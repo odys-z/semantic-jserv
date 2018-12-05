@@ -7,7 +7,10 @@
         <dependent-module archiveName="semantics.transact-0.5.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.transact/semantic.transact">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <property name="context-root" value="semantic.jserv"/>
+        <dependent-module archiveName="semantic.DA-0.1.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.DA/semantic.DA">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <property name="java-output-path" value="/semantic.jserv/target/classes"/>
+        <property name="context-root" value="jserv"/>
     </wb-module>
 </project-modules>
