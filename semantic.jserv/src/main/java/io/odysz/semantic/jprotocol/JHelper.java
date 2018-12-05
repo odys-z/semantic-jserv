@@ -13,4 +13,13 @@ public class JHelper {
 		return null;
 	}
 
+	public static SemanticObject parse(String jstr) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static Object OK(String code, SUser login, String[] props) {
+		return null;
+	}
+
 }
