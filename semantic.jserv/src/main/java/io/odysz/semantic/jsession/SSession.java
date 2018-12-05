@@ -261,7 +261,7 @@ public class SSession extends HttpServlet {
 			if ("query".equals(t)) {
 				// get function tree
 				SemanticObject resp;
-				DbLog dblog = check(header);
+				SUser dblog = check(header);
 				if (dblog != null) // login
 					resp = respSessionInfo((String)header.get("ssid"), connId, rootId);
 				else { // debugging
