@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configs>
+  <t id="default" pk="k" columns="k,v">
+	<c>
+		<k>IrUser</k>
+		<v>Class name of SUser Implementation</v>
+	</c>
+	<c>
+		<k>folder.file-upload</k>
+		<v>file:/home/ody/uploads</v>
+	</c>
+	<c>
+		<k>sync.log.on-verbose</k>
+		<v>false</v>
+	</c>
+	<c>
+		<k>ss-timeout-min</k>
+		<v>200</v>
+	</c>
+	<c>
+		<k>ss-timeout-min.debugMode</k>
+		<v>false</v>
+	</c>
+  </t>
+
+  <t id="tree-semantics" pk="k" columns="k,v">
+  	<!-- for v fields, see SemanticTree.ix* -->
+	<!--See SemanticTree for v difinetion.
+			All fields here are alias used to access rs columns.
+  			js-node-type: easyui, checked: null, tabl: e_areas, recId: areaId, parent id: parentId, text: areaName, full path: fullpath
+  			for easyui, only parentId is mandatory?
+  			Troubleshooting:
+  			1. too much recusive error report by jquery.
+  			set easyui table data-options idfield as areaId (data-options="idField: 'areaId',...)
+  		<v>easyui,,e_areas,areaId,parentId,areaName,fullpath</v>
+	-->
+  	<c> <k>templ-treegrid</k>
+  		<v>jsframe,checked,table,rec-id,parentId,text,fullpath,sibling-sort,paging-at-server</v>
+  	</c>
+  </t>
+
+  <t id="cbb" pk="k" columns="k,v">
+  	<!-- signal / communication way (link layer) -->
+  	<c><k>a-comm-link</k>
+  		<v>value of a-comm-link</v>
+  	</c>
+  	<c><k>model</k>
+  		<v>value of model</v>
+  	</c>
+	<c><k>gisorg</k>
+  		<v>value of gisorg</v>
+  	</c>
+  	<c><k>gisorgType</k>
+  		<v>select domainId as value, domainName as text from a_domain where domainId = '0104'</v>
+  	</c>
+	<c><k>dealType</k>
+    	<v>select domainId as value, domainName as text from a_domain where domainValue='2'</v>
+    </c>
+  	
+    <c><k>regOrg</k>
+    	<v>select orgId as value, orgName as text from a_reg_org   </v>
+    </c>
+    
+    <c><k>frontend</k>
+    	<v>select frontendId as value, frontendName as text from e_frontend where areaId='%s'  </v>
+    </c>
+    <c><k>area</k>
+    	<v>select areaId as value, areaName as text from e_areas where orgId='%s'  </v>
+    </c>
+
+     <c><k>modelarea</k>
+    	<v>select areaId as value, areaName as text from e_areas   </v>
+    </c>
+    
+    <!-- device running state (e_device.runStatus) -->
+    <!-- device state -->
+  	<c><k>e-device-state</k>
+    	<v>select domainId as value, domainName as text from a_domain where parentId ='C05'  </v>
+  	</c>
+  	
+    <c>
+    	<k>allroles</k>
+    	<v>select roleId as value, roleName as text from a_roles order by roleId desc</v>
+    </c>
+  </t>
+</configs>
