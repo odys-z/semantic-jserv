@@ -193,8 +193,8 @@ public class SSession extends HttpServlet {
 			String headstr = request.getParameter("header");
 			SemanticObject jheader = null;
 			if (headstr != null) {
-				jheader = (SemanticObject) JHelper.JsonParse(headstr);
-				IrSession.check(jheader);
+				jheader = (SemanticObject) JHelper.parse(headstr);
+				check(jheader);
 			}
 			else throw new SsException("Query session with GET request neending a header string.");
 
@@ -239,14 +239,14 @@ public class SSession extends HttpServlet {
 		try {
 			String connId = request.getParameter("conn");
 			if (connId == null || connId.trim().length() == 0)
-				connId = Connects.getDefltConnId();
+				connId = Connects.defltConn();
 
 			String payload = JHelper.getPayloadString(request);
 			// find user and check login info String payload = JsonHelper.getPayloadString(request);
 			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
 			SemanticObject jlogin = null;
 			if (payload != null && payload.trim().length() > 0)
-				jlogin = (SemanticObject)JHelper.JsonParse(payload);
+				jlogin = (SemanticObject)JHelper.parse(payload);
 			else throw new SQLException ("Session request not supported: login-obj=null");
 
 			String t = request.getParameter("t");
@@ -276,7 +276,7 @@ public class SSession extends HttpServlet {
 				if (login == null) {
 					// no such user
 					String logid = (String) jlogin.get("logid");
-					SemanticObject resp = JHelper.err(IrSession.ERR_UID, logid); 
+					SemanticObject resp = JHelper.err(ERR_UID, logid); 
 					writer.write(resp);
 				}
 				else {
@@ -284,11 +284,11 @@ public class SSession extends HttpServlet {
 						//SemanticObject resp = login.response(jlogin, request);
 						
 						lock.lock();
-						users.put(login.getSessionId(), login);
+						users.put(login.sessionId(), login);
 						lock.unlock();
-						writer.write(JHelper.OK(login.getSessionId(), login.toJsonBuilder(), new String[] {"url", login.homepage()}));
+						writer.write(JHelper.OK(login.sessionId(), login, new String[] {"url", login.homepage()}));
 					}
-					else writer.write(JHelper.err(IrSession.ERR_PSWD, "passwords not matching - pswd = encrypt(uid, pswd, iv)"));
+					else writer.write(JHelper.err(ERR_PSWD, "passwords not matching - pswd = encrypt(uid, pswd, iv)"));
 				}
 			}
 			else if ("logout".equals(a)) {
@@ -309,7 +309,7 @@ public class SSession extends HttpServlet {
 			else if ("touch".equals(t)) {
 				check(header);
 				String logid = (String) header.get("logid");
-				writer.write(JHelper.OK(logid));
+				writer.write(JHelper.OK(logid, null));
 			}
 			else
 				throw new SQLException (String.format(
@@ -321,7 +321,7 @@ public class SSession extends HttpServlet {
 		} catch (Exception e) {
 			e.printStackTrace();
 			if (writer != null)
-				writer.write(JHelper.Err(e.getMessage()));
+				writer.write(JHelper.err(e.getMessage()));
 		} finally {
 			if (writer != null)
 				writer.close();
