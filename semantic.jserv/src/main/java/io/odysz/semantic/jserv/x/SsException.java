@@ -7,7 +7,7 @@ package io.odysz.semantic.jserv.x;
 public class SsException extends Exception {
 	private static final long serialVersionUID = 1L;
 
-	public SsException(String string) {
+	public SsException(String msg) {
 		// TODO Auto-generated constructor stub
 	}
 
