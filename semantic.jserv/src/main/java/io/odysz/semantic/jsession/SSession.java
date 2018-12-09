@@ -1,7 +1,10 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Random;
@@ -13,12 +16,17 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.Configs;
 import io.odysz.common.Radix64;
@@ -30,9 +38,14 @@ import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DATranscxt;
 import io.odysz.semantic.jprotocol.JHelper;
+import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jprotocol.JMessage.MsgCode;
+import io.odysz.semantic.jprotocol.JProtocol.Session.Msg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.SQuery;
 import io.odysz.semantic.jserv.ServFlags;
+
+import static io.odysz.semantic.jprotocol.JProtocol.*;
 
 /**Handle login-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}<br>
  * and session-header: {uid: “user-id”,  ssid: “session-id-plain/cipher”, sys: “module-id”}<br>
@@ -43,7 +56,7 @@ import io.odysz.semantic.jserv.ServFlags;
  * @author ody
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv" })
-public class SSession extends HttpServlet {
+public class SSession extends HttpServlet implements ISessionVerifier {
 	/** * */
 	private static final long serialVersionUID = 1L;
 	
@@ -121,7 +134,7 @@ public class SSession extends HttpServlet {
 	 * @throws SsException Session checking failed.
 	 * @throws SQLException Reqest payload header.usrAct is null 
 	 */
-	public static SUser check(SemanticObject jHeader) throws SsException, SQLException {
+	public static SUser verify(SemanticObject jHeader) throws SsException, SQLException {
 		if (jHeader == null)
 			throw new SsException("session header is missing");
 
@@ -147,48 +160,15 @@ public class SSession extends HttpServlet {
 		else throw new SsException("session info is missing or timeout");
 	}
 
-	/**
-	 * @param jHeader
-	 * @return DbLog for really checking (check session with session id), else null for debug - only uid usable
-	 * - use this to load functions, etc.
-	 * @throws SsException Session checking failed.
-	 * @throws SQLException Reqest payload header.usrAct is null 
-	 */
-//	public static DbLog check(SemanticObject jHeader) throws IrSessionException, SQLException {
-//		if (jHeader == null)
-//			throw new IrSessionException("session header is missing");
-//
-//		// ignore debugging
-//		try {String debug = jHeader.getString("debug");
-//			if (debug != null && !debug.equals("false")) {
-//				return null;
-//			}
-//		} catch (Exception ex) {}
-//
-//		// if ("admin".equals(ssHeader.get("uid"))) return false;
-//
-//		String ssid = jHeader.getString("ssid");
-//		if (users.containsKey(ssid)) {
-//			SUser usr = users.get(ssid);
-//			String slogid = jHeader.getString("logid");
-//			if (slogid != null && slogid.equals(usr.getLogId())) {
-//				usr.touch();
-//				return new DbLog(usr, jHeader);
-//			}
-//			else throw new IrSessionException("session token is not matching");
-//		}
-//		else throw new IrSessionException("session info is missing or timeout");
-//	}
-
 	public static SUser getUser(SemanticObject jheader) {
 		return users.get(jheader.get("ssid"));
 	}
 
-
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		if (ServFlags.session) System.out.println("login get ========");
 		response.setContentType("text/html;charset=UTF-8");
-		JsonWriter writer = Json.createWriter(response.getOutputStream());
+		// JsonWriter writer = Json.createWriter(response.getOutputStream());
+		Msg msg = new Session.Msg();
 		try {
 			String headstr = request.getParameter("header");
 			SemanticObject jheader = null;
@@ -204,27 +184,42 @@ public class SSession extends HttpServlet {
 				rootId = null;
 			String conn = request.getParameter("conn");
 			if ("query".equals(t)) {
+				// query functions
 				String ssid = request.getParameter("ssid");
-				SemanticObject resp = respSessionInfo(ssid, conn, rootId);
-				writer.write(resp);
+				SemanticObject functions = respSessionInfo(ssid, conn, rootId);
+				msg.respond(functions);
 			}
 			else if ("touch".equals(t)) {
 				// already touched by check()
 				String logid = (String) jheader.get("logid");
-				writer.write(JHelper.OK(logid, null));
+				// writer.write(JHelper.OK(logid, null));
+				msg.ok();
 			}
-			else writer.write(JHelper.err("Login.serv using GET to query or touch session info - use POST to login, logout, check session."));
+			// else writer.write(JHelper.err("Login.serv using GET to query or touch session info - use POST to login, logout, check session."));
+			else {
+				msg.err("Login.serv using GET to query or touch session info - use POST to login, logout, check session.");
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			if (writer != null)
-				writer.write(JHelper.err(e.getMessage()));
+			msg.err(e.getMessage());
 		} catch (SsException e) {
-			writer.write(JHelper.err(ERR_CHK, e.getMessage()));
+			msg.err(MsgCode.exSession, e.getMessage());
 		} catch (SAXException e) {
 			e.printStackTrace();
+			msg.err(MsgCode.exDA, e.getMessage());
 		} finally {
-			if (writer != null)
-				writer.close();
+			if (ServFlags.session) {
+        		// FIXME performance
+				// TODO move to JHelper
+				JHelper.println(msg);
+				JsonWriter writer = new JsonWriter(new OutputStreamWriter(System.out, "UTF-8"));
+        		Type t = new TypeToken<Msg>() {}.getType();
+        		new Gson().toJson(msg, t, writer);
+        		writer.close();
+        		System.out.println("can?");
+			}
+			OutputStream os = response.getOutputStream();
+			Session.respond(os, msg);
 		}
 	}
 
