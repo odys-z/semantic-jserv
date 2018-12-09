@@ -43,15 +43,15 @@ public class SQuery extends HttpServlet {
 		
 		try {
 			// Transcxt is a sql builder, you will get:
-			// select funcId code, funcName name from a_functions f
+			// select funcId Port, funcName name from a_functions f
 			st.select("a_functions", "f")
-				.col("funcId", "code")
+				.col("funcId", "Port")
 				.col("funcName", "name")
 				.commit(sqls);
 		
 			// Print what's built.
 			// Use a static final boolean before calling Utils.log(format, args)
-			// Java compiler will dismiss this code, same effect like c #define. 
+			// Java compiler will dismiss this Port, same effect like c #define. 
 			if (ServFlags.query)
 				Utils.logi(sqls);
 
