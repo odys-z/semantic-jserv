@@ -11,9 +11,14 @@ import static j2html.TagCreator.tbody;
 import static j2html.TagCreator.td;
 import static j2html.TagCreator.th;
 import static j2html.TagCreator.tr;
+
+import java.util.HashMap;
+import java.util.List;
+
 import static j2html.TagCreator.span;
 
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantics.SemanticObject;
 
 /**Helper for coverting modules to readable html.
  * @author ody
@@ -30,10 +35,36 @@ public class Html {
 		return "<!DOCTYPE HTML>" + html(
 			head(meta().withCharset("utf-8")),
 			body(
-				h1("echo.test"),
+				h1("Html.rs()"),
 					table(tbody(
 						tr(each(rs.getColnames().keySet(), col -> th(span(col)))),
 						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
+				)).render();
+	}
+
+	public static String list(List<String> list) {
+		return "<!DOCTYPE HTML>" + html(
+			head(meta().withCharset("utf-8")),
+			body(
+				h1("Html.list()"),
+					table(tbody(
+						tr(th(""), th("")),
+						each(list, cell -> tr(td(""), td(cell)))))
+				)).render();
+	}
+
+	/**TODO can html writing outputStream?
+	 * @param res
+	 * @return
+	 */
+	public static String map(HashMap<String, SemanticObject> res) {
+		return "<!DOCTYPE HTML>" + html(
+			head(meta().withCharset("utf-8")),
+			body(
+				h1("Html.map()"),
+					table(tbody(
+						tr(th("key"), th("value")),
+						each(res.keySet(), k -> tr(td(res.get(k).toString())))))
 				)).render();
 	}
 

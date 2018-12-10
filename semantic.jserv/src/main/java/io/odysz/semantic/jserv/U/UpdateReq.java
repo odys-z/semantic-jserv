@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.R;
+package io.odysz.semantic.jserv.U;
 
 import java.util.ArrayList;
 
@@ -28,7 +28,7 @@ or
  * @author ody
  *
  */
-public class QueryMsg extends JMessage {
+public class UpdateReq extends JMessage {
 
 	/**Main table */
 	String mtabl;
@@ -43,25 +43,25 @@ public class QueryMsg extends JMessage {
 	 */
 	ArrayList<String[]> joins;
 
-	/**exprs: [expr-obj],
-	 * expr-obj: {tabl: "b_articles/t_alais", alais: "recId", expr: "recId"}
+	/**nvs: [nv-obj],
+	 * nv-obj: {n: "roleName", v: "admin"}
 	 *  */
-	ArrayList<String[]> exprs;
+	ArrayList<String[]> nvs;
 	
 	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
 	ArrayList<String[]> where;
 	
 	/**orders: [order-obj],
      - order-obj: {tabl: "b_articles", field: "pubDate", asc: "true"} */
-	ArrayList<String[]> orders;
+//	ArrayList<String[]> orders;
 	
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
-	ArrayList<String[]> groups;
+//	ArrayList<String[]> groups;
 	
 
-	public QueryMsg() {
-		super(Port.query);
+	public UpdateReq() {
+		super(Port.update);
 	}
 
 }

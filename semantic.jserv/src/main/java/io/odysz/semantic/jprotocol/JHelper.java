@@ -12,6 +12,7 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JProtocol.Session.Msg;
@@ -69,7 +70,7 @@ public class JHelper<T> {
  	}</pre>
 	 * @param in
 	 * @param elemClass
-	 * @return
+	 * @return {header, query: [query-obj]}
 	 * @throws IOException
 	 */
 	public List<T> readJsonStream(InputStream in, Class<? extends T> elemClass) throws IOException {
@@ -87,10 +88,72 @@ public class JHelper<T> {
         return messages;
  
     }
-
+	
 	public static void println(JMessage msg) {
 		
 	}
 
+	public T readJson(InputStream in, Class<? extends T> elemClass) throws IOException {
+		// {header: {header-obj}, req: [msg]}
+        JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
+        reader.beginObject();
+        reader.beginArray();
+        Type t = new TypeToken<T>() {}.getType();
+        List<T> messages = new ArrayList<T>();
+        while (reader.hasNext()) {
+            T message = gson.fromJson(reader, elemClass);
+            messages.add(message);
+        }
+	}
+
+	
+	public T prettyprint(InputStream in, Class<? extends T> msgClass) throws IOException {
+        JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
+        reader.beginObject();
+        JMessage msg = new JMessage();
+        while (true) {
+            JsonToken token = reader.peek();
+            switch (token) {
+            case BEGIN_ARRAY:
+                reader.beginArray();
+                writer.beginArray();
+                break;
+            case END_ARRAY:
+                reader.endArray();
+                writer.endArray();
+                break;
+            case BEGIN_OBJECT:
+                reader.beginObject();
+                writer.beginObject();
+                break;
+            case END_OBJECT:
+                reader.endObject();
+                writer.endObject();
+                break;
+            case NAME:
+                String name = reader.nextName();
+                writer.name(name);
+                break;
+            case STRING:
+                String s = reader.nextString();
+                writer.value(s);
+                break;
+            case NUMBER:
+                String n = reader.nextString();
+                writer.value(new BigDecimal(n));
+                break;
+            case BOOLEAN:
+                boolean b = reader.nextBoolean();
+                writer.value(b);
+                break;
+            case NULL:
+                reader.nextNull();
+                writer.nullValue();
+                break;
+            case END_DOCUMENT:
+                return;
+            }
+        }
+    }
 }
 

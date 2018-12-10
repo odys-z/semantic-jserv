@@ -14,14 +14,14 @@ import com.google.gson.Gson;
  *
  */
 public class JMessage {
-	public enum Port { heartbeat, seesion, query };
+	public enum Port { heartbeat, seesion, query, update };
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral};
 
 	static Gson gson = new Gson();
 
 	@SuppressWarnings("unused")
 	private String vestion = "1.0";
-	protected Port typ;
+//	protected Port typ;
 	@SuppressWarnings("unused")
 	private int seq;
 
@@ -34,7 +34,7 @@ public class JMessage {
 	}
 
 	public JMessage(Port msgCode) {
-		this.typ = msgCode;
+		this.port = msgCode;
 		seq = (int) (Math.random() * 1000);
 	}
 	
