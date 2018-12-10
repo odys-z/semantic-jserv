@@ -46,46 +46,6 @@ public class SQuery extends HttpServlet {
 			
 			QueryMsg msg = msgs.get(0);
 //			// TODO let's use stream mode
-//			ArrayList<String> sqls = new ArrayList<String>();
-//			Query selct = st.select(msg.mtabl, msg.mAlias);
-//			if (msg.exprs != null && msg.exprs.size() > 0)
-//				for (String[] col : msg.exprs)
-//					// TODO extend col()
-//					selct.col(col[0], col[2], col[1]);
-//			
-//			if (msg.joins != null && msg.joins.size() > 0) {
-//				for (String[] j : msg.joins)
-//					selct.j(join.parse(j[0]), j[1], j[2], j[3]);
-//			}
-//			
-//			if (msg.where != null && msg.where.size() > 0) {
-//				for (String[] cond : msg.where)
-//					selct.where(cond[1], cond[0], cond[2]);
-//			}
-//			
-//			// TODO: GROUP
-//			// TODO: ORDER
-//			selct.commit(sqls);
-//
-//			
-//			/*
-//			// Transcxt is a sql builder, you will get:
-//			// select funcId Port, funcName name from a_functions f
-//			st.select("a_functions", "f")
-//				.col("funcId", "Port")
-//				.col("funcName", "name")
-//				.commit(sqls);
-//				*/
-//		
-//			if (ServFlags.query)
-//				Utils.logi(sqls);
-//
-//			// Using semantic-DA to query from default connection.
-//			// If the connection is not default, use another overloaded function select(connId, ...).
-//			SResultset rs = Connects.select(sqls.get(0));
-//			if (ServFlags.query)
-//				try {rs.printSomeData(false, 1, rs.getColumnName(1), rs.getColumnName(2)); }
-//				catch (Exception e) {e.printStackTrace();}
 
 			SResultset rs = query(msg);
 			
@@ -143,15 +103,6 @@ public class SQuery extends HttpServlet {
 		selct.commit(sqls);
 
 			
-		/*
-		// Transcxt is a sql builder, you will get:
-		// select funcId Port, funcName name from a_functions f
-		st.select("a_functions", "f")
-			.col("funcId", "Port")
-			.col("funcName", "name")
-			.commit(sqls);
-			*/
-	
 		if (ServFlags.query)
 			Utils.logi(sqls);
 
