@@ -6,7 +6,9 @@ import javax.servlet.annotation.WebListener;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.transact.sql.Transcxt;
+import io.odysz.semantic.DA.DATranscxt;
+import io.odysz.semantic.jsession.ISessionVerifier;
+import io.odysz.semantic.jsession.SSession;
 
 /**This application scope initializing and managing module should be here.
  * @author ody
@@ -15,7 +17,8 @@ import io.odysz.transact.sql.Transcxt;
 @WebListener
 public class JSingleton implements ServletContextListener {
 
-	public static Transcxt st;
+	public static DATranscxt st;
+	private static ISessionVerifier session;
 
 	public void contextDestroyed(ServletContextEvent arg0) {
 	}
@@ -26,7 +29,13 @@ public class JSingleton implements ServletContextListener {
 		String xmlDir = evt.getServletContext().getRealPath("/WEB-INF");
 		Connects.init(xmlDir);
 		
-		st = new Transcxt(null);
+		st = new DATranscxt(null);
+		
+		session = new SSession();
+	}
+
+	public static ISessionVerifier getSessionVerifier() {
+		return session;
 	}
 
 }

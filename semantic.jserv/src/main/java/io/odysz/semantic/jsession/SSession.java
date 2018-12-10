@@ -134,17 +134,10 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @throws SsException Session checking failed.
 	 * @throws SQLException Reqest payload header.usrAct is null 
 	 */
-	public static SUser verify(SemanticObject jHeader) throws SsException, SQLException {
+	@Override
+	public SUser verify(SemanticObject jHeader) throws SsException, SQLException {
 		if (jHeader == null)
 			throw new SsException("session header is missing");
-
-		// ignore debugging
-		String debug = (String) jHeader.get("debug");
-		if (debug != null && !debug.equals("false")) {
-			return null;
-		}
-
-		// if ("admin".equals(ssHeader.get("uid"))) return false;
 
 		String ssid = (String)jHeader.get("ssid");
 		if (users.containsKey(ssid)) {

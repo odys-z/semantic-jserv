@@ -2,6 +2,7 @@ package io.odysz.semantic.jserv.R;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +28,11 @@ import io.odysz.transact.x.TransException;
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/query.serv" })
 public class SQuery extends HttpServlet {
 	private static Transcxt st;
-	static JHelper<QueryMsg> jhelper;
+	static JHelper<QueryReq> jhelperReq;
+	static JHelper<QueryResp> jhelperResp;
 	static {
 		st = JSingleton.st;
-		jhelper = new JHelper<QueryMsg>();
+		jhelperReq = new JHelper<QueryReq>();
 	}
 
 	private static final long serialVersionUID = 1L;
@@ -41,12 +43,13 @@ public class SQuery extends HttpServlet {
 		
 		try {
 			InputStream in = req.getInputStream();
-			List<QueryMsg> msgs = jhelper.readJsonStream(in, QueryMsg.class);
+			List<QueryReq> msgs = jhelperReq.readJsonStream(in, QueryReq.class);
 			in.close();
 			
-			QueryMsg msg = msgs.get(0);
+			verifier.verify(msgs);
+			
+			QueryReq msg = msgs.get(0);
 //			// TODO let's use stream mode
-
 			SResultset rs = query(msg);
 			
 			resp.setCharacterEncoding("UTF-8");
@@ -62,24 +65,25 @@ public class SQuery extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		try {
 			InputStream in = req.getInputStream();
-			List<QueryMsg> msgs = jhelper.readJsonStream(in, QueryMsg.class);
+			List<QueryReq> msgs = jhelperReq.readJsonStream(in, QueryReq.class);
 			in.close();
 			
-			QueryMsg msg = msgs.get(0);
+			QueryReq msg = msgs.get(0);
 			SResultset rs = query(msg);
 			
 			resp.setCharacterEncoding("UTF-8");
-			resp.getWriter().write(Html.rs(rs));
+//			resp.getWriter().write(Html.rs(rs));
+			OutputStream os = resp.getOutputStream();
+			jhelperResp.writeJsonStream(os, new QueryResp(rs));
 			resp.flushBuffer();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
 			e.printStackTrace();
 		}
-
 	}
 	
-	SResultset query(QueryMsg msg) throws SQLException, TransException {
+	SResultset query(QueryReq msg) throws SQLException, TransException {
 		// TODO let's use stream mode
 		ArrayList<String> sqls = new ArrayList<String>();
 		Query selct = st.select(msg.mtabl, msg.mAlias);
@@ -102,7 +106,6 @@ public class SQuery extends HttpServlet {
 		// TODO: ORDER
 		selct.commit(sqls);
 
-			
 		if (ServFlags.query)
 			Utils.logi(sqls);
 

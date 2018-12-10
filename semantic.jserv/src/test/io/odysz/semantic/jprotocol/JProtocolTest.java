@@ -20,6 +20,7 @@ import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jserv.R.QueryReq;
 
 class JProtocolTest {
 	Gson gson;
@@ -131,7 +132,6 @@ class JProtocolTest {
         Utils.<Axby>logi(xas);
 	}
 	
-	
 	public void writeJsonStream(OutputStream out, List<JMessage> messages) throws IOException {
         JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, "UTF-8"));
         writer.setIndent("  ");
@@ -142,4 +142,13 @@ class JProtocolTest {
         writer.endArray();
         writer.close();
     }
+	
+	/**Test Gson hybrid mode.
+	 * 
+	 */
+	@Test
+	void tryGsonHybrid() {
+		QueryReq msg =  new QueryReq();
+		msg.header();
+	}
 }
