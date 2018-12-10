@@ -8,9 +8,13 @@ import java.util.stream.Stream;
 
 import com.google.gson.Gson;
 
-@SuppressWarnings("unchecked")
+/**Base class of message used by JProtocol.
+ * Should extends SemanticObject?
+ * @author ody
+ *
+ */
 public class JMessage {
-	public enum Port { heartbeat, seesion };
+	public enum Port { heartbeat, seesion, query };
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral};
 
 	static Gson gson = new Gson();

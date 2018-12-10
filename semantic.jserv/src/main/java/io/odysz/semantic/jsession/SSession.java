@@ -42,7 +42,7 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol.Session.Msg;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.semantic.jserv.SQuery;
+import io.odysz.semantic.jserv.SQuerySample;
 import io.odysz.semantic.jserv.ServFlags;
 
 import static io.odysz.semantic.jprotocol.JProtocol.*;
@@ -174,7 +174,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			SemanticObject jheader = null;
 			if (headstr != null) {
 				jheader = (SemanticObject) JHelper.parse(headstr);
-				check(jheader);
+//				check(jheader);
 			}
 			else throw new SsException("Query session with GET request neending a header string.");
 
@@ -186,7 +186,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			if ("query".equals(t)) {
 				// query functions
 				String ssid = request.getParameter("ssid");
-				SemanticObject functions = respSessionInfo(ssid, conn, rootId);
+				SemanticObject functions = null; // respSessionInfo(ssid, conn, rootId);
 				msg.respond(functions);
 			}
 			else if ("touch".equals(t)) {
@@ -199,14 +199,14 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			else {
 				msg.err("Login.serv using GET to query or touch session info - use POST to login, logout, check session.");
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-			msg.err(e.getMessage());
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//			msg.err(e.getMessage());
 		} catch (SsException e) {
 			msg.err(MsgCode.exSession, e.getMessage());
-		} catch (SAXException e) {
-			e.printStackTrace();
-			msg.err(MsgCode.exDA, e.getMessage());
+//		} catch (SAXException e) {
+//			e.printStackTrace();
+//			msg.err(MsgCode.exDA, e.getMessage());
 		} finally {
 			if (ServFlags.session) {
         		// FIXME performance
@@ -230,97 +230,97 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 	private void jsonResp(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		response.setContentType("text/html;charset=UTF-8");
-		JsonWriter writer = Json.createWriter(response.getOutputStream());
-		try {
-			String connId = request.getParameter("conn");
-			if (connId == null || connId.trim().length() == 0)
-				connId = Connects.defltConn();
-
-			String payload = JHelper.getPayloadString(request);
-			// find user and check login info String payload = JsonHelper.getPayloadString(request);
-			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
-			SemanticObject jlogin = null;
-			if (payload != null && payload.trim().length() > 0)
-				jlogin = (SemanticObject)JHelper.parse(payload);
-			else throw new SQLException ("Session request not supported: login-obj=null");
-
-			String t = request.getParameter("t");
-			String rootId = request.getParameter("root");
-			if (rootId != null && rootId.trim().length() == 0)
-				rootId = null;
-			String a = (String) jlogin.get("a");
-			SemanticObject header = null;
-			try {header = (SemanticObject) jlogin.get("header"); }
-			catch (Exception e) {throw new SsException("request header not understandable");}
-
-			if ("query".equals(t)) {
-				// get function tree
-				SemanticObject resp;
-				SUser dblog = check(header);
-				if (dblog != null) // login
-					resp = respSessionInfo((String)header.get("ssid"), connId, rootId);
-				else { // debugging
-					String logid = (String) header.get("logid");
-					String uid = (String) header.get("uid");
-					resp = respSessionInfoDebug(uid, logid, connId, rootId);
-				}
-				writer.write(resp);
-			}
-			else if ("login".equals(a)) {
-				SUser login = parseLogin(jlogin, t, connId);
-				if (login == null) {
-					// no such user
-					String logid = (String) jlogin.get("logid");
-					SemanticObject resp = JHelper.err(ERR_UID, logid); 
-					writer.write(resp);
-				}
-				else {
-					if (login.login(jlogin, request)) {
-						//SemanticObject resp = login.response(jlogin, request);
-						
-						lock.lock();
-						users.put(login.sessionId(), login);
-						lock.unlock();
-						writer.write(JHelper.OK(login.sessionId(), login, new String[] {"url", login.homepage()}));
-					}
-					else writer.write(JHelper.err(ERR_PSWD, "passwords not matching - pswd = encrypt(uid, pswd, iv)"));
-				}
-			}
-			else if ("logout".equals(a)) {
-				check(header);
-				// {uid: “user-id”,  ssid: “session-id-plain/cipher”, vi: "vi-b64"<, sys: “module-id”>}
-				String ssid = (String) header.get("ssid");
-
-				lock.lock();
-				SUser usr = users.remove(ssid);
-				lock.unlock();
-
-				if (usr != null) {
-					SemanticObject resp = usr.logout(header);
-					writer.write(resp);
-				}
-				else writer.write(JHelper.OK("But no such session been found."));
-			}
-			else if ("touch".equals(t)) {
-				check(header);
-				String logid = (String) header.get("logid");
-				writer.write(JHelper.OK(logid, null));
-			}
-			else
-				throw new SQLException (String.format(
-					"Session Request not supported: a=%s", a));
-			//writer.close();
-			response.flushBuffer();
-		} catch (SsException e) {
-			writer.write(JHelper.err(ERR_CHK, e.getMessage()));
-		} catch (Exception e) {
-			e.printStackTrace();
-			if (writer != null)
-				writer.write(JHelper.err(e.getMessage()));
-		} finally {
-			if (writer != null)
-				writer.close();
-		}
+//		JsonWriter writer = Json.createWriter(response.getOutputStream());
+//		try {
+//			String connId = request.getParameter("conn");
+//			if (connId == null || connId.trim().length() == 0)
+//				connId = Connects.defltConn();
+//
+//			String payload = JHelper.getPayloadString(request);
+//			// find user and check login info String payload = JsonHelper.getPayloadString(request);
+//			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
+//			SemanticObject jlogin = null;
+//			if (payload != null && payload.trim().length() > 0)
+//				jlogin = (SemanticObject)JHelper.parse(payload);
+//			else throw new SQLException ("Session request not supported: login-obj=null");
+//
+//			String t = request.getParameter("t");
+//			String rootId = request.getParameter("root");
+//			if (rootId != null && rootId.trim().length() == 0)
+//				rootId = null;
+//			String a = (String) jlogin.get("a");
+//			SemanticObject header = null;
+//			try {header = (SemanticObject) jlogin.get("header"); }
+//			catch (Exception e) {throw new SsException("request header not understandable");}
+//
+//			if ("query".equals(t)) {
+//				// get function tree
+//				SemanticObject resp;
+//				SUser dblog = check(header);
+//				if (dblog != null) // login
+//					resp = respSessionInfo((String)header.get("ssid"), connId, rootId);
+//				else { // debugging
+//					String logid = (String) header.get("logid");
+//					String uid = (String) header.get("uid");
+//					resp = respSessionInfoDebug(uid, logid, connId, rootId);
+//				}
+//				writer.write(resp);
+//			}
+//			else if ("login".equals(a)) {
+//				SUser login = parseLogin(jlogin, t, connId);
+//				if (login == null) {
+//					// no such user
+//					String logid = (String) jlogin.get("logid");
+//					SemanticObject resp = JHelper.err(ERR_UID, logid); 
+//					writer.write(resp);
+//				}
+//				else {
+//					if (login.login(jlogin, request)) {
+//						//SemanticObject resp = login.response(jlogin, request);
+//						
+//						lock.lock();
+//						users.put(login.sessionId(), login);
+//						lock.unlock();
+//						writer.write(JHelper.OK(login.sessionId(), login, new String[] {"url", login.homepage()}));
+//					}
+//					else writer.write(JHelper.err(ERR_PSWD, "passwords not matching - pswd = encrypt(uid, pswd, iv)"));
+//				}
+//			}
+//			else if ("logout".equals(a)) {
+//				check(header);
+//				// {uid: “user-id”,  ssid: “session-id-plain/cipher”, vi: "vi-b64"<, sys: “module-id”>}
+//				String ssid = (String) header.get("ssid");
+//
+//				lock.lock();
+//				SUser usr = users.remove(ssid);
+//				lock.unlock();
+//
+//				if (usr != null) {
+//					SemanticObject resp = usr.logout(header);
+//					writer.write(resp);
+//				}
+//				else writer.write(JHelper.OK("But no such session been found."));
+//			}
+//			else if ("touch".equals(t)) {
+//				check(header);
+//				String logid = (String) header.get("logid");
+//				writer.write(JHelper.OK(logid, null));
+//			}
+//			else
+//				throw new SQLException (String.format(
+//					"Session Request not supported: a=%s", a));
+//			//writer.close();
+//			response.flushBuffer();
+//		} catch (SsException e) {
+//			writer.write(JHelper.err(ERR_CHK, e.getMessage()));
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			if (writer != null)
+//				writer.write(JHelper.err(e.getMessage()));
+//		} finally {
+//			if (writer != null)
+//				writer.close();
+//		}
 	}
 
 	private SUser parseLogin(SemanticObject jlogin, String target, String connId) throws Exception {
