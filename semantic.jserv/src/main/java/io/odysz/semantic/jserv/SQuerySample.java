@@ -1,18 +1,5 @@
 package io.odysz.semantic.jserv;
 
-import static j2html.TagCreator.body;
-import static j2html.TagCreator.each;
-import static j2html.TagCreator.h1;
-import static j2html.TagCreator.head;
-import static j2html.TagCreator.html;
-import static j2html.TagCreator.meta;
-import static j2html.TagCreator.table;
-import static j2html.TagCreator.tbody;
-import static j2html.TagCreator.td;
-import static j2html.TagCreator.th;
-import static j2html.TagCreator.tr;
-import static j2html.TagCreator.span;
-
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -26,11 +13,12 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.transact.sql.Transcxt;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/query.serv" })
-public class SQuery extends HttpServlet {
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/query-ex.serv" })
+public class SQuerySample extends HttpServlet {
 	private static Transcxt st;
 	static { st = JSingleton.st; }
 
@@ -62,30 +50,13 @@ public class SQuery extends HttpServlet {
 				rs.printSomeData(false, 1, "fid");
 			
 			resp.setCharacterEncoding("UTF-8");
-			resp.getWriter().write(htmlRs(rs));
+			resp.getWriter().write(Html.rs(rs));
 			resp.flushBuffer();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
 			e.printStackTrace();
 		}
-	}
-
-	/**Change rs to html.
-	 * @param rs
-	 * @return
-	 */
-	public static String htmlRs(SResultset rs) {
-		// html() is a simple HTML composer, see
-		// https://github.com/tipsy/j2html 
-		return "<!DOCTYPE HTML>" + html(
-			head(meta().withCharset("utf-8")),
-			body(
-				h1("echo.test"),
-					table(tbody(
-						tr(each(rs.getColnames().keySet(), col -> th(span(col)))),
-						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
-				)).render();
 	}
 
 }
