@@ -2,6 +2,7 @@ package io.odysz.semantic.jserv.U;
 
 import java.util.ArrayList;
 
+import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JMessage;
 
 /**<pre>
@@ -50,6 +51,9 @@ public class UpdateReq extends JMessage {
 	
 	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
 	ArrayList<String[]> where;
+	
+	
+	public JHeader header;
 	
 	/**orders: [order-obj],
      - order-obj: {tabl: "b_articles", field: "pubDate", asc: "true"} */

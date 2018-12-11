@@ -1,8 +1,10 @@
 package io.odysz.semantic.jserv.R;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JMessage;
 
 /**<pre>
@@ -59,6 +61,8 @@ public class QueryReq extends JMessage {
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
 	ArrayList<String[]> groups;
+
+	public JHeader header;
 	
 
 	public QueryReq() {
@@ -69,6 +73,12 @@ public class QueryReq extends JMessage {
 	public QueryReq respond(SResultset rs) {
 
 		return this;
+	}
+
+
+	public List<JMessage> queries() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

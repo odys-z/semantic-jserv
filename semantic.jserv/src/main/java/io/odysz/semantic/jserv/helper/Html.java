@@ -6,12 +6,15 @@ import static j2html.TagCreator.h1;
 import static j2html.TagCreator.head;
 import static j2html.TagCreator.html;
 import static j2html.TagCreator.meta;
+import static j2html.TagCreator.li;
 import static j2html.TagCreator.table;
 import static j2html.TagCreator.tbody;
 import static j2html.TagCreator.td;
 import static j2html.TagCreator.th;
 import static j2html.TagCreator.tr;
+import static j2html.TagCreator.ul;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,15 +30,17 @@ import io.odysz.semantics.SemanticObject;
 public class Html {
 	/**Change rs to html.
 	 * @param rs
+	 * @param msgs
 	 * @return
 	 */
-	public static String rs(SResultset rs) {
+	public static String rs(SResultset rs, String... msgs) {
 		// html() is a simple HTML composer, see
 		// https://github.com/tipsy/j2html 
 		return "<!DOCTYPE HTML>" + html(
 			head(meta().withCharset("utf-8")),
 			body(
 				h1("Html.rs()"),
+					ul(each(Arrays.asList(msgs), pmsg -> li(""))),
 					table(tbody(
 						tr(each(rs.getColnames().keySet(), col -> th(span(col)))),
 						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
@@ -66,6 +71,11 @@ public class Html {
 						tr(th("key"), th("value")),
 						each(res.keySet(), k -> tr(td(res.get(k).toString())))))
 				)).render();
+	}
+
+	public static char[] semanticObj(SemanticObject functions) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

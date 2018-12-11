@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -20,6 +21,9 @@ import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
+import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.jsession.ISessionVerifier;
+import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Transcxt;
 import io.odysz.transact.sql.parts.select.JoinTabl.join;
@@ -27,15 +31,19 @@ import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/query.serv" })
 public class SQuery extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	private static ISessionVerifier verifier;
 	private static Transcxt st;
+
 	static JHelper<QueryReq> jhelperReq;
 	static JHelper<QueryResp> jhelperResp;
 	static {
 		st = JSingleton.st;
-		jhelperReq = new JHelper<QueryReq>();
+		jhelperReq  = new JHelper<QueryReq>();
+		jhelperResp = new JHelper<QueryResp>();
+		verifier = JSingleton.getSessionVerifier();
 	}
-
-	private static final long serialVersionUID = 1L;
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -43,21 +51,30 @@ public class SQuery extends HttpServlet {
 		
 		try {
 			InputStream in = req.getInputStream();
-			List<QueryReq> msgs = jhelperReq.readJsonStream(in, QueryReq.class);
+			QueryReq msg = jhelperReq.readJson(in, QueryReq.class);
 			in.close();
 			
-			verifier.verify(msgs);
+			verifier.verify(msg.header);
 			
-			QueryReq msg = msgs.get(0);
 //			// TODO let's use stream mode
-			SResultset rs = query(msg);
+
+			SResultset rs = query((QueryReq) msg.queries().get(0));
 			
 			resp.setCharacterEncoding("UTF-8");
-			resp.getWriter().write(Html.rs(rs));
+			
+			int size = msg.queries().size();
+			if (size > 1)
+				resp.getWriter().write(Html.rs(rs, String.format("%s more query results ignored.", size - 1)));
+			else 
+				resp.getWriter().write(Html.rs(rs));
 			resp.flushBuffer();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
+			e.printStackTrace();
+		} catch (SsException e) {
+			e.printStackTrace();
+		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		}
 	}
@@ -68,13 +85,17 @@ public class SQuery extends HttpServlet {
 			List<QueryReq> msgs = jhelperReq.readJsonStream(in, QueryReq.class);
 			in.close();
 			
+			HashMap<String, SResultset> rses = new HashMap<String, SResultset>();
 			QueryReq msg = msgs.get(0);
 			SResultset rs = query(msg);
+			rses.put("0", rs);
 			
 			resp.setCharacterEncoding("UTF-8");
 //			resp.getWriter().write(Html.rs(rs));
+//			JHelper.writeJson(os, new QueryResp().rs(rs));
 			OutputStream os = resp.getOutputStream();
-			jhelperResp.writeJsonStream(os, new QueryResp(rs));
+			SemanticObject res = new SemanticObject().put("rs", rses);
+			JHelper.writeJson(os, res);
 			resp.flushBuffer();
 		} catch (SQLException e) {
 			e.printStackTrace();

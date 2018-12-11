@@ -37,13 +37,18 @@ import io.odysz.transact.x.TransException;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DATranscxt;
+import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
-import io.odysz.semantic.jprotocol.JProtocol.Session.Msg;
+import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.SQuerySample;
 import io.odysz.semantic.jserv.ServFlags;
+import io.odysz.semantic.jserv.U.UpdateReq;
+import io.odysz.semantic.jserv.U.UpdateResp;
+import io.odysz.semantic.jserv.helper.Html;
+import io.odysz.semantic.jserv.helper.ServletAdapter;
 
 import static io.odysz.semantic.jprotocol.JProtocol.*;
 
@@ -83,6 +88,13 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	private static ScheduledFuture<?> schedualed;
 	
 	private static DATranscxt sctx;
+
+	static JHelper<SessionReq> jreqHelper;
+
+	static {
+		sctx = JSingleton.st;
+		jreqHelper = new JHelper<SessionReq>();
+	}
 
 	public static void init(DATranscxt daSctx) {
 		sctx = daSctx;
@@ -135,14 +147,14 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @throws SQLException Reqest payload header.usrAct is null 
 	 */
 	@Override
-	public SUser verify(SemanticObject jHeader) throws SsException, SQLException {
+	public SUser verify(JHeader jHeader) throws SsException, SQLException {
 		if (jHeader == null)
 			throw new SsException("session header is missing");
 
-		String ssid = (String)jHeader.get("ssid");
+		String ssid = (String)jHeader.ssid();
 		if (users.containsKey(ssid)) {
 			SUser usr = users.get(ssid);
-			String slogid = (String)jHeader.get("logid");
+			String slogid = (String)jHeader.logid();
 			if (slogid != null && slogid.equals(usr.getUserId())) {
 				usr.touch();
 				// return new DbLog(usr, jHeader);
@@ -157,19 +169,16 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		return users.get(jheader.get("ssid"));
 	}
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request, HttpServletResponse resp)
+			throws ServletException, IOException {
 		if (ServFlags.session) System.out.println("login get ========");
-		response.setContentType("text/html;charset=UTF-8");
+		resp.setContentType("text/html;charset=UTF-8");
 		// JsonWriter writer = Json.createWriter(response.getOutputStream());
-		Msg msg = new Session.Msg();
 		try {
+			SessionReq msg = ServletAdapter.<SessionReq>read(request, jreqHelper, SessionReq.class);
 			String headstr = request.getParameter("header");
-			SemanticObject jheader = null;
-			if (headstr != null) {
-				jheader = (SemanticObject) JHelper.parse(headstr);
-//				check(jheader);
-			}
-			else throw new SsException("Query session with GET request neending a header string.");
+			if (headstr == null)
+				throw new SsException("Query session with GET request neending a header string.");
 
 			String t = request.getParameter("t");
 			String rootId = request.getParameter("root");
@@ -179,40 +188,46 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			if ("query".equals(t)) {
 				// query functions
 				String ssid = request.getParameter("ssid");
-				SemanticObject functions = null; // respSessionInfo(ssid, conn, rootId);
-				msg.respond(functions);
+				SemanticObject functions = respSessionInfo(ssid, conn, rootId);
+				resp.setCharacterEncoding("UTF-8");
+				resp.getWriter().write(Html.semanticObj(functions));
+				resp.flushBuffer();
 			}
 			else if ("touch".equals(t)) {
 				// already touched by check()
-				String logid = (String) jheader.get("logid");
-				// writer.write(JHelper.OK(logid, null));
-				msg.ok();
+				SUser usr = verify(msg.header);
+				String logid = usr.getUserId();
+				HashMap<String, SemanticObject> ok = new HashMap<String, SemanticObject>(1);
+				ok.put(usr.uid, usr);
+				resp.getWriter().write(Html.map(ok));
 			}
 			// else writer.write(JHelper.err("Login.serv using GET to query or touch session info - use POST to login, logout, check session."));
 			else {
 				msg.err("Login.serv using GET to query or touch session info - use POST to login, logout, check session.");
 			}
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//			msg.err(e.getMessage());
 		} catch (SsException e) {
-			msg.err(MsgCode.exSession, e.getMessage());
-//		} catch (SAXException e) {
-//			e.printStackTrace();
-//			msg.err(MsgCode.exDA, e.getMessage());
+			JProtocol.err(resp.getOutputStream(), Port.session, MsgCode.exSession, e.getMessage());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ReflectiveOperationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} finally {
-			if (ServFlags.session) {
-        		// FIXME performance
-				// TODO move to JHelper
-				JHelper.println(msg);
-				JsonWriter writer = new JsonWriter(new OutputStreamWriter(System.out, "UTF-8"));
-        		Type t = new TypeToken<Msg>() {}.getType();
-        		new Gson().toJson(msg, t, writer);
-        		writer.close();
-        		System.out.println("can?");
-			}
-			OutputStream os = response.getOutputStream();
-			Session.respond(os, msg);
+//			if (ServFlags.session) {
+//        		// FIXME performance
+//				// TODO move to ServletAdapter
+//				JsonWriter writer = new JsonWriter(new OutputStreamWriter(System.out, "UTF-8"));
+//        		Type t = new TypeToken<String>() {}.getType();
+//        		gson.toJson(msg, t, writer);
+//        		writer.close();
+//        		System.out.println("can?");
+//			}
+//			OutputStream os = resp.getOutputStream();
+//			SessionReq.respond(os, msg);
 		}
 	}
 
@@ -349,10 +364,11 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 			// Note: add hard coded uppercase maping as the first parameter
 //			SemanticObject f = JsonHelper.convert(null, Connects.getMappings(conn, functionStr[0], functionStr[1]), funcs.getRowCount(), funcs);
-			SemanticObject resp = JHelper.OK("", u);
-			return resp;
+//			SemanticObject resp = JHelper.OK("", u);
+//			return resp;
 		}
-		else return JHelper.err(ERR_CHK, "Session tocken failed");
+//		else
+			return JProtocol.err(Port.session, MsgCode.exSession, "Session tocken failed");
 	}
 	
 	private SemanticObject respSessionInfoDebug(String uid, String logId, String conn, String rootId)
@@ -378,7 +394,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		
 		SUser iruser = createUser("SUser",uid, logId, "", "", "debug");
 		
-		SemanticObject resp = JHelper.OK("", iruser);
+		SemanticObject resp = JProtocol.ok(Port.session, iruser);
 		return resp;
 	}
 
@@ -443,7 +459,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 //		SUser iruser1 =  (SUser) constructor.newInstance("admin", "admin", "", "", "debug");
 		
 		SUser iruser = createUser("SUser","admin", "admin", "", "", "debug");
-		SemanticObject resp = JHelper.OK("", iruser);
+		SemanticObject resp = JProtocol.ok(Port.session, iruser);
 		return resp;
 	}
 
