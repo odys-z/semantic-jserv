@@ -62,7 +62,6 @@ public class QueryReq extends JMessage {
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
 	ArrayList<String[]> groups;
 
-	public JHeader header;
 	
 
 	public QueryReq() {

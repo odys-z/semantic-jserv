@@ -138,14 +138,18 @@ public class JHelper<T extends JMessage> {
 				if (name != null && "header".equals(name.trim().toLowerCase()))
 					msg.header(readObj(reader, JHeader.class));
 				else if (name != null && "body".equals(name.trim().toLowerCase()))
-					reader.beginObject();
-				else
+					reader.nextName();
+				else {
 					reader.close();
 					throw new SemanticException("Can't parse json message: %s, %s", bodyItemclzz.toString(), msg.toString());
+				}
+				break;
 			case END_ARRAY:
 				reader.endArray();
+				break;
 			case END_OBJECT:
 				reader.endObject();
+				break;
 			default:
 				reader.close();
 				throw new SemanticException("Can't parse json message: %s, %s", bodyItemclzz.toString(), msg.toString());

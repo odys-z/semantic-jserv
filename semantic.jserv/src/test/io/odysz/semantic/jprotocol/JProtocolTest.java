@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.Utils;
@@ -161,5 +162,56 @@ class JProtocolTest {
         writer.endArray();
         writer.close();
     }
+	
+	@Test
+	void tryPeek() throws SemanticException, IOException {
+		Utils.logi("\n ------------------- try peek ---------------------------");
+		StringBuffer sbf = new StringBuffer("{\"header\":{}, \"body\":[{}] }")  ;
+        byte[] bytes = sbf.toString().getBytes();
+        InputStream in = new ByteArrayInputStream(bytes);
+		// JHelper<JMessage> jhelper = new JHelper<JMessage>();
+		// JMessage msgs = new JHelper<JMessage>().readJson(in, JMessage.class)
+        JHeader jheader = null; 
+        JHeader jbody = null; 
+		JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
+		reader.beginObject();
+		JsonToken token = reader.peek();
+		while (token != null && token != JsonToken.END_DOCUMENT) {
+			switch (token) {
+			case NAME:
+				String name = reader.nextName();
+				if (name != null && "header".equals(name.trim().toLowerCase()))
+					jheader = gson.fromJson(reader, JHeader.class);
+				else if (name != null && "body".equals(name.trim().toLowerCase()))
+//					jbody = gson.fromJson(reader, JHeader.class);
+//					reader.nextName();
+					;
+				else {
+					reader.close();
+					throw new SemanticException("Can't parse json message: , ");
+				}
+				break;
+			case BEGIN_ARRAY:
+				reader.beginArray();
+				break;
+			case END_ARRAY:
+				reader.endArray();
+				break;
+			case END_OBJECT:
+				reader.endObject();
+				break;
+			default:
+				reader.close();
+				throw new SemanticException("Can't parse json message: , ");
+			}
+			token = reader.peek();
+		}
+//		reader.endObject();
+		reader.close();
+
+        Utils.<JMessage>logi(jheader.toString());
+        Utils.<JMessage>logi(jbody.toString());
+ 	
+	}
 	
 }

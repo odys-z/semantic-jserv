@@ -34,6 +34,7 @@ public class JMessage {
 	String msg;
 
 	List<? extends JMessage> body;
+
 	
 	JMessage() {
 		seq = (int) (Math.random() * 1000);
@@ -59,7 +60,10 @@ public class JMessage {
 		return this;
 	}
 	
+	JHeader header;
+	public JHeader header() { return header; }
 	public JMessage header(JHeader header) {
+		this.header = header;
 		return this;
 	}
 

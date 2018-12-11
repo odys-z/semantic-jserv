@@ -56,8 +56,6 @@ public class SQuery extends HttpServlet {
 			
 			verifier.verify(msg.header);
 			
-//			// TODO let's use stream mode
-
 			SResultset rs = query((QueryReq) msg.queries().get(0));
 			
 			resp.setCharacterEncoding("UTF-8");
