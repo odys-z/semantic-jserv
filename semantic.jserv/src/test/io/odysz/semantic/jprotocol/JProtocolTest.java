@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -23,7 +25,7 @@ import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jserv.R.QueryReq;
 
 class JProtocolTest {
-	Gson gson;
+	static Gson gson;
 	
 	@BeforeEach
 	void setUp() throws Exception {
@@ -56,7 +58,7 @@ class JProtocolTest {
 	void testGsonLimitation() {
 		ArrayList<JMessage> msgs = new ArrayList<JMessage>();
 		msgs.add(new JMessage(Port.heartbeat));
-		Utils.logi(JProtocol.<JMessage>parse(msgs));
+		Utils.logi(JProtocolTest.<JMessage>parse(msgs));
 
 		Utils.logi("\n-------------------------------");
 		// print:
@@ -65,7 +67,7 @@ class JProtocolTest {
 		// {a=u, b=v, c=[8.0, 9.0]}
 		// This shows Gson can't handle inner type of members.
 		// Axby.c is a list of integer, but Gson only deserializing according to type of c's string format, either strings or floats.
-		ArrayList<Axby> s = (ArrayList<Axby>) JProtocol.<Axby>convert(
+		ArrayList<Axby> s = (ArrayList<Axby>) JProtocolTest.<Axby>convert(
 				"[{\"a\": \"1\", \"b\": \"y\"},"
 				+ "{\"a\": \"x\", b: \"y\", c: [\"1.0\",\"2.0\"]},"
 				+ "{\"a\": \"u\", b: \"v\", c: [8,9]}]"
@@ -73,12 +75,12 @@ class JProtocolTest {
 		Utils.<Axby>logi(s);
 		
 		Utils.logi("\n-------------------------------");
-		String str = JProtocol.<Axby>parse(s);
+		String str = JProtocolTest.<Axby>parse(s);
 		Utils.logi(str);
 
 
 		Utils.logi("\n-------------------------------");
-		List<JMessage> t = JProtocol.convert(str);
+		List<JMessage> t = JProtocolTest.convert(str);
 		Utils.<JMessage>logi((ArrayList<JMessage>)t);
 	}
 
@@ -97,6 +99,20 @@ class JProtocolTest {
 		 */
 		ArrayList<Integer> c;
 	}
+
+	public static <T> List<T> convert(String str) {
+		Type t = new TypeToken<ArrayList<T>>() {}.getType();
+//		Type t = new TypeToken<List<JMessage>>() {}.getType();
+		List<T> j = gson.fromJson(str, t);
+		return j;
+	}
+
+	public static <T> String parse(List<T> s) {
+		Type t = new TypeToken<List<T>>() {}.getType();
+		String j = gson.toJson(s, t);
+		return j;
+	}
+	
 	
 	@Test
 	void tryGsonStream() throws IOException {
@@ -143,12 +159,4 @@ class JProtocolTest {
         writer.close();
     }
 	
-	/**Test Gson hybrid mode.
-	 * 
-	 */
-	@Test
-	void tryGsonHybrid() {
-		QueryReq msg =  new QueryReq();
-		msg.header();
-	}
 }

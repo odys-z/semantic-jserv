@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -20,6 +19,8 @@ import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
+import io.odysz.semantic.jserv.helper.ServletAdapter;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.sql.Update;
@@ -29,13 +30,13 @@ import io.odysz.transact.x.TransException;
 public class SUpdate extends HttpServlet {
 	private static DATranscxt st;
 	static JHelper<UpdateReq> jreqHelper;
-	static JHelper<UpdateResp> jrespHelper;
+//	static JHelper<UpdateResp> jrespHelper;
 	private static ISessionVerifier verifier;
 
 	static {
 		st = JSingleton.st;
 		jreqHelper = new JHelper<UpdateReq>();
-		jrespHelper = new JHelper<UpdateResp>();
+//		jrespHelper = new JHelper<UpdateResp>();
 		verifier = JSingleton.getSessionVerifier();
 	}
 
@@ -46,14 +47,11 @@ public class SUpdate extends HttpServlet {
 			throws ServletException, IOException {
 		
 		try {
-			InputStream in = req.getInputStream();
-			List<UpdateReq> msgs = jreqHelper.readJsonStream(in, UpdateReq.class);
-			in.close();
+			// url = .../update.serv?req={header: {...}, body: []}
+			UpdateReq msg = ServletAdapter.<UpdateReq>read(req, jreqHelper, UpdateReq.class);
 			
-			verifier.verify(msgs);
+			verifier.verify(msg.header);
 			
-			UpdateReq msg = msgs.get(0);
-//			// TODO let's use stream mode
 			HashMap<String,SemanticObject> res = update(msg);
 			
 			resp.setCharacterEncoding("UTF-8");
@@ -63,26 +61,35 @@ public class SUpdate extends HttpServlet {
 			e.printStackTrace();
 		} catch (TransException e) {
 			e.printStackTrace();
+		} catch (ReflectiveOperationException e) {
+			e.printStackTrace();
+		} catch (SsException e) {
+			e.printStackTrace();
 		}
 	}
 
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		try {
 			InputStream in = req.getInputStream();
-			List<UpdateReq> msgs = jreqHelper.readJsonStream(in, UpdateReq.class);
+			// UpdateReq msg = jreqHelper.readJson(in, UpdateReq.class);
+			UpdateReq msg = ServletAdapter.<UpdateReq>read(req, jreqHelper, UpdateReq.class);
 			in.close();
 			
-			UpdateReq msg = msgs.get(0);
+			verifier.verify(msg.header);
+
 			HashMap<String, SemanticObject> res = update(msg);
 			
 			resp.setCharacterEncoding("UTF-8");
-//			resp.getWriter().write(Html.list(res));
 			OutputStream os = resp.getOutputStream();
-			jrespHelper.writeJsonStream(os, new UpdateResp(res));
+			JHelper.writeJson(os, new SemanticObject().put("res", res));
 			resp.flushBuffer();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
+			e.printStackTrace();
+		} catch (SsException e) {
+			e.printStackTrace();
+		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		}
 	}

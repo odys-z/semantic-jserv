@@ -7,9 +7,13 @@ public class QueryResp extends JMessage {
 
 	private SResultset rs;
 
-	QueryResp(SResultset rs) {
+	public QueryResp() {
 		super(Port.query);
+	}
+
+	public QueryResp rs(SResultset rs) {
 		this.rs = rs;
+		return this;
 	}
 
 }

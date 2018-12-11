@@ -8,26 +8,32 @@ import java.util.stream.Stream;
 
 import com.google.gson.Gson;
 
-/**Base class of message used by JProtocol.
- * Should extends SemanticObject?
+import io.odysz.semantics.SemanticObject;
+
+/**<p>Base class of message used by JProtocol.</p>
+ * <p>Relationship with {@link SemanticObject}:</p>
+ * 1. A incoming json message is parsed by *.serv into JMessage, which should used to directly build statement;<br>
+ * 2. A outgoing data ojbect is presented as SemanticObject, which should been directly write int output stream.
  * @author ody
  *
  */
 public class JMessage {
-	public enum Port { heartbeat, seesion, query, update };
+	public enum Port { heartbeat, session, query, update };
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral};
 
 	static Gson gson = new Gson();
 
 	@SuppressWarnings("unused")
 	private String vestion = "1.0";
-//	protected Port typ;
-	@SuppressWarnings("unused")
-	private int seq;
+	int seq;
+	public int seq() { return seq; }
 
+	SemanticObject semanticObj;
 	Port port;
 	MsgCode code;
 	String msg;
+
+	List<? extends JMessage> body;
 	
 	JMessage() {
 		seq = (int) (Math.random() * 1000);
@@ -51,6 +57,19 @@ public class JMessage {
 		code = errCode;
 		this.msg = msg;
 		return this;
+	}
+	
+	public JMessage header(JHeader header) {
+		return this;
+	}
+
+	public JMessage body(List<? extends JMessage> bodyItems) {
+		this.body = bodyItems;
+		return this;
+	}
+	
+	public List<? extends JMessage> body() {
+		return body;
 	}
 
 	static String pairPrmv = "'%s': %s";
