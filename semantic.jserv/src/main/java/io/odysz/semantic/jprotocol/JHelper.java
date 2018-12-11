@@ -86,7 +86,6 @@ public class JHelper<T extends JMessage> {
 	 * @param elemClass
 	 * @return {header, query: [query-obj]}
 	 * @throws IOException
-	 */
 	public List<T> readJsonStream(InputStream in, Class<? extends T> elemClass) throws IOException {
 		JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
 		reader.beginArray();
@@ -102,6 +101,7 @@ public class JHelper<T extends JMessage> {
 		return messages;
  
 	}
+	 */
 	
 	public static void println(JMessage msg) {
 		
@@ -121,15 +121,14 @@ public class JHelper<T extends JMessage> {
 		// new UpdateReq, ...
 //		 Class<? extends JMessage> bodyItemclzz = (Class<? extends JMessage>) Class.forName(bodyItemtype.getTypeName());
 //		Class<? extends JMessage> bodyItemclzz = (Class<? extends JMessage>) bodyItemtype.getClass();
-		Constructor<? extends JMessage> ctor = bodyItemclzz.getDeclaredConstructor(new Object[0].getClass());
+		Constructor<? extends JMessage> ctor = bodyItemclzz.getDeclaredConstructor();
 		JMessage msg = ctor.newInstance();
 
 		// {header: {header-obj}, req: [msg]}
 		JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
 		reader.beginObject();
-		JsonToken token = null;
+		JsonToken token = reader.peek();
 		while (token != null && token != JsonToken.END_DOCUMENT) {
-			token = reader.peek();
 			switch (token) {
 			case BEGIN_ARRAY:
 				msg.body(readArr(reader, bodyItemclzz));
@@ -151,6 +150,7 @@ public class JHelper<T extends JMessage> {
 				reader.close();
 				throw new SemanticException("Can't parse json message: %s, %s", bodyItemclzz.toString(), msg.toString());
 			}
+			token = reader.peek();
 		}
 		reader.endObject();
 		reader.close();

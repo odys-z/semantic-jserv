@@ -23,6 +23,7 @@ import com.google.gson.stream.JsonWriter;
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jserv.R.QueryReq;
+import io.odysz.semantics.x.SemanticException;
 
 class JProtocolTest {
 	static Gson gson;
@@ -115,16 +116,17 @@ class JProtocolTest {
 	
 	
 	@Test
-	void tryGsonStream() throws IOException {
+	void tryGsonStream() throws IOException, SemanticException, ReflectiveOperationException {
 		Utils.logi("\n --------------- deserialized -------------------------------");
-		StringBuffer sbf = new StringBuffer("[{\"vestion\":\"1.0\",\"Port\":\"heartbeat\",\"seq\":142}]");
+		StringBuffer sbf = new StringBuffer("{\"header\":{}, body:[{\"vestion\":\"1.0\",\"Port\":\"heartbeat\",\"seq\":142}]}") ;
         byte[] bytes = sbf.toString().getBytes();
         InputStream in = new ByteArrayInputStream(bytes);
-		List<JMessage> msgs = new JHelper<JMessage>().readJsonStream(in, JMessage.class);
-        Utils.<JMessage>logi(msgs);
+		JHelper<JMessage> jhelper = new JHelper<JMessage>();
+		JMessage msgs = new JHelper<JMessage>().readJson(in, JMessage.class);
+        Utils.<JMessage>logi((List<JMessage>)msgs.body);
         
 		Utils.logi("\n -------------- output stream -------------------------------");
-		msgs.get(0).incSeq().incSeq().incSeq();
+		msgs.body.get(0).incSeq().incSeq().incSeq();
         OutputStream output = new OutputStream() {
             private StringBuilder string = new StringBuilder();
             @Override
@@ -137,15 +139,16 @@ class JProtocolTest {
                 return this.string.toString();
             }
         };
-        writeJsonStream(output, msgs);
+        writeJsonStream(output, (List<JMessage>)msgs.body);
         Utils.logi(output.toString());
         
 		Utils.logi("\n --------------- subclass Axby ------------------------------");
-		sbf = new StringBuffer("[{\"a\":\"1\",\"b\":\"y\"},{\"a\":\"x\",\"b\":\"y\",\"c\":[\"1.0\",\"2.0\"]},{\"a\":\"u\",\"b\":\"v\",\"c\":[8.0,9.0]}]");
+		sbf = new StringBuffer("{\"header\": {}, "
+				+ "\"body\": [{\"a\":\"1\",\"b\":\"y\"},{\"a\":\"x\",\"b\":\"y\",\"c\":[\"1.0\",\"2.0\"]},{\"a\":\"u\",\"b\":\"v\",\"c\":[8.0,9.0]}]}");
         bytes = sbf.toString().getBytes();
         in = new ByteArrayInputStream(bytes);
-		List<Axby> xas = new JHelper<Axby>().readJsonStream(in, Axby.class);
-        Utils.<Axby>logi(xas);
+		Axby xas = new JHelper<Axby>().readJson(in, Axby.class);
+        Utils.<Axby>logi((List<Axby>)xas.body);
 	}
 	
 	public void writeJsonStream(OutputStream out, List<JMessage> messages) throws IOException {

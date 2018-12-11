@@ -1,12 +1,10 @@
 package io.odysz.semantic.jserv.R;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -21,6 +19,7 @@ import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
+import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.SemanticObject;
@@ -50,9 +49,10 @@ public class SQuery extends HttpServlet {
 			throws ServletException, IOException {
 		
 		try {
-			InputStream in = req.getInputStream();
-			QueryReq msg = jhelperReq.readJson(in, QueryReq.class);
-			in.close();
+//			InputStream in = req.getInputStream();
+//			QueryReq msg = jhelperReq.readJson(in, QueryReq.class);
+//			in.close();
+			QueryReq msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			
 			verifier.verify(msg.header);
 			
@@ -81,12 +81,13 @@ public class SQuery extends HttpServlet {
 	
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		try {
-			InputStream in = req.getInputStream();
-			List<QueryReq> msgs = jhelperReq.readJsonStream(in, QueryReq.class);
-			in.close();
+//			InputStream in = req.getInputStream();
+//			List<QueryReq> msgs = jhelperReq.readJsonStream(in, QueryReq.class);
+//			in.close();
+			QueryReq msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			
 			HashMap<String, SResultset> rses = new HashMap<String, SResultset>();
-			QueryReq msg = msgs.get(0);
+//			QueryReq msg = msgs.get(0);
 			SResultset rs = query(msg);
 			rses.put("0", rs);
 			
@@ -100,6 +101,9 @@ public class SQuery extends HttpServlet {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
+			e.printStackTrace();
+		} catch (ReflectiveOperationException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
