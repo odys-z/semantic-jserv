@@ -54,7 +54,7 @@ public class SQuery extends HttpServlet {
 //			in.close();
 			QueryReq msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			
-			verifier.verify(msg.header);
+			verifier.verify(msg.header());
 			
 			SResultset rs = query((QueryReq) msg.queries().get(0));
 			
@@ -101,7 +101,6 @@ public class SQuery extends HttpServlet {
 		} catch (TransException e) {
 			e.printStackTrace();
 		} catch (ReflectiveOperationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
