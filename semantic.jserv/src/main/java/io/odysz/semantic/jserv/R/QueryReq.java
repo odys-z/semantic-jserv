@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.odysz.module.rs.SResultset;
-import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JMessage;
 
 /**<pre>
@@ -69,15 +68,13 @@ public class QueryReq extends JMessage {
 	}
 
 
-	public QueryReq respond(SResultset rs) {
+//	public QueryReq respond(SResultset rs) {
+//		return this;
+//	}
 
-		return this;
-	}
 
-
-	public List<JMessage> queries() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	public List<JMessage> queries() {
+//		return null;
+//	}
 
 }

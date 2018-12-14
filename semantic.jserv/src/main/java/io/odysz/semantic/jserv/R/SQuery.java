@@ -47,7 +47,7 @@ public class SQuery extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		
+		resp.setCharacterEncoding("UTF-8");
 		try {
 //			InputStream in = req.getInputStream();
 //			QueryReq msg = jhelperReq.readJson(in, QueryReq.class);
@@ -56,11 +56,10 @@ public class SQuery extends HttpServlet {
 			
 			verifier.verify(msg.header());
 			
-			SResultset rs = query((QueryReq) msg.queries().get(0));
+			SResultset rs = query((QueryReq) msg.body().get(0));
 			
-			resp.setCharacterEncoding("UTF-8");
 			
-			int size = msg.queries().size();
+			int size = msg.body().size();
 			if (size > 1)
 				resp.getWriter().write(Html.rs(rs, String.format("%s more query results ignored.", size - 1)));
 			else 
