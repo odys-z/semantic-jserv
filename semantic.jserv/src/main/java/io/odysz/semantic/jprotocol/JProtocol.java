@@ -1,12 +1,9 @@
 package io.odysz.semantic.jprotocol;
 
-import java.io.OutputStream;
-
 import com.google.gson.Gson;
 
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
-import io.odysz.semantic.jsession.SUser;
 import io.odysz.semantics.SemanticObject;
 
 public class JProtocol {
@@ -26,14 +23,15 @@ public class JProtocol {
 //		return j;
 //	}
 
-	public static void err(OutputStream o, Port port, MsgCode code, String err) {
-//		SemanticObject obj = new SemanticObject();
-//		obj.put("code", code.name());
-//		obj.put("error", err);
-//		obj.put("port", port.name());
-		SemanticObject obj = err(port, code, err);
-		JHelper.writeJson(o, obj);
-	}
+//	public static void err(OutputStream o, Port port, MsgCode code, String err) {
+////		SemanticObject obj = new SemanticObject();
+////		obj.put("code", code.name());
+////		obj.put("error", err);
+////		obj.put("port", port.name());
+//		SemanticObject obj = err(port, code, err);
+//		JHelper.writeJson(o, obj);
+//	}
+//	public static void err(OutputStream o, Port port, MsgCode code, String err) { }
 
 	public static SemanticObject err(Port port, MsgCode code, String err) {
 		SemanticObject obj = new SemanticObject();
@@ -43,10 +41,10 @@ public class JProtocol {
 		return obj;
 	}
 
-	public static SemanticObject ok(Port port, SUser iruser) {
+	public static SemanticObject ok(Port port, SemanticObject msg) {
 		SemanticObject obj = new SemanticObject();
 		obj.put("code", MsgCode.ok.name());
-		obj.put("msg", iruser);
+		obj.put("msg", msg);
 		obj.put("port", port.name());
 		return obj;
 	}

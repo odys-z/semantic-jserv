@@ -73,9 +73,14 @@ public class Html {
 				)).render();
 	}
 
-	public static char[] semanticObj(SemanticObject functions) {
+	public static char[] map(SemanticObject res) {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+//	public static char[] semanticObj(SemanticObject functions) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 }
