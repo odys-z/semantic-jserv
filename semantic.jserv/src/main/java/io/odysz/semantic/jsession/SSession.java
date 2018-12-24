@@ -65,12 +65,12 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	/** * */
 	private static final long serialVersionUID = 1L;
 	
-	static final String ERR_UID = "uid_err";
-	static final String ERR_PSWD = "pswd_err";
-	/**Session error, session expired, wrong pswd, etc. */
-	public static final String ERR_CHK = "ss_err";
-	/**Identity error, id expired, duplicate, etc. */
-	public static final String ERR_ID = "id_err";
+//	static final String ERR_UID = "uid_err";
+//	static final String ERR_PSWD = "pswd_err";
+//	/**Session error, session expired, wrong pswd, etc. */
+//	public static final String ERR_CHK = "ss_err";
+//	/**Identity error, id expired, duplicate, etc. */
+//	public static final String ERR_ID = "id_err";
 	
 	/**[session-id, SUser]*/
 	static HashMap<String, SUser> users;
@@ -89,11 +89,11 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	
 	private static DATranscxt sctx;
 
-	static JHelper<SessionReq> jreqHelper;
+	static JHelper<SessionReq> jhelperss;
 
 	static {
 		sctx = JSingleton.st;
-		jreqHelper = new JHelper<SessionReq>();
+		jhelperss = new JHelper<SessionReq>();
 	}
 
 	public static void init(DATranscxt daSctx) {
@@ -112,9 +112,9 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		int m = 20;
 		boolean debugMode = false;
 		try { m = Integer.valueOf(Configs.getCfg("ss-timeout-min"));} catch (Exception e) {}
-		try { debugMode = Configs.getBoolean("ss-timeout-min.debugMode");} catch (Exception e) {}
+		try { debugMode = Configs.getBoolean("ss.debugMode");} catch (Exception e) {}
 		if (debugMode)
-			Utils.warn("IrSession debug mode true (config.xml/ss-timeout-min.debugMode");
+			Utils.warn("Session debug mode is true (config.xml/ss.debugMode");
 
         schedualed = scheduler.scheduleAtFixedRate(
         		new SessionChecker(users, m, debugMode),
@@ -175,7 +175,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		resp.setContentType("text/html;charset=UTF-8");
 		// JsonWriter writer = Json.createWriter(response.getOutputStream());
 		try {
-			SessionReq msg = ServletAdapter.<SessionReq>read(request, jreqHelper, SessionReq.class);
 			String headstr = request.getParameter("header");
 			if (headstr == null)
 				throw new SsException("Query session with GET request neending a header string.");
@@ -185,6 +184,9 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			if (rootId != null && rootId.trim().length() == 0)
 				rootId = null;
 			String conn = request.getParameter("conn");
+
+			SessionReq msg = ServletAdapter.<SessionReq>read(request, jhelperss, SessionReq.class);
+
 			if ("query".equals(t)) {
 				// query functions
 				String ssid = request.getParameter("ssid");
@@ -236,14 +238,25 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		jsonResp(request, response);
 	}
 
-	private void jsonResp(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	private void jsonResp(HttpServletRequest req, HttpServletResponse response) throws IOException {
 		response.setContentType("text/html;charset=UTF-8");
-//		JsonWriter writer = Json.createWriter(response.getOutputStream());
-//		try {
-//			String connId = request.getParameter("conn");
-//			if (connId == null || connId.trim().length() == 0)
-//				connId = Connects.defltConn();
-//
+		try {
+			String connId = req.getParameter("conn");
+			if (connId == null || connId.trim().length() == 0)
+				connId = Connects.defltConn();
+
+			SessionReq msg = ServletAdapter.<SessionReq>read(req, jhelperss, SessionReq.class);
+
+			String t = req.getParameter("t");
+			
+			if ("query".equals(t)) {
+				
+			}
+		}
+		catch (Exception ex) {
+			
+		}
+
 //			String payload = JHelper.getPayloadString(request);
 //			// find user and check login info String payload = JsonHelper.getPayloadString(request);
 //			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
