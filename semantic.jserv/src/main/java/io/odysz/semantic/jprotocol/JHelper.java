@@ -4,17 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -70,7 +66,7 @@ public class JHelper<T extends JMessage> {
 //		writer.close();
 //	}
 
-	public static void writeJson(OutputStream o, SemanticObject obj) {
+	public void writeJson(OutputStream o, SemanticObject obj) {
 	}
 
 	/**read json stream int list of elemClass: ArrayList&lt;elemClass&gt;.<br>

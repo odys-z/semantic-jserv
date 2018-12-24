@@ -50,15 +50,15 @@ public class JMessage {
 		return this;
 	}
 	
-	public JMessage err(String msg) {
-		return err(MsgCode.exGeneral, msg);
-	}
-
-	public JMessage err(MsgCode errCode, String msg) {
-		code = errCode;
-		this.msg = msg;
-		return this;
-	}
+//	public JMessage err(String msg) {
+//		return err(MsgCode.exGeneral, msg);
+//	}
+//
+//	public JMessage err(MsgCode errCode, String msg) {
+//		code = errCode;
+//		this.msg = msg;
+//		return this;
+//	}
 	
 	JHeader header;
 	public JHeader header() { return header; }
