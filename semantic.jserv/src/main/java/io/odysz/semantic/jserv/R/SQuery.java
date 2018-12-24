@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -36,11 +35,11 @@ public class SQuery extends HttpServlet {
 	private static Transcxt st;
 
 	static JHelper<QueryReq> jhelperReq;
-	static JHelper<QueryResp> jhelperResp;
+//	static JHelper<QueryResp> jhelperResp;
 	static {
 		st = JSingleton.st;
 		jhelperReq  = new JHelper<QueryReq>();
-		jhelperResp = new JHelper<QueryResp>();
+//		jhelperResp = new JHelper<QueryResp>();
 		verifier = JSingleton.getSessionVerifier();
 	}
 
@@ -56,14 +55,16 @@ public class SQuery extends HttpServlet {
 			
 			verifier.verify(msg.header());
 			
-			SResultset rs = query((QueryReq) msg.body().get(0));
+//			QueryResp rs = query((QueryReq) msg.body().get(0));
+			SemanticObject rs = query((QueryReq) msg.body().get(0));
 			
 			
-			int size = msg.body().size();
-			if (size > 1)
-				resp.getWriter().write(Html.rs(rs, String.format("%s more query results ignored.", size - 1)));
-			else 
-				resp.getWriter().write(Html.rs(rs));
+//			int size = msg.body().size();
+//			if (size > 1)
+//				resp.getWriter().write(Html.rs((SResultset)rs.get("rs"),
+//						String.format("%s more query results ignored.", size - 1)));
+//			else 
+				resp.getWriter().write(Html.rs((SResultset)rs.get("rs")));
 			resp.flushBuffer();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -83,17 +84,16 @@ public class SQuery extends HttpServlet {
 //			in.close();
 			QueryReq msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			
-			HashMap<String, SResultset> rses = new HashMap<String, SResultset>();
-//			QueryReq msg = msgs.get(0);
-			SResultset rs = query(msg);
-			rses.put("0", rs);
+//			HashMap<String, SResultset> rses = new HashMap<String, SResultset>();
+			SemanticObject rs = query(msg);
+//			rses.put("0", rs);
 			
 			resp.setCharacterEncoding("UTF-8");
-//			resp.getWriter().write(Html.rs(rs));
-//			JHelper.writeJson(os, new QueryResp().rs(rs));
 			OutputStream os = resp.getOutputStream();
-			SemanticObject res = new SemanticObject().put("rs", rses);
-			JHelper.writeJson(os, res);
+
+//			rs.write(os);
+			ServletAdapter.write(resp, rs);
+			os.close();
 			resp.flushBuffer();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -104,7 +104,7 @@ public class SQuery extends HttpServlet {
 		}
 	}
 	
-	SResultset query(QueryReq msg) throws SQLException, TransException {
+	SemanticObject query(QueryReq msg) throws SQLException, TransException {
 		// TODO let's use stream mode
 		ArrayList<String> sqls = new ArrayList<String>();
 		Query selct = st.select(msg.mtabl, msg.mAlias);
@@ -132,13 +132,19 @@ public class SQuery extends HttpServlet {
 
 		// Using semantic-DA to query from default connection.
 		// If the connection is not default, use another overloaded function select(connId, ...).
-		SResultset rs = Connects.select(sqls.get(0));
+//		QueryResp respMsg = new QueryResp();
 
-		if (ServFlags.query)
-			try {rs.printSomeData(false, 1, rs.getColumnName(1), rs.getColumnName(2)); }
-			catch (Exception e) {e.printStackTrace();}
+		SemanticObject respMsg = new SemanticObject();
+		for (String sql : sqls) {
+			SResultset rs = Connects.select(sql);
+			respMsg.add("rs", rs);
 
-		return rs;
+			if (ServFlags.query)
+				try {rs.printSomeData(false, 1, rs.getColumnName(1), rs.getColumnName(2)); }
+				catch (Exception e) {e.printStackTrace();}
+		}
+
+		return respMsg;
 	}
 
 }
