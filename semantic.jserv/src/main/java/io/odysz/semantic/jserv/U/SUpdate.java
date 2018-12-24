@@ -2,10 +2,8 @@ package io.odysz.semantic.jserv.U;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -30,13 +28,13 @@ import io.odysz.transact.x.TransException;
 public class SUpdate extends HttpServlet {
 	private static DATranscxt st;
 	static JHelper<UpdateReq> jreqHelper;
-//	static JHelper<UpdateResp> jrespHelper;
+	static JHelper<UpdateResp> jrespHelper;
 	private static ISessionVerifier verifier;
 
 	static {
 		st = JSingleton.st;
 		jreqHelper = new JHelper<UpdateReq>();
-//		jrespHelper = new JHelper<UpdateResp>();
+		jrespHelper = new JHelper<UpdateResp>();
 		verifier = JSingleton.getSessionVerifier();
 	}
 
@@ -52,7 +50,7 @@ public class SUpdate extends HttpServlet {
 			
 			verifier.verify(msg.header);
 			
-			HashMap<String,SemanticObject> res = update(msg);
+			SemanticObject res = update(msg);
 			
 			resp.setCharacterEncoding("UTF-8");
 			resp.getWriter().write(Html.map(res));
@@ -77,12 +75,14 @@ public class SUpdate extends HttpServlet {
 			
 			verifier.verify(msg.header);
 
-			HashMap<String, SemanticObject> res = update(msg);
+			SemanticObject res = update(msg);
 			
-			resp.setCharacterEncoding("UTF-8");
-			OutputStream os = resp.getOutputStream();
-			JHelper.writeJson(os, new SemanticObject().put("res", res));
-			resp.flushBuffer();
+//			resp.setCharacterEncoding("UTF-8");
+//			OutputStream os = resp.getOutputStream();
+//			JHelper.writeJson(os, new SemanticObject().put("res", res));
+//			resp.flushBuffer();
+			ServletAdapter.write(resp, jrespHelper, res);
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
@@ -94,13 +94,13 @@ public class SUpdate extends HttpServlet {
 		}
 	}
 
-	private HashMap<String,SemanticObject> update(UpdateReq msg) throws SQLException, TransException {
+	private SemanticObject update(UpdateReq msg) throws SQLException, TransException {
 		ArrayList<String> sqls = new ArrayList<String>();
 		Update upd = st.update(msg.mtabl);
 
 		if (ServFlags.update)
 			Utils.logi(sqls);
-		HashMap<String, SemanticObject> res = upd.commit(sqls);
+		SemanticObject res = upd.commit(sqls);
 		return res;
 	}
 }

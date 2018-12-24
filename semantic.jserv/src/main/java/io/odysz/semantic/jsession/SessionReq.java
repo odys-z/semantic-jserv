@@ -1,8 +1,5 @@
 package io.odysz.semantic.jsession;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import com.google.gson.Gson;
 
 import io.odysz.semantic.jprotocol.JHeader;
@@ -17,9 +14,19 @@ public class SessionReq extends JMessage {
 	private static Gson gson = new Gson();
 
 	JHeader header;
+	private String a;
 
 	SessionReq() {
 		super(Port.session);
+	}
+
+	public String a() {
+		return a;
+	}
+
+	public String uid() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 
