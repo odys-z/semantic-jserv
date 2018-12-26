@@ -18,7 +18,7 @@ import io.odysz.semantics.SemanticObject;
  *
  */
 public class JMessage {
-	public enum Port { heartbeat, session, query, update };
+	public enum Port { heartbeat, session, query, update, echo };
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral};
 
 	static Gson gson = new Gson();
@@ -33,7 +33,7 @@ public class JMessage {
 	MsgCode code;
 	String msg;
 
-	List<? extends JMessage> body;
+	protected List<? extends JMessage> body;
 
 	
 	JMessage() {
