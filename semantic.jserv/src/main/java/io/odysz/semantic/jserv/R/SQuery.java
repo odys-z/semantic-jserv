@@ -46,6 +46,8 @@ public class SQuery extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+		if (ServFlags.query)
+			Utils.logi("---------- query.serv get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
 //			InputStream in = req.getInputStream();
@@ -78,6 +80,8 @@ public class SQuery extends HttpServlet {
 	}
 	
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		if (ServFlags.query)
+			Utils.logi("========== query.serv post ==========");
 		try {
 //			InputStream in = req.getInputStream();
 //			List<QueryReq> msgs = jhelperReq.readJsonStream(in, QueryReq.class);
