@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JMessage;
 
 /**<pre>
@@ -30,7 +31,7 @@ or
  * @author ody
  *
  */
-public class QueryReq extends JMessage {
+public class QueryReq extends JBody {
 
 	/**Main table */
 	String mtabl;
@@ -63,9 +64,9 @@ public class QueryReq extends JMessage {
 
 	
 
-	public QueryReq() {
-		super(Port.query);
-	}
+//	public QueryReq() {
+//		super(Port.query);
+//	}
 
 
 //	public QueryReq respond(SResultset rs) {

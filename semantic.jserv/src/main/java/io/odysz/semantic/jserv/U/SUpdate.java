@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DA.DATranscxt;
 import io.odysz.semantic.jprotocol.JHelper;
+import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
@@ -24,17 +25,17 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/query.serv" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/update.serv" })
 public class SUpdate extends HttpServlet {
 	private static DATranscxt st;
 	static JHelper<UpdateReq> jreqHelper;
-	static JHelper<UpdateResp> jrespHelper;
+//	static JHelper<UpdateResp> jrespHelper;
 	private static ISessionVerifier verifier;
 
 	static {
 		st = JSingleton.st;
 		jreqHelper = new JHelper<UpdateReq>();
-		jrespHelper = new JHelper<UpdateResp>();
+//		jrespHelper = new JHelper<UpdateResp>();
 		verifier = JSingleton.getSessionVerifier();
 	}
 
@@ -46,11 +47,11 @@ public class SUpdate extends HttpServlet {
 		
 		try {
 			// url = .../update.serv?req={header: {...}, body: []}
-			UpdateReq msg = ServletAdapter.<UpdateReq>read(req, jreqHelper, UpdateReq.class);
+			JMessage<UpdateReq> msg = ServletAdapter.<UpdateReq>read(req, jreqHelper, UpdateReq.class);
 			
-			verifier.verify(msg.header);
+			verifier.verify(msg.header());
 			
-			SemanticObject res = update(msg);
+			SemanticObject res = update(msg.body().get(0));
 			
 			resp.setCharacterEncoding("UTF-8");
 			resp.getWriter().write(Html.map(res));
@@ -69,19 +70,14 @@ public class SUpdate extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		try {
 			InputStream in = req.getInputStream();
-			// UpdateReq msg = jreqHelper.readJson(in, UpdateReq.class);
-			UpdateReq msg = ServletAdapter.<UpdateReq>read(req, jreqHelper, UpdateReq.class);
+			JMessage<UpdateReq> msg = ServletAdapter.<UpdateReq>read(req, jreqHelper, UpdateReq.class);
 			in.close();
 			
-			verifier.verify(msg.header);
+			verifier.verify(msg.header());
 
-			SemanticObject res = update(msg);
+			SemanticObject res = update(msg.body().get(0));
 			
-//			resp.setCharacterEncoding("UTF-8");
-//			OutputStream os = resp.getOutputStream();
-//			JHelper.writeJson(os, new SemanticObject().put("res", res));
-//			resp.flushBuffer();
-			ServletAdapter.write(resp, jrespHelper, res);
+			ServletAdapter.write(resp, res);
 
 		} catch (SQLException e) {
 			e.printStackTrace();
