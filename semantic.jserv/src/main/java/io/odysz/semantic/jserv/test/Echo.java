@@ -8,10 +8,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.semantic.jprotocol.JHelper;
+import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
+import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
 public class Echo extends HttpServlet {
@@ -34,8 +36,8 @@ public class Echo extends HttpServlet {
 		try {
 			resp.setCharacterEncoding("UTF-8");
 
-			EchoReq msg = ServletAdapter.<EchoReq>read(req, jhelperReq, EchoReq.class);
-			ServletAdapter.write(resp, msg.echo());
+			JMessage<EchoReq> msg = ServletAdapter.<EchoReq>read(req, jhelperReq, EchoReq.class);
+			ServletAdapter.write(resp, new SemanticObject().put("echo", msg.toStringEx()));
 			resp.flushBuffer();
 		} catch (SemanticException | IOException | ReflectiveOperationException e) {
 			ServletAdapter.write(resp, JProtocol.err(Port.echo, MsgCode.exGeneral, e.getMessage()));

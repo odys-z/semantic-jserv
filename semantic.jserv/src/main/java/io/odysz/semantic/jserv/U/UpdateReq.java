@@ -2,6 +2,7 @@ package io.odysz.semantic.jserv.U;
 
 import java.util.ArrayList;
 
+import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JMessage;
 
@@ -29,7 +30,7 @@ or
  * @author ody
  *
  */
-public class UpdateReq extends JMessage {
+public class UpdateReq extends JBody {
 
 	/**Main table */
 	String mtabl;
@@ -64,8 +65,8 @@ public class UpdateReq extends JMessage {
 //	ArrayList<String[]> groups;
 	
 
-	public UpdateReq() {
-		super(Port.update);
-	}
+//	public UpdateReq() {
+//		super(Port.update);
+//	}
 
 }

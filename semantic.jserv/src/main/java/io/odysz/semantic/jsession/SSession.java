@@ -25,6 +25,7 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DATranscxt;
 import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
+import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
@@ -33,12 +34,10 @@ import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.jsession.SSession.UserMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import oracle.net.aso.u;
 
 /**Handle login-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}<br>
  * and session-header: {uid: “user-id”,  ssid: “session-id-plain/cipher”, sys: “module-id”}<br>
@@ -199,7 +198,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		if (ServFlags.session) System.out.println("login get ========");
 		resp.setContentType("text/html;charset=UTF-8");
 		try {
-			SessionReq msg = ServletAdapter.<SessionReq>read(request, jreqHelper, SessionReq.class);
+			JMessage<SessionReq> msg = ServletAdapter.<SessionReq>read(request, jreqHelper, SessionReq.class);
 			String headstr = request.getParameter("header");
 			if (headstr == null)
 				throw new SsException("Query session with GET request neending a header string.");
@@ -208,7 +207,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			if (t != null) t = t.toLowerCase().trim();
 			if ("ping".equals(t) || "touch".equals(t)) {
 				// already touched by check()
-				IUser usr = verify(msg.header);
+				IUser usr = verify(msg.header());
 				SemanticObject ok = new SemanticObject();
 				ok.put(usr.uid(), (SemanticObject)usr);
 				resp.getWriter().write(Html.map(ok));
@@ -253,13 +252,14 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			if (connId == null || connId.trim().length() == 0)
 				connId = Connects.defltConn();
 	
-			SessionReq payload = ServletAdapter.<SessionReq>read(req, jreqHelper, SessionReq.class);
+			JMessage<SessionReq> payload = ServletAdapter.<SessionReq>read(req, jreqHelper, SessionReq.class);
 			// find user and check login info 
 			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
 			if (payload != null && payload.header() != null) {
-				String a = payload.a();
+				SessionReq sessionBody = payload.body().get(0);
+				String a = sessionBody.a();
 				if ("login".equals(a)) {
-					IUser login = loadUser(payload, connId);
+					IUser login = loadUser(sessionBody, connId);
 //					if (login == null) {
 //						// no such user
 //						String logid = (String) payload.uid();

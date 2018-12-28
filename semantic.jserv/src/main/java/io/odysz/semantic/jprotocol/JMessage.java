@@ -17,7 +17,7 @@ import io.odysz.semantics.SemanticObject;
  * @author ody
  *
  */
-public class JMessage {
+public class JMessage <T extends JBody> {
 	public enum Port { heartbeat, session, query, update, echo };
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral};
 
@@ -33,8 +33,7 @@ public class JMessage {
 	MsgCode code;
 	String msg;
 
-	protected List<? extends JMessage> body;
-
+	protected List<T> body;
 	
 	JMessage() {
 		seq = (int) (Math.random() * 1000);
@@ -45,7 +44,7 @@ public class JMessage {
 		seq = (int) (Math.random() * 1000);
 	}
 	
-	public JMessage incSeq() {
+	public JMessage<T> incSeq() {
 		seq++;
 		return this;
 	}
@@ -62,17 +61,17 @@ public class JMessage {
 	
 	JHeader header;
 	public JHeader header() { return header; }
-	public JMessage header(JHeader header) {
+	public JMessage<T> header(JHeader header) {
 		this.header = header;
 		return this;
 	}
 
-	public JMessage body(List<? extends JMessage> bodyItems) {
+	public JMessage<T> body(List<T> bodyItems) {
 		this.body = bodyItems;
 		return this;
 	}
 	
-	public List<? extends JMessage> body() {
+	public List<T> body() {
 		return body;
 	}
 

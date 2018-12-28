@@ -15,6 +15,10 @@ import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.JHelper;
+import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JMessage.MsgCode;
+import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
@@ -22,6 +26,7 @@ import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Transcxt;
 import io.odysz.transact.sql.parts.select.JoinTabl.join;
@@ -53,12 +58,12 @@ public class SQuery extends HttpServlet {
 //			InputStream in = req.getInputStream();
 //			QueryReq msg = jhelperReq.readJson(in, QueryReq.class);
 //			in.close();
-			QueryReq msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
+			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			
 			verifier.verify(msg.header());
 			
 //			QueryResp rs = query((QueryReq) msg.body().get(0));
-			SemanticObject rs = query((QueryReq) msg.body().get(0));
+			SemanticObject rs = query(msg);
 			
 			
 //			int size = msg.body().size();
@@ -83,34 +88,34 @@ public class SQuery extends HttpServlet {
 		if (ServFlags.query)
 			Utils.logi("========== query.serv post ==========");
 		try {
-//			InputStream in = req.getInputStream();
-//			List<QueryReq> msgs = jhelperReq.readJsonStream(in, QueryReq.class);
-//			in.close();
-			QueryReq msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
+			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			
-//			HashMap<String, SResultset> rses = new HashMap<String, SResultset>();
 			SemanticObject rs = query(msg);
-//			rses.put("0", rs);
 			
 			resp.setCharacterEncoding("UTF-8");
 			OutputStream os = resp.getOutputStream();
 
-//			rs.write(os);
 			ServletAdapter.write(resp, rs);
-			os.close();
 			resp.flushBuffer();
+			os.close();
+		} catch (SemanticException e) {
+			 ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
 			e.printStackTrace();
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exGeneral, e.getMessage()));
 		}
 	}
 	
-	SemanticObject query(QueryReq msg) throws SQLException, TransException {
+	SemanticObject query(JMessage<QueryReq> msgBody) throws SQLException, TransException {
 		// TODO let's use stream mode
 		ArrayList<String> sqls = new ArrayList<String>();
+		QueryReq msg = msgBody.body().get(0);
 		Query selct = st.select(msg.mtabl, msg.mAlias);
 		if (msg.exprs != null && msg.exprs.size() > 0)
 			for (String[] col : msg.exprs)
