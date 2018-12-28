@@ -18,31 +18,7 @@ import io.odysz.semantics.x.SemanticException;
 
 public class JHelper<T extends JBody> {
 
-//	public static SemanticObject OK(String code, SUser iruser, SemanticObject... msg) {
-//		return null;
-//	}
-//
-//	public static SemanticObject err(String errChk, String... msg) {
-//		return null;
-//	}
-//
-//	public static SemanticObject parse(String jstr) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-//
-//	public static Object OK(String code, SUser login, String[] props) {
-//		return null;
-//	}
-
 	private Gson gson = new Gson();
-
-//	public void writeJsonStream(OutputStream out, T msg) throws IOException {
-//		JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, "UTF-8"));
-//		Type t = new TypeToken<T>() {}.getType();
-//		gson.toJson(msg, t, writer);
-//		writer.close();
-//	}
 
 //	public void writeJson(OutputStream out, T msg) throws IOException {
 //		JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, "UTF-8"));
