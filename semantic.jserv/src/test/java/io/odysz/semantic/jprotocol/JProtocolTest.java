@@ -87,6 +87,7 @@ class JProtocolTest {
 		String a;
 		String b;
 		
+		
 		/**In <a href='https://howtodoinjava.com/apache-commons/google-gson-tutorial-convert-java-object-to-from-json/#serialization_deserialization'>
 		 * [Google Gson Tutorial : Convert Java Object to / from JSON]</a> 
 		 * section 6. Gson custom serialization and deserialization, 

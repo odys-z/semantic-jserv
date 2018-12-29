@@ -1,11 +1,8 @@
 package io.odysz.semantic.jserv.R;
 
 import java.util.ArrayList;
-import java.util.List;
 
-import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.jprotocol.JBody;
-import io.odysz.semantic.jprotocol.JMessage;
 
 /**<pre>
 query-obj: { tabl: tabl-obj,
@@ -61,21 +58,4 @@ public class QueryReq extends JBody {
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
 	ArrayList<String[]> groups;
-
-	
-
-//	public QueryReq() {
-//		super(Port.query);
-//	}
-
-
-//	public QueryReq respond(SResultset rs) {
-//		return this;
-//	}
-
-
-//	public List<JMessage> queries() {
-//		return null;
-//	}
-
 }
