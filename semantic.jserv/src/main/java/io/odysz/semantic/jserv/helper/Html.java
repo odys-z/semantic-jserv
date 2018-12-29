@@ -73,14 +73,16 @@ public class Html {
 				)).render();
 	}
 
-	public static char[] map(SemanticObject res) {
+	public static String map(SemanticObject res) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-//	public static char[] semanticObj(SemanticObject functions) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+	public static String ok(String msg) {
+		return "<!DOCTYPE HTML>" + html(
+			head(meta().withCharset("utf-8")),
+			body(h1(msg)))
+		.render();
+	}
 
 }
