@@ -9,7 +9,6 @@ public abstract class JBody {
 	}
 
 	public static String[] expr(String alais, String expr, Object object) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
