@@ -1,8 +1,11 @@
 package io.odysz.semantic.jserv.R;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.odysz.semantic.jprotocol.JBody;
+import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantics.SemanticObject;
 
 /**<pre>
 query-obj: { tabl: tabl-obj,
@@ -29,6 +32,10 @@ or
  *
  */
 public class QueryReq extends JBody {
+
+	public QueryReq(JMessage<? extends JBody> parent) {
+		super(parent);
+	}
 
 	/**Main table */
 	String mtabl;
@@ -58,4 +65,10 @@ public class QueryReq extends JBody {
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
 	ArrayList<String[]> groups;
+
+	public static JMessage<QueryReq> formatReq(SemanticObject ssInf, String[] usrAct, List<String[]> joins,
+			List<String[]> exprs, List<String[]> conds, List<String[]> orders, List<String[]> groupings) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

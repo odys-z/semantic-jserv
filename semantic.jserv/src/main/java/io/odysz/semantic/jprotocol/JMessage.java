@@ -1,6 +1,7 @@
 package io.odysz.semantic.jprotocol;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,8 +19,21 @@ import io.odysz.semantics.SemanticObject;
  *
  */
 public class JMessage <T extends JBody> {
-	public enum Port { heartbeat, session, query, update, echo, user };
-	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral};
+	public enum Port {  heartbeat("ping.serv"), session("session.serv"),
+						insert("c.serv"), query("r.serv"), update("u.serv"), delete("d.serv"),
+						echo("echo.serv"), user("user.serv");
+		private String url;
+		Port(String url) { this.url = url; }
+		public String url() {
+			return url; }
+	};
+
+	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral;
+		public boolean eq(String code) {
+			MsgCode c = MsgCode.valueOf(MsgCode.class, code);
+			return this == c;
+		}
+	};
 
 	static Gson gson = new Gson();
 
@@ -49,16 +63,6 @@ public class JMessage <T extends JBody> {
 		return this;
 	}
 	
-//	public JMessage err(String msg) {
-//		return err(MsgCode.exGeneral, msg);
-//	}
-//
-//	public JMessage err(MsgCode errCode, String msg) {
-//		code = errCode;
-//		this.msg = msg;
-//		return this;
-//	}
-	
 	JHeader header;
 	public JHeader header() { return header; }
 	public JMessage<T> header(JHeader header) {
@@ -69,6 +73,12 @@ public class JMessage <T extends JBody> {
 	public JMessage<T> body(List<T> bodyItems) {
 		this.body = bodyItems;
 		return this;
+	}
+
+	public void body(T itm) {
+		if (body == null)
+			body = new ArrayList<T>();
+		body.add(itm);
 	}
 	
 	public List<T> body() {
@@ -123,6 +133,10 @@ public class JMessage <T extends JBody> {
 					return String.format("EXCEPTION: \"%s\"", e.getMessage());
 				}
 			}).collect(Collectors.joining(", ", "{", "}"));
+	}
+
+	public String servUrl(String servRoot, String conn) {
+		return String.format("%s/%s?conn=%s", servRoot, port.url(), conn);
 	}
 
 }

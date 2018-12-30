@@ -1,14 +1,14 @@
 package io.odysz.semantic.jserv.test;
 
-import java.util.stream.Collectors;
 
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JMessage;
-import io.odysz.semantics.SemanticObject;
 
 public class EchoReq extends JBody {
 
-//	EchoReq() { super(Port.echo); }
+	public EchoReq(JMessage<? extends JBody> parent) {
+		super(parent);
+	}
 
 //	public SemanticObject echo() {
 //		return new SemanticObject().put("echo",
