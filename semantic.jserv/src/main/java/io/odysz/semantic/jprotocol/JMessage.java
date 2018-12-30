@@ -18,7 +18,7 @@ import io.odysz.semantics.SemanticObject;
  *
  */
 public class JMessage <T extends JBody> {
-	public enum Port { heartbeat, session, query, update, echo, user };
+	public enum Port { heartbeat, session, insert, query, update, delete , echo, user};
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral};
 
 	static Gson gson = new Gson();
@@ -48,16 +48,6 @@ public class JMessage <T extends JBody> {
 		seq++;
 		return this;
 	}
-	
-//	public JMessage err(String msg) {
-//		return err(MsgCode.exGeneral, msg);
-//	}
-//
-//	public JMessage err(MsgCode errCode, String msg) {
-//		code = errCode;
-//		this.msg = msg;
-//		return this;
-//	}
 	
 	JHeader header;
 	public JHeader header() { return header; }
