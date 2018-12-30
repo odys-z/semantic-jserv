@@ -19,6 +19,11 @@ import io.odysz.semantics.SemanticObject;
  *
  */
 public class JMessage <T extends JBody> {
+
+	/**TODO shall we use dynamic registered ports?
+	 * @author ody
+	 *
+	 */
 	public enum Port {  heartbeat("ping.serv"), session("session.serv"),
 						insert("c.serv"), query("r.serv"), update("u.serv"), delete("d.serv"),
 						echo("echo.serv"), user("user.serv");
