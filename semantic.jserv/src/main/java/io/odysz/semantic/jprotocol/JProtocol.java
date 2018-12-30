@@ -1,6 +1,7 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 
 import com.google.gson.Gson;
@@ -16,7 +17,7 @@ public class JProtocol {
 	 * e.g. on success when an http post request finished. */
 	@FunctionalInterface
 	public interface SCallback {
-		void onCallback(String code, Object Data) throws IOException, SQLException, SemanticException;
+		void onCallback(String code, SemanticObject Data) throws IOException, SQLException, SemanticException;
 	}
 	
 

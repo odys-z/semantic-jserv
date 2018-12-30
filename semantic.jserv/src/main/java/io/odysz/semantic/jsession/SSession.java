@@ -357,30 +357,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		return  (IUser) constructor.newInstance(uid, pswd, iv, userName);
 	}
 	
-//	//通过反射机制新建用户(读数据库)
-//	public static SUser createUser(String logid) throws Exception {
-//		String sql = String.format(Configs.getCfg("irSession_bas_person"), logid);
-//		SResultset rs0 = Connects.select(sql);
-//		if (rs0.getRowCount() <= 0)
-//			return null;
-//		rs0.beforeFirst().next();
-//		
-//		String userStr= Configs.getCfg("SUsertable");
-//		String[] userStrArray = userStr.split(",");
-//		String userId = rs0.getString(userStrArray[0]);    //用户ID
-//		String logId = rs0.getString(userStrArray[1]);     //登陆名，用于登陆
-//		String dbPswd = rs0.getString(userStrArray[2]);    //密码
-//		String iv = rs0.getString(userStrArray[3]);        //加密辅助字段
-//		String userName = rs0.getString(userStrArray[4]);  //姓名
-//		
-//		
-////		new irUser = Configs.getCfg("SUser");
-//
-//		Class<?> cls = Class.forName(Configs.getCfg("SUser"));
-//		Constructor<?> constructor = cls.getConstructor(String.class,String.class,String.class,String.class,String.class); 
-//		return (SUser) constructor.newInstance(userId, logId, dbPswd, iv, userName);
-//	}
-	
 	/**Get a 24 chars random Id.
 	 * @return
 	 */

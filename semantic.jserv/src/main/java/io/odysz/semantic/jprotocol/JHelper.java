@@ -39,6 +39,11 @@ public class JHelper<T extends JBody> {
 		writer.close();
 	}
 
+	public void writeJson(OutputStream os, JMessage<? extends JBody> jreq) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	public void println(JMessage<T> msg) {
 		
 	}
@@ -69,7 +74,7 @@ public class JHelper<T extends JBody> {
 					if (name != null && "header".equals(name.trim().toLowerCase()))
 						msg.header(readObj(reader, JHeader.class));
 					else if (name != null && "body".equals(name.trim().toLowerCase())) {
-						List<T> m = readBody(reader, bodyItemclzz);
+						List<T> m = readBody(reader, bodyItemclzz, msg);
 						msg.body(m);
 					}
 					else {
@@ -94,15 +99,20 @@ public class JHelper<T extends JBody> {
 		return msg;
 	}
 	
+	public static SemanticObject readJson(InputStream in) {
+		
+		return new SemanticObject();
+	}
+
 	@SuppressWarnings("unchecked")
-	protected List<T> readBody(JsonReader reader, Class<? extends JBody> elemClass)
+	protected List<T> readBody(JsonReader reader, Class<? extends JBody> elemClass, JMessage<?> parent)
 			throws IOException {
 		reader.beginArray();
 		List<T> messages = new ArrayList<T>();
 		while (reader.hasNext()) {
 			T message;
 			try { message = gson.fromJson(reader, elemClass); }
-			catch (Exception me) { message = (T) new JErroBody(me.getMessage());}
+			catch (Exception me) { message = (T) new JErrBody(parent, me.getMessage());}
 			messages.add(message);
 		}
 		reader.endArray();
@@ -113,6 +123,5 @@ public class JHelper<T extends JBody> {
 		JHeader header = gson.fromJson(reader, elemClass);
 		return header;
 	}
-	
 }
 

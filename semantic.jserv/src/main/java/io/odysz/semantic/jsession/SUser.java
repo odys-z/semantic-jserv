@@ -18,6 +18,13 @@ import io.odysz.transact.x.TransException;
 class SUser extends SemanticObject implements IUser {
 	protected String uid;
 
+	/**jmsg should be what the response of {@link SSession}
+	 * @param jmsg
+	 */
+	public SUser(SemanticObject jmsg) {
+		uid = jmsg.getString("uid");
+	}
+
 	@Override
 	public String uid() {
 		return uid;

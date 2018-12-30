@@ -32,6 +32,11 @@ or
  */
 public class UpdateReq extends JBody {
 
+	public UpdateReq(JMessage<? extends JBody> parent) {
+		super(parent);
+	}
+
+
 	/**Main table */
 	String mtabl;
 	/**Main table alias*/
