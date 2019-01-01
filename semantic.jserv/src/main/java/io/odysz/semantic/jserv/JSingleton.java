@@ -4,6 +4,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
+import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DATranscxt;
@@ -28,6 +29,7 @@ public class JSingleton implements ServletContextListener {
 
 		String xmlDir = evt.getServletContext().getRealPath("/WEB-INF");
 		Connects.init(xmlDir);
+		Configs.init(xmlDir);
 		
 		st = new DATranscxt(null);
 		

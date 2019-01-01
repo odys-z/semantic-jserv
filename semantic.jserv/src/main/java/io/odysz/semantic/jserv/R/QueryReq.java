@@ -1,7 +1,10 @@
 package io.odysz.semantic.jserv.R;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JMessage;
@@ -70,5 +73,14 @@ public class QueryReq extends JBody {
 			List<String[]> exprs, List<String[]> conds, List<String[]> orders, List<String[]> groupings) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void toJson(JsonWriter writer) throws IOException {
+		writer.beginObject();
+		writer.name("a").value(a);
+		writer.name("mtabl").value(mtabl);
+		writer.name("mAlias").value("...");
+		writer.endObject();
 	}
 }

@@ -32,7 +32,7 @@ import io.odysz.transact.sql.Transcxt;
 import io.odysz.transact.sql.parts.select.JoinTabl.join;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/query.serv" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv" })
 public class SQuery extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 

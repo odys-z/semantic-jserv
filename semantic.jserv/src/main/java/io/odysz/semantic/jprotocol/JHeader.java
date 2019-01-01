@@ -2,14 +2,16 @@ package io.odysz.semantic.jprotocol;
 
 public class JHeader {
 
+	String uid;
+	String ssid;
+	String iv64;
+
 	public String logid() {
-		// TODO Auto-generated method stub
-		return null;
+		return uid;
 	}
 
 	public String ssid() {
-		// TODO Auto-generated method stub
-		return null;
+		return ssid;
 	}
 
 }

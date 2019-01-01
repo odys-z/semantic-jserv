@@ -52,13 +52,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	/** * */
 	private static final long serialVersionUID = 1L;
 	
-//	static final String ERR_UID = "uid_err";
-//	static final String ERR_PSWD = "pswd_err";
-//	/**Session error, session expired, wrong pswd, etc. */
-//	public static final String ERR_CHK = "ss_err";
-//	/**Identity error, id expired, duplicate, etc. */
-//	public static final String ERR_ID = "id_err";
-	
 	/**[session-id, SUser]*/
 	static HashMap<String, IUser> users;
 
@@ -66,12 +59,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	public static ReentrantLock lock;
 	private static Random random;
 	
-//	// FIXME - CLM needing presented here?
-//	/** a_functions,a_role_funcs,funcId,parentId*/
-//	private static String functionStrArr;
-//	/** a_functions,a_role_funcs,funcId,parentId */
-//	private static String functionStr[];
-
 	private static ScheduledFuture<?> schedualed;
 	
 	private static DATranscxt sctx;
@@ -86,10 +73,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	public static void init(DATranscxt daSctx) {
 		sctx = daSctx;
 
-//		functionStrArr = Configs.getCfg("function");
-//		if (functionStrArr != null)
-//			functionStr = functionStrArr.split(",");
-
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
 		//scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -97,10 +80,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 		lock = new ReentrantLock();
 		int m = 20;
-//		boolean debugMode = false;
 		try { m = Integer.valueOf(Configs.getCfg("ss-timeout-min"));} catch (Exception e) {}
-//		try { debugMode = Configs.getBoolean("ss-timeout-min.debugMode");} catch (Exception e) {}
-//		if (debugMode)
 		if (ServFlags.session)
 			Utils.warn("IrSession debug mode true (ServFlage.session)");
 
@@ -129,12 +109,12 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 	public static class UserMeta {
 		static String clzz = "io.oz.semantic.jsession.SUser";
-		static String tbl = "s_users";
+		static String tbl = "a_user";
 		static String uidField = "userId";
 		static String unameField = "userName";
-		static String pswdField = "pswd";
-		static String ivField = "iv";
-		static String urlField = "url";
+		static String pswdField = "pwd";
+		static String ivField = "encAuxiliary";
+		static String urlField = "dept";
 
 		public static UserMeta config() { return new UserMeta(); }
 
@@ -327,7 +307,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			.col(UserMeta.pswdField, "pswd")
 			.col(UserMeta.ivField, "iv")
 			.col(UserMeta.urlField, "url")
-			.where("=", "u." + UserMeta.uidField, jreq.uid())
+			.where("=", "u." + UserMeta.uidField, "'" + jreq.uid() + "'")
 			.rs();
 		
 		if (rs.beforeFirst().next()) {
@@ -349,10 +329,17 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @param userName 
 	 * @return
 	 * @throws ReflectiveOperationException 
+	 * @throws SemanticException 
 	 */
-	public static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName) throws ReflectiveOperationException {
+	public static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName) throws ReflectiveOperationException, SemanticException {
+		if (!Configs.hasCfg(clsNamekey))
+			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
+		String clsname = Configs.getCfg(clsNamekey);
+		if (clsname == null)
+			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
+
 		@SuppressWarnings("unchecked")
-		Class<SUser> cls = (Class<SUser>) Class.forName(Configs.getCfg(clsNamekey));
+		Class<SUser> cls = (Class<SUser>) Class.forName(clsname);
 		Constructor<SUser> constructor = cls.getConstructor(String.class, String.class, String.class, String.class);
 		return  (IUser) constructor.newInstance(uid, pswd, iv, userName);
 	}
