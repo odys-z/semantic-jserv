@@ -1,6 +1,9 @@
 package io.odysz.semantic.jserv.U;
 
+import java.io.IOException;
 import java.util.ArrayList;
+
+import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHeader;
@@ -60,6 +63,12 @@ public class UpdateReq extends JBody {
 	
 	
 	public JHeader header;
+
+
+	@Override
+	public void toJson(JsonWriter writer) throws IOException {
+		writer.beginObject().endArray();
+	}
 	
 	/**orders: [order-obj],
      - order-obj: {tabl: "b_articles", field: "pubDate", asc: "true"} */

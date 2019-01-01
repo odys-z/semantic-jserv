@@ -25,7 +25,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/update.serv" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv" })
 public class SUpdate extends HttpServlet {
 	private static DATranscxt st;
 	static JHelper<UpdateReq> jreqHelper;

@@ -1,5 +1,9 @@
 package io.odysz.semantic.jprotocol;
 
+import java.io.IOException;
+
+import com.google.gson.stream.JsonWriter;
+
 public abstract class JBody {
 	public static String[] jcondt(String logic, String field, String v, String tabl) {
 		return new String[] {logic, field, v, tabl};
@@ -16,7 +20,7 @@ public abstract class JBody {
 	}
 
 	/** Action: login | c | r | u | d */
-	private String a;
+	protected String a;
 
 	/**get action */
 	public String a() {
@@ -27,5 +31,11 @@ public abstract class JBody {
 		this.a = act;
 		return this;
 	}
+
+	/** Sesrialize this object into json, with help of JsonWriter
+	 * @param writer
+	 * @throws IOException
+	 */
+	public abstract void toJson(JsonWriter writer) throws IOException;
 
 }

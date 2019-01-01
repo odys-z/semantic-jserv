@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import com.google.gson.Gson;
 
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.x.SemanticException;
 
 /**<p>Base class of message used by JProtocol.</p>
  * <p>Relationship with {@link SemanticObject}:</p>
@@ -24,17 +25,29 @@ public class JMessage <T extends JBody> {
 	 * @author ody
 	 *
 	 */
-	public enum Port {  heartbeat("ping.serv"), session("session.serv"),
+	public enum Port {  heartbeat("ping.serv"), session("login.serv"),
 						insert("c.serv"), query("r.serv"), update("u.serv"), delete("d.serv"),
 						echo("echo.serv"), user("user.serv");
 		private String url;
 		Port(String url) { this.url = url; }
-		public String url() {
-			return url; }
+		public String url() { return url; }
+
+		public static Port parse(String pport) {
+			if (heartbeat.name().equals(pport)) return heartbeat;
+			if (session.name().equals(pport)) return session;
+			if (insert.name().equals(pport)) return insert;
+			if (query.name().equals(pport)) return query;
+			if (update.name().equals(pport)) return update;
+			if (delete.name().equals(pport)) return delete;
+			if (echo.name().equals(pport)) return echo;
+			if (user.name().equals(pport)) return user;
+			return null;
+		}
 	};
 
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral;
 		public boolean eq(String code) {
+			if (code != null) return false;
 			MsgCode c = MsgCode.valueOf(MsgCode.class, code);
 			return this == c;
 		}
@@ -48,7 +61,10 @@ public class JMessage <T extends JBody> {
 	public int seq() { return seq; }
 
 	SemanticObject semanticObj;
+
 	Port port;
+	public Port port() { return port; }
+
 	MsgCode code;
 	String msg;
 
@@ -142,6 +158,12 @@ public class JMessage <T extends JBody> {
 
 	public String servUrl(String servRoot, String conn) {
 		return String.format("%s/%s?conn=%s", servRoot, port.url(), conn);
+	}
+
+	public void port(String pport) throws SemanticException {
+		port = Port.parse(pport);
+		if (pport == null)
+			throw new SemanticException("Port can not be null");
 	}
 
 }
