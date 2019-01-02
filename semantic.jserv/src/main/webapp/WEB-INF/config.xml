@@ -2,8 +2,9 @@
 <configs>
   <t id="default" pk="k" columns="k,v">
 	<c>
-		<k>IrUser</k>
-		<v>Class name of SUser Implementation</v>
+		<!-- Class name of SUser Implementation -->
+		<k>class-IUser</k>
+		<v>io.odysz.semantic.jsession.SUser</v>
 	</c>
 	<c>
 		<k>folder.file-upload</k>

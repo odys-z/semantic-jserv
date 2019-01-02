@@ -1,7 +1,6 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.SQLException;
 
 import com.google.gson.Gson;

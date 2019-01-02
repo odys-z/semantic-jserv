@@ -13,7 +13,7 @@ public abstract class JBody {
 		return null;
 	}
 
-	private JMessage<? extends JBody> parent;
+	JMessage<? extends JBody> parent;
 
 	public JBody(JMessage<? extends JBody> parent) {
 		this.parent = parent;
