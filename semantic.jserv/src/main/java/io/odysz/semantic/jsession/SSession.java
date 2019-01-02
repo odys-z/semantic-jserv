@@ -2,6 +2,7 @@ package io.odysz.semantic.jsession;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Random;
@@ -18,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Configs;
-import io.odysz.common.Radix64;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.Connects;
@@ -29,7 +29,6 @@ import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
-import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
@@ -51,13 +50,18 @@ import io.odysz.transact.x.TransException;
 public class SSession extends HttpServlet implements ISessionVerifier {
 	/** * */
 	private static final long serialVersionUID = 1L;
+
+	static String rootK = null;
 	
 	/**[session-id, SUser]*/
 	static HashMap<String, IUser> users;
 
 	private static ScheduledExecutorService scheduler;
+	
+	/**session pool reentrant lock*/
 	public static ReentrantLock lock;
-	private static Random random;
+
+//	private static Random random;
 	
 	private static ScheduledFuture<?> schedualed;
 	
@@ -65,20 +69,23 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 	static JHelper<SessionReq> jreqHelper;
 
-	static {
-		sctx = JSingleton.st;
-		jreqHelper = new JHelper<SessionReq>();
-	}
+//	static {
+//		sctx = JSingleton.st;
+//		jreqHelper = new JHelper<SessionReq>();
+//		lock = new ReentrantLock();
+//	}
 
 	public static void init(DATranscxt daSctx) {
+		lock = new ReentrantLock();
 		sctx = daSctx;
+		jreqHelper = new JHelper<SessionReq>();
+//        random = new Random();
 
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
 		//scheduler = Executors.newSingleThreadScheduledExecutor();
 		scheduler = Executors.newScheduledThreadPool(0);
 
-		lock = new ReentrantLock();
 		int m = 20;
 		try { m = Integer.valueOf(Configs.getCfg("ss-timeout-min"));} catch (Exception e) {}
 		if (ServFlags.session)
@@ -88,7 +95,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
         		new SessionChecker(users, m),
         		0, 1, TimeUnit.MINUTES);
         
-        random = new Random();
 	}
 	
 	/**Stop all threads that were scheduled by IrSession.
@@ -108,7 +114,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	}
 
 	public static class UserMeta {
-		static String clzz = "io.oz.semantic.jsession.SUser";
+		static String clzz = "class-IUser";
 		static String tbl = "a_user";
 		static String uidField = "userId";
 		static String unameField = "userName";
@@ -178,7 +184,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		if (ServFlags.session) System.out.println("login get ========");
 		resp.setContentType("text/html;charset=UTF-8");
 		try {
-			JMessage<SessionReq> msg = ServletAdapter.<SessionReq>read(request, jreqHelper, SessionReq.class);
+//			JMessage<SessionReq> msg = ServletAdapter.<SessionReq>read(request, jreqHelper, SessionReq.class);
 			String headstr = request.getParameter("header");
 			if (headstr == null)
 				throw new SsException("Query session with GET request neending a header string.");
@@ -187,10 +193,18 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			if (t != null) t = t.toLowerCase().trim();
 			if ("ping".equals(t) || "touch".equals(t)) {
 				// already touched by check()
-				IUser usr = verify(msg.header());
+				// IUser usr = verify(msg.header());
+				IUser usr = verify(jreqHelper.readHeader(headstr));
 				SemanticObject ok = new SemanticObject();
 				ok.put(usr.uid(), (SemanticObject)usr);
 				resp.getWriter().write(Html.map(ok));
+			}
+			// FIXME IMPORTANT password here 
+			// FIXME IMPORTANT password here 
+			else if ("init".equals(t)) {
+				String k = request.getParameter("k");
+				rootK = k;
+				resp.getWriter().write(Html.ok(k));
 			}
 			else {
 				//msg.err("Login.serv using GET to touch session info - use POST to login, logout, check session.");
@@ -200,10 +214,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		} catch (SsException e) {
 			ServletAdapter.write(resp, JProtocol.err(Port.session, e.code, e.getMessage()));
 		} catch (SQLException e) {
-			e.printStackTrace();
-		} catch (TransException e) {
-			e.printStackTrace();
-		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} finally {
 //			if (ServFlags.session) {
@@ -246,7 +256,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 //						throw new SsException("User Id not found: ", logid);
 //					}
 //					else {
-						if (login.login()) {
+						if (login.login(sessionBody)) {
 							//SemanticObject resp = login.response(jlogin, request);
 							
 							lock.lock();
@@ -290,7 +300,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 				}
 			}
 			else throw new SsException ("Session request not supported: login-obj=null");
-		} catch (SsException e) {
+		} catch (SsException | TransException e) {
 			ServletAdapter.write(response, JProtocol.err(Port.session, MsgCode.exSession, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -299,6 +309,15 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		}
 	}
 
+	/**Load user instance form DB table (name = {@link UserMeta#tbl}).
+	 * @param jreq
+	 * @param connId
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws SsException
+	 * @throws ReflectiveOperationException
+	 */
 	private IUser loadUser(SessionReq jreq, String connId)
 			throws TransException, SQLException, SsException, ReflectiveOperationException {
 		SResultset rs = (SResultset) sctx.select(UserMeta.tbl, "u")
@@ -339,14 +358,24 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 
 		@SuppressWarnings("unchecked")
-		Class<SUser> cls = (Class<SUser>) Class.forName(clsname);
-		Constructor<SUser> constructor = cls.getConstructor(String.class, String.class, String.class, String.class);
-		return  (IUser) constructor.newInstance(uid, pswd, iv, userName);
+		Class<IUser> cls = (Class<IUser>) Class.forName(clsname);
+		Constructor<IUser> constructor = null;
+		try {
+			constructor = cls.getConstructor(String.class, String.class, String.class, String.class);
+		} catch (NoSuchMethodException ne) {
+			throw new SemanticException("Class %s needs a consturctor like SUser(String uid, String pswd, String iv, String usrName).", "clsname");
+		}
+		try {
+			return (IUser) constructor.newInstance(uid, pswd, iv, userName);
+		} catch (InvocationTargetException ie) {
+			throw new SemanticException("create IUser instance failed: %s",
+					ie.getTargetException() == null ? "" : ie.getTargetException().getMessage());
+		}
 	}
+
 	
 	/**Get a 24 chars random Id.
 	 * @return
-	 */
 	public static String getSSId() {
 		String ssid = null;
 		while (ssid == null || users.containsKey(ssid)) {
@@ -358,4 +387,5 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		}
 		return ssid;
 	}
+	 */
 }

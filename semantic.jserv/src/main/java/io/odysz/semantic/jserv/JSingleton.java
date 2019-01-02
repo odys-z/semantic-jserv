@@ -32,7 +32,7 @@ public class JSingleton implements ServletContextListener {
 		Configs.init(xmlDir);
 		
 		st = new DATranscxt(null);
-		
+		SSession.init(st);
 		session = new SSession();
 	}
 

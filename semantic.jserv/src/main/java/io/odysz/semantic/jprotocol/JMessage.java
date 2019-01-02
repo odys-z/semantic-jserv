@@ -47,7 +47,7 @@ public class JMessage <T extends JBody> {
 
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral;
 		public boolean eq(String code) {
-			if (code != null) return false;
+			if (code == null) return false;
 			MsgCode c = MsgCode.valueOf(MsgCode.class, code);
 			return this == c;
 		}

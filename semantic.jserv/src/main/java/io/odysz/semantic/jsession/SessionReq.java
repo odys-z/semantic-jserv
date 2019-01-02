@@ -19,7 +19,10 @@ public class SessionReq extends JBody {
 	}
 
 	String uid;
-	String token64;
+	String token;
+	String token() { return token; }
+	String iv;
+	String iv() { return iv; }
 
 	public String uid() { return uid; }
 
@@ -37,12 +40,10 @@ public class SessionReq extends JBody {
 	}
 
 	private void setup(String uid, String tk64, String iv64) {
+		this.uid = uid;
+		this.token = tk64;
+		this.iv = iv64;
 	}
-
-	private String token() {
-		return "debug";
-	}
-
 
 	public static IUser parseLogin(InputStream in, String uid, String tk64, String iv64) throws SemanticException, IOException {
 		SemanticObject jmsg = JHelper.readResp(in);
@@ -54,6 +55,7 @@ public class SessionReq extends JBody {
 		writer.beginObject();
 		writer.name("a").value(a);
 		writer.name("uid").value(uid);
+		writer.name("iv").value(iv);
 		writer.name("token").value(token());
 		writer.endObject();
 	}

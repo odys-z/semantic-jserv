@@ -1,5 +1,6 @@
 package io.odysz.semantic.jprotocol;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -8,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
@@ -15,6 +17,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
@@ -27,21 +30,101 @@ public class JHelper<T extends JBody> {
 
 	private static Gson gson = new Gson();
 
-	public static void writeJson(OutputStream os, SemanticObject msg) throws IOException {
+	/*
+	public static void writeJsonResp(OutputStream os, SemanticObject msg) throws IOException {
 		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
 		writer.beginObject();
 		writer.name("port").value(msg.getString("port"));
 		writer.name("code").value(msg.getString("code"));
 		if (msg.getType("error") != null)
 			writer.name("error").value(msg.getString("error"));
-		if (msg.getType("msg") != null)
-			writer.name("msg").value(msg.getString("msg"));
+
+		Class<?> t = msg.getType("msg");
+		if (t == SemanticObject.class)
+			// writer.name("msg").value(msg.get("msg"));
+			writeJsonResp(os, (SemanticObject) msg.get("msg"));
+		else if (t != null) // string, object, ...
+			writer.name("msg").value(msg.get("msg").toString());
+		// else t is null, no such property
+
 		// TODO body ...
 		writer.endObject();
 		writer.close();
 	}
+	*/
+	//
+	public static void writeJsonResp(OutputStream os, SemanticObject msg) throws IOException {
+		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
+//		writer.beginObject();
+//		HashMap<String, Object> ps = msg.props();
+//		for (String n : ps.keySet()) {
+//			Class<?> t = msg.getType(n);
+//			Object v = msg.get(n);
+//			writer.name(n);
+//			writeRespValue(writer, t, v);
+//		}
+//		writer.endObject();
+		writeJsonValue(writer, msg);
+		writer.close();
+	}
 
-	public void writeJson(OutputStream os, JMessage<? extends JBody> jreq, Class<? extends JBody> itemClz) throws IOException {
+
+	@SuppressWarnings("unchecked")
+	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v) throws IOException {
+		if (IUser.class.isAssignableFrom(t)) {
+			((IUser)v).writeJsonRespValue(writer);
+		}
+		if (SemanticObject.class.isAssignableFrom(t)) {
+			 writeJsonValue(writer, (SemanticObject) v);
+//			((SemanticObject)v).jsonValue(writer);
+		}
+		else if (Map.class.isAssignableFrom(t)) {
+			writeMap(writer, (Map<?, ?>) v);
+		}
+		else if (List.class.isAssignableFrom(t)) {
+			writeLst(writer, (List<Object>) v);
+		}
+		else
+			writer.value(v.toString());
+	}
+
+
+	private static void writeJsonValue(JsonWriter writer, SemanticObject v) throws IOException {
+		writer.beginObject();
+		HashMap<String, Object> ps = v.props();
+		if (ps != null)
+			for (String n : ps.keySet()) {
+				Class<?> t = v.getType(n);
+				Object obj = v.get(n);
+				writer.name(n);
+				writeRespValue(writer, t, obj);
+			}
+		writer.endObject();
+	}
+
+
+	private static void writeLst(JsonWriter writer, List<Object> lst) throws IOException {
+		writer.beginArray();
+		for (Object v : lst) {
+			writeRespValue(writer, v.getClass(), v);
+		}
+		
+		writer.endArray();
+	}
+
+
+	private static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException {
+		writer.beginArray();
+		for (Object k : map.keySet()) {
+			Object v = map.get(k);
+			writer.name(k.toString());
+			writeRespValue(writer, map.get(k).getClass(), map.get(k));
+		}
+		
+		writer.endArray();
+	}
+
+	public void writeJsonReq(OutputStream os, JMessage<? extends JBody> jreq, Class<? extends JBody> itemClz) throws IOException {
 		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
         writer.setIndent("  ");
 		writer.beginObject();
@@ -65,7 +148,6 @@ public class JHelper<T extends JBody> {
 	}
 
 	public void println(JMessage<T> msg) {
-		
 	}
 	
 	public static SemanticObject readResp(InputStream in) throws IOException, SemanticException {
@@ -80,17 +162,10 @@ public class JHelper<T extends JBody> {
 				switch (tk) {
 				case NAME:
 					String name = reader.nextName();
-//					if (name != null && "port".equals(name))
-//						obj.put("port", reader.nextString());
-//					else if (name != null && "code".equals(name))
-//						obj.put("code", reader.nextString());
-//					else if (name != null && "msg".equals(name))
-//						obj.put("msg", reader.nextString());
-//					else
-						if (name != null && "rs".equals(name))
-						obj.put("rs", rs(reader));
+					if (name != null && "rs".equals(name))
+						obj.put("rs", readRs(reader));
 					else if (name != null && "map".equals(name))
-						obj.put("map", map(reader));
+						obj.put("map", readMap(reader));
 					else {
 						tk = reader.peek();
 						if (tk == JsonToken.NULL) {
@@ -120,7 +195,7 @@ public class JHelper<T extends JBody> {
 		return obj;
 	}
 
-	private static HashMap<String, String> map(JsonReader reader) throws IOException {
+	private static HashMap<String, String> readMap(JsonReader reader) throws IOException {
 		reader.beginArray();
 
 		HashMap<String, String> m = new HashMap<String, String>();
@@ -155,7 +230,7 @@ public class JHelper<T extends JBody> {
 	 * @return
 	 * @throws IOException
 	 */
-	private static SResultset rs(JsonReader reader) throws IOException {
+	private static SResultset readRs(JsonReader reader) throws IOException {
 		reader.beginArray();
 
 		HashMap<String, Integer> colnames = new HashMap<String, Integer>();
@@ -215,9 +290,12 @@ public class JHelper<T extends JBody> {
 		JMessage<T> msg = new JMessage<T>();
 
 		// {header: {header-obj}, body: [msgs]}
+		JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
 		try {
-			JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
 			reader.setLenient(true);
+			if (reader.peek() == JsonToken.NULL)
+				// empty load
+				return null;
 			reader.beginObject();
 			JsonToken token = reader.peek();
 			while (token != null && token != JsonToken.END_DOCUMENT) {
@@ -227,7 +305,7 @@ public class JHelper<T extends JBody> {
 					if (name != null && "port".equals(name.trim().toLowerCase()))
 						msg.port(reader.nextString());
 					else if (name != null && "header".equals(name.trim().toLowerCase()))
-						msg.header(readObj(reader, JHeader.class));
+						msg.header(readHeader(reader));
 					else if (name != null && "body".equals(name.trim().toLowerCase())) {
 						List<T> m = readBody(reader, bodyItemclzz, msg);
 						msg.body(m);
@@ -246,14 +324,22 @@ public class JHelper<T extends JBody> {
 				}
 				token = reader.peek();
 			}
-			reader.close();
 		} catch (Exception e) {
 			throw new SemanticException("Parsing Json failed. Internal error: %s", e.getMessage());
-		}
+		} finally { reader.close(); }
 		
 		return msg;
 	}
 
+	/**<p>Read message body (deserialization).</p>
+	 * <p>In the current version (0.1.0), the method using Gson, and the debugging shows only
+	 * fields with getter can be deserialized.</p>
+	 * @param reader
+	 * @param elemClass
+	 * @param parent
+	 * @return
+	 * @throws IOException
+	 */
 	@SuppressWarnings("unchecked")
 	protected List<T> readBody(JsonReader reader, Class<? extends JBody> elemClass, JMessage<?> parent)
 			throws IOException {
@@ -261,17 +347,27 @@ public class JHelper<T extends JBody> {
 		List<T> messages = new ArrayList<T>();
 		while (reader.hasNext()) {
 			T message;
+			// debugging shows that only fields with getter can be deserialized
 			try { message = gson.fromJson(reader, elemClass); }
 			catch (Exception me) { message = (T) new JErrBody(parent, me.getMessage());}
+			message.parent = parent;
 			messages.add(message);
 		}
 		reader.endArray();
 		return messages;
 	}
 
-	protected JHeader readObj(JsonReader reader, Class<JHeader> elemClass) throws IOException {
-		JHeader header = gson.fromJson(reader, elemClass);
+	protected JHeader readHeader(JsonReader reader) throws IOException {
+		JHeader header = gson.fromJson(reader, JHeader.class);
 		return header;
+	}
+
+	public JHeader readHeader(String head) throws IOException {
+		if (head == null || head.length() == 0)
+			return null;
+		InputStream in = new ByteArrayInputStream(head.getBytes());
+		JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
+		return readHeader(reader);
 	}
 }
 

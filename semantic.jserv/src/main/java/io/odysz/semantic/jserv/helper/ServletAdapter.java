@@ -65,7 +65,7 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 		resp.setContentType("application/json");
 		OutputStream os = resp.getOutputStream();
 		
-		JHelper.writeJson(os, msg);
+		JHelper.writeJsonResp(os, msg);
 		/*
 		// TODO move to JProtocol
 		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
@@ -82,5 +82,6 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 		*/
 		os.flush();
 	}
+
 
 }
