@@ -2,13 +2,14 @@ package io.odysz.semantic.jserv.R;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.transact.sql.Query;
+import io.odysz.transact.sql.Query.Ix;
 
 /**<pre>
 query-obj: { tabl: tabl-obj,
@@ -35,10 +36,6 @@ or
  *
  */
 public class QueryReq extends JBody {
-
-	public QueryReq(JMessage<? extends JBody> parent) {
-		super(parent);
-	}
 
 	/**Main table */
 	String mtabl;
@@ -68,11 +65,79 @@ public class QueryReq extends JBody {
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
 	ArrayList<String[]> groups;
+	private int page;
+	private int pgsize;
 
-	public static JMessage<QueryReq> formatReq(SemanticObject ssInf, String[] usrAct, List<String[]> joins,
-			List<String[]> exprs, List<String[]> conds, List<String[]> orders, List<String[]> groupings) {
-		// TODO Auto-generated method stub
-		return null;
+//	protected QueryReq setUserAct(String funcId, String funcName, String url, String cmd) {
+//		parent.header().usrAct(new String[] {funcId, funcName, url, cmd});
+//		return this;
+//	}
+	public QueryReq(JMessage<? extends JBody> parent) {
+		super(parent);
+		this.page = 0;
+		this.pgsize = 20;
+	}
+
+	public void page(int page, int size) {
+		this.page = page;
+		this.pgsize = size;
+	}
+
+	public QueryReq j(String with, String as, String on) {
+		return j("j", with, as, on);
+	}
+
+	public QueryReq l(String with, String as, String on) {
+		return j("l", with, as, on);
+	}
+
+	public QueryReq r(String with, String as, String on) {
+		return j("r", with, as, on);
+	}
+
+	public QueryReq j(ArrayList<String[]> joins) {
+		if (joins != null)
+			for (String[] join : joins) 
+				j(join);
+		return this;
+	}
+
+	public QueryReq j(String t, String with, String as, String on) {
+		if (joins == null)
+			joins = new ArrayList<String[]>();
+		String[] j = new String[Ix.JoinSize];
+		j[Ix.JoinTabl] = with;
+		j[Ix.JoinAlias] = as;
+		j[Ix.JoinType] = t;
+		j[Ix.JoinOnCond] = on;
+		return j(j);
+	}
+	
+	private QueryReq j(String[] join) {
+		joins.add(join);
+		return this;
+	}
+
+	public void expr(String expr, String alais, String[] tabl) {
+		if (exprs == null)
+			exprs = new ArrayList<String[]>();
+		String[] exp = new String[Ix.ExprSize];
+		exp[Ix.ExprExpr] = expr;
+		exp[Ix.ExprAlais] = expr;
+		exp[Ix.ExprTabl] = tabl == null || tabl.length == 0 ? null : tabl[0];
+		exprs.add(exp);
+	}
+
+	/**<p>Create a qeury request body item, for joining etc.,
+	 * and can be serialized into json by {@link #toJson(JsonWriter)}.</p>
+	 * <p>Client side helper, don't confused with {@link Query}.</p>
+	 * @param jmsg
+	 * @param ssInf
+	 * @return
+	 */
+	public static QueryReq formatReq(JMessage<QueryReq> jmsg, SemanticObject ssInf) {
+		QueryReq bdItem = new QueryReq(jmsg);
+		return bdItem;
 	}
 
 	@Override
@@ -80,7 +145,23 @@ public class QueryReq extends JBody {
 		writer.beginObject();
 		writer.name("a").value(a);
 		writer.name("mtabl").value(mtabl);
-		writer.name("mAlias").value("...");
+		writer.name("mAlias").value(mAlias);
+
+		if (joins != null) {
+			writer.name("joins");
+			writer.beginArray();
+			for (String[] join : joins) {
+				writer.beginObject();
+				for (int i = 0; i < join.length; i++) {
+					if (join[i] == null)
+						writer.value("");
+					else
+						writer.value(join[i]);
+				}
+			}
+			writer.endArray();
+		}
+		// TODO exprs ...
 		writer.endObject();
 	}
 }

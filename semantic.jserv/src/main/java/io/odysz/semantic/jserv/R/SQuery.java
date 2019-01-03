@@ -124,7 +124,11 @@ public class SQuery extends HttpServlet {
 		
 		if (msg.joins != null && msg.joins.size() > 0) {
 			for (String[] j : msg.joins)
-				selct.j(join.parse(j[0]), j[1], j[2], j[3]);
+//				 selct.j(join.parse(j[0]), j[1], j[2], j[3]);
+				 selct.j(join.parse(j[Query.Ix.JoinType]),
+						 			j[Query.Ix.JoinTabl],
+						 			j[Query.Ix.JoinAlias],
+						 			j[Query.Ix.JoinOnCond]);
 		}
 		
 		if (msg.where != null && msg.where.size() > 0) {

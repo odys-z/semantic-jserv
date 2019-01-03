@@ -9,11 +9,11 @@ public abstract class JBody {
 		return new String[] {logic, field, v, tabl};
 	}
 
-	public static String[] expr(String alais, String expr, Object object) {
-		return null;
-	}
+//	public static String[] expr(String alais, String expr, Object object) {
+//		return null;
+//	}
 
-	JMessage<? extends JBody> parent;
+	protected JMessage<? extends JBody> parent;
 
 	public JBody(JMessage<? extends JBody> parent) {
 		this.parent = parent;
