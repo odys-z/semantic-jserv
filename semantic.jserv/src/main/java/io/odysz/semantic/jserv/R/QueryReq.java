@@ -68,10 +68,6 @@ public class QueryReq extends JBody {
 	private int page;
 	private int pgsize;
 
-//	protected QueryReq setUserAct(String funcId, String funcName, String url, String cmd) {
-//		parent.header().usrAct(new String[] {funcId, funcName, url, cmd});
-//		return this;
-//	}
 	public QueryReq(JMessage<? extends JBody> parent) {
 		super(parent);
 		this.page = 0;
