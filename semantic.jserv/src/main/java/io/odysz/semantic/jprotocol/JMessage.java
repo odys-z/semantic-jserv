@@ -32,17 +32,18 @@ public class JMessage <T extends JBody> {
 		Port(String url) { this.url = url; }
 		public String url() { return url; }
 
-		public static Port parse(String pport) {
-			if (heartbeat.name().equals(pport)) return heartbeat;
-			if (session.name().equals(pport)) return session;
-			if (insert.name().equals(pport)) return insert;
-			if (query.name().equals(pport)) return query;
-			if (update.name().equals(pport)) return update;
-			if (delete.name().equals(pport)) return delete;
-			if (echo.name().equals(pport)) return echo;
-			if (user.name().equals(pport)) return user;
-			return null;
-		}
+//		public static Port parse(String pport) {
+//			return Port.valueOf(pport);
+////			if (heartbeat.name().equals(pport)) return heartbeat;
+////			if (session.name().equals(pport)) return session;
+////			if (insert.name().equals(pport)) return insert;
+////			if (query.name().equals(pport)) return query;
+////			if (update.name().equals(pport)) return update;
+////			if (delete.name().equals(pport)) return delete;
+////			if (echo.name().equals(pport)) return echo;
+////			if (user.name().equals(pport)) return user;
+////			return null;
+//		}
 	};
 
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral;
@@ -62,13 +63,28 @@ public class JMessage <T extends JBody> {
 
 	SemanticObject semanticObj;
 
+//	public String servUrl(String servRoot, String conn) {
+//		return String.format("%s/%s?conn=%s", servRoot, port.url(), conn);
+//	}
+
 	Port port;
 	public Port port() { return port; }
+	public void port(String pport) throws SemanticException {
+		port = Port.valueOf(pport);
+		if (pport == null)
+			throw new SemanticException("Port can not be null");
+	}
+
+	public String t;
 
 	MsgCode code;
 	String msg;
 
 	protected List<T> body;
+
+	public T body(int i) {
+		return body.get(0);
+	}
 	
 	JMessage() {
 		seq = (int) (Math.random() * 1000);
@@ -85,6 +101,8 @@ public class JMessage <T extends JBody> {
 	}
 	
 	JHeader header;
+
+
 	public JHeader header() { return header; }
 	public JMessage<T> header(JHeader header) {
 		this.header = header;
@@ -154,16 +172,6 @@ public class JMessage <T extends JBody> {
 					return String.format("EXCEPTION: \"%s\"", e.getMessage());
 				}
 			}).collect(Collectors.joining(", ", "{", "}"));
-	}
-
-	public String servUrl(String servRoot, String conn) {
-		return String.format("%s/%s?conn=%s", servRoot, port.url(), conn);
-	}
-
-	public void port(String pport) throws SemanticException {
-		port = Port.parse(pport);
-		if (pport == null)
-			throw new SemanticException("Port can not be null");
 	}
 
 }

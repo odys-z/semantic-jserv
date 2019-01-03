@@ -1,6 +1,7 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -27,6 +28,9 @@ import io.odysz.semantics.x.SemanticException;
  * @param <T> e.g. {@link io.odysz.semantic.jserv.R.QueryReq} (extends JBody), the message item type of JMessage.
  */
 public class JHelper<T extends JBody> {
+
+	private static boolean printCaller = true;
+	public static void printCaller (boolean print) { printCaller = print; }
 
 	private static Gson gson = new Gson();
 
@@ -74,7 +78,7 @@ public class JHelper<T extends JBody> {
 		if (IUser.class.isAssignableFrom(t)) {
 			((IUser)v).writeJsonRespValue(writer);
 		}
-		if (SemanticObject.class.isAssignableFrom(t)) {
+		else if (SemanticObject.class.isAssignableFrom(t)) {
 			 writeJsonValue(writer, (SemanticObject) v);
 //			((SemanticObject)v).jsonValue(writer);
 		}
@@ -118,26 +122,33 @@ public class JHelper<T extends JBody> {
 		for (Object k : map.keySet()) {
 			Object v = map.get(k);
 			writer.name(k.toString());
-			writeRespValue(writer, map.get(k).getClass(), map.get(k));
+			writeRespValue(writer, v.getClass(), v);
 		}
 		
 		writer.endArray();
 	}
 
-	public void writeJsonReq(OutputStream os, JMessage<? extends JBody> jreq, Class<? extends JBody> itemClz) throws IOException {
+	public void writeJsonReq(OutputStream os, JMessage<? extends JBody> jreq, Class<? extends JBody> itemClz)
+			throws IOException, SemanticException {
+		if (jreq.body == null)
+			throw new SemanticException("Request must have message body.");
+		
 		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
         writer.setIndent("  ");
 		writer.beginObject();
 		writer.name("port").value(jreq.port().name());
 
-		writer.name("header").beginObject();
+		writer.name("header"); //.beginObject();
 		if (jreq.header != null)
 			gson.toJson(jreq.header, JHeader.class, writer);
-		writer.endObject();
+		else {
+			writer.beginObject();
+			writer.endObject();
+		}
 
 		writer.name("body").beginArray();
-        for (JBody message : jreq.body) 
-        	message.toJson(writer);
+        for (JBody bodyItem : jreq.body) 
+        	bodyItem.toJson(writer);
             // gson.toJson(message, itemClz, writer);
 		writer.endArray();
 		writer.endObject();
@@ -154,44 +165,89 @@ public class JHelper<T extends JBody> {
 		JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
 		SemanticObject obj = new SemanticObject();
 		
-		try {
-			reader.beginObject();
-			JsonToken tk = reader.peek();
-
-			while (tk != null && tk != JsonToken.END_DOCUMENT) {
-				switch (tk) {
-				case NAME:
-					String name = reader.nextName();
-					if (name != null && "rs".equals(name))
-						obj.put("rs", readRs(reader));
-					else if (name != null && "map".equals(name))
-						obj.put("map", readMap(reader));
-					else {
-						tk = reader.peek();
-						if (tk == JsonToken.NULL) {
-							reader.nextNull();
-							obj.put(name, null);
-						}
-						else
-							obj.put(name, reader.nextString());
-					}
-					break;
-				default:
-					// reader.close();
-					break;
-				}
-				if (tk != JsonToken.END_DOCUMENT)
-					tk = reader.peek();
-				if (tk == JsonToken.END_OBJECT)
-					break;
-			}
-		} catch (Exception e) {
-			throw new SemanticException("Parsing response failed. Internal error: %s", e.getMessage());
-		}
-		finally {
-			reader.close();
-		}
+//		try {
+//			reader.beginObject();
+//			JsonToken tk = reader.peek();
+//
+//			while (tk != null && tk != JsonToken.END_DOCUMENT) {
+//				switch (tk) {
+//				case NAME:
+//					String name = reader.nextName();
+//					if (name != null && "rs".equals(name))
+//						obj.put("rs", readRs(reader));
+//					else if (name != null && "map".equals(name))
+//						obj.put("map", readMap(reader));
+//					else {
+//						tk = reader.peek();
+//						if (tk == JsonToken.NULL) {
+//							reader.nextNull();
+//							obj.put(name, null);
+//						}
+//						else if (tk == JsonToken.BEGIN_OBJECT)
+//							obj.put(name, readSemanticObj(reader));
+//						else
+//							obj.put(name, reader.nextString());
+//					}
+//					break;
+//				default:
+//					// reader.close();
+//					break;
+//				}
+//				if (tk != JsonToken.END_DOCUMENT)
+//					tk = reader.peek();
+//				if (tk == JsonToken.END_OBJECT)
+//					break;
+//			}
+//			reader.endObject();
+//		} catch (Exception e) {
+//			throw new SemanticException("Parsing response failed. Internal error: %s", e.getMessage());
+//		}
+//		finally {
+//			reader.close();
+//		}
 		
+		obj = readSemanticObj(reader);
+		return obj;
+	}
+
+	private static SemanticObject readSemanticObj(JsonReader reader) throws IOException {
+		SemanticObject obj = new SemanticObject();
+		reader.beginObject();
+
+		JsonToken tk = reader.peek();
+
+		while (tk != null && tk != JsonToken.END_DOCUMENT) {
+			switch (tk) {
+			case NAME:
+				String name = reader.nextName();
+				if (name != null && "rs".equals(name))
+					// semantics: rs is list
+					obj.put("rs", readRs(reader));
+			else if (name != null && "map".equals(name))
+					// semantics: map is Map
+					obj.put("map", readMap(reader));
+				else {
+					tk = reader.peek();
+					if (tk == JsonToken.NULL) {
+						reader.nextNull();
+						obj.put(name, null);
+					}
+					else if (tk == JsonToken.BEGIN_OBJECT)
+						obj.put(name, readSemanticObj(reader));
+					else
+						obj.put(name, reader.nextString());
+				}
+				break;
+			default:
+				// reader.close();
+				break;
+			}
+			if (tk != JsonToken.END_DOCUMENT)
+				tk = reader.peek();
+			if (tk == JsonToken.END_OBJECT)
+				break;
+		}
+		reader.endObject();
 		return obj;
 	}
 
@@ -368,6 +424,32 @@ public class JHelper<T extends JBody> {
 		InputStream in = new ByteArrayInputStream(head.getBytes());
 		JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
 		return readHeader(reader);
+	}
+	
+	public static void logi(SemanticObject obj) {
+		try {
+			if (printCaller) {
+				StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+				System.out.println(String.format("log by        %s.%s(%s:%s)", 
+								stElements[2].getClassName(), stElements[2].getMethodName(),
+								stElements[2].getFileName(), stElements[2].getLineNumber()));
+				if (stElements.length > 3)
+				System.out.println(String.format("              %s.%s(%s:%s)", 
+								stElements[3].getClassName(), stElements[3].getMethodName(),
+								stElements[3].getFileName(), stElements[3].getLineNumber()));
+			}
+
+			if (obj != null) {
+    			OutputStream os = new ByteArrayOutputStream();
+    			writeJsonResp(os, obj);
+				System.out.println(os.toString());
+			}
+
+		} catch (Exception ex) {
+			StackTraceElement[] x = ex.getStackTrace();
+			System.err.println(String.format("logi(): Can't print. Error: %s. called by %s.%s()",
+					ex.getMessage(), x[0].getClassName(), x[0].getMethodName()));
+		}
 	}
 }
 
