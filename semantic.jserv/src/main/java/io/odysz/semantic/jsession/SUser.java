@@ -87,9 +87,9 @@ class SUser extends SemanticObject implements IUser {
 		return ssid;
 	}
 
-	public String json() {
-		return "user json ...";
-	}
+//	public String json() {
+//		return "user json ...";
+//	}
 
 	@Override
 	public boolean login(Object request) throws TransException {

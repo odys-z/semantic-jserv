@@ -2,6 +2,7 @@ package io.odysz.semantic.jserv.user;
 
 import java.io.IOException;
 
+import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
@@ -22,5 +23,9 @@ public class JUserBody extends JBody {
 		writer.beginObject();
 		writer.name("data").value("user");
 		writer.endObject();
+	}
+
+	@Override
+	public void fromJson(JsonReader reader) throws IOException {
 	}
 }

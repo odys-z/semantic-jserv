@@ -37,11 +37,15 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 				throws IOException, SemanticException, ReflectiveOperationException {
 		InputStream in = null; 
 		String headstr = req.getParameter("header");
-		if (headstr != null && headstr.length() > 3) {
+		if (headstr != null && headstr.length() > 1) {
 			byte[] b = headstr.getBytes();
 			in = new ByteArrayInputStream(b);
 		}
-		else in = req.getInputStream();
+		else {
+			if (req.getContentLength() == 0)
+				return null;
+			in = req.getInputStream();
+		}
 		
 		JMessage<T> msg = jreqHelper.readJson(in, bodyItemclazz);
 		in.close();

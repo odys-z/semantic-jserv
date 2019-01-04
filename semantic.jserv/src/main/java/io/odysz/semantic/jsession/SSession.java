@@ -88,7 +88,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		int m = 20;
 		try { m = Integer.valueOf(Configs.getCfg("ss-timeout-min"));} catch (Exception e) {}
 		if (ServFlags.session)
-			Utils.warn("IrSession debug mode true (ServFlage.session)");
+			Utils.warn("SSession debug mode true (ServFlage.session)");
 
         schedualed = scheduler.scheduleAtFixedRate(
         		new SessionChecker(users, m),
@@ -349,7 +349,8 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @throws ReflectiveOperationException 
 	 * @throws SemanticException 
 	 */
-	public static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName) throws ReflectiveOperationException, SemanticException {
+	public static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName)
+			throws ReflectiveOperationException, SemanticException {
 		if (!Configs.hasCfg(clsNamekey))
 			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 		String clsname = Configs.getCfg(clsNamekey);

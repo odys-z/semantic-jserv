@@ -29,6 +29,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Transcxt;
+import io.odysz.transact.sql.Query.Ix;
 import io.odysz.transact.sql.parts.select.JoinTabl.join;
 import io.odysz.transact.x.TransException;
 
@@ -119,21 +120,19 @@ public class SQuery extends HttpServlet {
 		Query selct = st.select(msg.mtabl, msg.mAlias);
 		if (msg.exprs != null && msg.exprs.size() > 0)
 			for (String[] col : msg.exprs)
-				// TODO extend col()
-				selct.col(col[0], col[2], col[1]);
+				selct.col(col[Ix.exprExpr], col[Ix.exprAlais]);
 		
 		if (msg.joins != null && msg.joins.size() > 0) {
 			for (String[] j : msg.joins)
-//				 selct.j(join.parse(j[0]), j[1], j[2], j[3]);
-				 selct.j(join.parse(j[Query.Ix.JoinType]),
-						 			j[Query.Ix.JoinTabl],
-						 			j[Query.Ix.JoinAlias],
-						 			j[Query.Ix.JoinOnCond]);
+				 selct.j(join.parse(j[Ix.joinType]),
+						 			j[Ix.joinTabl],
+						 			j[Ix.joinAlias],
+						 			j[Ix.joinOnCond]);
 		}
 		
 		if (msg.where != null && msg.where.size() > 0) {
 			for (String[] cond : msg.where)
-				selct.where(cond[1], cond[0], cond[2]);
+				selct.where(cond[Ix.predicateOper], cond[Ix.predicateL], cond[Ix.predicateR]);
 		}
 		
 		// TODO: GROUP

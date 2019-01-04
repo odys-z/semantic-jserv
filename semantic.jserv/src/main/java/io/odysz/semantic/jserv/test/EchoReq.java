@@ -3,6 +3,7 @@ package io.odysz.semantic.jserv.test;
 
 import java.io.IOException;
 
+import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
@@ -19,5 +20,11 @@ public class EchoReq extends JBody {
 		writer.beginObject();
 		writer.name("echo").value("ping");
 		writer.endObject();
+	}
+
+	@Override
+	public void fromJson(JsonReader reader) throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 }

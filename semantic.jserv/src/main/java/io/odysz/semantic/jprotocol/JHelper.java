@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,44 +35,11 @@ public class JHelper<T extends JBody> {
 
 	private static Gson gson = new Gson();
 
-	/*
 	public static void writeJsonResp(OutputStream os, SemanticObject msg) throws IOException {
 		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
-		writer.beginObject();
-		writer.name("port").value(msg.getString("port"));
-		writer.name("code").value(msg.getString("code"));
-		if (msg.getType("error") != null)
-			writer.name("error").value(msg.getString("error"));
-
-		Class<?> t = msg.getType("msg");
-		if (t == SemanticObject.class)
-			// writer.name("msg").value(msg.get("msg"));
-			writeJsonResp(os, (SemanticObject) msg.get("msg"));
-		else if (t != null) // string, object, ...
-			writer.name("msg").value(msg.get("msg").toString());
-		// else t is null, no such property
-
-		// TODO body ...
-		writer.endObject();
-		writer.close();
-	}
-	*/
-	//
-	public static void writeJsonResp(OutputStream os, SemanticObject msg) throws IOException {
-		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
-//		writer.beginObject();
-//		HashMap<String, Object> ps = msg.props();
-//		for (String n : ps.keySet()) {
-//			Class<?> t = msg.getType(n);
-//			Object v = msg.get(n);
-//			writer.name(n);
-//			writeRespValue(writer, t, v);
-//		}
-//		writer.endObject();
 		writeJsonValue(writer, msg);
 		writer.close();
 	}
-
 
 	@SuppressWarnings("unchecked")
 	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v) throws IOException {
@@ -80,7 +48,6 @@ public class JHelper<T extends JBody> {
 		}
 		else if (SemanticObject.class.isAssignableFrom(t)) {
 			 writeJsonValue(writer, (SemanticObject) v);
-//			((SemanticObject)v).jsonValue(writer);
 		}
 		else if (Map.class.isAssignableFrom(t)) {
 			writeMap(writer, (Map<?, ?>) v);
@@ -91,7 +58,6 @@ public class JHelper<T extends JBody> {
 		else
 			writer.value(v.toString());
 	}
-
 
 	private static void writeJsonValue(JsonWriter writer, SemanticObject v) throws IOException {
 		writer.beginObject();
@@ -106,7 +72,6 @@ public class JHelper<T extends JBody> {
 		writer.endObject();
 	}
 
-
 	private static void writeLst(JsonWriter writer, List<Object> lst) throws IOException {
 		writer.beginArray();
 		for (Object v : lst) {
@@ -115,7 +80,6 @@ public class JHelper<T extends JBody> {
 		
 		writer.endArray();
 	}
-
 
 	private static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException {
 		writer.beginArray();
@@ -164,47 +128,6 @@ public class JHelper<T extends JBody> {
 	public static SemanticObject readResp(InputStream in) throws IOException, SemanticException {
 		JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
 		SemanticObject obj = new SemanticObject();
-		
-//		try {
-//			reader.beginObject();
-//			JsonToken tk = reader.peek();
-//
-//			while (tk != null && tk != JsonToken.END_DOCUMENT) {
-//				switch (tk) {
-//				case NAME:
-//					String name = reader.nextName();
-//					if (name != null && "rs".equals(name))
-//						obj.put("rs", readRs(reader));
-//					else if (name != null && "map".equals(name))
-//						obj.put("map", readMap(reader));
-//					else {
-//						tk = reader.peek();
-//						if (tk == JsonToken.NULL) {
-//							reader.nextNull();
-//							obj.put(name, null);
-//						}
-//						else if (tk == JsonToken.BEGIN_OBJECT)
-//							obj.put(name, readSemanticObj(reader));
-//						else
-//							obj.put(name, reader.nextString());
-//					}
-//					break;
-//				default:
-//					// reader.close();
-//					break;
-//				}
-//				if (tk != JsonToken.END_DOCUMENT)
-//					tk = reader.peek();
-//				if (tk == JsonToken.END_OBJECT)
-//					break;
-//			}
-//			reader.endObject();
-//		} catch (Exception e) {
-//			throw new SemanticException("Parsing response failed. Internal error: %s", e.getMessage());
-//		}
-//		finally {
-//			reader.close();
-//		}
 		
 		obj = readSemanticObj(reader);
 		return obj;
@@ -363,8 +286,7 @@ public class JHelper<T extends JBody> {
 					else if (name != null && "header".equals(name.trim().toLowerCase()))
 						msg.header(readHeader(reader));
 					else if (name != null && "body".equals(name.trim().toLowerCase())) {
-						List<T> m = readBody(reader, bodyItemclzz, msg);
-						msg.body(m);
+						readBody(reader, bodyItemclzz, msg);
 					}
 					else {
 						reader.close();
@@ -387,30 +309,36 @@ public class JHelper<T extends JBody> {
 		return msg;
 	}
 
-	/**<p>Read message body (deserialization).</p>
+	/**<p>Read message body into parent's body. (deserialization).</p>
 	 * <p>In the current version (0.1.0), the method using Gson, and the debugging shows only
 	 * fields with getter can be deserialized.</p>
 	 * @param reader
 	 * @param elemClass
 	 * @param parent
-	 * @return
+	 * @throws SemanticException
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unchecked")
-	protected List<T> readBody(JsonReader reader, Class<? extends JBody> elemClass, JMessage<?> parent)
-			throws IOException {
+	protected void readBody(JsonReader reader, Class<? extends JBody> elemClass, JMessage<? extends JBody> parent)
+			throws SemanticException, IOException {
 		reader.beginArray();
-		List<T> messages = new ArrayList<T>();
-		while (reader.hasNext()) {
-			T message;
-			// debugging shows that only fields with getter can be deserialized
-			try { message = gson.fromJson(reader, elemClass); }
-			catch (Exception me) { message = (T) new JErrBody(parent, me.getMessage());}
-			message.parent = parent;
-			messages.add(message);
+//		List<T> messages = new ArrayList<T>();
+		while (reader.hasNext() && reader.peek() != JsonToken.END_ARRAY) {
+			JBody bodyItem;
+			try {
+				Constructor<? extends JBody> ctor = elemClass.getConstructor(parent.getClass());
+
+				bodyItem = ctor.newInstance(parent);
+			} catch (Exception ie) {
+				throw new SemanticException("Can't find %1$s's constructor %1$s(%2$s): %3$s - %4$s",
+						elemClass.getName(), parent.getClass().getName(), ie.getClass().getName(), ie.getMessage());
+			}
+
+			bodyItem.fromJson(reader);
+			parent.body(bodyItem);
+//			messages.add((T)bodyItem);
 		}
 		reader.endArray();
-		return messages;
+//		return messages;
 	}
 
 	protected JHeader readHeader(JsonReader reader) throws IOException {

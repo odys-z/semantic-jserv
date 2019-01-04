@@ -2,6 +2,7 @@ package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
 
+import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 public abstract class JBody {
@@ -15,7 +16,7 @@ public abstract class JBody {
 
 	protected JMessage<? extends JBody> parent;
 
-	public JBody(JMessage<? extends JBody> parent) {
+	protected JBody(JMessage<? extends JBody> parent) {
 		this.parent = parent;
 	}
 
@@ -32,10 +33,16 @@ public abstract class JBody {
 		return this;
 	}
 
-	/** Sesrialize this object into json, with help of JsonWriter
+	/** Serialize this object into json, with help of JsonWriter. { a: login, ... }
 	 * @param writer
 	 * @throws IOException
 	 */
 	public abstract void toJson(JsonWriter writer) throws IOException;
+
+	/**Deserialize body item object from reader into fields.
+	 * @param reader
+	 * @throws IOException
+	 */
+	public abstract void fromJson(JsonReader reader) throws IOException;
 
 }

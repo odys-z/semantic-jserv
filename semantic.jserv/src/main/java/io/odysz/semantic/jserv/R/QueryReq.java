@@ -3,6 +3,8 @@ package io.odysz.semantic.jserv.R;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
@@ -65,11 +67,22 @@ public class QueryReq extends JBody {
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
 	ArrayList<String[]> groups;
-	private int page;
-	private int pgsize;
+
+	int page;
+	int pgsize;
 
 	public QueryReq(JMessage<? extends JBody> parent) {
 		super(parent);
+		a = "r";
+	}
+
+	public QueryReq(JMessage<? extends JBody> parent, String fromTbl, String... alias) {
+		super(parent);
+		a = "r";
+
+		mtabl = fromTbl;
+		mAlias = alias == null || alias.length == 0 ? null : alias[0];
+		
 		this.page = 0;
 		this.pgsize = 20;
 	}
@@ -101,11 +114,11 @@ public class QueryReq extends JBody {
 	public QueryReq j(String t, String with, String as, String on) {
 		if (joins == null)
 			joins = new ArrayList<String[]>();
-		String[] j = new String[Ix.JoinSize];
-		j[Ix.JoinTabl] = with;
-		j[Ix.JoinAlias] = as;
-		j[Ix.JoinType] = t;
-		j[Ix.JoinOnCond] = on;
+		String[] j = new String[Ix.joinSize];
+		j[Ix.joinTabl] = with;
+		j[Ix.joinAlias] = as;
+		j[Ix.joinType] = t;
+		j[Ix.joinOnCond] = on;
 		return j(j);
 	}
 	
@@ -114,25 +127,41 @@ public class QueryReq extends JBody {
 		return this;
 	}
 
-	public void expr(String expr, String alais, String[] tabl) {
+	public QueryReq expr(String expr, String alais, String[] tabl) {
 		if (exprs == null)
 			exprs = new ArrayList<String[]>();
-		String[] exp = new String[Ix.ExprSize];
-		exp[Ix.ExprExpr] = expr;
-		exp[Ix.ExprAlais] = expr;
-		exp[Ix.ExprTabl] = tabl == null || tabl.length == 0 ? null : tabl[0];
+		String[] exp = new String[Ix.exprSize];
+		exp[Ix.exprExpr] = expr;
+		exp[Ix.exprAlais] = expr;
+		exp[Ix.exprTabl] = tabl == null || tabl.length == 0 ? null : tabl[0];
 		exprs.add(exp);
+		return this;
+	}
+	
+	public QueryReq where(String oper, String lop, String rop) {
+		if (where == null)
+			where = new ArrayList<String[]>();
+
+		String[] predicate = new String[Ix.predicateSize];
+		predicate[Ix.predicateOper] = oper;
+		predicate[Ix.predicateL] = lop;
+		predicate[Ix.predicateR] = rop;
+
+		where.add(predicate);
+		return this;
 	}
 
 	/**<p>Create a qeury request body item, for joining etc.,
 	 * and can be serialized into json by {@link #toJson(JsonWriter)}.</p>
 	 * <p>Client side helper, don't confused with {@link Query}.</p>
-	 * @param jmsg
+	 * @param parent
 	 * @param ssInf
-	 * @return
+	 * @param from 
+	 * @param as 
+	 * @return query request
 	 */
-	public static QueryReq formatReq(JMessage<QueryReq> jmsg, SemanticObject ssInf) {
-		QueryReq bdItem = new QueryReq(jmsg);
+	public static QueryReq formatReq(JMessage<QueryReq> parent, SemanticObject ssInf, String from, String as) {
+		QueryReq bdItem = new QueryReq(parent, from, as);
 		return bdItem;
 	}
 
@@ -147,17 +176,67 @@ public class QueryReq extends JBody {
 			writer.name("joins");
 			writer.beginArray();
 			for (String[] join : joins) {
-				writer.beginObject();
+				writer.beginArray();
 				for (int i = 0; i < join.length; i++) {
 					if (join[i] == null)
 						writer.value("");
 					else
 						writer.value(join[i]);
 				}
+				writer.endArray();
 			}
 			writer.endArray();
 		}
 		// TODO exprs ...
 		writer.endObject();
+	}
+
+	@Override
+	public void fromJson(JsonReader reader) throws IOException {
+		JsonToken token = reader.peek();
+		if (token == JsonToken.BEGIN_OBJECT) {
+			reader.beginObject();
+			while (token != JsonToken.END_OBJECT) {
+				String name = reader.nextName();
+				if ("a".equals(name))
+					a = reader.nextString();
+				else if ("mtabl".equals(name))
+					mtabl = reader.nextString();
+				else if ("mAlias".equals(name))
+					mAlias = reader.nextString();
+				else if ("joins".equals(name))
+					joins = fromJsonStrings(reader);
+				// TODO ...
+				token = reader.peek();
+			}
+			reader.endObject();
+		}
+	}
+
+	/**deserialize "[{n,v, m,u,...},...]" to list.
+	 * @param reader
+	 * @return list
+	 * @throws IOException
+	 */
+	private static ArrayList<String[]> fromJsonStrings(JsonReader reader) throws IOException {
+		ArrayList<String[]> lst = new ArrayList<String[]>();
+		reader.beginArray();
+
+		// for the type
+		String[] dumb = new String[] {};
+		
+		while (reader.peek() != JsonToken.END_ARRAY) {
+			reader.beginArray();
+			JsonToken tk = reader.peek();
+			ArrayList<String> join = new ArrayList<String>();
+			while (tk != JsonToken.END_ARRAY) {
+				join.add(reader.nextString());
+				tk = reader.peek();
+			}
+			lst.add(join.toArray(dumb));
+			reader.endArray();
+		}
+		reader.endArray();
+		return lst;
 	}
 }
