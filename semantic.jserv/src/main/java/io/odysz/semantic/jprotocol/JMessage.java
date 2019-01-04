@@ -80,12 +80,6 @@ public class JMessage <T extends JBody> {
 	MsgCode code;
 	String msg;
 
-	protected List<T> body;
-
-	public T body(int i) {
-		return body.get(0);
-	}
-	
 	JMessage() {
 		seq = (int) (Math.random() * 1000);
 	}
@@ -95,6 +89,17 @@ public class JMessage <T extends JBody> {
 		seq = (int) (Math.random() * 1000);
 	}
 	
+	protected List<T> body;
+	public T body(int i) { return body.get(0); }
+	public List<T> body() { return body; }
+
+	@SuppressWarnings("unchecked")
+	public void body(JBody bodyItem) {
+		if (body == null)
+			body = new ArrayList<T>();
+		body.add((T)bodyItem);
+	}
+
 	public JMessage<T> incSeq() {
 		seq++;
 		return this;
@@ -112,16 +117,6 @@ public class JMessage <T extends JBody> {
 	public JMessage<T> body(List<T> bodyItems) {
 		this.body = bodyItems;
 		return this;
-	}
-
-	public void body(T itm) {
-		if (body == null)
-			body = new ArrayList<T>();
-		body.add(itm);
-	}
-	
-	public List<T> body() {
-		return body;
 	}
 
 	static String pairPrmv = "'%s': %s";

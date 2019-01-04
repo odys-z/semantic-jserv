@@ -1,17 +1,15 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
-import java.io.InputStream;
 
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.JBody;
-import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.Port;
-import io.odysz.semantics.IUser;
-import io.odysz.semantics.SemanticObject;
-import io.odysz.semantics.x.SemanticException;
 
 public class SessionReq extends JBody {
 	public SessionReq(JMessage<SessionReq> parent) {
@@ -35,7 +33,7 @@ public class SessionReq extends JBody {
 
 		itm.setup(uid, tk64, iv64);
 
-		jmsg.body(itm);
+		jmsg.body((JBody)itm);
 		return jmsg;
 	}
 
@@ -45,10 +43,10 @@ public class SessionReq extends JBody {
 		this.iv = iv64;
 	}
 
-	public static IUser parseLogin(InputStream in, String uid, String tk64, String iv64) throws SemanticException, IOException {
-		SemanticObject jmsg = JHelper.readResp(in);
-		return new SUser(jmsg);
-	}
+//	public static IUser parseLogin(InputStream in, String uid, String tk64, String iv64) throws SemanticException, IOException {
+//		SemanticObject jmsg = JHelper.readResp(in);
+//		return new SUser(jmsg);
+//	}
 
 	@Override
 	public void toJson(JsonWriter writer) throws IOException {
@@ -59,5 +57,29 @@ public class SessionReq extends JBody {
 		writer.name("token").value(token());
 		writer.endObject();
 	}
+
+	@Override
+	public void fromJson(JsonReader reader) throws IOException {
+		JsonToken token = reader.peek();
+		if (token == JsonToken.BEGIN_OBJECT) {
+			reader.beginObject();
+			while (token != JsonToken.END_OBJECT) {
+				String name = reader.nextName();
+				if ("a".equals(name))
+					a = reader.nextString();
+				else if ("uid".equals(name))
+					uid = reader.nextString();
+				else if ("iv".equals(name))
+					iv = reader.nextString();
+				else if ("token".equals(name))
+					this.token = reader.nextString();
+				else
+					Utils.warn("Session request's property ignored: %s : %s", name, reader.nextString());
+				token = reader.peek();
+			}
+			reader.endObject();
+		}
+	}
+
 }
 

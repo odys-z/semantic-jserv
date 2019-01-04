@@ -3,6 +3,7 @@ package io.odysz.semantic.jserv.U;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
@@ -68,6 +69,13 @@ public class UpdateReq extends JBody {
 	@Override
 	public void toJson(JsonWriter writer) throws IOException {
 		writer.beginObject().endArray();
+	}
+
+
+	@Override
+	public void fromJson(JsonReader reader) throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	/**orders: [order-obj],
