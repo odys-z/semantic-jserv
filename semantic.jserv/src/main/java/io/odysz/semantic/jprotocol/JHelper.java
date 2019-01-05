@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,31 +36,73 @@ public class JHelper<T extends JBody> {
 
 	private static Gson gson = new Gson();
 
-	public static void writeJsonResp(OutputStream os, SemanticObject msg) throws IOException {
+	public static void writeJsonResp(OutputStream os, SemanticObject msg) throws IOException, SQLException {
 		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
 		writeJsonValue(writer, msg);
 		writer.close();
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v) throws IOException {
+	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v) throws IOException, SQLException {
 		if (IUser.class.isAssignableFrom(t)) {
 			((IUser)v).writeJsonRespValue(writer);
 		}
 		else if (SemanticObject.class.isAssignableFrom(t)) {
 			 writeJsonValue(writer, (SemanticObject) v);
 		}
+		else if (t == String[].class) {
+			writeStrings(writer, (String[])v);
+		}
+		else if (v instanceof SResultset) {
+			SResultset rs = (SResultset)v;
+			writeRs(writer, rs);
+		}
 		else if (Map.class.isAssignableFrom(t)) {
 			writeMap(writer, (Map<?, ?>) v);
 		}
 		else if (List.class.isAssignableFrom(t)) {
-			writeLst(writer, (List<Object>) v);
+			writeLst(writer, (List<Object[]>) v);
 		}
 		else
 			writer.value(v.toString());
 	}
 
-	private static void writeJsonValue(JsonWriter writer, SemanticObject v) throws IOException {
+	public static void writeStrings(JsonWriter writer, String[] v) throws IOException {
+		writer.beginArray();
+		for (int i = 0; i < v.length; i++) {
+			if (v[i] == null)
+				writer.value("");
+			else
+				writer.value(v[i]);
+		}
+		writer.endArray();
+	}
+
+	private static void writeRs(JsonWriter writer, SResultset rs) throws IOException, SQLException {
+		// [ [col1, col2, ...],
+		//   [cel1, cel2, ...], ...
+		writer.beginArray();
+
+		// starting from 1
+		writer.beginArray();
+		for (int c = 1; c <= rs.getColCount(); c++) {
+			writer.value(rs.getColumnName(c));
+		}
+		writer.endArray();
+
+		rs.beforeFirst();
+		while (rs.next()) {
+			writer.beginArray();
+			for (int ix = 1; ix <= rs.getColCount(); ix++) {
+				writer.value(rs.getString(ix));
+			}
+			writer.endArray();
+		}
+
+		writer.endArray();
+	}
+
+	private static void writeJsonValue(JsonWriter writer, SemanticObject v) throws IOException, SQLException {
 		writer.beginObject();
 		HashMap<String, Object> ps = v.props();
 		if (ps != null)
@@ -72,7 +115,7 @@ public class JHelper<T extends JBody> {
 		writer.endObject();
 	}
 
-	private static void writeLst(JsonWriter writer, List<Object> lst) throws IOException {
+	public static void writeLst(JsonWriter writer, List<Object[]> lst) throws IOException, SQLException {
 		writer.beginArray();
 		for (Object v : lst) {
 			writeRespValue(writer, v.getClass(), v);
@@ -81,7 +124,7 @@ public class JHelper<T extends JBody> {
 		writer.endArray();
 	}
 
-	private static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException {
+	private static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException, SQLException {
 		writer.beginArray();
 		for (Object k : map.keySet()) {
 			Object v = map.get(k);
@@ -145,7 +188,7 @@ public class JHelper<T extends JBody> {
 				String name = reader.nextName();
 				if (name != null && "rs".equals(name))
 					// semantics: rs is list
-					obj.put("rs", readRs(reader));
+					obj.put("rs", readLstRs(reader));
 			else if (name != null && "map".equals(name))
 					// semantics: map is Map
 					obj.put("map", readMap(reader));
@@ -162,7 +205,6 @@ public class JHelper<T extends JBody> {
 				}
 				break;
 			default:
-				// reader.close();
 				break;
 			}
 			if (tk != JsonToken.END_DOCUMENT)
@@ -193,15 +235,68 @@ public class JHelper<T extends JBody> {
 			tk = reader.peek();
 		}
 
-		if (tk == JsonToken.END_ARRAY) {
+		if (tk == JsonToken.END_ARRAY)
 			reader.endArray();
+
+		return m;
+	}
+
+	public static ArrayList<Object[]> readLstStrs(JsonReader reader) throws IOException {
+		ArrayList<Object[]> lst = new ArrayList<Object[]>();
+		reader.beginArray();
+
+		JsonToken tk = reader.peek();
+		while (tk != JsonToken.END_ARRAY) {
+			String[] rs = readStrs(reader);
+			lst.add(rs);
+			tk = reader.peek();
+		}
+
+		reader.endArray();
+		return lst;
+	}
+
+	public static String[] readStrs(JsonReader reader) throws IOException {
+		reader.beginArray();
+
+		ArrayList<String> strs = new ArrayList<String>();
+		
+		JsonToken tk = reader.peek();
+		// error tolerating is necessary?
+		if (tk == JsonToken.END_DOCUMENT)
+			return strs.toArray(new String[] {});
+
+		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
+			String v = null;
+			if (tk != JsonToken.NULL)
+				v = reader.nextString();
+			else {
+				v = null;
+				reader.nextNull();
+			};
+			strs.add(v);
 			tk = reader.peek();
 		}
 
 		if (tk == JsonToken.END_ARRAY)
 			reader.endArray();
 
-		return m;
+		return strs.toArray(new String[] {});
+	}
+
+	public static List<?> readLstRs(JsonReader reader) throws IOException {
+		ArrayList<Object> lst = new ArrayList<Object>();
+		reader.beginArray();
+
+		JsonToken tk = reader.peek();
+		while (tk != JsonToken.END_ARRAY) {
+			SResultset rs = readRs(reader);
+			lst.add(rs);
+			tk = reader.peek();
+		}
+
+		reader.endArray();
+		return lst;
 	}
 
 	/**Read {@link SResultset}.
@@ -219,10 +314,13 @@ public class JHelper<T extends JBody> {
 		JsonToken tk = reader.peek();
 		int c = 1;
 		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
-			colnames.put(reader.nextString(), c);
+			if (tk != JsonToken.NULL)
+				colnames.put(reader.nextString(), c);
+			else reader.nextNull();
 			c++;
 			tk = reader.peek();
 		}
+		reader.endArray();
 
 		SResultset rs = new SResultset(colnames);
 		
@@ -237,8 +335,15 @@ public class JHelper<T extends JBody> {
 			ArrayList<Object> row = new ArrayList<Object>(colnames.size());
 			c = 0;
 			while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
-				String v = reader.nextString();
+				String v = null;
+				if (tk != JsonToken.NULL)
+					v = reader.nextString();
+				else {
+					v = null;
+					reader.nextNull();
+				};
 				row.add(c, v);
+				c++;
 				tk = reader.peek();
 			}
 			rs.append(row);
@@ -290,7 +395,8 @@ public class JHelper<T extends JBody> {
 					}
 					else {
 						reader.close();
-						throw new SemanticException("Can't parse json message: %s, %s", bodyItemclzz.toString(), msg.toString());
+						throw new SemanticException("Can't parse json message: %s, %s",
+								bodyItemclzz.toString(), msg.toString());
 					}
 					break;
 				case END_OBJECT:
@@ -298,7 +404,8 @@ public class JHelper<T extends JBody> {
 					break;
 				default:
 					reader.close();
-					throw new SemanticException("Can't parse json message: %s, %s", bodyItemclzz.toString(), msg.toString());
+					throw new SemanticException("Can't parse json message: %s, %s",
+							bodyItemclzz.toString(), msg.toString());
 				}
 				token = reader.peek();
 			}
@@ -318,10 +425,9 @@ public class JHelper<T extends JBody> {
 	 * @throws SemanticException
 	 * @throws IOException
 	 */
-	protected void readBody(JsonReader reader, Class<? extends JBody> elemClass, JMessage<? extends JBody> parent)
-			throws SemanticException, IOException {
+	protected void readBody(JsonReader reader, Class<? extends JBody> elemClass,
+			JMessage<? extends JBody> parent) throws SemanticException, IOException {
 		reader.beginArray();
-//		List<T> messages = new ArrayList<T>();
 		while (reader.hasNext() && reader.peek() != JsonToken.END_ARRAY) {
 			JBody bodyItem;
 			try {
@@ -330,15 +436,14 @@ public class JHelper<T extends JBody> {
 				bodyItem = ctor.newInstance(parent);
 			} catch (Exception ie) {
 				throw new SemanticException("Can't find %1$s's constructor %1$s(%2$s): %3$s - %4$s",
-						elemClass.getName(), parent.getClass().getName(), ie.getClass().getName(), ie.getMessage());
+						elemClass.getName(), parent.getClass().getName(),
+						ie.getClass().getName(), ie.getMessage());
 			}
 
 			bodyItem.fromJson(reader);
 			parent.body(bodyItem);
-//			messages.add((T)bodyItem);
 		}
 		reader.endArray();
-//		return messages;
 	}
 
 	protected JHeader readHeader(JsonReader reader) throws IOException {
