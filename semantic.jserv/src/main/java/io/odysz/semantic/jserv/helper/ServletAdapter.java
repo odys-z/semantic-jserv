@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.sql.SQLException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -53,23 +54,17 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 		return msg;
 	}
 
-//	public static void write(HttpServletResponse resp, JHelper<? extends JMessage> jrespHelper,
-//				SemanticObject msg)
-//				throws IOException {
-//		resp.setCharacterEncoding("UTF-8");
-//		OutputStream os = resp.getOutputStream();
-//		
-//		jrespHelper.writeJson(os, msg);
-//		os.flush();
-//	}
-
 	public static void write(HttpServletResponse resp, 
 				SemanticObject msg) throws IOException {
 		resp.setCharacterEncoding("UTF-8");
 		resp.setContentType("application/json");
 		OutputStream os = resp.getOutputStream();
 		
-		JHelper.writeJsonResp(os, msg);
+		try {
+			JHelper.writeJsonResp(os, msg);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		/*
 		// TODO move to JProtocol
 		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));

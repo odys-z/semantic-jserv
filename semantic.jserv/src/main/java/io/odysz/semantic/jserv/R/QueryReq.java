@@ -1,6 +1,7 @@
 package io.odysz.semantic.jserv.R;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import com.google.gson.stream.JsonReader;
@@ -8,6 +9,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
+import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.sql.Query;
@@ -50,23 +52,23 @@ public class QueryReq extends JBody {
             	cond-obj: {(main-table | alais.)left-col-val op (table-1 | alias2 .)right-col-val}
            				- op: '=' | '&lt;=' | '&gt;=' ...</pre>
 	 */
-	ArrayList<String[]> joins;
+	ArrayList<Object[]> joins;
 
 	/**exprs: [expr-obj],
 	 * expr-obj: {tabl: "b_articles/t_alais", alais: "recId", expr: "recId"}
 	 *  */
-	ArrayList<String[]> exprs;
+	ArrayList<Object[]> exprs;
 	
 	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
-	ArrayList<String[]> where;
+	ArrayList<Object[]> where;
 	
 	/**orders: [order-obj],
      - order-obj: {tabl: "b_articles", field: "pubDate", asc: "true"} */
-	ArrayList<String[]> orders;
+	ArrayList<Object[]> orders;
 	
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
-	ArrayList<String[]> groups;
+	ArrayList<Object[]> groups;
 
 	int page;
 	int pgsize;
@@ -113,7 +115,7 @@ public class QueryReq extends JBody {
 
 	public QueryReq j(String t, String with, String as, String on) {
 		if (joins == null)
-			joins = new ArrayList<String[]>();
+			joins = new ArrayList<Object[]>();
 		String[] j = new String[Ix.joinSize];
 		j[Ix.joinTabl] = with;
 		j[Ix.joinAlias] = as;
@@ -127,9 +129,9 @@ public class QueryReq extends JBody {
 		return this;
 	}
 
-	public QueryReq expr(String expr, String alais, String[] tabl) {
+	public QueryReq expr(String expr, String alais, String... tabl) {
 		if (exprs == null)
-			exprs = new ArrayList<String[]>();
+			exprs = new ArrayList<Object[]>();
 		String[] exp = new String[Ix.exprSize];
 		exp[Ix.exprExpr] = expr;
 		exp[Ix.exprAlais] = expr;
@@ -140,7 +142,7 @@ public class QueryReq extends JBody {
 	
 	public QueryReq where(String oper, String lop, String rop) {
 		if (where == null)
-			where = new ArrayList<String[]>();
+			where = new ArrayList<Object[]>();
 
 		String[] predicate = new String[Ix.predicateSize];
 		predicate[Ix.predicateOper] = oper;
@@ -172,24 +174,29 @@ public class QueryReq extends JBody {
 		writer.name("mtabl").value(mtabl);
 		writer.name("mAlias").value(mAlias);
 
-		if (joins != null) {
-			writer.name("joins");
-			writer.beginArray();
-			for (String[] join : joins) {
-				writer.beginArray();
-				for (int i = 0; i < join.length; i++) {
-					if (join[i] == null)
-						writer.value("");
-					else
-						writer.value(join[i]);
-				}
-				writer.endArray();
+		try {
+			if (exprs != null) {
+				writer.name("exprs");
+				JHelper.writeLst(writer, exprs);
 			}
-			writer.endArray();
+			else 
+				writer.name("exprs").value("*");
+
+			if (joins != null) {
+				writer.name("joins");
+				JHelper.writeLst(writer, joins);
+			}
+			if (where != null) {
+				writer.name("where");
+				JHelper.writeLst(writer, where);
+			}
+			// TODO orders, groups ...
+		} catch (SQLException e) {
+			e.printStackTrace();	
 		}
-		// TODO exprs ...
 		writer.endObject();
 	}
+
 
 	@Override
 	public void fromJson(JsonReader reader) throws IOException {
@@ -204,8 +211,17 @@ public class QueryReq extends JBody {
 					mtabl = reader.nextString();
 				else if ("mAlias".equals(name))
 					mAlias = reader.nextString();
+				else if ("exprs".equals(name)) {
+					if (reader.peek() == JsonToken.BEGIN_ARRAY)
+						exprs = JHelper.readLstStrs(reader);
+					else reader.nextString(); // skip "*"
+				}
 				else if ("joins".equals(name))
-					joins = fromJsonStrings(reader);
+					// joins = fromJsonStrings(reader);
+					joins = (ArrayList<Object[]>) JHelper.readLstStrs(reader);
+				else if ("where".equals(name))
+					// where = fromJsonStrings(reader);
+					where = (ArrayList<Object[]>) JHelper.readLstStrs(reader);
 				// TODO ...
 				token = reader.peek();
 			}
@@ -217,9 +233,8 @@ public class QueryReq extends JBody {
 	 * @param reader
 	 * @return list
 	 * @throws IOException
-	 */
-	private static ArrayList<String[]> fromJsonStrings(JsonReader reader) throws IOException {
-		ArrayList<String[]> lst = new ArrayList<String[]>();
+	private static ArrayList<Object[]> fromJsonStrings(JsonReader reader) throws IOException {
+		ArrayList<Object[]> lst = new ArrayList<Object[]>();
 		reader.beginArray();
 
 		// for the type
@@ -239,4 +254,5 @@ public class QueryReq extends JBody {
 		reader.endArray();
 		return lst;
 	}
+	 */
 }

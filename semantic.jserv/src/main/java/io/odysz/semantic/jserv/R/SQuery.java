@@ -1,7 +1,6 @@
 package io.odysz.semantic.jserv.R;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -94,17 +93,16 @@ public class SQuery extends HttpServlet {
 			SemanticObject rs = query(msg);
 			
 			resp.setCharacterEncoding("UTF-8");
-			OutputStream os = resp.getOutputStream();
+//			OutputStream os = resp.getOutputStream();
 
 			ServletAdapter.write(resp, rs);
 			resp.flushBuffer();
-			os.close();
+//			os.close();
 		} catch (SemanticException e) {
-			 ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
-		} catch (SQLException e) {
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
+		} catch (SQLException | TransException e) {
 			e.printStackTrace();
-		} catch (TransException e) {
-			e.printStackTrace();
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -119,20 +117,22 @@ public class SQuery extends HttpServlet {
 		QueryReq msg = msgBody.body().get(0);
 		Query selct = st.select(msg.mtabl, msg.mAlias);
 		if (msg.exprs != null && msg.exprs.size() > 0)
-			for (String[] col : msg.exprs)
-				selct.col(col[Ix.exprExpr], col[Ix.exprAlais]);
+			for (Object[] col : msg.exprs)
+				selct.col((String)col[Ix.exprExpr], (String)col[Ix.exprAlais]);
 		
 		if (msg.joins != null && msg.joins.size() > 0) {
-			for (String[] j : msg.joins)
-				 selct.j(join.parse(j[Ix.joinType]),
-						 			j[Ix.joinTabl],
-						 			j[Ix.joinAlias],
-						 			j[Ix.joinOnCond]);
+			for (Object[] j : msg.joins)
+				 selct.j(join.parse((String)j[Ix.joinType]),
+						 			(String)j[Ix.joinTabl],
+						 			(String)j[Ix.joinAlias],
+						 			(String)j[Ix.joinOnCond]);
 		}
 		
 		if (msg.where != null && msg.where.size() > 0) {
-			for (String[] cond : msg.where)
-				selct.where(cond[Ix.predicateOper], cond[Ix.predicateL], cond[Ix.predicateR]);
+			for (Object[] cond : msg.where)
+				selct.where((String)cond[Ix.predicateOper],
+							(String)cond[Ix.predicateL],
+							(String)cond[Ix.predicateR]);
 		}
 		
 		// TODO: GROUP
@@ -155,7 +155,8 @@ public class SQuery extends HttpServlet {
 				try {rs.printSomeData(false, 1, rs.getColumnName(1), rs.getColumnName(2)); }
 				catch (Exception e) {e.printStackTrace();}
 		}
-
+		respMsg.put("code", "ok");
+		respMsg.put("port", Port.query);
 		return respMsg;
 	}
 
