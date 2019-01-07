@@ -24,6 +24,12 @@ public class SessionReq extends JBody {
 
 	public String uid() { return uid; }
 
+	/**Format login request message.
+	 * @param uid
+	 * @param tk64
+	 * @param iv64
+	 * @return login request message
+	 */
 	public static JMessage<SessionReq> formatLogin(String uid, String tk64, String iv64) {
 		JMessage<SessionReq> jmsg = new JMessage<SessionReq>(Port.session);
 
@@ -43,11 +49,6 @@ public class SessionReq extends JBody {
 		this.iv = iv64;
 	}
 
-//	public static IUser parseLogin(InputStream in, String uid, String tk64, String iv64) throws SemanticException, IOException {
-//		SemanticObject jmsg = JHelper.readResp(in);
-//		return new SUser(jmsg);
-//	}
-
 	@Override
 	public void toJson(JsonWriter writer) throws IOException {
 		writer.beginObject();
@@ -61,6 +62,13 @@ public class SessionReq extends JBody {
 	@Override
 	public void fromJson(JsonReader reader) throws IOException {
 		JsonToken token = reader.peek();
+		
+		// why?
+		while (token == JsonToken.NULL) {
+			reader.nextNull();
+			token = reader.peek();
+		}
+		
 		if (token == JsonToken.BEGIN_OBJECT) {
 			reader.beginObject();
 			while (token != JsonToken.END_OBJECT) {

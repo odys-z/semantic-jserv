@@ -31,7 +31,7 @@ public class Html {
 	/**Change rs to html.
 	 * @param rs
 	 * @param msgs
-	 * @return
+	 * @return html doc
 	 */
 	public static String rs(SResultset rs, String... msgs) {
 		// html() is a simple HTML composer, see
@@ -60,7 +60,7 @@ public class Html {
 
 	/**TODO can html writing outputStream?
 	 * @param res
-	 * @return
+	 * @return html doc
 	 */
 	public static String map(HashMap<String, SemanticObject> res) {
 		return "<!DOCTYPE HTML>" + html(

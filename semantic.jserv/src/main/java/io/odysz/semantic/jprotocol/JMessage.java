@@ -23,7 +23,6 @@ public class JMessage <T extends JBody> {
 
 	/**TODO shall we use dynamic registered ports?
 	 * @author ody
-	 *
 	 */
 	public enum Port {  heartbeat("ping.serv"), session("login.serv"),
 						insert("c.serv"), query("r.serv"), update("u.serv"), delete("d.serv"),
@@ -31,19 +30,6 @@ public class JMessage <T extends JBody> {
 		private String url;
 		Port(String url) { this.url = url; }
 		public String url() { return url; }
-
-//		public static Port parse(String pport) {
-//			return Port.valueOf(pport);
-////			if (heartbeat.name().equals(pport)) return heartbeat;
-////			if (session.name().equals(pport)) return session;
-////			if (insert.name().equals(pport)) return insert;
-////			if (query.name().equals(pport)) return query;
-////			if (update.name().equals(pport)) return update;
-////			if (delete.name().equals(pport)) return delete;
-////			if (echo.name().equals(pport)) return echo;
-////			if (user.name().equals(pport)) return user;
-////			return null;
-//		}
 	};
 
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral;
@@ -63,10 +49,6 @@ public class JMessage <T extends JBody> {
 
 	SemanticObject semanticObj;
 
-//	public String servUrl(String servRoot, String conn) {
-//		return String.format("%s/%s?conn=%s", servRoot, port.url(), conn);
-//	}
-
 	Port port;
 	public Port port() { return port; }
 	public void port(String pport) throws SemanticException {
@@ -76,9 +58,6 @@ public class JMessage <T extends JBody> {
 	}
 
 	public String t;
-
-	MsgCode code;
-	String msg;
 
 	JMessage() {
 		seq = (int) (Math.random() * 1000);
@@ -106,8 +85,6 @@ public class JMessage <T extends JBody> {
 	}
 	
 	JHeader header;
-
-
 	public JHeader header() { return header; }
 	public JMessage<T> header(JHeader header) {
 		this.header = header;
@@ -119,16 +96,13 @@ public class JMessage <T extends JBody> {
 		return this;
 	}
 
-	static String pairPrmv = "'%s': %s";
-	
 	@Override
 	public String toString() {
 		return gson.toJson(this, this.getClass());
 	}
 
+	static String pairPrmv = "'%s': %s";
 	public String toStringEx() {
-//		return String.format("\n%s (id=%s)\tseq:%s\tcode:%s",
-//				getClass().getSimpleName(), this.hashCode(), seq, Port == null ? null : Port.name());
 		Field flist[] = this.getClass().getDeclaredFields();
 
 		// FIXME performance problem : flat list

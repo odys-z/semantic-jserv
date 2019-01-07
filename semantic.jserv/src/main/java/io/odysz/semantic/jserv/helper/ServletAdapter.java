@@ -28,7 +28,7 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 	 * @param req
 	 * @param jreqHelper
 	 * @param bodyItemclazz
-	 * @return
+	 * @return deserialized JMessage
 	 * @throws IOException
 	 * @throws SemanticException
 	 * @throws ReflectiveOperationException
