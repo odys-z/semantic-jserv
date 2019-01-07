@@ -214,19 +214,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			ServletAdapter.write(resp, JProtocol.err(Port.session, e.code, e.getMessage()));
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} finally {
-//			if (ServFlags.session) {
-//        		// FIXME performance
-//				// TODO move to ServletAdapter
-//				JsonWriter writer = new JsonWriter(new OutputStreamWriter(System.out, "UTF-8"));
-//        		Type t = new TypeToken<String>() {}.getType();
-//        		gson.toJson(msg, t, writer);
-//        		writer.close();
-//        		System.out.println("can?");
-//			}
-//			OutputStream os = resp.getOutputStream();
-//			SessionReq.respond(os, msg);
-		}
+		} finally { }
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -244,27 +232,19 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			JMessage<SessionReq> payload = ServletAdapter.<SessionReq>read(req, jreqHelper, SessionReq.class);
 			// find user and check login info 
 			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
-			if (payload != null && payload.header() != null) {
+			if (payload != null) {
+			// if (payload != null && payload.header() != null) {
 				SessionReq sessionBody = payload.body().get(0);
 				String a = sessionBody.a();
 				if ("login".equals(a)) {
 					IUser login = loadUser(sessionBody, connId);
-//					if (login == null) {
-//						// no such user
-//						String logid = (String) payload.uid();
-//						throw new SsException("User Id not found: ", logid);
-//					}
-//					else {
-						if (login.login(sessionBody)) {
-							//SemanticObject resp = login.response(jlogin, request);
-							
-							lock.lock();
-							users.put(login.sessionId(), login);
-							lock.unlock();
-							ServletAdapter.write(response, JProtocol.ok(Port.session, (SemanticObject)login));
-						}
-						else throw new SsException("passwords not matching - pswd = encrypt(uid, pswd, iv)");
-//					}
+					if (login.login(sessionBody)) {
+						lock.lock();
+						users.put(login.sessionId(), login);
+						lock.unlock();
+						ServletAdapter.write(response, JProtocol.ok(Port.session, (SemanticObject)login));
+					}
+					else throw new SsException("passwords not matching - pswd = encrypt(uid, pswd, iv)");
 				}
 				else if ("logout".equals(a)) {
 					JHeader header = payload.header();
@@ -278,7 +258,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 					lock.unlock();
 	
 					if (usr != null) {
-						// SemanticObject resp = usr.logout(header);
 						SemanticObject resp = usr.logout();
 						ServletAdapter.write(response, JProtocol.ok(Port.session, resp));
 					}
@@ -292,7 +271,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 					if ("ping".equals(t) || "touch".equals(t)) {
 						JHeader header = payload.header();
 						verify(header);
-//						String logid = header.logid();
 						ServletAdapter.write(response, JProtocol.ok(Port.session, null));
 					}
 					else throw new SsException ("Session Request not supported: a=%s", a);
@@ -311,7 +289,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	/**Load user instance form DB table (name = {@link UserMeta#tbl}).
 	 * @param jreq
 	 * @param connId
-	 * @return
+	 * @return new IUser instance loaded from database (from connId)
 	 * @throws TransException
 	 * @throws SQLException
 	 * @throws SsException
@@ -330,7 +308,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString("uid");
-			IUser obj = createUser(UserMeta.clzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("url"));
+			IUser obj = createUser(UserMeta.clzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"));
 			if (obj instanceof SemanticObject)
 				return obj;
 			throw new SemanticException("IUser implementation must extend SemanticObject.");
@@ -345,7 +323,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @param pswd 
 	 * @param iv auxiliary encryption field
 	 * @param userName 
-	 * @return
+	 * @return new IUser instance
 	 * @throws ReflectiveOperationException 
 	 * @throws SemanticException 
 	 */

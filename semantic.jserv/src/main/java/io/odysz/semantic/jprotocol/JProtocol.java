@@ -16,9 +16,15 @@ public class JProtocol {
 	 * e.g. on success when an http post request finished. */
 	@FunctionalInterface
 	public interface SCallback {
+		/**call back function called by semantic.transact
+		 * @param code 'ok' | 'ex...'
+		 * @param Data response message
+		 * @throws IOException
+		 * @throws SQLException
+		 * @throws SemanticException
+		 */
 		void onCallback(String code, SemanticObject Data) throws IOException, SQLException, SemanticException;
 	}
-	
 
 	public static Gson gson = new Gson();
 	

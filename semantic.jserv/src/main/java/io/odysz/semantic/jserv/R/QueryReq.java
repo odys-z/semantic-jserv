@@ -17,7 +17,7 @@ import io.odysz.transact.sql.Query.Ix;
 
 /**<pre>
 query-obj: { tabl: tabl-obj,
-			 joins: [join-obj],
+             joins: [join-obj],
              exprs: [expr-obj],
              where: [cond-obj],
              orders: [order-obj],
@@ -129,12 +129,12 @@ public class QueryReq extends JBody {
 		return this;
 	}
 
-	public QueryReq expr(String expr, String alais, String... tabl) {
+	public QueryReq expr(String expr, String alias, String... tabl) {
 		if (exprs == null)
 			exprs = new ArrayList<Object[]>();
 		String[] exp = new String[Ix.exprSize];
 		exp[Ix.exprExpr] = expr;
-		exp[Ix.exprAlais] = expr;
+		exp[Ix.exprAlais] = alias;
 		exp[Ix.exprTabl] = tabl == null || tabl.length == 0 ? null : tabl[0];
 		exprs.add(exp);
 		return this;
@@ -229,30 +229,4 @@ public class QueryReq extends JBody {
 		}
 	}
 
-	/**deserialize "[{n,v, m,u,...},...]" to list.
-	 * @param reader
-	 * @return list
-	 * @throws IOException
-	private static ArrayList<Object[]> fromJsonStrings(JsonReader reader) throws IOException {
-		ArrayList<Object[]> lst = new ArrayList<Object[]>();
-		reader.beginArray();
-
-		// for the type
-		String[] dumb = new String[] {};
-		
-		while (reader.peek() != JsonToken.END_ARRAY) {
-			reader.beginArray();
-			JsonToken tk = reader.peek();
-			ArrayList<String> join = new ArrayList<String>();
-			while (tk != JsonToken.END_ARRAY) {
-				join.add(reader.nextString());
-				tk = reader.peek();
-			}
-			lst.add(join.toArray(dumb));
-			reader.endArray();
-		}
-		reader.endArray();
-		return lst;
-	}
-	 */
 }

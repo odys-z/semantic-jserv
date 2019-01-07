@@ -135,6 +135,14 @@ public class JHelper<T extends JBody> {
 		writer.endArray();
 	}
 
+	/**Write jreq into output stream.
+	 * If jreq.header is null, create an empty object {}.
+	 * @param os
+	 * @param jreq
+	 * @param itemClz
+	 * @throws IOException
+	 * @throws SemanticException
+	 */
 	public void writeJsonReq(OutputStream os, JMessage<? extends JBody> jreq, Class<? extends JBody> itemClz)
 			throws IOException, SemanticException {
 		if (jreq.body == null)
@@ -301,7 +309,7 @@ public class JHelper<T extends JBody> {
 
 	/**Read {@link SResultset}.
 	 * @param reader
-	 * @return
+	 * @return result set
 	 * @throws IOException
 	 */
 	private static SResultset readRs(JsonReader reader) throws IOException {
@@ -386,17 +394,20 @@ public class JHelper<T extends JBody> {
 				switch (token) {
 				case NAME:
 					String name = reader.nextName();
-					if (name != null && "port".equals(name.trim().toLowerCase()))
+					name = name == null ? null : name.trim().toLowerCase();
+					if (name != null && "port".equals(name))
 						msg.port(reader.nextString());
-					else if (name != null && "header".equals(name.trim().toLowerCase()))
+					else if (name != null && "header".equals(name))
 						msg.header(readHeader(reader));
-					else if (name != null && "body".equals(name.trim().toLowerCase())) {
+					else if (name != null && "body".equals(name))
 						readBody(reader, bodyItemclzz, msg);
-					}
+					else if (name != null && ("seq".equals(name) || "version".equals(name)))
+						// skip
+						reader.nextString();
 					else {
 						reader.close();
-						throw new SemanticException("Can't parse json message: %s, %s",
-								bodyItemclzz.toString(), msg.toString());
+						throw new SemanticException("Can't parse json message. Expecting port | header | body, but get %s (body type: %s, message: %s)",
+								name, bodyItemclzz.toString(), msg.toString());
 					}
 					break;
 				case END_OBJECT:
@@ -404,8 +415,8 @@ public class JHelper<T extends JBody> {
 					break;
 				default:
 					reader.close();
-					throw new SemanticException("Can't parse json message: %s, %s",
-							bodyItemclzz.toString(), msg.toString());
+					throw new SemanticException("Can't parse json message. Expecting token NAME | END_OBJECT, but get %s (body type: %s, message: %s)",
+								token.name(), bodyItemclzz.toString(), msg.toString());
 				}
 				token = reader.peek();
 			}
@@ -442,6 +453,10 @@ public class JHelper<T extends JBody> {
 
 			bodyItem.fromJson(reader);
 			parent.body(bodyItem);
+
+			// attacked?
+			if (parent.body.size() > 20)
+				throw new SemanticException("Max request body item is 20.");
 		}
 		reader.endArray();
 	}
