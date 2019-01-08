@@ -207,6 +207,10 @@ public class QueryReq extends JBody {
 				String name = reader.nextName();
 				if ("a".equals(name))
 					a = reader.nextString();
+				else if ("page".equals(name))
+					page = reader.nextInt();
+				else if ("pgSize".equals(name))
+					pgsize = reader.nextInt();
 				else if ("mtabl".equals(name))
 					mtabl = reader.nextString();
 				else if ("mAlias".equals(name))
