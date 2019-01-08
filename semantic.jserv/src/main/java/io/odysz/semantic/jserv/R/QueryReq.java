@@ -197,7 +197,6 @@ public class QueryReq extends JBody {
 		writer.endObject();
 	}
 
-
 	@Override
 	public void fromJson(JsonReader reader) throws IOException {
 		JsonToken token = reader.peek();
@@ -221,10 +220,8 @@ public class QueryReq extends JBody {
 					else reader.nextString(); // skip "*"
 				}
 				else if ("joins".equals(name))
-					// joins = fromJsonStrings(reader);
 					joins = (ArrayList<Object[]>) JHelper.readLstStrs(reader);
 				else if ("where".equals(name))
-					// where = fromJsonStrings(reader);
 					where = (ArrayList<Object[]>) JHelper.readLstStrs(reader);
 				// TODO ...
 				token = reader.peek();
