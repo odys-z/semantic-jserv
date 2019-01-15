@@ -144,9 +144,6 @@ public class SQuery extends HttpServlet {
 			Utils.logi(sqls);
 
 		// Using semantic-DA to query from default connection.
-		// If the connection is not default, use another overloaded function select(connId, ...).
-//		QueryResp respMsg = new QueryResp();
-
 		SemanticObject respMsg = new SemanticObject();
 		for (String sql : sqls) {
 			SResultset rs = Connects.select(sql);
