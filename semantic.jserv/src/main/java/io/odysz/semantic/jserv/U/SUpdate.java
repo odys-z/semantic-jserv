@@ -33,7 +33,7 @@ public class SUpdate extends HttpServlet {
 	private static ISessionVerifier verifier;
 
 	static {
-		st = JSingleton.st;
+		st = JSingleton.defltScxt;
 		jreqHelper = new JHelper<UpdateReq>();
 //		jrespHelper = new JHelper<UpdateResp>();
 		verifier = JSingleton.getSessionVerifier();

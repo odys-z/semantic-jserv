@@ -42,7 +42,7 @@ public class SQuery extends HttpServlet {
 	static JHelper<QueryReq> jhelperReq;
 //	static JHelper<QueryResp> jhelperResp;
 	static {
-		st = JSingleton.st;
+		st = JSingleton.defltScxt;
 		jhelperReq  = new JHelper<QueryReq>();
 //		jhelperResp = new JHelper<QueryResp>();
 		verifier = JSingleton.getSessionVerifier();
@@ -115,7 +115,8 @@ public class SQuery extends HttpServlet {
 		// TODO let's use stream mode
 		ArrayList<String> sqls = new ArrayList<String>();
 		QueryReq msg = msgBody.body().get(0);
-		Query selct = st.select(msg.mtabl, msg.mAlias);
+		Query selct = st.select(msg.mtabl, msg.mAlias)
+						.page(msg.page, msg.pgsize);
 		if (msg.exprs != null && msg.exprs.size() > 0)
 			for (Object[] col : msg.exprs)
 				selct.col((String)col[Ix.exprExpr], (String)col[Ix.exprAlais]);
@@ -138,7 +139,7 @@ public class SQuery extends HttpServlet {
 		// TODO: GROUP
 		// TODO: ORDER
 		selct.commit(sqls);
-
+		
 		if (ServFlags.query)
 			Utils.logi(sqls);
 
