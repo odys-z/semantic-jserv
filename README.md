@@ -17,11 +17,14 @@ Here is an example (context.xml):
     </Context>
 
 #### SEVERE: Servlet.service() for servlet [io.odysz.semantic.jserv.R.SQuery] in context with path [/semantic.jserv] threw exception [Servlet execution threw an exception] with root cause
-
     java.lang.ClassNotFoundException: io.odysz.transact.sql.parts.select.JoinTabl$1
 	at org.apache.catalina.loader.WebappClassLoaderBase.loadClass(WebappClassLoaderBase.java:1343)
 	at org.apache.catalina.loader.WebappClassLoaderBase.loadClass(WebappClassLoaderBase.java:1173)
 	at io.odysz.transact.sql.parts.select.JoinTabl.sql(JoinTabl.java:60)
-    
+Try 
+- mvn clean package -U
+and
+- eclipse -> right click project -> maven -> update project ... -> force update snapshot / release
+
     
     
