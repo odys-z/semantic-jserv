@@ -69,7 +69,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	static JHelper<SessionReq> jreqHelper;
 
 //	static {
-//		sctx = JSingleton.st;
+//		sctx = JSingleton.defltScxt;
 //		jreqHelper = new JHelper<SessionReq>();
 //		lock = new ReentrantLock();
 //	}

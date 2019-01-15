@@ -85,8 +85,8 @@ public class QueryReq extends JBody {
 		mtabl = fromTbl;
 		mAlias = alias == null || alias.length == 0 ? null : alias[0];
 		
-		this.page = 0;
-		this.pgsize = 20;
+		this.page = -1;
+		this.pgsize = 0;
 	}
 
 	public void page(int page, int size) {

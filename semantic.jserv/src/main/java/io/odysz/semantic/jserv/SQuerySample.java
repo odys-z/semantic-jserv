@@ -20,7 +20,7 @@ import io.odysz.transact.x.TransException;
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/query-ex.serv" })
 public class SQuerySample extends HttpServlet {
 	private static Transcxt st;
-	static { st = JSingleton.st; }
+	static { st = JSingleton.defltScxt; }
 
 	private static final long serialVersionUID = 1L;
 
