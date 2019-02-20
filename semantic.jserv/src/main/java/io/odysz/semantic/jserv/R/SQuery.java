@@ -40,11 +40,10 @@ public class SQuery extends HttpServlet {
 	private static Transcxt st;
 
 	static JHelper<QueryReq> jhelperReq;
-//	static JHelper<QueryResp> jhelperResp;
+
 	static {
 		st = JSingleton.defltScxt;
 		jhelperReq  = new JHelper<QueryReq>();
-//		jhelperResp = new JHelper<QueryResp>();
 		verifier = JSingleton.getSessionVerifier();
 	}
 
@@ -55,23 +54,11 @@ public class SQuery extends HttpServlet {
 			Utils.logi("---------- query.serv get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
-//			InputStream in = req.getInputStream();
-//			QueryReq msg = jhelperReq.readJson(in, QueryReq.class);
-//			in.close();
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
-			
 			verifier.verify(msg.header());
-			
-//			QueryResp rs = query((QueryReq) msg.body().get(0));
+
 			SemanticObject rs = query(msg);
-			
-			
-//			int size = msg.body().size();
-//			if (size > 1)
-//				resp.getWriter().write(Html.rs((SResultset)rs.get("rs"),
-//						String.format("%s more query results ignored.", size - 1)));
-//			else 
-				resp.getWriter().write(Html.rs((SResultset)rs.get("rs")));
+			resp.getWriter().write(Html.rs((SResultset)rs.get("rs")));
 			resp.flushBuffer();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -93,11 +80,9 @@ public class SQuery extends HttpServlet {
 			SemanticObject rs = query(msg);
 			
 			resp.setCharacterEncoding("UTF-8");
-//			OutputStream os = resp.getOutputStream();
 
 			ServletAdapter.write(resp, rs);
 			resp.flushBuffer();
-//			os.close();
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -112,7 +97,6 @@ public class SQuery extends HttpServlet {
 	}
 	
 	SemanticObject query(JMessage<QueryReq> msgBody) throws SQLException, TransException {
-		// TODO let's use stream mode
 		ArrayList<String> sqls = new ArrayList<String>();
 		QueryReq msg = msgBody.body().get(0);
 		Query selct = st.select(msg.mtabl, msg.mAlias)
