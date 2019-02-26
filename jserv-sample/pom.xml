@@ -43,10 +43,23 @@
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
 	    <version>0.0.1-SNAPSHOT</version>
+	    <scope>System</scope>
 	</dependency>
 
   </dependencies>
   <build>
     <finalName>jserv-sample</finalName>
+    <plugins>
+    	<plugin>
+	        <groupId>org.apache.tomcat.maven</groupId>
+	        <artifactId>tomcat7-maven-plugin</artifactId>
+	        <version>2.5</version>
+	        <!-- 
+	        <configuration>
+	          <path>/mycontext</path>
+	        </configuration>
+			 -->
+		</plugin>
+    </plugins>
   </build>
 </project>
