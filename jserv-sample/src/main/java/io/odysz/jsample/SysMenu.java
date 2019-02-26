@@ -1,0 +1,84 @@
+package io.odysz.jsample;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import io.odysz.common.Utils;
+import io.odysz.jsample.utils.SampleFlags;
+import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.ext.SemanticTree;
+import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JMessage.MsgCode;
+import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jserv.R.QueryReq;
+import io.odysz.semantic.jserv.R.SQuery;
+import io.odysz.semantic.jserv.helper.Html;
+import io.odysz.semantic.jserv.helper.ServletAdapter;
+import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
+
+@WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.sample" })
+public class SysMenu  extends SemanticTree {
+	private static final long serialVersionUID = 1L;
+	
+	/**Menu tree semantics */
+	private static String[] streeMenu;
+	
+	static {
+		// TODO load menu tree semantics
+	}
+
+	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+		if (SampleFlags.menu)
+			Utils.logi("---------- menu.sample get <- %s ----------", req.getRemoteAddr());
+
+		List<String> menu = null;
+		resp.getWriter().write(Html.list(menu));
+		resp.flushBuffer();
+	}
+
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+		if (SampleFlags.menu)
+			Utils.logi("========== menu.sample post <= %s ==========", req.getRemoteAddr());
+
+		try {
+			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
+			
+			SemanticObject rs = query(msg);
+			
+			SResultset[] tabls = (SResultset[]) rs.get("rs");
+			if (tabls != null && tabls.length > 0) {
+				tabls = (SResultset[]) rs.remove("rs");
+				for (int i = 0; i < tabls.length; i++)
+					rs.add("trees", querySTree(tabls[i], streeMenu));
+			}
+			
+			resp.setCharacterEncoding("UTF-8");
+			ServletAdapter.write(resp, rs);
+			resp.flushBuffer();
+		} catch (SemanticException e) {
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
+		} catch (SQLException | TransException e) {
+			e.printStackTrace();
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
+		} catch (ReflectiveOperationException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exGeneral, e.getMessage()));
+		}
+	}
+
+}

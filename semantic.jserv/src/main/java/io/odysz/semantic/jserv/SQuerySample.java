@@ -17,6 +17,9 @@ import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.transact.sql.Transcxt;
 import io.odysz.transact.x.TransException;
 
+/**@deprecated All code samples are moved to semantic-sample.
+ * @author ody
+ */
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/query-ex.serv" })
 public class SQuerySample extends HttpServlet {
 	private static Transcxt st;

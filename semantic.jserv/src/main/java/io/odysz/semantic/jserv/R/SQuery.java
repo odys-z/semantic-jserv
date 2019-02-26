@@ -36,10 +36,10 @@ import io.odysz.transact.x.TransException;
 public class SQuery extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	private static ISessionVerifier verifier;
-	private static Transcxt st;
+	protected static ISessionVerifier verifier;
+	protected static Transcxt st;
 
-	static JHelper<QueryReq> jhelperReq;
+	protected static JHelper<QueryReq> jhelperReq;
 
 	static {
 		st = JSingleton.defltScxt;
@@ -102,7 +102,7 @@ public class SQuery extends HttpServlet {
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	SemanticObject query(JMessage<QueryReq> msgBody) throws SQLException, TransException {
+	protected SemanticObject query(JMessage<QueryReq> msgBody) throws SQLException, TransException {
 		ArrayList<String> sqls = new ArrayList<String>();
 		QueryReq msg = msgBody.body().get(0);
 		Query selct = st.select(msg.mtabl, msg.mAlias)
