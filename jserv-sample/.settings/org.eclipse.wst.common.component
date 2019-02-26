@@ -4,6 +4,12 @@
         <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
+        <dependent-module archiveName="semantics.transact-0.5.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.transact/semantic.transact">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="semantic.DA-0.1.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.DA/semantic.DA">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <property name="context-root" value="jserv-sample"/>
         <property name="java-output-path" value="/jserv-sample/target/classes"/>
     </wb-module>
