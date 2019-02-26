@@ -23,4 +23,8 @@ The use cases implemented in this sample project, like login, menu, list, master
 
 Further explanation about semantics patterns will be added in the future. Sorry about the inconvenient.
 
+#TODOs
+Semantic-jserv is initially created as a web application, it's always been included as WAR in jserv-sample's deployment assembly properties page, resulting classes not found at runtime.
+   
 #### See wiki for more information
+
