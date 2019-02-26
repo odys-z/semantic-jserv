@@ -98,7 +98,7 @@ public class SQuery extends HttpServlet {
 	
 	/**
 	 * @param msgBody
-	 * @return {code: "ok", port: {@link JMessage.Port#query}, rs: [SResultset, ...]}
+	 * @return {code: "ok", port: {@link JMessage.Port}.query, rs: [{@link SResultset}, ...]}
 	 * @throws SQLException
 	 * @throws TransException
 	 */
