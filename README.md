@@ -1,5 +1,5 @@
 # About semantic-jserv
-A sementic data service web application using protocol based on json.
+A semantic data service web application using protocol based on json.
 
 - semantic.jserv
 The service lib, depends on servlet and semantic-DA.
