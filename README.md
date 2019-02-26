@@ -1,5 +1,14 @@
 # semantic-jserv
-sementic data service using protocol based on json 
+A sementic data service web application using protocol based on json.
+
+## semantic.jserv
+The service lib, depends on servlet and semantic-DA.
+
+## jserv-sample
+A sample project (quick start project) showing how to import and using semantic.jserv.
+
+For showing how to access the service, a client has also implemented with a sample project, see jclient/js/vue/demo.app.vue.
+
 
 ## Troubleshootings
 ### Error: java.sql.SQLException: Name \[jdbc/inet-semantic\] is not bound in this Context. Unable to find \[jdbc\].
