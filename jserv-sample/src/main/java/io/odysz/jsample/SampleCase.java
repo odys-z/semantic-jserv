@@ -5,5 +5,6 @@ import javax.servlet.http.HttpServlet;
 
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/case.sample" })
 public class SampleCase  extends HttpServlet {
+	private static final long serialVersionUID = 1L;
 
 }
