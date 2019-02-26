@@ -21,7 +21,8 @@ import io.odysz.semantics.x.SemanticException;
  */
 public class JMessage <T extends JBody> {
 
-	/**TODO shall we use dynamic registered ports?
+	/**Port is the conceptual equivalent to the SOAP port, the service methods' group.<br>
+	 * TODO shall we use dynamic registered ports?
 	 * @author ody
 	 */
 	public enum Port {  heartbeat("ping.serv"), session("login.serv"),
