@@ -7,7 +7,7 @@ The service lib, depends on servlet and semantic-DA.
 - jserv-sample
 A sample project (quick start project) showing how to import and using semantic.jserv.
 
-For showing how to access the service, a client has also implemented with a sample project, see jclient/js/vue/demo.app.vue.
+For showing how to access the service, a client has also implemented with a sample project, see jclient/js/test/vue/demo.app.vue.
 
 # Quick Start
 The jserv-sample project is used to illustrating how to use semantic.jserv.
