@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
 import io.odysz.jsample.utils.SampleFlags;
+import io.odysz.semantic.jserv.helper.Html;
 
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/case.sample" })
 public class SampleCase  extends HttpServlet {
@@ -19,5 +20,8 @@ public class SampleCase  extends HttpServlet {
 			throws ServletException, IOException {
 		if (SampleFlags.SampleCase)
 			Utils.logi("---------- query (r.serv) get <- %s ----------", req.getRemoteAddr());
+
+		resp.getWriter().write(Html.ok(req.getRequestURL().toString()));
+		resp.flushBuffer();
 	}
 }

@@ -49,4 +49,7 @@ and
 - eclipse -> right click project -> maven -> update project ... -> force update snapshot / release
 
     
+   
+#TODOs
+Semantic-jserv is initially created as a web application, it's always been included as WAR in jserv-sample's deployment assembly properties page, resulting classes not found at runtime.
     

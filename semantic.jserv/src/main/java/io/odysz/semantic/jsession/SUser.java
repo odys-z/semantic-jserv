@@ -25,6 +25,7 @@ class SUser extends SemanticObject implements IUser {
 	private String pswd;
 	private String usrName;
 //	private String iv;
+	@SuppressWarnings("unused")
 	private long touched;
 
 	private static Random random = new Random();

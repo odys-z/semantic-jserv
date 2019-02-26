@@ -3,6 +3,7 @@
 	<name>jserv-sample</name>
 	<comment></comment>
 	<projects>
+		<project>semantic.jserv</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
