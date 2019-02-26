@@ -25,7 +25,7 @@ Further explanation about semantics patterns will be added in the future. Sorry 
 
 # Troubleshootings
 ### Error: java.sql.SQLException: Name \[jdbc/inet-semantic\] is not bound in this Context. Unable to find \[jdbc\].
-It's connection pool not cofigured correctly.
+It's connection pool not configured correctly.
 
 Here is an example (context.xml):
 
