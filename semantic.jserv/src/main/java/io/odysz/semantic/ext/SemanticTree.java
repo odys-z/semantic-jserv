@@ -17,14 +17,24 @@ import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.Configs;
+import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jprotocol.JMessage.MsgCode;
+import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.R.QueryReq;
 import io.odysz.semantic.jserv.R.SQuery;
+import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
+import io.odysz.transact.x.TransException;
 
 /**
  * Servlet implementing Semantic Tree<br>
@@ -40,44 +50,126 @@ import io.odysz.transact.sql.Query;
 public class SemanticTree extends SQuery {
 	private static final long serialVersionUID = 1L;
 
-	private static final int ixJsframe = 0;
-	public static class IxVue {
+	public static class Ix {
 		/** the boolean field */
-		public static final int chked = 1;
-		public static final int tabl = 2;
-		public static final int recId = 3;
-		public static final int parent = 4;
-		public static final int text = 5;
-		public static final int fullpath = 6;
-		public static final int sort = 7;
+		public static final int chked = 0;
+		public static final int tabl = 1;
+		public static final int recId = 2;
+		public static final int parent = 3;
+		public static final int fullpath = 4;
+		public static final int sort = 5;
+		public static final int text = 6;
 		public static final int pageByServer = 8;
-		public static final int count = 9;
 	}
+	
+	protected static JHelper<QueryReq> jtreeReq;
+
+	static {
+		st = JSingleton.defltScxt;
+		jtreeReq  = new JHelper<QueryReq>();
+		verifier = JSingleton.getSessionVerifier();
+	}	
+
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		if (ServFlags.extStree) System.out.println("stree.serv get ------");
-		jsonResp(request, response);
+	protected void doGet(HttpServletRequest req, HttpServletResponse response) throws IOException {
+		if (ServFlags.extStree)
+			Utils.logi("---------- stree.jserv post <- %s ----------", req.getRemoteAddr());
+		jsonResp(req, response);
 	}
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		if (ServFlags.extStree) System.out.println("stree.serv post ======");
-		jsonResp(request, response);
+	protected void doPost(HttpServletRequest req, HttpServletResponse response) throws IOException {
+		if (ServFlags.extStree)
+			Utils.logi("========== stree.jserv post <= %s ==========", req.getRemoteAddr());
+		jsonResp(req, response);
 	}
 
-	protected void jsonResp(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected void jsonResp(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		try {
+			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jtreeReq, QueryReq.class);
+			
+			String t = req.getParameter("t");
+			if (t == null)
+				throw new SemanticException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
+			String connId = req.getParameter("conn");
+//			if (connId == null || connId.trim().length() == 0)
+//				connId = DA.getDefltConnId();
+
+			// find tree semantics
+			String semanticKey = req.getParameter("sk");
+			if (semanticKey == null || semanticKey.trim().length() == 0)
+				throw new SQLException("Sementic key must present for s-tree.serv.");
+			String semantic = Configs.getCfg("tree-semantics", semanticKey);
+			String[][] semanticss = null; 
+			if (!"sql".equals(t)) {
+				if (semantic == null || semantic.trim().length() == 0)
+					throw new SQLException(String.format("Sementics not cofigured correctly: \n\t%s\n\t%s", semanticKey, semantic));
+				semanticss = parseSemantics(semantic);
+			}
+
+			// branches
+			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=reforest
+			if ("reforest".equals(t))
+				resp = rebuildForest(connId, semanticss, dblog);
+			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=retree&root=002
+			else if ("retree".equals(t)) {
+				String root = req.getParameter("root");
+				resp = rebuildTree(connId, root, semanticss, dblog);
+			}
+			else {
+				// sql or any
+				int page = 0;
+				int size = 20;
+				try {page = Integer.valueOf(req.getParameter("page"));
+				}catch (Exception e) {}
+				try {size = Integer.valueOf(req.getParameter("size"));
+				}catch (Exception e) {}
+				
+				if ("sql".equals(t)) {
+					// sql
+					String[] args = req.getParameterValues("args");
+					resp = loadConfigArgs(connId, semanticKey, args, page, size);
+				}
+				else {
+					// any
+					String rootId = req.getParameter("root");
+					resp = loadSemantics(payload[1], page, size, rootId, connId, semanticss);
+				}
+			}
+
+
+			SemanticObject rs = query(msg, semanticss);
+			
+			resp.setCharacterEncoding("UTF-8");
+
+			ServletAdapter.write(resp, rs);
+			resp.flushBuffer();
+		} catch (SemanticException e) {
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
+		} catch (SQLException | TransException e) {
+			e.printStackTrace();
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
+		} catch (ReflectiveOperationException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exGeneral, e.getMessage()));
+		}
+		
+		
+		
 		// response.setContentType("text/html;charset=UTF-8");
-		JsonWriter writer = Json.createWriter(response.getOutputStream());
+		JsonWriter writer = Json.createWriter(resp.getOutputStream());
 		try {
 			JsonObject resp;
-			JSONObject[] payload = ServManager.parseReq(request);
+			JSONObject[] payload = ServManager.parseReq(req);
 			DbLog dblog = null; 
 
-			String t = request.getParameter("t");
+			String t = req.getParameter("t");
 
 			if ("reforest".equals(t)) 
 				// try get dblog
@@ -87,10 +179,10 @@ public class SemanticTree extends SQuery {
 
 			if (t == null)
 				throw new SQLException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
-			String connId = request.getParameter("conn");
+			String connId = req.getParameter("conn");
 
 			// find tree semantics
-			String semanticKey = request.getParameter("sk");
+			String semanticKey = req.getParameter("sk");
 			if (semanticKey == null || semanticKey.trim().length() == 0)
 				throw new SQLException("Sementic key must present for s-tree.serv.");
 			String semantic = Configs.getCfg("tree-semantics", semanticKey);
@@ -109,33 +201,33 @@ public class SemanticTree extends SQuery {
 				resp = rebuildForest(connId, semanticss, dblog);
 			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=retree&root=002
 			else if ("retree".equals(t)) {
-				String root = request.getParameter("root");
+				String root = req.getParameter("root");
 				resp = rebuildTree(connId, root, semanticss, dblog);
 			}
 			else {
 				// sql or any
 				int page = 0;
 				int size = 20;
-				try {page = Integer.valueOf(request.getParameter("page"));
+				try {page = Integer.valueOf(req.getParameter("page"));
 				}catch (Exception e) {}
-				try {size = Integer.valueOf(request.getParameter("size"));
+				try {size = Integer.valueOf(req.getParameter("size"));
 				}catch (Exception e) {}
 				
 				if ("sql".equals(t)) {
 					// sql
-					String[] args = request.getParameterValues("args");
+					String[] args = req.getParameterValues("args");
 					resp = loadConfigArgs(connId, semanticKey, args, page, size);
 				}
 				else {
 					// any
-					String rootId = request.getParameter("root");
+					String rootId = req.getParameter("root");
 					resp = loadSemantics(payload[1], page, size, rootId, connId, semanticss);
 				}
 			}
 
 			writer.write(resp);
 			writer.close();
-			response.flushBuffer();
+			resp.flushBuffer();
 		} catch (IrSessionException ssex) {
 			if (writer != null)
 				writer.write(JsonHelper.err(IrSession.ERR_CHK, ssex.getMessage()));
@@ -151,6 +243,16 @@ public class SemanticTree extends SQuery {
 			if (writer != null)
 				writer.close();
 		}
+	}
+
+	/**Get Tree
+	 * @param msg
+	 * @param semanticss
+	 * @return
+	 */
+	private SemanticObject query(JMessage<QueryReq> msg, String[][] semanticss) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	static JsonObject loadConfigArgs(String connId, String sqlkey, String[] args,
