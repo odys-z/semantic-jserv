@@ -27,7 +27,9 @@ public class JMessage <T extends JBody> {
 	 */
 	public enum Port {  heartbeat("ping.serv"), session("login.serv"),
 						insert("c.serv"), query("r.serv"), update("u.serv"), delete("d.serv"),
-						echo("echo.serv"), user("user.serv");
+						echo("echo.serv"), user("user.serv"),
+						// data structure extensions
+						stree("s-tree.serv");
 		private String url;
 		Port(String url) { this.url = url; }
 		public String url() { return url; }

@@ -2,8 +2,7 @@ package io.odysz.semantic.ext;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -12,28 +11,27 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.stream.JsonWriter;
-
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
+import io.odysz.common.dbtype;
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.DA.DatasetCfg.Ix;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
-import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.R.QueryReq;
 import io.odysz.semantic.jserv.R.SQuery;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.Query;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -45,22 +43,13 @@ import io.odysz.transact.x.TransException;
  * retree: re-build tree from root;<br>
  * sql: load tree by configured sql (t = ds, sk = sql-key);<br>
  * [any]: load semantics tree (sk)
+ * 
+ * @author odys-z@github.com
  */
 @WebServlet(description = "Abstract Tree Data Service", urlPatterns = { "/s-tree.jserv" })
 public class SemanticTree extends SQuery {
 	private static final long serialVersionUID = 1L;
 
-	public static class Ix {
-		/** the boolean field */
-		public static final int chked = 0;
-		public static final int tabl = 1;
-		public static final int recId = 2;
-		public static final int parent = 3;
-		public static final int fullpath = 4;
-		public static final int sort = 5;
-		public static final int text = 6;
-		public static final int pageByServer = 8;
-	}
 	
 	protected static JHelper<QueryReq> jtreeReq;
 
@@ -89,15 +78,16 @@ public class SemanticTree extends SQuery {
 	}
 
 	protected void jsonResp(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		resp.setCharacterEncoding("UTF-8");
 		try {
-			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jtreeReq, QueryReq.class);
-			
 			String t = req.getParameter("t");
 			if (t == null)
 				throw new SemanticException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
 			String connId = req.getParameter("conn");
-//			if (connId == null || connId.trim().length() == 0)
-//				connId = DA.getDefltConnId();
+
+			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jtreeReq, QueryReq.class);
+			// check session
+			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 
 			// find tree semantics
 			String semanticKey = req.getParameter("sk");
@@ -107,18 +97,20 @@ public class SemanticTree extends SQuery {
 			String[][] semanticss = null; 
 			if (!"sql".equals(t)) {
 				if (semantic == null || semantic.trim().length() == 0)
-					throw new SQLException(String.format("Sementics not cofigured correctly: \n\t%s\n\t%s", semanticKey, semantic));
+					throw new SQLException(String.format(
+						"Sementics not cofigured correctly: \n\t%s\n\t%s", semanticKey, semantic));
 				semanticss = parseSemantics(semantic);
 			}
 
+			SemanticObject r;
 			// branches
 			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=reforest
 			if ("reforest".equals(t))
-				resp = rebuildForest(connId, semanticss, dblog);
+				r = rebuildForest(connId, semanticss, usr);
 			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=retree&root=002
 			else if ("retree".equals(t)) {
 				String root = req.getParameter("root");
-				resp = rebuildTree(connId, root, semanticss, dblog);
+				r = rebuildTree(connId, root, semanticss, usr);
 			}
 			else {
 				// sql or any
@@ -132,116 +124,26 @@ public class SemanticTree extends SQuery {
 				if ("sql".equals(t)) {
 					// sql
 					String[] args = req.getParameterValues("args");
-					resp = loadConfigArgs(connId, semanticKey, args, page, size);
+					r = loadConfigArgs(connId, semanticKey, args, page, size);
 				}
 				else {
 					// any
 					String rootId = req.getParameter("root");
-					resp = loadSemantics(payload[1], page, size, rootId, connId, semanticss);
+					r = loadSemantics(msg.body(0), page, size, rootId, connId, semanticss);
 				}
 			}
 
-
-			SemanticObject rs = query(msg, semanticss);
-			
-			resp.setCharacterEncoding("UTF-8");
-
-			ServletAdapter.write(resp, rs);
-			resp.flushBuffer();
+			ServletAdapter.write(resp, r);
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
 			e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
-		} catch (ReflectiveOperationException e) {
-			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exGeneral, e.getMessage()));
-		}
-		
-		
-		
-		// response.setContentType("text/html;charset=UTF-8");
-		JsonWriter writer = Json.createWriter(resp.getOutputStream());
-		try {
-			JsonObject resp;
-			JSONObject[] payload = ServManager.parseReq(req);
-			DbLog dblog = null; 
-
-			String t = req.getParameter("t");
-
-			if ("reforest".equals(t)) 
-				// try get dblog
-				try { dblog = IrSession.check(payload[0]); } catch(Exception ex) {}
-			else
-				dblog = IrSession.check(payload[0]);
-
-			if (t == null)
-				throw new SQLException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
-			String connId = req.getParameter("conn");
-
-			// find tree semantics
-			String semanticKey = req.getParameter("sk");
-			if (semanticKey == null || semanticKey.trim().length() == 0)
-				throw new SQLException("Sementic key must present for s-tree.serv.");
-			String semantic = Configs.getCfg("tree-semantics", semanticKey);
-			String[][] semanticss = null; 
-			if (!"sql".equals(t)) {
-				if (semantic == null || semantic.trim().length() == 0)
-					throw new SQLException(String.format("Sementics not cofigured correctly: \n\t%s\n\t%s", semanticKey, semantic));
-				semanticss = parseSemantics(semantic);
-			}
-			if (connId == null || connId.trim().length() == 0)
-				connId = DA.getDefltConnId();
-
-			// branches
-			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=reforest
-			if ("reforest".equals(t))
-				resp = rebuildForest(connId, semanticss, dblog);
-			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=retree&root=002
-			else if ("retree".equals(t)) {
-				String root = req.getParameter("root");
-				resp = rebuildTree(connId, root, semanticss, dblog);
-			}
-			else {
-				// sql or any
-				int page = 0;
-				int size = 20;
-				try {page = Integer.valueOf(req.getParameter("page"));
-				}catch (Exception e) {}
-				try {size = Integer.valueOf(req.getParameter("size"));
-				}catch (Exception e) {}
-				
-				if ("sql".equals(t)) {
-					// sql
-					String[] args = req.getParameterValues("args");
-					resp = loadConfigArgs(connId, semanticKey, args, page, size);
-				}
-				else {
-					// any
-					String rootId = req.getParameter("root");
-					resp = loadSemantics(payload[1], page, size, rootId, connId, semanticss);
-				}
-			}
-
-			writer.write(resp);
-			writer.close();
-			resp.flushBuffer();
-		} catch (IrSessionException ssex) {
-			if (writer != null)
-				writer.write(JsonHelper.err(IrSession.ERR_CHK, ssex.getMessage()));
-		} catch (SQLException e) {
-			e.printStackTrace();
-			if (writer != null)
-				writer.write(JsonHelper.Err(e.getMessage()));
-		} catch (Exception e) {
-			e.printStackTrace();
-			if (writer != null)
-				writer.write(JsonHelper.Err(e.getMessage()));
 		} finally {
-			if (writer != null)
-				writer.close();
+			resp.flushBuffer();
 		}
 	}
 
@@ -249,32 +151,33 @@ public class SemanticTree extends SQuery {
 	 * @param msg
 	 * @param semanticss
 	 * @return
+	 * @throws TransException 
+	 * @throws SQLException 
 	 */
-	private SemanticObject query(JMessage<QueryReq> msg, String[][] semanticss) {
-		// TODO Auto-generated method stub
-		return null;
+	private SemanticObject query(JMessage<QueryReq> msg, String[][] semanticss) throws SQLException, TransException {
+		return super.query(msg);
 	}
 
-	static JsonObject loadConfigArgs(String connId, String sqlkey, String[] args,
-			int page, int size) throws SQLException {
-		String[][] semanticss = parseSemantics(DatasetCfg.getStree(connId, sqlkey));
-		String sql = DatasetCfg.getSql(connId, sqlkey, args);
+	static SemanticObject loadConfigArgs(String connId, String sqlkey, String[] args,
+			int page, int size) throws SQLException, SemanticException {
+//		String[][] semanticss = parseSemantics(DatasetCfg.getStree(connId, sqlkey));
+//		String sql = DatasetCfg.getSql(connId, sqlkey, args);
 		// resp = loadSemantics(payload, page, size, rootId, connId, semanticss);
-		if (page >= 0 && size >= 0) {
-			sql = DA.pagingSql(connId, sql, page, size);
-		}
+//		if (page >= 0 && size >= 0) {
+//			sql = Connects.pagingSql(connId, sql, page, size);
+//		}
 
-		String s1 = String.format("select count(*) as total from (%s) t", sql);
-		SResultset rs0 = DA.select(s1);
-		rs0.beforeFirst().next();
-		int total = rs0.getInt("total");
+//		String s1 = String.format("select count(*) as total from (%s) t", sql);
+//		SResultset rs0 = Connects.select(s1);
+//		rs0.beforeFirst().next();
+//		int total = rs0.getInt("total");
 
-		SResultset rs = DatasetCfg.mapRs(connId, sqlkey, DA.select(sql));
-		JsonArray jforest = buildRs (rs, semanticss);
-		JsonObjectBuilder block = Json.createObjectBuilder();
-		block.add("total", total);
-		block.add("rows", jforest);
-		return block.build();
+		// SResultset rs = DatasetCfg.mapRs(connId, sqlkey, Connects.select(sql));
+		List<SemanticObject> f = DatasetCfg.loadStree(connId, sqlkey);
+		SemanticObject block = new SemanticObject();
+//		block.add("total", total);
+		block.put("forest", f);
+		return block;
 	}
 
 	/**parse "easyui,,e_areas,areaId id,parentId,areaName text,fullpath,siblingSort,false" to 2d array.
@@ -283,7 +186,7 @@ public class SemanticTree extends SQuery {
 	 */
 	private static String[][] parseSemantics(String semantic) {
 		if (semantic == null) return null;
-		String[][] sm = new String[countIx][];
+		String[][] sm = new String[Ix.count][];
 		String[] sms = semantic.split(",");
 		for (int ix = 0; ix < sms.length; ix++) {
 			String smstr = sms[ix];
@@ -300,154 +203,38 @@ public class SemanticTree extends SQuery {
 		return sm;
 	}
 
-	public static JsonObject loadSemantics(JSONObject jobj, int page, int pgSize, String rootId,
-			String connId, String sk) throws IOException, SQLException, IrSessionException, SAXException {
-		String semantic = Configs.getCfg("tree-semantics", sk);
-		// String semantic = Configs.getCfg("tree-semantics", semanticKey);
-		String[][] semanticss = null; 
-		if (sk == null || sk.trim().length() == 0 || semantic == null || semantic.trim().length() == 0) 
-			throw new SQLException(String.format("Sementics not cofigured correctly: sk = %s, semantic = %s", sk, semantic));
-		else
-			semanticss = parseSemantics(semantic);
-		return loadSemantics(jobj, page, pgSize, rootId, connId, semanticss);
-	}
+//	public static SemanticObject loadSemantics(QueryReq jobj, int page, int pgSize, String rootId,
+//			String connId, String sk) throws IOException, SQLException, SsException, SAXException {
+//		String semantic = Configs.getCfg("tree-semantics", sk);
+//		// String semantic = Configs.getCfg("tree-semantics", semanticKey);
+//		String[][] semanticss = null; 
+//		if (sk == null || sk.trim().length() == 0 || semantic == null || semantic.trim().length() == 0) 
+//			throw new SQLException(String.format("Sementics not cofigured correctly: sk = %s, semantic = %s", sk, semantic));
+//		else
+//			semanticss = parseSemantics(semantic);
+//		return loadSemantics(jobj, page, pgSize, rootId, connId, semanticss);
+//	}
 
-	private static JsonObject loadSemantics(JMessage<QueryReq> jobj, int page, int pgSize, String rootId,
-			String connId, String[][] semanticss) throws IOException, SQLException, SAXException {
+	private static SemanticObject loadSemantics(QueryReq jobj, int page, int pgSize, String rootId,
+			String connId, String[][] semanticss) throws IOException, SQLException, SAXException, SsException {
 
-		JsonObject resp;
+		SemanticObject resp;
 		// for robustness
 		if (rootId != null && rootId.trim().length() == 0)
 			rootId = null;
 		
-		resp = querySTree(connId, jobj, rootId, page, pgSize, semanticss);
+//		resp = querySTree(connId, jobj, rootId, page, pgSize, semanticss);
 		return resp;
 	}
 
-	/**Semantics Extension: filter area root: if rootId == null, get user org's root area
-	 * @param jobj
-	 * @param rootId
-	 * @return
-	private String smExtRootArea(JSONObject jobj, String rootId) {
-		//没有root参数从session中读取所在区域 - default case: load areas only for that of user org
-		if( rootId == null) {
-			// rootId=IFireSingleton.getAreaId();
-			JSONObject jheader = (JSONObject) jobj.get("header");
-			IfireUser usr = (IfireUser) IrSession.getUser(jheader);
-			return usr.getRootAreaId();
-		}
-		return rootId;
-	}
-	 */
-
-	/**Query tree data, construct according to semanticss. If rootId != null, will query a subtree.
-	 * @param connId
-	 * @param t
-	 * @param jobj
-	 * @param rootId
-	 * @param page
-	 * @param size
-	 * @param semanticss
-	 * @return
-	 * @throws SQLException
-	 * @throws IOException
-	 * @throws IrSessionException
-	 * @throws SAXException 
-	 */
-	@SuppressWarnings("unchecked")
-	private static JsonObject querySTree(String connId, JMessage<QueryReq> jobj, String rootId,
-		int page, int size, String[][] semanticss) throws SQLException, IOException, SsException, SAXException {
-		// Ignore "order by" by client, override with semantics
-		JSONArray orders = semanticOrder(semanticss);
-		jobj.put("orders", orders);
-		
-		jobj = complementExprs(jobj, semanticss);
-
-		String[] sql;
-		if (rootId != null && rootId.trim().length() > 0) {
-			// add cond: fullpath llike root-path
-			// tabls = [{t, tabl, as, on}, ...]
-			// conds = [{field, logic, tabl, v}, ...]
-			JSONObject like = subnodeIds(semanticss, rootId);
-			JSONArray conds = (JSONArray)jobj.get("conds");
-			if (conds == null) {
-				conds = new JSONArray();
-				jobj.put("conds", conds);
-			}
-			conds.add(like);
-
-			sql = Query.buildSelect(jobj, semanticss[ixTabl][0], connId);
-		}
-		else
-			sql = Query.buildSelect(jobj, semanticss[ixTabl][0], connId);
-
-
-		SResultset rs0 = DA.select(sql[0]);
-		rs0.beforeFirst().next();
-		int total = rs0.getInt("total");
-
-		if (ispaging(semanticss, page, size))
-			sql[1] = DA.pagingSql(connId, sql[1], page, size);
-		SResultset rs = DA.select(sql[1]);
-		rs.beforeFirst();
-
-		// 2018-01-31 For Oracle portion: convert uppercase to bump-case according to mappings(dc.xml) and request object(alais)
-		if (DA.isOracle(connId))
-			JsonHelper.renameRsCols(jobj, rs, connId);
-
-		JsonArray jforest = buildRs (rs, semanticss);
-		JsonObjectBuilder block = Json.createObjectBuilder();
-		block.add("total", total);
-		block.add("rows", jforest);
-		JsonObject resp = block.build();
-		return resp;
-	}
 	
-	private static JsonArray buildRs (SResultset rs, String[][] semanticss) throws SQLException {
-		// build the tree/forest
-		JsonArrayBuilder forest = Json.createArrayBuilder();
-		rs.beforeFirst();
-		while (rs.next()) {
-			JsonObjectBuilder root  = formatSemanticNode(semanticss, rs);
-
-			// checkSemantics(rs, semanticss, ixRecId);
-			JsonArrayBuilder children = buildSubTree(semanticss, root,
-					rs.getString(semanticss[ixRecId][1] == null ? semanticss[ixRecId][0] : semanticss[ixRecId][1]), rs);
-			if (children.build().size() > 0)
-				root.add("children", children);
-			forest.add(root);
-		}
-
-		JsonArray jforest = forest.build();
-		return jforest;
-	}
-
-	/** return true if: page >= 0, size >=0, semantics[ixPageByServer][0] == true<br>
-	 * default semantics[ixPageByServer][0] == true
-	 * @param sm
-	 * @param page
-	 * @param size
-	 * @return
-	 */
-	private static boolean ispaging(String[][] sm, int page, int size) {
-		if (page >= 0 && size >= 0
-				&& sm != null && sm.length > ixPageByServer
-				&& sm[ixPageByServer] != null && sm[ixPageByServer][0] != null) {
-			String flg = sm[ixPageByServer][0].trim().toLowerCase();
-			if ("false".equals(flg) || "f".equals(flg) || "0".equals(flg) || "n".equals(flg) || "no".equals(flg))
-				return false;
-		}
-		return true;
-	}
-
 	/**If exprs is not enough, add exprs from semanticss to form up the least collection including:
 	 * recId, parentId, fullpath, text.
 	 * @param jobj
 	 * @param semanticss
 	 * @return
-	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static JSONObject complementExprs(JSONObject jreq, String[][] semanticss) {
+	private static SemanticObject complementExprs(SemanticObject jreq, String[][] semanticss) {
 		JSONArray exprs = (JSONArray) jreq.get("exprs");
 		if (exprs == null) {
 			exprs = new JSONArray();
@@ -457,7 +244,7 @@ public class SemanticTree extends SQuery {
 
 		Iterator i = exprs.iterator();
 		while (i.hasNext()) {
-			JSONObject expr = (JSONObject) i.next();
+			SemanticObject expr = (SemanticObject) i.next();
 			String colname = (String) expr.get("alais");
 			if (colname == null || "".equals(colname.trim()))
 				colname = (String) expr.get("expr");
@@ -466,10 +253,10 @@ public class SemanticTree extends SQuery {
 		}
 		
 		for (String als : leastCols.keySet()) {
-			JSONObject expr = new JSONObject();
+			SemanticObject expr = new SemanticObject();
 			expr.put("expr", leastCols.get(als));
 			expr.put("alais", als);
-			expr.put("tabl", semanticss[ixTabl][0]);
+			expr.put("tabl", semanticss[Ix.tabl][0]);
 			exprs.add(expr);
 		}
 
@@ -477,58 +264,31 @@ public class SemanticTree extends SQuery {
 	}
 
 	@SuppressWarnings("serial")
-	private static HashMap<String, String> convertLestExprs(String[][] sm) {
+	private static HashMap<String, String> convertLestExprs(String[][] smtc) {
 		return new HashMap<String, String>() {
-			{put(sm[ixRecId][1] == null ? sm[ixRecId][0] : sm[ixRecId][1], sm[ixRecId][0]);}
-			{put(sm[ixParent][1] == null ? sm[ixParent][0] : sm[ixParent][1], sm[ixParent][0]);}
-			{put(sm[ixText][1] == null ? sm[ixText][0] : sm[ixText][1], sm[ixText][0]);}
-			{put(sm[ixFullpath][1] == null ? sm[ixFullpath][0] : sm[ixFullpath][1], sm[ixFullpath][0]);}
+			{put(smtc[Ix.recId][1] == null ? smtc[Ix.recId][0] : smtc[Ix.recId][1], smtc[Ix.recId][0]);}
+			{put(smtc[Ix.parent][1] == null ? smtc[Ix.parent][0] : smtc[Ix.parent][1], smtc[Ix.parent][0]);}
+			{put(smtc[Ix.text][1] == null ? smtc[Ix.text][0] : smtc[Ix.text][1], smtc[Ix.text][0]);}
+			{put(smtc[Ix.fullpath][1] == null ? smtc[Ix.fullpath][0] : smtc[Ix.fullpath][1], smtc[Ix.fullpath][0]);}
 		};
 	}
-
+	 */
 
 	/**Set query "order by" by fullpath.
 	 * @param semanticss
 	 * @return
-	 */
 	@SuppressWarnings("unchecked")
 	private static JSONArray semanticOrder(String[][] semanticss) {
 		JSONArray orders = new JSONArray();
-		JSONObject order = new JSONObject();
+		SemanticObject order = new SemanticObject();
 		// semanticsss: <v>easyui,,id,parentId,text,fullpath</v>
-		order.put("tabl", semanticss[ixTabl][0]);
-		order.put("field", semanticss[ixFullpath][1] == null
-						? semanticss[ixFullpath][0] : semanticss[ixFullpath][1]);
+		order.put("tabl", semanticss[Ix.tabl][0]);
+		order.put("field", semanticss[Ix.fullpath][1] == null
+						? semanticss[Ix.fullpath][0] : semanticss[Ix.fullpath][1]);
 		order.put("asc", "asc");
 		orders.add(order);
 
 		return orders;
-	}
-
-	/**Format jobj.conds for "fullpath like 'parent-path.%'"
-	 * @param semanticss
-	 * @param rootId
-	 * @return {field, logic: "like", tabl, v: "fullpath-root"}
-	 * @throws SQLException
-	 */
-	@SuppressWarnings("unchecked")
-	private static JSONObject subnodeIds(String[][] semanticss, String rootId) throws SQLException {
-		String sql = String.format("select %s from %s where %s = '%s'",
-				semanticss[ixFullpath][0], semanticss[ixTabl][0], semanticss[ixRecId][0], rootId);
-		SResultset rs = DA.select(sql);
-		if (rs.beforeFirst().next()) {
-			JSONObject j = new JSONObject();
-			j.put("field", semanticss[ixFullpath][0]);
-			j.put("logic", "=%");
-			j.put("tabl", semanticss[ixTabl][0]);
-			j.put("v", rs.getString(1));
-			return j;
-		}
-		else{
-			if (IrSingleton.debug)
-				System.err.println("not rootId tree");
-			return null;
-		}
 	}
 
 	private static void checkSemantics(SResultset rs, String[][] sm, int ix) throws SQLException {
@@ -545,89 +305,27 @@ public class SemanticTree extends SQuery {
 					sm[ix], sem, rs.getColCount(), cols));
 		}
 	}
-
-	private static JsonArrayBuilder buildSubTree(String[][] sm,
-			JsonObjectBuilder parentNode, String parentId, SResultset rs) throws SQLException {
-		JsonArrayBuilder childrenArray = Json.createArrayBuilder();
-//		int cols = rs.getColCount();
-		while (rs.next()) {
-			checkSemantics(rs, sm, ixParent);
-			String currentParentID = rs.getString(sm[ixParent][1] == null ? sm[ixParent][0] : sm[ixParent][1]);
-			if (currentParentID == null || currentParentID.trim().length() == 0) {
-				// new tree root
-				rs.previous();
-				if (childrenArray.build().size() > 0) // FIXME build each time?
-					parentNode.add("children", childrenArray);
-				return childrenArray;
-//				throw new SQLException(
-//						"Parent ID shouldn't be null in sub tree. One of such data comes from disordered resultset. Data for tree binding must ordered in deep first travels order - must order by fullpath when select from db.");
-			}
-			// HERE! ending adding children
-			if (!currentParentID.trim().equals(parentId.trim())) {
-				rs.previous();
-				if (childrenArray.build().size() > 0)
-					parentNode.add("children", childrenArray);
-				return childrenArray;
-			}
-
-//			JsonObjectBuilder child = Json.createObjectBuilder();
-//			for (int i = 1; i <= cols; i++) {
-//				String v = rs.getString(i);
-//				if (v != null)
-//					child.add(rs.getColumnName(i), v);
-//			}
-			JsonObjectBuilder child = formatSemanticNode(sm, rs);
-
-			JsonArrayBuilder subOrg = buildSubTree(sm, child,
-					rs.getString(sm[ixRecId][1] == null ? sm[ixRecId][0] : sm[ixRecId][1]), rs);
-
-			if (subOrg.build().size() > 0)
-				child.add("children", subOrg);
-			childrenArray.add(child);
-		}
-		return childrenArray;
-	}
-
-	/**Create a JsonObjectBuilder for easyui tree node with current rs row.
-	 * @param sm
-	 * @param rs
-	 * @return
-	 * @throws SQLException
 	 */
-	private static JsonObjectBuilder formatSemanticNode(String[][] sm, SResultset rs) throws SQLException {
-		JsonObjectBuilder node = Json.createObjectBuilder();
-		if(!"easyui".equals(sm[ixJsframe][0]))
-			throw new SQLException("js frame configuration not supported: " + sm[ixJsframe][0]);
 
-		for (int i = 1;  i <= rs.getColCount(); i++) {
-			String v = rs.getString(i);
-			String col = rs.getColumnName(i);
-			if (v != null)
-				if (col.equals(sm[ixChked][0]))
-					node.add(col, rs.getBoolean(i));
-				else
-					node.add(col, v);
-		}
-		return node;
-	}
 
-	/**Rebuild subtree starting at root.
+	/**Rebuild subtree starting at root.<br>
+	 * Currently only mysql is supported. You may override this method to adapt to other RDBMS.
 	 * @param connId
 	 * @param rootId
 	 * @param semanticss
-	 * @param dblog 
+	 * @param usrInf 
 	 * @return
 	 * @throws SQLException
 	 */
-	private JsonObject rebuildTree(String connId, String rootId, String[][] semanticss, DbLog dblog) throws SQLException {
-		if (DA.getConnType(connId).equals("mysql"))
-			return BuildMysql.rebuildDbTree(rootId, semanticss, dblog);
+	protected SemanticObject rebuildTree(String connId, String rootId, String[][] semanticss, IUser usrInf) throws SQLException {
+		if (Connects.driverType(connId) == dbtype.mysql)
+			return BuildMysql.rebuildDbTree(rootId, semanticss, usrInf);
 		else throw new SQLException("TODO...");
 	}
 
-	private JsonObject rebuildForest(String connId, String[][] semanticss, DbLog dblog) throws SQLException {
-		if (DA.getConnType(connId).equals("mysql"))
-			return BuildMysql.rebuildDbForest(semanticss, dblog);
+	protected SemanticObject rebuildForest(String connId, String[][] semanticss, IUser usrInf) throws SQLException {
+		if (Connects.driverType(connId) == dbtype.mysql)
+			return BuildMysql.rebuildDbForest(semanticss, usrInf);
 		else throw new SQLException("TODO...");
 	}
 
@@ -743,16 +441,16 @@ end </pre>
 		 * @return
 		 * @throws SQLException
 		 */
-		private static JsonObject rebuildDbTree(String rootId, String[][] sm, DbLog dblog) throws SQLException {
+		private static SemanticObject rebuildDbTree(String rootId, String[][] sm, IUser dblog) throws SQLException {
 			// clear root parentId
 			String sql = String.format("update %1$s set %2$s = null where %2$s = %3$s or %2$s = ''",
-					sm[ixTabl][0], sm[ixParent][0], sm[ixRecId][0]);
-			DA.commit(dblog, sql);
+					sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);
+			Connects.commit(dblog, sql);
 
 			String pid = null;
 			sql = String.format("select %1$s pid from %2$s where %3$s = '%4$s'", 
-					sm[ixParent][0], sm[ixTabl][0], sm[ixRecId][0], rootId);
-			SResultset rs = DA.select(sql);
+					sm[Ix.parent][0], sm[Ix.tabl][0], sm[Ix.recId][0], rootId);
+			SResultset rs = Connects.select(sql);
 			if (rs.beforeFirst().next()) {
 				pid = rs.getString("pid");
 				if (pid != null && pid.trim().length() == 0)
@@ -767,13 +465,20 @@ end </pre>
 
 			int total = 0;
 			int level = 1;
-			int[] i = DA.commit(dblog, updatei);
+			int[] i = Connects.commit(dblog, updatei);
 			while (i != null && i.length > 0 && i[0] > 0) {
 				total += i[0];
 				updatei = updatePi(rootId, sm, level++);
-				i = DA.commit(dblog, updatei);
+				i = Connects.commit(dblog, updatei);
 			}
-			return JsonHelper.OK(String.format("Updated %d records from root %s", total, rootId));
+
+//			SemanticObject respMsg = new SemanticObject();
+//			respMsg.put("code", "ok");
+//			respMsg.put("port", Port.stree);
+//			respMsg.put("msg", String.format("Updated %d records from root %s", total, rootId));
+//			return respMsg;
+			return JProtocol.ok(Port.stree, "Updated %s records from root %s", total, rootId);
+
 		}
 	
 		/**update e_areas
@@ -788,7 +493,7 @@ end </pre>
 			// where areaId = 'rootId'
 			return String.format("update %1$s set %2$s = concat(char2rx64(ifnull(%3$s, 0)), ' ', %4$s) " +
 					"where %4$s = '%5$s'",
-					sm[ixTabl][0], sm[ixFullpath][0], sm[ixSibling][0], sm[ixRecId][0], rootId);
+					sm[Ix.tabl][0], sm[Ix.fullpath][0], sm[Ix.sort][0], sm[Ix.recId][0], rootId);
 		}
 	
 		private static String updateSubroot(String rootId, String[][] sm) {
@@ -797,35 +502,36 @@ end </pre>
 			// where p0.domainId = '0202';
 			return String.format("update %1$s p0 join %1$s r on p0.%2$s = r.%3$s " +
 					"set p0.%4$s = concat(r.%4$s, '.', char2rx64(ifnull(p0.%5$s, 0)), ' ', p0.%3$s) where p0.%3$s = '%6$s'",
-					sm[ixTabl][0], sm[ixParent][0], sm[ixRecId][0], sm[ixFullpath][0], sm[ixSibling][0], rootId);
+					sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0], sm[Ix.fullpath][0], sm[Ix.sort][0], rootId);
 		}
 		
 		//////////////////////////////// forest /////////////////////////////////////////////////////
 
-		private static JsonObject rebuildDbForest(String[][] sm, DbLog dblog) throws SQLException {
+		private static SemanticObject rebuildDbForest(String[][] sm, IUser dblog) throws SQLException {
 			// clear root parentId
 			String sql = String.format("update %1$s set %2$s = null where %2$s = %3$s or %2$s = ''",
-					sm[ixTabl][0], sm[ixParent][0], sm[ixRecId][0]);
-			DA.commit(dblog, sql);
+					sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);
+			Connects.commit(dblog, sql);
 
 			String updatei = updateForestRoot(sm);
 
 			int total = 0;
 			int level = 1;
-			int[] i = DA.commit(dblog, updatei);
+			int[] i = Connects.commit(dblog, updatei);
 			while (i != null && i.length > 0 && i[0] > 0) {
 				total += i[0];
 				updatei = updatePi(null, sm, level++);
-				i = DA.commit(dblog, updatei);
+				i = Connects.commit(dblog, updatei);
 			}
-			return JsonHelper.OK("Updated records: " + total);
+			// return JsonHelper.OK("Updated records: " + total);
+			return JProtocol.ok(Port.stree, "Updated records: %s", total);
 		}
 		
 		private static String updateForestRoot(String[][] sm) {
 			// update e_areas set fullpath = CONCAT(char2rx64(ifnull(siblingSort, 0)), ' ', areaId) where parentId is null;
 			return String.format("update %1$s set %2$s = concat(char2rx64(ifnull(%3$s, 0)), ' ', %4$s) " +
 					"where %5$s is null",
-					sm[ixTabl][0], sm[ixFullpath][0], sm[ixSibling][0], sm[ixRecId][0], sm[ixParent][0]);
+					sm[Ix.tabl][0], sm[Ix.fullpath][0], sm[Ix.sort][0], sm[Ix.recId][0], sm[Ix.parent][0]);
 		}
 
 		/**<pre>
@@ -849,23 +555,23 @@ where p0.parentId is null; </pre>
 		private static String updatePi(String rootId, String[][] sm, int pi) {
 			// e_areas p0 on p1.parentId = p0.areaId
 			String p0 = String.format("%1$s p%2$d on p%3$d.%4$s = p%2$d.%5$s",
-					sm[ixTabl][0], 0, 1, sm[ixParent][0], sm[ixRecId][0]);
+					sm[Ix.tabl][0], 0, 1, sm[Ix.parent][0], sm[Ix.recId][0]);
 			for (int i = 1; i < pi; i++) {
 				// e_areas p1 on p2.parentId = p1.areaId join [e_areas p0 on p1.parentId = p0.areaId]
 				p0 = String.format("%1$s p%2$d on p%3$d.%4$s = p%2$d.%5$s join %6$s",
-						sm[ixTabl][0], i, i + 1, sm[ixParent][0], sm[ixRecId][0], p0);
+						sm[Ix.tabl][0], i, i + 1, sm[Ix.parent][0], sm[Ix.recId][0], p0);
 			}
 			p0 = String.format("update %1$s p%2$d join %3$s %4$s %5$s",
-					sm[ixTabl][0], pi, p0, setPi(sm, pi),
-					rootId == null ? String.format("where p0.%1$s is null", sm[ixParent][0]) // where p0.parentId is null
-								   : String.format("where p0.%1$s = '%2$s'", sm[ixRecId][0], rootId)); // where p0.areaId = 'rootId'
+					sm[Ix.tabl][0], pi, p0, setPi(sm, pi),
+					rootId == null ? String.format("where p0.%1$s is null", sm[Ix.parent][0]) // where p0.parentId is null
+								   : String.format("where p0.%1$s = '%2$s'", sm[Ix.recId][0], rootId)); // where p0.areaId = 'rootId'
 			return p0;
 		}
 
 		private static String setPi(String[][] sm, int pi) {
 			// set p2.fullpath = concat(p1.fullpath, ' ', char2rx64(ifnull(p2.siblingSort, 0)), '#', p2.areaId)
 			return String.format("set p%1$d.%2$s = concat(p%3$d.%2$s, '.', char2rx64(ifnull(p%1$d.%4$s, 0)), ' ', p%1$d.%5$s)",
-					pi, sm[ixFullpath][0], pi - 1, sm[ixSibling][0], sm[ixRecId][0]);
+					pi, sm[Ix.fullpath][0], pi - 1, sm[Ix.sort][0], sm[Ix.recId][0]);
 		}
 	}
 }
