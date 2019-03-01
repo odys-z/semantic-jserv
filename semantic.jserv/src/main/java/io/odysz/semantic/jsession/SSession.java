@@ -271,7 +271,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 					if ("ping".equals(t) || "touch".equals(t)) {
 						JHeader header = payload.header();
 						verify(header);
-						ServletAdapter.write(response, JProtocol.ok(Port.session, null));
+						ServletAdapter.write(response, JProtocol.ok(Port.session, ""));
 					}
 					else throw new SsException ("Session Request not supported: a=%s", a);
 				}

@@ -13,7 +13,6 @@ import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
-import io.odysz.semantics.SemanticObject;
 
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/user.serv" })
 public class SUser <T> extends HttpServlet {
@@ -33,7 +32,7 @@ public class SUser <T> extends HttpServlet {
 		OutputStream os = resp.getOutputStream();
 
 		ServletAdapter.write(resp, JProtocol.ok(Port.user,
-				new SemanticObject().put("msg", "suser.serv: to be overriden...")));
+				"suser.serv: to be overriden..."));
 		resp.flushBuffer();
 		os.close();
 	}

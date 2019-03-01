@@ -15,8 +15,7 @@ public class HeartBeat extends JBody {
 	private String uid;
 
 	protected HeartBeat(JMessage<JBody> parent, String ssid, String uid) {
-		super(parent);
-//		super(Port.heartbeat);
+		super(parent); // Heartbeats don't need db access
 		this.ssid = ssid;
 		this.uid = uid;
 	}

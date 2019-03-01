@@ -2,6 +2,7 @@ package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 
 import com.google.gson.Gson;
 
@@ -37,10 +38,18 @@ public class JProtocol {
 	}
 
 	// deprecated?
+	public static SemanticObject ok(Port port, List<SemanticObject> msg) {
+		SemanticObject obj = new SemanticObject();
+		obj.put("code", MsgCode.ok.name());
+		obj.put("list", msg);
+		obj.put("port", port.name());
+		return obj;
+	}
+
 	public static SemanticObject ok(Port port, SemanticObject msg) {
 		SemanticObject obj = new SemanticObject();
 		obj.put("code", MsgCode.ok.name());
-		obj.put("msg", msg);
+		obj.put("data", msg);
 		obj.put("port", port.name());
 		return obj;
 	}

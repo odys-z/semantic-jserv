@@ -70,15 +70,15 @@ public class QueryReq extends JBody {
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
 	ArrayList<Object[]> groups;
 
-	int page;
-	int pgsize;
+	protected int page;
+	protected int pgsize;
 
 	public QueryReq(JMessage<? extends JBody> parent) {
 		super(parent);
 		a = "r";
 	}
 
-	public QueryReq(JMessage<? extends JBody> parent, String fromTbl, String... alias) {
+	public QueryReq(JMessage<? extends JBody> parent, String conn, String fromTbl, String... alias) {
 		super(parent);
 		a = "r";
 

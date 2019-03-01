@@ -18,6 +18,7 @@ import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.DA.DatasetCfg.Ix;
+import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
@@ -51,11 +52,11 @@ public class SemanticTree extends SQuery {
 	private static final long serialVersionUID = 1L;
 
 	
-	protected static JHelper<QueryReq> jtreeReq;
+	protected static JHelper<DatasetReq> jtreeReq;
 
 	static {
 		st = JSingleton.defltScxt;
-		jtreeReq  = new JHelper<QueryReq>();
+		jtreeReq  = new JHelper<DatasetReq>();
 		verifier = JSingleton.getSessionVerifier();
 	}	
 
@@ -85,7 +86,7 @@ public class SemanticTree extends SQuery {
 				throw new SemanticException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
 			String connId = req.getParameter("conn");
 
-			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jtreeReq, QueryReq.class);
+			JMessage<DatasetReq> msg = ServletAdapter.<DatasetReq>read(req, jtreeReq, QueryReq.class);
 			// check session
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 
@@ -93,43 +94,47 @@ public class SemanticTree extends SQuery {
 			String semanticKey = req.getParameter("sk");
 			if (semanticKey == null || semanticKey.trim().length() == 0)
 				throw new SQLException("Sementic key must present for s-tree.serv.");
-			String semantic = Configs.getCfg("tree-semantics", semanticKey);
-			String[][] semanticss = null; 
-			if (!"sql".equals(t)) {
-				if (semantic == null || semantic.trim().length() == 0)
-					throw new SQLException(String.format(
-						"Sementics not cofigured correctly: \n\t%s\n\t%s", semanticKey, semantic));
-				semanticss = parseSemantics(semantic);
-			}
+
+			// String semantic = Configs.getCfg("tree-semantics", semanticKey);
+			TreeSemantics treeSmtcs = loading...;
+
+//			String[][] semanticss = null; 
+//			if (!"sql".equals(t)) {
+//				if (semantic == null || semantic.trim().length() == 0)
+//					throw new SQLException(String.format(
+//						"Sementics not cofigured correctly: \n\t%s\n\t%s", semanticKey, semantic));
+//				semanticss = parseSemantics(semantic);
+//			}
 
 			SemanticObject r;
 			// branches
 			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=reforest
 			if ("reforest".equals(t))
-				r = rebuildForest(connId, semanticss, usr);
+				r = rebuildForest(connId, treeSmtcs, usr);
 			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=retree&root=002
 			else if ("retree".equals(t)) {
 				String root = req.getParameter("root");
-				r = rebuildTree(connId, root, semanticss, usr);
+				r = rebuildTree(connId, root, treeSmtcs, usr);
 			}
 			else {
 				// sql or any
-				int page = 0;
-				int size = 20;
-				try {page = Integer.valueOf(req.getParameter("page"));
-				}catch (Exception e) {}
-				try {size = Integer.valueOf(req.getParameter("size"));
-				}catch (Exception e) {}
+//				int page = 0;
+//				int size = 20;
+//				try {page = Integer.valueOf(req.getParameter("page"));
+//				}catch (Exception e) {}
+//				try {size = Integer.valueOf(req.getParameter("size"));
+//				}catch (Exception e) {}
 				
 				if ("sql".equals(t)) {
 					// sql
 					String[] args = req.getParameterValues("args");
-					r = loadConfigArgs(connId, semanticKey, args, page, size);
+					// r = loadDatasetree(connId, semanticKey, args);
+					r = loadDatasetree(connId, msg);
 				}
 				else {
 					// any
 					String rootId = req.getParameter("root");
-					r = loadSemantics(msg.body(0), page, size, rootId, connId, semanticss);
+					r = loadSemantics(msg, treeSmtcs);
 				}
 			}
 
@@ -153,78 +158,45 @@ public class SemanticTree extends SQuery {
 	 * @return
 	 * @throws TransException 
 	 * @throws SQLException 
-	 */
 	private SemanticObject query(JMessage<QueryReq> msg, String[][] semanticss) throws SQLException, TransException {
 		return super.query(msg);
 	}
+	 */
 
-	static SemanticObject loadConfigArgs(String connId, String sqlkey, String[] args,
-			int page, int size) throws SQLException, SemanticException {
-//		String[][] semanticss = parseSemantics(DatasetCfg.getStree(connId, sqlkey));
-//		String sql = DatasetCfg.getSql(connId, sqlkey, args);
-		// resp = loadSemantics(payload, page, size, rootId, connId, semanticss);
+	static SemanticObject loadDatasetree (String conn, JMessage<DatasetReq> msgBody)
+			throws SQLException, SemanticException {
+		DatasetReq msg = msgBody.body().get(0);
+//		String sql = DatasetCfg.getSql(conn, msg.sk, (Object[])msg.sqlArgs);
+//		rs = DatasetCfg.dss.get(sk).map(conn, rs);	
+		SResultset rs = DatasetCfg.select(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);
+
+		// ss is deferent from that of dataset (it may not exists, or been overridden)
+		TreeSemantics ss;
+		return JProtocol.ok(Port.stree,
+				DatasetCfg.buildForest(rs, ss));
+	}
+
+//	private static String getSql(String connId, String sqlkey, String[] args, int page, int size)
+//			throws SQLException, SemanticException {
+//		String sql = DatasetCfg.getSql(connId, sqlkey, (Object[])args);
 //		if (page >= 0 && size >= 0) {
 //			sql = Connects.pagingSql(connId, sql, page, size);
 //		}
-
-//		String s1 = String.format("select count(*) as total from (%s) t", sql);
-//		SResultset rs0 = Connects.select(s1);
-//		rs0.beforeFirst().next();
-//		int total = rs0.getInt("total");
-
-		// SResultset rs = DatasetCfg.mapRs(connId, sqlkey, Connects.select(sql));
-		List<SemanticObject> f = DatasetCfg.loadStree(connId, sqlkey);
-		SemanticObject block = new SemanticObject();
-//		block.add("total", total);
-		block.put("forest", f);
-		return block;
-	}
-
-	/**parse "easyui,,e_areas,areaId id,parentId,areaName text,fullpath,siblingSort,false" to 2d array.
-	 * @param semantic
-	 * @return [0:[easyui, null], 1:[checked, null], 2:[tabl, null], 3:[areaId, id], ...]
-	 */
-	private static String[][] parseSemantics(String semantic) {
-		if (semantic == null) return null;
-		String[][] sm = new String[Ix.count][];
-		String[] sms = semantic.split(",");
-		for (int ix = 0; ix < sms.length; ix++) {
-			String smstr = sms[ix];
-			smstr = smstr.replaceAll("\\s+[aA][sS]\\s+", " "); // replace " as "
-			String[] smss = smstr.split(" ");
-			if (smss == null || smss.length > 2 || smss[0] == null)
-				System.err.println(String.format("WARN - SematnicTree: ignoring semantics not understandable: %s", smstr));
-			else {
-				sm[ix] = new String[] {smss[0].trim(),
-					(smss.length > 1 && smss[1] != null) ? smss[1].trim() : null};
-			}
-		}
-
-		return sm;
-	}
-
-//	public static SemanticObject loadSemantics(QueryReq jobj, int page, int pgSize, String rootId,
-//			String connId, String sk) throws IOException, SQLException, SsException, SAXException {
-//		String semantic = Configs.getCfg("tree-semantics", sk);
-//		// String semantic = Configs.getCfg("tree-semantics", semanticKey);
-//		String[][] semanticss = null; 
-//		if (sk == null || sk.trim().length() == 0 || semantic == null || semantic.trim().length() == 0) 
-//			throw new SQLException(String.format("Sementics not cofigured correctly: sk = %s, semantic = %s", sk, semantic));
-//		else
-//			semanticss = parseSemantics(semantic);
-//		return loadSemantics(jobj, page, pgSize, rootId, connId, semanticss);
+//		return sql;
 //	}
 
-	private static SemanticObject loadSemantics(QueryReq jobj, int page, int pgSize, String rootId,
-			String connId, String[][] semanticss) throws IOException, SQLException, SAXException, SsException {
+	private SemanticObject loadSemantics(JMessage<DatasetReq> jobj, int page, int pgSize, String rootId,
+			String connId, TreeSemantics semanticss) throws IOException, SQLException, SAXException, SsException, TransException {
 
-		SemanticObject resp;
 		// for robustness
 		if (rootId != null && rootId.trim().length() == 0)
 			rootId = null;
 		
-//		resp = querySTree(connId, jobj, rootId, page, pgSize, semanticss);
-		return resp;
+		SemanticObject rs = query((JMessage<QueryReq>)jobj);
+		List<SemanticObject> resp = null;
+		if (rs != null)
+			resp = DatasetCfg.buildForest((SResultset) rs.get("rs"), semanticss);
+		return JProtocol.ok(Port.stree, resp);
 	}
 
 	
@@ -317,13 +289,15 @@ public class SemanticTree extends SQuery {
 	 * @return
 	 * @throws SQLException
 	 */
-	protected SemanticObject rebuildTree(String connId, String rootId, String[][] semanticss, IUser usrInf) throws SQLException {
+	protected SemanticObject rebuildTree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)
+			throws SQLException {
 		if (Connects.driverType(connId) == dbtype.mysql)
 			return BuildMysql.rebuildDbTree(rootId, semanticss, usrInf);
 		else throw new SQLException("TODO...");
 	}
 
-	protected SemanticObject rebuildForest(String connId, String[][] semanticss, IUser usrInf) throws SQLException {
+	protected SemanticObject rebuildForest(String connId, TreeSemantics semanticss, IUser usrInf)
+			throws SQLException {
 		if (Connects.driverType(connId) == dbtype.mysql)
 			return BuildMysql.rebuildDbForest(semanticss, usrInf);
 		else throw new SQLException("TODO...");
@@ -441,7 +415,8 @@ end </pre>
 		 * @return
 		 * @throws SQLException
 		 */
-		private static SemanticObject rebuildDbTree(String rootId, String[][] sm, IUser dblog) throws SQLException {
+		private static SemanticObject rebuildDbTree(String rootId, String[][] sm, IUser dblog)
+				throws SQLException {
 			// clear root parentId
 			String sql = String.format("update %1$s set %2$s = null where %2$s = %3$s or %2$s = ''",
 					sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);
@@ -507,7 +482,7 @@ end </pre>
 		
 		//////////////////////////////// forest /////////////////////////////////////////////////////
 
-		private static SemanticObject rebuildDbForest(String[][] sm, IUser dblog) throws SQLException {
+		private static SemanticObject rebuildDbForest(TreeSemantics sm, IUser dblog) throws SQLException {
 			// clear root parentId
 			String sql = String.format("update %1$s set %2$s = null where %2$s = %3$s or %2$s = ''",
 					sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);

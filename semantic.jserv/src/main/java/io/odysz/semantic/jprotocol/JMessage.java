@@ -29,7 +29,7 @@ public class JMessage <T extends JBody> {
 						insert("c.serv"), query("r.serv"), update("u.serv"), delete("d.serv"),
 						echo("echo.serv"), user("user.serv"),
 						// data structure extensions
-						stree("s-tree.serv");
+						stree("s-tree.jserv"), dataset("ds.jserv");
 		private String url;
 		Port(String url) { this.url = url; }
 		public String url() { return url; }
