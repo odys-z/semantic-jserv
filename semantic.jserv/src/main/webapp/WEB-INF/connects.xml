@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<conns>
+  <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,smtcs">
+  	<!-- drvmnger table is used to configure basic db connection, for pooled datasource, see bdcp -->
+  	<!-- smtcs: semantics configuration used only for the connection.
+  		(And a global semantics configuration?) -->
+  	<c>
+  		<id>local-sqlite</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<!-- For sqlite, src = relative path from this configure file.
+  			So connection string can be: jdbc:sqlite:WEB-INF/remote.db -->
+  		<src>semantic-DA.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  	</c>
+  	
+	<c>
+  		<id>local-mysql</id>
+  		<type>mysql</type>
+  		<isdef></isdef>
+  		<src>jdbc:mysql://[host]:3306/[mysql-db]?characterEncoding=utf8</src>
+  		<usr>???</usr>
+  		<pswd>*******</pswd>
+  		<dbg>true</dbg>
+  	</c>
+
+	<c>
+  		<id>local-orcl</id>
+  		<type>oracle</type>
+  		<isdef></isdef>
+  		<src>jdbc:oracle:thin:@[host]:1521:[orcl]</src>
+  		<usr>???</usr>
+  		<pswd>*******</pswd>
+  		<dbg>true</dbg>
+	</c>
+
+  </t>
+
+  <!-- NOTE: dbcp configuration shouldn't work because you don't have container providing the connections.
+  	User semantic-DA.test to test connection pool mode. -->
+  <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,smtcs">
+  	<!-- dbcp table is used to pooled db datasource, for basic connection, see dao -->
+  	<!-- type: mysql | oracle | mssql -->
+  	<!-- id: client specify id for the desired target data source -->
+  	<!-- src: connection name, e.g. context.xml/Context/Resource [name] -->
+  	<!-- dbg: true for printing sql -->
+  	<!-- smtcs: semantics configuration used only for the connection.
+  		(And a global semantics configuration?) -->
+
+	<!-- A pooled connection configuration example for Tomcat 6, 7, 8
+  		in %CATALINA_HOME/conf/server.xml/GlobalNamingResoure/Resource:
+  	<Resource name="jdbc/semantic-DA" global="jdbc/semantic-DA" 
+  			auth="Container" type="javax.sql.DataSource"
+  			maxActive="10" maxIdle="3" maxWait="10000"
+  			username="odysz" password="..." driverClassName="com.mysql.jdbc.Driver"
+  			url="jdbc:mysql://...:3306/prj" connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true" />
+  	 -->
+   	<c>
+  		<id>inet</id>
+  		<type>mysql</type>
+  		<src>jdbc/ifire_twin</src>
+  		<isdef>true</isdef>
+  		<!-- Not used -->
+  		<usr></usr>
+  		<!-- Not used (will be protected in cipher in the future -->
+  		<pswd></pswd>
+  		<dbg>true</dbg>
+  	</c>
+  </t>
+</conns>

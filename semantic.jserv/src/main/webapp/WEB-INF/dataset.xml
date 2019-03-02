@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataset>
+<t id="ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
+	<!-- This table is used for define sqls that can be parameterized when serving data.
+		Client using 'sk' in request message to use sqls.
+		Records returned by sql can be mapped into bump cases (for oracle) if 'cols' is not empty.
+		Different version of sql, mysql, oracle, etc. is used according to connId and driver type,
+		see connects.xml. 
+		s-tree: if this field is defined, the retrieved records is translated in to an STree, with names specified as:
+			0: is checking needed, 1: tabl name (ignored, used in other case), 2: record id,
+			3: parent id, 4: fullpath (optinal), 5: sibling sort (optional), 6: item text,
+			7: children name (default 'children', js can use this to find children, auto generated while building tree),
+			8: should paged by server (ignored because sql is used directly. For paging by server, see SQuery).
+			Note all element can be defined as "db field, client name", while client name is optional.
+			The client name can not ignored if the client using a different name other than db field name.
+	 -->
+	<c>
+  		<sk>test.tree</sk>
+  		<cols></cols>
+  		<mysql>SELECT domainId id, parentId, domainName, domainValue, sort, "others", fullpath
+  			FROM a_domain order by fullpath limit 5;
+  		</mysql>
+  		<orcl>SELECT "domId" "id", "parentId", "domName" "domainName", "domVal" "domainValue", "sort", "remarks", "fullpath"
+  			FROM "a_domain" order by "fullpath"
+  		</orcl>
+  		<sqlit>SELECT domainId id, parentId, domainName, domainValue, sort, "others", fullpath, stamp, upstamp
+  			FROM a_domain order by fullpath;
+  		</sqlit>
+  		<s-tree>checked,ir_workflow,id idVue,parentId,text,,,false</s-tree>
+	</c>
+</t>
+</dataset>

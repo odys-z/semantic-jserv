@@ -327,7 +327,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @throws ReflectiveOperationException 
 	 * @throws SemanticException 
 	 */
-	public static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName)
+	private static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName)
 			throws ReflectiveOperationException, SemanticException {
 		if (!Configs.hasCfg(clsNamekey))
 			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
