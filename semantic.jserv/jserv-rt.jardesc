@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <jardesc>
-    <jar path="/home/ody/docs/personal/ws-github/.metadata/.plugins/org.eclipse.wst.server.core/tmp0/wtpwebapps/jserv-sample/WEB-INF/lib/semantic.jserv.jar"/>
+    <jar path="jserv-sample/src/main/webapp/WEB-INF/lib/semantic.jserv-SNAPSHOT.jar"/>
     <options buildIfNeeded="true" compress="true" descriptionLocation="/semantic.jserv/jserv-rt.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
@@ -12,12 +12,13 @@
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jserv"/>
+        <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.ext"/>
         <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jserv.U{SUpdate.java"/>
         <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jserv.U{UpdateReq.java"/>
         <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jserv.helper"/>
         <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jserv.R{SQuery.java"/>
-        <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jprotocol"/>
         <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jsession"/>
+        <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jprotocol"/>
         <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jserv.test"/>
         <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jserv.x"/>
         <javaElement handleIdentifier="=semantic.jserv/src\/main\/java&lt;io.odysz.semantic.jserv.R{QueryReq.java"/>

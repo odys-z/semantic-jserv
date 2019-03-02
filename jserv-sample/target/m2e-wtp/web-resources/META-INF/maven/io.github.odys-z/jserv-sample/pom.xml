@@ -43,13 +43,33 @@
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
 	    <version>0.0.1-SNAPSHOT</version>
-	    <scope>System</scope>
+		<!-- provide: the semantic.jserv-x.x.x.jar is exported as jar from semantic.jserv and included in build path separately.
+			So use provide to exclude packaging for runtime.
+			eclipse debug on tomcat server can't find maven dependent class.
+			see similar issue: https://stackoverflow.com/questions/21237339/java-lang-classnotfoundexception-org-springframework-web-context-contextloaderl
+			for maven scope, see:
+			https://stackoverflow.com/questions/26975818/what-is-scope-under-dependency-in-pom-xml-for
+			for maven war dependency, there be be a better solution:
+			https://stackoverflow.com/questions/1769586/maven-war-dependency 
+			We have a wiki page disussing this:
+			https://github.com/odys-z/semantic-jserv/wiki/Semantic-jserv-Troubleshootings#classnotfoundexception
+			-->
+	    <scope>provide</scope>
 	</dependency>
 
   </dependencies>
   <build>
     <finalName>jserv-sample</finalName>
     <plugins>
+    	<plugin>
+    		<artifactId>maven-compiler-plugin</artifactId>
+    		<version>3.7.0</version>
+    		<configuration>
+    		<source>1.8</source>
+    		<target>1.8</target>
+    		</configuration>
+    	</plugin>
+
     	<plugin>
 	        <groupId>org.apache.tomcat.maven</groupId>
 	        <artifactId>tomcat7-maven-plugin</artifactId>
