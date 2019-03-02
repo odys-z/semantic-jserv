@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -12,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.jsample.utils.SampleFlags;
-import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.ext.DatasetReq;
@@ -23,14 +21,11 @@ import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.semantic.jserv.R.QueryReq;
-import io.odysz.semantic.jserv.R.SQuery;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.sample" })
 public class SysMenu  extends SemanticTree {
