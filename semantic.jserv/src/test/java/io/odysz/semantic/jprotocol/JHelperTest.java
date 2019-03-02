@@ -1,7 +1,5 @@
 package io.odysz.semantic.jprotocol;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
