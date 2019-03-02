@@ -33,6 +33,7 @@ public class JSingleton implements ServletContextListener {
 
 	public void contextInitialized(ServletContextEvent evt) {
 		Utils.printCaller(false);
+		Utils.logi("JSingleton initializing...");
 
 		String xmlDir = evt.getServletContext().getRealPath("/WEB-INF");
 		Connects.init(xmlDir);

@@ -156,14 +156,15 @@ public class QueryReq extends JBody {
 	/**<p>Create a qeury request body item, for joining etc.,
 	 * and can be serialized into json by {@link #toJson(JsonWriter)}.</p>
 	 * <p>Client side helper, don't confused with {@link Query}.</p>
+	 * @param conn
 	 * @param parent
 	 * @param ssInf
 	 * @param from 
 	 * @param as 
 	 * @return query request
 	 */
-	public static QueryReq formatReq(JMessage<QueryReq> parent, SemanticObject ssInf, String from, String as) {
-		QueryReq bdItem = new QueryReq(parent, from, as);
+	public static QueryReq formatReq(String conn, JMessage<QueryReq> parent, SemanticObject ssInf, String from, String as) {
+		QueryReq bdItem = new QueryReq(parent, conn, from, as);
 		return bdItem;
 	}
 

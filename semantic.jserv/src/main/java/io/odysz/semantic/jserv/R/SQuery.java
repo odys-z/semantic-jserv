@@ -54,7 +54,7 @@ public class SQuery extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.query)
-			Utils.logi("---------- query (r.serv) get <- %s ----------", req.getRemoteAddr());
+			Utils.logi("---------- squery (r.serv) get <- %s ----------", req.getRemoteAddr());
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
@@ -77,7 +77,7 @@ public class SQuery extends HttpServlet {
 	
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (ServFlags.query)
-			Utils.logi("========== query (r.serv) post <= %s ==========", req.getRemoteAddr());
+			Utils.logi("========== squery (r.serv) post <= %s ==========", req.getRemoteAddr());
 		try {
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			

@@ -66,8 +66,8 @@ public class JMessage <T extends JBody> {
 		seq = (int) (Math.random() * 1000);
 	}
 
-	public JMessage(Port msgCode) {
-		this.port = msgCode;
+	public JMessage(Port port) {
+		this.port = port;
 		seq = (int) (Math.random() * 1000);
 	}
 	

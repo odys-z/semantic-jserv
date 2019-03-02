@@ -38,7 +38,7 @@
    	<c>
   		<id>inet</id>
   		<type>mysql</type>
-  		<src>jdbc/inet-semantic</src>
+  		<src>jdbc/inet-sample</src>
   		<isdef>true</isdef>
   		<!-- Not used -->
   		<usr></usr>
