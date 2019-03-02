@@ -69,14 +69,6 @@ public class SysMenu  extends SemanticTree {
 			
 			String connId = req.getParameter("conn");
 
-//			SemanticObject rs = query(msg.body(0));
-//			SResultset[] tabls = (SResultset[]) rs.get("rs");
-//			if (tabls != null && tabls.length > 0) {
-//				tabls = (SResultset[]) rs.remove("rs");
-//				for (int i = 0; i < tabls.length; i++)
-//					rs.add("trees", querySTree(tabls[i], streeMenu));
-//			}
-
 			List<SemanticObject> lst = DatasetCfg.loadStree(connId,
 					jreq.sk(), jreq.page(), jreq.size(), jreq.sqlArgs);
 			SemanticObject rs = JProtocol.ok(Port.stree, lst);

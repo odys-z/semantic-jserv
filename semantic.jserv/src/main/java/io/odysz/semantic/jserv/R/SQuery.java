@@ -78,15 +78,14 @@ public class SQuery extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (ServFlags.query)
 			Utils.logi("========== squery (r.serv) post <= %s ==========", req.getRemoteAddr());
+
+		resp.setCharacterEncoding("UTF-8");
 		try {
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			
 			SemanticObject rs = query(msg.body(0));
-			
-			resp.setCharacterEncoding("UTF-8");
 
 			ServletAdapter.write(resp, rs);
-			resp.flushBuffer();
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -97,6 +96,8 @@ public class SQuery extends HttpServlet {
 		} catch (Exception e) {
 			e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exGeneral, e.getMessage()));
+		} finally {
+			resp.flushBuffer();
 		}
 	}
 	
@@ -147,9 +148,11 @@ public class SQuery extends HttpServlet {
 				try {rs.printSomeData(false, 1, rs.getColumnName(1), rs.getColumnName(2)); }
 				catch (Exception e) {e.printStackTrace();}
 		}
-		respMsg.put("code", "ok");
-		respMsg.put("port", Port.query);
-		return respMsg;
+
+		return JProtocol.ok(Port.query, respMsg);
+//		respMsg.put("code", "ok");
+//		respMsg.put("port", Port.query);
+//		return respMsg;
 	}
 
 }

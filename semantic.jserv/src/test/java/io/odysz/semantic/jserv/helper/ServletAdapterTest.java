@@ -1,7 +1,5 @@
 package io.odysz.semantic.jserv.helper;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,10 +10,10 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
 
-import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantics.SemanticObject;
 
 class ServletAdapterTest {
