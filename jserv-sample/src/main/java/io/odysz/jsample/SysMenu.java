@@ -9,18 +9,25 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.jsample.utils.SampleFlags;
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
+import io.odysz.semantic.ext.DatasetReq;
 import io.odysz.semantic.ext.SemanticTree;
+import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.R.QueryReq;
 import io.odysz.semantic.jserv.R.SQuery;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -29,11 +36,14 @@ import io.odysz.transact.x.TransException;
 public class SysMenu  extends SemanticTree {
 	private static final long serialVersionUID = 1L;
 	
+	protected static JHelper<DatasetReq> jmenuReq;
+
 	/**Menu tree semantics */
-	private static String[] streeMenu;
+	private static TreeSemantics menuSemtcs;
 	
 	static {
-		// TODO load menu tree semantics
+		jmenuReq  = new JHelper<DatasetReq>();
+		menuSemtcs = new TreeSemantics(Configs.getCfg("tree-semantics", "sys.menu.vue-sample"));
 	}
 
 	@Override
@@ -53,24 +63,33 @@ public class SysMenu  extends SemanticTree {
 		if (SampleFlags.menu)
 			Utils.logi("========== menu.sample post <= %s ==========", req.getRemoteAddr());
 
+		resp.setCharacterEncoding("UTF-8");
 		try {
-			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
+			JMessage<DatasetReq> jmsg = ServletAdapter.<DatasetReq>read(req, jmenuReq, DatasetReq.class);
+			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
+
+			DatasetReq jreq = jmsg.body(0);
+			jreq.treeSemtcs(menuSemtcs);
+			jreq.sqlArgs = new String[] {usr.get("role")};
 			
-			SemanticObject rs = query(msg);
+			String connId = req.getParameter("conn");
+
+//			SemanticObject rs = query(msg.body(0));
+//			SResultset[] tabls = (SResultset[]) rs.get("rs");
+//			if (tabls != null && tabls.length > 0) {
+//				tabls = (SResultset[]) rs.remove("rs");
+//				for (int i = 0; i < tabls.length; i++)
+//					rs.add("trees", querySTree(tabls[i], streeMenu));
+//			}
+
+			List<SemanticObject> lst = DatasetCfg.loadStree(connId,
+					jreq.sk(), jreq.page(), jreq.size(), jreq.sqlArgs);
+			SemanticObject rs = JProtocol.ok(Port.stree, lst);
 			
-			SResultset[] tabls = (SResultset[]) rs.get("rs");
-			if (tabls != null && tabls.length > 0) {
-				tabls = (SResultset[]) rs.remove("rs");
-				for (int i = 0; i < tabls.length; i++)
-					rs.add("trees", querySTree(tabls[i], streeMenu));
-			}
-			
-			resp.setCharacterEncoding("UTF-8");
 			ServletAdapter.write(resp, rs);
-			resp.flushBuffer();
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
-		} catch (SQLException | TransException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
 		} catch (ReflectiveOperationException e) {
@@ -78,6 +97,8 @@ public class SysMenu  extends SemanticTree {
 		} catch (Exception e) {
 			e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exGeneral, e.getMessage()));
+		} finally {
+			resp.flushBuffer();
 		}
 	}
 

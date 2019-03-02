@@ -16,7 +16,8 @@ import io.odysz.transact.x.TransException;
 /**<p>Session user object.</p>
  * This object is usually created when user logged in,
  * and is used for semantics processing like finger print, etc.
- * @author ody
+ * 
+ * @author odys-z@github.com
  *
  */
 class SUser extends SemanticObject implements IUser {
@@ -24,7 +25,6 @@ class SUser extends SemanticObject implements IUser {
 	protected String uid;
 	private String pswd;
 	private String usrName;
-//	private String iv;
 	@SuppressWarnings("unused")
 	private long touched;
 
@@ -40,11 +40,10 @@ class SUser extends SemanticObject implements IUser {
 	public SUser(String uid, String pswd, String iv, String usrName) throws SemanticException {
 		this.uid = uid;
 		this.pswd = pswd;
-//		this.iv = iv;
 		this.usrName = usrName;
 		
 		if (SSession.rootK == null)
-			throw new SemanticException("Session rootKey not initialized. Use http GET /login.serv?t=init&k=[key]&header=[...] to set root key.");
+			throw new SemanticException("Session rootKey not initialized. Use http GET /login.serv?t=init&k=[key]&header={} to set root key.");
 		
 		// decrypt db-pswd-cipher with sys-key and db-iv => db-pswd
 		try {
@@ -87,10 +86,6 @@ class SUser extends SemanticObject implements IUser {
 			ssid = randomId();
 		return ssid;
 	}
-
-//	public String json() {
-//		return "user json ...";
-//	}
 
 	@Override
 	public boolean login(Object request) throws TransException {

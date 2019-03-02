@@ -17,7 +17,6 @@ import io.odysz.common.dbtype;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
-import io.odysz.semantic.DA.DatasetCfg.Ix;
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
@@ -86,9 +85,12 @@ public class SemanticTree extends SQuery {
 				throw new SemanticException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
 			String connId = req.getParameter("conn");
 
-			JMessage<DatasetReq> msg = ServletAdapter.<DatasetReq>read(req, jtreeReq, QueryReq.class);
+
 			// check session
-			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
+			JMessage<DatasetReq> jmsg = ServletAdapter.<DatasetReq>read(req, jtreeReq, QueryReq.class);
+			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
+
+			DatasetReq jreq = jmsg.body(0);
 
 			// find tree semantics
 			String semanticKey = req.getParameter("sk");
@@ -96,45 +98,27 @@ public class SemanticTree extends SQuery {
 				throw new SQLException("Sementic key must present for s-tree.serv.");
 
 			// String semantic = Configs.getCfg("tree-semantics", semanticKey);
-			TreeSemantics treeSmtcs = loading...;
-
-//			String[][] semanticss = null; 
-//			if (!"sql".equals(t)) {
-//				if (semantic == null || semantic.trim().length() == 0)
-//					throw new SQLException(String.format(
-//						"Sementics not cofigured correctly: \n\t%s\n\t%s", semanticKey, semantic));
-//				semanticss = parseSemantics(semantic);
-//			}
-
 			SemanticObject r;
-			// branches
+			// t branches: reforest | retree | ds | <empty>
 			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=reforest
 			if ("reforest".equals(t))
-				r = rebuildForest(connId, treeSmtcs, usr);
+				r = rebuildForest(connId, getTreeSemtcs(req, jreq), usr);
 			// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=retree&root=002
 			else if ("retree".equals(t)) {
 				String root = req.getParameter("root");
-				r = rebuildTree(connId, root, treeSmtcs, usr);
+				r = rebuildTree(connId, root, getTreeSemtcs(req, jreq), usr);
 			}
 			else {
-				// sql or any
-//				int page = 0;
-//				int size = 20;
-//				try {page = Integer.valueOf(req.getParameter("page"));
-//				}catch (Exception e) {}
-//				try {size = Integer.valueOf(req.getParameter("size"));
-//				}catch (Exception e) {}
-				
-				if ("sql".equals(t)) {
-					// sql
-					String[] args = req.getParameterValues("args");
-					// r = loadDatasetree(connId, semanticKey, args);
-					r = loadDatasetree(connId, msg);
+				if ("sqltree".equals(t)) {
+					// ds (tree configured in dataset.xml)
+					List<SemanticObject> lst = DatasetCfg.loadStree(connId,
+							jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
+					r = JProtocol.ok(Port.stree, lst);
 				}
 				else {
-					// any
-					String rootId = req.getParameter("root");
-					r = loadSemantics(msg, treeSmtcs);
+					// empty (build tree from general query results with semantic of 'sk')
+					// String rootId = req.getParameter("root");
+					r = loadSemantics(connId, jreq, getTreeSemtcs(req, jreq));
 				}
 			}
 
@@ -152,50 +136,50 @@ public class SemanticTree extends SQuery {
 		}
 	}
 
-	/**Get Tree
-	 * @param msg
-	 * @param semanticss
+	/**Figure out tree semantics in the following steps:<br>
+	 * 1. if jreq is not null try get it (the client is defined a semantics);<br>
+	 * 2. if req has an 'sk' parameter, load in confix.xml, if failed, try dataset.xml;<br>
+	 * 3. if jreq has and 'sk' parameter, load in confix.xml, if failed, try dataset.xml.<br>
+	 * @param req
+	 * @param jreq
 	 * @return
-	 * @throws TransException 
-	 * @throws SQLException 
-	private SemanticObject query(JMessage<QueryReq> msg, String[][] semanticss) throws SQLException, TransException {
-		return super.query(msg);
-	}
 	 */
+	private TreeSemantics getTreeSemtcs(HttpServletRequest req, DatasetReq jreq) {
+		TreeSemantics ts = jreq.getTreeSemantics();
+		if (ts != null)
+			return ts;
 
-	static SemanticObject loadDatasetree (String conn, JMessage<DatasetReq> msgBody)
-			throws SQLException, SemanticException {
-		DatasetReq msg = msgBody.body().get(0);
-//		String sql = DatasetCfg.getSql(conn, msg.sk, (Object[])msg.sqlArgs);
-//		rs = DatasetCfg.dss.get(sk).map(conn, rs);	
-		SResultset rs = DatasetCfg.select(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);
-
-		// ss is deferent from that of dataset (it may not exists, or been overridden)
-		TreeSemantics ss;
-		return JProtocol.ok(Port.stree,
-				DatasetCfg.buildForest(rs, ss));
+		String sk = req.getParameter("sk");
+		if (sk == null)
+			sk = jreq == null ? null : jreq.sk;
+		String tss = Configs.getCfg("tree-semantics", sk);
+		if (tss != null)
+			return new TreeSemantics(tss);
+		return DatasetCfg.getTreeSemtcs(sk);
 	}
 
-//	private static String getSql(String connId, String sqlkey, String[] args, int page, int size)
-//			throws SQLException, SemanticException {
-//		String sql = DatasetCfg.getSql(connId, sqlkey, (Object[])args);
-//		if (page >= 0 && size >= 0) {
-//			sql = Connects.pagingSql(connId, sql, page, size);
-//		}
-//		return sql;
-//	}
-
-	private SemanticObject loadSemantics(JMessage<DatasetReq> jobj, int page, int pgSize, String rootId,
-			String connId, TreeSemantics semanticss) throws IOException, SQLException, SAXException, SsException, TransException {
-
+	/**Build s-tree with general query ({@link SQuery#query(QueryReq)}).
+	 * @param connId
+	 * @param jobj
+	 * @param treeSmtcs
+	 * @return
+	 * @throws IOException
+	 * @throws SQLException
+	 * @throws SAXException
+	 * @throws SsException
+	 * @throws TransException
+	 */
+	private SemanticObject loadSemantics(String connId, DatasetReq jobj, TreeSemantics treeSmtcs)
+			throws IOException, SQLException, SAXException, SsException, TransException {
 		// for robustness
+		String rootId = jobj.rootId;
 		if (rootId != null && rootId.trim().length() == 0)
 			rootId = null;
 		
-		SemanticObject rs = query((JMessage<QueryReq>)jobj);
+		SemanticObject rs = query((QueryReq)jobj);
 		List<SemanticObject> resp = null;
 		if (rs != null)
-			resp = DatasetCfg.buildForest((SResultset) rs.get("rs"), semanticss);
+			resp = DatasetCfg.buildForest((SResultset) rs.get("rs"), treeSmtcs);
 		return JProtocol.ok(Port.stree, resp);
 	}
 
@@ -279,7 +263,6 @@ public class SemanticTree extends SQuery {
 	}
 	 */
 
-
 	/**Rebuild subtree starting at root.<br>
 	 * Currently only mysql is supported. You may override this method to adapt to other RDBMS.
 	 * @param connId
@@ -303,7 +286,9 @@ public class SemanticTree extends SQuery {
 		else throw new SQLException("TODO...");
 	}
 
-	/**A helper class to rebuild tree structure in db table - in case node's parent changing makes subtree fullpath incorrect.<br>
+	/**FIXME use semantic.transact to extend this class to build sql for all supported DB
+	 * - even supporting no radix64.<br>
+	 * A helper class to rebuild tree structure in db table - in case node's parent changing makes subtree fullpath incorrect.<br>
 	 * This needs two DB facilities to work:<br>
 	 * 1. the radix64 array<pre>
 CREATE TABLE ir_radix64 (
@@ -406,7 +391,6 @@ end </pre>
 	 * See {@link #rebuildDbForest(String[])} for tested sqls.
 	 * @author ody
 	 */
-	
 	static class BuildMysql {
 		/**
 		 * @param rootId
@@ -415,16 +399,18 @@ end </pre>
 		 * @return
 		 * @throws SQLException
 		 */
-		private static SemanticObject rebuildDbTree(String rootId, String[][] sm, IUser dblog)
+		private static SemanticObject rebuildDbTree(String rootId, TreeSemantics sm, IUser dblog)
 				throws SQLException {
 			// clear root parentId
 			String sql = String.format("update %1$s set %2$s = null where %2$s = %3$s or %2$s = ''",
-					sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);
+					// sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);
+					sm.tabl(), sm.dbParent(), sm.dbRecId());
 			Connects.commit(dblog, sql);
 
 			String pid = null;
 			sql = String.format("select %1$s pid from %2$s where %3$s = '%4$s'", 
-					sm[Ix.parent][0], sm[Ix.tabl][0], sm[Ix.recId][0], rootId);
+					// sm[Ix.parent][0], sm[Ix.tabl][0], sm[Ix.recId][0], rootId);
+					sm.dbParent(), sm.tabl(), sm.dbRecId(), rootId);
 			SResultset rs = Connects.select(sql);
 			if (rs.beforeFirst().next()) {
 				pid = rs.getString("pid");
@@ -453,7 +439,6 @@ end </pre>
 //			respMsg.put("msg", String.format("Updated %d records from root %s", total, rootId));
 //			return respMsg;
 			return JProtocol.ok(Port.stree, "Updated %s records from root %s", total, rootId);
-
 		}
 	
 		/**update e_areas
@@ -463,21 +448,23 @@ end </pre>
 		 * @param sm
 		 * @return
 		 */
-		private static String updateRoot(String rootId, String[][] sm) {
+		private static String updateRoot(String rootId, TreeSemantics sm) {
 			// update e_areas set fullpath = concat(lpad(ifnull(siblingSort, '0'), 2, '0'), ' ', areaId)
 			// where areaId = 'rootId'
 			return String.format("update %1$s set %2$s = concat(char2rx64(ifnull(%3$s, 0)), ' ', %4$s) " +
 					"where %4$s = '%5$s'",
-					sm[Ix.tabl][0], sm[Ix.fullpath][0], sm[Ix.sort][0], sm[Ix.recId][0], rootId);
+					// sm[Ix.tabl][0], sm[Ix.fullpath][0], sm[Ix.sort][0], sm[Ix.recId][0], rootId);
+					sm.tabl(), sm.dbFullpath(), sm.dbSort(), sm.dbRecId(), rootId);
 		}
 	
-		private static String updateSubroot(String rootId, String[][] sm) {
+		private static String updateSubroot(String rootId, TreeSemantics sm) {
 			// update a_domain p0 join a_domain r on p0.parentId = r.domainId
 			// set p0.fullpath = concat(r.fullpath, '.', char2rx64(ifnull(p0.sort, 0)), ' ', p0.domainId)
 			// where p0.domainId = '0202';
 			return String.format("update %1$s p0 join %1$s r on p0.%2$s = r.%3$s " +
 					"set p0.%4$s = concat(r.%4$s, '.', char2rx64(ifnull(p0.%5$s, 0)), ' ', p0.%3$s) where p0.%3$s = '%6$s'",
-					sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0], sm[Ix.fullpath][0], sm[Ix.sort][0], rootId);
+					// sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0], sm[Ix.fullpath][0], sm[Ix.sort][0], rootId);
+					sm.tabl(), sm.dbParent(), sm.dbRecId(), sm.dbFullpath(), sm.dbSort(), rootId);
 		}
 		
 		//////////////////////////////// forest /////////////////////////////////////////////////////
@@ -485,7 +472,8 @@ end </pre>
 		private static SemanticObject rebuildDbForest(TreeSemantics sm, IUser dblog) throws SQLException {
 			// clear root parentId
 			String sql = String.format("update %1$s set %2$s = null where %2$s = %3$s or %2$s = ''",
-					sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);
+					// sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);
+					sm.tabl(), sm.dbParent(), sm.dbRecId());
 			Connects.commit(dblog, sql);
 
 			String updatei = updateForestRoot(sm);
@@ -502,11 +490,12 @@ end </pre>
 			return JProtocol.ok(Port.stree, "Updated records: %s", total);
 		}
 		
-		private static String updateForestRoot(String[][] sm) {
+		private static String updateForestRoot(TreeSemantics sm) {
 			// update e_areas set fullpath = CONCAT(char2rx64(ifnull(siblingSort, 0)), ' ', areaId) where parentId is null;
 			return String.format("update %1$s set %2$s = concat(char2rx64(ifnull(%3$s, 0)), ' ', %4$s) " +
 					"where %5$s is null",
-					sm[Ix.tabl][0], sm[Ix.fullpath][0], sm[Ix.sort][0], sm[Ix.recId][0], sm[Ix.parent][0]);
+					// sm[Ix.tabl][0], sm[Ix.fullpath][0], sm[Ix.sort][0], sm[Ix.recId][0], sm[Ix.parent][0]);
+					sm.tabl(), sm.dbFullpath(), sm.dbSort(), sm.dbRecId(), sm.dbParent());
 		}
 
 		/**<pre>
@@ -527,26 +516,36 @@ where p0.parentId is null; </pre>
 		 * @param pi
 		 * @return
 		 */
-		private static String updatePi(String rootId, String[][] sm, int pi) {
+		private static String updatePi(String rootId, TreeSemantics sm, int pi) {
 			// e_areas p0 on p1.parentId = p0.areaId
 			String p0 = String.format("%1$s p%2$d on p%3$d.%4$s = p%2$d.%5$s",
-					sm[Ix.tabl][0], 0, 1, sm[Ix.parent][0], sm[Ix.recId][0]);
+					// sm[Ix.tabl][0], 0, 1, sm[Ix.parent][0], sm[Ix.recId][0]);
+					sm.tabl(), sm.dbParent(), sm.dbRecId());
 			for (int i = 1; i < pi; i++) {
 				// e_areas p1 on p2.parentId = p1.areaId join [e_areas p0 on p1.parentId = p0.areaId]
 				p0 = String.format("%1$s p%2$d on p%3$d.%4$s = p%2$d.%5$s join %6$s",
-						sm[Ix.tabl][0], i, i + 1, sm[Ix.parent][0], sm[Ix.recId][0], p0);
+						// sm[Ix.tabl][0], i, i + 1, sm[Ix.parent][0], sm[Ix.recId][0], p0);
+						sm.tabl(), i, i + 1, sm.dbParent(), sm.dbRecId(), p0);
 			}
 			p0 = String.format("update %1$s p%2$d join %3$s %4$s %5$s",
-					sm[Ix.tabl][0], pi, p0, setPi(sm, pi),
-					rootId == null ? String.format("where p0.%1$s is null", sm[Ix.parent][0]) // where p0.parentId is null
-								   : String.format("where p0.%1$s = '%2$s'", sm[Ix.recId][0], rootId)); // where p0.areaId = 'rootId'
+					// sm[Ix.tabl][0],
+					sm.tabl(),
+					pi, p0, setPi(sm, pi),
+					rootId == null ? String.format("where p0.%1$s is null",
+													// sm[Ix.parent][0]
+													sm.dbParent()) // where p0.parentId is null
+								   : String.format("where p0.%1$s = '%2$s'",
+										   // sm[Ix.recId][0],
+										   sm.dbRecId(),
+										   rootId)); // where p0.areaId = 'rootId'
 			return p0;
 		}
 
-		private static String setPi(String[][] sm, int pi) {
+		private static String setPi(TreeSemantics sm, int pi) {
 			// set p2.fullpath = concat(p1.fullpath, ' ', char2rx64(ifnull(p2.siblingSort, 0)), '#', p2.areaId)
 			return String.format("set p%1$d.%2$s = concat(p%3$d.%2$s, '.', char2rx64(ifnull(p%1$d.%4$s, 0)), ' ', p%1$d.%5$s)",
-					pi, sm[Ix.fullpath][0], pi - 1, sm[Ix.sort][0], sm[Ix.recId][0]);
+					// pi, sm[Ix.fullpath][0], pi - 1, sm[Ix.sort][0], sm[Ix.recId][0]);
+					pi, sm.dbFullpath(), pi - 1, sm.dbSort(), sm.dbRecId());
 		}
 	}
 }

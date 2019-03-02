@@ -60,9 +60,8 @@ public class SQuery extends HttpServlet {
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			verifier.verify(msg.header());
 
-			SemanticObject rs = query(msg);
+			SemanticObject rs = query(msg.body(0));
 			resp.getWriter().write(Html.rs((SResultset)rs.get("rs")));
-			resp.flushBuffer();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
@@ -71,6 +70,8 @@ public class SQuery extends HttpServlet {
 			e.printStackTrace();
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
+		} finally {
+			resp.flushBuffer();
 		}
 	}
 	
@@ -80,7 +81,7 @@ public class SQuery extends HttpServlet {
 		try {
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
 			
-			SemanticObject rs = query(msg);
+			SemanticObject rs = query(msg.body(0));
 			
 			resp.setCharacterEncoding("UTF-8");
 
@@ -105,9 +106,9 @@ public class SQuery extends HttpServlet {
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	protected SemanticObject query(JMessage<QueryReq> msgBody) throws SQLException, TransException {
+	protected SemanticObject query(QueryReq msg) throws SQLException, TransException {
 		ArrayList<String> sqls = new ArrayList<String>();
-		QueryReq msg = msgBody.body().get(0);
+//		QueryReq msg = msgBody.body().get(0);
 		Query selct = st.select(msg.mtabl, msg.mAlias)
 						.page(msg.page, msg.pgsize);
 		if (msg.exprs != null && msg.exprs.size() > 0)
