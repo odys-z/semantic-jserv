@@ -8,6 +8,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.xml.sax.SAXException;
+
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.jsample.utils.SampleFlags;
@@ -23,6 +25,7 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -39,6 +42,11 @@ public class SysMenu  extends SemanticTree {
 	static {
 		jmenuReq  = new JHelper<DatasetReq>();
 		menuSemtcs = new TreeSemantics(Configs.getCfg("tree-semantics", "sys.menu.vue-sample"));
+		try {
+			DatasetCfg.init(JSingleton.rootINF());
+		} catch (SAXException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -47,9 +55,25 @@ public class SysMenu  extends SemanticTree {
 		if (SampleFlags.menu)
 			Utils.logi("---------- menu.sample get <- %s ----------", req.getRemoteAddr());
 
-		List<String> menu = null;
-		resp.getWriter().write(Html.list(menu));
-		resp.flushBuffer();
+		try {
+			String connId = req.getParameter("conn");
+			String sk = req.getParameter("sk");
+
+			List<SemanticObject> lst = DatasetCfg.loadStree(connId,
+					sk, 0, -1, "admin");
+
+			resp.getWriter().write(Html.listSemtcs(lst));
+		} catch (SemanticException e) {
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
+//		} catch (SsException e) {
+//			e.printStackTrace();
+//			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSession, e.getMessage()));
+		} finally {
+			resp.flushBuffer();
+		}
 	}
 
 	@Override
@@ -81,9 +105,9 @@ public class SysMenu  extends SemanticTree {
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
-		} catch (Exception e) {
+		} catch (SsException e) {
 			e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exGeneral, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSession, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
