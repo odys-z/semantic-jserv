@@ -22,6 +22,7 @@ import static j2html.TagCreator.span;
 
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantics.SemanticObject;
+import j2html.tags.ContainerTag;
 
 /**Helper for coverting modules to readable html.
  * @author ody
@@ -54,8 +55,27 @@ public class Html {
 				h1("Html.list()"),
 					table(tbody(
 						tr(th(""), th("")),
-						each(list, cell -> tr(td(""), td(cell)))))
+						list == null ? tr(td("null"), td("")) : each(list, cell -> tr(td(""), td(cell)))))
+				)).render(); // FIXME use render(Appendable)
+	}
+
+	public static String listSemtcs(List<SemanticObject> list) {
+		return "<!DOCTYPE HTML>" + html(
+			head(meta().withCharset("utf-8")),
+			body(
+				h1("Html.list()"),
+					table(tbody(
+						tr(th(""), th("")),
+						list == null ? tr(td("null"), td("")) : each(list, cell -> trEx(cell))))
 				)).render();
+	}
+
+	private static ContainerTag trEx(SemanticObject cell) {
+		ContainerTag tr = tr("'");
+		for (String p : cell.props().keySet()) {
+			tr.with(td(p), td(cell.get(p).toString()));
+		}
+		return tr;
 	}
 
 	/**TODO can html writing outputStream?

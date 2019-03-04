@@ -72,6 +72,10 @@ class SUser extends SemanticObject implements IUser {
 		return uid;
 	}
 
+	public String get(String prop) {
+		return null;
+	}
+
 	@Override
 	public ArrayList<String> dbLog(ArrayList<String> sqls) {
 		return sqls;
@@ -102,8 +106,13 @@ class SUser extends SemanticObject implements IUser {
 			touch();
 			return true;
 		}
-
+		
 		return false;
+	}
+	
+	@Override
+	public IUser set(String prop, Object value) {
+		return this;
 	}
 
 	@Override

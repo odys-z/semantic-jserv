@@ -27,6 +27,7 @@ public class JSingleton implements ServletContextListener {
 
 	public static DATranscxt defltScxt;
 	private static ISessionVerifier session;
+	private static String rootINF;
 
 	public void contextDestroyed(ServletContextEvent arg0) {
 	}
@@ -35,12 +36,12 @@ public class JSingleton implements ServletContextListener {
 		Utils.printCaller(false);
 		Utils.logi("JSingleton initializing...");
 
-		String xmlDir = evt.getServletContext().getRealPath("/WEB-INF");
-		Connects.init(xmlDir);
-		Configs.init(xmlDir);
+		rootINF = evt.getServletContext().getRealPath("/WEB-INF");
+		Connects.init(rootINF);
+		Configs.init(rootINF);
 		
 		try {
-			ISemantext s = new DASemantext("inet", xmlDir + "/semantics.xml");
+			ISemantext s = new DASemantext("inet", rootINF + "/semantics.xml");
 			defltScxt = new DATranscxt(s);
 			SSession.init(defltScxt);
 			session = new SSession();
@@ -51,6 +52,13 @@ public class JSingleton implements ServletContextListener {
 
 	public static ISessionVerifier getSessionVerifier() {
 		return session;
+	}
+
+	/**Get server root/WEB-INF path (filesystem local)
+	 * @return
+	 */
+	public static String rootINF() {
+		return rootINF;
 	}
 
 }
