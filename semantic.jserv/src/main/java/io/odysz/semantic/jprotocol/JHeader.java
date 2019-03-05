@@ -1,5 +1,8 @@
 package io.odysz.semantic.jprotocol;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class JHeader {
 
 	String uid;
@@ -34,6 +37,16 @@ public class JHeader {
 	
 	public static String[] usrAct(String funcId, String remarks, String cate, String cmd) {
 		return new String[] {funcId, cate, cmd, remarks};
+	}
+	
+	/**For test. The string can not been used for json data.
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return String.format("{ssid: %s, uid: %s, iv64: %s,\n\t\tuserAct: %s}",
+				ssid, uid, iv64,
+				Arrays.stream(usrAct).collect(Collectors.joining(", ", "[", "]")));
 	}
 
 }

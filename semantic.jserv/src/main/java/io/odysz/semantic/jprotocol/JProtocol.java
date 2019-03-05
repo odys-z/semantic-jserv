@@ -28,7 +28,7 @@ public class JProtocol {
 
 	public static Gson gson = new Gson();
 	
-	public static SemanticObject err(Port port, MsgCode code, String err) {
+	public static SemanticObject err(IPort port, MsgCode code, String err) {
 		SemanticObject obj = new SemanticObject();
 		obj.put("code", code.name());
 		obj.put("error", err);
@@ -36,7 +36,7 @@ public class JProtocol {
 		return obj;
 	}
 
-	public static SemanticObject ok(Port port, Object data) {
+	public static SemanticObject ok(IPort port, Object data) {
 		SemanticObject obj = new SemanticObject();
 		obj.put("code", MsgCode.ok.name());
 		obj.put("data", data);
