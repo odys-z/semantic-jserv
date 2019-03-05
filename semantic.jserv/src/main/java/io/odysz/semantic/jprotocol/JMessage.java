@@ -46,6 +46,21 @@ public class JMessage <T extends JBody> {
 
 	static Gson gson = new Gson();
 
+	/**The default IPort implelemtation.
+	 * Used for parsing port name (string) to IPort instance, like {@link #Port}.<br>
+	 * */
+	static IPort defaultPortImpl;
+
+	/**Set the default IPort implelemtation, which is used for parsing port name (string)
+	 * to IPort instance, like {@link Port}.<br>
+	 * Because {{@link Port} only defined limited ports, user must initialize JMessage with {@link understandPorts(IPort)}.<br>
+	 * An example of how to use this is shown in jserv-sample/io.odysz.jsample.SysMenu.<br>
+	 * Also check how to implement IPort extending {@link #Port}, see example of jserv-sample/io.odysz.jsample.protocol.Samport.
+	 * */
+	static public void understandPorts(IPort p) {
+		defaultPortImpl = p;
+	}
+	
 	@SuppressWarnings("unused")
 	private String vestion = "1.0";
 	int seq;
@@ -57,13 +72,13 @@ public class JMessage <T extends JBody> {
 	public IPort port() { return port; }
 	public void port(String pport) throws SemanticException {
 		/// translate from string to enum
-		if (port == null)
+		if (defaultPortImpl == null)
 			port = Port.echo.valof(pport);
 		else
-			port = port.valof(pport);
+			port = defaultPortImpl.valof(pport);
 
-		if (pport == null)
-			throw new SemanticException("Port can not be null");
+		if (port == null)
+			throw new SemanticException("Port can not be null. Not initialized? To use JMassage understand ports, call understandPorts(IPort) first.");
 	}
 
 	public String t;
@@ -136,7 +151,7 @@ public class JMessage <T extends JBody> {
 											e1.printStackTrace();
 											return String.format("EXCEPTION:\"%\"", e1.getMessage());
 										}
-							}).collect(Collectors.joining(", ", "'" + m.getName() + "': [", "]"))
+							}).collect(Collectors.joining(", ", "'" + m.getName() + "': [<", ">]"))
 						);
 						return s;
 					}
@@ -144,12 +159,7 @@ public class JMessage <T extends JBody> {
 						String s = ((List<?>)m.get(this))
 								.stream()
 								.map( e -> e.toString() )
-//								.map( e -> {
-//									return Stream.of(e)
-//											.map(el -> el.toString())
-//											.collect(Collectors.joining(", "));
-//								})
-								.collect(Collectors.joining(", ", "'" + m.getName() + "': [", "]"));
+								.collect(Collectors.joining(", ", "\n\t'" + m.getName() + "': [", "]"));
 						return s;
 					}
 					else return String.format(pairPrmv, m.getName(), m.get(this));

@@ -45,6 +45,10 @@ public class SysMenu  extends SemanticTree {
 		menuSemtcs = new TreeSemantics(Configs.getCfg("tree-semantics", "sys.menu.vue-sample"));
 		try {
 			DatasetCfg.init(JSingleton.rootINF());
+			// Because of the java enum limitation, or maybe the author's knowledge limitation, 
+			// JMessage needing a IPort instance to handle ports that implemented a new version of valof() method handling all ports.<br>
+			// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
+			JMessage.understandPorts(Samport.menu);
 		} catch (SAXException | IOException e) {
 			e.printStackTrace();
 		}

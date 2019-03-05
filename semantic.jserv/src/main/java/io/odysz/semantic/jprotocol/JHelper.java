@@ -421,6 +421,7 @@ public class JHelper<T extends JBody> {
 				token = reader.peek();
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new SemanticException("Parsing Json failed. Internal error: %s", e.getMessage());
 		} finally { reader.close(); }
 		

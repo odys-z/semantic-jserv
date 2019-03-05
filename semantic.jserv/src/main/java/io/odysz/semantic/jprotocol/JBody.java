@@ -1,6 +1,7 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -43,7 +44,17 @@ public abstract class JBody {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return String.format("a: %s, ...", a);
+		StringBuffer b = new StringBuffer(String.format(
+				"{<%s>\n\t\ta: %s,", getClass().getName(), a));
+		Field[] fdList = this.getClass().getDeclaredFields();
+		for (Field f : fdList) {
+			String v = null;
+			try { v = f.get(this).toString(); }
+			catch (Throwable e) { }
+			b.append(String.format("\n\t\t%s: %s,",
+					f.getName(), v));
+		}
+		return b.append("\n\t}").toString();
 	}
 
 	/**Deserialize body item object from reader into fields.
