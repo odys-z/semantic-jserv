@@ -174,6 +174,8 @@ public class QueryReq extends JBody {
 		writer.name("a").value(a);
 		writer.name("mtabl").value(mtabl);
 		writer.name("mAlias").value(mAlias);
+		writer.name("page").value(page);
+		writer.name("pgSize").value(pgsize);
 
 		try {
 			if (exprs != null) {
@@ -206,15 +208,15 @@ public class QueryReq extends JBody {
 			while (token != JsonToken.END_OBJECT) {
 				String name = reader.nextName();
 				if ("a".equals(name))
-					a = reader.nextString();
+					a = nextString(reader);
 				else if ("page".equals(name))
 					page = reader.nextInt();
 				else if ("pgSize".equals(name))
 					pgsize = reader.nextInt();
 				else if ("mtabl".equals(name))
-					mtabl = reader.nextString();
+					mtabl = nextString(reader);
 				else if ("mAlias".equals(name))
-					mAlias = reader.nextString();
+					mAlias = nextString(reader);
 				else if ("exprs".equals(name)) {
 					if (reader.peek() == JsonToken.BEGIN_ARRAY)
 						exprs = JHelper.readLstStrs(reader);
@@ -229,6 +231,14 @@ public class QueryReq extends JBody {
 			}
 			reader.endObject();
 		}
+	}
+
+	public static String nextString(JsonReader reader) throws IOException {
+		if (reader.peek() == JsonToken.NULL) {
+			reader.nextNull();
+			return null;
+		}
+		else return reader.nextString(); 
 	}
 
 }
