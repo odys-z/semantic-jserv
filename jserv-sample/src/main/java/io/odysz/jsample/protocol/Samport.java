@@ -11,9 +11,11 @@ public enum Samport implements IPort {
 	public String url() { return url; }
 	@Override
 	public IPort valof(String pname) {
-		Samport p = valueOf(pname);
-		if (p == null)
-			return Port.valueOf(pname);
-		else return p;
+		try {
+			IPort p = Port.valueOf(pname);
+			return p;
+		} catch (Exception e) {
+			return valueOf(pname);
+		}
 	}	
 }
