@@ -12,6 +12,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
+import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
@@ -64,10 +65,10 @@ public class SysMenu  extends SemanticTree {
 
 			resp.getWriter().write(Html.listSemtcs(lst));
 		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {
 			e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exTransct, e.getMessage()));
 //		} catch (SsException e) {
 //			e.printStackTrace();
 //			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSession, e.getMessage()));
@@ -99,7 +100,7 @@ public class SysMenu  extends SemanticTree {
 			
 			ServletAdapter.write(resp, rs);
 		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {
 			e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));

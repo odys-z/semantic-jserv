@@ -25,14 +25,15 @@ public class JMessage <T extends JBody> {
 	 * TODO shall we use dynamic registered ports?
 	 * @author ody
 	 */
-	public enum Port {  heartbeat("ping.serv"), session("login.serv"),
+	public enum Port implements IPort {  heartbeat("ping.serv"), session("login.serv"),
 						insert("c.serv"), query("r.serv"), update("u.serv"), delete("d.serv"),
 						echo("echo.serv"), user("user.serv"),
 						// data structure extensions
 						stree("s-tree.jserv"), dataset("ds.jserv");
 		private String url;
+		@Override public String url() { return url; }
 		Port(String url) { this.url = url; }
-		public String url() { return url; }
+		@Override public IPort valof(String pname) { return valueOf(pname); }
 	};
 
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral;
@@ -52,10 +53,15 @@ public class JMessage <T extends JBody> {
 
 	SemanticObject semanticObj;
 
-	Port port;
-	public Port port() { return port; }
+	IPort port;
+	public IPort port() { return port; }
 	public void port(String pport) throws SemanticException {
-		port = Port.valueOf(pport);
+		/// translate from string to enum
+		if (port == null)
+			port = Port.echo.valof(pport);
+		else
+			port = port.valof(pport);
+
 		if (pport == null)
 			throw new SemanticException("Port can not be null");
 	}
@@ -66,7 +72,7 @@ public class JMessage <T extends JBody> {
 		seq = (int) (Math.random() * 1000);
 	}
 
-	public JMessage(Port port) {
+	public JMessage(IPort port) {
 		this.port = port;
 		seq = (int) (Math.random() * 1000);
 	}
@@ -104,11 +110,11 @@ public class JMessage <T extends JBody> {
 		return gson.toJson(this, this.getClass());
 	}
 
-	static String pairPrmv = "'%s': %s";
+	static String pairPrmv = "\n\t'%s': %s";
 	public String toStringEx() {
 		Field flist[] = this.getClass().getDeclaredFields();
 
-		// FIXME performance problem : flat list
+		// FIXME performance problem : flat list (or appendable?)
 		return Stream.of(flist)
 			.filter(m -> !m.getName().startsWith("this$"))
 			.map(m -> {
@@ -135,7 +141,14 @@ public class JMessage <T extends JBody> {
 						return s;
 					}
 					else if (List.class.isAssignableFrom(t)) {
-						String s = ((List<?>)m.get(this)).stream().map(e -> e.toString())
+						String s = ((List<?>)m.get(this))
+								.stream()
+								.map( e -> e.toString() )
+//								.map( e -> {
+//									return Stream.of(e)
+//											.map(el -> el.toString())
+//											.collect(Collectors.joining(", "));
+//								})
 								.collect(Collectors.joining(", ", "'" + m.getName() + "': [", "]"));
 						return s;
 					}

@@ -39,6 +39,13 @@ public abstract class JBody {
 	 */
 	public abstract void toJson(JsonWriter writer) throws IOException;
 
+	/**For debug, print, etc. The string can not been used for json data.
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return String.format("a: %s, ...", a);
+	}
+
 	/**Deserialize body item object from reader into fields.
 	 * @param reader
 	 * @throws IOException
