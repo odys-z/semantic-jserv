@@ -61,7 +61,7 @@ public class JHelper<T extends JBody> {
 			writeMap(writer, (Map<?, ?>) v);
 		}
 		else if (List.class.isAssignableFrom(t)) {
-			writeLst(writer, (List<Object[]>) v);
+			writeLst(writer, (List<Object>) v);
 		}
 		else
 			writer.value(v.toString());
@@ -115,7 +115,7 @@ public class JHelper<T extends JBody> {
 		writer.endObject();
 	}
 
-	public static void writeLst(JsonWriter writer, List<Object[]> lst) throws IOException, SQLException {
+	public static void writeLst(JsonWriter writer, List<?> lst) throws IOException, SQLException {
 		writer.beginArray();
 		for (Object v : lst) {
 			writeRespValue(writer, v.getClass(), v);
@@ -184,7 +184,7 @@ public class JHelper<T extends JBody> {
 		return obj;
 	}
 
-	private static SemanticObject readSemanticObj(JsonReader reader) throws IOException {
+	private static SemanticObject readSemanticObj(JsonReader reader) throws IOException, SemanticException {
 		SemanticObject obj = new SemanticObject();
 		reader.beginObject();
 
@@ -208,6 +208,8 @@ public class JHelper<T extends JBody> {
 					}
 					else if (tk == JsonToken.BEGIN_OBJECT)
 						obj.put(name, readSemanticObj(reader));
+					else if (tk == JsonToken.BEGIN_ARRAY)
+						obj.put(name, readLstStrs(reader));
 					else
 						obj.put(name, reader.nextString());
 				}
@@ -249,14 +251,34 @@ public class JHelper<T extends JBody> {
 		return m;
 	}
 
-	public static ArrayList<Object[]> readLstStrs(JsonReader reader) throws IOException {
-		ArrayList<Object[]> lst = new ArrayList<Object[]>();
+	/**We restricted protocol complicity here. No object array! Only String array and indexed with constants.
+	 * @param reader
+	 * @return
+	 * @throws IOException
+	 * @throws SemanticException 
+	 */
+	public static ArrayList<String[]> readLstStrs(JsonReader reader) throws IOException, SemanticException {
+		ArrayList<String[]> lst = new ArrayList<String[]>();
 		reader.beginArray();
 
 		JsonToken tk = reader.peek();
 		while (tk != JsonToken.END_ARRAY) {
-			String[] rs = readStrs(reader);
-			lst.add(rs);
+			tk = reader.peek();
+			if (tk == JsonToken.BEGIN_ARRAY)
+				return readLstStrs(reader);
+			else if (tk == JsonToken.BEGIN_OBJECT) {
+				// shouldn't happen
+//				ArrayList<SemanticObject> objs = new ArrayList<SemanticObject>();
+//				while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
+//					objs.add(readSemanticObj(reader));
+//					tk = reader.peek();
+//				}
+				throw new SemanticException("can't handle object array");
+			}
+			else {
+				String[] rs = readStrs(reader);
+				lst.add(rs);
+			}
 			tk = reader.peek();
 		}
 

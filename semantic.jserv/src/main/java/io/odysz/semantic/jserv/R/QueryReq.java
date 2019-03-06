@@ -12,6 +12,7 @@ import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Query.Ix;
 
@@ -52,23 +53,23 @@ public class QueryReq extends JBody {
             	cond-obj: {(main-table | alais.)left-col-val op (table-1 | alias2 .)right-col-val}
            				- op: '=' | '&lt;=' | '&gt;=' ...</pre>
 	 */
-	ArrayList<Object[]> joins;
+	ArrayList<String[]> joins;
 
 	/**exprs: [expr-obj],
 	 * expr-obj: {tabl: "b_articles/t_alais", alais: "recId", expr: "recId"}
 	 *  */
-	ArrayList<Object[]> exprs;
+	ArrayList<String[]> exprs;
 	
 	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
-	ArrayList<Object[]> where;
+	ArrayList<String[]> where;
 	
 	/**orders: [order-obj],
      - order-obj: {tabl: "b_articles", field: "pubDate", asc: "true"} */
-	ArrayList<Object[]> orders;
+	ArrayList<String[]> orders;
 	
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
-	ArrayList<Object[]> groups;
+	ArrayList<String[]> groups;
 
 	protected int page;
 	protected int pgsize;
@@ -115,7 +116,7 @@ public class QueryReq extends JBody {
 
 	public QueryReq j(String t, String with, String as, String on) {
 		if (joins == null)
-			joins = new ArrayList<Object[]>();
+			joins = new ArrayList<String[]>();
 		String[] j = new String[Ix.joinSize];
 		j[Ix.joinTabl] = with;
 		j[Ix.joinAlias] = as;
@@ -131,7 +132,7 @@ public class QueryReq extends JBody {
 
 	public QueryReq expr(String expr, String alias, String... tabl) {
 		if (exprs == null)
-			exprs = new ArrayList<Object[]>();
+			exprs = new ArrayList<String[]>();
 		String[] exp = new String[Ix.exprSize];
 		exp[Ix.exprExpr] = expr;
 		exp[Ix.exprAlais] = alias;
@@ -142,7 +143,7 @@ public class QueryReq extends JBody {
 	
 	public QueryReq where(String oper, String lop, String rop) {
 		if (where == null)
-			where = new ArrayList<Object[]>();
+			where = new ArrayList<String[]>();
 
 		String[] predicate = new String[Ix.predicateSize];
 		predicate[Ix.predicateOper] = oper;
@@ -201,7 +202,7 @@ public class QueryReq extends JBody {
 	}
 
 	@Override
-	public void fromJson(JsonReader reader) throws IOException {
+	public void fromJson(JsonReader reader) throws IOException, SemanticException {
 		JsonToken token = reader.peek();
 		if (token == JsonToken.BEGIN_OBJECT) {
 			reader.beginObject();
@@ -223,9 +224,9 @@ public class QueryReq extends JBody {
 					else reader.nextString(); // skip "*"
 				}
 				else if ("joins".equals(name))
-					joins = (ArrayList<Object[]>) JHelper.readLstStrs(reader);
+					joins = JHelper.readLstStrs(reader);
 				else if ("where".equals(name))
-					where = (ArrayList<Object[]>) JHelper.readLstStrs(reader);
+					where = JHelper.readLstStrs(reader);
 				// TODO ...
 				token = reader.peek();
 			}

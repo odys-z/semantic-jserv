@@ -53,8 +53,9 @@
 			https://stackoverflow.com/questions/1769586/maven-war-dependency 
 			We have a wiki page disussing this:
 			https://github.com/odys-z/semantic-jserv/wiki/Semantic-jserv-Troubleshootings#classnotfoundexception
+	    <scope>provided</scope>
 			-->
-	    <scope>provide</scope>
+		<classifier>classes</classifier>
 	</dependency>
 
   </dependencies>
@@ -74,12 +75,20 @@
 	        <groupId>org.apache.tomcat.maven</groupId>
 	        <artifactId>tomcat7-maven-plugin</artifactId>
 	        <version>2.5</version>
-	        <!-- 
-	        <configuration>
-	          <path>/mycontext</path>
-	        </configuration>
-			 -->
 		</plugin>
+		
+		<plugin>
+			<!-- http://ykyuen.wordpress.com/2009/10/30/maven-dependency-on-jarwar-package
+				https://pragmaticintegrator.wordpress.com/2010/10/22/using-a-war-module-as-dependency-in-maven/
+			 -->
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-war-plugin</artifactId>
+			<version>3.2.2</version>
+			<configuration>
+				<useCache>true</useCache>
+			</configuration>
+		</plugin>
+		
     </plugins>
   </build>
 </project>

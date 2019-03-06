@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configs>
   <t id="default" pk="k" columns="k,v">
-	<c> <k>IrUser</k>
-		<v>Class name of SUser Implementation</v>
+	<c>
+		<!-- Class name of SUser Implementation -->
+		<k>class-IUser</k>
+		<v>io.odysz.semantic.jsession.SUser</v>
 	</c>
-	<c> <k>folder.file-upload</k>
+	<c>
+		<k>folder.file-upload</k>
 		<v>file:/home/ody/uploads</v>
 	</c>
-	<c> <k>ss-timeout-min</k>
-		<v>20</v>
+	<c>
+		<k>sync.log.on-verbose</k>
+		<v>false</v>
+	</c>
+	<c>
+		<k>ss-timeout-min</k>
+		<v>200</v>
+	</c>
+	<c>
+		<k>ss-timeout-min.debugMode</k>
+		<v>false</v>
 	</c>
   </t>
 
-  <!-- Shouldn't provided by client?
-  	Yes, but it's difficult for user rebuild forest manual via browser.
-  	So we are planning support providing tree semantics by both client and configures.
   <t id="tree-semantics" pk="k" columns="k,v">
-  	<!- - for v fields, see SemanticTree.ix* - ->
-	<!- -See SemanticTree for v difinetion.
+  	<!-- for v fields, see SemanticTree.ix* -->
+	<!--See SemanticTree for v difinetion.
 			All fields here are alias used to access rs columns.
   			js-node-type: easyui, checked: null, tabl: e_areas, recId: areaId, parent id: parentId, text: areaName, full path: fullpath
   			for easyui, only parentId is mandatory?
@@ -25,10 +34,12 @@
   			1. too much recusive error report by jquery.
   			set easyui table data-options idfield as areaId (data-options="idField: 'areaId',...)
   		<v>easyui,,e_areas,areaId,parentId,areaName,fullpath</v>
-	- ->
+	-->
   	<c> <k>templ-treegrid</k>
   		<v>checked,table,rec-id,parentId,text,fullpath,sibling-sort,paging-at-server</v>
   	</c>
   </t>
-  -->
+
+  <t id="cbb" pk="k" columns="k,v">
+  </t>
 </configs>
