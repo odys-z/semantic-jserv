@@ -5,7 +5,7 @@
   	<!-- smtcs: semantics configuration used only for the connection.
   		(And a global semantics configuration?) -->
   	<c>
-  		<id>local-sqlite</id>
+  		<id>local</id>
   		<type>sqlite</type>
   		<isdef></isdef>
   		<!-- For sqlite, src = relative path from this configure file.
@@ -14,33 +14,10 @@
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
-  		<dbg>true</dbg>
+  		<dbg>false</dbg>
   	</c>
-  	
-	<c>
-  		<id>local-mysql</id>
-  		<type>mysql</type>
-  		<isdef></isdef>
-  		<src>jdbc:mysql://[host]:3306/[mysql-db]?characterEncoding=utf8</src>
-  		<usr>???</usr>
-  		<pswd>*******</pswd>
-  		<dbg>true</dbg>
-  	</c>
-
-	<c>
-  		<id>local-orcl</id>
-  		<type>oracle</type>
-  		<isdef></isdef>
-  		<src>jdbc:oracle:thin:@[host]:1521:[orcl]</src>
-  		<usr>???</usr>
-  		<pswd>*******</pswd>
-  		<dbg>true</dbg>
-	</c>
-
   </t>
 
-  <!-- NOTE: dbcp configuration shouldn't work because you don't have container providing the connections.
-  	User semantic-DA.test to test connection pool mode. -->
   <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,smtcs">
   	<!-- dbcp table is used to pooled db datasource, for basic connection, see dao -->
   	<!-- type: mysql | oracle | mssql -->
@@ -61,7 +38,7 @@
    	<c>
   		<id>inet</id>
   		<type>mysql</type>
-  		<src>jdbc/ifire_twin</src>
+  		<src>jdbc/inet-sample</src>
   		<isdef>true</isdef>
   		<!-- Not used -->
   		<usr></usr>

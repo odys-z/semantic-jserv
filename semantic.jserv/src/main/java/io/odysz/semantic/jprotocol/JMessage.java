@@ -129,7 +129,7 @@ public class JMessage <T extends JBody> {
 	public String toStringEx() {
 		Field flist[] = this.getClass().getDeclaredFields();
 
-		// FIXME performance problem : flat list (or appendable?)
+		// FIXME performance problem : flat list (or appendable?) - stream don't help here, get instances first instead
 		return Stream.of(flist)
 			.filter(m -> !m.getName().startsWith("this$"))
 			.map(m -> {
@@ -151,7 +151,7 @@ public class JMessage <T extends JBody> {
 											e1.printStackTrace();
 											return String.format("EXCEPTION:\"%\"", e1.getMessage());
 										}
-							}).collect(Collectors.joining(", ", "'" + m.getName() + "': [<", ">]"))
+							}).collect(Collectors.joining(", ", "'" + m.getName() + "': [", "]"))
 						);
 						return s;
 					}

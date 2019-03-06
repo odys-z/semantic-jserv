@@ -4,7 +4,6 @@
   <groupId>io.github.odys-z</groupId>
   <artifactId>semantic.jserv</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <packaging>jar</packaging>
 
   <name>semantic.jserv Maven Webapp</name>
   <url>http://maven.apache.org</url>
@@ -147,7 +146,19 @@
 		  	</executions>
 	  	</plugin>
 		
-		<!-- JavaDoc and source attachment -->
+		<plugin>
+			<!-- http://ykyuen.wordpress.com/2009/10/30/maven-dependency-on-jarwar-package
+				https://pragmaticintegrator.wordpress.com/2010/10/22/using-a-war-module-as-dependency-in-maven/
+			 -->
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-war-plugin</artifactId>
+			<version>3.2.2</version>
+			<configuration>
+				<useCache>true</useCache>
+			</configuration>
+		</plugin>
+		
+		<!-- JavaDoc and source attachment
 		<plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-source-plugin</artifactId>
@@ -175,8 +186,9 @@
 	        </execution>
 	      </executions>
 	 	</plugin>
-		
+		 -->
     </plugins>
   </build>
   
+  <packaging>war</packaging>
 </project>

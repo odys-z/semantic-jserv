@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <jardesc>
-    <jar path="jserv-sample/src/main/webapp/WEB-INF/lib/semantic.jserv-SNAPSHOT.jar"/>
+    <jar path="jserv-sample/src/main/webapp/WEB-INF/lib/semantic.jserv.jar"/>
     <options buildIfNeeded="true" compress="true" descriptionLocation="/semantic.jserv/jserv-rt.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>

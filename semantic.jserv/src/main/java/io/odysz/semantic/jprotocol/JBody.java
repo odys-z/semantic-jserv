@@ -6,6 +6,8 @@ import java.lang.reflect.Field;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import io.odysz.semantics.x.SemanticException;
+
 public abstract class JBody {
 	public static String[] jcondt(String logic, String field, String v, String tabl) {
 		return new String[] {logic, field, v, tabl};
@@ -60,7 +62,8 @@ public abstract class JBody {
 	/**Deserialize body item object from reader into fields.
 	 * @param reader
 	 * @throws IOException
+	 * @throws SemanticException 
 	 */
-	public abstract void fromJson(JsonReader reader) throws IOException;
+	public abstract void fromJson(JsonReader reader) throws IOException, SemanticException;
 
 }
