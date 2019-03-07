@@ -191,13 +191,12 @@ public class JHelper<T extends JBody> {
 		JsonToken tk = reader.peek();
 
 		while (tk != null && tk != JsonToken.END_DOCUMENT) {
-			switch (tk) {
-			case NAME:
+			if (tk == JsonToken.NAME) {
 				String name = reader.nextName();
 				if (name != null && "rs".equals(name))
 					// semantics: rs is list
 					obj.put("rs", readLstRs(reader));
-			else if (name != null && "map".equals(name))
+				else if (name != null && "map".equals(name))
 					// semantics: map is Map
 					obj.put("map", readMap(reader));
 				else {
@@ -213,9 +212,9 @@ public class JHelper<T extends JBody> {
 					else
 						obj.put(name, reader.nextString());
 				}
-				break;
-			default:
-				break;
+			}
+			else {
+				// what's here?
 			}
 			if (tk != JsonToken.END_DOCUMENT)
 				tk = reader.peek();
@@ -413,8 +412,7 @@ public class JHelper<T extends JBody> {
 			reader.beginObject();
 			JsonToken token = reader.peek();
 			while (token != null && token != JsonToken.END_DOCUMENT) {
-				switch (token) {
-				case NAME:
+				if (token == JsonToken.NAME) {
 					String name = reader.nextName();
 					name = name == null ? null : name.trim().toLowerCase();
 					if (name != null && "port".equals(name))
@@ -431,11 +429,10 @@ public class JHelper<T extends JBody> {
 						throw new SemanticException("Can't parse json message. Expecting port | header | body, but get %s (body type: %s, message: %s)",
 								name, bodyItemclzz.toString(), msg.toString());
 					}
-					break;
-				case END_OBJECT:
+				}
+				else if (token == JsonToken.END_OBJECT)
 					reader.endObject();
-					break;
-				default:
+				else {
 					reader.close();
 					throw new SemanticException("Can't parse json message. Expecting token NAME | END_OBJECT, but get %s (body type: %s, message: %s)",
 								token.name(), bodyItemclzz.toString(), msg.toString());
