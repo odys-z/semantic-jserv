@@ -74,13 +74,13 @@ public class QueryReq extends JBody {
 	protected int page;
 	protected int pgsize;
 
-	public QueryReq(JMessage<? extends JBody> parent) {
-		super(parent);
+	public QueryReq(JMessage<? extends JBody> parent, String conn) {
+		super(parent, conn);
 		a = "r";
 	}
 
 	public QueryReq(JMessage<? extends JBody> parent, String conn, String fromTbl, String... alias) {
-		super(parent);
+		super(parent, conn);
 		a = "r";
 
 		mtabl = fromTbl;
@@ -90,10 +90,15 @@ public class QueryReq extends JBody {
 		this.pgsize = 0;
 	}
 
-	public void page(int page, int size) {
+	public QueryReq page(int page, int size) {
 		this.page = page;
 		this.pgsize = size;
+		return this;
 	}
+
+	public int size() { return pgsize; }
+
+	public int page() { return page; }
 
 	public QueryReq j(String with, String as, String on) {
 		return j("j", with, as, on);
@@ -154,6 +159,15 @@ public class QueryReq extends JBody {
 		return this;
 	}
 
+	public QueryReq orderby(String col, boolean... asc) {
+		if (orders == null)
+			orders = new ArrayList<String[]>();
+		orders.add(new String[] {col,
+				String.valueOf(asc == null || asc.length == 0 ? "asc"
+						: asc[0] ? "asc" : "desc")});
+		return this;
+	}
+
 	/**<p>Create a qeury request body item, for joining etc.,
 	 * and can be serialized into json by {@link #toJson(JsonWriter)}.</p>
 	 * <p>Client side helper, don't confused with {@link Query}.</p>
@@ -172,6 +186,7 @@ public class QueryReq extends JBody {
 	@Override
 	public void toJson(JsonWriter writer) throws IOException {
 		writer.beginObject();
+		writer.name("conn").value(conn);
 		writer.name("a").value(a);
 		writer.name("mtabl").value(mtabl);
 		writer.name("mAlias").value(mAlias);
@@ -194,7 +209,11 @@ public class QueryReq extends JBody {
 				writer.name("where");
 				JHelper.writeLst(writer, where);
 			}
-			// TODO orders, groups ...
+			// TODO groups ...
+			if (orders != null) {
+				writer.name("orders");
+				JHelper.writeLst(writer, orders);
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();	
 		}
@@ -209,15 +228,17 @@ public class QueryReq extends JBody {
 			while (token != JsonToken.END_OBJECT) {
 				String name = reader.nextName();
 				if ("a".equals(name))
-					a = nextString(reader);
+					a = JHelper.nextString(reader);
+				else if ("conn".equals(name))
+					conn = JHelper.nextString(reader);
 				else if ("page".equals(name))
 					page = reader.nextInt();
 				else if ("pgSize".equals(name))
 					pgsize = reader.nextInt();
 				else if ("mtabl".equals(name))
-					mtabl = nextString(reader);
+					mtabl = JHelper.nextString(reader);
 				else if ("mAlias".equals(name))
-					mAlias = nextString(reader);
+					mAlias = JHelper.nextString(reader);
 				else if ("exprs".equals(name)) {
 					if (reader.peek() == JsonToken.BEGIN_ARRAY)
 						exprs = JHelper.readLstStrs(reader);
@@ -227,6 +248,10 @@ public class QueryReq extends JBody {
 					joins = JHelper.readLstStrs(reader);
 				else if ("where".equals(name))
 					where = JHelper.readLstStrs(reader);
+				else if ("orders".equals(name))
+					orders = JHelper.readLstStrs(reader);
+				else if ("groups".equals(name))
+					groups = JHelper.readLstStrs(reader);
 				// TODO ...
 				token = reader.peek();
 			}
@@ -234,12 +259,11 @@ public class QueryReq extends JBody {
 		}
 	}
 
-	public static String nextString(JsonReader reader) throws IOException {
-		if (reader.peek() == JsonToken.NULL) {
-			reader.nextNull();
-			return null;
-		}
-		else return reader.nextString(); 
-	}
-
+//	public static String nextString(JsonReader reader) throws IOException {
+//		if (reader.peek() == JsonToken.NULL) {
+//			reader.nextNull();
+//			return null;
+//		}
+//		else return reader.nextString(); 
+//	}
 }

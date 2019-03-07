@@ -12,7 +12,7 @@ import io.odysz.semantic.jprotocol.JMessage;
 public class EchoReq extends JBody {
 
 	public EchoReq(JMessage<? extends JBody> parent) {
-		super(parent);
+		super(parent, null);
 	}
 
 	@Override

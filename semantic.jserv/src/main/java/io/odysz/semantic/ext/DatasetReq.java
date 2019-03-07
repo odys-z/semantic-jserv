@@ -23,13 +23,17 @@ public class DatasetReq extends QueryReq {
 	/**{@link TreeSEmantics} of tree from {@link #smtcss} or set with {@link #treeSemtcs(TreeSemantics)} */
 	private TreeSemantics stcs;
 
-	public DatasetReq(JMessage<? extends JBody> parent) {
-		super(parent);
+	public DatasetReq(JMessage<? extends JBody> parent, String conn) {
+		super(parent, conn);
+		a = "ds";
 	}
 
 	public String sk() { return sk; }
-	public int size() { return pgsize; }
-	public int page() { return page; }
+
+	public static DatasetReq formatReq(String conn, JMessage<DatasetReq> parent) {
+		DatasetReq bdItem = new DatasetReq(parent, conn);
+		return bdItem;
+	}
 
 	/**
 	 * @return parsed semantics
@@ -55,6 +59,7 @@ public class DatasetReq extends QueryReq {
 	public void toJson(JsonWriter writer) throws IOException {
 		writer.beginObject();
 		writer.name("a").value(a);
+		writer.name("conn").value(conn);
 		writer.name("sk").value(sk);
 		writer.name("rootId").value(rootId);
 		writer.name("page").value(page);
@@ -81,19 +86,23 @@ public class DatasetReq extends QueryReq {
 			while (token != JsonToken.END_OBJECT) {
 				String name = reader.nextName();
 				if ("a".equals(name))
-					a = nextString(reader);
+					a = JHelper.nextString(reader);
+				else if ("conn".equals(name))
+					conn = JHelper.nextString(reader);
 				else if ("page".equals(name))
 					page = reader.nextInt();
 				else if ("pgSize".equals(name))
 					pgsize = reader.nextInt();
 				else if ("sk".equals(name))
-					sk = nextString(reader);
+					sk = JHelper.nextString(reader);
 				else if ("rootId".equals(name))
-					rootId = nextString(reader);
+					rootId = JHelper.nextString(reader);
 				else if ("smtcss".equals(name)) {
 					JsonToken peek = reader.peek();
 					if (peek == JsonToken.BEGIN_ARRAY) {
+						reader.beginArray();
 						String[] ss = JHelper.readStrs(reader);
+						reader.endArray();
 						stcs = new TreeSemantics(ss);
 					}
 					else if (peek == JsonToken.NULL)
@@ -111,5 +120,4 @@ public class DatasetReq extends QueryReq {
 			reader.endObject();
 		}
 	}
-
 }

@@ -12,7 +12,7 @@ class JMessageTest {
 
 	@Test
 	void testToStringEx() {
-		DatasetReq req = new DatasetReq(null);
+		DatasetReq req = new DatasetReq(null, "test-conn");
 
 		String t = "tag";
 		JHeader header = new JHeader("ssid-junit", "uid-junit");

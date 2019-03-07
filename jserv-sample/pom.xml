@@ -54,8 +54,8 @@
 			We have a wiki page disussing this:
 			https://github.com/odys-z/semantic-jserv/wiki/Semantic-jserv-Troubleshootings#classnotfoundexception
 	    <scope>provided</scope>
-			-->
 		<classifier>classes</classifier>
+			-->
 	</dependency>
 
   </dependencies>

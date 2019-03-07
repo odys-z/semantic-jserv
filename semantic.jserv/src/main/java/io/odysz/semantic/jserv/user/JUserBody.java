@@ -14,8 +14,8 @@ import io.odysz.semantic.jprotocol.JMessage;
  */
 public class JUserBody extends JBody {
 
-	public JUserBody(JMessage<? extends JBody> parent) {
-		super(parent);
+	public JUserBody(JMessage<? extends JBody> parent, String conn) {
+		super(parent, conn);
 	}
 
 	@Override

@@ -109,6 +109,7 @@ public class JMessage <T extends JBody> {
 	}
 	
 	JHeader header;
+
 	public JHeader header() { return header; }
 	public JMessage<T> header(JHeader header) {
 		this.header = header;
@@ -122,7 +123,8 @@ public class JMessage <T extends JBody> {
 
 	@Override
 	public String toString() {
-		return gson.toJson(this, this.getClass());
+		// return gson.toJson(this, this.getClass());
+		return toStringEx();
 	}
 
 	static String pairPrmv = "\n\t'%s': %s";
