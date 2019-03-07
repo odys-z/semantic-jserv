@@ -143,7 +143,7 @@ public class JHelper<T extends JBody> {
 	 * @throws IOException
 	 * @throws SemanticException
 	 */
-	public void writeJsonReq(OutputStream os, JMessage<? extends JBody> jreq, Class<? extends JBody> itemClz)
+	public static void writeJsonReq(OutputStream os, JMessage<? extends JBody> jreq)
 			throws IOException, SemanticException {
 		if (jreq.body == null)
 			throw new SemanticException("Request must have message body.");
@@ -152,6 +152,7 @@ public class JHelper<T extends JBody> {
         writer.setIndent("  ");
 		writer.beginObject();
 		writer.name("port").value(jreq.port().name());
+		writer.name("t").value(jreq.t);
 
 		writer.name("header"); //.beginObject();
 		if (jreq.header != null)
@@ -263,8 +264,12 @@ public class JHelper<T extends JBody> {
 		JsonToken tk = reader.peek();
 		while (tk != JsonToken.END_ARRAY) {
 			tk = reader.peek();
-			if (tk == JsonToken.BEGIN_ARRAY)
-				return readLstStrs(reader);
+			if (tk == JsonToken.BEGIN_ARRAY) {
+				// not recursive, only support 2d string array
+				reader.beginArray();
+				lst.add(readStrs(reader));
+				reader.endArray();
+			}
 			else if (tk == JsonToken.BEGIN_OBJECT) {
 				// shouldn't happen
 //				ArrayList<SemanticObject> objs = new ArrayList<SemanticObject>();
@@ -286,7 +291,7 @@ public class JHelper<T extends JBody> {
 	}
 
 	public static String[] readStrs(JsonReader reader) throws IOException {
-		reader.beginArray();
+//		reader.beginArray();
 
 		ArrayList<String> strs = new ArrayList<String>();
 		
@@ -307,9 +312,8 @@ public class JHelper<T extends JBody> {
 			tk = reader.peek();
 		}
 
-		if (tk == JsonToken.END_ARRAY)
-			reader.endArray();
-
+//		if (tk == JsonToken.END_ARRAY)
+//			reader.endArray();
 		return strs.toArray(new String[] {});
 	}
 
@@ -417,13 +421,15 @@ public class JHelper<T extends JBody> {
 					name = name == null ? null : name.trim().toLowerCase();
 					if (name != null && "port".equals(name))
 						msg.port(reader.nextString());
+					else if (name != null && "t".equals(name))
+						msg.t = nextString(reader);
 					else if (name != null && "header".equals(name))
 						msg.header(readHeader(reader));
 					else if (name != null && "body".equals(name))
 						readBody(reader, bodyItemclzz, msg);
 					else if (name != null && ("seq".equals(name) || "version".equals(name)))
 						// skip
-						reader.nextString();
+						nextString(reader);
 					else {
 						reader.close();
 						throw new SemanticException("Can't parse json message. Expecting port | header | body, but get %s (body type: %s, message: %s)",
@@ -447,6 +453,28 @@ public class JHelper<T extends JBody> {
 		return msg;
 	}
 
+	public static String nextString(JsonReader reader) throws IOException {
+		JsonToken tk = reader.peek();
+		if (tk == JsonToken.STRING)
+			return reader.nextString();
+		else if (tk == JsonToken.NUMBER) {
+			Object v = null;
+			try {v = reader.nextBoolean();}
+			catch (Exception e) {
+				try {v = reader.nextDouble();}
+				catch (Exception e2) {
+					try {v = reader.nextInt();}
+					catch (Exception e3) {}
+			} }
+			return String.valueOf(v);
+		}
+		else if (tk == JsonToken.NULL) {
+			reader.nextNull();
+			return null;
+		}
+		return null;
+	}
+
 	/**<p>Read message body into parent's body. (deserialization).</p>
 	 * <p>In the current version (0.1.0), the method using Gson, and the debugging shows only
 	 * fields with getter can be deserialized.</p>
@@ -462,9 +490,10 @@ public class JHelper<T extends JBody> {
 		while (reader.hasNext() && reader.peek() != JsonToken.END_ARRAY) {
 			JBody bodyItem;
 			try {
-				Constructor<? extends JBody> ctor = elemClass.getConstructor(parent.getClass());
+				Constructor<? extends JBody> ctor = elemClass.getConstructor(
+						parent.getClass(), String.class);
 
-				bodyItem = ctor.newInstance(parent);
+				bodyItem = ctor.newInstance(parent, null);
 			} catch (Exception ie) {
 				throw new SemanticException("Can't find %1$s's constructor %1$s(%2$s): %3$s - %4$s",
 						elemClass.getName(), parent.getClass().getName(),

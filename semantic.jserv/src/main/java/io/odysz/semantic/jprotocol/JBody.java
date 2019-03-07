@@ -18,9 +18,11 @@ public abstract class JBody {
 //	}
 
 	protected JMessage<? extends JBody> parent;
+	protected String conn;
 
-	protected JBody(JMessage<? extends JBody> parent) {
+	protected JBody(JMessage<? extends JBody> parent, String conn) {
 		this.parent = parent;
+		this.conn = conn;
 	}
 
 	/** Action: login | c | r | u | d */
@@ -30,6 +32,8 @@ public abstract class JBody {
 	public String a() {
 		return a;
 	}
+	
+	public String conn() { return conn; }
 
 	public JBody a(String act) {
 		this.a = act;
@@ -51,8 +55,9 @@ public abstract class JBody {
 		Field[] fdList = this.getClass().getDeclaredFields();
 		for (Field f : fdList) {
 			String v = null;
-			try { v = f.get(this).toString(); }
-			catch (Throwable e) { }
+			try{f.setAccessible(true);
+				v = f.get(this).toString();
+			}catch (Throwable e) { }
 			b.append(String.format("\n\t\t%s: %s,",
 					f.getName(), v));
 		}

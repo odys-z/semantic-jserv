@@ -15,27 +15,10 @@ public class HeartBeat extends JBody {
 	private String uid;
 
 	protected HeartBeat(JMessage<JBody> parent, String ssid, String uid) {
-		super(parent); // Heartbeats don't need db access
+		super(parent, null); // Heartbeats don't need db access
 		this.ssid = ssid;
 		this.uid = uid;
 	}
-
-//	public static String Req(String ssid) {
-//		HeartBeat beat = new HeartBeat(ssid);
-//		String req = gson.toJson(beat);
-//		return req;
-//	}
-	
-//	public static HeartBeat onReq(String req) {
-//		HeartBeat msg = gson.fromJson(req, HeartBeat.class);
-//		return msg;
-//	}
-	
-//	public static HeartBeat respond (String ssid) {
-//		return new HeartBeat(ssid);
-//	}
-
-//	public static void onResp (String resp) { }
 
 	@Override
 	public void toJson(JsonWriter writer) throws IOException {

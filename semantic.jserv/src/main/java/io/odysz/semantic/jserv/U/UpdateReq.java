@@ -36,8 +36,8 @@ or
  */
 public class UpdateReq extends JBody {
 
-	public UpdateReq(JMessage<? extends JBody> parent) {
-		super(parent);
+	public UpdateReq(JMessage<? extends JBody> parent, String conn) {
+		super(parent, conn);
 	}
 
 

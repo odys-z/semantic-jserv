@@ -45,8 +45,8 @@ public class JHeader {
 	@Override
 	public String toString() {
 		return String.format("{ssid: %s, uid: %s, iv64: %s,\n\t\tuserAct: %s}",
-				ssid, uid, iv64,
-				Arrays.stream(usrAct).collect(Collectors.joining(", ", "[", "]")));
+				ssid, uid, iv64, usrAct == null ? null :
+					Arrays.stream(usrAct).collect(Collectors.joining(", ", "[", "]")));
 	}
 
 }

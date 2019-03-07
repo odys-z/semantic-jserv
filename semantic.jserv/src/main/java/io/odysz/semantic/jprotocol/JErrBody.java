@@ -14,7 +14,7 @@ public class JErrBody extends JBody {
 	 * @param error
 	 */
 	public JErrBody(JMessage<?> parent, String error) {
-		super(parent);
+		super(parent, null);
 		err = error;
 	}
 

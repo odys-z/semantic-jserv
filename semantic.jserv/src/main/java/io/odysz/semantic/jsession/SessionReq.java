@@ -13,7 +13,7 @@ import io.odysz.semantic.jprotocol.JMessage.Port;
 
 public class SessionReq extends JBody {
 	public SessionReq(JMessage<SessionReq> parent) {
-		super(parent);
+		super(parent, null); // session's DB access is controlled by server
 	}
 
 	String uid;
