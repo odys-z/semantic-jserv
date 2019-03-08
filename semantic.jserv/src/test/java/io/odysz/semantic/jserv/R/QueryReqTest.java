@@ -59,11 +59,11 @@ class QueryReqTest {
 
 		assertEquals(Port.query, resp.port());
 		assertEquals(req.t, resp.t);
-		assertEquals(req.body(0).pgsize, resp.body(0).pgsize);
 		assertEquals("ss-id", resp.header().ssid());
 		QueryReq bd = resp.body(0);
 		assertEquals("inet-sample", bd.conn()); // not printed by JBbody.toString()
 		assertEquals("r", bd.a()); // not printed by JBbody.toString()
+		assertEquals(req.body(0).pgsize, bd.pgsize);
 		assertEquals("a_user", bd.mtabl);
 		assertEquals("u", bd.mAlias);
 		assertEquals("userId", bd.exprs.get(0)[Ix.exprExpr]);

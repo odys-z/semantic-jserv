@@ -12,7 +12,11 @@ import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 
 public class SessionReq extends JBody {
-	public SessionReq(JMessage<SessionReq> parent) {
+	/**
+	 * @param parent
+	 * @param conn ignored for session connection are controlled by server 
+	 */
+	public SessionReq(JMessage<SessionReq> parent, String conn) {
 		super(parent, null); // session's DB access is controlled by server
 	}
 
@@ -33,7 +37,7 @@ public class SessionReq extends JBody {
 	public static JMessage<SessionReq> formatLogin(String uid, String tk64, String iv64) {
 		JMessage<SessionReq> jmsg = new JMessage<SessionReq>(Port.session);
 
-		SessionReq itm = new SessionReq(jmsg);
+		SessionReq itm = new SessionReq(jmsg, null);
 		itm.uid = uid;
 		itm.a("login");
 

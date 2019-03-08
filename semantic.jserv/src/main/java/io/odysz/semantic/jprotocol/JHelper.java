@@ -67,15 +67,33 @@ public class JHelper<T extends JBody> {
 			writer.value(v.toString());
 	}
 
+	/**Write a string array, with "[" and "]".
+	 * @param writer
+	 * @param v
+	 * @throws IOException
+	 */
 	public static void writeStrings(JsonWriter writer, String[] v) throws IOException {
 		writer.beginArray();
 		for (int i = 0; i < v.length; i++) {
 			if (v[i] == null)
-				writer.value("");
+				// writer.value("");
+				writer.nullValue();
 			else
 				writer.value(v[i]);
 		}
 		writer.endArray();
+	}
+
+	public static void writeStrss(JsonWriter writer, String[][] vss) throws IOException {
+//		writer.beginArray();
+		for (int i = 0; i < vss.length; i++) {
+			if (vss[i] == null)
+				writer.nullValue();
+			else
+				// writer.value(v[i]);
+				writeStrings(writer, vss[i]);
+		}
+//		writer.endArray();
 	}
 
 	private static void writeRs(JsonWriter writer, SResultset rs) throws IOException, SQLException {
@@ -209,7 +227,10 @@ public class JHelper<T extends JBody> {
 					else if (tk == JsonToken.BEGIN_OBJECT)
 						obj.put(name, readSemanticObj(reader));
 					else if (tk == JsonToken.BEGIN_ARRAY)
-						obj.put(name, readLstStrs(reader));
+						try {obj.put(name, readLstStrs(reader));
+						}catch (SemanticException se) {
+							obj.put(name, readSmtcsObjs(reader, true));
+						}
 					else
 						obj.put(name, reader.nextString());
 				}
@@ -271,12 +292,7 @@ public class JHelper<T extends JBody> {
 				reader.endArray();
 			}
 			else if (tk == JsonToken.BEGIN_OBJECT) {
-				// shouldn't happen
-//				ArrayList<SemanticObject> objs = new ArrayList<SemanticObject>();
-//				while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
-//					objs.add(readSemanticObj(reader));
-//					tk = reader.peek();
-//				}
+				// caller is trying as string array, but actually found here is an object array
 				throw new SemanticException("can't handle object array");
 			}
 			else {
@@ -290,9 +306,28 @@ public class JHelper<T extends JBody> {
 		return lst;
 	}
 
+	public static ArrayList<SemanticObject> readSmtcsObjs(JsonReader reader, boolean ignoreStartingArr)
+			throws IOException, SemanticException {
+		ArrayList<SemanticObject> lst = new ArrayList<SemanticObject>();
+		if (!ignoreStartingArr)
+			reader.beginArray();
+		JsonToken tk = reader.peek();
+		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
+			if (tk == JsonToken.BEGIN_OBJECT) {
+				lst.add(readSemanticObj(reader));
+			}
+			tk = reader.peek();
+		}
+		reader.endArray();
+		return lst;
+	}
+	/**Convert a string ot string[], not handling begin "[" and ending "]".
+	 * Caller call this because it know the string is an array according to semantics.
+	 * @param reader
+	 * @return String[]
+	 * @throws IOException
+	 */
 	public static String[] readStrs(JsonReader reader) throws IOException {
-//		reader.beginArray();
-
 		ArrayList<String> strs = new ArrayList<String>();
 		
 		JsonToken tk = reader.peek();
@@ -301,22 +336,53 @@ public class JHelper<T extends JBody> {
 			return strs.toArray(new String[] {});
 
 		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
-			String v = null;
-			if (tk != JsonToken.NULL)
-				v = reader.nextString();
-			else {
-				v = null;
-				reader.nextNull();
-			};
-			strs.add(v);
+//			String v = null;
+//			if (tk != JsonToken.NULL)
+//				v = reader.nextString();
+//			else {
+//				v = null;
+//				reader.nextNull();
+//			};
+//			strs.add(v);
+			strs.add(nextString(reader));
 			tk = reader.peek();
 		}
-
-//		if (tk == JsonToken.END_ARRAY)
-//			reader.endArray();
 		return strs.toArray(new String[] {});
 	}
 
+	/**Convert a string[] to string[][], not handling begin "[" and ending "]".
+	 * Caller call this because it know the string is an 2d array according to semantics.
+	 * @param reader
+	 * @return 2d String array
+	 * @throws IOException
+	 * @throws SemanticException 
+	 */
+	public static String[][] readStrss(JsonReader reader) throws IOException, SemanticException {
+		ArrayList<String[]> strs = new ArrayList<String[]>();
+		
+		JsonToken tk = reader.peek();
+		// error tolerating is necessary?
+		if (tk == JsonToken.END_DOCUMENT)
+			return strs.toArray(new String[][] {});
+
+		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
+			if (tk == JsonToken.BEGIN_ARRAY) {
+				reader.beginArray();
+				String[] a = readStrs(reader);
+				strs.add(a);
+				reader.endArray();
+			}
+			else if (tk == JsonToken.NULL) {
+				reader.nextNull();
+				strs.add(null);
+			}
+			else
+				throw new SemanticException("The semantics can not been understood.");
+			tk = reader.peek();
+		}
+		return strs.toArray(new String[][] {});
+	}
+	
 	public static List<?> readLstRs(JsonReader reader) throws IOException {
 		ArrayList<Object> lst = new ArrayList<Object>();
 		reader.beginArray();
