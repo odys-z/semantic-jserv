@@ -12,6 +12,7 @@ import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jserv.R.QueryReq;
+import io.odysz.semantics.x.SemanticException;
 
 public class DatasetReq extends QueryReq {
 
@@ -19,9 +20,9 @@ public class DatasetReq extends QueryReq {
 	public String[] sqlArgs;
 	public String rootId;
 	/**String array of tree semantics from client */
-	private String smtcss;
+	protected String smtcss;
 	/**{@link TreeSEmantics} of tree from {@link #smtcss} or set with {@link #treeSemtcs(TreeSemantics)} */
-	private TreeSemantics stcs;
+	protected TreeSemantics stcs;
 
 	public DatasetReq(JMessage<? extends JBody> parent, String conn) {
 		super(parent, conn);
@@ -30,8 +31,9 @@ public class DatasetReq extends QueryReq {
 
 	public String sk() { return sk; }
 
-	public static DatasetReq formatReq(String conn, JMessage<DatasetReq> parent) {
+	public static DatasetReq formatReq(String conn, JMessage<DatasetReq> parent, String sk) {
 		DatasetReq bdItem = new DatasetReq(parent, conn);
+		bdItem.sk = sk;
 		return bdItem;
 	}
 
@@ -51,8 +53,9 @@ public class DatasetReq extends QueryReq {
 		}
 	}
 
-	public void treeSemtcs(TreeSemantics semtcs) {
+	public DatasetReq treeSemtcs(TreeSemantics semtcs) {
 		this.stcs = semtcs;
+		return this;
 	}
 
 	@Override
@@ -65,7 +68,12 @@ public class DatasetReq extends QueryReq {
 		writer.name("page").value(page);
 		writer.name("pgSize").value(pgsize);
 
-		writer.name("smtcss").value(stcs == null ? "[" + smtcss + "]" : stcs.toJson());
+		writer.name("smtcss");
+		writer.beginArray();
+		// writer.value(stcs == null ? smtcss : LangExt.toString(stcs.treeSmtcs()));
+		if (stcs != null)
+			JHelper.writeStrss(writer, stcs.treeSmtcs());
+		writer.endArray();
 
 		try {
 			if (sqlArgs != null) {
@@ -79,7 +87,7 @@ public class DatasetReq extends QueryReq {
 	}
 
 	@Override
-	public void fromJson(JsonReader reader) throws IOException {
+	public void fromJson(JsonReader reader) throws IOException, SemanticException {
 		JsonToken token = reader.peek();
 		if (token == JsonToken.BEGIN_OBJECT) {
 			reader.beginObject();
@@ -101,15 +109,16 @@ public class DatasetReq extends QueryReq {
 					JsonToken peek = reader.peek();
 					if (peek == JsonToken.BEGIN_ARRAY) {
 						reader.beginArray();
-						String[] ss = JHelper.readStrs(reader);
+						String[][] ss = JHelper.readStrss(reader);
 						reader.endArray();
-						stcs = new TreeSemantics(ss);
+						if (ss != null)
+							stcs = new TreeSemantics(ss);
 					}
 					else if (peek == JsonToken.NULL)
 						reader.nextNull();
 					else {
 						// What's this?
-						Utils.warn("Not handled: %s - expecting array", reader.nextString());
+						Utils.warn("Not handled: %s - %s - expecting array", name, reader.nextString());
 					}
 				}
 				else if ("sqlArgs".equals(name))
