@@ -145,7 +145,8 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	}
 
 	
-	/**
+	/**FIXME: This is a security breach. Client request can be duplicated with plain ssid and uid.<br>
+	 * Should we use a session key?
 	 * @param jHeader
 	 * @return {@link SUser} if succeed, which can be used for db logging
 	 * - use this to load functions, etc.
@@ -203,7 +204,10 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			else if ("init".equals(t)) {
 				String k = request.getParameter("k");
 				rootK = k;
-				resp.getWriter().write(Html.ok(k));
+				String r = String.format("Root key re-initialized: %s%s",
+						k.substring(0, 1), k.replaceAll(".", "*"));
+				Utils.warn(r);
+				resp.getWriter().write(Html.ok(r));
 			}
 			else {
 				//msg.err("Login.serv using GET to touch session info - use POST to login, logout, check session.");
