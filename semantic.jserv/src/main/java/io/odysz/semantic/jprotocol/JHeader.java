@@ -35,7 +35,7 @@ public class JHeader {
 		usrAct = act;
 	}
 	
-	public static String[] usrAct(String funcId, String remarks, String cate, String cmd) {
+	public static String[] usrAct(String funcId, String cmd, String cate, String remarks) {
 		return new String[] {funcId, cate, cmd, remarks};
 	}
 	
