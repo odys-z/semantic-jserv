@@ -35,7 +35,6 @@ public class SUpdate extends HttpServlet {
 	static {
 		st = JSingleton.defltScxt;
 		jreqHelper = new JHelper<UpdateReq>();
-//		jrespHelper = new JHelper<UpdateResp>();
 		verifier = JSingleton.getSessionVerifier();
 	}
 
