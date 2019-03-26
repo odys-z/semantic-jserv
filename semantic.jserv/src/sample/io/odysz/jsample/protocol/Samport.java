@@ -5,7 +5,7 @@ import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantics.x.SemanticException;
 
 public enum Samport implements IPort {
-	menu("menu.sample"); 
+	menu("menu.sample"), cheapflow("cheapflow.sample"); 
 
 	private String url;
 	Samport(String v) { url = v; };
