@@ -114,13 +114,13 @@ public class SysMenu  extends SemanticTree {
 		} catch (SQLException e) {
 			if (SampleFlags.menu)
 				e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exTransct, e.getMessage()));
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} catch (SsException e) {
 			if (SampleFlags.menu)
 				e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSession, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exSession, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}

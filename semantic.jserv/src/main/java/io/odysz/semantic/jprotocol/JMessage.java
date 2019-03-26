@@ -36,7 +36,7 @@ public class JMessage <T extends JBody> {
 		@Override public IPort valof(String pname) { return valueOf(pname); }
 	};
 
-	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral;
+	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext;
 		public boolean eq(String code) {
 			if (code == null) return false;
 			MsgCode c = MsgCode.valueOf(MsgCode.class, code);

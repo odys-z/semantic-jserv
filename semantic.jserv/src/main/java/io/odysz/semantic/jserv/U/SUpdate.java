@@ -3,7 +3,6 @@ package io.odysz.semantic.jserv.U;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -11,16 +10,15 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import io.odysz.common.Utils;
 import io.odysz.semantic.DA.DATranscxt;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
@@ -30,7 +28,7 @@ public class SUpdate extends HttpServlet {
 	private static DATranscxt st;
 	static JHelper<UpdateReq> jreqHelper;
 //	static JHelper<UpdateResp> jrespHelper;
-	private static ISessionVerifier verifier;
+	protected static ISessionVerifier verifier;
 
 	static {
 		st = JSingleton.defltScxt;
@@ -48,9 +46,9 @@ public class SUpdate extends HttpServlet {
 			// url = .../update.serv?req={header: {...}, body: []}
 			JMessage<UpdateReq> msg = ServletAdapter.<UpdateReq>read(req, jreqHelper, UpdateReq.class);
 			
-			verifier.verify(msg.header());
+			IUser usr = verifier.verify(msg.header());
 			
-			SemanticObject res = update(msg.body().get(0));
+			SemanticObject res = update(msg.body().get(0), usr);
 			
 			resp.setCharacterEncoding("UTF-8");
 			resp.getWriter().write(Html.map(res));
@@ -72,9 +70,9 @@ public class SUpdate extends HttpServlet {
 			JMessage<UpdateReq> msg = ServletAdapter.<UpdateReq>read(req, jreqHelper, UpdateReq.class);
 			in.close();
 			
-			verifier.verify(msg.header());
+			IUser usr = verifier.verify(msg.header());
 
-			SemanticObject res = update(msg.body().get(0));
+			SemanticObject res = update(msg.body().get(0), usr);
 			
 			ServletAdapter.write(resp, res);
 
@@ -89,13 +87,14 @@ public class SUpdate extends HttpServlet {
 		}
 	}
 
-	private SemanticObject update(UpdateReq msg) throws SQLException, TransException {
-		ArrayList<String> sqls = new ArrayList<String>();
-		Update upd = st.update(msg.mtabl);
+	private SemanticObject update(UpdateReq msg, IUser usr) throws SQLException, TransException {
+		// ArrayList<String> sqls = new ArrayList<String>();
+		Update upd = st.update(msg.mtabl, usr);
 
-		if (ServFlags.update)
-			Utils.logi(sqls);
-		SemanticObject res = upd.commit(sqls);
+		// if (ServFlags.update) Utils.logi(sqls);
+		SemanticObject res = (SemanticObject) upd
+				// .commit(sqls)
+				.u(st.instancontxt(usr));
 		return res;
 	}
 }

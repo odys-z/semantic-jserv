@@ -109,7 +109,6 @@ public class SQuery extends HttpServlet {
 	 */
 	protected SemanticObject query(QueryReq msg) throws SQLException, TransException {
 		ArrayList<String> sqls = new ArrayList<String>();
-//		QueryReq msg = msgBody.body().get(0);
 		Query selct = st.select(msg.mtabl, msg.mAlias)
 						.page(msg.page, msg.pgsize);
 		if (msg.exprs != null && msg.exprs.size() > 0)
@@ -150,9 +149,5 @@ public class SQuery extends HttpServlet {
 		}
 
 		return JProtocol.ok(Port.query, respMsg);
-//		respMsg.put("code", "ok");
-//		respMsg.put("port", Port.query);
-//		return respMsg;
 	}
-
 }

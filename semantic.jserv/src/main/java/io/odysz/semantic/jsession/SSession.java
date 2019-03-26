@@ -68,17 +68,10 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 	static JHelper<SessionReq> jreqHelper;
 
-//	static {
-//		sctx = JSingleton.defltScxt;
-//		jreqHelper = new JHelper<SessionReq>();
-//		lock = new ReentrantLock();
-//	}
-
 	public static void init(DATranscxt daSctx) {
 		lock = new ReentrantLock();
 		sctx = daSctx;
 		jreqHelper = new JHelper<SessionReq>();
-//        random = new Random();
 
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
@@ -184,7 +177,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		if (ServFlags.session) System.out.println("login get ========");
 		resp.setContentType("text/html;charset=UTF-8");
 		try {
-//			JMessage<SessionReq> msg = ServletAdapter.<SessionReq>read(request, jreqHelper, SessionReq.class);
 			String headstr = request.getParameter("header");
 			if (headstr == null)
 				throw new SsException("Query session with GET request neending a header string.");
@@ -308,7 +300,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			.col(UserMeta.ivField, "iv")
 			.col(UserMeta.urlField, "url")
 			.where("=", "u." + UserMeta.uidField, "'" + jreq.uid() + "'")
-			.rs();
+			.rs(sctx.basictx());
 		
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString("uid");

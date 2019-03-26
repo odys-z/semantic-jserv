@@ -4,5 +4,6 @@ public class SampleFlags {
 
 	public static final boolean echo = true;
 	public static final boolean menu = true;
+	public static final boolean cheapflow = true;
 
 }
