@@ -104,7 +104,9 @@ public class SysMenu  extends SemanticTree {
 
 			List<SemanticObject> lst = DatasetCfg.loadStree(Connects.defltConn(),
 					sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-			SemanticObject rs = JProtocol.ok(Port.stree, lst);
+			SemanticObject menu = new SemanticObject();
+			menu.put("menu", lst);
+			SemanticObject rs = JProtocol.ok(Port.stree, menu);
 			
 			ServletAdapter.write(resp, rs);
 		} catch (SemanticException e) {
