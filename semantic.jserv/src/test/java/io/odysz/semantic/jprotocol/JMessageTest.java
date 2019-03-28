@@ -1,8 +1,6 @@
 package io.odysz.semantic.jprotocol;
 
-// import static org.junit.jupiter.api.Assertions.*;
-
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.ext.DatasetReq;

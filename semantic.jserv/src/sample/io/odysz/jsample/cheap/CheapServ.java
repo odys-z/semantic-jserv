@@ -21,6 +21,7 @@ import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.U.SUpdate;
+import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
@@ -67,23 +68,22 @@ public class CheapServ extends SUpdate {
 	 * path-to-workflow-meta.xml<br>
 	 * It connId is the same as in connects.xml.
 	 */
-	private static final String confpath = "..";
+	public static final String confpath = "../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml";
 
 	static {
 		jcheapReq  = new JHelper<CheapReq>();
-		try {
-			p = Samport.cheapflow;
+
+		p = Samport.cheapflow;
 			
-			CheapEngin.initCheap(FilenameUtils.concat(JSingleton.rootINF(), confpath), null);
-			// Because of the java enum limitation, or maybe the author's knowledge limitation, 
-			// JMessage needing a IPort instance to handle ports that implemented a new version of valof() method handling all ports.<br>
-			// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
-			//
-			// If the same in SysMenu is surely called before this servlet going to work, this line can be comment out. 
-			JMessage.understandPorts(Samport.cheapflow);
-		} catch (SAXException | IOException | TransException e) {
-			e.printStackTrace();
-		}
+		// Because of the java enum limitation, or maybe the author's knowledge limitation, 
+		// JMessage needing a IPort instance to handle ports that implemented a new version of valof() method handling all ports.<br>
+		// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
+		//
+		// If the same in SysMenu is surely called before this servlet going to work, this line can be comment out. 
+		JMessage.understandPorts(Samport.cheapflow);
+
+		// initialized by Sampleton
+		// CheapEngin.initCheap(FilenameUtils.concat(JSingleton.rootINF(), confpath), null);
 	}
 
 	@Override
@@ -93,11 +93,22 @@ public class CheapServ extends SUpdate {
 
 		try {
 			String t = req.getParameter("t");
+			if ("reload-cheap".equals(t)) {
+				try {
+					CheapEngin.initCheap(FilenameUtils.concat(JSingleton.rootINF(), confpath), null);
+					resp.getWriter().write(Html.ok("cheap reloaded"));
+				} catch (SAXException e) {
+					e.printStackTrace();
+					resp.getWriter().write(Html.err(e.getMessage()));
+				}
+				return;
+			}
+
 			JMessage<CheapReq> jmsg = ServletAdapter.<CheapReq>read(req, jcheapReq, CheapReq.class);
 			IUser usr = verifier.verify(jmsg.header());
 
 			CheapReq jreq = jmsg.body(0);
-			SemanticObject cheap = handle(t, jreq, usr);
+			SemanticObject cheap = handle(Req.parse(t), jreq, usr);
 			SemanticObject rs = JProtocol.ok(p, cheap);
 			ServletAdapter.write(resp, rs);
 		} catch (SemanticException e) {
@@ -127,13 +138,13 @@ public class CheapServ extends SUpdate {
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			String t = req.getParameter("t");
 			JMessage<CheapReq> jmsg = ServletAdapter.<CheapReq>read(req, jcheapReq, CheapReq.class);
 			IUser usr = verifier.verify(jmsg.header());
 
 			CheapReq jreq = jmsg.body(0);
+			String a = jreq.req();
 
-			SemanticObject cheap = handle(t, jreq, usr);
+			SemanticObject cheap = handle(Req.parse(a), jreq, usr);
 			SemanticObject rs = JProtocol.ok(p, cheap);
 			ServletAdapter.write(resp, rs);
 		} catch (SemanticException e) {
@@ -157,9 +168,11 @@ public class CheapServ extends SUpdate {
 		}
 	}
 
-	private SemanticObject handle(String t, CheapReq jobj, IUser usr) throws SQLException, TransException {
-		if (Req.start.name().equals(t))
+	private SemanticObject handle(Req req, CheapReq jobj, IUser usr) throws SQLException, TransException {
+		if (Req.start == req)
 			return start(jobj, usr);
+		else if (Req.cmd == req)
+			return cmd(jobj, usr);
 //		String wftype = (String) jobj.get(WfProtocol.wfid);
 //		String req = (String) jobj.get(WfProtocol.cmd);
 //		String busiId = (String) jobj.get(WfProtocol.busid); // taskId
@@ -171,9 +184,9 @@ public class CheapServ extends SUpdate {
 //
 //		SemanticObject cheap = new SemanticObject();
 //		return cheap;
-		else throw new CheapException("t can not handlered: %s", t);
+		else throw new CheapException("t can not handlered: %s", req);
 	}
-	
+
 	private SemanticObject start(CheapReq jobj, IUser usr) throws SQLException, TransException {
 		ArrayList<ArrayList<String[]>> inserts = jobj.childInserts;
 		
@@ -198,6 +211,10 @@ public class CheapServ extends SUpdate {
 			eh.onArrive(((CheapEvent) res.get("evt")));
 
 		return res;
+	}
+	
+	private SemanticObject cmd(CheapReq jobj, IUser usr) {
+		return null;
 	}
 
 }

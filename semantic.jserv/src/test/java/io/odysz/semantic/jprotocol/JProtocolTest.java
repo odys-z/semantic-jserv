@@ -7,8 +7,8 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -20,7 +20,7 @@ import io.odysz.semantic.jprotocol.JMessage.Port;
 class JProtocolTest {
 	static Gson gson;
 	
-	@BeforeEach
+	@Before
 	void setUp() throws Exception {
 		Utils.printCaller(false);
 		gson = new Gson();

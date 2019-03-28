@@ -306,6 +306,32 @@ public class JHelper<T extends JBody> {
 		return lst;
 	}
 
+	public static ArrayList<ArrayList<String[]>> readLstLstStrs(JsonReader reader)
+			throws IOException, SemanticException {
+		ArrayList<ArrayList<String[]>> lstlst = new ArrayList<ArrayList<String[]>>();
+		reader.beginArray();
+
+		JsonToken tk = reader.peek();
+		while (tk != JsonToken.END_ARRAY) {
+			tk = reader.peek();
+			if (tk == JsonToken.BEGIN_ARRAY) {
+				// not recursive, only support 2d string array
+				reader.beginArray();
+				while (tk != JsonToken.END_ARRAY) {
+					lstlst.add(readLstStrs(reader));
+					tk = reader.peek();
+				}
+				reader.endArray();
+			}
+			else
+				throw new SemanticException("can't handle object array");
+			tk = reader.peek();
+		}
+
+		reader.endArray();
+		return lstlst;
+	}
+	
 	public static ArrayList<SemanticObject> readSmtcsObjs(JsonReader reader, boolean ignoreStartingArr)
 			throws IOException, SemanticException {
 		ArrayList<SemanticObject> lst = new ArrayList<SemanticObject>();

@@ -1,6 +1,7 @@
 package io.odysz.semantic.ext;
 
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -8,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;

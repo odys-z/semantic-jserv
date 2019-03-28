@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;

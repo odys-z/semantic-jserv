@@ -3,7 +3,7 @@ package io.odysz.semantic.jprotocol;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.jserv.R.QueryReq;

@@ -105,4 +105,11 @@ public class Html {
 		.render();
 	}
 
+	public static String err(String msg) {
+		return "<!DOCTYPE HTML>" + html(
+			head(meta().withCharset("utf-8")),
+			body(h1(msg).withSrc("color:red")))
+		.render();
+	}
+
 }
