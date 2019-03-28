@@ -1,6 +1,7 @@
 package io.odysz.semantic.jserv.R;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -8,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.JHeader;
@@ -19,12 +20,12 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;
 
-class QueryReqTest {
+public class QueryReqTest {
 
 	protected static JHelper<QueryReq> jreqQuery = new JHelper<QueryReq>();
 
 	@Test
-	void testToFrom() throws SemanticException, IOException, ReflectiveOperationException {
+	public void testToFrom() throws SemanticException, IOException, ReflectiveOperationException {
 		Utils.printCaller(false);
 
 		JMessage<QueryReq> req = new JMessage<QueryReq>(Port.query);

@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
 
 import org.xml.sax.SAXException;
 
@@ -19,21 +17,20 @@ import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantic.jsession.SSession;
 import io.odysz.semantics.ISemantext;
 
-/**This application scope initializing and managing module should be here.
- * @author ody
- *
+/**This jserv lib  initializing and managing module. Subclass must be a web listener.
+ * See {@link io.odysz.jsample.Sampleton} example of how to use JSingleton in application.
+ * @author odys-z@github.com
  */
-@WebListener
-public class JSingleton implements ServletContextListener {
+public class JSingleton {
 
 	public static DATranscxt defltScxt;
 	private static ISessionVerifier session;
 	private static String rootINF;
 
-	public void contextDestroyed(ServletContextEvent arg0) {
+	public void onDestroyed(ServletContextEvent arg0) {
 	}
 
-	public void contextInitialized(ServletContextEvent evt) {
+	public void onInitialized(ServletContextEvent evt) {
 		Utils.printCaller(false);
 		Utils.logi("JSingleton initializing...");
 

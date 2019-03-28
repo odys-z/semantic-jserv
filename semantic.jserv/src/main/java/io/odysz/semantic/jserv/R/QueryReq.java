@@ -16,29 +16,8 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Query.Ix;
 
-/**<pre>
-query-obj: { tabl: tabl-obj,
-             joins: [join-obj],
-             exprs: [expr-obj],
-             where: [cond-obj],
-             orders: [order-obj],
-             group: [group-obj]
-           }
-     - tabl-obj: {tabl: "table-1", as: "t_alais"}
-     - join-obj: [{t: "j/r/l", tabl: "table-1", as: "t_alais", on: conds}]
-           - conds: [cond-obj]
-            	cond-obj: {(main-table | alais .)left-col-val op (table-1 | alias2 .)right-col-val}
-           				- op: '=' | '&lt;=' | '&gt;=' ...
-     - expr-obj: {tabl: "b_articles/t_alais", alais: "recId", expr: "recId"}
-     - order-obj: {tabl: "b_articles", field: "pubDate", asc: "true"}
-     - group-obj: {tabl: "b_articles/t_alais", expr: "recId" }
-
-respons:
-{total: num, rows[]}
-or
-{code: "failed", msg: msg}</pre>
- * @author ody
- *
+/**Query Request Body Item.<br>
+ * @author odys-z@github.com
  */
 public class QueryReq extends JBody {
 

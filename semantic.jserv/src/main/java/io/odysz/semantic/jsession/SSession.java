@@ -28,6 +28,7 @@ import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
@@ -282,6 +283,8 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		}
 	}
 
+	IUser jrobot = new JRobot();
+
 	/**Load user instance form DB table (name = {@link UserMeta#tbl}).
 	 * @param jreq
 	 * @param connId
@@ -300,7 +303,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			.col(UserMeta.ivField, "iv")
 			.col(UserMeta.urlField, "url")
 			.where("=", "u." + UserMeta.uidField, "'" + jreq.uid() + "'")
-			.rs(sctx.basictx());
+			.rs(sctx.instancontxt(jrobot));
 		
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString("uid");
