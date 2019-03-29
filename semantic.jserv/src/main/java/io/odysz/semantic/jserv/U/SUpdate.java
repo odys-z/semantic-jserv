@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import io.odysz.semantic.DA.DATranscxt;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jserv.JSingleton;

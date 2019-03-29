@@ -17,11 +17,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FilenameUtils;
+import org.xml.sax.SAXException;
+
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.DA.DATranscxt;
 import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
@@ -29,6 +32,7 @@ import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JRobot;
+import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
@@ -65,13 +69,17 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	
 	private static ScheduledFuture<?> schedualed;
 	
-	private static DATranscxt sctx;
+	static DATranscxt sctx;
 
 	static JHelper<SessionReq> jreqHelper;
 
-	public static void init(DATranscxt daSctx) {
+	public static void init(DATranscxt daSctx) throws SAXException, IOException {
 		lock = new ReentrantLock();
+
 		sctx = daSctx;
+		DATranscxt.initConfigs(daSctx.basiconnId(),
+				FilenameUtils.concat(JSingleton.rootINF(), "semantic-log.xml"));
+
 		jreqHelper = new JHelper<SessionReq>();
 
 		users = new HashMap<String, IUser>();
