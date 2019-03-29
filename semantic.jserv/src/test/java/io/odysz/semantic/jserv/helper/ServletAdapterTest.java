@@ -16,11 +16,11 @@ import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantics.SemanticObject;
 
-class ServletAdapterTest {
+public class ServletAdapterTest {
 	static Gson gson = new Gson();
 
 	@Test
-	void test() throws IOException {
+	public void test() throws IOException {
 		Utils.printCaller(false);
 		
 		OutputStream os = new ByteArrayOutputStream();

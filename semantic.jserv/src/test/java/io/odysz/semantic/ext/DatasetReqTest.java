@@ -19,12 +19,12 @@ import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantics.x.SemanticException;
 
-class DatasetReqTest {
+public class DatasetReqTest {
 
 	protected static JHelper<DatasetReq> jreqDs = new JHelper<DatasetReq>();
 
 	@Test
-	void testToFromJson() throws SemanticException, IOException, ReflectiveOperationException {
+	public void testToFromJson() throws SemanticException, IOException, ReflectiveOperationException {
 		Utils.printCaller(false);
 
 		JMessage<DatasetReq> req = new JMessage<DatasetReq>(Port.dataset);

@@ -204,6 +204,7 @@ public class QueryReq extends JBody {
 		JsonToken token = reader.peek();
 		if (token == JsonToken.BEGIN_OBJECT) {
 			reader.beginObject();
+			token = reader.peek();
 			while (token != JsonToken.END_OBJECT) {
 				String name = reader.nextName();
 				if ("a".equals(name))

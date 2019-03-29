@@ -6,10 +6,10 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.ext.DatasetReq;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 
-class JMessageTest {
+public class JMessageTest {
 
 	@Test
-	void testToStringEx() {
+	public void testToStringEx() {
 		DatasetReq req = new DatasetReq(null, "test-conn");
 
 		String t = "tag";
