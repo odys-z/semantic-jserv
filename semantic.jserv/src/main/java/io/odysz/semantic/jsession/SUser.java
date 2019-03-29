@@ -4,10 +4,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.apache.commons.io.FilenameUtils;
+import org.xml.sax.SAXException;
+
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.AESHelper;
 import io.odysz.common.Radix64;
+import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.LoggingUser;
+import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -25,8 +31,23 @@ class SUser extends SemanticObject implements IUser {
 	protected String uid;
 	private String pswd;
 	private String usrName;
+
 	@SuppressWarnings("unused")
 	private long touched;
+	private String funcId;
+	private String funcName;
+
+	private static DATranscxt logsctx;
+	static {
+		String conn = "local-sqlite";
+		try {
+			// TODO This is a typical initializing, should moved to subclass of JSingleton.
+			DATranscxt.initConfigs(conn, FilenameUtils.concat(JSingleton.rootINF(), "semantic-log.xml"));
+			logsctx = new DATranscxt(conn);
+		} catch (SAXException | IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	private static Random random = new Random();
 
@@ -67,24 +88,25 @@ class SUser extends SemanticObject implements IUser {
 		uid = jmsg.getString("uid");
 	}
 
-	@Override
-	public String uid() {
-		return uid;
-	}
+	@Override public String uid() { return uid; }
 
-	public String get(String prop) {
-		return null;
-	}
+	public String get(String prop) { return "TODO"; }
 
 	@Override
 	public ArrayList<String> dbLog(ArrayList<String> sqls) {
-		return sqls;
+		return LoggingUser.genLog(logsctx, sqls, this, funcName, funcId);
 	}
 
 	public void touch() {
 		touched = System.currentTimeMillis();
 	}
 
+	@Override
+	public IUser logAct(String funcName, String funcId) {
+		this.funcName = funcName;
+		this.funcId = funcId;
+		return this;
+	}
 	public String sessionId() {
 		if (ssid == null)
 			ssid = randomId();

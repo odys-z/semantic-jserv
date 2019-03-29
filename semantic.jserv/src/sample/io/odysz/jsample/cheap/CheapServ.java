@@ -81,9 +81,6 @@ public class CheapServ extends SUpdate {
 		//
 		// If the same in SysMenu is surely called before this servlet going to work, this line can be comment out. 
 		JMessage.understandPorts(Samport.cheapflow);
-
-		// initialized by Sampleton
-		// CheapEngin.initCheap(FilenameUtils.concat(JSingleton.rootINF(), confpath), null);
 	}
 
 	@Override
@@ -173,17 +170,6 @@ public class CheapServ extends SUpdate {
 			return start(jobj, usr);
 		else if (Req.cmd == req)
 			return cmd(jobj, usr);
-//		String wftype = (String) jobj.get(WfProtocol.wfid);
-//		String req = (String) jobj.get(WfProtocol.cmd);
-//		String busiId = (String) jobj.get(WfProtocol.busid); // taskId
-//		String currentInstId = (String) jobj.get(WfProtocol.current);
-//		String nodeDesc = (String)jobj.get(WfProtocol.ndesc);
-//		String[] busiNvs = (String[])jobj.get(WfProtocol.nvs);
-//		SemanticObject multireq = (SemanticObject)jobj.get(WfProtocol.busiMulti);
-//
-//
-//		SemanticObject cheap = new SemanticObject();
-//		return cheap;
 		else throw new CheapException("t can not handlered: %s", req);
 	}
 
@@ -197,7 +183,7 @@ public class CheapServ extends SUpdate {
 				.taskNv("remarks", "testing")
 				.taskChildMulti("task_details", null, inserts)
 				.postupdates(postups)
-				.commit(usr);
+				.commit(usr.logAct("Start Flow " + jobj.wftype, "cheap.start"));
 
 		// simulating business layer handling events
 		ICheapEventHandler eh = (ICheapEventHandler) res.remove("stepHandler");

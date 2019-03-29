@@ -23,4 +23,6 @@ public class JRobot implements IUser {
 
 	@Override public void writeJsonRespValue(Object writer) throws IOException { }
 
+	@Override public IUser logAct(String funcName, String funcId) { return this; }
+
 }

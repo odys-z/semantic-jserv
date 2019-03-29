@@ -64,7 +64,7 @@ public class JHelper<T extends JBody> {
 			writeLst(writer, (List<Object>) v);
 		}
 		else
-			writer.value(v.toString());
+			writer.value(v == null ? JsonToken.NULL.toString() : v.toString());
 	}
 
 	/**Write a string array, with "[" and "]".
