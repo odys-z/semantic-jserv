@@ -1,8 +1,5 @@
 package io.odysz.semantic.jprotocol;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,16 +9,15 @@ import org.junit.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 
-class JProtocolTest {
+public class JProtocolTest {
 	static Gson gson;
 	
 	@Before
-	void setUp() throws Exception {
+	public void setUp() throws Exception {
 		Utils.printCaller(false);
 		gson = new Gson();
 	}
@@ -49,7 +45,7 @@ class JProtocolTest {
 	 */
 	@SuppressWarnings("rawtypes")
 	@Test
-	void testGsonLimitation() {
+	public void testGsonLimitation() {
 		ArrayList<JMessage> msgs = new ArrayList<JMessage>();
 		msgs.add(new JMessage(Port.heartbeat));
 		Utils.logi(JProtocolTest.<JMessage>parse(msgs));
@@ -108,128 +104,4 @@ class JProtocolTest {
 		String j = gson.toJson(s, t);
 		return j;
 	}
-	
-	
-//	@SuppressWarnings("unchecked")
-//	@Test
-//	void tryGsonStream() throws IOException, SemanticException, ReflectiveOperationException {
-//		Utils.logi("\n --------------- deserialized -------------------------------");
-//		StringBuffer sbf = new StringBuffer("{\"header\":{}, body:[{\"vestion\":\"1.0\",\"Port\":\"heartbeat\",\"seq\":142}]}") ;
-//        byte[] bytes = sbf.toString().getBytes();
-//        InputStream in = new ByteArrayInputStream(bytes);
-//		JHelper<QueryReq> jhelper = new JHelper<QueryReq>();
-//		JMessage<?> msg = new JHelper<QueryReq>().readJson(in, QueryReq.class);
-//        Utils.<QueryReq>logi((List<QueryReq>)msg.body);
-//        
-//		Utils.logi("\n -------------- output stream -------------------------------");
-//		msg.incSeq().incSeq().incSeq();
-//        OutputStream output = new OutputStream() {
-//            private StringBuilder string = new StringBuilder();
-//            @Override
-//            public void write(int b) throws IOException {
-//                this.string.append((char) b );
-//            }
-//
-//            //Netbeans IDE automatically overrides this toString()
-//            public String toString(){
-//                return this.string.toString();
-//            }
-//        };
-//        writeJsonStream(output, (List<QueryReq>)msg.body);
-//        Utils.logi(output.toString());
-//        
-//		Utils.logi("\n --------------- subclass Axby ------------------------------");
-//		sbf = new StringBuffer("{\"header\": {}, "
-//				+ "\"body\": [{\"a\":\"1\",\"b\":\"y\"},{\"a\":\"x\",\"b\":\"y\",\"c\":[\"1.0\",\"2.0\"]},{\"a\":\"u\",\"b\":\"v\",\"c\":[8.0,9.0]}]}");
-//        bytes = sbf.toString().getBytes();
-//        in = new ByteArrayInputStream(bytes);
-//		Axby xas = new JHelper<Axby>().readJson(in, Axby.class);
-//        Utils.<Axby>logi((List<Axby>)xas.body);
-//	}
-	
-	public void writeJsonStream(OutputStream out, List<? extends JBody> messages) throws IOException {
-        JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, "UTF-8"));
-        writer.setIndent("  ");
-        writer.beginArray();
-        for (JBody message : messages) {
-            gson.toJson(message, JMessage.class, writer);
-        }
-        writer.endArray();
-        writer.close();
-    }
-	
-//	@Test
-//	void tryPeek() throws SemanticException, IOException {
-//		Utils.logi("\n ------------------- try peek ---------------------------");
-//		StringBuffer sbf = new StringBuffer("{\"header\":{}, \"body\":[{}] }")  ;
-//        byte[] bytes = sbf.toString().getBytes();
-//        InputStream in = new ByteArrayInputStream(bytes);
-//		// JHelper<JMessage> jhelper = new JHelper<JMessage>();
-//		// JMessage msgs = new JHelper<JMessage>().readJson(in, JMessage.class)
-//        JHeader jheader = null; 
-//        JHeader jbody = null; 
-//		JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
-//		reader.beginObject();
-//		JsonToken token = reader.peek();
-//		while (token != null && token != JsonToken.END_DOCUMENT) {
-//			switch (token) {
-//			case NAME:
-//				String name = reader.nextName();
-//				if (name != null && "header".equals(name.trim().toLowerCase()))
-//					jheader = gson.fromJson(reader, JHeader.class);
-//				else if (name != null && "body".equals(name.trim().toLowerCase()))
-////					jbody = gson.fromJson(reader, JHeader.class);
-////					reader.nextName();
-//					;
-//				else {
-//					reader.close();
-//					throw new SemanticException("Can't parse json message: , ");
-//				}
-//				break;
-//			case BEGIN_ARRAY:
-//				reader.beginArray();
-//				break;
-//			case END_ARRAY:
-//				reader.endArray();
-//				break;
-//			case END_OBJECT:
-//				reader.endObject();
-//				break;
-//			default:
-//				reader.close();
-//				throw new SemanticException("Can't parse json message: , ");
-//			}
-//			token = reader.peek();
-//		}
-////		reader.endObject();
-//		reader.close();
-//
-//        Utils.<JMessage>logi(jheader.toString());
-//        Utils.<JMessage>logi(jbody.toString());
-// 	
-//	}
-	
-//	@Test
-//	public void testJHelperQuery() throws SemanticException, IOException, ReflectiveOperationException {
-//		String req = "";
-//		JHelper<QueryReq> jhelperReq = new JHelper<QueryReq>();
-//		// QueryReq msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
-//		QueryReq msg = ServletAdapter_QueryReq_read(req, jhelperReq, QueryReq.class);
-//		Utils.logi(msg.toStringEx());
-//	}
-//	
-//	private static QueryReq ServletAdapter_QueryReq_read(String headstr, JHelper<QueryReq> jreqHelper,
-//			Class<? extends JBody> clz) throws SemanticException, IOException, ReflectiveOperationException {
-//		InputStream in = null; 
-//		if (headstr != null && headstr.length() > 3) {
-//			byte[] b = headstr.getBytes();
-//			in = new ByteArrayInputStream(b);
-//		}
-////		else in = req.getInputStream();
-//		
-//		QueryReq msg = (QueryReq) jreqHelper.readJson(in, clz);
-//		in.close();
-//
-//		return msg;
-//	}
 }

@@ -9,10 +9,10 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.jserv.R.QueryReq;
 import io.odysz.semantics.x.SemanticException;
 
-class JHelperTest {
+public class JHelperTest {
 
 	@Test
-	void testReadJson() throws SemanticException, IOException, ReflectiveOperationException {
+	public void testReadJson() throws SemanticException, IOException, ReflectiveOperationException {
 		JHelper<QueryReq> jhelperReq = new JHelper<QueryReq>();
 		byte[] b = "{header:{}, body:[{}]}"
 				.getBytes();
