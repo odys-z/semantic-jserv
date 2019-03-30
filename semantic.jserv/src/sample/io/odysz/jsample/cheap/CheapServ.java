@@ -67,8 +67,8 @@ public class CheapServ extends SUpdate {
 	/**
 	 * path-to-workflow-meta.xml<br>
 	 * It connId is the same as in connects.xml.
+		public static final String confpath = "../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml";
 	 */
-	public static final String confpath = "../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml";
 
 	static {
 		jcheapReq  = new JHelper<CheapReq>();
@@ -92,7 +92,7 @@ public class CheapServ extends SUpdate {
 			String t = req.getParameter("t");
 			if ("reload-cheap".equals(t)) {
 				try {
-					CheapEngin.initCheap(FilenameUtils.concat(JSingleton.rootINF(), confpath), null);
+					CheapEngin.initCheap(FilenameUtils.concat(JSingleton.rootINF(), CheapEngin.confpath), null);
 					resp.getWriter().write(Html.ok("cheap reloaded"));
 				} catch (SAXException e) {
 					e.printStackTrace();

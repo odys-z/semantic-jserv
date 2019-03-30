@@ -109,9 +109,9 @@ public class DatasetReq extends QueryReq {
 				else if ("smtcss".equals(name)) {
 					JsonToken peek = reader.peek();
 					if (peek == JsonToken.BEGIN_ARRAY) {
-						reader.beginArray();
+//						reader.beginArray();
 						String[][] ss = JHelper.readStrss(reader);
-						reader.endArray();
+//						reader.endArray();
 						if (ss != null)
 							stcs = new TreeSemantics(ss);
 					}

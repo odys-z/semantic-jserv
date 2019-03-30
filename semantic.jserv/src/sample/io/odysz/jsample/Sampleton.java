@@ -9,7 +9,7 @@ import javax.servlet.annotation.WebListener;
 import org.apache.commons.io.FilenameUtils;
 import org.xml.sax.SAXException;
 
-import io.odysz.jsample.cheap.CheapServ;
+import io.odysz.common.Configs;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.sworkflow.CheapEngin;
 import io.odysz.transact.x.TransException;
@@ -22,7 +22,8 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 		super.onInitialized(sce);
 		
 		try {
-			CheapEngin.initCheap(FilenameUtils.concat(rootINF(), CheapServ.confpath), null);
+			// CheapEngin.initCheap(FilenameUtils.concat(rootINF(), CheapServ.confpath), null);
+			CheapEngin.initCheap(FilenameUtils.concat(rootINF(), Configs.getCfg("cheap", "config-path")), null);
 		} catch (TransException | IOException | SAXException e) {
 			e.printStackTrace();
 		}
