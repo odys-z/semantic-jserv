@@ -17,7 +17,7 @@ import io.odysz.sworkflow.EnginDesign.Req;
 
 public class CheapReq extends JBody {
 	public static CheapReq format(JMessage<QueryReq> parent, Req req, String wfId) {
-		CheapReq r = new CheapReq(parent, null);
+		CheapReq r = new CheapReq(parent);
 		r.a = req.name();
 		r.wftype = wfId;
 		return r;
@@ -30,6 +30,9 @@ public class CheapReq extends JBody {
 		return this;
 	}
 
+	protected String[] cmdArgs;
+	public String[] args() { return cmdArgs; }
+
 	protected String nodeDesc;
 	protected String ndescpt;
 	protected String childTbl;
@@ -37,8 +40,16 @@ public class CheapReq extends JBody {
 	public ArrayList<String[]> taskNvs() { return taskNvs; }
 	protected ArrayList<ArrayList<String[]>> childInserts;
 
-	public CheapReq(JMessage<? extends JBody> parent, String conn) {
-		super(parent, conn);
+	public CheapReq(JMessage<? extends JBody> parent) {
+		super(parent, null); // client can't control engine's connection
+	}
+
+	/**This should used only by JHelper, fake is ignored.
+	 * @param parent
+	 * @param fake
+	 */
+	public CheapReq(JMessage<? extends JBody> parent, String fake) {
+		super(parent, null); // client can't control engine's connection
 	}
 
 	@Override
@@ -58,6 +69,10 @@ public class CheapReq extends JBody {
 			if (childInserts != null) {
 				writer.name("childInserts");
 				JHelper.writeLst(writer, childInserts);
+			}
+			if (cmdArgs != null) {
+				writer.name("cmdArgs");
+				JHelper.writeStrings(writer, cmdArgs);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();	
@@ -82,6 +97,8 @@ public class CheapReq extends JBody {
 					ndescpt = JHelper.nextString(reader);
 				else if ("childTbl".equals(name))
 					childTbl = JHelper.nextString(reader);
+				else if ("cmdArgs".equals(name)) 
+					cmdArgs = JHelper.readStrs(reader);
 				else if ("taskNvs".equals(name)) 
 					taskNvs = JHelper.readLstStrs(reader);
 				else if ("childInserts".equals(name)) 
@@ -137,6 +154,25 @@ public class CheapReq extends JBody {
 	public CheapReq req(Req req) {
 		return (CheapReq) a(req.name());
 	}
+	
+	/**Ask Req.cmd with cmd name as parameter.
+	 * @param cmd
+	 * @return the req object
+	 */
+	public CheapReq reqCmd(String cmd) {
+		this.cmdArgs = new String[] {cmd};
+		return req(Req.cmd);
+	}
 
+	/**Ask the node's right.
+	 * @param nodeId
+	 * @param usrId
+	 * @param taskId
+	 * @return the req object
+	 */
+	public CheapReq cmdsRight(String nodeId, String usrId, String taskId) {
+		this.cmdArgs = new String[] {nodeId, usrId, taskId};
+		return req(Req.cmdsRight);
+	}
 
 }
