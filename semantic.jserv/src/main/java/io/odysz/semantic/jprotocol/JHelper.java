@@ -85,15 +85,12 @@ public class JHelper<T extends JBody> {
 	}
 
 	public static void writeStrss(JsonWriter writer, String[][] vss) throws IOException {
-//		writer.beginArray();
 		for (int i = 0; i < vss.length; i++) {
 			if (vss[i] == null)
 				writer.nullValue();
 			else
-				// writer.value(v[i]);
 				writeStrings(writer, vss[i]);
 		}
-//		writer.endArray();
 	}
 
 	private static void writeRs(JsonWriter writer, SResultset rs) throws IOException, SQLException {
