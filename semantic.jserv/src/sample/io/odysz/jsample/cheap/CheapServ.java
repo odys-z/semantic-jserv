@@ -170,7 +170,15 @@ public class CheapServ extends SUpdate {
 			return start(jobj, usr);
 		else if (Req.cmd == req)
 			return cmd(jobj, usr);
+		else if (Req.cmdsRight == req) 
+			return right(jobj, usr);
 		else throw new CheapException("t can not handlered: %s", req);
+	}
+
+	private SemanticObject right(CheapReq jobj, IUser usr) throws SemanticException, SQLException {
+		String nid = jobj.args()[0];
+		String tid = jobj.args()[1];
+		return CheapApi.right(jobj.wftype, usr.uid(), nid, tid);
 	}
 
 	private SemanticObject start(CheapReq jobj, IUser usr) throws SQLException, TransException {

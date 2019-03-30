@@ -284,9 +284,9 @@ public class JHelper<T extends JBody> {
 			tk = reader.peek();
 			if (tk == JsonToken.BEGIN_ARRAY) {
 				// not recursive, only support 2d string array
-				reader.beginArray();
+				// reader.beginArray();
 				lst.add(readStrs(reader));
-				reader.endArray();
+				// reader.endArray();
 			}
 			else if (tk == JsonToken.BEGIN_OBJECT) {
 				// caller is trying as string array, but actually found here is an object array
@@ -313,12 +313,12 @@ public class JHelper<T extends JBody> {
 			tk = reader.peek();
 			if (tk == JsonToken.BEGIN_ARRAY) {
 				// not recursive, only support 2d string array
-				reader.beginArray();
+				// reader.beginArray();
 				while (tk != JsonToken.END_ARRAY) {
 					lstlst.add(readLstStrs(reader));
 					tk = reader.peek();
 				}
-				reader.endArray();
+				// reader.endArray();
 			}
 			else
 				throw new SemanticException("can't handle object array");
@@ -357,6 +357,8 @@ public class JHelper<T extends JBody> {
 		// error tolerating is necessary?
 		if (tk == JsonToken.END_DOCUMENT)
 			return strs.toArray(new String[] {});
+		else if (tk == JsonToken.BEGIN_ARRAY)
+			reader.beginArray();
 
 		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
 //			String v = null;
@@ -370,6 +372,10 @@ public class JHelper<T extends JBody> {
 			strs.add(nextString(reader));
 			tk = reader.peek();
 		}
+		
+		if (tk == JsonToken.END_ARRAY)
+			reader.endArray();
+		
 		return strs.toArray(new String[] {});
 	}
 

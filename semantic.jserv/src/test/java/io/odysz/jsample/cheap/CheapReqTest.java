@@ -64,4 +64,34 @@ public class CheapReqTest {
 		assertEquals(1, bd.taskNvs().size());
 	}
 
+	@Test
+	public void testRightReq() throws IOException, SemanticException, ReflectiveOperationException {
+		Utils.printCaller(false);
+		JMessage.understandPorts(Samport.cheapflow);
+
+		String wfid = "t01";
+		CheapReq req = new CheapReq(null)
+				.cmdsRight("n-01", "user-1", "task 1")
+				.wftype(wfid);
+
+		JHeader header = new JHeader("ss-id", "uid");
+		JHeader.usrAct("func-id", "query", "a_user", "R");
+		JMessage<CheapReq> jmsg = new JMessage<CheapReq>(Samport.cheapflow);
+		jmsg.header(header);
+		jmsg.body(req);
+
+		OutputStream os = new ByteArrayOutputStream();
+		JHelper.writeJsonReq(os, jmsg);
+		String json = os.toString();
+		os.close();
+
+		InputStream in = new ByteArrayInputStream(json.getBytes());
+		JMessage<CheapReq> resp = jreqCheap.readJson(in, CheapReq.class);
+		json = resp.toString();
+		Utils.logi(json);
+
+		CheapReq bd = resp.body(0);
+		assertEquals("n-01", bd.args()[0]);
+
+	}
 }
