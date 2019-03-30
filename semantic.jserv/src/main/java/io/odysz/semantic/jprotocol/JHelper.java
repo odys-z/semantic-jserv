@@ -63,8 +63,8 @@ public class JHelper<T extends JBody> {
 		else if (List.class.isAssignableFrom(t)) {
 			writeLst(writer, (List<Object>) v);
 		}
-		else
-			writer.value(v == null ? JsonToken.NULL.toString() : v.toString());
+		else // writer.value(v == null ? JsonToken.NULL.toString() : v.toString());
+			writer.value(v.toString());
 	}
 
 	/**Write a string array, with "[" and "]".
@@ -140,14 +140,14 @@ public class JHelper<T extends JBody> {
 	}
 
 	private static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException, SQLException {
-		writer.beginArray();
+		writer.beginObject();
 		for (Object k : map.keySet()) {
 			Object v = map.get(k);
 			writer.name(k.toString());
 			writeRespValue(writer, v.getClass(), v);
 		}
 		
-		writer.endArray();
+		writer.endObject();
 	}
 
 	/**Write jreq into output stream.
@@ -394,12 +394,13 @@ public class JHelper<T extends JBody> {
 		if (tk == JsonToken.END_DOCUMENT)
 			return strs.toArray(new String[][] {});
 
+		if (tk == JsonToken.BEGIN_ARRAY)
+			reader.beginArray();
+
 		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
 			if (tk == JsonToken.BEGIN_ARRAY) {
-				reader.beginArray();
 				String[] a = readStrs(reader);
 				strs.add(a);
-				reader.endArray();
 			}
 			else if (tk == JsonToken.NULL) {
 				reader.nextNull();
@@ -409,6 +410,10 @@ public class JHelper<T extends JBody> {
 				throw new SemanticException("The semantics can not been understood.");
 			tk = reader.peek();
 		}
+
+		if (tk == JsonToken.END_ARRAY)
+			reader.endArray();
+
 		return strs.toArray(new String[][] {});
 	}
 	

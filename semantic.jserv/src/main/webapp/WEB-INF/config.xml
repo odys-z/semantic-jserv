@@ -40,6 +40,12 @@
   	</c>
   </t>
 
-  <t id="cbb" pk="k" columns="k,v">
+  <t id="cheap" pk="k" columns="k,v">
+	<c> <k>config-path</k>
+	<!-- 
+		<v>../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml</v>
+	 -->
+		<v>../../../../../../../../../../../../../git/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml</v>
+	</c>
   </t>
 </configs>
