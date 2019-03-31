@@ -175,4 +175,8 @@ public class CheapReq extends JBody {
 		return req(Req.cmdsRight);
 	}
 
+	public CheapReq loadFlow(String wfId, String taskId) {
+		this.cmdArgs = new String[] {wfId, taskId};
+		return req(Req.load);
+	}
 }
