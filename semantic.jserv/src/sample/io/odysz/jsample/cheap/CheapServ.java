@@ -172,6 +172,8 @@ public class CheapServ extends SUpdate {
 			return cmd(jobj, usr);
 		else if (Req.cmdsRight == req) 
 			return right(jobj, usr);
+		else if (Req.load == req) 
+			return loadFlow(jobj, usr);
 		else throw new CheapException("t can not handlered: %s", req);
 	}
 
@@ -181,6 +183,12 @@ public class CheapServ extends SUpdate {
 		return CheapApi.right(jobj.wftype, usr.uid(), nid, tid);
 	}
 
+	private SemanticObject loadFlow(CheapReq jobj, IUser usr) throws SQLException, TransException {
+		String wfid = jobj.args()[0];
+		String tid = jobj.args()[1];
+		return CheapApi.loadFlow(wfid, tid, usr.uid());
+	}
+	
 	private SemanticObject start(CheapReq jobj, IUser usr) throws SQLException, TransException {
 		ArrayList<ArrayList<String[]>> inserts = jobj.childInserts;
 		
