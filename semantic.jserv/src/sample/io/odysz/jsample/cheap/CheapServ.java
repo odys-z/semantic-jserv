@@ -195,7 +195,7 @@ public class CheapServ extends SUpdate {
 		// testTrans = CheapEngin.trcs;
 		Update postups = null;
 		SemanticObject res = CheapApi.start(jobj.wftype)
-				.nodeDesc(jobj.nodeDesc)
+				.nodeDesc(jobj.ndescpt)
 				.taskNv("remarks", "testing")
 				.taskChildMulti("task_details", null, inserts)
 				.postupdates(postups)

@@ -207,36 +207,41 @@ public class QueryReq extends JBody {
 			token = reader.peek();
 			while (token != JsonToken.END_OBJECT) {
 				String name = reader.nextName();
-				if ("a".equals(name))
-					a = JHelper.nextString(reader);
-				else if ("conn".equals(name))
-					conn = JHelper.nextString(reader);
-				else if ("page".equals(name))
-					page = reader.nextInt();
-				else if ("pgSize".equals(name))
-					pgsize = reader.nextInt();
-				else if ("mtabl".equals(name))
-					mtabl = JHelper.nextString(reader);
-				else if ("mAlias".equals(name))
-					mAlias = JHelper.nextString(reader);
-				else if ("exprs".equals(name)) {
-					if (reader.peek() == JsonToken.BEGIN_ARRAY)
-						exprs = JHelper.readLstStrs(reader);
-					else reader.nextString(); // skip "*"
-				}
-				else if ("joins".equals(name))
-					joins = JHelper.readLstStrs(reader);
-				else if ("where".equals(name))
-					where = JHelper.readLstStrs(reader);
-				else if ("orders".equals(name))
-					orders = JHelper.readLstStrs(reader);
-				else if ("groups".equals(name))
-					groups = JHelper.readLstStrs(reader);
-				// TODO ...
+				fromJsonName(name, reader);
 				token = reader.peek();
 			}
 			reader.endObject();
 		}
+	}
+
+	protected void fromJsonName(String name, JsonReader reader)
+			throws SemanticException, IOException {
+		if ("a".equals(name))
+			a = JHelper.nextString(reader);
+		else if ("conn".equals(name))
+			conn = JHelper.nextString(reader);
+		else if ("page".equals(name))
+			page = reader.nextInt();
+		else if ("pgSize".equals(name))
+			pgsize = reader.nextInt();
+		else if ("mtabl".equals(name))
+			mtabl = JHelper.nextString(reader);
+		else if ("mAlias".equals(name))
+			mAlias = JHelper.nextString(reader);
+		else if ("exprs".equals(name)) {
+			if (reader.peek() == JsonToken.BEGIN_ARRAY)
+				exprs = JHelper.readLstStrs(reader);
+			else reader.nextString(); // skip "*"
+		}
+		else if ("joins".equals(name))
+			joins = JHelper.readLstStrs(reader);
+		else if ("where".equals(name))
+			where = JHelper.readLstStrs(reader);
+		else if ("orders".equals(name))
+			orders = JHelper.readLstStrs(reader);
+		else if ("groups".equals(name))
+			groups = JHelper.readLstStrs(reader);
+		// TODO ...
 	}
 
 //	public static String nextString(JsonReader reader) throws IOException {

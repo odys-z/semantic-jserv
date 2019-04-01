@@ -124,6 +124,7 @@ public class DatasetReq extends QueryReq {
 				}
 				else if ("sqlArgs".equals(name))
 					sqlArgs = JHelper.readStrs(reader);
+				else fromJsonName(name, reader);
 
 				token = reader.peek();
 			}
