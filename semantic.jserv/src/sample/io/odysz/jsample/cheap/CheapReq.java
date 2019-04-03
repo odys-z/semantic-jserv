@@ -33,7 +33,6 @@ public class CheapReq extends JBody {
 	protected String[] cmdArgs;
 	public String[] args() { return cmdArgs; }
 
-//	protected String nodeDesc;
 	protected String ndescpt;
 	protected String childTbl;
 	protected ArrayList<String[]> taskNvs;
