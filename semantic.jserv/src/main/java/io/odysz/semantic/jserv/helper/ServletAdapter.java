@@ -1,13 +1,11 @@
 package io.odysz.semantic.jserv.helper;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
 
-import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -87,14 +85,4 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 		while ( (numRead = ins.read(buf)) >= 0 )
 			outs.write(buf, 0, numRead);
 	}
-
-	public static void copyB64(FileOutputStream outs, ServletInputStream ins) throws IOException {
-		int numRead;
-		byte[] buf = new byte[bufLen];
-
-		while ( (numRead = ins.read(buf)) >= 0 ) {
-			outs.write(buf, 0, numRead);
-		}
-	}
-
 }
