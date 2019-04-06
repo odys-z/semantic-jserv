@@ -27,7 +27,7 @@ public class JMessage <T extends JBody> {
 	 */
 	public enum Port implements IPort {  heartbeat("ping.serv"), session("login.serv"),
 						insert("c.serv"), query("r.serv"), update("u.serv"), delete("d.serv"),
-						echo("echo.serv"), user("user.serv"),
+						echo("echo.serv"), file("file.serv"), user("user.serv"),
 						// data structure extensions
 						stree("s-tree.jserv"), dataset("ds.jserv");
 		private String url;

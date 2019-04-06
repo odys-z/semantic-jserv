@@ -1,11 +1,13 @@
 package io.odysz.semantic.jserv.helper;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
 
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -21,6 +23,8 @@ import io.odysz.semantics.x.SemanticException;
  *
  */
 public class ServletAdapter {
+	static final int bufLen = 1024 * 32;
+
 	/**<p>Read JMessage from request.</p>
 	 * <p>FIXME req input stream is closed if there is no header string in url?</p>
 	 * usage: <pre>jhelperReq  = new JHelper&lt;QueryReq&gt;();
@@ -65,22 +69,32 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		/*
-		// TODO move to JProtocol
-		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
-		writer.beginObject();
-		writer.name("port").value(msg.getString("port"));
-		writer.name("code").value(msg.getString("code"));
-		if (msg.getType("error") != null)
-			writer.name("error").value(msg.getString("error"));
-		if (msg.getType("msg") != null)
-			writer.name("msg").value(msg.getString("msg"));
-		// TODO body ...
-		writer.endObject();
-		writer.close();
-		*/
 		os.flush();
 	}
 
+	public static void write(HttpServletResponse resp, InputStream ins) throws IOException {
+		resp.setCharacterEncoding("UTF-8");
+		resp.setContentType("application/json");
+		OutputStream os = resp.getOutputStream();
+
+		copy(os, ins);
+	}
+
+	public static void copy(OutputStream outs, InputStream ins) throws IOException {
+		int numRead;
+		byte[] buf = new byte[bufLen];
+
+		while ( (numRead = ins.read(buf)) >= 0 )
+			outs.write(buf, 0, numRead);
+	}
+
+	public static void copyB64(FileOutputStream outs, ServletInputStream ins) throws IOException {
+		int numRead;
+		byte[] buf = new byte[bufLen];
+
+		while ( (numRead = ins.read(buf)) >= 0 ) {
+			outs.write(buf, 0, numRead);
+		}
+	}
 
 }
