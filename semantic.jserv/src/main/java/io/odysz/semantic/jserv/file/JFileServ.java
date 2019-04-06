@@ -52,6 +52,19 @@ public class JFileServ extends HttpServlet {
 		resp.flushBuffer();
 	}
 
+	/**
+https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file
+https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications
+https://vuejsexamples.com/file-upload-component-for-vue-js/
+https://stackoverflow.com/questions/4006520/using-html5-file-uploads-with-ajax-and-jquery
+https://wisdmlabs.com/blog/access-file-before-upload-using-jquery-ajax/
+
+	 * @param req
+	 * @param resp
+	 * @param file
+	 * @return
+	 * @throws IOException
+	 */
 	private String upload(HttpServletRequest req, HttpServletResponse resp, String file) throws IOException {
 		if (uploadPath == null) {
 			uploadPath = Configs.getCfg("upload.file.serv");
