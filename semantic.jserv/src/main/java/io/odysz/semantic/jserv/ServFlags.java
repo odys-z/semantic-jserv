@@ -8,7 +8,9 @@ public class ServFlags {
 	public static final boolean update = true;
 	
 	/**{@link io.odysz.semantic.ext.SemanticTree} */
-	public static final boolean extStree = true; 
+	public static final boolean extStree = true;
+
+	public static final boolean file = true; 
 
 
 }

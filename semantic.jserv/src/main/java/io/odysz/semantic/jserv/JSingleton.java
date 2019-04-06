@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.ServletContextEvent;
 
+import org.apache.commons.io.FilenameUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
@@ -54,6 +55,14 @@ public class JSingleton {
 	 */
 	public static String rootINF() {
 		return rootINF;
+	}
+
+	/**Get WEB-INF file path
+	 * @param filename
+	 * @return rootINF() + filename
+	 */
+	public static String getFileInfPath(String filename) {
+		return FilenameUtils.concat(rootINF(), filename);
 	}
 
 }
