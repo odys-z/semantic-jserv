@@ -3,6 +3,8 @@ package io.odysz.semantic.jserv.file;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Base64;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -66,11 +68,15 @@ public class JFileServ extends HttpServlet {
 		String fileId = fileId(req, file);
 		String filepath = FilenameUtils.concat(uploadPath, fileId);
 		FileOutputStream outs = new FileOutputStream(filepath);
-		if (decode)
-			ServletAdapter.copyB64(outs, req.getInputStream());
-		else 
+		if (decode) {
+			OutputStream os = Base64.getEncoder().wrap(outs);
+			ServletAdapter.copy(os, req.getInputStream());
+			os.close();
+		}
+		else  {
 			ServletAdapter.copy(outs, req.getInputStream());
-		outs.close();
+			outs.close();
+		}
 
 		SemanticObject rs = JProtocol.ok(p, fileId);
 		ServletAdapter.write(resp, rs);
