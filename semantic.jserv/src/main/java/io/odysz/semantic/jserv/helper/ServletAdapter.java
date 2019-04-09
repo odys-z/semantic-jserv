@@ -1,6 +1,7 @@
 package io.odysz.semantic.jserv.helper;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -84,5 +85,9 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 
 		while ( (numRead = ins.read(buf)) >= 0 )
 			outs.write(buf, 0, numRead);
+	}
+
+	public static void copy(FileOutputStream outs, String line) throws IOException {
+		outs.write(line.getBytes());
 	}
 }
