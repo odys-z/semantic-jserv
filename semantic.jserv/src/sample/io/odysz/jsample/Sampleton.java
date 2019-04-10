@@ -22,7 +22,6 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 		super.onInitialized(sce);
 		
 		try {
-			// CheapEngin.initCheap(FilenameUtils.concat(rootINF(), CheapServ.confpath), null);
 			CheapEngin.initCheap(FilenameUtils.concat(rootINF(), Configs.getCfg("cheap", "config-path")), null);
 		} catch (TransException | IOException | SAXException e) {
 			e.printStackTrace();

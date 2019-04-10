@@ -85,7 +85,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
 		//scheduler = Executors.newSingleThreadScheduledExecutor();
-		scheduler = Executors.newScheduledThreadPool(0);
+		scheduler = Executors.newScheduledThreadPool(1);
 
 		int m = 20;
 		try { m = Integer.valueOf(Configs.getCfg("ss-timeout-min"));} catch (Exception e) {}

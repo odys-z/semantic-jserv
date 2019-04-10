@@ -25,6 +25,8 @@ public class JSingleton {
 	private static String rootINF;
 
 	public void onDestroyed(ServletContextEvent arg0) {
+		SSession.stopScheduled(5);
+		Connects.close();
 	}
 
 	public void onInitialized(ServletContextEvent evt) {
