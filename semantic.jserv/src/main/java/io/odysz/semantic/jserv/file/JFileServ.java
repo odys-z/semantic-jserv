@@ -188,8 +188,6 @@ https://wisdmlabs.com/blog/access-file-before-upload-using-jquery-ajax/
 			String clientFileName = g.get(0);
 			String ext = FilenameUtils.getExtension(clientFileName);
 			String name = FilenameUtils.removeExtension(clientFileName);
-//			String ext = g.size() > 1 ? g.get(2) : "upload";
-//			String name = g.get(0);
 			return String.format("%s %s-%s.%s", remote, name, System.currentTimeMillis(),
 					ext == null || ext.length() == 0 ? "upload" : ext);
 		}

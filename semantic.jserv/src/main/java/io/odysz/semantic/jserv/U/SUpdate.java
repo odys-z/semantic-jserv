@@ -27,7 +27,6 @@ import io.odysz.transact.x.TransException;
 public class SUpdate extends HttpServlet {
 	private static DATranscxt st;
 	static JHelper<UpdateReq> jreqHelper;
-//	static JHelper<UpdateResp> jrespHelper;
 	protected static ISessionVerifier verifier;
 
 	static {
