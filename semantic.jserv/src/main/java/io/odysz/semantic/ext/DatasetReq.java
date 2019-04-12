@@ -7,6 +7,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.Utils;
+import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
@@ -68,12 +69,15 @@ public class DatasetReq extends QueryReq {
 		writer.name("page").value(page);
 		writer.name("pgSize").value(pgsize);
 
-		writer.name("smtcss");
-		writer.beginArray();
-		// writer.value(stcs == null ? smtcss : LangExt.toString(stcs.treeSmtcs()));
-		if (stcs != null)
-			JHelper.writeStrss(writer, stcs.treeSmtcs());
-		writer.endArray();
+		// sk's semantics overriding smtcss?
+		if (sk != null) {
+			writer.name("smtcss");
+			writer.beginArray();
+			// writer.value(stcs == null ? smtcss : LangExt.toString(stcs.treeSmtcs()));
+			if (stcs != null)
+				JHelper.writeStrss(writer, stcs.treeSmtcs());
+			writer.endArray();
+		}
 
 		try {
 			if (sqlArgs != null) {
@@ -102,17 +106,22 @@ public class DatasetReq extends QueryReq {
 					page = reader.nextInt();
 				else if ("pgSize".equals(name))
 					pgsize = reader.nextInt();
-				else if ("sk".equals(name))
-					sk = JHelper.nextString(reader);
 				else if ("rootId".equals(name))
 					rootId = JHelper.nextString(reader);
+				else if ("sk".equals(name)) {
+					// only one of sk and smtcss should appear
+					sk = JHelper.nextString(reader);
+					if (stcs == null) // stcs can be load according to smtcss
+						stcs = DatasetCfg.getTreeSemtcs(sk);
+				}
 				else if ("smtcss".equals(name)) {
+					// only one of sk and smtcss should appear
 					JsonToken peek = reader.peek();
 					if (peek == JsonToken.BEGIN_ARRAY) {
 //						reader.beginArray();
 						String[][] ss = JHelper.readStrss(reader);
 //						reader.endArray();
-						if (ss != null)
+						if (ss != null && stcs == null) // stcs can be load according to sk
 							stcs = new TreeSemantics(ss);
 					}
 					else if (peek == JsonToken.NULL)
