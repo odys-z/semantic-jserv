@@ -11,6 +11,7 @@ import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantic.jsession.SSession;
 
@@ -21,7 +22,7 @@ import io.odysz.semantic.jsession.SSession;
 public class JSingleton {
 
 	public static DATranscxt defltScxt;
-	private static ISessionVerifier session;
+	private static ISessionVerifier ssVerier;
 	private static String rootINF;
 
 	public void onDestroyed(ServletContextEvent arg0) {
@@ -38,18 +39,19 @@ public class JSingleton {
 		Configs.init(rootINF);
 		
 		try {
+			DatasetCfg.init(rootINF());
 			// HashMap<String, DASemantics> cfgs =  DATranscxt.initConfigs(Connects.defltConn(), rootINF + "/semantics.xml");
 			// ISemantext s = new DASemantext(Connects.defltConn(), cfgs, new JRobot());
 			defltScxt = new DATranscxt(Connects.defltConn());
 			SSession.init(defltScxt);
-			session = new SSession();
+			ssVerier = new SSession();
 		} catch (SAXException | IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static ISessionVerifier getSessionVerifier() {
-		return session;
+		return ssVerier;
 	}
 
 	/**Get server root/WEB-INF path (filesystem local)
