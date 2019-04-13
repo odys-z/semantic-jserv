@@ -6,7 +6,6 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
-import org.apache.commons.io.FilenameUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
@@ -14,6 +13,7 @@ import io.odysz.jsample.protocol.Samport;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.sworkflow.CheapEngin;
+import io.odysz.sworkflow.ICustomChecker;
 import io.odysz.transact.x.TransException;
 
 @WebListener
@@ -29,7 +29,8 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 			// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 			JMessage.understandPorts(Samport.menu);
 
-			CheapEngin.initCheap(FilenameUtils.concat(rootINF(), Configs.getCfg("cheap", "config-path")), null);
+			ICustomChecker checker = null; // TODO
+			CheapEngin.initCheap(getFileInfPath(Configs.getCfg("cheap", "config-path")), checker);
 		} catch (TransException | IOException | SAXException e) {
 			e.printStackTrace();
 		}
