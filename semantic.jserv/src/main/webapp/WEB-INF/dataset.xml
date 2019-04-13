@@ -38,5 +38,13 @@
   		</mysql>
   		<s-tree>,a_functions,funcId id,parentId,funcName title,,,false</s-tree>
 	</c>
+
+	<c>
+	  	<sk>sys.menu.ez-test</sk>
+  		<mysql>SELECT funcId, parentId, funcName, funcUrl href, isUsed sort, fullpath
+  			FROM a_functions f order by f.fullpath
+  		</mysql>
+  		<s-tree>,a_functions,funcId id,parentId,funcName text,,,false</s-tree>
+  	</c>
 </t>
 </dataset>
