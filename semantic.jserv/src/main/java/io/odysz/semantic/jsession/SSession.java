@@ -147,7 +147,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	}
 
 	
-	/**FIXME: This is a security breach. Client request can be duplicated with plain ssid and uid.<br>
+	/**FIXME: This is a security breach. Client request can duplicated request with plain ssid and uid.<br>
 	 * Should we use a session key?
 	 * @param jHeader
 	 * @return {@link SUser} if succeed, which can be used for db logging
@@ -193,8 +193,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			String t = request.getParameter("t");
 			if (t != null) t = t.toLowerCase().trim();
 			if ("ping".equals(t) || "touch".equals(t)) {
-				// already touched by check()
-				// IUser usr = verify(msg.header());
+				// already touched by verify()
 				IUser usr = verify(jreqHelper.readHeader(headstr));
 				SemanticObject ok = new SemanticObject();
 				ok.put(usr.uid(), (SemanticObject)usr);
