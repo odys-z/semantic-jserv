@@ -243,12 +243,4 @@ public class QueryReq extends JBody {
 			groups = JHelper.readLstStrs(reader);
 		// TODO ...
 	}
-
-//	public static String nextString(JsonReader reader) throws IOException {
-//		if (reader.peek() == JsonToken.NULL) {
-//			reader.nextNull();
-//			return null;
-//		}
-//		else return reader.nextString(); 
-//	}
 }
