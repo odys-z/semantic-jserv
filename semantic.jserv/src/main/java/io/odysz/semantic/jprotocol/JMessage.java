@@ -16,20 +16,30 @@ import io.odysz.semantics.x.SemanticException;
  * <p>Relationship with {@link SemanticObject}:</p>
  * 1. A incoming json message is parsed by *.serv into JMessage, which should used to directly build statement;<br>
  * 2. A outgoing data ojbect is presented as SemanticObject, which should been directly write int output stream.
- * @author ody
+ * @author odys-z@github.com
  *
  */
 public class JMessage <T extends JBody> {
 
 	/**Port is the conceptual equivalent to the SOAP port, the service methods' group.<br>
+	 * NOTE: java code shouldn't use switch-case block on enum. That cause problem with generated class.
 	 * TODO shall we use dynamic registered ports?
-	 * @author ody
+	 * @author odys-z@github.com
 	 */
 	public enum Port implements IPort {  heartbeat("ping.serv"), session("login.serv"),
 						insert("c.serv"), query("r.serv"), update("u.serv"), delete("d.serv"),
-						echo("echo.serv"), file("file.serv"), user("user.serv"),
-						// data structure extensions
-						stree("s-tree.jserv"), dataset("ds.jserv");
+						echo("echo.serv"),
+						/** serv port for downloading json/xml file or uploading a file.<br>
+						 * @see {@link io.odysz.semantic.jserv.file.JFileServ}. */
+						file("file.serv"),
+						/**Any user defined request using message body of subclass of JBody must use this port */ 
+						user("user.serv"),
+						/** semantic tree of dataset extensions<br>
+						 * @see {@link io.odysz.semantic.ext.SemanticTree}. */
+						stree("s-tree.jserv"),
+						/** dataset extensions<br>
+						 * @see {@link io.odysz.semantic.ext.Dataset}. */
+						dataset("ds.jserv");
 		private String url;
 		@Override public String url() { return url; }
 		Port(String url) { this.url = url; }

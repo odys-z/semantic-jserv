@@ -15,7 +15,7 @@
 			The client name can not ignored if the client using a different name other than db field name.
 
 		NOTE: Because semantic-jserv and jclient are case sensitive,
-			  it's strongly recommended all oracle selected columns being quoted.
+			  it's strongly recommended that all oracle selected columns should being double quoted.
 	 -->
 	<c>
   		<sk>test.tree</sk>
@@ -34,17 +34,17 @@
 	<c>
 	  	<sk>sys.menu.vue-sample</sk>
   		<mysql>SELECT funcId, parentId, funcName, funcUrl href, isUsed sort, fullpath
-  			FROM a_functions f order by f.fullpath
+  			FROM a_sys_functions f order by f.fullpath
   		</mysql>
-  		<s-tree>,a_functions,funcId id,parentId,funcName title,,,false</s-tree>
+  		<s-tree>,a_sys_functions,funcId id,parentId,funcName title,,,false</s-tree>
 	</c>
 
 	<c>
 	  	<sk>sys.menu.ez-test</sk>
-  		<mysql>SELECT funcId, parentId, funcName, funcUrl href, isUsed sort, fullpath
-  			FROM a_functions f order by f.fullpath
+  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, isUsed sort, fullpath
+  			FROM a_sys_functions f order by f.fullpath
   		</mysql>
-  		<s-tree>,a_functions,funcId id,parentId,funcName text,,,false</s-tree>
+  		<s-tree>,a_sys_functions,funcId id,parentId,funcName text,,,false</s-tree>
   	</c>
 </t>
 </dataset>
