@@ -121,7 +121,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		static String unameField = "userName";
 		static String pswdField = "pwd";
 		static String ivField = "encAuxiliary";
-		static String urlField = "dept";
+		// static String urlField = "departId";
 
 		public static UserMeta config() { return new UserMeta(); }
 
@@ -140,10 +140,10 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			return this;
 		}
 
-		public UserMeta url(String urlfield) {
-			urlField = urlfield;
-			return this;
-		}
+//		public UserMeta url(String urlfield) {
+//			urlField = urlfield;
+//			return this;
+//		}
 	}
 
 	
@@ -308,7 +308,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			.col(UserMeta.unameField, "uname")
 			.col(UserMeta.pswdField, "pswd")
 			.col(UserMeta.ivField, "iv")
-			.col(UserMeta.urlField, "url")
+			// .col(UserMeta.urlField, "url")
 			.where("=", "u." + UserMeta.uidField, "'" + jreq.uid() + "'")
 			.rs(sctx.instancontxt(jrobot));
 		

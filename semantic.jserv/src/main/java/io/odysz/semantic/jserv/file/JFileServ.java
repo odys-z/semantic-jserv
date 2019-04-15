@@ -29,6 +29,10 @@ import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
+/**File download / upload serv.<br>
+ * 
+ * @author odys-z@github.com
+ */
 @MultipartConfig
 @WebServlet(description = "Serving text files", urlPatterns = { "/file.serv" })
 public class JFileServ extends HttpServlet {
