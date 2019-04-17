@@ -141,7 +141,13 @@ public class SQuery extends HttpServlet {
 		SemanticObject respMsg = new SemanticObject();
 		for (String sql : sqls) {
 			SResultset rs = Connects.select(sql);
-			respMsg.add("rs", rs);
+			respMsg.rs(rs, 100);
+			// FIXME bug here, not 100!
+			// FIXME bug here, not 100!
+			// FIXME bug here, not 100!
+			// FIXME bug here, not 100!
+			// FIXME bug here, not 100!
+			// FIXME bug here, not 100!
 
 			if (ServFlags.query)
 				try {rs.printSomeData(false, 1, rs.getColumnName(1), rs.getColumnName(2)); }

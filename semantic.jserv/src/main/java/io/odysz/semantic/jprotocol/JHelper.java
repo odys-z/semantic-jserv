@@ -349,8 +349,9 @@ public class JHelper<T extends JBody> {
 	 * @param reader
 	 * @return String[]
 	 * @throws IOException
+	 * @throws SemanticException 
 	 */
-	public static String[] readStrs(JsonReader reader) throws IOException {
+	public static String[] readStrs(JsonReader reader) throws IOException, SemanticException {
 		ArrayList<String> strs = new ArrayList<String>();
 		
 		JsonToken tk = reader.peek();
@@ -553,7 +554,7 @@ public class JHelper<T extends JBody> {
 		return msg;
 	}
 
-	public static String nextString(JsonReader reader) throws IOException {
+	public static String nextString(JsonReader reader) throws IOException, SemanticException {
 		JsonToken tk = reader.peek();
 		if (tk == JsonToken.STRING)
 			return reader.nextString();
@@ -572,7 +573,10 @@ public class JHelper<T extends JBody> {
 			reader.nextNull();
 			return null;
 		}
-		return null;
+		else 
+			throw new SemanticException("Parsing Json failed. Trying reading string, but can't understand token here: %s : %s",
+					reader.getPath(),
+					tk.name());
 	}
 
 	/**<p>Read message body into parent's body. (deserialization).</p>

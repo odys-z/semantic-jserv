@@ -46,10 +46,11 @@ import io.odysz.transact.x.TransException;
  * 
  * @author odys-z@github.com
  */
-@WebServlet(description = "Abstract Tree Data Service", urlPatterns = { "/s-tree.jserv" })
+@WebServlet(description = "Abstract Tree Data Service", urlPatterns = { "/s-tree.serv" })
 public class SemanticTree extends SQuery {
 	private static final long serialVersionUID = 1L;
 
+	private static Port p = Port.stree;
 	
 	protected static JHelper<DatasetReq> jtreeReq;
 
@@ -81,13 +82,13 @@ public class SemanticTree extends SQuery {
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			String t = req.getParameter("t");
-			if (t == null)
-				throw new SemanticException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
+//			if (t == null)
+//				throw new SemanticException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
 			String connId = req.getParameter("conn");
 
 
 			// check session
-			JMessage<DatasetReq> jmsg = ServletAdapter.<DatasetReq>read(req, jtreeReq, QueryReq.class);
+			JMessage<DatasetReq> jmsg = ServletAdapter.<DatasetReq>read(req, jtreeReq, DatasetReq.class);
 			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
 
 			DatasetReq jreq = jmsg.body(0);
@@ -113,7 +114,7 @@ public class SemanticTree extends SQuery {
 					// ds (tree configured in dataset.xml)
 					List<SemanticObject> lst = DatasetCfg.loadStree(connId,
 							jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-					r = JProtocol.ok(Port.stree, lst);
+					r = JProtocol.ok(p, lst);
 				}
 				else {
 					// empty (build tree from general query results with semantic of 'sk')
@@ -124,13 +125,13 @@ public class SemanticTree extends SQuery {
 
 			ServletAdapter.write(resp, r);
 		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
 			e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exGeneral, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exGeneral, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
@@ -180,7 +181,7 @@ public class SemanticTree extends SQuery {
 		List<SemanticObject> resp = null;
 		if (rs != null)
 			resp = DatasetCfg.buildForest((SResultset) rs.get("rs"), treeSmtcs);
-		return JProtocol.ok(Port.stree, resp);
+		return JProtocol.ok(p, resp);
 	}
 
 	
@@ -438,7 +439,7 @@ end </pre>
 //			respMsg.put("port", Port.stree);
 //			respMsg.put("msg", String.format("Updated %d records from root %s", total, rootId));
 //			return respMsg;
-			return JProtocol.ok(Port.stree, "Updated %s records from root %s", total, rootId);
+			return JProtocol.ok(p, "Updated %s records from root %s", total, rootId);
 		}
 	
 		/**update e_areas
@@ -487,7 +488,7 @@ end </pre>
 				i = Connects.commit(dblog, updatei);
 			}
 			// return JsonHelper.OK("Updated records: " + total);
-			return JProtocol.ok(Port.stree, "Updated records: %s", total);
+			return JProtocol.ok(p, "Updated records: %s", total);
 		}
 		
 		private static String updateForestRoot(TreeSemantics sm) {
