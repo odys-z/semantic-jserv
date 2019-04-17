@@ -34,7 +34,7 @@ import io.odysz.transact.x.TransException;
 /**CRUD read service extension: dataset.
  * @author odys-z@github.com
  */
-@WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.jserv" })
+@WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv" })
 public class Dataset extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
