@@ -2,7 +2,6 @@ package io.odysz.semantic.ext;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -21,7 +20,6 @@ import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
-import io.odysz.semantic.jserv.R.QueryReq;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
@@ -60,7 +58,7 @@ public class Dataset extends HttpServlet {
 			if (conn == null || conn.trim().length() == 0)
 				conn = Connects.defltConn();
 
-			JMessage<DatasetReq> msg = ServletAdapter.<DatasetReq>read(req, jhelperReq, QueryReq.class);
+			JMessage<DatasetReq> msg = ServletAdapter.<DatasetReq>read(req, jhelperReq, DatasetReq.class);
 			verifier.verify(msg.header());
 
 			SemanticObject rs = dataset(conn, msg);
@@ -88,7 +86,7 @@ public class Dataset extends HttpServlet {
 			if (conn == null || conn.trim().length() == 0)
 				conn = Connects.defltConn();
 
-			JMessage<DatasetReq> msg = ServletAdapter.<DatasetReq>read(req, jhelperReq, QueryReq.class);
+			JMessage<DatasetReq> msg = ServletAdapter.<DatasetReq>read(req, jhelperReq, DatasetReq.class);
 			
 			SemanticObject rs = dataset(conn, msg);
 			
@@ -118,8 +116,18 @@ public class Dataset extends HttpServlet {
 	protected SemanticObject dataset(String conn, JMessage<DatasetReq> msgBody)
 			throws SQLException, TransException {
 		DatasetReq msg = msgBody.body().get(0);
-		List<SemanticObject> ds = DatasetCfg.loadStree(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
-		return JProtocol.ok(Port.dataset, ds);
+		// List<SemanticObject> ds = DatasetCfg.loadStree(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
+		SResultset ds = DatasetCfg.select(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
+
+		// Shall be moved to Protocol?
+		SemanticObject respMsg = new SemanticObject();
+		respMsg.rs(ds, 100);
+		// FIXME bug here, not 100!
+		// FIXME bug here, not 100!
+		// FIXME bug here, not 100!
+		// FIXME bug here, not 100!
+		// FIXME bug here, not 100!
+		return JProtocol.ok(Port.dataset, respMsg);
 	}
 
 }

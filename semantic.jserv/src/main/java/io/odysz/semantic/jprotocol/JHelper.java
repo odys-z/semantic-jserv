@@ -358,8 +358,10 @@ public class JHelper<T extends JBody> {
 		// error tolerating is necessary?
 		if (tk == JsonToken.END_DOCUMENT)
 			return strs.toArray(new String[] {});
-		else if (tk == JsonToken.BEGIN_ARRAY)
+		else if (tk == JsonToken.BEGIN_ARRAY) {
 			reader.beginArray();
+			tk = reader.peek();
+		}
 
 		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
 //			String v = null;

@@ -212,6 +212,7 @@ public class QueryReq extends JBody {
 			}
 			reader.endObject();
 		}
+		else throw new SemanticException("Parse QueryReq failed. %s : %s", reader.getPath(), token.name());
 	}
 
 	protected void fromJsonName(String name, JsonReader reader)

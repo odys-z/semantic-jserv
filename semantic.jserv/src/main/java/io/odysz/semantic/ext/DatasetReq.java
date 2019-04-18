@@ -139,5 +139,6 @@ public class DatasetReq extends QueryReq {
 			}
 			reader.endObject();
 		}
+		else throw new SemanticException("Parse DatasetReq failed. %s : %s", reader.getPath(), token.name());
 	}
 }

@@ -7,10 +7,15 @@
 		Different version of sql, mysql, oracle, etc. is used according to connId and driver type,
 		see connects.xml. 
 		s-tree: if this field is defined, the retrieved records is translated in to an STree, with names specified as:
-			0: is checking needed, 1: tabl name (ignored, used in other case), 2: record id,
-			3: parent id, 4: fullpath (optinal), 5: sibling sort (optional), 6: item text,
+			0: is checking needed,
+			1: tabl name (ignored, used in other case),
+			2: record id,
+			3: parent id,
+			4: fullpath (optinal),
+			5: sibling sort (optional),
+			6: item text,
 			7: children name (default 'children', js can use this to find children, auto generated while building tree),
-			8: should paged by server (ignored because sql is used directly. For paging by server, see SQuery).
+			8: not used flag. like: should paged by server (ignored because sql is used directly. For paging by server, see SQuery).
 			Note all element can be defined as "db field, client name", while client name is optional.
 			The client name can not ignored if the client using a different name other than db field name.
 
@@ -45,6 +50,16 @@
   			FROM a_sys_functions f order by f.fullpath
   		</mysql>
   		<s-tree>,a_sys_functions,funcId id,parentId,funcName text,,,false</s-tree>
+  	</c>
+  	
+  	<!-- jsample/easyui/users.html -->
+	<c> <sk>projects.ez</sk>
+		<mysql>select projectId, projectName, parentId, fullpath, sort
+		from p_projects p where p.orgId = '%s'</mysql>
+  		<s-tree>,p_projects,projectId id,parentId,fullpath,sort,projectName text,,false</s-tree>
+	</c>
+	<c> <sk>roles</sk>
+		<mysql>select roleId as value,roleName as text from a_roles</mysql>
   	</c>
 </t>
 </dataset>
