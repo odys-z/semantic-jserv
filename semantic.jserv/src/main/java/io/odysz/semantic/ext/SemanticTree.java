@@ -81,7 +81,7 @@ public class SemanticTree extends SQuery {
 	protected void jsonResp(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			String t = req.getParameter("t");
+//			String t = req.getParameter("t");
 //			if (t == null)
 //				throw new SemanticException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
 			String connId = req.getParameter("conn");
@@ -92,10 +92,11 @@ public class SemanticTree extends SQuery {
 			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
 
 			DatasetReq jreq = jmsg.body(0);
+			String t = jreq.a();
 
 			// find tree semantics
-			String semanticKey = req.getParameter("sk");
-			if (semanticKey == null || semanticKey.trim().length() == 0)
+//			String semanticKey = jreq.sk;
+			if (jreq.sk == null || jreq.sk.trim().length() == 0)
 				throw new SQLException("Sementic key must present for s-tree.serv.");
 
 			// String semantic = Configs.getCfg("tree-semantics", semanticKey);
@@ -116,9 +117,14 @@ public class SemanticTree extends SQuery {
 							jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
 					r = JProtocol.ok(p, lst);
 				}
+//				else if ("sqltable".equals(t)) {
+//					SResultset lst = DatasetCfg.loadDataset(connId,
+//							jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
+//					r = JProtocol.ok(p, lst);
+//				}
 				else {
 					// empty (build tree from general query results with semantic of 'sk')
-					// String rootId = req.getParameter("root");
+
 					r = loadSemantics(connId, jreq, getTreeSemtcs(req, jreq));
 				}
 			}
@@ -185,85 +191,6 @@ public class SemanticTree extends SQuery {
 	}
 
 	
-	/**If exprs is not enough, add exprs from semanticss to form up the least collection including:
-	 * recId, parentId, fullpath, text.
-	 * @param jobj
-	 * @param semanticss
-	 * @return
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static SemanticObject complementExprs(SemanticObject jreq, String[][] semanticss) {
-		JSONArray exprs = (JSONArray) jreq.get("exprs");
-		if (exprs == null) {
-			exprs = new JSONArray();
-			jreq.put("exprs", exprs);
-		}
-		HashMap<String, String> leastCols = convertLestExprs(semanticss);
-
-		Iterator i = exprs.iterator();
-		while (i.hasNext()) {
-			SemanticObject expr = (SemanticObject) i.next();
-			String colname = (String) expr.get("alais");
-			if (colname == null || "".equals(colname.trim()))
-				colname = (String) expr.get("expr");
-			if (leastCols.containsKey(colname))
-				leastCols.remove(colname);
-		}
-		
-		for (String als : leastCols.keySet()) {
-			SemanticObject expr = new SemanticObject();
-			expr.put("expr", leastCols.get(als));
-			expr.put("alais", als);
-			expr.put("tabl", semanticss[Ix.tabl][0]);
-			exprs.add(expr);
-		}
-
-		return jreq;
-	}
-
-	@SuppressWarnings("serial")
-	private static HashMap<String, String> convertLestExprs(String[][] smtc) {
-		return new HashMap<String, String>() {
-			{put(smtc[Ix.recId][1] == null ? smtc[Ix.recId][0] : smtc[Ix.recId][1], smtc[Ix.recId][0]);}
-			{put(smtc[Ix.parent][1] == null ? smtc[Ix.parent][0] : smtc[Ix.parent][1], smtc[Ix.parent][0]);}
-			{put(smtc[Ix.text][1] == null ? smtc[Ix.text][0] : smtc[Ix.text][1], smtc[Ix.text][0]);}
-			{put(smtc[Ix.fullpath][1] == null ? smtc[Ix.fullpath][0] : smtc[Ix.fullpath][1], smtc[Ix.fullpath][0]);}
-		};
-	}
-	 */
-
-	/**Set query "order by" by fullpath.
-	 * @param semanticss
-	 * @return
-	@SuppressWarnings("unchecked")
-	private static JSONArray semanticOrder(String[][] semanticss) {
-		JSONArray orders = new JSONArray();
-		SemanticObject order = new SemanticObject();
-		// semanticsss: <v>easyui,,id,parentId,text,fullpath</v>
-		order.put("tabl", semanticss[Ix.tabl][0]);
-		order.put("field", semanticss[Ix.fullpath][1] == null
-						? semanticss[Ix.fullpath][0] : semanticss[Ix.fullpath][1]);
-		order.put("asc", "asc");
-		orders.add(order);
-
-		return orders;
-	}
-
-	private static void checkSemantics(SResultset rs, String[][] sm, int ix) throws SQLException {
-		try { rs.getString(sm[ix][1] == null ? sm[ix][0] : sm[ix][1]); }
-		catch (Exception ex) {
-			String cols = "";
-			for  (String c : rs.getColnames().keySet()) {
-				cols = String.format("%s:\t%s", cols, rs.getColnames().get(c)[1]);;
-			}
-			String sem = "";
-			for (String[] s : sm)
-				sem += String.format("%s %s, ", s[0], s[1] == null ? s[0] : s[1]);
-			throw new SQLException(String.format("Checking query result against tree semantics failed - can't find %s. semantics:\n%s\ncolumns(count %s):\n%s",
-					sm[ix], sem, rs.getColCount(), cols));
-		}
-	}
-	 */
-
 	/**Rebuild subtree starting at root.<br>
 	 * Currently only mysql is supported. You may override this method to adapt to other RDBMS.
 	 * @param connId

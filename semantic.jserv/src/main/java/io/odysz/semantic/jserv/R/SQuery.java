@@ -140,8 +140,10 @@ public class SQuery extends HttpServlet {
 		// Using semantic-DA to query from default connection.
 		SemanticObject respMsg = new SemanticObject();
 		for (String sql : sqls) {
+			// Shall be moved to Protocol?
 			SResultset rs = Connects.select(sql);
 			respMsg.rs(rs, 100);
+
 			// FIXME bug here, not 100!
 			// FIXME bug here, not 100!
 			// FIXME bug here, not 100!
