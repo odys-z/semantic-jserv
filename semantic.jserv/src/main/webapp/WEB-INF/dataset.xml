@@ -61,5 +61,8 @@
 	<c> <sk>roles</sk>
 		<mysql>select roleId as value,roleName as text from a_roles</mysql>
   	</c>
+  	<c> <sk>departs.org</sk>
+  		<mysql>select departId, orgId, departName, departState from a_org_depart where orgId = '%s'</mysql>
+  	</c>
 </t>
 </dataset>
