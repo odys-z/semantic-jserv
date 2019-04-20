@@ -1,7 +1,6 @@
 package io.odysz.jsample.cheap;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import com.google.gson.stream.JsonReader;
@@ -52,7 +51,7 @@ public class CheapReq extends JBody {
 	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException {
+	public void toJson(JsonWriter writer) throws IOException, SemanticException {
 		writer.beginObject();
 		writer.name("conn").value(conn);
 		writer.name("a").value(a);
@@ -60,21 +59,17 @@ public class CheapReq extends JBody {
 		writer.name("ndescpt").value(ndescpt);
 		writer.name("childTbl").value(childTbl);
 
-		try {
-			if (taskNvs != null) {
-				writer.name("taskNvs");
-				JHelper.writeLst(writer, taskNvs);
-			}
-			if (childInserts != null) {
-				writer.name("childInserts");
-				JHelper.writeLst(writer, childInserts);
-			}
-			if (cmdArgs != null) {
-				writer.name("cmdArgs");
-				JHelper.writeStrings(writer, cmdArgs);
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();	
+		if (taskNvs != null) {
+			writer.name("taskNvs");
+			JHelper.writeLst(writer, taskNvs);
+		}
+		if (childInserts != null) {
+			writer.name("childInserts");
+			JHelper.writeLst(writer, childInserts);
+		}
+		if (cmdArgs != null) {
+			writer.name("cmdArgs");
+			JHelper.writeStrings(writer, cmdArgs);
 		}
 		writer.endObject();
 	}

@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.sql.SQLException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -65,7 +64,7 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 		
 		try {
 			JHelper.writeJsonResp(os, msg);
-		} catch (SQLException e) {
+		} catch (SemanticException e) {
 			e.printStackTrace();
 		}
 		os.flush();

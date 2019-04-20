@@ -16,7 +16,6 @@ import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.Port;
-import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;
 
@@ -35,8 +34,7 @@ public class QueryReqTest {
 		JHeader.usrAct("func-id", "query", "a_user", "R");
 		req.header(header);
 
-		SemanticObject ssinf = new SemanticObject();
-		QueryReq itm = QueryReq.formatReq("inet-sample", req, ssinf, "a_user", "u")
+		QueryReq itm = QueryReq.formatReq("inet-sample", req, "a_user", "u")
 				.expr("userId", null)
 				.j("a_roles", "r", "r.roleId = u.roleId")
 				.where("=", "r.roleId", "'amdin'")
