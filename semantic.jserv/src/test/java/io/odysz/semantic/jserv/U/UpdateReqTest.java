@@ -35,10 +35,7 @@ public class UpdateReqTest {
 
 		UpdateReq itm = new UpdateReq(msg, "inet-sample", "a_user", "I")
 				.nv("userId", "admin - 1")
-				.nv("userName", "junit")
-				// .where("=", "r.roleId", "'amdin'")
-				// .post()
-				;
+				.nv("userName", "junit");
 		msg.body(itm);
 
 		OutputStream os = new ByteArrayOutputStream();
