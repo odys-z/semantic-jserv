@@ -36,14 +36,14 @@ public class JHelper<T extends JBody> {
 
 	private static Gson gson = new Gson();
 
-	public static void writeJsonResp(OutputStream os, SemanticObject msg) throws IOException, SQLException {
+	public static void writeJsonResp(OutputStream os, SemanticObject msg) throws IOException, SemanticException {
 		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
 		writeJsonValue(writer, msg);
 		writer.close();
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v) throws IOException, SQLException {
+	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v) throws IOException, SemanticException {
 		if (IUser.class.isAssignableFrom(t)) {
 			((IUser)v).writeJsonRespValue(writer);
 		}
@@ -93,7 +93,7 @@ public class JHelper<T extends JBody> {
 		}
 	}
 
-	private static void writeRs(JsonWriter writer, SResultset rs) throws IOException, SQLException {
+	private static void writeRs(JsonWriter writer, SResultset rs) throws IOException, SemanticException {
 		// [ [col1, col2, ...],
 		//   [cel1, cel2, ...], ...
 		writer.beginArray();
@@ -105,19 +105,24 @@ public class JHelper<T extends JBody> {
 		}
 		writer.endArray();
 
-		rs.beforeFirst();
-		while (rs.next()) {
-			writer.beginArray();
-			for (int ix = 1; ix <= rs.getColCount(); ix++) {
-				writer.value(rs.getString(ix));
+		try {
+			rs.beforeFirst();
+			while (rs.next()) {
+				writer.beginArray();
+				for (int ix = 1; ix <= rs.getColCount(); ix++) {
+					writer.value(rs.getString(ix));
+				}
+				writer.endArray();
 			}
-			writer.endArray();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new SemanticException(e.getMessage());
 		}
 
 		writer.endArray();
 	}
 
-	private static void writeJsonValue(JsonWriter writer, SemanticObject v) throws IOException, SQLException {
+	private static void writeJsonValue(JsonWriter writer, SemanticObject v) throws IOException, SemanticException {
 		writer.beginObject();
 		HashMap<String, Object> ps = v.props();
 		if (ps != null)
@@ -130,7 +135,7 @@ public class JHelper<T extends JBody> {
 		writer.endObject();
 	}
 
-	public static void writeLst(JsonWriter writer, List<?> lst) throws IOException, SQLException {
+	public static void writeLst(JsonWriter writer, List<?> lst) throws IOException, SemanticException {
 		writer.beginArray();
 		for (Object v : lst) {
 			writeRespValue(writer, v.getClass(), v);
@@ -139,7 +144,7 @@ public class JHelper<T extends JBody> {
 		writer.endArray();
 	}
 
-	private static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException, SQLException {
+	private static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException, SemanticException {
 		writer.beginObject();
 		for (Object k : map.keySet()) {
 			Object v = map.get(k);

@@ -61,8 +61,11 @@
 	<c> <sk>roles</sk>
 		<mysql>select roleId as value,roleName as text from a_roles</mysql>
   	</c>
+	<c> <sk>orgs</sk>
+		<mysql>select orgId as value, orgName as text from a_reg_org</mysql>
+  	</c>
   	<c> <sk>departs.org</sk>
-  		<mysql>select departId, orgId, departName, departState from a_org_depart where orgId = '%s'</mysql>
+  		<mysql>select departId value, orgId, departName text, departState from a_org_depart where orgId = '%s'</mysql>
   	</c>
 </t>
 </dataset>

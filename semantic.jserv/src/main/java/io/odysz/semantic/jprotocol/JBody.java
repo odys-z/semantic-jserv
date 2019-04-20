@@ -13,38 +13,32 @@ public abstract class JBody {
 		return new String[] {logic, field, v, tabl};
 	}
 
-//	public static String[] expr(String alais, String expr, Object object) {
-//		return null;
-//	}
-
 	protected JMessage<? extends JBody> parent;
+
 	protected String conn;
-
-	protected JBody(JMessage<? extends JBody> parent, String conn) {
-		this.parent = parent;
-		this.conn = conn;
-	}
-
-	/** Action: login | c | r | u | d */
-	protected String a;
-
-	/**get action */
-	public String a() {
-		return a;
-	}
-	
 	public String conn() { return conn; }
+
+	/** Action: login | c | r | u | d | any serv extension */
+	protected String a;
+	/** @return Action: login | c | r | u | d | any serv extension */
+	public String a() { return a; }
 
 	public JBody a(String act) {
 		this.a = act;
 		return this;
 	}
 
+	protected JBody(JMessage<? extends JBody> parent, String conn) {
+		this.parent = parent;
+		this.conn = conn;
+	}
+
 	/** Serialize this object into json, with help of JsonWriter. { a: login, ... }
 	 * @param writer
 	 * @throws IOException
+	 * @throws SemanticException 
 	 */
-	public abstract void toJson(JsonWriter writer) throws IOException;
+	public abstract void toJson(JsonWriter writer) throws IOException, SemanticException;
 
 	/**For debug, print, etc. The string can not been used for json data.
 	 * @see java.lang.Object#toString()

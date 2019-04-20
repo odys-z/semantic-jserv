@@ -1,7 +1,6 @@
 package io.odysz.semantic.jserv.R;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import com.google.gson.stream.JsonReader;
@@ -11,7 +10,6 @@ import com.google.gson.stream.JsonWriter;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
-import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Query.Ix;
@@ -152,50 +150,47 @@ public class QueryReq extends JBody {
 	 * <p>Client side helper, don't confused with {@link Query}.</p>
 	 * @param conn
 	 * @param parent
-	 * @param ssInf
 	 * @param from 
 	 * @param as 
 	 * @return query request
 	 */
-	public static QueryReq formatReq(String conn, JMessage<QueryReq> parent, SemanticObject ssInf, String from, String as) {
+	public static QueryReq formatReq(String conn, JMessage<QueryReq> parent,
+				String from, String as) {
 		QueryReq bdItem = new QueryReq(parent, conn, from, as);
 		return bdItem;
 	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException {
+	public void toJson(JsonWriter writer) throws IOException, SemanticException {
 		writer.beginObject();
-		writer.name("conn").value(conn);
-		writer.name("a").value(a);
-		writer.name("mtabl").value(mtabl);
-		writer.name("mAlias").value(mAlias);
-		writer.name("page").value(page);
-		writer.name("pgSize").value(pgsize);
+		// design notes: keep consists with UpdateReq
+		writer.name("conn").value(conn)
+			.name("a").value(a)
+			.name("mtabl").value(mtabl)
+			.name("mAlias").value(mAlias)
+			.name("page").value(page)
+			.name("pgSize").value(pgsize);
 
-		try {
-			if (exprs != null) {
-				writer.name("exprs");
-				JHelper.writeLst(writer, exprs);
-			}
-			else 
-				writer.name("exprs").value("*");
-
-			if (joins != null) {
-				writer.name("joins");
-				JHelper.writeLst(writer, joins);
-			}
-			if (where != null) {
-				writer.name("where");
-				JHelper.writeLst(writer, where);
-			}
-			// TODO groups ...
-			if (orders != null) {
-				writer.name("orders");
-				JHelper.writeLst(writer, orders);
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();	
+		if (exprs != null) {
+			writer.name("exprs");
+			JHelper.writeLst(writer, exprs);
 		}
+		else 
+			writer.name("exprs").value("*");
+
+		if (joins != null) {
+			writer.name("joins");
+			JHelper.writeLst(writer, joins);
+		}
+		if (where != null) {
+			writer.name("where");
+			JHelper.writeLst(writer, where);
+		}
+		if (orders != null) {
+			writer.name("orders");
+			JHelper.writeLst(writer, orders);
+		}
+
 		writer.endObject();
 	}
 
