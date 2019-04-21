@@ -39,11 +39,11 @@ public class JSingleton {
 		Configs.init(rootINF);
 		
 		try {
-			DatasetCfg.init(rootINF());
+			DatasetCfg.init(rootINF);
 			// HashMap<String, DASemantics> cfgs =  DATranscxt.initConfigs(Connects.defltConn(), rootINF + "/semantics.xml");
 			// ISemantext s = new DASemantext(Connects.defltConn(), cfgs, new JRobot());
 			defltScxt = new DATranscxt(Connects.defltConn());
-			SSession.init(defltScxt);
+			SSession.init(defltScxt, evt.getServletContext());
 			ssVerier = new SSession();
 		} catch (SAXException | IOException e) {
 			e.printStackTrace();

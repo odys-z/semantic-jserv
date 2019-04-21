@@ -38,9 +38,21 @@
   			url="jdbc:mysql://...:3306/prj" connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true" />
   	 -->
    	<c>
-  		<id>inet</id>
+  		<id>io.odys-z</id>
   		<type>mysql</type>
   		<src>jdbc/inet-sample</src>
+  		<isdef></isdef>
+  		<!-- Not used -->
+  		<usr></usr>
+  		<!-- Not used (will be protected in cipher in the future -->
+  		<pswd></pswd>
+  		<dbg>true</dbg>
+  	</c>
+
+   	<c>
+  		<id>inet</id>
+  		<type>mysql</type>
+  		<src>jdbc/inforise-prjcost</src>
   		<isdef>true</isdef>
   		<!-- Not used -->
   		<usr></usr>
@@ -48,5 +60,6 @@
   		<pswd></pswd>
   		<dbg>true</dbg>
   	</c>
+
   </t>
 </conns>

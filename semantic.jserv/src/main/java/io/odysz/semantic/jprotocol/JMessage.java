@@ -20,7 +20,6 @@ import io.odysz.semantics.x.SemanticException;
  *
  */
 public class JMessage <T extends JBody> {
-
 	/**Port is the conceptual equivalent to the SOAP port, the service methods' group.<br>
 	 * NOTE: java code shouldn't use switch-case block on enum. That cause problem with generated class.
 	 * TODO shall we use dynamic registered ports?

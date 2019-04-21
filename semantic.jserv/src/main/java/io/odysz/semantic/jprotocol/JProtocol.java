@@ -11,6 +11,13 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
 public class JProtocol {
+	public static class CRUD {
+		public static final String C = "I";
+		public static final String R = "R";
+		public static final String U = "U";
+		public static final String D = "D";
+	}
+
 	/**Interface of lambd expression, using method {@link #onCallback(String, Object)}
 	 * for callback on events happened,
 	 * e.g. on success when an http post request finished. */

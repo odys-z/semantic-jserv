@@ -64,7 +64,8 @@ class SUser extends SemanticObject implements IUser {
 		this.usrName = usrName;
 		
 		if (SSession.rootK == null)
-			throw new SemanticException("Session rootKey not initialized. Use http GET /login.serv?t=init&k=[key]&header={} to set root key.");
+			// throw new SemanticException("Session rootKey not initialized. Use http GET /login.serv?t=init&k=[key]&header={} to set root key.");
+			throw new SemanticException("Session rootKey not initialized. May check context prameter like tomcat context.xml/Parameter/name='io.oz.root-key'?");
 		
 		// decrypt db-pswd-cipher with sys-key and db-iv => db-pswd
 		try {

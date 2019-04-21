@@ -11,6 +11,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -65,15 +66,26 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	/**session pool reentrant lock*/
 	public static ReentrantLock lock;
 
-//	private static Random random;
-	
 	private static ScheduledFuture<?> schedualed;
 	
 	static DATranscxt sctx;
 
 	static JHelper<SessionReq> jreqHelper;
 
-	public static void init(DATranscxt daSctx) throws SAXException, IOException {
+	/**Initialize semantext, schedule tasks,
+	 * load root key from tomcat context.xml.
+	 * To configure root key in tomcat, in context.xml, <pre>
+	&lt;Context&gt;
+		&lt;Parameter name="io.oz.root-key" value="*************" override="false"/&gt;
+	&lt;/Context&gt;&lt;/pre>
+	 * @param daSctx
+	 * @param ctx context for loading context.xml/resource
+	 * @throws SAXException
+	 * @throws IOException
+	 */
+	public static void init(DATranscxt daSctx, ServletContext ctx) throws SAXException, IOException {
+		rootK = ctx.getInitParameter("io.oz.root-key");
+
 		lock = new ReentrantLock();
 
 		sctx = daSctx;
@@ -95,7 +107,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
         schedualed = scheduler.scheduleAtFixedRate(
         		new SessionChecker(users, m),
         		0, 1, TimeUnit.MINUTES);
-        
 	}
 	
 	/**Stop all threads that were scheduled by IrSession.
@@ -114,14 +125,18 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		}
 	}
 
+	/**Hard coded string of user table information.
+	 *
+	 * @author ody
+	 */
 	public static class UserMeta {
+		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
 		static String clzz = "class-IUser";
 		static String tbl = "a_user";
 		static String uidField = "userId";
 		static String unameField = "userName";
 		static String pswdField = "pwd";
 		static String ivField = "encAuxiliary";
-		// static String urlField = "departId";
 
 		public static UserMeta config() { return new UserMeta(); }
 
@@ -139,11 +154,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			pswdField = pswdfield;
 			return this;
 		}
-
-//		public UserMeta url(String urlfield) {
-//			urlField = urlfield;
-//			return this;
-//		}
 	}
 
 	
@@ -199,16 +209,14 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 				ok.put(usr.uid(), (SemanticObject)usr);
 				resp.getWriter().write(Html.map(ok));
 			}
-			// FIXME IMPORTANT password here 
-			// FIXME IMPORTANT password here 
-			else if ("init".equals(t)) {
-				String k = request.getParameter("k");
-				rootK = k;
-				String r = String.format("Root key re-initialized: %s%s",
-						k.substring(0, 1), k.replaceAll(".", "*"));
-				Utils.warn(r);
-				resp.getWriter().write(Html.ok(r));
-			}
+//			else if ("init".equals(t)) {
+//				String k = request.getParameter("k");
+//				rootK = k;
+//				String r = String.format("Root key re-initialized: %s%s",
+//						k.substring(0, 1), k.replaceAll(".", "*"));
+//				Utils.warn(r);
+//				resp.getWriter().write(Html.ok(r));
+//			}
 			else {
 				//msg.err("Login.serv using GET to touch session info - use POST to login, logout, check session.");
 				ServletAdapter.write(resp, JProtocol.err(Port.session, MsgCode.exGeneral,
