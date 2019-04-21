@@ -1,5 +1,7 @@
 package io.odysz.semantic.jserv.U;
 
+import static io.odysz.semantic.jprotocol.JProtocol.CRUD.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -128,8 +130,6 @@ public class UpdateReq extends JBody {
 			conn = JHelper.nextString(reader);
 		else if ("mtabl".equals(name))
 			mtabl = JHelper.nextString(reader);
-//		else if ("mAlias".equals(name))
-//			mAlias = JHelper.nextString(reader);
 		else if ("nvs".equals(name)) 
 			nvs = JHelper.readLstStrs(reader);
 		
@@ -145,5 +145,20 @@ public class UpdateReq extends JBody {
 			}
 			reader.endArray();
 		}
+	}
+
+	/**Update request validating.
+	 * The request must is an update with pk and setting values;
+	 * or is an insert with some inserting value.
+	 * @param flag Not used in v1.0
+	 * @throws SemanticException 
+	 */
+	public void validate(int ... flag) throws SemanticException {
+		if (nvs == null || nvs.size() <= 0)
+			throw new SemanticException("Updating denied for empty column values");
+		if (U.equals(a) && (where == null || where.isEmpty()))
+			throw new SemanticException("Updating denied for empty conditions");
+		if (C.equals(a) && (nvs == null || nvs.isEmpty()))
+			throw new SemanticException("Insertion denied for empty values");
 	}
 }

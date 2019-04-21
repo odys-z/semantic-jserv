@@ -71,7 +71,11 @@ public class SUpdate extends HttpServlet {
 			
 			IUser usr = verifier.verify(msg.header());
 
-			SemanticObject res = update(msg.body().get(0), usr);
+			// validate requires
+			UpdateReq q = msg.body(0);
+			q.validate();
+
+			SemanticObject res = update(q, usr);
 			
 			ServletAdapter.write(resp, res);
 
