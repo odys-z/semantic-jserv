@@ -13,8 +13,6 @@ import io.odysz.semantics.x.SemanticException;
 public class FileReq extends JBody {
 	String file;
 	int len;
-//	OutputStream outs;
-//	OutputStream outs;
 	String payload;
 
 	protected FileReq(JMessage<? extends JBody> parent, String filename) {
