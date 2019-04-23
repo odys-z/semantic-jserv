@@ -118,6 +118,19 @@ public class SQuery extends HttpServlet {
 			for (Object[] col : msg.exprs)
 				selct.col((String)col[Ix.exprExpr], (String)col[Ix.exprAlais]);
 		
+		// FIXME bug of join on parsing:
+//		0	l
+//		1	a_roles
+//		2	r
+//		3	u.roleId=r.roleId or u.roleId = 'admin' and u.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People')
+//
+//		select userId userId, userName userName, mobile mobile, dept.orgId orgId, o.orgName orgName, 
+//		dept.departName departName, dept.departId departId, r.roleId roleId, r.roleName roleName, notes notes 
+//		from a_user u 
+//		join a_reg_org o on u.orgId = o.orgId 
+//		left outer join a_org_depart dept on u.departId = dept.departId 
+//		left outer join a_roles r on u.roleId = r.roleId OR u.roleId = 'admin' AND u.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People') 
+//		where u.userName like '%张%'
 		if (msg.joins != null && msg.joins.size() > 0) {
 			for (Object[] j : msg.joins)
 				 selct.j(join.parse((String)j[Ix.joinType]),
