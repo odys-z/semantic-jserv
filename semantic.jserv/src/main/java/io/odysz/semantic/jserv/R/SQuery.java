@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
@@ -38,6 +39,8 @@ import io.odysz.transact.x.TransException;
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv" })
 public class SQuery extends HttpServlet {
 	private static final long serialVersionUID = 1L;
+
+	private static final IPort p = Port.query;
 
 	protected static ISessionVerifier verifier;
 	protected static Transcxt st;
@@ -87,15 +90,15 @@ public class SQuery extends HttpServlet {
 
 			ServletAdapter.write(resp, rs);
 		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exSemantic, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
 			e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exTransct, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.query, MsgCode.exGeneral, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exGeneral, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
@@ -156,6 +159,6 @@ public class SQuery extends HttpServlet {
 				catch (Exception e) {e.printStackTrace();}
 		}
 
-		return JProtocol.ok(Port.query, respMsg);
+		return JProtocol.ok(p, respMsg);
 	}
 }

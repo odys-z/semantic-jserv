@@ -1,6 +1,7 @@
 package io.odysz.semantic.jserv.U;
 
-import static io.odysz.semantic.jprotocol.JProtocol.CRUD.*;
+import static io.odysz.semantic.jprotocol.JProtocol.CRUD.C;
+import static io.odysz.semantic.jprotocol.JProtocol.CRUD.U;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -77,7 +78,8 @@ public class UpdateReq extends JBody {
 		postUpds.add(pst);
 		return this;
 	}
-
+	
+	
 	@Override
 	public void toJson(JsonWriter writer) throws IOException, SemanticException {
 		writer.beginObject();
@@ -161,4 +163,5 @@ public class UpdateReq extends JBody {
 		if (C.equals(a) && (nvs == null || nvs.isEmpty()))
 			throw new SemanticException("Insertion denied for empty values");
 	}
+
 }

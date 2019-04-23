@@ -14,7 +14,7 @@ import io.odysz.jsample.protocol.Samport;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.sworkflow.CheapEngin;
-import io.odysz.sworkflow.ICheapChecker;
+import io.odysz.sworkflow.ICustomChecker;
 import io.odysz.transact.x.TransException;
 
 @WebListener
@@ -31,7 +31,7 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 			// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 			JMessage.understandPorts(Samport.menu);
 
-			ICheapChecker checker = null; // TODO
+			ICustomChecker checker = null; // TODO
 
 			relapath = Configs.getCfg("cheap", "config-path");
 				CheapEngin.initCheap(getFileInfPath(relapath), checker);
