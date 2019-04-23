@@ -63,8 +63,11 @@ public class JHelper<T extends JBody> {
 		else if (List.class.isAssignableFrom(t)) {
 			writeLst(writer, (List<Object>) v);
 		}
-		else // writer.value(v == null ? JsonToken.NULL.toString() : v.toString());
-			writer.value(v.toString());
+		else
+			// Note 2019.4.23, these two way are alternated more than twice, what's it?
+			// case 1: switch to null included, for autoVals of update is nullable.
+			writer.value(v == null ? JsonToken.NULL.toString() : v.toString());
+			// writer.value(v.toString());
 	}
 
 	/**Write a string array, with "[" and "]".
@@ -295,7 +298,7 @@ public class JHelper<T extends JBody> {
 			}
 			else if (tk == JsonToken.BEGIN_OBJECT) {
 				// caller is trying as string array, but actually found here is an object array
-				throw new SemanticException("can't handle object array");
+				throw new SemanticException("can't handle object array %s : %s", reader.getPath(), tk);
 			}
 			else {
 				String[] rs = readStrs(reader);
@@ -659,5 +662,6 @@ public class JHelper<T extends JBody> {
 					ex.getMessage(), x[0].getClassName(), x[0].getMethodName()));
 		}
 	}
+
 }
 
