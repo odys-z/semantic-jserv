@@ -16,7 +16,7 @@
 			6: item text,
 			7: children name (default 'children', js can use this to find children, auto generated while building tree),
 			8: not used flag. like: should paged by server (ignored because sql is used directly. For paging by server, see SQuery).
-			Note all element can be defined as "db field, client name", while client name is optional.
+			Note: all element can be defined as "db field, client name", while client name is optional.
 			The client name can not ignored if the client using a different name other than db field name.
 
 		NOTE: Because semantic-jserv and jclient are case sensitive,
@@ -66,6 +66,13 @@
   	</c>
   	<c> <sk>departs.org</sk>
   		<mysql>select departId value, orgId, departName text, departState from a_org_depart where orgId = '%s'</mysql>
+  	</c>
+
+	<!-- role-func tree -->
+  	<c> <sk>trees.role_funcs</sk>
+  		<mysql>select isnull(r.roleId) chk, funcName text, f.funcId, parentId, sort, fullpath
+  		from a_functions f left outer join a_role_funcs r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</mysql>
+  		<s-tree>true,a_functions,funcId value,parentId,fullpath,sort,funcName text,children,false</s-tree>
   	</c>
 </t>
 </dataset>
