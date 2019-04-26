@@ -10,6 +10,7 @@ import com.google.gson.stream.JsonWriter;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Query.Ix;
@@ -58,7 +59,7 @@ public class QueryReq extends JBody {
 
 	public QueryReq(JMessage<? extends JBody> parent, String conn, String fromTbl, String... alias) {
 		super(parent, conn);
-		a = "r";
+		a = CRUD.R;
 
 		mtabl = fromTbl;
 		mAlias = alias == null || alias.length == 0 ? null : alias[0];

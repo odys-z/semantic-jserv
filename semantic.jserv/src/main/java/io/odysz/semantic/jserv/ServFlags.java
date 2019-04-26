@@ -1,10 +1,10 @@
 package io.odysz.semantic.jserv;
 
 public class ServFlags {
-	/**{@link io.odysz.semantic.jserv.R.SQuery} */
+	/**{@link io.odysz.semantic.jserv.R.JQuery} */
 	public static final boolean query = true;
 	public static final boolean session = true;
-	/**{@link io.odysz.semantic.jserv.U.SUpdate} */
+	/**{@link io.odysz.semantic.jserv.U.JUpdate} */
 	public static final boolean update = true;
 	
 	/**{@link io.odysz.semantic.ext.SemanticTree} */

@@ -20,7 +20,7 @@ import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.semantic.jserv.U.SUpdate;
+import io.odysz.semantic.jserv.U.JUpdate;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
@@ -37,7 +37,7 @@ import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Handling work flow request", urlPatterns = { "/cheapflow.sample" })
-public class CheapServ extends SUpdate {
+public class CheapServ extends JUpdate {
 	public static class WfProtocol {
 		public static String reqBody = "wfreq";
 
