@@ -54,30 +54,4 @@ public class JProtocol {
 	public static SemanticObject ok(Port port, String msg, Object... msgArgs) {
 		return ok(port, String.format(msg, msgArgs));
 	}
-
-	/*
-	// deprecated?
-	public static SemanticObject ok(Port port, List<SemanticObject> msg) {
-		SemanticObject obj = new SemanticObject();
-		obj.put("code", MsgCode.ok.name());
-		obj.put("data", msg);
-		obj.put("port", port.name());
-		return obj;
-	}
-
-	public static SemanticObject ok(Port port, SemanticObject msg) {
-		SemanticObject obj = new SemanticObject();
-		obj.put("code", MsgCode.ok.name());
-		obj.put("data", msg);
-		obj.put("port", port.name());
-		return obj;
-	}
-
-	public static SemanticObject ok(Port port, String msg, Object... msgArgs) {
-		SemanticObject obj = new SemanticObject();
-		obj.put("code", MsgCode.ok.name());
-		obj.put("data", String.format(msg, msgArgs));
-		obj.put("port", port.name());
-		return obj;
-	}*/
 }

@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.test;
+package io.odysz.semantic.jserv.echo;
 
 import java.io.IOException;
 

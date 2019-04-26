@@ -26,7 +26,7 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.R.QueryReq;
-import io.odysz.semantic.jserv.R.SQuery;
+import io.odysz.semantic.jserv.R.JQuery;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
@@ -47,7 +47,7 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 @WebServlet(description = "Abstract Tree Data Service", urlPatterns = { "/s-tree.serv" })
-public class SemanticTree extends SQuery {
+public class SemanticTree extends JQuery {
 	private static final long serialVersionUID = 1L;
 
 	private static Port p = Port.stree;
@@ -165,7 +165,7 @@ public class SemanticTree extends SQuery {
 		return DatasetCfg.getTreeSemtcs(sk);
 	}
 
-	/**Build s-tree with general query ({@link SQuery#query(QueryReq)}).
+	/**Build s-tree with general query ({@link JQuery#query(QueryReq)}).
 	 * @param connId
 	 * @param jobj
 	 * @param treeSmtcs

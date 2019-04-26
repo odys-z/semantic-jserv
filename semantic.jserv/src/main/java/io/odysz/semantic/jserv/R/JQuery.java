@@ -37,7 +37,7 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv" })
-public class SQuery extends HttpServlet {
+public class JQuery extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	private static final IPort p = Port.query;

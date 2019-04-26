@@ -17,6 +17,7 @@ import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
@@ -26,11 +27,14 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
+import io.odysz.transact.sql.Delete;
+import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Query.Ix;
+import io.odysz.transact.sql.Statement;
 import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv" })
-public class SUpdate extends HttpServlet {
+public class JUpdate extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	private static final Port p = Port.update;
@@ -55,7 +59,7 @@ public class SUpdate extends HttpServlet {
 			
 			IUser usr = verifier.verify(msg.header());
 			
-			SemanticObject res = update(msg.body().get(0), usr);
+			SemanticObject res = updt(msg.body().get(0), usr);
 			
 			resp.setCharacterEncoding("UTF-8");
 			resp.getWriter().write(Html.map(res));
@@ -83,7 +87,13 @@ public class SUpdate extends HttpServlet {
 			UpdateReq q = msg.body(0);
 			q.validate();
 
-			SemanticObject res = update(q, usr);
+			SemanticObject res = updt(q, usr);
+			if (CRUD.U.equals(q.a()))
+				res = updt(q, usr);
+			else if (CRUD.C.equals(q.a()))
+				res = inst(q, usr);
+			else if (CRUD.D.equals(q.a()))
+				res = delt(q, usr);
 			
 			ServletAdapter.write(resp, res);
 
@@ -102,26 +112,34 @@ public class SUpdate extends HttpServlet {
 		}
 	}
 
-	private SemanticObject update(UpdateReq msg, IUser usr) throws SQLException, TransException {
+	/**Handle update request, generate {@link Update}, commit, return results.
+	 * @param msg
+	 * @param usr
+	 * @return results
+	 * @throws SQLException
+	 * @throws TransException
+	 */
+	private SemanticObject updt(UpdateReq msg, IUser usr) throws SQLException, TransException {
 		Update upd = st.update(msg.mtabl, usr);
 
 		SemanticObject res = (SemanticObject) upd
 				.nvs(msg.nvs)
 				.where(tolerateNv(msg.where))
-				// .post(toStatmts(msg.postUpds))
 				.post(postUpds(msg, st, usr))
 				.u(st.instancontxt(usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error
 			return new SemanticObject()
+					.port(p.name())
 					.code(MsgCode.ok.name())
 					.msg("");
-		return res.code(MsgCode.ok.name());
+		return res.port(p.name())
+					.code(MsgCode.ok.name());
 	}
 
-	/**Change [n-v] to ["=", n, "'v'"]
+	/**Change [n-v] to ["=", n, "'v'"], tolerate client's behavior.
 	 * @param where
-	 * @return
+	 * @return predicates[[logic, n, v], ...]
 	 */
 	private ArrayList<String[]> tolerateNv(ArrayList<String[]> where) {
 		if (where != null)
@@ -144,17 +162,71 @@ public class SUpdate extends HttpServlet {
 	 * @param msg
 	 * @param st
 	 * @param usr
-	 * @return
+	 * @return statements
 	 */
-	ArrayList<Update> postUpds(UpdateReq msg, DATranscxt st, IUser usr) {
+	static ArrayList<Statement<?>> postUpds(UpdateReq msg, DATranscxt st, IUser usr) {
 		if (msg.postUpds != null) {
-			ArrayList<Update> posts = new ArrayList<Update>(msg.postUpds.size());
+			ArrayList<Statement<?>> posts = new ArrayList<Statement<?>>(msg.postUpds.size());
 			for (UpdateReq pst : msg.postUpds) {
-				Update upd = st.update(pst.mtabl, usr);
+				Statement<?> upd = null;
+				if (CRUD.C.equals(pst.a()))
+					upd = st.insert(pst.mtabl, usr);
+				else if (CRUD.U.equals(pst.a()))
+					upd = st.update(pst.mtabl, usr);
+				else if (CRUD.D.equals(pst.a()))
+					upd = st.delete(pst.mtabl, usr);
 				posts.add(upd);
 			}
 			return posts;
 		}
 		return null;
+	}
+	
+	/**Handle insert request, generate {@link Insert}, commit, return results.
+	 * @param msg
+	 * @param usr
+	 * @return results
+	 * @throws SQLException
+	 * @throws TransException
+	 */
+	private SemanticObject inst(UpdateReq msg, IUser usr)
+			throws SemanticException, TransException, SQLException {
+		Insert upd = st.insert(msg.mtabl, usr);
+
+		SemanticObject res = (SemanticObject) upd
+				.cols(InsertReq.cols(msg))
+				.values(InsertReq.values(msg))
+				.where(tolerateNv(msg.where))
+				.post(postUpds(msg, st, usr))
+				.ins(st.instancontxt(usr));
+		if (res == null)
+			// stop SelvletAdapter.writer(null) error
+			return new SemanticObject()
+					.port(p.name())
+					.code(MsgCode.ok.name());
+		return res.port(p.name()).code(MsgCode.ok.name());
+	}
+	
+	/**Handle delete request, generate {@link Delete}, commit, return results.
+	 * @param msg
+	 * @param usr
+	 * @return results
+	 * @throws SQLException
+	 * @throws TransException
+	 */
+	private SemanticObject delt(UpdateReq msg, IUser usr)
+			throws SemanticException, TransException, SQLException {
+		Delete del = st.delete(msg.mtabl, usr);
+
+		SemanticObject res = (SemanticObject) del
+				.where(tolerateNv(msg.where))
+				.post(postUpds(msg, st, usr))
+				.del(st.instancontxt(usr));
+		if (res == null)
+			// stop SelvletAdapter.writer(null) error
+			return new SemanticObject()
+					.port(p.name())
+					.code(MsgCode.ok.name());
+		return res.port(p.name()).code(MsgCode.ok.name());
 	}
 }
