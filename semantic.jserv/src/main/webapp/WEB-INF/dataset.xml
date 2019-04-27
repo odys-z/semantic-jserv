@@ -7,7 +7,9 @@
 		Different version of sql, mysql, oracle, etc. is used according to connId and driver type,
 		see connects.xml. 
 		s-tree: if this field is defined, the retrieved records is translated in to an STree, with names specified as:
-			0: is checking needed,
+			0: the checked value for check box, etc, the column's value should changed to boolean.
+				It's always configured as 'checked' for easyUI.
+				see DatasetCfg#isColChecked(String),
 			1: tabl name (ignored, used in other case),
 			2: record id,
 			3: parent id,
@@ -72,7 +74,7 @@
   	<c> <sk>trees.role_funcs</sk>
   		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.funcId sort, fullpath
   		from a_sys_functions f left outer join a_role_funcs r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</mysql>
-  		<s-tree>true,a_functions,funcId value,parentId,fullpath,sort,funcName text,children,false</s-tree>
+  		<s-tree>checked,a_functions,funcId value,parentId,fullpath,sort,funcName text,children,false</s-tree>
   	</c>
 </t>
 </dataset>
