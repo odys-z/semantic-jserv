@@ -95,7 +95,6 @@ public class SemanticTree extends JQuery {
 			String t = jreq.a();
 
 			// find tree semantics
-//			String semanticKey = jreq.sk;
 			if (jreq.sk == null || jreq.sk.trim().length() == 0)
 				throw new SQLException("Sementic key must present for s-tree.serv.");
 
@@ -124,7 +123,6 @@ public class SemanticTree extends JQuery {
 //				}
 				else {
 					// empty (build tree from general query results with semantic of 'sk')
-
 					r = loadSemantics(connId, jreq, getTreeSemtcs(req, jreq));
 				}
 			}
@@ -149,7 +147,7 @@ public class SemanticTree extends JQuery {
 	 * 3. if jreq has and 'sk' parameter, load in confix.xml, if failed, try dataset.xml.<br>
 	 * @param req
 	 * @param jreq
-	 * @return
+	 * @return tree's semantics, {@link TreeSemantics}
 	 */
 	private TreeSemantics getTreeSemtcs(HttpServletRequest req, DatasetReq jreq) {
 		TreeSemantics ts = jreq.getTreeSemantics();
@@ -169,7 +167,7 @@ public class SemanticTree extends JQuery {
 	 * @param connId
 	 * @param jobj
 	 * @param treeSmtcs
-	 * @return
+	 * @return {@link SemanticObject} response
 	 * @throws IOException
 	 * @throws SQLException
 	 * @throws SAXException
