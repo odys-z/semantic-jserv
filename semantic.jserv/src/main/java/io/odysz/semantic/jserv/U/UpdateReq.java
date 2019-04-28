@@ -30,8 +30,13 @@ public class UpdateReq extends JBody {
 	/**nvs: [nv-obj],
 	 * nv-obj: {n: "roleName", v: "admin"}
 	 *  */
-	ArrayList<String[]> nvs;
+	ArrayList<Object[]> nvs;
 	
+	/**inserting values, used for "I". 3d array [[[n, v], ...]] */
+	private ArrayList<ArrayList<?>> nvss;
+	/**inserting columns, used for "I".*/
+	private String[] cols;
+
 	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
 	ArrayList<String[]> where;
 	
@@ -51,7 +56,7 @@ public class UpdateReq extends JBody {
 	
 	public UpdateReq nv(String n, String v) {
 		if (nvs == null)
-			nvs = new ArrayList<String[]>();
+			nvs = new ArrayList<Object[]>();
 		String[] nv = new String[2];
 		nv[Ix.nvn] = n;
 		nv[Ix.nvv] = v;
@@ -59,6 +64,20 @@ public class UpdateReq extends JBody {
 		return this;	
 	}
 
+	/** get columns for sql insert into (COLS) 
+	 * @return columns
+	 */
+	public String[] cols() {
+		return cols;
+	}
+
+	/** get values in VALUE-CLAUSE for sql insert into (...) values VALUE-CLAUSE 
+	 * @return [[[n, v], ...]]
+	 */
+	public ArrayList<ArrayList<?>> values() {
+		return nvss;
+	}
+	
 	public UpdateReq where(String oper, String lop, String rop) {
 		if (where == null)
 			where = new ArrayList<String[]>();
@@ -78,7 +97,6 @@ public class UpdateReq extends JBody {
 		postUpds.add(pst);
 		return this;
 	}
-	
 	
 	@Override
 	public void toJson(JsonWriter writer) throws IOException, SemanticException {
@@ -105,8 +123,21 @@ public class UpdateReq extends JBody {
 			writer.endArray();
 		}
 
+		// for insert only
+		if (nvss != null) {
+			writer.name("nvss");
+			JHelper.writeLst(writer, nvss);
+		}
+		if (cols != null) {
+			writer.name("cols");
+			JHelper.writeStrings(writer, cols);
+		}
+		
 		writer.endObject();
 	}
+
+	// FIXME Call for Anson 
+	protected void child2Json(JsonWriter writer) throws SemanticException, IOException { }
 
 	@Override
 	public void fromJson(JsonReader reader) throws IOException, SemanticException {
@@ -124,6 +155,7 @@ public class UpdateReq extends JBody {
 		else throw new SemanticException("Parse QueryReq failed. %s : %s", reader.getPath(), token.name());
 	}
 
+	@SuppressWarnings("unchecked")
 	protected void fromJsonName(String name, JsonReader reader)
 			throws SemanticException, IOException {
 		if ("a".equals(name))
@@ -132,21 +164,35 @@ public class UpdateReq extends JBody {
 			conn = JHelper.nextString(reader);
 		else if ("mtabl".equals(name))
 			mtabl = JHelper.nextString(reader);
-		else if ("nvs".equals(name)) 
-			nvs = JHelper.readLstStrs(reader);
-		
+		else if ("nvs".equals(name))
+			nvs = (ArrayList<Object[]>) JHelper.readLstStrs(reader);
 		else if ("where".equals(name))
-			where = JHelper.readLstStrs(reader);
+			where = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		else if ("postUpds".equals(name)) {
 			postUpds = new ArrayList<UpdateReq>();
 			reader.beginArray();
 			while (reader.peek() != JsonToken.END_ARRAY) {
+				// FIXME Call for Anson 
+				// FIXME Call for Anson 
+				// This is a strong prof that we need print type information into json.
+				// When we are creating the deserialized object,
+				// how do we know should it be UpdateReq or InsertReq?
+				// The distinguish flag (a) currently is not readed now.
 				UpdateReq post = new UpdateReq(null, conn, mtabl, null);
 				post.fromJson(reader);
 				postUpds.add(post);
 			}
 			reader.endArray();
 		}
+		// FIXME Calling child function? not possible with Gson.
+		// else readChild(name, reader);
+		else if ("nvss".equals(name))
+			nvss = JHelper.readLstLstStrs(reader);
+		else if ("cols".equals(name))
+			cols = JHelper.readStrs(reader);
+	}
+
+	protected void readChild(String name, JsonReader reader) throws SemanticException, IOException {
 	}
 
 	/**Update request validating.

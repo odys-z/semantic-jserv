@@ -91,7 +91,7 @@ public class JUpdate extends HttpServlet {
 			if (CRUD.U.equals(q.a()))
 				res = updt(q, usr);
 			else if (CRUD.C.equals(q.a()))
-				res = inst(q, usr);
+				res = inst((InsertReq) q, usr);
 			else if (CRUD.D.equals(q.a()))
 				res = delt(q, usr);
 			
@@ -158,24 +158,30 @@ public class JUpdate extends HttpServlet {
 		return where;
 	}
 
-	/**convert request {@link UpdateReq} to {@link io.odysz.transact.sql.Statement}
+	/**convert msg's requests ({@link UpdateReq}) to {@link io.odysz.transact.sql.Statement}
 	 * @param msg
 	 * @param st
 	 * @param usr
 	 * @return statements
+	 * @throws TransException 
 	 */
-	static ArrayList<Statement<?>> postUpds(UpdateReq msg, DATranscxt st, IUser usr) {
+	static ArrayList<Statement<?>> postUpds(UpdateReq msg, DATranscxt st, IUser usr) throws TransException {
 		if (msg.postUpds != null) {
 			ArrayList<Statement<?>> posts = new ArrayList<Statement<?>>(msg.postUpds.size());
 			for (UpdateReq pst : msg.postUpds) {
 				Statement<?> upd = null;
 				if (CRUD.C.equals(pst.a()))
-					upd = st.insert(pst.mtabl, usr);
+					upd = st.insert(pst.mtabl, usr)
+							.cols(pst.cols())
+							.values(pst.values());
 				else if (CRUD.U.equals(pst.a()))
-					upd = st.update(pst.mtabl, usr);
+					upd = st.update(pst.mtabl, usr)
+							.nvs(pst.nvs);
 				else if (CRUD.D.equals(pst.a()))
 					upd = st.delete(pst.mtabl, usr);
-				posts.add(upd);
+
+				posts.add(upd.where(pst.where)
+							.post(postUpds(pst, st, usr)));
 			}
 			return posts;
 		}
@@ -189,13 +195,13 @@ public class JUpdate extends HttpServlet {
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	private SemanticObject inst(UpdateReq msg, IUser usr)
+	private SemanticObject inst(InsertReq msg, IUser usr)
 			throws SemanticException, TransException, SQLException {
 		Insert upd = st.insert(msg.mtabl, usr);
 
 		SemanticObject res = (SemanticObject) upd
-				.cols(InsertReq.cols(msg))
-				.values(InsertReq.values(msg))
+				.cols(msg.cols())
+				.values(msg.values())
 				.where(tolerateNv(msg.where))
 				.post(postUpds(msg, st, usr))
 				.ins(st.instancontxt(usr));

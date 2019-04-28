@@ -138,6 +138,12 @@ public class JHelper<T extends JBody> {
 		writer.endObject();
 	}
 
+	/**Write list into json. This method handle multi-dimensional array.
+	 * @param writer
+	 * @param lst
+	 * @throws IOException
+	 * @throws SemanticException
+	 */
 	public static void writeLst(JsonWriter writer, List<?> lst) throws IOException, SemanticException {
 		writer.beginArray();
 		for (Object v : lst) {
@@ -283,8 +289,8 @@ public class JHelper<T extends JBody> {
 	 * @throws IOException
 	 * @throws SemanticException 
 	 */
-	public static ArrayList<String[]> readLstStrs(JsonReader reader) throws IOException, SemanticException {
-		ArrayList<String[]> lst = new ArrayList<String[]>();
+	public static ArrayList<?> readLstStrs(JsonReader reader) throws IOException, SemanticException {
+		ArrayList<Object[]> lst = new ArrayList<Object[]>();
 		reader.beginArray();
 
 		JsonToken tk = reader.peek();
@@ -300,6 +306,11 @@ public class JHelper<T extends JBody> {
 				// caller is trying as string array, but actually found here is an object array
 				throw new SemanticException("can't handle object array %s : %s", reader.getPath(), tk);
 			}
+			else if (tk == JsonToken.NULL) {
+				// list level 1 is [], but not inner list
+				reader.nextNull();
+				break;
+			}
 			else {
 				String[] rs = readStrs(reader);
 				lst.add(rs);
@@ -311,9 +322,9 @@ public class JHelper<T extends JBody> {
 		return lst;
 	}
 
-	public static ArrayList<ArrayList<String[]>> readLstLstStrs(JsonReader reader)
+	public static ArrayList<ArrayList<?>> readLstLstStrs(JsonReader reader)
 			throws IOException, SemanticException {
-		ArrayList<ArrayList<String[]>> lstlst = new ArrayList<ArrayList<String[]>>();
+		ArrayList<ArrayList<?>> lstlst = new ArrayList<ArrayList<?>>();
 		reader.beginArray();
 
 		JsonToken tk = reader.peek();
@@ -372,14 +383,6 @@ public class JHelper<T extends JBody> {
 		}
 
 		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
-//			String v = null;
-//			if (tk != JsonToken.NULL)
-//				v = reader.nextString();
-//			else {
-//				v = null;
-//				reader.nextNull();
-//			};
-//			strs.add(v);
 			strs.add(nextString(reader));
 			tk = reader.peek();
 		}
@@ -586,7 +589,7 @@ public class JHelper<T extends JBody> {
 		else 
 			throw new SemanticException("Parsing Json failed. Trying reading string, but can't understand token here: %s : %s",
 					reader.getPath(),
-					tk.name());
+					reader.peek().name());
 	}
 
 	/**<p>Read message body into parent's body. (deserialization).</p>

@@ -211,6 +211,7 @@ public class QueryReq extends JBody {
 		else throw new SemanticException("Parse QueryReq failed. %s : %s", reader.getPath(), token.name());
 	}
 
+	@SuppressWarnings("unchecked")
 	protected void fromJsonName(String name, JsonReader reader)
 			throws SemanticException, IOException {
 		if ("a".equals(name))
@@ -227,17 +228,17 @@ public class QueryReq extends JBody {
 			mAlias = JHelper.nextString(reader);
 		else if ("exprs".equals(name)) {
 			if (reader.peek() == JsonToken.BEGIN_ARRAY)
-				exprs = JHelper.readLstStrs(reader);
+				exprs = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 			else reader.nextString(); // skip "*"
 		}
 		else if ("joins".equals(name))
-			joins = JHelper.readLstStrs(reader);
+			joins = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		else if ("where".equals(name))
-			where = JHelper.readLstStrs(reader);
+			where = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		else if ("orders".equals(name))
-			orders = JHelper.readLstStrs(reader);
+			orders = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		else if ("groups".equals(name))
-			groups = JHelper.readLstStrs(reader);
+			groups = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		// TODO ...
 	}
 }

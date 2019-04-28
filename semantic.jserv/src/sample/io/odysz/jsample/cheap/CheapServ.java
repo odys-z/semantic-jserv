@@ -190,7 +190,7 @@ public class CheapServ extends JUpdate {
 	}
 	
 	private SemanticObject start(CheapReq jobj, IUser usr) throws SQLException, TransException {
-		ArrayList<ArrayList<String[]>> inserts = jobj.childInserts;
+		ArrayList<ArrayList<?>> inserts = jobj.childInserts;
 		
 		// testTrans = CheapEngin.trcs;
 		Update postups = null;
