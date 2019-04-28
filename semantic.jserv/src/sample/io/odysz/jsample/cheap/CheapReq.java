@@ -36,7 +36,8 @@ public class CheapReq extends JBody {
 	protected String childTbl;
 	protected ArrayList<String[]> taskNvs;
 	public ArrayList<String[]> taskNvs() { return taskNvs; }
-	protected ArrayList<ArrayList<String[]>> childInserts;
+	/** 3d array */
+	protected ArrayList<ArrayList<?>> childInserts;
 
 	public CheapReq(JMessage<? extends JBody> parent) {
 		super(parent, null); // client can't control engine's connection
@@ -74,6 +75,7 @@ public class CheapReq extends JBody {
 		writer.endObject();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void fromJson(JsonReader reader) throws IOException, SemanticException {
 		JsonToken token = reader.peek();
@@ -94,7 +96,7 @@ public class CheapReq extends JBody {
 				else if ("cmdArgs".equals(name)) 
 					cmdArgs = JHelper.readStrs(reader);
 				else if ("taskNvs".equals(name)) 
-					taskNvs = JHelper.readLstStrs(reader);
+					taskNvs = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 				else if ("childInserts".equals(name)) 
 					childInserts = JHelper.readLstLstStrs(reader);
 				token = reader.peek();
@@ -120,7 +122,10 @@ public class CheapReq extends JBody {
 	 * @return
 	 */
 	public CheapReq childInsert(String n, String v) {
-		childInserts.get(childInserts.size() - 1).add(new String[] {n, v});
+		// childInserts.get(childInserts.size() - 1).add(new String[] {n, v});
+		@SuppressWarnings("unchecked")
+		ArrayList<String[]> lst = (ArrayList<String[]>) childInserts.get(childInserts.size() - 1);
+		lst.add(new String[] {n, v});
 		return this;
 	}
 
@@ -129,7 +134,7 @@ public class CheapReq extends JBody {
 	 */
 	public CheapReq newChildInstRow() {
 		if (childInserts == null)
-			childInserts = new ArrayList<ArrayList<String[]>>();
+			childInserts = new ArrayList<ArrayList<?>>();
 		childInserts.add(new ArrayList<String[]>());
 		return this;
 	}

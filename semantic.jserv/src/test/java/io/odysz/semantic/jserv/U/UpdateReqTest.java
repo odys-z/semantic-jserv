@@ -15,6 +15,7 @@ import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 
@@ -71,14 +72,17 @@ public class UpdateReqTest {
 		JHeader.usrAct("func-id", "update", "a_user", "U");
 		msg.header(header);
 
-		UpdateReq pst = new UpdateReq(msg, "inet-sample", "postabl", "U")
+		UpdateReq pst = new UpdateReq(msg, "inet-sample", "postabl", CRUD.U)
 				.nv("postName", "post - 1")
 				.where("=", "postId", "'AUTO'");
+		UpdateReq pst2 = new UpdateReq(msg, "inet-sample", "postabl2", CRUD.D)
+				.where("=", "postId", "'ABC'");
 		UpdateReq itm = new UpdateReq(msg, "inet-sample", "a_user", "U")
 				.nv("userId", "admin - 1")
 				.nv("userName", "junit")
 				.where("=", "r.roleId", "'amdin'")
 				.post(pst)
+				.post(pst2)
 				;
 		msg.body(itm);
 
