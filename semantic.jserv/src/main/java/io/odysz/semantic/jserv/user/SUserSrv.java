@@ -14,8 +14,12 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 
+/**Abstract base class for user's serverlet extension.
+ * @author odys-z@github.com
+ * @param <T>
+ */
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/user.serv" })
-public class SUser <T> extends HttpServlet {
+public class SUserSrv <T extends UserReq> extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 
