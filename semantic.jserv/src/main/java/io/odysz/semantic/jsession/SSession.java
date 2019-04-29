@@ -160,7 +160,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	/**FIXME: This is a security breach. Client request can duplicated request with plain ssid and uid.<br>
 	 * Should we use a session key?
 	 * @param jHeader
-	 * @return {@link SUser} if succeed, which can be used for db logging
+	 * @return {@link JUser} if succeed, which can be used for db logging
 	 * - use this to load functions, etc.
 	 * @throws SsException Session checking failed.
 	 * @throws SQLException Reqest payload header.usrAct is null 

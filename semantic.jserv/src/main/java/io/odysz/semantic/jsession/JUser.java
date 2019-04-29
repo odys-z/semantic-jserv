@@ -26,7 +26,7 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  *
  */
-class SUser extends SemanticObject implements IUser {
+class JUser extends SemanticObject implements IUser {
 	protected String ssid;
 	protected String uid;
 	private String pswd;
@@ -58,7 +58,7 @@ class SUser extends SemanticObject implements IUser {
 	 * @param usrName
 	 * @throws TransException 
 	 */
-	public SUser(String uid, String pswd, String iv, String usrName) throws SemanticException {
+	public JUser(String uid, String pswd, String iv, String usrName) throws SemanticException {
 		this.uid = uid;
 		this.pswd = pswd;
 		this.usrName = usrName;
@@ -85,7 +85,7 @@ class SUser extends SemanticObject implements IUser {
 	/**jmsg should be what the response of {@link SSession}
 	 * @param jmsg
 	 */
-	public SUser(SemanticObject jmsg) {
+	public JUser(SemanticObject jmsg) {
 		uid = jmsg.getString("uid");
 	}
 
