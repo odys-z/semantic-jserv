@@ -8,13 +8,13 @@ import com.google.gson.stream.JsonWriter;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JMessage;
 
-/**A stub for user extension
+/**A stub for user's message body extension - subclassing {@link JBody}.
  * @author ody
  *
  */
-public class JUserBody extends JBody {
+public class UserReq extends JBody {
 
-	public JUserBody(JMessage<? extends JBody> parent, String conn) {
+	public UserReq(JMessage<? extends JBody> parent, String conn) {
 		super(parent, conn);
 	}
 

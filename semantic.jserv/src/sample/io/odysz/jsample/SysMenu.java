@@ -113,8 +113,6 @@ public class SysMenu  extends SemanticTree {
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} catch (SsException e) {
-//			if (SampleFlags.menu)
-//				e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exSession, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
