@@ -2,7 +2,6 @@ package io.odysz.semantic.jserv.R;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -12,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
-import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
@@ -25,10 +24,10 @@ import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
-import io.odysz.transact.sql.Transcxt;
 import io.odysz.transact.sql.Query.Ix;
 import io.odysz.transact.sql.parts.select.JoinTabl.join;
 import io.odysz.transact.x.TransException;
@@ -43,7 +42,7 @@ public class JQuery extends HttpServlet {
 	private static final IPort p = Port.query;
 
 	protected static ISessionVerifier verifier;
-	protected static Transcxt st;
+	protected static DATranscxt st;
 
 	protected static JHelper<QueryReq> jhelperReq;
 
@@ -61,9 +60,9 @@ public class JQuery extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
-			verifier.verify(msg.header());
+			IUser usr = verifier.verify(msg.header());
 
-			SemanticObject rs = query(msg.body(0));
+			SemanticObject rs = query(msg.body(0), usr);
 			resp.getWriter().write(Html.rs((SResultset)rs.get("rs")));
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -85,8 +84,8 @@ public class JQuery extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
-			
-			SemanticObject rs = query(msg.body(0));
+			IUser usr = verifier.verify(msg.header());
+			SemanticObject rs = query(msg.body(0), usr);
 
 			ServletAdapter.write(resp, rs);
 		} catch (SemanticException e) {
@@ -106,12 +105,13 @@ public class JQuery extends HttpServlet {
 	
 	/**
 	 * @param msg
+	 * @param usr 
 	 * @return {code: "ok", port: {@link JMessage.Port}.query, rs: [{@link SResultset}, ...]}
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	protected SemanticObject query(QueryReq msg) throws SQLException, TransException {
-		ArrayList<String> sqls = new ArrayList<String>();
+	protected SemanticObject query(QueryReq msg, IUser usr) throws SQLException, TransException {
+//		ArrayList<String> sqls = new ArrayList<String>();
 		Query selct = st.select(msg.mtabl, msg.mAlias)
 						.page(msg.page, msg.pgsize);
 		if (msg.exprs != null && msg.exprs.size() > 0)
@@ -145,9 +145,9 @@ public class JQuery extends HttpServlet {
 							(String)cond[Ix.predicateL],
 							(String)cond[Ix.predicateR]);
 		}
-		
 		// TODO: GROUP
 		// TODO: ORDER
+		/*
 		selct.commit(sqls);
 		
 		if (ServFlags.query)
@@ -159,13 +159,7 @@ public class JQuery extends HttpServlet {
 			// Shall be moved to Protocol?
 			SResultset rs = Connects.select(sql);
 			respMsg.rs(rs, 100);
-
-			// FIXME bug here, not 100!
-			// FIXME bug here, not 100!
-			// FIXME bug here, not 100!
-			// FIXME bug here, not 100!
-			// FIXME bug here, not 100!
-			// FIXME bug here, not 100!
+			// bug here, not 100!
 
 			if (ServFlags.query)
 				try {rs.printSomeData(false, 1, rs.getColumnName(1), rs.getColumnName(2)); }
@@ -173,5 +167,8 @@ public class JQuery extends HttpServlet {
 		}
 
 		return JProtocol.ok(p, respMsg);
+		*/
+		SemanticObject resp = (SemanticObject) selct.rs(st.instancontxt(usr));
+		return JProtocol.ok(p, resp);
 	}
 }
