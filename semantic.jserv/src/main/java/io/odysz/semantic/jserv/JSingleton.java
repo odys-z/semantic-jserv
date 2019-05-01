@@ -55,7 +55,7 @@ public class JSingleton {
 	}
 
 	/**Get server root/WEB-INF path (filesystem local)
-	 * @return
+	 * @return WEB-INF root path
 	 */
 	public static String rootINF() {
 		return rootINF;

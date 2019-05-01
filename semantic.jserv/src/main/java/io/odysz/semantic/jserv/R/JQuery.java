@@ -105,7 +105,7 @@ public class JQuery extends HttpServlet {
 	}
 	
 	/**
-	 * @param msgBody
+	 * @param msg
 	 * @return {code: "ok", port: {@link JMessage.Port}.query, rs: [{@link SResultset}, ...]}
 	 * @throws SQLException
 	 * @throws TransException

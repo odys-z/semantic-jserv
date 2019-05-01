@@ -168,7 +168,6 @@ public class JHelper<T extends JBody> {
 	 * If jreq.header is null, create an empty object {}.
 	 * @param os
 	 * @param jreq
-	 * @param itemClz
 	 * @throws IOException
 	 * @throws SemanticException
 	 */
@@ -285,7 +284,7 @@ public class JHelper<T extends JBody> {
 
 	/**We restricted protocol complicity here. No object array! Only String array and indexed with constants.
 	 * @param reader
-	 * @return
+	 * @return ArrayList[ Object [] ]
 	 * @throws IOException
 	 * @throws SemanticException 
 	 */

@@ -22,7 +22,7 @@ public class DatasetReq extends QueryReq {
 	public String rootId;
 	/**String array of tree semantics from client */
 	protected String smtcss;
-	/**{@link TreeSEmantics} of tree from {@link #smtcss} or set with {@link #treeSemtcs(TreeSemantics)} */
+	/**{@link TreeSemantics} of tree from {@link #smtcss} or set with {@link #treeSemtcs} ({@link TreeSemantics}) */
 	protected TreeSemantics stcs;
 
 	public DatasetReq(JMessage<? extends JBody> parent, String conn) {

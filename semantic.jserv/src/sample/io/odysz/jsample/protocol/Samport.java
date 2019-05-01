@@ -4,8 +4,12 @@ import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantics.x.SemanticException;
 
+/**Sample project's prots extension */
 public enum Samport implements IPort {
-	menu("menu.sample"), cheapflow("cheapflow.sample"); 
+	/**port provided by {@link io.odysz.jsample.SysMenu} */
+	menu("menu.sample"),
+	/**workflow port, see {@link io.odysz.sworkflow.CheapEngin} */
+	cheapflow("cheapflow.sample"); 
 
 	private String url;
 	Samport(String v) { url = v; };
