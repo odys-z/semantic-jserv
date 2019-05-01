@@ -123,7 +123,7 @@ public class SemanticTree extends JQuery {
 //				}
 				else {
 					// empty (build tree from general query results with semantic of 'sk')
-					r = loadSemantics(connId, jreq, getTreeSemtcs(req, jreq));
+					r = loadSemantics(connId, jreq, getTreeSemtcs(req, jreq), usr);
 				}
 			}
 
@@ -167,6 +167,7 @@ public class SemanticTree extends JQuery {
 	 * @param connId
 	 * @param jobj
 	 * @param treeSmtcs
+	 * @param usr 
 	 * @return {@link SemanticObject} response
 	 * @throws IOException
 	 * @throws SQLException
@@ -174,14 +175,14 @@ public class SemanticTree extends JQuery {
 	 * @throws SsException
 	 * @throws TransException
 	 */
-	private SemanticObject loadSemantics(String connId, DatasetReq jobj, TreeSemantics treeSmtcs)
+	private SemanticObject loadSemantics(String connId, DatasetReq jobj, TreeSemantics treeSmtcs, IUser usr)
 			throws IOException, SQLException, SAXException, SsException, TransException {
 		// for robustness
 		String rootId = jobj.rootId;
 		if (rootId != null && rootId.trim().length() == 0)
 			rootId = null;
 		
-		SemanticObject rs = query((QueryReq)jobj);
+		SemanticObject rs = query((QueryReq)jobj, usr);
 		List<SemanticObject> resp = null;
 		if (rs != null)
 			resp = DatasetCfg.buildForest((SResultset) rs.get("rs"), treeSmtcs);
