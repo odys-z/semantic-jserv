@@ -18,7 +18,7 @@ public class JProtocol {
 		public static final String D = "D";
 	}
 
-	/**Interface of lambd expression, using method {@link #onCallback(String, Object)}
+	/**Interface of lambd expression, using method {@link #onCallback(String, SemanticObject)}
 	 * for callback on events happened,
 	 * e.g. on success when an http post request finished. */
 	@FunctionalInterface

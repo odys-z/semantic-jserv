@@ -195,7 +195,7 @@ public class SemanticTree extends JQuery {
 	 * @param rootId
 	 * @param semanticss
 	 * @param usrInf 
-	 * @return
+	 * @return response
 	 * @throws SQLException
 	 */
 	protected SemanticObject rebuildTree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)

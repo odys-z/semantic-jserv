@@ -62,11 +62,12 @@ public class JMessage <T extends JBody> {
 	static IPort defaultPortImpl;
 
 	/**Set the default IPort implelemtation, which is used for parsing port name (string)
-	 * to IPort instance, like {@link Port}.<br>
-	 * Because {{@link Port} only defined limited ports, user must initialize JMessage with {@link understandPorts(IPort)}.<br>
+	 * to IPort instance, like {@link JMessage.Port}.<br>
+	 * Because {{@link Port} only defined limited ports, user must initialize JMessage with {@link #understandPorts(IPort)}.<br>
 	 * An example of how to use this is shown in jserv-sample/io.odysz.jsample.SysMenu.<br>
-	 * Also check how to implement IPort extending {@link #Port}, see example of jserv-sample/io.odysz.jsample.protocol.Samport.
-	 * */
+	 * Also check how to implement IPort extending {@link Port}, see example of jserv-sample/io.odysz.jsample.protocol.Samport.
+	 * @param p extended Port
+	 */
 	static public void understandPorts(IPort p) {
 		defaultPortImpl = p;
 	}

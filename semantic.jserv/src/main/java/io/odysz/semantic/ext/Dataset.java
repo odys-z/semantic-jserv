@@ -29,7 +29,9 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Transcxt;
 import io.odysz.transact.x.TransException;
 
-/**CRUD read service extension: dataset.
+/**CRUD read service extension: dataset.<br>
+ * This port use a configure file (dataset.xml) as data definition.
+ * The client request ({@link DatasetReq}) provide configure key and parameter, the port answer with queried results.
  * @author odys-z@github.com
  */
 @WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv" })
@@ -109,7 +111,7 @@ public class Dataset extends HttpServlet {
 	
 	/**
 	 * @param msgBody
-	 * @return {code: "ok", port: {@link JMessage.Port}.query, rs: [{@link SResultset}, ...]}
+	 * @return {code: "ok", port: {@link JMessage#Port}.query, rs: [{@link SResultset}, ...]}
 	 * @throws SQLException
 	 * @throws TransException
 	 */
