@@ -28,7 +28,6 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.Delete;
-import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Query.Ix;
 import io.odysz.transact.sql.Statement;
 import io.odysz.transact.x.TransException;
@@ -87,11 +86,12 @@ public class JUpdate extends HttpServlet {
 			UpdateReq q = msg.body(0);
 			q.validate();
 
-			SemanticObject res = updt(q, usr);
+			SemanticObject res = null;
 			if (CRUD.U.equals(q.a()))
 				res = updt(q, usr);
 			else if (CRUD.C.equals(q.a()))
-				res = inst((InsertReq) q, usr);
+				// res = inst((InsertReq) q, usr);
+				throw new SemanticException("Inserting Request is handled by i.serv. Please update client.");
 			else if (CRUD.D.equals(q.a()))
 				res = delt(q, usr);
 			
@@ -141,7 +141,7 @@ public class JUpdate extends HttpServlet {
 	 * @param where
 	 * @return predicates[[logic, n, v], ...]
 	 */
-	private ArrayList<String[]> tolerateNv(ArrayList<String[]> where) {
+	static ArrayList<String[]> tolerateNv(ArrayList<String[]> where) {
 		if (where != null)
 			for (int ix = 0; ix < where.size(); ix++) {
 				String[] nv = where.get(ix);
@@ -194,7 +194,6 @@ public class JUpdate extends HttpServlet {
 	 * @return results
 	 * @throws SQLException
 	 * @throws TransException
-	 */
 	private SemanticObject inst(InsertReq msg, IUser usr)
 			throws SemanticException, TransException, SQLException {
 		Insert upd = st.insert(msg.mtabl, usr);
@@ -212,6 +211,7 @@ public class JUpdate extends HttpServlet {
 					.code(MsgCode.ok.name());
 		return res.port(p.name()).code(MsgCode.ok.name());
 	}
+	 */
 	
 	/**Handle delete request, generate {@link Delete}, commit, return results.
 	 * @param msg

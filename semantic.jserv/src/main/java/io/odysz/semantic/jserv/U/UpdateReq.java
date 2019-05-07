@@ -1,6 +1,5 @@
 package io.odysz.semantic.jserv.U;
 
-import static io.odysz.semantic.jprotocol.JProtocol.CRUD.C;
 import static io.odysz.semantic.jprotocol.JProtocol.CRUD.U;
 
 import java.io.IOException;
@@ -33,7 +32,7 @@ public class UpdateReq extends JBody {
 	ArrayList<Object[]> nvs;
 	
 	/**inserting values, used for "I". 3d array [[[n, v], ...]] */
-	private ArrayList<ArrayList<?>> nvss;
+	protected ArrayList<ArrayList<?>> nvss;
 	/**inserting columns, used for "I".*/
 	private String[] cols;
 
@@ -202,12 +201,12 @@ public class UpdateReq extends JBody {
 	 * @throws SemanticException 
 	 */
 	public void validate(int ... flag) throws SemanticException {
-		if (nvs == null || nvs.size() <= 0)
-			throw new SemanticException("Updating denied for empty column values");
+		if ((nvs == null || nvs.size() <= 0) && (nvss == null || nvss.size() <= 0))
+			throw new SemanticException("Updating/inserting denied for empty column values");
 		if (U.equals(a) && (where == null || where.isEmpty()))
 			throw new SemanticException("Updating denied for empty conditions");
-		if (C.equals(a) && (nvs == null || nvs.isEmpty()))
-			throw new SemanticException("Insertion denied for empty values");
+//		if (C.equals(a) && (nvs == null || nvs.isEmpty()))
+//			throw new SemanticException("Insertion denied for empty values");
 	}
 
 }
