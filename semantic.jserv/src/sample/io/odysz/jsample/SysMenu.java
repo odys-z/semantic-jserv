@@ -28,7 +28,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
-@WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.sample" })
+@WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
 public class SysMenu  extends SemanticTree {
 	private static final long serialVersionUID = 1L;
 	
