@@ -23,6 +23,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.JHeader;
@@ -37,7 +38,6 @@ import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantics.IResults;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -311,7 +311,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 */
 	private IUser loadUser(SessionReq jreq, String connId)
 			throws TransException, SQLException, SsException, ReflectiveOperationException {
-		IResults rs = sctx.select(UserMeta.tbl, "u")
+		SemanticObject s = sctx.select(UserMeta.tbl, "u")
 			.col(UserMeta.uidField, "uid")
 			.col(UserMeta.unameField, "uname")
 			.col(UserMeta.pswdField, "pswd")
@@ -320,6 +320,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			.where("=", "u." + UserMeta.uidField, "'" + jreq.uid() + "'")
 			.rs(sctx.instancontxt(jrobot));
 		
+		SResultset rs = (SResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString("uid");
 			IUser obj = createUser(UserMeta.clzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"));

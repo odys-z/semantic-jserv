@@ -91,7 +91,6 @@ public class Dataset extends HttpServlet {
 			JMessage<DatasetReq> msg = ServletAdapter.<DatasetReq>read(req, jhelperReq, DatasetReq.class);
 			
 			SemanticObject rs = dataset(conn, msg);
-			
 
 			ServletAdapter.write(resp, rs);
 		} catch (SemanticException e) {
@@ -123,12 +122,7 @@ public class Dataset extends HttpServlet {
 
 		// Shall be moved to Protocol?
 		SemanticObject respMsg = new SemanticObject();
-		respMsg.rs(ds, 100);
-		// FIXME bug here, not 100!
-		// FIXME bug here, not 100!
-		// FIXME bug here, not 100!
-		// FIXME bug here, not 100!
-		// FIXME bug here, not 100!
+		respMsg.rs(ds, ds.total());
 		return JProtocol.ok(Port.dataset, respMsg);
 	}
 

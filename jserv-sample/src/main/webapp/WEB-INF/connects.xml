@@ -5,16 +5,18 @@
   	<!-- smtcs: semantics configuration used only for the connection.
   		(And a global semantics configuration?) -->
   	<c>
-  		<id>local</id>
+  		<id>local-sqlite</id>
   		<type>sqlite</type>
   		<isdef></isdef>
   		<!-- For sqlite, src = relative path from this configure file.
-  			So connection string can be: jdbc:sqlite:WEB-INF/remote.db -->
-  		<src>semantic-DA.db</src>
+  			So connection string can be: jdbc:sqlite:WEB-INF/remote.db
+  		<src>../../../../../../../../../../../../../git/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-test.db</src>
+  			-->
+  		<src>../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-test.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
-  		<dbg>false</dbg>
+  		<dbg>true</dbg>
   	</c>
   </t>
 
@@ -36,9 +38,21 @@
   			url="jdbc:mysql://...:3306/prj" connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true" />
   	 -->
    	<c>
-  		<id>inet</id>
+  		<id>io.odys-z</id>
   		<type>mysql</type>
   		<src>jdbc/inet-sample</src>
+  		<isdef></isdef>
+  		<!-- Not used -->
+  		<usr></usr>
+  		<!-- Not used (will be protected in cipher in the future -->
+  		<pswd></pswd>
+  		<dbg>true</dbg>
+  	</c>
+
+   	<c>
+  		<id>inet</id>
+  		<type>mysql</type>
+  		<src>jdbc/inforise-prjcost</src>
   		<isdef>true</isdef>
   		<!-- Not used -->
   		<usr></usr>
@@ -46,5 +60,6 @@
   		<pswd></pswd>
   		<dbg>true</dbg>
   	</c>
+
   </t>
 </conns>

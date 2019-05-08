@@ -23,12 +23,12 @@
   </repositories>
 
   <dependencies>
-	<dependency>
-    	<groupId>org.junit.jupiter</groupId>
-    	<artifactId>junit-jupiter-engine</artifactId>
-    	<version>5.3.1</version>
-    	<scope>test</scope>
-	</dependency>
+  	<dependency>
+  		<groupId>junit</groupId>
+  		<artifactId>junit</artifactId>
+  		<version>4.12</version>
+  		<scope>test</scope>
+    </dependency>
 
     <dependency>
     	<groupId>javax.servlet</groupId>
@@ -42,7 +42,7 @@
 			to update immediately. -->
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>0.9.0-SNAPSHOT</version>
+	    <version>0.9.2-SNAPSHOT</version>
 		<!-- provide: the semantic.jserv-x.x.x.jar is exported as jar from semantic.jserv and included in build path separately.
 			So use provide to exclude packaging for runtime.
 			eclipse debug on tomcat server can't find maven dependent class.
@@ -56,9 +56,41 @@
 	    <scope>provided</scope>
 		<classifier>classes</classifier>
 			-->
+   	</dependency>
+	
+   	<dependency>
+	    <groupId>io.github.odys-z</groupId>
+	    <artifactId>semantic.workflow</artifactId>
+	    <version>0.5.0-SNAPSHOT</version>
 	</dependency>
 
+	<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
+	<dependency>
+	    <groupId>org.xerial</groupId>
+	    <artifactId>sqlite-jdbc</artifactId>
+	    <version>3.25.2</version>
+	</dependency>
   </dependencies>
+
+  <scm>
+  	<connection>scm:git:git://github.com/odys-z/semantic-jserv.git</connection>
+  	<developerConnection>scm:git:odys-z@github.com:odys-z/semantic-jserv.git</developerConnection>
+  	<url>https://github.com/odys-z/semantic-jserv</url>
+  	<tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+  	<snapshotRepository>
+  		<id>ossrh</id>
+  		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+  		<uniqueVersion>false</uniqueVersion>
+  	</snapshotRepository>
+  	<repository>
+  		<id>ossrh</id>
+  		<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+	</repository>
+  </distributionManagement>
+
   <build>
     <finalName>jserv-sample</finalName>
     <plugins>
@@ -88,7 +120,36 @@
 				<useCache>true</useCache>
 			</configuration>
 		</plugin>
-		
+
+		<!-- JavaDoc and source attachment
+		 -->
+		<plugin>
+	      <groupId>org.apache.maven.plugins</groupId>
+	      <artifactId>maven-source-plugin</artifactId>
+	      <version>2.2.1</version>
+	      <executions>
+	        <execution>
+	          <id>attach-sources</id>
+	          <goals>
+	            <goal>jar-no-fork</goal>
+	          </goals>
+	        </execution>
+	      </executions>
+	    </plugin>
+
+		<plugin>
+	      <groupId>org.apache.maven.plugins</groupId>
+	      <artifactId>maven-javadoc-plugin</artifactId>
+	      <version>2.9.1</version>
+	      <executions>
+	        <execution>
+	          <id>attach-javadocs</id>
+	          <goals>
+	            <goal>jar</goal>
+	          </goals>
+	        </execution>
+	      </executions>
+	 	</plugin>
     </plugins>
   </build>
 </project>

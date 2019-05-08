@@ -37,13 +37,23 @@
   		select count(*) cnt from a_rolefunc where roleId = '%s'
   		,cnt</args>
   	</s>
+
+	<!-- User.log() don't use this configure file, but should be OK - never used -->
   	<s>
-  		<!-- User.log() don't use this configure file, but should be OK - never used -->
   		<id>04</id>
   		<smtc>o-t</smtc>
   		<tabl>a_logs</tabl>
   		<pk>logId</pk>
   		<args></args>
+  	</s>
+  	
+  	<!-- default users passsword -->
+  	<s>
+  		<id>user.01</id>
+  		<smtc>d-v</smtc>
+  		<tabl>a_user</tabl>
+  		<pk>userId</pk>
+  		<args>pwd,'12345678'</args>
   	</s>
   </t>
 </semantics>
