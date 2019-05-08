@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <semantics>
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
-  <!-- smtc:
+  <!-- see semantic.DA/io.odysz.semantic.DASemantics
+  smtc:
   	0. {@link #autoPk} </b> key-word: "auto" | "ai" | "a-i" args: 0: auto incrementing handled field
 	1. {@link #fullpath} </b> key-word: "fullpath" | "fp" | "f-p" 0: parent Id field, 1: sibling/sort field (optional), 2: fullpath field
 	2. {@link #parentChildren} </b> key-word: "pc-del-all" | "parent-child-del-all"
@@ -16,44 +17,18 @@
    -->
   	<s>
   		<id>01</id>
-  		<smtc>fullpath</smtc>
-  		<tabl>a_functions</tabl>
-  		<pk>funcId</pk>
-  		<args>parentId,sibling,fullpath</args>
-  	</s>
-  	<s>
-  		<id>02</id>
-  		<smtc>pc-del-all</smtc>
-  		<tabl>a_functions</tabl>
-  		<pk>funcId</pk>
-  		<args>a_rolefunc,funcId</args>
-  	</s>
-  	<s>
-  		<id>03</id>
-  		<smtc>ck-cnt-del</smtc>
-  		<tabl>a_roles</tabl>
-  		<pk>roleId</pk>
-  		<args>a_rolefunc,
-  		select count(*) cnt from a_rolefunc where roleId = '%s'
-  		,cnt</args>
-  	</s>
-
-	<!-- User.log() don't use this configure file, but should be OK - never used -->
-  	<s>
-  		<id>04</id>
-  		<smtc>o-t</smtc>
+ 		<smtc>a-k</smtc>
   		<tabl>a_logs</tabl>
   		<pk>logId</pk>
-  		<args></args>
+  		<args>logId</args>
   	</s>
-  	
-  	<!-- default users passsword -->
+
   	<s>
-  		<id>user.01</id>
-  		<smtc>d-v</smtc>
-  		<tabl>a_user</tabl>
-  		<pk>userId</pk>
-  		<args>pwd,'12345678'</args>
+  		<id>02</id>
+ 		<smtc>o-t</smtc>
+  		<tabl>a_logs</tabl>
+  		<pk>logId</pk>
+  		<args>oper,logTime</args>
   	</s>
   </t>
 </semantics>

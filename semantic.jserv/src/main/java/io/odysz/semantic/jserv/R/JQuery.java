@@ -24,7 +24,6 @@ import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
-import io.odysz.semantics.IResults;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -169,7 +168,8 @@ public class JQuery extends HttpServlet {
 
 		return JProtocol.ok(p, respMsg);
 		*/
-		IResults rs = selct.rs(st.instancontxt(usr));
+		SemanticObject s = selct.rs(st.instancontxt(usr));
+		SResultset rs = (SResultset) s.rs(0);
 		SemanticObject respMsg = new SemanticObject();
 		respMsg.rs(rs, rs.total());
 		return JProtocol.ok(p, respMsg);

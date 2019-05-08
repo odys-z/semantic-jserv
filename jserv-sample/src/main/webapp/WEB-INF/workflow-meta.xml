@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow>
+  <t id="conn" pk="conn" columns="conn">
+  	<s> <conn>local-sqlite</conn> </s>
+  </t>
+
+  <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
+  <!--	All business semantics must committed in JDBC transact but outside CheapEngin's handling must configured here.
+		For smtc type, see io.odysz.semantic.DASemantic.smtype.
+  -->
+  	<!-- expense task table's oper/opertime -->
+  	<s> <id>01</id>
+  		<smtc>o-t</smtc>
+  		<tabl>r_expense</tabl>
+  		<pk>expenseId</pk>
+  		<args>addUser,addDate</args>
+  	</s>
+
+  	<!-- task details table's auto pk
+  	<s> <id>02</id>
+  		<smtc>pk</smtc>
+  		<tabl>task_details</tabl>
+  		<pk>recId</pk>
+  		<args>recId</args>
+  	</s>
+  	-->
+
+  	<!-- expense task details table's fk to r_expense.taskId (in business semantics, task details is a children of tasks)
+		Args[0]: referencing col, [1]: target table, [2] target pk col
+  		For args details, see semantic.DA/io.odysz.semantic.smtype#fkIns 
+  	-->
+  	<s> <id>03</id>
+  		<smtc>fk-ins</smtc>
+  		<tabl>r_expensedetails</tabl>
+  		<pk>expenseId</pk>
+  		<args>expenseId,r_expense,expenseId</args>
+  	</s>
+  </t>
+
+  <t id="right-ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
+	<!-- This table is used for define sqls that can be parameterized when serving data.
+
+		Cmds selected from this is compared to request's cmd name.
+		If the requested cmd is in the results, then the user has the rights to commit a workflow command.
+		
+		CheapEngin using 'sk' from oz_wfnodes.cmdRights to find user's rights.
+		sql values: [0] cmd-id (configured in oz_wfcmds.cmd), [1] cmd-flags;
+		args: [%1$s] wfid, [%2$s] node-id, [%3$s] user-id, [%4$s] task-id
+		Note: for a start command, task-id is null. If you are checking task-id on a starting node, that's a semantic error.
+	 -->
+	<s>
+		<!-- ds-allcmd is configured in oz_wfnodes.cmdRights
+			Tip: to make CheapEngin working more stable, keep at leas one rights configure rule, with sk = ds-allcmd.
+			CheapEngin will use this as default if the workflow configured nothing for a node rights.
+		-->
+  		<sk>ds-allcmd</sk>
+  		<mysql>SELECT cmd, rightFilter from oz_wfcmds c join oz_wfnodes n
+  		on c.nodeId = n.nodeId and n.wfId = '%1$s' and n.nodeId = '%2$s'</mysql>
+  		<sqlit>SELECT cmd, rightFilter from oz_wfcmds c join oz_wfnodes n
+  		on c.nodeId = n.nodeId and n.wfId = '%1$s' and n.nodeId = '%2$s'</sqlit>
+	</s>
+
+	<s>
+		<!-- ds-v1 is configured in oz_wfnodes.cmdRights -->
+  		<sk>ds-v1</sk>
+  		<mysql>SELECT cmd, rightFilter from oz_wfcmds c join oz_wfnodes n
+  		on c.nodeId = n.nodeId and n.wfId = '%1$s' and n.nodeId = '%2$s' and rightFilter = 'a'</mysql>
+  		<sqlit>SELECT cmd, rightFilter from oz_wfcmds c join oz_wfnodes n
+  		on c.nodeId = n.nodeId and n.wfId = '%1$s' and n.nodeId = '%2$s' and rightFilter = 'a'</sqlit>
+	</s>
+  </t>
+</workflow>

@@ -4,7 +4,7 @@
 	<c>
 		<!-- Class name of SUser Implementation -->
 		<k>class-IUser</k>
-		<v>io.odysz.semantic.jsession.SUser</v>
+		<v>io.odysz.semantic.jsession.JUser</v>
 	</c>
 	<c>
 		<k>folder.file-upload</k>
@@ -40,6 +40,12 @@
   	</c>
   </t>
 
-  <t id="cbb" pk="k" columns="k,v">
+  <t id="cheap" pk="k" columns="k,v">
+	<c> <k>config-path</k>
+	<!-- change this also need to change connection source in connects/xml
+		<v>../../../../../../../../../../../../../git/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml</v>
+	 -->
+		<v>../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml</v>
+	</c>
   </t>
 </configs>
