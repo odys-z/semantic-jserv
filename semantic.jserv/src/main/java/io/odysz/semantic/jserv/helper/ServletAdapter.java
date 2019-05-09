@@ -13,7 +13,7 @@ import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantics.SemanticObject;
-import io.odysz.semantics.x.SemanticException;
+import io.odysz.semantics.x.*;
 
 /**<p>Servlet request / response IO helper</p>
  * TODO: all serv extends this class?

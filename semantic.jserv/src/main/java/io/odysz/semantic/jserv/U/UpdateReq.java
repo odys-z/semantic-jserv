@@ -9,6 +9,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
@@ -135,7 +136,11 @@ public class UpdateReq extends JBody {
 		writer.endObject();
 	}
 
-	// FIXME Call for Anson 
+	/**FIXME Call for Anson 
+	 * @param writer
+	 * @throws SemanticException
+	 * @throws IOException
+	 */
 	protected void child2Json(JsonWriter writer) throws SemanticException, IOException { }
 
 	@Override
@@ -191,8 +196,7 @@ public class UpdateReq extends JBody {
 			cols = JHelper.readStrs(reader);
 	}
 
-	protected void readChild(String name, JsonReader reader) throws SemanticException, IOException {
-	}
+//	protected void readChild(String name, JsonReader reader) throws SemanticException, IOException {}
 
 	/**Update request validating.
 	 * The request must is an update with pk and setting values;
@@ -203,10 +207,10 @@ public class UpdateReq extends JBody {
 	public void validate(int ... flag) throws SemanticException {
 		if (!D.equals(a) && (nvs == null || nvs.size() <= 0) && (nvss == null || nvss.size() <= 0))
 			throw new SemanticException("Updating/inserting denied for empty column values");
-		if ((U.equals(a) || D.equals(a)) && (where == null || where.isEmpty()))
-			throw new SemanticException("Updating denied for empty conditions");
-//		if (C.equals(a) && (nvs == null || nvs.isEmpty()))
-//			throw new SemanticException("Insertion denied for empty values");
+		if ((U.equals(a) || D.equals(a)) && where == null || where.isEmpty())
+				throw new SemanticException("Updatin/deleting  denied for empty conditions");
+		if (!R.equals(a) && mtabl == null || LangExt.isblank(mtabl))
+				throw new SemanticException("Updating/inserting/deleting denied for empty main table");
 	}
 
 }
