@@ -25,8 +25,35 @@ The use cases implemented in this sample project, like login, menu, list, master
 
 Further explanation about semantics patterns will be added in the future. Sorry about the inconvenient.
 
-# TODOs
-Semantic-jserv is initially created as a web application, it's always been included as WAR in jserv-sample's deployment assembly properties page, resulting classes not found at runtime.
-   
+# About Semantics-*
+
+## semantic-jserv
+
+This is initially a web application lib. It should been deployed as WAR together with a web application lik jserv-sample. 
+
+See jserv-sample/pom.xml.
+
+## semantic-transact
+
+This is a basically sql builder. The semantic.jserv based on it to handling request, generating sqls that can be committed in a JDBC transact.
+
+## semantic-DA
+
+This module handling semantics configured in semantics.xml, like auto key, fk, operator-time finger print etc.
+
+## jcleint
+
+The client side communicating with semantic-jserv.
+
+Currently a java client and a js client together with [easyUI](https://www.jeasyui.com) is basically working. And a C# client project is also started. We also planning porting the java client to Android.
+
+The js client together with a vue client is also in tense developing.
+
+## TODO
+
+Currently jser-sample and it's lib located in the same repository.
+
+Application developer won't care the lib source. We need separate these two.
+
 #### See wiki for more information
 
