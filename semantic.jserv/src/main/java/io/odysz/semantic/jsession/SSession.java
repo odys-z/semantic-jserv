@@ -163,7 +163,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @return {@link JUser} if succeed, which can be used for db logging
 	 * - use this to load functions, etc.
 	 * @throws SsException Session checking failed.
-	 * @throws SQLException Reqest payload header.usrAct is null 
+	 * @throws SQLException Reqest payload header.usrAct is null (TODO sure?)
 	 */
 	@Override
 	public IUser verify(JHeader jHeader) throws SsException, SQLException {

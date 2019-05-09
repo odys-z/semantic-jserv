@@ -158,7 +158,7 @@ public class JUpdate extends HttpServlet {
 		return where;
 	}
 
-	/**convert msg's requests ({@link UpdateReq}) to {@link io.odysz.transact.sql.Statement}
+	/**convert msg's post requests ({@link UpdateReq}) to {@link io.odysz.transact.sql.Statement}
 	 * @param msg
 	 * @param st
 	 * @param usr
@@ -221,13 +221,13 @@ public class JUpdate extends HttpServlet {
 	 * @throws TransException
 	 */
 	private SemanticObject delt(UpdateReq msg, IUser usr)
-			throws SemanticException, TransException, SQLException {
+			throws TransException, SQLException {
 		Delete del = st.delete(msg.mtabl, usr);
-
+		
 		SemanticObject res = (SemanticObject) del
 				.where(tolerateNv(msg.where))
 				.post(postUpds(msg, st, usr))
-				.del(st.instancontxt(usr));
+				.d(st.instancontxt(usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error
 			return new SemanticObject()
