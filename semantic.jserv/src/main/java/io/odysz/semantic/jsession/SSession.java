@@ -80,10 +80,13 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	&lt;/Context&gt;&lt;/pre>
 	 * @param daSctx
 	 * @param ctx context for loading context.xml/resource
-	 * @throws SAXException
-	 * @throws IOException
+	 * @throws SAXException something wrong with configuration files
+	 * @throws IOException file accessing failed
+	 * @throws SemanticException semantics error
+	 * @throws SQLException database accessing error
 	 */
-	public static void init(DATranscxt daSctx, ServletContext ctx) throws SAXException, IOException {
+	public static void init(DATranscxt daSctx, ServletContext ctx)
+			throws SAXException, IOException, SemanticException, SQLException {
 		rootK = ctx.getInitParameter("io.oz.root-key");
 
 		lock = new ReentrantLock();
