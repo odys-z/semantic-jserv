@@ -1,7 +1,9 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import org.apache.commons.io.FilenameUtils;
@@ -13,9 +15,11 @@ import io.odysz.common.AESHelper;
 import io.odysz.common.Radix64;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -43,8 +47,11 @@ class JUser extends SemanticObject implements IUser {
 		try {
 			// TODO This is a typical initializing, should moved to subclass of JSingleton.
 			DATranscxt.initConfigs(conn, FilenameUtils.concat(JSingleton.rootINF(), "semantic-log.xml"));
-			logsctx = new DATranscxt(conn);
-		} catch (SAXException | IOException e) {
+
+			HashMap<String, TableMeta> metas = Connects.loadMeta(conn);
+
+			logsctx = new DATranscxt(conn, metas);
+		} catch (SAXException | IOException | SemanticException | SQLException e) {
 			e.printStackTrace();
 		}
 	}

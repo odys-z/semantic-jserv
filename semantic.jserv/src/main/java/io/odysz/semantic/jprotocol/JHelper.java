@@ -153,7 +153,7 @@ public class JHelper<T extends JBody> {
 		writer.endArray();
 	}
 
-	private static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException, SemanticException {
+	public static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException, SemanticException {
 		writer.beginObject();
 		for (Object k : map.keySet()) {
 			Object v = map.get(k);
@@ -257,7 +257,7 @@ public class JHelper<T extends JBody> {
 		return obj;
 	}
 
-	private static HashMap<String, String> readMap(JsonReader reader) throws IOException {
+	public static HashMap<String, String> readMap(JsonReader reader) throws IOException {
 		reader.beginArray();
 
 		HashMap<String, String> m = new HashMap<String, String>();

@@ -1,6 +1,7 @@
 package io.odysz.jsample;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -47,6 +48,8 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 			Utils.warn("%s: %s\nCheck Config.xml:\ntable=cheap\nk=config-path\nv=%s",
 					e.getClass().getName(), e.getMessage(), relapath);
 		} catch (TransException | SAXException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}

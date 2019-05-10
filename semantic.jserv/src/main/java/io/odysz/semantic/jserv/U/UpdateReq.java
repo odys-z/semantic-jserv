@@ -207,7 +207,7 @@ public class UpdateReq extends JBody {
 	public void validate(int ... flag) throws SemanticException {
 		if (!D.equals(a) && (nvs == null || nvs.size() <= 0) && (nvss == null || nvss.size() <= 0))
 			throw new SemanticException("Updating/inserting denied for empty column values");
-		if ((U.equals(a) || D.equals(a)) && where == null || where.isEmpty())
+		if ((U.equals(a) || D.equals(a)) && (where == null || where.isEmpty()))
 				throw new SemanticException("Updatin/deleting  denied for empty conditions");
 		if (!R.equals(a) && mtabl == null || LangExt.isblank(mtabl))
 				throw new SemanticException("Updating/inserting/deleting denied for empty main table");
