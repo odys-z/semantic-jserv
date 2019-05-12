@@ -7,7 +7,7 @@
         <dependent-module archiveName="semantics.transact-0.5.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.transact/semantic.transact">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="semantic.DA-0.2.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.DA/semantic.DA">
+        <dependent-module archiveName="semantic.DA-0.3.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.DA/semantic.DA">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="semantic.workflow-0.5.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.workflow/semantic.workflow">
