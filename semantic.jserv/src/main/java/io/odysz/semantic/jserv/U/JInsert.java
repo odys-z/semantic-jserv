@@ -92,7 +92,7 @@ public class JInsert extends HttpServlet {
 			else
 				throw new SemanticException("i.serv only handling a=i. Please update client!");
 			
-			ServletAdapter.write(resp, res);
+			ServletAdapter.write(resp, res, msg.opts());
 
 		} catch (SsException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));

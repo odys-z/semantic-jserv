@@ -95,7 +95,7 @@ public class JUpdate extends HttpServlet {
 			else if (CRUD.D.equals(q.a()))
 				res = delt(q, usr);
 			
-			ServletAdapter.write(resp, res);
+			ServletAdapter.write(resp, res, msg.opts());
 
 		} catch (SsException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));

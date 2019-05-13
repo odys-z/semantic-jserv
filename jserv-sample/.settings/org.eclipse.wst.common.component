@@ -4,7 +4,8 @@
         <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/test"/>
-        <dependent-module archiveName="semantic.jserv-0.9.2-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.jserv/semantic.jserv">
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
+        <dependent-module archiveName="semantic.jserv-0.9.3-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.jserv/semantic.jserv">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="semantics.transact-0.6.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.transact/semantic.transact">
@@ -13,7 +14,7 @@
         <dependent-module archiveName="semantic.DA-0.3.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.DA/semantic.DA">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="semantic.workflow-0.5.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic-workflow/semantic-workflow">
+        <dependent-module archiveName="semantic.workflow-0.5.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.workflow/semantic.workflow">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <property name="context-root" value="jserv-sample"/>

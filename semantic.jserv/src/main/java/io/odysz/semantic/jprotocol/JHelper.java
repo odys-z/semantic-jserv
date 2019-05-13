@@ -35,68 +35,88 @@ public class JHelper<T extends JBody> {
 	public static void printCaller (boolean print) { printCaller = print; }
 
 	private static Gson gson = new Gson();
+	private static JOpts _opts = new JOpts();
 
-	public static void writeJsonResp(OutputStream os, SemanticObject msg) throws IOException, SemanticException {
+	public static void writeJsonResp(OutputStream os, SemanticObject msg, JOpts opts)
+			throws IOException, SemanticException {
 		JsonWriter writer = new JsonWriter(new OutputStreamWriter(os, "UTF-8"));
-		writeJsonValue(writer, msg);
+		writeJsonValue(writer, msg, opts);
 		writer.close();
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v) throws IOException, SemanticException {
+	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v, JOpts opts) throws IOException, SemanticException {
 		if (IUser.class.isAssignableFrom(t)) {
 			((IUser)v).writeJsonRespValue(writer);
 		}
 		else if (SemanticObject.class.isAssignableFrom(t)) {
-			 writeJsonValue(writer, (SemanticObject) v);
+			 writeJsonValue(writer, (SemanticObject) v, opts);
 		}
 		else if (t == String[].class) {
-			writeStrings(writer, (String[])v);
+			writeStrings(writer, (String[])v, opts);
 		}
 		else if (v instanceof SResultset) {
 			SResultset rs = (SResultset)v;
-			writeRs(writer, rs);
+			writeRs(writer, rs, opts);
 		}
 		else if (Map.class.isAssignableFrom(t)) {
-			writeMap(writer, (Map<?, ?>) v);
+			writeMap(writer, (Map<?, ?>) v, opts);
 		}
 		else if (List.class.isAssignableFrom(t)) {
-			writeLst(writer, (List<Object>) v);
+			writeLst(writer, (List<Object>) v, opts);
 		}
+		// Note 2019.5.13  set value while considering options
+		else if (Boolean.class.isAssignableFrom(t))
+			if (opts.noBoolean)
+				writer.value((Boolean) v ? "true" : "false");
+			else 
+				writer.value((Boolean)v);
 		else
+			// Note 2019.5.13  set value while considering options
+			// writer.value(v == null ? JsonToken.NULL.toString() : v.toString());
+
 			// Note 2019.4.23, these two way are alternated more than twice, what's it?
 			// case 1: switch to null included, for autoVals of update is nullable.
-			writer.value(v == null ? JsonToken.NULL.toString() : v.toString());
-			// writer.value(v.toString());
+			
+			writer.value(v == null ? (opts.noNull ? "" : JsonToken.NULL.toString())
+								   : v.toString());
 	}
 
 	/**Write a string array, with "[" and "]".
 	 * @param writer
 	 * @param v
+	 * @param opts 
 	 * @throws IOException
 	 */
-	public static void writeStrings(JsonWriter writer, String[] v) throws IOException {
+	public static void writeStrings(JsonWriter writer, String[] v, JOpts opts) throws IOException {
 		writer.beginArray();
 		for (int i = 0; i < v.length; i++) {
-			if (v[i] == null)
-				// writer.value("");
-				writer.nullValue();
+			if (v[i] == null) {
+				if (opts.noNull)
+					writer.value("");
+				else
+					writer.nullValue();
+			}
 			else
 				writer.value(v[i]);
 		}
 		writer.endArray();
 	}
 
-	public static void writeStrss(JsonWriter writer, String[][] vss) throws IOException {
+	public static void writeStrss(JsonWriter writer, String[][] vss, JOpts opts) throws IOException {
 		for (int i = 0; i < vss.length; i++) {
-			if (vss[i] == null)
-				writer.nullValue();
+			if (vss[i] == null) {
+				if (opts.noNull)
+					writer.value("");
+				else 
+					writer.nullValue();
+			}
 			else
-				writeStrings(writer, vss[i]);
+				writeStrings(writer, vss[i], opts);
 		}
 	}
 
-	private static void writeRs(JsonWriter writer, SResultset rs) throws IOException, SemanticException {
+	private static void writeRs(JsonWriter writer, SResultset rs, JOpts opts) throws IOException, SemanticException {
 		// [ [col1, col2, ...],
 		//   [cel1, cel2, ...], ...
 		writer.beginArray();
@@ -113,7 +133,15 @@ public class JHelper<T extends JBody> {
 			while (rs.next()) {
 				writer.beginArray();
 				for (int ix = 1; ix <= rs.getColCount(); ix++) {
-					writer.value(rs.getString(ix));
+					// writer.value(rs.getString(ix));
+					String v = rs.getString(ix);
+					if (v == null)
+						if (opts.noNull)
+							writer.value("");
+						else 
+							writer.nullValue();
+					else
+						writer.value(toJsonOpt(opts, rs.getString(ix)));
 				}
 				writer.endArray();
 			}
@@ -125,7 +153,22 @@ public class JHelper<T extends JBody> {
 		writer.endArray();
 	}
 
-	private static void writeJsonValue(JsonWriter writer, SemanticObject v) throws IOException, SemanticException {
+	/**Convert string considering j-options.
+	 * @param opts
+	 * @param v
+	 * @return json string
+	 */
+	private static String toJsonOpt(JOpts opts, String v) {
+		if (opts.noBoolean && "true".equals(v))
+			return "'true'";
+		else if (opts.noBoolean && "false".equals(v))
+			return "'false'";
+		else if (opts.noNull && v == null)
+			return "";
+		return v;
+	}
+
+	private static void writeJsonValue(JsonWriter writer, SemanticObject v, JOpts opts) throws IOException, SemanticException {
 		writer.beginObject();
 		HashMap<String, Object> ps = v.props();
 		if (ps != null)
@@ -133,7 +176,7 @@ public class JHelper<T extends JBody> {
 				Class<?> t = v.getType(n);
 				Object obj = v.get(n);
 				writer.name(n);
-				writeRespValue(writer, t, obj);
+				writeRespValue(writer, t, obj, opts);
 			}
 		writer.endObject();
 	}
@@ -141,24 +184,25 @@ public class JHelper<T extends JBody> {
 	/**Write list into json. This method handle multi-dimensional array.
 	 * @param writer
 	 * @param lst
+	 * @param opts 
 	 * @throws IOException
 	 * @throws SemanticException
 	 */
-	public static void writeLst(JsonWriter writer, List<?> lst) throws IOException, SemanticException {
+	public static void writeLst(JsonWriter writer, List<?> lst, JOpts opts) throws IOException, SemanticException {
 		writer.beginArray();
 		for (Object v : lst) {
-			writeRespValue(writer, v.getClass(), v);
+			writeRespValue(writer, v.getClass(), v, opts);
 		}
 		
 		writer.endArray();
 	}
 
-	public static void writeMap(JsonWriter writer, Map<?, ?> map) throws IOException, SemanticException {
+	public static void writeMap(JsonWriter writer, Map<?, ?> map, JOpts opts) throws IOException, SemanticException {
 		writer.beginObject();
 		for (Object k : map.keySet()) {
 			Object v = map.get(k);
 			writer.name(k.toString());
-			writeRespValue(writer, v.getClass(), v);
+			writeRespValue(writer, v.getClass(), v, opts);
 		}
 		
 		writer.endObject();
@@ -192,7 +236,7 @@ public class JHelper<T extends JBody> {
 
 		writer.name("body").beginArray();
         for (JBody bodyItem : jreq.body) 
-        	bodyItem.toJson(writer);
+        	bodyItem.toJson(writer, _opts );
             // gson.toJson(message, itemClz, writer);
 		writer.endArray();
 		writer.endObject();
@@ -536,6 +580,8 @@ public class JHelper<T extends JBody> {
 						msg.port(reader.nextString());
 					else if (name != null && "t".equals(name))
 						msg.t = nextString(reader);
+					else if (name != null && "opts".equals(name))
+						msg.opts(readOpts(reader));
 					else if (name != null && "header".equals(name))
 						msg.header(readHeader(reader));
 					else if (name != null && "body".equals(name))
@@ -630,6 +676,11 @@ public class JHelper<T extends JBody> {
 		JHeader header = gson.fromJson(reader, JHeader.class);
 		return header;
 	}
+	
+	protected JOpts readOpts(JsonReader reader) throws IOException {
+		JOpts opts = gson.fromJson(reader, JOpts.class);
+		return opts;
+	}
 
 	public JHeader readHeader(String head) throws IOException {
 		if (head == null || head.length() == 0)
@@ -654,7 +705,7 @@ public class JHelper<T extends JBody> {
 
 			if (obj != null) {
     			OutputStream os = new ByteArrayOutputStream();
-    			writeJsonResp(os, obj);
+    			writeJsonResp(os, obj, new JOpts());
 				System.out.println(os.toString());
 			}
 

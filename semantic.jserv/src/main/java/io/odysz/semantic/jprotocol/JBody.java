@@ -35,10 +35,11 @@ public abstract class JBody {
 
 	/** Serialize this object into json, with help of JsonWriter. { a: login, ... }
 	 * @param writer
+	 * @param opts
 	 * @throws IOException
 	 * @throws SemanticException 
 	 */
-	public abstract void toJson(JsonWriter writer) throws IOException, SemanticException;
+	public abstract void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException;
 
 	/**For debug, print, etc. The string can not been used for json data.
 	 * @see java.lang.Object#toString()

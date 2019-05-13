@@ -12,10 +12,12 @@ import org.xml.sax.SAXException;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.AESHelper;
+import io.odysz.common.Configs;
 import io.odysz.common.Radix64;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -43,7 +45,8 @@ class JUser extends SemanticObject implements IUser {
 
 	private static DATranscxt logsctx;
 	static {
-		String conn = "local-sqlite";
+		// String conn = "local-sqlite";
+		String conn = Configs.getCfg("log-connId");
 		try {
 			// TODO This is a typical initializing, should moved to subclass of JSingleton.
 			DATranscxt.initConfigs(conn, FilenameUtils.concat(JSingleton.rootINF(), "semantic-log.xml"));
@@ -147,7 +150,7 @@ class JUser extends SemanticObject implements IUser {
 
 	@Override
 	public SemanticObject logout() {
-		return null;
+		return new SemanticObject().code(MsgCode.ok.name());
 	}
 
 	@Override

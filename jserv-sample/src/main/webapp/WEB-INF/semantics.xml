@@ -34,7 +34,7 @@
   		<tabl>a_roles</tabl>
   		<pk>roleId</pk>
   		<args>a_rolefunc,
-  		select count(*) cnt from a_rolefunc where roleId = '%s'
+  		select count(*) cnt from a_role_func where roleId = '%s'
   		,cnt</args>
   	</s>
 

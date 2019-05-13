@@ -12,6 +12,7 @@ import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jserv.R.QueryReq;
 import io.odysz.semantics.x.SemanticException;
 
@@ -60,7 +61,7 @@ public class DatasetReq extends QueryReq {
 	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException {
 		writer.beginObject();
 		writer.name("a").value(a);
 		writer.name("conn").value(conn);
@@ -75,14 +76,14 @@ public class DatasetReq extends QueryReq {
 			writer.beginArray();
 			// writer.value(stcs == null ? smtcss : LangExt.toString(stcs.treeSmtcs()));
 			if (stcs != null)
-				JHelper.writeStrss(writer, stcs.treeSmtcs());
+				JHelper.writeStrss(writer, stcs.treeSmtcs(), opts);
 			writer.endArray();
 		}
 
 		try {
 			if (sqlArgs != null) {
 				writer.name("joins");
-				JHelper.writeStrings(writer, sqlArgs);
+				JHelper.writeStrings(writer, sqlArgs, opts);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();	
