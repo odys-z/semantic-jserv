@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.*;
 
@@ -22,6 +23,8 @@ import io.odysz.semantics.x.*;
  */
 public class ServletAdapter {
 	static final int bufLen = 1024 * 32;
+
+	static JOpts _opts = new JOpts();
 
 	/**<p>Read JMessage from request.</p>
 	 * <p>FIXME req input stream is closed if there is no header string in url?</p>
@@ -56,14 +59,18 @@ QueryReq msg = ServletAdapter.&lt;QueryReq&gt;read(req, jhelperReq, QueryReq.cla
 		return msg;
 	}
 
+	public static void write(HttpServletResponse resp, SemanticObject msg) throws IOException {
+		write(resp, msg, _opts);
+	}
+
 	public static void write(HttpServletResponse resp, 
-				SemanticObject msg) throws IOException {
+				SemanticObject msg, JOpts opts) throws IOException {
 		resp.setCharacterEncoding("UTF-8");
 		resp.setContentType("application/json");
 		OutputStream os = resp.getOutputStream();
 		
 		try {
-			JHelper.writeJsonResp(os, msg);
+			JHelper.writeJsonResp(os, msg, opts);
 		} catch (SemanticException e) {
 			e.printStackTrace();
 		}

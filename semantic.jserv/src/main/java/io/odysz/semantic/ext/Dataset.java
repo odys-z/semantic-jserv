@@ -13,10 +13,12 @@ import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
@@ -42,6 +44,9 @@ public class Dataset extends HttpServlet {
 	protected static Transcxt st;
 
 	protected static JHelper<DatasetReq> jhelperReq;
+	
+	static IPort p = Port.dataset;
+	static JOpts _opts = new JOpts();
 
 	static {
 		st = JSingleton.defltScxt;
@@ -92,17 +97,17 @@ public class Dataset extends HttpServlet {
 			
 			SemanticObject rs = dataset(conn, msg);
 
-			ServletAdapter.write(resp, rs);
+			ServletAdapter.write(resp, rs, msg.opts());
 		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(Port.dataset, MsgCode.exSemantic, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
 			e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.dataset, MsgCode.exTransct, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Port.dataset, MsgCode.exGeneral, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exGeneral, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}

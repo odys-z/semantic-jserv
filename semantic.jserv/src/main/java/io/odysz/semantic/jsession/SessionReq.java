@@ -10,6 +10,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JOpts;
 
 public class SessionReq extends JBody {
 	/**
@@ -54,7 +55,7 @@ public class SessionReq extends JBody {
 	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException {
 		writer.beginObject();
 		writer.name("a").value(a);
 		writer.name("uid").value(uid);

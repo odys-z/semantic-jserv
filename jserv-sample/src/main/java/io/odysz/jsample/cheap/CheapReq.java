@@ -10,6 +10,7 @@ import com.google.gson.stream.JsonWriter;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jserv.R.QueryReq;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.sworkflow.EnginDesign.Req;
@@ -52,7 +53,7 @@ public class CheapReq extends JBody {
 	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException, SemanticException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
 		writer.beginObject();
 		writer.name("conn").value(conn);
 		writer.name("a").value(a);
@@ -62,15 +63,15 @@ public class CheapReq extends JBody {
 
 		if (taskNvs != null) {
 			writer.name("taskNvs");
-			JHelper.writeLst(writer, taskNvs);
+			JHelper.writeLst(writer, taskNvs, opts);
 		}
 		if (childInserts != null) {
 			writer.name("childInserts");
-			JHelper.writeLst(writer, childInserts);
+			JHelper.writeLst(writer, childInserts, opts);
 		}
 		if (cmdArgs != null) {
 			writer.name("cmdArgs");
-			JHelper.writeStrings(writer, cmdArgs);
+			JHelper.writeStrings(writer, cmdArgs, opts);
 		}
 		writer.endObject();
 	}

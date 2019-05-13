@@ -37,7 +37,7 @@ public class Echo extends HttpServlet {
 			resp.setCharacterEncoding("UTF-8");
 
 			JMessage<EchoReq> msg = ServletAdapter.<EchoReq>read(req, jhelperReq, EchoReq.class);
-			ServletAdapter.write(resp, new SemanticObject().put("echo", msg.toStringEx()));
+			ServletAdapter.write(resp, new SemanticObject().put("echo", msg.toStringEx()), msg.opts());
 			resp.flushBuffer();
 		} catch (SemanticException | IOException | ReflectiveOperationException e) {
 			ServletAdapter.write(resp, JProtocol.err(Port.echo, MsgCode.exGeneral, e.getMessage()));

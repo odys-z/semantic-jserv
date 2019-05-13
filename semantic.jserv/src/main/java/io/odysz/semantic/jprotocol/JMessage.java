@@ -120,11 +120,16 @@ public class JMessage <T extends JBody> {
 	}
 	
 	JHeader header;
-
 	public JHeader header() { return header; }
 	public JMessage<T> header(JHeader header) {
 		this.header = header;
 		return this;
+	}
+	
+	JOpts opts;
+	public void opts(JOpts readOpts) { this.opts = readOpts; }
+	public JOpts opts() {
+		return opts == null ? new JOpts() : opts;
 	}
 
 	public JMessage<T> body(List<T> bodyItems) {
@@ -134,7 +139,6 @@ public class JMessage <T extends JBody> {
 
 	@Override
 	public String toString() {
-		// return gson.toJson(this, this.getClass());
 		return toStringEx();
 	}
 

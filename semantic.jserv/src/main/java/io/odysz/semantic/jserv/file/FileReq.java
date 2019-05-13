@@ -8,6 +8,7 @@ import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantics.x.SemanticException;
 
 public class FileReq extends JBody {
@@ -35,7 +36,7 @@ public class FileReq extends JBody {
 //	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException {
 		writer.beginObject();
 		writer.name("file").value(conn);
 		writer.name("a").value(a);
@@ -44,8 +45,12 @@ public class FileReq extends JBody {
 		writer.name("payload");
 		if (payload != null)
 			writer.value(payload);
-		else
-			writer.nullValue();
+		else {
+			if (opts.noNull)
+				writer.value("");
+			else
+				writer.nullValue();
+		}
 	}
 
 	@Override

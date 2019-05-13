@@ -11,6 +11,7 @@ import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantics.x.SemanticException;
 
 /**A stub for user's message body extension - subclassing {@link JBody}.
@@ -27,7 +28,7 @@ public class UserReq extends JBody {
 	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException, SemanticException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
 		writer.beginObject()
 			.name("conn").value(conn)
 			.name("a").value(a)
@@ -37,7 +38,7 @@ public class UserReq extends JBody {
 		
 		if (data != null) {
 			writer.name("data");
-			JHelper.writeMap(writer, data);
+			JHelper.writeMap(writer, data, opts);
 		}
 		
 		writer.endObject();
