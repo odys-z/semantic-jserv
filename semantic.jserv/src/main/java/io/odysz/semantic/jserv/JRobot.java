@@ -7,6 +7,10 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.x.TransException;
 
+/**This robot is only used for test.
+ * If you are implementin a servlet without login, subclassing a {@link io.odysz.semantic.jserv.jsession.JUser JUser} instead.
+ * @author odys-z@github.com
+ */
 public class JRobot implements IUser {
 
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return sqls; }

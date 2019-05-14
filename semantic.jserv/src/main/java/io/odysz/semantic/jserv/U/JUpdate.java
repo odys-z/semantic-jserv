@@ -142,11 +142,16 @@ public class JUpdate extends HttpServlet {
 	 * @return predicates[[logic, n, v], ...]
 	 */
 	static ArrayList<String[]> tolerateNv(ArrayList<String[]> where) {
-		if (where != null)
+		if (where != null) {
 			for (int ix = 0; ix < where.size(); ix++) {
 				String[] nv = where.get(ix);
 				if (nv != null && nv.length == 2) {
 					String v = nv[Ix.nvv];
+					if (v == null) {
+						// client has done something wrong
+						where.set(ix, null); // not remove(), because it's still iterating
+						continue;
+					}
 
 					// v can be large, performance can be improved
 					if (v.startsWith("'"))
@@ -155,6 +160,9 @@ public class JUpdate extends HttpServlet {
 						where.set(ix, new String[] {"=", nv[Ix.nvn], "'" + v + "'"});
 				}
 			}
+			where.removeIf(m -> m == null);
+		}
+
 		return where;
 	}
 

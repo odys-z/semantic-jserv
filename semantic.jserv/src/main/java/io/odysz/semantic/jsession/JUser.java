@@ -1,38 +1,35 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
-
-import org.apache.commons.io.FilenameUtils;
-import org.xml.sax.SAXException;
 
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
+import io.odysz.common.LangExt;
 import io.odysz.common.Radix64;
+import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
-import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
-import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
-import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
-/**<p>Session user object.</p>
- * This object is usually created when user logged in,
- * and is used for semantics processing like finger print, etc.
+/**<p>IUser implementation supporting session.</p>
+ * <p>This object is usually created when user logged in,
+ * and is used for semantics processing like finger print, etc.</p>
+ * <p>The logging connection is configured in configs.xml/k=log-connId.</p>
+ * <p>A subclass can be used for handling serv without login.</p>
+ * 
+ * TODO provide a sample case in sample.jserv.
  * 
  * @author odys-z@github.com
- *
  */
-class JUser extends SemanticObject implements IUser {
+public class JUser extends SemanticObject implements IUser {
 	protected String ssid;
 	protected String uid;
 	private String pswd;
@@ -45,16 +42,12 @@ class JUser extends SemanticObject implements IUser {
 
 	private static DATranscxt logsctx;
 	static {
-		// String conn = "local-sqlite";
 		String conn = Configs.getCfg("log-connId");
+		if (LangExt.isblank(conn))
+			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
 		try {
-			// TODO This is a typical initializing, should moved to subclass of JSingleton.
-			DATranscxt.initConfigs(conn, FilenameUtils.concat(JSingleton.rootINF(), "semantic-log.xml"));
-
-			HashMap<String, TableMeta> metas = Connects.loadMeta(conn);
-
-			logsctx = new DATranscxt(conn, metas);
-		} catch (SAXException | IOException | SemanticException | SQLException e) {
+			logsctx = new DATranscxt(conn);
+		} catch (SemanticException e) {
 			e.printStackTrace();
 		}
 	}
