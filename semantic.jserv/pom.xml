@@ -60,7 +60,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.DA</artifactId>
-	    <version>0.3.0-SNAPSHOT</version>
+	    <version>0.9.0-SNAPSHOT</version>
 	</dependency>
 
    	<dependency>
