@@ -46,14 +46,14 @@ public class DatasetReqTest {
 		JHelper.writeJsonReq(os, req);
 		String json = os.toString();
 		os.close();
-		Utils.logi(json);
-		assertTrue(json.startsWith("{\n"));
+//		Utils.logi(json);
+		assertTrue(json.startsWith("{\n  \"port\": \"dataset\","));
 
 		InputStream in = new ByteArrayInputStream(json.getBytes());
 		JMessage<DatasetReq> resp = jreqDs.readJson(in, DatasetReq.class);
 		json = resp.toString();
-		Utils.logi(json);
-		assertTrue(json.startsWith("{\n"));
+//		Utils.logi(json);
+		assertTrue(json.startsWith("{gson, \n"));
 
 		assertEquals(Port.dataset, resp.port());
 		assertEquals(req.t, resp.t);

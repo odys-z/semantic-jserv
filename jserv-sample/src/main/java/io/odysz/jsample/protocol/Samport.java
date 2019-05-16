@@ -9,7 +9,9 @@ public enum Samport implements IPort {
 	/**port provided by {@link io.odysz.jsample.SysMenu} */
 	menu("menu.sample"),
 	/**workflow port, see {@link io.odysz.sworkflow.CheapEngin} */
-	cheapflow("cheapflow.sample"); 
+	cheapflow("cheapflow.sample"), 
+	/** sample servlet tools.serv */
+	tools("tools.serv");
 
 	private String url;
 	Samport(String v) { url = v; };
