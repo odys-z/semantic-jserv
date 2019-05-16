@@ -257,7 +257,7 @@ public class JHelper<T extends JBody> {
 		return obj;
 	}
 
-	private static SemanticObject readSemanticObj(JsonReader reader) throws IOException, SemanticException {
+	public static SemanticObject readSemanticObj(JsonReader reader) throws IOException, SemanticException {
 		SemanticObject obj = new SemanticObject();
 		reader.beginObject();
 
@@ -301,27 +301,45 @@ public class JHelper<T extends JBody> {
 		return obj;
 	}
 
-	public static HashMap<String, String> readMap(JsonReader reader) throws IOException {
-		reader.beginArray();
+	public static HashMap<String, Object> readMap(JsonReader reader) throws IOException, SemanticException {
+		// reader.beginArray();
+		reader.beginObject();
 
-		HashMap<String, String> m = new HashMap<String, String>();
+		HashMap<String, Object> m = new HashMap<String, Object>();
 
 		JsonToken tk = reader.peek();
 		// error tolerating is necessary?
 		if (tk == JsonToken.END_DOCUMENT)
 			return m;
 
-		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
-			reader.beginObject();
-			String n = reader.nextName();
-			String v = reader.nextString();
-			m.put(n, v);
-			reader.endObject();
+		// while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
+		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_OBJECT) {
+			// reader.beginObject();
 			tk = reader.peek();
+			if (tk == JsonToken.NAME) {
+				String n = reader.nextName();
+				tk = reader.peek();
+				Object v = null;
+				if (tk == JsonToken.BEGIN_ARRAY)
+					v = readLstStrs(reader);
+				else if (tk == JsonToken.BEGIN_OBJECT)
+					v = readSemanticObj(reader);
+				if (tk == JsonToken.STRING)
+					v = reader.nextString();
+				else
+					throw new SemanticException("Parsing Json failed. Trying reading data, but can't understand token here: %s : %s",
+							reader.getPath(), tk);
+				m.put(n, v);
+			}
+//			reader.endObject();
+//			tk = reader.peek();
 		}
 
-		if (tk == JsonToken.END_ARRAY)
-			reader.endArray();
+//		if (tk == JsonToken.END_ARRAY)
+//			reader.endArray();
+		if (tk == JsonToken.END_OBJECT)
+			reader.endObject();
+
 
 		return m;
 	}
@@ -357,6 +375,7 @@ public class JHelper<T extends JBody> {
 			else {
 				String[] rs = readStrs(reader);
 				lst.add(rs);
+				return lst; // 2019.05.15 - another proof of needing anson
 			}
 			tk = reader.peek();
 		}

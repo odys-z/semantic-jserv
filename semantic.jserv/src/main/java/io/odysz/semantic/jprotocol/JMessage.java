@@ -108,10 +108,11 @@ public class JMessage <T extends JBody> {
 	public List<T> body() { return body; }
 
 	@SuppressWarnings("unchecked")
-	public void body(JBody bodyItem) {
+	public JMessage<T> body(JBody bodyItem) {
 		if (body == null)
 			body = new ArrayList<T>();
 		body.add((T)bodyItem);
+		return this;
 	}
 
 	public JMessage<T> incSeq() {
@@ -151,6 +152,8 @@ public class JMessage <T extends JBody> {
 			.filter(m -> !m.getName().startsWith("this$"))
 			.map(m -> {
 				try {
+					if ("gson".equals(m.getName()))
+						return "gson";
 					Class<?> t = m.getType();
 					if (m.get(this) == null)
 						return String.format(pairPrmv, m.getName(), "null");

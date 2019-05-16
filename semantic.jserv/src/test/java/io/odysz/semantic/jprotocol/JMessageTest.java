@@ -1,8 +1,9 @@
 package io.odysz.semantic.jprotocol;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 
-import io.odysz.common.Utils;
 import io.odysz.semantic.ext.DatasetReq;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 
@@ -25,7 +26,8 @@ public class JMessageTest {
 
 		jmsg.header(header);
 
-		Utils.logi(jmsg.toStringEx());
+		// Utils.logi(jmsg.toStringEx());
+		assertEquals("test-conn", jmsg.body(0).conn);
 	}
 
 }

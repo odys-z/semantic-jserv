@@ -48,7 +48,7 @@ public class QueryReq extends JBody {
 	
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
-	ArrayList<String[]> groups;
+	String[] groups;
 
 	protected int page;
 	protected int pgsize;
@@ -239,7 +239,6 @@ public class QueryReq extends JBody {
 		else if ("orders".equals(name))
 			orders = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		else if ("groups".equals(name))
-			groups = (ArrayList<String[]>) JHelper.readLstStrs(reader);
-		// TODO ...
+			groups = JHelper.readStrs(reader);
 	}
 }

@@ -148,10 +148,9 @@ public class JQuery extends HttpServlet {
 							(String)cond[Ix.predicateR]);
 		}
 		// TODO: GROUP
+		selct.groupby(msg.groups);
 		// ORDER BY
-		if (msg.orders != null && msg.orders.size() > 0) {
-			selct.orderbys(msg.orders);
-		}
+		selct.orderby(msg.orders);
 		/*
 		selct.commit(sqls);
 		
