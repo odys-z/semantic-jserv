@@ -11,6 +11,8 @@ import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JOpts;
+import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
 /**A stub for user's message body extension - subclassing {@link JBody}.
@@ -18,26 +20,46 @@ import io.odysz.semantics.x.SemanticException;
  *
  */
 public class UserReq extends JBody {
-	private String t;
 	private String code;
-	private HashMap<String, ?> data;
+	// private HashMap<String, Object> data;
+	private SemanticObject data;
+	public UserReq data(String k, Object v) {
+		if (k == null) return this;
+
+		if (data == null)
+			data = new SemanticObject();
+		data.put(k, v);
+		return this;
+	}
+
+	public Object data(String k) {
+		return data == null ? null : data.get(k);
+	}
+
+	String tabl;
+	public String tabl() { return tabl; }
 
 	public UserReq(JMessage<? extends JBody> parent, String conn) {
 		super(parent, conn);
 	}
+	
+	public Object get(String prop) {
+		return data == null ? null : data.get(prop);
+	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException, SemanticException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
 		writer.beginObject()
 			.name("conn").value(conn)
 			.name("a").value(a)
 			.name("code").value(code)
 			.name("port").value(Port.user.name())
-			.name("t").value(t);
+			.name("tabl").value(tabl);
 		
 		if (data != null) {
 			writer.name("data");
-			JHelper.writeMap(writer, data);
+			// JHelper.writeMap(writer, data, opts);
+			JHelper.writeMap(writer, data.props(), opts);
 		}
 		
 		writer.endObject();
@@ -55,15 +77,17 @@ public class UserReq extends JBody {
 					a = JHelper.nextString(reader);
 				else if ("conn".equals(name))
 					conn = JHelper.nextString(reader);
-				else if ("t".equals(name))
-					t = JHelper.nextString(reader);
 				else if ("code".equals(name))
 					code = JHelper.nextString(reader);
 				else if ("port".equals(name))
 					// must be Port.user, drop it
 					JHelper.nextString(reader);
-				else if ("data".equals(name))
-					data = JHelper.readMap(reader);
+				else if ("tabl".equals(name))
+					tabl = JHelper.nextString(reader);
+				else if ("data".equals(name)) {
+					// HashMap<String, Object> v = JHelper.readMap(reader);
+					data = JHelper.readSemanticObj(reader);
+				}
 
 				token = reader.peek();
 			}

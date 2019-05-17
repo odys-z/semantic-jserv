@@ -87,7 +87,9 @@ public class JQuery extends HttpServlet {
 			IUser usr = verifier.verify(msg.header());
 			SemanticObject rs = query(msg.body(0), usr);
 
-			ServletAdapter.write(resp, rs);
+			ServletAdapter.write(resp, rs, msg.opts());
+		} catch (SsException e) {
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -146,7 +148,9 @@ public class JQuery extends HttpServlet {
 							(String)cond[Ix.predicateR]);
 		}
 		// TODO: GROUP
-		// TODO: ORDER
+		selct.groupby(msg.groups);
+		// ORDER BY
+		selct.orderby(msg.orders);
 		/*
 		selct.commit(sqls);
 		

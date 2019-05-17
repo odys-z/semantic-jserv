@@ -50,7 +50,7 @@ public class UpdateReqTest {
 		JMessage<UpdateReq> resp = jreqUpd.readJson(in, UpdateReq.class);
 		json = resp.toString();
 		Utils.logi(json);
-		assertTrue(json.startsWith("{\n"));
+		assertTrue(json.startsWith("{gson, \n"));
 
 		assertEquals(Port.update, resp.port());
 		assertEquals(msg.t, resp.t);
@@ -97,7 +97,7 @@ public class UpdateReqTest {
 		JMessage<UpdateReq> resp = jreqUpd.readJson(in, UpdateReq.class);
 		json = resp.toString();
 		Utils.logi(json);
-		assertTrue(json.startsWith("{\n"));
+		assertTrue(json.startsWith("{gson, \n"));
 
 		UpdateReq bd = resp.body(0);
 		assertEquals("U", bd.a()); // not printed by JBbody.toString()

@@ -8,6 +8,7 @@ import com.google.gson.stream.JsonWriter;
 
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JOpts;
 
 public class EchoReq extends JBody {
 
@@ -16,7 +17,7 @@ public class EchoReq extends JBody {
 	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException {
 		writer.beginObject();
 		writer.name("echo").value("ping");
 		writer.endObject();

@@ -53,8 +53,8 @@ public class QueryReqTest {
 		InputStream in = new ByteArrayInputStream(json.getBytes());
 		JMessage<QueryReq> resp = jreqQuery.readJson(in, QueryReq.class);
 		json = resp.toString();
-		Utils.logi(json);
-		assertTrue(json.startsWith("{\n"));
+//		Utils.logi(json);
+		assertTrue(json.startsWith("{gson, \n"));
 
 		assertEquals(Port.query, resp.port());
 		assertEquals(req.t, resp.t);
