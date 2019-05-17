@@ -14,6 +14,8 @@ import org.xml.sax.SAXException;
 import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
+import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
@@ -60,6 +62,7 @@ public class CheapServ extends JUpdate {
 	}
 
 	private static final long serialVersionUID = 1L;
+	private static final String cheapConn = Connects.defltConn();
 	private static IPort p;
 
 	protected static JHelper<CheapReq> jcheapReq;
@@ -92,7 +95,8 @@ public class CheapServ extends JUpdate {
 			String t = req.getParameter("t");
 			if ("reload-cheap".equals(t)) {
 				try {
-					CheapEngin.initCheap(FilenameUtils.concat(JSingleton.rootINF(), CheapEngin.confpath), null);
+					CheapEngin.initCheap(FilenameUtils.concat(JSingleton.rootINF(), CheapEngin.confpath),
+							DATranscxt.meta(cheapConn), null);
 					resp.getWriter().write(Html.ok("cheap reloaded"));
 				} catch (SAXException e) {
 					e.printStackTrace();

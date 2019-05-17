@@ -43,7 +43,7 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 			ICheapChecker checker = null; // TODO
 
 			relapath = Configs.getCfg("cheap", "config-path");
-			CheapEngin.initCheap(getFileInfPath(relapath), checker);
+			CheapEngin.initCheap(getFileInfPath(relapath), DATranscxt.meta(relapath), checker);
 		} catch (IOException e) {
 			Utils.warn("%s: %s\nCheck Config.xml:\ntable=cheap\nk=config-path\nv=%s",
 					e.getClass().getName(), e.getMessage(), relapath);
