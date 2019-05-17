@@ -26,9 +26,7 @@
   		<smtc>ck-cnt-del</smtc>
   		<tabl>a_roles</tabl>
   		<pk>roleId</pk>
-  		<args>a_rolefunc,
-  		select count(*) cnt from a_role_func where roleId = '%s'
-  		,cnt</args>
+  		<args>funcId,a_role_func,roleId</args>
   	</s>
 
 	<!-- User.log() don't use this configure file, but should be OK - never used -->
@@ -49,7 +47,7 @@
   		<args>pwd,'12345678'</args>
   	</s>
   	
-  	<!-- 报销auto-key -->
+  	<!-- Expense auto-key -->
   	<s>
   		<id>expense.key</id>
   		<smtc>auto</smtc>
@@ -58,7 +56,7 @@
   		<args>expenseId</args>
   	</s>
   	
-  	<!-- 报销添加人、添加时间 -->
+  	<!-- Expense fingerprint -->
   	<s>
   		<id>expense_o_t</id>
   		<smtc>o-t</smtc>
@@ -67,7 +65,7 @@
   		<args>addUser,addDate</args>
   	</s>
   	
-  	<!-- 删除报销同时删除报销明细 -->
+  	<!-- delete expense children -->
   	<s>
   	   <id>expense_expensedetail_del</id>
   		<smtc>pc-del-all</smtc>
@@ -83,7 +81,7 @@
   		<pk>expenseItem</pk>
   		<args>expenseAccount,0</args>
   	</s>
-  	<!-- 报销 明细外键r_expensedetail fk-->
+  	<!-- children fk to expense -->
   	<s>
   		<id>expensedetail.fkey</id>
   		<smtc>fk</smtc>
