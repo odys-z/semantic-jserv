@@ -14,6 +14,7 @@ import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;
 
@@ -99,38 +100,37 @@ public class UpdateReq extends JBody {
 	}
 	
 	@Override
-	public void toJson(JsonWriter writer) throws IOException, SemanticException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
 		writer.beginObject();
 		// design notes: keep consists with QueryReq
 		writer.name("conn").value(conn)
 			.name("a").value(a)
-//			.name("mAlias").value(mAlias)
 			.name("mtabl").value(mtabl) ;
 
 		if (where != null) {
 			writer.name("where");
-			JHelper.writeLst(writer, where);
+			JHelper.writeLst(writer, where, opts);
 		}
 		if (nvs != null) {
 			writer.name("nvs");
-			JHelper.writeLst(writer, nvs);
+			JHelper.writeLst(writer, nvs, opts);
 		}
 		if (postUpds != null) {
 			writer.name("postUpds")
 				.beginArray();
 			for (UpdateReq post : postUpds)
-				post.toJson(writer);
+				post.toJson(writer, opts);
 			writer.endArray();
 		}
 
 		// for insert only
 		if (nvss != null) {
 			writer.name("nvss");
-			JHelper.writeLst(writer, nvss);
+			JHelper.writeLst(writer, nvss, opts);
 		}
 		if (cols != null) {
 			writer.name("cols");
-			JHelper.writeStrings(writer, cols);
+			JHelper.writeStrings(writer, cols, opts);
 		}
 		
 		writer.endObject();

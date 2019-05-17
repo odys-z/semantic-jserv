@@ -257,9 +257,10 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 						lock.lock();
 						users.put(login.sessionId(), login);
 						lock.unlock();
-						ServletAdapter.write(response, JProtocol.ok(Port.session, (SemanticObject)login));
+						ServletAdapter.write(response, JProtocol.ok(Port.session, (SemanticObject)login),
+								payload.opts());
 					}
-					else throw new SsException("passwords not matching - pswd = encrypt(uid, pswd, iv)");
+					else throw new SsException("Password doesn't matching! Expecting token encrypt(uid, pswd, iv)");
 				}
 				else if ("logout".equals(a)) {
 					JHeader header = payload.header();
@@ -274,11 +275,13 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	
 					if (usr != null) {
 						SemanticObject resp = usr.logout();
-						ServletAdapter.write(response, JProtocol.ok(Port.session, resp));
+						ServletAdapter.write(response, JProtocol.ok(Port.session, resp),
+								payload.opts());
 					}
 					else
 						ServletAdapter.write(response, JProtocol.ok(Port.session,
-								new SemanticObject().put("msg", "But no such session exists.")));
+								new SemanticObject().put("msg", "But no such session exists.")),
+								payload.opts());
 				}
 				else {
 					String t = req.getParameter("t");
@@ -286,7 +289,8 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 					if ("ping".equals(t) || "touch".equals(t)) {
 						JHeader header = payload.header();
 						verify(header);
-						ServletAdapter.write(response, JProtocol.ok(Port.session, ""));
+						ServletAdapter.write(response, JProtocol.ok(Port.session, ""),
+								payload.opts());
 					}
 					else throw new SsException ("Session Request not supported: a=%s", a);
 				}

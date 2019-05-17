@@ -127,7 +127,7 @@ public class SemanticTree extends JQuery {
 				}
 			}
 
-			ServletAdapter.write(resp, r);
+			ServletAdapter.write(resp, r, jmsg.opts());
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {

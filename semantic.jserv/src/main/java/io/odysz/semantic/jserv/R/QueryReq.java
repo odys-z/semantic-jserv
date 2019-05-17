@@ -10,6 +10,7 @@ import com.google.gson.stream.JsonWriter;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
@@ -47,7 +48,7 @@ public class QueryReq extends JBody {
 	
 	/**group: [group-obj]
      - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
-	ArrayList<String[]> groups;
+	String[] groups;
 
 	protected int page;
 	protected int pgsize;
@@ -162,7 +163,7 @@ public class QueryReq extends JBody {
 	}
 
 	@Override
-	public void toJson(JsonWriter writer) throws IOException, SemanticException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
 		writer.beginObject();
 		// design notes: keep consists with UpdateReq
 		writer.name("conn").value(conn)
@@ -174,22 +175,22 @@ public class QueryReq extends JBody {
 
 		if (exprs != null) {
 			writer.name("exprs");
-			JHelper.writeLst(writer, exprs);
+			JHelper.writeLst(writer, exprs, opts);
 		}
 		else 
 			writer.name("exprs").value("*");
 
 		if (joins != null) {
 			writer.name("joins");
-			JHelper.writeLst(writer, joins);
+			JHelper.writeLst(writer, joins, opts);
 		}
 		if (where != null) {
 			writer.name("where");
-			JHelper.writeLst(writer, where);
+			JHelper.writeLst(writer, where, opts);
 		}
 		if (orders != null) {
 			writer.name("orders");
-			JHelper.writeLst(writer, orders);
+			JHelper.writeLst(writer, orders, opts);
 		}
 
 		writer.endObject();
@@ -238,7 +239,6 @@ public class QueryReq extends JBody {
 		else if ("orders".equals(name))
 			orders = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		else if ("groups".equals(name))
-			groups = (ArrayList<String[]>) JHelper.readLstStrs(reader);
-		// TODO ...
+			groups = JHelper.readStrs(reader);
 	}
 }
