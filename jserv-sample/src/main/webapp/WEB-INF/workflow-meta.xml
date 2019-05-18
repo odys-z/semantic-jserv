@@ -49,15 +49,17 @@
 		Note: for a start command, task-id is null. If you are checking task-id on a starting node, that's a semantic error.
 	 -->
 	<s>
-		<!-- ds-allcmd is configured in oz_wfnodes.cmdRights
-			Tip: to make CheapEngin working more stable, keep at leas one rights configure rule, with sk = ds-allcmd.
+		<!-- ds-allcmd is configured in oz_workflow.rights
+			Tip: to make CheapEngin working more stable, keep at leats one rights configure rule, with sk = ds-allcmd.
 			CheapEngin will use this as default if the workflow configured nothing for a node rights.
 		-->
   		<sk>ds-allcmd</sk>
-  		<mysql>SELECT cmd, rightFilter from oz_wfcmds c join oz_wfnodes n
-  		on c.nodeId = n.nodeId and n.wfId = '%1$s' and n.nodeId = '%2$s'</mysql>
-  		<sqlit>SELECT cmd, rightFilter from oz_wfcmds c join oz_wfnodes n
-  		on c.nodeId = n.nodeId and n.wfId = '%1$s' and n.nodeId = '%2$s'</sqlit>
+  		<mysql>select n.nodeId, nodeName, cmdRights, c.cmd, c.txt, r.roleId
+  		from oz_wfnodes n left outer join oz_wfcmds c on n.nodeId = c.nodeId and n.wfId = '%1$s'
+  		left outer join oz_wfrights r on c.cmd = r.cmd and r.roleId = '%2$s';</mysql>
+  		<sqlite>select n.nodeId, nodeName, cmdRights, c.cmd, c.txt, r.roleId
+  		from oz_wfnodes n left outer join oz_wfcmds c on n.nodeId = c.nodeId and n.wfId = '%1$s'
+  		left outer join oz_wfrights r on c.cmd = r.cmd and r.roleId = '%2$s';</sqlite>
 	</s>
 
 	<s>
