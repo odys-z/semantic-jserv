@@ -48,9 +48,10 @@
   <t id="cheap" pk="k" columns="k,v">
 	<c> <k>config-path</k>
 	<!-- change this also need to change connection source in connects/xml
+		<v>../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml</v>
 		<v>../../../../../../../../../../../../../git/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml</v>
 	 -->
-		<v>../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-meta.xml</v>
+		<v>workflow-meta.xml</v>
 	</c>
   </t>
 </configs>
