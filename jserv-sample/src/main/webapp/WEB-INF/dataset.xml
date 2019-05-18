@@ -76,5 +76,11 @@
   		from a_sys_functions f left outer join a_role_funcs r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</mysql>
   		<s-tree>checked,a_functions,funcId value,parentId,fullpath,sort,funcName text,children,false</s-tree>
   	</c>
+  	
+  	<!-- workflow combobox -->
+  	<c> <sk>ezcbb-workflows</sk>
+  		<mysql>select wfId, wfName from oz_workflow</mysql>
+  		<sqlite></sqlite>
+  	</c>
 </t>
 </dataset>

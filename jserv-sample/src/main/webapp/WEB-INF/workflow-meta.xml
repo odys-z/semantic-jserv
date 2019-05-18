@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workflow>
   <t id="conn" pk="conn" columns="conn">
-  	<s> <conn>local-sqlite</conn> </s>
+  	<s> <conn>inet</conn> </s>
   </t>
 
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
