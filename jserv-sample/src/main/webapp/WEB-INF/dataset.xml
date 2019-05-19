@@ -84,14 +84,14 @@
   	</c>
   	<!-- get workflow tree. arg[0] wfId, [1] roleId -->
   	<c> <sk>wf-rights.tree</sk>
-  		<mysql>select false checked, n.nodeId, nodeName, n.nodeId cmd, '' txt, '' roleId, concat(n.wfId, '/', n.nodeId) fullpath, 0 sort, null parent
+  		<mysql>select false checked, n.nodeId, nodeName, n.nodeId value, nodeName text, '' roleId, concat(n.wfId, '/', n.nodeId) fullpath, 0 sort, wfId parent
   		from oz_wfnodes n where n.wfId = '%1$s'
   		union
-  		select r.roleId is not null checked, n.nodeId, nodeName, c.cmd, c.txt, r.roleId, concat(n.wfId, '/', n.nodeId, '/', ifnull(c.cmd, '')) fullpath, c.sort, n.nodeId parent
+  		select r.roleId is not null checked, n.nodeId, nodeName, c.cmd value, c.txt text, r.roleId, concat(n.wfId, '/', n.nodeId, '/', ifnull(c.cmd, '')) fullpath, c.sort, n.nodeId parent
   		from oz_wfnodes n left outer join oz_wfcmds c on n.nodeId = c.nodeId and n.wfId = '%1$s'
   		left outer join oz_wfrights r on c.cmd = r.cmd and r.roleId = '%2$s'
   		order by fullpath, sort</mysql>
-  		<s-tree>checked,oz_workflow,cmd value,parent,fullpath,sort,txt text,children,false</s-tree>
+  		<s-tree>checked,oz_workflow,value,parent,fullpath,sort,text,children,false</s-tree>
   	</c>
 </t>
 </dataset>
