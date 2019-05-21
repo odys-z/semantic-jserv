@@ -2,6 +2,7 @@ package io.odysz.jsample.cheap;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -30,8 +31,24 @@ public class CheapReq extends JBody {
 		return this;
 	}
 
-	protected String[] cmdArgs;
-	public String[] args() { return cmdArgs; }
+	protected HashMap<String,Object> cmdArgs;
+	public Object args(String n) { return cmdArgs == null ? null : cmdArgs.get(n); }
+
+	private CheapReq args(String n, String v) {
+		if (cmdArgs == null)
+			cmdArgs = new HashMap<String, Object>();
+		cmdArgs.put(n, v);
+		return this;
+	}
+	
+	public CheapReq taskId(String v) { return args("taskId", v); }
+	public String taskId() { return (String) args("taskId"); }
+	
+	public CheapReq nodeId(String v) { return args("nodeId", v); }
+	public String nodeId() { return (String) args("nodeId"); }
+	
+	public CheapReq usrId(String v) { return args("usrId", v); }
+	public String usrId() { return (String) args("usrId"); }
 
 	protected String ndescpt;
 	protected String childTbl;
@@ -71,7 +88,8 @@ public class CheapReq extends JBody {
 		}
 		if (cmdArgs != null) {
 			writer.name("cmdArgs");
-			JHelper.writeStrings(writer, cmdArgs, opts);
+			// JHelper.writeStrings(writer, cmdArgs, opts);
+			JHelper.writeMap(writer, cmdArgs, opts);
 		}
 		writer.endObject();
 	}
@@ -95,7 +113,8 @@ public class CheapReq extends JBody {
 				else if ("childTbl".equals(name))
 					childTbl = JHelper.nextString(reader);
 				else if ("cmdArgs".equals(name)) 
-					cmdArgs = JHelper.readStrs(reader);
+					// cmdArgs = JHelper.readStrs(reader);
+					cmdArgs = JHelper.readMap(reader);
 				else if ("taskNvs".equals(name)) 
 					taskNvs = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 				else if ("childInserts".equals(name)) 
@@ -160,8 +179,9 @@ public class CheapReq extends JBody {
 	 * @return the req object
 	 */
 	public CheapReq reqCmd(String cmd) {
-		this.cmdArgs = new String[] {cmd};
-		return req(Req.cmd);
+		// this.cmdArgs = new String[] {cmd};
+		// return req(Req.cmd);
+		return args("req", cmd);
 	}
 
 	/**Ask the node's right.
@@ -171,12 +191,17 @@ public class CheapReq extends JBody {
 	 * @return the req object
 	 */
 	public CheapReq cmdsRight(String nodeId, String usrId, String taskId) {
-		this.cmdArgs = new String[] {nodeId, usrId, taskId};
-		return req(Req.cmdsRight);
+		// this.cmdArgs = new String[] {nodeId, usrId, taskId};
+		nodeId(nodeId);
+		usrId(usrId);
+		taskId(taskId);
+		return req(Req.rights);
 	}
 
 	public CheapReq loadFlow(String wfId, String taskId) {
-		this.cmdArgs = new String[] {wfId, taskId};
+		// this.cmdArgs = new String[] {wfId, taskId};
+		this.wftype(wfId);
+		taskId(taskId);
 		return req(Req.load);
 	}
 }

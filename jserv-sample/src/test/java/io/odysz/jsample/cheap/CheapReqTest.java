@@ -53,7 +53,7 @@ public class CheapReqTest {
 		JMessage<CheapReq> resp = jreqCheap.readJson(in, CheapReq.class);
 		json = resp.toString();
 		Utils.logi(json);
-		assertTrue(json.startsWith("{\n"));
+		assertTrue(json.startsWith("{gson, \n"));
 
 		assertEquals(Samport.cheapflow, resp.port());
 		assertEquals(req.t, resp.t);
@@ -90,7 +90,7 @@ public class CheapReqTest {
 		Utils.logi(json);
 
 		CheapReq bd = resp.body(0);
-		assertEquals("n-01", bd.args()[0]);
+		assertEquals("n-01", bd.args("nodeId"));
 
 	}
 }
