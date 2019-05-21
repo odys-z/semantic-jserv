@@ -165,7 +165,7 @@ public class CheapServ extends JUpdate {
 			return start(jobj, usr);
 		else if (Req.cmd == req)
 			return cmd(jobj, usr);
-		else if (Req.cmdsRight == req) 
+		else if (Req.rights == req) 
 			return right(jobj, usr);
 		else if (Req.load == req) 
 			return loadFlow(jobj, usr);
@@ -173,14 +173,14 @@ public class CheapServ extends JUpdate {
 	}
 
 	private SemanticObject right(CheapReq jobj, IUser usr) throws SemanticException, SQLException {
-		String nid = jobj.args()[0];
-		String tid = jobj.args()[1];
+		String nid = jobj.nodeId();
+		String tid = jobj.taskId();
 		return CheapApi.right(jobj.wftype, usr.uid(), nid, tid);
 	}
 
 	private SemanticObject loadFlow(CheapReq jobj, IUser usr) throws SQLException, TransException {
-		String wfid = jobj.args()[0];
-		String tid = jobj.args()[1];
+		String wfid = jobj.wftype();
+		String tid = jobj.taskId();
 		return CheapApi.loadFlow(wfid, tid, usr.uid());
 	}
 	

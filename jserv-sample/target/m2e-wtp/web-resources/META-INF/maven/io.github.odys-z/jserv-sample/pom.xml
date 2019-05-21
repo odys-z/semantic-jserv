@@ -105,6 +105,13 @@
 			<version>3.2.2</version>
 			<configuration>
 				<useCache>true</useCache>
+				<attachClasses>true</attachClasses>
+				<!-- Also export jar classes.
+					jserv-sample is a web application, but the jclient.java needing the protocols.
+					Referencing a war need some tricks. see answer by Morteza Malvandi 
+					https://stackoverflow.com/questions/31020038/how-can-i-add-war-file-to-another-java-web-application-dependencies
+				-->
+                <classesClassifier>classes</classesClassifier>
 			</configuration>
 		</plugin>
 
