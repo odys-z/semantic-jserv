@@ -46,6 +46,7 @@
 		CheapEngin using 'sk' from oz_wfnodes.cmdRights to find user's rights.
 		sql values: [0] cmd-id (configured in oz_wfcmds.cmd), [1] cmd-flags;
 		args: [%1$s] wfid, [%2$s] node-id, [%3$s] user-id, [%4$s] task-id
+		columns: command-id, command-text
 		Note: for a start command, task-id is null. If you are checking task-id on a starting node, that's a semantic error.
 	 -->
 	<s>
@@ -53,13 +54,26 @@
 			Tip: to make CheapEngin working more stable, keep at leats one rights configure rule, with sk = ds-allcmd.
 			CheapEngin will use this as default if the workflow configured nothing for a node rights.
 		-->
-  		<sk>ds-allcmd</sk>
-  		<mysql>select n.nodeId, nodeName, cmdRights, c.cmd, c.txt, r.roleId
+  		<sk>ds-allcmd-backup</sk>
+  		<mysql>select c.cmd, c.txt, n.nodeId, nodeName, cmdRights, r.roleId
   		from oz_wfnodes n left outer join oz_wfcmds c on n.nodeId = c.nodeId and n.wfId = '%1$s'
   		left outer join oz_wfrights r on c.cmd = r.cmd and r.roleId = '%2$s';</mysql>
-  		<sqlite>select n.nodeId, nodeName, cmdRights, c.cmd, c.txt, r.roleId
+  		<sqlite>select c.cmd, c.txt, n.nodeId, nodeName, cmdRights, r.roleId
   		from oz_wfnodes n left outer join oz_wfcmds c on n.nodeId = c.nodeId and n.wfId = '%1$s'
   		left outer join oz_wfrights r on c.cmd = r.cmd and r.roleId = '%2$s';</sqlite>
+	</s>
+	
+	<!-- semantics: oz_wfrights is a relationship table linking to roles, oz_wfcmds,
+		roleId is the user's role when he/she has rights to commit the command -->
+	<s>
+		<sk>ds-allcmd</sk>
+		<mysql>select c.cmd, c.txt from oz_wfrights r
+			join a_user u on u.userId = '%3$s'
+			join oz_wfcmds c on r.cmd = c.cmd and r.roleId = u.roleId and r.wfId = '%1$s' and r.nodeId = '%2$s'
+		</mysql>
+		<sqlite>select c.cmd, c.txt from task_rights r join oz_wfcmds c
+			on r.roleId = '%3$s' and r.cmdFilter = c.cmd and r.wfId = '%1$s' and r.nodeId = '%2$s'
+		</sqlite>
 	</s>
 
 	<s>

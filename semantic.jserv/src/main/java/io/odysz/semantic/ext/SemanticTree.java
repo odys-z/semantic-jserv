@@ -185,7 +185,7 @@ public class SemanticTree extends JQuery {
 		SemanticObject rs = query((QueryReq)jobj, usr);
 		List<SemanticObject> resp = null;
 		if (rs != null)
-			resp = DatasetCfg.buildForest((SResultset) rs.get("rs"), treeSmtcs);
+			resp = DatasetCfg.buildForest((SResultset) ((SemanticObject)rs.data()).rs(0), treeSmtcs);
 		return JProtocol.ok(p, resp);
 	}
 
