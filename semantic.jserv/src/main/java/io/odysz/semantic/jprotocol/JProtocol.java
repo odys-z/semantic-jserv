@@ -36,8 +36,12 @@ public class JProtocol {
 	public static Gson gson = new Gson();
 	
 	public static SemanticObject err(IPort port, MsgCode code, String err) {
+		return err (port, code.name(), err);
+	}
+
+	public static SemanticObject err(IPort port, String code, String err) {
 		SemanticObject obj = new SemanticObject();
-		obj.put("code", code.name());
+		obj.put("code", code);
 		obj.put("error", err);
 		obj.put("port", port.name());
 		return obj;

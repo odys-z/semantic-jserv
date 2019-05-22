@@ -108,6 +108,9 @@ public class CheapReq extends JBody {
 					conn = JHelper.nextString(reader);
 				else if ("wftype".equals(name))
 					wftype = JHelper.nextString(reader);
+				else if ("port".equals(name))
+					// tolerate client redundant
+					JHelper.nextString(reader);
 				else if ("ndescpt".equals(name))
 					ndescpt = JHelper.nextString(reader);
 				else if ("childTbl".equals(name))

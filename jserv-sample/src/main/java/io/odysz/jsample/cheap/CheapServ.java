@@ -139,6 +139,8 @@ public class CheapServ extends JUpdate {
 			SemanticObject cheap = handle(Req.parse(a), jreq, usr);
 			SemanticObject rs = JProtocol.ok(p, cheap);
 			ServletAdapter.write(resp, rs);
+		} catch (CheapException e) {
+			ServletAdapter.write(resp, JProtocol.err(p, e.code(), e.getMessage()));
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {
@@ -169,7 +171,7 @@ public class CheapServ extends JUpdate {
 			return right(jobj, usr);
 		else if (Req.load == req) 
 			return loadFlow(jobj, usr);
-		else throw new CheapException("t can not handlered: %s", req);
+		else throw new CheapException("Req(body.a) can been not handled: %s", req);
 	}
 
 	private SemanticObject right(CheapReq jobj, IUser usr) throws SemanticException, SQLException {
@@ -191,7 +193,7 @@ public class CheapServ extends JUpdate {
 		Update postups = null;
 		SemanticObject res = CheapApi.start(jobj.wftype)
 				.nodeDesc(jobj.ndescpt)
-				.taskNv("remarks", "testing")
+				.taskNv(jobj.taskNvs)
 				.taskChildMulti("task_details", null, inserts)
 				.postupdates(postups)
 				.commit(usr.logAct("Start Flow " + jobj.wftype, "cheap.start"));
