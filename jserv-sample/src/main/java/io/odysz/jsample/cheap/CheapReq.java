@@ -41,14 +41,17 @@ public class CheapReq extends JBody {
 		return this;
 	}
 	
-	public CheapReq taskId(String v) { return args("taskId", v); }
+	public CheapReq taskId(String tid) { return args("taskId", tid); }
 	public String taskId() { return (String) args("taskId"); }
 	
-	public CheapReq nodeId(String v) { return args("nodeId", v); }
+	public CheapReq nodeId(String nid) { return args("nodeId", nid); }
 	public String nodeId() { return (String) args("nodeId"); }
 	
-	public CheapReq usrId(String v) { return args("usrId", v); }
+	public CheapReq usrId(String uid) { return args("usrId", uid); }
 	public String usrId() { return (String) args("usrId"); }
+
+	public CheapReq instId(String iid) { return args("instId", iid); }
+	public String instId() { return (String) args("instId"); }
 
 	protected String ndescpt;
 	protected String childTbl;
