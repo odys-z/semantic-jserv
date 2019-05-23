@@ -171,6 +171,8 @@ public class CheapServ extends JUpdate {
 			return right(jobj, usr);
 		else if (Req.load == req) 
 			return loadFlow(jobj, usr);
+		else if (Req.nodeCmds == req) 
+			return loadCmds(jobj, usr);
 		else throw new CheapException("Req(body.a) can been not handled: %s", req);
 	}
 
@@ -184,6 +186,13 @@ public class CheapServ extends JUpdate {
 		String wfid = jobj.wftype();
 		String tid = jobj.taskId();
 		return CheapApi.loadFlow(wfid, tid, usr.uid());
+	}
+
+	private SemanticObject loadCmds(CheapReq jobj, IUser usr) throws TransException, SQLException {
+		String wfid = jobj.wftype();
+		String nId = jobj.nodeId();
+		String iId = jobj.instId();
+		return CheapApi.loadCmds(wfid, nId, iId, usr.uid());
 	}
 	
 	private SemanticObject start(CheapReq jobj, IUser usr) throws SQLException, TransException {
