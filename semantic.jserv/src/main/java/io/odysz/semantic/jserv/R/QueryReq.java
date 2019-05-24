@@ -233,7 +233,8 @@ public class QueryReq extends JBody {
 			else reader.nextString(); // skip "*"
 		}
 		else if ("joins".equals(name))
-			joins = (ArrayList<String[]>) JHelper.readLstStrs(reader);
+			// joins = (ArrayList<String[]>) JHelper.readLstStrs(reader);
+			joins = (ArrayList<String[]>) JHelper.readLst_StrObj(reader, QueryReq.class);
 		else if ("where".equals(name))
 			where = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		else if ("orders".equals(name))

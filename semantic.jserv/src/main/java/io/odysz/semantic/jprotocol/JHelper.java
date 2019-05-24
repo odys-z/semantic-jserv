@@ -326,6 +326,10 @@ public class JHelper<T extends JBody> {
 					v = readSemanticObj(reader);
 				if (tk == JsonToken.STRING)
 					v = reader.nextString();
+				else if (tk == JsonToken.NULL) {
+					reader.nextNull();
+					v = null;
+				}
 				else
 					throw new SemanticException("Parsing Json failed. Trying reading data, but can't understand token here: %s : %s",
 							reader.getPath(), tk);
@@ -344,7 +348,9 @@ public class JHelper<T extends JBody> {
 		return m;
 	}
 
-	/**We restricted protocol complicity here. No object array! Only String array and indexed with constants.
+	/**@deprecated replaced by {@link #readLst_StrObj(JsonReader, Class)}<br>
+	 * - needing anson<br>
+	 * We restricted protocol complicity here. No object array! Only String array and indexed with constants.
 	 * @param reader
 	 * @return ArrayList[ Object [] ]
 	 * @throws IOException
@@ -361,6 +367,48 @@ public class JHelper<T extends JBody> {
 				// not recursive, only support 2d string array
 				// reader.beginArray();
 				lst.add(readStrs(reader));
+				// reader.endArray();
+			}
+			else if (tk == JsonToken.BEGIN_OBJECT) {
+				// caller is trying as string array, but actually found here is an object array
+				throw new SemanticException("can't handle object array %s : %s", reader.getPath(), tk);
+			}
+			else if (tk == JsonToken.NULL) {
+				// list level 1 is [], but not inner list
+				reader.nextNull();
+				break;
+			}
+			else {
+				String[] rs = readStrs(reader);
+				lst.add(rs);
+				return lst; // 2019.05.15 - another proof of needing anson
+			}
+			tk = reader.peek();
+		}
+
+		reader.endArray();
+		return lst;
+	}
+
+	/**Read string list, but the element can be a JBody - another requirement of anson.
+	 * @param reader
+	 * @param elemClzz
+	 * @return
+	 * @throws IOException 
+	 * @throws SemanticException 
+	 */
+	public static ArrayList<?> readLst_StrObj(JsonReader reader, Class<? extends JBody> elemClzz)
+			throws IOException, SemanticException {
+		ArrayList<Object[]> lst = new ArrayList<Object[]>();
+		reader.beginArray();
+
+		JsonToken tk = reader.peek();
+		while (tk != JsonToken.END_ARRAY) {
+			tk = reader.peek();
+			if (tk == JsonToken.BEGIN_ARRAY) {
+				// not recursive, only support 2d string array
+				// reader.beginArray();
+				lst.add(readStrObjs(reader, elemClzz));
 				// reader.endArray();
 			}
 			else if (tk == JsonToken.BEGIN_OBJECT) {
@@ -425,7 +473,8 @@ public class JHelper<T extends JBody> {
 		reader.endArray();
 		return lst;
 	}
-	/**Convert a string ot string[], not handling begin "[" and ending "]".
+	/**@deprecated replaced by {@link #readStrObjs(JsonReader, Class)}<br>
+	 * Convert a string ot string[], not handling begin "[" and ending "]".
 	 * Caller call this because it know the string is an array according to semantics.
 	 * @param reader
 	 * @return String[]
@@ -453,6 +502,32 @@ public class JHelper<T extends JBody> {
 			reader.endArray();
 		
 		return strs.toArray(new String[] {});
+	}
+
+	public static Object[] readStrObjs(JsonReader reader, Class<? extends JBody> clz) throws IOException, SemanticException {
+		ArrayList<Object> strs = new ArrayList<Object>();
+		
+		JsonToken tk = reader.peek();
+		if (tk == JsonToken.END_DOCUMENT)
+			return strs.toArray(new String[] {});
+		else if (tk == JsonToken.BEGIN_ARRAY) {
+			reader.beginArray();
+			tk = reader.peek();
+		}
+
+		while (tk != JsonToken.END_DOCUMENT && tk != JsonToken.END_ARRAY) {
+			tk = reader.peek();
+			if (tk == JsonToken.BEGIN_OBJECT)
+				strs.add(readBody(reader, clz));
+			else
+				strs.add(nextString(reader));
+			tk = reader.peek();
+		}
+		
+		if (tk == JsonToken.END_ARRAY)
+			reader.endArray();
+		
+		return strs.toArray(new Object[] {});
 	}
 
 	/**Convert a string[] to string[][], not handling begin "[" and ending "]".
@@ -665,11 +740,13 @@ public class JHelper<T extends JBody> {
 	 * @throws SemanticException
 	 * @throws IOException
 	 */
-	protected void readBody(JsonReader reader, Class<? extends JBody> elemClass,
+	protected static void readBody(JsonReader reader, Class<? extends JBody> elemClass,
 			JMessage<? extends JBody> parent) throws SemanticException, IOException {
 		reader.beginArray();
+
 		while (reader.hasNext() && reader.peek() != JsonToken.END_ARRAY) {
 			JBody bodyItem;
+			// TODO can we use readBody(reader, clz)?
 			try {
 				Constructor<? extends JBody> ctor = elemClass.getConstructor(
 						parent.getClass(), String.class);
@@ -689,6 +766,26 @@ public class JHelper<T extends JBody> {
 				throw new SemanticException("Max request body item is 20.");
 		}
 		reader.endArray();
+	}
+	
+	protected static JBody readBody(JsonReader reader, Class<? extends JBody> elemClass)
+			throws SemanticException, IOException {
+			JBody bodyItem;
+			try {
+
+				Constructor<? extends JBody> ctor = elemClass.getConstructor(
+						JMessage.class, String.class);
+
+				bodyItem = ctor.newInstance(null, null);
+			} catch (Exception ie) {
+				throw new SemanticException("Can't find %1$s's constructor: %2$s - %3$s",
+						elemClass.getName(), 
+						ie.getClass().getName(), ie.getMessage());
+			}
+
+			bodyItem.fromJson(reader);
+			return bodyItem;
+
 	}
 
 	protected JHeader readHeader(JsonReader reader) throws IOException {
