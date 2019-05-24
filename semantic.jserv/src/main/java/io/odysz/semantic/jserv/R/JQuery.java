@@ -112,7 +112,7 @@ public class JQuery extends HttpServlet {
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	protected SemanticObject query(QueryReq msg, IUser usr) throws SQLException, TransException {
+	protected Query buildSelct(QueryReq msg, IUser usr) throws SQLException, TransException {
 //		ArrayList<String> sqls = new ArrayList<String>();
 		Query selct = st.select(msg.mtabl, msg.mAlias)
 						.page(msg.page, msg.pgsize);
@@ -133,12 +133,27 @@ public class JQuery extends HttpServlet {
 //		left outer join a_org_depart dept on u.departId = dept.departId 
 //		left outer join a_roles r on u.roleId = r.roleId OR u.roleId = 'admin' AND u.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People') 
 //		where u.userName like '%张%'
+
+
 		if (msg.joins != null && msg.joins.size() > 0) {
+//			for (Object[] j : msg.joins)
+//				selct.j(join.parse((String)j[Ix.joinType]),
+//						 (String)j[Ix.joinTabl],
+//						 (String)j[Ix.joinAlias],
+//						 (String)j[Ix.joinOnCond]);
 			for (Object[] j : msg.joins)
-				 selct.j(join.parse((String)j[Ix.joinType]),
-						 (String)j[Ix.joinTabl],
-						 (String)j[Ix.joinAlias],
-						 (String)j[Ix.joinOnCond]);
+				if (j[Ix.joinTabl] instanceof QueryReq) {
+					Query q = buildSelct((QueryReq)j[Ix.joinTabl], usr);
+					selct.j(join.parse((String)j[Ix.joinType]),
+							q,
+							(String)j[Ix.joinAlias],
+							(String)j[Ix.joinOnCond]);
+				}
+				else
+					selct.j(join.parse((String)j[Ix.joinType]),
+							(String)j[Ix.joinTabl],
+							(String)j[Ix.joinAlias],
+							(String)j[Ix.joinOnCond]);
 		}
 		
 		if (msg.where != null && msg.where.size() > 0) {
@@ -151,27 +166,12 @@ public class JQuery extends HttpServlet {
 		selct.groupby(msg.groups);
 		// ORDER BY
 		selct.orderby(msg.orders);
-		/*
-		selct.commit(sqls);
 		
-		if (ServFlags.query)
-			Utils.logi(sqls);
+		return selct;
+	}
 
-		// Using semantic-DA to query from default connection.
-		SemanticObject respMsg = new SemanticObject();
-		for (String sql : sqls) {
-			// Shall be moved to Protocol?
-			SResultset rs = Connects.select(sql);
-			respMsg.rs(rs, 100);
-			// bug here, not 100!
-
-			if (ServFlags.query)
-				try {rs.printSomeData(false, 1, rs.getColumnName(1), rs.getColumnName(2)); }
-				catch (Exception e) {e.printStackTrace();}
-		}
-
-		return JProtocol.ok(p, respMsg);
-		*/
+	protected SemanticObject query(QueryReq msg, IUser usr) throws SQLException, TransException {
+		Query selct = buildSelct(msg, usr);
 		SemanticObject s = selct.rs(st.instancontxt(usr));
 		SResultset rs = (SResultset) s.rs(0);
 		SemanticObject respMsg = new SemanticObject();
