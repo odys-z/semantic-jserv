@@ -122,7 +122,7 @@ public class CheapReq extends JBody {
 					// cmdArgs = JHelper.readStrs(reader);
 					cmdArgs = JHelper.readMap(reader);
 				else if ("taskNvs".equals(name)) 
-					taskNvs = (ArrayList<String[]>) JHelper.readLstStrs(reader);
+					taskNvs = (ArrayList<String[]>) JHelper.readLst_StrObj(reader, null); // null: shouldn't used for any v.
 				else if ("childInserts".equals(name)) 
 					childInserts = JHelper.readLstLstStrs(reader);
 				token = reader.peek();

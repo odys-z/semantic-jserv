@@ -60,7 +60,7 @@ public class CheapServ extends JUpdate {
 	}
 
 	private static final long serialVersionUID = 1L;
-	// private static final String cheapConn = Connects.defltConn();
+	private static final boolean logFlag = SampleFlags.cheapflow;
 	private static IPort p;
 
 	protected static JHelper<CheapReq> jcheapReq;
@@ -75,12 +75,12 @@ public class CheapServ extends JUpdate {
 		// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 		//
 		// If the same in SysMenu is surely called before this servlet going to work, this line can be comment out. 
-		JMessage.understandPorts(Samport.cheapflow);
+		JMessage.understandPorts(p);
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		if (SampleFlags.cheapflow)
+		if (logFlag)
 			Utils.logi("---------- cheapflow.sample get <- %s ----------", req.getRemoteAddr());
 
 		try {
@@ -109,13 +109,13 @@ public class CheapServ extends JUpdate {
 			e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
-			if (SampleFlags.cheapflow)
+			if (logFlag)
 				e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
-			if (SampleFlags.cheapflow)
+			if (logFlag)
 				e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.ext, e.getMessage()));
 		} finally {
@@ -125,7 +125,7 @@ public class CheapServ extends JUpdate {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		if (SampleFlags.cheapflow)
+		if (logFlag)
 			Utils.logi("========== cheapflow.sample post <= %s ==========", req.getRemoteAddr());
 
 		resp.setCharacterEncoding("UTF-8");
@@ -144,17 +144,17 @@ public class CheapServ extends JUpdate {
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {
-			if (SampleFlags.cheapflow)
+			if (logFlag)
 				e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} catch (SsException e) {
-			if (SampleFlags.cheapflow)
+			if (logFlag)
 				e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
 		} catch (TransException e) {
-			if (SampleFlags.cheapflow)
+			if (logFlag)
 				e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.ext, e.getMessage()));
 		} finally {
