@@ -43,13 +43,13 @@ public class UpdateReqTest {
 		JHelper.writeJsonReq(os, msg);
 		String json = os.toString();
 		os.close();
-		Utils.logi(json);
+		// Utils.logi(json);
 		assertTrue(json.startsWith("{\n"));
 
 		InputStream in = new ByteArrayInputStream(json.getBytes());
 		JMessage<UpdateReq> resp = jreqUpd.readJson(in, UpdateReq.class);
 		json = resp.toString();
-		Utils.logi(json);
+		// Utils.logi(json);
 		assertTrue(json.startsWith("{gson, \n"));
 
 		assertEquals(Port.update, resp.port());
@@ -90,13 +90,13 @@ public class UpdateReqTest {
 		JHelper.writeJsonReq(os, msg);
 		String json = os.toString();
 		os.close();
-		Utils.logi(json);
+		// Utils.logi(json);
 		assertTrue(json.startsWith("{\n"));
 
 		InputStream in = new ByteArrayInputStream(json.getBytes());
 		JMessage<UpdateReq> resp = jreqUpd.readJson(in, UpdateReq.class);
 		json = resp.toString();
-		Utils.logi(json);
+		// Utils.logi(json);
 		assertTrue(json.startsWith("{gson, \n"));
 
 		UpdateReq bd = resp.body(0);
