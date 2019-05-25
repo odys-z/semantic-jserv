@@ -32,7 +32,7 @@ public class QueryReq extends JBody {
             	cond-obj: {(main-table | alais.)left-col-val op (table-1 | alias2 .)right-col-val}
            				- op: '=' | '&lt;=' | '&gt;=' ...</pre>
 	 */
-	ArrayList<String[]> joins;
+	ArrayList<Object[]> joins;
 
 	/**exprs: [expr-obj],
 	 * expr-obj: {tabl: "b_articles/t_alais", alais: "recId", expr: "recId"}
@@ -100,7 +100,7 @@ public class QueryReq extends JBody {
 
 	public QueryReq j(String t, String with, String as, String on) {
 		if (joins == null)
-			joins = new ArrayList<String[]>();
+			joins = new ArrayList<Object[]>();
 		String[] j = new String[Ix.joinSize];
 		j[Ix.joinTabl] = with;
 		j[Ix.joinAlias] = as;
@@ -234,7 +234,7 @@ public class QueryReq extends JBody {
 		}
 		else if ("joins".equals(name))
 			// joins = (ArrayList<String[]>) JHelper.readLstStrs(reader);
-			joins = (ArrayList<String[]>) JHelper.readLst_StrObj(reader, QueryReq.class);
+			joins = (ArrayList<Object[]>) JHelper.readLst_StrObj(reader, QueryReq.class);
 		else if ("where".equals(name))
 			where = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		else if ("orders".equals(name))
