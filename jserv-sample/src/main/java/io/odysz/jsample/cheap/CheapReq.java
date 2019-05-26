@@ -55,8 +55,8 @@ public class CheapReq extends JBody {
 
 	protected String ndescpt;
 	protected String childTbl;
-	protected ArrayList<String[]> taskNvs;
-	public ArrayList<String[]> taskNvs() { return taskNvs; }
+	protected ArrayList<Object[]> taskNvs;
+	public ArrayList<Object[]> taskNvs() { return taskNvs; }
 	/** 3d array */
 	protected ArrayList<ArrayList<?>> childInserts;
 
@@ -122,7 +122,7 @@ public class CheapReq extends JBody {
 					// cmdArgs = JHelper.readStrs(reader);
 					cmdArgs = JHelper.readMap(reader);
 				else if ("taskNvs".equals(name)) 
-					taskNvs = (ArrayList<String[]>) JHelper.readLst_StrObj(reader, null); // null: shouldn't used for any v.
+					taskNvs = (ArrayList<Object[]>) JHelper.readLst_StrObj(reader, null); // null: shouldn't used for any v.
 				else if ("childInserts".equals(name)) 
 					childInserts = JHelper.readLstLstStrs(reader);
 				token = reader.peek();
@@ -167,7 +167,7 @@ public class CheapReq extends JBody {
 
 	public CheapReq taskNv(String n, String v) {
 		if (taskNvs == null)
-			taskNvs = new ArrayList<String[]>();
+			taskNvs = new ArrayList<Object[]>();
 		taskNvs.add(new String[] {n, v});
 		return this;
 	}

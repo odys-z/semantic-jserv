@@ -5,9 +5,12 @@
   </t>
 
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
-  <!--	All business semantics must committed in JDBC transact but outside CheapEngin's handling must configured here.
-		For smtc type, see io.odysz.semantic.DASemantic.smtype.
-  -->
+	<!-- smtc: semantics type, e.g. auto: auto increase key.
+  			see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html 
+  		tabl: database table name
+  		pk:
+  		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
+	 -->
   	<!-- expense task table's oper/opertime -->
   	<s> <id>01</id>
   		<smtc>o-t</smtc>
@@ -35,6 +38,7 @@
   		<pk>expenseId</pk>
   		<args>expenseId,r_expense,expenseId</args>
   	</s>
+  	
   </t>
 
   <t id="right-ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
