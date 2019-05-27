@@ -57,7 +57,14 @@ public class CheapReq extends JBody {
 	protected String childTbl;
 	protected ArrayList<Object[]> taskNvs;
 	public ArrayList<Object[]> taskNvs() { return taskNvs; }
-	/** 3d array */
+	public CheapReq taskNv(String n, Object v) {
+		if (taskNvs == null)
+			taskNvs = new ArrayList<Object[]>();
+		taskNvs.add(new Object[] {n, v});
+		return this;
+	}
+	
+	/** 3d array of post insertings */
 	protected ArrayList<ArrayList<?>> childInserts;
 
 	public CheapReq(JMessage<? extends JBody> parent) {
@@ -165,12 +172,7 @@ public class CheapReq extends JBody {
 		return this;
 	}
 
-	public CheapReq taskNv(String n, String v) {
-		if (taskNvs == null)
-			taskNvs = new ArrayList<Object[]>();
-		taskNvs.add(new String[] {n, v});
-		return this;
-	}
+
 
 	public String req() {
 		return a;
