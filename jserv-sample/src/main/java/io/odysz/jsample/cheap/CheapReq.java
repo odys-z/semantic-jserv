@@ -172,11 +172,7 @@ public class CheapReq extends JBody {
 		return this;
 	}
 
-
-
-	public String req() {
-		return a;
-	}
+	public String req() { return a; }
 
 	public CheapReq req(Req req) {
 		return (CheapReq) a(req.name());
