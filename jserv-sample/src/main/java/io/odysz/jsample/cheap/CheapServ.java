@@ -150,8 +150,8 @@ public class CheapServ extends JUpdate {
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} catch (SsException e) {
-			if (logFlag)
-				e.printStackTrace();
+//			if (logFlag)
+//				e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
 		} catch (TransException e) {
 			if (logFlag)
@@ -185,7 +185,7 @@ public class CheapServ extends JUpdate {
 	private SemanticObject loadFlow(CheapReq jobj, IUser usr) throws SQLException, TransException {
 		String wfid = jobj.wftype();
 		String tid = jobj.taskId();
-		return CheapApi.loadFlow(wfid, tid, usr.uid());
+		return CheapApi.loadFlow(wfid, tid, usr);
 	}
 
 	private SemanticObject loadCmds(CheapReq jobj, IUser usr) throws TransException, SQLException {
