@@ -159,6 +159,17 @@ public class UpdateReq extends JBody {
 		else throw new SemanticException("Parse QueryReq failed. %s : %s", reader.getPath(), token.name());
 	}
 
+	/**<p>Deserialize to objects.</p>
+	 * 
+	 * <b>Note:</b>
+	 * <p>All {@link #postUpds} elements are deserialized to UpdateReq,
+	 * so this field can only work for Update/Insert request.</p>
+	 * @see JHelper#readLstUpdateReq(JsonReader).
+	 * @param name
+	 * @param reader
+	 * @throws SemanticException
+	 * @throws IOException
+	 */
 	@SuppressWarnings("unchecked")
 	protected void fromJsonName(String name, JsonReader reader)
 			throws SemanticException, IOException {
@@ -182,6 +193,9 @@ public class UpdateReq extends JBody {
 				// When we are creating the deserialized object,
 				// how do we know should it be UpdateReq or InsertReq?
 				// The distinguish flag (a) currently is not readed now.
+				
+				// But why this is working?
+				// Because the InsertReq is actually nothing, insert request can be represented by UpdateReq.
 				UpdateReq post = new UpdateReq(null, conn, mtabl, null);
 				post.fromJson(reader);
 				postUpds.add(post);
@@ -195,8 +209,6 @@ public class UpdateReq extends JBody {
 		else if ("cols".equals(name))
 			cols = JHelper.readStrs(reader);
 	}
-
-//	protected void readChild(String name, JsonReader reader) throws SemanticException, IOException {}
 
 	/**Update request validating.
 	 * The request must is an update with pk and setting values;

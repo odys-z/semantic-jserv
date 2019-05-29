@@ -20,6 +20,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.jserv.U.UpdateReq;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -685,7 +686,7 @@ public class JHelper<T extends JBody> {
 						nextString(reader);
 					else {
 						reader.close();
-						throw new SemanticException("Can't parse json message. Expecting port | header | body, but get %s (body type: %s, message: %s)",
+						throw new SemanticException("Can't parse json message. Expecting port | header | body, ..., but get %s (body type: %s, message: %s)",
 								name, bodyItemclzz.toString(), msg.toString());
 					}
 				}
@@ -830,6 +831,30 @@ public class JHelper<T extends JBody> {
 			System.err.println(String.format("logi(): Can't print. Error: %s. called by %s.%s()",
 					ex.getMessage(), x[0].getClassName(), x[0].getMethodName()));
 		}
+	}
+
+	/**<p>Deserializing a list of UpdateReqs.</p>
+	 * <b>Note:</b>
+	 * <p>All request element is deserialized a UpdateReq, so this can only work for Update/Insert request.</p>
+	 * @param reader
+	 * @return UpdateReq list
+	 * @throws IOException 
+	 * @throws SemanticException 
+	 */
+	public static ArrayList<UpdateReq> readLstUpdateReq(JsonReader reader)
+			throws SemanticException, IOException {
+		reader.beginArray();
+		JsonToken tk = reader.peek();
+		ArrayList<UpdateReq> upds = new ArrayList<UpdateReq>();
+		while (tk != JsonToken.END_ARRAY && tk != JsonToken.END_DOCUMENT) {
+			UpdateReq post = new UpdateReq(null, null, null, null);
+			post.fromJson(reader);
+			upds.add(post);
+			tk = reader.peek();
+		}
+		if (tk == JsonToken.END_ARRAY)
+			reader.endArray();
+		return upds;
 	}
 
 }

@@ -2,7 +2,6 @@ package io.odysz.jsample.cheap;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -173,7 +172,7 @@ public class CheapServ extends JUpdate {
 			return loadFlow(jobj, usr);
 		else if (Req.nodeCmds == req) 
 			return loadCmds(jobj, usr);
-		else throw new CheapException("Req(body.a) can been not handled: %s", req);
+		else throw new CheapException("Req(body.a) can not been handled: %s", req);
 	}
 
 	private SemanticObject right(CheapReq jobj, IUser usr) throws SemanticException, SQLException {
@@ -196,18 +195,21 @@ public class CheapServ extends JUpdate {
 	}
 	
 	private SemanticObject start(CheapReq jobj, IUser usr) throws SQLException, TransException {
-		ArrayList<ArrayList<?>> inserts = jobj.childInserts;
+//		ArrayList<ArrayList<?>> inserts = jobj.childInserts;
+//		String insertabl = jobj.childInsertabl;
 		
 		// testTrans = CheapEngin.trcs;
-		Update postups = null;
+		Update postups = jobj.posts();
+		// CheapWorkflow wf = CheapEngin.getWf(jobj.wftype);
 		SemanticObject res = CheapApi.start(jobj.wftype, jobj.taskId())
 				.nodeDesc(jobj.ndescpt)
 				.taskNv(jobj.taskNvs)
-				.taskChildMulti("task_details", null, inserts)
+				// .taskChildMulti(insertabl, null, inserts)
 				.postupdates(postups)
 				.commit(usr.logAct("Start Flow " + jobj.wftype, "cheap.start"));
 
 		// simulating business layer handling events
+		// FIXME why events handling is here?
 		ICheapEventHandler eh = (ICheapEventHandler) res.remove("stepHandler");
 		if (eh != null) {
 			CheapEvent evt = (CheapEvent) res.get("evt");
@@ -221,8 +223,30 @@ public class CheapServ extends JUpdate {
 		return res;
 	}
 	
-	private SemanticObject cmd(CheapReq jobj, IUser usr) {
-		return null;
+	private SemanticObject cmd(CheapReq jobj, IUser usr) throws SQLException, TransException {
+		String wftype = jobj.wftype();
+		String taskId = jobj.taskId();
+		String cmd = jobj.cmd();
+
+		Update postups = jobj.posts();
+		SemanticObject res = CheapApi.next(wftype, taskId, cmd)
+				.nodeDesc(jobj.ndescpt)
+				// .taskChildMulti(jobj.childInsertabl, null, jobj.childInserts)
+				.postupdates(postups)
+				.commit(usr.logAct(String.format("Req %s - %s", jobj.wftype, cmd), "cheap.cmd"));
+
+		// FIXME why events handling is here?
+		ICheapEventHandler eh = (ICheapEventHandler) res.remove("stepHandler");
+		if (eh != null) {
+			CheapEvent evt = (CheapEvent) res.get("evt");
+			eh.onCmd(evt);
+		}
+
+		eh = (ICheapEventHandler) res.remove("arriHandler");
+		if (eh != null)
+			eh.onArrive(((CheapEvent) res.get("evt")));
+
+		return res;
 	}
 
 }

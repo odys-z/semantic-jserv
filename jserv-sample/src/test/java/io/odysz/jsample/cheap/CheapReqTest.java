@@ -37,9 +37,10 @@ public class CheapReqTest {
 		CheapReq itm = CheapReq.format(null, Req.start, wfId)
 				.nodeDesc("Desc: bla")
 				.taskNv("remarks", "task bbb")
-				.childTabl("task_details")
-				.newChildInstRow().childInsert("remarks", "client detail - 00").childInsert("extra", "01")
-				.newChildInstRow().childInsert("remarks", "client detail - 01");
+//				.childTabl("task_details")
+//				.newChildInstRow().childInsert("remarks", "client detail - 00").childInsert("extra", "01")
+//				.newChildInstRow().childInsert("remarks", "client detail - 01")
+				;
 		req.body(itm);
 
 		OutputStream os = new ByteArrayOutputStream();

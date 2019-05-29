@@ -13,8 +13,10 @@ import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jserv.R.QueryReq;
+import io.odysz.semantic.jserv.U.UpdateReq;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.sworkflow.EnginDesign.Req;
+import io.odysz.transact.sql.Update;
 
 public class CheapReq extends JBody {
 	public static CheapReq format(JMessage<QueryReq> parent, Req req, String wfId) {
@@ -54,7 +56,7 @@ public class CheapReq extends JBody {
 	public String instId() { return (String) args("instId"); }
 
 	protected String ndescpt;
-	protected String childTbl;
+//	protected String childTbl;
 	protected ArrayList<Object[]> taskNvs;
 	public ArrayList<Object[]> taskNvs() { return taskNvs; }
 	public CheapReq taskNv(String n, Object v) {
@@ -63,9 +65,13 @@ public class CheapReq extends JBody {
 		taskNvs.add(new Object[] {n, v});
 		return this;
 	}
+
+	protected String cmd;
+	public String cmd() { return cmd; }
 	
 	/** 3d array of post insertings */
-	protected ArrayList<ArrayList<?>> childInserts;
+	protected ArrayList<UpdateReq> postUpds;
+	// protected ArrayList<ArrayList<?>> childInserts;
 
 	public CheapReq(JMessage<? extends JBody> parent) {
 		super(parent, null); // client can't control engine's connection
@@ -86,19 +92,22 @@ public class CheapReq extends JBody {
 		writer.name("a").value(a);
 		writer.name("wftype").value(wftype);
 		writer.name("ndescpt").value(ndescpt);
-		writer.name("childTbl").value(childTbl);
+//		writer.name("childTbl").value(childTbl);
 
+		if (cmd != null)
+			writer.name("cmd").value(cmd);
+//		if (childInsertabl != null)
+//			writer.name("childInsertabl").value(childInsertabl);
 		if (taskNvs != null) {
 			writer.name("taskNvs");
 			JHelper.writeLst(writer, taskNvs, opts);
 		}
-		if (childInserts != null) {
-			writer.name("childInserts");
-			JHelper.writeLst(writer, childInserts, opts);
+		if (postUpds != null) {
+			writer.name("postUpds");
+			JHelper.writeLst(writer, postUpds, opts);
 		}
 		if (cmdArgs != null) {
 			writer.name("cmdArgs");
-			// JHelper.writeStrings(writer, cmdArgs, opts);
 			JHelper.writeMap(writer, cmdArgs, opts);
 		}
 		writer.endObject();
@@ -118,20 +127,23 @@ public class CheapReq extends JBody {
 					conn = JHelper.nextString(reader);
 				else if ("wftype".equals(name))
 					wftype = JHelper.nextString(reader);
+				else if ("cmd".equals(name))
+					cmd = JHelper.nextString(reader);
 				else if ("port".equals(name))
 					// tolerate client redundant
 					JHelper.nextString(reader);
 				else if ("ndescpt".equals(name))
 					ndescpt = JHelper.nextString(reader);
-				else if ("childTbl".equals(name))
-					childTbl = JHelper.nextString(reader);
+//				else if ("childTbl".equals(name))
+//					childTbl = JHelper.nextString(reader);
 				else if ("cmdArgs".equals(name)) 
 					// cmdArgs = JHelper.readStrs(reader);
 					cmdArgs = JHelper.readMap(reader);
 				else if ("taskNvs".equals(name)) 
 					taskNvs = (ArrayList<Object[]>) JHelper.readLst_StrObj(reader, null); // null: shouldn't used for any v.
-				else if ("childInserts".equals(name)) 
-					childInserts = JHelper.readLstLstStrs(reader);
+				else if ("postUpds".equals(name)) 
+					// childInserts = JHelper.readLstLstStrs(reader);
+					postUpds = (ArrayList<UpdateReq>) JHelper.readLstUpdateReq(reader);
 				token = reader.peek();
 			}
 			reader.endObject();
@@ -143,17 +155,16 @@ public class CheapReq extends JBody {
 		return this;
 	}
 
-	public CheapReq childTabl(String tbl) {
-		this.childTbl = tbl;
-		return this;
-	}
+//	public CheapReq childTabl(String tbl) {
+//		this.childTbl = tbl;
+//		return this;
+//	}
 
 	/**Insert nv into the newly prepared row.
 	 * @see {@link #newChildInstRow()}.
 	 * @param n
 	 * @param v
 	 * @return
-	 */
 	public CheapReq childInsert(String n, String v) {
 		// childInserts.get(childInserts.size() - 1).add(new String[] {n, v});
 		@SuppressWarnings("unchecked")
@@ -161,16 +172,17 @@ public class CheapReq extends JBody {
 		lst.add(new String[] {n, v});
 		return this;
 	}
+	 */
 
 	/**Prepare a new child table's row inserting.
 	 * @return
-	 */
 	public CheapReq newChildInstRow() {
 		if (childInserts == null)
 			childInserts = new ArrayList<ArrayList<?>>();
 		childInserts.add(new ArrayList<String[]>());
 		return this;
 	}
+	 */
 
 	public String req() { return a; }
 
@@ -183,8 +195,6 @@ public class CheapReq extends JBody {
 	 * @return the req object
 	 */
 	public CheapReq reqCmd(String cmd) {
-		// this.cmdArgs = new String[] {cmd};
-		// return req(Req.cmd);
 		return args("req", cmd);
 	}
 
@@ -207,5 +217,13 @@ public class CheapReq extends JBody {
 		this.wftype(wfId);
 		taskId(taskId);
 		return req(Req.load);
+	}
+
+	/**TODO format post children delete, inserts, updates by users
+	 * 
+	 * @return update / delete / insert
+	 */
+	public Update posts() {
+		return null;
 	}
 }
