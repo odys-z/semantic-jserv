@@ -3,51 +3,19 @@ package io.odysz.semantic.jserv.U;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JMessage;
 
-/**Insert Request helper<br>
- * 
+/**<p>Insert Request helper</p>
+ * <b>Note:</b>
+ * <p>InsertReq is a subclass of UpdateReq, and have no {@link #toJson(com.google.gson.stream.JsonWriter, io.odysz.semantic.jprotocol.JOpts) toJson()}
+ * and {@link #fromJsonName(String, com.google.gson.stream.JsonReader) fromJson()} implementation.
+ * Otherwise any post updating list in request won't work.</p>
+ * Because all request element is deserialized a UpdateReq, so this can only work for Update/Insert request.</p>
+ * see {@link UpdateReq#fromJsonName(String, com.google.gson.stream.JsonReader) super.fromJsonName()}<br>
+ * and {@link io.odysz.semantic.jprotocol.JHelper#readLstUpdateReq(com.google.gson.stream.JsonReader) JHelper.readListUpdateReq()}
  * @author odys-z@github.com
  */
 public class InsertReq extends UpdateReq {
-	/**3d array [[[n, v], ...]] */
-//	private ArrayList<ArrayList<?>> nvss;
-//	private String[] cols;
-
 
 	public InsertReq(JMessage<? extends JBody> parent, String conn) {
 		super(parent, conn);
 	}
-
-	/** get columns for sql insert into (COLS) 
-	public String[] cols() {
-		// parse columns from nvs
-		return cols;
-	}
-	 * */
-
-	/** get values in VALUE-CLAUSE for sql insert into (...) values VALUE-CLAUSE 
-	 * @return [[[n, v], ...]]
-	public ArrayList<ArrayList<?>> values() {
-		return nvss;
-	}
-	 */
-	
-//	@Override
-//	protected void child2Json(JsonWriter writer) throws SemanticException, IOException {
-//		if (nvss != null) {
-//			writer.name("nvss");
-//			JHelper.writeLst(writer, nvss);
-//		}
-//		if (cols != null) {
-//			writer.name("cols");
-//			JHelper.writeStrings(writer, cols);
-//		}
-//	}
-	
-//	@Override
-//	protected void readChild(String name, JsonReader reader) throws SemanticException, IOException {
-//		if ("nvss".equals(name))
-//			nvss = JHelper.readLstLstStrs(reader);
-//		else if ("cols".equals(name))
-//			cols = JHelper.readStrs(reader);
-//	}
 }
