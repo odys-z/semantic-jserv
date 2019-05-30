@@ -2,7 +2,6 @@ package io.odysz.semantic.jserv;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
 
 import javax.servlet.ServletContextEvent;
 
@@ -16,7 +15,6 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantic.jsession.SSession;
-import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 
 /**This jserv lib  initializing and managing module. Subclass must be a web listener.
@@ -44,8 +42,8 @@ public class JSingleton {
 		
 		try {
 			DatasetCfg.init(rootINF);
-			HashMap<String, TableMeta> metas = Connects.loadMeta(Connects.defltConn());
-			defltScxt = new DATranscxt(Connects.defltConn(), metas);
+			// HashMap<String, TableMeta> metas = Connects.loadMeta(Connects.defltConn());
+			defltScxt = new DATranscxt(Connects.defltConn());
 			SSession.init(defltScxt, evt.getServletContext());
 			ssVerier = new SSession();
 		} catch (SAXException | IOException | SemanticException | SQLException e) {

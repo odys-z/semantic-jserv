@@ -76,7 +76,7 @@ public class Tools extends HttpServlet {
 			// this constructor can only been called after metas has been loaded
 			// (Jsingleton got a chance to initialize)
 			st = new DATranscxt("inet");
-		} catch (SemanticException e) {
+		} catch (SemanticException | SQLException e) {
 			e.printStackTrace();
 		}
 		jReq  = new JHelper<UserReq>();

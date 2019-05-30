@@ -1,6 +1,7 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -47,7 +48,7 @@ public class JUser extends SemanticObject implements IUser {
 			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
 		try {
 			logsctx = new DATranscxt(conn);
-		} catch (SemanticException e) {
+		} catch (SemanticException | SQLException e) {
 			e.printStackTrace();
 		}
 	}
