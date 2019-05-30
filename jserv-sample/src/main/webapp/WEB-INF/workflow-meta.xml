@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workflow>
   <t id="conn" pk="conn" columns="conn">
-  	<s> <conn>inet</conn> </s>
+  	<s> <conn>local-sqlite</conn> </s>
   </t>
 
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
@@ -75,8 +75,9 @@
 			join a_user u on u.userId = '%3$s'
 			join oz_wfcmds c on r.cmd = c.cmd and r.roleId = u.roleId and r.wfId = '%1$s' and r.nodeId = '%2$s'
 		</mysql>
-		<sqlite>select c.cmd, c.txt from task_rights r join oz_wfcmds c
-			on r.roleId = '%3$s' and r.cmdFilter = c.cmd and r.wfId = '%1$s' and r.nodeId = '%2$s'
+		<sqlite>select c.nodeId, c.cmd, c.txt from task_rights r
+			join a_user u on u.userId = 'admin'
+			join oz_wfcmds c on r.roleId = u.roleId and r.wfId = '%1$s' and r.nodeId = '%2$s'
 		</sqlite>
 	</s>
 
