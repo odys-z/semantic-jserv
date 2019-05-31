@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.xml.sax.SAXException;
+
 import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
@@ -76,7 +78,7 @@ public class Tools extends HttpServlet {
 			// this constructor can only been called after metas has been loaded
 			// (Jsingleton got a chance to initialize)
 			st = new DATranscxt("inet");
-		} catch (SemanticException | SQLException e) {
+		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
 		jReq  = new JHelper<UserReq>();

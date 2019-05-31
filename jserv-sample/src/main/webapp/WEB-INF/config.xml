@@ -25,7 +25,7 @@
 	<c>
 		<!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml) -->
 		<k>log-connId</k>
-		<v>inet</v>
+		<v>local-sqlite</v>
 	</c>
   </t>
 

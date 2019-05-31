@@ -75,10 +75,10 @@
 			join a_user u on u.userId = '%3$s'
 			join oz_wfcmds c on r.cmd = c.cmd and r.roleId = u.roleId and r.wfId = '%1$s' and r.nodeId = '%2$s'
 		</mysql>
-		<sqlite>select c.nodeId, c.cmd, c.txt from task_rights r
-			join a_user u on u.userId = 'admin'
-			join oz_wfcmds c on r.roleId = u.roleId and r.wfId = '%1$s' and r.nodeId = '%2$s'
-		</sqlite>
+		<sqlit>select c.cmd, c.txt, r.nodeId from task_rights r
+			join a_user u on u.userId = '%3$s' and r.nodeId = '%2$s'
+			join oz_wfcmds c on r.wfId = '%1$s' and c.nodeId = '%2$s'
+		</sqlit>
 	</s>
 
 	<s>

@@ -1,19 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <semantics>
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
-  <!-- see semantic.DA/io.odysz.semantic.DASemantics
-  smtc:
-  	0. {@link #autoPk} </b> key-word: "auto" | "ai" | "a-i" args: 0: auto incrementing handled field
-	1. {@link #fullpath} </b> key-word: "fullpath" | "fp" | "f-p" 0: parent Id field, 1: sibling/sort field (optional), 2: fullpath field
-	2. {@link #parentChildren} </b> key-word: "pc-del-all" | "parent-child-del-all"
-	3. {@link #dencrypt} </b> key-word: "d-e" | "de-encrypt"
-	4. {@link #opTime}</b> key-word: "o-t" | "oper-time" args 0: oper-field, 1: oper-time-field (optional)	
-	5. {@link #checkSqlCountOnDel} </b> key-word: "ck-cnt-del" | "check-count-del" args: 0: error-message-format, 1: checking-sql, 2: count-col
-	6. {@link #checkSqlCountOnInsert} </b> key-word: "ck-cnt-ins" | "check-count-insert"
-	7. {@link #checkDsCountOnDel} </b> key-word: "ds-cnt-ins" | "ds-count-insert"
-	8. {@link #composingCol} </b> key-word: "cmp-col" | "compose-col" | "compose-column"
-	9. {@link #stampUp1ThanDown} </b> key-word: "stamp-up1"
-	10.{@link #orclob} </b> key-word: "clob"
+  <!-- smtc: semantics type, e.g. auto: auto increase key.
+  			see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html 
+  		tabl: database table name
+  		pk:
+  		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
    -->
   	<s>
   		<id>01</id>
