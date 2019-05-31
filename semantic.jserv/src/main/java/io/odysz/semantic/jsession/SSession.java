@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.FilenameUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
@@ -88,12 +87,14 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	public static void init(DATranscxt daSctx, ServletContext ctx)
 			throws SAXException, IOException, SemanticException, SQLException {
 		rootK = ctx.getInitParameter("io.oz.root-key");
+		sctx = daSctx;
 
 		lock = new ReentrantLock();
 
-		sctx = daSctx;
-		DATranscxt.initConfigs(daSctx.basiconnId(),
-				FilenameUtils.concat(JSingleton.rootINF(), "semantic-log.xml"));
+		String conn = daSctx.basiconnId();
+		Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here", conn);
+		DATranscxt.loadSemantics(conn,
+					JSingleton.getFileInfPath("semantic-log.xml"));
 
 		jreqHelper = new JHelper<SessionReq>();
 
@@ -138,7 +139,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		static String tbl = "a_user";
 		static String uidField = "userId";
 		static String unameField = "userName";
-		static String pswdField = "pwd";
+		static String pswdField = "pswd";
 		static String ivField = "encAuxiliary";
 
 		public static UserMeta config() { return new UserMeta(); }

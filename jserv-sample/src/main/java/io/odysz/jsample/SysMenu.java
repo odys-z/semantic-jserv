@@ -94,8 +94,7 @@ public class SysMenu  extends SemanticTree {
 			// jreq.treeSemtcs(menuSemtcs);
 
 			String sk = jreq.sk();
-			jreq.sqlArgs = new String[] {usr.get("role")};
-			
+			jreq.sqlArgs = new String[] {usr.uid()};
 
 			List<SemanticObject> lst = DatasetCfg.loadStree(Connects.defltConn(),
 					sk == null ? defltSk : sk, jreq.page(), jreq.size(), jreq.sqlArgs);

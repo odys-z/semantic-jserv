@@ -39,13 +39,17 @@ public class JSingleton {
 		rootINF = evt.getServletContext().getRealPath("/WEB-INF");
 		Connects.init(rootINF);
 		Configs.init(rootINF);
+		DATranscxt.configRoot(rootINF);
 		
 		try {
 			DatasetCfg.init(rootINF);
 			// HashMap<String, TableMeta> metas = Connects.loadMeta(Connects.defltConn());
 			defltScxt = new DATranscxt(Connects.defltConn());
+			
+			Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 			SSession.init(defltScxt, evt.getServletContext());
 			ssVerier = new SSession();
+
 		} catch (SAXException | IOException | SemanticException | SQLException e) {
 			e.printStackTrace();
 		}
@@ -58,9 +62,7 @@ public class JSingleton {
 	/**Get server root/WEB-INF path (filesystem local)
 	 * @return WEB-INF root path
 	 */
-	public static String rootINF() {
-		return rootINF;
-	}
+	public static String rootINF() { return rootINF; }
 
 	/**Get WEB-INF file path
 	 * @param filename

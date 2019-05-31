@@ -5,6 +5,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.xml.sax.SAXException;
+
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.AESHelper;
@@ -48,7 +50,7 @@ public class JUser extends SemanticObject implements IUser {
 			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
 		try {
 			logsctx = new DATranscxt(conn);
-		} catch (SemanticException | SQLException e) {
+		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
 	}
