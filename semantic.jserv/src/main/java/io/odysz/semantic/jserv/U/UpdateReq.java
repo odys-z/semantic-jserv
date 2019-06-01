@@ -1,6 +1,8 @@
 package io.odysz.semantic.jserv.U;
 
-import static io.odysz.semantic.jprotocol.JProtocol.CRUD.*;
+import static io.odysz.semantic.jprotocol.JProtocol.CRUD.D;
+import static io.odysz.semantic.jprotocol.JProtocol.CRUD.R;
+import static io.odysz.semantic.jprotocol.JProtocol.CRUD.U;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JOpts;
+import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;
 
@@ -23,6 +26,18 @@ import io.odysz.transact.sql.Query.Ix;
  * @author odys-z@github.com
  */
 public class UpdateReq extends JBody {
+	/**Format an update request.
+	 * @param conn
+	 * @param parent
+	 * @param tabl
+	 * @param cmd {@link CRUD}.c R U D
+	 * @return a new update request
+	 */
+	public static UpdateReq formatReq(String conn, JMessage<UpdateReq> parent, String tabl, String cmd) {
+		UpdateReq bdItem = new UpdateReq(parent, conn, tabl, cmd);
+		return bdItem;
+	}
+
 	/**Main table */
 	String mtabl;
 	/**Main table alias*/
@@ -35,7 +50,8 @@ public class UpdateReq extends JBody {
 	
 	/**inserting values, used for "I". 3d array [[[n, v], ...]] */
 	protected ArrayList<ArrayList<?>> nvss;
-	/**inserting columns, used for "I".*/
+	/**inserting columns, used for "I".
+	 * Here a col shouldn't be an expression - so not Object[], unlike that of query. */
 	private String[] cols;
 
 	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
@@ -156,7 +172,7 @@ public class UpdateReq extends JBody {
 			}
 			reader.endObject();
 		}
-		else throw new SemanticException("Parse QueryReq failed. %s : %s", reader.getPath(), token.name());
+		else throw new SemanticException("Parse UpdateReq failed. path: %s; token: %s", reader.getPath(), token.name());
 	}
 
 	/**<p>Deserialize to objects.</p>
@@ -180,9 +196,9 @@ public class UpdateReq extends JBody {
 		else if ("mtabl".equals(name))
 			mtabl = JHelper.nextString(reader);
 		else if ("nvs".equals(name))
-			nvs = (ArrayList<Object[]>) JHelper.readLstStrs(reader);
+			nvs = (ArrayList<Object[]>) JHelper.readLst_StrObj(reader, null);
 		else if ("where".equals(name))
-			where = (ArrayList<String[]>) JHelper.readLstStrs(reader);
+			where = (ArrayList<String[]>) JHelper.readLst_StrObj(reader, null);
 		else if ("postUpds".equals(name)) {
 			postUpds = new ArrayList<UpdateReq>();
 			reader.beginArray();
@@ -207,7 +223,7 @@ public class UpdateReq extends JBody {
 		else if ("nvss".equals(name))
 			nvss = JHelper.readLstLstStrs(reader);
 		else if ("cols".equals(name))
-			cols = JHelper.readStrs(reader);
+			cols = (String[]) JHelper.readStrObjs(reader, null);
 	}
 
 	/**Update request validating.

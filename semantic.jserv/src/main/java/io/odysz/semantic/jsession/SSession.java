@@ -216,10 +216,10 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 //			else if ("init".equals(t)) {
 //				String k = request.getParameter("k");
 //				rootK = k;
-//				String r = String.format("Root key re-initialized: %s%s",
+//				String R = String.format("Root key re-initialized: %s%s",
 //						k.substring(0, 1), k.replaceAll(".", "*"));
-//				Utils.warn(r);
-//				resp.getWriter().write(Html.ok(r));
+//				Utils.warn(R);
+//				resp.getWriter().write(Html.ok(R));
 //			}
 			else {
 				//msg.err("Login.serv using GET to touch session info - use POST to login, logout, check session.");
@@ -319,13 +319,13 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 */
 	private IUser loadUser(SessionReq jreq, String connId)
 			throws TransException, SQLException, SsException, ReflectiveOperationException {
-		SemanticObject s = sctx.select(UserMeta.tbl, "u")
+		SemanticObject s = sctx.select(UserMeta.tbl, "U")
 			.col(UserMeta.uidField, "uid")
 			.col(UserMeta.unameField, "uname")
 			.col(UserMeta.pswdField, "pswd")
 			.col(UserMeta.ivField, "iv")
 			// .col(UserMeta.urlField, "url")
-			.where("=", "u." + UserMeta.uidField, "'" + jreq.uid() + "'")
+			.where("=", "U." + UserMeta.uidField, "'" + jreq.uid() + "'")
 			.rs(sctx.instancontxt(jrobot));
 		
 		SResultset rs = (SResultset) s.rs(0);;

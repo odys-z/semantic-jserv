@@ -26,13 +26,13 @@ import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Query.Ix;
 import io.odysz.transact.sql.Statement;
+import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/U.serv" })
 public class JUpdate extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
@@ -125,7 +125,7 @@ public class JUpdate extends HttpServlet {
 		SemanticObject res = (SemanticObject) upd
 				.nvs(msg.nvs)
 				.where(tolerateNv(msg.where))
-				.post(postUpds(msg, st, usr))
+				.post(postUpds(msg.postUpds, usr))
 				.u(st.instancontxt(usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error
@@ -166,17 +166,18 @@ public class JUpdate extends HttpServlet {
 		return where;
 	}
 
-	/**convert msg's post requests ({@link UpdateReq}) to {@link io.odysz.transact.sql.Statement}
-	 * @param msg
+	/**convert update requests' body, usually from msg's post requests,
+	 * list of ({@link UpdateReq}) to {@link io.odysz.transact.sql.Statement}.
+	 * @param updreq
 	 * @param st
 	 * @param usr
 	 * @return statements
 	 * @throws TransException 
 	 */
-	static ArrayList<Statement<?>> postUpds(UpdateReq msg, DATranscxt st, IUser usr) throws TransException {
-		if (msg.postUpds != null) {
-			ArrayList<Statement<?>> posts = new ArrayList<Statement<?>>(msg.postUpds.size());
-			for (UpdateReq pst : msg.postUpds) {
+	public static ArrayList<Statement<?>> postUpds(ArrayList<UpdateReq> updreq, IUser usr) throws TransException {
+		if (updreq != null) {
+			ArrayList<Statement<?>> posts = new ArrayList<Statement<?>>(updreq.size());
+			for (UpdateReq pst : updreq) {
 				Statement<?> upd = null;
 				if (CRUD.C.equals(pst.a()))
 					upd = st.insert(pst.mtabl, usr)
@@ -189,13 +190,14 @@ public class JUpdate extends HttpServlet {
 					upd = st.delete(pst.mtabl, usr);
 
 				posts.add(upd.where(pst.where)
-							.post(postUpds(pst, st, usr)));
+							.post(postUpds(pst.postUpds, usr)));
 			}
 			return posts;
 		}
 		return null;
 	}
 	
+
 	/**Handle insert request, generate {@link Insert}, commit, return results.
 	 * @param msg
 	 * @param usr
@@ -234,7 +236,7 @@ public class JUpdate extends HttpServlet {
 		
 		SemanticObject res = (SemanticObject) del
 				.where(tolerateNv(msg.where))
-				.post(postUpds(msg, st, usr))
+				.post(postUpds(msg.postUpds, usr))
 				.d(st.instancontxt(usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error

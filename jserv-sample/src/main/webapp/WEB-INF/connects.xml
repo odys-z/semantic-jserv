@@ -10,9 +10,9 @@
   		<isdef>true</isdef>
   		<!-- For sqlite, src = relative path from this configure file.
   			So connection string can be: jdbc:sqlite:WEB-INF/remote.db
-  		<src>../../../../../../../../../../../../../git/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-test.db</src>
-  			-->
   		<src>../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-test.db</src>
+  			-->
+  		<src>../../../../../../../../../../../../../git/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-test.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->

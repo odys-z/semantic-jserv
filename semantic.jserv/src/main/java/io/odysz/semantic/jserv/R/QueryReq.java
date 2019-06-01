@@ -27,7 +27,7 @@ public class QueryReq extends JBody {
 	String mAlias;
 	
 	/**<pre>joins: [join-obj],
-     - join-obj: [{t: "j/r/l", tabl: "table-1", as: "t_alais", on: conds}]
+     - join-obj: [{t: "j/R/l", tabl: "table-1", as: "t_alais", on: conds}]
            - conds: [cond-obj]
             	cond-obj: {(main-table | alais.)left-col-val op (table-1 | alias2 .)right-col-val}
            				- op: '=' | '&lt;=' | '&gt;=' ...</pre>
@@ -55,7 +55,7 @@ public class QueryReq extends JBody {
 
 	public QueryReq(JMessage<? extends JBody> parent, String conn) {
 		super(parent, conn);
-		a = "r";
+		a = "R";
 	}
 
 	public QueryReq(JMessage<? extends JBody> parent, String conn, String fromTbl, String... alias) {
@@ -88,7 +88,7 @@ public class QueryReq extends JBody {
 	}
 
 	public QueryReq r(String with, String as, String on) {
-		return j("r", with, as, on);
+		return j("R", with, as, on);
 	}
 
 	public QueryReq j(ArrayList<String[]> joins) {

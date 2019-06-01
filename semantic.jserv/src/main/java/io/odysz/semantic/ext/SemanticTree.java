@@ -119,7 +119,7 @@ public class SemanticTree extends JQuery {
 //				else if ("sqltable".equals(t)) {
 //					SResultset lst = DatasetCfg.loadDataset(connId,
 //							jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-//					r = JProtocol.ok(p, lst);
+//					R = JProtocol.ok(p, lst);
 //				}
 				else {
 					// empty (build tree from general query results with semantic of 'sk')
@@ -267,8 +267,8 @@ insert into ir_radix64(intv, charv) values (34, 'Y');
 insert into ir_radix64(intv, charv) values (35, 'Z');
 insert into ir_radix64(intv, charv) values (36, 'a');
 insert into ir_radix64(intv, charv) values (37, 'b');
-insert into ir_radix64(intv, charv) values (38, 'c');
-insert into ir_radix64(intv, charv) values (39, 'd');
+insert into ir_radix64(intv, charv) values (38, 'C');
+insert into ir_radix64(intv, charv) values (39, 'D');
 
 insert into ir_radix64(intv, charv) values (40, 'e');
 insert into ir_radix64(intv, charv) values (41, 'f');
@@ -284,12 +284,12 @@ insert into ir_radix64(intv, charv) values (49, 'n');
 insert into ir_radix64(intv, charv) values (50, 'o');
 insert into ir_radix64(intv, charv) values (51, 'p');
 insert into ir_radix64(intv, charv) values (52, 'q');
-insert into ir_radix64(intv, charv) values (53, 'r');
+insert into ir_radix64(intv, charv) values (53, 'R');
 insert into ir_radix64(intv, charv) values (54, 's');
 insert into ir_radix64(intv, charv) values (55, 't');
 
 
-insert into ir_radix64(intv, charv) values (56, 'u');
+insert into ir_radix64(intv, charv) values (56, 'U');
 insert into ir_radix64(intv, charv) values (57, 'v');
 insert into ir_radix64(intv, charv) values (58, 'w');
 insert into ir_radix64(intv, charv) values (59, 'x');
@@ -307,11 +307,11 @@ begin
   DECLARE ix INT DEFAULT 0;
   
   set ix = intv & 63; -- 03fh
-  select charv into chr0 from ir_radix64 r where r.intv = ix;
+  select charv into chr0 from ir_radix64 R where R.intv = ix;
 
   set intv = intv >> 6;
   set ix = intv & 63;
-  select charv into chr1 from ir_radix64 r where r.intv = ix;
+  select charv into chr1 from ir_radix64 R where R.intv = ix;
   
   return concat(chr1, chr0);
 end </pre>
@@ -363,7 +363,7 @@ end </pre>
 //			SemanticObject respMsg = new SemanticObject();
 //			respMsg.put("code", "ok");
 //			respMsg.put("port", Port.stree);
-//			respMsg.put("msg", String.format("Updated %d records from root %s", total, rootId));
+//			respMsg.put("msg", String.format("Updated %D records from root %s", total, rootId));
 //			return respMsg;
 			return JProtocol.ok(p, "Updated %s records from root %s", total, rootId);
 		}
@@ -385,11 +385,11 @@ end </pre>
 		}
 	
 		private static String updateSubroot(String rootId, TreeSemantics sm) {
-			// update a_domain p0 join a_domain r on p0.parentId = r.domainId
-			// set p0.fullpath = concat(r.fullpath, '.', char2rx64(ifnull(p0.sort, 0)), ' ', p0.domainId)
+			// update a_domain p0 join a_domain R on p0.parentId = R.domainId
+			// set p0.fullpath = concat(R.fullpath, '.', char2rx64(ifnull(p0.sort, 0)), ' ', p0.domainId)
 			// where p0.domainId = '0202';
-			return String.format("update %1$s p0 join %1$s r on p0.%2$s = r.%3$s " +
-					"set p0.%4$s = concat(r.%4$s, '.', char2rx64(ifnull(p0.%5$s, 0)), ' ', p0.%3$s) where p0.%3$s = '%6$s'",
+			return String.format("update %1$s p0 join %1$s R on p0.%2$s = R.%3$s " +
+					"set p0.%4$s = concat(R.%4$s, '.', char2rx64(ifnull(p0.%5$s, 0)), ' ', p0.%3$s) where p0.%3$s = '%6$s'",
 					// sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0], sm[Ix.fullpath][0], sm[Ix.sort][0], rootId);
 					sm.tabl(), sm.dbParent(), sm.dbRecId(), sm.dbFullpath(), sm.dbSort(), rootId);
 		}
@@ -445,16 +445,16 @@ where p0.parentId is null; </pre>
 		 */
 		private static String updatePi(String rootId, TreeSemantics sm, int pi) {
 			// e_areas p0 on p1.parentId = p0.areaId
-			String p0 = String.format("%1$s p%2$d on p%3$d.%4$s = p%2$d.%5$s",
+			String p0 = String.format("%1$s p%2$D on p%3$D.%4$s = p%2$D.%5$s",
 					// sm[Ix.tabl][0], 0, 1, sm[Ix.parent][0], sm[Ix.recId][0]);
 					sm.tabl(), sm.dbParent(), sm.dbRecId());
 			for (int i = 1; i < pi; i++) {
 				// e_areas p1 on p2.parentId = p1.areaId join [e_areas p0 on p1.parentId = p0.areaId]
-				p0 = String.format("%1$s p%2$d on p%3$d.%4$s = p%2$d.%5$s join %6$s",
+				p0 = String.format("%1$s p%2$D on p%3$D.%4$s = p%2$D.%5$s join %6$s",
 						// sm[Ix.tabl][0], i, i + 1, sm[Ix.parent][0], sm[Ix.recId][0], p0);
 						sm.tabl(), i, i + 1, sm.dbParent(), sm.dbRecId(), p0);
 			}
-			p0 = String.format("update %1$s p%2$d join %3$s %4$s %5$s",
+			p0 = String.format("update %1$s p%2$D join %3$s %4$s %5$s",
 					// sm[Ix.tabl][0],
 					sm.tabl(),
 					pi, p0, setPi(sm, pi),
@@ -470,7 +470,7 @@ where p0.parentId is null; </pre>
 
 		private static String setPi(TreeSemantics sm, int pi) {
 			// set p2.fullpath = concat(p1.fullpath, ' ', char2rx64(ifnull(p2.siblingSort, 0)), '#', p2.areaId)
-			return String.format("set p%1$d.%2$s = concat(p%3$d.%2$s, '.', char2rx64(ifnull(p%1$d.%4$s, 0)), ' ', p%1$d.%5$s)",
+			return String.format("set p%1$D.%2$s = concat(p%3$D.%2$s, '.', char2rx64(ifnull(p%1$D.%4$s, 0)), ' ', p%1$D.%5$s)",
 					// pi, sm[Ix.fullpath][0], pi - 1, sm[Ix.sort][0], sm[Ix.recId][0]);
 					pi, sm.dbFullpath(), pi - 1, sm.dbSort(), sm.dbRecId());
 		}

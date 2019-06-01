@@ -16,10 +16,10 @@
 //
 //public class CheapReq extends JBody {
 //	public static CheapReq format(JMessage<QueryReq> parent, Req req, String wfId) {
-//		CheapReq r = new CheapReq(parent);
-//		r.a = req.name();
-//		r.wftype = wfId;
-//		return r;
+//		CheapReq R = new CheapReq(parent);
+//		R.a = req.name();
+//		R.wftype = wfId;
+//		return R;
 //	}
 //
 //	protected String wftype;

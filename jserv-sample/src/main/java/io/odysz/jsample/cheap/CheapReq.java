@@ -13,10 +13,13 @@ import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jserv.R.QueryReq;
+import io.odysz.semantic.jserv.U.JUpdate;
 import io.odysz.semantic.jserv.U.UpdateReq;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.sworkflow.EnginDesign.Req;
-import io.odysz.transact.sql.Update;
+import io.odysz.transact.sql.Statement;
+import io.odysz.transact.x.TransException;
 
 public class CheapReq extends JBody {
 	public static CheapReq format(JMessage<QueryReq> parent, Req req, String wfId) {
@@ -71,6 +74,12 @@ public class CheapReq extends JBody {
 	
 	/** 3d array of post insertings */
 	protected ArrayList<UpdateReq> postUpds;
+	public CheapReq post(UpdateReq p) {
+		if (postUpds == null)
+			postUpds = new ArrayList<UpdateReq>();
+		postUpds.add(p);
+		return this;
+	}
 	// protected ArrayList<ArrayList<?>> childInserts;
 
 	public CheapReq(JMessage<? extends JBody> parent) {
@@ -186,6 +195,10 @@ public class CheapReq extends JBody {
 
 	public String req() { return a; }
 
+	/**calling super.a(req)
+	 * @param req
+	 * @return this
+	 */
 	public CheapReq req(Req req) {
 		return (CheapReq) a(req.name());
 	}
@@ -195,7 +208,9 @@ public class CheapReq extends JBody {
 	 * @return the req object
 	 */
 	public CheapReq reqCmd(String cmd) {
-		return args("req", cmd);
+		// return args("req", cmd);
+		this.cmd = cmd;
+		return this;
 	}
 
 	/**Ask the node's right.
@@ -219,11 +234,12 @@ public class CheapReq extends JBody {
 		return req(Req.load);
 	}
 
-	/**TODO format post children delete, inserts, updates by users
+	/**format post children delete, inserts, updates by users
 	 * 
 	 * @return update / delete / insert
+	 * @throws TransException 
 	 */
-	public Update posts() {
-		return null;
+	public ArrayList<Statement<?>> posts(IUser usr) throws TransException {
+		return JUpdate.postUpds(postUpds, usr);
 	}
 }

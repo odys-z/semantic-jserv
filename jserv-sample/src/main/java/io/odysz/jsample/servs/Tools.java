@@ -159,7 +159,7 @@ public class Tools extends HttpServlet {
 				.where_("=", "borrowId", borrowId)
 				.post(ins)
 				.post(upd)
-				// If calling d() instead of commit() here, should also committed logs to DB (cmd = save)
+				// If calling D() instead of commit() here, should also committed logs to DB (cmd = save)
 				.commit(sqls, usr);
 		
 		Utils.logi(sqls);

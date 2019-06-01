@@ -58,5 +58,14 @@
   		<args>oper,opertime</args>
   	</s>
 
+  	<s>
+  		<id>tasks_details_fk</id>
+  		<smtc>fk</smtc>
+  		<tabl>task_details</tabl>
+  		<pk>recId</pk>
+  		<args>taskId,tasks,taskId</args>
+  	</s>
+
+
   </t>
 </semantics>
