@@ -18,9 +18,9 @@ public abstract class JBody {
 	protected String conn;
 	public String conn() { return conn; }
 
-	/** Action: login | c | r | u | d | any serv extension */
+	/** Action: login | C | R | U | D | any serv extension */
 	protected String a;
-	/** @return Action: login | c | r | u | d | any serv extension */
+	/** @return Action: login | C | R | U | D | any serv extension */
 	public String a() { return a; }
 
 	public JBody a(String act) {

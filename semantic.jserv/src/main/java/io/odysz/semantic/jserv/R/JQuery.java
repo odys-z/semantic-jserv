@@ -35,7 +35,7 @@ import io.odysz.transact.x.TransException;
 /**CRUD read service.
  * @author odys-z@github.com
  */
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/R.serv" })
 public class JQuery extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
@@ -56,7 +56,7 @@ public class JQuery extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.query)
-			Utils.logi("---------- squery (r.serv) get <- %s ----------", req.getRemoteAddr());
+			Utils.logi("---------- squery (R.serv) get <- %s ----------", req.getRemoteAddr());
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);
@@ -79,7 +79,7 @@ public class JQuery extends HttpServlet {
 	
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (ServFlags.query)
-			Utils.logi("========== squery (r.serv) post <= %s ==========", req.getRemoteAddr());
+			Utils.logi("========== squery (R.serv) post <= %s ==========", req.getRemoteAddr());
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
@@ -123,16 +123,16 @@ public class JQuery extends HttpServlet {
 		// FIXME bug of join on parsing:
 //		0	l
 //		1	a_roles
-//		2	r
-//		3	u.roleId=r.roleId or u.roleId = 'admin' and u.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People')
+//		2	R
+//		3	U.roleId=R.roleId or U.roleId = 'admin' and U.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People')
 //
 //		select userId userId, userName userName, mobile mobile, dept.orgId orgId, o.orgName orgName, 
-//		dept.departName departName, dept.departId departId, r.roleId roleId, r.roleName roleName, notes notes 
-//		from a_user u 
-//		join a_reg_org o on u.orgId = o.orgId 
-//		left outer join a_org_depart dept on u.departId = dept.departId 
-//		left outer join a_roles r on u.roleId = r.roleId OR u.roleId = 'admin' AND u.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People') 
-//		where u.userName like '%张%'
+//		dept.departName departName, dept.departId departId, R.roleId roleId, R.roleName roleName, notes notes 
+//		from a_user U 
+//		join a_reg_org o on U.orgId = o.orgId 
+//		left outer join a_org_depart dept on U.departId = dept.departId 
+//		left outer join a_roles R on U.roleId = R.roleId OR U.roleId = 'admin' AND U.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People') 
+//		where U.userName like '%张%'
 
 
 		if (msg.joins != null && msg.joins.size() > 0) {

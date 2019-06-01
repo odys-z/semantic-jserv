@@ -72,6 +72,8 @@ public class JHelper<T extends JBody> {
 				writer.value((Boolean) v ? "true" : "false");
 			else 
 				writer.value((Boolean)v);
+		else if (JBody.class.isAssignableFrom(t))
+			((JBody)v).toJson(writer, opts);
 		else
 			// Note 2019.5.13  set value while considering options
 			// writer.value(v == null ? JsonToken.NULL.toString() : v.toString());

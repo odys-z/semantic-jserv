@@ -80,7 +80,7 @@ public class UpdateReqTest {
 		UpdateReq itm = new UpdateReq(msg, "inet-sample", "a_user", "U")
 				.nv("userId", "admin - 1")
 				.nv("userName", "junit")
-				.where("=", "r.roleId", "'amdin'")
+				.where("=", "R.roleId", "'amdin'")
 				.post(pst)
 				.post(pst2)
 				;

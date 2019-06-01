@@ -2,6 +2,7 @@ package io.odysz.jsample.cheap;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -32,7 +33,7 @@ import io.odysz.sworkflow.CheapEvent;
 import io.odysz.sworkflow.CheapException;
 import io.odysz.sworkflow.EnginDesign.Req;
 import io.odysz.sworkflow.ICheapEventHandler;
-import io.odysz.transact.sql.Update;
+import io.odysz.transact.sql.Statement;
 import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Handling work flow request", urlPatterns = { "/cheapflow.sample" })
@@ -199,7 +200,7 @@ public class CheapServ extends JUpdate {
 //		String insertabl = jobj.childInsertabl;
 		
 		// testTrans = CheapEngin.trcs;
-		Update postups = jobj.posts();
+		ArrayList<Statement<?>> postups = jobj.posts(usr);
 		// CheapWorkflow wf = CheapEngin.getWf(jobj.wftype);
 		SemanticObject res = CheapApi.start(jobj.wftype, jobj.taskId())
 				.nodeDesc(jobj.ndescpt)
@@ -228,7 +229,7 @@ public class CheapServ extends JUpdate {
 		String taskId = jobj.taskId();
 		String cmd = jobj.cmd();
 
-		Update postups = jobj.posts();
+		ArrayList<Statement<?>> postups = jobj.posts(usr);
 		SemanticObject res = CheapApi.next(wftype, taskId, cmd)
 				.nodeDesc(jobj.ndescpt)
 				// .taskChildMulti(jobj.childInsertabl, null, jobj.childInserts)

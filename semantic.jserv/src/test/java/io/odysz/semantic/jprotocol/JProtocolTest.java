@@ -29,18 +29,18 @@ public class JProtocolTest {
 
 -------------------------------
 {a=1, b=y}
-{a=x, b=y, c=[1.0, 2.0]}
-{a=u, b=v, c=[8.0, 9.0]}
+{a=x, b=y, C=[1.0, 2.0]}
+{a=U, b=v, C=[8.0, 9.0]}
 
 -------------------------------
-[{"a":"1","b":"y"},{"a":"x","b":"y","c":["1.0","2.0"]},{"a":"u","b":"v","c":[8.0,9.0]}]
+[{"a":"1","b":"y"},{"a":"x","b":"y","C":["1.0","2.0"]},{"a":"U","b":"v","C":[8.0,9.0]}]
 
 -------------------------------
 {a=1, b=y}
-{a=x, b=y, c=[1.0, 2.0]}
-{a=u, b=v, c=[8.0, 9.0]}</pre>
+{a=x, b=y, C=[1.0, 2.0]}
+{a=U, b=v, C=[8.0, 9.0]}</pre>
 	 * This shows Gson can't handle inner type of members.
-	 * Axby.c is a list of integer, but Gson only deserializing according to type of c's string format, either strings or floats.<br>
+	 * Axby.c is a list of integer, but Gson only deserializing according to type of C's string format, either strings or floats.<br>
 	 * <img width='1391' src='it-type list-of-string.png'/>
 	 */
 	@SuppressWarnings("rawtypes")
@@ -53,14 +53,14 @@ public class JProtocolTest {
 		Utils.logi("\n-------------------------------");
 		// print:
 		// {a=1, b=y}
-		// {a=x, b=y, c=[1, 2]}
-		// {a=u, b=v, c=[8.0, 9.0]}
+		// {a=x, b=y, C=[1, 2]}
+		// {a=U, b=v, C=[8.0, 9.0]}
 		// This shows Gson can't handle inner type of members.
-		// Axby.c is a list of integer, but Gson only deserializing according to type of c's string format, either strings or floats.
+		// Axby.c is a list of integer, but Gson only deserializing according to type of C's string format, either strings or floats.
 		ArrayList<Axby> s = (ArrayList<Axby>) JProtocolTest.<Axby>convert(
 				"[{\"a\": \"1\", \"b\": \"y\"},"
-				+ "{\"a\": \"x\", b: \"y\", c: [\"1.0\",\"2.0\"]},"
-				+ "{\"a\": \"u\", b: \"v\", c: [8,9]}]"
+				+ "{\"a\": \"x\", b: \"y\", C: [\"1.0\",\"2.0\"]},"
+				+ "{\"a\": \"U\", b: \"v\", C: [8,9]}]"
 				);
 		Utils.<Axby>logi(s);
 		
