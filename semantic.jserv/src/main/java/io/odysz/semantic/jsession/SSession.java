@@ -113,7 +113,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
         		0, 1, TimeUnit.MINUTES);
 	}
 	
-	/**Stop all threads that were scheduled by IrSession.
+	/**Stop all threads that were scheduled by SSession.
 	 * @param msDelay delay in milliseconds.
 	 */
 	public static void stopScheduled(int msDelay) {
@@ -319,13 +319,13 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 */
 	private IUser loadUser(SessionReq jreq, String connId)
 			throws TransException, SQLException, SsException, ReflectiveOperationException {
-		SemanticObject s = sctx.select(UserMeta.tbl, "U")
+		SemanticObject s = sctx.select(UserMeta.tbl, "u")
 			.col(UserMeta.uidField, "uid")
 			.col(UserMeta.unameField, "uname")
 			.col(UserMeta.pswdField, "pswd")
 			.col(UserMeta.ivField, "iv")
 			// .col(UserMeta.urlField, "url")
-			.where("=", "U." + UserMeta.uidField, "'" + jreq.uid() + "'")
+			.where_("=", "u." + UserMeta.uidField, jreq.uid())
 			.rs(sctx.instancontxt(jrobot));
 		
 		SResultset rs = (SResultset) s.rs(0);;
