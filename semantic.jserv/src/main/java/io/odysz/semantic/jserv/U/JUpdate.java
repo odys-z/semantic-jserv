@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
@@ -32,7 +33,7 @@ import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/U.serv" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv" })
 public class JUpdate extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
@@ -141,12 +142,12 @@ public class JUpdate extends HttpServlet {
 	 * @param where
 	 * @return predicates[[logic, n, v], ...]
 	 */
-	static ArrayList<String[]> tolerateNv(ArrayList<String[]> where) {
+	static ArrayList<Object[]> tolerateNv(ArrayList<Object[]> where) {
 		if (where != null) {
 			for (int ix = 0; ix < where.size(); ix++) {
-				String[] nv = where.get(ix);
+				Object[] nv = where.get(ix);
 				if (nv != null && nv.length == 2) {
-					String v = nv[Ix.nvv];
+					Object v = nv[Ix.nvv];
 					if (v == null) {
 						// client has done something wrong
 						where.set(ix, null); // not remove(), because it's still iterating
@@ -154,10 +155,10 @@ public class JUpdate extends HttpServlet {
 					}
 
 					// v can be large, performance can be improved
-					if (v.startsWith("'"))
-						where.set(ix, new String[] {"=", nv[Ix.nvn], v});
+					if (v instanceof String && ((String)v).startsWith("'"))
+						where.set(ix, new Object[] {"=", nv[Ix.nvn], v});
 					else
-						where.set(ix, new String[] {"=", nv[Ix.nvn], "'" + v + "'"});
+						where.set(ix, new String[] {"=", (String)nv[Ix.nvn], "'" + v + "'"});
 				}
 			}
 			where.removeIf(m -> m == null);
@@ -188,6 +189,10 @@ public class JUpdate extends HttpServlet {
 							.nvs(pst.nvs);
 				else if (CRUD.D.equals(pst.a()))
 					upd = st.delete(pst.mtabl, usr);
+				else if (pst != null) {
+					Utils.warn("Can't handle request:\n" + pst.toString());
+					continue;
+				}
 
 				posts.add(upd.where(pst.where)
 							.post(postUpds(pst.postUpds, usr)));

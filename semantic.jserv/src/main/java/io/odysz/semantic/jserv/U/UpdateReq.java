@@ -6,12 +6,14 @@ import static io.odysz.semantic.jprotocol.JProtocol.CRUD.U;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.LangExt;
+import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
@@ -52,10 +54,10 @@ public class UpdateReq extends JBody {
 	protected ArrayList<ArrayList<?>> nvss;
 	/**inserting columns, used for "I".
 	 * Here a col shouldn't be an expression - so not Object[], unlike that of query. */
-	private String[] cols;
+	protected String[] cols;
 
 	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
-	ArrayList<String[]> where;
+	ArrayList<Object[]> where;
 	
 	ArrayList<UpdateReq> postUpds;
 	
@@ -81,7 +83,7 @@ public class UpdateReq extends JBody {
 		return this;	
 	}
 
-	/** get columns for sql insert into (COLS) 
+	/** get columns for sql's insert into COLs. 
 	 * @return columns
 	 */
 	public String[] cols() {
@@ -92,12 +94,19 @@ public class UpdateReq extends JBody {
 	 * @return [[[n, v], ...]]
 	 */
 	public ArrayList<ArrayList<?>> values() {
+		if (nvs != null && nvs.size() > 0) {
+			if (nvss == null)
+				nvss = new ArrayList<ArrayList<?>>();
+
+			nvss.add(nvs);
+			nvs = null;
+		}
 		return nvss;
 	}
 	
 	public UpdateReq where(String oper, String lop, String rop) {
 		if (where == null)
-			where = new ArrayList<String[]>();
+			where = new ArrayList<Object[]>();
 
 		String[] predicate = new String[Ix.predicateSize];
 		predicate[Ix.predicateOper] = oper;
@@ -114,9 +123,15 @@ public class UpdateReq extends JBody {
 		postUpds.add(pst);
 		return this;
 	}
-	
+
 	@Override
 	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
+		if (CRUD.C.equals(a) && (cols == null || cols.length == 0))
+			Utils.warn("WARN - UpdateReq.toJson():\nFound inserting request but cols are null, this is wrong for no insert statement can be generated.\n" +
+					"Suggestion: call the InsertReq.col(col-name) before serialize this to json for table: %s\n" +
+					"Another common error leads to this is using UpdateReq for inserting with java client.",
+					mtabl);
+
 		writer.beginObject();
 		// design notes: keep consists with QueryReq
 		writer.name("conn").value(conn)
@@ -198,7 +213,7 @@ public class UpdateReq extends JBody {
 		else if ("nvs".equals(name))
 			nvs = (ArrayList<Object[]>) JHelper.readLst_StrObj(reader, null);
 		else if ("where".equals(name))
-			where = (ArrayList<String[]>) JHelper.readLst_StrObj(reader, null);
+			where = (ArrayList<Object[]>) JHelper.readLst_StrObj(reader, null);
 		else if ("postUpds".equals(name)) {
 			postUpds = new ArrayList<UpdateReq>();
 			reader.beginArray();
@@ -222,8 +237,10 @@ public class UpdateReq extends JBody {
 		// else readChild(name, reader);
 		else if ("nvss".equals(name))
 			nvss = JHelper.readLstLstStrs(reader);
-		else if ("cols".equals(name))
-			cols = (String[]) JHelper.readStrObjs(reader, null);
+		else if ("cols".equals(name)) {
+			Object[] objs = JHelper.readStrObjs(reader, null);
+			cols = Arrays.stream(objs).toArray(String[]::new);
+		}
 	}
 
 	/**Update request validating.

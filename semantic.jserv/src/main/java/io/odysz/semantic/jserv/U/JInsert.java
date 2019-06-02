@@ -128,7 +128,7 @@ public class JInsert extends HttpServlet {
 				.cols(cols)
 				.values(msg.values())
 				.where(JUpdate.tolerateNv(msg.where))
-				.post(JUpdate.postUpds(msg, st, usr))
+				.post(JUpdate.postUpds(msg.postUpds, usr))
 				.ins(st.instancontxt(usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error
