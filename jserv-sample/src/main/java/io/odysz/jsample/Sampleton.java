@@ -1,6 +1,7 @@
 package io.odysz.jsample;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -20,18 +21,8 @@ import io.odysz.transact.x.TransException;
 @WebListener
 public class Sampleton extends JSingleton implements ServletContextListener {
 
-//	private static boolean initAgain = false;
-
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
-//		if (initAgain) {
-//			// This method can be called twice by tomcat. And there are similar reports like:
-//			// https://stackoverflow.com/questions/16702011/tomcat-deploying-the-same-application-twice-in-netbeans 
-//			Utils.warn("Once agin ??????????");
-//			return;
-//		}
-//
-//		initAgain = true;
 
 		super.onInitialized(sce);
 		
@@ -42,12 +33,7 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 			// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 			JMessage.understandPorts(Samport.menu);
 
-			// init semantics
-			// Current version only support default connection's semantics.
-//			DATranscxt.initConfigs(Connects.defltConn(),
-//				FilenameUtils.concat(rootINF(), "semantics.xml"));
-			
-			ICheapChecker checker = null; // TODO
+			HashMap<String, ICheapChecker> checker = null; // To be tested
 
 			relapath = Configs.getCfg("cheap", "config-path");
 			// meta must loaded by DATranscxt before initCheap()
@@ -58,8 +44,6 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 					e.getClass().getName(), e.getMessage(), relapath);
 		} catch (TransException | SAXException e) {
 			e.printStackTrace();
-//		} catch (SQLException e) {
-//			e.printStackTrace();
 		}
 	}
 
