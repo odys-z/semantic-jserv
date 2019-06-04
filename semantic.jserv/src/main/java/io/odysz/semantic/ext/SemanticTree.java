@@ -186,7 +186,7 @@ public class SemanticTree extends JQuery {
 		List<SemanticObject> resp = null;
 		if (rs != null)
 			resp = DatasetCfg.buildForest((SResultset) ((SemanticObject)rs.data()).rs(0), treeSmtcs);
-		return JProtocol.ok(p, resp);
+		return JProtocol.ok(p, resp).total(0, rs.total(0));
 	}
 
 	
