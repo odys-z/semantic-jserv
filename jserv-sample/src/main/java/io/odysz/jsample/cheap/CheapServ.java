@@ -207,7 +207,7 @@ public class CheapServ extends JUpdate {
 				.taskNv(jobj.taskNvs)
 				// .taskChildMulti(insertabl, null, inserts)
 				.postupdates(postups)
-				.commit(usr.logAct("Start Flow " + jobj.wftype, "cheap.start"));
+				.commitReq(usr.logAct("Start Flow " + jobj.wftype, "cheap.start"));
 
 		// simulating business layer handling events
 		// FIXME why events handling is here?
@@ -234,7 +234,7 @@ public class CheapServ extends JUpdate {
 				.nodeDesc(jobj.ndescpt)
 				// .taskChildMulti(jobj.childInsertabl, null, jobj.childInserts)
 				.postupdates(postups)
-				.commit(usr.logAct(String.format("Req %s - %s", jobj.wftype, cmd), "cheap.cmd"));
+				.commitReq(usr.logAct(String.format("Req %s - %s", jobj.wftype, cmd), "cheap.cmd"));
 
 		// FIXME why events handling is here?
 		ICheapEventHandler eh = (ICheapEventHandler) res.remove("stepHandler");

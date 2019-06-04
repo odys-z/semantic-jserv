@@ -29,7 +29,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/C.serv" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/c.serv" })
 public class JInsert extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
