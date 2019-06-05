@@ -63,6 +63,8 @@ public class UpdateReq extends JBody {
 	
 	public JHeader header;
 
+	ArrayList<Object[]> attacheds;
+
 	public UpdateReq(JMessage<? extends JBody> parent, String conn) {
 		super(parent, conn);
 	}
@@ -103,7 +105,14 @@ public class UpdateReq extends JBody {
 		}
 		return nvss;
 	}
-	
+
+	public UpdateReq attach(String file, String b64) {
+		if (attacheds == null)
+			attacheds = new ArrayList<Object[]>();
+		attacheds.add(new String[] {file, b64});
+		return this;
+	}
+
 	public UpdateReq where(String oper, String lop, String rop) {
 		if (where == null)
 			where = new ArrayList<Object[]>();
@@ -136,7 +145,7 @@ public class UpdateReq extends JBody {
 		// design notes: keep consists with QueryReq
 		writer.name("conn").value(conn)
 			.name("a").value(a)
-			.name("mtabl").value(mtabl) ;
+			.name("mtabl").value(mtabl);
 
 		if (where != null) {
 			writer.name("where");
@@ -162,6 +171,10 @@ public class UpdateReq extends JBody {
 		if (cols != null) {
 			writer.name("cols");
 			JHelper.writeStrings(writer, cols, opts);
+		}
+		if (attacheds != null) {
+			writer.name("attacheds");
+			JHelper.writeLst(writer, attacheds, opts);
 		}
 		
 		writer.endObject();
@@ -201,7 +214,6 @@ public class UpdateReq extends JBody {
 	 * @throws SemanticException
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unchecked")
 	protected void fromJsonName(String name, JsonReader reader)
 			throws SemanticException, IOException {
 		if ("a".equals(name))
@@ -241,6 +253,8 @@ public class UpdateReq extends JBody {
 			Object[] objs = JHelper.readStrObjs(reader, null);
 			cols = Arrays.stream(objs).toArray(String[]::new);
 		}
+		else if ("attacheds".equals(name))
+			attacheds = JHelper.readLst_StrObj(reader, null);
 	}
 
 	/**Update request validating.

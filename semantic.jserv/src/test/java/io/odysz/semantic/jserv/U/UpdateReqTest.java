@@ -36,7 +36,8 @@ public class UpdateReqTest {
 
 		UpdateReq itm = new UpdateReq(msg, "inet-sample", "a_user", "I")
 				.nv("userId", "admin - 1")
-				.nv("userName", "junit");
+				.nv("userName", "junit")
+				.attach("t1.png", "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4wQJAxIXLe1hiwAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAWSURBVAjXY/wvI8PAyMjE8OcPw79/ABuIBTEWd1cXAAAAAElFTkSuQmCC");
 		msg.body(itm);
 
 		OutputStream os = new ByteArrayOutputStream();
@@ -59,6 +60,7 @@ public class UpdateReqTest {
 		assertEquals("I", bd.a()); // not printed by JBbody.toString()
 		assertEquals("a_user", bd.mtabl);
 		assertEquals("userId", bd.nvs.get(0)[Query.Ix.nvn]);
+		assertEquals("t1.png", bd.attacheds.get(0)[0]);
 	}
 
 	@Test
