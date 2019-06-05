@@ -400,7 +400,7 @@ public class JHelper<T extends JBody> {
 	 * @throws IOException 
 	 * @throws SemanticException 
 	 */
-	public static ArrayList<?> readLst_StrObj(JsonReader reader, Class<? extends JBody> elemClzz)
+	public static ArrayList<Object[]> readLst_StrObj(JsonReader reader, Class<? extends JBody> elemClzz)
 			throws IOException, SemanticException {
 		ArrayList<Object[]> lst = new ArrayList<Object[]>();
 		reader.beginArray();
