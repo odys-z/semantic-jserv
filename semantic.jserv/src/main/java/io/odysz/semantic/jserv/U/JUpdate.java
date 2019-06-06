@@ -127,7 +127,7 @@ public class JUpdate extends HttpServlet {
 				.nvs(msg.nvs)
 				.where(tolerateNv(msg.where))
 				.post(postUpds(msg.postUpds, usr))
-				.attachs(msg.attacheds)
+				// .attachs(msg.attacheds)
 				.u(st.instancontxt(usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error

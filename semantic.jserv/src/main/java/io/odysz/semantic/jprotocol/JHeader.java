@@ -1,5 +1,6 @@
 package io.odysz.semantic.jprotocol;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,10 @@ public class JHeader {
 		return String.format("{ssid: %s, uid: %s, iv64: %s,\n\t\tuserAct: %s}",
 				ssid, uid, iv64, usrAct == null ? null :
 					Arrays.stream(usrAct).collect(Collectors.joining(", ", "[", "]")));
+	}
+	
+	public static JHeader fromJson(String json) throws IOException {
+		return JHelper.readHeader(json);
 	}
 
 }

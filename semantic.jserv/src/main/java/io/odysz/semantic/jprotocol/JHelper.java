@@ -791,7 +791,7 @@ public class JHelper<T extends JBody> {
 
 	}
 
-	protected JHeader readHeader(JsonReader reader) throws IOException {
+	protected static JHeader readHeader(JsonReader reader) throws IOException {
 		JHeader header = gson.fromJson(reader, JHeader.class);
 		return header;
 	}
@@ -801,7 +801,7 @@ public class JHelper<T extends JBody> {
 		return opts;
 	}
 
-	public JHeader readHeader(String head) throws IOException {
+	public static JHeader readHeader(String head) throws IOException {
 		if (head == null || head.length() == 0)
 			return null;
 		InputStream in = new ByteArrayInputStream(head.getBytes());
