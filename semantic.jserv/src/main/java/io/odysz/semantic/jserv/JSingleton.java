@@ -39,7 +39,7 @@ public class JSingleton {
 		rootINF = evt.getServletContext().getRealPath("/WEB-INF");
 		Connects.init(rootINF);
 		Configs.init(rootINF);
-		DATranscxt.configRoot(rootINF);
+		DATranscxt.configRoot(rootINF, rootINF);
 		
 		try {
 			DatasetCfg.init(rootINF);
