@@ -29,15 +29,22 @@
   		<args>funcId,a_role_func,roleId</args>
   	</s>
 
-	<!-- User.log() don't use this configure file, but should be OK - never used
   	<s>
-  		<id>04</id>
-  		<smtc>o-t</smtc>
+  		<id>log.01</id>
+ 		<smtc>a-k</smtc>
   		<tabl>a_logs</tabl>
   		<pk>logId</pk>
-  		<args></args>
-  	</s> -->
-  	
+  		<args>logId</args>
+  	</s>
+
+  	<s>
+  		<id>log.02</id>
+ 		<smtc>o-t</smtc>
+  		<tabl>a_logs</tabl>
+  		<pk>logId</pk>
+  		<args>oper,logTime</args>
+  	</s>
+ 
   	<!-- default users passsword -->
   	<s>
   		<id>user.01</id>
