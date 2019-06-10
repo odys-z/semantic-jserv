@@ -51,5 +51,46 @@
   		<args>expenseId,r_expense,expenseId</args>
   	</s>
   	
+  	  	<!-- image attachments to a_user: auto pk -->
+  	<s>
+  		<id>52</id>
+  		<smtc>autopk</smtc>
+  		<tabl>a_attaches</tabl>
+  		<pk>attId</pk>
+  		<args>attId</args>
+  	</s>
+
+  	<!-- image attachments to a_user: save as file -->
+  	<s>
+  		<id>53</id>
+  		<smtc>ef</smtc>
+  		<tabl>a_attaches</tabl>
+  		<pk>attId</pk>
+  		<!-- try delete, save to WEB-INF/uploads/[busiTbl]/[uri],
+  				in table attches, pk attId,
+  				row's value in uri will replaced with a file,
+  				handled for business table, fk to busi-id,
+  				filename rule: busiTbl-recId-attName(.suffix)
+  			see https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html
+  				-->
+  		<args>uploads,uri,busiTbl,busiId,attName</args>
+  	</s>
+  	<!-- delete attachments when deleting a user -->
+  	<s>
+  		<id>54</id>
+  		<smtc>pc-del-all</smtc>
+  		<tabl>a_user</tabl>
+  		<pk>userId</pk>
+  		<args>userId a_attaches attId</args>
+  	</s>
+  	<!-- attachments' oper-time -->
+  	<s>
+  		<id>55</id>
+  		<smtc>o-t</smtc>
+  		<tabl>a_attaches</tabl>
+  		<pk>attId</pk>
+  		<args>oper,optime</args>
+  	</s>
+  	
   </t>
 </semantics>

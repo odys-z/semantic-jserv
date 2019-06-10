@@ -120,7 +120,7 @@ public class JQuery extends HttpServlet {
 			for (Object[] col : msg.exprs)
 				selct.col((String)col[Ix.exprExpr], (String)col[Ix.exprAlais]);
 		
-		// FIXME bug of join on parsing:
+		// Sample of join on parsing:
 //		0	l
 //		1	a_roles
 //		2	R
@@ -134,13 +134,7 @@ public class JQuery extends HttpServlet {
 //		left outer join a_roles R on U.roleId = R.roleId OR U.roleId = 'admin' AND U.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People') 
 //		where U.userName like '%张%'
 
-
 		if (msg.joins != null && msg.joins.size() > 0) {
-//			for (Object[] j : msg.joins)
-//				selct.j(join.parse((String)j[Ix.joinType]),
-//						 (String)j[Ix.joinTabl],
-//						 (String)j[Ix.joinAlias],
-//						 (String)j[Ix.joinOnCond]);
 			for (Object[] j : msg.joins)
 				if (j[Ix.joinTabl] instanceof QueryReq) {
 					Query q = buildSelct((QueryReq)j[Ix.joinTabl], usr);
@@ -162,7 +156,7 @@ public class JQuery extends HttpServlet {
 							(String)cond[Ix.predicateL],
 							(String)cond[Ix.predicateR]);
 		}
-		// TODO: GROUP
+		// GROUP BY
 		selct.groupby(msg.groups);
 		// ORDER BY
 		selct.orderby(msg.orders);
