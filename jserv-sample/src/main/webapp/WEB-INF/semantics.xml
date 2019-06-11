@@ -51,7 +51,7 @@
   		<args>expenseId,r_expense,expenseId</args>
   	</s>
   	
-  	  	<!-- image attachments to a_user: auto pk -->
+  	<!-- image attachments to a_user: auto pk -->
   	<s>
   		<id>52</id>
   		<smtc>autopk</smtc>
