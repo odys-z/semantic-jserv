@@ -208,7 +208,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			if (t != null) t = t.toLowerCase().trim();
 			if ("ping".equals(t) || "touch".equals(t)) {
 				// already touched by verify()
-				IUser usr = verify(jreqHelper.readHeader(headstr));
+				IUser usr = verify(JHelper.readHeader(headstr));
 				SemanticObject ok = new SemanticObject();
 				ok.put(usr.uid(), (SemanticObject)usr);
 				resp.getWriter().write(Html.map(ok));

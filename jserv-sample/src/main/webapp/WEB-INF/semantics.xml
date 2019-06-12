@@ -78,14 +78,26 @@
   	<!-- delete attachments when deleting a user -->
   	<s>
   		<id>54</id>
-  		<smtc>pc-del-all</smtc>
+  		<smtc>pc-del-tbl</smtc>
   		<tabl>a_user</tabl>
   		<pk>userId</pk>
-  		<args>userId a_attaches attId</args>
+  		<!-- 0 child fk; 1 child table; 2 child pk; 3 business cate (table name) [, ...]  -->
+  		<args>busiId a_attaches attId busiTbl</args>
+  	</s>
+  	<s>
+  		<id>55</id>
+  		<smtc>fk-ins-cate</smtc>
+  		<tabl>a_attaches</tabl>
+  		<pk>attId</pk>
+  		<!-- 0 business cate (table name); 1 merged child fk; 2 parent table, 3 parent referee [, ...]  -->
+  		<args>
+  		busiTbl busiId a_user userId,
+  		busiTbl busiId a_user_fake fakeId
+  		</args>
   	</s>
   	<!-- attachments' oper-time -->
   	<s>
-  		<id>55</id>
+  		<id>56</id>
   		<smtc>o-t</smtc>
   		<tabl>a_attaches</tabl>
   		<pk>attId</pk>
