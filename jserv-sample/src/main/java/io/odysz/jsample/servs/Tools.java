@@ -150,7 +150,7 @@ public class Tools extends HttpServlet {
 		}
 
 		Update upd = st.update("borrowTbl", usr)
-				.nv("total", total)
+				.nv("total", String.valueOf(total))
 				.where_("=", "borrowId", borrowId);
 		
 		
