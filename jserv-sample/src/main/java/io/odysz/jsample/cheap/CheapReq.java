@@ -122,7 +122,6 @@ public class CheapReq extends JBody {
 		writer.endObject();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void fromJson(JsonReader reader) throws IOException, SemanticException {
 		JsonToken token = reader.peek();
