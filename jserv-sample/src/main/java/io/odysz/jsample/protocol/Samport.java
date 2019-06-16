@@ -7,7 +7,7 @@ import io.odysz.semantics.x.SemanticException;
 /**Sample project's prots extension */
 public enum Samport implements IPort {
 	/**port provided by {@link io.odysz.jsample.SysMenu} */
-	menu("menu.sample"),
+	menu("menu.serv"),
 	/**workflow port, see {@link io.odysz.sworkflow.CheapEngin} */
 	cheapflow("cheapflow.sample"), 
 	/** sample servlet tools.serv */
