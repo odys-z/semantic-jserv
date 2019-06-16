@@ -26,8 +26,8 @@ public class JMessage <T extends JBody> {
 	 * @author odys-z@github.com
 	 */
 	public enum Port implements IPort {  heartbeat("ping.serv"), session("login.serv"),
-						query("R.serv"), update("U.serv"),
-						insert("C.serv"), delete("D.serv"),
+						query("r.serv"), update("u.serv"),
+						insert("c.serv"), delete("d.serv"),
 						echo("echo.serv"),
 						/** serv port for downloading json/xml file or uploading a file.<br>
 						 * @see {@link io.odysz.semantic.jserv.file.JFileServ}. */
