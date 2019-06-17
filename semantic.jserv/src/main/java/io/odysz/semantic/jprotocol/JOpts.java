@@ -9,4 +9,5 @@ public class JOpts {
 	/** replace boolean value with 'true' or 'false' */
 	public boolean noBoolean;
 
+	public String doubleFormat;
 }
