@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.common.dbtype;
 import io.odysz.module.rs.SResultset;
@@ -22,6 +23,7 @@ import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
@@ -91,6 +93,7 @@ public class SemanticTree extends JQuery {
 			JMessage<DatasetReq> jmsg = ServletAdapter.<DatasetReq>read(req, jtreeReq, DatasetReq.class);
 			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
 
+
 			DatasetReq jreq = jmsg.body(0);
 			String t = jreq.a();
 
@@ -123,7 +126,8 @@ public class SemanticTree extends JQuery {
 //				}
 				else {
 					// empty (build tree from general query results with semantic of 'sk')
-					r = loadSemantics(connId, jreq, getTreeSemtcs(req, jreq), usr);
+					JOpts opts = jmsg.opts();
+					r = loadSTree(connId, jreq, getTreeSemtcs(req, jreq), usr, opts);
 				}
 			}
 
@@ -168,6 +172,7 @@ public class SemanticTree extends JQuery {
 	 * @param jobj
 	 * @param treeSmtcs
 	 * @param usr 
+	 * @param opts 
 	 * @return {@link SemanticObject} response
 	 * @throws IOException
 	 * @throws SQLException
@@ -175,20 +180,26 @@ public class SemanticTree extends JQuery {
 	 * @throws SsException
 	 * @throws TransException
 	 */
-	private SemanticObject loadSemantics(String connId, DatasetReq jobj, TreeSemantics treeSmtcs, IUser usr)
+	private SemanticObject loadSTree(String connId, DatasetReq jobj, TreeSemantics treeSmtcs, IUser usr, JOpts opts)
 			throws IOException, SQLException, SAXException, SsException, TransException {
 		// for robustness
+		if (treeSmtcs == null)
+			throw new SemanticException("SemanticTree#loadSTree(): Can't build tree, tree semantics is null.");
+
 		String rootId = jobj.rootId;
 		if (rootId != null && rootId.trim().length() == 0)
 			rootId = null;
 		
 		SemanticObject rs = query((QueryReq)jobj, usr);
 		List<SemanticObject> resp = null;
-		if (rs != null)
-			resp = DatasetCfg.buildForest((SResultset) ((SemanticObject)rs.data()).rs(0), treeSmtcs);
+		if (rs != null) {
+			SResultset result = (SResultset) ((SemanticObject)rs.data()).rs(0);
+			if (opts != null && opts.doubleFormat != null)
+				result.stringFormat(Double.class, LangExt.prefixIfnull("%", opts.doubleFormat));
+			resp = DatasetCfg.buildForest(result, treeSmtcs);
+		}
 		return JProtocol.ok(p, resp).total(0, rs.total(0));
 	}
-
 	
 	/**Rebuild subtree starting at root.<br>
 	 * Currently only mysql is supported. You may override this method to adapt to other RDBMS.

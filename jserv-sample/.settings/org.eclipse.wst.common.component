@@ -4,7 +4,6 @@
         <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/test"/>
-        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
         <dependent-module archiveName="semantic.jserv-0.9.8-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.jserv/semantic.jserv">
             <dependency-type>uses</dependency-type>
         </dependent-module>
