@@ -3,6 +3,7 @@ package io.odysz.semantic.jsession;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
@@ -20,11 +21,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.DASemantics.smtype;
+import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
@@ -42,20 +47,33 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
-/**Handle login-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}<br>
- * and session-header: {uid: “user-id”,  ssid: “session-id-plain/cipher”, sys: “module-id”}<br>
-	 * Session object are required when login successfully, and removed automatically.
-	 * When removing, the SUser object is removed via session lisenter.<br>
-	 * Be careful with servlet session - created via getSessionId():<br>
-	 * https://stackoverflow.com/questions/2255814/can-i-turn-off-the-httpsession-in-web-xml
- * @author ody
+/**<p>1. Handle login-obj: {@link SessionReq}.<br>
+ *  a: "login/logout",<br>
+ *  uid: "user-id",<br>
+ *  pswd: "uid-cipher-by-pswd",<br>
+ *  iv: "session-iv"</p>
+ * <p>2. Session verifying using session-header<br>
+ * uid: “user-id”,<br>
+ * ssid: “session-id-plain/cipher”,<br>
+ * sys: “module-id”</p>
+ * <p>Session object are required when login successfully, and removed automatically.
+ * When removing, the SUser object is removed via session lisenter.</p>
+ * <p><b>Note:</b></p>Session header is post by client in HTTP request's body other than in HTTP header.
+ * It's HTTP body payload, understood by semantic-jserv as a request header semantically.</p>
+ * <p>Also don't confused with servlet session - created via getSessionId(),
+ * <br>and you'd better 
+ * <a href='https://stackoverflow.com/questions/2255814/can-i-turn-off-the-httpsession-in-web-xml'>turn off it</a>.</p>
+ * 
+ * @author odys-z@github.com
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv" })
 public class SSession extends HttpServlet implements ISessionVerifier {
 	/** * */
 	private static final long serialVersionUID = 1L;
 
-	static String rootK = null;
+	private static final IPort p = Port.session;
+
+//	static String rootK = null;
 	
 	/**[session-id, SUser]*/
 	static HashMap<String, IUser> users;
@@ -86,7 +104,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 */
 	public static void init(DATranscxt daSctx, ServletContext ctx)
 			throws SAXException, IOException, SemanticException, SQLException {
-		rootK = ctx.getInitParameter("io.oz.root-key");
 		sctx = daSctx;
 
 		lock = new ReentrantLock();
@@ -106,7 +123,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		int m = 20;
 		try { m = Integer.valueOf(Configs.getCfg("ss-timeout-min"));} catch (Exception e) {}
 		if (ServFlags.session)
-			Utils.warn("SSession debug mode true (ServFlage.session)");
+			Utils.warn("[ServFlags.session] SSession debug mode true (ServFlage.session)");
 
         schedualed = scheduler.scheduleAtFixedRate(
         		new SessionChecker(users, m),
@@ -131,36 +148,35 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 	/**Hard coded string of user table information.
 	 *
-	 * @author ody
+	 * @author odys-z@github.com
 	 */
 	public static class UserMeta {
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
 		static String clzz = "class-IUser";
 		static String tbl = "a_user";
-		static String uidField = "userId";
-		static String unameField = "userName";
-		static String pswdField = "pswd";
-		static String ivField = "encAuxiliary";
+		static String pk = "userId";
+		static String uname = "userName";
+		static String pswd = "pswd";
+		static String iv = "encAuxiliary";
 
 		public static UserMeta config() { return new UserMeta(); }
 
 		public UserMeta userName(String unamefield) {
-			unameField = unamefield;
+			uname = unamefield;
 			return this;
 		}
 
 		public UserMeta iv(String ivfield) {
-			ivField = ivfield;
+			iv = ivfield;
 			return this;
 		}
 
 		public UserMeta pswd(String pswdfield) {
-			pswdField = pswdfield;
+			pswd = pswdfield;
 			return this;
 		}
 	}
 
-	
 	/**FIXME: This is a security breach. Client request can duplicated request with plain ssid and uid.<br>
 	 * Should we use a session key?
 	 * @param jHeader
@@ -180,7 +196,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			String slogid = (String)jHeader.logid();
 			if (slogid != null && slogid.equals(usr.uid())) {
 				usr.touch();
-				// return new DbLog(usr, jHeader);
 				return usr;
 			}
 			else throw new SsException("session token is not matching");
@@ -213,21 +228,12 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 				ok.put(usr.uid(), (SemanticObject)usr);
 				resp.getWriter().write(Html.map(ok));
 			}
-//			else if ("init".equals(t)) {
-//				String k = request.getParameter("k");
-//				rootK = k;
-//				String R = String.format("Root key re-initialized: %s%s",
-//						k.substring(0, 1), k.replaceAll(".", "*"));
-//				Utils.warn(R);
-//				resp.getWriter().write(Html.ok(R));
-//			}
 			else {
-				//msg.err("Login.serv using GET to touch session info - use POST to login, logout, check session.");
-				ServletAdapter.write(resp, JProtocol.err(Port.session, MsgCode.exGeneral,
+				ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exGeneral,
 						"Login.serv using GET to touch session info - use POST to login, logout, check session."));
 			}
 		} catch (SsException e) {
-			ServletAdapter.write(resp, JProtocol.err(Port.session, e.code, e.getMessage()));
+			ServletAdapter.write(resp, JProtocol.err(p, e.code, e.getMessage()));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally { }
@@ -258,7 +264,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 						lock.lock();
 						users.put(login.sessionId(), login);
 						lock.unlock();
-						ServletAdapter.write(response, JProtocol.ok(Port.session, (SemanticObject)login),
+						ServletAdapter.write(response, JProtocol.ok(p, (SemanticObject)login),
 								payload.opts());
 					}
 					else throw new SsException("Password doesn't matching! Expecting token encrypt(uid, pswd, iv)");
@@ -276,13 +282,48 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	
 					if (usr != null) {
 						SemanticObject resp = usr.logout();
-						ServletAdapter.write(response, JProtocol.ok(Port.session, resp),
+						ServletAdapter.write(response, JProtocol.ok(p, resp),
 								payload.opts());
 					}
 					else
-						ServletAdapter.write(response, JProtocol.ok(Port.session,
+						ServletAdapter.write(response, JProtocol.ok(p,
 								new SemanticObject().put("msg", "But no such session exists.")),
 								payload.opts());
+				}
+				else if ("pswd".equals(a)) {
+					// change password
+					JHeader header = payload.header();
+					IUser usr = verify(header);
+					
+					// client: encrypt with ssid, send cipher with iv
+					// FIXME using of session key, see bug of verify()
+					String ssid = (String) header.ssid();
+//					String iv64 = sessionBody.iv;
+					String iv64 = sessionBody.md("iv_pswd");
+					String newPswd = sessionBody.md("pswd");
+					usr.sessionKey(ssid);
+
+					// dencrypt field of a_user.userId: pswd, encAuxiliary
+					if (!DATranscxt.hasSemantics(connId, UserMeta.tbl, smtype.dencrypt)) {
+						throw new SemanticException("Can't update pswd, because table %s is not protected by semantics %s",
+								UserMeta.tbl, smtype.dencrypt.name());
+					}
+
+					Utils.logi("new pswd: %s",
+						AESHelper.decrypt(newPswd, usr.sessionId(), AESHelper.decode64(iv64)));
+
+					sctx.update(UserMeta.tbl, usr)
+						.nv(UserMeta.pswd, newPswd)
+						.nv(UserMeta.iv, iv64)
+						.whereEq(UserMeta.pk, usr.uid())
+						.u(sctx.instancontxt(usr));
+
+					// ok, logout
+					lock.lock();
+					users.remove(ssid);
+					lock.unlock();
+	
+					ServletAdapter.write(response, JProtocol.ok(p, "You must relogin!"));
 				}
 				else {
 					String t = req.getParameter("t");
@@ -290,18 +331,18 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 					if ("ping".equals(t) || "touch".equals(t)) {
 						JHeader header = payload.header();
 						verify(header);
-						ServletAdapter.write(response, JProtocol.ok(Port.session, ""),
+						ServletAdapter.write(response, JProtocol.ok(p, ""),
 								payload.opts());
 					}
 					else throw new SsException ("Session Request not supported: a=%s", a);
 				}
 			}
-			else throw new SsException ("Session request not supported: login-obj=null");
+			else throw new SsException ("Session request not supported: request body is null");
 		} catch (SsException | TransException e) {
-			ServletAdapter.write(response, JProtocol.err(Port.session, MsgCode.exSession, e.getMessage()));
+			ServletAdapter.write(response, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			ServletAdapter.write(response, JProtocol.err(Port.session, MsgCode.exGeneral, e.getMessage()));
+			ServletAdapter.write(response, JProtocol.err(p, MsgCode.exGeneral, e.getMessage()));
 		} finally {
 		}
 	}
@@ -316,16 +357,18 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @throws SQLException
 	 * @throws SsException
 	 * @throws ReflectiveOperationException
+	 * @throws IOException 
+	 * @throws GeneralSecurityException 
 	 */
 	private IUser loadUser(SessionReq jreq, String connId)
-			throws TransException, SQLException, SsException, ReflectiveOperationException {
+			throws TransException, SQLException, SsException, ReflectiveOperationException, GeneralSecurityException, IOException {
 		SemanticObject s = sctx.select(UserMeta.tbl, "u")
-			.col(UserMeta.uidField, "uid")
-			.col(UserMeta.unameField, "uname")
-			.col(UserMeta.pswdField, "pswd")
-			.col(UserMeta.ivField, "iv")
+			.col(UserMeta.pk, "uid")
+			.col(UserMeta.uname, "uname")
+			.col(UserMeta.pswd, "pswd")
+			.col(UserMeta.iv, "iv")
 			// .col(UserMeta.urlField, "url")
-			.where_("=", "u." + UserMeta.uidField, jreq.uid())
+			.where_("=", "u." + UserMeta.pk, jreq.uid())
 			.rs(sctx.instancontxt(jrobot));
 		
 		SResultset rs = (SResultset) s.rs(0);;
@@ -349,9 +392,11 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @return new IUser instance
 	 * @throws ReflectiveOperationException 
 	 * @throws SemanticException 
+	 * @throws IOException 
+	 * @throws GeneralSecurityException 
 	 */
 	private static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName)
-			throws ReflectiveOperationException, SemanticException {
+			throws ReflectiveOperationException, SemanticException, GeneralSecurityException, IOException {
 		if (!Configs.hasCfg(clsNamekey))
 			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 		String clsname = Configs.getCfg(clsNamekey);
@@ -361,20 +406,29 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		@SuppressWarnings("unchecked")
 		Class<IUser> cls = (Class<IUser>) Class.forName(clsname);
 		Constructor<IUser> constructor = null;
+//		try {
+//			constructor = cls.getConstructor(String.class, String.class, String.class, String.class);
+//		} catch (NoSuchMethodException ne) {
+//			throw new SemanticException("Class %s needs a consturctor like SUser(String uid, String pswd, String iv, String usrName).", "clsname");
+//		}
 		try {
-			constructor = cls.getConstructor(String.class, String.class, String.class, String.class);
+			constructor = cls.getConstructor(String.class, String.class, String.class);
 		} catch (NoSuchMethodException ne) {
-			throw new SemanticException("Class %s needs a consturctor like SUser(String uid, String pswd, String iv, String usrName).", "clsname");
+			throw new SemanticException("Class %s needs a consturctor like JUser(String uid, String pswd, String usrName).", "clsname");
 		}
+
 		try {
-			return (IUser) constructor.newInstance(uid, pswd, iv, userName);
+			if (!LangExt.isblank(iv))
+				pswd = AESHelper.decrypt(pswd, "infochange-v2", AESHelper.decode64(iv));
+			// return (IUser) constructor.newInstance(uid, pswd, iv, userName);
+			return (IUser) constructor.newInstance(uid, pswd, userName);
 		} catch (InvocationTargetException ie) {
+			ie.printStackTrace();
 			throw new SemanticException("create IUser instance failed: %s",
 					ie.getTargetException() == null ? "" : ie.getTargetException().getMessage());
 		}
 	}
 
-	
 	/**Get a 24 chars random Id.
 	 * @return
 	public static String getSSId() {

@@ -13,13 +13,16 @@ import io.odysz.transact.x.TransException;
  */
 public class JRobot implements IUser {
 
+	long touched;
+
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return sqls; }
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 
 	@Override public String sessionId() { return null; }
 
-	@Override public void touch() { } 
+	@Override public void touch() { touched = System.currentTimeMillis(); } 
+	@Override public long touchedMs() { return touched; } 
 
 	@Override public String uid() { return "jrobot"; }
 

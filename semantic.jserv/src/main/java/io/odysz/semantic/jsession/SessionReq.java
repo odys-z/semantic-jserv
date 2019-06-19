@@ -1,17 +1,25 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.JBody;
+import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JOpts;
+import io.odysz.semantics.x.SemanticException;
 
+/**<p>Sessin Request<br>
+ * a = "login" | "logout" | "heartbeat" ...</p>
+ * @author odys-z@github.com
+ */
 public class SessionReq extends JBody {
 	/**
 	 * @param parent
@@ -26,6 +34,17 @@ public class SessionReq extends JBody {
 	String token() { return token; }
 	String iv;
 	String iv() { return iv; }
+
+	HashMap<String,Object> mds;
+	public String md(String k) { return mds == null ? null : (String) mds.get(k); }
+	public SessionReq md(String k, String md) {
+		if (k == null || LangExt.isblank(md))
+			return this;
+		if (mds == null)
+			mds = new HashMap<String, Object>();
+		mds.put(k, md);
+		return this;
+	}
 
 	public String uid() { return uid; }
 
@@ -55,17 +74,21 @@ public class SessionReq extends JBody {
 	}
 
 	@Override
-	public void toJson(JsonWriter writer, JOpts opts) throws IOException {
+	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
 		writer.beginObject();
 		writer.name("a").value(a);
 		writer.name("uid").value(uid);
 		writer.name("iv").value(iv);
 		writer.name("token").value(token());
+		if (mds != null) {
+			writer.name("mds");
+			JHelper.writeMap(writer, mds, new JOpts());
+		}
 		writer.endObject();
 	}
 
 	@Override
-	public void fromJson(JsonReader reader) throws IOException {
+	public void fromJson(JsonReader reader) throws IOException, SemanticException {
 		JsonToken token = reader.peek();
 		
 		// why?
@@ -86,6 +109,8 @@ public class SessionReq extends JBody {
 					iv = reader.nextString();
 				else if ("token".equals(name))
 					this.token = reader.nextString();
+				else if ("mds".equals(name))
+					this.mds = JHelper.readMap(reader);
 				else
 					Utils.warn("Session request's property ignored: %s : %s", name, reader.nextString());
 				token = reader.peek();
