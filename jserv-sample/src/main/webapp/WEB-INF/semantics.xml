@@ -2,107 +2,115 @@
 <semantics>
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
   <!-- smtc: semantics type, e.g. auto: auto increase key.
-  			see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html 
-  		tabl: database table name
-  		pk:
-  		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
+			see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html 
+		tabl: database table name
+		pk:
+		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
    -->
-  	
-  	<!-- Expense auto-key -->
-  	<s>
-  		<id>expense.key</id>
-  		<smtc>auto</smtc>
-  		<tabl>r_expense</tabl>
-  		<pk>expenseId</pk>
-  		<args>expenseId</args>
-  	</s>
-  	
-  	<!-- Expense fingerprint -->
-  	<s>
-  		<id>expense_o_t</id>
-  		<smtc>o-t</smtc>
-  		<tabl>r_expense</tabl>
-  		<pk>expenseId</pk>
-  		<args>addUser,addDate</args>
-  	</s>
-  	
-  	<!-- delete expense children -->
-  	<s>
-  	   <id>expense_expensedetail_del</id>
-  		<smtc>pc-del-all</smtc>
-  		<tabl>r_expense</tabl>
-  		<pk>expenseId</pk>
-  		<!-- args 0: child-table, 1: child-table-key -->
-  		<args>r_expensedetail,expenseId</args>
-  	</s>
-  	<s>
-  		<id>exp_details.dv</id>
-  		<smtc>d-v</smtc>
-  		<tabl>r_expensedetail</tabl>
-  		<pk>expenseItem</pk>
-  		<args>expenseAccount,0</args>
-  	</s>
-  	<!-- children fk to expense -->
-  	<s>
-  		<id>expensedetail.fkey</id>
-  		<smtc>fk</smtc>
-  		<tabl>r_expensedetail</tabl>
-  		<pk>expenseItem</pk>
-  		<args>expenseId,r_expense,expenseId</args>
-  	</s>
-  	
-  	<!-- image attachments to a_user: auto pk -->
-  	<s>
-  		<id>52</id>
-  		<smtc>autopk</smtc>
-  		<tabl>a_attaches</tabl>
-  		<pk>attId</pk>
-  		<args>attId</args>
-  	</s>
+	
+	<!-- Expense auto-key -->
+	<s>
+		<id>expense.key</id>
+		<smtc>auto</smtc>
+		<tabl>r_expense</tabl>
+		<pk>expenseId</pk>
+		<args>expenseId</args>
+	</s>
+	
+	<!-- Expense fingerprint -->
+	<s>
+		<id>expense_o_t</id>
+		<smtc>o-t</smtc>
+		<tabl>r_expense</tabl>
+		<pk>expenseId</pk>
+		<args>addUser,addDate</args>
+	</s>
+	
+	<!-- delete expense children -->
+	<s>
+	   <id>expense_expensedetail_del</id>
+		<smtc>pc-del-all</smtc>
+		<tabl>r_expense</tabl>
+		<pk>expenseId</pk>
+		<!-- args 0: child-table, 1: child-table-key -->
+		<args>r_expensedetail,expenseId</args>
+	</s>
+	<s>
+		<id>exp_details.dv</id>
+		<smtc>d-v</smtc>
+		<tabl>r_expensedetail</tabl>
+		<pk>expenseItem</pk>
+		<args>expenseAccount,0</args>
+	</s>
+	<!-- children fk to expense -->
+	<s>
+		<id>expensedetail.fkey</id>
+		<smtc>fk</smtc>
+		<tabl>r_expensedetail</tabl>
+		<pk>expenseItem</pk>
+		<args>expenseId,r_expense,expenseId</args>
+	</s>
+	
+	<!-- image attachments to a_user: auto pk -->
+	<s>
+		<id>52</id>
+		<smtc>autopk</smtc>
+		<tabl>a_attaches</tabl>
+		<pk>attId</pk>
+		<args>attId</args>
+	</s>
 
-  	<!-- image attachments to a_user: save as file -->
-  	<s>
-  		<id>53</id>
-  		<smtc>ef</smtc>
-  		<tabl>a_attaches</tabl>
-  		<pk>attId</pk>
-  		<!-- try delete, save to WEB-INF/uploads/[busiTbl]/[uri],
-  				in table attches, pk attId,
-  				row's value in uri will replaced with a file,
-  				handled for business table, fk to busi-id,
-  				filename rule: busiTbl-recId-attName(.suffix)
-  			see https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html
-  				-->
-  		<args>uploads,uri,busiTbl,busiId,attName</args>
-  	</s>
-  	<!-- delete attachments when deleting a user -->
-  	<s>
-  		<id>54</id>
-  		<smtc>pc-del-tbl</smtc>
-  		<tabl>a_user</tabl>
-  		<pk>userId</pk>
-  		<!-- 0 child fk; 1 child table; 2 child pk; 3 business cate (table name) [, ...]  -->
-  		<args>busiId a_attaches attId busiTbl</args>
-  	</s>
-  	<s>
-  		<id>55</id>
-  		<smtc>fk-ins-cate</smtc>
-  		<tabl>a_attaches</tabl>
-  		<pk>attId</pk>
-  		<!-- 0 business cate (table name); 1 merged child fk; 2 parent table, 3 parent referee [, ...]  -->
-  		<args>
-  		busiTbl busiId a_user userId,
-  		busiTbl busiId a_user_fake fakeId
-  		</args>
-  	</s>
-  	<!-- attachments' oper-time -->
-  	<s>
-  		<id>56</id>
-  		<smtc>o-t</smtc>
-  		<tabl>a_attaches</tabl>
-  		<pk>attId</pk>
-  		<args>oper,optime</args>
-  	</s>
-  	
+	<!-- image attachments to a_user: save as file -->
+	<s>
+		<id>53</id>
+		<smtc>ef</smtc>
+		<tabl>a_attaches</tabl>
+		<pk>attId</pk>
+		<!-- try delete, save to WEB-INF/uploads/[busiTbl]/[uri],
+				in table attches, pk attId,
+				row's value in uri will replaced with a file,
+				handled for business table, fk to busi-id,
+				filename rule: busiTbl-recId-attName(.suffix)
+			see https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html
+				-->
+		<args>uploads,uri,busiTbl,busiId,attName</args>
+	</s>
+	<!-- delete attachments when deleting a user -->
+	<s>
+		<id>54</id>
+		<smtc>pc-del-tbl</smtc>
+		<tabl>a_user</tabl>
+		<pk>userId</pk>
+		<!-- 0 child fk; 1 child table; 2 child pk; 3 business cate (table name) [, ...]  -->
+		<args>busiId a_attaches attId busiTbl</args>
+	</s>
+	<s>
+		<id>54.user-pswd</id>
+		<smtc>dencrypt</smtc>
+		<tabl>a_user</tabl>
+		<pk>userId</pk>
+		<args>pswd,encAuxiliary</args>
+	</s>
+
+	<s>
+		<id>55</id>
+		<smtc>fk-ins-cate</smtc>
+		<tabl>a_attaches</tabl>
+		<pk>attId</pk>
+		<!-- 0 business cate (table name); 1 merged child fk; 2 parent table, 3 parent referee [, ...]  -->
+		<args>
+		busiTbl busiId a_user userId,
+		busiTbl busiId a_user_fake fakeId
+		</args>
+	</s>
+	<!-- attachments' oper-time -->
+	<s>
+		<id>56</id>
+		<smtc>o-t</smtc>
+		<tabl>a_attaches</tabl>
+		<pk>attId</pk>
+		<args>oper,optime</args>
+	</s>
+	
   </t>
 </semantics>

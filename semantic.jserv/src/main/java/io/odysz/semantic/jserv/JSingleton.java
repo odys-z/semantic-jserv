@@ -3,6 +3,7 @@ package io.odysz.semantic.jserv;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
 import org.apache.commons.io.FilenameUtils;
@@ -36,10 +37,12 @@ public class JSingleton {
 		Utils.printCaller(false);
 		Utils.logi("JSingleton initializing...");
 
-		rootINF = evt.getServletContext().getRealPath("/WEB-INF");
+		ServletContext ctx = evt.getServletContext();
+		rootINF = ctx.getRealPath("/WEB-INF");
 		Connects.init(rootINF);
 		Configs.init(rootINF);
 		DATranscxt.configRoot(rootINF, rootINF);
+		DATranscxt.key("user-pswd", ctx.getInitParameter("io.oz.root-key"));
 		
 		try {
 			DatasetCfg.init(rootINF);
@@ -47,7 +50,7 @@ public class JSingleton {
 			defltScxt = new DATranscxt(Connects.defltConn());
 			
 			Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
-			SSession.init(defltScxt, evt.getServletContext());
+			SSession.init(defltScxt, ctx);
 			ssVerier = new SSession();
 
 		} catch (SAXException | IOException | SemanticException | SQLException e) {

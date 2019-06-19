@@ -28,8 +28,6 @@ import io.odysz.transact.x.TransException;
  * <p>The logging connection is configured in configs.xml/k=log-connId.</p>
  * <p>A subclass can be used for handling serv without login.</p>
  * 
- * TODO provide a sample case in sample.jserv.
- * 
  * @author odys-z@github.com
  */
 public class JUser extends SemanticObject implements IUser {
@@ -38,7 +36,6 @@ public class JUser extends SemanticObject implements IUser {
 	private String pswd;
 	private String usrName;
 
-	@SuppressWarnings("unused")
 	private long touched;
 	private String funcId;
 	private String funcName;
@@ -59,33 +56,35 @@ public class JUser extends SemanticObject implements IUser {
 
 	/**Constructor for session login
 	 * @param uid user Id
-	 * @param pswd pswd in DB
-	 * @param iv iv in DB
+	 * @param pswd pswd in DB (plain text)
 	 * @param usrName
 	 * @throws TransException 
 	 */
-	public JUser(String uid, String pswd, String iv, String usrName) throws SemanticException {
+	public JUser(String uid, String pswd, String usrName) throws SemanticException {
 		this.uid = uid;
 		this.pswd = pswd;
 		this.usrName = usrName;
 		
-		if (SSession.rootK == null)
+		String rootK = DATranscxt.key("user-pswd");
+		if (rootK == null)
 			// throw new SemanticException("Session rootKey not initialized. Use http GET /login.serv?t=init&k=[key]&header={} to set root key.");
 			throw new SemanticException("Session rootKey not initialized. May check context prameter like tomcat context.xml/Parameter/name='io.oz.root-key'?");
 		
 		// decrypt db-pswd-cipher with sys-key and db-iv => db-pswd
-		try {
-			if (iv == null || iv.trim().length() == 0) {
-				// this record is not encrypted - for robustness
-				this.pswd = pswd;
-			}
-			else {
-				byte[] dbiv = AESHelper.decode64(iv);
-				String plain = AESHelper.decrypt(pswd, SSession.rootK, dbiv);
-				this.pswd = plain;
-			}
-		}
-		catch (Throwable e) { throw new SemanticException (e.getMessage()); }
+//		try {
+//			if (iv == null || iv.trim().length() == 0) {
+//				// this record is not encrypted - for robustness
+//				this.pswd = pswd;
+//			}
+//			else {
+//				byte[] dbiv = AESHelper.decode64(iv);
+//				String plain = AESHelper.decrypt(pswd, rootK, dbiv);
+//				this.pswd = plain;
+//			}
+//		}
+//		catch (Throwable e) { throw new SemanticException (e.getMessage()); }
+
+		this.pswd = pswd;
 	}
 
 	/**jmsg should be what the response of {@link SSession}
@@ -97,8 +96,6 @@ public class JUser extends SemanticObject implements IUser {
 
 	@Override public String uid() { return uid; }
 
-	public String get(String prop) { return "TODO"; }
-
 	@Override
 	public ArrayList<String> dbLog(ArrayList<String> sqls) {
 		return LoggingUser.genLog(logsctx, sqls, this, funcName, funcId);
@@ -107,6 +104,9 @@ public class JUser extends SemanticObject implements IUser {
 	public void touch() {
 		touched = System.currentTimeMillis();
 	}
+
+	@Override
+	public long touchedMs() { return touched; }
 
 	@Override
 	public IUser logAct(String funcName, String funcId) {
@@ -139,11 +139,6 @@ public class JUser extends SemanticObject implements IUser {
 		return false;
 	}
 	
-	@Override
-	public IUser set(String prop, Object value) {
-		return this;
-	}
-
 	@Override
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
