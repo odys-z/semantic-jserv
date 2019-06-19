@@ -419,7 +419,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 		try {
 			if (!LangExt.isblank(iv))
-				pswd = AESHelper.decrypt(pswd, "infochange-v2", AESHelper.decode64(iv));
+				pswd = AESHelper.decrypt(pswd, DATranscxt.key("user-pswd"), AESHelper.decode64(iv));
 			// return (IUser) constructor.newInstance(uid, pswd, iv, userName);
 			return (IUser) constructor.newInstance(uid, pswd, userName);
 		} catch (InvocationTargetException ie) {

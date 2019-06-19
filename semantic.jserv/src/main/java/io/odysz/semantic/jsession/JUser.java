@@ -121,6 +121,12 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	@Override
+	public String sessionKey() { 
+		// FIXME
+		return ssid;
+	}
+	
+	@Override
 	public boolean login(Object request) throws TransException {
 		SessionReq req = (SessionReq)request;
 
