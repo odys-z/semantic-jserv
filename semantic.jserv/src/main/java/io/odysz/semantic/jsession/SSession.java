@@ -68,12 +68,13 @@ import io.odysz.transact.x.TransException;
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv" })
 public class SSession extends HttpServlet implements ISessionVerifier {
+	public static enum Notify { changePswd, todo }
+
 	/** * */
 	private static final long serialVersionUID = 1L;
 
 	private static final IPort p = Port.session;
 
-//	static String rootK = null;
 	
 	/**[session-id, SUser]*/
 	static HashMap<String, IUser> users;
@@ -264,6 +265,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 						lock.lock();
 						users.put(login.sessionId(), login);
 						lock.unlock();
+						
 						ServletAdapter.write(response, JProtocol.ok(p, (SemanticObject)login),
 								payload.opts());
 					}
@@ -418,10 +420,22 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		}
 
 		try {
-			if (!LangExt.isblank(iv))
-				pswd = AESHelper.decrypt(pswd, DATranscxt.key("user-pswd"), AESHelper.decode64(iv));
-			// return (IUser) constructor.newInstance(uid, pswd, iv, userName);
-			return (IUser) constructor.newInstance(uid, pswd, userName);
+			if (!LangExt.isblank(iv)) {
+				try {
+					// still can be wrong with messed up data, e.g. with iv and plain pswd
+					pswd = AESHelper.decrypt(pswd, DATranscxt.key("user-pswd"), AESHelper.decode64(iv));
+				} catch (Exception e) {
+					Utils.warn("Decrypting user pswd failed. cipher: %s, iv %s, rootkey: *(%s)",
+							pswd, iv == null ? null : AESHelper.decode64(iv),
+							DATranscxt.key("user-pswd") == null ? null : DATranscxt.key("user-pswd").length());
+				}
+				return (IUser) constructor.newInstance(uid, pswd, userName);
+			}
+			else 
+				return (IUser) constructor
+						.newInstance(uid, pswd, userName)
+						.notify(Notify.changePswd.name());
+
 		} catch (InvocationTargetException ie) {
 			ie.printStackTrace();
 			throw new SemanticException("create IUser instance failed: %s",
