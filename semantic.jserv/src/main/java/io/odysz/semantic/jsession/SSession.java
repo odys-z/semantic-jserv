@@ -68,10 +68,9 @@ import io.odysz.transact.x.TransException;
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv" })
 public class SSession extends HttpServlet implements ISessionVerifier {
-	public static enum Notify { changePswd, todo }
-
-	/** * */
 	private static final long serialVersionUID = 1L;
+
+	public static enum Notify { changePswd, todo }
 
 	private static final IPort p = Port.session;
 
@@ -385,7 +384,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			throw new SsException("User Id not found: ", jreq.uid());
 	}
 
-	/**
+	/**Create a new IUser instance, where the class name is configured in config.xml/k=clsNamekey.
 	 * @param clsNamekey class name
 	 * @param uid user id
 	 * @param pswd 
@@ -408,11 +407,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		@SuppressWarnings("unchecked")
 		Class<IUser> cls = (Class<IUser>) Class.forName(clsname);
 		Constructor<IUser> constructor = null;
-//		try {
-//			constructor = cls.getConstructor(String.class, String.class, String.class, String.class);
-//		} catch (NoSuchMethodException ne) {
-//			throw new SemanticException("Class %s needs a consturctor like SUser(String uid, String pswd, String iv, String usrName).", "clsname");
-//		}
+
 		try {
 			constructor = cls.getConstructor(String.class, String.class, String.class);
 		} catch (NoSuchMethodException ne) {
@@ -421,10 +416,11 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 		try {
 			if (!LangExt.isblank(iv)) {
+				// still can be wrong with messed up data, e.g. with iv and plain pswd
 				try {
-					// still can be wrong with messed up data, e.g. with iv and plain pswd
-					pswd = AESHelper.decrypt(pswd, DATranscxt.key("user-pswd"), AESHelper.decode64(iv));
-				} catch (Exception e) {
+					pswd = AESHelper.decrypt(pswd,
+							DATranscxt.key("user-pswd"), AESHelper.decode64(iv));
+				} catch (Throwable e) {
 					Utils.warn("Decrypting user pswd failed. cipher: %s, iv %s, rootkey: *(%s)",
 							pswd, iv == null ? null : AESHelper.decode64(iv),
 							DATranscxt.key("user-pswd") == null ? null : DATranscxt.key("user-pswd").length());
