@@ -3,6 +3,7 @@ package io.odysz.semantic.jsession;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.xml.sax.SAXException;
@@ -114,6 +115,7 @@ public class JUser extends SemanticObject implements IUser {
 		this.funcId = funcId;
 		return this;
 	}
+
 	public String sessionId() {
 		if (ssid == null)
 			ssid = randomId();
@@ -125,7 +127,30 @@ public class JUser extends SemanticObject implements IUser {
 		// FIXME
 		return ssid;
 	}
-	
+
+	@Override
+	public IUser sessionKey(String skey) {
+		return (IUser) put("s-key", skey);
+	}
+
+	/**Add notifyings
+	 * @param n
+	 * @return this
+	 * @throws TransException 
+	 */
+	public JUser notify(Object note) throws TransException {
+		return (JUser) add("_notifies_", note);
+	}
+
+	/**Get notified string list.
+	 * @return notifyings
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Object> notifies() {
+		// return (List<Object>) props.get("_notifies_");
+		return (List<Object>) get("_notifies_");
+	}
+
 	@Override
 	public boolean login(Object request) throws TransException {
 		SessionReq req = (SessionReq)request;
@@ -164,5 +189,10 @@ public class JUser extends SemanticObject implements IUser {
 		return String.format("%s%s",
 				Radix64.toString(random.nextInt()),
 				Radix64.toString(random.nextInt()));
+	}
+
+	public IUser notify(String name) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
