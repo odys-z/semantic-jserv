@@ -392,12 +392,13 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @param userName 
 	 * @return new IUser instance
 	 * @throws ReflectiveOperationException 
-	 * @throws SemanticException 
 	 * @throws IOException 
 	 * @throws GeneralSecurityException 
+	 * @throws TransException notifying message failed
+	 * @throws IllegalArgumentException 
 	 */
 	private static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName)
-			throws ReflectiveOperationException, SemanticException, GeneralSecurityException, IOException {
+			throws ReflectiveOperationException, GeneralSecurityException, IOException, IllegalArgumentException, TransException {
 		if (!Configs.hasCfg(clsNamekey))
 			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 		String clsname = Configs.getCfg(clsNamekey);
