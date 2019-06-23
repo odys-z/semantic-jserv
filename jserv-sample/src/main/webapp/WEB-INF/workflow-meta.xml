@@ -9,6 +9,12 @@
   		<!-- CheapApiTest won't work if true -->
   		<v>false</v>
   	</s>
+  	<s> <k>user-meta</k>
+		<v>a_user,userId,userName,roleId</v>
+	</s>
+	<s> <k>wfrights-meta</k>
+		<v>oz_wfrigths,nodeId,roleId</v>
+	</s>
   </t>
 
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
