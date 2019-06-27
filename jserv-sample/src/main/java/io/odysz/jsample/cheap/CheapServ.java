@@ -28,7 +28,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.sworkflow.CheapApi;
-import io.odysz.sworkflow.CheapEngin;
+import io.odysz.sworkflow.CheapEnginv1;
 import io.odysz.sworkflow.CheapEvent;
 import io.odysz.sworkflow.CheapException;
 import io.odysz.sworkflow.EnginDesign.Req;
@@ -87,7 +87,7 @@ public class CheapServ extends JUpdate {
 			String t = req.getParameter("t");
 			if ("reload-cheap".equals(t)) {
 				try {
-					CheapEngin.initCheap(FilenameUtils.concat(JSingleton.rootINF(), CheapEngin.confpath), null);
+					CheapEnginv1.initCheap(FilenameUtils.concat(JSingleton.rootINF(), CheapEnginv1.confpath), null);
 					resp.getWriter().write(Html.ok("cheap reloaded"));
 				} catch (SAXException e) {
 					e.printStackTrace();
