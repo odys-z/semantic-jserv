@@ -14,7 +14,7 @@ import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.sworkflow.CheapEngin;
+import io.odysz.sworkflow.CheapEnginv1;
 import io.odysz.sworkflow.ICheapChecker;
 import io.odysz.transact.x.TransException;
 
@@ -37,7 +37,7 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 
 			relapath = Configs.getCfg("cheap", "config-path");
 			// meta must loaded by DATranscxt before initCheap()
-			CheapEngin.initCheap(getFileInfPath(relapath), checker);
+			CheapEnginv1.initCheap(getFileInfPath(relapath), checker);
 		} catch (IOException e) {
 			e.printStackTrace();
 			Utils.warn("%s: %s\nCheck Config.xml:\ntable=cheap\nk=config-path\nv=%s",
@@ -49,7 +49,7 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 
 	@Override
 	public void contextDestroyed(ServletContextEvent sce) {
-		CheapEngin.stopCheap();
+		CheapEnginv1.stopCheap();
 		super.onDestroyed(sce);
 	}
 

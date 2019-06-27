@@ -48,7 +48,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.workflow</artifactId>
-	    <version>0.7.3-SNAPSHOT</version>
+	    <version>0.7.4-SNAPSHOT</version>
 	</dependency>
 
 	<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
