@@ -53,6 +53,8 @@ public class QueryReq extends JBody {
 	protected int page;
 	protected int pgsize;
 
+	String[] limt;
+
 	public QueryReq(JMessage<? extends JBody> parent, String conn) {
 		super(parent, conn);
 		a = "R";
@@ -192,6 +194,10 @@ public class QueryReq extends JBody {
 			writer.name("orders");
 			JHelper.writeLst(writer, orders, opts);
 		}
+		if (limt != null) {
+			writer.name("limt");
+			JHelper.writeStrings(writer, limt, opts);
+		}
 
 		writer.endObject();
 	}
@@ -241,5 +247,7 @@ public class QueryReq extends JBody {
 			orders = (ArrayList<String[]>) JHelper.readLstStrs(reader);
 		else if ("groups".equals(name))
 			groups = JHelper.readStrs(reader);
+		else if ("limt".equals(name))
+			limt = JHelper.readStrs(reader);
 	}
 }

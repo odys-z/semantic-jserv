@@ -128,6 +128,7 @@ public class JUpdate extends HttpServlet {
 				.where(tolerateNv(msg.where))
 				.post(postUpds(msg.postUpds, usr))
 				// .attachs(msg.attacheds)
+				.limit(msg.limt)
 				.u(st.instancontxt(usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error
@@ -202,32 +203,6 @@ public class JUpdate extends HttpServlet {
 		}
 		return null;
 	}
-	
-
-	/**Handle insert request, generate {@link Insert}, commit, return results.
-	 * @param msg
-	 * @param usr
-	 * @return results
-	 * @throws SQLException
-	 * @throws TransException
-	private SemanticObject inst(InsertReq msg, IUser usr)
-			throws SemanticException, TransException, SQLException {
-		Insert upd = st.insert(msg.mtabl, usr);
-
-		SemanticObject res = (SemanticObject) upd
-				.cols(msg.cols())
-				.values(msg.values())
-				.where(tolerateNv(msg.where))
-				.post(postUpds(msg, st, usr))
-				.ins(st.instancontxt(usr));
-		if (res == null)
-			// stop SelvletAdapter.writer(null) error
-			return new SemanticObject()
-					.port(p.name())
-					.code(MsgCode.ok.name());
-		return res.port(p.name()).code(MsgCode.ok.name());
-	}
-	 */
 	
 	/**Handle delete request, generate {@link Delete}, commit, return results.
 	 * @param msg

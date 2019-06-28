@@ -59,6 +59,8 @@ public class UpdateReq extends JBody {
 	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
 	ArrayList<Object[]> where;
 	
+	String limt;
+
 	ArrayList<UpdateReq> postUpds;
 	
 	public JHeader header;
@@ -172,6 +174,9 @@ public class UpdateReq extends JBody {
 			writer.name("cols");
 			JHelper.writeStrings(writer, cols, opts);
 		}
+		if (limt != null)
+			writer.name("limt").value(limt);
+			
 		if (attacheds != null) {
 			writer.name("attacheds");
 			JHelper.writeLst(writer, attacheds, opts);
@@ -253,6 +258,8 @@ public class UpdateReq extends JBody {
 			Object[] objs = JHelper.readStrObjs(reader, null);
 			cols = Arrays.stream(objs).toArray(String[]::new);
 		}
+		else if ("limt".equals(name))
+			limt = JHelper.nextString(reader);
 		else if ("attacheds".equals(name))
 			attacheds = JHelper.readLst_StrObj(reader, null);
 	}
