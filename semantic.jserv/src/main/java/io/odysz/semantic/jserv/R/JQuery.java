@@ -161,6 +161,9 @@ public class JQuery extends HttpServlet {
 		// ORDER BY
 		selct.orderby(msg.orders);
 		
+		if (msg.limt != null)
+			selct.limit(msg.limt[0], msg.limt.length > 1 ? msg.limt[1] : null);
+		
 		return selct;
 	}
 
