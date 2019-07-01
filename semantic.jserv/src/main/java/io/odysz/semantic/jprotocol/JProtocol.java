@@ -58,4 +58,13 @@ public class JProtocol {
 	public static SemanticObject ok(Port port, String msg, Object... msgArgs) {
 		return ok(port, String.format(msg, msgArgs));
 	}
+
+	public static SemanticObject err(Port p, MsgCode c, String err, SemanticObject ex) {
+//		SemanticObject obj = new SemanticObject();
+//		obj.put("code", c);
+//		obj.put("error", err);
+//		obj.put("ex", ex);
+//		obj.put("port", p.name());
+		return err(p, c, err).put("ex", ex);
+	}
 }
