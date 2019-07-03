@@ -5,19 +5,33 @@
   	<!-- smtcs: semantics configuration used only for the connection.
   		(And a global semantics configuration?) -->
   	<c>
-  		<id>local-sqlite</id>
+  		<id>sys-sqlite</id>
   		<type>sqlite</type>
-  		<isdef></isdef>
+  		<isdef>true</isdef>
   		<!-- For sqlite, src = relative path from this configure file.
   			So connection string can be: jdbc:sqlite:WEB-INF/remote.db
   		<src>../../../../../../../../../../../../../git/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-test.db</src>
-  			-->
   		<src>../../../../../../../../../git/repo/semantic-workflow/eclipse.workflow/semantic.workflow/src/test/res/workflow-test.db</src>
+  			-->
+  		<src>sample/system.sqlite</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
   		<dbg>true</dbg>
-  		<smtcs>semantics-sqlite.xml</smtcs>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+
+  	<c>
+  		<!-- This id must be the same as in workflow-meta.xml/t[cfg]/k[conn]/v -->
+  		<id>cheap-sqlite</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>sample/cheap.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-workflow.xml</smtcs>
   	</c>
   </t>
 
@@ -48,19 +62,6 @@
   		<!-- Not used (will be protected in cipher in the future -->
   		<pswd></pswd>
   		<dbg>true</dbg>
-  	</c>
-
-   	<c>
-  		<id>inet</id>
-  		<type>mysql</type>
-  		<src>jdbc/inforise-prjcost</src>
-  		<isdef>true</isdef>
-  		<!-- Not used -->
-  		<usr></usr>
-  		<!-- Not used (will be protected in cipher in the future -->
-  		<pswd></pswd>
-  		<dbg>true</dbg>
-  		<smtcs>semantics.xml</smtcs>
   	</c>
 
   </t>
