@@ -7,62 +7,57 @@
 		pk:
 		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
    -->
-	
-	<!-- Expense auto-key -->
 	<s>
-		<id>expense.key</id>
-		<smtc>auto</smtc>
-		<tabl>r_expense</tabl>
-		<pk>expenseId</pk>
-		<args>expenseId</args>
-	</s>
-	
-	<!-- Expense fingerprint -->
+  		<id>sys.01</id>
+  		<smtc>fullpath</smtc>
+  		<tabl>a_functions</tabl>
+  		<pk>funcId</pk>
+  		<args>parentId,sibling,fullpath</args>
+  	</s>
+  	<s>
+  		<id>sys.02</id>
+  		<smtc>pc-del-all</smtc>
+  		<tabl>a_functions</tabl>
+  		<pk>funcId</pk>
+  		<args>a_rolefunc,funcId</args>
+  	</s>
+  	<s>
+  		<id>sys.03</id>
+  		<smtc>ck-cnt-del</smtc>
+  		<tabl>a_roles</tabl>
+  		<pk>roleId</pk>
+  		<args>funcId,a_role_func,roleId</args>
+  	</s>
+
+  	<!-- default users passsword -->
+  	<s>
+  		<id>sys.04</id>
+  		<smtc>d-v</smtc>
+  		<tabl>a_user</tabl>
+  		<pk>userId</pk>
+  		<args>pswd,'12345678'</args>
+  	</s>
+
 	<s>
-		<id>expense_o_t</id>
-		<smtc>o-t</smtc>
-		<tabl>r_expense</tabl>
-		<pk>expenseId</pk>
-		<args>addUser,addDate</args>
+		<id>sys.05</id>
+		<smtc>dencrypt</smtc>
+		<tabl>a_user</tabl>
+		<pk>userId</pk>
+		<args>pswd,encAuxiliary</args>
 	</s>
-	
-	<!-- delete expense children -->
-	<s>
-	   <id>expense_expensedetail_del</id>
-		<smtc>pc-del-all</smtc>
-		<tabl>r_expense</tabl>
-		<pk>expenseId</pk>
-		<!-- args 0: child-table, 1: child-table-key -->
-		<args>r_expensedetail,expenseId</args>
-	</s>
-	<s>
-		<id>exp_details.dv</id>
-		<smtc>d-v</smtc>
-		<tabl>r_expensedetail</tabl>
-		<pk>expenseItem</pk>
-		<args>expenseAccount,0</args>
-	</s>
-	<!-- children fk to expense -->
-	<s>
-		<id>expensedetail.fkey</id>
-		<smtc>fk</smtc>
-		<tabl>r_expensedetail</tabl>
-		<pk>expenseItem</pk>
-		<args>expenseId,r_expense,expenseId</args>
-	</s>
-	
+
 	<!-- image attachments to a_user: auto pk -->
 	<s>
-		<id>52</id>
+		<id>att.01</id>
 		<smtc>autopk</smtc>
 		<tabl>a_attaches</tabl>
 		<pk>attId</pk>
 		<args>attId</args>
 	</s>
 
-	<!-- image attachments to a_user: save as file -->
+	<!-- external file (attachments to a_user): save as file -->
 	<s>
-		<id>53</id>
+		<id>att.02</id>
 		<smtc>ef</smtc>
 		<tabl>a_attaches</tabl>
 		<pk>attId</pk>
@@ -77,7 +72,7 @@
 	</s>
 	<!-- delete attachments when deleting a user -->
 	<s>
-		<id>54</id>
+		<id>att.03</id>
 		<smtc>pc-del-tbl</smtc>
 		<tabl>a_user</tabl>
 		<pk>userId</pk>
@@ -85,15 +80,7 @@
 		<args>busiId a_attaches attId busiTbl</args>
 	</s>
 	<s>
-		<id>54.user-pswd</id>
-		<smtc>dencrypt</smtc>
-		<tabl>a_user</tabl>
-		<pk>userId</pk>
-		<args>pswd,encAuxiliary</args>
-	</s>
-
-	<s>
-		<id>55</id>
+		<id>att.parent</id>
 		<smtc>fk-ins-cate</smtc>
 		<tabl>a_attaches</tabl>
 		<pk>attId</pk>
@@ -105,7 +92,7 @@
 	</s>
 	<!-- attachments' oper-time -->
 	<s>
-		<id>56</id>
+		<id>att.oper</id>
 		<smtc>o-t</smtc>
 		<tabl>a_attaches</tabl>
 		<pk>attId</pk>
