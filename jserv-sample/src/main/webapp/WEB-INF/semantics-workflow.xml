@@ -7,53 +7,7 @@
   		pk:
   		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
    -->
-  	<s>
-  		<id>01</id>
-  		<smtc>fullpath</smtc>
-  		<tabl>a_functions</tabl>
-  		<pk>funcId</pk>
-  		<args>parentId,sibling,fullpath</args>
-  	</s>
-  	<s>
-  		<id>02</id>
-  		<smtc>pc-del-all</smtc>
-  		<tabl>a_functions</tabl>
-  		<pk>funcId</pk>
-  		<args>a_rolefunc,funcId</args>
-  	</s>
-  	<s>
-  		<id>03</id>
-  		<smtc>ck-cnt-del</smtc>
-  		<tabl>a_roles</tabl>
-  		<pk>roleId</pk>
-  		<args>funcId,a_role_func,roleId</args>
-  	</s>
 
-  	<s>
-  		<id>log.01</id>
- 		<smtc>a-k</smtc>
-  		<tabl>a_logs</tabl>
-  		<pk>logId</pk>
-  		<args>logId</args>
-  	</s>
-
-  	<s>
-  		<id>log.02</id>
- 		<smtc>o-t</smtc>
-  		<tabl>a_logs</tabl>
-  		<pk>logId</pk>
-  		<args>oper,logTime</args>
-  	</s>
- 
-  	<!-- default users passsword -->
-  	<s>
-  		<id>user.01</id>
-  		<smtc>d-v</smtc>
-  		<tabl>a_user</tabl>
-  		<pk>userId</pk>
-  		<args>pswd,'12345678'</args>
-  	</s>
-  	
   	<!-- table semantic-worflow/test/res/workflow-test.db tasks
   		CheapEngin doesn't enforce this, but the table is created with column oper not null.
   	-->
@@ -80,7 +34,6 @@
   		<pk>recId</pk>
   		<args>recId</args>
   	</s>
-
 
   </t>
 </semantics>

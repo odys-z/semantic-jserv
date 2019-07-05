@@ -4,8 +4,9 @@
 	<c>
 		<!-- Class name of SUser Implementation -->
 		<k>class-IUser</k>
-		<v>io.odysz.semantic.jsession.JUser</v>
+		<v>io.odysz.jsample.SampleUser</v>
 	</c>
+
 	<c>
 		<k>folder.file-upload</k>
 		<v>file:/home/ody/uploads</v>
@@ -25,7 +26,7 @@
 	<c>
 		<!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml) -->
 		<k>log-connId</k>
-		<v>local-sqlite</v>
+		<v>sys-sqlite</v>
 	</c>
   </t>
 
