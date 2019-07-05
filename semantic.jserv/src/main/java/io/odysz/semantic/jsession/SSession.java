@@ -42,6 +42,7 @@ import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -89,6 +90,11 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 	static JHelper<SessionReq> jreqHelper;
 
+	private static String usrClzz;
+	private static JUserMeta usrMeta;
+
+	IUser jrobot = new JRobot();
+
 	/**Initialize semantext, schedule tasks,
 	 * load root key from tomcat context.xml.
 	 * To configure root key in tomcat, in context.xml, <pre>
@@ -120,6 +126,18 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		//scheduler = Executors.newSingleThreadScheduledExecutor();
 		scheduler = Executors.newScheduledThreadPool(1);
 
+		try {
+			usrClzz = "class-IUser";
+			IUser tmp = createUser(usrClzz, "temp", "pswd", null, "temp user");
+			usrMeta = (JUserMeta) tmp.meta();
+		}
+		catch (Exception ex) {
+			// usrMeta = new JUserMeta("a_user", conn);
+			Utils.warn("SSesion: Implementation class of IUser doesn't configured correctly in: config.xml/t[id=cfg]/k=%s, check the value.",
+					usrClzz);
+			ex.printStackTrace();
+		}
+
 		int m = 20;
 		try { m = Integer.valueOf(Configs.getCfg("ss-timeout-min"));} catch (Exception e) {}
 		if (ServFlags.session)
@@ -143,37 +161,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		    } 
 		} catch (InterruptedException e) {
 		    scheduler.shutdownNow();
-		}
-	}
-
-	/**Hard coded string of user table information.
-	 *
-	 * @author odys-z@github.com
-	 */
-	public static class UserMeta {
-		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-		static String clzz = "class-IUser";
-		static String tbl = "a_user";
-		static String pk = "userId";
-		static String uname = "userName";
-		static String pswd = "pswd";
-		static String iv = "encAuxiliary";
-
-		public static UserMeta config() { return new UserMeta(); }
-
-		public UserMeta userName(String unamefield) {
-			uname = unamefield;
-			return this;
-		}
-
-		public UserMeta iv(String ivfield) {
-			iv = ivfield;
-			return this;
-		}
-
-		public UserMeta pswd(String pswdfield) {
-			pswd = pswdfield;
-			return this;
 		}
 	}
 
@@ -305,18 +292,18 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 					usr.sessionKey(ssid);
 
 					// dencrypt field of a_user.userId: pswd, encAuxiliary
-					if (!DATranscxt.hasSemantics(connId, UserMeta.tbl, smtype.dencrypt)) {
+					if (!DATranscxt.hasSemantics(connId, usrMeta.tbl, smtype.dencrypt)) {
 						throw new SemanticException("Can't update pswd, because table %s is not protected by semantics %s",
-								UserMeta.tbl, smtype.dencrypt.name());
+								usrMeta.tbl, smtype.dencrypt.name());
 					}
 
 					Utils.logi("new pswd: %s",
 						AESHelper.decrypt(newPswd, usr.sessionId(), AESHelper.decode64(iv64)));
 
-					sctx.update(UserMeta.tbl, usr)
-						.nv(UserMeta.pswd, newPswd)
-						.nv(UserMeta.iv, iv64)
-						.whereEq(UserMeta.pk, usr.uid())
+					sctx.update(usrMeta.tbl, usr)
+						.nv(usrMeta.pswd, newPswd)
+						.nv(usrMeta.iv, iv64)
+						.whereEq(usrMeta.pk, usr.uid())
 						.u(sctx.instancontxt(usr));
 
 					// ok, logout
@@ -348,8 +335,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		}
 	}
 
-	IUser jrobot = new JRobot();
-
 	/**Load user instance form DB table (name = {@link UserMeta#tbl}).
 	 * @param jreq
 	 * @param connId
@@ -362,20 +347,21 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 	 * @throws GeneralSecurityException 
 	 */
 	private IUser loadUser(SessionReq jreq, String connId)
-			throws TransException, SQLException, SsException, ReflectiveOperationException, GeneralSecurityException, IOException {
-		SemanticObject s = sctx.select(UserMeta.tbl, "u")
-			.col(UserMeta.pk, "uid")
-			.col(UserMeta.uname, "uname")
-			.col(UserMeta.pswd, "pswd")
-			.col(UserMeta.iv, "iv")
+			throws TransException, SQLException, SsException,
+			ReflectiveOperationException, GeneralSecurityException, IOException {
+		SemanticObject s = sctx.select(usrMeta.tbl, "u")
+			.col(usrMeta.pk, "uid")
+			.col(usrMeta.uname, "uname")
+			.col(usrMeta.pswd, "pswd")
+			.col(usrMeta.iv, "iv")
 			// .col(UserMeta.urlField, "url")
-			.where_("=", "u." + UserMeta.pk, jreq.uid())
+			.where_("=", "u." + usrMeta.pk, jreq.uid())
 			.rs(sctx.instancontxt(jrobot));
 		
 		SResultset rs = (SResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString("uid");
-			IUser obj = createUser(UserMeta.clzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"));
+			IUser obj = createUser(usrClzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"));
 			if (obj instanceof SemanticObject)
 				return obj;
 			throw new SemanticException("IUser implementation must extend SemanticObject.");

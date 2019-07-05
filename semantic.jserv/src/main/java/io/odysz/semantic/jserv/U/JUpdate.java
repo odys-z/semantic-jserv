@@ -101,7 +101,12 @@ public class JUpdate extends HttpServlet {
 		} catch (SsException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
 		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+//			if (e.ex() == null)
+//				ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.ex()));
+//			else
+//				ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+				ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage(), e.ex()));
 		} catch (SQLException | TransException e) {
 			e.printStackTrace(); // only for debug convenience
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));

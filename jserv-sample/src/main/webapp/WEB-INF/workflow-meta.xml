@@ -3,7 +3,7 @@
   <!-- version 0.7.2 -->
   <t id="cfg" pk="k" columns="k,v">
   	<s> <k>conn</k>
-  		<v>local-sqlite</v>
+  		<v>cheap-sqlite</v>
   	</s>
   	<s> <k>enable-checker</k>
   		<!-- CheapApiTest won't work if true -->

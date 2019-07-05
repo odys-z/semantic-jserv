@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.meta.TableMeta;
 import io.odysz.transact.x.TransException;
 
 /**This robot is only used for test.
@@ -40,5 +41,7 @@ public class JRobot implements IUser {
 	@Override public IUser notify(Object note) throws TransException { return null; }
 
 	@Override public List<Object> notifies() { return null; }
+
+	@Override public TableMeta meta() { return null; }
 
 }

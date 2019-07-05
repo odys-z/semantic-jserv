@@ -20,6 +20,7 @@ import io.odysz.semantic.LoggingUser;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -32,6 +33,44 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 public class JUser extends SemanticObject implements IUser {
+	/**Hard coded field string of user table information.
+	 *
+	 * @author odys-z@github.com
+	 */
+	public static class JUserMeta extends TableMeta {
+		public JUserMeta(String tbl, String... conn) {
+			super(tbl, conn);
+			this.tbl = "a_user";
+			this.pk = "userId";
+			this.uname = "userName";
+			this.pswd = "pswd";
+			this.iv = "encAuxiliary";
+		}
+
+		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
+//		String clzz = "class-IUser";
+		protected String tbl; // = "a_user";
+		protected String pk; // = "userId";
+		protected String uname; // = "userName";
+		protected String pswd; // = "pswd";
+		protected String iv; // = "encAuxiliary";
+
+		public JUserMeta userName(String unamefield) {
+			uname = unamefield;
+			return this;
+		}
+
+		public JUserMeta iv(String ivfield) {
+			iv = ivfield;
+			return this;
+		}
+
+		public JUserMeta pswd(String pswdfield) {
+			pswd = pswdfield;
+			return this;
+		}
+	}
+
 	protected String ssid;
 	protected String uid;
 	private String pswd;
@@ -88,6 +127,10 @@ public class JUser extends SemanticObject implements IUser {
 		this.pswd = pswd;
 	}
 
+	public TableMeta meta() {
+		return new JUserMeta("a_user", SSession.sctx.basiconnId());
+	}
+
 	/**jmsg should be what the response of {@link SSession}
 	 * @param jmsg
 	 */
@@ -124,7 +167,6 @@ public class JUser extends SemanticObject implements IUser {
 
 	@Override
 	public String sessionKey() { 
-		// FIXME
 		return ssid;
 	}
 
@@ -191,8 +233,7 @@ public class JUser extends SemanticObject implements IUser {
 				Radix64.toString(random.nextInt()));
 	}
 
-	public IUser notify(String name) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	public IUser notify(String name) {
+//		return null;
+//	}
 }
