@@ -128,6 +128,15 @@ public class UpdateReq extends JBody {
 		return this;
 	}
 
+	/** calling where("=", lop, "'" + rconst + "'")
+	 * @param lop
+	 * @param rconst
+	 * @return
+	 */
+	public UpdateReq whereEq(String lop, String rconst) {
+		return where("=", lop, "'" + rconst + "'");
+	}
+
 	public UpdateReq post(UpdateReq pst) {
 		if (postUpds == null)
 			postUpds = new ArrayList<UpdateReq>();

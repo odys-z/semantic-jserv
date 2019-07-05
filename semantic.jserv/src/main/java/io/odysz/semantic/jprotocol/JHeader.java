@@ -32,8 +32,9 @@ public class JHeader {
 		return new JHeader(ssid, uid);
 	}
 
-	public void act(String[] act) {
+	public JHeader act(String[] act) {
 		usrAct = act;
+		return this;
 	}
 	
 	public static String[] usrAct(String funcId, String cmd, String cate, String remarks) {

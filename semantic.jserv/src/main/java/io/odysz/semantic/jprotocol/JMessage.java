@@ -107,6 +107,10 @@ public class JMessage <T extends JBody> {
 	public T body(int i) { return body.get(0); }
 	public List<T> body() { return body; }
 
+	/**Add a request body to the request list.
+	 * @param bodyItem
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public JMessage<T> body(JBody bodyItem) {
 		if (body == null)
