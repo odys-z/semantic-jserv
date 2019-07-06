@@ -72,6 +72,12 @@
   	<c> <sk>departs.org</sk>
   		<mysql>select departId value, orgId, departName text, departState from a_org_depart where orgId = '%s'</mysql>
   	</c>
+  	
+  	<!-- orgnization combobox -->
+  	<c> <sk>org.all</sk>
+  		<mysql>select orgId value, orgName text from a_orgs</mysql>
+  		<sqlit>select orgId value, orgName text from a_orgs</sqlit>
+	</c>
 
 	<!-- role-func tree -->
   	<c> <sk>trees.role_funcs</sk>

@@ -10,8 +10,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
+import io.odysz.common.dbtype;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
@@ -114,8 +116,17 @@ public class JQuery extends HttpServlet {
 	 */
 	protected Query buildSelct(QueryReq msg, IUser usr) throws SQLException, TransException {
 //		ArrayList<String> sqls = new ArrayList<String>();
-		Query selct = st.select(msg.mtabl, msg.mAlias)
-						.page(msg.page, msg.pgsize);
+		Query selct = st.select(msg.mtabl, msg.mAlias);
+		
+		// exclude sqlite paging
+		if (msg.page >= 0 && msg.pgsize > 0
+			&& dbtype.sqlite == Connects.driverType(
+				msg.conn() == null ? Connects.defltConn() : msg.conn())) {
+			Utils.warn("JQuery#buildSelct(): Requesting data from sqlite, but it's not easy to page in sqlite. So page and size are ignored: %s, %s.",
+					msg.page, msg.pgsize);
+		}
+		else selct.page(msg.page, msg.pgsize);
+
 		if (msg.exprs != null && msg.exprs.size() > 0)
 			for (Object[] col : msg.exprs)
 				selct.col((String)col[Ix.exprExpr], (String)col[Ix.exprAlais]);
