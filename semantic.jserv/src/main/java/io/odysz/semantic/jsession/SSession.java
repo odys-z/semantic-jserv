@@ -123,7 +123,6 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
-		//scheduler = Executors.newSingleThreadScheduledExecutor();
 		scheduler = Executors.newScheduledThreadPool(1);
 
 		try {
@@ -426,18 +425,4 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 		}
 	}
 
-	/**Get a 24 chars random Id.
-	 * @return
-	public static String getSSId() {
-		String ssid = null;
-		while (ssid == null || users.containsKey(ssid)) {
-			ssid = String.format("%s%s%s%s",
-					Radix64.toString(random.nextInt()),
-					Radix64.toString(random.nextInt()),
-					Radix64.toString(random.nextInt()),
-					Radix64.toString(random.nextInt()));
-		}
-		return ssid;
-	}
-	 */
 }
