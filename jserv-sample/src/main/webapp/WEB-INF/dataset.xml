@@ -35,7 +35,7 @@
   		<sqlit>SELECT domainId id, parentId, domainName, domainValue, sort, "others", fullpath, stamp, upstamp
   			FROM a_domain order by fullpath;
   		</sqlit>
-  		<s-tree>checked,ir_workflow,id idVue,parentId,text,,,false</s-tree>
+  		<s-tree>checked,a_domain,id,parentId,text,,,false</s-tree>
 	</c>
 	
 	<c>
@@ -65,6 +65,7 @@
 	</c>
 	<c> <sk>roles</sk>
 		<mysql>select roleId as value,roleName as text from a_roles</mysql>
+		<sqlit>select roleId as value,roleName as text from a_roles</sqlit>
   	</c>
 	<c> <sk>orgs</sk>
 		<mysql>select orgId as value, orgName as text from a_reg_org</mysql>
