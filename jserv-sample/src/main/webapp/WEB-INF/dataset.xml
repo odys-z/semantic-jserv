@@ -38,13 +38,15 @@
   		<s-tree>checked,a_domain,id,parentId,text,,,false</s-tree>
 	</c>
 	
+	<!--
 	<c>
 	  	<sk>sys.menu.vue-sample</sk>
   		<mysql>SELECT funcId, parentId, funcName, funcUrl href, isUsed sort, fullpath
-  			FROM a_sys_functions f order by f.fullpath
-  		</mysql>
-  		<s-tree>,a_sys_functions,funcId id,parentId,funcName title,,,false</s-tree>
-	</c>
+  			FROM a_functions f order by f.fullpath </mysql>
+  		<sqlit>SELECT funcId, parentId, funcName, url href, sibling sort, fullpath
+  			FROM a_functions f order by f.fullpath</sqlit>
+  		<s-tree>,a_functions,funcId id,parentId,funcName title,,,false</s-tree>
+	</c> -->
 
 	<c>
 	  	<sk>sys.menu.ez-test</sk>

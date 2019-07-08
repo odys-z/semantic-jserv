@@ -53,6 +53,9 @@ public class JHelper<T extends JBody> {
 		else if (SemanticObject.class.isAssignableFrom(t)) {
 			 writeJsonValue(writer, (SemanticObject) v, opts);
 		}
+		else if (t == Object[].class) {
+			writeStrings(writer, (Object[])v, opts);
+		}
 		else if (t == String[].class) {
 			writeStrings(writer, (String[])v, opts);
 		}
@@ -102,6 +105,21 @@ public class JHelper<T extends JBody> {
 			}
 			else
 				writer.value(v[i]);
+		}
+		writer.endArray();
+	}
+
+	private static void writeStrings(JsonWriter writer, Object[] v, JOpts opts) throws IOException {
+		writer.beginArray();
+		for (int i = 0; i < v.length; i++) {
+			if (v[i] == null) {
+				if (opts.noNull)
+					writer.value("");
+				else
+					writer.nullValue();
+			}
+			else
+				writer.value(v[i].toString());
 		}
 		writer.endArray();
 	}
@@ -749,7 +767,6 @@ public class JHelper<T extends JBody> {
 
 		while (reader.hasNext() && reader.peek() != JsonToken.END_ARRAY) {
 			JBody bodyItem;
-			// TODO can we use readBody(reader, clz)?
 			try {
 				Constructor<? extends JBody> ctor = elemClass.getConstructor(
 						parent.getClass(), String.class);

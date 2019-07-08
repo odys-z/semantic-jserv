@@ -57,6 +57,20 @@
 	    <artifactId>sqlite-jdbc</artifactId>
 	    <version>3.25.2</version>
 	</dependency>
+
+	<!-- ojdbc7.jar
+		Since oracle JDBC driver package needing license agreement, you need install ojdbc.jar like this:
+		mvn install:install-file -Dfile=lib/ojdbc7.jar -DgroupId=com.oracle -DartifactId=ojdbc14 -Dversion=12.1.0.1 -Dpackaging=jar
+	-->
+	<dependency>
+	    <groupId>com.oracle</groupId>
+	    <artifactId>ojdbc14</artifactId>
+	    <version>12.1.0.1</version>
+	    <!-- This is only needed when testing, but we deployed this dependency because we don't want to skip tests when deploying.
+	    	see https://stackoverflow.com/questions/30108053/can-i-configure-maven-to-ignore-test-scoped-dependencies-if-im-skipping-runni
+	    <scope>provided</scope>
+		 -->
+	</dependency>	
   </dependencies>
 
   <scm>

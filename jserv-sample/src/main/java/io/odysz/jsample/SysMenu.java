@@ -38,7 +38,7 @@ public class SysMenu  extends SemanticTree {
 	// private static TreeSemantics menuSemtcs;
 
 	/**sk in dataset.xml: menu tree */
-	private static final String defltSk = "sys.menu.vue-sample";
+	private static final String defltSk = "sys.menu.ez-test";
 	
 	static {
 		jmenuReq  = new JHelper<DatasetReq>();
