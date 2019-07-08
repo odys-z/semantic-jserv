@@ -1,6 +1,7 @@
 package io.odysz.semantic.jserv.U;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import com.google.gson.stream.JsonWriter;
 
@@ -24,14 +25,20 @@ import io.odysz.semantics.x.SemanticException;
  */
 public class InsertReq extends UpdateReq {
 
+	/**Don't call new InsertReq(), call {@link #formatReq(String, JMessage, String)}.
+	 * This constructor is declared publicly for JHelper.
+	 * @param parent
+	 * @param conn
+	 */
 	public InsertReq(JMessage<? extends JBody> parent, String conn) {
 		super(parent, conn);
 	}
 	
-//	public InsertReq cols(String[] cols) {
-//		super.cols = cols;
-//		return this;
-//	}
+	public InsertReq cols(String[] cols) {
+		super.cols = cols;
+		return this;
+	}
+
 	/**Format an insert request.
 	 * @param conn
 	 * @param parent
@@ -61,5 +68,13 @@ public class InsertReq extends UpdateReq {
 		}
 			
 		super.toJson(writer, opts);
+	}
+
+	public void valus(ArrayList<Object[]> row) throws SemanticException {
+		if (nvs != null && nvs.size() > 0)
+			throw new SemanticException("InsertReq don't support both nv() and values() been called for the same request object. User only one of them.");
+		if (nvss == null)
+			nvss = new ArrayList<ArrayList<?>>();
+		nvss.add(row);
 	}
 }

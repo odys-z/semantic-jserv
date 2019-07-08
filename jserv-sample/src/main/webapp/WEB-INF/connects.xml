@@ -62,5 +62,19 @@
   		<dbg>true</dbg>
   	</c>
 
+	<!-- See https://odys-z.github.io/notes/jclient/quick-start.html#java -->
+   	<c>
+  		<id>orcl.alarm-report</id>
+  		<type>orcl</type>
+  		<src>jdbc/orcl-temp</src>
+  		<isdef></isdef>
+  		<!-- Not used -->
+  		<usr></usr>
+  		<!-- Not used (will be protected in cipher in the future -->
+  		<pswd></pswd>
+  		<dbg>true</dbg>
+  		<smtcs>semantics-orcl.xml</smtcs>
+  	</c>
+
   </t>
 </conns>

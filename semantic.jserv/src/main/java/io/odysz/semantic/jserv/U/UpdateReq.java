@@ -40,6 +40,12 @@ public class UpdateReq extends JBody {
 		return bdItem;
 	}
 
+	public static UpdateReq formatDelReq(String conn, JMessage<UpdateReq> parent, String tabl, String cmd) {
+		UpdateReq bdItem = new UpdateReq(parent, conn, tabl, cmd);
+		bdItem.a(CRUD.D);
+		return bdItem;
+	}
+
 	/**Main table */
 	String mtabl;
 	/**Main table alias*/
@@ -77,10 +83,10 @@ public class UpdateReq extends JBody {
 		a = cmd;
 	}
 	
-	public UpdateReq nv(String n, String v) {
+	public UpdateReq nv(String n, Object v) {
 		if (nvs == null)
 			nvs = new ArrayList<Object[]>();
-		String[] nv = new String[2];
+		Object[] nv = new Object[2];
 		nv[Ix.nvn] = n;
 		nv[Ix.nvv] = v;
 		nvs.add(nv);
@@ -90,9 +96,7 @@ public class UpdateReq extends JBody {
 	/** get columns for sql's insert into COLs. 
 	 * @return columns
 	 */
-	public String[] cols() {
-		return cols;
-	}
+	public String[] cols() { return cols; }
 
 	/** get values in VALUE-CLAUSE for sql insert into (...) values VALUE-CLAUSE 
 	 * @return [[[n, v], ...]]
@@ -108,6 +112,11 @@ public class UpdateReq extends JBody {
 		return nvss;
 	}
 
+	/**FIXME wrong?
+	 * @param file
+	 * @param b64
+	 * @return
+	 */
 	public UpdateReq attach(String file, String b64) {
 		if (attacheds == null)
 			attacheds = new ArrayList<Object[]>();
