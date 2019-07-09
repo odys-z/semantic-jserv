@@ -86,8 +86,8 @@
 		<pk>attId</pk>
 		<!-- 0 business cate (table name); 1 merged child fk; 2 parent table, 3 parent referee [, ...]  -->
 		<args>
-		busiTbl busiId a_user userId,
-		busiTbl busiId a_user_fake fakeId
+		busiTbl busiId a_users userId,
+		busiTbl busiId b_tasks taskId
 		</args>
 	</s>
 	<!-- attachments' oper-time -->
