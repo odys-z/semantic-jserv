@@ -49,11 +49,10 @@ public class UpdateReq extends JBody {
 	/**Main table */
 	String mtabl;
 	/**Main table alias*/
-	// String mAlias; // not support select insert yet
 	
 	/**nvs: [nv-obj],
 	 * nv-obj: {n: "roleName", v: "admin"}
-	 *  */
+	 */
 	ArrayList<Object[]> nvs;
 	
 	/**inserting values, used for "I". 3d array [[[n, v], ...]] */

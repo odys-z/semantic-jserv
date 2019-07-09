@@ -99,7 +99,7 @@ public class JInsert extends HttpServlet {
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
-			e.printStackTrace(); // only for debug convenience
+			e.printStackTrace(); // only for debugging convenience
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -129,7 +129,7 @@ public class JInsert extends HttpServlet {
 				.values(msg.values())
 				.where(JUpdate.tolerateNv(msg.where))
 				.post(JUpdate.postUpds(msg.postUpds, usr))
-				.ins(st.instancontxt(usr));
+				.ins(st.instancontxt(msg.conn(), usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error
 			return new SemanticObject()

@@ -134,7 +134,7 @@ public class JUpdate extends HttpServlet {
 				.post(postUpds(msg.postUpds, usr))
 				// .attachs(msg.attacheds)
 				.limit(msg.limt)
-				.u(st.instancontxt(usr));
+				.u(st.instancontxt(msg.conn(), usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error
 			return new SemanticObject()
@@ -223,7 +223,7 @@ public class JUpdate extends HttpServlet {
 		SemanticObject res = (SemanticObject) del
 				.where(tolerateNv(msg.where))
 				.post(postUpds(msg.postUpds, usr))
-				.d(st.instancontxt(usr));
+				.d(st.instancontxt(msg.conn(), usr));
 		if (res == null)
 			// stop SelvletAdapter.writer(null) error
 			return new SemanticObject()

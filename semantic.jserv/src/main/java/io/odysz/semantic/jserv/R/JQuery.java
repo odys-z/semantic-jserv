@@ -180,7 +180,7 @@ public class JQuery extends HttpServlet {
 
 	protected SemanticObject query(QueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = buildSelct(msg, usr);
-		SemanticObject s = selct.rs(st.instancontxt(usr));
+		SemanticObject s = selct.rs(st.instancontxt(msg.conn(), usr));
 		SResultset rs = (SResultset) s.rs(0);
 		SemanticObject respMsg = new SemanticObject();
 		respMsg.rs(rs, rs.total());

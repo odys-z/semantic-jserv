@@ -227,7 +227,8 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		if (ServFlags.session) System.out.println("login post ------");
+		if (ServFlags.session)
+			Utils.logi("[ServFlags.session] login post ------");
 		jsonResp(request, response);
 	}
 
@@ -303,7 +304,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 						.nv(usrMeta.pswd, newPswd)
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, usr.uid())
-						.u(sctx.instancontxt(usr));
+						.u(sctx.instancontxt(sctx.basiconnId(), usr));
 
 					// ok, logout
 					lock.lock();
@@ -355,7 +356,7 @@ public class SSession extends HttpServlet implements ISessionVerifier {
 			.col(usrMeta.iv, "iv")
 			// .col(UserMeta.urlField, "url")
 			.where_("=", "u." + usrMeta.pk, jreq.uid())
-			.rs(sctx.instancontxt(jrobot));
+			.rs(sctx.instancontxt(sctx.basiconnId(), jrobot));
 		
 		SResultset rs = (SResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
