@@ -33,7 +33,7 @@
   		<smtc>fk</smtc>
   		<tabl>b_reprecords</tabl>
   		<pk>recId</pk>
-  		<args>recId,b_reports,repId</args>
+  		<args>repId,b_reports,repId</args>
  	</s>
   </t>
 </semantics>
