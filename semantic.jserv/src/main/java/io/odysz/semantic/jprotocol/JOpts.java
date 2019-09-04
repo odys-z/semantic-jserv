@@ -8,6 +8,6 @@ public class JOpts {
 	public boolean noNull;
 	/** replace boolean value with 'true' or 'false' */
 	public boolean noBoolean;
-
+	/**double number format. not used?*/
 	public String doubleFormat;
 }
