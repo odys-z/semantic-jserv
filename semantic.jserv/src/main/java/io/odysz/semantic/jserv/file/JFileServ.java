@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
-import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io_odysz.FilenameUtils;
 
 import io.odysz.common.Configs;
 import io.odysz.common.Regex;
