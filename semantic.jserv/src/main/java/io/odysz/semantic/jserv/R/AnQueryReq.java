@@ -1,0 +1,247 @@
+package io.odysz.semantic.jserv.R;
+
+import java.util.ArrayList;
+
+import com.google.gson.stream.JsonWriter;
+
+import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.JProtocol.CRUD;
+import io.odysz.transact.sql.Query;
+import io.odysz.transact.sql.Query.Ix;
+
+/**Query Request Body Item.<br>
+ * @author odys-z@github.com
+ */
+public class AnQueryReq extends AnsonBody {
+
+	/**Main table */
+	String mtabl;
+	/**Main table alias*/
+	String mAlias;
+	
+	/**<pre>joins: [join-obj],
+     - join-obj: [{t: "j/R/l", tabl: "table-1", as: "t_alais", on: conds}]
+           - conds: [cond-obj]
+            	cond-obj: {(main-table | alais.)left-col-val op (table-1 | alias2 .)right-col-val}
+           				- op: '=' | '&lt;=' | '&gt;=' ...</pre>
+	 */
+	ArrayList<Object[]> joins;
+
+	/**exprs: [expr-obj],
+	 * expr-obj: {tabl: "b_articles/t_alais", alais: "recId", expr: "recId"}
+	 *  */
+	ArrayList<String[]> exprs;
+	
+	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
+	ArrayList<String[]> where;
+	
+	/**orders: [order-obj],
+     - order-obj: {tabl: "b_articles", field: "pubDate", asc: "true"} */
+	ArrayList<String[]> orders;
+	
+	/**group: [group-obj]
+     - group-obj: {tabl: "b_articles/t_alais", expr: "recId" } */
+	String[] groups;
+
+	protected int page;
+	protected int pgsize;
+
+	String[] limt;
+
+	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String conn) {
+		super(parent, conn);
+		a = "R";
+	}
+
+	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String conn, String fromTbl, String... alias) {
+		super(parent, conn);
+		a = CRUD.R;
+
+		mtabl = fromTbl;
+		mAlias = alias == null || alias.length == 0 ? null : alias[0];
+		
+		this.page = -1;
+		this.pgsize = 0;
+	}
+
+	public AnQueryReq page(int page, int size) {
+		this.page = page;
+		this.pgsize = size;
+		return this;
+	}
+
+	public int size() { return pgsize; }
+
+	public int page() { return page; }
+
+	public AnQueryReq j(String with, String as, String on) {
+		return j("j", with, as, on);
+	}
+
+	public AnQueryReq l(String with, String as, String on) {
+		return j("l", with, as, on);
+	}
+
+	public AnQueryReq r(String with, String as, String on) {
+		return j("R", with, as, on);
+	}
+
+	public AnQueryReq j(ArrayList<String[]> joins) {
+		if (joins != null)
+			for (String[] join : joins) 
+				j(join);
+		return this;
+	}
+
+	public AnQueryReq j(String t, String with, String as, String on) {
+		if (joins == null)
+			joins = new ArrayList<Object[]>();
+		String[] j = new String[Ix.joinSize];
+		j[Ix.joinTabl] = with;
+		j[Ix.joinAlias] = as;
+		j[Ix.joinType] = t;
+		j[Ix.joinOnCond] = on;
+		return j(j);
+	}
+	
+	private AnQueryReq j(String[] join) {
+		joins.add(join);
+		return this;
+	}
+
+	public AnQueryReq expr(String expr, String alias, String... tabl) {
+		if (exprs == null)
+			exprs = new ArrayList<String[]>();
+		String[] exp = new String[Ix.exprSize];
+		exp[Ix.exprExpr] = expr;
+		exp[Ix.exprAlais] = alias;
+		exp[Ix.exprTabl] = tabl == null || tabl.length == 0 ? null : tabl[0];
+		exprs.add(exp);
+		return this;
+	}
+	
+	public AnQueryReq where(String oper, String lop, String rop) {
+		if (where == null)
+			where = new ArrayList<String[]>();
+
+		String[] predicate = new String[Ix.predicateSize];
+		predicate[Ix.predicateOper] = oper;
+		predicate[Ix.predicateL] = lop;
+		predicate[Ix.predicateR] = rop;
+
+		where.add(predicate);
+		return this;
+	}
+
+	public AnQueryReq orderby(String col, boolean... asc) {
+		if (orders == null)
+			orders = new ArrayList<String[]>();
+		orders.add(new String[] {col,
+				String.valueOf(asc == null || asc.length == 0 ? "asc"
+						: asc[0] ? "asc" : "desc")});
+		return this;
+	}
+
+	/**<p>Create a qeury request body item, for joining etc.,
+	 * and can be serialized into json by {@link #toJson(JsonWriter)}.</p>
+	 * <p>Client side helper, don't confused with {@link Query}.</p>
+	 * @param conn
+	 * @param parent
+	 * @param from 
+	 * @param as 
+	 * @return query request
+	 */
+	public static AnQueryReq formatReq(String conn, AnsonMsg<AnQueryReq> parent,
+				String from, String as) {
+		AnQueryReq bdItem = new AnQueryReq(parent, conn, from, as);
+		return bdItem;
+	}
+
+//	@Override
+//	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
+//		writer.beginObject();
+//		// design notes: keep consists with UpdateReq
+//		writer.name("conn").value(conn)
+//			.name("a").value(a)
+//			.name("mtabl").value(mtabl)
+//			.name("mAlias").value(mAlias)
+//			.name("page").value(page)
+//			.name("pgSize").value(pgsize);
+//
+//		if (exprs != null) {
+//			writer.name("exprs");
+//			JHelper.writeLst(writer, exprs, opts);
+//		}
+//		else 
+//			writer.name("exprs").value("*");
+//
+//		if (joins != null) {
+//			writer.name("joins");
+//			JHelper.writeLst(writer, joins, opts);
+//		}
+//		if (where != null) {
+//			writer.name("where");
+//			JHelper.writeLst(writer, where, opts);
+//		}
+//		if (orders != null) {
+//			writer.name("orders");
+//			JHelper.writeLst(writer, orders, opts);
+//		}
+//		if (limt != null) {
+//			writer.name("limt");
+//			JHelper.writeStrings(writer, limt, opts);
+//		}
+//
+//		writer.endObject();
+//	}
+
+//	@Override
+//	public void fromJson(JsonReader reader) throws IOException, SemanticException {
+//		JsonToken token = reader.peek();
+//		if (token == JsonToken.BEGIN_OBJECT) {
+//			reader.beginObject();
+//			token = reader.peek();
+//			while (token != JsonToken.END_OBJECT) {
+//				String name = reader.nextName();
+//				fromJsonName(name, reader);
+//				token = reader.peek();
+//			}
+//			reader.endObject();
+//		}
+//		else throw new SemanticException("Parse QueryReq failed. %s : %s", reader.getPath(), token.name());
+//	}
+
+//	@SuppressWarnings("unchecked")
+//	protected void fromJsonName(String name, JsonReader reader)
+//			throws SemanticException, IOException {
+//		if ("a".equals(name))
+//			a = JHelper.nextString(reader);
+//		else if ("conn".equals(name))
+//			conn = JHelper.nextString(reader);
+//		else if ("page".equals(name))
+//			page = reader.nextInt();
+//		else if ("pgSize".equals(name))
+//			pgsize = reader.nextInt();
+//		else if ("mtabl".equals(name))
+//			mtabl = JHelper.nextString(reader);
+//		else if ("mAlias".equals(name))
+//			mAlias = JHelper.nextString(reader);
+//		else if ("exprs".equals(name)) {
+//			if (reader.peek() == JsonToken.BEGIN_ARRAY)
+//				exprs = (ArrayList<String[]>) JHelper.readLstStrs(reader);
+//			else reader.nextString(); // skip "*"
+//		}
+//		else if ("joins".equals(name))
+//			// joins = (ArrayList<String[]>) JHelper.readLstStrs(reader);
+//			joins = (ArrayList<Object[]>) JHelper.readLst_StrObj(reader, AnQueryReq.class);
+//		else if ("where".equals(name))
+//			where = (ArrayList<String[]>) JHelper.readLstStrs(reader);
+//		else if ("orders".equals(name))
+//			orders = (ArrayList<String[]>) JHelper.readLstStrs(reader);
+//		else if ("groups".equals(name))
+//			groups = JHelper.readStrs(reader);
+//		else if ("limt".equals(name))
+//			limt = JHelper.readStrs(reader);
+//	}
+}
