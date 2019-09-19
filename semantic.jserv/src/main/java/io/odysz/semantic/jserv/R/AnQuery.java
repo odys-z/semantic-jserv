@@ -56,19 +56,19 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 	protected void onGet(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.query)
-			Utils.logi("---------- squery (R.serv) get ----------");
+			Utils.logi("---------- squery (r.serv) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			IUser usr = verifier.verify(msg.header());
+//			IUser usr = verifier.verify(msg.header());
 
-			SemanticObject rs = query(msg.body(0), usr);
+			SemanticObject rs = query(msg.body(0), null);
 			resp.getWriter().write(Html.rs((SResultset)rs.get("rs")));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
 			e.printStackTrace();
-		} catch (SsException e) {
-			e.printStackTrace();
+//		} catch (SsException e) {
+//			e.printStackTrace();
 		} finally {
 			resp.flushBuffer();
 		}
@@ -80,12 +80,12 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			IUser usr = verifier.verify(msg.header());
-			SemanticObject rs = query(msg.body(0), usr);
+//			IUser usr = verifier.verify(msg.header());
+			SemanticObject rs = query(msg.body(0), null);
 
 			ServletAdapter.write(resp, rs, msg.opts());
-		} catch (SsException e) {
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+//		} catch (SsException e) {
+//			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
