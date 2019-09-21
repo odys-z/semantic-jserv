@@ -23,7 +23,6 @@ import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServHandler;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
-import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -74,6 +73,7 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 		}
 	}
 	
+	@Override
 	protected void onPost(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp) throws IOException {
 		if (ServFlags.query)
 			Utils.logi("========== squery (2.serv2) post ==========");
