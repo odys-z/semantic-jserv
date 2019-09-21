@@ -7,4 +7,7 @@ public class SessionInf extends Anson {
 	String uid;
 	String userName;
 	String roleId; 
+	
+	public String ssid() { return ssid; }
+	public String uid() { return uid; }
 }

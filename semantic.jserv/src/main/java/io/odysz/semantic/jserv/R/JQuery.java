@@ -58,7 +58,7 @@ public class JQuery extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.query)
-			Utils.logi("---------- squery (R.serv) get <- %s ----------", req.getRemoteAddr());
+			Utils.logi("---------- squery (r.serv) get <- %s ----------", req.getRemoteAddr());
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			JMessage<QueryReq> msg = ServletAdapter.<QueryReq>read(req, jhelperReq, QueryReq.class);

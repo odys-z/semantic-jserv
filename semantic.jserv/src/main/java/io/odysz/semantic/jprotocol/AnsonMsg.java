@@ -11,7 +11,7 @@ import io.odysz.anson.Anson;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
-/**<p>Base class of message used by {@link AnsonProtocol}.</p>
+/**<p>Base class of message used by {@link io.odysz.semantic.jserv.ServHandler ServHandler}.</p>
  * <p>Relationship with {@link SemanticObject}:</p>
  * 1. A incoming json message is parsed by *.serv into JMessage, which should used to directly build statement;<br>
  * 2. A outgoing data ojbect is presented as SemanticObject, which should been directly write int output stream.
@@ -89,8 +89,6 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			throw new SemanticException("Port can not be null. Not initialized? To use JMassage understand ports, call understandPorts(IPort) first.");
 	}
 
-	public String t;
-
 	AnsonMsg() {
 		seq = (int) (Math.random() * 1000);
 	}
@@ -106,7 +104,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 
 	/**Add a request body to the request list.
 	 * @param bodyItem
-	 * @return
+	 * @return new message object
 	 */
 	@SuppressWarnings("unchecked")
 	public AnsonMsg<T> body(AnsonBody bodyItem) {
