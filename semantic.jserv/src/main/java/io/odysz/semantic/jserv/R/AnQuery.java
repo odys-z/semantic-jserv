@@ -23,6 +23,7 @@ import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServHandler;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -58,16 +59,16 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 			Utils.logi("---------- squery (r.serv) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
-//			IUser usr = verifier.verify(msg.header());
+			IUser usr = verifier.verify(msg.header());
 
-			SemanticObject rs = query(msg.body(0), null);
+			SemanticObject rs = query(msg.body(0), usr);
 			resp.getWriter().write(Html.rs((SResultset)rs.get("rs")));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
 			e.printStackTrace();
-//		} catch (SsException e) {
-//			e.printStackTrace();
+		} catch (SsException e) {
+			e.printStackTrace();
 		} finally {
 			resp.flushBuffer();
 		}
@@ -80,12 +81,12 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-//			IUser usr = verifier.verify(msg.header());
-			SemanticObject rs = query(msg.body(0), null);
+			IUser usr = verifier.verify(msg.header());
+			SemanticObject rs = query(msg.body(0), usr);
 
 			ServletAdapter.write(resp, rs, msg.opts());
-//		} catch (SsException e) {
-//			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+		} catch (SsException e) {
+			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
