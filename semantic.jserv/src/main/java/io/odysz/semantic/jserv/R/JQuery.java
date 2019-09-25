@@ -95,12 +95,14 @@ public class JQuery extends HttpServlet {
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
-			e.printStackTrace();
+			if (ServFlags.query)
+				e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		} catch (ReflectiveOperationException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (ServFlags.query)
+				e.printStackTrace();
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exGeneral, e.getMessage()));
 		} finally {
 			resp.flushBuffer();

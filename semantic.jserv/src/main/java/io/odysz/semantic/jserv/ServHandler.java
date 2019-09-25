@@ -10,12 +10,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.JMessage;
-import io.odysz.semantic.jserv.R.AnQueryReq;
+import io.odysz.semantics.x.SemanticException;
 
 public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
+	protected String p;
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -23,6 +24,7 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 		super.doGet(req, resp);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		InputStream in = null; 
@@ -37,21 +39,24 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 			in = req.getInputStream();
 		}
 		
-		AnsonMsg<AnQueryReq> msg;
+		AnsonMsg<T> msg;
 		try {
-			msg = (AnsonMsg<AnQueryReq>) Anson.fromJson(in);
+			msg = (AnsonMsg<T>) Anson.fromJson(in);
 			onPost(msg, resp);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			e.printStackTrace();
+		} catch (SemanticException | AnsonException e) {
+			// response error;
+			write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		}
 		in.close();
 
 	}
 
-	protected void onGet(AnsonMsg<T> msg, HttpServletResponse resp) throws ServletException, IOException {
-	}
+	abstract protected void onGet(AnsonMsg<T> msg, HttpServletResponse resp)
+			throws ServletException, IOException, AnsonException, SemanticException;
 
-	protected void onPost(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp) throws IOException {
-	}
+	abstract protected void onPost(AnsonMsg<T> msg, HttpServletResponse resp)
+			throws ServletException, IOException, AnsonException, SemanticException;
 
 }
