@@ -14,6 +14,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantic.jsession.SSession;
 import io.odysz.semantics.x.SemanticException;
@@ -51,6 +52,7 @@ public class JSingleton {
 			
 			Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 			SSession.init(defltScxt, ctx);
+			AnSession.init(defltScxt, ctx);
 			ssVerier = new SSession();
 
 		} catch (SAXException | IOException | SemanticException | SQLException e) {

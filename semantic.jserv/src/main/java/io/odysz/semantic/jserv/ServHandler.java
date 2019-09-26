@@ -15,6 +15,7 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.IPort;
+import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantics.x.SemanticException;
 
@@ -51,12 +52,11 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 			write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		}
 		in.close();
-
 	}
 
-	private void write(HttpServletResponse resp, Anson err) {
+	private void write(HttpServletResponse resp, AnsonMsg<? extends AnsonBody> err, JOpts opts) {
 		try {
-			err.toBlock(resp.getOutputStream());
+			err.toBlock(resp.getOutputStream(), opts);
 		} catch (AnsonException | IOException e) {
 			e.printStackTrace();
 		}

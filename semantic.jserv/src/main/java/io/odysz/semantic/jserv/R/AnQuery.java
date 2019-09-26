@@ -36,7 +36,7 @@ import io.odysz.transact.x.TransException;
 /**CRUD read service.
  * @author odys-z@github.com
  */
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv2" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv11" })
 public class AnQuery extends ServHandler<AnQueryReq> {
 
 	private static final IPort p = Port.query;
