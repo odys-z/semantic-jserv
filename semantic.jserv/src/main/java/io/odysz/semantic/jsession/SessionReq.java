@@ -9,6 +9,8 @@ import com.google.gson.stream.JsonWriter;
 
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
+import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.JBody;
 import io.odysz.semantic.jprotocol.JHelper;
 import io.odysz.semantic.jprotocol.JMessage;
@@ -117,6 +119,11 @@ public class SessionReq extends JBody {
 			}
 			reader.endObject();
 		}
+	}
+	
+	////////////////////////////// version 1.1  ////////////////////////////////
+	public static AnsonMsg<? extends AnsonBody> formatLoginV11(String uid, String tk64, String iv64) {
+		return null;
 	}
 
 }

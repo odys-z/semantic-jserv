@@ -1,14 +1,10 @@
 package io.odysz.semantic.jprotocol;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import io.odysz.anson.Anson;
-import io.odysz.semantics.SemanticObject;
+import io.odysz.semantic.jsession.SessionReq;
 import io.odysz.semantics.x.SemanticException;
 
 /**<p>Base class of message used by {@link io.odysz.semantic.jserv.ServHandler ServHandler}.</p>
@@ -74,10 +70,12 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	int seq;
 	public int seq() { return seq; }
 
-	SemanticObject semanticObj;
-
 	IPort port;
 	public IPort port() { return port; }
+
+	private MsgCode code;
+	public MsgCode code() { return code; }
+
 	public void port(String pport) throws SemanticException {
 		/// translate from string to enum
 		if (defaultPortImpl == null)
@@ -96,6 +94,13 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	public AnsonMsg(IPort port) {
 		this.port = port;
 		seq = (int) (Math.random() * 1000);
+	}
+
+	/**Typically for response
+	 * @param code
+	 */
+	public AnsonMsg(MsgCode code) {
+		this.code = code;
 	}
 	
 	protected List<T> body;
@@ -137,55 +142,55 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		return this;
 	}
 
-	@Override
-	public String toString() {
-		return toStringEx();
-	}
+//	@Override
+//	public String toString() {
+//		return toStringEx();
+//	}
 
-	static String pairPrmv = "\n\t'%s': %s";
-	public String toStringEx() {
-		Field flist[] = this.getClass().getDeclaredFields();
-
-		// FIXME performance problem : flat list (or appendable?) - stream don't help here, get instances first instead
-		return Stream.of(flist)
-			.filter(m -> !m.getName().startsWith("this$"))
-			.map(m -> {
-				try {
-					if ("gson".equals(m.getName()))
-						return "gson";
-					Class<?> t = m.getType();
-					if (m.get(this) == null)
-						return String.format(pairPrmv, m.getName(), "null");
-					if (t.isPrimitive() || t == String.class)
-						return String.format(pairPrmv, m.getName(), m.get(this));
-					else if (t.isArray()) {
-						// FIXME performance problem
-						String s = String.format(pairPrmv, m.getName(), 
-							m == null || m.get(this) == null ? "" :
-								Arrays.stream((Object[])m.get(this))
-									.map(e -> {
-										try {
-											return e == null ? "" : e.toString();
-										} catch (IllegalArgumentException e1) {
-											e1.printStackTrace();
-											return String.format("EXCEPTION:\"%\"", e1.getMessage());
-										}
-							}).collect(Collectors.joining(", ", "'" + m.getName() + "': [", "]"))
-						);
-						return s;
-					}
-					else if (List.class.isAssignableFrom(t)) {
-						String s = ((List<?>)m.get(this))
-								.stream()
-								.map( e -> e.toString() )
-								.collect(Collectors.joining(", ", "\n\t'" + m.getName() + "': [", "]"));
-						return s;
-					}
-					else return String.format(pairPrmv, m.getName(), m.get(this));
-				} catch (IllegalArgumentException | IllegalAccessException e) {
-					return String.format("EXCEPTION: \"%s\"", e.getMessage());
-				}
-			}).collect(Collectors.joining(", ", "{", "}"));
-	}
+//	static String pairPrmv = "\n\t'%s': %s";
+//	public String toStringEx() {
+//		Field flist[] = this.getClass().getDeclaredFields();
+//
+//		// FIXME performance problem : flat list (or appendable?) - stream don't help here, get instances first instead
+//		return Stream.of(flist)
+//			.filter(m -> !m.getName().startsWith("this$"))
+//			.map(m -> {
+//				try {
+//					if ("gson".equals(m.getName()))
+//						return "gson";
+//					Class<?> t = m.getType();
+//					if (m.get(this) == null)
+//						return String.format(pairPrmv, m.getName(), "null");
+//					if (t.isPrimitive() || t == String.class)
+//						return String.format(pairPrmv, m.getName(), m.get(this));
+//					else if (t.isArray()) {
+//						// FIXME performance problem
+//						String s = String.format(pairPrmv, m.getName(), 
+//							m == null || m.get(this) == null ? "" :
+//								Arrays.stream((Object[])m.get(this))
+//									.map(e -> {
+//										try {
+//											return e == null ? "" : e.toString();
+//										} catch (IllegalArgumentException e1) {
+//											e1.printStackTrace();
+//											return String.format("EXCEPTION:\"%\"", e1.getMessage());
+//										}
+//							}).collect(Collectors.joining(", ", "'" + m.getName() + "': [", "]"))
+//						);
+//						return s;
+//					}
+//					else if (List.class.isAssignableFrom(t)) {
+//						String s = ((List<?>)m.get(this))
+//								.stream()
+//								.map( e -> e.toString() )
+//								.collect(Collectors.joining(", ", "\n\t'" + m.getName() + "': [", "]"));
+//						return s;
+//					}
+//					else return String.format(pairPrmv, m.getName(), m.get(this));
+//				} catch (IllegalArgumentException | IllegalAccessException e) {
+//					return String.format("EXCEPTION: \"%s\"", e.getMessage());
+//				}
+//			}).collect(Collectors.joining(", ", "{", "}"));
+//	}
 
 }

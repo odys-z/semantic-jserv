@@ -31,7 +31,6 @@ public abstract class AnsonBody extends Anson {
 
 	/**For debug, print, etc. The string can not been used for json data.
 	 * @see java.lang.Object#toString()
-	 */
 	public String toString() {
 		StringBuffer b = new StringBuffer(String.format(
 				"{<%s>\n\t\ta: %s,", getClass().getName(), a));
@@ -46,5 +45,6 @@ public abstract class AnsonBody extends Anson {
 		}
 		return b.append("\n\t}").toString();
 	}
+	 */
 
 }

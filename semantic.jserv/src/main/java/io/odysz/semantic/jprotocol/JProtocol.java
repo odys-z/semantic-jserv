@@ -33,6 +33,18 @@ public class JProtocol {
 		void onCallback(String code, SemanticObject Data) throws IOException, SQLException, SemanticException;
 	}
 
+	@FunctionalInterface
+	public interface SCallbackV11 {
+		/**call back function called by semantic.transact
+		 * @param code 'ok' | 'ex...'
+		 * @param Data response message
+		 * @throws IOException
+		 * @throws SQLException
+		 * @throws SemanticException
+		 */
+		void onCallback(String code, AnsonResp Data) throws IOException, SQLException, SemanticException;
+	}
+
 	public static Gson gson = new Gson();
 	
 	public static SemanticObject err(IPort port, MsgCode code, String err) {
@@ -67,4 +79,11 @@ public class JProtocol {
 //		obj.put("port", p.name());
 		return err(p, c, err).put("ex", ex);
 	}
+	
+	//////////////////////// version 1.1 with support of Anson //////////////////////
+	public static AnsonResp err(IPort port, AnsonMsg.MsgCode code, String err) {
+		AnsonResp obj = new AnsonResp(port, code, err);
+		return obj;
+	}
+
 }
