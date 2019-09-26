@@ -2,12 +2,9 @@ package io.odysz.semantic.jserv.R;
 
 import java.util.ArrayList;
 
-import com.google.gson.stream.JsonWriter;
-
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.JProtocol.CRUD;
-import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Query.Ix;
 
 /**Query Request Body Item.<br>
@@ -143,9 +140,8 @@ public class AnQueryReq extends AnsonBody {
 		return this;
 	}
 
-	/**<p>Create a qeury request body item, for joining etc.,
-	 * and can be serialized into json by {@link #toJson(JsonWriter)}.</p>
-	 * <p>Client side helper, don't confused with {@link Query}.</p>
+	/**<p>Create a qeury request body item, for joining etc.</p>
+	 * <p>This is a client side helper, don't confused with {@link io.odysz.transact.sql.Query Query}.</p>
 	 * @param conn
 	 * @param parent
 	 * @param from 
@@ -153,8 +149,9 @@ public class AnQueryReq extends AnsonBody {
 	 * @return query request
 	 */
 	public static AnQueryReq formatReq(String conn, AnsonMsg<AnQueryReq> parent,
-				String from, String as) {
-		AnQueryReq bdItem = new AnQueryReq(parent, conn, from, as);
+				String from, String... as) {
+		AnQueryReq bdItem = new AnQueryReq(parent, conn, from,
+				as == null || as.length == 0 ? null : as[0]);
 		return bdItem;
 	}
 

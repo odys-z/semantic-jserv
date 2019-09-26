@@ -876,5 +876,10 @@ public class JHelper<T extends JBody> {
 		return upds;
 	}
 
+	/////////////////////////////// version 1.1 ////////////////////////////////
+	public static void writeAnsonReq(OutputStream outputStream, AnsonMsg<? extends AnsonBody> reqBody) {
+		
+	}
+
 }
 

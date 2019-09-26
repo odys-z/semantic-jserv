@@ -13,10 +13,13 @@ import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.IPort;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantics.x.SemanticException;
 
 public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
-	protected String p;
+	protected IPort p;
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -43,14 +46,20 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 		try {
 			msg = (AnsonMsg<T>) Anson.fromJson(in);
 			onPost(msg, resp);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			e.printStackTrace();
 		} catch (SemanticException | AnsonException e) {
 			// response error;
 			write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		}
 		in.close();
 
+	}
+
+	private void write(HttpServletResponse resp, Anson err) {
+		try {
+			err.toBlock(resp.getOutputStream());
+		} catch (AnsonException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	abstract protected void onGet(AnsonMsg<T> msg, HttpServletResponse resp)
