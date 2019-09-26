@@ -142,6 +142,10 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		return this;
 	}
 
+	public static AnsonResp ok(IPort p, String txt) {
+		return new AnsonResp(p, MsgCode.ok, txt);
+	}
+
 //	@Override
 //	public String toString() {
 //		return toStringEx();
