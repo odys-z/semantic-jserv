@@ -13,10 +13,10 @@ import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
-import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
@@ -44,11 +44,8 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 	protected static ISessionVerifier verifier;
 	protected static DATranscxt st;
 
-//	protected static JHelper<QueryReq> jhelperReq;
-
 	static {
 		st = JSingleton.defltScxt;
-//		jhelperReq  = new JHelper<QueryReq>();
 		verifier = JSingleton.getSessionVerifier();
 	}
 
@@ -56,19 +53,19 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 	protected void onGet(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.query)
-			Utils.logi("---------- squery (r.serv) get ----------");
+			Utils.logi("---------- squery (r.serv11) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			IUser usr = verifier.verify(msg.header());
-
-			SemanticObject rs = query(msg.body(0), usr);
-			resp.getWriter().write(Html.rs((SResultset)rs.get("rs")));
+//			IUser usr = verifier.verify(msg.header());
+//			SResultset rs = query(msg.body(0), usr);
+			SResultset rs = query(msg.body(0), null);
+			resp.getWriter().write(Html.rs(rs));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
 			e.printStackTrace();
-		} catch (SsException e) {
-			e.printStackTrace();
+//		} catch (SsException e) {
+//			e.printStackTrace();
 		} finally {
 			resp.flushBuffer();
 		}
@@ -77,16 +74,17 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 	@Override
 	protected void onPost(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp) throws IOException {
 		if (ServFlags.query)
-			Utils.logi("========== squery (2.serv2) post ==========");
+			Utils.logi("========== squery (r.serv11) post ==========");
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			IUser usr = verifier.verify(msg.header());
-			SemanticObject rs = query(msg.body(0), usr);
+//			IUser usr = verifier.verify(msg.header());
+//			SResultset rs = query(msg.body(0), usr);
+			SResultset rs = query(msg.body(0), null);
 
-			ServletAdapter.write(resp, rs, msg.opts());
-		} catch (SsException e) {
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+			write(resp, rs, msg.opts());
+//		} catch (SsException e) {
+//			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SemanticException e) {
 			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -99,7 +97,7 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 			resp.flushBuffer();
 		}
 	}
-	
+
 	/**
 	 * @param msg
 	 * @param usr 
@@ -108,7 +106,6 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 	 * @throws TransException
 	 */
 	protected Query buildSelct(AnQueryReq msg, IUser usr) throws SQLException, TransException {
-//		ArrayList<String> sqls = new ArrayList<String>();
 		Query selct = st.select(msg.mtabl, msg.mAlias);
 		
 		// exclude sqlite paging
@@ -171,12 +168,10 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 		return selct;
 	}
 
-	protected SemanticObject query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
+	protected SResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = buildSelct(msg, usr);
 		SemanticObject s = selct.rs(st.instancontxt(msg.conn(), usr));
 		SResultset rs = (SResultset) s.rs(0);
-		SemanticObject respMsg = new SemanticObject();
-		respMsg.rs(rs, rs.total());
-		return JProtocol.ok(p, respMsg);
+		return rs;
 	}
 }

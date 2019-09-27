@@ -1,28 +1,34 @@
 package io.odysz.semantic.jprotocol;
 
-import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.module.rs.SResultset;
 
-/**Error response
+/**Anson message response body
  * @author odys-z@github.com
  */
 public class AnsonResp extends AnsonBody {
 
-	private IPort p;
-	private MsgCode c;
-	private String e;
+	private String m;
+	private SResultset rs;
 
-	public AnsonResp(IPort p, MsgCode code, String err) {
+	public AnsonResp(AnsonMsg<AnsonResp> parent) {
+		super(parent, null);
+	}
+
+	public AnsonResp(String txt) {
 		super(null, null);
-		this.p = p;
-		this.c = code;
-		this.e = err;
+		this.m = txt;
 	}
 
-	public String error() {
-		return e;
+	public String msg() {
+		return m;
 	}
 
-	public MsgCode code() {
-		return c;
+	public AnsonBody rs(SResultset rs) {
+		this.rs = rs;
+		return this;
+	}
+
+	public SResultset rs() {
+		return this.rs;
 	}
 }

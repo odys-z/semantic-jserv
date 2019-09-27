@@ -10,12 +10,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
+import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
-import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantics.x.SemanticException;
 
@@ -24,14 +26,7 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		super.doGet(req, resp);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		InputStream in = null; 
+		InputStream in;
 		String headstr = req.getParameter("header");
 		if (headstr != null && headstr.length() > 1) {
 			byte[] b = headstr.getBytes();
@@ -42,26 +37,51 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 				return ;
 			in = req.getInputStream();
 		}
-		
-		AnsonMsg<T> msg;
 		try {
-			msg = (AnsonMsg<T>) Anson.fromJson(in);
-			onPost(msg, resp);
-		} catch (SemanticException | AnsonException e) {
-			// response error;
-			write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
+			@SuppressWarnings("unchecked")
+			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
+			onGet(msg, resp);
+		} catch (AnsonException | SemanticException e) {
+			if (ServFlags.query)
+				e.printStackTrace();
+			write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		}
 		in.close();
 	}
 
-	private void write(HttpServletResponse resp, AnsonMsg<? extends AnsonBody> err, JOpts opts) {
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		try {
-			err.toBlock(resp.getOutputStream(), opts);
+			InputStream in = req.getInputStream(); 
+			@SuppressWarnings("unchecked")
+			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
+			onPost(msg, resp);
+		} catch (SemanticException | AnsonException e) {
+			if (ServFlags.query)
+				e.printStackTrace();
+			write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+		}
+	}
+
+	protected void write(HttpServletResponse resp, AnsonMsg<AnsonResp> msg, JsonOpt... opts) {
+		try {
+			msg.toBlock(resp.getOutputStream(), opts);
 		} catch (AnsonException | IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	protected void write(HttpServletResponse resp, SResultset rs, JsonOpt opts) {
+		try {
+			AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>();
+			AnsonResp bd = new AnsonResp(msg);
+			msg.body(bd.rs(rs));
+			msg.toBlock(resp.getOutputStream(), opts);
+		} catch (AnsonException | IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	abstract protected void onGet(AnsonMsg<T> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException;
 

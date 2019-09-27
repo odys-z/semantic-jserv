@@ -26,7 +26,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
 /**<h4>The bridge of json string and JMessage/SemanticObject objects</h4>
- * @author ody
+ * @author odys-z@github.com
  *
  * @param <T> e.g. {@link io.odysz.semantic.jserv.R.QueryReq} (extends JBody), the message item type of JMessage.
  */
@@ -46,7 +46,8 @@ public class JHelper<T extends JBody> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v, JOpts opts) throws IOException, SemanticException {
+	private static void writeRespValue(JsonWriter writer, Class<?> t, Object v,
+			JOpts opts) throws IOException, SemanticException {
 		if (IUser.class.isAssignableFrom(t)) {
 			((IUser)v).writeJsonRespValue(writer);
 		}
@@ -494,6 +495,7 @@ public class JHelper<T extends JBody> {
 		reader.endArray();
 		return lst;
 	}
+
 	/**@deprecated replaced by {@link #readStrObjs(JsonReader, Class)}<br>
 	 * Convert a string ot string[], not handling begin "[" and ending "]".
 	 * Caller call this because it know the string is an array according to semantics.
@@ -876,10 +878,6 @@ public class JHelper<T extends JBody> {
 		return upds;
 	}
 
-	/////////////////////////////// version 1.1 ////////////////////////////////
-	public static void writeAnsonReq(OutputStream outputStream, AnsonMsg<? extends AnsonBody> reqBody) {
-		
-	}
 
 }
 

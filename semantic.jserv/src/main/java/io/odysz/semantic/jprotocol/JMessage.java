@@ -1,5 +1,6 @@
 package io.odysz.semantic.jprotocol;
 
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +10,8 @@ import java.util.stream.Stream;
 
 import com.google.gson.Gson;
 
+import io.odysz.anson.IJsonable;
+import io.odysz.anson.JsonOpt;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
@@ -22,7 +25,7 @@ import io.odysz.semantics.x.SemanticException;
 public class JMessage <T extends JBody> {
 	/**Port is the conceptual equivalent to the SOAP port, the service methods' group.<br>
 	 * NOTE: java code shouldn't use switch-case block on enum. That cause problem with generated class.
-	 * TODO shall we use dynamic registered ports?
+	 * @deprecated
 	 * @author odys-z@github.com
 	 */
 	public enum Port implements IPort {  heartbeat("ping.serv"), session("login.serv"),
@@ -44,6 +47,16 @@ public class JMessage <T extends JBody> {
 		@Override public String url() { return url; }
 		Port(String url) { this.url = url; }
 		@Override public IPort valof(String pname) { return valueOf(pname); }
+
+		@Override
+		public IJsonable toBlock(OutputStream stream, JsonOpt... opts) {
+			return this;
+		}
+
+		@Override
+		public IJsonable toJson(StringBuffer buf) {
+			return this;
+		}	
 	};
 
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext;

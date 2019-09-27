@@ -3,6 +3,7 @@ package io.odysz.semantic.jsession;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import io.odysz.common.Utils;
 import io.odysz.semantics.IUser;
 
 public class SessionChecker implements Runnable {
@@ -17,7 +18,6 @@ public class SessionChecker implements Runnable {
 	@Override
 	public void run() {
 		HashSet<String> ss = new HashSet<String>();
-//		IrSession.lock.lock();
 		try {
 			long timestamp = System.currentTimeMillis();
 			for (String ssid : sspool.keySet()) {
@@ -25,14 +25,16 @@ public class SessionChecker implements Runnable {
 				if (timestamp > usr.touchedMs() + timeout)
 					ss.add(ssid);
 			}
+
+			if (sspool.size() > 0)
+				Utils.logi ("Sesssion refeshed, expired session(s):\n%s",
+					sspool.keySet());
+
 			for (String ssid : ss) {
 				sspool.remove(ssid);
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-//		if (ServFlags.session)
-//			Utils.logi ("[ServFlags.session] Sesssion refeshed, remain ssid(s):\n%s",
-//					sspool.keySet());
 	}
 }

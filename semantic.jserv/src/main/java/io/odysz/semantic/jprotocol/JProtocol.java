@@ -36,13 +36,14 @@ public class JProtocol {
 	@FunctionalInterface
 	public interface SCallbackV11 {
 		/**call back function called by semantic.transact
-		 * @param code 'ok' | 'ex...'
-		 * @param Data response message
+		 * @param msgCode 'ok' | 'ex...'
+		 * @param anSessionReq response message
 		 * @throws IOException
 		 * @throws SQLException
 		 * @throws SemanticException
 		 */
-		void onCallback(String code, AnsonResp Data) throws IOException, SQLException, SemanticException;
+		void onCallback(io.odysz.semantic.jprotocol.AnsonMsg.MsgCode msgCode,
+				AnsonResp anSessionReq) throws IOException, SQLException, SemanticException;
 	}
 
 	public static Gson gson = new Gson();
@@ -81,9 +82,11 @@ public class JProtocol {
 	}
 	
 	//////////////////////// version 1.1 with support of Anson //////////////////////
-	public static AnsonResp err(IPort port, AnsonMsg.MsgCode code, String err) {
-		AnsonResp obj = new AnsonResp(port, code, err);
-		return obj;
+	public static AnsonMsg<AnsonResp> err(IPort port, AnsonMsg.MsgCode code, String err) {
+		AnsonResp obj = new AnsonResp(err);
+		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(port, code)
+									.body(obj);
+		return msg;
 	}
 
 }

@@ -5,13 +5,16 @@ import java.util.HashMap;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 
 /**<p>Sessin Request<br>
  * a = "login" | "logout" | "heartbeat" ...</p>
  * @author odys-z@github.com
  */
 public class AnSessionReq extends AnsonBody {
+	public AnSessionReq() {
+		super(null, null); // session's DB access is controlled by server
+	}
 
 	/**Session connection is ignored and controlled by server.
 	 * @param parent
@@ -63,11 +66,5 @@ public class AnSessionReq extends AnsonBody {
 		this.token = tk64;
 		this.iv = iv64;
 	}
-
-	////////////////////////////// version 1.1  ////////////////////////////////
-	public static AnsonMsg<? extends AnsonBody> formatLoginV11(String uid, String tk64, String iv64) {
-		return null;
-	}
-
 }
 

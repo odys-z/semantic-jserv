@@ -15,8 +15,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
@@ -27,22 +25,20 @@ import io.odysz.common.Configs;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.DASemantics.smtype;
+import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHeader;
-import io.odysz.semantic.jprotocol.JHelper;
-import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
-import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServHandler;
-import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
@@ -91,8 +87,6 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 	
 	static DATranscxt sctx;
 
-//	static JHelper<SessionReq> jreqHelper;
-
 	private static String usrClzz;
 	private static JUserMeta usrMeta;
 
@@ -122,8 +116,6 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 		DATranscxt.loadSemantics(conn,
 					JSingleton.getFileInfPath("semantic-log.xml"));
 
-//		jreqHelper = new JHelper<SessionReq>();
-
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
 		scheduler = Executors.newScheduledThreadPool(1);
@@ -134,7 +126,6 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 			usrMeta = (JUserMeta) tmp.meta();
 		}
 		catch (Exception ex) {
-			// usrMeta = new JUserMeta("a_user", conn);
 			Utils.warn("SSesion: Implementation class of IUser doesn't configured correctly in: config.xml/t[id=cfg]/k=%s, check the value.",
 					usrClzz);
 			ex.printStackTrace();
@@ -166,16 +157,19 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 		}
 	}
 
-	/**FIXME: This is a security breach. Client request can duplicated request with plain ssid and uid.<br>
-	 * Should we use a session key?
-	 * @param jHeader
+	/**@deprecated */
+	public IUser verify(JHeader jHeader) throws SsException, SQLException {
+		return null;
+	}
+
+	/**@param jHeader
 	 * @return {@link JUser} if succeed, which can be used for db logging
 	 * - use this to load functions, etc.
 	 * @throws SsException Session checking failed.
 	 * @throws SQLException Reqest payload header.usrAct is null (TODO sure?)
-	 */
 	@Override
-	public IUser verify(JHeader jHeader) throws SsException, SQLException {
+	 */
+	public IUser verify(AnsonHeader jHeader) throws SsException, SQLException {
 		if (jHeader == null)
 			throw new SsException("session header is missing");
 
@@ -238,10 +232,11 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 	@Override
 	protected void onGet(AnsonMsg<AnSessionReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
+		jsonResp(msg, resp);
 	}
 
 	@Override
-	protected void onPost(AnsonMsg<AnSessionReq> msg, HttpServletResponse resp)
+	protected void onPost(AnsonMsg<AnSessionReq> msg, HttpServletResponse resp) throws IOException {
 		jsonResp(msg, resp);
 	}
 
@@ -251,8 +246,6 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 			String connId = Connects.defltConn();
 			if (connId == null || connId.trim().length() == 0)
 				connId = Connects.defltConn();
-	
-			// JMessage<SessionReq> payload = ServletAdapter.<SessionReq>read(msg, jreqHelper, SessionReq.class);
 
 			// find user and check login info 
 			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
@@ -266,13 +259,13 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 						users.put(login.sessionId(), login);
 						lock.unlock();
 						
-						ServletAdapter.write(response, JProtocol.ok(p, (SemanticObject)login),
+						write(response, AnsonMsg.ok(p, login),
 								msg.opts());
 					}
 					else throw new SsException("Password doesn't matching! Expecting token encrypt(uid, pswd, iv)");
 				}
 				else if ("logout".equals(a)) {
-					JHeader header = msg.header();
+					AnsonHeader header = msg.header();
 					try {verify(header);}
 					catch (SsException sx) {} // logout anyway if session check is failed
 					// {uid: “user-id”,  ssid: “session-id-plain/cipher”, vi: "vi-b64"<, sys: “module-id”>}
@@ -284,23 +277,22 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 	
 					if (usr != null) {
 						SemanticObject resp = usr.logout();
-						ServletAdapter.write(response, JProtocol.ok(p, resp),
+						write(response, AnsonMsg.ok(p, resp),
 								msg.opts());
 					}
 					else
-						ServletAdapter.write(response, JProtocol.ok(p,
+						write(response, AnsonMsg.ok(p,
 								new SemanticObject().put("msg", "But no such session exists.")),
 								msg.opts());
 				}
 				else if ("pswd".equals(a)) {
 					// change password
-					JHeader header = msg.header();
+					AnsonHeader header = msg.header();
 					IUser usr = verify(header);
 					
 					// client: encrypt with ssid, send cipher with iv
 					// FIXME using of session key, see bug of verify()
 					String ssid = (String) header.ssid();
-//					String iv64 = sessionBody.iv;
 					String iv64 = sessionBody.md("iv_pswd");
 					String newPswd = sessionBody.md("pswd");
 					usr.sessionKey(ssid);
@@ -330,7 +322,7 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 				else {
 					if (a != null) a = a.toLowerCase().trim();
 					if ("ping".equals(a) || "touch".equals(a)) {
-						JHeader header = msg.header();
+						AnsonHeader header = msg.header();
 						verify(header);
 						write(response, AnsonMsg.ok(p, ""), msg.opts());
 					}
