@@ -171,12 +171,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		return new AnsonMsg<AnsonResp>(p, MsgCode.ok).body(bd);
 	}
 
-	public static AnsonMsg<AnsonResp> ok(IPort p, IUser login) {
-		return null;
-	}
-
-	public static AnsonMsg<AnsonResp> ok(IPort p, SemanticObject resp) {
-		// TODO Auto-generated method stub
-		return null;
+	public static AnsonMsg<AnsonResp> ok(IPort p, AnsonResp resp) {
+		return new AnsonMsg<AnsonResp>(p, MsgCode.ok).body(resp);
 	}
 }

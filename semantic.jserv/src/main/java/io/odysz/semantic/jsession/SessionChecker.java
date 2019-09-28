@@ -26,12 +26,13 @@ public class SessionChecker implements Runnable {
 					ss.add(ssid);
 			}
 
-			if (sspool.size() > 0)
-				Utils.logi ("Sesssion refeshed, expired session(s):\n%s",
-					sspool.keySet());
+			if (ss.size() > 0) {
+				Utils.logi ("Sesssion refeshed, expired session(s):\n");
+			}
 
 			for (String ssid : ss) {
-				sspool.remove(ssid);
+				IUser s = sspool.remove(ssid);
+				Utils.logi("[%s, %s]", ssid, s.uid());
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();

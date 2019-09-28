@@ -195,6 +195,9 @@ public class JUser extends SemanticObject implements IUser {
 
 	@Override
 	public boolean login(Object request) throws TransException {
+		if (request instanceof AnSessionReq)
+			return loginV11((AnSessionReq) request);
+		
 		SessionReq req = (SessionReq)request;
 
 		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
@@ -212,6 +215,22 @@ public class JUser extends SemanticObject implements IUser {
 		return false;
 	}
 	
+	private boolean loginV11(AnSessionReq req) throws TransException {
+		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
+		byte[] ssiv = AESHelper.decode64(req.iv);
+		String c = null;
+		try { c = AESHelper.encrypt(uid, pswd, ssiv); }
+		catch (Exception e) { throw new TransException (e.getMessage()); }
+
+		// 2. compare pswd-cipher with j.pswd
+		if (c.equals(req.token())) {
+			touch();
+			return true;
+		}
+
+		return false;
+	}
+
 	@Override
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
