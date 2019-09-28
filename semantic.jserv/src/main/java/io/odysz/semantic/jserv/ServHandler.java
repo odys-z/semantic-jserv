@@ -63,7 +63,7 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
-	protected void write(HttpServletResponse resp, AnsonMsg<AnsonResp> msg, JsonOpt... opts) {
+	protected void write(HttpServletResponse resp, AnsonMsg<? extends AnsonResp> msg, JsonOpt... opts) {
 		try {
 			msg.toBlock(resp.getOutputStream(), opts);
 		} catch (AnsonException | IOException e) {

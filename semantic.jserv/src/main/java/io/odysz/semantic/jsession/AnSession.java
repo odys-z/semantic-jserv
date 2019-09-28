@@ -259,10 +259,10 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 						users.put(login.sessionId(), login);
 						lock.unlock();
 						
-						AnSessionResp rsp = new AnSessionResp();
-						SessionInf ssinf = rsp.ssInf();
-						write(response, AnsonMsg.ok(p, rsp),
-								msg.opts());
+						SessionInf ssinf = new SessionInf(login.sessionId(), login.uid());
+						AnsonMsg<AnSessionResp> rspMsg = new AnsonMsg<AnSessionResp>();
+						AnSessionResp bd = new AnSessionResp(rspMsg, ssinf);
+						write(response, rspMsg, msg.opts());
 					}
 					else throw new SsException("Password doesn't matching! Expecting token encrypt(uid, pswd, iv)");
 				}
