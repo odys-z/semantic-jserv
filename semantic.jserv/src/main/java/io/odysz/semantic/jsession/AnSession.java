@@ -259,7 +259,9 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 						users.put(login.sessionId(), login);
 						lock.unlock();
 						
-						write(response, AnsonMsg.ok(p, login),
+						AnSessionResp rsp = new AnSessionResp();
+						SessionInf ssinf = rsp.ssInf();
+						write(response, AnsonMsg.ok(p, rsp),
 								msg.opts());
 					}
 					else throw new SsException("Password doesn't matching! Expecting token encrypt(uid, pswd, iv)");
@@ -277,12 +279,11 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 	
 					if (usr != null) {
 						SemanticObject resp = usr.logout();
-						write(response, AnsonMsg.ok(p, resp),
+						write(response, AnsonMsg.ok(p, resp.msg()),
 								msg.opts());
 					}
 					else
-						write(response, AnsonMsg.ok(p,
-								new SemanticObject().put("msg", "But no such session exists.")),
+						write(response, AnsonMsg.ok(p, "But no such session exists."),
 								msg.opts());
 				}
 				else if ("pswd".equals(a)) {
