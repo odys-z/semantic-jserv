@@ -10,7 +10,7 @@ public class AnsonResp extends AnsonBody {
 	private String m;
 	private SResultset rs;
 
-	public AnsonResp(AnsonMsg<AnsonResp> parent) {
+	public AnsonResp(AnsonMsg<? extends AnsonResp> parent) {
 		super(parent, null);
 	}
 

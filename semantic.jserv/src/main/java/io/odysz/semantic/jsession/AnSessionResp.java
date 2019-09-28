@@ -9,14 +9,14 @@ public class AnSessionResp extends AnsonResp {
 
 	public AnSessionResp(AnsonMsg<AnsonResp> parent, String ssid, String uid, String ... roleId) {
 		super(parent);
-		ssInf = new SessionInf();
+		ssInf = new SessionInf(ssid, uid, roleId == null || roleId.length == 0 ? null : roleId[0]);
 		ssInf.ssid = ssid;
 		ssInf.uid = uid;
-		if (roleId != null && roleId.length > 0)
-			ssInf.roleId = roleId[0];
+//		if (roleId != null && roleId.length > 0)
+//			ssInf.roleId = roleId[0];
 	}
 
-	public AnSessionResp(AnsonMsg<AnsonResp> parent, SessionInf ssInf) {
+	public AnSessionResp(AnsonMsg<? extends AnsonResp> parent, SessionInf ssInf) {
 		super(parent);
 		this.ssInf = ssInf;
 	}
