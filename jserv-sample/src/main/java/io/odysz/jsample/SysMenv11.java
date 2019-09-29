@@ -28,11 +28,10 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
-@WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
-public class SysMenu  extends SemanticTree {
+@WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv11" })
+public class SysMenv11  extends SemanticTree {
 	private static final long serialVersionUID = 1L;
 	
-	protected static JHelper<DatasetReq> jmenuReq;
 
 	/**Menu tree semantics */
 	// private static TreeSemantics menuSemtcs;
@@ -40,9 +39,7 @@ public class SysMenu  extends SemanticTree {
 	/**sk in dataset.xml: menu tree */
 	private static final String defltSk = "sys.menu.ez-test";
 	
-	static {
-		jmenuReq  = new JHelper<DatasetReq>();
-	}
+//	static { jmenuReq  = new JHelper<DatasetReq>(); }
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -68,43 +65,43 @@ public class SysMenu  extends SemanticTree {
 		}
 	}
 
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws IOException {
-		if (SampleFlags.menu)
-			Utils.logi("========== menu.sample post <= %s ==========", req.getRemoteAddr());
-
-		resp.setCharacterEncoding("UTF-8");
-		try {
-			JMessage<DatasetReq> jmsg = ServletAdapter.<DatasetReq>read(req, jmenuReq, DatasetReq.class);
-			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
-
-			DatasetReq jreq = jmsg.body(0);
-			// jreq.treeSemtcs(menuSemtcs);
-
-			String sk = jreq.sk();
-			jreq.sqlArgs = new String[] {usr.uid()};
-
-			List<SemanticObject> lst = DatasetCfg.loadStree(Connects.defltConn(),
-					sk == null ? defltSk : sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-			SemanticObject menu = new SemanticObject();
-			menu.put("menu", lst);
-			SemanticObject rs = JProtocol.ok(Port.stree, menu);
-			
-			ServletAdapter.write(resp, rs);
-		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exSemantic, e.getMessage()));
-		} catch (SQLException e) {
-			if (SampleFlags.menu)
-				e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exTransct, e.getMessage()));
-		} catch (ReflectiveOperationException e) {
-			e.printStackTrace();
-		} catch (SsException e) {
-			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exSession, e.getMessage()));
-		} finally {
-			resp.flushBuffer();
-		}
-	}
+//	@Override
+//	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+//			throws IOException {
+//		if (SampleFlags.menu)
+//			Utils.logi("========== menu.sample post <= %s ==========", req.getRemoteAddr());
+//
+//		resp.setCharacterEncoding("UTF-8");
+//		try {
+//			JMessage<DatasetReq> jmsg = ServletAdapter.<DatasetReq>read(req, jmenuReq, DatasetReq.class);
+//			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
+//
+//			DatasetReq jreq = jmsg.body(0);
+//			// jreq.treeSemtcs(menuSemtcs);
+//
+//			String sk = jreq.sk();
+//			jreq.sqlArgs = new String[] {usr.uid()};
+//
+//			List<SemanticObject> lst = DatasetCfg.loadStree(Connects.defltConn(),
+//					sk == null ? defltSk : sk, jreq.page(), jreq.size(), jreq.sqlArgs);
+//			SemanticObject menu = new SemanticObject();
+//			menu.put("menu", lst);
+//			SemanticObject rs = JProtocol.ok(Port.stree, menu);
+//			
+//			ServletAdapter.write(resp, rs);
+//		} catch (SemanticException e) {
+//			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exSemantic, e.getMessage()));
+//		} catch (SQLException e) {
+//			if (SampleFlags.menu)
+//				e.printStackTrace();
+//			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exTransct, e.getMessage()));
+//		} catch (ReflectiveOperationException e) {
+//			e.printStackTrace();
+//		} catch (SsException e) {
+//			ServletAdapter.write(resp, JProtocol.err(Samport.menu, MsgCode.exSession, e.getMessage()));
+//		} finally {
+//			resp.flushBuffer();
+//		}
+//	}
 
 }

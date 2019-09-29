@@ -9,8 +9,6 @@ import io.odysz.anson.Anson;
 import io.odysz.anson.IJsonable;
 import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
-import io.odysz.semantics.IUser;
-import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
 /**<p>Base class of message used by {@link io.odysz.semantic.jserv.ServHandler serv11}.</p>
@@ -140,6 +138,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		if (body == null)
 			body = new ArrayList<T>();
 		body.add((T)bodyItem);
+		bodyItem.parent = this;
 		return this;
 	}
 

@@ -30,6 +30,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHeader;
@@ -260,8 +261,8 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 						lock.unlock();
 						
 						SessionInf ssinf = new SessionInf(login.sessionId(), login.uid());
-						AnsonMsg<AnSessionResp> rspMsg = new AnsonMsg<AnSessionResp>();
-						AnSessionResp bd = new AnSessionResp(rspMsg, ssinf);
+						AnSessionResp bd = new AnSessionResp(null, ssinf);
+						AnsonMsg<AnSessionResp> rspMsg = ok(bd);
 						write(response, rspMsg, msg.opts());
 					}
 					else throw new SsException("Password doesn't matching! Expecting token encrypt(uid, pswd, iv)");
