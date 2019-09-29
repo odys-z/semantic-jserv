@@ -71,15 +71,21 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
-	protected void write(HttpServletResponse resp, SResultset rs, JsonOpt opts) {
-		try {
-			AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>();
-			AnsonResp bd = new AnsonResp(msg);
-			msg.body(bd.rs(rs));
-			msg.toBlock(resp.getOutputStream(), opts);
-		} catch (AnsonException | IOException e) {
-			e.printStackTrace();
-		}
+	/**Response with OK message.
+	 * @param rs
+	 * @return 
+	 */
+	protected AnsonMsg<AnsonResp> ok(SResultset rs) {
+		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);
+		AnsonResp bd = new AnsonResp(msg);
+		msg.body(bd.rs(rs));
+		return msg;
+	}
+
+	protected <U extends AnsonResp> AnsonMsg<U> ok(U body) {
+		AnsonMsg<U> msg = new AnsonMsg<U>(p, MsgCode.ok);
+		msg.body(body);
+		return msg;
 	}
 	
 	abstract protected void onGet(AnsonMsg<T> msg, HttpServletResponse resp)

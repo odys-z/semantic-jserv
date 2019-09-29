@@ -5,6 +5,7 @@ import java.sql.SQLException;
 
 import com.google.gson.Gson;
 
+import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JMessage.Port;
 import io.odysz.semantics.SemanticObject;
@@ -37,13 +38,13 @@ public class JProtocol {
 	public interface SCallbackV11 {
 		/**call back function called by semantic.transact
 		 * @param msgCode 'ok' | 'ex...'
-		 * @param anSessionReq response message
+		 * @param resp response message
 		 * @throws IOException
 		 * @throws SQLException
 		 * @throws SemanticException
 		 */
 		void onCallback(io.odysz.semantic.jprotocol.AnsonMsg.MsgCode msgCode,
-				AnsonResp anSessionReq) throws IOException, SQLException, SemanticException;
+				AnsonResp resp) throws IOException, SQLException, AnsonException, SemanticException;
 	}
 
 	public static Gson gson = new Gson();

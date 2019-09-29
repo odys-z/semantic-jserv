@@ -31,4 +31,8 @@ public class AnsonResp extends AnsonBody {
 	public SResultset rs() {
 		return this.rs;
 	}
+
+	public Object data(String key) {
+		return null;
+	}
 }

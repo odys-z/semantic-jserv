@@ -82,7 +82,7 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 //			SResultset rs = query(msg.body(0), usr);
 			SResultset rs = query(msg.body(0), null);
 
-			write(resp, rs, msg.opts());
+			write(resp, ok(rs), msg.opts());
 //		} catch (SsException e) {
 //			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 		} catch (SemanticException e) {
