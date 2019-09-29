@@ -16,6 +16,8 @@ public class AnsonHeader extends Anson {
 		this.uid = uid;
 		this.ssid = ssid;
 	}
+	
+	public AnsonHeader() { }
 
 	public String logid() {
 		return uid;
@@ -37,7 +39,7 @@ public class AnsonHeader extends Anson {
 		usrAct = act;
 		return this;
 	}
-	
+
 	public static String[] usrAct(String funcId, String cmd, String cate, String remarks) {
 		return new String[] {funcId, cate, cmd, remarks};
 	}

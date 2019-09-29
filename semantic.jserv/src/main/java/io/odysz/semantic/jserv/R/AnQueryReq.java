@@ -51,6 +51,11 @@ public class AnQueryReq extends AnsonBody {
 		a = "R";
 	}
 
+	public AnQueryReq() {
+		super(null, null);
+		a = "R";
+	}
+
 	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String conn, String fromTbl, String... alias) {
 		super(parent, conn);
 		a = CRUD.R;
