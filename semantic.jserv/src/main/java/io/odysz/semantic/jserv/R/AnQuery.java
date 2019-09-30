@@ -118,7 +118,7 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 		else selct.page(msg.page, msg.pgsize);
 
 		if (msg.exprs != null && msg.exprs.size() > 0)
-			for (String[] col : msg.exprs)
+			 for (String[] col : msg.exprs)
 				selct.col((String)col[Ix.exprExpr], (String)col[Ix.exprAlais]);
 		
 		// Sample of join on parsing:
