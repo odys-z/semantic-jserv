@@ -23,7 +23,7 @@ public class AnQueryReq extends AnsonBody {
             	cond-obj: {(main-table | alais.)left-col-val op (table-1 | alias2 .)right-col-val}
            				- op: '=' | '&lt;=' | '&gt;=' ...</pre>
 	 */
-	ArrayList<Object[]> joins;
+	ArrayList<String[]> joins;
 
 	/**exprs: [expr-obj],
 	 * expr-obj: {tabl: "b_articles/t_alais", alais: "recId", expr: "recId"}
@@ -98,7 +98,7 @@ public class AnQueryReq extends AnsonBody {
 
 	public AnQueryReq j(String t, String with, String as, String on) {
 		if (joins == null)
-			joins = new ArrayList<Object[]>();
+			joins = new ArrayList<String[]>();
 		String[] j = new String[Ix.joinSize];
 		j[Ix.joinTabl] = with;
 		j[Ix.joinAlias] = as;

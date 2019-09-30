@@ -31,6 +31,10 @@ public class QueryReq extends JBody {
            - conds: [cond-obj]
             	cond-obj: {(main-table | alais.)left-col-val op (table-1 | alias2 .)right-col-val}
            				- op: '=' | '&lt;=' | '&gt;=' ...</pre>
+     * <p>TODO make sure:<br>
+     * In previous version, elemnets are created by semantics aware parser.
+     * But in v1.1, it's handled by a generic parser.
+     * What if a "join" is a sub query?</p>
 	 */
 	ArrayList<Object[]> joins;
 
