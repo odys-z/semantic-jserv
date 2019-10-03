@@ -32,8 +32,9 @@ import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
-/**Sample serv (Port = user.serv)<br>
- * a = "A" | "B" | "C";<br>
+/**<p>Sample serv (Port = user.serv) shows how user can extend basic serv API
+ * with help of semantic-transact SQL builder</p>
+ * function branch: a = "A" | "B" | "C";<br>
  * The js client request should do something like this:<pre>
 var conn = jconsts.conn;
 function saveTooleA() {
@@ -63,7 +64,7 @@ function saveTooleA() {
 }</pre>
  * @author odys-z@github.com
  */
-@WebServlet(description = "jserv.sample example/user.serv", urlPatterns = { "/tools.serv" })
+@WebServlet(description = "jserv.sample example/tools.serv", urlPatterns = { "/tools.serv" })
 public class Tools extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 

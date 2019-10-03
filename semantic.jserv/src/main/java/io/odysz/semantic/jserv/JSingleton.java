@@ -14,6 +14,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.DA.DatasetCfgV11;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantic.jsession.SSession;
@@ -27,6 +28,7 @@ public class JSingleton {
 
 	public static DATranscxt defltScxt;
 	private static ISessionVerifier ssVerier;
+	private static AnSession ssVerierV11;
 	private static String rootINF;
 
 	public void onDestroyed(ServletContextEvent arg0) {
@@ -47,6 +49,7 @@ public class JSingleton {
 		
 		try {
 			DatasetCfg.init(rootINF);
+			DatasetCfgV11.init(rootINF);
 			// HashMap<String, TableMeta> metas = Connects.loadMeta(Connects.defltConn());
 			defltScxt = new DATranscxt(Connects.defltConn());
 			
@@ -54,6 +57,7 @@ public class JSingleton {
 			SSession.init(defltScxt, ctx);
 			AnSession.init(defltScxt, ctx);
 			ssVerier = new SSession();
+			ssVerierV11 = new AnSession();
 
 		} catch (SAXException | IOException | SemanticException | SQLException e) {
 			e.printStackTrace();
@@ -62,6 +66,10 @@ public class JSingleton {
 
 	public static ISessionVerifier getSessionVerifier() {
 		return ssVerier;
+	}
+
+	public static ISessionVerifier getSessionVerifierV11() {
+		return ssVerierV11;
 	}
 
 	/**Get server root/WEB-INF path (filesystem local)
@@ -76,5 +84,4 @@ public class JSingleton {
 	public static String getFileInfPath(String filename) {
 		return FilenameUtils.concat(rootINF(), filename);
 	}
-
 }

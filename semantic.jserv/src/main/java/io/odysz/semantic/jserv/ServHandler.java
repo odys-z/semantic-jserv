@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.anson.Anson;
 import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
-import io.odysz.module.rs.SResultset;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -75,7 +75,7 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 	 * @param rs
 	 * @return 
 	 */
-	protected AnsonMsg<AnsonResp> ok(SResultset rs) {
+	protected AnsonMsg<AnsonResp> ok(AnResultset rs) {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);
 		AnsonResp bd = new AnsonResp(msg);
 		msg.body(bd.rs(rs));
@@ -86,6 +86,17 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 		AnsonMsg<U> msg = new AnsonMsg<U>(p, MsgCode.ok);
 		msg.body(body);
 		return msg;
+	}
+	
+	protected AnsonMsg<AnsonResp> ok(String templ, Object... args) {
+		AnsonMsg<AnsonResp> msg = AnsonMsg.ok(p, String.format(templ, args));
+		return msg;
+	}
+	
+	protected AnsonMsg<AnsonResp> err(MsgCode code, String templ, Object ... args) {
+		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, code);
+		AnsonResp bd = new AnsonResp(msg, String.format(templ, args));
+		return msg.body(bd);
 	}
 	
 	abstract protected void onGet(AnsonMsg<T> msg, HttpServletResponse resp)
