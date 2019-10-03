@@ -21,6 +21,14 @@ import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantics.x.SemanticException;
 
+/**<p>Base serv class for handling json request.</p>
+ * Servlet extending this must subclass this class, and override
+ * {@link #onGet(AnsonMsg, HttpServletResponse) onGet()} and {@link #onPost(AnsonMsg, HttpServletResponse) onPost()}.
+ * 
+ * @author odys-z@github.com
+ *
+ * @param <T> any subclass extends {@link AnsonBody}.
+ */
 public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 	protected IPort p;
 
