@@ -1,6 +1,6 @@
 package io.odysz.semantic.ext;
 
-import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
+import io.odysz.semantic.DA.DatasetCfgV11.TreeSemantics;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.R.AnQueryReq;
@@ -14,6 +14,16 @@ public class AnDatasetReq extends AnQueryReq {
 	protected String smtcss;
 	/**{@link TreeSemantics} of tree from {@link #smtcss} or set with {@link #treeSemtcs} ({@link TreeSemantics}) */
 	protected TreeSemantics stcs;
+
+	String root;
+	public String root() { return root; }
+
+	public AnDatasetReq() { super(null, null);}
+
+	public AnDatasetReq root(String rootId) {
+		this.root = rootId;
+		return this;
+	}
 
 	public AnDatasetReq(AnsonMsg<? extends AnsonBody> parent, String conn) {
 		super(parent, conn);

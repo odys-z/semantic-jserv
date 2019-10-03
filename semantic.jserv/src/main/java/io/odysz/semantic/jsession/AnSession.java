@@ -30,7 +30,6 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHeader;
@@ -163,21 +162,21 @@ public class AnSession extends ServHandler<AnSessionReq> implements ISessionVeri
 		return null;
 	}
 
-	/**@param jHeader
+	/**@param anHeader
 	 * @return {@link JUser} if succeed, which can be used for db logging
 	 * - use this to load functions, etc.
 	 * @throws SsException Session checking failed.
 	 * @throws SQLException Reqest payload header.usrAct is null (TODO sure?)
-	@Override
 	 */
-	public IUser verify(AnsonHeader jHeader) throws SsException, SQLException {
-		if (jHeader == null)
+	@Override
+	public IUser verify(AnsonHeader anHeader) throws SsException, SQLException {
+		if (anHeader == null)
 			throw new SsException("session header is missing");
 
-		String ssid = (String)jHeader.ssid();
+		String ssid = (String)anHeader.ssid();
 		if (users.containsKey(ssid)) {
 			IUser usr = users.get(ssid);
-			String slogid = (String)jHeader.logid();
+			String slogid = (String)anHeader.logid();
 			if (slogid != null && slogid.equals(usr.uid())) {
 				usr.touch();
 				return usr;

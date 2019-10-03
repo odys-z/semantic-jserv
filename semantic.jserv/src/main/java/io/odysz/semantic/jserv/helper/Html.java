@@ -20,6 +20,7 @@ import java.util.List;
 
 import static j2html.TagCreator.span;
 
+import io.odysz.module.rs.AnResultset;
 import io.odysz.module.rs.SResultset;
 import io.odysz.semantics.SemanticObject;
 import j2html.tags.ContainerTag;
@@ -30,6 +31,7 @@ import j2html.tags.ContainerTag;
  */
 public class Html {
 	/**Change rs to html.
+	 * TODO remove
 	 * @param rs
 	 * @param msgs
 	 * @return html doc
@@ -46,6 +48,19 @@ public class Html {
 						tr(each(rs.getColnames().keySet(), col -> th(span(col)))),
 						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
 				)).render();
+	}
+
+	public static String rs(AnResultset rs, String... msgs) {
+		return "<!DOCTYPE HTML>" + html(
+			head(meta().withCharset("utf-8")),
+			body(
+				h1("Html.rs()"),
+					ul(each(Arrays.asList(msgs), pmsg -> li(""))),
+					table(tbody(
+						tr(each(rs.getColnames().keySet(), col -> th(span(col)))),
+						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
+				)).render();
+
 	}
 
 	public static String list(List<String> list) {
