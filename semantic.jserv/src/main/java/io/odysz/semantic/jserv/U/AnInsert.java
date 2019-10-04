@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.R;
+package io.odysz.semantic.jserv.U;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -35,7 +35,7 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv11" })
-public class AnQuery extends ServHandler<AnQueryReq> {
+public class AnQuery extends ServHandler<AnInsertReq> {
 
 	@Override
 	public void init() throws ServletException {
@@ -52,7 +52,7 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 	}
 
 	@Override
-	protected void onGet(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp)
+	protected void onGet(AnsonMsg<AnInsertReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.query)
 			Utils.logi("---------- squery (r.serv11) get ----------");
@@ -73,7 +73,7 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 	}
 	
 	@Override
-	protected void onPost(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp) throws IOException {
+	protected void onPost(AnsonMsg<AnInsertReq> msg, HttpServletResponse resp) throws IOException {
 		if (ServFlags.query)
 			Utils.logi("========== squery (r.serv11) post ==========");
 
@@ -102,80 +102,4 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 		}
 	}
 
-	/**
-	 * @param msg
-	 * @param usr 
-	 * @return {code: "ok", port: {@link JMessage.Port}.query, rs: [{@link SResultset}, ...]}
-	 * @throws SQLException
-	 * @throws TransException
-	 */
-	protected static Query buildSelct(AnQueryReq msg, IUser usr) throws SQLException, TransException {
-		Query selct = st.select(msg.mtabl, msg.mAlias);
-		
-		// exclude sqlite paging
-		if (msg.page >= 0 && msg.pgsize > 0
-			&& dbtype.sqlite == Connects.driverType(
-				msg.conn() == null ? Connects.defltConn() : msg.conn())) {
-			Utils.warn("JQuery#buildSelct(): Requesting data from sqlite, but it's not easy to page in sqlite. So page and size are ignored: %s, %s.",
-					msg.page, msg.pgsize);
-		}
-		else selct.page(msg.page, msg.pgsize);
-
-		if (msg.exprs != null && msg.exprs.size() > 0)
-			 for (String[] col : msg.exprs)
-				selct.col((String)col[Ix.exprExpr], (String)col[Ix.exprAlais]);
-		
-		// Sample of join on parsing:
-//		0	l
-//		1	a_roles
-//		2	R
-//		3	U.roleId=R.roleId or U.roleId = 'admin' and U.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People')
-//
-//		select userId userId, userName userName, mobile mobile, dept.orgId orgId, o.orgName orgName, 
-//		dept.departName departName, dept.departId departId, R.roleId roleId, R.roleName roleName, notes notes 
-//		from a_user U 
-//		join a_reg_org o on U.orgId = o.orgId 
-//		left outer join a_org_depart dept on U.departId = dept.departId 
-//		left outer join a_roles R on U.roleId = R.roleId OR U.roleId = 'admin' AND U.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People') 
-//		where U.userName like '%张%'
-
-		if (msg.joins != null && msg.joins.size() > 0) {
-			for (Object[] j : msg.joins)
-				if (j[Ix.joinTabl] instanceof QueryReq) {
-					Query q = buildSelct((AnQueryReq)j[Ix.joinTabl], usr);
-					selct.j(join.parse((String)j[Ix.joinType]),
-							q,
-							(String)j[Ix.joinAlias],
-							(String)j[Ix.joinOnCond]);
-				}
-				else
-					selct.j(join.parse((String)j[Ix.joinType]),
-							(String)j[Ix.joinTabl],
-							(String)j[Ix.joinAlias],
-							(String)j[Ix.joinOnCond]);
-		}
-		
-		if (msg.where != null && msg.where.size() > 0) {
-			for (Object[] cond : msg.where)
-				selct.where((String)cond[Ix.predicateOper],
-							(String)cond[Ix.predicateL],
-							(String)cond[Ix.predicateR]);
-		}
-		// GROUP BY
-		selct.groupby(msg.groups);
-		// ORDER BY
-		selct.orderby(msg.orders);
-		
-		if (msg.limt != null)
-			selct.limit(msg.limt[0], msg.limt.length > 1 ? msg.limt[1] : null);
-		
-		return selct;
-	}
-
-	public static AnResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
-		Query selct = buildSelct(msg, usr);
-		SemanticObject s = selct.rs(st.instancontxt(msg.conn(), usr));
-		AnResultset rs = new AnResultset((SResultset)s.rs(0));
-		return rs;
-	}
 }
