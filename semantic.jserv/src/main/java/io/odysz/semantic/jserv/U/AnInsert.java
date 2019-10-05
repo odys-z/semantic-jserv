@@ -8,15 +8,12 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
-import io.odysz.common.dbtype;
-import io.odysz.module.rs.AnResultset;
-import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.jprotocol.JMessage;
+import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServHandler;
@@ -26,16 +23,14 @@ import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.Query;
-import io.odysz.transact.sql.Query.Ix;
-import io.odysz.transact.sql.parts.select.JoinTabl.join;
+import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
-/**CRUD read service.
+/**CRUD insertion service.
  * @author odys-z@github.com
  */
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv11" })
-public class AnQuery extends ServHandler<AnInsertReq> {
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/c.serv11" })
+public class AnInsert extends ServHandler<AnInsertReq> {
 
 	@Override
 	public void init() throws ServletException {
@@ -56,11 +51,17 @@ public class AnQuery extends ServHandler<AnInsertReq> {
 			throws ServletException, IOException {
 		if (ServFlags.query)
 			Utils.logi("---------- squery (r.serv11) get ----------");
-		resp.setCharacterEncoding("UTF-8");
 		try {
 			IUser usr = verifier.verify(msg.header());
-			AnResultset rs = query(msg.body(0), usr);
-			resp.getWriter().write(Html.rs(rs));
+
+			AnsonMsg<AnsonResp> res;
+			AnInsertReq q = msg.body(0);
+			if (CRUD.C.equals(q .a()))
+				res = inst(q, usr);
+			else
+				throw new SemanticException("%s only handling a=i. Please update client!", p.name());
+			
+			resp.getWriter().write(Html.map(res));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
@@ -77,29 +78,58 @@ public class AnQuery extends ServHandler<AnInsertReq> {
 		if (ServFlags.query)
 			Utils.logi("========== squery (r.serv11) post ==========");
 
-		resp.setCharacterEncoding("UTF-8");
 		try {
 			IUser usr = verifier.verify(msg.header());
-			AnResultset rs = query(msg.body(0), usr);
+			AnInsertReq q = msg.body(0);
+			q.validate();
 
-			write(resp, ok(rs), msg.opts());
+			AnsonMsg<AnsonResp> res = null;
+			if (CRUD.C.equals(q.a()))
+				res = inst((AnInsertReq) q, usr);
+			else
+				throw new SemanticException("i.serv only handling a=i. Please update client!");
+
+			write(resp, res, msg.opts());
 		} catch (SsException e) {
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (SemanticException e) {
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
 			e.printStackTrace();
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exGeneral, e.getMessage()));
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
 	}
 
+	/**Handle insert request, generate {@link Insert} statement,
+	 * then commit and return results.
+	 * @param msg
+	 * @param usr
+	 * @return results
+	 * @throws SQLException
+	 * @throws TransException
+	 */
+	private AnsonMsg<AnsonResp> inst(AnInsertReq msg, IUser usr)
+			throws TransException, SQLException {
+		Insert upd = st.insert(msg.mtabl, usr);
+
+		String[] cols = msg.cols();
+		if (cols == null || cols.length == 0)
+			throw new SemanticException("Can't insert %s values without columns sepecification.", msg.mtabl);
+
+		SemanticObject res = (SemanticObject) upd
+				.cols(cols)
+				.values(msg.values())
+				.where(AnUpdate.tolerateNv(msg.where))
+				.post(AnUpdate.postUpds(msg.postUpds, usr))
+				.ins(st.instancontxt(msg.conn(), usr));
+		if (res == null)
+			return new AnsonMsg<AnsonResp>(p, MsgCode.ok);
+		return new AnsonMsg<AnsonResp>(p, MsgCode.ok)
+				.body(new AnsonResp().data(res.props()));
+	}
 }

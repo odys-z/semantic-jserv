@@ -48,6 +48,7 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 		try {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
+			resp.setCharacterEncoding("UTF-8");
 			onGet(msg, resp);
 		} catch (AnsonException | SemanticException e) {
 			if (ServFlags.query)
@@ -63,6 +64,7 @@ public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
 			InputStream in = req.getInputStream(); 
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
+			resp.setCharacterEncoding("UTF-8");
 			onPost(msg, resp);
 		} catch (SemanticException | AnsonException e) {
 			if (ServFlags.query)
