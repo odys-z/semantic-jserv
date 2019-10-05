@@ -35,7 +35,7 @@ public class AnInsertReq extends AnUpdateReq {
 	 * @param conn
 	 * @param parent
 	 * @param tabl
-	 * @param cmd {@link CRUD}.c R U D
+	 * @param cmd {@link CRUD}.C R U D
 	 * @return a new update request
 	 */
 	public static AnInsertReq formatInsertReq(String conn, AnsonMsg<AnInsertReq> parent, String tabl) {
