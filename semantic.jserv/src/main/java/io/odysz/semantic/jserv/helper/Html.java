@@ -22,6 +22,8 @@ import static j2html.TagCreator.span;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantics.SemanticObject;
 import j2html.tags.ContainerTag;
 
@@ -48,19 +50,6 @@ public class Html {
 						tr(each(rs.getColnames().keySet(), col -> th(span(col)))),
 						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
 				)).render();
-	}
-
-	public static String rs(AnResultset rs, String... msgs) {
-		return "<!DOCTYPE HTML>" + html(
-			head(meta().withCharset("utf-8")),
-			body(
-				h1("Html.rs()"),
-					ul(each(Arrays.asList(msgs), pmsg -> li(""))),
-					table(tbody(
-						tr(each(rs.getColnames().keySet(), col -> th(span(col)))),
-						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
-				)).render();
-
 	}
 
 	public static String list(List<String> list) {
@@ -108,9 +97,42 @@ public class Html {
 				)).render();
 	}
 
+	/**A very old bug?
+	 * @param res
+	 * @return null
+	 */
 	public static String map(SemanticObject res) {
-		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	public static String rs(AnResultset rs, String... msgs) {
+		return "<!DOCTYPE HTML>" + html(
+			head(meta().withCharset("utf-8")),
+			body(
+				h1("Html.rs()"),
+					ul(each(Arrays.asList(msgs), pmsg -> li(""))),
+					table(tbody(
+						tr(each(rs.getColnames().keySet(), col -> th(span(col)))),
+						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
+				)).render();
+
+	}
+
+	/**Write responding message with data of type map.<br>
+	 * TODO can html writing outputStream?
+	 * @param res
+	 * @return html doc
+	 */
+	public static String map(AnsonMsg<AnsonResp> res) {
+		HashMap<String, Object> map = res == null || res.body(0) == null ? null : res.body(0).data();
+		return "<!DOCTYPE HTML>" + html(
+			head(meta().withCharset("utf-8")),
+			body(
+				h1("code " + res.code().name() + ", port " + res.port().name()),
+					table(tbody(
+						tr(th("key"), th("value")),
+						map == null ? null : each(map.keySet(), k -> tr(td(map.get(k).toString())))))
+				)).render();
 	}
 
 	public static String ok(String msg) {

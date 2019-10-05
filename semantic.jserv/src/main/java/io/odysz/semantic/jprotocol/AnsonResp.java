@@ -1,6 +1,7 @@
 package io.odysz.semantic.jprotocol;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import io.odysz.module.rs.AnResultset;
 
@@ -11,6 +12,7 @@ public class AnsonResp extends AnsonBody {
 
 	private String m;
 	private ArrayList<AnResultset> rs;
+	private HashMap<String, Object> map;
 
 	public AnsonResp() {
 		super(null, null);
@@ -43,5 +45,14 @@ public class AnsonResp extends AnsonBody {
 
 	public AnResultset rs(int ix) {
 		return this.rs == null ? null : this.rs.get(ix);
+	}
+
+	public AnsonResp data(HashMap<String, Object> props) {
+		this.map = props;
+		return this;
+	}
+	
+	public HashMap<String, Object> data () {
+		return map;
 	}
 }

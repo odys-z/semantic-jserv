@@ -56,7 +56,6 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 			throws ServletException, IOException {
 		if (ServFlags.query)
 			Utils.logi("---------- squery (r.serv11) get ----------");
-		resp.setCharacterEncoding("UTF-8");
 		try {
 			IUser usr = verifier.verify(msg.header());
 			AnResultset rs = query(msg.body(0), usr);
@@ -77,7 +76,6 @@ public class AnQuery extends ServHandler<AnQueryReq> {
 		if (ServFlags.query)
 			Utils.logi("========== squery (r.serv11) post ==========");
 
-		resp.setCharacterEncoding("UTF-8");
 		try {
 			IUser usr = verifier.verify(msg.header());
 			AnResultset rs = query(msg.body(0), usr);
