@@ -5,15 +5,15 @@ import static io.odysz.semantic.jprotocol.JProtocol.CRUD.R;
 import static io.odysz.semantic.jprotocol.JProtocol.CRUD.U;
 import java.util.ArrayList;
 
-import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;
 
-/**<p>Insert Request helper</p>
+/**<p>Insert Request Message</p>
  * <b>Note:</b>
  * <p>InsertReq is a subclass of UpdateReq, and have no {@link #toJson(com.google.gson.stream.JsonWriter, io.odysz.semantic.jprotocol.JOpts) toJson()}
  * and {@link #fromJsonName(String, com.google.gson.stream.JsonReader) fromJson()} implementation.
@@ -53,7 +53,7 @@ public class AnUpdateReq extends AnsonBody {
 
 	ArrayList<AnUpdateReq> postUpds;
 	
-	public JHeader header;
+	public AnsonHeader header;
 
 	ArrayList<Object[]> attacheds;
 
