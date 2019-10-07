@@ -11,7 +11,7 @@ import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantics.x.SemanticException;
 
-/**<p>Base class of message used by {@link io.odysz.semantic.jserv.ServHandler serv11}.</p>
+/**<p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort serv11}.</p>
  * 1. A incoming json message is parsed by *.serv into JMessage,
  * which can be used to directly to build statements;<br>
  * 2. An outgoing data object which is presented as AnsonMsg<AnsonResp>,

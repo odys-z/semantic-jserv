@@ -30,7 +30,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
-import io.odysz.semantic.jserv.ServHandler;
+import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.R.JQuery;
@@ -55,7 +55,7 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 @WebServlet(description = "Abstract Tree Data Service", urlPatterns = { "/s-tree.serv11" })
-public class SemanticTreeV11 extends ServHandler<AnDatasetReq> {
+public class SemanticTreeV11 extends ServPort<AnDatasetReq> {
 	private static final long serialVersionUID = 1L;
 
 	@Override

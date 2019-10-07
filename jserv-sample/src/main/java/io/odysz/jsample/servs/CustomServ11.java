@@ -8,12 +8,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jserv.ServHandler;
+import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantics.x.SemanticException;
 
 /**<p>Sample serv (Port = user.serv) shows how user can extend basic serv API
  * with help of semantic-transact SQL builder<br>
- * This also shows how user can extend {@link ServHandler} with typed message handler,
+ * This also shows how user can extend {@link ServPort} with typed message handler,
  * antson, which is new to v1.1.</p>
  * function branch: a = "A" | "B" | "C";<br>
  * The js client request should do something like this:<pre>
@@ -46,7 +46,7 @@ function saveTooleA() {
  * @author odys-z@github.com
  */
 @WebServlet(description = "jserv.sample example: extend serv handler", urlPatterns = { "/custom.serv11" })
-public class CustomServ11 extends ServHandler<CustomReq> {
+public class CustomServ11 extends ServPort<CustomReq> {
 	private static final long serialVersionUID = 1L;
 
 	@Override
