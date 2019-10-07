@@ -16,7 +16,7 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
-import io.odysz.semantic.jserv.ServHandler;
+import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
@@ -30,7 +30,7 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/c.serv11" })
-public class AnInsert extends ServHandler<AnInsertReq> {
+public class AnInsert extends ServPort<AnInsertReq> {
 
 	@Override
 	public void init() throws ServletException {

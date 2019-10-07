@@ -38,7 +38,7 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
-import io.odysz.semantic.jserv.ServHandler;
+import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
@@ -67,7 +67,7 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv11" })
-public class AnSession extends ServHandler<AnSessionReq> implements ISessionVerifier {
+public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifier {
 	private static final long serialVersionUID = 1L;
 
 	public static enum Notify { changePswd, todo }

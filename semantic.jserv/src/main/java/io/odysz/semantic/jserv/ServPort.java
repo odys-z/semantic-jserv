@@ -29,7 +29,7 @@ import io.odysz.semantics.x.SemanticException;
  *
  * @param <T> any subclass extends {@link AnsonBody}.
  */
-public abstract class ServHandler<T extends AnsonBody> extends HttpServlet {
+public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	protected IPort p;
 
 	@Override
