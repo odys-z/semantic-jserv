@@ -13,7 +13,6 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
-import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
@@ -89,7 +88,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 		} catch (SQLException | TransException e) {
 			if (ServFlags.update)
 				e.printStackTrace(); // only for debug convenience
-			write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (Exception e) {
 			if (ServFlags.update)
 				e.printStackTrace();

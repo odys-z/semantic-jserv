@@ -18,7 +18,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
-import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantics.x.SemanticException;
 
 /**<p>Base serv class for handling json request.</p>
@@ -53,7 +52,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		} catch (AnsonException | SemanticException e) {
 			if (ServFlags.query)
 				e.printStackTrace();
-			write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		}
 		in.close();
 	}
@@ -69,7 +68,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		} catch (SemanticException | AnsonException e) {
 			if (ServFlags.query)
 				e.printStackTrace();
-			write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		}
 	}
 

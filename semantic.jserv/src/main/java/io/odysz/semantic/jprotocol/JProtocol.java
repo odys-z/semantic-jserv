@@ -6,8 +6,8 @@ import java.sql.SQLException;
 import com.google.gson.Gson;
 
 import io.odysz.anson.x.AnsonException;
-import io.odysz.semantic.jprotocol.JMessage.MsgCode;
-import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
@@ -49,7 +49,7 @@ public class JProtocol {
 
 	public static Gson gson = new Gson();
 	
-	public static SemanticObject err(IPort port, MsgCode code, String err) {
+	public static SemanticObject err(IPort port, JMessage.MsgCode code, String err) {
 		return err (port, code.name(), err);
 	}
 
@@ -69,21 +69,16 @@ public class JProtocol {
 		return obj;
 	}
 
-	public static SemanticObject ok(Port port, String msg, Object... msgArgs) {
+	public static SemanticObject ok(IPort port, String msg, Object... msgArgs) {
 		return ok(port, String.format(msg, msgArgs));
 	}
 
-	public static SemanticObject err(Port p, MsgCode c, String err, SemanticObject ex) {
-//		SemanticObject obj = new SemanticObject();
-//		obj.put("code", c);
-//		obj.put("error", err);
-//		obj.put("ex", ex);
-//		obj.put("port", p.name());
+	public static SemanticObject err(JMessage.Port p, JMessage.MsgCode c, String err, SemanticObject ex) {
 		return err(p, c, err).put("ex", ex);
 	}
 	
 	//////////////////////// version 1.1 with support of Anson //////////////////////
-	public static AnsonMsg<AnsonResp> err(IPort port, AnsonMsg.MsgCode code, String err) {
+	public static AnsonMsg<AnsonResp> err(Port port, AnsonMsg.MsgCode code, String err) {
 		AnsonResp obj = new AnsonResp(err);
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(port, code)
 									.body(obj);

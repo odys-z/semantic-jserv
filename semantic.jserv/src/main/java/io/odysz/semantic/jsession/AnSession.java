@@ -31,7 +31,6 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JHeader;
 import io.odysz.semantic.jprotocol.JMessage.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol;
@@ -72,7 +71,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	public static enum Notify { changePswd, todo }
 
-	private static final IPort p = Port.session;
+	private static final Port p = Port.session;
 
 	
 	/**[session-id, SUser]*/
@@ -189,45 +188,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	public static IUser getUser(SemanticObject jheader) {
 		return users.get(jheader.get("ssid"));
 	}
-
-//	/**Handle ping(touch)
-//	 * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
-//	 */
-//	protected void doGet(HttpServletRequest request, HttpServletResponse resp)
-//			throws ServletException, IOException {
-//		if (ServFlags.session) System.out.println("login get ========");
-//		resp.setContentType("text/html;charset=UTF-8");
-//		try {
-//			String headstr = request.getParameter("header");
-//			if (headstr == null)
-//				throw new SsException("Query session with GET request neending a header string.");
-//
-//			String t = request.getParameter("t");
-//			if (t != null) t = t.toLowerCase().trim();
-//			if ("ping".equals(t) || "touch".equals(t)) {
-//				// already touched by verify()
-//				IUser usr = verify(JHelper.readHeader(headstr));
-//				SemanticObject ok = new SemanticObject();
-//				ok.put(usr.uid(), (SemanticObject)usr);
-//				resp.getWriter().write(Html.map(ok));
-//			}
-//			else {
-//				ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exGeneral,
-//						"Login.serv using GET to touch session info - use POST to login, logout, check session."));
-//			}
-//		} catch (SsException e) {
-//			ServletAdapter.write(resp, JProtocol.err(p, e.code, e.getMessage()));
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		} finally { }
-//	}
-
-//	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-//			throws ServletException, IOException {
-//		if (ServFlags.session)
-//			Utils.logi("[ServFlags.session] login post ------");
-//		jsonResp(request, response);
-//	}
 
 	@Override
 	protected void onGet(AnsonMsg<AnSessionReq> msg, HttpServletResponse resp)

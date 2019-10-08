@@ -47,7 +47,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		@Override
 		public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
 			stream.write('\"');
-			stream.write(url.getBytes());
+			stream.write(name().getBytes());
 			stream.write('\"');
 			return this;
 		}
@@ -55,7 +55,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		@Override
 		public IJsonable toJson(StringBuffer buf) throws IOException, AnsonException {
 			buf.append('\"');
-			buf.append(url);
+			buf.append(name().getBytes());
 			buf.append('\"');
 			return this;
 		}	
@@ -90,6 +90,10 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	int seq;
 	public int seq() { return seq; }
 
+	// TODO  won't work
+	// TODO  won't work
+	// TODO  won't work
+	// TODO  won't work
 	IPort port;
 	public IPort port() { return port; }
 
