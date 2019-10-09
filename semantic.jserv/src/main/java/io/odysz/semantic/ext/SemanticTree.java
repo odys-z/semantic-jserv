@@ -83,16 +83,11 @@ public class SemanticTree extends JQuery {
 	protected void jsonResp(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		resp.setCharacterEncoding("UTF-8");
 		try {
-//			String t = req.getParameter("t");
-//			if (t == null)
-//				throw new SemanticException("s-tree.serv usage: t=load/reforest/retree&rootId=...");
 			String connId = req.getParameter("conn");
-
 
 			// check session
 			JMessage<DatasetReq> jmsg = ServletAdapter.<DatasetReq>read(req, jtreeReq, DatasetReq.class);
 			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
-
 
 			DatasetReq jreq = jmsg.body(0);
 			String t = jreq.a();

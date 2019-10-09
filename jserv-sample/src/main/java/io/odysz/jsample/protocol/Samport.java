@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import io.odysz.anson.IJsonable;
+import io.odysz.anson.JSONAnsonListener;
 import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.IPort;
@@ -19,6 +20,13 @@ public enum Samport implements IPort {
 	/** sample servlet tools.serv */
 	tools("tools.serv11");
 
+	static {
+		JSONAnsonListener.registFactory(Samport.class, 
+			(s) -> {
+					return Samport.valueOf(s);
+			});
+	}
+	
 	private String url;
 	Samport(String v) { url = v; };
 	public String url() { return url; }

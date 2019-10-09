@@ -7,6 +7,7 @@ import java.util.List;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.IJsonable;
+import io.odysz.anson.JSONAnsonListener;
 import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantics.x.SemanticException;
@@ -39,6 +40,14 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 						/** dataset extensions<br>
 						 * @see {@link io.odysz.semantic.ext.Dataset}. */
 						dataset("ds.serv11");
+
+		static {
+			JSONAnsonListener.registFactory(IPort.class, 
+				(s) -> {
+						return Port.valueOf(s);
+				});
+		}
+
 		private String url;
 		@Override public String url() { return url; }
 		Port(String url) { this.url = url; }
@@ -90,10 +99,10 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	int seq;
 	public int seq() { return seq; }
 
-	// TODO  won't work
-	// TODO  won't work
-	// TODO  won't work
-	// TODO  won't work
+	// TODO Test Samport
+	// TODO Test Samport
+	// TODO Test Samport
+	// TODO Test Samport
 	IPort port;
 	public IPort port() { return port; }
 
