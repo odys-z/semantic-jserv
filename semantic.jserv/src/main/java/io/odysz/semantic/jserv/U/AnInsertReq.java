@@ -65,7 +65,7 @@ public class AnInsertReq extends AnUpdateReq {
 		if (nvs != null && nvs.size() > 0)
 			throw new SemanticException("InsertReq don't support both nv() and values() been called for the same request object. User only one of them.");
 		if (nvss == null)
-			nvss = new ArrayList<ArrayList<?>>();
+			nvss = new ArrayList<ArrayList<Object[]>>();
 		nvss.add(row);
 	}
 }

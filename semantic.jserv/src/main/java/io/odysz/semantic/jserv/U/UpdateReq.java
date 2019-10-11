@@ -56,7 +56,7 @@ public class UpdateReq extends JBody {
 	ArrayList<Object[]> nvs;
 	
 	/**inserting values, used for "I". 3d array [[[n, v], ...]] */
-	protected ArrayList<ArrayList<?>> nvss;
+	protected ArrayList<ArrayList<Object[]>> nvss;
 	/**inserting columns, used for "I".
 	 * Here a col shouldn't be an expression - so not Object[], unlike that of query. */
 	protected String[] cols;
@@ -100,10 +100,10 @@ public class UpdateReq extends JBody {
 	/** get values in VALUE-CLAUSE for sql insert into (...) values VALUE-CLAUSE 
 	 * @return [[[n, v], ...]]
 	 */
-	public ArrayList<ArrayList<?>> values() {
+	public ArrayList<ArrayList<Object[]>> values() {
 		if (nvs != null && nvs.size() > 0) {
 			if (nvss == null)
-				nvss = new ArrayList<ArrayList<?>>();
+				nvss = new ArrayList<ArrayList<Object[]>>();
 
 			nvss.add(nvs);
 			nvs = null;
