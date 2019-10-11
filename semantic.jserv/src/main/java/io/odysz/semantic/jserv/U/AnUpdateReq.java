@@ -5,6 +5,7 @@ import static io.odysz.semantic.jprotocol.JProtocol.CRUD.R;
 import static io.odysz.semantic.jprotocol.JProtocol.CRUD.U;
 import java.util.ArrayList;
 
+import io.odysz.anson.AnsonField;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonHeader;
@@ -34,8 +35,9 @@ public class AnUpdateReq extends AnsonBody {
 	 */
 	ArrayList<Object[]> nvs;
 	
+//	@AnsonField(valType="java.util.ArrayList/[Ljava.lang.Object;")
 	/**inserting values, used for "I". 3d array [[[n, v], ...]] */
-	protected ArrayList<ArrayList<?>> nvss;
+	protected ArrayList<ArrayList<Object[]>> nvss;
 	/**inserting columns, used for "I".
 	 * Here a col shouldn't be an expression - so not Object[], unlike that of query. */
 	protected String[] cols;
@@ -98,17 +100,17 @@ public class AnUpdateReq extends AnsonBody {
 		if (nvs != null && nvs.size() > 0)
 			throw new SemanticException("InsertReq don't support both nv() and values() been called for the same request object. User only one of them.");
 		if (nvss == null)
-			nvss = new ArrayList<ArrayList<?>>();
+			nvss = new ArrayList<ArrayList<Object[]>>();
 		nvss.add(row);
 	}
 
 	/** get values in VALUE-CLAUSE for sql insert into (...) values VALUE-CLAUSE 
 	 * @return [[[n, v], ...]]
 	 */
-	public ArrayList<ArrayList<?>> values() {
+	public ArrayList<ArrayList<Object[]>> values() {
 		if (nvs != null && nvs.size() > 0) {
 			if (nvss == null)
-				nvss = new ArrayList<ArrayList<?>>();
+				nvss = new ArrayList<ArrayList<Object[]>>();
 
 			nvss.add(nvs);
 			nvs = null;

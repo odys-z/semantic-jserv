@@ -454,9 +454,10 @@ public class JHelper<T extends JBody> {
 		return lst;
 	}
 
-	public static ArrayList<ArrayList<?>> readLstLstStrs(JsonReader reader)
+	@SuppressWarnings("unchecked")
+	public static ArrayList<ArrayList<Object[]>> readLstLstStrs(JsonReader reader)
 			throws IOException, SemanticException {
-		ArrayList<ArrayList<?>> lstlst = new ArrayList<ArrayList<?>>();
+		ArrayList<ArrayList<Object[]>> lstlst = new ArrayList<ArrayList<Object[]>>();
 		reader.beginArray();
 
 		JsonToken tk = reader.peek();
@@ -466,7 +467,7 @@ public class JHelper<T extends JBody> {
 				// not recursive, only support 2d string array
 				// reader.beginArray();
 				while (tk != JsonToken.END_ARRAY) {
-					lstlst.add(readLstStrs(reader));
+					lstlst.add((ArrayList<Object[]>) readLstStrs(reader));
 					tk = reader.peek();
 				}
 				// reader.endArray();
