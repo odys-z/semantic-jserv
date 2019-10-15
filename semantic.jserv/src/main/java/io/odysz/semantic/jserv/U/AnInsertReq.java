@@ -68,4 +68,13 @@ public class AnInsertReq extends AnUpdateReq {
 			nvss = new ArrayList<ArrayList<Object[]>>();
 		nvss.add(row);
 	}
+
+	public AnUpdateReq cols(String c, String ...ci) {
+		if (cols == null)
+			cols = new String[ci == null ? 1 : ci.length + 1];
+		cols[0] = c;
+		for (int ix = 0; ci != null && ix < ci.length; ix++)
+			cols[ix + 1] = ci[ix];
+		return this;
+	}
 }

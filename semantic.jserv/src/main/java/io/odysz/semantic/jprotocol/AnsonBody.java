@@ -2,6 +2,7 @@ package io.odysz.semantic.jprotocol;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
+import io.odysz.semantic.jserv.U.AnUpdateReq;
 
 public abstract class AnsonBody extends Anson {
 	public static String[] jcondt(String logic, String field, String v, String tabl) {
@@ -28,4 +29,5 @@ public abstract class AnsonBody extends Anson {
 		this.parent = parent;
 		this.conn = conn;
 	}
+
 }
