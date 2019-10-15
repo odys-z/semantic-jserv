@@ -3,13 +3,20 @@ package io.odysz.semantic.jserv.U;
 import static io.odysz.semantic.jprotocol.JProtocol.CRUD.D;
 import static io.odysz.semantic.jprotocol.JProtocol.CRUD.R;
 import static io.odysz.semantic.jprotocol.JProtocol.CRUD.U;
+
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
-import io.odysz.anson.AnsonField;
+import io.odysz.anson.Anson;
+import io.odysz.anson.JsonOpt;
+import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
+import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;
@@ -27,15 +34,55 @@ import io.odysz.transact.sql.Query.Ix;
  * @author odys-z@github.com
  */
 public class AnUpdateReq extends AnsonBody {
+	@Override
+	public Anson toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
+		if (CRUD.C.equals(a) && (cols == null || cols.length == 0))
+			Utils.warn("WARN - UpdateReq.toJson():\nFound inserting request but cols are null, this is wrong for no insert statement can be generated.\n" +
+					"Suggestion: call the InsertReq.col(col-name) before serialize this to json for table: %s\n" +
+					"Another common error leads to this is using UpdateReq for inserting with java client.",
+					mtabl);
+		return super.toBlock(stream, opts);
+	}
+
+	/**Format an update request.
+	 * @param conn
+	 * @param parent
+	 * @param tabl
+	 * @param cmd {@link CRUD}.c R U D
+	 * @return a new update request
+	 */
+	public static AnUpdateReq formatUpdateReq(String conn, AnsonMsg<AnUpdateReq> parent, String tabl) {
+		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, conn)
+				.a(CRUD.U))
+				.mtabl(tabl);
+		return bdItem;
+	}
+	
+	/**Format a delete request.
+	 * @param conn
+	 * @param parent
+	 * @param tabl
+	 * @return a new deleting request
+	 */
+	public static AnUpdateReq formatDelReq(String conn, AnsonMsg<AnUpdateReq> parent, String tabl) {
+		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, conn)
+								.a(CRUD.D))
+								.mtabl(tabl);
+		return bdItem;
+	}
+
 	/**Main table */
 	String mtabl;
+	public AnUpdateReq mtabl(String mtbl) {
+		mtabl = mtbl;
+		return this;
+	}
 
 	/**nvs: [nv-obj],
 	 * nv-obj: {n: "roleName", v: "admin"}
 	 */
 	ArrayList<Object[]> nvs;
 	
-//	@AnsonField(valType="java.util.ArrayList/[Ljava.lang.Object;")
 	/**inserting values, used for "I". 3d array [[[n, v], ...]] */
 	protected ArrayList<ArrayList<Object[]>> nvss;
 	/**inserting columns, used for "I".
@@ -72,20 +119,6 @@ public class AnUpdateReq extends AnsonBody {
 		super(parent, conn);
 	}
 	
-	/**Format an insert request.
-	 * @param conn
-	 * @param parent
-	 * @param tabl
-	 * @param cmd {@link CRUD}.c R U D
-	 * @return a new update request
-	 */
-	public static AnUpdateReq formatUpdateReq(String conn, AnsonMsg<AnUpdateReq> parent, String tabl) {
-		AnUpdateReq bdItem = (AnUpdateReq) new AnUpdateReq(parent, conn)
-				.a(CRUD.C);
-		bdItem.mtabl = tabl;
-		return bdItem;
-	}
-
 	public AnUpdateReq nv(String n, Object v) {
 		if (nvs == null)
 			nvs = new ArrayList<Object[]>();
