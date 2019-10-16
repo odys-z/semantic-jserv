@@ -12,7 +12,6 @@ import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.DA.DatasetCfgV11;
 import io.odysz.semantic.DA.DatasetCfgV11.AnTreeNode;
 import io.odysz.semantic.ext.AnDatasetReq;
@@ -22,7 +21,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
-import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
 @WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv11" })
@@ -48,10 +46,10 @@ public class SysMenv11 extends SemanticTreeV11 {
 			String connId = msg.body(0).conn();
 			String sk = msg.body(0).sk();
 
-			List<SemanticObject> lst = DatasetCfg.loadStree(connId,
+			List<AnTreeNode> lst = DatasetCfgV11.loadStree(connId,
 					sk == null ? defltSk : sk, 0, -1, "admin");
 
-			resp.getWriter().write(Html.listSemtcs(lst));
+			resp.getWriter().write(Html.listAnson(lst));
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {

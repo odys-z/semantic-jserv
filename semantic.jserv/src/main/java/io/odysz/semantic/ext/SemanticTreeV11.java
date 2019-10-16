@@ -33,10 +33,7 @@ import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.R.AnQueryReq;
-import io.odysz.semantic.jserv.R.JQuery;
-import io.odysz.semantic.jserv.R.QueryReq;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -56,20 +53,22 @@ import io.odysz.transact.x.TransException;
  */
 @WebServlet(description = "Abstract Tree Data Service", urlPatterns = { "/s-tree.serv11" })
 public class SemanticTreeV11 extends ServPort<AnDatasetReq> {
-	private static final long serialVersionUID = 1L;
-
-	@Override
-	public void init() throws ServletException {
-		super.init();
-		p = Port.stree;
+	public SemanticTreeV11() {
+		super(Port.stree);
 	}
 
+	private static final long serialVersionUID = 1L;
+
+//	@Override
+//	public void init() throws ServletException {
+//		super.init();
+//		p = Port.stree;
+//	}
+
 	protected static DATranscxt st;
-	protected static ISessionVerifier verifier;
 
 	static {
 		st = JSingleton.defltScxt;
-		verifier = JSingleton.getSessionVerifierV11();
 	}	
 
 	/**

@@ -15,6 +15,7 @@ import io.odysz.semantics.x.SemanticException;
 public enum Samport implements IPort {
 	/**port provided by {@link io.odysz.jsample.SysMenu} */
 	menu("menu.serv11"),
+	example("example.serv11"),
 	/**workflow port, see {@link io.odysz.sworkflow.CheapEngin} */
 	cheapflow("cheapflow.samplev11"), 
 	/** sample servlet tools.serv */

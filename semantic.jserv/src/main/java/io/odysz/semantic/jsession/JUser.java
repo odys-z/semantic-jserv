@@ -8,8 +8,6 @@ import java.util.Random;
 
 import org.xml.sax.SAXException;
 
-import com.google.gson.stream.JsonWriter;
-
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.LangExt;
@@ -17,7 +15,7 @@ import io.odysz.common.Radix64;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
-import io.odysz.semantic.jprotocol.JMessage.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
@@ -128,7 +126,7 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	public TableMeta meta() {
-		return new JUserMeta("a_user", SSession.sctx.basiconnId());
+		return new JUserMeta("a_user", AnSession.sctx.basiconnId());
 	}
 
 	/**jmsg should be what the response of {@link SSession}
@@ -193,29 +191,29 @@ public class JUser extends SemanticObject implements IUser {
 		return (List<Object>) get("_notifies_");
 	}
 
-	@Override
-	public boolean login(Object request) throws TransException {
-		if (request instanceof AnSessionReq)
-			return loginV11((AnSessionReq) request);
-		
-		SessionReq req = (SessionReq)request;
-
-		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
-		byte[] ssiv = AESHelper.decode64(req.iv);
-		String c = null;
-		try { c = AESHelper.encrypt(uid, pswd, ssiv); }
-		catch (Exception e) { throw new TransException (e.getMessage()); }
-
-		// 2. compare pswd-cipher with j.pswd
-		if (c.equals(req.token())) {
-			touch();
-			return true;
-		}
-		
-		return false;
-	}
+//	@Override
+//	public boolean login(Object req) throws TransException {
+//		if (request instanceof AnSessionReq)
+//			return loginV11((AnSessionReq) request);
+//		
+//		AnSessionReq req = (AnSessionReq)request;
+//
+//		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
+//		byte[] ssiv = AESHelper.decode64(req.iv);
+//		String c = null;
+//		try { c = AESHelper.encrypt(uid, pswd, ssiv); }
+//		catch (Exception e) { throw new TransException (e.getMessage()); }
+//
+//		// 2. compare pswd-cipher with j.pswd
+//		if (c.equals(req.token())) {
+//			touch();
+//			return true;
+//		}
+//		
+//		return false;
+//	}
 	
-	private boolean loginV11(AnSessionReq req) throws TransException {
+	public boolean login(AnSessionReq req) throws TransException {
 		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
 		byte[] ssiv = AESHelper.decode64(req.iv);
 		String c = null;
@@ -236,15 +234,15 @@ public class JUser extends SemanticObject implements IUser {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
 
-	@Override
-	public void writeJsonRespValue(Object writer) throws IOException {
-		JsonWriter wr = (JsonWriter) writer;
-		wr.beginObject();
-		wr.name("uid").value(uid);
-		wr.name("ssid").value(ssid);
-		wr.name("user-name").value(usrName);
-		wr.endObject();
-	}
+//	@Override
+//	public void writeJsonRespValue(Object writer) throws IOException {
+//		JsonWriter wr = (JsonWriter) writer;
+//		wr.beginObject();
+//		wr.name("uid").value(uid);
+//		wr.name("ssid").value(ssid);
+//		wr.name("user-name").value(usrName);
+//		wr.endObject();
+//	}
 
 	private static String randomId() {
 		return String.format("%s%s",

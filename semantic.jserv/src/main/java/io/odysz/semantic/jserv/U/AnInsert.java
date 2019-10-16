@@ -32,18 +32,22 @@ import io.odysz.transact.x.TransException;
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/c.serv11" })
 public class AnInsert extends ServPort<AnInsertReq> {
 
-	@Override
-	public void init() throws ServletException {
-		super.init();
-		p = Port.query;
+	public AnInsert() {
+		super(Port.query);
 	}
+
+//	@Override
+//	public void init() throws ServletException {
+//		super.init();
+//		p = Port.query;
+//	}
 
 	protected static ISessionVerifier verifier;
 	protected static DATranscxt st;
 
 	static {
 		st = JSingleton.defltScxt;
-		verifier = JSingleton.getSessionVerifierV11();
+		verifier = JSingleton.getSessionVerifier();
 	}
 
 	@Override

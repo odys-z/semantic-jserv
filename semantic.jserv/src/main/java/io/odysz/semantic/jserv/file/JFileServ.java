@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
 import javax.servlet.ServletException;
@@ -16,16 +18,18 @@ import javax.servlet.http.Part;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 
+import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Regex;
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.IPort;
-import io.odysz.semantic.jprotocol.JMessage.MsgCode;
-import io.odysz.semantic.jprotocol.JMessage.Port;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
-import io.odysz.semantic.jserv.helper.ServletAdapter;
+import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
@@ -35,41 +39,49 @@ import io.odysz.semantics.x.SemanticException;
  */
 @MultipartConfig
 @WebServlet(description = "Serving text files", urlPatterns = { "/file.serv" })
-public class JFileServ extends HttpServlet {
+public class JFileServ extends ServPort<FileReq> {
+	public JFileServ() {
+		super(Port.file);
+	}
+
 	private static final long serialVersionUID = 1L;
+	private static final int bufLen = 1024 * 16;
 	static IPort p = Port.file;
 
 	private static Regex regex = new Regex(".*filename\\s*=\\s*\"(.*)\"");
 
 	private String uploadPath;
 
-	protected void doGet(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
-		if (ServFlags.file)
-			System.out.println("file.serv get ------");
-		try {resp(req, response, req.getParameter("t"), req.getParameter("file"));
+	@Override
+	protected void onGet(AnsonMsg<FileReq> msg, HttpServletResponse resp)
+			throws ServletException, IOException, AnsonException, SemanticException {
+		try {
+			resp(msg, resp, msg.body(0).a(), msg.body(0).file());
 		} catch (SemanticException e) {
-			ServletAdapter.write(response, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		}
 	}
 
-	protected void doPost(HttpServletRequest req, HttpServletResponse response)
-			throws ServletException, IOException {
+	@Override
+	protected void onPost(AnsonMsg<FileReq> msg, HttpServletResponse resp)
+			throws ServletException, IOException, AnsonException, SemanticException {
 		if (ServFlags.file)
 			System.out.println("file.serv post ========");
 		try {
-			resp(req, response, req.getParameter("t"), req.getParameter("file"));
+			resp(msg, resp, msg.body(0).a(), msg.body(0).file());
 		} catch (SemanticException e) {
-			ServletAdapter.write(response, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		}
 	}
-	
-	protected void resp(HttpServletRequest req, HttpServletResponse resp, String t, String file)
+
+	protected void resp(AnsonMsg<FileReq> msg, HttpServletResponse resp, String a, String file)
 			throws IOException, SemanticException, ServletException {
 		resp.setContentType("text/html;charset=UTF-8");
-		if ("jx".equals(t))
+		if ("jx".equals(a))
 			jtxt(resp, file);
-		else if ("upload".equals(t))
-			uploadForm(req, resp, file);
+		else if ("upload".equals(a))
+			// uploadForm(msg, resp, file);
+			throw new SemanticException("Please upload file with XHR via streamFile.serv");
 
 		resp.flushBuffer();
 	}
@@ -94,7 +106,8 @@ IHDR...
 	 * @throws SemanticException 
 	 * @throws ServletException 
 	 */
-	private String uploadForm(HttpServletRequest req, HttpServletResponse resp, String file) throws IOException, SemanticException, ServletException {
+	private String uploadForm(HttpServletRequest req, HttpServletResponse resp, String file)
+			throws IOException, SemanticException, ServletException {
 		if (uploadPath == null) {
 			uploadPath = Configs.getCfg("upload.file.serv");
 			if (uploadPath == null)
@@ -116,10 +129,10 @@ IHDR...
 			String fileId = fileId(req, part);
 			String filepath = FilenameUtils.concat(uploadPath, fileId);
 			FileOutputStream outs = new FileOutputStream(filepath);
-			ServletAdapter.copy(outs, part.getInputStream());
+			copy(outs, part.getInputStream());
     		outs.close();
-    		SemanticObject rs = JProtocol.ok(p, fileId);
-    		ServletAdapter.write(resp, rs);
+    		// SemanticObject rs = JProtocol.ok(p, fileId);
+    		write(resp, ok(fileId));
     		return fileId;
 		}
 		throw new SemanticException("No file part found.");
@@ -199,10 +212,24 @@ https://wisdmlabs.com/blog/access-file-before-upload-using-jquery-ajax/
 			return String.format("%s unknown-%s.upload", remote, System.currentTimeMillis());
 	}
 
-	private void jtxt(HttpServletResponse response, String file) throws IOException {
+	private void jtxt(HttpServletResponse resp, String file) throws IOException {
 		String jsonfile  = JSingleton.getFileInfPath(file);
 		FileInputStream fis = new FileInputStream(jsonfile);
-		ServletAdapter.write(response, fis);
+
+		resp.setCharacterEncoding("UTF-8");
+		resp.setContentType("application/json");
+		OutputStream os = resp.getOutputStream();
+
+		copy(os, fis);
 		fis.close();
 	}
+
+	public static void copy(OutputStream outs, InputStream ins) throws IOException {
+		int numRead;
+		byte[] buf = new byte[bufLen];
+
+		while ( (numRead = ins.read(buf)) >= 0 )
+			outs.write(buf, 0, numRead);
+	}
+
 }

@@ -5,8 +5,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
@@ -15,18 +13,15 @@ import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.jprotocol.IPort;
-import io.odysz.semantic.jprotocol.JHelper;
-import io.odysz.semantic.jprotocol.JMessage;
-import io.odysz.semantic.jprotocol.JMessage.MsgCode;
-import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
+import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.helper.Html;
-import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
-import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Update;
@@ -52,7 +47,7 @@ function saveTooleA() {
 	var jmsg = ssClient
 		// ssClient's current user action is handled by jeasy when loading menu
 		.usrCmd('save') // return ssClient itself
-		.userReq(conn, engports.tools, usrReq); // return the JMessage<UserReq> object
+		.userReq(conn, engports.tools, usrReq); // return the AnsonMsg<UserReq> object
 
 	// You should get sqls at server side like this:
 	// delete from r_tools_borrows where borrowId = 'borrow-001'
@@ -65,15 +60,16 @@ function saveTooleA() {
  * @author odys-z@github.com
  */
 @WebServlet(description = "jserv.sample example/tools.serv", urlPatterns = { "/tools.serv" })
-public class Tools extends HttpServlet {
+public class Tools extends ServPort<UserReq> {
+	public Tools() {
+		super(null);
+		p = Samport.tools;
+	}
+
 	private static final long serialVersionUID = 1L;
 
 	static DATranscxt st;
 
-	protected static JHelper<UserReq> jReq;
-
-	private static final IPort p = Samport.tools;
-	
 	static {
 		try {
 			// this constructor can only been called after metas has been loaded
@@ -82,14 +78,13 @@ public class Tools extends HttpServlet {
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
-		jReq  = new JHelper<UserReq>();
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+	protected void onGet(AnsonMsg<UserReq> req, HttpServletResponse resp)
 			throws IOException {
 		if (SampleFlags.user)
-			Utils.logi("---------- servs.Business A GET <- %s ----------", req.getRemoteAddr());
+			Utils.logi("---------- servs.Business A GET ----------");
 		try {
 			resp.getWriter().write(Html.ok("Please visit POST."));
 		} finally {
@@ -98,19 +93,19 @@ public class Tools extends HttpServlet {
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+	protected void onPost(AnsonMsg<UserReq> jmsg, HttpServletResponse resp)
 			throws IOException {
 		if (SampleFlags.user)
-			Utils.logi("========== servs.Business A POST <= %s ==========", req.getRemoteAddr());
+			Utils.logi("========== servs.Business A POST ==========");
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			JMessage<UserReq> jmsg = ServletAdapter.<UserReq>read(req, jReq, UserReq.class);
+//			AnsonMsg<UserReq> jmsg = ServletAdapter.<UserReq>read(req, jReq, UserReq.class);
 			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
 
 			UserReq jreq = jmsg.body(0);
 
-			SemanticObject rsp = null;
+			SampleResp rsp = null;
 			if ("A".equals(jreq.a()))
 				rsp = A(jreq, usr);
 			else if ("B".equals(jreq.a()))
@@ -119,25 +114,23 @@ public class Tools extends HttpServlet {
 				rsp = C(jreq, usr);
 			else throw new SemanticException("request.body.a can not handled: %s", jreq.a());
 
-			rsp = JProtocol.ok(p, rsp);
+			AnsonMsg<AnsonResp> rp = ok(rsp);
 			
-			ServletAdapter.write(resp, rsp);
+			write(resp, rp);
 		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
 			if (SampleFlags.user)
 				e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
-		} catch (ReflectiveOperationException e) {
-			e.printStackTrace();
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
 	}
 
-	private SemanticObject A(UserReq req, IUser usr) throws TransException {
+	private SampleResp A(UserReq req, IUser usr) throws TransException {
 		String borrowId = (String) req.get("borrowId");
 		@SuppressWarnings("unchecked")
 		ArrayList<String[]> items = (ArrayList<String[]>) req.get("items");
@@ -165,18 +158,16 @@ public class Tools extends HttpServlet {
 		
 		Utils.logi(sqls);
 
-		return new SemanticObject().code(MsgCode.ok.name()).port(p.name());
+		return new SampleResp(p).msg(String.valueOf(sqls.size()));
 	}
 
-	private SemanticObject B(UserReq req, IUser usr) {
-		return new SemanticObject()
-				.code(MsgCode.ok.name()).port(p.name())
+	private SampleResp B(UserReq req, IUser usr) {
+		return new SampleResp(p)
 				.msg("B");
 	}
 
-	private SemanticObject C(UserReq req, IUser usr) {
-		return new SemanticObject()
-				.code(MsgCode.ok.name()).port(p.name())
+	private SampleResp C(UserReq req, IUser usr) {
+		return new SampleResp(p)
 				.msg("C");
 	}
 }

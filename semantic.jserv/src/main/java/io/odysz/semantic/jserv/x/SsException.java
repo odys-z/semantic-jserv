@@ -1,6 +1,6 @@
 package io.odysz.semantic.jserv.x;
 
-import io.odysz.semantic.jprotocol.JMessage.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 
 /**Semantic session exception
  * @author ody

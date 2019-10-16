@@ -12,6 +12,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantic.jserv.JSingleton;
@@ -31,6 +32,10 @@ import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv11" })
 public class AnUpdate extends ServPort<AnUpdateReq> {
+	public AnUpdate() {
+		super(Port.update);
+	}
+
 	private static final long serialVersionUID = 1L;
 
 	private static DATranscxt st;
