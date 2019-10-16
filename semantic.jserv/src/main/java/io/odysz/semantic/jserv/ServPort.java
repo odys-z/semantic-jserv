@@ -16,8 +16,10 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
+import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.x.SemanticException;
 
 /**<p>Base serv class for handling json request.</p>
@@ -29,7 +31,14 @@ import io.odysz.semantics.x.SemanticException;
  * @param <T> any subclass extends {@link AnsonBody}.
  */
 public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
+	protected static ISessionVerifier verifier;
 	protected IPort p;
+	
+	static {
+		verifier = JSingleton.getSessionVerifier();
+	}
+
+	public ServPort(Port port) { this.p = port; }
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

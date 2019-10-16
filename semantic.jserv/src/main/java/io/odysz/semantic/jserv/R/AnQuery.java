@@ -10,13 +10,11 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.common.Utils;
 import io.odysz.common.dbtype;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.module.rs.SResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.jprotocol.JMessage;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
@@ -37,18 +35,20 @@ import io.odysz.transact.x.TransException;
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv11" })
 public class AnQuery extends ServPort<AnQueryReq> {
 
-	@Override
-	public void init() throws ServletException {
-		super.init();
-		p = Port.query;
-	}
+	public AnQuery() { super(Port.query); }
+
+//	@Override
+//	public void init() throws ServletException {
+//		super.init();
+//		p = Port.query;
+//	}
 
 	protected static ISessionVerifier verifier;
 	protected static DATranscxt st;
 
 	static {
 		st = JSingleton.defltScxt;
-		verifier = JSingleton.getSessionVerifierV11();
+		verifier = JSingleton.getSessionVerifier();
 	}
 
 	@Override
@@ -139,7 +139,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 
 		if (msg.joins != null && msg.joins.size() > 0) {
 			for (Object[] j : msg.joins)
-				if (j[Ix.joinTabl] instanceof QueryReq) {
+				if (j[Ix.joinTabl] instanceof AnQueryReq) {
 					Query q = buildSelct((AnQueryReq)j[Ix.joinTabl], usr);
 					selct.j(join.parse((String)j[Ix.joinType]),
 							q,
@@ -173,7 +173,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	public static AnResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = buildSelct(msg, usr);
 		SemanticObject s = selct.rs(st.instancontxt(msg.conn(), usr));
-		AnResultset rs = new AnResultset((SResultset)s.rs(0));
-		return rs;
+		// AnResultset rs = new AnResultset(s.rs(0));
+		return s.rs(0);
 	}
 }

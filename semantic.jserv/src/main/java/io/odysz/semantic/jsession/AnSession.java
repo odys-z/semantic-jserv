@@ -24,21 +24,18 @@ import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
-import io.odysz.module.rs.SResultset;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.jprotocol.JHeader;
-import io.odysz.semantic.jprotocol.JMessage.MsgCode;
-import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
-import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantics.IUser;
@@ -67,13 +64,14 @@ import io.odysz.transact.x.TransException;
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv11" })
 public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifier {
+	public AnSession() {
+		super(Port.session);
+	}
+
 	private static final long serialVersionUID = 1L;
 
 	public static enum Notify { changePswd, todo }
 
-	private static final Port p = Port.session;
-
-	
 	/**[session-id, SUser]*/
 	static HashMap<String, IUser> users;
 
@@ -154,11 +152,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		} catch (InterruptedException e) {
 		    scheduler.shutdownNow();
 		}
-	}
-
-	/**@deprecated */
-	public IUser verify(JHeader jHeader) throws SsException, SQLException {
-		return null;
 	}
 
 	/**@param anHeader
@@ -278,7 +271,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					users.remove(ssid);
 					lock.unlock();
 	
-					ServletAdapter.write(response, JProtocol.ok(p, "You must relogin!"));
+					write(response, ok("You must relogin!"));
 				}
 				else {
 					if (a != null) a = a.toLowerCase().trim();
@@ -292,10 +285,10 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			}
 			else throw new SsException ("Session request not supported: request body is null");
 		} catch (SsException | TransException e) {
-			ServletAdapter.write(response, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
+			write(response, err(MsgCode.exSession, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			ServletAdapter.write(response, JProtocol.err(p, MsgCode.exGeneral, e.getMessage()));
+			write(response, err(MsgCode.exGeneral, e.getMessage()));
 		} finally {
 		}
 	}
@@ -323,7 +316,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.where_("=", "u." + usrMeta.pk, sessionBody.uid())
 			.rs(sctx.instancontxt(sctx.basiconnId(), jrobot));
 		
-		SResultset rs = (SResultset) s.rs(0);;
+		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString("uid");
 			IUser obj = createUser(usrClzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"));

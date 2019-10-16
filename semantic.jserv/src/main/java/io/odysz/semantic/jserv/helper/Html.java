@@ -20,8 +20,9 @@ import java.util.List;
 
 import static j2html.TagCreator.span;
 
+import io.odysz.anson.Anson;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.module.rs.SResultset;
+import io.odysz.semantic.DA.DatasetCfgV11.AnTreeNode;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantics.SemanticObject;
@@ -37,7 +38,6 @@ public class Html {
 	 * @param rs
 	 * @param msgs
 	 * @return html doc
-	 */
 	public static String rs(SResultset rs, String... msgs) {
 		// html() is a simple HTML composer, see
 		// https://github.com/tipsy/j2html 
@@ -51,6 +51,7 @@ public class Html {
 						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
 				)).render();
 	}
+	 */
 
 	public static String list(List<String> list) {
 		return "<!DOCTYPE HTML>" + html(
@@ -74,11 +75,29 @@ public class Html {
 				)).render();
 	}
 
+	public static String listAnson(List<AnTreeNode> lst) {
+		return "<!DOCTYPE HTML>" + html(
+			head(meta().withCharset("utf-8")),
+			body(
+				h1("Html.list()"),
+					table(tbody(
+						tr(th(""), th("")),
+						lst == null ? tr(td("null"), td("")) : each(lst, cell -> trEx(cell))))
+				)).render();
+
+	}
+
 	private static ContainerTag trEx(SemanticObject cell) {
 		ContainerTag tr = tr("'");
 		for (String p : cell.props().keySet()) {
 			tr.with(td(p), td(cell.get(p).toString()));
 		}
+		return tr;
+	}
+
+	private static ContainerTag trEx(Anson cell) {
+		ContainerTag tr = tr("'");
+		tr.with(td(cell.toString()));
 		return tr;
 	}
 

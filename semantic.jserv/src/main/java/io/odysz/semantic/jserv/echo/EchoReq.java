@@ -1,31 +1,25 @@
 package io.odysz.semantic.jserv.echo;
 
 
-import java.io.IOException;
+import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.jprotocol.AnsonMsg;
 
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
+public class EchoReq extends AnsonBody {
 
-import io.odysz.semantic.jprotocol.JBody;
-import io.odysz.semantic.jprotocol.JMessage;
-import io.odysz.semantic.jprotocol.JOpts;
-
-public class EchoReq extends JBody {
-
-	public EchoReq(JMessage<? extends JBody> parent) {
+	public EchoReq(AnsonMsg<? extends AnsonBody> parent) {
 		super(parent, null);
 	}
 
-	@Override
-	public void toJson(JsonWriter writer, JOpts opts) throws IOException {
-		writer.beginObject();
-		writer.name("echo").value("ping");
-		writer.endObject();
-	}
-
-	@Override
-	public void fromJson(JsonReader reader) throws IOException {
-		// TODO Auto-generated method stub
-		
-	}
+//	@Override
+//	public void toJson(JsonWriter writer, JOpts opts) throws IOException {
+//		writer.beginObject();
+//		writer.name("echo").value("ping");
+//		writer.endObject();
+//	}
+//
+//	@Override
+//	public void fromJson(JsonReader reader) throws IOException {
+//		// TODO Auto-generated method stub
+//		
+//	}
 }

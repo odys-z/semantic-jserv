@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io_odysz.FilenameUtils;
@@ -14,30 +13,27 @@ import org.xml.sax.SAXException;
 import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
-import io.odysz.semantic.jprotocol.IPort;
-import io.odysz.semantic.jprotocol.JHelper;
-import io.odysz.semantic.jprotocol.JMessage;
-import io.odysz.semantic.jprotocol.JMessage.MsgCode;
-import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.semantic.jserv.U.JUpdate;
+import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.helper.Html;
-import io.odysz.semantic.jserv.helper.ServletAdapter;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
-import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.sworkflow.CheapApi;
 import io.odysz.sworkflow.CheapEnginv1;
 import io.odysz.sworkflow.CheapEvent;
 import io.odysz.sworkflow.CheapException;
+import io.odysz.sworkflow.CheapResp;
 import io.odysz.sworkflow.EnginDesign.Req;
 import io.odysz.sworkflow.ICheapEventHandler;
 import io.odysz.transact.sql.Statement;
 import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Handling work flow request", urlPatterns = { "/cheapflow.sample" })
-public class CheapServ extends JUpdate {
+public class CheapServ extends ServPort<CheapReq> {
 	public static class WfProtocol {
 		public static String reqBody = "wfreq";
 
@@ -61,31 +57,30 @@ public class CheapServ extends JUpdate {
 
 	private static final long serialVersionUID = 1L;
 	private static final boolean logFlag = SampleFlags.cheapflow;
-	private static IPort p;
 
-	protected static JHelper<CheapReq> jcheapReq;
+	public CheapServ() {
+		super(null);
+		p = Samport.cheapflow;
+	}
 
 	static {
-		jcheapReq  = new JHelper<CheapReq>();
-
-		p = Samport.cheapflow;
-			
 		// Because of the java enum limitation, or maybe the author's knowledge limitation, 
-		// JMessage needing a IPort instance to handle ports that implemented a new version of valof() method handling all ports.<br>
+		// AnsonMsg needing a IPort instance to handle ports that implemented a new version of valof() method handling all ports.<br>
 		// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 		//
 		// If the same in SysMenu is surely called before this servlet going to work, this line can be comment out. 
-		JMessage.understandPorts(p);
+		AnsonMsg.understandPorts(Samport.cheapflow);
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	protected void onGet(AnsonMsg<CheapReq> jmsg, HttpServletResponse resp) throws IOException {
 		if (logFlag)
-			Utils.logi("---------- cheapflow.sample get <- %s ----------", req.getRemoteAddr());
+			Utils.logi("---------- cheapflow.sample get ----------");
 
 		try {
-			String t = req.getParameter("t");
-			if ("reload-cheap".equals(t)) {
+			// String t = req.getParameter("t");
+			String a = jmsg.body(0).a();
+			if ("reload-cheap".equals(a)) {
 				try {
 					CheapEnginv1.initCheap(FilenameUtils.concat(JSingleton.rootINF(), CheapEnginv1.confpath), null);
 					resp.getWriter().write(Html.ok("cheap reloaded"));
@@ -96,73 +91,67 @@ public class CheapServ extends JUpdate {
 				return;
 			}
 
-			JMessage<CheapReq> jmsg = ServletAdapter.<CheapReq>read(req, jcheapReq, CheapReq.class);
+//			AnsonMsg<CheapReq> jmsg = ServletAdapter.<CheapReq>read(req, jcheapReq, CheapReq.class);
 			IUser usr = verifier.verify(jmsg.header());
 
 			CheapReq jreq = jmsg.body(0);
-			SemanticObject cheap = handle(Req.parse(t), jreq, usr);
-			SemanticObject rs = JProtocol.ok(p, cheap);
-			ServletAdapter.write(resp, rs);
+			CheapResp cheap = handle(Req.parse(a), jreq, usr);
+			AnsonMsg<AnsonResp> rs = ok(cheap.rs());
+			write(resp, rs);
 		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {
 			e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			if (logFlag)
 				e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
-		} catch (ReflectiveOperationException e) {
-			e.printStackTrace();
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (TransException e) {
 			if (logFlag)
 				e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.ext, e.getMessage()));
+			write(resp, err(MsgCode.ext, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	protected void onPost(AnsonMsg<CheapReq> jmsg, HttpServletResponse resp) throws IOException {
 		if (logFlag)
-			Utils.logi("========== cheapflow.sample post <= %s ==========", req.getRemoteAddr());
+			Utils.logi("========== cheapflow.sample post ==========");
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			JMessage<CheapReq> jmsg = ServletAdapter.<CheapReq>read(req, jcheapReq, CheapReq.class);
+			// AnsonMsg<CheapReq> jmsg = ServletAdapter.<CheapReq>read(req, jcheapReq, CheapReq.class);
 			IUser usr = verifier.verify(jmsg.header());
 
 			CheapReq jreq = jmsg.body(0);
 			String a = jreq.req();
 
-			SemanticObject cheap = handle(Req.parse(a), jreq, usr);
-			SemanticObject rs = JProtocol.ok(p, cheap);
-			ServletAdapter.write(resp, rs);
+			CheapResp cheap = handle(Req.parse(a), jreq, usr);
+			AnsonMsg<AnsonResp> rs = ok(cheap.rs());
+			write(resp, rs);
 		} catch (CheapException e) {
-			ServletAdapter.write(resp, JProtocol.err(p, e.code(), e.getMessage()));
+			write(resp, err(MsgCode.ext, e.getMessage()));
 		} catch (SemanticException e) {
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {
 			if (logFlag)
 				e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
-		} catch (ReflectiveOperationException e) {
-			e.printStackTrace();
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
-//			if (logFlag)
-//				e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (TransException e) {
 			if (logFlag)
 				e.printStackTrace();
-			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.ext, e.getMessage()));
+			write(resp, err(MsgCode.ext, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
 	}
 
-	private SemanticObject handle(Req req, CheapReq jobj, IUser usr) throws SQLException, TransException {
+	private CheapResp handle(Req req, CheapReq jobj, IUser usr) throws SQLException, TransException {
 		if (Req.start == req)
 			return start(jobj, usr);
 		else if (Req.cmd == req)
@@ -176,33 +165,28 @@ public class CheapServ extends JUpdate {
 		else throw new CheapException("Req(body.a) can not been handled: %s", req);
 	}
 
-	private SemanticObject right(CheapReq jobj, IUser usr) throws SemanticException, SQLException {
+	private CheapResp right(CheapReq jobj, IUser usr) throws SemanticException, SQLException {
 		String nid = jobj.nodeId();
 		String tid = jobj.taskId();
 		return CheapApi.right(jobj.wftype, usr.uid(), nid, tid);
 	}
 
-	private SemanticObject loadFlow(CheapReq jobj, IUser usr) throws SQLException, TransException {
+	private CheapResp loadFlow(CheapReq jobj, IUser usr) throws SQLException, TransException {
 		String wfid = jobj.wftype();
 		String tid = jobj.taskId();
 		return CheapApi.loadFlow(wfid, tid, usr);
 	}
 
-	private SemanticObject loadCmds(CheapReq jobj, IUser usr) throws TransException, SQLException {
+	private CheapResp loadCmds(CheapReq jobj, IUser usr) throws TransException, SQLException {
 		String wfid = jobj.wftype();
 		String nId = jobj.nodeId();
 		String iId = jobj.instId();
 		return CheapApi.loadCmds(wfid, nId, iId, usr.uid());
 	}
 	
-	private SemanticObject start(CheapReq jobj, IUser usr) throws SQLException, TransException {
-//		ArrayList<ArrayList<?>> inserts = jobj.childInserts;
-//		String insertabl = jobj.childInsertabl;
-		
-		// testTrans = CheapEngin.trcs;
+	private CheapResp start(CheapReq jobj, IUser usr) throws SQLException, TransException {
 		ArrayList<Statement<?>> postups = jobj.posts(usr);
-		// CheapWorkflow wf = CheapEngin.getWf(jobj.wftype);
-		SemanticObject res = CheapApi.start(jobj.wftype, jobj.taskId())
+		CheapResp res = CheapApi.start(jobj.wftype, jobj.taskId())
 				.nodeDesc(jobj.ndescpt)
 				.taskNv(jobj.taskNvs)
 				// .taskChildMulti(insertabl, null, inserts)
@@ -211,41 +195,43 @@ public class CheapServ extends JUpdate {
 
 		// simulating business layer handling events
 		// FIXME why events handling is here?
-		ICheapEventHandler eh = (ICheapEventHandler) res.remove("stepHandler");
+		ICheapEventHandler eh = res.rmStepHandler();
 		if (eh != null) {
-			CheapEvent evt = (CheapEvent) res.get("evt");
+			CheapEvent evt = (CheapEvent) res.event();
 			eh.onCmd(evt);
 		}
 
-		eh = (ICheapEventHandler) res.remove("arriHandler");
+		eh = (ICheapEventHandler) res.rmArriveHandler();
 		if (eh != null)
-			eh.onArrive(((CheapEvent) res.get("evt")));
+			eh.onArrive(res.event());
 
 		return res;
 	}
 	
-	private SemanticObject cmd(CheapReq jobj, IUser usr) throws SQLException, TransException {
+	private CheapResp cmd(CheapReq jobj, IUser usr) throws SQLException, TransException {
 		String wftype = jobj.wftype();
 		String taskId = jobj.taskId();
 		String cmd = jobj.cmd();
 
 		ArrayList<Statement<?>> postups = jobj.posts(usr);
-		SemanticObject res = CheapApi.next(wftype, taskId, cmd)
+		CheapResp res = CheapApi.next(wftype, taskId, cmd)
 				.nodeDesc(jobj.ndescpt)
 				// .taskChildMulti(jobj.childInsertabl, null, jobj.childInserts)
 				.postupdates(postups)
 				.commitReq(usr.logAct(String.format("Req %s - %s", jobj.wftype, cmd), "cheap.cmd"));
 
 		// FIXME why events handling is here?
-		ICheapEventHandler eh = (ICheapEventHandler) res.remove("stepHandler");
+		// ICheapEventHandler eh = (ICheapEventHandler) res.remove("stepHandler");
+		ICheapEventHandler eh = res.rmStepHandler();
+
 		if (eh != null) {
-			CheapEvent evt = (CheapEvent) res.get("evt");
-			eh.onCmd(evt);
+			// CheapEvent evt = (CheapEvent) res.get("evt");
+			eh.onCmd(res.event());
 		}
 
-		eh = (ICheapEventHandler) res.remove("arriHandler");
+		eh = res.rmArriveHandler();
 		if (eh != null)
-			eh.onArrive(((CheapEvent) res.get("evt")));
+			eh.onArrive(res.event());
 
 		return res;
 	}
