@@ -174,6 +174,6 @@ public class AnQuery extends ServPort<AnQueryReq> {
 		Query selct = buildSelct(msg, usr);
 		SemanticObject s = selct.rs(st.instancontxt(msg.conn(), usr));
 		// AnResultset rs = new AnResultset(s.rs(0));
-		return s.rs(0);
+		return (AnResultset) s.rs(0);
 	}
 }

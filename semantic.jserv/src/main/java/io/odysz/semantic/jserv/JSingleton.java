@@ -50,7 +50,6 @@ public class JSingleton {
 			
 			Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 			AnSession.init(defltScxt, ctx);
-			ssVerier = new AnSession();
 
 		} catch (SAXException | IOException | SemanticException | SQLException e) {
 			e.printStackTrace();
@@ -58,6 +57,8 @@ public class JSingleton {
 	}
 
 	public static ISessionVerifier getSessionVerifier() {
+		if (ssVerier == null)
+			ssVerier = new AnSession();
 		return ssVerier;
 	}
 
