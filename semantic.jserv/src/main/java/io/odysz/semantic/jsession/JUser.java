@@ -72,6 +72,7 @@ public class JUser extends SemanticObject implements IUser {
 	protected String ssid;
 	protected String uid;
 	private String pswd;
+	@SuppressWarnings("unused")
 	private String usrName;
 
 	private long touched;
@@ -213,7 +214,9 @@ public class JUser extends SemanticObject implements IUser {
 //		return false;
 //	}
 	
-	public boolean login(AnSessionReq req) throws TransException {
+	@Override
+	public boolean login(Object reqObj) throws TransException {
+		AnSessionReq req = (AnSessionReq)reqObj;
 		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
 		byte[] ssiv = AESHelper.decode64(req.iv);
 		String c = null;

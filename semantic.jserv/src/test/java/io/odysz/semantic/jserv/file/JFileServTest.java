@@ -6,6 +6,7 @@ import org.junit.Test;
 
 public class JFileServTest {
 
+	/**Make sure {@link JFileServ} handle file path correctly */
 	@Test
 	public void test() {
 		String p = JFileServ.parsefileId("ip", "form-data; name=\"file\"; filename=\"t1.png\"");

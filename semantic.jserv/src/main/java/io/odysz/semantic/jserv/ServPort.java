@@ -3,6 +3,7 @@ package io.odysz.semantic.jserv;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -90,9 +91,16 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	}
 
 	/**Response with OK message.
-	 * @param rs
+	 * @param arrayList
 	 * @return 
 	 */
+	protected AnsonMsg<AnsonResp> ok(ArrayList<AnResultset> arrayList) {
+		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);
+		AnsonResp bd = new AnsonResp(msg);
+		msg.body(bd.rs(arrayList));
+		return msg;
+	}
+
 	protected AnsonMsg<AnsonResp> ok(AnResultset rs) {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);
 		AnsonResp bd = new AnsonResp(msg);

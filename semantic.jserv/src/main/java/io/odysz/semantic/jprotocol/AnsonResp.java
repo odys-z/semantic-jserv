@@ -34,10 +34,27 @@ public class AnsonResp extends AnsonBody {
 
 	public String msg() { return m; }
 
-	public AnsonBody rs(AnResultset rs) {
+	public AnsonResp rs(AnResultset rs) {
 		if (this.rs == null)
 			this.rs = new ArrayList<AnResultset>(1);
 		this.rs.add(rs);
+		return this;
+	}
+
+	/**Add a resultset to list.
+	 * @param rs
+	 * @param totalRows total row count for a paged query (only a page of rows is actually in rs).
+	 * @return this
+	 */
+	public AnsonResp rs(AnResultset rs, int totalRows) {
+		if (this.rs == null)
+			this.rs = new ArrayList<AnResultset>();
+		this.rs.add(rs.total(totalRows));
+		return this;
+	}
+
+	public AnsonBody rs(ArrayList<AnResultset> rsLst) {
+		this.rs = rsLst;
 		return this;
 	}
 
