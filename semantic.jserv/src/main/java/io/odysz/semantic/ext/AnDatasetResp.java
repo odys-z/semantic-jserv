@@ -9,7 +9,7 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 
 public class AnDatasetResp extends AnsonResp {
 
-	private List<? extends Anson> forest;
+	private List<?> forest;
 
 	public AnDatasetResp(AnsonMsg<AnsonResp> parent, ArrayList<Anson> forest) {
 		super(parent);
@@ -23,10 +23,10 @@ public class AnDatasetResp extends AnsonResp {
 		super("");
 	}
 
-	public AnDatasetResp forest(List<? extends Anson> lst) {
+	public AnDatasetResp forest(List<?> lst) {
 		forest = lst;
 		return this;
 	}
 
-	public List<? extends Anson> forest() { return forest; }
+	public List<?> forest() { return forest; }
 }
