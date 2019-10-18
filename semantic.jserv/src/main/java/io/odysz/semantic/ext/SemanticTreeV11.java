@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
-import io.odysz.anson.Anson;
 import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
@@ -23,7 +22,6 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfgV11;
 import io.odysz.semantic.DA.DatasetCfgV11.TreeSemantics;
-import io.odysz.semantic.DA.DatasetCfgV11.AnTreeNode;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -175,7 +173,7 @@ public class SemanticTreeV11 extends ServPort<AnDatasetReq> {
 		else {
 			if ("sqltree".equals(t)) {
 				// ds (tree configured in dataset.xml)
-				List<AnTreeNode> lst = DatasetCfgV11.loadStree(connId,
+				List<?> lst = DatasetCfgV11.loadStree(connId,
 						jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
 				AnDatasetResp re = new AnDatasetResp(null).forest(lst);
 				r = ok(re);
@@ -239,7 +237,7 @@ public class SemanticTreeV11 extends ServPort<AnDatasetReq> {
 			rootId = null;
 		
 		AnResultset rs = AnQuery.query((AnQueryReq)jreq, usr);
-		List<AnTreeNode> forest = null;
+		List<?> forest = null;
 		if (rs != null) {
 			if (opts != null && opts.doubleFormat != null)
 				rs.stringFormat(Double.class, LangExt.prefixIfnull("%", opts.doubleFormat));
@@ -248,7 +246,7 @@ public class SemanticTreeV11 extends ServPort<AnDatasetReq> {
 		return ok(rs.total(), forest);
 	}
 	
-	protected AnsonMsg<AnDatasetResp> ok(int total, List<? extends Anson> forest) {
+	protected AnsonMsg<AnDatasetResp> ok(int total, List<?> forest) {
 		AnsonMsg<AnDatasetResp> msg = new AnsonMsg<AnDatasetResp>(p, MsgCode.ok);
 		AnDatasetResp body = new AnDatasetResp(msg);
 		body.forest(forest);

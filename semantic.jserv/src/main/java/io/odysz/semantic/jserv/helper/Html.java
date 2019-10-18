@@ -20,9 +20,7 @@ import java.util.List;
 
 import static j2html.TagCreator.span;
 
-import io.odysz.anson.Anson;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DA.DatasetCfgV11.AnTreeNode;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantics.SemanticObject;
@@ -75,16 +73,22 @@ public class Html {
 				)).render();
 	}
 
-	public static String listAnson(List<AnTreeNode> lst) {
+	public static String listAnson(List<?> lst) {
 		return "<!DOCTYPE HTML>" + html(
 			head(meta().withCharset("utf-8")),
 			body(
 				h1("Html.list()"),
 					table(tbody(
 						tr(th(""), th("")),
-						lst == null ? tr(td("null"), td("")) : each(lst, cell -> trEx(cell))))
+						lst == null ? tr(td("null"), td("")) : each(lst, cell -> trEx(cell.toString()))))
 				)).render();
 
+	}
+
+	private static ContainerTag trEx(String s) {
+		ContainerTag tr = tr("'");
+		tr.with(td(s));
+		return tr;
 	}
 
 	private static ContainerTag trEx(SemanticObject cell) {
@@ -95,11 +99,11 @@ public class Html {
 		return tr;
 	}
 
-	private static ContainerTag trEx(Anson cell) {
-		ContainerTag tr = tr("'");
-		tr.with(td(cell.toString()));
-		return tr;
-	}
+//	private static ContainerTag trEx(Anson cell) {
+//		ContainerTag tr = tr("'");
+//		tr.with(td(cell.toString()));
+//		return tr;
+//	}
 
 	/**TODO can html writing outputStream?
 	 * @param res

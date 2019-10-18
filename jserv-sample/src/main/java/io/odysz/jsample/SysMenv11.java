@@ -13,7 +13,6 @@ import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfgV11;
-import io.odysz.semantic.DA.DatasetCfgV11.AnTreeNode;
 import io.odysz.semantic.ext.AnDatasetReq;
 import io.odysz.semantic.ext.SemanticTreeV11;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -46,7 +45,7 @@ public class SysMenv11 extends SemanticTreeV11 {
 			String connId = msg.body(0).conn();
 			String sk = msg.body(0).sk();
 
-			List<AnTreeNode> lst = DatasetCfgV11.loadStree(connId,
+			List<?> lst = DatasetCfgV11.loadStree(connId,
 					sk == null ? defltSk : sk, 0, -1, "admin");
 
 			resp.getWriter().write(Html.listAnson(lst));
@@ -75,7 +74,7 @@ public class SysMenv11 extends SemanticTreeV11 {
 			String sk = jreq.sk();
 			jreq.sqlArgs = new String[] {usr.uid()};
 
-			List<AnTreeNode> lst = DatasetCfgV11.loadStree(Connects.defltConn(),
+			List<?> lst = DatasetCfgV11.loadStree(Connects.defltConn(),
 					sk == null ? defltSk : sk, jreq.page(), jreq.size(), jreq.sqlArgs);
 			
 			write(resp, ok(lst.size(), lst));

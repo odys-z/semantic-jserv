@@ -54,10 +54,11 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 				return ;
 			in = req.getInputStream();
 		}
+		resp.setContentType("application/json");
+		resp.setCharacterEncoding("UTF-8");
 		try {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
-			resp.setCharacterEncoding("UTF-8");
 			onGet(msg, resp);
 		} catch (AnsonException | SemanticException e) {
 			if (ServFlags.query)
@@ -70,10 +71,15 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		try {
+			resp.setCharacterEncoding("UTF-8");
+
+			// Firefox will complain "XML Parsing Error: not well-formed" even parsed resp correctly.
+			resp.setContentType("application/json");
+
 			InputStream in = req.getInputStream(); 
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
-			resp.setCharacterEncoding("UTF-8");
+
 			onPost(msg, resp);
 		} catch (SemanticException | AnsonException e) {
 			if (ServFlags.query)
