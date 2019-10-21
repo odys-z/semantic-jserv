@@ -6,8 +6,6 @@ import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
@@ -69,24 +67,6 @@ public class SemanticTreeV11 extends ServPort<AnDatasetReq> {
 		st = JSingleton.defltScxt;
 	}	
 
-	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	protected void doGet(HttpServletRequest req, HttpServletResponse response) throws IOException {
-		if (ServFlags.extStree)
-			Utils.logi("---------- s-tree.serv11 post <- %s ----------", req.getRemoteAddr());
-		jsonResp(req, response);
-	}
-	 */
-
-	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
-	protected void doPost(HttpServletRequest req, HttpServletResponse response) throws IOException {
-		if (ServFlags.extStree)
-			Utils.logi("========== s-tree.serv11 post <= %s ==========", req.getRemoteAddr());
-		jsonResp(req, response);
-	}
-	 */
-
 	@Override
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
@@ -94,14 +74,9 @@ public class SemanticTreeV11 extends ServPort<AnDatasetReq> {
 			Utils.logi("---------- squery (r.serv11) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
-//			IUser usr = verifier.verify(msg.header());
 			jsonResp(msg, resp);
-			// AnResultset rs = query(msg.body(0), usr);
-			// resp.getWriter().write(Html.rs(rs));
 		} catch (SQLException e) {
 			e.printStackTrace();
-//		} catch (TransException e) {
-//			e.printStackTrace();
 		} catch (SsException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -120,20 +95,12 @@ public class SemanticTreeV11 extends ServPort<AnDatasetReq> {
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-//			IUser usr = verifier.verify(msg.header());
-			// AnResultset rs = query(msg.body(0), usr);
 			jsonResp(msg, resp);
 
-//			write(resp, ok(rs), msg.opts());
 		} catch (SQLException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (SsException e) {
 			e.printStackTrace();
-//		} catch (SemanticException e) {
-//			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
-//		} catch (SQLException | TransException e) {
-//			e.printStackTrace();
-//			ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));

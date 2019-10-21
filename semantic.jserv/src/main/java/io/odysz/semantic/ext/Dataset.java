@@ -47,7 +47,6 @@ public class Dataset extends ServPort<AnDatasetReq> {
 
 	static {
 		st = JSingleton.defltScxt;
-//		verifier = JSingleton.getSessionVerifier();
 	}
 
 	@Override
@@ -57,9 +56,6 @@ public class Dataset extends ServPort<AnDatasetReq> {
 			Utils.logi("---------- query (ds.jserv11) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
-//			String conn = req.getParameter("conn");
-//			if (conn == null || conn.trim().length() == 0)
-//				conn = Connects.defltConn();
 			String conn = msg.body(0).conn();
 
 			verifier.verify(msg.header());
