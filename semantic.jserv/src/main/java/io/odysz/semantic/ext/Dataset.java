@@ -33,7 +33,7 @@ import io.odysz.transact.x.TransException;
  */
 @WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv11" })
 public class Dataset extends ServPort<AnDatasetReq> {
-	public Dataset(Port port) {
+	public Dataset() {
 		super(Port.dataset);
 	}
 

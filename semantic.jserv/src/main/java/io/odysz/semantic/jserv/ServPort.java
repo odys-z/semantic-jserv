@@ -54,8 +54,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 				return ;
 			in = req.getInputStream();
 		}
-		resp.setContentType("application/json");
 		resp.setCharacterEncoding("UTF-8");
+		resp.setContentType("application/json");
 		try {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
