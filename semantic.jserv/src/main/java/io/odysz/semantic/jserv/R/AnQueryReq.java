@@ -46,6 +46,8 @@ public class AnQueryReq extends AnsonBody {
 
 	String[] limt;
 
+	ArrayList<String[]> havings;
+
 	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String conn) {
 		super(parent, conn);
 		a = "R";
@@ -160,90 +162,16 @@ public class AnQueryReq extends AnsonBody {
 		return bdItem;
 	}
 
-//	@Override
-//	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
-//		writer.beginObject();
-//		// design notes: keep consists with UpdateReq
-//		writer.name("conn").value(conn)
-//			.name("a").value(a)
-//			.name("mtabl").value(mtabl)
-//			.name("mAlias").value(mAlias)
-//			.name("page").value(page)
-//			.name("pgSize").value(pgsize);
-//
-//		if (exprs != null) {
-//			writer.name("exprs");
-//			JHelper.writeLst(writer, exprs, opts);
-//		}
-//		else 
-//			writer.name("exprs").value("*");
-//
-//		if (joins != null) {
-//			writer.name("joins");
-//			JHelper.writeLst(writer, joins, opts);
-//		}
-//		if (where != null) {
-//			writer.name("where");
-//			JHelper.writeLst(writer, where, opts);
-//		}
-//		if (orders != null) {
-//			writer.name("orders");
-//			JHelper.writeLst(writer, orders, opts);
-//		}
-//		if (limt != null) {
-//			writer.name("limt");
-//			JHelper.writeStrings(writer, limt, opts);
-//		}
-//
-//		writer.endObject();
-//	}
+	public AnQueryReq having(String oper, String lop, String rop) {
+		if (where == null)
+			where = new ArrayList<String[]>();
 
-//	@Override
-//	public void fromJson(JsonReader reader) throws IOException, SemanticException {
-//		JsonToken token = reader.peek();
-//		if (token == JsonToken.BEGIN_OBJECT) {
-//			reader.beginObject();
-//			token = reader.peek();
-//			while (token != JsonToken.END_OBJECT) {
-//				String name = reader.nextName();
-//				fromJsonName(name, reader);
-//				token = reader.peek();
-//			}
-//			reader.endObject();
-//		}
-//		else throw new SemanticException("Parse QueryReq failed. %s : %s", reader.getPath(), token.name());
-//	}
+		String[] predicate = new String[Ix.predicateSize];
+		predicate[Ix.predicateOper] = oper;
+		predicate[Ix.predicateL] = lop;
+		predicate[Ix.predicateR] = rop;
 
-//	@SuppressWarnings("unchecked")
-//	protected void fromJsonName(String name, JsonReader reader)
-//			throws SemanticException, IOException {
-//		if ("a".equals(name))
-//			a = JHelper.nextString(reader);
-//		else if ("conn".equals(name))
-//			conn = JHelper.nextString(reader);
-//		else if ("page".equals(name))
-//			page = reader.nextInt();
-//		else if ("pgSize".equals(name))
-//			pgsize = reader.nextInt();
-//		else if ("mtabl".equals(name))
-//			mtabl = JHelper.nextString(reader);
-//		else if ("mAlias".equals(name))
-//			mAlias = JHelper.nextString(reader);
-//		else if ("exprs".equals(name)) {
-//			if (reader.peek() == JsonToken.BEGIN_ARRAY)
-//				exprs = (ArrayList<String[]>) JHelper.readLstStrs(reader);
-//			else reader.nextString(); // skip "*"
-//		}
-//		else if ("joins".equals(name))
-//			// joins = (ArrayList<String[]>) JHelper.readLstStrs(reader);
-//			joins = (ArrayList<Object[]>) JHelper.readLst_StrObj(reader, AnQueryReq.class);
-//		else if ("where".equals(name))
-//			where = (ArrayList<String[]>) JHelper.readLstStrs(reader);
-//		else if ("orders".equals(name))
-//			orders = (ArrayList<String[]>) JHelper.readLstStrs(reader);
-//		else if ("groups".equals(name))
-//			groups = JHelper.readStrs(reader);
-//		else if ("limt".equals(name))
-//			limt = JHelper.readStrs(reader);
-//	}
+		where.add(predicate);
+		return this;
+	}
 }

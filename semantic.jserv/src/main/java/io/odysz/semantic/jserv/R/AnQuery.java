@@ -153,14 +153,21 @@ public class AnQuery extends ServPort<AnQueryReq> {
 							(String)j[Ix.joinOnCond]);
 		}
 		
-		if (msg.where != null && msg.where.size() > 0) {
+		if (msg.where != null && msg.where.size() > 0)
 			for (Object[] cond : msg.where)
 				selct.where((String)cond[Ix.predicateOper],
 							(String)cond[Ix.predicateL],
 							(String)cond[Ix.predicateR]);
-		}
 		// GROUP BY
 		selct.groupby(msg.groups);
+		
+		// HAVING
+		if (msg.havings != null && msg.havings.size() > 0)
+			for(Object[] havin : msg.havings)
+				selct.having((String)havin[Ix.predicateOper],
+							(String)havin[Ix.predicateL],
+							(String)havin[Ix.predicateR]);
+
 		// ORDER BY
 		selct.orderby(msg.orders);
 		
@@ -173,7 +180,6 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	public static AnResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = buildSelct(msg, usr);
 		SemanticObject s = selct.rs(st.instancontxt(msg.conn(), usr));
-		// AnResultset rs = new AnResultset(s.rs(0));
 		return (AnResultset) s.rs(0);
 	}
 }
