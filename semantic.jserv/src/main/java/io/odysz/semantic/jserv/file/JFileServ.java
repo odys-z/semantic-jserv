@@ -6,34 +6,37 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 
+import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Regex;
 import io.odysz.common.Utils;
-import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
-import io.odysz.semantics.SemanticObject;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.x.SemanticException;
 
 /**File download / upload serv.<br>
+ * 
+ * <p><b>Note</b>: This servlet requires servlet 3.1 and upper.
+ * See <a href='https://ursaj.com/upload-files-in-java-with-servlet-api'>Handle upload request</a></p>
  * 
  * @author odys-z@github.com
  */
@@ -56,35 +59,65 @@ public class JFileServ extends ServPort<FileReq> {
 	protected void onGet(AnsonMsg<FileReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		try {
-			resp(msg, resp, msg.body(0).a(), msg.body(0).file());
+			String a = msg.body(0).a();
+			if ("jx".equals(a))
+				jtxt(resp, msg.body(0).file());
+			else if ("upload".equals(a))
+				throw new SemanticException("Pleas use HTTP POST for uploading file stream.");
+			else
+				throw new SemanticException("Parameter a is unknown.");
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		}
 	}
 
 	@Override
-	protected void onPost(AnsonMsg<FileReq> msg, HttpServletResponse resp)
-			throws ServletException, IOException, AnsonException, SemanticException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		if (ServFlags.file)
 			System.out.println("file.serv post ========");
+
 		try {
-			resp(msg, resp, msg.body(0).a(), msg.body(0).file());
-		} catch (SemanticException e) {
+			resp.setCharacterEncoding("UTF-8");
+			// Firefox will complain "XML Parsing Error: not well-formed" even parsed resp correctly.
+			resp.setContentType("application/json");
+
+			String a = req.getParameter("a");
+			if ("upload".equals(a))
+				uploadForm(req, resp, req.getPart("filename").getSubmittedFileName());
+			else if ("jx".equals(a)) {
+				InputStream in = req.getInputStream(); 
+				@SuppressWarnings("unchecked")
+				AnsonMsg<FileReq> msg = (AnsonMsg<FileReq>) Anson.fromJson(in);
+				verifier.verify(msg.header());
+				jtxt(resp, msg.body(0).file());
+			}
+
+
+			// onPost(msg, resp);
+
+
+			resp.flushBuffer();
+		} catch (SemanticException | AnsonException | SsException | SQLException e) {
+			if (ServFlags.query)
+				e.printStackTrace();
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		}
 	}
 
-	protected void resp(AnsonMsg<FileReq> msg, HttpServletResponse resp, String a, String file)
-			throws IOException, SemanticException, ServletException {
-		resp.setContentType("text/html;charset=UTF-8");
-		if ("jx".equals(a))
-			jtxt(resp, file);
-		else if ("upload".equals(a))
-			// uploadForm(msg, resp, file);
-			throw new SemanticException("Please upload file with XHR via streamFile.serv");
+	@Override
+	protected void onPost(AnsonMsg<FileReq> msg, HttpServletResponse resp) { }
 
-		resp.flushBuffer();
-	}
+//	protected void resp(AnsonMsg<FileReq> msg, HttpServletResponse resp, String a, String file)
+//			throws IOException, SemanticException, ServletException {
+//		resp.setContentType("text/html;charset=UTF-8");
+//		if ("jx".equals(a))
+//			jtxt(resp, file);
+//		else if ("upload".equals(a))
+//			// uploadForm(msg, resp, file);
+//			throw new SemanticException("Please upload file with XHR via streamFile.serv");
+//
+//		resp.flushBuffer();
+//	}
 
 	/**Ajax POST:
 	 * <pre>xhr:  $.ajaxSettings.xhr();
