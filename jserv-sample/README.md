@@ -4,9 +4,9 @@ Jserv-sample is a sample project that shows how to use semantic-* to build the a
 
 # Quick Start
 
-See [serv-sample](Jhttps://odys-z.github.io/notes/semantics/jserv/jsample-quick-start.html#jsample-kick Quick Start).
+See [serv-sample Quick Start](Jhttps://odys-z.github.io/notes/semantics/jserv/jsample-quick-start.html#jsample-kick).
 
 # Docutments
 
-See [javadoc](https://odys-z.github.io/notes/semantics/jserv/jsample-quick-start.html Jserv-sample javadoc).
+See [Jserv-sample javadoc](https://odys-z.github.io/notes/semantics/jserv/jsample-quick-start.html).
 
