@@ -17,9 +17,6 @@
         <dependent-module archiveName="semantic.DA-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.DA/semantic.DA">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="semantic.workflow-0.7.7-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.workflow/semantic.workflow">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
         <property name="context-root" value="jserv-sample"/>
         <property name="java-output-path" value="/jserv-sample/target/classes"/>
     </wb-module>
