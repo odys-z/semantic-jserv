@@ -106,7 +106,7 @@ public class JUser extends SemanticObject implements IUser {
 		
 		String rootK = DATranscxt.key("user-pswd");
 		if (rootK == null)
-			throw new SemanticException("Session rootKey not initialized. May check context prameter like tomcat context.xml/Parameter/name='io.oz.root-key'?");
+			throw new SemanticException("Session rootKey not initialized. Have checked context prameter like server's context.xml/Parameter/name='io.oz.root-key'?");
 		
 		// decrypt db-pswd-cipher with sys-key and db-iv => db-pswd
 //		try {
