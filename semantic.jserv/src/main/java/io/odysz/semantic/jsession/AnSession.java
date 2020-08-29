@@ -329,7 +329,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	}
 
 	/**Create a new IUser instance, where the class name is configured in config.xml/k=class-IUser.
-	 * For the sample project, jserv-sample coming with this lib, it's configured as <a href='https://github.com/odys-z/semantic-jserv/blob/master/jserv-sample/target/jserv-sample/MEB-INF/config.xml'>
+	 * For the sample project, jserv-sample coming with this lib, it's configured as <a href='https://github.com/odys-z/semantic-jserv/blob/master/jserv-sample/src/main/webapp/WEB-INF/config.xml'>
 	 * io.odysz.jsample.SampleUser</a>
 	 * @param clsNamekey class name
 	 * @param uid user id
