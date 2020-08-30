@@ -62,7 +62,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.DA</artifactId>
-	    <version>1.0.1</version>
+	    <version>1.0.1-SNAPSHOT</version>
 	</dependency>
 
 	<!-- 
@@ -88,7 +88,7 @@
 	    <groupId>com.oracle</groupId>
 	    <artifactId>ojdbc14</artifactId>
 	    <version>12.1.0.1</version>
-	    <scope>provide</scope>
+	    <scope>provided</scope>
 	</dependency>
     
 	<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->

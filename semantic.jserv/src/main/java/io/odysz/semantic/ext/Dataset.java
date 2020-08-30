@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DA.DatasetCfgV11;
+import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -107,7 +107,7 @@ public class Dataset extends ServPort<AnDatasetReq> {
 			throws SQLException, TransException {
 		AnDatasetReq msg = msgBody.body().get(0);
 		// List<SemanticObject> ds = DatasetCfg.loadStree(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
-		AnResultset ds = DatasetCfgV11.select(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
+		AnResultset ds = DatasetCfg.select(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
 
 		// Shall be moved to Protocol?
 		AnDatasetResp respMsg = new AnDatasetResp();

@@ -13,7 +13,7 @@ import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.DA.DatasetCfgV11;
+import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.x.SemanticException;
@@ -45,7 +45,7 @@ public class JSingleton {
 		DATranscxt.key("user-pswd", ctx.getInitParameter("io.oz.root-key"));
 		
 		try {
-			DatasetCfgV11.init(rootINF);
+			DatasetCfg.init(rootINF);
 			defltScxt = new DATranscxt(Connects.defltConn());
 			
 			Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
