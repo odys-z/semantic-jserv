@@ -27,7 +27,7 @@
   	<dependency>
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>
-  		<version>4.12</version>
+  		<version>4.13.1</version>
   		<scope>test</scope>
     </dependency>
 
@@ -62,7 +62,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.DA</artifactId>
-	    <version>1.0.0</version>
+	    <version>1.0.1-SNAPSHOT</version>
 	</dependency>
 
 	<!-- 
@@ -88,14 +88,14 @@
 	    <groupId>com.oracle</groupId>
 	    <artifactId>ojdbc14</artifactId>
 	    <version>12.1.0.1</version>
-	    <scope>provide</scope>
+	    <scope>provided</scope>
 	</dependency>
     
 	<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
 	<dependency>
 		<groupId>mysql</groupId>
 		<artifactId>mysql-connector-java</artifactId>
-		<version>5.1.6</version>
+		<version>8.0.21</version>
 	</dependency>
 	
     <!-- for echoing simple html -->
