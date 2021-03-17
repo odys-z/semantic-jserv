@@ -106,8 +106,7 @@ public class JUser extends SemanticObject implements IUser {
 		
 		String rootK = DATranscxt.key("user-pswd");
 		if (rootK == null)
-			// throw new SemanticException("Session rootKey not initialized. Use http GET /login.serv?t=init&k=[key]&header={} to set root key.");
-			throw new SemanticException("Session rootKey not initialized. May check context prameter like tomcat context.xml/Parameter/name='io.oz.root-key'?");
+			throw new SemanticException("Session rootKey not initialized. Have checked context prameter like server's context.xml/Parameter/name='io.oz.root-key'?");
 		
 		// decrypt db-pswd-cipher with sys-key and db-iv => db-pswd
 //		try {
@@ -188,32 +187,9 @@ public class JUser extends SemanticObject implements IUser {
 	 */
 	@SuppressWarnings("unchecked")
 	public List<Object> notifies() {
-		// return (List<Object>) props.get("_notifies_");
 		return (List<Object>) get("_notifies_");
 	}
 
-//	@Override
-//	public boolean login(Object req) throws TransException {
-//		if (request instanceof AnSessionReq)
-//			return loginV11((AnSessionReq) request);
-//		
-//		AnSessionReq req = (AnSessionReq)request;
-//
-//		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
-//		byte[] ssiv = AESHelper.decode64(req.iv);
-//		String c = null;
-//		try { c = AESHelper.encrypt(uid, pswd, ssiv); }
-//		catch (Exception e) { throw new TransException (e.getMessage()); }
-//
-//		// 2. compare pswd-cipher with j.pswd
-//		if (c.equals(req.token())) {
-//			touch();
-//			return true;
-//		}
-//		
-//		return false;
-//	}
-	
 	@Override
 	public boolean login(Object reqObj) throws TransException {
 		AnSessionReq req = (AnSessionReq)reqObj;
@@ -237,23 +213,9 @@ public class JUser extends SemanticObject implements IUser {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
 
-//	@Override
-//	public void writeJsonRespValue(Object writer) throws IOException {
-//		JsonWriter wr = (JsonWriter) writer;
-//		wr.beginObject();
-//		wr.name("uid").value(uid);
-//		wr.name("ssid").value(ssid);
-//		wr.name("user-name").value(usrName);
-//		wr.endObject();
-//	}
-
 	private static String randomId() {
 		return String.format("%s%s",
 				Radix64.toString(random.nextInt()),
 				Radix64.toString(random.nextInt()));
 	}
-
-//	public IUser notify(String name) {
-//		return null;
-//	}
 }

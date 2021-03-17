@@ -12,9 +12,9 @@ import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.DA.DatasetCfgV11;
+import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.ext.AnDatasetReq;
-import io.odysz.semantic.ext.SemanticTreeV11;
+import io.odysz.semantic.ext.SemanticTree;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.helper.Html;
@@ -23,7 +23,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 
 @WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv11" })
-public class SysMenv11 extends SemanticTreeV11 {
+public class SysMen extends SemanticTree {
 	private static final long serialVersionUID = 1L;
 	
 	@Override
@@ -45,7 +45,7 @@ public class SysMenv11 extends SemanticTreeV11 {
 			String connId = msg.body(0).conn();
 			String sk = msg.body(0).sk();
 
-			List<?> lst = DatasetCfgV11.loadStree(connId,
+			List<?> lst = DatasetCfg.loadStree(connId,
 					sk == null ? defltSk : sk, 0, -1, "admin");
 
 			resp.getWriter().write(Html.listAnson(lst));
@@ -74,7 +74,7 @@ public class SysMenv11 extends SemanticTreeV11 {
 			String sk = jreq.sk();
 			jreq.sqlArgs = new String[] {usr.uid()};
 
-			List<?> lst = DatasetCfgV11.loadStree(Connects.defltConn(),
+			List<?> lst = DatasetCfg.loadStree(Connects.defltConn(),
 					sk == null ? defltSk : sk, jreq.page(), jreq.size(), jreq.sqlArgs);
 			
 			write(resp, ok(lst.size(), lst));

@@ -1,6 +1,6 @@
 package io.odysz.semantic.ext;
 
-import io.odysz.semantic.DA.DatasetCfgV11.TreeSemantics;
+import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.R.AnQueryReq;
