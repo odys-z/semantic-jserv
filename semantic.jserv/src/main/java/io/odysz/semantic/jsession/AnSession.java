@@ -219,7 +219,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					}
 					else throw new SsException(
 							"Password doesn't match! Expecting token encrypted."
-							+ System.lineSeparator()    // FIXME why dosn't work?
+							+ System.lineSeparator()    // FIXME why doesn't work?
 							+ "Additional Details: %s",
 							login.notifies() != null && login.notifies().size() > 0 ? login.notifies().get(0) : "");
 				}
