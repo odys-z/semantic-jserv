@@ -8,7 +8,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 
 /**<p>Sessin Request<br>
- * a = "login" | "logout" | "heartbeat" ...</p>
+ * a: see {@link AnSession} </p>
  * @author odys-z@github.com
  */
 public class AnSessionReq extends AnsonBody {

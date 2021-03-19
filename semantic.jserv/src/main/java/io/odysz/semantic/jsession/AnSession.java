@@ -44,7 +44,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 /**<p>1. Handle login-obj: {@link SessionReq}.<br>
- *  a: "login/logout",<br>
+ *  a: "login | logout | pswd | init | ping(touch)",<br>
  *  uid: "user-id",<br>
  *  pswd: "uid-cipher-by-pswd",<br>
  *  iv: "session-iv"</p>
@@ -248,18 +248,18 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					AnsonHeader header = msg.header();
 					IUser usr = verify(header);
 					
+					// dencrypt field of a_user.userId: pswd, encAuxiliary
+					if (!DATranscxt.hasSemantics(connId, usrMeta.tbl, smtype.dencrypt)) {
+						throw new SemanticException("Can't update pswd, because data entry %s is not protected by semantics %s",
+								usrMeta.tbl, smtype.dencrypt.name());
+					}
+
 					// client: encrypt with ssid, send cipher with iv
 					// FIXME using of session key, see bug of verify()
 					String ssid = (String) header.ssid();
 					String iv64 = sessionBody.md("iv_pswd");
 					String newPswd = sessionBody.md("pswd");
 					usr.sessionKey(ssid);
-
-					// dencrypt field of a_user.userId: pswd, encAuxiliary
-					if (!DATranscxt.hasSemantics(connId, usrMeta.tbl, smtype.dencrypt)) {
-						throw new SemanticException("Can't update pswd, because table %s is not protected by semantics %s",
-								usrMeta.tbl, smtype.dencrypt.name());
-					}
 
 					Utils.logi("new pswd: %s",
 						AESHelper.decrypt(newPswd, usr.sessionId(), AESHelper.decode64(iv64)));
@@ -276,6 +276,58 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					lock.unlock();
 	
 					write(response, ok("You must relogin!"));
+				}
+				else if ("init".equals(a)) {
+					// reset password
+					AnsonHeader header = msg.header();
+					
+					if (!DATranscxt.hasSemantics(connId, usrMeta.tbl, smtype.dencrypt)) {
+						throw new SemanticException("Can't update pswd, because data entry %s is not protected by semantics %s",
+								usrMeta.tbl, smtype.dencrypt.name());
+					}
+					
+					String ssid = (String) header.ssid();
+					String iv64 = sessionBody.md("iv_pswd");
+					String newPswd = sessionBody.md("pswd");
+
+					// check his IV
+					SemanticObject s = sctx.select(usrMeta.tbl, "u")
+							.col(usrMeta.iv, "iv")
+							.where_("=", "u." + usrMeta.pk, sessionBody.uid())
+							.rs(sctx.instancontxt(sctx.basiconnId(), jrobot));
+						
+					AnResultset rs = (AnResultset) s.rs(0);;
+					if (rs.beforeFirst().next()) {
+						String iv = rs.getString("iv");
+						if (!LangExt.isEmpty(iv))
+							throw new SemanticException("Can't update pswd, because IV is not allowed to change.");
+					}
+					
+					sctx.select(usrMeta.tbl, "u")
+						// .rs(sctx.instancontxt(msg.conn(), usr));
+						.rs(sctx.instancontxt(sctx.basiconnId(), jrobot));
+				
+					// set a new pswd
+					Utils.logi("intialize pswd: %s",
+						AESHelper.decrypt(newPswd, jrobot.sessionId(), AESHelper.decode64(iv64)));
+
+					sctx.update(usrMeta.tbl, jrobot)
+						.nv(usrMeta.pswd, newPswd)
+						.nv(usrMeta.iv, iv64)
+						.whereEq(usrMeta.pk, header.logid())
+						.u(sctx.instancontxt(sctx.basiconnId(), jrobot));
+
+					// remove session if logged in
+					if (users.containsKey(ssid)) {
+						// This happens when log on users IV been reset
+						lock.lock();
+						users.remove(ssid);
+						lock.unlock();
+						write(response, ok("You must relogin!"));
+					}
+					else {
+						write(response, ok("Initializing password successed."));
+					}
 				}
 				else {
 					if (a != null) a = a.toLowerCase().trim();
@@ -300,7 +352,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	/**Load user instance form DB table (name = {@link UserMeta#tbl}).
 	 * @param sessionBody
 	 * @param connId
-	 * @return new IUser instance loaded from database (from connId)
+	 * @return new IUser instance loaded from database (from connId), see {@link #createUser(String, String, String, String, String)}
 	 * @throws TransException
 	 * @throws SQLException
 	 * @throws SsException
@@ -340,7 +392,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * @param pswd 
 	 * @param iv auxiliary encryption field
 	 * @param userName 
-	 * @return new IUser instance
+	 * @return new IUser instance, if the use's IV is empty, will create a notification of {@link Notify#changePswd}.
 	 * @throws ReflectiveOperationException 
 	 * @throws IOException 
 	 * @throws GeneralSecurityException 
