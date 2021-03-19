@@ -217,7 +217,10 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						AnsonMsg<AnSessionResp> rspMsg = ok(bd);
 						write(response, rspMsg, msg.opts());
 					}
-					else throw new SsException("Password doesn't matching! Expecting token encrypt(uid, pswd, iv)");
+					else throw new SsException(
+							"Password doesn't match! Expecting token encrypted." + System.lineSeparator()
+							+ "Additional Details: %s",
+							login.notifies() != null && login.notifies().size() > 0 ? login.notifies().get(0) : "");
 				}
 				else if ("logout".equals(a)) {
 					AnsonHeader header = msg.header();

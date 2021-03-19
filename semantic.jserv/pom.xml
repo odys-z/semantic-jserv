@@ -5,7 +5,7 @@
   <artifactId>semantic.jserv</artifactId>
   <version>1.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-  
+
   <name>semantic.jserv lib</name>
   <url>http://maven.apache.org</url>
 
@@ -36,7 +36,7 @@
     	<artifactId>javax.servlet-api</artifactId>
     	<version>3.1.0</version>
     	<scope>provided</scope>
-    </dependency> 
+    </dependency>
 
 	<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson
 	<dependency>
@@ -62,10 +62,10 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.DA</artifactId>
-	    <version>1.0.1-SNAPSHOT</version>
+	    <version>1.0.1</version>
 	</dependency>
 
-	<!-- 
+	<!--
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.workflow</artifactId>
@@ -78,7 +78,7 @@
 	    <artifactId>sqlite-jdbc</artifactId>
 	    <version>3.25.2</version>
 	</dependency>
-	
+
 	<!-- ojdbc7.jar
 		Since oracle JDBC driver package needing license agreement, you need agree the license and download the jar file,
 		then install ojdbc.jar into maven local cache like this:
@@ -90,14 +90,14 @@
 	    <version>12.1.0.1</version>
 	    <scope>provided</scope>
 	</dependency>
-    
+
 	<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
 	<dependency>
 		<groupId>mysql</groupId>
 		<artifactId>mysql-connector-java</artifactId>
 		<version>8.0.21</version>
 	</dependency>
-	
+
     <!-- for echoing simple html -->
     <dependency>
     	<groupId>com.j2html</groupId>
@@ -127,7 +127,7 @@
 
   <build>
     <!-- <finalName>semantic.jserv</finalName> -->
-    
+
     <plugins>
     	<plugin>
     		<artifactId>maven-compiler-plugin</artifactId>
@@ -138,14 +138,14 @@
     		</configuration>
     	</plugin>
 
-		<!-- 
+		<!--
     	<plugin>
 	        <groupId>org.apache.tomcat.maven</groupId>
 	        <artifactId>tomcat7-maven-plugin</artifactId>
 	        <version>2.5</version>
 		</plugin>
 		 -->
-		
+
 		<plugin>
 		  	<artifactId>maven-deploy-plugin</artifactId>
 		  	<version>2.8.2</version>
@@ -159,7 +159,7 @@
 		  		</execution>
 		  	</executions>
 	  	</plugin>
-		
+
 		<!-- http://ykyuen.wordpress.com/2009/10/30/maven-dependency-on-jarwar-package
 			 https://pragmaticintegrator.wordpress.com/2010/10/22/using-a-war-module-as-dependency-in-maven/
 		<plugin>
@@ -171,7 +171,7 @@
 			</configuration>
 		</plugin>
 		 -->
-		
+
 		<plugin>
 			<groupId>org.apache.maven.plugins</groupId>
 			<artifactId>maven-jar-plugin</artifactId>
@@ -213,5 +213,5 @@
 	 	</plugin>
     </plugins>
   </build>
-  
+
 </project>
