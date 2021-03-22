@@ -229,9 +229,10 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	 * @param usrInf 
 	 * @return response
 	 * @throws SQLException
+	 * @throws TransException Failed to lookup connection
 	 */
 	protected AnsonMsg<AnsonResp> rebuildTree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)
-			throws SQLException {
+			throws SQLException, TransException {
 		if (Connects.driverType(connId) == dbtype.mysql) {
 			int total = BuildMysql.rebuildDbTree(rootId, semanticss, usrInf);
 			return ok("re-forest", "Updated %s records from root %s", total, rootId);
@@ -240,7 +241,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	}
 
 	protected AnsonMsg<AnsonResp> rebuildForest(String connId, TreeSemantics semanticss, IUser usrInf)
-			throws SQLException {
+			throws SQLException, TransException {
 		if (Connects.driverType(connId) == dbtype.mysql) {
 			
 			int total = BuildMysql.rebuildDbForest(semanticss, usrInf);
@@ -361,9 +362,10 @@ end </pre>
 		 * @param dblog 
 		 * @return
 		 * @throws SQLException
+		 * @throws TransException 
 		 */
 		private static int rebuildDbTree(String rootId, TreeSemantics sm, IUser dblog)
-				throws SQLException {
+				throws SQLException, TransException {
 			// clear root parentId
 			String sql = String.format("update %1$s set %2$s = null where %2$s = %3$s or %2$s = ''",
 					// sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);
@@ -433,8 +435,9 @@ end </pre>
 		 * @param dblog
 		 * @return total records
 		 * @throws SQLException
+		 * @throws TransException 
 		 */
-		private static int rebuildDbForest(TreeSemantics sm, IUser dblog) throws SQLException {
+		private static int rebuildDbForest(TreeSemantics sm, IUser dblog) throws SQLException, TransException {
 			// clear root parentId
 			String sql = String.format("update %1$s set %2$s = null where %2$s = %3$s or %2$s = ''",
 					// sm[Ix.tabl][0], sm[Ix.parent][0], sm[Ix.recId][0]);
