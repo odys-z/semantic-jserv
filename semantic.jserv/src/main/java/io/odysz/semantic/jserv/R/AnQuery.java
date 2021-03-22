@@ -123,19 +123,20 @@ public class AnQuery extends ServPort<AnQueryReq> {
 			 for (String[] col : msg.exprs)
 				selct.col((String)col[Ix.exprExpr], (String)col[Ix.exprAlais]);
 		
-		// Sample of join on parsing:
-//		0	l
-//		1	a_roles
-//		2	R
-//		3	U.roleId=R.roleId or U.roleId = 'admin' and U.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People')
-//
-//		select userId userId, userName userName, mobile mobile, dept.orgId orgId, o.orgName orgName, 
-//		dept.departName departName, dept.departId departId, R.roleId roleId, R.roleName roleName, notes notes 
-//		from a_user U 
-//		join a_reg_org o on U.orgId = o.orgId 
-//		left outer join a_org_depart dept on U.departId = dept.departId 
-//		left outer join a_roles R on U.roleId = R.roleId OR U.roleId = 'admin' AND U.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People') 
-//		where U.userName like '%张%'
+		/* Sample of join on parsing:
+		0	l
+		1	a_roles
+		2	R
+		3	U.roleId=R.roleId or U.roleId = 'admin' and U.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People')
+
+		select userId userId, userName userName, mobile mobile, dept.orgId orgId, o.orgName orgName, 
+		dept.departName departName, dept.departId departId, R.roleId roleId, R.roleName roleName, notes notes 
+		from a_user U 
+		join a_reg_org o on U.orgId = o.orgId 
+		left outer join a_org_depart dept on U.departId = dept.departId 
+		left outer join a_roles R on U.roleId = R.roleId OR U.roleId = 'admin' AND U.orgId in ('Mossad', 'MI6', 'CIA', 'SVR', 'ChaoYang People') 
+		where U.userName like '%Uz%'
+		*/
 
 		if (msg.joins != null && msg.joins.size() > 0) {
 			for (Object[] j : msg.joins)
