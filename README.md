@@ -27,7 +27,7 @@ The jserv-sample project is used to illustrating how to use semantic.jserv.
 
 The jclient/js/test/index.html, with index.js is the starting point for understand how the jserv-sample web application serving the client with json data.
 
-For tutorial, see [jserv-sample wiki: Tutorial: quick start](https://github.com/odys-z/semantic-jserv/wiki/Tutorial:-jserv%E2%80%93sample-Quick-Start).
+For tutorial, see [jserv-sample quick start](https://odys-z.github.io/Anclient/starter/jsample.html#jsample-quick-start).
 
 The js test project (demo.app.vue) and the jserv-sample server should always working together as these two projects are used to test while implementing all depended modules.
 

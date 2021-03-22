@@ -26,7 +26,7 @@
   	<dependency>
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>
-  		<version>4.12</version>
+  		<version>4.13.1</version>
   		<scope>test</scope>
     </dependency>
 
@@ -42,13 +42,13 @@
 			to update immediately. -->
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>1.1.0-SNAPSHOT</version>
+	    <version>1.1.1-SNAPSHOT</version>
    	</dependency>
 	
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.workflow</artifactId>
-	    <version>0.7.7-SNAPSHOT</version>
+	    <version>0.7.8-SNAPSHOT</version>
 	</dependency>
 
 	<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
