@@ -86,7 +86,7 @@
 //	}
 //	
 //	@SuppressWarnings("unused")
-//	private String vestion = "1.0";
+//	private String version = "1.0";
 //	int seq;
 //	public int seq() { return seq; }
 //
