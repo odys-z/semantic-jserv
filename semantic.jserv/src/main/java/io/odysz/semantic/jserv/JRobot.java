@@ -21,9 +21,8 @@ public class JRobot implements IUser {
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 
-	@Override public String sessionId() { return null; }
-
 	@Override public void touch() { touched = System.currentTimeMillis(); } 
+
 	@Override public long touchedMs() { return touched; } 
 
 	@Override public String uid() { return "jrobot"; }
@@ -34,9 +33,9 @@ public class JRobot implements IUser {
 
 	@Override public IUser logAct(String funcName, String funcId) { return this; }
 
-	@Override public String sessionKey() { return null; }
+	@Override public String sessionId() { return null; }
 
-	@Override public IUser sessionKey(String skey) { return null; }
+	@Override public IUser sessionId(String skey) { return null; }
 
 	@Override public IUser notify(Object note) throws TransException { return null; }
 

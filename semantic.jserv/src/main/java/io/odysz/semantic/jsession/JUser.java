@@ -4,14 +4,12 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import org.xml.sax.SAXException;
 
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.LangExt;
-import io.odysz.common.Radix64;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
@@ -91,7 +89,7 @@ public class JUser extends SemanticObject implements IUser {
 		}
 	}
 
-	private static Random random = new Random();
+//	private static Random random = new Random();
 
 	/**Constructor for session login
 	 * @param uid user Id
@@ -157,19 +155,19 @@ public class JUser extends SemanticObject implements IUser {
 		return this;
 	}
 
-	public String sessionId() {
-		if (ssid == null)
-			ssid = randomId();
+//	public String sessionId() {
+//		if (ssid == null)
+//			ssid = randomId();
+//		return ssid;
+//	}
+
+	@Override
+	public String sessionId() { 
 		return ssid;
 	}
 
 	@Override
-	public String sessionKey() { 
-		return ssid;
-	}
-
-	@Override
-	public IUser sessionKey(String skey) {
+	public IUser sessionId(String skey) {
 		return (IUser) put("s-key", skey);
 	}
 
@@ -213,9 +211,9 @@ public class JUser extends SemanticObject implements IUser {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
 
-	private static String randomId() {
-		return String.format("%s%s",
-				Radix64.toString(random.nextInt()),
-				Radix64.toString(random.nextInt()));
-	}
+//	private static String randomId() {
+//		return String.format("%s%s",
+//				Radix64.toString(random.nextInt()),
+//				Radix64.toString(random.nextInt()));
+//	}
 }

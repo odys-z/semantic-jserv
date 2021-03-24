@@ -154,7 +154,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		}
 	}
 
-	/**@param anHeader
+	/**FIXME where is token verification?
+	 * @param anHeader
 	 * @return {@link JUser} if succeed, which can be used for db logging
 	 * - use this to load functions, etc.
 	 * @throws SsException Session checking failed.
@@ -259,7 +260,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					String ssid = (String) header.ssid();
 					String iv64 = sessionBody.md("iv_pswd");
 					String newPswd = sessionBody.md("pswd");
-					usr.sessionKey(ssid);
+					usr.sessionId(ssid);
 
 					Utils.logi("new pswd: %s",
 						AESHelper.decrypt(newPswd, usr.sessionId(), AESHelper.decode64(iv64)));
@@ -300,19 +301,15 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					if (rs.beforeFirst().next()) {
 						String iv = rs.getString("iv");
 						if (!LangExt.isEmpty(iv))
-							throw new SemanticException("Can't update pswd, because IV is not allowed to change.");
+							throw new SemanticException("Can't update pswd, because it is not allowed to change.");
 					}
 					
-					sctx.select(usrMeta.tbl, "u")
-						// .rs(sctx.instancontxt(msg.conn(), usr));
-						.rs(sctx.instancontxt(sctx.basiconnId(), jrobot));
-				
 					// set a new pswd
-					Utils.logi("intialize pswd: %s",
-						AESHelper.decrypt(newPswd, jrobot.sessionId(), AESHelper.decode64(iv64)));
+					String pswd2 = AESHelper.decrypt(newPswd, jrobot.sessionId(), AESHelper.decode64(iv64));
+					Utils.logi("intialize pswd: %s", pswd2);
 
 					sctx.update(usrMeta.tbl, jrobot)
-						.nv(usrMeta.pswd, newPswd)
+						.nv(usrMeta.pswd, pswd2)
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, header.logid())
 						.u(sctx.instancontxt(sctx.basiconnId(), jrobot));
