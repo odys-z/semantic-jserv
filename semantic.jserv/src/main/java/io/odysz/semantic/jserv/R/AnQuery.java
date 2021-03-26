@@ -178,6 +178,13 @@ public class AnQuery extends ServPort<AnQueryReq> {
 		return selct;
 	}
 
+	/**Query with help of {@link #buildSelct(AnQueryReq, IUser)}.
+	 * @param msg
+	 * @param usr
+	 * @return result set
+	 * @throws SQLException
+	 * @throws TransException
+	 */
 	public static AnResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = buildSelct(msg, usr);
 		SemanticObject s = selct.rs(st.instancontxt(msg.conn(), usr));

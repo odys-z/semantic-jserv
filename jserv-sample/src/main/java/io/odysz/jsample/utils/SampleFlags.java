@@ -7,4 +7,5 @@ public class SampleFlags {
 	public static final boolean cheapflow = true;
 
 	public static final boolean user = true;
+	public static final boolean xvisual = true;
 }
