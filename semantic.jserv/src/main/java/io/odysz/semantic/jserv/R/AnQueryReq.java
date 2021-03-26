@@ -8,6 +8,8 @@ import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.transact.sql.Query.Ix;
 
 /**Query Request Body Item.<br>
+ * Included are information of RDBMS query information,
+ * table, joins, conditions, groups, orders, etc.
  * @author odys-z@github.com
  */
 public class AnQueryReq extends AnsonBody {

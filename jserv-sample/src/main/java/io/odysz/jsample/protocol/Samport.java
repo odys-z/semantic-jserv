@@ -19,7 +19,8 @@ public enum Samport implements IPort {
 	/**workflow port, see {@link io.odysz.sworkflow.CheapEngin} */
 	cheapflow("cheapflow.samplev11"), 
 	/** sample servlet tools.serv */
-	tools("tools.serv11");
+	tools("tools.serv"),
+	vec3("vec3.serv");
 
 	static {
 		JSONAnsonListener.registFactory(Samport.class, 
