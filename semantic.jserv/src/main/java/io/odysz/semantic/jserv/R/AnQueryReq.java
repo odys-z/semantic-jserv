@@ -52,12 +52,12 @@ public class AnQueryReq extends AnsonBody {
 
 	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String conn) {
 		super(parent, conn);
-		a = "R";
+		a = CRUD.R;
 	}
 
 	public AnQueryReq() {
 		super(null, null);
-		a = "R";
+		a = CRUD.R;
 	}
 
 	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String conn, String fromTbl, String... alias) {

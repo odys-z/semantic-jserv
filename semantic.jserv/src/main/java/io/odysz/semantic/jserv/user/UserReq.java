@@ -9,7 +9,13 @@ import io.odysz.semantics.SemanticObject;
  *
  */
 public class UserReq extends AnsonBody {
+	@SuppressWarnings("unused")
 	private String code;
+	
+	public UserReq() {
+		super(null, null);
+		code = "";
+	}
 
 	private SemanticObject data;
 	public UserReq data(String k, Object v) {
@@ -35,53 +41,4 @@ public class UserReq extends AnsonBody {
 	public Object get(String prop) {
 		return data == null ? null : data.get(prop);
 	}
-
-//	@Override
-//	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
-//		writer.beginObject()
-//			.name("conn").value(conn)
-//			.name("a").value(a)
-//			.name("code").value(code)
-//			.name("port").value(Port.user.name())
-//			.name("tabl").value(tabl);
-//		
-//		if (data != null) {
-//			writer.name("data");
-//			// JHelper.writeMap(writer, data, opts);
-//			JHelper.writeMap(writer, data.props(), opts);
-//		}
-//		
-//		writer.endObject();
-//	}
-//
-//	@Override
-//	public void fromJson(JsonReader reader) throws IOException, SemanticException {
-//		JsonToken token = reader.peek();
-//		if (token == JsonToken.BEGIN_OBJECT) {
-//			reader.beginObject();
-//			token = reader.peek();
-//			while (token != JsonToken.END_OBJECT) {
-//				String name = reader.nextName();
-//				if ("a".equals(name))
-//					a = JHelper.nextString(reader);
-//				else if ("conn".equals(name))
-//					conn = JHelper.nextString(reader);
-//				else if ("code".equals(name))
-//					code = JHelper.nextString(reader);
-//				else if ("port".equals(name))
-//					// must be Port.user, drop it
-//					JHelper.nextString(reader);
-//				else if ("tabl".equals(name))
-//					tabl = JHelper.nextString(reader);
-//				else if ("data".equals(name)) {
-//					// HashMap<String, Object> v = JHelper.readMap(reader);
-//					data = JHelper.readSemanticObj(reader);
-//				}
-//
-//				token = reader.peek();
-//			}
-//			reader.endObject();
-//		}
-//		else throw new SemanticException("Parse QueryReq failed. %s : %s", reader.getPath(), token.name());
-//	}
 }
