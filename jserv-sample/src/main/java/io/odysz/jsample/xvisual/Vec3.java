@@ -68,25 +68,17 @@ public class Vec3 extends ServPort<UserReq> {
 
 	private static final long serialVersionUID = 1L;
 
-	static DATranscxt st;
-
-	static {
-		try {
-			// this constructor can only been called after metas has been loaded
-			// (Jsingleton got a chance to initialize)
-			st = new DATranscxt("inet");
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	@Override
-	protected void onGet(AnsonMsg<UserReq> req, HttpServletResponse resp)
+	protected void onGet(AnsonMsg<UserReq> jmsg, HttpServletResponse resp)
 			throws IOException {
 		if (SampleFlags.xvisual)
 			Utils.logi("---------- x-visual/vec3.serv GET ----------");
 		try {
-			resp.getWriter().write(Html.ok("Please visit POST."));
+			UserReq jreq = jmsg.body(0);
+			if ("query".equals(jreq.a()))
+				resp.getWriter().write(Html.ok("a = xyz | vec, xyz: find posssible axis labels; vec: get vectors."));
+			else
+				resp.getWriter().write(Html.ok("Please visit POST."));
 		} finally {
 			resp.flushBuffer();
 		}
@@ -109,7 +101,9 @@ public class Vec3 extends ServPort<UserReq> {
 				rsp = xyz(jmsg, usr);
 			else if ("vec".equals(jreq.a()))
 				rsp = vectors(jmsg, usr);
-			else throw new SemanticException("request.body.a can not handled: %s", jreq.a());
+			else
+				throw new SemanticException("request.body.a can not handled: %s\n" +
+						"Only a = xyz | vec are supported. Please use GET a=query to find what's latest are supported ()", jreq.a());
 
 			write(resp, rsp);
 		} catch (SemanticException e) {
@@ -144,7 +138,8 @@ public class Vec3 extends ServPort<UserReq> {
 	protected AnsonMsg<AnsonResp> xyz(AnsonMsg<UserReq> jmsg, IUser usr)
 			throws TransException, SQLException {
 		UserReq req = jmsg.body(0);
-		SemanticObject rs = st.select("s_domain", "d")
+		DATranscxt st = getContext(req.conn());
+		SemanticObject rs = st .select("s_domain", "d")
 				.nv("title", "txt")
 				.orderby(serialsOrder) // TODO add ui order
 				.rs(st.instancontxt(req.conn(), usr));
@@ -152,18 +147,32 @@ public class Vec3 extends ServPort<UserReq> {
 		return ok((ArrayList<AnResultset>) rs.rs(0));
 	}
 
+	static DATranscxt getContext(String connId) throws SemanticException {
+		// TODO you can create a context buffer here
+		try {
+			return new DATranscxt(connId);
+		} catch (SQLException | SAXException | IOException e) {
+			throw new SemanticException("Can't create DATranscxt. Caused by: " + e.getMessage());
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	protected AnsonMsg<AnsonResp> vectors(AnsonMsg<UserReq> jmsg, IUser usr) 
 			throws TransException, SQLException {
 		UserReq req = jmsg.body(0);
+		DATranscxt st = getContext(req.conn());
+		
+		// actually a direct sql statement is more comfortable
+		// you can configure it as a dataset:
+		// select sum(val) amount, dim1 age from vector v join s_domain d on v.dim3 = d.did group by age, dim1, dim2 order by parent asc, did asc
 		SemanticObject rs = st.select("vector", "v")
-				.nv("sum(val)", "amount")   // name can be an expr - let's extend this later
+				.j("s_domain", "d", "v.dim3 = d.did)")
+				.col("sum(val)", "amount")   // name can be an expr - let's extend this later
+				.col("dim1", "age")
 
 				.groupby(serialsGroup)
-				// probably needing a new req type
-				// .groupby((String[])req.get("group"))
 
-				.orderby(serialsOrder) // TODO add ui order
+				.orderby(serialsOrder) // TODO add s_domain.ui_order
 				.rs(st.instancontxt(req.conn(), usr));
 
 		return ok((ArrayList<AnResultset>) rs.rs(0));

@@ -25,26 +25,33 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * NOTE: java code shouldn't use switch-case block on enum. That cause problem with generated class.
 	 * @author odys-z@github.com
 	 */
-	public enum Port implements IPort {  heartbeat("ping.serv11"), session("login.serv11"),
-						query("r.serv11"), update("u.serv11"),
-						insert("c.serv11"), delete("d.serv11"),
-						echo("echo.serv11"),
-						/** serv port for downloading json/xml file or uploading a file.<br>
-						 * @see {@link io.odysz.semantic.jserv.file.JFileServ}. */
-						file("file.serv11"),
-						/**Any user defined request using message body of subclass of JBody must use this port */ 
-						user("user.serv11"),
-						/** semantic tree of dataset extensions<br>
-						 * @see {@link io.odysz.semantic.ext.SemanticTree}. */
-						stree("s-tree.serv11"),
-						/** dataset extensions<br>
-						 * @see {@link io.odysz.semantic.ext.Dataset}. */
-						dataset("ds.serv11");
+	public enum Port implements IPort {  
+			heartbeat("ping.serv11"), session("login.serv11"),
+			query("r.serv11"), update("u.serv11"),
+			insert("c.serv11"), delete("d.serv11"),
+			echo("echo.serv11"),
+			/** serv port for downloading json/xml file or uploading a file.<br>
+			 * @see {@link io.odysz.semantic.jserv.file.JFileServ}. */
+			file("file.serv11"),
+			/**Any user defined request using message body of subclass of JBody must use this port */ 
+			user("user.serv11"),
+			/** semantic tree of dataset extensions<br>
+			 * @see {@link io.odysz.semantic.ext.SemanticTree}. */
+			stree("s-tree.serv11"),
+			/** dataset extensions<br>
+			 * @see {@link io.odysz.semantic.ext.Dataset}. */
+			dataset("ds.serv11");
 
 		static {
 			JSONAnsonListener.registFactory(IPort.class, 
 				(s) -> {
-						return Port.valueOf(s);
+					// return Port.valueOf(s);
+					try {
+						return defaultPortImpl.valof(s);
+					} catch (SemanticException e) {
+						e.printStackTrace();
+						return null;
+					}
 				});
 		}
 

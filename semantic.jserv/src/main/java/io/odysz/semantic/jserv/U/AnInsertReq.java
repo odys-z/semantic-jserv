@@ -24,10 +24,12 @@ public class AnInsertReq extends AnUpdateReq {
 	 */
 	public AnInsertReq(AnsonMsg<? extends AnsonBody> parent, String conn) {
 		super(parent, conn);
+		a = CRUD.C;
 	}
 	
 	public AnInsertReq cols(String[] cols) {
 		super.cols = cols;
+		a = CRUD.C;
 		return this;
 	}
 
@@ -45,22 +47,6 @@ public class AnInsertReq extends AnUpdateReq {
 		return bdItem;
 	}
 	
-//	/**Tolerate some situation and call super{@link #toJson(JsonWriter, JOpts)}.
-//	 * @see io.odysz.semantic.jserv.U.UpdateReq#toJson(com.google.gson.stream.JsonWriter, io.odysz.semantic.jprotocol.JOpts)
-//	 */
-//	public void toJson(JsonWriter writer, JOpts opts) throws IOException, SemanticException {
-//		if (cols == null && nvs != null) {
-//			// try figure out the cols and tolerate this
-//			cols = new String[nvs.size()];
-//			for (int ix = 0; ix < nvs.size(); ix++) {
-//				Object[] nv = nvs.get(ix);
-//				cols[ix] = (String)nv[0];
-//			}
-//		}
-//			
-//		super.toJson(writer, opts);
-//	}
-
 	public void valus(ArrayList<Object[]> row) throws SemanticException {
 		if (nvs != null && nvs.size() > 0)
 			throw new SemanticException("InsertReq don't support both nv() and values() been called for the same request object. User only one of them.");
