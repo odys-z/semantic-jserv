@@ -14,6 +14,7 @@ import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
@@ -148,7 +149,7 @@ public class Vec3 extends ServPort<UserReq> {
 	}
 
 	static DATranscxt getContext(String connId) throws SemanticException {
-		// TODO you can create a context buffer here
+		// TODO & FIXME you can create a context buffer here
 		try {
 			return new DATranscxt(connId);
 		} catch (SQLException | SAXException | IOException e) {
@@ -156,7 +157,6 @@ public class Vec3 extends ServPort<UserReq> {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	protected AnsonMsg<AnsonResp> vectors(AnsonMsg<UserReq> jmsg, IUser usr) 
 			throws TransException, SQLException {
 		UserReq req = jmsg.body(0);
@@ -169,12 +169,57 @@ public class Vec3 extends ServPort<UserReq> {
 				.j("s_domain", "d", "v.dim3 = d.did)")
 				.col("sum(val)", "amount")   // name can be an expr - let's extend this later
 				.col("dim1", "age")
-
 				.groupby(serialsGroup)
-
 				.orderby(serialsOrder) // TODO add s_domain.ui_order
 				.rs(st.instancontxt(req.conn(), usr));
 
-		return ok((ArrayList<AnResultset>) rs.rs(0));
+		return ok((AnResultset)rs.rs(0));
+	}
+
+	static String cube_x = "x.cube.vec3";
+	static String cube_z = "z.cube.vec3";
+	static String cube_y = "xzy.cube.vec3"; // only debugging
+
+	protected AnsonMsg<XChartResp> cubes(AnsonMsg<UserReq> jmsg, IUser usr) 
+			throws TransException, SQLException {
+		UserReq req = jmsg.body(0);
+
+		String[] decodes = null;
+		AnResultset x = DatasetCfg.loadDataset(req.conn(), cube_x,
+				-1, -1, decodes); // no paging
+		AnResultset z = DatasetCfg.loadDataset(req.conn(), cube_z,
+				-1, -1, decodes);
+	
+		/* TODO case_expression of select_element not implemented in semantic.transact
+		 * then it can be queried like:
+		DATranscxt st = getContext(req.conn());
+		SemanticObject y = st.select("vector", "v")
+				.j("s_domain", "x", "v.dim3 = x.did)")
+				.j("s_domain", "z", "v.dim7 = z.did)")
+				.col("sum(val)", "amount")   // name can be an expr - let's extend this later
+				.col("dim1", "age")
+				.groupby(cubeGroups)
+				.orderby(cubeOrder)
+				.rs(st.instancontxt(req.conn(), usr));
+		 */
+
+		decodes = caseElem(x, z);
+		AnResultset y = DatasetCfg.loadDataset(req.conn(), cube_z,
+				-1, -1, decodes);
+
+		// tested only for sqlite
+		XChartResp cube = new XChartResp(x, z, y);
+		return new AnsonMsg<XChartResp>(Samport.vec3).body(cube);
+	}
+
+	/**Get case-when select element string - a temporary solution
+	 * @param x
+	 * @param z
+	 * @return
+	 */
+	String[] caseElem(AnResultset x, AnResultset z) {
+		String casex = "case dim3 when 'GICS-101010' then 0 when 'GICS-151010' then 1 else 2 end";
+		String casez = "case dim7 when 'own-1' then 0 when 'own-2' then 1 when 'own-3' then 2 when 'own-4' then 3 else 4 end";
+		return new String[] {casex, casez};
 	}
 }
