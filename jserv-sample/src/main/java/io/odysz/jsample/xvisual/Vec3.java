@@ -97,11 +97,13 @@ public class Vec3 extends ServPort<UserReq> {
 
 			UserReq jreq = jmsg.body(0);
 
-			AnsonMsg<AnsonResp> rsp = null;
+			AnsonMsg<? extends AnsonResp> rsp = null;
 			if ("xyz".equals(jreq.a()))
 				rsp = xyz(jmsg, usr);
 			else if ("vec".equals(jreq.a()))
 				rsp = vectors(jmsg, usr);
+			else if ("cube".equals(jreq.a()))
+				rsp = cubes(jmsg, usr);
 			else
 				throw new SemanticException("request.body.a can not handled: %s\n" +
 						"Only a = xyz | vec are supported. Please use GET a=query to find what's latest are supported ()", jreq.a());
@@ -176,22 +178,22 @@ public class Vec3 extends ServPort<UserReq> {
 		return ok((AnResultset)rs.rs(0));
 	}
 
+	static String cube_legend = "legend.cube.vec3";
+	static String cube_max = "max.cube.vec3";
 	static String cube_x = "x.cube.vec3";
 	static String cube_z = "z.cube.vec3";
 	static String cube_y = "xzy.cube.vec3"; // only debugging
 
+	@SuppressWarnings({ "unchecked", "static-access" })
 	protected AnsonMsg<XChartResp> cubes(AnsonMsg<UserReq> jmsg, IUser usr) 
 			throws TransException, SQLException {
 		UserReq req = jmsg.body(0);
 
-		String[] decodes = null;
-		AnResultset x = DatasetCfg.loadDataset(req.conn(), cube_x,
-				-1, -1, decodes); // no paging
-		AnResultset z = DatasetCfg.loadDataset(req.conn(), cube_z,
-				-1, -1, decodes);
+		AnResultset x = DatasetCfg.loadDataset(req.conn(), cube_x);
+		AnResultset z = DatasetCfg.loadDataset(req.conn(), cube_z);
 	
-		/* TODO case_expression of select_element not implemented in semantic.transact
-		 * then it can be queried like:
+		/* TODO Case_expression of select_element is not implemented in semantic.transact.
+		 * It can be queried like:
 		DATranscxt st = getContext(req.conn());
 		SemanticObject y = st.select("vector", "v")
 				.j("s_domain", "x", "v.dim3 = x.did)")
@@ -203,13 +205,18 @@ public class Vec3 extends ServPort<UserReq> {
 				.rs(st.instancontxt(req.conn(), usr));
 		 */
 
-		decodes = caseElem(x, z);
-		AnResultset y = DatasetCfg.loadDataset(req.conn(), cube_z,
-				-1, -1, decodes);
+		AnResultset legend = DatasetCfg.loadDataset(req.conn(), cube_legend); 
+		AnResultset maxmin = DatasetCfg.loadDataset(req.conn(), cube_max); 
+
+		AnResultset y = DatasetCfg.loadDataset(req.conn(), cube_y, -1, -1, caseElem(x, z));
 
 		// tested only for sqlite
-		XChartResp cube = new XChartResp(x, z, y);
-		return new AnsonMsg<XChartResp>(Samport.vec3).body(cube);
+		XChartResp cube = new XChartResp(x, z)
+				.axis("x", "z", "y")
+				.legend(legend)
+				.range(maxmin)
+				.vector(y);
+		return (AnsonMsg<XChartResp>) new AnsonMsg<XChartResp>().ok(Samport.vec3, cube);
 	}
 
 	/**Get case-when select element string - a temporary solution
@@ -218,7 +225,8 @@ public class Vec3 extends ServPort<UserReq> {
 	 * @return
 	 */
 	String[] caseElem(AnResultset x, AnResultset z) {
-		String casex = "case dim3 when 'GICS-101010' then 0 when 'GICS-151010' then 1 else 2 end";
+		// TODO iterate through x, z to generate case statement
+		String casex = "case dim3 when 'GICS-10101010' then 0 when 'GICS-15102050' then 1 else 2 end";
 		String casez = "case dim7 when 'own-1' then 0 when 'own-2' then 1 when 'own-3' then 2 when 'own-4' then 3 else 4 end";
 		return new String[] {casex, casez};
 	}
