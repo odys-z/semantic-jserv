@@ -226,7 +226,7 @@ public class Vec3 extends ServPort<UserReq> {
 	 */
 	String[] caseElem(AnResultset x, AnResultset z) {
 		// TODO iterate through x, z to generate case statement
-		String casex = "case dim3 when 'GICS-10101010' then 0 when 'GICS-15102050' then 1 else 2 end";
+		String casex = "case dim3 when 'GICS-15103020' then 0 when 'GICS-15101010' then 1 else 2 end";
 		String casez = "case dim7 when 'own-1' then 0 when 'own-2' then 1 when 'own-3' then 2 when 'own-4' then 3 else 4 end";
 		return new String[] {casex, casez};
 	}
