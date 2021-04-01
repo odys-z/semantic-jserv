@@ -146,19 +146,16 @@
 
   	<c>
   	<!-- for debug: select count(vid) cnt, dim7, dim1 age, z.label ownership, x.label indust, sum(val)
-	select count(vid) cnt, 
-	case dim3 when 'GICS-101010' then 0 when 'GICS-151010' then 1 else 2 end as x,
-	dim7,
-	case dim7 when 'own-1' then 0 when 'own-2' then 1 when 'own-3' then 2 when 'own-4' then 3 else 4 end as z, 
-	val amount, 
-  	dim1 age, dim7 ownership
-	z.label ownership, 
-	x.label indust, sum(val) amount
-	from vector v 
-	join s_domain x on v.dim3 = x.did 
-	join s_domain z on v.dim7 = z.did 
-	group by age, dim3, ownership
-	order by x.did asc, z.did asc
+		select
+		case dim3 when 'GICS-10101010' then 0 when 'GICS-10101050' then 1 else 2 end as x, 
+		case dim7 when 'own-1' then 0 when 'own-2' then 1 when 'own-3' then 2 when 'own-4' then 3 else 4 end as z, 
+		sum(ifnull(val, 0)) amount
+		from s_domain x 
+		left join vector v on v.dim3 = x.did 
+		join s_domain z on v.dim7 = z.did
+		where x.tag = 'GICS'
+		group by dim1, dim3, dim7
+		order by x.did asc, z.did asc
   	-->
   		<sk>xzy.cube.vec3</sk>
   		<mysql></mysql>
