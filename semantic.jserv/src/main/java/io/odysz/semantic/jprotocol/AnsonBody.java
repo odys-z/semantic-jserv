@@ -4,9 +4,9 @@ import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
 
 public abstract class AnsonBody extends Anson {
-	public static String[] jcondt(String logic, String field, String v, String tabl) {
-		return new String[] {logic, field, v, tabl};
-	}
+//	public static String[] jcondt(String logic, String field, String v, String tabl) {
+//		return new String[] {logic, field, v, tabl};
+//	}
 
 	@AnsonField(ref=AnsonField.enclosing)
 	protected AnsonMsg<? extends AnsonBody> parent;
