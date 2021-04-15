@@ -89,8 +89,6 @@ public class JUser extends SemanticObject implements IUser {
 		}
 	}
 
-//	private static Random random = new Random();
-
 	/**Constructor for session login
 	 * @param uid user Id
 	 * @param pswd pswd in DB (plain text)
@@ -155,12 +153,6 @@ public class JUser extends SemanticObject implements IUser {
 		return this;
 	}
 
-//	public String sessionId() {
-//		if (ssid == null)
-//			ssid = randomId();
-//		return ssid;
-//	}
-
 	@Override
 	public String sessionId() { 
 		return ssid;
@@ -210,10 +202,4 @@ public class JUser extends SemanticObject implements IUser {
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
-
-//	private static String randomId() {
-//		return String.format("%s%s",
-//				Radix64.toString(random.nextInt()),
-//				Radix64.toString(random.nextInt()));
-//	}
 }
