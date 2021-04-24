@@ -260,7 +260,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					String ssid = (String) header.ssid();
 					String iv64 = sessionBody.md("iv_pswd");
 					String newPswd = sessionBody.md("pswd");
-					usr.sessionId(ssid);
+					// usr.sessionId(ssid);
 
 					Utils.logi("new pswd: %s",
 						AESHelper.decrypt(newPswd, usr.sessionId(), AESHelper.decode64(iv64)));

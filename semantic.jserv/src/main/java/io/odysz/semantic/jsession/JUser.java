@@ -155,21 +155,15 @@ public class JUser extends SemanticObject implements IUser {
 		return this;
 	}
 
-//	public String sessionId() {
-//		if (ssid == null)
-//			ssid = randomId();
-//		return ssid;
-//	}
-
 	@Override
 	public String sessionId() { 
 		return ssid;
 	}
 
-	@Override
-	public IUser sessionId(String skey) {
-		return (IUser) put("s-key", skey);
-	}
+//	@Override
+//	public IUser sessionId(String skey) {
+//		return (IUser) put("s-key", skey);
+//	}
 
 	/**Add notifyings
 	 * @param n
@@ -209,6 +203,16 @@ public class JUser extends SemanticObject implements IUser {
 	@Override
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
+	}
+
+	@Override
+	public IUser sessionKey(String string) {
+		return null;
+	}
+
+	@Override
+	public String sessionKey() {
+		return null;
 	}
 
 //	private static String randomId() {
