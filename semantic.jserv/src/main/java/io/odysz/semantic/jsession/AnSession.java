@@ -94,7 +94,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * To configure root key in tomcat, in context.xml, <pre>
 	&lt;Context&gt;
 		&lt;Parameter name="io.oz.root-key" value="*************" override="false"/&gt;
-	&lt;/Context&gt;&lt;/pre>
+	&lt;/Context&gt;</pre>
 	 * @param daSctx
 	 * @param ctx context for loading context.xml/resource
 	 * @throws SAXException something wrong with configuration files
@@ -195,7 +195,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	}
 
 
-	private void jsonResp(AnsonMsg<AnSessionReq> msg, HttpServletResponse response) throws IOException {
+	protected void jsonResp(AnsonMsg<AnSessionReq> msg, HttpServletResponse response) throws IOException {
 		try {
 			String connId = Connects.defltConn();
 			if (connId == null || connId.trim().length() == 0)
@@ -320,7 +320,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						lock.lock();
 						users.remove(ssid);
 						lock.unlock();
-						write(response, ok("You must relogin!"));
+						write(response, ok("You must re-login!"));
 					}
 					else {
 						write(response, ok("Initializing password successed."));
