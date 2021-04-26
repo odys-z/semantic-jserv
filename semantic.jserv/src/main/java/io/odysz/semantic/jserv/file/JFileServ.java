@@ -92,10 +92,6 @@ public class JFileServ extends ServPort<FileReq> {
 				jtxt(resp, msg.body(0).file());
 			}
 
-
-			// onPost(msg, resp);
-
-
 			resp.flushBuffer();
 		} catch (SemanticException | AnsonException | SsException | SQLException e) {
 			if (ServFlags.query)

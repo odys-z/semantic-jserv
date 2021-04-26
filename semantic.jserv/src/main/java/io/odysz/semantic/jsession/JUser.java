@@ -25,7 +25,7 @@ import io.odysz.transact.x.TransException;
  * and is used for semantics processing like finger print, etc.</p>
  * <p>The logging connection is configured in configs.xml/k=log-connId.</p>
  * <p>A subclass can be used for handling serv without login.</p>
- * 
+ *
  * @author odys-z@github.com
  */
 public class JUser extends SemanticObject implements IUser {
@@ -89,23 +89,21 @@ public class JUser extends SemanticObject implements IUser {
 		}
 	}
 
-//	private static Random random = new Random();
-
 	/**Constructor for session login
 	 * @param uid user Id
 	 * @param pswd pswd in DB (plain text)
 	 * @param usrName
-	 * @throws TransException 
+	 * @throws TransException
 	 */
 	public JUser(String uid, String pswd, String usrName) throws SemanticException {
 		this.uid = uid;
 		this.pswd = pswd;
 		this.usrName = usrName;
-		
+
 		String rootK = DATranscxt.key("user-pswd");
 		if (rootK == null)
 			throw new SemanticException("Session rootKey not initialized. Have checked context prameter like server's context.xml/Parameter/name='io.oz.root-key'?");
-		
+
 		// decrypt db-pswd-cipher with sys-key and db-iv => db-pswd
 //		try {
 //			if (iv == null || iv.trim().length() == 0) {
@@ -156,7 +154,7 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	@Override
-	public String sessionId() { 
+	public String sessionId() {
 		return ssid;
 	}
 
@@ -168,7 +166,7 @@ public class JUser extends SemanticObject implements IUser {
 	/**Add notifyings
 	 * @param n
 	 * @return this
-	 * @throws TransException 
+	 * @throws TransException
 	 */
 	public JUser notify(Object note) throws TransException {
 		return (JUser) add("_notifies_", note);
@@ -214,10 +212,4 @@ public class JUser extends SemanticObject implements IUser {
 	public String sessionKey() {
 		return null;
 	}
-
-//	private static String randomId() {
-//		return String.format("%s%s",
-//				Radix64.toString(random.nextInt()),
-//				Radix64.toString(random.nextInt()));
-//	}
 }

@@ -45,7 +45,6 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		static {
 			JSONAnsonListener.registFactory(IPort.class, 
 				(s) -> {
-					// return Port.valueOf(s);
 					try {
 						return defaultPortImpl.valof(s);
 					} catch (SemanticException e) {
@@ -106,10 +105,6 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	int seq;
 	public int seq() { return seq; }
 
-	// TODO Test Samport
-	// TODO Test Samport
-	// TODO Test Samport
-	// TODO Test Samport
 	IPort port;
 	public IPort port() { return port; }
 

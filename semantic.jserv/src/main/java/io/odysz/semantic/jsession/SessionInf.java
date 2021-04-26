@@ -18,4 +18,5 @@ public class SessionInf extends Anson {
 	
 	public String ssid() { return ssid; }
 	public String uid() { return uid; }
+	public String roleId() { return roleId; }
 }
