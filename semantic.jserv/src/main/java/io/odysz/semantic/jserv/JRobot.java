@@ -35,12 +35,13 @@ public class JRobot implements IUser {
 
 	@Override public String sessionId() { return null; }
 
-	@Override public IUser sessionId(String skey) { return null; }
-
 	@Override public IUser notify(Object note) throws TransException { return null; }
 
 	@Override public List<Object> notifies() { return null; }
 
 	@Override public TableMeta meta() { return null; }
 
+	@Override public IUser sessionKey(String string) { return null; }
+
+	@Override public String sessionKey() { return null; }
 }

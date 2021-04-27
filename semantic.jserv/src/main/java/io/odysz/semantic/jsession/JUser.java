@@ -25,7 +25,7 @@ import io.odysz.transact.x.TransException;
  * and is used for semantics processing like finger print, etc.</p>
  * <p>The logging connection is configured in configs.xml/k=log-connId.</p>
  * <p>A subclass can be used for handling serv without login.</p>
- * 
+ *
  * @author odys-z@github.com
  */
 public class JUser extends SemanticObject implements IUser {
@@ -93,17 +93,17 @@ public class JUser extends SemanticObject implements IUser {
 	 * @param uid user Id
 	 * @param pswd pswd in DB (plain text)
 	 * @param usrName
-	 * @throws TransException 
+	 * @throws TransException
 	 */
 	public JUser(String uid, String pswd, String usrName) throws SemanticException {
 		this.uid = uid;
 		this.pswd = pswd;
 		this.usrName = usrName;
-		
+
 		String rootK = DATranscxt.key("user-pswd");
 		if (rootK == null)
 			throw new SemanticException("Session rootKey not initialized. Have checked context prameter like server's context.xml/Parameter/name='io.oz.root-key'?");
-		
+
 		// decrypt db-pswd-cipher with sys-key and db-iv => db-pswd
 //		try {
 //			if (iv == null || iv.trim().length() == 0) {
@@ -154,19 +154,19 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	@Override
-	public String sessionId() { 
+	public String sessionId() {
 		return ssid;
 	}
 
-	@Override
-	public IUser sessionId(String skey) {
-		return (IUser) put("s-key", skey);
-	}
+//	@Override
+//	public IUser sessionId(String skey) {
+//		return (IUser) put("s-key", skey);
+//	}
 
 	/**Add notifyings
 	 * @param n
 	 * @return this
-	 * @throws TransException 
+	 * @throws TransException
 	 */
 	public JUser notify(Object note) throws TransException {
 		return (JUser) add("_notifies_", note);
@@ -201,5 +201,15 @@ public class JUser extends SemanticObject implements IUser {
 	@Override
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
+	}
+
+	@Override
+	public IUser sessionKey(String string) {
+		return null;
+	}
+
+	@Override
+	public String sessionKey() {
+		return null;
 	}
 }
