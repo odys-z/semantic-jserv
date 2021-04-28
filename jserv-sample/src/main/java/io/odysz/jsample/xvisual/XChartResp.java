@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import io.odysz.anson.AnsonField;
-import io.odysz.antson.utils.AnsonNvs;
+import io.odysz.anson.utils.AnsonNvs;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonResp;
 

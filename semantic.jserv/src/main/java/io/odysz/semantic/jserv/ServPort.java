@@ -67,8 +67,9 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		} catch (Throwable t) {
 			t.printStackTrace();
 			write(resp, err(MsgCode.exGeneral, "Internal error at sever side."));
+		} finally {
+			in.close();
 		}
-		in.close();
 	}
 
 	@Override
