@@ -3,6 +3,7 @@ package io.odysz.semantic.jserv.echo;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -10,6 +11,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
 
+@WebServlet(description = "service echo", urlPatterns = { "/echo.serv" })
 public class Echo extends ServPort<EchoReq> {
 	public Echo() { super(Port.echo); }
 
