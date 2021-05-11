@@ -32,7 +32,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			echo("echo.serv11"),
 			/** serv port for downloading json/xml file or uploading a file.<br>
 			 * @see {@link io.odysz.semantic.jserv.file.JFileServ}. */
-			file("file.serv11"),
+			file("file.serv"),
 			/**Any user defined request using message body of subclass of JBody must use this port */ 
 			user("user.serv11"),
 			/** semantic tree of dataset extensions<br>
