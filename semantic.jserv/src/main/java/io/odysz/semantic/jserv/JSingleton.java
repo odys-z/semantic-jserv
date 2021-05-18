@@ -39,9 +39,10 @@ public class JSingleton {
 
 		ServletContext ctx = evt.getServletContext();
 		rootINF = ctx.getRealPath("/WEB-INF");
+		String root = ctx.getRealPath(".");
 		Connects.init(rootINF);
 		Configs.init(rootINF);
-		DATranscxt.configRoot(rootINF, rootINF);
+		DATranscxt.configRoot(rootINF, root);
 		DATranscxt.key("user-pswd", ctx.getInitParameter("io.oz.root-key"));
 		
 		try {
