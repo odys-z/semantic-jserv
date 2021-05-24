@@ -131,7 +131,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	
 	protected AnsonMsg<AnsonResp> err(MsgCode code, String templ, Object ... args) {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, code);
-		AnsonResp bd = new AnsonResp(msg, String.format(templ, args));
+		AnsonResp bd = new AnsonResp(msg, String.format(templ == null ? "" : templ, args));
 		return msg.body(bd);
 	}
 	

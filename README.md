@@ -62,4 +62,23 @@ Currently a java client and a js client together with [easyUI](https://www.jeasy
 
 The js client together with a vue client is also in tense developing.
 
-#### TODO merge wiki with docs
+# Issues
+
+1. Can't reserve file name for uploaded files.
+
+If the orginal file is referenced each other, this relationship will be erased.
+
+Example: uploaded ex.gltf & ex.bin
+
+```
+attId  |attName        |uri                                   |busiTbl |busiId |oper  |optime              |
+-------|---------------|--------------------------------------|--------|-------|------|--------------------|
+00000i |xv-import.gltf |uploads/a_users/00000i xv-import.gltf |a_users |admin  |admin |2021-05-14 10:22:32 |
+00000j |xv-import.bin  |uploads/a_users/00000j xv-import.bin  |a_users |admin  |admin |2021-05-14 10:22:32 |
+```
+
+files are saved as
+```
+00000i xv-import.gltf
+00000j xv-import.bin
+```

@@ -6,6 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -23,6 +24,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.LangExt;
+import io.odysz.common.Radix64;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.smtype;
@@ -210,6 +212,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					IUser login = loadUser(sessionBody, connId);
 					if (login.login(sessionBody)) {
 						lock.lock();
+						login.sessionId(allocateSsid());
 						users.put(login.sessionId(), login);
 						lock.unlock();
 						
@@ -344,6 +347,14 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			write(response, err(MsgCode.exGeneral, e.getMessage()));
 		} finally {
 		}
+	}
+
+	protected String allocateSsid() {
+		Random random = new Random();
+		String ssid = Radix64.toString(random.nextInt(), 8);
+		while (users.containsKey(ssid))
+			ssid = Radix64.toString(random.nextInt(), 8);
+		return ssid;
 	}
 
 	/**Load user instance form DB table (name = {@link UserMeta#tbl}).

@@ -41,7 +41,7 @@ import io.odysz.semantics.x.SemanticException;
  * @author odys-z@github.com
  */
 @MultipartConfig
-@WebServlet(description = "Serving text files", urlPatterns = { "/file.serv" })
+@WebServlet(description = "Serving text files", urlPatterns = { "/file.serv11" })
 public class JFileServ extends ServPort<FileReq> {
 	public JFileServ() {
 		super(Port.file);
@@ -59,6 +59,8 @@ public class JFileServ extends ServPort<FileReq> {
 	protected void onGet(AnsonMsg<FileReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		try {
+			// FIXME not verification?
+
 			String a = msg.body(0).a();
 			if ("jx".equals(a))
 				jtxt(resp, msg.body(0).file());
