@@ -11,11 +11,14 @@ import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantics.x.SemanticException;
 
-/**Sample project's prots extension */
+/**Sample project's prots extension
+ * This enum replaced jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}. */
 public enum Samport implements IPort {
+	heartbeat("ping.serv11"), session("login.serv11"),
 	/**port provided by {@link io.odysz.jsample.SysMenu} */
 	menu("menu.serv11"),
 	example("example.serv11"),
+	file("file.serv11"),
 	/**workflow port, see {@link io.odysz.sworkflow.CheapEngin} */
 	cheapflow("cheapflow.samplev11"), 
 	/** sample servlet tools.serv */

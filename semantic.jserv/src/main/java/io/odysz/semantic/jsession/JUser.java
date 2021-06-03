@@ -158,10 +158,11 @@ public class JUser extends SemanticObject implements IUser {
 		return ssid;
 	}
 
-//	@Override
-//	public IUser sessionId(String skey) {
-//		return (IUser) put("s-key", skey);
-//	}
+	@Override
+	public IUser sessionId(String sessionId) {
+		this.ssid = sessionId;
+		return this;
+	}
 
 	/**Add notifyings
 	 * @param n
@@ -204,8 +205,9 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	@Override
-	public IUser sessionKey(String string) {
-		return null;
+	public IUser sessionKey(String skey) {
+		// ssid = skey;
+		return this;
 	}
 
 	@Override
