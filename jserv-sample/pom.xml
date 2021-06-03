@@ -34,7 +34,7 @@
     	<groupId>javax.servlet</groupId>
     	<artifactId>javax.servlet-api</artifactId>
     	<version>3.0.1</version>
-    </dependency> 
+    </dependency>
 
    	<dependency>
 		<!-- As sonatype SNAPSHOT is updating on a daily base, you may update this with:
@@ -44,7 +44,7 @@
 	    <artifactId>semantic.jserv</artifactId>
 	    <version>[1.1.1,)</version>
    	</dependency>
-	
+
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.workflow</artifactId>
@@ -70,7 +70,7 @@
 	    	see https://stackoverflow.com/questions/30108053/can-i-configure-maven-to-ignore-test-scoped-dependencies-if-im-skipping-runni
 	    <scope>provided</scope>
 		 -->
-	</dependency>	
+	</dependency>
   </dependencies>
 
   <scm>
@@ -109,7 +109,7 @@
 	        <artifactId>tomcat7-maven-plugin</artifactId>
 	        <version>2.5</version>
 		</plugin>
-		
+
 		<plugin>
 			<!-- http://ykyuen.wordpress.com/2009/10/30/maven-dependency-on-jarwar-package
 				https://pragmaticintegrator.wordpress.com/2010/10/22/using-a-war-module-as-dependency-in-maven/
@@ -122,7 +122,7 @@
 				<attachClasses>true</attachClasses>
 				<!-- Also export jar classes.
 					jserv-sample is a web application, but the jclient.java needing the protocols.
-					Referencing a war need some tricks. see answer by Morteza Malvandi 
+					Referencing a war need some tricks. see answer by Morteza Malvandi
 					https://stackoverflow.com/questions/31020038/how-can-i-add-war-file-to-another-java-web-application-dependencies
 				-->
                 <classesClassifier>classes</classesClassifier>
@@ -148,6 +148,9 @@
 		<plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-javadoc-plugin</artifactId>
+		  <configuration>
+			  <additionalparam>-Xdoclint:none</additionalparam>
+		  </configuration>
 	      <version>2.9.1</version>
 	      <executions>
 	        <execution>

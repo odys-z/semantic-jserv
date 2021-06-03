@@ -22,10 +22,11 @@ import io.odysz.semantics.x.SemanticException;
  */
 public class AnsonMsg <T extends AnsonBody> extends Anson {
 	/**Port is the conceptual equivalent to the SOAP port, the service methods' group.<br>
+	 * Client must use enum name, e.g. heartbeat, session in json. url are explained at server side.
 	 * NOTE: java code shouldn't use switch-case block on enum. That cause problem with generated class.
 	 * @author odys-z@github.com
 	 */
-	public enum Port implements IPort {  
+	public static enum Port implements IPort {  
 			heartbeat("ping.serv11"), session("login.serv11"),
 			query("r.serv11"), update("u.serv11"),
 			insert("c.serv11"), delete("d.serv11"),
@@ -57,7 +58,10 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		private String url;
 		@Override public String url() { return url; }
 		Port(String url) { this.url = url; }
-		@Override public IPort valof(String pname) { return valueOf(pname); }
+		@Override
+		public IPort valof(String pname) {
+			return valueOf(pname);
+		}
 
 		@Override
 		public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
