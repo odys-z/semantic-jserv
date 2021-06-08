@@ -6,7 +6,7 @@
   <artifactId>jserv-quiz</artifactId>
   <packaging>war</packaging>
   <version>0.0.1-SNAPSHOT</version>
-  <name>jserv-quiz, jserv serice for react quiz.</name>
+  <name>jserv-quiz, jserv for react quiz.</name>
   <url>http://github.com/odys-z/semantic-jserv</url>
 
   <properties>
