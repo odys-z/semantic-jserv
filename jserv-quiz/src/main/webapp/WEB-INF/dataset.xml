@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataset>
+<t id="ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
+	<c>
+	  	<sk>sys.menu.jserv-quiz</sk>
+  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, isUsed sort, fullpath
+  			FROM a_sys_functions f order by f.fullpath
+  		</mysql>
+  		<sqlit>SELECT funcId, parentId, funcName, url, sibling sort, fullpath
+  			FROM a_functions f order by f.fullpath
+  		</sqlit>
+  		<s-tree>,a_sys_functions,funcId id,parentId,funcName text,,,false</s-tree>
+  	</c>
+</t>
+</dataset>
