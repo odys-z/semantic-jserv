@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<semantics>
+  <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
+  <!-- smtc: semantics type, e.g. auto: auto increase key.
+			see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html
+		tabl: database table name
+		pk:
+		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
+   -->
+	<!-- quiz auto pk -->
+	<s>
+		<id>quiz.01</id>
+		<smtc>autopk</smtc>
+		<tabl>quizzes</tabl>
+		<pk>qid</pk>
+		<args>qid</args>
+	</s>
+	<!-- quiz' oper-time -->
+	<s>
+		<id>quizzes.oper</id>
+		<smtc>o-t</smtc>
+		<tabl>quizzes</tabl>
+		<pk>quid</pk>
+		<args>oper,optime</args>
+	</s>
+
+	<!-- questions auto pk -->
+	<s>
+		<id>question.auto</id>
+		<smtc>autopk</smtc>
+		<tabl>questions</tabl>
+		<pk>qid</pk>
+		<args>qid</args>
+	</s>
+
+	<!-- parent-children foreign key -->
+	<s>
+  		<id>quiz_fk</id>
+  		<smtc>fk</smtc>
+  		<tabl>questions</tabl>
+  		<pk>quizid</pk>
+  		<args>quizid,quizzes,qid</args>
+  	</s>
+  </t>
+</semantics>
