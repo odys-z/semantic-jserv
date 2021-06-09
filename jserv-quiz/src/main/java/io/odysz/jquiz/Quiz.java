@@ -26,6 +26,7 @@ import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
@@ -81,7 +82,7 @@ public class Quiz extends ServPort<UserReq> {
 
 			AnsonMsg<? extends AnsonResp> rsp = null;
 			if ("quiz".equals(jreq.a()))
-				throw new NullPointerException("todo ...");
+				rsp = quiz(jmsg.body(0), usr);
 			else if ("list".equals(jreq.a()))
 				rsp = quizzes(jmsg, usr);
 			else if ("insert".equals(jreq.a()))
@@ -104,10 +105,6 @@ public class Quiz extends ServPort<UserReq> {
 		} finally {
 			resp.flushBuffer();
 		}
-	}
-
-	private AnsonMsg<? extends AnsonResp> update(UserReq body, IUser usr) {
-		return null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -136,29 +133,71 @@ public class Quiz extends ServPort<UserReq> {
 			.post(ins)
 			.ins(smtxt);
 		
-		return ok(new AnsonResp(String.valueOf(total)));
+		return ok(new QuizResp()
+				.quizId((String)smtxt.resulvedVal("quizzes", "qid"))
+				.title(titl)
+				.questions(total)
+				.msg("inserted"));
 	}
 
+	@SuppressWarnings("unchecked")
+	private AnsonMsg<? extends AnsonResp> update(UserReq body, IUser usr) throws TransException, SQLException {
+		List<String[][]> ques = (List<String[][]>) body.data(QuizProtocol.questions);
+		String info = (String) body.data(QuizProtocol.quizinfo);
+		String titl = (String) body.data(QuizProtocol.qtitle);
+		String qzid =  (String) body.data(QuizProtocol.quizId);
 
-//	static DATranscxt getContext(String connId) throws SemanticException {
-//		// TODO & FIXME you can create a context buffer here
-//		try {
-//			return new DATranscxt(connId);
-//		} catch (SQLException | SAXException | IOException e) {
-//			throw new SemanticException("Can't create DATranscxt. Caused by: " + e.getMessage());
-//		}
-//	}
+		int total = 0;
+		Insert ins = st.insert("questions", usr);
+		for (String[][] it : ques) {
+			for (String[] nv : it)
+				ins.nv(nv[0], nv[1]);
+			total++;
+		}
+		
+		Delete del = st.delete("questions", usr)
+				.where("=", "quizId", qzid)
+				.post(ins);
+
+		ISemantext smtxt = st.instancontxt(body.conn(), usr);
+		st.update("quizzes", usr)
+			.nv("quizinfo", info)
+			.nv("title", titl)
+			.post(del)
+			.u(smtxt);
+		
+		return ok(new QuizResp()
+				.quizId(qzid)
+				.questions(total)
+				.msg("updated"));
+	}
 
 	protected AnsonMsg<AnsonResp> quizzes(AnsonMsg<UserReq> jmsg, IUser usr) 
 			throws TransException, SQLException {
 		UserReq req = jmsg.body(0);
-		// DATranscxt st = getContext(req.conn());
 		
 		SemanticObject rs = st.select("quizzes", "q")
 				.l("s_domain", "d", "q.subject = d.did)")
 				.rs(st.instancontxt(req.conn(), usr));
 
-		return ok((AnResultset)rs.rs(0));
+		//return ok((AnResultset)rs.rs(0));
+		return ok(new QuizResp(rs).msg("list loaded"));
 	}
 
+	private AnsonMsg<? extends AnsonResp> quiz(UserReq body, IUser usr) throws TransException, SQLException {
+		String qzid =  (String) body.data(QuizProtocol.quizId);
+		ISemantext smtxt = st.instancontxt(body.conn(), usr);
+		SemanticObject so = st
+			.select("quizzes", "q")
+			.where("=", "qid", qzid)
+			.rs(smtxt);
+		SemanticObject ques = st
+			.select("questions", "q")
+			.where("=", "quizId", qzid)
+			.rs(smtxt);
+		
+		so.put(QuizProtocol.questions, ques.rs(0));
+
+		return ok(new QuizResp(so).msg("quiz loaded"));
+	}
 }
