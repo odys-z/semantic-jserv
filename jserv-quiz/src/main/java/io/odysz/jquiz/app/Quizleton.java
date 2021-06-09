@@ -4,7 +4,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
-import io.odysz.jsample.protocol.Quizport;
+import io.odysz.jquiz.protocol.Quizport;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 
