@@ -9,7 +9,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
-import io.odysz.jsample.protocol.Quizport;
+import io.odysz.jquiz.protocol.Quizport;
 import io.odysz.jquiz.utils.JquizFlags;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;

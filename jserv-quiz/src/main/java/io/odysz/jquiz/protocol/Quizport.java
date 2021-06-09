@@ -1,4 +1,4 @@
-package io.odysz.jsample.protocol;
+package io.odysz.jquiz.protocol;
 
 import java.io.IOException;
 import java.io.OutputStream;
