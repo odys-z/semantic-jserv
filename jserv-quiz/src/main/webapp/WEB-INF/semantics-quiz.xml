@@ -38,8 +38,8 @@
   		<id>quiz_fk</id>
   		<smtc>fk</smtc>
   		<tabl>questions</tabl>
-  		<pk>quizid</pk>
-  		<args>quizid,quizzes,qid</args>
+  		<pk>qid</pk>
+  		<args>quizId,quizzes,qid</args>
   	</s>
   </t>
 </semantics>

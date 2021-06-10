@@ -115,23 +115,30 @@ public class Quiz extends ServPort<UserReq> {
 		String qown = (String) body.data(QuizProtocol.qowner);
 		String day0 = (String) body.data(QuizProtocol.dcreate);
 
-		int total = 0;
-		Insert ins = st.insert("questions", usr);
-		for (String[][] it : ques) {
-			for (String[] nv : it)
-				ins.nv(nv[0], nv[1]);
-			total++;
-		}
 
 		ISemantext smtxt = st.instancontxt(body.conn(), usr);
 		// ArrayList<String> sqls = new ArrayList<String>();
-		st.insert("quizzes", usr)
+		Insert insquz = st.insert("quizzes", usr)
 			.nv("quizinfo", info)
 			.nv("title", titl)
 			.nv("qowner", qown)
 			.nv("dcreate", day0)
-			.post(ins)
-			.ins(smtxt);
+			;
+//			.post(ins)
+//			.ins(smtxt);
+
+		int total = 0;
+		if (ques != null) {
+			for (String[][] q : ques) {
+				Insert ins = st.insert("questions", usr);
+				for (String[] nv : q)
+					ins.nv(nv[0], nv[1]);
+				insquz.post(ins);
+				total++;
+			}
+		}
+		
+		insquz.ins(smtxt);
 		
 		return ok(new QuizResp()
 				.quizId((String)smtxt.resulvedVal("quizzes", "qid"))
@@ -156,14 +163,14 @@ public class Quiz extends ServPort<UserReq> {
 		}
 		
 		Delete del = st.delete("questions", usr)
-				.where("=", "quizId", qzid)
+				.where_("=", "quizId", qzid)
 				.post(ins);
 
 		ISemantext smtxt = st.instancontxt(body.conn(), usr);
 		st.update("quizzes", usr)
 			.nv("quizinfo", info)
 			.nv("title", titl)
-			.where("=", "qid", qzid)
+			.where_("=", "qid", qzid)
 			.post(del)
 			.u(smtxt);
 		
@@ -179,9 +186,10 @@ public class Quiz extends ServPort<UserReq> {
 		
 		SemanticObject rs = st.select("quizzes", "q")
 				.l("s_domain", "d", "q.subject = d.did)")
+				// TODO conditions
+				// TODO conditions
 				.rs(st.instancontxt(req.conn(), usr));
 
-		//return ok((AnResultset)rs.rs(0));
 		return ok(new QuizResp(rs).msg("list loaded"));
 	}
 
@@ -190,11 +198,11 @@ public class Quiz extends ServPort<UserReq> {
 		ISemantext smtxt = st.instancontxt(body.conn(), usr);
 		SemanticObject so = st
 			.select("quizzes", "q")
-			.where("=", "qid", LangExt.isEmpty(qzid) ? "''" : qzid)
+			.where_("=", "qid", LangExt.isEmpty(qzid) ? "" : qzid)
 			.rs(smtxt);
 		SemanticObject ques = st
 			.select("questions", "q")
-			.where("=", "quizId", qzid)
+			.where_("=", "quizId", qzid)
 			.rs(smtxt);
 		
 		so.put(QuizProtocol.questions, ques.rs(0));
