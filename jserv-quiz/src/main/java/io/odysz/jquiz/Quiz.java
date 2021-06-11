@@ -28,6 +28,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
 /**Service Port for quiz data.
@@ -154,25 +155,28 @@ public class Quiz extends ServPort<UserReq> {
 		String titl = (String) body.data(QuizProtocol.qtitle);
 		String qzid =  (String) body.data(QuizProtocol.quizId);
 
-		int total = 0;
-		Insert ins = st.insert("questions", usr);
-		for (String[][] it : ques) {
-			for (String[] nv : it)
-				ins.nv(nv[0], nv[1]);
-			total++;
-		}
-		
 		Delete del = st.delete("questions", usr)
-				.where_("=", "quizId", qzid)
-				.post(ins);
+				.where_("=", "quizId", qzid);
 
-		ISemantext smtxt = st.instancontxt(body.conn(), usr);
-		st.update("quizzes", usr)
+		Update upd = st.update("quizzes", usr)
 			.nv("quizinfo", info)
 			.nv("title", titl)
 			.where_("=", "qid", qzid)
-			.post(del)
-			.u(smtxt);
+			.post(del);
+
+		int total = 0;
+		if (ques != null) {
+			for (String[][] q : ques) {
+				Insert ins = st.insert("questions", usr);
+				for (String[] nv : q)
+					ins.nv(nv[0], nv[1]);
+				del.post(ins);
+				total++;
+			}
+		}
+	
+		ISemantext smtxt = st.instancontxt(body.conn(), usr);
+		upd.u(smtxt);
 		
 		return ok(new QuizResp()
 				.quizId(qzid)

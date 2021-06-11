@@ -41,5 +41,12 @@
   		<pk>qid</pk>
   		<args>quizId,quizzes,qid</args>
   	</s>
+  	<s>
+  		<id>quiz_pkref</id>
+  		<smtc>post-fk</smtc>
+  		<tabl>questions</tabl>
+  		<pk>qid</pk>
+  		<args>quizId,quizzes,qid</args>
+  	</s>
   </t>
 </semantics>
