@@ -9,10 +9,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.jquiz.protocol.Quizport;
 import io.odysz.jquiz.utils.JquizFlags;
-import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -163,6 +163,7 @@ public class Quiz extends ServPort<UserReq> {
 		st.update("quizzes", usr)
 			.nv("quizinfo", info)
 			.nv("title", titl)
+			.where("=", "qid", qzid)
 			.post(del)
 			.u(smtxt);
 		
@@ -189,7 +190,7 @@ public class Quiz extends ServPort<UserReq> {
 		ISemantext smtxt = st.instancontxt(body.conn(), usr);
 		SemanticObject so = st
 			.select("quizzes", "q")
-			.where("=", "qid", qzid)
+			.where("=", "qid", LangExt.isEmpty(qzid) ? "''" : qzid)
 			.rs(smtxt);
 		SemanticObject ques = st
 			.select("questions", "q")
