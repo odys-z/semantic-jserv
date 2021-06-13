@@ -17,5 +17,5 @@
 --><!-- The contents of this file will be loaded for each web application -->
 <Context reloadable="true">
     <WatchedResource>WEB-INF/web.xml</WatchedResource>
-    <Parameter name="io.oz.root-key" value="odys-z.github.io" orride="false"/>
+    <Parameter name="io.oz.root-key" value="odys-z.github.io" override="false"/>
 </Context>
