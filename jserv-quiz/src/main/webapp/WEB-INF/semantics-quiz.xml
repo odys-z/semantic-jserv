@@ -34,6 +34,7 @@
 	</s>
 
 	<!-- parent-children foreign key -->
+	<!-- delete all children -->
 	<s>
   		<id>quiz_fk</id>
   		<smtc>fk</smtc>
@@ -41,6 +42,7 @@
   		<pk>qid</pk>
   		<args>quizId,quizzes,qid</args>
   	</s>
+	<!-- keep fk's consistance -->
   	<s>
   		<id>quiz_pkref</id>
   		<smtc>post-fk</smtc>
