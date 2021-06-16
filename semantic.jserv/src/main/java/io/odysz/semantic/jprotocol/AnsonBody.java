@@ -14,9 +14,9 @@ public abstract class AnsonBody extends Anson {
 	protected String conn;
 	public String conn() { return conn; }
 
-	/** Action: login | C | R | U | D | any serv extension */
+	/** Action: login | pswd, and any serv port extension */
 	protected String a;
-	/** @return Action: login | C | R | U | D | any serv extension */
+	/** @return Action: login | pswd and any serv port extension */
 	public String a() { return a; }
 
 	public AnsonBody a(String act) {
