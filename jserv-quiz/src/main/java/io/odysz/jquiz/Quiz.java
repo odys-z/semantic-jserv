@@ -3,23 +3,27 @@ package io.odysz.jquiz;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
+import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.jquiz.protocol.Quizport;
 import io.odysz.jquiz.utils.JquizFlags;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
-import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.ISemantext;
@@ -50,23 +54,88 @@ public class Quiz extends ServPort<UserReq> {
 		}
 	}
 
+	private IUser jsonRobot;
+
 
 	public Quiz() {
 		super(null);
 		p = Quizport.quiz;
+		jsonRobot = new JRobot();
 	}
 
 	@Override
 	protected void onGet(AnsonMsg<UserReq> jmsg, HttpServletResponse resp)
-			throws IOException {
+			throws IOException, ServletException {
 		if (JquizFlags.quiz)
 			Utils.logi("---------- jserv-quiz/quiz.serv GET ----------");
 		try {
-			// UserReq jreq = jmsg.body(0);
-			resp.getWriter().write(Html.ok("Please visit POST."));
+			// serving json
+			UserReq jreq = jmsg.body(0);
+			resp.getWriter().write(json((String) jreq.get(QuizProtocol.quizId)));
+		} catch (TransException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		} finally {
 			resp.flushBuffer();
 		}
+	}
+	
+	/**For empty get header, feed a json if possible. 
+	 * @see io.odysz.semantic.jserv.ServPort#onGetAnsonException(io.odysz.anson.x.AnsonException, javax.servlet.http.HttpServletResponse, java.util.Map)
+	 */
+	protected void onGetAnsonException(AnsonException e,
+			HttpServletResponse resp, Map<String, String[]> map) throws IOException, ServletException {
+		String[] qid = map != null ? map.get("qid") : null;
+		if (qid == null || qid.length <= 0)
+			resp.getWriter().write("{}");
+		else
+			try {
+				resp.getWriter().write(json(qid[0]));
+			} catch (TransException | SQLException e1) {
+				e1.printStackTrace();
+				throw new ServletException(e1.getMessage());
+			}
+	}
+
+	private char[] json(String qzid) throws TransException, SQLException {
+		// FIXME buffer is needed here (just for fun, how about implement that LRU buffer?)
+		// FIXME conn = null is a bug
+		ISemantext smtxt = st.instancontxt(null, jsonRobot);
+		SemanticObject so = st
+			.select("quizzes", "q")
+			.where_("=", "qid", LangExt.isEmpty(qzid) ? "" : qzid)
+			.rs(smtxt);
+		SemanticObject ques = st
+			.select("questions", "q")
+			.col("answers").col("answer", "correct")
+			.col("qnumber", "number").col("hints", "prompt")
+			.col("''", "image")  // TODO
+			.where_("=", "quizId", qzid)
+			.rs(smtxt);
+		
+		// so.put(QuizProtocol.questions, ques.rs(0));
+		return composeJson(so, (AnResultset) ques.rs(0));
+	}
+
+	/**Compose json for "plain-quiz":
+	 * <pre>{
+	 "questions": [ { 
+	   "answers": [""],
+	   "correct": { "index": 0 },
+	   "number": 6,
+	   "prompt": "Which one you like most?",
+	   "image": "imgs/qr.jpg"
+	   }, ... ]
+	   "title": "How well do you know real creatures?",
+	   "url": "http://urbaninstitute.github.io/quick-quiz/"
+	 }</pre>
+	 * @param quiz
+	 * @param questions
+	 * @return
+	 */
+	private char[] composeJson(SemanticObject quiz, AnResultset questions) {
+		return null;
 	}
 
 	@Override
@@ -125,8 +194,6 @@ public class Quiz extends ServPort<UserReq> {
 			.nv("qowner", qown)
 			.nv("dcreate", day0)
 			;
-//			.post(ins)
-//			.ins(smtxt);
 
 		int total = 0;
 		if (ques != null) {
@@ -168,8 +235,12 @@ public class Quiz extends ServPort<UserReq> {
 		if (ques != null) {
 			for (String[][] q : ques) {
 				Insert ins = st.insert("questions", usr);
+				// FIXME can the semantics-DA support this auto update?
+				// see DASemantextTest#testMultiChildInst()
+				ins.nv("quizId", qzid);
 				for (String[] nv : q)
-					ins.nv(nv[0], nv[1]);
+					if (!"quizId".equals(nv[0]))
+						ins.nv(nv[0], nv[1]);
 				del.post(ins);
 				total++;
 			}

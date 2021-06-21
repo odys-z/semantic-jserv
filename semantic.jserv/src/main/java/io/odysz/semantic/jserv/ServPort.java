@@ -3,7 +3,9 @@ package io.odysz.semantic.jserv;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -22,6 +24,7 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 
 /**<p>Base serv class for handling json request.</p>
  * Servlet extending this must subclass this class, and override
@@ -60,8 +63,10 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
 			onGet(msg, resp);
-		} catch (AnsonException | SemanticException e) {
-			if (ServFlags.query)
+		} catch (AnsonException e) {
+			onGetAnsonException(e, resp, req.getParameterMap());
+		} catch (SemanticException e) {
+			if (ServFlags.port)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (Throwable t) {
@@ -70,6 +75,21 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		} finally {
 			in.close();
 		}
+	}
+
+	/**Override this to handle null envelop in GET requests.
+	 * @param e
+	 * @param resp
+	 * @param map 
+	 * @throws IOException 
+	 * @throws SQLException 
+	 * @throws TransException 
+	 */
+	protected void onGetAnsonException(AnsonException e,
+			HttpServletResponse resp, Map<String, String[]> map) throws IOException, ServletException {
+		if (ServFlags.port)
+			e.printStackTrace();
+		write(resp, err(MsgCode.exSemantic, e.getMessage()));
 	}
 
 	@Override

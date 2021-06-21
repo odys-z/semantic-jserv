@@ -10,7 +10,10 @@ public class ServFlags {
 	/**{@link io.odysz.semantic.ext.SemanticTree} */
 	public static final boolean extStree = true;
 
-	public static final boolean file = true; 
+	public static final boolean file = true;
+	
+	/** common of port handler */
+	public static final boolean port = true; 
 
 
 }
