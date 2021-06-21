@@ -34,7 +34,12 @@
 	</s>
 
 	<!-- parent-children foreign key -->
-	<!-- delete all children -->
+	<!-- delete all children
+		A notes about semantic-DA:
+		Because b_alarm is updating, no auto key generated,
+		so child fk should provided by client, and won't been resulved.
+		FIXME can we implement the function?
+	-->
 	<s>
   		<id>quiz_fk</id>
   		<smtc>fk</smtc>
@@ -42,13 +47,14 @@
   		<pk>qid</pk>
   		<args>quizId,quizzes,qid</args>
   	</s>
-	<!-- keep fk's consistance -->
+	<!-- keep fk's consistance
+		(post-fk noly used for wire back parent renferencing child id)
   	<s>
   		<id>quiz_pkref</id>
   		<smtc>post-fk</smtc>
   		<tabl>questions</tabl>
   		<pk>qid</pk>
   		<args>quizId,quizzes,qid</args>
-  	</s>
+  	</s> -->
   </t>
 </semantics>
