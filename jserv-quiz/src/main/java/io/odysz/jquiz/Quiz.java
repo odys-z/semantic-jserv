@@ -54,13 +54,15 @@ public class Quiz extends ServPort<UserReq> {
 		}
 	}
 
-	private IUser jsonRobot;
+	private static IUser jsonRobot;
 
 
 	public Quiz() {
 		super(null);
 		p = Quizport.quiz;
-		jsonRobot = new JRobot();
+
+		if (jsonRobot == null)
+			jsonRobot = new JRobot();
 	}
 
 	@Override
@@ -71,7 +73,7 @@ public class Quiz extends ServPort<UserReq> {
 		try {
 			// serving json
 			UserReq jreq = jmsg.body(0);
-			resp.getWriter().write(json((String) jreq.get(QuizProtocol.quizId)));
+			write(resp, jsonQuiz((String) jreq.get(QuizProtocol.quizId)));
 		} catch (TransException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
@@ -87,35 +89,43 @@ public class Quiz extends ServPort<UserReq> {
 	protected void onGetAnsonException(AnsonException e,
 			HttpServletResponse resp, Map<String, String[]> map) throws IOException, ServletException {
 		String[] qid = map != null ? map.get("qid") : null;
-		if (qid == null || qid.length <= 0)
-			resp.getWriter().write("{}");
+		if (qid == null || qid.length <= 0) {
+			resp.getWriter().write("{\"error\": ");
+			resp.getWriter().write(e.getMessage());
+			resp.getWriter().write("\"}");
+		}
 		else
 			try {
-				resp.getWriter().write(json(qid[0]));
+				write(resp, jsonQuiz(qid[0]));
 			} catch (TransException | SQLException e1) {
 				e1.printStackTrace();
 				throw new ServletException(e1.getMessage());
 			}
 	}
 
-	private char[] json(String qzid) throws TransException, SQLException {
+	public static AnsonMsg<JsonQuiz> jsonQuiz(String qzid)
+			throws TransException, SQLException, IOException {
 		// FIXME buffer is needed here (just for fun, how about implement that LRU buffer?)
 		// FIXME conn = null is a bug
 		ISemantext smtxt = st.instancontxt(null, jsonRobot);
 		SemanticObject so = st
 			.select("quizzes", "q")
+			.col("qid").col("title").col("extra", "url")
 			.where_("=", "qid", LangExt.isEmpty(qzid) ? "" : qzid)
 			.rs(smtxt);
 		SemanticObject ques = st
 			.select("questions", "q")
+			.col("qid")
 			.col("answers").col("answer", "correct")
-			.col("qnumber", "number").col("hints", "prompt")
+			.col("0", "number")
+			.col("question", "prompt")
 			.col("''", "image")  // TODO
 			.where_("=", "quizId", qzid)
 			.rs(smtxt);
 		
-		// so.put(QuizProtocol.questions, ques.rs(0));
-		return composeJson(so, (AnResultset) ques.rs(0));
+		return new AnsonMsg<JsonQuiz>().body(new JsonQuiz()
+				.quiz((AnResultset)so.rs(0))
+				.questions((AnResultset)ques.rs(0)));
 	}
 
 	/**Compose json for "plain-quiz":
@@ -130,13 +140,29 @@ public class Quiz extends ServPort<UserReq> {
 	   "title": "How well do you know real creatures?",
 	   "url": "http://urbaninstitute.github.io/quick-quiz/"
 	 }</pre>
+	 * @param writer
 	 * @param quiz
 	 * @param questions
 	 * @return
+	 * @throws SQLException 
+	 * @throws IOException 
 	 */
-	private char[] composeJson(SemanticObject quiz, AnResultset questions) {
-		return null;
-	}
+//	public static void composeJsonQuiz(Writer writer, AnResultset quiz, AnResultset questions)
+//			throws SQLException, IOException {
+//		if (quiz.total() > 1) {
+//			Utils.warn("composeJsonQuiz(): can only convert 1 quiz:");
+//			quiz.printSomeData(true, 2);
+//		}
+//		if (quiz.total() == 1) {
+//			writer.write("\"");
+//			quiz.beforeFirst().next();
+//			writer.write("\"title\": \"");
+//			writer.write(quiz.getString("title"));
+//			writer.write("\", \"url\": \"");
+//			writer.write(quiz.getString("url"));
+//			writer.write("\"}");
+//		}
+//	}
 
 	@Override
 	protected void onPost(AnsonMsg<UserReq> jmsg, HttpServletResponse resp)
