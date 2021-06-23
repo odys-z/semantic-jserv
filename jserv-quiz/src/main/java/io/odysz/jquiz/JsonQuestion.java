@@ -1,13 +1,14 @@
 package io.odysz.jquiz;
 
 import io.odysz.anson.Anson;
+import io.odysz.common.LangExt;
 
 public class JsonQuestion extends Anson {
 
 	public static class Correct extends Anson {
 		int index = 0;
 		Correct(String idx) {
-			index = Integer.valueOf(idx);
+			index = LangExt.isEmpty(idx) ? 0 : Integer.valueOf(idx);
 		}
 	}
 

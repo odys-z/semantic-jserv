@@ -56,5 +56,30 @@
   		<pk>qid</pk>
   		<args>quizId,quizzes,qid</args>
   	</s> -->
+  	
+ 	<!-- polls auto pk -->
+	<s>
+		<id>polls.auto</id>
+		<smtc>autopk</smtc>
+		<tabl>polls</tabl>
+		<pk>pid</pk>
+		<args>pid</args>
+	</s> 	
+
+	<s>
+		<id>pss.auto</id>
+		<smtc>autopk</smtc>
+		<tabl>polldetails</tabl>
+		<pk>pssId</pk>
+		<args>pssId</args>
+	</s> 	
+
+	<s>
+  		<id>pollss_fk</id>
+  		<smtc>fk</smtc>
+  		<tabl>polldetails</tabl>
+  		<pk>pssId</pk>
+  		<args>pid,polls,pid</args>
+  	</s>
   </t>
 </semantics>

@@ -7,4 +7,7 @@ public class QuizProtocol {
 	public static String qowner = "qowner";
 	public static String dcreate = "dcreate";
 	public static String questions = "questions";
+
+	public static String poll = "poll";
+	public static String pollUser = "pollUser";
 }

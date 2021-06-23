@@ -2,6 +2,7 @@ package io.odysz.jquiz;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -128,42 +129,6 @@ public class Quiz extends ServPort<UserReq> {
 				.questions((AnResultset)ques.rs(0)));
 	}
 
-	/**Compose json for "plain-quiz":
-	 * <pre>{
-	 "questions": [ { 
-	   "answers": [""],
-	   "correct": { "index": 0 },
-	   "number": 6,
-	   "prompt": "Which one you like most?",
-	   "image": "imgs/qr.jpg"
-	   }, ... ]
-	   "title": "How well do you know real creatures?",
-	   "url": "http://urbaninstitute.github.io/quick-quiz/"
-	 }</pre>
-	 * @param writer
-	 * @param quiz
-	 * @param questions
-	 * @return
-	 * @throws SQLException 
-	 * @throws IOException 
-	 */
-//	public static void composeJsonQuiz(Writer writer, AnResultset quiz, AnResultset questions)
-//			throws SQLException, IOException {
-//		if (quiz.total() > 1) {
-//			Utils.warn("composeJsonQuiz(): can only convert 1 quiz:");
-//			quiz.printSomeData(true, 2);
-//		}
-//		if (quiz.total() == 1) {
-//			writer.write("\"");
-//			quiz.beforeFirst().next();
-//			writer.write("\"title\": \"");
-//			writer.write(quiz.getString("title"));
-//			writer.write("\", \"url\": \"");
-//			writer.write(quiz.getString("url"));
-//			writer.write("\"}");
-//		}
-//	}
-
 	@Override
 	protected void onPost(AnsonMsg<UserReq> jmsg, HttpServletResponse resp)
 			throws IOException {
@@ -172,23 +137,27 @@ public class Quiz extends ServPort<UserReq> {
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
-
 			UserReq jreq = jmsg.body(0);
-
+			String a = jreq.a();
 			AnsonMsg<? extends AnsonResp> rsp = null;
-			if ("quiz".equals(jreq.a()))
-				rsp = quiz(jmsg.body(0), usr);
-			else if ("list".equals(jreq.a()))
-				rsp = quizzes(jmsg, usr);
-			else if ("insert".equals(jreq.a()))
-				rsp = insert(jmsg.body(0), usr);
-			else if ("update".equals(jreq.a()))
-				rsp = update(jmsg.body(0), usr);
-			else
-				throw new SemanticException("request.body.a can not handled: %s\n" +
-						"Only a = quiz | list | insert | update are supported.", jreq.a());
+			if ("poll".equals(a)) {
+				rsp = onPoll(jreq);
+			}
+			else {
+				IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
 
+				if ("quiz".equals(a))
+					rsp = quiz(jmsg.body(0), usr);
+				else if ("list".equals(a))
+					rsp = quizzes(jmsg, usr);
+				else if ("insert".equals(a))
+					rsp = insert(jmsg.body(0), usr);
+				else if ("update".equals(a))
+					rsp = update(jmsg.body(0), usr);
+				else
+					throw new SemanticException("request.body.a can not handled: %s\n" +
+							"Only a = poll | quiz | list | insert | update are supported.", jreq.a());
+			}
 			write(resp, rsp);
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
@@ -203,6 +172,36 @@ public class Quiz extends ServPort<UserReq> {
 		}
 	}
 
+	protected AnsonMsg<? extends AnsonResp> onPoll(UserReq props) throws TransException, SQLException {
+		@SuppressWarnings("unchecked")
+		ArrayList<String[]> polls = (ArrayList<String[]>) props.get(QuizProtocol.poll);
+		String qzid = (String) props.get(QuizProtocol.quizId);
+		String usrinfo = (String) props.get(QuizProtocol.pollUser);
+
+
+		ISemantext smtxt = st.instancontxt(props.conn(), jsonRobot);
+		Insert inspoll = st.insert("polls", jsonRobot)
+			.nv("userInfo", usrinfo)
+			.nv("quizId", qzid)
+			;
+
+		if (polls != null) {
+			for (String[] qid_ans : polls) {
+				Insert ins = st.insert("polldetails", jsonRobot);
+				ins.nv("questid", qid_ans[0]);
+				ins.nv("results", qid_ans[1]);
+				inspoll.post(ins);
+			}
+		}
+		
+		inspoll.ins(smtxt);
+
+		return ok(new QuizResp()
+				.quizId(qzid)
+				.msg("poll saved"));
+	}
+	
+
 	@SuppressWarnings("unchecked")
 	protected AnsonMsg<? extends AnsonResp> insert(UserReq body, IUser usr) throws TransException, SQLException {
 		List<String[][]> ques = (List<String[][]>) body.data(QuizProtocol.questions);
@@ -213,7 +212,6 @@ public class Quiz extends ServPort<UserReq> {
 
 
 		ISemantext smtxt = st.instancontxt(body.conn(), usr);
-		// ArrayList<String> sqls = new ArrayList<String>();
 		Insert insquz = st.insert("quizzes", usr)
 			.nv("quizinfo", info)
 			.nv("title", titl)
