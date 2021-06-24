@@ -1,9 +1,11 @@
 # buld mvn war package or
 # mvn clean package && docker build -t jserv-quiz .
 # See ../jserv-sample/Dockerfile for why not latest tomcat.
-# Be careful clean maven first.
+# Be careful clean maven first
+# (Also make sure maven dependency are resolved as the newest as Eclipse is depending locally).
 # docker tag jserv-quiz odysz/jserv-quiz
 # docker push odysz/jserv-quiz
+# run docker: docker run --name jquiz -dp 8080:8080 jserv-quiz
 FROM tomcat:9.0
 COPY target/jserv-quiz.war $CATALINA_HOME/webapps
 EXPOSE 8080
