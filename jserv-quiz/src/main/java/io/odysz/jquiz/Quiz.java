@@ -118,7 +118,7 @@ public class Quiz extends ServPort<UserReq> {
 			.select("questions", "q")
 			.col("qid")
 			.col("answers").col("answer", "correct")
-			.col("0", "number")
+			.col("0", "number").col("qtype")
 			.col("question", "prompt")
 			.col("''", "image")  // TODO
 			.where_("=", "quizId", qzid)
@@ -172,6 +172,12 @@ public class Quiz extends ServPort<UserReq> {
 		}
 	}
 
+	/**Save a poll. Each answer to a question has a pssid - used for filtering and analysing?
+	 * @param props
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	protected AnsonMsg<? extends AnsonResp> onPoll(UserReq props) throws TransException, SQLException {
 		@SuppressWarnings("unchecked")
 		ArrayList<String[]> polls = (ArrayList<String[]>) props.get(QuizProtocol.poll);

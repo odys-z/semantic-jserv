@@ -18,6 +18,7 @@ public class JsonQuestion extends Anson {
 	protected String prompt;
 	protected String number;
 	protected String image;
+	protected String qtype;
 
 	public JsonQuestion(String id) {
 		qid = id;
@@ -45,6 +46,11 @@ public class JsonQuestion extends Anson {
 
 	public JsonQuestion image(String v) {
 		image = v;
+		return this;
+	}
+
+	public JsonQuestion qtype(String v) {
+		qtype = v;
 		return this;
 	}
 
