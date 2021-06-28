@@ -57,7 +57,6 @@ public class Quiz extends ServPort<UserReq> {
 
 	private static IUser jsonRobot;
 
-
 	public Quiz() {
 		super(null);
 		p = Quizport.quiz;
