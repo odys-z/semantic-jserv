@@ -82,6 +82,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	/**session pool reentrant lock*/
 	public static ReentrantLock lock;
 
+	/** Session checking task buffer */
 	private static ScheduledFuture<?> schedualed;
 	
 	static DATranscxt sctx;
