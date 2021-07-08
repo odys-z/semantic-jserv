@@ -22,7 +22,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 
-@WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv11" })
+@WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
 public class SysMen extends SemanticTree {
 	private static final long serialVersionUID = 1L;
 	
@@ -39,7 +39,7 @@ public class SysMen extends SemanticTree {
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (SampleFlags.menu)
-			Utils.logi("---------- menu.serv11 get ----------");
+			Utils.logi("---------- menu.serv get ----------");
 
 		try {
 			String connId = msg.body(0).conn();
