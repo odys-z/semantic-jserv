@@ -8,16 +8,19 @@
                 
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
-        <dependent-module archiveName="semantic.jserv-1.2.2.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.jserv/semantic.jserv">
+        <dependent-module archiveName="semantic.jserv-1.2.5.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.jserv/semantic.jserv">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="semantics.transact-1.1.4.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.transact/semantic.transact">
+        <dependent-module archiveName="semantics.transact-1.1.5.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.transact/semantic.transact">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="antson-0.9.4.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/antson/antson">
+        <dependent-module archiveName="antson-0.9.5.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/antson/antson">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="semantic.DA-1.1.3.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.DA/semantic.DA">
+        <dependent-module archiveName="semantic.DA-1.1.5.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.DA/semantic.DA">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="semantic.workflow-0.7.10.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.workflow/semantic.workflow">
             <dependency-type>uses</dependency-type>
         </dependent-module>
                 
