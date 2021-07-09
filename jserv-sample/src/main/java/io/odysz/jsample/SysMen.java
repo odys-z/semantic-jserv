@@ -33,7 +33,7 @@ public class SysMen extends SemanticTree {
 	}
 
 	/**sk in dataset.xml: menu tree */
-	private static final String defltSk = "sys.menu.ez-test";
+	private static final String defltSk = "sys.menu.jsample";
 
 	@Override
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
@@ -60,7 +60,8 @@ public class SysMen extends SemanticTree {
 	}
 
 	@Override
-	protected void onPost(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp) throws IOException, SemanticException {
+	protected void onPost(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
+			throws IOException, SemanticException {
 		if (SampleFlags.menu)
 			Utils.logi("========== menu.sample post ==========");
 
@@ -84,8 +85,6 @@ public class SysMen extends SemanticTree {
 			if (SampleFlags.menu)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
-//		} catch (ReflectiveOperationException e) {
-//			e.printStackTrace();
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} finally {
