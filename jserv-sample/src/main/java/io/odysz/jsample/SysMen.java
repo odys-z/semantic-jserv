@@ -63,7 +63,7 @@ public class SysMen extends SemanticTree {
 	protected void onPost(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws IOException, SemanticException {
 		if (SampleFlags.menu)
-			Utils.logi("========== menu.sample post ==========");
+			Utils.logi("========== menu.serv post ==========");
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
