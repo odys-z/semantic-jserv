@@ -28,9 +28,15 @@
 	<c>
 	  	<sk>lvl1.domain.jsample</sk>
   		<mysql></mysql>
-  		<sqlit>SELECT * FROM a_domain d order by d.fullpath</sqlit>
+  		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId is null order by d.fullpath</sqlit>
 	</c>
 
+	<c>
+	  	<sk>nations.domain.jsample</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId = 'nation' order by d.fullpath</sqlit>
+  	</c>
+  	
 	<c>
 	  	<sk>sys.menu.jsample</sk>
   		<mysql>SELECT funcId, parentId, funcName, funcUrl url, isUsed sort, fullpath, css, flags
