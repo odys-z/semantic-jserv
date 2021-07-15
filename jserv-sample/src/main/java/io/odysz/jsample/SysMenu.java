@@ -23,7 +23,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 
 @WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
-public class SysMen extends SemanticTree {
+public class SysMenu extends SemanticTree {
 	private static final long serialVersionUID = 1L;
 	
 	@Override
@@ -87,6 +87,8 @@ public class SysMen extends SemanticTree {
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
+		} catch (ClassCastException e) {
+			write(resp, err(MsgCode.exGeneral, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
