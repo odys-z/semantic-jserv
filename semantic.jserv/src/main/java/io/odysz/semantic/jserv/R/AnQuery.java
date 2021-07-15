@@ -37,12 +37,6 @@ public class AnQuery extends ServPort<AnQueryReq> {
 
 	public AnQuery() { super(Port.query); }
 
-//	@Override
-//	public void init() throws ServletException {
-//		super.init();
-//		p = Port.query;
-//	}
-
 	protected static ISessionVerifier verifier;
 	protected static DATranscxt st;
 
@@ -82,18 +76,14 @@ public class AnQuery extends ServPort<AnQueryReq> {
 
 			write(resp, ok(rs), msg.opts());
 		} catch (SsException e) {
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (SemanticException e) {
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
 			e.printStackTrace();
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exGeneral, e.getMessage()));
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
