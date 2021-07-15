@@ -36,7 +36,7 @@
   		<mysql></mysql>
   		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId = 'nation' order by d.fullpath</sqlit>
   	</c>
-  	
+	
 	<c>
 	  	<sk>sys.menu.jsample</sk>
   		<mysql>SELECT funcId, parentId, funcName, funcUrl url, isUsed sort, fullpath, css, flags
