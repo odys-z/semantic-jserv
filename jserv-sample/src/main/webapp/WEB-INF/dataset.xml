@@ -75,7 +75,10 @@
   	<c> <sk>trees.role_funcs</sk>
   		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.funcId sort, fullpath
   		from a_sys_functions f left outer join a_role_funcs r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</mysql>
-  		<s-tree>checked,a_functions,funcId value,parentId,fullpath,sort,funcName text,children,false</s-tree>
+  		<sqlit>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.funcId sort, fullpath
+  		from a_functions f left outer join a_role_func r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath
+  		</sqlit>
+  		<s-tree>checked,a_functions,funcId nodeId,parentId,fullpath,sort,funcName text,children,false</s-tree>
   	</c>
   	
   	<!-- workflow combobox -->

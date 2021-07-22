@@ -174,9 +174,6 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		if (ts != null)
 			return ts;
 
-//		String tss = Configs.getCfg("tree-semantics", jreq.sk);
-//		if (tss != null)
-//			return new TreeSemantics(tss);
 		return DatasetCfg.getTreeSemtcs(jreq.sk);
 	}
 
