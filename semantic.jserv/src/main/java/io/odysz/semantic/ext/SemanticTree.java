@@ -76,9 +76,9 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		try {
 			jsonResp(msg, resp);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SsException e) {
-			e.printStackTrace();
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
@@ -98,9 +98,9 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			jsonResp(msg, resp);
 
 		} catch (SQLException e) {
-			write(resp, err(MsgCode.exSession, e.getMessage()));
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SsException e) {
-			e.printStackTrace();
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
