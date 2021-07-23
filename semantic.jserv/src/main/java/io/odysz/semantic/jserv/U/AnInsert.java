@@ -33,7 +33,8 @@ import io.odysz.transact.x.TransException;
 public class AnInsert extends ServPort<AnInsertReq> {
 
 	public AnInsert() {
-		super(Port.query);
+		// ody Jul 22, 2021, bug? super(Port.query);
+		super(Port.insert);
 	}
 
 //	@Override
@@ -53,8 +54,8 @@ public class AnInsert extends ServPort<AnInsertReq> {
 	@Override
 	protected void onGet(AnsonMsg<AnInsertReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
-		if (ServFlags.query)
-			Utils.logi("---------- squery (r.serv11) get ----------");
+		if (ServFlags.update)
+			Utils.logi("---------- insert (c.serv11) get ----------");
 		try {
 			IUser usr = verifier.verify(msg.header());
 
@@ -79,8 +80,8 @@ public class AnInsert extends ServPort<AnInsertReq> {
 	
 	@Override
 	protected void onPost(AnsonMsg<AnInsertReq> msg, HttpServletResponse resp) throws IOException {
-		if (ServFlags.query)
-			Utils.logi("========== squery (r.serv11) post ==========");
+		if (ServFlags.update)
+			Utils.logi("========== insert (c.serv11) post ==========");
 
 		try {
 			IUser usr = verifier.verify(msg.header());
