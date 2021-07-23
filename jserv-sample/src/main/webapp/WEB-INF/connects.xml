@@ -62,32 +62,29 @@
   			maxActive="10" maxIdle="3" maxWait="10000"
   			username="odysz" password="..." driverClassName="com.mysql.jdbc.Driver"
   			url="jdbc:mysql://...:3306/prj" connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true" />
-  	 -->
    	<c>
   		<id>io.odys-z</id>
   		<type>mysql</type>
   		<src>jdbc/inet-sample</src>
   		<isdef></isdef>
-  		<!-- Not used -->
-  		<usr></usr>
-  		<!-- Not used (will be protected in cipher in the future -->
-  		<pswd></pswd>
+  		<usr>Not used</usr>
+  		<pswd>Not used (will be protected in cipher in the future)</pswd>
   		<dbg>true</dbg>
   	</c>
+	-->
 
-	<!-- See https://odys-z.github.io/notes/jclient/quick-start.html#java -->
+	<!-- See https://odys-z.github.io/notes/jclient/quick-start.html#java
    	<c>
   		<id>orcl.alarm-report</id>
   		<type>orcl</type>
   		<src>jdbc/orcl-temp</src>
   		<isdef></isdef>
-  		<!-- Not used -->
-  		<usr></usr>
-  		<!-- Not used (will be protected in cipher in the future -->
-  		<pswd></pswd>
+  		<usr>Not used</usr>
+  		<pswd>Not used</pswd>
   		<dbg>true</dbg>
   		<smtcs>semantics-orcl.xml</smtcs>
   	</c>
+	-->
 
   </t>
 </conns>
