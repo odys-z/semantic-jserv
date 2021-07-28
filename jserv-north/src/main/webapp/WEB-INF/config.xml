@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configs>
+  <t id="default" pk="k" columns="k,v">
+	<c>
+		<!-- Class name of SUser Implementation -->
+		<k>class-IUser</k>
+		<v>io.odysz.jquiz.app.QuizUser</v>
+	</c>
+
+	<c>
+		<k>sync.log.on-verbose</k>
+		<v>false</v>
+	</c>
+	<c>
+		<k>ss-timeout-min</k>
+		<v>30</v>
+	</c>
+	<c>
+		<k>ss-timeout-min.debugMode</k>
+		<v>false</v>
+	</c>
+	<c>
+		<!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml) -->
+		<k>log-connId</k>
+		<v>sys-sqlite</v>
+	</c>
+  </t>
+
+  <t id="tree-semantics" pk="k" columns="k,v">
+  	<!-- for v fields, see SemanticTree.ix* -->
+	<!--See SemanticTree for v difinetion.
+			All fields here are alias used to access rs columns.
+  			js-node-type: easyui, checked: null, tabl: e_areas, recId: areaId, parent id: parentId, text: areaName, full path: fullpath
+  			for easyui, only parentId is mandatory?
+  			Troubleshooting:
+  			1. too much recusive error report by jquery.
+  			set easyui table data-options idfield as areaId (data-options="idField: 'areaId',...)
+  		<v>easyui,,e_areas,areaId,parentId,areaName,fullpath</v>
+	-->
+  	<c> <k>templ-treegrid</k>
+  		<v>checked,table,rec-id,parentId,text,fullpath,sibling-sort,paging-at-server</v>
+  	</c>
+  </t>
+
+  <t id="cheap" pk="k" columns="k,v">
+	<c> <k>config-path</k>
+	<!-- change this also need to change connection source in connects/xml
+	 -->
+		<v>workflow-meta.xml</v>
+	</c>
+  </t>
+</configs>
