@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<semantics>
+  <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
+  <!-- smtc: semantics type, e.g. auto: auto increase key.
+			see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html 
+		tabl: database table name
+		pk:
+		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
+   -->
+	<s>
+  		<id>sys.01</id>
+  		<smtc>fullpath</smtc>
+  		<tabl>a_functions</tabl>
+  		<pk>funcId</pk>
+  		<args>parentId,sibling,fullpath</args>
+  	</s>
+  	<s>
+  		<id>sys.02</id>
+  		<smtc>pc-del-all</smtc>
+  		<tabl>a_functions</tabl>
+  		<pk>funcId</pk>
+  		<args>a_rolefunc,funcId</args>
+  	</s>
+  	<s>
+  		<id>sys.03</id>
+  		<smtc>ck-cnt-del</smtc>
+  		<tabl>a_roles</tabl>
+  		<pk>roleId</pk>
+  		<args>funcId,a_role_func,roleId</args>
+  	</s>
+
+  	<!-- default users passsword -->
+  	<s>
+  		<id>sys.04</id>
+  		<smtc>d-v</smtc>
+  		<tabl>a_user</tabl>
+  		<pk>userId</pk>
+  		<args>pswd,'12345678'</args>
+  	</s>
+
+	<s>
+		<id>sys.05</id>
+		<smtc>dencrypt</smtc>
+		<tabl>a_user</tabl>
+		<pk>userId</pk>
+		<args>pswd,encAuxiliary</args>
+	</s>
+
+	<!-- image attachments to a_user: auto pk -->
+	<s>
+		<id>att.01</id>
+		<smtc>autopk</smtc>
+		<tabl>a_attaches</tabl>
+		<pk>attId</pk>
+		<args>attId</args>
+	</s>
+
+	<!-- external file (attachments to a_user): save as file -->
+	<s>
+		<id>att.02</id>
+		<smtc>ef</smtc>
+		<tabl>a_attaches</tabl>
+		<pk>attId</pk>
+		<!-- try delete, save to WEB-INF/uploads/[busiTbl]/[uri],
+				in table attches, pk attId,
+				row's value in uri will replaced with a file,
+				handled for business table, fk to busi-id,
+				filename rule: busiTbl-recId-attName(.suffix)
+			see https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html
+				-->
+		<args>uploads,uri,busiTbl,busiId,attName</args>
+	</s>
+	<!-- delete attachments when deleting a user -->
+	<s>
+		<id>att.03</id>
+		<smtc>pc-del-tbl</smtc>
+		<tabl>a_user</tabl>
+		<pk>userId</pk>
+		<!-- 0 child fk; 1 child table; 2 child pk; 3 business cate (table name) [, ...]  -->
+		<args>busiId a_attaches attId busiTbl</args>
+	</s>
+	<s>
+		<id>att.parent</id>
+		<smtc>fk-ins-cate</smtc>
+		<tabl>a_attaches</tabl>
+		<pk>attId</pk>
+		<!-- 0 business cate (table name); 1 merged child fk; 2 parent table, 3 parent referee [, ...]  -->
+		<args>
+		busiTbl busiId a_users userId,
+		busiTbl busiId b_tasks taskId
+		</args>
+	</s>
+	<!-- attachments' oper-time -->
+	<s>
+		<id>att.oper</id>
+		<smtc>o-t</smtc>
+		<tabl>a_attaches</tabl>
+		<pk>attId</pk>
+		<args>oper,optime</args>
+	</s>
+	
+  </t>
+</semantics>
