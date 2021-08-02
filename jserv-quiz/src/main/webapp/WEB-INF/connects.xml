@@ -44,6 +44,19 @@
   		<dbg>true</dbg>
   		<smtcs>semantics-quiz.xml</smtcs>
   	</c>
+
+  	<c>
+  		<id>north</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>sqlite/north.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-north.xml</smtcs>
+  	</c>
+
   </t>
 
   <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,smtcs">

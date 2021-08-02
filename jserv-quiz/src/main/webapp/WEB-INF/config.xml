@@ -4,7 +4,7 @@
 	<c>
 		<!-- Class name of SUser Implementation -->
 		<k>class-IUser</k>
-		<v>io.odysz.jquiz.app.QuizUser</v>
+		<v>io.odysz.acadynamo.DynaUser</v>
 	</c>
 
 	<c>
