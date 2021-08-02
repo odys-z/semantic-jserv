@@ -1,4 +1,4 @@
-package io.odysz.jquiz.app;
+package io.odysz.acadynamo;
 
 import java.io.IOException;
 import java.sql.SQLException;
