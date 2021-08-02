@@ -1,4 +1,4 @@
-package io.odysz.jquiz.app;
+package io.odysz.acadynamo;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;

@@ -21,31 +21,6 @@
 
   	<c>
   		<!-- for date scripts, see docs -->
-  		<id>quiz</id>
-  		<type>sqlite</type>
-  		<isdef></isdef>
-  		<src>sqlite/quizzes.sqlite</src>
-  		<usr>test</usr>
-  		<pswd>test</pswd>
-  		<!-- enable sql printing -->
-  		<dbg>true</dbg>
-  		<smtcs>semantics-quiz.xml</smtcs>
-  	</c>
-
-  	<c>
-  		<!-- for date scripts, see docs -->
-  		<id>quiz-test</id>
-  		<type>sqlite</type>
-  		<isdef></isdef>
-  		<src>sqlite/quizzes.test.sqlite</src>
-  		<usr>test</usr>
-  		<pswd>test</pswd>
-  		<!-- enable sql printing -->
-  		<dbg>true</dbg>
-  		<smtcs>semantics-quiz.xml</smtcs>
-  	</c>
-
-  	<c>
   		<id>north</id>
   		<type>sqlite</type>
   		<isdef></isdef>

@@ -6,7 +6,7 @@
   <artifactId>jserv-north</artifactId>
   <packaging>war</packaging>
   <version>0.1.0</version>
-  <name>jserv-north</name>
+  <name>jserv-north, jserv for North Star.</name>
   <url>http://github.com/odys-z/semantic-jserv</url>
 
   <properties>
@@ -53,6 +53,6 @@
   </scm>
   
   <build>
-    <finalName>jserv-quiz</finalName>
+    <finalName>jserv-north</finalName>
   </build>
 </project>
