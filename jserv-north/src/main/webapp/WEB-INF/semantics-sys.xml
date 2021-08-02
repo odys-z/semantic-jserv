@@ -26,21 +26,7 @@
   		<smtc>ck-cnt-del</smtc>
   		<tabl>a_roles</tabl>
   		<pk>roleId</pk>
-  		<!-- 1. count on delete
-  			 [0] name or child referencing column (a_role_func.roleId will be used for counting)
-  			 [1] child table
-  			 [2] child pk (or condition column)
-
-  			 Not: this can be multiple rules, separated by ","
-  			 Test Example of a_domain (pk domainId):
-  			 domainId a_orgs orgType,
-  			 domainId b_alarms typeId
-
-  			 the resulting sql:
-  			 select count(orgType) from a_orgs where orgType in (select domainId from a_domain where domainId = '000001')
-  			 where the 'where clause' in select clause is composed from condition of the request's where condition.
-  		 -->
-  		<args>roleId a_role_func roleId</args>
+  		<args>funcId,a_role_func,roleId</args>
   	</s>
 
   	<!-- default users passsword -->
