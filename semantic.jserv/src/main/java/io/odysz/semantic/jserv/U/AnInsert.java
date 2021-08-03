@@ -37,12 +37,6 @@ public class AnInsert extends ServPort<AnInsertReq> {
 		super(Port.insert);
 	}
 
-//	@Override
-//	public void init() throws ServletException {
-//		super.init();
-//		p = Port.query;
-//	}
-
 	protected static ISessionVerifier verifier;
 	protected static DATranscxt st;
 
