@@ -20,8 +20,8 @@ CREATE TABLE polls (
     -- poll main table (child of quizzes)
 	pid varchar2(12),        -- poll id
 	quizId varchar2(12),     -- quiz id, fk -> quizzes.qid
-	userId varchar2(12),     -- sys / regisetered user
-	userInfo varchar2(1000), -- temp user info
+	userId varchar2(12),     -- [optional] sys / regisetered user
+	userInfo varchar2(1000), -- temp user info, json?
 	extra varchar2(1000),
 	CONSTRAINT polls_PK PRIMARY KEY (pid)
 );
