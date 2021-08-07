@@ -111,7 +111,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		lock = new ReentrantLock();
 
-		String conn = daSctx.basiconnId();
+		String conn = daSctx.sessionConnId();//.basiconnId();
 		Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here", conn);
 		DATranscxt.loadSemantics(conn,
 					JSingleton.getFileInfPath("semantic-log.xml"));
@@ -273,7 +273,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						.nv(usrMeta.pswd, newPswd)
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, usr.uid())
-						.u(sctx.instancontxt(sctx.basiconnId(), usr));
+						.u(sctx.instancontxt(sctx.sessionConnId(), usr));
 
 					// ok, logout
 					lock.lock();
@@ -299,7 +299,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					SemanticObject s = sctx.select(usrMeta.tbl, "u")
 							.col(usrMeta.iv, "iv")
 							.where_("=", "u." + usrMeta.pk, sessionBody.uid())
-							.rs(sctx.instancontxt(sctx.basiconnId(), jrobot));
+							.rs(sctx.instancontxt(sctx.sessionConnId(), jrobot));
 						
 					AnResultset rs = (AnResultset) s.rs(0);;
 					if (rs.beforeFirst().next()) {
@@ -316,7 +316,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						.nv(usrMeta.pswd, pswd2)
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, header.logid())
-						.u(sctx.instancontxt(sctx.basiconnId(), jrobot));
+						.u(sctx.instancontxt(sctx.sessionConnId(), jrobot));
 
 					// remove session if logged in
 					if (users.containsKey(ssid)) {
@@ -379,7 +379,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.iv, "iv")
 			// .col(UserMeta.urlField, "url")
 			.where_("=", "u." + usrMeta.pk, sessionBody.uid())
-			.rs(sctx.instancontxt(sctx.basiconnId(), jrobot));
+			.rs(sctx.instancontxt(sctx.sessionConnId(), jrobot));
 		
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {

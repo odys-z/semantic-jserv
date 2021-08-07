@@ -122,7 +122,7 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	public TableMeta meta() {
-		return new JUserMeta("a_user", AnSession.sctx.basiconnId());
+		return new JUserMeta("a_user", AnSession.sctx.sessionConnId());
 	}
 
 	/**jmsg should be what the response of {@link SSession}
