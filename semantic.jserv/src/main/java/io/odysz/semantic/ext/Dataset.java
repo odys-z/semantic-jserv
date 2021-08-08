@@ -81,12 +81,14 @@ public class Dataset extends ServPort<AnDatasetReq> {
 		if (ServFlags.query)
 			Utils.logi("========== query (ds.jserv11) post ==========");
 		try {
-			String conn = msg.body(0).uri();
-			conn = Connects.uri2conn(conn);
-
-			AnsonResp rs = dataset(conn, msg);
-
-			write(resp, ok(rs));
+			String uri = msg.body(0).uri();
+			if (uri == null)
+				write(resp, err(MsgCode.exSemantic, "Since v1.3.0, Dataset request must specify an uri."));
+			else {
+				String conn = Connects.uri2conn(uri);
+				AnsonResp rs = dataset(conn, msg);
+				write(resp, ok(rs));
+			}
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
