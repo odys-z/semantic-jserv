@@ -14,6 +14,7 @@ import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -141,11 +142,11 @@ public class Vec3 extends ServPort<UserReq> {
 	protected AnsonMsg<AnsonResp> xyz(AnsonMsg<UserReq> jmsg, IUser usr)
 			throws TransException, SQLException {
 		UserReq req = jmsg.body(0);
-		DATranscxt st = getContext(req.conn());
+		DATranscxt st = getContext(Connects.uri2conn(req.uri()));
 		SemanticObject rs = st .select("s_domain", "d")
 				.nv("title", "txt")
 				.orderby(serialsOrder) // TODO add ui order
-				.rs(st.instancontxt(req.conn(), usr));
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr));
 
 		return ok((ArrayList<AnResultset>) rs.rs(0));
 	}
@@ -162,7 +163,7 @@ public class Vec3 extends ServPort<UserReq> {
 	protected AnsonMsg<AnsonResp> vectors(AnsonMsg<UserReq> jmsg, IUser usr) 
 			throws TransException, SQLException {
 		UserReq req = jmsg.body(0);
-		DATranscxt st = getContext(req.conn());
+		DATranscxt st = getContext(Connects.uri2conn(req.uri()));
 		
 		// actually a direct sql statement is more comfortable
 		// you can configure it as a dataset:
@@ -173,7 +174,7 @@ public class Vec3 extends ServPort<UserReq> {
 				.col("dim1", "age")
 				.groupby(serialsGroup)
 				.orderby(serialsOrder) // TODO add s_domain.ui_order
-				.rs(st.instancontxt(req.conn(), usr));
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr));
 
 		return ok((AnResultset)rs.rs(0));
 	}
@@ -189,8 +190,8 @@ public class Vec3 extends ServPort<UserReq> {
 			throws TransException, SQLException {
 		UserReq req = jmsg.body(0);
 
-		AnResultset x = DatasetCfg.loadDataset(req.conn(), cube_x);
-		AnResultset z = DatasetCfg.loadDataset(req.conn(), cube_z);
+		AnResultset x = DatasetCfg.loadDataset(Connects.uri2conn(req.uri()), cube_x);
+		AnResultset z = DatasetCfg.loadDataset(Connects.uri2conn(req.uri()), cube_z);
 	
 		/* TODO Case_expression of select_element is not implemented in semantic.transact.
 		 * It can be queried like:
@@ -205,10 +206,10 @@ public class Vec3 extends ServPort<UserReq> {
 				.rs(st.instancontxt(req.conn(), usr));
 		 */
 
-		AnResultset legend = DatasetCfg.loadDataset(req.conn(), cube_legend); 
-		AnResultset maxmin = DatasetCfg.loadDataset(req.conn(), cube_max); 
+		AnResultset legend = DatasetCfg.loadDataset(Connects.uri2conn(req.uri()), cube_legend); 
+		AnResultset maxmin = DatasetCfg.loadDataset(Connects.uri2conn(req.uri()), cube_max); 
 
-		AnResultset y = DatasetCfg.loadDataset(req.conn(), cube_y, -1, -1, caseElem(x, z));
+		AnResultset y = DatasetCfg.loadDataset(Connects.uri2conn(req.uri()), cube_y, -1, -1, caseElem(x, z));
 
 		// tested only for sqlite
 		XChartResp cube = new XChartResp(x, z)

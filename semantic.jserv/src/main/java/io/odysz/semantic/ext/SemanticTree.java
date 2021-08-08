@@ -113,8 +113,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			throws IOException, SQLException, SAXException, SsException, TransException {
 		resp.setCharacterEncoding("UTF-8");
 
-		// yes, still only 1 request body in v1.1
-		String connId = jmsg.body(0).conn();
+		String connId = jmsg.body(0).uri();
+		connId = Connects.uri2conn(connId);
 
 		// check session
 		IUser usr = verifier.verify(jmsg.header());

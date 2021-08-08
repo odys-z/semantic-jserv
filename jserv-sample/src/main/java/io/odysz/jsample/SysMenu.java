@@ -42,7 +42,8 @@ public class SysMenu extends SemanticTree {
 			Utils.logi("---------- menu.serv get ----------");
 
 		try {
-			String connId = msg.body(0).conn();
+			String connId = msg.body(0).uri();
+			connId = Connects.uri2conn(connId);
 			String sk = msg.body(0).sk();
 
 			List<?> lst = DatasetCfg.loadStree(connId,
