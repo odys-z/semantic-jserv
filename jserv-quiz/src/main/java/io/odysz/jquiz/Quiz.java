@@ -19,6 +19,7 @@ import io.odysz.jquiz.protocol.Quizport;
 import io.odysz.jquiz.utils.JquizFlags;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
@@ -184,7 +185,7 @@ public class Quiz extends ServPort<UserReq> {
 		String usrinfo = (String) props.get(QuizProtocol.pollUser);
 
 
-		ISemantext smtxt = st.instancontxt(props.conn(), jsonRobot);
+		ISemantext smtxt = st.instancontxt(Connects.uri2conn(props.uri()), jsonRobot);
 		Insert inspoll = st.insert("polls", jsonRobot)
 			.nv("userInfo", usrinfo)
 			.nv("quizId", qzid)
@@ -216,7 +217,7 @@ public class Quiz extends ServPort<UserReq> {
 		String day0 = (String) body.data(QuizProtocol.dcreate);
 
 
-		ISemantext smtxt = st.instancontxt(body.conn(), usr);
+		ISemantext smtxt = st.instancontxt(Connects.uri2conn(body.uri()), usr);
 		Insert insquz = st.insert("quizzes", usr)
 			.nv("quizinfo", info)
 			.nv("title", titl)
@@ -275,7 +276,7 @@ public class Quiz extends ServPort<UserReq> {
 			}
 		}
 	
-		ISemantext smtxt = st.instancontxt(body.conn(), usr);
+		ISemantext smtxt = st.instancontxt(Connects.uri2conn(body.uri()), usr);
 		upd.u(smtxt);
 		
 		return ok(new QuizResp()
@@ -292,14 +293,14 @@ public class Quiz extends ServPort<UserReq> {
 				.l("s_domain", "d", "q.subject = d.did)")
 				// TODO conditions
 				// TODO conditions
-				.rs(st.instancontxt(req.conn(), usr));
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr));
 
 		return ok(new QuizResp(rs).msg("list loaded"));
 	}
 
 	private AnsonMsg<? extends AnsonResp> quiz(UserReq body, IUser usr) throws TransException, SQLException {
 		String qzid =  (String) body.data(QuizProtocol.quizId);
-		ISemantext smtxt = st.instancontxt(body.conn(), usr);
+		ISemantext smtxt = st.instancontxt(Connects.uri2conn(body.uri()), usr);
 		SemanticObject so = st
 			.select("quizzes", "q")
 			.where_("=", "qid", LangExt.isEmpty(qzid) ? "" : qzid)

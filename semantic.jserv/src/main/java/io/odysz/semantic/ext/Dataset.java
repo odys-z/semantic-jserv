@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -56,7 +57,8 @@ public class Dataset extends ServPort<AnDatasetReq> {
 			Utils.logi("---------- query (ds.jserv11) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			String conn = msg.body(0).conn();
+			String conn = msg.body(0).uri();
+			conn = Connects.uri2conn(conn);
 
 			verifier.verify(msg.header());
 
@@ -79,7 +81,8 @@ public class Dataset extends ServPort<AnDatasetReq> {
 		if (ServFlags.query)
 			Utils.logi("========== query (ds.jserv11) post ==========");
 		try {
-			String conn = msg.body(0).conn();
+			String conn = msg.body(0).uri();
+			conn = Connects.uri2conn(conn);
 
 			AnsonResp rs = dataset(conn, msg);
 

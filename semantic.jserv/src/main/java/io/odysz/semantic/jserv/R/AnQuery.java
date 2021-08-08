@@ -103,7 +103,9 @@ public class AnQuery extends ServPort<AnQueryReq> {
 		// exclude sqlite paging
 		if (msg.page >= 0 && msg.pgsize > 0
 			&& dbtype.sqlite == Connects.driverType(
-				msg.conn() == null ? Connects.defltConn() : msg.conn())) {
+				// msg.conn() == null ? Connects.defltConn() : msg.conn()
+				Connects.uri2conn(msg.uri())
+			)) {
 			Utils.warn("JQuery#buildSelct(): Requesting data from sqlite, but it's not easy to page in sqlite. So page and size are ignored: %s, %s.",
 					msg.page, msg.pgsize);
 		}
@@ -177,7 +179,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	 */
 	public static AnResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = buildSelct(msg, usr);
-		SemanticObject s = selct.rs(st.instancontxt(msg.conn(), usr));
+		SemanticObject s = selct.rs(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
 		return (AnResultset) s.rs(0);
 	}
 }

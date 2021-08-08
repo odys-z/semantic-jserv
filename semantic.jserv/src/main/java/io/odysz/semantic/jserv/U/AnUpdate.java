@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -119,7 +120,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 				.post(postUpds(msg.postUpds, usr))
 				// .attachs(msg.attacheds)
 				.limit(msg.limt)
-				.u(st.instancontxt(msg.conn(), usr));
+				.u(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
 
 		if (res == null)
 			return new AnsonMsg<AnsonResp>(p, MsgCode.ok);
@@ -205,7 +206,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 		SemanticObject res = (SemanticObject) del
 				.where(tolerateNv(msg.where))
 				.post(postUpds(msg.postUpds, usr))
-				.d(st.instancontxt(msg.conn(), usr));
+				.d(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
 
 		if (res == null)
 			return new AnsonMsg<AnsonResp>(p, MsgCode.ok);
