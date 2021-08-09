@@ -17,6 +17,9 @@ VALUES
 ('n-mystud',  'My Students',    '/n/my-students','{icon: ''children''}','1', '2 n01.3 n-mystud', 'n01',3),
 
 ('c01',       'Center Me',      NULL,            '',                    '1', '3 c01',             NULL, 3),
-('c-status',  'My Status',      '/c/status',     '{icon: ''sms''}',     '1', '3 c01.1 c-status',  'n01',1),
-('c-myconn',  'My Connection',  '/c/myconn',     '{icon: ''send''}',    '1', '3 c01.2 c-status',  'n01',2),
-('c-mypolls', 'My Polls',       '/c/mypolls',    '{icon: ''sms''}',     '1', '3 c01.3 c-mypolls', 'n01',3);
+('c-status',  'My Status',      '/c/status',     '{icon: ''sms''}',     '1', '3 c01.1 c-status',  'c01',1),
+('c-myconn',  'My Connection',  '/c/myconn',     '{icon: ''send''}',    '1', '3 c01.2 c-status',  'c01',2),
+('c-mypolls', 'My Polls',       '/c/mypolls',    '{icon: ''sms''}',     '1', '3 c01.3 c-mypolls', 'c01',3);
+
+SELECT funcId, parentId, funcName, url, sibling sort, fullpath, css, flags
+  			FROM a_functions f order by f.fullpath
