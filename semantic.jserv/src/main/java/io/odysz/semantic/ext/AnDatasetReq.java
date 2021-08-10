@@ -10,9 +10,9 @@ public class AnDatasetReq extends AnQueryReq {
 	String sk;
 	public String[] sqlArgs;
 	public String rootId;
-	/**String array of tree semantics from client */
-	protected String smtcss;
-	/**{@link TreeSemantics} of tree from {@link #smtcss} or set with {@link #treeSemtcs} ({@link TreeSemantics}) */
+	/**String array of tree semantics from client, same as dataset.xml/t/c/s-tree */
+	protected String s_tree;
+	/**{@link TreeSemantics} of tree from {@link #s_tree} or set with {@link #treeSemtcs} ({@link TreeSemantics}) */
 	protected TreeSemantics stcs;
 
 	String root;
@@ -38,17 +38,17 @@ public class AnDatasetReq extends AnQueryReq {
 		return bdItem;
 	}
 
-	/**
+	/**Get the tree semantics. Client can provide {@link #s_tree} string as tree semantics.
 	 * @return parsed semantics
 	 */
 	public TreeSemantics getTreeSemantics() {
 		if (stcs != null)
 			return stcs;
 		else {
-			if (smtcss == null)
+			if (s_tree == null)
 				return null;
 			else {
-				stcs = new TreeSemantics(smtcss);
+				stcs = new TreeSemantics(s_tree);
 				return stcs;
 			}
 		}
