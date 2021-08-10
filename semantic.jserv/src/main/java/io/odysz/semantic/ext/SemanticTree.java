@@ -161,9 +161,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	}
 
 	/**Figure out tree semantics in the following steps:<br>
-	 * 1. if jreq is not null try get it (the client has defined a semantics);<br>
-	 * 2. if req has an 'sk' parameter, load in confix.xml, if failed, try dataset.xml;<br>
-	 * 3. if jreq has and 'sk' parameter, load in confix.xml, if failed, try dataset.xml.<br>
+	 * 1. if jreq is not null try get it (may be the client has defined a semantics);<br>
+	 * 2. if req has an 'sk' parameter, load it from dataset.xml - this way can error prone;<br>
 	 * @param jreq
 	 * @return tree's semantics, {@link TreeSemantics}
 	 */
