@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <conns>
-  <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,smtcs">
+  <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,log,smtcs">
   	<!-- drvmnger table is used to configure basic db connection, for pooled datasource, see bdcp -->
   	<!-- smtcs: semantics configuration used only for the connection.
   		(And a global semantics configuration?) -->
@@ -16,6 +16,7 @@
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
   		<dbg>true</dbg>
+  		<log>true</log>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
 
@@ -29,6 +30,7 @@
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
   		<dbg>true</dbg>
+  		<log>false</log>
   		<smtcs>semantics-workflow.xml</smtcs>
   	</c>
   	
@@ -42,11 +44,12 @@
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
   		<dbg>true</dbg>
+  		<log>true</log>
   		<smtcs>semantics-vec.xml</smtcs>
   	</c>
   </t>
 
-  <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,smtcs">
+  <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,log,smtcs">
   	<!-- dbcp table is used to pooled db datasource, for basic connection, see dao -->
   	<!-- type: mysql | oracle | mssql -->
   	<!-- id: client specify id for the desired target data source -->
@@ -70,6 +73,7 @@
   		<usr>Not used</usr>
   		<pswd>Not used (will be protected in cipher in the future)</pswd>
   		<dbg>true</dbg>
+  		<log>true</log>
   	</c>
 	-->
 
@@ -82,6 +86,7 @@
   		<usr>Not used</usr>
   		<pswd>Not used</pswd>
   		<dbg>true</dbg>
+  		<log>true</log>
   		<smtcs>semantics-orcl.xml</smtcs>
   	</c>
 	-->

@@ -45,22 +45,30 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
-/**<p>1. Handle login-obj: {@link SessionReq}.<br>
- *  a: "login | logout | pswd | init | ping(touch)",<br>
+/**
+ * <h5>1. Handle login-obj: {@link SessionReq}.</h5>
+ *  <p>a: "login | logout | pswd | init | ping(touch)",<br>
  *  uid: "user-id",<br>
  *  pswd: "uid-cipher-by-pswd",<br>
  *  iv: "session-iv"</p>
- * <p>2. Session verifying using session-header<br>
- * uid: “user-id”,<br>
+ *  
+ * <h5>2. Session verifying using session-header</h5>
+ * <p>uid: “user-id”,<br>
  * ssid: “session-id-plain/cipher”,<br>
  * sys: “module-id”</p>
  * <p>Session object are required when login successfully, and removed automatically.
- * When removing, the SUser object is removed via session lisenter.</p>
+ * When removing, the {@link JUser} object is removed via session lisenter.</p>
  * <p><b>Note:</b></p>Session header is post by client in HTTP request's body other than in HTTP header.
  * It's HTTP body payload, understood by semantic-jserv as a request header semantically.</p>
  * <p>Also don't confused with servlet session - created via getSessionId(),
  * <br>and you'd better 
  * <a href='https://stackoverflow.com/questions/2255814/can-i-turn-off-the-httpsession-in-web-xml'>turn off it</a>.</p>
+ * 
+ * <h5>3. User action can be logged with session information</h5>
+ * <p>AnSession requires loggings sql semantics explicitly defined in "semantic-log.xml",
+ * with file name hard coded.</p>
+ * <p>Logging can be disabled by connection configuration. 
+ * Each connection requiring loggin must have a table named "a_logs".</p>
  * 
  * @author odys-z@github.com
  */
@@ -111,10 +119,10 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		lock = new ReentrantLock();
 
-		String conn = daSctx.sessionConnId();//.basiconnId();
-		Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here", conn);
+		String conn = daSctx.getSysConnId();//.basiconnId();
+		Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here.", conn);
 		DATranscxt.loadSemantics(conn,
-					JSingleton.getFileInfPath("semantic-log.xml"));
+					JSingleton.getFileInfPath(JUser.sessionSmtXml));
 
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
@@ -273,7 +281,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						.nv(usrMeta.pswd, newPswd)
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, usr.uid())
-						.u(sctx.instancontxt(sctx.sessionConnId(), usr));
+						.u(sctx.instancontxt(sctx.getSysConnId(), usr));
 
 					// ok, logout
 					lock.lock();
@@ -299,7 +307,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					SemanticObject s = sctx.select(usrMeta.tbl, "u")
 							.col(usrMeta.iv, "iv")
 							.where_("=", "u." + usrMeta.pk, sessionBody.uid())
-							.rs(sctx.instancontxt(sctx.sessionConnId(), jrobot));
+							.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
 						
 					AnResultset rs = (AnResultset) s.rs(0);;
 					if (rs.beforeFirst().next()) {
@@ -316,7 +324,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						.nv(usrMeta.pswd, pswd2)
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, header.logid())
-						.u(sctx.instancontxt(sctx.sessionConnId(), jrobot));
+						.u(sctx.instancontxt(sctx.getSysConnId(), jrobot));
 
 					// remove session if logged in
 					if (users.containsKey(ssid)) {
@@ -379,7 +387,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.iv, "iv")
 			// .col(UserMeta.urlField, "url")
 			.where_("=", "u." + usrMeta.pk, sessionBody.uid())
-			.rs(sctx.instancontxt(sctx.sessionConnId(), jrobot));
+			.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
 		
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
