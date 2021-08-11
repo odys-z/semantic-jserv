@@ -119,10 +119,12 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		lock = new ReentrantLock();
 
-		String conn = daSctx.getSysConnId();//.basiconnId();
-		Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here.", conn);
-		DATranscxt.loadSemantics(conn,
-					JSingleton.getFileInfPath(JUser.sessionSmtXml));
+		String conn = daSctx.getSysConnId();
+		if (!DATranscxt.alreadyLoaded(conn)) {
+			Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here.", conn);
+			DATranscxt.loadSemantics(conn,
+						JSingleton.getFileInfPath(JUser.sessionSmtXml));
+		}
 
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
