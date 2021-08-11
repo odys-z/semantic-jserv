@@ -53,7 +53,7 @@ public class LogTranscxt extends DATranscxt {
 	 */
 	public static HashMap<String, HashMap<String, DASemantics>> loadVirtualSemantics(String xmlpath)
 			throws SAXException, IOException, SQLException, SemanticException {
-		Utils.logi("Loading Semantics (fullpath):\n\t%s", xmlpath);
+		Utils.logi("Loading Semantics of logging, fullpath:\n\t%s", xmlpath);
 
 		// String fpath = Connects.getSmtcs(sysConn);
 		// String fpath = Connects.getSmtcs(xmlpath);
