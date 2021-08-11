@@ -49,6 +49,9 @@ public class JSingleton {
 			DatasetCfg.init(rootINF);
 			defltScxt = new DATranscxt(Connects.defltConn());
 			
+			for (String connId : Connects.getAllConnIds())
+				DATranscxt.loadSemantics(connId, JSingleton.getFileInfPath(Connects.getSmtcsPath(connId)));
+				
 			Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 			AnSession.init(defltScxt, ctx);
 

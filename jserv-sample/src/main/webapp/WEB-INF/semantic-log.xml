@@ -8,7 +8,7 @@
 		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
    -->
   	<s>
-  		<id>01</id>
+  		<id>log.01</id>
  		<smtc>a-k</smtc>
   		<tabl>a_logs</tabl>
   		<pk>logId</pk>
@@ -16,7 +16,7 @@
   	</s>
 
   	<s>
-  		<id>02</id>
+  		<id>log.02</id>
  		<smtc>o-t</smtc>
   		<tabl>a_logs</tabl>
   		<pk>logId</pk>

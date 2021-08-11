@@ -3,11 +3,11 @@ drop table indicators;
 
 CREATE TABLE indicators (
     -- indicator configuration
-	indId   VARCHAR(12),
-	indName VARCHAR(64),
+	indId   VARCHAR(12) NOT NULL,
+	indName VARCHAR(64) NOT NULL,
 	parent  VARCHAR(12),
-	sort    VARCHAR(4),
-	fullpath VARCHAR(256),
+	sort    VARCHAR(4) NOT NULL,
+	fullpath VARCHAR(256) NOT NULL,
 	css     VARCHAR(256),  -- special display format, e.g. icon
 	weight  FLOAT,         -- default weight. A poll should have question weight independently; children's weight should sum up to 1.0
 	qtype   VARCHAR(4),    -- value type (single, multiple options, number, rank5, rank10, ...)

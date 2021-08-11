@@ -15,5 +15,23 @@
 		<pk>vid</pk>
 		<args>vid</args>
 	</s>
+
+	<s>
+  		<id>vec.02</id>
+  		<smtc>a-k</smtc>
+  		<tabl>indicators</tabl>
+  		<pk>indId</pk>
+  		<args>indId</args>
+  	</s>
+
+
+	<s>
+  		<id>vec.03</id>
+  		<smtc>fullpath</smtc>
+  		<tabl>indicators</tabl>
+  		<pk>indId</pk>
+  		<args>parent,sort,fullpath</args>
+  	</s>
+
   </t>
 </semantics>
