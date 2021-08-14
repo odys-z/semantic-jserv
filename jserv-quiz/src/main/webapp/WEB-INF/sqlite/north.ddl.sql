@@ -50,6 +50,7 @@ CREATE TABLE quizzes (
     extra      varchar(1000)
 );
 
+drop table questions;
 CREATE TABLE questions (
 	-- quizzes details (child of quizzes)
 	-- some questions are copied from indicators, some are not
