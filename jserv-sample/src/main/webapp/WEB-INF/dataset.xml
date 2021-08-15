@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dataset>
-<t id="ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
+<t id="ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
 	<!-- This table is used for define sqls that can be parameterized when serving data.
 		Client using 'sk' in request message to use sqls.
+		conn: Optional, the conn-id overriding client's URI's conn-id. use case: cbb is binding source different from URI.
 		Records returned by sql can be mapped into bump cases (for oracle) if 'cols' is not empty.
 		Different version of sql, mysql, oracle, etc. is used according to connId and driver type,
 		see connects.xml. 
