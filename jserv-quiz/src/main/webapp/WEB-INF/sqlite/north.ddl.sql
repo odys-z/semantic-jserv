@@ -16,6 +16,7 @@ CREATE TABLE ind_emotion (
 	CONSTRAINT ind_emotion_PK PRIMARY KEY (indId)
 );
 
+drop table polls;
 CREATE TABLE polls (
     -- poll main table (child of quizzes)
 	pid varchar2(12),        -- poll id
@@ -36,6 +37,7 @@ CREATE TABLE polldetails (
 	CONSTRAINT polldetails_PK PRIMARY KEY (pssid)
 );
 
+drop table quizzes;
 CREATE TABLE quizzes (
 	-- quizzes records (master)
     qid        varchar(12) PRIMARY KEY,
@@ -47,7 +49,9 @@ CREATE TABLE quizzes (
     qowner     varchar(12),
     dcreate    NUMERIC,
     subject    varchar(12),
-    extra      varchar(1000)
+    flag       varchar(2),     -- e.g. is this a template
+    pubTime    NUMERIC,        -- publish datetime
+    extra      varchar(1000)   -- e.g. times been copied
 );
 
 drop table questions;
