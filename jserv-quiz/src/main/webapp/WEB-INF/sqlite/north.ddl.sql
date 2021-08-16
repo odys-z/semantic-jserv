@@ -1,18 +1,22 @@
 SELECT indId, indName, parent, sort, fullpath, css, weight, qtype, remarks, extra
 FROM ind_emotion;
 
+drop table ind_emotion;
 CREATE TABLE ind_emotion (
     -- indicator configuration
-	indId VARCHAR(12),
-	indName VARCHAR(64),
-	parent VARCHAR(12),
-	sort VARCHAR(4),
-	fullpath VARCHAR(256),
-	css VARCHAR(256),     -- special display format, e.g. icon
-	weight FLOAT,         -- default weight. A poll should have question weight independently
-	qtype VARCHAR(4),     -- question type (single, multiple answer, ...)
-	remarks VARCHAR(512),
-	extra VARCHAR(128),
+	indId      VARCHAR(12),
+	indName    VARCHAR(64),
+	parent     VARCHAR(12),
+	sort       VARCHAR(4),      -- tree sibling sort
+	fullpath   VARCHAR(256),
+	css        VARCHAR(256),    -- special display format, e.g. icon
+	weight     FLOAT,           -- default weight. A poll should have question weight independently
+	qtype      VARCHAR(4),      -- question type (single, multiple answer, ...)
+	remarks    VARCHAR(512),    -- used as quiz question
+	qsort      int DEFAULT 0,   -- sort in a quiz
+	expectings VARCHAR(512),    -- expected answers
+	descrpt    VARCHAR(256),    -- a short description
+	extra      VARCHAR(128),
 	CONSTRAINT ind_emotion_PK PRIMARY KEY (indId)
 );
 
