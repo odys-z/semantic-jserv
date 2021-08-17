@@ -34,6 +34,11 @@ public class AnsonResp extends AnsonBody {
 
 	public String msg() { return m; }
 
+	public AnsonResp msg(String txt) {
+		this.m = txt;
+		return this;
+	}
+
 	public AnsonResp rs(AnResultset rs) {
 		if (this.rs == null)
 			this.rs = new ArrayList<AnResultset>(1);
