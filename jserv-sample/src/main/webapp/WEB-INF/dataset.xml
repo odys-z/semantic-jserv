@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <dataset>
 <t id="ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
 	<!-- This table is used for define sqls that can be parameterized when serving data.
