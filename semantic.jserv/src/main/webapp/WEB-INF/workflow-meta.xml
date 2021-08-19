@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <workflow>
   <t id="conn" pk="conn" columns="conn">
   	<s> <conn>local-sqlite</conn> </s>
