@@ -1,3 +1,5 @@
 target
 /.metadata/
 RemoteSystemsTempFiles
+.settings
+.classpath
