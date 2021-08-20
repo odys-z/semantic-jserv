@@ -1,5 +1,6 @@
 target
 .settings
+.classpath
 
 #jserv-quiz/.settings/org.eclipse.wst.common.component
 #
