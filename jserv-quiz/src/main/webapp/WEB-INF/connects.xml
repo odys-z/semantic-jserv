@@ -89,7 +89,7 @@
   	</c>
   </t>
   
-  <t id="conn-uri" pk='uri,role' columns="uri, conn">
+  <t id="conn-uri" pk='uri' columns="uri, conn">
   	<!-- for uri, see AnClient/js/example/example.js/north-star/north-app.jsx
   	     for conn, see above
   	     It's planned to try configure connections via user requests, in the future.
