@@ -106,7 +106,7 @@ public class Vec3 extends ServPort<UserReq> {
 			else if ("cube".equals(jreq.a()))
 				rsp = cubes(jmsg, usr);
 			else
-				throw new SemanticException("request.body.a can not handled: %s\n" +
+				throw new SemanticException("request.body.a can not handled: %s\\n" +
 						"Only a = xyz | vec are supported. Please use GET a=query to find what's latest are supported ()", jreq.a());
 
 			write(resp, rsp);
