@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <dataset>
-<t id="ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
+<t id="ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
 	<!-- This table is used for define sqls that can be parameterized when serving data.
 		Client using 'sk' in request message to use sqls.
+		conn: Optional, the conn-id overriding client's URI's conn-id. use case: cbb is binding source different from URI.
 		Records returned by sql can be mapped into bump cases (for oracle) if 'cols' is not empty.
 		Different version of sql, mysql, oracle, etc. is used according to connId and driver type,
 		see connects.xml. 
@@ -81,23 +83,12 @@
   		<s-tree>checked,a_functions,funcId nodeId,parentId,fullpath,sort,funcName text,children,false</s-tree>
   	</c>
   	
-  	<!-- workflow combobox -->
-  	<c> <sk>ezcbb-workflows</sk>
-  		<mysql>select wfId value, wfName text from oz_workflow</mysql>
-  		<sqlite></sqlite>
-  	</c>
-  	<!-- get workflow tree. arg[0] wfId, [1] roleId -->
-  	<c> <sk>wf-rights.tree</sk>
-  		<mysql>select false checked, n.nodeId, nodeName, n.nodeId value, nodeName text, '' roleId, concat(n.wfId, '/', n.nodeId) fullpath, 0 sort, wfId parent
-  		from oz_wfnodes n where n.wfId = '%1$s'
-  		union
-  		select r.roleId is not null checked, n.nodeId, nodeName, c.cmd value, c.txt text, r.roleId, concat(n.wfId, '/', n.nodeId, '/', ifnull(c.cmd, '')) fullpath, c.sort, n.nodeId parent
-  		from oz_wfnodes n join oz_wfcmds c on n.nodeId = c.nodeId and n.wfId = '%1$s'
-  		left outer join oz_wfrights r on c.cmd = r.cmd and r.roleId = '%2$s'
-  		order by fullpath, sort</mysql>
-  		<s-tree>checked,oz_workflow,value,parent,fullpath,sort,text,children,false</s-tree>
-  	</c>
-
+  	<!-- Indicator Tree -->
+	<c> <sk>xv.indicators</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT 0 checked, indId, indName, parent parentId, sort, fullpath, css, weight, qtype, remarks, extra FROM indicators order by fullpath</sqlit>
+  		<s-tree>checked,indicators,indId nodeId,parentId,fullpath,sort,indName text,children,false</s-tree>
+	</c>
 
 	<c> <sk>legend.cube.vec3</sk>
   		<mysql></mysql>

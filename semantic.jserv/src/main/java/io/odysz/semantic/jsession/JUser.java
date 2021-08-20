@@ -78,14 +78,23 @@ public class JUser extends SemanticObject implements IUser {
 	private String funcName;
 
 	private static DATranscxt logsctx;
+	private static String[] connss;
+	public static final String sessionSmtXml;
+	public static final String logTabl;
 	static {
 		String conn = Configs.getCfg("log-connId");
 		if (LangExt.isblank(conn))
 			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
 		try {
-			logsctx = new DATranscxt(conn);
+			connss = conn.split(","); // [conn-id, log.xml, a_logs]
+			// logsctx = new DATranscxt(connss[0]);
+			logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
+		}
+		finally {
+			sessionSmtXml  = connss != null ? connss[1] : "";
+			logTabl = connss != null ? connss[2] : "";
 		}
 	}
 
@@ -122,7 +131,7 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	public TableMeta meta() {
-		return new JUserMeta("a_user", AnSession.sctx.sessionConnId());
+		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
 	}
 
 	/**jmsg should be what the response of {@link SSession}
@@ -136,7 +145,7 @@ public class JUser extends SemanticObject implements IUser {
 
 	@Override
 	public ArrayList<String> dbLog(ArrayList<String> sqls) {
-		return LoggingUser.genLog(logsctx, sqls, this, funcName, funcId);
+		return LoggingUser.genLog(logsctx, logTabl, sqls, this, funcName, funcId);
 	}
 
 	public void touch() {
