@@ -70,8 +70,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	@Override
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		if (ServFlags.query)
-			Utils.logi("---------- squery (r.serv11) get ----------");
+		if (ServFlags.extStree)
+			Utils.logi("---------- squery (s-tree.serv11) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			jsonResp(msg, resp);
@@ -90,8 +90,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	@Override
 	protected void onPost(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		if (ServFlags.query)
-			Utils.logi("========== squery (r.serv11) post ==========");
+		if (ServFlags.extStree)
+			Utils.logi("========== squery (s-tree.serv11) post ==========");
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
