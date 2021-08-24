@@ -24,6 +24,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	/**Port is the conceptual equivalent to the SOAP port, the service methods' group.<br>
 	 * Client must use enum name, e.g. heartbeat, session in json. url are explained at server side.
 	 * NOTE: java code shouldn't use switch-case block on enum. That cause problem with generated class.
+	 * 
 	 * @author odys-z@github.com
 	 */
 	public static enum Port implements IPort {  
