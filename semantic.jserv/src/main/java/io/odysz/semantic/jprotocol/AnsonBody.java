@@ -9,8 +9,6 @@ public abstract class AnsonBody extends Anson {
 
 	protected String uri;
 	public String uri() { return uri; }
-//	protected String conn;
-//	public String conn() { return conn; }
 
 	/** Action: login | pswd, and any serv port extension */
 	protected String a;
