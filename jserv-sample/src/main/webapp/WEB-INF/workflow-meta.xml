@@ -55,7 +55,7 @@
   	
   </t>
 
-  <t id="right-ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
+  <t id="right-ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
 	<!-- This table is used for define sqls that can be parameterized when serving data.
 
 		Cmds selected from this is compared to request's cmd name.
