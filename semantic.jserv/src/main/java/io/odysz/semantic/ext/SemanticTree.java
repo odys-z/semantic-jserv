@@ -356,7 +356,7 @@ end </pre>
 		 * @param rootId
 		 * @param sm
 		 * @param dblog 
-		 * @return
+		 * @return total updated records - not the moved items?
 		 * @throws SQLException
 		 * @throws TransException 
 		 */
@@ -510,6 +510,32 @@ where p0.parentId is null; </pre>
 			return String.format("set p%1$D.%2$s = concat(p%3$D.%2$s, '.', char2rx64(ifnull(p%1$D.%4$s, 0)), ' ', p%1$D.%5$s)",
 					// pi, sm[Ix.fullpath][0], pi - 1, sm[Ix.sort][0], sm[Ix.recId][0]);
 					pi, sm.dbFullpath(), pi - 1, sm.dbSort(), sm.dbRecId());
+		}
+	}
+	
+	static class Reforest {
+		
+		public static int rebuild(String rootId, TreeSemantics sm, IUser dblog) throws TransException, SQLException {
+			String t = sm.tabl();
+			String fullpath = sm.dbFullpath();
+			String sort = sm.dbSort();
+			String id = sm.dbRecId();
+			String p = sm.dbParent();
+
+			// update ind_emotion set fullpath = p.fullpath || "." || sort where ind_emotion.parent in (select indId from ind_emotion where parent in (NULL, ''))  
+			String parent = "(NULL, '')";
+			String inParent = parent;
+
+			int reti = 1;
+			while (reti > 0) {
+				SemanticObject res = st
+					.update("ind_emotion")
+					.nv("userName", "abc-x01")
+					.where("=", "userId", "'admin'")
+					.u(st.instancontxt(null, dblog));
+				reti = res.total(0);
+			}
+			return 0;
 		}
 	}
 }
