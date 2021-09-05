@@ -9,19 +9,18 @@ public class AnDatasetReq extends AnQueryReq {
 
 	String sk;
 	public String[] sqlArgs;
-	public String rootId;
 	/**String array of tree semantics from client, same as dataset.xml/t/c/s-tree */
 	protected String s_tree;
 	/**{@link TreeSemantics} of tree from {@link #s_tree} or set with {@link #treeSemtcs} ({@link TreeSemantics}) */
 	protected TreeSemantics stcs;
 
-	String root;
-	public String root() { return root; }
+	public String rootId;
+	public String root() { return rootId; }
 
 	public AnDatasetReq() { super(null, null);}
 
 	public AnDatasetReq root(String rootId) {
-		this.root = rootId;
+		this.rootId = rootId;
 		return this;
 	}
 

@@ -195,7 +195,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		if (treeSmtcs == null)
 			throw new SemanticException("SemanticTree#loadSTree(): Can't build tree, tree semantics is null.");
 
-		String rootId = jreq.rootId;
+		String rootId = jreq.root();
 		if (rootId != null && rootId.trim().length() == 0)
 			rootId = null;
 		
@@ -229,11 +229,15 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	 */
 	protected AnsonMsg<AnsonResp> rebuildTree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)
 			throws SQLException, TransException {
+		int total = 0;
 		if (Connects.driverType(connId) == dbtype.mysql) {
-			int total = BuildMysql.rebuildDbTree(rootId, semanticss, usrInf);
-			return ok("re-forest", "Updated %s records from root %s", total, rootId);
+			// @deprecated
+			total = BuildMysql.rebuildDbTree(rootId, semanticss, usrInf);
 		}
-		else throw new SQLException("TODO...");
+		else
+			total = Reforest.shapeSubtree(connId, rootId, semanticss, usrInf);
+
+		return ok("re-forest", "Updated %s records from root %s", total, rootId);
 	}
 
 	protected AnsonMsg<AnsonResp> rebuildForest(String connId, TreeSemantics semanticss, IUser usrInf)
@@ -246,7 +250,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		else throw new SQLException("TODO...");
 	}
 
-	/**FIXME use semantic.transact to extend this class to build sql for all supported DB
+	/**FIXME use semantic.transact to extend this class to build sql for all supported DB.
+	 * For mysql 8, see {@link Reforest}.
 	 * - even supporting no radix64.<br>
 	 * A helper class to rebuild tree structure in db table - in case node's parent changing makes subtree fullpath incorrect.<br>
 	 * This needs two DB facilities to work:<br>
@@ -513,29 +518,58 @@ where p0.parentId is null; </pre>
 		}
 	}
 	
-	static class Reforest {
+	/**Update fullpath, recursively.
+	 * TODO oracle 11gr2: https://dev.mysql.com/doc/refman/8.0/en/with.html 
+	 * TODO mysql 8: https://dev.mysql.com/doc/refman/8.0/en/with.html 
+	 * 
+	 * @author Odys Zhou
+	 */
+	public static class Reforest {
 		
-		public static int rebuild(String rootId, TreeSemantics sm, IUser dblog) throws TransException, SQLException {
-			String t = sm.tabl();
-			String fullpath = sm.dbFullpath();
-			String sort = sm.dbSort();
-			String id = sm.dbRecId();
-			String p = sm.dbParent();
+		/** sqlite<pre>
+	with backtrace (indId, parent, fullpath) as (
+		select indId, parent, fullpath from ind_emotion2 where indId = 'C'
+		union all
+		select me.indId, me.parent, p.fullpath || '.' || printf('%02d', sort) from backtrace p
+		join ind_emotion2 me on me.parent = p.indId 
+	) 
+	update ind_emotion2 set fullpath = (
+	select fullpath from backtrace t where ind_emotion2.indId = t.indId) where indId in (select indId from backtrace); 
+		</pre>
+		 * @param connId
+		 * @param rootId 
+		 * @param sm
+		 * @param dblog
+		 * @return
+		 * @throws TransException
+		 * @throws SQLException
+		 */
+		public static int shapeSubtree(String connId, String rootId, TreeSemantics sm, IUser dblog) throws TransException, SQLException {
 
-			// update ind_emotion set fullpath = p.fullpath || "." || sort where ind_emotion.parent in (select indId from ind_emotion where parent in (NULL, ''))  
-			String parent = "(NULL, '')";
-			String inParent = parent;
-
-			int reti = 1;
-			while (reti > 0) {
-				SemanticObject res = st
-					.update("ind_emotion")
-					.nv("userName", "abc-x01")
-					.where("=", "userId", "'admin'")
-					.u(st.instancontxt(null, dblog));
-				reti = res.total(0);
+			if (Connects.driverType(connId) != dbtype.sqlite) {
+				throw new SemanticException("[TODO] Reshape fullpath are not supported yet.");
 			}
-			return 0;
+			else {
+				/* sqlite
+				with backtrace (indId, parent, fullpath) as (
+					select indId, parent, fullpath from ind_emotion2 where indId = 'C'
+					union all
+					select me.indId, me.parent, p.fullpath || '.' || printf('%02d', sort) from backtrace p
+					join ind_emotion2 me on me.parent = p.indId 
+				) 
+				update ind_emotion2 set fullpath = (
+				select fullpath from backtrace t where ind_emotion2.indId = t.indId) where indId in (select indId from backtrace); 
+				*/
+				return Connects.commit(connId, dblog, String.format(
+				"with backtrace (indId, parent, fullpath) as (" +
+					"select %2$s indId, %3$s parent, %4$s fullpath from %1$s where %2$s = '%6$s' " +
+					"union all " +
+					"select me.%2$s, me.%3$s, p.fullpath || '.' || printf('%%0%7$sd', %5$s) from backtrace p " +
+					"join %1$s me on me.%3$s = p.indId) " +
+				"update %1$s set %4$s = " +
+				"(select %4$s from backtrace t where %1$s.%2$s = t.indId) where %2$s in (select indId from backtrace)",
+				sm.tabl(), sm.dbRecId(), sm.dbParent(), sm.dbFullpath(), sm.dbSort(), rootId, 2))[0];
+			}
 		}
 	}
 }
