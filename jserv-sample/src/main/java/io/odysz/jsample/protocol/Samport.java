@@ -25,7 +25,7 @@ public enum Samport implements IPort {
 	tools("tools.serv"),
 	vec3("vec3.serv"),
 	/** The new experimental serv, extending semantics to the client side */
-	userstier("st-users");
+	userstier("users.tier");
 
 	static {
 		JSONAnsonListener.registFactory(Samport.class, 
