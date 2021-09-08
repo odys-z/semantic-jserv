@@ -142,7 +142,7 @@ public class UsersTier extends ServPort<UserstReq> {
 				.l("a_roles", "r", "r.roleId = u.roleId");
 
 		if (!LangExt.isEmpty(jreq.userName))
-			q.where("%", "roleName", jreq.userName);
+			q.whereLike("roleName", jreq.userName);
 
 		if (!LangExt.isEmpty(jreq.userId))
 			q.whereEq("userId", jreq.userId);
