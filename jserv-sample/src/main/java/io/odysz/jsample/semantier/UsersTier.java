@@ -75,10 +75,12 @@ public class UsersTier extends ServPort<UserstReq> {
 				rsp = ins(jreq, usr);
 			else if (UserstReq.A.update.equals(jreq.a()))
 				rsp = upd(jreq, usr);
+			else if (UserstReq.A.del.equals(jreq.a()))
+				rsp = del(jreq, usr);
 			else throw new SemanticException(String.format(
 						"request.body.a can not handled: %s\\n" +
-						"Only a = [%s, %s, %s, %s] are supported.",
-						jreq.a(), A.records, A.rec, A.insert, A.update));
+						"Only a = [%s, %s, %s, %s, %s] are supported.",
+						jreq.a(), A.records, A.rec, A.insert, A.update, A.del));
 
 			write(resp, rsp);
 		} catch (SemanticException e) {
@@ -90,6 +92,19 @@ public class UsersTier extends ServPort<UserstReq> {
 		} finally {
 			resp.flushBuffer();
 		}
+	}
+
+	private AnsonMsg<AnsonResp> del(UserstReq jreq, IUser usr)
+			throws SemanticException, TransException, SQLException {
+
+		if (jreq.deletings == null && jreq.deletings.length > 0)
+			throw new SemanticException("Failed on deleting null ids.");
+
+		SemanticObject res = (SemanticObject) st.delete("a_users", usr)
+			.whereIn("userId", jreq.deletings)
+			.d(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
+
+		return ok(new AnsonResp().msg(res.msg()));
 	}
 
 	private AnsonMsg<AnsonResp> upd(UserstReq jreq, IUser usr)
@@ -107,6 +122,7 @@ public class UsersTier extends ServPort<UserstReq> {
 		}
 
 		SemanticObject res = (SemanticObject)u
+				.whereEq("userId", jreq.pk)
 				.u(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
 
 		return ok(new AnsonResp().msg(res.msg()));
@@ -121,7 +137,7 @@ public class UsersTier extends ServPort<UserstReq> {
 				((Insert) jreq.nvs(st.insert("a_users", usr)))
 				.ins(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
 
-		return ok(new AnsonResp().msg(res.msg()));
+		return ok(new AnsonResp().data(res.props()));
 	}
 
 	protected AnsonMsg<AnsonResp> rec(UserstReq jreq, IUser usr) throws TransException, SQLException {

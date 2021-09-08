@@ -18,11 +18,12 @@ public class UserstReq extends UserReq {
 		public static final String rec = "rec";
 
 		public static final String update = "a-u";
-
 		public static final String insert = "a-c";
+		public static final String del = "a-d";
 	}
 
 	/// use case: load record - refactor this into CRUD?
+	/// record field?
 	String userId;
 	String userName;
 	String orgId;
@@ -30,6 +31,13 @@ public class UserstReq extends UserReq {
 	/// use case: insert/update record
 	HashMap<String, Object> record;
 	ArrayList<Relations> relations;
+	String pk;
+
+	/// use case: d
+	/**
+	 * Deleting Ids, e.g. AnQueryForm.state.selected.Ids
+	 */
+	String[] deletings;
 
 	public UserstReq() {
 		super(null, null);
