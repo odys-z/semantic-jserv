@@ -17,14 +17,18 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.tier.Relations;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Query;
+import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Semantic tier: users", urlPatterns = { "/users.tier" })
@@ -67,21 +71,57 @@ public class UsersTier extends ServPort<UserstReq> {
 				rsp = records(jreq, usr);
 			else if (UserstReq.A.rec.equals(jreq.a()))
 				rsp = rec(jreq, usr);
+			else if (UserstReq.A.insert.equals(jreq.a()))
+				rsp = ins(jreq, usr);
+			else if (UserstReq.A.update.equals(jreq.a()))
+				rsp = upd(jreq, usr);
 			else throw new SemanticException(String.format(
 						"request.body.a can not handled: %s\\n" +
-						"Only a = [%s, %s] are supported.",
-						jreq.a(), A.records, A.rec));
+						"Only a = [%s, %s, %s, %s] are supported.",
+						jreq.a(), A.records, A.rec, A.insert, A.update));
 
 			write(resp, rsp);
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
-		} catch (SQLException | TransException e) {
+		} catch (SQLException | TransException e) { e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
+	}
+
+	private AnsonMsg<AnsonResp> upd(UserstReq jreq, IUser usr)
+			throws SemanticException, TransException, SQLException {
+		if (jreq.record == null && jreq.relations == null)
+			throw new SemanticException("Failed on inserting null record.");
+
+		Update u = st.update("a_users", usr);
+		jreq.nvs(u);
+		
+		if (jreq.relations != null && jreq.relations.size() > 0) {
+			// shouldn't happen for Anclient/test/jsample/users.jsx
+			for (Relations r : jreq.relations)
+				u.post(r.update(st));
+		}
+
+		SemanticObject res = (SemanticObject)u
+				.u(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
+
+		return ok(new AnsonResp().msg(res.msg()));
+	}
+
+	protected AnsonMsg<AnsonResp> ins(UserstReq jreq, IUser usr)
+			throws SemanticException, TransException, SQLException {
+		if (jreq.record == null)
+			throw new SemanticException("Failed on inserting null record.");
+
+		SemanticObject res = (SemanticObject)
+				((Insert) jreq.nvs(st.insert("a_users", usr)))
+				.ins(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
+
+		return ok(new AnsonResp().msg(res.msg()));
 	}
 
 	protected AnsonMsg<AnsonResp> rec(UserstReq jreq, IUser usr) throws TransException, SQLException {
@@ -98,7 +138,7 @@ public class UsersTier extends ServPort<UserstReq> {
 			throws SemanticException, TransException, SQLException {
 		Query q = st.select("a_users", "u")
 				.col("userId").col("userName").col("orgName").col("roleName")
-				.j("a_orgs", "o", "o.orgId = u.orgId")
+				.l("a_orgs", "o", "o.orgId = u.orgId")
 				.l("a_roles", "r", "r.roleId = u.roleId");
 
 		if (!LangExt.isEmpty(jreq.userName))
