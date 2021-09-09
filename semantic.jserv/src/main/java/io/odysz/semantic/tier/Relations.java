@@ -10,6 +10,11 @@ import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Statement;
 import io.odysz.transact.x.TransException;
 
+/**Relation table's object (parent-tabl, rows)
+ * 
+ * @author odys-z@github.com
+ *
+ */
 public class Relations extends Anson {
 	String rtabl;
 	String[] cols;
