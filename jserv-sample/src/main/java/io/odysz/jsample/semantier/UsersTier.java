@@ -13,6 +13,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.semantier.UserstReq.A;
+import io.odysz.jsample.utils.StrRes;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -23,18 +24,22 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.Relations;
+import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Update;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Semantic tier: users", urlPatterns = { "/users.tier" })
 public class UsersTier extends ServPort<UserstReq> {
 
 	private static final long serialVersionUID = 1L;
+
+	private static final String mtabl = "a_users";
 
 	static DATranscxt st;
 
@@ -100,7 +105,7 @@ public class UsersTier extends ServPort<UserstReq> {
 		if (jreq.deletings == null && jreq.deletings.length > 0)
 			throw new SemanticException("Failed on deleting null ids.");
 
-		SemanticObject res = (SemanticObject) st.delete("a_users", usr)
+		SemanticObject res = (SemanticObject) st.delete(mtabl, usr)
 			.whereIn("userId", jreq.deletings)
 			.d(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
 
@@ -112,7 +117,7 @@ public class UsersTier extends ServPort<UserstReq> {
 		if (jreq.record == null && jreq.relations == null)
 			throw new SemanticException("Failed on inserting null record.");
 
-		Update u = st.update("a_users", usr);
+		Update u = st.update(mtabl, usr);
 		jreq.nvs(u);
 		
 		if (jreq.relations != null && jreq.relations.size() > 0) {
@@ -131,11 +136,23 @@ public class UsersTier extends ServPort<UserstReq> {
 	protected AnsonMsg<AnsonResp> ins(UserstReq jreq, IUser usr)
 			throws SemanticException, TransException, SQLException {
 		if (jreq.record == null)
-			throw new SemanticException("Failed on inserting null record.");
+			throw new SemanticException(StrRes.insert_null_record);
+		
+		ISemantext stx = st.instancontxt(Connects.uri2conn(jreq.uri()), usr);
+
+		AnResultset rs = (AnResultset) st.select(mtabl, "u")
+				.col(Funcall.count("u"), "c")
+				.whereEq("userId", jreq.userId)
+				.rs(stx)
+				.rs(0);
+
+		rs.beforeFirst().next();
+		if (rs.getInt("c") > 0)
+			throw new SemanticException(StrRes.logid_exits);
 
 		SemanticObject res = (SemanticObject)
-				((Insert) jreq.nvs(st.insert("a_users", usr)))
-				.ins(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
+				((Insert) jreq.nvs(st.insert(mtabl, usr)))
+				.ins(stx);
 
 		return ok(new AnsonResp().data(res.props()));
 	}
