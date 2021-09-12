@@ -42,7 +42,9 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			stree("s-tree.serv11"),
 			/** dataset extensions<br>
 			 * @see {@link io.odysz.semantic.ext.Dataset}. */
-			dataset("ds.serv11");
+			dataset("ds.serv11"),
+			/** ds.tier, dataset's semantic tier */
+			datasetier("ds.tier");
 
 		static {
 			JSONAnsonListener.registFactory(IPort.class, 
