@@ -39,9 +39,9 @@ public class UsersTier extends ServPort<UserstReq> {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final String mtabl = "a_users";
+	protected static DATranscxt st;
 
-	static DATranscxt st;
+	private static String mtabl = "a_users";
 
 	static {
 		try {
@@ -159,7 +159,7 @@ public class UsersTier extends ServPort<UserstReq> {
 
 	protected AnsonMsg<AnsonResp> rec(UserstReq jreq, IUser usr) throws TransException, SQLException {
 		AnResultset rs = (AnResultset) st
-			.select("a_users", "u")
+			.select(mtabl, "u")
 			.whereEq("userId", jreq.userId)
 			.rs(st.instancontxt(Connects.uri2conn(jreq.uri()), usr))
 			.rs(0);
@@ -179,6 +179,12 @@ public class UsersTier extends ServPort<UserstReq> {
 
 		if (!LangExt.isEmpty(jreq.userId))
 			q.whereEq("userId", jreq.userId);
+
+		if (!LangExt.isEmpty(jreq.roleId))
+			q.whereEq("u.roleId", jreq.roleId);
+
+		if (!LangExt.isEmpty(jreq.orgId))
+			q.whereEq("u.orgId", jreq.orgId);
 
 		AnResultset rs = (AnResultset) q
 			.rs(st.instancontxt(Connects.uri2conn(jreq.uri()), usr))
