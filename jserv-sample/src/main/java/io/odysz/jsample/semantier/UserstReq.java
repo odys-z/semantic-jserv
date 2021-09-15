@@ -17,9 +17,9 @@ public class UserstReq extends UserReq {
 		/** Ask for loading a rec */
 		public static final String rec = "rec";
 
-		public static final String update = "a-u";
-		public static final String insert = "a-c";
-		public static final String del = "a-d";
+		public static final String update = "u";
+		public static final String insert = "c";
+		public static final String del = "d";
 	}
 
 	/// use case: load record - refactor this into CRUD?
