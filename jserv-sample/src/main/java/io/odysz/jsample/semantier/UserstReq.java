@@ -27,6 +27,8 @@ public class UserstReq extends UserReq {
 	String userId;
 	String userName;
 	String orgId;
+	String roleId;
+	boolean hasTodos;
 	
 	/// use case: insert/update record
 	HashMap<String, Object> record;
