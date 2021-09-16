@@ -31,7 +31,7 @@ public enum Samport implements IPort {
 	static {
 		JSONAnsonListener.registFactory(Samport.class, 
 			(s) -> {
-					return Samport.valueOf(s);
+				return Samport.valueOf(s);
 			});
 	}
 	
