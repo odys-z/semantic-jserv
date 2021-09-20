@@ -180,8 +180,9 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 				else if (CRUD.D.equals(pst.a()))
 					upd = st.delete(pst.mtabl, usr);
 				else if (pst != null) {
-					Utils.warn("Can't handle request:\n" + pst.toString());
-					continue;
+					// Utils.warn("Can't handle request:\n" + pst.toString());
+					// continue;
+					throw new TransException("Can't handle request's ask (t): %s", pst.toString());
 				}
 
 				posts.add(upd.where(pst.where)

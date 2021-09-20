@@ -49,7 +49,7 @@ function saveTooleA() {
 	var jmsg = ssClient
 		// ssClient's current user action is handled by jeasy when loading menu
 		.usrCmd('save') // return ssClient itself
-		.userReq(conn, engports.tools, usrReq); // return the AnsonMsg<UserReq> object
+		.userReq(conn, engports.tools, usrReq); // return the AnsonMsg&lt;UserReq&gt; object
 
 	// You should get sqls at server side like this:
 	// delete from r_tools_borrows where borrowId = 'borrow-001'
