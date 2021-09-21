@@ -44,7 +44,9 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			 * @see {@link io.odysz.semantic.ext.Dataset}. */
 			dataset("ds.serv11"),
 			/** ds.tier, dataset's semantic tier */
-			datasetier("ds.tier");
+			datasetier("ds.tier"),
+			/** document manage's semantic tier */
+			docstier("docs.tier");
 
 		static {
 			JSONAnsonListener.registFactory(IPort.class, 
