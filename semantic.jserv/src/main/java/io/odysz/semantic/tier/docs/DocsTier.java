@@ -116,7 +116,7 @@ public class DocsTier extends ServPort<DocsReq> {
 
 		AnResultset doc = ((AnResultset) st.select("n_docs", "d")
 			.l("n_doc_kid", "dk", "d.docId = dk.docId")
-			.col("d.docId").col("docName").col("docType").col("uri")
+			.col("d.docId").col("docName").col("mime").col("uri")
 			.rs(stx)
 			.rs(0));
 		
@@ -129,7 +129,7 @@ public class DocsTier extends ServPort<DocsReq> {
 
 		AnResultset docs = ((AnResultset) st.select("n_docs", "d")
 			.l("n_doc_kid", "dk", "d.docId = dk.docId")
-			.col("d.docId").col("docName").col("docType") // .col("uri") - too big
+			.col("d.docId").col("docName").col("mime") // .col("uri") - too big
 			.col(Funcall.sqlCount("dk.userId"), "sharings")
 			.col(Funcall.sqlCount(Funcall.sqlIfElse(stx, "dk.state = conf", "1", "null")), "confirmed")
 			.orderby("d.optime", "desc")
