@@ -41,7 +41,7 @@
 	
 	<c>
 	  	<sk>sys.menu.jsample</sk>
-  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, isUsed sort, fullpath, css, flags
+  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, sibling sort, fullpath, css, flags
   			FROM a_sys_functions f order by f.fullpath
   		</mysql>
   		<sqlit>SELECT funcId, parentId, funcName, url, sibling sort, fullpath, css, flags
@@ -75,9 +75,9 @@
 
 	<!-- role-func tree -->
   	<c> <sk>trees.role_funcs</sk>
-  		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.funcId sort, fullpath
+  		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.sibling sort, fullpath
   		from a_sys_functions f left outer join a_role_funcs r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</mysql>
-  		<sqlit>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.funcId sort, fullpath
+  		<sqlit>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.sibling sort, fullpath
   		from a_functions f left outer join a_role_func r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath
   		</sqlit>
   		<s-tree>checked,a_functions,funcId nodeId,parentId,fullpath,sort,funcName text,children,false</s-tree>
