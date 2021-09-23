@@ -11,10 +11,21 @@ public class DocsReq extends AnsonBody {
 		public static final String del = "d";
 	}
 
+	public static class State {
+		public static final String confirmed = "conf";
+		public static final String published = "publ";
+		public static final String closed = "clos";
+		public static final String deprecated = "depr";
+	};
+
 	String docId;
 	String docName;
 	String mime;
 	String content64;
+	
+	public DocsReq() {
+		super(null, null);
+	}
 
 	protected DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
