@@ -21,7 +21,8 @@ public class DocsReq extends AnsonBody {
 	String docId;
 	String docName;
 	String mime;
-	String content64;
+	String uri64;
+	String[] deletings;
 	
 	public DocsReq() {
 		super(null, null);
