@@ -91,7 +91,7 @@ public class DocsTier extends ServPort<DocsReq> {
 		ISemantext stx = st.instancontxt(conn, usr);
 
 		SemanticObject doc = (SemanticObject) st.delete("n_docs", usr)
-			.whereEq("docId", jreq.docId)
+			.whereIn("docId", jreq.deletings)
 			.d(stx);
 		
 		return new AnsonResp().msg("ok").data(doc.props());
@@ -104,7 +104,7 @@ public class DocsTier extends ServPort<DocsReq> {
 		SemanticObject doc = (SemanticObject) st.delete("n_docs", usr)
 			.whereEq("docId", jreq.docId)
 			.post(st.insert("n_docs")
-				.nv("docName", jreq.docName).nv("mime", jreq.mime).nv("uri", jreq.content64))
+				.nv("docName", jreq.docName).nv("mime", jreq.mime).nv("uri", jreq.uri64).nv("userId", usr.uid()))
 			.d(stx);
 		
 		return new AnsonResp().msg("ok").data(doc.props());
