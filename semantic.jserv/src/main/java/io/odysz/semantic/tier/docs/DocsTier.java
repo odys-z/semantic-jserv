@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -25,6 +26,7 @@ import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 
@@ -62,6 +64,8 @@ public class DocsTier extends ServPort<DocsReq> {
 			AnsonResp rsp = null;
 			if (A.records.equals(jreq.a()))
 				rsp = list(jreq, usr);
+			if (A.mydocs.equals(jreq.a()))
+				rsp = mydocs(jreq, usr);
 			else if (A.rec.equals(jreq.a()))
 				rsp = doc(jreq, usr);
 			else if (A.upload.equals(jreq.a()))
@@ -70,8 +74,8 @@ public class DocsTier extends ServPort<DocsReq> {
 				rsp = del(jreq, usr);
 			else throw new SemanticException(String.format(
 						"request.body.a can not handled: %s\\n" +
-						"Only a = [%s, %s, %s, %s] are supported.",
-						jreq.a(), A.records, A.rec, A.upload, A.del));
+						"Only a = [%s, %s, %s, %s, %s] are supported.",
+						jreq.a(), A.records, A.mydocs, A.rec, A.upload, A.del));
 
 			write(resp, ok(rsp));
 		} catch (SemanticException e) {
@@ -121,6 +125,28 @@ public class DocsTier extends ServPort<DocsReq> {
 			.rs(0));
 		
 		return new AnsonResp().msg("ok").rs(doc);
+	}
+
+	private AnsonResp mydocs(DocsReq req, IUser usr) throws TransException, SQLException {
+		String conn = Connects.uri2conn(req.uri());
+		ISemantext stx = st.instancontxt(conn, usr);
+
+		Query q = st.select("n_docs", "d")
+			.j("n_doc_kid", "dk", "d.docId = dk.docId")
+			.col("d.docId").col("docName").col("mime") // .col("uri") - too big
+			.col(Funcall.sqlCount(Funcall.sqlIfElse(stx, String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
+			.whereEq("dk.userId", usr.uid())
+			.groupby("d.docId")
+			.orderby("d.optime", "desc");
+		
+		if (!LangExt.isblank(req.docState))
+			q.whereEq("dk.state", req.docState);
+
+		AnResultset docs = ((AnResultset) q
+			.rs(stx)
+			.rs(0));
+		
+		return new AnsonResp().msg("ok").rs(docs);
 	}
 
 	private AnsonResp list(DocsReq req, IUser usr) throws TransException, SQLException {

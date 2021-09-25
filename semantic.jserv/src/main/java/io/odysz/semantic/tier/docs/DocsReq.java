@@ -6,6 +6,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 public class DocsReq extends AnsonBody {
 	public static class A {
 		public static final String records = "r/list";
+		public static final String mydocs = "r/my-docs";
 		public static final String rec = "r/rec";
 		public static final String upload = "c";
 		public static final String del = "d";
@@ -16,13 +17,17 @@ public class DocsReq extends AnsonBody {
 		public static final String published = "publ";
 		public static final String closed = "clos";
 		public static final String deprecated = "depr";
-	};
+	}
+
 
 	String docId;
 	String docName;
 	String mime;
 	String uri64;
+
 	String[] deletings;
+
+	String docState;
 	
 	public DocsReq() {
 		super(null, null);
