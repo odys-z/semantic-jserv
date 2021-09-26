@@ -64,7 +64,7 @@ public class DocsTier extends ServPort<DocsReq> {
 			AnsonResp rsp = null;
 			if (A.records.equals(jreq.a()))
 				rsp = list(jreq, usr);
-			if (A.mydocs.equals(jreq.a()))
+			else if (A.mydocs.equals(jreq.a()))
 				rsp = mydocs(jreq, usr);
 			else if (A.rec.equals(jreq.a()))
 				rsp = doc(jreq, usr);
@@ -119,8 +119,9 @@ public class DocsTier extends ServPort<DocsReq> {
 		ISemantext stx = st.instancontxt(conn, usr);
 
 		AnResultset doc = ((AnResultset) st.select("n_docs", "d")
-			.l("n_doc_kid", "dk", "d.docId = dk.docId")
-			.col("d.docId").col("docName").col("mime").col("uri")
+			// .l("n_doc_kid", "dk", "d.docId = dk.docId")
+			.col("d.docId").col("docName").col("mime").col(Funcall.extFile("uri"), "uri64")
+			.whereEq("d.docId", jreq.docId)
 			.rs(stx)
 			.rs(0));
 		
@@ -133,7 +134,7 @@ public class DocsTier extends ServPort<DocsReq> {
 
 		Query q = st.select("n_docs", "d")
 			.j("n_doc_kid", "dk", "d.docId = dk.docId")
-			.col("d.docId").col("docName").col("mime") // .col("uri") - too big
+			.col("d.docId").col("docName").col("mime").col("d.userId", "sharer") // .col("uri") - too big
 			.col(Funcall.sqlCount(Funcall.sqlIfElse(stx, String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
 			.whereEq("dk.userId", usr.uid())
 			.groupby("d.docId")
