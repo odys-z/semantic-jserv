@@ -30,9 +30,12 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.Logic.op;
+import io.odysz.transact.sql.parts.condition.Condit;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -134,6 +137,13 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		else if ("tagtree".equals(t)) {
 			String root = jreq.root();
 			r = tagSubtree(connId, root, getTreeSemtcs(jreq), usr);
+		}
+		else if ("tagtrees".equals(t)) {
+			r = tagTrees(connId, getTreeSemtcs(jreq), usr);
+		}
+		else if ("untagtree".equals(t)) {
+			String root = jreq.root();
+			r = untagSubtree(connId, root, getTreeSemtcs(jreq), usr);
 		}
 		else {
 			if ("sqltree".equals(t)) {
@@ -243,6 +253,25 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		else throw new SQLException("TODO...");
 	}
 
+	protected AnsonMsg<AnsonResp> tagTrees(String connId, TreeSemantics sm, IUser usr) throws TransException, SQLException {
+		// This operation is expensive
+
+		ISemantext smtxt = st.instancontxt(connId, usr);
+
+		AnResultset rs = (AnResultset) st.select(sm.tabl(), "t")
+				.col(sm.dbRecId(), "rid")
+				.where(new Condit(op.isnull, sm.dbParent(), "null").or(new Condit(op.in, sm.dbParent(), "'', 'cate'")))
+				.rs(smtxt)
+				.rs(0);
+		
+		while(rs.next()) {
+			String root = rs.getString("rid");
+			Reforest.tagSubtree(connId, root, "'" + root + "'", sm, usr);
+		}
+				
+		return ok("tagtrees", "Tagged %s trees", rs.total());
+	}
+
 	protected AnsonMsg<AnsonResp> tagSubtree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)
 			throws SQLException, TransException {
 		int total = 0;
@@ -251,10 +280,24 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			throw new SemanticException("TODO ...");
 		}
 		else
-			total = Reforest.tagSubtree(connId, rootId, semanticss, usrInf);
+			total = Reforest.tagSubtree(connId, rootId, "'" + rootId + "'", semanticss, usrInf);
 
 		return ok("re-forest", "Tagged %s records from root %s", total, rootId);
 	}
+
+	protected AnsonMsg<AnsonResp> untagSubtree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)
+			throws SQLException, TransException {
+		int total = 0;
+		if (Connects.driverType(connId) == dbtype.mysql) {
+			// @deprecated
+			throw new SemanticException("TODO ...");
+		}
+		else
+			total = Reforest.tagSubtree(connId, rootId, "null", semanticss, usrInf);
+
+		return ok("re-forest", "Tagged %s records from root %s", total, rootId);
+	}
+
 	/**FIXME use semantic.transact to extend this class to build sql for all supported DB.
 	 * For mysql 8, see {@link Reforest}.
 	 * - even supporting no radix64.<br>
@@ -581,13 +624,14 @@ where p0.parentId is null; </pre>
 		/** Tag all subtree nodes with root's Id.
 		 * @param connId
 		 * @param rootId
+		 * @param tagval 'root-id' or "null"
 		 * @param sm
 		 * @param dblog
 		 * @return
 		 * @throws SQLException
 		 * @throws TransException
 		 */
-		public static int tagSubtree(String connId, String rootId, TreeSemantics sm, IUser dblog) throws SQLException, TransException {
+		public static int tagSubtree(String connId, String rootId, String tagval, TreeSemantics sm, IUser dblog) throws SQLException, TransException {
 			if (Connects.driverType(connId) != dbtype.sqlite) {
 				throw new SemanticException("[TODO] Reshape fullpath are not supported yet.");
 			}
@@ -605,8 +649,8 @@ where p0.parentId is null; </pre>
 					"union all " +
 					"select me.%2$s indId, me.%3$s parent from backtrace p " +
 					"join %1$s me on me.parent = p.indId" +
-					") update %1$s set %4$s = '%5$s' where %2$s in (select indId from backtrace)",
-					sm.tabl(), sm.dbRecId(), sm.dbParent(), sm.dbTagCol(), rootId))[0];
+					") update %1$s set %4$s = %6$s where %2$s in (select indId from backtrace)",
+					sm.tabl(), sm.dbRecId(), sm.dbParent(), sm.dbTagCol(), rootId, tagval))[0];
 			}
 		}
 		
