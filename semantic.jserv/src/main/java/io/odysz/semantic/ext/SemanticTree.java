@@ -55,12 +55,6 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 
 	private static final long serialVersionUID = 1L;
 
-//	@Override
-//	public void init() throws ServletException {
-//		super.init();
-//		p = Port.stree;
-//	}
-
 	protected static DATranscxt st;
 
 	static {
@@ -137,6 +131,10 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			String root = jreq.root();
 			r = rebuildTree(connId, root, getTreeSemtcs(jreq), usr);
 		}
+		else if ("tagtree".equals(t)) {
+			String root = jreq.root();
+			r = tagSubtree(connId, root, getTreeSemtcs(jreq), usr);
+		}
 		else {
 			if ("sqltree".equals(t)) {
 				// ds (tree configured in dataset.xml)
@@ -145,11 +143,6 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 				AnDatasetResp re = new AnDatasetResp(null).forest(lst);
 				r = ok(re);
 			}
-//				else if ("sqltable".equals(t)) {
-//					SResultset lst = DatasetCfg.loadDataset(connId,
-//							jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-//					R = JProtocol.ok(p, lst);
-//				}
 			else {
 				// empty (build tree from general query results with semantic of 'sk')
 				JsonOpt opts = jmsg.opts();
@@ -250,6 +243,18 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		else throw new SQLException("TODO...");
 	}
 
+	protected AnsonMsg<AnsonResp> tagSubtree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)
+			throws SQLException, TransException {
+		int total = 0;
+		if (Connects.driverType(connId) == dbtype.mysql) {
+			// @deprecated
+			throw new SemanticException("TODO ...");
+		}
+		else
+			total = Reforest.tagSubtree(connId, rootId, semanticss, usrInf);
+
+		return ok("re-forest", "Tagged %s records from root %s", total, rootId);
+	}
 	/**FIXME use semantic.transact to extend this class to build sql for all supported DB.
 	 * For mysql 8, see {@link Reforest}.
 	 * - even supporting no radix64.<br>
@@ -564,6 +569,7 @@ where p0.parentId is null; </pre>
 				"with backtrace (indId, parent, fullpath) as (" +
 					"select %2$s indId, %3$s parent, %4$s fullpath from %1$s where %2$s = '%6$s' " +
 					"union all " +
+					// FIXME should be "me.<recId> indId" instead of me.indId?
 					"select me.%2$s, me.%3$s, p.fullpath || '.' || printf('%%0%7$sd', %5$s) from backtrace p " +
 					"join %1$s me on me.%3$s = p.indId) " +
 				"update %1$s set %4$s = " +
@@ -571,5 +577,38 @@ where p0.parentId is null; </pre>
 				sm.tabl(), sm.dbRecId(), sm.dbParent(), sm.dbFullpath(), sm.dbSort(), rootId, 2))[0];
 			}
 		}
+		
+		/** Tag all subtree nodes with root's Id.
+		 * @param connId
+		 * @param rootId
+		 * @param sm
+		 * @param dblog
+		 * @return
+		 * @throws SQLException
+		 * @throws TransException
+		 */
+		public static int tagSubtree(String connId, String rootId, TreeSemantics sm, IUser dblog) throws SQLException, TransException {
+			if (Connects.driverType(connId) != dbtype.sqlite) {
+				throw new SemanticException("[TODO] Reshape fullpath are not supported yet.");
+			}
+			else {
+			/* with backtrace (indId, parent) as (
+				select indId, parent from ind_emotion where indId = '000001'
+				union all
+				select me.indId, me.parent from backtrace p
+				join ind_emotion me on me.parent = p.indId 
+			) update ind_emotion set templId = '000001' where indId in (select indId from backtrace);
+			 */
+				return Connects.commit(connId, dblog, String.format(
+					"with backtrace (indId, parent) as (" +
+					"select %2$s indId,%3$s parent from %1$s where indId = '%5$s' " +
+					"union all " +
+					"select me.%2$s indId, me.%3$s parent from backtrace p " +
+					"join %1$s me on me.parent = p.indId" +
+					") update %1$s set %4$s = '%5$s' where %2$s in (select indId from backtrace)",
+					sm.tabl(), sm.dbRecId(), sm.dbParent(), sm.dbTagCol(), rootId))[0];
+			}
+		}
+		
 	}
 }
