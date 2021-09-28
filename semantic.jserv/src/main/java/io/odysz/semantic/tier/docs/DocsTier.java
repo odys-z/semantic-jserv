@@ -119,7 +119,6 @@ public class DocsTier extends ServPort<DocsReq> {
 		ISemantext stx = st.instancontxt(conn, usr);
 
 		AnResultset doc = ((AnResultset) st.select("n_docs", "d")
-			// .l("n_doc_kid", "dk", "d.docId = dk.docId")
 			.col("d.docId").col("docName").col("mime").col(Funcall.extFile("uri"), "uri64")
 			.whereEq("d.docId", jreq.docId)
 			.rs(stx)
