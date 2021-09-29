@@ -27,6 +27,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
+import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 
@@ -139,6 +140,12 @@ public class DocsTier extends ServPort<DocsReq> {
 			.groupby("d.docId")
 			.orderby("d.optime", "desc");
 		
+		if (!LangExt.isblank(req.docName))
+			q.whereLike("dk.state", req.docName);
+		
+		if (!LangExt.isblank(req.mime))
+			q.where_(op.rlike, "d.mime", (LangExt.isblank(req.mime) ? "" : req.mime));
+
 		if (!LangExt.isblank(req.docState))
 			q.whereEq("dk.state", req.docState);
 
@@ -150,6 +157,8 @@ public class DocsTier extends ServPort<DocsReq> {
 	}
 
 	private AnsonResp list(DocsReq req, IUser usr) throws TransException, SQLException {
+		System.out.print("docker tag: v1.3.0.1");
+
 		String conn = Connects.uri2conn(req.uri());
 		ISemantext stx = st.instancontxt(conn, usr);
 
@@ -159,6 +168,7 @@ public class DocsTier extends ServPort<DocsReq> {
 			.col(Funcall.sqlCount("dk.userId"), "sharings")
 			.col(Funcall.sqlCount(Funcall.sqlIfElse(stx, String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
 			.whereEq("d.userId", usr.uid())
+			.where(op.rlike, "d.mime", "'" + (LangExt.isblank(req.mime) ? "" : req.mime) + "'")
 			.groupby("d.docId")
 			.orderby("d.optime", "desc")
 			.rs(stx)
