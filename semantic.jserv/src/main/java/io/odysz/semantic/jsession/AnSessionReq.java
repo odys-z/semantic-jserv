@@ -29,7 +29,7 @@ public class AnSessionReq extends AnsonBody {
 	String iv;
 	String iv() { return iv; }
 
-	HashMap<String,Object> mds;
+	HashMap<String, Object> mds;
 	public String md(String k) { return mds == null ? null : (String) mds.get(k); }
 	public AnSessionReq md(String k, String md) {
 		if (k == null || LangExt.isblank(md))

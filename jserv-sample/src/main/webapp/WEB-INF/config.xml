@@ -8,10 +8,12 @@
 		<v>io.odysz.jsample.SampleUser</v>
 	</c>
 
+	<!-- 
 	<c>
 		<k>folder.file-upload</k>
 		<v>file:/home/ody/uploads</v>
-	</c>
+	</c> -->
+
 	<c>
 		<k>sync.log.on-verbose</k>
 		<v>false</v>

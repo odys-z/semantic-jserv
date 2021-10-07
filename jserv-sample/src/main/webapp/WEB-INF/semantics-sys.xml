@@ -48,7 +48,7 @@
   	<s>
   		<id>sys.04</id>
   		<smtc>d-v</smtc>
-  		<tabl>a_user</tabl>
+  		<tabl>a_users</tabl>
   		<pk>userId</pk>
   		<args>pswd,'12345678'</args>
   	</s>
@@ -56,9 +56,9 @@
 	<s>
 		<id>sys.05</id>
 		<smtc>dencrypt</smtc>
-		<tabl>a_user</tabl>
+		<tabl>a_users</tabl>
 		<pk>userId</pk>
-		<args>pswd,encAuxiliary</args>
+		<args>pswd,iv</args>
 	</s>
 
 	<!-- image attachments to a_user: auto pk -->
@@ -83,8 +83,9 @@
 				filename rule: busiTbl-recId-attName(.suffix)
 			see https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html
 				-->
-		<args>uploads,uri,busiTbl,busiId,attName</args>
+		<args>$VOLUME_HOME/uploads,uri,busiTbl,busiId,attName</args>
 	</s>
+
 	<!-- delete attachments when deleting a user -->
 	<s>
 		<id>att.03</id>

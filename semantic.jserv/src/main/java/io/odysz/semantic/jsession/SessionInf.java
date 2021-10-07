@@ -5,7 +5,9 @@ import io.odysz.anson.Anson;
 public class SessionInf extends Anson {
 	String ssid;
 	String uid;
-	String roleId; 
+	String roleId;
+	String userName;
+	String roleName; 
 
 	public SessionInf () {
 	}
@@ -19,4 +21,14 @@ public class SessionInf extends Anson {
 	public String ssid() { return ssid; }
 	public String uid() { return uid; }
 	public String roleId() { return roleId; }
+	public String userName() { return userName; }
+	public SessionInf userName(String name) {
+		this.userName = name;
+		return this;
+	}
+	public String roleName() { return roleName; }
+	public SessionInf roleName(String name) {
+		this.roleName = name;
+		return this;
+	}
 }
