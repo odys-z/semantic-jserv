@@ -233,8 +233,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						write(response, rspMsg, msg.opts());
 					}
 					else throw new SsException(
-							"Password doesn't match! Expecting token encrypted."
-							+ System.lineSeparator()    // FIXME why doesn't work?
+							"Password doesn't match!\\n"
 							+ "Additional Details: %s",
 							login.notifies() != null && login.notifies().size() > 0 ? login.notifies().get(0) : "");
 				}
@@ -273,14 +272,19 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					// FIXME using of session key, see bug of verify()
 					String ssid = (String) header.ssid();
 					String iv64 = sessionBody.md("iv_pswd");
-					String newPswd = sessionBody.md("pswd");
-					// usr.sessionId(ssid);
+//					String newPswd = sessionBody.md("pswd");
+					
+//					AESHelper.decrypt(sessionBody.md("oldpswd"), header.ssid(), AESHelper.decode64(sessionBody.md("iv_old")));
+					// check old password
+					if (!usr.guessPswd(sessionBody.md("oldpswd"), sessionBody.md("iv_old")))
+						throw new SemanticException("Can not verify old password!");
 
-					Utils.logi("new pswd: %s",
-						AESHelper.decrypt(newPswd, usr.sessionId(), AESHelper.decode64(iv64)));
+//					Utils.logi("new pswd: %s",
+//						AESHelper.decrypt(newPswd, usr.sessionId(), AESHelper.decode64(iv64)));
 
 					sctx.update(usrMeta.tbl, usr)
-						.nv(usrMeta.pswd, newPswd)
+						// .nv(usrMeta.pswd, newPswd)
+						.nv(usrMeta.pswd, sessionBody.md("pswd"))
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, usr.uid())
 						.u(sctx.instancontxt(sctx.getSysConnId(), usr));

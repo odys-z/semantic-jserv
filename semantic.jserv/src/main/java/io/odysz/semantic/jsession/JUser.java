@@ -1,6 +1,7 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -207,6 +208,23 @@ public class JUser extends SemanticObject implements IUser {
 
 		return false;
 	}
+	
+	@Override
+	public boolean guessPswd(String pswd64, String iv64)
+			throws TransException, GeneralSecurityException, IOException {
+		return pswd != null && pswd.equals(AESHelper.decrypt(pswd64, this.ssid, AESHelper.decode64(iv64)));
+	}
+
+//	public static boolean checkPswd(String uid, String encryptKey, String iv64, String tokenVerify64) throws TransException {
+//		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
+//		byte[] ssiv = AESHelper.decode64(iv64);
+//		String c = null;
+//		try { c = AESHelper.encrypt(uid, encryptKey, ssiv); }
+//		catch (Exception e) { throw new TransException (e.getMessage()); }
+//
+//		// 2. compare pswd-cipher with j.pswd
+//		return c.equals(tokenVerify64);
+//	}
 
 	@Override
 	public SemanticObject logout() {

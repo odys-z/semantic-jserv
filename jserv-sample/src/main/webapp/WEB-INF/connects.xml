@@ -12,7 +12,7 @@
   		<!-- For sqlite, src = relative path from this configure file.
   			So connection string can be: jdbc:sqlite:WEB-INF/remote.db
   			-->
-  		<src>sample/system.sqlite</src>
+  		<src>$VOLUME_HOME/system.sqlite</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
@@ -26,7 +26,7 @@
   		<id>cheap-sqlite</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>sample/cheap.sqlite</src>
+  		<src>$VOLUME_HOME/cheap.sqlite</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
@@ -40,7 +40,7 @@
   		<id>raw-vec</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>sample/vectors.sqlite</src>
+  		<src>$VOLUME_HOME/vectors.sqlite</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
