@@ -184,7 +184,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 					throw new TransException("Can't handle request's ask (t): %s", pst.toString());
 				}
 
-				posts.add(upd.where(pst.where)
+				posts.add(upd.where(AnUpdate.tolerateNv(pst.where))
 							.post(postUpds(pst.postUpds, usr)));
 			}
 			return posts;
