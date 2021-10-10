@@ -160,6 +160,8 @@ public class UsersTier extends ServPort<UserstReq> {
 	protected AnsonMsg<AnsonResp> rec(UserstReq jreq, IUser usr) throws TransException, SQLException {
 		AnResultset rs = (AnResultset) st
 			.select(mtabl, "u")
+			.col("userId").col("userName").col("roleId").col("orgId").col("nationId").col("counter").col("birthday")
+			.col("''", "pswd")
 			.whereEq("userId", jreq.userId)
 			.rs(st.instancontxt(Connects.uri2conn(jreq.uri()), usr))
 			.rs(0);
