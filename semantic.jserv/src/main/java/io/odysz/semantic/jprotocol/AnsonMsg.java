@@ -184,6 +184,16 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		return opts == null ? new JsonOpt() : opts;
 	}
 
+	String addr;
+	public AnsonMsg<T> addr(String addr) {
+		this.addr = addr;
+		return this;
+	}
+
+	/**Get remote address if possible
+	 * @return address */
+	public String addr() { return addr; }
+
 	public AnsonMsg<T> body(List<T> bodyItems) {
 		this.body = bodyItems;
 		return this;
@@ -197,4 +207,5 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	public static AnsonMsg<? extends AnsonResp> ok(IPort p, AnsonResp resp) {
 		return new AnsonMsg<AnsonResp>(p, MsgCode.ok).body(resp);
 	}
+
 }
