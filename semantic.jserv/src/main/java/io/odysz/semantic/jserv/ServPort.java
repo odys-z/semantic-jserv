@@ -61,7 +61,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		try {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
-			onGet(msg, resp);
+			onGet(msg.addr(req.getRemoteAddr()), resp);
 		} catch (AnsonException e) {
 			onGetAnsonException(e, resp, req.getParameterMap());
 		} catch (SemanticException e) {
@@ -103,7 +103,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
 
-			onPost(msg, resp);
+			onPost(msg.addr(req.getRemoteAddr()), resp);
 		} catch (SemanticException | AnsonException e) {
 			if (ServFlags.query)
 				e.printStackTrace();
