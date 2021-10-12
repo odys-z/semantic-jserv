@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<semantics>
+  <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
+  <!-- smtc: semantics type, e.g. auto: auto increase key.
+			see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html 
+		tabl: database table name
+		pk:
+		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
+   -->
+  	<s>
+  		<id>alarm.01</id>
+  		<smtc>pc-del-all</smtc>
+  		<tabl>b_reports</tabl>
+  		<pk>repId</pk>
+  		<args>b_reprecords,recId</args>
+  	</s>
+   	<s>
+  	<id>alarm.02</id>
+  		<smtc>auto</smtc>
+  		<tabl>b_reports</tabl>
+  		<pk>repId</pk>
+  		<args>repId</args>
+ 	</s>
+ 	<s>
+  		<id>alarm.03</id>
+  		<smtc>auto</smtc>
+  		<tabl>b_reprecords</tabl>
+  		<pk>recId</pk>
+  		<args>recId</args>
+ 	</s>
+ 	<s>
+  		<id>alarm.04</id>
+  		<smtc>fk</smtc>
+  		<tabl>b_reprecords</tabl>
+  		<pk>recId</pk>
+  		<args>repId,b_reports,repId</args>
+ 	</s>
+  </t>
+</semantics>
