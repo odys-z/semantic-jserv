@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<semantics>
+  <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
+  <!-- smtc: semantics type, e.g. auto: auto increase key.
+  			see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html 
+  		tabl: database table name
+  		pk:
+  		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
+   -->
+
+  	<!-- table semantic-worflow/test/res/workflow-test.db tasks
+  		CheapEngin doesn't enforce this, but the table is created with column oper not null.
+  	-->
+  	<s>
+  		<id>tasks_o_t</id>
+  		<smtc>o-t</smtc>
+  		<tabl>tasks</tabl>
+  		<pk>taskId</pk>
+  		<args>oper,opertime</args>
+  	</s>
+
+  	<s>
+  		<id>tasks_details_fk</id>
+  		<smtc>fk</smtc>
+  		<tabl>task_details</tabl>
+  		<pk>recId</pk>
+  		<args>taskId,tasks,taskId</args>
+  	</s>
+
+  	<s>
+  		<id>tasks_details_auto</id>
+  		<smtc>auto</smtc>
+  		<tabl>task_details</tabl>
+  		<pk>recId</pk>
+  		<args>recId</args>
+  	</s>
+
+  </t>
+</semantics>
