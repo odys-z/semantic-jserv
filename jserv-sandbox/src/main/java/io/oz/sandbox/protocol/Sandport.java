@@ -18,7 +18,9 @@ public enum Sandport implements IPort {
 	tools("tools.serv"),
 	vec3("vec3.less"),
 	/** The new experimental serv, extending semantics to the client side */
-	userstier("users.less");
+	userstier("users.less"),
+	/** editor.less */
+	editor("editor.less");
 
 	static {
 		JSONAnsonListener.registFactory(Sandport.class, 
