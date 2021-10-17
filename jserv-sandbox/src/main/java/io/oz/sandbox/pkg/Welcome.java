@@ -15,15 +15,15 @@ import io.oz.sandbox.SandRobot;
 import io.oz.sandbox.pkg.EditReq.A;
 import io.oz.sandbox.protocol.Sandport;
 
-/**@deprecated
+/**
  * @author Odys Zhou
  *
  */
-@WebServlet(description = "Semantic tier: users", urlPatterns = { "/editor.less" })
-public class ReactEditor extends ServPort<EditReq> {
+@WebServlet(description = "Semantic sessionless: welecome", urlPatterns = { "/welcome.less" })
+public class Welcome extends ServPort<EditReq> {
 	private static final long serialVersionUID = 1L;
 
-	public ReactEditor() {
+	public Welcome() {
 		super(Sandport.editor);
 	}
 
