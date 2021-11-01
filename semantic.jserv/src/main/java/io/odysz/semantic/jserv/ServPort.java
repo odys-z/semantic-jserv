@@ -108,6 +108,9 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			if (ServFlags.query)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
+		} catch (Exception e) {
+			e.printStackTrace();
+			write(resp, err(MsgCode.exGeneral, e.getMessage()));
 		}
 	}
 
