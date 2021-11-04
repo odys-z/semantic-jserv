@@ -147,7 +147,7 @@ public class UsersLess extends ServPort<UserstReq> {
 		ISemantext stx = st.instancontxt(Connects.uri2conn(jreq.uri()), usr);
 
 		AnResultset rs = (AnResultset) st.select(mtabl, "u")
-				.col(Funcall.sqlCount("userId"), "c")
+				.col(Funcall.count("userId"), "c")
 				.whereEq("userId", jreq.userId)
 				.rs(stx)
 				.rs(0);

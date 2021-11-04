@@ -135,7 +135,7 @@ public class DocsTier extends ServPort<DocsReq> {
 		Query q = st.select("n_docs", "d")
 			.j("n_doc_kid", "dk", "d.docId = dk.docId")
 			.col("d.docId").col("docName").col("mime").col("d.userId", "sharer") // .col("uri") - too big
-			.col(Funcall.sqlCount(Funcall.sqlIfElse(stx, String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
+			.col(Funcall.count(Funcall.ifElse(String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
 			.whereEq("dk.userId", usr.uid())
 			.groupby("d.docId")
 			.orderby("d.optime", "desc");
@@ -165,8 +165,8 @@ public class DocsTier extends ServPort<DocsReq> {
 		AnResultset docs = ((AnResultset) st.select("n_docs", "d")
 			.l("n_doc_kid", "dk", "d.docId = dk.docId")
 			.col("d.docId").col("docName").col("mime") // .col("uri") - too big
-			.col(Funcall.sqlCount("dk.userId"), "sharings")
-			.col(Funcall.sqlCount(Funcall.sqlIfElse(stx, String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
+			.col(Funcall.count("dk.userId"), "sharings")
+			.col(Funcall.count(Funcall.ifElse(String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
 			.whereEq("d.userId", usr.uid())
 			.where(op.rlike, "d.mime", "'" + (LangExt.isblank(req.mime) ? "" : req.mime) + "'")
 			.groupby("d.docId")
