@@ -73,7 +73,10 @@
   		<sqlit>select orgId value, orgName text from a_orgs</sqlit>
 	</c>
 
-	<!-- role-func tree -->
+	<!-- role-func tree
+		Note for @anclient/anreact 0.3.52
+		Anclient/anreact/jsample/RoleDetails (TSX) now use this to load relation tree.
+	 -->
   	<c> <sk>trees.role_funcs</sk>
   		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.sibling sort, fullpath
   		from a_sys_functions f left outer join a_role_funcs r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</mysql>
