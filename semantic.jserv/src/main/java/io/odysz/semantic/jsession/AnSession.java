@@ -138,7 +138,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			usrMeta = (JUserMeta) tmp.meta();
 		}
 		catch (Exception ex) {
-			Utils.warn("SSesion: Implementation class of IUser doesn't configured correctly in: config.xml/t[id=cfg]/k=%s, check the value.",
+			Utils.warn("SSesion: Implementation class of IUser doesn't configured correctly in: config.xml/t[id=default]/k=%s, check the value.",
 					usrClzz);
 			ex.printStackTrace();
 		}
