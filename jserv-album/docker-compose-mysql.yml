@@ -14,4 +14,12 @@ services:
       - SYS_NICE # https://stackoverflow.com/a/55706057/7362888
     volumes:
       - "./volume/my.conf:/etc/mysql/conf.d/config-file.cnf"
-      - "./volume:/var/lib/mysql:rw"
+
+      # Docker on windows is runing in VirtualBox: https://stackoverflow.com/a/36721432/7362888
+      # Only know copy data with Windows Docker Desktop ...
+      # Needing tested on linux
+      - "album.mysql:/var/lib/mysql:rw"
+
+volumes:
+    album.mysql:
+        external: false # https://stackoverflow.com/a/37707335/7362888

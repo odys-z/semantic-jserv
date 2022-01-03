@@ -5,7 +5,7 @@
 	<c>
 		<!-- Class name of SUser Implementation -->
 		<k>class-IUser</k>
-		<v>io.oz.sandbox.SandRobot</v>
+		<v>io.oz.album.PhotoRobot</v>
 	</c>
 
 	<!-- 
