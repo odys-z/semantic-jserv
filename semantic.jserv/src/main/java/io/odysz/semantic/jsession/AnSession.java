@@ -95,7 +95,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	
 	static DATranscxt sctx;
 
-	private static String usrClzz;
+	/** key of JUser class name, "class-IUser" used in config.xml */
+	public static final String usrClzz = "class-IUser";
+
 	private static JUserMeta usrMeta;
 
 	IUser jrobot = new JRobot();
@@ -131,7 +133,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		scheduler = Executors.newScheduledThreadPool(1);
 
 		try {
-			usrClzz = "class-IUser";
+			// usrClzz = "class-IUser";
 			IUser tmp = createUser(usrClzz, "temp", "pswd", null, "temp user");
 			usrMeta = (JUserMeta) tmp.meta();
 		}
@@ -206,7 +208,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	protected void onPost(AnsonMsg<AnSessionReq> msg, HttpServletResponse resp) throws IOException {
 		jsonResp(msg, resp);
 	}
-
 
 	protected void jsonResp(AnsonMsg<AnSessionReq> msg, HttpServletResponse response) throws IOException {
 		try {
@@ -391,7 +392,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.uname, "uname")
 			.col(usrMeta.pswd, "pswd")
 			.col(usrMeta.iv, "iv")
-			// .col(UserMeta.urlField, "url")
 			.where_("=", "u." + usrMeta.pk, sessionBody.uid())
 			.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
 		
