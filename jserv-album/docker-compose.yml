@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+
+  mysqldb:
+    image: mysql:8.0.2
+    environment:
+      MYSQL_ROOT_PASSWORD: odys-z.github.io
+      MYSQL_DATABASE: album-cloud
+    ports:
+      - "3306:3306"
+    cap_add:
+      - SYS_NICE # https://stackoverflow.com/a/55706057/7362888
+    volumes:
+      - "./volume/my.conf:/etc/mysql/conf.d/config-file.cnf"
+      - "./volume:/var/lib/mysql:rw"

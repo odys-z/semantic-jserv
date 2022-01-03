@@ -45,7 +45,6 @@ public class JUser extends SemanticObject implements IUser {
 		}
 
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-//		String clzz = "class-IUser";
 		protected String tbl; // = "a_user";
 		protected String pk; // = "userId";
 		protected String uname; // = "userName";
