@@ -121,7 +121,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	 */
 	protected void write(HttpServletResponse resp, AnsonMsg<? extends AnsonResp> msg, JsonOpt... opts) {
 		try {
-			if (resp != null)
+			if (msg != null)
 				msg.toBlock(resp.getOutputStream(), opts);
 		} catch (AnsonException | IOException e) {
 			e.printStackTrace();
