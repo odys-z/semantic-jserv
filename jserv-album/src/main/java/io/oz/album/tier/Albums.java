@@ -22,10 +22,42 @@ import io.oz.album.AlbumPort;
 import io.oz.album.AlbumSingleton;
 import io.oz.album.tier.AlbumReq.A;
 
+/**Manage album
+ * 
+ * @author ody
+ *
+ */
 @WebServlet(description = "Album tier: albums", urlPatterns = { "/album.less" })
 public class Albums extends ServPort<AlbumReq> {
 
 	private static final long serialVersionUID = 1L;
+
+	/** db table */
+	static final String tabl = "h_photos";
+	/** uri db field */
+	static final String uri = "uri";
+	/** file state db field */
+	static final String state = "state";
+
+	/** media file state */
+	static enum S {
+		uploading("uploading"),
+		valid("valid"),
+		synchronizing("synching"),
+		archive("archive"),
+		shared("shared");
+
+		private String state;
+
+		S(String state) {
+			this.state = state;
+		}
+
+		public String s() {
+			return this.state;
+		}
+	}
+
 
 	public Albums() {
 		super(AlbumPort.album);
@@ -59,11 +91,18 @@ public class Albums extends ServPort<AlbumReq> {
 				rsp = photos(jmsg.body(0), usr);
 			else if (A.rec.equals(a))
 				rsp = photo(jmsg.body(0), usr);
+			else if (A.insert.equals(a))
+				rsp = create(jmsg.body(0), usr);
+			else if (A.upload.equals(a))
+				upload(resp, jmsg.body(0), usr);
+			else if (A.download.equals(a))
+				download(resp, jmsg.body(0), usr);
 			else
 				throw new SemanticException(
 						"request.body.a can not handled: %s\\n" +
-						"Only a = [%s, %s, %s, %s, %s, %s] are supported.",
-						jreq.a(), A.records, A.collect, A.rec, A.insert, A.update, A.del );
+						"Only a = [%s, %s, %s, %s, %s, %s, %s, %s] are supported.",
+						jreq.a(), A.records, A.collect, A.rec, A.insert,
+								  A.update, A.download, A.upload, A.del );
 			write(resp, rsp);
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
@@ -78,18 +117,27 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
+	private AnsonMsg<? extends AnsonResp> download(HttpServletResponse resp, AlbumReq body, IUser usr) {
+		return null;
+	}
+
+	private AnsonMsg<? extends AnsonResp> create(AlbumReq body, IUser usr) {
+		return null;
+	}
+
+	private AnsonMsg<? extends AnsonResp> upload(HttpServletResponse resp, AlbumReq body, IUser usr) {
+		return null;
+	}
+
 	private AnsonMsg<? extends AnsonResp> photo(AlbumReq body, IUser usr) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	private AnsonMsg<? extends AnsonResp> photos(AlbumReq body, IUser usr) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	private AnsonMsg<? extends AnsonResp> album(AlbumReq body, IUser usr) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

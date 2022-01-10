@@ -8,6 +8,11 @@
 		<v>io.oz.album.PhotoRobot</v>
 	</c>
 
+	<c>
+		<!-- home id is the same as remote id. Only registered home can get one -->
+		<k>home-id</k>
+		<v>test.odyzhou</v>
+	</c>
 	<!-- 
 	<c>
 		<k>folder.file-upload</k>
