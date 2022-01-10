@@ -114,9 +114,15 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
+	/**Write message to resp.
+	 * @param resp can be null if user handled response already
+	 * @param msg
+	 * @param opts
+	 */
 	protected void write(HttpServletResponse resp, AnsonMsg<? extends AnsonResp> msg, JsonOpt... opts) {
 		try {
-			msg.toBlock(resp.getOutputStream(), opts);
+			if (resp != null)
+				msg.toBlock(resp.getOutputStream(), opts);
 		} catch (AnsonException | IOException e) {
 			e.printStackTrace();
 		}
@@ -144,6 +150,11 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		AnsonMsg<U> msg = new AnsonMsg<U>(p, MsgCode.ok);
 		msg.body(body);
 		return msg;
+	}
+	
+	static public AnsonMsg<AnsonResp> ok(IPort p) {
+		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);
+		return msg.body(new AnsonResp().msg(MsgCode.ok.name()));
 	}
 	
 	protected AnsonMsg<AnsonResp> ok(String templ, Object... args) {

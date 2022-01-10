@@ -14,12 +14,14 @@ import io.odysz.semantics.x.SemanticException;
 /**Sample project's prots extension
  * This enum replaced jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}. */
 public enum AlbumPort implements IPort {
-	/** The new experimental serv, extending semantics to the client side */
+	/** users.less */
 	userstier("users.less"),
 	/** editor.less */
 	editor("editor.less"),
-	/** editor.less */
+	/** album.less */
 	album("album.less");
+	/** album.stream */
+//	stream("album.stream");
 
 	static {
 		JSONAnsonListener.registFactory(AlbumPort.class, 
@@ -34,8 +36,7 @@ public enum AlbumPort implements IPort {
 	@Override
 	public IPort valof(String pname) throws SemanticException {
 		try {
-			IPort p = Port.valueOf(pname);
-			return p;
+			return Port.valueOf(pname);
 		} catch (Exception e) {
 			try { return valueOf(pname); }
 			catch (IllegalArgumentException ex) {

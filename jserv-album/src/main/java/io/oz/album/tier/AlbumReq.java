@@ -8,6 +8,8 @@ public class AlbumReq extends AnsonBody {
 		static final String records = "r/collects";
 		static final String collect = "r/photos";
 		static final String rec = "r/photo";
+		static final String download = "r/download";
+		static final String upload = "c/upload";
 		static final String update = "u";
 		static final String insert = "c";
 		static final String del = "d";
