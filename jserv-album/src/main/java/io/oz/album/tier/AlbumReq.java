@@ -18,7 +18,9 @@ public class AlbumReq extends AnsonBody {
 	static class args {
 	}
 	
-	String aid;
+	String albumId;
+
+	String fileId;
 	
 	public AlbumReq() {
 		super(null, null);
