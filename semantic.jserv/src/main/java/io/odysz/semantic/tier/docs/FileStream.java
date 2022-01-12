@@ -26,19 +26,6 @@ import io.odysz.transact.x.TransException;
  *
  */
 public class FileStream {
-//	static final String tabl = "n_docs";
-//	static final String uri = "uri";
-//	static final String state = "state";
-//
-//	/** Docs state */
-//	static class S {
-//		static final String uploading = "uploading";
-//		static final String valid = "valid";
-//		static final String synchronizing = "synching";
-//		static final String archive = "archive";
-//		static final String shared = "shared";
-//	}
-
 	protected static DATranscxt st;
 
 	/** file table name */
