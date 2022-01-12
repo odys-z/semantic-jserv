@@ -23,7 +23,9 @@ class AlbumsTest {
 		AlbumResp rep = Albums.rec(req, robot);
 		
 		assertEquals("test-00001", rep.id);
-		assertEquals("test-00001", rep.fileName);
+		assertEquals("test-00001.jpg", rep.fileName);
+		
+		
 	}
 
 }
