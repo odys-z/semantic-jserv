@@ -51,7 +51,11 @@ public class FileStream {
 	public static MsgCode upload(String funcUri, String extUri, InputStream in, IUser usr)
 			throws TransException, IOException, SQLException {
 		String targetFile = filext(funcUri, extUri, usr);
-		FileOutputStream out = new FileOutputStream(targetFile);
+		return writeFile(in, targetFile);
+	}
+	
+	protected static MsgCode writeFile(InputStream in, String target) throws IOException {
+		FileOutputStream out = new FileOutputStream(target);
 		IOUtils.copy(in, out);
 		out.close();
 		return MsgCode.ok;
@@ -60,11 +64,16 @@ public class FileStream {
 	public static MsgCode download(OutputStream out, String funcUri, String extUri, IUser usr)
 			throws TransException, IOException, SQLException {
 		String srcFile = filext(funcUri, extUri, usr);
-		FileInputStream in = new FileInputStream(srcFile);
+		return sendFile(out, srcFile);
+	}
+
+	protected static MsgCode sendFile(OutputStream out, String src) throws IOException {
+		FileInputStream in = new FileInputStream(src);
 		IOUtils.copy(in, out);
 		in.close();
 		return MsgCode.ok;
 	}
+
 
 	/**Map uri to file path
 	 * @param funcUri client function uri
