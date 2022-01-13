@@ -2,6 +2,7 @@ package io.oz.album.tier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.File;
 import java.sql.SQLException;
 
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,9 @@ class AlbumsTest {
 
 	@Test
 	void testRec() throws SemanticException, TransException, SQLException {
+		File f = new File("volume");
+		String dir = f.getAbsolutePath();
+		
 		AlbumReq req = new AlbumReq();
 		req.fileId = "test-00001";
 		
@@ -24,7 +28,6 @@ class AlbumsTest {
 		
 		assertEquals("test-00001", rep.id);
 		assertEquals("test-00001.jpg", rep.fileName);
-		
 		
 	}
 
