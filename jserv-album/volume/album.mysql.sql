@@ -4,6 +4,7 @@ DROP table if exists c_photos ;
 CREATE TABLE c_photos (
   pid varchar(12) NOT NULL,
   pname varchar(256) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  uri varchar(512) NOT NULL,
   pdate datetime DEFAULT NULL,
   device varchar(12) comment 'original device ID',
   shareby varchar(12) comment 'shared by / creator',

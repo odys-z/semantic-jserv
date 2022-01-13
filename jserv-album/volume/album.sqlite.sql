@@ -4,6 +4,7 @@ DROP table if exists h_photos;
 CREATE TABLE h_photos (
   pid varchar(12) NOT NULL,
   pname varchar(256),
+  uri varchar(512) NOT NULL,
   pdate datetime,
   device varchar(12), -- 'original device ID',
   shareby varchar(12), -- 'shared by / creator',

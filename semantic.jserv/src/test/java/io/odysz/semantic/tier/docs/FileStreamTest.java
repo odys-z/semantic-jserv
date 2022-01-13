@@ -25,17 +25,21 @@ class FileStreamTest {
 		FileInputStream in = new FileInputStream(path);
 		path = EnvPath.decodeUri(dir, "test.saved");
 		FileStream.writeFile(in, path);
+		in.close();
 
 		path = EnvPath.decodeUri(dir, "test.response");
 		OutputStream target = new FileOutputStream(path);
 		path = EnvPath.decodeUri(dir, "test.saved");
 		FileStream.sendFile(target, path);
+		target.close();
 		
 		path = EnvPath.decodeUri(dir, "test.response");
 		f = new File(path);
 		FileReader fr = new FileReader(f);
 		BufferedReader br = new BufferedReader(fr);
 		String l = br.readLine();
+		br.close();
+		fr.close();
 		assertEquals(l, "USACO");
 	}
 
