@@ -22,8 +22,8 @@ public class AlbumReq extends AnsonBody {
 
 	String fileId;
 	
-	public AlbumReq() {
-		super(null, null);
+	public AlbumReq(String funcUri) {
+		super(null, funcUri);
 	}
 
 	protected AlbumReq(AnsonMsg<? extends AnsonBody> parent, String uri) {

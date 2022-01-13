@@ -155,8 +155,8 @@ public class Albums extends ServPort<AlbumReq> {
 			throws SemanticException, TransException, SQLException {
 		String fileId = req.fileId;
 		AnResultset rs = (AnResultset) st.select(tabl)
-			.col("uri")
-			.whereEq("id", fileId)
+//			.col("uri")
+			.whereEq("pid", fileId)
 			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 			.rs(0);
 
