@@ -26,11 +26,6 @@ INSERT INTO h_photos
 	 
 select * from h_photos ph ;
 
-<<<<<<< HEAD
-delete from h_album;
-
-
-=======
 delete * from h_collects;
 
 insert into h_collects ( cid, cname, shareby, cdate, tags ) values
@@ -57,4 +52,3 @@ insert into h_coll_phot (cid, pid) values
 ('a-001', 'test-00002'),
 ('c-001', 'test-00004'),
 ('c-001', 'test-00005');
->>>>>>> 6280c7125480e520316da97fd734faa9e1fbf541
