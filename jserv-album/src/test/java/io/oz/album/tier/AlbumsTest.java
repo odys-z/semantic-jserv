@@ -58,13 +58,14 @@ class AlbumsTest {
 		assertEquals("DSC_0124.JPG", rep.photo.pname);
 		assertEquals("omni/ody/2019_08/DSC_0124.JPG", rep.photo.uri);
 		
-		AlbumResp coll = Albums.photos(req, robot);
-		assertEquals(3, coll.collectRecords.size());
+		req.collectId = "c-001";
+		AlbumResp coll = Albums.collect(req, robot);
+		assertEquals(1, coll.collectRecords.size());
 		assertEquals("c-001", coll.collectRecords.get(0).cid);
-		assertEquals("The Liar & Fool", coll.collectRecords.get(0).cname);
+		assertEquals("Liar & Fool", coll.collectRecords.get(0).cname);
 		assertEquals("c-001", coll.photos.get(0)[0].collectId);
-		assertEquals("DSC_0124.JPG", coll.photos.get(0)[0].pname);
-		assertEquals("omni/ody/2019_08/DSC_0124.JPG", coll.photos.get(0)[0].uri);
+		assertEquals("DSC_0005.JPG", coll.photos.get(0)[0].pname);
+		assertEquals("omni/ody/2019_08/DSC_0005.JPG", coll.photos.get(0)[0].uri);
 	}
 
 //	@SuppressWarnings("unchecked")
