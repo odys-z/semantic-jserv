@@ -36,8 +36,13 @@ public class Albums extends ServPort<AlbumReq> {
 
 	private static final long serialVersionUID = 1L;
 
-	/** db table */
-	static final String tabl = "h_photos";
+	/** db photo table */
+	static final String tablPhotos = "h_photos";
+	/** db photo table */
+	static final String tablAlbums = "h_albums";
+	/** db collection table */
+	static final String tablCollects = "h_collects";
+
 	/** uri db field */
 	static final String uri = "uri";
 	/** file state db field */
@@ -154,8 +159,7 @@ public class Albums extends ServPort<AlbumReq> {
 	protected static AlbumResp rec(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 		String fileId = req.fileId;
-		AnResultset rs = (AnResultset) st.select(tabl)
-//			.col("uri")
+		AnResultset rs = (AnResultset) st.select(tablPhotos)
 			.whereEq("pid", fileId)
 			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 			.rs(0);
@@ -163,15 +167,33 @@ public class Albums extends ServPort<AlbumReq> {
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", fileId, usr.uid());
 
-		return new AlbumResp(rs);
+		return new AlbumResp().rec(rs);
 	}
 
-	private AlbumResp photos(AlbumReq body, IUser usr) {
+	protected static AlbumResp photos(AlbumReq req, IUser usr) {
 		return null;
 	}
 
-	private AlbumResp album(AlbumReq body, IUser usr) {
-		return null;
+	protected static AlbumResp album(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+		String aid = req.albumId;
+		AnResultset rs = (AnResultset) st.select(tablPhotos)
+			.whereEq("aid", aid)
+			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+			.rs(0);
+
+		if (!rs.next())
+			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
+
+		AlbumResp album = new AlbumResp().album(rs);
+
+		rs = (AnResultset) st.select(tablCollects)
+			.whereEq("aid", aid)
+			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+			.rs(0);
+
+		album.collects(rs);
+
+		return album;
 	}
 
 }

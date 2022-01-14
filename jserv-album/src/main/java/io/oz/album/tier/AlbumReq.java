@@ -19,9 +19,10 @@ public class AlbumReq extends AnsonBody {
 	}
 	
 	String albumId;
-
+	String collectId;
 	String fileId;
-	
+	Photo photo; 
+
 	public AlbumReq(String funcUri) {
 		super(null, funcUri);
 	}

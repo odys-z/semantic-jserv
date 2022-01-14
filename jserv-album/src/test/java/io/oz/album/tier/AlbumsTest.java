@@ -3,15 +3,29 @@ package io.oz.album.tier;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
+import org.vishag.async.AsyncSupplier;
 
+import io.odysz.anson.x.AnsonException;
+import io.odysz.jclient.Clients;
+import io.odysz.jclient.InsecureClient;
+import io.odysz.jclient.SessionClient;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JProtocol.SCallbackV11;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
+import io.oz.album.tier.AlbumReq.A;
 
 /**
  * <pre>INSERT INTO h_photos (pid,uri,pname,pdate,cdate,tags,oper,opertime) VALUES
@@ -27,20 +41,20 @@ import io.oz.album.PhotoRobot;
  *
  */
 class AlbumsTest {
+	static String jserv;
+
 	static IUser robot;
-	/**root of file system */
-	// static String root;
-	/** local woking dir */
+	/** local working dir */
 	static String local;
 
 	static {
 		try {
-			// all starting at project root
-			// root = new File("volume").getAbsolutePath();
+			jserv = "http://localhost:8080/jserv-album";
 			System.setProperty("VOLUME_HOME", "../../../../volume");
 			Connects.init("src/main/webapp/WEB-INF");
+			Clients.init(jserv);
 
-			local = new File("src/test/download").getAbsolutePath();
+			local = new File("src/test/local").getAbsolutePath();
 			robot = new PhotoRobot("test album");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -55,9 +69,101 @@ class AlbumsTest {
 
 		AlbumResp rep = Albums.rec(req, robot);
 		
-		assertEquals("test-00001", rep.pid);
-		assertEquals("DSC_0124.JPG", rep.fileName);
-		assertEquals("omni/ody/2019_08/DSC_0124.JPG", rep.fileUri);
+		assertEquals("test-00001", rep.photo.pid);
+		assertEquals("DSC_0124.JPG", rep.photo.pname);
+		assertEquals("omni/ody/2019_08/DSC_0124.JPG", rep.photo.uri);
 	}
 
+//	@SuppressWarnings("unchecked")
+//	@Test
+//	void testUpload() throws SemanticException, TransException, SQLException {
+//		AlbumReq req = new AlbumReq("/local/test");
+//		req.a(A.insert);
+//		req.albumId = "a-001";
+//		
+//		AlbumResp resp = Albums.album(req, robot);
+//		Photo photoRec = resp.collects[0][0];
+//		
+//		String localPath = "my.jpg";
+//		Supplier<String>[] resultSuppliers = null;
+//		try {
+//			resultSuppliers = AsyncSupplier.getDefault().submitSuppliers(
+//						() -> new StreamClient<Photo>().upload(photoRec, localPath) );
+//		}
+//		catch (Exception ex) {
+//			fail(ex.getMessage());
+//		}
+//	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	void testDownload() throws SemanticException, TransException, SQLException {
+		AlbumReq req = new AlbumReq("/local/test");
+		req.a(A.insert);
+		req.collectId = "c-001";
+
+		Supplier<AlbumResp>[] albumResp = null;
+//		AlbumResp resp = Albums.photos(req, robot);
+//		Photo[] collect = resp.photos.get(0);
+		try {
+			albumResp = AsyncSupplier.getDefault().submitSuppliers(
+				     () -> getCollection(req)
+				   );
+		}
+		catch (Exception ex) {
+			fail(ex.getMessage());
+		}
+
+		AlbumResp resp = albumResp[0].get();
+		Photo[] collect = resp.photos.get(0);
+		Photo ph1 = collect[0];
+		Photo ph2 = collect[1];
+		Photo ph3 = collect[2];
+		
+		Supplier<String>[] resultSuppliers = null;
+		try {
+			resultSuppliers = AsyncSupplier.getDefault().submitSuppliers(
+				     () -> getDownloadResult(ph1, ph1.pname),
+				     () -> getDownloadResult(ph2, ph2.pname),
+				     () -> getDownloadResult(ph3, ph3.pname)
+				   );
+		}
+		catch (Exception ex) {
+			fail(ex.getMessage());
+		}
+
+		String a = resultSuppliers[0].get();
+		String b = resultSuppliers[1].get();
+		String c = resultSuppliers[2].get();
+	}
+
+	AlbumResp getCollection(AlbumReq req) {
+		AlbumResp[] buf = new AlbumResp[1];
+		String signal = "";
+		try {
+			InsecureClient client = new InsecureClient(jserv);
+			AnsonMsg<? extends AnsonBody> q = client.userReq(AlbumPort.album, null, req);
+
+			client.commit(q, (MsgCode msgCode, AnsonResp resp) -> {
+				buf[0] = (AlbumResp) resp;
+			} );
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			signal.notify();
+		}
+
+		try {
+			signal.wait(10000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		return buf[0];
+	}
+
+	String getDownloadResult(Photo photo, String filepath) {
+		return new StreamClient<Photo>().download(photo, filepath);
+	}
 }
