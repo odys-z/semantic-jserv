@@ -7,7 +7,13 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jsession.SessionInf;
 
 public class Photo implements FileRecord {
+	/**<h5>Design Note</h5>
+	 * The session info is typically not a DB entity, but it's necessary for protocol.
+	 * So the {@link Photo} type doesn't means the same as DB record. 
+	 * @see #collectId
+	 */
 	SessionInf ssInf;
+
 	String pid;
 	String pname;
 	String uri;
@@ -17,6 +23,14 @@ public class Photo implements FileRecord {
 	String geoy;
 	String exif;
 	String sharer;
+
+	/**<h5>Design Note:</h5>
+	 * The DB photo table doesn't has this filed. But the collection view need this for presentation.
+	 * If provided, the presentation tier doesn't need to care the DB semantics anymore.
+	 * So is this where the semantics stopped propagating?
+	 * @see #ssInf
+	 */
+	String collectId;
 	
 	public Photo(AnResultset rs) throws SQLException {
 		this.pid = rs.getString("pid");
