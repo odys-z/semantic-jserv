@@ -26,3 +26,6 @@ INSERT INTO h_photos
 	 
 select * from h_photos hp ;
 
+delete from h_album;
+
+
