@@ -45,6 +45,11 @@ public class Photo implements FileRecord {
 		this.geoy = rs.getString("geoy");
 	}
 
+	public Photo(String collectId, AnResultset rs) throws SQLException {
+		this(rs);
+		this.collectId = collectId;
+	}
+
 	@Override
 	public String recId() { return pid; }
 

@@ -43,10 +43,13 @@ public class Albums extends ServPort<AlbumReq> {
 	/** db collection table */
 	static final String tablCollects = "h_collects";
 
+	static final String tablCollectPhoto = "h_coll_phot";
+
 	/** uri db field */
 	static final String uri = "uri";
 	/** file state db field */
 	static final String state = "state";
+
 
 	/** media file state */
 	static enum S {
@@ -62,10 +65,12 @@ public class Albums extends ServPort<AlbumReq> {
 			this.state = state;
 		}
 
-		public String s() {
-			return this.state;
-		}
+//		public String name() {
+//			return this.state;
+//		}
 	}
+	
+	S fileState;
 
 	protected static DATranscxt st;
 
@@ -107,7 +112,7 @@ public class Albums extends ServPort<AlbumReq> {
 			if (A.records.equals(a)) // load
 				rsp = album(jmsg.body(0), usr);
 			else if (A.collect.equals(a))
-				rsp = photos(jmsg.body(0), usr);
+				rsp = collect(jmsg.body(0), usr);
 			else if (A.rec.equals(a))
 				rsp = rec(jmsg.body(0), usr);
 			else if (A.insert.equals(a))
@@ -170,8 +175,28 @@ public class Albums extends ServPort<AlbumReq> {
 		return new AlbumResp().rec(rs);
 	}
 
-	protected static AlbumResp photos(AlbumReq req, IUser usr) {
-		return null;
+	protected static AlbumResp collect(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+		String cid = req.collectId;
+		AnResultset rs = (AnResultset) st.select(tablCollects)
+			.whereEq("cid", cid)
+			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+			.rs(0);
+
+		if (!rs.next())
+			throw new SemanticException("Can't find photo collection for id = %s (permission of %s)", cid, usr.uid());
+
+		AlbumResp album = new AlbumResp().collects(rs);
+
+		rs = (AnResultset) st.select(tablPhotos, "p")
+			.col("p.*")
+			.j(tablCollectPhoto, "cp", "cp.pid = p.pid")
+			.whereEq("cp.cid", cid)
+			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+			.rs(0);
+
+		album.photos(cid, rs);
+
+		return album;
 	}
 
 	protected static AlbumResp album(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {

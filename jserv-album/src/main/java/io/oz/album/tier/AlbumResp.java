@@ -44,4 +44,18 @@ public class AlbumResp extends AnsonResp {
 		return this;
 	}
 
+	public AlbumResp photos(String collectId, AnResultset rs) throws SQLException {
+		if (this.photos == null)
+			this.photos = new ArrayList<Photo[]>(1);
+
+		ArrayList<Photo> photos = new ArrayList<Photo>(rs.total());
+		rs.beforeFirst();
+		while(rs.next()) {
+			photos.add(new Photo(collectId, rs));
+		}
+
+		this.photos.add(photos.toArray(new Photo[0]));
+		return this;
+	}
+
 }
