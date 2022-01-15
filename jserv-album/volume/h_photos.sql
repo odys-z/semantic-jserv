@@ -35,20 +35,24 @@ insert into h_collects ( cid, cname, shareby, cdate, tags, oper, opertime ) valu
 
 select * from h_collects;
 
-delete * from h_albums;
+delete  from h_albums;
 
 insert into h_albums ( aid, aname, shareby, cdate, tags, oper, opertime )
 values ('a-001', 'Living a life', 'ody', '2022-01-13', '#life', 'ody', '2022-01-13' );
 
 select * from h_albums;
 
-delete * from h_album_coll;
+delete from h_album_coll;
 insert into h_album_coll (aid, cid) values
 ('a-001', 'c001'), ('a-001', 'c002'), ('a-001', 'c003');
 
-delete * from h_coll_phot;
+select * from h_album_coll hac ;
+
+delete from h_coll_phot;
 insert into h_coll_phot (cid, pid) values
 ('c-001', 'test-00000'),
 ('a-001', 'test-00002'),
 ('c-001', 'test-00004'),
 ('c-001', 'test-00005');
+
+select * from h_coll_phot hcp ;
