@@ -44,7 +44,22 @@
 				type="javax.sql.DataSource" />
 	see https://stackoverflow.com/a/22545669/7362888
 	-->
-   	<c> <!-- For tomcat, in context.xml:
+   	<c> <!-- For tomcat, 
+   		in server.xml:
+   		
+  	<Resource auth="Container" connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true;useSSL=false;enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2" driverClassName="com.mysql.cj.jdbc.Driver" global="jdbc/album-cloud" maxActive="10" maxIdle="3" maxWait="10000" name="jdbc/album-cloud" password="odys-z.github.io" type="javax.sql.DataSource" url="jdbc:mysql://127.0.0.1:3306/album-cloud" username="odysz"/>
+   		in context.xml:
+			<GlobalNamingResources>
+  				<Resource auth="Container"
+					  connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true;useSSL=false;enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2"
+					  driverClassName="com.mysql.cj.jdbc.Driver"
+					  global="jdbc/album-cloud" maxActive="10" maxIdle="3" maxWait="10000"
+					  name="jdbc/album-cloud" password="..."
+					  type="javax.sql.DataSource"
+					  url="jdbc:mysql://...:3306/album-cloud"
+					  username="..."/>
+  			</GlobalNamingResources>
+
 			<ResourceLink name="jdbc/album-cloud"
 				global="jdbc/album-cloud"
 				type="javax.sql.DataSource" />
