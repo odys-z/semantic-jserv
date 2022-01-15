@@ -44,7 +44,11 @@
 				type="javax.sql.DataSource" />
 	see https://stackoverflow.com/a/22545669/7362888
 	-->
-   	<c>
+   	<c> <!-- For tomcat, in context.xml:
+			<ResourceLink name="jdbc/album-cloud"
+				global="jdbc/album-cloud"
+				type="javax.sql.DataSource" />
+   		 -->
   		<id>album-cloud</id>
   		<type>mysql</type>
   		<src>jdbc/album-cloud</src>
