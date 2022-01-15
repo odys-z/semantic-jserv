@@ -4,6 +4,23 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 
 public class AlbumReq extends AnsonBody {
+
+	/** media file state */
+	static enum fileState {
+		uploading("uploading"),
+		valid("valid"),
+		synchronizing("synching"),
+		archive("archive"),
+		shared("shared");
+
+		@SuppressWarnings("unused")
+		private String state;
+
+		fileState(String state) {
+			this.state = state;
+		}
+	}
+	
 	static class A {
 		static final String records = "r/collects";
 		static final String collect = "r/photos";
@@ -29,6 +46,11 @@ public class AlbumReq extends AnsonBody {
 
 	protected AlbumReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
+	}
+
+	public AlbumReq collectId(String cid) {
+		this.collectId = cid;
+		return this;
 	}
 
 }
