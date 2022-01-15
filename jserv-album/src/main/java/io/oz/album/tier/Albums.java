@@ -25,6 +25,7 @@ import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
 import io.oz.album.AlbumSingleton;
 import io.oz.album.tier.AlbumReq.A;
+import io.oz.album.tier.AlbumReq.fileState;
 
 /**Manage album
  * 
@@ -51,26 +52,7 @@ public class Albums extends ServPort<AlbumReq> {
 	static final String state = "state";
 
 
-	/** media file state */
-	static enum S {
-		uploading("uploading"),
-		valid("valid"),
-		synchronizing("synching"),
-		archive("archive"),
-		shared("shared");
-
-		private String state;
-
-		S(String state) {
-			this.state = state;
-		}
-
-//		public String name() {
-//			return this.state;
-//		}
-	}
-	
-	S fileState;
+	fileState fileState;
 
 	protected static DATranscxt st;
 
