@@ -48,10 +48,13 @@ public enum Sandport implements IPort {
 
 	@Override
 	public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
-		stream.write('\"');
-		stream.write(url.getBytes());
-		stream.write('\"');
-		return this;
+		throw new AnsonException(0, "FIXME: shouldn't use name()?", opts);
+		// url can't been deserialized in newer version, should use name.
+
+//		stream.write('\"');
+//		stream.write(url.getBytes());
+//		stream.write('\"');
+//		return this;
 	}
 
 	@Override

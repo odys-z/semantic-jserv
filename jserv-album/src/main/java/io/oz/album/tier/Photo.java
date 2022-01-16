@@ -2,11 +2,12 @@ package io.oz.album.tier;
 
 import java.sql.SQLException;
 
+import io.odysz.anson.Anson;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jsession.SessionInf;
 
-public class Photo implements FileRecord {
+public class Photo extends Anson implements FileRecord {
 	/**<h5>Design Note</h5>
 	 * The session info is typically not a DB entity, but it's necessary for protocol.
 	 * So the {@link Photo} type doesn't means the same as DB record. 
