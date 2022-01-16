@@ -38,16 +38,16 @@ public enum AlbumPort implements IPort {
 		} catch (Exception e) {
 			try { return valueOf(pname); }
 			catch (IllegalArgumentException ex) {
-				throw new SemanticException(ex.getMessage());
+				throw new SemanticException("Error of IllegalArgumentException: %s", ex.getMessage());
 			}
-			
 		}
 	}
 
 	@Override
 	public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
 		stream.write('\"');
-		stream.write(url.getBytes());
+		// stream.write(url.getBytes());
+		stream.write(name().getBytes());
 		stream.write('\"');
 		return this;
 	}
@@ -55,7 +55,8 @@ public enum AlbumPort implements IPort {
 	@Override
 	public IJsonable toJson(StringBuffer buf) throws IOException, AnsonException {
 		buf.append('\"');
-		buf.append(url);
+		// buf.append(url);
+		buf.append(name());
 		buf.append('\"');
 		return this;
 	}	

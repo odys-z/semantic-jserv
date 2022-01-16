@@ -17,13 +17,12 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.ServPort;
-import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
-import io.oz.album.AlbumSingleton;
+import io.oz.album.PhotoRobot;
 import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.tier.AlbumReq.fileState;
 
@@ -56,10 +55,12 @@ public class Albums extends ServPort<AlbumReq> {
 
 	protected static DATranscxt st;
 
+	static IUser robot;
 
 	static {
 		try {
 			st = new DATranscxt(null);
+			robot = new PhotoRobot("Robot Album");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
@@ -89,7 +90,8 @@ public class Albums extends ServPort<AlbumReq> {
 			String a = jreq.a();
 			AlbumResp rsp = null;
 
-			IUser usr = AlbumSingleton.getSessionVerifier().verify(jmsg.header());
+			// IUser usr = AlbumSingleton.getSessionVerifier().verify(jmsg.header());
+			IUser usr = robot;
 
 			if (A.records.equals(a)) // load
 				rsp = album(jmsg.body(0), usr);
@@ -116,8 +118,6 @@ public class Albums extends ServPort<AlbumReq> {
 			if (AlbumFlags.album)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
-		} catch (SsException e) {
-			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}

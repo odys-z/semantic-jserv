@@ -21,15 +21,15 @@ public class AlbumReq extends AnsonBody {
 		}
 	}
 	
-	static class A {
-		static final String records = "r/collects";
-		static final String collect = "r/photos";
-		static final String rec = "r/photo";
-		static final String download = "r/download";
-		static final String upload = "c/upload";
-		static final String update = "u";
-		static final String insert = "c";
-		static final String del = "d";
+	static public class A {
+		public static final String records = "r/collects";
+		public static final String collect = "r/photos";
+		public static final String rec = "r/photo";
+		public static final String download = "r/download";
+		public static final String upload = "c/upload";
+		public static final String update = "u";
+		public static final String insert = "c";
+		public static final String del = "d";
 	}
 	
 	static class args {
@@ -40,6 +40,10 @@ public class AlbumReq extends AnsonBody {
 	String fileId;
 	Photo photo; 
 
+	public AlbumReq() {
+		super(null, null);
+	}
+	
 	public AlbumReq(String funcUri) {
 		super(null, funcUri);
 	}
