@@ -17,6 +17,7 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.ServPort;
+import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -123,8 +124,19 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
-	private AlbumResp download(HttpServletResponse resp, AlbumReq body, IUser usr) {
-		return null;
+	private void download(HttpServletResponse resp, AlbumReq freq, IUser usr)
+			throws IOException, SemanticException, TransException, SQLException {
+		AnResultset rs = (AnResultset) st
+			.select(tablPhotos)
+			.col("uri")
+			.whereEq("pid", freq.fileId)
+			.rs(st.instancontxt(Connects.uri2conn(uri), usr))
+			.rs(0);
+
+		if (!rs.next())
+			throw new SemanticException("Can't find file for id: %s (permission of %s)", freq.fileId, usr.uid());
+	
+		FileStream.sendFile(resp.getOutputStream(), rs.getString("uri"));
 	}
 
 	private AlbumResp create(AlbumReq body, IUser usr) {

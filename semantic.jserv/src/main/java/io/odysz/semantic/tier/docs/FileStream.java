@@ -67,7 +67,7 @@ public class FileStream {
 		return sendFile(out, srcFile);
 	}
 
-	protected static MsgCode sendFile(OutputStream out, String src) throws IOException {
+	public static MsgCode sendFile(OutputStream out, String src) throws IOException {
 		FileInputStream in = new FileInputStream(src);
 		IOUtils.copy(in, out);
 		in.close();

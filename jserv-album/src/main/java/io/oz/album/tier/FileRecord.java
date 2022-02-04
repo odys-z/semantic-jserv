@@ -1,7 +1,9 @@
 package io.oz.album.tier;
 
-public interface FileRecord {
-	String recId();
-	String uri();
-	String token();
+import io.odysz.anson.Anson;
+
+public class FileRecord extends Anson {
+	public String recId;
+	public String uri;
+	public String token;
 }

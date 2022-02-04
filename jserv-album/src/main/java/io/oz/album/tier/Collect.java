@@ -2,15 +2,18 @@ package io.oz.album.tier;
 
 import java.sql.SQLException;
 
+import io.odysz.anson.Anson;
 import io.odysz.module.rs.AnResultset;
 
-public class Collect {
+public class Collect extends Anson {
 
 	String tags;
 	String cdate;
 	String shareby;
 	String cname;
 	String cid;
+	
+	public Collect() {}
 
 	public Collect(AnResultset rs) throws SQLException {
 		this.cid = rs.getString("cid");
