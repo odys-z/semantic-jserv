@@ -1,23 +1,30 @@
 package io.oz.album.tier;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.sql.SQLException;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io_odysz.FilenameUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantics.ShExtFile;
+import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.ServPort;
+import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.FileStream;
+import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -91,7 +98,6 @@ public class Albums extends ServPort<AlbumReq> {
 			String a = jreq.a();
 			AlbumResp rsp = null;
 
-			// IUser usr = AlbumSingleton.getSessionVerifier().verify(jmsg.header());
 			IUser usr = robot;
 
 			if (A.records.equals(a)) // load
@@ -105,7 +111,7 @@ public class Albums extends ServPort<AlbumReq> {
 			else if (A.upload.equals(a))
 				upload(resp, jmsg.body(0), usr);
 			else if (A.download.equals(a))
-				download(resp, jmsg.body(0), usr);
+				download(resp.getOutputStream(), jmsg.body(0), usr);
 			else
 				throw new SemanticException(
 						"request.body.a can not handled: %s\\n" +
@@ -124,19 +130,24 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
-	private void download(HttpServletResponse resp, AlbumReq freq, IUser usr)
+	void download(OutputStream ofs, DocsReq freq, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
+		String conn = Connects.uri2conn(uri);
+		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st
 			.select(tablPhotos)
-			.col("uri")
-			.whereEq("pid", freq.fileId)
-			.rs(st.instancontxt(Connects.uri2conn(uri), usr))
+			.col("uri").col("folder")
+			.whereEq("pid", freq.docId)
+			.rs(stx)
 			.rs(0);
 
 		if (!rs.next())
-			throw new SemanticException("Can't find file for id: %s (permission of %s)", freq.fileId, usr.uid());
+			throw new SemanticException("Can't find file for id: %s (permission of %s)", freq.docId, usr.uid());
 	
-		FileStream.sendFile(resp.getOutputStream(), rs.getString("uri"));
+		// keep file system root the same with semantics configuration 
+		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, tablPhotos, smtype.extFile)).getFileRoot();
+//		extroot = FilenameUtils.concat(extroot, rs.getString("folder"), usr.uid());
+		FileStream.sendFile(ofs, EnvPath.decodeUri(extroot, rs.getString("uri")));
 	}
 
 	private AlbumResp create(AlbumReq body, IUser usr) {
@@ -157,7 +168,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	protected static AlbumResp rec(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
-		String fileId = req.fileId;
+		String fileId = req.docId;
 		AnResultset rs = (AnResultset) st.select(tablPhotos)
 			.whereEq("pid", fileId)
 			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
