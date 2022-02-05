@@ -31,6 +31,7 @@ public class Photo extends FileRecord {
 	 * @see #ssInf
 	 */
 	String collectId;
+	String albumId;
 	
 	public Photo() {}
 	

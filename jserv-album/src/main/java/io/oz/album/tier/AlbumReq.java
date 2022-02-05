@@ -2,8 +2,9 @@ package io.oz.album.tier;
 
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.tier.docs.DocsReq;
 
-public class AlbumReq extends AnsonBody {
+public class AlbumReq extends DocsReq {
 
 	/** media file state */
 	static enum fileState {
@@ -37,7 +38,7 @@ public class AlbumReq extends AnsonBody {
 	
 	String albumId;
 	String collectId;
-	String fileId;
+	// String fileId;
 	Photo photo; 
 
 	public AlbumReq() {
@@ -54,6 +55,15 @@ public class AlbumReq extends AnsonBody {
 
 	public AlbumReq collectId(String cid) {
 		this.collectId = cid;
+		return this;
+	}
+
+	public AlbumReq download(Photo photo) {
+		this.albumId = photo.albumId;
+		this.collectId = photo.collectId;
+		this.docId = photo.pid;
+		this.photo = photo;
+		this.a = A.download;
 		return this;
 	}
 

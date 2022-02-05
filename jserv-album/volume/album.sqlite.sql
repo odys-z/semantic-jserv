@@ -3,8 +3,9 @@
 DROP table if exists h_photos;
 CREATE TABLE h_photos (
   pid varchar(12) NOT NULL,
+  folder varchar(256) NOT NULL,
   pname varchar(256),
-  uri varchar(512) NOT NULL,
+  uri varchar(512) NOT NULL, -- storage/userId/folder/recId-clientname
   pdate datetime,
   device varchar(12), -- 'original device ID',
   shareby varchar(12), -- 'shared by / creator',
@@ -30,7 +31,7 @@ CREATE TABLE h_collects (
   opertime datetime not null,
 
   PRIMARY KEY (cid)
-);
+); -- subject collection
 
 DROP table if exists h_coll_phot ;
 CREATE TABLE h_coll_phot (
@@ -43,6 +44,7 @@ CREATE TABLE h_coll_phot (
 DROP table if exists h_albums ;
 CREATE TABLE h_albums (
   aid varchar(12) NOT NULL,
+  storage varchar(256) NOT NULL,
   aname varchar(256) DEFAULT NULL,
   shareby varchar(12), -- comment 'shared by / creator',
   cdate datetime not null, -- comment 'create date time',

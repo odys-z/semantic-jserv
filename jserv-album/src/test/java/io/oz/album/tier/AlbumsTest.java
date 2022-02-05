@@ -14,7 +14,9 @@ import io.odysz.transact.x.TransException;
 import io.oz.album.PhotoRobot;
 
 /**
- * <pre>INSERT INTO h_photos (pid,uri,pname,pdate,cdate,tags,oper,opertime) VALUES
+ * Test file / uri data access functions.
+ * 
+ * <pre>INSERT INTO h_photos (pid,uri,pname,folder,pdate,cdate,tags,oper,opertime) VALUES
 	 ('test-00000','omni/ody/2019_08/DSC_0005.JPG','DSC_0005.JPG','2019-08-24','2021-08-24','#Qing Hai Lake','ody','2022-01-13'),
 	 ('test-00001','omni/ody/2019_08/DSC_0124.JPG','DSC_0124.JPG','2019-08-24','2021-08-24','#Qing Hai Lake','ody','2022-01-13'),
 	 ('test-00002','omni/ody/2021_08/IMG_20210826.jgp','IMG_20210826.jgp','2019-08-24 15:44:30','2021-08-26','#Lotus Lake','ody','2022-01-13'),
@@ -50,7 +52,7 @@ class AlbumsTest {
 	void testRec() throws SemanticException, TransException, SQLException {
 	
 		AlbumReq req = new AlbumReq("/local/test");
-		req.fileId = "test-00001";
+		req.docId = "test-00001";
 
 		AlbumResp rep = Albums.rec(req, robot);
 		

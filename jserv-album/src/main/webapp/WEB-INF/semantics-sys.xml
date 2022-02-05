@@ -11,9 +11,17 @@
 	<s>
 		<id>pho.oper</id>
 		<smtc>o-t</smtc>
-		<tabl>photos</tabl>
+		<tabl>h_photos</tabl>
 		<pk>pid</pk>
 		<args>oper,optime</args>
+	</s>
+	
+	<s>
+		<id>pho.extfile</id>
+		<smtc>ef</smtc>
+		<tabl>h_photos</tabl>
+		<pk>pid</pk>
+		<args>$VOLUME_HOME,uri,busiTbl,busiId,attName</args>
 	</s>
 	
   </t>
