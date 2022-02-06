@@ -1,10 +1,24 @@
 package io.oz.album.tier;
 
+import java.io.IOException;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.Date;
+
+import org.apache.tika.parser.image.ImageMetadataExtractor;
+import org.xml.sax.SAXException;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 
 import io.odysz.common.DateFormat;
+import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jsession.SessionInf;
+import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.AbsPart;
+import io.odysz.transact.sql.parts.condition.ExprPart;
+import io.odysz.transact.sql.parts.condition.Funcall;
 
 public class Photo extends FileRecord {
 	/**<h5>Design Note</h5>
@@ -32,6 +46,9 @@ public class Photo extends FileRecord {
 	 */
 	String collectId;
 	String albumId;
+
+	
+	String month;
 	
 	public Photo() {}
 	
@@ -52,5 +69,40 @@ public class Photo extends FileRecord {
 		this(rs);
 		this.collectId = collectId;
 	}
+
+	public String month() throws IOException, SemanticException  {
+		if (month == null)
+			photoDate();
+		return month;
+	}
+
+	public AbsPart photoDate() throws IOException, SemanticException {
+		try {
+			String pdate = null;
+			Date d;
+			if (exif != null) {
+				Metadata meta = new Metadata();
+				new ImageMetadataExtractor(meta).parseRawExif(exif.getBytes());
+				d = meta.getDate(TikaCoreProperties.CREATED);
+			}
+			else {
+				pdate = cdate;
+				d = DateFormat.parse(pdate);
+			}
+
+			if (LangExt.isblank(pdate)) {
+				month = DateFormat.formatYYmm(new Date());
+				return Funcall.now();
+			}
+			else {
+				month = DateFormat.formatYYmm(d);
+				return new ExprPart(pdate);
+			}
+		} catch (IOException | SAXException | TikaException | ParseException e) {
+			e.printStackTrace();
+			throw new SemanticException(e.getMessage());
+		}
+	}
+
 
 }

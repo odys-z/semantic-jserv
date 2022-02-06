@@ -29,7 +29,9 @@ public class AlbumReq extends DocsReq {
 		public static final String download = "r/download";
 		public static final String upload = "c/upload";
 		public static final String update = "u";
-		public static final String insert = "c";
+		public static final String insertPhoto = "c/photo";
+		public static final String insertCollect = "c/collect";
+		public static final String insertAlbum = "c/album";
 		public static final String del = "d";
 	}
 	
@@ -58,12 +60,32 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
+	/**Create download request with photo record.
+	 * @param photo
+	 * @return
+	 */
 	public AlbumReq download(Photo photo) {
 		this.albumId = photo.albumId;
 		this.collectId = photo.collectId;
 		this.docId = photo.pid;
 		this.photo = photo;
 		this.a = A.download;
+		return this;
+	}
+
+	/**TODO create request for inserting new photo
+	 * @param collId
+	 * @param localname
+	 * @return
+	 */
+	public AlbumReq createPhoto(String collId, String localname) {
+		return null;
+	}
+
+	public AlbumReq photoId(String pid) {
+		if (photo == null)
+			photo = new Photo();
+		photo.pid = pid;
 		return this;
 	}
 

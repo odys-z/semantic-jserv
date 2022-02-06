@@ -6,10 +6,10 @@ CREATE TABLE h_photos (
   folder varchar(256) NOT NULL,
   pname varchar(256),
   uri varchar(512) NOT NULL, -- storage/userId/folder/recId-clientname
-  pdate datetime,
+  pdate datetime,     -- picture taken time
   device varchar(12), -- 'original device ID',
   shareby varchar(12), -- 'shared by / creator',
-  cdate datetime not null, -- 'create date time',
+  sharedate datetime not null, -- 'shared date time',
   tags varchar(512) DEFAULT NULL ,
   geox double DEFAULT 0,
   geoy double DEFAULT 0,

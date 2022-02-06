@@ -58,7 +58,7 @@ class AlbumsTest {
 		
 		assertEquals("test-00001", rep.photo.pid);
 		assertEquals("DSC_0124.JPG", rep.photo.pname);
-		assertEquals("omni/ody/2019_08/DSC_0124.JPG", rep.photo.uri);
+		assertEquals("ody/2019_08/DSC_0124.JPG", rep.photo.uri);
 		
 		req.collectId = "c-001";
 		AlbumResp coll = Albums.collect(req, robot);
@@ -67,99 +67,7 @@ class AlbumsTest {
 		assertEquals("Liar & Fool", coll.collectRecords.get(0).cname);
 		assertEquals("c-001", coll.photos.get(0)[0].collectId);
 		assertEquals("DSC_0005.JPG", coll.photos.get(0)[0].pname);
-		assertEquals("omni/ody/2019_08/DSC_0005.JPG", coll.photos.get(0)[0].uri);
+		assertEquals("ody/2019_08/DSC_0005.JPG", coll.photos.get(0)[0].uri);
 	}
 
-//	@SuppressWarnings("unchecked")
-//	@Test
-//	void testUpload() throws SemanticException, TransException, SQLException {
-//		AlbumReq req = new AlbumReq("/local/test");
-//		req.a(A.insert);
-//		req.albumId = "a-001";
-//		
-//		AlbumResp resp = Albums.album(req, robot);
-//		Photo photoRec = resp.collects[0][0];
-//		
-//		String localPath = "my.jpg";
-//		Supplier<String>[] resultSuppliers = null;
-//		try {
-//			resultSuppliers = AsyncSupplier.getDefault().submitSuppliers(
-//						() -> new StreamClient<Photo>().upload(photoRec, localPath) );
-//		}
-//		catch (Exception ex) {
-//			fail(ex.getMessage());
-//		}
-//	}
-
-//	@SuppressWarnings("unchecked")
-//	@Test
-//	void testDownload() throws SemanticException, TransException, SQLException {
-//		AlbumReq req = new AlbumReq("/local/test");
-//		req.a(A.insert);
-//		req.collectId = "c-001";
-//
-//		Supplier<AlbumResp>[] albumResp = null;
-////		AlbumResp resp = Albums.photos(req, robot);
-////		Photo[] collect = resp.photos.get(0);
-//		try {
-//			albumResp = AsyncSupplier.getDefault().submitSuppliers(
-//				     () -> getCollection(req)
-//				   );
-//		}
-//		catch (Exception ex) {
-//			fail(ex.getMessage());
-//		}
-//
-//		AlbumResp resp = albumResp[0].get();
-//		Photo[] collect = resp.photos.get(0);
-//		Photo ph1 = collect[0];
-//		Photo ph2 = collect[1];
-//		Photo ph3 = collect[2];
-//		
-//		Supplier<String>[] resultSuppliers = null;
-//		try {
-//			resultSuppliers = AsyncSupplier.getDefault().submitSuppliers(
-//				     () -> getDownloadResult(ph1, ph1.pname),
-//				     () -> getDownloadResult(ph2, ph2.pname),
-//				     () -> getDownloadResult(ph3, ph3.pname)
-//				   );
-//		}
-//		catch (Exception ex) {
-//			fail(ex.getMessage());
-//		}
-//
-//		String a = resultSuppliers[0].get();
-//		String b = resultSuppliers[1].get();
-//		String c = resultSuppliers[2].get();
-//	}
-//
-//	AlbumResp getCollection(AlbumReq req) {
-//		AlbumResp[] buf = new AlbumResp[1];
-//		String signal = "";
-//		try {
-//			InsecureClient client = new InsecureClient(jserv);
-//			AnsonMsg<? extends AnsonBody> q = client.userReq(AlbumPort.album, null, req);
-//
-//			client.commit(q, (MsgCode msgCode, AnsonResp resp) -> {
-//				buf[0] = (AlbumResp) resp;
-//			} );
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		finally {
-//			signal.notify();
-//		}
-//
-//		try {
-//			signal.wait(10000);
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-//
-//		return buf[0];
-//	}
-//
-//	String getDownloadResult(Photo photo, String filepath) {
-//		return new StreamClient<Photo>().download(photo, filepath);
-//	}
 }
