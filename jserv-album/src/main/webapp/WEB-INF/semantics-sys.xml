@@ -8,6 +8,14 @@
 		pk:
 		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
    -->
+    <s>
+		<id>pho.ak</id>
+		<smtc>a-k</smtc>
+		<tabl>h_photos</tabl>
+		<pk>pid</pk>
+		<args></args>
+    </s>
+
 	<s>
 		<id>pho.oper</id>
 		<smtc>o-t</smtc>

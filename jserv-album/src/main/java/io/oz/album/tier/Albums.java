@@ -8,7 +8,6 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io_odysz.FilenameUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
@@ -26,7 +25,9 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
@@ -100,25 +101,27 @@ public class Albums extends ServPort<AlbumReq> {
 
 			IUser usr = robot;
 
-			if (A.records.equals(a)) // load
-				rsp = album(jmsg.body(0), usr);
-			else if (A.collect.equals(a))
-				rsp = collect(jmsg.body(0), usr);
-			else if (A.rec.equals(a))
-				rsp = rec(jmsg.body(0), usr);
-			else if (A.insert.equals(a))
-				rsp = create(jmsg.body(0), usr);
-			else if (A.upload.equals(a))
+			if (A.upload.equals(a))
 				upload(resp, jmsg.body(0), usr);
 			else if (A.download.equals(a))
 				download(resp.getOutputStream(), jmsg.body(0), usr);
-			else
-				throw new SemanticException(
-						"request.body.a can not handled: %s\\n" +
-						"Only a = [%s, %s, %s, %s, %s, %s, %s, %s] are supported.",
-						jreq.a(), A.records, A.collect, A.rec, A.insert,
-								  A.update, A.download, A.upload, A.del );
-			write(resp, ok(rsp));
+			else {
+				if (A.records.equals(a)) // load
+					rsp = album(jmsg.body(0), usr);
+				else if (A.collect.equals(a))
+					rsp = collect(jmsg.body(0), usr);
+				else if (A.rec.equals(a))
+					rsp = rec(jmsg.body(0), usr);
+				else if (A.insertPhoto.equals(a))
+					rsp = createPhoto(jmsg.body(0), usr);
+				else
+					throw new SemanticException(
+							"request.body.a can not handled: %s\\n" +
+							"Only a = [%s, %s, %s, %s, %s, %s, %s, %s] are supported.",
+							jreq.a(), A.records, A.collect, A.rec, A.insertPhoto,
+									  A.update, A.download, A.upload, A.del );
+				write(resp, ok(rsp));
+			}
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -142,16 +145,29 @@ public class Albums extends ServPort<AlbumReq> {
 			.rs(0);
 
 		if (!rs.next())
-			throw new SemanticException("Can't find file for id: %s (permission of %s)", freq.docId, usr.uid());
+			throw new SemanticException("Can't find file for id: %s (permission of %s)",
+					freq.docId, usr.uid());
 	
 		// keep file system root the same with semantics configuration 
-		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, tablPhotos, smtype.extFile)).getFileRoot();
-//		extroot = FilenameUtils.concat(extroot, rs.getString("folder"), usr.uid());
+		String extroot = ((ShExtFile) DATranscxt
+				.getHandler(conn, tablPhotos, smtype.extFile))
+				.getFileRoot();
 		FileStream.sendFile(ofs, EnvPath.decodeUri(extroot, rs.getString("uri")));
 	}
 
-	private AlbumResp create(AlbumReq body, IUser usr) {
-		return null;
+	private AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
+		String conn = Connects.uri2conn(uri);
+
+		SemanticObject res = (SemanticObject) st
+				.insert(tablPhotos)
+				.nv("uri", "stub")
+				.nv("pname", req.photo.pname)
+				.nv("pdate", req.photo.photoDate())
+				.nv("folder", req.photo.month())
+				.nv("sharedate", Funcall.now())
+				.ins(st.instancontxt(conn, usr));
+
+		return new AlbumResp().photo(req.photo, (String) res.get("pid"));
 	}
 
 	private AlbumResp upload(HttpServletResponse resp, AlbumReq body, IUser usr) {

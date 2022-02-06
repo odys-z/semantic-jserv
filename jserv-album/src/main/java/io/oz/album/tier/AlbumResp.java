@@ -23,6 +23,13 @@ public class AlbumResp extends AnsonResp {
 		return this;
 	}
 
+	public AlbumResp photo(Photo photo, String ... pid) {
+		this.photo = photo;
+		if (pid != null && pid.length > 0)
+			this.photo.pid = pid[0];
+		return this;
+	}
+
 	/**Initialize album record
 	 * @param rs
 	 * @return
