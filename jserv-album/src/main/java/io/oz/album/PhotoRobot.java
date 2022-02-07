@@ -13,7 +13,7 @@ import io.odysz.transact.x.TransException;
 /**A robot is only used for test.
  * @author odys-z@github.com
  */
-public class PhotoRobot implements IUser {
+public class PhotoRobot extends SemanticObject implements IUser {
 
 	long touched;
 

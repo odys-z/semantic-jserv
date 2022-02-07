@@ -1,2 +1,4 @@
 /target/
 download
+volume/Robot*
+volume/**/* my.jpg

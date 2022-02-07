@@ -1,5 +1,11 @@
 package io.oz.album.tier;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import io.odysz.common.AESHelper;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -73,19 +79,36 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-	/**TODO create request for inserting new photo
+	/**Create request for inserting new photo.
+	 * <p>FIXME: introducing stream field of Anson?</p>
 	 * @param collId
 	 * @param localname
 	 * @return
+	 * @throws IOException 
 	 */
-	public AlbumReq createPhoto(String collId, String localname) {
-		return null;
+	public AlbumReq createPhoto(String collId, String localname) throws IOException {
+		Path p = Paths.get(localname);
+		byte[] f = Files.readAllBytes(p);
+		String b64 = AESHelper.encode64(f);
+
+		this.photo = new Photo();
+		this.photo.collectId = collId;
+		this.photo.uri = b64;
+		this.photo.pname = localname;
+		this.a = A.insertPhoto;
+
+		return this;
 	}
 
 	public AlbumReq photoId(String pid) {
 		if (photo == null)
 			photo = new Photo();
 		photo.pid = pid;
+		return this;
+	}
+
+	public AlbumReq photoName(String name) {
+		photo.pname = name;
 		return this;
 	}
 

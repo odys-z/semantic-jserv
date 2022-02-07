@@ -7,6 +7,7 @@ import java.util.Date;
 
 import org.apache.tika.parser.image.ImageMetadataExtractor;
 import org.xml.sax.SAXException;
+import org.apache.james.mime4j.dom.datetime.DateTime;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -14,36 +15,22 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 
 public class Photo extends FileRecord {
-	/**<h5>Design Note</h5>
-	 * The session info is typically not a DB entity, but it's necessary for protocol.
-	 * So the {@link Photo} type doesn't means the same as DB record. 
-	 * @see #collectId
-	 */
-	SessionInf ssInf;
-
 	String pid;
 	String pname;
 	String uri;
 	String shareby;
-	String cdate;
+	String sharedate;
 	String geox;
 	String geoy;
 	String exif;
 	String sharer;
 
-	/**<h5>Design Note:</h5>
-	 * The DB photo table doesn't has this filed. But the collection view need this for presentation.
-	 * If provided, the presentation tier doesn't need to care the DB semantics anymore.
-	 * So is this where the semantics stopped propagating?
-	 * @see #ssInf
-	 */
 	String collectId;
 	String albumId;
 
@@ -57,9 +44,9 @@ public class Photo extends FileRecord {
 		this.pname = rs.getString("pname");
 		this.uri = rs.getString("uri");
 		try {
-			this.cdate = DateFormat.formatime(rs.getDate("cdate"));
+			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
 		} catch (SQLException ex) {
-			this.cdate = rs.getString("cdate");
+			this.sharedate = rs.getString("pdate");
 		}
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
@@ -86,8 +73,9 @@ public class Photo extends FileRecord {
 				d = meta.getDate(TikaCoreProperties.CREATED);
 			}
 			else {
-				pdate = cdate;
-				d = DateFormat.parse(pdate);
+//				pdate = sharedate;
+//				d = DateFormat.parse(pdate);
+				d = new Date();
 			}
 
 			if (LangExt.isblank(pdate)) {
@@ -98,7 +86,7 @@ public class Photo extends FileRecord {
 				month = DateFormat.formatYYmm(d);
 				return new ExprPart(pdate);
 			}
-		} catch (IOException | SAXException | TikaException | ParseException e) {
+		} catch (IOException | SAXException | TikaException e) {
 			e.printStackTrace();
 			throw new SemanticException(e.getMessage());
 		}

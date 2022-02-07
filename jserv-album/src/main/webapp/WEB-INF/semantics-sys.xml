@@ -13,7 +13,7 @@
 		<smtc>a-k</smtc>
 		<tabl>h_photos</tabl>
 		<pk>pid</pk>
-		<args></args>
+		<args>pid</args>
     </s>
 
 	<s>
@@ -21,7 +21,7 @@
 		<smtc>o-t</smtc>
 		<tabl>h_photos</tabl>
 		<pk>pid</pk>
-		<args>oper,optime</args>
+		<args>oper,opertime</args>
 	</s>
 	
 	<s>
@@ -29,7 +29,7 @@
 		<smtc>ef</smtc>
 		<tabl>h_photos</tabl>
 		<pk>pid</pk>
-		<args>$VOLUME_HOME,uri,busiTbl,busiId,attName</args>
+		<args>$VOLUME_HOME,uri,shareby,folder,pname</args>
 	</s>
 	
   </t>

@@ -44,27 +44,27 @@ public class AnUpdateReq extends AnsonBody {
 	}
 
 	/**Format an update request.
-	 * @param conn
+	 * @param funcUri
 	 * @param parent
 	 * @param tabl
 	 * @param cmd {@link CRUD}.C R U D
 	 * @return a new update request
 	 */
-	public static AnUpdateReq formatUpdateReq(String conn, AnsonMsg<AnUpdateReq> parent, String tabl) {
-		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, conn)
+	public static AnUpdateReq formatUpdateReq(String funcUri, AnsonMsg<AnUpdateReq> parent, String tabl) {
+		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, funcUri)
 				.a(CRUD.U))
 				.mtabl(tabl);
 		return bdItem;
 	}
 	
 	/**Format a delete request.
-	 * @param conn
+	 * @param furi
 	 * @param parent
 	 * @param tabl
 	 * @return a new deleting request
 	 */
-	public static AnUpdateReq formatDelReq(String conn, AnsonMsg<AnUpdateReq> parent, String tabl) {
-		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, conn)
+	public static AnUpdateReq formatDelReq(String furi, AnsonMsg<AnUpdateReq> parent, String tabl) {
+		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, furi)
 								.a(CRUD.D))
 								.mtabl(tabl);
 		return bdItem;
@@ -112,10 +112,10 @@ public class AnUpdateReq extends AnsonBody {
 	/**Don't call new InsertReq(), call {@link #formatReq(String, JMessage, String)}.
 	 * This constructor is declared publicly for JHelper.
 	 * @param parent
-	 * @param conn
+	 * @param uri
 	 */
-	public AnUpdateReq(AnsonMsg<? extends AnsonBody> parent, String conn) {
-		super(parent, conn);
+	public AnUpdateReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
+		super(parent, uri);
 	}
 	
 	public AnUpdateReq nv(String n, Object v) {

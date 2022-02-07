@@ -20,7 +20,9 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantics.ISemantext;
@@ -101,8 +103,10 @@ public class Albums extends ServPort<AlbumReq> {
 
 			IUser usr = robot;
 
-			if (A.upload.equals(a))
+			if (A.upload.equals(a)) {
+				usr = JSingleton.getSessionVerifier().verify(jmsg.header());
 				upload(resp, jmsg.body(0), usr);
+			}
 			else if (A.download.equals(a))
 				download(resp.getOutputStream(), jmsg.body(0), usr);
 			else {
@@ -112,8 +116,10 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = collect(jmsg.body(0), usr);
 				else if (A.rec.equals(a))
 					rsp = rec(jmsg.body(0), usr);
-				else if (A.insertPhoto.equals(a))
+				else if (A.insertPhoto.equals(a)) {
+					usr = JSingleton.getSessionVerifier().verify(jmsg.header());
 					rsp = createPhoto(jmsg.body(0), usr);
+				}
 				else
 					throw new SemanticException(
 							"request.body.a can not handled: %s\\n" +
@@ -128,6 +134,8 @@ public class Albums extends ServPort<AlbumReq> {
 			if (AlbumFlags.album)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
+		} catch (SsException e) {
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
@@ -155,23 +163,25 @@ public class Albums extends ServPort<AlbumReq> {
 		FileStream.sendFile(ofs, EnvPath.decodeUri(extroot, rs.getString("uri")));
 	}
 
-	private AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
+	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(uri);
 
 		SemanticObject res = (SemanticObject) st
-				.insert(tablPhotos)
-				.nv("uri", "stub")
+				.insert(tablPhotos, usr)
+				.nv("uri", req.photo.uri)
 				.nv("pname", req.photo.pname)
 				.nv("pdate", req.photo.photoDate())
+				.nv("shareby", usr.uid())
 				.nv("folder", req.photo.month())
 				.nv("sharedate", Funcall.now())
 				.ins(st.instancontxt(conn, usr));
 
-		return new AlbumResp().photo(req.photo, (String) res.get("pid"));
+		String pid = ((SemanticObject) ((SemanticObject)res.get("resulved")).get("h_photos")).getString("pid");
+		return new AlbumResp().photo(req.photo, pid);
 	}
 
-	private AlbumResp upload(HttpServletResponse resp, AlbumReq body, IUser usr) {
-		return null;
+	AlbumResp upload(HttpServletResponse resp, AlbumReq body, IUser usr) throws AnsonException {
+		throw new AnsonException(0, "Needing antson support stream mode ...");
 	}
 
 	/**Read a media file record (id, uri), TODO touch LRU.
