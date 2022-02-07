@@ -2,15 +2,13 @@ package io.oz.album.tier;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.Date;
 
-import org.apache.tika.parser.image.ImageMetadataExtractor;
-import org.xml.sax.SAXException;
-import org.apache.james.mime4j.dom.datetime.DateTime;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
+import org.apache.tika.parser.image.ImageMetadataExtractor;
+import org.xml.sax.SAXException;
 
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
