@@ -241,6 +241,10 @@
 	          </goals>
 	        </execution>
 	      </executions>
+	      <configuration>
+	      	<failOnError>false</failOnError>
+	      	<additionalJOption>-Xdoclint:none</additionalJOption>
+	      </configuration>
 	 	</plugin>
 	 	
 	  <plugin>
