@@ -19,18 +19,18 @@ import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 
 public class Photo extends FileRecord {
-	String pid;
-	String pname;
-	String uri;
-	String shareby;
-	String sharedate;
-	String geox;
-	String geoy;
-	String exif;
-	String sharer;
+	public String pid;
+	public String pname;
+	public String uri;
+	public String shareby;
+	public String sharedate;
+	public String geox;
+	public String geoy;
+	public String exif;
+	public String sharer;
 
-	String collectId;
-	String albumId;
+	public String collectId;
+	public String albumId;
 
 	
 	String month;
