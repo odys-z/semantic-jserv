@@ -23,6 +23,7 @@ import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -144,7 +145,7 @@ class AlbumsTest {
 	}
 	
 	@Test
-	void testUpload() throws TransException, IOException, AnsonException, GeneralSecurityException {
+	void testUpload() throws TransException, IOException, AnsonException, GeneralSecurityException, SsException {
 		String localFolder = "res";
 		String filename = "my.jpg";
 
