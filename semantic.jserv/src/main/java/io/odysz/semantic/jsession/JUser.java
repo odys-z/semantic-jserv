@@ -134,7 +134,7 @@ public class JUser extends SemanticObject implements IUser {
 		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
 	}
 
-	/**jmsg should be what the response of {@link SSession}
+	/**jmsg, the response of {@link AnSession}
 	 * @param jmsg
 	 */
 	public JUser(SemanticObject jmsg) {
@@ -174,7 +174,7 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	/**Add notifyings
-	 * @param n
+	 * @param note
 	 * @return this
 	 * @throws TransException
 	 */

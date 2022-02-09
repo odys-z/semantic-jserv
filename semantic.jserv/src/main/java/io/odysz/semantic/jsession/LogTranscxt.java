@@ -21,10 +21,10 @@ import io.odysz.semantics.x.SemanticException;
 
 public class LogTranscxt extends DATranscxt {
 
-	/**Log {@link DATransxct} is a special transxct, 
+	/**Log {@link DATranscxt} is a special transxct, 
 	 * which use a special semantic-log.xml for semantics and use 
 	 * different connId for a_log datatable sql generating.  
-	 * @param sysConn, e.g. the defualt system connection Id, the a_log table will be used for meta checking.
+	 * @param sysConn e.g. the defualt system connection Id, the a_log table will be used for meta checking.
 	 * @param xml
 	 * @param logTabl 
 	 * @throws SQLException
@@ -42,9 +42,7 @@ public class LogTranscxt extends DATranscxt {
 	
 	/**</p>Get sys samantics, then apply to all connections.</p>
 	 * This method also initialize table meta by calling {@link Connects}.
-	 * @param eachConn
 	 * @param xmlpath
-	 * @param cfgpath full path to semantics.xml (path and name) 
 	 * @return configurations
 	 * @throws SAXException
 	 * @throws IOException
