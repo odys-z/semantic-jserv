@@ -15,13 +15,13 @@ import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
 
-public class AlbumTier extends Semantier {
+public class AlbumClientier extends Semantier {
 
 	private SessionClient client;
 	private ErrorCtx errCtx;
 	private String funcUri;
 
-	public AlbumTier(SessionClient client, ErrorCtx errCtx) {
+	public AlbumClientier(SessionClient client, ErrorCtx errCtx) {
 		this.client = client;
 		this.errCtx = errCtx;
 	}

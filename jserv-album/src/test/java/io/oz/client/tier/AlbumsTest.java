@@ -27,7 +27,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.client.AlbumTier;
+import io.oz.album.client.AlbumClientier;
 import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
 
@@ -124,7 +124,7 @@ class AlbumsTest {
 	}
 
 	AlbumResp getCollection(String collectId) {
-		AlbumTier tier = new AlbumTier(client, errCtx);
+		AlbumClientier tier = new AlbumClientier(client, errCtx);
 		try {
 			return tier.getCollect(collectId);
 		} catch (SemanticException | IOException | AnsonException e) {
@@ -135,7 +135,7 @@ class AlbumsTest {
 	}
 
 	String getDownloadResult(Photo photo, String filepath) {
-		AlbumTier tier = new AlbumTier(client, errCtx);
+		AlbumClientier tier = new AlbumClientier(client, errCtx);
 		try {
 			return tier.download(photo, filepath);
 		} catch (IOException | AnsonException | SemanticException e) {
@@ -150,7 +150,7 @@ class AlbumsTest {
 		String filename = "my.jpg";
 
 		SessionClient ssclient = Clients.login("ody", "123456");
-		AlbumTier tier = new AlbumTier(ssclient, errCtx);
+		AlbumClientier tier = new AlbumClientier(ssclient, errCtx);
 		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 
 		assertEquals("c-001", resp.photo().collectId);

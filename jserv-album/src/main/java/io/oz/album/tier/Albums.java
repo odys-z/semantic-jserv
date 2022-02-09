@@ -37,7 +37,14 @@ import io.oz.album.PhotoRobot;
 import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.tier.AlbumReq.fileState;
 
-/**Manage album
+/**<h5>The album tier</h5>
+ * Although this tie is using the pattern of <i>less</i>, it's also verifying user when uploading - for subfolder name of user
+ * 
+ * <h5>Design note for version 0.1</h5>
+ * <p>A photo always have a default collection Id.</p>
+ * The clients collect image files etc., create photo records and upload ({@link AlbumReq.A.insertPhoto A.insertPhoto})
+ * - without collection Id; <br>
+ * the browsing clients are supported with a default collection: home/usr/month.
  * 
  * @author ody
  *
@@ -206,7 +213,8 @@ public class Albums extends ServPort<AlbumReq> {
 		return new AlbumResp().rec(rs);
 	}
 
-	protected static AlbumResp collect(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+	protected static AlbumResp collect(AlbumReq req, IUser usr)
+			throws SemanticException, TransException, SQLException {
 		String cid = req.collectId;
 		AnResultset rs = (AnResultset) st.select(tablCollects)
 			.whereEq("cid", cid)
@@ -230,7 +238,8 @@ public class Albums extends ServPort<AlbumReq> {
 		return album;
 	}
 
-	protected static AlbumResp album(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+	protected static AlbumResp album(AlbumReq req, IUser usr)
+			throws SemanticException, TransException, SQLException {
 		String aid = req.albumId;
 		AnResultset rs = (AnResultset) st.select(tablPhotos)
 			.whereEq("aid", aid)

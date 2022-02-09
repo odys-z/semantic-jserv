@@ -9,12 +9,11 @@ import io.odysz.semantics.SemanticObject;
  *
  */
 public class UserReq extends AnsonBody {
-	@SuppressWarnings("unused")
-	private String code;
+	// private String code;
 	
 	public UserReq() {
 		super(null, null);
-		code = "";
+		// code = "";
 	}
 
 	private SemanticObject data;
