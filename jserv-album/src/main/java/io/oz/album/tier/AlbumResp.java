@@ -12,8 +12,12 @@ public class AlbumResp extends AnsonResp {
 	String ownerId;
 	String owner;
 	ArrayList<Collect> collectRecords;
+
 	ArrayList<Photo[]> photos;
+	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
+
 	Photo photo;
+	public Photo photo() { return photo; }
 
 	public AlbumResp() throws SQLException {
 	}
