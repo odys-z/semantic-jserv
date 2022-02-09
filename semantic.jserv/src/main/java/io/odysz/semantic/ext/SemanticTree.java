@@ -456,7 +456,7 @@ end </pre>
 		 * where areaId = 'rootId'
 		 * @param rootId
 		 * @param sm
-		 * @return
+		 * @return sql for root update
 		 */
 		private static String updateRoot(String rootId, TreeSemantics sm) {
 			// update e_areas set fullpath = concat(lpad(ifnull(siblingSort, '0'), 2, '0'), ' ', areaId)
@@ -531,7 +531,7 @@ set p3.fullpath = concat(p2.fullpath, ' ', char2rx64(ifnull(p3.siblingSort, 0)),
 where p0.parentId is null; </pre>
 		 * @param sm
 		 * @param pi
-		 * @return
+		 * @return the i-th snippet
 		 */
 		private static String updatePi(String rootId, TreeSemantics sm, int pi) {
 			// e_areas p0 on p1.parentId = p0.areaId
@@ -588,7 +588,7 @@ where p0.parentId is null; </pre>
 		 * @param rootId 
 		 * @param sm
 		 * @param dblog
-		 * @return
+		 * @return  updated count
 		 * @throws TransException
 		 * @throws SQLException
 		 */
@@ -627,7 +627,7 @@ where p0.parentId is null; </pre>
 		 * @param tagval 'root-id' or "null"
 		 * @param sm
 		 * @param dblog
-		 * @return
+		 * @return updated count
 		 * @throws SQLException
 		 * @throws TransException
 		 */

@@ -19,7 +19,6 @@ import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.x.SemanticException;
 
 /**This jserv lib  initializing and managing module. Subclass must be a web listener.
- * See {@link io.odysz.jsample.Sampleton} example of how to use JSingleton in application.
  * @author odys-z@github.com
  */
 public class JSingleton {

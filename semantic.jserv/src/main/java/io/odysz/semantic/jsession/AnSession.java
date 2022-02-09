@@ -46,7 +46,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 /**
- * <h5>1. Handle login-obj: {@link SessionReq}.</h5>
+ * <h5>1. Handle login-obj: {@link AnSessionReq}.</h5>
  *  <p>a: "login | logout | pswd | init | ping(touch)",<br>
  *  uid: "user-id",<br>
  *  pswd: "uid-cipher-by-pswd",<br>
