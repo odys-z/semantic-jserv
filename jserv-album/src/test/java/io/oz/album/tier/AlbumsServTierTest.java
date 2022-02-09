@@ -28,7 +28,7 @@ import io.oz.album.PhotoRobot;
  * @author ody
  *
  */
-class AlbumsTest {
+class AlbumsServTierTest {
 	static String jserv;
 
 	static IUser robot;
