@@ -6,7 +6,7 @@ import io.odysz.semantic.jprotocol.AnsonResp;
  * @author ody
  *
  */
-public class DocsResp extends AnsonResp {
+public class DocsResp extends AnsonResp implements IFileDescriptor {
 	long size;
 	long size() { return size; } 
 
@@ -15,18 +15,15 @@ public class DocsResp extends AnsonResp {
 		recId = recid;
 		return this;
 	}
+	@Override
 	public String recId() { return recId; }
 
 	String fullpath;
-	public String fullpath() {
-		return fullpath;
-	}
+	public String fullpath() { return fullpath; }
 
 	String filename;
 	public String clientname() { return filename; }
 
-	public String mime() { return null; }
-	public String doctype() { return null; }
 
 //	DocsResp put(String name, Object val) {
 //		data().put(name, val);
