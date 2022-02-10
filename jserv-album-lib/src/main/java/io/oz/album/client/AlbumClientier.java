@@ -24,16 +24,23 @@ public class AlbumClientier extends Semantier {
 	private SessionClient client;
 	private ErrorCtx errCtx;
 	private String funcUri;
+	private String clientUri;
 
-	public AlbumClientier(SessionClient client, ErrorCtx errCtx) {
+	/**
+	 * @param clientUri - the client function uri this instance will be used for.
+	 * @param client
+	 * @param errCtx
+	 */
+	public AlbumClientier(String clientUri, SessionClient client, ErrorCtx errCtx) {
 		this.client = client;
 		this.errCtx = errCtx;
+		this.clientUri = clientUri;
 	}
 
 	public AlbumResp getCollect(String collectId) throws SemanticException, IOException, AnsonException {
 		AlbumReq req = new AlbumReq(funcUri).collectId("c-001");
 		req.a(A.collect);
-		AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq("test/collect", AlbumPort.album, req);
+		AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req);
 		return client.commit(q, errCtx);
 	}
 
@@ -52,13 +59,13 @@ public class AlbumClientier extends Semantier {
 
 		String[] act = AnsonHeader.usrAct("album.java", "create", "c/photo", "create photo");
 		AnsonHeader header = client.header().act(act);
-		AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq("test/collect", AlbumPort.album, req)
+		AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
 									.header(header);
 
 		return client.commit(q, errCtx);
 	}
 
-	public List<DocsResp> syncPhotos(List<IFileDescriptor> photos) throws SemanticException, IOException, AnsonException {
+	public List<DocsResp> syncPhotos(List<? extends IFileDescriptor> photos) throws SemanticException, IOException, AnsonException {
 		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
@@ -69,7 +76,7 @@ public class AlbumClientier extends Semantier {
 					.createPhoto(p);
 			req.a(A.insertPhoto);
 
-			AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq("test/collect", AlbumPort.album, req)
+			AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
 									.header(header);
 
 			DocsResp resp = client.commit(q, errCtx);
