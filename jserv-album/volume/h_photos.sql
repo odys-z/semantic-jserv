@@ -27,10 +27,11 @@ select * from h_photos ph ;
 
 delete * from h_collects;
 
-insert into h_collects ( cid, cname, shareby, cdate, tags, oper, opertime ) values
-('c-001', 'Liar & Fool', 'ody','2022-01-13', '#family', 'ody', '2022-01-13' ),
-('c-002', 'Toronto', 'ody','2022-01-13', '#travel', 'ody', '2022-01-13' ),
-('c-003', 'Garze', 'ody','2022-01-13', '#travel', 'ody', '2022-01-13' );
+insert into h_collects ( cid, cname, shareby, yyyy_mm, cdate, tags, oper, opertime ) values
+('c-001', 'Liar & Fool', 'ody', '2019_08', '2019-08-13', '#family', 'ody', '2022-01-13' ),
+('c-002', 'Northwest',   'ody', '2021_08', '2021-08-13', '#travel', 'ody', '2022-01-13' ),
+('c-003', 'Toronto',     'ody', '2021_10', '2021-10-13', '#travel', 'ody', '2022-01-13' ),
+('c-004', 'Garze',       'ody', '2021_12', '2022-12-13', '#travel', 'ody', '2022-01-13' );
 
 select * from h_collects;
 

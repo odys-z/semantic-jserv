@@ -157,9 +157,8 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 	}
 
 	/**convert update requests' body, usually from msg's post requests,
-	 * list of ({@link UpdateReq}) to {@link io.odysz.transact.sql.Statement}.
+	 * list of ({@link AnUpdateReq}) to {@link io.odysz.transact.sql.Statement}.
 	 * @param updreq
-	 * @param st
 	 * @param usr
 	 * @return statements
 	 * @throws TransException 

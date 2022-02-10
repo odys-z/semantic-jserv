@@ -93,7 +93,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	/**
 	 * @param msg
 	 * @param usr 
-	 * @return {code: "ok", port: {@link JMessage.Port}.query, rs: [{@link SResultset}, ...]}
+	 * @return {code: "ok", port: {@link AnsonMsg.Port#query}, rs: [{@link AnResultset}, ...]}
 	 * @throws SQLException
 	 * @throws TransException
 	 */
