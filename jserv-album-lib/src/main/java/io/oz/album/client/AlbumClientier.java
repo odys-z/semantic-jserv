@@ -1,6 +1,7 @@
 package io.oz.album.client;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import io.odysz.anson.x.AnsonException;
@@ -10,6 +11,7 @@ import io.odysz.jclient.tier.Semantier;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.AlbumPort;
 import io.oz.album.tier.AlbumReq;
@@ -56,11 +58,13 @@ public class AlbumClientier extends Semantier {
 		return client.commit(q, errCtx);
 	}
 
-	public List<DocsResp> syncPhotos(List<DocsResp> photos) throws SemanticException, IOException, AnsonException {
+	public List<DocsResp> syncPhotos(List<IFileDescriptor> photos) throws SemanticException, IOException, AnsonException {
 		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
-		for (DocsResp p : photos) {
+		List<DocsResp> reslts = new ArrayList<DocsResp>(photos.size());
+
+		for (IFileDescriptor p : photos) {
 			AlbumReq req = new AlbumReq()
 					.createPhoto(p);
 			req.a(A.insertPhoto);
@@ -70,10 +74,9 @@ public class AlbumClientier extends Semantier {
 
 			DocsResp resp = client.commit(q, errCtx);
 
-			// Design Note: shouldn't implement a default file descriptor of Anson ?
-			p.recId(resp.recId()).data().put("cid", resp.data().get("cid"));
+			reslts.add(resp);
 		}
-		return photos;
+		return reslts;
 	}
 
 }
