@@ -107,7 +107,7 @@ public class AnUpdateReq extends AnsonBody {
 		super(null, null);
 	}
 	
-	/**Don't call new InsertReq(), call {@link #formatReq(String, JMessage, String)}.
+	/**Don't call new InsertReq(), call {@link #formatUpdateReq(String, AnsonMsg, String)}.
 	 * This constructor is declared publicly for JHelper.
 	 * @param parent
 	 * @param uri

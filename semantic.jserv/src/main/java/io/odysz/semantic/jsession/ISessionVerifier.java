@@ -10,7 +10,7 @@ public interface ISessionVerifier {
 
 	/**Verify session token
 	 * @param AnsonHeader
-	 * @return
+	 * @return IUser instance
 	 * @throws SsException
 	 * @throws SQLException
 	 */
