@@ -144,8 +144,15 @@ class AlbumsTest {
 		}
 	}
 	
+	/**Tet append to collection with a pic.
+	 * @throws TransException
+	 * @throws IOException
+	 * @throws AnsonException
+	 * @throws GeneralSecurityException
+	 * @throws SsException
+	 */
 	@Test
-	void testUpload() throws TransException, IOException, AnsonException, GeneralSecurityException, SsException {
+	void testAppend2Collect() throws TransException, IOException, AnsonException, GeneralSecurityException, SsException {
 		String localFolder = "res";
 		String filename = "my.jpg";
 
@@ -155,6 +162,27 @@ class AlbumsTest {
 
 		assertEquals("c-001", resp.photo().collectId);
 		assertEquals(6, resp.photo().pid.length());
+	}
+	
+	/**
+	 * Suppose multiple files are picked, then synchronize into repository.
+	 * @throws AnsonException 
+	 * @throws GeneralSecurityException 
+	 * @throws IOException 
+	 * @throws SsException 
+	 * @throws SemanticException 
+	 */
+	@Test
+	void testSyncPhotos() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
+		String localFolder = "res";
+		String filename = "my.jpg";
+
+		SessionClient ssclient = Clients.login("ody", "123456");
+		AlbumClientier tier = new AlbumClientier(ssclient, errCtx);
+		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
+
+		assertEquals("c-001", resp.photo().collectId);
+		assertEquals(6, resp.photo().pid.length());	
 	}
 	
 }

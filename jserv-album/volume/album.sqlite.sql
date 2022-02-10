@@ -25,6 +25,7 @@ CREATE TABLE h_collects (
   cid varchar(12), -- NOT NULL,
   cname varchar(256), -- DEFAULT NULL,
   shareby varchar(12), -- comment 'shared by / creator',
+  yyyy_mm varchar(8),  -- subfolder
   cdate datetime not null, -- comment 'create date time',
   tags varchar(512) DEFAULT NULL ,
   oper varchar(12) not null,

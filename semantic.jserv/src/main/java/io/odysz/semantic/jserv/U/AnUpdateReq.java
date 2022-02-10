@@ -22,14 +22,12 @@ import io.odysz.transact.sql.Query.Ix;
 
 /**<p>Insert Request Message</p>
  * <b>Note:</b>
- * <p>InsertReq is a subclass of UpdateReq, and have no {@link #toJson(com.google.gson.stream.JsonWriter, io.odysz.semantic.jprotocol.JOpts) toJson()}
- * and {@link #fromJsonName(String, com.google.gson.stream.JsonReader) fromJson()} implementation.
+ * <p>InsertReq is a subclass of UpdateReq, and have no {@link #toBlock(JsonOpt)}
+ * and {@link #fromJson(java.io.InputStream)} implementation.
  * Otherwise any post updating list in request won't work.</p>
  * Because all request element is deserialized a UpdateReq, so this can only work for Update/Insert request.</p>
  * <p>Design Memo<br>
  * This is a strong evidence showing that we need anson.</p>
- * see {@link UpdateReq#fromJsonName(String, com.google.gson.stream.JsonReader) super.fromJsonName()}<br>
- * and {@link io.odysz.semantic.jprotocol.JHelper#readLstUpdateReq(com.google.gson.stream.JsonReader) JHelper.readListUpdateReq()}
  * @author odys-z@github.com
  */
 public class AnUpdateReq extends AnsonBody {
@@ -153,7 +151,7 @@ public class AnUpdateReq extends AnsonBody {
 	/**FIXME wrong?
 	 * @param file
 	 * @param b64
-	 * @return
+	 * @return update request
 	 */
 	public AnUpdateReq attach(String file, String b64) {
 		if (attacheds == null)
@@ -178,7 +176,7 @@ public class AnUpdateReq extends AnsonBody {
 	/** calling where("=", lop, "'" + rconst + "'")
 	 * @param lop
 	 * @param rconst
-	 * @return
+	 * @return update request
 	 */
 	public AnUpdateReq whereEq(String lop, String rconst) {
 		return where("=", lop, "'" + rconst + "'");

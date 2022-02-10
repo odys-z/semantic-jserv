@@ -104,7 +104,7 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	
 	/**
 	 * @param msgBody
-	 * @return {code: "ok", port: {@link AnsonMsg.Port}.query, rs: [{@link AnResultset}, ...]}
+	 * @return {code: "ok", port: {@link AnsonMsg.Port#query}, rs: [{@link AnResultset}, ...]}
 	 * @throws SQLException
 	 * @throws TransException
 	 */

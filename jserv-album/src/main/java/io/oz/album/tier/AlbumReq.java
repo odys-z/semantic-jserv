@@ -9,6 +9,7 @@ import io.odysz.common.AESHelper;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.tier.docs.DocsResp;
 
 public class AlbumReq extends DocsReq {
 
@@ -43,10 +44,9 @@ public class AlbumReq extends DocsReq {
 	
 	static class args {
 	}
-	
+
 	String albumId;
 	String collectId;
-	// String fileId;
 	Photo photo; 
 
 	public AlbumReq() {
@@ -94,7 +94,7 @@ public class AlbumReq extends DocsReq {
 		this.photo = new Photo();
 		this.photo.collectId = collId;
 		this.photo.uri = b64;
-		this.photo.pname = localname;
+		this.photo.pname = p.getFileName().toString();
 		this.a = A.insertPhoto;
 
 		return this;
@@ -109,6 +109,19 @@ public class AlbumReq extends DocsReq {
 
 	public AlbumReq photoName(String name) {
 		photo.pname = name;
+		return this;
+	}
+
+	public AlbumReq createPhoto(DocsResp file) throws IOException {
+		Path p = Paths.get(file.fullpath());
+		// FIXME performance problem
+		byte[] f = Files.readAllBytes(p);
+		String b64 = AESHelper.encode64(f);
+
+		this.photo = new Photo();
+		this.photo.uri = b64;
+		this.photo.pname = file.clientname();
+		this.a = A.insertPhoto;
 		return this;
 	}
 

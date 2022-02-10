@@ -130,7 +130,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	/**Response with OK message.
 	 * @param arrayList
-	 * @return 
+	 * @return AnsonMsg code = ok 
 	 */
 	protected AnsonMsg<AnsonResp> ok(ArrayList<AnResultset> arrayList) {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);

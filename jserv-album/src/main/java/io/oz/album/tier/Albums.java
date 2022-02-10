@@ -29,6 +29,7 @@ import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
@@ -173,20 +174,69 @@ public class Albums extends ServPort<AlbumReq> {
 	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(uri);
 
-		SemanticObject res = (SemanticObject) st
+		Insert ins = st
 				.insert(tablPhotos, usr)
 				.nv("uri", req.photo.uri)
 				.nv("pname", req.photo.pname)
 				.nv("pdate", req.photo.photoDate())
 				.nv("shareby", usr.uid())
 				.nv("folder", req.photo.month())
-				.nv("sharedate", Funcall.now())
+				.nv("sharedate", Funcall.now());
+		
+		if (req.photo.collectId == null)
+			// create a default collection - uid/month/file.ext
+			// This can not been supported by db semantics because it's business required for complex handling
+			req.photo.collectId = getMonthCollection(conn, req.photo, usr);
+
+		ins.post( st.insert(tablCollectPhoto)
+					.nv("pid", req.photo.pid)
+					.nv("cid", req.photo.collectId) );
+
+		SemanticObject res = (SemanticObject) ins
 				.ins(st.instancontxt(conn, usr));
 
 		String pid = ((SemanticObject) ((SemanticObject)res.get("resulved")).get("h_photos")).getString("pid");
 		return new AlbumResp().photo(req.photo, pid);
 	}
+	
+	/**map uid/month -> collect-id
+	 * @param photo
+	 * @param usr
+	 * @return collect id
+	 * @throws IOException 
+	 * @throws SQLException 
+	 * @throws TransException 
+	 */
+	private String getMonthCollection(String conn, Photo photo, IUser usr) throws IOException, TransException, SQLException {
+		// TODO hit collection LRU
+		AnResultset rs = (AnResultset) st.select(tablCollects, "c")
+				.whereEq("yyyy_mm", photo.month())
+				.whereEq("shareby", usr.uid())
+				.rs(st.instancontxt(conn, usr))
+				.rs(0);
+		String cid = null;
+		if (rs.next())
+			cid = rs.getString("cid");
+		else {
+			SemanticObject res = (SemanticObject) st
+				.insert(tablCollects)
+				.nv("yyyy_mm", photo.month())
+				.nv("shareby", usr.uid())
+				.nv("cname", photo.month())
+				.ins(st.instancontxt(conn, usr));
+			cid = res.resulve(tablCollects, "cid");
+			System.err.println("resulved cid: " + cid);
+		}
+		return cid;
+	}
 
+	/**@deprecate
+	 * @param resp
+	 * @param body
+	 * @param usr
+	 * @return
+	 * @throws AnsonException
+	 */
 	AlbumResp upload(HttpServletResponse resp, AlbumReq body, IUser usr) throws AnsonException {
 		throw new AnsonException(0, "Needing antson support stream mode ...");
 	}

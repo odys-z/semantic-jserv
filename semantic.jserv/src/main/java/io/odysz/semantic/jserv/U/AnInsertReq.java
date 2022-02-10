@@ -17,7 +17,7 @@ public class AnInsertReq extends AnUpdateReq {
 
 	public AnInsertReq() { }
 
-	/**Don't call new InsertReq(), call {@link #formatReq(String, JMessage, String)}.
+	/**Don't call new AnInsertReq(), call {@link #formatInsertReq(String, AnsonMsg, String)}
 	 * This constructor is declared publicly for JHelper.
 	 * @param parent
 	 * @param furi function uri
@@ -37,7 +37,6 @@ public class AnInsertReq extends AnUpdateReq {
 	 * @param furi
 	 * @param parent
 	 * @param tabl
-	 * @param cmd {@link CRUD}.C R U D
 	 * @return a new update request
 	 */
 	public static AnInsertReq formatInsertReq(String furi, AnsonMsg<AnInsertReq> parent, String tabl) {

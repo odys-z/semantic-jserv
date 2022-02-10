@@ -18,6 +18,10 @@ import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 
+/**Server side and jprotocol oriented data record - not BaseFile used by file picker. 
+ * @author ody
+ *
+ */
 public class Photo extends FileRecord {
 	public String pid;
 	public String pname;
