@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
 
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.parser.image.ImageMetadataExtractor;
-import org.xml.sax.SAXException;
+//import org.apache.tika.exception.TikaException;
+//import org.apache.tika.metadata.Metadata;
+//import org.apache.tika.metadata.TikaCoreProperties;
+//import org.apache.tika.parser.image.ImageMetadataExtractor;
+//import org.xml.sax.SAXException;
 
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
@@ -66,17 +66,15 @@ public class Photo extends FileRecord {
 	}
 
 	public AbsPart photoDate() throws IOException, SemanticException {
-		try {
+//		try {
 			String pdate = null;
-			Date d;
+			Date d = null;
 			if (exif != null) {
-				Metadata meta = new Metadata();
-				new ImageMetadataExtractor(meta).parseRawExif(exif.getBytes());
-				d = meta.getDate(TikaCoreProperties.CREATED);
+//				Metadata meta = new Metadata();
+				// new ImageMetadataExtractor(meta).parseRawExif(exif.getBytes());
+//				d = meta.getDate(TikaCoreProperties.CREATED);
 			}
 			else {
-//				pdate = sharedate;
-//				d = DateFormat.parse(pdate);
 				d = new Date();
 			}
 
@@ -88,10 +86,10 @@ public class Photo extends FileRecord {
 				month = DateFormat.formatYYmm(d);
 				return new ExprPart(pdate);
 			}
-		} catch (IOException | SAXException | TikaException e) {
-			e.printStackTrace();
-			throw new SemanticException(e.getMessage());
-		}
+//		} catch (IOException | SAXException e ) {
+//			e.printStackTrace();
+//			throw new SemanticException(e.getMessage());
+//		}
 	}
 
 
