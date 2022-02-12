@@ -45,7 +45,6 @@ public class AnUpdateReq extends AnsonBody {
 	 * @param funcUri
 	 * @param parent
 	 * @param tabl
-	 * @param cmd {@link CRUD}.C R U D
 	 * @return a new update request
 	 */
 	public static AnUpdateReq formatUpdateReq(String funcUri, AnsonMsg<AnUpdateReq> parent, String tabl) {
