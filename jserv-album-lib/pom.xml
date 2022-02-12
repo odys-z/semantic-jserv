@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
   <artifactId>album-lib</artifactId>
-  <version>0.1.2-SNAPSHOT</version>
+  <version>0.1.3-SNAPSHOT</version>
   <name>Album Common Lib</name>
   <description>Album Common Lib</description>
   <url>https://odys-z.github.io</url>
@@ -41,7 +41,6 @@
     </dependency>
     
     <!--
-     -->
 	<dependency>
 		<groupId>org.apache.tika</groupId>
 		<artifactId>tika-core</artifactId>
@@ -52,6 +51,12 @@
 		<groupId>org.apache.tika</groupId>
 		<artifactId>tika-parsers-standard-package</artifactId>
 		<version>2.2.1</version>
+	</dependency>   
+     -->
+	<dependency>
+		<groupId>io.github.odys-z</groupId>
+		<artifactId>tika-light</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
 	</dependency>   
 
 	<dependency>
@@ -193,7 +198,7 @@
 		<version>1.5</version>
 		<executions>
 			<execution>
-			  <id>semantics.transact</id>
+			  <id>Jserv Album</id>
 			  <phase>verify</phase>
 			  <goals>
 				<goal>sign</goal>
