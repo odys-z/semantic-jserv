@@ -33,15 +33,15 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			insert("c.serv11"), delete("d.serv11"),
 			echo("echo.serv11"),
 			/** serv port for downloading json/xml file or uploading a file.<br>
-			 * @see io.odysz.semantic.jserv.file.JFileServ. */
+			 * see io.odysz.semantic.jserv.file.JFileServ in semantic.jserv. */
 			file("file.serv"),
 			/**Any user defined request using message body of subclass of JBody must use this port */ 
 			user("user.serv11"),
 			/** semantic tree of dataset extensions<br>
-			 * @see io.odysz.semantic.ext.SemanticTree. */
+			 * see io.odysz.semantic.ext.SemanticTree in semantic.jserv. */
 			stree("s-tree.serv11"),
 			/** dataset extensions<br>
-			 * @see io.odysz.semantic.ext.Dataset. */
+			 * see io.odysz.semantic.ext.Dataset in semantic.jserv. */
 			dataset("ds.serv11"),
 			/** ds.tier, dataset's semantic tier */
 			datasetier("ds.tier"),

@@ -79,7 +79,7 @@ public class FileStream {
 	 * @param funcUri client function uri
 	 * @param fileId file id, of which uri usually handled by semantics file ext
 	 * @param usr 
-	 * @return
+	 * @return resolved uri of file
 	 * @throws SemanticException can't find path of fileId 
 	 * @throws TransException 
 	 * @throws SQLException 

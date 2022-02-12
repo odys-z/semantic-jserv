@@ -18,12 +18,28 @@
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
   <scm>
   	<connection>scm:git:git://github.com/odys-z/semantic-jserv.git</connection>
   	<developerConnection>scm:git:odys-z@github.com:odys-z/semantic-jserv.git</developerConnection>
   	<url>https://github.com/odys-z/semantic-jserv</url>
   	<tag>HEAD</tag>
   </scm>
+
+  <developers>
+    <developer>
+      <name>Odys Zhou</name>
+      <email>odys.zhou@gmail.com</email>
+      <organization>odys-z.github.io</organization>
+      <organizationUrl>https://odys-z.github.io</organizationUrl>
+    </developer>
+  </developers>
 
   <distributionManagement>
   	<snapshotRepository>

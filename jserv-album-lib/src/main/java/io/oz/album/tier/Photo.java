@@ -4,12 +4,11 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
 
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.image.ImageMetadataExtractor;
 import org.xml.sax.SAXException;
-
-import com.drew.metadata.MetadataException;
 
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
@@ -87,7 +86,7 @@ public class Photo extends FileRecord {
 				month = DateFormat.formatYYmm(d);
 				return new ExprPart(pdate);
 			}
-		} catch (SAXException | MetadataException  e ) {
+		} catch (SAXException | TikaException e ) {
 			e.printStackTrace();
 			throw new SemanticException(e.getMessage());
 		}
