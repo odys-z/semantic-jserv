@@ -6,7 +6,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>war</packaging>
 
   <name>jserv-album Maven Webapp</name>
@@ -80,7 +80,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
-	    <version>[0.1.2-SNAPSHOT,)</version>
+	    <version>[0.1.3-SNAPSHOT,)</version>
 	</dependency>
 
 	<dependency>
