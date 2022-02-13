@@ -18,6 +18,11 @@ public class JProtocol {
 		public static final String D = "D";
 	}
 
+	/**Function interface: 
+	 * see {@link SCallbackV11#onCallback(MsgCode, AnsonResp)}
+	 * @author ody
+	 *
+	 */
 	@FunctionalInterface
 	public interface SCallbackV11 {
 		/**call back function called by semantic.transact
