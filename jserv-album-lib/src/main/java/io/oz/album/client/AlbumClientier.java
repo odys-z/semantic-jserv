@@ -10,6 +10,10 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.jclient.tier.Semantier;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JProtocol.OnError;
+import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
@@ -85,5 +89,45 @@ public class AlbumClientier extends Semantier {
 		}
 		return reslts;
 	}
+	
+	public void asyncPhotos(List<? extends IFileDescriptor> photos, OnOk onOk, OnError onErr)
+			throws SemanticException, IOException, AnsonException {
+		new Thread(new Runnable() {
+	        public void run() {
+	        DocsResp resp = null;
+			try {
+				String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
+				AnsonHeader header = client.header().act(act);
 
+				List<DocsResp> reslts = new ArrayList<DocsResp>(photos.size());
+
+				for (IFileDescriptor p : photos) {
+					AlbumReq req = new AlbumReq().createPhoto(p);
+					req.a(A.insertPhoto);
+
+					AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
+											.header(header);
+
+					resp = client.commit(q, new ErrorCtx() {
+						@Override
+						public void onError(MsgCode code, AnsonResp obj) throws SemanticException {
+							onErr.err(code, obj.msg());
+						}
+
+						@Override
+						public void onError(MsgCode code, String msg, Object ...args) throws SemanticException {
+							onErr.err(code, msg, (String[])args);
+						}
+					});
+
+					reslts.add(resp);
+					onOk.ok(resp);
+				}
+			} catch (IOException e) {
+				onErr.err(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());
+			} catch (AnsonException | SemanticException e) { 
+				onErr.err(MsgCode.exGeneral, clientUri, e.getClass().getName(), e.getMessage());
+			}
+	    } } ).start();
+	}
 }
