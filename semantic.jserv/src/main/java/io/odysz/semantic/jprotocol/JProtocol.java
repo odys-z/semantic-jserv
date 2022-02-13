@@ -18,8 +18,17 @@ public class JProtocol {
 		public static final String D = "D";
 	}
 
+	@FunctionalInterface
+	public interface OnOk {
+		void ok(AnsonResp resp) throws IOException, AnsonException, SemanticException;
+	}
+	
+	@FunctionalInterface
+	public interface OnError { void err(MsgCode ok, String msg, String ... args ); }
+
 	/**Function interface: 
 	 * see {@link SCallbackV11#onCallback(MsgCode, AnsonResp)}
+	 * @deprecated replaced by {@link OnOk}
 	 * @author ody
 	 *
 	 */
