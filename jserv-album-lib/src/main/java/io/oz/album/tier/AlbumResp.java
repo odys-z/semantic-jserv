@@ -36,7 +36,7 @@ public class AlbumResp extends DocsResp {
 
 	/**Initialize album record
 	 * @param rs
-	 * @return
+	 * @return response object
 	 * @throws SQLException 
 	 */
 	public AlbumResp album(AnResultset rs) throws SQLException {

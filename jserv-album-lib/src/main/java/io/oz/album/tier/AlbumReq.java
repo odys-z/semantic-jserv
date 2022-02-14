@@ -68,7 +68,7 @@ public class AlbumReq extends DocsReq {
 
 	/**Create download request with photo record.
 	 * @param photo
-	 * @return
+	 * @return request
 	 */
 	public AlbumReq download(Photo photo) {
 		this.albumId = photo.albumId;
@@ -83,7 +83,7 @@ public class AlbumReq extends DocsReq {
 	 * <p>FIXME: introducing stream field of Anson?</p>
 	 * @param collId
 	 * @param localname
-	 * @return
+	 * @return request
 	 * @throws IOException 
 	 */
 	public AlbumReq createPhoto(String collId, String localname) throws IOException {

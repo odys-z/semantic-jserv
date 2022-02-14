@@ -189,7 +189,7 @@ public class Albums extends ServPort<AlbumReq> {
 			req.photo.collectId = getMonthCollection(conn, req.photo, usr);
 
 		ins.post( st.insert(tablCollectPhoto)
-					.nv("pid", req.photo.pid)
+					// pid is resulved
 					.nv("cid", req.photo.collectId) );
 
 		SemanticObject res = (SemanticObject) ins
@@ -218,13 +218,15 @@ public class Albums extends ServPort<AlbumReq> {
 		if (rs.next())
 			cid = rs.getString("cid");
 		else {
-			SemanticObject res = (SemanticObject) st
-				.insert(tablCollects)
-				.nv("yyyy_mm", photo.month())
-				.nv("shareby", usr.uid())
-				.nv("cname", photo.month())
-				.ins(st.instancontxt(conn, usr));
-			cid = res.resulve(tablCollects, "cid");
+			ISemantext s1 = st.instancontxt(conn, usr);
+			st.insert(tablCollects, usr)
+			  .nv("yyyy_mm", photo.month())
+			  .nv("shareby", usr.uid())
+			  .nv("cname", photo.month())
+			  .nv("cdate", Funcall.now())
+			  .ins(s1);
+			// cid = res.resulve(tablCollects, "cid");
+			cid = (String) s1.resulvedVal(tablCollects, "cid");
 			System.err.println("resulved cid: " + cid);
 		}
 		return cid;
