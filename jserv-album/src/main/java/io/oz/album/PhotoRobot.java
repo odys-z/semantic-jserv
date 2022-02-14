@@ -19,6 +19,8 @@ public class PhotoRobot extends SemanticObject implements IUser {
 
 	String remote;
 
+	private String ssid;
+
 	public PhotoRobot(String userid) {
 		this.remote = userid;
 	}
@@ -47,7 +49,11 @@ public class PhotoRobot extends SemanticObject implements IUser {
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 
-	@Override public void touch() { touched = System.currentTimeMillis(); } 
+	@Override
+	public IUser touch() {
+		touched = System.currentTimeMillis();
+		return this;
+	} 
 
 	@Override public long touchedMs() { return touched; } 
 
@@ -59,7 +65,9 @@ public class PhotoRobot extends SemanticObject implements IUser {
 
 	@Override public IUser logAct(String funcName, String funcId) { return this; }
 
-	@Override public String sessionId() { return null; }
+	@Override public String sessionId() { return ssid; }
+
+	@Override public IUser sessionId(String ssid) { this.ssid = ssid; return this; }
 
 	@Override public IUser notify(Object note) throws TransException { return this; }
 
@@ -67,7 +75,7 @@ public class PhotoRobot extends SemanticObject implements IUser {
 
 	// @Override public TableMeta meta() { return null; }
 
-	@Override public IUser sessionKey(String string) { return this; }
-
-	@Override public String sessionKey() { return null; }
+//	@Override public IUser sessionKey(String string) { return this; }
+//
+//	@Override public String sessionKey() { return null; }
 }

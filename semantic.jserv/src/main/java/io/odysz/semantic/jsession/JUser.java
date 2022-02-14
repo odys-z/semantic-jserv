@@ -148,8 +148,9 @@ public class JUser extends SemanticObject implements IUser {
 		return LoggingUser.genLog(logsctx, logTabl, sqls, this, funcName, funcId);
 	}
 
-	public void touch() {
+	public JUser touch() {
 		touched = System.currentTimeMillis();
+		return this;
 	}
 
 	@Override
@@ -214,30 +215,19 @@ public class JUser extends SemanticObject implements IUser {
 		return pswd != null && pswd.equals(AESHelper.decrypt(pswd64, this.ssid, AESHelper.decode64(iv64)));
 	}
 
-//	public static boolean checkPswd(String uid, String encryptKey, String iv64, String tokenVerify64) throws TransException {
-//		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
-//		byte[] ssiv = AESHelper.decode64(iv64);
-//		String c = null;
-//		try { c = AESHelper.encrypt(uid, encryptKey, ssiv); }
-//		catch (Exception e) { throw new TransException (e.getMessage()); }
-//
-//		// 2. compare pswd-cipher with j.pswd
-//		return c.equals(tokenVerify64);
-//	}
 
 	@Override
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
 
-	@Override
-	public IUser sessionKey(String skey) {
-		// ssid = skey;
-		return this;
-	}
-
-	@Override
-	public String sessionKey() {
-		return null;
-	}
+// TODO this change must be verified
+//	@Override
+//	public IUser sessionKey(String skey) {
+//		// ssid = skey; - but why this is commented out?
+//		return this;
+//	}
+//
+//	@Override
+//	public String sessionKey() { return null; }
 }
