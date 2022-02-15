@@ -1,7 +1,6 @@
 package io.odysz.semantic.tier;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -53,9 +52,6 @@ public class Datasetier extends ServPort<DatasetierReq> {
 			write(resp, ok(rsp));
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
-		} catch (SQLException e) {
-			e.printStackTrace();
-			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} finally {

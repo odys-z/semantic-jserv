@@ -8,6 +8,7 @@ CREATE TABLE h_photos (
   uri varchar(512) NOT NULL, -- storage/userId/folder/recId-clientname
   pdate datetime,     -- picture taken time
   device varchar(12), -- 'original device ID',
+  clientpath TEXT DEFAULT '/' NOT NULL, -- device + clientpath = identity
   shareby varchar(12), -- 'shared by / creator',
   sharedate datetime not null, -- 'shared date time',
   tags varchar(512) DEFAULT NULL ,
@@ -18,7 +19,7 @@ CREATE TABLE h_photos (
   opertime datetime not null,
 
   PRIMARY KEY (pid)
-) ;
+);
 
 DROP table if exists h_collects ;
 CREATE TABLE h_collects (

@@ -1,7 +1,5 @@
 package io.odysz.semantic.jsession;
 
-import java.sql.SQLException;
-
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
@@ -12,9 +10,8 @@ public interface ISessionVerifier {
 	 * @param AnsonHeader
 	 * @return IUser instance
 	 * @throws SsException
-	 * @throws SQLException
 	 */
-	default IUser verify(AnsonHeader AnsonHeader) throws SsException, SQLException {
+	default IUser verify(AnsonHeader AnsonHeader) throws SsException {
 		// default function body for old version
 		return null;
 	};
