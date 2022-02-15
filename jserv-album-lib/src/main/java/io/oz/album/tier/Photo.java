@@ -2,6 +2,7 @@ package io.oz.album.tier;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.Date;
 
 import org.apache.tika.exception.TikaException;
@@ -26,6 +27,8 @@ public class Photo extends FileRecord {
 	public String pid;
 	public String pname;
 	public String uri;
+	/** usally reported by client file system, overriden by exif date, if exits */
+	public String createDate;
 	public String shareby;
 	public String sharedate;
 	public String geox;
@@ -75,11 +78,20 @@ public class Photo extends FileRecord {
 				d = meta.getDate(TikaCoreProperties.CREATED);
 			}
 			else {
-				d = new Date();
+				pdate = createDate;
+				if (pdate == null)
+					d = new Date();
+				else {
+					try {
+						d = DateFormat.parse(pdate);
+					} catch (ParseException e) {
+						d = new Date();
+					}
+				}
 			}
 
 			if (LangExt.isblank(pdate)) {
-				month = DateFormat.formatYYmm(new Date());
+				month = DateFormat.formatYYmm(d);
 				return Funcall.now();
 			}
 			else {
@@ -91,6 +103,4 @@ public class Photo extends FileRecord {
 			throw new SemanticException(e.getMessage());
 		}
 	}
-
-
 }

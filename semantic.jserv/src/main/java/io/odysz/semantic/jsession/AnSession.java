@@ -177,7 +177,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * @throws SQLException Reqest payload header.usrAct is null (TODO sure?)
 	 */
 	@Override
-	public IUser verify(AnsonHeader anHeader) throws SsException, SQLException {
+	public IUser verify(AnsonHeader anHeader) throws SsException {
 		if (anHeader == null)
 			throw new SsException("session header is missing");
 
@@ -392,6 +392,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString("uid");
 			IUser obj = createUser(usrClzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"))
+						.onCreate(sessionBody)
 						.touch();
 			if (obj instanceof SemanticObject)
 				return obj;
