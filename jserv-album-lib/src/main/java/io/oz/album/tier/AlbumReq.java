@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.odysz.common.AESHelper;
 import io.odysz.semantic.jprotocol.AnsonBody;
@@ -40,6 +42,7 @@ public class AlbumReq extends DocsReq {
 		public static final String insertCollect = "c/collect";
 		public static final String insertAlbum = "c/album";
 		public static final String del = "d";
+		public static final String selectSyncs = "r/syncflags";
 	}
 	
 	static class args {
@@ -47,7 +50,10 @@ public class AlbumReq extends DocsReq {
 
 	String albumId;
 	String collectId;
-	Photo photo; 
+	Photo photo;
+	List<SyncRec> syncQueries;
+	String device; 
+	public AlbumReq device(String device) { this.device = device; return this; }
 
 	public AlbumReq() {
 		super(null, null);
@@ -122,6 +128,13 @@ public class AlbumReq extends DocsReq {
 		this.photo.uri = b64;
 		this.photo.pname = file.clientname();
 		this.a = A.insertPhoto;
+		return this;
+	}
+
+	public AlbumReq querySync(IFileDescriptor p) {
+		if (syncQueries == null)
+			syncQueries = new ArrayList<SyncRec>();
+		syncQueries.add(new SyncRec(p));
 		return this;
 	}
 
