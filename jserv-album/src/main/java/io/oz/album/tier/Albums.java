@@ -139,6 +139,8 @@ public class Albums extends ServPort<AlbumReq> {
 							"Only a = [%s, %s, %s, %s, %s, %s, %s, %s] are supported.",
 							jreq.a(), A.records, A.collect, A.rec, A.insertPhoto,
 									  A.update, A.download, A.upload, A.del );
+
+				Utils.logi(rsp.toString());
 				write(resp, ok(rsp));
 			}
 		} catch (SemanticException e) {
@@ -160,16 +162,14 @@ public class Albums extends ServPort<AlbumReq> {
 		for (SyncRec s : req.syncQueries)
 			orders.add(new String[] {String.format("pid = '%s'", s.fullpath())});
 
-		AnResultset rs = (AnResultset) st.select(tablCollects)
+		AnResultset rs = (AnResultset) st.select(tablPhotos)
 			.whereIn("pid", pids)
 			.whereEq("device", req.device)
 			.orderby(orders)
 			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 			.rs(0);
 
-		AlbumResp album = new AlbumResp().collects(rs);
-
-		album.photos("sync-temp-id", rs);
+		AlbumResp album = new AlbumResp().photos("sync-temp-id", rs);
 
 		return album;
 	}

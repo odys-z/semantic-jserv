@@ -9,6 +9,8 @@ public class SyncRec extends Anson implements IFileDescriptor {
 	private String clientpath;
 	private String filename;
 
+	public SyncRec() { }
+
 	public SyncRec(IFileDescriptor p) {
 		this.docId = p.recId();
 		this.clientpath = p.fullpath();
