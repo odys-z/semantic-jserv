@@ -68,6 +68,48 @@ public class AlbumClientier extends Semantier {
 
 		return client.commit(q, errCtx);
 	}
+	
+	public AlbumClientier asyncQuerySyncs(List<? extends IFileDescriptor> files, OnOk onOk, OnError onErr) {
+		new Thread(new Runnable() {
+	        public void run() {
+	        DocsResp resp = null;
+			try {
+				String[] act = AnsonHeader.usrAct("album.java", "query", "r/states", "query sync");
+				AnsonHeader header = client.header().act(act);
+
+				List<DocsResp> reslts = new ArrayList<DocsResp>(files.size());
+
+				for (IFileDescriptor p : files) {
+					AlbumReq req = new AlbumReq().querySync(p);
+					req.a(A.selectSyncs);
+
+					AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
+											.header(header);
+
+					resp = client.commit(q, new ErrorCtx() {
+						@Override
+						public void onError(MsgCode code, AnsonResp obj) throws SemanticException {
+							onErr.err(code, obj.msg());
+						}
+
+						@Override
+						public void onError(MsgCode code, String msg, Object ...args) throws SemanticException {
+							onErr.err(code, msg, (String[])args);
+						}
+					});
+
+					reslts.add(resp);
+					onOk.ok(resp);
+				}
+			} catch (IOException e) {
+				onErr.err(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());
+			} catch (AnsonException | SemanticException e) { 
+				onErr.err(MsgCode.exGeneral, clientUri, e.getClass().getName(), e.getMessage());
+			}
+	    } } ).start();
+		return null;
+
+	}
 
 	public List<DocsResp> syncPhotos(List<? extends IFileDescriptor> photos) throws SemanticException, IOException, AnsonException {
 		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");

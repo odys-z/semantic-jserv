@@ -3,6 +3,7 @@ package io.oz.album.tier;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -128,6 +129,10 @@ public class Albums extends ServPort<AlbumReq> {
 					usr = JSingleton.getSessionVerifier().verify(jmsg.header());
 					rsp = createPhoto(jmsg.body(0), usr);
 				}
+				else if (A.selectSyncs.equals(a)) {
+					usr = JSingleton.getSessionVerifier().verify(jmsg.header());
+					rsp = selectSyncs(jmsg.body(0), usr);
+				}
 				else
 					throw new SemanticException(
 							"request.body.a can not handled: %s\\n" +
@@ -147,6 +152,26 @@ public class Albums extends ServPort<AlbumReq> {
 		} finally {
 			resp.flushBuffer();
 		}
+	}
+
+	AlbumResp selectSyncs(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+		String[] pids = new String[req.syncQueries.size()];
+		ArrayList<String[]> orders = new ArrayList<String[]>(req.syncQueries.size());
+		for (SyncRec s : req.syncQueries)
+			orders.add(new String[] {String.format("pid = '%s'", s.fullpath())});
+
+		AnResultset rs = (AnResultset) st.select(tablCollects)
+			.whereIn("pid", pids)
+			.whereEq("device", req.device)
+			.orderby(orders)
+			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+			.rs(0);
+
+		AlbumResp album = new AlbumResp().collects(rs);
+
+		album.photos("sync-temp-id", rs);
+
+		return album;
 	}
 
 	void download(OutputStream ofs, DocsReq freq, IUser usr)
@@ -179,6 +204,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("uri", req.photo.uri)
 				.nv("pname", req.photo.pname)
 				.nv("pdate", req.photo.photoDate())
+				.nv("device", ((PhotoRobot)usr).deviceId())
 				.nv("shareby", usr.uid())
 				.nv("folder", req.photo.month())
 				.nv("sharedate", Funcall.now());
