@@ -2,6 +2,7 @@ package io.oz.album.tier;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -17,6 +18,9 @@ public class AlbumResp extends DocsResp {
 	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
 
 	public SyncingPage syncing;
+	HashMap<String, Object> clientPaths;
+	public HashMap<String, Object> syncPaths() { return clientPaths; }
+	
 	Photo photo;
 	public Photo photo() { return photo; }
 
@@ -71,16 +75,18 @@ public class AlbumResp extends DocsResp {
 	}
 	
 	public AlbumResp syncRecords(String collectId, AnResultset rs) throws SQLException {
-		if (this.photos == null)
-			this.photos = new ArrayList<Photo[]>(1);
+//		if (this.photos == null)
+//			this.photos = new ArrayList<Photo[]>(1);
 
-		ArrayList<Photo> photos = new ArrayList<Photo>(rs.total());
+//		ArrayList<Photo> photos = new ArrayList<Photo>(rs.total());
+		clientPaths = new HashMap<String, Object>();
+
 		rs.beforeFirst();
 		while(rs.next()) {
-			photos.add(new Photo().asSyncRec(rs));
+			clientPaths.put(rs.getString("clientpath"), rs.getString("syncFlag"));
 		}
 
-		this.photos.add(photos.toArray(new Photo[0]));
+//		this.photos.add(photos.toArray(new Photo[0]));
 		return this;
 	}
 
