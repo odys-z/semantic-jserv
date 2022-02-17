@@ -153,10 +153,10 @@ class AlbumsTest {
 	 */
 	@Test
 	void testAppend2Collect() throws TransException, IOException, AnsonException, GeneralSecurityException, SsException {
-		String localFolder = "res";
+		String localFolder = "test/res";
 		String filename = "my.jpg";
 
-		SessionClient ssclient = Clients.login("ody", "123456");
+		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
 		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 
@@ -174,10 +174,10 @@ class AlbumsTest {
 	 */
 	@Test
 	void testSyncPhotos() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
-		String localFolder = "res";
+		String localFolder = "test/res";
 		String filename = "my.jpg";
 
-		SessionClient ssclient = Clients.login("ody", "123456");
+		SessionClient ssclient = Clients.login("ody", "123456", "device-1");
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
 		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 

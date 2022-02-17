@@ -168,13 +168,14 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 
 		AnResultset rs = (AnResultset) st.select(tablPhotos)
+			.col("clientpath").col("1", "syncFlag")
 			.whereIn("clientpath", paths)
 			.whereEq("device", req.syncing.device)
 			.orderby(orders)
 			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 			.rs(0);
 
-		AlbumResp album = new AlbumResp().photos("sync-temp-id", rs);
+		AlbumResp album = new AlbumResp().syncRecords("sync-temp-id", rs);
 
 		return album;
 	}
@@ -210,6 +211,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("pname", req.photo.pname)
 				.nv("pdate", req.photo.photoDate())
 				.nv("device", ((PhotoRobot)usr).deviceId())
+				.nv("clientpath", req.photo.clientpath)
 				.nv("shareby", usr.uid())
 				.nv("folder", req.photo.month())
 				.nv("sharedate", Funcall.now());
@@ -305,7 +307,7 @@ public class Albums extends ServPort<AlbumReq> {
 			.rs(0);
 
 		if (!rs.next())
-			throw new SemanticException("Can't find photo collection for id = %s (permission of %s)", cid, usr.uid());
+			throw new SemanticException("Can't find photo collection for id = '%s' (permission of %s)", cid, usr.uid());
 
 		AlbumResp album = new AlbumResp().collects(rs);
 
