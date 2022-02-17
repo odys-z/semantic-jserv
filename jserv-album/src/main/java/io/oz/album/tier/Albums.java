@@ -37,7 +37,7 @@ import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
 import io.oz.album.tier.AlbumReq.A;
-import io.oz.album.tier.AlbumReq.fileState;
+import io.oz.album.tier.AlbumReq.FileState;
 
 /**<h5>The album tier</h5>
  * Although this tie is using the pattern of <i>less</i>, it's also verifying user when uploading - for subfolder name of user
@@ -70,8 +70,7 @@ public class Albums extends ServPort<AlbumReq> {
 	/** file state db field */
 	static final String state = "state";
 
-
-	fileState fileState;
+	FileState fileState;
 
 	protected static DATranscxt st;
 
@@ -140,7 +139,8 @@ public class Albums extends ServPort<AlbumReq> {
 							jreq.a(), A.records, A.collect, A.rec, A.insertPhoto,
 									  A.update, A.download, A.upload, A.del );
 
-				Utils.logi(rsp.toString());
+				// Utils.logi(rsp.toString());
+				rsp.syncing = jmsg.body(0).syncing;
 				write(resp, ok(rsp));
 			}
 		} catch (SemanticException e) {
@@ -157,14 +157,19 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 
 	AlbumResp selectSyncs(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
-		String[] pids = new String[req.syncQueries.size()];
+		if (req.syncQueries == null)
+			throw new SemanticException("Null Query - invalide request.");
+
+		ArrayList<String> paths = new ArrayList<String>(req.syncQueries.size());
 		ArrayList<String[]> orders = new ArrayList<String[]>(req.syncQueries.size());
-		for (SyncRec s : req.syncQueries)
+		for (SyncRec s : req.syncQueries) {
+			paths.add(s.fullpath());
 			orders.add(new String[] {String.format("pid = '%s'", s.fullpath())});
+		}
 
 		AnResultset rs = (AnResultset) st.select(tablPhotos)
-			.whereIn("pid", pids)
-			.whereEq("device", req.device)
+			.whereIn("clientpath", paths)
+			.whereEq("device", req.syncing.device)
 			.orderby(orders)
 			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 			.rs(0);
