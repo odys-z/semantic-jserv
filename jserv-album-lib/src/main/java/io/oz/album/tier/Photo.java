@@ -55,11 +55,23 @@ public class Photo extends FileRecord {
 		}
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
+		
 	}
 
 	public Photo(String collectId, AnResultset rs) throws SQLException {
 		this(rs);
 		this.collectId = collectId;
+	}
+
+	/**Set client path and syncFlag
+	 * @param rs
+	 * @return this
+	 * @throws SQLException
+	 */
+	public Photo asSyncRec(AnResultset rs) throws SQLException {
+		this.clientpath = rs.getString("clientpath"); 
+		this.syncFlag = rs.getInt("syncFlag"); 
+		return this;
 	}
 
 	public String month() throws IOException, SemanticException  {
@@ -103,4 +115,5 @@ public class Photo extends FileRecord {
 			throw new SemanticException(e.getMessage());
 		}
 	}
+
 }

@@ -113,7 +113,7 @@ public class AlbumClientier extends Semantier {
 		return null;
 	}
 
-	public List<DocsResp> syncPhotos(List<? extends IFileDescriptor> photos) throws SemanticException, IOException, AnsonException {
+	public List<DocsResp> syncPhotos(List<? extends IFileDescriptor> photos, ClientPhotoUser user) throws SemanticException, IOException, AnsonException {
 		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
@@ -121,7 +121,8 @@ public class AlbumClientier extends Semantier {
 
 		for (IFileDescriptor p : photos) {
 			AlbumReq req = new AlbumReq()
-					.createPhoto(p);
+					.device(user.device())
+					.createPhoto(p, user);
 			req.a(A.insertPhoto);
 
 			AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
@@ -134,7 +135,16 @@ public class AlbumClientier extends Semantier {
 		return reslts;
 	}
 	
-	public void asyncPhotos(List<? extends IFileDescriptor> photos, OnOk onOk, OnError onErr)
+	/**Asynchronously synchronize photos
+	 * @param photos
+	 * @param user
+	 * @param onOk
+	 * @param onErr
+	 * @throws SemanticException
+	 * @throws IOException
+	 * @throws AnsonException
+	 */
+	public void asyncPhotos(List<? extends IFileDescriptor> photos, ClientPhotoUser user, OnOk onOk, OnError onErr)
 			throws SemanticException, IOException, AnsonException {
 		new Thread(new Runnable() {
 	        public void run() {
@@ -147,7 +157,7 @@ public class AlbumClientier extends Semantier {
 
 				for (IFileDescriptor p : photos) {
 					AlbumReq req = new AlbumReq()
-							.createPhoto(p);
+							.createPhoto(p, user);
 					req.a(A.insertPhoto);
 
 					AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)

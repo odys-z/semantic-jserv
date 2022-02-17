@@ -8,10 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.odysz.common.AESHelper;
+import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantics.x.SemanticException;
+import io.oz.album.client.ClientPhotoUser;
 
 public class AlbumReq extends DocsReq {
 
@@ -121,13 +124,17 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-	public AlbumReq createPhoto(IFileDescriptor file) throws IOException {
+	public AlbumReq createPhoto(IFileDescriptor file, ClientPhotoUser usr) throws IOException, SemanticException {
 		Path p = Paths.get(file.fullpath());
 		// FIXME performance problem
 		byte[] f = Files.readAllBytes(p);
 		String b64 = AESHelper.encode64(f);
 
+		this.device = usr.device();
+		if (LangExt.isblank(this.device, ".", "/"))
+			throw new SemanticException("File to be uploade must come with user's device id - for distinguish files. %s", file.fullpath());
 		this.photo = new Photo();
+		this.photo.clientpath = file.fullpath(); 
 		this.photo.uri = b64;
 		this.photo.pname = file.clientname();
 		this.a = A.insertPhoto;

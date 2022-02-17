@@ -60,7 +60,7 @@ public class AnSessionReq extends AnsonBody {
 
 		itm.setup(uid, tk64, iv64);
 
-		if (deviceId != null)
+		if (deviceId != null && deviceId.length > 0)
 			itm.deviceId = deviceId[0];
 
 		jmsg.body((AnsonBody)itm);
