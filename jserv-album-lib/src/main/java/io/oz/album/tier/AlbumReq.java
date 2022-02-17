@@ -16,7 +16,7 @@ import io.odysz.semantic.tier.docs.IFileDescriptor;
 public class AlbumReq extends DocsReq {
 
 	/** media file state */
-	static enum fileState {
+	static enum FileState {
 		uploading("uploading"),
 		valid("valid"),
 		synchronizing("synching"),
@@ -26,7 +26,7 @@ public class AlbumReq extends DocsReq {
 		@SuppressWarnings("unused")
 		private String state;
 
-		fileState(String state) {
+		FileState(String state) {
 			this.state = state;
 		}
 	}
@@ -51,8 +51,11 @@ public class AlbumReq extends DocsReq {
 	String albumId;
 	String collectId;
 	Photo photo;
-	List<SyncRec> syncQueries;
+
+	SyncingPage syncing;
 	String device; 
+	List<SyncRec> syncQueries;
+
 	public AlbumReq device(String device) { this.device = device; return this; }
 
 	public AlbumReq() {
@@ -135,6 +138,11 @@ public class AlbumReq extends DocsReq {
 		if (syncQueries == null)
 			syncQueries = new ArrayList<SyncRec>();
 		syncQueries.add(new SyncRec(p));
+		return this;
+	}
+
+	public AlbumReq syncing(SyncingPage page) {
+		this.syncing = page;
 		return this;
 	}
 

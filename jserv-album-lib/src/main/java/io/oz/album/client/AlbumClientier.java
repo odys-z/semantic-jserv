@@ -22,6 +22,7 @@ import io.oz.album.tier.AlbumReq;
 import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
+import io.oz.album.tier.SyncingPage;
 
 public class AlbumClientier extends Semantier {
 
@@ -69,7 +70,7 @@ public class AlbumClientier extends Semantier {
 		return client.commit(q, errCtx);
 	}
 	
-	public AlbumClientier asyncQuerySyncs(List<? extends IFileDescriptor> files, OnOk onOk, OnError onErr) {
+	public AlbumClientier asyncQuerySyncs(List<? extends IFileDescriptor> files, SyncingPage page, OnOk onOk, OnError onErr) {
 		new Thread(new Runnable() {
 	        public void run() {
 	        DocsResp resp = null;
@@ -79,28 +80,30 @@ public class AlbumClientier extends Semantier {
 
 				List<DocsResp> reslts = new ArrayList<DocsResp>(files.size());
 
-				for (IFileDescriptor p : files) {
-					AlbumReq req = new AlbumReq().querySync(p);
-					req.a(A.selectSyncs);
+				AlbumReq req = (AlbumReq) new AlbumReq().syncing(page).a(A.selectSyncs);
 
-					AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
-											.header(header);
-
-					resp = client.commit(q, new ErrorCtx() {
-						@Override
-						public void onError(MsgCode code, AnsonResp obj) throws SemanticException {
-							onErr.err(code, obj.msg());
-						}
-
-						@Override
-						public void onError(MsgCode code, String msg, Object ...args) throws SemanticException {
-							onErr.err(code, msg, (String[])args);
-						}
-					});
-
-					reslts.add(resp);
-					onOk.ok(resp);
+				for (int i = page.start; i < page.end & i < files.size(); i++) {
+					IFileDescriptor p = files.get(i);
+					req.querySync(p);
 				}
+
+				AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
+										.header(header);
+
+				resp = client.commit(q, new ErrorCtx() {
+					@Override
+					public void onError(MsgCode code, AnsonResp obj) throws SemanticException {
+						onErr.err(code, obj.msg());
+					}
+
+					@Override
+					public void onError(MsgCode code, String msg, Object ...args) throws SemanticException {
+						onErr.err(code, msg, (String[])args);
+					}
+				});
+
+				reslts.add(resp);
+				onOk.ok(resp);
 			} catch (IOException e) {
 				onErr.err(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());
 			} catch (AnsonException | SemanticException e) { 
@@ -108,7 +111,6 @@ public class AlbumClientier extends Semantier {
 			}
 	    } } ).start();
 		return null;
-
 	}
 
 	public List<DocsResp> syncPhotos(List<? extends IFileDescriptor> photos) throws SemanticException, IOException, AnsonException {
@@ -144,7 +146,8 @@ public class AlbumClientier extends Semantier {
 				List<DocsResp> reslts = new ArrayList<DocsResp>(photos.size());
 
 				for (IFileDescriptor p : photos) {
-					AlbumReq req = new AlbumReq().createPhoto(p);
+					AlbumReq req = new AlbumReq()
+							.createPhoto(p);
 					req.a(A.insertPhoto);
 
 					AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)

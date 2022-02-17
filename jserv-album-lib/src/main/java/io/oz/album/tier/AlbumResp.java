@@ -3,7 +3,6 @@ package io.oz.album.tier;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.DocsResp;
 
@@ -14,10 +13,10 @@ public class AlbumResp extends DocsResp {
 	String owner;
 	ArrayList<Collect> collectRecords;
 
-	@AnsonField(valType="[Lio.oz.album.tier.Photo;")
 	ArrayList<Photo[]> photos;
 	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
 
+	public SyncingPage syncing;
 	Photo photo;
 	public Photo photo() { return photo; }
 
