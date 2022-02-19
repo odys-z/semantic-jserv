@@ -1,5 +1,6 @@
 package io.oz.client.tier;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -203,10 +204,12 @@ class AlbumsTest {
 		videos.add((SyncRec) new SyncRec().fullpath(FilenameUtils.concat(localFolder, filename)));
 
 		ClientDocUser photoUser = new ClientDocUser("tester", "device-test");
-		AlbumResp resp = tier.syncVideos(videos, photoUser);
+		List<DocsResp> resps = tier.syncVideos(videos, photoUser);
 
-		List<DocsResp> lst = (List<DocsResp>) resp.data().get("results");
-		for (DocsResp d : lst) {
+		assertNotNull(resps);
+		assertEquals(1, resps.size());
+
+		for (DocsResp d : resps) {
 			String docId = d.recId();
 			AlbumResp rp = tier.selectPhoto(docId);
 			assertEquals(rp.clientname(), d.clientname());

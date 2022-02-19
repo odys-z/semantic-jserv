@@ -6,7 +6,6 @@ import java.util.HashMap;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.SyncingPage;
 
 public class AlbumResp extends DocsResp {
 
@@ -18,7 +17,6 @@ public class AlbumResp extends DocsResp {
 	ArrayList<Photo[]> photos;
 	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
 
-	public SyncingPage syncing;
 	HashMap<String, Object> clientPaths;
 	public HashMap<String, Object> syncPaths() { return clientPaths; }
 	

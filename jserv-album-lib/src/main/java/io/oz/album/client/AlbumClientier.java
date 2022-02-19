@@ -70,60 +70,11 @@ public class AlbumClientier extends Semantier {
 
 		new Thread(new Runnable() {
 			public void run() {
-	        DocsResp resp = null;
 			try {
-				String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
-				AnsonHeader header = client.header().act(act);
-
-				List<DocsResp> reslts = new ArrayList<DocsResp>(videos.size());
-
-				for (IFileDescriptor p : videos) {
-					DocsReq req = new DocsReq()
-							.blockStart(p, user);
-					req.a(DocsReq.A.blockStart);
-
-					AnsonMsg<DocsReq> q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
-											.header(header);
-
-					resp = client.commit(q, errHandler);
-
-					int seq = 0;
-					FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
-					try {
-						StringBuilder b64 = AESHelper.encode64(ifs);
-						while (b64 != null) {
-							req = new AlbumReq().blockUp(seq, resp, b64, user);
-							req.a(DocsReq.A.blockUp);
-							seq++;
-
-							q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
-										.header(header);
-
-							resp = client.commit(q, errHandler);
-						}
-						req = new DocsReq().blockEnd(resp, user);
-						req.a(DocsReq.A.blockEnd);
-						q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
-									.header(header);
-						resp = client.commit(q, errHandler);
-					}
-					catch (Exception ex) {
-						req = new DocsReq().blockAbort(resp, user);
-						req.a(DocsReq.A.blockAbort);
-						q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
-									.header(header);
-						resp = client.commit(q, errHandler);
-
-						throw ex;
-					}
-					finally { ifs.close(); }
-
-					reslts.add(resp);
-
-					AlbumResp res = new AlbumResp();
-					res.data().put("results", reslts);
-					onOk.ok(res);
-				}
+				List<DocsResp> reslts = syncVideos(videos, user);
+				DocsResp resp = new DocsResp();
+				resp.data().put("results", reslts);
+				onOk.ok(resp);
 			} catch (IOException e) {
 				onErr.err(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());
 			} catch (AnsonException | SemanticException e) { 
@@ -133,7 +84,7 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 	
-	public AlbumResp syncVideos(List<? extends IFileDescriptor> videos, ClientDocUser user, ErrorCtx ... onErr) {
+	public List<DocsResp> syncVideos(List<? extends IFileDescriptor> videos, ClientDocUser user, ErrorCtx ... onErr) {
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 
         DocsResp resp = null;
@@ -152,13 +103,14 @@ public class AlbumClientier extends Semantier {
 										.header(header);
 
 				resp = client.commit(q, errHandler);
+				String chainId = resp.chainId();
 
 				int seq = 0;
 				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
 				try {
 					StringBuilder b64 = AESHelper.encode64(ifs);
 					while (b64 != null) {
-						req = new AlbumReq().blockUp(seq, resp, b64, user);
+						req = new DocsReq().blockUp(chainId, seq, resp, b64, user);
 						req.a(DocsReq.A.blockUp);
 						seq++;
 
@@ -167,7 +119,7 @@ public class AlbumClientier extends Semantier {
 
 						resp = client.commit(q, errHandler);
 					}
-					req = new DocsReq().blockEnd(resp, user);
+					req = new DocsReq().blockEnd(chainId, resp, user);
 					req.a(DocsReq.A.blockEnd);
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 								.header(header);
@@ -186,9 +138,7 @@ public class AlbumClientier extends Semantier {
 
 				reslts.add(resp);
 
-				AlbumResp res = new AlbumResp();
-				res.data().put("results", reslts);
-				return res;
+				return reslts;
 			}
 		} catch (IOException e) {
 			errHandler.onError(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());

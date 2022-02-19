@@ -28,6 +28,7 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncRec;
 import io.odysz.semantics.ISemantext;
@@ -111,9 +112,9 @@ public class Albums extends ServPort<AlbumReq> {
 			Utils.logi("========== ever-connect /album.less POST ==========");
 
 		try {
-			AlbumReq jreq = jmsg.body(0);
+			DocsReq jreq = jmsg.body(0);
 			String a = jreq.a();
-			AlbumResp rsp = null;
+			DocsResp rsp = null;
 
 			if (A.records.equals(a) || A.collect.equals(a) || A.rec.equals(a) || A.download.equals(a)) {
 				// Session less
@@ -136,17 +137,23 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = createPhoto(jmsg.body(0), usr);
 				else if (A.selectSyncs.equals(a))
 					rsp = querySyncs(jmsg.body(0), usr);
+
+				//
+				else if (DocsReq.A.blockAbort.equals(a))
+					rsp = abortBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockStart.equals(a))
 					rsp = startBlocks(jmsg.body(0), usr);
 				else if (DocsReq.A.blockUp.equals(a))
 					rsp = uploadBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockEnd.equals(a))
 					rsp = endBlock(jmsg.body(0), usr);
+
 				else throw new SemanticException(
 						"request.body.a can not handled request: %s",
 						jreq.a());
 			}
-			rsp.syncing = jmsg.body(0).syncing();
+
+			rsp.syncing(jreq.syncing());
 			write(resp, ok(rsp));
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
@@ -159,12 +166,15 @@ public class Albums extends ServPort<AlbumReq> {
 		} catch (InterruptedException e) {
 			if (Anson.verbose)
 				e.printStackTrace();
+		} catch (Throwable e) {
+			e.printStackTrace();
+			write(resp, err(MsgCode.exGeneral, "%s\n%s", e.getClass().getName(), e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
 	}
 
-	AlbumResp startBlocks(AlbumReq body, IUser usr) throws IOException, SemanticException, SQLException {
+	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, SemanticException, SQLException {
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
@@ -180,25 +190,42 @@ public class Albums extends ServPort<AlbumReq> {
 			throw new SemanticException("Why started again?");
 
 		blockChains.put(id, chain);
-		return (AlbumResp) new AlbumResp().chainId(id);
+		return new DocsResp().chainId(id);
 	}
 
-	AlbumResp uploadBlock(AlbumReq body, IUser usr) throws SemanticException, IOException, SQLException {
+	DocsResp uploadBlock(DocsReq body, IUser usr) throws SemanticException, IOException, SQLException, AnsonException {
 		String id = body.chainId();
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
 
 		BlockChain chain = blockChains.get(id);
 		chain.appendBlock(body);
-		return (AlbumResp) new AlbumResp().blockSeq(body.blockSeq());
+		return new DocsResp().blockSeq(body.blockSeq());
 	}
 
-	AlbumResp endBlock(AlbumReq body, IUser usr) throws SQLException, IOException, InterruptedException, AnsonException {
-		blockChains.get(body.chainId()).closeChain();
-		blockChains.remove(body.chainId());
+	DocsResp endBlock(DocsReq body, IUser usr) throws SQLException, IOException, InterruptedException, AnsonException {
+		String id = body.chainId();
+		if (blockChains.containsKey(id)) {
+			blockChains.get(id).closeChain();
+			blockChains.remove(id);
+		}
 
-		AlbumResp ack = new AlbumResp();
+		DocsResp ack = new DocsResp();
 		ack.blockSeqReply = body.blockSeq();
+		// TODO move file
+		return ack;
+	}
+
+	DocsResp abortBlock(DocsReq body, IUser usr) throws SQLException, IOException, InterruptedException, AnsonException {
+		String id = body.chainId();
+		if (blockChains.containsKey(id)) {
+			blockChains.get(id).closeChain();
+			blockChains.remove(id);
+		}
+
+		DocsResp ack = new DocsResp();
+		ack.blockSeqReply = body.blockSeq();
+		// TODO remove file (test)
 		return ack;
 	}
 
