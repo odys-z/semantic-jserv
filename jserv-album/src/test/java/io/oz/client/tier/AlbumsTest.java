@@ -66,7 +66,7 @@ class AlbumsTest {
 			local = new File("src/test/local").getAbsolutePath();
 
 			SessionClient.verbose(true);
-			Anson.verbose(true);
+			Anson.verbose = true;
 
 			errCtx = new ErrorCtx() {
 				public void onError(MsgCode c, AnsonResp rep) {

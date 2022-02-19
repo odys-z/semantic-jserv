@@ -1,8 +1,7 @@
-package io.oz.album.client;
 
 /**
+package io.oz.album.client;
  * Client User type, which is diffenret from IUser.
- */
 public class ClientPhotoUser {
     public ClientPhotoUser(String usrid, String pswd, String device) {
         this.uid  = usrid;
@@ -31,3 +30,5 @@ public class ClientPhotoUser {
         return this;
     }
 }
+
+ */

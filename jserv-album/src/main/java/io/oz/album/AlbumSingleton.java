@@ -4,7 +4,6 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
-import io.odysz.anson.Anson;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 
@@ -17,7 +16,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 		super.onInitialized(sce);
 		
 		AnsonMsg.understandPorts(AlbumPort.album);
-		Anson.verbose(true);
+		// Anson.verbose = true;
 	}
 
 	@Override

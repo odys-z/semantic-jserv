@@ -24,9 +24,15 @@ public class DocsResp extends AnsonResp implements IFileDescriptor {
 	String filename;
 	public String clientname() { return filename; }
 
-
-//	DocsResp put(String name, Object val) {
-//		data().put(name, val);
-//		return this;
-//	}
+	public long blockSeqReply;
+	public DocsResp blockSeq(long seq) {
+		blockSeqReply = seq;
+		return this;
+	}
+	
+	String chainId;
+	public DocsResp chainId(String blockChain) {
+		chainId = blockChain;
+		return this;
+	}
 }

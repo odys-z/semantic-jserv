@@ -23,7 +23,7 @@ import io.odysz.transact.sql.parts.condition.Funcall;
  * @author ody
  *
  */
-public class Photo extends FileRecord {
+public class Photo extends PhotoRecord {
 	public String pid;
 	public String pname;
 	public String uri;

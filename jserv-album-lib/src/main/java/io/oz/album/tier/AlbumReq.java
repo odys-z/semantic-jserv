@@ -4,17 +4,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.tier.docs.ClientDocUser;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
-import io.oz.album.client.ClientPhotoUser;
 
 public class AlbumReq extends DocsReq {
 
@@ -46,6 +44,7 @@ public class AlbumReq extends DocsReq {
 		public static final String insertAlbum = "c/album";
 		public static final String del = "d";
 		public static final String selectSyncs = "r/syncflags";
+
 	}
 	
 	static class args {
@@ -54,10 +53,6 @@ public class AlbumReq extends DocsReq {
 	String albumId;
 	String collectId;
 	Photo photo;
-
-	SyncingPage syncing;
-	String device; 
-	List<SyncRec> syncQueries;
 
 	public AlbumReq device(String device) { this.device = device; return this; }
 
@@ -124,15 +119,21 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-	public AlbumReq createPhoto(IFileDescriptor file, ClientPhotoUser usr) throws IOException, SemanticException {
+	/**Create a photo. Use this for small file.
+	 * @param file
+	 * @param usr
+	 * @return album request
+	 * @throws IOException
+	 * @throws SemanticException
+	 */
+	public AlbumReq createPhoto(IFileDescriptor file, ClientDocUser usr) throws IOException, SemanticException {
 		Path p = Paths.get(file.fullpath());
-		// FIXME performance problem
 		byte[] f = Files.readAllBytes(p);
 		String b64 = AESHelper.encode64(f);
 
 		this.device = usr.device();
 		if (LangExt.isblank(this.device, ".", "/"))
-			throw new SemanticException("File to be uploade must come with user's device id - for distinguish files. %s", file.fullpath());
+			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files. %s", file.fullpath());
 		this.photo = new Photo();
 		this.photo.clientpath = file.fullpath(); 
 		this.photo.uri = b64;
@@ -141,16 +142,71 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-	public AlbumReq querySync(IFileDescriptor p) {
-		if (syncQueries == null)
-			syncQueries = new ArrayList<SyncRec>();
-		syncQueries.add(new SyncRec(p));
-		return this;
-	}
-
-	public AlbumReq syncing(SyncingPage page) {
-		this.syncing = page;
-		return this;
-	}
+//	public AlbumReq querySync(IFileDescriptor p) {
+//		if (syncQueries == null)
+//			syncQueries = new ArrayList<SyncRec>();
+//		syncQueries.add(new SyncRec(p));
+//		return this;
+//	}
+//
+//	public AlbumReq syncing(SyncingPage page) {
+//		this.syncing = page;
+//		return this;
+//	}
+//
+//	public AlbumReq startBlocksUp(IFileDescriptor file, ClientPhotoUser usr) throws SemanticException {
+//		this.device = usr.device();
+//		if (LangExt.isblank(this.device, ".", "/"))
+//			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files. %s", file.fullpath());
+//		this.photo = new Photo();
+//		this.photo.clientpath = file.fullpath(); 
+//		this.photo.pname = file.clientname();
+//		this.blockSeq = 0;
+//		
+//		this.a = A.blockStart;
+//		return this;
+//	}
+//
+//	public AlbumReq blockUp(DocsResp resp, StringBuilder b64, ClientPhotoUser usr) throws SemanticException {
+//		this.device = usr.device();
+//		if (LangExt.isblank(this.device, ".", "/"))
+//			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
+//
+//		this.blockSeq = resp.blockSeqReply + 1;
+//
+//		this.photo = new Photo();
+//		this.photo.recId = resp.recId();
+//		this.photo.clientpath = resp.fullpath();
+//		this.photo.uri = b64.toString();
+//
+//		this.a = A.blockUp;
+//		return this;
+//	}
+//
+//	public AlbumReq blockAbort(DocsResp resp, ClientPhotoUser usr) throws SemanticException {
+//		this.device = usr.device();
+//
+//		this.blockSeq = resp.blockSeqReply;
+//
+//		this.photo = new Photo();
+//		this.photo.recId = resp.recId();
+//		this.photo.clientpath = resp.fullpath();
+//
+//		this.a = A.blockAbort;
+//		return this;
+//	}
+//
+//	public AlbumReq blockEnd(DocsResp resp, ClientPhotoUser usr) throws SemanticException {
+//		this.device = usr.device();
+//
+//		this.blockSeq = resp.blockSeqReply;
+//
+//		this.photo = new Photo();
+//		this.photo.recId = resp.recId();
+//		this.photo.clientpath = resp.fullpath();
+//
+//		this.a = A.blockEnd;
+//		return this;
+//	}
 
 }

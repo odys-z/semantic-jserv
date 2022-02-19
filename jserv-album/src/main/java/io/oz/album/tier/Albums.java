@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -11,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
@@ -24,8 +26,10 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.FileStream;
+import io.odysz.semantic.tier.docs.SyncRec;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -72,6 +76,8 @@ public class Albums extends ServPort<AlbumReq> {
 
 	FileState fileState;
 
+	private HashMap<String, BlockChain> blockChains;
+
 	protected static DATranscxt st;
 
 	static IUser robot;
@@ -109,40 +115,39 @@ public class Albums extends ServPort<AlbumReq> {
 			String a = jreq.a();
 			AlbumResp rsp = null;
 
-			IUser usr = robot;
-
-			if (A.upload.equals(a)) {
-				usr = JSingleton.getSessionVerifier().verify(jmsg.header());
-				upload(resp, jmsg.body(0), usr);
-			}
-			else if (A.download.equals(a))
-				download(resp.getOutputStream(), jmsg.body(0), usr);
-			else {
+			if (A.records.equals(a) || A.collect.equals(a) || A.rec.equals(a) || A.download.equals(a)) {
+				// Session less
+				IUser usr = robot;
 				if (A.records.equals(a)) // load
 					rsp = album(jmsg.body(0), usr);
 				else if (A.collect.equals(a))
 					rsp = collect(jmsg.body(0), usr);
 				else if (A.rec.equals(a))
 					rsp = rec(jmsg.body(0), usr);
-				else if (A.insertPhoto.equals(a)) {
-					usr = JSingleton.getSessionVerifier().verify(jmsg.header());
-					rsp = createPhoto(jmsg.body(0), usr);
-				}
-				else if (A.selectSyncs.equals(a)) {
-					usr = JSingleton.getSessionVerifier().verify(jmsg.header());
-					rsp = selectSyncs(jmsg.body(0), usr);
-				}
-				else
-					throw new SemanticException(
-							"request.body.a can not handled: %s\\n" +
-							"Only a = [%s, %s, %s, %s, %s, %s, %s, %s] are supported.",
-							jreq.a(), A.records, A.collect, A.rec, A.insertPhoto,
-									  A.update, A.download, A.upload, A.del );
-
-				// Utils.logi(rsp.toString());
-				rsp.syncing = jmsg.body(0).syncing;
-				write(resp, ok(rsp));
+				else if (A.download.equals(a))
+					download(resp.getOutputStream(), jmsg.body(0), usr);
 			}
+			else {
+				// session required
+				IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
+				if (A.upload.equals(a))
+					upload(resp, jmsg.body(0), usr);
+				else if (A.insertPhoto.equals(a))
+					rsp = createPhoto(jmsg.body(0), usr);
+				else if (A.selectSyncs.equals(a))
+					rsp = querySyncs(jmsg.body(0), usr);
+				else if (DocsReq.A.blockStart.equals(a))
+					rsp = startBlocks(jmsg.body(0), usr);
+				else if (DocsReq.A.blockUp.equals(a))
+					rsp = uploadBlock(jmsg.body(0), usr);
+				else if (DocsReq.A.blockEnd.equals(a))
+					rsp = endBlock(jmsg.body(0), usr);
+				else throw new SemanticException(
+						"request.body.a can not handled request: %s",
+						jreq.a());
+			}
+			rsp.syncing = jmsg.body(0).syncing();
+			write(resp, ok(rsp));
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -151,18 +156,59 @@ public class Albums extends ServPort<AlbumReq> {
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
+		} catch (InterruptedException e) {
+			if (Anson.verbose)
+				e.printStackTrace();
 		} finally {
 			resp.flushBuffer();
 		}
 	}
 
-	AlbumResp selectSyncs(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
-		if (req.syncQueries == null)
+	AlbumResp startBlocks(AlbumReq body, IUser usr) throws IOException, SemanticException, SQLException {
+		if (blockChains == null)
+			blockChains = new HashMap<String, BlockChain>(2);
+
+		String conn = Connects.uri2conn(body.uri());
+		String extroot = ((ShExtFile) DATranscxt
+			.getHandler(conn, tablPhotos, smtype.extFile))
+			.getFileRoot();
+		BlockChain chain = new BlockChain(extroot, usr.sessionId(), body.clientpath);
+		// FIXME security breach?
+		String id = chain.id();
+
+		if (blockChains.containsKey(id))
+			throw new SemanticException("Why started again?");
+
+		blockChains.put(id, chain);
+		return (AlbumResp) new AlbumResp().chainId(id);
+	}
+
+	AlbumResp uploadBlock(AlbumReq body, IUser usr) throws SemanticException, IOException, SQLException {
+		String id = body.chainId();
+		if (!blockChains.containsKey(id))
+			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
+
+		BlockChain chain = blockChains.get(id);
+		chain.appendBlock(body);
+		return (AlbumResp) new AlbumResp().blockSeq(body.blockSeq());
+	}
+
+	AlbumResp endBlock(AlbumReq body, IUser usr) throws SQLException, IOException, InterruptedException, AnsonException {
+		blockChains.get(body.chainId()).closeChain();
+		blockChains.remove(body.chainId());
+
+		AlbumResp ack = new AlbumResp();
+		ack.blockSeqReply = body.blockSeq();
+		return ack;
+	}
+
+	AlbumResp querySyncs(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+		if (req.syncQueries() == null)
 			throw new SemanticException("Null Query - invalide request.");
 
-		ArrayList<String> paths = new ArrayList<String>(req.syncQueries.size());
-		ArrayList<String[]> orders = new ArrayList<String[]>(req.syncQueries.size());
-		for (SyncRec s : req.syncQueries) {
+		ArrayList<String> paths = new ArrayList<String>(req.syncQueries().size());
+		ArrayList<String[]> orders = new ArrayList<String[]>(req.syncQueries().size());
+		for (SyncRec s : req.syncQueries()) {
 			paths.add(s.fullpath());
 			orders.add(new String[] {String.format("pid = '%s'", s.fullpath())});
 		}
@@ -170,7 +216,7 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = (AnResultset) st.select(tablPhotos)
 			.col("clientpath").col("1", "syncFlag")
 			.whereIn("clientpath", paths)
-			.whereEq("device", req.syncing.device)
+			.whereEq("device", req.syncing().device)
 			.orderby(orders)
 			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 			.rs(0);
@@ -182,7 +228,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 	void download(OutputStream ofs, DocsReq freq, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(uri);
+		String conn = Connects.uri2conn(freq.uri());
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st
 			.select(tablPhotos)
@@ -203,7 +249,7 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 
 	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
-		String conn = Connects.uri2conn(uri);
+		String conn = Connects.uri2conn(req.uri());
 
 		Insert ins = st
 				.insert(tablPhotos, usr)
