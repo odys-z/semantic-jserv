@@ -25,7 +25,7 @@ public class AlbumResp extends DocsResp {
 	Photo photo;
 	public Photo photo() { return photo; }
 
-	public AlbumResp() throws SQLException {
+	public AlbumResp() {
 	}
 	
 	public AlbumResp rec(AnResultset rs) throws SQLException {

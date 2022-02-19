@@ -55,15 +55,15 @@ public class AlbumClientier extends Semantier {
 	}
 	
     // public int blockSize = 2048 * 2048;
-	public AlbumClientier asyncVideos(List<IFileDescriptor> videos, ClientDocUser user, OnOk onOk, OnError onErr) {
+	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos, ClientDocUser user, OnOk onOk, OnError onErr) {
 		ErrorCtx errHandler = new ErrorCtx() {
 			@Override
-			public void onError(MsgCode code, AnsonResp obj) throws SemanticException {
+			public void onError(MsgCode code, AnsonResp obj) {
 				onErr.err(code, obj.msg());
 			}
 
 			@Override
-			public void onError(MsgCode code, String msg, Object ...args) throws SemanticException {
+			public void onError(MsgCode code, String msg, Object ...args) {
 				onErr.err(code, msg, (String[])args);
 			}
 		};
@@ -119,7 +119,10 @@ public class AlbumClientier extends Semantier {
 					finally { ifs.close(); }
 
 					reslts.add(resp);
-					onOk.ok(resp);
+
+					AlbumResp res = new AlbumResp();
+					res.data().put("results", reslts);
+					onOk.ok(res);
 				}
 			} catch (IOException e) {
 				onErr.err(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());
@@ -128,6 +131,71 @@ public class AlbumClientier extends Semantier {
 			}
 	    } } ).start();
 		return this;
+	}
+	
+	public AlbumResp syncVideos(List<? extends IFileDescriptor> videos, ClientDocUser user, ErrorCtx ... onErr) {
+		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+
+        DocsResp resp = null;
+		try {
+			String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
+			AnsonHeader header = client.header().act(act);
+
+			List<DocsResp> reslts = new ArrayList<DocsResp>(videos.size());
+
+			for (IFileDescriptor p : videos) {
+				DocsReq req = new DocsReq()
+						.blockStart(p, user);
+				req.a(DocsReq.A.blockStart);
+
+				AnsonMsg<DocsReq> q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
+										.header(header);
+
+				resp = client.commit(q, errHandler);
+
+				int seq = 0;
+				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
+				try {
+					StringBuilder b64 = AESHelper.encode64(ifs);
+					while (b64 != null) {
+						req = new AlbumReq().blockUp(seq, resp, b64, user);
+						req.a(DocsReq.A.blockUp);
+						seq++;
+
+						q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
+									.header(header);
+
+						resp = client.commit(q, errHandler);
+					}
+					req = new DocsReq().blockEnd(resp, user);
+					req.a(DocsReq.A.blockEnd);
+					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
+								.header(header);
+					resp = client.commit(q, errHandler);
+				}
+				catch (Exception ex) {
+					req = new DocsReq().blockAbort(resp, user);
+					req.a(DocsReq.A.blockAbort);
+					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
+								.header(header);
+					resp = client.commit(q, errHandler);
+
+					throw ex;
+				}
+				finally { ifs.close(); }
+
+				reslts.add(resp);
+
+				AlbumResp res = new AlbumResp();
+				res.data().put("results", reslts);
+				return res;
+			}
+		} catch (IOException e) {
+			errHandler.onError(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());
+		} catch (AnsonException | SemanticException e) { 
+			errHandler.onError(MsgCode.exGeneral, clientUri, e.getClass().getName(), e.getMessage());
+		}
+		return null;
 	}
 
 	public String download(Photo photo, String localpath)
@@ -180,12 +248,12 @@ public class AlbumClientier extends Semantier {
 
 				resp = client.commit(q, new ErrorCtx() {
 					@Override
-					public void onError(MsgCode code, AnsonResp obj) throws SemanticException {
+					public void onError(MsgCode code, AnsonResp obj) {
 						onErr.err(code, obj.msg());
 					}
 
 					@Override
-					public void onError(MsgCode code, String msg, Object ...args) throws SemanticException {
+					public void onError(MsgCode code, String msg, Object ...args) {
 						onErr.err(code, msg, (String[])args);
 					}
 				});
@@ -253,12 +321,12 @@ public class AlbumClientier extends Semantier {
 
 					resp = client.commit(q, new ErrorCtx() {
 						@Override
-						public void onError(MsgCode code, AnsonResp obj) throws SemanticException {
+						public void onError(MsgCode code, AnsonResp obj) {
 							onErr.err(code, obj.msg());
 						}
 
 						@Override
-						public void onError(MsgCode code, String msg, Object ...args) throws SemanticException {
+						public void onError(MsgCode code, String msg, Object ...args) {
 							onErr.err(code, msg, (String[])args);
 						}
 					});
@@ -272,5 +340,27 @@ public class AlbumClientier extends Semantier {
 				onErr.err(MsgCode.exGeneral, clientUri, e.getClass().getName(), e.getMessage());
 			}
 	    } } ).start();
+	}
+
+	public AlbumResp selectPhoto(String docId, ErrorCtx ... onErr) {
+		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
+		AnsonHeader header = client.header().act(act);
+
+		AlbumReq req = new AlbumReq().selectPhoto(docId);
+		// req.a(A.rec);
+
+		AlbumResp resp = null;
+		try {
+			AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
+										.header(header);
+
+			resp = client.commit(q, errCtx);
+		} catch (AnsonException | SemanticException e) {
+			errHandler.onError(MsgCode.exSemantic, e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
+		} catch (IOException e) {
+			errHandler.onError(MsgCode.exIo, e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
+		}
+		return resp;
 	}
 }

@@ -24,7 +24,7 @@ class BlockChainTest {
 	 */
 	@Test
 	void testBlockChain() throws IOException, SemanticException, InterruptedException, AnsonException {
-		ClientDocUser user = new ClientDocUser("tester", "not used", "local device");
+		ClientDocUser user = new ClientDocUser("tester", "local device");
 		
 		chain = new BlockChain("src/test/results", "session-test", "/sdcard/0/Downloads/test.3gp");
 		// FIXME security breach?

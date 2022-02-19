@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.FileUtils;
@@ -24,6 +26,10 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.tier.docs.ClientDocUser;
+import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.SyncRec;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -144,7 +150,7 @@ class AlbumsTest {
 		}
 	}
 	
-	/**Tet append to collection with a pic.
+	/**Test append to collection with a pic.
 	 * @throws TransException
 	 * @throws IOException
 	 * @throws AnsonException
@@ -185,4 +191,25 @@ class AlbumsTest {
 		assertEquals(6, resp.photo().pid.length());	
 	}
 	
+	@Test
+	void testVideoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
+		String localFolder = "test/res";
+		String filename = "ignored.MOV";
+
+		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
+		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
+
+		List<SyncRec> videos = new ArrayList<SyncRec>();
+		videos.add((SyncRec) new SyncRec().fullpath(FilenameUtils.concat(localFolder, filename)));
+
+		ClientDocUser photoUser = new ClientDocUser("tester", "device-test");
+		AlbumResp resp = tier.syncVideos(videos, photoUser);
+
+		List<DocsResp> lst = (List<DocsResp>) resp.data().get("results");
+		for (DocsResp d : lst) {
+			String docId = d.recId();
+			AlbumResp rp = tier.selectPhoto(docId);
+			assertEquals(rp.clientname(), d.clientname());
+		}
+	}
 }

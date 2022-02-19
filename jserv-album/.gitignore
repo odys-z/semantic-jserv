@@ -2,5 +2,7 @@
 download
 volume/Robot*
 volume/**/* my.jpg
+volume/**/ignored*.*
 volume/ody/2022_02/*
 test/results
+test/res/ignore*.*

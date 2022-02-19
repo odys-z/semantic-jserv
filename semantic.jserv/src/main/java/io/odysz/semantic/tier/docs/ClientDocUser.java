@@ -1,10 +1,14 @@
 package io.odysz.semantic.tier.docs;
 
+/**
+ * @deprecated should be replaced with {@link io.odysz.semantic.jsession.SessionInf}.
+ * @author ody
+ *
+ */
 public class ClientDocUser {
 
-    public ClientDocUser(String usrid, String pswd, String device) {
+    public ClientDocUser(String usrid, String device) {
 		this.uid  = usrid;
-		this.pswd = pswd;
 		this.device = device;
 	}
 
@@ -22,10 +26,10 @@ public class ClientDocUser {
 		return this;
 	}
 
-	String pswd;
-	public String pswd() {return pswd; }
-	public ClientDocUser pswd(String psword) {
-		pswd = psword;
-		return this;
-	}
+//	String pswd;
+//	public String pswd() {return pswd; }
+//	public ClientDocUser pswd(String psword) {
+//		pswd = psword;
+//		return this;
+//	}
 }
