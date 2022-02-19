@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.odysz.semantic.tier.docs;
 
 import io.odysz.anson.Anson;
 

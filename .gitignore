@@ -2,3 +2,4 @@
 main.net
 .settings
 .classpath
+src/test/results/

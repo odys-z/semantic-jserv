@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.SyncingPage;
 
 public class AlbumResp extends DocsResp {
 
