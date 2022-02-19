@@ -10,6 +10,12 @@ public class DocsResp extends AnsonResp implements IFileDescriptor {
 	long size;
 	long size() { return size; } 
 
+	SyncingPage syncing;
+	public DocsResp syncing(SyncingPage page) {
+		syncing = page;
+		return this;
+	}
+
 	String recId;
 	public DocsResp recId(String recid) {
 		recId = recid;
@@ -35,6 +41,7 @@ public class DocsResp extends AnsonResp implements IFileDescriptor {
 	}
 	
 	String chainId;
+	public String chainId() { return chainId; }
 	public DocsResp chainId(String blockChain) {
 		chainId = blockChain;
 		return this;

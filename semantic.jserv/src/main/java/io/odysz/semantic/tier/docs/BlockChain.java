@@ -1,8 +1,5 @@
 package io.odysz.semantic.tier.docs;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -49,8 +46,9 @@ public class BlockChain {
 
 		// String clientname = FilenameUtils.getName(clientpath);
 		outputPath = EnvPath.decodeUri(extroot, ssId, clientpath);
-		String parentpath = FilenameUtils.getPath(outputPath);
-		try { new File(parentpath).mkdirs(); } catch (Exception ex) {}
+		String parentpath = FilenameUtils.getFullPath(outputPath);
+		try { new File(parentpath).mkdirs(); }
+		catch (Exception ex) { ex.printStackTrace(); }
 
 		chainId = FilenameUtils.concat(extroot, ssId, clientpath);
 
@@ -62,7 +60,7 @@ public class BlockChain {
 
 	}
 
-	public BlockChain appendBlock(DocsReq blockReq) throws IOException {
+	public BlockChain appendBlock(DocsReq blockReq) throws IOException, AnsonException {
 		DocsReq pre = waitings;
 		DocsReq nxt = waitings.nextBlock;
 
@@ -73,9 +71,10 @@ public class BlockChain {
 		pre.nextBlock = blockReq;
 		blockReq.nextBlock = nxt;
 
-		assertNotNull(ofs);
-		if (waitings.nextBlock != null)
-			assertTrue(waitings.blockSeq < waitings.nextBlock.blockSeq);
+		// assertNotNull(ofs); makes out going stream in trouble?
+		if (ofs == null) throw new IOException("Output stream broken!");
+		if (waitings.nextBlock != null && waitings.blockSeq >= waitings.nextBlock.blockSeq)
+			throw new AnsonException(0, "Handling block's sequence error.");
 
 		while (waitings.nextBlock != null && waitings.blockSeq + 1 == waitings.nextBlock.blockSeq) {
 			ofs.write(AESHelper.decode64(waitings.nextBlock.uri64));

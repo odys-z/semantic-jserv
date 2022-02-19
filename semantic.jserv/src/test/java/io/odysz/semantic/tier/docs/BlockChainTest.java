@@ -35,17 +35,17 @@ class BlockChainTest {
 		DocsResp resp = new DocsResp().chainId(id);
 		String b64;
 		b64 = AESHelper.encode64("1. Hello\n".getBytes());
-		DocsReq b0 = new DocsReq().blockUp(0, resp, b64, user);
+		DocsReq b0 = new DocsReq().blockUp(id, 0, resp, b64, user);
 		b64 = AESHelper.encode64("2. Bonjour\n".getBytes());
-		DocsReq b1 = new DocsReq().blockUp(1, resp, b64, user);
+		DocsReq b1 = new DocsReq().blockUp(id, 1, resp, b64, user);
 		b64 = AESHelper.encode64("3. こんにちは\n".getBytes());
-		DocsReq b2 = new DocsReq().blockUp(2, resp, b64, user);
+		DocsReq b2 = new DocsReq().blockUp(id, 2, resp, b64, user);
 		b64 = AESHelper.encode64("4. Привет\n".getBytes());
-		DocsReq b3 = new DocsReq().blockUp(3, resp, b64, user);
+		DocsReq b3 = new DocsReq().blockUp(id, 3, resp, b64, user);
 		b64 = AESHelper.encode64("5. 안녕하세요\n".getBytes());
-		DocsReq b4 = new DocsReq().blockUp(4, resp, b64, user);
+		DocsReq b4 = new DocsReq().blockUp(id, 4, resp, b64, user);
 		b64 = AESHelper.encode64("6. नमस्ते \n".getBytes());
-		DocsReq b5 = new DocsReq().blockUp(5, resp, b64, user);
+		DocsReq b5 = new DocsReq().blockUp(id, 5, resp, b64, user);
 
 		chain.appendBlock(b0)
 			.appendBlock(b4)

@@ -2,6 +2,7 @@ package io.odysz.semantic.tier.docs;
 
 import java.util.ArrayList;
 
+import io.odysz.anson.AnsonField;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -33,6 +34,8 @@ public class DocsReq extends AnsonBody {
 	public String docName;
 	public String clientpath;
 	public String mime;
+
+	@AnsonField(shortoString = true)
 	public String uri64;
 
 	String[] deletings;
@@ -100,16 +103,17 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public DocsReq blockUp(long sequence, DocsResp resp, StringBuilder b64, ClientDocUser usr) throws SemanticException {
+	public DocsReq blockUp(String chainId, long sequence, DocsResp resp, StringBuilder b64, ClientDocUser usr) throws SemanticException {
 		String uri64 = b64.toString();
-		return blockUp(sequence, resp, uri64, usr);
+		return blockUp(chainId, sequence, resp, uri64, usr);
 	}
 	
-	public DocsReq blockUp(long sequence, DocsResp resp, String s64, ClientDocUser usr) throws SemanticException {
+	public DocsReq blockUp(String chainId, long sequence, DocsResp resp, String s64, ClientDocUser usr) throws SemanticException {
 		this.device = usr.device();
 		if (LangExt.isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
 
+		this.chainId = chainId;
 		this.blockSeq = sequence;
 
 		this.docId = resp.recId();
@@ -120,19 +124,20 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public DocsReq blockAbort(DocsResp resp, ClientDocUser usr) throws SemanticException {
+	public DocsReq blockAbort(DocsResp startAck, ClientDocUser usr) throws SemanticException {
 		this.device = usr.device();
 
-		this.blockSeq = resp.blockSeqReply;
+		this.blockSeq = startAck.blockSeqReply;
 
-		this.docId = resp.recId();
-		this.clientpath = resp.fullpath();
+		this.docId = startAck.recId();
+		this.clientpath = startAck.fullpath();
 
 		this.a = A.blockAbort;
 		return this;
 	}
 
-	public DocsReq blockEnd(DocsResp resp, ClientDocUser usr) throws SemanticException {
+	public DocsReq blockEnd(String chainId, DocsResp resp, ClientDocUser usr) throws SemanticException {
+		this.chainId = chainId;
 		this.device = usr.device();
 
 		this.blockSeq = resp.blockSeqReply;
