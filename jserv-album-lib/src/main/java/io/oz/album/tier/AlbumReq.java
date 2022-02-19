@@ -142,71 +142,13 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-//	public AlbumReq querySync(IFileDescriptor p) {
-//		if (syncQueries == null)
-//			syncQueries = new ArrayList<SyncRec>();
-//		syncQueries.add(new SyncRec(p));
-//		return this;
-//	}
-//
-//	public AlbumReq syncing(SyncingPage page) {
-//		this.syncing = page;
-//		return this;
-//	}
-//
-//	public AlbumReq startBlocksUp(IFileDescriptor file, ClientPhotoUser usr) throws SemanticException {
-//		this.device = usr.device();
-//		if (LangExt.isblank(this.device, ".", "/"))
-//			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files. %s", file.fullpath());
-//		this.photo = new Photo();
-//		this.photo.clientpath = file.fullpath(); 
-//		this.photo.pname = file.clientname();
-//		this.blockSeq = 0;
-//		
-//		this.a = A.blockStart;
-//		return this;
-//	}
-//
-//	public AlbumReq blockUp(DocsResp resp, StringBuilder b64, ClientPhotoUser usr) throws SemanticException {
-//		this.device = usr.device();
-//		if (LangExt.isblank(this.device, ".", "/"))
-//			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
-//
-//		this.blockSeq = resp.blockSeqReply + 1;
-//
-//		this.photo = new Photo();
-//		this.photo.recId = resp.recId();
-//		this.photo.clientpath = resp.fullpath();
-//		this.photo.uri = b64.toString();
-//
-//		this.a = A.blockUp;
-//		return this;
-//	}
-//
-//	public AlbumReq blockAbort(DocsResp resp, ClientPhotoUser usr) throws SemanticException {
-//		this.device = usr.device();
-//
-//		this.blockSeq = resp.blockSeqReply;
-//
-//		this.photo = new Photo();
-//		this.photo.recId = resp.recId();
-//		this.photo.clientpath = resp.fullpath();
-//
-//		this.a = A.blockAbort;
-//		return this;
-//	}
-//
-//	public AlbumReq blockEnd(DocsResp resp, ClientPhotoUser usr) throws SemanticException {
-//		this.device = usr.device();
-//
-//		this.blockSeq = resp.blockSeqReply;
-//
-//		this.photo = new Photo();
-//		this.photo.recId = resp.recId();
-//		this.photo.clientpath = resp.fullpath();
-//
-//		this.a = A.blockEnd;
-//		return this;
-//	}
+	public AlbumReq selectPhoto(String pid) {
+		this.docId = pid;
+		this.photo = new Photo();
+		this.photo.pid = pid;
+		this.a = A.rec;
+
+		return this;
+	}
 
 }

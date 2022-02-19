@@ -7,6 +7,8 @@ public interface IFileDescriptor {
 	IFileDescriptor recId(String recId);
 
 	String fullpath();
+	IFileDescriptor fullpath(String clientpath);
+
 	String clientname();
 
 	default public String mime() { return null; }

@@ -333,7 +333,16 @@ public class Albums extends ServPort<AlbumReq> {
 	protected static AlbumResp rec(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 		String fileId = req.docId;
-		AnResultset rs = (AnResultset) st.select(tablPhotos)
+		AnResultset rs = (AnResultset) st.select(tablPhotos, "p")
+			.j("a_users", "u", "u.userId = p.shareby")
+			.j(tablCollects, "c", "c.cid = p.cid")
+			.col("pid").col("pname").col("pdate")
+			.col("yyyy_mm")
+			.col("clientpath")
+			.col("userName", "shareby")
+			.col("sharedate")
+			.col("tags").col("geox").col("geoy")
+			.col("exi")
 			.whereEq("pid", fileId)
 			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 			.rs(0);

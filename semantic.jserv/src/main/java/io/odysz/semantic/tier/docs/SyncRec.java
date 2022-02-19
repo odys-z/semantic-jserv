@@ -33,6 +33,12 @@ public class SyncRec extends Anson implements IFileDescriptor {
 	}
 
 	@Override
+	public IFileDescriptor fullpath(String clientpath) {
+		this.clientpath = clientpath;
+		return this;
+	}
+
+	@Override
 	public String clientname() {
 		return filename;
 	}

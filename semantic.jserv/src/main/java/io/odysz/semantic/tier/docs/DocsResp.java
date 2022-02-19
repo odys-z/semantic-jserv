@@ -20,6 +20,10 @@ public class DocsResp extends AnsonResp implements IFileDescriptor {
 
 	String fullpath;
 	public String fullpath() { return fullpath; }
+	public IFileDescriptor fullpath(String fullpath) {
+		this.fullpath = fullpath;
+		return this;
+	}
 
 	String filename;
 	public String clientname() { return filename; }
