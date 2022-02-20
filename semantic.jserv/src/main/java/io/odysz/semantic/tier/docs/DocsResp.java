@@ -46,4 +46,9 @@ public class DocsResp extends AnsonResp implements IFileDescriptor {
 		chainId = blockChain;
 		return this;
 	}
+	
+	String cdate;
+
+	@Override
+	public String cdate() { return cdate; }
 }
