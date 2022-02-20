@@ -195,9 +195,10 @@ public class Albums extends ServPort<AlbumReq> {
 		String extroot = ((ShExtFile) DATranscxt
 			.getHandler(conn, tablPhotos, smtype.extFile))
 			.getFileRoot();
-		BlockChain chain = new BlockChain(extroot, usr.sessionId(), body.clientpath, body.createDate);
+		BlockChain chain = new BlockChain(extroot, usr.uid(), usr.sessionId(), body.clientpath, body.createDate);
+
 		// FIXME security breach?
-		String id = chain.id();
+		String id = usr.sessionId() + " " + chain.clientpath;
 
 		if (blockChains.containsKey(id))
 			throw new SemanticException("Why started again?");
@@ -207,7 +208,8 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, SQLException, TransException {
-		String id = body.chainId();
+		// String id = body.chainId();
+		String id = chainId(usr, body.clientpath);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
 
@@ -218,10 +220,11 @@ public class Albums extends ServPort<AlbumReq> {
 
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		String id = body.chainId();
+		String id = chainId(usr, body.clientpath);
 		BlockChain chain;
 		if (blockChains.containsKey(id)) {
-			blockChains.get(id).closeChain();
+			blockChains.get(id)
+					   .closeChain();
 			chain = blockChains.remove(id);
 		}
 		else
@@ -260,16 +263,23 @@ public class Albums extends ServPort<AlbumReq> {
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		String id = body.chainId();
-		if (blockChains.containsKey(id)) {
-			blockChains.get(id).closeChain();
-			blockChains.remove(id);
-		}
-
+		//String id = body.chainId();
+		String id = chainId(usr, body.clientpath);
 		DocsResp ack = new DocsResp();
-		ack.blockSeqReply = body.blockSeq();
-		// TODO remove file (test)
+		if (blockChains.containsKey(id)) {
+			blockChains.get(id)
+					   .abortChain();
+			blockChains.remove(id);
+			ack.blockSeqReply = body.blockSeq();
+		}
+		else
+			ack.blockSeqReply = -1;
+
 		return ack;
+	}
+
+	private String chainId(IUser usr, String clientpathRaw) {
+		return usr.sessionId() + " " + clientpathRaw;
 	}
 
 	AlbumResp querySyncs(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
@@ -299,24 +309,6 @@ public class Albums extends ServPort<AlbumReq> {
 	void download(OutputStream ofs, DocsReq freq, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(freq.uri());
-//		ISemantext stx = st.instancontxt(conn, usr);
-//		AnResultset rs = (AnResultset) st
-//			.select(tablPhotos)
-//			.col("uri").col("folder")
-//			.whereEq("pid", freq.docId)
-//			.rs(stx)
-//			.rs(0);
-//
-//		if (!rs.next())
-//			throw new SemanticException("Can't find file for id: %s (permission of %s)",
-//					freq.docId, usr.uid());
-	
-		// keep file system root the same with semantics configuration 
-//		String extroot = ((ShExtFile) DATranscxt
-//				.getHandler(conn, tablPhotos, smtype.extFile))
-//				.getFileRoot();
-//		FileStream.sendFile(ofs, EnvPath.decodeUri(extroot, rs.getString("uri")));
-
 		FileStream.sendFile(ofs, resolvExtroot(conn, freq.docId, usr));
 	}
 	
@@ -338,7 +330,6 @@ public class Albums extends ServPort<AlbumReq> {
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
-	
 
 	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());

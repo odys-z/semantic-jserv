@@ -17,7 +17,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
-import io.odysz.semantic.tier.docs.ClientDocUser;
+import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
@@ -56,18 +56,18 @@ public class AlbumClientier extends Semantier {
 		return client.commit(q, errCtx);
 	}
 	
-	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos, ClientDocUser user, OnOk onOk, OnError onErr) {
-		ErrorCtx errHandler = new ErrorCtx() {
-			@Override
-			public void onError(MsgCode code, AnsonResp obj) {
-				onErr.err(code, obj.msg());
-			}
-
-			@Override
-			public void onError(MsgCode code, String msg, Object ...args) {
-				onErr.err(code, msg, (String[])args);
-			}
-		};
+	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos, SessionInf user, OnOk onOk, OnError onErr) {
+//		ErrorCtx errHandler = new ErrorCtx() {
+//			@Override
+//			public void onError(MsgCode code, AnsonResp obj) {
+//				onErr.err(code, obj.msg());
+//			}
+//
+//			@Override
+//			public void onError(MsgCode code, String msg, Object ...args) {
+//				onErr.err(code, msg, (String[])args);
+//			}
+//		};
 
 		new Thread(new Runnable() {
 			public void run() {
@@ -85,7 +85,7 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 	
-	public List<DocsResp> syncVideos(List<? extends IFileDescriptor> videos, ClientDocUser user, ErrorCtx ... onErr) {
+	public List<DocsResp> syncVideos(List<? extends IFileDescriptor> videos, SessionInf user, ErrorCtx ... onErr) {
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 
         DocsResp resp = null;
@@ -104,14 +104,14 @@ public class AlbumClientier extends Semantier {
 										.header(header);
 
 				resp = client.commit(q, errHandler);
-				String chainId = resp.chainId();
+				// String chainId = resp.chainId();
 
 				int seq = 0;
 				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
 				try {
 					String b64 = AESHelper.encode64(ifs, blocksize);
 					while (b64 != null) {
-						req = new DocsReq().blockUp(chainId, seq, resp, b64, user);
+						req = new DocsReq().blockUp(seq, resp, b64, user);
 						req.a(DocsReq.A.blockUp);
 						seq++;
 
@@ -121,7 +121,7 @@ public class AlbumClientier extends Semantier {
 						resp = client.commit(q, errHandler);
 						b64 = AESHelper.encode64(ifs, blocksize);
 					}
-					req = new DocsReq().blockEnd(chainId, resp, user);
+					req = new DocsReq().blockEnd(resp, user);
 					req.a(DocsReq.A.blockEnd);
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 								.header(header);
@@ -221,7 +221,8 @@ public class AlbumClientier extends Semantier {
 		return null;
 	}
 
-	public List<DocsResp> syncPhotos(List<? extends IFileDescriptor> photos, ClientDocUser user) throws SemanticException, IOException, AnsonException {
+	public List<DocsResp> syncPhotos(List<? extends IFileDescriptor> photos, SessionInf user)
+			throws SemanticException, IOException, AnsonException {
 		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
@@ -229,7 +230,7 @@ public class AlbumClientier extends Semantier {
 
 		for (IFileDescriptor p : photos) {
 			AlbumReq req = new AlbumReq()
-					.device(user.device())
+					.device(user.device)
 					.createPhoto(p, user);
 			req.a(A.insertPhoto);
 
@@ -252,7 +253,7 @@ public class AlbumClientier extends Semantier {
 	 * @throws IOException
 	 * @throws AnsonException
 	 */
-	public void asyncPhotos(List<? extends IFileDescriptor> photos, ClientDocUser user, OnOk onOk, OnError onErr)
+	public void asyncPhotos(List<? extends IFileDescriptor> photos, SessionInf user, OnOk onOk, OnError onErr)
 			throws SemanticException, IOException, AnsonException {
 		new Thread(new Runnable() {
 	        public void run() {
