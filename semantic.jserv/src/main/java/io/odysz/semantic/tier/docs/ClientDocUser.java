@@ -25,11 +25,4 @@ public class ClientDocUser {
 		uid = userId;
 		return this;
 	}
-
-//	String pswd;
-//	public String pswd() {return pswd; }
-//	public ClientDocUser pswd(String psword) {
-//		pswd = psword;
-//		return this;
-//	}
 }
