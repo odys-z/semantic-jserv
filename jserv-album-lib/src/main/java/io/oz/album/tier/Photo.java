@@ -11,6 +11,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.image.ImageMetadataExtractor;
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.Anson;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
@@ -23,12 +24,17 @@ import io.odysz.transact.sql.parts.condition.Funcall;
  * @author ody
  *
  */
-public class Photo extends PhotoRecord {
-	public String pid;
+public class Photo extends Anson {
+	public String recId;
 	public String pname;
-	public String uri;
+
+	public String clientpath;
+
+	public int syncFlag;
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;
+
+	public String uri;
 	public String shareby;
 	public String sharedate;
 	public String geox;
@@ -45,7 +51,7 @@ public class Photo extends PhotoRecord {
 	public Photo() {}
 	
 	public Photo(AnResultset rs) throws SQLException {
-		this.pid = rs.getString("pid");
+		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
 		this.uri = rs.getString("uri");
 		try {

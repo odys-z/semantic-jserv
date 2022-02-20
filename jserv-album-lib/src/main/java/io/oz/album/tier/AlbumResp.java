@@ -34,7 +34,7 @@ public class AlbumResp extends DocsResp {
 	public AlbumResp photo(Photo photo, String ... pid) {
 		this.photo = photo;
 		if (pid != null && pid.length > 0)
-			this.photo.pid = pid[0];
+			this.photo.recId = pid[0];
 		return this;
 	}
 

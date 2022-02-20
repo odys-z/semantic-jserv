@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 
 class BlockChainTest {
 	BlockChain chain;
@@ -23,10 +24,10 @@ class BlockChainTest {
 	 * @throws InterruptedException 
 	 */
 	@Test
-	void testBlockChain() throws IOException, SemanticException, InterruptedException, AnsonException {
+	void testBlockChain() throws IOException, TransException, InterruptedException, AnsonException {
 		ClientDocUser user = new ClientDocUser("tester", "local device");
 		
-		chain = new BlockChain("src/test/results", "session-test", "/sdcard/0/Downloads/test.3gp");
+		chain = new BlockChain("src/test/results", "session-test", "/sdcard/0/Downloads/test.3gp", "1911-10-10 10:10:10");
 		// FIXME security breach?
 		String id = chain.id();
 
