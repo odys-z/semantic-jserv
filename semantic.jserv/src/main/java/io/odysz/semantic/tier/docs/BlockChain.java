@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 
@@ -24,43 +26,38 @@ public class BlockChain {
 	public final String clientname;
 	public final String cdate;
 
-	final String chainId;
-	public String id() { return chainId; }
-
 	protected final String extroot;
 	public final String outputPath;
 	protected final OutputStream ofs;
 	
 	protected final DocsReq waitings;
 
-	/**Save file to $VALUME_HOME/ssid/tablDoc/clientname
+	/**Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
 	 * @param rootpath configured root path, e.g. resolved by {@link io.odysz.semantic.ShExtFile}
+	 * @param usrId
 	 * @param ssId
-	 * @param clientpath
+	 * @param clientpathRaw - client path that can match at client's environment (saving at server side replaced some special characters)
 	 * @param createDate 
 	 * @throws IOException
 	 * @throws TransException 
 	 */
-	public BlockChain(String rootpath, String ssId, String clientpath, String createDate) throws IOException, TransException {
-		if (LangExt.isblank(clientpath))
+	public BlockChain(String rootpath, String userId, String ssId, String clientpathRaw, String createDate) throws IOException, TransException {
+		if (LangExt.isblank(clientpathRaw))
 			throw new TransException("Client path is neccessary to start a block chain transaction.");
 		this.ssId = ssId;
 		this.cdate = createDate;
-		this.clientpath = clientpath;
+		this.clientpath = clientpathRaw;
 
-		clientpath = clientpath.replaceFirst("^/", "");
+		String clientpath = clientpathRaw.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
-		extroot = FilenameUtils.concat("uploading-temp", clientpath);
+		extroot = FilenameUtils.concat(rootpath, userId, "uploading-temp", ssId);
 
 		clientname = FilenameUtils.getName(clientpath);
-		outputPath = EnvPath.decodeUri(extroot, ssId, clientname);
+		outputPath = EnvPath.decodeUri(extroot, clientpath);
 
 		String parentpath = FilenameUtils.getFullPath(outputPath);
-		try { new File(parentpath).mkdirs(); }
-		catch (Exception ex) { ex.printStackTrace(); }
-
-		chainId = FilenameUtils.concat(extroot, ssId, clientpath);
+		new File(parentpath).mkdirs(); 
 
 		File f = new File(outputPath);
 		f.createNewFile();
@@ -94,13 +91,34 @@ public class BlockChain {
 		return this;
 	}
 
-	public void closeChain() throws IOException, InterruptedException, TransException {
+	public void abortChain() throws IOException, InterruptedException, TransException {
 		if (waitings.nextBlock != null)
 			Thread.sleep(1000);
 
 		ofs.close();
+
+		try { Files.delete(Paths.get(outputPath)); }
+		catch (IOException e) { e.printStackTrace(); }
+
 		if (waitings.nextBlock != null)
 			// some packages lost
 			throw new TransException("Some packages lost. path: %s", clientpath);
+	}
+
+	public String closeChain() throws IOException, InterruptedException, TransException {
+		if (waitings.nextBlock != null)
+			Thread.sleep(1000);
+
+		ofs.close();
+
+		if (waitings.nextBlock != null) {
+			try { Files.delete(Paths.get(outputPath)); }
+			catch (IOException e) { e.printStackTrace(); }
+
+			// some packages lost
+			throw new TransException("Some packages lost. path: %s", clientpath);
+		}
+
+		return outputPath;
 	}
 }

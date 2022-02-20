@@ -27,7 +27,7 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.tier.docs.ClientDocUser;
+import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncRec;
 import io.odysz.semantics.IUser;
@@ -208,7 +208,8 @@ class AlbumsTest {
 		videos.add((SyncRec)
 				new SyncRec().fullpath(FilenameUtils.concat(localFolder, filename)));
 
-		ClientDocUser photoUser = new ClientDocUser("tester", "device-test");
+		SessionInf photoUser = new SessionInf("ssid1234", "tester");
+		photoUser.device = "device-test";
 		List<DocsResp> resps = tier.syncVideos(videos, photoUser);
 
 		assertNotNull(resps);

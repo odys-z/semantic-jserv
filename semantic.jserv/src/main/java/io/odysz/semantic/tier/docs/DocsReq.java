@@ -6,6 +6,7 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 
 public class DocsReq extends AnsonBody {
@@ -29,7 +30,6 @@ public class DocsReq extends AnsonBody {
 		public static final String deprecated = "depr";
 	}
 
-
 	public String docId;
 	public String docName;
 	public String createDate;
@@ -42,12 +42,6 @@ public class DocsReq extends AnsonBody {
 	String[] deletings;
 
 	String docState;
-	
-	/**
-	 * Output stream when this object is used as block chain node.
-	@AnsonField(ignoreTo = true, ignoreFrom = true)
-	FileOutputStream ofs;
-	 */
 	
 	public DocsReq() {
 		super(null, null);
@@ -70,10 +64,6 @@ public class DocsReq extends AnsonBody {
 	protected long blockSeq;
 	public long blockSeq() { return blockSeq; } 
 
-	/** created by jserv, copied from {@link DocsResp} */
-	String chainId;
-	public String chainId() { return chainId; }
-
 	public DocsReq nextBlock;
 
 	public DocsReq querySync(IFileDescriptor p) {
@@ -88,12 +78,8 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-//	public String blockChainId(IUser user) {
-//		return chainId; // user.uid() + "/" + docId;
-//	}
-	
-	public DocsReq blockStart(IFileDescriptor file, ClientDocUser usr) throws SemanticException {
-		this.device = usr.device();
+	public DocsReq blockStart(IFileDescriptor file, SessionInf usr) throws SemanticException {
+		this.device = usr.device;
 		if (LangExt.isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files. %s", file.fullpath());
 		this.clientpath = file.fullpath(); 
@@ -105,17 +91,16 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public DocsReq blockUp(String chainId, long sequence, DocsResp resp, StringBuilder b64, ClientDocUser usr) throws SemanticException {
+	public DocsReq blockUp(long sequence, DocsResp resp, StringBuilder b64, SessionInf usr) throws SemanticException {
 		String uri64 = b64.toString();
-		return blockUp(chainId, sequence, resp, uri64, usr);
+		return blockUp(sequence, resp, uri64, usr);
 	}
 	
-	public DocsReq blockUp(String chainId, long sequence, DocsResp resp, String s64, ClientDocUser usr) throws SemanticException {
-		this.device = usr.device();
+	public DocsReq blockUp(long sequence, DocsResp resp, String s64, SessionInf usr) throws SemanticException {
+		this.device = usr.device;
 		if (LangExt.isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
 
-		this.chainId = chainId;
 		this.blockSeq = sequence;
 
 		this.docId = resp.recId();
@@ -126,8 +111,8 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public DocsReq blockAbort(DocsResp startAck, ClientDocUser usr) throws SemanticException {
-		this.device = usr.device();
+	public DocsReq blockAbort(DocsResp startAck, SessionInf usr) throws SemanticException {
+		this.device = usr.device;
 
 		this.blockSeq = startAck.blockSeqReply;
 
@@ -138,9 +123,8 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public DocsReq blockEnd(String chainId, DocsResp resp, ClientDocUser usr) throws SemanticException {
-		this.chainId = chainId;
-		this.device = usr.device();
+	public DocsReq blockEnd(DocsResp resp, SessionInf usr) throws SemanticException {
+		this.device = usr.device;
 
 		this.blockSeq = resp.blockSeqReply;
 
@@ -155,6 +139,4 @@ public class DocsReq extends AnsonBody {
 		blockSeq = i;
 		return this;
 	}
-
-
 }
