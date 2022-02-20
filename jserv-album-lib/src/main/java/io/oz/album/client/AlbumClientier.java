@@ -33,8 +33,10 @@ public class AlbumClientier extends Semantier {
 
 	private SessionClient client;
 	private ErrorCtx errCtx;
-	private String funcUri;
+//	private String funcUri;
 	private String clientUri;
+
+	public static int blocksize = 3 * 1024 * 1024;
 
 	/**
 	 * @param clientUri - the client function uri this instance will be used for.
@@ -48,13 +50,12 @@ public class AlbumClientier extends Semantier {
 	}
 
 	public AlbumResp getCollect(String collectId) throws SemanticException, IOException, AnsonException {
-		AlbumReq req = new AlbumReq(funcUri).collectId("c-001");
+		AlbumReq req = new AlbumReq(clientUri).collectId("c-001");
 		req.a(A.collect);
 		AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req);
 		return client.commit(q, errCtx);
 	}
 	
-    // public int blockSize = 2048 * 2048;
 	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos, ClientDocUser user, OnOk onOk, OnError onErr) {
 		ErrorCtx errHandler = new ErrorCtx() {
 			@Override
@@ -108,7 +109,7 @@ public class AlbumClientier extends Semantier {
 				int seq = 0;
 				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
 				try {
-					StringBuilder b64 = AESHelper.encode64(ifs);
+					String b64 = AESHelper.encode64(ifs, blocksize);
 					while (b64 != null) {
 						req = new DocsReq().blockUp(chainId, seq, resp, b64, user);
 						req.a(DocsReq.A.blockUp);
@@ -118,6 +119,7 @@ public class AlbumClientier extends Semantier {
 									.header(header);
 
 						resp = client.commit(q, errHandler);
+						b64 = AESHelper.encode64(ifs, blocksize);
 					}
 					req = new DocsReq().blockEnd(chainId, resp, user);
 					req.a(DocsReq.A.blockEnd);
@@ -150,13 +152,13 @@ public class AlbumClientier extends Semantier {
 
 	public String download(Photo photo, String localpath)
 			throws SemanticException, AnsonException, IOException {
-		AlbumReq req = new AlbumReq().download(photo);
+		AlbumReq req = new AlbumReq(clientUri).download(photo);
 		req.a(A.download);
-		return client.download(funcUri, AlbumPort.album, req, localpath);
+		return client.download(clientUri, AlbumPort.album, req, localpath);
 	}
 
 	public AlbumResp insertPhoto(String collId, String fullpath, String clientname) throws SemanticException, IOException, AnsonException {
-		AlbumReq req = new AlbumReq()
+		AlbumReq req = new AlbumReq(clientUri)
 				.createPhoto(collId, fullpath)
 				.photoName(clientname);
 		req.a(A.insertPhoto);
@@ -312,5 +314,10 @@ public class AlbumClientier extends Semantier {
 			errHandler.onError(MsgCode.exIo, e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
 		}
 		return resp;
+	}
+
+	public AlbumClientier blockSize(int size) {
+		blocksize = size;
+		return this;
 	}
 }

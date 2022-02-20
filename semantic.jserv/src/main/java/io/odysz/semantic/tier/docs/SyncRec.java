@@ -1,12 +1,25 @@
 package io.odysz.semantic.tier.docs;
 
-import io.odysz.anson.Anson;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 
+import io.odysz.anson.Anson;
+import io.odysz.common.DateFormat;
+
+/**
+ * Query results of synchronizing data.
+ * 
+ * @author ody
+ *
+ */
 public class SyncRec extends Anson implements IFileDescriptor {
 
 	private String docId;
 	private String clientpath;
 	private String filename;
+	private String cdate;
 
 	public SyncRec() { }
 
@@ -14,6 +27,7 @@ public class SyncRec extends Anson implements IFileDescriptor {
 		this.docId = p.recId();
 		this.clientpath = p.fullpath();
 		this.filename = p.clientname();
+		this.cdate = p.cdate();
 	}
 
 	@Override
@@ -33,8 +47,9 @@ public class SyncRec extends Anson implements IFileDescriptor {
 	}
 
 	@Override
-	public IFileDescriptor fullpath(String clientpath) {
+	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = clientpath;
+		cdate = DateFormat.formatime((FileTime) Files.getAttribute(Paths.get(clientpath), "creationTime"));
 		return this;
 	}
 
@@ -42,5 +57,7 @@ public class SyncRec extends Anson implements IFileDescriptor {
 	public String clientname() {
 		return filename;
 	}
-	
+
+	@Override
+	public String cdate() { return cdate; }
 }

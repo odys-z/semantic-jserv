@@ -29,7 +29,6 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.ClientDocUser;
 import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncRec;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -151,7 +150,8 @@ class AlbumsTest {
 		}
 	}
 	
-	/**Test append to collection with a pic.
+	/**
+	 * Test append to collection with a pic.
 	 * @throws TransException
 	 * @throws IOException
 	 * @throws AnsonException
@@ -168,7 +168,7 @@ class AlbumsTest {
 		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 
 		assertEquals("c-001", resp.photo().collectId);
-		assertEquals(6, resp.photo().pid.length());
+		assertEquals(6, resp.photo().recId.length());
 	}
 	
 	/**
@@ -189,19 +189,24 @@ class AlbumsTest {
 		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 
 		assertEquals("c-001", resp.photo().collectId);
-		assertEquals(6, resp.photo().pid.length());	
+		assertEquals(6, resp.photo().recId.length());	
 	}
 	
 	@Test
 	void testVideoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "test/res";
+		// int bsize = 72 * 1024;
+		// String filename = "my.jpg";
+		int bsize = 18 * 1024 * 1024;
 		String filename = "ignored.MOV";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
-		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
+		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx)
+								.blockSize(bsize);
 
 		List<SyncRec> videos = new ArrayList<SyncRec>();
-		videos.add((SyncRec) new SyncRec().fullpath(FilenameUtils.concat(localFolder, filename)));
+		videos.add((SyncRec)
+				new SyncRec().fullpath(FilenameUtils.concat(localFolder, filename)));
 
 		ClientDocUser photoUser = new ClientDocUser("tester", "device-test");
 		List<DocsResp> resps = tier.syncVideos(videos, photoUser);
@@ -211,8 +216,11 @@ class AlbumsTest {
 
 		for (DocsResp d : resps) {
 			String docId = d.recId();
+			assertEquals(6, docId.length());
+
 			AlbumResp rp = tier.selectPhoto(docId);
-			assertEquals(rp.clientname(), d.clientname());
+			assertNotNull(rp.photo().pname);
+			assertEquals(rp.photo().pname, filename);
 		}
 	}
 }

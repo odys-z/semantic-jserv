@@ -37,7 +37,7 @@ public class AlbumReq extends DocsReq {
 		public static final String collect = "r/photos";
 		public static final String rec = "r/photo";
 		public static final String download = "r/download";
-		public static final String upload = "c/upload";
+//		public static final String upload = "c/upload";
 		public static final String update = "u";
 		public static final String insertPhoto = "c/photo";
 		public static final String insertCollect = "c/collect";
@@ -80,7 +80,7 @@ public class AlbumReq extends DocsReq {
 	public AlbumReq download(Photo photo) {
 		this.albumId = photo.albumId;
 		this.collectId = photo.collectId;
-		this.docId = photo.pid;
+		this.docId = photo.recId;
 		this.photo = photo;
 		this.a = A.download;
 		return this;
@@ -89,17 +89,18 @@ public class AlbumReq extends DocsReq {
 	/**Create request for inserting new photo.
 	 * <p>FIXME: introducing stream field of Anson?</p>
 	 * @param collId
-	 * @param localname
+	 * @param fullpath
 	 * @return request
 	 * @throws IOException 
 	 */
-	public AlbumReq createPhoto(String collId, String localname) throws IOException {
-		Path p = Paths.get(localname);
+	public AlbumReq createPhoto(String collId, String fullpath) throws IOException {
+		Path p = Paths.get(fullpath);
 		byte[] f = Files.readAllBytes(p);
 		String b64 = AESHelper.encode64(f);
 
 		this.photo = new Photo();
 		this.photo.collectId = collId;
+		this.photo.clientpath = fullpath;
 		this.photo.uri = b64;
 		this.photo.pname = p.getFileName().toString();
 		this.a = A.insertPhoto;
@@ -110,7 +111,7 @@ public class AlbumReq extends DocsReq {
 	public AlbumReq photoId(String pid) {
 		if (photo == null)
 			photo = new Photo();
-		photo.pid = pid;
+		photo.recId = pid;
 		return this;
 	}
 
@@ -142,10 +143,10 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-	public AlbumReq selectPhoto(String pid) {
-		this.docId = pid;
+	public AlbumReq selectPhoto(String docId) {
+		this.docId = docId;
 		this.photo = new Photo();
-		this.photo.pid = pid;
+		this.photo.recId = docId;
 		this.a = A.rec;
 
 		return this;
