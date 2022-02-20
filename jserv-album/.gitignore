@@ -4,5 +4,6 @@ volume/Robot*
 volume/**/* my.jpg
 volume/**/ignored*.*
 volume/ody/2022_02/*
+volume/ody/2022_03/*
 test/results
 test/res/ignore*.*
