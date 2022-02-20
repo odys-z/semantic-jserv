@@ -56,7 +56,7 @@ class AlbumsServTierTest {
 
 		AlbumResp rep = Albums.rec(req, robot);
 		
-		assertEquals("test-00001", rep.photo.pid);
+		assertEquals("test-00001", rep.photo.recId);
 		assertEquals("DSC_0124.JPG", rep.photo.pname);
 		assertEquals("ody/2019_08/DSC_0124.JPG", rep.photo.uri);
 		

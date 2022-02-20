@@ -1,7 +1,12 @@
 package io.oz.album.tier;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,11 +15,16 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
+
+import org.apache.tika.metadata.Metadata;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.EnvPath;
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFile;
@@ -131,30 +141,33 @@ public class Albums extends ServPort<AlbumReq> {
 			else {
 				// session required
 				IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
-				if (A.upload.equals(a))
-					upload(resp, jmsg.body(0), usr);
-				else if (A.insertPhoto.equals(a))
+//				if (A.upload.equals(a))
+//					upload(resp, jmsg.body(0), usr);
+//				else
+				if (A.insertPhoto.equals(a))
 					rsp = createPhoto(jmsg.body(0), usr);
 				else if (A.selectSyncs.equals(a))
 					rsp = querySyncs(jmsg.body(0), usr);
 
 				//
-				else if (DocsReq.A.blockAbort.equals(a))
-					rsp = abortBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockStart.equals(a))
 					rsp = startBlocks(jmsg.body(0), usr);
 				else if (DocsReq.A.blockUp.equals(a))
 					rsp = uploadBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockEnd.equals(a))
 					rsp = endBlock(jmsg.body(0), usr);
+				else if (DocsReq.A.blockAbort.equals(a))
+					rsp = abortBlock(jmsg.body(0), usr);
 
 				else throw new SemanticException(
 						"request.body.a can not handled request: %s",
 						jreq.a());
 			}
 
-			rsp.syncing(jreq.syncing());
-			write(resp, ok(rsp));
+			if (rsp != null) {
+				rsp.syncing(jreq.syncing());
+				write(resp, ok(rsp));
+			}
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -174,7 +187,7 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
-	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, SemanticException, SQLException {
+	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, SQLException, TransException {
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
@@ -182,7 +195,7 @@ public class Albums extends ServPort<AlbumReq> {
 		String extroot = ((ShExtFile) DATranscxt
 			.getHandler(conn, tablPhotos, smtype.extFile))
 			.getFileRoot();
-		BlockChain chain = new BlockChain(extroot, usr.sessionId(), body.clientpath);
+		BlockChain chain = new BlockChain(extroot, usr.sessionId(), body.clientpath, body.createDate);
 		// FIXME security breach?
 		String id = chain.id();
 
@@ -193,7 +206,7 @@ public class Albums extends ServPort<AlbumReq> {
 		return new DocsResp().chainId(id);
 	}
 
-	DocsResp uploadBlock(DocsReq body, IUser usr) throws SemanticException, IOException, SQLException, AnsonException {
+	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, SQLException, TransException {
 		String id = body.chainId();
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
@@ -203,20 +216,50 @@ public class Albums extends ServPort<AlbumReq> {
 		return new DocsResp().blockSeq(body.blockSeq());
 	}
 
-	DocsResp endBlock(DocsReq body, IUser usr) throws SQLException, IOException, InterruptedException, AnsonException {
+	DocsResp endBlock(DocsReq body, IUser usr)
+			throws SQLException, IOException, InterruptedException, TransException {
 		String id = body.chainId();
+		BlockChain chain;
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
-			blockChains.remove(id);
+			chain = blockChains.remove(id);
 		}
+		else
+			throw new SemanticException("Ending block chain is not existing.");
 
-		DocsResp ack = new DocsResp();
+		// insert photo (empty uri)
+		String conn = Connects.uri2conn(body.uri());
+		Photo photo = new Photo();
+
+	    BodyContentHandler handler = new BodyContentHandler();
+	    
+	    AutoDetectParser parser = new AutoDetectParser();
+	    Metadata metadata = new Metadata();
+	    try (FileInputStream stream = new FileInputStream(new File(chain.outputPath))) {
+	        parser.parse(stream, handler, metadata);
+	        photo.exif = handler.toString();
+	    }
+	    catch (Exception ex) { }
+
+		photo.clientpath = chain.clientpath;
+		photo.pname = chain.clientname;
+		photo.createDate = chain.cdate;
+		photo.uri = null;
+		String pid = createFile(conn, photo, usr);
+		
+		// move file
+		String targetPath = resolvExtroot(conn, pid, usr);
+		if (AlbumFlags.album)
+			Utils.logi("   %s\n-> %s", chain.outputPath, targetPath);
+		Files.move(Paths.get(chain.outputPath) , Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+
+		DocsResp ack = new DocsResp().recId(pid);
 		ack.blockSeqReply = body.blockSeq();
-		// TODO move file
 		return ack;
 	}
 
-	DocsResp abortBlock(DocsReq body, IUser usr) throws SQLException, IOException, InterruptedException, AnsonException {
+	DocsResp abortBlock(DocsReq body, IUser usr)
+			throws SQLException, IOException, InterruptedException, TransException {
 		String id = body.chainId();
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
@@ -256,53 +299,83 @@ public class Albums extends ServPort<AlbumReq> {
 	void download(OutputStream ofs, DocsReq freq, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(freq.uri());
+//		ISemantext stx = st.instancontxt(conn, usr);
+//		AnResultset rs = (AnResultset) st
+//			.select(tablPhotos)
+//			.col("uri").col("folder")
+//			.whereEq("pid", freq.docId)
+//			.rs(stx)
+//			.rs(0);
+//
+//		if (!rs.next())
+//			throw new SemanticException("Can't find file for id: %s (permission of %s)",
+//					freq.docId, usr.uid());
+	
+		// keep file system root the same with semantics configuration 
+//		String extroot = ((ShExtFile) DATranscxt
+//				.getHandler(conn, tablPhotos, smtype.extFile))
+//				.getFileRoot();
+//		FileStream.sendFile(ofs, EnvPath.decodeUri(extroot, rs.getString("uri")));
+
+		FileStream.sendFile(ofs, resolvExtroot(conn, freq.docId, usr));
+	}
+	
+	static String resolvExtroot(String conn, String docId, IUser usr) throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st
 			.select(tablPhotos)
 			.col("uri").col("folder")
-			.whereEq("pid", freq.docId)
+			.whereEq("pid", docId)
 			.rs(stx)
 			.rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)",
-					freq.docId, usr.uid());
-	
-		// keep file system root the same with semantics configuration 
+					docId, usr.uid());
+
 		String extroot = ((ShExtFile) DATranscxt
 				.getHandler(conn, tablPhotos, smtype.extFile))
 				.getFileRoot();
-		FileStream.sendFile(ofs, EnvPath.decodeUri(extroot, rs.getString("uri")));
+		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
+	
 
 	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
+		String pid = createFile(conn, req.photo, usr);
+		return new AlbumResp().photo(req.photo, pid);
+	}
+
+	String createFile(String conn, Photo photo, IUser usr) throws TransException, SQLException, IOException {
+		// clearer message is better here
+		if (LangExt.isblank(photo.clientpath))
+			throw new SemanticException("Client path can't be null/empty.");
 
 		Insert ins = st
 				.insert(tablPhotos, usr)
-				.nv("uri", req.photo.uri)
-				.nv("pname", req.photo.pname)
-				.nv("pdate", req.photo.photoDate())
+				.nv("uri", photo.uri)
+				.nv("pname", photo.pname)
+				.nv("pdate", photo.photoDate())
 				.nv("device", ((PhotoRobot)usr).deviceId())
-				.nv("clientpath", req.photo.clientpath)
+				.nv("clientpath", photo.clientpath)
 				.nv("shareby", usr.uid())
-				.nv("folder", req.photo.month())
+				.nv("folder", photo.month())
 				.nv("sharedate", Funcall.now());
 		
-		if (req.photo.collectId == null)
+		if (photo.collectId == null)
 			// create a default collection - uid/month/file.ext
 			// This can not been supported by db semantics because it's business required for complex handling
-			req.photo.collectId = getMonthCollection(conn, req.photo, usr);
+			photo.collectId = getMonthCollection(conn, photo, usr);
 
 		ins.post( st.insert(tablCollectPhoto)
 					// pid is resulved
-					.nv("cid", req.photo.collectId) );
+					.nv("cid", photo.collectId) );
 
 		SemanticObject res = (SemanticObject) ins
 				.ins(st.instancontxt(conn, usr));
 
 		String pid = ((SemanticObject) ((SemanticObject)res.get("resulved")).get("h_photos")).getString("pid");
-		return new AlbumResp().photo(req.photo, pid);
+		return pid;
 	}
 	
 	/**map uid/month -> collect-id
@@ -313,7 +386,8 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws SQLException 
 	 * @throws TransException 
 	 */
-	private String getMonthCollection(String conn, Photo photo, IUser usr) throws IOException, TransException, SQLException {
+	private String getMonthCollection(String conn, Photo photo, IUser usr)
+			throws IOException, TransException, SQLException {
 		// TODO hit collection LRU
 		AnResultset rs = (AnResultset) st.select(tablCollects, "c")
 				.whereEq("yyyy_mm", photo.month())
@@ -338,17 +412,6 @@ public class Albums extends ServPort<AlbumReq> {
 		return cid;
 	}
 
-	/**@deprecate
-	 * @param resp
-	 * @param body
-	 * @param usr
-	 * @return
-	 * @throws AnsonException
-	 */
-	AlbumResp upload(HttpServletResponse resp, AlbumReq body, IUser usr) throws AnsonException {
-		throw new AnsonException(0, "Needing antson support stream mode ...");
-	}
-
 	/**Read a media file record (id, uri), TODO touch LRU.
 	 * @param req
 	 * @param usr
@@ -359,23 +422,22 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	protected static AlbumResp rec(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
-		String fileId = req.docId;
 		AnResultset rs = (AnResultset) st.select(tablPhotos, "p")
 			.j("a_users", "u", "u.userId = p.shareby")
-			.j(tablCollects, "c", "c.cid = p.cid")
 			.col("pid").col("pname").col("pdate")
-			.col("yyyy_mm")
+			.col("folder")
 			.col("clientpath")
+			.col("uri")
 			.col("userName", "shareby")
 			.col("sharedate")
 			.col("tags").col("geox").col("geoy")
-			.col("exi")
-			.whereEq("pid", fileId)
+			.col("exif")
+			.whereEq("pid", req.docId)
 			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 			.rs(0);
 
 		if (!rs.next())
-			throw new SemanticException("Can't find file for id: %s (permission of %s)", fileId, usr.uid());
+			throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
 
 		return new AlbumResp().rec(rs);
 	}
