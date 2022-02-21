@@ -6,49 +6,50 @@ import io.odysz.semantic.jprotocol.AnsonResp;
  * @author ody
  *
  */
-public class DocsResp extends AnsonResp implements IFileDescriptor {
+public class DocsResp extends AnsonResp {
 	long size;
 	long size() { return size; } 
 
 	SyncingPage syncing;
+	public SyncingPage syncing() { return syncing; }
 	public DocsResp syncing(SyncingPage page) {
 		syncing = page;
 		return this;
 	}
 
 	String recId;
+	public String recId() { return recId; }
 	public DocsResp recId(String recid) {
 		recId = recid;
 		return this;
 	}
-	@Override
-	public String recId() { return recId; }
 
 	String fullpath;
 	public String fullpath() { return fullpath; }
-	public IFileDescriptor fullpath(String fullpath) {
+	public DocsResp fullpath(String fullpath) {
 		this.fullpath = fullpath;
 		return this;
 	}
 
 	String filename;
 	public String clientname() { return filename; }
+	public DocsResp  clientname(String clientname) {
+		this.filename = clientname;
+		return this;
+	}
 
 	public long blockSeqReply;
+	public long blockSeq() { return blockSeqReply; }
 	public DocsResp blockSeq(long seq) {
 		blockSeqReply = seq;
 		return this;
 	}
 	
-	String chainId;
-	public String chainId() { return chainId; }
-	public DocsResp chainId(String blockChain) {
-		chainId = blockChain;
+	String cdate;
+	public String cdate() { return cdate; }
+	public DocsResp cdate(String cdate) {
+		this.cdate = cdate;
 		return this;
 	}
-	
-	String cdate;
 
-	@Override
-	public String cdate() { return cdate; }
 }

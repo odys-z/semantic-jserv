@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
@@ -23,6 +24,15 @@ public class JProtocol {
 		void ok(AnsonResp resp) throws IOException, AnsonException, SemanticException;
 	}
 	
+	/**
+	 * Progress notifier called by block chain.
+	 * Parameter blockResp provide the last uploaded block's sequence number.
+	 */
+	@FunctionalInterface
+	public interface OnProcess {
+		void proc(int listIndx, int totalBlocks, DocsResp blockResp) throws IOException, AnsonException, SemanticException;
+	}
+
 	@FunctionalInterface
 	public interface OnError { void err(MsgCode ok, String msg, String ... args ); }
 

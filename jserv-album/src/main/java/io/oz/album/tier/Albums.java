@@ -54,13 +54,17 @@ import io.oz.album.PhotoRobot;
 import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.tier.AlbumReq.FileState;
 
-/**<h5>The album tier</h5>
- * Although this tie is using the pattern of <i>less</i>, it's also verifying user when uploading - for subfolder name of user
+/**
+ * <h5>The album tier</h5> Although this tie is using the pattern of
+ * <i>less</i>, it's also verifying user when uploading - for subfolder name of
+ * user
  * 
  * <h5>Design note for version 0.1</h5>
- * <p>A photo always have a default collection Id.</p>
- * The clients collect image files etc., create photo records and upload ({@link AlbumReq.A.insertPhoto A.insertPhoto})
- * - without collection Id; <br>
+ * <p>
+ * A photo always have a default collection Id.
+ * </p>
+ * The clients collect image files etc., create photo records and upload
+ * ({@link AlbumReq.A.insertPhoto A.insertPhoto}) - without collection Id; <br>
  * the browsing clients are supported with a default collection: home/usr/month.
  * 
  * @author ody
@@ -101,7 +105,7 @@ public class Albums extends ServPort<AlbumReq> {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public Albums() {
 		super(AlbumPort.album);
 	}
@@ -137,8 +141,7 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = rec(jmsg.body(0), usr);
 				else if (A.download.equals(a))
 					download(resp.getOutputStream(), jmsg.body(0), usr);
-			}
-			else {
+			} else {
 				// session required
 				IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
 //				if (A.upload.equals(a))
@@ -159,9 +162,8 @@ public class Albums extends ServPort<AlbumReq> {
 				else if (DocsReq.A.blockAbort.equals(a))
 					rsp = abortBlock(jmsg.body(0), usr);
 
-				else throw new SemanticException(
-						"request.body.a can not handled request: %s",
-						jreq.a());
+				else
+					throw new SemanticException("request.body.a can not handled request: %s", jreq.a());
 			}
 
 			if (rsp != null) {
@@ -192,9 +194,7 @@ public class Albums extends ServPort<AlbumReq> {
 			blockChains = new HashMap<String, BlockChain>(2);
 
 		String conn = Connects.uri2conn(body.uri());
-		String extroot = ((ShExtFile) DATranscxt
-			.getHandler(conn, tablPhotos, smtype.extFile))
-			.getFileRoot();
+		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, tablPhotos, smtype.extFile)).getFileRoot();
 		BlockChain chain = new BlockChain(extroot, usr.uid(), usr.sessionId(), body.clientpath, body.createDate);
 
 		// FIXME security breach?
@@ -204,7 +204,11 @@ public class Albums extends ServPort<AlbumReq> {
 			throw new SemanticException("Why started again?");
 
 		blockChains.put(id, chain);
-		return new DocsResp().chainId(id);
+		return new DocsResp()
+				.blockSeq(-1)
+				.clientname(chain.clientname)
+				.fullpath(chain.clientpath)
+				.cdate(body.createDate);
 	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, SQLException, TransException {
@@ -215,64 +219,67 @@ public class Albums extends ServPort<AlbumReq> {
 
 		BlockChain chain = blockChains.get(id);
 		chain.appendBlock(body);
-		return new DocsResp().blockSeq(body.blockSeq());
+
+		return new DocsResp()
+				.blockSeq(body.blockSeq())
+				.clientname(chain.clientname)
+				.fullpath(chain.clientpath)
+				.cdate(body.createDate);
 	}
 
-	DocsResp endBlock(DocsReq body, IUser usr)
-			throws SQLException, IOException, InterruptedException, TransException {
+	DocsResp endBlock(DocsReq body, IUser usr) throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.clientpath);
 		BlockChain chain;
 		if (blockChains.containsKey(id)) {
-			blockChains.get(id)
-					   .closeChain();
+			blockChains.get(id).closeChain();
 			chain = blockChains.remove(id);
-		}
-		else
+		} else
 			throw new SemanticException("Ending block chain is not existing.");
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
 		Photo photo = new Photo();
 
-	    BodyContentHandler handler = new BodyContentHandler();
-	    
-	    AutoDetectParser parser = new AutoDetectParser();
-	    Metadata metadata = new Metadata();
-	    try (FileInputStream stream = new FileInputStream(new File(chain.outputPath))) {
-	        parser.parse(stream, handler, metadata);
-	        photo.exif = handler.toString();
-	    }
-	    catch (Exception ex) { }
+		BodyContentHandler handler = new BodyContentHandler();
+
+		AutoDetectParser parser = new AutoDetectParser();
+		Metadata metadata = new Metadata();
+		try (FileInputStream stream = new FileInputStream(new File(chain.outputPath))) {
+			parser.parse(stream, handler, metadata);
+			photo.exif = handler.toString();
+		} catch (Exception ex) {
+		}
 
 		photo.clientpath = chain.clientpath;
 		photo.pname = chain.clientname;
 		photo.createDate = chain.cdate;
 		photo.uri = null;
 		String pid = createFile(conn, photo, usr);
-		
+
 		// move file
 		String targetPath = resolvExtroot(conn, pid, usr);
 		if (AlbumFlags.album)
 			Utils.logi("   %s\n-> %s", chain.outputPath, targetPath);
-		Files.move(Paths.get(chain.outputPath) , Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
-		DocsResp ack = new DocsResp().recId(pid);
-		ack.blockSeqReply = body.blockSeq();
-		return ack;
+		return new DocsResp()
+				.recId(pid)
+				.blockSeq(body.blockSeq())
+				.clientname(chain.clientname)
+				.fullpath(chain.clientpath)
+				.cdate(body.createDate);
 	}
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		//String id = body.chainId();
+		// String id = body.chainId();
 		String id = chainId(usr, body.clientpath);
 		DocsResp ack = new DocsResp();
 		if (blockChains.containsKey(id)) {
-			blockChains.get(id)
-					   .abortChain();
+			blockChains.get(id).abortChain();
 			blockChains.remove(id);
 			ack.blockSeqReply = body.blockSeq();
-		}
-		else
+		} else
 			ack.blockSeqReply = -1;
 
 		return ack;
@@ -290,16 +297,12 @@ public class Albums extends ServPort<AlbumReq> {
 		ArrayList<String[]> orders = new ArrayList<String[]>(req.syncQueries().size());
 		for (SyncRec s : req.syncQueries()) {
 			paths.add(s.fullpath());
-			orders.add(new String[] {String.format("pid = '%s'", s.fullpath())});
+			orders.add(new String[] { String.format("pid = '%s'", s.fullpath()) });
 		}
 
-		AnResultset rs = (AnResultset) st.select(tablPhotos)
-			.col("clientpath").col("1", "syncFlag")
-			.whereIn("clientpath", paths)
-			.whereEq("device", req.syncing().device)
-			.orderby(orders)
-			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
-			.rs(0);
+		AnResultset rs = (AnResultset) st.select(tablPhotos).col("clientpath").col("1", "syncFlag")
+				.whereIn("clientpath", paths).whereEq("device", req.syncing().device).orderby(orders)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
 		AlbumResp album = new AlbumResp().syncRecords("sync-temp-id", rs);
 
@@ -311,23 +314,16 @@ public class Albums extends ServPort<AlbumReq> {
 		String conn = Connects.uri2conn(freq.uri());
 		FileStream.sendFile(ofs, resolvExtroot(conn, freq.docId, usr));
 	}
-	
+
 	static String resolvExtroot(String conn, String docId, IUser usr) throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
-		AnResultset rs = (AnResultset) st
-			.select(tablPhotos)
-			.col("uri").col("folder")
-			.whereEq("pid", docId)
-			.rs(stx)
-			.rs(0);
+		AnResultset rs = (AnResultset) st.select(tablPhotos).col("uri").col("folder").whereEq("pid", docId).rs(stx)
+				.rs(0);
 
 		if (!rs.next())
-			throw new SemanticException("Can't find file for id: %s (permission of %s)",
-					docId, usr.uid());
+			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 
-		String extroot = ((ShExtFile) DATranscxt
-				.getHandler(conn, tablPhotos, smtype.extFile))
-				.getFileRoot();
+		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, tablPhotos, smtype.extFile)).getFileRoot();
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
 
@@ -342,60 +338,49 @@ public class Albums extends ServPort<AlbumReq> {
 		if (LangExt.isblank(photo.clientpath))
 			throw new SemanticException("Client path can't be null/empty.");
 
-		Insert ins = st
-				.insert(tablPhotos, usr)
-				.nv("uri", photo.uri)
-				.nv("pname", photo.pname)
-				.nv("pdate", photo.photoDate())
-				.nv("device", ((PhotoRobot)usr).deviceId())
-				.nv("clientpath", photo.clientpath)
-				.nv("shareby", usr.uid())
-				.nv("folder", photo.month())
+		Insert ins = st.insert(tablPhotos, usr).nv("uri", photo.uri).nv("pname", photo.pname)
+				.nv("pdate", photo.photoDate()).nv("device", ((PhotoRobot) usr).deviceId())
+				.nv("clientpath", photo.clientpath).nv("shareby", usr.uid()).nv("folder", photo.month())
 				.nv("sharedate", Funcall.now());
-		
+
 		if (photo.collectId == null)
 			// create a default collection - uid/month/file.ext
-			// This can not been supported by db semantics because it's business required for complex handling
+			// This can not been supported by db semantics because it's business required
+			// for complex handling
 			photo.collectId = getMonthCollection(conn, photo, usr);
 
-		ins.post( st.insert(tablCollectPhoto)
-					// pid is resulved
-					.nv("cid", photo.collectId) );
+		ins.post(st.insert(tablCollectPhoto)
+				// pid is resulved
+				.nv("cid", photo.collectId));
 
-		SemanticObject res = (SemanticObject) ins
-				.ins(st.instancontxt(conn, usr));
+		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 
-		String pid = ((SemanticObject) ((SemanticObject)res.get("resulved")).get("h_photos")).getString("pid");
+		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved")).get("h_photos")).getString("pid");
 		return pid;
 	}
-	
-	/**map uid/month -> collect-id
+
+	/**
+	 * map uid/month -> collect-id
+	 * 
 	 * @param photo
 	 * @param usr
 	 * @return collect id
-	 * @throws IOException 
-	 * @throws SQLException 
-	 * @throws TransException 
+	 * @throws IOException
+	 * @throws SQLException
+	 * @throws TransException
 	 */
 	private String getMonthCollection(String conn, Photo photo, IUser usr)
 			throws IOException, TransException, SQLException {
 		// TODO hit collection LRU
-		AnResultset rs = (AnResultset) st.select(tablCollects, "c")
-				.whereEq("yyyy_mm", photo.month())
-				.whereEq("shareby", usr.uid())
-				.rs(st.instancontxt(conn, usr))
-				.rs(0);
+		AnResultset rs = (AnResultset) st.select(tablCollects, "c").whereEq("yyyy_mm", photo.month())
+				.whereEq("shareby", usr.uid()).rs(st.instancontxt(conn, usr)).rs(0);
 		String cid = null;
 		if (rs.next())
 			cid = rs.getString("cid");
 		else {
 			ISemantext s1 = st.instancontxt(conn, usr);
-			st.insert(tablCollects, usr)
-			  .nv("yyyy_mm", photo.month())
-			  .nv("shareby", usr.uid())
-			  .nv("cname", photo.month())
-			  .nv("cdate", Funcall.now())
-			  .ins(s1);
+			st.insert(tablCollects, usr).nv("yyyy_mm", photo.month()).nv("shareby", usr.uid())
+					.nv("cname", photo.month()).nv("cdate", Funcall.now()).ins(s1);
 			// cid = res.resulve(tablCollects, "cid");
 			cid = (String) s1.resulvedVal(tablCollects, "cid");
 			System.err.println("resulved cid: " + cid);
@@ -403,29 +388,21 @@ public class Albums extends ServPort<AlbumReq> {
 		return cid;
 	}
 
-	/**Read a media file record (id, uri), TODO touch LRU.
+	/**
+	 * Read a media file record (id, uri), TODO touch LRU.
+	 * 
 	 * @param req
 	 * @param usr
 	 * @return loaded media record
-	 * @throws SQLException 
-	 * @throws TransException 
-	 * @throws SemanticException 
+	 * @throws SQLException
+	 * @throws TransException
+	 * @throws SemanticException
 	 */
-	protected static AlbumResp rec(AlbumReq req, IUser usr)
-			throws SemanticException, TransException, SQLException {
-		AnResultset rs = (AnResultset) st.select(tablPhotos, "p")
-			.j("a_users", "u", "u.userId = p.shareby")
-			.col("pid").col("pname").col("pdate")
-			.col("folder")
-			.col("clientpath")
-			.col("uri")
-			.col("userName", "shareby")
-			.col("sharedate")
-			.col("tags").col("geox").col("geoy")
-			.col("exif")
-			.whereEq("pid", req.docId)
-			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
-			.rs(0);
+	protected static AlbumResp rec(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+		AnResultset rs = (AnResultset) st.select(tablPhotos, "p").j("a_users", "u", "u.userId = p.shareby").col("pid")
+				.col("pname").col("pdate").col("folder").col("clientpath").col("uri").col("userName", "shareby")
+				.col("sharedate").col("tags").col("geox").col("geoy").col("exif").whereEq("pid", req.docId)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
@@ -433,48 +410,36 @@ public class Albums extends ServPort<AlbumReq> {
 		return new AlbumResp().rec(rs);
 	}
 
-	protected static AlbumResp collect(AlbumReq req, IUser usr)
-			throws SemanticException, TransException, SQLException {
+	protected static AlbumResp collect(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
 		String cid = req.collectId;
-		AnResultset rs = (AnResultset) st.select(tablCollects)
-			.whereEq("cid", cid)
-			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
-			.rs(0);
+		AnResultset rs = (AnResultset) st.select(tablCollects).whereEq("cid", cid)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find photo collection for id = '%s' (permission of %s)", cid, usr.uid());
 
 		AlbumResp album = new AlbumResp().collects(rs);
 
-		rs = (AnResultset) st.select(tablPhotos, "p")
-			.col("p.*")
-			.j(tablCollectPhoto, "cp", "cp.pid = p.pid")
-			.whereEq("cp.cid", cid)
-			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
-			.rs(0);
+		rs = (AnResultset) st.select(tablPhotos, "p").col("p.*").j(tablCollectPhoto, "cp", "cp.pid = p.pid")
+				.whereEq("cp.cid", cid).rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
 		album.photos(cid, rs);
 
 		return album;
 	}
 
-	protected static AlbumResp album(AlbumReq req, IUser usr)
-			throws SemanticException, TransException, SQLException {
+	protected static AlbumResp album(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
 		String aid = req.albumId;
-		AnResultset rs = (AnResultset) st.select(tablPhotos)
-			.whereEq("aid", aid)
-			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
-			.rs(0);
+		AnResultset rs = (AnResultset) st.select(tablPhotos).whereEq("aid", aid)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
 
 		AlbumResp album = new AlbumResp().album(rs);
 
-		rs = (AnResultset) st.select(tablCollects)
-			.whereEq("aid", aid)
-			.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
-			.rs(0);
+		rs = (AnResultset) st.select(tablCollects).whereEq("aid", aid)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
 		album.collects(rs);
 
