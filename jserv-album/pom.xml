@@ -6,7 +6,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <version>0.4.5-SNAPSHOT</version>
+  <version>0.4.6-SNAPSHOT</version>
   <packaging>war</packaging>
 
   <name>jserv-album Maven Webapp</name>
@@ -82,7 +82,7 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>[1.3.4-SNAPSHOT,)</version>
+	  <version>[1.3.5-SNAPSHOT,)</version>
    	</dependency>
 
 	<!--
@@ -96,7 +96,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
-	    <version>[0.1.3-SNAPSHOT,)</version>
+	    <version>[0.4.6-SNAPSHOT,)</version>
 	</dependency>
 
 	<dependency>

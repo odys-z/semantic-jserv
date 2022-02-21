@@ -1,6 +1,6 @@
 package io.oz.client.tier;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -205,12 +205,12 @@ class AlbumsTest {
 								.blockSize(bsize);
 
 		List<SyncRec> videos = new ArrayList<SyncRec>();
-		videos.add((SyncRec)
-				new SyncRec().fullpath(FilenameUtils.concat(localFolder, filename)));
+		videos.add((SyncRec) new SyncRec()
+					.fullpath(FilenameUtils.concat(localFolder, filename)));
 
 		SessionInf photoUser = new SessionInf("ssid1234", "tester");
 		photoUser.device = "device-test";
-		List<DocsResp> resps = tier.syncVideos(videos, photoUser);
+		List<DocsResp> resps = tier.syncVideos(videos, photoUser, null);
 
 		assertNotNull(resps);
 		assertEquals(1, resps.size());
@@ -219,7 +219,7 @@ class AlbumsTest {
 			String docId = d.recId();
 			assertEquals(6, docId.length());
 
-			AlbumResp rp = tier.selectPhoto(docId);
+			AlbumResp rp = tier.selectPhotoRec(docId);
 			assertNotNull(rp.photo().pname);
 			assertEquals(rp.photo().pname, filename);
 		}

@@ -3,11 +3,14 @@ package io.oz.album.client;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
+import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.jclient.tier.Semantier;
@@ -17,6 +20,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
+import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -33,10 +37,13 @@ public class AlbumClientier extends Semantier {
 
 	private SessionClient client;
 	private ErrorCtx errCtx;
-//	private String funcUri;
 	private String clientUri;
 
 	public static int blocksize = 3 * 1024 * 1024;
+	
+	static {
+		AnsonMsg.understandPorts(AlbumPort.album);
+	}
 
 	/**
 	 * @param clientUri - the client function uri this instance will be used for.
@@ -56,23 +63,11 @@ public class AlbumClientier extends Semantier {
 		return client.commit(q, errCtx);
 	}
 	
-	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos, SessionInf user, OnOk onOk, OnError onErr) {
-//		ErrorCtx errHandler = new ErrorCtx() {
-//			@Override
-//			public void onError(MsgCode code, AnsonResp obj) {
-//				onErr.err(code, obj.msg());
-//			}
-//
-//			@Override
-//			public void onError(MsgCode code, String msg, Object ...args) {
-//				onErr.err(code, msg, (String[])args);
-//			}
-//		};
-
+	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos, SessionInf user, OnProcess onProc, OnOk onOk, OnError onErr) {
 		new Thread(new Runnable() {
 			public void run() {
 			try {
-				List<DocsResp> reslts = syncVideos(videos, user);
+				List<DocsResp> reslts = syncVideos(videos, user, onProc);
 				DocsResp resp = new DocsResp();
 				resp.data().put("results", reslts);
 				onOk.ok(resp);
@@ -85,7 +80,7 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 	
-	public List<DocsResp> syncVideos(List<? extends IFileDescriptor> videos, SessionInf user, ErrorCtx ... onErr) {
+	public List<DocsResp> syncVideos(List<? extends IFileDescriptor> videos, SessionInf user, OnProcess proc, ErrorCtx ... onErr) {
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 
         DocsResp resp = null;
@@ -95,16 +90,24 @@ public class AlbumClientier extends Semantier {
 
 			List<DocsResp> reslts = new ArrayList<DocsResp>(videos.size());
 
-			for (IFileDescriptor p : videos) {
+			for ( int px = 0; px < videos.size(); px++ ) {
+
+				IFileDescriptor p = videos.get(px);
 				DocsReq req = new DocsReq()
 						.blockStart(p, user);
-				req.a(DocsReq.A.blockStart);
+				// req.a(DocsReq.A.blockStart);
 
 				AnsonMsg<DocsReq> q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 										.header(header);
 
 				resp = client.commit(q, errHandler);
 				// String chainId = resp.chainId();
+				String pth = p.fullpath();
+				if (!pth.equals(resp.fullpath()))
+					Utils.warn("resp not reply with exactly the same path: %s", resp.fullpath());
+
+				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
+				if (proc != null) proc.proc(px, totalBlocks, resp);
 
 				int seq = 0;
 				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
@@ -112,20 +115,23 @@ public class AlbumClientier extends Semantier {
 					String b64 = AESHelper.encode64(ifs, blocksize);
 					while (b64 != null) {
 						req = new DocsReq().blockUp(seq, resp, b64, user);
-						req.a(DocsReq.A.blockUp);
+						// req.a(DocsReq.A.blockUp);
 						seq++;
 
 						q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 									.header(header);
 
 						resp = client.commit(q, errHandler);
+						if (proc != null) proc.proc(px, totalBlocks, resp);
+
 						b64 = AESHelper.encode64(ifs, blocksize);
 					}
 					req = new DocsReq().blockEnd(resp, user);
-					req.a(DocsReq.A.blockEnd);
+					// req.a(DocsReq.A.blockEnd);
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 								.header(header);
 					resp = client.commit(q, errHandler);
+					if (proc != null) proc.proc(px, totalBlocks, resp);
 				}
 				catch (Exception ex) {
 					req = new DocsReq().blockAbort(resp, user);
@@ -133,15 +139,16 @@ public class AlbumClientier extends Semantier {
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 								.header(header);
 					resp = client.commit(q, errHandler);
+					if (proc != null) proc.proc(px, totalBlocks, resp);
 
 					throw ex;
 				}
 				finally { ifs.close(); }
 
 				reslts.add(resp);
-
-				return reslts;
 			}
+
+			return reslts;
 		} catch (IOException e) {
 			errHandler.onError(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());
 		} catch (AnsonException | SemanticException e) { 
@@ -157,7 +164,9 @@ public class AlbumClientier extends Semantier {
 		return client.download(clientUri, AlbumPort.album, req, localpath);
 	}
 
-	public AlbumResp insertPhoto(String collId, String fullpath, String clientname) throws SemanticException, IOException, AnsonException {
+	public AlbumResp insertPhoto(String collId, String fullpath, String clientname)
+			throws SemanticException, IOException, AnsonException {
+
 		AlbumReq req = new AlbumReq(clientUri)
 				.createPhoto(collId, fullpath)
 				.photoName(clientname);
@@ -295,7 +304,12 @@ public class AlbumClientier extends Semantier {
 	    } } ).start();
 	}
 
-	public AlbumResp selectPhoto(String docId, ErrorCtx ... onErr) {
+	/**Get a photo record (this synchronous file base64 content)
+	 * @param docId
+	 * @param onErr
+	 * @return response
+	 */
+	public AlbumResp selectPhotoRec(String docId, ErrorCtx ... onErr) {
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);

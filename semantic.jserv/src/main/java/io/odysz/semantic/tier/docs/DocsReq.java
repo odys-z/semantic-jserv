@@ -82,6 +82,7 @@ public class DocsReq extends AnsonBody {
 		this.device = usr.device;
 		if (LangExt.isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files. %s", file.fullpath());
+
 		this.clientpath = file.fullpath(); 
 		this.docName = file.clientname();
 		this.createDate = file.cdate();
