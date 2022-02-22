@@ -1,7 +1,5 @@
 package io.oz.album.tier;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -15,11 +13,7 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
-
-import org.apache.tika.metadata.Metadata;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
@@ -51,6 +45,7 @@ import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
+import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.tier.AlbumReq.FileState;
 
@@ -74,6 +69,9 @@ import io.oz.album.tier.AlbumReq.FileState;
 public class Albums extends ServPort<AlbumReq> {
 
 	private static final long serialVersionUID = 1L;
+
+	/** tringger exif parsing when new photo inserted */
+	public static int POST_ParseExif = 1;
 
 	/** db photo table */
 	static final String tablPhotos = "h_photos";
@@ -144,11 +142,10 @@ public class Albums extends ServPort<AlbumReq> {
 			} else {
 				// session required
 				IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
-//				if (A.upload.equals(a))
-//					upload(resp, jmsg.body(0), usr);
-//				else
 				if (A.insertPhoto.equals(a))
 					rsp = createPhoto(jmsg.body(0), usr);
+				else if (A.del.equals(a))
+					rsp = delPhoto(jmsg.body(0), usr);
 				else if (A.selectSyncs.equals(a))
 					rsp = querySyncs(jmsg.body(0), usr);
 
@@ -166,7 +163,7 @@ public class Albums extends ServPort<AlbumReq> {
 					throw new SemanticException("request.body.a can not handled request: %s", jreq.a());
 			}
 
-			if (rsp != null) {
+			if (rsp != null) { // no rsp for download
 				rsp.syncing(jreq.syncing());
 				write(resp, ok(rsp));
 			}
@@ -189,7 +186,9 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
-	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, SQLException, TransException {
+	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException {
+		checkDuplicate(Connects.uri2conn(body.uri()), ((PhotoRobot)usr).deviceId(), body.clientpath, usr);
+
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
@@ -211,7 +210,26 @@ public class Albums extends ServPort<AlbumReq> {
 				.cdate(body.createDate);
 	}
 
-	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, SQLException, TransException {
+	void checkDuplication(AlbumReq body, PhotoRobot usr) throws SemanticException, TransException, SQLException {
+		checkDuplicate(Connects.uri2conn(body.uri()), usr.deviceId(), body.photo.clientpath, usr);
+	}
+
+	private void checkDuplicate(String conn, String device, String clientpath, IUser usr) throws SemanticException, TransException, SQLException {
+		AnResultset rs = (AnResultset) st
+				.select(tablPhotos, "p")
+				.col(Funcall.count("pid"), "cnt")
+				.whereEq("device", device)
+				.whereEq("clientpath", clientpath)
+				.rs(st.instancontxt(conn, usr))
+				.rs(0);
+		rs.beforeFirst().next();
+
+		if (rs.getInt("cnt") > 0)
+			throw new SemanticException("Found existing file for device %s, client path: %s",
+					device, clientpath);
+	}
+
+	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		// String id = body.chainId();
 		String id = chainId(usr, body.clientpath);
 		if (!blockChains.containsKey(id))
@@ -227,7 +245,8 @@ public class Albums extends ServPort<AlbumReq> {
 				.cdate(body.createDate);
 	}
 
-	DocsResp endBlock(DocsReq body, IUser usr) throws SQLException, IOException, InterruptedException, TransException {
+	DocsResp endBlock(DocsReq body, IUser usr)
+			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.clientpath);
 		BlockChain chain;
 		if (blockChains.containsKey(id)) {
@@ -240,19 +259,11 @@ public class Albums extends ServPort<AlbumReq> {
 		String conn = Connects.uri2conn(body.uri());
 		Photo photo = new Photo();
 
-		BodyContentHandler handler = new BodyContentHandler();
-
-		AutoDetectParser parser = new AutoDetectParser();
-		Metadata metadata = new Metadata();
-		try (FileInputStream stream = new FileInputStream(new File(chain.outputPath))) {
-			parser.parse(stream, handler, metadata);
-			photo.exif = handler.toString();
-		} catch (Exception ex) {
-		}
+		photo.createDate = chain.cdate;
+		Exif.parseExif(photo, chain.outputPath);
 
 		photo.clientpath = chain.clientpath;
 		photo.pname = chain.clientname;
-		photo.createDate = chain.cdate;
 		photo.uri = null;
 		String pid = createFile(conn, photo, usr);
 
@@ -329,18 +340,51 @@ public class Albums extends ServPort<AlbumReq> {
 
 	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
+		checkDuplication(req, (PhotoRobot) usr);
+
 		String pid = createFile(conn, req.photo, usr);
 		return new AlbumResp().photo(req.photo, pid);
 	}
 
-	String createFile(String conn, Photo photo, IUser usr) throws TransException, SQLException, IOException {
+	private DocsResp delPhoto(AlbumReq req, IUser usr) throws TransException, SQLException {
+		String conn = Connects.uri2conn(req.uri());
+
+		SemanticObject res = (SemanticObject) st
+				.delete(tablPhotos, usr)
+				.whereEq("device", req.device())
+				.whereEq("clientpath", req.clientpath)
+				.d(st.instancontxt(conn, usr));
+
+		return (DocsResp) new DocsResp().data(res.props()); 
+	}
+
+	/**create photo - call this after duplication is checked.
+	 * @param conn
+	 * @param photo
+	 * @param usr
+	 * @return pid
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	String createFile(String conn, Photo photo, IUser usr)
+			throws TransException, SQLException, IOException {
 		// clearer message is better here
 		if (LangExt.isblank(photo.clientpath))
 			throw new SemanticException("Client path can't be null/empty.");
+		
+		if (LangExt.isblank(photo.month, " - - "))
+			throw new SemanticException("Month of photo creating is important for saving files. It's recommended to parse it from exif.");
 
-		Insert ins = st.insert(tablPhotos, usr).nv("uri", photo.uri).nv("pname", photo.pname)
-				.nv("pdate", photo.photoDate()).nv("device", ((PhotoRobot) usr).deviceId())
-				.nv("clientpath", photo.clientpath).nv("shareby", usr.uid()).nv("folder", photo.month())
+		Insert ins = st.insert(tablPhotos, usr)
+				.nv("uri", photo.uri).nv("pname", photo.pname)
+				.nv("pdate", photo.photoDate())
+				.nv("folder", photo.month())
+				.nv("device", ((PhotoRobot) usr).deviceId())
+				.nv("geox", photo.geox).nv("geoy", photo.geoy)
+				.nv("clientpath", photo.clientpath)
+				.nv("exif", photo.exif)
+				.nv("shareby", usr.uid())
 				.nv("sharedate", Funcall.now());
 
 		if (photo.collectId == null)
@@ -354,10 +398,15 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("cid", photo.collectId));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
+		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
+				.get("h_photos"))
+				.getString("pid");
 
-		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved")).get("h_photos")).getString("pid");
 		return pid;
 	}
+
+
+	static void postParseExif(String pid) { }
 
 	/**
 	 * map uid/month -> collect-id
@@ -399,9 +448,18 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws SemanticException
 	 */
 	protected static AlbumResp rec(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
-		AnResultset rs = (AnResultset) st.select(tablPhotos, "p").j("a_users", "u", "u.userId = p.shareby").col("pid")
-				.col("pname").col("pdate").col("folder").col("clientpath").col("uri").col("userName", "shareby")
-				.col("sharedate").col("tags").col("geox").col("geoy").col("exif").whereEq("pid", req.docId)
+		AnResultset rs = (AnResultset) st
+				.select(tablPhotos, "p")
+				.j("a_users", "u", "u.userId = p.shareby")
+				.col("pid")
+				.col("pname").col("pdate")
+				.col("folder").col("clientpath")
+				.col("uri")
+				.col("userName", "shareby")
+				.col("sharedate").col("tags")
+				.col("geox").col("geoy")
+				// .col("exif")
+				.whereEq("pid", req.docId)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
 		if (!rs.next())

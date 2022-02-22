@@ -25,7 +25,6 @@ import io.odysz.jclient.InsecureClient;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
-import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -75,8 +74,11 @@ class AlbumsTest {
 			Anson.verbose = true;
 
 			errCtx = new ErrorCtx() {
-				public void onError(MsgCode c, AnsonResp rep) {
-					fail(rep.msg());
+				// @Override public void onError(MsgCode c, AnsonResp rep) { fail(rep.msg()); }
+
+				@Override
+				public void onError(MsgCode c, String rep) {
+					fail(String.format("code %s, msg: %s", c.name(), rep));
 				}
 			};
 		} catch (Exception e) {
@@ -165,10 +167,18 @@ class AlbumsTest {
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
-		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 
-		assertEquals("c-001", resp.photo().collectId);
-		assertEquals(6, resp.photo().recId.length());
+		try {
+			tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
+			fail("should failed on duplicate file found");
+		}
+		catch (SemanticException e) { }
+
+		tier.del("device-test", FilenameUtils.concat(localFolder, filename));
+		AlbumResp rep = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
+
+		assertEquals("c-001", rep.photo().collectId);
+		assertEquals(6, rep.photo().recId.length());
 	}
 	
 	/**
@@ -186,6 +196,13 @@ class AlbumsTest {
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-1");
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
+		try {
+			tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
+			fail("checking duplication failed.");
+		}
+		catch (SemanticException e) { }
+
+		tier.del("device-1", FilenameUtils.concat(localFolder, filename));
 		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 
 		assertEquals("c-001", resp.photo().collectId);
@@ -195,10 +212,10 @@ class AlbumsTest {
 	@Test
 	void testVideoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "test/res";
-		// int bsize = 72 * 1024;
-		// String filename = "my.jpg";
-		int bsize = 18 * 1024 * 1024;
-		String filename = "ignored.MOV";
+		 int bsize = 72 * 1024;
+		 String filename = "my.jpg";
+//		int bsize = 18 * 1024 * 1024;
+//		String filename = "ignored.MOV";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx)
@@ -208,20 +225,34 @@ class AlbumsTest {
 		videos.add((SyncRec) new SyncRec()
 					.fullpath(FilenameUtils.concat(localFolder, filename)));
 
-		SessionInf photoUser = new SessionInf("ssid1234", "tester");
+		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = "device-test";
-		List<DocsResp> resps = tier.syncVideos(videos, photoUser, null);
 
-		assertNotNull(resps);
-		assertEquals(1, resps.size());
+		tier.syncVideos( videos, photoUser,
+			(c, v, resp) -> {
+				fail("duplicate checking not working");
+			},
+			new ErrorCtx() {
+				@Override
+				public void onError(MsgCode c, String msg) {
+					if (!MsgCode.exGeneral.equals(c))
+						fail("Not expected code");
 
-		for (DocsResp d : resps) {
-			String docId = d.recId();
-			assertEquals(6, docId.length());
+					tier.del("device-test", videos.get(0).fullpath());
+					List<DocsResp> resps = tier.syncVideos(videos, photoUser, null);
+					assertNotNull(resps);
+					assertEquals(1, resps.size());
 
-			AlbumResp rp = tier.selectPhotoRec(docId);
-			assertNotNull(rp.photo().pname);
-			assertEquals(rp.photo().pname, filename);
-		}
+					for (DocsResp d : resps) {
+						String docId = d.recId();
+						assertEquals(6, docId.length());
+
+						AlbumResp rp = tier.selectPhotoRec(docId);
+						assertNotNull(rp.photo().pname);
+						assertEquals(rp.photo().pname, filename);
+					}
+				}
+			});
+
 	}
 }
