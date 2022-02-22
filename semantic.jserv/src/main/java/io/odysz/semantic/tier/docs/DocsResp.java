@@ -1,5 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
+import java.util.HashMap;
+
 import io.odysz.semantic.jprotocol.AnsonResp;
 
 /**This structure is recommend used as Parcel between Android activities.
@@ -9,6 +11,11 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 public class DocsResp extends AnsonResp {
 	long size;
 	long size() { return size; } 
+	
+	public DocsResp() {
+		super();
+		map = new HashMap<String, Object>();
+	}
 
 	SyncingPage syncing;
 	public SyncingPage syncing() { return syncing; }

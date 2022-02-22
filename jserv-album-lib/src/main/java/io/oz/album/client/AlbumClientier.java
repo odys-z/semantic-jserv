@@ -17,7 +17,6 @@ import io.odysz.jclient.tier.Semantier;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
-import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
@@ -95,7 +94,6 @@ public class AlbumClientier extends Semantier {
 				IFileDescriptor p = videos.get(px);
 				DocsReq req = new DocsReq()
 						.blockStart(p, user);
-				// req.a(DocsReq.A.blockStart);
 
 				AnsonMsg<DocsReq> q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 										.header(header);
@@ -134,6 +132,8 @@ public class AlbumClientier extends Semantier {
 					if (proc != null) proc.proc(px, totalBlocks, resp);
 				}
 				catch (Exception ex) {
+					Utils.warn(ex.getMessage());
+
 					req = new DocsReq().blockAbort(resp, user);
 					req.a(DocsReq.A.blockAbort);
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
@@ -150,9 +150,9 @@ public class AlbumClientier extends Semantier {
 
 			return reslts;
 		} catch (IOException e) {
-			errHandler.onError(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());
+			errHandler.onError(MsgCode.exIo, e.getClass().getName() + " " + e.getMessage());
 		} catch (AnsonException | SemanticException e) { 
-			errHandler.onError(MsgCode.exGeneral, clientUri, e.getClass().getName(), e.getMessage());
+			errHandler.onError(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
 		}
 		return null;
 	}
@@ -208,14 +208,11 @@ public class AlbumClientier extends Semantier {
 										.header(header);
 
 				resp = client.commit(q, new ErrorCtx() {
-					@Override
-					public void onError(MsgCode code, AnsonResp obj) {
-						onErr.err(code, obj.msg());
-					}
+					// @Override public void onError(MsgCode code, AnsonResp obj) { onErr.err(code, obj.msg()); }
 
 					@Override
-					public void onError(MsgCode code, String msg, Object ...args) {
-						onErr.err(code, msg, (String[])args);
+					public void onError(MsgCode code, String msg) {
+						onErr.err(code, msg);
 					}
 				});
 
@@ -282,14 +279,11 @@ public class AlbumClientier extends Semantier {
 											.header(header);
 
 					resp = client.commit(q, new ErrorCtx() {
-						@Override
-						public void onError(MsgCode code, AnsonResp obj) {
-							onErr.err(code, obj.msg());
-						}
+						// @Override public void onError(MsgCode code, AnsonResp obj) { onErr.err(code, obj.msg()); }
 
 						@Override
-						public void onError(MsgCode code, String msg, Object ...args) {
-							onErr.err(code, msg, (String[])args);
+						public void onError(MsgCode code, String msg) {
+							onErr.err(code, msg);
 						}
 					});
 
@@ -324,9 +318,9 @@ public class AlbumClientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errHandler.onError(MsgCode.exSemantic, e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
+			errHandler.onError(MsgCode.exSemantic, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
 		} catch (IOException e) {
-			errHandler.onError(MsgCode.exIo, e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
+			errHandler.onError(MsgCode.exIo, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
 		}
 		return resp;
 	}
@@ -334,5 +328,24 @@ public class AlbumClientier extends Semantier {
 	public AlbumClientier blockSize(int size) {
 		blocksize = size;
 		return this;
+	}
+
+	public DocsResp del(String device, String clientpath) {
+		AlbumReq req = new AlbumReq().del(device, clientpath);
+
+		DocsResp resp = null;
+		try {
+			String[] act = AnsonHeader.usrAct("album.java", "del", "d/photo", "");
+			AnsonHeader header = client.header().act(act);
+			AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
+										.header(header);
+
+			resp = client.commit(q, errCtx);
+		} catch (AnsonException | SemanticException e) {
+			errCtx.onError(MsgCode.exSemantic, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+		} catch (IOException e) {
+			errCtx.onError(MsgCode.exIo, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+		}
+		return resp;
 	}
 }

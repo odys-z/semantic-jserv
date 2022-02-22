@@ -13,6 +13,7 @@ import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.album.helpers.Exif;
 
 public class AlbumReq extends DocsReq {
 
@@ -37,7 +38,6 @@ public class AlbumReq extends DocsReq {
 		public static final String collect = "r/photos";
 		public static final String rec = "r/photo";
 		public static final String download = "r/download";
-//		public static final String upload = "c/upload";
 		public static final String update = "u";
 		public static final String insertPhoto = "c/photo";
 		public static final String insertCollect = "c/collect";
@@ -103,6 +103,9 @@ public class AlbumReq extends DocsReq {
 		this.photo.clientpath = fullpath;
 		this.photo.uri = b64;
 		this.photo.pname = p.getFileName().toString();
+		
+		Exif.parseExif(this.photo, fullpath);
+
 		this.a = A.insertPhoto;
 
 		return this;
@@ -149,6 +152,15 @@ public class AlbumReq extends DocsReq {
 		this.photo.recId = docId;
 		this.a = A.rec;
 
+		return this;
+	}
+
+	public AlbumReq del(String device, String clientpath) {
+		this.photo = new Photo();
+//		this.photo.clientpath = clientpath;
+		this.device = device;
+		this.clientpath = clientpath;
+		this.a = A.del;
 		return this;
 	}
 

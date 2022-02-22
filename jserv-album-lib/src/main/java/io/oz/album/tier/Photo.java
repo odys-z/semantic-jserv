@@ -3,15 +3,11 @@ package io.oz.album.tier;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.parser.image.ImageMetadataExtractor;
-import org.xml.sax.SAXException;
-
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
@@ -34,12 +30,13 @@ public class Photo extends Anson {
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;
 
+	@AnsonField(shortoString=true)
 	public String uri;
 	public String shareby;
 	public String sharedate;
 	public String geox;
 	public String geoy;
-	public String exif;
+	public ArrayList<String> exif;
 	public String sharer;
 
 	public String collectId;
@@ -88,38 +85,24 @@ public class Photo extends Anson {
 
 	public AbsPart photoDate() throws IOException, SemanticException {
 		try {
-			String pdate = null;
-			Date d = null;
-			if (exif != null) {
-				Metadata meta = new Metadata();
-				new ImageMetadataExtractor(meta).parseRawExif(exif.getBytes());
-				d = meta.getDate(TikaCoreProperties.CREATED);
+			if (!LangExt.isblank(createDate)) {
+				Date d = DateFormat.parse(createDate); 
+				month = DateFormat.formatYYmm(d);
+				return new ExprPart("'" + createDate + "'");
 			}
 			else {
-				pdate = createDate;
-				if (pdate == null)
-					d = new Date();
-				else {
-					try {
-						d = DateFormat.parse(pdate);
-					} catch (ParseException e) {
-						d = new Date();
-					}
-				}
-			}
-
-			if (LangExt.isblank(pdate)) {
+				Date d = new Date();
 				month = DateFormat.formatYYmm(d);
 				return Funcall.now();
 			}
-			else {
-				month = DateFormat.formatYYmm(d);
-				return new ExprPart(pdate);
-			}
-		} catch (SAXException | TikaException e ) {
+		} catch (ParseException e ) {
 			e.printStackTrace();
 			throw new SemanticException(e.getMessage());
 		}
+	}
+
+	public void month(Date d) {
+		month = DateFormat.formatYYmm(d);
 	}
 
 }
