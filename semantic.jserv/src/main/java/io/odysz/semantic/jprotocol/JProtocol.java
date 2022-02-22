@@ -37,9 +37,7 @@ public class JProtocol {
 	public interface OnError { void err(MsgCode ok, String msg, String ... args ); }
 
 	/**Function interface: 
-	 * see {@link SCallbackV11#onCallback(MsgCode, AnsonResp)}
 	 * @deprecated replaced by {@link OnOk}
-	 * @author ody
 	 *
 	 */
 	@FunctionalInterface
