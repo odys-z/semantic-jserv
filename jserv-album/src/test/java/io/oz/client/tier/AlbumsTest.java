@@ -193,7 +193,8 @@ class AlbumsTest {
 	@Test
 	void testSyncInsertPhotos() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "test/res";
-		String filename = "my.jpg";
+		// String filename = "my.jpg";
+		String filename = "no-exif.jpg";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-1");
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
