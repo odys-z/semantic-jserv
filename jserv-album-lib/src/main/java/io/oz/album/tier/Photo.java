@@ -1,6 +1,7 @@
 package io.oz.album.tier;
 
 import java.io.IOException;
+import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -106,6 +107,10 @@ public class Photo extends Anson {
 	}
 
 	public void month(Date d) {
+		month = DateFormat.formatYYmm(d);
+	}
+
+	public void month(FileTime d) {
 		month = DateFormat.formatYYmm(d);
 	}
 

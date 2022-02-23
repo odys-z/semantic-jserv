@@ -2,6 +2,10 @@ package io.oz.album.helpers;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -37,8 +41,15 @@ public class Exif {
 			}
 
 			Date d = metadata.getDate(TikaCoreProperties.CREATED);
-			photo.createDate = DateFormat.formatime(d);
-			photo.month(d);
+			if (d != null) {
+				photo.createDate = DateFormat.formatime(d);
+				photo.month(d);
+			}
+			else {
+				Path file = Paths.get(filepath);
+				FileTime fd = (FileTime) Files.getAttribute(file, "creationTime");
+				photo.month(fd);
+			}
 
 			photo.geox = metadata.get(TikaCoreProperties.LANGUAGE);
 			if (photo.geox == null) photo.geox = geox0;
