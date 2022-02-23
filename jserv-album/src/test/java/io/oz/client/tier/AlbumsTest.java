@@ -28,6 +28,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncRec;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -70,8 +71,8 @@ class AlbumsTest {
 			client = new InsecureClient(jserv);
 			local = new File("src/test/local").getAbsolutePath();
 
-			SessionClient.verbose(true);
-			Anson.verbose = true;
+			SessionClient.verbose(false);
+			Anson.verbose = false;
 
 			errCtx = new ErrorCtx() {
 				// @Override public void onError(MsgCode c, AnsonResp rep) { fail(rep.msg()); }
@@ -190,7 +191,7 @@ class AlbumsTest {
 	 * @throws SemanticException 
 	 */
 	@Test
-	void testSyncPhotos() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
+	void testSyncInsertPhotos() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "test/res";
 		String filename = "my.jpg";
 
@@ -209,6 +210,45 @@ class AlbumsTest {
 		assertEquals(6, resp.photo().recId.length());	
 	}
 	
+	@Test
+	void testSyncImages() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
+		String localFolder = "test/res";
+		String filename = "my.jpg";
+		String device = "device-2";
+
+		SessionClient ssclient = Clients.login("ody", "123456", device);
+		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
+
+		List<IFileDescriptor> imges = new ArrayList<IFileDescriptor>();
+		imges.add(new IFileDescriptor() {
+			@Override
+			public String fullpath() { return FilenameUtils.concat(localFolder, filename); }
+
+			@Override
+			public IFileDescriptor fullpath(String clientpath) throws IOException { return this; }
+
+			@Override public String clientname() { return filename; }
+
+			@Override public String cdate() { return null; } 
+		});
+
+		try {
+			tier.syncPhotos((List<? extends IFileDescriptor>)imges, ssclient.ssInfo());
+			fail("checking duplication failed.");
+		}
+		catch (SemanticException e) { }
+
+		tier.del(device, FilenameUtils.concat(localFolder, filename));
+		List<AlbumResp> resp = tier.syncPhotos((List<? extends IFileDescriptor>)imges, ssclient.ssInfo());
+
+		for (AlbumResp doc : resp) {
+			assertEquals(6, doc.photo().recId().length());
+			assertEquals("c-001", doc.photo().collectId());
+			assertEquals("2019_08", doc.photo().month());
+			assertEquals("test/res/my.jpg", doc.photo().clientpath);	
+		}
+	}
+
 	@Test
 	void testVideoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "test/res";

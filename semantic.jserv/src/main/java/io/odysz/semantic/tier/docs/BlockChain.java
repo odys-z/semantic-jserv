@@ -34,7 +34,7 @@ public class BlockChain {
 
 	/**Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
-	 * @param rootpath configured root path, e.g. resolved by {@link io.odysz.semantic.ShExtFile}
+	 * @param rootpath configured root path, e.g. resolved by Semantic.DA io.odysz.semantic.ShExtFile
 	 * @param usrId
 	 * @param ssId
 	 * @param clientpathRaw - client path that can match at client's environment (saving at server side replaced some special characters)

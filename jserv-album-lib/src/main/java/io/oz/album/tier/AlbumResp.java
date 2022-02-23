@@ -88,5 +88,4 @@ public class AlbumResp extends DocsResp {
 //		this.photos.add(photos.toArray(new Photo[0]));
 		return this;
 	}
-
 }
