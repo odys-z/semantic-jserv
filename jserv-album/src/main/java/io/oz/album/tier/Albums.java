@@ -305,14 +305,15 @@ public class Albums extends ServPort<AlbumReq> {
 			throw new SemanticException("Null Query - invalide request.");
 
 		ArrayList<String> paths = new ArrayList<String>(req.syncQueries().size());
-		ArrayList<String[]> orders = new ArrayList<String[]>(req.syncQueries().size());
+		// ArrayList<String[]> orders = new ArrayList<String[]>(req.syncQueries().size());
 		for (SyncRec s : req.syncQueries()) {
 			paths.add(s.fullpath());
-			orders.add(new String[] { String.format("pid = '%s'", s.fullpath()) });
+			// orders.add(new String[] { String.format("pid = '%s'", s.fullpath()) });
 		}
 
 		AnResultset rs = (AnResultset) st.select(tablPhotos).col("clientpath").col("1", "syncFlag")
-				.whereIn("clientpath", paths).whereEq("device", req.syncing().device).orderby(orders)
+				.whereIn("clientpath", paths).whereEq("device", req.syncing().device)
+				// .orderby(orders)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
 		AlbumResp album = new AlbumResp().syncRecords("sync-temp-id", rs);

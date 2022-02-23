@@ -22,6 +22,8 @@ import io.odysz.transact.sql.parts.condition.Funcall;
  */
 public class Photo extends Anson {
 	public String recId;
+	public String recId() { return recId; }
+
 	public String pname;
 
 	public String clientpath;
@@ -40,6 +42,8 @@ public class Photo extends Anson {
 	public String sharer;
 
 	public String collectId;
+	public String collectId() { return collectId; }
+
 	public String albumId;
 
 	

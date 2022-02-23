@@ -131,6 +131,8 @@ public class AlbumReq extends DocsReq {
 	 * @throws SemanticException
 	 */
 	public AlbumReq createPhoto(IFileDescriptor file, SessionInf usr) throws IOException, SemanticException {
+		return createPhoto(null, file.fullpath());
+		/*
 		Path p = Paths.get(file.fullpath());
 		byte[] f = Files.readAllBytes(p);
 		String b64 = AESHelper.encode64(f);
@@ -142,8 +144,12 @@ public class AlbumReq extends DocsReq {
 		this.photo.clientpath = file.fullpath(); 
 		this.photo.uri = b64;
 		this.photo.pname = file.clientname();
+
+		Exif.parseExif(this.photo, fullpath);
+
 		this.a = A.insertPhoto;
 		return this;
+		*/
 	}
 
 	public AlbumReq selectPhoto(String docId) {

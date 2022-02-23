@@ -11,12 +11,15 @@ import io.odysz.common.DateFormat;
 /**
  * Query results of synchronizing data.
  * 
+ * <p>To query a file's synchronizing state, without client DB, the way to match
+ * a file at server side is match device name and client path. So no db record Id
+ * can be used here. </p>
  * @author ody
  *
  */
 public class SyncRec extends Anson implements IFileDescriptor {
 
-	private String docId;
+	// private String docId;
 	private String clientpath;
 	private String filename;
 	private String cdate;
@@ -24,22 +27,22 @@ public class SyncRec extends Anson implements IFileDescriptor {
 	public SyncRec() { }
 
 	public SyncRec(IFileDescriptor p) {
-		this.docId = p.recId();
+		// this.docId = p.recId();
 		this.clientpath = p.fullpath();
 		this.filename = p.clientname();
 		this.cdate = p.cdate();
 	}
 
-	@Override
-	public String recId() {
-		return docId;
-	}
-
-	@Override
-	public IFileDescriptor recId(String recId) {
-		this.docId = recId;
-		return this;
-	}
+//	@Override
+//	public String recId() {
+//		return docId;
+//	}
+//
+//	@Override
+//	public IFileDescriptor recId(String recId) {
+//		this.docId = recId;
+//		return this;
+//	}
 
 	@Override
 	public String fullpath() {
