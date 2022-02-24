@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import io.odysz.common.AESHelper;
-import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jsession.SessionInf;
@@ -44,7 +43,7 @@ public class AlbumReq extends DocsReq {
 		public static final String insertAlbum = "c/album";
 		public static final String del = "d";
 		public static final String selectSyncs = "r/syncflags";
-
+		public static final String getPrefs = "r/prefs";
 	}
 	
 	static class args {

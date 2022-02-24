@@ -23,6 +23,8 @@ public class AlbumResp extends DocsResp {
 	Photo photo;
 	public Photo photo() { return photo; }
 
+	public Profiles profils;
+	
 	public AlbumResp() {
 	}
 	
@@ -74,10 +76,6 @@ public class AlbumResp extends DocsResp {
 	}
 	
 	public AlbumResp syncRecords(String collectId, AnResultset rs) throws SQLException {
-//		if (this.photos == null)
-//			this.photos = new ArrayList<Photo[]>(1);
-
-//		ArrayList<Photo> photos = new ArrayList<Photo>(rs.total());
 		clientPaths = new HashMap<String, Object>();
 
 		rs.beforeFirst();
@@ -85,7 +83,11 @@ public class AlbumResp extends DocsResp {
 			clientPaths.put(rs.getString("clientpath"), rs.getString("syncFlag"));
 		}
 
-//		this.photos.add(photos.toArray(new Photo[0]));
+		return this;
+	}
+
+	public AlbumResp profiles(Profiles profiles) {
+		this.profils = profiles;
 		return this;
 	}
 }
