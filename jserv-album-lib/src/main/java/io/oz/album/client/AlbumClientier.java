@@ -17,6 +17,7 @@ import io.odysz.jclient.tier.Semantier;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
@@ -60,6 +61,29 @@ public class AlbumClientier extends Semantier {
 		req.a(A.collect);
 		AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req);
 		return client.commit(q, errCtx);
+	}
+	
+	public AlbumClientier getSettings(OnOk onOk, OnError onErr) {
+		new Thread(new Runnable() {
+			public void run() {
+			try {
+				String[] act = AnsonHeader.usrAct("album.java", "profile", "r/settings", "load profile");
+				AnsonHeader header = client.header().act(act);
+
+				AlbumReq req = new AlbumReq(clientUri);
+				req.a(A.getPrefs);
+				AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
+						.header(header);
+				AnsonResp resp = client.commit(q, errCtx);
+				onOk.ok(resp);
+			} catch (IOException e) {
+				onErr.err(MsgCode.exIo, "%s\n%s", e.getClass().getName(), e.getMessage());
+			} catch (AnsonException | SemanticException e) { 
+				onErr.err(MsgCode.exGeneral, "%s\n%s", e.getClass().getName(), e.getMessage());
+			} 
+		} } ).start();
+		
+		return this;
 	}
 	
 	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos, SessionInf user, OnProcess onProc, OnOk onOk, OnError onErr) {

@@ -82,6 +82,8 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static final String tablCollectPhoto = "h_coll_phot";
 
+	static final String tablDomain = "a_domain";
+
 	/** uri db field */
 	static final String uri = "uri";
 	/** file state db field */
@@ -148,6 +150,8 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = delPhoto(jmsg.body(0), usr);
 				else if (A.selectSyncs.equals(a))
 					rsp = querySyncs(jmsg.body(0), usr);
+				else if (A.getPrefs.equals(a))
+					rsp = profile(jmsg.body(0), usr);
 
 				//
 				else if (DocsReq.A.blockStart.equals(a))
@@ -186,6 +190,19 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
+	AlbumResp profile(AlbumReq body, IUser usr) throws SemanticException, TransException, SQLException {
+		AnResultset rs = (AnResultset) st
+				.select(tablDomain)
+				.whereEq("domainId", "home")
+				.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
+				.rs(0);
+
+		rs.beforeFirst().next();
+		String home = rs.getString("domainName");
+
+		return new AlbumResp().profiles(new Profiles(home));
+	}
+
 	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException {
 		checkDuplicate(Connects.uri2conn(body.uri()), ((PhotoRobot)usr).deviceId(), body.clientpath, usr);
 
@@ -210,11 +227,16 @@ public class Albums extends ServPort<AlbumReq> {
 				.cdate(body.createDate);
 	}
 
-	void checkDuplication(AlbumReq body, PhotoRobot usr) throws SemanticException, TransException, SQLException {
-		checkDuplicate(Connects.uri2conn(body.uri()), usr.deviceId(), body.photo.clientpath, usr);
+	void checkDuplication(AlbumReq body, PhotoRobot usr)
+			throws SemanticException, TransException, SQLException {
+
+		checkDuplicate(Connects.uri2conn(body.uri()),
+				usr.deviceId(), body.photo.clientpath, usr);
 	}
 
-	private void checkDuplicate(String conn, String device, String clientpath, IUser usr) throws SemanticException, TransException, SQLException {
+	private void checkDuplicate(String conn, String device, String clientpath, IUser usr)
+			throws SemanticException, TransException, SQLException {
+
 		AnResultset rs = (AnResultset) st
 				.select(tablPhotos, "p")
 				.col(Funcall.count("pid"), "cnt")
@@ -300,7 +322,9 @@ public class Albums extends ServPort<AlbumReq> {
 		return usr.sessionId() + " " + clientpathRaw;
 	}
 
-	AlbumResp querySyncs(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+	AlbumResp querySyncs(AlbumReq req, IUser usr)
+			throws SemanticException, TransException, SQLException {
+
 		if (req.syncQueries() == null)
 			throw new SemanticException("Null Query - invalide request.");
 
@@ -448,7 +472,9 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws TransException
 	 * @throws SemanticException
 	 */
-	protected static AlbumResp rec(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+	protected static AlbumResp rec(AlbumReq req, IUser usr)
+			throws SemanticException, TransException, SQLException {
+
 		AnResultset rs = (AnResultset) st
 				.select(tablPhotos, "p")
 				.j("a_users", "u", "u.userId = p.shareby")
@@ -469,25 +495,37 @@ public class Albums extends ServPort<AlbumReq> {
 		return new AlbumResp().rec(rs);
 	}
 
-	protected static AlbumResp collect(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+	protected static AlbumResp collect(AlbumReq req, IUser usr)
+			throws SemanticException, TransException, SQLException {
+
 		String cid = req.collectId;
-		AnResultset rs = (AnResultset) st.select(tablCollects).whereEq("cid", cid)
-				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
+		AnResultset rs = (AnResultset) st
+				.select(tablCollects)
+				.whereEq("cid", cid)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+				.rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find photo collection for id = '%s' (permission of %s)", cid, usr.uid());
 
 		AlbumResp album = new AlbumResp().collects(rs);
 
-		rs = (AnResultset) st.select(tablPhotos, "p").col("p.*").j(tablCollectPhoto, "cp", "cp.pid = p.pid")
-				.whereEq("cp.cid", cid).rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
+		rs = (AnResultset) st
+				.select(tablPhotos, "p")
+				.j(tablCollectPhoto, "cp", "cp.pid = p.pid")
+				.col("p.*")
+				.whereEq("cp.cid", cid)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+				.rs(0);
 
 		album.photos(cid, rs);
 
 		return album;
 	}
 
-	protected static AlbumResp album(AlbumReq req, IUser usr) throws SemanticException, TransException, SQLException {
+	protected static AlbumResp album(AlbumReq req, IUser usr)
+			throws SemanticException, TransException, SQLException {
+
 		String aid = req.albumId;
 		AnResultset rs = (AnResultset) st.select(tablPhotos).whereEq("aid", aid)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
