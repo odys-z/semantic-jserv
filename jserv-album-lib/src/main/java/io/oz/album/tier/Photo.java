@@ -1,15 +1,14 @@
 package io.oz.album.tier;
 
 import java.io.IOException;
+import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.parser.image.ImageMetadataExtractor;
-import org.xml.sax.SAXException;
-
+import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
@@ -22,18 +21,30 @@ import io.odysz.transact.sql.parts.condition.Funcall;
  * @author ody
  *
  */
-public class Photo extends FileRecord {
-	public String pid;
+public class Photo extends Anson {
+	public String recId;
+	public String recId() { return recId; }
+
 	public String pname;
+
+	public String clientpath;
+
+	public int syncFlag;
+	/** usally reported by client file system, overriden by exif date, if exits */
+	public String createDate;
+
+	@AnsonField(shortoString=true)
 	public String uri;
 	public String shareby;
 	public String sharedate;
 	public String geox;
 	public String geoy;
-	public String exif;
+	public ArrayList<String> exif;
 	public String sharer;
 
 	public String collectId;
+	public String collectId() { return collectId; }
+
 	public String albumId;
 
 	
@@ -42,7 +53,7 @@ public class Photo extends FileRecord {
 	public Photo() {}
 	
 	public Photo(AnResultset rs) throws SQLException {
-		this.pid = rs.getString("pid");
+		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
 		this.uri = rs.getString("uri");
 		try {
@@ -52,11 +63,23 @@ public class Photo extends FileRecord {
 		}
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
+		
 	}
 
 	public Photo(String collectId, AnResultset rs) throws SQLException {
 		this(rs);
 		this.collectId = collectId;
+	}
+
+	/**Set client path and syncFlag
+	 * @param rs
+	 * @return this
+	 * @throws SQLException
+	 */
+	public Photo asSyncRec(AnResultset rs) throws SQLException {
+		this.clientpath = rs.getString("clientpath"); 
+		this.syncFlag = rs.getInt("syncFlag"); 
+		return this;
 	}
 
 	public String month() throws IOException, SemanticException  {
@@ -67,30 +90,28 @@ public class Photo extends FileRecord {
 
 	public AbsPart photoDate() throws IOException, SemanticException {
 		try {
-			String pdate = null;
-			Date d = null;
-			if (exif != null) {
-				Metadata meta = new Metadata();
-				new ImageMetadataExtractor(meta).parseRawExif(exif.getBytes());
-				d = meta.getDate(TikaCoreProperties.CREATED);
+			if (!LangExt.isblank(createDate)) {
+				Date d = DateFormat.parse(createDate); 
+				month = DateFormat.formatYYmm(d);
+				return new ExprPart("'" + createDate + "'");
 			}
 			else {
-				d = new Date();
-			}
-
-			if (LangExt.isblank(pdate)) {
-				month = DateFormat.formatYYmm(new Date());
+				Date d = new Date();
+				month = DateFormat.formatYYmm(d);
 				return Funcall.now();
 			}
-			else {
-				month = DateFormat.formatYYmm(d);
-				return new ExprPart(pdate);
-			}
-		} catch (SAXException | TikaException e ) {
+		} catch (ParseException e ) {
 			e.printStackTrace();
 			throw new SemanticException(e.getMessage());
 		}
 	}
 
+	public void month(Date d) {
+		month = DateFormat.formatYYmm(d);
+	}
+
+	public void month(FileTime d) {
+		month = DateFormat.formatYYmm(d);
+	}
 
 }

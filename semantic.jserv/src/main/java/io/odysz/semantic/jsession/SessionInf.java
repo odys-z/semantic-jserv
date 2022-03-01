@@ -9,6 +9,8 @@ public class SessionInf extends Anson {
 	String userName;
 	String roleName; 
 
+	public String device;
+	
 	public SessionInf () {
 	}
 	

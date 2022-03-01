@@ -1,7 +1,13 @@
 package io.odysz.semantic.tier.docs;
 
+import java.util.ArrayList;
+
+import io.odysz.anson.AnsonField;
+import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jsession.SessionInf;
+import io.odysz.semantics.x.SemanticException;
 
 public class DocsReq extends AnsonBody {
 	public static class A {
@@ -10,6 +16,11 @@ public class DocsReq extends AnsonBody {
 		public static final String rec = "r/rec";
 		public static final String upload = "c";
 		public static final String del = "d";
+
+		public static final String blockStart = "c/b/start";
+		public static final String blockUp = "c/b/block";
+		public static final String blockEnd = "c/b/end";
+		public static final String blockAbort = "c/b/abort";
 	}
 
 	public static class State {
@@ -19,10 +30,13 @@ public class DocsReq extends AnsonBody {
 		public static final String deprecated = "depr";
 	}
 
-
 	public String docId;
 	public String docName;
+	public String createDate;
+	public String clientpath;
 	public String mime;
+
+	@AnsonField(shortoString = true)
 	public String uri64;
 
 	String[] deletings;
@@ -31,10 +45,99 @@ public class DocsReq extends AnsonBody {
 	
 	public DocsReq() {
 		super(null, null);
+		blockSeq = -1;
 	}
 
 	protected DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 	}
 
+	protected SyncingPage syncing;
+	public SyncingPage syncing() { return syncing; }
+
+	protected String device; 
+	public String device() { return device; }
+
+	protected ArrayList<SyncRec> syncQueries;
+	public ArrayList<SyncRec> syncQueries() { return syncQueries; }
+
+	protected long blockSeq;
+	public long blockSeq() { return blockSeq; } 
+
+	public DocsReq nextBlock;
+
+	public DocsReq querySync(IFileDescriptor p) {
+		if (syncQueries == null)
+			syncQueries = new ArrayList<SyncRec>();
+		syncQueries.add(new SyncRec(p));
+		return this;
+	}
+
+	public DocsReq syncing(SyncingPage page) {
+		this.syncing = page;
+		return this;
+	}
+
+	public DocsReq blockStart(IFileDescriptor file, SessionInf usr) throws SemanticException {
+		this.device = usr.device;
+		if (LangExt.isblank(this.device, ".", "/"))
+			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files. %s", file.fullpath());
+
+		this.clientpath = file.fullpath(); 
+		this.docName = file.clientname();
+		this.createDate = file.cdate();
+		this.blockSeq = 0;
+		
+		this.a = A.blockStart;
+		return this;
+	}
+
+	public DocsReq blockUp(long sequence, DocsResp resp, StringBuilder b64, SessionInf usr) throws SemanticException {
+		String uri64 = b64.toString();
+		return blockUp(sequence, resp, uri64, usr);
+	}
+	
+	public DocsReq blockUp(long sequence, DocsResp resp, String s64, SessionInf usr) throws SemanticException {
+		this.device = usr.device;
+		if (LangExt.isblank(this.device, ".", "/"))
+			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
+
+		this.blockSeq = sequence;
+
+		this.docId = resp.recId();
+		this.clientpath = resp.fullpath();
+		this.uri64 = s64;
+
+		this.a = A.blockUp;
+		return this;
+	}
+
+	public DocsReq blockAbort(DocsResp startAck, SessionInf usr) throws SemanticException {
+		this.device = usr.device;
+
+		this.blockSeq = startAck.blockSeqReply;
+
+		this.docId = startAck.recId();
+		this.clientpath = startAck.fullpath();
+
+		this.a = A.blockAbort;
+		return this;
+	}
+
+	public DocsReq blockEnd(DocsResp resp, SessionInf usr) throws SemanticException {
+		this.device = usr.device;
+
+		this.blockSeq = resp.blockSeqReply;
+
+		this.docId = resp.recId();
+		this.clientpath = resp.fullpath();
+
+		this.a = A.blockEnd;
+		return this;
+	}
+
+	public DocsReq blockSeq(int i) {
+		blockSeq = i;
+		return this;
+	}
 }

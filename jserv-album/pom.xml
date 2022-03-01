@@ -6,7 +6,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <version>0.2.0-SNAPSHOT</version>
+  <version>0.4.6-SNAPSHOT</version>
   <packaging>war</packaging>
 
   <name>jserv-album Maven Webapp</name>
@@ -18,12 +18,28 @@
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
   <scm>
   	<connection>scm:git:git://github.com/odys-z/semantic-jserv.git</connection>
   	<developerConnection>scm:git:odys-z@github.com:odys-z/semantic-jserv.git</developerConnection>
   	<url>https://github.com/odys-z/semantic-jserv</url>
   	<tag>HEAD</tag>
   </scm>
+
+  <developers>
+    <developer>
+      <name>Odys Zhou</name>
+      <email>odys.zhou@gmail.com</email>
+      <organization>odys-z.github.io</organization>
+      <organizationUrl>https://odys-z.github.io</organizationUrl>
+    </developer>
+  </developers>
 
   <distributionManagement>
   	<snapshotRepository>
@@ -44,7 +60,7 @@
       <version>5.3.1</version>
       <scope>test</scope>
     </dependency>
-    
+
 	<dependency>
 		<groupId>org.apache.tika</groupId>
 		<artifactId>tika-core</artifactId>
@@ -55,18 +71,18 @@
 		<groupId>org.apache.tika</groupId>
 		<artifactId>tika-parsers-standard-package</artifactId>
 		<version>2.2.1</version>
-	</dependency>   
+	</dependency>
 
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <version>3.0.1</version>
     </dependency>
-    
+
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>[1.3.3-SNAPSHOT,)</version>
+	  <version>[1.3.5-SNAPSHOT,)</version>
    	</dependency>
 
 	<!--
@@ -80,7 +96,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
-	    <version>[0.1.3,)</version>
+	    <version>[0.4.6-SNAPSHOT,)</version>
 	</dependency>
 
 	<dependency>
@@ -125,7 +141,7 @@
           <artifactId>maven-install-plugin</artifactId>
           <version>2.5.2</version>
       </plugin>
-        
+
 
    	  <plugin>
 	  	<artifactId>maven-deploy-plugin</artifactId>
@@ -228,7 +244,7 @@
 			</execution>
 		</executions>
 	  </plugin>
-	  
+
       </plugins>
     </pluginManagement>
   </build>

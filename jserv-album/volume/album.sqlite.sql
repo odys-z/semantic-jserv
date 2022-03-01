@@ -8,6 +8,7 @@ CREATE TABLE h_photos (
   uri varchar(512) NOT NULL, -- storage/userId/folder/recId-clientname
   pdate datetime,     -- picture taken time
   device varchar(12), -- 'original device ID',
+  clientpath TEXT DEFAULT '/' NOT NULL, -- device + clientpath = identity
   shareby varchar(12), -- 'shared by / creator',
   sharedate datetime not null, -- 'shared date time',
   tags varchar(512) DEFAULT NULL ,
@@ -18,21 +19,21 @@ CREATE TABLE h_photos (
   opertime datetime not null,
 
   PRIMARY KEY (pid)
-) ;
+);
 
 DROP table if exists h_collects ;
 CREATE TABLE h_collects (
-  cid varchar(12), -- NOT NULL,
-  cname varchar(256), -- DEFAULT NULL,
-  shareby varchar(12), -- comment 'shared by / creator',
-  yyyy_mm varchar(8),  -- subfolder
-  cdate datetime not null, -- comment 'create date time',
+  cid varchar(12) NOT NULL,     -- NOT NULL,
+  cname varchar(256),           -- DEFAULT NULL,
+  shareby varchar(12) NOT NULL, -- comment 'shared by / creator',
+  yyyy_mm varchar(8) NOT NULL,  -- subfolder
+  cdate datetime not null,      -- comment 'create date time',
   tags varchar(512) DEFAULT NULL ,
   oper varchar(12) not null,
   opertime datetime not null,
 
   PRIMARY KEY (cid)
-); -- subject collection
+); -- subject collection, every photo has a default collection, uid/yyyy_mm
 
 DROP table if exists h_coll_phot ;
 CREATE TABLE h_coll_phot (

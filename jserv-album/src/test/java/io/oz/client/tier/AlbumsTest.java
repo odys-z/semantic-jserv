@@ -1,5 +1,6 @@
 package io.oz.client.tier;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.FileUtils;
@@ -22,8 +25,11 @@ import io.odysz.jclient.InsecureClient;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
-import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.jsession.SessionInf;
+import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.SyncRec;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -65,12 +71,15 @@ class AlbumsTest {
 			client = new InsecureClient(jserv);
 			local = new File("src/test/local").getAbsolutePath();
 
-			SessionClient.verbose(true);
-			Anson.verbose(true);
+			SessionClient.verbose(false);
+			Anson.verbose = false;
 
 			errCtx = new ErrorCtx() {
-				public void onError(MsgCode c, AnsonResp rep) {
-					fail(rep.msg());
+				// @Override public void onError(MsgCode c, AnsonResp rep) { fail(rep.msg()); }
+
+				@Override
+				public void onError(MsgCode c, String rep) {
+					fail(String.format("code %s, msg: %s", c.name(), rep));
 				}
 			};
 		} catch (Exception e) {
@@ -144,7 +153,8 @@ class AlbumsTest {
 		}
 	}
 	
-	/**Tet append to collection with a pic.
+	/**
+	 * Test append to collection with a pic.
 	 * @throws TransException
 	 * @throws IOException
 	 * @throws AnsonException
@@ -153,15 +163,23 @@ class AlbumsTest {
 	 */
 	@Test
 	void testAppend2Collect() throws TransException, IOException, AnsonException, GeneralSecurityException, SsException {
-		String localFolder = "res";
+		String localFolder = "test/res";
 		String filename = "my.jpg";
 
-		SessionClient ssclient = Clients.login("ody", "123456");
+		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
-		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 
-		assertEquals("c-001", resp.photo().collectId);
-		assertEquals(6, resp.photo().pid.length());
+		try {
+			tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
+			fail("should failed on duplicate file found");
+		}
+		catch (SemanticException e) { }
+
+		tier.del("device-test", FilenameUtils.concat(localFolder, filename));
+		AlbumResp rep = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
+
+		assertEquals("c-001", rep.photo().collectId);
+		assertEquals(6, rep.photo().recId.length());
 	}
 	
 	/**
@@ -173,16 +191,109 @@ class AlbumsTest {
 	 * @throws SemanticException 
 	 */
 	@Test
-	void testSyncPhotos() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
-		String localFolder = "res";
-		String filename = "my.jpg";
+	void testSyncInsertPhotos() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
+		String localFolder = "test/res";
+		// String filename = "my.jpg";
+		String filename = "no-exif.jpg";
 
-		SessionClient ssclient = Clients.login("ody", "123456");
+		SessionClient ssclient = Clients.login("ody", "123456", "device-1");
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
+		try {
+			tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
+			fail("checking duplication failed.");
+		}
+		catch (SemanticException e) { }
+
+		tier.del("device-1", FilenameUtils.concat(localFolder, filename));
 		AlbumResp resp = tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 
 		assertEquals("c-001", resp.photo().collectId);
-		assertEquals(6, resp.photo().pid.length());	
+		assertEquals(6, resp.photo().recId.length());	
 	}
 	
+	@Test
+	void testSyncImages() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
+		String localFolder = "test/res";
+		String filename = "my.jpg";
+		String device = "device-2";
+
+		SessionClient ssclient = Clients.login("ody", "123456", device);
+		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
+
+		List<IFileDescriptor> imges = new ArrayList<IFileDescriptor>();
+		imges.add(new IFileDescriptor() {
+			@Override
+			public String fullpath() { return FilenameUtils.concat(localFolder, filename); }
+
+			@Override
+			public IFileDescriptor fullpath(String clientpath) throws IOException { return this; }
+
+			@Override public String clientname() { return filename; }
+
+			@Override public String cdate() { return null; } 
+		});
+
+		try {
+			tier.syncPhotos((List<? extends IFileDescriptor>)imges, ssclient.ssInfo());
+			fail("checking duplication failed.");
+		}
+		catch (SemanticException e) { }
+
+		tier.del(device, FilenameUtils.concat(localFolder, filename));
+		List<AlbumResp> resp = tier.syncPhotos((List<? extends IFileDescriptor>)imges, ssclient.ssInfo());
+
+		for (AlbumResp doc : resp) {
+			assertEquals(6, doc.photo().recId().length());
+			assertEquals("c-001", doc.photo().collectId());
+			assertEquals("2019_08", doc.photo().month());
+			assertEquals("test/res/my.jpg", doc.photo().clientpath);	
+		}
+	}
+
+	@Test
+	void testVideoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
+		String localFolder = "test/res";
+		 int bsize = 72 * 1024;
+		 String filename = "my.jpg";
+//		int bsize = 18 * 1024 * 1024;
+//		String filename = "ignored.MOV";
+
+		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
+		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx)
+								.blockSize(bsize);
+
+		List<SyncRec> videos = new ArrayList<SyncRec>();
+		videos.add((SyncRec) new SyncRec()
+					.fullpath(FilenameUtils.concat(localFolder, filename)));
+
+		SessionInf photoUser = ssclient.ssInfo();
+		photoUser.device = "device-test";
+
+		tier.syncVideos( videos, photoUser,
+			(c, v, resp) -> {
+				fail("duplicate checking not working");
+			},
+			new ErrorCtx() {
+				@Override
+				public void onError(MsgCode c, String msg) {
+					if (!MsgCode.exGeneral.equals(c))
+						fail("Not expected code");
+
+					tier.del("device-test", videos.get(0).fullpath());
+					List<DocsResp> resps = tier.syncVideos(videos, photoUser, null);
+					assertNotNull(resps);
+					assertEquals(1, resps.size());
+
+					for (DocsResp d : resps) {
+						String docId = d.recId();
+						assertEquals(6, docId.length());
+
+						AlbumResp rp = tier.selectPhotoRec(docId);
+						assertNotNull(rp.photo().pname);
+						assertEquals(rp.photo().pname, filename);
+					}
+				}
+			});
+
+	}
 }
