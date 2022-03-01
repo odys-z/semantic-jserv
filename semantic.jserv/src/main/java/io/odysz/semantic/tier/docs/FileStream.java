@@ -22,8 +22,8 @@ import io.odysz.transact.x.TransException;
  * - file upload / download in stream
  * 
  * <h6>This should be moved to framework with test</h6>
+ * 
  * @author Ody Zhou
- *
  */
 public class FileStream {
 	protected static DATranscxt st;
@@ -75,11 +75,11 @@ public class FileStream {
 	}
 
 
-	/**Map uri to file path
+	/**Map uri to file path, according to db records. Which means a doc record already exists.
 	 * @param funcUri client function uri
-	 * @param fileId file id, of which uri usually handled by semantics file ext
+	 * @param fileId file record id, of which uri usually handled by semantics file ext
 	 * @param usr 
-	 * @return
+	 * @return resolved uri of file
 	 * @throws SemanticException can't find path of fileId 
 	 * @throws TransException 
 	 * @throws SQLException 

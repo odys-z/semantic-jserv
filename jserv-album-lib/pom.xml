@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
   <artifactId>album-lib</artifactId>
-  <version>0.1.2-SNAPSHOT</version>
+  <version>0.4.9</version>
   <name>Album Common Lib</name>
   <description>Album Common Lib</description>
   <url>https://odys-z.github.io</url>
@@ -13,12 +13,28 @@
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
   <scm>
   	<connection>scm:git:git://github.com/odys-z/semantic-jserv.git</connection>
   	<developerConnection>scm:git:odys-z@github.com:odys-z/semantic-jserv.git</developerConnection>
   	<url>https://github.com/odys-z/semantic-jserv</url>
   	<tag>HEAD</tag>
   </scm>
+
+  <developers>
+    <developer>
+      <name>Odys Zhou</name>
+      <email>odys.zhou@gmail.com</email>
+      <organization>odys-z.github.io</organization>
+      <organizationUrl>https://odys-z.github.io</organizationUrl>
+    </developer>
+  </developers>
 
   <distributionManagement>
   	<snapshotRepository>
@@ -39,9 +55,7 @@
       <version>5.3.1</version>
       <scope>test</scope>
     </dependency>
-    
-    <!--
-     -->
+
 	<dependency>
 		<groupId>org.apache.tika</groupId>
 		<artifactId>tika-core</artifactId>
@@ -52,18 +66,26 @@
 		<groupId>org.apache.tika</groupId>
 		<artifactId>tika-parsers-standard-package</artifactId>
 		<version>2.2.1</version>
-	</dependency>   
+	</dependency>
+
+    <!--
+	<dependency>
+		<groupId>io.github.odys-z</groupId>
+		<artifactId>tika-light</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</dependency>
+     -->
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>anclient.java</artifactId>
-	    <version>[0.3.0-SNAPSHOT,)</version>
+	    <version>[0.4.7,)</version>
 	</dependency>
 
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>[1.3.3-SNAPSHOT,)</version>
+	  <version>[1.3.7,)</version>
    	</dependency>
   </dependencies>
 
@@ -98,7 +120,7 @@
       </plugin>
       </plugins>
     </pluginManagement>
-        
+
     <plugins>
    	  <plugin>
 	  	<artifactId>maven-deploy-plugin</artifactId>
@@ -193,7 +215,7 @@
 		<version>1.5</version>
 		<executions>
 			<execution>
-			  <id>semantics.transact</id>
+			  <id>Jserv Album</id>
 			  <phase>verify</phase>
 			  <goals>
 				<goal>sign</goal>

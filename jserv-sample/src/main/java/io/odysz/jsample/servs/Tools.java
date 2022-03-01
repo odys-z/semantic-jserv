@@ -119,7 +119,7 @@ public class Tools extends ServPort<UserReq> {
 			write(resp, rp);
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
-		} catch (SQLException | TransException e) {
+		} catch (TransException e) {
 			if (SampleFlags.user)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));

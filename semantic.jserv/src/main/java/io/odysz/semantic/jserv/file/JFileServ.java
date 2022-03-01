@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.ServletException;
@@ -96,7 +95,7 @@ public class JFileServ extends ServPort<FileReq> {
 			}
 
 			resp.flushBuffer();
-		} catch (SemanticException | AnsonException | SsException | SQLException e) {
+		} catch (SemanticException | AnsonException | SsException e) {
 			if (ServFlags.query)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
