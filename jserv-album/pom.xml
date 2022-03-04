@@ -7,7 +7,7 @@
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
   <version>0.4.6-SNAPSHOT</version>
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
 
   <name>jserv-album Maven Webapp</name>
   <url>https://odys-z.github.io</url>
@@ -82,7 +82,7 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>[1.3.8,)</version>
+	  <version>[1.3.9-SNAPSHOT,)</version>
    	</dependency>
 
 	<!--
@@ -115,9 +115,8 @@
   <build>
     <finalName>jserv-album</finalName>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
-      <plugins>
-      <!-- https://stackoverflow.com/questions/41326911/maven-plugin-for-tomcat-9 -->
-      <plugin>
+     <plugins>
+     <plugin>
           <artifactId>maven-clean-plugin</artifactId>
           <version>3.1.0</version>
       </plugin>
@@ -246,7 +245,52 @@
 		</executions>
 	  </plugin>
 
+		<!--
+		<plugin>
+		   <groupId>org.apache.tomcat.maven</groupId>
+		   <artifactId>tomcat7-maven-plugin</artifactId>
+		   <version>2.1</version>
+		   <configuration>
+			 <!- - context root for Java web apps - -> 
+			 <path>/jserv-album</path>
+			 <!- - name of executable jar file - -> 
+			 <finalName>executable.jar</finalName>
+		   </configuration>
+		</plugin>
+		-->
       </plugins>
     </pluginManagement>
+    <!--
+    <plugins>
+        <plugin>
+            <groupId>org.codehaus.cargo</groupId>
+            <artifactId>cargo-maven2-plugin</artifactId>
+            <version>1.7.9</version>
+            <configuration>
+                <container>
+                    <systemProperties>
+                        <myvar1>${myEnvVar}</myvar1>
+                        <myvar2>... stuff ...</myvar2>
+                    </systemProperties>
+                    <containerId>tomcat9x</containerId>
+                    <zipUrlInstaller>
+                        <url>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/9.0.29/tomcat-9.0.29.zip</url>
+                    </zipUrlInstaller>
+                </container>
+                <deployables>
+                    <deployable>
+                        <groupId>io.github.odys-z</groupId>
+                        <artifactId>jserv-album</artifactId>
+                        <type>war</type>
+                        <location>target/jserv-album.war</location>
+                        <properties>
+                            <context>jserv-album</context>
+                        </properties>
+                    </deployable>
+                </deployables>
+            </configuration>
+        </plugin>
+    </plugins>
+     -->
   </build>
 </project>

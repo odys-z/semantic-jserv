@@ -66,10 +66,6 @@ public class JSingleton {
 		return ssVerier;
 	}
 
-//	public static ISessionVerifier getSessionVerifierV11() {
-//		return ssVerierV11;
-//	}
-
 	/**Get server root/WEB-INF path (filesystem local)
 	 * @return WEB-INF root path
 	 */
