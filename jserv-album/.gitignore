@@ -9,3 +9,5 @@ volume/ody/ - - /**
 volume/ody/uploading-temp
 test/results
 test/res/ignore*.*
+.extract
+./
