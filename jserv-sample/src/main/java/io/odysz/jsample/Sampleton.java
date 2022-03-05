@@ -1,6 +1,7 @@
 package io.odysz.jsample;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 
 import javax.servlet.ServletContextEvent;
@@ -23,11 +24,10 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
-
-		super.onInitialized(sce);
-		
 		String relapath = null;
 		try {
+			super.onInitialized(sce);
+
 			// Because of the java enum limitation, or maybe the author's knowledge limitation, 
 			// JMessage needing a IPort instance to handle ports that implemented a new version of valof() method handling all ports.<br>
 			// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
@@ -42,7 +42,7 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 			e.printStackTrace();
 			Utils.warn("%s: %s\nCheck Config.xml:\ntable=cheap\nk=config-path\nv=%s",
 					e.getClass().getName(), e.getMessage(), relapath);
-		} catch (TransException | SAXException e) {
+		} catch (TransException | SAXException | SQLException e) {
 			e.printStackTrace();
 		}
 	}
