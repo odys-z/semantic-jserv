@@ -371,7 +371,7 @@ public class Albums extends ServPort<AlbumReq> {
 		return new AlbumResp().photo(req.photo, pid);
 	}
 
-	private DocsResp delPhoto(AlbumReq req, IUser usr) throws TransException, SQLException {
+	DocsResp delPhoto(AlbumReq req, IUser usr) throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 
 		SemanticObject res = (SemanticObject) st
@@ -427,15 +427,34 @@ public class Albums extends ServPort<AlbumReq> {
 				.get("h_photos"))
 				.getString("pid");
 		
-		postHandling(pid);
+		postHandling(pid, conn, usr);
 
 		return pid;
 	}
 
-
-	protected static void postHandling(String pid) {
+	protected static void postHandling(String pid, String conn, IUser usr) {
 		new Thread(() ->{
-			
+			AnResultset rs;
+			try {
+				ISemantext stx = st.instancontxt(conn, usr);
+				rs = (AnResultset) st
+					.select(tablPhotos, "p")
+					.col("folder").col("clientpath")
+					.col("uri")
+					// .col("geox").col("geoy")
+					// .col("exif")
+					.whereEq("pid", pid)
+					.rs(stx).rs(0);
+
+				if (rs.next()) {
+					String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
+					Photo p = new Photo();
+					Exif.parseExif(p, pth);
+					Utils.logi(p.exif);
+				}
+			} catch (TransException | SQLException e) {
+				e.printStackTrace();
+			}
 		}).start();
 	}
 
