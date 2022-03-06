@@ -427,13 +427,19 @@ public class Albums extends ServPort<AlbumReq> {
 				.get("h_photos"))
 				.getString("pid");
 		
-		// postHandling(pid);
+		postHandling(pid);
 
 		return pid;
 	}
 
 
-	static void postParseExif(String pid) { }
+	protected static void postHandling(String pid) {
+		new Thread(() ->{
+			
+		}).start();
+	}
+
+	// static void postParseExif(String pid) { }
 
 	/**
 	 * map uid/month -> collect-id
