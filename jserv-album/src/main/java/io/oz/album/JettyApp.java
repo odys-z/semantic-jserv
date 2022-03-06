@@ -3,6 +3,7 @@ package io.oz.album;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -35,7 +36,11 @@ public class JettyApp {
         registerServlets(wacHandler, Albums.class);
         registerServlets(wacHandler, AnSession.class);
 
-        wacHandler.addServlet(ExampleServlet.class, "/exam");
+        ServletHolder holderHome = new ServletHolder("static-home", DefaultServlet.class);
+        holderHome.setInitParameter("resourceBase", "dist");
+        // holderHome.setInitParameter("dirAllowed", "true");
+        holderHome.setInitParameter("pathInfoOnly", "true");
+        wacHandler.addServlet(holderHome, "/dist/*");
 
         server.setHandler(wacHandler);
         
