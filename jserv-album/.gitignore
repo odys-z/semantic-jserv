@@ -11,3 +11,4 @@ test/results
 test/res/ignore*.*
 .extract
 ./
+dist

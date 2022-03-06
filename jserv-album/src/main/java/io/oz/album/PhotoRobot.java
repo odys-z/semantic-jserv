@@ -56,7 +56,7 @@ public class PhotoRobot extends SemanticObject implements IUser {
 	@Override
 	public IUser onCreate(Anson reqBody) throws SsException {
 		deviceId = ((AnSessionReq)reqBody).deviceId();
-		if (LangExt.isblank(deviceId, "/", "."))
+		if (LangExt.isblank(deviceId, "/", "\\."))
 			throw new SsException("Photo user's device Id can not be null - used for distinguish files.");
 		return this;
 	}

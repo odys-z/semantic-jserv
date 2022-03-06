@@ -426,6 +426,8 @@ public class Albums extends ServPort<AlbumReq> {
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
 				.get("h_photos"))
 				.getString("pid");
+		
+		// postHandling(pid);
 
 		return pid;
 	}
