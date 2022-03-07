@@ -458,8 +458,6 @@ public class Albums extends ServPort<AlbumReq> {
 		}).start();
 	}
 
-	// static void postParseExif(String pid) { }
-
 	/**
 	 * map uid/month -> collect-id
 	 * 
