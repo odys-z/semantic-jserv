@@ -356,11 +356,12 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		}
 	}
 
-	protected String allocateSsid() {
+	public static String allocateSsid() {
 		Random random = new Random();
-		String ssid = Radix64.toString(random.nextInt(), 8);
-		while (users.containsKey(ssid))
-			ssid = Radix64.toString(random.nextInt(), 8);
+		// 2 ^ 48 = 64 ^ 8
+		String ssid = Radix64.toString((long)random.nextInt() * (short)random.nextInt(), 8);
+		while (users != null && users.containsKey(ssid))
+			ssid = Radix64.toString((long)random.nextInt() * (short)random.nextInt(), 8);
 		return ssid;
 	}
 
