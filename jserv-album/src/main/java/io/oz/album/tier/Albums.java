@@ -412,11 +412,11 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("shareby", usr.uid())
 				.nv("sharedate", Funcall.now());
 
-		if (photo.collectId == null)
-			// create a default collection - uid/month/file.ext
-			// This can not been supported by db semantics because it's business required
-			// for complex handling
-			photo.collectId = getMonthCollection(conn, photo, usr);
+		// create a default collection - uid/month/file.ext
+		// This can not been supported by db semantics because it's business required
+		// for complex handling
+		// if (photo.collectId == null)
+		// 	photo.collectId = getMonthCollection(conn, photo, usr);
 
 		ins.post(st.insert(tablCollectPhoto)
 				// pid is resulved
@@ -451,8 +451,15 @@ public class Albums extends ServPort<AlbumReq> {
 					Photo p = new Photo();
 					Exif.parseExif(p, pth);
 					Utils.logi(p.exif);
+					if (p.photoDate() != null)
+						st.update(conn, usr)
+							.nv("folder", p.month())
+							.nv("pdate", p.photoDate())
+							.nv("x", p.geox).nv("y", p.geoy)
+							.whereEq("pid", pid)
+							.u(st.instancontxt(conn, usr));
 				}
-			} catch (TransException | SQLException e) {
+			} catch (TransException | SQLException | IOException e) {
 				e.printStackTrace();
 			}
 		}).start();
@@ -467,7 +474,6 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws IOException
 	 * @throws SQLException
 	 * @throws TransException
-	 */
 	private String getMonthCollection(String conn, Photo photo, IUser usr)
 			throws IOException, TransException, SQLException {
 		// TODO hit collection LRU
@@ -486,6 +492,7 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 		return cid;
 	}
+	 */
 
 	/**
 	 * Read a media file record (id, uri), TODO touch LRU.
