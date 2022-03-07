@@ -57,26 +57,6 @@
     </dependency>
 
 	<dependency>
-		<groupId>org.apache.tika</groupId>
-		<artifactId>tika-core</artifactId>
-		<version>[2.2.1,)</version>
-	</dependency>
-
-	<dependency>
-		<groupId>org.apache.tika</groupId>
-		<artifactId>tika-parsers-standard-package</artifactId>
-		<version>2.2.1</version>
-	</dependency>
-
-    <!--
-	<dependency>
-		<groupId>io.github.odys-z</groupId>
-		<artifactId>tika-light</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
-	</dependency>
-     -->
-
-	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>anclient.java</artifactId>
 	    <version>[0.4.7,)</version>
