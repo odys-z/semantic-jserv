@@ -437,7 +437,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @param conn
 	 * @param usr
 	 */
-	protected static void onPhotoCreated(String pid, String conn, IUser usr) {
+	static protected void onPhotoCreated(String pid, String conn, IUser usr) {
 		new Thread(() -> {
 			AnResultset rs;
 			try {
@@ -445,9 +445,7 @@ public class Albums extends ServPort<AlbumReq> {
 					.select(tablPhotos, "p")
 					.col("folder").col("clientpath")
 					.col("uri")
-					.col("folder")
-					// .col("geox").col("geoy")
-					// .col("exif")
+					.col("pname")
 					.whereEq("pid", pid)
 					.rs(st.instancontxt(conn, usr))
 					.rs(0);
@@ -462,6 +460,9 @@ public class Albums extends ServPort<AlbumReq> {
 						st.update(tablPhotos, usr)
 						  .nv("folder", p.month())
 						  .nv("pdate", p.photoDate())
+						  .nv("uri", pth)
+						  .nv("pname", rs.getString("pname"))
+						  .nv("shareby", usr.uid())
 						  .nv("geox", p.geox).nv("geoy", p.geoy)
 						  .whereEq("pid", pid)
 						  .u(stx);
