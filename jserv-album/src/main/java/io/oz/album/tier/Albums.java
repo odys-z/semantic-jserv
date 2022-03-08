@@ -418,46 +418,54 @@ public class Albums extends ServPort<AlbumReq> {
 		// if (photo.collectId == null)
 		// 	photo.collectId = getMonthCollection(conn, photo, usr);
 
-		ins.post(st.insert(tablCollectPhoto)
-				// pid is resulved
-				.nv("cid", photo.collectId));
+		// ins.post(st.insert(tablCollectPhoto)
+		// 		// pid is resulved
+		// 		.nv("cid", photo.collectId));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
 				.get("h_photos"))
 				.getString("pid");
 		
-		postHandling(pid, conn, usr);
+		onPhotoCreated(pid, conn, usr);
 
 		return pid;
 	}
 
-	protected static void postHandling(String pid, String conn, IUser usr) {
-		new Thread(() ->{
+	/**This method update geox,y and date automatically - should only used when creating pictures.
+	 * @param pid
+	 * @param conn
+	 * @param usr
+	 */
+	protected static void onPhotoCreated(String pid, String conn, IUser usr) {
+		new Thread(() -> {
 			AnResultset rs;
 			try {
-				ISemantext stx = st.instancontxt(conn, usr);
 				rs = (AnResultset) st
 					.select(tablPhotos, "p")
 					.col("folder").col("clientpath")
 					.col("uri")
+					.col("folder")
 					// .col("geox").col("geoy")
 					// .col("exif")
 					.whereEq("pid", pid)
-					.rs(stx).rs(0);
+					.rs(st.instancontxt(conn, usr))
+					.rs(0);
 
 				if (rs.next()) {
+					ISemantext stx = st.instancontxt(conn, usr);
 					String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
 					Photo p = new Photo();
 					Exif.parseExif(p, pth);
-					Utils.logi(p.exif);
-					if (p.photoDate() != null)
-						st.update(conn, usr)
-							.nv("folder", p.month())
-							.nv("pdate", p.photoDate())
-							.nv("x", p.geox).nv("y", p.geoy)
-							.whereEq("pid", pid)
-							.u(st.instancontxt(conn, usr));
+					// Utils.logi(p.exif);
+					if (p.photoDate() != null) {
+						st.update(tablPhotos, usr)
+						  .nv("folder", p.month())
+						  .nv("pdate", p.photoDate())
+						  .nv("geox", p.geox).nv("geoy", p.geoy)
+						  .whereEq("pid", pid)
+						  .u(stx);
+					}
 				}
 			} catch (TransException | SQLException | IOException e) {
 				e.printStackTrace();
