@@ -2,6 +2,10 @@
 <!DOCTYPE xml>
 <configs>
   <t id="default" pk="k" columns="k,v">
+    <c>
+    	<k>file-sys</k>
+    	<v>windows</v>
+    </c>
 	<c>
 		<!-- Class name of SUser Implementation -->
 		<k>class-IUser</k>

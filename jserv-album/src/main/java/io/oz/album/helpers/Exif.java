@@ -51,7 +51,7 @@ public class Exif {
 				photo.month(fd);
 			}
 
-			photo.geox = metadata.get(TikaCoreProperties.LANGUAGE);
+			photo.geox = metadata.get(TikaCoreProperties.LONGITUDE);
 			if (photo.geox == null) photo.geox = geox0;
 
 			photo.geoy = metadata.get(TikaCoreProperties.LATITUDE);
