@@ -1,3 +1,6 @@
+
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.odys-z/semantic.jserv/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.odys-z/semantic.jserv/)
+
 # About semantic-jserv
 A semantic data service web application using protocol based on json.
 
