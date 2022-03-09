@@ -54,31 +54,10 @@ This is a basically sql builder. The semantic.jserv based on it to handling requ
 
 This module handling semantics configured in semantics.xml, like auto key, fk, operator-time finger print etc.
 
-## jcleint
+## AnCleint
 
 The client side communicating with semantic-jserv.
 
-Currently a java client and a js client together with [easyUI](https://www.jeasyui.com) is basically working. And a C# client project is also started. We also planning porting the java client to Android.
+Currently a java client and a js client together with React is basically working. And a C# client project is also came with a lib in Nuget (stoped for a while). Java client to Android also tested.
 
 The js client together with a vue client is also in tense developing.
-
-# Issues
-
-1. Can't reserve file name for uploaded files.
-
-If the orginal file is referenced each other, this relationship will be erased.
-
-Example: uploaded ex.gltf & ex.bin
-
-```
-attId  |attName        |uri                                   |busiTbl |busiId |oper  |optime              |
--------|---------------|--------------------------------------|--------|-------|------|--------------------|
-00000i |xv-import.gltf |uploads/a_users/00000i xv-import.gltf |a_users |admin  |admin |2021-05-14 10:22:32 |
-00000j |xv-import.bin  |uploads/a_users/00000j xv-import.bin  |a_users |admin  |admin |2021-05-14 10:22:32 |
-```
-
-files are saved as
-```
-00000i xv-import.gltf
-00000j xv-import.bin
-```
