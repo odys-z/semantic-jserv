@@ -9,8 +9,8 @@ public class HeartBeat extends AnsonBody {
 	private String ssid;
 	private String uid;
 
-	protected HeartBeat(AnsonMsg<AnsonBody> parent, String ssid, String uid) {
-		super(parent, null); // Heartbeats don't need db access
+	public HeartBeat(AnsonMsg<AnsonBody> parent, String uri, String ssid, String uid) {
+		super(parent, uri);
 		this.ssid = ssid;
 		this.uid = uid;
 	}

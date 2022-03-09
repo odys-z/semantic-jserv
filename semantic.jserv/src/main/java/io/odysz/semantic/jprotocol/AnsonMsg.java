@@ -28,7 +28,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * @author odys-z@github.com
 	 */
 	public static enum Port implements IPort {  
-			heartbeat("ping.serv11"), session("login.serv11"),
+			heartbeat("ping.serv"), session("login.serv11"),
 			query("r.serv11"), update("u.serv11"),
 			insert("c.serv11"), delete("d.serv11"),
 			echo("echo.serv11"),
