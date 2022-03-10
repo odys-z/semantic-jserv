@@ -21,12 +21,12 @@ import io.odysz.transact.x.TransException;
  */
 public class BlockChain {
 
-	public final String ssId;
+	// public final String ssId;
 	public final String clientpath;
 	public final String clientname;
 	public final String cdate;
 
-	protected final String extroot;
+	// protected final String tempFolder;
 	public final String outputPath;
 	protected final OutputStream ofs;
 	
@@ -34,27 +34,28 @@ public class BlockChain {
 
 	/**Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
-	 * @param rootpath configured root path, e.g. resolved by Semantic.DA io.odysz.semantic.ShExtFile
-	 * @param usrId
-	 * @param ssId
+	 * @param tempDir
 	 * @param clientpathRaw - client path that can match at client's environment (saving at server side replaced some special characters)
 	 * @param createDate 
 	 * @throws IOException
 	 * @throws TransException 
 	 */
-	public BlockChain(String rootpath, String userId, String ssId, String clientpathRaw, String createDate) throws IOException, TransException {
+	public BlockChain(String tempDir, String clientpathRaw, String createDate)
+			throws IOException, TransException {
+
 		if (LangExt.isblank(clientpathRaw))
 			throw new TransException("Client path is neccessary to start a block chain transaction.");
-		this.ssId = ssId;
+		// this.ssId = ssId;
 		this.cdate = createDate;
 		this.clientpath = clientpathRaw;
 
+		// tempDir = FilenameUtils.concat(rootpath, userId, "uploading-temp", ssId);
+
 		String clientpath = clientpathRaw.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
-		extroot = FilenameUtils.concat(rootpath, userId, "uploading-temp", ssId);
 
 		clientname = FilenameUtils.getName(clientpath);
-		outputPath = EnvPath.decodeUri(extroot, clientpath);
+		outputPath = EnvPath.decodeUri(tempDir, clientpath);
 
 		String parentpath = FilenameUtils.getFullPath(outputPath);
 		new File(parentpath).mkdirs(); 

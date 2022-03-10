@@ -21,7 +21,8 @@
 	<c>
 		<k>folder.file-upload</k>
 		<v>file:/home/ody/uploads</v>
-	</c> -->
+	</c>
+	-->
 
 	<c>
 		<k>sync.log.on-verbose</k>
@@ -29,7 +30,7 @@
 	</c>
 	<c>
 		<k>ss-timeout-min</k>
-		<v>30</v>
+		<v>3</v>
 	</c>
 	<c>
 		<k>ss-timeout-min.debugMode</k>

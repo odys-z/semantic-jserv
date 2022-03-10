@@ -9,6 +9,10 @@ public class HeartBeat extends AnsonBody {
 	private String ssid;
 	private String uid;
 
+	public HeartBeat() {
+		super(null, null);
+	}
+
 	public HeartBeat(AnsonMsg<AnsonBody> parent, String uri, String ssid, String uid) {
 		super(parent, uri);
 		this.ssid = ssid;
