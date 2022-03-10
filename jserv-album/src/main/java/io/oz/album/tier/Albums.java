@@ -74,7 +74,7 @@ public class Albums extends ServPort<AlbumReq> {
 	public static int POST_ParseExif = 1;
 
 	/** db photo table */
-	static final String tablPhotos = "h_photos";
+	public static final String tablPhotos = "h_photos";
 	/** db photo table */
 	static final String tablAlbums = "h_albums";
 	/** db collection table */
@@ -209,9 +209,11 @@ public class Albums extends ServPort<AlbumReq> {
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
+		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
 		String conn = Connects.uri2conn(body.uri());
-		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, tablPhotos, smtype.extFile)).getFileRoot();
-		BlockChain chain = new BlockChain(extroot, usr.uid(), usr.sessionId(), body.clientpath, body.createDate);
+		String tempDir = ((PhotoRobot)usr).touchTempDir(conn);
+
+		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate);
 
 		// FIXME security breach?
 		String id = usr.sessionId() + " " + chain.clientpath;
@@ -371,7 +373,7 @@ public class Albums extends ServPort<AlbumReq> {
 		return new AlbumResp().photo(req.photo, pid);
 	}
 
-	private DocsResp delPhoto(AlbumReq req, IUser usr) throws TransException, SQLException {
+	DocsResp delPhoto(AlbumReq req, IUser usr) throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 
 		SemanticObject res = (SemanticObject) st
@@ -412,26 +414,67 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("shareby", usr.uid())
 				.nv("sharedate", Funcall.now());
 
-		if (photo.collectId == null)
-			// create a default collection - uid/month/file.ext
-			// This can not been supported by db semantics because it's business required
-			// for complex handling
-			photo.collectId = getMonthCollection(conn, photo, usr);
+		// create a default collection - uid/month/file.ext
+		// This can not been supported by db semantics because it's business required
+		// for complex handling
+		// if (photo.collectId == null)
+		// 	photo.collectId = getMonthCollection(conn, photo, usr);
 
-		ins.post(st.insert(tablCollectPhoto)
-				// pid is resulved
-				.nv("cid", photo.collectId));
+		// ins.post(st.insert(tablCollectPhoto)
+		// 		// pid is resulved
+		// 		.nv("cid", photo.collectId));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
 				.get("h_photos"))
 				.getString("pid");
+		
+		onPhotoCreated(pid, conn, usr);
 
 		return pid;
 	}
 
+	/**This method update geox,y and date automatically - should only used when creating pictures.
+	 * @param pid
+	 * @param conn
+	 * @param usr
+	 */
+	static protected void onPhotoCreated(String pid, String conn, IUser usr) {
+		new Thread(() -> {
+			AnResultset rs;
+			try {
+				rs = (AnResultset) st
+					.select(tablPhotos, "p")
+					.col("folder").col("clientpath")
+					.col("uri")
+					.col("pname")
+					.whereEq("pid", pid)
+					.rs(st.instancontxt(conn, usr))
+					.rs(0);
 
-	static void postParseExif(String pid) { }
+				if (rs.next()) {
+					ISemantext stx = st.instancontxt(conn, usr);
+					String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
+					Photo p = new Photo();
+					Exif.parseExif(p, pth);
+					// Utils.logi(p.exif);
+					if (p.photoDate() != null) {
+						st.update(tablPhotos, usr)
+						  .nv("folder", p.month())
+						  .nv("pdate", p.photoDate())
+						  .nv("uri", pth)
+						  .nv("pname", rs.getString("pname"))
+						  .nv("shareby", usr.uid())
+						  .nv("geox", p.geox).nv("geoy", p.geoy)
+						  .whereEq("pid", pid)
+						  .u(stx);
+					}
+				}
+			} catch (TransException | SQLException | IOException e) {
+				e.printStackTrace();
+			}
+		}).start();
+	}
 
 	/**
 	 * map uid/month -> collect-id
@@ -442,7 +485,6 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws IOException
 	 * @throws SQLException
 	 * @throws TransException
-	 */
 	private String getMonthCollection(String conn, Photo photo, IUser usr)
 			throws IOException, TransException, SQLException {
 		// TODO hit collection LRU
@@ -461,6 +503,7 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 		return cid;
 	}
+	 */
 
 	/**
 	 * Read a media file record (id, uri), TODO touch LRU.
