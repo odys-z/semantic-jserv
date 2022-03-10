@@ -17,6 +17,7 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
+	<!-- Semantics-* is built on javax.servlet -->
 	<jetty.version>9.4.45.v20220203</jetty.version>
   </properties>
 
@@ -84,7 +85,7 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>[1.4.0-SNAPSHOT,)</version>
+	  <version>[1.4.3,)</version>
    	</dependency>
 
 	<!--
@@ -98,7 +99,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
-	    <version>[0.4.10,)</version>
+	    <version>[0.4.14,)</version>
 	</dependency>
 
 	<dependency>

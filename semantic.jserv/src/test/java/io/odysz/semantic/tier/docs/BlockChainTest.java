@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.semantic.jsession.SessionInf;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -34,7 +35,9 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.3gp";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain("$VOLUME_HOME", uid, ssid, clientpath, "1911-10-10 10:10:10");
+		// chain = new BlockChain("$VOLUME_HOME", uid, ssid, clientpath, "1911-10-10 10:10:10");
+		String tempDir = IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid);
+		chain = new BlockChain(tempDir, clientpath, "1911-10-10 10:10:10");
 
 		assertEquals("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath);
 		assertEquals("/sdcard/0/Downloads/test.3gp", chain.clientpath);
@@ -83,9 +86,9 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.3gp";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain("$VOLUME_HOME", uid, ssid, clientpath, "1911-10-10 10:10:10");
+		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid), clientpath, "1911-10-10 10:10:10");
 
-		assertEquals("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath);
+		assertEquals("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath);
 		assertEquals("/sdcard/0/Downloads/test.3gp", chain.clientpath);
 
 		DocsResp resp = (DocsResp) new DocsResp().fullpath(clientpath);
@@ -151,7 +154,7 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.aborting";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain("$VOLUME_HOME", uid, ssid, clientpath, "1911-10-10 10:10:10");
+		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid), clientpath, "1911-10-10 10:10:10");
 
 		assertEquals("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath);
 		assertEquals("/sdcard/0/Downloads/test.aborting", chain.clientpath);

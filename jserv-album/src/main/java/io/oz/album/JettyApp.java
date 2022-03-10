@@ -13,6 +13,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jsession.AnSession;
+import io.odysz.semantic.jsession.HeartLink;
 import io.oz.album.tier.Albums;
 
 import javax.servlet.Servlet;
@@ -35,6 +36,7 @@ public class JettyApp {
         wacHandler.setResourceBase(".");
         registerServlets(wacHandler, Albums.class);
         registerServlets(wacHandler, AnSession.class);
+        registerServlets(wacHandler, HeartLink.class);
 
         ServletHolder holderHome = new ServletHolder("static-home", DefaultServlet.class);
         holderHome.setInitParameter("resourceBase", "dist");

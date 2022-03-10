@@ -74,7 +74,7 @@ public class Albums extends ServPort<AlbumReq> {
 	public static int POST_ParseExif = 1;
 
 	/** db photo table */
-	static final String tablPhotos = "h_photos";
+	public static final String tablPhotos = "h_photos";
 	/** db photo table */
 	static final String tablAlbums = "h_albums";
 	/** db collection table */
@@ -209,9 +209,11 @@ public class Albums extends ServPort<AlbumReq> {
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
+		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
 		String conn = Connects.uri2conn(body.uri());
-		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, tablPhotos, smtype.extFile)).getFileRoot();
-		BlockChain chain = new BlockChain(extroot, usr.uid(), usr.sessionId(), body.clientpath, body.createDate);
+		String tempDir = ((PhotoRobot)usr).touchTempDir(conn);
+
+		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate);
 
 		// FIXME security breach?
 		String id = usr.sessionId() + " " + chain.clientpath;
