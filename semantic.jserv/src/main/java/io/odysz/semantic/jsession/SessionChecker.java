@@ -32,6 +32,7 @@ public class SessionChecker implements Runnable {
 
 			for (String ssid : ss) {
 				IUser s = sspool.remove(ssid);
+				s.logout();
 				Utils.logi("[%s, %s]", ssid, s.uid());
 			}
 		} catch (Exception ex) {

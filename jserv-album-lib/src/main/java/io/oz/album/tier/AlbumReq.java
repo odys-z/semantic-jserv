@@ -12,7 +12,6 @@ import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
-import io.oz.album.helpers.Exif;
 
 public class AlbumReq extends DocsReq {
 
@@ -103,7 +102,7 @@ public class AlbumReq extends DocsReq {
 		this.photo.uri = b64;
 		this.photo.pname = p.getFileName().toString();
 		
-		Exif.parseExif(this.photo, fullpath);
+		// Exif.parseExif(this.photo, fullpath);
 
 		this.a = A.insertPhoto;
 

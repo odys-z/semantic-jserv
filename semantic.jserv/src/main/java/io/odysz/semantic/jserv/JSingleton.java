@@ -25,20 +25,23 @@ public class JSingleton {
 
 	public static DATranscxt defltScxt;
 	private static ISessionVerifier ssVerier;
-	private static String rootINF;
+	private static String webINF;
 
 	public void onDestroyed(ServletContextEvent arg0) {
 		AnSession.stopScheduled(5);
 		Connects.close();
 	}
 
-	public void onInitialized(ServletContextEvent evt) {
+	public void onInitialized(ServletContextEvent evt) throws SemanticException, SAXException, IOException, SQLException {
 		Utils.printCaller(false);
 		Utils.logi("JSingleton initializing...");
 
 		ServletContext ctx = evt.getServletContext();
-		rootINF = ctx.getRealPath("/WEB-INF");
+		webINF = ctx.getRealPath("/WEB-INF");
 		String root = ctx.getRealPath(".");
+		initJserv(root, webINF, ctx.getInitParameter("io.oz.root-key"));
+		
+		/*
 		Connects.init(rootINF);
 		Configs.init(rootINF);
 		DATranscxt.configRoot(rootINF, root);
@@ -58,6 +61,39 @@ public class JSingleton {
 		} catch (SAXException | IOException | SemanticException | SQLException e) {
 			e.printStackTrace();
 		}
+		*/
+	}
+	
+	/**For initializing from Jetty - it's not able to find root path?
+	 * @param root
+	 * @param rootINF
+	 * @param rootKey, e.g. context.xml/parameter=root-key
+	 * @throws IOException 
+	 * @throws SAXException 
+	 * @throws SQLException 
+	 * @throws SemanticException 
+	 */
+	public static void initJserv(String root, String rootINF, String rootKey) throws SAXException, IOException, SemanticException, SQLException {
+
+		webINF = rootINF;
+		Connects.init(rootINF);
+		Configs.init(rootINF);
+		DATranscxt.configRoot(rootINF, root);
+		DATranscxt.key("user-pswd", rootKey);
+		
+		DatasetCfg.init(rootINF);
+		
+		for (String connId : Connects.getAllConnIds())
+			// Don't remove this until Docker deployment is verified:
+			// DATranscxt.loadSemantics(connId, JSingleton.getFileInfPath(Connects.getSmtcsPath(connId)));
+			DATranscxt.loadSemantics(connId, Connects.getSmtcsPath(connId));
+
+		defltScxt = new DATranscxt(Connects.defltConn());
+			
+		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
+
+		AnSession.init(defltScxt);
+		
 	}
 
 	public static ISessionVerifier getSessionVerifier() {
@@ -66,14 +102,10 @@ public class JSingleton {
 		return ssVerier;
 	}
 
-//	public static ISessionVerifier getSessionVerifierV11() {
-//		return ssVerierV11;
-//	}
-
 	/**Get server root/WEB-INF path (filesystem local)
 	 * @return WEB-INF root path
 	 */
-	public static String rootINF() { return rootINF; }
+	public static String rootINF() { return webINF; }
 
 	/**Get WEB-INF file path
 	 * @param filename
