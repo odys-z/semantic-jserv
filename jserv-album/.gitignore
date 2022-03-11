@@ -13,3 +13,4 @@ test/res/ignore*.*
 .extract
 ./
 dist
+winserv.xml
