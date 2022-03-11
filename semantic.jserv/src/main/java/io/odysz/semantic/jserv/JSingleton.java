@@ -73,7 +73,8 @@ public class JSingleton {
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public static void initJserv(String root, String rootINF, String rootKey) throws SAXException, IOException, SemanticException, SQLException {
+	public static void initJserv(String root, String rootINF, String rootKey)
+			throws SAXException, IOException, SemanticException, SQLException {
 
 		webINF = rootINF;
 		Connects.init(rootINF);
