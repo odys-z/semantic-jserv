@@ -12,9 +12,12 @@ import org.xml.sax.SAXException;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.album.helpers.Winserv;
 
 @WebListener
 public class AlbumSingleton extends JSingleton implements ServletContextListener {
+	
+	static public final String winserv_xml = "WEB-INF/winserv.xml";
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
@@ -23,6 +26,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			super.onInitialized(sce);
 			
 			AnsonMsg.understandPorts(AlbumPort.album);
+			Winserv.init("WEB-INF/winserv.xml");
 			// Anson.verbose = true;
 		} catch (SemanticException | SAXException | IOException | SQLException e) {
 			e.printStackTrace();
