@@ -1,0 +1,10 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!DOCTYPE xml>
+<configs>
+  <t id="winserv" pk="k" columns="k,v">
+  <c><k>bind</k><v>0.0.0.0</v></c>
+  <c><k>port</k><v>8080</v></c>
+  <c><k>home</k><v>My Home</v></c>
+  <c><k>volume</k><v>c:\album</v></c>
+  </t>
+</configs>
