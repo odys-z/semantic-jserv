@@ -94,7 +94,6 @@ public class JSingleton {
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 
 		AnSession.init(defltScxt);
-		
 	}
 
 	public static ISessionVerifier getSessionVerifier() {
