@@ -32,7 +32,8 @@ public class JSingleton {
 		Connects.close();
 	}
 
-	public void onInitialized(ServletContextEvent evt) throws SemanticException, SAXException, IOException, SQLException {
+	public void onInitialized(ServletContextEvent evt)
+			throws SemanticException, SAXException, IOException, SQLException {
 		Utils.printCaller(false);
 		Utils.logi("JSingleton initializing...");
 
@@ -40,28 +41,6 @@ public class JSingleton {
 		webINF = ctx.getRealPath("/WEB-INF");
 		String root = ctx.getRealPath(".");
 		initJserv(root, webINF, ctx.getInitParameter("io.oz.root-key"));
-		
-		/*
-		Connects.init(rootINF);
-		Configs.init(rootINF);
-		DATranscxt.configRoot(rootINF, root);
-		DATranscxt.key("user-pswd", ctx.getInitParameter("io.oz.root-key"));
-		
-		try {
-			DatasetCfg.init(rootINF);
-			
-			for (String connId : Connects.getAllConnIds())
-				DATranscxt.loadSemantics(connId, JSingleton.getFileInfPath(Connects.getSmtcsPath(connId)));
-
-			defltScxt = new DATranscxt(Connects.defltConn());
-				
-			Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
-			AnSession.init(defltScxt, ctx);
-
-		} catch (SAXException | IOException | SemanticException | SQLException e) {
-			e.printStackTrace();
-		}
-		*/
 	}
 	
 	/**For initializing from Jetty - it's not able to find root path?
