@@ -37,6 +37,8 @@ public class JettyApp {
 
         wacHandler.setContextPath("/jserv-album");
         wacHandler.setResourceBase(".");
+        wacHandler.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
+
         registerServlets(wacHandler, Albums.class);
         registerServlets(wacHandler, AnSession.class);
         registerServlets(wacHandler, HeartLink.class);
@@ -57,9 +59,19 @@ public class JettyApp {
         httpConnector.setIdleTimeout(5000);
         server.addConnector(httpConnector);
         
-        // System.getenv().put("VOLUME_HOME", Winserv.v(keys.volume));
+        System.out.println(httpConnector.getHost());
+        
         System.setProperty("VOLUME_HOME", Winserv.v(keys.volume));
 
+//        Listener v = httpConnector.getHttpChannelListeners();
+//        InetAddress addr = InetAddress.getLocalHost();
+//        // Get IP Address
+//        byte[] ipAddr = addr.getAddress();
+//		// Get hostname
+//		String hostname = addr.getHostName();
+		
+		// listInet();
+       
         server.start();
         server.join();
     }
@@ -88,4 +100,5 @@ public class JettyApp {
 		if (server != null)
 			server.stop();
 	}
+
 }
