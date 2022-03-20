@@ -130,6 +130,20 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		if (port == null)
 			throw new SemanticException("Port can not be null. Not initialized? To use JMassage understand ports, call understandPorts(IPort) first.");
 	}
+	
+	/**
+	 * There are cases extended ServPort using different IPort class.
+	 * This method is used to change port implementation.
+	 * FIXME deprecate IPort 
+	 * 
+	 * @param enport
+	 * @return
+	 * @throws SemanticException
+	 */
+	public AnsonMsg<T> port(IPort enport) throws SemanticException {
+		port = enport;
+		return this;
+	}
 
 	public AnsonMsg() {
 		seq = (int) (Math.random() * 1000);

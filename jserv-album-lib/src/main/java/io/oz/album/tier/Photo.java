@@ -56,6 +56,10 @@ public class Photo extends Anson {
 		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
 		this.uri = rs.getString("uri");
+		this.month = rs.getString("folder");
+		this.createDate = rs.getString("pdate");
+		this.geox = rs.getString("geox");
+		this.geoy = rs.getString("geoy");
 		try {
 			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
 		} catch (SQLException ex) {

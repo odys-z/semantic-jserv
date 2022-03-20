@@ -232,8 +232,6 @@ public class AlbumClientier extends Semantier {
 										.header(header);
 
 				resp = client.commit(q, new ErrorCtx() {
-					// @Override public void onError(MsgCode code, AnsonResp obj) { onErr.err(code, obj.msg()); }
-
 					@Override
 					public void onError(MsgCode code, String msg) {
 						onErr.err(code, msg);
@@ -262,7 +260,6 @@ public class AlbumClientier extends Semantier {
 			AlbumReq req = new AlbumReq()
 					.device(user.device)
 					.createPhoto(p, user);
-			// req.a(A.insertPhoto);
 
 			AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
 									.header(header);

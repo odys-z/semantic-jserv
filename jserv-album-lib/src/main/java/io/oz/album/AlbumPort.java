@@ -14,6 +14,8 @@ import io.odysz.semantics.x.SemanticException;
 /**Sample project's prots extension
  * This enum replaced jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}. */
 public enum AlbumPort implements IPort {
+	heartbeat("ping.serv"),
+	session("login.serv11"),
 	/** users.less */
 	userstier("users.less"),
 	/** editor.less */
