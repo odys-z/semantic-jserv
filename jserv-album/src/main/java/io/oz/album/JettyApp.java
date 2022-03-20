@@ -13,6 +13,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 
+import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
@@ -28,12 +29,16 @@ public class JettyApp {
 
     public static void main(String[] args) throws Exception {
 
+    	Winserv.init(AlbumSingleton.winserv_xml);
+        
+        System.setProperty("VOLUME_HOME", Winserv.v(keys.volume));
+        Utils.logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+
 		AnsonMsg.understandPorts(AlbumPort.album);
 
         WebAppContext wacHandler = new WebAppContext();
 
     	JSingleton.initJserv(".", "WEB-INF", "ABCDEF0123456789");
-    	Winserv.init(AlbumSingleton.winserv_xml);
 
         wacHandler.setContextPath("/jserv-album");
         wacHandler.setResourceBase(".");
@@ -60,8 +65,6 @@ public class JettyApp {
         server.addConnector(httpConnector);
         
         // System.out.println(httpConnector.getHost());
-        
-        System.setProperty("VOLUME_HOME", Winserv.v(keys.volume));
 
 //        Listener v = httpConnector.getHttpChannelListeners();
 //        InetAddress addr = InetAddress.getLocalHost();
