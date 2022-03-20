@@ -58,7 +58,7 @@ class AlbumsServTierTest {
 		
 		assertEquals("test-00001", rep.photo.recId);
 		assertEquals("DSC_0124.JPG", rep.photo.pname);
-		assertEquals("ody/2019_08/DSC_0124.JPG", rep.photo.uri);
+		assertEquals("$VOLUME_HOME/ody/2019_08/DSC_0124.JPG", rep.photo.uri);
 		
 		req.collectId = "c-001";
 		AlbumResp coll = Albums.collect(req, robot);
@@ -67,7 +67,7 @@ class AlbumsServTierTest {
 		assertEquals("Liar & Fool", coll.collectRecords.get(0).cname);
 		assertEquals("c-001", coll.photos.get(0)[0].collectId);
 		assertEquals("DSC_0005.JPG", coll.photos.get(0)[0].pname);
-		assertEquals("ody/2019_08/DSC_0005.JPG", coll.photos.get(0)[0].uri);
+		assertEquals("$VOLUME_HOME/ody/2019_08/DSC_0005.JPG", coll.photos.get(0)[0].uri);
 	}
 
 }
