@@ -265,9 +265,7 @@ class AlbumsTest {
 		String myId = null; 
 		for (AlbumResp doc : resp) {
 			myId = doc.photo().recId;
-//			assertEquals(8, doc.photo().recId().length());
 			// assertEquals("c-001", doc.photo().collectId()); FXIME collection Id changed?
-//			assertEquals("2019_08", doc.photo().month());
 			assertEquals("test/res/my.jpg", doc.photo().clientpath);	
 		}
 
@@ -281,8 +279,6 @@ class AlbumsTest {
 		String localFolder = "test/res";
 		 int bsize = 72 * 1024;
 		 String filename = "my.jpg";
-//		int bsize = 18 * 1024 * 1024;
-//		String filename = "ignored.MOV";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx)
