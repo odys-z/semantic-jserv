@@ -269,7 +269,7 @@ class AlbumsTest {
 			assertEquals("test/res/my.jpg", doc.photo().clientpath);	
 		}
 
-		Thread.sleep(500); // wait for exif parsing at server side
+		Thread.sleep(2000); // wait for exif parsing at server side
 		AlbumResp rep = tier.selectPhotoRec(myId, errCtx);
 		assertEquals("2019_08", rep.photo().month());
 	}
