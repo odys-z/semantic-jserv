@@ -167,9 +167,9 @@ public class Albums extends ServPort<AlbumReq> {
 					throw new SemanticException("request.body.a can not handled request: %s", jreq.a());
 			}
 
-			if (rsp != null) { // no rsp for download
+			if (rsp != null) { // no rsp for a == download
 				rsp.syncing(jreq.syncing());
-				write(resp, ok(rsp));
+				write(resp, ok(rsp).port(AlbumPort.album));
 			}
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
@@ -386,6 +386,8 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 
 	/**create photo - call this after duplication is checked.
+	 * 
+	 * <p>Photo is created as in the folder of user/month/.
 	 * @param conn
 	 * @param photo
 	 * @param usr
@@ -400,8 +402,8 @@ public class Albums extends ServPort<AlbumReq> {
 		if (LangExt.isblank(photo.clientpath))
 			throw new SemanticException("Client path can't be null/empty.");
 		
-		if (LangExt.isblank(photo.month, " - - "))
-			throw new SemanticException("Month of photo creating is important for saving files. It's recommended to parse it from exif.");
+		if (LangExt.isblank(photo.month(), " - - "))
+			throw new SemanticException("Month of photo creating is important for saving files. It's required for creating media file.");
 
 		Insert ins = st.insert(tablPhotos, usr)
 				.nv("uri", photo.uri).nv("pname", photo.pname)
@@ -413,16 +415,6 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("exif", photo.exif)
 				.nv("shareby", usr.uid())
 				.nv("sharedate", Funcall.now());
-
-		// create a default collection - uid/month/file.ext
-		// This can not been supported by db semantics because it's business required
-		// for complex handling
-		// if (photo.collectId == null)
-		// 	photo.collectId = getMonthCollection(conn, photo, usr);
-
-		// ins.post(st.insert(tablCollectPhoto)
-		// 		// pid is resulved
-		// 		.nv("cid", photo.collectId));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))

@@ -59,7 +59,7 @@ public class JettyApp {
         httpConnector.setIdleTimeout(5000);
         server.addConnector(httpConnector);
         
-        System.out.println(httpConnector.getHost());
+        // System.out.println(httpConnector.getHost());
         
         System.setProperty("VOLUME_HOME", Winserv.v(keys.volume));
 

@@ -52,7 +52,10 @@ public class AlbumReq extends DocsReq {
 	String collectId;
 	Photo photo;
 
-	public AlbumReq device(String device) { this.device = device; return this; }
+	public AlbumReq device(String device) {
+		this.device = device;
+		return this;
+	}
 
 	public AlbumReq() {
 		super(null, null);
@@ -161,7 +164,6 @@ public class AlbumReq extends DocsReq {
 
 	public AlbumReq del(String device, String clientpath) {
 		this.photo = new Photo();
-//		this.photo.clientpath = clientpath;
 		this.device = device;
 		this.clientpath = clientpath;
 		this.a = A.del;
