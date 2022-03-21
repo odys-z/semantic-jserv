@@ -31,7 +31,9 @@ public class JettyApp {
 
     	Winserv.init(AlbumSingleton.winserv_xml);
         
-        System.setProperty("VOLUME_HOME", Winserv.v(keys.volume));
+    	String vol = Winserv.v(keys.volume);
+    	vol = vol == null ? "" : vol.replace("\\", "\\\\");
+        System.setProperty("VOLUME_HOME", vol);
         Utils.logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
 		AnsonMsg.understandPorts(AlbumPort.album);
