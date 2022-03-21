@@ -42,14 +42,14 @@ public class Winserv {
 	}
 
 	public static boolean vbool(String key) {
-		String isTrue = Configs.getCfg(key);
+		String isTrue = cfgs.get(keys.deftXTableId).get(key);
 		if (isTrue == null) return false;
 		isTrue = isTrue.trim().toLowerCase();
 		return "true".equals(isTrue) || "1".equals(isTrue) || "y".equals(isTrue) || "yes".equals(isTrue);
 	}
 
 	public static int vint(String key, int deflt) {
-		String str = Configs.getCfg(key);
+		String str = cfgs.get(keys.deftXTableId).get(key);
 		if (str == null) return deflt;
 		str = str.trim().toLowerCase();
 
