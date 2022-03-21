@@ -421,7 +421,8 @@ public class Albums extends ServPort<AlbumReq> {
 				.get("h_photos"))
 				.getString("pid");
 		
-		onPhotoCreated(pid, conn, usr);
+		if (photo.geox == null || photo.month == null)
+			onPhotoCreated(pid, conn, usr);
 
 		return pid;
 	}
