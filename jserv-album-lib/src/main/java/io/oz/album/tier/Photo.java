@@ -32,15 +32,16 @@ public class Photo extends Anson {
 	public int syncFlag;
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;
-
+	
 	@AnsonField(shortoString=true)
 	public String uri;
 	public String shareby;
 	public String sharedate;
 	public String geox;
 	public String geoy;
-	public ArrayList<String> exif;
 	public String sharer;
+	public ArrayList<String> exif;
+	public String mime;
 
 	public String collectId;
 	public String collectId() { return collectId; }
@@ -60,6 +61,7 @@ public class Photo extends Anson {
 		this.createDate = rs.getString("pdate");
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
+		this.mime = rs.getString("mime");
 		try {
 			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
 		} catch (SQLException ex) {
