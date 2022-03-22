@@ -1,12 +1,13 @@
 package io.oz.album;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.io.FileUtils;
 
 import io.odysz.anson.Anson;
 import io.odysz.common.LangExt;
@@ -105,9 +106,10 @@ public class PhotoRobot extends SemanticObject implements IUser {
 		for (String temp : tempDirs) {
 			try {
 				Utils.logi("Deleting: %s", temp);
-				Files.delete(Paths.get(temp));
+				// Files.delete(Paths.get(temp));
+				FileUtils.deleteDirectory(new File(temp));
 			} catch (IOException e) {
-				Utils.warn("Can not delete folder: %s.", temp);
+				Utils.warn("Can not delete folder: %s.\n%s", temp, e.getMessage());
 			}
 		}
 		return null;
