@@ -27,7 +27,7 @@ public class SessionChecker implements Runnable {
 			}
 
 			if (ss.size() > 0) {
-				Utils.logi ("Sesssion refeshed, expired session(s):\n");
+				Utils.logi ("Sesssion refeshed, expired session(s):");
 			}
 
 			for (String ssid : ss) {

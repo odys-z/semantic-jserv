@@ -40,6 +40,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
@@ -415,6 +416,9 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("exif", photo.exif)
 				.nv("shareby", usr.uid())
 				.nv("sharedate", Funcall.now());
+		
+		if (!LangExt.isblank(photo.mime))
+			ins.nv("mime", photo.mime);
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
@@ -452,15 +456,18 @@ public class Albums extends ServPort<AlbumReq> {
 					Exif.parseExif(p, pth);
 					// Utils.logi(p.exif);
 					if (p.photoDate() != null) {
-						st.update(tablPhotos, usr)
-						  .nv("folder", p.month())
-						  .nv("pdate", p.photoDate())
-						  .nv("uri", pth)
-						  .nv("pname", rs.getString("pname"))
-						  .nv("shareby", usr.uid())
-						  .nv("geox", p.geox).nv("geoy", p.geoy)
-						  .whereEq("pid", pid)
-						  .u(stx);
+						Update u = st
+							.update(tablPhotos, usr)
+							.nv("folder", p.month())
+							.nv("pdate", p.photoDate())
+							.nv("uri", pth)
+							.nv("pname", rs.getString("pname"))
+							.nv("shareby", usr.uid())
+							.nv("geox", p.geox).nv("geoy", p.geoy)
+							.whereEq("pid", pid);
+						if (!LangExt.isblank(p.mime))
+							u.nv("mime", p.mime);
+						u.u(stx);
 					}
 				}
 			} catch (TransException | SQLException | IOException e) {
@@ -468,35 +475,6 @@ public class Albums extends ServPort<AlbumReq> {
 			}
 		}).start();
 	}
-
-	/**
-	 * map uid/month -> collect-id
-	 * 
-	 * @param photo
-	 * @param usr
-	 * @return collect id
-	 * @throws IOException
-	 * @throws SQLException
-	 * @throws TransException
-	private String getMonthCollection(String conn, Photo photo, IUser usr)
-			throws IOException, TransException, SQLException {
-		// TODO hit collection LRU
-		AnResultset rs = (AnResultset) st.select(tablCollects, "c").whereEq("yyyy_mm", photo.month())
-				.whereEq("shareby", usr.uid()).rs(st.instancontxt(conn, usr)).rs(0);
-		String cid = null;
-		if (rs.next())
-			cid = rs.getString("cid");
-		else {
-			ISemantext s1 = st.instancontxt(conn, usr);
-			st.insert(tablCollects, usr).nv("yyyy_mm", photo.month()).nv("shareby", usr.uid())
-					.nv("cname", photo.month()).nv("cdate", Funcall.now()).ins(s1);
-			// cid = res.resulve(tablCollects, "cid");
-			cid = (String) s1.resulvedVal(tablCollects, "cid");
-			System.err.println("resulved cid: " + cid);
-		}
-		return cid;
-	}
-	 */
 
 	/**
 	 * Read a media file record (id, uri), TODO touch LRU.

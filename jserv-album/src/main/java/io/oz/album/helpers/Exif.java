@@ -2,6 +2,7 @@ package io.oz.album.helpers;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.sax.BodyContentHandler;
 
 import io.odysz.common.DateFormat;
+import io.odysz.common.LangExt;
 import io.oz.album.tier.Photo;
 
 public class Exif {
@@ -27,6 +29,12 @@ public class Exif {
 	}
 
 	public static Photo parseExif(Photo photo, String filepath) {
+
+		try {
+			photo.mime = LangExt.isblank(photo.mime) ?
+				Files.probeContentType(Path.of(filepath)) : photo.mime;
+		} catch (IOException e) { }
+
 		try (FileInputStream stream = new FileInputStream(new File(filepath))) {
 			BodyContentHandler handler = new BodyContentHandler();
 			AutoDetectParser parser = new AutoDetectParser();
@@ -39,7 +47,7 @@ public class Exif {
 				photo.exif.add(name + ":" +
 							(exif == null ? "null" : exif.trim().replace("\n", "\\n")));
 			}
-
+			
 			Date d = metadata.getDate(TikaCoreProperties.CREATED);
 			if (d != null) {
 				photo.createDate = DateFormat.formatime(d);

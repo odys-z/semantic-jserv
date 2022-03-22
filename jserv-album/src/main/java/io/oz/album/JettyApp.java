@@ -13,6 +13,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 
+import io.odysz.anson.Anson;
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -36,6 +37,7 @@ public class JettyApp {
         System.setProperty("VOLUME_HOME", vol);
         Utils.logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
+        Anson.verbose = false;
 		AnsonMsg.understandPorts(AlbumPort.album);
 
         WebAppContext wacHandler = new WebAppContext();
