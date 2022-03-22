@@ -15,11 +15,13 @@ CREATE TABLE h_photos (
   geox double DEFAULT 0,
   geoy double DEFAULT 0,
   exif text default null,
+  mime varchar(64),
   oper varchar(12) not null,
   opertime datetime not null,
 
   PRIMARY KEY (pid)
 );
+-- ALTER TABLE h_photos ADD mime TEXT(64);
 
 DROP table if exists h_collects ;
 CREATE TABLE h_collects (
