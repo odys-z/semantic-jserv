@@ -32,7 +32,7 @@ public class Exif {
 
 		try {
 			photo.mime = LangExt.isblank(photo.mime) ?
-				Files.probeContentType(Path.of(filepath)) : photo.mime;
+				Files.probeContentType(Paths.get(filepath)) : photo.mime;
 		} catch (IOException e) { }
 
 		try (FileInputStream stream = new FileInputStream(new File(filepath))) {

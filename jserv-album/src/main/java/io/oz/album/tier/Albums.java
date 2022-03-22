@@ -499,7 +499,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.col("userName", "shareby")
 				.col("sharedate").col("tags")
 				.col("geox").col("geoy")
-				// .col("exif")
+				.col("mime")
 				.whereEq("pid", req.docId)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
