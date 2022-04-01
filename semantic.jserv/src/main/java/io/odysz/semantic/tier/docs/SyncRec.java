@@ -33,17 +33,6 @@ public class SyncRec extends Anson implements IFileDescriptor {
 		this.cdate = p.cdate();
 	}
 
-//	@Override
-//	public String recId() {
-//		return docId;
-//	}
-//
-//	@Override
-//	public IFileDescriptor recId(String recId) {
-//		this.docId = recId;
-//		return this;
-//	}
-
 	@Override
 	public String fullpath() {
 		return clientpath;

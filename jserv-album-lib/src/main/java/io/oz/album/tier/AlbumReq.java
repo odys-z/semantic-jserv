@@ -15,7 +15,7 @@ import io.odysz.semantics.x.SemanticException;
 
 public class AlbumReq extends DocsReq {
 
-	/** media file state */
+	/** media file state
 	static enum FileState {
 		uploading("uploading"),
 		valid("valid"),
@@ -29,7 +29,7 @@ public class AlbumReq extends DocsReq {
 		FileState(String state) {
 			this.state = state;
 		}
-	}
+	} */
 	
 	static public class A {
 		public static final String records = "r/collects";
