@@ -48,7 +48,6 @@ import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
-import io.oz.album.tier.AlbumReq.FileState;
 
 /**
  * <h5>The album tier</h5> Although this tie is using the pattern of
@@ -90,7 +89,7 @@ public class Albums extends ServPort<AlbumReq> {
 	/** file state db field */
 	static final String state = "state";
 
-	FileState fileState;
+	// FileState fileState;
 
 	private HashMap<String, BlockChain> blockChains;
 

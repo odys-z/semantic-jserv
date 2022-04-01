@@ -48,7 +48,6 @@ public enum AlbumPort implements IPort {
 	@Override
 	public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
 		stream.write('\"');
-		// stream.write(url.getBytes());
 		stream.write(name().getBytes());
 		stream.write('\"');
 		return this;

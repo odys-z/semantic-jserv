@@ -20,8 +20,10 @@ public interface IFileDescriptor {
 
 	String clientname();
 
+	/** @deprecated */
 	default public String mime() { return null; }
 
+	/** @deprecated */
 	default public String doctype() { return null; }
 
 	String cdate();
