@@ -277,7 +277,7 @@
 					<goal>shade</goal>
 				</goals>
 				<configuration>
-					<finalName>${project.artifactId}-${project.version}-uber</finalName>
+					<finalName>${project.artifactId}-${project.version}</finalName>
 				</configuration>
 			</execution>
 		</executions>
