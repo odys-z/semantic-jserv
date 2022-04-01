@@ -4,6 +4,11 @@ import java.util.HashMap;
 
 import io.odysz.common.Configs;
 
+/**The environment configuration for service of Windows.
+ * Only Jatty app should use this.
+ * @author ody
+ *
+ */
 public class Winserv {
 	/** * */
 	public static class keys {
