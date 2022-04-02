@@ -67,8 +67,9 @@ public class AlbumClientier extends Semantier {
 		new Thread(new Runnable() {
 			public void run() {
 			try {
-				String[] act = AnsonHeader.usrAct("album.java", "profile", "r/settings", "load profile");
-				AnsonHeader header = client.header().act(act);
+				// String[] act = AnsonHeader.usrAct("album.java", "profile", "r/settings", "load profile");
+				AnsonHeader header = client.header()
+						.act("album.java", "profile", "r/settings", "load profile");
 
 				AlbumReq req = new AlbumReq(clientUri);
 				req.a(A.getPrefs);

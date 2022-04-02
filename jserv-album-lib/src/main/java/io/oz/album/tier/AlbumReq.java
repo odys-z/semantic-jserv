@@ -45,8 +45,7 @@ public class AlbumReq extends DocsReq {
 		public static final String getPrefs = "r/prefs";
 	}
 	
-	static class args {
-	}
+	// static class args { }
 
 	String albumId;
 	String collectId;
@@ -133,24 +132,6 @@ public class AlbumReq extends DocsReq {
 	 */
 	public AlbumReq createPhoto(IFileDescriptor file, SessionInf usr) throws IOException, SemanticException {
 		return createPhoto(null, file.fullpath());
-		/*
-		Path p = Paths.get(file.fullpath());
-		byte[] f = Files.readAllBytes(p);
-		String b64 = AESHelper.encode64(f);
-
-		this.device = usr.device;
-		if (LangExt.isblank(this.device, ".", "/"))
-			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files. %s", file.fullpath());
-		this.photo = new Photo();
-		this.photo.clientpath = file.fullpath(); 
-		this.photo.uri = b64;
-		this.photo.pname = file.clientname();
-
-		Exif.parseExif(this.photo, fullpath);
-
-		this.a = A.insertPhoto;
-		return this;
-		*/
 	}
 
 	public AlbumReq selectPhoto(String docId) {
