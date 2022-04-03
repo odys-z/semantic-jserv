@@ -15,15 +15,19 @@ import io.odysz.semantics.x.SemanticException;
 /**<p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort serv11}.</p>
  * 1. A incoming json message is parsed by *.serv into JMessage,
  * which can be used to directly to build statements;<br>
- * 2. An outgoing data object which is presented as AnsonMsg<AnsonResp>,
+ * 2. An outgoing data object which is presented as AnsonMsg&lt;AnsonResp&gt;,
  * which should been directly write into output stream.
  * 
  * @author odys-z@github.com
  */
 public class AnsonMsg <T extends AnsonBody> extends Anson {
 	/**Port is the conceptual equivalent to the SOAP port, the service methods' group.<br>
-	 * Client must use enum name, e.g. heartbeat, session in json. url are explained at server side.
-	 * NOTE: java code shouldn't use switch-case block on enum. That cause problem with generated class.
+	 * Client must use enum name, e.g. heartbeat, session in json.
+	 * And url are explained at server side.
+	 * 
+	 * NOTE:
+	 * java code shouldn't use switch-case block on enum. That cause problem
+	 * with generated class.
 	 * 
 	 * @author odys-z@github.com
 	 */
