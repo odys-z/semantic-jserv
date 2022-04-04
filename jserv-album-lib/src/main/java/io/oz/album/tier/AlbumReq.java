@@ -15,22 +15,6 @@ import io.odysz.semantics.x.SemanticException;
 
 public class AlbumReq extends DocsReq {
 
-	/** media file state
-	static enum FileState {
-		uploading("uploading"),
-		valid("valid"),
-		synchronizing("synching"),
-		archive("archive"),
-		shared("shared");
-
-		@SuppressWarnings("unused")
-		private String state;
-
-		FileState(String state) {
-			this.state = state;
-		}
-	} */
-	
 	static public class A {
 		public static final String records = "r/collects";
 		public static final String collect = "r/photos";
@@ -45,8 +29,6 @@ public class AlbumReq extends DocsReq {
 		public static final String getPrefs = "r/prefs";
 	}
 	
-	// static class args { }
-
 	String albumId;
 	String collectId;
 	Photo photo;
