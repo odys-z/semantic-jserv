@@ -89,8 +89,6 @@ public class Albums extends ServPort<AlbumReq> {
 	/** file state db field */
 	static final String state = "state";
 
-	// FileState fileState;
-
 	private HashMap<String, BlockChain> blockChains;
 
 	protected static DATranscxt st;

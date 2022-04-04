@@ -106,7 +106,6 @@ public class PhotoRobot extends SemanticObject implements IUser {
 		for (String temp : tempDirs) {
 			try {
 				Utils.logi("Deleting: %s", temp);
-				// Files.delete(Paths.get(temp));
 				FileUtils.deleteDirectory(new File(temp));
 			} catch (IOException e) {
 				Utils.warn("Can not delete folder: %s.\n%s", temp, e.getMessage());

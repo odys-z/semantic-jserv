@@ -27,7 +27,6 @@ public class SyncRec extends Anson implements IFileDescriptor {
 	public SyncRec() { }
 
 	public SyncRec(IFileDescriptor p) {
-		// this.docId = p.recId();
 		this.clientpath = p.fullpath();
 		this.filename = p.clientname();
 		this.cdate = p.cdate();

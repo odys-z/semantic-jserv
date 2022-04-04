@@ -67,7 +67,6 @@ public class AlbumClientier extends Semantier {
 		new Thread(new Runnable() {
 			public void run() {
 			try {
-				// String[] act = AnsonHeader.usrAct("album.java", "profile", "r/settings", "load profile");
 				AnsonHeader header = client.header()
 						.act("album.java", "profile", "r/settings", "load profile");
 
@@ -87,7 +86,9 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 	
-	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos, SessionInf user, OnProcess onProc, OnOk onOk, OnError onErr) {
+	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos,
+				SessionInf user, OnProcess onProc, OnOk onOk, OnError onErr) {
+
 		new Thread(new Runnable() {
 			public void run() {
 			try {
@@ -104,7 +105,9 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 	
-	public List<DocsResp> syncVideos(List<? extends IFileDescriptor> videos, SessionInf user, OnProcess proc, ErrorCtx ... onErr) {
+	public List<DocsResp> syncVideos(List<? extends IFileDescriptor> videos,
+				SessionInf user, OnProcess proc, ErrorCtx ... onErr) {
+
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 
         DocsResp resp = null;
