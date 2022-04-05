@@ -68,7 +68,12 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-	/**Create request for inserting new photo.
+	/**
+	 * TODO FIXME
+	 * TODO FIXME
+	 * Bug: some app exported pic won't get the right folder - no create date overriding empty EXIF date?
+	 * 
+	 * Create request for inserting new photo.
 	 * <p>FIXME: introducing stream field of Anson?</p>
 	 * @param collId
 	 * @param fullpath
@@ -87,6 +92,9 @@ public class AlbumReq extends DocsReq {
 		this.photo.pname = p.getFileName().toString();
 		
 		// Exif.parseExif(this.photo, fullpath);
+		// TODO FIXME
+		// TODO FIXME
+		// Bug: some app exported pic won't get the right folder - no create date overriding empty EXIF date?
 
 		this.a = A.insertPhoto;
 
