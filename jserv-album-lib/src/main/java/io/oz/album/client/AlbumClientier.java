@@ -197,7 +197,7 @@ public class AlbumClientier extends Semantier {
 		AlbumReq req = new AlbumReq(clientUri)
 				.createPhoto(collId, fullpath)
 				.photoName(clientname);
-		req.a(A.insertPhoto);
+		// req.a(A.insertPhoto);
 
 		String[] act = AnsonHeader.usrAct("album.java", "create", "c/photo", "create photo");
 		AnsonHeader header = client.header().act(act);
