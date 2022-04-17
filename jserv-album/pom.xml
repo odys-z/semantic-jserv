@@ -6,7 +6,8 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <version>0.5.2</version>
+  <version>0.5.3</version>
+  <!-- see git branch jetty-winsrv for building jetty embedded app -->
   <packaging>jar</packaging>
 
   <name>jserv-album Maven Webapp</name>
