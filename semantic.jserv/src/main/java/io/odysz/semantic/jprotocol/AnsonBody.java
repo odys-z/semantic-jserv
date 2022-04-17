@@ -25,6 +25,10 @@ public abstract class AnsonBody extends Anson {
 		return this;
 	}
 
+	/**
+	 * @param parent
+	 * @param uri see <a href='https://odys-z.github.io/Anclient/guide/func-uri.html#uri-mapping'>Anclient Doc</a>
+	 */
 	protected AnsonBody(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		this.parent = parent;
 		this.uri = uri;
