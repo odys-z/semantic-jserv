@@ -276,7 +276,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						throw new SemanticException("Can not verify old password!");
 
 					sctx.update(usrMeta.tbl, usr)
-						.nv(usrMeta.pswd, sessionBody.md("pswd"))
+						.nv(usrMeta.pswd, sessionBody.md("pswd")) // depends on semantics: dencrypt
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, usr.uid())
 						.u(sctx.instancontxt(sctx.getSysConnId(), usr));
