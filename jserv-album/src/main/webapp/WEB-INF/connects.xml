@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<conns>
+  <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,log,smtcs">
+  	<!-- drvmnger table is used to configure basic db connection, for pooled datasource, see bdcp -->
+  	<!-- smtcs: semantics configuration used only for the connection. -->
+  	<c>
+  		<id>sys-sqlite</id>
+  		<type>sqlite</type>
+  		<isdef>true</isdef>
+  		<!-- For sqlite, src = relative path from this configure file.
+  			So connection string can be: jdbc:sqlite:WEB-INF/remote.db
+  			-->
+  		<src>$VOLUME_HOME/system.db</src>
+  		<usr></usr>
+  		<pswd></pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<log>false</log>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+  </t>
+
+  <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,log,smtcs">
+  	<!-- dbcp table is used to pooled db datasource, for basic connection, see dao -->
+  	<!-- type: mysql | oracle | mssql -->
+  	<!-- id: client specify id for the desired target data source -->
+  	<!-- src: connection name, e.g. context.xml/Context/Resource [name] -->
+  	<!-- dbg: true for printing sql -->
+  	<!-- smtcs: semantics configuration used only for the connection.
+  		(And a global semantics configuration?) -->
+
+	<!-- A pooled connection configuration example for Tomcat 6, 7, 8
+  		in %CATALINA_HOME/conf/server.xml/GlobalNamingResoure/Resource:
+  	<Resource name="jdbc/semantic-DA" global="jdbc/semantic-DA" 
+  			auth="Container" type="javax.sql.DataSource"
+  			maxActive="10" maxIdle="3" maxWait="10000"
+  			username="odysz" password="..." driverClassName="com.mysql.cj.jdbc.Driver"
+  			url="jdbc:mysql://...:3306/prj" connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true" />
+  	
+  	in context.xml:
+	<ResourceLink name="jdbc/album-cloud"
+				global="jdbc/album-cloud"
+				type="javax.sql.DataSource" />
+	see https://stackoverflow.com/a/22545669/7362888
+	-->
+   	<!-- For tomcat, 
+   		in server.xml:
+   		
+			<GlobalNamingResources>
+  				<Resource auth="Container"
+					  connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true;useSSL=false;enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2"
+					  driverClassName="com.mysql.cj.jdbc.Driver"
+					  global="jdbc/album-cloud" maxActive="10" maxIdle="3" maxWait="10000"
+					  name="jdbc/album-cloud" password="..."
+					  type="javax.sql.DataSource"
+					  url="jdbc:mysql://...:3306/album-cloud"
+					  username="..."/>
+  			</GlobalNamingResources>
+
+   		in context.xml:
+			<ResourceLink name="jdbc/album-cloud"
+				global="jdbc/album-cloud"
+				type="javax.sql.DataSource" />
+   	<c>
+  		<id>album-cloud</id>
+  		<type>mysql</type>
+  		<src>jdbc/album-cloud</src>
+  		<isdef></isdef>
+  		<usr>Not used</usr>
+  		<pswd>Not used (will be protected in cipher in the future)</pswd>
+  		<dbg>true</dbg>
+  		<log>false</log>
+  		<smtcs>semantics-cloud.xml</smtcs>
+  	</c>
+   		 -->
+  </t>
+
+  <t id="conn-uri" pk='uri' columns="uri, conn">
+  	<!-- for uri, see AnClient/js/example/example.js/north-star/north-app.jsx
+  	     for conn, see above
+  	     It's planned to try configure connections via user requests, in the future.
+  	-->
+  	<!-- It's sessionless 
+   	<c>
+  		<uri>session</uri>
+  		<conn>sys-sqlite</conn>
+  	</c>
+  	 -->
+   	<c>
+  		<uri>/local/*</uri>
+  		<conn>sys-sqlite</conn>
+  	</c>
+   	<c>
+  		<uri>/cloud/*</uri>
+  		<conn>album-cloud</conn>
+  	</c>
+  </t>
+</conns>

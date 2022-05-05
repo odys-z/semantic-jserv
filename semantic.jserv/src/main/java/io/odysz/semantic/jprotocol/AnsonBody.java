@@ -9,6 +9,11 @@ public abstract class AnsonBody extends Anson {
 
 	protected String uri;
 	public String uri() { return uri; }
+	public AnsonBody uri(String uri) {
+		if (this.uri == null)
+			this.uri = uri;
+		return this;
+	}
 
 	/** Action: login | pswd, and any serv port extension */
 	protected String a;
@@ -20,6 +25,10 @@ public abstract class AnsonBody extends Anson {
 		return this;
 	}
 
+	/**
+	 * @param parent
+	 * @param uri see <a href='https://odys-z.github.io/Anclient/guide/func-uri.html#uri-mapping'>Anclient Doc</a>
+	 */
 	protected AnsonBody(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		this.parent = parent;
 		this.uri = uri;

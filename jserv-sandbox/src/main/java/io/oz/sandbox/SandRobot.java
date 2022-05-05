@@ -48,7 +48,7 @@ public class SandRobot implements IUser {
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 
-	@Override public void touch() { touched = System.currentTimeMillis(); } 
+	@Override public SandRobot touch() { touched = System.currentTimeMillis(); return this; } 
 
 	@Override public long touchedMs() { return touched; } 
 

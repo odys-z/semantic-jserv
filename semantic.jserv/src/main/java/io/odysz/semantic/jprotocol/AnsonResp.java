@@ -74,6 +74,13 @@ public class AnsonResp extends AnsonBody {
 		return this;
 	}
 	
+	public AnsonResp data(String k, Object v) {
+		if (this.map == null)
+			this.map = new HashMap<String, Object>();
+		this.map.put(k, v);
+		return this;
+	}
+	
 	public HashMap<String, Object> data () {
 		return map;
 	}

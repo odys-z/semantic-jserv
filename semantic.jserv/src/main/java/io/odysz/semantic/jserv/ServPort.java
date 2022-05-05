@@ -110,13 +110,19 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			write(resp, err(MsgCode.exGeneral, e.getMessage()));
+			write(resp, err(MsgCode.exGeneral, e.getClass().getName(), e.getMessage()));
 		}
 	}
 
+	/**Write message to resp.
+	 * @param resp can be null if user handled response already
+	 * @param msg
+	 * @param opts
+	 */
 	protected void write(HttpServletResponse resp, AnsonMsg<? extends AnsonResp> msg, JsonOpt... opts) {
 		try {
-			msg.toBlock(resp.getOutputStream(), opts);
+			if (msg != null)
+				msg.toBlock(resp.getOutputStream(), opts);
 		} catch (AnsonException | IOException e) {
 			e.printStackTrace();
 		}
@@ -124,7 +130,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	/**Response with OK message.
 	 * @param arrayList
-	 * @return 
+	 * @return AnsonMsg code = ok 
 	 */
 	protected AnsonMsg<AnsonResp> ok(ArrayList<AnResultset> arrayList) {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);
@@ -144,6 +150,11 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		AnsonMsg<U> msg = new AnsonMsg<U>(p, MsgCode.ok);
 		msg.body(body);
 		return msg;
+	}
+	
+	static public AnsonMsg<AnsonResp> ok(IPort p) {
+		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);
+		return msg.body(new AnsonResp().msg(MsgCode.ok.name()));
 	}
 	
 	protected AnsonMsg<AnsonResp> ok(String templ, Object... args) {

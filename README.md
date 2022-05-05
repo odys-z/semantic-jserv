@@ -1,3 +1,6 @@
+
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.odys-z/semantic.jserv/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.odys-z/semantic.jserv/)
+
 # About semantic-jserv
 A semantic data service web application using protocol based on json.
 
@@ -7,7 +10,7 @@ The service lib, depends on servlet and semantic-DA.
 - jserv-sample
 A sample project (quick start project) showing how to import and using semantic.jserv.
 
-For showing how to access the service, a client has also implemented with a sample project, see jclient/js/test/vue/demo.app.vue.
+For showing how to access the service, a client has also implemented with a sample project, see [Anclient/examples](https://github.com/odys-z/Anclient/tree/master/examples).
 
 # Quick Start
 
@@ -17,19 +20,11 @@ pom.xml
     <dependency>
         <groupId>io.github.odys-z</groupId>
         <artifactId>semantic.jserv</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>[1.4.0,)</version>
     </dependency>
 ~~~
 
-For example, see [jserv-sample](https://github.com/odys-z/semantic-jserv/tree/master/jserv-sample).
-
 The jserv-sample project is used to illustrating how to use semantic.jserv.
-
-The jclient/js/test/index.html, with index.js is the starting point for understand how the jserv-sample web application serving the client with json data.
-
-For tutorial, see [jserv-sample quick start](https://odys-z.github.io/Anclient/starter/jsample.html#jsample-quick-start).
-
-The js test project (demo.app.vue) and the jserv-sample server should always working together as these two projects are used to test while implementing all depended modules.
 
 # Why semantics-*
 As all semantic-* modules and jclients are implemented based on an assumption that developers needing a framework to facilitating typical [CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete) business handling, the jserv-sample Eclipse maven project implemented a typical web application structure, with session handling and protocols based on json, handling abstracted CRUD processing.
@@ -54,31 +49,10 @@ This is a basically sql builder. The semantic.jserv based on it to handling requ
 
 This module handling semantics configured in semantics.xml, like auto key, fk, operator-time finger print etc.
 
-## jcleint
+## AnCleint
 
 The client side communicating with semantic-jserv.
 
-Currently a java client and a js client together with [easyUI](https://www.jeasyui.com) is basically working. And a C# client project is also started. We also planning porting the java client to Android.
+Currently a java client and a js client together with React is basically working. And a C# client project is also came with a lib in Nuget (stoped for a while). Java client to Android also tested.
 
 The js client together with a vue client is also in tense developing.
-
-# Issues
-
-1. Can't reserve file name for uploaded files.
-
-If the orginal file is referenced each other, this relationship will be erased.
-
-Example: uploaded ex.gltf & ex.bin
-
-```
-attId  |attName        |uri                                   |busiTbl |busiId |oper  |optime              |
--------|---------------|--------------------------------------|--------|-------|------|--------------------|
-00000i |xv-import.gltf |uploads/a_users/00000i xv-import.gltf |a_users |admin  |admin |2021-05-14 10:22:32 |
-00000j |xv-import.bin  |uploads/a_users/00000j xv-import.bin  |a_users |admin  |admin |2021-05-14 10:22:32 |
-```
-
-files are saved as
-```
-00000i xv-import.gltf
-00000j xv-import.bin
-```

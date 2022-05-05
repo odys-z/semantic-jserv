@@ -24,15 +24,15 @@ public class AnDatasetReq extends AnQueryReq {
 		return this;
 	}
 
-	public AnDatasetReq(AnsonMsg<? extends AnsonBody> parent, String conn) {
-		super(parent, conn);
+	public AnDatasetReq(AnsonMsg<? extends AnsonBody> parent, String funcUri) {
+		super(parent, funcUri);
 		a = "ds";
 	}
 
 	public String sk() { return sk; }
 
-	public static AnDatasetReq formatReq(String conn, AnsonMsg<AnDatasetReq> parent, String sk) {
-		AnDatasetReq bdItem = new AnDatasetReq(parent, conn);
+	public static AnDatasetReq formatReq(String furi, AnsonMsg<AnDatasetReq> parent, String sk) {
+		AnDatasetReq bdItem = new AnDatasetReq(parent, furi);
 		bdItem.sk = sk;
 		return bdItem;
 	}
