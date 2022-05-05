@@ -10,7 +10,8 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.transact.x.TransException;
 
 /**This robot is only used for test.
- * If you are implementin a servlet without login, subclassing a {@link io.odysz.semantic.jserv.jsession.JUser JUser} instead.
+ * If you are implementin a servlet without login, subclassing a
+ * {@link io.odysz.semantic.jsession.JUser JUser} instead.
  * @author odys-z@github.com
  */
 public class JRobot implements IUser {
@@ -21,7 +22,7 @@ public class JRobot implements IUser {
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 
-	@Override public void touch() { touched = System.currentTimeMillis(); } 
+	@Override public JRobot touch() { touched = System.currentTimeMillis(); return this; } 
 
 	@Override public long touchedMs() { return touched; } 
 

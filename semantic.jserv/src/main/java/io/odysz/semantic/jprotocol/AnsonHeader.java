@@ -40,9 +40,19 @@ public class AnsonHeader extends Anson {
 		return this;
 	}
 
+	public AnsonHeader act(String funcId, String cmd, String cate, String remarks) {
+		return act(new String[] {funcId, cate, cmd, remarks});
+	}
+
+	public AnsonHeader act(LogAct act) {
+		usrAct = new String[] {act.func, act.cate, act.cmd, act.remarks};
+		return this;
+	}
+
 	public static String[] usrAct(String funcId, String cmd, String cate, String remarks) {
 		return new String[] {funcId, cate, cmd, remarks};
 	}
+
 	
 	/**For test. The string can not been used for json data.
 	 * @see java.lang.Object#toString()

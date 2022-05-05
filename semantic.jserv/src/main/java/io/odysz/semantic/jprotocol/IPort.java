@@ -10,6 +10,7 @@ public interface IPort extends IJsonable {
 		public String name();
 
 		/**Equivalent of enum.valueOf(), except for subclass returning instance of jserv.Port.
-		 * @throws SemanticException */
+		 * @throws SemanticException port name not found
+		 * */
 		public IPort valof(String pname) throws SemanticException;
 }

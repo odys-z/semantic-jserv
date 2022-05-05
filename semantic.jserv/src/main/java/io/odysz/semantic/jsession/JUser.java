@@ -45,7 +45,6 @@ public class JUser extends SemanticObject implements IUser {
 		}
 
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-//		String clzz = "class-IUser";
 		protected String tbl; // = "a_user";
 		protected String pk; // = "userId";
 		protected String uname; // = "userName";
@@ -135,7 +134,7 @@ public class JUser extends SemanticObject implements IUser {
 		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
 	}
 
-	/**jmsg should be what the response of {@link SSession}
+	/**jmsg, the response of {@link AnSession}
 	 * @param jmsg
 	 */
 	public JUser(SemanticObject jmsg) {
@@ -149,8 +148,9 @@ public class JUser extends SemanticObject implements IUser {
 		return LoggingUser.genLog(logsctx, logTabl, sqls, this, funcName, funcId);
 	}
 
-	public void touch() {
+	public JUser touch() {
 		touched = System.currentTimeMillis();
+		return this;
 	}
 
 	@Override
@@ -175,7 +175,7 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	/**Add notifyings
-	 * @param n
+	 * @param note
 	 * @return this
 	 * @throws TransException
 	 */
@@ -215,30 +215,19 @@ public class JUser extends SemanticObject implements IUser {
 		return pswd != null && pswd.equals(AESHelper.decrypt(pswd64, this.ssid, AESHelper.decode64(iv64)));
 	}
 
-//	public static boolean checkPswd(String uid, String encryptKey, String iv64, String tokenVerify64) throws TransException {
-//		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
-//		byte[] ssiv = AESHelper.decode64(iv64);
-//		String c = null;
-//		try { c = AESHelper.encrypt(uid, encryptKey, ssiv); }
-//		catch (Exception e) { throw new TransException (e.getMessage()); }
-//
-//		// 2. compare pswd-cipher with j.pswd
-//		return c.equals(tokenVerify64);
-//	}
 
 	@Override
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
 
-	@Override
-	public IUser sessionKey(String skey) {
-		// ssid = skey;
-		return this;
-	}
-
-	@Override
-	public String sessionKey() {
-		return null;
-	}
+// TODO this change must be verified
+//	@Override
+//	public IUser sessionKey(String skey) {
+//		// ssid = skey; - but why this is commented out?
+//		return this;
+//	}
+//
+//	@Override
+//	public String sessionKey() { return null; }
 }

@@ -13,7 +13,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -46,7 +45,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 /**
- * <h5>1. Handle login-obj: {@link SessionReq}.</h5>
+ * <h5>1. Handle login-obj: {@link AnSessionReq}.</h5>
  *  <p>a: "login | logout | pswd | init | ping(touch)",<br>
  *  uid: "user-id",<br>
  *  pswd: "uid-cipher-by-pswd",<br>
@@ -95,7 +94,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	
 	static DATranscxt sctx;
 
-	private static String usrClzz;
+	/** key of JUser class name, "class-IUser" used in config.xml */
+	public static final String usrClzz = "class-IUser";
+
 	private static JUserMeta usrMeta;
 
 	IUser jrobot = new JRobot();
@@ -107,13 +108,12 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		&lt;Parameter name="io.oz.root-key" value="*************" override="false"/&gt;
 	&lt;/Context&gt;</pre>
 	 * @param daSctx
-	 * @param ctx context for loading context.xml/resource
 	 * @throws SAXException something wrong with configuration files
 	 * @throws IOException file accessing failed
 	 * @throws SemanticException semantics error
 	 * @throws SQLException database accessing error
 	 */
-	public static void init(DATranscxt daSctx, ServletContext ctx)
+	public static void init(DATranscxt daSctx)
 			throws SAXException, IOException, SemanticException, SQLException {
 		sctx = daSctx;
 
@@ -131,12 +131,12 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		scheduler = Executors.newScheduledThreadPool(1);
 
 		try {
-			usrClzz = "class-IUser";
+			// usrClzz = "class-IUser";
 			IUser tmp = createUser(usrClzz, "temp", "pswd", null, "temp user");
 			usrMeta = (JUserMeta) tmp.meta();
 		}
 		catch (Exception ex) {
-			Utils.warn("SSesion: Implementation class of IUser doesn't configured correctly in: config.xml/t[id=cfg]/k=%s, check the value.",
+			Utils.warn("SSesion: Implementation class of IUser doesn't configured correctly in: config.xml/t[id=default]/k=%s, check the value.",
 					usrClzz);
 			ex.printStackTrace();
 		}
@@ -175,7 +175,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * @throws SQLException Reqest payload header.usrAct is null (TODO sure?)
 	 */
 	@Override
-	public IUser verify(AnsonHeader anHeader) throws SsException, SQLException {
+	public IUser verify(AnsonHeader anHeader) throws SsException {
 		if (anHeader == null)
 			throw new SsException("session header is missing");
 
@@ -184,8 +184,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			IUser usr = users.get(ssid);
 			String slogid = (String)anHeader.logid();
 			if (slogid != null && slogid.equals(usr.uid())) {
-				usr.touch();
-				return usr;
+				return usr.touch();
 			}
 			else throw new SsException("session token is not matching");
 		}
@@ -206,7 +205,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	protected void onPost(AnsonMsg<AnSessionReq> msg, HttpServletResponse resp) throws IOException {
 		jsonResp(msg, resp);
 	}
-
 
 	protected void jsonResp(AnsonMsg<AnSessionReq> msg, HttpServletResponse response) throws IOException {
 		try {
@@ -272,19 +270,13 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					// FIXME using of session key, see bug of verify()
 					String ssid = (String) header.ssid();
 					String iv64 = sessionBody.md("iv_pswd");
-//					String newPswd = sessionBody.md("pswd");
 					
-//					AESHelper.decrypt(sessionBody.md("oldpswd"), header.ssid(), AESHelper.decode64(sessionBody.md("iv_old")));
 					// check old password
 					if (!usr.guessPswd(sessionBody.md("oldpswd"), sessionBody.md("iv_old")))
 						throw new SemanticException("Can not verify old password!");
 
-//					Utils.logi("new pswd: %s",
-//						AESHelper.decrypt(newPswd, usr.sessionId(), AESHelper.decode64(iv64)));
-
 					sctx.update(usrMeta.tbl, usr)
-						// .nv(usrMeta.pswd, newPswd)
-						.nv(usrMeta.pswd, sessionBody.md("pswd"))
+						.nv(usrMeta.pswd, sessionBody.md("pswd")) // depends on semantics: dencrypt
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, usr.uid())
 						.u(sctx.instancontxt(sctx.getSysConnId(), usr));
@@ -364,11 +356,12 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		}
 	}
 
-	protected String allocateSsid() {
+	public static String allocateSsid() {
 		Random random = new Random();
-		String ssid = Radix64.toString(random.nextInt(), 8);
-		while (users.containsKey(ssid))
-			ssid = Radix64.toString(random.nextInt(), 8);
+		// 2 ^ 48 = 64 ^ 8
+		String ssid = Radix64.toString((long)random.nextInt() * (short)random.nextInt(), 8);
+		while (users != null && users.containsKey(ssid))
+			ssid = Radix64.toString((long)random.nextInt() * (short)random.nextInt(), 8);
 		return ssid;
 	}
 
@@ -391,14 +384,15 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.uname, "uname")
 			.col(usrMeta.pswd, "pswd")
 			.col(usrMeta.iv, "iv")
-			// .col(UserMeta.urlField, "url")
 			.where_("=", "u." + usrMeta.pk, sessionBody.uid())
 			.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
 		
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString("uid");
-			IUser obj = createUser(usrClzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"));
+			IUser obj = createUser(usrClzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"))
+						.onCreate(sessionBody)
+						.touch();
 			if (obj instanceof SemanticObject)
 				return obj;
 			throw new SemanticException("IUser implementation must extend SemanticObject.");
