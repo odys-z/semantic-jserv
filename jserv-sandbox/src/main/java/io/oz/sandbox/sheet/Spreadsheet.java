@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -65,10 +66,12 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 		
 		try {
 			SpreadsheetResp rsp = null;
-			if (A.update == jreq.a())
+			if (A.insert == jreq.a())
 				rsp = insert(jreq);
 			else if (A.update == jreq.a())
 				rsp = update(jreq);
+			else if (A.records == jreq.a())
+				rsp = records(jreq);
 			else
 				throw new SemanticException("Request (request.body.a = %s) can not be handled", jreq.a());
 
@@ -78,6 +81,15 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 		} finally {
 			resp.flushBuffer();
 		}
+	}
+
+	static SpreadsheetResp records(SpreadsheetReq jreq) throws TransException, SQLException {
+		String conn = Connects.uri2conn(jreq.uri());
+		AnResultset rs =  (AnResultset) st.select(tabl, "")
+		  .rs(st.instancontxt(conn, robot))
+		  .rs(0);
+		
+		return new SpreadsheetResp(rs);
 	}
 
 	static SpreadsheetResp insert(SpreadsheetReq jreq) throws TransException, SQLException {
