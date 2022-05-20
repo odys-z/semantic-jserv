@@ -21,6 +21,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 import io.oz.sandbox.SandRobot;
@@ -85,7 +86,11 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 
 	static SpreadsheetResp records(SpreadsheetReq jreq) throws TransException, SQLException {
 		String conn = Connects.uri2conn(jreq.uri());
-		AnResultset rs =  (AnResultset) st.select(tabl, "")
+		Query select = st.select(tabl, "c");
+		
+		if (jreq.q)
+		
+		AnResultset rs =  (AnResultset) st.select(tabl, "c")
 		  .rs(st.instancontxt(conn, robot))
 		  .rs(0);
 		
