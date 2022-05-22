@@ -95,10 +95,12 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 	static SpreadsheetResp insert(SpreadsheetReq jreq) throws TransException, SQLException {
 
 		Insert ins = st.insert(tabl, robot)
+				.nv("currName", jreq.rec.currName)
 				.nv("cate", jreq.rec.cate)
 				.nv("clevle", jreq.rec.level)
 				.nv("subject", jreq.rec.subject)
-				.nv("module", jreq.rec.module);
+				.nv("module", jreq.rec.module)
+				.nv("sort", jreq.rec.sort);
 		
 		String conn = Connects.uri2conn(jreq.uri());
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, robot));
@@ -124,6 +126,10 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 			upd.nv("module", jreq.rec.module);
 		if (jreq.rec.level != null)
 			upd.nv("clevel", jreq.rec.level);
+		if (jreq.rec.currName != null)
+			upd.nv("currName", jreq.rec.currName);
+		if (jreq.rec.sort != null)
+			upd.nv("sort", jreq.rec.sort);
 	
 		String conn = Connects.uri2conn(jreq.uri());
 		upd.u(st.instancontxt(conn, robot));

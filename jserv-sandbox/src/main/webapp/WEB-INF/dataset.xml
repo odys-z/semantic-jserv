@@ -164,5 +164,15 @@
 		group by dim1, dim3, dim7
 		order by x.did asc, z.did asc</sqlit>
   	</c>
+  	
+  	<!-- Spreadsheet -->
+  	<c>
+  		<sk>curr-cate</sk>
+		<mysql>select domainId as value, domainName as name from a_domain d where d.parentId = 'curr-cate'</mysql>
+  	</c>
+  	<c>
+  		<sk>curr-subj</sk>
+		<mysql>select domainId as value, domainName as name from a_domain d where d.parentId = 'curr-subj'</mysql>
+  	</c>
 </t>
 </dataset>

@@ -9,4 +9,6 @@ public class MyCurriculum extends Anson {
     String subject;
     String parentId;
 	String level;
+	String currName;
+	String sort;
 }
