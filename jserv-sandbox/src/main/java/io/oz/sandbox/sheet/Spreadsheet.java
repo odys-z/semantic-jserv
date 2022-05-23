@@ -15,7 +15,6 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
-import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -33,8 +32,6 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 
 	private static final long serialVersionUID = 1L;
 
-	public static final String tabl = "b_curriculums";
-
 	static DATranscxt st;
 
 	static IUser robot;
@@ -48,9 +45,8 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 		}
 	}
 
-
-	public Spreadsheet(IPort port) {
-		super(Sandport.sheet);
+	public Spreadsheet() {
+		super(Sandport.workbook);
 	}
 
 	@Override
@@ -67,11 +63,11 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 		
 		try {
 			SpreadsheetResp rsp = null;
-			if (A.insert == jreq.a())
+			if (A.insert.equals(jreq.a()))
 				rsp = insert(jreq);
-			else if (A.update == jreq.a())
+			else if (A.update.equals(jreq.a()))
 				rsp = update(jreq);
-			else if (A.records == jreq.a())
+			else if (A.records.equals(jreq.a()))
 				rsp = records(jreq);
 			else
 				throw new SemanticException("Request (request.body.a = %s) can not be handled", jreq.a());
@@ -86,11 +82,17 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 
 	static SpreadsheetResp records(SpreadsheetReq jreq) throws TransException, SQLException {
 		String conn = Connects.uri2conn(jreq.uri());
-		Query select = st.select(tabl, "c");
+		Query select = st.select(MyCurriculum.tabl, "c");
 		
-		if (jreq.q)
+		if (jreq.page != null && jreq.page.condts != null)
+			for (String[] cond : jreq.page.condts) {
+				if (cond != null && "currName".equals(cond[0]))
+					select.whereLike(cond[0], cond[1]);
+				else
+					select.whereEq(cond[0], cond[1]);
+			}
 		
-		AnResultset rs =  (AnResultset) st.select(tabl, "c")
+		AnResultset rs = (AnResultset) st.select(MyCurriculum.tabl, "c")
 		  .rs(st.instancontxt(conn, robot))
 		  .rs(0);
 		
@@ -99,18 +101,14 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 
 	static SpreadsheetResp insert(SpreadsheetReq jreq) throws TransException, SQLException {
 
-		Insert ins = st.insert(tabl, robot)
-				.nv("currName", jreq.rec.currName)
-				.nv("cate", jreq.rec.cate)
-				.nv("clevle", jreq.rec.level)
-				.nv("subject", jreq.rec.subject)
-				.nv("module", jreq.rec.module)
-				.nv("sort", jreq.rec.sort);
+		Insert ins = st.insert(MyCurriculum.tabl, robot);
+		
+		jreq.insertRec(ins);
 		
 		String conn = Connects.uri2conn(jreq.uri());
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, robot));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
-				.get(tabl))
+				.get(MyCurriculum.tabl))
 				.getString("cid");
 		
 		jreq.rec.cid = pid;
@@ -120,7 +118,7 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 
 	static SpreadsheetResp update(SpreadsheetReq jreq) throws TransException, SQLException {
 
-		Update upd = st.update(tabl, robot)
+		Update upd = st.update(MyCurriculum.tabl, robot)
 				.whereEq("cid", jreq.rec.cid);
 	
 		if (jreq.rec.cate != null)
