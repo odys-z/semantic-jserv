@@ -174,5 +174,13 @@
   		<sk>curr-subj</sk>
 		<mysql>select domainId as value, domainName as name from a_domain d where d.parentId = 'curr-subj'</mysql>
   	</c>
+  	<c>
+  		<sk>curr-modu</sk>
+		<mysql>select domainId as value, domainName as name from a_domain d where d.parentId = 'curr-module'</mysql>
+  	</c>
+  	<c>
+  		<sk>curr-level</sk>
+		<mysql>select domainId as value, domainName as name from a_domain d where d.parentId = 'curr-level'</mysql>
+  	</c>
 </t>
 </dataset>

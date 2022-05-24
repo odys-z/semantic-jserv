@@ -11,7 +11,7 @@ public class MyCurriculum extends Anson {
     String module;
     String subject;
     String parentId;
-	String level;
+	String clevel;
 	String currName;
 	String sort;
 }

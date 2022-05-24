@@ -29,18 +29,18 @@ public class SpreadsheetReq extends AnsonBody {
 		
 		if (rec == null) {
 			rec = new MyCurriculum();
-			rec.currName = "curr name";
-			rec.cate = "cate";
-			rec.level = "level";
-			rec.subject = "subject";
-			rec.module = "module";
+			rec.currName = "курс";
+			rec.cate = "";
+			rec.clevel = "";
+			rec.subject = "";
+			rec.module = "";
 			rec.sort = "999";
 		}
 		// else - default value by client
 
 		inst.nv("currName", rec.currName)
 			.nv("cate", rec.cate)
-			.nv("clevel", rec.level)
+			.nv("clevel", rec.clevel)
 			.nv("subject", rec.subject)
 			.nv("module", rec.module)
 			.nv("sort", rec.sort);

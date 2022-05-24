@@ -127,8 +127,8 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 			upd.nv("subject", jreq.rec.subject);
 		if (jreq.rec.module != null)
 			upd.nv("module", jreq.rec.module);
-		if (jreq.rec.level != null)
-			upd.nv("clevel", jreq.rec.level);
+		if (jreq.rec.clevel != null)
+			upd.nv("clevel", jreq.rec.clevel);
 		if (jreq.rec.currName != null)
 			upd.nv("currName", jreq.rec.currName);
 		if (jreq.rec.sort != null)
