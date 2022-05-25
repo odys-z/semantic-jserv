@@ -220,14 +220,4 @@ public class JUser extends SemanticObject implements IUser {
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
-
-// TODO this change must be verified
-//	@Override
-//	public IUser sessionKey(String skey) {
-//		// ssid = skey; - but why this is commented out?
-//		return this;
-//	}
-//
-//	@Override
-//	public String sessionKey() { return null; }
 }

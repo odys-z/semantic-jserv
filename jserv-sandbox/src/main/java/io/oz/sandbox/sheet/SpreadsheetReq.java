@@ -6,6 +6,12 @@ import io.odysz.semantic.jserv.R.PageInf;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
+/**
+ * TODO This envolope will be changed to generic type once Antson support it.
+ * 
+ * @author odys-z@github.com
+ *
+ */
 public class SpreadsheetReq extends AnsonBody {
 	static class A {
 		public static final String records = "r";
