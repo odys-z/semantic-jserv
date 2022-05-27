@@ -3,6 +3,7 @@ package io.oz.sandbox.sheet;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.R.PageInf;
+import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
@@ -12,7 +13,7 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  *
  */
-public class SpreadsheetReq extends AnsonBody {
+public class SpreadsheetReq extends UserReq {
 	static class A {
 		public static final String records = "r";
 		public static final String insert = "c";

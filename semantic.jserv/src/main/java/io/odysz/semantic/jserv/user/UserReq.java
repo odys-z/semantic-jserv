@@ -9,14 +9,12 @@ import io.odysz.semantics.SemanticObject;
  *
  */
 public class UserReq extends AnsonBody {
-	// private String code;
 	
 	public UserReq() {
 		super(null, null);
-		// code = "";
 	}
 
-	private SemanticObject data;
+	SemanticObject data;
 	public UserReq data(String k, Object v) {
 		if (k == null) return this;
 
