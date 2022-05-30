@@ -194,7 +194,7 @@ public class AnUpdateReq extends AnsonBody {
 		if ((U.equals(a) || D.equals(a)) && (where == null || where.isEmpty()))
 				throw new SemanticException("Updatin/deleting denied for empty conditions");
 		if (!R.equals(a) && mtabl == null || LangExt.isblank(mtabl))
-				throw new SemanticException("Updating/inserting/deleting denied for empty main table");
+				throw new SemanticException("Updating/inserting/deleting denied for empty main table name.");
 		
 	}
 }
