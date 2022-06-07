@@ -8,5 +8,6 @@ public class PageInf extends Anson {
 
 	public long page;
 	public long size;
+	public long total;
 	public ArrayList<String[]> condts;
 }
