@@ -15,6 +15,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
@@ -36,8 +37,8 @@ public class JUser extends SemanticObject implements IUser {
 	 */
 	public static class JUserMeta extends TableMeta {
 		public JUserMeta(String tbl, String... conn) {
-			super(tbl, conn);
-			this.tbl = "a_user";
+			super("a_users", conn);
+			// this.tbl = "a_user";
 			this.pk = "userId";
 			this.uname = "userName";
 			this.pswd = "pswd";
@@ -45,11 +46,11 @@ public class JUser extends SemanticObject implements IUser {
 		}
 
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-		protected String tbl; // = "a_user";
-		protected String pk; // = "userId";
-		protected String uname; // = "userName";
-		protected String pswd; // = "pswd";
-		protected String iv; // = "encAuxiliary";
+		// public String tbl; // = "a_user";
+		public String pk; // = "userId";
+		public String uname; // = "userName";
+		public String pswd; // = "pswd";
+		public String iv; // = "encAuxiliary";
 
 		public JUserMeta userName(String unamefield) {
 			uname = unamefield;
@@ -219,5 +220,10 @@ public class JUser extends SemanticObject implements IUser {
 	@Override
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
+	}
+	
+	@Override
+	public IUser validatePassword() throws SsException, SQLException, TransException {
+		return this;
 	}
 }
