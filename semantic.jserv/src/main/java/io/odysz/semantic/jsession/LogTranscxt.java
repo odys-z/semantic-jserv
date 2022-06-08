@@ -83,7 +83,7 @@ public class LogTranscxt extends DATranscxt {
 				String smtc = xcfg.getString("smtc");
 				String args = xcfg.getString("args");
 				try {
-					addSemantics(conn, tabl, pk, smtc, args);
+					addSemantics(conn, tabl, pk, smtc, args, Connects.getDebug(conn));
 				} catch (SemanticException e) {
 					// some configuration error
 					// continue

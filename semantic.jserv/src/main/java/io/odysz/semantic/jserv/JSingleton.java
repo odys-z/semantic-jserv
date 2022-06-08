@@ -66,7 +66,7 @@ public class JSingleton {
 		for (String connId : Connects.getAllConnIds())
 			// Don't remove this until Docker deployment is verified:
 			// DATranscxt.loadSemantics(connId, JSingleton.getFileInfPath(Connects.getSmtcsPath(connId)));
-			DATranscxt.loadSemantics(connId, Connects.getSmtcsPath(connId));
+			DATranscxt.loadSemantics(connId, Connects.getSmtcsPath(connId), Connects.getDebug(connId));
 
 		defltScxt = new DATranscxt(Connects.defltConn());
 			
