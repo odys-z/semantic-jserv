@@ -132,8 +132,10 @@ public class UsersLess extends ServPort<UserstReq> {
 				u.post(r.update(st));
 		}
 
+		if (LangExt.isblank(jreq.pk))
+			throw new TransException("FIXME");
 		SemanticObject res = (SemanticObject)u
-				.whereEq("userId", jreq.pk)
+				.whereEq("userId", jreq.pk)// FIXME jreq.userId?
 				.u(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
 
 		return ok(new AnsonResp().msg(res.msg()));
