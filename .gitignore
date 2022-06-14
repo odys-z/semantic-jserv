@@ -1,2 +1,5 @@
 *.zip
 main.net
+bin
+build
+target
