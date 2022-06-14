@@ -14,21 +14,24 @@ import io.odysz.semantics.x.SemanticException;
 /**Sample project's prots extension
  * This enum replaced jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}. */
 public enum Samport implements IPort {
-	heartbeat("ping.serv11"), session("login.serv11"),
+	heartbeat("ping.serv"), session("login.serv11"),
 	/**port provided by {@link io.odysz.jsample.SysMenu} */
-	menu("menu.serv11"),
+	menu("menu.serv"),
 	example("example.serv11"),
 	file("file.serv11"),
 	/**workflow port, see {@link io.odysz.sworkflow.CheapEngin} */
 	cheapflow("cheapflow.samplev11"), 
 	/** sample servlet tools.serv */
 	tools("tools.serv"),
-	vec3("vec3.serv");
+	vec3("vec3.serv"),
+	/** The new experimental serv, extending semantics to the client side */
+	userstier("users.tier"),
+	gpatier("gpa.tier");
 
 	static {
 		JSONAnsonListener.registFactory(Samport.class, 
 			(s) -> {
-					return Samport.valueOf(s);
+				return Samport.valueOf(s);
 			});
 	}
 	
@@ -51,10 +54,13 @@ public enum Samport implements IPort {
 
 	@Override
 	public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
-		stream.write('\"');
-		stream.write(url.getBytes());
-		stream.write('\"');
-		return this;
+		throw new AnsonException(0, "FIXME: shouldn't use name()?");
+		// url can't been deserialized in newer version, should use name.
+
+//		stream.write('\"');
+//		stream.write(url.getBytes());
+//		stream.write('\"');
+//		return this;
 	}
 
 	@Override

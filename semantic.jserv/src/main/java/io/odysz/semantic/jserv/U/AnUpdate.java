@@ -8,8 +8,8 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -119,7 +119,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 				.post(postUpds(msg.postUpds, usr))
 				// .attachs(msg.attacheds)
 				.limit(msg.limt)
-				.u(st.instancontxt(msg.conn(), usr));
+				.u(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
 
 		if (res == null)
 			return new AnsonMsg<AnsonResp>(p, MsgCode.ok);
@@ -157,9 +157,8 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 	}
 
 	/**convert update requests' body, usually from msg's post requests,
-	 * list of ({@link UpdateReq}) to {@link io.odysz.transact.sql.Statement}.
+	 * list of ({@link AnUpdateReq}) to {@link io.odysz.transact.sql.Statement}.
 	 * @param updreq
-	 * @param st
 	 * @param usr
 	 * @return statements
 	 * @throws TransException 
@@ -179,11 +178,10 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 				else if (CRUD.D.equals(pst.a()))
 					upd = st.delete(pst.mtabl, usr);
 				else if (pst != null) {
-					Utils.warn("Can't handle request:\n" + pst.toString());
-					continue;
+					throw new TransException("Can't handle request's ask (t): %s", pst.toString());
 				}
 
-				posts.add(upd.where(pst.where)
+				posts.add(upd.where(AnUpdate.tolerateNv(pst.where))
 							.post(postUpds(pst.postUpds, usr)));
 			}
 			return posts;
@@ -205,7 +203,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 		SemanticObject res = (SemanticObject) del
 				.where(tolerateNv(msg.where))
 				.post(postUpds(msg.postUpds, usr))
-				.d(st.instancontxt(msg.conn(), usr));
+				.d(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
 
 		if (res == null)
 			return new AnsonMsg<AnsonResp>(p, MsgCode.ok);

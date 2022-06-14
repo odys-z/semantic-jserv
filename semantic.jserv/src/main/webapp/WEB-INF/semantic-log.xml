@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <semantics>
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
   <!-- see semantic.DA/io.odysz.semantic.DASemantics

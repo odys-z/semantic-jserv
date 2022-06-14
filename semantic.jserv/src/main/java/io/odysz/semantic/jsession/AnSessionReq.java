@@ -24,12 +24,13 @@ public class AnSessionReq extends AnsonBody {
 	}
 
 	String uid;
+	public String uid() { return uid; }
 	String token;
 	String token() { return token; }
 	String iv;
 	String iv() { return iv; }
 
-	HashMap<String,Object> mds;
+	HashMap<String, Object> mds;
 	public String md(String k) { return mds == null ? null : (String) mds.get(k); }
 	public AnSessionReq md(String k, String md) {
 		if (k == null || LangExt.isblank(md))
@@ -40,15 +41,17 @@ public class AnSessionReq extends AnsonBody {
 		return this;
 	}
 
-	public String uid() { return uid; }
+	String deviceId;
+	public String deviceId() { return deviceId; }
 
 	/**Format login request message.
 	 * @param uid
 	 * @param tk64
 	 * @param iv64
+	 * @param deviceId
 	 * @return login request message
 	 */
-	public static AnsonMsg<AnSessionReq> formatLogin(String uid, String tk64, String iv64) {
+	public static AnsonMsg<AnSessionReq> formatLogin(String uid, String tk64, String iv64, String ... deviceId) {
 		AnsonMsg<AnSessionReq> jmsg = new AnsonMsg<AnSessionReq>(Port.session);
 
 		AnSessionReq itm = new AnSessionReq(jmsg);
@@ -56,6 +59,9 @@ public class AnSessionReq extends AnsonBody {
 		itm.a("login");
 
 		itm.setup(uid, tk64, iv64);
+
+		if (deviceId != null && deviceId.length > 0)
+			itm.deviceId = deviceId[0];
 
 		jmsg.body((AnsonBody)itm);
 		return jmsg;

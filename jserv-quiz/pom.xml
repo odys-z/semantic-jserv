@@ -3,10 +3,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.odys-z</groupId>
-  <artifactId>jserv-quiz</artifactId>
+  <artifactId>jserv-north</artifactId>
   <packaging>war</packaging>
-  <version>0.1.0</version>
-  <name>jserv-quiz, jserv for react quiz.</name>
+  <version>0.1.3</version>
+  <name>jserv-north</name>
   <url>http://github.com/odys-z/semantic-jserv</url>
 
   <properties>
@@ -33,7 +33,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>[1.2.1,)</version>
+	    <version>[1.3.0-SNAPSHOT,)</version>
    	</dependency>
    	
    	<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->

@@ -1,15 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <dataset>
-<t id="ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
+<t id="ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
 	<c>
-	  	<sk>sys.menu.jserv-quiz</sk>
-  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, isUsed sort, fullpath
-  			FROM a_sys_functions f order by f.fullpath
+	  	<sk>sys.menu.north</sk>
+  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, isUsed sort, fullpath, css, flags
+  			FROM a_functions f order by f.fullpath
   		</mysql>
-  		<sqlit>SELECT funcId, parentId, funcName, url, sibling sort, fullpath
+  		<sqlit>SELECT funcId, parentId, funcName, url, sibling sort, fullpath, css, flags
   			FROM a_functions f order by f.fullpath
   		</sqlit>
   		<s-tree>,a_sys_functions,funcId id,parentId,funcName text,,,false</s-tree>
+  	</c>
+
+  	<c>
+	  	<sk>lvl1.domain.north</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId is null order by d.fullpath</sqlit>
+	</c>
+
+  	<!-- orgnization combobox -->
+  	<c> <sk>org.all</sk>
+  		<mysql>select orgId value, orgName text from a_orgs</mysql>
+  		<sqlit>select orgId value, orgName text from a_orgs</sqlit>
+	</c>
+
+	<c> <sk>roles</sk>
+		<mysql>select roleId as value,roleName as text from a_roles</mysql>
+		<sqlit>select roleId as value,roleName as text from a_roles</sqlit>
   	</c>
 </t>
 </dataset>

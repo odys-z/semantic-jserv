@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <semantics>
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
   <!-- smtc: semantics type, e.g. auto: auto increase key.
@@ -26,14 +27,28 @@
   		<smtc>ck-cnt-del</smtc>
   		<tabl>a_roles</tabl>
   		<pk>roleId</pk>
-  		<args>funcId,a_role_func,roleId</args>
+  		<!-- 1. count on delete
+  			 [0] name or child referencing column (a_role_func.roleId will be used for counting)
+  			 [1] child table
+  			 [2] child pk (or condition column)
+
+  			 Not: this can be multiple rules, separated by ","
+  			 Test Example of a_domain (pk domainId):
+  			 domainId a_orgs orgType,
+  			 domainId b_alarms typeId
+
+  			 the resulting sql:
+  			 select count(orgType) from a_orgs where orgType in (select domainId from a_domain where domainId = '000001')
+  			 where the 'where clause' in select clause is composed from condition of the request's where condition.
+  		 -->
+  		<args>roleId a_role_func roleId</args>
   	</s>
 
   	<!-- default users passsword -->
   	<s>
   		<id>sys.04</id>
   		<smtc>d-v</smtc>
-  		<tabl>a_user</tabl>
+  		<tabl>a_users</tabl>
   		<pk>userId</pk>
   		<args>pswd,'12345678'</args>
   	</s>
@@ -41,9 +56,9 @@
 	<s>
 		<id>sys.05</id>
 		<smtc>dencrypt</smtc>
-		<tabl>a_user</tabl>
+		<tabl>a_users</tabl>
 		<pk>userId</pk>
-		<args>pswd,encAuxiliary</args>
+		<args>pswd,iv</args>
 	</s>
 
 	<!-- image attachments to a_user: auto pk -->
@@ -68,8 +83,9 @@
 				filename rule: busiTbl-recId-attName(.suffix)
 			see https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html
 				-->
-		<args>uploads,uri,busiTbl,busiId,attName</args>
+		<args>$VOLUME_HOME/uploads,uri,busiTbl,busiId,attName</args>
 	</s>
+
 	<!-- delete attachments when deleting a user -->
 	<s>
 		<id>att.03</id>

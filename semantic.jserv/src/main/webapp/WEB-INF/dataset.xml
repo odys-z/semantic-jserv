@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <dataset>
-<t id="ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
+<t id="ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
 	<!-- This table is used for define sqls that can be parameterized when serving data.
 		Client using 'sk' in request message to use sqls.
+		conn: Optional, the conn-id overriding client's URI's conn-id. use case: cbb is binding source different from URI.
 		Records returned by sql can be mapped into bump cases (for oracle) if 'cols' is not empty.
 		Different version of sql, mysql, oracle, etc. is used according to connId and driver type,
 		see connects.xml. 
@@ -40,7 +42,7 @@
 	
 	<c>
 	  	<sk>sys.menu.vue-sample</sk>
-  		<mysql>SELECT funcId, parentId, funcName, funcUrl href, isUsed sort, fullpath
+  		<mysql>SELECT funcId, parentId, funcName, funcUrl href, sibling sort, fullpath
   			FROM a_sys_functions f order by f.fullpath
   		</mysql>
   		<s-tree>,a_sys_functions,funcId id,parentId,funcName title,,,false</s-tree>
@@ -48,7 +50,7 @@
 
 	<c>
 	  	<sk>sys.menu.ez-test</sk>
-  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, isUsed sort, fullpath
+  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, sibling sort, fullpath
   			FROM a_sys_functions f order by f.fullpath
   		</mysql>
   		<s-tree>,a_sys_functions,funcId id,parentId,funcName text,,,false</s-tree>
@@ -72,8 +74,10 @@
 
 	<!-- role-func tree -->
   	<c> <sk>trees.role_funcs</sk>
-  		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.funcId sort, fullpath
+  		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.sibling sort, fullpath
   		from a_sys_functions f left outer join a_role_funcs r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</mysql>
+  		<sqlit>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.sibling sort, fullpath
+  		from a_functions f left outer join a_role_func r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</sqlit>
   		<s-tree>checked,a_functions,funcId value,parentId,fullpath,sort,funcName text,children,false</s-tree>
   	</c>
 </t>

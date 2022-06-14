@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -33,14 +34,9 @@ import io.odysz.transact.x.TransException;
 public class AnInsert extends ServPort<AnInsertReq> {
 
 	public AnInsert() {
-		super(Port.query);
+		// ody Jul 22, 2021, bug? super(Port.query);
+		super(Port.insert);
 	}
-
-//	@Override
-//	public void init() throws ServletException {
-//		super.init();
-//		p = Port.query;
-//	}
 
 	protected static ISessionVerifier verifier;
 	protected static DATranscxt st;
@@ -53,8 +49,8 @@ public class AnInsert extends ServPort<AnInsertReq> {
 	@Override
 	protected void onGet(AnsonMsg<AnInsertReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
-		if (ServFlags.query)
-			Utils.logi("---------- squery (r.serv11) get ----------");
+		if (ServFlags.update)
+			Utils.logi("---------- insert (c.serv11) get ----------");
 		try {
 			IUser usr = verifier.verify(msg.header());
 
@@ -79,8 +75,8 @@ public class AnInsert extends ServPort<AnInsertReq> {
 	
 	@Override
 	protected void onPost(AnsonMsg<AnInsertReq> msg, HttpServletResponse resp) throws IOException {
-		if (ServFlags.query)
-			Utils.logi("========== squery (r.serv11) post ==========");
+		if (ServFlags.update)
+			Utils.logi("========== insert (c.serv11) post ==========");
 
 		try {
 			IUser usr = verifier.verify(msg.header());
@@ -125,12 +121,14 @@ public class AnInsert extends ServPort<AnInsertReq> {
 		if (cols == null || cols.length == 0)
 			throw new SemanticException("Can't insert %s values without columns sepecification.", msg.mtabl);
 
+		String connId = Connects.uri2conn(msg.uri());
+
 		SemanticObject res = (SemanticObject) upd
 				.cols(cols)
 				.values(msg.values())
 				.where(AnUpdate.tolerateNv(msg.where))
 				.post(AnUpdate.postUpds(msg.postUpds, usr))
-				.ins(st.instancontxt(msg.conn(), usr));
+				.ins(st.instancontxt(connId, usr));
 		if (res == null)
 			return new AnsonMsg<AnsonResp>(p, MsgCode.ok);
 		return new AnsonMsg<AnsonResp>(p, MsgCode.ok)

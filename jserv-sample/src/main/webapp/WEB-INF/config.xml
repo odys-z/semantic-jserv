@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <configs>
   <t id="default" pk="k" columns="k,v">
 	<c>
@@ -7,10 +8,12 @@
 		<v>io.odysz.jsample.SampleUser</v>
 	</c>
 
+	<!-- 
 	<c>
 		<k>folder.file-upload</k>
 		<v>file:/home/ody/uploads</v>
-	</c>
+	</c> -->
+
 	<c>
 		<k>sync.log.on-verbose</k>
 		<v>false</v>
@@ -24,9 +27,12 @@
 		<v>false</v>
 	</c>
 	<c>
-		<!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml) -->
+        <!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml)
+             Since v1.3.0, when creating log-id, will use system default conn-id;
+             when insert log, using this conn-id.
+         -->
 		<k>log-connId</k>
-		<v>sys-sqlite</v>
+		<v>sys-sqlite,semantic-log.xml,a_logs</v>
 	</c>
   </t>
 

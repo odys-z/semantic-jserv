@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<semantics>
+  <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
+  <!-- smtc: semantics type, e.g. auto: auto increase key.
+			see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html 
+		tabl: database table name
+		pk:
+		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
+   -->
+    <s>
+		<id>pho.ak</id>
+		<smtc>a-k</smtc>
+		<tabl>h_photos</tabl>
+		<pk>pid</pk>
+		<args>pid</args>
+    </s>
+
+	<s>
+		<id>pho.oper</id>
+		<smtc>o-t</smtc>
+		<tabl>h_photos</tabl>
+		<pk>pid</pk>
+		<args>oper,opertime</args>
+	</s>
+	
+	<s>
+		<id>pho.extfile</id>
+		<smtc>ef</smtc>
+		<tabl>h_photos</tabl>
+		<pk>pid</pk>
+		<args>$VOLUME_HOME,uri,shareby,folder,pname</args>
+	</s>
+	
+	<s>
+		<id>cll.ak</id>
+		<smtc>a-k</smtc>
+		<tabl>h_collects</tabl>
+		<pk>cid</pk>
+		<args>cid</args>
+    </s>
+
+	<s>
+		<id>cll.oper</id>
+		<smtc>o-t</smtc>
+		<tabl>h_collects</tabl>
+		<pk>cid</pk>
+		<args>oper,opertime</args>
+	</s>
+	
+	<s>
+		<id>collect_photo.fk-pid</id>
+		<tabl>h_coll_phot</tabl>
+  		<smtc>pkref</smtc>
+  		<pk></pk>
+		<args>pid,h_photos,pid</args>
+	</s>
+  </t>
+</semantics>

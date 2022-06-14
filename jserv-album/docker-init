@@ -1,0 +1,8 @@
+# WARNING - not tested yet!
+
+docker volume rm album.mysql
+docker volume create album.mysql
+
+sudo cp -r volume/* /var/lib/docker/volumes/album.mysql/_data
+
+docker run --name jserv-album -v album.mysql:/var/local/volume -p 8080:8080 -d --rm odysz/jserv-album

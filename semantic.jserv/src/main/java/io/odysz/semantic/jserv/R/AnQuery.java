@@ -37,12 +37,6 @@ public class AnQuery extends ServPort<AnQueryReq> {
 
 	public AnQuery() { super(Port.query); }
 
-//	@Override
-//	public void init() throws ServletException {
-//		super.init();
-//		p = Port.query;
-//	}
-
 	protected static ISessionVerifier verifier;
 	protected static DATranscxt st;
 
@@ -82,18 +76,14 @@ public class AnQuery extends ServPort<AnQueryReq> {
 
 			write(resp, ok(rs), msg.opts());
 		} catch (SsException e) {
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSession, e.getMessage()));
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (SemanticException e) {
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exSemantic, e.getMessage()));
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
 			e.printStackTrace();
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exTransct, e.getMessage()));
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			// ServletAdapter.write(resp, JProtocol.err(p, MsgCode.exGeneral, e.getMessage()));
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
@@ -103,7 +93,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	/**
 	 * @param msg
 	 * @param usr 
-	 * @return {code: "ok", port: {@link JMessage.Port}.query, rs: [{@link SResultset}, ...]}
+	 * @return {code: "ok", port: {@link AnsonMsg.Port#query}, rs: [{@link AnResultset}, ...]}
 	 * @throws SQLException
 	 * @throws TransException
 	 */
@@ -113,7 +103,9 @@ public class AnQuery extends ServPort<AnQueryReq> {
 		// exclude sqlite paging
 		if (msg.page >= 0 && msg.pgsize > 0
 			&& dbtype.sqlite == Connects.driverType(
-				msg.conn() == null ? Connects.defltConn() : msg.conn())) {
+				// msg.conn() == null ? Connects.defltConn() : msg.conn()
+				Connects.uri2conn(msg.uri())
+			)) {
 			Utils.warn("JQuery#buildSelct(): Requesting data from sqlite, but it's not easy to page in sqlite. So page and size are ignored: %s, %s.",
 					msg.page, msg.pgsize);
 		}
@@ -187,7 +179,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	 */
 	public static AnResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = buildSelct(msg, usr);
-		SemanticObject s = selct.rs(st.instancontxt(msg.conn(), usr));
+		SemanticObject s = selct.rs(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
 		return (AnResultset) s.rs(0);
 	}
 }

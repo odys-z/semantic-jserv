@@ -30,9 +30,12 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.Logic.op;
+import io.odysz.transact.sql.parts.condition.Condit;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -55,12 +58,6 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 
 	private static final long serialVersionUID = 1L;
 
-//	@Override
-//	public void init() throws ServletException {
-//		super.init();
-//		p = Port.stree;
-//	}
-
 	protected static DATranscxt st;
 
 	static {
@@ -70,15 +67,15 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	@Override
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		if (ServFlags.query)
-			Utils.logi("---------- squery (r.serv11) get ----------");
+		if (ServFlags.extStree)
+			Utils.logi("---------- squery (s-tree.serv11) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			jsonResp(msg, resp);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SsException e) {
-			e.printStackTrace();
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
@@ -90,17 +87,17 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	@Override
 	protected void onPost(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		if (ServFlags.query)
-			Utils.logi("========== squery (r.serv11) post ==========");
+		if (ServFlags.extStree)
+			Utils.logi("========== squery (s-tree.serv11) post ==========");
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			jsonResp(msg, resp);
 
 		} catch (SQLException e) {
-			write(resp, err(MsgCode.exSession, e.getMessage()));
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SsException e) {
-			e.printStackTrace();
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
@@ -113,8 +110,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			throws IOException, SQLException, SAXException, SsException, TransException {
 		resp.setCharacterEncoding("UTF-8");
 
-		// yes, still only 1 request body in v1.1
-		String connId = jmsg.body(0).conn();
+		String connId = jmsg.body(0).uri();
+		connId = Connects.uri2conn(connId);
 
 		// check session
 		IUser usr = verifier.verify(jmsg.header());
@@ -137,6 +134,17 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			String root = jreq.root();
 			r = rebuildTree(connId, root, getTreeSemtcs(jreq), usr);
 		}
+		else if ("tagtree".equals(t)) {
+			String root = jreq.root();
+			r = tagSubtree(connId, root, getTreeSemtcs(jreq), usr);
+		}
+		else if ("tagtrees".equals(t)) {
+			r = tagTrees(connId, getTreeSemtcs(jreq), usr);
+		}
+		else if ("untagtree".equals(t)) {
+			String root = jreq.root();
+			r = untagSubtree(connId, root, getTreeSemtcs(jreq), usr);
+		}
 		else {
 			if ("sqltree".equals(t)) {
 				// ds (tree configured in dataset.xml)
@@ -145,11 +153,6 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 				AnDatasetResp re = new AnDatasetResp(null).forest(lst);
 				r = ok(re);
 			}
-//				else if ("sqltable".equals(t)) {
-//					SResultset lst = DatasetCfg.loadDataset(connId,
-//							jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-//					R = JProtocol.ok(p, lst);
-//				}
 			else {
 				// empty (build tree from general query results with semantic of 'sk')
 				JsonOpt opts = jmsg.opts();
@@ -161,9 +164,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	}
 
 	/**Figure out tree semantics in the following steps:<br>
-	 * 1. if jreq is not null try get it (the client has defined a semantics);<br>
-	 * 2. if req has an 'sk' parameter, load in confix.xml, if failed, try dataset.xml;<br>
-	 * 3. if jreq has and 'sk' parameter, load in confix.xml, if failed, try dataset.xml.<br>
+	 * 1. if jreq is not null try get it (may be the client has defined a semantics);<br>
+	 * 2. if req has an 'sk' parameter, load it from dataset.xml - this way can error prone;<br>
 	 * @param jreq
 	 * @return tree's semantics, {@link TreeSemantics}
 	 */
@@ -174,9 +176,6 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		if (ts != null)
 			return ts;
 
-//		String tss = Configs.getCfg("tree-semantics", jreq.sk);
-//		if (tss != null)
-//			return new TreeSemantics(tss);
 		return DatasetCfg.getTreeSemtcs(jreq.sk);
 	}
 
@@ -199,7 +198,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		if (treeSmtcs == null)
 			throw new SemanticException("SemanticTree#loadSTree(): Can't build tree, tree semantics is null.");
 
-		String rootId = jreq.rootId;
+		String rootId = jreq.root();
 		if (rootId != null && rootId.trim().length() == 0)
 			rootId = null;
 		
@@ -233,11 +232,15 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	 */
 	protected AnsonMsg<AnsonResp> rebuildTree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)
 			throws SQLException, TransException {
+		int total = 0;
 		if (Connects.driverType(connId) == dbtype.mysql) {
-			int total = BuildMysql.rebuildDbTree(rootId, semanticss, usrInf);
-			return ok("re-forest", "Updated %s records from root %s", total, rootId);
+			// @deprecated
+			total = BuildMysql.rebuildDbTree(rootId, semanticss, usrInf);
 		}
-		else throw new SQLException("TODO...");
+		else
+			total = Reforest.shapeSubtree(connId, rootId, semanticss, usrInf);
+
+		return ok("re-forest", "Updated %s records from root %s", total, rootId);
 	}
 
 	protected AnsonMsg<AnsonResp> rebuildForest(String connId, TreeSemantics semanticss, IUser usrInf)
@@ -250,7 +253,53 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		else throw new SQLException("TODO...");
 	}
 
-	/**FIXME use semantic.transact to extend this class to build sql for all supported DB
+	protected AnsonMsg<AnsonResp> tagTrees(String connId, TreeSemantics sm, IUser usr) throws TransException, SQLException {
+		// This operation is expensive
+
+		ISemantext smtxt = st.instancontxt(connId, usr);
+
+		AnResultset rs = (AnResultset) st.select(sm.tabl(), "t")
+				.col(sm.dbRecId(), "rid")
+				.where(new Condit(op.isnull, sm.dbParent(), "null").or(new Condit(op.in, sm.dbParent(), "'', 'cate'")))
+				.rs(smtxt)
+				.rs(0);
+		
+		while(rs.next()) {
+			String root = rs.getString("rid");
+			Reforest.tagSubtree(connId, root, "'" + root + "'", sm, usr);
+		}
+				
+		return ok("tagtrees", "Tagged %s trees", rs.total());
+	}
+
+	protected AnsonMsg<AnsonResp> tagSubtree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)
+			throws SQLException, TransException {
+		int total = 0;
+		if (Connects.driverType(connId) == dbtype.mysql) {
+			// @deprecated
+			throw new SemanticException("TODO ...");
+		}
+		else
+			total = Reforest.tagSubtree(connId, rootId, "'" + rootId + "'", semanticss, usrInf);
+
+		return ok("re-forest", "Tagged %s records from root %s", total, rootId);
+	}
+
+	protected AnsonMsg<AnsonResp> untagSubtree(String connId, String rootId, TreeSemantics semanticss, IUser usrInf)
+			throws SQLException, TransException {
+		int total = 0;
+		if (Connects.driverType(connId) == dbtype.mysql) {
+			// @deprecated
+			throw new SemanticException("TODO ...");
+		}
+		else
+			total = Reforest.tagSubtree(connId, rootId, "null", semanticss, usrInf);
+
+		return ok("re-forest", "Tagged %s records from root %s", total, rootId);
+	}
+
+	/**FIXME use semantic.transact to extend this class to build sql for all supported DB.
+	 * For mysql 8, see {@link Reforest}.
 	 * - even supporting no radix64.<br>
 	 * A helper class to rebuild tree structure in db table - in case node's parent changing makes subtree fullpath incorrect.<br>
 	 * This needs two DB facilities to work:<br>
@@ -360,7 +409,7 @@ end </pre>
 		 * @param rootId
 		 * @param sm
 		 * @param dblog 
-		 * @return
+		 * @return total updated records - not the moved items?
 		 * @throws SQLException
 		 * @throws TransException 
 		 */
@@ -407,7 +456,7 @@ end </pre>
 		 * where areaId = 'rootId'
 		 * @param rootId
 		 * @param sm
-		 * @return
+		 * @return sql for root update
 		 */
 		private static String updateRoot(String rootId, TreeSemantics sm) {
 			// update e_areas set fullpath = concat(lpad(ifnull(siblingSort, '0'), 2, '0'), ' ', areaId)
@@ -482,7 +531,7 @@ set p3.fullpath = concat(p2.fullpath, ' ', char2rx64(ifnull(p3.siblingSort, 0)),
 where p0.parentId is null; </pre>
 		 * @param sm
 		 * @param pi
-		 * @return
+		 * @return the i-th snippet
 		 */
 		private static String updatePi(String rootId, TreeSemantics sm, int pi) {
 			// e_areas p0 on p1.parentId = p0.areaId
@@ -515,5 +564,95 @@ where p0.parentId is null; </pre>
 					// pi, sm[Ix.fullpath][0], pi - 1, sm[Ix.sort][0], sm[Ix.recId][0]);
 					pi, sm.dbFullpath(), pi - 1, sm.dbSort(), sm.dbRecId());
 		}
+	}
+	
+	/**Update fullpath, recursively.
+	 * TODO oracle 11gr2: https://dev.mysql.com/doc/refman/8.0/en/with.html 
+	 * TODO mysql 8: https://dev.mysql.com/doc/refman/8.0/en/with.html 
+	 * 
+	 * @author Odys Zhou
+	 */
+	public static class Reforest {
+		
+		/** sqlite<pre>
+	with backtrace (indId, parent, fullpath) as (
+		select indId, parent, fullpath from ind_emotion2 where indId = 'C'
+		union all
+		select me.indId, me.parent, p.fullpath || '.' || printf('%02d', sort) from backtrace p
+		join ind_emotion2 me on me.parent = p.indId 
+	) 
+	update ind_emotion2 set fullpath = (
+	select fullpath from backtrace t where ind_emotion2.indId = t.indId) where indId in (select indId from backtrace); 
+		</pre>
+		 * @param connId
+		 * @param rootId 
+		 * @param sm
+		 * @param dblog
+		 * @return  updated count
+		 * @throws TransException
+		 * @throws SQLException
+		 */
+		public static int shapeSubtree(String connId, String rootId, TreeSemantics sm, IUser dblog) throws TransException, SQLException {
+
+			if (Connects.driverType(connId) != dbtype.sqlite) {
+				throw new SemanticException("[TODO] Reshape fullpath are not supported yet.");
+			}
+			else {
+				/* sqlite
+				with backtrace (indId, parent, fullpath) as (
+					select indId, parent, fullpath from ind_emotion2 where indId = 'C'
+					union all
+					select me.indId, me.parent, p.fullpath || '.' || printf('%02d', sort) from backtrace p
+					join ind_emotion2 me on me.parent = p.indId 
+				) 
+				update ind_emotion2 set fullpath = (
+				select fullpath from backtrace t where ind_emotion2.indId = t.indId) where indId in (select indId from backtrace); 
+				*/
+				return Connects.commit(connId, dblog, String.format(
+				"with backtrace (indId, parent, fullpath) as (" +
+					"select %2$s indId, %3$s parent, %4$s fullpath from %1$s where %2$s = '%6$s' " +
+					"union all " +
+					// FIXME should be "me.<recId> indId" instead of me.indId?
+					"select me.%2$s, me.%3$s, p.fullpath || '.' || printf('%%0%7$sd', %5$s) from backtrace p " +
+					"join %1$s me on me.%3$s = p.indId) " +
+				"update %1$s set %4$s = " +
+				"(select %4$s from backtrace t where %1$s.%2$s = t.indId) where %2$s in (select indId from backtrace)",
+				sm.tabl(), sm.dbRecId(), sm.dbParent(), sm.dbFullpath(), sm.dbSort(), rootId, 2))[0];
+			}
+		}
+		
+		/** Tag all subtree nodes with root's Id.
+		 * @param connId
+		 * @param rootId
+		 * @param tagval 'root-id' or "null"
+		 * @param sm
+		 * @param dblog
+		 * @return updated count
+		 * @throws SQLException
+		 * @throws TransException
+		 */
+		public static int tagSubtree(String connId, String rootId, String tagval, TreeSemantics sm, IUser dblog) throws SQLException, TransException {
+			if (Connects.driverType(connId) != dbtype.sqlite) {
+				throw new SemanticException("[TODO] Reshape fullpath are not supported yet.");
+			}
+			else {
+			/* with backtrace (indId, parent) as (
+				select indId, parent from ind_emotion where indId = '000001'
+				union all
+				select me.indId, me.parent from backtrace p
+				join ind_emotion me on me.parent = p.indId 
+			) update ind_emotion set templId = '000001' where indId in (select indId from backtrace);
+			 */
+				return Connects.commit(connId, dblog, String.format(
+					"with backtrace (indId, parent) as (" +
+					"select %2$s indId,%3$s parent from %1$s where indId = '%5$s' " +
+					"union all " +
+					"select me.%2$s indId, me.%3$s parent from backtrace p " +
+					"join %1$s me on me.parent = p.indId" +
+					") update %1$s set %4$s = %6$s where %2$s in (select indId from backtrace)",
+					sm.tabl(), sm.dbRecId(), sm.dbParent(), sm.dbTagCol(), rootId, tagval))[0];
+			}
+		}
+		
 	}
 }

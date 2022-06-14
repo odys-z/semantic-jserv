@@ -15,7 +15,7 @@ import io.odysz.semantics.x.SemanticException;
  * This enum replaced jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}. */
 public enum Quizport implements IPort {
 	echo("echo.serv"),
-	heartbeat("ping.serv11"), session("login.serv11"),
+	heartbeat("ping.serv"), session("login.serv11"),
 	/**port provided by {@link io.odysz.jsample.SysMenu} */
 	menu("menu.serv"),
 	file("file.serv11"),
@@ -49,6 +49,7 @@ public enum Quizport implements IPort {
 	public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
 		stream.write('\"');
 		stream.write(url.getBytes());
+		System.err.println("ERROR shouldn't user name()? ");
 		stream.write('\"');
 		return this;
 	}

@@ -19,7 +19,6 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
-import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jsession.ISessionVerifier;
@@ -42,7 +41,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		verifier = JSingleton.getSessionVerifier();
 	}
 
-	public ServPort(Port port) { this.p = port; }
+	public ServPort(IPort port) { this.p = port; }
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -62,7 +61,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		try {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
-			onGet(msg, resp);
+			onGet(msg.addr(req.getRemoteAddr()), resp);
 		} catch (AnsonException e) {
 			onGetAnsonException(e, resp, req.getParameterMap());
 		} catch (SemanticException e) {
@@ -104,17 +103,26 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
 
-			onPost(msg, resp);
+			onPost(msg.addr(req.getRemoteAddr()), resp);
 		} catch (SemanticException | AnsonException e) {
 			if (ServFlags.query)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
+		} catch (Exception e) {
+			e.printStackTrace();
+			write(resp, err(MsgCode.exGeneral, e.getClass().getName(), e.getMessage()));
 		}
 	}
 
+	/**Write message to resp.
+	 * @param resp can be null if user handled response already
+	 * @param msg
+	 * @param opts
+	 */
 	protected void write(HttpServletResponse resp, AnsonMsg<? extends AnsonResp> msg, JsonOpt... opts) {
 		try {
-			msg.toBlock(resp.getOutputStream(), opts);
+			if (msg != null)
+				msg.toBlock(resp.getOutputStream(), opts);
 		} catch (AnsonException | IOException e) {
 			e.printStackTrace();
 		}
@@ -122,7 +130,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	/**Response with OK message.
 	 * @param arrayList
-	 * @return 
+	 * @return AnsonMsg code = ok 
 	 */
 	protected AnsonMsg<AnsonResp> ok(ArrayList<AnResultset> arrayList) {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);
@@ -144,6 +152,11 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		return msg;
 	}
 	
+	static public AnsonMsg<AnsonResp> ok(IPort p) {
+		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, MsgCode.ok);
+		return msg.body(new AnsonResp().msg(MsgCode.ok.name()));
+	}
+	
 	protected AnsonMsg<AnsonResp> ok(String templ, Object... args) {
 		AnsonMsg<AnsonResp> msg = AnsonMsg.ok(p, String.format(templ, args));
 		return msg;
@@ -151,7 +164,10 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	
 	protected AnsonMsg<AnsonResp> err(MsgCode code, String templ, Object ... args) {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, code);
-		AnsonResp bd = new AnsonResp(msg, String.format(templ == null ? "" : templ, args));
+		AnsonResp bd = new AnsonResp(msg,
+				// sql error message can have '%'
+				args == null ? templ :
+				String.format(templ == null ? "" : templ, args));
 		return msg.body(bd);
 	}
 	

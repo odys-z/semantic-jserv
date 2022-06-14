@@ -4,20 +4,17 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantics.SemanticObject;
 
-/**A stub for user's message body extension - subclassing {@link JBody}.
+/**A stub for user's message body extension - subclassing {@link AnsonBody}.
  * @author ody
  *
  */
 public class UserReq extends AnsonBody {
-	@SuppressWarnings("unused")
-	private String code;
 	
 	public UserReq() {
 		super(null, null);
-		code = "";
 	}
 
-	private SemanticObject data;
+	SemanticObject data;
 	public UserReq data(String k, Object v) {
 		if (k == null) return this;
 
