@@ -3,3 +3,6 @@ main.net
 bin
 build
 target
+.settings
+.classpath
+src/test/results/

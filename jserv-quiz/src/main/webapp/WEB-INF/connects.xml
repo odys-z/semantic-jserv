@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <conns>
   <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,smtcs">
   	<!-- drvmnger table is used to configure basic db connection, for pooled datasource, see bdcp -->
@@ -44,6 +45,19 @@
   		<dbg>true</dbg>
   		<smtcs>semantics-quiz.xml</smtcs>
   	</c>
+
+  	<c>
+  		<id>north</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>sqlite/north.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-north.xml</smtcs>
+  	</c>
+
   </t>
 
   <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,smtcs">
@@ -73,6 +87,31 @@
   		<!-- Not used (will be protected in cipher in the future -->
   		<pswd></pswd>
   		<dbg>true</dbg>
+  	</c>
+  </t>
+  
+  <t id="conn-uri" pk='uri' columns="uri, conn">
+  	<!-- for uri, see AnClient/js/example/example.js/north-star/north-app.jsx
+  	     for conn, see above
+  	     It's planned to try configure connections via user requests, in the future.
+  	-->
+   	<c>
+  		<uri>session</uri>
+  		<conn>sys-sqlite</conn>
+  	</c>
+   	<c>
+  		<uri>/sys/*</uri>
+  		<conn>sys-sqlite</conn>
+  	</c>
+  	
+  	<c>
+  		<uri>/n/*</uri>
+  		<conn>north</conn>
+  	</c>
+
+  	<c>
+  		<uri>quiz/*</uri>
+  		<conn>quiz</conn>
   	</c>
   </t>
 </conns>

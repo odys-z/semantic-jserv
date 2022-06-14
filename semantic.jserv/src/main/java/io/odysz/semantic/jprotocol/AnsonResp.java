@@ -34,6 +34,11 @@ public class AnsonResp extends AnsonBody {
 
 	public String msg() { return m; }
 
+	public AnsonResp msg(String txt) {
+		this.m = txt;
+		return this;
+	}
+
 	public AnsonResp rs(AnResultset rs) {
 		if (this.rs == null)
 			this.rs = new ArrayList<AnResultset>(1);
@@ -66,6 +71,13 @@ public class AnsonResp extends AnsonBody {
 
 	public AnsonResp data(HashMap<String, Object> props) {
 		this.map = props;
+		return this;
+	}
+	
+	public AnsonResp data(String k, Object v) {
+		if (this.map == null)
+			this.map = new HashMap<String, Object>();
+		this.map.put(k, v);
 		return this;
 	}
 	

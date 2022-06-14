@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.ServletException;
@@ -51,6 +50,7 @@ public class JFileServ extends ServPort<FileReq> {
 	private static final int bufLen = 1024 * 16;
 	static IPort p = Port.file;
 
+	/** Regex: filename = (group) */
 	private static Regex regex = new Regex(".*filename\\s*=\\s*\"(.*)\"");
 
 	private String uploadPath;
@@ -95,7 +95,7 @@ public class JFileServ extends ServPort<FileReq> {
 			}
 
 			resp.flushBuffer();
-		} catch (SemanticException | AnsonException | SsException | SQLException e) {
+		} catch (SemanticException | AnsonException | SsException e) {
 			if (ServFlags.query)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
@@ -104,18 +104,6 @@ public class JFileServ extends ServPort<FileReq> {
 
 	@Override
 	protected void onPost(AnsonMsg<FileReq> msg, HttpServletResponse resp) { }
-
-//	protected void resp(AnsonMsg<FileReq> msg, HttpServletResponse resp, String a, String file)
-//			throws IOException, SemanticException, ServletException {
-//		resp.setContentType("text/html;charset=UTF-8");
-//		if ("jx".equals(a))
-//			jtxt(resp, file);
-//		else if ("upload".equals(a))
-//			// uploadForm(msg, resp, file);
-//			throw new SemanticException("Please upload file with XHR via streamFile.serv");
-//
-//		resp.flushBuffer();
-//	}
 
 	/**Ajax POST:
 	 * <pre>xhr:  $.ajaxSettings.xhr();
@@ -132,7 +120,7 @@ IHDR...
 	 * @param req
 	 * @param resp
 	 * @param file
-	 * @return
+	 * @return file id (file been saved)
 	 * @throws IOException
 	 * @throws SemanticException 
 	 * @throws ServletException 
@@ -230,7 +218,7 @@ https://wisdmlabs.com/blog/access-file-before-upload-using-jquery-ajax/
 		return parsefileId(req.getRemoteAddr(), hd);
 	}
 	
-	static String parsefileId(String remote, String head) {
+	private static String parsefileId(String remote, String head) {
 		ArrayList<String> g = regex.findGroups(head);
 		if (g != null && g.size() > 0) {
 			String clientFileName = g.get(0);

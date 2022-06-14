@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <dataset>
-<t id="ds" pk="sk" columns="sk,cols,mysql,orcl,ms2k,sqlit,s-tree">
+<t id="ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
 	<!-- This table is used for define sqls that can be parameterized when serving data.
 		Client using 'sk' in request message to use sqls.
+		conn: Optional, the conn-id overriding client's URI's conn-id. use case: cbb is binding source different from URI.
 		Records returned by sql can be mapped into bump cases (for oracle) if 'cols' is not empty.
 		Different version of sql, mysql, oracle, etc. is used according to connId and driver type,
 		see connects.xml. 
@@ -25,22 +27,24 @@
   		<s-tree>checked,a_domain,id,parentId,text,,,false</s-tree>
 	</c>
 	
-	<!--
 	<c>
-	  	<sk>sys.menu.vue-sample</sk>
-  		<mysql>SELECT funcId, parentId, funcName, funcUrl href, isUsed sort, fullpath
-  			FROM a_functions f order by f.fullpath </mysql>
-  		<sqlit>SELECT funcId, parentId, funcName, url href, sibling sort, fullpath
-  			FROM a_functions f order by f.fullpath</sqlit>
-  		<s-tree>,a_functions,funcId id,parentId,funcName title,,,false</s-tree>
-	</c> -->
+	  	<sk>lvl1.domain.jsample</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId is null order by d.fullpath</sqlit>
+	</c>
 
 	<c>
-	  	<sk>sys.menu.ez-test</sk>
-  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, isUsed sort, fullpath
+	  	<sk>nations.domain.jsample</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId = 'nation' order by d.fullpath</sqlit>
+  	</c>
+	
+	<c>
+	  	<sk>sys.menu.jsample</sk>
+  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, sibling sort, fullpath, css, flags
   			FROM a_sys_functions f order by f.fullpath
   		</mysql>
-  		<sqlit>SELECT funcId, parentId, funcName, url, sibling sort, fullpath
+  		<sqlit>SELECT funcId, parentId, funcName, url, sibling sort, fullpath, css, flags
   			FROM a_functions f order by f.fullpath
   		</sqlit>
   		<s-tree>,a_sys_functions,funcId id,parentId,funcName text,,,false</s-tree>
@@ -69,30 +73,25 @@
   		<sqlit>select orgId value, orgName text from a_orgs</sqlit>
 	</c>
 
-	<!-- role-func tree -->
+	<!-- role-func tree
+		Note for @anclient/anreact 0.3.52
+		Anclient/anreact/jsample/RoleDetails (TSX) now use this to load relation tree.
+	 -->
   	<c> <sk>trees.role_funcs</sk>
-  		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.funcId sort, fullpath
+  		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.sibling sort, fullpath
   		from a_sys_functions f left outer join a_role_funcs r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</mysql>
-  		<s-tree>checked,a_functions,funcId value,parentId,fullpath,sort,funcName text,children,false</s-tree>
+  		<sqlit>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.sibling sort, fullpath
+  		from a_functions f left outer join a_role_func r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath
+  		</sqlit>
+  		<s-tree>checked,a_functions,funcId nodeId,parentId,fullpath,sort,funcName text,children,false</s-tree>
   	</c>
   	
-  	<!-- workflow combobox -->
-  	<c> <sk>ezcbb-workflows</sk>
-  		<mysql>select wfId value, wfName text from oz_workflow</mysql>
-  		<sqlite></sqlite>
-  	</c>
-  	<!-- get workflow tree. arg[0] wfId, [1] roleId -->
-  	<c> <sk>wf-rights.tree</sk>
-  		<mysql>select false checked, n.nodeId, nodeName, n.nodeId value, nodeName text, '' roleId, concat(n.wfId, '/', n.nodeId) fullpath, 0 sort, wfId parent
-  		from oz_wfnodes n where n.wfId = '%1$s'
-  		union
-  		select r.roleId is not null checked, n.nodeId, nodeName, c.cmd value, c.txt text, r.roleId, concat(n.wfId, '/', n.nodeId, '/', ifnull(c.cmd, '')) fullpath, c.sort, n.nodeId parent
-  		from oz_wfnodes n join oz_wfcmds c on n.nodeId = c.nodeId and n.wfId = '%1$s'
-  		left outer join oz_wfrights r on c.cmd = r.cmd and r.roleId = '%2$s'
-  		order by fullpath, sort</mysql>
-  		<s-tree>checked,oz_workflow,value,parent,fullpath,sort,text,children,false</s-tree>
-  	</c>
-
+  	<!-- Indicator Tree -->
+	<c> <sk>xv.indicators</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT 0 checked, indId, indName, parent parentId, sort, fullpath, css, weight, qtype, remarks, extra FROM indicators order by fullpath</sqlit>
+  		<s-tree>checked,indicators,indId nodeId,parentId,fullpath,sort,indName text,children,false</s-tree>
+	</c>
 
 	<c> <sk>legend.cube.vec3</sk>
   		<mysql></mysql>

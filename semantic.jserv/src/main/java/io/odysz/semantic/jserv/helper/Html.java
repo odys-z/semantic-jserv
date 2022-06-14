@@ -31,26 +31,10 @@ import j2html.tags.ContainerTag;
  *
  */
 public class Html {
-	/**Change rs to html.
-	 * TODO remove
-	 * @param rs
-	 * @param msgs
-	 * @return html doc
-	public static String rs(SResultset rs, String... msgs) {
-		// html() is a simple HTML composer, see
-		// https://github.com/tipsy/j2html 
-		return "<!DOCTYPE HTML>" + html(
-			head(meta().withCharset("utf-8")),
-			body(
-				h1("Html.rs()"),
-					ul(each(Arrays.asList(msgs), pmsg -> li(""))),
-					table(tbody(
-						tr(each(rs.getColnames().keySet(), col -> th(span(col)))),
-						each(rs.getRows(), row -> tr(each(row, cell -> td(cell.toString()))))))
-				)).render();
-	}
+	/**Get html list tag
+	 * @param list
+	 * @return list tag
 	 */
-
 	public static String list(List<String> list) {
 		return "<!DOCTYPE HTML>" + html(
 			head(meta().withCharset("utf-8")),

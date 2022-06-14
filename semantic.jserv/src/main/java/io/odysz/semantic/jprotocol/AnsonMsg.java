@@ -15,33 +15,42 @@ import io.odysz.semantics.x.SemanticException;
 /**<p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort serv11}.</p>
  * 1. A incoming json message is parsed by *.serv into JMessage,
  * which can be used to directly to build statements;<br>
- * 2. An outgoing data object which is presented as AnsonMsg<AnsonResp>,
+ * 2. An outgoing data object which is presented as AnsonMsg&lt;AnsonResp&gt;,
  * which should been directly write into output stream.
  * 
  * @author odys-z@github.com
  */
 public class AnsonMsg <T extends AnsonBody> extends Anson {
 	/**Port is the conceptual equivalent to the SOAP port, the service methods' group.<br>
-	 * Client must use enum name, e.g. heartbeat, session in json. url are explained at server side.
-	 * NOTE: java code shouldn't use switch-case block on enum. That cause problem with generated class.
+	 * Client must use enum name, e.g. heartbeat, session in json.
+	 * And url are explained at server side.
+	 * 
+	 * NOTE:
+	 * java code shouldn't use switch-case block on enum. That cause problem
+	 * with generated class.
+	 * 
 	 * @author odys-z@github.com
 	 */
 	public static enum Port implements IPort {  
-			heartbeat("ping.serv11"), session("login.serv11"),
+			heartbeat("ping.serv"), session("login.serv11"),
 			query("r.serv11"), update("u.serv11"),
 			insert("c.serv11"), delete("d.serv11"),
 			echo("echo.serv11"),
 			/** serv port for downloading json/xml file or uploading a file.<br>
-			 * @see {@link io.odysz.semantic.jserv.file.JFileServ}. */
+			 * see io.odysz.semantic.jserv.file.JFileServ in semantic.jserv. */
 			file("file.serv"),
 			/**Any user defined request using message body of subclass of JBody must use this port */ 
 			user("user.serv11"),
 			/** semantic tree of dataset extensions<br>
-			 * @see {@link io.odysz.semantic.ext.SemanticTree}. */
+			 * see io.odysz.semantic.ext.SemanticTree in semantic.jserv. */
 			stree("s-tree.serv11"),
 			/** dataset extensions<br>
-			 * @see {@link io.odysz.semantic.ext.Dataset}. */
-			dataset("ds.serv11");
+			 * see io.odysz.semantic.ext.Dataset in semantic.jserv. */
+			dataset("ds.serv11"),
+			/** ds.tier, dataset's semantic tier */
+			datasetier("ds.tier"),
+			/** document manage's semantic tier */
+			docstier("docs.tier");
 
 		static {
 			JSONAnsonListener.registFactory(IPort.class, 
@@ -125,6 +134,20 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		if (port == null)
 			throw new SemanticException("Port can not be null. Not initialized? To use JMassage understand ports, call understandPorts(IPort) first.");
 	}
+	
+	/**
+	 * There are cases extended ServPort using different IPort class.
+	 * This method is used to change port implementation.
+	 * FIXME deprecate IPort 
+	 * 
+	 * @param enport
+	 * @return
+	 * @throws SemanticException
+	 */
+	public AnsonMsg<T> port(IPort enport) throws SemanticException {
+		port = enport;
+		return this;
+	}
 
 	public AnsonMsg() {
 		seq = (int) (Math.random() * 1000);
@@ -179,6 +202,16 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		return opts == null ? new JsonOpt() : opts;
 	}
 
+	String addr;
+	public AnsonMsg<T> addr(String addr) {
+		this.addr = addr;
+		return this;
+	}
+
+	/**Get remote address if possible
+	 * @return address */
+	public String addr() { return addr; }
+
 	public AnsonMsg<T> body(List<T> bodyItems) {
 		this.body = bodyItems;
 		return this;
@@ -192,4 +225,5 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	public static AnsonMsg<? extends AnsonResp> ok(IPort p, AnsonResp resp) {
 		return new AnsonMsg<AnsonResp>(p, MsgCode.ok).body(resp);
 	}
+
 }

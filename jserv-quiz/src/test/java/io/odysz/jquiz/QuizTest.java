@@ -31,9 +31,6 @@ import io.odysz.transact.x.TransException;
  * 
  * @author odys-z@github.com */
 class QuizTest {
-	
-	@SuppressWarnings("unused")
-	private static Quiz quiz;
 
 	@BeforeAll
 	static void initSqlite() throws SemanticException, SQLException, SAXException, IOException {
@@ -42,7 +39,8 @@ class QuizTest {
 		Utils.logi(path);
 		Connects.init(path);
 
-		quiz = new Quiz();						// initialize jrobot
+		@SuppressWarnings("unused")
+		Quiz quiz = new Quiz();						// initialize jrobot
 		Quiz.st = new DATranscxt("quiz-test");	// see comments for sql scripts
 	}
 

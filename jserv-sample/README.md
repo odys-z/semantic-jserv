@@ -17,4 +17,9 @@ This is only an SOA Json service. The full example for docker is developing.
     docker pull odysz/jserv-sample
 ```
 
-See [Docker Hub](https://hub.docker.com/r/odysz/jserv-sample)
+See [image at Docker Hub](https://hub.docker.com/r/odysz/jserv-sample).
+
+
+# Source project troubleshootings
+
+You may need install maven dependency, semantic-workflow locally, which is not published into maven repository.

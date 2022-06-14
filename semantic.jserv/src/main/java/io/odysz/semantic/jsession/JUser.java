@@ -1,6 +1,7 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
@@ -35,8 +37,8 @@ public class JUser extends SemanticObject implements IUser {
 	 */
 	public static class JUserMeta extends TableMeta {
 		public JUserMeta(String tbl, String... conn) {
-			super(tbl, conn);
-			this.tbl = "a_user";
+			super("a_users", conn);
+			// this.tbl = "a_user";
 			this.pk = "userId";
 			this.uname = "userName";
 			this.pswd = "pswd";
@@ -44,12 +46,11 @@ public class JUser extends SemanticObject implements IUser {
 		}
 
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-//		String clzz = "class-IUser";
-		protected String tbl; // = "a_user";
-		protected String pk; // = "userId";
-		protected String uname; // = "userName";
-		protected String pswd; // = "pswd";
-		protected String iv; // = "encAuxiliary";
+		// public String tbl; // = "a_user";
+		public String pk; // = "userId";
+		public String uname; // = "userName";
+		public String pswd; // = "pswd";
+		public String iv; // = "encAuxiliary";
 
 		public JUserMeta userName(String unamefield) {
 			uname = unamefield;
@@ -78,14 +79,23 @@ public class JUser extends SemanticObject implements IUser {
 	private String funcName;
 
 	private static DATranscxt logsctx;
+	private static String[] connss;
+	public static final String sessionSmtXml;
+	public static final String logTabl;
 	static {
 		String conn = Configs.getCfg("log-connId");
 		if (LangExt.isblank(conn))
 			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
 		try {
-			logsctx = new DATranscxt(conn);
+			connss = conn.split(","); // [conn-id, log.xml, a_logs]
+			// logsctx = new DATranscxt(connss[0]);
+			logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
+		}
+		finally {
+			sessionSmtXml  = connss != null ? connss[1] : "";
+			logTabl = connss != null ? connss[2] : "";
 		}
 	}
 
@@ -122,10 +132,10 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	public TableMeta meta() {
-		return new JUserMeta("a_user", AnSession.sctx.basiconnId());
+		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
 	}
 
-	/**jmsg should be what the response of {@link SSession}
+	/**jmsg, the response of {@link AnSession}
 	 * @param jmsg
 	 */
 	public JUser(SemanticObject jmsg) {
@@ -136,11 +146,12 @@ public class JUser extends SemanticObject implements IUser {
 
 	@Override
 	public ArrayList<String> dbLog(ArrayList<String> sqls) {
-		return LoggingUser.genLog(logsctx, sqls, this, funcName, funcId);
+		return LoggingUser.genLog(logsctx, logTabl, sqls, this, funcName, funcId);
 	}
 
-	public void touch() {
+	public JUser touch() {
 		touched = System.currentTimeMillis();
+		return this;
 	}
 
 	@Override
@@ -165,7 +176,7 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	/**Add notifyings
-	 * @param n
+	 * @param note
 	 * @return this
 	 * @throws TransException
 	 */
@@ -198,20 +209,21 @@ public class JUser extends SemanticObject implements IUser {
 
 		return false;
 	}
+	
+	@Override
+	public boolean guessPswd(String pswd64, String iv64)
+			throws TransException, GeneralSecurityException, IOException {
+		return pswd != null && pswd.equals(AESHelper.decrypt(pswd64, this.ssid, AESHelper.decode64(iv64)));
+	}
+
 
 	@Override
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
-
+	
 	@Override
-	public IUser sessionKey(String skey) {
-		// ssid = skey;
+	public IUser validatePassword() throws SsException, SQLException, TransException {
 		return this;
-	}
-
-	@Override
-	public String sessionKey() {
-		return null;
 	}
 }

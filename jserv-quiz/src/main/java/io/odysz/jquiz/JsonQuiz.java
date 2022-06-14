@@ -72,6 +72,7 @@ public class JsonQuiz extends AnsonResp {
 				JsonQuestion q = new JsonQuestion(questions.getString("qid"))
 						.answers(questions.getString("answers"))
 						.correct(questions.getString("correct"))
+						.qtype(questions.getString("qtype"))
 						.number(questions.getString("number"))
 						.prompt(questions.getString("prompt"))
 						.image(questions.getString("image"))

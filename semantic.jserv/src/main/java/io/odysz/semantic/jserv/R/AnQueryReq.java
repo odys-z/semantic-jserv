@@ -50,8 +50,8 @@ public class AnQueryReq extends AnsonBody {
 
 	ArrayList<String[]> havings;
 
-	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String conn) {
-		super(parent, conn);
+	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
+		super(parent, uri);
 		a = CRUD.R;
 	}
 
