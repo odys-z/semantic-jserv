@@ -27,8 +27,18 @@ import io.oz.sandbox.SandRobot;
 import io.oz.sandbox.protocol.Sandport;
 import io.oz.sandbox.sheet.SpreadsheetReq.A;
 
+/**
+ * Example &amp; test for <a href='https://github.com/odys-z/Anclient/blob/master/js/anreact/src/react/widgets/spreadsheet.tsx'>
+ * Spreadsheet</a>.
+ * 
+ * AnClient.js test: <a href='https://github.com/odys-z/Anclient/tree/master/js/test/sessionless/src/workbook'>
+ * sessionless workbook</a>
+ * 
+ * @author odys-z@github.com
+ *
+ */
 @WebServlet(description = "Semantic sessionless: spreadsheet", urlPatterns = { "/sheet.less" })
-public class Spreadsheet extends ServPort<SpreadsheetReq> {
+public class WorkbookTier extends ServPort<SpreadsheetReq> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -45,7 +55,7 @@ public class Spreadsheet extends ServPort<SpreadsheetReq> {
 		}
 	}
 
-	public Spreadsheet() {
+	public WorkbookTier() {
 		super(Sandport.workbook);
 	}
 
