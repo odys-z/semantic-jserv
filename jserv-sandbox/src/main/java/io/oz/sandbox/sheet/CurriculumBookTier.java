@@ -25,7 +25,9 @@ import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 import io.oz.sandbox.SandRobot;
 import io.oz.sandbox.protocol.Sandport;
-import io.oz.sandbox.sheet.SpreadsheetReq.A;
+import io.oz.spreadsheet.SpreadsheetReq;
+import io.oz.spreadsheet.SpreadsheetReq.A;
+import io.oz.spreadsheet.SpreadsheetResp;
 
 /**
  * Example &amp; test for <a href='https://github.com/odys-z/Anclient/blob/master/js/anreact/src/react/widgets/spreadsheet.tsx'>
@@ -34,11 +36,16 @@ import io.oz.sandbox.sheet.SpreadsheetReq.A;
  * AnClient.js test: <a href='https://github.com/odys-z/Anclient/tree/master/js/test/sessionless/src/workbook'>
  * sessionless workbook</a>
  * 
+ * DESIGN NOTE
+ * 
+ * As Semantier pattern don't try to abstract CRUD pattern further more,
+ * This class is only handling requests of MyCurriculum workbook.
+ * 
  * @author odys-z@github.com
  *
  */
 @WebServlet(description = "Semantic sessionless: spreadsheet", urlPatterns = { "/sheet.less" })
-public class WorkbookTier extends ServPort<SpreadsheetReq> {
+public class CurriculumBookTier extends ServPort<SpreadsheetReq> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -55,7 +62,7 @@ public class WorkbookTier extends ServPort<SpreadsheetReq> {
 		}
 	}
 
-	public WorkbookTier() {
+	public CurriculumBookTier() {
 		super(Sandport.workbook);
 	}
 
@@ -113,7 +120,11 @@ public class WorkbookTier extends ServPort<SpreadsheetReq> {
 
 		Insert ins = st.insert(MyCurriculum.tabl, robot);
 		
-		jreq.insertRec(ins);
+		// jreq.insertRec(ins);
+		MyCurriculum rec = (MyCurriculum) jreq.rec();
+		if (rec == null)
+			rec = new MyCurriculum();
+		rec.setNvs(ins);
 		
 		String conn = Connects.uri2conn(jreq.uri());
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, robot));
@@ -121,33 +132,35 @@ public class WorkbookTier extends ServPort<SpreadsheetReq> {
 				.get(MyCurriculum.tabl))
 				.getString("cid");
 		
-		jreq.rec.cid = pid;
+		rec.cid = pid;
 
-		return new SpreadsheetResp(jreq.rec);
+		return new SpreadsheetResp(rec);
 	}
 
 	static SpreadsheetResp update(SpreadsheetReq jreq) throws TransException, SQLException {
 
+		MyCurriculum rec = (MyCurriculum) jreq.rec();
+
 		Update upd = st.update(MyCurriculum.tabl, robot)
-				.whereEq("cid", jreq.rec.cid);
+				.whereEq("cid", rec.cid);
 	
-		if (jreq.rec.cate != null)
-			upd.nv("cate", jreq.rec.cate);
-		if (jreq.rec.subject != null)
-			upd.nv("subject", jreq.rec.subject);
-		if (jreq.rec.module != null)
-			upd.nv("module", jreq.rec.module);
-		if (jreq.rec.clevel != null)
-			upd.nv("clevel", jreq.rec.clevel);
-		if (jreq.rec.currName != null)
-			upd.nv("currName", jreq.rec.currName);
-		if (jreq.rec.sort != null)
-			upd.nv("sort", jreq.rec.sort);
+		if (rec.cate != null)
+			upd.nv("cate", rec.cate);
+		if (rec.subject != null)
+			upd.nv("subject", rec.subject);
+		if (rec.module != null)
+			upd.nv("module", rec.module);
+		if (rec.clevel != null)
+			upd.nv("clevel", rec.clevel);
+		if (rec.currName != null)
+			upd.nv("currName", rec.currName);
+		if (rec.sort != null)
+			upd.nv("sort", rec.sort);
 	
 		String conn = Connects.uri2conn(jreq.uri());
 		upd.u(st.instancontxt(conn, robot));
 
-		return new SpreadsheetResp(jreq.rec);
+		return new SpreadsheetResp(rec);
 	}
 
 }
