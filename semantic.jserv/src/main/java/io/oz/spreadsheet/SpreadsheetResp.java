@@ -13,7 +13,6 @@ public class SpreadsheetResp extends AnsonResp {
 		this.rec = rec;
 	}
 
-	@SuppressWarnings("serial")
 	public SpreadsheetResp(AnResultset sheet) {
 		this.rs = new ArrayList<AnResultset>() { {add(sheet);} };
 	}
