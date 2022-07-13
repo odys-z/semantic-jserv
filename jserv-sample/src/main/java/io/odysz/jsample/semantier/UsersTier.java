@@ -171,7 +171,8 @@ public class UsersTier extends ServPort<UserstReq> {
 
 	protected AnsonMsg<AnsonResp> records(UserstReq jreq, IUser usr)
 			throws SemanticException, TransException, SQLException {
-		Query q = st.select("a_users", "u")
+		Query q = st
+				.select("a_users", "u").page(jreq.page)
 				.col("userId").col("userName").col("orgName").col("roleName")
 				.l("a_orgs", "o", "o.orgId = u.orgId")
 				.l("a_roles", "r", "r.roleId = u.roleId");
