@@ -80,6 +80,8 @@ public class Albums extends ServPort<AlbumReq> {
 	/** db collection table */
 	static final String tablCollects = "h_collects";
 
+	static final String tablAlbumCollect = "h_album_coll";
+
 	static final String tablCollectPhoto = "h_coll_phot";
 
 	static final String tablDomain = "a_domain";
@@ -538,8 +540,16 @@ public class Albums extends ServPort<AlbumReq> {
 			throws SemanticException, TransException, SQLException {
 
 		String aid = req.albumId;
-		AnResultset rs = (AnResultset) st.select(tablPhotos).whereEq("aid", aid)
-				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
+		AnResultset rs = (AnResultset) st
+				.select(tablPhotos, "h")
+				.j(tablCollectPhoto , "ch", "ch.pid = h.pid")
+				.j(tablAlbumCollect, "ac", "ac.cid = ch.pid")
+				.j(tablAlbums, "a", "a.aId = ac.aId")
+				.cols("h.pid", "folder", "pname", "pdate", "device", "h.shareby", "h.tags", "mime", "storage", "aname")
+				.whereEq("a.aid", aid)
+				.limit("", 5)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+				.rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
