@@ -38,6 +38,7 @@ import io.odysz.semantics.x.SemanticException;
  * See <a href='https://ursaj.com/upload-files-in-java-with-servlet-api'>Handle upload request</a></p>
  * 
  * @author odys-z@github.com
+ * @deprecated
  */
 @MultipartConfig
 @WebServlet(description = "Serving text files", urlPatterns = { "/file.serv11" })
