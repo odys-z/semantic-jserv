@@ -52,6 +52,12 @@ public class AlbumResp extends DocsResp {
 		return this;
 	}
 
+	/**
+	 * Construct an array of {@link Collect}.
+	 * @param rs
+	 * @return
+	 * @throws SQLException
+	 */
 	public AlbumResp collects(AnResultset rs) throws SQLException {
 		this.collectRecords = new ArrayList<Collect>(rs.total());
 		rs.beforeFirst();

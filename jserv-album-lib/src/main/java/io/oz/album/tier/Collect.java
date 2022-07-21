@@ -15,6 +15,12 @@ public class Collect extends Anson {
 	
 	public Collect() {}
 
+	/**
+	 * set fields: cid, cname, shareby, cdate, tags
+	 * 
+	 * @param rs
+	 * @throws SQLException
+	 */
 	public Collect(AnResultset rs) throws SQLException {
 		this.cid = rs.getString("cid");
 		this.cname = rs.getString("cname");
