@@ -559,6 +559,7 @@ public class Albums extends ServPort<AlbumReq> {
 		String aid = req.albumId;
 		if (isblank(aid))
 			aid = ((PhotoRobot)usr).defaultAlbum();
+
 		AnResultset rs = (AnResultset) st
 				.select(tablPhotos, "h")
 				.j(tablCollectPhoto , "ch", "ch.pid = h.pid")
