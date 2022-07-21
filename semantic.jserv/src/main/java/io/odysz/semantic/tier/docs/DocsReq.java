@@ -8,6 +8,7 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.PageInf;
 
 public class DocsReq extends AnsonBody {
 	public static class A {
@@ -30,6 +31,8 @@ public class DocsReq extends AnsonBody {
 		public static final String deprecated = "depr";
 	}
 
+	public PageInf page;
+	
 	public String docId;
 	public String docName;
 	public String createDate;
