@@ -58,12 +58,38 @@ public class AlbumResp extends DocsResp {
 	 * @return
 	 * @throws SQLException
 	 */
-	public AlbumResp collects(AnResultset rs) throws SQLException {
+	public AlbumResp setCollects(AnResultset rs) throws SQLException {
 		this.collectRecords = new ArrayList<Collect>(rs.total());
 		rs.beforeFirst();
 		while(rs.next()) {
 			collectRecords.add(new Collect(rs));
 		}
+		return this;
+	}
+
+	/**
+	 * Construct a 2D array of photos: [collect: photo[]]
+	 * 
+	 * @param rs photos ordered by cid
+	 * @return this
+	 * @throws SQLException 
+	 */
+	public AlbumResp collectPhotos(AnResultset rs) throws SQLException {
+		String cid = "";
+		Collect collect = null;
+		
+		this.collectRecords = new ArrayList<Collect>(rs.total());
+		rs.beforeFirst();
+		while(rs.next()) {
+			if (collect == null || !cid.equals(rs.getString("cid"))) {
+				if (collect != null)
+					collectRecords.add(collect);
+				collect = new Collect(rs);
+			}
+			collect.addPhoto(rs);
+		}
+		// collectRecords.add(new Collect(rs));
+
 		return this;
 	}
 

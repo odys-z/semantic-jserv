@@ -524,7 +524,7 @@ public class Albums extends ServPort<AlbumReq> {
 		if (!rs.next())
 			throw new SemanticException("Can't find photo collection for id = '%s' (permission of %s)", cid, usr.uid());
 
-		AlbumResp album = new AlbumResp().collects(rs);
+		AlbumResp album = new AlbumResp().setCollects(rs);
 
 		rs = (AnResultset) st
 				.select(tablPhotos, "p")
@@ -561,14 +561,8 @@ public class Albums extends ServPort<AlbumReq> {
 			aid = ((PhotoRobot)usr).defaultAlbum();
 
 		AnResultset rs = (AnResultset) st
-				.select(tablPhotos, "h")
-				.j(tablCollectPhoto , "ch", "ch.pid = h.pid")
-				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
-				.j(tablAlbums, "a", "a.aid = ac.aid")
-				.j(tablUser, "u", "u.userId = h.shareby")
-				.cols("a.aid", "h.pid", "folder", "pname", "pdate", "device", "h.shareby ownerId", "u.userName owner", "h.tags", "mime", "storage", "aname")
+				.select(tablAlbums, "a")
 				.whereEq("a.aid", aid)
-				.limit("", 5)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 				.rs(0);
 
@@ -577,10 +571,16 @@ public class Albums extends ServPort<AlbumReq> {
 
 		AlbumResp album = new AlbumResp().album(rs);
 
-		rs = (AnResultset) st.select(tablCollects).whereEq("aid", aid)
-				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
+		rs = (AnResultset) st.select(tablCollects, "c").page(req.page)
+				.j(tablCollectPhoto , "ch", "ch.pid = h.pid")
+				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
+				.j(tablUser, "u", "u.userId = h.shareby")
+				.cols("a.aid", "h.pid", "folder", "pname", "pdate", "device", "h.shareby ownerId", "u.userName owner", "h.tags", "mime", "storage", "aname")
+				.whereEq("ac.aid", aid)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+				.rs(0);
 
-		album.collects(rs);
+		album.collectPhotos(rs);
 
 		return album;
 	}
