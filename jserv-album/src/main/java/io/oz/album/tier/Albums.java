@@ -49,6 +49,8 @@ import io.oz.album.PhotoRobot;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
 
+import static io.odysz.common.LangExt.*;
+
 /**
  * <h5>The album tier</h5> Although this tie is using the pattern of
  * <i>less</i>, it's also verifying user when uploading - for subfolder name of
@@ -85,6 +87,7 @@ public class Albums extends ServPort<AlbumReq> {
 	static final String tablCollectPhoto = "h_coll_phot";
 
 	static final String tablDomain = "a_domain";
+	static final String tablUser = "a_users";
 
 	/** uri db field */
 	static final String uri = "uri";
@@ -536,16 +539,33 @@ public class Albums extends ServPort<AlbumReq> {
 		return album;
 	}
 
+	/**
+	 * <h4>Load album (aid = req.albumId)</h4>
+	 * MEMO TODO Android client shouldn't reach here until now.
+	 * 
+	 * <p>If albumId is empty, load according to the session's profile.
+	 * </p>
+	 * 
+	 * @param req
+	 * @param usr
+	 * @return album
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	protected static AlbumResp album(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
 		String aid = req.albumId;
+		if (isblank(aid))
+			aid = ((PhotoRobot)usr).defaultAlbum();
 		AnResultset rs = (AnResultset) st
 				.select(tablPhotos, "h")
 				.j(tablCollectPhoto , "ch", "ch.pid = h.pid")
-				.j(tablAlbumCollect, "ac", "ac.cid = ch.pid")
-				.j(tablAlbums, "a", "a.aId = ac.aId")
-				.cols("h.pid", "folder", "pname", "pdate", "device", "h.shareby", "h.tags", "mime", "storage", "aname")
+				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
+				.j(tablAlbums, "a", "a.aid = ac.aid")
+				.j(tablUser, "u", "u.userId = h.shareby")
+				.cols("a.aid", "h.pid", "folder", "pname", "pdate", "device", "h.shareby ownerId", "u.userName owner", "h.tags", "mime", "storage", "aname")
 				.whereEq("a.aid", aid)
 				.limit("", 5)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
