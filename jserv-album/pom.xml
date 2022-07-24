@@ -86,7 +86,7 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>[1.4.9,)</version>
+	  <version>[1.4.10,)</version>
    	</dependency>
 
 	<!--
@@ -114,7 +114,7 @@
 		<artifactId>mysql-connector-java</artifactId>
 		<version>[8.0.27,)</version>
 	</dependency>
-	
+
 	<dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
@@ -293,7 +293,7 @@
 					</excludes>
 				</filter>
 			</filters>
-			
+
 			<transformers>
 				<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 					<mainClass>io.oz.album.JettyApp</mainClass>
@@ -308,7 +308,7 @@
 		</configuration>
 	  </plugin>
     </plugins>
-    
+
     <resources>
       <resource>
     	<directory>src/main/webapp</directory>
