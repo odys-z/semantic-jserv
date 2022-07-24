@@ -18,8 +18,8 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
-	<!-- Semantics-* is built on javax.servlet -->
-	<jetty.version>10.0.10</jetty.version>
+	<!-- Semantics-* is built on javax.servlet, only jetty 9 -->
+	<jetty.version>9.4.48.v20220622</jetty.version>
   </properties>
 
   <licenses>
