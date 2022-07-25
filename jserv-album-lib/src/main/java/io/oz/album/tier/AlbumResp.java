@@ -85,10 +85,13 @@ public class AlbumResp extends DocsResp {
 				if (collect != null)
 					collectRecords.add(collect);
 				collect = new Collect(rs);
+				cid = collect.cid;
 			}
 			collect.addPhoto(rs);
 		}
 		// collectRecords.add(new Collect(rs));
+		if (collect != null)
+			collectRecords.add(collect);
 
 		return this;
 	}
