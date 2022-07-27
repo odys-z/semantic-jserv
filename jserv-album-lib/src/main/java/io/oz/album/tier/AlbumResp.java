@@ -13,6 +13,7 @@ public class AlbumResp extends DocsResp {
 	String ownerId;
 	String owner;
 	ArrayList<Collect> collectRecords;
+	Profiles profils;
 
 	ArrayList<Photo[]> photos;
 	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
@@ -23,7 +24,6 @@ public class AlbumResp extends DocsResp {
 	Photo photo;
 	public Photo photo() { return photo; }
 
-	public Profiles profils;
 	
 	public AlbumResp() {
 	}
