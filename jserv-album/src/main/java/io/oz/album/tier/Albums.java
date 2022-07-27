@@ -109,20 +109,35 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 	
-
 	public Albums() {
 		super(AlbumPort.album);
 	}
 	
-
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 
 		if (AlbumFlags.album)
 			Utils.logi("---------- ever-connect /album.less GET  ----------");
+
+		try {
+			DocsReq jreq = msg.body(0);
+			String a = jreq.a();
+			if (A.download.equals(a))
+				download(resp.getOutputStream(), msg.body(0), robot);
+		} catch (SemanticException e) {
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
+		} catch (SQLException | TransException e) {
+			if (AlbumFlags.album)
+				e.printStackTrace();
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
+//		} catch (InterruptedException e) {
+//			if (Anson.verbose)
+//				e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
-	
 
 	@Override
 	protected void onPost(AnsonMsg<AlbumReq> jmsg, HttpServletResponse resp)
@@ -195,7 +210,6 @@ public class Albums extends ServPort<AlbumReq> {
 			resp.flushBuffer();
 		}
 	}
-	
 
 	AlbumResp profile(AlbumReq body, IUser usr) throws SemanticException, TransException, SQLException {
 		AnResultset rs = (AnResultset) st
@@ -209,7 +223,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return new AlbumResp().profiles(new Profiles(home));
 	}
-	
 
 	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException {
 		checkDuplicate(Connects.uri2conn(body.uri()), ((PhotoRobot)usr).deviceId(), body.clientpath, usr);
@@ -236,7 +249,6 @@ public class Albums extends ServPort<AlbumReq> {
 				.fullpath(chain.clientpath)
 				.cdate(body.createDate);
 	}
-	
 
 	void checkDuplication(AlbumReq body, PhotoRobot usr)
 			throws SemanticException, TransException, SQLException {
@@ -244,7 +256,6 @@ public class Albums extends ServPort<AlbumReq> {
 		checkDuplicate(Connects.uri2conn(body.uri()),
 				usr.deviceId(), body.photo.clientpath, usr);
 	}
-	
 
 	private void checkDuplicate(String conn, String device, String clientpath, IUser usr)
 			throws SemanticException, TransException, SQLException {
@@ -263,7 +274,6 @@ public class Albums extends ServPort<AlbumReq> {
 					device, clientpath);
 	}
 	
-
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		// String id = body.chainId();
 		String id = chainId(usr, body.clientpath);
@@ -280,7 +290,6 @@ public class Albums extends ServPort<AlbumReq> {
 				.cdate(body.createDate);
 	}
 	
-
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.clientpath);
@@ -317,7 +326,6 @@ public class Albums extends ServPort<AlbumReq> {
 				.cdate(body.createDate);
 	}
 	
-
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		// String id = body.chainId();
@@ -333,12 +341,10 @@ public class Albums extends ServPort<AlbumReq> {
 		return ack;
 	}
 	
-
 	private String chainId(IUser usr, String clientpathRaw) {
 		return usr.sessionId() + " " + clientpathRaw;
 	}
 	
-
 	AlbumResp querySyncs(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
@@ -362,14 +368,12 @@ public class Albums extends ServPort<AlbumReq> {
 		return album;
 	}
 	
-
 	void download(OutputStream ofs, DocsReq freq, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(freq.uri());
 		FileStream.sendFile(ofs, resolvExtroot(conn, freq.docId, usr));
 	}
 	
-
 	static String resolvExtroot(String conn, String docId, IUser usr) throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st.select(tablPhotos).col("uri").col("folder").whereEq("pid", docId).rs(stx)
@@ -382,7 +386,6 @@ public class Albums extends ServPort<AlbumReq> {
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
 	
-
 	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
 		checkDuplication(req, (PhotoRobot) usr);
@@ -390,7 +393,6 @@ public class Albums extends ServPort<AlbumReq> {
 		String pid = createFile(conn, req.photo, usr);
 		return new AlbumResp().photo(req.photo, pid);
 	}
-
 
 	DocsResp delPhoto(AlbumReq req, IUser usr) throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
@@ -403,7 +405,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return (DocsResp) new DocsResp().data(res.props()); 
 	}
-	
 
 	/**create photo - call this after duplication is checked.
 	 * 
@@ -449,7 +450,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return pid;
 	}
-
 
 	/**This method update geox,y and date automatically - should only used when creating pictures.
 	 * @param pid
@@ -529,8 +529,6 @@ public class Albums extends ServPort<AlbumReq> {
 		return new AlbumResp().rec(rs);
 	}
 	
-	
-
 	protected static AlbumResp collect(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
@@ -558,7 +556,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return album;
 	}
-
 
 	/**
 	 * <h4>Load album (aid = req.albumId)</h4>
@@ -614,5 +611,4 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return album;
 	}
-
 }
