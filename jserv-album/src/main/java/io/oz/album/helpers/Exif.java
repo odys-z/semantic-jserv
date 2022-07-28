@@ -19,6 +19,12 @@ import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.oz.album.tier.Photo;
 
+/**
+ * Exif data format helper
+ * 
+ * @author Ody
+ *
+ */
 public class Exif {
 	static String geox0 = "0";
 	static String geoy0 = "0";

@@ -27,7 +27,7 @@ public class Collect extends Anson {
 	public Collect(AnResultset rs) throws SQLException {
 		this.cid = rs.getString("cid");
 		this.cname = rs.getString("cname");
-		this.shareby = rs.getString("shareby");
+		this.shareby = rs.getString("collector"); // TODO android version needing change correspondently.
 		this.cdate = rs.getString("cdate");
 		this.tags = rs.getString("tags");
 	}
