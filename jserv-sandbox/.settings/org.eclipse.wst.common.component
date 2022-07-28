@@ -13,7 +13,7 @@
         <dependent-module archiveName="semantics.transact-1.4.6.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.transact/semantic.transact">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="antson-0.9.15.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/antson/antson">
+        <dependent-module archiveName="antson-0.9.16.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/antson/antson">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="semantic.DA-1.4.6.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/semantic.DA/semantic.DA">
