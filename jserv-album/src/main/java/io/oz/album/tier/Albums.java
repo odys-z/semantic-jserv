@@ -61,7 +61,7 @@ import static io.odysz.common.LangExt.*;
  * A photo always have a default collection Id.
  * </p>
  * The clients collect image files etc., create photo records and upload
- * ({@link AlbumReq.A.insertPhoto A.insertPhoto}) - without collection Id; <br>
+ * ({@link AlbumReq.A#insertPhoto A.insertPhoto}) - without collection Id; <br>
  * the browsing clients are supported with a default collection: home/usr/month.
  * 
  * @author ody
@@ -108,17 +108,35 @@ public class Albums extends ServPort<AlbumReq> {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public Albums() {
 		super(AlbumPort.album);
 	}
-
+	
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 
 		if (AlbumFlags.album)
 			Utils.logi("---------- ever-connect /album.less GET  ----------");
+
+		try {
+			DocsReq jreq = msg.body(0);
+			String a = jreq.a();
+			if (A.download.equals(a))
+				download(resp.getOutputStream(), msg.body(0), robot);
+		} catch (SemanticException e) {
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
+		} catch (SQLException | TransException e) {
+			if (AlbumFlags.album)
+				e.printStackTrace();
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
+//		} catch (InterruptedException e) {
+//			if (Anson.verbose)
+//				e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -255,7 +273,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throw new SemanticException("Found existing file for device %s, client path: %s",
 					device, clientpath);
 	}
-
+	
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		// String id = body.chainId();
 		String id = chainId(usr, body.clientpath);
@@ -271,7 +289,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.fullpath(chain.clientpath)
 				.cdate(body.createDate);
 	}
-
+	
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.clientpath);
@@ -307,7 +325,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.fullpath(chain.clientpath)
 				.cdate(body.createDate);
 	}
-
+	
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		// String id = body.chainId();
@@ -322,11 +340,11 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return ack;
 	}
-
+	
 	private String chainId(IUser usr, String clientpathRaw) {
 		return usr.sessionId() + " " + clientpathRaw;
 	}
-
+	
 	AlbumResp querySyncs(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
@@ -349,13 +367,13 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return album;
 	}
-
+	
 	void download(OutputStream ofs, DocsReq freq, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(freq.uri());
 		FileStream.sendFile(ofs, resolvExtroot(conn, freq.docId, usr));
 	}
-
+	
 	static String resolvExtroot(String conn, String docId, IUser usr) throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st.select(tablPhotos).col("uri").col("folder").whereEq("pid", docId).rs(stx)
@@ -367,7 +385,7 @@ public class Albums extends ServPort<AlbumReq> {
 		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, tablPhotos, smtype.extFile)).getFileRoot();
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
-
+	
 	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
 		checkDuplication(req, (PhotoRobot) usr);
@@ -510,7 +528,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return new AlbumResp().rec(rs);
 	}
-
+	
 	protected static AlbumResp collect(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
@@ -562,6 +580,8 @@ public class Albums extends ServPort<AlbumReq> {
 
 		AnResultset rs = (AnResultset) st
 				.select(tablAlbums, "a")
+				.j(tablUser, "u", "u.userId = a.shareby")
+				.cols("a.*", "a.shareby ownerId", "u.userName owner")
 				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 				.rs(0);
@@ -571,12 +591,19 @@ public class Albums extends ServPort<AlbumReq> {
 
 		AlbumResp album = new AlbumResp().album(rs);
 
-		rs = (AnResultset) st.select(tablCollects, "c").page(req.page)
-				.j(tablCollectPhoto , "ch", "ch.pid = h.pid")
+		rs = (AnResultset) st
+				.select(tablPhotos, "p").page(req.page)
+				.j(tablCollectPhoto , "ch", "ch.pid = p.pid")
 				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
-				.j(tablUser, "u", "u.userId = h.shareby")
-				.cols("a.aid", "h.pid", "folder", "pname", "pdate", "device", "h.shareby ownerId", "u.userName owner", "h.tags", "mime", "storage", "aname")
-				.whereEq("ac.aid", aid)
+				.j(tablCollects, "c", "c.cid = ch.cid")
+				.j(tablAlbums, "a", "a.aid = ac.aid")
+				.j(tablUser, "u", "u.userId = p.shareby")
+				.cols("ac.aid", "ch.cid",
+					  "p.pid", "pname", "pdate", "p.tags", "mime", "uri", "folder", "geox", "geoy", "sharedate",
+					  "c.shareby collector", "c.cdate",
+					  "device", "p.shareby ownerId", "u.userName owner",
+					  "storage", "aname", "cname")
+				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
 				.rs(0);
 
@@ -584,5 +611,4 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return album;
 	}
-
 }
