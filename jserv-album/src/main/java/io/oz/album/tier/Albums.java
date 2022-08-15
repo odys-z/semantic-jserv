@@ -1,5 +1,7 @@
 package io.oz.album.tier;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -48,8 +50,6 @@ import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
-
-import static io.odysz.common.LangExt.*;
 
 /**
  * <h5>The album tier</h5> Although this tie is using the pattern of
