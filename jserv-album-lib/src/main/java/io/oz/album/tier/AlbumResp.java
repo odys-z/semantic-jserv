@@ -12,7 +12,10 @@ public class AlbumResp extends DocsResp {
 	String albumId;
 	String ownerId;
 	String owner;
+
+	/** Album */
 	ArrayList<Collect> collectRecords;
+
 	Profiles profils;
 
 	ArrayList<Photo[]> photos;
@@ -24,9 +27,7 @@ public class AlbumResp extends DocsResp {
 	Photo photo;
 	public Photo photo() { return photo; }
 
-	
-	public AlbumResp() {
-	}
+	public AlbumResp() { }
 	
 	public AlbumResp rec(AnResultset rs) throws SQLException {
 		this.photo = new Photo(rs);
