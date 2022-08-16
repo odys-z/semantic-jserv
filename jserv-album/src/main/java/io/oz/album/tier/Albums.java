@@ -3,7 +3,6 @@ package io.oz.album.tier;
 import static io.odysz.common.LangExt.isblank;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -111,6 +110,14 @@ public class Albums extends ServPort<AlbumReq> {
 	
 	public Albums() {
 		super(AlbumPort.album);
+		
+		missingFile = "";
+	}
+	
+	String missingFile = "";
+	public Albums missingFile(String onlyPng) {
+		missingFile = onlyPng;
+		return this;
 	}
 	
 	@Override
@@ -124,7 +131,7 @@ public class Albums extends ServPort<AlbumReq> {
 			DocsReq jreq = msg.body(0);
 			String a = jreq.a();
 			if (A.download.equals(a))
-				download(resp.getOutputStream(), msg.body(0), robot);
+				download(resp, msg.body(0), robot);
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -161,7 +168,7 @@ public class Albums extends ServPort<AlbumReq> {
 				else if (A.rec.equals(a))
 					rsp = rec(jmsg.body(0), usr);
 				else if (A.download.equals(a))
-					download(resp.getOutputStream(), jmsg.body(0), usr);
+					download(resp, jmsg.body(0), usr);
 			} else {
 				// session required
 				IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
@@ -368,10 +375,34 @@ public class Albums extends ServPort<AlbumReq> {
 		return album;
 	}
 	
-	void download(OutputStream ofs, DocsReq freq, IUser usr)
+	void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(freq.uri());
-		FileStream.sendFile(ofs, resolvExtroot(conn, freq.docId, usr));
+		
+		AnResultset rs = (AnResultset) st
+				.select(tablPhotos, "p")
+				.j("a_users", "u", "u.userId = p.shareby")
+				.col("pid")
+				.col("pname").col("pdate")
+				.col("folder").col("clientpath")
+				.col("uri")
+				.col("userName", "shareby")
+				.col("sharedate").col("tags")
+				.col("geox").col("geoy")
+				.col("mime")
+				.whereEq("pid", req.docId)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
+
+		if (!rs.next()) {
+			// throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
+			resp.setContentType("image/png");
+			FileStream.sendFile(resp.getOutputStream(), missingFile);
+		}
+		else {
+			String mime = rs.getString("mime");
+			resp.setContentType(mime);
+			String conn = Connects.uri2conn(req.uri());
+			FileStream.sendFile(resp.getOutputStream(), resolvExtroot(conn, req.docId, usr));
+		}
 	}
 	
 	static String resolvExtroot(String conn, String docId, IUser usr) throws TransException, SQLException {
@@ -419,7 +450,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	String createFile(String conn, Photo photo, IUser usr)
 			throws TransException, SQLException, IOException {
-		// clearer message is better here
+		// a clearer message is better here
 		if (LangExt.isblank(photo.clientpath))
 			throw new SemanticException("Client path can't be null/empty.");
 		
