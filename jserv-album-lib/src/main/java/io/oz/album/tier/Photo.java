@@ -42,6 +42,12 @@ public class Photo extends Anson {
 	public String sharer;
 	public ArrayList<String> exif;
 	public String mime;
+	/** image size */
+	public int[] widthHeight;
+	/** reduction of image size */
+	public int[] wh;
+	/** composed css json, saved as string */
+	public String css;
 
 	public String collectId;
 	public String collectId() { return collectId; }
@@ -50,6 +56,7 @@ public class Photo extends Anson {
 
 	
 	String month;
+
 	
 	public Photo() {}
 	
@@ -62,6 +69,17 @@ public class Photo extends Anson {
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
 		this.mime = rs.getString("mime");
+		
+		this.css = rs.getString("css");
+//		if (!isblank(css)) {
+//			// Design Issue: Anson.fromJson() ?
+//			String[] csss = css.split(";");
+//			for (String s : csss) {
+//				String[] pv = s.split(":");
+//				if (pv != null && pv.length == 2 && "size".equals(pv[0]))
+//			}
+//		}
+		
 		try {
 			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
 		} catch (SQLException ex) {
@@ -118,6 +136,19 @@ public class Photo extends Anson {
 
 	public void month(FileTime d) {
 		month = DateFormat.formatYYmm(d);
+	}
+
+	/**
+	 * Compose a string representing json object for saving in DB.
+	 * The type "io.oz.album.tier.PhotoCSS" doesn't exist at server side (v0.4.18)
+	 * 
+	 * @return string of json for saving
+	 */
+	public String css() {
+		if (widthHeight != null)
+			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s]}",
+				widthHeight[0], widthHeight[1], wh[0], wh[1]);
+		else return "";
 	}
 
 }
