@@ -18,6 +18,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.CheapMath;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
@@ -505,7 +506,17 @@ public class Albums extends ServPort<AlbumReq> {
 					String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
 					Photo p = new Photo();
 					Exif.parseExif(p, pth);
-					// Utils.logi(p.exif);
+					
+					if (isblank(p.widthHeight))
+						p.widthHeight = Exif.parseWidthHeight(pth);
+					if (isblank(p.wh))
+						p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
+					if (p.widthHeight[0] > p.widthHeight[1]) {
+						int w = p.wh[0];
+						p.wh[0] = p.wh[1];
+						p.wh[1] = w;
+					}
+
 					if (p.photoDate() != null) {
 						Update u = st
 							.update(tablPhotos, usr)
@@ -516,8 +527,10 @@ public class Albums extends ServPort<AlbumReq> {
 							.nv("shareby", usr.uid())
 							.nv("geox", p.geox).nv("geoy", p.geoy)
 							.whereEq("pid", pid);
-						if (!LangExt.isblank(p.mime))
+						if (!isblank(p.mime))
 							u.nv("mime", p.mime);
+						if (!isblank(p.widthHeight))
+							u.nv("css", p.css());
 						u.u(stx);
 					}
 				}
@@ -550,7 +563,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.col("userName", "shareby")
 				.col("sharedate").col("tags")
 				.col("geox").col("geoy")
-				.col("mime")
+				.col("mime").col("css")
 				.whereEq("pid", req.docId)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
@@ -630,7 +643,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.j(tablAlbums, "a", "a.aid = ac.aid")
 				.j(tablUser, "u", "u.userId = p.shareby")
 				.cols("ac.aid", "ch.cid",
-					  "p.pid", "pname", "pdate", "p.tags", "mime", "uri", "folder", "geox", "geoy", "sharedate",
+					  "p.pid", "pname", "pdate", "p.tags", "mime", "p.css", "uri", "folder", "geox", "geoy", "sharedate",
 					  "c.shareby collector", "c.cdate",
 					  "device", "p.shareby ownerId", "u.userName owner",
 					  "storage", "aname", "cname")

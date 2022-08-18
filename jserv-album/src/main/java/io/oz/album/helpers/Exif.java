@@ -9,6 +9,12 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
 
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -17,6 +23,7 @@ import org.apache.tika.sax.BodyContentHandler;
 
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
+import io.odysz.common.Utils;
 import io.oz.album.tier.Photo;
 
 /**
@@ -73,6 +80,41 @@ public class Exif {
 		} catch (Exception ex) { }
 
 		return photo;
+	}
+
+	/**
+	 * Gets image dimensions for given file.
+	 * 
+	 * Can't support ico and svg.
+	 * 
+	 * @see https://stackoverflow.com/a/12164026
+	 * @param imgFile image file
+	 * @return dimensions of image
+	 * @throws IOException if the file is not a known image
+	 */
+	public static int[] parseWidthHeight(String pth) throws IOException {
+	  File imgFile = new File(pth);
+	  int pos = imgFile.getName().lastIndexOf(".");
+	  if (pos == -1)
+	    throw new IOException("No extension for file: " + imgFile.getAbsolutePath());
+	  String suffix = imgFile.getName().substring(pos + 1);
+	  Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix(suffix);
+	  while(iter.hasNext()) {
+	    ImageReader reader = iter.next();
+	    try {
+	      ImageInputStream stream = new FileImageInputStream(imgFile);
+	      reader.setInput(stream);
+	      int width = reader.getWidth(reader.getMinIndex());
+	      int height = reader.getHeight(reader.getMinIndex());
+	      return new int[] {width, height};
+	    } catch (IOException e) {
+	      Utils.warn("Error reading: " + imgFile.getAbsolutePath(), e);
+	    } finally {
+	      reader.dispose();
+	    }
+	  }
+
+	  throw new IOException("Not a known image file: " + imgFile.getAbsolutePath());
 	}
 
 }
