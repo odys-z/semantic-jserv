@@ -1,4 +1,5 @@
-
+[![Ukraine](https://cdn3.emoji.gg/emojis/6101-ukraine.gif)](https://emoji.gg/emoji/6101-ukraine)
+[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.odys-z/semantic.jserv/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.odys-z/semantic.jserv/)
 
 # About semantic-jserv
@@ -20,11 +21,12 @@ pom.xml
     <dependency>
         <groupId>io.github.odys-z</groupId>
         <artifactId>semantic.jserv</artifactId>
-        <version>[1.4.0,)</version>
+        <version>[1.4.8,)</version>
     </dependency>
 ~~~
 
-The jserv-sample project is used to illustrating how to use semantic.jserv.
+There are multiple sub project, jserv-* , which are the samples for illustrating
+how to use semantic.jserv.
 
 # Why semantics-*
 As all semantic-* modules and jclients are implemented based on an assumption that developers needing a framework to facilitating typical [CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete) business handling, the jserv-sample Eclipse maven project implemented a typical web application structure, with session handling and protocols based on json, handling abstracted CRUD processing.
