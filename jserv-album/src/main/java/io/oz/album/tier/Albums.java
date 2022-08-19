@@ -524,14 +524,20 @@ public class Albums extends ServPort<AlbumReq> {
 							.nv("pdate", p.photoDate())
 							.nv("uri", pth)
 							.nv("pname", rs.getString("pname"))
-							.nv("shareby", usr.uid())
-							.nv("geox", p.geox).nv("geoy", p.geoy)
-							.whereEq("pid", pid);
+							.nv("shareby", usr.uid());
+
+						if (!isblank(p.geox) || !isblank(p.geoy))
+						   u.nv("exif", p.exif())
+							.nv("geox", p.geox)
+							.nv("geoy", p.geoy);
+
 						if (!isblank(p.mime))
 							u.nv("mime", p.mime);
 						if (!isblank(p.widthHeight))
 							u.nv("css", p.css());
-						u.u(stx);
+
+						u.whereEq("pid", pid)
+						 .u(stx);
 					}
 				}
 			} catch (TransException | SQLException | IOException e) {

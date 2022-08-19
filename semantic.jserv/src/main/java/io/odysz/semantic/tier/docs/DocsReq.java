@@ -39,7 +39,7 @@ public class DocsReq extends AnsonBody {
 	public String clientpath;
 	public String mime;
 
-	@AnsonField(shortoString = true)
+	@AnsonField(shortenString = true)
 	public String uri64;
 
 	String[] deletings;

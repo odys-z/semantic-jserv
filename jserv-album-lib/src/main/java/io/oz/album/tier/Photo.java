@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
@@ -33,14 +34,21 @@ public class Photo extends Anson {
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;
 	
-	@AnsonField(shortoString=true)
+	@AnsonField(shortenString=true)
 	public String uri;
 	public String shareby;
 	public String sharedate;
 	public String geox;
 	public String geoy;
 	public String sharer;
+
 	public ArrayList<String> exif;
+	public String exif() {
+		return exif == null ? null
+				: exif.stream()
+				 .collect(Collectors.joining(","));
+	}
+
 	public String mime;
 	/** image size */
 	public int[] widthHeight;
@@ -66,6 +74,7 @@ public class Photo extends Anson {
 		this.uri = rs.getString("uri");
 		this.month = rs.getString("folder");
 		this.createDate = rs.getString("pdate");
+		this.shareby = rs.getString("owner");
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
 		this.mime = rs.getString("mime");
@@ -150,5 +159,6 @@ public class Photo extends Anson {
 				widthHeight[0], widthHeight[1], wh[0], wh[1]);
 		else return "";
 	}
+
 
 }
