@@ -4,8 +4,10 @@ import java.util.HashMap;
 
 import io.odysz.common.Configs;
 
-/**The environment configuration for service of Windows.
+/**
+ * <p>The environment configuration loader for service of Windows.</p>
  * Only Jatty app should use this.
+ * 
  * @author ody
  *
  */

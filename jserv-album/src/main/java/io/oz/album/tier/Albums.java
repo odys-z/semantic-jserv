@@ -1,7 +1,8 @@
 package io.oz.album.tier;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -17,6 +18,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.CheapMath;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
@@ -59,7 +61,7 @@ import io.oz.album.tier.AlbumReq.A;
  * A photo always have a default collection Id.
  * </p>
  * The clients collect image files etc., create photo records and upload
- * ({@link AlbumReq.A.insertPhoto A.insertPhoto}) - without collection Id; <br>
+ * ({@link AlbumReq.A#insertPhoto A.insertPhoto}) - without collection Id; <br>
  * the browsing clients are supported with a default collection: home/usr/month.
  * 
  * @author ody
@@ -80,9 +82,12 @@ public class Albums extends ServPort<AlbumReq> {
 	/** db collection table */
 	static final String tablCollects = "h_collects";
 
+	static final String tablAlbumCollect = "h_album_coll";
+
 	static final String tablCollectPhoto = "h_coll_phot";
 
 	static final String tablDomain = "a_domain";
+	static final String tablUser = "a_users";
 
 	/** uri db field */
 	static final String uri = "uri";
@@ -103,17 +108,43 @@ public class Albums extends ServPort<AlbumReq> {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public Albums() {
 		super(AlbumPort.album);
+		
+		missingFile = "";
 	}
-
+	
+	String missingFile = "";
+	public Albums missingFile(String onlyPng) {
+		missingFile = onlyPng;
+		return this;
+	}
+	
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 
 		if (AlbumFlags.album)
 			Utils.logi("---------- ever-connect /album.less GET  ----------");
+
+		try {
+			DocsReq jreq = msg.body(0);
+			String a = jreq.a();
+			if (A.download.equals(a))
+				download(resp, msg.body(0), robot);
+		} catch (SemanticException e) {
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
+		} catch (SQLException | TransException e) {
+			if (AlbumFlags.album)
+				e.printStackTrace();
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
+//		} catch (InterruptedException e) {
+//			if (Anson.verbose)
+//				e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -138,7 +169,7 @@ public class Albums extends ServPort<AlbumReq> {
 				else if (A.rec.equals(a))
 					rsp = rec(jmsg.body(0), usr);
 				else if (A.download.equals(a))
-					download(resp.getOutputStream(), jmsg.body(0), usr);
+					download(resp, jmsg.body(0), usr);
 			} else {
 				// session required
 				IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
@@ -250,7 +281,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throw new SemanticException("Found existing file for device %s, client path: %s",
 					device, clientpath);
 	}
-
+	
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		// String id = body.chainId();
 		String id = chainId(usr, body.clientpath);
@@ -266,7 +297,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.fullpath(chain.clientpath)
 				.cdate(body.createDate);
 	}
-
+	
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.clientpath);
@@ -302,7 +333,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.fullpath(chain.clientpath)
 				.cdate(body.createDate);
 	}
-
+	
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		// String id = body.chainId();
@@ -317,11 +348,11 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return ack;
 	}
-
+	
 	private String chainId(IUser usr, String clientpathRaw) {
 		return usr.sessionId() + " " + clientpathRaw;
 	}
-
+	
 	AlbumResp querySyncs(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
@@ -344,13 +375,37 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return album;
 	}
-
-	void download(OutputStream ofs, DocsReq freq, IUser usr)
+	
+	void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(freq.uri());
-		FileStream.sendFile(ofs, resolvExtroot(conn, freq.docId, usr));
-	}
+		
+		AnResultset rs = (AnResultset) st
+				.select(tablPhotos, "p")
+				.j("a_users", "u", "u.userId = p.shareby")
+				.col("pid")
+				.col("pname").col("pdate")
+				.col("folder").col("clientpath")
+				.col("uri")
+				.col("userName", "shareby")
+				.col("sharedate").col("tags")
+				.col("geox").col("geoy")
+				.col("mime")
+				.whereEq("pid", req.docId)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
+		if (!rs.next()) {
+			// throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
+			resp.setContentType("image/png");
+			FileStream.sendFile(resp.getOutputStream(), missingFile);
+		}
+		else {
+			String mime = rs.getString("mime");
+			resp.setContentType(mime);
+			String conn = Connects.uri2conn(req.uri());
+			FileStream.sendFile(resp.getOutputStream(), resolvExtroot(conn, req.docId, usr));
+		}
+	}
+	
 	static String resolvExtroot(String conn, String docId, IUser usr) throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st.select(tablPhotos).col("uri").col("folder").whereEq("pid", docId).rs(stx)
@@ -362,7 +417,7 @@ public class Albums extends ServPort<AlbumReq> {
 		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, tablPhotos, smtype.extFile)).getFileRoot();
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
-
+	
 	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
 		checkDuplication(req, (PhotoRobot) usr);
@@ -396,7 +451,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	String createFile(String conn, Photo photo, IUser usr)
 			throws TransException, SQLException, IOException {
-		// clearer message is better here
+		// a clearer message is better here
 		if (LangExt.isblank(photo.clientpath))
 			throw new SemanticException("Client path can't be null/empty.");
 		
@@ -451,7 +506,17 @@ public class Albums extends ServPort<AlbumReq> {
 					String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
 					Photo p = new Photo();
 					Exif.parseExif(p, pth);
-					// Utils.logi(p.exif);
+					
+					if (isblank(p.widthHeight))
+						p.widthHeight = Exif.parseWidthHeight(pth);
+					if (isblank(p.wh))
+						p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
+					if (p.widthHeight[0] > p.widthHeight[1]) {
+						int w = p.wh[0];
+						p.wh[0] = p.wh[1];
+						p.wh[1] = w;
+					}
+
 					if (p.photoDate() != null) {
 						Update u = st
 							.update(tablPhotos, usr)
@@ -459,12 +524,20 @@ public class Albums extends ServPort<AlbumReq> {
 							.nv("pdate", p.photoDate())
 							.nv("uri", pth)
 							.nv("pname", rs.getString("pname"))
-							.nv("shareby", usr.uid())
-							.nv("geox", p.geox).nv("geoy", p.geoy)
-							.whereEq("pid", pid);
-						if (!LangExt.isblank(p.mime))
+							.nv("shareby", usr.uid());
+
+						if (!isblank(p.geox) || !isblank(p.geoy))
+						   u.nv("exif", p.exif())
+							.nv("geox", p.geox)
+							.nv("geoy", p.geoy);
+
+						if (!isblank(p.mime))
 							u.nv("mime", p.mime);
-						u.u(stx);
+						if (!isblank(p.widthHeight))
+							u.nv("css", p.css());
+
+						u.whereEq("pid", pid)
+						 .u(stx);
 					}
 				}
 			} catch (TransException | SQLException | IOException e) {
@@ -496,7 +569,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.col("userName", "shareby")
 				.col("sharedate").col("tags")
 				.col("geox").col("geoy")
-				.col("mime")
+				.col("mime").col("css")
 				.whereEq("pid", req.docId)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
 
@@ -505,7 +578,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return new AlbumResp().rec(rs);
 	}
-
+	
 	protected static AlbumResp collect(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
@@ -519,7 +592,7 @@ public class Albums extends ServPort<AlbumReq> {
 		if (!rs.next())
 			throw new SemanticException("Can't find photo collection for id = '%s' (permission of %s)", cid, usr.uid());
 
-		AlbumResp album = new AlbumResp().collects(rs);
+		AlbumResp album = new AlbumResp().setCollects(rs);
 
 		rs = (AnResultset) st
 				.select(tablPhotos, "p")
@@ -534,24 +607,58 @@ public class Albums extends ServPort<AlbumReq> {
 		return album;
 	}
 
+	/**
+	 * <h4>Load album (aid = req.albumId)</h4>
+	 * MEMO TODO Android client shouldn't reach here until now.
+	 * 
+	 * <p>If albumId is empty, load according to the session's profile.
+	 * </p>
+	 * 
+	 * @param req
+	 * @param usr
+	 * @return album
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	protected static AlbumResp album(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
 		String aid = req.albumId;
-		AnResultset rs = (AnResultset) st.select(tablPhotos).whereEq("aid", aid)
-				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
+		if (isblank(aid))
+			aid = ((PhotoRobot)usr).defaultAlbum();
+
+		AnResultset rs = (AnResultset) st
+				.select(tablAlbums, "a")
+				.j(tablUser, "u", "u.userId = a.shareby")
+				.cols("a.*", "a.shareby ownerId", "u.userName owner")
+				.whereEq("a.aid", aid)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+				.rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
 
 		AlbumResp album = new AlbumResp().album(rs);
 
-		rs = (AnResultset) st.select(tablCollects).whereEq("aid", aid)
-				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
+		rs = (AnResultset) st
+				.select(tablPhotos, "p").page(req.page)
+				.j(tablCollectPhoto , "ch", "ch.pid = p.pid")
+				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
+				.j(tablCollects, "c", "c.cid = ch.cid")
+				.j(tablAlbums, "a", "a.aid = ac.aid")
+				.j(tablUser, "u", "u.userId = p.shareby")
+				.cols("ac.aid", "ch.cid",
+					  "p.pid", "pname", "pdate", "p.tags", "mime", "p.css", "uri", "folder", "geox", "geoy", "sharedate",
+					  "c.shareby collector", "c.cdate",
+					  "device", "p.shareby ownerId", "u.userName owner",
+					  "storage", "aname", "cname")
+				.whereEq("a.aid", aid)
+				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+				.rs(0);
 
-		album.collects(rs);
+		album.collectPhotos(rs);
 
 		return album;
 	}
-
 }

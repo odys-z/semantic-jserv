@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.anson.Anson;
 import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.AESHelper;
+import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -47,8 +49,14 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		InputStream in;
 		String headstr = req.getParameter("header");
+		String anson64 = req.getParameter("anson64");
 		if (headstr != null && headstr.length() > 1) {
 			byte[] b = headstr.getBytes();
+			in = new ByteArrayInputStream(b);
+		}
+		else if (!LangExt.isEmpty(anson64)) {
+			byte[] b = AESHelper.decode64(anson64);
+			// byte[] b = anson64.getBytes();
 			in = new ByteArrayInputStream(b);
 		}
 		else {
@@ -88,7 +96,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			HttpServletResponse resp, Map<String, String[]> map) throws IOException, ServletException {
 		if (ServFlags.port)
 			e.printStackTrace();
-		write(resp, err(MsgCode.exSemantic, e.getMessage()));
+		write(resp, err(MsgCode.exSemantic, e.getMessage() + "\n Usually this is an error raised from browser visiting."));
 	}
 
 	@Override
