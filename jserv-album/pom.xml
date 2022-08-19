@@ -6,7 +6,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <version>0.5.4</version>
+  <version>0.5.5</version>
   <!-- see git branch jetty-winsrv for building jetty embedded app -->
   <packaging>war</packaging>
 

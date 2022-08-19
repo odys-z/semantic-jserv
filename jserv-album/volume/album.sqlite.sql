@@ -8,20 +8,21 @@ CREATE TABLE h_photos (
   uri varchar(512) NOT NULL, -- storage/userId/folder/recId-clientname
   pdate datetime,     -- picture taken time
   device varchar(12), -- 'original device ID',
-  clientpath TEXT DEFAULT '/' NOT NULL, -- device + clientpath = identity
   shareby varchar(12), -- 'shared by / creator',
   sharedate datetime not null, -- 'shared date time',
   tags varchar(512) DEFAULT NULL ,
   geox double DEFAULT 0,
   geoy double DEFAULT 0,
   exif text default null,
-  mime varchar(64),
   oper varchar(12) not null,
   opertime datetime not null,
+  clientpath TEXT DEFAULT '/' NOT NULL,
+  mime TEXT(64),       -- e.g. image/png;base64,
+  css text,            -- ui styles, v0.5.5: {type: NA, size: [width, height, w, h]}, where w/h is reduction of width/height
 
   PRIMARY KEY (pid)
 );
--- ALTER TABLE h_photos ADD mime TEXT(64);
+
 
 DROP table if exists h_collects ;
 CREATE TABLE h_collects (
