@@ -131,4 +131,8 @@ public class PhotoRobot extends SemanticObject implements IUser {
 		tempDirs.add(tempDir);
 		return tempDir;
 	}
+
+	public String defaultAlbum() {
+		return "a-001";
+	}
 }

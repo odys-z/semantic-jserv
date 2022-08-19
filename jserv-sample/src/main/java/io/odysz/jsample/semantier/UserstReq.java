@@ -6,6 +6,7 @@ import java.util.HashMap;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.tier.Relations;
 import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.sql.Statement;
 import io.odysz.transact.x.TransException;
 
@@ -23,6 +24,7 @@ public class UserstReq extends UserReq {
 	}
 
 	/// use case: load record - refactor this into CRUD?
+	PageInf page;
 	/// record field?
 	String userId;
 	String userName;

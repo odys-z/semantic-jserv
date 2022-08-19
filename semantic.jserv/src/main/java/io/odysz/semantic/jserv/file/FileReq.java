@@ -3,6 +3,7 @@ package io.odysz.semantic.jserv.file;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 
+/** @deprecated will be replaced by DocsReq */
 public class FileReq extends AnsonBody {
 	String file;
 	int len;

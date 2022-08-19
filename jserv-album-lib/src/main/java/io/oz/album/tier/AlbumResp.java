@@ -12,7 +12,11 @@ public class AlbumResp extends DocsResp {
 	String albumId;
 	String ownerId;
 	String owner;
+
+	/** Album */
 	ArrayList<Collect> collectRecords;
+
+	Profiles profils;
 
 	ArrayList<Photo[]> photos;
 	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
@@ -23,10 +27,7 @@ public class AlbumResp extends DocsResp {
 	Photo photo;
 	public Photo photo() { return photo; }
 
-	public Profiles profils;
-	
-	public AlbumResp() {
-	}
+	public AlbumResp() { }
 	
 	public AlbumResp rec(AnResultset rs) throws SQLException {
 		this.photo = new Photo(rs);
@@ -52,12 +53,47 @@ public class AlbumResp extends DocsResp {
 		return this;
 	}
 
-	public AlbumResp collects(AnResultset rs) throws SQLException {
+	/**
+	 * Construct an array of {@link Collect}.
+	 * @param rs
+	 * @return
+	 * @throws SQLException
+	 */
+	public AlbumResp setCollects(AnResultset rs) throws SQLException {
 		this.collectRecords = new ArrayList<Collect>(rs.total());
 		rs.beforeFirst();
 		while(rs.next()) {
 			collectRecords.add(new Collect(rs));
 		}
+		return this;
+	}
+
+	/**
+	 * Construct a 2D array of photos: [collect: photo[]]
+	 * 
+	 * @param rs photos ordered by cid
+	 * @return this
+	 * @throws SQLException 
+	 */
+	public AlbumResp collectPhotos(AnResultset rs) throws SQLException {
+		String cid = "";
+		Collect collect = null;
+		
+		this.collectRecords = new ArrayList<Collect>(rs.total());
+		rs.beforeFirst();
+		while(rs.next()) {
+			if (collect == null || !cid.equals(rs.getString("cid"))) {
+				if (collect != null)
+					collectRecords.add(collect);
+				collect = new Collect(rs);
+				cid = collect.cid;
+			}
+			collect.addPhoto(rs);
+		}
+		// collectRecords.add(new Collect(rs));
+		if (collect != null)
+			collectRecords.add(collect);
+
 		return this;
 	}
 

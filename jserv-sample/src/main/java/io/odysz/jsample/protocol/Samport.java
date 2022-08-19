@@ -54,13 +54,10 @@ public enum Samport implements IPort {
 
 	@Override
 	public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
-		throw new AnsonException(0, "FIXME: shouldn't use name()?");
-		// url can't been deserialized in newer version, should use name.
-
-//		stream.write('\"');
-//		stream.write(url.getBytes());
-//		stream.write('\"');
-//		return this;
+		stream.write('\"');
+		stream.write(name().getBytes());
+		stream.write('\"');
+		return this;
 	}
 
 	@Override
