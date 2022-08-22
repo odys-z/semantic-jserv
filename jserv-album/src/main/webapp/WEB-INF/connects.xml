@@ -17,7 +17,7 @@
   		<!-- enable sql printing -->
   		<dbg>true</dbg>
   		<log>false</log>
-  		<smtcs>semantics-sys.xml</smtcs>
+  		<smtcs>semantics-cloud.xml</smtcs>
   	</c>
   </t>
 

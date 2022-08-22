@@ -37,6 +37,7 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncRec;
+import io.odysz.semantic.tier.docs.sync.Docsyncer;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -471,6 +472,9 @@ public class Albums extends ServPort<AlbumReq> {
 		
 		if (!LangExt.isblank(photo.mime))
 			ins.nv("mime", photo.mime);
+		
+		// branch one-step
+		Docsyncer.syncTask(ins, photo, tablPhotos, usr);
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
