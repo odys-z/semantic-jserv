@@ -11,6 +11,9 @@ import io.odysz.common.DateFormat;
 /**
  * Query results of synchronizing data.
  * 
+ * <b>Note: This is only used for client, e.g. Android, querying information of file synchronizing.
+ * For file synchronizing task description, see DocsyncResp</b>
+ * 
  * <p>To query a file's synchronizing state, without client DB, the way to match
  * a file at server side is match device name and client path. So no db record Id
  * can be used here. </p>

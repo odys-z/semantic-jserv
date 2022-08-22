@@ -3,14 +3,17 @@ package io.oz.album;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
+import io.odysz.semantic.tier.docs.sync.Docsyncer;
 import io.odysz.semantics.x.SemanticException;
 
 @WebListener
@@ -26,6 +29,8 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			
 			AnsonMsg.understandPorts(AlbumPort.album);
 			// Anson.verbose = true;
+			
+			Docsyncer.init(sce);
 		} catch (SemanticException | SAXException | IOException | SQLException e) {
 			e.printStackTrace();
 		}

@@ -13,6 +13,7 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.tier.docs.sync.ISyncFile;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
@@ -22,7 +23,7 @@ import io.odysz.transact.sql.parts.condition.Funcall;
  * @author ody
  *
  */
-public class Photo extends Anson {
+public class Photo extends Anson implements ISyncFile {
 	public String recId;
 	public String recId() { return recId; }
 
@@ -47,6 +48,12 @@ public class Photo extends Anson {
 		return exif == null ? null
 				: exif.stream()
 				 .collect(Collectors.joining(","));
+	}
+
+	boolean isPublic;
+	@Override
+	public boolean isPublic() {
+		return isPublic;
 	}
 
 	public String mime;

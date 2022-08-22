@@ -50,7 +50,9 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			/** ds.tier, dataset's semantic tier */
 			datasetier("ds.tier"),
 			/** document manage's semantic tier */
-			docstier("docs.tier");
+			docstier("docs.tier"),
+			/** experimental */
+			docsync("docs.sync");
 
 		static {
 			JSONAnsonListener.registFactory(IPort.class, 
