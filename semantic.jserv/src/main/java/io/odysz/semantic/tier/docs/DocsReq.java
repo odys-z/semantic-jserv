@@ -15,6 +15,7 @@ public class DocsReq extends AnsonBody {
 		public static final String records = "r/list";
 		public static final String mydocs = "r/my-docs";
 		public static final String rec = "r/rec";
+		public static final String download = "r/download";
 		public static final String upload = "c";
 		public static final String del = "d";
 
@@ -141,6 +142,12 @@ public class DocsReq extends AnsonBody {
 
 	public DocsReq blockSeq(int i) {
 		blockSeq = i;
+		return this;
+	}
+
+	public AnsonBody syncWith(String fullpath, String device) {
+		this.clientpath = fullpath;
+		this.device = device;
 		return this;
 	}
 }

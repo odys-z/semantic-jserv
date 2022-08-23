@@ -13,7 +13,7 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.tier.docs.sync.ISyncFile;
+import io.odysz.semantic.jserv.file.ISyncFile;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;

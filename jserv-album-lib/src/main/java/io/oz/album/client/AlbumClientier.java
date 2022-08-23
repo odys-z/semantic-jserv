@@ -127,7 +127,7 @@ public class AlbumClientier extends Semantier {
 										.header(header);
 
 				resp = client.commit(q, errHandler);
-				// String chainId = resp.chainId();
+
 				String pth = p.fullpath();
 				if (!pth.equals(resp.fullpath()))
 					Utils.warn("resp not reply with exactly the same path: %s", resp.fullpath());
@@ -152,7 +152,7 @@ public class AlbumClientier extends Semantier {
 						b64 = AESHelper.encode64(ifs, blocksize);
 					}
 					req = new DocsReq().blockEnd(resp, user);
-					// req.a(DocsReq.A.blockEnd);
+
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 								.header(header);
 					resp = client.commit(q, errHandler);
@@ -197,7 +197,6 @@ public class AlbumClientier extends Semantier {
 		AlbumReq req = new AlbumReq(clientUri)
 				.createPhoto(collId, fullpath)
 				.photoName(clientname);
-		// req.a(A.insertPhoto);
 
 		String[] act = AnsonHeader.usrAct("album.java", "create", "c/photo", "create photo");
 		AnsonHeader header = client.header().act(act);
