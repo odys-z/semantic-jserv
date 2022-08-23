@@ -354,6 +354,15 @@ public class Albums extends ServPort<AlbumReq> {
 		return usr.sessionId() + " " + clientpathRaw;
 	}
 	
+	/**
+	 * Query client paths
+	 * @param req
+	 * @param usr
+	 * @return album where clientpath in req's fullpath and device also matched
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	AlbumResp querySyncs(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
@@ -361,13 +370,14 @@ public class Albums extends ServPort<AlbumReq> {
 			throw new SemanticException("Null Query - invalide request.");
 
 		ArrayList<String> paths = new ArrayList<String>(req.syncQueries().size());
-		// ArrayList<String[]> orders = new ArrayList<String[]>(req.syncQueries().size());
 		for (SyncRec s : req.syncQueries()) {
 			paths.add(s.fullpath());
-			// orders.add(new String[] { String.format("pid = '%s'", s.fullpath()) });
 		}
 
-		AnResultset rs = (AnResultset) st.select(tablPhotos).col("clientpath").col("1", "syncFlag")
+		AnResultset rs = (AnResultset) st
+				.select(tablPhotos)
+				.col("clientpath")
+				.col("1", "syncFlag") // this flag is used for query by client, not for hub vs. private storage
 				.whereIn("clientpath", paths).whereEq("device", req.syncing().device)
 				// .orderby(orders)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr)).rs(0);
@@ -474,7 +484,7 @@ public class Albums extends ServPort<AlbumReq> {
 			ins.nv("mime", photo.mime);
 		
 		// branch one-step
-		Docsyncer.syncTask(ins, photo, tablPhotos, usr);
+		ins.post(Docsyncer.onDocreate(photo, tablPhotos, usr));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))

@@ -3,14 +3,12 @@ package io.oz.album;
 import java.io.IOException;
 import java.sql.SQLException;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
 import org.xml.sax.SAXException;
 
-import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.tier.docs.sync.Docsyncer;

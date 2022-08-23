@@ -21,11 +21,16 @@ public class AlbumReq extends DocsReq {
 		public static final String rec = "r/photo";
 		public static final String download = "r/download";
 		public static final String update = "u";
+
 		public static final String insertPhoto = "c/photo";
 		public static final String insertCollect = "c/collect";
 		public static final String insertAlbum = "c/album";
+
 		public static final String del = "d";
+
+		/** Query client paths */
 		public static final String selectSyncs = "r/syncflags";
+
 		public static final String getPrefs = "r/prefs";
 	}
 	

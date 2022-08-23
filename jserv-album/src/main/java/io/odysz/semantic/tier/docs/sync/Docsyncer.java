@@ -21,24 +21,34 @@ import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
+import io.odysz.semantic.jserv.file.ISyncFile;
+import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
-public class Docsyncer extends ServPort<DocsyncReq> {
+public class Docsyncer extends ServPort<DocsReq> {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public Docsyncer() {
 		super(Port.docsync);
 	}
 
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
-
-	public static final String tablSyncTasks = "sync_tasks";
 
 	public static final String cloudHub = "cloud-hub";
 	public static final String mainStorage = "main-storage";
@@ -47,6 +57,7 @@ public class Docsyncer extends ServPort<DocsyncReq> {
 	public static final String taskHubBuffered = "hub-buf";
 	public static final String taskPushByMain = "main-push";
 
+	public static final String tablSyncTasks = "sync_tasks";
 
 	static ReentrantLock lock;
 
@@ -66,29 +77,30 @@ public class Docsyncer extends ServPort<DocsyncReq> {
 		}
 	}
 
-	public static void syncTask(Insert insertFile, ISyncFile doc, String targetabl, IUser usr)
+	public static Insert onDocreate(ISyncFile doc, String targetabl, IUser usr)
 			throws TransException {
 
 		if (SyncWorker.hub == mode && !doc.isPublic())
-			insertFile.post(st
+			return st
 				.insert(Docsyncer.tablSyncTasks)
 				.nv("task", Docsyncer.taskHubBuffered)
 				.nv("shareby", usr.uid())
 				.nv("docId", doc.recId())
 				.nv("targetabl", targetabl)
-				);
+				;
 		else if (SyncWorker.main == mode && doc.isPublic())
-			insertFile.post(st
+			return st
 				.insert(Docsyncer.tablSyncTasks)
 				.nv("task", Docsyncer.taskPushByMain)
 				.nv("shareby", usr.uid())
 				.nv("docId", doc.recId())
 				.nv("targetabl", targetabl)
-				);
+				;
 		else if (SyncWorker.priv == mode)
 			throw new TransException("TODO");
 		else
 			Utils.warn("Unknow album serv mode: %s", mode);
+		return null;
 	}
 
 	public static void init(ServletContextEvent evt) {
@@ -124,17 +136,42 @@ public class Docsyncer extends ServPort<DocsyncReq> {
 	}
 
 	@Override
-	protected void onGet(AnsonMsg<DocsyncReq> msg, HttpServletResponse resp)
+	protected void onGet(AnsonMsg<DocsReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		//
 		
 	}
 
 	@Override
-	protected void onPost(AnsonMsg<DocsyncReq> msg, HttpServletResponse resp)
+	protected void onPost(AnsonMsg<DocsReq> jmsg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		// 
-		
+		resp.setCharacterEncoding("UTF-8");
+		try {
+			IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
+
+			DocsReq jreq = jmsg.body(0);
+
+			AnsonResp rsp = null;
+			if (A.records.equals(jreq.a()))
+				rsp = query(jreq, usr);
+			else throw new SemanticException(String.format(
+						"request.body.a can not handled: %s\\n",
+						jreq.a()));
+
+			write(resp, ok(rsp));
+		} catch (TransException e) {
+			e.printStackTrace();
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
+		} catch (SsException e) {
+			write(resp, err(MsgCode.exSession, e.getMessage()));
+		} finally {
+			resp.flushBuffer();
+		}
+	}
+
+	private AnsonResp query(DocsReq jreq, IUser usr) {
+		return null;
 	}
 
 }
