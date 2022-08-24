@@ -42,8 +42,14 @@
 		<v>center hub</v>
 	</c>
 	<c>
+		<!-- worker interval -->
 		<k>sync-interval-min</k>
 		<v>1</v>
+	</c>
+	<c>
+		<!-- connect id for where to save downloaded file, e.g default connection key -->
+		<k>sync-conn-id</k>
+		<v>sys-sqlite</v>
 	</c>
   </t>
 

@@ -31,6 +31,8 @@ public class Photo extends Anson implements ISyncFile {
 
 	public String clientpath;
 
+	public String device;
+	
 	public int syncFlag;
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;
@@ -61,17 +63,32 @@ public class Photo extends Anson implements ISyncFile {
 	public int[] widthHeight;
 	/** reduction of image size */
 	public int[] wh;
-	/** composed css json, saved as string */
+	
+	/**
+	 * Composed css json, saved as string.
+	 * @see #css()
+	 * */
 	public String css;
+
+	/**
+	 * Compose a string representing json object for saving in DB.
+	 * The type "io.oz.album.tier.PhotoCSS" doesn't exist at server side (v0.4.18)
+	 * 
+	 * @return string of json for saving
+	 */
+	public String css() {
+		if (widthHeight != null)
+			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s]}",
+				widthHeight[0], widthHeight[1], wh[0], wh[1]);
+		else return "";
+	}
 
 	public String collectId;
 	public String collectId() { return collectId; }
 
 	public String albumId;
-
 	
 	String month;
-
 	
 	public Photo() {}
 	
@@ -87,14 +104,10 @@ public class Photo extends Anson implements ISyncFile {
 		this.mime = rs.getString("mime");
 		
 		this.css = rs.getString("css");
-//		if (!isblank(css)) {
-//			// Design Issue: Anson.fromJson() ?
-//			String[] csss = css.split(";");
-//			for (String s : csss) {
-//				String[] pv = s.split(":");
-//				if (pv != null && pv.length == 2 && "size".equals(pv[0]))
-//			}
-//		}
+		
+		// TODO debug
+		this.clientpath =  rs.getString("clientpath");
+		this.device =  rs.getString("device");
 		
 		try {
 			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
@@ -154,17 +167,14 @@ public class Photo extends Anson implements ISyncFile {
 		month = DateFormat.formatYYmm(d);
 	}
 
-	/**
-	 * Compose a string representing json object for saving in DB.
-	 * The type "io.oz.album.tier.PhotoCSS" doesn't exist at server side (v0.4.18)
-	 * 
-	 * @return string of json for saving
-	 */
-	public String css() {
-		if (widthHeight != null)
-			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s]}",
-				widthHeight[0], widthHeight[1], wh[0], wh[1]);
-		else return "";
+	@Override
+	public String fullpath() {
+		return clientpath;
+	}
+
+	@Override
+	public String device() {
+		return device;
 	}
 
 

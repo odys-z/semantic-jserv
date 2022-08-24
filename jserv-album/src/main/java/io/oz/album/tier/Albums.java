@@ -317,6 +317,7 @@ public class Albums extends ServPort<AlbumReq> {
 		Exif.parseExif(photo, chain.outputPath);
 
 		photo.clientpath = chain.clientpath;
+		photo.device = ((PhotoRobot) usr).deviceId();
 		photo.pname = chain.clientname;
 		photo.uri = null;
 		String pid = createFile(conn, photo, usr);
@@ -460,7 +461,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	String createFile(String conn, Photo photo, IUser usr)
+	public static String createFile(String conn, Photo photo, IUser usr)
 			throws TransException, SQLException, IOException {
 		// a clearer message is better here
 		if (LangExt.isblank(photo.clientpath))
@@ -474,8 +475,8 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("pdate", photo.photoDate())
 				.nv("folder", photo.month())
 				.nv("device", ((PhotoRobot) usr).deviceId())
-				.nv("geox", photo.geox).nv("geoy", photo.geoy)
 				.nv("clientpath", photo.clientpath)
+				.nv("geox", photo.geox).nv("geoy", photo.geoy)
 				.nv("exif", photo.exif)
 				.nv("shareby", usr.uid())
 				.nv("sharedate", Funcall.now());
@@ -578,7 +579,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.j("a_users", "u", "u.userId = p.shareby")
 				.col("pid")
 				.col("pname").col("pdate")
-				.col("folder").col("clientpath")
+				.col("folder").col("clientpath").col("device")
 				.col("uri")
 				.col("userName", "shareby")
 				.col("sharedate").col("tags")
@@ -665,7 +666,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.cols("ac.aid", "ch.cid",
 					  "p.pid", "pname", "pdate", "p.tags", "mime", "p.css", "uri", "folder", "geox", "geoy", "sharedate",
 					  "c.shareby collector", "c.cdate",
-					  "device", "p.shareby ownerId", "u.userName owner",
+					  "clientpath", "device", "p.shareby ownerId", "u.userName owner",
 					  "storage", "aname", "cname")
 				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))

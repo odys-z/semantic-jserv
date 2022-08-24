@@ -114,7 +114,9 @@ public class PhotoRobot extends SemanticObject implements IUser {
 		return null;
 	}
 
-	/**Get a temp dir, and have it deleted when logout.
+	/**
+	 * Get a temp dir, and have it deleted when logout.
+	 * 
 	 * @param conn
 	 * @return the dir
 	 * @throws SemanticException

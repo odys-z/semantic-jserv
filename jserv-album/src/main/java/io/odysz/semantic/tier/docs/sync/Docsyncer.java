@@ -49,6 +49,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
+	public static final String keySynconn = "sync-conn-id";
 
 	public static final String cloudHub = "cloud-hub";
 	public static final String mainStorage = "main-storage";
@@ -128,7 +129,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		else mode = SyncWorker.priv;
 	
         schedualed = scheduler.scheduleAtFixedRate(
-        		new SyncWorker(mode),
+        		new SyncWorker(mode, Configs.getCfg(keySynconn)),
         		0, m, TimeUnit.MINUTES);
 
 		if (ServFlags.file)
@@ -170,7 +171,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		}
 	}
 
-	private AnsonResp query(DocsReq jreq, IUser usr) {
+	protected AnsonResp query(DocsReq jreq, IUser usr) {
 		return null;
 	}
 

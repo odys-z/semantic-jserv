@@ -6,12 +6,19 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jserv.file.ISyncFile;
 import io.odysz.semantic.jsession.SessionInf;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 
 public class DocsReq extends AnsonBody {
 	public static class A {
+		/**
+		 * Action: read records
+		 * @see DocsTier#list(DocsReq req, IUser usr)
+		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
+		 * */
 		public static final String records = "r/list";
 		public static final String mydocs = "r/my-docs";
 		public static final String rec = "r/rec";
@@ -23,6 +30,12 @@ public class DocsReq extends AnsonBody {
 		public static final String blockUp = "c/b/block";
 		public static final String blockEnd = "c/b/end";
 		public static final String blockAbort = "c/b/abort";
+
+		/**
+		 * Action: close synchronizing task
+		 * @see io.odysz.semantic.tier.docs.sync.SyncWorker#syncDoc(ISyncFile p, SessionInf worker, AnsonHeader header)
+		 */
+		public static final String synclose = "u/close";
 	}
 
 	public static class State {
@@ -56,6 +69,16 @@ public class DocsReq extends AnsonBody {
 		super(parent, uri);
 	}
 
+	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, ISyncFile p) {
+		super(parent, uri);
+		device = p.recId();
+		clientpath = p.fullpath();
+		docId = p.recId();
+	}
+
+	/**
+	 * The page of quirying client files status - not for used between jservs. 
+	 */
 	protected SyncingPage syncing;
 	public SyncingPage syncing() { return syncing; }
 
