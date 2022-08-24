@@ -156,9 +156,16 @@ public class DocsTier extends ServPort<DocsReq> {
 		return new AnsonResp().msg("ok").rs(docs);
 	}
 
-	private AnsonResp list(DocsReq req, IUser usr) throws TransException, SQLException {
-		// System.out.print("docker tag: v1.3.0.1");
-
+	/**
+	 * Get n_docs records where userId and mime matched.
+	 *  
+	 * @param req
+	 * @param usr
+	 * @return response with doc result set
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	protected AnsonResp list(DocsReq req, IUser usr) throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 		ISemantext stx = st.instancontxt(conn, usr);
 
