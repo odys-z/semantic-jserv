@@ -56,6 +56,8 @@ public class SyncWorker implements Runnable {
 	@Override
 	public void run() {
 		try {
+			Docsyncer.lock.lock();
+
 			if (workerId == null)
 				workerId = registerWorker(uri);
 			if (client == null) {
@@ -80,6 +82,9 @@ public class SyncWorker implements Runnable {
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
+		}
+		finally {
+			Docsyncer.lock.unlock();
 		}
 	}
 

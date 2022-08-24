@@ -156,11 +156,16 @@ public class Docsyncer extends ServPort<DocsReq> {
 			AnsonResp rsp = null;
 			if (A.records.equals(jreq.a()))
 				rsp = query(jreq, usr);
+			else if (A.download.equals(jreq.a()))
+				download(resp, jreq, usr);
+			else if (A.synclose.equals(jreq.a()))
+				rsp = synclose(jreq, usr);
 			else throw new SemanticException(String.format(
 						"request.body.a can not handled: %s\\n",
 						jreq.a()));
 
-			write(resp, ok(rsp));
+			if (resp != null)
+				write(resp, ok(rsp));
 		} catch (TransException e) {
 			e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
@@ -169,6 +174,27 @@ public class Docsyncer extends ServPort<DocsReq> {
 		} finally {
 			resp.flushBuffer();
 		}
+	}
+
+	/**
+	 * Write file stream to response
+	 * @param resp 
+	 * @param jreq
+	 * @param usr
+	 * @return 
+	 */
+	protected void download(HttpServletResponse resp, DocsReq jreq, IUser usr) {
+	}
+
+	/**
+	 * Remove sync task.
+	 * 
+	 * @param jreq
+	 * @param usr
+	 * @return response
+	 */
+	protected AnsonResp synclose(DocsReq jreq, IUser usr) {
+		return null;
 	}
 
 	protected AnsonResp query(DocsReq jreq, IUser usr) {
