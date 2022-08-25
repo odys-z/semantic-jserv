@@ -420,7 +420,10 @@ public class Albums extends ServPort<AlbumReq> {
 	
 	static String resolvExtroot(String conn, String docId, IUser usr) throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
-		AnResultset rs = (AnResultset) st.select(tablPhotos).col("uri").col("folder").whereEq("pid", docId).rs(stx)
+		AnResultset rs = (AnResultset) st
+				.select(tablPhotos)
+				.col("uri").col("folder")
+				.whereEq("pid", docId).rs(stx)
 				.rs(0);
 
 		if (!rs.next())
@@ -445,12 +448,13 @@ public class Albums extends ServPort<AlbumReq> {
 				.delete(tablPhotos, usr)
 				.whereEq("device", req.device())
 				.whereEq("clientpath", req.clientpath)
+				.post(Docsyncer.onDel(req.clientpath, req.device()))
 				.d(st.instancontxt(conn, usr));
-
+		
 		return (DocsResp) new DocsResp().data(res.props()); 
 	}
 
-	/**create photo - call this after duplication is checked.
+	/**Create photo - call this after duplication is checked.
 	 * 
 	 * <p>Photo is created as in the folder of user/month/.
 	 * @param conn
@@ -463,7 +467,6 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	public static String createFile(String conn, Photo photo, IUser usr)
 			throws TransException, SQLException, IOException {
-		// a clearer message is better here
 		if (LangExt.isblank(photo.clientpath))
 			throw new SemanticException("Client path can't be null/empty.");
 		
@@ -478,13 +481,15 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("clientpath", photo.clientpath)
 				.nv("geox", photo.geox).nv("geoy", photo.geoy)
 				.nv("exif", photo.exif)
+				.nv("shareflag", photo.isPublic ? DocsReq.sharePublic : DocsReq.sharePrivate)
 				.nv("shareby", usr.uid())
 				.nv("sharedate", Funcall.now());
 		
 		if (!LangExt.isblank(photo.mime))
 			ins.nv("mime", photo.mime);
 		
-		// branch one-step
+		// add a synchronizing task
+		// - also triggered as private storage jserv, but no statement will be added
 		ins.post(Docsyncer.onDocreate(photo, tablPhotos, usr));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
@@ -532,10 +537,14 @@ public class Albums extends ServPort<AlbumReq> {
 						p.wh[1] = w;
 					}
 
-					if (p.photoDate() != null) {
-						Update u = st
+					Update u = st
 							.update(tablPhotos, usr)
-							.nv("folder", p.month())
+						 	.nv("css", p.css())
+						 	.nv("filesize", String.valueOf(p.size))
+							.whereEq("pid", pid);
+
+					if (p.photoDate() != null) {
+						   u.nv("folder", p.month())
 							.nv("pdate", p.photoDate())
 							.nv("uri", pth)
 							.nv("pname", rs.getString("pname"))
@@ -548,12 +557,13 @@ public class Albums extends ServPort<AlbumReq> {
 
 						if (!isblank(p.mime))
 							u.nv("mime", p.mime);
-						if (!isblank(p.widthHeight))
-							u.nv("css", p.css());
+						// if (!isblank(p.widthHeight))
+						// 	u.nv("css", p.css());
 
-						u.whereEq("pid", pid)
-						 .u(stx);
+						// u.whereEq("pid", pid)
+						// .u(stx);
 					}
+					u.u(stx);
 				}
 			} catch (TransException | SQLException | IOException e) {
 				e.printStackTrace();

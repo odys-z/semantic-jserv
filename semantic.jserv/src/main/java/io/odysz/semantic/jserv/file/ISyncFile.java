@@ -13,8 +13,14 @@ public interface ISyncFile {
 	boolean isPublic();
 
 	/** Equivalent to client path */
-	String fullpath();
+	String clientpath();
+
 	/** device name */
 	String device();
+
+	/** File uri */
+	String uri();
+
+	String mime();
 
 }

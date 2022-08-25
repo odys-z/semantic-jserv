@@ -45,6 +45,13 @@ public class DocsReq extends AnsonBody {
 		public static final String deprecated = "depr";
 	}
 
+	/** shared as public file */
+	public static final String sharePublic  = "pub";
+	/** published for sharing */
+	public static final String sharePublish  = "hub";
+	/** private sharing */
+	public static final String sharePrivate = "prv";
+
 	public PageInf page;
 	
 	public String docId;
@@ -72,7 +79,7 @@ public class DocsReq extends AnsonBody {
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, ISyncFile p) {
 		super(parent, uri);
 		device = p.recId();
-		clientpath = p.fullpath();
+		clientpath = p.clientpath();
 		docId = p.recId();
 	}
 
