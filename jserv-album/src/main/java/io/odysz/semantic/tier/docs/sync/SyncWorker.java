@@ -199,6 +199,11 @@ public class SyncWorker implements Runnable {
 	}
 
 	public SyncWorker push() {
+		if (mode == main || mode == priv) {
+			// find local records with shareflag = pub
+			// upload
+			// set shareflag = hub
+		}
 		return this;
 	}
 

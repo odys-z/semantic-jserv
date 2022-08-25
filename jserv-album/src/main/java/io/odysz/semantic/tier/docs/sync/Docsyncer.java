@@ -42,7 +42,9 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
+import io.oz.album.PhotoRobot;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
 public class Docsyncer extends ServPort<DocsReq> {
@@ -271,8 +273,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return (DocsResp) new DocsResp().data(r.props()); 
 	}
 
-	protected AnsonResp query(DocsReq jreq, IUser usr) {
-		return null;
+	protected DocsResp query(DocsReq jreq, IUser usr) throws TransException, SQLException {
+		AnResultset rs = (AnResultset) st.select(tablSyncTasks, "t")
+				// .whereEq("device", jreq.device())
+				// .whereEq("clientpath", jreq.clientpath)
+				.whereEq("home", jreq.org)
+				.rs(st.instancontxt(connHub, usr))
+				.rs(0);
+
+		return (DocsResp) new DocsResp().rs(rs);
 	}
 
 }
