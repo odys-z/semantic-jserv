@@ -48,7 +48,9 @@ public class Exif {
 				Files.probeContentType(Paths.get(filepath)) : photo.mime;
 		} catch (IOException e) { }
 
-		try (FileInputStream stream = new FileInputStream(new File(filepath))) {
+		File f = new File(filepath);
+		photo.size = f.length();
+		try (FileInputStream stream = new FileInputStream(f)) {
 			BodyContentHandler handler = new BodyContentHandler();
 			AutoDetectParser parser = new AutoDetectParser();
 			Metadata metadata = new Metadata();

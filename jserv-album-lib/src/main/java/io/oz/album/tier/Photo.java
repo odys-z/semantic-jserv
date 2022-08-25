@@ -44,7 +44,11 @@ public class Photo extends Anson implements ISyncFile {
 	public String geox;
 	public String geoy;
 	public String sharer;
+	
+	/** usually ignored when sending request */
+	public long size;
 
+	/** usually ignored when sending request */
 	public ArrayList<String> exif;
 	public String exif() {
 		return exif == null ? null
@@ -168,13 +172,23 @@ public class Photo extends Anson implements ISyncFile {
 	}
 
 	@Override
-	public String fullpath() {
+	public String clientpath() {
 		return clientpath;
 	}
 
 	@Override
 	public String device() {
 		return device;
+	}
+
+	@Override
+	public String uri() {
+		return uri;
+	}
+
+	@Override
+	public String mime() {
+		return mime;
 	}
 
 

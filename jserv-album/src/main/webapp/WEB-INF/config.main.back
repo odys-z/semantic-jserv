@@ -37,9 +37,9 @@
 		<v>sys-sqlite,semantic-log.xml,a_logs</v>
 	</c>
 	<c>
-		<!-- (center) hub, (main) storage, (private) storage -->
+		<!-- (center) hub, main (storage), private (storage) -->
 		<k>sync-mode</k>
-		<v>hub</v>
+		<v>main</v>
 	</c>
 	<c>
 		<!-- worker interval -->
