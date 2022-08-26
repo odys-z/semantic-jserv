@@ -10,6 +10,7 @@ public class SessionInf extends Anson {
 	String roleName; 
 
 	public String device;
+	public SessionInf device(String dev) { this.device = dev; return this; }
 	
 	public SessionInf () {
 	}

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.junit.jupiter.api.Test;
+import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
@@ -30,11 +31,12 @@ class SyncWorkerTest {
 	 * @throws AnsonException 
 	 * @throws GeneralSecurityException 
 	 * @throws SsException 
+	 * @throws SAXException 
 	 * 
 	 */
 	@SuppressWarnings("serial")
 	@Test
-	void testPrivMain() throws AnsonException, SQLException, IOException, TransException, SsException, GeneralSecurityException {
+	void testPrivMain() throws AnsonException, SQLException, IOException, TransException, SsException, GeneralSecurityException, SAXException {
 		
 		String conn = "sys-sqlite";
 		Photo photo = new Photo();
@@ -59,6 +61,7 @@ class SyncWorkerTest {
 
 		String pid = Albums.createFile(conn, photo, usr);
 
+		SyncWorker.blocksize = 32 * 3;
 		SyncWorker worker = new SyncWorker(0, conn, "h_photos")
 				.login("odys-z.github.io", "слава україні")
 				.push();

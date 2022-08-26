@@ -1,21 +1,27 @@
 package io.odysz.semantic.tier.docs.sync;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFile;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
@@ -23,26 +29,35 @@ import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.jserv.file.ISyncFile;
+import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
 import io.oz.album.helpers.Exif;
+import io.oz.album.tier.AlbumReq;
+import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Albums;
 import io.oz.album.tier.Photo;
 
 public class SyncWorker implements Runnable {
+	static int blocksize = 12 * 1024 * 1024;
 
+	/** jserv node mode: cloud hub, equivalent of {@link Docsyncer#cloudHub} */
 	public static final int hub = 0;
+	/** jserv node mode: private main, equivalent of {@link Docsyncer#mainStorage} */
 	public static final int main = 1;
+	/** jserv node mode: private , equivalent of {@link Docsyncer#privateStorage}*/
 	public static final int priv = 2;
 	
 	int mode;
-
+	DATranscxt localSt;
 	SessionClient client;
 	
 	String uri;
@@ -55,11 +70,16 @@ public class SyncWorker implements Runnable {
 	PhotoRobot robot;
 	ErrorCtx errLog;
 
-	public SyncWorker(int mode, String connId, String docTable) {
+
+	public SyncWorker(int mode, String connId, String docTable)
+			throws SemanticException, SQLException, SAXException, IOException {
 		this.mode = mode;
 		uri = "sync.jserv";
 		connPriv = connId;
 		targetablPriv = docTable;
+		
+		if (mode != main)
+			localSt = new DATranscxt(connId);
 		
 		errLog = new ErrorCtx() {
 			@Override
@@ -96,11 +116,11 @@ public class SyncWorker implements Runnable {
 		}
 	}
 
-	public SyncWorker login(String workerId, String string) throws SemanticException, AnsonException, SsException, IOException, GeneralSecurityException {
+	public SyncWorker login(String workerId, String pswd) throws SemanticException, AnsonException, SsException, IOException, GeneralSecurityException {
 		this.workerId = workerId;
 		
 		if (client == null) {
-			client = Clients.login(workerId, "configured passwd");
+			client = Clients.login(workerId, pswd);
 			robot = new PhotoRobot(workerId, null, workerId);
 			tempDir = String.format("io.oz.sync-%s.%s", mode, workerId); 
 		}
@@ -121,7 +141,7 @@ public class SyncWorker implements Runnable {
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, worker, targetablPriv)) {
 			DocsReq req = (DocsReq) new DocsReq(/* p */)
-							.syncWith(p.clientpath(), p.device())
+							.syncWith(p.fullpath(), p.device())
 							.a(A.download);
 
 			String tempath = tempath(p, worker);
@@ -140,7 +160,7 @@ public class SyncWorker implements Runnable {
 
 		client.commit(q, errLog);
 
-		return p.clientpath();
+		return p.fullpath();
 	}
 
 	/** 
@@ -186,8 +206,8 @@ public class SyncWorker implements Runnable {
 		}
 	}
 
-	public String tempath(ISyncFile f, PhotoRobot worker) {
-		String tempath = f.clientpath().replaceAll(":", "");
+	public String tempath(IFileDescriptor f, PhotoRobot worker) {
+		String tempath = f.fullpath().replaceAll(":", "");
 		return EnvPath.decodeUri(tempDir, tempath);
 	}
 
@@ -198,13 +218,106 @@ public class SyncWorker implements Runnable {
 		return EnvPath.decodeUri(extroot, uri);
 	}
 
-	public SyncWorker push() {
+	public SyncWorker push() throws TransException, SQLException {
 		if (mode == main || mode == priv) {
 			// find local records with shareflag = pub
+			AnResultset rs = (AnResultset) localSt
+				.select(targetablPriv, "f")
+				.cols("device", "clientpath", "shareflag")
+				.whereEq("shareflag", Docsyncer.taskPrvPushing)
+				.rs(localSt.instancontxt(connPriv, robot))
+				.rs(0);
+
 			// upload
+			syncVideos(rs, robot.sessionInf(), new OnProcess() {
+
+				@Override
+				public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
+						throws IOException, AnsonException, SemanticException {
+					
+				}});
+			
 			// set shareflag = hub
 		}
 		return this;
+	}
+
+	public List<DocsResp> syncVideos(AnResultset files,
+			SessionInf user, OnProcess proc, ErrorCtx ... onErr) {
+
+		DocsResp resp = null;
+		try {
+			String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
+			AnsonHeader header = client.header().act(act);
+
+			List<DocsResp> reslts = new ArrayList<DocsResp>(files.size());
+
+			while(files.next()) {
+			// for ( int px = 0; px < files.size(); px++ ) {
+				// IFileDescriptor p = files.get(px);
+				IFileDescriptor p = files.get(px);
+				DocsReq req = new DocsReq()
+						.blockStart(p, user);
+
+				AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, AlbumPort.album, req)
+										.header(header);
+
+				resp = client.commit(q, errLog);
+
+				String pth = p.fullpath();
+				if (!pth.equals(resp.fullpath()))
+					Utils.warn("resp not reply with exactly the same path: %s", resp.fullpath());
+
+				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
+				if (proc != null) proc.proc(px, totalBlocks, resp);
+
+				int seq = 0;
+				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
+				try {
+					String b64 = AESHelper.encode64(ifs, blocksize);
+					while (b64 != null) {
+						req = new DocsReq().blockUp(seq, resp, b64, user);
+						seq++;
+
+						q = client.<DocsReq>userReq(uri, AlbumPort.album, req)
+									.header(header);
+
+						resp = client.commit(q, errLog);
+						if (proc != null) proc.proc(px, totalBlocks, resp);
+
+						b64 = AESHelper.encode64(ifs, blocksize);
+					}
+					req = new DocsReq().blockEnd(resp, user);
+
+					q = client.<DocsReq>userReq(uri, AlbumPort.album, req)
+								.header(header);
+					resp = client.commit(q, errLog);
+					if (proc != null) proc.proc(px, totalBlocks, resp);
+				}
+				catch (Exception ex) {
+					Utils.warn(ex.getMessage());
+
+					req = new DocsReq().blockAbort(resp, user);
+					req.a(DocsReq.A.blockAbort);
+					q = client.<DocsReq>userReq(uri, AlbumPort.album, req)
+								.header(header);
+					resp = client.commit(q, errLog);
+					if (proc != null) proc.proc(px, totalBlocks, resp);
+
+					throw ex;
+				}
+				finally { ifs.close(); }
+
+				reslts.add(resp);
+			}
+
+			return reslts;
+		} catch (IOException e) {
+			errLog.onError(MsgCode.exIo, e.getClass().getName() + " " + e.getMessage());
+		} catch (AnsonException | SemanticException e) { 
+			errLog.onError(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
+		}
+		return null;
 	}
 
 	public DocsResp queryTasks() {

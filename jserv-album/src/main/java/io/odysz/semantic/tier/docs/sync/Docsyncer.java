@@ -31,20 +31,18 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
-import io.odysz.semantic.jserv.file.ISyncFile;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
-import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
-import io.oz.album.PhotoRobot;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
 public class Docsyncer extends ServPort<DocsReq> {
@@ -66,8 +64,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String mainStorage = "main-storage";
 	public static final String privateStorage = "private-storage";
 
+	/** hub file to be pulled by private nodes */
 	public static final String taskHubBuffered = "hub-buf";
-	public static final String taskPushByMain = "main-push";
+//	public static final String taskPushByMain = "main-push";
+	/** local file to be pushed to cloud hub */
+	public static final String taskPrvPushing = "pub";
+	/** local file published at cloud hub */
+	public static final String taskPrvPushed  = "hub";
+	/** noly stored at local jserv node */
+	public static final String taskLocalOnly  = "prv";
 
 	public static final String tablSyncTasks = "sync_tasks";
 
@@ -98,7 +103,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return null;
 	}
 
-	public static Insert onDocreate(ISyncFile doc, String targetabl, IUser usr)
+	public static Insert onDocreate(IFileDescriptor doc, String targetabl, IUser usr)
 			throws TransException {
 
 		if (SyncWorker.hub == mode && !doc.isPublic())
@@ -110,16 +115,16 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.nv("uri", doc.uri())
 				.nv("mime", doc.mime())
 				.nv("device", doc.device())
-				.nv("clientpath", doc.clientpath())
+				.nv("clientpath", doc.fullpath())
 				.nv("targetabl", targetabl)
 				;
 		else if (SyncWorker.main == mode && doc.isPublic())
-			return st
-				.insert(Docsyncer.tablSyncTasks)
-				.nv("task", Docsyncer.taskPushByMain)
-				.nv("shareby", usr.uid())
-				.nv("docId", doc.recId())
-				.nv("targetabl", targetabl)
+//			return st
+//				.insert(Docsyncer.tablSyncTasks)
+//				.nv("task", Docsyncer.taskPushByMain)
+//				.nv("shareby", usr.uid())
+//				.nv("docId", doc.recId())
+//				.nv("targetabl", targetabl)
 				;
 		else if (SyncWorker.priv == mode)
 			throw new TransException("TODO");
@@ -128,7 +133,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return null;
 	}
 
-	public static void init(ServletContextEvent evt) {
+	public static void init(ServletContextEvent evt) throws SemanticException, SQLException, SAXException, IOException {
 
 		Utils.logi("Starting file synchronizer ...");
 
@@ -276,7 +281,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.select(tablSyncTasks, "t")
 				// .whereEq("device", jreq.device())
 				// .whereEq("clientpath", jreq.clientpath)
-				.whereEq("home", jreq.org)
+				.whereEq("family", jreq.org)
 				.rs(st.instancontxt(connHub, usr))
 				.rs(0);
 

@@ -9,22 +9,26 @@ import java.io.IOException;
  *
  */
 public interface IFileDescriptor {
-	/** Read record Id */
-	// String recId();
-
-	/** Set record Id */
-	// IFileDescriptor recId(String recId);
+	/** doc/file record Id - different for each jserv node */
+	String recId();
 
 	String fullpath();
 	IFileDescriptor fullpath(String clientpath) throws IOException;
 
 	String clientname();
 
-	/** @deprecated */
-	default public String mime() { return null; }
+	String mime();
 
 	/** @deprecated */
 	default public String doctype() { return null; }
 
 	String cdate();
+
+	/** device name */
+	String device();
+
+	/** File uri */
+	String uri();
+
+	boolean isPublic();
 }

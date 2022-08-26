@@ -86,7 +86,7 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 	
-	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos,
+	public AlbumClientier asyncVideos_not_used(List<? extends IFileDescriptor> videos,
 				SessionInf user, OnProcess onProc, OnOk onOk, OnError onErr) {
 
 		new Thread(new Runnable() {
@@ -105,6 +105,16 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 	
+	/**
+	 * <b>Issue:</b>
+	 * Can this been replaced by SyncWorker.push() ?
+	 * 
+	 * @param videos
+	 * @param user
+	 * @param proc
+	 * @param onErr
+	 * @return
+	 */
 	public List<DocsResp> syncVideos(List<? extends IFileDescriptor> videos,
 				SessionInf user, OnProcess proc, ErrorCtx ... onErr) {
 
@@ -251,6 +261,19 @@ public class AlbumClientier extends Semantier {
 		return null;
 	}
 
+	/**
+	 * push photos
+	 * 
+	 * <b>Issue:</b>
+	 * Can this been replaced by SyncWorker.push() ?
+	 * 
+	 * @param photos
+	 * @param user
+	 * @return synchronizing result
+	 * @throws SemanticException
+	 * @throws IOException
+	 * @throws AnsonException
+	 */
 	public List<AlbumResp> syncPhotos(List<? extends IFileDescriptor> photos, SessionInf user)
 			throws SemanticException, IOException, AnsonException {
 		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
