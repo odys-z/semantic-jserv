@@ -254,8 +254,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return EnvPath.decodeUri(extroot, uri);
 	}
 
-
-
 	/**
 	 * Remove sync task.
 	 * 
@@ -274,7 +272,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	protected DocsResp query(DocsReq jreq, IUser usr) throws TransException, SQLException {
-		AnResultset rs = (AnResultset) st.select(tablSyncTasks, "t")
+		AnResultset rs = (AnResultset) st
+				.select(tablSyncTasks, "t")
 				// .whereEq("device", jreq.device())
 				// .whereEq("clientpath", jreq.clientpath)
 				.whereEq("home", jreq.org)
