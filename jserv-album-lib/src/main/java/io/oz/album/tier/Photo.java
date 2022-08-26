@@ -13,7 +13,7 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.jserv.file.ISyncFile;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
@@ -23,22 +23,33 @@ import io.odysz.transact.sql.parts.condition.Funcall;
  * @author ody
  *
  */
-public class Photo extends Anson implements ISyncFile {
+public class Photo extends Anson implements IFileDescriptor {
 	public String recId;
 	public String recId() { return recId; }
 
 	public String pname;
+	@Override
+	public String clientname() { return pname; }
 
 	public String clientpath;
+	@Override
+	public String fullpath() { return clientpath; }
 
 	public String device;
+	@Override
+	public String device() { return device; }
 	
 	public int syncFlag;
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;
+	@Override
+	public String cdate() { return createDate; }
 	
 	@AnsonField(shortenString=true)
 	public String uri;
+	@Override
+	public String uri() { return uri; }
+
 	public String shareby;
 	public String sharedate;
 	public String geox;
@@ -63,6 +74,9 @@ public class Photo extends Anson implements ISyncFile {
 	}
 
 	public String mime;
+	@Override
+	public String mime() { return mime; }
+
 	/** image size */
 	public int[] widthHeight;
 	/** reduction of image size */
@@ -172,24 +186,9 @@ public class Photo extends Anson implements ISyncFile {
 	}
 
 	@Override
-	public String clientpath() {
-		return clientpath;
+	public IFileDescriptor fullpath(String clientpath) throws IOException {
+		this.clientpath = clientpath;
+		return this;
 	}
-
-	@Override
-	public String device() {
-		return device;
-	}
-
-	@Override
-	public String uri() {
-		return uri;
-	}
-
-	@Override
-	public String mime() {
-		return mime;
-	}
-
 
 }

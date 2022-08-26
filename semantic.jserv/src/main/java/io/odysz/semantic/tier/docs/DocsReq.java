@@ -6,7 +6,6 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jserv.file.ISyncFile;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -76,10 +75,10 @@ public class DocsReq extends AnsonBody {
 		super(parent, uri);
 	}
 
-	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, ISyncFile p) {
+	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
 		super(parent, uri);
-		device = p.recId();
-		clientpath = p.clientpath();
+		device = p.device();
+		clientpath = p.fullpath();
 		docId = p.recId();
 	}
 
@@ -99,6 +98,13 @@ public class DocsReq extends AnsonBody {
 	public long blockSeq() { return blockSeq; } 
 
 	public DocsReq nextBlock;
+
+	/**
+	 * <p>Document sharing domain.</p>
+	 * for album synchronizing, this is h_photos.family (not null).
+	 * */
+	public String org;
+	public DocsReq org(String org) { this.org = org; return this; }
 
 	public DocsReq querySync(IFileDescriptor p) {
 		if (syncQueries == null)

@@ -18,6 +18,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
@@ -136,5 +137,9 @@ public class PhotoRobot extends SemanticObject implements IUser {
 
 	public String defaultAlbum() {
 		return "a-001";
+	}
+
+	public SessionInf sessionInf() {
+		return new SessionInf();
 	}
 }
