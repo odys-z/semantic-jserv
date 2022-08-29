@@ -41,8 +41,6 @@ import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
 import io.oz.album.helpers.Exif;
-import io.oz.album.tier.AlbumReq;
-import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Albums;
 import io.oz.album.tier.Photo;
 
@@ -229,7 +227,7 @@ public class SyncWorker implements Runnable {
 				.rs(0);
 
 			// upload
-			syncVideos(rs, robot.sessionInf(), new OnProcess() {
+			sync(rs, robot.sessionInf(), new OnProcess() {
 
 				@Override
 				public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
@@ -242,31 +240,32 @@ public class SyncWorker implements Runnable {
 		return this;
 	}
 
-	public List<DocsResp> syncVideos(AnResultset files,
-			SessionInf user, OnProcess proc, ErrorCtx ... onErr) {
+	public List<DocsResp> sync(AnResultset files,
+			SessionInf user, OnProcess proc, ErrorCtx ... onErr) throws SQLException {
 
 		DocsResp resp = null;
 		try {
-			String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
+			String[] act = AnsonHeader.usrAct("sync", "sync", "sync/docs", "multi sync");
 			AnsonHeader header = client.header().act(act);
 
-			List<DocsResp> reslts = new ArrayList<DocsResp>(files.size());
+			List<DocsResp> reslts = new ArrayList<DocsResp>(files.getRowCount());
 
+			int px = 0;
 			while(files.next()) {
-			// for ( int px = 0; px < files.size(); px++ ) {
-				// IFileDescriptor p = files.get(px);
-				IFileDescriptor p = files.get(px);
+				px++;
+				IFileDescriptor p = new Photo(files);
 				DocsReq req = new DocsReq()
 						.blockStart(p, user);
 
-				AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, AlbumPort.album, req)
-										.header(header);
+				AnsonMsg<DocsReq> q = client
+						.<DocsReq>userReq(uri, Port.docsync, req)
+						.header(header);
 
 				resp = client.commit(q, errLog);
 
 				String pth = p.fullpath();
 				if (!pth.equals(resp.fullpath()))
-					Utils.warn("resp not reply with exactly the same path: %s", resp.fullpath());
+					Utils.warn("resp is not replied with exactly the same path: %s", resp.fullpath());
 
 				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
 				if (proc != null) proc.proc(px, totalBlocks, resp);

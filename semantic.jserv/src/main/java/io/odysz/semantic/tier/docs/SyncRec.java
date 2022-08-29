@@ -9,10 +9,11 @@ import io.odysz.anson.Anson;
 import io.odysz.common.DateFormat;
 
 /**
- * Query results of synchronizing data.
+ * <p>Query results of synchronizing data.</p>
  * 
- * <b>Note: This is only used for client, e.g. Android, querying information of file synchronizing.
- * For file synchronizing task description, see DocsyncResp</b>
+ * <b>Note:</b>
+ * This is only used for client, e.g. Android, querying information of file synchronizing.
+ * For file synchronizing task description, see DocsyncResp
  * 
  * <p>To query a file's synchronizing state, without client DB, the way to match
  * a file at server side is match device name and client path. So no db record Id
@@ -54,4 +55,34 @@ public class SyncRec extends Anson implements IFileDescriptor {
 
 	@Override
 	public String cdate() { return cdate; }
+
+	@Override
+	public String recId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String mime() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String device() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String uri() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isPublic() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }
