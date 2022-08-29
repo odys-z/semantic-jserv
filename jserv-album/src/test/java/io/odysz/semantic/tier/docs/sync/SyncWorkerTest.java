@@ -36,7 +36,9 @@ class SyncWorkerTest {
 	 */
 	@SuppressWarnings("serial")
 	@Test
-	void testPrivMain() throws AnsonException, SQLException, IOException, TransException, SsException, GeneralSecurityException, SAXException {
+	void testPrivMain() throws
+		AnsonException, SQLException, IOException, TransException,
+		SsException, GeneralSecurityException, SAXException {
 		
 		String conn = "sys-sqlite";
 		Photo photo = new Photo();
