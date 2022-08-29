@@ -1,4 +1,4 @@
-package io.odysz.semantic.tier.docs.sync;
+package io.oz.jserv.sync;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,11 +38,7 @@ import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.AlbumPort;
-import io.oz.album.PhotoRobot;
-import io.oz.album.helpers.Exif;
-import io.oz.album.tier.Albums;
-import io.oz.album.tier.Photo;
+import io.oz.jserv.docsync.SyncDoc;
 
 public class SyncWorker implements Runnable {
 	static int blocksize = 12 * 1024 * 1024;
@@ -65,7 +61,7 @@ public class SyncWorker implements Runnable {
 	/** document's table name - table for saving records of local files */
 	String targetablPriv;
 	String tempDir;
-	PhotoRobot robot;
+	SyncRobot robot;
 	ErrorCtx errLog;
 
 
@@ -119,7 +115,7 @@ public class SyncWorker implements Runnable {
 		
 		if (client == null) {
 			client = Clients.login(workerId, pswd);
-			robot = new PhotoRobot(workerId, null, workerId);
+			robot = new SyncRobot(workerId, null, workerId);
 			tempDir = String.format("io.oz.sync-%s.%s", mode, workerId); 
 		}
 		
@@ -130,12 +126,12 @@ public class SyncWorker implements Runnable {
 			throws SQLException, AnsonException, IOException, TransException {
 		AnsonHeader header = null;
 		while (resp.rs(0).next()) {
-			Photo p = new Photo(resp.rs(0));
+			SyncDoc p = new SyncDoc(resp.rs(0));
 			syncDoc(p, robot, header);
 		}
 	}
 
-	String syncDoc(Photo p, PhotoRobot worker, AnsonHeader header)
+	String syncDoc(SyncDoc p, SyncRobot worker, AnsonHeader header)
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, worker, targetablPriv)) {
 			DocsReq req = (DocsReq) new DocsReq(/* p */)
@@ -146,7 +142,7 @@ public class SyncWorker implements Runnable {
 			
 			client.download(uri, Port.docsync, req, tempath);
 			
-			Albums.createFile(connPriv, p, robot);
+			createFile(connPriv, p, robot);
 		}
 
 		DocsReq clsReq = (DocsReq) new DocsReq(null, uri, p)
@@ -159,6 +155,11 @@ public class SyncWorker implements Runnable {
 		client.commit(q, errLog);
 
 		return p.fullpath();
+	}
+
+	public static String createFile(String connPriv2, SyncDoc p, SyncRobot robot2) {
+		
+		return null;
 	}
 
 	/** 
@@ -175,17 +176,16 @@ public class SyncWorker implements Runnable {
 	 * or false if file size and mime doesn't match (tempath deleted)
 	 * @throws IOException 
 	 */
-	protected boolean verifyDel(Photo f, PhotoRobot worker, String docTable) throws IOException {
+	protected boolean verifyDel(SyncDoc f, SyncRobot worker, String docTable) throws IOException {
 		String pth = tempath(f, worker);
 		File file = new File(pth);
 		if (!file.exists())
 			return false;
 	
-		String mime = f.mime;
 		long size = f.size;
-		f = Exif.parseExif(f, pth);
+		long length = file.length();
 
-		if ( mime != null && mime.equals(f.mime) && size == f.size ) {
+		if ( size == length ) {
 			// move temporary file
 			String targetPath = resolvePrivRoot(f.uri);
 			if (Docsyncer.debug)
@@ -204,7 +204,7 @@ public class SyncWorker implements Runnable {
 		}
 	}
 
-	public String tempath(IFileDescriptor f, PhotoRobot worker) {
+	public String tempath(IFileDescriptor f, SyncRobot worker) {
 		String tempath = f.fullpath().replaceAll(":", "");
 		return EnvPath.decodeUri(tempDir, tempath);
 	}
@@ -221,8 +221,8 @@ public class SyncWorker implements Runnable {
 			// find local records with shareflag = pub
 			AnResultset rs = (AnResultset) localSt
 				.select(targetablPriv, "f")
-				.cols("device", "clientpath", "shareflag")
-				.whereEq("shareflag", Docsyncer.taskPrvPushing)
+				.cols("device", "clientpath", "syncflag")
+				.whereEq("syncflag", DocsReq.sharePublic)
 				.rs(localSt.instancontxt(connPriv, robot))
 				.rs(0);
 
@@ -253,7 +253,7 @@ public class SyncWorker implements Runnable {
 			int px = 0;
 			while(files.next()) {
 				px++;
-				IFileDescriptor p = new Photo(files);
+				IFileDescriptor p = new SyncDoc(files);
 				DocsReq req = new DocsReq()
 						.blockStart(p, user);
 
@@ -278,7 +278,7 @@ public class SyncWorker implements Runnable {
 						req = new DocsReq().blockUp(seq, resp, b64, user);
 						seq++;
 
-						q = client.<DocsReq>userReq(uri, AlbumPort.album, req)
+						q = client.<DocsReq>userReq(uri, Port.docsync, req)
 									.header(header);
 
 						resp = client.commit(q, errLog);
@@ -288,7 +288,7 @@ public class SyncWorker implements Runnable {
 					}
 					req = new DocsReq().blockEnd(resp, user);
 
-					q = client.<DocsReq>userReq(uri, AlbumPort.album, req)
+					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
 					resp = client.commit(q, errLog);
 					if (proc != null) proc.proc(px, totalBlocks, resp);
@@ -298,7 +298,7 @@ public class SyncWorker implements Runnable {
 
 					req = new DocsReq().blockAbort(resp, user);
 					req.a(DocsReq.A.blockAbort);
-					q = client.<DocsReq>userReq(uri, AlbumPort.album, req)
+					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
 					resp = client.commit(q, errLog);
 					if (proc != null) proc.proc(px, totalBlocks, resp);

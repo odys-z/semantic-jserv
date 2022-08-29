@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.oz.jserv.docsync;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
@@ -20,13 +20,13 @@ import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 
 /**
- * Server side and jprotocol oriented data record - not BaseFile used by file picker. 
+ * Server side and jprotocol oriented data record,
+ * and sync object used for docsync.jserv. 
  * 
- * @deprecated replaced by SyncDoc
  * @author ody
  *
  */
-public class Photo extends Anson implements IFileDescriptor {
+public class SyncDoc extends Anson implements IFileDescriptor {
 	public String recId;
 	public String recId() { return recId; }
 
@@ -55,9 +55,9 @@ public class Photo extends Anson implements IFileDescriptor {
 
 	public String shareby;
 	public String sharedate;
-	public String geox;
-	public String geoy;
-	public String sharer;
+//	public String geox;
+//	public String geoy;
+//	public String sharer;
 	
 	/** usually ignored when sending request */
 	public long size;
@@ -81,15 +81,15 @@ public class Photo extends Anson implements IFileDescriptor {
 	public String mime() { return mime; }
 
 	/** image size */
-	public int[] widthHeight;
+//	public int[] widthHeight;
 	/** reduction of image size */
-	public int[] wh;
+//	public int[] wh;
 	
 	/**
 	 * Composed css json, saved as string.
 	 * @see #css()
 	 * */
-	public String css;
+//	public String css;
 
 	/**
 	 * Compose a string representing json object for saving in DB.
@@ -97,34 +97,34 @@ public class Photo extends Anson implements IFileDescriptor {
 	 * 
 	 * @return string of json for saving
 	 */
-	public String css() {
-		if (widthHeight != null)
-			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s]}",
-				widthHeight[0], widthHeight[1], wh[0], wh[1]);
-		else return "";
-	}
+//	public String css() {
+//		if (widthHeight != null)
+//			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s]}",
+//				widthHeight[0], widthHeight[1], wh[0], wh[1]);
+//		else return "";
+//	}
 
-	public String collectId;
-	public String collectId() { return collectId; }
+//	public String collectId;
+//	public String collectId() { return collectId; }
 
-	public String albumId;
+//	public String albumId;
 	
 	String month;
 	
-	public Photo() {}
+	public SyncDoc() {}
 	
-	public Photo(AnResultset rs) throws SQLException {
+	public SyncDoc(AnResultset rs) throws SQLException {
 		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
 		this.uri = rs.getString("uri");
 		this.month = rs.getString("folder");
 		this.createDate = rs.getString("pdate");
-		this.shareby = rs.getString("owner");
-		this.geox = rs.getString("geox");
-		this.geoy = rs.getString("geoy");
+//		this.shareby = rs.getString("owner");
+//		this.geox = rs.getString("geox");
+//		this.geoy = rs.getString("geoy");
 		this.mime = rs.getString("mime");
 		
-		this.css = rs.getString("css");
+//		this.css = rs.getString("css");
 		
 		// TODO debug
 		this.clientpath =  rs.getString("clientpath");
@@ -135,14 +135,14 @@ public class Photo extends Anson implements IFileDescriptor {
 		} catch (SQLException ex) {
 			this.sharedate = rs.getString("pdate");
 		}
-		this.geox = rs.getString("geox");
-		this.geoy = rs.getString("geoy");
+//		this.geox = rs.getString("geox");
+//		this.geoy = rs.getString("geoy");
 		
 	}
 
-	public Photo(String collectId, AnResultset rs) throws SQLException {
+	public SyncDoc(String collectId, AnResultset rs) throws SQLException {
 		this(rs);
-		this.collectId = collectId;
+//		this.collectId = collectId;
 	}
 
 	/**Set client path and syncFlag
@@ -150,7 +150,7 @@ public class Photo extends Anson implements IFileDescriptor {
 	 * @return this
 	 * @throws SQLException
 	 */
-	public Photo asSyncRec(AnResultset rs) throws SQLException {
+	public SyncDoc asSyncRec(AnResultset rs) throws SQLException {
 		this.clientpath = rs.getString("clientpath"); 
 		this.syncFlag = rs.getInt("syncFlag"); 
 		return this;

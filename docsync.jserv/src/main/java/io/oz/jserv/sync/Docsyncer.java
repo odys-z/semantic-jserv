@@ -1,4 +1,4 @@
-package io.odysz.semantic.tier.docs.sync;
+package io.oz.jserv.sync;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -58,23 +58,24 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
 	public static final String keySynconn = "sync-conn-id";
-	public static final String keySyntablMeta = "sync-table-meta";
+	public static final String keySyncName = "sync-table-name";
 
 	public static final String cloudHub = "cloud-hub";
 	public static final String mainStorage = "main-storage";
 	public static final String privateStorage = "private-storage";
 
 	/** hub file to be pulled by private nodes */
-	public static final String taskHubBuffered = "hub-buf";
+//	public static final String taskHubBuffered = "hub-buf";
 //	public static final String taskPushByMain = "main-push";
 	/** local file to be pushed to cloud hub */
-	public static final String taskPrvPushing = "pub";
+//	public static final String taskPrvPushing = "pub";
 	/** local file published at cloud hub */
-	public static final String taskPrvPushed  = "hub";
+//	public static final String taskPrvPushed  = "hub";
 	/** noly stored at local jserv node */
-	public static final String taskLocalOnly  = "prv";
+//	public static final String taskLocalOnly  = "prv";
 
-	public static final String tablSyncTasks = "sync_tasks";
+//	public static final String tablSyncTasks = "sync_tasks";
+	public static final String tablSyncLog = "sync_log";
 
 	static ReentrantLock lock;
 
@@ -87,7 +88,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	private static int mode;
 	/** connection for update task records at cloud hub */
 	private static String connHub;
-	private static String targetablHub;
+	// private static String targetablHub;
 
 	public static boolean debug = true;
 
@@ -103,34 +104,46 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return null;
 	}
 
-	public static Insert onDocreate(IFileDescriptor doc, String targetabl, IUser usr)
+	/**
+	 * <p>Add a sync task when the doc to be created</p>
+	 * <p>1. mode == {@link SyncWorker#hub}<br/>
+	 * task: tag the doc to be synchronized by private storage</p>
+	 * <p>2. mode == {@link SyncWorker#main} or {@link SyncWorker#priv}<br/>
+	 * task: if doc is public, create a task for pushing to the cloud hub</p>
+	 * This method requires the taget table has fields of:
+	 * 
+	 * @param ins
+	 * @param doc
+	 * @param targetabl
+	 * @param usr
+	 * @return ins
+	 * @throws TransException
+	 */
+	public static Insert onDocreate(Insert ins, IFileDescriptor doc, String targetabl, IUser usr)
 			throws TransException {
 
 		if (SyncWorker.hub == mode && !doc.isPublic())
-			return st
-				.insert(tablSyncTasks)
-				.nv("task", taskHubBuffered)
-				.nv("shareby", usr.uid())
-				.nv("docId", doc.recId())
-				.nv("uri", doc.uri())
-				.nv("mime", doc.mime())
+			return ins
+				// .nv("shareby", usr.uid())
+				// .nv("docId", doc.recId())
 				.nv("device", doc.device())
 				.nv("clientpath", doc.fullpath())
-				.nv("targetabl", targetabl)
+				.nv("syncflag", doc.isPublic() ? DocsReq.shareCloudHub : DocsReq.shareCloudTmp)
 				;
-		else if (SyncWorker.main == mode && doc.isPublic())
-//			return st
-//				.insert(Docsyncer.tablSyncTasks)
-//				.nv("task", Docsyncer.taskPushByMain)
-//				.nv("shareby", usr.uid())
-//				.nv("docId", doc.recId())
-//				.nv("targetabl", targetabl)
+		else if (SyncWorker.main == mode)
+			return ins
+				// .nv("shareby", usr.uid())
+				// .nv("docId", doc.recId())
+				.nv("device", doc.device())
+				.nv("clientpath", doc.fullpath())
+				.nv("syncflag", doc.isPublic() ? DocsReq.sharePublic : DocsReq.sharePrivate)
 				;
 		else if (SyncWorker.priv == mode)
 			throw new TransException("TODO");
-		else
+		else {
 			Utils.warn("Unknow album serv mode: %s", mode);
-		return null;
+			return ins;
+		}
 	}
 
 	public static void init(ServletContextEvent evt) throws SemanticException, SQLException, SAXException, IOException {
@@ -150,13 +163,13 @@ public class Docsyncer extends ServPort<DocsReq> {
 		try { m = Integer.valueOf(Configs.getCfg(keyInterval)); } catch (Exception e) {}
 
 		String conn = Configs.getCfg(keySynconn);
-		String targetabl = Configs.getCfg(keySyntablMeta);
+		String targetabl = Configs.getCfg(keySyncName);
 
 		String cfg = Configs.getCfg(keyMode);
 		if (Docsyncer.cloudHub.equals(cfg)) {
 			mode = SyncWorker.hub;
 			connHub = conn;
-			targetablHub = targetabl;
+			// targetablHub = targetabl;
 		}
 		else if (Docsyncer.mainStorage.equals(cfg))
 			mode = SyncWorker.main;
@@ -231,7 +244,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			throws IOException, SemanticException, TransException, SQLException {
 		
 		AnResultset rs = (AnResultset) st
-				.select(tablSyncTasks, "p")
+				.select(req.docTabl, "p")
 				.col("device").col("clientpath")
 				.col("uri")
 				.col("mime")
@@ -246,15 +259,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 			String mime = rs.getString("mime");
 			resp.setContentType(mime);
 
-			String path = resolveHubRoot(rs.getString("uri"));
+			String path = resolveHubRoot(req.docTabl, rs.getString("uri"));
 
 			FileStream.sendFile(resp.getOutputStream(), path);
 		}
 	}
 	
-	public static String resolveHubRoot(String uri) {
+	public static String resolveHubRoot(String tabl, String uri) {
 		String extroot = ((ShExtFile) DATranscxt
-				.getHandler(connHub, targetablHub, smtype.extFile))
+				.getHandler(connHub, tabl, smtype.extFile))
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, uri);
 	}
@@ -269,16 +282,18 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws TransException 
 	 */
 	protected DocsResp synclose(DocsReq jreq, IUser usr) throws TransException, SQLException {
-		SemanticObject r = (SemanticObject) st.delete(tablSyncTasks)
-		  .whereEq("device", jreq.device())
-		  .whereEq("clientpath", jreq.clientpath)
-		  .d(st.instancontxt(connHub, usr));
+		SemanticObject r = (SemanticObject) st.insert(tablSyncLog)
+		  .nv("tabl", jreq.docTabl)
+		  .nv("device", jreq.device())
+		  .nv("clientpath", jreq.clientpath)
+		  .nv("syncby", usr.uid())
+		  .ins(st.instancontxt(connHub, usr));
 		return (DocsResp) new DocsResp().data(r.props()); 
 	}
 
 	protected DocsResp query(DocsReq jreq, IUser usr) throws TransException, SQLException {
 		AnResultset rs = (AnResultset) st
-				.select(tablSyncTasks, "t")
+				.select(jreq.docTabl, "t")
 				// .whereEq("device", jreq.device())
 				// .whereEq("clientpath", jreq.clientpath)
 				.whereEq("family", jreq.org)
