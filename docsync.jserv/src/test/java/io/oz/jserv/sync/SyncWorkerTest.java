@@ -1,4 +1,4 @@
-package io.odysz.semantic.tier.docs.sync;
+package io.oz.jserv.sync;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,9 +17,9 @@ import io.odysz.common.DateFormat;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.transact.x.TransException;
-import io.oz.album.PhotoRobot;
-import io.oz.album.tier.Albums;
-import io.oz.album.tier.Photo;
+import io.oz.jserv.docsync.SyncDoc;
+import io.oz.jserv.sync.SyncRobot;
+import io.oz.jserv.sync.SyncWorker;
 
 class SyncWorkerTest {
 
@@ -41,27 +41,32 @@ class SyncWorkerTest {
 		SsException, GeneralSecurityException, SAXException {
 		
 		String conn = "sys-sqlite";
-		Photo photo = new Photo();
+		SyncDoc photo = new SyncDoc();
 
-		String clientpath = "test/res/182x121.png";
+		String clientpath = "src/test/res/182x121.png";
 		File png = new File(clientpath);
 		FileInputStream ifs = new FileInputStream(png);
-		photo.uri = AESHelper.encode64(ifs, (int)png.length()); // 3 | 219
 
-		photo.albumId = "t0";
+		String b64 = AESHelper.encode64(ifs, 216); // 12 | 216, length = 219
+		photo.uri = b64;
+		while (b64 != null) {
+			b64 = AESHelper.encode64(ifs, 216);
+			if (b64 != null)
+				photo.uri += b64;
+		}
+		ifs.close();
+
 		photo.clientpath = clientpath;
 		photo.device = "jserv.main";
-		photo.sharer = "ody";
-		photo.geox = "50.426516"; // longitude
-		photo.geoy = "30.563037"; // latitude
+		photo.shareby = "ody";
 		photo.exif = new ArrayList<String>() {
 			{add("location:вулиця Лаврська' 27' Київ");};
 			{add("camera:Bayraktar TB2");}};
 		photo.sharedate = DateFormat.format(new Date());
 
-		PhotoRobot usr = new PhotoRobot("odys-z.github.io");
+		SyncRobot usr = new SyncRobot("odys-z.github.io");
 
-		String pid = Albums.createFile(conn, photo, usr);
+		String pid = SyncWorker.createFile(conn, photo, usr);
 
 		SyncWorker.blocksize = 32 * 3;
 		SyncWorker worker = new SyncWorker(0, conn, "h_photos")

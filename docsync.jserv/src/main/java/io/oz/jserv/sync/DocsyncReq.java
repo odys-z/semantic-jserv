@@ -1,3 +1,4 @@
+package io.oz.jserv.sync;
 //package io.odysz.semantic.tier.docs.sync;
 //
 //import io.odysz.semantic.jprotocol.AnsonBody;

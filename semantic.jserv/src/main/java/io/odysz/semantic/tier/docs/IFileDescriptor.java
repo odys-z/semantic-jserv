@@ -2,9 +2,10 @@ package io.odysz.semantic.tier.docs;
 
 import java.io.IOException;
 
-/**This interface is for java client collect local file information and requesting
- * file information at server side. So no record Id can present here.
- *  
+/**
+ * Since jserv 1.4.11, a file is an object shared across nodes, so this
+ * interface is also used for synchronizing.
+ * 
  * @author ody
  *
  */
@@ -12,7 +13,12 @@ public interface IFileDescriptor {
 	/** doc/file record Id - different for each jserv node */
 	String recId();
 
+	/**
+	 * Get full client path 
+	 * @return path
+	 */
 	String fullpath();
+
 	IFileDescriptor fullpath(String clientpath) throws IOException;
 
 	String clientname();
@@ -24,10 +30,10 @@ public interface IFileDescriptor {
 
 	String cdate();
 
-	/** device name */
+	/** @return device name */
 	String device();
 
-	/** File uri */
+	/** @return file uri */
 	String uri();
 
 	boolean isPublic();

@@ -254,31 +254,26 @@ class AlbumsTest {
 
 			@Override
 			public String recId() {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
 			@Override
 			public String mime() {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
 			@Override
 			public String device() {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
 			@Override
 			public String uri() {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
 			@Override
 			public boolean isPublic() {
-				// TODO Auto-generated method stub
 				return false;
 			} 
 		});

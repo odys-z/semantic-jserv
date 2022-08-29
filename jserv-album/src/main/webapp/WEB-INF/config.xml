@@ -52,8 +52,8 @@
 		<v>sys-sqlite</v>
 	</c>
 	<c>
-		<!-- table records to be synchronized -->
-		<k>sync-table-meta</k>
+		<!-- sync task name (multiple threads for the future), i.e. table name, of which table's records to be synchronized) -->
+		<k>sync-table-name</k>
 		<v>h_photos</v>
 	</c>
   </t>

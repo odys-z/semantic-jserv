@@ -11,8 +11,8 @@ import org.xml.sax.SAXException;
 
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.semantic.tier.docs.sync.Docsyncer;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.jserv.sync.Docsyncer;
 
 @WebListener
 public class AlbumSingleton extends JSingleton implements ServletContextListener {

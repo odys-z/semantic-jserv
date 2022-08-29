@@ -45,14 +45,17 @@ public class DocsReq extends AnsonBody {
 	}
 
 	/** shared as public file */
-	public static final String sharePublic  = "pub";
+	public static final String sharePublic = "pub";
 	/** published for sharing */
-	public static final String sharePublish  = "hub";
+	public static final String shareCloudHub = "hub";
+	/** temporary buffered at cloude */
+	public static final String shareCloudTmp = "tmp";
 	/** private sharing */
 	public static final String sharePrivate = "prv";
 
 	public PageInf page;
 	
+	public String docTabl;
 	public String docId;
 	public String docName;
 	public String createDate;

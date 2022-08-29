@@ -37,7 +37,6 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncRec;
-import io.odysz.semantic.tier.docs.sync.Docsyncer;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -51,6 +50,7 @@ import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
+import io.oz.jserv.sync.Docsyncer;
 
 /**
  * <h5>The album tier</h5> Although this tie is using the pattern of
@@ -477,20 +477,21 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv("uri", photo.uri).nv("pname", photo.pname)
 				.nv("pdate", photo.photoDate())
 				.nv("folder", photo.month())
-				.nv("device", ((PhotoRobot) usr).deviceId())
-				.nv("clientpath", photo.clientpath)
+				// .nv("device", ((PhotoRobot) usr).deviceId())
+				// .nv("clientpath", photo.clientpath)
 				.nv("geox", photo.geox).nv("geoy", photo.geoy)
 				.nv("exif", photo.exif)
-				.nv("shareflag", photo.isPublic ? DocsReq.sharePublic : DocsReq.sharePrivate)
-				.nv("shareby", usr.uid())
-				.nv("sharedate", Funcall.now());
+				// .nv("syncflag", photo.isPublic ? DocsReq.sharePublic : DocsReq.sharePrivate)
+				 .nv("shareby", usr.uid())
+				 .nv("sharedate", Funcall.now())
+				;
 		
 		if (!LangExt.isblank(photo.mime))
 			ins.nv("mime", photo.mime);
 		
 		// add a synchronizing task
 		// - also triggered as private storage jserv, but no statement will be added
-		ins.post(Docsyncer.onDocreate(photo, tablPhotos, usr));
+		Docsyncer.onDocreate(ins, photo, tablPhotos, usr);
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
