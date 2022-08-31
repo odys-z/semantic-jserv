@@ -216,23 +216,31 @@ public class SyncWorker implements Runnable {
 		return EnvPath.decodeUri(extroot, uri);
 	}
 
+	/**
+	 * Local node push docs to the cloud hub. 
+	 * 
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	public SyncWorker push() throws TransException, SQLException {
 		if (mode == main || mode == priv) {
 			// find local records with shareflag = pub
 			AnResultset rs = (AnResultset) localSt
 				.select(targetablPriv, "f")
 				.cols("device", "clientpath", "syncflag")
-				.whereEq("syncflag", DocsReq.sharePublic)
+				.whereEq("syncflag", DocsReq.sharePrvHub)
 				.rs(localSt.instancontxt(connPriv, robot))
 				.rs(0);
 
 			// upload
+			String clientpath = rs.getString("clientpath");
 			sync(rs, robot.sessionInf(), new OnProcess() {
 
 				@Override
 				public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
 						throws IOException, AnsonException, SemanticException {
-					
+					Utils.logi("%s: %s / %s, %s", clientpath, listIndx, totalBlocks, blockResp.msg());
 				}});
 			
 			// set shareflag = hub
@@ -240,8 +248,13 @@ public class SyncWorker implements Runnable {
 		return this;
 	}
 
-	public List<DocsResp> sync(AnResultset files,
-			SessionInf user, OnProcess proc, ErrorCtx ... onErr) throws SQLException {
+	private List<DocsResp> sync(AnResultset rs, SessionInf sessionInf, OnProcess onProcess)
+			throws SQLException {
+		return sync(uri, client, errLog, rs, sessionInf, onProcess);
+	}
+
+	public static List<DocsResp> sync(String uri, SessionClient client, ErrorCtx onErr,
+			AnResultset files, SessionInf user, OnProcess proc) throws SQLException {
 
 		DocsResp resp = null;
 		try {
@@ -261,7 +274,7 @@ public class SyncWorker implements Runnable {
 						.<DocsReq>userReq(uri, Port.docsync, req)
 						.header(header);
 
-				resp = client.commit(q, errLog);
+				resp = client.commit(q, onErr);
 
 				String pth = p.fullpath();
 				if (!pth.equals(resp.fullpath()))
@@ -281,7 +294,7 @@ public class SyncWorker implements Runnable {
 						q = client.<DocsReq>userReq(uri, Port.docsync, req)
 									.header(header);
 
-						resp = client.commit(q, errLog);
+						resp = client.commit(q, onErr);
 						if (proc != null) proc.proc(px, totalBlocks, resp);
 
 						b64 = AESHelper.encode64(ifs, blocksize);
@@ -290,7 +303,7 @@ public class SyncWorker implements Runnable {
 
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
-					resp = client.commit(q, errLog);
+					resp = client.commit(q, onErr);
 					if (proc != null) proc.proc(px, totalBlocks, resp);
 				}
 				catch (Exception ex) {
@@ -300,7 +313,7 @@ public class SyncWorker implements Runnable {
 					req.a(DocsReq.A.blockAbort);
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
-					resp = client.commit(q, errLog);
+					resp = client.commit(q, onErr);
 					if (proc != null) proc.proc(px, totalBlocks, resp);
 
 					throw ex;
@@ -312,9 +325,9 @@ public class SyncWorker implements Runnable {
 
 			return reslts;
 		} catch (IOException e) {
-			errLog.onError(MsgCode.exIo, e.getClass().getName() + " " + e.getMessage());
+			onErr.onError(MsgCode.exIo, e.getClass().getName() + " " + e.getMessage());
 		} catch (AnsonException | SemanticException e) { 
-			errLog.onError(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
+			onErr.onError(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
 		}
 		return null;
 	}

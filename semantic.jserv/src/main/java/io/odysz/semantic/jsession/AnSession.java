@@ -390,6 +390,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.uname, "uname")
 			.col(usrMeta.pswd, "pswd")
 			.col(usrMeta.iv, "iv")
+			.col(usrMeta.org, "org")        // v1.4.11
+			.col(usrMeta.role, "role")		// v1.4.11
 			.where_("=", "u." + usrMeta.pk, sessionBody.uid())
 			.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
 		
@@ -397,6 +399,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString("uid");
 			IUser obj = createUser(usrClzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"))
+						.onCreate(rs) // v1.4.11
 						.onCreate(sessionBody)
 						.touch();
 			if (obj instanceof SemanticObject)

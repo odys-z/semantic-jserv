@@ -474,6 +474,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throw new SemanticException("Month of photo creating is important for saving files. It's required for creating media file.");
 
 		Insert ins = st.insert(tablPhotos, usr)
+				.nv("family", ((PhotoRobot) usr).orgId())
 				.nv("uri", photo.uri).nv("pname", photo.pname)
 				.nv("pdate", photo.photoDate())
 				.nv("folder", photo.month())
