@@ -66,6 +66,13 @@
 	    <version>[0.4.14,)</version>
 	</dependency>
 
+	<dependency>
+	    <groupId>io.github.odys-z</groupId>
+	    <artifactId>album-lib</artifactId>
+	    <scope>test</scope>
+	    <version>[0.4.19,)</version>
+	</dependency>
+
   </dependencies>
 
   <scm>

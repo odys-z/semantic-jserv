@@ -252,30 +252,15 @@ class AlbumsTest {
 
 			@Override public String cdate() { return null; }
 
-			@Override
-			public String recId() {
-				return null;
-			}
+			@Override public String recId() { return null; }
 
-			@Override
-			public String mime() {
-				return null;
-			}
+			@Override public String mime() { return null; }
 
-			@Override
-			public String device() {
-				return null;
-			}
+			@Override public String device() { return null; }
 
-			@Override
-			public String uri() {
-				return null;
-			}
+			@Override public String uri() { return null; }
 
-			@Override
-			public boolean isPublic() {
-				return false;
-			} 
+			@Override public boolean isPublic() { return false; } 
 		});
 
 		try {

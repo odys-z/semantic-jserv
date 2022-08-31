@@ -128,7 +128,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				// .nv("docId", doc.recId())
 				.nv("device", doc.device())
 				.nv("clientpath", doc.fullpath())
-				.nv("syncflag", doc.isPublic() ? DocsReq.shareCloudHub : DocsReq.shareCloudTmp)
+				.nv("syncflag", doc.isPublic() ? DocsReq.shareCloudHub : DocsReq.shareCloudPrv)
 				;
 		else if (SyncWorker.main == mode)
 			return ins
@@ -283,20 +283,21 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 */
 	protected DocsResp synclose(DocsReq jreq, IUser usr) throws TransException, SQLException {
 		SemanticObject r = (SemanticObject) st.insert(tablSyncLog)
-		  .nv("tabl", jreq.docTabl)
-		  .nv("device", jreq.device())
-		  .nv("clientpath", jreq.clientpath)
-		  .nv("syncby", usr.uid())
-		  .ins(st.instancontxt(connHub, usr));
+				.nv("family", jreq.org)
+				.nv("tabl", jreq.docTabl)
+				.nv("device", jreq.device())
+				.nv("clientpath", jreq.clientpath)
+				.nv("syncby", usr.uid())
+				.ins(st.instancontxt(connHub, usr));
 		return (DocsResp) new DocsResp().data(r.props()); 
 	}
 
 	protected DocsResp query(DocsReq jreq, IUser usr) throws TransException, SQLException {
 		AnResultset rs = (AnResultset) st
 				.select(jreq.docTabl, "t")
-				// .whereEq("device", jreq.device())
-				// .whereEq("clientpath", jreq.clientpath)
+				.cols("family", "device", "clientpath", "syncflag")
 				.whereEq("family", jreq.org)
+				.whereEqOr("syncflag", DocsReq.sharePrivate, DocsReq.shareCloudHub)
 				.rs(st.instancontxt(connHub, usr))
 				.rs(0);
 

@@ -44,14 +44,45 @@ public class DocsReq extends AnsonBody {
 		public static final String deprecated = "depr";
 	}
 
-	/** shared as public file */
+	/** 
+	 * <p>Doc state: shared as public file.</p>
+	 * <p>docs created at hub:</p>
+	 *          hub state --&gt; both<br>
+	 * public : {@link #shareCloudHub} - (pulled) -&gt; {@link #sharePublic}<br/>
+	 * private: {@link #shareCloudPrv} - (pulled) -&gt; {@link #sharePrivate}<br/>
+	 * <p>docs created at private:</p>
+	 *          private state --&gt; both<br>
+	 * public : {@link #sharePrvHub}  - (pushed) -&gt; {@link #sharePublic}<br/>
+	 * private: {@link #sharePrvTmp}  - (synced) -&gt; {@link #sharePrivate}<br/>
+	 */
 	public static final String sharePublic = "pub";
-	/** published for sharing */
+
+	/**
+	 * <p>Doc state: uploaded to hub for sharing.</p>
+	 * @see #sharePublic
+	 */
 	public static final String shareCloudHub = "hub";
-	/** temporary buffered at cloude */
-	public static final String shareCloudTmp = "tmp";
-	/** private sharing */
+	/**
+	 * <p>temporary buffered at cloud.</p>
+	 * @see #sharePublic
+	 */
+	public static final String shareCloudPrv = "h-p";
+	/**
+	 * privately shared
+	 * @see #sharePublic
+	 * */
 	public static final String sharePrivate = "prv";
+	/** 
+	 * Doc state: doc is created as public and buffered at private node 
+	 * @see #sharePublic
+	 */
+	public static final String sharePrvHub = "p-h";
+	/**
+	 * Doc state: doc is created as private at private node
+	 * (state will turn to {@link #sharePrivate} by synchronizer). 
+	 * @see #sharePublic
+	 */
+	public static final String sharePrvTmp = "p.t";
 
 	public PageInf page;
 	
