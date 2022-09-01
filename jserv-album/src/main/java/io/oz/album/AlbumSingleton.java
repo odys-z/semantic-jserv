@@ -28,7 +28,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			AnsonMsg.understandPorts(AlbumPort.album);
 			// Anson.verbose = true;
 			
-			Docsyncer.init(sce);
+			Docsyncer.init(sce, System.getProperty("JSERV_NODE"));
 		} catch (SemanticException | SAXException | IOException | SQLException e) {
 			e.printStackTrace();
 		}

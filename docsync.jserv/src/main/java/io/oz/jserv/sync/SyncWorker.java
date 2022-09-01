@@ -65,11 +65,12 @@ public class SyncWorker implements Runnable {
 	ErrorCtx errLog;
 
 
-	public SyncWorker(int mode, String connId, String docTable)
+	public SyncWorker(int mode, String connId, String worker, String docTable)
 			throws SemanticException, SQLException, SAXException, IOException {
 		this.mode = mode;
 		uri = "sync.jserv";
 		connPriv = connId;
+		workerId = worker;
 		targetablPriv = docTable;
 		
 		if (mode != main)
@@ -81,6 +82,18 @@ public class SyncWorker implements Runnable {
 				Utils.warn(msg);
 			}
 		};
+	}
+
+	public SyncWorker login(String workerId, String pswd) throws SemanticException, AnsonException, SsException, IOException, GeneralSecurityException {
+		this.workerId = workerId;
+		
+		if (workerId != null && client == null) {
+			client = Clients.login(workerId, pswd);
+			robot = new SyncRobot(workerId, null, workerId);
+			tempDir = String.format("io.oz.sync-%s.%s", mode, workerId); 
+		}
+		
+		return this;
 	}
 
 	@Override
@@ -108,18 +121,6 @@ public class SyncWorker implements Runnable {
 		finally {
 			Docsyncer.lock.unlock();
 		}
-	}
-
-	public SyncWorker login(String workerId, String pswd) throws SemanticException, AnsonException, SsException, IOException, GeneralSecurityException {
-		this.workerId = workerId;
-		
-		if (client == null) {
-			client = Clients.login(workerId, pswd);
-			robot = new SyncRobot(workerId, null, workerId);
-			tempDir = String.format("io.oz.sync-%s.%s", mode, workerId); 
-		}
-		
-		return this;
 	}
 
 	void syncDocs(DocsResp resp)
