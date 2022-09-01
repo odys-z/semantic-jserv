@@ -104,7 +104,7 @@ class SyncWorkerTest {
 		String pid = SyncWorker.createFile(conn, photo, usr);
 
 		SyncWorker.blocksize = 32 * 3;
-		SyncWorker worker = new SyncWorker(0, conn, "h_photos")
+		SyncWorker worker = new SyncWorker(0, conn, "kyiv.jnode", "h_photos")
 				.login("odys-z.github.io", "слава україні") // jserv node
 				.push();
 	

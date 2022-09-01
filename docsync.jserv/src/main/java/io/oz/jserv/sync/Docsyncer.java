@@ -60,9 +60,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String keySynconn = "sync-conn-id";
 	public static final String keySyncName = "sync-table-name";
 
-	public static final String cloudHub = "cloud-hub";
-	public static final String mainStorage = "main-storage";
-	public static final String privateStorage = "private-storage";
+	public static final String cloudHub = "hub";
+	public static final String mainStorage = "main";
+	public static final String privateStorage = "private";
 
 	/** hub file to be pulled by private nodes */
 //	public static final String taskHubBuffered = "hub-buf";
@@ -86,9 +86,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 	@SuppressWarnings("unused")
 	private static ScheduledFuture<?> schedualed;
 	private static int mode;
-	/** connection for update task records at cloud hub */
-	private static String connHub;
-	// private static String targetablHub;
+	/** connection for update sync flages &amp; task records. */
+	private static String synconn;
 
 	public static boolean debug = true;
 
@@ -146,7 +145,19 @@ public class Docsyncer extends ServPort<DocsReq> {
 		}
 	}
 
-	public static void init(ServletContextEvent evt) throws SemanticException, SQLException, SAXException, IOException {
+	/**
+	 * Initialize doc synchronizer.
+	 * @param evt
+	 * @param nodeId Jserv node id which is used as sync-worker's login id.
+	 * It is not required if the node is running in hub mode.
+	 * 
+	 * @throws SemanticException
+	 * @throws SQLException
+	 * @throws SAXException
+	 * @throws IOException
+	 */
+	public static void init(ServletContextEvent evt, String nodeId)
+			throws SemanticException, SQLException, SAXException, IOException {
 
 		Utils.logi("Starting file synchronizer ...");
 
@@ -162,25 +173,28 @@ public class Docsyncer extends ServPort<DocsReq> {
 		int m = 5;  // sync interval
 		try { m = Integer.valueOf(Configs.getCfg(keyInterval)); } catch (Exception e) {}
 
-		String conn = Configs.getCfg(keySynconn);
+		synconn = Configs.getCfg(keySynconn);
 		String targetabl = Configs.getCfg(keySyncName);
 
 		String cfg = Configs.getCfg(keyMode);
 		if (Docsyncer.cloudHub.equals(cfg)) {
 			mode = SyncWorker.hub;
-			connHub = conn;
-			// targetablHub = targetabl;
+			if (ServFlags.file)
+				Utils.logi("[ServFlags.file] sync worker disabled for node working in cloud hub mode.");
 		}
-		else if (Docsyncer.mainStorage.equals(cfg))
-			mode = SyncWorker.main;
-		else mode = SyncWorker.priv;
-	
-        schedualed = scheduler.scheduleAtFixedRate(
-        		new SyncWorker(mode, conn, targetabl),
-        		0, m, TimeUnit.MINUTES);
+		else {
+			if (Docsyncer.mainStorage.equals(cfg))
+				mode = SyncWorker.main;
+			else mode = SyncWorker.priv;
+		
+			schedualed = scheduler.scheduleAtFixedRate(
+					new SyncWorker(mode, synconn, nodeId, targetabl),
+					0, m, TimeUnit.MINUTES);
 
-		if (ServFlags.file)
-			Utils.warn("[ServFlags.file] sync worker scheduled (interval %s minute).", m);
+			if (ServFlags.file)
+				Utils.warn("[ServFlags.file] sync worker scheduled for private node (mode %s, interval %s minute).",
+						cfg, m);
+		}
 	}
 
 	@Override
@@ -250,7 +264,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.col("mime")
 				.whereEq("device", req.device())
 				.whereEq("clientpath", req.clientpath)
-				.rs(st.instancontxt(connHub, usr)).rs(0);
+				.rs(st.instancontxt(synconn, usr)).rs(0);
 
 		if (!rs.next()) {
 			write(resp, err(MsgCode.exDA, "File missing: %s", ""));
@@ -267,7 +281,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	
 	public static String resolveHubRoot(String tabl, String uri) {
 		String extroot = ((ShExtFile) DATranscxt
-				.getHandler(connHub, tabl, smtype.extFile))
+				.getHandler(synconn, tabl, smtype.extFile))
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, uri);
 	}
@@ -288,7 +302,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.nv("device", jreq.device())
 				.nv("clientpath", jreq.clientpath)
 				.nv("syncby", usr.uid())
-				.ins(st.instancontxt(connHub, usr));
+				.ins(st.instancontxt(synconn, usr));
 		return (DocsResp) new DocsResp().data(r.props()); 
 	}
 
@@ -298,7 +312,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.cols("family", "device", "clientpath", "syncflag")
 				.whereEq("family", jreq.org)
 				.whereEqOr("syncflag", DocsReq.sharePrivate, DocsReq.shareCloudHub)
-				.rs(st.instancontxt(connHub, usr))
+				.rs(st.instancontxt(synconn, usr))
 				.rs(0);
 
 		return (DocsResp) new DocsResp().rs(rs);
