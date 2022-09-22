@@ -21,43 +21,70 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
+import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.DASemantics.smtype;
+import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.SessionInf;
+import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncRec;
+import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 import io.oz.album.client.AlbumClientier;
 import io.oz.album.tier.AlbumResp;
-import io.oz.jserv.docsync.SyncDoc;
-import io.oz.jserv.sync.SyncRobot;
-import io.oz.jserv.sync.SyncWorker;
+import io.oz.album.tier.DocUtils;
+import io.oz.album.tier.Photo;
+import io.oz.album.tier.PhotoMeta;
 
 class SyncWorkerTest {
 
+//	static final String tablPhotos = "h_photos";
+
 	static ErrorCtx errLog;
+	static DATranscxt defltSt;
 
 	static {
-		Path currentRelativePath = Paths.get("");
-		String p = currentRelativePath.toAbsolutePath().toString();
-		System.setProperty("VOLUME_HOME", p + "/src/test/res/volume");
-		Connects.init("src/test/res/WEB-INF");
-		Clients.init("http://localhost:8081/jserv-album", true);
-		
-		errLog = new ErrorCtx() {
-			@Override
-			public void onError(MsgCode code, String msg) {
-				Utils.warn(msg);
-			}
-		};
+		try {
+			Path currentRelativePath = Paths.get("");
+			String p = currentRelativePath.toAbsolutePath().toString();
+			System.setProperty("VOLUME_HOME", p + "/src/test/res/volume");
+
+			Configs.init(p + "/src/test/res/WEB-INF");
+			Connects.init(p + "/src/test/res/WEB-INF");
+			defltSt = new DATranscxt(Connects.defltConn());
+			AnsonMsg.understandPorts(Port.docsync);
+			AnSession.init(defltSt);
+
+			Connects.init("src/test/res/WEB-INF");
+			Clients.init("http://localhost:8081/jserv-album", true);
+			
+			errLog = new ErrorCtx() {
+				@Override
+				public void onError(MsgCode code, String msg) {
+					Utils.warn(msg);
+				}
+			};
+		} catch (SemanticException | SQLException | SAXException | IOException e) {
+			e.printStackTrace();
+		}
 	}
+
 	/**
 	 * Test {@link SyncWorker} with album-jserv as sync hub (8081).
 	 * @throws TransException 
@@ -75,8 +102,9 @@ class SyncWorkerTest {
 		AnsonException, SQLException, IOException, TransException,
 		SsException, GeneralSecurityException, SAXException {
 		
+		// create a public file at this private node
 		String conn = "main-sqlite";
-		SyncDoc photo = new SyncDoc();
+		Photo photo = new Photo();
 
 		String clientpath = "src/test/res/182x121.png";
 		File png = new File(clientpath);
@@ -92,7 +120,7 @@ class SyncWorkerTest {
 		ifs.close();
 
 		photo.clientpath = clientpath;
-		photo.device = "jserv.main";
+		photo.device = "test device";
 		photo.shareby = "ody";
 		photo.exif = new ArrayList<String>() {
 			{add("location:вулиця Лаврська' 27' Київ");};
@@ -101,16 +129,39 @@ class SyncWorkerTest {
 
 		SyncRobot usr = new SyncRobot("odys-z.github.io");
 
-		String pid = SyncWorker.createFile(conn, photo, usr);
+		String pth = createPhoto(conn, photo, usr, new PhotoMeta(defltSt.getSysConnId()));
 
+		// synchronize to cloud hub
 		SyncWorker.blocksize = 32 * 3;
-		SyncWorker worker = new SyncWorker(0, conn, "kyiv.jnode", "h_photos")
+		SyncWorker worker = new SyncWorker(0, conn, "kyiv.jnode", "h_photos", new DocTableMeta("h_photos", conn))
 				.login("odys-z.github.io", "слава україні") // jserv node
 				.push();
 	
 		DocsResp resp = worker.queryTasks();
 
-		worker.syncDocs(resp);
+		worker.pullDocs(resp);
+	}
+
+	/**
+	 * Simulates the processing of Albums.createFile(), creating a stub photo and querying it (have syncflag updated).
+	 * 
+	 * @param conn
+	 * @param photo
+	 * @param usr
+	 * @param meta 
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws IOException 
+	 */
+	String createPhoto(String conn, Photo photo, SyncRobot usr, PhotoMeta meta)
+			throws TransException, SQLException, IOException {
+
+		if (!DATranscxt.hasSemantics(conn, "h_photos", smtype.extFile))
+			throw new SemanticException("Semantics of ext-file for h_photos.uri dosen't been found");
+		
+		Update post = Docsyncer.onDocreate(photo, meta, usr);
+		return DocUtils.createFile(conn, photo, usr, meta, defltSt, post);
 	}
 
 	@Test

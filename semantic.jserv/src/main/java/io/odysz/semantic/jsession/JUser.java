@@ -41,25 +41,33 @@ public class JUser extends SemanticObject implements IUser {
 
 		public JUserMeta(String tbl, String... conn) {
 			super("a_users", conn);
-			// this.tbl = "a_user";
+			this.tbl = "a_users";
 			this.pk = "userId";
 			this.uname = "userName";
 			this.pswd = "pswd";
 			this.iv = "encAuxiliary";
 			this.org = "orgId";
+			this.orgName = "orgName";
 			this.role = "roleId";
+			this.roleName = "roleName";
 		}
 
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-		// public String tbl; // = "a_user";
 		public String pk; // = "userId";
 		public String uname; // = "userName";
 		public String pswd; // = "pswd";
 		public String iv; // = "encAuxiliary";
-		/** v1.4.11 */
+		/** v1.4.11, column of org id */
 		public String org;
-		/** v1.4.11 */
+		/** v1.4.11, column of org name */
+		public String orgName;
+		/** v1.4.11, column of role id */
 		public String role;
+		/** v1.4.11, column of role name */
+		public String roleName;
+
+		public String orgTbl = "a_orgs";
+		public String roleTbl = "a_roles";
 
 		public JUserMeta userName(String unamefield) {
 			uname = unamefield;
@@ -76,7 +84,7 @@ public class JUser extends SemanticObject implements IUser {
 			return this;
 		}
 	}
-
+	
 	protected String ssid;
 	protected String uid;
 	protected String org;
@@ -94,8 +102,11 @@ public class JUser extends SemanticObject implements IUser {
 
 	private long touched;
 	/** current action's business function */
-	private String funcId;
-	private String funcName;
+	String funcId;
+	String funcName;
+	String userName;
+	String roleName;
+	String orgName;
 
 	private static DATranscxt logsctx;
 	private static String[] connss;
@@ -247,15 +258,22 @@ public class JUser extends SemanticObject implements IUser {
 	}
 	
 	@Override
-	public IUser onCreate(Anson opts) {
-		if (opts instanceof AnResultset) {
+	public IUser onCreate(Anson with) throws SsException {
+		if (with instanceof AnResultset) {
+			JUserMeta meta = (JUserMeta) meta();
+			AnResultset rs = (AnResultset) with;
 			try {
-				this.org = ((AnResultset) opts).getString("org");
-				this.role = ((AnResultset) opts).getString("role");
+				rs.beforeFirst().next();
+				userName = rs.getString(meta.uname);
+				role = rs.getString(meta.role);
+				org = rs.getString(meta.org);
+				roleName = rs.getString(meta.roleName);
+				orgName = rs.getString(meta.orgName);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 		}
+
 		return this;
 	}
 }

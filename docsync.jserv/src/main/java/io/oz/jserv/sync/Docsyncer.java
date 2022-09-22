@@ -23,6 +23,7 @@ import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFile;
 import io.odysz.semantic.DASemantics.smtype;
+import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -41,7 +42,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
-import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
@@ -104,38 +105,40 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * <p>Add a sync task when the doc to be created</p>
-	 * <p>1. mode == {@link SyncWorker#hub}<br/>
-	 * task: tag the doc to be synchronized by private storage</p>
-	 * <p>2. mode == {@link SyncWorker#main} or {@link SyncWorker#priv}<br/>
+	 * <p>Add a sync task when the doc is to be created</p>
+	 * <p>1. for jserv mode == {@link SyncWorker#hub}<br/>
+	 * task: tags the doc to be synchronized by private storage</p>
+	 * <p>2. for jserv mode == {@link SyncWorker#main} or {@link SyncWorker#priv}<br/>
 	 * task: if doc is public, create a task for pushing to the cloud hub</p>
-	 * This method requires the taget table has fields of:
+	 * This method requires the target table has fields named meta.shareflag &amp; meta.syncflag.
 	 * 
-	 * @param ins
 	 * @param doc
-	 * @param targetabl
+	 * @param meta
 	 * @param usr
-	 * @return ins
+	 * @return post update
 	 * @throws TransException
 	 */
-	public static Insert onDocreate(Insert ins, IFileDescriptor doc, String targetabl, IUser usr)
+	public static Update onDocreate(IFileDescriptor doc, DocTableMeta meta, IUser usr)
 			throws TransException {
 
+		Update ins = st.update(meta.tbl);
 		if (SyncWorker.hub == mode && !doc.isPublic())
 			return ins
 				// .nv("shareby", usr.uid())
 				// .nv("docId", doc.recId())
-				.nv("device", doc.device())
-				.nv("clientpath", doc.fullpath())
-				.nv("syncflag", doc.isPublic() ? DocsReq.shareCloudHub : DocsReq.shareCloudPrv)
+				// .nv("device", doc.device())
+				// .nv("clientpath", doc.fullpath())
+				.nv(meta.shareflag, DocsReq.Share.pub)
+				.nv(meta.syncflag, DocsyncReq.SyncFlag.hubInit)
+				.whereEq(meta.pk, doc.recId())
 				;
+		
+		// private doc
 		else if (SyncWorker.main == mode)
 			return ins
-				// .nv("shareby", usr.uid())
-				// .nv("docId", doc.recId())
-				.nv("device", doc.device())
-				.nv("clientpath", doc.fullpath())
-				.nv("syncflag", doc.isPublic() ? DocsReq.sharePublic : DocsReq.sharePrivate)
+				.nv(meta.shareflag, doc.isPublic() ? DocsReq.Share.pub : DocsReq.Share.priv)
+				.nv(meta.syncflag, doc.isPublic() ? DocsyncReq.SyncFlag.priv : DocsyncReq.SyncFlag.sharing)
+				.whereEq(meta.pk, doc.recId())
 				;
 		else if (SyncWorker.priv == mode)
 			throw new TransException("TODO");
@@ -188,7 +191,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			else mode = SyncWorker.priv;
 		
 			schedualed = scheduler.scheduleAtFixedRate(
-					new SyncWorker(mode, synconn, nodeId, targetabl),
+					new SyncWorker(mode, synconn, nodeId, targetabl, new DocTableMeta("h_photos", synconn)),
 					0, m, TimeUnit.MINUTES);
 
 			if (ServFlags.file)
@@ -311,7 +314,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.select(jreq.docTabl, "t")
 				.cols("family", "device", "clientpath", "syncflag")
 				.whereEq("family", jreq.org)
-				.whereEqOr("syncflag", DocsReq.sharePrivate, DocsReq.shareCloudHub)
+				.whereEq("syncflag", DocsyncReq.SyncFlag.hubInit)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0);
 

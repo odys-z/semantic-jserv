@@ -2,6 +2,7 @@ package io.oz.album;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.apache.commons.io.FileUtils;
 import io.odysz.anson.Anson;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFile;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
@@ -26,7 +28,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.Albums;
 
-/**A robot is only used for test.
+/**A robot used session-less service.
  * 
  * @author odys-z@github.com
  */
@@ -35,6 +37,11 @@ public class PhotoRobot extends SemanticObject implements IUser {
 	long touched;
 
 	String userId;
+	String userName;
+	String roleId;
+	String roleName;
+	String orgId;
+	String orgName;
 	
 	String deviceId;
 	public String deviceId() { return deviceId; }
@@ -43,35 +50,59 @@ public class PhotoRobot extends SemanticObject implements IUser {
 
 	private Set<String> tempDirs;
 
+	RobotMeta userMeta;
+
 	public PhotoRobot(String userid) {
 		this.userId = userid;
+		userMeta = (RobotMeta) meta();
 	}
 
+	/**
+	 * Reflect constructor
+	 * @param userid
+	 * @param pswd
+	 * @param userName
+	 */
 	public PhotoRobot(String userid, String pswd, String userName) {
 		this.userId = userid;
+		userMeta = (RobotMeta) meta();
 	}
 	
 	public static class RobotMeta extends JUserMeta {
+		String device;
 		public RobotMeta(String tbl, String... conn) {
 			super(tbl, conn);
 
-			this.tbl = "a_users";
-			pk = "userId";
-			uname = "userName";
-			pswd = "pswd";
 			iv = "iv";
+			device = "device";
 		}
 	}
 
 	public TableMeta meta() {
-		return new RobotMeta("");
+		return new RobotMeta("a_users");
 	}
 
+	// TODO move this to JUser?
 	@Override
-	public IUser onCreate(Anson reqBody) throws SsException {
-		deviceId = ((AnSessionReq)reqBody).deviceId();
-		if (LangExt.isblank(deviceId, "/", "\\."))
-			throw new SsException("Photo user's device Id can not be null - used for distinguish files.");
+	public IUser onCreate(Anson with) throws SsException {
+		if (with instanceof AnResultset) {
+			AnResultset rs = (AnResultset) with;
+			try {
+				rs.beforeFirst().next();
+				roleId = rs.getString(userMeta.role);
+				userName = rs.getString(userMeta.uname);
+				orgId = rs.getString(userMeta.org);
+				roleName = rs.getString(userMeta.org);
+				orgName = rs.getString(userMeta.orgName);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		if (with instanceof AnSessionReq) {
+			deviceId = ((AnSessionReq)with).deviceId();
+			if (LangExt.isblank(deviceId, "/", "\\."))
+				throw new SsException("Photo user's device Id can not be null - used for distinguish files.");
+		}
 		return this;
 	}
 

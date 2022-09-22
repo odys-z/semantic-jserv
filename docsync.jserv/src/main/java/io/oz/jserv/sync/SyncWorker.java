@@ -17,6 +17,7 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
@@ -24,6 +25,7 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFile;
 import io.odysz.semantic.DASemantics.smtype;
+import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -36,9 +38,11 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docsync.SyncDoc;
 
 public class SyncWorker implements Runnable {
 	static int blocksize = 12 * 1024 * 1024;
@@ -64,14 +68,20 @@ public class SyncWorker implements Runnable {
 	SyncRobot robot;
 	ErrorCtx errLog;
 
+	/**
+	 * Local table meta of which records been synchronized as private jserv node.
+	 */
+	DocTableMeta localMeta;
 
-	public SyncWorker(int mode, String connId, String worker, String docTable)
+	public SyncWorker(int mode, String connId, String worker, String docTable, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
 		this.mode = mode;
 		uri = "sync.jserv";
 		connPriv = connId;
 		workerId = worker;
 		targetablPriv = docTable;
+
+		localMeta = tablMeta;
 		
 		if (mode != main)
 			localSt = new DATranscxt(connId);
@@ -88,7 +98,7 @@ public class SyncWorker implements Runnable {
 		this.workerId = workerId;
 		
 		if (workerId != null && client == null) {
-			client = Clients.login(workerId, pswd);
+			client = Clients.login(workerId, pswd, "java.test");
 			robot = new SyncRobot(workerId, null, workerId);
 			tempDir = String.format("io.oz.sync-%s.%s", mode, workerId); 
 		}
@@ -113,7 +123,7 @@ public class SyncWorker implements Runnable {
 
 			resp = client.commit(q, errLog);
 			
-			syncDocs(resp);
+			pullDocs(resp);
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -123,27 +133,50 @@ public class SyncWorker implements Runnable {
 		}
 	}
 
-	void syncDocs(DocsResp resp)
+	/**
+	 * @param user 
+	 * @return response
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
+	 */
+	public DocsResp queryTasks() throws SemanticException, AnsonException, IOException {
+		DocsyncReq req = new DocsyncReq()
+							.query();
+
+		String[] act = AnsonHeader.usrAct("sync", "sync", "sync/tasks", "private query");
+		AnsonHeader header = client.header().act(act);
+
+		AnsonMsg<DocsyncReq> q = client
+				.<DocsyncReq>userReq(uri, Port.docsync, req)
+				.header(header);
+		
+
+		return client.<DocsyncReq, DocsResp>commit(q, errLog);
+	}
+
+	void pullDocs(DocsResp tasks)
 			throws SQLException, AnsonException, IOException, TransException {
 		AnsonHeader header = null;
-		while (resp.rs(0).next()) {
-			SyncDoc p = new SyncDoc(resp.rs(0));
-			syncDoc(p, robot, header);
+		while (tasks.rs(0).next()) {
+			SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
+			syncPull(p, robot, header);
 		}
 	}
 
-	String syncDoc(SyncDoc p, SyncRobot worker, AnsonHeader header)
+	String syncPull(SyncDoc p, SyncRobot worker, AnsonHeader header)
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, worker, targetablPriv)) {
-			DocsReq req = (DocsReq) new DocsReq(/* p */)
-							.syncWith(p.fullpath(), p.device())
+			DocsyncReq req = (DocsyncReq) new DocsyncReq(/* p */)
+							.with(p.fullpath(), p.device())
 							.a(A.download);
 
 			String tempath = tempath(p, worker);
 			
-			client.download(uri, Port.docsync, req, tempath);
+			String path = client.download(uri, Port.docsync, req, tempath);
 			
-			createFile(connPriv, p, robot);
+			p.uri(path);
+			insertLocalFile(localSt, connPriv, path, p, robot, localMeta);
 		}
 
 		DocsReq clsReq = (DocsReq) new DocsReq(null, uri, p)
@@ -158,9 +191,32 @@ public class SyncWorker implements Runnable {
 		return p.fullpath();
 	}
 
-	public static String createFile(String connPriv2, SyncDoc p, SyncRobot robot2) {
+	static String insertLocalFile(DATranscxt st, String conn, String path, SyncDoc doc, SyncRobot usr, DocTableMeta meta)
+			throws TransException, SQLException {
+		if (LangExt.isblank(path))
+			throw new SemanticException("Client path can't be null/empty.");
 		
-		return null;
+		Insert ins = st.insert(meta.tbl, usr)
+				.nv("family", usr.orgId())
+				.nv("uri", doc.uri)
+				.nv("pname", doc.pname)
+				.nv("device", usr.deviceId())
+				.nv("clientpath", doc.clientpath)
+				.nv("shareflag", doc.isPublic() ? DocsReq.Share.pub : DocsReq.Share.priv)
+				.nv("syncflag", doc.isPublic() ? DocsyncReq.SyncFlag.sharing : DocsyncReq.SyncFlag.priv)
+				;
+		
+		if (!LangExt.isblank(doc.mime))
+			ins.nv("mime", doc.mime);
+		
+		Docsyncer.onDocreate(doc, meta, usr);
+
+		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
+		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
+				.get("h_photos"))
+				.getString("pid");
+		
+		return pid;
 	}
 
 	/** 
@@ -218,7 +274,7 @@ public class SyncWorker implements Runnable {
 	}
 
 	/**
-	 * Local node push docs to the cloud hub. 
+	 * Private nodes push docs to the cloud hub. 
 	 * 
 	 * @return
 	 * @throws TransException
@@ -230,7 +286,7 @@ public class SyncWorker implements Runnable {
 			AnResultset rs = (AnResultset) localSt
 				.select(targetablPriv, "f")
 				.cols("device", "clientpath", "syncflag")
-				.whereEq("syncflag", DocsReq.sharePrvHub)
+				.whereEq("syncflag", DocsyncReq.SyncFlag.sharing)
 				.rs(localSt.instancontxt(connPriv, robot))
 				.rs(0);
 
@@ -249,12 +305,19 @@ public class SyncWorker implements Runnable {
 		return this;
 	}
 
-	private List<DocsResp> sync(AnResultset rs, SessionInf sessionInf, OnProcess onProcess)
+	/** Synchronizing files to hub using block chain, accessing port {@link Port#docsync}.
+	 * @param rs
+	 * @param sessionInf
+	 * @param onProcess
+	 * @return Sync response list
+	 * @throws SQLException
+	 */
+	List<DocsResp> sync(AnResultset rs, SessionInf sessionInf, OnProcess onProcess)
 			throws SQLException {
 		return sync(uri, client, errLog, rs, sessionInf, onProcess);
 	}
 
-	public static List<DocsResp> sync(String uri, SessionClient client, ErrorCtx onErr,
+	public List<DocsResp> sync(String uri, SessionClient client, ErrorCtx onErr,
 			AnResultset files, SessionInf user, OnProcess proc) throws SQLException {
 
 		DocsResp resp = null;
@@ -267,7 +330,7 @@ public class SyncWorker implements Runnable {
 			int px = 0;
 			while(files.next()) {
 				px++;
-				IFileDescriptor p = new SyncDoc(files);
+				IFileDescriptor p = new SyncDoc(files, localMeta);
 				DocsReq req = new DocsReq()
 						.blockStart(p, user);
 
@@ -301,11 +364,15 @@ public class SyncWorker implements Runnable {
 						b64 = AESHelper.encode64(ifs, blocksize);
 					}
 					req = new DocsReq().blockEnd(resp, user);
-
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
 					resp = client.commit(q, onErr);
-					if (proc != null) proc.proc(px, totalBlocks, resp);
+
+					
+					// TODO
+					// FIXME change local sync flag
+
+					if (proc != null) proc.proc(totalBlocks, totalBlocks, resp);
 				}
 				catch (Exception ex) {
 					Utils.warn(ex.getMessage());
@@ -332,10 +399,4 @@ public class SyncWorker implements Runnable {
 		}
 		return null;
 	}
-
-	public DocsResp queryTasks() {
-		return null;
-	}
-
-
 }

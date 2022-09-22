@@ -1,4 +1,4 @@
-package io.oz.jserv.docsync;
+package io.oz.jserv.sync;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
@@ -13,6 +13,7 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.AbsPart;
@@ -55,9 +56,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 
 	public String shareby;
 	public String sharedate;
-//	public String geox;
-//	public String geoy;
-//	public String sharer;
 	
 	/** usually ignored when sending request */
 	public long size;
@@ -80,69 +78,41 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public String mime() { return mime; }
 
-	/** image size */
-//	public int[] widthHeight;
-	/** reduction of image size */
-//	public int[] wh;
-	
-	/**
-	 * Composed css json, saved as string.
-	 * @see #css()
-	 * */
-//	public String css;
-
-	/**
-	 * Compose a string representing json object for saving in DB.
-	 * The type "io.oz.album.tier.PhotoCSS" doesn't exist at server side (v0.4.18)
-	 * 
-	 * @return string of json for saving
-	 */
-//	public String css() {
-//		if (widthHeight != null)
-//			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s]}",
-//				widthHeight[0], widthHeight[1], wh[0], wh[1]);
-//		else return "";
-//	}
-
-//	public String collectId;
-//	public String collectId() { return collectId; }
-
-//	public String albumId;
-	
 	String month;
 	
 	public SyncDoc() {}
 	
-	public SyncDoc(AnResultset rs) throws SQLException {
+	public SyncDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
+		/*
 		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
 		this.uri = rs.getString("uri");
 		this.month = rs.getString("folder");
 		this.createDate = rs.getString("pdate");
-//		this.shareby = rs.getString("owner");
-//		this.geox = rs.getString("geox");
-//		this.geoy = rs.getString("geoy");
 		this.mime = rs.getString("mime");
-		
-//		this.css = rs.getString("css");
-		
-		// TODO debug
 		this.clientpath =  rs.getString("clientpath");
 		this.device =  rs.getString("device");
+		*/
+		this.recId = rs.getString(meta.pk);
+		this.pname = rs.getString(meta.filename);
+		this.uri = rs.getString(meta.uri);
+		this.createDate = rs.getString(meta.createDate);
+		this.mime = rs.getString(meta.mime);
+		
+		// TODO debug
+		this.clientpath =  rs.getString(meta.fullpath);
+		this.device =  rs.getString(meta.device);
 		
 		try {
-			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
+			this.sharedate = DateFormat.formatime(rs.getDate(meta.shareDate));
 		} catch (SQLException ex) {
-			this.sharedate = rs.getString("pdate");
+			this.sharedate = rs.getString(meta.createDate);
 		}
-//		this.geox = rs.getString("geox");
-//		this.geoy = rs.getString("geoy");
 		
 	}
 
-	public SyncDoc(String collectId, AnResultset rs) throws SQLException {
-		this(rs);
-//		this.collectId = collectId;
+	public SyncDoc(String collectId, AnResultset rs, DocTableMeta meta) throws SQLException {
+		this(rs, meta);
 	}
 
 	/**Set client path and syncFlag
@@ -191,6 +161,15 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = clientpath;
+		return this;
+	}
+
+	/**Set (private) jserv node file full path (path replaced with %VOLUME_HOME)
+	 * @param path
+	 * @return
+	 */
+	public IFileDescriptor uri(String path) {
+		
 		return this;
 	}
 

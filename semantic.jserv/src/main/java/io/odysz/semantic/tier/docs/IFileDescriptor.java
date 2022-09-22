@@ -19,6 +19,11 @@ public interface IFileDescriptor {
 	 */
 	String fullpath();
 
+	/**Set client full path.
+	 * @param clientpath
+	 * @return
+	 * @throws IOException
+	 */
 	IFileDescriptor fullpath(String clientpath) throws IOException;
 
 	String clientname();

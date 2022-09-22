@@ -26,7 +26,8 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
-/**A robot is only used for test.
+/**
+ * A robot is only used for test.
  * 
  * @author odys-z@github.com
  */
@@ -52,14 +53,12 @@ public class SyncRobot extends SemanticObject implements IUser {
 	}
 	
 	public static class RobotMeta extends JUserMeta {
+		String device;
 		public RobotMeta(String tbl, String... conn) {
 			super(tbl, conn);
 
-			this.tbl = "a_users";
-			pk = "userId";
-			uname = "userName";
-			pswd = "pswd";
 			iv = "iv";
+			device = "device";
 		}
 	}
 
