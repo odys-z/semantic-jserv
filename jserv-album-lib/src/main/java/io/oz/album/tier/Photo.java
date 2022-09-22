@@ -20,9 +20,8 @@ import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 
 /**
- * Server side and jprotocol oriented data record - not BaseFile used by file picker. 
+ * Server side and jprotocol oriented data record - not BaseFile used by file picker (at Android client). 
  * 
- * @deprecated replaced by SyncDoc
  * @author ody
  *
  */

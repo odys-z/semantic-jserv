@@ -386,19 +386,25 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throws TransException, SQLException, SsException,
 			ReflectiveOperationException, GeneralSecurityException, IOException {
 		SemanticObject s = sctx.select(usrMeta.tbl, "u")
-			.col(usrMeta.pk, "uid")
-			.col(usrMeta.uname, "uname")
-			.col(usrMeta.pswd, "pswd")
-			.col(usrMeta.iv, "iv")
-			.col(usrMeta.org, "org")        // v1.4.11
-			.col(usrMeta.role, "role")		// v1.4.11
+			.je("u", usrMeta.roleTbl, "r", usrMeta.role)
+			.je("u", usrMeta.orgTbl, "o", usrMeta.org)
+			/*
+			.col(usrMeta.pk)
+			.col(usrMeta.uname)
+			.col(usrMeta.pswd)
+			.col(usrMeta.iv)
+			*/
+			.col("u.*")
+			.col(usrMeta.orgName)       // v1.4.11
+			.col(usrMeta.roleName)		// v1.4.11
 			.where_("=", "u." + usrMeta.pk, sessionBody.uid())
 			.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
 		
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
-			String uid = rs.getString("uid");
-			IUser obj = createUser(usrClzz, uid, rs.getString("pswd"), rs.getString("iv"), rs.getString("uname"))
+			String uid = rs.getString(usrMeta.pk);
+			IUser obj = createUser(usrClzz, uid,
+							rs.getString(usrMeta.pswd), rs.getString(usrMeta.iv), rs.getString(usrMeta.uname))
 						.onCreate(rs) // v1.4.11
 						.onCreate(sessionBody)
 						.touch();

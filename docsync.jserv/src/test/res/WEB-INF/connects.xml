@@ -43,19 +43,17 @@
 				global="jdbc/album-cloud"
 				type="javax.sql.DataSource" />
 	see https://stackoverflow.com/a/22545669/7362888
-  	 -->
    	<c>
   		<id>inet</id>
   		<type>mysql</type>
   		<src>jdbc/ifire_twin</src>
   		<isdef></isdef>
-  		<!-- Not used -->
   		<usr></usr>
-  		<!-- Not used (will be protected in cipher in the future -->
   		<pswd></pswd>
   		<dbg></dbg>
   		<smtcs>src/test/res/semantics.xml</smtcs>
   	</c>
+  	 -->
   </t>
 
   <t id="conn-uri" pk='uri' columns="uri, conn">

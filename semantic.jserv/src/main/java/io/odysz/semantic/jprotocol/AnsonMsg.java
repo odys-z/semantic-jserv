@@ -51,7 +51,10 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			datasetier("ds.tier"),
 			/** document manage's semantic tier */
 			docstier("docs.tier"),
-			/** experimental */
+			/**
+			 * <h5>[experimental]</h5>
+			 * This port is implemented by an extension.
+			 * */
 			docsync("docs.sync");
 
 		static {
