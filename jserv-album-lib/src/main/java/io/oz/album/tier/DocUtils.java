@@ -7,7 +7,6 @@ import io.odysz.common.LangExt;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
-import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Update;
@@ -16,8 +15,8 @@ import io.odysz.transact.x.TransException;
 
 public class DocUtils {
 	/**
-	 * <p>Create photo - call this after duplication is checked.</p>
-	 * <p>TODO: replaced by SyncWorkerTest.createFileB64()</p>
+	 * <p>Create a file, e.g. photo - call this after duplication is checked.</p>
+	 * <p>TODO: to be replaced by SyncWorkerTest.createFileB64()</p>
 	 * <p>Photo is created as in the folder of user/month/.</p>
 	 * 
 	 * @param conn
@@ -31,7 +30,7 @@ public class DocUtils {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFile(String conn, Photo photo, IUser usr, TableMeta photoMeta, DATranscxt st, Update onFileCreateSql)
+	public static String createFile(String conn, Photo photo, IUser usr, PhotoMeta photoMeta, DATranscxt st, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
 		if (LangExt.isblank(photo.clientpath))
 			throw new SemanticException("Client path can't be null/empty.");
@@ -40,17 +39,18 @@ public class DocUtils {
 			throw new SemanticException("Month of photo creating is important for saving files. It's required for creating media file.");
 
 		Insert ins = st.insert(photoMeta.tbl, usr)
-				.nv("family", usr.orgId())
-				.nv("uri", photo.uri).nv("pname", photo.pname)
-				.nv("pdate", photo.photoDate())
-				.nv("folder", photo.month())
+				.nv(photoMeta.family, usr.orgId())
+				.nv(photoMeta.uri, photo.uri)
+				.nv(photoMeta.filename, photo.pname)
+				.nv(photoMeta.createDate, photo.photoDate())
+				.nv(photoMeta.folder, photo.month())
 				// .nv("device", ((PhotoRobot) usr).deviceId())
 				// .nv("clientpath", photo.clientpath)
 				.nv("geox", photo.geox).nv("geoy", photo.geoy)
-				.nv("exif", photo.exif)
+				.nv(photoMeta.exif, photo.exif)
 				// .nv("syncflag", photo.isPublic ? DocsReq.sharePublic : DocsReq.sharePrivate)
-				 .nv("shareby", usr.uid())
-				 .nv("sharedate", Funcall.now())
+				.nv(photoMeta.shareby, usr.uid())
+				.nv(photoMeta.shareDate, Funcall.now())
 				;
 		
 		if (!LangExt.isblank(photo.mime))
@@ -72,6 +72,4 @@ public class DocUtils {
 
 		return pid;
 	}
-
-
 }

@@ -34,9 +34,11 @@ import io.odysz.transact.x.TransException;
 public class SyncRobot extends SemanticObject implements IUser {
 
 	long touched;
-
 	String userId;
-	
+
+	String orgId;
+	public String orgId() { return orgId; }
+
 	String deviceId;
 	public String deviceId() { return deviceId; }
 
@@ -44,8 +46,9 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	private Set<String> tempDirs;
 
-	public SyncRobot(String userid) {
+	public SyncRobot(String userid, String orgId) {
 		this.userId = userid;
+		this.orgId = orgId;
 	}
 
 	public SyncRobot(String userid, String pswd, String userName) {

@@ -1,5 +1,6 @@
 package io.oz.jserv.sync;
 
+import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -13,17 +14,17 @@ public class DocsyncReq extends DocsReq {
 
 	public static final class SyncFlag {
 		/**
-		 * created at cloud hub
+		 * created at cloud hub ('+')
 		 */
-		public static String hubInit;
+		public static final String hubInit = "+";
 		/**
-		 * kept as private file
+		 * kept as private file ('-')
 		 */
-		public static String priv;
+		public static final String priv = "-";
 		/**
-		 * to be pushed (shared) to hub
+		 * to be pushed (shared) to hub ('psh')
 		 */
-		public static String sharing;
+		public static final String pushing = "psh";
 		
 	}
 
@@ -35,14 +36,20 @@ public class DocsyncReq extends DocsReq {
 		super(null, null);
 	}
 
+	public DocsyncReq(String family) {
+		super(null, null);
+		this.org = family;
+	}
+
 	public DocsyncReq with(String fullpath, String device) {
 		this.clientpath = fullpath;
 		this.device = device;
 		return this;
 	}
 
-	public DocsyncReq query() {
+	public DocsyncReq query(DocTableMeta meta) {
 		a = A.query;
+		docTabl = meta.tbl;
 		return this;
 	}
 

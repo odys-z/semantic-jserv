@@ -23,27 +23,23 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
-import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DASemantics.smtype;
-import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.SessionInf;
-import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncRec;
-import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 import io.oz.album.client.AlbumClientier;
@@ -53,8 +49,6 @@ import io.oz.album.tier.Photo;
 import io.oz.album.tier.PhotoMeta;
 
 class SyncWorkerTest {
-
-//	static final String tablPhotos = "h_photos";
 
 	static ErrorCtx errLog;
 	static DATranscxt defltSt;
@@ -109,6 +103,7 @@ class SyncWorkerTest {
 		String clientpath = "src/test/res/182x121.png";
 		File png = new File(clientpath);
 		FileInputStream ifs = new FileInputStream(png);
+		photo.pname = png.getName();
 
 		String b64 = AESHelper.encode64(ifs, 216); // 12 | 216, length = 219
 		photo.uri = b64;
@@ -127,17 +122,20 @@ class SyncWorkerTest {
 			{add("camera:Bayraktar TB2");}};
 		photo.sharedate = DateFormat.format(new Date());
 
-		SyncRobot usr = new SyncRobot("odys-z.github.io");
+		SyncRobot usr = new SyncRobot("odys-z.github.io", "f/zsu");
 
 		String pth = createPhoto(conn, photo, usr, new PhotoMeta(defltSt.getSysConnId()));
 
+		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.recId, photo.pname, pth);
+
 		// synchronize to cloud hub
 		SyncWorker.blocksize = 32 * 3;
-		SyncWorker worker = new SyncWorker(0, conn, "kyiv.jnode", "h_photos", new DocTableMeta("h_photos", conn))
+		DocTableMeta meta = new DocTableMeta("h_photos", "pid", conn);
+		SyncWorker worker = new SyncWorker(0, conn, "kyiv.jnode", meta)
 				.login("odys-z.github.io", "слава україні") // jserv node
 				.push();
 	
-		DocsResp resp = worker.queryTasks();
+		DocsResp resp = worker.queryTasks(meta, usr, photo.device);
 
 		worker.pullDocs(resp);
 	}
@@ -157,7 +155,7 @@ class SyncWorkerTest {
 	String createPhoto(String conn, Photo photo, SyncRobot usr, PhotoMeta meta)
 			throws TransException, SQLException, IOException {
 
-		if (!DATranscxt.hasSemantics(conn, "h_photos", smtype.extFile))
+		if (!DATranscxt.hasSemantics(conn, meta.tbl, smtype.extFile))
 			throw new SemanticException("Semantics of ext-file for h_photos.uri dosen't been found");
 		
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
