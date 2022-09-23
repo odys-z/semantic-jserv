@@ -4,13 +4,16 @@ import io.odysz.semantic.ext.DocTableMeta;
 
 public class PhotoMeta extends DocTableMeta {
 
-	public final String device;
+	public final String exif;
+	public final String folder;
+	public final String family;
 
 	public PhotoMeta(String conn) {
-		super("h_phots", conn);
+		super("h_photos", "pid", conn);
 		
-		pk = "pid";
-		device = "device";
+		exif = "exif";
+		folder = "folder";
+		family = "family";
 	}
 
 }

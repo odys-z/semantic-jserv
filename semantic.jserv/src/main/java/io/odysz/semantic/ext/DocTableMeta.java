@@ -13,23 +13,27 @@ public class DocTableMeta extends TableMeta {
 	public final String device;
 	public final String fullpath;
 	public final String shareDate;
+	public final String shareby;
+	public final String org;
 	
-	public DocTableMeta(String tbl, String conn) {
+	public DocTableMeta(String tbl, String pk, String conn) {
 		super(tbl, conn);
 
 		// TODO let's build from sync.xml
 		tbl = "h_photos";
-		pk = "pid";
+		this.pk = pk;
 
 		filename = "pname";
 		uri = "uri";
 		createDate = "pdate";
+		org = "family";
 		mime = "mime";
 		device = "device";
 		fullpath = "clientpath";
 		shareDate = "sharedate";
+		shareby = "shareby";
 
-		syncflag = "syncflag";
+		syncflag = "sync";
 		shareflag = "shareflag";
 	}
 

@@ -138,9 +138,6 @@ public class Albums extends ServPort<AlbumReq> {
 			if (AlbumFlags.album)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
-//		} catch (InterruptedException e) {
-//			if (Anson.verbose)
-//				e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -269,8 +266,8 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
-				.whereEq("device", device)
-				.whereEq("clientpath", clientpath)
+				.whereEq(meta.device, device)
+				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
 		rs.beforeFirst().next();

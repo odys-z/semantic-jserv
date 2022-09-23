@@ -26,7 +26,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.tier.Albums;
+import io.oz.album.tier.PhotoMeta;
 
 /**A robot used session-less service.
  * 
@@ -156,7 +156,7 @@ public class PhotoRobot extends SemanticObject implements IUser {
 	public String touchTempDir(String conn) throws SemanticException {
 
 		String extroot = ((ShExtFile) DATranscxt
-						.getHandler(conn, Albums.tablPhotos, smtype.extFile))
+						.getHandler(conn, new PhotoMeta(conn).tbl, smtype.extFile))
 						.getFileRoot();
 
 		String tempDir = IUser.tempDir(extroot, userId, "uploading-temp", ssid);

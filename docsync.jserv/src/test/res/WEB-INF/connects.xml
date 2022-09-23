@@ -13,7 +13,7 @@
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	

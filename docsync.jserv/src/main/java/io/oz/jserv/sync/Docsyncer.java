@@ -2,6 +2,7 @@ package io.oz.jserv.sync;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -44,6 +45,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
+import io.oz.album.tier.PhotoMeta;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
 public class Docsyncer extends ServPort<DocsReq> {
@@ -52,6 +54,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	private static HashMap<String, DocTableMeta> metas;
+
 	public Docsyncer() {
 		super(Port.docsync);
 	}
@@ -59,7 +63,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
 	public static final String keySynconn = "sync-conn-id";
-	public static final String keySyncName = "sync-table-name";
 
 	public static final String cloudHub = "hub";
 	public static final String mainStorage = "main";
@@ -95,9 +98,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 	static {
 		try {
 			st = new DATranscxt(null);
+			metas = new HashMap<String, DocTableMeta>();
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void addSyncTable(DocTableMeta m) {
+		metas.put(m.tbl, m);
 	}
 
 	public static Delete onDel(String clientpath, String device) {
@@ -124,21 +132,17 @@ public class Docsyncer extends ServPort<DocsReq> {
 		Update ins = st.update(meta.tbl);
 		if (SyncWorker.hub == mode && !doc.isPublic())
 			return ins
-				// .nv("shareby", usr.uid())
-				// .nv("docId", doc.recId())
-				// .nv("device", doc.device())
-				// .nv("clientpath", doc.fullpath())
-				.nv(meta.shareflag, DocsReq.Share.pub)
 				.nv(meta.syncflag, DocsyncReq.SyncFlag.hubInit)
 				.whereEq(meta.pk, doc.recId())
+				.whereEq(meta.shareflag, DocsReq.Share.pub)
 				;
 		
 		// private doc
 		else if (SyncWorker.main == mode)
 			return ins
-				.nv(meta.shareflag, doc.isPublic() ? DocsReq.Share.pub : DocsReq.Share.priv)
-				.nv(meta.syncflag, doc.isPublic() ? DocsyncReq.SyncFlag.priv : DocsyncReq.SyncFlag.sharing)
+				.nv(meta.syncflag, doc.isPublic() ? DocsyncReq.SyncFlag.priv : DocsyncReq.SyncFlag.pushing)
 				.whereEq(meta.pk, doc.recId())
+				.whereEq(meta.shareflag, doc.isPublic() ? DocsReq.Share.pub : DocsReq.Share.priv)
 				;
 		else if (SyncWorker.priv == mode)
 			throw new TransException("TODO");
@@ -177,7 +181,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 		try { m = Integer.valueOf(Configs.getCfg(keyInterval)); } catch (Exception e) {}
 
 		synconn = Configs.getCfg(keySynconn);
-		String targetabl = Configs.getCfg(keySyncName);
 
 		String cfg = Configs.getCfg(keyMode);
 		if (Docsyncer.cloudHub.equals(cfg)) {
@@ -191,7 +194,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			else mode = SyncWorker.priv;
 		
 			schedualed = scheduler.scheduleAtFixedRate(
-					new SyncWorker(mode, synconn, nodeId, targetabl, new DocTableMeta("h_photos", synconn)),
+					new SyncWorker(mode, synconn, nodeId, new DocTableMeta("h_photos", "pid", synconn)),
 					0, m, TimeUnit.MINUTES);
 
 			if (ServFlags.file)
@@ -260,20 +263,21 @@ public class Docsyncer extends ServPort<DocsReq> {
 	void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 		
+		DocTableMeta meta = metas.get(req.docTabl);
 		AnResultset rs = (AnResultset) st
-				.select(req.docTabl, "p")
-				.col("device").col("clientpath")
-				.col("uri")
-				.col("mime")
-				.whereEq("device", req.device())
-				.whereEq("clientpath", req.clientpath)
+				.select(meta.tbl, "p")
+				.col(meta.device).col(meta.fullpath)
+				.col(meta.uri)
+				.col(meta.mime)
+				.whereEq(meta.device, req.device())
+				.whereEq(meta.fullpath, req.clientpath)
 				.rs(st.instancontxt(synconn, usr)).rs(0);
 
 		if (!rs.next()) {
 			write(resp, err(MsgCode.exDA, "File missing: %s", ""));
 		}
 		else {
-			String mime = rs.getString("mime");
+			String mime = rs.getString(meta.mime);
 			resp.setContentType(mime);
 
 			String path = resolveHubRoot(req.docTabl, rs.getString("uri"));
@@ -310,11 +314,12 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	protected DocsResp query(DocsReq jreq, IUser usr) throws TransException, SQLException {
+		DocTableMeta meta = metas.get(jreq.docTabl);
 		AnResultset rs = (AnResultset) st
 				.select(jreq.docTabl, "t")
-				.cols("family", "device", "clientpath", "syncflag")
-				.whereEq("family", jreq.org)
-				.whereEq("syncflag", DocsyncReq.SyncFlag.hubInit)
+				.cols(meta.org, meta.device, meta.fullpath, meta.syncflag)
+				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.syncflag, DocsyncReq.SyncFlag.hubInit)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0);
 
