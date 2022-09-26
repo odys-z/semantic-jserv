@@ -3,6 +3,11 @@ package io.odysz.semantic.ext;
 import io.odysz.semantics.meta.TableMeta;
 
 public class DocTableMeta extends TableMeta {
+	public static class Share {
+		public static final String pub = "pub";
+		public static final String priv = "priv";
+	}
+
 
 	public final String syncflag;
 	public final String shareflag;

@@ -42,4 +42,19 @@ public interface IFileDescriptor {
 	String uri();
 
 	boolean isPublic();
+	
+//	/**
+//	 * Set statement semantics context (for resulving pkval etc.)
+//	 * @since v1.4.12
+//	 * @param insCtx
+//	 * @return
+//	 */
+//	default public IFileDescriptor semantext(ISemantext stmtCtx) { return this; }
+//	
+//	/**
+//	 * Get statement semantics context (for resulving pkval etc.)
+//	 * @since v1.4.12
+//	 * @return
+//	 */
+//	default public ISemantext semantext() { return null; }
 }

@@ -9,8 +9,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -44,8 +42,9 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Update;
+import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.x.TransException;
-import io.oz.album.tier.PhotoMeta;
+import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
 public class Docsyncer extends ServPort<DocsReq> {
@@ -81,17 +80,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 //	public static final String tablSyncTasks = "sync_tasks";
 	public static final String tablSyncLog = "sync_log";
 
-	static ReentrantLock lock;
-
-	protected static DATranscxt st;
-
-	private static ScheduledExecutorService scheduler;
-
 	@SuppressWarnings("unused")
 	private static ScheduledFuture<?> schedualed;
-	private static int mode;
+	private static SyncMode mode;
+	static ReentrantLock lock;
+	protected static DATranscxt st;
 	/** connection for update sync flages &amp; task records. */
 	private static String synconn;
+
+	private static ScheduledExecutorService scheduler;
 
 	public static boolean debug = true;
 
@@ -113,7 +110,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * <p>Add a sync task when the doc is to be created</p>
+	 * <p>Add a synchronizing task when the doc is to be created,
+	 * where doc id is resulved from semantext.</p>
 	 * <p>1. for jserv mode == {@link SyncWorker#hub}<br/>
 	 * task: tags the doc to be synchronized by private storage</p>
 	 * <p>2. for jserv mode == {@link SyncWorker#main} or {@link SyncWorker#priv}<br/>
@@ -129,26 +127,25 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static Update onDocreate(IFileDescriptor doc, DocTableMeta meta, IUser usr)
 			throws TransException {
 
-		Update ins = st.update(meta.tbl);
-		if (SyncWorker.hub == mode && !doc.isPublic())
-			return ins
+		if (SyncMode.hub == mode && !doc.isPublic())
+			return st.update(meta.tbl)
 				.nv(meta.syncflag, DocsyncReq.SyncFlag.hubInit)
-				.whereEq(meta.pk, doc.recId())
-				.whereEq(meta.shareflag, DocsReq.Share.pub)
+				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
+				.whereEq(meta.shareflag, DocTableMeta.Share.pub)
 				;
 		
 		// private doc
-		else if (SyncWorker.main == mode)
-			return ins
-				.nv(meta.syncflag, doc.isPublic() ? DocsyncReq.SyncFlag.priv : DocsyncReq.SyncFlag.pushing)
-				.whereEq(meta.pk, doc.recId())
-				.whereEq(meta.shareflag, doc.isPublic() ? DocsReq.Share.pub : DocsReq.Share.priv)
+		else if (SyncMode.main == mode || SyncMode.priv == mode)
+			return st.update(meta.tbl)
+				.nv(meta.syncflag, doc.isPublic() ? DocsyncReq.SyncFlag.pushing : DocsyncReq.SyncFlag.priv)
+				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
+				.whereEq(meta.shareflag, doc.isPublic() ? DocTableMeta.Share.pub : DocTableMeta.Share.priv)
 				;
-		else if (SyncWorker.priv == mode)
-			throw new TransException("TODO");
+//		else if (SyncMode.priv == mode)
+//			throw new TransException("TODO");
 		else {
 			Utils.warn("Unknow album serv mode: %s", mode);
-			return ins;
+			return null;
 		}
 	}
 
@@ -163,14 +160,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws SAXException
 	 * @throws IOException
 	 */
-	public static void init(ServletContextEvent evt, String nodeId)
+	public static void init(String nodeId)
 			throws SemanticException, SQLException, SAXException, IOException {
 
 		Utils.logi("Starting file synchronizer ...");
 
-		ServletContext ctx = evt.getServletContext();
-		String webINF = ctx.getRealPath("/WEB-INF");
-		String root = ctx.getRealPath(".");
+//		ServletContext ctx = evt.getServletContext();
+//		String webINF = ctx.getRealPath("/WEB-INF");
+//		String root = ctx.getRealPath(".");
 		// initJserv(root, webINF, ctx.getInitParameter("io.oz.root-key"));
 		
 		lock = new ReentrantLock();
@@ -184,14 +181,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		String cfg = Configs.getCfg(keyMode);
 		if (Docsyncer.cloudHub.equals(cfg)) {
-			mode = SyncWorker.hub;
+			mode = SyncMode.hub;
 			if (ServFlags.file)
 				Utils.logi("[ServFlags.file] sync worker disabled for node working in cloud hub mode.");
 		}
 		else {
 			if (Docsyncer.mainStorage.equals(cfg))
-				mode = SyncWorker.main;
-			else mode = SyncWorker.priv;
+				mode = SyncMode.main;
+			else mode = SyncMode.priv;
 		
 			schedualed = scheduler.scheduleAtFixedRate(
 					new SyncWorker(mode, synconn, nodeId, new DocTableMeta("h_photos", "pid", synconn)),
@@ -280,7 +277,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			String mime = rs.getString(meta.mime);
 			resp.setContentType(mime);
 
-			String path = resolveHubRoot(req.docTabl, rs.getString("uri"));
+			String path = resolveHubRoot(req.docTabl, rs.getString(meta.uri));
 
 			FileStream.sendFile(resp.getOutputStream(), path);
 		}

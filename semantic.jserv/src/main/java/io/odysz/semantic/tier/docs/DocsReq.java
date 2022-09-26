@@ -37,11 +37,6 @@ public class DocsReq extends AnsonBody {
 		public static final String synclose = "u/close";
 	}
 
-	public static class Share {
-		public static final String pub = "pub";
-		public static final String priv = "priv";
-	}
-
 //	public static class State {
 //		public static final String confirmed = "conf";
 //		public static final String published = "publ";
