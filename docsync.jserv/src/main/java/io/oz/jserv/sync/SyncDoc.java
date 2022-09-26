@@ -9,6 +9,7 @@ import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantics.ISemantext;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
@@ -71,6 +72,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	String month;
 
 	DocTableMeta docMeta;
+
+	ISemantext semantxt;
 	
 	public SyncDoc() {}
 	
@@ -102,9 +105,9 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		}
 	}
 
-	public SyncDoc(String collectId, AnResultset rs, DocTableMeta meta) throws SQLException {
-		this(rs, meta);
-	}
+//	public SyncDoc(String collectId, AnResultset rs, DocTableMeta meta) throws SQLException {
+//		this(rs, meta);
+//	}
 
 	/**Set client path and syncFlag
 	 * @param rs
@@ -164,4 +167,13 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 
+//	@Override
+//	public IFileDescriptor semantext(ISemantext stmtCtx) {
+//		this.semantxt = stmtCtx;
+//		return this;
+//	}
+//	
+//	@Override
+//	public ISemantext semantext() { return semantxt; }
+	
 }

@@ -5,6 +5,8 @@ import java.sql.SQLException;
 
 import io.odysz.common.LangExt;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -42,13 +44,13 @@ public class DocUtils {
 				.nv(photoMeta.family, usr.orgId())
 				.nv(photoMeta.uri, photo.uri)
 				.nv(photoMeta.filename, photo.pname)
+				.nv(photoMeta.device, photo.device)
+				.nv(photoMeta.fullpath, photo.fullpath())
 				.nv(photoMeta.createDate, photo.photoDate())
 				.nv(photoMeta.folder, photo.month())
-				// .nv("device", ((PhotoRobot) usr).deviceId())
-				// .nv("clientpath", photo.clientpath)
 				.nv("geox", photo.geox).nv("geoy", photo.geoy)
 				.nv(photoMeta.exif, photo.exif)
-				// .nv("syncflag", photo.isPublic ? DocsReq.sharePublic : DocsReq.sharePrivate)
+				.nv(photoMeta.shareflag, photo.isPublic ? DocTableMeta.Share.pub : DocTableMeta.Share.priv)
 				.nv(photoMeta.shareby, usr.uid())
 				.nv(photoMeta.shareDate, Funcall.now())
 				;
@@ -62,7 +64,9 @@ public class DocUtils {
 		if (onFileCreateSql != null)
 			ins.post(onFileCreateSql);
 
-		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
+		ISemantext insCtx = st.instancontxt(conn, usr);
+		// photo.semantext(insCtx);
+		SemanticObject res = (SemanticObject) ins.ins(insCtx);
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
 				.get(photoMeta.tbl))
 				.getString(photoMeta.pk);

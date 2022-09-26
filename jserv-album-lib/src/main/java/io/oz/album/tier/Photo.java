@@ -53,7 +53,20 @@ public class Photo extends Anson implements IFileDescriptor {
 	public String uri() { return uri; }
 
 	public String shareby;
+	public Photo shareby(String share) {
+		this.shareby = share;
+		return this;
+	}
+
 	public String sharedate;
+	public Photo sharedate(String format) {
+		sharedate = format;
+		return this;
+	}
+	public Photo sharedate(Date date) {
+		return sharedate(DateFormat.format(date));
+	}
+
 	public String geox;
 	public String geoy;
 	public String sharer;
@@ -69,15 +82,21 @@ public class Photo extends Anson implements IFileDescriptor {
 				 .collect(Collectors.joining(","));
 	}
 
-	boolean isPublic;
+	public boolean isPublic;
 	@Override
-	public boolean isPublic() {
-		return isPublic;
+	public boolean isPublic() { return isPublic; }
+	public Photo isPublic(boolean pub) {
+		isPublic = pub;
+		return this;
 	}
 
 	public String mime;
 	@Override
 	public String mime() { return mime; }
+	public Photo mime(String mime) {
+		this.mime = mime;
+		return this;
+	}
 
 	/** image size */
 	public int[] widthHeight;

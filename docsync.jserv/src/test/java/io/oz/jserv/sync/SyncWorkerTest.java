@@ -22,7 +22,6 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
-import io.odysz.common.DateFormat;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
@@ -47,6 +46,7 @@ import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.DocUtils;
 import io.oz.album.tier.Photo;
 import io.oz.album.tier.PhotoMeta;
+import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 class SyncWorkerTest {
 
@@ -68,6 +68,8 @@ class SyncWorkerTest {
 			Connects.init("src/test/res/WEB-INF");
 			Clients.init("http://localhost:8081/jserv-album", true);
 			
+			Docsyncer.init("Sync Test");
+
 			errLog = new ErrorCtx() {
 				@Override
 				public void onError(MsgCode code, String msg) {
@@ -116,27 +118,27 @@ class SyncWorkerTest {
 
 		photo.clientpath = clientpath;
 		photo.device = "test device";
-		photo.shareby = "ody";
 		photo.exif = new ArrayList<String>() {
 			{add("location:вулиця Лаврська' 27' Київ");};
 			{add("camera:Bayraktar TB2");}};
-		photo.sharedate = DateFormat.format(new Date());
+		photo.isPublic(true)
+			.shareby("ody")
+			.sharedate(new Date());
 
 		SyncRobot usr = new SyncRobot("odys-z.github.io", "f/zsu");
 
-		String pth = createPhoto(conn, photo, usr, new PhotoMeta(defltSt.getSysConnId()));
+		String pid = createPhoto(conn, photo, usr, new PhotoMeta(defltSt.getSysConnId()));
 
-		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.recId, photo.pname, pth);
+		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.fullpath(), photo.pname, pid);
 
 		// synchronize to cloud hub
 		SyncWorker.blocksize = 32 * 3;
 		DocTableMeta meta = new DocTableMeta("h_photos", "pid", conn);
-		SyncWorker worker = new SyncWorker(0, conn, "kyiv.jnode", meta)
+		SyncWorker worker = new SyncWorker(SyncMode.main, conn, "kyiv.jnode", meta)
 				.login("odys-z.github.io", "слава україні") // jserv node
 				.push();
 	
 		DocsResp resp = worker.queryTasks(meta, usr, photo.device);
-
 		worker.pullDocs(resp);
 	}
 
@@ -168,7 +170,6 @@ class SyncWorkerTest {
 		SsException, GeneralSecurityException, SAXException {
 	}
 	
-	@Test
 	void videoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "src/test/res/anclient.java";
 		int bsize = 72 * 1024;

@@ -47,14 +47,17 @@ import io.odysz.transact.x.TransException;
 public class SyncWorker implements Runnable {
 	static int blocksize = 12 * 1024 * 1024;
 
-	/** jserv node mode: cloud hub, equivalent of {@link Docsyncer#cloudHub} */
-	public static final int hub = 0;
-	/** jserv node mode: private main, equivalent of {@link Docsyncer#mainStorage} */
-	public static final int main = 1;
-	/** jserv node mode: private , equivalent of {@link Docsyncer#privateStorage}*/
-	public static final int priv = 2;
+	public enum SyncMode {
+		/** jserv node mode: cloud hub, equivalent of {@link Docsyncer#cloudHub} */
+		hub,
+		/** jserv node mode: private main, equivalent of {@link Docsyncer#mainStorage} */
+		main,
+		/** jserv node mode: private , equivalent of {@link Docsyncer#privateStorage}*/
+		priv
+	};
 	
-	int mode;
+	SyncMode mode;
+	
 	DATranscxt localSt;
 	SessionClient client;
 	
@@ -73,7 +76,7 @@ public class SyncWorker implements Runnable {
 	 */
 	DocTableMeta localMeta;
 
-	public SyncWorker(int mode, String connId, String worker, DocTableMeta tablMeta)
+	public SyncWorker(SyncMode mode, String connId, String worker, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
 		this.mode = mode;
 		uri = "sync.jserv";
@@ -83,8 +86,7 @@ public class SyncWorker implements Runnable {
 
 		localMeta = tablMeta;
 		
-		if (mode != main)
-			localSt = new DATranscxt(connId);
+		localSt = new DATranscxt(connId);
 		
 		errLog = new ErrorCtx() {
 			@Override
@@ -203,8 +205,8 @@ public class SyncWorker implements Runnable {
 				.nv("pname", doc.pname)
 				.nv("device", usr.deviceId())
 				.nv("clientpath", doc.clientpath)
-				.nv("shareflag", doc.isPublic() ? DocsReq.Share.pub : DocsReq.Share.priv)
-				.nv("syncflag", doc.isPublic() ? DocsyncReq.SyncFlag.pushing : DocsyncReq.SyncFlag.priv)
+				.nv("shareflag", doc.isPublic() ? DocTableMeta.Share.pub : DocTableMeta.Share.priv)
+				// .nv("syncflag", doc.isPublic() ? DocsyncReq.SyncFlag.pushing : DocsyncReq.SyncFlag.priv)
 				;
 		
 		if (!LangExt.isblank(doc.mime))
@@ -282,24 +284,26 @@ public class SyncWorker implements Runnable {
 	 * @throws SQLException
 	 */
 	public SyncWorker push() throws TransException, SQLException {
-		if (mode == main || mode == priv) {
+		if (mode == SyncMode.main || mode == SyncMode.priv) {
 			// find local records with shareflag = pub
-			AnResultset rs = (AnResultset) localSt
+			AnResultset rs = ((AnResultset) localSt
 				.select(localMeta.tbl, "f")
 				.cols(localMeta.device, localMeta.fullpath, localMeta.syncflag)
 				.whereEq(localMeta.syncflag, DocsyncReq.SyncFlag.pushing)
 				.rs(localSt.instancontxt(connPriv, robot))
-				.rs(0);
+				.rs(0)).beforeFirst();
 
-			// upload
-			String clientpath = rs.getString(localMeta.fullpath);
-			sync(localMeta, rs, robot.sessionInf(), new OnProcess() {
+			while (rs.next()) {
+				// upload
+				String clientpath = rs.getString(localMeta.fullpath);
+				sync(localMeta, rs, robot.sessionInf(), new OnProcess() {
 
-				@Override
-				public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
-						throws IOException, AnsonException, SemanticException {
-					Utils.logi("%s: %s / %s, %s", clientpath, listIndx, totalBlocks, blockResp.msg());
-				}});
+					@Override
+					public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
+							throws IOException, AnsonException, SemanticException {
+						Utils.logi("%s: %s / %s, %s", clientpath, listIndx, totalBlocks, blockResp.msg());
+					}});
+			}
 			
 			// set shareflag = hub
 		}
