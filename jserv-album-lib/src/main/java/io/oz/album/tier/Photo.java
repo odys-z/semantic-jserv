@@ -8,12 +8,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.stream.Collectors;
 
-import io.odysz.anson.Anson;
-import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
@@ -25,54 +24,54 @@ import io.odysz.transact.sql.parts.condition.Funcall;
  * @author ody
  *
  */
-public class Photo extends Anson implements IFileDescriptor {
-	public String recId;
-	public String recId() { return recId; }
+public class Photo extends SyncDoc implements IFileDescriptor {
+//	public String recId;
+//	public String recId() { return recId; }
+//
+//	public String pname;
+//	@Override
+//	public String clientname() { return pname; }
 
-	public String pname;
-	@Override
-	public String clientname() { return pname; }
+//	public String clientpath;
+//	@Override
+//	public String fullpath() { return clientpath; }
 
-	public String clientpath;
-	@Override
-	public String fullpath() { return clientpath; }
-
-	public String device;
-	@Override
-	public String device() { return device; }
+//	public String device;
+//	@Override
+//	public String device() { return device; }
 	
-	public int syncFlag;
-	/** usally reported by client file system, overriden by exif date, if exits */
-	public String createDate;
-	@Override
-	public String cdate() { return createDate; }
+//	public int syncFlag;
+//	/** usally reported by client file system, overriden by exif date, if exits */
+//	public String createDate;
+//	@Override
+//	public String cdate() { return createDate; }
 	
-	@AnsonField(shortenString=true)
-	public String uri;
-	@Override
-	public String uri() { return uri; }
+//	@AnsonField(shortenString=true)
+//	public String uri;
+//	@Override
+//	public String uri() { return uri; }
 
-	public String shareby;
-	public Photo shareby(String share) {
-		this.shareby = share;
-		return this;
-	}
-
-	public String sharedate;
-	public Photo sharedate(String format) {
-		sharedate = format;
-		return this;
-	}
-	public Photo sharedate(Date date) {
-		return sharedate(DateFormat.format(date));
-	}
+//	public String shareby;
+//	public Photo shareby(String share) {
+//		this.shareby = share;
+//		return this;
+//	}
+//
+//	public String sharedate;
+//	public Photo sharedate(String format) {
+//		sharedate = format;
+//		return this;
+//	}
+//	public Photo sharedate(Date date) {
+//		return sharedate(DateFormat.format(date));
+//	}
 
 	public String geox;
 	public String geoy;
-	public String sharer;
+//	public String sharer;
 	
 	/** usually ignored when sending request */
-	public long size;
+//	public long size;
 
 	/** usually ignored when sending request */
 	public ArrayList<String> exif;
@@ -82,21 +81,21 @@ public class Photo extends Anson implements IFileDescriptor {
 				 .collect(Collectors.joining(","));
 	}
 
-	public boolean isPublic;
-	@Override
-	public boolean isPublic() { return isPublic; }
-	public Photo isPublic(boolean pub) {
-		isPublic = pub;
-		return this;
-	}
+//	public boolean isPublic;
+//	@Override
+//	public boolean isPublic() { return isPublic; }
+//	public Photo isPublic(boolean pub) {
+//		isPublic = pub;
+//		return this;
+//	}
 
-	public String mime;
-	@Override
-	public String mime() { return mime; }
-	public Photo mime(String mime) {
-		this.mime = mime;
-		return this;
-	}
+//	public String mime;
+//	@Override
+//	public String mime() { return mime; }
+//	public Photo mime(String mime) {
+//		this.mime = mime;
+//		return this;
+//	}
 
 	/** image size */
 	public int[] widthHeight;
@@ -174,7 +173,7 @@ public class Photo extends Anson implements IFileDescriptor {
 		return this;
 	}
 
-	public String month() throws IOException, SemanticException  {
+	public String folder() throws IOException, SemanticException {
 		if (month == null)
 			photoDate();
 		return month;

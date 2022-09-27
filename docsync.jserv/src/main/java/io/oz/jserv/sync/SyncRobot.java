@@ -143,6 +143,15 @@ public class SyncRobot extends SemanticObject implements IUser {
 	}
 
 	public SessionInf sessionInf() {
-		return new SessionInf();
+		return new SessionInf().device(deviceId);
+	}
+
+	public String  device() {
+		return deviceId;
+	}
+
+	public SyncRobot device(String dev) {
+		deviceId = dev;
+		return this;
 	}
 }

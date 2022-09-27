@@ -38,6 +38,7 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -101,7 +102,7 @@ public class SyncWorker implements Runnable {
 		
 		if (workerId != null && client == null) {
 			client = Clients.login(workerId, pswd, "java.test");
-			robot = new SyncRobot(workerId, null, workerId);
+			robot = new SyncRobot(workerId, null, workerId).device("junit test device");
 			tempDir = String.format("io.oz.sync-%s.%s", mode, workerId); 
 		}
 		
@@ -288,22 +289,21 @@ public class SyncWorker implements Runnable {
 			// find local records with shareflag = pub
 			AnResultset rs = ((AnResultset) localSt
 				.select(localMeta.tbl, "f")
-				.cols(localMeta.device, localMeta.fullpath, localMeta.syncflag)
+				// .cols(localMeta.device, localMeta.fullpath, localMeta.syncflag)
+				.cols(SyncDoc.nvCols(localMeta))
 				.whereEq(localMeta.syncflag, DocsyncReq.SyncFlag.pushing)
 				.rs(localSt.instancontxt(connPriv, robot))
 				.rs(0)).beforeFirst();
 
-			while (rs.next()) {
-				// upload
-				String clientpath = rs.getString(localMeta.fullpath);
-				sync(localMeta, rs, robot.sessionInf(), new OnProcess() {
+			// upload
+			String clientpath = rs.getString(localMeta.fullpath);
+			sync(localMeta, rs, robot.sessionInf(), new OnProcess() {
 
-					@Override
-					public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
-							throws IOException, AnsonException, SemanticException {
-						Utils.logi("%s: %s / %s, %s", clientpath, listIndx, totalBlocks, blockResp.msg());
-					}});
-			}
+				@Override
+				public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
+						throws IOException, AnsonException, SemanticException {
+					Utils.logi("%s: %s / %s, %s", clientpath, listIndx, totalBlocks, blockResp.msg());
+				}});
 			
 			// set shareflag = hub
 		}
@@ -313,7 +313,7 @@ public class SyncWorker implements Runnable {
 	/** Synchronizing files to hub using block chain, accessing port {@link Port#docsync}.
 	 * @param localMeta 
 	 * @param rs
-	 * @param sessionInf
+	 * @param sessionInf device is required for overriding doc's device field.
 	 * @param onProcess
 	 * @return Sync response list
 	 * @throws SQLException

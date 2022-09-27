@@ -1,15 +1,16 @@
-package io.oz.jserv.sync;
+package io.odysz.semantic.tier.docs;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Date;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
-import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.ISemantext;
+import io.odysz.semantics.x.SemanticException;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
@@ -64,18 +65,54 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public boolean isPublic() {
 		return isPublic;
 	}
+	public SyncDoc isPublic(boolean pub) {
+		isPublic = pub;
+		return this;
+	}
 
 	public String mime;
 	@Override
 	public String mime() { return mime; }
 
 	String month;
+	
+	public SyncDoc shareby(String share) {
+		this.shareby = share;
+		return this;
+	}
+
+	public SyncDoc sharedate(String format) {
+		sharedate = format;
+		return this;
+	}
+
+	public SyncDoc sharedate(Date date) {
+		return sharedate(DateFormat.format(date));
+	}
 
 	DocTableMeta docMeta;
 
 	ISemantext semantxt;
 	
 	public SyncDoc() {}
+	
+	/**
+	 * A helper used to make sure query fields are correct.
+	 * @param meta
+	 * @return cols for Select.cols()
+	 */
+	public static String[] nvCols(DocTableMeta meta) {
+		return new String[] {
+				meta.pk,
+				meta.filename,
+				meta.uri,
+				meta.createDate,
+				meta.shareDate,
+				meta.mime,
+				meta.fullpath,
+				meta.device
+		};
+	}
 	
 	public SyncDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
 		/*
@@ -100,14 +137,10 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		
 		try {
 			this.sharedate = DateFormat.formatime(rs.getDate(meta.shareDate));
-		} catch (SQLException ex) {
+		} catch (Exception ex) {
 			this.sharedate = rs.getString(meta.createDate);
 		}
 	}
-
-//	public SyncDoc(String collectId, AnResultset rs, DocTableMeta meta) throws SQLException {
-//		this(rs, meta);
-//	}
 
 	/**Set client path and syncFlag
 	 * @param rs
@@ -119,38 +152,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.syncFlag = rs.getInt(docMeta.syncflag); 
 		return this;
 	}
-
-//	public String month() throws IOException, SemanticException  {
-//		if (month == null)
-//			photoDate();
-//		return month;
-//	}
-//
-//	public AbsPart photoDate() throws IOException, SemanticException {
-//		try {
-//			if (!LangExt.isblank(createDate)) {
-//				Date d = DateFormat.parse(createDate); 
-//				month = DateFormat.formatYYmm(d);
-//				return new ExprPart("'" + createDate + "'");
-//			}
-//			else {
-//				Date d = new Date();
-//				month = DateFormat.formatYYmm(d);
-//				return Funcall.now();
-//			}
-//		} catch (ParseException e ) {
-//			e.printStackTrace();
-//			throw new SemanticException(e.getMessage());
-//		}
-//	}
-//
-//	public void month(Date d) {
-//		month = DateFormat.formatYYmm(d);
-//	}
-//
-//	public void month(FileTime d) {
-//		month = DateFormat.formatYYmm(d);
-//	}
 
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
@@ -165,6 +166,10 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public IFileDescriptor uri(String path) {
 		
 		return this;
+	}
+
+	public String folder() throws IOException, SemanticException  {
+		return null;
 	}
 
 //	@Override
