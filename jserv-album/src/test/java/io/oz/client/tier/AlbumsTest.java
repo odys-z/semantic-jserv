@@ -281,7 +281,7 @@ class AlbumsTest {
 
 		Thread.sleep(2000); // wait for exif parsing at server side
 		AlbumResp rep = tier.selectPhotoRec(myId, errCtx);
-		assertEquals("2019_08", rep.photo().month());
+		assertEquals("2019_08", rep.photo().folder());
 	}
 
 	@Test

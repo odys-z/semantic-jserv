@@ -20,6 +20,7 @@ public class DocTableMeta extends TableMeta {
 	public final String shareDate;
 	public final String shareby;
 	public final String org;
+	public final String folder;
 	
 	public DocTableMeta(String tbl, String pk, String conn) {
 		super(tbl, conn);
@@ -30,6 +31,7 @@ public class DocTableMeta extends TableMeta {
 
 		filename = "pname";
 		uri = "uri";
+		folder = "folder";
 		createDate = "pdate";
 		org = "family";
 		mime = "mime";

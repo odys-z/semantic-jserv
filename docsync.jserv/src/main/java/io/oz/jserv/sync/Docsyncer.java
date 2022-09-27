@@ -44,6 +44,7 @@ import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.sync.Dochain.IOnChainOk;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
@@ -53,11 +54,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static HashMap<String, DocTableMeta> metas;
+	static HashMap<String, DocTableMeta> metas;
+	static HashMap<String, IOnChainOk> endChainHandlers;
 
-	public Docsyncer() {
-		super(Port.docsync);
-	}
+	IOnChainOk onCreateHandler;
 
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
@@ -200,6 +200,16 @@ public class Docsyncer extends ServPort<DocsReq> {
 		}
 	}
 
+	public Docsyncer() {
+		super(Port.docsync);
+	}
+
+	public static void addDochainHandler (String tabl, IOnChainOk onCreateHandler) {
+		if (endChainHandlers != null)
+			endChainHandlers = new HashMap<String, IOnChainOk>();
+		endChainHandlers.put(tabl, onCreateHandler);
+	}
+
 	@Override
 	protected void onGet(AnsonMsg<DocsReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
@@ -218,15 +228,31 @@ public class Docsyncer extends ServPort<DocsReq> {
 			DocsReq jreq = jmsg.body(0);
 
 			AnsonResp rsp = null;
-			if (A.records.equals(jreq.a()))
+			String a = jreq.a();
+			if (A.records.equals(a))
 				rsp = query(jreq, usr);
-			else if (A.download.equals(jreq.a()))
+			else if (A.download.equals(a))
 				download(resp, jreq, usr);
-			else if (A.synclose.equals(jreq.a()))
+			else if (A.synclose.equals(a))
 				rsp = synclose(jreq, usr);
-			else throw new SemanticException(String.format(
-						"request.body.a can not handled: %s\\n",
-						jreq.a()));
+
+			//
+			else {
+				Dochain chain = new Dochain(metas.get(jreq.docName));
+				if (DocsReq.A.blockStart.equals(a))
+					rsp = chain.startBlocks(jmsg.body(0), usr);
+				else if (DocsReq.A.blockUp.equals(a))
+					rsp = chain.uploadBlock(jmsg.body(0), usr);
+				else if (DocsReq.A.blockEnd.equals(a))
+					// synchronization are supposed to be required by a SyncRobot
+					rsp = chain.endBlock(jmsg.body(0), (SyncRobot)usr, onCreateHandler);
+				else if (DocsReq.A.blockAbort.equals(a))
+					rsp = chain.abortBlock(jmsg.body(0), usr);
+
+				else throw new SemanticException(String.format(
+					"request.body.a can not handled: %s\\n",
+					a));
+			}
 
 			if (resp != null)
 				write(resp, ok(rsp));
@@ -235,6 +261,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
+		} catch (InterruptedException e) {
+			// e.printStackTrace();
+			write(resp, err(MsgCode.exIo, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}

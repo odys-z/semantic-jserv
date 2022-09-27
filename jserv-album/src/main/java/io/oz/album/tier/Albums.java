@@ -31,6 +31,7 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.BlockChain;
+import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
@@ -72,9 +73,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 	/** tringger exif parsing when new photo inserted */
 	public static int POST_ParseExif = 1;
-
-	/** db photo table */
-	//public static final String tablPhotos = "h_photos";
 
 	/** db photo table */
 	static final String tablAlbums = "h_albums";

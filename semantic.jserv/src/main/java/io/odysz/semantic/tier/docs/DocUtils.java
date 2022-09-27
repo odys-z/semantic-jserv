@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.odysz.semantic.tier.docs;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,7 +24,7 @@ public class DocUtils {
 	 * @param conn
 	 * @param photo
 	 * @param usr
-	 * @param photoMeta 
+	 * @param meta 
 	 * @param st 
 	 * @param onFileCreateSql 
 	 * @return pid
@@ -32,27 +32,27 @@ public class DocUtils {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFile(String conn, Photo photo, IUser usr, PhotoMeta photoMeta, DATranscxt st, Update onFileCreateSql)
+	public static String createFile(String conn, SyncDoc photo, IUser usr, DocTableMeta meta, DATranscxt st, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
 		if (LangExt.isblank(photo.clientpath))
 			throw new SemanticException("Client path can't be null/empty.");
 		
-		if (LangExt.isblank(photo.month(), " - - "))
-			throw new SemanticException("Month of photo creating is important for saving files. It's required for creating media file.");
+		if (LangExt.isblank(photo.folder(), " - - "))
+			throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 
-		Insert ins = st.insert(photoMeta.tbl, usr)
-				.nv(photoMeta.family, usr.orgId())
-				.nv(photoMeta.uri, photo.uri)
-				.nv(photoMeta.filename, photo.pname)
-				.nv(photoMeta.device, photo.device)
-				.nv(photoMeta.fullpath, photo.fullpath())
-				.nv(photoMeta.createDate, photo.photoDate())
-				.nv(photoMeta.folder, photo.month())
-				.nv("geox", photo.geox).nv("geoy", photo.geoy)
-				.nv(photoMeta.exif, photo.exif)
-				.nv(photoMeta.shareflag, photo.isPublic ? DocTableMeta.Share.pub : DocTableMeta.Share.priv)
-				.nv(photoMeta.shareby, usr.uid())
-				.nv(photoMeta.shareDate, Funcall.now())
+		Insert ins = st.insert(meta.tbl, usr)
+				.nv(meta.org, usr.orgId())
+				.nv(meta.uri, photo.uri)
+				.nv(meta.filename, photo.pname)
+				.nv(meta.device, photo.device)
+				.nv(meta.fullpath, photo.fullpath())
+				.nv(meta.createDate, photo.createDate)
+				.nv(meta.folder, photo.folder())
+				// .nv("geox", photo.geox).nv("geoy", photo.geoy)
+				// .nv(photoMeta.exif, photo.exif)
+				.nv(meta.shareflag, photo.isPublic() ? DocTableMeta.Share.pub : DocTableMeta.Share.priv)
+				.nv(meta.shareby, usr.uid())
+				.nv(meta.shareDate, Funcall.now())
 				;
 		
 		if (!LangExt.isblank(photo.mime))
@@ -68,8 +68,8 @@ public class DocUtils {
 		// photo.semantext(insCtx);
 		SemanticObject res = (SemanticObject) ins.ins(insCtx);
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
-				.get(photoMeta.tbl))
-				.getString(photoMeta.pk);
+				.get(meta.tbl))
+				.getString(meta.pk);
 		
 //		if (photo.geox == null || photo.month == null)
 //			onPhotoCreated(pid, conn, usr);
