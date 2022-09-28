@@ -126,7 +126,7 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 
 	public String albumId;
 	
-	String month;
+	// String month;
 	
 	public Photo() {}
 	
@@ -134,7 +134,7 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
 		this.uri = rs.getString("uri");
-		this.month = rs.getString("folder");
+		this.folder = rs.getString("folder");
 		this.createDate = rs.getString("pdate");
 		this.shareby = rs.getString("owner");
 		this.geox = rs.getString("geox");
@@ -174,21 +174,21 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 	}
 
 	public String folder() throws IOException, SemanticException {
-		if (month == null)
+		if (folder == null)
 			photoDate();
-		return month;
+		return folder;
 	}
 
 	public AbsPart photoDate() throws IOException, SemanticException {
 		try {
 			if (!LangExt.isblank(createDate)) {
 				Date d = DateFormat.parse(createDate); 
-				month = DateFormat.formatYYmm(d);
+				folder = DateFormat.formatYYmm(d);
 				return new ExprPart("'" + createDate + "'");
 			}
 			else {
 				Date d = new Date();
-				month = DateFormat.formatYYmm(d);
+				folder = DateFormat.formatYYmm(d);
 				return Funcall.now();
 			}
 		} catch (ParseException e ) {
@@ -198,11 +198,11 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 	}
 
 	public void month(Date d) {
-		month = DateFormat.formatYYmm(d);
+		folder = DateFormat.formatYYmm(d);
 	}
 
 	public void month(FileTime d) {
-		month = DateFormat.formatYYmm(d);
+		folder = DateFormat.formatYYmm(d);
 	}
 
 	@Override

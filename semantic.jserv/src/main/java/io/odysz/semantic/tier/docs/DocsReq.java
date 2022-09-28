@@ -92,22 +92,36 @@ public class DocsReq extends AnsonBody {
 	public String createDate;
 	public String clientpath;
 	public String mime;
+	public String subFolder;
 
 	@AnsonField(shortenString = true)
 	public String uri64;
 
 	String[] deletings;
 
-//	String docState;
 	String shareflag;
 	
 	public DocsReq() {
 		super(null, null);
 		blockSeq = -1;
+		
+		subFolder = "";
+	}
+
+	/**
+	 * @param syncTask i.e. docTable name, could be a design problem?
+	 */
+	public DocsReq(String syncTask) {
+		super(null, null);
+		blockSeq = -1;
+		docTabl = syncTask;
+		subFolder = "";
 	}
 
 	protected DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
+		blockSeq = -1;
+		subFolder = "";
 	}
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
@@ -213,6 +227,11 @@ public class DocsReq extends AnsonBody {
 
 	public DocsReq blockSeq(int i) {
 		blockSeq = i;
+		return this;
+	}
+
+	public DocsReq folder(String name) {
+		subFolder = name;
 		return this;
 	}
 }

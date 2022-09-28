@@ -90,6 +90,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return sharedate(DateFormat.format(date));
 	}
 
+	@AnsonField(ignoreTo=true)
 	DocTableMeta docMeta;
 
 	ISemantext semantxt;
@@ -168,8 +169,14 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 
-	public String folder() throws IOException, SemanticException  {
-		return null;
+	protected String folder;
+	public String folder() throws IOException, SemanticException {
+		return folder;
+	}
+
+	public SyncDoc folder(String v) {
+		this.folder = v;
+		return this;
 	}
 
 //	@Override

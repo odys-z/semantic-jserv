@@ -236,7 +236,7 @@ public class Albums extends ServPort<AlbumReq> {
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
 		String tempDir = ((PhotoRobot)usr).touchTempDir(conn);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate);
+		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder);
 
 		// FIXME security breach?
 		String id = usr.sessionId() + " " + chain.clientpath;

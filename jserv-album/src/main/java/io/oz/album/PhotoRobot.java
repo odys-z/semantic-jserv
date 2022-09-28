@@ -27,20 +27,21 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.PhotoMeta;
+import io.oz.jserv.sync.SyncRobot;
 
 /**A robot used session-less service.
  * 
  * @author odys-z@github.com
  */
-public class PhotoRobot extends SemanticObject implements IUser {
+public class PhotoRobot extends SyncRobot implements IUser {
 
 	long touched;
 
-	String userId;
-	String userName;
+//	String userId;
+//	String userName;
 	String roleId;
 	String roleName;
-	String orgId;
+//	String orgId;
 	String orgName;
 	
 	String deviceId;
@@ -53,7 +54,8 @@ public class PhotoRobot extends SemanticObject implements IUser {
 	RobotMeta userMeta;
 
 	public PhotoRobot(String userid) {
-		this.userId = userid;
+		super(userid, null);
+//		this.userId = userid;
 		userMeta = (RobotMeta) meta();
 	}
 
@@ -64,7 +66,8 @@ public class PhotoRobot extends SemanticObject implements IUser {
 	 * @param userName
 	 */
 	public PhotoRobot(String userid, String pswd, String userName) {
-		this.userId = userid;
+		super(userid, null);
+		// this.userId = userid;
 		userMeta = (RobotMeta) meta();
 	}
 	

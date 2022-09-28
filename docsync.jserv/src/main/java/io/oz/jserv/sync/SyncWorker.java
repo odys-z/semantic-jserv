@@ -119,7 +119,7 @@ public class SyncWorker implements Runnable {
 			String[] act = AnsonHeader.usrAct("sync.jserv", "query", "r/tasks", "query tasks");
 			AnsonHeader header = client.header().act(act);
 
-			DocsReq req = (DocsReq) new DocsReq().a(A.records);
+			DocsReq req = (DocsReq) new DocsReq(null).a(A.records);
 
 			AnsonMsg<DocsReq> q = client.<DocsReq>userReq("", AnsonMsg.Port.docsync, req)
 									.header(header);
@@ -337,7 +337,8 @@ public class SyncWorker implements Runnable {
 			while(files.next()) {
 				px++;
 				IFileDescriptor p = new SyncDoc(files, localMeta);
-				DocsReq req = new DocsReq()
+				DocsReq req = new DocsReq(localMeta.tbl)
+						.folder("kyiv")
 						.blockStart(p, user);
 
 				AnsonMsg<DocsReq> q = client
@@ -358,7 +359,7 @@ public class SyncWorker implements Runnable {
 				try {
 					String b64 = AESHelper.encode64(ifs, blocksize);
 					while (b64 != null) {
-						req = new DocsReq().blockUp(seq, resp, b64, user);
+						req = new DocsReq(localMeta.tbl).blockUp(seq, resp, b64, user);
 						seq++;
 
 						q = client.<DocsReq>userReq(uri, Port.docsync, req)
@@ -369,7 +370,7 @@ public class SyncWorker implements Runnable {
 
 						b64 = AESHelper.encode64(ifs, blocksize);
 					}
-					req = new DocsReq().blockEnd(resp, user);
+					req = new DocsReq(localMeta.tbl).blockEnd(resp, user);
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
 					resp = client.commit(q, onErr);
@@ -383,7 +384,7 @@ public class SyncWorker implements Runnable {
 				catch (Exception ex) {
 					Utils.warn(ex.getMessage());
 
-					req = new DocsReq().blockAbort(resp, user);
+					req = new DocsReq(localMeta.tbl).blockAbort(resp, user);
 					req.a(DocsReq.A.blockAbort);
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
