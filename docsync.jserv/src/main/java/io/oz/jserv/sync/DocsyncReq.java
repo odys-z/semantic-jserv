@@ -12,22 +12,6 @@ public class DocsyncReq extends DocsReq {
 		public static final String download = "rec"; 
 	}
 
-	public static final class SyncFlag {
-		/**
-		 * created at cloud hub ('+')
-		 */
-		public static final String hubInit = "+";
-		/**
-		 * kept as private file ('-')
-		 */
-		public static final String priv = "-";
-		/**
-		 * to be pushed (shared) to hub ('psh')
-		 */
-		public static final String pushing = "psh";
-		
-	}
-
 	protected DocsyncReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 	}

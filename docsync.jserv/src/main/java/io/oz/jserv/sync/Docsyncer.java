@@ -24,6 +24,8 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFile;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.ext.DocTableMeta.Share;
+import io.odysz.semantic.ext.DocTableMeta.SyncFlag;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -129,18 +131,18 @@ public class Docsyncer extends ServPort<DocsReq> {
 			throws TransException {
 
 		if (SyncMode.hub == mode && !doc.isPublic())
-			return st.update(meta.tbl)
-				.nv(meta.syncflag, DocsyncReq.SyncFlag.hubInit)
+			return st.update(meta.tbl, usr)
+				.nv(meta.syncflag, SyncFlag.hubInit)
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
-				.whereEq(meta.shareflag, DocTableMeta.Share.pub)
+				.whereEq(meta.shareflag, Share.pub)
 				;
 		
 		// private doc
 		else if (SyncMode.main == mode || SyncMode.priv == mode)
-			return st.update(meta.tbl)
-				.nv(meta.syncflag, doc.isPublic() ? DocsyncReq.SyncFlag.pushing : DocsyncReq.SyncFlag.priv)
+			return st.update(meta.tbl, usr)
+				.nv(meta.syncflag, doc.isPublic() ? SyncFlag.pushing : SyncFlag.priv)
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
-				.whereEq(meta.shareflag, doc.isPublic() ? DocTableMeta.Share.pub : DocTableMeta.Share.priv)
+				.whereEq(meta.shareflag, doc.isPublic() ? Share.pub : Share.priv)
 				;
 //		else if (SyncMode.priv == mode)
 //			throw new TransException("TODO");
@@ -332,7 +334,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws TransException 
 	 */
 	protected DocsResp synclose(DocsReq jreq, IUser usr) throws TransException, SQLException {
-		SemanticObject r = (SemanticObject) st.insert(tablSyncLog)
+		SemanticObject r = (SemanticObject) st.insert(tablSyncLog, usr)
 				.nv("family", jreq.org)
 				.nv("tabl", jreq.docTabl)
 				.nv("device", jreq.device())
@@ -348,7 +350,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.select(jreq.docTabl, "t")
 				.cols(meta.org, meta.device, meta.fullpath, meta.syncflag)
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
-				.whereEq(meta.syncflag, DocsyncReq.SyncFlag.hubInit)
+				.whereEq(meta.syncflag, SyncFlag.hubInit)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0);
 

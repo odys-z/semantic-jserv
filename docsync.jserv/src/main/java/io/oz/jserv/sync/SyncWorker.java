@@ -291,7 +291,7 @@ public class SyncWorker implements Runnable {
 				.select(localMeta.tbl, "f")
 				// .cols(localMeta.device, localMeta.fullpath, localMeta.syncflag)
 				.cols(SyncDoc.nvCols(localMeta))
-				.whereEq(localMeta.syncflag, DocsyncReq.SyncFlag.pushing)
+				.whereEq(localMeta.syncflag, DocTableMeta.SyncFlag.pushing)
 				.rs(localSt.instancontxt(connPriv, robot))
 				.rs(0)).beforeFirst();
 
@@ -302,7 +302,7 @@ public class SyncWorker implements Runnable {
 				@Override
 				public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
 						throws IOException, AnsonException, SemanticException {
-					Utils.logi("%s: %s / %s, %s", clientpath, listIndx, totalBlocks, blockResp.msg());
+					Utils.logi("%s: %s / %s, reply: %s", clientpath, listIndx, totalBlocks, blockResp.msg());
 				}});
 			
 			// set shareflag = hub
@@ -317,14 +317,15 @@ public class SyncWorker implements Runnable {
 	 * @param onProcess
 	 * @return Sync response list
 	 * @throws SQLException
+	 * @throws TransException 
 	 */
 	List<DocsResp> sync(DocTableMeta localMeta, AnResultset rs, SessionInf sessionInf, OnProcess onProcess)
-			throws SQLException {
+			throws SQLException, TransException {
 		return sync(uri, client, errLog, localMeta, rs, sessionInf, onProcess);
 	}
 
 	public List<DocsResp> sync(String uri, SessionClient client, ErrorCtx onErr, DocTableMeta meta,
-			AnResultset files, SessionInf user, OnProcess proc) throws SQLException {
+			AnResultset files, SessionInf user, OnProcess proc) throws TransException, SQLException {
 
 		DocsResp resp = null;
 		try {
@@ -376,12 +377,14 @@ public class SyncWorker implements Runnable {
 					resp = client.commit(q, onErr);
 
 					
-					// TODO
-					// FIXME change local sync flag
+					localSt.update(localMeta.tbl, robot)
+						.nv(localMeta.syncflag, DocTableMeta.SyncFlag.publish)
+						.whereEq(localMeta.pk, p.recId())
+						.u(localSt.instancontxt(connPriv, robot));
 
 					if (proc != null) proc.proc(totalBlocks, totalBlocks, resp);
 				}
-				catch (Exception ex) {
+				catch (TransException | IOException ex) {
 					Utils.warn(ex.getMessage());
 
 					req = new DocsReq(localMeta.tbl).blockAbort(resp, user);
