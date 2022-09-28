@@ -8,6 +8,27 @@ public class DocTableMeta extends TableMeta {
 		public static final String priv = "priv";
 	}
 
+	public static final class SyncFlag {
+		/**
+		 * created at cloud hub ('✩')
+		 */
+		public static final String hubInit = "✩";
+		/**
+		 * kept as private file ('🔒')
+		 */
+		public static final String priv = "🔒";
+		/**
+		 * to be pushed (shared) to hub ('⇈')
+		 */
+		public static final String pushing = "⇈";
+	
+		/**
+		 * synchronized (shared) with hub ('🌎')
+		 */
+		public static final String publish = "🌎";
+		
+	}
+
 
 	public final String syncflag;
 	public final String shareflag;
