@@ -33,13 +33,14 @@ import io.odysz.transact.x.TransException;
  */
 public class SyncRobot extends SemanticObject implements IUser {
 
-	long touched;
-	String userId;
+	protected long touched;
+	protected String userId;
+	protected String userName;
 
-	String orgId;
+	protected String orgId;
 	public String orgId() { return orgId; }
 
-	String deviceId;
+	protected String deviceId;
 	public String deviceId() { return deviceId; }
 
 	private String ssid;
@@ -53,6 +54,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	public SyncRobot(String userid, String pswd, String userName) {
 		this.userId = userid;
+		this.userName = userName;
 	}
 	
 	public static class RobotMeta extends JUserMeta {
@@ -66,7 +68,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 	}
 
 	public TableMeta meta() {
-		return new RobotMeta("");
+		return new RobotMeta("a_users");
 	}
 
 	@Override

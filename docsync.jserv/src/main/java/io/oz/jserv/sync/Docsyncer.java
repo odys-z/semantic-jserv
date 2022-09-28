@@ -18,6 +18,7 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFile;
@@ -238,7 +239,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 			//
 			else {
-				Dochain chain = new Dochain(metas.get(jreq.docName));
+				if (LangExt.isblank(jreq.docTabl))
+					throw new SemanticException("To push a doc via Docsyncer, docTable name can not be null.");
+				Dochain chain = new Dochain(metas.get(jreq.docTabl), st);
 				if (DocsReq.A.blockStart.equals(a))
 					rsp = chain.startBlocks(jmsg.body(0), usr);
 				else if (DocsReq.A.blockUp.equals(a))

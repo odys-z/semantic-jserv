@@ -7,6 +7,7 @@ import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 
+import io.odysz.anson.AnsonField;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -45,19 +46,21 @@ public class Dochain {
 
 	public static final boolean verbose = true;
 
-	protected static DATranscxt st;
+	DATranscxt st;
 
-	HashMap<String, BlockChain> blockChains;
+	static HashMap<String, BlockChain> blockChains;
 
+	@AnsonField(ignoreTo=true)
 	DocTableMeta meta;
 	
-	public Dochain (DocTableMeta meta) {
+	public Dochain (DocTableMeta meta, DATranscxt deflst) {
 		this.meta = meta;
+		this.st = deflst;
 	}
 
 	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, ((SyncRobot)usr).deviceId(), body.clientpath, usr);
+		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
@@ -65,7 +68,7 @@ public class Dochain {
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate);
+		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder);
 
 		// FIXME security breach?
 		// String id = usr.sessionId() + " " + chain.clientpath;
@@ -108,7 +111,9 @@ public class Dochain {
 	
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		// String id = body.chainId();
-		String id = chainId(usr, body.clientpath);
+		// String id = chainId(usr, body.clientpath);
+
+		String id = body.device() + " " + body.clientpath;
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
 
@@ -125,7 +130,9 @@ public class Dochain {
 	
 	DocsResp endBlock(DocsReq body, SyncRobot usr, IOnChainOk ok)
 			throws SQLException, IOException, InterruptedException, TransException {
-		String id = chainId(usr, body.clientpath);
+		// String id = chainId(usr, body.clientpath);
+
+		String id = body.device() + " " + body.clientpath;
 		BlockChain chain;
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
@@ -145,10 +152,11 @@ public class Dochain {
 		photo.device = usr.device();
 		photo.pname = chain.clientname;
 		photo.uri = null;
-		String pid = createFile(conn, photo, meta, usr, ok);
+		photo.folder(chain.saveFolder); 
+		String pid = createFile(st, conn, photo, meta, usr, ok);
 
 		// move file
-		String targetPath = resolvExtroot(conn, pid, usr, meta);
+		String targetPath = resolvExtroot(st, conn, pid, usr, meta);
 		if (verbose)
 			Utils.logi("   %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
@@ -164,7 +172,8 @@ public class Dochain {
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		// String id = body.chainId();
-		String id = chainId(usr, body.clientpath);
+		// String id = chainId(usr, body.clientpath);
+		String id = body.device() + " " + body.clientpath;
 		DocsResp ack = new DocsResp();
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).abortChain();
@@ -177,12 +186,12 @@ public class Dochain {
 	}
 
 	
-	private String chainId(IUser usr, String clientpathRaw) {
-		return usr.sessionId() + " " + clientpathRaw;
-	}
+//	private String chainId(IUser usr, String clientpathRaw) {
+//		return usr.sessionId() + " " + clientpathRaw;
+//	}
 
 
-	public static String createFile(String conn, SyncDoc photo, DocTableMeta meta, SyncRobot usr, IOnChainOk end)
+	public static String createFile(DATranscxt st, String conn, SyncDoc photo, DocTableMeta meta, SyncRobot usr, IOnChainOk end)
 			throws TransException, SQLException, IOException {
 		
 		// DocTableMeta meta = new DocTableMeta(conn);
@@ -197,10 +206,10 @@ public class Dochain {
 	}
 
 
-	static String resolvExtroot(String conn, String docId, IUser usr, DocTableMeta meta2) throws TransException, SQLException {
-		ISemantext stx = st.instancontxt(conn, usr);
-		AnResultset rs = (AnResultset) st
-				.select(meta2.tbl)
+	static String resolvExtroot(DATranscxt defltst, String conn, String docId, IUser usr, DocTableMeta meta) throws TransException, SQLException {
+		ISemantext stx = defltst.instancontxt(conn, usr);
+		AnResultset rs = (AnResultset) defltst
+				.select(meta.tbl)
 				.col("uri").col("folder")
 				.whereEq("pid", docId).rs(stx)
 				.rs(0);
@@ -208,7 +217,7 @@ public class Dochain {
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 
-		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, meta2.tbl, smtype.extFile)).getFileRoot();
+		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, meta.tbl, smtype.extFile)).getFileRoot();
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
 	

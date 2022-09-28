@@ -22,6 +22,7 @@ import io.odysz.transact.x.TransException;
 public class BlockChain {
 
 	// public final String ssId;
+	public final String saveFolder;
 	public final String clientpath;
 	public final String clientname;
 	public final String cdate;
@@ -37,10 +38,11 @@ public class BlockChain {
 	 * @param tempDir
 	 * @param clientpathRaw - client path that can match at client's environment (saving at server side replaced some special characters)
 	 * @param createDate 
+	 * @param targetFolder the file should finally saved to this sub folder (specified by client) 
 	 * @throws IOException
 	 * @throws TransException 
 	 */
-	public BlockChain(String tempDir, String clientpathRaw, String createDate)
+	public BlockChain(String tempDir, String clientpathRaw, String createDate, String targetFolder)
 			throws IOException, TransException {
 
 		if (LangExt.isblank(clientpathRaw))
@@ -48,6 +50,7 @@ public class BlockChain {
 		// this.ssId = ssId;
 		this.cdate = createDate;
 		this.clientpath = clientpathRaw;
+		this.saveFolder = targetFolder;
 
 		// tempDir = FilenameUtils.concat(rootpath, userId, "uploading-temp", ssId);
 
