@@ -33,6 +33,10 @@ public class BlockChain {
 	
 	protected final DocsReq waitings;
 
+	public String shareby;
+	public String shareDate;
+	public String shareflag;
+
 	/**Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
 	 * @param tempDir
@@ -124,5 +128,12 @@ public class BlockChain {
 		}
 
 		return outputPath;
+	}
+
+	public BlockChain share(String shareby, String shareDate, String shareflag) {
+		this.shareby = shareby;
+		this.shareDate = shareDate;
+		this.shareflag = shareflag;
+		return this;
 	}
 }

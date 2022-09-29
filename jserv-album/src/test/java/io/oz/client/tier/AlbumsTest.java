@@ -259,8 +259,6 @@ class AlbumsTest {
 			@Override public String device() { return null; }
 
 			@Override public String uri() { return null; }
-
-			@Override public boolean isPublic() { return false; } 
 		});
 
 		try {

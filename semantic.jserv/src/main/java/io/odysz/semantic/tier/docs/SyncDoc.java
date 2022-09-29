@@ -34,7 +34,10 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public String device() { return device; }
 	
-	public int syncFlag;
+	public String shareflag;
+	@Override
+	public String shareflag() { return shareflag; }
+
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;
 	@Override
@@ -48,6 +51,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public String shareby;
 	public String sharedate;
 	
+	public int syncFlag;
+
 	/** usually ignored when sending request */
 	public long size;
 
@@ -60,15 +65,15 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	}
 	*/
 
-	boolean isPublic;
-	@Override
-	public boolean isPublic() {
-		return isPublic;
-	}
-	public SyncDoc isPublic(boolean pub) {
-		isPublic = pub;
-		return this;
-	}
+//	boolean isPublic;
+//	@Override
+//	public boolean isPublic() {
+//		return isPublic;
+//	}
+//	public SyncDoc isPublic(boolean pub) {
+//		isPublic = pub;
+//		return this;
+//	}
 
 	public String mime;
 	@Override
@@ -109,23 +114,16 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 				meta.uri,
 				meta.createDate,
 				meta.shareDate,
+				meta.shareby,
+				meta.shareflag,
 				meta.mime,
 				meta.fullpath,
-				meta.device
+				meta.device,
+				meta.folder
 		};
 	}
 	
 	public SyncDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
-		/*
-		this.recId = rs.getString("pid");
-		this.pname = rs.getString("pname");
-		this.uri = rs.getString("uri");
-		this.month = rs.getString("folder");
-		this.createDate = rs.getString("pdate");
-		this.mime = rs.getString("mime");
-		this.clientpath =  rs.getString("clientpath");
-		this.device =  rs.getString("device");
-		*/
 		this.docMeta = meta;
 		this.recId = rs.getString(meta.pk);
 		this.pname = rs.getString(meta.filename);
@@ -133,6 +131,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.createDate = rs.getString(meta.createDate);
 		this.mime = rs.getString(meta.mime);
 		
+		// this.isPublic = Share.pub.equals(rs.getString(meta.shareflag, null));
 		this.clientpath =  rs.getString(meta.fullpath);
 		this.device =  rs.getString(meta.device);
 		
@@ -141,6 +140,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		} catch (Exception ex) {
 			this.sharedate = rs.getString(meta.createDate);
 		}
+		this.shareby = rs.getString(meta.shareby);
+		this.shareflag = rs.getString(meta.shareflag);
 	}
 
 	/**Set client path and syncFlag
@@ -163,10 +164,12 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	/**Set (private) jserv node file full path (path replaced with %VOLUME_HOME)
 	 * @param path
 	 * @return
+	 * @throws SemanticException 
 	 */
-	public IFileDescriptor uri(String path) {
+	public IFileDescriptor uri(String path) throws SemanticException {
 		
-		return this;
+		// return this;
+		throw new SemanticException("TODO");
 	}
 
 	protected String folder;

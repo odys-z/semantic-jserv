@@ -14,6 +14,8 @@ volume/ody/ - - /**
 volume/ody/uploading-temp
 volume/admin
 volume/odys-z.github.io
+volume/null
+volume/2022*
 test/results
 test/res/ignore*.*
 .extract

@@ -206,7 +206,7 @@ public class SyncWorker implements Runnable {
 				.nv("pname", doc.pname)
 				.nv("device", usr.deviceId())
 				.nv("clientpath", doc.clientpath)
-				.nv("shareflag", doc.isPublic() ? DocTableMeta.Share.pub : DocTableMeta.Share.priv)
+				.nv("shareflag", doc.shareflag)
 				// .nv("syncflag", doc.isPublic() ? DocsyncReq.SyncFlag.pushing : DocsyncReq.SyncFlag.priv)
 				;
 		
@@ -297,7 +297,7 @@ public class SyncWorker implements Runnable {
 
 			// upload
 			String clientpath = rs.getString(localMeta.fullpath);
-			sync(localMeta, rs, robot.sessionInf(), new OnProcess() {
+			sync(rs, new OnProcess() {
 
 				@Override
 				public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
@@ -313,20 +313,21 @@ public class SyncWorker implements Runnable {
 	/** Synchronizing files to hub using block chain, accessing port {@link Port#docsync}.
 	 * @param localMeta 
 	 * @param rs
-	 * @param sessionInf device is required for overriding doc's device field.
+	 * @param robot device is required for overriding doc's device field.
 	 * @param onProcess
 	 * @return Sync response list
 	 * @throws SQLException
 	 * @throws TransException 
 	 */
-	List<DocsResp> sync(DocTableMeta localMeta, AnResultset rs, SessionInf sessionInf, OnProcess onProcess)
+	List<DocsResp> sync(AnResultset rs, OnProcess onProcess)
 			throws SQLException, TransException {
-		return sync(uri, client, errLog, localMeta, rs, sessionInf, onProcess);
+		return sync(localSt, connPriv, uri, client, errLog, localMeta, rs, robot, onProcess);
 	}
 
-	public List<DocsResp> sync(String uri, SessionClient client, ErrorCtx onErr, DocTableMeta meta,
-			AnResultset files, SessionInf user, OnProcess proc) throws TransException, SQLException {
+	public static List<DocsResp> sync(DATranscxt st, String loconn, String uri, SessionClient client, ErrorCtx onErr, DocTableMeta meta,
+			AnResultset files, SyncRobot robot, OnProcess proc) throws TransException, SQLException {
 
+		SessionInf user = robot.sessionInf();
 		DocsResp resp = null;
 		try {
 			String[] act = AnsonHeader.usrAct("sync", "push", meta.tbl, user.device);
@@ -337,9 +338,10 @@ public class SyncWorker implements Runnable {
 			int px = 0;
 			while(files.next()) {
 				px++;
-				IFileDescriptor p = new SyncDoc(files, localMeta);
-				DocsReq req = new DocsReq(localMeta.tbl)
-						.folder("kyiv")
+				IFileDescriptor p = new SyncDoc(files, meta);
+				DocsReq req = new DocsReq(meta.tbl)
+						.folder(files.getString(meta.folder))
+						.share((SyncDoc)p)
 						.blockStart(p, user);
 
 				AnsonMsg<DocsReq> q = client
@@ -360,7 +362,7 @@ public class SyncWorker implements Runnable {
 				try {
 					String b64 = AESHelper.encode64(ifs, blocksize);
 					while (b64 != null) {
-						req = new DocsReq(localMeta.tbl).blockUp(seq, resp, b64, user);
+						req = new DocsReq(meta.tbl).blockUp(seq, resp, b64, user);
 						seq++;
 
 						q = client.<DocsReq>userReq(uri, Port.docsync, req)
@@ -371,23 +373,23 @@ public class SyncWorker implements Runnable {
 
 						b64 = AESHelper.encode64(ifs, blocksize);
 					}
-					req = new DocsReq(localMeta.tbl).blockEnd(resp, user);
+					req = new DocsReq(meta.tbl).blockEnd(resp, user);
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
 					resp = client.commit(q, onErr);
 
 					
-					localSt.update(localMeta.tbl, robot)
-						.nv(localMeta.syncflag, DocTableMeta.SyncFlag.publish)
-						.whereEq(localMeta.pk, p.recId())
-						.u(localSt.instancontxt(connPriv, robot));
+					st.update(meta.tbl, robot)
+						.nv(meta.syncflag, DocTableMeta.SyncFlag.publish)
+						.whereEq(meta.pk, p.recId())
+						.u(st.instancontxt(loconn, robot));
 
 					if (proc != null) proc.proc(totalBlocks, totalBlocks, resp);
 				}
 				catch (TransException | IOException ex) {
 					Utils.warn(ex.getMessage());
 
-					req = new DocsReq(localMeta.tbl).blockAbort(resp, user);
+					req = new DocsReq(meta.tbl).blockAbort(resp, user);
 					req.a(DocsReq.A.blockAbort);
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);

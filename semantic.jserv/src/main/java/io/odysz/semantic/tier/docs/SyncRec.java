@@ -75,9 +75,4 @@ public class SyncRec extends Anson implements IFileDescriptor {
 	public String uri() {
 		return null;
 	}
-
-	@Override
-	public boolean isPublic() {
-		return false;
-	}
 }
