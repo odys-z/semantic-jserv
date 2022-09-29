@@ -68,10 +68,9 @@ public class Dochain {
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder);
+		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder)
+				.share(body.shareby, body.shareDate, body.shareflag);
 
-		// FIXME security breach?
-		// String id = usr.sessionId() + " " + chain.clientpath;
 		String id = body.device() + " " + chain.clientpath;
 
 		if (blockChains.containsKey(id))
@@ -128,7 +127,7 @@ public class Dochain {
 	}
 
 	
-	DocsResp endBlock(DocsReq body, SyncRobot usr, IOnChainOk ok)
+	DocsResp endBlock(DocsReq body, SyncRobot usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		// String id = chainId(usr, body.clientpath);
 
@@ -151,9 +150,16 @@ public class Dochain {
 		photo.clientpath = chain.clientpath;
 		photo.device = usr.device();
 		photo.pname = chain.clientname;
+		photo.folder(chain.saveFolder);
+		photo.shareby = chain.shareby;
+		photo.sharedate = chain.shareDate;
+		photo.shareflag = chain.shareflag;
+
 		photo.uri = null;
-		photo.folder(chain.saveFolder); 
-		String pid = createFile(st, conn, photo, meta, usr, ok);
+		String pid = createFile(st, conn, photo, meta, usr, 
+				(Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
+					return null;
+				});
 
 		// move file
 		String targetPath = resolvExtroot(st, conn, pid, usr, meta);
@@ -191,7 +197,8 @@ public class Dochain {
 //	}
 
 
-	public static String createFile(DATranscxt st, String conn, SyncDoc photo, DocTableMeta meta, SyncRobot usr, IOnChainOk end)
+	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
+			DocTableMeta meta, SyncRobot usr, IOnChainOk end)
 			throws TransException, SQLException, IOException {
 		
 		// DocTableMeta meta = new DocTableMeta(conn);

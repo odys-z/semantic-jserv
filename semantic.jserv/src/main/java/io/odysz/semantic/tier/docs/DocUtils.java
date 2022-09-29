@@ -12,7 +12,6 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Update;
-import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 
 public class DocUtils {
@@ -48,11 +47,9 @@ public class DocUtils {
 				.nv(meta.fullpath, photo.fullpath())
 				.nv(meta.createDate, photo.createDate)
 				.nv(meta.folder, photo.folder())
-				// .nv("geox", photo.geox).nv("geoy", photo.geoy)
-				// .nv(photoMeta.exif, photo.exif)
-				.nv(meta.shareflag, photo.isPublic() ? DocTableMeta.Share.pub : DocTableMeta.Share.priv)
-				.nv(meta.shareby, usr.uid())
-				.nv(meta.shareDate, Funcall.now())
+				.nv(meta.shareflag, photo.shareflag)
+				.nv(meta.shareby, photo.shareby)
+				.nv(meta.shareDate, photo.sharedate)
 				;
 		
 		if (!LangExt.isblank(photo.mime))

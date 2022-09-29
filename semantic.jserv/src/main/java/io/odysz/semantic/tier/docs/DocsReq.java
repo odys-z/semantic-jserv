@@ -99,7 +99,9 @@ public class DocsReq extends AnsonBody {
 
 	String[] deletings;
 
-	String shareflag;
+	public String shareflag;
+	public String shareby;
+	public String shareDate;
 	
 	public DocsReq() {
 		super(null, null);
@@ -232,6 +234,13 @@ public class DocsReq extends AnsonBody {
 
 	public DocsReq folder(String name) {
 		subFolder = name;
+		return this;
+	}
+
+	public DocsReq share(SyncDoc p) {
+		shareflag = p.shareflag;
+		shareby = p.shareby;
+		shareby = p.sharedate;
 		return this;
 	}
 }

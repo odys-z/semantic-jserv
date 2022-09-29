@@ -30,6 +30,7 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -121,7 +122,7 @@ class SyncWorkerTest {
 		photo.exif = new ArrayList<String>() {
 			{add("location:вулиця Лаврська' 27' Київ");};
 			{add("camera:Bayraktar TB2");}};
-		photo.isPublic(true)
+		photo.shareflag(Share.pub)
 			.shareby("ody")
 			.sharedate(new Date());
 
@@ -165,9 +166,10 @@ class SyncWorkerTest {
 	}
 
 	@Test
-	void testPrivPull() throws
-		AnsonException, SQLException, IOException, TransException,
-		SsException, GeneralSecurityException, SAXException {
+	void testPrivPull() {
+		// upload a file via anclient.java (Album Client)
+
+		// downward synchronize the file
 	}
 	
 	void videoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {

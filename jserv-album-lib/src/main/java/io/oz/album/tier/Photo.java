@@ -211,4 +211,9 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 		return this;
 	}
 
+	public SyncDoc shareflag(String share) {
+		shareflag = share;
+		return this;
+	}
+
 }

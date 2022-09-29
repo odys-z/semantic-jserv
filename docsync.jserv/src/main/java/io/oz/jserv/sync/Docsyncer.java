@@ -130,7 +130,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static Update onDocreate(IFileDescriptor doc, DocTableMeta meta, IUser usr)
 			throws TransException {
 
-		if (SyncMode.hub == mode && !doc.isPublic())
+		if (SyncMode.hub == mode && !Share.pub.equals(doc.shareflag()))
 			return st.update(meta.tbl, usr)
 				.nv(meta.syncflag, SyncFlag.hubInit)
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
@@ -140,9 +140,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 		// private doc
 		else if (SyncMode.main == mode || SyncMode.priv == mode)
 			return st.update(meta.tbl, usr)
-				.nv(meta.syncflag, doc.isPublic() ? SyncFlag.pushing : SyncFlag.priv)
+				.nv(meta.syncflag, Share.pub.equals(doc.shareflag()) ? SyncFlag.pushing : SyncFlag.priv)
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
-				.whereEq(meta.shareflag, doc.isPublic() ? Share.pub : Share.priv)
+				.whereEq(meta.shareflag, doc.shareflag())
 				;
 //		else if (SyncMode.priv == mode)
 //			throw new TransException("TODO");
@@ -250,7 +250,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 					rsp = chain.uploadBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockEnd.equals(a))
 					// synchronization are supposed to be required by a SyncRobot
-					rsp = chain.endBlock(jmsg.body(0), (SyncRobot)usr, onCreateHandler);
+					rsp = chain.endBlock(jmsg.body(0), (SyncRobot)usr);
 				else if (DocsReq.A.blockAbort.equals(a))
 					rsp = chain.abortBlock(jmsg.body(0), usr);
 

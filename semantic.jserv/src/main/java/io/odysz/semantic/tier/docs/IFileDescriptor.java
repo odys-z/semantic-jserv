@@ -2,6 +2,8 @@ package io.odysz.semantic.tier.docs;
 
 import java.io.IOException;
 
+import io.odysz.semantic.ext.DocTableMeta.Share;
+
 /**
  * Since jserv 1.4.11, a file is an object shared across nodes, so this
  * interface is also used for synchronizing.
@@ -41,7 +43,8 @@ public interface IFileDescriptor {
 	/** @return file uri */
 	String uri();
 
-	boolean isPublic();
+	// boolean isPublic();
+	default String shareflag() { return Share.priv; }
 	
 //	/**
 //	 * Set statement semantics context (for resulving pkval etc.)
