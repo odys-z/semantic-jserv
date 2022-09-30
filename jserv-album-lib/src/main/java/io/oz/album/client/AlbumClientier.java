@@ -106,8 +106,6 @@ public class AlbumClientier extends Semantier {
 	}
 	
 	/**
-	 * <b>Issue:</b>
-	 * Can this been replaced by SyncWorker.push() ?
 	 * 
 	 * @param videos
 	 * @param user
@@ -143,7 +141,7 @@ public class AlbumClientier extends Semantier {
 					Utils.warn("resp not reply with exactly the same path: %s", resp.fullpath());
 
 				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
-				if (proc != null) proc.proc(px, totalBlocks, resp);
+				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp);
 
 				int seq = 0;
 				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
@@ -157,7 +155,7 @@ public class AlbumClientier extends Semantier {
 									.header(header);
 
 						resp = client.commit(q, errHandler);
-						if (proc != null) proc.proc(px, totalBlocks, resp);
+						if (proc != null) proc.proc(videos.size(), px, seq, totalBlocks, resp);
 
 						b64 = AESHelper.encode64(ifs, blocksize);
 					}
@@ -166,7 +164,7 @@ public class AlbumClientier extends Semantier {
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 								.header(header);
 					resp = client.commit(q, errHandler);
-					if (proc != null) proc.proc(px, totalBlocks, resp);
+					if (proc != null) proc.proc(videos.size(), px, seq, totalBlocks, resp);
 				}
 				catch (Exception ex) {
 					Utils.warn(ex.getMessage());
@@ -176,7 +174,7 @@ public class AlbumClientier extends Semantier {
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 								.header(header);
 					resp = client.commit(q, errHandler);
-					if (proc != null) proc.proc(px, totalBlocks, resp);
+					if (proc != null) proc.proc(videos.size(), px, seq, totalBlocks, resp);
 
 					throw ex;
 				}

@@ -166,13 +166,23 @@ class SyncWorkerTest {
 	}
 
 	@Test
-	void testPrivPull() {
-		// upload a file via anclient.java (Album Client)
+	void testPrivPull() throws Exception {
+		videoUp();
 
 		// downward synchronize the file
+		String conn = "main-sqlite";
+		SyncWorker.blocksize = 32 * 3;
+		DocTableMeta meta = new DocTableMeta("h_photos", "pid", conn);
+		SyncWorker worker = new SyncWorker(SyncMode.main, conn, "kyiv.jnode", meta);
+		ArrayList<String> ids = worker
+				.login("odys-z.github.io", "слава україні") // jserv node
+				.pull();
+		
+		// 
+		worker.verifyDocs(ids);
 	}
-	
-	void videoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
+
+	static String videoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "src/test/res/anclient.java";
 		int bsize = 72 * 1024;
 		String filename = "Amelia Anisovych.mp4";
@@ -182,15 +192,16 @@ class SyncWorkerTest {
 								.blockSize(bsize);
 
 		List<SyncRec> videos = new ArrayList<SyncRec>();
+		String path = FilenameUtils.concat(localFolder, filename);
 		videos.add((SyncRec) new SyncRec()
-					.fullpath(FilenameUtils.concat(localFolder, filename)));
+					.fullpath(path));
 
 		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = "device-test";
 
 		tier.syncVideos( videos, photoUser,
-			(c, v, resp) -> {
-				fail("duplicate checking not working");
+			(ix, total, c, pth, resp) -> {
+				fail("Duplicate checking not working on " + pth);
 			},
 			new ErrorCtx() {
 				@Override
@@ -213,6 +224,6 @@ class SyncWorkerTest {
 					}
 				}
 			});
-
+		return path;
 	}
 }

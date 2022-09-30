@@ -1,5 +1,7 @@
 package io.oz.jserv.sync;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,17 +25,17 @@ import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFile;
-import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.SessionInf;
+import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -145,7 +147,7 @@ public class SyncWorker implements Runnable {
 	 * @throws AnsonException 
 	 * @throws SemanticException 
 	 */
-	public DocsResp queryTasks(DocTableMeta meta, IUser usr, String device) throws SemanticException, AnsonException, IOException {
+	DocsResp queryTasks(DocTableMeta meta, IUser usr, String device) throws SemanticException, AnsonException, IOException {
 		DocsyncReq req = new DocsyncReq(usr.orgId())
 							.query(meta);
 
@@ -159,15 +161,36 @@ public class SyncWorker implements Runnable {
 		return client.<DocsyncReq, DocsResp>commit(q, errLog);
 	}
 
-	void pullDocs(DocsResp tasks)
+	ArrayList<String> pullDocs(DocsResp tasks)
 			throws SQLException, AnsonException, IOException, TransException {
+		
+		ArrayList<String> res = new ArrayList<String>();
 		AnsonHeader header = null;
 		while (tasks.rs(0).next()) {
-			SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
-			syncPull(p, robot, header);
+			try {
+				SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
+					
+				res.add(syncPull(p, robot, header));
+			}
+			catch(Exception e) {
+				fail(e.getMessage());
+			}
 		}
+		
+		return res;
 	}
 
+	/**
+	 * Downward synchronizing.
+	 * @param p
+	 * @param worker
+	 * @param header
+	 * @return record Id (e.g. h_photos.pid)
+	 * @throws AnsonException
+	 * @throws IOException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	String syncPull(SyncDoc p, SyncRobot worker, AnsonHeader header)
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, worker, localMeta.tbl)) {
@@ -192,7 +215,7 @@ public class SyncWorker implements Runnable {
 
 		client.commit(q, errLog);
 
-		return p.fullpath();
+		return p.recId();
 	}
 
 	static String insertLocalFile(DATranscxt st, String conn, String path, SyncDoc doc, SyncRobot usr, DocTableMeta meta)
@@ -271,10 +294,7 @@ public class SyncWorker implements Runnable {
 	}
 
 	public String resolvePrivRoot(String uri) {
-		String extroot = ((ShExtFile) DATranscxt
-				.getHandler(connPriv, localMeta.tbl, smtype.extFile))
-				.getFileRoot();
-		return EnvPath.decodeUri(extroot, uri);
+		return DocUtils.resolvePrivRoot(uri, localMeta, connPriv);
 	}
 
 	/**
@@ -289,7 +309,6 @@ public class SyncWorker implements Runnable {
 			// find local records with shareflag = pub
 			AnResultset rs = ((AnResultset) localSt
 				.select(localMeta.tbl, "f")
-				// .cols(localMeta.device, localMeta.fullpath, localMeta.syncflag)
 				.cols(SyncDoc.nvCols(localMeta))
 				.whereEq(localMeta.syncflag, DocTableMeta.SyncFlag.pushing)
 				.rs(localSt.instancontxt(connPriv, robot))
@@ -300,17 +319,19 @@ public class SyncWorker implements Runnable {
 			sync(rs, new OnProcess() {
 
 				@Override
-				public void proc(int listIndx, int totalBlocks, DocsResp blockResp)
+				public void proc(int listIndx, int rows, int seq, int totalBlocks, AnsonResp blockResp)
 						throws IOException, AnsonException, SemanticException {
-					Utils.logi("%s: %s / %s, reply: %s", clientpath, listIndx, totalBlocks, blockResp.msg());
-				}});
+					Utils.logi("[%s/%s]%s: %s / %s, reply: %s", listIndx, rows, clientpath, seq, totalBlocks, blockResp.msg());
+				}
+			});
 			
 			// set shareflag = hub
 		}
 		return this;
 	}
 
-	/** Synchronizing files to hub using block chain, accessing port {@link Port#docsync}.
+	/**
+	 * Synchronizing files to hub using block chain, accessing port {@link Port#docsync}.
 	 * @param localMeta 
 	 * @param rs
 	 * @param robot device is required for overriding doc's device field.
@@ -355,7 +376,7 @@ public class SyncWorker implements Runnable {
 					Utils.warn("resp is not replied with exactly the same path: %s", resp.fullpath());
 
 				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
-				if (proc != null) proc.proc(px, totalBlocks, resp);
+				if (proc != null) proc.proc(files.total(), px, 0, totalBlocks, resp);
 
 				int seq = 0;
 				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
@@ -369,7 +390,7 @@ public class SyncWorker implements Runnable {
 									.header(header);
 
 						resp = client.commit(q, onErr);
-						if (proc != null) proc.proc(px, totalBlocks, resp);
+						if (proc != null) proc.proc(files.total(), px, seq, totalBlocks, resp);
 
 						b64 = AESHelper.encode64(ifs, blocksize);
 					}
@@ -384,7 +405,7 @@ public class SyncWorker implements Runnable {
 						.whereEq(meta.pk, p.recId())
 						.u(st.instancontxt(loconn, robot));
 
-					if (proc != null) proc.proc(totalBlocks, totalBlocks, resp);
+					if (proc != null) proc.proc(files.total(), px, seq, totalBlocks, resp);
 				}
 				catch (TransException | IOException ex) {
 					Utils.warn(ex.getMessage());
@@ -394,7 +415,7 @@ public class SyncWorker implements Runnable {
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
 					resp = client.commit(q, onErr);
-					if (proc != null) proc.proc(px, totalBlocks, resp);
+					if (proc != null) proc.proc(files.total(), px, seq, totalBlocks, resp);
 
 					throw ex;
 				}
@@ -410,5 +431,27 @@ public class SyncWorker implements Runnable {
 			onErr.onError(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
 		}
 		return null;
+	}
+
+	public ArrayList<String> pull() throws AnsonException, IOException, SQLException, TransException {
+		DocsResp rsp = queryTasks(localMeta, robot, connPriv);
+		return pullDocs(rsp);
+	}
+
+	public SyncWorker verifyDocs(ArrayList<String> ids) throws TransException, SQLException {
+		AnResultset rs = (AnResultset) localSt
+				.select(localMeta.tbl, "t")
+				.cols(localMeta.pk, localMeta.fullpath, localMeta.uri, localMeta.mime, localMeta.size)
+				.whereIn(localMeta.pk, ids)
+				.rs(localSt.instancontxt(connPriv, robot))
+				.rs(0);
+
+		if (rs.total() != ids.size())
+			throw new SemanticException("id count (%s) != file records' count (%s)", ids.size(), rs.total());
+
+		while (rs.next()) {
+			
+		}
+		return this;
 	}
 }

@@ -300,14 +300,14 @@ class AlbumsTest {
 		photoUser.device = "device-test";
 
 		tier.syncVideos( videos, photoUser,
-			(c, v, resp) -> {
-				fail("duplicate checking not working");
+			(ix, total, c, pth, resp) -> {
+				fail("Duplicate checking not working on " + pth);
 			},
 			new ErrorCtx() {
 				@Override
 				public void onError(MsgCode c, String msg) {
 					if (!MsgCode.exGeneral.equals(c))
-						fail("Not expected code");
+						fail("Not expected error for this handling.");
 
 					tier.del("device-test", videos.get(0).fullpath());
 					List<DocsResp> resps = tier.syncVideos(videos, photoUser, null);
