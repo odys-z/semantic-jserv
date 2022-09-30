@@ -3,7 +3,10 @@ package io.odysz.semantic.tier.docs;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
+import io.odysz.semantic.DASemantics.ShExtFile;
+import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.ISemantext;
@@ -72,5 +75,20 @@ public class DocUtils {
 //			onPhotoCreated(pid, conn, usr);
 
 		return pid;
+	}
+
+	/**
+	 * Resolve file uri with configured Semantics handler, {@link smtype#extFile}.
+	 * @param uri
+	 * @param meta
+	 * @param conn
+	 * @return decode then concatenated absolute path, for file accessing.
+	 * @see EnvPath#decodeUri(String, String)
+	 */
+	public static String resolvePrivRoot(String uri, DocTableMeta meta, String conn) {
+		String extroot = ((ShExtFile) DATranscxt
+				.getHandler(conn, meta.tbl, smtype.extFile))
+				.getFileRoot();
+		return EnvPath.decodeUri(extroot, uri);
 	}
 }

@@ -56,25 +56,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	/** usually ignored when sending request */
 	public long size;
 
-	/** usually ignored when sending request
-	public ArrayList<String> exif;
-	public String exif() {
-		return exif == null ? null
-				: exif.stream()
-				 .collect(Collectors.joining(","));
-	}
-	*/
-
-//	boolean isPublic;
-//	@Override
-//	public boolean isPublic() {
-//		return isPublic;
-//	}
-//	public SyncDoc isPublic(boolean pub) {
-//		isPublic = pub;
-//		return this;
-//	}
-
 	public String mime;
 	@Override
 	public String mime() { return mime; }
@@ -181,14 +162,4 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.folder = v;
 		return this;
 	}
-
-//	@Override
-//	public IFileDescriptor semantext(ISemantext stmtCtx) {
-//		this.semantxt = stmtCtx;
-//		return this;
-//	}
-//	
-//	@Override
-//	public ISemantext semantext() { return semantxt; }
-	
 }

@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
@@ -30,7 +29,10 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
-		void proc(int listIndx, int totalBlocks, DocsResp blockResp) throws IOException, AnsonException, SemanticException;
+		// void proc(int listIndx, int totalBlocks, DocsResp blockResp) throws IOException, AnsonException, SemanticException;
+
+		void proc(int rowCount, int px, int seq, int totalBlocks, AnsonResp resp)
+			throws IOException, AnsonException, SemanticException;
 	}
 
 	@FunctionalInterface
@@ -80,5 +82,4 @@ public class JProtocol {
 									.body(obj);
 		return msg;
 	}
-
 }

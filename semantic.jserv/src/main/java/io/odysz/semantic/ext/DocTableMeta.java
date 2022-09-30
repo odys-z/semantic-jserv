@@ -42,6 +42,7 @@ public class DocTableMeta extends TableMeta {
 	public final String shareby;
 	public final String org;
 	public final String folder;
+	public final String size;
 	
 	public DocTableMeta(String tbl, String pk, String conn) {
 		super(tbl, conn);
@@ -56,6 +57,7 @@ public class DocTableMeta extends TableMeta {
 		createDate = "pdate";
 		org = "family";
 		mime = "mime";
+		size = "size";
 		device = "device";
 		fullpath = "clientpath";
 		shareDate = "sharedate";
