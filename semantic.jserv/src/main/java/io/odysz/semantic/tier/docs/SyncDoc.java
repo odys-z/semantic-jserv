@@ -125,6 +125,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.shareflag = rs.getString(meta.shareflag);
 	}
 
+	// public SyncDoc(IFileDescriptor p) { }
+
 	/**Set client path and syncFlag
 	 * @param rs
 	 * @return this

@@ -23,6 +23,7 @@ public class DocsReq extends AnsonBody {
 		public static final String rec = "r/rec";
 		public static final String download = "r/download";
 		public static final String upload = "c";
+		/** request for deleting docs */
 		public static final String del = "d";
 
 		public static final String blockStart = "c/b/start";
@@ -103,6 +104,10 @@ public class DocsReq extends AnsonBody {
 	public String shareby;
 	public String shareDate;
 	
+	/**
+	 * <b>Note: use {@link #DocsReq(String)}</b><br>
+	 * Don't use this constructor - should only be used by json deserializer. 
+	 */
 	public DocsReq() {
 		super(null, null);
 		blockSeq = -1;
@@ -141,9 +146,13 @@ public class DocsReq extends AnsonBody {
 
 	protected String device; 
 	public String device() { return device; }
+	public DocsReq device(String d) {
+		device = d;
+		return this;
+	}
 
-	protected ArrayList<SyncRec> syncQueries;
-	public ArrayList<SyncRec> syncQueries() { return syncQueries; }
+	protected ArrayList<SyncDoc> syncQueries;
+	public ArrayList<SyncDoc> syncQueries() { return syncQueries; }
 
 	protected long blockSeq;
 	public long blockSeq() { return blockSeq; } 
@@ -157,12 +166,12 @@ public class DocsReq extends AnsonBody {
 	public String org;
 	public DocsReq org(String org) { this.org = org; return this; }
 
-	public DocsReq querySync(IFileDescriptor p) {
-		if (syncQueries == null)
-			syncQueries = new ArrayList<SyncRec>();
-		syncQueries.add(new SyncRec(p));
-		return this;
-	}
+//	public DocsReq querySync(IFileDescriptor p) {
+//		if (syncQueries == null)
+//			syncQueries = new ArrayList<SyncDoc>();
+//		syncQueries.add(new SyncDoc(p));
+//		return this;
+//	}
 
 	public DocsReq syncing(SyncingPage page) {
 		this.syncing = page;
@@ -241,6 +250,11 @@ public class DocsReq extends AnsonBody {
 		shareflag = p.shareflag;
 		shareby = p.shareby;
 		shareby = p.sharedate;
+		return this;
+	}
+
+	public DocsReq clientpath(String path) {
+		clientpath = path;
 		return this;
 	}
 }
