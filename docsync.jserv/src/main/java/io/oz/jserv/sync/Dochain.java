@@ -65,7 +65,7 @@ public class Dochain {
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
-		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
+		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by SyncRobot. 
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
 
 		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder)

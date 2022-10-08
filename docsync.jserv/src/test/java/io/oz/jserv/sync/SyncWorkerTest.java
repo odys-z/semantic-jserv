@@ -39,12 +39,10 @@ import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.SyncRec;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
-import io.oz.album.client.AlbumClientier;
-import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
 import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
@@ -53,9 +51,13 @@ class SyncWorkerTest {
 
 	static ErrorCtx errLog;
 	static DATranscxt defltSt;
-
+	static String conn;
+	static DocTableMeta meta;
+	
 	static {
 		try {
+			conn = "main-sqlite";
+
 			Path currentRelativePath = Paths.get("");
 			String p = currentRelativePath.toAbsolutePath().toString();
 			System.setProperty("VOLUME_HOME", p + "/src/test/res/volume");
@@ -69,6 +71,8 @@ class SyncWorkerTest {
 			Connects.init("src/test/res/WEB-INF");
 			Clients.init("http://localhost:8081/jserv-album", true);
 			
+			meta = new DocTableMeta("h_photos", "pid", conn);
+
 			Docsyncer.init("Sync Test");
 
 			errLog = new ErrorCtx() {
@@ -100,7 +104,6 @@ class SyncWorkerTest {
 		SsException, GeneralSecurityException, SAXException {
 		
 		// create a public file at this private node
-		String conn = "main-sqlite";
 		Photo photo = new Photo();
 
 		String clientpath = "src/test/res/182x121.png";
@@ -134,7 +137,6 @@ class SyncWorkerTest {
 
 		// synchronize to cloud hub
 		SyncWorker.blocksize = 32 * 3;
-		DocTableMeta meta = new DocTableMeta("h_photos", "pid", conn);
 		SyncWorker worker = new SyncWorker(SyncMode.main, conn, "kyiv.jnode", meta)
 				.login("odys-z.github.io", "слава україні") // jserv node
 				.push();
@@ -167,7 +169,7 @@ class SyncWorkerTest {
 
 	@Test
 	void testPrivPull() throws Exception {
-		videoUp();
+		videoUp(meta);
 
 		// downward synchronize the file
 		String conn = "main-sqlite";
@@ -182,26 +184,36 @@ class SyncWorkerTest {
 		worker.verifyDocs(ids);
 	}
 
-	static String videoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
+	static String videoUp(DocTableMeta photoMeta) throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "src/test/res/anclient.java";
 		int bsize = 72 * 1024;
 		String filename = "Amelia Anisovych.mp4";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");  // client device
-		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errLog)
+		Synclientier tier = new Synclientier("test/album", ssclient, photoMeta, errLog)
 								.blockSize(bsize);
 
-		List<SyncRec> videos = new ArrayList<SyncRec>();
+		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		String path = FilenameUtils.concat(localFolder, filename);
-		videos.add((SyncRec) new SyncRec()
+		videos.add((SyncDoc) new SyncDoc()
 					.fullpath(path));
 
 		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = "device-test";
 
 		tier.syncVideos( videos, photoUser,
-			(ix, total, c, pth, resp) -> {
-				fail("Duplicate checking not working on " + pth);
+			(rows, rx, bx, blks, resp) -> {
+				/* First time sql for data manipulation:
+					INSERT INTO h_photos
+					(pid, family, folder, pname, uri, pdate,
+					device, shareby, sharedate, tags, geox, geoy, exif, oper, opertime, 
+					clientpath, mime, filesize, css, shareflag, sync)
+					VALUES
+					('Test ЗСУ00001', 'omni', '2022_03', 'Amelia Anisovych.mp4', '$VOLUME_HOME/ody//2022_03/no such file.mp4', 1994,
+					'device-test', 'ody', 1997, NULL, 0.0, 0.0, 'exif', 'ody', 1997,
+					'src/test/res/anclient.java/Amelia Anisovych.mp4', 'video/mp4', NULL, NULL, 'pub', NULL);
+				 */
+				fail("Duplicate checking not working: " + resp.toString());
 			},
 			new ErrorCtx() {
 				@Override
@@ -218,9 +230,9 @@ class SyncWorkerTest {
 						String docId = d.recId();
 						assertEquals(8, docId.length());
 
-						AlbumResp rp = tier.selectPhotoRec(docId);
-						assertNotNull(rp.photo().pname);
-						assertEquals(rp.photo().pname, filename);
+						DocsResp rp = tier.selectDoc(docId);
+						assertNotNull(rp.clientname());
+						assertEquals(rp.clientname(), filename);
 					}
 				}
 			});

@@ -138,7 +138,7 @@ public class AlbumClientier extends Semantier {
 
 				String pth = p.fullpath();
 				if (!pth.equals(resp.fullpath()))
-					Utils.warn("resp not reply with exactly the same path: %s", resp.fullpath());
+					Utils.warn("Resp is not replied with exactly the same path: %s", resp.fullpath());
 
 				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
 				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp);
@@ -235,7 +235,7 @@ public class AlbumClientier extends Semantier {
 
 				for (int i = page.start; i < page.end & i < files.size(); i++) {
 					IFileDescriptor p = files.get(i);
-					req.querySync(p);
+					// req.querySync(p);
 				}
 
 				AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
@@ -362,9 +362,9 @@ public class AlbumClientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errHandler.onError(MsgCode.exSemantic, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+			errHandler.onError(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
-			errHandler.onError(MsgCode.exIo, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+			errHandler.onError(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		}
 		return resp;
 	}
@@ -374,6 +374,12 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 
+	/**
+	 * @deprecated replaced by {@link Synclientier#del(String, String)}
+	 * @param device
+	 * @param clientpath
+	 * @return
+	 */
 	public DocsResp del(String device, String clientpath) {
 		AlbumReq req = new AlbumReq().del(device, clientpath);
 
@@ -386,9 +392,9 @@ public class AlbumClientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errCtx.onError(MsgCode.exSemantic, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+			errCtx.onError(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
-			errCtx.onError(MsgCode.exIo, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+			errCtx.onError(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		}
 		return resp;
 	}

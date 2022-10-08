@@ -32,7 +32,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
-import io.odysz.semantic.tier.docs.SyncRec;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -292,8 +292,8 @@ class AlbumsTest {
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx)
 								.blockSize(bsize);
 
-		List<SyncRec> videos = new ArrayList<SyncRec>();
-		videos.add((SyncRec) new SyncRec()
+		List<SyncDoc> videos = new ArrayList<SyncDoc>();
+		videos.add((SyncDoc) new SyncDoc()
 					.fullpath(FilenameUtils.concat(localFolder, filename)));
 
 		SessionInf photoUser = ssclient.ssInfo();

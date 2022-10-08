@@ -27,6 +27,7 @@ import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.ext.DocTableMeta.SyncFlag;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -70,17 +71,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String mainStorage = "main";
 	public static final String privateStorage = "private";
 
-	/** hub file to be pulled by private nodes */
-//	public static final String taskHubBuffered = "hub-buf";
-//	public static final String taskPushByMain = "main-push";
-	/** local file to be pushed to cloud hub */
-//	public static final String taskPrvPushing = "pub";
-	/** local file published at cloud hub */
-//	public static final String taskPrvPushed  = "hub";
-	/** noly stored at local jserv node */
-//	public static final String taskLocalOnly  = "prv";
-
-//	public static final String tablSyncTasks = "sync_tasks";
 	public static final String tablSyncLog = "sync_log";
 
 	@SuppressWarnings("unused")
@@ -110,6 +100,20 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 	public static Delete onDel(String clientpath, String device) {
 		return null;
+	}
+
+	public static DocsResp delDocRec(DocsReq req, IUser usr) throws TransException, SQLException {
+		String conn = Connects.uri2conn(req.uri());
+		DocTableMeta meta = metas.get(req.docTabl); 
+
+		SemanticObject res = (SemanticObject) st
+				.delete(meta.tbl, usr)
+				.whereEq("device", req.device())
+				.whereEq("clientpath", req.clientpath)
+				.post(Docsyncer.onDel(req.clientpath, req.device()))
+				.d(st.instancontxt(conn, usr));
+		
+		return (DocsResp) new DocsResp().data(res.props()); 
 	}
 
 	/**
@@ -239,24 +243,32 @@ public class Docsyncer extends ServPort<DocsReq> {
 			else if (A.synclose.equals(a))
 				rsp = synclose(jreq, usr);
 
-			//
+			// requires meta for operations
 			else {
 				if (LangExt.isblank(jreq.docTabl))
 					throw new SemanticException("To push a doc via Docsyncer, docTable name can not be null.");
-				Dochain chain = new Dochain(metas.get(jreq.docTabl), st);
-				if (DocsReq.A.blockStart.equals(a))
-					rsp = chain.startBlocks(jmsg.body(0), usr);
-				else if (DocsReq.A.blockUp.equals(a))
-					rsp = chain.uploadBlock(jmsg.body(0), usr);
-				else if (DocsReq.A.blockEnd.equals(a))
-					// synchronization are supposed to be required by a SyncRobot
-					rsp = chain.endBlock(jmsg.body(0), (SyncRobot)usr);
-				else if (DocsReq.A.blockAbort.equals(a))
-					rsp = chain.abortBlock(jmsg.body(0), usr);
 
-				else throw new SemanticException(String.format(
-					"request.body.a can not handled: %s\\n",
-					a));
+				if (A.del.equals(a))
+					rsp = delDocRec(jmsg.body(0), usr);
+				else {
+					Dochain chain = new Dochain(metas.get(jreq.docTabl), st);
+					if (DocsReq.A.blockStart.equals(a)) {
+						if (LangExt.isblank(jreq.subFolder, " - - "))
+							throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
+						rsp = chain.startBlocks(jmsg.body(0), usr);
+					}
+					else if (DocsReq.A.blockUp.equals(a))
+						rsp = chain.uploadBlock(jmsg.body(0), usr);
+					else if (DocsReq.A.blockEnd.equals(a))
+						// synchronization are supposed to be required by a SyncRobot
+						rsp = chain.endBlock(jmsg.body(0), (SyncRobot)usr);
+					else if (DocsReq.A.blockAbort.equals(a))
+						rsp = chain.abortBlock(jmsg.body(0), usr);
+
+					else throw new SemanticException(String.format(
+						"request.body.a can not handled: %s",
+						a));
+				}
 			}
 
 			if (resp != null)

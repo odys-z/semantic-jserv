@@ -35,7 +35,7 @@ import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
-import io.odysz.semantic.tier.docs.SyncRec;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -123,7 +123,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throws ServletException, IOException, AnsonException, SemanticException {
 
 		if (AlbumFlags.album)
-			Utils.logi("---------- ever-connect /album.less GET  ----------");
+			Utils.logi("[AlbumFlags.album/album.less GET]");
 
 		try {
 			DocsReq jreq = msg.body(0);
@@ -146,7 +146,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throws ServletException, IOException, AnsonException, SemanticException {
 
 		if (AlbumFlags.album)
-			Utils.logi("========== ever-connect /album.less POST ==========");
+			Utils.logi("[AlbumFlags.album/album.less POST]");
 
 		try {
 			DocsReq jreq = jmsg.body(0);
@@ -365,7 +365,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throw new SemanticException("Null Query - invalide request.");
 
 		ArrayList<String> paths = new ArrayList<String>(req.syncQueries().size());
-		for (SyncRec s : req.syncQueries()) {
+		for (SyncDoc s : req.syncQueries()) {
 			paths.add(s.fullpath());
 		}
 
@@ -440,7 +440,7 @@ public class Albums extends ServPort<AlbumReq> {
 		return new AlbumResp().photo(req.photo, pid);
 	}
 
-	DocsResp delPhoto(AlbumReq req, IUser usr) throws TransException, SQLException {
+	static DocsResp delPhoto(AlbumReq req, IUser usr) throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 

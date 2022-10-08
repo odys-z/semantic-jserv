@@ -31,7 +31,7 @@ public class JProtocol {
 	public interface OnProcess {
 		// void proc(int listIndx, int totalBlocks, DocsResp blockResp) throws IOException, AnsonException, SemanticException;
 
-		void proc(int rowCount, int px, int seq, int totalBlocks, AnsonResp resp)
+		void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
 			throws IOException, AnsonException, SemanticException;
 	}
 

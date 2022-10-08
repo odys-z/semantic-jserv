@@ -65,15 +65,10 @@ public class DocUtils {
 			ins.post(onFileCreateSql);
 
 		ISemantext insCtx = st.instancontxt(conn, usr);
-		// photo.semantext(insCtx);
 		SemanticObject res = (SemanticObject) ins.ins(insCtx);
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
 				.get(meta.tbl))
 				.getString(meta.pk);
-		
-//		if (photo.geox == null || photo.month == null)
-//			onPhotoCreated(pid, conn, usr);
-
 		return pid;
 	}
 
