@@ -60,7 +60,8 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-	/**Create download request with photo record.
+	/**
+	 * Create a download request with a photo record.
 	 * @param photo
 	 * @return request
 	 */
@@ -74,12 +75,10 @@ public class AlbumReq extends DocsReq {
 	}
 
 	/**
-	 * TODO FIXME
-	 * TODO FIXME
-	 * Bug: some app exported pic won't get the right folder - no create date overriding empty EXIF date?
+	 * Create a request for inserting a new photo.
+	 * <p>FIXME: introducing stream field (uri) of Anson?</p>
+	 * TODO: use SyncDoc#loadFile.
 	 * 
-	 * Create request for inserting new photo.
-	 * <p>FIXME: introducing stream field of Anson?</p>
 	 * @param collId
 	 * @param fullpath
 	 * @return request
@@ -99,7 +98,7 @@ public class AlbumReq extends DocsReq {
 		// Exif.parseExif(this.photo, fullpath);
 		// TODO FIXME
 		// TODO FIXME
-		// Bug: some app exported pic won't get the right folder - no create date overriding empty EXIF date?
+		// Bug: some app exported pic won't get the correct folder - doesn't create date overriding empty EXIF date?
 
 		this.a = A.insertPhoto;
 
@@ -131,8 +130,8 @@ public class AlbumReq extends DocsReq {
 
 	public AlbumReq selectPhoto(String docId) {
 		this.docId = docId;
-		this.photo = new Photo();
-		this.photo.recId = docId;
+		// this.photo = new Photo();
+		// this.photo.recId = docId;
 		this.a = A.rec;
 
 		return this;

@@ -86,6 +86,7 @@ public class Synclientier extends Semantier {
 				DocsReq req = new DocsReq(meta.tbl)
 						.folder("synctest")
 						.share(p)
+						.resetChain(true)
 						.blockStart(p, user);
 
 				AnsonMsg<DocsReq> q = client.<DocsReq>userReq(clientUri, Port.docsync, req)

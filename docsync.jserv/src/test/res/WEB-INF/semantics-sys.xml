@@ -26,10 +26,11 @@
 	
 	<s>
 		<id>pho.extfile</id>
-		<smtc>ef</smtc>
+		<smtc>ef2.0</smtc>
 		<tabl>h_photos</tabl>
 		<pk>pid</pk>
-		<args>$VOLUME_HOME,uri,shareby,folder,pname</args>
+		<!-- args 0: uploads, 1: uri, 2: sub ..., -1: client-name (mandatory) -->
+		<args>$VOLUME_HOME,uri,family,shareby,folder,pname</args>
 	</s>
 	
 	<s>

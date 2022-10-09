@@ -1,15 +1,20 @@
 package io.odysz.semantic.tier.docs;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Date;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
+import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.ISemantext;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 
 /**
@@ -34,8 +39,10 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public String device() { return device; }
 	
+	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
 	public String shareflag;
 	@Override
+	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
 	public String shareflag() { return shareflag; }
 
 	/** usally reported by client file system, overriden by exif date, if exits */
@@ -60,8 +67,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public String mime() { return mime; }
 
-	String month;
-	
 	public SyncDoc shareby(String share) {
 		this.shareby = share;
 		return this;
@@ -79,6 +84,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@AnsonField(ignoreTo=true)
 	DocTableMeta docMeta;
 
+	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	ISemantext semantxt;
 	
 	public SyncDoc() {}
@@ -125,9 +131,32 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.shareflag = rs.getString(meta.shareflag);
 	}
 
-	// public SyncDoc(IFileDescriptor p) { }
+	/**
+	 * Load local file, take current time as sharing date.
+	 * @param fullpath
+	 * @param owner
+	 * @param shareflag
+	 * @return this
+	 * @throws IOException
+	 */
+	public SyncDoc loadFile(String fullpath, IUser owner, String shareflag) throws IOException {
+		Path p = Paths.get(fullpath);
+		byte[] f = Files.readAllBytes(p);
+		String b64 = AESHelper.encode64(f);
+		this.uri = b64;
 
-	/**Set client path and syncFlag
+		fullpath(fullpath);
+		this.pname = p.getFileName().toString();
+		
+		this.shareby = owner.uid();
+		this.shareflag = shareflag;
+		sharedate(new Date());
+
+		return this;
+	}
+
+	/**
+	 * Set client path and syncFlag according to rs, where rs columns should have been specified with {@link #nvCols(DocTableMeta)}.
 	 * @param rs
 	 * @return this
 	 * @throws SQLException

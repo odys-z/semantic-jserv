@@ -3,11 +3,6 @@ package io.odysz.semantic.ext;
 import io.odysz.semantics.meta.TableMeta;
 
 public class DocTableMeta extends TableMeta {
-	public static class Share {
-		public static final String pub = "pub";
-		public static final String priv = "priv";
-	}
-
 	public static final class SyncFlag {
 		/**
 		 * created at cloud hub ('✩')
@@ -27,6 +22,13 @@ public class DocTableMeta extends TableMeta {
 		 */
 		public static final String publish = "🌎";
 		
+	}
+
+	public static class Share {
+		/** public asset */
+		public static final String pub = "pub";
+		/** private asset */
+		public static final String priv = "priv";
 	}
 
 

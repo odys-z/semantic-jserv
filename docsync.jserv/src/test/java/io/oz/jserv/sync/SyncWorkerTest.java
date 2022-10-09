@@ -2,6 +2,7 @@ package io.oz.jserv.sync;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -22,6 +23,7 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
@@ -40,6 +42,7 @@ import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
@@ -49,14 +52,17 @@ import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 class SyncWorkerTest {
 
+	static String conn;
+	static String testDevice;
+
 	static ErrorCtx errLog;
 	static DATranscxt defltSt;
-	static String conn;
 	static DocTableMeta meta;
 	
 	static {
 		try {
 			conn = "main-sqlite";
+			testDevice = "device-test";
 
 			Path currentRelativePath = Paths.get("");
 			String p = currentRelativePath.toAbsolutePath().toString();
@@ -125,13 +131,13 @@ class SyncWorkerTest {
 		photo.exif = new ArrayList<String>() {
 			{add("location:вулиця Лаврська' 27' Київ");};
 			{add("camera:Bayraktar TB2");}};
-		photo.shareflag(Share.pub)
+		photo.shareflag(DocTableMeta.Share.pub)
 			.shareby("ody")
 			.sharedate(new Date());
 
-		SyncRobot usr = new SyncRobot("odys-z.github.io", "f/zsu");
+		SyncRobot rob = new SyncRobot("odys-z.github.io", "f/zsu");
 
-		String pid = createPhoto(conn, photo, usr, new PhotoMeta(defltSt.getSysConnId()));
+		String pid = createPhoto(conn, photo, rob, new PhotoMeta(defltSt.getSysConnId()));
 
 		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.fullpath(), photo.pname, pid);
 
@@ -141,7 +147,7 @@ class SyncWorkerTest {
 				.login("odys-z.github.io", "слава україні") // jserv node
 				.push();
 	
-		DocsResp resp = worker.queryTasks(meta, usr, photo.device);
+		DocsResp resp = worker.queryTasks(meta, rob, photo.device);
 		worker.pullDocs(resp);
 	}
 
@@ -167,39 +173,48 @@ class SyncWorkerTest {
 		return DocUtils.createFile(conn, photo, usr, meta, defltSt, post);
 	}
 
+	/**
+	 * </h5>A word about sharer and path at jserv:</h5>
+	 * <p>
+	 * - video is uploaded as owning of "odys-z.github.io"<br>
+	 * - uri is handled by {@link io.odysz.semantic.DASemantics.ShExtFile ShExtFile} and using shareby as user-id-sub-folder name, like:<br>
+	 * [volume]/[family]/[shareby]/[folder]/[pid] filename, e.g.<br>
+	 * /.../jserv-album/volume/odys-z.github.io/synctest/0000009P ...<br>
+	 * </p>
+	 * @throws Exception
+	 */
 	@Test
 	void testPrivPull() throws Exception {
-		videoUp(meta);
+		String owner = "odys-z.github.io";
+		SyncRobot robot = new SyncRobot(owner, "f/zsu");
+		videoUp(meta, robot);
 
 		// downward synchronize the file
-		String conn = "main-sqlite";
 		SyncWorker.blocksize = 32 * 3;
 		DocTableMeta meta = new DocTableMeta("h_photos", "pid", conn);
 		SyncWorker worker = new SyncWorker(SyncMode.main, conn, "kyiv.jnode", meta);
 		ArrayList<String> ids = worker
-				.login("odys-z.github.io", "слава україні") // jserv node
+				.login(owner, "слава україні") // jserv node
 				.pull();
 		
-		// 
 		worker.verifyDocs(ids);
 	}
 
-	static String videoUp(DocTableMeta photoMeta) throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
+	static String videoUp(DocTableMeta photoMeta, IUser owner) throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "src/test/res/anclient.java";
 		int bsize = 72 * 1024;
 		String filename = "Amelia Anisovych.mp4";
 
-		SessionClient ssclient = Clients.login("ody", "123456", "device-test");  // client device
+		SessionClient ssclient = Clients.login("ody", "123456", testDevice);  // client device
 		Synclientier tier = new Synclientier("test/album", ssclient, photoMeta, errLog)
 								.blockSize(bsize);
 
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		String path = FilenameUtils.concat(localFolder, filename);
-		videos.add((SyncDoc) new SyncDoc()
-					.fullpath(path));
+		videos.add((SyncDoc) new SyncDoc().loadFile(path, owner, Share.pub));
 
 		SessionInf photoUser = ssclient.ssInfo();
-		photoUser.device = "device-test";
+		photoUser.device = testDevice;
 
 		tier.syncVideos( videos, photoUser,
 			(rows, rx, bx, blks, resp) -> {
@@ -213,7 +228,7 @@ class SyncWorkerTest {
 					'device-test', 'ody', 1997, NULL, 0.0, 0.0, 'exif', 'ody', 1997,
 					'src/test/res/anclient.java/Amelia Anisovych.mp4', 'video/mp4', NULL, NULL, 'pub', NULL);
 				 */
-				fail("Duplicate checking not working: " + resp.toString());
+				fail("Duplicate checking failed: " + resp.toString());
 			},
 			new ErrorCtx() {
 				@Override
@@ -221,7 +236,7 @@ class SyncWorkerTest {
 					if (!MsgCode.exGeneral.equals(c))
 						fail("Not expected code");
 
-					tier.del("device-test", videos.get(0).fullpath());
+					tier.del(testDevice, videos.get(0).fullpath());
 					List<DocsResp> resps = tier.syncVideos(videos, photoUser, null);
 					assertNotNull(resps);
 					assertEquals(1, resps.size());
@@ -231,6 +246,8 @@ class SyncWorkerTest {
 						assertEquals(8, docId.length());
 
 						DocsResp rp = tier.selectDoc(docId);
+
+						assertTrue(LangExt.isblank(rp.msg()));
 						assertNotNull(rp.clientname());
 						assertEquals(rp.clientname(), filename);
 					}

@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 
@@ -37,25 +36,17 @@ public class PhotoRobot extends SyncRobot implements IUser {
 
 	long touched;
 
-//	String userId;
-//	String userName;
 	String roleId;
 	String roleName;
-//	String orgId;
 	String orgName;
 	
 	String deviceId;
 	public String deviceId() { return deviceId; }
 
-	private String ssid;
-
-	private Set<String> tempDirs;
-
 	RobotMeta userMeta;
 
 	public PhotoRobot(String userid) {
 		super(userid, null);
-//		this.userId = userid;
 		userMeta = (RobotMeta) meta();
 	}
 
