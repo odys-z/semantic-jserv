@@ -6,6 +6,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.odysz.anson.AnsonField;
 import io.odysz.common.EnvPath;
@@ -30,7 +32,7 @@ import io.odysz.transact.x.TransException;
 
 public class Dochain {
 
-	public interface IOnChainOk {
+	public interface OnChainOk {
 		/**
 		 * {@link Docsyncer} use this as a chance of update user's data
 		 * when block chain finished successfully.
@@ -58,7 +60,7 @@ public class Dochain {
 		this.st = deflst;
 	}
 
-	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException {
+	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException, InterruptedException {
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
 
@@ -71,10 +73,12 @@ public class Dochain {
 		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder)
 				.share(body.shareby, body.shareDate, body.shareflag);
 
-		String id = body.device() + " " + chain.clientpath;
+		String id = chainId(usr, body);
 
-		if (blockChains.containsKey(id))
-			throw new SemanticException("Why started again?");
+		if (blockChains.containsKey(id) && !body.reset)
+			throw new SemanticException("Block chain already exists, restarting?");
+		else if (body.reset)
+			abortBlock(body, usr);
 
 		blockChains.put(id, chain);
 		return new DocsResp()
@@ -90,8 +94,7 @@ public class Dochain {
 		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
 	}
 
-
-	private void checkDuplicate(String conn, String device, String clientpath, IUser usr)
+	void checkDuplicate(String conn, String device, String clientpath, IUser usr)
 			throws SemanticException, TransException, SQLException {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
@@ -109,10 +112,7 @@ public class Dochain {
 
 	
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
-		// String id = body.chainId();
-		// String id = chainId(usr, body.clientpath);
-
-		String id = body.device() + " " + body.clientpath;
+		String id = chainId(usr, body);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
 
@@ -129,9 +129,7 @@ public class Dochain {
 	
 	DocsResp endBlock(DocsReq body, SyncRobot usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		// String id = chainId(usr, body.clientpath);
-
-		String id = body.device() + " " + body.clientpath;
+		String id = chainId(usr, body);
 		BlockChain chain;
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
@@ -177,9 +175,7 @@ public class Dochain {
 	
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		// String id = body.chainId();
-		// String id = chainId(usr, body.clientpath);
-		String id = body.device() + " " + body.clientpath;
+		String id = chainId(usr, body);
 		DocsResp ack = new DocsResp();
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).abortChain();
@@ -191,25 +187,20 @@ public class Dochain {
 		return ack;
 	}
 
-	
-//	private String chainId(IUser usr, String clientpathRaw) {
-//		return usr.sessionId() + " " + clientpathRaw;
-//	}
-
+	public static String chainId(IUser usr, DocsReq req) {
+		return Stream
+			.of(usr.orgId(), usr.uid(), req.device(), req.clientpath)
+			.collect(Collectors.joining("."));
+	}
 
 	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
-			DocTableMeta meta, SyncRobot usr, IOnChainOk end)
+			DocTableMeta meta, SyncRobot usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
-		
-		// DocTableMeta meta = new DocTableMeta(conn);
-
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);
 
-		String pid = DocUtils.createFile(conn, photo, usr, meta, st, post);
-
-		return pid;
+		return DocUtils.createFile(conn, photo, usr, meta, st, post);
 	}
 
 

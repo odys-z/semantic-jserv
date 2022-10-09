@@ -23,11 +23,10 @@ import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFile;
 import io.odysz.semantic.DASemantics.smtype;
-import io.odysz.semantic.ext.DocTableMeta;
-import io.odysz.semantic.ext.DocTableMeta.Share;
-import io.odysz.semantic.ext.DocTableMeta.SyncFlag;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.ext.DocTableMeta.SyncFlag;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -48,20 +47,17 @@ import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.sync.Dochain.IOnChainOk;
+import io.oz.jserv.sync.Dochain.OnChainOk;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
 public class Docsyncer extends ServPort<DocsReq> {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	static HashMap<String, DocTableMeta> metas;
-	static HashMap<String, IOnChainOk> endChainHandlers;
+	static HashMap<String, OnChainOk> endChainHandlers;
 
-	IOnChainOk onCreateHandler;
+	OnChainOk onCreateHandler;
 
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
@@ -117,10 +113,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * <p>Add a synchronizing task when the doc is to be created,
-	 * where doc id is resulved from semantext.</p>
+	 * <p>Add a synchronizing task (setup syncflag) when the doc is to be created,
+	 * where doc id will be resulved from semantext.</p>
 	 * <p>1. for jserv mode == {@link SyncWorker#hub}<br/>
-	 * task: tags the doc to be synchronized by private storage</p>
+	 * task: tag the doc to be synchronized by private storage</p>
 	 * <p>2. for jserv mode == {@link SyncWorker#main} or {@link SyncWorker#priv}<br/>
 	 * task: if doc is public, create a task for pushing to the cloud hub</p>
 	 * This method requires the target table has fields named meta.shareflag &amp; meta.syncflag.
@@ -134,17 +130,17 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static Update onDocreate(IFileDescriptor doc, DocTableMeta meta, IUser usr)
 			throws TransException {
 
-		if (SyncMode.hub == mode && !Share.pub.equals(doc.shareflag()))
+		if (SyncMode.hub == mode && !DocTableMeta.Share.pub.equals(doc.shareflag()))
 			return st.update(meta.tbl, usr)
 				.nv(meta.syncflag, SyncFlag.hubInit)
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
-				.whereEq(meta.shareflag, Share.pub)
+				.whereEq(meta.shareflag, DocTableMeta.Share.pub)
 				;
 		
 		// private doc
 		else if (SyncMode.main == mode || SyncMode.priv == mode)
 			return st.update(meta.tbl, usr)
-				.nv(meta.syncflag, Share.pub.equals(doc.shareflag()) ? SyncFlag.pushing : SyncFlag.priv)
+				.nv(meta.syncflag, DocTableMeta.Share.pub.equals(doc.shareflag()) ? SyncFlag.pushing : SyncFlag.priv)
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
 				.whereEq(meta.shareflag, doc.shareflag())
 				;
@@ -211,9 +207,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 		super(Port.docsync);
 	}
 
-	public static void addDochainHandler (String tabl, IOnChainOk onCreateHandler) {
+	public static void addDochainHandler (String tabl, OnChainOk onCreateHandler) {
 		if (endChainHandlers != null)
-			endChainHandlers = new HashMap<String, IOnChainOk>();
+			endChainHandlers = new HashMap<String, OnChainOk>();
 		endChainHandlers.put(tabl, onCreateHandler);
 	}
 

@@ -100,6 +100,7 @@ public class DocsReq extends AnsonBody {
 
 	String[] deletings;
 
+	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
 	public String shareflag;
 	public String shareby;
 	public String shareDate;
@@ -164,6 +165,8 @@ public class DocsReq extends AnsonBody {
 	 * for album synchronizing, this is h_photos.family (not null).
 	 * */
 	public String org;
+
+	public boolean reset;
 	public DocsReq org(String org) { this.org = org; return this; }
 
 //	public DocsReq querySync(IFileDescriptor p) {
@@ -249,12 +252,17 @@ public class DocsReq extends AnsonBody {
 	public DocsReq share(SyncDoc p) {
 		shareflag = p.shareflag;
 		shareby = p.shareby;
-		shareby = p.sharedate;
+		shareDate = p.sharedate;
 		return this;
 	}
 
 	public DocsReq clientpath(String path) {
 		clientpath = path;
+		return this;
+	}
+
+	public DocsReq resetChain(boolean set) {
+		this.reset = set;
 		return this;
 	}
 }
