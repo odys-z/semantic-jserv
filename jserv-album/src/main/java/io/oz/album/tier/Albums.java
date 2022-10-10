@@ -318,7 +318,7 @@ public class Albums extends ServPort<AlbumReq> {
 		// move file
 		String targetPath = resolvExtroot(conn, pid, usr, meta);
 		if (AlbumFlags.album)
-			Utils.logi("   [AlbumFlags.album] %s\n-> %s", chain.outputPath, targetPath);
+			Utils.logi("   [AlbumFlags.album: end block] %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
 		return new DocsResp()
