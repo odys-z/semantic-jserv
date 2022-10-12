@@ -86,6 +86,7 @@ public class Synclientier extends Semantier {
 				DocsReq req = new DocsReq(meta.tbl)
 						.folder("synctest")
 						.share(p)
+						.device(user.device)
 						.resetChain(true)
 						.blockStart(p, user);
 
@@ -95,8 +96,8 @@ public class Synclientier extends Semantier {
 				resp = client.commit(q, errHandler);
 
 				String pth = p.fullpath();
-				if (!pth.equals(resp.fullpath()))
-					Utils.warn("Resp is not replied with exactly the same path: %s", resp.fullpath());
+				if (!pth.equals(resp.doc.fullpath()))
+					Utils.warn("Resp is not replied with exactly the same path: %s", resp.doc.fullpath());
 
 				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
 				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp);

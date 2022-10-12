@@ -75,7 +75,7 @@ class SyncWorkerTest {
 			AnSession.init(defltSt);
 
 			Connects.init("src/test/res/WEB-INF");
-			Clients.init("http://localhost:8081/jserv-album", true);
+			Clients.init("http://localhost:8081/jserv-album", false);
 			
 			meta = new DocTableMeta("h_photos", "pid", conn);
 
@@ -93,7 +93,7 @@ class SyncWorkerTest {
 	}
 
 	/**
-	 * Test {@link SyncWorker} with album-jserv as sync hub (8081).
+	 * Test {@link SyncWorker}' pushing (synchronizing 'pub') with album-jserv as sync hub (8081).
 	 * @throws TransException 
 	 * @throws IOException 
 	 * @throws SQLException 
@@ -148,7 +148,10 @@ class SyncWorkerTest {
 				.push();
 	
 		DocsResp resp = worker.queryTasks(meta, rob, photo.device);
-		worker.pullDocs(resp);
+		
+		assertEquals(clientpath, resp.doc.fullpath());
+
+		// worker.pullDocs(resp);
 	}
 
 	/**
@@ -166,8 +169,8 @@ class SyncWorkerTest {
 	String createPhoto(String conn, Photo photo, SyncRobot usr, PhotoMeta meta)
 			throws TransException, SQLException, IOException {
 
-		if (!DATranscxt.hasSemantics(conn, meta.tbl, smtype.extFile))
-			throw new SemanticException("Semantics of ext-file for h_photos.uri dosen't been found");
+		if (!DATranscxt.hasSemantics(conn, meta.tbl, smtype.extFilev2))
+			throw new SemanticException("Semantics of ext-file for h_photos.uri can't been found");
 		
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
 		return DocUtils.createFile(conn, photo, usr, meta, defltSt, post);
@@ -187,7 +190,7 @@ class SyncWorkerTest {
 	void testPrivPull() throws Exception {
 		String owner = "odys-z.github.io";
 		SyncRobot robot = new SyncRobot(owner, "f/zsu");
-		videoUp(meta, robot);
+		videoUpTest(meta, robot);
 
 		// downward synchronize the file
 		SyncWorker.blocksize = 32 * 3;
@@ -200,7 +203,8 @@ class SyncWorkerTest {
 		worker.verifyDocs(ids);
 	}
 
-	static String videoUp(DocTableMeta photoMeta, IUser owner) throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
+	static String videoUpTest(DocTableMeta photoMeta, IUser owner)
+			throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "src/test/res/anclient.java";
 		int bsize = 72 * 1024;
 		String filename = "Amelia Anisovych.mp4";
@@ -211,7 +215,7 @@ class SyncWorkerTest {
 
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		String path = FilenameUtils.concat(localFolder, filename);
-		videos.add((SyncDoc) new SyncDoc().loadFile(path, owner, Share.pub));
+		videos.add((SyncDoc) new SyncDoc().loadFile(path, owner, Share.pub).folder("test.pull"));
 
 		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = testDevice;
@@ -242,14 +246,14 @@ class SyncWorkerTest {
 					assertEquals(1, resps.size());
 
 					for (DocsResp d : resps) {
-						String docId = d.recId();
+						String docId = d.doc.recId();
 						assertEquals(8, docId.length());
 
 						DocsResp rp = tier.selectDoc(docId);
 
 						assertTrue(LangExt.isblank(rp.msg()));
-						assertNotNull(rp.clientname());
-						assertEquals(rp.clientname(), filename);
+						assertEquals(testDevice, rp.doc.device());
+						assertEquals(path, rp.doc.fullpath());
 					}
 				}
 			});

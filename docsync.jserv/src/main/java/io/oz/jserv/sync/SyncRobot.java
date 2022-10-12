@@ -13,7 +13,7 @@ import org.apache.commons.io.FileUtils;
 import io.odysz.anson.Anson;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
-import io.odysz.semantic.DASemantics.ShExtFile;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.x.SsException;
@@ -129,8 +129,8 @@ public class SyncRobot extends SemanticObject implements IUser {
 	 */
 	public String touchTempDir(String conn, String tablPhotos) throws SemanticException {
 
-		String extroot = ((ShExtFile) DATranscxt
-						.getHandler(conn, tablPhotos, smtype.extFile))
+		String extroot = ((ShExtFilev2) DATranscxt
+						.getHandler(conn, tablPhotos, smtype.extFilev2))
 						.getFileRoot();
 
 		String tempDir = IUser.tempDir(extroot, userId, "uploading-temp", ssid);
@@ -148,9 +148,9 @@ public class SyncRobot extends SemanticObject implements IUser {
 		return new SessionInf().device(deviceId);
 	}
 
-	public String  device() {
-		return deviceId;
-	}
+//	public String  device() {
+//		return deviceId;
+//	}
 
 	public SyncRobot device(String dev) {
 		deviceId = dev;

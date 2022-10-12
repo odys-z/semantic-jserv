@@ -161,11 +161,21 @@ public class SyncWorker implements Runnable {
 		return client.<DocsyncReq, DocsResp>commit(q, errLog);
 	}
 
+	/**
+	 * Pull files if any files at hub needing to be downward synchronized.
+	 * @param tasks
+	 * @return list of local file ids
+	 * @throws SQLException
+	 * @throws AnsonException
+	 * @throws IOException
+	 * @throws TransException
+	 */
 	ArrayList<String> pullDocs(DocsResp tasks)
 			throws SQLException, AnsonException, IOException, TransException {
 		
 		ArrayList<String> res = new ArrayList<String>();
 		AnsonHeader header = null;
+		tasks.rs(0).beforeFirst();
 		while (tasks.rs(0).next()) {
 			try {
 				SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
@@ -230,7 +240,6 @@ public class SyncWorker implements Runnable {
 				.nv("device", usr.deviceId())
 				.nv("clientpath", doc.clientpath)
 				.nv("shareflag", doc.shareflag)
-				// .nv("syncflag", doc.isPublic() ? DocsyncReq.SyncFlag.pushing : DocsyncReq.SyncFlag.priv)
 				;
 		
 		if (!LangExt.isblank(doc.mime))
@@ -372,8 +381,8 @@ public class SyncWorker implements Runnable {
 				resp = client.commit(q, onErr);
 
 				String pth = p.fullpath();
-				if (!pth.equals(resp.fullpath()))
-					Utils.warn("resp is not replied with exactly the same path: %s", resp.fullpath());
+				if (!pth.equals(resp.doc.fullpath()))
+					Utils.warn("resp is not replied with exactly the same path: %s", resp.doc.fullpath());
 
 				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
 				if (proc != null) proc.proc(files.total(), px, 0, totalBlocks, resp);
@@ -438,6 +447,14 @@ public class SyncWorker implements Runnable {
 		return pullDocs(rsp);
 	}
 
+	/**
+	 * Verifying each rec-id has a corresponding local file.
+	 * 
+	 * @param ids
+	 * @return this
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	public SyncWorker verifyDocs(ArrayList<String> ids) throws TransException, SQLException {
 		AnResultset rs = (AnResultset) localSt
 				.select(localMeta.tbl, "t")
@@ -450,7 +467,12 @@ public class SyncWorker implements Runnable {
 			throw new SemanticException("id count (%s) != file records' count (%s)", ids.size(), rs.total());
 
 		while (rs.next()) {
-			
+			String p = resolvePrivRoot(rs.getString(localMeta.uri));
+			File f = new File(p);
+			if (f.exists() && f.length() == rs.getLong(localMeta.size))
+				continue;
+			throw new SemanticException("Doc doesn't exists. id: %s, uri: %s, expecting path: %s",
+					rs.getString(localMeta.pk), uri, p);
 		}
 		return this;
 	}

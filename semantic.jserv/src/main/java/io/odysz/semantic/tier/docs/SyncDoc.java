@@ -26,10 +26,18 @@ import io.odysz.semantics.x.SemanticException;
 public class SyncDoc extends Anson implements IFileDescriptor {
 	public String recId;
 	public String recId() { return recId; }
+	public SyncDoc recId(String did) {
+		recId = did;
+		return this;
+	}
 
 	public String pname;
 	@Override
 	public String clientname() { return pname; }
+	public SyncDoc clientname(String clientname) {
+		pname = clientname;
+		return this;
+	}
 
 	public String clientpath;
 	@Override
@@ -49,6 +57,10 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public String createDate;
 	@Override
 	public String cdate() { return createDate; }
+	public SyncDoc cdate(String cdate) {
+		createDate = cdate;
+		return this;
+	}
 	
 	@AnsonField(shortenString=true)
 	public String uri;
@@ -185,10 +197,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	}
 
 	protected String folder;
-	public String folder() throws IOException, SemanticException {
-		return folder;
-	}
-
+	public String folder() throws IOException, SemanticException { return folder; }
 	public SyncDoc folder(String v) {
 		this.folder = v;
 		return this;
