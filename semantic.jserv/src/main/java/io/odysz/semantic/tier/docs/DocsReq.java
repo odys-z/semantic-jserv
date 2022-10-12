@@ -207,8 +207,8 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = sequence;
 
-		this.docId = resp.recId();
-		this.clientpath = resp.fullpath();
+		this.docId = resp.doc.recId();
+		this.clientpath = resp.doc.fullpath();
 		this.uri64 = s64;
 
 		this.a = A.blockUp;
@@ -220,8 +220,8 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = startAck.blockSeqReply;
 
-		this.docId = startAck.recId();
-		this.clientpath = startAck.fullpath();
+		this.docId = startAck.doc.recId();
+		this.clientpath = startAck.doc.fullpath();
 
 		this.a = A.blockAbort;
 		return this;
@@ -232,8 +232,8 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = resp.blockSeqReply;
 
-		this.docId = resp.recId();
-		this.clientpath = resp.fullpath();
+		this.docId = resp.doc.recId();
+		this.clientpath = resp.doc.fullpath();
 
 		this.a = A.blockEnd;
 		return this;

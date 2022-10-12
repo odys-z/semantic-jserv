@@ -5,11 +5,17 @@ import io.odysz.semantics.meta.TableMeta;
 public class DocTableMeta extends TableMeta {
 	public static final class SyncFlag {
 		/**
-		 * created at cloud hub ('✩')
+		 * created at cloud hub ('✩') by client (not jnode),
+		 * and to be synchronized by private / main jnode.
+		 * 
+		 * <p> pub &amp; {@link #hubInit} -- [sync request] --&gt; {@link #publish}
+		 * <p> prv &amp; {@link #hubInit} -- [sync request] --&gt; null
 		 */
 		public static final String hubInit = "✩";
 		/**
-		 * kept as private file ('🔒')
+		 * <p>kept as private file ('🔒')</p>
+		 * If the jnode is working on hub mode, the file record can be removed later
+		 * according expire and storage limitation. 
 		 */
 		public static final String priv = "🔒";
 		/**

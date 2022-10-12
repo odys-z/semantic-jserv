@@ -247,9 +247,10 @@ public class Albums extends ServPort<AlbumReq> {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
-				.clientname(chain.clientname)
-				.fullpath(chain.clientpath)
-				.cdate(body.createDate);
+				.doc((SyncDoc) new SyncDoc()
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(chain.clientpath));
 	}
 
 	void checkDuplication(AlbumReq body, PhotoRobot usr)
@@ -286,9 +287,10 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.clientname(chain.clientname)
-				.fullpath(chain.clientpath)
-				.cdate(body.createDate);
+				.doc((SyncDoc) new SyncDoc()
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(chain.clientpath));
 	}
 	
 	DocsResp endBlock(DocsReq body, IUser usr)
@@ -322,11 +324,12 @@ public class Albums extends ServPort<AlbumReq> {
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
 		return new DocsResp()
-				.recId(pid)
 				.blockSeq(body.blockSeq())
-				.clientname(chain.clientname)
-				.fullpath(chain.clientpath)
-				.cdate(body.createDate);
+				.doc((SyncDoc) new SyncDoc()
+					.recId(pid)
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(chain.clientpath));
 	}
 	
 	DocsResp abortBlock(DocsReq body, IUser usr)

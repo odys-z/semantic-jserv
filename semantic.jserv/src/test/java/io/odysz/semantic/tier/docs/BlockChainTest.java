@@ -42,7 +42,9 @@ class BlockChainTest {
 		assertEquals("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath);
 		assertEquals("/sdcard/0/Downloads/test.3gp", chain.clientpath);
 
-		DocsResp resp = (DocsResp) new DocsResp().fullpath(clientpath);
+		DocsResp resp = (DocsResp) new DocsResp()
+				.doc( (SyncDoc) new SyncDoc()
+						.fullpath(clientpath));
 
 		// client side 
 		String b64;
@@ -91,7 +93,7 @@ class BlockChainTest {
 		assertEquals("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath);
 		assertEquals("/sdcard/0/Downloads/test.3gp", chain.clientpath);
 
-		DocsResp resp = (DocsResp) new DocsResp().fullpath(clientpath);
+		DocsResp resp = (DocsResp) new DocsResp().doc((SyncDoc) new SyncDoc().fullpath(clientpath));
 
 		// client side 
 		String b64;
@@ -163,7 +165,7 @@ class BlockChainTest {
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");
 		ssinf.device = "local junit";
 		
-		DocsResp resp = (DocsResp) new DocsResp().fullpath(clientpath);
+		DocsResp resp = (DocsResp) new DocsResp().doc((SyncDoc) new SyncDoc().fullpath(clientpath));
 
 		b64 = AESHelper.encode64("1. Hello\n".getBytes());
 		DocsReq b0 = new DocsReq().blockUp(0, resp, b64, ssinf);

@@ -40,8 +40,8 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	String roleName;
 	String orgName;
 	
-	String deviceId;
-	public String deviceId() { return deviceId; }
+//	String deviceId;
+//	public String deviceId() { return deviceId; }
 
 	RobotMeta userMeta;
 

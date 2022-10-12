@@ -315,7 +315,7 @@ class AlbumsTest {
 					assertEquals(1, resps.size());
 
 					for (DocsResp d : resps) {
-						String docId = d.recId();
+						String docId = d.doc.recId();
 						assertEquals(8, docId.length());
 
 						AlbumResp rp = tier.selectPhotoRec(docId);

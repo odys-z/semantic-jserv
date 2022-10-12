@@ -13,7 +13,7 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFile;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -83,9 +83,10 @@ public class Dochain {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
-				.clientname(chain.clientname)
-				.fullpath(chain.clientpath)
-				.cdate(body.createDate);
+				.doc((SyncDoc) new SyncDoc()
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(chain.clientpath));
 	}
 
 	void checkDuplication(DocsReq body, SyncRobot usr)
@@ -96,6 +97,7 @@ public class Dochain {
 
 	void checkDuplicate(String conn, String device, String clientpath, IUser usr)
 			throws SemanticException, TransException, SQLException {
+
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
@@ -121,9 +123,10 @@ public class Dochain {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.clientname(chain.clientname)
-				.fullpath(chain.clientpath)
-				.cdate(body.createDate);
+				.doc((SyncDoc) new SyncDoc()
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(chain.clientpath));
 	}
 
 	
@@ -146,7 +149,7 @@ public class Dochain {
 		// Exif.parseExif(photo, chain.outputPath);
 
 		photo.clientpath = chain.clientpath;
-		photo.device = usr.device();
+		photo.device = usr.deviceId();
 		photo.pname = chain.clientname;
 		photo.folder(chain.saveFolder);
 		photo.shareby = chain.shareby;
@@ -166,11 +169,12 @@ public class Dochain {
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
 		return new DocsResp()
-				.recId(pid)
 				.blockSeq(body.blockSeq())
-				.clientname(chain.clientname)
-				.fullpath(chain.clientpath)
-				.cdate(body.createDate);
+				.doc((SyncDoc) new SyncDoc()
+					.recId(pid)
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(chain.clientpath));
 	}
 	
 	DocsResp abortBlock(DocsReq body, IUser usr)
@@ -215,7 +219,7 @@ public class Dochain {
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 
-		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, meta.tbl, smtype.extFile)).getFileRoot();
+		String extroot = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2)).getFileRoot();
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
 	

@@ -40,6 +40,7 @@ import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -130,12 +131,21 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static Update onDocreate(IFileDescriptor doc, DocTableMeta meta, IUser usr)
 			throws TransException {
 
-		if (SyncMode.hub == mode && !DocTableMeta.Share.pub.equals(doc.shareflag()))
-			return st.update(meta.tbl, usr)
-				.nv(meta.syncflag, SyncFlag.hubInit)
-				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
-				.whereEq(meta.shareflag, DocTableMeta.Share.pub)
-				;
+		if (SyncMode.hub == mode)
+			// 1.1 hub <- pub: syncflag = hubInit
+			if (DocTableMeta.Share.pub.equals(doc.shareflag()))
+				return st.update(meta.tbl, usr)
+					.nv(meta.syncflag, SyncFlag.hubInit)
+					.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
+					.whereEq(meta.shareflag, DocTableMeta.Share.pub)
+					;
+			// 1.2 hub <- prv: syncflag = publish 
+			else
+				return st.update(meta.tbl, usr)
+					.nv(meta.syncflag, SyncFlag.priv)
+					.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
+					.whereEq(meta.shareflag, DocTableMeta.Share.pub)
+					;
 		
 		// private doc
 		else if (SyncMode.main == mode || SyncMode.priv == mode)
@@ -144,10 +154,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
 				.whereEq(meta.shareflag, doc.shareflag())
 				;
-//		else if (SyncMode.priv == mode)
-//			throw new TransException("TODO");
 		else {
-			Utils.warn("Unknow album serv mode: %s", mode);
+			Utils.warn("Unknown album serv mode: %s", mode);
 			return null;
 		}
 	}
@@ -233,8 +241,11 @@ public class Docsyncer extends ServPort<DocsReq> {
 			AnsonResp rsp = null;
 			String a = jreq.a();
 			if (A.records.equals(a))
-				rsp = query(jreq, usr);
+				rsp = queryTasks(jreq, usr);
+			else if (A.rec.equals(a))
+				rsp = selectDoc(jreq, usr);
 			else if (A.download.equals(a))
+				// non-session access allowed?
 				download(resp, jreq, usr);
 			else if (A.synclose.equals(a))
 				rsp = synclose(jreq, usr);
@@ -327,7 +338,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	
 	public static String resolveHubRoot(String tabl, String uri) {
 		String extroot = ((ShExtFile) DATranscxt
-				.getHandler(synconn, tabl, smtype.extFile))
+				.getHandler(synconn, tabl, smtype.extFilev2))
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, uri);
 	}
@@ -352,7 +363,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return (DocsResp) new DocsResp().data(r.props()); 
 	}
 
-	protected DocsResp query(DocsReq jreq, IUser usr) throws TransException, SQLException {
+	protected DocsResp queryTasks(DocsReq jreq, IUser usr) throws TransException, SQLException {
 		DocTableMeta meta = metas.get(jreq.docTabl);
 		AnResultset rs = (AnResultset) st
 				.select(jreq.docTabl, "t")
@@ -365,4 +376,19 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return (DocsResp) new DocsResp().rs(rs);
 	}
 
+	protected DocsResp selectDoc(DocsReq jreq, IUser usr) throws TransException, SQLException {
+		DocTableMeta meta = metas.get(jreq.docTabl);
+		AnResultset rs = (AnResultset) st
+				.select(jreq.docTabl, "t")
+				// .cols(meta.org, meta.device, meta.fullpath, meta.syncflag)
+				.cols(SyncDoc.nvCols(meta))
+				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.pk, jreq.docId)
+				.rs(st.instancontxt(synconn, usr))
+				.rs(0);
+		
+		rs.beforeFirst().next();
+
+		return (DocsResp) new DocsResp().doc(rs, meta);
+	}
 }
