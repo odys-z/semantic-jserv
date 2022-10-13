@@ -50,6 +50,9 @@ import io.odysz.transact.x.TransException;
 public class SyncWorker implements Runnable {
 	static int blocksize = 12 * 1024 * 1024;
 
+	/**
+	 * jserv-node states
+	 */
 	public enum SyncMode {
 		/** jserv node mode: cloud hub, equivalent of {@link Docsyncer#cloudHub} */
 		hub,
@@ -131,7 +134,7 @@ public class SyncWorker implements Runnable {
 			pullDocs(resp);
 
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			// ex.printStackTrace();
 		}
 		finally {
 			Docsyncer.lock.unlock();
@@ -163,7 +166,7 @@ public class SyncWorker implements Runnable {
 
 	/**
 	 * Pull files if any files at hub needing to be downward synchronized.
-	 * @param tasks
+	 * @param tasks response of task querying, of which the result set (index 0) is the task list. 
 	 * @return list of local file ids
 	 * @throws SQLException
 	 * @throws AnsonException
@@ -180,7 +183,7 @@ public class SyncWorker implements Runnable {
 			try {
 				SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
 					
-				res.add(syncPull(p, robot, header));
+				res.add(synClose(synPull(p, robot, header), robot, header));
 			}
 			catch(Exception e) {
 				fail(e.getMessage());
@@ -195,13 +198,13 @@ public class SyncWorker implements Runnable {
 	 * @param p
 	 * @param worker
 	 * @param header
-	 * @return record Id (e.g. h_photos.pid)
+	 * @return doc record (e.g. h_photos)
 	 * @throws AnsonException
 	 * @throws IOException
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	String syncPull(SyncDoc p, SyncRobot worker, AnsonHeader header)
+	SyncDoc synPull(SyncDoc p, SyncRobot worker, AnsonHeader header)
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, worker, localMeta.tbl)) {
 			DocsyncReq req = (DocsyncReq) new DocsyncReq(/* p */)
@@ -215,6 +218,11 @@ public class SyncWorker implements Runnable {
 			p.uri(path);
 			insertLocalFile(localSt, connPriv, path, p, robot, localMeta);
 		}
+		return p;
+	}
+
+	String synClose(SyncDoc p, SyncRobot worker, AnsonHeader header)
+			throws AnsonException, IOException, TransException, SQLException {
 
 		DocsReq clsReq = (DocsReq) new DocsReq(null, uri, p)
 						.a(A.synclose);
@@ -256,7 +264,7 @@ public class SyncWorker implements Runnable {
 	}
 
 	/** 
-	 * <h5>Verify the file.</h5>
+	 * <p>Verify the local file.</p>
 	 * <p>If it is not expected, delete it.</p>
 	 * Two cases need this verification<br>
 	 * 1. the file was downloaded but the task closing was failed<br>
@@ -319,18 +327,25 @@ public class SyncWorker implements Runnable {
 			AnResultset rs = ((AnResultset) localSt
 				.select(localMeta.tbl, "f")
 				.cols(SyncDoc.nvCols(localMeta))
-				.whereEq(localMeta.syncflag, DocTableMeta.SyncFlag.pushing)
+				.whereEq(localMeta.syncflag, SyncFlag.pushing)
 				.rs(localSt.instancontxt(connPriv, robot))
 				.rs(0)).beforeFirst();
 
+			rs.next();
+
 			// upload
-			String clientpath = rs.getString(localMeta.fullpath);
 			sync(rs, new OnProcess() {
 
 				@Override
 				public void proc(int listIndx, int rows, int seq, int totalBlocks, AnsonResp blockResp)
 						throws IOException, AnsonException, SemanticException {
-					Utils.logi("[%s/%s]%s: %s / %s, reply: %s", listIndx, rows, clientpath, seq, totalBlocks, blockResp.msg());
+					String clientpath;
+					try {
+						clientpath = rs.getString(localMeta.fullpath);
+						Utils.logi("[%s/%s] %s: %s / %s, reply: %s", listIndx, rows, clientpath, seq, totalBlocks, blockResp.msg());
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
 				}
 			});
 			
@@ -410,7 +425,7 @@ public class SyncWorker implements Runnable {
 
 					
 					st.update(meta.tbl, robot)
-						.nv(meta.syncflag, DocTableMeta.SyncFlag.publish)
+						.nv(meta.syncflag, SyncFlag.publish)
 						.whereEq(meta.pk, p.recId())
 						.u(st.instancontxt(loconn, robot));
 
