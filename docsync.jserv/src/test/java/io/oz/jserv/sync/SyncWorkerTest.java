@@ -28,6 +28,7 @@ import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -149,9 +150,16 @@ class SyncWorkerTest {
 	
 		DocsResp resp = worker.queryTasks(meta, rob, photo.device);
 		
-		assertEquals(clientpath, resp.doc.fullpath());
+		AnResultset tasks = resp.rs(0);
+		if (tasks == null || tasks.total() == 0)
+			fail("Shouldn't be here");
 
-		// worker.pullDocs(resp);
+		tasks.beforeFirst();
+		while (tasks.next()) {
+			assertEquals(clientpath, tasks.getString(meta.fullpath));
+		}
+
+		worker.pullDocs(resp);
 	}
 
 	/**

@@ -26,7 +26,6 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
-import io.odysz.semantic.ext.DocTableMeta.SyncFlag;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -49,6 +48,7 @@ import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.sync.Dochain.OnChainOk;
+import io.oz.jserv.sync.SyncFlag.SyncEvent;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
@@ -68,7 +68,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String mainStorage = "main";
 	public static final String privateStorage = "private";
 
-	public static final String tablSyncLog = "sync_log";
+//	public static final String tablSyncLog = "sync_log";
 
 	@SuppressWarnings("unused")
 	private static ScheduledFuture<?> schedualed;
@@ -114,23 +114,20 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * <p>Add a synchronizing task (setup syncflag) when the doc is to be created,
-	 * where doc id will be resulved from semantext.</p>
-	 * <p>1. for jserv mode == {@link SyncWorker#hub}<br/>
-	 * task: tag the doc to be synchronized by private storage</p>
-	 * <p>2. for jserv mode == {@link SyncWorker#main} or {@link SyncWorker#priv}<br/>
-	 * task: if doc is public, create a task for pushing to the cloud hub</p>
-	 * This method requires the target table has fields named meta.shareflag &amp; meta.syncflag.
+	 * <p>Setup sync-flag after doc been synchronized</p>
+	 * @see SyncFlag
 	 * 
 	 * @param doc
+	 * @param e 
 	 * @param meta
 	 * @param usr
 	 * @return post update
 	 * @throws TransException
 	 */
-	public static Update onDocreate(IFileDescriptor doc, DocTableMeta meta, IUser usr)
+	public static Update onDocreate(SyncDoc doc, SyncEvent e, DocTableMeta meta, IUser usr)
 			throws TransException {
 
+		/*
 		if (SyncMode.hub == mode)
 			// 1.1 hub <- pub: syncflag = hubInit
 			if (DocTableMeta.Share.pub.equals(doc.shareflag()))
@@ -158,6 +155,13 @@ public class Docsyncer extends ServPort<DocsReq> {
 			Utils.warn("Unknown album serv mode: %s", mode);
 			return null;
 		}
+		*/
+		String synf = SyncFlag.to(doc.shareflag(), e, doc.shareflag());
+		return st.update(meta.tbl, usr)
+				.nv(meta.syncflag, synf)
+				.whereEq(meta.org, usr.orgId())
+				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
+				;
 	}
 
 	/**
@@ -344,7 +348,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * Remove sync task.
+	 * Remove sync task, either by close of by delete.
 	 * 
 	 * @param jreq
 	 * @param usr
@@ -353,25 +357,27 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws TransException 
 	 */
 	protected DocsResp synclose(DocsReq jreq, IUser usr) throws TransException, SQLException {
-		SemanticObject r = (SemanticObject) st.insert(tablSyncLog, usr)
-				.nv("family", jreq.org)
-				.nv("tabl", jreq.docTabl)
-				.nv("device", jreq.device())
-				.nv("clientpath", jreq.clientpath)
-				.nv("syncby", usr.uid())
-				.ins(st.instancontxt(synconn, usr));
+		DocTableMeta meta = metas.get(jreq.docTabl);
+		SemanticObject r = (SemanticObject) st
+				.update(meta.tbl, usr)
+				.nv(meta.shareflag, SyncFlag.publish)
+				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.device, usr.deviceId())
+				.whereEq(meta.fullpath, jreq.clientpath)
+				.u(st.instancontxt(synconn, usr));
 		return (DocsResp) new DocsResp().data(r.props()); 
 	}
 
 	protected DocsResp queryTasks(DocsReq jreq, IUser usr) throws TransException, SQLException {
 		DocTableMeta meta = metas.get(jreq.docTabl);
-		AnResultset rs = (AnResultset) st
+		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
-				.cols(meta.org, meta.device, meta.fullpath, meta.syncflag)
+				.cols(meta.org, meta.device, meta.fullpath, meta.shareflag, meta.syncflag)
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
 				.whereEq(meta.syncflag, SyncFlag.hubInit)
 				.rs(st.instancontxt(synconn, usr))
-				.rs(0);
+				.rs(0))
+				.beforeFirst();
 
 		return (DocsResp) new DocsResp().rs(rs);
 	}
@@ -380,15 +386,12 @@ public class Docsyncer extends ServPort<DocsReq> {
 		DocTableMeta meta = metas.get(jreq.docTabl);
 		AnResultset rs = (AnResultset) st
 				.select(jreq.docTabl, "t")
-				// .cols(meta.org, meta.device, meta.fullpath, meta.syncflag)
 				.cols(SyncDoc.nvCols(meta))
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
 				.whereEq(meta.pk, jreq.docId)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0);
 		
-		rs.beforeFirst().next();
-
 		return (DocsResp) new DocsResp().doc(rs, meta);
 	}
 }
