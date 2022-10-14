@@ -100,7 +100,10 @@ public class DocsReq extends AnsonBody {
 
 	String[] deletings;
 
-	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
+	/**
+	 * Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub}
+	 * or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}.
+	 */
 	public String shareflag;
 	public String shareby;
 	public String shareDate;

@@ -52,6 +52,7 @@ import io.oz.jserv.sync.SyncWorker.SyncMode;
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
 public class Docsyncer extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
+	public static boolean debug = true;
 
 	static HashMap<String, DocTableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
@@ -62,6 +63,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String keyInterval = "sync-interval-min";
 	public static final String keySynconn = "sync-conn-id";
 
+	/** TODO replace with SyncMode.pub */
 	public static final String cloudHub = "hub";
 	public static final String mainStorage = "main";
 	public static final String privateStorage = "private";
@@ -76,12 +78,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 	private static ScheduledExecutorService scheduler;
 
-	public static boolean debug = true;
+	static SyncRobot robot;
 
 	static {
 		try {
 			st = new DATranscxt(null);
 			metas = new HashMap<String, DocTableMeta>();
+
+			robot = new SyncRobot("Robot Syncer", "");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
@@ -224,7 +228,25 @@ public class Docsyncer extends ServPort<DocsReq> {
 	protected void onGet(AnsonMsg<DocsReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		//
-		
+		if (debug)
+			Utils.logi("[Docsyncer.debug/album.less GET]");
+
+		try {
+			DocsReq jreq = msg.body(0);
+			String a = jreq.a();
+			if (A.download.equals(a))
+				download(resp, msg.body(0), robot);
+		} catch (SemanticException e) {
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
+		} catch (SQLException | TransException e) {
+			if (debug) {
+				Utils.warn("[Docsyncer.debug]");
+				e.printStackTrace();
+			}
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
 	}
 
 	@Override
