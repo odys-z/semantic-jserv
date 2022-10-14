@@ -29,7 +29,6 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
 
 public class Dochain {
 
@@ -201,7 +200,7 @@ public class Dochain {
 	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
 			DocTableMeta meta, SyncRobot usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
-		Update post = Docsyncer.onDocreate(photo, SyncEvent.pushEnd, meta, usr);
+		Update post = Docsyncer.onDocreate(photo, meta, usr);
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);
 

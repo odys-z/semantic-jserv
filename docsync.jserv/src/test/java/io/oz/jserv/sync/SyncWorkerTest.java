@@ -185,10 +185,10 @@ class SyncWorkerTest {
 	}
 
 	/**
-	 * </h5>A word about sharer and path at jserv:</h5>
+	 * <h5>A word about sharer and path at jserv:</h5>
 	 * <p>
-	 * - video is uploaded as owning of "odys-z.github.io"<br>
-	 * - uri is handled by {@link io.odysz.semantic.DASemantics.ShExtFile ShExtFile} and using shareby as user-id-sub-folder name, like:<br>
+	 * - video is uploaded as owned by "odys-z.github.io"<br>
+	 * - uri is handled by {@link io.odysz.semantic.DASemantics.ShExtFile ShExtFile} and using shareby as user-id/sub-folder name, like:<br>
 	 * [volume]/[family]/[shareby]/[folder]/[pid] filename, e.g.<br>
 	 * /.../jserv-album/volume/odys-z.github.io/synctest/0000009P ...<br>
 	 * </p>
