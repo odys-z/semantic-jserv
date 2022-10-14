@@ -239,23 +239,23 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 			AnsonResp rsp = null;
 			String a = jreq.a();
-			if (A.records.equals(a))
-				rsp = queryTasks(jreq, usr);
-			else if (A.rec.equals(a))
+			if (A.rec.equals(a))
 				rsp = selectDoc(jreq, usr);
 			else if (A.download.equals(a))
 				// non-session access allowed?
 				download(resp, jreq, usr);
-			else if (A.synclose.equals(a))
-				rsp = synclose(jreq, usr);
 
 			// requires meta for operations
 			else {
 				if (LangExt.isblank(jreq.docTabl))
 					throw new SemanticException("To push a doc via Docsyncer, docTable name can not be null.");
 
-				if (A.del.equals(a))
+				if (A.records.equals(a))
+					rsp = queryTasks(jreq, usr);
+				else if (A.del.equals(a))
 					rsp = delDocRec(jmsg.body(0), usr);
+				else if (A.synclose.equals(a))
+					rsp = synclose(jreq, usr);
 				else {
 					Dochain chain = new Dochain(metas.get(jreq.docTabl), st);
 					if (DocsReq.A.blockStart.equals(a)) {

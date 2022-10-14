@@ -112,7 +112,6 @@ public class Dochain {
 					device, clientpath);
 	}
 
-	
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		String id = chainId(usr, body);
 		if (!blockChains.containsKey(id))
@@ -129,7 +128,6 @@ public class Dochain {
 					.fullpath(chain.clientpath));
 	}
 
-	
 	DocsResp endBlock(DocsReq body, SyncRobot usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
@@ -142,11 +140,9 @@ public class Dochain {
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
-		// DocTableMeta meta = new DocTableMeta(conn);
 		SyncDoc photo = new SyncDoc();
 
 		photo.createDate = chain.cdate;
-		// Exif.parseExif(photo, chain.outputPath);
 
 		photo.clientpath = chain.clientpath;
 		photo.device = usr.deviceId();
