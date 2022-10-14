@@ -5,43 +5,26 @@ import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 /**
- * <img src='sync-states.png'/>
+ * <img src='sync-states.jpg'/>
  * @author odys-z@github.com
  *
  */
 public final class SyncFlag {
-	/**
-	 * created at cloud hub ('✩') by client (not jnode),
-	 * and to be synchronized by private / main jnode.
-	 * 
-	 * <p> pub &amp; {@link #hubInit} -- [sync request] --&gt; {@link #publish}
-	 * <p> prv &amp; {@link #hubInit} -- [sync request] --&gt; null
-	 */
-	public static final String hubInit = "✩";
-	/**
-	 * <p>kept as private file ('🔒')</p>
-	 * If the jnode is working on hub mode, the file record can be removed later
-	 * according expire and storage limitation. 
-	 */
+	/** kept as private file ('🔒') at private node. */
 	public static final String priv = "🔒";
-	/**
-	 * to be pushed (shared) to hub ('⇈')
-	 */
+	/** to be pushed (shared) to hub ('⇈') */
 	public static final String pushing = "⇈";
-
-	/**
-	 * synchronized (shared) with hub ('🌎')
-	 */
+	/** synchronized (shared) with hub ('🌎') */
 	public static final String publish = "🌎";
-	
+	/**created at cloud hub ('✩') by both client and jnode pushing, */
+	public static final String hub = "✩";
 	/** This state can not present in database */ 
 	public static final String end = "";
 	
-	
-	public static enum SyncEvent { push, pushEnd, pull, close, hide };
+	public static enum SyncEvent { create, push, pushEnd, pull, close, publish, hide };
 	
 	/**
-	 * @param now current state, one of {@link #publish}, {@link #priv}, {@link #hubInit}, {@link #pushing} and {@link #end}.
+	 * @param now current state (SyncFlag constants)
 	 * @param e
 	 * @param share either {@link Share#pub} or {@link Share#priv}.
 	 * @return next state
@@ -53,28 +36,32 @@ public final class SyncFlag {
 		}
 		else if (pushing.equals(now)) {
 			if (e == SyncEvent.pushEnd && Share.isPub(share))
-				return pushing;
+				return publish;
 			else if (e == SyncEvent.pushEnd && Share.isPriv(share))
-				return hubInit;
+				return hub;
 		}
 		else if (publish.equals(now)) {
+			if (e == SyncEvent.close)
+				return end;
+			else if (e == SyncEvent.hide)
+				return hub;
+			else if (e == SyncEvent.pull)
+				return priv;
+		}
+		else if (hub.equals(now)) {
 			if (e == SyncEvent.close && Share.isPub(share))
 				return end;
-			else if (e == SyncEvent.hide && Share.isPriv(share))
-				return hubInit;
-		}
-		else if (hubInit.equals(now)) {
-			if (e == SyncEvent.pull && Share.isPub(share))
-				return end;
-			else if (e == SyncEvent.pull && Share.isPriv(share))
-				return hubInit;
+			else if (e == SyncEvent.publish)
+				return publish;
+			else if (e == SyncEvent.pull)
+				return priv;
 		}
 		return now;
 	}
 
-	public static String start(SyncMode mode) throws SemanticException {
+	public static String start(SyncMode mode, String share) throws SemanticException {
 			if (SyncMode.hub == mode)
-				return hubInit;
+				return Share.isPub(share) ? publish : hub;
 			else if (SyncMode.priv == mode || SyncMode.main == mode)
 				return priv;
 			throw new SemanticException("Unhandled state transition.");

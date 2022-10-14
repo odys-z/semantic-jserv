@@ -38,7 +38,6 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
-import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -48,7 +47,6 @@ import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.sync.Dochain.OnChainOk;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
@@ -67,8 +65,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String cloudHub = "hub";
 	public static final String mainStorage = "main";
 	public static final String privateStorage = "private";
-
-//	public static final String tablSyncLog = "sync_log";
 
 	@SuppressWarnings("unused")
 	private static ScheduledFuture<?> schedualed;
@@ -118,13 +114,12 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @see SyncFlag
 	 * 
 	 * @param doc
-	 * @param e 
 	 * @param meta
 	 * @param usr
 	 * @return post update
 	 * @throws TransException
 	 */
-	public static Update onDocreate(SyncDoc doc, SyncEvent e, DocTableMeta meta, IUser usr)
+	public static Update onDocreate(SyncDoc doc, DocTableMeta meta, IUser usr)
 			throws TransException {
 
 		/*
@@ -156,9 +151,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 			return null;
 		}
 		*/
-		String synf = SyncFlag.to(doc.shareflag(), e, doc.shareflag());
+		String syn = SyncFlag.start(mode, doc.shareflag());
 		return st.update(meta.tbl, usr)
-				.nv(meta.syncflag, synf)
+				.nv(meta.syncflag, syn)
 				.whereEq(meta.org, usr.orgId())
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
 				;
@@ -374,7 +369,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.select(jreq.docTabl, "t")
 				.cols(meta.org, meta.device, meta.fullpath, meta.shareflag, meta.syncflag)
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
-				.whereEq(meta.syncflag, SyncFlag.hubInit)
+				.whereEq(meta.syncflag, SyncFlag.hub)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();
