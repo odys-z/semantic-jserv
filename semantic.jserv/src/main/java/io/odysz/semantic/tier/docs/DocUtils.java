@@ -19,9 +19,10 @@ import io.odysz.transact.x.TransException;
 
 public class DocUtils {
 	/**
-	 * <p>Create a file, e.g. photo - call this after duplication is checked.</p>
+	 * <p>Create a doc recode with a file, e.g. h_photos - call this after duplication is checked.</p>
+	 * <p>This method will insert record, and can trigger ExtFile handling.</p>
 	 * <p>TODO: to be replaced by SyncWorkerTest.createFileB64()</p>
-	 * <p>Photo is created as in the folder of user/month/.</p>
+	 * <p>Photo is created as in the folder of user/[photo.folder]/.</p>
 	 * 
 	 * @param conn
 	 * @param photo
@@ -82,7 +83,7 @@ public class DocUtils {
 	 */
 	public static String resolvePrivRoot(String uri, DocTableMeta meta, String conn) {
 		String extroot = ((ShExtFile) DATranscxt
-				.getHandler(conn, meta.tbl, smtype.extFile))
+				.getHandler(conn, meta.tbl, smtype.extFilev2))
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, uri);
 	}
