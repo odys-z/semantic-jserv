@@ -5,7 +5,9 @@ import java.sql.SQLException;
 
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFile;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
@@ -19,13 +21,13 @@ import io.odysz.transact.x.TransException;
 
 public class DocUtils {
 	/**
-	 * <p>Create a doc recode with a file, e.g. h_photos - call this after duplication is checked.</p>
-	 * <p>This method will insert record, and can trigger ExtFile handling.</p>
-	 * <p>TODO: to be replaced by SyncWorkerTest.createFileB64()</p>
-	 * <p>Photo is created as in the folder of user/[photo.folder]/.</p>
+	 * <p>Create a doc record with a file, e.g. h_photos - call this after duplication is checked.</p>
+	 * <p>This method will insert record, and can trigger ExtFilev2 handling.</p>
+	 * <p>Photo is created as in the folder of user/[photo.folder]/;<br>
+	 * Photo's device and family are replaced with session information.</p>
 	 * 
 	 * @param conn
-	 * @param photo
+	 * @param photo with photo.uri that is the entire base-64 encoded string
 	 * @param usr
 	 * @param meta 
 	 * @param st 
@@ -35,7 +37,7 @@ public class DocUtils {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFile(String conn, SyncDoc photo, IUser usr, DocTableMeta meta, DATranscxt st, Update onFileCreateSql)
+	public static String createFileB64(String conn, SyncDoc photo, IUser usr, DocTableMeta meta, DATranscxt st, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
 		if (LangExt.isblank(photo.clientpath))
 			throw new SemanticException("Client path can't be null/empty.");
@@ -47,7 +49,7 @@ public class DocUtils {
 				.nv(meta.org, usr.orgId())
 				.nv(meta.uri, photo.uri)
 				.nv(meta.filename, photo.pname)
-				.nv(meta.device, photo.device)
+				.nv(meta.device, usr.deviceId())
 				.nv(meta.fullpath, photo.fullpath())
 				.nv(meta.createDate, photo.createDate)
 				.nv(meta.folder, photo.folder())
@@ -86,5 +88,20 @@ public class DocUtils {
 				.getHandler(conn, meta.tbl, smtype.extFilev2))
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, uri);
+	}
+
+	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, DocTableMeta meta) throws TransException, SQLException {
+		ISemantext stx = st.instancontxt(conn, usr);
+		AnResultset rs = (AnResultset) st
+				.select(meta.tbl)
+				.col("uri").col("folder")
+				.whereEq("pid", docId).rs(stx)
+				.rs(0);
+	
+		if (!rs.next())
+			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
+	
+		String extroot = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2)).getFileRoot();
+		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
 }

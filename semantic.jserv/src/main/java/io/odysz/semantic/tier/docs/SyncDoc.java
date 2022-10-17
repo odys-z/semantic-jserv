@@ -15,7 +15,6 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
-import io.odysz.semantics.x.SemanticException;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
@@ -43,7 +42,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public String fullpath() { return clientpath; }
 
-	public String device;
+	/** Non-public: doc' device id is managed by session. */
+	protected String device;
 	@Override
 	public String device() { return device; }
 	
@@ -133,6 +133,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		// this.isPublic = Share.pub.equals(rs.getString(meta.shareflag, null));
 		this.clientpath =  rs.getString(meta.fullpath);
 		this.device =  rs.getString(meta.device);
+		this.folder = rs.getString(meta.folder);
 		
 		try {
 			this.sharedate = DateFormat.formatime(rs.getDate(meta.shareDate));
@@ -189,15 +190,18 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	 * @param path
 	 * @return
 	 * @throws SemanticException 
-	 */
-	public IFileDescriptor uri(String path) throws SemanticException {
-		
-		// return this;
-		throw new SemanticException("TODO");
+	 * @throws IOException 
+	public IFileDescriptor uri(String path) throws SemanticException, IOException {
+		fullpath(path);
+		pname = FilenameUtils.getName(path);
+		// throw new SemanticException("TODO");
+		this.uri = null;
+		return this;
 	}
+	 */
 
 	protected String folder;
-	public String folder() throws IOException, SemanticException { return folder; }
+	public String folder() { return folder; }
 	public SyncDoc folder(String v) {
 		this.folder = v;
 		return this;

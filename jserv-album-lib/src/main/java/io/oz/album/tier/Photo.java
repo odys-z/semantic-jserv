@@ -13,7 +13,6 @@ import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
@@ -173,13 +172,13 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 		return this;
 	}
 
-	public String folder() throws IOException, SemanticException {
+	public String folder() {
 		if (folder == null)
 			photoDate();
 		return folder;
 	}
 
-	public AbsPart photoDate() throws IOException, SemanticException {
+	public AbsPart photoDate() {
 		try {
 			if (!LangExt.isblank(createDate)) {
 				Date d = DateFormat.parse(createDate); 
@@ -193,7 +192,9 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 			}
 		} catch (ParseException e ) {
 			e.printStackTrace();
-			throw new SemanticException(e.getMessage());
+			Date d = new Date();
+			folder = DateFormat.formatYYmm(d);
+			return Funcall.now();
 		}
 	}
 
