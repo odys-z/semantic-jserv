@@ -1,9 +1,11 @@
 package io.oz.jserv.sync;
 
+import io.odysz.common.LangExt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantics.x.SemanticException;
 
 public class DocsyncReq extends DocsReq {
 	public static class A {
@@ -20,14 +22,21 @@ public class DocsyncReq extends DocsReq {
 		super(null, null);
 	}
 
-	public DocsyncReq(String family) {
+	public DocsyncReq(String family) throws SemanticException {
 		super(null, null);
+		if (LangExt.isblank(family, "/"))
+			throw new SemanticException("DocsyncReq.family can not be empty.");
 		this.org = family;
 	}
 
 	public DocsyncReq with(String fullpath, String device) {
 		this.clientpath = fullpath;
 		this.device = device;
+		return this;
+	}
+	
+	public DocsyncReq docTabl(String tabl) {
+		this.docTabl = tabl;
 		return this;
 	}
 

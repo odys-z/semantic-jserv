@@ -25,14 +25,15 @@ import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
+import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -41,7 +42,6 @@ import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
@@ -72,7 +72,7 @@ public class SyncWorker implements Runnable {
 	/** connection for update task records at private storage node */
 	String connPriv;
 	/** document's table name - table for saving records of local files */
-	// String targetablPriv;
+	
 	String tempDir;
 	SyncRobot robot;
 	ErrorCtx errLog;
@@ -81,6 +81,8 @@ public class SyncWorker implements Runnable {
 	 * Local table meta of which records been synchronized as private jserv node.
 	 */
 	DocTableMeta localMeta;
+
+	public boolean verbose = true;
 
 	public SyncWorker(SyncMode mode, String connId, String worker, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
@@ -102,13 +104,25 @@ public class SyncWorker implements Runnable {
 		};
 	}
 
-	public SyncWorker login(String workerId, String pswd) throws SemanticException, AnsonException, SsException, IOException, GeneralSecurityException {
+	public SyncWorker login(String workerId, String pswd) throws SemanticException, AnsonException, SsException, IOException, GeneralSecurityException, SQLException {
 		this.workerId = workerId;
 		
 		if (workerId != null && client == null) {
-			client = Clients.login(workerId, pswd, "java.test");
-			robot = new SyncRobot(workerId, null, workerId).device("junit test device");
+			client = Clients.login(workerId, pswd, "jnode " + workerId);
+			robot = new SyncRobot(workerId, null, workerId)
+					.device("jnode " + workerId);
 			tempDir = String.format("io.oz.sync-%s.%s", mode, workerId); 
+			
+			new File(tempDir).mkdirs(); 
+
+			AnsonMsg<AnQueryReq> q = client.query("/jnode/worker", "a_users", "u", 0, -1);
+			q.body(0).j("a_orgs", "o", "o.orgId = u.orgId")
+					.whereEq("=", "u.userId", robot.userId);
+			AnsonResp resp = client.commit(q, errLog);
+			AnResultset rs = resp.rs(0).beforeFirst();
+			if (rs.next())
+				robot.orgId(rs.getString("orgId"))
+					.orgName(rs.getString("orgName"));
 		}
 		
 		return this;
@@ -143,18 +157,18 @@ public class SyncWorker implements Runnable {
 
 	/**
 	 * @param meta 
-	 * @param usr 
-	 * @param device 
+	 * @param family 
+	 * @param deviceId 
 	 * @return response
 	 * @throws IOException 
 	 * @throws AnsonException 
 	 * @throws SemanticException 
 	 */
-	DocsResp queryTasks(DocTableMeta meta, IUser usr, String device) throws SemanticException, AnsonException, IOException {
-		DocsyncReq req = new DocsyncReq(usr.orgId())
+	DocsResp queryTasks(DocTableMeta meta, String family, String deviceId) throws SemanticException, AnsonException, IOException {
+		DocsyncReq req = new DocsyncReq(family)
 							.query(meta);
 
-		String[] act = AnsonHeader.usrAct("sync", "list", meta.tbl, device);
+		String[] act = AnsonHeader.usrAct("sync", "list", meta.tbl, deviceId);
 		AnsonHeader header = client.header().act(act);
 
 		AnsonMsg<DocsyncReq> q = client
@@ -177,15 +191,15 @@ public class SyncWorker implements Runnable {
 			throws SQLException, AnsonException, IOException, TransException {
 		
 		ArrayList<String> res = new ArrayList<String>();
-		AnsonHeader header = null;
 		tasks.rs(0).beforeFirst();
 		while (tasks.rs(0).next()) {
 			try {
 				SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
 					
-				res.add(synClose(synPull(p, robot, header), robot, header));
+				res.add(synClose(synStreamPull(p, robot), robot, localMeta));
 			}
 			catch(Exception e) {
+				e.printStackTrace();
 				fail(e.getMessage());
 			}
 		}
@@ -197,17 +211,17 @@ public class SyncWorker implements Runnable {
 	 * Downward synchronizing.
 	 * @param p
 	 * @param worker
-	 * @param header
 	 * @return doc record (e.g. h_photos)
 	 * @throws AnsonException
 	 * @throws IOException
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	SyncDoc synPull(SyncDoc p, SyncRobot worker, AnsonHeader header)
+	SyncDoc synStreamPull(SyncDoc p, SyncRobot worker)
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, worker, localMeta.tbl)) {
-			DocsyncReq req = (DocsyncReq) new DocsyncReq(/* p */)
+			DocsyncReq req = (DocsyncReq) new DocsyncReq(worker.orgId)
+							.docTabl(localMeta.tbl)
 							.with(p.fullpath(), p.device())
 							.a(A.download);
 
@@ -215,21 +229,31 @@ public class SyncWorker implements Runnable {
 			
 			String path = client.download(uri, Port.docsync, req, tempath);
 			
-			p.uri(path);
-			insertLocalFile(localSt, connPriv, path, p, robot, localMeta);
+			// p.uri(path);
+			// suppress uri handling, but create a stub file
+			p.uri = "";
+
+			String pid = insertLocalFile(localSt, connPriv, path, p, robot, localMeta);
+			
+			// move
+			String targetPath = DocUtils.resolvExtroot(localSt, connPriv, pid, robot, localMeta);
+			if (verbose)
+				Utils.logi("   [SyncWorker.verbose: end stream download] %s\n-> %s", path, targetPath);
+			Files.move(Paths.get(path), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 		}
 		return p;
 	}
 
-	String synClose(SyncDoc p, SyncRobot worker, AnsonHeader header)
+	String synClose(SyncDoc p, SyncRobot worker, DocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 
-		DocsReq clsReq = (DocsReq) new DocsReq(null, uri, p)
+		DocsyncReq clsReq = (DocsyncReq) new DocsyncReq(worker.orgId)
+						.with(p.device(), p.fullpath())
+						.docTabl(meta.tbl)
 						.a(A.synclose);
 
 		AnsonMsg<DocsReq> q = client
-				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq)
-				.header(header);
+				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
 
 		client.commit(q, errLog);
 
@@ -242,23 +266,26 @@ public class SyncWorker implements Runnable {
 			throw new SemanticException("Client path can't be null/empty.");
 		
 		Insert ins = st.insert(meta.tbl, usr)
-				.nv("family", usr.orgId())
-				.nv("uri", doc.uri)
-				.nv("pname", doc.pname)
-				.nv("device", usr.deviceId())
-				.nv("clientpath", doc.clientpath)
-				.nv("shareflag", doc.shareflag)
+				.nv(meta.org, usr.orgId())
+				.nv(meta.uri, doc.uri)
+				.nv(meta.filename, doc.pname)
+				.nv(meta.device, usr.deviceId())
+				.nv(meta.fullpath, doc.clientpath)
+				.nv(meta.folder, doc.folder())
+				.nv(meta.shareby, doc.shareby)
+				.nv(meta.shareflag, doc.shareflag)
+				.nv(meta.shareDate, doc.sharedate)
 				;
 		
 		if (!LangExt.isblank(doc.mime))
-			ins.nv("mime", doc.mime);
+			ins.nv(meta.mime, doc.mime);
 		
-		Docsyncer.onDocreate(doc, meta, usr);
+		ins.post(Docsyncer.onDocreate(doc, meta, usr));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
-				.get("h_photos"))
-				.getString("pid");
+				.get(meta.tbl))
+				.getString(meta.pk);
 		
 		return pid;
 	}
@@ -327,7 +354,7 @@ public class SyncWorker implements Runnable {
 			AnResultset rs = ((AnResultset) localSt
 				.select(localMeta.tbl, "f")
 				.cols(SyncDoc.nvCols(localMeta))
-				.whereEq(localMeta.syncflag, SyncFlag.pushing)
+				.whereEq(localMeta.syncflag, SyncFlag.priv)
 				.rs(localSt.instancontxt(connPriv, robot))
 				.rs(0)).beforeFirst();
 
@@ -458,7 +485,7 @@ public class SyncWorker implements Runnable {
 	}
 
 	public ArrayList<String> pull() throws AnsonException, IOException, SQLException, TransException {
-		DocsResp rsp = queryTasks(localMeta, robot, connPriv);
+		DocsResp rsp = queryTasks(localMeta, robot.orgId, robot.deviceId);
 		return pullDocs(rsp);
 	}
 

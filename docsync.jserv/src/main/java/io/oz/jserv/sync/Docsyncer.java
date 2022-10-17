@@ -21,7 +21,7 @@ import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFile;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -263,14 +263,16 @@ public class Docsyncer extends ServPort<DocsReq> {
 			String a = jreq.a();
 			if (A.rec.equals(a))
 				rsp = selectDoc(jreq, usr);
-			else if (A.download.equals(a))
+			else if (A.download.equals(a)) {
 				// non-session access allowed?
 				download(resp, jreq, usr);
+				return;
+			}
 
 			// requires meta for operations
 			else {
 				if (LangExt.isblank(jreq.docTabl))
-					throw new SemanticException("To push a doc via Docsyncer, docTable name can not be null.");
+					throw new SemanticException("To push/update a doc via Docsyncer, docTable name can not be null.");
 
 				if (A.records.equals(a))
 					rsp = queryTasks(jreq, usr);
@@ -335,6 +337,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 			throws IOException, SemanticException, TransException, SQLException {
 		
 		DocTableMeta meta = metas.get(req.docTabl);
+		if (meta == null)
+			throw new SemanticException("Can't find table meta for %s", req.docTabl);
+		
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(meta.device).col(meta.fullpath)
@@ -358,7 +363,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 	
 	public static String resolveHubRoot(String tabl, String uri) {
-		String extroot = ((ShExtFile) DATranscxt
+		String extroot = ((ShExtFilev2) DATranscxt
 				.getHandler(synconn, tabl, smtype.extFilev2))
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, uri);
@@ -385,13 +390,24 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return (DocsResp) new DocsResp().data(r.props()); 
 	}
 
+	/**
+	 * Query tasks for synchronizing.
+	 * This method accept tasks querying for different family - request.org not null.  
+	 * Otherwise using session's org-id.
+	 * @param jreq
+	 * @param usr
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	protected DocsResp queryTasks(DocsReq jreq, IUser usr) throws TransException, SQLException {
 		DocTableMeta meta = metas.get(jreq.docTabl);
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
-				.cols(meta.org, meta.device, meta.fullpath, meta.shareflag, meta.syncflag)
+				// .cols(meta.org, meta.device, meta.fullpath, meta.shareflag, meta.syncflag)
+				.cols(SyncDoc.nvCols(meta))
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
-				.whereEq(meta.syncflag, SyncFlag.hub)
+				// .whereEq(meta.syncflag, SyncFlag.hub)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();

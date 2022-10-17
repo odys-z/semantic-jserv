@@ -18,11 +18,8 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFile;
-import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -36,7 +33,6 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -93,7 +89,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 	private HashMap<String, BlockChain> blockChains;
 
-	protected static DATranscxt st;
+	public static DATranscxt st;
 
 	static IUser robot;
 
@@ -312,13 +308,13 @@ public class Albums extends ServPort<AlbumReq> {
 		Exif.parseExif(photo, chain.outputPath);
 
 		photo.clientpath = chain.clientpath;
-		photo.device = ((PhotoRobot) usr).deviceId();
+		// photo.device = ((PhotoRobot) usr).deviceId();
 		photo.pname = chain.clientname;
 		photo.uri = null;
 		String pid = createFile(conn, photo, usr);
 
 		// move file
-		String targetPath = resolvExtroot(conn, pid, usr, meta);
+		String targetPath = DocUtils.resolvExtroot(st, conn, pid, usr, meta);
 		if (AlbumFlags.album)
 			Utils.logi("   [AlbumFlags.album: end block] %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
@@ -416,23 +412,8 @@ public class Albums extends ServPort<AlbumReq> {
 		else {
 			String mime = rs.getString("mime");
 			resp.setContentType(mime);
-			FileStream.sendFile(resp.getOutputStream(), resolvExtroot(conn, req.docId, usr, meta));
+			FileStream.sendFile(resp.getOutputStream(), DocUtils.resolvExtroot(st, conn, req.docId, usr, meta));
 		}
-	}
-	
-	static String resolvExtroot(String conn, String docId, IUser usr, PhotoMeta meta) throws TransException, SQLException {
-		ISemantext stx = st.instancontxt(conn, usr);
-		AnResultset rs = (AnResultset) st
-				.select(meta.tbl)
-				.col("uri").col("folder")
-				.whereEq("pid", docId).rs(stx)
-				.rs(0);
-
-		if (!rs.next())
-			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
-
-		String extroot = ((ShExtFile) DATranscxt.getHandler(conn, meta.tbl, smtype.extFile)).getFileRoot();
-		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
 	
 	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
@@ -477,7 +458,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
 
-		String pid = DocUtils.createFile(conn, photo, usr, meta, st, post);
+		String pid = DocUtils.createFileB64(conn, photo, usr, meta, st, post);
 
 		return pid;
 		/*

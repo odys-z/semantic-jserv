@@ -39,6 +39,10 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	protected String orgId;
 	public String orgId() { return orgId; }
+	public SyncRobot orgId(String org) {
+		orgId = org;
+		return this;
+	}
 
 	protected String deviceId;
 	public String deviceId() { return deviceId; }
@@ -46,6 +50,11 @@ public class SyncRobot extends SemanticObject implements IUser {
 	protected String ssid;
 
 	protected Set<String> tempDirs;
+	public String orgName;
+	public SyncRobot orgName (String org) {
+		orgName = org;
+		return this;
+	}
 
 	public SyncRobot(String userid, String orgId) {
 		this.userId = userid;

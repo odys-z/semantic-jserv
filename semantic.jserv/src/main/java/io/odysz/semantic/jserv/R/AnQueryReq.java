@@ -60,8 +60,8 @@ public class AnQueryReq extends AnsonBody {
 		a = CRUD.R;
 	}
 
-	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String conn, String fromTbl, String... alias) {
-		super(parent, conn);
+	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String uri, String fromTbl, String... alias) {
+		super(parent, uri);
 		a = CRUD.R;
 
 		mtabl = fromTbl;
@@ -138,6 +138,10 @@ public class AnQueryReq extends AnsonBody {
 
 		where.add(predicate);
 		return this;
+	}
+
+	public AnQueryReq whereEq(String oper, String lop, String constv) {
+		return where(oper, lop, "'" + constv + "'");
 	}
 
 	public AnQueryReq orderby(String col, boolean... asc) {

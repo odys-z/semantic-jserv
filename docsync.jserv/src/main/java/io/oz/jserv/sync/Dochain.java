@@ -145,7 +145,7 @@ public class Dochain {
 		photo.createDate = chain.cdate;
 
 		photo.clientpath = chain.clientpath;
-		photo.device = usr.deviceId();
+		// photo.device = usr.deviceId();
 		photo.pname = chain.clientname;
 		photo.folder(chain.saveFolder);
 		photo.shareby = chain.shareby;
@@ -155,7 +155,7 @@ public class Dochain {
 		photo.uri = null;
 		String pid = createFile(st, conn, photo, meta, usr, 
 				(Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
-					return null;
+					return post;
 				});
 
 		// move file
@@ -200,7 +200,7 @@ public class Dochain {
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);
 
-		return DocUtils.createFile(conn, photo, usr, meta, st, post);
+		return DocUtils.createFileB64(conn, photo, usr, meta, st, post);
 	}
 
 

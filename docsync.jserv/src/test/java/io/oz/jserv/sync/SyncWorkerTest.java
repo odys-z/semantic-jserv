@@ -128,7 +128,7 @@ class SyncWorkerTest {
 		ifs.close();
 
 		photo.clientpath = clientpath;
-		photo.device = "test device";
+		// photo.device = "test device";
 		photo.exif = new ArrayList<String>() {
 			{add("location:вулиця Лаврська' 27' Київ");};
 			{add("camera:Bayraktar TB2");}};
@@ -136,19 +136,19 @@ class SyncWorkerTest {
 			.shareby("ody")
 			.sharedate(new Date());
 
-		SyncRobot rob = new SyncRobot("odys-z.github.io", "f/zsu");
-
-		String pid = createPhoto(conn, photo, rob, new PhotoMeta(defltSt.getSysConnId()));
-
-		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.fullpath(), photo.pname, pid);
+		// SyncRobot rob = new SyncRobot("odys-z.github.io", "f/zsu");
 
 		// synchronize to cloud hub
 		SyncWorker.blocksize = 32 * 3;
 		SyncWorker worker = new SyncWorker(SyncMode.main, conn, "kyiv.jnode", meta)
-				.login("odys-z.github.io", "слава україні") // jserv node
-				.push();
+				.login("odys-z.github.io", "слава україні"); // jserv node
+
+		String pid = createPhoto(conn, photo, worker.robot, new PhotoMeta(defltSt.getSysConnId()));
+		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.fullpath(), photo.pname, pid);
+
+		worker.push();
 	
-		DocsResp resp = worker.queryTasks(meta, rob, photo.device);
+		DocsResp resp = worker.queryTasks(meta, worker.robot.orgId, worker.robot.deviceId);
 		
 		AnResultset tasks = resp.rs(0);
 		if (tasks == null || tasks.total() == 0)
@@ -163,7 +163,7 @@ class SyncWorkerTest {
 	}
 
 	/**
-	 * Simulates the processing of Albums.createFile(), creating a stub photo and querying it (have syncflag updated).
+	 * Simulates the processing of Albums.createFile(), creating a stub photo and querying it (having syncflag updated).
 	 * 
 	 * @param conn
 	 * @param photo
@@ -181,7 +181,7 @@ class SyncWorkerTest {
 			throw new SemanticException("Semantics of ext-file for h_photos.uri can't been found");
 		
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
-		return DocUtils.createFile(conn, photo, usr, meta, defltSt, post);
+		return DocUtils.createFileB64(conn, photo, usr, meta, defltSt, post);
 	}
 
 	/**
