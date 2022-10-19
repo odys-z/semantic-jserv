@@ -103,9 +103,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(req.uri());
 		DocTableMeta meta = metas.get(req.docTabl); 
 
+		String device = req.device();
+		if (!LangExt.isblank(device) && device.equals(usr.deviceId()))
+			throw new SemanticException("User (id %s, device %s) is trying to delete a file from another device? (req.device = %s)",
+					usr.uid(), usr.deviceId(), req.device());
+		
 		SemanticObject res = (SemanticObject) st
 				.delete(meta.tbl, usr)
-				.whereEq("device", req.device())
+				// .whereEq("device", req.device())
+				.whereEq("device", device)
 				.whereEq("clientpath", req.clientpath)
 				.post(Docsyncer.onDel(req.clientpath, req.device()))
 				.d(st.instancontxt(conn, usr));
