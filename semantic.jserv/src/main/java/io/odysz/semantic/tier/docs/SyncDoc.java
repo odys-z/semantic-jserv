@@ -1,20 +1,15 @@
 package io.odysz.semantic.tier.docs;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Date;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
-import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.ISemantext;
-import io.odysz.semantics.IUser;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
@@ -92,6 +87,20 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc sharedate(Date date) {
 		return sharedate(DateFormat.format(date));
 	}
+	
+	public SyncDoc share(String shareby, String s, String sharedate) {
+		this.shareflag = s;
+		this.shareby = shareby;
+		sharedate(sharedate);
+		return this;
+	}
+
+	public SyncDoc share(String shareby, String s, Date sharedate) {
+		this.shareflag = s;
+		this.shareby = shareby;
+		sharedate(sharedate);
+		return this;
+	}
 
 	@AnsonField(ignoreTo=true)
 	DocTableMeta docMeta;
@@ -151,7 +160,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	 * @param shareflag
 	 * @return this
 	 * @throws IOException
-	 */
 	public SyncDoc loadFile(String fullpath, IUser owner, String shareflag) throws IOException {
 		Path p = Paths.get(fullpath);
 		byte[] f = Files.readAllBytes(p);
@@ -167,18 +175,19 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 
 		return this;
 	}
+	 */
 
 	/**
 	 * Set client path and syncFlag according to rs, where rs columns should have been specified with {@link #nvCols(DocTableMeta)}.
 	 * @param rs
 	 * @return this
 	 * @throws SQLException
-	 */
 	public SyncDoc asSyncRec(AnResultset rs) throws SQLException {
 		this.clientpath = rs.getString(docMeta.fullpath); 
 		this.syncFlag = rs.getInt(docMeta.syncflag); 
 		return this;
 	}
+	 */
 
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {

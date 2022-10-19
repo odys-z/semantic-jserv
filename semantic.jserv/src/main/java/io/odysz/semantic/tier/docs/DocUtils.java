@@ -21,7 +21,7 @@ import io.odysz.transact.x.TransException;
 
 public class DocUtils {
 	/**
-	 * <p>Create a doc record with a file, e.g. h_photos - call this after duplication is checked.</p>
+	 * <p>Create a doc record with a local file, e.g. h_photos - call this after duplication is checked.</p>
 	 * <p>This method will insert record, and can trigger ExtFilev2 handling.</p>
 	 * <p>Photo is created as in the folder of user/[photo.folder]/;<br>
 	 * Photo's device and family are replaced with session information.</p>
@@ -32,7 +32,7 @@ public class DocUtils {
 	 * @param meta 
 	 * @param st 
 	 * @param onFileCreateSql 
-	 * @return pid
+	 * @return doc id, e.g. pid
 	 * @throws TransException
 	 * @throws SQLException
 	 * @throws IOException
