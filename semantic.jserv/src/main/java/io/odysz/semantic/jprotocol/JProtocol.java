@@ -6,8 +6,10 @@ import java.sql.SQLException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 
 public class JProtocol {
 	/** Typical operation's common names */
@@ -35,6 +37,11 @@ public class JProtocol {
 			throws IOException, AnsonException, SemanticException;
 	}
 
+	@FunctionalInterface
+	public interface OnDocOk {
+		void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException, SQLException;
+	}
+	
 	@FunctionalInterface
 	public interface OnError { void err(MsgCode ok, String msg, String ... args ); }
 

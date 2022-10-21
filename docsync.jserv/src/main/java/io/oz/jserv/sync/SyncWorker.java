@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -68,7 +67,6 @@ public class SyncWorker implements Runnable {
 		uri = "sync.jserv";
 		connPriv = connId;
 		workerId = worker;
-		// targetablPriv = tablMeta.tbl;
 
 		localMeta = tablMeta;
 		
@@ -82,7 +80,7 @@ public class SyncWorker implements Runnable {
 		};
 	}
 
-	public SyncWorker login(String workerId, String pswd) throws SemanticException, AnsonException, SsException, IOException, GeneralSecurityException, SQLException, SAXException {
+	public SyncWorker login(String pswd) throws SemanticException, AnsonException, SsException, IOException, SQLException, SAXException {
 		synctier = new Synclientier(uri, connPriv, errLog)
 				.login(workerId, pswd);
 		return this;
@@ -152,13 +150,15 @@ public class SyncWorker implements Runnable {
 	 * @return
 	 * @throws TransException
 	 * @throws SQLException
+	 * @throws IOException 
+	 * @throws AnsonException 
 	 */
-	public SyncWorker push() throws TransException, SQLException {
+	public SyncWorker push() throws TransException, SQLException, AnsonException, IOException {
 		if (mode == SyncMode.main || mode == SyncMode.priv) {
 			// find local records with shareflag = pub
 			AnResultset rs = ((AnResultset) localSt
 				.select(localMeta.tbl, "f")
-				.cols(SyncDoc.nvCols(localMeta))
+				.cols(SyncDoc.nvCols(localMeta)).col(localMeta.syncflag)
 				.whereEq(localMeta.syncflag, SyncFlag.priv)
 				.limit(30)
 				.rs(localSt.instancontxt(connPriv, synctier.robot))
@@ -167,8 +167,8 @@ public class SyncWorker implements Runnable {
 			rs.next();
 
 			// upload
-			synctier.syncUp(rs, workerId, localMeta, new OnProcess() {
-
+			synctier.syncUp(rs, workerId, localMeta,
+			  new OnProcess() {
 				@Override
 				public void proc(int listIndx, int rows, int seq, int totalBlocks, AnsonResp blockResp)
 						throws IOException, AnsonException, SemanticException {
@@ -180,9 +180,8 @@ public class SyncWorker implements Runnable {
 						e.printStackTrace();
 					}
 				}
-			});
+			  });
 			
-			// set shareflag = hub
 		}
 		return this;
 	}
@@ -190,10 +189,6 @@ public class SyncWorker implements Runnable {
 	public ArrayList<String> pull() throws AnsonException, IOException, SQLException, TransException {
 		DocsResp rsp = synctier.queryTasks(localMeta, synctier.robot.orgId, synctier.robot.deviceId);
 		return pullDocs(rsp);
-	}
-
-	public Synclientier client() {
-		return synctier;
 	}
 
 	/**
@@ -224,6 +219,19 @@ public class SyncWorker implements Runnable {
 					rs.getString(localMeta.pk), uri, p);
 		}
 		return this;
+	}
+
+	public String org() {
+		return synctier.robot.orgId;
+	}
+	
+	public SyncRobot robot() {
+		return synctier.robot;
+	}
+
+	public DocsResp queryTasks()
+			throws SemanticException, AnsonException, IOException {
+		return synctier.queryTasks(localMeta, synctier.robot.orgId, workerId);
 	}
 
 	/*

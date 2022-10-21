@@ -39,9 +39,6 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	String roleId;
 	String roleName;
 	String orgName;
-	
-//	String deviceId;
-//	public String deviceId() { return deviceId; }
 
 	RobotMeta userMeta;
 
@@ -58,14 +55,13 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	 */
 	public PhotoRobot(String userid, String pswd, String userName) {
 		super(userid, null);
-		// this.userId = userid;
 		userMeta = (RobotMeta) meta();
 	}
 	
 	public static class RobotMeta extends JUserMeta {
 		String device;
-		public RobotMeta(String tbl, String... conn) {
-			super(tbl, conn);
+		public RobotMeta(String... conn) {
+			super(conn);
 
 			iv = "iv";
 			device = "device";
@@ -150,7 +146,7 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	public String touchTempDir(String conn) throws SemanticException {
 
 		String extroot = ((ShExtFile) DATranscxt
-						.getHandler(conn, new PhotoMeta(conn).tbl, smtype.extFile))
+						.getHandler(conn, new PhotoMeta(conn).tbl, smtype.extFilev2))
 						.getFileRoot();
 
 		String tempDir = IUser.tempDir(extroot, userId, "uploading-temp", ssid);

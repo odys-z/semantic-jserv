@@ -69,7 +69,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 	public static class RobotMeta extends JUserMeta {
 		String device;
 		public RobotMeta(String tbl, String... conn) {
-			super(tbl, conn);
+			super(conn);
 
 			iv = "iv";
 			device = "device";

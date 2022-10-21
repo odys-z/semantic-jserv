@@ -39,7 +39,7 @@ public class JUser extends SemanticObject implements IUser {
 	 */
 	public static class JUserMeta extends TableMeta {
 
-		public JUserMeta(String tbl, String... conn) {
+		public JUserMeta(String... conn) {
 			super("a_users", conn);
 			this.tbl = "a_users";
 			this.pk = "userId";
