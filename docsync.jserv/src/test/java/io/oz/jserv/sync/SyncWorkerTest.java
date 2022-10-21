@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import static io.oz.jserv.sync.ZSUNodes.*;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -36,6 +38,8 @@ import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.SessionInf;
@@ -48,14 +52,12 @@ import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.Photo;
 import io.oz.album.tier.PhotoMeta;
+import io.oz.jserv.sync.SyncFlag.SyncEvent;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
-
-import static io.oz.jserv.sync.ZSUNodes.*;
 
 class SyncWorkerTest {
 
 	static String conn;
-	// static String testDevice;
 
 	static ErrorCtx errLog;
 	static DATranscxt defltSt;
@@ -64,24 +66,22 @@ class SyncWorkerTest {
 	static {
 		try {
 			conn = "main-sqlite";
-			// testDevice = "device-test";
 
 			Path currentRelativePath = Paths.get("");
 			String p = currentRelativePath.toAbsolutePath().toString();
-			System.setProperty("VOLUME_HOME", p + "/src/test/res/volume");
+			System.setProperty("VOLUME_HOME", FilenameUtils.concat(p, volumeDir));
 
-			Configs.init(p + "/src/test/res/WEB-INF");
-			Connects.init(p + "/src/test/res/WEB-INF");
+			String wwwinf = FilenameUtils.concat(p, webRoot);
+			Configs.init(wwwinf);
+			Connects.init(wwwinf);
 			defltSt = new DATranscxt(Connects.defltConn());
 			AnsonMsg.understandPorts(Port.docsync);
 			AnSession.init(defltSt);
 
-			Connects.init("src/test/res/WEB-INF");
-			Clients.init(ZSUNodes.jservUrl, false);
+			// Connects.init(webRoot);
+			Clients.init(jservUrl, false);
 			
-			meta = new DocTableMeta("h_photos", "pid", conn);
-
-			Docsyncer.init("Sync Test");
+			meta = new PhotoMeta(conn);
 
 			errLog = new ErrorCtx() {
 				@Override
@@ -95,6 +95,8 @@ class SyncWorkerTest {
 	}
 
 	/**
+	 * <p>Kyiv -&gt; hub -&gt; Kharkiv</p>
+	 * 
 	 * Test {@link SyncWorker}' pushing (synchronizing 'pub') with album-jserv as sync hub (8081).
 	 * @throws TransException 
 	 * @throws IOException 
@@ -107,14 +109,14 @@ class SyncWorkerTest {
 	 */
 	@SuppressWarnings("serial")
 	@Test
-	void testShareByPriv() throws
+	void testShareByKyiv() throws
 		AnsonException, SQLException, IOException, TransException,
 		SsException, GeneralSecurityException, SAXException {
 		
 		// 1. create a public file at this private node
 		Photo photo = new Photo();
 
-		String clientpath = "src/test/res/182x121.png";
+		String clientpath = Kyiv.png;
 		File png = new File(clientpath);
 		FileInputStream ifs = new FileInputStream(png);
 		photo.pname = png.getName();
@@ -136,20 +138,21 @@ class SyncWorkerTest {
 			.shareby("ody")
 			.sharedate(new Date());
 
-		// 2. synchronize to cloud hub
+		// 2. synchronize to cloud hub ( hub <- kyiv )
+		Docsyncer.init(Kyiv.JNode.nodeId);
 		SyncWorker.blocksize = 32 * 3;
-		SyncWorker worker = new SyncWorker(SyncMode.priv, conn, "kyiv.jnode", meta)
-				.login("odys-z.github.io", "слава україні");
+		SyncWorker worker = new SyncWorker(Kyiv.JNode.mode, conn, Kyiv.JNode.worker, meta)
+				.login(Kyiv.JNode.passwd);
 
-		String pid = createPhoto(conn, photo, worker.client().robot, new PhotoMeta(defltSt.getSysConnId()));
+		String pid = createPhoto(conn, photo, worker.robot(), new PhotoMeta(defltSt.getSysConnId()));
 		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.fullpath(), photo.pname, pid);
 
 		worker.push();
 	
-		// 3. query my tasks as another jnode
-		worker = new SyncWorker(SyncMode.main, conn, "kharkiv.jnode", meta)
-				.login("ody", "123456");
-		DocsResp resp = worker.client().queryTasks(meta, worker.client().robot.orgId, worker.client().robot.deviceId);
+		// 3. query my tasks as another jnode (kharkiv)
+		worker = new SyncWorker(Kharkiv.JNode.mode, conn, Kharkiv.JNode.worker, meta)
+				.login(Kharkiv.JNode.passwd);
+		DocsResp resp = worker.queryTasks();
 		
 		AnResultset tasks = resp.rs(0);
 		if (tasks == null || tasks.total() == 0)
@@ -165,9 +168,10 @@ class SyncWorkerTest {
 	}
 
 	/**
-	 * Simulates the processing of Albums.createFile(), creating a stub photo and querying it (having syncflag updated).
+	 * Simulates the processing of Albums.createFile(), creating a stub photo and having syncflag updated.
 	 * 
 	 * @see DocUtils#createFileB64(String, SyncDoc, IUser, DocTableMeta, DATranscxt, Update)
+	 * @see Docsyncer#onDocreate(SyncDoc, DocTableMeta, IUser)
 	 * @param conn
 	 * @param photo
 	 * @param usr
@@ -188,6 +192,8 @@ class SyncWorkerTest {
 	}
 
 	/**
+	 * <p> device -&t; hub -&t; Kharkiv</p>
+	 * 
 	 * <h5>A word about sharer and path at jserv:</h5>
 	 * <p>
 	 * - video is uploaded as owned by "odys-z.github.io"<br>
@@ -198,18 +204,15 @@ class SyncWorkerTest {
 	 * @throws Exception
 	 */
 	@Test
-	void testPrivPull() throws Exception {
-		String owner = "odys-z.github.io";
-		SyncRobot robot = new SyncRobot(owner, "f/zsu");
-		Synclientier kharkiv = new Synclientier("sync.jser", conn, errLog).login("syrskyi", "123456");
-		videoUpTest(meta);
+	void testKharivPull() throws Exception {
+		videoUpByApp(meta);
 
-		// downward synchronize the file
+		// downward synchronize the file, hub -> Kyiv
 		SyncWorker.blocksize = 32 * 3;
-		DocTableMeta meta = new DocTableMeta("h_photos", "pid", conn);
-		SyncWorker worker = new SyncWorker(SyncMode.main, conn, "kyiv.jnode", meta);
+		DocTableMeta meta = new PhotoMeta(conn);
+		SyncWorker worker = new SyncWorker(SyncMode.main, conn, Kyiv.JNode.worker, meta);
 		ArrayList<String> ids = worker
-				.login(owner, "слава україні") // jserv node
+				.login(Kyiv.JNode.passwd)
 				.pull();
 		
 		if (ids == null || ids.size() != 1)
@@ -218,25 +221,38 @@ class SyncWorkerTest {
 		worker.verifyDocs(ids);
 	}
 
-	static String videoUpTest(DocTableMeta photoMeta)
-			throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException, SQLException, SAXException {
-		String localFolder = "src/test/res/anclient.java";
+	/**
+	 * Upload video from a device to a private node, Kharkiv.
+	 * 
+	 * @param photoMeta
+	 * @return
+	 * @throws SsException
+	 * @throws IOException
+	 * @throws GeneralSecurityException
+	 * @throws AnsonException
+	 * @throws SQLException
+	 * @throws SAXException
+	 * @throws TransException 
+	 */
+	static String videoUpByApp(DocTableMeta photoMeta)
+			throws SsException, IOException, GeneralSecurityException, AnsonException, SQLException, SAXException, TransException {
+		// String localFolder = "src/test/res/anclient.java";
+		// String filename = "Amelia Anisovych.mp4";
+		// String path = FilenameUtils.concat(localFolder, filename);
 		int bsize = 72 * 1024;
-		String filename = "Amelia Anisovych.mp4";
 
-		Synclientier tier = new Synclientier("sync.jserv", conn, errLog)
-				.login(Kharkiv.Anclient.userId, Kharkiv.Anclient.pswd)
+		Synclientier tier = new Synclientier(clientUri, conn, errLog)
+				.login(AnDevice.userId, AnDevice.passwd)
 				.blockSize(bsize);
 
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
-		String path = FilenameUtils.concat(localFolder, filename);
 		videos.add((SyncDoc) new SyncDoc()
 					.share(tier .robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
-					.fullpath(path));
+					.fullpath(AnDevice.localFile));
 
 		SessionInf photoUser = tier.client.ssInfo();
-		photoUser.device = Kharkiv.Anclient.device;// "kharkiv.jnode";
+		photoUser.device = AnDevice.device;
 
 		tier.pushBlocks( meta, videos, photoUser,
 			(rows, rx, bx, blks, resp) -> {
@@ -253,15 +269,29 @@ class SyncWorkerTest {
 				fail(String.format(
 					"Duplicate checking failed: %s\n%s",
 					resp.msg(), resp.toString()));
-			},
+			}, null,
 			new ErrorCtx() {
 				@Override
 				public void onError(MsgCode c, String msg) {
-					if (!MsgCode.exGeneral.equals(c))
+					if (MsgCode.exGeneral != c)
 						fail("Not expected code");
 
-					tier.del(meta, Kharkiv.Anclient.device, videos.get(0).fullpath());
-					List<DocsResp> resps = tier.pushBlocks(meta, videos, photoUser, null);
+					tier.del(meta, AnDevice.device, videos.get(0).fullpath());
+					List<DocsResp> resps = null;
+					try {
+						resps = tier.pushBlocks(meta, videos, photoUser, null, new OnDocOk() {
+							@Override
+							public void ok(SyncDoc doc, AnsonResp resp)
+									throws IOException, AnsonException, TransException, SQLException {
+								String f = SyncFlag.to(Share.pub, SyncEvent.pushEnd, doc.shareflag());
+								Synclientier.setLocalSync(tier.localSt, tier.connPriv, meta, doc, f, tier.robot);
+							}
+						});
+					} catch (TransException | IOException | SQLException e) {
+						e.printStackTrace();
+						fail(e.getMessage());
+					}
+					
 					assertNotNull(resps);
 					assertEquals(1, resps.size());
 
@@ -272,11 +302,11 @@ class SyncWorkerTest {
 						DocsResp rp = tier.selectDoc(meta, docId);
 
 						assertTrue(LangExt.isblank(rp.msg()));
-						assertEquals(Kharkiv.Anclient.device, rp.doc.device());
-						assertEquals(path, rp.doc.fullpath());
+						assertEquals(AnDevice.device, rp.doc.device());
+						assertEquals(AnDevice.localFile, rp.doc.fullpath());
 					}
 				}
 			});
-		return path;
+		return AnDevice.localFile;
 	}
 }
