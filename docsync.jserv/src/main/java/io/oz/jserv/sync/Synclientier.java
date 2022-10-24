@@ -94,6 +94,7 @@ public class Synclientier extends Semantier {
 		tempDir = "";
 		
 		localSt = new DATranscxt(connId);
+		connPriv = connId;
 	}
 	
 	public Synclientier(String clientUri, String connId, ErrorCtx errCtx)
@@ -176,8 +177,8 @@ public class Synclientier extends Semantier {
 		OnDocOk onDocOk = new OnDocOk() {
 			@Override
 			public void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException, SQLException {
-				String sync0 = rs.getString(meta.syncflag);
-				String share = rs.getString(meta.shareflag);
+				String sync0 = doc.syncFlag; // rs.getString(meta.syncflag);
+				String share = doc.shareflag; // rs.getString(meta.shareflag);
 				String f = SyncFlag.to(sync0, SyncEvent.pushEnd, share);
 				setLocalSync(localSt, connPriv, meta, doc, f, robot);
 			}
@@ -242,90 +243,100 @@ public class Synclientier extends Semantier {
 	 * @param proc
 	 * @param docOk
 	 * @param onErr
-	 * @return
+	 * @return result list (AnsonResp)
 	 */
 	public List<DocsResp> pushBlocks(DocTableMeta meta, List<? extends SyncDoc> videos,
 				SessionInf user, OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr) throws TransException, IOException, SQLException {
 
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 
-        DocsResp resp = null;
-		try {
-			String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
-			AnsonHeader header = client.header().act(act);
+        DocsResp resp0 = null;
+        DocsResp respi = null;
 
-			List<DocsResp> reslts = new ArrayList<DocsResp>(videos.size());
+		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
+		AnsonHeader header = client.header().act(act);
 
-			for ( int px = 0; px < videos.size(); px++ ) {
+		List<DocsResp> reslts = new ArrayList<DocsResp>(videos.size());
 
-				SyncDoc p = videos.get(px);
-				DocsReq req = new DocsReq(meta.tbl)
-						.folder("synctest")
-						.share(p)
-						.device(user.device)
-						.resetChain(true)
-						.blockStart(p, user);
+		for ( int px = 0; px < videos.size(); px++ ) {
 
-				AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
-										.header(header);
+			FileInputStream ifs = null;
+			int seq = 0;
+			int totalBlocks = 0;
 
-				resp = client.commit(q, errHandler);
+			SyncDoc p = videos.get(px);
+			DocsReq req = new DocsReq(meta.tbl)
+					.folder("synctest")
+					.share(p)
+					.device(user.device)
+					.resetChain(true)
+					.blockStart(p, user);
 
-				String pth = p.fullpath();
-				if (!pth.equals(resp.doc.fullpath()))
-					Utils.warn("Resp is not replied with exactly the same path: %s", resp.doc.fullpath());
-
-				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
-				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp);
-
-				int seq = 0;
-				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
-				try {
-					String b64 = AESHelper.encode64(ifs, blocksize);
-					while (b64 != null) {
-						req = new DocsReq(meta.tbl).blockUp(seq, resp, b64, user);
-						seq++;
-
-						q = client.<DocsReq>userReq(uri, Port.docsync, req)
+			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
 									.header(header);
 
-						resp = client.commit(q, errHandler);
-						if (proc != null) proc.proc(px, videos.size(), seq, totalBlocks, resp);
+			try {
+				resp0 = client.commit(q, errHandler);
 
-						b64 = AESHelper.encode64(ifs, blocksize);
-					}
-					req = new DocsReq(meta.tbl).blockEnd(resp, user);
+				String pth = p.fullpath();
+				if (!pth.equals(resp0.doc.fullpath()))
+					Utils.warn("Resp is not replied with exactly the same path: %s", resp0.doc.fullpath());
+
+				totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
+				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp0);
+
+				ifs = new FileInputStream(new File(p.fullpath()));
+
+				String b64 = AESHelper.encode64(ifs, blocksize);
+				while (b64 != null) {
+					req = new DocsReq(meta.tbl).blockUp(seq, respi == null ? resp0 : respi, b64, user);
+					seq++;
 
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
-					resp = client.commit(q, errHandler);
-					if (proc != null) proc.proc(px, videos.size(), seq, totalBlocks, resp);
 
-					if (docOk != null) docOk.ok(p, resp);
-					reslts.add(resp);
+					respi = client.commit(q, errHandler);
+					if (proc != null) proc.proc(px, videos.size(), seq, totalBlocks, respi);
+
+					b64 = AESHelper.encode64(ifs, blocksize);
 				}
-				catch (IOException | TransException | SQLException ex) {
-					Utils.warn(ex.getMessage());
+				req = new DocsReq(meta.tbl).blockEnd(respi, user);
 
-					req = new DocsReq(meta.tbl).blockAbort(resp, user);
+				q = client.<DocsReq>userReq(uri, Port.docsync, req)
+							.header(header);
+				respi = client.commit(q, errHandler);
+				if (proc != null) proc.proc(px, videos.size(), seq, totalBlocks, respi);
+
+				if (docOk != null) docOk.ok(p, respi);
+				reslts.add(respi);
+			}
+			catch (IOException | TransException | SQLException | AnsonException ex) { 
+				Utils.warn(ex.getMessage());
+
+				if (resp0 != null) {
+					req = new DocsReq(meta.tbl).blockAbort(resp0, user);
 					req.a(DocsReq.A.blockAbort);
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
-					resp = client.commit(q, errHandler);
-					if (proc != null) proc.proc(videos.size(), px, seq, totalBlocks, resp);
-
-					throw ex;
+					respi = client.commit(q, errHandler);
+					if (proc != null)
+						proc.proc(videos.size(), px, seq, totalBlocks, respi);
 				}
-				finally { ifs.close(); }
-			}
+				else
+					if (proc != null)
+						proc.proc(px, videos.size(), seq, totalBlocks, new AnsonResp().msg(ex.getMessage()));
 
-			return reslts;
-		} catch (IOException e) {
-			errHandler.onError(MsgCode.exIo, e.getClass().getName() + " " + e.getMessage());
-		} catch (AnsonException | SemanticException e) { 
-			errHandler.onError(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
+				if (ex instanceof IOException)
+					continue;
+				else throw ex;
+			}
+			finally {
+				if (ifs != null)
+					ifs.close();
+			}
 		}
-		return null;
+
+		return reslts;
 	}
 
 //	public String download(Photo photo, String localpath)
