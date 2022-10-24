@@ -99,22 +99,27 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return null;
 	}
 
-	public static DocsResp delDocRec(DocsReq req, IUser usr) throws TransException, SQLException {
+	public static DocsResp delDocRec(DocsReq req, IUser usr, boolean ...isAdmin)
+			throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 		DocTableMeta meta = metas.get(req.docTabl); 
 
 		String device = req.device();
-		if (!LangExt.isblank(device) && device.equals(usr.deviceId()))
+
+		if (!LangExt.is(isAdmin)
+				&& !LangExt.isblank(device) && !device.equals(usr.deviceId()))
 			throw new SemanticException("User (id %s, device %s) is trying to delete a file from another device? (req.device = %s)",
 					usr.uid(), usr.deviceId(), req.device());
 		
-		SemanticObject res = (SemanticObject) st
+		Delete d = st
 				.delete(meta.tbl, usr)
-				// .whereEq("device", req.device())
-				.whereEq("device", device)
-				.whereEq("clientpath", req.clientpath)
+				.whereEq(meta.org, usr.orgId())
+				.whereEq(meta.device, device)
+				.whereEq(meta.fullpath, req.clientpath)
 				.post(Docsyncer.onDel(req.clientpath, req.device()))
-				.d(st.instancontxt(conn, usr));
+				;
+
+		SemanticObject res = (SemanticObject) d.d(st.instancontxt(conn, usr));
 		
 		return (DocsResp) new DocsResp().data(res.props()); 
 	}
@@ -132,35 +137,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static Update onDocreate(SyncDoc doc, DocTableMeta meta, IUser usr)
 			throws TransException {
 
-		/*
-		if (SyncMode.hub == mode)
-			// 1.1 hub <- pub: syncflag = hubInit
-			if (DocTableMeta.Share.pub.equals(doc.shareflag()))
-				return st.update(meta.tbl, usr)
-					.nv(meta.syncflag, SyncFlag.hubInit)
-					.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
-					.whereEq(meta.shareflag, DocTableMeta.Share.pub)
-					;
-			// 1.2 hub <- prv: syncflag = publish 
-			else
-				return st.update(meta.tbl, usr)
-					.nv(meta.syncflag, SyncFlag.priv)
-					.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
-					.whereEq(meta.shareflag, DocTableMeta.Share.pub)
-					;
-		
-		// private doc
-		else if (SyncMode.main == mode || SyncMode.priv == mode)
-			return st.update(meta.tbl, usr)
-				.nv(meta.syncflag, DocTableMeta.Share.pub.equals(doc.shareflag()) ? SyncFlag.pushing : SyncFlag.priv)
-				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
-				.whereEq(meta.shareflag, doc.shareflag())
-				;
-		else {
-			Utils.warn("Unknown album serv mode: %s", mode);
-			return null;
-		}
-		*/
 		String syn = SyncFlag.start(mode, doc.shareflag());
 		return st.update(meta.tbl, usr)
 				.nv(meta.syncflag, syn)
@@ -185,11 +161,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		Utils.logi("Starting file synchronizer ...");
 
-//		ServletContext ctx = evt.getServletContext();
-//		String webINF = ctx.getRealPath("/WEB-INF");
-//		String root = ctx.getRealPath(".");
-		// initJserv(root, webINF, ctx.getInitParameter("io.oz.root-key"));
-		
 		lock = new ReentrantLock();
 
 		scheduler = Executors.newScheduledThreadPool(1);

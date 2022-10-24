@@ -25,7 +25,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 public class SyncWorker implements Runnable {
-	static int blocksize = 12 * 1024 * 1024;
+	static int blocksize = 3 * 1024 * 1024;
 
 	/**
 	 * jserv-node states
@@ -64,7 +64,7 @@ public class SyncWorker implements Runnable {
 	public SyncWorker(SyncMode mode, String connId, String worker, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
 		this.mode = mode;
-		uri = "sync.jserv";
+		uri = "/sync/worker";
 		connPriv = connId;
 		workerId = worker;
 
@@ -174,14 +174,14 @@ public class SyncWorker implements Runnable {
 						throws IOException, AnsonException, SemanticException {
 					String clientpath;
 					try {
-						clientpath = rs.getString(localMeta.fullpath);
-						Utils.logi("[%s/%s] %s: %s / %s, reply: %s", listIndx, rows, clientpath, seq, totalBlocks, blockResp.msg());
+						clientpath = rs.getString(listIndx, localMeta.fullpath);
+						Utils.logi("[%s/%s] %s: %s / %s, reply: %s",
+								listIndx, rows, clientpath, seq, totalBlocks, blockResp.msg());
 					} catch (SQLException e) {
 						e.printStackTrace();
 					}
 				}
 			  });
-			
 		}
 		return this;
 	}
@@ -232,6 +232,10 @@ public class SyncWorker implements Runnable {
 	public DocsResp queryTasks()
 			throws SemanticException, AnsonException, IOException {
 		return synctier.queryTasks(localMeta, synctier.robot.orgId, workerId);
+	}
+
+	public String nodeId() {
+		return synctier.robot.deviceId();
 	}
 
 	/*

@@ -109,14 +109,21 @@ class SyncWorkerTest {
 	 */
 	@SuppressWarnings("serial")
 	@Test
-	void testShareByKyiv() throws
+	void testShareByKyiv() throws 
 		AnsonException, SQLException, IOException, TransException,
 		SsException, GeneralSecurityException, SAXException {
 		
+		String clientpath = Kyiv.png;
+		SyncWorker worker = new SyncWorker(Kyiv.JNode.mode, conn, Kyiv.JNode.worker, meta)
+				.login(Kyiv.JNode.passwd);
+
+		// 0. clean failed tests
+		cleanKyiv(worker, clientpath);
+		worker.synctier.del(meta, worker.nodeId(), clientpath);
+
 		// 1. create a public file at this private node
 		Photo photo = new Photo();
 
-		String clientpath = Kyiv.png;
 		File png = new File(clientpath);
 		FileInputStream ifs = new FileInputStream(png);
 		photo.pname = png.getName();
@@ -135,14 +142,12 @@ class SyncWorkerTest {
 			{add("location:вулиця Лаврська' 27' Київ");};
 			{add("camera:Bayraktar TB2");}};
 		photo.shareflag(DocTableMeta.Share.pub)
-			.shareby("ody")
+			.shareby("ody@kyiv")
 			.sharedate(new Date());
 
 		// 2. synchronize to cloud hub ( hub <- kyiv )
 		Docsyncer.init(Kyiv.JNode.nodeId);
 		SyncWorker.blocksize = 32 * 3;
-		SyncWorker worker = new SyncWorker(Kyiv.JNode.mode, conn, Kyiv.JNode.worker, meta)
-				.login(Kyiv.JNode.passwd);
 
 		String pid = createPhoto(conn, photo, worker.robot(), new PhotoMeta(defltSt.getSysConnId()));
 		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.fullpath(), photo.pname, pid);
@@ -166,6 +171,20 @@ class SyncWorkerTest {
 		// 4. synchronize downwardly 
 		// worker.pullDocs(resp);
 	}
+
+	private void cleanKyiv(SyncWorker worker, String clientpath) throws TransException, SQLException {
+
+		String device = worker.synctier.robot.deviceId;
+
+		defltSt
+			.delete(meta.tbl, worker.robot())
+			.whereEq(meta.org, worker.org())
+			.whereEq(meta.device, device)
+			.whereEq(meta.fullpath, clientpath)
+			.post(Docsyncer.onDel(clientpath, device))
+			.d(defltSt.instancontxt(conn, worker.robot()));
+	}
+
 
 	/**
 	 * Simulates the processing of Albums.createFile(), creating a stub photo and having syncflag updated.

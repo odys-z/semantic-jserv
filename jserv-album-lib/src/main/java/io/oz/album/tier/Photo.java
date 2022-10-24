@@ -168,7 +168,7 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 	 */
 	public Photo asSyncRec(AnResultset rs) throws SQLException {
 		this.clientpath = rs.getString("clientpath"); 
-		this.syncFlag = rs.getInt("syncFlag"); 
+		this.syncFlag = rs.getString("syncFlag"); 
 		return this;
 	}
 

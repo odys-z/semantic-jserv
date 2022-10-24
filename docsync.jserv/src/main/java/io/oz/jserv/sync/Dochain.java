@@ -30,6 +30,8 @@ import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 
+import static io.odysz.common.LangExt.*;
+
 public class Dochain {
 
 	public interface OnChainOk {
@@ -97,10 +99,14 @@ public class Dochain {
 
 	void checkDuplicate(String conn, String device, String clientpath, IUser usr)
 			throws SemanticException, TransException, SQLException {
+		if (isblank(usr.orgId()))
+			throw new SemanticException("Can't delete doc without user's org id. device %s, client path: %s",
+					device, clientpath);
 
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
+				.whereEq(meta.org, usr.orgId())
 				.whereEq(meta.device, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))

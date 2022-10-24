@@ -65,7 +65,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public String shareby;
 	public String sharedate;
 	
-	public int syncFlag;
+	public String syncFlag;
 
 	/** usually ignored when sending request */
 	public long size;
