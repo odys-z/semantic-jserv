@@ -9,15 +9,27 @@ import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.sync.SyncFlag.SyncEvent;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
 
+/**
+ * <img src='../../../../../../main/java/io/oz/jserv/sync/sync-states.jpg'/>
+ * @author odys-z@github.com
+ *
+ */
 class SyncFlagTest {
 
 	@Test
 	void testTo() {
-		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushEnd, Share.priv));
-		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushEnd, Share.pub));
-		assertEquals(SyncFlag.pushing, SyncFlag.to(SyncFlag.pushing, null, Share.pub));
+		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.priv, SyncEvent.pushEnd, Share.priv));
+		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.priv, SyncEvent.pushEnd, Share.pub));
 		assertEquals(null, SyncFlag.to(null, SyncEvent.pushEnd, Share.pub));
-		assertEquals(SyncFlag.pushing, SyncFlag.to(SyncFlag.pushing, SyncEvent.pull, Share.pub));
+		
+		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.publish, SyncEvent.pull, Share.pub));
+		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.publish, SyncEvent.pull, Share.priv)); // won't happen
+
+		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.hub, SyncEvent.pull, Share.pub)); // won't happen
+		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.hub, SyncEvent.pull, Share.priv));
+
+		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.hub, SyncEvent.publish, null));
+		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.publish, SyncEvent.hide, null));
 	}
 
 	@Test

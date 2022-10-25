@@ -41,6 +41,7 @@ public class SyncWorker implements Runnable {
 	
 	SyncMode mode;
 	
+	String mac;
 	Synclientier synctier;
 	
 	public final String uri;
@@ -61,12 +62,13 @@ public class SyncWorker implements Runnable {
 	public boolean verbose = true;
 
 
-	public SyncWorker(SyncMode mode, String connId, String worker, DocTableMeta tablMeta)
+	public SyncWorker(SyncMode mode, String device, String connId, String worker, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
 		this.mode = mode;
 		uri = "/sync/worker";
 		connPriv = connId;
 		workerId = worker;
+		mac = device;
 
 		localMeta = tablMeta;
 		
@@ -82,7 +84,7 @@ public class SyncWorker implements Runnable {
 
 	public SyncWorker login(String pswd) throws SemanticException, AnsonException, SsException, IOException, SQLException, SAXException {
 		synctier = new Synclientier(uri, connPriv, errLog)
-				.login(workerId, pswd);
+				.login(workerId, mac, pswd);
 		return this;
 	}
 

@@ -12,8 +12,10 @@ import io.oz.jserv.sync.SyncWorker.SyncMode;
 public final class SyncFlag {
 	/** kept as private file ('🔒') at private node. */
 	public static final String priv = "🔒";
-	/** to be pushed (shared) to hub ('⇈') */
-	public static final String pushing = "⇈";
+
+	//** to be pushed (shared) to hub ('⇈') */
+	// public static final String pushing = "⇈";
+
 	/** synchronized (shared) with hub ('🌎') */
 	public static final String publish = "🌎";
 	/**created at cloud hub ('✩') by both client and jnode pushing, */
@@ -31,10 +33,10 @@ public final class SyncFlag {
 	 */
 	public static String to(String now, SyncEvent e, String share) {
 		if (priv.equals(now)) {
-			if (e == SyncEvent.push)
-				return pushing;
-		}
-		else if (pushing.equals(now)) {
+//			if (e == SyncEvent.push)
+//				return pushing;
+//		}
+//		else if (pushing.equals(now)) {
 			if (e == SyncEvent.pushEnd && Share.isPub(share))
 				return publish;
 			else if (e == SyncEvent.pushEnd && Share.isPriv(share))
