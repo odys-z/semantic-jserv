@@ -86,12 +86,18 @@ class SyncWorkerTest {
 			errLog = new ErrorCtx() {
 				@Override
 				public void onError(MsgCode code, String msg) {
-					Utils.warn(msg);
+					// Utils.warn(msg);
+					fail(msg);
 				}
 			};
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Test
+	void testIds() {
+		
 	}
 
 	/**
@@ -114,7 +120,7 @@ class SyncWorkerTest {
 		SsException, GeneralSecurityException, SAXException {
 		
 		String clientpath = Kyiv.png;
-		SyncWorker worker = new SyncWorker(Kyiv.JNode.mode, conn, Kyiv.JNode.worker, meta)
+		SyncWorker worker = new SyncWorker(Kyiv.JNode.mode, Kyiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta)
 				.login(Kyiv.JNode.passwd);
 
 		// 0. clean failed tests
@@ -155,7 +161,7 @@ class SyncWorkerTest {
 		worker.push();
 	
 		// 3. query my tasks as another jnode (kharkiv)
-		worker = new SyncWorker(Kharkiv.JNode.mode, conn, Kharkiv.JNode.worker, meta)
+		worker = new SyncWorker(Kharkiv.JNode.mode, Kharkiv.JNode.nodeId, conn, Kharkiv.JNode.worker, meta)
 				.login(Kharkiv.JNode.passwd);
 		DocsResp resp = worker.queryTasks();
 		
@@ -211,7 +217,7 @@ class SyncWorkerTest {
 	}
 
 	/**
-	 * <p> device -&t; hub -&t; Kharkiv</p>
+	 * <p> device -&gt; hub -&gt; Kharkiv</p>
 	 * 
 	 * <h5>A word about sharer and path at jserv:</h5>
 	 * <p>
@@ -229,7 +235,7 @@ class SyncWorkerTest {
 		// downward synchronize the file, hub -> Kyiv
 		SyncWorker.blocksize = 32 * 3;
 		DocTableMeta meta = new PhotoMeta(conn);
-		SyncWorker worker = new SyncWorker(SyncMode.main, conn, Kyiv.JNode.worker, meta);
+		SyncWorker worker = new SyncWorker(SyncMode.main, Kharkiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta);
 		ArrayList<String> ids = worker
 				.login(Kyiv.JNode.passwd)
 				.pull();
@@ -255,13 +261,10 @@ class SyncWorkerTest {
 	 */
 	static String videoUpByApp(DocTableMeta photoMeta)
 			throws SsException, IOException, GeneralSecurityException, AnsonException, SQLException, SAXException, TransException {
-		// String localFolder = "src/test/res/anclient.java";
-		// String filename = "Amelia Anisovych.mp4";
-		// String path = FilenameUtils.concat(localFolder, filename);
 		int bsize = 72 * 1024;
 
 		Synclientier tier = new Synclientier(clientUri, conn, errLog)
-				.login(AnDevice.userId, AnDevice.passwd)
+				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
@@ -270,10 +273,11 @@ class SyncWorkerTest {
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile));
 
-		SessionInf photoUser = tier.client.ssInfo();
-		photoUser.device = AnDevice.device;
+		SessionInf ssInf = tier.client.ssInfo();
+		// ssInf.device = AnDevice.device;  
 
-		tier.pushBlocks( meta, videos, photoUser,
+		tier.pushBlocks( meta, videos,
+			ssInf, // simulating pushing from app
 			(rows, rx, bx, blks, resp) -> {
 				/* First time sql for data manipulation:
 					INSERT INTO h_photos
@@ -281,7 +285,7 @@ class SyncWorkerTest {
 					device, shareby, sharedate, tags, geox, geoy, exif, oper, opertime, 
 					clientpath, mime, filesize, css, shareflag, sync)
 					VALUES
-					('Test ЗСУ00001', 'omni', '2022_03', 'Amelia Anisovych.mp4', '$VOLUME_HOME/ody//2022_03/no such file.mp4', 1994,
+					('Test ЗСУ00001', 'omni', '2022_03', 'Amelia Anisovych.mp4', '$VOLUME_HOME/ody/2022_03/no such file.mp4', 1994,
 					'jnode syrskyi', 'ody', 1997, NULL, 0.0, 0.0, 'exif', 'ody', 1997,
 					'src/test/res/anclient.java/Amelia Anisovych.mp4', 'video/mp4', NULL, NULL, 'pub', NULL);
 				 */
@@ -295,10 +299,15 @@ class SyncWorkerTest {
 					if (MsgCode.exGeneral != c)
 						fail("Not expected code");
 
-					tier.del(meta, AnDevice.device, videos.get(0).fullpath());
+					try { tier.del(meta, AnDevice.device, videos.get(0).fullpath()); }
+					catch (Exception e) {
+						e.printStackTrace();
+						fail(e.getMessage());
+					}
+					
 					List<DocsResp> resps = null;
 					try {
-						resps = tier.pushBlocks(meta, videos, photoUser, null, new OnDocOk() {
+						resps = tier.pushBlocks(meta, videos, ssInf, null, new OnDocOk() {
 							@Override
 							public void ok(SyncDoc doc, AnsonResp resp)
 									throws IOException, AnsonException, TransException, SQLException {

@@ -49,6 +49,12 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.sync.SyncFlag.SyncEvent;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
 
+/**
+ * Doc synchronizing API for both jserv node and java client.
+ * 
+ * @author odys-z@github.com
+ *
+ */
 public class Synclientier extends Semantier {
 	public boolean verbose = false;
 
@@ -102,13 +108,13 @@ public class Synclientier extends Semantier {
 		this(clientUri, null, connId, errCtx);
 	}
 	
-	public Synclientier login(String workerId, String pswd)
+	public Synclientier login(String workerId, String device, String pswd)
 			throws SQLException, SemanticException, AnsonException, SsException, IOException {
 
-		client = Clients.login(workerId, pswd, "jnode " + workerId);
+		client = Clients.login(workerId, pswd, device);
 
 		robot = new SyncRobot(workerId, null, workerId)
-				.device("jnode " + workerId);
+				.device(device);
 		tempDir = String.format("io.oz.sync.%s.%s", SyncMode.priv, workerId); 
 		
 		new File(tempDir).mkdirs(); 
@@ -237,8 +243,9 @@ public class Synclientier extends Semantier {
 	 * Upward pushing with BlockChain
 	 * 
 	 * @param meta
-	 * @param videos any doc-table managed record, of which uri shouldn't be loaded
-	 * - working in stream mode
+	 * @param videos any doc-table managed records, of which uri shouldn't be loaded,
+	 * e.g. use {@link io.odysz.transact.sql.parts.condition.Funcall#extFile(String) extFile()} as sql select expression.
+	 * - the method is working in stream mode
 	 * @param user
 	 * @param proc
 	 * @param docOk
@@ -319,16 +326,18 @@ public class Synclientier extends Semantier {
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
 					respi = client.commit(q, errHandler);
-					if (proc != null)
-						proc.proc(videos.size(), px, seq, totalBlocks, respi);
+//					if (proc != null)
+//						proc.proc(videos.size(), px, seq, totalBlocks, respi);
 				}
-				else
-					if (proc != null)
-						proc.proc(px, videos.size(), seq, totalBlocks, new AnsonResp().msg(ex.getMessage()));
+//				else
+//					if (proc != null)
+//						proc.proc(px, videos.size(), seq, totalBlocks, new AnsonResp().msg(ex.getMessage()));
 
 				if (ex instanceof IOException)
 					continue;
-				else throw ex;
+				else if (onErr == null || onErr.length < 1 || onErr[0] == null)
+					throw ex;
+				else onErr[0].onError(MsgCode.exGeneral, connPriv);
 			}
 			finally {
 				if (ifs != null)
