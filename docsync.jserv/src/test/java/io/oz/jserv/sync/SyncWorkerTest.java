@@ -96,8 +96,15 @@ class SyncWorkerTest {
 	}
 
 	@Test
-	void testIds() {
-		
+	void testIds() throws SemanticException, SQLException, SAXException, IOException, AnsonException, SsException {
+		SyncWorker worker = new SyncWorker(Kyiv.JNode.mode, Kyiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta)
+				.login(Kyiv.JNode.passwd);
+		assertEquals("/sync/worker", worker.uri);
+		assertEquals(family, worker.org());
+		assertEquals(Kyiv.JNode.worker, worker.workerId);
+		assertEquals(Kyiv.JNode.worker, worker.robot().userId);
+		assertEquals(Kyiv.JNode.nodeId, worker.mac);
+		assertEquals(Kyiv.JNode.nodeId, worker.robot().deviceId);
 	}
 
 	/**
@@ -171,7 +178,9 @@ class SyncWorkerTest {
 
 		tasks.beforeFirst();
 		while (tasks.next()) {
-			assertEquals(clientpath, tasks.getString(meta.fullpath));
+			assertTrue( AnDevice.device.equals(tasks.getString(meta.device))
+					|| Kharkiv.JNode.nodeId.equals(tasks.getString(meta.device))
+					|| clientpath.equals(tasks.getString(meta.fullpath)));
 		}
 
 		// 4. synchronize downwardly 
@@ -190,7 +199,6 @@ class SyncWorkerTest {
 			.post(Docsyncer.onDel(clientpath, device))
 			.d(defltSt.instancontxt(conn, worker.robot()));
 	}
-
 
 	/**
 	 * Simulates the processing of Albums.createFile(), creating a stub photo and having syncflag updated.
@@ -263,6 +271,7 @@ class SyncWorkerTest {
 			throws SsException, IOException, GeneralSecurityException, AnsonException, SQLException, SAXException, TransException {
 		int bsize = 72 * 1024;
 
+		// app is using Synclientier for synchronizing 
 		Synclientier tier = new Synclientier(clientUri, conn, errLog)
 				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);

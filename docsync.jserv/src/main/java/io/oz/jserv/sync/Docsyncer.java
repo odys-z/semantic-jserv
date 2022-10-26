@@ -182,7 +182,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			else mode = SyncMode.priv;
 		
 			schedualed = scheduler.scheduleAtFixedRate(
-					new SyncWorker(mode, synconn, nodeId, nodeId, new DocTableMeta("h_photos", "pid", synconn)),
+					new SyncWorker(mode, nodeId, synconn, nodeId, new DocTableMeta("h_photos", "pid", synconn)),
 					0, m, TimeUnit.MINUTES);
 
 			if (ServFlags.file)
