@@ -19,6 +19,7 @@ public class ZSUNodes {
 	public static final String volumeDir = "./src/test/res/volume";
 
 	public static final String jservUrl = "http://localhost:8081/jserv-album";
+	/** shouldn't be used directly - configured at album-jserv */
 	public static final String family = "f/zsu";
 
 	public static class Kyiv {
@@ -49,7 +50,7 @@ public class ZSUNodes {
 	public static class AnDevice {
 		public static final String userId = "syrskyi";
 		public static final String passwd = "слава україні";
-		public static final String device = "app.kharkiv";
+		public static final String device = "app.syrskyi";
 		public static final String localFile = "src/test/res/anclient.java/Amelia Anisovych.mp4";
 	}
 }
