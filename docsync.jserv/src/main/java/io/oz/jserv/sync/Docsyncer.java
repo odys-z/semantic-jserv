@@ -41,6 +41,7 @@ import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Update;
@@ -54,7 +55,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 	public static boolean debug = true;
 
-	static HashMap<String, DocTableMeta> metas;
+	static HashMap<String, TableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
 
 	OnChainOk onCreateHandler;
@@ -83,7 +84,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	static {
 		try {
 			st = new DATranscxt(null);
-			metas = new HashMap<String, DocTableMeta>();
+			metas = new HashMap<String, TableMeta>();
 
 			robot = new SyncRobot("Robot Syncer", "");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
@@ -91,7 +92,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		}
 	}
 	
-	public static void addSyncTable(DocTableMeta m) {
+	public static void addSyncTable(TableMeta m) {
 		metas.put(m.tbl, m);
 	}
 
@@ -102,7 +103,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static DocsResp delDocRec(DocsReq req, IUser usr, boolean ...isAdmin)
 			throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
-		DocTableMeta meta = metas.get(req.docTabl); 
+		DocTableMeta meta = (DocTableMeta) metas.get(req.docTabl); 
 
 		String device = req.device();
 
@@ -258,7 +259,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				else if (A.synclose.equals(a))
 					rsp = synclose(jreq, usr);
 				else {
-					Dochain chain = new Dochain(metas.get(jreq.docTabl), st);
+					Dochain chain = new Dochain((DocTableMeta) metas.get(jreq.docTabl), st);
 					if (DocsReq.A.blockStart.equals(a)) {
 						if (LangExt.isblank(jreq.subFolder, " - - "))
 							throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
@@ -313,7 +314,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 		
-		DocTableMeta meta = metas.get(req.docTabl);
+		DocTableMeta meta = (DocTableMeta) metas.get(req.docTabl);
 		if (meta == null)
 			throw new SemanticException("Can't find table meta for %s", req.docTabl);
 		
@@ -354,17 +355,22 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @return response
 	 * @throws SQLException 
 	 * @throws TransException 
+	 * @throws IOException 
 	 */
-	protected DocsResp synclose(DocsReq jreq, IUser usr) throws TransException, SQLException {
-		DocTableMeta meta = metas.get(jreq.docTabl);
-		SemanticObject r = (SemanticObject) st
-				.update(meta.tbl, usr)
-				.nv(meta.shareflag, SyncFlag.publish)
-				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
-				.whereEq(meta.device, usr.deviceId())
-				.whereEq(meta.fullpath, jreq.clientpath)
-				.u(st.instancontxt(synconn, usr));
-		return (DocsResp) new DocsResp().data(r.props()); 
+	protected DocsResp synclose(DocsReq jreq, IUser usr) throws TransException, SQLException, IOException {
+		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
+		st.update(meta.tbl, usr)
+			.nv(meta.shareflag, SyncFlag.publish)
+			.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+			.whereEq(meta.device, usr.deviceId())
+			.whereEq(meta.fullpath, jreq.clientpath)
+			.u(st.instancontxt(synconn, usr));
+		
+		return (DocsResp) new DocsResp()
+				.org(usr.orgId())
+				.doc((SyncDoc) new SyncDoc()
+						.device(usr.deviceId())
+						.fullpath(jreq.clientpath)); 
 	}
 
 	/**
@@ -378,7 +384,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws SQLException
 	 */
 	protected DocsResp queryTasks(DocsReq jreq, IUser usr) throws TransException, SQLException {
-		DocTableMeta meta = metas.get(jreq.docTabl);
+		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
 				// .cols(meta.org, meta.device, meta.fullpath, meta.shareflag, meta.syncflag)
@@ -393,7 +399,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	protected DocsResp selectDoc(DocsReq jreq, IUser usr) throws TransException, SQLException {
-		DocTableMeta meta = metas.get(jreq.docTabl);
+		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 		AnResultset rs = (AnResultset) st
 				.select(jreq.docTabl, "t")
 				.cols(SyncDoc.nvCols(meta))

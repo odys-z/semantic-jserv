@@ -18,6 +18,7 @@ public class DocsResp extends AnsonResp {
 	public SyncDoc doc;
 
 	SyncingPage syncing;
+
 	public SyncingPage syncing() { return syncing; }
 	public DocsResp syncing(SyncingPage page) {
 		syncing = page;
@@ -25,6 +26,7 @@ public class DocsResp extends AnsonResp {
 	}
 
 	public long blockSeqReply;
+
 	public long blockSeq() { return blockSeqReply; }
 	public DocsResp blockSeq(long seq) {
 		blockSeqReply = seq;
@@ -41,6 +43,13 @@ public class DocsResp extends AnsonResp {
 			throw new SemanticException("This method can only handling 1 record.");
 		rs.beforeFirst().next();
 		this.doc = new SyncDoc(rs, meta);
+		return this;
+	}
+
+	String org;
+	public String org() { return org; }
+	public DocsResp org(String orgId) {
+		this.org = orgId;
 		return this;
 	}
 

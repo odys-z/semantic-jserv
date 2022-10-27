@@ -41,7 +41,11 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	protected String device;
 	@Override
 	public String device() { return device; }
-	
+	public SyncDoc device(String device) {
+		this.device = device;
+		return this;
+	}
+
 	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
 	public String shareflag;
 	@Override

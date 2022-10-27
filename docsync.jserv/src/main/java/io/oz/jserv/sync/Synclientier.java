@@ -218,8 +218,8 @@ public class Synclientier extends Semantier {
 
 		if (!verifyDel(p, robot, meta)) {
 			DocsyncReq req = (DocsyncReq) new DocsyncReq(robot.orgId)
-							.docTabl(robot.meta().tbl)
-							.with(p.fullpath(), p.device())
+							.docTabl(meta.tbl)
+							.with(p.device(), p.fullpath())
 							.a(A.download);
 
 			String tempath = tempath(p);
@@ -296,7 +296,7 @@ public class Synclientier extends Semantier {
 
 				String b64 = AESHelper.encode64(ifs, blocksize);
 				while (b64 != null) {
-					req = new DocsReq(meta.tbl).blockUp(seq, respi == null ? resp0 : respi, b64, user);
+					req = new DocsReq(meta.tbl).blockUp(seq, p, b64, user);
 					seq++;
 
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
@@ -409,7 +409,7 @@ public class Synclientier extends Semantier {
 		return resp;
 	}
 	
-	String synClose(SyncDoc p, DocTableMeta meta)
+	DocsResp synClose(SyncDoc p, DocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 
 		DocsyncReq clsReq = (DocsyncReq) new DocsyncReq(robot.orgId)
@@ -420,9 +420,9 @@ public class Synclientier extends Semantier {
 		AnsonMsg<DocsReq> q = client
 				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
 
-		client.commit(q, errCtx);
-
-		return p.recId();
+		DocsResp r = client.commit(q, errCtx);
+		return r;
+		// return p.recId();
 	}
 	
 	static String insertLocalFile(DATranscxt st, String conn, String path, SyncDoc doc, SyncRobot usr, DocTableMeta meta)
@@ -430,6 +430,8 @@ public class Synclientier extends Semantier {
 		if (LangExt.isblank(path))
 			throw new SemanticException("Client path can't be null/empty.");
 		
+		long size = new File(path).length();
+
 		Insert ins = st.insert(meta.tbl, usr)
 				.nv(meta.org, usr.orgId())
 				.nv(meta.uri, doc.uri)
@@ -437,6 +439,7 @@ public class Synclientier extends Semantier {
 				.nv(meta.device, usr.deviceId())
 				.nv(meta.fullpath, doc.clientpath)
 				.nv(meta.folder, doc.folder())
+				.nv(meta.size, size)
 				.nv(meta.shareby, doc.shareby)
 				.nv(meta.shareflag, doc.shareflag)
 				.nv(meta.shareDate, doc.sharedate)

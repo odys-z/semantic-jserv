@@ -12,6 +12,7 @@ import org.xml.sax.SAXException;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
+import io.odysz.semantic.jsession.JUser;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.sync.Docsyncer;
@@ -31,7 +32,13 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			// Anson.verbose = true;
 			
 			Docsyncer.init(System.getProperty("JSERV_NODE"));
+			
+			// FIXME
+			// This is a repeated and error-prone task.
+			// Only system configure tool can resolve this issue?
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
+			Docsyncer.addSyncTable(new JUser.JUserMeta(Connects.defltConn()));
+
 		} catch (SemanticException | SAXException | IOException | SQLException e) {
 			e.printStackTrace();
 		}
