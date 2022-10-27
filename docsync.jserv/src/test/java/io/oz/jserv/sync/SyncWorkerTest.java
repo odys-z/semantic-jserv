@@ -180,7 +180,8 @@ class SyncWorkerTest {
 		while (tasks.next()) {
 			assertTrue( AnDevice.device.equals(tasks.getString(meta.device))
 					|| Kharkiv.JNode.nodeId.equals(tasks.getString(meta.device))
-					|| clientpath.equals(tasks.getString(meta.fullpath)));
+					|| Kyiv.JNode.nodeId.equals(tasks.getString(meta.device))
+					&& clientpath.equals(tasks.getString(meta.fullpath)));
 		}
 
 		// 4. synchronize downwardly 
@@ -218,7 +219,7 @@ class SyncWorkerTest {
 			throws TransException, SQLException, IOException {
 
 		if (!DATranscxt.hasSemantics(conn, meta.tbl, smtype.extFilev2))
-			throw new SemanticException("Semantics of ext-file for h_photos.uri can't been found");
+			throw new SemanticException("Semantics of ext-file2.0 for h_photos.uri can't been found");
 		
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
 		return DocUtils.createFileB64(conn, photo, usr, meta, defltSt, post);
@@ -240,15 +241,17 @@ class SyncWorkerTest {
 	void testKharivPull() throws Exception {
 		videoUpByApp(meta);
 
+		Docsyncer.init(Kharkiv.JNode.nodeId);
+
 		// downward synchronize the file, hub -> Kyiv
 		SyncWorker.blocksize = 32 * 3;
 		DocTableMeta meta = new PhotoMeta(conn);
 		SyncWorker worker = new SyncWorker(SyncMode.main, Kharkiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta);
-		ArrayList<String> ids = worker
+		ArrayList<DocsResp> ids = worker
 				.login(Kyiv.JNode.passwd)
 				.pull();
 		
-		if (ids == null || ids.size() != 1)
+		if (ids == null || ids.size() == 0)
 			fail("No pull tasks are completed.");
 
 		worker.verifyDocs(ids);

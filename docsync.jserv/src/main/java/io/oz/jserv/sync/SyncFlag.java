@@ -66,6 +66,6 @@ public final class SyncFlag {
 				return Share.isPub(share) ? publish : hub;
 			else if (SyncMode.priv == mode || SyncMode.main == mode)
 				return priv;
-			throw new SemanticException("Unhandled state transition.");
+			throw new SemanticException("Unhandled state starting: mode %s : share %s.", mode, share);
 	}
 }

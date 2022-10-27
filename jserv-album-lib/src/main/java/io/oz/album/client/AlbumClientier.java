@@ -148,7 +148,7 @@ public class AlbumClientier extends Semantier {
 				try {
 					String b64 = AESHelper.encode64(ifs, blocksize);
 					while (b64 != null) {
-						req = new DocsReq().blockUp(seq, resp, b64, user);
+						req = new DocsReq().blockUp(seq, p, b64, user);
 						seq++;
 
 						q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)

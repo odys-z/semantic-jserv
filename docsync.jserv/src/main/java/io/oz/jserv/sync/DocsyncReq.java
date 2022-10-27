@@ -29,7 +29,7 @@ public class DocsyncReq extends DocsReq {
 		this.org = family;
 	}
 
-	public DocsyncReq with(String fullpath, String device) {
+	public DocsyncReq with(String device, String fullpath) {
 		this.clientpath = fullpath;
 		this.device = device;
 		return this;

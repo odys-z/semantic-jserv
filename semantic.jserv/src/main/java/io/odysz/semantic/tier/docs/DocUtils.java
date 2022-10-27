@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFile;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
@@ -84,7 +83,7 @@ public class DocUtils {
 	 * @see EnvPath#decodeUri(String, String)
 	 */
 	public static String resolvePrivRoot(String uri, DocTableMeta meta, String conn) {
-		String extroot = ((ShExtFile) DATranscxt
+		String extroot = ((ShExtFilev2) DATranscxt
 				.getHandler(conn, meta.tbl, smtype.extFilev2))
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, uri);

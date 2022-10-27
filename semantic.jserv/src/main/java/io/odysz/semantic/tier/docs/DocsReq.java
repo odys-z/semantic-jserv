@@ -198,20 +198,24 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public DocsReq blockUp(long sequence, DocsResp resp, StringBuilder b64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(int seq, DocsResp resp, String b64, SessionInf ssinf) throws SemanticException {
+		return blockUp(seq, resp.doc, b64, ssinf);
+	}
+
+	public DocsReq blockUp(long sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
 		String uri64 = b64.toString();
-		return blockUp(sequence, resp, uri64, usr);
+		return blockUp(sequence, doc, uri64, usr);
 	}
 	
-	public DocsReq blockUp(long sequence, DocsResp resp, String s64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(long sequence, IFileDescriptor doc, String s64, SessionInf usr) throws SemanticException {
 		this.device = usr.device;
 		if (LangExt.isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
 
 		this.blockSeq = sequence;
 
-		this.docId = resp.doc.recId();
-		this.clientpath = resp.doc.fullpath();
+		this.docId = doc.recId();
+		this.clientpath = doc.fullpath();
 		this.uri64 = s64;
 
 		this.a = A.blockUp;

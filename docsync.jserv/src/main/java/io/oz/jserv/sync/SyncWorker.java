@@ -125,10 +125,10 @@ public class SyncWorker implements Runnable {
 	 * @throws IOException
 	 * @throws TransException
 	 */
-	ArrayList<String> pullDocs(DocsResp tasks)
+	ArrayList<DocsResp> pullDocs(DocsResp tasks)
 			throws SQLException, AnsonException, IOException, TransException {
 		
-		ArrayList<String> res = new ArrayList<String>();
+		ArrayList<DocsResp> res = new ArrayList<DocsResp>(tasks.rs(0).total());
 		tasks.rs(0).beforeFirst();
 		while (tasks.rs(0).next()) {
 			try {
@@ -188,7 +188,7 @@ public class SyncWorker implements Runnable {
 		return this;
 	}
 
-	public ArrayList<String> pull() throws AnsonException, IOException, SQLException, TransException {
+	public ArrayList<DocsResp> pull() throws AnsonException, IOException, SQLException, TransException {
 		DocsResp rsp = synctier.queryTasks(localMeta, synctier.robot.orgId, synctier.robot.deviceId);
 		return pullDocs(rsp);
 	}
@@ -196,12 +196,14 @@ public class SyncWorker implements Runnable {
 	/**
 	 * Verifying each rec-id has a corresponding local file.
 	 * 
-	 * @param ids
+	 * @param list length should limited. 
 	 * @return this
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	public SyncWorker verifyDocs(ArrayList<String> ids) throws TransException, SQLException {
+	public SyncWorker verifyDocs(ArrayList<DocsResp> list) throws TransException, SQLException {
+
+		/*
 		AnResultset rs = (AnResultset) localSt
 				.select(localMeta.tbl, "t")
 				.cols(localMeta.pk, localMeta.fullpath, localMeta.uri, localMeta.mime, localMeta.size)
@@ -220,6 +222,34 @@ public class SyncWorker implements Runnable {
 			throw new SemanticException("Doc doesn't exists. id: %s, uri: %s, expecting path: %s",
 					rs.getString(localMeta.pk), uri, p);
 		}
+		*/
+		for (DocsResp r : list) {
+			AnResultset rs = (AnResultset) localSt
+				.select(localMeta.tbl, "t")
+				.cols(localMeta.pk, localMeta.fullpath, localMeta.uri, localMeta.mime, localMeta.size)
+				.whereEq(localMeta.org, r.org())
+				.whereEq(localMeta.device, mac)
+				.whereEq(localMeta.fullpath, r.doc.fullpath())
+				.rs(localSt.instancontxt(connPriv, synctier.robot))
+				.rs(0);
+
+			rs.beforeFirst().next();
+			String p = synctier.resolvePrivRoot(rs.getString(localMeta.uri), localMeta);
+			File f = new File(p);
+
+			if (!f.exists())
+				throw new SemanticException("Doc doesn't exists.\nid: %s, uri: %s,\nexpecting path: %s",
+					rs.getString(localMeta.pk), rs.getString(localMeta.uri), p);
+			else if (f.length() != rs.getLong(localMeta.size))
+				throw new SemanticException("Saved length (%s) doesn't equal file length (%s).\nid: %s, uri: %s,\nexpecting path: %s",
+					rs.getLong(localMeta.size), f.length(), rs.getString(localMeta.pk), rs.getString(localMeta.uri), p);
+			else if (!mime(f).equals(rs.getLong(localMeta.mime)))
+				throw new SemanticException("Saved mime (%s) doesn't match with file's (%s).\nid: %s, uri: %s,\nexpecting path: %s",
+					rs.getLong(localMeta.mime), mime(f), rs.getString(localMeta.pk), rs.getString(localMeta.uri), p);
+			else
+				continue;
+		}
+
 		return this;
 	}
 
