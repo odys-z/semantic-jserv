@@ -78,8 +78,8 @@ class SyncWorkerTest {
 			AnsonMsg.understandPorts(Port.docsync);
 			AnSession.init(defltSt);
 
-			// Connects.init(webRoot);
-			Clients.init(jservUrl, false);
+			// This worker for test is a client of Album hub.
+			Clients.init(jservHub, false);
 			
 			meta = new PhotoMeta(conn);
 
@@ -99,7 +99,7 @@ class SyncWorkerTest {
 	void testIds() throws SemanticException, SQLException, SAXException, IOException, AnsonException, SsException {
 		SyncWorker worker = new SyncWorker(Kyiv.JNode.mode, Kyiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta)
 				.login(Kyiv.JNode.passwd);
-		assertEquals("/sync/worker", worker.uri);
+		assertEquals("/sync/worker", worker.funcUri);
 		assertEquals(family, worker.org());
 		assertEquals(Kyiv.JNode.worker, worker.workerId);
 		assertEquals(Kyiv.JNode.worker, worker.robot().userId);
@@ -131,7 +131,7 @@ class SyncWorkerTest {
 				.login(Kyiv.JNode.passwd);
 
 		// 0. clean failed tests
-		cleanKyiv(worker, clientpath);
+		clean(worker, clientpath);
 		worker.synctier.del(meta, worker.nodeId(), clientpath);
 
 		// 1. create a public file at this private node
@@ -188,17 +188,22 @@ class SyncWorkerTest {
 		// worker.pullDocs(resp);
 	}
 
-	private void cleanKyiv(SyncWorker worker, String clientpath) throws TransException, SQLException {
+	private void clean(SyncWorker worker, String clientpath)
+			throws TransException, SQLException {
 
 		String device = worker.synctier.robot.deviceId;
 
 		defltSt
 			.delete(meta.tbl, worker.robot())
 			.whereEq(meta.org, worker.org())
-			.whereEq(meta.device, device)
-			.whereEq(meta.fullpath, clientpath)
+			// .whereEq(meta.device, device)
+			// .whereEq(meta.fullpath, clientpath)
 			.post(Docsyncer.onDel(clientpath, device))
 			.d(defltSt.instancontxt(conn, worker.robot()));
+		
+		worker.synctier.del(meta, Kyiv.JNode.nodeId, null);
+		worker.synctier.del(meta, Kharkiv.JNode.nodeId, null);
+		worker.synctier.del(meta, AnDevice.device, null);
 	}
 
 	/**
@@ -239,16 +244,23 @@ class SyncWorkerTest {
 	 */
 	@Test
 	void testKharivPull() throws Exception {
+		String clientpath = Kyiv.png;
+		SyncWorker worker = new SyncWorker(Kharkiv.JNode.mode, Kharkiv.JNode.nodeId, conn, Kharkiv.JNode.worker, meta)
+				.login(Kharkiv.JNode.passwd);
+
+		// 0. clean failed tests
+		clean(worker, clientpath);
+
 		videoUpByApp(meta);
 
 		Docsyncer.init(Kharkiv.JNode.nodeId);
 
-		// downward synchronize the file, hub -> Kyiv
+		// downward synchronize the file, hub -> Kharkiv (working as main node)
 		SyncWorker.blocksize = 32 * 3;
 		DocTableMeta meta = new PhotoMeta(conn);
-		SyncWorker worker = new SyncWorker(SyncMode.main, Kharkiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta);
+		worker = new SyncWorker(SyncMode.main, Kharkiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta);
 		ArrayList<DocsResp> ids = worker
-				.login(Kyiv.JNode.passwd)
+				.login(Kharkiv.JNode.passwd)
 				.pull();
 		
 		if (ids == null || ids.size() == 0)
@@ -269,7 +281,6 @@ class SyncWorkerTest {
 	 * @throws SQLException
 	 * @throws SAXException
 	 * @throws TransException 
-	 */
 	static String videoUpByApp(DocTableMeta photoMeta)
 			throws SsException, IOException, GeneralSecurityException, AnsonException, SQLException, SAXException, TransException {
 		int bsize = 72 * 1024;
@@ -300,7 +311,7 @@ class SyncWorkerTest {
 					('Test ЗСУ00001', 'omni', '2022_03', 'Amelia Anisovych.mp4', '$VOLUME_HOME/ody/2022_03/no such file.mp4', 1994,
 					'jnode syrskyi', 'ody', 1997, NULL, 0.0, 0.0, 'exif', 'ody', 1997,
 					'src/test/res/anclient.java/Amelia Anisovych.mp4', 'video/mp4', NULL, NULL, 'pub', NULL);
-				 */
+				 * /
 				fail(String.format(
 					"Duplicate checking failed: %s\n%s",
 					resp.msg(), resp.toString()));
@@ -347,6 +358,75 @@ class SyncWorkerTest {
 					}
 				}
 			});
+		return AnDevice.localFile;
+	}
+	*/
+
+	static String videoUpByApp(DocTableMeta photoMeta)
+			throws SsException, IOException, GeneralSecurityException, AnsonException, SQLException, SAXException, TransException {
+		int bsize = 72 * 1024;
+
+		// app is using Synclientier for synchronizing 
+		Synclientier tier = new Synclientier(clientUri, conn, errLog)
+				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
+				.blockSize(bsize);
+
+		List<SyncDoc> videos = new ArrayList<SyncDoc>();
+		videos.add((SyncDoc) new SyncDoc()
+					.share(tier .robot.uid(), Share.pub, new Date())
+					.folder(Kharkiv.folder)
+					.fullpath(AnDevice.localFile));
+
+		SessionInf ssInf = tier.client.ssInfo(); // simulating pushing from app
+		// ssInf.device = AnDevice.device;  
+
+		List<DocsResp> resps = tier.pushBlocks( meta, videos, ssInf, null, new OnDocOk() {
+			@Override
+			public void ok(SyncDoc doc, AnsonResp resp)
+					throws IOException, AnsonException, TransException, SQLException {
+				String f = SyncFlag.to(Share.pub, SyncEvent.pushEnd, doc.shareflag());
+				Synclientier.setLocalSync(tier.localSt, tier.connPriv, meta, doc, f, tier.robot);
+
+				// pushing again should fail
+				@SuppressWarnings("unused")
+				List<DocsResp> resps2 = null;
+				try {
+
+					resps2 = tier.pushBlocks(meta, videos, ssInf, null,
+					new OnDocOk() {
+						@Override
+						public void ok(SyncDoc doc, AnsonResp resp)
+								throws IOException, AnsonException, TransException, SQLException {
+							fail("Shouldn't be here");
+						}
+					},
+					new ErrorCtx() {
+					@Override
+					public void onError(MsgCode c, String msg) {
+						// duplicate checking works;
+					}});
+				} catch (TransException | IOException | SQLException e) {
+					e.printStackTrace();
+					fail(e.getMessage());
+				}
+			}
+		});
+
+		assertNotNull(resps);
+		assertEquals(1, resps.size());
+
+		for (DocsResp d : resps) {
+			String docId = d.doc.recId();
+			assertEquals(8, docId.length());
+
+			DocsResp rp = tier.selectDoc(meta, docId);
+
+			assertTrue(LangExt.isblank(rp.msg()));
+			assertEquals(AnDevice.device, rp.doc.device());
+			assertEquals(AnDevice.localFile, rp.doc.fullpath());
+		}
+
+
 		return AnDevice.localFile;
 	}
 }

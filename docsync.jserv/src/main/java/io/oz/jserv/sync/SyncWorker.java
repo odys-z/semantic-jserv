@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -44,7 +46,7 @@ public class SyncWorker implements Runnable {
 	String mac;
 	Synclientier synctier;
 	
-	public final String uri;
+	public final String funcUri;
 	String connPriv;
 	String workerId;
 	
@@ -65,7 +67,7 @@ public class SyncWorker implements Runnable {
 	public SyncWorker(SyncMode mode, String device, String connId, String worker, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
 		this.mode = mode;
-		uri = "/sync/worker";
+		funcUri = "/sync/worker";
 		connPriv = connId;
 		workerId = worker;
 		mac = device;
@@ -82,8 +84,23 @@ public class SyncWorker implements Runnable {
 		};
 	}
 
+	/**
+	 * Log into hub since this worker is working as a client of hub node,
+	 * where hub root url is initialized with Clients.init(String, boolean).
+	 * 
+	 * @see Synclientier#login(String, String, String)
+	 * 
+	 * @param pswd
+	 * @return this.
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws SsException
+	 * @throws IOException
+	 * @throws SQLException
+	 * @throws SAXException
+	 */
 	public SyncWorker login(String pswd) throws SemanticException, AnsonException, SsException, IOException, SQLException, SAXException {
-		synctier = new Synclientier(uri, connPriv, errLog)
+		synctier = new Synclientier(funcUri, connPriv, errLog)
 				.login(workerId, mac, pswd);
 		return this;
 	}
@@ -166,8 +183,6 @@ public class SyncWorker implements Runnable {
 				.rs(localSt.instancontxt(connPriv, synctier.robot))
 				.rs(0)).beforeFirst();
 
-			rs.next();
-
 			// upload
 			synctier.syncUp(rs, workerId, localMeta,
 			  new OnProcess() {
@@ -200,8 +215,9 @@ public class SyncWorker implements Runnable {
 	 * @return this
 	 * @throws TransException
 	 * @throws SQLException
+	 * @throws IOException 
 	 */
-	public SyncWorker verifyDocs(ArrayList<DocsResp> list) throws TransException, SQLException {
+	public SyncWorker verifyDocs(ArrayList<DocsResp> list) throws TransException, SQLException, IOException {
 
 		/*
 		AnResultset rs = (AnResultset) localSt
@@ -243,9 +259,11 @@ public class SyncWorker implements Runnable {
 			else if (f.length() != rs.getLong(localMeta.size))
 				throw new SemanticException("Saved length (%s) doesn't equal file length (%s).\nid: %s, uri: %s,\nexpecting path: %s",
 					rs.getLong(localMeta.size), f.length(), rs.getString(localMeta.pk), rs.getString(localMeta.uri), p);
-			else if (!mime(f).equals(rs.getLong(localMeta.mime)))
+			else if (!Files.probeContentType(Paths.get(p)).equals(rs.getString(localMeta.mime)))
 				throw new SemanticException("Saved mime (%s) doesn't match with file's (%s).\nid: %s, uri: %s,\nexpecting path: %s",
-					rs.getLong(localMeta.mime), mime(f), rs.getString(localMeta.pk), rs.getString(localMeta.uri), p);
+					rs.getString(localMeta.mime), 
+					Files.probeContentType(Paths.get(p)).equals(rs.getString(localMeta.mime)),
+					rs.getString(localMeta.pk), rs.getString(localMeta.uri), p);
 			else
 				continue;
 		}

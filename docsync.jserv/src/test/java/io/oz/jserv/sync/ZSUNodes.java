@@ -18,7 +18,7 @@ public class ZSUNodes {
 	public static final String webRoot = "./src/test/res/WEB-INF";
 	public static final String volumeDir = "./src/test/res/volume";
 
-	public static final String jservUrl = "http://localhost:8081/jserv-album";
+	public static final String jservHub = "http://localhost:8081/jserv-album";
 	/** shouldn't be used directly - configured at album-jserv */
 	public static final String family = "f/zsu";
 

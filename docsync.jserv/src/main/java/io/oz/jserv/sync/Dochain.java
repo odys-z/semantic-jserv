@@ -146,19 +146,9 @@ public class Dochain {
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
-		SyncDoc photo = new SyncDoc();
-
-		photo.createDate = chain.cdate;
-
-		photo.clientpath = chain.clientpath;
-		// photo.device = usr.deviceId();
-		photo.pname = chain.clientname;
-		photo.folder(chain.saveFolder);
-		photo.shareby = chain.shareby;
-		photo.sharedate = chain.shareDate;
-		photo.shareflag = chain.shareflag;
-
-		photo.uri = null;
+		SyncDoc photo = new SyncDoc().parseChain(chain);
+		photo.uri = null; // suppress semantics ExtFile, support me.
+		
 		String pid = createFile(st, conn, photo, meta, usr, 
 				(Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
 					return post;
@@ -178,7 +168,7 @@ public class Dochain {
 					.cdate(body.createDate)
 					.fullpath(chain.clientpath));
 	}
-	
+
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
@@ -203,6 +193,7 @@ public class Dochain {
 			DocTableMeta meta, SyncRobot usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
+
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);
 

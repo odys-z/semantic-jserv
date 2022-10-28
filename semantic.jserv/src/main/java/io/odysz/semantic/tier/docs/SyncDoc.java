@@ -1,6 +1,9 @@
 package io.odysz.semantic.tier.docs;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Date;
 
@@ -10,6 +13,8 @@ import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.ISemantext;
+
+import static io.odysz.common.LangExt.*;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
@@ -131,7 +136,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 				meta.mime,
 				meta.fullpath,
 				meta.device,
-				meta.folder
+				meta.folder,
+				meta.size
 		};
 	}
 	
@@ -142,6 +148,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.uri = rs.getString(meta.uri);
 		this.createDate = rs.getString(meta.createDate);
 		this.mime = rs.getString(meta.mime);
+		this.size = rs.getLong(meta.size, 0);
 		
 		// this.isPublic = Share.pub.equals(rs.getString(meta.shareflag, null));
 		this.clientpath =  rs.getString(meta.fullpath);
@@ -218,5 +225,28 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc folder(String v) {
 		this.folder = v;
 		return this;
+	}
+
+	public SyncDoc parseMimeSize(String abspath) throws IOException {
+		mime = isblank(mime)
+				? Files.probeContentType(Paths.get(abspath))
+				: mime;
+
+		File f = new File(abspath);
+		size = f.length();
+		return this;
+	}
+
+	public SyncDoc parseChain(BlockChain chain) throws IOException {
+		createDate = chain.cdate;
+
+		clientpath = chain.clientpath;
+		pname = chain.clientname;
+		folder(chain.saveFolder);
+		shareby = chain.shareby;
+		sharedate = chain.shareDate;
+		shareflag = chain.shareflag;
+		
+		return parseMimeSize(chain.outputPath);
 	}
 }
