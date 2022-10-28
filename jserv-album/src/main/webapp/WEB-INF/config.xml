@@ -56,6 +56,12 @@
 		<k>sync-table-name</k>
 		<v>h_photos</v>
 	</c>
+	
+	<c>
+		<!-- verbose and doc deleting safe mode -->
+		<k>docsync.debug</k>
+		<v>true</v>
+	</c>
   </t>
 
   <t id="tree-semantics" pk="k" columns="k,v">

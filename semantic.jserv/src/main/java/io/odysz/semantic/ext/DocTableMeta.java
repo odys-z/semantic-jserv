@@ -48,7 +48,7 @@ public class DocTableMeta extends TableMeta {
 		createDate = "pdate";
 		org = "family";
 		mime = "mime";
-		size = "size";
+		size = "filesize";
 		device = "device";
 		fullpath = "clientpath";
 		shareDate = "sharedate";

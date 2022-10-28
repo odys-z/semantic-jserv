@@ -18,7 +18,6 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
-import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
@@ -50,9 +49,15 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.sync.Dochain.OnChainOk;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
 
+import static io.odysz.common.LangExt.*;
+
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
 public class Docsyncer extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
+	
+	/** Flag of verbose and doc-writing privilege.
+	 *  <h6>configuration</h6>config.xml/t[id=default]/k=docsync.debug
+	 *  */
 	public static boolean debug = true;
 
 	static HashMap<String, TableMeta> metas;
@@ -87,6 +92,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 			metas = new HashMap<String, TableMeta>();
 
 			robot = new SyncRobot("Robot Syncer", "");
+			
+			debug = Configs.getBoolean("docsync.debug");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
@@ -107,8 +114,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		String device = req.device();
 
-		if (!LangExt.is(isAdmin)
-				&& !LangExt.isblank(device) && !device.equals(usr.deviceId()))
+		if (!is(isAdmin)
+				&& !isblank(device) && !device.equals(usr.deviceId()))
 			throw new SemanticException("User (id %s, device %s) is trying to delete a file from another device? (req.device = %s)",
 					usr.uid(), usr.deviceId(), req.device());
 		
@@ -116,9 +123,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.delete(meta.tbl, usr)
 				.whereEq(meta.org, usr.orgId())
 				.whereEq(meta.device, device)
-				.whereEq(meta.fullpath, req.clientpath)
+				// .whereEq(meta.fullpath, req.clientpath)
 				.post(Docsyncer.onDel(req.clientpath, req.device()))
 				;
+		
+		if (req.clientpath == null && !is(isAdmin))
+			throw new SemanticException("This user are not permeted to delete multiple files at on request: %s, device %s",
+					usr.uid(), usr.deviceId());
+		else if (req.clientpath != null)
+			d.whereEq(meta.fullpath, req.clientpath);
 
 		SemanticObject res = (SemanticObject) d.d(st.instancontxt(conn, usr));
 		
@@ -249,19 +262,19 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 			// requires meta for operations
 			else {
-				if (LangExt.isblank(jreq.docTabl))
+				if (isblank(jreq.docTabl))
 					throw new SemanticException("To push/update a doc via Docsyncer, docTable name can not be null.");
 
 				if (A.records.equals(a))
 					rsp = queryTasks(jreq, usr);
 				else if (A.del.equals(a))
-					rsp = delDocRec(jmsg.body(0), usr);
+					rsp = delDocRec(jmsg.body(0), usr, debug);
 				else if (A.synclose.equals(a))
 					rsp = synclose(jreq, usr);
 				else {
 					Dochain chain = new Dochain((DocTableMeta) metas.get(jreq.docTabl), st);
 					if (DocsReq.A.blockStart.equals(a)) {
-						if (LangExt.isblank(jreq.subFolder, " - - "))
+						if (isblank(jreq.subFolder, " - - "))
 							throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 						rsp = chain.startBlocks(jmsg.body(0), usr);
 					}

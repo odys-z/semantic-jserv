@@ -55,10 +55,11 @@ public class DocUtils {
 				.nv(meta.shareflag, photo.shareflag)
 				.nv(meta.shareby, photo.shareby)
 				.nv(meta.shareDate, photo.sharedate)
+				.nv(meta.size, photo.size)
 				;
 		
 		if (!LangExt.isblank(photo.mime))
-			ins.nv("mime", photo.mime);
+			ins.nv(meta.mime, photo.mime);
 		
 		// add a synchronizing task
 		// - also triggered as private storage jserv, but no statement will be added

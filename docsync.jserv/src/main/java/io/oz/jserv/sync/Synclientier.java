@@ -108,6 +108,19 @@ public class Synclientier extends Semantier {
 		this(clientUri, null, connId, errCtx);
 	}
 	
+	/**
+	 * Login to hub, where hub root url is initialized with {@link Clients#init(String, boolean...)}.
+	 * 
+	 * @param workerId
+	 * @param device
+	 * @param pswd
+	 * @return this
+	 * @throws SQLException
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws SsException
+	 * @throws IOException
+	 */
 	public Synclientier login(String workerId, String device, String pswd)
 			throws SQLException, SemanticException, AnsonException, SsException, IOException {
 
@@ -161,7 +174,7 @@ public class Synclientier extends Semantier {
 	
 	/**
 	 * Synchronizing files to hub using block chain, accessing port {@link Port#docsync}.
-	 * @param rs row count should limited
+	 * @param rs tasks, rows should be limited
 	 * @param workerId 
 	 * @param meta 
 	 * @param onProcess
