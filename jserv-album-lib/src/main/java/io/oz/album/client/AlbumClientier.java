@@ -33,6 +33,11 @@ import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
 
+/**
+ * @deprecated
+ * @author odys-z@github.com
+ *
+ */
 public class AlbumClientier extends Semantier {
 
 	private SessionClient client;
@@ -86,6 +91,7 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 	
+	/*
 	public AlbumClientier asyncVideos_not_used(List<? extends IFileDescriptor> videos,
 				SessionInf user, OnProcess onProc, OnOk onOk, OnError onErr) {
 
@@ -104,6 +110,7 @@ public class AlbumClientier extends Semantier {
 	    } } ).start();
 		return this;
 	}
+	*/
 	
 	/**
 	 * 
