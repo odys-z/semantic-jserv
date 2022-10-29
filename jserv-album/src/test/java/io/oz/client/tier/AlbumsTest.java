@@ -42,6 +42,7 @@ import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
 
 /**
+ * @deprecated
  * <pre>
  * INSERT INTO h_photos (pid,uri,pname,pdate,cdate,tags,oper,opertime) VALUES
 	 ('test-00000','omni/ody/2019_08/DSC_0005.JPG','DSC_0005.JPG','2019-08-24','2021-08-24','#Qing Hai Lake','ody','2022-01-13'),
