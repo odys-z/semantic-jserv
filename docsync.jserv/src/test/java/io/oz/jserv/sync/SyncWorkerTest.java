@@ -85,7 +85,7 @@ class SyncWorkerTest {
 
 			errLog = new ErrorCtx() {
 				@Override
-				public void onError(MsgCode code, String msg) {
+				public void err(MsgCode code, String msg, String...args) {
 					// Utils.warn(msg);
 					fail(msg);
 				}
@@ -321,10 +321,9 @@ class SyncWorkerTest {
 						}
 					},
 					new ErrorCtx() {
-					@Override
-					public void onError(MsgCode c, String msg) {
-						// duplicate checking works;
-					}});
+						@Override
+						public void err(MsgCode code, String msg, String...args) { }
+					});
 				} catch (TransException | IOException | SQLException e) {
 					e.printStackTrace();
 					fail(e.getMessage());

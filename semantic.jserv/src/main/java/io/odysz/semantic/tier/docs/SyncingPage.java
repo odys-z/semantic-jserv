@@ -2,6 +2,12 @@ package io.odysz.semantic.tier.docs;
 
 import io.odysz.anson.Anson;
 
+/**
+ * Task page to update synchronizing information.
+ * 
+ * @author odys-z@github.com
+ *
+ */
 public class SyncingPage extends Anson {
 	public String device;
     public int taskNo = 0;

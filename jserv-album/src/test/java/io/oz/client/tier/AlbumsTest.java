@@ -95,10 +95,8 @@ class AlbumsTest {
 			Anson.verbose = false;
 
 			errCtx = new ErrorCtx() {
-				// @Override public void onError(MsgCode c, AnsonResp rep) { fail(rep.msg()); }
-
 				@Override
-				public void onError(MsgCode c, String rep) {
+				public void err(MsgCode c, String rep, String...args) {
 					fail(String.format("code %s, msg: %s", c.name(), rep));
 				}
 			};
@@ -306,7 +304,7 @@ class AlbumsTest {
 			},
 			new ErrorCtx() {
 				@Override
-				public void onError(MsgCode c, String msg) {
+				public void err(MsgCode c, String msg, String ...args) {
 					if (!MsgCode.exGeneral.equals(c))
 						fail("Not expected error for this handling.");
 
