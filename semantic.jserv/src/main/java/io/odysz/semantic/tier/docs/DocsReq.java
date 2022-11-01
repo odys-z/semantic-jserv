@@ -207,6 +207,19 @@ public class DocsReq extends AnsonBody {
 		return blockUp(sequence, doc, uri64, usr);
 	}
 	
+	/**
+	 * Compose blocks for updating, which will be handled at server side by {@link BlockChain}.
+	 * 
+	 * <p><b>issue</b>
+	 * Is this means there should be a Dochain client peer?</p>
+	 * 
+	 * @param sequence
+	 * @param doc
+	 * @param s64
+	 * @param usr
+	 * @return this
+	 * @throws SemanticException
+	 */
 	public DocsReq blockUp(long sequence, IFileDescriptor doc, String s64, SessionInf usr) throws SemanticException {
 		this.device = usr.device;
 		if (LangExt.isblank(this.device, ".", "/"))

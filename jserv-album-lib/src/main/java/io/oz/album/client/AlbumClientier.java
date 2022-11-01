@@ -192,9 +192,9 @@ public class AlbumClientier extends Semantier {
 
 			return reslts;
 		} catch (IOException e) {
-			errHandler.onError(MsgCode.exIo, e.getClass().getName() + " " + e.getMessage());
+			errHandler.err(MsgCode.exIo, e.getClass().getName() + " " + e.getMessage());
 		} catch (AnsonException | SemanticException e) { 
-			errHandler.onError(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
+			errHandler.err(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
 		}
 		return null;
 	}
@@ -250,7 +250,7 @@ public class AlbumClientier extends Semantier {
 
 				resp = client.commit(q, new ErrorCtx() {
 					@Override
-					public void onError(MsgCode code, String msg) {
+					public void err(MsgCode code, String msg, String ...args) {
 						onErr.err(code, msg);
 					}
 				});
@@ -333,7 +333,7 @@ public class AlbumClientier extends Semantier {
 						// @Override public void onError(MsgCode code, AnsonResp obj) { onErr.err(code, obj.msg()); }
 
 						@Override
-						public void onError(MsgCode code, String msg) {
+						public void err(MsgCode code, String msg, String ... args) {
 							onErr.err(code, msg);
 						}
 					});
@@ -369,9 +369,9 @@ public class AlbumClientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errHandler.onError(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errHandler.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
-			errHandler.onError(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errHandler.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		}
 		return resp;
 	}
@@ -399,9 +399,9 @@ public class AlbumClientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errCtx.onError(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errCtx.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
-			errCtx.onError(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errCtx.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		}
 		return resp;
 	}

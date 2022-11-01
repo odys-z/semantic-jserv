@@ -339,18 +339,13 @@ public class Synclientier extends Semantier {
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
 					respi = client.commit(q, errHandler);
-//					if (proc != null)
-//						proc.proc(videos.size(), px, seq, totalBlocks, respi);
 				}
-//				else
-//					if (proc != null)
-//						proc.proc(px, videos.size(), seq, totalBlocks, new AnsonResp().msg(ex.getMessage()));
 
 				if (ex instanceof IOException)
 					continue;
 				else if (onErr == null || onErr.length < 1 || onErr[0] == null)
 					throw ex;
-				else onErr[0].onError(MsgCode.exGeneral, connPriv);
+				else onErr[0].err(MsgCode.exGeneral, connPriv);
 			}
 			finally {
 				if (ifs != null)
@@ -393,9 +388,9 @@ public class Synclientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errHandler.onError(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errHandler.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
-			errHandler.onError(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errHandler.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		}
 		return resp;
 	}
@@ -415,9 +410,9 @@ public class Synclientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errCtx.onError(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errCtx.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
-			errCtx.onError(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errCtx.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		}
 		return resp;
 	}

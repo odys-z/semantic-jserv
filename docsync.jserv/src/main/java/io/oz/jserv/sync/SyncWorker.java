@@ -78,7 +78,7 @@ public class SyncWorker implements Runnable {
 		
 		errLog = new ErrorCtx() {
 			@Override
-			public void onError(MsgCode code, String msg) {
+			public void err(MsgCode code, String msg, String... args) {
 				Utils.warn(msg);
 			}
 		};
