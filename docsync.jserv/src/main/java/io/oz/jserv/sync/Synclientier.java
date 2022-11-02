@@ -1,5 +1,7 @@
 package io.oz.jserv.sync;
 
+import static io.odysz.common.LangExt.isNull;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -356,13 +358,13 @@ public class Synclientier extends Semantier {
 		return reslts;
 	}
 
-//	public String download(Photo photo, String localpath)
-//			throws SemanticException, AnsonException, IOException {
-//		DocsReq req = (DocsReq) new DocsReq(meta.tbl).uri(clientUri);
-//		req.docId = photo.recId;
-//		req.a(A.download);
-//		return client.download(clientUri, Port.docsync, req, localpath);
-//	}
+	public String download(String clientUri, String syname, SyncDoc photo, String localpath)
+			throws SemanticException, AnsonException, IOException {
+		DocsReq req = (DocsReq) new DocsReq(syname).uri(clientUri);
+		req.docId = photo.recId;
+		req.a(A.download);
+		return client.download(clientUri, Port.docsync, req, localpath);
+	}
 
 	/**
 	 * Get a doc record from jserv.
@@ -466,6 +468,23 @@ public class Synclientier extends Semantier {
 		return pid;
 	}
 
+	public DocsResp insertSyncDoc(DocTableMeta meta, SyncDoc doc, OnDocOk ok, OnProcess ... proc)
+			throws TransException, IOException, SQLException {
+		List<SyncDoc> videos = new ArrayList<SyncDoc>();
+		videos.add(doc);
+
+		SessionInf ssInf = client.ssInfo(); // simulating pushing from app
+
+		List<DocsResp> resps = pushBlocks(meta, videos, ssInf, 
+				isNull(proc) ? (new OnProcess() {
+					@Override
+					public void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
+							throws IOException, AnsonException, SemanticException {
+					}} ) : proc[0],
+				ok, errCtx);	
+		return resps.get(0);
+	}
+	
 	/** 
 	 * <p>Verify the local file.</p>
 	 * <p>If it is not expected, delete it.</p>
