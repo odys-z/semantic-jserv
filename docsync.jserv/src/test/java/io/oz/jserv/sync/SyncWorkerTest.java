@@ -16,7 +16,6 @@ import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
@@ -42,7 +41,6 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
@@ -291,16 +289,22 @@ class SyncWorkerTest {
 				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
+		/*
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		videos.add((SyncDoc) new SyncDoc()
-					.share(tier .robot.uid(), Share.pub, new Date())
+					.share(tier.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile));
 
 		SessionInf ssInf = tier.client.ssInfo(); // simulating pushing from app
-		// ssInf.device = AnDevice.device;  
 
 		List<DocsResp> resps = tier.pushBlocks( meta, videos, ssInf, null, new OnDocOk() {
+		*/
+		SyncDoc doc = (SyncDoc) new SyncDoc()
+					.share(tier.robot.uid(), Share.pub, new Date())
+					.folder(Kharkiv.folder)
+					.fullpath(AnDevice.localFile);
+		DocsResp resp = tier.insertSyncDoc(meta, doc, new OnDocOk() {
 			@Override
 			public void ok(SyncDoc doc, AnsonResp resp)
 					throws IOException, AnsonException, TransException, SQLException {
@@ -308,21 +312,25 @@ class SyncWorkerTest {
 				Synclientier.setLocalSync(tier.localSt, tier.connPriv, meta, doc, f, tier.robot);
 
 				// pushing again should fail
+				// List<DocsResp> resps2 = null;
 				@SuppressWarnings("unused")
-				List<DocsResp> resps2 = null;
+				DocsResp resp2 = null;
 				try {
 
-					resps2 = tier.pushBlocks(meta, videos, ssInf, null,
+					resp2 = tier.insertSyncDoc(meta, doc,
+					// resps2 = tier.pushBlocks(meta, videos, ssInf, null,
 					new OnDocOk() {
 						@Override
 						public void ok(SyncDoc doc, AnsonResp resp)
 								throws IOException, AnsonException, TransException, SQLException {
-							fail("Shouldn't be here");
+							fail("Double checking failed.");
 						}
-					},
-					new ErrorCtx() {
-						@Override
-						public void err(MsgCode code, String msg, String...args) { }
+//					},
+//					new ErrorCtx() {
+//						@Override
+//						public void err(MsgCode code, String msg, String...args) {
+//							// expected
+//						}
 					});
 				} catch (TransException | IOException | SQLException e) {
 					e.printStackTrace();
@@ -331,20 +339,16 @@ class SyncWorkerTest {
 			}
 		});
 
-		assertNotNull(resps);
-		assertEquals(1, resps.size());
+		assertNotNull(resp);
 
-		for (DocsResp d : resps) {
-			String docId = d.doc.recId();
-			assertEquals(8, docId.length());
+		String docId = resp.doc.recId();
+		assertEquals(8, docId.length());
 
-			DocsResp rp = tier.selectDoc(meta, docId);
+		DocsResp rp = tier.selectDoc(meta, docId);
 
-			assertTrue(LangExt.isblank(rp.msg()));
-			assertEquals(AnDevice.device, rp.doc.device());
-			assertEquals(AnDevice.localFile, rp.doc.fullpath());
-		}
-
+		assertTrue(LangExt.isblank(rp.msg()));
+		assertEquals(AnDevice.device, rp.doc.device());
+		assertEquals(AnDevice.localFile, rp.doc.fullpath());
 
 		return AnDevice.localFile;
 	}

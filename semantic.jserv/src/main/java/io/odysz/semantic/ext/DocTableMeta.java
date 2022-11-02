@@ -3,6 +3,9 @@ package io.odysz.semantic.ext;
 import io.odysz.semantics.meta.TableMeta;
 
 public class DocTableMeta extends TableMeta {
+	/**
+	 * consts of share type: pub | priv 
+	 */
 	public static class Share {
 		/** public asset */
 		public static final String pub = "pub";
