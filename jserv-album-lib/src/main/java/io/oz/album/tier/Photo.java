@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.stream.Collectors;
 
 import io.odysz.common.DateFormat;
-import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncDoc;
@@ -17,6 +16,7 @@ import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 
+import static io.odysz.common.LangExt.isblank;
 /**
  * Server side and jprotocol oriented data record - not BaseFile used by file picker (at Android client). 
  * 
@@ -24,54 +24,9 @@ import io.odysz.transact.sql.parts.condition.Funcall;
  *
  */
 public class Photo extends SyncDoc implements IFileDescriptor {
-//	public String recId;
-//	public String recId() { return recId; }
-//
-//	public String pname;
-//	@Override
-//	public String clientname() { return pname; }
-
-//	public String clientpath;
-//	@Override
-//	public String fullpath() { return clientpath; }
-
-//	public String device;
-//	@Override
-//	public String device() { return device; }
-	
-//	public int syncFlag;
-//	/** usally reported by client file system, overriden by exif date, if exits */
-//	public String createDate;
-//	@Override
-//	public String cdate() { return createDate; }
-	
-//	@AnsonField(shortenString=true)
-//	public String uri;
-//	@Override
-//	public String uri() { return uri; }
-
-//	public String shareby;
-//	public Photo shareby(String share) {
-//		this.shareby = share;
-//		return this;
-//	}
-//
-//	public String sharedate;
-//	public Photo sharedate(String format) {
-//		sharedate = format;
-//		return this;
-//	}
-//	public Photo sharedate(Date date) {
-//		return sharedate(DateFormat.format(date));
-//	}
-
 	public String geox;
 	public String geoy;
-//	public String sharer;
 	
-	/** usually ignored when sending request */
-//	public long size;
-
 	/** usually ignored when sending request */
 	public ArrayList<String> exif;
 	public String exif() {
@@ -79,22 +34,6 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 				: exif.stream()
 				 .collect(Collectors.joining(","));
 	}
-
-//	public boolean isPublic;
-//	@Override
-//	public boolean isPublic() { return isPublic; }
-//	public Photo isPublic(boolean pub) {
-//		isPublic = pub;
-//		return this;
-//	}
-
-//	public String mime;
-//	@Override
-//	public String mime() { return mime; }
-//	public Photo mime(String mime) {
-//		this.mime = mime;
-//		return this;
-//	}
 
 	/** image size */
 	public int[] widthHeight;
@@ -124,8 +63,6 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 	public String collectId() { return collectId; }
 
 	public String albumId;
-	
-	// String month;
 	
 	public Photo() {}
 	
@@ -180,7 +117,7 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 
 	public AbsPart photoDate() {
 		try {
-			if (!LangExt.isblank(createDate)) {
+			if (!isblank(createDate)) {
 				Date d = DateFormat.parse(createDate); 
 				folder = DateFormat.formatYYmm(d);
 				return new ExprPart("'" + createDate + "'");
@@ -206,9 +143,22 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 		folder = DateFormat.formatYYmm(d);
 	}
 
+	public void month(String d) {
+		try {
+			folder = DateFormat.formatYYmm(DateFormat.parse(d));
+		} catch (ParseException e) {
+			e.printStackTrace();
+			folder = DateFormat.formatYYmm(new Date());
+		}
+	}
+
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
-		this.clientpath = clientpath;
+		super.fullpath(clientpath);
+
+		if (isblank(folder)) {
+			month(cdate());
+		}
 		return this;
 	}
 

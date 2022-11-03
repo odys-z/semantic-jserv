@@ -10,6 +10,7 @@ import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
+import io.odysz.transact.x.TransException;
 
 public class DocsReq extends AnsonBody {
 	public static class A {
@@ -36,6 +37,9 @@ public class DocsReq extends AnsonBody {
 		 * @see io.odysz.semantic.tier.docs.sync.SyncWorker#syncDoc(ISyncFile p, SessionInf worker, AnsonHeader header)
 		 */
 		public static final String synclose = "u/close";
+
+		// TODO serv
+		public static String selectDocs;
 	}
 
 //	public static class State {
@@ -145,8 +149,8 @@ public class DocsReq extends AnsonBody {
 	/**
 	 * The page of quirying client files status - not for used between jservs. 
 	 */
-	protected SyncingPage syncing;
-	public SyncingPage syncing() { return syncing; }
+	protected DocsPage syncing;
+	public DocsPage syncing() { return syncing; }
 
 	protected String device; 
 	public String device() { return device; }
@@ -179,7 +183,7 @@ public class DocsReq extends AnsonBody {
 //		return this;
 //	}
 
-	public DocsReq syncing(SyncingPage page) {
+	public DocsReq syncing(DocsPage page) {
 		this.syncing = page;
 		return this;
 	}
@@ -284,5 +288,9 @@ public class DocsReq extends AnsonBody {
 	public DocsReq resetChain(boolean set) {
 		this.reset = set;
 		return this;
+	}
+
+	public void querySync(IFileDescriptor p) throws TransException {
+		throw new TransException("TODO");
 	}
 }

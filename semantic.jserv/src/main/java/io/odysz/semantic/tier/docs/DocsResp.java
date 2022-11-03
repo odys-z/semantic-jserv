@@ -17,10 +17,10 @@ import io.odysz.semantics.x.SemanticException;
 public class DocsResp extends AnsonResp {
 	public SyncDoc doc;
 
-	SyncingPage syncing;
+	DocsPage syncing;
 
-	public SyncingPage syncing() { return syncing; }
-	public DocsResp syncing(SyncingPage page) {
+	public DocsPage syncing() { return syncing; }
+	public DocsResp syncing(DocsPage page) {
 		syncing = page;
 		return this;
 	}

@@ -325,12 +325,12 @@ class SyncWorkerTest {
 								throws IOException, AnsonException, TransException, SQLException {
 							fail("Double checking failed.");
 						}
-//					},
-//					new ErrorCtx() {
-//						@Override
-//						public void err(MsgCode code, String msg, String...args) {
-//							// expected
-//						}
+					},
+					new ErrorCtx() {
+						@Override
+						public void err(MsgCode code, String msg, String...args) {
+							// expected
+						}
 					});
 				} catch (TransException | IOException | SQLException e) {
 					e.printStackTrace();

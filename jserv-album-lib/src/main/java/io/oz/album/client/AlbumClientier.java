@@ -25,7 +25,7 @@ import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
-import io.odysz.semantic.tier.docs.SyncingPage;
+import io.odysz.semantic.tier.docs.DocsPage;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.AlbumPort;
 import io.oz.album.tier.AlbumReq;
@@ -228,7 +228,7 @@ public class AlbumClientier extends Semantier {
 	 * @param onErr
 	 * @return this
 	 */
-	public AlbumClientier asyncQuerySyncs(List<? extends IFileDescriptor> files, SyncingPage page, OnOk onOk, OnError onErr) {
+	public AlbumClientier asyncQuerySyncs(List<? extends IFileDescriptor> files, DocsPage page, OnOk onOk, OnError onErr) {
 		new Thread(new Runnable() {
 	        public void run() {
 	        DocsResp resp = null;
