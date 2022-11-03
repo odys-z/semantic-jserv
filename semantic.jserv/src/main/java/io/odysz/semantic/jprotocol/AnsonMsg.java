@@ -53,7 +53,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			docstier("docs.tier"),
 			/**
 			 * <h5>[experimental]</h5>
-			 * This port is implemented by an extension.
+			 * This port is implemented by extension docsync.jserv.
 			 * */
 			docsync("docs.sync");
 

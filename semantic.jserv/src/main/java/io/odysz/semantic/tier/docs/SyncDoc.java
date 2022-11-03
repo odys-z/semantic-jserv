@@ -3,7 +3,9 @@ package io.odysz.semantic.tier.docs;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
 import java.util.Date;
 
@@ -65,6 +67,16 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		createDate = cdate;
 		return this;
 	}
+	public SyncDoc cdate(FileTime fd) {
+		createDate = DateFormat.formatime(fd);
+		return this;
+	}
+
+	public SyncDoc cdate(Date date) {
+		createDate = DateFormat.format(date);
+		return this;
+	}
+
 	
 	@AnsonField(shortenString=true)
 	public String uri;
@@ -203,6 +215,18 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = clientpath;
+
+		if (isblank(createDate)) {
+			try {
+				Path p = Paths.get(clientpath);
+				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
+				cdate(fd);
+			}
+			catch (IOException ex) {
+				cdate(new Date());
+			}
+		}
+
 		return this;
 	}
 
