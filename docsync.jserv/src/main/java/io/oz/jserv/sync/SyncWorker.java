@@ -1,7 +1,5 @@
 package io.oz.jserv.sync;
 
-import static org.junit.jupiter.api.Assertions.fail;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -156,7 +154,6 @@ public class SyncWorker implements Runnable {
 			}
 			catch(Exception e) {
 				e.printStackTrace();
-				fail(e.getMessage());
 			}
 		}
 		
