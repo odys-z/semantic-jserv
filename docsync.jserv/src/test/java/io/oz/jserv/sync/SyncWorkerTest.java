@@ -307,9 +307,14 @@ class SyncWorkerTest {
 		DocsResp resp = tier.insertSyncDoc(meta, doc, new OnDocOk() {
 			@Override
 			public void ok(SyncDoc doc, AnsonResp resp)
-					throws IOException, AnsonException, TransException, SQLException {
+					throws IOException, AnsonException, TransException {
 				String f = SyncFlag.to(Share.pub, SyncEvent.pushEnd, doc.shareflag());
-				Synclientier.setLocalSync(tier.localSt, tier.connPriv, meta, doc, f, tier.robot);
+				try {
+					Synclientier.setLocalSync(tier.localSt, tier.connPriv, meta, doc, f, tier.robot);
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+					fail(e1.getMessage());
+				}
 
 				// pushing again should fail
 				// List<DocsResp> resps2 = null;
@@ -322,7 +327,7 @@ class SyncWorkerTest {
 					new OnDocOk() {
 						@Override
 						public void ok(SyncDoc doc, AnsonResp resp)
-								throws IOException, AnsonException, TransException, SQLException {
+								throws IOException, AnsonException, TransException {
 							fail("Double checking failed.");
 						}
 					},

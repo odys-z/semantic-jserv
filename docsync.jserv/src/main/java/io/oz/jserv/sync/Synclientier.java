@@ -60,12 +60,13 @@ import io.oz.jserv.sync.SyncWorker.SyncMode;
 public class Synclientier extends Semantier {
 	public boolean verbose = false;
 
-	SessionClient client;
-	ErrorCtx errCtx;
+	protected SessionClient client;
+	protected ErrorCtx errCtx;
 
-	SyncRobot robot;
+	protected SyncRobot robot;
 
-	DATranscxt localSt;
+	protected DATranscxt localSt;
+
 	/** connection for update task records at private storage node */
 	String connPriv;
 
@@ -94,19 +95,26 @@ public class Synclientier extends Semantier {
 	 * @throws SemanticException 
 	 */
 	public Synclientier(String clientUri, SessionClient client, String connId, ErrorCtx errCtx)
-			throws SemanticException, SQLException, SAXException, IOException {
+			throws SemanticException, IOException {
 		this.client = client;
 		this.errCtx = errCtx;
 		this.uri = clientUri;
 		
 		tempDir = "";
 		
-		localSt = new DATranscxt(connId);
+		try {
+			localSt = new DATranscxt(connId);
+		} catch (SQLException | SAXException e) {
+			throw new SemanticException(
+					"Accessing local DB failed with conn %s. Only jnode should throw this."
+					+ "\nex: %s,\nmessage: %s",
+					connId, e.getClass().getName(), e.getMessage());
+		}
 		connPriv = connId;
 	}
 	
 	public Synclientier(String clientUri, String connId, ErrorCtx errCtx)
-			throws SemanticException, SQLException, SAXException, IOException {
+			throws SemanticException, IOException {
 		this(clientUri, null, connId, errCtx);
 	}
 	
@@ -124,7 +132,7 @@ public class Synclientier extends Semantier {
 	 * @throws IOException
 	 */
 	public Synclientier login(String workerId, String device, String pswd)
-			throws SQLException, SemanticException, AnsonException, SsException, IOException {
+			throws SemanticException, AnsonException, SsException, IOException {
 
 		client = Clients.login(workerId, pswd, device);
 
@@ -140,11 +148,15 @@ public class Synclientier extends Semantier {
 		q.body(0).j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
 				.whereEq("=", "u." + um.pk, robot.userId);
 		AnsonResp resp = client.commit(q, errCtx);
-		AnResultset rs = resp.rs(0).beforeFirst();
-		if (rs.next())
-			robot.orgId(rs.getString(um.org))
-				.orgName(rs.getString(um.orgName));
-		else throw new SemanticException("Jnode haven't been reqistered: %s", robot.userId);
+		try {
+			AnResultset rs = resp.rs(0).beforeFirst();
+			if (rs.next())
+				robot.orgId(rs.getString(um.org))
+					.orgName(rs.getString(um.orgName));
+			else throw new SemanticException("Jnode haven't been reqistered: %s", robot.userId);
+		} catch (SQLException e) {
+			throw new SemanticException("Return of rs is not understandable: %s", e.getMessage());
+		}
 
 		return this;
 	}
@@ -195,7 +207,8 @@ public class Synclientier extends Semantier {
 		return syncUp(videos, workerId, meta, onProc);
 	}
 
-	public List<DocsResp> syncUp(List<? extends SyncDoc> videos, String workerId, DocTableMeta meta, OnProcess onProc, OnDocOk... docOk)
+	public List<DocsResp> syncUp(List<? extends SyncDoc> videos, String workerId,
+			DocTableMeta meta, OnProcess onProc, OnDocOk... docOk)
 			throws SQLException, TransException, AnsonException, IOException {
 		SessionInf photoUser = client.ssInfo();
 		photoUser.device = workerId;
@@ -204,11 +217,16 @@ public class Synclientier extends Semantier {
 				meta, videos, photoUser, onProc,
 				isNull(docOk) ? new OnDocOk() {
 					@Override
-					public void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException, SQLException {
+					public void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException {
 						String sync0 = doc.syncFlag; // rs.getString(meta.syncflag);
 						String share = doc.shareflag; // rs.getString(meta.shareflag);
 						String f = SyncFlag.to(sync0, SyncEvent.pushEnd, share);
-						setLocalSync(localSt, connPriv, meta, doc, f, robot);
+						try {
+							setLocalSync(localSt, connPriv, meta, doc, f, robot);
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 				} : docOk[0],
 				errCtx);
@@ -274,7 +292,7 @@ public class Synclientier extends Semantier {
 	 * @return result list (AnsonResp)
 	 */
 	public List<DocsResp> pushBlocks(DocTableMeta meta, List<? extends SyncDoc> videos,
-				SessionInf user, OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr) throws TransException, IOException, SQLException {
+				SessionInf user, OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr) throws TransException, IOException {
 
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 
@@ -338,7 +356,7 @@ public class Synclientier extends Semantier {
 				if (docOk != null) docOk.ok(p, respi);
 				reslts.add(respi);
 			}
-			catch (IOException | TransException | SQLException | AnsonException ex) { 
+			catch (IOException | TransException | AnsonException ex) { 
 				Utils.warn(ex.getMessage());
 
 				if (resp0 != null) {

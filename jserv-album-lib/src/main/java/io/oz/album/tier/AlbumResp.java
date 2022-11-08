@@ -17,6 +17,7 @@ public class AlbumResp extends DocsResp {
 	ArrayList<Collect> collectRecords;
 
 	Profiles profils;
+	public Profiles profiles() { return profils; }
 
 	ArrayList<Photo[]> photos;
 	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
