@@ -39,7 +39,7 @@ public class JProtocol {
 
 	@FunctionalInterface
 	public interface OnDocOk {
-		void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException, SQLException;
+		void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException;
 	}
 	
 	@FunctionalInterface
