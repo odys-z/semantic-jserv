@@ -69,7 +69,7 @@ public class Synclientier extends Semantier {
 	/** connection for update task records at private storage node */
 	// String connPriv;
 
-	String tempDir;
+	protected String tempDir;
 
 	int blocksize = 3 * 1024 * 1024;
 	public void bloksize(int s) throws SemanticException {
@@ -139,27 +139,32 @@ public class Synclientier extends Semantier {
 
 		client = Clients.login(workerId, pswd, device);
 
-		robot = new SyncRobot(workerId, workerId)
-				.device(device);
-		tempDir = FilenameUtils.concat(tempDir,
-				String.format("io.oz.sync.%s.%s", tempDir, SyncMode.priv, workerId));
-		
-		new File(tempDir).mkdirs(); 
-		
-		JUserMeta um = (JUserMeta) robot.meta();
-
-		AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
-		q.body(0).j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
-				.whereEq("=", "u." + um.pk, robot.userId);
-		AnsonResp resp = client.commit(q, errCtx);
+		return onLogin(client);
+	}
+	
+	public Synclientier onLogin(SessionClient client) {
+		SessionInf ssinf = client.ssInfo();
 		try {
+			robot = new SyncRobot(ssinf.uid(), ssinf.device)
+					.device(ssinf.device);
+			tempDir = FilenameUtils.concat(tempDir,
+					String.format("io.oz.sync.%s.%s", tempDir, SyncMode.priv, ssinf.uid()));
+			
+			new File(tempDir).mkdirs(); 
+			
+			JUserMeta um = (JUserMeta) robot.meta();
+
+			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
+			q.body(0).j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
+					.whereEq("=", "u." + um.pk, robot.userId);
+			AnsonResp resp = client.commit(q, errCtx);
 			AnResultset rs = resp.rs(0).beforeFirst();
 			if (rs.next())
 				robot.orgId(rs.getString(um.org))
 					.orgName(rs.getString(um.orgName));
 			else throw new SemanticException("Jnode haven't been reqistered: %s", robot.userId);
-		} catch (SQLException e) {
-			throw new SemanticException("Return of rs is not understandable: %s", e.getMessage());
+		} catch (SemanticException | AnsonException | SQLException | IOException e) {
+			e.printStackTrace();
 		}
 
 		return this;
