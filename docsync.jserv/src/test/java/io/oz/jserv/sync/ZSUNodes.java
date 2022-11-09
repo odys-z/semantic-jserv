@@ -26,7 +26,7 @@ public class ZSUNodes {
 		public static final String folder = "red-forest";
 		public static final String png = "src/test/res/182x121.png";
 
-		public static class JNode {
+		public static class Synode {
 			public static final String nodeId = "jnode-kyiv";
 			public static final SyncMode mode = SyncMode.main;
 
@@ -38,7 +38,7 @@ public class ZSUNodes {
 	public static class Kharkiv {
 		public static final String folder = "trackor-brigade";
 
-		public static class JNode {
+		public static class Synode {
 			public static final String nodeId = "jnode-kharkiv";
 			public static final SyncMode mode = SyncMode.priv;
 

@@ -446,7 +446,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		try {
 			constructor = cls.getConstructor(String.class, String.class, String.class);
 		} catch (NoSuchMethodException ne) {
-			throw new SemanticException("Class %s needs a consturctor like JUser(String uid, String pswd, String usrName).", "clsname");
+			throw new SemanticException("Class %s needs a consturctor like JUser(String, String, String).", cls.getTypeName());
 		}
 
 		try {

@@ -42,7 +42,7 @@ public class SyncWorker implements Runnable {
 	SyncMode mode;
 	
 	String mac;
-	Synclientier synctier;
+	SynodeTier synctier;
 	
 	public final String funcUri;
 	String connPriv;
@@ -98,7 +98,7 @@ public class SyncWorker implements Runnable {
 	 * @throws SAXException
 	 */
 	public SyncWorker login(String pswd) throws SemanticException, AnsonException, SsException, IOException, SQLException, SAXException {
-		synctier = new Synclientier(funcUri, connPriv, errLog)
+		synctier = (SynodeTier) new SynodeTier(funcUri, connPriv, errLog)
 				.login(workerId, mac, pswd);
 		return this;
 	}

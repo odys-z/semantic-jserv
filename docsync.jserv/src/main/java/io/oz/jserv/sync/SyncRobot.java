@@ -61,6 +61,13 @@ public class SyncRobot extends SemanticObject implements IUser {
 		this.orgId = orgId;
 	}
 
+	/**
+	 * for jserv construction
+	 * 
+	 * @param userid
+	 * @param pswd
+	 * @param userName
+	 */
 	public SyncRobot(String userid, String pswd, String userName) {
 		this.userId = userid;
 		this.userName = userName;

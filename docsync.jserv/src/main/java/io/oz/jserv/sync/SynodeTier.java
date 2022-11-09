@@ -1,0 +1,172 @@
+package io.oz.jserv.sync;
+
+import static io.odysz.common.LangExt.isNull;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
+import java.util.List;
+
+import org.apache.commons.io.FileUtils;
+import org.xml.sax.SAXException;
+
+import io.odysz.anson.x.AnsonException;
+import io.odysz.common.Utils;
+import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
+import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
+import io.odysz.semantic.jsession.SessionInf;
+import io.odysz.semantic.tier.docs.DocUtils;
+import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.DocsReq.A;
+import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
+import io.oz.jserv.sync.SyncFlag.SyncEvent;
+
+public class SynodeTier extends Synclientier {
+
+	protected DATranscxt localSt;
+	protected String connPriv;
+
+	public SynodeTier(String clientUri, String connId, ErrorCtx errCtx)
+			throws SemanticException, IOException {
+		super(clientUri, errCtx);
+		try {
+			localSt = new DATranscxt(connId);
+		} catch (SQLException | SAXException e) {
+			throw new SemanticException(
+					"Accessing local DB failed with conn %s. Only jnode should throw this."
+					+ "\nex: %s,\nmessage: %s",
+					connId, e.getClass().getName(), e.getMessage());
+		}
+		connPriv = connId;
+	}
+
+	@Override
+	public List<DocsResp> syncUp(List<? extends SyncDoc> videos, String workerId,
+			DocTableMeta meta, OnProcess onProc, OnDocOk... docOk)
+			throws SQLException, TransException, AnsonException, IOException {
+		SessionInf photoUser = client.ssInfo();
+		photoUser.device = workerId;
+
+		return pushBlocks(
+				meta, videos, photoUser, onProc,
+				isNull(docOk) ? new OnDocOk() {
+					@Override
+					public void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException {
+						String sync0 = doc.syncFlag; // rs.getString(meta.syncflag);
+						String share = doc.shareflag; // rs.getString(meta.shareflag);
+						String f = SyncFlag.to(sync0, SyncEvent.pushEnd, share);
+						try {
+							setLocalSync(localSt, connPriv, meta, doc, f, robot);
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
+					}
+				} : docOk[0],
+				errCtx);
+	}
+
+	/**
+	 * Downward synchronizing.
+	 * @param p
+	 * @param meta 
+	 * @return doc record (e.g. h_photos)
+	 * @throws AnsonException
+	 * @throws IOException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	SyncDoc synStreamPull(SyncDoc p, DocTableMeta meta)
+			throws AnsonException, IOException, TransException, SQLException {
+		if (!verifyDel(p, meta)) {
+			DocsyncReq req = (DocsyncReq) new DocsyncReq(robot.orgId)
+							.docTabl(meta.tbl)
+							.with(p.device(), p.fullpath())
+							.a(A.download);
+
+			String tempath = tempath(p);
+			String path = client.download(uri, Port.docsync, req, tempath);
+			
+			@SuppressWarnings("unused")
+			String pid = onCreateLocalFile(p, path, meta);
+		}
+		return p;
+	}
+	
+	protected String onCreateLocalFile(SyncDoc p, String path, DocTableMeta meta)
+			throws TransException, SQLException, IOException {
+		// suppress uri handling, but create a stub file
+		p.uri = "";
+
+		String pid = insertLocalFile(localSt, connPriv, path, p, robot, meta);
+		
+		// move
+		String targetPath = DocUtils.resolvExtroot(localSt, connPriv, pid, robot, meta);
+		if (verbose)
+			Utils.logi("   [SyncWorker.verbose: end stream download] %s\n-> %s", path, targetPath);
+		Files.move(Paths.get(path), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+
+		return pid;
+	}
+	
+	/** 
+	 * <p>Verify the local file.</p>
+	 * <p>If it is not expected, delete it.</p>
+	 * Two cases need this verification<br>
+	 * 1. the file was downloaded but the task of closing had failed<br>
+	 * 2. the previous downloading resulted in the error message and been saved as a file<br>
+	 * 
+	 * <p>This is differnet from the super one, and can not be called if this is
+	 * client doesn't works as jnode, because the uri target path can not be found
+	 * without a DB semantics handler.</p>
+	 * 
+	 * @param f
+	 * @param meta doc's table name, e.g. h_photos, used to resolve target file path if needed
+	 * @return true if file exists and mime and size can match (file moved to uri);
+	 * or false if file size and mime doesn't match (tempath deleted)
+	 * @throws IOException 
+	 */
+	@Override
+	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) throws IOException {
+		String pth = tempath(f);
+		File file = new File(pth);
+		if (!file.exists())
+			return false;
+
+		long size = f.size;
+		long length = file.length();
+
+		if ( size == length ) {
+			// move temporary file
+			String targetPath = resolvePrivRoot(f.uri, meta);
+			if (Docsyncer.debug)
+				Utils.logi("   %s\n-> %s", pth, targetPath);
+			try {
+				Files.move(Paths.get(pth), Paths.get(targetPath), StandardCopyOption.ATOMIC_MOVE);
+			} catch (Throwable t) {
+				Utils.warn("Moving temporary file failed: %s\n->%s\n  %s\n  %s",
+							pth, targetPath, f.device(), f.clientpath);
+			}
+			return true;
+		}
+		else {
+			try { FileUtils.delete(new File(pth)); }
+			catch (Exception ex) {}
+			return false;
+		}
+	}
+
+	public String resolvePrivRoot(String uri, DocTableMeta localMeta) {
+		return DocUtils.resolvePrivRoot(uri, localMeta, connPriv);
+	}
+
+}
