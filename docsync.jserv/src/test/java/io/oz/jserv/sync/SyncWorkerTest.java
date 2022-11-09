@@ -95,14 +95,14 @@ class SyncWorkerTest {
 
 	@Test
 	void testIds() throws SemanticException, SQLException, SAXException, IOException, AnsonException, SsException {
-		SyncWorker worker = new SyncWorker(Kyiv.JNode.mode, Kyiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta)
-				.login(Kyiv.JNode.passwd);
+		SyncWorker worker = new SyncWorker(Kyiv.Synode.mode, Kyiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
+				.login(Kyiv.Synode.passwd);
 		assertEquals("/sync/worker", worker.funcUri);
 		assertEquals(family, worker.org());
-		assertEquals(Kyiv.JNode.worker, worker.workerId);
-		assertEquals(Kyiv.JNode.worker, worker.robot().userId);
-		assertEquals(Kyiv.JNode.nodeId, worker.mac);
-		assertEquals(Kyiv.JNode.nodeId, worker.robot().deviceId);
+		assertEquals(Kyiv.Synode.worker, worker.workerId);
+		assertEquals(Kyiv.Synode.worker, worker.robot().userId);
+		assertEquals(Kyiv.Synode.nodeId, worker.mac);
+		assertEquals(Kyiv.Synode.nodeId, worker.robot().deviceId);
 	}
 
 	/**
@@ -125,11 +125,12 @@ class SyncWorkerTest {
 		SsException, GeneralSecurityException, SAXException {
 		
 		String clientpath = Kyiv.png;
-		SyncWorker worker = new SyncWorker(Kyiv.JNode.mode, Kyiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta)
-				.login(Kyiv.JNode.passwd);
+		SyncWorker worker = new SyncWorker(Kyiv.Synode.mode, Kyiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
+				.login(Kyiv.Synode.passwd);
 
 		// 0. clean failed tests
 		clean(worker, clientpath);
+		worker.synctier.tempRoot("synode.kyiv");
 		worker.synctier.del(meta, worker.nodeId(), clientpath);
 
 		// 1. create a public file at this private node
@@ -157,7 +158,7 @@ class SyncWorkerTest {
 			.sharedate(new Date());
 
 		// 2. synchronize to cloud hub ( hub <- kyiv )
-		Docsyncer.init(Kyiv.JNode.nodeId);
+		Docsyncer.init(Kyiv.Synode.nodeId);
 		SyncWorker.blocksize = 32 * 3;
 
 		String pid = createPhoto(conn, photo, worker.robot(), new PhotoMeta(defltSt.getSysConnId()));
@@ -166,8 +167,8 @@ class SyncWorkerTest {
 		worker.push();
 	
 		// 3. query my tasks as another jnode (kharkiv)
-		worker = new SyncWorker(Kharkiv.JNode.mode, Kharkiv.JNode.nodeId, conn, Kharkiv.JNode.worker, meta)
-				.login(Kharkiv.JNode.passwd);
+		worker = new SyncWorker(Kharkiv.Synode.mode, Kharkiv.Synode.nodeId, conn, Kharkiv.Synode.worker, meta)
+				.login(Kharkiv.Synode.passwd);
 		DocsResp resp = worker.queryTasks();
 		
 		AnResultset tasks = resp.rs(0);
@@ -177,8 +178,8 @@ class SyncWorkerTest {
 		tasks.beforeFirst();
 		while (tasks.next()) {
 			assertTrue( AnDevice.device.equals(tasks.getString(meta.device))
-					|| Kharkiv.JNode.nodeId.equals(tasks.getString(meta.device))
-					|| Kyiv.JNode.nodeId.equals(tasks.getString(meta.device))
+					|| Kharkiv.Synode.nodeId.equals(tasks.getString(meta.device))
+					|| Kyiv.Synode.nodeId.equals(tasks.getString(meta.device))
 					&& clientpath.equals(tasks.getString(meta.fullpath)));
 		}
 
@@ -199,8 +200,8 @@ class SyncWorkerTest {
 			.post(Docsyncer.onDel(clientpath, device))
 			.d(defltSt.instancontxt(conn, worker.robot()));
 		
-		worker.synctier.del(meta, Kyiv.JNode.nodeId, null);
-		worker.synctier.del(meta, Kharkiv.JNode.nodeId, null);
+		worker.synctier.del(meta, Kyiv.Synode.nodeId, null);
+		worker.synctier.del(meta, Kharkiv.Synode.nodeId, null);
 		worker.synctier.del(meta, AnDevice.device, null);
 	}
 
@@ -243,22 +244,23 @@ class SyncWorkerTest {
 	@Test
 	void testKharivPull() throws Exception {
 		String clientpath = Kyiv.png;
-		SyncWorker worker = new SyncWorker(Kharkiv.JNode.mode, Kharkiv.JNode.nodeId, conn, Kharkiv.JNode.worker, meta)
-				.login(Kharkiv.JNode.passwd);
+		SyncWorker worker = new SyncWorker(Kharkiv.Synode.mode, Kharkiv.Synode.nodeId, conn, Kharkiv.Synode.worker, meta)
+				.login(Kharkiv.Synode.passwd);
 
 		// 0. clean failed tests
 		clean(worker, clientpath);
+		worker.synctier.tempRoot("synode.kharkiv");
 
 		videoUpByApp(meta);
 
-		Docsyncer.init(Kharkiv.JNode.nodeId);
+		Docsyncer.init(Kharkiv.Synode.nodeId);
 
 		// downward synchronize the file, hub -> Kharkiv (working as main node)
 		SyncWorker.blocksize = 32 * 3;
 		DocTableMeta meta = new PhotoMeta(conn);
-		worker = new SyncWorker(SyncMode.main, Kharkiv.JNode.nodeId, conn, Kyiv.JNode.worker, meta);
+		worker = new SyncWorker(SyncMode.main, Kharkiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta);
 		ArrayList<DocsResp> ids = worker
-				.login(Kharkiv.JNode.passwd)
+				.login(Kharkiv.Synode.passwd)
 				.pull();
 		
 		if (ids == null || ids.size() == 0)
@@ -285,7 +287,8 @@ class SyncWorkerTest {
 		int bsize = 72 * 1024;
 
 		// app is using Synclientier for synchronizing 
-		Synclientier tier = new Synclientier(clientUri, conn, errLog)
+		Synclientier apptier = new Synclientier(clientUri, errLog)
+				.tempRoot("app.kharkiv")
 				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
@@ -301,17 +304,22 @@ class SyncWorkerTest {
 		List<DocsResp> resps = tier.pushBlocks( meta, videos, ssInf, null, new OnDocOk() {
 		*/
 		SyncDoc doc = (SyncDoc) new SyncDoc()
-					.share(tier.robot.uid(), Share.pub, new Date())
+					.share(apptier.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);
-		DocsResp resp = tier.insertSyncDoc(meta, doc, new OnDocOk() {
+		DocsResp resp = apptier.insertSyncDoc(meta, doc, new OnDocOk() {
 			@Override
 			public void ok(SyncDoc doc, AnsonResp resp)
 					throws IOException, AnsonException, TransException {
+				// update synode (Kharkiv) flag - app device do nothing here
 				String f = SyncFlag.to(Share.pub, SyncEvent.pushEnd, doc.shareflag());
 				try {
+					SynodeTier tier = (SynodeTier) new SynodeTier(clientUri, conn, errLog)
+							.tempRoot("synode.kharkiv")
+							.login(Kharkiv.Synode.worker, Kharkiv.Synode.nodeId, Kharkiv.Synode.passwd)
+							.blockSize(bsize);
 					Synclientier.setLocalSync(tier.localSt, tier.connPriv, meta, doc, f, tier.robot);
-				} catch (SQLException e1) {
+				} catch (SQLException | SsException e1) {
 					e1.printStackTrace();
 					fail(e1.getMessage());
 				}
@@ -322,7 +330,7 @@ class SyncWorkerTest {
 				DocsResp resp2 = null;
 				try {
 
-					resp2 = tier.insertSyncDoc(meta, doc,
+					resp2 = apptier.insertSyncDoc(meta, doc,
 					// resps2 = tier.pushBlocks(meta, videos, ssInf, null,
 					new OnDocOk() {
 						@Override
@@ -349,7 +357,7 @@ class SyncWorkerTest {
 		String docId = resp.doc.recId();
 		assertEquals(8, docId.length());
 
-		DocsResp rp = tier.selectDoc(meta, docId);
+		DocsResp rp = apptier.selectDoc(meta, docId);
 
 		assertTrue(LangExt.isblank(rp.msg()));
 		assertEquals(AnDevice.device, rp.doc.device());

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io_odysz.FilenameUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
@@ -37,7 +38,6 @@ import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.jsession.SessionInf;
-import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsPage;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
@@ -48,7 +48,6 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 /**
@@ -65,10 +64,10 @@ public class Synclientier extends Semantier {
 
 	protected SyncRobot robot;
 
-	protected DATranscxt localSt;
+	// protected DATranscxt localSt;
 
 	/** connection for update task records at private storage node */
-	String connPriv;
+	// String connPriv;
 
 	String tempDir;
 
@@ -86,36 +85,40 @@ public class Synclientier extends Semantier {
 	
 	/**
 	 * @param clientUri - the client function uri this instance will be used for.
-	 * @param client
 	 * @param errCtx
-	 * @param connId 
 	 * @throws IOException 
 	 * @throws SAXException 
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public Synclientier(String clientUri, SessionClient client, String connId, ErrorCtx errCtx)
+	public Synclientier(String clientUri, ErrorCtx errCtx)
 			throws SemanticException, IOException {
-		this.client = client;
+//		this.client = client;
 		this.errCtx = errCtx;
 		this.uri = clientUri;
 		
-		tempDir = "";
+		tempDir = ".";
 		
-		try {
-			localSt = new DATranscxt(connId);
-		} catch (SQLException | SAXException e) {
-			throw new SemanticException(
-					"Accessing local DB failed with conn %s. Only jnode should throw this."
-					+ "\nex: %s,\nmessage: %s",
-					connId, e.getClass().getName(), e.getMessage());
-		}
-		connPriv = connId;
+//		try {
+//			localSt = new DATranscxt(connId);
+//		} catch (SQLException | SAXException e) {
+//			throw new SemanticException(
+//					"Accessing local DB failed with conn %s. Only jnode should throw this."
+//					+ "\nex: %s,\nmessage: %s",
+//					connId, e.getClass().getName(), e.getMessage());
+//		}
+//		connPriv = connId;
 	}
 	
-	public Synclientier(String clientUri, String connId, ErrorCtx errCtx)
-			throws SemanticException, IOException {
-		this(clientUri, null, connId, errCtx);
+	/**
+	 * Temporary root will be changed after login.
+	 * 
+	 * @param root
+	 * @return this
+	 */
+	public Synclientier tempRoot(String root) {
+		tempDir = root; 
+		return this;
 	}
 	
 	/**
@@ -136,9 +139,10 @@ public class Synclientier extends Semantier {
 
 		client = Clients.login(workerId, pswd, device);
 
-		robot = new SyncRobot(workerId, null, workerId)
+		robot = new SyncRobot(workerId, workerId)
 				.device(device);
-		tempDir = String.format("io.oz.sync.%s.%s", SyncMode.priv, workerId); 
+		tempDir = FilenameUtils.concat(tempDir,
+				String.format("io.oz.sync.%s.%s", tempDir, SyncMode.priv, workerId));
 		
 		new File(tempDir).mkdirs(); 
 		
@@ -217,29 +221,20 @@ public class Synclientier extends Semantier {
 				meta, videos, photoUser, onProc,
 				isNull(docOk) ? new OnDocOk() {
 					@Override
-					public void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException {
-						String sync0 = doc.syncFlag; // rs.getString(meta.syncflag);
-						String share = doc.shareflag; // rs.getString(meta.shareflag);
-						String f = SyncFlag.to(sync0, SyncEvent.pushEnd, share);
-						try {
-							setLocalSync(localSt, connPriv, meta, doc, f, robot);
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
+					public void ok(SyncDoc doc, AnsonResp resp)
+							throws IOException, AnsonException, TransException { }
 				} : docOk[0],
 				errCtx);
 	}
 
-	public static void setLocalSync(DATranscxt localSt, String conn, DocTableMeta meta, SyncDoc doc, String syncflag, SyncRobot robot)
+	public static void setLocalSync(DATranscxt localSt, String conn,
+			DocTableMeta meta, SyncDoc doc, String syncflag, SyncRobot robot)
 			throws TransException, SQLException {
 		localSt.update(meta.tbl, robot)
 			.nv(meta.syncflag, SyncFlag.hub)
 			.whereEq(meta.pk, doc.recId)
 			.u(localSt.instancontxt(conn, robot));
 	}
-
 
 	/**
 	 * Downward synchronizing.
@@ -255,28 +250,48 @@ public class Synclientier extends Semantier {
 	SyncDoc synStreamPull(SyncDoc p, DocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 
-		if (!verifyDel(p, robot, meta)) {
+		if (!verifyDel(p, meta)) {
 			DocsyncReq req = (DocsyncReq) new DocsyncReq(robot.orgId)
 							.docTabl(meta.tbl)
 							.with(p.device(), p.fullpath())
 							.a(A.download);
 
 			String tempath = tempath(p);
-			String path = client.download(uri, Port.docsync, req, tempath);
-			
-			// suppress uri handling, but create a stub file
-			p.uri = "";
-
-			String pid = insertLocalFile(localSt, connPriv, path, p, robot, meta);
-			
-			// move
-			String targetPath = DocUtils.resolvExtroot(localSt, connPriv, pid, robot, meta);
-			if (verbose)
-				Utils.logi("   [SyncWorker.verbose: end stream download] %s\n-> %s", path, targetPath);
-			Files.move(Paths.get(path), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+			tempath = client.download(uri, Port.docsync, req, tempath);
 		}
 		return p;
 	}
+
+
+	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) throws IOException {
+		String pth = tempath(f);
+		File file = new File(pth);
+		if (!file.exists())
+			return false;
+
+		long size = f.size;
+		long length = file.length();
+
+		if ( size == length ) {
+			// move temporary file
+			String targetPath = ""; //resolvePrivRoot(f.uri, meta);
+			if (Docsyncer.debug)
+				Utils.logi("   %s\n-> %s", pth, targetPath);
+			try {
+				Files.move(Paths.get(pth), Paths.get(targetPath), StandardCopyOption.ATOMIC_MOVE);
+			} catch (Throwable t) {
+				Utils.warn("Moving temporary file failed: %s\n->%s\n  %s\n  %s",
+							pth, targetPath, f.device(), f.clientpath);
+			}
+			return true;
+		}
+		else {
+			try { FileUtils.delete(new File(pth)); }
+			catch (Exception ex) {}
+			return false;
+		}
+	}
+	
 
 	/**
 	 * Upward pushing with BlockChain
@@ -442,48 +457,6 @@ public class Synclientier extends Semantier {
 		}
 		return resp;
 	}
-		
-	/** 
-	 * <p>Verify the local file.</p>
-	 * <p>If it is not expected, delete it.</p>
-	 * Two cases need this verification<br>
-	 * 1. the file was downloaded but the task closing was failed<br>
-	 * 2. the previous downloading resulted in the error message and been saved as a file<br>
-	 * 
-	 * @param f
-	 * @param worker 
-	 * @param meta doc's table name, e.g. h_photos, used to resolve target file path if needed
-	 * @return true if file exists and mime and size match (file moved to uri);
-	 * or false if file size and mime doesn't match (tempath deleted)
-	 * @throws IOException 
-	 */
-	protected boolean verifyDel(SyncDoc f, SyncRobot worker, DocTableMeta meta) throws IOException {
-		String pth = tempath(f);
-		File file = new File(pth);
-		if (!file.exists())
-			return false;
-	
-		long size = f.size;
-		long length = file.length();
-
-		if ( size == length ) {
-			// move temporary file
-			String targetPath = resolvePrivRoot(f.uri, meta);
-			if (Docsyncer.debug)
-				Utils.logi("   %s\n-> %s", pth, targetPath);
-			try {
-				Files.move(Paths.get(pth), Paths.get(targetPath), StandardCopyOption.ATOMIC_MOVE);
-			} catch (Throwable t) {
-				Utils.warn("Moving temporary file failed: %s\n->%s\n  %s\n  %s", pth, targetPath, f.device(), f.clientpath);
-			}
-			return true;
-		}
-		else {
-			try { FileUtils.delete(new File(pth)); }
-			catch (Exception ex) {}
-			return false;
-		}
-	}
 
 	DocsResp synClose(SyncDoc p, DocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
@@ -587,10 +560,6 @@ public class Synclientier extends Semantier {
 	public String tempath(IFileDescriptor f) {
 		String tempath = f.fullpath().replaceAll(":", "");
 		return EnvPath.decodeUri(tempDir, tempath);
-	}
-
-	public String resolvePrivRoot(String uri, DocTableMeta localMeta) {
-		return DocUtils.resolvePrivRoot(uri, localMeta, connPriv);
 	}
 
 }
