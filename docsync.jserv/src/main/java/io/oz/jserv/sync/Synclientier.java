@@ -93,21 +93,10 @@ public class Synclientier extends Semantier {
 	 */
 	public Synclientier(String clientUri, ErrorCtx errCtx)
 			throws SemanticException, IOException {
-//		this.client = client;
 		this.errCtx = errCtx;
 		this.uri = clientUri;
 		
 		tempDir = ".";
-		
-//		try {
-//			localSt = new DATranscxt(connId);
-//		} catch (SQLException | SAXException e) {
-//			throw new SemanticException(
-//					"Accessing local DB failed with conn %s. Only jnode should throw this."
-//					+ "\nex: %s,\nmessage: %s",
-//					connId, e.getClass().getName(), e.getMessage());
-//		}
-//		connPriv = connId;
 	}
 	
 	/**
@@ -319,7 +308,7 @@ public class Synclientier extends Semantier {
         DocsResp resp0 = null;
         DocsResp respi = null;
 
-		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
+		String[] act = AnsonHeader.usrAct("albumtier.java", "sync", "c/sync", "push blocks");
 		AnsonHeader header = client.header().act(act);
 
 		List<DocsResp> reslts = new ArrayList<DocsResp>(videos.size());
@@ -332,7 +321,7 @@ public class Synclientier extends Semantier {
 
 			SyncDoc p = videos.get(px);
 			DocsReq req = new DocsReq(meta.tbl)
-					.folder("synctest")
+					.folder(p.folder())
 					.share(p)
 					.device(user.device)
 					.resetChain(true)

@@ -15,6 +15,7 @@ import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.ISemantext;
+import io.odysz.semantics.x.SemanticException;
 
 import static io.odysz.common.LangExt.*;
 
@@ -178,6 +179,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 
 	/**
 	 * Load local file, take current time as sharing date.
+	 * @param meta 
 	 * @param fullpath
 	 * @param owner
 	 * @param shareflag
@@ -199,6 +201,41 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 	 */
+
+	/**
+	 * @param d
+	 * @param fullpath
+	 * @param meta
+	 * @throws IOException checking local file failed
+	 * @throws SemanticException device is null
+	 */
+	public SyncDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) throws IOException, SemanticException {
+		this.docMeta = meta;
+		this.recId = d.recId();
+		this.pname = d.clientname();
+		this.uri = d.uri();
+		this.createDate = d.cdate();
+		this.mime = d.mime();
+		// this.size = rs.getLong(meta.size, 0);
+		this.fullpath(fullpath);
+		
+		this.device = d.device();
+		if (isblank(this.device))
+			throw new SemanticException("SyncDoc requires device is not null");
+
+		// this.isPublic = Share.pub.equals(rs.getString(meta.shareflag, null));
+		// this.clientpath =  rs.getString(meta.fullpath);
+		// this.device =  rs.getString(meta.device);
+		// this.folder = rs.getString(meta.folder);
+		
+//		try {
+//			this.sharedate = DateFormat.formatime(rs.getDate(meta.shareDate));
+//		} catch (Exception ex) {
+//			this.sharedate = p.cdate();;
+//		}
+//		this.shareby = rs.getString(meta.shareby);
+//		this.shareflag = rs.getString(meta.shareflag);
+	}
 
 	/**
 	 * Set client path and syncFlag according to rs, where rs columns should have been specified with {@link #nvCols(DocTableMeta)}.
