@@ -1,5 +1,6 @@
 package io.odysz.semantic.tier.docs;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import io.odysz.anson.AnsonField;
@@ -10,7 +11,6 @@ import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
-import io.odysz.transact.x.TransException;
 
 public class DocsReq extends AnsonBody {
 	public static class A {
@@ -34,60 +34,12 @@ public class DocsReq extends AnsonBody {
 
 		/**
 		 * Action: close synchronizing task
-		 * @see io.odysz.semantic.tier.docs.sync.SyncWorker#syncDoc(ISyncFile p, SessionInf worker, AnsonHeader header)
 		 */
 		public static final String synclose = "u/close";
 
 		// TODO serv
 		public static String selectDocs;
 	}
-
-//	public static class State {
-//		public static final String confirmed = "conf";
-//		public static final String published = "publ";
-//		public static final String closed = "clos";
-//		public static final String deprecated = "depr";
-//	}
-
-//	/** 
-//	 * <p>Doc state: shared as public file.</p>
-//	 * <p>docs created at hub:</p>
-//	 *          hub state --&gt; both<br>
-//	 * public : {@link #shareCloudHub} - (pulled) -&gt; {@link #sharePublic}<br/>
-//	 * private: {@link #shareCloudPrv} - (pulled) -&gt; {@link #sharePrivate}<br/>
-//	 * <p>docs created at private:</p>
-//	 *          private state --&gt; both<br>
-//	 * public : {@link #sharePrvHub}  - (pushed) -&gt; {@link #sharePublic}<br/>
-//	 * private: {@link #sharePrvTmp}  - (synced) -&gt; {@link #sharePrivate}<br/>
-//	 */
-//	public static final String sharePublic = "pub";
-
-//	/**
-//	 * <p>Doc state: uploaded to hub for sharing.</p>
-//	 * @see #sharePublic
-//	 */
-//	public static final String shareCloudHub = "hub";
-//	/**
-//	 * <p>temporary buffered at cloud.</p>
-//	 * @see #sharePublic
-//	 */
-//	public static final String shareCloudPrv = "h-p";
-//	/**
-//	 * privately shared
-//	 * @see #sharePublic
-//	 * */
-//	public static final String sharePrivate = "prv";
-//	/** 
-//	 * Doc state: doc is created as public and buffered at private node 
-//	 * @see #sharePublic
-//	 */
-//	public static final String sharePrvHub = "p-h";
-//	/**
-//	 * Doc state: doc is created as private at private node
-//	 * (state will turn to {@link #sharePrivate} by synchronizer). 
-//	 * @see #sharePublic
-//	 */
-//	public static final String sharePrvTmp = "p.t";
 
 	public PageInf page;
 
@@ -119,7 +71,6 @@ public class DocsReq extends AnsonBody {
 	public DocsReq() {
 		super(null, null);
 		blockSeq = -1;
-		
 		subFolder = "";
 	}
 
@@ -176,12 +127,19 @@ public class DocsReq extends AnsonBody {
 	public boolean reset;
 	public DocsReq org(String org) { this.org = org; return this; }
 
-//	public DocsReq querySync(IFileDescriptor p) {
-//		if (syncQueries == null)
-//			syncQueries = new ArrayList<SyncDoc>();
-//		syncQueries.add(new SyncDoc(p));
-//		return this;
-//	}
+	/**
+	 * @param p
+	 * @return this
+	 * @throws IOException see {@link SyncDoc} constructor
+	 * @throws SemanticException see {@link SyncDoc} constructor 
+	 */
+	public DocsReq querySync(IFileDescriptor p) throws IOException, SemanticException {
+		if (syncQueries == null)
+			syncQueries = new ArrayList<SyncDoc>();
+		syncQueries.add(new SyncDoc(p, clientpath, null));
+
+		return this;
+	}
 
 	public DocsReq syncing(DocsPage page) {
 		this.syncing = page;
@@ -290,7 +248,7 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public void querySync(IFileDescriptor p) throws TransException {
-		throw new TransException("TODO");
-	}
+//	public void querySync(IFileDescriptor p) throws TransException {
+//		throw new TransException("TODO");
+//	}
 }
