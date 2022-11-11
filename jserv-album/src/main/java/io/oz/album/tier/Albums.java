@@ -379,7 +379,7 @@ public class Albums extends ServPort<AlbumReq> {
 				// .orderby(orders)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
-		AlbumResp album = new AlbumResp().syncRecords("sync-temp-id", rs);
+		AlbumResp album = (AlbumResp) new AlbumResp().syncRecords("sync-temp-id", rs);
 
 		return album;
 	}

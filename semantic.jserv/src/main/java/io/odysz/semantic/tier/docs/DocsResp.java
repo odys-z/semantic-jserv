@@ -1,6 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
@@ -18,6 +19,20 @@ public class DocsResp extends AnsonResp {
 	public SyncDoc doc;
 
 	DocsPage syncing;
+
+	HashMap<String, Object> clientPaths;
+	public HashMap<String, Object> syncPaths() { return clientPaths; }
+	
+	public DocsResp syncRecords(String collectId, AnResultset rs) throws SQLException {
+		clientPaths = new HashMap<String, Object>();
+
+		rs.beforeFirst();
+		while(rs.next()) {
+			clientPaths.put(rs.getString("clientpath"), rs.getString("syncFlag"));
+		}
+
+		return this;
+	}
 
 	public DocsPage syncing() { return syncing; }
 	public DocsResp syncing(DocsPage page) {

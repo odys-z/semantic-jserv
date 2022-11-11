@@ -148,7 +148,7 @@ public class SynodeTier extends Synclientier {
 		if ( size == length ) {
 			// move temporary file
 			String targetPath = resolvePrivRoot(f.uri, meta);
-			if (Docsyncer.debug)
+			if (Docsyncer.verbose)
 				Utils.logi("   %s\n-> %s", pth, targetPath);
 			try {
 				Files.move(Paths.get(pth), Paths.get(targetPath), StandardCopyOption.ATOMIC_MOVE);

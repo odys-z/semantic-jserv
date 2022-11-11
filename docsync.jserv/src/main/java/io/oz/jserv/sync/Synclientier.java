@@ -269,7 +269,7 @@ public class Synclientier extends Semantier {
 		if ( size == length ) {
 			// move temporary file
 			String targetPath = ""; //resolvePrivRoot(f.uri, meta);
-			if (Docsyncer.debug)
+			if (Docsyncer.verbose)
 				Utils.logi("   %s\n-> %s", pth, targetPath);
 			try {
 				Files.move(Paths.get(pth), Paths.get(targetPath), StandardCopyOption.ATOMIC_MOVE);
@@ -531,15 +531,21 @@ public class Synclientier extends Semantier {
 		return isNull(resps) ? null : resps.get(0);
 	}
 	
-	public DocsResp queryDocs(List<? extends IFileDescriptor> files, DocsPage page)
+	public DocsResp queryDocs(List<? extends SyncDoc> files, DocsPage page, DocTableMeta meta)
 			throws TransException, IOException, SQLException {
 		String[] act = AnsonHeader.usrAct("album.java", "query", "r/states", "query sync");
 		AnsonHeader header = client.header().act(act);
 
-		DocsReq req = (DocsReq) new DocsReq().syncing(page).a(A.selectDocs);
+		DocsReq req = (DocsReq) new DocsReq()
+				.syncing(page)
+				.docTabl(meta.tbl)
+				.device(page.device)
+				.a(A.records);
 
 		for (int i = page.start; i < page.end & i < files.size(); i++) {
 			IFileDescriptor p = files.get(i);
+			if (isblank(p.fullpath()))
+				continue;
 			req.querySync(p);
 		}
 

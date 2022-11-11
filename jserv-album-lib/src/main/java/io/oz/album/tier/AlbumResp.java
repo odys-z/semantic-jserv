@@ -2,7 +2,6 @@ package io.oz.album.tier;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -22,9 +21,6 @@ public class AlbumResp extends DocsResp {
 	ArrayList<Photo[]> photos;
 	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
 
-	HashMap<String, Object> clientPaths;
-	public HashMap<String, Object> syncPaths() { return clientPaths; }
-	
 	Photo photo;
 	public Photo photo() { return photo; }
 
@@ -112,17 +108,6 @@ public class AlbumResp extends DocsResp {
 		return this;
 	}
 	
-	public AlbumResp syncRecords(String collectId, AnResultset rs) throws SQLException {
-		clientPaths = new HashMap<String, Object>();
-
-		rs.beforeFirst();
-		while(rs.next()) {
-			clientPaths.put(rs.getString("clientpath"), rs.getString("syncFlag"));
-		}
-
-		return this;
-	}
-
 	public AlbumResp profiles(Profiles profiles) {
 		this.profils = profiles;
 		return this;
