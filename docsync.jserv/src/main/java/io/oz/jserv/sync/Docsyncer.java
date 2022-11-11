@@ -58,7 +58,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	/** Flag of verbose and doc-writing privilege.
 	 *  <h6>configuration</h6>config.xml/t[id=default]/k=docsync.debug
 	 *  */
-	public static boolean debug = true;
+	public static boolean verbose = true;
 
 	static HashMap<String, TableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
@@ -93,7 +93,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 			robot = new SyncRobot("Robot Syncer", "");
 			
-			debug = Configs.getBoolean("docsync.debug");
+			verbose = Configs.getBoolean("docsync.debug");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
@@ -219,7 +219,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	protected void onGet(AnsonMsg<DocsReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		//
-		if (debug)
+		if (verbose)
 			Utils.logi("[Docsyncer.debug/album.less GET]");
 
 		try {
@@ -230,7 +230,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
-			if (debug) {
+			if (verbose) {
 				Utils.warn("[Docsyncer.debug]");
 				e.printStackTrace();
 			}
@@ -268,7 +268,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				if (A.records.equals(a))
 					rsp = queryTasks(jreq, usr);
 				else if (A.del.equals(a))
-					rsp = delDocRec(jmsg.body(0), usr, debug);
+					rsp = delDocRec(jmsg.body(0), usr, verbose);
 				else if (A.synclose.equals(a))
 					rsp = synclose(jreq, usr);
 				else {
@@ -294,8 +294,11 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 			if (resp != null)
 				write(resp, ok(rsp));
-		} catch (SQLException | TransException e) {
-			e.printStackTrace();
+		} catch (SQLException | SemanticException e) {
+			if (verbose) e.printStackTrace();
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
+		} catch (TransException e) {
+			if (verbose) e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));

@@ -1,5 +1,7 @@
 package io.oz.album.tier;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
@@ -8,8 +10,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.transact.sql.parts.AbsPart;
@@ -164,6 +168,30 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 
 	public SyncDoc shareflag(String share) {
 		shareflag = share;
+		return this;
+	}
+
+	@SuppressWarnings("serial")
+	public Photo create(String fullpath) throws IOException {
+		File png = new File(fullpath);
+		FileInputStream ifs = new FileInputStream(png);
+		pname = png.getName();
+
+		String b64 = AESHelper.encode64(ifs, 216); // 12 | 216, length = 219
+		uri = b64;
+		while (b64 != null) {
+			b64 = AESHelper.encode64(ifs, 216); // FIXME this will padding useless bytes, what is happening when the file is saved at server side?
+			if (b64 != null)
+				uri += b64;
+		}
+		ifs.close();
+
+		this.clientpath = fullpath;
+		exif = new ArrayList<String>() {
+			{add("location:вулиця Лаврська' 27' Київ");};
+			{add("camera:Bayraktar TB2");}};
+		share("ody@kyiv", Share.pub, new Date());
+
 		return this;
 	}
 

@@ -134,28 +134,7 @@ class SyncWorkerTest {
 		worker.synctier.del(meta, worker.nodeId(), clientpath);
 
 		// 1. create a public file at this private node
-		Photo photo = new Photo();
-
-		File png = new File(clientpath);
-		FileInputStream ifs = new FileInputStream(png);
-		photo.pname = png.getName();
-
-		String b64 = AESHelper.encode64(ifs, 216); // 12 | 216, length = 219
-		photo.uri = b64;
-		while (b64 != null) {
-			b64 = AESHelper.encode64(ifs, 216); // FIXME this will padding useless bytes, what is happening when the file is saved at server side?
-			if (b64 != null)
-				photo.uri += b64;
-		}
-		ifs.close();
-
-		photo.clientpath = clientpath;
-		photo.exif = new ArrayList<String>() {
-			{add("location:вулиця Лаврська' 27' Київ");};
-			{add("camera:Bayraktar TB2");}};
-		photo.shareflag(DocTableMeta.Share.pub)
-			.shareby("ody@kyiv")
-			.sharedate(new Date());
+		Photo photo = new Photo().create(clientpath);
 
 		// 2. synchronize to cloud hub ( hub <- kyiv )
 		Docsyncer.init(Kyiv.Synode.nodeId);

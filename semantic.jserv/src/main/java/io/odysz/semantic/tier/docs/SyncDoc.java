@@ -110,8 +110,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return sharedate(DateFormat.format(date));
 	}
 	
-	public SyncDoc share(String shareby, String s, String sharedate) {
-		this.shareflag = s;
+	public SyncDoc share(String shareby, String flag, String sharedate) {
+		this.shareflag = flag;
 		this.shareby = shareby;
 		sharedate(sharedate);
 		return this;
@@ -221,7 +221,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		
 		this.device = d.device();
 		if (isblank(this.device))
-			throw new SemanticException("SyncDoc requires device is not null");
+			throw new SemanticException("SyncDoc requires device can not be null");
 
 		// this.isPublic = Share.pub.equals(rs.getString(meta.shareflag, null));
 		// this.clientpath =  rs.getString(meta.fullpath);
