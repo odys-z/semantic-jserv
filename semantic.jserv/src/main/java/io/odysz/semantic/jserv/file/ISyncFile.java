@@ -5,16 +5,22 @@ package io.odysz.semantic.jserv.file;
  * 
  * @author odys-z@github.com
  *
- */
 public interface ISyncFile {
 
 	String recId();
 
 	boolean isPublic();
 
-	/** Equivalent to client path */
-	String fullpath();
-	/** device name */
+	/** Equivalent to client path * /
+	String clientpath();
+
+	/** device name * /
 	String device();
 
+	/** File uri * /
+	String uri();
+
+	String mime();
+
 }
+*/

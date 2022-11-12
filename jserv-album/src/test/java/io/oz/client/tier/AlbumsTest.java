@@ -32,7 +32,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
-import io.odysz.semantic.tier.docs.SyncRec;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -42,6 +42,7 @@ import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
 
 /**
+ * @deprecated
  * <pre>
  * INSERT INTO h_photos (pid,uri,pname,pdate,cdate,tags,oper,opertime) VALUES
 	 ('test-00000','omni/ody/2019_08/DSC_0005.JPG','DSC_0005.JPG','2019-08-24','2021-08-24','#Qing Hai Lake','ody','2022-01-13'),
@@ -94,10 +95,8 @@ class AlbumsTest {
 			Anson.verbose = false;
 
 			errCtx = new ErrorCtx() {
-				// @Override public void onError(MsgCode c, AnsonResp rep) { fail(rep.msg()); }
-
 				@Override
-				public void onError(MsgCode c, String rep) {
+				public void err(MsgCode c, String rep, String...args) {
 					fail(String.format("code %s, msg: %s", c.name(), rep));
 				}
 			};
@@ -250,7 +249,15 @@ class AlbumsTest {
 
 			@Override public String clientname() { return filename; }
 
-			@Override public String cdate() { return null; } 
+			@Override public String cdate() { return null; }
+
+			@Override public String recId() { return null; }
+
+			@Override public String mime() { return null; }
+
+			@Override public String device() { return null; }
+
+			@Override public String uri() { return null; }
 		});
 
 		try {
@@ -271,7 +278,7 @@ class AlbumsTest {
 
 		Thread.sleep(2000); // wait for exif parsing at server side
 		AlbumResp rep = tier.selectPhotoRec(myId, errCtx);
-		assertEquals("2019_08", rep.photo().month());
+		assertEquals("2019_08", rep.photo().folder());
 	}
 
 	@Test
@@ -284,22 +291,22 @@ class AlbumsTest {
 		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx)
 								.blockSize(bsize);
 
-		List<SyncRec> videos = new ArrayList<SyncRec>();
-		videos.add((SyncRec) new SyncRec()
+		List<SyncDoc> videos = new ArrayList<SyncDoc>();
+		videos.add((SyncDoc) new SyncDoc()
 					.fullpath(FilenameUtils.concat(localFolder, filename)));
 
 		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = "device-test";
 
 		tier.syncVideos( videos, photoUser,
-			(c, v, resp) -> {
-				fail("duplicate checking not working");
+			(ix, total, c, pth, resp) -> {
+				fail("Duplicate checking not working on " + pth);
 			},
 			new ErrorCtx() {
 				@Override
-				public void onError(MsgCode c, String msg) {
+				public void err(MsgCode c, String msg, String ...args) {
 					if (!MsgCode.exGeneral.equals(c))
-						fail("Not expected code");
+						fail("Not expected error for this handling.");
 
 					tier.del("device-test", videos.get(0).fullpath());
 					List<DocsResp> resps = tier.syncVideos(videos, photoUser, null);
@@ -307,7 +314,7 @@ class AlbumsTest {
 					assertEquals(1, resps.size());
 
 					for (DocsResp d : resps) {
-						String docId = d.recId();
+						String docId = d.doc.recId();
 						assertEquals(8, docId.length());
 
 						AlbumResp rp = tier.selectPhotoRec(docId);

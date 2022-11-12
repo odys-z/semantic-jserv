@@ -8,10 +8,12 @@ import java.util.List;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.Anson;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -36,21 +38,36 @@ public class JUser extends SemanticObject implements IUser {
 	 * @author odys-z@github.com
 	 */
 	public static class JUserMeta extends TableMeta {
-		public JUserMeta(String tbl, String... conn) {
+
+		public JUserMeta(String... conn) {
 			super("a_users", conn);
-			// this.tbl = "a_user";
+			this.tbl = "a_users";
 			this.pk = "userId";
 			this.uname = "userName";
 			this.pswd = "pswd";
 			this.iv = "encAuxiliary";
+			this.org = "orgId";
+			this.orgName = "orgName";
+			this.role = "roleId";
+			this.roleName = "roleName";
 		}
 
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-		// public String tbl; // = "a_user";
 		public String pk; // = "userId";
 		public String uname; // = "userName";
 		public String pswd; // = "pswd";
 		public String iv; // = "encAuxiliary";
+		/** v1.4.11, column of org id */
+		public String org;
+		/** v1.4.11, column of org name */
+		public String orgName;
+		/** v1.4.11, column of role id */
+		public String role;
+		/** v1.4.11, column of role name */
+		public String roleName;
+
+		public String orgTbl = "a_orgs";
+		public String roleTbl = "a_roles";
 
 		public JUserMeta userName(String unamefield) {
 			uname = unamefield;
@@ -67,16 +84,29 @@ public class JUser extends SemanticObject implements IUser {
 			return this;
 		}
 	}
-
+	
 	protected String ssid;
 	protected String uid;
+	protected String org;
+	protected String role;
 	private String pswd;
 	@SuppressWarnings("unused")
 	private String usrName;
+	
+	/** v1.4.11 */
+	@Override
+	public String orgId() { return org; }
+	/** v1.4.11 */
+	@Override
+	public String roleId() { return role; }
 
 	private long touched;
-	private String funcId;
-	private String funcName;
+	/** current action's business function */
+	String funcId;
+	String funcName;
+	String userName;
+	String roleName;
+	String orgName;
 
 	private static DATranscxt logsctx;
 	private static String[] connss;
@@ -224,6 +254,26 @@ public class JUser extends SemanticObject implements IUser {
 	
 	@Override
 	public IUser validatePassword() throws SsException, SQLException, TransException {
+		return this;
+	}
+	
+	@Override
+	public IUser onCreate(Anson with) throws SsException {
+		if (with instanceof AnResultset) {
+			JUserMeta meta = (JUserMeta) meta();
+			AnResultset rs = (AnResultset) with;
+			try {
+				rs.beforeFirst().next();
+				userName = rs.getString(meta.uname);
+				role = rs.getString(meta.role);
+				org = rs.getString(meta.org);
+				roleName = rs.getString(meta.roleName);
+				orgName = rs.getString(meta.orgName);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
 		return this;
 	}
 }

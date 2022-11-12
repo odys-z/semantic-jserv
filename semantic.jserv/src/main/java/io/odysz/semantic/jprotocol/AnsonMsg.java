@@ -51,7 +51,10 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			datasetier("ds.tier"),
 			/** document manage's semantic tier */
 			docstier("docs.tier"),
-			/** experimental */
+			/**
+			 * <h5>[experimental]</h5>
+			 * This port is implemented by extension docsync.jserv.
+			 * */
 			docsync("docs.sync");
 
 		static {
@@ -92,11 +95,11 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	};
 
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext;
-		public boolean eq(String code) {
-			if (code == null) return false;
-			MsgCode c = MsgCode.valueOf(MsgCode.class, code);
-			return this == c;
-		}
+//		public boolean eq(String code) {
+//			if (code == null) return false;
+//			MsgCode c = MsgCode.valueOf(MsgCode.class, code);
+//			return this == c;
+//		}
 	};
 
 	/**The default IPort implelemtation.

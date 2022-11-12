@@ -6,9 +6,10 @@ import java.sql.SQLException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 
 public class JProtocol {
 	/** Typical operation's common names */
@@ -30,9 +31,17 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
-		void proc(int listIndx, int totalBlocks, DocsResp blockResp) throws IOException, AnsonException, SemanticException;
+		// void proc(int listIndx, int totalBlocks, DocsResp blockResp) throws IOException, AnsonException, SemanticException;
+
+		void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
+			throws IOException, AnsonException, SemanticException;
 	}
 
+	@FunctionalInterface
+	public interface OnDocOk {
+		void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException;
+	}
+	
 	@FunctionalInterface
 	public interface OnError { void err(MsgCode ok, String msg, String ... args ); }
 
@@ -80,5 +89,4 @@ public class JProtocol {
 									.body(obj);
 		return msg;
 	}
-
 }

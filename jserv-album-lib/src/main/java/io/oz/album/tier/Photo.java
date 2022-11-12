@@ -8,43 +8,26 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.stream.Collectors;
 
-import io.odysz.anson.Anson;
-import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
-import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.jserv.file.ISyncFile;
-import io.odysz.semantics.x.SemanticException;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 
-/**Server side and jprotocol oriented data record - not BaseFile used by file picker. 
+import static io.odysz.common.LangExt.isblank;
+/**
+ * Server side and jprotocol oriented data record - not BaseFile used by file picker (at Android client). 
+ * 
  * @author ody
  *
  */
-public class Photo extends Anson implements ISyncFile {
-	public String recId;
-	public String recId() { return recId; }
-
-	public String pname;
-
-	public String clientpath;
-
-	public String device;
-	
-	public int syncFlag;
-	/** usally reported by client file system, overriden by exif date, if exits */
-	public String createDate;
-	
-	@AnsonField(shortenString=true)
-	public String uri;
-	public String shareby;
-	public String sharedate;
+public class Photo extends SyncDoc implements IFileDescriptor {
 	public String geox;
 	public String geoy;
-	public String sharer;
-
+	
+	/** usually ignored when sending request */
 	public ArrayList<String> exif;
 	public String exif() {
 		return exif == null ? null
@@ -52,13 +35,6 @@ public class Photo extends Anson implements ISyncFile {
 				 .collect(Collectors.joining(","));
 	}
 
-	boolean isPublic;
-	@Override
-	public boolean isPublic() {
-		return isPublic;
-	}
-
-	public String mime;
 	/** image size */
 	public int[] widthHeight;
 	/** reduction of image size */
@@ -88,15 +64,13 @@ public class Photo extends Anson implements ISyncFile {
 
 	public String albumId;
 	
-	String month;
-	
 	public Photo() {}
 	
 	public Photo(AnResultset rs) throws SQLException {
 		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
 		this.uri = rs.getString("uri");
-		this.month = rs.getString("folder");
+		this.folder = rs.getString("folder");
 		this.createDate = rs.getString("pdate");
 		this.shareby = rs.getString("owner");
 		this.geox = rs.getString("geox");
@@ -131,51 +105,66 @@ public class Photo extends Anson implements ISyncFile {
 	 */
 	public Photo asSyncRec(AnResultset rs) throws SQLException {
 		this.clientpath = rs.getString("clientpath"); 
-		this.syncFlag = rs.getInt("syncFlag"); 
+		this.syncFlag = rs.getString("syncFlag"); 
 		return this;
 	}
 
-	public String month() throws IOException, SemanticException  {
-		if (month == null)
+	public String folder() {
+		if (folder == null)
 			photoDate();
-		return month;
+		return folder;
 	}
 
-	public AbsPart photoDate() throws IOException, SemanticException {
+	public AbsPart photoDate() {
 		try {
-			if (!LangExt.isblank(createDate)) {
+			if (!isblank(createDate)) {
 				Date d = DateFormat.parse(createDate); 
-				month = DateFormat.formatYYmm(d);
+				folder = DateFormat.formatYYmm(d);
 				return new ExprPart("'" + createDate + "'");
 			}
 			else {
 				Date d = new Date();
-				month = DateFormat.formatYYmm(d);
+				folder = DateFormat.formatYYmm(d);
 				return Funcall.now();
 			}
 		} catch (ParseException e ) {
 			e.printStackTrace();
-			throw new SemanticException(e.getMessage());
+			Date d = new Date();
+			folder = DateFormat.formatYYmm(d);
+			return Funcall.now();
 		}
 	}
 
 	public void month(Date d) {
-		month = DateFormat.formatYYmm(d);
+		folder = DateFormat.formatYYmm(d);
 	}
 
 	public void month(FileTime d) {
-		month = DateFormat.formatYYmm(d);
+		folder = DateFormat.formatYYmm(d);
+	}
+
+	public void month(String d) {
+		try {
+			folder = DateFormat.formatYYmm(DateFormat.parse(d));
+		} catch (ParseException e) {
+			e.printStackTrace();
+			folder = DateFormat.formatYYmm(new Date());
+		}
 	}
 
 	@Override
-	public String fullpath() {
-		return clientpath;
+	public IFileDescriptor fullpath(String clientpath) throws IOException {
+		super.fullpath(clientpath);
+
+		if (isblank(folder)) {
+			month(cdate());
+		}
+		return this;
 	}
 
-	@Override
-	public String device() {
-		return device;
+	public SyncDoc shareflag(String share) {
+		shareflag = share;
+		return this;
 	}
-
 
 }

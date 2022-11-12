@@ -25,7 +25,7 @@ import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
-import io.odysz.semantic.tier.docs.SyncingPage;
+import io.odysz.semantic.tier.docs.DocsPage;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.AlbumPort;
 import io.oz.album.tier.AlbumReq;
@@ -33,6 +33,11 @@ import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
 
+/**
+ * @deprecated
+ * @author odys-z@github.com
+ *
+ */
 public class AlbumClientier extends Semantier {
 
 	private SessionClient client;
@@ -86,7 +91,8 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 	
-	public AlbumClientier asyncVideos(List<? extends IFileDescriptor> videos,
+	/*
+	public AlbumClientier asyncVideos_not_used(List<? extends IFileDescriptor> videos,
 				SessionInf user, OnProcess onProc, OnOk onOk, OnError onErr) {
 
 		new Thread(new Runnable() {
@@ -104,7 +110,16 @@ public class AlbumClientier extends Semantier {
 	    } } ).start();
 		return this;
 	}
+	*/
 	
+	/**
+	 * 
+	 * @param videos
+	 * @param user
+	 * @param proc
+	 * @param onErr
+	 * @return
+	 */
 	public List<DocsResp> syncVideos(List<? extends IFileDescriptor> videos,
 				SessionInf user, OnProcess proc, ErrorCtx ... onErr) {
 
@@ -129,25 +144,25 @@ public class AlbumClientier extends Semantier {
 				resp = client.commit(q, errHandler);
 
 				String pth = p.fullpath();
-				if (!pth.equals(resp.fullpath()))
-					Utils.warn("resp not reply with exactly the same path: %s", resp.fullpath());
+				if (!pth.equals(resp.doc.fullpath()))
+					Utils.warn("Resp is not replied with exactly the same path: %s", resp.doc.fullpath());
 
 				int totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
-				if (proc != null) proc.proc(px, totalBlocks, resp);
+				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp);
 
 				int seq = 0;
 				FileInputStream ifs = new FileInputStream(new File(p.fullpath()));
 				try {
 					String b64 = AESHelper.encode64(ifs, blocksize);
 					while (b64 != null) {
-						req = new DocsReq().blockUp(seq, resp, b64, user);
+						req = new DocsReq().blockUp(seq, p, b64, user);
 						seq++;
 
 						q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 									.header(header);
 
 						resp = client.commit(q, errHandler);
-						if (proc != null) proc.proc(px, totalBlocks, resp);
+						if (proc != null) proc.proc(videos.size(), px, seq, totalBlocks, resp);
 
 						b64 = AESHelper.encode64(ifs, blocksize);
 					}
@@ -156,7 +171,7 @@ public class AlbumClientier extends Semantier {
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 								.header(header);
 					resp = client.commit(q, errHandler);
-					if (proc != null) proc.proc(px, totalBlocks, resp);
+					if (proc != null) proc.proc(videos.size(), px, seq, totalBlocks, resp);
 				}
 				catch (Exception ex) {
 					Utils.warn(ex.getMessage());
@@ -166,7 +181,7 @@ public class AlbumClientier extends Semantier {
 					q = client.<DocsReq>userReq(clientUri, AlbumPort.album, req)
 								.header(header);
 					resp = client.commit(q, errHandler);
-					if (proc != null) proc.proc(px, totalBlocks, resp);
+					if (proc != null) proc.proc(videos.size(), px, seq, totalBlocks, resp);
 
 					throw ex;
 				}
@@ -177,9 +192,9 @@ public class AlbumClientier extends Semantier {
 
 			return reslts;
 		} catch (IOException e) {
-			errHandler.onError(MsgCode.exIo, e.getClass().getName() + " " + e.getMessage());
+			errHandler.err(MsgCode.exIo, e.getClass().getName() + " " + e.getMessage());
 		} catch (AnsonException | SemanticException e) { 
-			errHandler.onError(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
+			errHandler.err(MsgCode.exGeneral, e.getClass().getName() + " " + e.getMessage());
 		}
 		return null;
 	}
@@ -213,7 +228,7 @@ public class AlbumClientier extends Semantier {
 	 * @param onErr
 	 * @return this
 	 */
-	public AlbumClientier asyncQuerySyncs(List<? extends IFileDescriptor> files, SyncingPage page, OnOk onOk, OnError onErr) {
+	public AlbumClientier asyncQuerySyncs(List<? extends IFileDescriptor> files, DocsPage page, OnOk onOk, OnError onErr) {
 		new Thread(new Runnable() {
 	        public void run() {
 	        DocsResp resp = null;
@@ -227,7 +242,7 @@ public class AlbumClientier extends Semantier {
 
 				for (int i = page.start; i < page.end & i < files.size(); i++) {
 					IFileDescriptor p = files.get(i);
-					req.querySync(p);
+					// req.querySync(p);
 				}
 
 				AnsonMsg<AlbumReq> q = client.<AlbumReq>userReq(clientUri, AlbumPort.album, req)
@@ -235,7 +250,7 @@ public class AlbumClientier extends Semantier {
 
 				resp = client.commit(q, new ErrorCtx() {
 					@Override
-					public void onError(MsgCode code, String msg) {
+					public void err(MsgCode code, String msg, String ...args) {
 						onErr.err(code, msg);
 					}
 				});
@@ -251,6 +266,19 @@ public class AlbumClientier extends Semantier {
 		return null;
 	}
 
+	/**
+	 * push photos
+	 * 
+	 * <b>Issue:</b>
+	 * Can this been replaced by SyncWorker.push() ?
+	 * 
+	 * @param photos
+	 * @param user
+	 * @return synchronizing result
+	 * @throws SemanticException
+	 * @throws IOException
+	 * @throws AnsonException
+	 */
 	public List<AlbumResp> syncPhotos(List<? extends IFileDescriptor> photos, SessionInf user)
 			throws SemanticException, IOException, AnsonException {
 		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
@@ -305,7 +333,7 @@ public class AlbumClientier extends Semantier {
 						// @Override public void onError(MsgCode code, AnsonResp obj) { onErr.err(code, obj.msg()); }
 
 						@Override
-						public void onError(MsgCode code, String msg) {
+						public void err(MsgCode code, String msg, String ... args) {
 							onErr.err(code, msg);
 						}
 					});
@@ -341,9 +369,9 @@ public class AlbumClientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errHandler.onError(MsgCode.exSemantic, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+			errHandler.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
-			errHandler.onError(MsgCode.exIo, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+			errHandler.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		}
 		return resp;
 	}
@@ -353,6 +381,12 @@ public class AlbumClientier extends Semantier {
 		return this;
 	}
 
+	/**
+	 * @deprecated replaced by {@link Synclientier#del(String, String)}
+	 * @param device
+	 * @param clientpath
+	 * @return
+	 */
 	public DocsResp del(String device, String clientpath) {
 		AlbumReq req = new AlbumReq().del(device, clientpath);
 
@@ -365,9 +399,9 @@ public class AlbumClientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errCtx.onError(MsgCode.exSemantic, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+			errCtx.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
-			errCtx.onError(MsgCode.exIo, e.getMessage() + " " + e.getCause() == null ? "" : e.getCause().getMessage());
+			errCtx.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		}
 		return resp;
 	}

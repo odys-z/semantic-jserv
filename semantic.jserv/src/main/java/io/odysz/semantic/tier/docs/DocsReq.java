@@ -1,12 +1,12 @@
 package io.odysz.semantic.tier.docs;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import io.odysz.anson.AnsonField;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jserv.file.ISyncFile;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -24,6 +24,7 @@ public class DocsReq extends AnsonBody {
 		public static final String rec = "r/rec";
 		public static final String download = "r/download";
 		public static final String upload = "c";
+		/** request for deleting docs */
 		public static final String del = "d";
 
 		public static final String blockStart = "c/b/start";
@@ -33,45 +34,65 @@ public class DocsReq extends AnsonBody {
 
 		/**
 		 * Action: close synchronizing task
-		 * @see io.odysz.semantic.tier.docs.sync.SyncWorker#syncDoc(ISyncFile p, SessionInf worker, AnsonHeader header)
 		 */
 		public static final String synclose = "u/close";
-	}
 
-	public static class State {
-		public static final String confirmed = "conf";
-		public static final String published = "publ";
-		public static final String closed = "clos";
-		public static final String deprecated = "depr";
+		// TODO serv
+		public static String selectDocs;
 	}
 
 	public PageInf page;
-	
+
+	public String docTabl;
 	public String docId;
 	public String docName;
 	public String createDate;
 	public String clientpath;
 	public String mime;
+	public String subFolder;
 
 	@AnsonField(shortenString = true)
 	public String uri64;
 
 	String[] deletings;
 
-	String docState;
+	/**
+	 * Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub}
+	 * or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}.
+	 */
+	public String shareflag;
+	public String shareby;
+	public String shareDate;
 	
+	/**
+	 * <b>Note: use {@link #DocsReq(String)}</b><br>
+	 * Don't use this constructor - should only be used by json deserializer. 
+	 */
 	public DocsReq() {
 		super(null, null);
 		blockSeq = -1;
+		subFolder = "";
+	}
+
+	/**
+	 * @param syncTask i.e. docTable name, could be a design problem?
+	 */
+	public DocsReq(String syncTask) {
+		super(null, null);
+		blockSeq = -1;
+		docTabl = syncTask;
+		subFolder = "";
 	}
 
 	protected DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
+		blockSeq = -1;
+		subFolder = "";
 	}
 
-	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, ISyncFile p) {
+	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
 		super(parent, uri);
-		device = p.recId();
+		device = p.device();
 		clientpath = p.fullpath();
 		docId = p.recId();
 	}
@@ -79,28 +100,48 @@ public class DocsReq extends AnsonBody {
 	/**
 	 * The page of quirying client files status - not for used between jservs. 
 	 */
-	protected SyncingPage syncing;
-	public SyncingPage syncing() { return syncing; }
+	protected DocsPage syncing;
+	public DocsPage syncing() { return syncing; }
 
 	protected String device; 
 	public String device() { return device; }
+	public DocsReq device(String d) {
+		device = d;
+		return this;
+	}
 
-	protected ArrayList<SyncRec> syncQueries;
-	public ArrayList<SyncRec> syncQueries() { return syncQueries; }
+	protected ArrayList<SyncDoc> syncQueries;
+	public ArrayList<SyncDoc> syncQueries() { return syncQueries; }
 
 	protected long blockSeq;
 	public long blockSeq() { return blockSeq; } 
 
 	public DocsReq nextBlock;
 
-	public DocsReq querySync(IFileDescriptor p) {
+	/**
+	 * <p>Document sharing domain.</p>
+	 * for album synchronizing, this is h_photos.family (not null).
+	 * */
+	public String org;
+
+	public boolean reset;
+	public DocsReq org(String org) { this.org = org; return this; }
+
+	/**
+	 * @param p
+	 * @return this
+	 * @throws IOException see {@link SyncDoc} constructor
+	 * @throws SemanticException see {@link SyncDoc} constructor 
+	 */
+	public DocsReq querySync(IFileDescriptor p) throws IOException, SemanticException {
 		if (syncQueries == null)
-			syncQueries = new ArrayList<SyncRec>();
-		syncQueries.add(new SyncRec(p));
+			syncQueries = new ArrayList<SyncDoc>();
+		syncQueries.add(new SyncDoc(p, clientpath, null));
+
 		return this;
 	}
 
-	public DocsReq syncing(SyncingPage page) {
+	public DocsReq syncing(DocsPage page) {
 		this.syncing = page;
 		return this;
 	}
@@ -108,7 +149,7 @@ public class DocsReq extends AnsonBody {
 	public DocsReq blockStart(IFileDescriptor file, SessionInf usr) throws SemanticException {
 		this.device = usr.device;
 		if (LangExt.isblank(this.device, ".", "/"))
-			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files. %s", file.fullpath());
+			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
 		this.clientpath = file.fullpath(); 
 		this.docName = file.clientname();
@@ -119,20 +160,37 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public DocsReq blockUp(long sequence, DocsResp resp, StringBuilder b64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(int seq, DocsResp resp, String b64, SessionInf ssinf) throws SemanticException {
+		return blockUp(seq, resp.doc, b64, ssinf);
+	}
+
+	public DocsReq blockUp(long sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
 		String uri64 = b64.toString();
-		return blockUp(sequence, resp, uri64, usr);
+		return blockUp(sequence, doc, uri64, usr);
 	}
 	
-	public DocsReq blockUp(long sequence, DocsResp resp, String s64, SessionInf usr) throws SemanticException {
+	/**
+	 * Compose blocks for updating, which will be handled at server side by {@link BlockChain}.
+	 * 
+	 * <p><b>issue</b>
+	 * Is this means there should be a Dochain client peer?</p>
+	 * 
+	 * @param sequence
+	 * @param doc
+	 * @param s64
+	 * @param usr
+	 * @return this
+	 * @throws SemanticException
+	 */
+	public DocsReq blockUp(long sequence, IFileDescriptor doc, String s64, SessionInf usr) throws SemanticException {
 		this.device = usr.device;
 		if (LangExt.isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
 
 		this.blockSeq = sequence;
 
-		this.docId = resp.recId();
-		this.clientpath = resp.fullpath();
+		this.docId = doc.recId();
+		this.clientpath = doc.fullpath();
 		this.uri64 = s64;
 
 		this.a = A.blockUp;
@@ -144,8 +202,8 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = startAck.blockSeqReply;
 
-		this.docId = startAck.recId();
-		this.clientpath = startAck.fullpath();
+		this.docId = startAck.doc.recId();
+		this.clientpath = startAck.doc.fullpath();
 
 		this.a = A.blockAbort;
 		return this;
@@ -156,8 +214,8 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = resp.blockSeqReply;
 
-		this.docId = resp.recId();
-		this.clientpath = resp.fullpath();
+		this.docId = resp.doc.recId();
+		this.clientpath = resp.doc.fullpath();
 
 		this.a = A.blockEnd;
 		return this;
@@ -168,9 +226,29 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public AnsonBody syncWith(String fullpath, String device) {
-		this.clientpath = fullpath;
-		this.device = device;
+	public DocsReq folder(String name) {
+		subFolder = name;
 		return this;
 	}
+
+	public DocsReq share(SyncDoc p) {
+		shareflag = p.shareflag;
+		shareby = p.shareby;
+		shareDate = p.sharedate;
+		return this;
+	}
+
+	public DocsReq clientpath(String path) {
+		clientpath = path;
+		return this;
+	}
+
+	public DocsReq resetChain(boolean set) {
+		this.reset = set;
+		return this;
+	}
+
+//	public void querySync(IFileDescriptor p) throws TransException {
+//		throw new TransException("TODO");
+//	}
 }

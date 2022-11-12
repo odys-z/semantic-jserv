@@ -37,9 +37,9 @@
 		<v>sys-sqlite,semantic-log.xml,a_logs</v>
 	</c>
 	<c>
-		<!-- center hub, main storage, private storage -->
+		<!-- (center) hub, main (storage), private (storage) -->
 		<k>sync-mode</k>
-		<v>center hub</v>
+		<v>hub</v>
 	</c>
 	<c>
 		<!-- worker interval -->
@@ -50,6 +50,17 @@
 		<!-- connect id for where to save downloaded file, e.g default connection key -->
 		<k>sync-conn-id</k>
 		<v>sys-sqlite</v>
+	</c>
+	<c>
+		<!-- sync task name (multiple threads for the future), i.e. table name, of which table's records to be synchronized) -->
+		<k>sync-table-name</k>
+		<v>h_photos</v>
+	</c>
+	
+	<c>
+		<!-- verbose and doc deleting safe mode -->
+		<k>docsync.debug</k>
+		<v>true</v>
 	</c>
   </t>
 

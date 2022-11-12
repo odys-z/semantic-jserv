@@ -1,61 +1,55 @@
 package io.odysz.semantic.tier.docs;
 
-import java.util.HashMap;
+import java.sql.SQLException;
 
+import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantics.x.SemanticException;
 
-/**This structure is recommend used as Parcel between Android activities.
+/**
+ * Docsyncer response.
+ * 
+ * This structure is recommend used as Parcel between Android activities.
  * @author ody
  *
  */
 public class DocsResp extends AnsonResp {
-	long size;
-	long size() { return size; } 
-	
-	public DocsResp() {
-		super();
-		map = new HashMap<String, Object>();
-	}
+	public SyncDoc doc;
 
-	SyncingPage syncing;
-	public SyncingPage syncing() { return syncing; }
-	public DocsResp syncing(SyncingPage page) {
+	DocsPage syncing;
+
+	public DocsPage syncing() { return syncing; }
+	public DocsResp syncing(DocsPage page) {
 		syncing = page;
 		return this;
 	}
 
-	String recId;
-	public String recId() { return recId; }
-	public DocsResp recId(String recid) {
-		recId = recid;
-		return this;
-	}
-
-	String fullpath;
-	public String fullpath() { return fullpath; }
-	public DocsResp fullpath(String fullpath) {
-		this.fullpath = fullpath;
-		return this;
-	}
-
-	String filename;
-	public String clientname() { return filename; }
-	public DocsResp  clientname(String clientname) {
-		this.filename = clientname;
-		return this;
-	}
-
 	public long blockSeqReply;
+
 	public long blockSeq() { return blockSeqReply; }
 	public DocsResp blockSeq(long seq) {
 		blockSeqReply = seq;
 		return this;
 	}
-	
-	String cdate;
-	public String cdate() { return cdate; }
-	public DocsResp cdate(String cdate) {
-		this.cdate = cdate;
+
+	public DocsResp doc(SyncDoc d) {
+		this.doc = d;
+		return this;
+	}
+
+	public DocsResp doc(AnResultset rs, DocTableMeta meta) throws SQLException, SemanticException {
+		if (rs != null && rs.total() > 1)
+			throw new SemanticException("This method can only handling 1 record.");
+		rs.beforeFirst().next();
+		this.doc = new SyncDoc(rs, meta);
+		return this;
+	}
+
+	String org;
+	public String org() { return org; }
+	public DocsResp org(String orgId) {
+		this.org = orgId;
 		return this;
 	}
 

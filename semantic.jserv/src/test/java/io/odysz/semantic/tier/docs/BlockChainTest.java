@@ -37,12 +37,14 @@ class BlockChainTest {
 		String uid = "tester";
 		// chain = new BlockChain("$VOLUME_HOME", uid, ssid, clientpath, "1911-10-10 10:10:10");
 		String tempDir = IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid);
-		chain = new BlockChain(tempDir, clientpath, "1911-10-10 10:10:10");
+		chain = new BlockChain(tempDir, clientpath, "1911-10-10 10:10:10", "");
 
 		assertEquals("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath);
 		assertEquals("/sdcard/0/Downloads/test.3gp", chain.clientpath);
 
-		DocsResp resp = (DocsResp) new DocsResp().fullpath(clientpath);
+		DocsResp resp = (DocsResp) new DocsResp()
+				.doc( (SyncDoc) new SyncDoc()
+						.fullpath(clientpath));
 
 		// client side 
 		String b64;
@@ -86,12 +88,12 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.3gp";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid), clientpath, "1911-10-10 10:10:10");
+		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid), clientpath, "1911-10-10 10:10:10", "");
 
 		assertEquals("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath);
 		assertEquals("/sdcard/0/Downloads/test.3gp", chain.clientpath);
 
-		DocsResp resp = (DocsResp) new DocsResp().fullpath(clientpath);
+		DocsResp resp = (DocsResp) new DocsResp().doc((SyncDoc) new SyncDoc().fullpath(clientpath));
 
 		// client side 
 		String b64;
@@ -154,7 +156,7 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.aborting";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid), clientpath, "1911-10-10 10:10:10");
+		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid), clientpath, "1911-10-10 10:10:10", "");
 
 		assertEquals("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath);
 		assertEquals("/sdcard/0/Downloads/test.aborting", chain.clientpath);
@@ -163,7 +165,7 @@ class BlockChainTest {
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");
 		ssinf.device = "local junit";
 		
-		DocsResp resp = (DocsResp) new DocsResp().fullpath(clientpath);
+		DocsResp resp = (DocsResp) new DocsResp().doc((SyncDoc) new SyncDoc().fullpath(clientpath));
 
 		b64 = AESHelper.encode64("1. Hello\n".getBytes());
 		DocsReq b0 = new DocsReq().blockUp(0, resp, b64, ssinf);
