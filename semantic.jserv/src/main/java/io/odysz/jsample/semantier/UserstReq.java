@@ -12,7 +12,7 @@ import io.odysz.transact.x.TransException;
 
 public class UserstReq extends UserReq {
 
-	static class A {
+	public static class A {
 		/** Ask for loading records */
 		public static final String records = "records";
 		/** Ask for loading a rec */
@@ -28,9 +28,13 @@ public class UserstReq extends UserReq {
 	/// record field?
 	String userId;
 	String userName;
+	public String userName() { return userName; };
 	String orgId;
+	public String orgId() { return orgId; };
 	String roleId;
+	public String roleId() { return roleId; };
 	boolean hasTodos;
+	public boolean hasTodos() { return hasTodos; }
 	
 	/// use case: insert/update record
 	HashMap<String, Object> record;

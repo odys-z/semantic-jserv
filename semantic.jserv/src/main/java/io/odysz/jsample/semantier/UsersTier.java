@@ -12,17 +12,16 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
-import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.semantier.UserstReq.A;
-import io.odysz.jsample.utils.SampleFlags;
-import io.odysz.jsample.utils.StrRes;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
+import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.Relations;
@@ -43,7 +42,7 @@ public class UsersTier extends ServPort<UserstReq> {
 
 	protected static DATranscxt st;
 
-	public static final String mtabl = "a_users";
+	public static String mtabl = "a_users";
 
 	static {
 		try {
@@ -54,14 +53,14 @@ public class UsersTier extends ServPort<UserstReq> {
 	}
 
 	public UsersTier() {
-		super(Samport.userstier);
+		super(Port.userstier);
 	}
 
 	@Override
 	protected void onGet(AnsonMsg<UserstReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		
-		if (SampleFlags.user)
+		if (ServFlags.jsample)
 			Utils.logi("---------- ever-connect / users.tier GET ----------");
 	}
 
@@ -95,7 +94,7 @@ public class UsersTier extends ServPort<UserstReq> {
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
-			if (SampleFlags.user) e.printStackTrace();
+			if (ServFlags.jsample) e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
@@ -132,7 +131,8 @@ public class UsersTier extends ServPort<UserstReq> {
 		}
 
 		SemanticObject res = (SemanticObject)u
-				.whereEq("userId", jreq.userId)
+				// .whereEq("userId", jreq.userId)  // TODO FIXME but why this works with the curriculum.js client?
+				.whereEq("userId", jreq.pk)
 				.u(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
 
 		return new AnsonResp().msg(res.msg());
@@ -141,7 +141,7 @@ public class UsersTier extends ServPort<UserstReq> {
 	protected AnsonResp ins(UserstReq jreq, IUser usr)
 			throws SemanticException, TransException, SQLException {
 		if (jreq.record == null)
-			throw new SemanticException(StrRes.insert_null_record);
+			throw new SemanticException("Inserting a null record ...");
 		
 		ISemantext stx = st.instancontxt(Connects.uri2conn(jreq.uri()), usr);
 
@@ -153,7 +153,7 @@ public class UsersTier extends ServPort<UserstReq> {
 
 		rs.beforeFirst().next();
 		if (rs.getInt("c") > 0)
-			throw new SemanticException(StrRes.logid_exits);
+			throw new SemanticException("record id doesn't exist");
 
 		SemanticObject res = (SemanticObject)
 				((Insert) jreq.nvs(st.insert(mtabl, usr)))
