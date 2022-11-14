@@ -13,8 +13,8 @@ public class SampleUser extends JUser {
 	 * @author odys-z@github.com
 	 */
 	public static class SampleUserMeta extends JUserMeta {
-		public SampleUserMeta(String tbl, String... conn) {
-			super(tbl, conn);
+		public SampleUserMeta(String... conn) {
+			super(conn);
 
 			this.tbl = "a_users";
 			pk = "userId";
@@ -29,7 +29,7 @@ public class SampleUser extends JUser {
 	}
 
 	public TableMeta meta() {
-		return new SampleUserMeta("");
+		return new SampleUserMeta();
 	}
 
 	@Override
