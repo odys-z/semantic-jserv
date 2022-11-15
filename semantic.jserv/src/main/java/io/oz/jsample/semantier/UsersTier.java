@@ -1,4 +1,4 @@
-package io.odysz.jsample.semantier;
+package io.oz.jsample.semantier;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -12,7 +12,6 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
-import io.odysz.jsample.semantier.UserstReq.A;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -34,6 +33,7 @@ import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
+import io.oz.jsample.semantier.UserstReq.A;
 
 @WebServlet(description = "Semantic tier: users", urlPatterns = { "/users.tier" })
 public class UsersTier extends ServPort<UserstReq> {

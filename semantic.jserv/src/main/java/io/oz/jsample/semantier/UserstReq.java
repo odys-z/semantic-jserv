@@ -1,4 +1,4 @@
-package io.odysz.jsample.semantier;
+package io.oz.jsample.semantier;
 
 import java.util.ArrayList;
 import java.util.HashMap;
