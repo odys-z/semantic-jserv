@@ -1,14 +1,15 @@
 package io.oz.jserv.sync;
 
+import static io.oz.jserv.sync.ZSUNodes.clientUri;
+import static io.oz.jserv.sync.ZSUNodes.family;
+import static io.oz.jserv.sync.ZSUNodes.jservHub;
+import static io.oz.jserv.sync.ZSUNodes.volumeDir;
+import static io.oz.jserv.sync.ZSUNodes.webRoot;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import static io.oz.jserv.sync.ZSUNodes.*;
-
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
@@ -52,6 +52,9 @@ import io.oz.album.tier.Photo;
 import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.sync.SyncFlag.SyncEvent;
 import io.oz.jserv.sync.SyncWorker.SyncMode;
+import io.oz.jserv.sync.ZSUNodes.AnDevice;
+import io.oz.jserv.sync.ZSUNodes.Kharkiv;
+import io.oz.jserv.sync.ZSUNodes.Kyiv;
 
 class SyncWorkerTest {
 
@@ -118,7 +121,6 @@ class SyncWorkerTest {
 	 * @throws SAXException 
 	 * 
 	 */
-	@SuppressWarnings("serial")
 	@Test
 	void testShareByKyiv() throws 
 		AnsonException, SQLException, IOException, TransException,

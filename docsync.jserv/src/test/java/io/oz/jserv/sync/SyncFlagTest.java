@@ -19,7 +19,9 @@ class SyncFlagTest {
 	@Test
 	void testTo() {
 		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.priv, SyncEvent.pushEnd, Share.priv));
+		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushEnd, Share.priv));
 		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.priv, SyncEvent.pushEnd, Share.pub));
+		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushEnd, Share.pub));
 		assertEquals(null, SyncFlag.to(null, SyncEvent.pushEnd, Share.pub));
 		
 		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.publish, SyncEvent.pull, Share.pub));
