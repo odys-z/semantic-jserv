@@ -265,7 +265,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				if (isblank(jreq.docTabl))
 					throw new SemanticException("To push/update a doc via Docsyncer, docTable name can not be null.");
 
-				if (A.records.equals(a))
+				if (A.syncdocs.equals(a))
 					rsp = queryTasks(jreq, usr);
 				else if (A.del.equals(a))
 					rsp = delDocRec(jmsg.body(0), usr, verbose);
