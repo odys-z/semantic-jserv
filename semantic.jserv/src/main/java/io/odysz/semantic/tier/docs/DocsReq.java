@@ -17,10 +17,16 @@ import static io.odysz.common.LangExt.isblank;
 public class DocsReq extends AnsonBody {
 	public static class A {
 		/**
-		 * Action: read records
+		 * Action: read records for synodes synchronizing.
+		 * For client querying matching (syncing) docs, use {@link #records} instead. 
 		 * @see DocsTier#list(DocsReq req, IUser usr)
 		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
 		 * */
+		public static final String syncdocs = "r/syncs";
+		/**
+		 * Action: read records for client path mathing.
+		 * For synodes synchronizing, use {@link #syncdocs} instead. 
+		 */
 		public static final String records = "r/list";
 		public static final String mydocs = "r/my-docs";
 		public static final String rec = "r/rec";

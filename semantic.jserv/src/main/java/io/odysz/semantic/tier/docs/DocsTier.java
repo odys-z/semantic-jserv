@@ -63,7 +63,7 @@ public class DocsTier extends ServPort<DocsReq> {
 			DocsReq jreq = jmsg.body(0);
 
 			AnsonResp rsp = null;
-			if (A.records.equals(jreq.a()))
+			if (A.syncdocs.equals(jreq.a()))
 				rsp = list(jreq, usr);
 			else if (A.mydocs.equals(jreq.a()))
 				rsp = mydocs(jreq, usr);
@@ -76,7 +76,7 @@ public class DocsTier extends ServPort<DocsReq> {
 			else throw new SemanticException(String.format(
 						"request.body.a can not handled: %s\\n" +
 						"Only a = [%s, %s, %s, %s, %s] are supported.",
-						jreq.a(), A.records, A.mydocs, A.rec, A.upload, A.del));
+						jreq.a(), A.syncdocs, A.mydocs, A.rec, A.upload, A.del));
 
 			write(resp, ok(rsp));
 		} catch (SemanticException e) {
