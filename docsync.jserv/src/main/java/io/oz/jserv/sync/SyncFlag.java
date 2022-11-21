@@ -13,8 +13,12 @@ public final class SyncFlag {
 	/** kept as private file ('🔒') at private node. */
 	public static final String priv = "🔒";
 
-	//** to be pushed (shared) to hub ('⇈') */
-	// public static final String pushing = "⇈";
+	/** to be pushed (shared) to hub ('⇈')
+	 * <p>This is a temporary state and is handled the same as the {@link #priv}
+	 * for {@link io.odysz.semantic.tier.docs.SyncDoc SyncDoc}'s state.
+	 * The only difference is the UI and broken link handling.
+	 * It's complicate but nothing about FSM.</p> */
+	public static final String pushing = "⇈";
 
 	/** synchronized (shared) with hub ('🌎') */
 	public static final String publish = "🌎";
@@ -32,11 +36,14 @@ public final class SyncFlag {
 	 * @return next state
 	 */
 	public static String to(String now, SyncEvent e, String share) {
+		/*
 		if (priv.equals(now)) {
 //			if (e == SyncEvent.push)
 //				return pushing;
 //		}
 //		else if (pushing.equals(now)) {
+		 */
+		if (priv.equals(now) || pushing.equals(now)) {
 			if (e == SyncEvent.pushEnd && Share.isPub(share))
 				return publish;
 			else if (e == SyncEvent.pushEnd && Share.isPriv(share))
