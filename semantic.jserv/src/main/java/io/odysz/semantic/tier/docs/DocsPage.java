@@ -1,5 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
+import java.util.ArrayList;
+
 import io.odysz.anson.Anson;
 
 /**
@@ -14,6 +16,8 @@ public class DocsPage extends Anson {
     public int start;
     public int end;
     
+    public SyncFlag flag;
+    
     public DocsPage() {}
 
     public DocsPage(int begin, int afterLast) {
@@ -26,4 +30,7 @@ public class DocsPage extends Anson {
         end += size;
         return this;
     }
+
+	protected ArrayList<String> pathsPage;
+	public ArrayList<String> paths() { return pathsPage; }
 }

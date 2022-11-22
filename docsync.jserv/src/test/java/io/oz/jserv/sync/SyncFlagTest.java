@@ -5,9 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.semantic.ext.DocTableMeta.Share;
+import io.odysz.semantic.tier.docs.SyncFlag;
+import io.odysz.semantic.tier.docs.SyncMode;
+import io.odysz.semantic.tier.docs.SyncFlag.SyncEvent;
 import io.odysz.semantics.x.SemanticException;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
-import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 /**
  * <img src='../../../../../../main/java/io/oz/jserv/sync/sync-states.jpg'/>

@@ -21,24 +21,14 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.SyncFlag;
+import io.odysz.semantic.tier.docs.SyncMode;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 public class SyncWorker implements Runnable {
 	static int blocksize = 3 * 1024 * 1024;
 
-	/**
-	 * jserv-node states
-	 */
-	public enum SyncMode {
-		/** jserv node mode: cloud hub, equivalent of {@link Docsyncer#cloudHub} */
-		hub,
-		/** jserv node mode: private main, equivalent of {@link Docsyncer#mainStorage} */
-		main,
-		/** jserv node mode: private , equivalent of {@link Docsyncer#privateStorage}*/
-		priv
-	};
-	
 	SyncMode mode;
 	
 	String mac;

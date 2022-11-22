@@ -44,11 +44,12 @@ import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.SyncFlag;
+import io.odysz.semantic.tier.docs.SyncMode;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 /**
  * Doc synchronizing API for both jserv node and java client.
@@ -171,17 +172,17 @@ public class Synclientier extends Semantier {
 	DocsResp queryTasks(DocTableMeta meta, String family, String deviceId)
 			throws SemanticException, AnsonException, IOException {
 
-		DocsyncReq req = new DocsyncReq(family)
+		DocPageReq req = new DocPageReq(family)
 							.query(meta);
 
 		String[] act = AnsonHeader.usrAct("sync", "list", meta.tbl, deviceId);
 		AnsonHeader header = client.header().act(act);
 
-		AnsonMsg<DocsyncReq> q = client
-				.<DocsyncReq>userReq(uri, Port.docsync, req)
+		AnsonMsg<DocPageReq> q = client
+				.<DocPageReq>userReq(uri, Port.docsync, req)
 				.header(header);
 
-		return client.<DocsyncReq, DocsResp>commit(q, errCtx);
+		return client.<DocPageReq, DocsResp>commit(q, errCtx);
 	}
 	
 	/**
@@ -245,7 +246,7 @@ public class Synclientier extends Semantier {
 			throws AnsonException, IOException, TransException, SQLException {
 
 		if (!verifyDel(p, meta)) {
-			DocsyncReq req = (DocsyncReq) new DocsyncReq(robot.orgId)
+			DocPageReq req = (DocPageReq) new DocPageReq(robot.orgId)
 							.docTabl(meta.tbl)
 							.with(p.device(), p.fullpath())
 							.a(A.download);
@@ -455,7 +456,7 @@ public class Synclientier extends Semantier {
 	DocsResp synClose(SyncDoc p, DocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 
-		DocsyncReq clsReq = (DocsyncReq) new DocsyncReq(robot.orgId)
+		DocPageReq clsReq = (DocPageReq) new DocPageReq(robot.orgId)
 						.with(p.device(), p.fullpath())
 						.docTabl(meta.tbl)
 						.a(A.synclose);

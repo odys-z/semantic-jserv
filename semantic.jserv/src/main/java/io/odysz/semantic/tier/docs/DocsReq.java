@@ -124,6 +124,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	protected ArrayList<SyncDoc> syncQueries;
+	/**@deprecated replaced by DocsPage.paths */
 	public ArrayList<SyncDoc> syncQueries() { return syncQueries; }
 
 	protected long blockSeq;
@@ -136,9 +137,16 @@ public class DocsReq extends AnsonBody {
 	 * for album synchronizing, this is h_photos.family (not null).
 	 * */
 	public String org;
+	public DocsReq org(String org) { this.org = org; return this; }
 
 	public boolean reset;
-	public DocsReq org(String org) { this.org = org; return this; }
+
+	private long limit = -1;
+	public long limit() { return limit; }
+	public DocsReq limit(long l) {
+		limit = l;
+		return this;
+	}
 
 	/**
 	 * Add a doc data for querying synchronizing information
@@ -270,8 +278,4 @@ public class DocsReq extends AnsonBody {
 		this.reset = set;
 		return this;
 	}
-
-//	public void querySync(IFileDescriptor p) throws TransException {
-//		throw new TransException("TODO");
-//	}
 }

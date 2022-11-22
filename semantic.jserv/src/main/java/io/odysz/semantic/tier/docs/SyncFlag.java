@@ -1,8 +1,7 @@
-package io.oz.jserv.sync;
+package io.odysz.semantic.tier.docs;
 
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantics.x.SemanticException;
-import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 /**
  * <img src='sync-states.jpg'/>
