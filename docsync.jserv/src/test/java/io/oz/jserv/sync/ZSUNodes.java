@@ -1,6 +1,6 @@
 package io.oz.jserv.sync;
 
-import io.oz.jserv.sync.SyncWorker.SyncMode;
+import io.odysz.semantic.tier.docs.SyncMode;
 
 /**
  * Consts for testing.

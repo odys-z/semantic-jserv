@@ -26,10 +26,11 @@ import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.SyncFlag;
 import io.odysz.semantic.tier.docs.DocsReq.A;
+import io.odysz.semantic.tier.docs.SyncFlag.SyncEvent;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
 
 public class SynodeTier extends Synclientier {
 
@@ -88,7 +89,7 @@ public class SynodeTier extends Synclientier {
 	SyncDoc synStreamPull(SyncDoc p, DocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, meta)) {
-			DocsyncReq req = (DocsyncReq) new DocsyncReq(robot.orgId)
+			DocPageReq req = (DocPageReq) new DocPageReq(robot.orgId)
 							.docTabl(meta.tbl)
 							.with(p.device(), p.fullpath())
 							.a(A.download);

@@ -38,6 +38,8 @@ import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.SyncFlag;
+import io.odysz.semantic.tier.docs.SyncMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
@@ -47,7 +49,6 @@ import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.sync.Dochain.OnChainOk;
-import io.oz.jserv.sync.SyncWorker.SyncMode;
 
 import static io.odysz.common.LangExt.*;
 
@@ -265,7 +266,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 				if (isblank(jreq.docTabl))
 					throw new SemanticException("To push/update a doc via Docsyncer, docTable name can not be null.");
 
-				if (A.syncdocs.equals(a))
+				if (A.records.equals(a))
+					rsp = queryDevicePage(jreq, usr);
+				else if (A.syncdocs.equals(a))
 					rsp = queryTasks(jreq, usr);
 				else if (A.del.equals(a))
 					rsp = delDocRec(jmsg.body(0), usr, verbose);
@@ -309,6 +312,24 @@ public class Docsyncer extends ServPort<DocsReq> {
 			resp.flushBuffer();
 		}
 	}
+
+	private AnsonResp queryDevicePage(DocsReq jreq, IUser usr) throws SQLException, TransException {
+		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
+		AnResultset rs = ((AnResultset) st
+				.select(jreq.docTabl, "t")
+				.cols(SyncDoc.nvCols(meta))
+				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.device, usr.deviceId())
+				.whereEq(meta.shareby, usr.uid())
+				.whereIn(meta.fullpath, jreq.syncing().paths())
+				.limit(jreq.limit())
+				.rs(st.instancontxt(synconn, usr))
+				.rs(0))
+				.beforeFirst();
+
+		return (DocsResp) new DocsResp().rs(rs);
+	}
+
 
 	/**
 	 * <p>Write file stream to response.</p>
@@ -407,6 +428,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.cols(SyncDoc.nvCols(meta))
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
 				// .whereEq(meta.syncflag, SyncFlag.hub)
+				.limit(jreq.limit())
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();
