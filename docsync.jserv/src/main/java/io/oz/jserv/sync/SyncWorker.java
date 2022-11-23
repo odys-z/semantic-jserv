@@ -38,8 +38,6 @@ public class SyncWorker implements Runnable {
 	String connPriv;
 	String workerId;
 	
-	// String tempDir;
-	// SyncRobot robot;
 	ErrorCtx errLog;
 
 	/**
