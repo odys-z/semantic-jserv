@@ -1,7 +1,6 @@
 package io.odysz.semantic.tier.docs;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
@@ -20,11 +19,10 @@ public class DocsResp extends AnsonResp {
 
 	protected DocsPage syncing;
 
-	protected HashMap<String, String[]> clientPaths;
-
 	protected String collectId;
 
-	public HashMap<String, String[]> syncPaths() { return clientPaths; }
+	// public HashMap<String, String[]> syncPaths() { return syncing == null ? null : syncing.clientPaths; }
+	public DocsPage pathsPage() { return syncing; }
 	
 	/**
 	 * <p>Set clientpaths page (rs).</p>
@@ -37,19 +35,7 @@ public class DocsResp extends AnsonResp {
 	 */
 	public DocsResp pathPage(String collectId, AnResultset rs, DocTableMeta meta) throws SQLException {
 		this.collectId = collectId;
-		clientPaths = new HashMap<String, String[]>();
-
-		rs.beforeFirst();
-		while(rs.next()) {
-			clientPaths.put(
-				rs.getString(meta.fullpath),
-				new String[] {
-					rs.getString(meta.syncflag),
-					rs.getString(meta.shareflag),
-					rs.getString(meta.shareDate)
-				});
-		}
-
+		syncing.paths(rs, meta);
 		return this;
 	}
 
