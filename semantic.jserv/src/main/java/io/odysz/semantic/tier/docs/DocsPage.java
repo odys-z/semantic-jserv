@@ -1,8 +1,11 @@
 package io.odysz.semantic.tier.docs;
 
-import java.util.ArrayList;
+import java.sql.SQLException;
+import java.util.HashMap;
 
 import io.odysz.anson.Anson;
+import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.ext.DocTableMeta;
 
 /**
  * Task page to update synchronizing information.
@@ -31,6 +34,23 @@ public class DocsPage extends Anson {
         return this;
     }
 
-	protected ArrayList<String> pathsPage;
-	public ArrayList<String> paths() { return pathsPage; }
+	protected HashMap<String, String[]> clientPaths;
+	public HashMap<String,String[]> paths() { return clientPaths; }
+	
+	public DocsPage paths(AnResultset rs, DocTableMeta meta) throws SQLException {
+		clientPaths = new HashMap<String, String[]>();
+
+		rs.beforeFirst();
+		while(rs.next()) {
+			clientPaths.put(
+				rs.getString(meta.fullpath),
+				new String[] {
+					rs.getString(meta.syncflag),
+					rs.getString(meta.shareflag),
+					rs.getString(meta.shareDate)
+				});
+		}
+		
+		return this;
+	}
 }

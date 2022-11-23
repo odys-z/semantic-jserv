@@ -307,7 +307,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (InterruptedException e) {
-			// e.printStackTrace();
 			write(resp, err(MsgCode.exIo, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
@@ -318,7 +317,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * Query the device's doc page of which the paths can be used for client matching,
 	 * e.g. show the files' synchronizing status.
 	 * 
-	 * @param jreq
+	 * @param jreq client paths should be limited
 	 * @param usr
 	 * @return page response
 	 * @throws SQLException
@@ -326,13 +325,17 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 */
 	protected AnsonResp queryDevicePage(DocsReq jreq, IUser usr) throws SQLException, TransException {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
+
+		String[] kpaths = jreq.syncing().paths() == null ? null
+				: (String[]) jreq.syncing().paths().keySet().toArray();
+
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
 				.cols(SyncDoc.synPageCols(meta))
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
 				.whereEq(meta.device, usr.deviceId())
 				.whereEq(meta.shareby, usr.uid())
-				.whereIn(meta.fullpath, jreq.syncing().paths())
+				.whereIn(meta.fullpath, kpaths)
 				.limit(jreq.limit())
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
