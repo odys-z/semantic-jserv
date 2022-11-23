@@ -26,6 +26,8 @@ import static io.odysz.common.LangExt.*;
  * @author ody
  */
 public class SyncDoc extends Anson implements IFileDescriptor {
+	protected static String[] synpageCols;
+
 	public String recId;
 	public String recId() { return recId; }
 	public SyncDoc recId(String did) {
@@ -154,6 +156,16 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		};
 	}
 	
+	/**
+	 * @param meta
+	 * @return String [meta.pk, meta.shareDate, meta.shareflag, meta.syncflag]
+	 */
+	public static String[] synPageCols(DocTableMeta meta) {
+		if (synpageCols == null)
+			synpageCols = new String[] {meta.pk, meta.shareDate, meta.shareflag, meta.syncflag};
+		return synpageCols;
+	}
+
 	public SyncDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
 		this.docMeta = meta;
 		this.recId = rs.getString(meta.pk);

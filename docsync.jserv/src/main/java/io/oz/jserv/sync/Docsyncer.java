@@ -45,6 +45,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
+import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.x.TransException;
@@ -104,7 +105,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		metas.put(m.tbl, m);
 	}
 
-	public static Delete onDel(String clientpath, String device) {
+	public static Statement<?> onDel(String clientpath, String device) {
 		return null;
 	}
 
@@ -313,11 +314,21 @@ public class Docsyncer extends ServPort<DocsReq> {
 		}
 	}
 
-	private AnsonResp queryDevicePage(DocsReq jreq, IUser usr) throws SQLException, TransException {
+	/**
+	 * Query the device's doc page of which the paths can be used for client matching,
+	 * e.g. show the files' synchronizing status.
+	 * 
+	 * @param jreq
+	 * @param usr
+	 * @return page response
+	 * @throws SQLException
+	 * @throws TransException
+	 */
+	protected AnsonResp queryDevicePage(DocsReq jreq, IUser usr) throws SQLException, TransException {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
-				.cols(SyncDoc.nvCols(meta))
+				.cols(SyncDoc.synPageCols(meta))
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
 				.whereEq(meta.device, usr.deviceId())
 				.whereEq(meta.shareby, usr.uid())
@@ -327,9 +338,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.rs(0))
 				.beforeFirst();
 
-		return (DocsResp) new DocsResp().rs(rs);
+		return (DocsResp) new DocsResp().pathPage(null, rs, meta);
 	}
-
 
 	/**
 	 * <p>Write file stream to response.</p>
