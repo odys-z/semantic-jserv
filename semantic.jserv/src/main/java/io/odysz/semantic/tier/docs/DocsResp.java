@@ -18,17 +18,36 @@ import io.odysz.semantics.x.SemanticException;
 public class DocsResp extends AnsonResp {
 	public SyncDoc doc;
 
-	DocsPage syncing;
+	protected DocsPage syncing;
 
-	HashMap<String, Object> clientPaths;
-	public HashMap<String, Object> syncPaths() { return clientPaths; }
+	protected HashMap<String, String[]> clientPaths;
+
+	protected String collectId;
+
+	public HashMap<String, String[]> syncPaths() { return clientPaths; }
 	
-	public DocsResp syncRecords(String collectId, AnResultset rs) throws SQLException {
-		clientPaths = new HashMap<String, Object>();
+	/**
+	 * <p>Set clientpaths page (rs).</p>
+	 * Rs must have columns specified with {@link SyncDoc#synPageCols(DocTableMeta)}.
+	 * @param collectId
+	 * @param rs
+	 * @param meta
+	 * @return this
+	 * @throws SQLException
+	 */
+	public DocsResp pathPage(String collectId, AnResultset rs, DocTableMeta meta) throws SQLException {
+		this.collectId = collectId;
+		clientPaths = new HashMap<String, String[]>();
 
 		rs.beforeFirst();
 		while(rs.next()) {
-			clientPaths.put(rs.getString("clientpath"), rs.getString("syncFlag"));
+			clientPaths.put(
+				rs.getString(meta.fullpath),
+				new String[] {
+					rs.getString(meta.syncflag),
+					rs.getString(meta.shareflag),
+					rs.getString(meta.shareDate)
+				});
 		}
 
 		return this;
@@ -39,7 +58,7 @@ public class DocsResp extends AnsonResp {
 		syncing = page;
 		return this;
 	}
-
+	
 	public long blockSeqReply;
 
 	public long blockSeq() { return blockSeqReply; }
