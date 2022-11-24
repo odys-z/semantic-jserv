@@ -1,5 +1,6 @@
 package io.odysz.semantic.tier.docs;
 
+import io.odysz.anson.Anson;
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantics.x.SemanticException;
 
@@ -8,7 +9,7 @@ import io.odysz.semantics.x.SemanticException;
  * @author odys-z@github.com
  *
  */
-public final class SyncFlag {
+public final class SyncFlag extends Anson {
 	/** kept as private file ('🔒') at private node. */
 	public static final String priv = "🔒";
 
@@ -35,13 +36,6 @@ public final class SyncFlag {
 	 * @return next state
 	 */
 	public static String to(String now, SyncEvent e, String share) {
-		/*
-		if (priv.equals(now)) {
-//			if (e == SyncEvent.push)
-//				return pushing;
-//		}
-//		else if (pushing.equals(now)) {
-		 */
 		if (priv.equals(now) || pushing.equals(now)) {
 			if (e == SyncEvent.pushEnd && Share.isPub(share))
 				return publish;

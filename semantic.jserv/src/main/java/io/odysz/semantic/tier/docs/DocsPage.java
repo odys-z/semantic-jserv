@@ -15,9 +15,8 @@ import io.odysz.semantic.ext.DocTableMeta;
  */
 public class DocsPage extends Anson {
 	public String device;
-    public int taskNo = 0;
-    public int start;
-    public int end;
+    public long start;
+    public long end;
     
     public SyncFlag flag;
     
@@ -28,7 +27,14 @@ public class DocsPage extends Anson {
         end = afterLast;
     }
 
-    public DocsPage nextPage(int size) {
+    public DocsPage(String device, long start, long end) {
+    	this.device = device;
+    	// this.taskNo = tasknum;
+    	this.start = start;
+    	this.end = end;
+	}
+
+	public DocsPage nextPage(long size) {
         start = end;
         end += size;
         return this;

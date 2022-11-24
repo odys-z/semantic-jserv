@@ -543,8 +543,11 @@ public class Synclientier extends Semantier {
 				.device(page.device)
 				.a(A.records);
 
-		for (int i = page.start; i < page.end & i < files.size(); i++) {
-			IFileDescriptor p = files.get(i);
+		for (long i = page.start; i < page.end & i < files.size(); i++) {
+			if (i < 0 || i > Integer.MAX_VALUE)
+				throw new SemanticException("Synclientier.queryDocs(): page's range is out of bounds: H%x", i);
+
+			IFileDescriptor p = files.get((int)i);
 			if (isblank(p.fullpath()))
 				continue;
 			req.querySync(p);

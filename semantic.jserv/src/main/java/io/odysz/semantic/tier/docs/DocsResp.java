@@ -27,14 +27,13 @@ public class DocsResp extends AnsonResp {
 	/**
 	 * <p>Set clientpaths page (rs).</p>
 	 * Rs must have columns specified with {@link SyncDoc#synPageCols(DocTableMeta)}.
-	 * @param collectId
 	 * @param rs
 	 * @param meta
 	 * @return this
 	 * @throws SQLException
 	 */
-	public DocsResp pathPage(String collectId, AnResultset rs, DocTableMeta meta) throws SQLException {
-		this.collectId = collectId;
+	public DocsResp pathPage(AnResultset rs, DocTableMeta meta) throws SQLException {
+		// this.collectId = collectId;
 		syncing.paths(rs, meta);
 		return this;
 	}
@@ -42,6 +41,10 @@ public class DocsResp extends AnsonResp {
 	public DocsPage syncing() { return syncing; }
 	public DocsResp syncing(DocsPage page) {
 		syncing = page;
+		return this;
+	}
+	public DocsResp syncing(DocsReq req) {
+		syncing = req.syncing;
 		return this;
 	}
 	
