@@ -34,7 +34,7 @@ import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
 
 /**
- * @deprecated
+ * @deprecated moved to Ablumtier
  * @author odys-z@github.com
  *
  */
@@ -222,6 +222,8 @@ public class AlbumClientier extends Semantier {
 	}
 	
 	/**Asynchronously query synchronizing records.
+	 * <p>Usage</p>
+	 * <a href='odys-z/Anclient/examples/example.android/file-picker/src/main/java/io/oz/fpick/adapter/BaseSynchronizer.java'>example</a>
 	 * @param files
 	 * @param page
 	 * @param onOk
@@ -240,8 +242,10 @@ public class AlbumClientier extends Semantier {
 
 				AlbumReq req = (AlbumReq) new AlbumReq().syncing(page).a(A.selectSyncs);
 
-				for (int i = page.start; i < page.end & i < files.size(); i++) {
-					IFileDescriptor p = files.get(i);
+				for (long i = page.start; i < page.end & i < files.size(); i++) {
+					if (i < 0 || i > Integer.MAX_VALUE)
+						throw new SemanticException("asyncQuerySyncs: page's range is out of bounds: H%x", i);
+					IFileDescriptor p = files.get((int)i);
 					// req.querySync(p);
 				}
 

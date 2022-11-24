@@ -112,4 +112,9 @@ public class AlbumResp extends DocsResp {
 		this.profils = profiles;
 		return this;
 	}
+
+	public DocsResp collect(String id) {
+		collectId = id;
+		return this;
+	}
 }

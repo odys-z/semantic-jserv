@@ -379,7 +379,9 @@ public class Albums extends ServPort<AlbumReq> {
 				// .orderby(orders)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
-		AlbumResp album = (AlbumResp) new AlbumResp().pathPage("sync-temp-id", rs, meta);
+		AlbumResp album = (AlbumResp) new AlbumResp()
+				.collect("sync-temp-id")
+				.pathPage(rs, meta);
 
 		return album;
 	}

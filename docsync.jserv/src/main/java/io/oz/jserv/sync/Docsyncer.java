@@ -341,7 +341,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.rs(0))
 				.beforeFirst();
 
-		return (DocsResp) new DocsResp().pathPage(null, rs, meta);
+		return (DocsResp) new DocsResp().syncing(jreq).pathPage(rs, meta);
 	}
 
 	/**
