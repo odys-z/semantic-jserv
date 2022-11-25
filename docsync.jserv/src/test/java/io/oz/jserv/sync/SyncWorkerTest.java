@@ -79,7 +79,7 @@ class SyncWorkerTest {
 			defltSt = new DATranscxt(Connects.defltConn());
 			AnsonMsg.understandPorts(Port.docsync);
 			AnSession.init(defltSt);
-
+			
 			// This worker for test is a client of Album hub.
 			Clients.init(jservHub, false);
 			
@@ -100,6 +100,7 @@ class SyncWorkerTest {
 	@Test
 	void testIds() throws SemanticException, SQLException, SAXException, IOException, AnsonException, SsException {
 		SyncWorker worker = new SyncWorker(Kyiv.Synode.mode, Kyiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
+				.stop()
 				.login(Kyiv.Synode.passwd);
 		assertEquals("/sync/worker", worker.funcUri);
 		assertEquals(family, worker.org());
@@ -129,6 +130,7 @@ class SyncWorkerTest {
 		
 		String clientpath = Kyiv.png;
 		SyncWorker worker = new SyncWorker(Kyiv.Synode.mode, Kyiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
+				.stop()
 				.login(Kyiv.Synode.passwd);
 
 		// 0. clean failed tests
@@ -150,6 +152,7 @@ class SyncWorkerTest {
 	
 		// 3. query my tasks as another jnode (kharkiv)
 		worker = new SyncWorker(Kharkiv.Synode.mode, Kharkiv.Synode.nodeId, conn, Kharkiv.Synode.worker, meta)
+				.stop()
 				.login(Kharkiv.Synode.passwd);
 		DocsResp resp = worker.queryTasks();
 		
@@ -227,6 +230,7 @@ class SyncWorkerTest {
 	void testKharivPull() throws Exception {
 		String clientpath = Kyiv.png;
 		SyncWorker worker = new SyncWorker(Kharkiv.Synode.mode, Kharkiv.Synode.nodeId, conn, Kharkiv.Synode.worker, meta)
+				.stop()
 				.login(Kharkiv.Synode.passwd);
 
 		// 0. clean failed tests
@@ -240,7 +244,8 @@ class SyncWorkerTest {
 		// downward synchronize the file, hub -> Kharkiv (working as main node)
 		SyncWorker.blocksize = 32 * 3;
 		DocTableMeta meta = new PhotoMeta(conn);
-		worker = new SyncWorker(SyncMode.main, Kharkiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta);
+		worker = new SyncWorker(SyncMode.main, Kharkiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
+				.stop();
 		ArrayList<DocsResp> ids = worker
 				.login(Kharkiv.Synode.passwd)
 				.pull();

@@ -2,6 +2,7 @@ package io.oz.jserv.sync;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -86,14 +87,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 	private static ScheduledExecutorService scheduler;
 
-	static SyncRobot robot;
+	static SyncRobot anonymous;
 
 	static {
 		try {
 			st = new DATranscxt(null);
 			metas = new HashMap<String, TableMeta>();
 
-			robot = new SyncRobot("Robot Syncer", "");
+			anonymous = new SyncRobot("Robot Syncer", "");
 			
 			verbose = Configs.getBoolean("docsync.debug");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
@@ -228,7 +229,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			DocsReq jreq = msg.body(0);
 			String a = jreq.a();
 			if (A.download.equals(a))
-				download(resp, msg.body(0), robot);
+				download(resp, msg.body(0), anonymous.orgId(jreq.org));
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -326,16 +327,17 @@ public class Docsyncer extends ServPort<DocsReq> {
 	protected AnsonResp queryDevicePage(DocsReq jreq, IUser usr) throws SQLException, TransException {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 
-		String[] kpaths = jreq.syncing().paths() == null ? null
-				: (String[]) jreq.syncing().paths().keySet().toArray();
+		Object[] kpaths = jreq.syncing().paths() == null ? null
+				: jreq.syncing().paths().keySet().toArray();
+		
 
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
 				.cols(SyncDoc.synPageCols(meta))
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
 				.whereEq(meta.device, usr.deviceId())
-				.whereEq(meta.shareby, usr.uid())
-				.whereIn(meta.fullpath, kpaths)
+				// .whereEq(meta.shareby, usr.uid())
+				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
 				.limit(jreq.limit())
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))

@@ -19,6 +19,8 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.AnsonHeader;
+import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
@@ -51,7 +53,33 @@ public class SynodeTier extends Synclientier {
 		}
 		connPriv = connId;
 	}
+	/**
+	 * @param meta 
+	 * @param family 
+	 * @param deviceId 
+	 * @return response
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
+	 */
+	DocsResp queryTasks(DocTableMeta meta, String family, String deviceId)
+			throws SemanticException, AnsonException, IOException {
 
+		DocsReq req = (DocsReq) new DocsReq(meta.tbl)
+				.org(family)
+				.a(A.syncdocs)
+				;
+
+		String[] act = AnsonHeader.usrAct("sync", "list", meta.tbl, deviceId);
+		AnsonHeader header = client.header().act(act);
+
+		AnsonMsg<DocsReq> q = client
+				.<DocsReq>userReq(uri, Port.docsync, req)
+				.header(header);
+
+		return client.<DocsReq, DocsResp>commit(q, errCtx);
+	}
+	
 	@Override
 	public List<DocsResp> syncUp(List<? extends SyncDoc> videos, String workerId,
 			DocTableMeta meta, OnProcess onProc, OnDocOk... docOk)

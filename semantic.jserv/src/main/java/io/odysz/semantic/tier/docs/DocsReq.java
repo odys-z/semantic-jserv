@@ -24,7 +24,7 @@ public class DocsReq extends AnsonBody {
 		 * */
 		public static final String syncdocs = "r/syncs";
 		/**
-		 * Action: read records for client path mathing.
+		 * Action: read records for client path matching.
 		 * For synodes synchronizing, use {@link #syncdocs} instead. 
 		 */
 		public static final String records = "r/list";
@@ -113,8 +113,8 @@ public class DocsReq extends AnsonBody {
 	/**
 	 * The page of quirying client files status - not for used between jservs. 
 	 */
-	protected DocsPage syncing;
-	public DocsPage syncing() { return syncing; }
+	protected PathsPage syncing;
+	public PathsPage syncing() { return syncing; }
 
 	protected String device; 
 	public String device() { return device; }
@@ -123,6 +123,7 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
+	/** @deprecated */
 	protected ArrayList<SyncDoc> syncQueries;
 	/**@deprecated replaced by DocsPage.paths */
 	public ArrayList<SyncDoc> syncQueries() { return syncQueries; }
@@ -149,8 +150,8 @@ public class DocsReq extends AnsonBody {
 	}
 
 	/**
-	 * Add a doc data for querying synchronizing information
-	 * - is this file pushed to the synode?
+	 * @deprecated
+	 * Add a doc record for matching path at synode. Should be called by device client.
 	 * <p>Note: if the file path is empty, the query is ignored.</p>
 	 * @param p
 	 * @return this
@@ -160,6 +161,11 @@ public class DocsReq extends AnsonBody {
 	public DocsReq querySync(IFileDescriptor p) throws IOException, SemanticException {
 		if (p == null || isblank(p.fullpath()))
 			return this;
+
+		File f = new File(p.fullpath());
+		if (!f.exists())
+			throw new SemanticException("File for querying doesn't exist: %s", p.fullpath());
+		/*
 		if (syncQueries == null)
 			syncQueries = new ArrayList<SyncDoc>();
 
@@ -168,11 +174,15 @@ public class DocsReq extends AnsonBody {
 			throw new SemanticException("File for querying doesn't exist: %s", p.fullpath());
 
 		syncQueries.add(new SyncDoc(p, p.fullpath(), null));
+		*/
+		if (page == null) {
+			page = new PageInf();
+		}
 
 		return this;
 	}
 
-	public DocsReq syncing(DocsPage page) {
+	public DocsReq syncing(PathsPage page) {
 		this.syncing = page;
 		return this;
 	}

@@ -1,5 +1,7 @@
 package io.oz.jserv.sync;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,6 +51,7 @@ public class SyncWorker implements Runnable {
 
 	public boolean verbose = true;
 
+	private boolean stop = false;
 
 	public SyncWorker(SyncMode mode, String device, String connId, String worker, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
@@ -93,26 +96,27 @@ public class SyncWorker implements Runnable {
 
 	@Override
 	public void run() {
+		if (stop || synctier == null || mode == SyncMode.hub)
+			return;
+		else if (isblank(workerId) || isblank(connPriv) || isblank(mac)) {
+			Utils.warn("SyncWorker is logged in but there are inccorect configures. Workder: %s, db-conn: %s, Node: %s", workerId, connPriv, mac);
+			stop();
+			Utils.warn("SyncWorker stopped.");
+			return;
+		}
+		else if (mode == null) {
+			Utils.warn("SyncWorker mode is not configured. Workder: %s, Node: %s", workerId, mac);
+			stop();
+			Utils.warn("SyncWorker stopped.");
+			return;
+		}
+
 		try {
-			/*
 			Docsyncer.lock.lock();
-
-	        DocsResp resp = null;
-
-			String[] act = AnsonHeader.usrAct("sync.jserv", "query", "r/tasks", "query tasks");
-			AnsonHeader header = client.header().act(act);
-
-			DocsReq req = (DocsReq) new DocsReq(null).a(A.records);
-
-			AnsonMsg<DocsReq> q = client.<DocsReq>userReq("", AnsonMsg.Port.docsync, req)
-									.header(header);
-
-			resp = client.commit(q, errLog);
-			
-			pullDocs(resp);
-			*/
+			pull();
+			push();
 		} catch (Exception ex) {
-			// ex.printStackTrace();
+			ex.printStackTrace();
 		}
 		finally {
 			Docsyncer.lock.unlock();
@@ -271,5 +275,10 @@ public class SyncWorker implements Runnable {
 
 	public String nodeId() {
 		return synctier.robot.deviceId();
+	}
+
+	public SyncWorker stop() {
+		stop = true;
+		return this;
 	}
 }
