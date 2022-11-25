@@ -17,11 +17,11 @@ import io.odysz.semantics.x.SemanticException;
 public class DocsResp extends AnsonResp {
 	public SyncDoc doc;
 
-	protected DocsPage syncing;
+	protected PathsPage syncing;
 
 	protected String collectId;
 
-	public DocsPage pathsPage() { return syncing; }
+	public PathsPage pathsPage() { return syncing; }
 	
 	/**
 	 * <p>Set clientpaths page (rs).</p>
@@ -36,8 +36,8 @@ public class DocsResp extends AnsonResp {
 		return this;
 	}
 
-	public DocsPage syncing() { return syncing; }
-	public DocsResp syncing(DocsPage page) {
+	public PathsPage syncing() { return syncing; }
+	public DocsResp syncing(PathsPage page) {
 		syncing = page;
 		return this;
 	}

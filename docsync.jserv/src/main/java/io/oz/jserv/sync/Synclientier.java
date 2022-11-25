@@ -38,7 +38,7 @@ import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.jsession.SessionInf;
-import io.odysz.semantic.tier.docs.DocsPage;
+import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -158,30 +158,6 @@ public class Synclientier extends Semantier {
 		}
 
 		return this;
-	}
-	
-	/**
-	 * @param meta 
-	 * @param family 
-	 * @param deviceId 
-	 * @return response
-	 * @throws IOException 
-	 * @throws AnsonException 
-	 * @throws SemanticException 
-	 */
-	DocsResp queryTasks(DocTableMeta meta, String family, String deviceId)
-			throws SemanticException, AnsonException, IOException {
-
-		DocsReq req = new DocsReq(meta.tbl).org(family);
-
-		String[] act = AnsonHeader.usrAct("sync", "list", meta.tbl, deviceId);
-		AnsonHeader header = client.header().act(act);
-
-		AnsonMsg<DocsReq> q = client
-				.<DocsReq>userReq(uri, Port.docsync, req)
-				.header(header);
-
-		return client.<DocsReq, DocsResp>commit(q, errCtx);
 	}
 	
 	/**
@@ -533,7 +509,8 @@ public class Synclientier extends Semantier {
 		return isNull(resps) ? null : resps.get(0);
 	}
 	
-	public DocsResp queryDocs(List<? extends SyncDoc> files, DocsPage page, DocTableMeta meta)
+	// public DocsResp queryDocs(List<? extends SyncDoc> files, DocsPage page, DocTableMeta meta)
+	public DocsResp queryPaths(PathsPage page, DocTableMeta meta)
 			throws TransException, IOException, SQLException {
 		String[] act = AnsonHeader.usrAct("album.java", "query", "r/states", "query sync");
 		AnsonHeader header = client.header().act(act);
@@ -544,15 +521,15 @@ public class Synclientier extends Semantier {
 				.device(page.device)
 				.a(A.records);
 
-		for (long i = page.start; i < page.end & i < files.size(); i++) {
-			if (i < 0 || i > Integer.MAX_VALUE)
-				throw new SemanticException("Synclientier.queryDocs(): page's range is out of bounds: H%x", i);
-
-			IFileDescriptor p = files.get((int)i);
-			if (isblank(p.fullpath()))
-				continue;
-			req.querySync(p);
-		}
+//		for (long i = page.start; i < page.end & i < files.size(); i++) {
+//			if (i < 0 || i > Integer.MAX_VALUE)
+//				throw new SemanticException("Synclientier.queryDocs(): page's range is out of bounds: H%x", i);
+//
+//			IFileDescriptor p = files.get((int)i);
+//			if (isblank(p.fullpath()))
+//				continue;
+//			req.querySync(p);
+//		}
 
 		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);

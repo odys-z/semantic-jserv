@@ -13,28 +13,25 @@ import io.odysz.semantic.ext.DocTableMeta;
  * @author odys-z@github.com
  *
  */
-public class DocsPage extends Anson {
+public class PathsPage extends Anson {
 	public String device;
     public long start;
     public long end;
     
-    public SyncFlag flag;
-    
-    public DocsPage() {}
+    public PathsPage() {}
 
-    public DocsPage(int begin, int afterLast) {
+    public PathsPage(int begin, int afterLast) {
         start = begin;
         end = afterLast;
     }
 
-    public DocsPage(String device, long start, long end) {
+    public PathsPage(String device, long start, long end) {
     	this.device = device;
-    	// this.taskNo = tasknum;
     	this.start = start;
     	this.end = end;
 	}
 
-	public DocsPage nextPage(long size) {
+	public PathsPage nextPage(long size) {
         start = end;
         end += size;
         return this;
@@ -48,14 +45,14 @@ public class DocsPage extends Anson {
 	public HashMap<String,String[]> paths() { return clientPaths; }
 	
 	/**
-	 * Set paths's flags: [meta.syncflag, shareflag, shareDate].
+	 * Set paths's flags: [meta.syncflag, share-flag, share-by, share-date].
 	 * 
 	 * @param rs must have columns of meta.syncflg, meta.shareflag, meta.shareDate.
 	 * @param meta
 	 * @return this
 	 * @throws SQLException accessing rs failed.
 	 */
-	public DocsPage paths(AnResultset rs, DocTableMeta meta) throws SQLException {
+	public PathsPage paths(AnResultset rs, DocTableMeta meta) throws SQLException {
 		clientPaths = new HashMap<String, String[]>();
 
 		rs.beforeFirst();
@@ -65,10 +62,25 @@ public class DocsPage extends Anson {
 				new String[] {
 					rs.getString(meta.syncflag),
 					rs.getString(meta.shareflag),
+					rs.getString(meta.shareby),
 					rs.getString(meta.shareDate)
 				});
 		}
 		
+		return this;
+	}
+
+	public PathsPage clear() {
+		if (clientPaths == null)
+			clientPaths = new HashMap<String, String[]>();
+		clientPaths.clear();
+		return this;
+	}
+	
+	public PathsPage add(String path) {
+		if (clientPaths == null)
+			clientPaths = new HashMap<String, String[]>();
+		clientPaths.put(path, null);
 		return this;
 	}
 }
