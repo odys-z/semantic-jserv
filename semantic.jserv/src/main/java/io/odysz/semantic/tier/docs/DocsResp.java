@@ -21,7 +21,6 @@ public class DocsResp extends AnsonResp {
 
 	protected String collectId;
 
-	// public HashMap<String, String[]> syncPaths() { return syncing == null ? null : syncing.clientPaths; }
 	public DocsPage pathsPage() { return syncing; }
 	
 	/**
@@ -33,7 +32,6 @@ public class DocsResp extends AnsonResp {
 	 * @throws SQLException
 	 */
 	public DocsResp pathPage(AnResultset rs, DocTableMeta meta) throws SQLException {
-		// this.collectId = collectId;
 		syncing.paths(rs, meta);
 		return this;
 	}

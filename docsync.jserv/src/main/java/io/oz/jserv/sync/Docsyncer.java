@@ -270,7 +270,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				if (A.records.equals(a))
 					rsp = queryDevicePage(jreq, usr);
 				else if (A.syncdocs.equals(a))
-					rsp = queryTasks(jreq, usr);
+					rsp = querySynodeTasks(jreq, usr);
 				else if (A.del.equals(a))
 					rsp = delDocRec(jmsg.body(0), usr, verbose);
 				else if (A.synclose.equals(a))
@@ -424,7 +424,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * Query tasks for synchronizing.
+	 * Query tasks for synchronizing between synodes.
 	 * This method accept tasks querying for different family - request.org not null.  
 	 * Otherwise using session's org-id.
 	 * @param jreq
@@ -433,7 +433,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	protected DocsResp queryTasks(DocsReq jreq, IUser usr) throws TransException, SQLException {
+	protected DocsResp querySynodeTasks(DocsReq jreq, IUser usr) throws TransException, SQLException {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")

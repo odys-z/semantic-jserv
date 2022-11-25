@@ -24,6 +24,7 @@ import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocUtils;
+import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantic.tier.docs.SyncFlag;
@@ -89,9 +90,10 @@ public class SynodeTier extends Synclientier {
 	SyncDoc synStreamPull(SyncDoc p, DocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, meta)) {
-			DocPageReq req = (DocPageReq) new DocPageReq(robot.orgId)
+			DocsReq req = (DocsReq) new DocsReq()
+							.org(robot.orgId)
 							.docTabl(meta.tbl)
-							.with(p.device(), p.fullpath())
+							.queryPath(p.device(), p.fullpath())
 							.a(A.download);
 
 			String tempath = tempath(p);
