@@ -278,4 +278,10 @@ public class DocsReq extends AnsonBody {
 		this.reset = set;
 		return this;
 	}
+	
+	public DocsReq queryPath(String device, String fullpath) {
+		this.clientpath = fullpath;
+		this.device = device;
+		return this;
+	}
 }

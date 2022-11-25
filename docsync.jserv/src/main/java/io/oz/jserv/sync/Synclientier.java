@@ -172,17 +172,16 @@ public class Synclientier extends Semantier {
 	DocsResp queryTasks(DocTableMeta meta, String family, String deviceId)
 			throws SemanticException, AnsonException, IOException {
 
-		DocPageReq req = new DocPageReq(family)
-							.query(meta);
+		DocsReq req = new DocsReq(meta.tbl).org(family);
 
 		String[] act = AnsonHeader.usrAct("sync", "list", meta.tbl, deviceId);
 		AnsonHeader header = client.header().act(act);
 
-		AnsonMsg<DocPageReq> q = client
-				.<DocPageReq>userReq(uri, Port.docsync, req)
+		AnsonMsg<DocsReq> q = client
+				.<DocsReq>userReq(uri, Port.docsync, req)
 				.header(header);
 
-		return client.<DocPageReq, DocsResp>commit(q, errCtx);
+		return client.<DocsReq, DocsResp>commit(q, errCtx);
 	}
 	
 	/**
@@ -246,9 +245,10 @@ public class Synclientier extends Semantier {
 			throws AnsonException, IOException, TransException, SQLException {
 
 		if (!verifyDel(p, meta)) {
-			DocPageReq req = (DocPageReq) new DocPageReq(robot.orgId)
+			DocsReq req = (DocsReq) new DocsReq()
 							.docTabl(meta.tbl)
-							.with(p.device(), p.fullpath())
+							.org(robot.orgId)
+							.queryPath(p.device(), p.fullpath())
 							.a(A.download);
 
 			String tempath = tempath(p);
@@ -456,9 +456,10 @@ public class Synclientier extends Semantier {
 	DocsResp synClose(SyncDoc p, DocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 
-		DocPageReq clsReq = (DocPageReq) new DocPageReq(robot.orgId)
-						.with(p.device(), p.fullpath())
+		DocsReq clsReq = (DocsReq) new DocsReq()
 						.docTabl(meta.tbl)
+						.org(robot.orgId)
+						.queryPath(p.device(), p.fullpath())
 						.a(A.synclose);
 
 		AnsonMsg<DocsReq> q = client

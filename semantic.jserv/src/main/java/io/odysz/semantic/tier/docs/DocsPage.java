@@ -41,8 +41,20 @@ public class DocsPage extends Anson {
     }
 
 	protected HashMap<String, String[]> clientPaths;
+	/**
+	 * @see #paths(AnResultset, DocTableMeta)
+	 * @return paths' flags
+	 */
 	public HashMap<String,String[]> paths() { return clientPaths; }
 	
+	/**
+	 * Set paths's flags: [meta.syncflag, shareflag, shareDate].
+	 * 
+	 * @param rs must have columns of meta.syncflg, meta.shareflag, meta.shareDate.
+	 * @param meta
+	 * @return this
+	 * @throws SQLException accessing rs failed.
+	 */
 	public DocsPage paths(AnResultset rs, DocTableMeta meta) throws SQLException {
 		clientPaths = new HashMap<String, String[]>();
 
