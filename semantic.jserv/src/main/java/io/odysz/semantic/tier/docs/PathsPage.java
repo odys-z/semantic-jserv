@@ -6,6 +6,7 @@ import java.util.HashMap;
 import io.odysz.anson.Anson;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantics.x.SemanticException;
 
 /**
  * Task page to update synchronizing information.
@@ -15,8 +16,8 @@ import io.odysz.semantic.ext.DocTableMeta;
  */
 public class PathsPage extends Anson {
 	public String device;
-    public long start;
-    public long end;
+    protected long start;
+    protected long end;
     
     public PathsPage() {}
 
@@ -82,5 +83,17 @@ public class PathsPage extends Anson {
 			clientPaths = new HashMap<String, String[]>();
 		clientPaths.put(path, null);
 		return this;
+	}
+	
+	public int start() throws SemanticException {
+		if (start < 0 || start > Integer.MAX_VALUE)
+			throw new SemanticException("Illegal long value to convert to int: %d", start);
+		return (int) start;
+	}
+	
+	public int end() throws SemanticException {
+		if (end < 0 || end > Integer.MAX_VALUE)
+			throw new SemanticException("Illegal long value to convert to int: %d", end);
+		return (int) end;
 	}
 }
