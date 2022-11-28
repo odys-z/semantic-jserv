@@ -29,6 +29,8 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 public class SyncWorker implements Runnable {
+	public final String funcUri;
+
 	static int blocksize = 3 * 1024 * 1024;
 
 	SyncMode mode;
@@ -36,7 +38,6 @@ public class SyncWorker implements Runnable {
 	String mac;
 	SynodeTier synctier;
 	
-	public final String funcUri;
 	String connPriv;
 	String workerId;
 	
@@ -207,27 +208,6 @@ public class SyncWorker implements Runnable {
 	 * @throws IOException 
 	 */
 	public SyncWorker verifyDocs(ArrayList<DocsResp> list) throws TransException, SQLException, IOException {
-
-		/*
-		AnResultset rs = (AnResultset) localSt
-				.select(localMeta.tbl, "t")
-				.cols(localMeta.pk, localMeta.fullpath, localMeta.uri, localMeta.mime, localMeta.size)
-				.whereIn(localMeta.pk, ids)
-				.rs(localSt.instancontxt(connPriv, synctier.robot))
-				.rs(0);
-
-		if (rs.total() != ids.size())
-			throw new SemanticException("id count (%s) != file records' count (%s)", ids.size(), rs.total());
-
-		while (rs.next()) {
-			String p = synctier.resolvePrivRoot(rs.getString(localMeta.uri), localMeta);
-			File f = new File(p);
-			if (f.exists() && f.length() == rs.getLong(localMeta.size))
-				continue;
-			throw new SemanticException("Doc doesn't exists. id: %s, uri: %s, expecting path: %s",
-					rs.getString(localMeta.pk), uri, p);
-		}
-		*/
 		for (DocsResp r : list) {
 			AnResultset rs = (AnResultset) localSt
 				.select(localMeta.tbl, "t")

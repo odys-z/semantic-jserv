@@ -242,7 +242,7 @@ public class AlbumClientier extends Semantier {
 
 				AlbumReq req = (AlbumReq) new AlbumReq().syncing(page).a(A.selectSyncs);
 
-				for (long i = page.start; i < page.end & i < files.size(); i++) {
+				for (long i = page.start(); i < page.end() & i < files.size(); i++) {
 					if (i < 0 || i > Integer.MAX_VALUE)
 						throw new SemanticException("asyncQuerySyncs: page's range is out of bounds: H%x", i);
 					IFileDescriptor p = files.get((int)i);
