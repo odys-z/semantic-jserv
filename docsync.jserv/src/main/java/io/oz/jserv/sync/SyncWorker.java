@@ -143,7 +143,7 @@ public class SyncWorker implements Runnable {
 				SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
 					
 				res.add(synctier.synClose(
-						synctier.synStreamPull(p, localMeta), localMeta));
+						synctier.synStreamPull(p, localMeta), localMeta.tbl));
 			}
 			catch(Exception e) {
 				e.printStackTrace();
@@ -174,7 +174,7 @@ public class SyncWorker implements Runnable {
 				.rs(0)).beforeFirst();
 
 			// upload
-			synctier.syncUp(rs, workerId, localMeta,
+			synctier.syncUp(localMeta, rs, workerId,
 			  new OnProcess() {
 				@Override
 				public void proc(int listIndx, int rows, int seq, int totalBlocks, AnsonResp blockResp)

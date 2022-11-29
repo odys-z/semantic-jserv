@@ -136,7 +136,7 @@ class SyncWorkerTest {
 		// 0. clean failed tests
 		clean(worker, clientpath);
 		worker.synctier.tempRoot("synode.kyiv");
-		worker.synctier.del(meta, worker.nodeId(), clientpath);
+		worker.synctier.del(meta.tbl, worker.nodeId(), clientpath);
 
 		// 1. create a public file at this private node
 		Photo photo = new Photo().create(clientpath);
@@ -185,9 +185,9 @@ class SyncWorkerTest {
 			.post(Docsyncer.onDel(clientpath, device))
 			.d(defltSt.instancontxt(conn, worker.robot()));
 		
-		worker.synctier.del(meta, Kyiv.Synode.nodeId, null);
-		worker.synctier.del(meta, Kharkiv.Synode.nodeId, null);
-		worker.synctier.del(meta, AnDevice.device, null);
+		worker.synctier.del(meta.tbl, Kyiv.Synode.nodeId, null);
+		worker.synctier.del(meta.tbl, Kharkiv.Synode.nodeId, null);
+		worker.synctier.del(meta.tbl, AnDevice.device, null);
 	}
 
 	/**
@@ -294,7 +294,7 @@ class SyncWorkerTest {
 					.share(apptier.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);
-		DocsResp resp = apptier.insertSyncDoc(meta, doc, new OnDocOk() {
+		DocsResp resp = apptier.insertSyncDoc(meta.tbl, doc, new OnDocOk() {
 			@Override
 			public void ok(SyncDoc doc, AnsonResp resp)
 					throws IOException, AnsonException, TransException {
@@ -317,7 +317,7 @@ class SyncWorkerTest {
 				DocsResp resp2 = null;
 				try {
 
-					resp2 = apptier.insertSyncDoc(meta, doc,
+					resp2 = apptier.insertSyncDoc(meta.tbl, doc,
 					// resps2 = tier.pushBlocks(meta, videos, ssInf, null,
 					new OnDocOk() {
 						@Override
@@ -344,7 +344,7 @@ class SyncWorkerTest {
 		String docId = resp.doc.recId();
 		assertEquals(8, docId.length());
 
-		DocsResp rp = apptier.selectDoc(meta, docId);
+		DocsResp rp = apptier.selectDoc(meta.tbl, docId);
 
 		assertTrue(LangExt.isblank(rp.msg()));
 		assertEquals(AnDevice.device, rp.doc.device());
