@@ -80,15 +80,14 @@ public class SynodeTier extends Synclientier {
 		return client.<DocsReq, DocsResp>commit(q, errCtx);
 	}
 	
-	@Override
-	public List<DocsResp> syncUp(List<? extends SyncDoc> videos, String workerId,
-			DocTableMeta meta, OnProcess onProc, OnDocOk... docOk)
+	public List<DocsResp> syncUp(DocTableMeta meta, List<? extends SyncDoc> videos, String workerId,
+			OnProcess onProc, OnDocOk... docOk)
 			throws SQLException, TransException, AnsonException, IOException {
 		SessionInf photoUser = client.ssInfo();
 		photoUser.device = workerId;
 
-		return pushBlocks(
-				meta, videos, photoUser, onProc,
+		return pushBlocks(meta.tbl,
+				videos, photoUser, onProc,
 				isNull(docOk) ? new OnDocOk() {
 					@Override
 					public void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException {
