@@ -37,7 +37,6 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
@@ -47,6 +46,7 @@ import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantic.tier.docs.SyncFlag;
 import io.odysz.semantic.tier.docs.SyncMode;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
@@ -65,12 +65,7 @@ public class Synclientier extends Semantier {
 
 	protected SyncRobot robot;
 
-	// protected DATranscxt localSt;
-
-	/** connection for update task records at private storage node */
-	// String connPriv;
-
-	protected String tempDir;
+	protected String tempath;
 
 	int blocksize = 3 * 1024 * 1024;
 	public void bloksize(int s) throws SemanticException {
@@ -97,7 +92,7 @@ public class Synclientier extends Semantier {
 		this.errCtx = errCtx;
 		this.uri = clientUri;
 		
-		tempDir = ".";
+		tempath = ".";
 	}
 	
 	/**
@@ -107,7 +102,7 @@ public class Synclientier extends Semantier {
 	 * @return this
 	 */
 	public Synclientier tempRoot(String root) {
-		tempDir = root; 
+		tempath = root; 
 		return this;
 	}
 	
@@ -137,10 +132,10 @@ public class Synclientier extends Semantier {
 		try {
 			robot = new SyncRobot(ssinf.uid(), ssinf.device)
 					.device(ssinf.device);
-			tempDir = FilenameUtils.concat(tempDir,
-					String.format("io.oz.sync.%s.%s", tempDir, SyncMode.priv, ssinf.uid()));
+			tempath = FilenameUtils.concat(tempath,
+					String.format("io.oz.sync.%s.%s", tempath, SyncMode.priv, ssinf.uid()));
 			
-			new File(tempDir).mkdirs(); 
+			new File(tempath).mkdirs(); 
 			
 			JUserMeta um = (JUserMeta) robot.meta();
 
@@ -234,7 +229,6 @@ public class Synclientier extends Semantier {
 		return p;
 	}
 
-
 	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) throws IOException {
 		String pth = tempath(f);
 		File file = new File(pth);
@@ -278,7 +272,8 @@ public class Synclientier extends Semantier {
 	 * @return result list (AnsonResp)
 	 */
 	public List<DocsResp> pushBlocks(String tbl, List<? extends SyncDoc> videos,
-				SessionInf user, OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr) throws TransException, IOException {
+				SessionInf user, OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr)
+				throws TransException, IOException {
 
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 
@@ -541,7 +536,7 @@ public class Synclientier extends Semantier {
 
 	public String tempath(IFileDescriptor f) {
 		String tempath = f.fullpath().replaceAll(":", "");
-		return EnvPath.decodeUri(tempDir, tempath);
+		return EnvPath.decodeUri(tempath, tempath);
 	}
 
 

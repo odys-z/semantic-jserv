@@ -162,7 +162,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	 */
 	public static String[] synPageCols(DocTableMeta meta) {
 		if (synpageCols == null)
-			synpageCols = new String[] {meta.pk, meta.shareby, meta.shareDate, meta.shareflag, meta.syncflag};
+			synpageCols = new String[] {meta.pk, meta.fullpath, meta.shareby, meta.shareDate, meta.shareflag, meta.syncflag};
 		return synpageCols;
 	}
 
