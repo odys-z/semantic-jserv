@@ -24,7 +24,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -32,6 +31,7 @@ import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantic.tier.docs.SyncFlag;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.SyncFlag.SyncEvent;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 

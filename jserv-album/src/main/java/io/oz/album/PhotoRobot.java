@@ -13,15 +13,15 @@ import io.odysz.anson.Anson;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFile;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -145,7 +145,7 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	 */
 	public String touchTempDir(String conn) throws SemanticException {
 
-		String extroot = ((ShExtFile) DATranscxt
+		String extroot = ((ShExtFilev2) DATranscxt
 						.getHandler(conn, new PhotoMeta(conn).tbl, smtype.extFilev2))
 						.getFileRoot();
 
@@ -160,7 +160,10 @@ public class PhotoRobot extends SyncRobot implements IUser {
 		return "a-001";
 	}
 
-	public SessionInf sessionInf() {
-		return new SessionInf();
+	@Override
+	public SessionInf getClientSessionInf(IUser login) { 
+		SessionInf inf = new SessionInf(login.sessionId(), login.uid(), login.roleId());
+		inf.device(login.deviceId());
+		return inf;
 	}
 }
