@@ -535,8 +535,8 @@ public class Synclientier extends Semantier {
 	}
 
 	public String tempath(IFileDescriptor f) {
-		String tempath = f.fullpath().replaceAll(":", "");
-		return EnvPath.decodeUri(tempath, tempath);
+		String clientpath = f.fullpath().replaceAll(":", "");
+		return EnvPath.decodeUri(tempath, f.device(), FilenameUtils.getName(clientpath));
 	}
 
 

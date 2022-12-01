@@ -148,6 +148,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 				meta.shareDate,
 				meta.shareby,
 				meta.shareflag,
+				meta.syncflag,
 				meta.mime,
 				meta.fullpath,
 				meta.device,
@@ -175,7 +176,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.mime = rs.getString(meta.mime);
 		this.size = rs.getLong(meta.size, 0);
 		
-		// this.isPublic = Share.pub.equals(rs.getString(meta.shareflag, null));
 		this.clientpath =  rs.getString(meta.fullpath);
 		this.device =  rs.getString(meta.device);
 		this.folder = rs.getString(meta.folder);
@@ -187,6 +187,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		}
 		this.shareby = rs.getString(meta.shareby);
 		this.shareflag = rs.getString(meta.shareflag);
+		this.syncFlag = rs.getString(meta.syncflag);
 	}
 
 	/**

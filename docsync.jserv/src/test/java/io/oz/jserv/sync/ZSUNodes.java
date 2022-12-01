@@ -36,7 +36,7 @@ public class ZSUNodes {
 	}
 
 	public static class Kharkiv {
-		public static final String folder = "trackor-brigade";
+		public static final String folder = "tractor-brigade";
 
 		public static class Synode {
 			public static final String nodeId = "jnode-kharkiv";
