@@ -53,6 +53,7 @@ public class SynodeTier extends Synclientier {
 		}
 		connPriv = connId;
 	}
+	
 	/**
 	 * @param meta 
 	 * @param family 
@@ -90,9 +91,10 @@ public class SynodeTier extends Synclientier {
 				videos, photoUser, onProc,
 				isNull(docOk) ? new OnDocOk() {
 					@Override
-					public void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException {
-						String sync0 = doc.syncFlag; // rs.getString(meta.syncflag);
-						String share = doc.shareflag; // rs.getString(meta.shareflag);
+					public void ok(SyncDoc doc, AnsonResp resp)
+							throws IOException, AnsonException, TransException {
+						String sync0 = doc.syncFlag;
+						String share = doc.shareflag;
 						String f = SyncFlag.to(sync0, SyncEvent.pushEnd, share);
 						try {
 							setLocalSync(localSt, connPriv, meta, doc, f, robot);

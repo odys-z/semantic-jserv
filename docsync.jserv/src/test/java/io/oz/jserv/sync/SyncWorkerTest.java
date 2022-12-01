@@ -1,10 +1,6 @@
 package io.oz.jserv.sync;
 
-import static io.oz.jserv.sync.ZSUNodes.clientUri;
-import static io.oz.jserv.sync.ZSUNodes.family;
-import static io.oz.jserv.sync.ZSUNodes.jservHub;
-import static io.oz.jserv.sync.ZSUNodes.volumeDir;
-import static io.oz.jserv.sync.ZSUNodes.webRoot;
+import static io.oz.jserv.sync.ZSUNodes.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -162,10 +158,13 @@ class SyncWorkerTest {
 
 		tasks.beforeFirst();
 		while (tasks.next()) {
-			assertTrue( AnDevice.device.equals(tasks.getString(meta.device))
-					|| Kharkiv.Synode.nodeId.equals(tasks.getString(meta.device))
-					|| Kyiv.Synode.nodeId.equals(tasks.getString(meta.device))
-					&& clientpath.equals(tasks.getString(meta.fullpath)));
+			String dev = tasks.getString(meta.device);
+			String pth = tasks.getString(meta.fullpath);
+			assertTrue( AnDevice.device.equals(dev)
+					|| Kharkiv.Synode.nodeId.equals(dev)
+					|| Kyiv.Synode.nodeId.equals(dev)
+					&& clientpath.equals(pth)
+					|| "omni".equals(dev));	// Albumtier test
 		}
 
 		// 4. synchronize downwardly 
