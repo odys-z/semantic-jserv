@@ -1,7 +1,5 @@
 package io.oz.jserv.sync;
 
-import io.odysz.semantic.tier.docs.SyncMode;
-
 /**
  * Consts for testing.
  * <pre>
@@ -28,7 +26,7 @@ public class ZSUNodes {
 
 		public static class Synode {
 			public static final String nodeId = "jnode-kyiv";
-			public static final SyncMode mode = SyncMode.main;
+			public static final SynodeMode mode = SynodeMode.main;
 
 			public static final String worker = "odys-z.github.io";
 			public static final String passwd = "слава україні";
@@ -40,7 +38,7 @@ public class ZSUNodes {
 
 		public static class Synode {
 			public static final String nodeId = "jnode-kharkiv";
-			public static final SyncMode mode = SyncMode.priv;
+			public static final SynodeMode mode = SynodeMode.priv;
 
 			public static final String worker = "syrskyi";
 			public static final String passwd = "слава україні";

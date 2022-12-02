@@ -39,8 +39,6 @@ import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantic.tier.docs.SyncFlag;
-import io.odysz.semantic.tier.docs.SyncMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
@@ -68,6 +66,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 	OnChainOk onCreateHandler;
 
+	static TableMeta synclogMeta;
+
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
 	public static final String keySynconn = "sync-conn-id";
@@ -79,7 +79,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 	@SuppressWarnings("unused")
 	private static ScheduledFuture<?> schedualed;
-	private static SyncMode mode;
+	private static SynodeMode mode;
 	static ReentrantLock lock;
 	protected static DATranscxt st;
 	/** connection for update sync flages &amp; task records. */
@@ -93,6 +93,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		try {
 			st = new DATranscxt(null);
 			metas = new HashMap<String, TableMeta>();
+			synclogMeta = new TableMeta("a_synclog");
 
 			anonymous = new SyncRobot("Robot Syncer", "");
 			
@@ -189,14 +190,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		String cfg = Configs.getCfg(keyMode);
 		if (Docsyncer.cloudHub.equals(cfg)) {
-			mode = SyncMode.hub;
+			mode = SynodeMode.hub;
 			if (ServFlags.file)
 				Utils.logi("[ServFlags.file] sync worker disabled for node working in cloud hub mode.");
 		}
 		else {
 			if (Docsyncer.mainStorage.equals(cfg))
-				mode = SyncMode.main;
-			else mode = SyncMode.priv;
+				mode = SynodeMode.main;
+			else mode = SynodeMode.priv;
 		
 			schedualed = scheduler.scheduleAtFixedRate(
 					new SyncWorker(mode, nodeId, synconn, nodeId, new DocTableMeta("h_photos", "pid", synconn)),
@@ -287,7 +288,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 						rsp = chain.uploadBlock(jmsg.body(0), usr);
 					else if (DocsReq.A.blockEnd.equals(a))
 						// synchronization are supposed to be required by a SyncRobot
-						rsp = chain.endBlock(jmsg.body(0), (SyncRobot)usr);
+						rsp = chain.endBlock(jmsg.body(0), (SyncRobot)usr, onBlocksFinish);
 					else if (DocsReq.A.blockAbort.equals(a))
 						rsp = chain.abortBlock(jmsg.body(0), usr);
 
@@ -463,4 +464,11 @@ public class Docsyncer extends ServPort<DocsReq> {
 		
 		return (DocsResp) new DocsResp().doc(rs, meta);
 	}
+
+	/**
+	 * Setup synchronizing tasks.
+	 */
+	protected OnChainOk onBlocksFinish = (Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
+		return post;
+	};
 }

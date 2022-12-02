@@ -1,9 +1,9 @@
-package io.odysz.semantic.tier.docs;
+package io.oz.jserv.sync;
 
 /**
  * jserv-node states
  */
-public enum SyncMode {
+public enum SynodeMode {
 	/** jserv node mode: cloud hub, equivalent of {@link Docsyncer#cloudHub} */
 	hub,
 	/** jserv node mode: private main, equivalent of {@link Docsyncer#mainStorage} */

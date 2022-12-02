@@ -28,12 +28,11 @@ import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantic.tier.docs.SyncFlag;
 import io.odysz.semantic.tier.docs.DocsReq.A;
-import io.odysz.semantic.tier.docs.SyncFlag.SyncEvent;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.sync.SyncFlag.SyncEvent;
 
 public class SynodeTier extends Synclientier {
 

@@ -23,8 +23,6 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantic.tier.docs.SyncFlag;
-import io.odysz.semantic.tier.docs.SyncMode;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -33,7 +31,7 @@ public class SyncWorker implements Runnable {
 
 	static int blocksize = 3 * 1024 * 1024;
 
-	SyncMode mode;
+	SynodeMode mode;
 	
 	String mac;
 	SynodeTier synctier;
@@ -54,7 +52,7 @@ public class SyncWorker implements Runnable {
 
 	private boolean stop = false;
 
-	public SyncWorker(SyncMode mode, String device, String connId, String worker, DocTableMeta tablMeta)
+	public SyncWorker(SynodeMode mode, String device, String connId, String worker, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
 		this.mode = mode;
 		funcUri = "/sync/worker";
@@ -97,7 +95,7 @@ public class SyncWorker implements Runnable {
 
 	@Override
 	public void run() {
-		if (stop || synctier == null || mode == SyncMode.hub)
+		if (stop || synctier == null || mode == SynodeMode.hub)
 			return;
 		else if (isblank(workerId) || isblank(connPriv) || isblank(mac)) {
 			Utils.warn("SyncWorker is logged in but there are inccorect configures. Workder: %s, db-conn: %s, Node: %s", workerId, connPriv, mac);
@@ -163,7 +161,7 @@ public class SyncWorker implements Runnable {
 	 * @throws AnsonException 
 	 */
 	public SyncWorker push() throws TransException, SQLException, AnsonException, IOException {
-		if (mode == SyncMode.main || mode == SyncMode.priv) {
+		if (mode == SynodeMode.main || mode == SynodeMode.priv) {
 			// find local records with shareflag = pub
 			AnResultset rs = ((AnResultset) localSt
 				.select(localMeta.tbl, "f")

@@ -1,4 +1,4 @@
-package io.odysz.semantic.tier.docs;
+package io.oz.jserv.sync;
 
 import io.odysz.anson.Anson;
 import io.odysz.semantic.ext.DocTableMeta.Share;
@@ -24,6 +24,8 @@ public final class SyncFlag extends Anson {
 	public static final String publish = "🌎";
 	/**created at cloud hub ('✩') by both client and jnode pushing, */
 	public static final String hub = "✩";
+	/** hub buffering expired or finished ('x') */
+	public static final String close = "x";
 	/** This state can not present in database */ 
 	public static final String end = "";
 	
@@ -44,15 +46,15 @@ public final class SyncFlag extends Anson {
 		}
 		else if (publish.equals(now)) {
 			if (e == SyncEvent.close)
-				return end;
+				return close;
 			else if (e == SyncEvent.hide)
 				return hub;
 			else if (e == SyncEvent.pull)
 				return priv;
 		}
 		else if (hub.equals(now)) {
-			if (e == SyncEvent.close && Share.isPub(share))
-				return end;
+			if (e == SyncEvent.close)
+				return close;
 			else if (e == SyncEvent.publish)
 				return publish;
 			else if (e == SyncEvent.pull)
@@ -61,10 +63,10 @@ public final class SyncFlag extends Anson {
 		return now;
 	}
 
-	public static String start(SyncMode mode, String share) throws SemanticException {
-			if (SyncMode.hub == mode)
+	public static String start(SynodeMode mode, String share) throws SemanticException {
+			if (SynodeMode.hub == mode)
 				return Share.isPub(share) ? publish : hub;
-			else if (SyncMode.priv == mode || SyncMode.main == mode)
+			else if (SynodeMode.priv == mode || SynodeMode.main == mode)
 				return priv;
 			throw new SemanticException("Unhandled state starting: mode %s : share %s.", mode, share);
 	}

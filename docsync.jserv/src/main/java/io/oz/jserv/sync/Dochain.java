@@ -134,7 +134,7 @@ public class Dochain {
 					.fullpath(chain.clientpath));
 	}
 
-	DocsResp endBlock(DocsReq body, SyncRobot usr)
+	DocsResp endBlock(DocsReq body, SyncRobot usr, OnChainOk ok)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
 		BlockChain chain;
@@ -149,10 +149,10 @@ public class Dochain {
 		SyncDoc photo = new SyncDoc().parseChain(chain);
 		photo.uri = null; // suppress semantics ExtFile, support me.
 		
-		String pid = createFile(st, conn, photo, meta, usr, 
-				(Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
-					return post;
-				});
+		String pid = createFile(st, conn, photo, meta, usr, ok);
+//				(Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
+//					return post;
+//				});
 
 		// move file
 		String targetPath = resolvExtroot(st, conn, pid, usr, meta);
