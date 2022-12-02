@@ -64,9 +64,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	static HashMap<String, TableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
 
-	OnChainOk onCreateHandler;
-
-	static TableMeta synclogMeta;
+	static HashMap<String,SharelogMeta> logmetas;
 
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
@@ -93,7 +91,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 		try {
 			st = new DATranscxt(null);
 			metas = new HashMap<String, TableMeta>();
-			synclogMeta = new TableMeta("a_synclog");
 
 			anonymous = new SyncRobot("Robot Syncer", "");
 			
@@ -188,9 +185,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		synconn = Configs.getCfg(keySynconn);
 
+		logmetas = new HashMap<String, SharelogMeta>();
+
 		String cfg = Configs.getCfg(keyMode);
 		if (Docsyncer.cloudHub.equals(cfg)) {
 			mode = SynodeMode.hub;
+
+			// FIXME oo design error TODO
+			logmetas.put("h_photos", new SharelogMeta("h_phots", "pid", synconn));
+
 			if (ServFlags.file)
 				Utils.logi("[ServFlags.file] sync worker disabled for node working in cloud hub mode.");
 		}
@@ -199,8 +202,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 				mode = SynodeMode.main;
 			else mode = SynodeMode.priv;
 		
-			schedualed = scheduler.scheduleAtFixedRate(
-					new SyncWorker(mode, nodeId, synconn, nodeId, new DocTableMeta("h_photos", "pid", synconn)),
+			schedualed = scheduler.scheduleAtFixedRate(new SyncWorker(
+					mode, nodeId, synconn, nodeId,
+					new DocTableMeta("h_photos", "pid", synconn)), // FIXME oo design error TODO
 					0, m, TimeUnit.MINUTES);
 
 			if (ServFlags.file)
@@ -469,6 +473,18 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * Setup synchronizing tasks.
 	 */
 	protected OnChainOk onBlocksFinish = (Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
+		if (mode != SynodeMode.hub) {
+			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.tbl);
+			SynodeMeta snode = (SynodeMeta) metas.get(meta.tbl);
+			try {
+				post.post(st.insert(shmeta.tbl, robot)
+							.select(st.select(snode.tbl, "n")
+									  .cols(shmeta.selectSynodeCols())
+									  .whereEq(snode.org, robot.orgId)));
+			} catch (TransException e) {
+				e.printStackTrace();
+			}
+		}
 		return post;
 	};
 }
