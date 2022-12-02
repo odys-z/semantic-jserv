@@ -40,15 +40,13 @@ import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantic.tier.docs.SyncFlag;
-import io.odysz.semantic.tier.docs.SyncMode;
-import io.odysz.semantic.tier.docs.SyncFlag.SyncEvent;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.Photo;
 import io.oz.album.tier.PhotoMeta;
+import io.oz.jserv.sync.SyncFlag.SyncEvent;
 import io.oz.jserv.sync.ZSUNodes.AnDevice;
 import io.oz.jserv.sync.ZSUNodes.Kharkiv;
 import io.oz.jserv.sync.ZSUNodes.Kyiv;
@@ -243,7 +241,7 @@ class SyncWorkerTest {
 		// downward synchronize the file, hub -> Kharkiv (working as main node)
 		SyncWorker.blocksize = 32 * 3;
 		DocTableMeta meta = new PhotoMeta(conn);
-		worker = new SyncWorker(SyncMode.main, Kharkiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
+		worker = new SyncWorker(SynodeMode.main, Kharkiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
 				.stop();
 		ArrayList<DocsResp> ids = worker
 				.login(Kharkiv.Synode.passwd)

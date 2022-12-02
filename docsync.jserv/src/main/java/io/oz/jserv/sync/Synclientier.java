@@ -43,8 +43,6 @@ import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantic.tier.docs.SyncFlag;
-import io.odysz.semantic.tier.docs.SyncMode;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
@@ -133,7 +131,7 @@ public class Synclientier extends Semantier {
 			robot = new SyncRobot(ssinf.uid(), ssinf.device)
 					.device(ssinf.device);
 			tempath = FilenameUtils.concat(tempath,
-					String.format("io.oz.sync.%s.%s", tempath, SyncMode.priv, ssinf.uid()));
+					String.format("io.oz.sync.%s.%s", tempath, SynodeMode.priv, ssinf.uid()));
 			
 			new File(tempath).mkdirs(); 
 			
