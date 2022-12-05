@@ -172,14 +172,12 @@ class SyncWorkerTest {
 	private void clean(SyncWorker worker, String clientpath)
 			throws TransException, SQLException {
 
-		String device = worker.synctier.robot.deviceId;
+		// String device = worker.synctier.robot.deviceId;
 
 		defltSt
 			.delete(meta.tbl, worker.robot())
 			.whereEq(meta.org, worker.org())
-			// .whereEq(meta.device, device)
-			// .whereEq(meta.fullpath, clientpath)
-			.post(Docsyncer.onDel(clientpath, device))
+			.post(Docsyncer.onClean(worker.org(), meta, worker.robot()))
 			.d(defltSt.instancontxt(conn, worker.robot()));
 		
 		worker.synctier.del(meta.tbl, Kyiv.Synode.nodeId, null);
@@ -212,7 +210,7 @@ class SyncWorkerTest {
 	}
 
 	/**
-	 * <p> device -&gt; hub -&gt; Kharkiv</p>
+	 * <p> device -&gt; hub -&gt; synode[Kharkiv]</p>
 	 * 
 	 * <h5>A word about sharer and path at jserv:</h5>
 	 * <p>
@@ -225,18 +223,18 @@ class SyncWorkerTest {
 	 */
 	@Test
 	void testKharivPull() throws Exception {
-		String clientpath = Kyiv.png;
 		SyncWorker worker = new SyncWorker(Kharkiv.Synode.mode, Kharkiv.Synode.nodeId, conn, Kharkiv.Synode.worker, meta)
 				.stop()
 				.login(Kharkiv.Synode.passwd);
 
 		// 0. clean failed tests
-		clean(worker, clientpath);
 		worker.synctier.tempRoot("synode.kharkiv");
+		clean(worker, Kyiv.png);
 
 		videoUpByApp(meta);
 
 		Docsyncer.init(Kharkiv.Synode.nodeId);
+
 
 		// downward synchronize the file, hub -> Kharkiv (working as main node)
 		SyncWorker.blocksize = 32 * 3;
@@ -254,7 +252,8 @@ class SyncWorkerTest {
 	}
 
 	/**
-	 * Upload video from a device to a private node, Kharkiv.
+	 * 1. Clean video {@link AnDevice#localFile} of device {@link AnDevice#device} <br>
+	 * 2. Upload the video from device to the private synode, Kharkiv.
 	 * 
 	 * @param photoMeta
 	 * @return
@@ -276,17 +275,8 @@ class SyncWorkerTest {
 				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
-		/*
-		List<SyncDoc> videos = new ArrayList<SyncDoc>();
-		videos.add((SyncDoc) new SyncDoc()
-					.share(tier.robot.uid(), Share.pub, new Date())
-					.folder(Kharkiv.folder)
-					.fullpath(AnDevice.localFile));
-
-		SessionInf ssInf = tier.client.ssInfo(); // simulating pushing from app
-
-		List<DocsResp> resps = tier.pushBlocks( meta, videos, ssInf, null, new OnDocOk() {
-		*/
+		apptier.del(photoMeta.tbl, AnDevice.device, AnDevice.localFile);
+		
 		SyncDoc doc = (SyncDoc) new SyncDoc()
 					.share(apptier.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)

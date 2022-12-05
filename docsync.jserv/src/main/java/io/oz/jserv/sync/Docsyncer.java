@@ -26,6 +26,7 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.ext.SharelogMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -64,7 +65,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	static HashMap<String, TableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
 
-	static HashMap<String,SharelogMeta> logmetas;
+	// static HashMap<String,SharelogMeta> logmetas;
 
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
@@ -104,10 +105,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 		metas.put(m.tbl, m);
 	}
 
-	public static Statement<?> onDel(String clientpath, String device) {
-		return null;
-	}
-
 	public static DocsResp delDocRec(DocsReq req, IUser usr, boolean ...isAdmin)
 			throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
@@ -120,12 +117,17 @@ public class Docsyncer extends ServPort<DocsReq> {
 			throw new SemanticException("User (id %s, device %s) is trying to delete a file from another device? (req.device = %s)",
 					usr.uid(), usr.deviceId(), req.device());
 		
+		String docId = resolveDoc(usr.orgId(), req.clientpath, device, meta, usr, conn);
+		
+		if (isblank(docId))
+			throw new SemanticException("No record found for doc %s : %s", device, req.clientpath);
+
 		Delete d = st
 				.delete(meta.tbl, usr)
-				.whereEq(meta.org, usr.orgId())
-				.whereEq(meta.device, device)
-				// .whereEq(meta.fullpath, req.clientpath)
-				.post(Docsyncer.onDel(req.clientpath, req.device()))
+				// .whereEq(meta.org, usr.orgId())
+				// .whereEq(meta.device, device)
+				.whereEq(meta.pk, docId)
+				.post(Docsyncer.onDel(docId, meta, usr))
 				;
 		
 		if (req.clientpath == null && !is(isAdmin))
@@ -137,6 +139,21 @@ public class Docsyncer extends ServPort<DocsReq> {
 		SemanticObject res = (SemanticObject) d.d(st.instancontxt(conn, usr));
 		
 		return (DocsResp) new DocsResp().data(res.props()); 
+	}
+
+	static String resolveDoc(String orgId, String clientpath, String device, DocTableMeta meta, IUser usr, String conn)
+			throws SQLException, TransException {
+		AnResultset rs = ((AnResultset) st.select(meta.tbl, "d")
+			.col(meta.pk)
+			.whereEq(meta.device, device)
+			.whereEq(meta.fullpath, clientpath)
+			.whereEq(meta.org, usr.orgId())
+			.rs(st.instancontxt(conn, usr))
+			.rs(0))
+			.beforeFirst();
+		if (rs.next())
+			return rs.getString(meta.pk);
+		else return null;
 	}
 
 	/**
@@ -185,14 +202,16 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		synconn = Configs.getCfg(keySynconn);
 
-		logmetas = new HashMap<String, SharelogMeta>();
+		// logmetas = new HashMap<String, SharelogMeta>();
 
 		String cfg = Configs.getCfg(keyMode);
 		if (Docsyncer.cloudHub.equals(cfg)) {
 			mode = SynodeMode.hub;
 
 			// FIXME oo design error TODO
-			logmetas.put("h_photos", new SharelogMeta("h_phots", "pid", synconn));
+			// metas.put("a_synclog", new SharelogMeta("h_phots", "pid", synconn));
+			SharelogMeta sharemeta = new SharelogMeta("h_phots", "pid", synconn);
+			metas.put(sharemeta.tbl, sharemeta);
 
 			if (ServFlags.file)
 				Utils.logi("[ServFlags.file] sync worker disabled for node working in cloud hub mode.");
@@ -474,7 +493,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 */
 	protected OnChainOk onBlocksFinish = (Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
 		if (mode != SynodeMode.hub) {
-			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.tbl);
+			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
 			SynodeMeta snode = (SynodeMeta) metas.get(meta.tbl);
 			try {
 				post.post(st.insert(shmeta.tbl, robot)
@@ -487,4 +506,30 @@ public class Docsyncer extends ServPort<DocsReq> {
 		}
 		return post;
 	};
+
+	/**
+	 * 1. clear share-log<br>
+	 * 
+	 * @param docId
+	 * @return statement for adding as a post statement
+	 */
+	public static Statement<?> onDel(String docId, DocTableMeta meta, IUser usr) {
+		if (mode == SynodeMode.hub) {
+			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
+			return st.delete(shmeta.tbl, usr)
+					.whereEq(shmeta.org, usr.orgId())
+					.whereEq(shmeta.docFk, docId);
+		}
+		return null;
+	}
+
+	public static Statement<?> onClean(String org, DocTableMeta meta, IUser usr) {
+		if (mode == SynodeMode.hub) {
+			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
+			return st.delete(shmeta.tbl, usr)
+				.whereEq(shmeta.org, usr.orgId());
+		}
+		return null;
+	}
+
 }
