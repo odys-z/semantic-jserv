@@ -267,7 +267,7 @@ public class Synclientier extends Semantier {
 	 * @param proc
 	 * @param docOk
 	 * @param onErr
-	 * @return result list (AnsonResp)
+	 * @return list of response
 	 */
 	public List<DocsResp> pushBlocks(String tbl, List<? extends SyncDoc> videos,
 				SessionInf user, OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr)
@@ -503,14 +503,14 @@ public class Synclientier extends Semantier {
 	}
 	
 	// public DocsResp queryDocs(List<? extends SyncDoc> files, DocsPage page, DocTableMeta meta)
-	public DocsResp queryPaths(PathsPage page, DocTableMeta meta)
-			throws TransException, IOException, SQLException {
+	public DocsResp queryPaths(PathsPage page, String tabl)
+			throws TransException, IOException {
 		String[] act = AnsonHeader.usrAct("album.java", "query", "r/states", "query sync");
 		AnsonHeader header = client.header().act(act);
 
 		DocsReq req = (DocsReq) new DocsReq()
 				.syncing(page)
-				.docTabl(meta.tbl)
+				.docTabl(tabl)
 				.device(page.device)
 				.a(A.records);
 
