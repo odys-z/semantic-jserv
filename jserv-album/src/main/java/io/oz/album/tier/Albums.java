@@ -434,7 +434,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.delete(meta.tbl, usr)
 				.whereEq("device", req.device())
 				.whereEq("clientpath", req.clientpath)
-				.post(Docsyncer.onDel(req.clientpath, req.device()))
+				// .post(Docsyncer.onDel(req.clientpath, req.device()))
 				.d(st.instancontxt(conn, usr));
 		
 		return (DocsResp) new DocsResp().data(res.props()); 
