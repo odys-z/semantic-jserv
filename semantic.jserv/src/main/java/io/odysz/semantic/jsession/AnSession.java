@@ -231,7 +231,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						users.put(login.sessionId(), login);
 						lock.unlock();
 						
-						// SessionInf ssinf = new SessionInf(login.sessionId(), login.uid());
 						SessionInf ssinf = login.getClientSessionInf(login);
 						AnSessionResp bd = new AnSessionResp(null, ssinf);
 						AnsonMsg<AnSessionResp> rspMsg = ok(bd);
