@@ -332,7 +332,7 @@ public class Synclientier extends Semantier {
 				respi = client.commit(q, errHandler);
 				if (proc != null) proc.proc(px, videos.size(), seq, totalBlocks, respi);
 
-				if (docOk != null) docOk.ok(p, respi);
+				if (docOk != null) docOk.ok(respi.doc, respi);
 				reslts.add(respi);
 			}
 			catch (IOException | TransException | AnsonException ex) { 

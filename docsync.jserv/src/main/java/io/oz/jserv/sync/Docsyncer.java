@@ -310,8 +310,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 					else if (DocsReq.A.blockUp.equals(a))
 						rsp = chain.uploadBlock(jmsg.body(0), usr);
 					else if (DocsReq.A.blockEnd.equals(a))
-						// synchronization are supposed to be required by a SyncRobot
-						rsp = chain.endBlock(jmsg.body(0), (SyncRobot)usr, onBlocksFinish);
+						rsp = chain.endBlock(jmsg.body(0), usr, onBlocksFinish);
 					else if (DocsReq.A.blockAbort.equals(a))
 						rsp = chain.abortBlock(jmsg.body(0), usr);
 
@@ -351,7 +350,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	protected AnsonResp queryDevicePage(DocsReq jreq, IUser usr) throws SQLException, TransException {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 
-		Object[] kpaths = jreq.syncing().paths() == null ? null
+		Object[] kpaths = jreq.syncing().paths() == null ? new Object[0]
 				: jreq.syncing().paths().keySet().toArray();
 		
 
@@ -491,7 +490,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	/**
 	 * Setup synchronizing tasks.
 	 */
-	protected OnChainOk onBlocksFinish = (Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
+	protected OnChainOk onBlocksFinish = (Update post, SyncDoc f, DocTableMeta meta, IUser robot) -> {
 		if (mode != SynodeMode.hub) {
 			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
 			SynodeMeta snode = (SynodeMeta) metas.get(meta.tbl);
@@ -499,7 +498,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				post.post(st.insert(shmeta.tbl, robot)
 							.select(st.select(snode.tbl, "n")
 									  .cols(shmeta.selectSynodeCols())
-									  .whereEq(snode.org, robot.orgId)));
+									  .whereEq(snode.org, robot.orgId())));
 			} catch (TransException e) {
 				e.printStackTrace();
 			}

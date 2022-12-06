@@ -8,6 +8,8 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.x.SemanticException;
 
+import static io.odysz.common.LangExt.isblank;
+
 /**
  * Task page to update synchronizing information.
  * 
@@ -52,12 +54,18 @@ public class PathsPage extends Anson {
 	 * @param meta
 	 * @return this
 	 * @throws SQLException accessing rs failed.
+	 * @throws SemanticException 
 	 */
-	public PathsPage paths(AnResultset rs, DocTableMeta meta) throws SQLException {
+	public PathsPage paths(AnResultset rs, DocTableMeta meta) throws SQLException, SemanticException {
 		clientPaths = new HashMap<String, String[]>();
 
 		rs.beforeFirst();
 		while(rs.next()) {
+			String dev = rs.getString(meta.device);
+			if (isblank(device))
+				device = dev;
+			else if (!device.equals(dev))
+				throw new SemanticException("Found different devices in a single page: %s : %s.", device, dev);
 			clientPaths.put(
 				rs.getString(meta.fullpath),
 				new String[] {

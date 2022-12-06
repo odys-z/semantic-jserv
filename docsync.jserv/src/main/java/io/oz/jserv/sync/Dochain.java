@@ -45,7 +45,7 @@ public class Dochain {
 		 * @param robot
 		 * @return either the original post statement or a new one.
 		 */
-		Update onDocreate(Update post, SyncDoc d, DocTableMeta meta, SyncRobot robot);
+		Update onDocreate(Update post, SyncDoc d, DocTableMeta meta, IUser robot);
 	}
 
 	public static final boolean verbose = true;
@@ -73,6 +73,7 @@ public class Dochain {
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
 
 		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder)
+				.device(usr.deviceId())
 				.share(body.shareby, body.shareDate, body.shareflag);
 
 		String id = chainId(usr, body);
@@ -134,7 +135,17 @@ public class Dochain {
 					.fullpath(chain.clientpath));
 	}
 
-	DocsResp endBlock(DocsReq body, SyncRobot usr, OnChainOk ok)
+	/**
+	 * @param body
+	 * @param usr for synode requires, it should be type SyncRobot
+	 * @param ok
+	 * @return response
+	 * @throws SQLException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws TransException
+	 */
+	DocsResp endBlock(DocsReq body, IUser usr, OnChainOk ok)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
 		BlockChain chain;
@@ -162,11 +173,12 @@ public class Dochain {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((SyncDoc) new SyncDoc()
-					.recId(pid)
-					.clientname(chain.clientname)
-					.cdate(body.createDate)
-					.fullpath(chain.clientpath));
+//				.doc((SyncDoc) new SyncDoc()
+//					.recId(pid)
+//					.clientname(chain.clientname)
+//					.cdate(body.createDate)
+//					.fullpath(chain.clientpath));
+				.doc(photo.recId(pid));
 	}
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
@@ -190,7 +202,7 @@ public class Dochain {
 	}
 
 	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
-			DocTableMeta meta, SyncRobot usr, OnChainOk end)
+			DocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
 
