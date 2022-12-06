@@ -163,7 +163,15 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	 */
 	public static String[] synPageCols(DocTableMeta meta) {
 		if (synpageCols == null)
-			synpageCols = new String[] {meta.pk, meta.fullpath, meta.shareby, meta.shareDate, meta.shareflag, meta.syncflag};
+			synpageCols = new String[] {
+					meta.pk,
+					meta.device,
+					meta.fullpath,
+					meta.shareby,
+					meta.shareDate,
+					meta.shareflag,
+					meta.syncflag
+			};
 		return synpageCols;
 	}
 
@@ -288,13 +296,15 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc parseChain(BlockChain chain) throws IOException {
 		createDate = chain.cdate;
 
+		device = chain.device;
 		clientpath = chain.clientpath;
 		pname = chain.clientname;
 		folder(chain.saveFolder);
+
 		shareby = chain.shareby;
 		sharedate = chain.shareDate;
 		shareflag = chain.shareflag;
-		
+
 		return parseMimeSize(chain.outputPath);
 	}
 }
