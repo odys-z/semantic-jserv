@@ -1,4 +1,4 @@
-package io.odysz.jsample.semantier;
+package io.oz.jsample.semantier;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -11,16 +11,16 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
-import io.odysz.jsample.protocol.Samport;
-import io.odysz.jsample.semantier.UserstReq.A;
-import io.odysz.jsample.utils.StrRes;
+import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
+import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.Relations;
@@ -33,6 +33,7 @@ import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
+import io.oz.jsample.semantier.UserstReq.A;
 
 @WebServlet(description = "Semantic tier: users", urlPatterns = { "/users.tier" })
 public class UsersTier extends ServPort<UserstReq> {
@@ -41,7 +42,7 @@ public class UsersTier extends ServPort<UserstReq> {
 
 	protected static DATranscxt st;
 
-	private static String mtabl = "a_users";
+	public static String mtabl = "a_users";
 
 	static {
 		try {
@@ -52,13 +53,15 @@ public class UsersTier extends ServPort<UserstReq> {
 	}
 
 	public UsersTier() {
-		super(Samport.userstier);
+		super(Port.userstier);
 	}
 
 	@Override
 	protected void onGet(AnsonMsg<UserstReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		
+		if (ServFlags.jsample)
+			Utils.logi("---------- ever-connect / users.tier GET ----------");
 	}
 
 	@Override
@@ -71,26 +74,27 @@ public class UsersTier extends ServPort<UserstReq> {
 
 			UserstReq jreq = jmsg.body(0);
 
-			AnsonMsg<AnsonResp> rsp = null;
-			if (UserstReq.A.records.equals(jreq.a()))
+			AnsonResp rsp = null;
+			if (A.records.equals(jreq.a()))
 				rsp = records(jreq, usr);
-			else if (UserstReq.A.rec.equals(jreq.a()))
+			else if (A.rec.equals(jreq.a()))
 				rsp = rec(jreq, usr);
-			else if (UserstReq.A.insert.equals(jreq.a()))
+			else if (A.insert.equals(jreq.a()))
 				rsp = ins(jreq, usr);
-			else if (UserstReq.A.update.equals(jreq.a()))
+			else if (A.update.equals(jreq.a()))
 				rsp = upd(jreq, usr);
-			else if (UserstReq.A.del.equals(jreq.a()))
+			else if (A.del.equals(jreq.a()))
 				rsp = del(jreq, usr);
 			else throw new SemanticException(String.format(
 						"request.body.a can not handled: %s\\n" +
 						"Only a = [%s, %s, %s, %s, %s] are supported.",
 						jreq.a(), A.records, A.rec, A.insert, A.update, A.del));
 
-			write(resp, rsp);
+			write(resp, ok(rsp));
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
-		} catch (SQLException | TransException e) { e.printStackTrace();
+		} catch (SQLException | TransException e) {
+			if (ServFlags.jsample) e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
@@ -99,7 +103,7 @@ public class UsersTier extends ServPort<UserstReq> {
 		}
 	}
 
-	private AnsonMsg<AnsonResp> del(UserstReq jreq, IUser usr)
+	protected AnsonResp del(UserstReq jreq, IUser usr)
 			throws SemanticException, TransException, SQLException {
 
 		if (jreq.deletings == null && jreq.deletings.length > 0)
@@ -109,10 +113,10 @@ public class UsersTier extends ServPort<UserstReq> {
 			.whereIn("userId", jreq.deletings)
 			.d(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
 
-		return ok(new AnsonResp().msg(res.msg()));
+		return new AnsonResp().msg(res.msg());
 	}
 
-	private AnsonMsg<AnsonResp> upd(UserstReq jreq, IUser usr)
+	protected AnsonResp upd(UserstReq jreq, IUser usr)
 			throws SemanticException, TransException, SQLException {
 		if (jreq.record == null && jreq.relations == null)
 			throw new SemanticException("Failed on inserting null record.");
@@ -127,37 +131,38 @@ public class UsersTier extends ServPort<UserstReq> {
 		}
 
 		SemanticObject res = (SemanticObject)u
+				// .whereEq("userId", jreq.userId)  // TODO FIXME but why this works with the curriculum.js client?
 				.whereEq("userId", jreq.pk)
 				.u(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
 
-		return ok(new AnsonResp().msg(res.msg()));
+		return new AnsonResp().msg(res.msg());
 	}
 
-	protected AnsonMsg<AnsonResp> ins(UserstReq jreq, IUser usr)
+	protected AnsonResp ins(UserstReq jreq, IUser usr)
 			throws SemanticException, TransException, SQLException {
 		if (jreq.record == null)
-			throw new SemanticException(StrRes.insert_null_record);
+			throw new SemanticException("Inserting a null record ...");
 		
 		ISemantext stx = st.instancontxt(Connects.uri2conn(jreq.uri()), usr);
 
 		AnResultset rs = (AnResultset) st.select(mtabl, "u")
 				.col(Funcall.count("userId"), "c")
-				.whereEq("userId", jreq.userId)
+				.whereEq("userId", jreq.record.get("userId"))
 				.rs(stx)
 				.rs(0);
 
 		rs.beforeFirst().next();
 		if (rs.getInt("c") > 0)
-			throw new SemanticException(StrRes.logid_exits);
+			throw new SemanticException("record id doesn't exist");
 
 		SemanticObject res = (SemanticObject)
 				((Insert) jreq.nvs(st.insert(mtabl, usr)))
 				.ins(stx);
 
-		return ok(new AnsonResp().data(res.props()));
+		return new AnsonResp().data(res.props());
 	}
 
-	protected AnsonMsg<AnsonResp> rec(UserstReq jreq, IUser usr) throws TransException, SQLException {
+	protected AnsonResp rec(UserstReq jreq, IUser usr) throws TransException, SQLException {
 		AnResultset rs = (AnResultset) st
 			.select(mtabl, "u")
 			.col("userId").col("userName").col("roleId").col("orgId").col("nationId").col("counter").col("birthday")
@@ -166,13 +171,13 @@ public class UsersTier extends ServPort<UserstReq> {
 			.rs(st.instancontxt(Connects.uri2conn(jreq.uri()), usr))
 			.rs(0);
 
-		return ok(new AnsonResp().rs(rs));
+		return new AnsonResp().rs(rs);
 	}
 
-	protected AnsonMsg<AnsonResp> records(UserstReq jreq, IUser usr)
+	protected AnsonResp records(UserstReq jreq, IUser usr)
 			throws SemanticException, TransException, SQLException {
-		Query q = st
-				.select("a_users", "u").page(jreq.page)
+		Query q = st.select(mtabl, "u")
+				.page(jreq.page)
 				.col("userId").col("userName").col("orgName").col("roleName")
 				.l("a_orgs", "o", "o.orgId = u.orgId")
 				.l("a_roles", "r", "r.roleId = u.roleId");
@@ -193,7 +198,7 @@ public class UsersTier extends ServPort<UserstReq> {
 			.rs(st.instancontxt(Connects.uri2conn(jreq.uri()), usr))
 			.rs(0);
 
-		return ok(new AnsonResp().rs(rs));
+		return new AnsonResp().rs(rs);
 	}
 
 }

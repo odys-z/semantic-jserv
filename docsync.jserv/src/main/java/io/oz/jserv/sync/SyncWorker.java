@@ -1,5 +1,7 @@
 package io.oz.jserv.sync;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,31 +27,18 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 public class SyncWorker implements Runnable {
+	public final String funcUri;
+
 	static int blocksize = 3 * 1024 * 1024;
 
-	/**
-	 * jserv-node states
-	 */
-	public enum SyncMode {
-		/** jserv node mode: cloud hub, equivalent of {@link Docsyncer#cloudHub} */
-		hub,
-		/** jserv node mode: private main, equivalent of {@link Docsyncer#mainStorage} */
-		main,
-		/** jserv node mode: private , equivalent of {@link Docsyncer#privateStorage}*/
-		priv
-	};
-	
-	SyncMode mode;
+	SynodeMode mode;
 	
 	String mac;
 	SynodeTier synctier;
 	
-	public final String funcUri;
 	String connPriv;
 	String workerId;
 	
-	// String tempDir;
-	// SyncRobot robot;
 	ErrorCtx errLog;
 
 	/**
@@ -61,8 +50,9 @@ public class SyncWorker implements Runnable {
 
 	public boolean verbose = true;
 
+	private boolean stop = false;
 
-	public SyncWorker(SyncMode mode, String device, String connId, String worker, DocTableMeta tablMeta)
+	public SyncWorker(SynodeMode mode, String device, String connId, String worker, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
 		this.mode = mode;
 		funcUri = "/sync/worker";
@@ -105,26 +95,27 @@ public class SyncWorker implements Runnable {
 
 	@Override
 	public void run() {
+		if (stop || synctier == null || mode == SynodeMode.hub)
+			return;
+		else if (isblank(workerId) || isblank(connPriv) || isblank(mac)) {
+			Utils.warn("SyncWorker is logged in but there are inccorect configures. Workder: %s, db-conn: %s, Node: %s", workerId, connPriv, mac);
+			stop();
+			Utils.warn("SyncWorker stopped.");
+			return;
+		}
+		else if (mode == null) {
+			Utils.warn("SyncWorker mode is not configured. Workder: %s, Node: %s", workerId, mac);
+			stop();
+			Utils.warn("SyncWorker stopped.");
+			return;
+		}
+
 		try {
-			/*
 			Docsyncer.lock.lock();
-
-	        DocsResp resp = null;
-
-			String[] act = AnsonHeader.usrAct("sync.jserv", "query", "r/tasks", "query tasks");
-			AnsonHeader header = client.header().act(act);
-
-			DocsReq req = (DocsReq) new DocsReq(null).a(A.records);
-
-			AnsonMsg<DocsReq> q = client.<DocsReq>userReq("", AnsonMsg.Port.docsync, req)
-									.header(header);
-
-			resp = client.commit(q, errLog);
-			
-			pullDocs(resp);
-			*/
+			pull();
+			push();
 		} catch (Exception ex) {
-			// ex.printStackTrace();
+			ex.printStackTrace();
 		}
 		finally {
 			Docsyncer.lock.unlock();
@@ -150,7 +141,7 @@ public class SyncWorker implements Runnable {
 				SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
 					
 				res.add(synctier.synClose(
-						synctier.synStreamPull(p, localMeta), localMeta));
+						synctier.synStreamPull(p, localMeta), localMeta.tbl));
 			}
 			catch(Exception e) {
 				e.printStackTrace();
@@ -170,7 +161,7 @@ public class SyncWorker implements Runnable {
 	 * @throws AnsonException 
 	 */
 	public SyncWorker push() throws TransException, SQLException, AnsonException, IOException {
-		if (mode == SyncMode.main || mode == SyncMode.priv) {
+		if (mode == SynodeMode.main || mode == SynodeMode.priv) {
 			// find local records with shareflag = pub
 			AnResultset rs = ((AnResultset) localSt
 				.select(localMeta.tbl, "f")
@@ -181,7 +172,7 @@ public class SyncWorker implements Runnable {
 				.rs(0)).beforeFirst();
 
 			// upload
-			synctier.syncUp(rs, workerId, localMeta,
+			synctier.syncUp(localMeta, rs, workerId,
 			  new OnProcess() {
 				@Override
 				public void proc(int listIndx, int rows, int seq, int totalBlocks, AnsonResp blockResp)
@@ -215,27 +206,6 @@ public class SyncWorker implements Runnable {
 	 * @throws IOException 
 	 */
 	public SyncWorker verifyDocs(ArrayList<DocsResp> list) throws TransException, SQLException, IOException {
-
-		/*
-		AnResultset rs = (AnResultset) localSt
-				.select(localMeta.tbl, "t")
-				.cols(localMeta.pk, localMeta.fullpath, localMeta.uri, localMeta.mime, localMeta.size)
-				.whereIn(localMeta.pk, ids)
-				.rs(localSt.instancontxt(connPriv, synctier.robot))
-				.rs(0);
-
-		if (rs.total() != ids.size())
-			throw new SemanticException("id count (%s) != file records' count (%s)", ids.size(), rs.total());
-
-		while (rs.next()) {
-			String p = synctier.resolvePrivRoot(rs.getString(localMeta.uri), localMeta);
-			File f = new File(p);
-			if (f.exists() && f.length() == rs.getLong(localMeta.size))
-				continue;
-			throw new SemanticException("Doc doesn't exists. id: %s, uri: %s, expecting path: %s",
-					rs.getString(localMeta.pk), uri, p);
-		}
-		*/
 		for (DocsResp r : list) {
 			AnResultset rs = (AnResultset) localSt
 				.select(localMeta.tbl, "t")
@@ -283,5 +253,10 @@ public class SyncWorker implements Runnable {
 
 	public String nodeId() {
 		return synctier.robot.deviceId();
+	}
+
+	public SyncWorker stop() {
+		stop = true;
+		return this;
 	}
 }

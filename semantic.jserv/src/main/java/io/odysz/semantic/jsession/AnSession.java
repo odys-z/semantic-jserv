@@ -41,6 +41,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -131,7 +132,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		scheduler = Executors.newScheduledThreadPool(1);
 
 		try {
-			// usrClzz = "class-IUser";
 			IUser tmp = createUser(usrClzz, "temp", "pswd", null, "temp user");
 			usrMeta = (JUserMeta) tmp.meta();
 		}
@@ -231,7 +231,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						users.put(login.sessionId(), login);
 						lock.unlock();
 						
-						SessionInf ssinf = new SessionInf(login.sessionId(), login.uid());
+						SessionInf ssinf = login.getClientSessionInf(login);
 						AnSessionResp bd = new AnSessionResp(null, ssinf);
 						AnsonMsg<AnSessionResp> rspMsg = ok(bd);
 						write(response, rspMsg, msg.opts());

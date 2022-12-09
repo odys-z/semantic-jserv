@@ -1,3 +1,4 @@
+package io.oz.jserv.sync;
 //package io.odysz.semantic.tier.docs;
 //
 //import java.io.IOException;

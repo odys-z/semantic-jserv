@@ -8,9 +8,9 @@ import java.nio.file.Paths;
 import io.odysz.common.AESHelper;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 
 public class AlbumReq extends DocsReq {

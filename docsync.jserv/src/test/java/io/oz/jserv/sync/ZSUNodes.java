@@ -1,7 +1,5 @@
 package io.oz.jserv.sync;
 
-import io.oz.jserv.sync.SyncWorker.SyncMode;
-
 /**
  * Consts for testing.
  * <pre>
@@ -28,7 +26,7 @@ public class ZSUNodes {
 
 		public static class Synode {
 			public static final String nodeId = "jnode-kyiv";
-			public static final SyncMode mode = SyncMode.main;
+			public static final SynodeMode mode = SynodeMode.hub;
 
 			public static final String worker = "odys-z.github.io";
 			public static final String passwd = "слава україні";
@@ -36,11 +34,11 @@ public class ZSUNodes {
 	}
 
 	public static class Kharkiv {
-		public static final String folder = "trackor-brigade";
+		public static final String folder = "tractor-brigade";
 
 		public static class Synode {
 			public static final String nodeId = "jnode-kharkiv";
-			public static final SyncMode mode = SyncMode.priv;
+			public static final SynodeMode mode = SynodeMode.main;
 
 			public static final String worker = "syrskyi";
 			public static final String passwd = "слава україні";

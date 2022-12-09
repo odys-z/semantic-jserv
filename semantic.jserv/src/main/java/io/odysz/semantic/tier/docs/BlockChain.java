@@ -36,7 +36,7 @@ public class BlockChain {
 	public String shareby;
 	public String shareDate;
 	public String shareflag;
-//	public String device;
+	public String device;
 
 	/**Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
@@ -138,8 +138,8 @@ public class BlockChain {
 		return this;
 	}
 
-//	public BlockChain device(String device) {
-//		this.device = device;
-//		return this;
-//	}
+	public BlockChain device(String device) {
+		this.device = device;
+		return this;
+	}
 }

@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 

@@ -379,7 +379,9 @@ public class Albums extends ServPort<AlbumReq> {
 				// .orderby(orders)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
-		AlbumResp album = new AlbumResp().syncRecords("sync-temp-id", rs);
+		AlbumResp album = (AlbumResp) new AlbumResp()
+				.collect("sync-temp-id")
+				.pathPage(rs, meta);
 
 		return album;
 	}
@@ -432,7 +434,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.delete(meta.tbl, usr)
 				.whereEq("device", req.device())
 				.whereEq("clientpath", req.clientpath)
-				.post(Docsyncer.onDel(req.clientpath, req.device()))
+				// .post(Docsyncer.onDel(req.clientpath, req.device()))
 				.d(st.instancontxt(conn, usr));
 		
 		return (DocsResp) new DocsResp().data(res.props()); 

@@ -2,6 +2,14 @@ package io.odysz.semantic.ext;
 
 import io.odysz.semantics.meta.TableMeta;
 
+/**
+ * Document records' table meta.
+ * <p>For Docsync.jserv, this meta is used for both client and server side.
+ * But the client should never use it as a parameter of API - only use a
+ * parameter of table name for specifying how the server should handle it.</p>
+ *
+ * @author odys-z@github.com
+ */
 public class DocTableMeta extends TableMeta {
 	/**
 	 * consts of share type: pub | priv 
@@ -37,6 +45,8 @@ public class DocTableMeta extends TableMeta {
 	public final String org;
 	public final String folder;
 	public final String size;
+
+	public final SharelogMeta sharelog;
 	
 	public DocTableMeta(String tbl, String pk, String conn) {
 		super(tbl, conn);
@@ -59,6 +69,8 @@ public class DocTableMeta extends TableMeta {
 
 		syncflag = "sync";
 		shareflag = "shareflag";
+		
+		sharelog = new SharelogMeta(tbl, pk, conn); 
 	}
 
 }

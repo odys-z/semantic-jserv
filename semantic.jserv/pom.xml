@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
   <artifactId>semantic.jserv</artifactId>
-  <version>1.4.12</version>
+  <version>1.4.16</version>
   <packaging>jar</packaging>
 
   <name>semantic.jserv lib</name>
@@ -70,7 +70,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantics.transact</artifactId>
-	    <version>[1.4.9,)</version>
+	    <version>[1.4.11,)</version>
 	</dependency>
 
 	<!-- As sonatype SNAPSHOT is updating on a daily base, you may update this with:
@@ -79,7 +79,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.DA</artifactId>
-	    <version>[1.4.9,)</version>
+	    <version>[1.4.11,)</version>
 	</dependency>
 
 	<!--
@@ -158,7 +158,7 @@
 
     	<plugin>
     		<artifactId>maven-compiler-plugin</artifactId>
-    		<version>3.7.0</version>
+    		<version>3.10.1</version>
     		<configuration>
     			<source>1.8</source>
     			<target>1.8</target>

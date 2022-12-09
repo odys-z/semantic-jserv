@@ -41,6 +41,8 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			file("file.serv"),
 			/**Any user defined request using message body of subclass of JBody must use this port */ 
 			user("user.serv11"),
+			/** experimental */
+			userstier("users.tier"),
 			/** semantic tree of dataset extensions<br>
 			 * see io.odysz.semantic.ext.SemanticTree in semantic.jserv. */
 			stree("s-tree.serv11"),
@@ -94,13 +96,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		}	
 	};
 
-	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext;
-//		public boolean eq(String code) {
-//			if (code == null) return false;
-//			MsgCode c = MsgCode.valueOf(MsgCode.class, code);
-//			return this == c;
-//		}
-	};
+	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext };
 
 	/**The default IPort implelemtation.
 	 * Used for parsing port name (string) to IPort instance, like {@link #Port}.<br>

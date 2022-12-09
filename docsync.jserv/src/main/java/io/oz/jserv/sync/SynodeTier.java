@@ -19,14 +19,17 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.AnsonHeader;
+import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocUtils;
+import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantic.tier.docs.DocsReq.A;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.sync.SyncFlag.SyncEvent;
@@ -49,21 +52,48 @@ public class SynodeTier extends Synclientier {
 		}
 		connPriv = connId;
 	}
+	
+	/**
+	 * @param meta 
+	 * @param family 
+	 * @param deviceId 
+	 * @return response
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
+	 */
+	DocsResp queryTasks(DocTableMeta meta, String family, String deviceId)
+			throws SemanticException, AnsonException, IOException {
 
-	@Override
-	public List<DocsResp> syncUp(List<? extends SyncDoc> videos, String workerId,
-			DocTableMeta meta, OnProcess onProc, OnDocOk... docOk)
+		DocsReq req = (DocsReq) new DocsReq(meta.tbl)
+				.org(family)
+				.a(A.syncdocs)
+				;
+
+		String[] act = AnsonHeader.usrAct("sync", "list", meta.tbl, deviceId);
+		AnsonHeader header = client.header().act(act);
+
+		AnsonMsg<DocsReq> q = client
+				.<DocsReq>userReq(uri, Port.docsync, req)
+				.header(header);
+
+		return client.<DocsReq, DocsResp>commit(q, errCtx);
+	}
+	
+	public List<DocsResp> syncUp(DocTableMeta meta, List<? extends SyncDoc> videos, String workerId,
+			OnProcess onProc, OnDocOk... docOk)
 			throws SQLException, TransException, AnsonException, IOException {
 		SessionInf photoUser = client.ssInfo();
 		photoUser.device = workerId;
 
-		return pushBlocks(
-				meta, videos, photoUser, onProc,
+		return pushBlocks(meta.tbl,
+				videos, photoUser, onProc,
 				isNull(docOk) ? new OnDocOk() {
 					@Override
-					public void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException {
-						String sync0 = doc.syncFlag; // rs.getString(meta.syncflag);
-						String share = doc.shareflag; // rs.getString(meta.shareflag);
+					public void ok(SyncDoc doc, AnsonResp resp)
+							throws IOException, AnsonException, TransException {
+						String sync0 = doc.syncFlag;
+						String share = doc.shareflag;
 						String f = SyncFlag.to(sync0, SyncEvent.pushEnd, share);
 						try {
 							setLocalSync(localSt, connPriv, meta, doc, f, robot);
@@ -88,9 +118,10 @@ public class SynodeTier extends Synclientier {
 	SyncDoc synStreamPull(SyncDoc p, DocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, meta)) {
-			DocsyncReq req = (DocsyncReq) new DocsyncReq(robot.orgId)
+			DocsReq req = (DocsReq) new DocsReq()
+							.org(robot.orgId)
 							.docTabl(meta.tbl)
-							.with(p.device(), p.fullpath())
+							.queryPath(p.device(), p.fullpath())
 							.a(A.download);
 
 			String tempath = tempath(p);
@@ -148,7 +179,7 @@ public class SynodeTier extends Synclientier {
 		if ( size == length ) {
 			// move temporary file
 			String targetPath = resolvePrivRoot(f.uri, meta);
-			if (Docsyncer.debug)
+			if (Docsyncer.verbose)
 				Utils.logi("   %s\n-> %s", pth, targetPath);
 			try {
 				Files.move(Paths.get(pth), Paths.get(targetPath), StandardCopyOption.ATOMIC_MOVE);

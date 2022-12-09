@@ -21,11 +21,11 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
-import io.odysz.semantic.tier.docs.DocsPage;
+import io.odysz.semantic.tier.docs.PathsPage;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.AlbumPort;
 import io.oz.album.tier.AlbumReq;
@@ -34,7 +34,7 @@ import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.Photo;
 
 /**
- * @deprecated
+ * @deprecated moved to Ablumtier
  * @author odys-z@github.com
  *
  */
@@ -222,13 +222,15 @@ public class AlbumClientier extends Semantier {
 	}
 	
 	/**Asynchronously query synchronizing records.
+	 * <p>Usage</p>
+	 * <a href='odys-z/Anclient/examples/example.android/file-picker/src/main/java/io/oz/fpick/adapter/BaseSynchronizer.java'>example</a>
 	 * @param files
 	 * @param page
 	 * @param onOk
 	 * @param onErr
 	 * @return this
 	 */
-	public AlbumClientier asyncQuerySyncs(List<? extends IFileDescriptor> files, DocsPage page, OnOk onOk, OnError onErr) {
+	public AlbumClientier asyncQuerySyncs(List<? extends IFileDescriptor> files, PathsPage page, OnOk onOk, OnError onErr) {
 		new Thread(new Runnable() {
 	        public void run() {
 	        DocsResp resp = null;
@@ -240,8 +242,10 @@ public class AlbumClientier extends Semantier {
 
 				AlbumReq req = (AlbumReq) new AlbumReq().syncing(page).a(A.selectSyncs);
 
-				for (int i = page.start; i < page.end & i < files.size(); i++) {
-					IFileDescriptor p = files.get(i);
+				for (long i = page.start(); i < page.end() & i < files.size(); i++) {
+					if (i < 0 || i > Integer.MAX_VALUE)
+						throw new SemanticException("asyncQuerySyncs: page's range is out of bounds: H%x", i);
+					IFileDescriptor p = files.get((int)i);
 					// req.querySync(p);
 				}
 

@@ -26,6 +26,8 @@ import static io.odysz.common.LangExt.*;
  * @author ody
  */
 public class SyncDoc extends Anson implements IFileDescriptor {
+	protected static String[] synpageCols;
+
 	public String recId;
 	public String recId() { return recId; }
 	public SyncDoc recId(String did) {
@@ -110,8 +112,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return sharedate(DateFormat.format(date));
 	}
 	
-	public SyncDoc share(String shareby, String s, String sharedate) {
-		this.shareflag = s;
+	public SyncDoc share(String shareby, String flag, String sharedate) {
+		this.shareflag = flag;
 		this.shareby = shareby;
 		sharedate(sharedate);
 		return this;
@@ -146,6 +148,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 				meta.shareDate,
 				meta.shareby,
 				meta.shareflag,
+				meta.syncflag,
 				meta.mime,
 				meta.fullpath,
 				meta.device,
@@ -154,6 +157,24 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		};
 	}
 	
+	/**
+	 * @param meta
+	 * @return String [meta.pk, meta.shareDate, meta.shareflag, meta.syncflag]
+	 */
+	public static String[] synPageCols(DocTableMeta meta) {
+		if (synpageCols == null)
+			synpageCols = new String[] {
+					meta.pk,
+					meta.device,
+					meta.fullpath,
+					meta.shareby,
+					meta.shareDate,
+					meta.shareflag,
+					meta.syncflag
+			};
+		return synpageCols;
+	}
+
 	public SyncDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
 		this.docMeta = meta;
 		this.recId = rs.getString(meta.pk);
@@ -163,7 +184,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.mime = rs.getString(meta.mime);
 		this.size = rs.getLong(meta.size, 0);
 		
-		// this.isPublic = Share.pub.equals(rs.getString(meta.shareflag, null));
 		this.clientpath =  rs.getString(meta.fullpath);
 		this.device =  rs.getString(meta.device);
 		this.folder = rs.getString(meta.folder);
@@ -175,6 +195,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		}
 		this.shareby = rs.getString(meta.shareby);
 		this.shareflag = rs.getString(meta.shareflag);
+		this.syncFlag = rs.getString(meta.syncflag);
 	}
 
 	/**
@@ -210,44 +231,18 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	 * @throws SemanticException device is null
 	 */
 	public SyncDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) throws IOException, SemanticException {
+		this.device = d.device();
+//		if (isblank(this.device))
+//			throw new SemanticException("SyncDoc requiring envelope's device can not be null");
+
 		this.docMeta = meta;
 		this.recId = d.recId();
 		this.pname = d.clientname();
 		this.uri = d.uri();
 		this.createDate = d.cdate();
 		this.mime = d.mime();
-		// this.size = rs.getLong(meta.size, 0);
 		this.fullpath(fullpath);
-		
-		this.device = d.device();
-		if (isblank(this.device))
-			throw new SemanticException("SyncDoc requires device is not null");
-
-		// this.isPublic = Share.pub.equals(rs.getString(meta.shareflag, null));
-		// this.clientpath =  rs.getString(meta.fullpath);
-		// this.device =  rs.getString(meta.device);
-		// this.folder = rs.getString(meta.folder);
-		
-//		try {
-//			this.sharedate = DateFormat.formatime(rs.getDate(meta.shareDate));
-//		} catch (Exception ex) {
-//			this.sharedate = p.cdate();;
-//		}
-//		this.shareby = rs.getString(meta.shareby);
-//		this.shareflag = rs.getString(meta.shareflag);
 	}
-
-	/**
-	 * Set client path and syncFlag according to rs, where rs columns should have been specified with {@link #nvCols(DocTableMeta)}.
-	 * @param rs
-	 * @return this
-	 * @throws SQLException
-	public SyncDoc asSyncRec(AnResultset rs) throws SQLException {
-		this.clientpath = rs.getString(docMeta.fullpath); 
-		this.syncFlag = rs.getInt(docMeta.syncflag); 
-		return this;
-	}
-	 */
 
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
@@ -301,13 +296,15 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc parseChain(BlockChain chain) throws IOException {
 		createDate = chain.cdate;
 
+		device = chain.device;
 		clientpath = chain.clientpath;
 		pname = chain.clientname;
 		folder(chain.saveFolder);
+
 		shareby = chain.shareby;
 		sharedate = chain.shareDate;
 		shareflag = chain.shareflag;
-		
+
 		return parseMimeSize(chain.outputPath);
 	}
 }

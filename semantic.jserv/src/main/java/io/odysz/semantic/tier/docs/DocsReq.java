@@ -1,24 +1,32 @@
 package io.odysz.semantic.tier.docs;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import io.odysz.anson.AnsonField;
-import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
+
+import static io.odysz.common.LangExt.isblank;
 
 public class DocsReq extends AnsonBody {
 	public static class A {
 		/**
-		 * Action: read records
+		 * Action: read records for synodes synchronizing.
+		 * For client querying matching (syncing) docs, use {@link #records} instead. 
 		 * @see DocsTier#list(DocsReq req, IUser usr)
 		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
 		 * */
+		public static final String syncdocs = "r/syncs";
+		/**
+		 * Action: read records for client path matching.
+		 * For synodes synchronizing, use {@link #syncdocs} instead. 
+		 */
 		public static final String records = "r/list";
 		public static final String mydocs = "r/my-docs";
 		public static final String rec = "r/rec";
@@ -37,13 +45,18 @@ public class DocsReq extends AnsonBody {
 		 */
 		public static final String synclose = "u/close";
 
-		// TODO serv
-		public static String selectDocs;
+		/** Query synchronizing tasks - for pure device client
+		public static final String selectDocs = "sync/tasks"; */
 	}
 
 	public PageInf page;
 
 	public String docTabl;
+	public DocsReq docTabl(String tbl) {
+		docTabl = tbl;
+		return this;
+	}
+
 	public String docId;
 	public String docName;
 	public String createDate;
@@ -100,8 +113,8 @@ public class DocsReq extends AnsonBody {
 	/**
 	 * The page of quirying client files status - not for used between jservs. 
 	 */
-	protected DocsPage syncing;
-	public DocsPage syncing() { return syncing; }
+	protected PathsPage syncing;
+	public PathsPage syncing() { return syncing; }
 
 	protected String device; 
 	public String device() { return device; }
@@ -110,7 +123,9 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
+	/** @deprecated */
 	protected ArrayList<SyncDoc> syncQueries;
+	/**@deprecated replaced by DocsPage.paths */
 	public ArrayList<SyncDoc> syncQueries() { return syncQueries; }
 
 	protected long blockSeq;
@@ -123,32 +138,58 @@ public class DocsReq extends AnsonBody {
 	 * for album synchronizing, this is h_photos.family (not null).
 	 * */
 	public String org;
-
-	public boolean reset;
 	public DocsReq org(String org) { this.org = org; return this; }
 
+	public boolean reset;
+
+	private long limit = -1;
+	public long limit() { return limit; }
+	public DocsReq limit(long l) {
+		limit = l;
+		return this;
+	}
+
 	/**
+	 * @deprecated
+	 * Add a doc record for matching path at synode. Should be called by device client.
+	 * <p>Note: if the file path is empty, the query is ignored.</p>
 	 * @param p
 	 * @return this
 	 * @throws IOException see {@link SyncDoc} constructor
-	 * @throws SemanticException see {@link SyncDoc} constructor 
+	 * @throws SemanticException fule doesn't exists. see {@link SyncDoc} constructor 
 	 */
 	public DocsReq querySync(IFileDescriptor p) throws IOException, SemanticException {
+		if (p == null || isblank(p.fullpath()))
+			return this;
+
+		File f = new File(p.fullpath());
+		if (!f.exists())
+			throw new SemanticException("File for querying doesn't exist: %s", p.fullpath());
+		/*
 		if (syncQueries == null)
 			syncQueries = new ArrayList<SyncDoc>();
-		syncQueries.add(new SyncDoc(p, clientpath, null));
+
+		File f = new File(p.fullpath());
+		if (!f.exists())
+			throw new SemanticException("File for querying doesn't exist: %s", p.fullpath());
+
+		syncQueries.add(new SyncDoc(p, p.fullpath(), null));
+		*/
+		if (page == null) {
+			page = new PageInf();
+		}
 
 		return this;
 	}
 
-	public DocsReq syncing(DocsPage page) {
+	public DocsReq syncing(PathsPage page) {
 		this.syncing = page;
 		return this;
 	}
 
 	public DocsReq blockStart(IFileDescriptor file, SessionInf usr) throws SemanticException {
 		this.device = usr.device;
-		if (LangExt.isblank(this.device, ".", "/"))
+		if (isblank(this.device, ".", "/"))
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
 		this.clientpath = file.fullpath(); 
@@ -184,7 +225,7 @@ public class DocsReq extends AnsonBody {
 	 */
 	public DocsReq blockUp(long sequence, IFileDescriptor doc, String s64, SessionInf usr) throws SemanticException {
 		this.device = usr.device;
-		if (LangExt.isblank(this.device, ".", "/"))
+		if (isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
 
 		this.blockSeq = sequence;
@@ -247,8 +288,10 @@ public class DocsReq extends AnsonBody {
 		this.reset = set;
 		return this;
 	}
-
-//	public void querySync(IFileDescriptor p) throws TransException {
-//		throw new TransException("TODO");
-//	}
+	
+	public DocsReq queryPath(String device, String fullpath) {
+		this.clientpath = fullpath;
+		this.device = device;
+		return this;
+	}
 }

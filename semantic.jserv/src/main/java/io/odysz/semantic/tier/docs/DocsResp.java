@@ -17,14 +17,36 @@ import io.odysz.semantics.x.SemanticException;
 public class DocsResp extends AnsonResp {
 	public SyncDoc doc;
 
-	DocsPage syncing;
+	protected PathsPage syncing;
 
-	public DocsPage syncing() { return syncing; }
-	public DocsResp syncing(DocsPage page) {
-		syncing = page;
+	protected String collectId;
+
+	public PathsPage pathsPage() { return syncing; }
+	
+	/**
+	 * <p>Set clientpaths page (rs).</p>
+	 * Rs must have columns specified with {@link SyncDoc#synPageCols(DocTableMeta)}.
+	 * @param rs
+	 * @param meta
+	 * @return this
+	 * @throws SQLException
+	 * @throws SemanticException 
+	 */
+	public DocsResp pathPage(AnResultset rs, DocTableMeta meta) throws SQLException, SemanticException {
+		syncing.paths(rs, meta);
 		return this;
 	}
 
+	public PathsPage syncing() { return syncing; }
+	public DocsResp syncing(PathsPage page) {
+		syncing = page;
+		return this;
+	}
+	public DocsResp syncing(DocsReq req) {
+		syncing = req.syncing;
+		return this;
+	}
+	
 	public long blockSeqReply;
 
 	public long blockSeq() { return blockSeqReply; }
