@@ -33,9 +33,6 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			
 			Docsyncer.init(System.getProperty("JSERV_NODE"));
 			
-			// FIXME
-			// This is a repeated and error-prone task.
-			// Only system configure tool can resolve this issue?
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
 			Docsyncer.addSyncTable(new JUser.JUserMeta(Connects.defltConn()));
 
