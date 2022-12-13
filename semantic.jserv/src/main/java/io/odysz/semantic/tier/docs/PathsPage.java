@@ -13,6 +13,8 @@ import static io.odysz.common.LangExt.isblank;
 /**
  * Task page to update synchronizing information.
  * 
+ * The core data {@link #clientPaths} is a map, and the size should be limited for performance reason.
+ * 
  * @author odys-z@github.com
  *
  */
@@ -40,6 +42,9 @@ public class PathsPage extends Anson {
         return this;
     }
 
+	/**
+	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date]} 
+	 */
 	protected HashMap<String, String[]> clientPaths;
 	/**
 	 * @see #paths(AnResultset, DocTableMeta)

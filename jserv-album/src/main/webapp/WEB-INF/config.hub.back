@@ -56,6 +56,20 @@
 		<k>sync-table-name</k>
 		<v>h_photos</v>
 	</c>
+	
+	<c>
+		<!-- verbose and doc deleting safe mode -->
+		<k>docsync.debug</k>
+		<v>true</v>
+	</c>
+
+	<c>
+		<!-- default saving folder resolver
+			constructor: DocProfile(SynodeMode mode)
+		 -->
+		<k>docsync.flolder-resolver</k>
+		<v>io.oz.album.tier.DocProfile</v>
+	</c>
   </t>
 
   <t id="tree-semantics" pk="k" columns="k,v">

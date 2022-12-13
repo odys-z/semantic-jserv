@@ -62,6 +62,14 @@
 		<k>docsync.debug</k>
 		<v>true</v>
 	</c>
+
+	<c>
+		<!-- default saving folder resolver
+			constructor: DocProfile(SynodeMode mode)
+		 -->
+		<k>docsync.folder-resolver</k>
+		<v>io.oz.album.tier.DocProfile</v>
+	</c>
   </t>
 
   <t id="tree-semantics" pk="k" columns="k,v">
