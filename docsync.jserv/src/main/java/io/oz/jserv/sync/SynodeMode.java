@@ -9,5 +9,7 @@ public enum SynodeMode {
 	/** jserv node mode: private main, equivalent of {@link Docsyncer#mainStorage} */
 	main,
 	/** jserv node mode: private , equivalent of {@link Docsyncer#privateStorage}*/
-	priv
+	priv,
+	/** jserv client device */
+	device
 }

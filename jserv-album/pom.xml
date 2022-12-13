@@ -92,7 +92,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>[0.1.8-SNAPSHOT,)</version>
+	    <version>[0.1.8,)</version>
 	</dependency>
 
 	<dependency>

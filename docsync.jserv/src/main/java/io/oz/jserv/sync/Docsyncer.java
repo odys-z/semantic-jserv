@@ -1,6 +1,7 @@
 package io.oz.jserv.sync;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
+import io.odysz.semantic.tier.docs.IFolderResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -85,6 +87,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 	private static String synconn;
 
 	private static ScheduledExecutorService scheduler;
+
+	public static IFolderResolver folderesolver;
 
 	static SyncRobot anonymous;
 
@@ -141,6 +145,19 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return (DocsResp) new DocsResp().data(res.props()); 
 	}
 
+	/**
+	 * Find doc id from synode's DB.
+	 * 
+	 * @param orgId
+	 * @param clientpath
+	 * @param device
+	 * @param meta
+	 * @param usr
+	 * @param conn
+	 * @return doc id
+	 * @throws SQLException
+	 * @throws TransException
+	 */
 	static String resolveDoc(String orgId, String clientpath, String device, DocTableMeta meta, IUser usr, String conn)
 			throws SQLException, TransException {
 		AnResultset rs = ((AnResultset) st.select(meta.tbl, "d")
@@ -230,6 +247,20 @@ public class Docsyncer extends ServPort<DocsReq> {
 				Utils.warn("[ServFlags.file] sync worker scheduled for private node (mode %s, interval %s minute).",
 						cfg, m);
 		}
+
+		try {
+			Class<?> reslass = Class.forName(Configs.getCfg("docsync.folder-resolver"));
+			Constructor<?> c = reslass.getConstructor(SynodeMode.class);
+			folderesolver = (IFolderResolver) c.newInstance(mode);
+			
+			Utils.logi("[Docsyncer] Working in '%s' mode, folder resolver: %s", mode, reslass.getName());
+		} catch (NoSuchMethodException e) {
+			throw new SemanticException("Fatal error: can't create folder resolver [k=docsync.flolder-resolver]: %s. No such method found (constructor with parameter of type SynodeMode).",
+					Configs.getCfg("docsync.resolver"));
+		} catch (ReflectiveOperationException e) {
+			throw new SemanticException("Fatal error: can't create folder resolver [k=docsync.flolder-resolver]: %s.",
+					Configs.getCfg("docsync.resolver"));
+		}
 	}
 
 	public Docsyncer() {
@@ -305,7 +336,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 					if (DocsReq.A.blockStart.equals(a)) {
 						if (isblank(jreq.subFolder, " - - "))
 							throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
-						rsp = chain.startBlocks(jmsg.body(0), usr);
+						rsp = chain.startBlocks(jmsg.body(0), usr, folderesolver);
 					}
 					else if (DocsReq.A.blockUp.equals(a))
 						rsp = chain.uploadBlock(jmsg.body(0), usr);
@@ -507,7 +538,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	};
 
 	/**
-	 * 1. clear share-log<br>
+	 * 1. clear share-log (only for {@link SynodeMode#hub})<br>
 	 * 
 	 * @param docId
 	 * @return statement for adding as a post statement

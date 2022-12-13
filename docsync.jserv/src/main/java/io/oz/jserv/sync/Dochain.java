@@ -22,6 +22,7 @@ import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.IFolderResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -62,7 +63,9 @@ public class Dochain {
 		this.st = deflst;
 	}
 
-	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException, InterruptedException {
+	DocsResp startBlocks(DocsReq body, IUser usr, IFolderResolver resolver)
+			throws IOException, TransException, SQLException, InterruptedException {
+
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
 
@@ -72,7 +75,12 @@ public class Dochain {
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by SyncRobot. 
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder)
+		String saveFolder = resolver.resolve(body, usr);
+		if (isblank(saveFolder, "/", "\\\\", ":", "."))
+			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
+					body.clientpath, usr.uid(), resolver.getClass().getName());
+		
+		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, saveFolder)
 				.device(usr.deviceId())
 				.share(body.shareby, body.shareDate, body.shareflag);
 

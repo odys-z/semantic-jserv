@@ -307,4 +307,20 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 
 		return parseMimeSize(chain.outputPath);
 	}
+
+	/**
+	 * Parse {@link PathsPage#clientPaths}.
+	 * 
+	 * @param flags
+	 * @return this
+	 */
+	public SyncDoc parseFlags(String[] flags) {
+		if (!isNull(flags)) {
+			syncFlag = flags[0];
+			shareflag = flags[1];
+			shareby = flags[2];
+			sharedate(flags[3]);
+		}
+		return this;
+	}
 }
