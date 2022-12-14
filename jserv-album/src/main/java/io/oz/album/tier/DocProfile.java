@@ -4,8 +4,9 @@ import java.text.ParseException;
 import java.util.Date;
 
 import io.odysz.common.DateFormat;
+import io.odysz.common.LangExt;
 import io.odysz.semantic.tier.docs.DocsReq;
-import io.odysz.semantic.tier.docs.IFolderResolver;
+import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantics.IUser;
 import io.oz.jserv.sync.SynodeMode;
 
@@ -24,7 +25,7 @@ import static io.oz.jserv.sync.SynodeMode.*;
  * @author odys-z@github.com
  *
  */
-public class DocProfile implements IFolderResolver {
+public class DocProfile implements IProfileResolver {
 
 	private SynodeMode mode;
 
@@ -33,7 +34,7 @@ public class DocProfile implements IFolderResolver {
 	}
 	
 	@Override
-	public String resolve(DocsReq req, IUser usr) {
+	public String synodeFolder(DocsReq req, IUser usr) {
 		String cname = req.subFolder;
 		if (this.mode == device)
 			return cname;
@@ -46,5 +47,23 @@ public class DocProfile implements IFolderResolver {
 			} catch (ParseException e) {
 				return usr.deviceId() + "-" + DateFormat.formatYYmm(new Date());
 			}
+	}
+
+	/**
+	 * <ol>
+	 * <li>ignore the request's sharer if it is come from a device (keep it for synode)</li>
+	 * </ol>
+	 * 
+	 * @see IProfileResolver#onStartPush(DocsReq, IUser)
+	 */
+	@Override
+	public DocsReq onStartPush(DocsReq req, IUser usr) {
+		if (isDevice(req.uri()))
+			req.shareby(usr.uid());
+		return req;
+	}
+
+	protected boolean isDevice(String uri) {
+		return LangExt.endWith(uri, ".and", ".js", ".ts", ".c#", ".c++", ".py");
 	}
 }

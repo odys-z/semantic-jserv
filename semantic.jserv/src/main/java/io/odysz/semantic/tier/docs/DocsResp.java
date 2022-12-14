@@ -32,7 +32,7 @@ public class DocsResp extends AnsonResp {
 	 * @throws SQLException
 	 * @throws SemanticException 
 	 */
-	public DocsResp pathPage(AnResultset rs, DocTableMeta meta) throws SQLException, SemanticException {
+	public DocsResp pathsPage(AnResultset rs, DocTableMeta meta) throws SQLException, SemanticException {
 		syncing.paths(rs, meta);
 		return this;
 	}

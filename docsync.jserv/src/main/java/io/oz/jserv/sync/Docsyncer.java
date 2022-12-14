@@ -40,7 +40,7 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
-import io.odysz.semantic.tier.docs.IFolderResolver;
+import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -88,7 +88,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 	private static ScheduledExecutorService scheduler;
 
-	public static IFolderResolver folderesolver;
+	public static IProfileResolver profilesolver;
 
 	static SyncRobot anonymous;
 
@@ -251,7 +251,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		try {
 			Class<?> reslass = Class.forName(Configs.getCfg("docsync.folder-resolver"));
 			Constructor<?> c = reslass.getConstructor(SynodeMode.class);
-			folderesolver = (IFolderResolver) c.newInstance(mode);
+			profilesolver = (IProfileResolver) c.newInstance(mode);
 			
 			Utils.logi("[Docsyncer] Working in '%s' mode, folder resolver: %s", mode, reslass.getName());
 		} catch (NoSuchMethodException e) {
@@ -336,7 +336,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 					if (DocsReq.A.blockStart.equals(a)) {
 						if (isblank(jreq.subFolder, " - - "))
 							throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
-						rsp = chain.startBlocks(jmsg.body(0), usr, folderesolver);
+						rsp = chain.startBlocks(profilesolver.onStartPush(jmsg.body(0), usr), usr, profilesolver);
 					}
 					else if (DocsReq.A.blockUp.equals(a))
 						rsp = chain.uploadBlock(jmsg.body(0), usr);
@@ -383,7 +383,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		Object[] kpaths = jreq.syncing().paths() == null ? new Object[0]
 				: jreq.syncing().paths().keySet().toArray();
-		
 
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
@@ -392,12 +391,12 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.whereEq(meta.device, usr.deviceId())
 				// .whereEq(meta.shareby, usr.uid())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
-				.limit(jreq.limit())
+				.limit(jreq.limit())	// FIXME issue: what if paths length > limit ?
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();
 
-		return (DocsResp) new DocsResp().syncing(jreq).pathPage(rs, meta);
+		return (DocsResp) new DocsResp().syncing(jreq).pathsPage(rs, meta);
 	}
 
 	/**

@@ -125,6 +125,14 @@ public class Synclientier extends Semantier {
 		return onLogin(client);
 	}
 	
+	/**
+	 * Start heart beat, create robot for synchronizing,
+	 * clean and create local temporary directory for downloading,
+	 * load user information.
+	 * 
+	 * @param client
+	 * @return this
+	 */
 	public Synclientier onLogin(SessionClient client) {
 		SessionInf ssinf = client.ssInfo();
 		try {
@@ -138,14 +146,16 @@ public class Synclientier extends Semantier {
 			JUserMeta um = (JUserMeta) robot.meta();
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
-			q.body(0).j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
-					.whereEq("=", "u." + um.pk, robot.userId);
+			q.body(0)
+			 .j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
+			 .whereEq("=", "u." + um.pk, robot.userId);
+
 			AnsonResp resp = client.commit(q, errCtx);
 			AnResultset rs = resp.rs(0).beforeFirst();
 			if (rs.next())
 				robot.orgId(rs.getString(um.org))
 					.orgName(rs.getString(um.orgName));
-			else throw new SemanticException("Jnode haven't been reqistered: %s", robot.userId);
+			else throw new SemanticException("Synode haven't been reqistered: %s", robot.userId);
 		} catch (SemanticException | AnsonException | SQLException | IOException e) {
 			e.printStackTrace();
 		}
