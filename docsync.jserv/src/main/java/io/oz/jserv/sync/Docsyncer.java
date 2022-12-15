@@ -67,8 +67,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 	static HashMap<String, TableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
 
-	// static HashMap<String,SharelogMeta> logmetas;
-
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
 	public static final String keySynconn = "sync-conn-id";
