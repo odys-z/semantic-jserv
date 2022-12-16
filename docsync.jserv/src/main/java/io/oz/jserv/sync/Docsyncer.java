@@ -172,13 +172,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * <p>Setup sync-flag after doc been synchronized</p>
+	 * <p>Setup sync-flag after doc been synchronized.</p>
+	 * <p>The update statement should committed with insert statement.</p> 
+	 * 
 	 * @see SyncFlag
 	 * 
 	 * @param doc
 	 * @param meta
 	 * @param usr
-	 * @return post update
+	 * @return post update with post of inserting share logs
 	 * @throws TransException
 	 */
 	public static Update onDocreate(SyncDoc doc, DocTableMeta meta, IUser usr)
@@ -189,6 +191,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.nv(meta.syncflag, syn)
 				.whereEq(meta.org, usr.orgId())
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
+				.post(mode == SynodeMode.device ? null :
+					st.insert(meta.sharelog.tbl, usr)
+					  .cols(meta.sharelog.insertShorelogCols())
+					  .select(st
+							.select("a_synodes", "n")
+							.cols(meta.sharelog.selectSynodeCols())
+							.col(new Resulving(meta.tbl, meta.pk))
+					  .whereEq("org", usr.orgId())))
 				;
 	}
 
@@ -414,7 +424,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	void download(HttpServletResponse resp, DocsReq req, IUser usr)
+	protected void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 		
 		DocTableMeta meta = (DocTableMeta) metas.get(req.docTabl);
