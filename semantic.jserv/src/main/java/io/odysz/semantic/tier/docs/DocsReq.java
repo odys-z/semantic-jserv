@@ -43,9 +43,13 @@ public class DocsReq extends AnsonBody {
 		public static final String blockAbort = "c/b/abort";
 
 		/**
-		 * Action: close synchronizing task
+		 * Action: close synchronizing push task
 		 */
-		public static final String synclose = "u/close";
+		public static final String synclosePush = "u/close";
+		/**
+		 * Action: close synchronizing pull task
+		 */
+		public static final String synclosePull = "r/close";
 
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */

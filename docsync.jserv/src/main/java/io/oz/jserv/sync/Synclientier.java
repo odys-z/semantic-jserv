@@ -463,7 +463,7 @@ public class Synclientier extends Semantier {
 						.docTabl(docTabl)
 						.org(robot.orgId)
 						.queryPath(p.device(), p.fullpath())
-						.a(A.synclose);
+						.a(A.synclosePush);
 
 		AnsonMsg<DocsReq> q = client
 				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);

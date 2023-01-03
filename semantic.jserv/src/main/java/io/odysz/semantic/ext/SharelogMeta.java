@@ -41,8 +41,10 @@ public class SharelogMeta extends TableMeta {
 	public final String docTbl;
 	public final String synid;
 	public final String clientpath;
+	public final String dstpath;
 	public final String expire;
 	public final String docFk;
+
 
 	public SharelogMeta(String parentbl, String parentpk, String... conn) {
 		super("a_sharelog", conn);
@@ -56,6 +58,7 @@ public class SharelogMeta extends TableMeta {
 		this.docFk = "docId";
 		this.org = "org";
 		this.clientpath = "clientpath";
+		this.dstpath = "dstpath";
 		this.docTbl = "tabl";
 		this.expire = "expire";
 	}

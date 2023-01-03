@@ -119,16 +119,17 @@ public class SynodeTier extends Synclientier {
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, meta)) {
 			DocsReq req = (DocsReq) new DocsReq()
-							.org(robot.orgId)
-							.docTabl(meta.tbl)
-							.queryPath(p.device(), p.fullpath())
-							.a(A.download);
+					.org(robot.orgId)
+					.docTabl(meta.tbl)
+					.queryPath(p.device(), p.fullpath())
+					.a(A.download);
 
 			String tempath = tempath(p);
 			String path = client.download(uri, Port.docsync, req, tempath);
 			
-			@SuppressWarnings("unused")
-			String pid = onCreateLocalFile(p, path, meta);
+			String dstpath = onCreateLocalFile(p, path, meta);
+			
+			synClosePull(p, dstpath);
 		}
 		return p;
 	}
@@ -146,7 +147,7 @@ public class SynodeTier extends Synclientier {
 			Utils.logi("   [SyncWorker.verbose: end stream download] %s\n-> %s", path, targetPath);
 		Files.move(Paths.get(path), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
-		return pid;
+		return targetPath;
 	}
 	
 	/** 
