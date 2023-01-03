@@ -192,7 +192,7 @@ public class SyncWorker implements Runnable {
 	}
 
 	public ArrayList<DocsResp> pull() throws AnsonException, IOException, SQLException, TransException {
-		DocsResp rsp = synctier.queryTasks(localMeta, synctier.robot.orgId, synctier.robot.deviceId);
+		DocsResp rsp = synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, synctier.robot.deviceId);
 		return pullDocs(rsp);
 	}
 
@@ -248,7 +248,12 @@ public class SyncWorker implements Runnable {
 
 	public DocsResp queryTasks()
 			throws SemanticException, AnsonException, IOException {
-		return synctier.queryTasks(localMeta, synctier.robot.orgId, workerId);
+		return synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, workerId);
+	}
+
+	public DocsResp listNodes()
+			throws SemanticException, AnsonException, IOException {
+		return synctier.listNodes(localMeta.tbl, synctier.robot.orgId);
 	}
 
 	public String nodeId() {
