@@ -173,6 +173,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 	/**
 	 * <p>Setup sync-flag after doc been synchronized.</p>
+	 * <p>If this node works in mode other than {@link SynodeMode#device},
+	 * this method will create insert statement into the share-log tasks table, meta.sharelog.</p>
 	 * <p>The update statement should committed with insert statement.</p> 
 	 * 
 	 * @see SyncFlag
@@ -196,7 +198,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 					  .cols(meta.sharelog.insertShorelogCols())
 					  .select(st
 							.select("a_synodes", "n")
-							.cols(meta.sharelog.selectSynodeCols())
+							// .cols(meta.sharelog.selectSynodeCols())
+							.cols(meta.sharelog.synid, meta.sharelog.org, meta.tbl)
 							.col(new Resulving(meta.tbl, meta.pk))
 					  .whereEq("org", usr.orgId())))
 				;
@@ -356,7 +359,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 						rsp = chain.abortBlock(jmsg.body(0), usr);
 
 					else throw new SemanticException(String.format(
-						"request.body.a can not handled: %s",
+						"request.body.a can not be handled: %s",
 						a));
 				}
 			}
@@ -382,7 +385,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * Query the device's doc page of which the paths can be used for client matching,
 	 * e.g. show the files' synchronizing status.
 	 * 
-	 * @param jreq client paths should be limited
+	 * @param jreq's client paths number should be limited
 	 * @param usr
 	 * @return page response
 	 * @throws SQLException
@@ -409,26 +412,27 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return (DocsResp) new DocsResp().syncing(jreq).pathsPage(rs, meta);
 	}
 
+	/**
+	 * List all the family's nodes, both devices &amp; synodes.
+	 * 
+	 * @param jreq
+	 * @param usr
+	 * @return
+	 * @throws SQLException
+	 * @throws TransException
+	 */
 	protected AnsonResp queryNodes(DocsReq jreq, IUser usr) throws SQLException, TransException {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 
-		Object[] kpaths = jreq.syncing().paths() == null ? new Object[0]
-				: jreq.syncing().paths().keySet().toArray();
-
 		AnResultset rs = ((AnResultset) st
 				.select(meta.sharelog.tbl, "t")
-				.cols(meta.sharelog.org, meta.sharel)
+				.cols(meta.sharelog.org, meta.sharelog.synid)
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
-				.whereEq(meta.device, usr.deviceId())
-				// .whereEq(meta.shareby, usr.uid())
-				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
-				.limit(jreq.limit())	// FIXME issue: what if paths length > limit ?
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();
 
-		return (DocsResp) new DocsResp().syncing(jreq).pathsPage(rs, meta);
-	
+		return (DocsResp) new DocsResp().rs(rs);
 	}
 
 
@@ -558,10 +562,13 @@ public class Docsyncer extends ServPort<DocsReq> {
 			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
 			SynodeMeta snode = (SynodeMeta) metas.get(meta.tbl);
 			try {
-				post.post(st.insert(shmeta.tbl, robot)
-							.select(st.select(snode.tbl, "n")
-									  .cols(shmeta.selectSynodeCols())
-									  .whereEq(snode.org, robot.orgId())));
+				post.post(st
+					.insert(shmeta.tbl, robot)
+					.select(st
+						.select(snode.tbl, "n")
+						// .cols(shmeta.selectSynodeCols())
+						.cols(shmeta.synid, shmeta.org)
+						.whereEq(snode.org, robot.orgId())));
 			} catch (TransException e) {
 				e.printStackTrace();
 			}
