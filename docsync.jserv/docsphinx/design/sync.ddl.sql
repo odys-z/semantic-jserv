@@ -24,6 +24,14 @@ create table a_sharelog (
 	tabl   varchar2(64) NOT NULL, -- doc's business name, e.g. 'h_photos'
 	docId  varchar2(12) NOT NULL, -- fk-on-del
 	synid  varchar2(64) NOT NULL, -- fk-on-del, synode & device
-	clientpath text     NOT NULL,
-	expire date
+	srcpath text        NOT NULL, -- clientpath
+	dstpath text,
+	expire date,
+	oper   varchar2(12),
+	optime datetime
 );
+
+select * from a_sharelog;
+select * from a_synodes;
+
+insert into a_sharelog  (synid, org, tabl, docId) select synid, org, tabl, '000000GP' from a_synodes n where org = 'f/zsu';
