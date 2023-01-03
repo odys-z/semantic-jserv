@@ -24,7 +24,7 @@ create table a_sharelog (
 	tabl   varchar2(64) NOT NULL, -- doc's business name, e.g. 'h_photos'
 	docId  varchar2(12) NOT NULL, -- fk-on-del
 	synid  varchar2(64) NOT NULL, -- fk-on-del, synode & device
-	srcpath text        NOT NULL, -- clientpath
+	clientpath text     NOT NULL, -- clientpath
 	dstpath text,
 	expire date,
 	oper   varchar2(12),

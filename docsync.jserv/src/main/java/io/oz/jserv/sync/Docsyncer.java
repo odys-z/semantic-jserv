@@ -60,7 +60,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 	
 	/** Flag of verbose and doc-writing privilege.
-	 *  <h6>configuration</h6>config.xml/t[id=default]/k=docsync.debug
+	 * 
+	 *  <p>configuration</p>
+	 *  config.xml/t[id=default]/k=docsync.debug
 	 *  */
 	public static boolean verbose = true;
 
@@ -198,10 +200,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 					  .cols(meta.sharelog.insertShorelogCols())
 					  .select(st
 							.select("a_synodes", "n")
-							// .cols(meta.sharelog.selectSynodeCols())
-							.cols(meta.sharelog.synid, meta.sharelog.org, meta.tbl)
+							.cols(meta.sharelog.synid, meta.sharelog.org, meta.sharelog.clientpath, meta.tbl)
 							.col(new Resulving(meta.tbl, meta.pk))
-					  .whereEq("org", usr.orgId())))
+							.whereEq("org", usr.orgId())))
 				;
 	}
 
@@ -342,8 +343,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 					rsp = querySynodeTasks(jreq, usr);
 				else if (A.del.equals(a))
 					rsp = delDocRec(jmsg.body(0), usr, verbose);
-				else if (A.synclose.equals(a))
-					rsp = synclose(jreq, usr);
+				else if (A.synclosePush.equals(a))
+					rsp = synclosePush(jreq, usr);
+				else if (A.synclosePull.equals(a))
+					rsp = synclosePull(jreq, usr);
 				else {
 					Dochain chain = new Dochain((DocTableMeta) metas.get(jreq.docTabl), st);
 					if (DocsReq.A.blockStart.equals(a)) {
@@ -428,6 +431,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.select(meta.sharelog.tbl, "t")
 				.cols(meta.sharelog.org, meta.sharelog.synid)
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				// .where(op.isnull, meta.sharelog.dstpath, null)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();
@@ -490,7 +494,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * Remove sync task, either by close of by delete.
+	 * Mark sync task as finished.
 	 * 
 	 * @param jreq
 	 * @param usr
@@ -499,7 +503,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws TransException 
 	 * @throws IOException 
 	 */
-	protected DocsResp synclose(DocsReq jreq, IUser usr) throws TransException, SQLException, IOException {
+	protected DocsResp synclosePush(DocsReq jreq, IUser usr) throws TransException, SQLException, IOException {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 		st.update(meta.tbl, usr)
 			.nv(meta.shareflag, SyncFlag.publish)
