@@ -18,3 +18,10 @@ April 2016Journal of Theoretical and Applied Information Technology 86(1):1,
 
 - Eugene Ilyichev, Data Syncing in Core Data Based iOS Apps, Posted on 03.04.2014,
 http://blog.denivip.ru/index.php/2014/04/data-syncing-in-core-data-based-ios-apps/?lang=en
+
+- Süleyman Eken et. al., Analyzing Distributed File Synchronization Techniques for
+Educational Data, Computer Engineering Department, Kocaeli University, İzmit, Turkey, [researchgate](https://www.researchgate.net/publication/260336042_Analyzing_distributed_file_synchronization_techniques_for_educational_data)
+
+- Github/bcpierce00: [Unison File Synchronizer](https://github.com/bcpierce00/unison)
+
+- Jens Alfke, [Replication Algorithm](https://github.com/couchbase/couchbase-lite-ios/wiki/Replication-Algorithm) of Couchbase, Feb 14, 2019

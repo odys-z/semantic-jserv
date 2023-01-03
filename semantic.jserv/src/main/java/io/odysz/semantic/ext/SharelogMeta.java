@@ -70,10 +70,10 @@ public class SharelogMeta extends TableMeta {
 		};
 	}
 
-	public String[] selectSynodeCols() {
-		return new String[] {
-			synid, org, docTbl//, new Resulving(docMeta.tbl, docMeta.pk)
-		};
-	}
+//	public String[] selectSynodeCols() {
+//		return new String[] {
+//			synid, org//, docTbl//, new Resulving(docMeta.tbl, docMeta.pk)
+//		};
+//	}
 
 }
