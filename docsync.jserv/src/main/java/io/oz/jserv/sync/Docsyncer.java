@@ -333,6 +333,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 				if (A.records.equals(a))
 					rsp = queryDevicePage(jreq, usr);
+				if (A.orgNodes.equals(a))
+					rsp = queryNodes(jreq, usr);
 				else if (A.syncdocs.equals(a))
 					rsp = querySynodeTasks(jreq, usr);
 				else if (A.del.equals(a))
@@ -406,6 +408,29 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		return (DocsResp) new DocsResp().syncing(jreq).pathsPage(rs, meta);
 	}
+
+	protected AnsonResp queryNodes(DocsReq jreq, IUser usr) throws SQLException, TransException {
+		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
+
+		Object[] kpaths = jreq.syncing().paths() == null ? new Object[0]
+				: jreq.syncing().paths().keySet().toArray();
+
+		AnResultset rs = ((AnResultset) st
+				.select(meta.sharelog.tbl, "t")
+				.cols(meta.sharelog.org, meta.sharel)
+				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.device, usr.deviceId())
+				// .whereEq(meta.shareby, usr.uid())
+				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
+				.limit(jreq.limit())	// FIXME issue: what if paths length > limit ?
+				.rs(st.instancontxt(synconn, usr))
+				.rs(0))
+				.beforeFirst();
+
+		return (DocsResp) new DocsResp().syncing(jreq).pathsPage(rs, meta);
+	
+	}
+
 
 	/**
 	 * <p>Write file stream to response.</p>
