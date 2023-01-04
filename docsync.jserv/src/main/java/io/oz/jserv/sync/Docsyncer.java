@@ -49,7 +49,9 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
+import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.Resulving;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.sync.Dochain.OnChainOk;
 
@@ -178,6 +180,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * <p>If this node works in mode other than {@link SynodeMode#device},
 	 * this method will create insert statement into the share-log tasks table, meta.sharelog.</p>
 	 * <p>The update statement should committed with insert statement.</p> 
+	 * <p>NOTE: syncstamp is automatically set on insert.
+	 * see {@link io.odysz.semantic.tier.docs.DocUtils#createFileB64(String, SyncDoc, IUser, DocTableMeta, DATranscxt, Update) createFile64()}
 	 * 
 	 * @see SyncFlag
 	 * 
@@ -195,6 +199,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.nv(meta.syncflag, syn)
 				.whereEq(meta.org, usr.orgId())
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
+				/*
 				.post(mode == SynodeMode.device ? null :
 					st.insert(meta.sharelog.tbl, usr)
 					  .cols(meta.sharelog.insertShorelogCols())
@@ -203,6 +208,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 							.cols(meta.sharelog.synid, meta.sharelog.org, meta.sharelog.clientpath, meta.tbl)
 							.col(new Resulving(meta.tbl, meta.pk))
 							.whereEq("org", usr.orgId())))
+				*/
 				;
 	}
 
@@ -337,7 +343,11 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 				if (A.records.equals(a))
 					rsp = queryDevicePage(jreq, usr);
-				if (A.orgNodes.equals(a))
+				else if (A.getstamp.equals(a))
+					rsp = getstamp(jreq, usr);
+				else if (A.setstamp.equals(a))
+					rsp = setstamp(jreq, usr);
+				else if (A.orgNodes.equals(a))
 					rsp = queryNodes(jreq, usr);
 				else if (A.syncdocs.equals(a))
 					rsp = querySynodeTasks(jreq, usr);
@@ -346,7 +356,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				else if (A.synclosePush.equals(a))
 					rsp = synclosePush(jreq, usr);
 				else if (A.synclosePull.equals(a))
-					rsp = synclosePull(jreq, usr);
+					; // for what? rsp = synclosePull(jreq, usr);
 				else {
 					Dochain chain = new Dochain((DocTableMeta) metas.get(jreq.docTabl), st);
 					if (DocsReq.A.blockStart.equals(a)) {
@@ -384,9 +394,29 @@ public class Docsyncer extends ServPort<DocsReq> {
 		}
 	}
 
+	private AnsonResp setstamp(DocsReq jreq, IUser usr) {
+		return null;
+	}
+
+	private AnsonResp getstamp(DocsReq jreq, IUser usr) throws SQLException, TransException {
+		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
+
+		AnResultset rs = ((AnResultset) st
+				.select("a_synodes", "t")
+				.col(Funcall.isnull("syncstamp", Funcall.now()), "stamp")
+				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.rs(st.instancontxt(synconn, usr))
+				.rs(0))
+				.beforeFirst();
+
+		return (DocsResp) new DocsResp().stamp(rs.getString("stamp"));
+	}
+
 	/**
 	 * Query the device's doc page of which the paths can be used for client matching,
 	 * e.g. show the files' synchronizing status.
+	 * 
+	 * @deprecated now paths matching only happens locally.
 	 * 
 	 * @param jreq's client paths number should be limited
 	 * @param usr
@@ -431,14 +461,12 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.select(meta.sharelog.tbl, "t")
 				.cols(meta.sharelog.org, meta.sharelog.synid)
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
-				// .where(op.isnull, meta.sharelog.dstpath, null)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();
 
 		return (DocsResp) new DocsResp().rs(rs);
 	}
-
 
 	/**
 	 * <p>Write file stream to response.</p>
@@ -530,13 +558,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws SQLException
 	 */
 	protected DocsResp querySynodeTasks(DocsReq jreq, IUser usr) throws TransException, SQLException {
+		if (isblank(jreq.stamp()))
+			throw new SemanticException("Can't query sync tasks with empty timestamp.");
+
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
-				// .cols(meta.org, meta.device, meta.fullpath, meta.shareflag, meta.syncflag)
 				.cols(SyncDoc.nvCols(meta))
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
-				// .whereEq(meta.syncflag, SyncFlag.hub)
+				.where(op.lt, meta.stamp, jreq.stamp())
 				.limit(jreq.limit())
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))

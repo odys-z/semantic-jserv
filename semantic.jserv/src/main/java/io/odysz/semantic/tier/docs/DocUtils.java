@@ -25,6 +25,11 @@ public class DocUtils {
 	 * <p>Photo is created as in the folder of user/[photo.folder]/;<br>
 	 * Photo's device and family are replaced with session information.</p>
 	 * 
+	 * @since 1.4.19, this method need DB triggering timestamp ({@link DocTableMeta#stamp}).
+	 * <pre>
+	 * sqlite example:
+	 * syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL
+	 * </pre>
 	 * @param conn
 	 * @param photo with photo.uri that is the entire base-64 encoded string
 	 * @param usr
