@@ -536,7 +536,6 @@ public class Synclientier extends Semantier {
 		return isNull(resps) ? null : resps.get(0);
 	}
 	
-	// public DocsResp queryDocs(List<? extends SyncDoc> files, DocsPage page, DocTableMeta meta)
 	public DocsResp queryPaths(PathsPage page, String tabl)
 			throws TransException, IOException {
 		String[] act = AnsonHeader.usrAct("synclient.java", "query", "r/states", "query sync");

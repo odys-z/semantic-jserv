@@ -23,17 +23,26 @@ public class DocsReq extends AnsonBody {
 		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
 		 * */
 		public static final String syncdocs = "r/syncs";
+
 		/** List all nodes, includeing devices &amp; synodes of the family */
 		public static final String orgNodes = "r/synodes";
+
 		/**
+		 * @deprecated now client only match paths with local DB.
+		 * 
 		 * Action: read records for client path matching.
 		 * For synodes synchronizing, use {@link #syncdocs} instead. 
 		 */
 		public static final String records = "r/list";
+		
+		public static final String getstamp = "r/stamp";
+		public static final String setstamp = "u/stamp";
+
 		public static final String mydocs = "r/my-docs";
 		public static final String rec = "r/rec";
 		public static final String download = "r/download";
 		public static final String upload = "c";
+
 		/** request for deleting docs */
 		public static final String del = "d";
 
@@ -121,6 +130,10 @@ public class DocsReq extends AnsonBody {
 		clientpath = p.fullpath();
 		docId = p.recId();
 	}
+
+
+	protected String stamp;
+	public String stamp() { return stamp; }
 
 	/**
 	 * The page of quirying client files status - not for used between jservs. 

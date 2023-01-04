@@ -3,6 +3,7 @@ package io.odysz.semantic.ext;
 import io.odysz.semantics.meta.TableMeta;
 
 /**
+ * @deprecated
  * <pre>
  drop table if exists a_synodes;
  CREATE TABLE a_synodes (

@@ -31,7 +31,10 @@ public class DocTableMeta extends TableMeta {
 		}
 	}
 
-
+	/** DB column for automantic timesamp. 
+	 * Sqlite:<pre>syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL</pre>
+	 */
+	public final String stamp;
 	public final String syncflag;
 	public final String shareflag;
 	public final String filename;
@@ -67,6 +70,7 @@ public class DocTableMeta extends TableMeta {
 		shareDate = "sharedate";
 		shareby = "shareby";
 
+		stamp = "syncstamp";
 		syncflag = "sync";
 		shareflag = "shareflag";
 		

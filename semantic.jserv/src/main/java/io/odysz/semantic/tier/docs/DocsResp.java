@@ -75,4 +75,10 @@ public class DocsResp extends AnsonResp {
 		return this;
 	}
 
+	String stamp;
+	public DocsResp stamp(String s) {
+		stamp = s;
+		return this;
+	}
+
 }
