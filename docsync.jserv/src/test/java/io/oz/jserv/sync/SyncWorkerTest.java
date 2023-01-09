@@ -134,7 +134,7 @@ class SyncWorkerTest {
 		// 0. clean failed tests
 		clean(worker, clientpath);
 		worker.synctier.tempRoot("synode.kyiv");
-		worker.synctier.del(meta.tbl, worker.nodeId(), clientpath);
+		worker.synctier.synDel(meta.tbl, worker.nodeId(), clientpath);
 
 		// 1. create a public file at this private node
 		Photo photo = new Photo().create(clientpath);
@@ -187,9 +187,9 @@ class SyncWorkerTest {
 			.post(Docsyncer.onClean(worker.org(), meta, worker.robot()))
 			.d(defltSt.instancontxt(conn, worker.robot()));
 		
-		worker.synctier.del(meta.tbl, Kyiv.Synode.nodeId, null);
-		worker.synctier.del(meta.tbl, Kharkiv.Synode.nodeId, null);
-		worker.synctier.del(meta.tbl, AnDevice.device, null);
+		worker.synctier.synDel(meta.tbl, Kyiv.Synode.nodeId, null);
+		worker.synctier.synDel(meta.tbl, Kharkiv.Synode.nodeId, null);
+		worker.synctier.synDel(meta.tbl, AnDevice.device, null);
 	}
 
 	/**
@@ -210,7 +210,7 @@ class SyncWorkerTest {
 			throws TransException, SQLException, IOException {
 
 		if (!DATranscxt.hasSemantics(conn, meta.tbl, smtype.extFilev2))
-			throw new SemanticException("Semantics of ext-file2.0 for h_photos.uri can't been found");
+			throw new SemanticException("Semantics of ext-file2.0 for h_photos.uri can't be found");
 		
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
 		return DocUtils.createFileB64(conn, photo, usr, meta, defltSt, post);
@@ -282,13 +282,13 @@ class SyncWorkerTest {
 				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
-		apptier.del(photoMeta.tbl, AnDevice.device, AnDevice.localFile);
+		apptier.synDel(photoMeta.tbl, AnDevice.device, AnDevice.localFile);
 		
 		SyncDoc doc = (SyncDoc) new SyncDoc()
 					.share(apptier.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);
-		DocsResp resp = apptier.insertSyncDoc(meta.tbl, doc, new OnDocOk() {
+		DocsResp resp = apptier.synInsertDoc(meta.tbl, doc, new OnDocOk() {
 			@Override
 			public void ok(SyncDoc doc, AnsonResp resp)
 					throws IOException, AnsonException, TransException {
@@ -311,7 +311,7 @@ class SyncWorkerTest {
 				DocsResp resp2 = null;
 				try {
 
-					resp2 = apptier.insertSyncDoc(meta.tbl, doc,
+					resp2 = apptier.synInsertDoc(meta.tbl, doc,
 					// resps2 = tier.pushBlocks(meta, videos, ssInf, null,
 					new OnDocOk() {
 						@Override
