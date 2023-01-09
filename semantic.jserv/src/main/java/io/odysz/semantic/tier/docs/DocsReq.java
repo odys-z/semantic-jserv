@@ -28,10 +28,10 @@ public class DocsReq extends AnsonBody {
 		public static final String orgNodes = "r/synodes";
 
 		/**
-		 * @deprecated now client only match paths with local DB.
-		 * 
 		 * Action: read records for client path matching.
 		 * For synodes synchronizing, use {@link #syncdocs} instead. 
+		 * 
+		 * @deprecated now clients only match paths with local DB.
 		 */
 		public static final String records = "r/list";
 		

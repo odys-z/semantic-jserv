@@ -1,5 +1,8 @@
 package io.oz.jserv.sync;
 
+import static io.odysz.common.LangExt.is;
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.sql.SQLException;
@@ -9,7 +12,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -27,7 +29,6 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
-import io.odysz.semantic.ext.SharelogMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -55,8 +56,6 @@ import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.sync.Dochain.OnChainOk;
 
-import static io.odysz.common.LangExt.*;
-
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
 public class Docsyncer extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
@@ -80,10 +79,17 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String mainStorage = "main";
 	public static final String privateStorage = "private";
 
+	/**
+	 * FIXME shouldn't be a map of [tabl, ScheduledFeature]?
+	 */
 	@SuppressWarnings("unused")
 	private static ScheduledFuture<?> schedualed;
 	private static SynodeMode mode;
-	static ReentrantLock lock;
+
+	protected static SynodeMeta orgMeta; 
+
+	// static ReentrantLock lock;
+
 	protected static DATranscxt st;
 	/** connection for update sync flages &amp; task records. */
 	private static String synconn;
@@ -98,6 +104,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		try {
 			st = new DATranscxt(null);
 			metas = new HashMap<String, TableMeta>();
+			orgMeta = new SynodeMeta();
 
 			anonymous = new SyncRobot("Robot Syncer", "");
 			
@@ -222,13 +229,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws SQLException
 	 * @throws SAXException
 	 * @throws IOException
+	 * @throws SsException 
+	 * @throws AnsonException 
 	 */
 	public static void init(String nodeId)
-			throws SemanticException, SQLException, SAXException, IOException {
+			throws SemanticException, SQLException, SAXException, IOException, AnsonException, SsException {
 
 		Utils.logi("Starting file synchronizer ...");
 
-		lock = new ReentrantLock();
+		// lock = new ReentrantLock();
 
 		scheduler = Executors.newScheduledThreadPool(1);
 
@@ -245,20 +254,23 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 			// FIXME oo design error TODO
 			// metas.put("a_synclog", new SharelogMeta("h_phots", "pid", synconn));
-			SharelogMeta sharemeta = new SharelogMeta("h_phots", "pid", synconn);
-			metas.put(sharemeta.tbl, sharemeta);
+			// SharelogMeta sharemeta = new SharelogMeta("h_phots", "pid", synconn);
+			// metas.put(sharemeta.tbl, sharemeta);
 
 			if (ServFlags.file)
-				Utils.logi("[ServFlags.file] sync worker disabled for node working in cloud hub mode.");
+				Utils.logi("[ServFlags.file] sync worker disabled for this node is working in cloud hub mode.");
 		}
 		else {
 			if (Docsyncer.mainStorage.equals(cfg))
 				mode = SynodeMode.main;
-			else mode = SynodeMode.priv;
+			else if (Docsyncer.privateStorage.equals(cfg))
+				mode = SynodeMode.priv;
+			else mode = SynodeMode.device;
 		
 			schedualed = scheduler.scheduleAtFixedRate(new SyncWorker(
 					mode, nodeId, synconn, nodeId,
-					new DocTableMeta("h_photos", "pid", synconn)), // FIXME oo design error TODO
+					new DocTableMeta("h_photos", "pid", synconn)) // FIXME oo design error TODO
+					.login("what's the pswd?"),
 					0, m, TimeUnit.MINUTES);
 
 			if (ServFlags.file)
@@ -342,7 +354,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 					throw new SemanticException("To push/update a doc via Docsyncer, docTable name can not be null.");
 
 				if (A.records.equals(a))
-					rsp = queryDevicePage(jreq, usr);
+					rsp = queryPathsPage(jreq, usr);
 				else if (A.getstamp.equals(a))
 					rsp = getstamp(jreq, usr);
 				else if (A.setstamp.equals(a))
@@ -424,7 +436,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	protected AnsonResp queryDevicePage(DocsReq jreq, IUser usr) throws SQLException, TransException {
+	protected AnsonResp queryPathsPage(DocsReq jreq, IUser usr) throws SQLException, TransException {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 
 		Object[] kpaths = jreq.syncing().paths() == null ? new Object[0]
@@ -455,12 +467,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws TransException
 	 */
 	protected AnsonResp queryNodes(DocsReq jreq, IUser usr) throws SQLException, TransException {
-		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
+		// DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 
 		AnResultset rs = ((AnResultset) st
-				.select(meta.sharelog.tbl, "t")
-				.cols(meta.sharelog.org, meta.sharelog.synid)
-				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				// .select(meta.sharelog.tbl, "t")
+				// .cols(meta.sharelog.org, meta.sharelog.synid)
+				.select(orgMeta.tbl, "t")
+				.cols(orgMeta.org, orgMeta.synid)
+				.whereEq(orgMeta.org, jreq.org == null ? usr.orgId() : jreq.org)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();
@@ -592,21 +606,21 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * Setup synchronizing tasks.
 	 */
 	protected OnChainOk onBlocksFinish = (Update post, SyncDoc f, DocTableMeta meta, IUser robot) -> {
-		if (mode != SynodeMode.hub) {
-			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
-			SynodeMeta snode = (SynodeMeta) metas.get(meta.tbl);
-			try {
-				post.post(st
-					.insert(shmeta.tbl, robot)
-					.select(st
-						.select(snode.tbl, "n")
-						// .cols(shmeta.selectSynodeCols())
-						.cols(shmeta.synid, shmeta.org)
-						.whereEq(snode.org, robot.orgId())));
-			} catch (TransException e) {
-				e.printStackTrace();
-			}
-		}
+//		if (mode != SynodeMode.hub) {
+//			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
+//			SynodeMeta snode = (SynodeMeta) metas.get(meta.tbl);
+//			try {
+//				post.post(st
+//					.insert(shmeta.tbl, robot)
+//					.select(st
+//						.select(snode.tbl, "n")
+//						// .cols(shmeta.selectSynodeCols())
+//						.cols(shmeta.synid, shmeta.org)
+//						.whereEq(snode.org, robot.orgId())));
+//			} catch (TransException e) {
+//				e.printStackTrace();
+//			}
+//		}
 		return post;
 	};
 
@@ -617,21 +631,21 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @return statement for adding as a post statement
 	 */
 	public static Statement<?> onDel(String docId, DocTableMeta meta, IUser usr) {
-		if (mode == SynodeMode.hub) {
-			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
-			return st.delete(shmeta.tbl, usr)
-					.whereEq(shmeta.org, usr.orgId())
-					.whereEq(shmeta.docFk, docId);
-		}
+//		if (mode == SynodeMode.hub) {
+//			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
+//			return st.delete(shmeta.tbl, usr)
+//					.whereEq(shmeta.org, usr.orgId())
+//					.whereEq(shmeta.docFk, docId);
+//		}
 		return null;
 	}
 
 	public static Statement<?> onClean(String org, DocTableMeta meta, IUser usr) {
-		if (mode == SynodeMode.hub) {
-			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
-			return st.delete(shmeta.tbl, usr)
-				.whereEq(shmeta.org, usr.orgId());
-		}
+//		if (mode == SynodeMode.hub) {
+//			SharelogMeta shmeta = (SharelogMeta) metas.get(meta.sharelog.tbl);
+//			return st.delete(shmeta.tbl, usr)
+//				.whereEq(shmeta.org, usr.orgId());
+//		}
 		return null;
 	}
 

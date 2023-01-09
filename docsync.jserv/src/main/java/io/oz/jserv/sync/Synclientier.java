@@ -171,23 +171,27 @@ public class Synclientier extends Semantier {
 	 * @param workerId 
 	 * @param onProcess
 	 * @return Sync response list
-	 * @throws SQLException
 	 * @throws TransException 
 	 * @throws AnsonException 
 	 * @throws IOException 
 	 */
 	List<DocsResp> syncUp(DocTableMeta meta, AnResultset rs, String workerId, OnProcess onProc)
-			throws SQLException, TransException, AnsonException, IOException {
+			throws TransException, AnsonException, IOException {
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
-		while (rs.next())
-			videos.add(new SyncDoc(rs, meta));
+		try {
+			while (rs.next())
+				videos.add(new SyncDoc(rs, meta));
 
-		return syncUp(meta.tbl, videos, workerId, onProc);
+			return syncUp(meta.tbl, videos, workerId, onProc);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public List<DocsResp> syncUp(String tabl, List<? extends SyncDoc> videos, String workerId,
 			OnProcess onProc, OnDocOk... docOk)
-			throws SQLException, TransException, AnsonException, IOException {
+			throws TransException, AnsonException, IOException {
 		SessionInf photoUser = client.ssInfo();
 		photoUser.device = workerId;
 
@@ -434,7 +438,7 @@ public class Synclientier extends Semantier {
 		
 	}
 	
-	public DocsResp del(String tabl, String device, String clientpath) {
+	public DocsResp synDel(String tabl, String device, String clientpath) {
 		DocsReq req = (DocsReq) new DocsReq(tabl)
 				.device(device)
 				.clientpath(clientpath)
@@ -456,7 +460,7 @@ public class Synclientier extends Semantier {
 		return resp;
 	}
 
-	DocsResp synClose(SyncDoc p, String docTabl)
+	DocsResp synClosePush(SyncDoc p, String docTabl)
 			throws AnsonException, IOException, TransException, SQLException {
 
 		DocsReq clsReq = (DocsReq) new DocsReq()
@@ -470,15 +474,54 @@ public class Synclientier extends Semantier {
 
 		DocsResp r = client.commit(q, errCtx);
 		return r;
-		// return p.recId();
 	}
 	
-	static String insertLocalFile(DATranscxt st, String conn, String path, SyncDoc doc, SyncRobot usr, DocTableMeta meta)
+	/**
+	 * Tell upper synode to close the doc downloading.
+	 * @param p
+	 * @param docTabl
+	 * @return
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws IOException
+	 */
+	DocsResp synClosePull(SyncDoc p, String docTabl)
+			throws SemanticException, AnsonException, IOException {
+		DocsReq clsReq = (DocsReq) new DocsReq()
+						.docTabl(docTabl)
+						.org(robot.orgId)
+						.queryPath(p.device(), p.fullpath())
+						.a(A.synclosePull);
+
+		AnsonMsg<DocsReq> q = client
+				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
+
+		DocsResp r = client.commit(q, errCtx);
+		return r;
+	}
+	
+	/**
+	 * Insert the locally ready doc (localpath) into table.
+	 * Also update meta.syncflag.
+	 * 
+	 * @param st
+	 * @param conn
+	 * @param localPath
+	 * @param doc
+	 * @param usr
+	 * @param meta
+	 * @return new doc id
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	static String insertLocalFile(DATranscxt st, String conn, String localPath,
+			SyncDoc doc, SyncRobot usr, DocTableMeta meta)
 			throws TransException, SQLException {
-		if (isblank(path))
+
+		if (isblank(localPath))
 			throw new SemanticException("Client path can't be null/empty.");
 		
-		long size = new File(path).length();
+		long size = new File(localPath).length();
 
 		Insert ins = st.insert(meta.tbl, usr)
 				.nv(meta.org, usr.orgId())
@@ -519,7 +562,7 @@ public class Synclientier extends Semantier {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	public DocsResp insertSyncDoc(String tabl, SyncDoc doc, OnDocOk ok, ErrorCtx ... errorCtx)
+	public DocsResp synInsertDoc(String tabl, SyncDoc doc, OnDocOk ok, ErrorCtx ... errorCtx)
 			throws TransException, IOException, SQLException {
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		videos.add(doc);
@@ -536,7 +579,16 @@ public class Synclientier extends Semantier {
 		return isNull(resps) ? null : resps.get(0);
 	}
 	
-	public DocsResp queryPaths(PathsPage page, String tabl)
+	/**
+	 * @deprecated now clients only match paths with local DB.
+	 * 
+	 * @param page
+	 * @param tabl
+	 * @return
+	 * @throws TransException
+	 * @throws IOException
+	 */
+	public DocsResp synQueryPathsPage(PathsPage page, String tabl)
 			throws TransException, IOException {
 		String[] act = AnsonHeader.usrAct("synclient.java", "query", "r/states", "query sync");
 		AnsonHeader header = client.header().act(act);

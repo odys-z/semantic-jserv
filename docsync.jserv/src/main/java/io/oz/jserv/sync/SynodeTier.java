@@ -1,6 +1,6 @@
 package io.oz.jserv.sync;
 
-import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -38,6 +39,9 @@ public class SynodeTier extends Synclientier {
 
 	protected DATranscxt localSt;
 	protected String connPriv;
+
+	protected HashMap<String, DeviceLock> deviceLocks;
+
 
 	public SynodeTier(String clientUri, String connId, ErrorCtx errCtx)
 			throws SemanticException, IOException {
@@ -106,7 +110,7 @@ public class SynodeTier extends Synclientier {
 	}
 
 	/**
-	 * Downward synchronizing.
+	 * Downward synchronize a doc. If succeed, also insert a record into local DB.
 	 * @param p
 	 * @param meta 
 	 * @return doc record (e.g. h_photos)
@@ -129,7 +133,9 @@ public class SynodeTier extends Synclientier {
 			
 			String dstpath = onCreateLocalFile(p, path, meta);
 			
-			synClosePull(p, dstpath);
+			// TODO: synClosePull(p, dstpath);
+			if (verbose)
+				Utils.logi("file downloaded is saved to %s", dstpath);;
 		}
 		return p;
 	}
@@ -200,5 +206,15 @@ public class SynodeTier extends Synclientier {
 	public String resolvePrivRoot(String uri, DocTableMeta localMeta) {
 		return DocUtils.resolvePrivRoot(uri, localMeta, connPriv);
 	}
+
+	DeviceLock getDeviceLock(String device) {
+		DeviceLock lck = deviceLocks.get(device);
+		if (isblank(lck)) {
+			lck = new DeviceLock(device);
+			deviceLocks.put(device, lck);
+		}
+		return lck;
+	}
+
 
 }

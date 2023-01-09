@@ -87,7 +87,8 @@ public class SyncWorker implements Runnable {
 	 * @throws SQLException
 	 * @throws SAXException
 	 */
-	public SyncWorker login(String pswd) throws SemanticException, AnsonException, SsException, IOException, SQLException, SAXException {
+	public SyncWorker login(String pswd) throws SemanticException, AnsonException,
+			SsException, IOException, SQLException, SAXException {
 		synctier = (SynodeTier) new SynodeTier(funcUri, connPriv, errLog)
 				.login(workerId, mac, pswd);
 		return this;
@@ -110,6 +111,7 @@ public class SyncWorker implements Runnable {
 			return;
 		}
 
+		/*
 		try {
 			Docsyncer.lock.lock();
 			pull();
@@ -120,6 +122,10 @@ public class SyncWorker implements Runnable {
 		finally {
 			Docsyncer.lock.unlock();
 		}
+		*/
+
+		pull();
+		push();
 	}
 
 	/**
@@ -134,66 +140,84 @@ public class SyncWorker implements Runnable {
 	ArrayList<DocsResp> pullDocs(DocsResp tasks)
 			throws SQLException, AnsonException, IOException, TransException {
 		
+		
 		ArrayList<DocsResp> res = new ArrayList<DocsResp>(tasks.rs(0).total());
 		tasks.rs(0).beforeFirst();
 		while (tasks.rs(0).next()) {
+			SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
+			DeviceLock lck = synctier.getDeviceLock(p.device());
+
 			try {
-				SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
-					
-				res.add(synctier.synClose(
-						synctier.synStreamPull(p, localMeta), localMeta.tbl));
+				if (!lck.isLocked()) {
+					lck.lock();
+					res.add(synctier.synClosePull(
+							synctier.synStreamPull(p, localMeta), localMeta.tbl));
+				}
+				// else continue;
 			}
 			catch(Exception e) {
 				e.printStackTrace();
+			}
+			finally {
+				lck.unlock();
 			}
 		}
 		
 		return res;
 	}
 
+
 	/**
 	 * Private nodes push docs to the cloud hub. 
 	 * 
-	 * @return
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws IOException 
-	 * @throws AnsonException 
+	 * @return this
 	 */
-	public SyncWorker push() throws TransException, SQLException, AnsonException, IOException {
-		if (mode == SynodeMode.main || mode == SynodeMode.priv) {
-			// find local records with shareflag = pub
-			AnResultset rs = ((AnResultset) localSt
-				.select(localMeta.tbl, "f")
-				.cols(SyncDoc.nvCols(localMeta)).col(localMeta.syncflag)
-				.whereEq(localMeta.syncflag, SyncFlag.priv)
-				.limit(30)
-				.rs(localSt.instancontxt(connPriv, synctier.robot))
-				.rs(0)).beforeFirst();
+	public SyncWorker push() {
+		if (mode == SynodeMode.main || mode == SynodeMode.priv || mode == SynodeMode.device) {
+			try {
+				// find local records with shareflag = pub
+				AnResultset rs = ((AnResultset) localSt
+					.select(localMeta.tbl, "f")
+					.cols(SyncDoc.nvCols(localMeta)).col(localMeta.syncflag)
+					.whereEq(localMeta.syncflag, SyncFlag.priv)
+					.limit(30)
+					.rs(localSt.instancontxt(connPriv, synctier.robot))
+					.rs(0)).beforeFirst();
 
-			// upload
-			synctier.syncUp(localMeta, rs, workerId,
-			  new OnProcess() {
-				@Override
-				public void proc(int listIndx, int rows, int seq, int totalBlocks, AnsonResp blockResp)
-						throws IOException, AnsonException, SemanticException {
-					String clientpath;
-					try {
-						clientpath = rs.getString(listIndx, localMeta.fullpath);
-						Utils.logi("[%s/%s] %s: %s / %s, reply: %s",
-								listIndx, rows, clientpath, seq, totalBlocks, blockResp.msg());
-					} catch (SQLException e) {
-						e.printStackTrace();
+				// upload
+				synctier.syncUp(localMeta, rs, workerId,
+				  new OnProcess() {
+					@Override
+					public void proc(int listIndx, int rows, int seq, int totalBlocks, AnsonResp blockResp)
+							throws IOException, AnsonException, SemanticException {
+						String clientpath;
+						try {
+							clientpath = rs.getString(listIndx, localMeta.fullpath);
+							Utils.logi("[%s/%s] %s: %s / %s, reply: %s",
+									listIndx, rows, clientpath, seq, totalBlocks, blockResp.msg());
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
 					}
-				}
-			  });
+				  });
+			} catch (AnsonException | TransException | IOException e) {
+				e.printStackTrace();
+			} catch (SQLException e) {
+				// how can accessing local DB failed?
+				e.printStackTrace();
+			}
 		}
 		return this;
 	}
 
-	public ArrayList<DocsResp> pull() throws AnsonException, IOException, SQLException, TransException {
-		DocsResp rsp = synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, synctier.robot.deviceId);
-		return pullDocs(rsp);
+	public ArrayList<DocsResp> pull() {
+		try {
+			DocsResp rsp = synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, synctier.robot.deviceId);
+			return pullDocs(rsp);
+		} catch (SQLException | AnsonException | IOException | TransException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	/**

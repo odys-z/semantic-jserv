@@ -49,7 +49,7 @@ public class DocTableMeta extends TableMeta {
 	public final String folder;
 	public final String size;
 
-	public final SharelogMeta sharelog;
+	// public final SharelogMeta sharelog;
 	
 	public DocTableMeta(String tbl, String pk, String conn) {
 		super(tbl, conn);
@@ -74,7 +74,7 @@ public class DocTableMeta extends TableMeta {
 		syncflag = "sync";
 		shareflag = "shareflag";
 		
-		sharelog = new SharelogMeta(tbl, pk, conn); 
+		// sharelog = new SharelogMeta(tbl, pk, conn); 
 	}
 
 }

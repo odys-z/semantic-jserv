@@ -3,7 +3,7 @@ CREATE TABLE a_synodes (
 	synid   varchar2(64) NOT NULL,-- user input
 	org     varchar2(12) NOT NULL,
 	mac     varchar2(256),        -- if possible
-	snycstamp datetime,           -- timestamp
+	snycstamp datetime,           -- timestamp for last successfully synchronizing (both up & down). So each time will merge records between last-stamp & got-stamp (now - 1s)
 	remarks varchar2(256),        -- empty?
 	startup DATETIME,             -- last bring up time
 	os      varchar2(256),        -- android, browser, etc.
@@ -25,22 +25,24 @@ CREATE TABLE h_photos2 (
   pname varchar(256),
   uri varchar(512) NOT NULL,   -- storage/userId/folder/recId-clientname
   pdate datetime,              -- picture taken time
+  
   device varchar(12),          -- 'original device ID',
+  clientpath TEXT DEFAULT '/' NOT NULL, -- shall we support 'moveTo' laterly?
+  oper varchar(12) not null,
+  opertime datetime not null,  -- this is the timestamp
+  -- syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL,
+
   shareby varchar(12),         -- 'shared by / creator',
   sharedate datetime not null, -- 'shared date time',
   tags varchar(512) DEFAULT NULL ,
   geox double DEFAULT 0,
   geoy double DEFAULT 0,
   exif text default null,
-  oper varchar(12) not null,
-  opertime datetime not null, 
-  clientpath TEXT DEFAULT '/' NOT NULL, 
   mime TEXT(64), 
   filesize INTEGER, 
   css text,                    -- e.g. {"type":"io.oz.album.tier.PhotoCSS", "size":[3147,1461,1049,487]}
   shareflag varchar2(12) default 'prv' not null, 
   sync varchar2(4),
-  syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL,
 
   PRIMARY KEY (pid)
 );
