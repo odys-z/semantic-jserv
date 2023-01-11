@@ -10,6 +10,7 @@ import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.io.FileUtils;
 import org.xml.sax.SAXException;
@@ -42,11 +43,13 @@ public class SynodeTier extends Synclientier {
 
 	protected HashMap<String, DeviceLock> deviceLocks;
 
+	private final ReentrantLock lock;
 
 	public SynodeTier(String clientUri, String connId, ErrorCtx errCtx)
 			throws SemanticException, IOException {
 		super(clientUri, errCtx);
 		try {
+			lock = new ReentrantLock();
 			localSt = new DATranscxt(connId);
 		} catch (SQLException | SAXException e) {
 			throw new SemanticException(
@@ -208,13 +211,16 @@ public class SynodeTier extends Synclientier {
 	}
 
 	DeviceLock getDeviceLock(String device) {
-		DeviceLock lck = deviceLocks.get(device);
-		if (isblank(lck)) {
-			lck = new DeviceLock(device);
-			deviceLocks.put(device, lck);
+		lock.lock();
+		try {
+			DeviceLock lck = deviceLocks.get(device);
+			if (isblank(lck)) {
+				lck = new DeviceLock(device);
+				deviceLocks.put(device, lck);
+			}
+			return lck;
+		} finally {
+			lock.unlock();
 		}
-		return lck;
 	}
-
-
 }

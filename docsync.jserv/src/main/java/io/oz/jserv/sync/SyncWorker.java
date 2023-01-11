@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.AnsonResultset;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
@@ -30,6 +31,8 @@ public class SyncWorker implements Runnable {
 	public final String funcUri;
 
 	static int blocksize = 3 * 1024 * 1024;
+
+	protected static SynodeMeta synodesMeta; 
 
 	SynodeMode mode;
 	
@@ -54,6 +57,7 @@ public class SyncWorker implements Runnable {
 
 	public SyncWorker(SynodeMode mode, String device, String connId, String worker, DocTableMeta tablMeta)
 			throws SemanticException, SQLException, SAXException, IOException {
+		synodesMeta = new SynodeMeta();
 		this.mode = mode;
 		funcUri = "/sync/worker";
 		connPriv = connId;
@@ -145,27 +149,11 @@ public class SyncWorker implements Runnable {
 		tasks.rs(0).beforeFirst();
 		while (tasks.rs(0).next()) {
 			SyncDoc p = new SyncDoc(tasks.rs(0), localMeta);
-			DeviceLock lck = synctier.getDeviceLock(p.device());
-
-			try {
-				if (!lck.isLocked()) {
-					lck.lock();
 					res.add(synctier.synClosePull(
 							synctier.synStreamPull(p, localMeta), localMeta.tbl));
-				}
-				// else continue;
-			}
-			catch(Exception e) {
-				e.printStackTrace();
-			}
-			finally {
-				lck.unlock();
-			}
 		}
-		
 		return res;
 	}
-
 
 	/**
 	 * Private nodes push docs to the cloud hub. 
@@ -211,13 +199,59 @@ public class SyncWorker implements Runnable {
 	}
 
 	public ArrayList<DocsResp> pull() {
-		try {
-			DocsResp rsp = synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, synctier.robot.deviceId);
-			return pullDocs(rsp);
-		} catch (SQLException | AnsonException | IOException | TransException e) {
-			e.printStackTrace();
-			return null;
+		ArrayList<String> synids = synodes();
+		
+		ArrayList<DocsResp> reslt = new ArrayList<DocsResp>();
+		for (String synid : synids) {
+
+			DeviceLock lck = synctier.getDeviceLock(synid);
+			if (!lck.isLocked()) {
+				lck.lock();
+				try {
+					DocsResp rsp= synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, synid);
+					reslt.addAll(pullDocs(rsp));
+				} catch (SQLException | TransException | AnsonException | IOException e) {
+					e.printStackTrace();
+				}
+				finally {
+					lck.unlock();
+				}
+			}
+			// else continue for other synodes;
 		}
+		return reslt;
+	}
+
+	/**Merge / synchronize syndoes.
+	 * @return list of all nodes (both merged and safely checked)
+	 */
+	public ArrayList<String> synodes() {
+
+		if (this.mode == SynodeMode.device)
+			try {
+				return synodes(synctier.robot.orgId);
+			} catch (AnsonException | TransException | SQLException | IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		else throw new NullPointerException("todo");
+	}
+
+	public ArrayList<String> synodes(String org)
+			throws TransException, SQLException, AnsonException, IOException {
+		DocsResp resp = listNodes(org);
+		AnResultset remotes = resp.rs(0);
+
+		AnResultset locals = (AnResultset) localSt
+				.select(synodesMeta.tbl, "n")
+				.whereEq(synodesMeta.org, org)
+				.orderby(synodesMeta.synid)
+				.rs(localSt.instancontxt(connPriv, synctier.robot))
+				.rs(0);
+		
+		TODO
+
+		return null;
 	}
 
 	/**
@@ -275,9 +309,9 @@ public class SyncWorker implements Runnable {
 		return synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, workerId);
 	}
 
-	public DocsResp listNodes()
+	public DocsResp listNodes(String org)
 			throws SemanticException, AnsonException, IOException {
-		return synctier.listNodes(localMeta.tbl, synctier.robot.orgId);
+		return synctier.listNodes(localMeta.tbl, org);
 	}
 
 	public String nodeId() {

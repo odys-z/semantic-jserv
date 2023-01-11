@@ -51,6 +51,7 @@ public class Dochain {
 
 	public static final boolean verbose = true;
 
+	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	DATranscxt st;
 
 	static HashMap<String, BlockChain> blockChains;
