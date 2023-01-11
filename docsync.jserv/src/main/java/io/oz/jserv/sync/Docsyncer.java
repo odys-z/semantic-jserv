@@ -86,7 +86,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	private static ScheduledFuture<?> schedualed;
 	private static SynodeMode mode;
 
-	protected static SynodeMeta orgMeta; 
+	protected static SynodeMeta synodesMeta; 
 
 	// static ReentrantLock lock;
 
@@ -104,7 +104,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		try {
 			st = new DATranscxt(null);
 			metas = new HashMap<String, TableMeta>();
-			orgMeta = new SynodeMeta();
+			synodesMeta = new SynodeMeta();
 
 			anonymous = new SyncRobot("Robot Syncer", "");
 			
@@ -472,9 +472,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 		AnResultset rs = ((AnResultset) st
 				// .select(meta.sharelog.tbl, "t")
 				// .cols(meta.sharelog.org, meta.sharelog.synid)
-				.select(orgMeta.tbl, "t")
-				.cols(orgMeta.org, orgMeta.synid)
-				.whereEq(orgMeta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.select(synodesMeta.tbl, "t")
+				.cols(synodesMeta.org, synodesMeta.synid)
+				.whereEq(synodesMeta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.orderby(synodesMeta.synid)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();

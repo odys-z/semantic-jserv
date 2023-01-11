@@ -9,13 +9,15 @@ CREATE TABLE a_synodes (
 	os      varchar2(256),        -- android, browser, etc.
 	version varchar2(64),         -- docsync.jserv version
 	extra   varchar2(512),
+	oper    varchar2(12) NOT NULL,
+	optime  datetime NOT NULL,
 	PRIMARY KEY (synid)
 );
 delete from a_synodes where org = 'f/zsu';
-insert into a_synodes (synid, org) values
-("jnode-kharkiv", "f/zsu"),
-("jnode-kyiv", "f/zsu"),
-("app.syrskyi", "f/zsu")
+insert into a_synodes (synid, org, oper, optime) values
+("jnode-kharkiv", "f/zsu", 'ody', datetime('now')),
+("jnode-kyiv", "f/zsu", 'ody', datetime('now')),
+("app.syrskyi", "f/zsu", 'ody', datetime('now'))
 ;
 
 CREATE TABLE h_photos2 (

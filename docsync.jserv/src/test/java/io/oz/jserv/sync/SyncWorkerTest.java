@@ -103,7 +103,7 @@ class SyncWorkerTest {
 		assertEquals(Kyiv.Synode.nodeId, worker.mac);
 		assertEquals(Kyiv.Synode.nodeId, worker.robot().deviceId);
 		
-		DocsResp rsp = worker.listNodes();
+		DocsResp rsp = worker.listNodes(family);
 		assertEquals(4, rsp.rs(0).total());
 	}
 
