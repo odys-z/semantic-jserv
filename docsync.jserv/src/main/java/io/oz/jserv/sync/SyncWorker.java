@@ -222,7 +222,7 @@ public class SyncWorker implements Runnable {
 		return reslt;
 	}
 
-	/**Merge / synchronize syndoes.
+	/**Merge / synchronize synodes.
 	 * @return list of all nodes (both merged and safely checked)
 	 */
 	public ArrayList<String> synodes() {
@@ -234,24 +234,64 @@ public class SyncWorker implements Runnable {
 				e.printStackTrace();
 				return null;
 			}
-		else throw new NullPointerException("todo");
+		else synorgs();
 	}
 
+	/**
+	 * Synchronize table a_synodes.
+	 * 
+	 * @param org
+	 * @return updated list
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws AnsonException
+	 * @throws IOException
+	 */
 	public ArrayList<String> synodes(String org)
 			throws TransException, SQLException, AnsonException, IOException {
+		String id = synodesMeta.synid;
+
 		DocsResp resp = listNodes(org);
 		AnResultset remotes = resp.rs(0);
 
 		AnResultset locals = (AnResultset) localSt
 				.select(synodesMeta.tbl, "n")
 				.whereEq(synodesMeta.org, org)
-				.orderby(synodesMeta.synid)
+				.orderby(id)
 				.rs(localSt.instancontxt(connPriv, synctier.robot))
 				.rs(0);
 		
-		TODO
+		int lx = 1, rx = 1;
+		ArrayList<String> res = new ArrayList<String>();
+		while (lx <= locals.getRowCount() && rx <= remotes.getRowCount()) {
+			String l = locals.getString(lx, id), r = remotes.getString(rx, id);
+			int diff = l.compareTo(r);
+			if (diff < 0) {
+				res.add(l);
+				lx++;
+			}
+			else if (diff > 0) {
+				res.add(r);
+				rx++;
+			}
+			else {
+				res.add(r);
+				lx++; rx++;
+			}
+		}
+		
+		if (lx <= locals.getRowCount()) {
+			remotes = locals;
+			rx = lx;
+		}
+		
+		while (rx <= remotes.getRowCount()) {
+			String r = remotes.getString(rx, id);
+			res.add(r);
+			rx++;
+		}
 
-		return null;
+		return res;
 	}
 
 	/**

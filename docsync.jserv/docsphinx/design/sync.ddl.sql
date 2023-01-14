@@ -49,8 +49,8 @@ CREATE TABLE h_photos2 (
   PRIMARY KEY (pid)
 );
 
-insert into h_photos2(pid, family, folder, pname, uri, pdate, device, shareby, sharedate, tags, geox, geoy, exif, oper, opertime, clientpath, mime, filesize, css, shareflag, sync) SELECT
-pid, family, folder, pname, uri, pdate, device, shareby, sharedate, tags, geox, geoy, exif, oper, opertime, clientpath, mime, filesize, css, shareflag, sync from h_photos;
+insert into h_photos2(pid, family, folder, pname, uri, pdate, device, shareby, sharedate, tags, geox, geoy, exif, oper, opertime, clientpath, mime, filesize, css, shareflag, sync) 
+SELECT pid, family, folder, pname, uri, pdate, device, shareby, sharedate, tags, geox, geoy, exif, oper, opertime, clientpath, mime, filesize, css, shareflag, sync from h_photos;
 
 drop table h_photos;
 alter table h_photos2 rename to h_photos;
