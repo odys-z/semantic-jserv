@@ -102,12 +102,16 @@ class SyncWorkerTest {
 		assertEquals(Kyiv.Synode.worker, worker.robot().userId);
 		assertEquals(Kyiv.Synode.nodeId, worker.mac);
 		assertEquals(Kyiv.Synode.nodeId, worker.robot().deviceId);
+		
+		DocsResp rsp = worker.listNodes();
+		assertEquals(4, rsp.rs(0).total());
 	}
 
 	/**
-	 * <p>Kyiv -&gt; hub -&gt; Kharkiv</p>
+	 * <p>Kyiv local -&gt; Kyiv (hub) -&gt; Kharkiv</p>
 	 * 
 	 * Test {@link SyncWorker}' pushing (synchronizing 'pub') with album-jserv as sync hub (8081).
+	 * 
 	 * @throws TransException 
 	 * @throws IOException 
 	 * @throws SQLException 
@@ -143,6 +147,9 @@ class SyncWorkerTest {
 		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.fullpath(), photo.pname, pid);
 
 		worker.push();
+		
+		// 2.1 verify the sharing tasks been created
+		// syndev: 
 	
 		// 3. query my tasks as another jnode (kharkiv)
 		worker = new SyncWorker(Kharkiv.Synode.mode, Kharkiv.Synode.nodeId, conn, Kharkiv.Synode.worker, meta)

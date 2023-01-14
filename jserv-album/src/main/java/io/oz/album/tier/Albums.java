@@ -381,7 +381,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		AlbumResp album = (AlbumResp) new AlbumResp()
 				.collect("sync-temp-id")
-				.pathPage(rs, meta);
+				.pathsPage(rs, meta);
 
 		return album;
 	}

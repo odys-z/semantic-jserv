@@ -54,7 +54,7 @@ public class SynodeTier extends Synclientier {
 	}
 	
 	/**
-	 * @param meta 
+	 * @param tbl task table name 
 	 * @param family 
 	 * @param deviceId 
 	 * @return response
@@ -62,15 +62,15 @@ public class SynodeTier extends Synclientier {
 	 * @throws AnsonException 
 	 * @throws SemanticException 
 	 */
-	DocsResp queryTasks(DocTableMeta meta, String family, String deviceId)
+	DocsResp queryTasks(String tbl, String family, String deviceId)
 			throws SemanticException, AnsonException, IOException {
 
-		DocsReq req = (DocsReq) new DocsReq(meta.tbl)
+		DocsReq req = (DocsReq) new DocsReq(tbl)
 				.org(family)
 				.a(A.syncdocs)
 				;
 
-		String[] act = AnsonHeader.usrAct("sync", "list", meta.tbl, deviceId);
+		String[] act = AnsonHeader.usrAct("sync", "list", tbl, deviceId);
 		AnsonHeader header = client.header().act(act);
 
 		AnsonMsg<DocsReq> q = client

@@ -125,6 +125,14 @@ public class Synclientier extends Semantier {
 		return onLogin(client);
 	}
 	
+	/**
+	 * Start heart beat, create robot for synchronizing,
+	 * clean and create local temporary directory for downloading,
+	 * load user information.
+	 * 
+	 * @param client
+	 * @return this
+	 */
 	public Synclientier onLogin(SessionClient client) {
 		SessionInf ssinf = client.ssInfo();
 		try {
@@ -138,14 +146,16 @@ public class Synclientier extends Semantier {
 			JUserMeta um = (JUserMeta) robot.meta();
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
-			q.body(0).j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
-					.whereEq("=", "u." + um.pk, robot.userId);
+			q.body(0)
+			 .j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
+			 .whereEq("=", "u." + um.pk, robot.userId);
+
 			AnsonResp resp = client.commit(q, errCtx);
 			AnResultset rs = resp.rs(0).beforeFirst();
 			if (rs.next())
 				robot.orgId(rs.getString(um.org))
 					.orgName(rs.getString(um.orgName));
-			else throw new SemanticException("Jnode haven't been reqistered: %s", robot.userId);
+			else throw new SemanticException("Synode haven't been reqistered: %s", robot.userId);
 		} catch (SemanticException | AnsonException | SQLException | IOException e) {
 			e.printStackTrace();
 		}
@@ -278,7 +288,7 @@ public class Synclientier extends Semantier {
         DocsResp resp0 = null;
         DocsResp respi = null;
 
-		String[] act = AnsonHeader.usrAct("albumtier.java", "sync", "c/sync", "push blocks");
+		String[] act = AnsonHeader.usrAct("synclient.java", "sync", "c/sync", "push blocks");
 		AnsonHeader header = client.header().act(act);
 
 		List<DocsResp> reslts = new ArrayList<DocsResp>(videos.size());
@@ -379,7 +389,7 @@ public class Synclientier extends Semantier {
 	 */
 	public DocsResp selectDoc(String docTabl, String docId, ErrorCtx ... onErr) {
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
-		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
+		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
 		DocsReq req = new DocsReq(docTabl);
@@ -400,6 +410,30 @@ public class Synclientier extends Semantier {
 		return resp;
 	}
 	
+	public DocsResp listNodes(String docTabl, String org, ErrorCtx ... onErr) {
+			ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
+		AnsonHeader header = client.header().act(act);
+
+		DocsReq req = new DocsReq(docTabl);
+		req.a(A.orgNodes);
+		req.org = org;
+
+		DocsResp resp = null;
+		try {
+			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
+										.header(header);
+
+			resp = client.commit(q, errCtx);
+		} catch (AnsonException | SemanticException e) {
+			errHandler.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+		} catch (IOException e) {
+			errHandler.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+		}
+		return resp;
+		
+	}
+	
 	public DocsResp del(String tabl, String device, String clientpath) {
 		DocsReq req = (DocsReq) new DocsReq(tabl)
 				.device(device)
@@ -408,7 +442,7 @@ public class Synclientier extends Semantier {
 
 		DocsResp resp = null;
 		try {
-			String[] act = AnsonHeader.usrAct("album.java", "del", "d/photo", "");
+			String[] act = AnsonHeader.usrAct("synclient.java", "del", "d/photo", "");
 			AnsonHeader header = client.header().act(act);
 			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
 										.header(header);
@@ -505,7 +539,7 @@ public class Synclientier extends Semantier {
 	// public DocsResp queryDocs(List<? extends SyncDoc> files, DocsPage page, DocTableMeta meta)
 	public DocsResp queryPaths(PathsPage page, String tabl)
 			throws TransException, IOException {
-		String[] act = AnsonHeader.usrAct("album.java", "query", "r/states", "query sync");
+		String[] act = AnsonHeader.usrAct("synclient.java", "query", "r/states", "query sync");
 		AnsonHeader header = client.header().act(act);
 
 		DocsReq req = (DocsReq) new DocsReq()

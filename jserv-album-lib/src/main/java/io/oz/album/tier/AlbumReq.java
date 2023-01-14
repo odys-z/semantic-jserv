@@ -95,11 +95,6 @@ public class AlbumReq extends DocsReq {
 		this.photo.uri = b64;
 		this.photo.pname = p.getFileName().toString();
 		
-		// Exif.parseExif(this.photo, fullpath);
-		// TODO FIXME
-		// TODO FIXME
-		// Bug: some app exported pic won't get the correct folder - doesn't create date overriding empty EXIF date?
-
 		this.a = A.insertPhoto;
 
 		return this;

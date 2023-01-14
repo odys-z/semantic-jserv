@@ -1,6 +1,7 @@
 package io.oz.jserv.sync;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
+import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -65,8 +67,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 	static HashMap<String, TableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
 
-	// static HashMap<String,SharelogMeta> logmetas;
-
 	public static final String keyMode = "sync-mode";
 	public static final String keyInterval = "sync-interval-min";
 	public static final String keySynconn = "sync-conn-id";
@@ -85,6 +85,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 	private static String synconn;
 
 	private static ScheduledExecutorService scheduler;
+
+	public static IProfileResolver profilesolver;
 
 	static SyncRobot anonymous;
 
@@ -141,6 +143,19 @@ public class Docsyncer extends ServPort<DocsReq> {
 		return (DocsResp) new DocsResp().data(res.props()); 
 	}
 
+	/**
+	 * Find doc id from synode's DB.
+	 * 
+	 * @param orgId
+	 * @param clientpath
+	 * @param device
+	 * @param meta
+	 * @param usr
+	 * @param conn
+	 * @return doc id
+	 * @throws SQLException
+	 * @throws TransException
+	 */
 	static String resolveDoc(String orgId, String clientpath, String device, DocTableMeta meta, IUser usr, String conn)
 			throws SQLException, TransException {
 		AnResultset rs = ((AnResultset) st.select(meta.tbl, "d")
@@ -157,13 +172,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * <p>Setup sync-flag after doc been synchronized</p>
+	 * <p>Setup sync-flag after doc been synchronized.</p>
+	 * <p>The update statement should committed with insert statement.</p> 
+	 * 
 	 * @see SyncFlag
 	 * 
 	 * @param doc
 	 * @param meta
 	 * @param usr
-	 * @return post update
+	 * @return post update with post of inserting share logs
 	 * @throws TransException
 	 */
 	public static Update onDocreate(SyncDoc doc, DocTableMeta meta, IUser usr)
@@ -174,6 +191,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.nv(meta.syncflag, syn)
 				.whereEq(meta.org, usr.orgId())
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
+				.post(mode == SynodeMode.device ? null :
+					st.insert(meta.sharelog.tbl, usr)
+					  .cols(meta.sharelog.insertShorelogCols())
+					  .select(st
+							.select("a_synodes", "n")
+							.cols(meta.sharelog.selectSynodeCols())
+							.col(new Resulving(meta.tbl, meta.pk))
+					  .whereEq("org", usr.orgId())))
 				;
 	}
 
@@ -229,6 +254,20 @@ public class Docsyncer extends ServPort<DocsReq> {
 			if (ServFlags.file)
 				Utils.warn("[ServFlags.file] sync worker scheduled for private node (mode %s, interval %s minute).",
 						cfg, m);
+		}
+
+		try {
+			Class<?> reslass = Class.forName(Configs.getCfg("docsync.folder-resolver"));
+			Constructor<?> c = reslass.getConstructor(SynodeMode.class);
+			profilesolver = (IProfileResolver) c.newInstance(mode);
+			
+			Utils.logi("[Docsyncer] Working in '%s' mode, folder resolver: %s", mode, reslass.getName());
+		} catch (NoSuchMethodException e) {
+			throw new SemanticException("Fatal error: can't create folder resolver [k=docsync.flolder-resolver]: %s. No such method found (constructor with parameter of type SynodeMode).",
+					Configs.getCfg("docsync.resolver"));
+		} catch (ReflectiveOperationException e) {
+			throw new SemanticException("Fatal error: can't create folder resolver [k=docsync.flolder-resolver]: %s.",
+					Configs.getCfg("docsync.resolver"));
 		}
 	}
 
@@ -294,6 +333,8 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 				if (A.records.equals(a))
 					rsp = queryDevicePage(jreq, usr);
+				if (A.orgNodes.equals(a))
+					rsp = queryNodes(jreq, usr);
 				else if (A.syncdocs.equals(a))
 					rsp = querySynodeTasks(jreq, usr);
 				else if (A.del.equals(a))
@@ -305,7 +346,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 					if (DocsReq.A.blockStart.equals(a)) {
 						if (isblank(jreq.subFolder, " - - "))
 							throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
-						rsp = chain.startBlocks(jmsg.body(0), usr);
+						rsp = chain.startBlocks(profilesolver.onStartPush(jmsg.body(0), usr), usr, profilesolver);
 					}
 					else if (DocsReq.A.blockUp.equals(a))
 						rsp = chain.uploadBlock(jmsg.body(0), usr);
@@ -352,7 +393,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		Object[] kpaths = jreq.syncing().paths() == null ? new Object[0]
 				: jreq.syncing().paths().keySet().toArray();
-		
 
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
@@ -361,13 +401,36 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.whereEq(meta.device, usr.deviceId())
 				// .whereEq(meta.shareby, usr.uid())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
-				.limit(jreq.limit())
+				.limit(jreq.limit())	// FIXME issue: what if paths length > limit ?
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();
 
-		return (DocsResp) new DocsResp().syncing(jreq).pathPage(rs, meta);
+		return (DocsResp) new DocsResp().syncing(jreq).pathsPage(rs, meta);
 	}
+
+	protected AnsonResp queryNodes(DocsReq jreq, IUser usr) throws SQLException, TransException {
+		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
+
+		Object[] kpaths = jreq.syncing().paths() == null ? new Object[0]
+				: jreq.syncing().paths().keySet().toArray();
+
+		AnResultset rs = ((AnResultset) st
+				.select(meta.sharelog.tbl, "t")
+				.cols(meta.sharelog.org, meta.sharel)
+				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.device, usr.deviceId())
+				// .whereEq(meta.shareby, usr.uid())
+				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
+				.limit(jreq.limit())	// FIXME issue: what if paths length > limit ?
+				.rs(st.instancontxt(synconn, usr))
+				.rs(0))
+				.beforeFirst();
+
+		return (DocsResp) new DocsResp().syncing(jreq).pathsPage(rs, meta);
+	
+	}
+
 
 	/**
 	 * <p>Write file stream to response.</p>
@@ -386,7 +449,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	void download(HttpServletResponse resp, DocsReq req, IUser usr)
+	protected void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 		
 		DocTableMeta meta = (DocTableMeta) metas.get(req.docTabl);
@@ -507,7 +570,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	};
 
 	/**
-	 * 1. clear share-log<br>
+	 * 1. clear share-log (only for {@link SynodeMode#hub})<br>
 	 * 
 	 * @param docId
 	 * @return statement for adding as a post statement

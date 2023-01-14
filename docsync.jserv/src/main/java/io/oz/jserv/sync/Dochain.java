@@ -22,6 +22,7 @@ import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -62,7 +63,9 @@ public class Dochain {
 		this.st = deflst;
 	}
 
-	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException, InterruptedException {
+	DocsResp startBlocks(DocsReq body, IUser usr, IProfileResolver profiles)
+			throws IOException, TransException, SQLException, InterruptedException {
+
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
 
@@ -72,7 +75,12 @@ public class Dochain {
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by SyncRobot. 
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder)
+		String saveFolder = profiles.synodeFolder(body, usr);
+		if (isblank(saveFolder, "/", "\\\\", ":", "."))
+			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
+					body.clientpath, usr.uid(), profiles.getClass().getName());
+		
+		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, saveFolder)
 				.device(usr.deviceId())
 				.share(body.shareby, body.shareDate, body.shareflag);
 
@@ -158,12 +166,9 @@ public class Dochain {
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
 		SyncDoc photo = new SyncDoc().parseChain(chain);
-		photo.uri = null; // suppress semantics ExtFile, support me.
+		photo.uri = null; // suppress semantics ExtFile, and support me (query befor move?).
 		
 		String pid = createFile(st, conn, photo, meta, usr, ok);
-//				(Update post, SyncDoc f, DocTableMeta meta, SyncRobot robot) -> {
-//					return post;
-//				});
 
 		// move file
 		String targetPath = resolvExtroot(st, conn, pid, usr, meta);
@@ -173,11 +178,6 @@ public class Dochain {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-//				.doc((SyncDoc) new SyncDoc()
-//					.recId(pid)
-//					.clientname(chain.clientname)
-//					.cdate(body.createDate)
-//					.fullpath(chain.clientpath));
 				.doc(photo.recId(pid));
 	}
 
@@ -213,7 +213,20 @@ public class Dochain {
 	}
 
 
-	static String resolvExtroot(DATranscxt defltst, String conn, String docId, IUser usr, DocTableMeta meta) throws TransException, SQLException {
+	/**
+	 * Resolve file root with samantics handler of {@link smtype#extFilev2}.
+	 * 
+	 * @param defltst
+	 * @param conn
+	 * @param docId
+	 * @param usr
+	 * @param meta
+	 * @return root resolved by {@link smtype#extFilev2}
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	static String resolvExtroot(DATranscxt defltst, String conn, String docId, IUser usr, DocTableMeta meta)
+			throws TransException, SQLException {
 		ISemantext stx = defltst.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) defltst
 				.select(meta.tbl)

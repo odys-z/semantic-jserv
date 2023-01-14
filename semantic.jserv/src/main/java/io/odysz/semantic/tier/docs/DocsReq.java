@@ -23,6 +23,8 @@ public class DocsReq extends AnsonBody {
 		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
 		 * */
 		public static final String syncdocs = "r/syncs";
+		/** List all nodes, includeing devices &amp; synodes of the family */
+		public static final String orgNodes = "r/synodes";
 		/**
 		 * Action: read records for client path matching.
 		 * For synodes synchronizing, use {@link #syncdocs} instead. 
@@ -74,7 +76,13 @@ public class DocsReq extends AnsonBody {
 	 * or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}.
 	 */
 	public String shareflag;
+
 	public String shareby;
+	public DocsReq shareby(String uid) {
+		shareby = uid;
+		return this;
+	}
+
 	public String shareDate;
 	
 	/**
