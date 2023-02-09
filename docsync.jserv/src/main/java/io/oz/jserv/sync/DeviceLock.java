@@ -2,6 +2,11 @@ package io.oz.jserv.sync;
 
 import java.util.concurrent.locks.ReentrantLock;
 
+/**Concurrency lock of device-wise synchronizing.
+ * 
+ * @author odys-z@github.com
+ *
+ */
 public class DeviceLock {
 	final ReentrantLock lock;
 	final String device;
