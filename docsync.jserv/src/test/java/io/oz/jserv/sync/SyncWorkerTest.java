@@ -293,7 +293,7 @@ class SyncWorkerTest {
 			public void ok(SyncDoc doc, AnsonResp resp)
 					throws IOException, AnsonException, TransException {
 				// update synode (Kharkiv) flag - app device do nothing here
-				String f = SyncFlag.to(Share.pub, SyncEvent.pushEnd, doc.shareflag());
+				String f = SyncFlag.to(Share.pub, SyncEvent.pushubEnd, doc.shareflag());
 				try {
 					SynodeTier tier = (SynodeTier) new SynodeTier(clientUri, conn, errLog)
 							.tempRoot("synode.kharkiv")

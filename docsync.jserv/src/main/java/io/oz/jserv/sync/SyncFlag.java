@@ -24,12 +24,44 @@ public final class SyncFlag extends Anson {
 	public static final String publish = "🌎";
 	/**created at cloud hub ('✩') by both client and jnode pushing, */
 	public static final String hub = "✩";
-	/** hub buffering expired or finished ('x') */
-	public static final String close = "x";
+	
+	//////////////// branch positive-sync /////
+	/**created at a device (client) node ('📱') */
+	public static final String device = "📱";
+	/**The doc is removed, and this record is a propagating record for
+	 * worldwide synchronizing ('Ⓓ')*/
+	public static final String deleting = "Ⓓ";
+	/**The doc is locally removed, and the task is waiting to push to a jnode ('Ⓛ') */
+	public static final String loc_remove = "Ⓛ";
+	/**The deleting task is denied by a device ('ⓧ')*/
+	public static final String del_deny = "ⓧ";
+	/** hub buffering expired or finished ('Ⓒ') */
+	public static final String close = "Ⓒ";
+	//////////////// branch positive-sync /////
+
 	/** This state can not present in database */ 
 	public static final String end = "";
 	
-	public static enum SyncEvent { create, push, pushEnd, pull, close, publish, hide };
+	public static enum SyncEvent {
+		create,
+		/** Start pushing by a jnode or a device. */
+		push,
+		/** A jnode pushing to hub ended or a device is notified by a jnode. */ 
+		pushubEnd,
+		/** A device pushing to jnode ended. */ 
+		pushJnodend,
+		/** A jnode pulling finished */
+		jnodePull,
+		/** device pulling finished */
+		devPull,
+		/** published at hub */
+		publish,
+		/**@deprecated deleting a doc worldwidely */
+		deleting,
+		/**@deprecated removed a local doc */
+		loc_remove,
+		close, hide
+	};
 	
 	/**
 	 * @param now current state (SyncFlag constants)
@@ -39,9 +71,9 @@ public final class SyncFlag extends Anson {
 	 */
 	public static String to(String now, SyncEvent e, String share) {
 		if (priv.equals(now) || pushing.equals(now)) {
-			if (e == SyncEvent.pushEnd && Share.isPub(share))
+			if (e == SyncEvent.pushubEnd && Share.isPub(share))
 				return publish;
-			else if (e == SyncEvent.pushEnd && Share.isPriv(share))
+			else if (e == SyncEvent.pushubEnd && Share.isPriv(share))
 				return hub;
 		}
 		else if (publish.equals(now)) {
@@ -49,7 +81,7 @@ public final class SyncFlag extends Anson {
 				return close;
 			else if (e == SyncEvent.hide)
 				return hub;
-			else if (e == SyncEvent.pull)
+			else if (e == SyncEvent.jnodePull)
 				return priv;
 		}
 		else if (hub.equals(now)) {
@@ -57,7 +89,7 @@ public final class SyncFlag extends Anson {
 				return close;
 			else if (e == SyncEvent.publish)
 				return publish;
-			else if (e == SyncEvent.pull)
+			else if (e == SyncEvent.jnodePull)
 				return priv;
 		}
 		return now;

@@ -9,9 +9,11 @@ import javax.servlet.annotation.WebListener;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.tier.PhotoMeta;
@@ -37,6 +39,10 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			Docsyncer.addSyncTable(new JUser.JUserMeta(Connects.defltConn()));
 
 		} catch (SemanticException | SAXException | IOException | SQLException e) {
+			e.printStackTrace();
+		} catch (AnsonException e) {
+			e.printStackTrace();
+		} catch (SsException e) {
 			e.printStackTrace();
 		}
 	}
