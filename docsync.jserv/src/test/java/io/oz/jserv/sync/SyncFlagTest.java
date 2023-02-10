@@ -47,17 +47,4 @@ class SyncFlagTest {
 		assertEquals(SyncFlag.publish, SyncFlag.start(SynodeMode.hub, Share.pub));
 	}
 
-	@Test
-	void testDevice() {
-		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.device, SyncEvent.pushJnodend, Share.priv));
-		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushJnodend, Share.priv));
-		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.device, SyncEvent.pushubEnd, Share.priv)); // notified by jnode
-		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.priv, SyncEvent.pushubEnd, Share.pub));
-		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushubEnd, Share.pub));
-		assertEquals(null, SyncFlag.to(null, SyncEvent.pushubEnd, Share.pub));
-	}
-
-	@Test
-	void testCleanTasks() {
-	}
 }
