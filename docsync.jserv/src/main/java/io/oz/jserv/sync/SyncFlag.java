@@ -10,7 +10,8 @@ import io.odysz.semantics.x.SemanticException;
  *
  */
 public final class SyncFlag extends Anson {
-	/** kept as private file ('🔒') at private node. */
+	/** kept as private file ('🔒') at private node.
+	 * TODO rename as jnode */
 	public static final String priv = "🔒";
 
 	/** to be pushed (shared) to hub ('⇈')
@@ -20,7 +21,10 @@ public final class SyncFlag extends Anson {
 	 * It's complicate but nothing about FSM.</p> */
 	public static final String pushing = "⇈";
 
-	/** synchronized (shared) with hub ('🌎') */
+	/**
+	 * synchronized (shared) with hub ('🌎')
+	 * @deprecated At positive-sync branch, now sync-state is orthogonal to sharing privilege.
+	 * */
 	public static final String publish = "🌎";
 	/**created at cloud hub ('✩') by both client and jnode pushing, */
 	public static final String hub = "✩";
@@ -42,6 +46,10 @@ public final class SyncFlag extends Anson {
 	/** This state can not present in database */ 
 	public static final String end = "";
 	
+	public static enum SyncAction {
+		
+	}
+	
 	public static enum SyncEvent {
 		create,
 		/** Start pushing by a jnode or a device. */
@@ -54,7 +62,9 @@ public final class SyncFlag extends Anson {
 		jnodePull,
 		/** device pulling finished */
 		devPull,
-		/** published at hub */
+		/** published at hub
+		 * @deprecated
+		 * */
 		publish,
 		/**@deprecated deleting a doc worldwidely */
 		deleting,
@@ -64,6 +74,7 @@ public final class SyncFlag extends Anson {
 	};
 	
 	/**
+	 * @deprecated at branch positive-sync, this method is replaced by SyncState#to() 
 	 * @param now current state (SyncFlag constants)
 	 * @param e
 	 * @param share either {@link Share#pub} or {@link Share#priv}.
