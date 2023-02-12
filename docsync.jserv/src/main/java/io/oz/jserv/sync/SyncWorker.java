@@ -11,7 +11,6 @@ import java.util.ArrayList;
 
 import org.xml.sax.SAXException;
 
-import io.odysz.anson.AnsonResultset;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
