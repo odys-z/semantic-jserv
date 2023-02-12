@@ -40,6 +40,10 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 
 		} catch (SemanticException | SAXException | IOException | SQLException | AnsonException | SsException e) {
 			e.printStackTrace();
+		} catch (AnsonException e) {
+			e.printStackTrace();
+		} catch (SsException e) {
+			e.printStackTrace();
 		}
 	}
 
