@@ -16,18 +16,18 @@ import io.oz.jserv.sync.SyncFlag.SyncEvent;
 class SyncFlagTest {
 
 	@Test
-	void testTo() {
-		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.priv, SyncEvent.pushEnd, Share.priv));
-		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushEnd, Share.priv));
-		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.priv, SyncEvent.pushEnd, Share.pub));
-		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushEnd, Share.pub));
-		assertEquals(null, SyncFlag.to(null, SyncEvent.pushEnd, Share.pub));
+	void testJnode() {
+		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.priv, SyncEvent.pushubEnd, Share.priv));
+		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushubEnd, Share.priv));
+		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.priv, SyncEvent.pushubEnd, Share.pub));
+		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushubEnd, Share.pub));
+		assertEquals(null, SyncFlag.to(null, SyncEvent.pushubEnd, Share.pub));
 		
-		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.publish, SyncEvent.pull, Share.pub));
-		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.publish, SyncEvent.pull, Share.priv)); // won't happen
+		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.publish, SyncEvent.jnodePull, Share.pub));
+		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.publish, SyncEvent.jnodePull, Share.priv)); // won't happen
 
-		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.hub, SyncEvent.pull, Share.pub)); // won't happen
-		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.hub, SyncEvent.pull, Share.priv));
+		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.hub, SyncEvent.jnodePull, Share.pub)); // won't happen
+		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.hub, SyncEvent.jnodePull, Share.priv));
 
 		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.hub, SyncEvent.publish, null));
 		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.publish, SyncEvent.hide, null));

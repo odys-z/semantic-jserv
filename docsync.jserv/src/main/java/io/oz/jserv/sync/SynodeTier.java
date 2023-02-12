@@ -101,7 +101,7 @@ public class SynodeTier extends Synclientier {
 							throws IOException, AnsonException, TransException {
 						String sync0 = doc.syncFlag;
 						String share = doc.shareflag;
-						String f = SyncFlag.to(sync0, SyncEvent.pushEnd, share);
+						String f = SyncFlag.to(sync0, SyncEvent.pushubEnd, share);
 						try {
 							setLocalSync(localSt, connPriv, meta, doc, f, robot);
 						} catch (SQLException e) {
