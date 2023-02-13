@@ -161,7 +161,7 @@ public class SyncWorker implements Runnable {
 	 * @return this
 	 */
 	public SyncWorker push() {
-		if (mode == SynodeMode.main || mode == SynodeMode.priv || mode == SynodeMode.device) {
+		if (mode == SynodeMode.main || mode == SynodeMode.bridge || mode == SynodeMode.device) {
 			try {
 				// find local records with shareflag = pub
 				AnResultset rs = ((AnResultset) localSt

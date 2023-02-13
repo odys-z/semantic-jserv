@@ -1,6 +1,7 @@
 package io.oz.jserv.sync;
 
-import static io.odysz.common.LangExt.*;
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,11 +38,11 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
@@ -50,7 +51,7 @@ import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
 /**
- * Doc synchronizing API for both jserv node and java client.
+ * Doc synchronizing API for both jserv node and device client.
  * 
  * @author odys-z@github.com
  *
@@ -136,10 +137,10 @@ public class Synclientier extends Semantier {
 	public Synclientier onLogin(SessionClient client) {
 		SessionInf ssinf = client.ssInfo();
 		try {
-			robot = new SyncRobot(ssinf.uid(), ssinf.device)
+			robot = new SyncRobot(ssinf.uid())
 					.device(ssinf.device);
 			tempath = FilenameUtils.concat(tempath,
-					String.format("io.oz.sync.%s.%s", tempath, SynodeMode.priv, ssinf.uid()));
+					String.format("io.oz.sync.%s.%s", ssinf.device, ssinf.uid()));
 			
 			new File(tempath).mkdirs(); 
 			
