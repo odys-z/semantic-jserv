@@ -106,7 +106,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			metas = new HashMap<String, TableMeta>();
 			synodesMeta = new SynodeMeta();
 
-			anonymous = new SyncRobot("Robot Syncer", "");
+			anonymous = new SyncRobot("Robot Syncer");
 			
 			verbose = Configs.getBoolean("docsync.debug");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
@@ -264,7 +264,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			if (Docsyncer.mainStorage.equals(cfg))
 				mode = SynodeMode.main;
 			else if (Docsyncer.privateStorage.equals(cfg))
-				mode = SynodeMode.priv;
+				mode = SynodeMode.bridge;
 			else mode = SynodeMode.device;
 		
 			schedualed = scheduler.scheduleAtFixedRate(new SyncWorker(

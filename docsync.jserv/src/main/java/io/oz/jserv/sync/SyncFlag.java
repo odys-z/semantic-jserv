@@ -58,10 +58,8 @@ public final class SyncFlag extends Anson {
 		pushubEnd,
 		/** A device pushing to jnode ended. */ 
 		pushJnodend,
-		/** A jnode pulling finished */
-		jnodePull,
-		/** device pulling finished */
-		devPull,
+		/** pulling finished */
+		pull,
 		/** published at hub
 		 * @deprecated
 		 * */
@@ -92,7 +90,7 @@ public final class SyncFlag extends Anson {
 				return close;
 			else if (e == SyncEvent.hide)
 				return hub;
-			else if (e == SyncEvent.jnodePull)
+			else if (e == SyncEvent.pull)
 				return priv;
 		}
 		else if (hub.equals(now)) {
@@ -100,7 +98,7 @@ public final class SyncFlag extends Anson {
 				return close;
 			else if (e == SyncEvent.publish)
 				return publish;
-			else if (e == SyncEvent.jnodePull)
+			else if (e == SyncEvent.pull)
 				return priv;
 		}
 		return now;
@@ -109,7 +107,7 @@ public final class SyncFlag extends Anson {
 	public static String start(SynodeMode mode, String share) throws SemanticException {
 			if (SynodeMode.hub == mode)
 				return Share.isPub(share) ? publish : hub;
-			else if (SynodeMode.priv == mode || SynodeMode.main == mode)
+			else if (SynodeMode.bridge == mode || SynodeMode.main == mode)
 				return priv;
 			throw new SemanticException("Unhandled state starting: mode %s : share %s.", mode, share);
 	}

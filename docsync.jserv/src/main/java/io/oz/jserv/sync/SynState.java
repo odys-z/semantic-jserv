@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.odysz.anson.Anson;
+import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.sync.SyncFlag.SyncEvent;
 
 import static io.oz.jserv.sync.SyncFlag.*;
+import static io.odysz.common.LangExt.isNull;
 
 public class SynState extends Anson {
 	
@@ -16,27 +18,44 @@ public class SynState extends Anson {
 
 	private String now;
 	
-	public SynState (String start) {
+	private SynodeMode me;
+	
+	public SynState (SynodeMode mode, String start) {
 		this.now = start;
+		this.me = mode;
 		firings = new ArrayList<SyncEvent>(1);
 		triggerings = new ArrayList<SyncAction>(1);
 	}
 	
-	SynState to(SyncEvent e) {
+	SynState to(SyncEvent e) throws SemanticException {
 		clear();
 		
-		if (priv.equals(now) || pushing.equals(now)) {
+		if (priv.equals(now) || (pushing.equals(now) && me == SynodeMode.bridge)) {
 			if (e == SyncEvent.pushubEnd)
 				now = hub;
+			else if (e == SyncEvent.push)
+				now = pushing;
 		}
 		else if (hub.equals(now)) {
 			if (e == SyncEvent.close)
 				now = close;
-			else if (e == SyncEvent.jnodePull)
+			else if (e == SyncEvent.pull && me == SynodeMode.bridge)
 				now = priv;
 		}
-		throw new NullPointerException("TODO");
-		// return this;
+		else if (device.equals(now) || (pushing.equals(now) && me == SynodeMode.device)) {
+			if (me != SynodeMode.device)
+				throw new SemanticException("SyncState = device can only exists on a device.");
+
+			// me == device
+			if (e == SyncEvent.pushubEnd)
+				now = hub;
+			else if (e == SyncEvent.pushJnodend)
+				now = priv;
+			else if (e == SyncEvent.push)
+				now = pushing;
+		}
+
+		return this;
 	}
 	
 	SynState clear() {
