@@ -38,11 +38,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
 			Docsyncer.addSyncTable(new JUser.JUserMeta(Connects.defltConn()));
 
-		} catch (SemanticException | SAXException | IOException | SQLException e) {
-			e.printStackTrace();
-		} catch (AnsonException e) {
-			e.printStackTrace();
-		} catch (SsException e) {
+		} catch (SemanticException | SAXException | IOException | SQLException | AnsonException | SsException e) {
 			e.printStackTrace();
 		}
 	}
