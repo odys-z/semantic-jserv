@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 import static io.odysz.common.LangExt.*;
 
@@ -34,7 +34,7 @@ import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
+import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 
 public class SynodeTier extends Synclientier {
 

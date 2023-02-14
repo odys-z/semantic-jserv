@@ -1,14 +1,14 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import io.odysz.anson.Anson;
 import io.odysz.semantics.x.SemanticException;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
+import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 
-import static io.oz.jserv.sync.SyncFlag.*;
 import static io.odysz.common.LangExt.isNull;
+import static io.oz.jserv.docsync.SyncFlag.*;
 
 public class SynState extends Anson {
 	

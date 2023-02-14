@@ -44,7 +44,7 @@ import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
-import io.oz.jserv.sync.Docsyncer;
+import io.oz.jserv.docsync.Docsyncer;
 
 /**
  * <h5>The album tier</h5> Although this tie is using the pattern of

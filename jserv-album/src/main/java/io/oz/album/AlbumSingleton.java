@@ -17,7 +17,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.tier.PhotoMeta;
-import io.oz.jserv.sync.Docsyncer;
+import io.oz.jserv.docsync.Docsyncer;
 
 @WebListener
 public class AlbumSingleton extends JSingleton implements ServletContextListener {

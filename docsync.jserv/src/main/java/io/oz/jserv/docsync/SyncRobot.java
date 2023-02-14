@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 
 import java.io.File;
@@ -25,6 +25,7 @@ import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.dbsync.DBStamper;
 
 /**
  * A robot is only used for test.
@@ -97,7 +98,8 @@ public class SyncRobot extends SemanticObject implements IUser {
 		return this;
 	}
 
-	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
+	@Override
+	public ArrayList<String> dbLog(ArrayList<String> sqls) throws TransException { return null; }
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 

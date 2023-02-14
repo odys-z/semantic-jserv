@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.isblank;
@@ -54,8 +54,13 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.sync.Dochain.OnChainOk;
+import io.oz.jserv.docsync.Dochain.OnChainOk;
 
+/**
+ * @deprecated replaced by {@link Synode}
+ * @author odys-z@github.com
+ *
+ */
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
 public class Docsyncer extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
