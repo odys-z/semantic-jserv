@@ -207,7 +207,7 @@ public class SyncWorker implements Runnable {
 			if (!lck.isLocked()) {
 				lck.lock();
 				try {
-					DocsResp rsp= synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, synid);
+					DocsResp rsp = synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, synid);
 					reslt.addAll(pullDocs(rsp));
 				} catch (SQLException | TransException | AnsonException | IOException e) {
 					e.printStackTrace();
@@ -233,7 +233,7 @@ public class SyncWorker implements Runnable {
 				e.printStackTrace();
 				return null;
 			}
-		else synorgs();
+		else return null; // TODO synorgs();
 	}
 
 	/**
