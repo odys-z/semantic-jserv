@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 import io.odysz.anson.Anson;
 import io.odysz.semantic.ext.DocTableMeta.Share;

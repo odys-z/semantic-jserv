@@ -1,11 +1,14 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
 import io.odysz.semantics.x.SemanticException;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
+import io.oz.jserv.docsync.SynState;
+import io.oz.jserv.docsync.SyncFlag;
+import io.oz.jserv.docsync.SynodeMode;
+import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 
 /**
  * <img src='../../../../../../main/java/io/oz/jserv/sync/sync-states.jpg'/>

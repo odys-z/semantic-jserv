@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 /**
  * jserv-node states
