@@ -81,9 +81,9 @@ from a_synodes n where org = 'f/zsu';
 
 drop table if exists syn_stamp;
 create table syn_stamp 
--- table-wise last updating stamps by a remote node
+-- table-wise last updating stamps by remote nodes
 -- 'D' is actually triggered a cleaning task; 'D' -> 'C'; 
--- for 'U', only h_photos.sync & h_photos.clientpath is handled
+-- for 'U', uri is not updated
 (
 	tabl    varchar2(64) NOT NULL, -- e.g. 'h_photos'
 	synode  varchar2(12) NOT NULL, -- fk-on-del
@@ -95,8 +95,8 @@ create table syn_stamp
 drop table if exists syn_clean;
 create table syn_clean (
 	tabl       varchar2(64),          -- null for 'h_photos'
-	synode     varchar2(12) NOT NULL, -- fk-on-del, synode id of creating device
+	synode     varchar2(12) NOT NULL, -- fk-on-del, synode id device to finish cleaning task
 	clientpath text         NOT NULL,
-	flag       char(1)      NOT NULL
+	flag       char(1)      NOT NULL  -- 'D' deleting, 'C' close (not exists),'R' rejected
 );
 
