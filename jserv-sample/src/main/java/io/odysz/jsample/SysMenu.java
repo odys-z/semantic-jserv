@@ -21,6 +21,7 @@ import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
 public class SysMenu extends SemanticTree {
@@ -50,7 +51,7 @@ public class SysMenu extends SemanticTree {
 					sk == null ? defltSk : sk, 0, -1, "admin");
 
 			resp.getWriter().write(Html.listAnson(lst));
-		} catch (SemanticException e) {
+		} catch (TransException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -88,6 +89,8 @@ public class SysMenu extends SemanticTree {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (ClassCastException e) {
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
+		} catch (TransException e) {
+			throw new SemanticException(e.getMessage());
 		} finally {
 			resp.flushBuffer();
 		}
