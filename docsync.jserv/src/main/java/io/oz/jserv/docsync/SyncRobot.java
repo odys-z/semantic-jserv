@@ -25,7 +25,6 @@ import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.dbsync.DBStamper;
 
 /**
  * A robot is only used for test.
@@ -84,8 +83,8 @@ public class SyncRobot extends SemanticObject implements IUser {
 	}
 
 	/** User table's meta, not doc table's meta.
-	 * @see io.odysz.semantics.IUser#meta()
 	 */
+	@Override
 	public TableMeta meta() {
 		return new RobotMeta("a_users");
 	}
