@@ -30,7 +30,7 @@ public class SandRobot implements IUser {
 
 	public static class SandRobotMeta extends JUserMeta {
 		public SandRobotMeta(String tbl, String... conn) {
-			super(tbl, conn);
+			super(conn);
 
 			this.tbl = "a_users";
 			pk = "userId";
