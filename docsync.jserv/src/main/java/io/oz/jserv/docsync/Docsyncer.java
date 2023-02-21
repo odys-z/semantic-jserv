@@ -61,7 +61,7 @@ import io.oz.jserv.docsync.Dochain.OnChainOk;
  * @author odys-z@github.com
  *
  */
-@WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
+@WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.del" })
 public class Docsyncer extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 	
@@ -75,14 +75,16 @@ public class Docsyncer extends ServPort<DocsReq> {
 	static HashMap<String, TableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
 
+	/** xml configure key: sync-mode */
 	public static final String keyMode = "sync-mode";
+	/** xml configure key: sync-pooling interval */
 	public static final String keyInterval = "sync-interval-min";
+	/** xml configure key: sync-db connection id */
 	public static final String keySynconn = "sync-conn-id";
 
-	/** TODO replace with SyncMode.pub */
 	public static final String cloudHub = "hub";
-	public static final String mainStorage = "main";
-	public static final String privateStorage = "private";
+	public static final String mainode = "main";
+	public static final String privnode = "private";
 
 	/**
 	 * FIXME shouldn't be a map of [tabl, ScheduledFeature]?
@@ -266,9 +268,9 @@ public class Docsyncer extends ServPort<DocsReq> {
 				Utils.logi("[ServFlags.file] sync worker disabled for this node is working in cloud hub mode.");
 		}
 		else {
-			if (Docsyncer.mainStorage.equals(cfg))
+			if (Docsyncer.mainode.equals(cfg))
 				mode = SynodeMode.main;
-			else if (Docsyncer.privateStorage.equals(cfg))
+			else if (Docsyncer.privnode.equals(cfg))
 				mode = SynodeMode.bridge;
 			else mode = SynodeMode.device;
 		
