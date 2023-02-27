@@ -43,7 +43,7 @@ public class SandRobot implements IUser {
 	}
 
 	public TableMeta meta() {
-		return new SandRobotMeta("");
+		return new SandRobotMeta(""); // no user table as this test is only for sessionless
 	}
 
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
