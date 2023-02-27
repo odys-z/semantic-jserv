@@ -42,7 +42,7 @@
 			to update immediately. -->
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>[1.4.12,)</version>
+	    <version>[1.4.16,)</version>
    	</dependency>
 
    	<dependency>
@@ -57,7 +57,12 @@
 	    <artifactId>sqlite-jdbc</artifactId>
 	    <version>3.25.2</version>
 	</dependency>
-
+	<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+	<dependency>
+		<groupId>mysql</groupId>
+		<artifactId>mysql-connector-java</artifactId>
+		<version>[8.0.25,)</version>
+	</dependency>
 	<!-- ojdbc7.jar
 		Since oracle JDBC driver package needing license agreement, you need install ojdbc.jar like this:
 		mvn install:install-file -Dfile=lib/ojdbc7.jar -DgroupId=com.oracle -DartifactId=ojdbc14 -Dversion=12.1.0.1 -Dpackaging=jar
