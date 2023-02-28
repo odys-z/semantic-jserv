@@ -40,7 +40,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>[1.4.9,)</version>
+	    <version>1.4.17</version>
    	</dependency>
 
 	<dependency>
@@ -80,7 +80,6 @@
     		<configuration>
     			<source>1.8</source>
     			<target>1.8</target>
-    			<release>1.8</release>
     		</configuration>
     	</plugin>
 
