@@ -26,7 +26,7 @@ import io.odysz.transact.x.TransException;
 @WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
 public class SysMenu extends SemanticTree {
 	private static final long serialVersionUID = 1L;
-	
+
 	@Override
 	public void init() throws ServletException {
 		super.init();
@@ -79,7 +79,7 @@ public class SysMenu extends SemanticTree {
 
 			List<?> lst = DatasetCfg.loadStree(Connects.defltConn(),
 					sk == null ? defltSk : sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-			
+
 			write(resp, ok(lst.size(), lst));
 		} catch (SQLException e) {
 			if (SampleFlags.menu)
