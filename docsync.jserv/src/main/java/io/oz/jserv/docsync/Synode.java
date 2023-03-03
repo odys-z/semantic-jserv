@@ -98,6 +98,8 @@ public class Synode extends ServPort<DocsReq> {
 			e.printStackTrace();
 		}
 	}
+
+	OnChainOk onBlocksFinish;
 	
 	public Synode() {
 		super(Port.docsync);
@@ -206,19 +208,19 @@ public class Synode extends ServPort<DocsReq> {
 					throw new SemanticException("To push/update a doc via Docsyncer, docTable name can not be null.");
 
 				if (A.records.equals(a))
-					rsp = queryPathsPage(jreq, usr);
+					; // rsp = queryPathsPage(jreq, usr);
 				else if (A.getstamp.equals(a))
-					rsp = getstamp(jreq, usr);
+					; // rsp = getstamp(jreq, usr);
 				else if (A.setstamp.equals(a))
-					rsp = setstamp(jreq, usr);
+					; // rsp = setstamp(jreq, usr);
 				else if (A.orgNodes.equals(a))
-					rsp = queryNodes(jreq, usr);
+					; // rsp = queryNodes(jreq, usr);
 				else if (A.syncdocs.equals(a))
-					rsp = querySynodeTasks(jreq, usr);
+					; // rsp = querySynodeTasks(jreq, usr);
 				else if (A.del.equals(a))
-					rsp = delDocRec(jmsg.body(0), usr, verbose);
+					; // rsp = delDocRec(jmsg.body(0), usr, verbose);
 				else if (A.synclosePush.equals(a))
-					rsp = synclosePush(jreq, usr);
+					; // rsp = synclosePush(jreq, usr);
 				else if (A.synclosePull.equals(a))
 					; // for what? rsp = synclosePull(jreq, usr);
 				else {

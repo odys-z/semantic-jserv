@@ -19,6 +19,7 @@ public class UserstReq extends UserReq {
 		public static final String rec = "rec";
 
 		public static final String update = "u";
+		public static final String avatar = "u/avatar";
 		public static final String insert = "c";
 		public static final String del = "d";
 	}
@@ -27,6 +28,7 @@ public class UserstReq extends UserReq {
 	PageInf page;
 	/// record field?
 	String userId;
+	public String userId() { return userId; }
 	String userName;
 	public String userName() { return userName; };
 	String orgId;
@@ -37,9 +39,10 @@ public class UserstReq extends UserReq {
 	public boolean hasTodos() { return hasTodos; }
 	
 	/// use case: insert/update record
-	HashMap<String, Object> record;
-	ArrayList<Relations> relations;
+	public HashMap<String, Object> record;
+	public ArrayList<Relations> relations;
 	String pk;
+	public String pk() { return pk; }
 
 	/// use case: d
 	/**
