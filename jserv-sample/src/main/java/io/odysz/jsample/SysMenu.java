@@ -90,7 +90,7 @@ public class SysMenu extends SemanticTree {
 		} catch (ClassCastException e) {
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
 		} catch (TransException e) {
-			throw new SemanticException(e.getMessage());
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
