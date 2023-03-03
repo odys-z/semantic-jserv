@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 import static io.odysz.common.LangExt.isblank;
 
@@ -160,7 +160,7 @@ public class SyncWorker implements Runnable {
 	 * @return this
 	 */
 	public SyncWorker push() {
-		if (mode == SynodeMode.main || mode == SynodeMode.priv || mode == SynodeMode.device) {
+		if (mode == SynodeMode.main || mode == SynodeMode.bridge || mode == SynodeMode.device) {
 			try {
 				// find local records with shareflag = pub
 				AnResultset rs = ((AnResultset) localSt
@@ -207,7 +207,7 @@ public class SyncWorker implements Runnable {
 			if (!lck.isLocked()) {
 				lck.lock();
 				try {
-					DocsResp rsp= synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, synid);
+					DocsResp rsp = synctier.queryTasks(localMeta.tbl, synctier.robot.orgId, synid);
 					reslt.addAll(pullDocs(rsp));
 				} catch (SQLException | TransException | AnsonException | IOException e) {
 					e.printStackTrace();
@@ -233,7 +233,7 @@ public class SyncWorker implements Runnable {
 				e.printStackTrace();
 				return null;
 			}
-		else synorgs();
+		else return null; // TODO synorgs();
 	}
 
 	/**
@@ -302,7 +302,8 @@ public class SyncWorker implements Runnable {
 	 * @throws SQLException
 	 * @throws IOException 
 	 */
-	public SyncWorker verifyDocs(ArrayList<DocsResp> list) throws TransException, SQLException, IOException {
+	public SyncWorker verifyDocs(ArrayList<DocsResp> list)
+			throws TransException, SQLException, IOException {
 		for (DocsResp r : list) {
 			AnResultset rs = (AnResultset) localSt
 				.select(localMeta.tbl, "t")

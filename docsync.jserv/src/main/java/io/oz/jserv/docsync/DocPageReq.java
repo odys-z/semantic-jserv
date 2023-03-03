@@ -1,3 +1,4 @@
+package io.oz.jserv.docsync;
 //package io.oz.jserv.sync;
 //
 //import io.odysz.common.LangExt;

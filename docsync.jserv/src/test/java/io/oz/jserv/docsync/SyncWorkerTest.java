@@ -1,6 +1,6 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
-import static io.oz.jserv.sync.ZSUNodes.*;
+import static io.oz.jserv.docsync.ZSUNodes.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -46,10 +46,17 @@ import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.Photo;
 import io.oz.album.tier.PhotoMeta;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
-import io.oz.jserv.sync.ZSUNodes.AnDevice;
-import io.oz.jserv.sync.ZSUNodes.Kharkiv;
-import io.oz.jserv.sync.ZSUNodes.Kyiv;
+import io.oz.jserv.docsync.Docsyncer;
+import io.oz.jserv.docsync.SyncFlag;
+import io.oz.jserv.docsync.SyncRobot;
+import io.oz.jserv.docsync.SyncWorker;
+import io.oz.jserv.docsync.Synclientier;
+import io.oz.jserv.docsync.SynodeMode;
+import io.oz.jserv.docsync.SynodeTier;
+import io.oz.jserv.docsync.SyncFlag.SyncEvent;
+import io.oz.jserv.docsync.ZSUNodes.AnDevice;
+import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
+import io.oz.jserv.docsync.ZSUNodes.Kyiv;
 
 class SyncWorkerTest {
 
