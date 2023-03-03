@@ -10,6 +10,8 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.transact.x.TransException;
 
+import static io.odysz.common.LangExt.isNull;;
+
 /**This robot is only used for test.
  * If you are implementin a servlet without login, subclassing a {@link io.odysz.semantic.jserv.jsession.JUser JUser} instead.
  * @author odys-z@github.com
@@ -30,7 +32,7 @@ public class SandRobot implements IUser {
 
 	public static class SandRobotMeta extends JUserMeta {
 		public SandRobotMeta(String tbl, String... conn) {
-			super(tbl, conn);
+			super(tbl, isNull(conn) ? null : conn[0]);
 
 			this.tbl = "a_users";
 			pk = "userId";
@@ -41,7 +43,7 @@ public class SandRobot implements IUser {
 	}
 
 	public TableMeta meta() {
-		return new SandRobotMeta("");
+		return new SandRobotMeta(""); // no user table as this test is only for sessionless
 	}
 
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
