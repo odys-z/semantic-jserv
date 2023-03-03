@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 /**
  * jserv-node states
@@ -8,8 +8,8 @@ public enum SynodeMode {
 	hub,
 	/** jserv node mode: private main, equivalent of {@link Docsyncer#mainStorage} */
 	main,
-	/** jserv node mode: private , equivalent of {@link Docsyncer#privateStorage}*/
-	priv,
+	/** jserv node mode: bridge , equivalent of {@link Docsyncer#privateStorage}*/
+	bridge,
 	/** jserv client device */
 	device
 }

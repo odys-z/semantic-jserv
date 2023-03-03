@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 
 import java.io.File;
@@ -56,9 +56,8 @@ public class SyncRobot extends SemanticObject implements IUser {
 		return this;
 	}
 
-	public SyncRobot(String userid, String orgId) {
+	public SyncRobot(String userid) {
 		this.userId = userid;
-		this.orgId = orgId;
 	}
 
 	/**
@@ -84,8 +83,8 @@ public class SyncRobot extends SemanticObject implements IUser {
 	}
 
 	/** User table's meta, not doc table's meta.
-	 * @see io.odysz.semantics.IUser#meta()
 	 */
+	@Override
 	public TableMeta meta() {
 		return new RobotMeta("a_users");
 	}
@@ -98,7 +97,8 @@ public class SyncRobot extends SemanticObject implements IUser {
 		return this;
 	}
 
-	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
+	@Override
+	public ArrayList<String> dbLog(ArrayList<String> sqls) throws TransException { return null; }
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 
@@ -166,10 +166,6 @@ public class SyncRobot extends SemanticObject implements IUser {
 	public SessionInf sessionInf() {
 		return new SessionInf().device(deviceId);
 	}
-
-//	public String  device() {
-//		return deviceId;
-//	}
 
 	public SyncRobot device(String dev) {
 		deviceId = dev;

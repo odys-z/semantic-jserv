@@ -26,7 +26,7 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.PhotoMeta;
-import io.oz.jserv.sync.SyncRobot;
+import io.oz.jserv.docsync.SyncRobot;
 
 /**A robot used session-less service.
  * 
@@ -43,7 +43,7 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	RobotMeta userMeta;
 
 	public PhotoRobot(String userid) {
-		super(userid, null);
+		super(userid, null, "Photo Robot");
 		userMeta = (RobotMeta) meta();
 	}
 
@@ -54,7 +54,7 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	 * @param userName
 	 */
 	public PhotoRobot(String userid, String pswd, String userName) {
-		super(userid, null);
+		super(userid, null, "Photo Robot");
 		userMeta = (RobotMeta) meta();
 	}
 	

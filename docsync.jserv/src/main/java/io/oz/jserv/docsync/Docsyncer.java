@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.isblank;
@@ -54,9 +54,14 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.sync.Dochain.OnChainOk;
+import io.oz.jserv.docsync.Dochain.OnChainOk;
 
-@WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.sync" })
+/**
+ * @deprecated replaced by {@link Synode}
+ * @author odys-z@github.com
+ *
+ */
+@WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.del" })
 public class Docsyncer extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 	
@@ -70,14 +75,16 @@ public class Docsyncer extends ServPort<DocsReq> {
 	static HashMap<String, TableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
 
+	/** xml configure key: sync-mode */
 	public static final String keyMode = "sync-mode";
+	/** xml configure key: sync-pooling interval */
 	public static final String keyInterval = "sync-interval-min";
+	/** xml configure key: sync-db connection id */
 	public static final String keySynconn = "sync-conn-id";
 
-	/** TODO replace with SyncMode.pub */
 	public static final String cloudHub = "hub";
-	public static final String mainStorage = "main";
-	public static final String privateStorage = "private";
+	public static final String mainode = "main";
+	public static final String privnode = "private";
 
 	/**
 	 * FIXME shouldn't be a map of [tabl, ScheduledFeature]?
@@ -106,7 +113,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			metas = new HashMap<String, TableMeta>();
 			synodesMeta = new SynodeMeta();
 
-			anonymous = new SyncRobot("Robot Syncer", "");
+			anonymous = new SyncRobot("Robot Syncer");
 			
 			verbose = Configs.getBoolean("docsync.debug");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
@@ -261,10 +268,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 				Utils.logi("[ServFlags.file] sync worker disabled for this node is working in cloud hub mode.");
 		}
 		else {
-			if (Docsyncer.mainStorage.equals(cfg))
+			if (Docsyncer.mainode.equals(cfg))
 				mode = SynodeMode.main;
-			else if (Docsyncer.privateStorage.equals(cfg))
-				mode = SynodeMode.priv;
+			else if (Docsyncer.privnode.equals(cfg))
+				mode = SynodeMode.bridge;
 			else mode = SynodeMode.device;
 		
 			schedualed = scheduler.scheduleAtFixedRate(new SyncWorker(
