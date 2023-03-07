@@ -98,9 +98,9 @@ create table syn_stamp
 
 drop table if exists syn_clean;
 create table syn_clean (
-	tabl       varchar2(64),          -- null for 'h_photos'
+	tabl       varchar2(64) NOT NULL, -- e.g. 'h_photos'
 	synode     varchar2(12) NOT NULL, -- fk-on-del, synode id device to finish cleaning task
-	clientpath text         NOT NULL,
-	flag       char(1)      NOT NULL  -- 'D' deleting, 'C' close (not exists),'R' rejected
+	clientpath text         NOT NULL, -- for h_photos.fullpath, or composed PK for other logic
+	flag       char(1)      NOT NULL  -- 'D' deleting, 'C' close (not exists),'R' rejected by device owner
 );
 

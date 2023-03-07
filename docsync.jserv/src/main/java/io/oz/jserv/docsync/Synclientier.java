@@ -67,6 +67,13 @@ public class Synclientier extends Semantier {
 	protected String tempath;
 
 	int blocksize = 3 * 1024 * 1024;
+
+	/**
+	 * Change default block size for performance. Default is 3 Mib.
+	 * 
+	 * @param s must be multiple of 12
+	 * @throws SemanticException
+	 */
 	public void bloksize(int s) throws SemanticException {
 		if (s % 12 != 0)
 			throw new SemanticException("Block size must be multiple of 12.");
