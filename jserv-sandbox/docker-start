@@ -1,0 +1,16 @@
+echo "Ever finished: 'docker build -t jsandbox .' ?"
+echo "remove and re-create volume jsandbox.sqlit? [n]"
+read -n 1 -p "y/n:" isdel
+if [ "$isdel" = 'y' ]
+then
+    docker volume rm jsandbox.sqlite
+    docker volume create jsandbox.sqlite
+
+    # https://stackoverflow.com/a/64418064else
+    echo "If running on windows (Engine v19.03), this won't work. Please run:"
+	echo "cp -r volume/* //wsl$/docker-desktop-data/version-pack-data/community/docker/volumes/jsandbox.sqlite/_data"
+    sudo cp -r volume/* /var/lib/docker/volumes/jsandbox.sqlite/_data
+else
+    echo "Using existing volume without updating volume data."
+fi
+docker run --name jsandbox -v jsandbox.sqlite:/var/local/volume -p 8080:8080 -d --rm odysz/jserv-sandbox
