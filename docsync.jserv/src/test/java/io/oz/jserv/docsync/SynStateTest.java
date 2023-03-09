@@ -11,7 +11,7 @@ import io.oz.jserv.docsync.SynodeMode;
 import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 
 /**
- * <img src='../../../../../../main/java/io/oz/jserv/sync/sync-states.jpg'/>
+ * <img src='../../../../../../main/java/io/oz/jserv/docsync/sync-states.jpg'/>
  * @author odys-z@github.com
  */
 class SynStateTest {
