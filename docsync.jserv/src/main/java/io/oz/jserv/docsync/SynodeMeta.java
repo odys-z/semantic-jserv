@@ -3,7 +3,10 @@ package io.oz.jserv.docsync;
 import io.odysz.semantics.meta.TableMeta;
 
 /**
- * <pre>drop table if exists a_synodes;
+ * a_synodes table meta
+ * 
+ * <pre>DDL
+drop table if exists a_synodes;
 CREATE TABLE a_synodes (
 	synid   varchar2(64) NOT NULL,-- user input
 	org     varchar2(12) NOT NULL,
