@@ -112,4 +112,4 @@ create table syn_clean (
 	synodee    varchar2(12) not null, -- fk-on-del, synode id device to finish cleaning task
 	flag       char(1)      not null, -- 'D' deleting, 'C' close (not exists),'R' rejected by device owner
 	syncstamp  datetime     default CURRENT_TIMESTAMP not null
-);
+);	
