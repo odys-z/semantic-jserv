@@ -12,9 +12,10 @@ public class DBSyncReq extends AnsonBody {
 
 	}
 
+	public String tabl;
+
 	protected DBSyncReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
-		// TODO Auto-generated constructor stub
 	}
 
 }
