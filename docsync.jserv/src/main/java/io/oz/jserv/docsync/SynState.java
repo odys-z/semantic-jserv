@@ -1,6 +1,7 @@
 package io.oz.jserv.docsync;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import io.odysz.anson.Anson;
@@ -19,6 +20,8 @@ public class SynState extends Anson {
 	private String now;
 	
 	private SynodeMode me;
+
+	private Date stamp;
 	
 	public SynState (SynodeMode mode, String start) {
 		this.now = start;
@@ -66,6 +69,16 @@ public class SynState extends Anson {
 
 	public SynState state(String next) {
 		now = next;
+		return this;
+	}
+
+	public boolean olderThan(Date date) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public SynState stamp(Date date) {
+		this.stamp = date;
 		return this;
 	}
 

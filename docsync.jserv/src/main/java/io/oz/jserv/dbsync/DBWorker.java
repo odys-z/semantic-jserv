@@ -1,11 +1,26 @@
 package io.oz.jserv.dbsync;
 
+import java.io.IOException;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.HashMap;
 
+import io.odysz.anson.x.AnsonException;
+import io.odysz.common.Utils;
+import io.odysz.jclient.Clients;
+import io.odysz.jclient.SessionClient;
+import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.PageInf;
+import io.odysz.transact.x.TransException;
+import io.oz.jserv.docsync.SynState;
+import io.oz.jserv.docsync.SyncFlag;
+import io.oz.jserv.docsync.SyncRobot;
 import io.oz.jserv.docsync.SynodeMode;
 
 /**
@@ -15,6 +30,9 @@ import io.oz.jserv.docsync.SynodeMode;
  */
 public class DBWorker implements Runnable {
 	
+	protected ErrorCtx err;
+	protected DATranscxt localSt;
+
 	/** synode id */
 	String myId;
 
@@ -24,14 +42,20 @@ public class DBWorker implements Runnable {
 	/** volume path */
 	String volpath;
 
-	/** clean session timestamps */
-	TimeWindow window; 
+	String conn;
+
+	protected SyncRobot robot;
 
 	SynodeMode mode;
 	
 	TableMeta cleanMeta;
 
 	private HashMap<String, TableMeta> entities;
+
+	/** clean session timestamps */
+	TimeWindow window; 
+
+	SessionClient client;
 
 	public DBWorker(String synode, SynodeMode m) {
 		myId = synode;
@@ -43,14 +67,23 @@ public class DBWorker implements Runnable {
 		return this;
 	}
 	
+	public DBWorker login(String pswd)
+			throws SemanticException, AnsonException, SsException, IOException {
+		client = Clients.login(myId, pswd, myId);
+		return this;
+	}
+	
 	/**
 	 * Merge syn_clean
 	 * 
 	 * @param upperNode
-	 * @throws SemanticException
 	 * @throws SQLException 
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws TransException 
 	 */
-	public void scanvage(String upperNode) throws SemanticException, SQLException {
+	public void scanvage(String upperNode)
+			throws SQLException, AnsonException, IOException, TransException {
 		upperId = upperNode;
 		
 		// 1. Open a clean session by
@@ -69,7 +102,7 @@ public class DBWorker implements Runnable {
 		closeClean(window);
 		
 		for (String etbl : entities.keySet()) {
-			DBSyncResp rep = syncTabl(etbl);
+			syncExtabl(etbl, window);
 		}
 	}
 	
@@ -78,12 +111,32 @@ public class DBWorker implements Runnable {
 		return null;
 	}
 
-	private void meargeCleans(TimeWindow window) throws SQLException {
-		DBSyncResp rpl = null;
+	private void meargeCleans(TimeWindow window)
+			throws SQLException, SemanticException, AnsonException, IOException {
+		DBSyncResp rpl = client.commit(null, err); // A = cleans
 		AnResultset tasks = rpl.tasks().beforeFirst();
 			
 		// order by tabl, synoder, clientpath, synodee
 		while (tasks.next()) {
+			/*
+			rec.flag | rep.syn  |
+			---------+----------+---------------------------------------------
+			D/R/E    | 'synode' |   -> req.delete/reject/close (trigger -> NULL, check rep.NULL?)
+			D        | R/E      |   local rec.flag = R/E
+			D        | NULL     | # local close 
+			R        | E-dev    |   error (E can only recorded on devices)
+			---------+----------+---------------------------------------------
+			R        |(main/prv)|   User rejected and then erased at somewhere else
+			         | NULL     |   * This only happens when a device fire multiple req.erase
+			         |          | # local close
+			---------+----------+---------------------------------------------
+			R        | D            -> req.reject
+			E-dev    | D            -> req.erase (upper: D -> E, trigger -> NULL, check rep.NULL?)
+			E-dev    | R            -> req.erase (upper: R -> E, trigger -> NULL, check rep.NULL?)
+			E-dev    | E-dev
+			E-dev    | NULL       # local close 
+			NULL     | R/D          -> req.close
+			*/
 		}
 	}
 
@@ -96,9 +149,72 @@ public class DBWorker implements Runnable {
 		// TODO Auto-generated method stub
 	}
 
-	private DBSyncResp syncTabl(String etbl) {
-		// TODO Auto-generated method stub
-		return null;
+	/**
+	 * Synchronize a ext-resource table.
+	 * Records in ex-resource is pushed / pulled one by one.
+	 * @param entity
+	 * @param wind 
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SQLException 
+	 * @throws TransException 
+	 */
+	private void syncExtabl(String entity, TimeWindow wind)
+			throws AnsonException, IOException, SQLException, TransException {
+		
+		Date dbnow = localSt.now(conn);
+		
+		try {
+			if (dbnow.compareTo(wind.right()) < 0)
+				throw new SemanticException("Time difference is to large to synchronize");
+			// otherwise users won't be able to feel it
+		} catch (ParseException e) {
+			e.printStackTrace();
+			throw new SemanticException("Unable to findout time window.");
+		}
+		
+		ExtableMeta m = (ExtableMeta) entities.get(entity); 
+
+		// query 
+		DBSyncResp resp = client.commit(DBSyncReq.extabl(entity, myId, wind), null);
+		PageInf page = resp.syncPage();
+		while (page != null && page.size > 0) {
+			if (page.size < page.total)
+				Utils.warn("Synchronizing pages are more than 1. This will result in error in concurrent service.");
+			
+			AnResultset rs = resp.rs(0).beforeFirst();
+
+			while (rs.next()) {
+				SynState sync = queryLocalExtabl(m, rs, wind);
+				if (sync == null || sync.olderThan(rs.getDate(m.stamp)))
+					pullExtrec(m, rs, wind);
+				else if (sync != null) {
+					pushExtrec(m, rs, wind);
+				}
+			}
+			
+			resp = client.commit(null, null);
+			page = resp.syncPage();
+		}
+		
+	}
+
+	private SynState queryLocalExtabl(ExtableMeta m, AnResultset rs, TimeWindow wind)
+			throws SQLException, TransException {
+		AnResultset ls = ((AnResultset)localSt
+			.select(m.tbl, "l")
+			.col(m.syncFlag).col(m.clientpath).col(m.stamp)
+			.whereEq(m.synoder, rs.getString(m.synoder))
+			.whereEq(m.clientpath, rs.getString(m.clientpath))
+			.rs(localSt.instancontxt(conn, robot))
+			.rs(0))
+			.beforeFirst();
+		
+		if (ls.next())
+			return new SynState(mode, ls.getString(m.syncFlag))
+					.stamp(ls.getDate(m.stamp));
+		else	
+			return null;
 	}
 
 	@Override
