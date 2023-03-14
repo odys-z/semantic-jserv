@@ -94,22 +94,23 @@ create table syn_stamp
 -- for 'U', uri is not updated
 (
 	tabl    varchar2(64) not null, -- e.g. 'h_photos'
-	synode  varchar2(12) not null, -- fk-on-del
+	synodee varchar2(12) not null, -- fk-on-del, client id asked for sychronizing
 	crud	char(1)      not null, -- 'R' is ignored; 'D' is actually triggered a cleaning task; 'D' -> 'C'; for 'U', only h_photos.sync & h_photos.clientpath is handled
 
 	recount integer,
 	-- not correct if multiple updated and not used as Semantics.DA can't access context for commitment results.
 	-- as photos are uploaded file by file, this is probably only useful for debugging.
 
-	syncstamp datetime default CURRENT_TIMESTAMP not null
+	syncstamp  datetime default CURRENT_TIMESTAMP not null,
+	cleanstamp datetime default CURRENT_TIMESTAMP not null
 );
 
 drop table if exists syn_clean;
 create table syn_clean (
-	tabl       varchar2(64) not null, -- e.g. 'h_photos'
-	synoder    varchar2(12) not null, -- fk-on-del, synode id for resource's PK
-	clientpath text         not null, -- for h_photos.fullpath, or composed PK for resouce's id
-	synodee    varchar2(12) not null, -- fk-on-del, synode id device to finish cleaning task
-	flag       char(1)      not null, -- 'D' deleting, 'C' close (not exists),'R' rejected by device owner
-	syncstamp  datetime     default CURRENT_TIMESTAMP not null
+	tabl        varchar2(64) not null, -- e.g. 'h_photos'
+	synoder     varchar2(12) not null, -- fk-on-del, synode id for resource's PK
+	clientpath  text         not null, -- for h_photos.fullpath, or composed PK for resouce's id
+	synodee     varchar2(12) not null, -- fk-on-del, synode id device to finish cleaning task
+	flag        char(1)      not null, -- 'D' deleting, 'C' close (not exists),'R' rejected by device owner
+	cleanstamp  datetime     default CURRENT_TIMESTAMP not null
 );	

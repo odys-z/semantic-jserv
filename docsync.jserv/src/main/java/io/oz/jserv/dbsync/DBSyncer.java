@@ -38,8 +38,6 @@ public class DBSyncer extends ServPort<DBSyncReq> {
 	@Override
 	protected void onGet(AnsonMsg<DBSyncReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -61,7 +59,7 @@ public class DBSyncer extends ServPort<DBSyncReq> {
 
 			if (A.open.equals(a))
 				rsp = onOpenClean(dbr, usr);
-			else if (A.records.equals(a))
+			else if (A.cleans.equals(a))
 				;
 
 			else throw new SemanticException(String.format(
@@ -78,22 +76,20 @@ public class DBSyncer extends ServPort<DBSyncReq> {
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
-		} catch (InterruptedException e) {
-			write(resp, err(MsgCode.exIo, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
 	}
 
 	/**
-	 * Open a clean session.
+	 * Open a clean session by reply with a time window.
 	 * @param req
 	 * @param usr
 	 * @return
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	private AnsonResp onOpenClean(DBSyncReq req, IUser usr) throws SQLException, TransException {
+	private DBSyncResp onOpenClean(DBSyncReq req, IUser usr) throws SQLException, TransException {
 		return null;
 	}
 
