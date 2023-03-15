@@ -1,6 +1,7 @@
 package io.oz.jserv.dbsync;
 
-import io.odysz.module.rs.AnResultset;
+import java.util.List;
+
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.transact.sql.PageInf;
 
@@ -8,7 +9,7 @@ public class DBSyncResp extends AnsonResp {
 	
 	PageInf pageInf;
 
-	public AnResultset tasks() {
+	public List<CleanTask> cleanTasks() {
 		// TODO Auto-generated method stub
 		return null;
 	}

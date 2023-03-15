@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
@@ -13,13 +14,15 @@ import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.jprotocol.AnsonHeader;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docsync.SynState;
-import io.oz.jserv.docsync.SyncFlag;
 import io.oz.jserv.docsync.SyncRobot;
 import io.oz.jserv.docsync.SynodeMode;
 
@@ -30,8 +33,10 @@ import io.oz.jserv.docsync.SynodeMode;
  */
 public class DBWorker implements Runnable {
 	
-	protected ErrorCtx err;
-	protected DATranscxt localSt;
+	ErrorCtx err;
+	DATranscxt localSt;
+	
+	final String uri;
 
 	/** synode id */
 	String myId;
@@ -41,16 +46,14 @@ public class DBWorker implements Runnable {
 
 	/** volume path */
 	String volpath;
-
 	String conn;
-
-	protected SyncRobot robot;
+	SyncRobot robot;
 
 	SynodeMode mode;
 	
 	TableMeta cleanMeta;
 
-	private HashMap<String, TableMeta> entities;
+	protected HashMap<String, TableMeta> entities;
 
 	/** clean session timestamps */
 	TimeWindow window; 
@@ -60,6 +63,7 @@ public class DBWorker implements Runnable {
 	public DBWorker(String synode, SynodeMode m) {
 		myId = synode;
 		mode = m;
+		uri = "/ext/docsync";
 	}
 	
 	public DBWorker volume(String path) {
@@ -112,31 +116,17 @@ public class DBWorker implements Runnable {
 	}
 
 	private void meargeCleans(TimeWindow window)
-			throws SQLException, SemanticException, AnsonException, IOException {
+			throws SQLException, AnsonException, IOException, TransException {
 		DBSyncResp rpl = client.commit(null, err); // A = cleans
-		AnResultset tasks = rpl.tasks().beforeFirst();
+		List<CleanTask> tasks = rpl.cleanTasks();
 			
-		// order by tabl, synoder, clientpath, synodee
-		while (tasks.next()) {
-			/*
-			rec.flag | rep.syn  |
-			---------+----------+---------------------------------------------
-			D/R/E    | 'synode' |   -> req.delete/reject/close (trigger -> NULL, check rep.NULL?)
-			D        | R/E      |   local rec.flag = R/E
-			D        | NULL     | # local close 
-			R        | E-dev    |   error (E can only recorded on devices)
-			---------+----------+---------------------------------------------
-			R        |(main/prv)|   User rejected and then erased at somewhere else
-			         | NULL     |   * This only happens when a device fire multiple req.erase
-			         |          | # local close
-			---------+----------+---------------------------------------------
-			R        | D            -> req.reject
-			E-dev    | D            -> req.erase (upper: D -> E, trigger -> NULL, check rep.NULL?)
-			E-dev    | R            -> req.erase (upper: R -> E, trigger -> NULL, check rep.NULL?)
-			E-dev    | E-dev
-			E-dev    | NULL       # local close 
-			NULL     | R/D          -> req.close
-			*/
+		// select synodee res from syn_clean where filter-window
+		// group by tabl, synoder, clientpath
+		for (CleanTask task : tasks) {
+			task.loadLocal(localSt, conn, robot, mode)
+				.merge()
+				.closeLocal(robot)
+				.fireReqs(client, err);
 		}
 	}
 
@@ -146,7 +136,6 @@ public class DBWorker implements Runnable {
 	 * @param window
 	 */
 	private void closeClean(TimeWindow window) {
-		// TODO Auto-generated method stub
 	}
 
 	/**
@@ -185,18 +174,51 @@ public class DBWorker implements Runnable {
 			AnResultset rs = resp.rs(0).beforeFirst();
 
 			while (rs.next()) {
-				SynState sync = queryLocalExtabl(m, rs, wind);
-				if (sync == null || sync.olderThan(rs.getDate(m.stamp)))
+				SynState localState = queryLocalExtabl(m, rs, wind);
+				if (localState == null || localState.olderThan(rs.getDate(m.stamp)))
 					pullExtrec(m, rs, wind);
-				else if (sync != null) {
+				else if (localState != null) {
 					pushExtrec(m, rs, wind);
 				}
 			}
 			
+			// finish / close this page
 			resp = client.commit(null, null);
 			page = resp.syncPage();
 		}
 		
+	}
+
+	private void pushExtrec(ExtableMeta m, AnResultset rs, TimeWindow wind) {
+		DBSyncReq req = new DBSyncReq(uri)
+				.pushEntity(rs.getString(m.synoder), rs.getString(m.clientpath), wind);
+		
+		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.entabl);
+
+		AnsonMsg<DBSyncReq> q = client
+				.<DBSyncReq>userReq(uri, Port.dbsyncer, req)
+				.header(client.header().act(act)); 
+
+		DBSyncResp resp = client.commit(q, err);
+		
+		// TODO What's the sync state?
+	}
+
+	private void pullExtrec(ExtableMeta m, AnResultset rs, TimeWindow wind) {
+		
+		DBSyncReq req = new DBSyncReq(uri)
+				.askEntity(rs.getString(m.synoder), rs.getString(m.clientpath), wind);
+		
+		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.entabl);
+
+		AnsonMsg<DBSyncReq> q = client
+				.<DBSyncReq>userReq(uri, Port.dbsyncer, req)
+				.header(client.header().act(act)); 
+
+		DBSyncResp resp = client.commit(q, err);
+		
+		// TODO download then update DB
+		// any previous module?
 	}
 
 	private SynState queryLocalExtabl(ExtableMeta m, AnResultset rs, TimeWindow wind)
