@@ -13,23 +13,23 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
-import io.odysz.semantic.util.DocLocks;
 import io.odysz.transact.x.TransException;
 
 /**
  * Blocks stream, not that block chain:)
+ * 
+ * <p>Block chain is not guarded with file read-write lock as it's not visible to others
+ * until the database is updated with the path.</p>
+ * 
  * @author ody
- *
  */
 public class BlockChain {
 
-	// public final String ssId;
 	public final String saveFolder;
 	public final String clientpath;
 	public final String clientname;
 	public final String cdate;
 
-	// protected final String tempFolder;
 	public final String outputPath;
 	protected final OutputStream ofs;
 	
@@ -58,8 +58,6 @@ public class BlockChain {
 		this.cdate = createDate;
 		this.clientpath = clientpathRaw;
 		this.saveFolder = targetFolder;
-
-		// tempDir = FilenameUtils.concat(rootpath, userId, "uploading-temp", ssId);
 
 		String clientpath = clientpathRaw.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
@@ -124,12 +122,8 @@ public class BlockChain {
 
 		if (waitings.nextBlock != null) {
 			Path p = Paths.get(outputPath);
-			try {
-				DocLocks.reading(p);
-				Files.delete(p);
-			}
+			try { Files.delete(p); }
 			catch (IOException e) { e.printStackTrace(); }
-			finally { DocLocks.readed(p); }
 
 			// some packages lost
 			throw new TransException("Some packages lost. path: %s", clientpath);
