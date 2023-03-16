@@ -204,6 +204,17 @@ public class DBWorker implements Runnable {
 		// TODO What's the sync state?
 	}
 
+	/**
+	 * <p>Pull an entity table record - only one record, and suitable for ext-file resource.</p>
+	 * FIXME
+	 * <p>FIXME What happens when downloading while modifying, moving the file?</p>
+	 * <p>For Linux, it seams safe. But for windows, abruptly accessing same
+	 * files are likely will happen.</p>
+	 * @see https://unix.stackexchange.com/a/41719
+	 * @param m
+	 * @param rs
+	 * @param wind
+	 */
 	private void pullExtrec(ExtableMeta m, AnResultset rs, TimeWindow wind) {
 		
 		DBSyncReq req = new DBSyncReq(uri)
