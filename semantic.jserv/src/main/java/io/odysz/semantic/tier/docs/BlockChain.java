@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.commons.io_odysz.FilenameUtils;
@@ -12,6 +13,7 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
+import io.odysz.semantic.util.DocLocks;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -121,8 +123,13 @@ public class BlockChain {
 		ofs.close();
 
 		if (waitings.nextBlock != null) {
-			try { Files.delete(Paths.get(outputPath)); }
+			Path p = Paths.get(outputPath);
+			try {
+				DocLocks.reading(p);
+				Files.delete(p);
+			}
 			catch (IOException e) { e.printStackTrace(); }
+			finally { DocLocks.readed(p); }
 
 			// some packages lost
 			throw new TransException("Some packages lost. path: %s", clientpath);
