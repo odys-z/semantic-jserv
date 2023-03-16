@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.io_odysz.FilenameUtils;
+
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
@@ -189,8 +191,10 @@ public class DBWorker implements Runnable {
 		
 	}
 
-	private void pushExtrec(ExtableMeta m, AnResultset rs, TimeWindow wind) {
-		DBSyncReq req = new DBSyncReq(uri)
+	private void pushExtrec(ExtableMeta m, AnResultset rs, TimeWindow wind)
+			throws SQLException, SemanticException, AnsonException, IOException {
+
+		DBSyncReq req = new DBSyncReq(uri, m.tbl)
 				.pushEntity(rs.getString(m.synoder), rs.getString(m.clientpath), wind);
 		
 		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.entabl);
@@ -206,19 +210,27 @@ public class DBWorker implements Runnable {
 
 	/**
 	 * <p>Pull an entity table record - only one record, and suitable for ext-file resource.</p>
-	 * FIXME
-	 * <p>FIXME What happens when downloading while modifying, moving the file?</p>
-	 * <p>For Linux, it seams safe. But for windows, abruptly accessing same
+	 * <p>File updating and reading concurrently is guarded with {@ DocLocks}.
+	 * For Linux, it seams safe. But for windows, abruptly accessing same
 	 * files are likely will happen.</p>
 	 * @see https://unix.stackexchange.com/a/41719
 	 * @param m
-	 * @param rs
-	 * @param wind
+	 * @param rs of which the current row will be queried for pull a resource
+	 * @param win
+	 * @throws SQLException 
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
 	 */
-	private void pullExtrec(ExtableMeta m, AnResultset rs, TimeWindow wind) {
+	private void pullExtrec(ExtableMeta m, AnResultset rs, TimeWindow win)
+			throws SQLException, SemanticException, AnsonException, IOException {
 		
-		DBSyncReq req = new DBSyncReq(uri)
-				.askEntity(rs.getString(m.synoder), rs.getString(m.clientpath), wind);
+		String synoder = rs.getString(m.synoder);
+		String clientpath = rs.getString(m.clientpath);
+		String pname = rs.getString(m.pname);
+
+		DBSyncReq req = new DBSyncReq(uri, m.tbl)
+				.askEntity(synoder, clientpath, win);
 		
 		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.entabl);
 
@@ -228,7 +240,15 @@ public class DBWorker implements Runnable {
 
 		DBSyncResp resp = client.commit(q, err);
 		
-		// TODO download then update DB
+		// download then update DB
+		req = new DBSyncReq(uri, m.tbl).download(synoder, clientpath);
+		client.download(uri, Port.docsync, req,
+						FilenameUtils.concat("tempFolder", synoder, pname));
+
+		AnResultset e = resp.rs(0);
+		
+		// move file
+
 		// any previous module?
 	}
 
