@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
+import java.util.concurrent.Semaphore;
 
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.SAXException;
@@ -67,11 +68,17 @@ public class FileStream {
 		return sendFile(out, srcFile);
 	}
 
-	public static MsgCode sendFile(OutputStream out, String src) throws IOException {
-		FileInputStream in = new FileInputStream(src);
-		IOUtils.copy(in, out);
-		in.close();
-		return MsgCode.ok;
+	public static MsgCode sendFile(OutputStream out, String src)
+			throws IOException {
+		try {
+			DocLocks.reading(src);
+			FileInputStream in = new FileInputStream(src);
+			IOUtils.copy(in, out);
+			in.close();
+			return MsgCode.ok;
+		} finally {
+			DocLocks.readed(src);
+		}
 	}
 
 
