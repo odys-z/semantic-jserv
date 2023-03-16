@@ -56,6 +56,6 @@ class DocLocksTest {
 					 res.stream().collect(Collectors.joining(",")));
 		assertEquals("r1,r2,w1",
 					 seq.stream().collect(Collectors.joining(",")));
-	}
+	} 
 
 }
