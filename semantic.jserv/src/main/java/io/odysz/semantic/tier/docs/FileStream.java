@@ -10,11 +10,11 @@ import java.sql.SQLException;
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.SAXException;
 
+import io.odysz.common.DocLocks;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
-import io.odysz.semantic.util.DocLocks;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
