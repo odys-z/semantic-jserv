@@ -13,8 +13,17 @@ public class DBSyncReq extends AnsonBody {
 		/** query clean tasks */
 		public static final String cleans = "r/cleans";
 
+		/** query a entity record */
+		public static final String q_entity = "r/entity";
+
+		/** push a entity record */
+		public static final String pushEntity = "u/entity";
+
 		/** push merged results: deletings, rejects, erasings */
 		public static final String pushMerged = "u/mergeds";
+
+		/** stream download */
+		public static final String download = "r/bin";
 	}
 
 	/**
@@ -33,6 +42,11 @@ public class DBSyncReq extends AnsonBody {
 	ArrayList<String> rejects;
 	ArrayList<String> erasings;
 
+	/// rec condt
+	String synode;
+	String clientpath;
+	TimeWindow window;
+
 	protected DBSyncReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 	}
@@ -41,10 +55,18 @@ public class DBSyncReq extends AnsonBody {
 		super(null, uri);
 	}
 
-	public DBSyncReq(String uri) {
+	public DBSyncReq(String uri, String tabl) {
 		super(null, uri);
+		this.tabl = tabl;
 	}
 
+	/**
+	 * <p>Composing a request for pushing merged results.</p>
+	 * @param deletings
+	 * @param rejects
+	 * @param erasings
+	 * @return
+	 */
 	public DBSyncReq mergeResults(ArrayList<String> deletings,
 			ArrayList<String> rejects, ArrayList<String> erasings) {
 		
@@ -53,6 +75,29 @@ public class DBSyncReq extends AnsonBody {
 		this.rejects = rejects;
 		this.erasings = erasings;
 
+		return this;
+	}
+
+	public DBSyncReq askEntity(String synode, String clientpath, TimeWindow win) {
+		a = A.q_entity;
+		this.synode = synode;
+		this.clientpath = clientpath;
+		this.window = win;
+		return this;
+	}
+
+	public DBSyncReq pushEntity(String synode, String clientpath, TimeWindow win) {
+		a = A.pushEntity;
+		this.synode = synode;
+		this.clientpath = clientpath;
+		this.window = win;
+		return this;
+	}
+
+	public DBSyncReq download(String synode, String clientpath) {
+		a = A.download;
+		this.synode = synode;
+		this.clientpath = clientpath;
 		return this;
 	}
 
