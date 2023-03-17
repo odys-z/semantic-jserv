@@ -23,7 +23,7 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.dbsync.DBSyncReq.A;
 
 @WebServlet(description = "Cleaning tasks manager", urlPatterns = { "/sync.db" })
-public class DBSyncer extends ServPort<DBSyncReq> {
+public class DBSynode extends ServPort<DBSyncReq> {
 
 	/**
 	 * 
@@ -31,7 +31,7 @@ public class DBSyncer extends ServPort<DBSyncReq> {
 	private static final long serialVersionUID = 1L;
 	private boolean verbose;
 
-	public DBSyncer() {
+	public DBSynode() {
 		super(Port.dbsyncer);
 	}
 
