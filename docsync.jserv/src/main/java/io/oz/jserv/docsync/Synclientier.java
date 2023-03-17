@@ -19,6 +19,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
+import io.odysz.common.DocLocks;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
@@ -204,7 +205,7 @@ public class Synclientier extends Semantier {
 		photoUser.device = workerId;
 
 		return pushBlocks(
-				tabl, videos, photoUser, onProc,
+				tabl, videos, onProc,
 				isNull(docOk) ? new OnDocOk() {
 					@Override
 					public void ok(SyncDoc doc, AnsonResp resp)
@@ -292,10 +293,18 @@ public class Synclientier extends Semantier {
 	 * @return list of response
 	 */
 	public List<DocsResp> pushBlocks(String tbl, List<? extends SyncDoc> videos,
-				SessionInf user, OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr)
+				OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr)
 				throws TransException, IOException {
+		ErrorCtx err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		return pushBlocks(client, uri, tbl, videos, blocksize, proc, docOk, err);
+	}
 
-		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+	public static List<DocsResp> pushBlocks(SessionClient client, String uri, String tbl,
+			List<? extends SyncDoc> videos, int blocksize,
+			OnProcess proc, OnDocOk docOk, ErrorCtx errHandler)
+			throws TransException, IOException {
+
+		SessionInf user = client.ssInfo();
 
         DocsResp resp0 = null;
         DocsResp respi = null;
@@ -332,6 +341,7 @@ public class Synclientier extends Semantier {
 				totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
 				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp0);
 
+				DocLocks.reading(p.fullpath());
 				ifs = new FileInputStream(new File(p.fullpath()));
 
 				String b64 = AESHelper.encode64(ifs, blocksize);
@@ -370,13 +380,12 @@ public class Synclientier extends Semantier {
 
 				if (ex instanceof IOException)
 					continue;
-				else if (onErr == null || onErr.length < 1 || onErr[0] == null)
-					throw ex;
-				else onErr[0].err(MsgCode.exGeneral, ex.getMessage(), ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
+				else errHandler.err(MsgCode.exGeneral, ex.getMessage(), ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
 			}
 			finally {
 				if (ifs != null)
 					ifs.close();
+				DocLocks.readed(p.fullpath());
 			}
 		}
 
@@ -534,8 +543,8 @@ public class Synclientier extends Semantier {
 		Insert ins = st.insert(meta.tbl, usr)
 				.nv(meta.org, usr.orgId())
 				.nv(meta.uri, doc.uri)
-				.nv(meta.filename, doc.pname)
-				.nv(meta.device, usr.deviceId())
+				.nv(meta.resname, doc.pname)
+				.nv(meta.synoder, usr.deviceId())
 				.nv(meta.fullpath, doc.clientpath)
 				.nv(meta.folder, doc.folder())
 				.nv(meta.size, size)
@@ -575,9 +584,9 @@ public class Synclientier extends Semantier {
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		videos.add(doc);
 
-		SessionInf ssInf = client.ssInfo(); // simulating pushing from app
+		// SessionInf ssInf = client.ssInfo(); // simulating pushing from app
 
-		List<DocsResp> resps = pushBlocks(tabl, videos, ssInf, 
+		List<DocsResp> resps = pushBlocks(tabl, videos, 
 				new OnProcess() {
 					@Override
 					public void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)

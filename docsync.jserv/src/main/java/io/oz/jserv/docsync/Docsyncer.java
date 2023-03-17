@@ -178,7 +178,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			throws SQLException, TransException {
 		AnResultset rs = ((AnResultset) st.select(meta.tbl, "d")
 			.col(meta.pk)
-			.whereEq(meta.device, device)
+			.whereEq(meta.synoder, device)
 			.whereEq(meta.fullpath, clientpath)
 			.whereEq(meta.org, usr.orgId())
 			.rs(st.instancontxt(conn, usr))
@@ -453,7 +453,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.select(jreq.docTabl, "t")
 				.cols(SyncDoc.synPageCols(meta))
 				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
-				.whereEq(meta.device, usr.deviceId())
+				.whereEq(meta.synoder, usr.deviceId())
 				// .whereEq(meta.shareby, usr.uid())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
 				.limit(jreq.limit())	// FIXME issue: what if paths length > limit ?
@@ -516,10 +516,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 		
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
-				.col(meta.device).col(meta.fullpath)
+				.col(meta.synoder).col(meta.fullpath)
 				.col(meta.uri)
 				.col(meta.mime)
-				.whereEq(meta.device, req.device())
+				.whereEq(meta.synoder, req.device())
 				.whereEq(meta.fullpath, req.clientpath)
 				.rs(st.instancontxt(synconn, usr)).rs(0);
 
@@ -558,7 +558,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		st.update(meta.tbl, usr)
 			.nv(meta.shareflag, SyncFlag.publish)
 			.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
-			.whereEq(meta.device, usr.deviceId())
+			.whereEq(meta.synoder, usr.deviceId())
 			.whereEq(meta.fullpath, jreq.clientpath)
 			.u(st.instancontxt(synconn, usr));
 		

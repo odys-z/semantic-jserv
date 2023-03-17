@@ -1,5 +1,7 @@
 package io.oz.jserv.dbsync;
 
+import static io.odysz.common.LangExt.isNull;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -16,16 +18,22 @@ import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docsync.SynState;
 import io.oz.jserv.docsync.SyncRobot;
+import io.oz.jserv.docsync.Synclientier;
 import io.oz.jserv.docsync.SynodeMode;
 
 /**
@@ -39,6 +47,7 @@ public class DBWorker implements Runnable {
 	DATranscxt localSt;
 	
 	final String uri;
+	final int blocksize;
 
 	/** synode id */
 	String myId;
@@ -62,10 +71,15 @@ public class DBWorker implements Runnable {
 
 	SessionClient client;
 
+	protected JProtocol.OnProcess onPushExtProc;
+	protected JProtocol.OnDocOk onPushExtOk;
+
 	public DBWorker(String synode, SynodeMode m) {
 		myId = synode;
 		mode = m;
 		uri = "/ext/docsync";
+		
+		blocksize = 3 * 1024 * 1024;
 	}
 	
 	public DBWorker volume(String path) {
@@ -164,7 +178,7 @@ public class DBWorker implements Runnable {
 			throw new SemanticException("Unable to findout time window.");
 		}
 		
-		ExtableMeta m = (ExtableMeta) entities.get(entity); 
+		DocTableMeta m = (DocTableMeta) entities.get(entity); 
 
 		// query 
 		DBSyncResp resp = client.commit(DBSyncReq.extabl(entity, myId, wind), null);
@@ -190,14 +204,28 @@ public class DBWorker implements Runnable {
 		}
 		
 	}
+	
 
-	private void pushExtrec(ExtableMeta m, AnResultset rs, TimeWindow wind)
-			throws SQLException, SemanticException, AnsonException, IOException {
+	private void pushExtrec(DocTableMeta m, AnResultset rs, TimeWindow wind)
+			throws SQLException, AnsonException, IOException, TransException {
 
-		DBSyncReq req = new DBSyncReq(uri, m.tbl)
-				.pushEntity(rs.getString(m.synoder), rs.getString(m.clientpath), wind);
+		// SessionInf photoUser = client.ssInfo();
+		// photoUser.device = myId;
+		if (onPushExtOk == null) 
+			onPushExtOk = (SyncDoc doc, AnsonResp resp) -> {
+				throw new AnsonException(0, "");
+			};
+
+		List<? extends SyncDoc> videos = null;
+
+		List<DocsResp> reslts = Synclientier.pushBlocks(client, uri, m.tbl,
+				videos, blocksize, onPushExtProc, onPushExtOk, err);
+		DocsResp res = reslts.get(0);
 		
-		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.entabl);
+		DBSyncReq req = new DBSyncReq(uri, m.tbl)
+				.pushEntity(rs.getString(m.synoder), rs.getString(m.fullpath), wind);
+		
+		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.tbl);
 
 		AnsonMsg<DBSyncReq> q = client
 				.<DBSyncReq>userReq(uri, Port.dbsyncer, req)
@@ -211,9 +239,8 @@ public class DBWorker implements Runnable {
 	/**
 	 * <p>Pull an entity table record - only one record, and suitable for ext-file resource.</p>
 	 * <p>File updating and reading concurrently is guarded with {@ DocLocks}.
-	 * For Linux, it seams safe. But for windows, abruptly accessing same
-	 * files are likely will happen.</p>
-	 * @see https://unix.stackexchange.com/a/41719
+	 * So when the ext-file is updated at server side, downloading will failed.</p>
+	 * 
 	 * @param m
 	 * @param rs of which the current row will be queried for pull a resource
 	 * @param win
@@ -222,17 +249,14 @@ public class DBWorker implements Runnable {
 	 * @throws AnsonException 
 	 * @throws SemanticException 
 	 */
-	private void pullExtrec(ExtableMeta m, AnResultset rs, TimeWindow win)
-			throws SQLException, SemanticException, AnsonException, IOException {
-		
-		String synoder = rs.getString(m.synoder);
-		String clientpath = rs.getString(m.clientpath);
-		String pname = rs.getString(m.pname);
+	private void pullExtrec(DocTableMeta m, AnResultset rs, TimeWindow win) throws SQLException, SemanticException, AnsonException, IOException { String synoder = rs.getString(m.synoder);
+		String clientpath = rs.getString(m.fullpath);
+		String pname = rs.getString(m.resname);
 
 		DBSyncReq req = new DBSyncReq(uri, m.tbl)
 				.askEntity(synoder, clientpath, win);
 		
-		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.entabl);
+		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.tbl);
 
 		AnsonMsg<DBSyncReq> q = client
 				.<DBSyncReq>userReq(uri, Port.dbsyncer, req)
@@ -252,19 +276,19 @@ public class DBWorker implements Runnable {
 		// any previous module?
 	}
 
-	private SynState queryLocalExtabl(ExtableMeta m, AnResultset rs, TimeWindow wind)
+	private SynState queryLocalExtabl(DocTableMeta m, AnResultset rs, TimeWindow wind)
 			throws SQLException, TransException {
 		AnResultset ls = ((AnResultset)localSt
 			.select(m.tbl, "l")
-			.col(m.syncFlag).col(m.clientpath).col(m.stamp)
+			.col(m.syncflag).col(m.fullpath).col(m.stamp)
 			.whereEq(m.synoder, rs.getString(m.synoder))
-			.whereEq(m.clientpath, rs.getString(m.clientpath))
+			.whereEq(m.fullpath, rs.getString(m.fullpath))
 			.rs(localSt.instancontxt(conn, robot))
 			.rs(0))
 			.beforeFirst();
 		
 		if (ls.next())
-			return new SynState(mode, ls.getString(m.syncFlag))
+			return new SynState(mode, ls.getString(m.syncflag))
 					.stamp(ls.getDate(m.stamp));
 		else	
 			return null;

@@ -170,7 +170,7 @@ class SyncWorkerTest {
 
 		tasks.beforeFirst();
 		while (tasks.next()) {
-			String dev = tasks.getString(meta.device);
+			String dev = tasks.getString(meta.synoder);
 			String pth = tasks.getString(meta.fullpath);
 			assertTrue( AnDevice.device.equals(dev)
 					|| Kharkiv.Synode.nodeId.equals(dev)

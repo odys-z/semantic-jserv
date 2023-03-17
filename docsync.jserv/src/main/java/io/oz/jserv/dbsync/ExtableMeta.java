@@ -2,6 +2,14 @@ package io.oz.jserv.dbsync;
 
 import io.odysz.semantics.meta.TableMeta;
 
+/**
+ * Ext-file table meta
+ * 
+ * @deprecated redundant to DocTableMeta
+ * 
+ * @author odys-z@github.com
+ *
+ */
 public class ExtableMeta extends TableMeta {
 
 	public final String entabl;
@@ -17,6 +25,8 @@ public class ExtableMeta extends TableMeta {
 
 	public final String stamp;
 
+	public final String uri;
+
 	public ExtableMeta(String tbl, String[] conn) {
 		super(tbl, conn);
 		
@@ -24,6 +34,8 @@ public class ExtableMeta extends TableMeta {
 		this.synoder = "synode";
 		this.clientpath = "clientpath";
 		this.pname = "pname";
+		this.uri = "uri";
+		
 		this.syncFlag = "sync";
 		this.stamp = "synctamp";
 	}
