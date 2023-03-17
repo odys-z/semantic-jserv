@@ -66,7 +66,7 @@ public class PathsPage extends Anson {
 
 		rs.beforeFirst();
 		while(rs.next()) {
-			String dev = rs.getString(meta.device);
+			String dev = rs.getString(meta.synoder);
 			if (isblank(device))
 				device = dev;
 			else if (!device.equals(dev))

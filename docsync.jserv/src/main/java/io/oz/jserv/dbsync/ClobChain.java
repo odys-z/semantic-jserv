@@ -1,4 +1,4 @@
-package io.oz.jserv.docsync;
+package io.oz.jserv.dbsync;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,10 +18,7 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
-import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
-import io.odysz.semantic.tier.docs.DocsReq;
-import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
@@ -30,10 +27,11 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docsync.SyncRobot;
 
 import static io.odysz.common.LangExt.*;
 
-public class Dochain {
+public class ClobChain {
 
 	public interface OnChainOk {
 		/**
@@ -54,24 +52,24 @@ public class Dochain {
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	DATranscxt st;
 
-	static HashMap<String, BlockChain> blockChains;
+	static HashMap<String, Cloblocks> blockChains;
 
 	@AnsonField(ignoreTo=true)
 	DocTableMeta meta;
 	
-	public Dochain (DocTableMeta meta, DATranscxt deflst) {
+	public ClobChain (DocTableMeta meta, DATranscxt deflst) {
 		this.meta = meta;
 		this.st = deflst;
 	}
 
-	DocsResp startBlocks(DocsReq body, IUser usr, IProfileResolver profiles)
+	DBSyncResp startBlocks(DBSyncReq body, IUser usr, IProfileResolver profiles)
 			throws IOException, TransException, SQLException, InterruptedException {
 
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
 
 		if (blockChains == null)
-			blockChains = new HashMap<String, BlockChain>(2);
+			blockChains = new HashMap<String, Cloblocks>(2);
 
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by SyncRobot. 
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
@@ -81,7 +79,7 @@ public class Dochain {
 			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
 					body.clientpath, usr.uid(), profiles.getClass().getName());
 		
-		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, saveFolder)
+		Cloblocks chain = new Cloblocks(tempDir, body.clientpath, body.createDate, saveFolder)
 				.device(usr.deviceId())
 				.share(body.shareby, body.shareDate, body.shareflag);
 
@@ -93,15 +91,18 @@ public class Dochain {
 			abortBlock(body, usr);
 
 		blockChains.put(id, chain);
-		return new DocsResp()
+		return new DBSyncResp()
 				.blockSeq(-1)
+				.started(chain);
+				/*
 				.doc((SyncDoc) new SyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.createDate)
 					.fullpath(chain.clientpath));
+					*/
 	}
 
-	void checkDuplication(DocsReq body, SyncRobot usr)
+	void checkDuplication(DBSyncReq body, SyncRobot usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
@@ -128,15 +129,15 @@ public class Dochain {
 					device, clientpath);
 	}
 
-	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
+	DBSyncResp uploadBlock(DBSyncReq body, IUser usr) throws IOException, TransException {
 		String id = chainId(usr, body);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
 
-		BlockChain chain = blockChains.get(id);
+		Cloblocks chain = blockChains.get(id);
 		chain.appendBlock(body);
 
-		return new DocsResp()
+		return new DBSyncResp()
 				.blockSeq(body.blockSeq())
 				.doc((SyncDoc) new SyncDoc()
 					.clientname(chain.clientname)
@@ -154,10 +155,10 @@ public class Dochain {
 	 * @throws InterruptedException
 	 * @throws TransException
 	 */
-	DocsResp endBlock(DocsReq body, IUser usr, OnChainOk ok)
+	DBSyncResp endBlock(DBSyncReq body, IUser usr, OnChainOk ok)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
-		BlockChain chain;
+		Cloblocks chain;
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
 			chain = blockChains.remove(id);
@@ -177,15 +178,15 @@ public class Dochain {
 			Utils.logi("   %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
-		return new DocsResp()
+		return new DBSyncResp()
 				.blockSeq(body.blockSeq())
 				.doc(photo.recId(pid));
 	}
 
-	DocsResp abortBlock(DocsReq body, IUser usr)
+	DBSyncResp abortBlock(DBSyncReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
-		DocsResp ack = new DocsResp();
+		DBSyncResp ack = new DBSyncResp();
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).abortChain();
 			blockChains.remove(id);
@@ -196,16 +197,16 @@ public class Dochain {
 		return ack;
 	}
 
-	public static String chainId(IUser usr, DocsReq req) {
+	public static String chainId(IUser usr, DBSyncReq req) {
 		return Stream
-			.of(usr.orgId(), usr.uid(), req.device(), req.clientpath)
+			.of(usr.orgId(), usr.uid(), req.synoder, req.clientpath)
 			.collect(Collectors.joining("."));
 	}
 
 	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
 			DocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
-		Update post = Docsyncer.onDocreate(photo, meta, usr);
+		Update post = DBSynode.onDocreate(photo, meta, usr);
 
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);

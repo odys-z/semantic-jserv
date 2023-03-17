@@ -261,7 +261,7 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
-				.whereEq(meta.device, device)
+				.whereEq(meta.synoder, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);

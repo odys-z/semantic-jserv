@@ -35,37 +35,43 @@ public class DocTableMeta extends TableMeta {
 	 * Sqlite:<pre>syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL</pre>
 	 */
 	public final String stamp;
-	public final String syncflag;
-	public final String shareflag;
-	public final String filename;
+	/** resource's creating node's device id, originally named as device */
+	public final String synoder;
+	public final String fullpath;
+	/** aslo named as pname, clientname or filename previously */
+	public final String resname;
+	/**
+	 * Resource identity, reading with {@link io.odysz.transact.sql.parts.condition.Funcall.Func#extFile extFile}
+	 * and updating with {@link io.odysz.semantic.DASemantics.ShExtFilev2 ShExtFile}.
+	 */
 	public final String uri;
 	public final String createDate;
 	public final String mime;
-	public final String device;
-	public final String fullpath;
 	public final String shareDate;
 	public final String shareby;
 	public final String org;
 	public final String folder;
 	public final String size;
 
+	public final String syncflag;
+	public final String shareflag;
 	// public final SharelogMeta sharelog;
 	
 	public DocTableMeta(String tbl, String pk, String conn) {
 		super(tbl, conn);
 
 		// TODO let's build from sync.xml
-		tbl = "h_photos";
+		this.tbl = "h_photos";
 		this.pk = pk;
 
-		filename = "pname";
+		resname = "pname";
 		uri = "uri";
 		folder = "folder";
 		createDate = "pdate";
 		org = "family";
 		mime = "mime";
 		size = "filesize";
-		device = "device";
+		synoder = "device";
 		fullpath = "clientpath";
 		shareDate = "sharedate";
 		shareby = "shareby";

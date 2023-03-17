@@ -94,7 +94,7 @@ public class SynodeTier extends Synclientier {
 		photoUser.device = workerId;
 
 		return pushBlocks(meta.tbl,
-				videos, photoUser, onProc,
+				videos, onProc,
 				isNull(docOk) ? new OnDocOk() {
 					@Override
 					public void ok(SyncDoc doc, AnsonResp resp)
