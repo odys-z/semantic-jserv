@@ -10,6 +10,7 @@ import io.odysz.transact.sql.PageInf;
 public class DBSyncResp extends AnsonResp {
 	
 	PageInf pageInf;
+	public long blockSeqReply;
 
 	public List<CleanTask> cleanTasks() {
 		// TODO Auto-generated method stub
