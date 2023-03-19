@@ -22,7 +22,7 @@ import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantic.tier.docs.SyncEntity;
+import io.odysz.semantic.tier.docs.SynEntity;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -179,7 +179,7 @@ public class ClobChain {
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
-		SyncEntity photo = new SyncEntity().parseChain(chain);
+		SynEntity photo = new SynEntity().parseChain(chain);
 		photo.uri = null; // suppress semantics ExtFile, and support me (query befor move?).
 		
 		String pid = createFile(st, conn, photo, meta, usr, ok);

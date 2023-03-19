@@ -18,12 +18,12 @@ import io.odysz.semantics.x.SemanticException;
  * 
  * @author ody
  */
-public class SyncEntity extends Anson {
+public class SynEntity extends Anson {
 	protected static String[] synpageCols;
 
 	public String recId;
 	public String recId() { return recId; }
-	public SyncEntity recId(String did) {
+	public SynEntity recId(String did) {
 		recId = did;
 		return this;
 	}
@@ -34,7 +34,7 @@ public class SyncEntity extends Anson {
 	/** Non-public: doc' device id is managed by session. */
 	protected String synode;
 	public String synode() { return synode; }
-	public SyncEntity synode(String synode) {
+	public SynEntity synode(String synode) {
 		this.synode = synode;
 		return this;
 	}
@@ -51,7 +51,7 @@ public class SyncEntity extends Anson {
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	ISemantext semantxt;
 	
-	public SyncEntity() {}
+	public SynEntity() {}
 	
 	/**
 	 * A helper used to make sure query fields are correct.
@@ -94,7 +94,7 @@ public class SyncEntity extends Anson {
 		return synpageCols;
 	}
 
-	public SyncEntity(AnResultset rs, DocTableMeta meta) throws SQLException {
+	public SynEntity(AnResultset rs, DocTableMeta meta) throws SQLException {
 		this.entMeta = meta;
 		this.recId = rs.getString(meta.pk);
 		this.uri = rs.getString(meta.uri);
@@ -112,7 +112,7 @@ public class SyncEntity extends Anson {
 	 * @throws IOException checking local file failed
 	 * @throws SemanticException device is null
 	 */
-	public SyncEntity(IFileDescriptor d, String fullpath, DocTableMeta meta) {
+	public SynEntity(IFileDescriptor d, String fullpath, DocTableMeta meta) {
 		this.synode = d.device();
 
 		this.entMeta = meta;
@@ -120,7 +120,7 @@ public class SyncEntity extends Anson {
 		this.uri = d.uri();
 	}
 
-	public SyncEntity parseChain(BlockChain chain) {
+	public SynEntity parseChain(BlockChain chain) {
 		synode = chain.device;
 		clientpath = chain.clientpath;
 		return this;
@@ -132,7 +132,7 @@ public class SyncEntity extends Anson {
 	 * @param flags
 	 * @return this
 	 */
-	public SyncEntity parseFlags(String[] flags) {
+	public SynEntity parseFlags(String[] flags) {
 		if (!isNull(flags)) {
 			syncFlag = flags[0];
 		}
