@@ -81,22 +81,15 @@ public class ClobChain {
 		// TODO deleting temp dir is handled by SyncRobot. 
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
 
-		String saveFolder = profiles.synodeFolder(body, usr);
-		if (isblank(saveFolder, "/", "\\\\", ":", "."))
-			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
-					body.clientpath, usr.uid(), profiles.getClass().getName());
-		
 		BlockChain chain = new BlockChain(tempDir, null, body.clientpath)
-				.saveFolder(body)
 				.synode(usr.deviceId())
-				// .share(body.shareby, body.shareDate, body.shareflag);
 				.entity(profiles.toEntity(body));
 
 		String id = chainId(usr, body);
 
-		if (blockChains.containsKey(id) && !body.reset)
+		if (blockChains.containsKey(id) && !body.resetChain)
 			throw new SemanticException("Block chain already exists, restarting?");
-		else if (body.reset)
+		else if (body.resetChain)
 			abortBlock(body, usr);
 
 		blockChains.put(id, chain);
@@ -215,15 +208,15 @@ public class ClobChain {
 			.collect(Collectors.joining("."));
 	}
 
-	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
+	public static String createFile(DATranscxt st, String conn, SynEntity ent,
 			DocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
-		Update post = DBSynode.onEncreate(photo, meta, usr);
+		Update post = DBSynode.onEncreate(ent, meta, usr);
 
 		if (end != null)
-			post = end.onDocreate(post, photo, meta, usr);
+			post = end.onEncreate(post, ent, meta, usr);
 
-		return DocUtils.createFileB64(conn, photo, usr, meta, st, post);
+		return DocUtils.createFileB64(conn, ent, usr, meta, st, post);
 	}
 
 

@@ -55,6 +55,8 @@ public class DBSyncReq extends AnsonBody {
 	String clientpath;
 	TimeWindow window;
 
+	public boolean resetChain;
+
 	protected DBSyncReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 	}
