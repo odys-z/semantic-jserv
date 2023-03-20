@@ -24,6 +24,7 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.SynEntity;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -35,13 +36,18 @@ import io.oz.jserv.docsync.SyncRobot;
 
 import static io.odysz.common.LangExt.*;
 
+/**
+ * C-lob chians, managing
+ * @author Alice
+ *
+ */
 public class ClobChain {
 
 	public interface OnChainOk {
 		/**
 		 * {@link Docsyncer} use this as a chance of update user's data
 		 * when block chain finished successfully.
-		 * 
+		 *
 		 * @param post
 		 * @param d
 		 * @param meta
@@ -60,45 +66,13 @@ public class ClobChain {
 
 	@AnsonField(ignoreTo=true)
 	DocTableMeta meta;
-	
+
 	public ClobChain (DocTableMeta meta, DATranscxt deflst) {
 		this.meta = meta;
 		this.st = deflst;
 	}
 
-	DocsResp startBlocks(DBSyncReq body, IUser usr)
-			throws IOException, TransException, SQLException {
-
-		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, ((SyncRobot)usr).deviceId(), body.clientpath, usr);
-
-		if (blockChains == null)
-			blockChains = new HashMap<String, Clobs>(2);
-
-		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
-		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
-
-		Clobs chain = new Clobs(tempDir, body.clientpath);
-
-		// FIXME security breach?
-		String id = usr.sessionId() + " " + chain.clientpath;
-
-		if (blockChains.containsKey(id))
-			throw new SemanticException("Why started again?");
-
-		blockChains.put(id, chain);
-		return new DocsResp()
-				.blockSeq(-1)
-				/*
-				.doc((SyncDoc) new SyncDoc()
-					.clientname(chain.clientname)
-					.cdate(body.createDate)
-					.fullpath(chain.clientpath));
-					*/
-				.entity(chain);
-	}
-
-	DBSyncResp startBlocks(DBSyncReq body, IUser usr, IProfileResolver profiles)
+	DBSyncResp startBlocks(DBSyncReq body, IUser usr, IDBEntityResolver profiles)
 			throws IOException, TransException, SQLException, InterruptedException {
 
 		String conn = Connects.uri2conn(body.uri());
@@ -107,36 +81,24 @@ public class ClobChain {
 		if (blockChains == null)
 			blockChains = new HashMap<String, Clobs>(2);
 
-		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by SyncRobot. 
+		// TODO deleting temp dir is handled by SyncRobot.
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
 
-		String saveFolder = profiles.synodeFolder(body, usr);
-		if (isblank(saveFolder, "/", "\\\\", ":", "."))
-			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
-					body.clientpath, usr.uid(), profiles.getClass().getName());
-		
 		Clobs chain = new Clobs(tempDir, body.clientpath)
 				.device(usr.deviceId())
-				// .share(body.shareby, body.shareDate, body.shareflag)
-				;
+				.entity(profiles.toEntity(body));
 
 		String id = chainId(usr, body);
 
-		if (blockChains.containsKey(id) && !body.reset)
+		if (blockChains.containsKey(id) && !body.resetChain)
 			throw new SemanticException("Block chain already exists, restarting?");
-		else if (body.reset)
+		else if (body.resetChain)
 			abortBlock(body, usr);
 
 		blockChains.put(id, chain);
 		return new DBSyncResp()
 				.blockSeq(-1)
-				.started(chain);
-				/*
-				.doc((SyncDoc) new SyncDoc()
-					.clientname(chain.clientname)
-					.cdate(body.createDate)
-					.fullpath(chain.clientpath));
-					*/
+				.start(chain);
 	}
 
 	void checkDuplication(DBSyncReq body, SyncRobot usr)
@@ -176,10 +138,13 @@ public class ClobChain {
 
 		return new DBSyncResp()
 				.blockSeq(body.blockSeq())
+				/*
 				.doc((SyncDoc) new SyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.createDate)
 					.fullpath(chain.clientpath));
+				*/
+				;
 	}
 
 	/**
@@ -204,10 +169,10 @@ public class ClobChain {
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
-		SyncDoc photo = new SyncDoc().parseChain(chain);
-		photo.uri = null; // suppress semantics ExtFile, and support me (query befor move?).
-		
-		String pid = createFile(st, conn, photo, meta, usr, ok);
+		SynEntity ent = chain.parseEntity();
+		ent.uri = null; // suppress semantics ExtFile, and support me (query befor move?).
+
+		String pid = createFile(st, conn, ent, meta, usr, ok);
 
 		// move file
 		String targetPath = resolvExtroot(st, conn, pid, usr, meta);
@@ -217,7 +182,7 @@ public class ClobChain {
 
 		return new DBSyncResp()
 				.blockSeq(body.blockSeq())
-				.doc(photo.recId(pid));
+				.entity(ent.recId(pid));
 	}
 
 	DBSyncResp abortBlock(DBSyncReq body, IUser usr)
@@ -236,25 +201,25 @@ public class ClobChain {
 
 	public static String chainId(IUser usr, DBSyncReq req) {
 		return Stream
-			.of(usr.orgId(), usr.uid(), req.synoder, req.clientpath)
+			.of(usr.orgId(), usr.uid(), req.synode, req.clientpath)
 			.collect(Collectors.joining("."));
 	}
 
-	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
+	public static String createFile(DATranscxt st, String conn, SynEntity ent,
 			DocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
-		Update post = DBSynode.onDocreate(photo, meta, usr);
+		Update post = DBSynode.onEncreate(ent, meta, usr);
 
 		if (end != null)
-			post = end.onDocreate(post, photo, meta, usr);
+			post = end.onEncreate(post, ent, meta, usr);
 
-		return DocUtils.createFileB64(conn, photo, usr, meta, st, post);
+		return DocUtils.createFileB64(conn, ent, usr, meta, st, post);
 	}
 
 
 	/**
 	 * Resolve file root with samantics handler of {@link smtype#extFilev2}.
-	 * 
+	 *
 	 * @param defltst
 	 * @param conn
 	 * @param docId
@@ -279,5 +244,5 @@ public class ClobChain {
 		String extroot = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2)).getFileRoot();
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
-	
+
 }

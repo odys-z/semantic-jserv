@@ -23,6 +23,8 @@ import static io.odysz.common.LangExt.*;
  * A sync object, server side and jprotocol oriented data record,
  * used for docsync.jserv. 
  * 
+ * TODO extending SyncEntity
+ * 
  * @author ody
  */
 public class SyncDoc extends Anson implements IFileDescriptor {

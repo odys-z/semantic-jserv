@@ -13,14 +13,15 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
+import io.odysz.semantic.tier.docs.SynEntity;
 import io.odysz.transact.x.TransException;
 
 /**
  * Blocks stream, not that block chain:)
- * 
+ *
  * <p>Block chain is not guarded with file read-write lock as it's not visible to others
  * until the database is updated with the path.</p>
- * 
+ *
  * @author ody
  */
 public class Clobs {
@@ -33,20 +34,22 @@ public class Clobs {
 	public final String outputPath;
 	/** Local file stream for writing clob */
 	protected final OutputStream ofs;
-	
+
 	protected final DBSyncReq waitings;
 
 //	public String shareby;
 //	public String shareDate;
 //	public String shareflag;
-	public String device;
+	String device;
+
+	SynEntity entity;
 
 	/**Create file output stream to $VALUME_HOME/userid/ssid/clientpath
-	 * 
+	 *
 	 * @param tempDir
 	 * @param clientpathRaw - client path that can match at client's environment (saving at server side replaced some special characters)
 	 * @throws IOException
-	 * @throws TransException 
+	 * @throws TransException
 	 */
 	public Clobs(String tempDir, String clientpathRaw) throws IOException, TransException {
 
@@ -61,7 +64,7 @@ public class Clobs {
 		outputPath = EnvPath.decodeUri(tempDir, clientpath);
 
 		String parentpath = FilenameUtils.getFullPath(outputPath);
-		new File(parentpath).mkdirs(); 
+		new File(parentpath).mkdirs();
 
 		File f = new File(outputPath);
 		f.createNewFile();
@@ -127,15 +130,18 @@ public class Clobs {
 		return outputPath;
 	}
 
-//	public Clobs share(String shareby, String shareDate, String shareflag) {
-//		this.shareby = shareby;
-//		this.shareDate = shareDate;
-//		this.shareflag = shareflag;
-//		return this;
-//	}
-
 	public Clobs device(String device) {
 		this.device = device;
 		return this;
+	}
+
+	public Clobs entity(SynEntity entity) {
+		this.entity = entity;
+		return this;
+	}
+
+	public SynEntity parseEntity() {
+		SynEntity e = new SynEntity();
+		return e;
 	}
 }

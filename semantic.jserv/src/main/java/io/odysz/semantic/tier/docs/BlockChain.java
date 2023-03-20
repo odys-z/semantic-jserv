@@ -28,7 +28,7 @@ public class BlockChain {
 	public final String saveFolder;
 	public final String clientpath;
 	public final String clientname;
-	public final String cdate;
+	public String cdate;
 
 	public final String outputPath;
 	protected final OutputStream ofs;
@@ -40,7 +40,33 @@ public class BlockChain {
 	public String shareflag;
 	public String device;
 
-	/**Create file output stream to $VALUME_HOME/userid/ssid/clientpath
+	/**
+	 * Port to DB-sync
+	 * 
+	 * @param tempDir
+	 * @param saveFolder
+	 * @param clientpath
+	 * @throws IOException
+	 */
+	public BlockChain(String tempDir, String saveFolder, String clientpath) throws IOException {
+
+		this.saveFolder = saveFolder;
+		this.clientpath = clientpath;
+		clientname = FilenameUtils.getName(clientpath);
+		outputPath = EnvPath.decodeUri(tempDir, saveFolder, clientname);
+
+		String parentpath = FilenameUtils.getFullPath(outputPath);
+		new File(parentpath).mkdirs(); 
+
+		File f = new File(outputPath);
+		f.createNewFile();
+		this.ofs = new FileOutputStream(f);
+
+		waitings = new DocsReq().blockSeq(-1);
+	}
+
+	/**
+	 * Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
 	 * @param tempDir
 	 * @param clientpathRaw - client path that can match at client's environment (saving at server side replaced some special characters)
