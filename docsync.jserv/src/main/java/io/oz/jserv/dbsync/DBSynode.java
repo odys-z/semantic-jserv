@@ -10,7 +10,10 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
+import org.xml.sax.SAXException;
+
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.Configs;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -27,20 +30,37 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.dbsync.DBSyncReq.A;
+import io.oz.jserv.docsync.SyncRobot;
+import io.oz.jserv.docsync.SynodeMeta;
 
 @WebServlet(description = "Cleaning tasks manager", urlPatterns = { "/sync.db" })
 public class DBSynode extends ServPort<DBSyncReq> {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
-	private boolean verbose;
+	private static boolean verbose;
 
-	final IProfileResolver profilesolver;
-	final DATranscxt st;
+	static DATranscxt st;
 
 	static HashMap<String, TableMeta> metas;
+	private static SynodeMeta synodesMeta;
+	private static SyncRobot anonymous;
+
+	static {
+		try {
+			st = new DATranscxt(null);
+			metas = new HashMap<String, TableMeta>();
+			synodesMeta = new SynodeMeta();
+
+			anonymous = new SyncRobot("Robot Syncer");
+
+			verbose = Configs.getBoolean("docsync.debug");
+		} catch (SemanticException | SQLException | SAXException | IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public DBSynode() {
 		super(Port.dbsyncer);
@@ -54,7 +74,7 @@ public class DBSynode extends ServPort<DBSyncReq> {
 	@Override
 	protected void onPost(AnsonMsg<DBSyncReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		// 
+		//
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
@@ -79,7 +99,7 @@ public class DBSynode extends ServPort<DBSyncReq> {
 					if (isblank(msg.subFolder, " - - "))
 						throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 					*/
-					rsp = chain.startBlocks(msg.body(0), usr, profilesolver);
+					rsp = chain.startBlocks(msg.body(0), usr, entityResolver);
 				}
 				else if (A.pushExtBlock.equals(a))
 					rsp = chain.uploadBlock(msg.body(0), usr);

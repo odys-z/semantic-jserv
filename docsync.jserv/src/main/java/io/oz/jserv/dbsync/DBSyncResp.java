@@ -3,15 +3,16 @@ package io.oz.jserv.dbsync;
 import java.util.List;
 
 import io.odysz.semantic.jprotocol.AnsonResp;
-import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.SynEntity;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.transact.sql.PageInf;
 
 public class DBSyncResp extends AnsonResp {
 	
 	PageInf pageInf;
-
 	long blockSeqReply;
+	Clobs clobchain;
+	SynEntity entity;
 
 	public List<CleanTask> cleanTasks() {
 		// TODO Auto-generated method stub
@@ -38,6 +39,16 @@ public class DBSyncResp extends AnsonResp {
 	public DBSyncResp doc(SyncDoc fullpath) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public DBSyncResp start(Clobs chain) {
+		this.clobchain = chain;
+		return this;
+	}
+
+	public DBSyncResp entity(SynEntity e) {
+		this.entity = e;
+		return this;
 	}
 
 }

@@ -11,6 +11,7 @@ import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -30,7 +31,7 @@ import io.oz.jserv.docsync.SynodeMode;
  */
 public class CleanTask extends Anson {
 
-	ExtableMeta met;
+	DocTableMeta met;
 	CleantablMeta syn_clean;
 
 	/** entity category */
@@ -76,9 +77,9 @@ public class CleanTask extends Anson {
 		this.conn = conn;
 		res2clean = this.st
 				.select(met.tbl, "l")
-				.whereEq(met.entabl, entabl)
+				.whereEq(met.tbl, entabl)
 				.whereEq(met.synoder, synoder)
-				.whereEq(met.clientpath, clientpath)
+				.whereEq(met.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
 				.<AnResultset, SynState>map((currow) -> {
 					return new SynState(mod, currow.getString("flag"));
