@@ -1,5 +1,6 @@
 package io.odysz.semantic.tier.docs;
 
+import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantics.IUser;
 
 /**
@@ -11,7 +12,7 @@ import io.odysz.semantics.IUser;
  *
  */
 public interface IProfileResolver {
-	String synodeFolder(DocsReq req, IUser usr);
+	String synodeFolder(AnsonBody req, IUser usr);
 	
 	/**
 	 * Modify request on chain ended.

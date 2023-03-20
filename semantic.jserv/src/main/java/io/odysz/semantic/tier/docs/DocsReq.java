@@ -153,7 +153,8 @@ public class DocsReq extends AnsonBody {
 	/**@deprecated replaced by DocsPage.paths */
 	public ArrayList<SyncDoc> syncQueries() { return syncQueries; }
 
-	protected long blockSeq;
+	/** TODO visibility = package */
+	public long blockSeq;
 	public long blockSeq() { return blockSeq; } 
 
 	public DocsReq nextBlock;

@@ -1,7 +1,5 @@
 package io.oz.jserv.dbsync;
 
-import static io.odysz.common.LangExt.isNull;
-
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -222,7 +220,7 @@ public class DBWorker implements Runnable {
 				videos, blocksize, onPushExtProc, onPushExtOk, err);
 		DocsResp res = reslts.get(0);
 		
-		DBSyncReq req = new DBSyncReq(uri, m.tbl)
+		DBSyncReq req = new DBSyncReq(null, uri, m.tbl)
 				.pushEntity(rs.getString(m.synoder), rs.getString(m.fullpath), wind);
 		
 		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.tbl);
@@ -253,7 +251,7 @@ public class DBWorker implements Runnable {
 		String clientpath = rs.getString(m.fullpath);
 		String pname = rs.getString(m.resname);
 
-		DBSyncReq req = new DBSyncReq(uri, m.tbl)
+		DBSyncReq req = new DBSyncReq(null, uri, m.tbl)
 				.askEntity(synoder, clientpath, win);
 		
 		String[] act = AnsonHeader.usrAct(uri, "db-sync", "u/pull-ent", m.tbl);
@@ -265,7 +263,7 @@ public class DBWorker implements Runnable {
 		DBSyncResp resp = client.commit(q, err);
 		
 		// download then update DB
-		req = new DBSyncReq(uri, m.tbl).download(synoder, clientpath);
+		req = new DBSyncReq(null, uri, m.tbl).download(synoder, clientpath);
 		client.download(uri, Port.docsync, req,
 						FilenameUtils.concat("tempFolder", synoder, pname));
 
