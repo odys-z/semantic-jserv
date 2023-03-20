@@ -11,6 +11,8 @@ public class DBSyncResp extends AnsonResp {
 	
 	PageInf pageInf;
 
+	long blockSeqReply;
+
 	public List<CleanTask> cleanTasks() {
 		// TODO Auto-generated method stub
 		return null;

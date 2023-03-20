@@ -5,6 +5,7 @@ import java.util.Date;
 
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
+import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantics.IUser;
@@ -34,7 +35,8 @@ public class DocProfile implements IProfileResolver {
 	}
 	
 	@Override
-	public String synodeFolder(DocsReq req, IUser usr) {
+	public String synodeFolder(AnsonBody reqBody, IUser usr) {
+		DocsReq req = ((DocsReq)reqBody);
 		String cname = req.subFolder;
 		if (this.mode == device)
 			return cname;

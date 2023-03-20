@@ -18,7 +18,10 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
+import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
@@ -27,6 +30,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
+import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.docsync.SyncRobot;
 
 import static io.odysz.common.LangExt.*;
@@ -52,7 +56,7 @@ public class ClobChain {
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	DATranscxt st;
 
-	static HashMap<String, Cloblocks> blockChains;
+	static HashMap<String, Clobs> blockChains;
 
 	@AnsonField(ignoreTo=true)
 	DocTableMeta meta;
@@ -62,6 +66,38 @@ public class ClobChain {
 		this.st = deflst;
 	}
 
+	DocsResp startBlocks(DBSyncReq body, IUser usr)
+			throws IOException, TransException, SQLException {
+
+		String conn = Connects.uri2conn(body.uri());
+		checkDuplicate(conn, ((SyncRobot)usr).deviceId(), body.clientpath, usr);
+
+		if (blockChains == null)
+			blockChains = new HashMap<String, Clobs>(2);
+
+		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
+		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
+
+		Clobs chain = new Clobs(tempDir, body.clientpath);
+
+		// FIXME security breach?
+		String id = usr.sessionId() + " " + chain.clientpath;
+
+		if (blockChains.containsKey(id))
+			throw new SemanticException("Why started again?");
+
+		blockChains.put(id, chain);
+		return new DocsResp()
+				.blockSeq(-1)
+				/*
+				.doc((SyncDoc) new SyncDoc()
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(chain.clientpath));
+					*/
+				.entity(chain);
+	}
+
 	DBSyncResp startBlocks(DBSyncReq body, IUser usr, IProfileResolver profiles)
 			throws IOException, TransException, SQLException, InterruptedException {
 
@@ -69,7 +105,7 @@ public class ClobChain {
 		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
 
 		if (blockChains == null)
-			blockChains = new HashMap<String, Cloblocks>(2);
+			blockChains = new HashMap<String, Clobs>(2);
 
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by SyncRobot. 
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
@@ -79,9 +115,10 @@ public class ClobChain {
 			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
 					body.clientpath, usr.uid(), profiles.getClass().getName());
 		
-		Cloblocks chain = new Cloblocks(tempDir, body.clientpath, body.createDate, saveFolder)
+		Clobs chain = new Clobs(tempDir, body.clientpath)
 				.device(usr.deviceId())
-				.share(body.shareby, body.shareDate, body.shareflag);
+				// .share(body.shareby, body.shareDate, body.shareflag)
+				;
 
 		String id = chainId(usr, body);
 
@@ -134,7 +171,7 @@ public class ClobChain {
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
 
-		Cloblocks chain = blockChains.get(id);
+		Clobs chain = blockChains.get(id);
 		chain.appendBlock(body);
 
 		return new DBSyncResp()
@@ -158,7 +195,7 @@ public class ClobChain {
 	DBSyncResp endBlock(DBSyncReq body, IUser usr, OnChainOk ok)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
-		Cloblocks chain;
+		Clobs chain;
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
 			chain = blockChains.remove(id);

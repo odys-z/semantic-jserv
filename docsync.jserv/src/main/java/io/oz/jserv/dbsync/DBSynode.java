@@ -11,6 +11,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonResp;
@@ -20,6 +21,7 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
@@ -34,6 +36,9 @@ public class DBSynode extends ServPort<DBSyncReq> {
 	 */
 	private static final long serialVersionUID = 1L;
 	private boolean verbose;
+
+	final IProfileResolver profilesolver;
+	final DATranscxt st;
 
 	static HashMap<String, TableMeta> metas;
 
@@ -74,7 +79,7 @@ public class DBSynode extends ServPort<DBSyncReq> {
 					if (isblank(msg.subFolder, " - - "))
 						throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 					*/
-					rsp = chain.startBlocks(profilesolver.onStartPush(msg.body(0), usr), usr, profilesolver);
+					rsp = chain.startBlocks(msg.body(0), usr, profilesolver);
 				}
 				else if (A.pushExtBlock.equals(a))
 					rsp = chain.uploadBlock(msg.body(0), usr);

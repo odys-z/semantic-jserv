@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.tier.docs.BlockChain;
 
 public class DBSyncReq extends AnsonBody {
 	public static class A {
@@ -54,18 +55,23 @@ public class DBSyncReq extends AnsonBody {
 	String synode;
 	String clientpath;
 	TimeWindow window;
+	String uri64;
 
-	protected DBSyncReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
+	boolean reset;
+	DBSyncReq nextBlock;
+	int blockSeq;
+	public DBSyncReq blockSeq(int seq) {
+		blockSeq = seq;
+		return this;
+	}
+
+	protected DBSyncReq(AnsonMsg<? extends AnsonBody> parent, String uri, String tabl) {
 		super(parent, uri);
+		this.tabl = tabl;
 	}
 	
 	public DBSyncReq(String uri, CleanTask cleanTask) {
 		super(null, uri);
-	}
-
-	public DBSyncReq(String uri, String tabl) {
-		super(null, uri);
-		this.tabl = tabl;
 	}
 
 	/**
