@@ -1,9 +1,6 @@
 package io.oz.jserv.dbsync;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.stream.Collectors;
@@ -11,27 +8,19 @@ import java.util.stream.Stream;
 
 import io.odysz.anson.AnsonField;
 import io.odysz.common.EnvPath;
-import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
-import io.odysz.semantic.tier.docs.BlockChain;
-import io.odysz.semantic.tier.docs.DocUtils;
-import io.odysz.semantic.tier.docs.DocsReq;
-import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantic.tier.docs.SynEntity;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
-import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.docsync.SyncRobot;
 
 import static io.odysz.common.LangExt.*;
@@ -72,7 +61,7 @@ public class ClobChain {
 		this.st = deflst;
 	}
 
-	DBSyncResp startBlocks(DBSyncReq body, IUser usr, IDBEntityResolver profiles)
+	DBSyncResp startBlocks(DBSyncReq body, IUser usr, IDBEntityResolver entresolve)
 			throws IOException, TransException, SQLException, InterruptedException {
 
 		String conn = Connects.uri2conn(body.uri());
@@ -86,7 +75,7 @@ public class ClobChain {
 
 		Clobs chain = new Clobs(tempDir, body.clientpath)
 				.device(usr.deviceId())
-				.entity(profiles.toEntity(body));
+				.entity(entresolve.toEntity(body));
 
 		String id = chainId(usr, body);
 
@@ -167,22 +156,10 @@ public class ClobChain {
 		} else
 			throw new SemanticException("Block chain to be end doesn't exist.");
 
-		// insert photo (empty uri)
-		String conn = Connects.uri2conn(body.uri());
-		SynEntity ent = chain.parseEntity();
-		ent.uri = null; // suppress semantics ExtFile, and support me (query befor move?).
-
-		String pid = createFile(st, conn, ent, meta, usr, ok);
-
-		// move file
-		String targetPath = resolvExtroot(st, conn, pid, usr, meta);
-		if (verbose)
-			Utils.logi("   %s\n-> %s", chain.outputPath, targetPath);
-		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
-
 		return new DBSyncResp()
 				.blockSeq(body.blockSeq())
-				.entity(ent.recId(pid));
+				// .entity(entityResolver.onEndChain(chain))
+				;
 	}
 
 	DBSyncResp abortBlock(DBSyncReq body, IUser usr)
@@ -205,7 +182,8 @@ public class ClobChain {
 			.collect(Collectors.joining("."));
 	}
 
-	public static String createFile(DATranscxt st, String conn, SynEntity ent,
+	/** TODO move to DocsChain
+ 	public static String createFile(DATranscxt st, String conn, SynEntity ent,
 			DocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
 		Update post = DBSynode.onEncreate(ent, meta, usr);
@@ -215,7 +193,7 @@ public class ClobChain {
 
 		return DocUtils.createFileB64(conn, ent, usr, meta, st, post);
 	}
-
+	*/
 
 	/**
 	 * Resolve file root with samantics handler of {@link smtype#extFilev2}.

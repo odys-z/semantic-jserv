@@ -29,6 +29,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.dbsync.ClobChain.OnChainOk;
 import io.oz.jserv.dbsync.DBSyncReq.A;
 import io.oz.jserv.docsync.SyncRobot;
 import io.oz.jserv.docsync.SynodeMeta;
@@ -61,6 +62,9 @@ public class DBSynode extends ServPort<DBSyncReq> {
 			e.printStackTrace();
 		}
 	}
+
+	private IDBEntityResolver entityResolver;
+	private OnChainOk onBlocksFinish;
 
 	public DBSynode() {
 		super(Port.dbsyncer);
@@ -123,6 +127,8 @@ public class DBSynode extends ServPort<DBSyncReq> {
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
+		} catch (InterruptedException e) {
+			write(resp, err(MsgCode.exIo, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
