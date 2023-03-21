@@ -17,29 +17,25 @@ import io.odysz.common.Configs;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.tier.docs.DocsReq;
-import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.dbsync.ClobChain.OnChainOk;
+import io.oz.jserv.dbsync.ClobEntity.OnChainOk;
+import io.oz.jserv.dbsync.ClobEntity.OnChainStart;
 import io.oz.jserv.dbsync.DBSyncReq.A;
 import io.oz.jserv.docsync.SyncRobot;
 import io.oz.jserv.docsync.SynodeMeta;
+import io.oz.jserv.docsync.SynodeMode;
 
 @WebServlet(description = "Cleaning tasks manager", urlPatterns = { "/sync.db" })
 public class DBSynode extends ServPort<DBSyncReq> {
-
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 1L;
 	private static boolean verbose;
 
@@ -55,7 +51,7 @@ public class DBSynode extends ServPort<DBSyncReq> {
 			metas = new HashMap<String, TableMeta>();
 			synodesMeta = new SynodeMeta();
 
-			anonymous = new SyncRobot("Robot Syncer");
+			anonymous = new SyncRobot("TODO: synode.xml/id");
 
 			verbose = Configs.getBoolean("docsync.debug");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
@@ -63,11 +59,13 @@ public class DBSynode extends ServPort<DBSyncReq> {
 		}
 	}
 
-	private IDBEntityResolver entityResolver;
+	private final SynodeMode mode;
 	private OnChainOk onBlocksFinish;
+	private OnChainStart onBlockstart;
 
 	public DBSynode() {
 		super(Port.dbsyncer);
+		mode = SynodeMode.hub; // FIXME, load syndoe.xml
 	}
 
 	@Override
@@ -97,19 +95,19 @@ public class DBSynode extends ServPort<DBSyncReq> {
 			else if (A.cleans.equals(a))
 				;
 			else {
-				ClobChain chain = new ClobChain((DocTableMeta) metas.get(dbr.tabl), st);
-				if (A.pushExtStart.equals(a)) {
+				ClobEntity chain = new ClobEntity((DocTableMeta) metas.get(dbr.tabl), st);
+				if (A.pushClobStart.equals(a)) {
 					/*
 					if (isblank(msg.subFolder, " - - "))
 						throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 					*/
-					rsp = chain.startBlocks(msg.body(0), usr, entityResolver);
+					rsp = chain.startBlocks(msg.body(0), usr, onBlockstart);
 				}
-				else if (A.pushExtBlock.equals(a))
+				else if (A.pushCloblock.equals(a))
 					rsp = chain.uploadBlock(msg.body(0), usr);
-				else if (A.pushExtEnd.equals(a))
-					rsp = chain.endBlock(msg.body(0), usr, onBlocksFinish);
-				else if (A.pushExtAbort.equals(a))
+				else if (A.pushClobEnd.equals(a))
+					rsp = chain.endBlock(msg.body(0), usr, mode, onBlocksFinish);
+				else if (A.pushClobAbort.equals(a))
 					rsp = chain.abortBlock(msg.body(0), usr);
 
 				else throw new SemanticException(String.format(
