@@ -1,5 +1,7 @@
 package io.oz.jserv.dbsync;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -7,43 +9,58 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.odysz.anson.AnsonField;
-import io.odysz.common.EnvPath;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFilev2;
-import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
-import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantics.ISemantext;
+import io.odysz.semantic.tier.docs.SynEntity;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docsync.SynState;
+import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 import io.oz.jserv.docsync.SyncRobot;
-
-import static io.odysz.common.LangExt.*;
+import io.oz.jserv.docsync.SynodeMode;
 
 /**
- * C-lob chians, managing
- * @author Alice
+ * A db entity record with a c-lob, managing pushing of c-lobs' sequence.
+ * 
+ * (Pulling is response and handled in file stream way)
+ * 
+ * @author odys-z@github.com
  *
  */
-public class ClobChain {
+public class ClobEntity {
 
 	public interface OnChainOk {
 		/**
 		 * {@link Docsyncer} use this as a chance of update user's data
 		 * when block chain finished successfully.
 		 *
-		 * @param post
-		 * @param d
+		 * @param mainst
+		 * @param ent the entity created with {@link OnChainStart}.
 		 * @param meta
 		 * @param robot
 		 * @return either the original post statement or a new one.
 		 */
-		Update onDocreate(Update post, SyncDoc d, DocTableMeta meta, IUser robot);
+		Update onEnd(Statement<?> mainst, SynEntity ent, DocTableMeta meta, IUser robot);
+	}
+
+	public interface OnChainStart {
+		/**
+		 * {@link Docsyncer} use this as a chance of creating user's data object
+		 * when block chain started.
+		 *
+		 * @param post
+		 * @param req
+		 * @param robot
+		 * @param meta
+		 * @return either the original post statement or a new one.
+		 */
+		SynEntity onStart(DBSyncReq req, IUser robot, DocTableMeta meta);
 	}
 
 	public static final boolean verbose = true;
@@ -56,12 +73,12 @@ public class ClobChain {
 	@AnsonField(ignoreTo=true)
 	DocTableMeta meta;
 
-	public ClobChain (DocTableMeta meta, DATranscxt deflst) {
+	public ClobEntity (DocTableMeta meta, DATranscxt deflst) {
 		this.meta = meta;
 		this.st = deflst;
 	}
 
-	DBSyncResp startBlocks(DBSyncReq body, IUser usr, IDBEntityResolver entresolve)
+	DBSyncResp startBlocks(DBSyncReq body, IUser usr, OnChainStart entresolve)
 			throws IOException, TransException, SQLException, InterruptedException {
 
 		String conn = Connects.uri2conn(body.uri());
@@ -75,7 +92,7 @@ public class ClobChain {
 
 		Clobs chain = new Clobs(tempDir, body.clientpath)
 				.device(usr.deviceId())
-				.entity(entresolve.toEntity(body));
+				.entity(entresolve.onStart(body, usr, meta));
 
 		String id = chainId(usr, body);
 
@@ -87,7 +104,10 @@ public class ClobChain {
 		blockChains.put(id, chain);
 		return new DBSyncResp()
 				.blockSeq(-1)
-				.start(chain);
+				.entity(new SynEntity()
+						.synode(chain.device)
+						.clientpath(chain.clientpath))
+				;
 	}
 
 	void checkDuplication(DBSyncReq body, SyncRobot usr)
@@ -127,12 +147,9 @@ public class ClobChain {
 
 		return new DBSyncResp()
 				.blockSeq(body.blockSeq())
-				/*
-				.doc((SyncDoc) new SyncDoc()
-					.clientname(chain.clientname)
-					.cdate(body.createDate)
-					.fullpath(chain.clientpath));
-				*/
+				.entity(new SynEntity()
+						.synode(chain.device)
+						.clientpath(chain.clientpath))
 				;
 	}
 
@@ -140,26 +157,65 @@ public class ClobChain {
 	 * @param body
 	 * @param usr for synode requires, it should be type SyncRobot
 	 * @param ok
+	 * @param synmode 
 	 * @return response
 	 * @throws SQLException
 	 * @throws IOException
 	 * @throws InterruptedException
 	 * @throws TransException
 	 */
-	DBSyncResp endBlock(DBSyncReq body, IUser usr, OnChainOk ok)
+	DBSyncResp endBlock(DBSyncReq body, IUser usr, SynodeMode synmode, OnChainOk ok)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
-		Clobs chain;
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
-			chain = blockChains.remove(id);
+
+			Clobs chain = blockChains.remove(id);
+			String conn = Connects.uri2conn(body.uri());
+			Statement<?> stmt = null;
+			if (st.exists(conn, meta.tbl, id))
+				stmt = updatent(meta, st, synmode, conn, chain, usr);
+			else
+				stmt = creatent(meta, st, synmode, chain, usr);
+
+			ok.onEnd(stmt, chain.entity, meta, usr);
+
+			return new DBSyncResp()
+				.blockSeq(body.blockSeq())
+				.entity(new SynEntity()
+						.synode(chain.device)
+						.clientpath(chain.clientpath))
+				;
 		} else
 			throw new SemanticException("Block chain to be end doesn't exist.");
+	}
 
-		return new DBSyncResp()
-				.blockSeq(body.blockSeq())
-				// .entity(entityResolver.onEndChain(chain))
-				;
+	// TODO static for moving to DocTablemeta?
+	static protected Statement<?> creatent(DocTableMeta m, DATranscxt st, SynodeMode synmode,
+			Clobs chain, IUser usr) throws TransException {
+
+		return st.insert(m.tbl, usr)
+				// here is where the finite state machine used
+				.nv("", "");
+	}
+
+	// TODO static for moving to DocTablemeta?
+	static Statement<?> updatent(DocTableMeta m, DATranscxt st, SynodeMode mode, String conn,
+			Clobs chain, IUser usr) throws TransException {
+
+		SynState from = loadState(m, st, mode, chain);
+
+		SyncEvent e = SyncEvent.pushJnodend;
+		
+		return st.update(m.tbl, usr)
+				// here is where the finite state machine used
+				.nv(m.syncflag, from.to(e).toString())
+				.whereEq(m.synoder, chain.device)
+				.whereEq(m.fullpath, chain.clientpath);
+	}
+
+	static SynState loadState(DocTableMeta met, DATranscxt st, SynodeMode mod, Clobs chain) {
+		return new SynState(null, null);
 	}
 
 	DBSyncResp abortBlock(DBSyncReq body, IUser usr)
@@ -182,7 +238,8 @@ public class ClobChain {
 			.collect(Collectors.joining("."));
 	}
 
-	/** TODO move to DocsChain
+	/**TODO
+	 * TODO move to DocsChain
  	public static String createFile(DATranscxt st, String conn, SynEntity ent,
 			DocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
@@ -194,33 +251,4 @@ public class ClobChain {
 		return DocUtils.createFileB64(conn, ent, usr, meta, st, post);
 	}
 	*/
-
-	/**
-	 * Resolve file root with samantics handler of {@link smtype#extFilev2}.
-	 *
-	 * @param defltst
-	 * @param conn
-	 * @param docId
-	 * @param usr
-	 * @param meta
-	 * @return root resolved by {@link smtype#extFilev2}
-	 * @throws TransException
-	 * @throws SQLException
-	 */
-	static String resolvExtroot(DATranscxt defltst, String conn, String docId, IUser usr, DocTableMeta meta)
-			throws TransException, SQLException {
-		ISemantext stx = defltst.instancontxt(conn, usr);
-		AnResultset rs = (AnResultset) defltst
-				.select(meta.tbl)
-				.col("uri").col("folder")
-				.whereEq("pid", docId).rs(stx)
-				.rs(0);
-
-		if (!rs.next())
-			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
-
-		String extroot = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2)).getFileRoot();
-		return EnvPath.decodeUri(extroot, rs.getString("uri"));
-	}
-
 }

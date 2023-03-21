@@ -30,7 +30,7 @@ public class SynState extends Anson {
 		triggerings = new ArrayList<SyncAction>(1);
 	}
 	
-	SynState to(SyncEvent e) throws SemanticException {
+	public SynState to(SyncEvent e) throws SemanticException {
 		clear();
 		
 		if (priv.equals(now) || (pushing.equals(now) && me == SynodeMode.bridge)) {

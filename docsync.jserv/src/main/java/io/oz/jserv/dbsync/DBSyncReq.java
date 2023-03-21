@@ -25,13 +25,13 @@ public class DBSyncReq extends AnsonBody {
 		/** stream download */
 		public static final String download = "r/bin";
 
-		public static final String pushExtStart = "u/push-start";
+		public static final String pushClobStart = "u/push-start";
 
-		public static final String pushExtBlock = "u/push-block";
+		public static final String pushCloblock = "u/push-block";
 
-		public static final String pushExtEnd = "c/push-end";
+		public static final String pushClobEnd = "c/push-end";
 
-		public static final String pushExtAbort = "c/push-abort";
+		public static final String pushClobAbort = "c/push-abort";
 	}
 
 	/**

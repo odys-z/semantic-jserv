@@ -11,12 +11,13 @@ public class DBSyncResp extends AnsonResp {
 	
 	PageInf pageInf;
 	long blockSeqReply;
-	Clobs clobchain;
+	// Clobs clobchain;
 	SynEntity entity;
 
+	List<CleanTask> tasks;
+
 	public List<CleanTask> cleanTasks() {
-		// TODO Auto-generated method stub
-		return null;
+		return tasks;
 	}
 
 	/**
@@ -33,18 +34,20 @@ public class DBSyncResp extends AnsonResp {
 
 	public DBSyncResp blockSeq(long blockSeq) {
 		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	public DBSyncResp doc(SyncDoc fullpath) {
 		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
+	/*
 	public DBSyncResp start(Clobs chain) {
 		this.clobchain = chain;
 		return this;
 	}
+	*/
 
 	public DBSyncResp entity(SynEntity e) {
 		this.entity = e;

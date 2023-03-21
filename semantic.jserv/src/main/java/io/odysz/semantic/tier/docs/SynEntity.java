@@ -13,10 +13,11 @@ import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;
 
 /**
- * A sync entity, server side and jprotocol oriented data record,
- * used for record synchronizing in docsync.jserv. 
+ * A synchronizable entity managed by the package, also a server side
+ * and jprotocol oriented data record, used for record synchronizing
+ * in docsync.jserv. 
  * 
- * @author ody
+ * @author Ody
  */
 public class SynEntity extends Anson {
 	protected static String[] synpageCols;
@@ -136,6 +137,11 @@ public class SynEntity extends Anson {
 		if (!isNull(flags)) {
 			syncFlag = flags[0];
 		}
+		return this;
+	}
+
+	public SynEntity clientpath(String p) {
+		this.clientpath = p;
 		return this;
 	}
 }
