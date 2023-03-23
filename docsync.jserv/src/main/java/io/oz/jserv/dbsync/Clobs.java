@@ -13,7 +13,6 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
-import io.odysz.semantic.tier.docs.SynEntity;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -26,7 +25,6 @@ import io.odysz.transact.x.TransException;
  */
 public class Clobs {
 
-	// public final String saveFolder;
 	public final String clientpath;
 	public final String clientname;
 
@@ -37,9 +35,6 @@ public class Clobs {
 
 	protected final DBSyncReq waitings;
 
-//	public String shareby;
-//	public String shareDate;
-//	public String shareflag;
 	String device;
 
 	SynEntity entity;

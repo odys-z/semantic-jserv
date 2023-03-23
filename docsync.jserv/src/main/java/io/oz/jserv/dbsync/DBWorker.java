@@ -29,6 +29,7 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.dbsync.DBSyncReq.A;
 import io.oz.jserv.docsync.SynState;
 import io.oz.jserv.docsync.SyncRobot;
 import io.oz.jserv.docsync.Synclientier;
@@ -113,7 +114,7 @@ public class DBWorker implements Runnable {
 		// 3. Merge (reduce clean tasks)
 		// 4. Close the clean session with timestamp
 		
-		window = openClean();
+		window = openClean("h_photos");
 		
 		meargeCleans(window);
 
@@ -124,14 +125,19 @@ public class DBWorker implements Runnable {
 		}
 	}
 	
-	private TimeWindow openClean() {
-		// TODO Auto-generated method stub
-		return null;
+	private TimeWindow openClean(String taskName) {
+		return new TimeWindow(taskName, blocksize)
+				.start(new Date())
+				.end(new Date());
 	}
 
-	private void meargeCleans(TimeWindow window)
+	private void meargeCleans(TimeWindow windw)
 			throws SQLException, AnsonException, IOException, TransException {
-		DBSyncResp rpl = client.commit(null, err); // A = cleans
+		// get clean tasks from upper
+		DBSyncReq req = new DBSyncReq(null, uri, cleanMeta.tbl)
+					.cleanTasks(windw);
+		AnsonMsg<DBSyncReq> open = client.<DBSyncReq>userReq(uri, Port.dbsyncer, req);
+		DBSyncResp rpl = client.commit(open, err); // A = cleans
 		List<CleanTask> tasks = rpl.cleanTasks();
 			
 		// select synodee res from syn_clean where filter-window
@@ -140,7 +146,7 @@ public class DBWorker implements Runnable {
 			task.loadLocal(localSt, conn, robot, mode)
 				.merge()
 				.closeLocal(robot)
-				.fireReqs(client, err);
+				.fileReqs(client, err);
 		}
 	}
 
@@ -202,7 +208,6 @@ public class DBWorker implements Runnable {
 		}
 		
 	}
-	
 
 	private void pushExtrec(DocTableMeta m, AnResultset rs, TimeWindow wind)
 			throws SQLException, AnsonException, IOException, TransException {

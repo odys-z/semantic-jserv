@@ -118,5 +118,11 @@ public class DBSyncReq extends AnsonBody {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+	
+	public DBSyncReq cleanTasks(TimeWindow wind) {
+		this.window = wind;
+		a = A.cleans;
+		return this;
+	}
 
 }

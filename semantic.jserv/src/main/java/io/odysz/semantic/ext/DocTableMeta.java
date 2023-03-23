@@ -55,6 +55,7 @@ public class DocTableMeta extends TableMeta {
 
 	public final String syncflag;
 	public final String shareflag;
+
 	// public final SharelogMeta sharelog;
 	
 	public DocTableMeta(String tbl, String pk, String conn) {
