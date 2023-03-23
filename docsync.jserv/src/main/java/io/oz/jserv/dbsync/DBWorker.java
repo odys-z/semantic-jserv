@@ -145,8 +145,10 @@ public class DBWorker implements Runnable {
 		for (CleanTask task : tasks) {
 			task.loadLocal(localSt, conn, robot, mode)
 				.merge()
-				.closeLocal(robot)
-				.fileReqs(client, err);
+				.closeLocal(robot);
+			
+			if (task.checkEntities())
+				task.fileReqs(client, err);
 		}
 	}
 

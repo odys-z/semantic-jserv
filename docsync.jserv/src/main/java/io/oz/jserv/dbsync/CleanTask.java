@@ -12,11 +12,14 @@ import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docsync.SynodeMode;
 
@@ -184,9 +187,14 @@ public class CleanTask extends Anson {
 	}
 
 
-	public boolean checkEntities() {
-		winChecks;
-		return this;
+	public boolean checkEntities() throws SQLException, SemanticException, TransException {
+		AnResultset rs = (AnResultset) st.select(met.tbl, "e")
+			.col(Funcall.count(met.pk), "c")
+			.whereEq(met.synoder, "")
+			.rs(st.instancontxt(Connects.uri2conn(uri), robot))
+			.rs(0);
+		rs.next();
+		return rs.getInt("c") > 0;
 	}
 
 	/**
