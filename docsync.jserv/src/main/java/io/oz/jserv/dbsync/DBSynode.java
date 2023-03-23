@@ -101,12 +101,12 @@ public class DBSynode extends ServPort<DBSyncReq> {
 					if (isblank(msg.subFolder, " - - "))
 						throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 					*/
-					rsp = chain.startBlocks(msg.body(0), usr, onBlockstart);
+					rsp = chain.startChain(msg.body(0), usr, onBlockstart);
 				}
 				else if (A.pushCloblock.equals(a))
-					rsp = chain.uploadBlock(msg.body(0), usr);
+					rsp = chain.uploadClob(msg.body(0), usr);
 				else if (A.pushClobEnd.equals(a))
-					rsp = chain.endBlock(msg.body(0), usr, mode, onBlocksFinish);
+					rsp = chain.endChain(msg.body(0), usr, mode, onBlocksFinish);
 				else if (A.pushClobAbort.equals(a))
 					rsp = chain.abortBlock(msg.body(0), usr);
 
@@ -140,7 +140,8 @@ public class DBSynode extends ServPort<DBSyncReq> {
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	private DBSyncResp onOpenClean(DBSyncReq req, IUser usr) throws SQLException, TransException {
+	private DBSyncResp onOpenClean(DBSyncReq req, IUser usr)
+			throws SQLException, TransException {
 		return null;
 	}
 

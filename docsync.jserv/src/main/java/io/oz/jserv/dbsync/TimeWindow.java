@@ -20,7 +20,9 @@ public class TimeWindow extends Anson {
 	long size;
 	
 	public TimeWindow (String tabl, long size) {
-		windw = new ArrayList<String>();
+		windw = new ArrayList<String>(2);
+		windw.add(null);
+		windw.add(null);
 		this.size = size;
 		this.tabl = tabl;
 	}
@@ -31,5 +33,23 @@ public class TimeWindow extends Anson {
 
 	Date right() throws ParseException {
 		return DateFormat.parseDateTime(windw.get(windw.size() - 1));
+	}
+
+	public TimeWindow start(Date d0) {
+		return start(DateFormat.formatime(d0));
+	}
+
+	public TimeWindow start(String d0) {
+		windw.set(0, d0);
+		return this;
+	}
+
+	public TimeWindow end(Date ddl) {
+		return end(DateFormat.formatime(ddl));
+	}
+
+	public TimeWindow end(String ddl) {
+		windw.set(1, ddl);
+		return this;
 	}
 }

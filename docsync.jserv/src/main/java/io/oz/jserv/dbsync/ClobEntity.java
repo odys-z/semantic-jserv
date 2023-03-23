@@ -13,7 +13,6 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
-import io.odysz.semantic.tier.docs.SynEntity;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Statement;
@@ -78,7 +77,7 @@ public class ClobEntity {
 		this.st = deflst;
 	}
 
-	DBSyncResp startBlocks(DBSyncReq body, IUser usr, OnChainStart entresolve)
+	DBSyncResp startChain(DBSyncReq body, IUser usr, OnChainStart entresolve)
 			throws IOException, TransException, SQLException, InterruptedException {
 
 		String conn = Connects.uri2conn(body.uri());
@@ -137,7 +136,7 @@ public class ClobEntity {
 					device, clientpath);
 	}
 
-	DBSyncResp uploadBlock(DBSyncReq body, IUser usr) throws IOException, TransException {
+	DBSyncResp uploadClob(DBSyncReq body, IUser usr) throws IOException, TransException {
 		String id = chainId(usr, body);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
@@ -164,7 +163,7 @@ public class ClobEntity {
 	 * @throws InterruptedException
 	 * @throws TransException
 	 */
-	DBSyncResp endBlock(DBSyncReq body, IUser usr, SynodeMode synmode, OnChainOk ok)
+	DBSyncResp endChain(DBSyncReq body, IUser usr, SynodeMode synmode, OnChainOk ok)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
 		if (blockChains.containsKey(id)) {
