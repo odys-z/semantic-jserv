@@ -97,7 +97,7 @@ public class CleanTask extends Anson {
 			throws TransException, SQLException {
 		this.st = st;
 		this.conn = conn;
-		res2clean = this.st
+		res2clean = ((AnResultset) st
 				.select(met.tbl, "e")
 				.j(syn_clean.tbl, "c", String.format("e.%s = c.%s and e.%s = c.%s",
 						met.synoder, syn_clean.synoder, met.fullpath, syn_clean.clientpath))
@@ -108,7 +108,8 @@ public class CleanTask extends Anson {
 				.whereEq(met.synoder, synoder)
 				.whereEq(met.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
-				.<AnResultset, CleanState>map("synodee", (currow) -> {
+				.rs(0))
+				.<CleanState>map("synodee", (currow) -> {
 					return new CleanState(
 							currow.getString("synodee"),
 							currow.getString("syn"),
@@ -141,8 +142,8 @@ public class CleanTask extends Anson {
 	E-dev   | E-dev   |
 	--------+---------+---------------------------------------------
 	NULL    | R/D/E   |  local insert, entity.syncflag = syn.flag
-			|         |  * in case of entity.syncflag != 'delete': 
-			|         |     table synchronizing required, window can not be moved forward
+	        |         |  * in case of entity.syncflag != 'delete': 
+	        |         |     table synchronizing required, window can not be moved forward
 	
 	[1] Impossible for the first request as this synodee at least must exists 
 	 * </pre>

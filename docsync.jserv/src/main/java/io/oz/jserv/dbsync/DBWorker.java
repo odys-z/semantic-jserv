@@ -249,12 +249,15 @@ public class DBWorker implements Runnable {
 	 * @param m
 	 * @param rs of which the current row will be queried for pull a resource
 	 * @param win
-	 * @throws SQLException 
-	 * @throws IOException 
-	 * @throws AnsonException 
+	 * @throws SQLException
+	 * @throws IOException
+	 * @throws AnsonException
 	 * @throws SemanticException 
 	 */
-	private void pullExtrec(DocTableMeta m, AnResultset rs, TimeWindow win) throws SQLException, SemanticException, AnsonException, IOException { String synoder = rs.getString(m.synoder);
+	private void pullExtrec(DocTableMeta m, AnResultset rs, TimeWindow win)
+			throws SQLException, SemanticException, AnsonException, IOException {
+		
+		String synoder = rs.getString(m.synoder);
 		String clientpath = rs.getString(m.fullpath);
 		String pname = rs.getString(m.resname);
 
