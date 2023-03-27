@@ -59,9 +59,6 @@ public class CleanTask extends Anson {
 
 	ArrayList<String> erasings;
 
-	@AnsonField(ignoreTo=true, ignoreFrom=true)
-	ArrayList<String> loclosings;
-
 	DATranscxt st;
 	String conn;
 	IUser robot;
@@ -150,8 +147,6 @@ public class CleanTask extends Anson {
 	 * @return this
 	 */
 	public CleanTask merge() {
-		if (this.loclosings != null) loclosings.clear();
-		else loclosings = new ArrayList<String>();
 
 		if (this.rejects != null) rejects.clear();
 		else rejects = new ArrayList<String>();
@@ -162,7 +157,7 @@ public class CleanTask extends Anson {
 		if (this.deletes != null) deletes.clear();
 		else deletes = new ArrayList<String>();
 
-		for (CleanState remote : synodees ) {
+		for (CleanState remote : synodees) {
 			CleanState loc = res2clean.remove(remote.synodee);
 			if (loc == null) {
 				// NULL - R/D/E
@@ -172,21 +167,13 @@ public class CleanTask extends Anson {
 			}
 			else if (loc.is(CleanState.E)) {
 				// E  -  D/R/E
-				if (!loc.is(CleanState.E))
+				if (!remote.is(CleanState.E))
 					erasings.add(loc.synodee);
 			}
 		}
 
-		if (res2clean.size() > 0) {
-			// Now res2cleans is that of rep.syn is NULL
-			// - entity.sync != 'delete' shouldn't happen in this round
-			for (CleanState close : res2clean.values())
-				loclosings.add(close.synodee);
-		}
-		
 		return this;
 	}
-
 
 	public boolean checkEntities() throws SQLException, SemanticException, TransException {
 		AnResultset rs = (AnResultset) st.select(met.tbl, "e")
@@ -201,6 +188,9 @@ public class CleanTask extends Anson {
 	/**
 	 * Close local entity (delete permanently) if merge results required.
 	 * 
+	 * After {@link #merge()}, res2cleans is that of rep.syn is NULL
+	 * - entity.sync != 'delete' shouldn't happen in this round
+	 * 
 	 * @param usr
 	 * @return this
 	 * @throws TransException
@@ -209,13 +199,22 @@ public class CleanTask extends Anson {
 	public CleanTask closeLocal(IUser usr)
 			throws TransException, SQLException {
 		this.robot = usr;
-		if(loclosings != null) {
-			st.delete(syn_clean.tabl, usr)
-			  .whereEq(syn_clean.synoder, synoder)
-			  .whereEq(syn_clean.clientpath, clientpath)
-			  .whereIn(syn_clean.synodee, loclosings)
-			  // FIXME trigger post entity deletion?
-			  .d(st.instancontxt(conn, usr));
+
+		if (res2clean.size() > 0) {
+			ArrayList<String> loclosings = new ArrayList<String>(res2clean.size());
+			for (CleanState close : res2clean.values())
+				loclosings.add(close.synodee);
+
+			res2clean.clear();
+
+			if(loclosings.size() > 0) {
+				st.delete(syn_clean.tabl, usr)
+				  .whereEq(syn_clean.synoder, synoder)
+				  .whereEq(syn_clean.clientpath, clientpath)
+				  .whereIn(syn_clean.synodee, loclosings)
+				  // FIXME trigger post entity deletion?
+				  .d(st.instancontxt(conn, usr));
+			}
 		}
 		return this;
 	}

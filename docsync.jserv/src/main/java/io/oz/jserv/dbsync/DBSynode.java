@@ -93,7 +93,9 @@ public class DBSynode extends ServPort<DBSyncReq> {
 			if (A.open.equals(a))
 				rsp = onOpenClean(dbr, usr);
 			else if (A.cleans.equals(a))
-				;
+				rsp = onQuryCleans(dbr, usr);
+			else if (A.pushDRE.equals(a))
+				rsp = onMergedCleans(dbr, usr);
 			else {
 				ClobEntity chain = new ClobEntity((DocTableMeta) metas.get(dbr.tabl), st);
 				if (A.pushClobStart.equals(a)) {
@@ -133,14 +135,40 @@ public class DBSynode extends ServPort<DBSyncReq> {
 	}
 
 	/**
+	 * Open a clean session by reply with a time window
+	 * [syn_stamp.cleanstamp, current_stamp).
+	 * @param dbr
+	 * @param usr
+	 * @return response
+	 */
+	protected DBSyncResp onQuryCleans(DBSyncReq dbr, IUser usr) {
+		DBSyncResp resp = new DBSyncResp().cleanWindow(dbr.tabl);
+		return resp;
+	}
+
+	/**
+	 * Handle rejects, erased and deleted, of which closed are also collected.
+	 * 
+	 * @param dbr
+	 * @param usr
+	 * @return reply
+	 */
+	protected AnsonResp onMergedCleans(DBSyncReq dbr, IUser usr) {
+		DBSyncResp resp = new DBSyncResp().cleanWindow(dbr.window)
+				; // and collect closing entities of this session
+		return resp;
+	}
+
+	/**
 	 * Open a clean session by reply with a time window.
+	 * @deprecated
 	 * @param req
 	 * @param usr
-	 * @return
+	 * @return response
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	private DBSyncResp onOpenClean(DBSyncReq req, IUser usr)
+	protected DBSyncResp onOpenClean(DBSyncReq req, IUser usr)
 			throws SQLException, TransException {
 		return null;
 	}
