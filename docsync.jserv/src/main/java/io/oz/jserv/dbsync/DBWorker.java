@@ -19,9 +19,9 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
@@ -29,7 +29,6 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.dbsync.DBSyncReq.A;
 import io.oz.jserv.docsync.SynState;
 import io.oz.jserv.docsync.SyncRobot;
 import io.oz.jserv.docsync.Synclientier;
@@ -72,6 +71,7 @@ public class DBWorker implements Runnable {
 
 	protected JProtocol.OnProcess onPushExtProc;
 	protected JProtocol.OnDocOk onPushExtOk;
+	protected List<CleanTask> tasks;
 
 	public DBWorker(String synode, SynodeMode m) {
 		myId = synode;
@@ -125,21 +125,20 @@ public class DBWorker implements Runnable {
 		}
 	}
 	
-	private TimeWindow openClean(String taskName) {
-		return new TimeWindow(taskName, blocksize)
-				.start(new Date())
-				.end(new Date());
+	private TimeWindow openClean(String taskName)
+			throws SemanticException, AnsonException, IOException {
+		// get clean tasks from upper
+		DBSyncReq req = new DBSyncReq(null, uri, cleanMeta.tbl)
+					.cleanTasks();
+		AnsonMsg<DBSyncReq> cleans = client.<DBSyncReq>userReq(uri, Port.dbsyncer, req);
+		DBSyncResp rpl = client.commit(cleans, err);
+		
+		tasks = rpl.cleanTasks();
+		return rpl.cleanWin;
 	}
 
 	private void meargeCleans(TimeWindow windw)
 			throws SQLException, AnsonException, IOException, TransException {
-		// get clean tasks from upper
-		DBSyncReq req = new DBSyncReq(null, uri, cleanMeta.tbl)
-					.cleanTasks(windw);
-		AnsonMsg<DBSyncReq> open = client.<DBSyncReq>userReq(uri, Port.dbsyncer, req);
-		DBSyncResp rpl = client.commit(open, err); // A = cleans
-		List<CleanTask> tasks = rpl.cleanTasks();
-			
 		// select synodee res from syn_clean where filter-window
 		// group by tabl, synoder, clientpath
 		for (CleanTask task : tasks) {

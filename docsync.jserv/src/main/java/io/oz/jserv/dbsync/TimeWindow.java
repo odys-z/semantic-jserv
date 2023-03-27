@@ -14,6 +14,9 @@ import io.odysz.common.DateFormat;
  */
 public class TimeWindow extends Anson {
 	ArrayList<String> windw;
+	
+	/** clock yyyy-MM-dd hh:mm:ss */
+	String GMT;
 
 	String tabl;
 

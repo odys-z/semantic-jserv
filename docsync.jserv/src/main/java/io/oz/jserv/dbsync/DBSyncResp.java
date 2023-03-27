@@ -14,6 +14,8 @@ public class DBSyncResp extends AnsonResp {
 	SynEntity entity;
 
 	List<CleanTask> tasks;
+	
+	TimeWindow cleanWin;
 
 	public List<CleanTask> cleanTasks() {
 		return tasks;
@@ -50,6 +52,16 @@ public class DBSyncResp extends AnsonResp {
 
 	public DBSyncResp entity(SynEntity e) {
 		this.entity = e;
+		return this;
+	}
+
+	public DBSyncResp cleanWindow(String tbl) {
+		cleanWin = new TimeWindow(tbl, 0); 
+		return this;
+	}
+
+	public DBSyncResp cleanWindow(TimeWindow win) {
+		cleanWin = win;
 		return this;
 	}
 

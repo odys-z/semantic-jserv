@@ -7,10 +7,12 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 
 public class DBSyncReq extends AnsonBody {
 	public static class A {
-		/** open a clean session (negotiation task size?) */
+		/** open a clean session (negotiation task size?)
+		 * @deprecated */
 		public static final String open = "r/open";
 
-		/** query clean tasks */
+		/**Open a clean session,
+		 * query clean tasks (negotiation task size?).*/
 		public static final String cleans = "r/cleans";
 
 		/** query a entity record */
@@ -20,7 +22,7 @@ public class DBSyncReq extends AnsonBody {
 		public static final String pushEntity = "u/entity";
 
 		/** push merged results: deletings, rejects, erasings */
-		public static final String pushMerged = "u/mergeds";
+		public static final String pushDRE = "u/mergeds";
 
 		/** stream download */
 		public static final String download = "r/bin";
@@ -73,6 +75,13 @@ public class DBSyncReq extends AnsonBody {
 		super(null, uri);
 	}
 
+//	public DBSyncReq openClean() {
+////		return new TimeWindow(taskName, blocksize)
+////				.start(new Date())
+////				.end(new Date());
+//		return this;
+//	}
+
 	/**
 	 * <p>Composing a request for pushing merged results.</p>
 	 * @param deletings
@@ -83,7 +92,7 @@ public class DBSyncReq extends AnsonBody {
 	public DBSyncReq mergeResults(ArrayList<String> deletings,
 			ArrayList<String> rejects, ArrayList<String> erasings) {
 
-		a = A.pushMerged;
+		a = A.pushDRE;
 		this.deletings = deletings;
 		this.rejects = rejects;
 		this.erasings = erasings;
@@ -119,8 +128,8 @@ public class DBSyncReq extends AnsonBody {
 		return 0;
 	}
 	
-	public DBSyncReq cleanTasks(TimeWindow wind) {
-		this.window = wind;
+	public DBSyncReq cleanTasks() {
+		// this.window = wind;
 		a = A.cleans;
 		return this;
 	}
