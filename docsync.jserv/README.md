@@ -29,3 +29,5 @@ Educational Data, Computer Engineering Department, Kocaeli University, İzmit, T
 [6] Gergely Kalapos, [Database synchronization between mobile devices and classical relational database management systems](https://epub.jku.at/download/pdf/383708), MASTER'S THESIS, JKU, Linz, Jan 2015
 
 In the chapter 4 of the thesis, the process and change-tracking schema is detailed in a few use cases.
+
+[7] [Dotmim.Sync](https://github.com/Mimetis/Dotmim.Sync) at Github.
