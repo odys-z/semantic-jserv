@@ -31,3 +31,35 @@ Educational Data, Computer Engineering Department, Kocaeli University, İzmit, T
 In the chapter 4 of the thesis, the process and change-tracking schema is detailed in a few use cases.
 
 [7] [Dotmim.Sync](https://github.com/Mimetis/Dotmim.Sync) at Github.
+
+- Main process [SyncAgent.SynchronizeAsync(...)](https://github.com/Mimetis/Dotmim.Sync/blob/2f77ac3c1bdec414125943ed6c16c35a98c734e4/Projects/Dotmim.Sync.Core/SyncAgent.cs#L323)
+
+```
+    // Get operation from server
+    SyncOperation operation;
+    (context, operation) = this.RemoteOrchestrator.InternalGetOperationAsync (
+            sScopeInfo, cScopeInfo, cScopeInfoClient, context,
+            default, default, cancellationToken, progress);
+```
+- (Base)Orchestractor:
+
+    Compose all args to an executabl DbCommand object.
+
+- [BaseOrchestractor.InternalSetCommandParametersValues(SyncContext context, DbCommand command, ...)](https://github.com/Mimetis/Dotmim.Sync/blob/2f77ac3c1bdec414125943ed6c16c35a98c734e4/Projects/Dotmim.Sync.Core/Orchestrators/Commands/BaseOrchestrator.Commands.cs#L117-L118)
+
+```
+    foreach (DbParameter parameter in command.Parameters) 
+    {
+        var column = schemaTable.Columns[parameter.SourceColumn];
+
+        object value = row[column] ?? DBNull.Value;
+        syncAdapter.AddCommandParameterValue(parameter, value, command, commandType);
+    }
+```
+Design Pattern: Interceptors
+
+Questions: how the changes is tracked?
+
+[8]  Ryan Kirkman, [Simple Relational Database Sync](http://ryankirkman.com/2013/02/03/simple-relational-database-sync.html)
+
+Using sequence += 1 instead of timestamp.
