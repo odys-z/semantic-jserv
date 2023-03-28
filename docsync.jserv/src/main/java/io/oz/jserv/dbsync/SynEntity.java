@@ -56,7 +56,7 @@ public class SynEntity extends Anson {
 	public SynEntity() {}
 	
 	/**
-	 * A helper used to make sure query fields are correct.
+	 * A helper used to make sure query fields of Ext-entity are correct.
 	 * @param meta
 	 * @return cols for Select.cols()
 	 */
