@@ -30,4 +30,63 @@ Educational Data, Computer Engineering Department, Kocaeli University, İzmit, T
 
 In the chapter 4 of the thesis, the process and change-tracking schema is detailed in a few use cases.
 
-[7] [Dotmim.Sync](https://github.com/Mimetis/Dotmim.Sync) at Github.
+[7] Retired Microsoft Technical Documents
+
+- [Master-master Row-Level Synchronization](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff650702(v=pandp.10)) &
+[the example based on SQL Server](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff649591(v=pandp.10))
+
+    Which detailed conflict resolving policy.
+
+    The tracking facility in database design:
+
+    ![database design](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/images/ff650702.des_synchronization_fig02(en-us,pandp.10).gif)
+
+    Two triggers of data table
+
+```
+    CREATE TRIGGER authors_inserted ON dbo.authors AFTER INSERT, UPDATE AS 
+    UPDATE dbo.authors 
+    SET last_changed = getdate() 
+    WHERE au_id = inserted.au_id;
+
+    CREATE TRIGGER authors_deleted ON dbo.authors BEFORE DELETE AS 
+    UPDATE dbo.authors 
+    SET last_changed = getdate() 
+    WHERE au_id = deleted.au_id;
+```
+ 
+     Then the synchronization is based upon SQL Server Publication & Subscription.
+
+[8] [Dotmim.Sync](https://github.com/Mimetis/Dotmim.Sync) at Github.
+
+- Main process [SyncAgent.SynchronizeAsync(...)](https://github.com/Mimetis/Dotmim.Sync/blob/2f77ac3c1bdec414125943ed6c16c35a98c734e4/Projects/Dotmim.Sync.Core/SyncAgent.cs#L323)
+
+```
+    // Get operation from server
+    SyncOperation operation;
+    (context, operation) = this.RemoteOrchestrator.InternalGetOperationAsync (
+            sScopeInfo, cScopeInfo, cScopeInfoClient, context,
+            default, default, cancellationToken, progress);
+```
+- (Base)Orchestractor:
+
+    Compose all args to an executabl DbCommand object.
+
+- [BaseOrchestractor.InternalSetCommandParametersValues(SyncContext context, DbCommand command, ...)](https://github.com/Mimetis/Dotmim.Sync/blob/2f77ac3c1bdec414125943ed6c16c35a98c734e4/Projects/Dotmim.Sync.Core/Orchestrators/Commands/BaseOrchestrator.Commands.cs#L117-L118)
+
+```
+    foreach (DbParameter parameter in command.Parameters) 
+    {
+        var column = schemaTable.Columns[parameter.SourceColumn];
+
+        object value = row[column] ?? DBNull.Value;
+        syncAdapter.AddCommandParameterValue(parameter, value, command, commandType);
+    }
+```
+Design Pattern: Interceptors
+
+Questions: how the changes is tracked?
+
+[9]  Ryan Kirkman, [Simple Relational Database Sync](http://ryankirkman.com/2013/02/03/simple-relational-database-sync.html)
+
+Using sequence += 1 instead of timestamp.
