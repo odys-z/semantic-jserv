@@ -105,6 +105,8 @@ Appendix A is a useful table for mapping data types across RDBMS.
 
 [11] [SymmetricDS](https://github.com/JumpMind/symmetric-ds), GPLv3
 
-- Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
-
 &emsp;A lot of router rules need to be configured, and synchroniztion is fixed according to group settings.
+
+![sym_data pattern](https://www.symmetricds.org/images/how-symmetricds-works/change-data-capture-small.png)
+
+- Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
