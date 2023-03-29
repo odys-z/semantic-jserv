@@ -55,7 +55,7 @@ In the chapter 4 of the thesis, the process and change-tracking schema is detail
     WHERE au_id = deleted.au_id;
 ```
  
->>Then the synchronization is based upon SQL Server Publication & Subscription.
+&emsp;Then the synchronization is based upon SQL Server Publication & Subscription.
 
 [8] [Dotmim.Sync](https://github.com/Mimetis/Dotmim.Sync) at Github.
 
@@ -94,9 +94,10 @@ Using sequence += 1 instead of timestamp.
 [10] [Daffodil Replicator](https://web.archive.org/web/20110314142602/http://opensource.replicator.daffodilsw.com/) hosted by Internet Archive
 &emsp;
 
->Which also uses a Publition-subscription pattern.
+&emsp;Which also uses a Publition-subscription pattern.
 
->Appendix A is a useful table for mapping data types across DBRMS.
+&emsp;
+Appendix A is a useful table for mapping data types across RDBMS.
 
 - [User's Guid](https://web.archive.org/web/20090823192326/http://opensource.replicator.daffodilsw.com/system/modules/com.daffodil.replicator/resources/Replicator/opensource/pdf/Replicator_Developers_Guide.pdf) [Backup](docsphinx/design/Daffodil_Replicator_Developers_Guide.pdf), Copyright 2005 Daffodil Software Ltd.
 
@@ -106,4 +107,4 @@ Using sequence += 1 instead of timestamp.
 
 - Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
 
->A lot of router rules need to be configured, and synchroniztion is fixed according to group settings.
+&emsp;A lot of router rules need to be configured, and synchroniztion is fixed according to group settings.
