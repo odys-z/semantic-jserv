@@ -104,6 +104,8 @@ Using sequence += 1 instead of timestamp.
 
 [11] [SymmetricDS](https://github.com/JumpMind/symmetric-ds), GPLv3
 
-- Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
-
 >A lot of router rules need to be configured, and synchroniztion is fixed according to group settings.
+
+![](https://www.symmetricds.org/images/how-symmetricds-works/change-data-capture-small.png)
+
+- Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
