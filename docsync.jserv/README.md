@@ -35,9 +35,9 @@ In the chapter 4 of the thesis, the process and change-tracking schema is detail
 - [Master-master Row-Level Synchronization](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff650702(v=pandp.10)) &
 [the example based on SQL Server](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff649591(v=pandp.10))
 
-    Which detailed conflict resolving policy.
+>Which detailed conflict resolving policy.
 
-    The tracking facility in database design:
+>The tracking facility in database design:
 
     ![database design](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/images/ff650702.des_synchronization_fig02(en-us,pandp.10).gif)
 
@@ -55,7 +55,7 @@ In the chapter 4 of the thesis, the process and change-tracking schema is detail
     WHERE au_id = deleted.au_id;
 ```
  
->>Then the synchronization is based upon SQL Server Publication & Subscription.
+>Then the synchronization is based upon SQL Server Publication & Subscription.
 
 [8] [Dotmim.Sync](https://github.com/Mimetis/Dotmim.Sync) at Github.
 
