@@ -111,3 +111,14 @@ Appendix A is a useful table for mapping data types across RDBMS.
 <br>Image Copyright © JumpMind, Inc
 
 - Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
+
+[x.1] [*Introducing eShopOnContainers reference app*](https://learn.microsoft.com/en-us/dotnet/architecture/cloud-native/introduce-eshoponcontainers-reference-app), Architecting Cloud Native .NET Applications for Azure, MS Documentation, 04/07/2022
+
+[x.2] [*Relational vs. NoSQL data*](https://learn.microsoft.com/en-us/dotnet/architecture/cloud-native/relational-vs-nosql-data), Architecting Cloud Native .NET Applications for Azure, MS Documentation, 04/07/2022
+
+[x.3] [*Cloud-native data patterns*](https://learn.microsoft.com/en-us/dotnet/architecture/cloud-native/distributed-data), Architecting Cloud Native .NET Applications for Azure, MS Documentation, 04/07/2022
+
+>Patterns like Materialized View (local read model) & Saga (distitributed transaction), CQRS (like result-cache routine) etc. are explained here with examples.
+
+>Discussion:<br>
+  As cloud applications are so expensive, is a samentics supported distributed architecture worth to try?
