@@ -111,3 +111,5 @@ Appendix A is a useful table for mapping data types across RDBMS.
 <br>Image Copyright © JumpMind, Inc
 
 - Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
+
+[x.1] [Introducing eShopOnContainers reference app, MS Documentation](https://learn.microsoft.com/en-us/dotnet/architecture/cloud-native/introduce-eshoponcontainers-reference-app)
