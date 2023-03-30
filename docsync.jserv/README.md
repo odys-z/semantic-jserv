@@ -1,9 +1,14 @@
 # About
 
-File synchronization with only the latest docs available. No modification history
+Currently experimenting database synchronization (replication) for synchronizing files
+with Semantic.DA's [Ext-filev2](https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html#extFilev2) & its [handler](https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.ShExtFilev2.html).
+
+Some provisional policies:
+
+- File synchronization with only the latest docs available. No modification history
 or confliction resolving.
 
-Modified files can be upload again.
+- Modified files can be upload again.
 
 [CVS, SVN patterns](https://stackoverflow.com/a/36028146) or
 [Operational Transform](https://en.wikipedia.org/wiki/Operational_transformation)
@@ -107,7 +112,7 @@ Appendix A is a useful table for mapping data types across RDBMS.
 
 &emsp;A lot of router rules need to be configured, and synchroniztion is fixed according to group settings.
 
-![sym_data pattern](https://www.symmetricds.org/images/how-symmetricds-works/change-data-capture-small.png)
+>    ![sym_data pattern](https://www.symmetricds.org/images/how-symmetricds-works/change-data-capture-small.png)
 <br>Image Copyright © JumpMind, Inc
 
 - Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
