@@ -11,7 +11,7 @@ create table syn_seq
 	-- as photos are uploaded file by file, this is probably only useful for debugging.
 
 	synyquist   integer not null,
-	cleanqyuist integer not null
+	cleanyquist integer not null
 );
 
 drop table if exists syn_change;
@@ -19,7 +19,7 @@ create table syn_change (
 	tabl        varchar2(64) not null, -- e.g. 'h_photos'
 	recId       varchar2(12) not null, -- recId
 	synodee     varchar2(12) not null, -- subscriber, fk-on-del, synode id device to finish cleaning task
-	synoder     varchar2(12) not null, -- fk-on-del, synode id for resource's PK
+	synoder     varchar2(12) not null, -- publisher, fk-on-del, synode id for resource's PK
 	clientpath  text         not null, -- for h_photos.fullpath, or composed PK for resouce's id
 	clientpath2 text,                  -- support max 3 fields of composed PK
 	flag        char(1)      not null, -- 'D' deleting, 'C' close (not exists),'R' rejected by device owner
@@ -29,9 +29,9 @@ create table syn_change (
 drop table if exists syn_clean;
 create table syn_clean (
 	tabl        varchar2(64) not null, -- e.g. 'h_photos'
-	synoder     varchar2(12) not null, -- fk-on-del, synode id for resource's PK
+	synoder     varchar2(12) not null, -- publisher, fk-on-del, synode id for resource's PK
 	clientpath  text         not null, -- for h_photos.fullpath, or composed PK for resouce's id
-	synodee     varchar2(12) not null, -- fk-on-del, synode id device to finish cleaning task
+	synodee     varchar2(12) not null, -- subscriber, fk-on-del, synode id device to finish cleaning task
 	flag        char(1)      not null, -- 'D' deleting, 'C' close (not exists),'R' rejected by device owner
 	cleanyquist integer      not null  -- last Nyquist sequence number of synodee
 );
