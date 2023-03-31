@@ -153,7 +153,7 @@ public class UsersTier extends ServPort<UserstReq> {
 
 		rs.beforeFirst().next();
 		if (rs.getInt("c") > 0)
-			throw new SemanticException("record id doesn't exist");
+			throw new SemanticException("User id already exists.");
 
 		SemanticObject res = (SemanticObject)
 				((Insert) jreq.nvs(st.insert(mtabl, usr)))
