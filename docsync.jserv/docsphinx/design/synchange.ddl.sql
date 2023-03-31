@@ -22,7 +22,7 @@ create table syn_change (
 	synodee     varchar2(12) not null, -- subscriber, fk-on-del, synode id device to finish cleaning task
 	synoder     varchar2(12) not null, -- publisher, fk-on-del, synode id for resource's PK
 	clientpath  text         not null, -- for h_photos.fullpath, or composed PK for resouce's id, not null?
-	clientpath2 text,                  -- support max 3 fields of composed PK
+	clientpath2 text,                  -- support max 3 fields of composed PK, TODO any betther patterns?
 	crud        char(1)      not null, -- I/U/D
 	flag        char(1)      not null, -- 'D' deleting, 'C' close (not exists),'R'/'E' rejected (then erased) by device owner
 	synyquist   integer      not null  -- last Nyquist sequence number of synodee
