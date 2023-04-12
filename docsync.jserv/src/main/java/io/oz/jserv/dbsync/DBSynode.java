@@ -61,7 +61,7 @@ public class DBSynode extends ServPort<DBSyncReq> {
 
 	private final SynodeMode mode;
 	private OnChainOk onBlocksFinish;
-	private OnChainStart onBlockstart;
+	private OnChainStart onClobstart;
 
 	public DBSynode() {
 		super(Port.dbsyncer);
@@ -103,7 +103,7 @@ public class DBSynode extends ServPort<DBSyncReq> {
 					if (isblank(msg.subFolder, " - - "))
 						throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 					*/
-					rsp = chain.startChain(msg.body(0), usr, onBlockstart);
+					rsp = chain.startChain(msg.body(0), usr, onClobstart);
 				}
 				else if (A.pushCloblock.equals(a))
 					rsp = chain.uploadClob(msg.body(0), usr);

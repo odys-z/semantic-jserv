@@ -11,7 +11,10 @@ import java.util.stream.Stream;
 import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DBSynsactBuilder;
+import io.odysz.semantic.SynEntity;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.DBSyntext.syntype;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -19,6 +22,7 @@ import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.dbsync.DBSyncReq.A;
 import io.oz.jserv.docsync.SynState;
 import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 import io.oz.jserv.docsync.SyncRobot;
@@ -50,7 +54,7 @@ public class ClobEntity {
 
 	public interface OnChainStart {
 		/**
-		 * {@link Docsyncer} use this as a chance of creating user's data object
+		 * {@link DBWorker} use this as a chance of creating user's data object
 		 * when block chain started.
 		 *
 		 * @param post
@@ -83,6 +87,11 @@ public class ClobEntity {
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
 
+		syntype typ = body.a().equals(A.pushClobStart) ? syntype.push : syntype.pull;
+		SynEntity e = entresolve.onStart(body, usr, meta)
+				// .synTask(new SynTask(typ))
+				.check(conn, (DBSynsactBuilder) st, body.entSubscribes());
+
 		if (blockChains == null)
 			blockChains = new HashMap<String, Clobs>(2);
 
@@ -91,7 +100,7 @@ public class ClobEntity {
 
 		Clobs chain = new Clobs(tempDir, body.clientpath)
 				.device(usr.deviceId())
-				.entity(entresolve.onStart(body, usr, meta));
+				.entity(e);
 
 		String id = chainId(usr, body);
 
@@ -103,9 +112,7 @@ public class ClobEntity {
 		blockChains.put(id, chain);
 		return new DBSyncResp()
 				.blockSeq(-1)
-				.entity(new SynEntity()
-						.synode(chain.device)
-						.clientpath(chain.clientpath))
+				.entity(chain.entity)
 				;
 	}
 
@@ -181,9 +188,6 @@ public class ClobEntity {
 
 			return new DBSyncResp()
 				.blockSeq(body.blockSeq())
-				.entity(new SynEntity()
-						.synode(chain.device)
-						.clientpath(chain.clientpath))
 				;
 		} else
 			throw new SemanticException("Block chain to be end doesn't exist.");

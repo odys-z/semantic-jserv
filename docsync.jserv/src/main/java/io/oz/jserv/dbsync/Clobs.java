@@ -13,6 +13,7 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
+import io.odysz.semantic.SynEntity;
 import io.odysz.transact.x.TransException;
 
 /**

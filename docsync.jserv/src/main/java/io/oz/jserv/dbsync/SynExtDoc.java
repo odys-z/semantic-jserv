@@ -1,16 +1,13 @@
 package io.oz.jserv.dbsync;
 
-import static io.odysz.common.LangExt.isNull;
-
 import java.io.IOException;
 import java.sql.SQLException;
 
-import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.SynEntity;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
-import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;
 
 /**
@@ -20,26 +17,7 @@ import io.odysz.semantics.x.SemanticException;
  * 
  * @author Ody
  */
-public class SynEntity extends Anson {
-	protected static String[] synpageCols;
-
-	public String recId;
-	public String recId() { return recId; }
-	public SynEntity recId(String did) {
-		recId = did;
-		return this;
-	}
-
-	public String clientpath;
-	public String fullpath() { return clientpath; }
-
-	/** Non-public: doc' device id is managed by session. */
-	protected String synode;
-	public String synode() { return synode; }
-	public SynEntity synode(String synode) {
-		this.synode = synode;
-		return this;
-	}
+public class SynExtDoc extends SynEntity {
 
 	@AnsonField(shortenString=true)
 	public String uri;
@@ -47,13 +25,7 @@ public class SynEntity extends Anson {
 
 	public String syncFlag;
 
-	@AnsonField(ignoreTo=true)
-	DocTableMeta entMeta;
-
-	@AnsonField(ignoreTo=true, ignoreFrom=true)
-	ISemantext semantxt;
-	
-	public SynEntity() {}
+	public SynExtDoc() {}
 	
 	/**
 	 * A helper used to make sure query fields of Ext-entity are correct.
@@ -96,7 +68,7 @@ public class SynEntity extends Anson {
 		return synpageCols;
 	}
 
-	public SynEntity(AnResultset rs, DocTableMeta meta) throws SQLException {
+	public SynExtDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
 		this.entMeta = meta;
 		this.recId = rs.getString(meta.pk);
 		this.uri = rs.getString(meta.uri);
@@ -114,35 +86,11 @@ public class SynEntity extends Anson {
 	 * @throws IOException checking local file failed
 	 * @throws SemanticException device is null
 	 */
-	public SynEntity(IFileDescriptor d, String fullpath, DocTableMeta meta) {
+	public SynExtDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) {
 		this.synode = d.device();
 
 		this.entMeta = meta;
 		this.recId = d.recId();
 		this.uri = d.uri();
-	}
-
-//	public SynEntity parseChain(ClobChain chain) {
-//		synode = chain.device;
-//		clientpath = chain.clientpath;
-//		return this;
-//	}
-
-	/**
-	 * Parse {@link PathsPage#clientPaths}.
-	 * 
-	 * @param flags
-	 * @return this
-	 */
-	public SynEntity parseFlags(String[] flags) {
-		if (!isNull(flags)) {
-			syncFlag = flags[0];
-		}
-		return this;
-	}
-
-	public SynEntity clientpath(String p) {
-		this.clientpath = p;
-		return this;
 	}
 }

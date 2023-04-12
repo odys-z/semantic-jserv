@@ -2,6 +2,7 @@ package io.oz.jserv.dbsync;
 
 import java.util.List;
 
+import io.odysz.semantic.SynEntity;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.transact.sql.PageInf;
