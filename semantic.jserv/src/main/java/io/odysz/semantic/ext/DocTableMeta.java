@@ -1,5 +1,6 @@
 package io.odysz.semantic.ext;
 
+import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantics.meta.TableMeta;
 
 /**
@@ -8,9 +9,11 @@ import io.odysz.semantics.meta.TableMeta;
  * But the client should never use it as a parameter of API - only use a
  * parameter of table name for specifying how the server should handle it.</p>
  *
+ * FIXME shouldn't subclassed from SynTableMeta?
+ * 
  * @author odys-z@github.com
  */
-public class DocTableMeta extends TableMeta {
+public class DocTableMeta extends SyntityMeta {
 	/**
 	 * consts of share type: pub | priv 
 	 */
