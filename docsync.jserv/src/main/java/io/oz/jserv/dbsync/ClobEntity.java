@@ -40,7 +40,7 @@ public class ClobEntity {
 
 	public interface OnChainOk {
 		/**
-		 * {@link Docsyncer} use this as a chance of update user's data
+		 * {@link DBWorker} use this as a chance of update user's data
 		 * when block chain finished successfully.
 		 *
 		 * @param mainst
@@ -153,10 +153,7 @@ public class ClobEntity {
 
 		return new DBSyncResp()
 				.blockSeq(body.blockSeq())
-				.entity(new SynEntity()
-						.synode(chain.device)
-						.clientpath(chain.clientpath))
-				;
+				.entity(chain.entity);
 	}
 
 	/**
@@ -188,7 +185,7 @@ public class ClobEntity {
 
 			return new DBSyncResp()
 				.blockSeq(body.blockSeq())
-				;
+				.entity(chain.entity);
 		} else
 			throw new SemanticException("Block chain to be end doesn't exist.");
 	}
