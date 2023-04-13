@@ -91,11 +91,11 @@ public class DBSynode extends ServPort<DBSyncReq> {
 				throw new SemanticException("To push/update a doc via Docsyncer, docTable name can not be null.");
 
 			if (A.open.equals(a))
-				rsp = onOpenClean(dbr, usr);
+				; // rsp = onOpenClean(dbr, usr);
 			else if (A.cleans.equals(a))
 				rsp = onQuryCleans(dbr, usr);
 			else if (A.pushDRE.equals(a))
-				rsp = onMergedCleans(dbr, usr);
+				; // rsp = onMergedCleans(dbr, usr);
 			else {
 				ClobEntity chain = new ClobEntity((DocTableMeta) metas.get(dbr.tabl), st);
 				if (A.pushClobStart.equals(a)) {
@@ -146,31 +146,31 @@ public class DBSynode extends ServPort<DBSyncReq> {
 		return resp;
 	}
 
-	/**
-	 * Handle rejects, erased and deleted, of which closed are also collected.
-	 * 
-	 * @param dbr
-	 * @param usr
-	 * @return reply
-	 */
-	protected AnsonResp onMergedCleans(DBSyncReq dbr, IUser usr) {
-		DBSyncResp resp = new DBSyncResp().cleanWindow(dbr.window)
-				; // and collect closing entities of this session
-		return resp;
-	}
-
-	/**
-	 * Open a clean session by reply with a time window.
-	 * @deprecated
-	 * @param req
-	 * @param usr
-	 * @return response
-	 * @throws SQLException
-	 * @throws TransException
-	 */
-	protected DBSyncResp onOpenClean(DBSyncReq req, IUser usr)
-			throws SQLException, TransException {
-		return null;
-	}
+//	/**
+//	 * Handle rejects, erased and deleted, of which closed are also collected.
+//	 * 
+//	 * @param dbr
+//	 * @param usr
+//	 * @return reply
+//	 */
+//	protected AnsonResp onMergedCleans(DBSyncReq dbr, IUser usr) {
+//		DBSyncResp resp = new DBSyncResp().cleanWindow(dbr.window)
+//				; // and collect closing entities of this session
+//		return resp;
+//	}
+//
+//	/**
+//	 * Open a clean session by reply with a time window.
+//	 * @deprecated
+//	 * @param req
+//	 * @param usr
+//	 * @return response
+//	 * @throws SQLException
+//	 * @throws TransException
+//	 */
+//	protected DBSyncResp onOpenClean(DBSyncReq req, IUser usr)
+//			throws SQLException, TransException {
+//		return null;
+//	}
 
 }

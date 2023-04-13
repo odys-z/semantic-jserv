@@ -25,8 +25,6 @@ public class SynExtDoc extends SynEntity {
 
 	public String syncFlag;
 
-	public SynExtDoc() {}
-	
 	/**
 	 * A helper used to make sure query fields of Ext-entity are correct.
 	 * @param meta
@@ -69,14 +67,15 @@ public class SynExtDoc extends SynEntity {
 	}
 
 	public SynExtDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
-		this.entMeta = meta;
-		this.recId = rs.getString(meta.pk);
+		super(rs, meta);
+		// this.entMeta = meta;
+		// this.recId = rs.getString(meta.pk);
 		this.uri = rs.getString(meta.uri);
 		
-		this.clientpath =  rs.getString(meta.fullpath);
-		this.synode =  rs.getString(meta.synoder);
+		// this.clientpath =  rs.getString(meta.fullpath);
+		// this.synode =  rs.getString(meta.synoder);
 		
-		this.syncFlag = rs.getString(meta.syncflag);
+		// this.syncFlag = rs.getString(meta.syncflag);
 	}
 
 	/**
@@ -87,9 +86,10 @@ public class SynExtDoc extends SynEntity {
 	 * @throws SemanticException device is null
 	 */
 	public SynExtDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) {
-		this.synode = d.device();
+		super(meta);
+		// this.synode = d.device();
 
-		this.entMeta = meta;
+		// this.entMeta = meta;
 		this.recId = d.recId();
 		this.uri = d.uri();
 	}
