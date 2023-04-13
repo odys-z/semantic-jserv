@@ -14,6 +14,7 @@ import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.SynEntity;
+import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -136,8 +137,8 @@ public class Clobs {
 		return this;
 	}
 
-	public SynEntity parseEntity() {
-		SynEntity e = new SynEntity();
+	public SynEntity parseEntity(SyntityMeta entm) {
+		SynEntity e = new SynEntity(entm);
 		return e;
 	}
 }
