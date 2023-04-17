@@ -1,7 +1,6 @@
 package io.odysz.semantic.ext;
 
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantics.meta.TableMeta;
 
 /**
  * Document records' table meta.
