@@ -5,8 +5,8 @@ import java.sql.SQLException;
 
 import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.SynEntity;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.syn.SynEntity;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
 
