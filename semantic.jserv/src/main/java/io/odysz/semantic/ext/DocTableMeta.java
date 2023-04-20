@@ -1,6 +1,9 @@
 package io.odysz.semantic.ext;
 
+import java.util.HashSet;
+
 import io.odysz.semantic.meta.SyntityMeta;
+import io.odysz.semantics.x.SemanticException;
 
 /**
  * Document records' table meta.
@@ -57,10 +60,11 @@ public class DocTableMeta extends SyntityMeta {
 
 	public final String syncflag;
 	public final String shareflag;
+	final HashSet<String> globalIds;
 
 	// public final SharelogMeta sharelog;
 	
-	public DocTableMeta(String tbl, String pk, String conn) {
+	public DocTableMeta(String tbl, String pk, String conn) throws SemanticException {
 		super(tbl, conn);
 
 		// TODO let's build from sync.xml
@@ -84,6 +88,12 @@ public class DocTableMeta extends SyntityMeta {
 		shareflag = "shareflag";
 		
 		// sharelog = new SharelogMeta(tbl, pk, conn); 
+		globalIds = new HashSet<String>() { {add(synoder);}; {add(fullpath);}; };
+	}
+
+	@Override
+	public HashSet<String> globalIds() {
+		return globalIds;
 	}
 
 }
