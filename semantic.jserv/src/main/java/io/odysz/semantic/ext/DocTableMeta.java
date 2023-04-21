@@ -3,7 +3,7 @@ package io.odysz.semantic.ext;
 import java.util.HashSet;
 
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 
 /**
  * Document records' table meta.
@@ -64,7 +64,7 @@ public class DocTableMeta extends SyntityMeta {
 
 	// public final SharelogMeta sharelog;
 	
-	public DocTableMeta(String tbl, String pk, String conn) throws SemanticException {
+	public DocTableMeta(String tbl, String pk, String conn) throws TransException {
 		super(tbl, conn);
 
 		// TODO let's build from sync.xml

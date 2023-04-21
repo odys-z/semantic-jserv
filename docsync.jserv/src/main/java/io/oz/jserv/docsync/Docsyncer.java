@@ -232,15 +232,15 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * @param nodeId Jserv node id which is used as sync-worker's login id.
 	 * It is not required if the node is running in hub mode.
 	 * 
-	 * @throws SemanticException
 	 * @throws SQLException
 	 * @throws SAXException
 	 * @throws IOException
 	 * @throws SsException 
 	 * @throws AnsonException 
+	 * @throws TransException 
 	 */
 	public static void init(String nodeId)
-			throws SemanticException, SQLException, SAXException, IOException, AnsonException, SsException {
+			throws SQLException, SAXException, IOException, AnsonException, SsException, TransException {
 
 		Utils.logi("Starting file synchronizer ...");
 

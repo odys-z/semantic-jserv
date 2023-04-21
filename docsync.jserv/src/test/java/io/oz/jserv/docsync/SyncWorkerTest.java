@@ -93,13 +93,13 @@ class SyncWorkerTest {
 					fail(msg);
 				}
 			};
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+		} catch (TransException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	@Test
-	void testIds() throws SemanticException, SQLException, SAXException, IOException, AnsonException, SsException {
+	void testIds() throws SQLException, SAXException, IOException, AnsonException, SsException, TransException {
 		SyncWorker worker = new SyncWorker(Kyiv.Synode.mode, Kyiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
 				.stop()
 				.login(Kyiv.Synode.passwd);

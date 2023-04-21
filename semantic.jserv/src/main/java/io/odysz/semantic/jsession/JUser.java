@@ -90,8 +90,8 @@ public class JUser extends SemanticObject implements IUser {
 	protected String org;
 	protected String role;
 	private String pswd;
-	@SuppressWarnings("unused")
-	private String usrName;
+//	@SuppressWarnings("unused")
+//	private String usrName;
 	
 	/** v1.4.11 */
 	@Override
@@ -138,7 +138,7 @@ public class JUser extends SemanticObject implements IUser {
 	public JUser(String uid, String pswd, String usrName) throws SemanticException {
 		this.uid = uid;
 		this.pswd = pswd;
-		this.usrName = usrName;
+//		this.usrName = usrName;
 
 		String rootK = DATranscxt.key("user-pswd");
 		if (rootK == null)
@@ -161,7 +161,7 @@ public class JUser extends SemanticObject implements IUser {
 		this.pswd = pswd;
 	}
 
-	public TableMeta meta() {
+	public TableMeta meta(String ... connId) {
 		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
 	}
 

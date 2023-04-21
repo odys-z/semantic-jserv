@@ -42,7 +42,7 @@ public class SandRobot implements IUser {
 		}
 	}
 
-	public TableMeta meta() {
+	public TableMeta meta(String ... connId) {
 		return new SandRobotMeta(""); // no user table as this test is only for sessionless
 	}
 

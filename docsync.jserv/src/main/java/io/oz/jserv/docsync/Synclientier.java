@@ -121,13 +121,13 @@ public class Synclientier extends Semantier {
 	 * @param pswd
 	 * @return this
 	 * @throws SQLException
-	 * @throws SemanticException
 	 * @throws AnsonException
 	 * @throws SsException
 	 * @throws IOException
+	 * @throws TransException 
 	 */
 	public Synclientier login(String workerId, String device, String pswd)
-			throws SemanticException, AnsonException, SsException, IOException {
+			throws AnsonException, SsException, IOException, TransException {
 
 		client = Clients.login(workerId, pswd, device);
 
@@ -141,6 +141,7 @@ public class Synclientier extends Semantier {
 	 * 
 	 * @param client
 	 * @return this
+	 * @throws TransException 
 	 */
 	public Synclientier onLogin(SessionClient client) {
 		SessionInf ssinf = client.ssInfo();
@@ -165,7 +166,7 @@ public class Synclientier extends Semantier {
 				robot.orgId(rs.getString(um.org))
 					.orgName(rs.getString(um.orgName));
 			else throw new SemanticException("Synode haven't been reqistered: %s", robot.userId);
-		} catch (SemanticException | AnsonException | SQLException | IOException e) {
+		} catch (TransException | AnsonException | SQLException | IOException e) {
 			e.printStackTrace();
 		}
 
