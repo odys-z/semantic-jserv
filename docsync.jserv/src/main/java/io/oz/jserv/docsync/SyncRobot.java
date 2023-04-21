@@ -1,8 +1,10 @@
 package io.oz.jserv.docsync;
 
+import static io.odysz.common.LangExt.isNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +18,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
@@ -83,12 +86,15 @@ public class SyncRobot extends SemanticObject implements IUser {
 	}
 
 	/** User table's meta, not doc table's meta.
+	 * @throws TransException 
 	 */
 	@Override
-	public TableMeta meta() {
-		return new RobotMeta("a_users");
+	public TableMeta meta(String ... connId) throws SQLException, TransException {
+		return new RobotMeta("a_users")
+				.clone(Connects.getMeta(
+				isNull(connId) ? null : connId[0], "a_users"));
 	}
-
+	
 	@Override
 	public IUser onCreate(Anson reqBody) throws SsException {
 		deviceId = ((AnSessionReq)reqBody).deviceId();

@@ -13,7 +13,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 import io.oz.jserv.docsync.Synode;
 
 @WebListener
@@ -36,7 +36,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			*/
 			Synode.init(System.getProperty("JSERV_NODE"));
 
-		} catch (SemanticException | SAXException | IOException | SQLException | AnsonException | SsException e) {
+		} catch (TransException | SAXException | IOException | SQLException | AnsonException | SsException e) {
 			e.printStackTrace();
 		}
 	}

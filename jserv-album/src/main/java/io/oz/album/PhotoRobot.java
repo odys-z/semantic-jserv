@@ -143,7 +143,7 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	 * @return the dir
 	 * @throws SemanticException
 	 */
-	public String touchTempDir(String conn) throws SemanticException {
+	public String touchTempDir(String conn) throws TransException {
 
 		String extroot = ((ShExtFilev2) DATranscxt
 						.getHandler(conn, new PhotoMeta(conn).tbl, smtype.extFilev2))
