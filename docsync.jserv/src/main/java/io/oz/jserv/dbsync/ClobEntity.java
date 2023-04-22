@@ -15,7 +15,6 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.syn.DBSynsactBuilder;
 import io.odysz.semantic.syn.SynEntity;
-import io.odysz.semantic.syn.DBSyntext.syntype;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Statement;
@@ -37,6 +36,8 @@ import io.oz.jserv.docsync.SynodeMode;
  *
  */
 public class ClobEntity {
+
+	public enum syntype { push, pull }
 
 	public interface OnChainOk {
 		/**
