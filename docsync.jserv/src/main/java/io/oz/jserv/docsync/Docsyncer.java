@@ -180,7 +180,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			.col(meta.pk)
 			.whereEq(meta.synoder, device)
 			.whereEq(meta.fullpath, clientpath)
-			.whereEq(meta.org, usr.orgId())
+			.whereEq(meta.org(), usr.orgId())
 			.rs(st.instancontxt(conn, usr))
 			.rs(0))
 			.beforeFirst();
@@ -211,7 +211,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		String syn = SyncFlag.start(mode, doc.shareflag());
 		return st.update(meta.tbl, usr)
 				.nv(meta.syncflag, syn)
-				.whereEq(meta.org, usr.orgId())
+				.whereEq(meta.org(), usr.orgId())
 				.whereEq(meta.pk, new Resulving(meta.tbl, meta.pk))
 				/*
 				.post(mode == SynodeMode.device ? null :
@@ -423,7 +423,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		AnResultset rs = ((AnResultset) st
 				.select("a_synodes", "t")
 				.col(Funcall.isnull("syncstamp", Funcall.now()), "stamp")
-				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.org(), jreq.org == null ? usr.orgId() : jreq.org)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0))
 				.beforeFirst();
@@ -452,7 +452,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
 				.cols(SyncDoc.synPageCols(meta))
-				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.org(), jreq.org == null ? usr.orgId() : jreq.org)
 				.whereEq(meta.synoder, usr.deviceId())
 				// .whereEq(meta.shareby, usr.uid())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
@@ -557,7 +557,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 		st.update(meta.tbl, usr)
 			.nv(meta.shareflag, SyncFlag.publish)
-			.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+			.whereEq(meta.org(), jreq.org == null ? usr.orgId() : jreq.org)
 			.whereEq(meta.synoder, usr.deviceId())
 			.whereEq(meta.fullpath, jreq.clientpath)
 			.u(st.instancontxt(synconn, usr));
@@ -587,7 +587,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
 				.cols(SyncDoc.nvCols(meta))
-				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.org(), jreq.org == null ? usr.orgId() : jreq.org)
 				.where(op.lt, meta.stamp, jreq.stamp())
 				.limit(jreq.limit())
 				.rs(st.instancontxt(synconn, usr))
@@ -602,7 +602,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		AnResultset rs = (AnResultset) st
 				.select(jreq.docTabl, "t")
 				.cols(SyncDoc.nvCols(meta))
-				.whereEq(meta.org, jreq.org == null ? usr.orgId() : jreq.org)
+				.whereEq(meta.org(), jreq.org == null ? usr.orgId() : jreq.org)
 				.whereEq(meta.pk, jreq.docId)
 				.rs(st.instancontxt(synconn, usr))
 				.rs(0);

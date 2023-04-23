@@ -116,7 +116,7 @@ public class Dochain {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
-				.whereEq(meta.org, usr.orgId())
+				.whereEq(meta.org(), usr.orgId())
 				.whereEq(meta.synoder, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))

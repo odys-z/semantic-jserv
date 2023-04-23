@@ -542,7 +542,7 @@ public class Synclientier extends Semantier {
 		long size = new File(localPath).length();
 
 		Insert ins = st.insert(meta.tbl, usr)
-				.nv(meta.org, usr.orgId())
+				.nv(meta.org(), usr.orgId())
 				.nv(meta.uri, doc.uri)
 				.nv(meta.resname, doc.pname)
 				.nv(meta.synoder, usr.deviceId())
