@@ -190,7 +190,7 @@ class SyncWorkerTest {
 
 		defltSt
 			.delete(meta.tbl, worker.robot())
-			.whereEq(meta.org, worker.org())
+			.whereEq(meta.org(), worker.org())
 			.post(Docsyncer.onClean(worker.org(), meta, worker.robot()))
 			.d(defltSt.instancontxt(conn, worker.robot()));
 		
