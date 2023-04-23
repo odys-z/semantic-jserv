@@ -34,7 +34,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.JRobot;
-import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
@@ -123,8 +122,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		String conn = daSctx.getSysConnId();
 		if (!DATranscxt.alreadyLoaded(conn)) {
 			Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here.", conn);
-			DATranscxt.loadSemantics(conn,
-						JSingleton.getFileInfPath(JUser.sessionSmtXml), daSctx.getSysDebug());
+			DATranscxt.loadSemantics(conn);
+						// JSingleton.getFileInfPath(JUser.sessionSmtXml), daSctx.getSysDebug());
 		}
 
 		users = new HashMap<String, IUser>();
