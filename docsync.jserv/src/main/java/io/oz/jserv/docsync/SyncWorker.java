@@ -308,7 +308,7 @@ public class SyncWorker implements Runnable {
 			AnResultset rs = (AnResultset) localSt
 				.select(localMeta.tbl, "t")
 				.cols(localMeta.pk, localMeta.fullpath, localMeta.uri, localMeta.mime, localMeta.size)
-				.whereEq(localMeta.org, r.org())
+				.whereEq(localMeta.org(), r.org())
 				.whereEq(localMeta.synoder, mac)
 				.whereEq(localMeta.fullpath, r.doc.fullpath())
 				.rs(localSt.instancontxt(connPriv, synctier.robot))

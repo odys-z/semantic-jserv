@@ -54,7 +54,7 @@ public class DocTableMeta extends SyntityMeta {
 	public final String mime;
 	public final String shareDate;
 	public final String shareby;
-	public final String org;
+//	public final String org;
 	public final String folder;
 	public final String size;
 
@@ -65,7 +65,7 @@ public class DocTableMeta extends SyntityMeta {
 	// public final SharelogMeta sharelog;
 	
 	public DocTableMeta(String tbl, String pk, String conn) throws TransException {
-		super(tbl, conn);
+		super(tbl, pk, "family", conn);
 
 		// TODO let's build from sync.xml
 		this.tbl = "h_photos";
@@ -75,7 +75,7 @@ public class DocTableMeta extends SyntityMeta {
 		uri = "uri";
 		folder = "folder";
 		createDate = "pdate";
-		org = "family";
+//		org = "family";
 		mime = "mime";
 		size = "filesize";
 		synoder = "device";

@@ -50,7 +50,7 @@ import io.odysz.transact.x.TransException;
  *  uid: "user-id",<br>
  *  pswd: "uid-cipher-by-pswd",<br>
  *  iv: "session-iv"</p>
- *  
+ *
  * <h5>2. Session verifying using session-header</h5>
  * <p>uid: “user-id”,<br>
  * ssid: “session-id-plain/cipher”,<br>
@@ -60,15 +60,15 @@ import io.odysz.transact.x.TransException;
  * <p><b>Note:</b></p>Session header is post by client in HTTP request's body other than in HTTP header.
  * It's HTTP body payload, understood by semantic-jserv as a request header semantically.</p>
  * <p>Also don't confused with servlet session - created via getSessionId(),
- * <br>and you'd better 
+ * <br>and you'd better
  * <a href='https://stackoverflow.com/questions/2255814/can-i-turn-off-the-httpsession-in-web-xml'>turn off it</a>.</p>
- * 
+ *
  * <h5>3. User action can be logged with session information</h5>
  * <p>AnSession requires loggings sql semantics explicitly defined in "semantic-log.xml",
  * with file name hard coded.</p>
- * <p>Logging can be disabled by connection configuration. 
+ * <p>Logging can be disabled by connection configuration.
  * Each connection requiring loggin must have a table named "a_logs".</p>
- * 
+ *
  * @author odys-z@github.com
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv11" })
@@ -85,13 +85,13 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	static HashMap<String, IUser> users;
 
 	private static ScheduledExecutorService scheduler;
-	
+
 	/**session pool reentrant lock*/
 	public static ReentrantLock lock;
 
 	/** Session checking task buffer */
 	private static ScheduledFuture<?> schedualed;
-	
+
 	static DATranscxt sctx;
 
 	/** key of JUser class name, "class-IUser" used in config.xml */
@@ -123,7 +123,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		if (!DATranscxt.alreadyLoaded(conn)) {
 			Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here.", conn);
 			DATranscxt.loadSemantics(conn);
-//					JSingleton.getFileInfPath(JUser.sessionSmtXml), daSctx.getSysDebug());
+						// JSingleton.getFileInfPath(JUser.sessionSmtXml), daSctx.getSysDebug());
 		}
 
 		users = new HashMap<String, IUser>();
@@ -149,7 +149,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
         		new SessionChecker(users, m),
         		0, 1, TimeUnit.MINUTES);
 	}
-	
+
 	/**Stop all threads that were scheduled by SSession.
 	 * @param msDelay delay in milliseconds.
 	 */
@@ -160,7 +160,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		try {
 		    if (!scheduler.awaitTermination(msDelay, TimeUnit.MILLISECONDS)) {
 		        scheduler.shutdownNow();
-		    } 
+		    }
 		} catch (InterruptedException e) {
 		    scheduler.shutdownNow();
 		}
@@ -217,7 +217,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			if (connId == null || connId.trim().length() == 0)
 				connId = Connects.defltConn();
 
-			// find user and check login info 
+			// find user and check login info
 			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
 			if (msg != null) {
 				AnSessionReq sessionBody = msg.body(0);
@@ -229,7 +229,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						login.sessionId(allocateSsid());
 						users.put(login.sessionId(), login);
 						lock.unlock();
-						
+
 						SessionInf ssinf = login.getClientSessionInf(login);
 						AnSessionResp bd = new AnSessionResp(null, ssinf);
 						AnsonMsg<AnSessionResp> rspMsg = ok(bd);
@@ -246,11 +246,11 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					catch (SsException sx) {} // logout anyway if session check is failed
 					// {uid: “user-id”,  ssid: “session-id-plain/cipher”, vi: "vi-b64"<, sys: “module-id”>}
 					String ssid = (String) header.ssid();
-	
+
 					lock.lock();
 					IUser usr = users.remove(ssid);
 					lock.unlock();
-	
+
 					if (usr != null) {
 						SemanticObject resp = usr.logout();
 						write(response, AnsonMsg.ok(p, resp.msg()),
@@ -264,7 +264,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					// change password
 					AnsonHeader header = msg.header();
 					IUser usr = verify(header);
-					
+
 					// dencrypt field of a_user.userId: pswd, encAuxiliary
 					if (!DATranscxt.hasSemantics(connId, usrMeta.tbl, smtype.dencrypt)) {
 						throw new SemanticException("Can't update pswd, because data entry %s is not protected by semantics %s",
@@ -275,7 +275,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					// FIXME using of session key, see bug of verify()
 					String ssid = (String) header.ssid();
 					String iv64 = sessionBody.md("iv_pswd");
-					
+
 					// check old password
 					if (!usr.guessPswd(sessionBody.md("oldpswd"), sessionBody.md("iv_old")))
 						throw new SemanticException("Can not verify old password!");
@@ -290,18 +290,18 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					lock.lock();
 					users.remove(ssid);
 					lock.unlock();
-	
+
 					write(response, ok("You must relogin!"));
 				}
 				else if ("init".equals(a)) {
 					// reset password
 					AnsonHeader header = msg.header();
-					
+
 					if (!DATranscxt.hasSemantics(connId, usrMeta.tbl, smtype.dencrypt)) {
 						throw new SemanticException("Can't update pswd, because data entry %s is not protected by semantics %s",
 								usrMeta.tbl, smtype.dencrypt.name());
 					}
-					
+
 					String ssid = (String) header.ssid();
 					String iv64 = sessionBody.md("iv_pswd");
 					String newPswd = sessionBody.md("pswd");
@@ -311,14 +311,14 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 							.col(usrMeta.iv, "iv")
 							.where_("=", "u." + usrMeta.pk, sessionBody.uid())
 							.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
-						
+
 					AnResultset rs = (AnResultset) s.rs(0);;
 					if (rs.beforeFirst().next()) {
 						String iv = rs.getString("iv");
 						if (!LangExt.isEmpty(iv))
 							throw new SemanticException("Can't update pswd, because it is not allowed to change.");
 					}
-					
+
 					// set a new pswd
 					String pswd2 = AESHelper.decrypt(newPswd, jrobot.sessionId(), AESHelper.decode64(iv64));
 					Utils.logi("intialize pswd: %s", pswd2);
@@ -378,8 +378,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * @throws SQLException
 	 * @throws SsException
 	 * @throws ReflectiveOperationException
-	 * @throws IOException 
-	 * @throws GeneralSecurityException 
+	 * @throws IOException
+	 * @throws GeneralSecurityException
 	 */
 	private IUser loadUser(AnSessionReq sessionBody, String connId)
 			throws TransException, SQLException, SsException,
@@ -398,7 +398,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.roleName)		// v1.4.11
 			.where_("=", "u." + usrMeta.pk, sessionBody.uid())
 			.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
-		
+
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString(usrMeta.pk);
@@ -420,15 +420,15 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * io.odysz.jsample.SampleUser</a>
 	 * @param clsNamekey class name
 	 * @param uid user id
-	 * @param pswd 
+	 * @param pswd
 	 * @param iv auxiliary encryption field
-	 * @param userName 
+	 * @param userName
 	 * @return new IUser instance, if the use's IV is empty, will create a notification of {@link Notify#changePswd}.
-	 * @throws ReflectiveOperationException 
-	 * @throws IOException 
-	 * @throws GeneralSecurityException 
+	 * @throws ReflectiveOperationException
+	 * @throws IOException
+	 * @throws GeneralSecurityException
 	 * @throws TransException notifying message failed
-	 * @throws IllegalArgumentException 
+	 * @throws IllegalArgumentException
 	 */
 	private static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName)
 			throws ReflectiveOperationException, GeneralSecurityException, IOException, IllegalArgumentException, TransException {
@@ -461,7 +461,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 				}
 				return (IUser) constructor.newInstance(uid, pswd, userName);
 			}
-			else 
+			else
 				return (IUser) constructor
 						.newInstance(uid, pswd, userName)
 						.notify(Notify.changePswd.name());
