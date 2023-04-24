@@ -213,7 +213,6 @@ public class Dochain {
 		return DocUtils.createFileB64(conn, photo, usr, meta, st, post);
 	}
 
-
 	/**
 	 * Resolve file root with samantics handler of {@link smtype#extFilev2}.
 	 * 
@@ -241,5 +240,4 @@ public class Dochain {
 		String extroot = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2)).getFileRoot();
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
-	
 }
