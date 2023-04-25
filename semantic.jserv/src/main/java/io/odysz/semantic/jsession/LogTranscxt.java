@@ -17,11 +17,18 @@ import io.odysz.module.xtable.XMLTable;
 import io.odysz.semantic.DASemantics;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.DATranscxt.SemanticsMap;
 import io.odysz.semantics.x.SemanticException;
 
+/**
+ * LogTranscxt also uses {@link DASemantics}.
+ * 
+ * @author ody
+ */
 public class LogTranscxt extends DATranscxt {
 
-	/**Log {@link DATranscxt} is a special transxct, 
+	/**
+	 * Log {@link DATranscxt} is a special transxct, 
 	 * which use a special semantic-log.xml for semantics and use 
 	 * different connId for a_log datatable sql generating.  
 	 * @param sysConn e.g. the defualt system connection Id, the a_log table will be used for meta checking.
@@ -40,7 +47,8 @@ public class LogTranscxt extends DATranscxt {
 		loadVirtualSemantics(xml);
 	}
 	
-	/**</p>Get sys samantics, then apply to all connections.</p>
+	/**
+	 * </p>Get sys samantics, then apply to all connections.</p>
 	 * This method also initialize table meta by calling {@link Connects}.
 	 * @param xmlpath
 	 * @return configurations
@@ -49,12 +57,9 @@ public class LogTranscxt extends DATranscxt {
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public static HashMap<String, HashMap<String, DASemantics>> loadVirtualSemantics(String xmlpath)
+	public static HashMap<String,SemanticsMap> loadVirtualSemantics(String xmlpath)
 			throws SAXException, IOException, SQLException, SemanticException {
 		Utils.logi("Loading Semantics of logging, fullpath:\n\t%s", xmlpath);
-
-		// String fpath = Connects.getSmtcs(sysConn);
-		// String fpath = Connects.getSmtcs(xmlpath);
 
 		String fpath = FilenameUtils.concat(cfgroot, xmlpath);
 
@@ -76,17 +81,16 @@ public class LogTranscxt extends DATranscxt {
 			xcfg.beforeFirst();
 			// smtConfigs shouldn't be null now
 			if (smtConfigs == null)
-				smtConfigs = new HashMap<String, HashMap<String, DASemantics>>();
+				// smtConfigs = new HashMap<String, HashMap<String, DASemantics>>();
+				smtConfigs = new HashMap<String, SemanticsMap>();
 			while (xcfg.next()) {
 				String tabl = xcfg.getString("tabl");
-				String pk = xcfg.getString("pk");
+				String pk   = xcfg.getString("pk");
 				String smtc = xcfg.getString("smtc");
 				String args = xcfg.getString("args");
 				try {
 					addSemantics(conn, tabl, pk, smtc, args, Connects.getDebug(conn));
 				} catch (SemanticException e) {
-					// some configuration error
-					// continue
 					Utils.warn(e.getMessage());
 				}
 			}
