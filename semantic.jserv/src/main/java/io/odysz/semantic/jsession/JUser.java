@@ -90,13 +90,11 @@ public class JUser extends SemanticObject implements IUser {
 	protected String org;
 	protected String role;
 	private String pswd;
-//	@SuppressWarnings("unused")
-//	private String usrName;
 	
-	/** v1.4.11 */
+	/**@since 1.4.11 */
 	@Override
 	public String orgId() { return org; }
-	/** v1.4.11 */
+	/**@since v1.4.11 */
 	@Override
 	public String roleId() { return role; }
 
@@ -138,7 +136,6 @@ public class JUser extends SemanticObject implements IUser {
 	public JUser(String uid, String pswd, String usrName) throws SemanticException {
 		this.uid = uid;
 		this.pswd = pswd;
-//		this.usrName = usrName;
 
 		String rootK = DATranscxt.key("user-pswd");
 		if (rootK == null)
