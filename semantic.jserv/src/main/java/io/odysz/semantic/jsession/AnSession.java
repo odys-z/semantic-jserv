@@ -123,6 +123,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		if (!DATranscxt.alreadyLoaded(conn)) {
 			Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here.", conn);
 			DATranscxt.loadSemantics(conn);
+						// JSingleton.getFileInfPath(JUser.sessionSmtXml), daSctx.getSysDebug());
 		}
 
 		users = new HashMap<String, IUser>();
