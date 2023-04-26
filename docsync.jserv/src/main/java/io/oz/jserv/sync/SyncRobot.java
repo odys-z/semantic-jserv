@@ -84,9 +84,9 @@ public class SyncRobot extends SemanticObject implements IUser {
 	}
 
 	/** User table's meta, not doc table's meta.
-	 * @see io.odysz.semantics.IUser#meta()
+	 * @see io.odysz.semantics.IUser#meta(String...)
 	 */
-	public TableMeta meta() {
+	public TableMeta meta(String... conn) {
 		return new RobotMeta("a_users");
 	}
 

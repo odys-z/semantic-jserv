@@ -1,5 +1,7 @@
 package io.odysz.semantic.jsession;
 
+import static io.odysz.common.LangExt.isNull;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
@@ -161,8 +163,9 @@ public class JUser extends SemanticObject implements IUser {
 		this.pswd = pswd;
 	}
 
-	public TableMeta meta() {
-		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
+	public TableMeta meta(String ...conn) {
+		// return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
+		return new JUserMeta("a_user", isNull(conn) ? AnSession.sctx.getSysConnId() : conn[0]);
 	}
 
 	/**jmsg, the response of {@link AnSession}
