@@ -14,7 +14,6 @@ import io.odysz.module.xtable.IXMLStruct;
 import io.odysz.module.xtable.Log4jWrapper;
 import io.odysz.module.xtable.XMLDataFactoryEx;
 import io.odysz.module.xtable.XMLTable;
-import io.odysz.semantic.DASemantics;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantics.x.SemanticException;
@@ -49,7 +48,7 @@ public class LogTranscxt extends DATranscxt {
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public static HashMap<String, HashMap<String, DASemantics>> loadVirtualSemantics(String xmlpath)
+	public static HashMap<String,SemanticsMap> loadVirtualSemantics(String xmlpath)
 			throws SAXException, IOException, SQLException, SemanticException {
 		Utils.logi("Loading Semantics of logging, fullpath:\n\t%s", xmlpath);
 
@@ -76,7 +75,8 @@ public class LogTranscxt extends DATranscxt {
 			xcfg.beforeFirst();
 			// smtConfigs shouldn't be null now
 			if (smtConfigs == null)
-				smtConfigs = new HashMap<String, HashMap<String, DASemantics>>();
+				// smtConfigs = new HashMap<String, HashMap<String, DASemantics>>();
+				smtConfigs = new HashMap<String, SemanticsMap>();
 			while (xcfg.next()) {
 				String tabl = xcfg.getString("tabl");
 				String pk = xcfg.getString("pk");

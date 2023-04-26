@@ -40,7 +40,7 @@ public class JRobot implements IUser {
 
 	@Override public List<Object> notifies() { return null; }
 
-	@Override public TableMeta meta() { return null; }
+	@Override public TableMeta meta(String... conn) { return null; }
 
 	@Override public IUser sessionKey(String string) { return this; }
 
