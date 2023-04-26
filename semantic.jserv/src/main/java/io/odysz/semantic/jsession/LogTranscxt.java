@@ -14,7 +14,6 @@ import io.odysz.module.xtable.IXMLStruct;
 import io.odysz.module.xtable.Log4jWrapper;
 import io.odysz.module.xtable.XMLDataFactoryEx;
 import io.odysz.module.xtable.XMLTable;
-import io.odysz.semantic.DASemantics;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DATranscxt.SemanticsMap;
