@@ -22,9 +22,9 @@ public class JRobot implements IUser {
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 
-	@Override public JRobot touch() { touched = System.currentTimeMillis(); return this; } 
+	@Override public JRobot touch() { touched = System.currentTimeMillis(); return this; }
 
-	@Override public long touchedMs() { return touched; } 
+	@Override public long touchedMs() { return touched; }
 
 	@Override public String uid() { return "jrobot"; }
 
@@ -40,7 +40,7 @@ public class JRobot implements IUser {
 
 	@Override public List<Object> notifies() { return null; }
 
-	@Override public TableMeta meta(String ... c) { return null; }
+	@Override public TableMeta meta(String... conn) { return null; }
 
 	@Override public IUser sessionKey(String string) { return this; }
 

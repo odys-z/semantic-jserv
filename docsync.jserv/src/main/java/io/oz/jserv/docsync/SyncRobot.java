@@ -31,7 +31,7 @@ import io.odysz.transact.x.TransException;
 
 /**
  * A robot is only used for test.
- * 
+ *
  * @author odys-z@github.com
  */
 public class SyncRobot extends SemanticObject implements IUser {
@@ -65,7 +65,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	/**
 	 * for jserv construction
-	 * 
+	 *
 	 * @param userid
 	 * @param pswd
 	 * @param userName
@@ -74,7 +74,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 		this.userId = userid;
 		this.userName = userName;
 	}
-	
+
 	public static class RobotMeta extends JUserMeta {
 		String device;
 		public RobotMeta(String tbl, String... conn) {
@@ -86,7 +86,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 	}
 
 	/** User table's meta, not doc table's meta.
-	 * @throws TransException 
+	 * @throws TransException
 	 */
 	@Override
 	public TableMeta meta(String ... connId) throws SQLException, TransException {
@@ -94,7 +94,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 				.clone(Connects.getMeta(
 				isNull(connId) ? null : connId[0], "a_users"));
 	}
-	
+
 	@Override
 	public IUser onCreate(Anson reqBody) throws SsException {
 		deviceId = ((AnSessionReq)reqBody).deviceId();
@@ -112,9 +112,9 @@ public class SyncRobot extends SemanticObject implements IUser {
 	public IUser touch() {
 		touched = System.currentTimeMillis();
 		return this;
-	} 
+	}
 
-	@Override public long touchedMs() { return touched; } 
+	@Override public long touchedMs() { return touched; }
 
 	@Override public String uid() { return userId; }
 
@@ -146,9 +146,9 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	/**
 	 * Get a temp dir, and have it deleted when logout.
-	 * 
+	 *
 	 * @param conn
-	 * @param tablPhotos 
+	 * @param tablPhotos
 	 * @return the dir
 	 * @throws SemanticException
 	 */
