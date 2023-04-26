@@ -35,7 +35,8 @@ public class LogTranscxt extends DATranscxt {
 		// get sys samantics, then apply to all connections
 		// loadVirtualSemantics(xml);
 
-		initConfigs(conn, loadSemantics(conn), (c) -> {return new SemanticsMap(c);});
+		initConfigs(conn, loadSemantics(conn), 
+						(trb, tbl, pk, debug) -> new DASemantics(trb, tbl, pk, debug));
 	}
 	
 	/**
