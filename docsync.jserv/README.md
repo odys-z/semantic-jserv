@@ -127,3 +127,7 @@ Appendix A is a useful table for mapping data types across RDBMS.
 
 >Discussion:<br>
   As cloud applications are so expensive, is a samentics supported distributed architecture worth to try?
+
+[x.4] [Azure SQL Edge Deployment Models](https://learn.microsoft.com/en-us/azure/azure-sql-edge/overview#deployment-models)
+
+>    [deploy model](https://learn.microsoft.com/en-us/azure/azure-sql-edge/media/overview/overview.png)
