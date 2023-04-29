@@ -23,6 +23,8 @@ import static io.odysz.common.LangExt.*;
  * A sync object, server side and jprotocol oriented data record,
  * used for docsync.jserv. 
  * 
+ * TODO extending SyncEntity
+ * 
  * @author ody
  */
 public class SyncDoc extends Anson implements IFileDescriptor {
@@ -142,7 +144,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public static String[] nvCols(DocTableMeta meta) {
 		return new String[] {
 				meta.pk,
-				meta.filename,
+				meta.resname,
 				meta.uri,
 				meta.createDate,
 				meta.shareDate,
@@ -151,7 +153,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 				meta.syncflag,
 				meta.mime,
 				meta.fullpath,
-				meta.device,
+				meta.synoder,
 				meta.folder,
 				meta.size
 		};
@@ -165,7 +167,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		if (synpageCols == null)
 			synpageCols = new String[] {
 					meta.pk,
-					meta.device,
+					meta.synoder,
 					meta.fullpath,
 					meta.shareby,
 					meta.shareDate,
@@ -178,14 +180,14 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
 		this.docMeta = meta;
 		this.recId = rs.getString(meta.pk);
-		this.pname = rs.getString(meta.filename);
+		this.pname = rs.getString(meta.resname);
 		this.uri = rs.getString(meta.uri);
 		this.createDate = rs.getString(meta.createDate);
 		this.mime = rs.getString(meta.mime);
 		this.size = rs.getLong(meta.size, 0);
 		
 		this.clientpath =  rs.getString(meta.fullpath);
-		this.device =  rs.getString(meta.device);
+		this.device =  rs.getString(meta.synoder);
 		this.folder = rs.getString(meta.folder);
 		
 		try {

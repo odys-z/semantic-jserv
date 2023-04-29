@@ -9,13 +9,12 @@ import javax.servlet.annotation.WebListener;
 
 import org.xml.sax.SAXException;
 
-import io.odysz.semantic.DA.Connects;
+import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.semantic.jsession.JUser;
-import io.odysz.semantics.x.SemanticException;
-import io.oz.album.tier.PhotoMeta;
-import io.oz.jserv.sync.Docsyncer;
+import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.transact.x.TransException;
+import io.oz.jserv.docsync.Synode;
 
 @WebListener
 public class AlbumSingleton extends JSingleton implements ServletContextListener {
@@ -29,14 +28,15 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			super.onInitialized(sce);
 			
 			AnsonMsg.understandPorts(AlbumPort.album);
-			// Anson.verbose = true;
 			
+			/*
 			Docsyncer.init(System.getProperty("JSERV_NODE"));
-			
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
 			Docsyncer.addSyncTable(new JUser.JUserMeta(Connects.defltConn()));
+			*/
+			Synode.init(System.getProperty("JSERV_NODE"));
 
-		} catch (SemanticException | SAXException | IOException | SQLException e) {
+		} catch (TransException | SAXException | IOException | SQLException | AnsonException | SsException e) {
 			e.printStackTrace();
 		}
 	}

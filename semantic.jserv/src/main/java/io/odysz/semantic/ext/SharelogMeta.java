@@ -3,6 +3,7 @@ package io.odysz.semantic.ext;
 import io.odysz.semantics.meta.TableMeta;
 
 /**
+ * @deprecated
  * <pre>
  drop table if exists a_synodes;
  CREATE TABLE a_synodes (
@@ -41,8 +42,10 @@ public class SharelogMeta extends TableMeta {
 	public final String docTbl;
 	public final String synid;
 	public final String clientpath;
+	public final String dstpath;
 	public final String expire;
 	public final String docFk;
+
 
 	public SharelogMeta(String parentbl, String parentpk, String... conn) {
 		super("a_sharelog", conn);
@@ -56,6 +59,7 @@ public class SharelogMeta extends TableMeta {
 		this.docFk = "docId";
 		this.org = "org";
 		this.clientpath = "clientpath";
+		this.dstpath = "dstpath";
 		this.docTbl = "tabl";
 		this.expire = "expire";
 	}
@@ -70,10 +74,10 @@ public class SharelogMeta extends TableMeta {
 		};
 	}
 
-	public String[] selectSynodeCols() {
-		return new String[] {
-			synid, org, docTbl//, new Resulving(docMeta.tbl, docMeta.pk)
-		};
-	}
+//	public String[] selectSynodeCols() {
+//		return new String[] {
+//			synid, org//, docTbl//, new Resulving(docMeta.tbl, docMeta.pk)
+//		};
+//	}
 
 }

@@ -12,12 +12,16 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 public class JProtocol {
-	/** Typical operation's common names */
+	/**
+	 * Typical operation's common names
+	 * @deprecated replaced by Semantic.DA/{@link io.odysz.semantic.CRUD}.
+	 * @since v1.4.12 requires semantic.DA v1.4.12
+	 * */
 	public static class CRUD {
-		public static final String C = "I";
-		public static final String R = "R";
-		public static final String U = "U";
-		public static final String D = "D";
+		public static final String C = io.odysz.semantic.CRUD.C;
+		public static final String R = io.odysz.semantic.CRUD.R;
+		public static final String U = io.odysz.semantic.CRUD.U;
+		public static final String D = io.odysz.semantic.CRUD.D;
 	}
 
 	@FunctionalInterface

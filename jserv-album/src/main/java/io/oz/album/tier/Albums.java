@@ -44,7 +44,7 @@ import io.oz.album.AlbumPort;
 import io.oz.album.PhotoRobot;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
-import io.oz.jserv.sync.Docsyncer;
+import io.oz.jserv.docsync.Docsyncer;
 
 /**
  * <h5>The album tier</h5> Although this tie is using the pattern of
@@ -144,6 +144,8 @@ public class Albums extends ServPort<AlbumReq> {
 		if (AlbumFlags.album)
 			Utils.logi("[AlbumFlags.album/album.less POST]");
 
+		resp.addHeader("Access-Control-Allow-Origin", "*");
+		
 		try {
 			DocsReq jreq = jmsg.body(0);
 			String a = jreq.a();
@@ -261,7 +263,7 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
-				.whereEq(meta.device, device)
+				.whereEq(meta.synoder, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);

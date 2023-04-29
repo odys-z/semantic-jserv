@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,22 +6,24 @@ import org.junit.jupiter.api.Test;
 
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantics.x.SemanticException;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
+import io.oz.jserv.docsync.SyncFlag;
+import io.oz.jserv.docsync.SynodeMode;
+import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 
 /**
- * <img src='../../../../../../main/java/io/oz/jserv/sync/sync-states.jpg'/>
+ * <img src='../../../../../../main/java/io/oz/jserv/docsync/sync-states.jpg'/>
  * @author odys-z@github.com
  *
  */
 class SyncFlagTest {
 
 	@Test
-	void testTo() {
-		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.priv, SyncEvent.pushEnd, Share.priv));
-		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushEnd, Share.priv));
-		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.priv, SyncEvent.pushEnd, Share.pub));
-		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushEnd, Share.pub));
-		assertEquals(null, SyncFlag.to(null, SyncEvent.pushEnd, Share.pub));
+	void testJnode() {
+		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.priv, SyncEvent.pushubEnd, Share.priv));
+		assertEquals(SyncFlag.hub, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushubEnd, Share.priv));
+		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.priv, SyncEvent.pushubEnd, Share.pub));
+		assertEquals(SyncFlag.publish, SyncFlag.to(SyncFlag.pushing, SyncEvent.pushubEnd, Share.pub));
+		assertEquals(null, SyncFlag.to(null, SyncEvent.pushubEnd, Share.pub));
 		
 		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.publish, SyncEvent.pull, Share.pub));
 		assertEquals(SyncFlag.priv, SyncFlag.to(SyncFlag.publish, SyncEvent.pull, Share.priv)); // won't happen
@@ -40,8 +42,8 @@ class SyncFlagTest {
 
 	@Test
 	void testStart() throws SemanticException {
-		assertEquals(SyncFlag.priv, SyncFlag.start(SynodeMode.priv, Share.pub));
-		assertEquals(SyncFlag.priv, SyncFlag.start(SynodeMode.priv, Share.priv));
+		assertEquals(SyncFlag.priv, SyncFlag.start(SynodeMode.bridge, Share.pub));
+		assertEquals(SyncFlag.priv, SyncFlag.start(SynodeMode.bridge, Share.priv));
 
 		assertEquals(SyncFlag.hub, SyncFlag.start(SynodeMode.hub, Share.priv));
 		assertEquals(SyncFlag.publish, SyncFlag.start(SynodeMode.hub, Share.pub));

@@ -29,7 +29,7 @@
 	<c>
         <!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml)
              Since v1.3.0, when creating log-id, will use system default conn-id;
-             when insert log, using this conn-id.
+             when insert log, jserv will use this conn-id.
          -->
 		<k>log-connId</k>
 		<v>sys-sqlite,semantic-log.xml,a_logs</v>
