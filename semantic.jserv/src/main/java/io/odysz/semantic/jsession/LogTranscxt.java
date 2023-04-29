@@ -36,7 +36,7 @@ public class LogTranscxt extends DATranscxt {
 		// loadVirtualSemantics(xml);
 
 		initConfigs(conn, loadSemantics(conn), 
-						(trb, tbl, pk, debug) -> new DASemantics(trb, tbl, pk, debug));
+						(c) -> new SemanticsMap(c));
 	}
 	
 	/**
