@@ -144,6 +144,8 @@ public class Albums extends ServPort<AlbumReq> {
 		if (AlbumFlags.album)
 			Utils.logi("[AlbumFlags.album/album.less POST]");
 
+		resp.addHeader("Access-Control-Allow-Origin", "*");
+		
 		try {
 			DocsReq jreq = jmsg.body(0);
 			String a = jreq.a();
