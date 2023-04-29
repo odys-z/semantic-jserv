@@ -1,4 +1,4 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,6 +51,7 @@ public class Dochain {
 
 	public static final boolean verbose = true;
 
+	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	DATranscxt st;
 
 	static HashMap<String, BlockChain> blockChains;
@@ -115,8 +116,8 @@ public class Dochain {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
-				.whereEq(meta.org, usr.orgId())
-				.whereEq(meta.device, device)
+				.whereEq(meta.org(), usr.orgId())
+				.whereEq(meta.synoder, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
@@ -212,7 +213,6 @@ public class Dochain {
 		return DocUtils.createFileB64(conn, photo, usr, meta, st, post);
 	}
 
-
 	/**
 	 * Resolve file root with samantics handler of {@link smtype#extFilev2}.
 	 * 
@@ -240,5 +240,4 @@ public class Dochain {
 		String extroot = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2)).getFileRoot();
 		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 	}
-	
 }

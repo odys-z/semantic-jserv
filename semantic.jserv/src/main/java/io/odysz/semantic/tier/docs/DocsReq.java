@@ -23,15 +23,26 @@ public class DocsReq extends AnsonBody {
 		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
 		 * */
 		public static final String syncdocs = "r/syncs";
+
+		/** List all nodes, includeing devices &amp; synodes of the family */
+		public static final String orgNodes = "r/synodes";
+
 		/**
 		 * Action: read records for client path matching.
 		 * For synodes synchronizing, use {@link #syncdocs} instead. 
+		 * 
+		 * @deprecated now clients only match paths with local DB.
 		 */
 		public static final String records = "r/list";
+		
+		public static final String getstamp = "r/stamp";
+		public static final String setstamp = "u/stamp";
+
 		public static final String mydocs = "r/my-docs";
 		public static final String rec = "r/rec";
 		public static final String download = "r/download";
 		public static final String upload = "c";
+
 		/** request for deleting docs */
 		public static final String del = "d";
 
@@ -41,9 +52,13 @@ public class DocsReq extends AnsonBody {
 		public static final String blockAbort = "c/b/abort";
 
 		/**
-		 * Action: close synchronizing task
+		 * Action: close synchronizing push task
 		 */
-		public static final String synclose = "u/close";
+		public static final String synclosePush = "u/close";
+		/**
+		 * Action: close synchronizing pull task
+		 */
+		public static final String synclosePull = "r/close";
 
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */
@@ -116,6 +131,10 @@ public class DocsReq extends AnsonBody {
 		docId = p.recId();
 	}
 
+
+	protected String stamp;
+	public String stamp() { return stamp; }
+
 	/**
 	 * The page of quirying client files status - not for used between jservs. 
 	 */
@@ -134,7 +153,8 @@ public class DocsReq extends AnsonBody {
 	/**@deprecated replaced by DocsPage.paths */
 	public ArrayList<SyncDoc> syncQueries() { return syncQueries; }
 
-	protected long blockSeq;
+	/** TODO visibility = package */
+	public long blockSeq;
 	public long blockSeq() { return blockSeq; } 
 
 	public DocsReq nextBlock;

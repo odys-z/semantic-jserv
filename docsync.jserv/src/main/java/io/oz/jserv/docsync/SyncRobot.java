@@ -1,8 +1,10 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
+import static io.odysz.common.LangExt.isNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +18,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
@@ -28,7 +31,7 @@ import io.odysz.transact.x.TransException;
 
 /**
  * A robot is only used for test.
- * 
+ *
  * @author odys-z@github.com
  */
 public class SyncRobot extends SemanticObject implements IUser {
@@ -56,14 +59,13 @@ public class SyncRobot extends SemanticObject implements IUser {
 		return this;
 	}
 
-	public SyncRobot(String userid, String orgId) {
+	public SyncRobot(String userid) {
 		this.userId = userid;
-		this.orgId = orgId;
 	}
 
 	/**
 	 * for jserv construction
-	 * 
+	 *
 	 * @param userid
 	 * @param pswd
 	 * @param userName
@@ -72,7 +74,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 		this.userId = userid;
 		this.userName = userName;
 	}
-	
+
 	public static class RobotMeta extends JUserMeta {
 		String device;
 		public RobotMeta(String tbl, String... conn) {
@@ -84,10 +86,13 @@ public class SyncRobot extends SemanticObject implements IUser {
 	}
 
 	/** User table's meta, not doc table's meta.
-	 * @see io.odysz.semantics.IUser#meta()
+	 * @throws TransException
 	 */
-	public TableMeta meta() {
-		return new RobotMeta("a_users");
+	@Override
+	public TableMeta meta(String ... connId) throws SQLException, TransException {
+		return new RobotMeta("a_users")
+				.clone(Connects.getMeta(
+				isNull(connId) ? null : connId[0], "a_users"));
 	}
 
 	@Override
@@ -98,7 +103,8 @@ public class SyncRobot extends SemanticObject implements IUser {
 		return this;
 	}
 
-	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
+	@Override
+	public ArrayList<String> dbLog(ArrayList<String> sqls) throws TransException { return null; }
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 
@@ -106,9 +112,9 @@ public class SyncRobot extends SemanticObject implements IUser {
 	public IUser touch() {
 		touched = System.currentTimeMillis();
 		return this;
-	} 
+	}
 
-	@Override public long touchedMs() { return touched; } 
+	@Override public long touchedMs() { return touched; }
 
 	@Override public String uid() { return userId; }
 
@@ -140,9 +146,9 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	/**
 	 * Get a temp dir, and have it deleted when logout.
-	 * 
+	 *
 	 * @param conn
-	 * @param tablPhotos 
+	 * @param tablPhotos
 	 * @return the dir
 	 * @throws SemanticException
 	 */
@@ -166,10 +172,6 @@ public class SyncRobot extends SemanticObject implements IUser {
 	public SessionInf sessionInf() {
 		return new SessionInf().device(deviceId);
 	}
-
-//	public String  device() {
-//		return deviceId;
-//	}
 
 	public SyncRobot device(String dev) {
 		deviceId = dev;

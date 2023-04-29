@@ -1,6 +1,6 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
-import static io.oz.jserv.sync.ZSUNodes.*;
+import static io.oz.jserv.docsync.ZSUNodes.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -46,10 +46,17 @@ import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.Photo;
 import io.oz.album.tier.PhotoMeta;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
-import io.oz.jserv.sync.ZSUNodes.AnDevice;
-import io.oz.jserv.sync.ZSUNodes.Kharkiv;
-import io.oz.jserv.sync.ZSUNodes.Kyiv;
+import io.oz.jserv.docsync.Docsyncer;
+import io.oz.jserv.docsync.SyncFlag;
+import io.oz.jserv.docsync.SyncRobot;
+import io.oz.jserv.docsync.SyncWorker;
+import io.oz.jserv.docsync.Synclientier;
+import io.oz.jserv.docsync.SynodeMode;
+import io.oz.jserv.docsync.SynodeTier;
+import io.oz.jserv.docsync.SyncFlag.SyncEvent;
+import io.oz.jserv.docsync.ZSUNodes.AnDevice;
+import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
+import io.oz.jserv.docsync.ZSUNodes.Kyiv;
 
 class SyncWorkerTest {
 
@@ -86,13 +93,13 @@ class SyncWorkerTest {
 					fail(msg);
 				}
 			};
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+		} catch (TransException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	@Test
-	void testIds() throws SemanticException, SQLException, SAXException, IOException, AnsonException, SsException {
+	void testIds() throws SQLException, SAXException, IOException, AnsonException, SsException, TransException {
 		SyncWorker worker = new SyncWorker(Kyiv.Synode.mode, Kyiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
 				.stop()
 				.login(Kyiv.Synode.passwd);
@@ -102,12 +109,16 @@ class SyncWorkerTest {
 		assertEquals(Kyiv.Synode.worker, worker.robot().userId);
 		assertEquals(Kyiv.Synode.nodeId, worker.mac);
 		assertEquals(Kyiv.Synode.nodeId, worker.robot().deviceId);
+		
+		DocsResp rsp = worker.listNodes(family);
+		assertEquals(4, rsp.rs(0).total());
 	}
 
 	/**
-	 * <p>Kyiv -&gt; hub -&gt; Kharkiv</p>
+	 * <p>Kyiv local -&gt; Kyiv (hub) -&gt; Kharkiv</p>
 	 * 
 	 * Test {@link SyncWorker}' pushing (synchronizing 'pub') with album-jserv as sync hub (8081).
+	 * 
 	 * @throws TransException 
 	 * @throws IOException 
 	 * @throws SQLException 
@@ -130,7 +141,7 @@ class SyncWorkerTest {
 		// 0. clean failed tests
 		clean(worker, clientpath);
 		worker.synctier.tempRoot("synode.kyiv");
-		worker.synctier.del(meta.tbl, worker.nodeId(), clientpath);
+		worker.synctier.synDel(meta.tbl, worker.nodeId(), clientpath);
 
 		// 1. create a public file at this private node
 		Photo photo = new Photo().create(clientpath);
@@ -143,6 +154,9 @@ class SyncWorkerTest {
 		Utils.logi("------ Saved Photo: %s ----------\n%s\n%s", photo.fullpath(), photo.pname, pid);
 
 		worker.push();
+		
+		// 2.1 verify the sharing tasks been created
+		// syndev: 
 	
 		// 3. query my tasks as another jnode (kharkiv)
 		worker = new SyncWorker(Kharkiv.Synode.mode, Kharkiv.Synode.nodeId, conn, Kharkiv.Synode.worker, meta)
@@ -156,7 +170,7 @@ class SyncWorkerTest {
 
 		tasks.beforeFirst();
 		while (tasks.next()) {
-			String dev = tasks.getString(meta.device);
+			String dev = tasks.getString(meta.synoder);
 			String pth = tasks.getString(meta.fullpath);
 			assertTrue( AnDevice.device.equals(dev)
 					|| Kharkiv.Synode.nodeId.equals(dev)
@@ -176,13 +190,13 @@ class SyncWorkerTest {
 
 		defltSt
 			.delete(meta.tbl, worker.robot())
-			.whereEq(meta.org, worker.org())
+			.whereEq(meta.org(), worker.org())
 			.post(Docsyncer.onClean(worker.org(), meta, worker.robot()))
 			.d(defltSt.instancontxt(conn, worker.robot()));
 		
-		worker.synctier.del(meta.tbl, Kyiv.Synode.nodeId, null);
-		worker.synctier.del(meta.tbl, Kharkiv.Synode.nodeId, null);
-		worker.synctier.del(meta.tbl, AnDevice.device, null);
+		worker.synctier.synDel(meta.tbl, Kyiv.Synode.nodeId, null);
+		worker.synctier.synDel(meta.tbl, Kharkiv.Synode.nodeId, null);
+		worker.synctier.synDel(meta.tbl, AnDevice.device, null);
 	}
 
 	/**
@@ -203,7 +217,7 @@ class SyncWorkerTest {
 			throws TransException, SQLException, IOException {
 
 		if (!DATranscxt.hasSemantics(conn, meta.tbl, smtype.extFilev2))
-			throw new SemanticException("Semantics of ext-file2.0 for h_photos.uri can't been found");
+			throw new SemanticException("Semantics of ext-file2.0 for h_photos.uri can't be found");
 		
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
 		return DocUtils.createFileB64(conn, photo, usr, meta, defltSt, post);
@@ -275,18 +289,18 @@ class SyncWorkerTest {
 				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
-		apptier.del(photoMeta.tbl, AnDevice.device, AnDevice.localFile);
+		apptier.synDel(photoMeta.tbl, AnDevice.device, AnDevice.localFile);
 		
 		SyncDoc doc = (SyncDoc) new SyncDoc()
 					.share(apptier.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);
-		DocsResp resp = apptier.insertSyncDoc(meta.tbl, doc, new OnDocOk() {
+		DocsResp resp = apptier.synInsertDoc(meta.tbl, doc, new OnDocOk() {
 			@Override
 			public void ok(SyncDoc doc, AnsonResp resp)
 					throws IOException, AnsonException, TransException {
 				// update synode (Kharkiv) flag - app device do nothing here
-				String f = SyncFlag.to(Share.pub, SyncEvent.pushEnd, doc.shareflag());
+				String f = SyncFlag.to(Share.pub, SyncEvent.pushubEnd, doc.shareflag());
 				try {
 					SynodeTier tier = (SynodeTier) new SynodeTier(clientUri, conn, errLog)
 							.tempRoot("synode.kharkiv")
@@ -304,7 +318,7 @@ class SyncWorkerTest {
 				DocsResp resp2 = null;
 				try {
 
-					resp2 = apptier.insertSyncDoc(meta.tbl, doc,
+					resp2 = apptier.synInsertDoc(meta.tbl, doc,
 					// resps2 = tier.pushBlocks(meta, videos, ssInf, null,
 					new OnDocOk() {
 						@Override

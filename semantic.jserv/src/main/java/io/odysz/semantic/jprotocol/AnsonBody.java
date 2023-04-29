@@ -8,6 +8,7 @@ public abstract class AnsonBody extends Anson {
 	protected AnsonMsg<? extends AnsonBody> parent;
 
 	protected String uri;
+	/** Get client function uri. */
 	public String uri() { return uri; }
 	public AnsonBody uri(String uri) {
 		if (this.uri == null)

@@ -126,7 +126,7 @@ Appendix A is a useful table for mapping data types across RDBMS.
 >Patterns like Materialized View (local read model) & Saga (distitributed transaction), CQRS (like result-cache routine) etc. are explained here with examples.
 
 >Discussion:<br>
-  As cloud applications are so expensive, is a samentics supported distributed architecture worth to try?
+  As cloud (NoSql) applications are so expensive, is a samentics supported distributed architecture worth to try?
 
 [x.4] [Azure SQL Edge Deployment Models](https://learn.microsoft.com/en-us/azure/azure-sql-edge/overview#deployment-models)
 

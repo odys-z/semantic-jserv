@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.SAXException;
 
+import io.odysz.common.DocLocks;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -67,11 +68,17 @@ public class FileStream {
 		return sendFile(out, srcFile);
 	}
 
-	public static MsgCode sendFile(OutputStream out, String src) throws IOException {
-		FileInputStream in = new FileInputStream(src);
-		IOUtils.copy(in, out);
-		in.close();
-		return MsgCode.ok;
+	public static MsgCode sendFile(OutputStream out, String src)
+			throws IOException {
+		try {
+			DocLocks.reading(src);
+			FileInputStream in = new FileInputStream(src);
+			IOUtils.copy(in, out);
+			in.close();
+			return MsgCode.ok;
+		} finally {
+			DocLocks.readed(src);
+		}
 	}
 
 

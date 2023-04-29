@@ -1,4 +1,6 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
+
+import io.oz.jserv.docsync.SynodeMode;
 
 /**
  * Consts for testing.

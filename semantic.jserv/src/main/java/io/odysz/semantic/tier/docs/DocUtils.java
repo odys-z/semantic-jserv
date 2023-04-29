@@ -25,6 +25,11 @@ public class DocUtils {
 	 * <p>Photo is created as in the folder of user/[photo.folder]/;<br>
 	 * Photo's device and family are replaced with session information.</p>
 	 * 
+	 * @since 1.4.19, this method need DB triggering timestamp ({@link DocTableMeta#stamp}).
+	 * <pre>
+	 * sqlite example:
+	 * syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL
+	 * </pre>
 	 * @param conn
 	 * @param photo with photo.uri that is the entire base-64 encoded string
 	 * @param usr
@@ -45,10 +50,10 @@ public class DocUtils {
 			throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 
 		Insert ins = st.insert(meta.tbl, usr)
-				.nv(meta.org, usr.orgId())
+				.nv(meta.org(), usr.orgId())
 				.nv(meta.uri, photo.uri)
-				.nv(meta.filename, photo.pname)
-				.nv(meta.device, usr.deviceId())
+				.nv(meta.resname, photo.pname)
+				.nv(meta.synoder, usr.deviceId())
 				.nv(meta.fullpath, photo.fullpath())
 				.nv(meta.createDate, photo.createDate)
 				.nv(meta.folder, photo.folder())

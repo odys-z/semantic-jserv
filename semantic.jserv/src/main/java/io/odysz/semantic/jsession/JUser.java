@@ -1,5 +1,7 @@
 package io.odysz.semantic.jsession;
 
+import static io.odysz.common.LangExt.isNull;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
@@ -84,19 +86,17 @@ public class JUser extends SemanticObject implements IUser {
 			return this;
 		}
 	}
-	
+
 	protected String ssid;
 	protected String uid;
 	protected String org;
 	protected String role;
 	private String pswd;
-	@SuppressWarnings("unused")
-	private String usrName;
-	
-	/** v1.4.11 */
+
+	/**@since 1.4.11 */
 	@Override
 	public String orgId() { return org; }
-	/** v1.4.11 */
+	/**@since v1.4.11 */
 	@Override
 	public String roleId() { return role; }
 
@@ -138,7 +138,6 @@ public class JUser extends SemanticObject implements IUser {
 	public JUser(String uid, String pswd, String usrName) throws SemanticException {
 		this.uid = uid;
 		this.pswd = pswd;
-		this.usrName = usrName;
 
 		String rootK = DATranscxt.key("user-pswd");
 		if (rootK == null)
@@ -161,8 +160,9 @@ public class JUser extends SemanticObject implements IUser {
 		this.pswd = pswd;
 	}
 
-	public TableMeta meta() {
-		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
+	public TableMeta meta(String ...conn) {
+		// return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
+		return new JUserMeta("a_user", isNull(conn) ? AnSession.sctx.getSysConnId() : conn[0]);
 	}
 
 	/**jmsg, the response of {@link AnSession}
@@ -239,7 +239,7 @@ public class JUser extends SemanticObject implements IUser {
 
 		return false;
 	}
-	
+
 	@Override
 	public boolean guessPswd(String pswd64, String iv64)
 			throws TransException, GeneralSecurityException, IOException {
@@ -251,12 +251,12 @@ public class JUser extends SemanticObject implements IUser {
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
-	
+
 	@Override
 	public IUser validatePassword() throws SsException, SQLException, TransException {
 		return this;
 	}
-	
+
 	@Override
 	public IUser onCreate(Anson with) throws SsException {
 		if (with instanceof AnResultset) {

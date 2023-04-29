@@ -1,4 +1,4 @@
-package io.odysz.semantic.tier.docs;
+package io.oz.jserv.dbsync;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,77 +13,46 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
+import io.odysz.semantic.meta.SyntityMeta;
+import io.odysz.semantic.syn.SynEntity;
 import io.odysz.transact.x.TransException;
 
 /**
  * Blocks stream, not that block chain:)
- * 
+ *
  * <p>Block chain is not guarded with file read-write lock as it's not visible to others
  * until the database is updated with the path.</p>
- * 
+ *
  * @author ody
  */
-public class BlockChain {
+public class Clobs {
 
-	public final String saveFolder;
 	public final String clientpath;
 	public final String clientname;
-	public String cdate;
 
+	/** Local file for writing clob */
 	public final String outputPath;
+	/** Local file stream for writing clob */
 	protected final OutputStream ofs;
-	
-	protected final DocsReq waitings;
 
-	public String shareby;
-	public String shareDate;
-	public String shareflag;
-	public String device;
+	protected final DBSyncReq waitings;
 
-	/**
-	 * Port to DB-sync
-	 * 
-	 * @param tempDir
-	 * @param saveFolder
-	 * @param clientpath
-	 * @throws IOException
-	 */
-	public BlockChain(String tempDir, String saveFolder, String clientpath) throws IOException {
+	String device;
 
-		this.saveFolder = saveFolder;
-		this.clientpath = clientpath;
-		clientname = FilenameUtils.getName(clientpath);
-		outputPath = EnvPath.decodeUri(tempDir, saveFolder, clientname);
+	SynEntity entity;
 
-		String parentpath = FilenameUtils.getFullPath(outputPath);
-		new File(parentpath).mkdirs(); 
-
-		File f = new File(outputPath);
-		f.createNewFile();
-		this.ofs = new FileOutputStream(f);
-
-		waitings = new DocsReq().blockSeq(-1);
-	}
-
-	/**
-	 * Create file output stream to $VALUME_HOME/userid/ssid/clientpath
-	 * 
+	/**Create file output stream to $VALUME_HOME/userid/ssid/clientpath
+	 *
 	 * @param tempDir
 	 * @param clientpathRaw - client path that can match at client's environment (saving at server side replaced some special characters)
-	 * @param createDate 
-	 * @param targetFolder the file should finally saved to this sub folder (specified by client) 
 	 * @throws IOException
-	 * @throws TransException 
+	 * @throws TransException
 	 */
-	public BlockChain(String tempDir, String clientpathRaw, String createDate, String targetFolder)
-			throws IOException, TransException {
+	public Clobs(String tempDir, String clientpathRaw) throws IOException, TransException {
 
 		if (LangExt.isblank(clientpathRaw))
 			throw new TransException("Client path is neccessary to start a block chain transaction.");
-		// this.ssId = ssId;
-		this.cdate = createDate;
 		this.clientpath = clientpathRaw;
-		this.saveFolder = targetFolder;
 
 		String clientpath = clientpathRaw.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
@@ -92,18 +61,18 @@ public class BlockChain {
 		outputPath = EnvPath.decodeUri(tempDir, clientpath);
 
 		String parentpath = FilenameUtils.getFullPath(outputPath);
-		new File(parentpath).mkdirs(); 
+		new File(parentpath).mkdirs();
 
 		File f = new File(outputPath);
 		f.createNewFile();
 		this.ofs = new FileOutputStream(f);
 
-		waitings = new DocsReq().blockSeq(-1);
+		waitings = new DBSyncReq(null, "", "m.tbl").blockSeq(-1);
 	}
 
-	public BlockChain appendBlock(DocsReq blockReq) throws IOException, TransException {
-		DocsReq pre = waitings;
-		DocsReq nxt = waitings.nextBlock;
+	public Clobs appendBlock(DBSyncReq blockReq) throws IOException, TransException {
+		DBSyncReq pre = waitings;
+		DBSyncReq nxt = waitings.nextBlock;
 
 		while (nxt != null && nxt.blockSeq < blockReq.blockSeq) {
 				pre = nxt;
@@ -158,15 +127,18 @@ public class BlockChain {
 		return outputPath;
 	}
 
-	public BlockChain share(String shareby, String shareDate, String shareflag) {
-		this.shareby = shareby;
-		this.shareDate = shareDate;
-		this.shareflag = shareflag;
+	public Clobs device(String device) {
+		this.device = device;
 		return this;
 	}
 
-	public BlockChain device(String device) {
-		this.device = device;
+	public Clobs entity(SynEntity entity) {
+		this.entity = entity;
 		return this;
+	}
+
+	public SynEntity parseEntity(SyntityMeta entm) {
+		SynEntity e = new SynEntity(entm);
+		return e;
 	}
 }

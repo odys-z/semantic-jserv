@@ -1,6 +1,6 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
-import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,7 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.io.FileUtils;
 import org.xml.sax.SAXException;
@@ -32,17 +34,22 @@ import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.sync.SyncFlag.SyncEvent;
+import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 
 public class SynodeTier extends Synclientier {
 
 	protected DATranscxt localSt;
 	protected String connPriv;
 
+	protected HashMap<String, DeviceLock> deviceLocks;
+
+	private final ReentrantLock lock;
+
 	public SynodeTier(String clientUri, String connId, ErrorCtx errCtx)
 			throws SemanticException, IOException {
 		super(clientUri, errCtx);
 		try {
+			lock = new ReentrantLock();
 			localSt = new DATranscxt(connId);
 		} catch (SQLException | SAXException e) {
 			throw new SemanticException(
@@ -54,7 +61,7 @@ public class SynodeTier extends Synclientier {
 	}
 	
 	/**
-	 * @param meta 
+	 * @param tbl task table name 
 	 * @param family 
 	 * @param deviceId 
 	 * @return response
@@ -62,15 +69,15 @@ public class SynodeTier extends Synclientier {
 	 * @throws AnsonException 
 	 * @throws SemanticException 
 	 */
-	DocsResp queryTasks(DocTableMeta meta, String family, String deviceId)
+	DocsResp queryTasks(String tbl, String family, String deviceId)
 			throws SemanticException, AnsonException, IOException {
 
-		DocsReq req = (DocsReq) new DocsReq(meta.tbl)
+		DocsReq req = (DocsReq) new DocsReq(tbl)
 				.org(family)
 				.a(A.syncdocs)
 				;
 
-		String[] act = AnsonHeader.usrAct("sync", "list", meta.tbl, deviceId);
+		String[] act = AnsonHeader.usrAct("sync", "list", tbl, deviceId);
 		AnsonHeader header = client.header().act(act);
 
 		AnsonMsg<DocsReq> q = client
@@ -87,14 +94,14 @@ public class SynodeTier extends Synclientier {
 		photoUser.device = workerId;
 
 		return pushBlocks(meta.tbl,
-				videos, photoUser, onProc,
+				videos, onProc,
 				isNull(docOk) ? new OnDocOk() {
 					@Override
 					public void ok(SyncDoc doc, AnsonResp resp)
 							throws IOException, AnsonException, TransException {
 						String sync0 = doc.syncFlag;
 						String share = doc.shareflag;
-						String f = SyncFlag.to(sync0, SyncEvent.pushEnd, share);
+						String f = SyncFlag.to(sync0, SyncEvent.pushubEnd, share);
 						try {
 							setLocalSync(localSt, connPriv, meta, doc, f, robot);
 						} catch (SQLException e) {
@@ -106,7 +113,7 @@ public class SynodeTier extends Synclientier {
 	}
 
 	/**
-	 * Downward synchronizing.
+	 * Downward synchronize a doc. If succeed, also insert a record into local DB.
 	 * @param p
 	 * @param meta 
 	 * @return doc record (e.g. h_photos)
@@ -119,16 +126,19 @@ public class SynodeTier extends Synclientier {
 			throws AnsonException, IOException, TransException, SQLException {
 		if (!verifyDel(p, meta)) {
 			DocsReq req = (DocsReq) new DocsReq()
-							.org(robot.orgId)
-							.docTabl(meta.tbl)
-							.queryPath(p.device(), p.fullpath())
-							.a(A.download);
+					.org(robot.orgId)
+					.docTabl(meta.tbl)
+					.queryPath(p.device(), p.fullpath())
+					.a(A.download);
 
 			String tempath = tempath(p);
 			String path = client.download(uri, Port.docsync, req, tempath);
 			
-			@SuppressWarnings("unused")
-			String pid = onCreateLocalFile(p, path, meta);
+			String dstpath = onCreateLocalFile(p, path, meta);
+			
+			// TODO: synClosePull(p, dstpath);
+			if (verbose)
+				Utils.logi("file downloaded is saved to %s", dstpath);;
 		}
 		return p;
 	}
@@ -146,7 +156,7 @@ public class SynodeTier extends Synclientier {
 			Utils.logi("   [SyncWorker.verbose: end stream download] %s\n-> %s", path, targetPath);
 		Files.move(Paths.get(path), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
-		return pid;
+		return targetPath;
 	}
 	
 	/** 
@@ -200,4 +210,17 @@ public class SynodeTier extends Synclientier {
 		return DocUtils.resolvePrivRoot(uri, localMeta, connPriv);
 	}
 
+	DeviceLock getDeviceLock(String device) {
+		lock.lock();
+		try {
+			DeviceLock lck = deviceLocks.get(device);
+			if (isblank(lck)) {
+				lck = new DeviceLock(device);
+				deviceLocks.put(device, lck);
+			}
+			return lck;
+		} finally {
+			lock.unlock();
+		}
+	}
 }

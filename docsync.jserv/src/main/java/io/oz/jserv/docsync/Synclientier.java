@@ -1,6 +1,7 @@
-package io.oz.jserv.sync;
+package io.oz.jserv.docsync;
 
-import static io.odysz.common.LangExt.*;
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,6 +19,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
+import io.odysz.common.DocLocks;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
@@ -37,11 +39,11 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
@@ -50,7 +52,7 @@ import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
 /**
- * Doc synchronizing API for both jserv node and java client.
+ * Doc synchronizing API for both jserv node and device client.
  * 
  * @author odys-z@github.com
  *
@@ -66,6 +68,13 @@ public class Synclientier extends Semantier {
 	protected String tempath;
 
 	int blocksize = 3 * 1024 * 1024;
+
+	/**
+	 * Change default block size for performance. Default is 3 Mib.
+	 * 
+	 * @param s must be multiple of 12
+	 * @throws SemanticException
+	 */
 	public void bloksize(int s) throws SemanticException {
 		if (s % 12 != 0)
 			throw new SemanticException("Block size must be multiple of 12.");
@@ -112,13 +121,13 @@ public class Synclientier extends Semantier {
 	 * @param pswd
 	 * @return this
 	 * @throws SQLException
-	 * @throws SemanticException
 	 * @throws AnsonException
 	 * @throws SsException
 	 * @throws IOException
+	 * @throws TransException 
 	 */
 	public Synclientier login(String workerId, String device, String pswd)
-			throws SemanticException, AnsonException, SsException, IOException {
+			throws AnsonException, SsException, IOException, TransException {
 
 		client = Clients.login(workerId, pswd, device);
 
@@ -132,14 +141,15 @@ public class Synclientier extends Semantier {
 	 * 
 	 * @param client
 	 * @return this
+	 * @throws TransException 
 	 */
 	public Synclientier onLogin(SessionClient client) {
 		SessionInf ssinf = client.ssInfo();
 		try {
-			robot = new SyncRobot(ssinf.uid(), ssinf.device)
+			robot = new SyncRobot(ssinf.uid())
 					.device(ssinf.device);
 			tempath = FilenameUtils.concat(tempath,
-					String.format("io.oz.sync.%s.%s", tempath, SynodeMode.priv, ssinf.uid()));
+					String.format("io.oz.sync.%s.%s", ssinf.device, ssinf.uid()));
 			
 			new File(tempath).mkdirs(); 
 			
@@ -156,7 +166,7 @@ public class Synclientier extends Semantier {
 				robot.orgId(rs.getString(um.org))
 					.orgName(rs.getString(um.orgName));
 			else throw new SemanticException("Synode haven't been reqistered: %s", robot.userId);
-		} catch (SemanticException | AnsonException | SQLException | IOException e) {
+		} catch (TransException | AnsonException | SQLException | IOException e) {
 			e.printStackTrace();
 		}
 
@@ -171,28 +181,32 @@ public class Synclientier extends Semantier {
 	 * @param workerId 
 	 * @param onProcess
 	 * @return Sync response list
-	 * @throws SQLException
 	 * @throws TransException 
 	 * @throws AnsonException 
 	 * @throws IOException 
 	 */
 	List<DocsResp> syncUp(DocTableMeta meta, AnResultset rs, String workerId, OnProcess onProc)
-			throws SQLException, TransException, AnsonException, IOException {
+			throws TransException, AnsonException, IOException {
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
-		while (rs.next())
-			videos.add(new SyncDoc(rs, meta));
+		try {
+			while (rs.next())
+				videos.add(new SyncDoc(rs, meta));
 
-		return syncUp(meta.tbl, videos, workerId, onProc);
+			return syncUp(meta.tbl, videos, workerId, onProc);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public List<DocsResp> syncUp(String tabl, List<? extends SyncDoc> videos, String workerId,
 			OnProcess onProc, OnDocOk... docOk)
-			throws SQLException, TransException, AnsonException, IOException {
+			throws TransException, AnsonException, IOException {
 		SessionInf photoUser = client.ssInfo();
 		photoUser.device = workerId;
 
 		return pushBlocks(
-				tabl, videos, photoUser, onProc,
+				tabl, videos, onProc,
 				isNull(docOk) ? new OnDocOk() {
 					@Override
 					public void ok(SyncDoc doc, AnsonResp resp)
@@ -280,15 +294,23 @@ public class Synclientier extends Semantier {
 	 * @return list of response
 	 */
 	public List<DocsResp> pushBlocks(String tbl, List<? extends SyncDoc> videos,
-				SessionInf user, OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr)
+				OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr)
 				throws TransException, IOException {
+		ErrorCtx err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		return pushBlocks(client, uri, tbl, videos, blocksize, proc, docOk, err);
+	}
 
-		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+	public static List<DocsResp> pushBlocks(SessionClient client, String uri, String tbl,
+			List<? extends SyncDoc> videos, int blocksize,
+			OnProcess proc, OnDocOk docOk, ErrorCtx errHandler)
+			throws TransException, IOException {
+
+		SessionInf user = client.ssInfo();
 
         DocsResp resp0 = null;
         DocsResp respi = null;
 
-		String[] act = AnsonHeader.usrAct("albumtier.java", "sync", "c/sync", "push blocks");
+		String[] act = AnsonHeader.usrAct("synclient.java", "sync", "c/sync", "push blocks");
 		AnsonHeader header = client.header().act(act);
 
 		List<DocsResp> reslts = new ArrayList<DocsResp>(videos.size());
@@ -320,6 +342,7 @@ public class Synclientier extends Semantier {
 				totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
 				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp0);
 
+				DocLocks.reading(p.fullpath());
 				ifs = new FileInputStream(new File(p.fullpath()));
 
 				String b64 = AESHelper.encode64(ifs, blocksize);
@@ -358,13 +381,12 @@ public class Synclientier extends Semantier {
 
 				if (ex instanceof IOException)
 					continue;
-				else if (onErr == null || onErr.length < 1 || onErr[0] == null)
-					throw ex;
-				else onErr[0].err(MsgCode.exGeneral, ex.getMessage(), ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
+				else errHandler.err(MsgCode.exGeneral, ex.getMessage(), ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
 			}
 			finally {
 				if (ifs != null)
 					ifs.close();
+				DocLocks.readed(p.fullpath());
 			}
 		}
 
@@ -389,7 +411,7 @@ public class Synclientier extends Semantier {
 	 */
 	public DocsResp selectDoc(String docTabl, String docId, ErrorCtx ... onErr) {
 		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
-		String[] act = AnsonHeader.usrAct("album.java", "synch", "c/photo", "multi synch");
+		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
 		DocsReq req = new DocsReq(docTabl);
@@ -410,7 +432,31 @@ public class Synclientier extends Semantier {
 		return resp;
 	}
 	
-	public DocsResp del(String tabl, String device, String clientpath) {
+	public DocsResp listNodes(String docTabl, String org, ErrorCtx ... onErr) {
+			ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
+		AnsonHeader header = client.header().act(act);
+
+		DocsReq req = new DocsReq(docTabl);
+		req.a(A.orgNodes);
+		req.org = org;
+
+		DocsResp resp = null;
+		try {
+			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
+										.header(header);
+
+			resp = client.commit(q, errCtx);
+		} catch (AnsonException | SemanticException e) {
+			errHandler.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+		} catch (IOException e) {
+			errHandler.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+		}
+		return resp;
+		
+	}
+	
+	public DocsResp synDel(String tabl, String device, String clientpath) {
 		DocsReq req = (DocsReq) new DocsReq(tabl)
 				.device(device)
 				.clientpath(clientpath)
@@ -418,7 +464,7 @@ public class Synclientier extends Semantier {
 
 		DocsResp resp = null;
 		try {
-			String[] act = AnsonHeader.usrAct("album.java", "del", "d/photo", "");
+			String[] act = AnsonHeader.usrAct("synclient.java", "del", "d/photo", "");
 			AnsonHeader header = client.header().act(act);
 			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
 										.header(header);
@@ -432,35 +478,74 @@ public class Synclientier extends Semantier {
 		return resp;
 	}
 
-	DocsResp synClose(SyncDoc p, String docTabl)
+	DocsResp synClosePush(SyncDoc p, String docTabl)
 			throws AnsonException, IOException, TransException, SQLException {
 
 		DocsReq clsReq = (DocsReq) new DocsReq()
 						.docTabl(docTabl)
 						.org(robot.orgId)
 						.queryPath(p.device(), p.fullpath())
-						.a(A.synclose);
+						.a(A.synclosePush);
 
 		AnsonMsg<DocsReq> q = client
 				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
 
 		DocsResp r = client.commit(q, errCtx);
 		return r;
-		// return p.recId();
 	}
 	
-	static String insertLocalFile(DATranscxt st, String conn, String path, SyncDoc doc, SyncRobot usr, DocTableMeta meta)
+	/**
+	 * Tell upper synode to close the doc downloading.
+	 * @param p
+	 * @param docTabl
+	 * @return
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws IOException
+	 */
+	DocsResp synClosePull(SyncDoc p, String docTabl)
+			throws SemanticException, AnsonException, IOException {
+		DocsReq clsReq = (DocsReq) new DocsReq()
+						.docTabl(docTabl)
+						.org(robot.orgId)
+						.queryPath(p.device(), p.fullpath())
+						.a(A.synclosePull);
+
+		AnsonMsg<DocsReq> q = client
+				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
+
+		DocsResp r = client.commit(q, errCtx);
+		return r;
+	}
+	
+	/**
+	 * Insert the locally ready doc (localpath) into table.
+	 * Also update meta.syncflag.
+	 * 
+	 * @param st
+	 * @param conn
+	 * @param localPath
+	 * @param doc
+	 * @param usr
+	 * @param meta
+	 * @return new doc id
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	static String insertLocalFile(DATranscxt st, String conn, String localPath,
+			SyncDoc doc, SyncRobot usr, DocTableMeta meta)
 			throws TransException, SQLException {
-		if (isblank(path))
+
+		if (isblank(localPath))
 			throw new SemanticException("Client path can't be null/empty.");
 		
-		long size = new File(path).length();
+		long size = new File(localPath).length();
 
 		Insert ins = st.insert(meta.tbl, usr)
-				.nv(meta.org, usr.orgId())
+				.nv(meta.org(), usr.orgId())
 				.nv(meta.uri, doc.uri)
-				.nv(meta.filename, doc.pname)
-				.nv(meta.device, usr.deviceId())
+				.nv(meta.resname, doc.pname)
+				.nv(meta.synoder, usr.deviceId())
 				.nv(meta.fullpath, doc.clientpath)
 				.nv(meta.folder, doc.folder())
 				.nv(meta.size, size)
@@ -495,14 +580,14 @@ public class Synclientier extends Semantier {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	public DocsResp insertSyncDoc(String tabl, SyncDoc doc, OnDocOk ok, ErrorCtx ... errorCtx)
+	public DocsResp synInsertDoc(String tabl, SyncDoc doc, OnDocOk ok, ErrorCtx ... errorCtx)
 			throws TransException, IOException, SQLException {
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		videos.add(doc);
 
-		SessionInf ssInf = client.ssInfo(); // simulating pushing from app
+		// SessionInf ssInf = client.ssInfo(); // simulating pushing from app
 
-		List<DocsResp> resps = pushBlocks(tabl, videos, ssInf, 
+		List<DocsResp> resps = pushBlocks(tabl, videos, 
 				new OnProcess() {
 					@Override
 					public void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
@@ -512,10 +597,18 @@ public class Synclientier extends Semantier {
 		return isNull(resps) ? null : resps.get(0);
 	}
 	
-	// public DocsResp queryDocs(List<? extends SyncDoc> files, DocsPage page, DocTableMeta meta)
-	public DocsResp queryPaths(PathsPage page, String tabl)
+	/**
+	 * @deprecated now clients only match paths with local DB.
+	 * 
+	 * @param page
+	 * @param tabl
+	 * @return
+	 * @throws TransException
+	 * @throws IOException
+	 */
+	public DocsResp synQueryPathsPage(PathsPage page, String tabl)
 			throws TransException, IOException {
-		String[] act = AnsonHeader.usrAct("album.java", "query", "r/states", "query sync");
+		String[] act = AnsonHeader.usrAct("synclient.java", "query", "r/states", "query sync");
 		AnsonHeader header = client.header().act(act);
 
 		DocsReq req = (DocsReq) new DocsReq()
