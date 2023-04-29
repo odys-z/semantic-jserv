@@ -76,7 +76,8 @@ public class LogTranscxt extends DATranscxt {
 			xcfg.beforeFirst();
 			// smtConfigs shouldn't be null now
 			if (smtConfigs == null)
-				smtConfigs = new HashMap<String, HashMap<String, DASemantics>>();
+				// smtConfigs = new HashMap<String, HashMap<String, DASemantics>>();
+				smtConfigs = new HashMap<String, DASemantics>();
 			while (xcfg.next()) {
 				String tabl = xcfg.getString("tabl");
 				String pk = xcfg.getString("pk");
