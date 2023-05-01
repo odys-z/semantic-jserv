@@ -6,7 +6,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <version>0.6.10-SNAPSHOT</version>
+  <version>0.6.50-SNAPSHOT</version>
   <!-- see git branch jetty-winsrv for building jetty embedded app -->
   <packaging>war</packaging>
 
@@ -92,7 +92,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>0.1.10-SNAPSHOT</version>
+	    <version>0.1.50-SNAPSHOT</version>
 	</dependency>
 
 	<dependency>

@@ -77,7 +77,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	public static class RobotMeta extends JUserMeta {
 		String device;
-		public RobotMeta(String tbl, String... conn) {
+		public RobotMeta(String tbl, String conn) {
 			super(conn);
 
 			iv = "iv";
@@ -90,7 +90,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 	 */
 	@Override
 	public TableMeta meta(String ... connId) throws SQLException, TransException {
-		return new RobotMeta("a_users")
+		return new RobotMeta("a_users", isNull(connId) ? null : connId[0])
 				.clone(Connects.getMeta(
 				isNull(connId) ? null : connId[0], "a_users"));
 	}

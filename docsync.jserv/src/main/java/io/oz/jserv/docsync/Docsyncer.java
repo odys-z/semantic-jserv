@@ -10,8 +10,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -87,10 +85,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 	public static final String privnode = "private";
 
 	/**
-	 * FIXME shouldn't be a map of [tabl, ScheduledFeature]?
-	 */
 	@SuppressWarnings("unused")
 	private static ScheduledFuture<?> schedualed;
+	private static ScheduledExecutorService scheduler;
+	 */
 	private static SynodeMode mode;
 
 	protected static SynodeMeta synodesMeta; 
@@ -100,8 +98,6 @@ public class Docsyncer extends ServPort<DocsReq> {
 	protected static DATranscxt st;
 	/** connection for update sync flages &amp; task records. */
 	private static String synconn;
-
-	private static ScheduledExecutorService scheduler;
 
 	public static IProfileResolver profilesolver;
 
@@ -137,10 +133,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 			throw new SemanticException("User (id %s, device %s) is trying to delete a file from another device? (req.device = %s)",
 					usr.uid(), usr.deviceId(), req.device());
 		
-		String docId = resolveDoc(usr.orgId(), req.clientpath, device, meta, usr, conn);
+		String docId = resolveDoc(usr.orgId(), req.clientpath(), device, meta, usr, conn);
 		
 		if (isblank(docId))
-			throw new SemanticException("No record found for doc %s : %s", device, req.clientpath);
+			throw new SemanticException("No record found for doc %s : %s", device, req.clientpath());
 
 		Delete d = st
 				.delete(meta.tbl, usr)
@@ -150,11 +146,11 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.post(Docsyncer.onDel(docId, meta, usr))
 				;
 		
-		if (req.clientpath == null && !is(isAdmin))
+		if (req.clientpath() == null && !is(isAdmin))
 			throw new SemanticException("This user are not permeted to delete multiple files at on request: %s, device %s",
 					usr.uid(), usr.deviceId());
-		else if (req.clientpath != null)
-			d.whereEq(meta.fullpath, req.clientpath);
+		else if (req.clientpath() != null)
+			d.whereEq(meta.fullpath, req.clientpath());
 
 		SemanticObject res = (SemanticObject) d.d(st.instancontxt(conn, usr));
 		
@@ -246,7 +242,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		// lock = new ReentrantLock();
 
-		scheduler = Executors.newScheduledThreadPool(1);
+		// scheduler = Executors.newScheduledThreadPool(1);
 
 		int m = 5;  // sync interval
 		try { m = Integer.valueOf(Configs.getCfg(keyInterval)); } catch (Exception e) {}
@@ -274,11 +270,13 @@ public class Docsyncer extends ServPort<DocsReq> {
 				mode = SynodeMode.bridge;
 			else mode = SynodeMode.device;
 		
+			/*
 			schedualed = scheduler.scheduleAtFixedRate(new SyncWorker(
 					mode, nodeId, synconn, nodeId,
 					new DocTableMeta("h_photos", "pid", synconn)) // FIXME oo design error TODO
 					.login("what's the pswd?"),
 					0, m, TimeUnit.MINUTES);
+			*/
 
 			if (ServFlags.file)
 				Utils.warn("[ServFlags.file] sync worker scheduled for private node (mode %s, interval %s minute).",
@@ -520,7 +518,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				.col(meta.uri)
 				.col(meta.mime)
 				.whereEq(meta.synoder, req.device())
-				.whereEq(meta.fullpath, req.clientpath)
+				.whereEq(meta.fullpath, req.clientpath())
 				.rs(st.instancontxt(synconn, usr)).rs(0);
 
 		if (!rs.next()) {
@@ -559,14 +557,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 			.nv(meta.shareflag, SyncFlag.publish)
 			.whereEq(meta.org(), jreq.org == null ? usr.orgId() : jreq.org)
 			.whereEq(meta.synoder, usr.deviceId())
-			.whereEq(meta.fullpath, jreq.clientpath)
+			.whereEq(meta.fullpath, jreq.clientpath())
 			.u(st.instancontxt(synconn, usr));
 		
 		return (DocsResp) new DocsResp()
 				.org(usr.orgId())
 				.doc((SyncDoc) new SyncDoc()
 						.device(usr.deviceId())
-						.fullpath(jreq.clientpath)); 
+						.fullpath(jreq.clientpath())); 
 	}
 
 	/**

@@ -133,10 +133,10 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		try {
 			IUser tmp = createUser(usrClzz, "temp", "pswd", null, "temp user");
-			usrMeta = (JUserMeta) tmp.meta();
+			usrMeta = (JUserMeta) tmp.meta(daSctx.getSysConnId());
 		}
 		catch (Exception ex) {
-			Utils.warn("SSesion: Implementation class of IUser doesn't configured correctly in: config.xml/t[id=default]/k=%s, check the value.",
+			Utils.warn("SSesion: Implementation class of IUser doesn't be configured correctly in: config.xml/t[id=default]/k=%s, check the value.",
 					usrClzz);
 			ex.printStackTrace();
 		}

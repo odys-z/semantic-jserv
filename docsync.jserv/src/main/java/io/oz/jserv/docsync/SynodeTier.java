@@ -195,7 +195,7 @@ public class SynodeTier extends Synclientier {
 				Files.move(Paths.get(pth), Paths.get(targetPath), StandardCopyOption.ATOMIC_MOVE);
 			} catch (Throwable t) {
 				Utils.warn("Moving temporary file failed: %s\n->%s\n  %s\n  %s",
-							pth, targetPath, f.device(), f.clientpath);
+							pth, targetPath, f.device(), f.fullpath());
 			}
 			return true;
 		}
