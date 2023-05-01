@@ -43,7 +43,7 @@ public class DocUtils {
 	 */
 	public static String createFileB64(String conn, SyncDoc photo, IUser usr, DocTableMeta meta, DATranscxt st, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
-		if (LangExt.isblank(photo.clientpath))
+		if (LangExt.isblank(photo.fullpath()))
 			throw new SemanticException("Client path can't be null/empty.");
 		
 		if (LangExt.isblank(photo.folder(), " - - "))
@@ -74,9 +74,7 @@ public class DocUtils {
 
 		ISemantext insCtx = st.instancontxt(conn, usr);
 		SemanticObject res = (SemanticObject) ins.ins(insCtx);
-		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
-				.get(meta.tbl))
-				.getString(meta.pk);
+		String pid = res.resulve(meta.tbl, meta.pk);
 		return pid;
 	}
 

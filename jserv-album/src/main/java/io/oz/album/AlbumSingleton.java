@@ -14,6 +14,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docsync.Docsyncer;
 import io.oz.jserv.docsync.Synode;
 
 @WebListener
@@ -29,12 +30,12 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			
 			AnsonMsg.understandPorts(AlbumPort.album);
 			
-			/*
 			Docsyncer.init(System.getProperty("JSERV_NODE"));
+			/*
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
 			Docsyncer.addSyncTable(new JUser.JUserMeta(Connects.defltConn()));
-			*/
 			Synode.init(System.getProperty("JSERV_NODE"));
+			*/
 
 		} catch (TransException | SAXException | IOException | SQLException | AnsonException | SsException e) {
 			e.printStackTrace();

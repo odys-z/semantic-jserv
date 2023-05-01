@@ -18,6 +18,7 @@ import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;
 
 import static io.odysz.common.LangExt.*;
+import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
@@ -45,7 +46,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 
-	public String clientpath;
+	private String clientpath;
 	@Override
 	public String fullpath() { return clientpath; }
 
@@ -121,13 +122,17 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 
-	public SyncDoc share(String shareby, String s, Date sharedate) {
-		this.shareflag = s;
+	public SyncDoc share(String shareby, String flag, Date sharedate) {
+		this.shareflag = flag;
 		this.shareby = shareby;
 		sharedate(sharedate);
 		return this;
 	}
 
+	public SyncDoc share(String shareby, String flag) {
+		return share(shareby, flag, new Date());
+	}
+	
 	@AnsonField(ignoreTo=true)
 	DocTableMeta docMeta;
 
@@ -248,7 +253,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
-		this.clientpath = clientpath;
+		this.clientpath = separatorsToUnix(clientpath);
 
 		if (isblank(createDate)) {
 			try {

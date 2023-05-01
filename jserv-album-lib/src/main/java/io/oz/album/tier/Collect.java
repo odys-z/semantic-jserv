@@ -1,5 +1,6 @@
 package io.oz.album.tier;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -27,12 +28,12 @@ public class Collect extends Anson {
 	public Collect(AnResultset rs) throws SQLException {
 		this.cid = rs.getString("cid");
 		this.cname = rs.getString("cname");
-		this.shareby = rs.getString("collector"); // TODO android version needing change correspondently.
+		this.shareby = rs.getString("shareby");
 		this.cdate = rs.getString("cdate");
 		this.tags = rs.getString("tags");
 	}
 
-	public Collect addPhoto(AnResultset rs) throws SQLException {
+	public Collect addPhoto(AnResultset rs) throws SQLException, IOException {
 		if (photos == null)
 			photos = new ArrayList<Photo>();
 		Photo p = new Photo(rs);

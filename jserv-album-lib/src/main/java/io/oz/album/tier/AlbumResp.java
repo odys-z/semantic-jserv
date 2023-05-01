@@ -1,5 +1,6 @@
 package io.oz.album.tier;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -26,7 +27,7 @@ public class AlbumResp extends DocsResp {
 
 	public AlbumResp() { }
 	
-	public AlbumResp rec(AnResultset rs) throws SQLException {
+	public AlbumResp rec(AnResultset rs) throws SQLException, IOException {
 		this.photo = new Photo(rs);
 		return this;
 	}
@@ -71,8 +72,9 @@ public class AlbumResp extends DocsResp {
 	 * @param rs photos ordered by cid
 	 * @return this
 	 * @throws SQLException 
+	 * @throws IOException 
 	 */
-	public AlbumResp collectPhotos(AnResultset rs) throws SQLException {
+	public AlbumResp collectPhotos(AnResultset rs) throws SQLException, IOException {
 		String cid = "";
 		Collect collect = null;
 		
@@ -94,7 +96,7 @@ public class AlbumResp extends DocsResp {
 		return this;
 	}
 
-	public AlbumResp photos(String collectId, AnResultset rs) throws SQLException {
+	public AlbumResp photos(String collectId, AnResultset rs) throws SQLException, IOException {
 		if (this.photos == null)
 			this.photos = new ArrayList<Photo[]>(1);
 

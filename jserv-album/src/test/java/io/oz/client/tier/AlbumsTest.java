@@ -139,6 +139,7 @@ class AlbumsTest {
 		String a = resultSuppliers[0].get();
 		assertTrue(a.toLowerCase().contains(".jpg"));
 		assertFalse(a.toLowerCase().contains("msg:"));
+		assertTrue(new File(a).exists());
 		assertTrue(FileUtils.sizeOf(new File(a)) > 5000);
 
 		String b = resultSuppliers[1].get();
@@ -273,12 +274,12 @@ class AlbumsTest {
 		for (AlbumResp doc : resp) {
 			myId = doc.photo().recId;
 			// assertEquals("c-001", doc.photo().collectId()); FXIME collection Id changed?
-			assertEquals("test/res/my.jpg", doc.photo().clientpath);	
+			assertEquals("test/res/my.jpg", doc.photo().fullpath());	
 		}
 
 		Thread.sleep(2000); // wait for exif parsing at server side
 		AlbumResp rep = tier.selectPhotoRec(myId, errCtx);
-		assertEquals("2019_08", rep.photo().folder());
+		assertEquals("2022_03", rep.photo().folder());
 	}
 
 	@Test

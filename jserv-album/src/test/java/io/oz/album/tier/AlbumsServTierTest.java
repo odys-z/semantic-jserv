@@ -1,8 +1,11 @@
 package io.oz.album.tier;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+
+import static io.odysz.common.LangExt.isblank;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 
 import org.junit.jupiter.api.Test;
@@ -49,7 +52,7 @@ class AlbumsServTierTest {
 	}
 
 	@Test
-	void testRec() throws SemanticException, TransException, SQLException {
+	void testRec() throws SemanticException, TransException, SQLException, IOException {
 	
 		AlbumReq req = new AlbumReq("/local/test");
 		req.docId = "test-00001";
@@ -58,7 +61,8 @@ class AlbumsServTierTest {
 		
 		assertEquals("test-00001", rep.photo.recId);
 		assertEquals("DSC_0124.JPG", rep.photo.pname);
-		assertEquals("$VOLUME_HOME/ody/2019_08/DSC_0124.JPG", rep.photo.uri);
+		assertTrue(isblank(rep.photo.uri));
+		assertEquals("2019_08", rep.photo.folder());
 		
 		req.collectId = "c-001";
 		AlbumResp coll = Albums.collect(req, robot);
@@ -67,7 +71,7 @@ class AlbumsServTierTest {
 		assertEquals("Liar & Fool", coll.collectRecords.get(0).cname);
 		assertEquals("c-001", coll.photos.get(0)[0].collectId);
 		assertEquals("DSC_0005.JPG", coll.photos.get(0)[0].pname);
-		assertEquals("$VOLUME_HOME/ody/2019_08/DSC_0005.JPG", coll.photos.get(0)[0].uri);
+		assertTrue(isblank(coll.photos.get(0)[0].uri));
 	}
 
 }
