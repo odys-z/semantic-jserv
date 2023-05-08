@@ -1,8 +1,6 @@
 package io.odysz.semantic.jserv.U;
 
-import static io.odysz.semantic.jprotocol.JProtocol.CRUD.D;
-import static io.odysz.semantic.jprotocol.JProtocol.CRUD.R;
-import static io.odysz.semantic.jprotocol.JProtocol.CRUD.U;
+import static io.odysz.semantic.CRUD.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,7 +14,6 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;
 
@@ -33,7 +30,7 @@ import io.odysz.transact.sql.Query.Ix;
 public class AnUpdateReq extends AnsonBody {
 	@Override
 	public Anson toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
-		if (CRUD.C.equals(a) && (cols == null || cols.length == 0))
+		if (C.equals(a) && (cols == null || cols.length == 0))
 			Utils.warn("WARN - UpdateReq.toJson():\nFound inserting request but cols are null, this is wrong for no insert statement can be generated.\n" +
 					"Suggestion: call the InsertReq.col(col-name) before serialize this to json for table: %s\n" +
 					"Another common error leads to this is using UpdateReq for inserting with java client.",
@@ -49,7 +46,7 @@ public class AnUpdateReq extends AnsonBody {
 	 */
 	public static AnUpdateReq formatUpdateReq(String funcUri, AnsonMsg<AnUpdateReq> parent, String tabl) {
 		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, funcUri)
-				.a(CRUD.U))
+				.a(U))
 				.mtabl(tabl);
 		return bdItem;
 	}
@@ -62,7 +59,7 @@ public class AnUpdateReq extends AnsonBody {
 	 */
 	public static AnUpdateReq formatDelReq(String furi, AnsonMsg<AnUpdateReq> parent, String tabl) {
 		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, furi)
-								.a(CRUD.D))
+								.a(D))
 								.mtabl(tabl);
 		return bdItem;
 	}
