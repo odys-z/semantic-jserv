@@ -119,12 +119,14 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		lock = new ReentrantLock();
 
+		/*
 		String conn = daSctx.getSysConnId();
 		if (!DATranscxt.alreadyLoaded(conn)) {
 			Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here.", conn);
 			DATranscxt.loadSemantics(conn);
 						// JSingleton.getFileInfPath(JUser.sessionSmtXml), daSctx.getSysDebug());
 		}
+		*/
 
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
@@ -132,10 +134,10 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		try {
 			IUser tmp = createUser(usrClzz, "temp", "pswd", null, "temp user");
-			usrMeta = (JUserMeta) tmp.meta();
+			usrMeta = (JUserMeta) tmp.meta(daSctx.getSysConnId());
 		}
 		catch (Exception ex) {
-			Utils.warn("SSesion: Implementation class of IUser doesn't configured correctly in: config.xml/t[id=default]/k=%s, check the value.",
+			Utils.warn("SSesion: Implementation class of IUser doesn't be configured correctly in: config.xml/t[id=default]/k=%s, check the value.",
 					usrClzz);
 			ex.printStackTrace();
 		}

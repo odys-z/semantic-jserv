@@ -2,22 +2,11 @@ package io.odysz.semantic.jsession;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 
-import org.apache.commons.io_odysz.FilenameUtils;
 import org.xml.sax.SAXException;
 
-import io.odysz.common.LangExt;
-import io.odysz.common.Utils;
-import io.odysz.module.xtable.IXMLStruct;
-import io.odysz.module.xtable.Log4jWrapper;
-import io.odysz.module.xtable.XMLDataFactoryEx;
-import io.odysz.module.xtable.XMLTable;
 import io.odysz.semantic.DASemantics;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.DATranscxt.SemanticsMap;
 import io.odysz.semantics.x.SemanticException;
 
 /**
@@ -31,7 +20,7 @@ public class LogTranscxt extends DATranscxt {
 	 * Log {@link DATranscxt} is a special transxct, 
 	 * which use a special semantic-log.xml for semantics and use 
 	 * different connId for a_log datatable sql generating.  
-	 * @param sysConn e.g. the defualt system connection Id, the a_log table will be used for meta checking.
+	 * @param conn e.g. the defualt system connection Id, the a_log table will be used for meta checking.
 	 * @param xml
 	 * @param logTabl 
 	 * @throws SQLException
@@ -39,31 +28,34 @@ public class LogTranscxt extends DATranscxt {
 	 * @throws IOException
 	 * @throws SemanticException
 	 */
-	public LogTranscxt(String sysConn, String xml, String logTabl)
+	public LogTranscxt(String conn, String xml, String logTabl)
 			throws SQLException, SAXException, IOException, SemanticException {
-		super(sysConn);
+		 super(conn);
 
 		// get sys samantics, then apply to all connections
-		loadVirtualSemantics(xml);
+		// loadVirtualSemantics(xml);
+
+		initConfigs(conn, loadSemantics(conn), 
+						(c) -> new SemanticsMap(c));
 	}
 	
 	/**
 	 * </p>Get sys samantics, then apply to all connections.</p>
 	 * This method also initialize table meta by calling {@link Connects}.
+	 * @param TFactory 
 	 * @param xmlpath
 	 * @return configurations
 	 * @throws SAXException
 	 * @throws IOException
 	 * @throws SQLException 
 	 * @throws SemanticException 
-	 */
 	public static HashMap<String,SemanticsMap> loadVirtualSemantics(String xmlpath)
 			throws SAXException, IOException, SQLException, SemanticException {
 		Utils.logi("Loading Semantics of logging, fullpath:\n\t%s", xmlpath);
 
 		String fpath = FilenameUtils.concat(cfgroot, xmlpath);
 
-		if (LangExt.isblank(fpath, "\\."))
+		if (isblank(fpath, "\\."))
 			throw new SemanticException(
 				"Log Transxct loading failed.\n   xml %1$s\n    path %2$s",
 				xmlpath, fpath);
@@ -88,14 +80,22 @@ public class LogTranscxt extends DATranscxt {
 				String pk   = xcfg.getString("pk");
 				String smtc = xcfg.getString("smtc");
 				String args = xcfg.getString("args");
-				try {
-					addSemantics(conn, tabl, pk, smtc, args, Connects.getDebug(conn));
-				} catch (SemanticException e) {
-					Utils.warn(e.getMessage());
-				}
+				addSemantics(conn, tabl, pk, smtc, args, Connects.getDebug(conn));
 			}
 		}
 		return smtConfigs;
 	}
 
+	public static void addSemantics(String conn, String tabl, String sm,
+				String pk, String args, boolean ... debug) {
+		SemanticsMap smap = smtConfigs.get(conn); 
+		if (smap == null) {
+			smap = new SemanticsMap(conn);
+			smtConfigs.put(conn, smap);
+		}
+		
+		//smap.addHandler(sm, tabl, pk, split(args, ","));
+	}
+	 */
+	
 }

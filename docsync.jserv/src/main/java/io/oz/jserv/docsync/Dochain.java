@@ -68,7 +68,7 @@ public class Dochain {
 			throws IOException, TransException, SQLException, InterruptedException {
 
 		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
+		checkDuplicate(conn, usr.deviceId(), body.clientpath(), usr);
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
@@ -79,9 +79,9 @@ public class Dochain {
 		String saveFolder = profiles.synodeFolder(body, usr);
 		if (isblank(saveFolder, "/", "\\\\", ":", "."))
 			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
-					body.clientpath, usr.uid(), profiles.getClass().getName());
+					body.clientpath(), usr.uid(), profiles.getClass().getName());
 		
-		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, saveFolder)
+		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, saveFolder)
 				.device(usr.deviceId())
 				.share(body.shareby, body.shareDate, body.shareflag);
 
@@ -104,7 +104,7 @@ public class Dochain {
 	void checkDuplication(DocsReq body, SyncRobot usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
+		checkDuplicate(conn, usr.deviceId(), body.clientpath(), usr);
 	}
 
 	void checkDuplicate(String conn, String device, String clientpath, IUser usr)
@@ -198,7 +198,7 @@ public class Dochain {
 
 	public static String chainId(IUser usr, DocsReq req) {
 		return Stream
-			.of(usr.orgId(), usr.uid(), req.device(), req.clientpath)
+			.of(usr.orgId(), usr.uid(), req.device(), req.clientpath())
 			.collect(Collectors.joining("."));
 	}
 

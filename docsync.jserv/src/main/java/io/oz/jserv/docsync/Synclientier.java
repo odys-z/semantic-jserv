@@ -269,7 +269,7 @@ public class Synclientier extends Semantier {
 				Files.move(Paths.get(pth), Paths.get(targetPath), StandardCopyOption.ATOMIC_MOVE);
 			} catch (Throwable t) {
 				Utils.warn("Moving temporary file failed: %s\n->%s\n  %s\n  %s",
-							pth, targetPath, f.device(), f.clientpath);
+							pth, targetPath, f.device(), f.fullpath());
 			}
 			return true;
 		}
@@ -546,7 +546,7 @@ public class Synclientier extends Semantier {
 				.nv(meta.uri, doc.uri)
 				.nv(meta.resname, doc.pname)
 				.nv(meta.synoder, usr.deviceId())
-				.nv(meta.fullpath, doc.clientpath)
+				.nv(meta.fullpath, doc.fullpath())
 				.nv(meta.folder, doc.folder())
 				.nv(meta.size, size)
 				.nv(meta.shareby, doc.shareby)

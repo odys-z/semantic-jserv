@@ -23,6 +23,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.meta.TableMeta;
@@ -273,7 +274,7 @@ public class DBWorker implements Runnable {
 		
 		// download then update DB
 		req = new DBSyncReq(null, uri, m.tbl).download(synoder, clientpath);
-		client.download(uri, Port.docsync, req,
+		client.download(uri, Port.docsync, null, // req is not an instance of DocsReq 
 						FilenameUtils.concat("tempFolder", synoder, pname));
 
 		AnResultset e = resp.rs(0);
