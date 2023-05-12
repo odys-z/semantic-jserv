@@ -22,6 +22,7 @@ import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.JSingleton;
@@ -224,7 +225,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, ((PhotoRobot)usr).deviceId(), body.clientpath, usr, new PhotoMeta(conn));
+		checkDuplicate(conn, ((PhotoRobot)usr).deviceId(), body.clientpath(), usr, new PhotoMeta(conn));
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
@@ -232,7 +233,7 @@ public class Albums extends ServPort<AlbumReq> {
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
 		String tempDir = ((PhotoRobot)usr).touchTempDir(conn);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath, body.createDate, body.subFolder);
+		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subFolder);
 
 		// FIXME security breach?
 		String id = usr.sessionId() + " " + chain.clientpath;
@@ -253,7 +254,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn,
-				usr.deviceId(), body.photo.clientpath, usr, new PhotoMeta(conn));
+				usr.deviceId(), body.photo.fullpath(), usr, new PhotoMeta(conn));
 	}
 
 	private void checkDuplicate(String conn, String device, String clientpath, IUser usr, PhotoMeta meta)
@@ -274,7 +275,7 @@ public class Albums extends ServPort<AlbumReq> {
 	
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		// String id = body.chainId();
-		String id = chainId(usr, body.clientpath);
+		String id = chainId(usr, body.clientpath());
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
 
@@ -291,7 +292,7 @@ public class Albums extends ServPort<AlbumReq> {
 	
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		String id = chainId(usr, body.clientpath);
+		String id = chainId(usr, body.clientpath());
 		BlockChain chain;
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
@@ -307,7 +308,8 @@ public class Albums extends ServPort<AlbumReq> {
 		photo.createDate = chain.cdate;
 		Exif.parseExif(photo, chain.outputPath);
 
-		photo.clientpath = chain.clientpath;
+		// photo.clientpath = chain.clientpath;
+		photo.fullpath(chain.clientpath);
 		// photo.device = ((PhotoRobot) usr).deviceId();
 		photo.pname = chain.clientname;
 		photo.uri = null;
@@ -331,7 +333,7 @@ public class Albums extends ServPort<AlbumReq> {
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		// String id = body.chainId();
-		String id = chainId(usr, body.clientpath);
+		String id = chainId(usr, body.clientpath());
 		DocsResp ack = new DocsResp();
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).abortChain();
@@ -433,7 +435,7 @@ public class Albums extends ServPort<AlbumReq> {
 		SemanticObject res = (SemanticObject) st
 				.delete(meta.tbl, usr)
 				.whereEq("device", req.device())
-				.whereEq("clientpath", req.clientpath)
+				.whereEq("clientpath", req.clientpath())
 				// .post(Docsyncer.onDel(req.clientpath, req.device()))
 				.d(st.instancontxt(conn, usr));
 		
@@ -459,6 +461,9 @@ public class Albums extends ServPort<AlbumReq> {
 		PhotoMeta meta = new PhotoMeta(conn);
 
 		Update post = Docsyncer.onDocreate(photo, meta, usr);
+
+		if (isblank(photo.shareby))
+			photo.share(usr.uid(), Share.priv);
 
 		String pid = DocUtils.createFileB64(conn, photo, usr, meta, st, post);
 
@@ -581,9 +586,10 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws SQLException
 	 * @throws TransException
 	 * @throws SemanticException
+	 * @throws IOException 
 	 */
 	protected static AlbumResp rec(AlbumReq req, IUser usr)
-			throws SemanticException, TransException, SQLException {
+			throws SemanticException, TransException, SQLException, IOException {
 
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
@@ -609,7 +615,7 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 	
 	protected static AlbumResp collect(AlbumReq req, IUser usr)
-			throws SemanticException, TransException, SQLException {
+			throws SemanticException, TransException, SQLException, IOException {
 
 		String cid = req.collectId;
 		AnResultset rs = (AnResultset) st
@@ -652,9 +658,10 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws SemanticException
 	 * @throws TransException
 	 * @throws SQLException
+	 * @throws IOException 
 	 */
 	protected static AlbumResp album(AlbumReq req, IUser usr)
-			throws SemanticException, TransException, SQLException {
+			throws SemanticException, TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 
@@ -683,7 +690,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.j(tablAlbums, "a", "a.aid = ac.aid")
 				.j(tablUser, "u", "u.userId = p.shareby")
 				.cols("ac.aid", "ch.cid",
-					  "p.pid", "pname", "pdate", "p.tags", "mime", "p.css", "uri", "folder", "geox", "geoy", "sharedate",
+					  "p.pid", "pname", "pdate", "p.tags", "mime", "p.css", "folder", "geox", "geoy", "sharedate",
 					  "c.shareby collector", "c.cdate",
 					  "clientpath", "device", "p.shareby ownerId", "u.userName owner",
 					  "storage", "aname", "cname")

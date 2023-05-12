@@ -2,9 +2,9 @@ package io.odysz.semantic.jserv.R;
 
 import java.util.ArrayList;
 
+import io.odysz.semantic.CRUD;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.transact.sql.Query.Ix;
 
 /**Query Request Body Item.<br>

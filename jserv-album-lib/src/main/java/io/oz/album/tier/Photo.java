@@ -70,21 +70,21 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 	
 	public Photo() {}
 	
-	public Photo(AnResultset rs) throws SQLException {
+	public Photo(AnResultset rs) throws SQLException, IOException {
 		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
-		this.uri = rs.getString("uri");
+		// this.uri = rs.getString("uri");
 		this.folder = rs.getString("folder");
 		this.createDate = rs.getString("pdate");
-		this.shareby = rs.getString("owner");
+		this.shareby = rs.getString("shareby");
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
 		this.mime = rs.getString("mime");
 		
 		this.css = rs.getString("css");
 		
-		// TODO debug
-		this.clientpath =  rs.getString("clientpath");
+		// this.clientpath =  rs.getString("clientpath");
+		fullpath(rs.getString("clientpath"));
 		this.device =  rs.getString("device");
 		
 		try {
@@ -97,7 +97,7 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 		
 	}
 
-	public Photo(String collectId, AnResultset rs) throws SQLException {
+	public Photo(String collectId, AnResultset rs) throws SQLException, IOException {
 		this(rs);
 		this.collectId = collectId;
 	}
@@ -106,9 +106,11 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 	 * @param rs
 	 * @return this
 	 * @throws SQLException
+	 * @throws IOException 
 	 */
-	public Photo asSyncRec(AnResultset rs) throws SQLException {
-		this.clientpath = rs.getString("clientpath"); 
+	public Photo asSyncRec(AnResultset rs) throws SQLException, IOException {
+		// this.clientpath = rs.getString("clientpath"); 
+		fullpath(rs.getString("clientpath")); 
 		this.syncFlag = rs.getString("syncFlag"); 
 		return this;
 	}
@@ -186,7 +188,8 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 		}
 		ifs.close();
 
-		this.clientpath = fullpath;
+		// this.clientpath = fullpath;
+		fullpath(fullpath);
 		exif = new ArrayList<String>() {
 			{add("location:вулиця Лаврська' 27' Київ");};
 			{add("camera:Bayraktar TB2");}};

@@ -13,6 +13,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 
 import static io.odysz.common.LangExt.isblank;
+import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
 
 public class DocsReq extends AnsonBody {
 	public static class A {
@@ -75,7 +76,7 @@ public class DocsReq extends AnsonBody {
 	public String docId;
 	public String docName;
 	public String createDate;
-	public String clientpath;
+	String clientpath;
 	public String mime;
 	public String subFolder;
 
@@ -127,7 +128,7 @@ public class DocsReq extends AnsonBody {
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
 		super(parent, uri);
 		device = p.device();
-		clientpath = p.fullpath();
+		clientpath(p.fullpath());
 		docId = p.recId();
 	}
 
@@ -218,7 +219,7 @@ public class DocsReq extends AnsonBody {
 		if (isblank(this.device, ".", "/"))
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
-		this.clientpath = file.fullpath(); 
+		clientpath(file.fullpath()); 
 		this.docName = file.clientname();
 		this.createDate = file.cdate();
 		this.blockSeq = 0;
@@ -257,7 +258,7 @@ public class DocsReq extends AnsonBody {
 		this.blockSeq = sequence;
 
 		this.docId = doc.recId();
-		this.clientpath = doc.fullpath();
+		clientpath(doc.fullpath());
 		this.uri64 = s64;
 
 		this.a = A.blockUp;
@@ -270,7 +271,7 @@ public class DocsReq extends AnsonBody {
 		this.blockSeq = startAck.blockSeqReply;
 
 		this.docId = startAck.doc.recId();
-		this.clientpath = startAck.doc.fullpath();
+		clientpath(startAck.doc.fullpath());
 
 		this.a = A.blockAbort;
 		return this;
@@ -282,9 +283,8 @@ public class DocsReq extends AnsonBody {
 		this.blockSeq = resp.blockSeqReply;
 
 		this.docId = resp.doc.recId();
-		this.clientpath = resp.doc.fullpath();
-
-		this.a = A.blockEnd;
+		clientpath(resp.doc.fullpath())
+			.a = A.blockEnd;
 		return this;
 	}
 
@@ -305,10 +305,18 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
+	/**
+	 * @since 1.5.0, path is converted to unix format since a windows path 
+	 * is not a valide json string.
+	 * @param path
+	 * @return
+	 */
 	public DocsReq clientpath(String path) {
-		clientpath = path;
+		clientpath = separatorsToUnix(path);
 		return this;
 	}
+
+	public String clientpath() { return clientpath; }
 
 	public DocsReq resetChain(boolean set) {
 		this.reset = set;
@@ -316,7 +324,7 @@ public class DocsReq extends AnsonBody {
 	}
 	
 	public DocsReq queryPath(String device, String fullpath) {
-		this.clientpath = fullpath;
+		clientpath(fullpath);
 		this.device = device;
 		return this;
 	}

@@ -91,7 +91,8 @@ public class AlbumReq extends DocsReq {
 
 		this.photo = new Photo();
 		this.photo.collectId = collId;
-		this.photo.clientpath = fullpath;
+		// this.photo.clientpath = escapeWinpath(fullpath);
+		this.photo.fullpath(fullpath);
 		this.photo.uri = b64;
 		this.photo.pname = p.getFileName().toString();
 		
@@ -125,17 +126,14 @@ public class AlbumReq extends DocsReq {
 
 	public AlbumReq selectPhoto(String docId) {
 		this.docId = docId;
-		// this.photo = new Photo();
-		// this.photo.recId = docId;
 		this.a = A.rec;
-
 		return this;
 	}
 
 	public AlbumReq del(String device, String clientpath) {
 		this.photo = new Photo();
 		this.device = device;
-		this.clientpath = clientpath;
+		clientpath(clientpath);
 		this.a = A.del;
 		return this;
 	}
