@@ -22,7 +22,9 @@ public enum Sandport implements IPort {
 	/** editor.less */
 	editor("editor.less"),
 
-	workbook("sheet.less");
+	workbook("sheet.less"),
+	
+	album("album.less");
 
 	static {
 		JSONAnsonListener.registFactory(Sandport.class, 

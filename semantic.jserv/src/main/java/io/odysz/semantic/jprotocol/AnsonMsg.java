@@ -45,10 +45,14 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			userstier("users.tier"),
 			/** semantic tree of dataset extensions<br>
 			 * see io.odysz.semantic.ext.SemanticTree in semantic.jserv. */
-			stree("s-tree.serv11"),
+			stree("s-tree.serv"),
+			/** @deprecated replaced by {@link #stree} */
+			stree11("s-tree.serv11"),
 			/** dataset extensions<br>
 			 * see io.odysz.semantic.ext.Dataset in semantic.jserv. */
-			dataset("ds.serv11"),
+			dataset("ds.serv"),
+			/** @deprecated replaced by {@link #dataset} */
+			dataset11("ds.serv11"),
 			/** ds.tier, dataset's semantic tier */
 			datasetier("ds.tier"),
 			/** document manage's semantic tier */
