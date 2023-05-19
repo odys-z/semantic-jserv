@@ -50,7 +50,7 @@ import io.odysz.transact.x.TransException;
  * 
  * @author odys-z@github.com
  */
-@WebServlet(description = "Abstract Tree Data Service", urlPatterns = { "/s-tree.serv11" })
+@WebServlet(description = "Abstract Tree Data Service", urlPatterns = { "/s-tree.serv" })
 public class SemanticTree extends ServPort<AnDatasetReq> {
 	public SemanticTree() {
 		super(Port.stree);
@@ -68,7 +68,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		if (ServFlags.extStree)
-			Utils.logi("---------- squery (s-tree.serv11) get ----------");
+			Utils.logi("---------- squery (s-tree.serv) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			jsonResp(msg, resp);
@@ -88,7 +88,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	protected void onPost(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		if (ServFlags.extStree)
-			Utils.logi("========== squery (s-tree.serv11) post ==========");
+			Utils.logi("========== squery (s-tree.serv) post ==========");
 
 		resp.setCharacterEncoding("UTF-8");
 		try {

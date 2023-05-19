@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -21,21 +20,21 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.helper.Html;
-import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Transcxt;
 import io.odysz.transact.x.TransException;
 
-/**CRUD read service extension: dataset.<br>
- * This port use a configure file (dataset.xml) as data definition.
- * The client request ({@link DatasetReq}) provide configure key and parameter, the port answer with queried results.
+/**
+ * 
+ * @deprecated Replaced by {@link Dataset}, and only for protocol backward compatibility.
+ * @since 1.5.0
  * @author odys-z@github.com
  */
-@WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv" })
-public class Dataset extends ServPort<AnDatasetReq> {
-	public Dataset() {
-		super(Port.dataset);
+@WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv11" })
+public class Dataset11 extends ServPort<AnDatasetReq> {
+	public Dataset11() {
+		super(Port.dataset11);
 	}
 
 	private static final long serialVersionUID = 1L;
@@ -43,7 +42,7 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	protected static ISessionVerifier verifier;
 	protected static Transcxt st;
 
-	static IPort p = Port.dataset;
+	static IPort p = Port.dataset11;
 	static JOpts _opts = new JOpts();
 
 	static {
@@ -53,8 +52,8 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	@Override
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
-		if (ServFlags.query)
-			Utils.logi("---------- query (ds.jserv11) get ----------");
+		if (ServFlags.extStree)
+			Utils.logi("---------- query (ds.jserv) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			String conn = msg.body(0).uri();
@@ -64,11 +63,7 @@ public class Dataset extends ServPort<AnDatasetReq> {
 
 			AnsonResp rs = dataset(conn, msg);
 			resp.getWriter().write(Html.rs((AnResultset)rs.rs(0)));
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} catch (TransException e) {
-			e.printStackTrace();
-		} catch (SsException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			resp.flushBuffer();
@@ -78,8 +73,8 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	protected void onPost(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws IOException {
 		resp.setCharacterEncoding("UTF-8");
-		if (ServFlags.query)
-			Utils.logi("========== query (ds.jserv11) post ==========");
+		if (ServFlags.extStree)
+			Utils.logi("========== query (ds.jserv) post ==========");
 		try {
 			String uri = msg.body(0).uri();
 			if (uri == null)
@@ -91,12 +86,6 @@ public class Dataset extends ServPort<AnDatasetReq> {
 			}
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
-		} catch (SQLException | TransException e) {
-			e.printStackTrace();
-			write(resp, err(MsgCode.exTransct, e.getMessage()));
-		} catch (Exception e) {
-			e.printStackTrace();
-			write(resp, err(MsgCode.exGeneral, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}
@@ -109,15 +98,8 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	 * @throws TransException
 	 */
 	protected AnsonResp dataset(String conn, AnsonMsg<AnDatasetReq> msgBody)
-			throws SQLException, TransException {
-		AnDatasetReq msg = msgBody.body().get(0);
-		// List<SemanticObject> ds = DatasetCfg.loadStree(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
-		AnResultset ds = DatasetCfg.select(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
-
-		// Shall be moved to Protocol?
-		AnDatasetResp respMsg = new AnDatasetResp();
-		respMsg.rs(ds, ds.total());
-		return respMsg;
+			throws SemanticException {
+		throw new SemanticException("Since 1.5.0, port url 'ds.jserv11' is renamed to 'ds.jserv11'.");
 	}
 
 
