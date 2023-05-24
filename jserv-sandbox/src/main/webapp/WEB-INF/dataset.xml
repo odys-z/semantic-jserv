@@ -182,5 +182,16 @@
   		<sk>curr-level</sk>
 		<mysql>select domainId as value, domainName as name from a_domain d where d.parentId = 'curr-level'</mysql>
   	</c>
+  	
+  	<!-- wedgets -->
+  	<c>
+  		<sk>tree-album-folder</sk>
+  		<sqlit>select h.pid, h.folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath 
+	from h_photos h where family = 'omni' union select * from (
+	select pid, folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath
+	from h_photos f where f.family = 'omni' group by f.folder
+	) order by fullpath</sqlit>
+  		<s-tree>,h_photos,pid,folder,fullpath,sort,tags text,,false</s-tree>
+  	</c>
 </t>
 </dataset>
