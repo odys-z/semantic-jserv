@@ -1,23 +1,25 @@
 package io.oz.sandbox.album;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.sandbox.protocol.Sandport;
-import io.oz.spreadsheet.SpreadsheetReq;
-import io.oz.spreadsheet.SpreadsheetResp;
 import io.oz.spreadsheet.SpreadsheetReq.A;
 
 @WebServlet(description = "Semantic sessionless: Album", urlPatterns = { "/album.less" })
@@ -71,9 +73,12 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		return null;
 	}
 
-	private DocsResp records(AlbumReq jreq) {
-		// TODO Auto-generated method stub
-		return null;
+	private AlbumResp records(AlbumReq jreq) throws SQLException, TransException {
+		if (isblank(jreq.sk))
+			throw new SemanticException("AlbumReq.sk is required.");
+		String conn = Connects.uri2conn(jreq.uri());
+		List<?> lst = DatasetCfg.loadStree(conn, jreq.sk, jreq.page);
+		return new AlbumResp().forest(lst);
 	}
 
 }
