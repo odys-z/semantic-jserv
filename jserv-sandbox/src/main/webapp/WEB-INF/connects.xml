@@ -21,11 +21,23 @@
   	</c>
 
   	<c>
-  		<!-- for date scripts, see docs -->
+  		<!-- TODO We need a tool for configure semantics -->
   		<id>raw-vec</id>
   		<type>sqlite</type>
   		<isdef></isdef>
   		<src>$VOLUME_HOME/vectors.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg>true</dbg>
+  		<log>true</log>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+
+  	<c>
+  		<id>album-sys</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>$VOLUME_HOME/album-system.sqlite</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
@@ -80,6 +92,10 @@
    	<c>
   		<uri>/xv.*/.*</uri>
   		<conn>raw-vec</conn>
+  	</c>
+   	<c>
+  		<uri>/album</uri>
+  		<conn>album-sys</conn>
   	</c>
   	
   </t>

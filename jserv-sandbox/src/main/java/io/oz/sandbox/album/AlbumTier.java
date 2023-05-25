@@ -76,6 +76,9 @@ public class AlbumTier extends ServPort<AlbumReq> {
 	private AlbumResp records(AlbumReq jreq) throws SQLException, TransException {
 		if (isblank(jreq.sk))
 			throw new SemanticException("AlbumReq.sk is required.");
+		if (isblank(jreq.sk))
+			throw new SemanticException("Sk or page-inf is empty.");
+
 		String conn = Connects.uri2conn(jreq.uri());
 		List<?> lst = DatasetCfg.loadStree(conn, jreq.sk, jreq.page);
 		return new AlbumResp().forest(lst);
