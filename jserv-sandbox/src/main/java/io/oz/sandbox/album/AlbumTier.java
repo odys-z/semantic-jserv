@@ -45,7 +45,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		AlbumReq jreq = msg.body(0);
 		
 		try {
-			DocsResp rsp = null;
+			AlbumResp rsp = null;
 			if (A.insert.equals(jreq.a()))
 				rsp = insert(jreq);
 			else if (A.update.equals(jreq.a()))
@@ -63,12 +63,12 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		}
 	}
 
-	private DocsResp insert(AlbumReq jreq) throws TransException, SQLException {
+	private AlbumResp insert(AlbumReq jreq) throws TransException, SQLException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	private DocsResp update(AlbumReq jreq) {
+	private AlbumResp update(AlbumReq jreq) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -76,12 +76,10 @@ public class AlbumTier extends ServPort<AlbumReq> {
 	private AlbumResp records(AlbumReq jreq) throws SQLException, TransException {
 		if (isblank(jreq.sk))
 			throw new SemanticException("AlbumReq.sk is required.");
-		if (isblank(jreq.sk))
-			throw new SemanticException("Sk or page-inf is empty.");
 
 		String conn = Connects.uri2conn(jreq.uri());
 		List<?> lst = DatasetCfg.loadStree(conn, jreq.sk, jreq.page);
-		return new AlbumResp().forest(lst);
+		return (AlbumResp) new AlbumResp().forest(lst);
 	}
 
 }
