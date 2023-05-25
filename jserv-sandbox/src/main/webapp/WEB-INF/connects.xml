@@ -37,7 +37,7 @@
   		<id>album-sys</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>$VOLUME_HOME/album-system.sqlite</src>
+  		<src>$VOLUME_HOME/album-system.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
