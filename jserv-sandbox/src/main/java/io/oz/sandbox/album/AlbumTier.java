@@ -1,6 +1,8 @@
 package io.oz.sandbox.album;
 
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.eq;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -15,15 +17,20 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.ServPort;
+import io.odysz.semantic.jsession.JUser;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
 import io.oz.sandbox.protocol.Sandport;
 import io.oz.spreadsheet.SpreadsheetReq.A;
 
 @WebServlet(description = "Semantic sessionless: Album", urlPatterns = { "/album.less" })
 public class AlbumTier extends ServPort<AlbumReq> {
+	static JRobot robot;
 
 	/**
 	 * 
@@ -32,6 +39,8 @@ public class AlbumTier extends ServPort<AlbumReq> {
 
 	public AlbumTier() {
 		super(Sandport.album);
+		
+		robot = new JRobot();
 	}
 
 	@Override
@@ -51,7 +60,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 			else if (A.update.equals(jreq.a()))
 				rsp = update(jreq);
 			else if (A.records.equals(jreq.a()))
-				rsp = records(jreq);
+				rsp = records(jreq, robot);
 			else
 				throw new SemanticException("Request (request.body.a = %s) can not be handled", jreq.a());
 
@@ -73,12 +82,19 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		return null;
 	}
 
-	private AlbumResp records(AlbumReq jreq) throws SQLException, TransException {
+	private AlbumResp records(AlbumReq jreq, IUser usr) throws SQLException, TransException {
 		if (isblank(jreq.sk))
 			throw new SemanticException("AlbumReq.sk is required.");
 
 		String conn = Connects.uri2conn(jreq.uri());
-		List<?> lst = DatasetCfg.loadStree(conn, jreq.sk, jreq.page);
+		// force org-id as first arg
+		PageInf page = isNull(jreq.page)
+				? new PageInf(0, -1, usr.orgId())
+				: eq(jreq.page.condts.get(0), usr.orgId())
+				? jreq.page
+				: jreq.page.insertCondt(usr.orgId());
+
+		List<?> lst = DatasetCfg.loadStree(conn, jreq.sk, page);
 		return (AlbumResp) new AlbumResp().forest(lst);
 	}
 
