@@ -215,10 +215,10 @@
   	<!-- wedgets -->
   	<c>
   		<sk>tree-album-family-folder</sk>
-  		<sqlit>select h.pid, 'omni' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'p' nodetype 
-	from h_photos h where family = 'omni' union select * from (
-	select 'omni' || '.' || folder, 'omni' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpat, 'gallery' nodetypeh
-	from h_photos f where f.family = 'omni' group by f.folder
+  		<sqlit>select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'p' nodetype 
+	from h_photos h where family = '%1$s' union select * from (
+	select '%1$s' || '.' || folder, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpat, 'gallery' nodetypeh
+	from h_photos f where f.family = '%1$s' group by f.folder
 	) order by fullpath</sqlit>
   		<s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags</s-tree>
   	</c>
