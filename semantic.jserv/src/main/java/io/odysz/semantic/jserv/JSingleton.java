@@ -45,7 +45,7 @@ public class JSingleton {
 	
 	/**For initializing from Jetty - it's not able to find root path?
 	 * @param root
-	 * @param rootINF
+	 * @param rootINF, e.g. WEB-INF
 	 * @param rootKey, e.g. context.xml/parameter=root-key
 	 * @throws IOException 
 	 * @throws SAXException 
@@ -58,6 +58,7 @@ public class JSingleton {
 		webINF = rootINF;
 		Connects.init(rootINF);
 		Configs.init(rootINF);
+
 		DATranscxt.configRoot(rootINF, root);
 		DATranscxt.key("user-pswd", rootKey);
 		

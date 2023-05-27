@@ -1,8 +1,8 @@
 package io.oz.sandbox.album;
 
-import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -19,8 +19,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.ServPort;
-import io.odysz.semantic.jsession.JUser;
-import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
@@ -55,16 +54,19 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		
 		try {
 			AlbumResp rsp = null;
+			IUser usr = verifier.verify(msg.header());
 			if (A.insert.equals(jreq.a()))
 				rsp = insert(jreq);
 			else if (A.update.equals(jreq.a()))
 				rsp = update(jreq);
 			else if (A.records.equals(jreq.a()))
-				rsp = records(jreq, robot);
+				rsp = records(jreq, usr);
 			else
 				throw new SemanticException("Request (request.body.a = %s) can not be handled", jreq.a());
 
 			write(resp, ok(rsp));
+		} catch (SsException e) {
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (TransException | SQLException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} finally {

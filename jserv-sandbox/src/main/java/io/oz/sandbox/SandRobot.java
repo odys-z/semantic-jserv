@@ -1,26 +1,32 @@
 package io.oz.sandbox;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.odysz.anson.Anson;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.transact.x.TransException;
 
-import static io.odysz.common.LangExt.isNull;;
-
 /**This robot is only used for test.
  * If you are implementin a servlet without login, subclassing a {@link io.odysz.semantic.jserv.jsession.JUser JUser} instead.
  * @author odys-z@github.com
  */
-public class SandRobot implements IUser {
+public class SandRobot extends SemanticObject implements IUser {
 
 	long touched;
 
 	String remote;
+	String org;
+	String orgName;
+	String role;
+	String roleName;
 
 	public SandRobot(String userid) {
 		this.remote = userid;
@@ -43,7 +49,28 @@ public class SandRobot implements IUser {
 	}
 
 	public TableMeta meta(String ... connId) {
-		return new SandRobotMeta(""); // no user table as this test is only for sessionless
+		// return new SandRobotMeta(""); // no user table as this test is only for sessionless
+		JUserMeta m = new JUserMeta();
+		m.iv = "iv";
+		return m;
+	}
+	
+	@Override
+	public IUser onCreate(Anson rs) throws GeneralSecurityException {
+		if (rs instanceof AnResultset) {
+			JUserMeta m = (JUserMeta) meta();
+			try {
+				this.org      = ((AnResultset) rs).getString(m.org);
+				this.orgName  = ((AnResultset) rs).getString(m.orgName);
+				this.role     = ((AnResultset) rs).getString(m.role);
+				this.roleName = ((AnResultset) rs).getString(m.roleName);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				throw new GeneralSecurityException(e.getMessage());
+			}
+		}
+
+		return this;
 	}
 
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
