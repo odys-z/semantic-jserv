@@ -28,6 +28,8 @@ public class SandRobot extends SemanticObject implements IUser {
 	String role;
 	String roleName;
 
+	String ssid;
+
 	public SandRobot(String userid) {
 		this.remote = userid;
 	}
@@ -82,6 +84,7 @@ public class SandRobot extends SemanticObject implements IUser {
 	@Override public long touchedMs() { return touched; } 
 
 	@Override public String uid() { return remote; }
+	@Override public String orgId() { return org; }
 
 	@Override public SemanticObject logout() { return null; }
 
@@ -89,7 +92,11 @@ public class SandRobot extends SemanticObject implements IUser {
 
 	@Override public IUser logAct(String funcName, String funcId) { return this; }
 
-	@Override public String sessionId() { return null; }
+	@Override public String sessionId() { return ssid; }
+	@Override public IUser sessionId(String rad64num) {
+		this.ssid = rad64num;
+		return this;
+	}
 
 	@Override public IUser notify(Object note) throws TransException { return this; }
 
