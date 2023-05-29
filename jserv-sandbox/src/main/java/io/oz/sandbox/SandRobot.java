@@ -50,8 +50,10 @@ public class SandRobot extends SemanticObject implements IUser {
 		}
 	}
 
+	/**
+	 * Special implementation for iv = 'iv'.
+	 */
 	public TableMeta meta(String ... connId) {
-		// return new SandRobotMeta(""); // no user table as this test is only for sessionless
 		JUserMeta m = new JUserMeta();
 		m.iv = "iv";
 		return m;
@@ -101,8 +103,6 @@ public class SandRobot extends SemanticObject implements IUser {
 	@Override public IUser notify(Object note) throws TransException { return this; }
 
 	@Override public List<Object> notifies() { return null; }
-
-	// @Override public TableMeta meta() { return null; }
 
 	@Override public IUser sessionKey(String string) { return this; }
 

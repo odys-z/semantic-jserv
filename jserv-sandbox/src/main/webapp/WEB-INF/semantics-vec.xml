@@ -33,6 +33,14 @@
   		<pk>indId</pk>
   		<args>parent,sort,fullpath</args>
   	</s>
-
+	
+	<s>
+		<id>pho.extfile</id>
+		<smtc>ef2.0</smtc>
+		<tabl>h_photos</tabl>
+		<pk>pid</pk>
+		<args>$VOLUME_HOME,uri,shareby,folder,pname</args>
+	</s>
+	
   </t>
 </semantics>

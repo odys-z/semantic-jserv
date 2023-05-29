@@ -6,5 +6,6 @@ public class DatasetierReq extends AnsonResp {
 
 	public static class A {
 		public static final String sks = "r/sks";
+		public static final String stree = "r/stree";
 	}
 }
