@@ -106,16 +106,10 @@ public class AlbumTier extends ServPort<AlbumReq> {
 
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
-				// .j("a_users", "u", "u.userId = p.shareby")
 				.col("pid")
 				.col("folder")
 				.col("clientpath")
 				.col("uri")
-//				.col("pname")
-//				.col("pdate")
-//				.col("userName", "shareby")
-//				.col("sharedate").col("tags")
-//				.col("geox").col("geoy")
 				.col("mime")
 				.whereEq("pid", req.pid)
 				.rs(st.instancontxt(conn, usr)).rs(0);
