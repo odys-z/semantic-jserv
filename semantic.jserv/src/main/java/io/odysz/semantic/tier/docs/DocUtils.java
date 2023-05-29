@@ -104,7 +104,17 @@ public class DocUtils {
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 	
-		String extroot = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2)).getFileRoot();
-		return EnvPath.decodeUri(extroot, rs.getString("uri"));
+//		String extroot = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2)).getFileRoot();
+//		return EnvPath.decodeUri(extroot, rs.getString("uri"));
+		return resolvExtroot(conn, rs.getString("uri"), meta);
+	}
+
+	public static String resolvExtroot(String conn, String extUri, DocTableMeta meta) throws TransException, SQLException {
+		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
+		if (h2 == null)
+			throw new SemanticException("To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",
+					conn, meta.tbl);
+		String extroot = h2.getFileRoot();
+		return EnvPath.decodeUri(extroot, extUri);
 	}
 }
