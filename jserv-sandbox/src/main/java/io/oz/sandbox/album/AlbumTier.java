@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -125,7 +126,10 @@ public class AlbumTier extends ServPort<AlbumReq> {
 			String p = DocUtils.resolvExtroot(conn, rs.getString("uri"), meta);
 			if (SandFlags.album)
 				Utils.logi(p);
-			FileStream.sendFile(resp.getOutputStream(), p);
+			try { FileStream.sendFile(resp.getOutputStream(), p); }
+			catch (FileNotFoundException e) {
+				Utils.warn("File not found: %s", e.getMessage());
+			}
 		}
 	}
 
