@@ -177,7 +177,8 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		return (AlbumResp) new AlbumResp();
 	}
 
-	protected AlbumResp albumtree(AlbumReq jreq, IUser usr) throws SQLException, TransException {
+	protected AlbumResp albumtree(AlbumReq jreq, IUser usr)
+			throws SQLException, TransException {
 		if (isblank(jreq.sk))
 			throw new SemanticException("AlbumReq.sk is required.");
 
