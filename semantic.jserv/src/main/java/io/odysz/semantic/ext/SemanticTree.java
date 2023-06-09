@@ -19,6 +19,7 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.DA.DatasetHelper;
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -207,7 +208,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		if (rs != null) {
 			if (opts != null && opts.doubleFormat != null)
 				rs.stringFormat(Double.class, LangExt.prefixIfnull("%", opts.doubleFormat));
-			forest = DatasetCfg.buildForest(rs, treeSmtcs);
+			forest = DatasetHelper.buildForest(rs, treeSmtcs);
 		}
 		return ok(rs.total(), forest);
 	}
