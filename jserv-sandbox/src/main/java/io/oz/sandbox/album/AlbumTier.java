@@ -20,7 +20,7 @@ import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.DA.DatasetHelper;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -190,7 +190,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 				? jreq.page
 				: jreq.page.insertCondt(usr.orgId());
 
-		List<?> lst = DatasetCfg.loadStree(conn, jreq.sk, page);
+		List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
 		return (AlbumResp) new AlbumResp().forest(lst);
 	}
 }
