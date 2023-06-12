@@ -84,15 +84,15 @@ public class AlbumTier extends ServPort<AlbumReq> {
 			String a = jreq.a();
 			if (A.download.equals(a))
 				download(resp, msg.body(0), robot);
+			else
+				throw new SemanticException("Request GET (request.body.a = %s) can not be handled", jreq.a());
 		} catch (SemanticException e) {
 			if (SandFlags.album)
 				e.printStackTrace();
-			resp.setContentType("application/json");
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
 			if (SandFlags.album)
 				e.printStackTrace();
-			resp.setContentType("application/json");
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
