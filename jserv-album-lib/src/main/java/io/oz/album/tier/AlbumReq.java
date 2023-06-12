@@ -13,6 +13,11 @@ import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 
+/**
+ * @deprecated moved to jserv.ext
+ * 
+ * @author Ody
+ */
 public class AlbumReq extends DocsReq {
 
 	static public class A {

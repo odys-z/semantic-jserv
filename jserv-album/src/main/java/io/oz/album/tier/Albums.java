@@ -692,7 +692,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.cols("ac.aid", "ch.cid",
 					  "p.pid", "pname", "pdate", "p.tags", "mime", "p.css", "folder", "geox", "geoy", "sharedate",
 					  "c.shareby collector", "c.cdate",
-					  "clientpath", "device", "p.shareby ownerId", "u.userName owner",
+					  "clientpath", "device", "p.shareby", "u.userName owner",
 					  "storage", "aname", "cname")
 				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(conn, usr))
