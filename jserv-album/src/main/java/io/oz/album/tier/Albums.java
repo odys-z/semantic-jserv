@@ -65,7 +65,6 @@ import io.oz.jserv.docsync.Docsyncer;
  */
 @WebServlet(description = "Album tier: albums", urlPatterns = { "/album.less" })
 public class Albums extends ServPort<AlbumReq> {
-
 	private static final long serialVersionUID = 1L;
 
 	/** tringger exif parsing when new photo inserted */
@@ -172,6 +171,8 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = querySyncs(jmsg.body(0), usr);
 				else if (A.getPrefs.equals(a))
 					rsp = profile(jmsg.body(0), usr);
+				else if (A.stree.equals(a))
+					rsp = gallery(jmsg.body(0), usr);
 
 				//
 				else if (DocsReq.A.blockStart.equals(a))
