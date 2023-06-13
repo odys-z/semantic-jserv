@@ -44,7 +44,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
-import io.oz.album.tier.Photo;
+import io.oz.album.tier.PhotoRec;
 import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.docsync.Docsyncer;
 import io.oz.jserv.docsync.SyncFlag;
@@ -144,7 +144,7 @@ class SyncWorkerTest {
 		worker.synctier.synDel(meta.tbl, worker.nodeId(), clientpath);
 
 		// 1. create a public file at this private node
-		Photo photo = new Photo().create(clientpath);
+		PhotoRec photo = new PhotoRec().create(clientpath);
 
 		// 2. synchronize to cloud hub ( hub <- kyiv )
 		Docsyncer.init(Kyiv.Synode.nodeId);
@@ -213,7 +213,7 @@ class SyncWorkerTest {
 	 * @throws SQLException
 	 * @throws IOException 
 	 */
-	String createPhoto(String conn, Photo photo, SyncRobot usr, PhotoMeta meta)
+	String createPhoto(String conn, PhotoRec photo, SyncRobot usr, PhotoMeta meta)
 			throws TransException, SQLException, IOException {
 
 		if (!DATranscxt.hasSemantics(conn, meta.tbl, smtype.extFilev2))
