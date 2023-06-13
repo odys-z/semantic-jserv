@@ -21,6 +21,7 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetHelper;
+import io.odysz.semantic.ext.AnDatasetResp;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -33,12 +34,15 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
-import io.oz.sandbox.album.AlbumReq.A;
+import io.oz.album.tier.AlbumReq;
+import io.oz.album.tier.AlbumReq.A;
 import io.oz.sandbox.protocol.Sandport;
 import io.oz.sandbox.utils.SandFlags;
 
 @WebServlet(description = "Semantic sessionless: Album", urlPatterns = { "/album.less" })
 public class AlbumTier extends ServPort<AlbumReq> {
+	private static final long serialVersionUID = 1L;
+
 	public class PhotoMeta extends DocTableMeta {
 
 		public final String exif;
@@ -56,11 +60,6 @@ public class AlbumTier extends ServPort<AlbumReq> {
 
 	static DATranscxt st;
 	static JRobot robot;
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 
 	String missingFile;
 
@@ -112,11 +111,10 @@ public class AlbumTier extends ServPort<AlbumReq> {
 				.col("clientpath")
 				.col("uri")
 				.col("mime")
-				.whereEq("pid", req.pid)
+				.whereEq("pid", req.docId)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next()) {
-			// throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
 			resp.setContentType("image/png");
 			FileStream.sendFile(resp.getOutputStream(), missingFile);
 		}
@@ -139,9 +137,9 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		AlbumReq jreq = msg.body(0);
 		
 		try {
-			AlbumResp rsp = null;
+			AnDatasetResp rsp = null;
 			IUser usr = verifier.verify(msg.header());
-			if (A.insert.equals(jreq.a()))
+			if (A.insertPhoto.equals(jreq.a()))
 				rsp = insert(jreq);
 			else if (A.update.equals(jreq.a()))
 				rsp = update(jreq);
@@ -162,22 +160,21 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		}
 	}
 
-
-	private AlbumResp insert(AlbumReq jreq) throws TransException, SQLException {
+	private AnDatasetResp insert(AlbumReq jreq) throws TransException, SQLException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	private AlbumResp update(AlbumReq jreq) {
+	private AnDatasetResp update(AlbumReq jreq) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	protected AlbumResp records(AlbumReq jreq, IUser usr) {
-		return (AlbumResp) new AlbumResp();
+	protected AnDatasetResp records(AlbumReq jreq, IUser usr) {
+		return new AnDatasetResp();
 	}
 
-	protected AlbumResp albumtree(AlbumReq jreq, IUser usr)
+	protected AnDatasetResp albumtree(AlbumReq jreq, IUser usr)
 			throws SQLException, TransException {
 		if (isblank(jreq.sk))
 			throw new SemanticException("AlbumReq.sk is required.");
@@ -191,6 +188,6 @@ public class AlbumTier extends ServPort<AlbumReq> {
 				: jreq.page.insertCondt(usr.orgId());
 
 		List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
-		return (AlbumResp) new AlbumResp().forest(lst);
+		return (AnDatasetResp) new AnDatasetResp().forest(lst);
 	}
 }

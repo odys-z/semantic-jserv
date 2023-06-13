@@ -8,19 +8,21 @@ import java.nio.file.Paths;
 import io.odysz.common.AESHelper;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.tier.DatasetierReq;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 
 /**
- * @deprecated moved to jserv.ext
- * 
  * @author Ody
  */
 public class AlbumReq extends DocsReq {
 
 	static public class A {
+		public static final String stree = DatasetierReq.A.stree;
+		public static final String sk = DatasetierReq.A.sks;
+
 		public static final String records = "r/collects";
 		public static final String collect = "r/photos";
 		public static final String rec = "r/photo";
@@ -41,7 +43,9 @@ public class AlbumReq extends DocsReq {
 	
 	String albumId;
 	String collectId;
-	Photo photo;
+	public PhotoRec photo;
+	/** s-tree's semantic key */
+	public String sk;
 
 	public AlbumReq device(String device) {
 		this.device = device;
@@ -70,7 +74,7 @@ public class AlbumReq extends DocsReq {
 	 * @param photo
 	 * @return request
 	 */
-	public AlbumReq download(Photo photo) {
+	public AlbumReq download(PhotoRec photo) {
 		this.albumId = photo.albumId;
 		this.collectId = photo.collectId;
 		this.docId = photo.recId;
@@ -94,9 +98,8 @@ public class AlbumReq extends DocsReq {
 		byte[] f = Files.readAllBytes(p);
 		String b64 = AESHelper.encode64(f);
 
-		this.photo = new Photo();
+		this.photo = new PhotoRec();
 		this.photo.collectId = collId;
-		// this.photo.clientpath = escapeWinpath(fullpath);
 		this.photo.fullpath(fullpath);
 		this.photo.uri = b64;
 		this.photo.pname = p.getFileName().toString();
@@ -108,7 +111,7 @@ public class AlbumReq extends DocsReq {
 
 	public AlbumReq photoId(String pid) {
 		if (photo == null)
-			photo = new Photo();
+			photo = new PhotoRec();
 		photo.recId = pid;
 		return this;
 	}
@@ -136,7 +139,7 @@ public class AlbumReq extends DocsReq {
 	}
 
 	public AlbumReq del(String device, String clientpath) {
-		this.photo = new Photo();
+		this.photo = new PhotoRec();
 		this.device = device;
 		clientpath(clientpath);
 		this.a = A.del;

@@ -24,7 +24,7 @@ import org.apache.tika.sax.BodyContentHandler;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
-import io.oz.album.tier.Photo;
+import io.oz.album.tier.PhotoRec;
 
 /**
  * Exif data format helper
@@ -41,7 +41,7 @@ public class Exif {
 		geoy0 = String.valueOf(y);
 	}
 
-	public static Photo parseExif(Photo photo, String filepath) {
+	public static PhotoRec parseExif(PhotoRec photo, String filepath) {
 
 		try {
 			photo.mime = LangExt.isblank(photo.mime) ?

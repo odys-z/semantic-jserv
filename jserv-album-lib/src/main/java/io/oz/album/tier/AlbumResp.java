@@ -19,20 +19,20 @@ public class AlbumResp extends DocsResp {
 	Profiles profils;
 	public Profiles profiles() { return profils; }
 
-	ArrayList<Photo[]> photos;
-	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
+	ArrayList<PhotoRec[]> photos;
+	public PhotoRec[] photos(int px) { return photos == null ? null : photos.get(px); }
 
-	Photo photo;
-	public Photo photo() { return photo; }
+	PhotoRec photo;
+	public PhotoRec photo() { return photo; }
 
 	public AlbumResp() { }
 	
 	public AlbumResp rec(AnResultset rs) throws SQLException, IOException {
-		this.photo = new Photo(rs);
+		this.photo = new PhotoRec(rs);
 		return this;
 	}
 
-	public AlbumResp photo(Photo photo, String ... pid) {
+	public AlbumResp photo(PhotoRec photo, String ... pid) {
 		this.photo = photo;
 		if (pid != null && pid.length > 0)
 			this.photo.recId = pid[0];
@@ -98,15 +98,15 @@ public class AlbumResp extends DocsResp {
 
 	public AlbumResp photos(String collectId, AnResultset rs) throws SQLException, IOException {
 		if (this.photos == null)
-			this.photos = new ArrayList<Photo[]>(1);
+			this.photos = new ArrayList<PhotoRec[]>(1);
 
-		ArrayList<Photo> photos = new ArrayList<Photo>(rs.total());
+		ArrayList<PhotoRec> photos = new ArrayList<PhotoRec>(rs.total());
 		rs.beforeFirst();
 		while(rs.next()) {
-			photos.add(new Photo(collectId, rs));
+			photos.add(new PhotoRec(collectId, rs));
 		}
 
-		this.photos.add(photos.toArray(new Photo[0]));
+		this.photos.add(photos.toArray(new PhotoRec[0]));
 		return this;
 	}
 	

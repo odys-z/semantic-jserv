@@ -303,7 +303,7 @@ public class Albums extends ServPort<AlbumReq> {
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
-		Photo photo = new Photo();
+		PhotoRec photo = new PhotoRec();
 
 		photo.createDate = chain.cdate;
 		Exif.parseExif(photo, chain.outputPath);
@@ -455,7 +455,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFile(String conn, Photo photo, IUser usr)
+	public static String createFile(String conn, PhotoRec photo, IUser usr)
 			throws TransException, SQLException, IOException {
 		
 		PhotoMeta meta = new PhotoMeta(conn);

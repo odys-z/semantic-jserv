@@ -6,12 +6,24 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 
 public class AnDatasetReq extends AnQueryReq {
+	
+	public static class A {
+		public static final String reforest = "reforest";
+		public static final String retree   = "retree";
+		public static final String tagtree  = "tagtree";
+		public static final String tagtrees = "tagtrees";
+		public static final String untagtree= "untagtree";
+		public static final String sqltree  = "sqltree";
+	}
 
 	String sk;
 	public String[] sqlArgs;
 	/**String array of tree semantics from client, same as dataset.xml/t/c/s-tree */
 	protected String s_tree;
-	/**{@link TreeSemantics} of tree from {@link #s_tree} or set with {@link #treeSemtcs} ({@link TreeSemantics}) */
+	/**
+	 * The {@link TreeSemantics} of tree from {@link #s_tree} or set
+	 * with {@link #treeSemtcs} ({@link TreeSemantics})
+	 */
 	protected TreeSemantics stcs;
 
 	public String rootId;
