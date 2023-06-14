@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -28,11 +29,12 @@ import io.odysz.transact.x.TransException;
 import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.docsync.SyncRobot;
 
-/**A robot used session-less service.
+/**
+ * Album user.
  * 
  * @author odys-z@github.com
  */
-public class PhotoRobot extends SyncRobot implements IUser {
+public class PhotoUser extends SyncRobot implements IUser {
 
 	long touched;
 
@@ -40,11 +42,11 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	String roleName;
 	String orgName;
 
-	RobotMeta userMeta;
+	PUserMeta userMeta;
 
-	public PhotoRobot(String userid) {
+	public PhotoUser(String userid) {
 		super(userid, null, "Photo Robot");
-		userMeta = (RobotMeta) meta();
+		userMeta = (PUserMeta) meta();
 	}
 
 	/**
@@ -53,14 +55,14 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	 * @param pswd
 	 * @param userName
 	 */
-	public PhotoRobot(String userid, String pswd, String userName) {
+	public PhotoUser(String userid, String pswd, String userName) {
 		super(userid, null, "Photo Robot");
-		userMeta = (RobotMeta) meta();
+		userMeta = (PUserMeta) meta();
 	}
 	
-	public static class RobotMeta extends JUserMeta {
+	public static class PUserMeta extends JUserMeta {
 		String device;
-		public RobotMeta(String... conn) {
+		public PUserMeta(String... conn) {
 			super(conn);
 
 			iv = "iv";
@@ -69,14 +71,14 @@ public class PhotoRobot extends SyncRobot implements IUser {
 	}
 
 	public TableMeta meta() {
-		return new RobotMeta("a_users");
+		return new PUserMeta("a_users");
 	}
 
 	// TODO move this to JUser?
 	@Override
-	public IUser onCreate(Anson with) throws SsException {
-		if (with instanceof AnResultset) {
-			AnResultset rs = (AnResultset) with;
+	public IUser onCreate(Anson withSession) throws SsException {
+		if (withSession instanceof AnResultset) {
+			AnResultset rs = (AnResultset) withSession;
 			try {
 				rs.beforeFirst().next();
 				roleId = rs.getString(userMeta.role);
@@ -88,10 +90,12 @@ public class PhotoRobot extends SyncRobot implements IUser {
 				e.printStackTrace();
 			}
 		}
-		if (with instanceof AnSessionReq) {
-			deviceId = ((AnSessionReq)with).deviceId();
+		if (withSession instanceof AnSessionReq) {
+			deviceId = ((AnSessionReq)withSession).deviceId();
 			if (LangExt.isblank(deviceId, "/", "\\."))
-				throw new SsException("Photo user's device Id can not be null - used for distinguish files.");
+				// throw new SsException("Photo user's device Id can not be null - used for distinguish files.");
+				Utils.logi("User %s logged in on %s as read only mode.",
+						((AnSessionReq)withSession).uid(), new Date().toString());
 		}
 		return this;
 	}
@@ -100,8 +104,7 @@ public class PhotoRobot extends SyncRobot implements IUser {
 
 	@Override public boolean login(Object request) throws TransException { return true; }
 
-	@Override
-	public IUser touch() {
+	@Override public IUser touch() {
 		touched = System.currentTimeMillis();
 		return this;
 	} 
@@ -122,8 +125,7 @@ public class PhotoRobot extends SyncRobot implements IUser {
 
 	@Override public List<Object> notifies() { return null; }
 
-	@Override
-	public SemanticObject logout() {
+	@Override public SemanticObject logout() {
 		if (tempDirs != null)
 		for (String temp : tempDirs) {
 			try {
