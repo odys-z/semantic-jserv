@@ -3,6 +3,7 @@ package io.oz.album.tier;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -15,6 +16,12 @@ public class AlbumResp extends DocsResp {
 
 	/** Album */
 	ArrayList<Collect> collectRecords;
+
+	List<?> forest;
+	public AlbumResp albumForest(List<?> forest) {
+		this.forest = forest;
+		return this;
+	}
 
 	Profiles profils;
 	public Profiles profiles() { return profils; }

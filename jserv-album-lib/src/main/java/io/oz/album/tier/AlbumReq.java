@@ -128,7 +128,8 @@ public class AlbumReq extends DocsReq {
 	 * @throws IOException
 	 * @throws SemanticException
 	 */
-	public AlbumReq createPhoto(IFileDescriptor file, SessionInf usr) throws IOException, SemanticException {
+	public AlbumReq createPhoto(IFileDescriptor file, SessionInf usr)
+			throws IOException, SemanticException {
 		return createPhoto(null, file.fullpath());
 	}
 

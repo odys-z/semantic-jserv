@@ -1,8 +1,14 @@
 package io.oz.album.tier;
 
+import java.sql.SQLException;
+
 import io.odysz.anson.Anson;
+import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.jsession.JUser.JUserMeta;
 
 public class Profiles extends Anson {
+	String uid;
+	String defltAlbum;
 
 	String home;
 	public String home() { return home; }
@@ -18,4 +24,11 @@ public class Profiles extends Anson {
 	public Profiles(String home) {
 		this.home = home;
 	}
+
+	public Profiles(AnResultset rs, JUserMeta m) throws SQLException {
+		this.home = rs.getString(m.org);
+		this.uid = rs.getString(m.pk);
+		this.defltAlbum = rs.getString("album");
+	}
+
 }
