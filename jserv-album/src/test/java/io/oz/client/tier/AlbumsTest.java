@@ -39,7 +39,7 @@ import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumPort;
 import io.oz.album.client.AlbumClientier;
 import io.oz.album.tier.AlbumResp;
-import io.oz.album.tier.Photo;
+import io.oz.album.tier.PhotoRec;
 
 /**
  * @deprecated
@@ -111,10 +111,10 @@ class AlbumsTest {
 		String localFolder = "test/results";
 
 		AlbumResp resp = getCollection("c-001");
-		Photo[] collect = resp.photos(0);
-		Photo ph1 = collect[0];
-		Photo ph2 = collect[1];
-		Photo ph3 = collect[2];
+		PhotoRec[] collect = resp.photos(0);
+		PhotoRec ph1 = collect[0];
+		PhotoRec ph2 = collect[1];
+		PhotoRec ph3 = collect[2];
 		try { FileUtils.delete(new File(ph1.pname)); } catch (Exception ex) {}
 		try { FileUtils.delete(new File(ph2.pname)); } catch (Exception ex) {}
 		try { FileUtils.delete(new File(ph3.pname)); } catch (Exception ex) {}
@@ -162,7 +162,7 @@ class AlbumsTest {
 		}
 	}
 
-	String getDownloadResult(Photo photo, String filepath) {
+	String getDownloadResult(PhotoRec photo, String filepath) {
 		AlbumClientier tier = new AlbumClientier("test/album", client, errCtx);
 		try {
 			return tier.download(photo, filepath);

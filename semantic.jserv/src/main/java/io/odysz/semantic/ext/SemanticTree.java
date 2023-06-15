@@ -19,6 +19,8 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.DA.DatasetHelper;
+import io.odysz.semantic.ext.AnDatasetReq.A;
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -117,7 +119,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		IUser usr = verifier.verify(jmsg.header());
 
 		AnDatasetReq jreq = jmsg.body(0);
-		String t = jreq.a();
+		String a = jreq.a();
 
 		// find tree semantics
 		if (jreq.sk == null || jreq.sk.trim().length() == 0)
@@ -127,26 +129,26 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		AnsonMsg<? extends AnsonResp> r;
 		// t branches: reforest | retree | ds | <empty>
 		// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=reforest
-		if ("reforest".equals(t))
+		if (A.reforest.equals(a))
 			r = rebuildForest(connId, getTreeSemtcs(jreq), usr);
 		// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=retree&root=002
-		else if ("retree".equals(t)) {
+		else if (A.retree.equals(a)) {
 			String root = jreq.root();
 			r = rebuildTree(connId, root, getTreeSemtcs(jreq), usr);
 		}
-		else if ("tagtree".equals(t)) {
+		else if (A.tagtree.equals(a)) {
 			String root = jreq.root();
 			r = tagSubtree(connId, root, getTreeSemtcs(jreq), usr);
 		}
-		else if ("tagtrees".equals(t)) {
+		else if (A.tagtrees.equals(a)) {
 			r = tagTrees(connId, getTreeSemtcs(jreq), usr);
 		}
-		else if ("untagtree".equals(t)) {
+		else if (A.untagtree.equals(a)) {
 			String root = jreq.root();
 			r = untagSubtree(connId, root, getTreeSemtcs(jreq), usr);
 		}
 		else {
-			if ("sqltree".equals(t)) {
+			if (A.sqltree.equals(a)) {
 				// ds (tree configured in dataset.xml)
 				List<?> lst = DatasetCfg.loadStree(connId,
 						jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
@@ -207,7 +209,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		if (rs != null) {
 			if (opts != null && opts.doubleFormat != null)
 				rs.stringFormat(Double.class, LangExt.prefixIfnull("%", opts.doubleFormat));
-			forest = DatasetCfg.buildForest(rs, treeSmtcs);
+			forest = DatasetHelper.buildForest(rs, treeSmtcs);
 		}
 		return ok(rs.total(), forest);
 	}

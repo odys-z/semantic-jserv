@@ -85,7 +85,9 @@ public class SyncRobot extends SemanticObject implements IUser {
 		}
 	}
 
-	/** User table's meta, not doc table's meta.
+	/**
+	 * User table's meta, not doc table's meta.
+	 * 
 	 * @throws TransException 
 	 */
 	@Override

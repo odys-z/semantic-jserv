@@ -14,7 +14,7 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.PhotoRobot;
+import io.oz.album.PhotoUser;
 
 /**
  * Test file / uri data access functions.
@@ -45,7 +45,7 @@ class AlbumsServTierTest {
 			Connects.init("src/main/webapp/WEB-INF");
 
 			local = new File("src/test/local").getAbsolutePath();
-			robot = new PhotoRobot("test album");
+			robot = new PhotoUser("test album");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
