@@ -14,6 +14,7 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;
 
@@ -29,6 +30,41 @@ import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
  * @author ody
  */
 public class SyncDoc extends Anson implements IFileDescriptor {
+	/** Temporary type for album's MVP version */
+	public final class SyncFlag extends Anson {
+		/** kept as private file ('🔒') at private node.
+		 * TODO rename as jnode */
+		public static final String priv = "🔒";
+
+		/** to be pushed (shared) to hub ('⇈')
+		 * <p>This is a temporary state and is handled the same as the {@link #priv}
+		 * for {@link io.odysz.semantic.tier.docs.SyncDoc SyncDoc}'s state.
+		 * The only difference is the UI and broken link handling.
+		 * It's complicate but nothing about FSM.</p> */
+		public static final String pushing = "⇈";
+
+		/**
+		 * synchronized (shared) with hub ('🌎')
+		 * */
+		public static final String publish = "🌎";
+		/**created at cloud hub ('✩') by both client and jnode pushing, */
+		public static final String hub = "✩";
+		
+		/**created at a device (client) node ('📱') */
+		public static final String device = "📱";
+		/**The doc is removed, and this record is a propagating record for
+		 * worldwide synchronizing ('Ⓓ')*/
+		public static final String deleting = "Ⓓ";
+		/**The doc is locally removed, and the task is waiting to push to a jnode ('Ⓛ') */
+		public static final String loc_remove = "Ⓛ";
+		/**The deleting task is denied by a device ('ⓧ')*/
+		public static final String del_deny = "ⓧ";
+		/** hub buffering expired or finished ('Ⓒ') */
+		public static final String close = "Ⓒ";
+		/** This state can not present in database */ 
+		public static final String end = "";
+	}
+	
 	protected static String[] synpageCols;
 
 	public String recId;
@@ -92,6 +128,9 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public String shareby;
 	public String sharedate;
 	
+	/**
+	 * Const string values of {@link SyncFlag}.
+	 */
 	public String syncFlag;
 
 	/** usually ignored when sending request */
@@ -247,6 +286,9 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.createDate = d.cdate();
 		this.mime = d.mime();
 		this.fullpath(fullpath);
+		
+        this.shareflag = Share.pub;
+        this.syncFlag = SyncFlag.device;
 	}
 
 	@Override
