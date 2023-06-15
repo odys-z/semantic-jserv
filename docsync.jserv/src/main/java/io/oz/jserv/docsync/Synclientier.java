@@ -28,6 +28,7 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.jclient.tier.Semantier;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -153,7 +154,11 @@ public class Synclientier extends Semantier {
 			
 			new File(tempath).mkdirs(); 
 			
-			JUserMeta um = (JUserMeta) robot.meta();
+			JUserMeta um = null;
+			if (Connects.getAllConnIds() == null)
+				um = (JUserMeta) robot.meta();
+			else // a temporary solution for client without DB connections
+				um = new JUserMeta();
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
