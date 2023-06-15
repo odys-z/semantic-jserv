@@ -46,7 +46,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 
-	private String clientpath;
+	protected String clientpath;
 	@Override
 	public String fullpath() { return clientpath; }
 
@@ -134,7 +134,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	}
 	
 	@AnsonField(ignoreTo=true)
-	DocTableMeta docMeta;
+	protected DocTableMeta docMeta;
 
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	ISemantext semantxt;
@@ -239,8 +239,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	 */
 	public SyncDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) throws IOException, SemanticException {
 		this.device = d.device();
-//		if (isblank(this.device))
-//			throw new SemanticException("SyncDoc requiring envelope's device can not be null");
 
 		this.docMeta = meta;
 		this.recId = d.recId();
