@@ -1,5 +1,7 @@
 package io.oz.album.tier;
 
+import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 
 import java.io.IOException;
@@ -9,6 +11,7 @@ import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -22,12 +25,15 @@ import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.DA.DatasetHelper;
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.meta.DomainMeta;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -36,13 +42,15 @@ import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
-import io.oz.album.PhotoRobot;
+import io.oz.album.PhotoUser;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
 import io.oz.jserv.docsync.Docsyncer;
@@ -65,7 +73,6 @@ import io.oz.jserv.docsync.Docsyncer;
  */
 @WebServlet(description = "Album tier: albums", urlPatterns = { "/album.less" })
 public class Albums extends ServPort<AlbumReq> {
-
 	private static final long serialVersionUID = 1L;
 
 	/** tringger exif parsing when new photo inserted */
@@ -80,7 +87,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static final String tablCollectPhoto = "h_coll_phot";
 
-	static final String tablDomain = "a_domain";
+	static DomainMeta domainMeta;
 	static final String tablUser = "a_users";
 
 	/** uri db field */
@@ -97,7 +104,8 @@ public class Albums extends ServPort<AlbumReq> {
 	static {
 		try {
 			st = new DATranscxt(null);
-			robot = new PhotoRobot("Robot Album");
+			robot = new PhotoUser("Robot Album");
+			domainMeta = new DomainMeta();
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
@@ -163,19 +171,24 @@ public class Albums extends ServPort<AlbumReq> {
 					download(resp, jmsg.body(0), usr);
 			} else {
 				// session required
-				IUser usr = JSingleton.getSessionVerifier().verify(jmsg.header());
+				PhotoUser usr = (PhotoUser) JSingleton.getSessionVerifier().verify(jmsg.header());
+				
+				Profiles prf = verifyProfiles(jmsg.body(0), usr, a);
+				
 				if (A.insertPhoto.equals(a))
-					rsp = createPhoto(jmsg.body(0), usr);
+					rsp = createPhoto(jmsg.body(0), usr, prf);
 				else if (A.del.equals(a))
-					rsp = delPhoto(jmsg.body(0), usr);
+					rsp = delPhoto(jmsg.body(0), usr, prf);
 				else if (A.selectSyncs.equals(a))
-					rsp = querySyncs(jmsg.body(0), usr);
+					rsp = querySyncs(jmsg.body(0), usr, prf);
 				else if (A.getPrefs.equals(a))
-					rsp = profile(jmsg.body(0), usr);
+					rsp = profile(jmsg.body(0), usr, prf);
+				else if (A.stree.equals(a))
+					rsp = galleryTree(jmsg.body(0), usr, prf);
 
 				//
 				else if (DocsReq.A.blockStart.equals(a))
-					rsp = startBlocks(jmsg.body(0), usr);
+					rsp = startBlocks(jmsg.body(0), usr, prf);
 				else if (DocsReq.A.blockUp.equals(a))
 					rsp = uploadBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockEnd.equals(a))
@@ -210,28 +223,66 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
-	AlbumResp profile(AlbumReq body, IUser usr) throws SemanticException, TransException, SQLException {
+	Profiles verifyProfiles(AlbumReq body, IUser usr, String a)
+			throws SemanticException, SQLException, TransException {
+		String org = usr.orgId();
+		String conn = Connects.uri2conn(body.uri());
+		JUserMeta m = (JUserMeta) usr.meta(conn);
+		AnResultset rs = ((AnResultset) st
+				.select(m.tbl)
+				.col(m.org).col(m.pk)
+				.col("'a-001'", "album")
+				.whereEq(m.pk, usr.uid())
+				.rs(st.instancontxt(conn, usr))
+				.rs(0)).nxt();
+
+		if (isblank(rs.getString(m.org)))
+			throw new SemanticException("Verifying user's profiles needs target user belongs to an organization / family.");
+		return new Profiles(rs, m);
+	}
+
+	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf) throws SQLException, TransException {
+		if (isblank(jreq.sk))
+			throw new SemanticException("AlbumReq.sk is required.");
+
+		String conn = Connects.uri2conn(jreq.uri());
+		// force org-id as first arg
+		PageInf page = isNull(jreq.page)
+				? new PageInf(0, -1, usr.orgId())
+				: eq(jreq.page.condts.get(0), usr.orgId())
+				? jreq.page
+				: jreq.page.insertCondt(usr.orgId());
+
+		List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
+		return new AlbumResp().albumForest(lst);
+	}
+
+	AlbumResp profile(AlbumReq body, IUser usr, Profiles prf)
+			throws SemanticException, TransException, SQLException {
+
 		AnResultset rs = (AnResultset) st
-				.select(tablDomain)
-				.whereEq("domainId", "home")
+				.select(domainMeta.tbl)
+				.whereEq(domainMeta.pk, "home")
 				.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
 				.rs(0);
 
 		rs.beforeFirst().next();
-		String home = rs.getString("domainName");
+		String home = rs.getString(domainMeta.domainName);
 
 		return new AlbumResp().profiles(new Profiles(home));
 	}
 
-	DocsResp startBlocks(DocsReq body, IUser usr) throws IOException, TransException, SQLException {
+	DocsResp startBlocks(DocsReq body, IUser usr, Profiles prf)
+			throws IOException, TransException, SQLException {
+
 		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, ((PhotoRobot)usr).deviceId(), body.clientpath(), usr, new PhotoMeta(conn));
+		checkDuplicate(conn, ((PhotoUser)usr).deviceId(), body.clientpath(), usr, new PhotoMeta(conn));
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
-		String tempDir = ((PhotoRobot)usr).touchTempDir(conn);
+		String tempDir = ((PhotoUser)usr).touchTempDir(conn);
 
 		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subFolder);
 
@@ -250,7 +301,7 @@ public class Albums extends ServPort<AlbumReq> {
 					.fullpath(chain.clientpath));
 	}
 
-	void checkDuplication(AlbumReq body, PhotoRobot usr)
+	void checkDuplication(AlbumReq body, PhotoUser usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn,
@@ -259,14 +310,13 @@ public class Albums extends ServPort<AlbumReq> {
 
 	private void checkDuplicate(String conn, String device, String clientpath, IUser usr, PhotoMeta meta)
 			throws SemanticException, TransException, SQLException {
-		AnResultset rs = (AnResultset) st
+		AnResultset rs = ((AnResultset) st
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
 				.whereEq(meta.synoder, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
-				.rs(0);
-		rs.beforeFirst().next();
+				.rs(0)).nxt();
 
 		if (rs.getInt("cnt") > 0)
 			throw new SemanticException("Found existing file for device %s, client path: %s",
@@ -274,7 +324,6 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 	
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
-		// String id = body.chainId();
 		String id = chainId(usr, body.clientpath());
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
@@ -303,14 +352,12 @@ public class Albums extends ServPort<AlbumReq> {
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
-		Photo photo = new Photo();
+		PhotoRec photo = new PhotoRec();
 
 		photo.createDate = chain.cdate;
 		Exif.parseExif(photo, chain.outputPath);
 
-		// photo.clientpath = chain.clientpath;
 		photo.fullpath(chain.clientpath);
-		// photo.device = ((PhotoRobot) usr).deviceId();
 		photo.pname = chain.clientname;
 		photo.uri = null;
 		String pid = createFile(conn, photo, usr);
@@ -353,13 +400,14 @@ public class Albums extends ServPort<AlbumReq> {
 	 * Query client paths
 	 * @param req
 	 * @param usr
+	 * @param prf 
 	 * @param meta 
 	 * @return album where clientpath in req's fullpath and device also matched
 	 * @throws SemanticException
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	AlbumResp querySyncs(AlbumReq req, IUser usr)
+	AlbumResp querySyncs(AlbumReq req, IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException {
 
 		if (req.syncQueries() == null)
@@ -420,15 +468,17 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 	
-	AlbumResp createPhoto(AlbumReq req, IUser usr) throws TransException, SQLException, IOException {
+	AlbumResp createPhoto(AlbumReq req, IUser usr, Profiles prf)
+			throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
-		checkDuplication(req, (PhotoRobot) usr);
+		checkDuplication(req, (PhotoUser) usr);
 
 		String pid = createFile(conn, req.photo, usr);
 		return new AlbumResp().photo(req.photo, pid);
 	}
 
-	static DocsResp delPhoto(AlbumReq req, IUser usr) throws TransException, SQLException {
+	static DocsResp delPhoto(AlbumReq req, IUser usr, Profiles prf)
+			throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 
@@ -455,7 +505,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFile(String conn, Photo photo, IUser usr)
+	public static String createFile(String conn, PhotoRec photo, IUser usr)
 			throws TransException, SQLException, IOException {
 		
 		PhotoMeta meta = new PhotoMeta(conn);
@@ -667,7 +717,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		String aid = req.albumId;
 		if (isblank(aid))
-			aid = ((PhotoRobot)usr).defaultAlbum();
+			aid = ((PhotoUser)usr).defaultAlbum();
 
 		AnResultset rs = (AnResultset) st
 				.select(tablAlbums, "a")
@@ -692,7 +742,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.cols("ac.aid", "ch.cid",
 					  "p.pid", "pname", "pdate", "p.tags", "mime", "p.css", "folder", "geox", "geoy", "sharedate",
 					  "c.shareby collector", "c.cdate",
-					  "clientpath", "device", "p.shareby ownerId", "u.userName owner",
+					  "clientpath", "device", "p.shareby", "u.userName owner",
 					  "storage", "aname", "cname")
 				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(conn, usr))

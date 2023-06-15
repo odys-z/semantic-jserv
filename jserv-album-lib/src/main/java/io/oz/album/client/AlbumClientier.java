@@ -31,7 +31,7 @@ import io.oz.album.AlbumPort;
 import io.oz.album.tier.AlbumReq;
 import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.tier.AlbumResp;
-import io.oz.album.tier.Photo;
+import io.oz.album.tier.PhotoRec;
 
 /**
  * @deprecated moved to Ablumtier
@@ -199,7 +199,7 @@ public class AlbumClientier extends Semantier {
 		return null;
 	}
 
-	public String download(Photo photo, String localpath)
+	public String download(PhotoRec photo, String localpath)
 			throws SemanticException, AnsonException, IOException {
 		AlbumReq req = new AlbumReq(clientUri).download(photo);
 		req.a(A.download);

@@ -27,7 +27,7 @@ import static io.odysz.common.LangExt.isblank;
  * @author ody
  *
  */
-public class Photo extends SyncDoc implements IFileDescriptor {
+public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public String geox;
 	public String geoy;
 	
@@ -68,9 +68,9 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 
 	public String albumId;
 	
-	public Photo() {}
+	public PhotoRec() {}
 	
-	public Photo(AnResultset rs) throws SQLException, IOException {
+	public PhotoRec(AnResultset rs) throws SQLException, IOException {
 		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
 		// this.uri = rs.getString("uri");
@@ -97,7 +97,7 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 		
 	}
 
-	public Photo(String collectId, AnResultset rs) throws SQLException, IOException {
+	public PhotoRec(String collectId, AnResultset rs) throws SQLException, IOException {
 		this(rs);
 		this.collectId = collectId;
 	}
@@ -108,7 +108,7 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 	 * @throws SQLException
 	 * @throws IOException 
 	 */
-	public Photo asSyncRec(AnResultset rs) throws SQLException, IOException {
+	public PhotoRec asSyncRec(AnResultset rs) throws SQLException, IOException {
 		// this.clientpath = rs.getString("clientpath"); 
 		fullpath(rs.getString("clientpath")); 
 		this.syncFlag = rs.getString("syncFlag"); 
@@ -174,7 +174,7 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 	}
 
 	@SuppressWarnings("serial")
-	public Photo create(String fullpath) throws IOException {
+	public PhotoRec create(String fullpath) throws IOException {
 		File png = new File(fullpath);
 		FileInputStream ifs = new FileInputStream(png);
 		pname = png.getName();
@@ -188,7 +188,6 @@ public class Photo extends SyncDoc implements IFileDescriptor {
 		}
 		ifs.close();
 
-		// this.clientpath = fullpath;
 		fullpath(fullpath);
 		exif = new ArrayList<String>() {
 			{add("location:вулиця Лаврська' 27' Київ");};

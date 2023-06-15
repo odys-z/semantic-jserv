@@ -15,7 +15,7 @@ public class Collect extends Anson {
 	String cname;
 	String cid;
 
-	ArrayList<Photo> photos;
+	ArrayList<PhotoRec> photos;
 	
 	public Collect() {}
 
@@ -35,8 +35,8 @@ public class Collect extends Anson {
 
 	public Collect addPhoto(AnResultset rs) throws SQLException, IOException {
 		if (photos == null)
-			photos = new ArrayList<Photo>();
-		Photo p = new Photo(rs);
+			photos = new ArrayList<PhotoRec>();
+		PhotoRec p = new PhotoRec(rs);
 		photos.add(p);
 		return this;
 	}
