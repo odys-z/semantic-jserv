@@ -36,6 +36,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
+import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
@@ -62,7 +63,7 @@ public class Synclientier extends Semantier {
 	public boolean verbose = false;
 
 	protected SessionClient client;
-	protected ErrorCtx errCtx;
+	protected OnError errCtx;
 
 	protected SyncRobot robot;
 
@@ -95,7 +96,7 @@ public class Synclientier extends Semantier {
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public Synclientier(String clientUri, ErrorCtx errCtx)
+	public Synclientier(String clientUri, OnError errCtx)
 			throws SemanticException, IOException {
 		this.errCtx = errCtx;
 		this.uri = clientUri;
@@ -299,15 +300,15 @@ public class Synclientier extends Semantier {
 	 * @return list of response
 	 */
 	public List<DocsResp> pushBlocks(String tbl, List<? extends SyncDoc> videos,
-				OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr)
+				OnProcess proc, OnDocOk docOk, OnError ... onErr)
 				throws TransException, IOException {
-		ErrorCtx err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		OnError err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 		return pushBlocks(client, uri, tbl, videos, blocksize, proc, docOk, err);
 	}
 
 	public static List<DocsResp> pushBlocks(SessionClient client, String uri, String tbl,
 			List<? extends SyncDoc> videos, int blocksize,
-			OnProcess proc, OnDocOk docOk, ErrorCtx errHandler)
+			OnProcess proc, OnDocOk docOk, OnError errHandler)
 			throws TransException, IOException {
 
 		SessionInf user = client.ssInfo();
@@ -415,7 +416,7 @@ public class Synclientier extends Semantier {
 	 * @return response
 	 */
 	public DocsResp selectDoc(String docTabl, String docId, ErrorCtx ... onErr) {
-		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		OnError errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
@@ -438,7 +439,7 @@ public class Synclientier extends Semantier {
 	}
 	
 	public DocsResp listNodes(String docTabl, String org, ErrorCtx ... onErr) {
-			ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		OnError errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
