@@ -3,7 +3,9 @@ package io.odysz.semantic.tier.docs;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 
 import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
@@ -159,7 +161,7 @@ public class DocsReq extends AnsonBody {
 	/** @deprecated */
 	protected ArrayList<SyncDoc> syncQueries;
 	/**@deprecated replaced by DocsPage.paths */
-	public ArrayList<SyncDoc> syncQueries() { return syncQueries; }
+	public Set<String> syncQueries() { return syncing.clientPaths.keySet(); }
 
 	/** TODO visibility = package */
 	public long blockSeq;

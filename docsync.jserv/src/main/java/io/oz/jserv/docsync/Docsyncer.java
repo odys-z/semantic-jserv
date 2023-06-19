@@ -56,6 +56,8 @@ import io.oz.jserv.docsync.Dochain.OnChainOk;
  * Branch for MVP policy, semantic-* v1.5.0, album.and 0.2.1,
  * replaced by {@link Synode},
  * 
+ * @deprecated even deprecated in MVP 0.2.1.
+ * 
  * @author odys-z@github.com
  *
  */

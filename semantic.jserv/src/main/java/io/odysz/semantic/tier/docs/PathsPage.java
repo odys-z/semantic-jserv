@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.x.SemanticException;
@@ -45,6 +46,7 @@ public class PathsPage extends Anson {
 	/**
 	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date]} 
 	 */
+	@AnsonField(valType="[Ljava.lang.String;")
 	protected HashMap<String, String[]> clientPaths;
 	/**
 	 * @see #paths(AnResultset, DocTableMeta)
