@@ -157,7 +157,7 @@ public class Synclientier extends Semantier {
 			new File(tempath).mkdirs(); 
 			
 			JUserMeta um = null;
-			if (Connects.getAllConnIds() == null)
+			if (!isNull(Connects.getAllConnIds()))
 				um = (JUserMeta) robot.meta();
 			else // a temporary solution for client without DB connections
 				um = new JUserMeta();
