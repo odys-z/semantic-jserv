@@ -30,7 +30,10 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			
 			AnsonMsg.understandPorts(AlbumPort.album);
 			
-			Docsyncer.init(System.getProperty("JSERV_NODE"));
+			String node = System.getProperty("JSERV_NODE");
+			Docsyncer.init(node);
+			Synode.init(node);
+
 			/*
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
 			Docsyncer.addSyncTable(new JUser.JUserMeta(Connects.defltConn()));

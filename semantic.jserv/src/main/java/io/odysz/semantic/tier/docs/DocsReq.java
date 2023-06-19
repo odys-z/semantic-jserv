@@ -3,8 +3,10 @@ package io.odysz.semantic.tier.docs;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 
 import io.odysz.anson.AnsonField;
+import io.odysz.common.DateFormat;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantics.IUser;
@@ -98,6 +100,11 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public String shareDate;
+	public String shareDate() {
+		if (isblank(shareDate))
+			shareDate = DateFormat.format(new Date());
+		return shareDate;
+	}
 	
 	/**
 	 * <b>Note: use {@link #DocsReq(String)}</b><br>
@@ -180,18 +187,18 @@ public class DocsReq extends AnsonBody {
 	 * @deprecated
 	 * Add a doc record for matching path at synode. Should be called by device client.
 	 * <p>Note: if the file path is empty, the query is ignored.</p>
-	 * @param p
+	 * @param d
 	 * @return this
 	 * @throws IOException see {@link SyncDoc} constructor
 	 * @throws SemanticException fule doesn't exists. see {@link SyncDoc} constructor 
 	 */
-	public DocsReq querySync(IFileDescriptor p) throws IOException, SemanticException {
-		if (p == null || isblank(p.fullpath()))
+	public DocsReq querySync(IFileDescriptor d) throws IOException, SemanticException {
+		if (d == null || isblank(d.fullpath()))
 			return this;
 
-		File f = new File(p.fullpath());
+		File f = new File(d.fullpath());
 		if (!f.exists())
-			throw new SemanticException("File for querying doesn't exist: %s", p.fullpath());
+			throw new SemanticException("File for querying doesn't exist: %s", d.fullpath());
 		/*
 		if (syncQueries == null)
 			syncQueries = new ArrayList<SyncDoc>();

@@ -8,8 +8,6 @@ import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -55,11 +53,13 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docsync.Dochain.OnChainOk;
 
 /**
- * @deprecated replaced by {@link Synode}
+ * Branch for MVP policy, semantic-* v1.5.0, album.and 0.2.1,
+ * replaced by {@link Synode},
+ * 
  * @author odys-z@github.com
  *
  */
-@WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.del" })
+@WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.album21" })
 public class Docsyncer extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 	
@@ -299,7 +299,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	}
 
 	public Docsyncer() {
-		super(Port.docsync);
+		super(Port.album21);
 	}
 
 	public static void addDochainHandler (String tabl, OnChainOk onCreateHandler) {

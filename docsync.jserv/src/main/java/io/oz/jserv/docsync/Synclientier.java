@@ -35,6 +35,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
@@ -612,7 +613,7 @@ public class Synclientier extends Semantier {
 	 * @throws TransException
 	 * @throws IOException
 	 */
-	public DocsResp synQueryPathsPage(PathsPage page, String tabl)
+	public <T extends IPort> DocsResp synQueryPathsPage(PathsPage page, String tabl, T port)
 			throws TransException, IOException {
 		String[] act = AnsonHeader.usrAct("synclient.java", "query", "r/states", "query sync");
 		AnsonHeader header = client.header().act(act);
@@ -633,7 +634,7 @@ public class Synclientier extends Semantier {
 //			req.querySync(p);
 //		}
 
-		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
+		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, port/*VMP 0.2.1 Port.docsync*/, req)
 								.header(header);
 
 		DocsResp resp = client.commit(q, errCtx);

@@ -22,6 +22,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonResp;
@@ -51,7 +52,7 @@ public class Synode extends ServPort<DocsReq> {
 	 *  */
 	public static boolean verbose = true;
 
-	static HashMap<String, TableMeta> metas;
+	// static HashMap<String, TableMeta> metas;
 	static HashMap<String, OnChainOk> endChainHandlers;
 
 	/** xml configure key: sync-mode */
@@ -88,7 +89,7 @@ public class Synode extends ServPort<DocsReq> {
 	static {
 		try {
 			st = new DATranscxt(null);
-			metas = new HashMap<String, TableMeta>();
+			// metas = new HashMap<String, TableMeta>();
 			synodesMeta = new SynodeMeta();
 
 			anonymous = new SyncRobot("Robot Synode");
@@ -173,9 +174,9 @@ public class Synode extends ServPort<DocsReq> {
 		}
 	}
 
-	public static void addSyncTable(TableMeta m) {
-		metas.put(m.tbl, m);
-	}
+//	public static void addSyncTable(TableMeta m) {
+//		metas.put(m.tbl, m);
+//	}
 
 	@Override
 	protected void onGet(AnsonMsg<DocsReq> msg, HttpServletResponse resp)
@@ -224,10 +225,14 @@ public class Synode extends ServPort<DocsReq> {
 				else if (A.synclosePull.equals(a))
 					; // for what? rsp = synclosePull(jreq, usr);
 				else {
-					Dochain chain = new Dochain((DocTableMeta) metas.get(jreq.docTabl), st);
+					TableMeta m = Connects.getMeta(Connects.uri2conn(jreq.uri()), jreq.docTabl);
+					if (!(m instanceof DocTableMeta))
+						m = new DocTableMeta(jreq.docTabl, "pid", Connects.uri2conn(jreq.uri())).replace();
+					Dochain chain = new Dochain((DocTableMeta) m, st);
 					if (DocsReq.A.blockStart.equals(a)) {
+						jreq.subFolder = profilesolver.synodeFolder(jreq, usr);
 						if (isblank(jreq.subFolder, " - - "))
-							throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
+							throw new SemanticException("Default saving folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 						rsp = chain.startBlocks(profilesolver.onStartPush(jmsg.body(0), usr), usr, profilesolver);
 					}
 					else if (DocsReq.A.blockUp.equals(a))
@@ -243,7 +248,7 @@ public class Synode extends ServPort<DocsReq> {
 				}
 			}
 
-			if (resp != null)
+			if (rsp != null)
 				write(resp, ok(rsp));
 		} catch (SQLException | SemanticException e) {
 			if (verbose) e.printStackTrace();
