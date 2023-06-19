@@ -23,7 +23,7 @@ public class AlbumReq extends DocsReq {
 		public static final String stree = DatasetierReq.A.stree;
 		public static final String sk = DatasetierReq.A.sks;
 
-		public static final String records = "r/collects";
+		public static final String album = "r/collects";
 		public static final String collect = "r/photos";
 		public static final String rec = "r/photo";
 		public static final String download = "r/download";
@@ -35,6 +35,7 @@ public class AlbumReq extends DocsReq {
 
 		public static final String del = "d";
 
+		// MVP 0.2.1
 		/** Query client paths */
 		public static final String selectSyncs = "r/syncflags";
 
