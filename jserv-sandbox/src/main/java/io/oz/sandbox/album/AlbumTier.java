@@ -145,7 +145,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 				rsp = update(jreq);
 			else if ((A.stree).equals(jreq.a()))
 				rsp = albumtree(jreq, usr);
-			else if (A.records.equals(jreq.a()))
+			else if (A.album.equals(jreq.a()))
 				rsp = records(jreq, usr);
 			else
 				throw new SemanticException("Request (request.body.a = %s) can not be handled", jreq.a());
