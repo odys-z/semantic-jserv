@@ -42,7 +42,6 @@ import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
-import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.sql.Update;
@@ -56,9 +55,10 @@ import io.oz.album.tier.AlbumReq.A;
 import io.oz.jserv.docsync.Docsyncer;
 
 /**
- * <h5>The album tier</h5> Although this tie is using the pattern of
- * <i>less</i>, it's also verifying user when uploading - for subfolder name of
- * user
+ * <h5>The album tier 0.2.1 (MVP)</h5>
+ * 
+ * Although this tie is using the pattern of <i>less</i>, it's also verifying user when uploading
+ * - for subfolder name of user.
  * 
  * <h5>Design note for version 0.1</h5>
  * <p>
@@ -231,7 +231,7 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = ((AnResultset) st
 				.select(m.tbl)
 				.col(m.org).col(m.pk)
-				.col("'a-001'", "album")
+				.col("'a-001'", "album") // FIXME
 				.whereEq(m.pk, usr.uid())
 				.rs(st.instancontxt(conn, usr))
 				.rs(0)).nxt();

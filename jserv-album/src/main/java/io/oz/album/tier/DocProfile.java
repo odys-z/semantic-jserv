@@ -5,6 +5,7 @@ import java.util.Date;
 
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
+import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IProfileResolver;
@@ -43,7 +44,7 @@ public class DocProfile implements IProfileResolver {
 		else
 			try {
 				if (isblank(req.mime) || image.is(req.mime) || video.is(req.mime))
-					return DateFormat.formatYYmm(DateFormat.parse(req.shareDate));
+					return DateFormat.formatYYmm(DateFormat.parse(req.shareDate()));
 				else
 					return DateFormat.formatYYmm(DateFormat.parse(req.createDate));
 			} catch (ParseException e) {
@@ -62,6 +63,8 @@ public class DocProfile implements IProfileResolver {
 	public DocsReq onStartPush(DocsReq req, IUser usr) {
 		if (isDevice(req.uri()))
 			req.shareby(usr.uid());
+		if (isblank(req.shareflag))
+			req.shareflag = Share.pub;
 		return req;
 	}
 
