@@ -11,6 +11,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 
 import io.odysz.anson.Anson;
+import io.odysz.common.Configs;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -27,6 +28,7 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.PhotoMeta;
+import io.oz.album.tier.Profiles;
 import io.oz.jserv.docsync.SyncRobot;
 
 /**
@@ -35,6 +37,8 @@ import io.oz.jserv.docsync.SyncRobot;
  * @author odys-z@github.com
  */
 public class PhotoUser extends SyncRobot implements IUser {
+
+	static final String WebRoot = "web-root";
 
 	long touched;
 
@@ -74,7 +78,6 @@ public class PhotoUser extends SyncRobot implements IUser {
 		return new PUserMeta("a_users");
 	}
 
-	// TODO move this to JUser?
 	@Override
 	public IUser onCreate(Anson withSession) throws SsException {
 		if (withSession instanceof AnResultset) {
@@ -158,14 +161,19 @@ public class PhotoUser extends SyncRobot implements IUser {
 		return tempDir;
 	}
 
-	public String defaultAlbum() {
-		return "a-001";
-	}
+//	public String defaultAlbum() {
+//		return "a-001";
+//	}
 
 	@Override
 	public SessionInf getClientSessionInf(IUser login) { 
 		SessionInf inf = new SessionInf(login.sessionId(), login.uid(), login.roleId());
 		inf.device(login.deviceId());
 		return inf;
+	}
+
+	@Override
+	public Profiles profile() {
+		return new Profiles().webroot(Configs.getCfg(WebRoot));
 	}
 }

@@ -56,7 +56,6 @@ import io.oz.album.AlbumPort;
 import io.oz.album.PhotoUser;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
-import io.oz.jserv.docsync.Docsyncer;
 
 /**
  * <h5>The album tier 0.2.1 (MVP)</h5>
@@ -162,12 +161,10 @@ public class Albums extends ServPort<AlbumReq> {
 			String a = jreq.a();
 			DocsResp rsp = null;
 
-			if (A.album.equals(a) || A.collect.equals(a) || A.rec.equals(a) || A.download.equals(a)) {
+			if (A.collect.equals(a) || A.rec.equals(a) || A.download.equals(a)) {
 				// Session less
 				IUser usr = robot;
-				if (A.album.equals(a)) // load
-					rsp = album(jmsg.body(0), usr);
-				else if (A.collect.equals(a))
+				if (A.collect.equals(a))
 					rsp = collect(jmsg.body(0), usr);
 				else if (A.rec.equals(a))
 					rsp = rec(jmsg.body(0), usr);
@@ -187,6 +184,8 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = querySyncs(jmsg.body(0), usr, prf);
 				else if (A.getPrefs.equals(a))
 					rsp = profile(jmsg.body(0), usr, prf);
+				else if (A.album.equals(a)) // load
+					rsp = album(jmsg.body(0), usr, prf);
 				else if (A.stree.equals(a))
 					rsp = galleryTree(jmsg.body(0), usr, prf);
 
@@ -227,9 +226,20 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
+	/**
+	 * Generate user's profile - used at server side,
+	 * yet {@link IUser#profile()} is used for loading profile for client side.
+	 * 
+	 * @param body
+	 * @param usr
+	 * @param a
+	 * @return profiles
+	 * @throws SemanticException
+	 * @throws SQLException
+	 * @throws TransException
+	 */
 	Profiles verifyProfiles(DocsReq body, IUser usr, String a)
 			throws SemanticException, SQLException, TransException {
-		String org = usr.orgId();
 		String conn = Connects.uri2conn(body.uri());
 		JUserMeta m = (JUserMeta) usr.meta(conn);
 		AnResultset rs = ((AnResultset) st
@@ -724,6 +734,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * 
 	 * @param req
 	 * @param usr
+	 * @param prf 
 	 * @return album
 	 * @throws SemanticException
 	 * @throws TransException
@@ -731,14 +742,12 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws IOException 
 	 */
 	protected static AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
-			IUser usr)
+			IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 
-		String aid = req.docId;
-		if (isblank(aid))
-			aid = ((PhotoUser)usr).defaultAlbum();
+		String aid = prf.defltAlbum;
 
 		AnResultset rs = (AnResultset) st
 				.select(tablAlbums, "a")

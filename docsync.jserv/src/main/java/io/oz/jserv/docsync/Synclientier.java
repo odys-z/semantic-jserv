@@ -55,7 +55,9 @@ import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
 /**
- * Doc synchronizing API for both jserv node and device client.
+ * Redundant to docsync.jser/Synclientier.
+ * 
+ * @deprecated MVP 0.2.1 To be deleted
  * 
  * @author odys-z@github.com
  *
@@ -186,7 +188,7 @@ public class Synclientier extends Semantier {
 	 * @param meta for creating {@link SyncDoc} object 
 	 * @param rs tasks, rows should be limited
 	 * @param workerId 
-	 * @param onProcess
+	 * @param onProc
 	 * @return Sync response list
 	 * @throws TransException 
 	 * @throws AnsonException 
@@ -234,8 +236,7 @@ public class Synclientier extends Semantier {
 	/**
 	 * Downward synchronizing.
 	 * @param p
-	 * @param worker
-	 * @param meta 
+	 * @param meta
 	 * @return doc record (e.g. h_photos)
 	 * @throws AnsonException
 	 * @throws IOException
@@ -258,7 +259,7 @@ public class Synclientier extends Semantier {
 		return p;
 	}
 
-	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) throws IOException {
+	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) {
 		String pth = tempath(f);
 		File file = new File(pth);
 		if (!file.exists())
@@ -294,7 +295,6 @@ public class Synclientier extends Semantier {
 	 * @param videos any doc-table managed records, of which uri shouldn't be loaded,
 	 * e.g. use {@link io.odysz.transact.sql.parts.condition.Funcall#extFile(String) extFile()} as sql select expression.
 	 * - the method is working in stream mode
-	 * @param user
 	 * @param proc
 	 * @param docOk
 	 * @param onErr
@@ -623,16 +623,6 @@ public class Synclientier extends Semantier {
 				.docTabl(tabl)
 				.device(page.device)
 				.a(A.records);
-
-//		for (long i = page.start; i < page.end & i < files.size(); i++) {
-//			if (i < 0 || i > Integer.MAX_VALUE)
-//				throw new SemanticException("Synclientier.queryDocs(): page's range is out of bounds: H%x", i);
-//
-//			IFileDescriptor p = files.get((int)i);
-//			if (isblank(p.fullpath()))
-//				continue;
-//			req.querySync(p);
-//		}
 
 		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, port/*VMP 0.2.1 Port.docsync*/, req)
 								.header(header);
