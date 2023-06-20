@@ -35,7 +35,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		heartbeat("ping.serv"), session("login.serv11"),
 		query("r.serv11"), update("u.serv11"),
 		insert("c.serv11"), delete("d.serv11"),
-		echo("echo.serv11"),
+		echo("echo.less"),
 		/** serv port for downloading json/xml file or uploading a file.<br>
 		 * see io.odysz.semantic.jserv.file.JFileServ in semantic.jserv. */
 		file("file.serv"),
