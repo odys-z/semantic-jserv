@@ -405,7 +405,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString(usrMeta.pk);
 			IUser obj = createUser(usrClzz, uid,
-							rs.getString(usrMeta.pswd), rs.getString(usrMeta.iv), rs.getString(usrMeta.uname))
+							rs.getString(usrMeta.pswd),
+							rs.getString(usrMeta.iv),
+							rs.getString(usrMeta.uname))
 						.onCreate(rs) // v1.4.11
 						.onCreate(sessionBody)
 						.touch();
