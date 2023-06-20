@@ -12,6 +12,10 @@ public class EchoReq extends AnsonBody {
 		public static final String inet = "inet";
 	}
 
+	public EchoReq() {
+		super(null, null);
+	}
+
 	public EchoReq(AnsonMsg<? extends AnsonBody> parent) {
 		super(parent, null);
 	}
