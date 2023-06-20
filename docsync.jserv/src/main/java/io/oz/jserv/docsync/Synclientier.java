@@ -622,7 +622,7 @@ public class Synclientier extends Semantier {
 				.syncing(page)
 				.docTabl(tabl)
 				.device(page.device)
-				.a(A.records);
+				.a(A.selectSyncs);
 
 		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, port/*VMP 0.2.1 Port.docsync*/, req)
 								.header(header);

@@ -9,6 +9,12 @@ public class AnSessionResp extends AnsonResp {
 
 	SessionInf ssInf;
 	
+	/**
+	 * A data package for extra user info for application's extension,
+	 * e.g. default page, login count, etc.
+	 * 
+	 * @since 1.5.0
+	 */
 	Anson profile;
 
 	public AnSessionResp(AnsonMsg<AnsonResp> parent, String ssid, String uid, String ... roleId) {
