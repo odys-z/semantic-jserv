@@ -65,6 +65,8 @@ public class DocsReq extends AnsonBody {
 		 */
 		public static final String synclosePull = "r/close";
 
+		public static final String selectSyncs = "r/syncflags";
+
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */
 	}

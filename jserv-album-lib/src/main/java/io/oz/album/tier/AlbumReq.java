@@ -37,7 +37,7 @@ public class AlbumReq extends DocsReq {
 
 		// MVP 0.2.1
 		/** Query client paths */
-		public static final String selectSyncs = "r/syncflags";
+		public static final String selectSyncs = DocsReq.A.selectSyncs; // "r/syncflags";
 
 		public static final String getPrefs = "r/prefs";
 	}

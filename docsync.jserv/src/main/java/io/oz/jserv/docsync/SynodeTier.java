@@ -177,7 +177,7 @@ public class SynodeTier extends Synclientier {
 	 * @throws IOException 
 	 */
 	@Override
-	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) throws IOException {
+	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) {
 		String pth = tempath(f);
 		File file = new File(pth);
 		if (!file.exists())

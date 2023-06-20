@@ -233,7 +233,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						lock.unlock();
 
 						SessionInf ssinf = login.getClientSessionInf(login);
-						AnSessionResp bd = new AnSessionResp(null, ssinf);
+						AnSessionResp bd = new AnSessionResp(null, ssinf).profile(login.profile());
 						AnsonMsg<AnSessionResp> rspMsg = ok(bd);
 						write(response, rspMsg, msg.opts());
 					}
