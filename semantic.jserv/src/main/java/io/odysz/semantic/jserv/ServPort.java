@@ -122,7 +122,9 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
-	/**Write message to resp.
+	/**
+	 * Write message to resp.
+	 * 
 	 * @param resp can be null if user handled response already
 	 * @param msg
 	 * @param opts
