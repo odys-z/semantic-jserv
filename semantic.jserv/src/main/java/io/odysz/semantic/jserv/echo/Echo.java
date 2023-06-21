@@ -20,7 +20,10 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.echo.EchoReq.A;
 import io.odysz.semantics.x.SemanticException;
 
-/**Service meta data
+/**
+ * <p>Echo serv, on Port {@link Port#echo}.</p>
+ * 
+ * url pattern: /echo.less.
  * 
  * @author ody
  */
