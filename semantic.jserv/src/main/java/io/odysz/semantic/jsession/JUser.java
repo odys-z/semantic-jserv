@@ -1,5 +1,8 @@
 package io.odysz.semantic.jsession;
 
+import static io.odysz.common.LangExt.split;
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
@@ -11,7 +14,6 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.Anson;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
-import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -107,23 +109,26 @@ public class JUser extends SemanticObject implements IUser {
 	String orgName;
 
 	private static DATranscxt logsctx;
-	private static String[] connss;
+	private static String logConn;
+	/** @deprecated */
 	public static final String sessionSmtXml;
 	public static final String logTabl;
+
 	static {
 		String conn = Configs.getCfg("log-connId");
-		if (LangExt.isblank(conn))
+		if (isblank(conn))
 			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
+
+		String[] connss = split(conn, ","); // [conn-id, log.xml, a_logs]
 		try {
-			connss = conn.split(","); // [conn-id, log.xml, a_logs]
-			// logsctx = new DATranscxt(connss[0]);
 			logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
+			logConn = connss[0];
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
 		finally {
-			sessionSmtXml  = connss != null ? connss[1] : "";
-			logTabl = connss != null ? connss[2] : "";
+			sessionSmtXml  = connss != null ? connss[1] : "semantics-log.xml";
+			logTabl = connss != null ? connss[2] : "a_logs";
 		}
 	}
 
@@ -173,7 +178,7 @@ public class JUser extends SemanticObject implements IUser {
 
 	@Override
 	public ArrayList<String> dbLog(ArrayList<String> sqls) {
-		return LoggingUser.genLog(logsctx, logTabl, sqls, this, funcName, funcId);
+		return LoggingUser.genLog(logConn, logsctx, logTabl, sqls, this, funcName, funcId);
 	}
 
 	public JUser touch() {
