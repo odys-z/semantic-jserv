@@ -22,6 +22,22 @@
   	</c>
 
   	<c>
+  		<id>log-sqlite</id>
+  		<type>sqlite</type>
+  		<isdef>false</isdef>
+  		<!-- NOTE For sqlite:
+  			 Same db file, e.g. system.sqliet will results in DB write lock exception.
+  		-->
+  		<src>$VOLUME_HOME/syslog.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>false</dbg>
+  		<log>true</log>
+  		<smtcs>semantic-log.xml</smtcs>
+  	</c>
+  	
+  	<c>
   		<!-- This id must be the same as in workflow-meta.xml/t[cfg]/k[conn]/v -->
   		<id>cheap-sqlite</id>
   		<type>sqlite</type>

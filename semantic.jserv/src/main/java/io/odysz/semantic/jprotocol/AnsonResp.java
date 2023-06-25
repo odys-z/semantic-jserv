@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantics.SemanticObject;
+
+import static io.odysz.common.LangExt.isblank;
 
 /**Anson message response body
  * @author odys-z@github.com
@@ -83,5 +86,23 @@ public class AnsonResp extends AnsonBody {
 	
 	public HashMap<String, Object> data () {
 		return map;
+	}
+
+	/**
+	 * Find resulved value in data, similar to {@link SemanticObject#resulve(String, String)}. 
+	 * 
+	 * @param tbl
+	 * @param autok
+	 * @return
+	 */
+	public String resulvedata(String tbl, String autok) {
+		if (!isblank(data())) {
+		// String obj = ((SemanticObject) resp.data().get("resulved")).resulve("a_attaches", "");
+			// return (String) ((SemanticObject) data().get("resulved")).get(tbl).get(autok); 
+			SemanticObject reslv = ((SemanticObject)data().get("resulved")); 
+			if (reslv != null)
+				return (String) ((SemanticObject) reslv.get(tbl)).get(autok);
+		}
+		return null;
 	}
 }

@@ -31,10 +31,10 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 			// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 			AnsonMsg.understandPorts(Samport.menu);
 
-			// HashMap<String, ICheapChecker> checker = null; // To be tested
-
 			relapath = Configs.getCfg("cheap", "config-path");
+
 			// meta must loaded by DATranscxt before initCheap()
+			// HashMap<String, ICheapChecker> checker = null; // To be tested
 			// CheapEnginv1.initCheap(getFileInfPath(relapath), checker);
 		} catch (IOException e) {
 			e.printStackTrace();
