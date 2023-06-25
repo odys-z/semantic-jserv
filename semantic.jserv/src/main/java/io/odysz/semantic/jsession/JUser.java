@@ -2,6 +2,7 @@ package io.odysz.semantic.jsession;
 
 import static io.odysz.common.LangExt.split;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -111,7 +112,8 @@ public class JUser extends SemanticObject implements IUser {
 	private static DATranscxt logsctx;
 	private static String logConn;
 	/** @deprecated */
-	public static final String sessionSmtXml;
+//	public static final String sessionSmtXml;
+	/** default "a_logs" */
 	public static final String logTabl;
 
 	static {
@@ -119,16 +121,20 @@ public class JUser extends SemanticObject implements IUser {
 		if (isblank(conn))
 			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
 
-		String[] connss = split(conn, ","); // [conn-id, log.xml, a_logs]
+		String[] connss = split(conn, ","); // [conn-id, a_logs]
 		try {
-			logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
+			if (isNull(connss))
+				throw new SemanticException("Parsing log connection config error: %s", conn);
+
+			// logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
+			logsctx = new LogTranscxt(connss[0]);
 			logConn = connss[0];
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
 		finally {
-			sessionSmtXml  = connss != null ? connss[1] : "semantics-log.xml";
-			logTabl = connss != null ? connss[2] : "a_logs";
+			// sessionSmtXml  = connss != null ? connss[1] : "semantics-log.xml";
+			logTabl = connss != null ? connss[1] : "a_logs";
 		}
 	}
 

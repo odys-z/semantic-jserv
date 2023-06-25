@@ -28,7 +28,7 @@ public class LogTranscxt extends DATranscxt {
 	 * @throws IOException
 	 * @throws SemanticException
 	 */
-	public LogTranscxt(String conn, String xml, String logTabl)
+	public LogTranscxt(String conn)
 			throws SQLException, SAXException, IOException, SemanticException {
 		 super(conn);
 
@@ -36,7 +36,7 @@ public class LogTranscxt extends DATranscxt {
 		// loadVirtualSemantics(xml);
 
 		initConfigs(conn, loadSemantics(conn), 
-						(c) -> new SemanticsMap(c));
+					(c) -> new SemanticsMap(c));
 	}
 	
 	/**
