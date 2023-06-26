@@ -98,8 +98,6 @@ public class AnsonResp extends AnsonBody {
 	 */
 	public String resulvedata(String tbl, String autok) {
 		if (!isblank(data())) {
-		// String obj = ((SemanticObject) resp.data().get("resulved")).resulve("a_attaches", "");
-			// return (String) ((SemanticObject) data().get("resulved")).get(tbl).get(autok); 
 			SemanticObject reslv = ((SemanticObject)data().get("resulved")); 
 			if (reslv != null)
 				return (String) ((SemanticObject) reslv.get(tbl)).get(autok);
