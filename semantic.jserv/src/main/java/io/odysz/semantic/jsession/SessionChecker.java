@@ -33,7 +33,7 @@ public class SessionChecker implements Runnable {
 			for (String ssid : ss) {
 				IUser s = sspool.remove(ssid);
 				s.logout();
-				Utils.logi("[%s, %s]", ssid, s.uid());
+				Utils.logi("[%s, %s : %s : %s]", ssid, s.orgId(), s.deviceId(), s.uid());
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
