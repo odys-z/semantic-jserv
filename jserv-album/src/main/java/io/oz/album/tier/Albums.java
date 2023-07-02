@@ -381,11 +381,18 @@ public class Albums extends ServPort<AlbumReq> {
 		if (AlbumFlags.album)
 			Utils.logi("   [AlbumFlags.album: end block] %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+		
+		try { onPhotoCreated(photo.recId, conn, meta, usr);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
 				.doc((SyncDoc) new SyncDoc()
 					.recId(pid)
+					.device(body.device())
+					.folder(photo.folder())
 					.clientname(chain.clientname)
 					.cdate(body.createDate)
 					.fullpath(chain.clientpath));
@@ -545,7 +552,7 @@ public class Albums extends ServPort<AlbumReq> {
 			photo.share(usr.uid(), Share.priv);
 
 		String pid = DocUtils.createFileB64(conn, photo, usr, meta, st, null);
-		onPhotoCreated(photo.recId, conn, meta, usr);
+		onPhotoCreated(pid, conn, meta, usr);
 
 		return pid;
 		/*
@@ -600,10 +607,10 @@ public class Albums extends ServPort<AlbumReq> {
 			try {
 				rs = (AnResultset) st
 					.select(m.tbl, "p")
-					.col("folder").col("clientpath")
-					.col("uri")
-					.col("pname")
-					.whereEq("pid", pid)
+					.col(m.folder).col(m.fullpath)
+					.col(m.uri)
+					.col(m.clientname)
+					.whereEq(m.pk, pid)
 					.rs(st.instancontxt(conn, usr))
 					.rs(0);
 
@@ -625,30 +632,31 @@ public class Albums extends ServPort<AlbumReq> {
 
 					Update u = st
 							.update(m.tbl, usr)
-						 	.nv("css", p.css())
-						 	.nv("filesize", String.valueOf(p.size))
-							.whereEq("pid", pid);
+						 	.nv(m.css, p.css())
+						 	.nv(m.size, String.valueOf(p.size))
+							.whereEq(m.pk, pid);
 
-					if (p.photoDate() != null) {
-						   u.nv("folder", p.folder())
-							.nv("pdate", p.photoDate())
-							.nv("uri", pth)
-							.nv("pname", rs.getString("pname"))
-							.nv("shareby", usr.uid());
+//					if (p.photoDate() != null) {
+//					   u.nv(m.folder, p.folder())
+//						.nv(m.createDate, p.photoDate())
+//						.nv(m.uri, pth)
+//						.nv(m.clientname, rs.getString(m.clientname))
+//						.nv(m.shareby, usr.uid());
 
 						if (!isblank(p.geox) || !isblank(p.geoy))
-						   u.nv("exif", p.exif())
-							.nv("geox", p.geox)
-							.nv("geoy", p.geoy);
+						   u.nv(m.exif, p.exif())
+							.nv(m.geox, p.geox)
+							.nv(m.geoy, p.geoy);
 
 						if (!isblank(p.mime))
-							u.nv("mime", p.mime);
-						// if (!isblank(p.widthHeight))
-						// 	u.nv("css", p.css());
+							u.nv(m.mime, p.mime);
+
+//						if (!isblank(p.widthHeight))
+//						 	u.nv(m.css, p.css());
 
 						// u.whereEq("pid", pid)
 						// .u(stx);
-					}
+//					}
 					u.u(stx);
 				}
 			} catch (TransException | SQLException | IOException e) {

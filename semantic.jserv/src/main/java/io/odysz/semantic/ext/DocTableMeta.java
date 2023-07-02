@@ -44,7 +44,7 @@ public class DocTableMeta extends SyntityMeta {
 	public final String synoder;
 	public final String fullpath;
 	/** aslo named as pname, clientname or filename previously */
-	public final String resname;
+	public final String clientname;
 	/**
 	 * Resource identity, reading with {@link io.odysz.transact.sql.parts.condition.Funcall.Func#extFile extFile}
 	 * and updating with {@link io.odysz.semantic.DASemantics.ShExtFilev2 ShExtFile}.
@@ -68,7 +68,7 @@ public class DocTableMeta extends SyntityMeta {
 		this.tbl = "h_photos";
 		this.pk = pk;
 
-		resname = "pname";
+		clientname = "pname";
 		uri = "uri";
 		folder = "folder";
 		createDate = "pdate";

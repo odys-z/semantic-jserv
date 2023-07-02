@@ -188,7 +188,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public static String[] nvCols(DocTableMeta meta) {
 		return new String[] {
 				meta.pk,
-				meta.resname,
+				meta.clientname,
 				meta.uri,
 				meta.createDate,
 				meta.shareDate,
@@ -224,7 +224,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
 		this.docMeta = meta;
 		this.recId = rs.getString(meta.pk);
-		this.pname = rs.getString(meta.resname);
+		this.pname = rs.getString(meta.clientname);
 		this.uri = rs.getString(meta.uri);
 		this.createDate = rs.getString(meta.createDate);
 		this.mime = rs.getString(meta.mime);

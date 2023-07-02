@@ -174,7 +174,7 @@ public class Dochain {
 		// move file
 		String targetPath = resolvExtroot(st, conn, pid, usr, meta);
 		if (verbose)
-			Utils.logi("   %s\n-> %s", chain.outputPath, targetPath);
+			Utils.logi("Dochain#endBlock(): %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
 		return new DocsResp()
@@ -202,6 +202,20 @@ public class Dochain {
 			.collect(Collectors.joining("."));
 	}
 
+	/**
+	 * Create doc record with local file.
+	 * 
+	 * @param st
+	 * @param conn
+	 * @param photo
+	 * @param meta
+	 * @param usr
+	 * @param end
+	 * @return doc id, e.g. pid
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws IOException
+	 */
 	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
 			DocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
