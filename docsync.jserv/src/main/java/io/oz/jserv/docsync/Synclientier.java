@@ -478,6 +478,7 @@ public class Synclientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
+			e.printStackTrace();
 			errCtx.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
 			errCtx.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
@@ -551,7 +552,7 @@ public class Synclientier extends Semantier {
 		Insert ins = st.insert(meta.tbl, usr)
 				.nv(meta.org(), usr.orgId())
 				.nv(meta.uri, doc.uri)
-				.nv(meta.resname, doc.pname)
+				.nv(meta.clientname, doc.pname)
 				.nv(meta.synoder, usr.deviceId())
 				.nv(meta.fullpath, doc.fullpath())
 				.nv(meta.folder, doc.folder())

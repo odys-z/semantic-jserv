@@ -52,7 +52,7 @@ public class DocUtils {
 		Insert ins = st.insert(meta.tbl, usr)
 				.nv(meta.org(), usr.orgId())
 				.nv(meta.uri, photo.uri)
-				.nv(meta.resname, photo.pname)
+				.nv(meta.clientname, photo.pname)
 				.nv(meta.synoder, usr.deviceId())
 				.nv(meta.fullpath, photo.fullpath())
 				.nv(meta.createDate, photo.createDate)

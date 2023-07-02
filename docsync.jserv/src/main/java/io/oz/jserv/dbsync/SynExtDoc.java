@@ -33,7 +33,7 @@ public class SynExtDoc extends SynEntity {
 	public static String[] nvCols(DocTableMeta meta) {
 		return new String[] {
 				meta.pk,
-				meta.resname,
+				meta.clientname,
 				meta.uri,
 				meta.createDate,
 				meta.shareDate,
