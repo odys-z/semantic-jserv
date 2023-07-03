@@ -7,10 +7,12 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
+import io.odysz.semantics.x.SemanticException;
+
 class ExifTest {
 
 	@Test
-	void testParseWidthHeight() throws IOException {
+	void testParseWidthHeight() throws IOException, SemanticException {
 		int[] wh = Exif.parseWidthHeight("test/res/300x150.jpg");
 		
 		assertEquals(300, wh[0]);
