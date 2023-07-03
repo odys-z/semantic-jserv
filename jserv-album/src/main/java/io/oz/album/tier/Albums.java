@@ -3,6 +3,8 @@ package io.oz.album.tier;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.transact.sql.parts.condition.Funcall.now;
+import static io.odysz.transact.sql.parts.condition.Funcall.count;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,13 +45,13 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.sql.Update;
-import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
@@ -326,7 +328,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throws SemanticException, TransException, SQLException {
 		AnResultset rs = ((AnResultset) st
 				.select(meta.tbl, "p")
-				.col(Funcall.count(meta.pk), "cnt")
+				.col(count(meta.pk), "cnt")
 				.whereEq(meta.synoder, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
@@ -382,10 +384,10 @@ public class Albums extends ServPort<AlbumReq> {
 			Utils.logi("   [AlbumFlags.album: end block] %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 		
-		try { onPhotoCreated(photo.recId, conn, meta, usr);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//		try { onPhotoCreated(photo.recId, conn, meta, usr);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
@@ -441,18 +443,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
-
-//		AnResultset rs = (AnResultset) st
-//				.select(meta.tbl)
-//				.col("clientpath")
-//				.col("1", "syncFlag") // this flag is used for query by client, not for hub vs. private storage
-//				.whereIn("clientpath", paths).whereEq("device", req.syncing().device)
-//				// .orderby(orders)
-//				.rs(st.instancontxt(conn, usr)).rs(0);
-
-//		AlbumResp album = (AlbumResp) new AlbumResp()
-//				.collect("sync-temp-id")
-//				.pathsPage(rs, meta);
 
 		Object[] kpaths = req.syncing().paths() == null ? new Object[0]
 				: req.syncing().paths().keySet().toArray();
@@ -555,47 +545,12 @@ public class Albums extends ServPort<AlbumReq> {
 		onPhotoCreated(pid, conn, meta, usr);
 
 		return pid;
-		/*
-		if (LangExt.isblank(photo.clientpath))
-			throw new SemanticException("Client path can't be null/empty.");
-		
-		if (LangExt.isblank(photo.month(), " - - "))
-			throw new SemanticException("Month of photo creating is important for saving files. It's required for creating media file.");
-
-		Insert ins = st.insert(tablPhotos, usr)
-				.nv("family", ((PhotoRobot) usr).orgId())
-				.nv("uri", photo.uri).nv("pname", photo.pname)
-				.nv("pdate", photo.photoDate())
-				.nv("folder", photo.month())
-				// .nv("device", ((PhotoRobot) usr).deviceId())
-				// .nv("clientpath", photo.clientpath)
-				.nv("geox", photo.geox).nv("geoy", photo.geoy)
-				.nv("exif", photo.exif)
-				// .nv("syncflag", photo.isPublic ? DocsReq.sharePublic : DocsReq.sharePrivate)
-				 .nv("shareby", usr.uid())
-				 .nv("sharedate", Funcall.now())
-				;
-		
-		if (!LangExt.isblank(photo.mime))
-			ins.nv("mime", photo.mime);
-		
-		// add a synchronizing task
-		// - also triggered as private storage jserv, but no statement will be added
-		Docsyncer.onDocreate(ins, photo, tablPhotos, usr);
-
-		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
-		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
-				.get(tablPhotos))
-				.getString("pid");
-		
-		if (photo.geox == null || photo.month == null)
-			onPhotoCreated(pid, conn, usr);
-
-		return pid;
-	 */
 	}
 
-	/**This method updates geox,y and date automatically - should only be used when pictures created.
+	/**
+	 * This method parse exif, update geox/y, date etc. - should only be used when file created.
+	 * 
+	 * TODO generate preview
 	 * 
 	 * @param pid
 	 * @param conn
@@ -610,6 +565,7 @@ public class Albums extends ServPort<AlbumReq> {
 					.col(m.folder).col(m.fullpath)
 					.col(m.uri)
 					.col(m.clientname)
+					.col(m.createDate)
 					.whereEq(m.pk, pid)
 					.rs(st.instancontxt(conn, usr))
 					.rs(0);
@@ -620,8 +576,12 @@ public class Albums extends ServPort<AlbumReq> {
 					PhotoRec p = new PhotoRec();
 					Exif.parseExif(p, pth);
 					
-					if (isblank(p.widthHeight))
-						p.widthHeight = Exif.parseWidthHeight(pth);
+					if (isblank(p.widthHeight)) {
+						try { p.widthHeight = Exif.parseWidthHeight(pth); }
+						catch (SemanticException e) {
+							Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
+						}
+					}
 					if (isblank(p.wh))
 						p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
 					if (p.widthHeight[0] > p.widthHeight[1]) {
@@ -631,10 +591,14 @@ public class Albums extends ServPort<AlbumReq> {
 					}
 
 					Update u = st
-							.update(m.tbl, usr)
-						 	.nv(m.css, p.css())
-						 	.nv(m.size, String.valueOf(p.size))
-							.whereEq(m.pk, pid);
+						.update(m.tbl, usr)
+						.nv(m.css, p.css())
+						.nv(m.size, String.valueOf(p.size))
+						.nv(m.syncflag, SyncFlag.publish)
+						.whereEq(m.pk, pid);
+
+					if (isblank(rs.getDate(m.createDate)))
+						u.nv(m.createDate, now());
 
 //					if (p.photoDate() != null) {
 //					   u.nv(m.folder, p.folder())
