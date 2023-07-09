@@ -10,6 +10,7 @@ import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -61,6 +62,7 @@ public class DocUtils {
 				.nv(meta.shareby, photo.shareby)
 				.nv(meta.shareDate, photo.sharedate)
 				.nv(meta.size, photo.size)
+				.nv(meta.syncflag, SyncFlag.publish) // temp for MVP 0.2.1
 				;
 		
 		if (!LangExt.isblank(photo.mime))

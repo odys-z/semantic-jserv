@@ -3,6 +3,7 @@ package io.odysz.semantic.tier.docs;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
@@ -301,7 +302,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
 				cdate(fd);
 			}
-			catch (IOException ex) {
+			catch (IOException | InvalidPathException ex) {
 				cdate(new Date());
 			}
 		}
