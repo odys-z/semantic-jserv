@@ -26,6 +26,7 @@ import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.CheapMath;
 import io.odysz.common.EnvPath;
+import io.odysz.common.MimeTypes;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -190,6 +191,8 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = album(jmsg.body(0), usr, prf);
 				else if (A.stree.equals(a))
 					rsp = galleryTree(jmsg.body(0), usr, prf);
+//				else if (A.docRecords.equals(a))
+//					rsp = docSynflags(jmsg.body(0), usr, prf);
 
 				//
 				else if (DocsReq.A.blockStart.equals(a))
@@ -227,6 +230,8 @@ public class Albums extends ServPort<AlbumReq> {
 			resp.flushBuffer();
 		}
 	}
+
+
 
 	/**
 	 * Generate user's profile - used at server side,
@@ -352,7 +357,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.doc((SyncDoc) new SyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.createDate)
-					.fullpath(chain.clientpath));
+					.fullpath(body.clientpath()));
 	}
 	
 	DocsResp endBlock(DocsReq body, IUser usr)
@@ -576,25 +581,27 @@ public class Albums extends ServPort<AlbumReq> {
 					PhotoRec p = new PhotoRec();
 					Exif.parseExif(p, pth);
 					
-					if (isblank(p.widthHeight)) {
-						try { p.widthHeight = Exif.parseWidthHeight(pth); }
-						catch (SemanticException e) {
-							Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
+					if (MimeTypes.isImgVideo(p.mime)) {
+						if (isblank(p.widthHeight)) {
+							try { p.widthHeight = Exif.parseWidthHeight(pth); }
+							catch (SemanticException e) {
+								Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
+							}
 						}
-					}
-					if (isblank(p.wh))
-						p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
-					if (p.widthHeight[0] > p.widthHeight[1]) {
-						int w = p.wh[0];
-						p.wh[0] = p.wh[1];
-						p.wh[1] = w;
+						if (isblank(p.wh))
+							p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
+						if (p.widthHeight[0] > p.widthHeight[1]) {
+							int w = p.wh[0];
+							p.wh[0] = p.wh[1];
+							p.wh[1] = w;
+						}
 					}
 
 					Update u = st
 						.update(m.tbl, usr)
 						.nv(m.css, p.css())
 						.nv(m.size, String.valueOf(p.size))
-						.nv(m.syncflag, SyncFlag.publish)
+						// .nv(m.syncflag, SyncFlag.publish)
 						.whereEq(m.pk, pid);
 
 					if (isblank(rs.getDate(m.createDate)))
