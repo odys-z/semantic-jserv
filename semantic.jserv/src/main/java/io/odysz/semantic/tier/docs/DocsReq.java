@@ -1,9 +1,11 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.isblank;
+import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 
@@ -15,9 +17,6 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
-
-import static io.odysz.common.LangExt.isblank;
-import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
 
 public class DocsReq extends AnsonBody {
 	public static class A {
