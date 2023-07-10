@@ -44,7 +44,7 @@ public class JUser extends SemanticObject implements IUser {
 
 		public JUserMeta(String... conn) {
 			super("a_users", conn);
-			this.tbl = "a_users";
+			// this.tbl = "a_users";
 			this.pk = "userId";
 			this.uname = "userName";
 			this.pswd = "pswd";

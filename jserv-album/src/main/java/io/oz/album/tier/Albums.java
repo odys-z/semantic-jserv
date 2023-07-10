@@ -92,7 +92,9 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static final String tablCollectPhoto = "h_coll_phot";
 
-	static DomainMeta domainMeta;
+//	static DomainMeta domainMeta;
+	static AOrgMeta orgMeta;
+
 	static final String tablUser = "a_users";
 
 	/** uri db field */
@@ -110,7 +112,8 @@ public class Albums extends ServPort<AlbumReq> {
 		try {
 			st = new DATranscxt(null);
 			robot = new PhotoUser("Robot Album");
-			domainMeta = new DomainMeta();
+			// domainMeta = new DomainMeta();
+			orgMeta = new AOrgMeta();
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
@@ -123,6 +126,7 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 	
 	String missingFile = "";
+
 	public Albums missingFile(String onlyPng) {
 		missingFile = onlyPng;
 		return this;
@@ -190,8 +194,6 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = album(jmsg.body(0), usr, prf);
 				else if (A.stree.equals(a))
 					rsp = galleryTree(jmsg.body(0), usr, prf);
-//				else if (A.docRecords.equals(a))
-//					rsp = docSynflags(jmsg.body(0), usr, prf);
 
 				//
 				else if (DocsReq.A.blockStart.equals(a))
@@ -281,15 +283,16 @@ public class Albums extends ServPort<AlbumReq> {
 			throws SemanticException, TransException, SQLException {
 
 		AnResultset rs = (AnResultset) st
-				.select(domainMeta.tbl)
-				.whereEq(domainMeta.pk, "home")
+				.select(orgMeta.tbl)
+				.whereEq(orgMeta.pk, usr.orgId())
 				.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
 				.rs(0);
 
 		rs.beforeFirst().next();
-		String home = rs.getString(domainMeta.domainName);
+		String home = rs.getString(orgMeta.orgName);
+		String webroot = rs.getString(orgMeta.webroot);
 
-		return new AlbumResp().profiles(new Profiles(home));
+		return new AlbumResp().profiles(new Profiles(home).webroot(webroot));
 	}
 
 	DocsResp startBlocks(DocsReq body, IUser usr, Profiles prf)
@@ -387,11 +390,6 @@ public class Albums extends ServPort<AlbumReq> {
 		if (AlbumFlags.album)
 			Utils.logi("   [AlbumFlags.album: end block] %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
-		
-//		try { onPhotoCreated(photo.recId, conn, meta, usr);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())

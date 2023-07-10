@@ -40,11 +40,6 @@ public class AlbumReq extends DocsReq {
 		public static final String selectSyncs = DocsReq.A.selectSyncs; // "r/syncflags";
 
 		public static final String getPrefs = "r/prefs";
-
-//		/** select uploaded docs (tagged with device Id),
-//		 * see Albums#docSynflags()
-//		 */
-//		public static final String docRecords = "r/docs";
 	}
 	
 	String albumId;
