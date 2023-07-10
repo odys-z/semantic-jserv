@@ -37,6 +37,7 @@ public class Profiles extends Anson {
 	}
 
 	String webroot;
+	public String webroot() { return webroot; }
 	public Profiles webroot(String cfg) {
 		this.webroot = cfg;
 		return this;
