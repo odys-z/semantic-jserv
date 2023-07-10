@@ -6,6 +6,17 @@
   		<!-- using session org as first arg -->
   		<sk>tree-album-family-folder</sk>
   		<sqlit>select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'p' nodetype, css, filesize img, null mov, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, null fav, mime
+	from h_photos h where family = '%1$s' and (substring(mime, 0, 6) = 'image' or substring(mime, 0, 6) = 'video') union select * from (
+	select '%1$s' || '.' || folder, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
+	sum(case when substring(mime, 0, 6) = 'image' then 1 else 0 end) img, sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov, sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime
+	from h_photos f where f.family = '%1$s' group by f.folder
+	) where img > 0 or mov > 0 order by fullpath</sqlit>
+  		<s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags</s-tree>
+  	</c>
+
+  	<c>
+  		<sk>tree-docs-folder</sk>
+  		<sqlit>select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'p' nodetype, css, filesize img, null mov, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, null fav, mime
 	from h_photos h where family = '%1$s' union select * from (
 	select '%1$s' || '.' || folder, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
 	sum(case when substring(mime, 0, 6) = 'image' then 1 else 0 end) img, sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov, sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime

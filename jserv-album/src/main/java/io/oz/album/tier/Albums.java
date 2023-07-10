@@ -39,7 +39,6 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.meta.DomainMeta;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -150,6 +149,8 @@ public class Albums extends ServPort<AlbumReq> {
 			if (AlbumFlags.album)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
+		} catch (IOException e) {
+			write(resp, err(MsgCode.exIo, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
