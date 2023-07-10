@@ -46,7 +46,6 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
