@@ -233,8 +233,6 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
-
-
 	/**
 	 * Generate user's profile - used at server side,
 	 * yet {@link IUser#profile()} is used for loading profile for client side.
@@ -405,7 +403,6 @@ public class Albums extends ServPort<AlbumReq> {
 	
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		// String id = body.chainId();
 		String id = chainId(usr, body.clientpath());
 		DocsResp ack = new DocsResp();
 		if (blockChains.containsKey(id)) {
@@ -433,6 +430,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
+	@SuppressWarnings("deprecation")
 	DocsResp querySyncs(DocsReq req, IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException {
 
