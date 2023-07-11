@@ -12,14 +12,23 @@ public class Profiles extends Anson {
 	String uid;
 	String defltAlbum;
 
-	String home;
-	public String home() { return home; }
+	public String home;
+	public Profiles home(String h) {
+		home = h;
+		return this;
+	}
 
-	int maxUsers;
-	public int maxusers() { return maxUsers; }
+	public int maxUsers;
+	public Profiles maxusers(int max) {
+		maxUsers = max;
+		return this;
+	}
 	
-	int servtype;
-	public int servtype() { return servtype; }
+	public int servtype;
+	public Profiles servtype(int t) {
+		servtype = t;
+		return this;
+	}
 
 	public Profiles() {}
 	
@@ -36,8 +45,7 @@ public class Profiles extends Anson {
 			this.defltAlbum = "a-001";
 	}
 
-	String webroot;
-	public String webroot() { return webroot; }
+	public String webroot;
 	public Profiles webroot(String cfg) {
 		this.webroot = cfg;
 		return this;
