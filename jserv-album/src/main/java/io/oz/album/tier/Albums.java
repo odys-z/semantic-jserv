@@ -91,7 +91,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static final String tablCollectPhoto = "h_coll_phot";
 
-//	static DomainMeta domainMeta;
 	static AOrgMeta orgMeta;
 
 	static final String tablUser = "a_users";
@@ -138,8 +137,8 @@ public class Albums extends ServPort<AlbumReq> {
 		if (AlbumFlags.album)
 			Utils.logi("[AlbumFlags.album/album.less GET]");
 
+		DocsReq jreq = msg.body(0);
 		try {
-			DocsReq jreq = msg.body(0);
 			String a = jreq.a();
 			if (A.download.equals(a))
 				download(resp, msg.body(0), robot);
@@ -454,7 +453,9 @@ public class Albums extends ServPort<AlbumReq> {
 				.whereEq(meta.org(), req.org == null ? usr.orgId() : req.org)
 				.whereEq(meta.synoder, usr.deviceId())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
-				.limit(req.limit())	// FIXME issue: what if paths length > limit ?
+				// TODO add file type for performance
+				// FIXME issue: what if paths length > limit ?
+				.limit(req.limit())
 				.rs(st.instancontxt(conn, usr))
 				.rs(0))
 				.beforeFirst();
@@ -487,6 +488,7 @@ public class Albums extends ServPort<AlbumReq> {
 		if (!rs.next()) {
 			// throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
 			resp.setContentType("image/png");
+			// resp.setContentType(rs.getString("mime"));
 			FileStream.sendFile(resp.getOutputStream(), missingFile);
 		}
 		else {
