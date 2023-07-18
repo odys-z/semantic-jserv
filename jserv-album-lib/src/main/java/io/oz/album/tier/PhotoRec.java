@@ -151,7 +151,9 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 
 	public void month(String d) {
 		try {
-			folder = DateFormat.formatYYmm(DateFormat.parse(d));
+			folder = isblank(d) ? 
+				DateFormat.formatYYmm(new Date()) :
+				DateFormat.formatYYmm(DateFormat.parse(d));
 		} catch (ParseException e) {
 			e.printStackTrace();
 			folder = DateFormat.formatYYmm(new Date());
