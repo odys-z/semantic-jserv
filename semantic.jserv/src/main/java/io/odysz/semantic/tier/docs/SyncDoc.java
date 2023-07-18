@@ -1,9 +1,12 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
+import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
@@ -17,9 +20,6 @@ import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;
-
-import static io.odysz.common.LangExt.*;
-import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
@@ -106,6 +106,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public String cdate() { return createDate; }
 	public SyncDoc cdate(String cdate) {
+		if (isblank(cdate))
+			return cdate(new Date()); 
 		createDate = cdate;
 		return this;
 	}
@@ -188,7 +190,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public static String[] nvCols(DocTableMeta meta) {
 		return new String[] {
 				meta.pk,
-				meta.resname,
+				meta.clientname,
 				meta.uri,
 				meta.createDate,
 				meta.shareDate,
@@ -224,7 +226,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
 		this.docMeta = meta;
 		this.recId = rs.getString(meta.pk);
-		this.pname = rs.getString(meta.resname);
+		this.pname = rs.getString(meta.clientname);
 		this.uri = rs.getString(meta.uri);
 		this.createDate = rs.getString(meta.createDate);
 		this.mime = rs.getString(meta.mime);
@@ -295,16 +297,17 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = separatorsToUnix(clientpath);
 
+		/* Since 1.5.0, finding file's datetime is supposed to be function of file provider.
 		if (isblank(createDate)) {
 			try {
 				Path p = Paths.get(clientpath);
 				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
 				cdate(fd);
 			}
-			catch (IOException ex) {
+			catch (IOException | InvalidPathException ex) {
 				cdate(new Date());
 			}
-		}
+		} */
 
 		return this;
 	}

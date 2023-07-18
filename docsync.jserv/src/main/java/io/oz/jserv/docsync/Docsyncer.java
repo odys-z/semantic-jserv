@@ -72,7 +72,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 *  */
 	public static boolean verbose = true;
 
+	/** Error: deprecated way. this metas only works for one DB connection.
+	 * Currently initialized in singleton. */
 	static HashMap<String, TableMeta> metas;
+
 	static HashMap<String, OnChainOk> endChainHandlers;
 
 	/** xml configure key: sync-mode */
@@ -108,7 +111,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	static {
 		try {
 			st = new DATranscxt(null);
-			metas = new HashMap<String, TableMeta>();
+			// metas = new HashMap<String, TableMeta>();
 			synodesMeta = new SynodeMeta();
 
 			anonymous = new SyncRobot("Robot Syncer");
@@ -123,6 +126,14 @@ public class Docsyncer extends ServPort<DocsReq> {
 		metas.put(m.tbl, m);
 	}
 
+	/**
+	 * @param req
+	 * @param usr
+	 * @param isAdmin
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	public static DocsResp delDocRec(DocsReq req, IUser usr, boolean ...isAdmin)
 			throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
@@ -130,10 +141,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		String device = req.device();
 
-		if (!is(isAdmin)
-				&& !isblank(device) && !device.equals(usr.deviceId()))
-			throw new SemanticException("User (id %s, device %s) is trying to delete a file from another device? (req.device = %s)",
-					usr.uid(), usr.deviceId(), req.device());
+		if (!is(isAdmin) && !isblank(device) && !device.equals(usr.deviceId()))
+			throw new SemanticException(
+				"User (id %s, device %s) is trying to delete a file from another device? (req.device = %s)",
+				usr.uid(), usr.deviceId(), req.device());
 		
 		String docId = resolveDoc(usr.orgId(), req.clientpath(), device, meta, usr, conn);
 		
@@ -655,6 +666,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 //				.whereEq(shmeta.org, usr.orgId());
 //		}
 		return null;
+	}
+
+	public static void metas(HashMap<String, TableMeta> meta) {
+		metas = meta;
 	}
 
 }

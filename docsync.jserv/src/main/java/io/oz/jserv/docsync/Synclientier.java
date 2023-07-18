@@ -478,6 +478,7 @@ public class Synclientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
+			e.printStackTrace();
 			errCtx.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
 			errCtx.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
@@ -551,7 +552,7 @@ public class Synclientier extends Semantier {
 		Insert ins = st.insert(meta.tbl, usr)
 				.nv(meta.org(), usr.orgId())
 				.nv(meta.uri, doc.uri)
-				.nv(meta.resname, doc.pname)
+				.nv(meta.clientname, doc.pname)
 				.nv(meta.synoder, usr.deviceId())
 				.nv(meta.fullpath, doc.fullpath())
 				.nv(meta.folder, doc.folder())
@@ -624,7 +625,7 @@ public class Synclientier extends Semantier {
 				.device(page.device)
 				.a(A.selectSyncs); // v 0.1.50
 
-		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, port/*VMP 0.2.1 Port.docsync*/, req)
+		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, port/*MVP 0.2.1 Port.docsync*/, req)
 								.header(header);
 
 		DocsResp resp = client.commit(q, errCtx);

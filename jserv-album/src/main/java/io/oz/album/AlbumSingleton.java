@@ -10,10 +10,12 @@ import javax.servlet.annotation.WebListener;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.transact.x.TransException;
+import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.docsync.Docsyncer;
 import io.oz.jserv.docsync.Synode;
 
@@ -34,12 +36,9 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			Docsyncer.init(node);
 			Synode.init(node);
 
-			/*
+			// MVP 0.2.1, temporary way of create meta
+			Docsyncer.metas(Connects.getMeta(Connects.defltConn()));
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
-			Docsyncer.addSyncTable(new JUser.JUserMeta(Connects.defltConn()));
-			Synode.init(System.getProperty("JSERV_NODE"));
-			*/
-
 		} catch (TransException | SAXException | IOException | SQLException | AnsonException | SsException e) {
 			e.printStackTrace();
 		}

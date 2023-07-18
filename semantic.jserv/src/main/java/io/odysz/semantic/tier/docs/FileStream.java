@@ -11,6 +11,7 @@ import org.apache.commons.io.IOUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.DocLocks;
+import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -72,6 +73,7 @@ public class FileStream {
 			throws IOException {
 		try {
 			DocLocks.reading(src);
+			Utils.logi(src);
 			FileInputStream in = new FileInputStream(src);
 			IOUtils.copy(in, out);
 			in.close();

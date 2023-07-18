@@ -106,6 +106,12 @@ public class PathsPage extends Anson {
 		return (int) start;
 	}
 	
+	/**
+	 * Index after last item, non-inclusive index, and size = end - start.
+	 * 
+	 * @return
+	 * @throws SemanticException
+	 */
 	public int end() throws SemanticException {
 		if (end < 0 || end > Integer.MAX_VALUE)
 			throw new SemanticException("Illegal long value to convert to int: %d", end);

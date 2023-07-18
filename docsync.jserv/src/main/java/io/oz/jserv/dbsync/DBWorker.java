@@ -259,7 +259,7 @@ public class DBWorker implements Runnable {
 		
 		String synoder = rs.getString(m.synoder);
 		String clientpath = rs.getString(m.fullpath);
-		String pname = rs.getString(m.resname);
+		String pname = rs.getString(m.clientname);
 
 		DBSyncReq req = new DBSyncReq(null, uri, m.tbl)
 				.askEntity(synoder, clientpath, win);
