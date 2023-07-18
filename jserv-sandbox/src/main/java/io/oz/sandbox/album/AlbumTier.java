@@ -6,6 +6,7 @@ import static io.odysz.common.LangExt.isblank;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 
 		public PhotoMeta(String conn) throws TransException {
 			super("h_photos", "pid", conn);
-			
+
 			exif = "exif";
 			folder = "folder";
 			family = "family";
@@ -65,10 +66,10 @@ public class AlbumTier extends ServPort<AlbumReq> {
 
 	public AlbumTier() throws SemanticException, SQLException, SAXException, IOException {
 		super(Sandport.album);
-		
+
 		st = new DATranscxt(null);
 		robot = new JRobot();
-		
+
 		missingFile = "";
 	}
 
@@ -98,7 +99,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		}
 	}
 
-	protected void download(HttpServletResponse resp, AlbumReq req, JRobot usr) 
+	protected void download(HttpServletResponse resp, AlbumReq req, JRobot usr)
 			throws IOException, SemanticException, TransException, SQLException {
 
 		String conn = Connects.uri2conn(req.uri());
@@ -124,9 +125,14 @@ public class AlbumTier extends ServPort<AlbumReq> {
 			String p = DocUtils.resolvExtroot(conn, rs.getString("uri"), meta);
 			if (SandFlags.album)
 				Utils.logi(p);
-			try { FileStream.sendFile(resp.getOutputStream(), p); }
-			catch (FileNotFoundException e) {
+			try (OutputStream os = resp.getOutputStream()) {
+				FileStream.sendFile(os, p);
+			} catch (FileNotFoundException e) {
 				Utils.warn("File not found: %s", e.getMessage());
+			} catch (IOException e) {
+				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
+				// This is harmless: https://stackoverflow.com/a/70020526/7362888
+				Utils.warn(e.getMessage());
 			}
 		}
 	}
@@ -135,7 +141,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 	protected void onPost(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
 		AlbumReq jreq = msg.body(0);
-		
+
 		try {
 			AnDatasetResp rsp = null;
 			IUser usr = verifier.verify(msg.header());

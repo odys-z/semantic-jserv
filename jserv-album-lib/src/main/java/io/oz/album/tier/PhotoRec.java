@@ -22,15 +22,15 @@ import io.odysz.transact.sql.parts.condition.Funcall;
 
 import static io.odysz.common.LangExt.isblank;
 /**
- * Server side and jprotocol oriented data record - not BaseFile used by file picker (at Android client). 
- * 
+ * Server side and jprotocol oriented data record - not BaseFile used by file picker (at Android client).
+ *
  * @author ody
  *
  */
 public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public String geox;
 	public String geoy;
-	
+
 	/** usually ignored when sending request */
 	public ArrayList<String> exif;
 	public String exif() {
@@ -43,7 +43,7 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public int[] widthHeight;
 	/** reduction of image size */
 	public int[] wh;
-	
+
 	/**
 	 * Composed css json, saved as string.
 	 * @see #css()
@@ -53,7 +53,7 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	/**
 	 * Compose a string representing json object for saving in DB.
 	 * The type "io.oz.album.tier.PhotoCSS" doesn't exist at server side (v0.4.18)
-	 * 
+	 *
 	 * @return string of json for saving
 	 */
 	public String css() {
@@ -67,9 +67,9 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public String collectId() { return collectId; }
 
 	public String albumId;
-	
+
 	public PhotoRec() {}
-	
+
 	public PhotoRec(AnResultset rs) throws SQLException, IOException {
 		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
@@ -80,13 +80,13 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
 		this.mime = rs.getString("mime");
-		
+
 		this.css = rs.getString("css");
-		
+
 		// this.clientpath =  rs.getString("clientpath");
 		fullpath(rs.getString("clientpath"));
 		this.device =  rs.getString("device");
-		
+
 		try {
 			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
 		} catch (SQLException ex) {
@@ -94,7 +94,7 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		}
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
-		
+
 	}
 
 	public PhotoRec(String collectId, AnResultset rs) throws SQLException, IOException {
@@ -106,12 +106,12 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	 * @param rs
 	 * @return this
 	 * @throws SQLException
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public PhotoRec asSyncRec(AnResultset rs) throws SQLException, IOException {
-		// this.clientpath = rs.getString("clientpath"); 
-		fullpath(rs.getString("clientpath")); 
-		this.syncFlag = rs.getString("syncFlag"); 
+		// this.clientpath = rs.getString("clientpath");
+		fullpath(rs.getString("clientpath"));
+		this.syncFlag = rs.getString("syncFlag");
 		return this;
 	}
 
@@ -124,7 +124,7 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public AbsPart photoDate() {
 		try {
 			if (!isblank(createDate)) {
-				Date d = DateFormat.parse(createDate); 
+				Date d = DateFormat.parse(createDate);
 				folder = DateFormat.formatYYmm(d);
 				return new ExprPart("'" + createDate + "'");
 			}
@@ -151,7 +151,7 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 
 	public void month(String d) {
 		try {
-			folder = isblank(d) ? 
+			folder = isblank(d) ?
 				DateFormat.formatYYmm(new Date()) :
 				DateFormat.formatYYmm(DateFormat.parse(d));
 		} catch (ParseException e) {

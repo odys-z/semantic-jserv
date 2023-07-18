@@ -7,6 +7,7 @@ import static io.odysz.transact.sql.parts.condition.Funcall.now;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -60,10 +61,10 @@ import io.oz.album.tier.AlbumReq.A;
 
 /**
  * <h5>The album tier 0.2.1 (MVP)</h5>
- * 
+ *
  * Although this tie is using the pattern of <i>less</i>, it's also verifying user when uploading
  * - for subfolder name of user.
- * 
+ *
  * <h5>Design note for version 0.1</h5>
  * <p>
  * A photo always have a default collection Id.
@@ -71,7 +72,7 @@ import io.oz.album.tier.AlbumReq.A;
  * The clients collect image files etc., create photo records and upload
  * ({@link AlbumReq.A#insertPhoto A.insertPhoto}) - without collection Id; <br>
  * the browsing clients are supported with a default collection: home/usr/month.
- * 
+ *
  * @author ody
  *
  */
@@ -116,20 +117,20 @@ public class Albums extends ServPort<AlbumReq> {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public Albums() {
 		super(AlbumPort.album);
-		
+
 		missingFile = "";
 	}
-	
+
 	String missingFile = "";
 
 	public Albums missingFile(String onlyPng) {
 		missingFile = onlyPng;
 		return this;
 	}
-	
+
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
@@ -179,9 +180,9 @@ public class Albums extends ServPort<AlbumReq> {
 			} else {
 				// session required
 				PhotoUser usr = (PhotoUser) JSingleton.getSessionVerifier().verify(jmsg.header());
-				
+
 				Profiles prf = verifyProfiles(jmsg.body(0), usr, a);
-				
+
 				if (A.insertPhoto.equals(a))
 					rsp = createPhoto(jmsg.body(0), usr, prf);
 				else if (A.del.equals(a))
@@ -235,7 +236,7 @@ public class Albums extends ServPort<AlbumReq> {
 	/**
 	 * Generate user's profile - used at server side,
 	 * yet {@link IUser#profile()} is used for loading profile for client side.
-	 * 
+	 *
 	 * @param body
 	 * @param usr
 	 * @param a
@@ -302,7 +303,7 @@ public class Albums extends ServPort<AlbumReq> {
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
-		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot. 
+		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot.
 		String tempDir = ((PhotoUser)usr).touchTempDir(conn);
 
 		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subFolder);
@@ -343,7 +344,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throw new SemanticException("Found existing file for device %s, client path: %s",
 					device, clientpath);
 	}
-	
+
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		String id = chainId(usr, body.clientpath());
 		if (!blockChains.containsKey(id))
@@ -359,7 +360,7 @@ public class Albums extends ServPort<AlbumReq> {
 					.cdate(body.createDate)
 					.fullpath(body.clientpath()));
 	}
-	
+
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.clientpath());
@@ -399,7 +400,7 @@ public class Albums extends ServPort<AlbumReq> {
 					.cdate(body.createDate)
 					.fullpath(chain.clientpath));
 	}
-	
+
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.clientpath());
@@ -413,17 +414,17 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return ack;
 	}
-	
+
 	private String chainId(IUser usr, String clientpathRaw) {
 		return usr.sessionId() + " " + clientpathRaw;
 	}
-	
+
 	/**
 	 * Query client paths
 	 * @param req
 	 * @param usr
-	 * @param prf 
-	 * @param meta 
+	 * @param prf
+	 * @param meta
 	 * @return album where clientpath in req's fullpath and device also matched
 	 * @throws SemanticException
 	 * @throws TransException
@@ -446,7 +447,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		Object[] kpaths = req.syncing().paths() == null ? new Object[0]
 				: req.syncing().paths().keySet().toArray();
-		
+
 		AnResultset rs = ((AnResultset) st
 				.select(req.docTabl, "t")
 				.cols(SyncDoc.synPageCols(meta))
@@ -464,7 +465,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return album;
 	}
-	
+
 	void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 
@@ -486,18 +487,23 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next()) {
-			// throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
 			resp.setContentType("image/png");
-			// resp.setContentType(rs.getString("mime"));
 			FileStream.sendFile(resp.getOutputStream(), missingFile);
 		}
 		else {
 			String mime = rs.getString("mime");
 			resp.setContentType(mime);
-			FileStream.sendFile(resp.getOutputStream(), DocUtils.resolvExtroot(st, conn, req.docId, usr, meta));
+			try ( OutputStream os = resp.getOutputStream() ) {
+				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.docId, usr, meta));
+				os.close();
+			} catch (IOException e) {
+				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
+				// This is harmless: https://stackoverflow.com/a/70020526/7362888
+				// Utils.warn(e.getMessage());
+			}
 		}
 	}
-	
+
 	AlbumResp createPhoto(AlbumReq req, IUser usr, Profiles prf)
 			throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
@@ -518,15 +524,15 @@ public class Albums extends ServPort<AlbumReq> {
 				.whereEq("clientpath", req.clientpath())
 				// .post(Docsyncer.onDel(req.clientpath, req.device()))
 				.d(st.instancontxt(conn, usr));
-		
-		return (DocsResp) new DocsResp().data(res.props()); 
+
+		return (DocsResp) new DocsResp().data(res.props());
 	}
 
 	/**
 	 * <p>Create photo - call this after duplication is checked.</p>
 	 * <p>TODO: replaced by SyncWorkerTest.createFileB64()</p>
 	 * <p>Photo is created as in the folder of user/month/.</p>
-	 * 
+	 *
 	 * @param conn
 	 * @param photo
 	 * @param usr
@@ -537,7 +543,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	public static String createFile(String conn, PhotoRec photo, IUser usr)
 			throws TransException, SQLException, IOException {
-		
+
 		PhotoMeta meta = new PhotoMeta(conn);
 
 
@@ -552,9 +558,9 @@ public class Albums extends ServPort<AlbumReq> {
 
 	/**
 	 * This method parse exif, update geox/y, date etc. - should only be used when file created.
-	 * 
+	 *
 	 * TODO generate preview
-	 * 
+	 *
 	 * @param pid
 	 * @param conn
 	 * @param usr
@@ -578,7 +584,7 @@ public class Albums extends ServPort<AlbumReq> {
 					String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
 					PhotoRec p = new PhotoRec();
 					Exif.parseExif(p, pth);
-					
+
 					if (MimeTypes.isImgVideo(p.mime)) {
 						if (isblank(p.widthHeight)) {
 							try { p.widthHeight = Exif.parseWidthHeight(pth); }
@@ -636,14 +642,14 @@ public class Albums extends ServPort<AlbumReq> {
 
 	/**
 	 * Read a media file record (id, uri), TODO touch LRU.
-	 * 
+	 *
 	 * @param req
 	 * @param usr
 	 * @return loaded media record
 	 * @throws SQLException
 	 * @throws TransException
 	 * @throws SemanticException
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	protected static AlbumResp rec(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
@@ -670,7 +676,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return new AlbumResp().rec(rs);
 	}
-	
+
 	protected static AlbumResp collect(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 
@@ -705,18 +711,18 @@ public class Albums extends ServPort<AlbumReq> {
 	/**
 	 * <h4>Load album (aid = req.albumId)</h4>
 	 * MEMO TODO Android client shouldn't reach here until now.
-	 * 
+	 *
 	 * <p>If albumId is empty, load according to the session's profile.
 	 * </p>
-	 * 
+	 *
 	 * @param req
 	 * @param usr
-	 * @param prf 
+	 * @param prf
 	 * @return album
 	 * @throws SemanticException
 	 * @throws TransException
 	 * @throws SQLException
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	protected static AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
 			IUser usr, Profiles prf)
