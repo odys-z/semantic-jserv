@@ -6,6 +6,7 @@ import static io.odysz.common.LangExt.isblank;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -124,9 +125,14 @@ public class AlbumTier extends ServPort<AlbumReq> {
 			String p = DocUtils.resolvExtroot(conn, rs.getString("uri"), meta);
 			if (SandFlags.album)
 				Utils.logi(p);
-			try { FileStream.sendFile(resp.getOutputStream(), p); }
-			catch (FileNotFoundException e) {
+			try (OutputStream os = resp.getOutputStream()) {
+				FileStream.sendFile(os, p);
+			} catch (FileNotFoundException e) {
 				Utils.warn("File not found: %s", e.getMessage());
+			} catch (IOException e) {
+				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
+				// This is harmless: https://stackoverflow.com/a/70020526/7362888
+				Utils.warn(e.getMessage());
 			}
 		}
 	}

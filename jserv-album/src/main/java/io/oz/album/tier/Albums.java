@@ -7,6 +7,7 @@ import static io.odysz.transact.sql.parts.condition.Funcall.now;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -486,15 +487,20 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next()) {
-			// throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
 			resp.setContentType("image/png");
-			// resp.setContentType(rs.getString("mime"));
 			FileStream.sendFile(resp.getOutputStream(), missingFile);
 		}
 		else {
 			String mime = rs.getString("mime");
 			resp.setContentType(mime);
-			FileStream.sendFile(resp.getOutputStream(), DocUtils.resolvExtroot(st, conn, req.docId, usr, meta));
+			try ( OutputStream os = resp.getOutputStream() ) {
+				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.docId, usr, meta));
+				os.close();
+			} catch (IOException e) {
+				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
+				// This is harmless: https://stackoverflow.com/a/70020526/7362888
+				// Utils.warn(e.getMessage());
+			}
 		}
 	}
 	
