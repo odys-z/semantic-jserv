@@ -54,6 +54,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	protected Set<String> tempDirs;
 	public String orgName;
+	private Object meta;
 	public SyncRobot orgName (String org) {
 		orgName = org;
 		return this;
@@ -85,14 +86,18 @@ public class SyncRobot extends SemanticObject implements IUser {
 		}
 	}
 
-	/** User table's meta, not doc table's meta.
+	/**
+	 * User table's meta, not doc table's meta.
+	 * 
 	 * @throws TransException 
 	 */
 	@Override
 	public TableMeta meta(String ... connId) throws SQLException, TransException {
-		return new RobotMeta("a_users", isNull(connId) ? null : connId[0])
+		if (meta == null)
+			meta = new RobotMeta("a_users", isNull(connId) ? null : connId[0])
 				.clone(Connects.getMeta(
 				isNull(connId) ? null : connId[0], "a_users"));
+		return (TableMeta) meta;
 	}
 	
 	@Override
@@ -165,9 +170,9 @@ public class SyncRobot extends SemanticObject implements IUser {
 		return tempDir;
 	}
 
-	public String defaultAlbum() {
-		return "a-001";
-	}
+//	public String defaultAlbum() {
+//		return "a-001";
+//	}
 
 	public SessionInf sessionInf() {
 		return new SessionInf().device(deviceId);

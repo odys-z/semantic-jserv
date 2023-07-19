@@ -2,16 +2,37 @@
 <!DOCTYPE xml>
 <dataset>
 <t id="ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
-	<!-- This table is used for define sqls that can be parameterized when serving data.
-		Client using 'sk' in request message to use sqls.
-		conn: Optional, the conn-id overriding client's URI's conn-id. use case: cbb is binding source different from URI.
-		Records returned by sql can be mapped into bump cases (for oracle) if 'cols' is not empty.
-		Different version of sql, mysql, oracle, etc. is used according to connId and driver type,
-		see connects.xml. 
-		s-tree: if this field is defined, the retrieved records is translated in to an STree. For field index, see class TreeSemantics.Ix.
+ <c>
+  <!-- using session org as first arg -->
+  <sk>tree-album-family-folder</sk>
+  <sqlit>select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'p' nodetype, css, filesize img, null mov, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, null fav, mime
+  from h_photos h where family = '%1$s' and (substring(mime, 0, 6) = 'image' or substring(mime, 0, 6) = 'video') union select * from (
+  select '%1$s' || '.' || folder, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
+  sum(case when substring(mime, 0, 6) = 'image' then 1 else 0 end) img, sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov, sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime
+  from h_photos f where f.family = '%1$s' group by f.folder
+  ) where img > 0 or mov > 0 order by fullpath</sqlit>
+  <s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags</s-tree>
+ </c>
 
-		NOTE: Because semantic-jserv and jclient are case sensitive,
-			  it's strongly recommended that all oracle selected columns should being double quoted.
-	 -->
+ <c>
+  <!-- using session org as first arg -->
+  <sk>tree-docs-folder</sk>
+  <sqlit>select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'doc' nodetype, css, filesize,
+  null pdf, null txt, null zip, 1 total,
+  case when (geox != 0) then geox || ',' || geoy end geo, null fav, mime
+  from h_photos h where family = '%1$s' and (substr(mime, 0, 6) != 'image' and substr(mime, 0, 6) != 'video' and substr(mime, 0, 6) !='audio')
+  union select * from (
+  select '%1$s' || '.' || folder, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'dir' nodetype, css, null filesize,
+  sum(case when substr(mime, 0, 16) = 'application/pdf' then 1 else 0 end) pdf,
+  sum(case when substr(mime, 0, 5) = 'text' then 1 else 0 end) txt,
+  sum(case when substr(mime, 0, 16) = 'application/zip' then 1 else 0 end) zip,
+  sum(case when mime is not null then 1 else 0 end) total,
+  sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime
+  from h_photos f where f.family = '%1$s' and substr(mime, 0, 6) != 'image' and substr(mime, 0, 6) != 'video' and substr(mime, 0, 6) !='audio'
+  group by f.folder
+  ) where total > 0 order by fullpath
+  </sqlit>
+  <s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags</s-tree>
+ </c>
 </t>
 </dataset>

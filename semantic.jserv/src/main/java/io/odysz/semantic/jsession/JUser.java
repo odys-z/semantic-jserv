@@ -1,5 +1,9 @@
 package io.odysz.semantic.jsession;
 
+import static io.odysz.common.LangExt.split;
+import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
@@ -11,7 +15,6 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.Anson;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
-import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -41,7 +44,7 @@ public class JUser extends SemanticObject implements IUser {
 
 		public JUserMeta(String... conn) {
 			super("a_users", conn);
-			this.tbl = "a_users";
+			// this.tbl = "a_users";
 			this.pk = "userId";
 			this.uname = "userName";
 			this.pswd = "pswd";
@@ -107,23 +110,31 @@ public class JUser extends SemanticObject implements IUser {
 	String orgName;
 
 	private static DATranscxt logsctx;
-	private static String[] connss;
-	public static final String sessionSmtXml;
+	private static String logConn;
+	/** @deprecated */
+//	public static final String sessionSmtXml;
+	/** default "a_logs" */
 	public static final String logTabl;
+
 	static {
 		String conn = Configs.getCfg("log-connId");
-		if (LangExt.isblank(conn))
+		if (isblank(conn))
 			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
+
+		String[] connss = split(conn, ","); // [conn-id, a_logs]
 		try {
-			connss = conn.split(","); // [conn-id, log.xml, a_logs]
-			// logsctx = new DATranscxt(connss[0]);
-			logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
+			if (isNull(connss))
+				throw new SemanticException("Parsing log connection config error: %s", conn);
+
+			// logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
+			logsctx = new LogTranscxt(connss[0]);
+			logConn = connss[0];
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
 		finally {
-			sessionSmtXml  = connss != null ? connss[1] : "";
-			logTabl = connss != null ? connss[2] : "";
+			// sessionSmtXml  = connss != null ? connss[1] : "semantics-log.xml";
+			logTabl = connss != null ? connss[1] : "a_logs";
 		}
 	}
 
@@ -173,7 +184,7 @@ public class JUser extends SemanticObject implements IUser {
 
 	@Override
 	public ArrayList<String> dbLog(ArrayList<String> sqls) {
-		return LoggingUser.genLog(logsctx, logTabl, sqls, this, funcName, funcId);
+		return LoggingUser.genLog(logConn, logsctx, logTabl, sqls, this, funcName, funcId);
 	}
 
 	public JUser touch() {

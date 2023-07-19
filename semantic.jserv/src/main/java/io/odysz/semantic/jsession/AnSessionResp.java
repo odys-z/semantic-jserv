@@ -1,12 +1,13 @@
 package io.odysz.semantic.jsession;
 
+import io.odysz.anson.Anson;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantics.SessionInf;
 
 public class AnSessionResp extends AnsonResp {
 
-	private SessionInf ssInf;
+	SessionInf ssInf;
 
 	public AnSessionResp(AnsonMsg<AnsonResp> parent, String ssid, String uid, String ... roleId) {
 		super(parent);
@@ -26,5 +27,27 @@ public class AnSessionResp extends AnsonResp {
 
 	public SessionInf ssInf() {
 		return ssInf;
+	}
+
+	/**
+	 * A data package for extra user info for application's extension,
+	 * e.g. default page, login count, etc.
+	 * 
+	 * @since 1.5.0
+	 */
+	Anson profile;
+	public Anson profile() { return profile; }
+
+	/**
+	 * Set {@link #profile}
+	 * 
+	 * @since 1.5.0
+	 * 
+	 * @param profile
+	 * @return this
+	 */
+	public AnSessionResp profile(Anson profile) {
+		this.profile = profile;
+		return this;
 	}
 }

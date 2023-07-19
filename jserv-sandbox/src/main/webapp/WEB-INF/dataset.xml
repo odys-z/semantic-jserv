@@ -13,6 +13,35 @@
 		NOTE: Because semantic-jserv and jclient are case sensitive,
 			  it's strongly recommended that all oracle selected columns should being double quoted.
 	 -->
+	 <!-- TODO add s-tree tag's comments, publish IX javadoc
+	 	/**
+		 * s-tree tag's fields index.
+		 */
+		static class Ix {
+			/** filed count: 9 */
+			public static final int count = 10;
+			/** the is-checked boolean field */
+			public static final int chked = 0;
+			/** main table name */
+			public static final int tabl = 1;
+			/** record pk filed (only single column) */
+			public static final int recId = 2;
+			/** parent field */
+			public static final int parent = 3;
+			/** fullpath field (optional) */
+			public static final int fullpath = 4;
+			/** sibling sort (fullpath first, optinal) */
+			public static final int sort = 5;
+			/** lable / text field for client binding */
+			public static final int text = 6;
+			public static final int nodetype = 7;
+			/** paging by server */
+			public static final int pageByServer = 8;
+
+			/** tag col: all subtree tag with same label. re-tagged by SmanticTree helper */
+			public static final int tagcol = 9;
+		}
+	  -->
 	<c>
   		<sk>test.tree</sk>
   		<mysql>SELECT domainId id, parentId, domainName, domainValue, sort, "others", fullpath
@@ -181,6 +210,18 @@
   	<c>
   		<sk>curr-level</sk>
 		<mysql>select domainId as value, domainName as name from a_domain d where d.parentId = 'curr-level'</mysql>
+  	</c>
+  	
+  	<!-- wedgets -->
+  	<c>
+  		<sk>tree-album-family-folder</sk>
+  		<sqlit>select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'p' nodetype, css, filesize img, null mov, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, null fav, mime
+	from h_photos h where family = '%1$s' union select * from (
+	select '%1$s' || '.' || folder, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
+	sum(case when substring(mime, 0, 6) = 'image' then 1 else 0 end) img, sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov, sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime
+	from h_photos f where f.family = '%1$s' group by f.folder
+	) order by fullpath</sqlit>
+  		<s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags</s-tree>
   	</c>
 </t>
 </dataset>

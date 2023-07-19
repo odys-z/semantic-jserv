@@ -8,9 +8,9 @@ then
 
     # https://stackoverflow.com/a/64418064else
     echo "If running on windows (Engine v19.03), this won't work. Please run:"
-	echo "cp -r volume/* //wsl$/docker-desktop-data/version-pack-data/community/docker/volumes/jsandbox.sqlite/_data"
-    sudo cp -r volume/* /var/lib/docker/volumes/jsandbox.sqlite/_data
+    echo "cp -r volume-treeditor/* //wsl$/docker-desktop-data/version-pack-data/community/docker/volumes/jsandbox.sqlite/_data"
+    sudo cp -r volume-treeditor/* /var/lib/docker/volumes/jsandbox.sqlite/_data
 else
     echo "Using existing volume without updating volume data."
 fi
-docker run --name jsandbox -v jsandbox.sqlite:/var/local/volume -p 8080:8080 -d --rm odysz/jserv-sandbox
+docker run --name jsandbox -v jsandbox.sqlite:/var/local/volume -p 8081:8080 -d --rm odysz/jsandbox:treeditor

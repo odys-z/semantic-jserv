@@ -233,7 +233,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						lock.unlock();
 
 						SessionInf ssinf = login.getClientSessionInf(login);
-						AnSessionResp bd = new AnSessionResp(null, ssinf);
+						AnSessionResp bd = new AnSessionResp(null, ssinf).profile(login.profile());
 						AnsonMsg<AnSessionResp> rspMsg = ok(bd);
 						write(response, rspMsg, msg.opts());
 					}
@@ -405,7 +405,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString(usrMeta.pk);
 			IUser obj = createUser(usrClzz, uid,
-							rs.getString(usrMeta.pswd), rs.getString(usrMeta.iv), rs.getString(usrMeta.uname))
+							rs.getString(usrMeta.pswd),
+							rs.getString(usrMeta.iv),
+							rs.getString(usrMeta.uname))
 						.onCreate(rs) // v1.4.11
 						.onCreate(sessionBody)
 						.touch();
@@ -457,9 +459,15 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					pswd = AESHelper.decrypt(pswd,
 							DATranscxt.key("user-pswd"), AESHelper.decode64(iv));
 				} catch (Throwable e) {
+					String rootkey = DATranscxt.key("user-pswd");
 					Utils.warn("Decrypting user pswd failed. cipher: %s, iv %s, rootkey: *(%s)",
 							pswd, iv == null ? null : AESHelper.decode64(iv),
-							DATranscxt.key("user-pswd") == null ? null : DATranscxt.key("user-pswd").length());
+							rootkey == null ? null : rootkey.length());
+					
+					if (rootkey == null)
+						Utils.warn("The rootkey can be configured either with context.xml or set like the way of JSingleton.initjserv().\n\t%s\n\t%s",
+							"context.xml example: https://github.com/odys-z/semantic-jserv/blob/master/jserv-sample/src/main/webapp/META-INF/context.xml",
+							"JSingleton.initJserv() example: https://github.com/odys-z/semantic-jserv/blob/20acb2f9a5397f96927a5e768263ccd3088e1a85/jserv-album/src/main/java/io/oz/album/JettyApp.java#L45");
 				}
 				return (IUser) constructor.newInstance(uid, pswd, userName);
 			}

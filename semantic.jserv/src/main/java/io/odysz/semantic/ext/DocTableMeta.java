@@ -44,7 +44,7 @@ public class DocTableMeta extends SyntityMeta {
 	public final String synoder;
 	public final String fullpath;
 	/** aslo named as pname, clientname or filename previously */
-	public final String resname;
+	public final String clientname;
 	/**
 	 * Resource identity, reading with {@link io.odysz.transact.sql.parts.condition.Funcall.Func#extFile extFile}
 	 * and updating with {@link io.odysz.semantic.DASemantics.ShExtFilev2 ShExtFile}.
@@ -54,7 +54,6 @@ public class DocTableMeta extends SyntityMeta {
 	public final String mime;
 	public final String shareDate;
 	public final String shareby;
-//	public final String org;
 	public final String folder;
 	public final String size;
 
@@ -62,8 +61,6 @@ public class DocTableMeta extends SyntityMeta {
 	public final String shareflag;
 	final HashSet<String> globalIds;
 
-	// public final SharelogMeta sharelog;
-	
 	public DocTableMeta(String tbl, String pk, String conn) throws TransException {
 		super(tbl, pk, "family", conn);
 
@@ -71,11 +68,10 @@ public class DocTableMeta extends SyntityMeta {
 		this.tbl = "h_photos";
 		this.pk = pk;
 
-		resname = "pname";
+		clientname = "pname";
 		uri = "uri";
 		folder = "folder";
 		createDate = "pdate";
-//		org = "family";
 		mime = "mime";
 		size = "filesize";
 		synoder = "device";

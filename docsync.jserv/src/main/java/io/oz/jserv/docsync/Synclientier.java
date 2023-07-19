@@ -28,13 +28,16 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.jclient.tier.Semantier;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.JProtocol.OnDocOk;
+import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
@@ -52,7 +55,9 @@ import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
 /**
- * Doc synchronizing API for both jserv node and device client.
+ * Redundant to docsync.jser/Synclientier.
+ * 
+ * @deprecated MVP 0.2.1 To be deleted
  * 
  * @author odys-z@github.com
  *
@@ -61,7 +66,7 @@ public class Synclientier extends Semantier {
 	public boolean verbose = false;
 
 	protected SessionClient client;
-	protected ErrorCtx errCtx;
+	protected OnError errCtx;
 
 	protected SyncRobot robot;
 
@@ -94,7 +99,7 @@ public class Synclientier extends Semantier {
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public Synclientier(String clientUri, ErrorCtx errCtx)
+	public Synclientier(String clientUri, OnError errCtx)
 			throws SemanticException, IOException {
 		this.errCtx = errCtx;
 		this.uri = clientUri;
@@ -153,7 +158,11 @@ public class Synclientier extends Semantier {
 			
 			new File(tempath).mkdirs(); 
 			
-			JUserMeta um = (JUserMeta) robot.meta();
+			JUserMeta um = null;
+			if (!isNull(Connects.getAllConnIds()))
+				um = (JUserMeta) robot.meta();
+			else // a temporary solution for client without DB connections
+				um = new JUserMeta();
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
@@ -179,7 +188,7 @@ public class Synclientier extends Semantier {
 	 * @param meta for creating {@link SyncDoc} object 
 	 * @param rs tasks, rows should be limited
 	 * @param workerId 
-	 * @param onProcess
+	 * @param onProc
 	 * @return Sync response list
 	 * @throws TransException 
 	 * @throws AnsonException 
@@ -227,8 +236,7 @@ public class Synclientier extends Semantier {
 	/**
 	 * Downward synchronizing.
 	 * @param p
-	 * @param worker
-	 * @param meta 
+	 * @param meta
 	 * @return doc record (e.g. h_photos)
 	 * @throws AnsonException
 	 * @throws IOException
@@ -251,7 +259,7 @@ public class Synclientier extends Semantier {
 		return p;
 	}
 
-	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) throws IOException {
+	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) {
 		String pth = tempath(f);
 		File file = new File(pth);
 		if (!file.exists())
@@ -287,22 +295,21 @@ public class Synclientier extends Semantier {
 	 * @param videos any doc-table managed records, of which uri shouldn't be loaded,
 	 * e.g. use {@link io.odysz.transact.sql.parts.condition.Funcall#extFile(String) extFile()} as sql select expression.
 	 * - the method is working in stream mode
-	 * @param user
 	 * @param proc
 	 * @param docOk
 	 * @param onErr
 	 * @return list of response
 	 */
 	public List<DocsResp> pushBlocks(String tbl, List<? extends SyncDoc> videos,
-				OnProcess proc, OnDocOk docOk, ErrorCtx ... onErr)
+				OnProcess proc, OnDocOk docOk, OnError ... onErr)
 				throws TransException, IOException {
-		ErrorCtx err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		OnError err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 		return pushBlocks(client, uri, tbl, videos, blocksize, proc, docOk, err);
 	}
 
 	public static List<DocsResp> pushBlocks(SessionClient client, String uri, String tbl,
 			List<? extends SyncDoc> videos, int blocksize,
-			OnProcess proc, OnDocOk docOk, ErrorCtx errHandler)
+			OnProcess proc, OnDocOk docOk, OnError errHandler)
 			throws TransException, IOException {
 
 		SessionInf user = client.ssInfo();
@@ -410,7 +417,7 @@ public class Synclientier extends Semantier {
 	 * @return response
 	 */
 	public DocsResp selectDoc(String docTabl, String docId, ErrorCtx ... onErr) {
-		ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		OnError errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
@@ -433,7 +440,7 @@ public class Synclientier extends Semantier {
 	}
 	
 	public DocsResp listNodes(String docTabl, String org, ErrorCtx ... onErr) {
-			ErrorCtx errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
+		OnError errHandler = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
@@ -471,6 +478,7 @@ public class Synclientier extends Semantier {
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
+			e.printStackTrace();
 			errCtx.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		} catch (IOException e) {
 			errCtx.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
@@ -544,7 +552,7 @@ public class Synclientier extends Semantier {
 		Insert ins = st.insert(meta.tbl, usr)
 				.nv(meta.org(), usr.orgId())
 				.nv(meta.uri, doc.uri)
-				.nv(meta.resname, doc.pname)
+				.nv(meta.clientname, doc.pname)
 				.nv(meta.synoder, usr.deviceId())
 				.nv(meta.fullpath, doc.fullpath())
 				.nv(meta.folder, doc.folder())
@@ -606,7 +614,7 @@ public class Synclientier extends Semantier {
 	 * @throws TransException
 	 * @throws IOException
 	 */
-	public DocsResp synQueryPathsPage(PathsPage page, String tabl)
+	public <T extends IPort> DocsResp synQueryPathsPage(PathsPage page, String tabl, T port)
 			throws TransException, IOException {
 		String[] act = AnsonHeader.usrAct("synclient.java", "query", "r/states", "query sync");
 		AnsonHeader header = client.header().act(act);
@@ -615,19 +623,9 @@ public class Synclientier extends Semantier {
 				.syncing(page)
 				.docTabl(tabl)
 				.device(page.device)
-				.a(A.records);
+				.a(A.selectSyncs); // v 0.1.50
 
-//		for (long i = page.start; i < page.end & i < files.size(); i++) {
-//			if (i < 0 || i > Integer.MAX_VALUE)
-//				throw new SemanticException("Synclientier.queryDocs(): page's range is out of bounds: H%x", i);
-//
-//			IFileDescriptor p = files.get((int)i);
-//			if (isblank(p.fullpath()))
-//				continue;
-//			req.querySync(p);
-//		}
-
-		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
+		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, port/*MVP 0.2.1 Port.docsync*/, req)
 								.header(header);
 
 		DocsResp resp = client.commit(q, errCtx);

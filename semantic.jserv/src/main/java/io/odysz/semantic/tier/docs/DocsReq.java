@@ -1,19 +1,22 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.isblank;
+import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Set;
 
 import io.odysz.anson.AnsonField;
+import io.odysz.common.DateFormat;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
-
-import static io.odysz.common.LangExt.isblank;
-import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
 
 public class DocsReq extends AnsonBody {
 	public static class A {
@@ -61,6 +64,8 @@ public class DocsReq extends AnsonBody {
 		 */
 		public static final String synclosePull = "r/close";
 
+		public static final String selectSyncs = "r/syncflags";
+
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */
 	}
@@ -98,6 +103,11 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public String shareDate;
+	public String shareDate() {
+		if (isblank(shareDate))
+			shareDate = DateFormat.format(new Date());
+		return shareDate;
+	}
 	
 	/**
 	 * <b>Note: use {@link #DocsReq(String)}</b><br>
@@ -152,7 +162,7 @@ public class DocsReq extends AnsonBody {
 	/** @deprecated */
 	protected ArrayList<SyncDoc> syncQueries;
 	/**@deprecated replaced by DocsPage.paths */
-	public ArrayList<SyncDoc> syncQueries() { return syncQueries; }
+	public Set<String> syncQueries() { return syncing.clientPaths.keySet(); }
 
 	/** TODO visibility = package */
 	public long blockSeq;
@@ -180,18 +190,18 @@ public class DocsReq extends AnsonBody {
 	 * @deprecated
 	 * Add a doc record for matching path at synode. Should be called by device client.
 	 * <p>Note: if the file path is empty, the query is ignored.</p>
-	 * @param p
+	 * @param d
 	 * @return this
 	 * @throws IOException see {@link SyncDoc} constructor
 	 * @throws SemanticException fule doesn't exists. see {@link SyncDoc} constructor 
 	 */
-	public DocsReq querySync(IFileDescriptor p) throws IOException, SemanticException {
-		if (p == null || isblank(p.fullpath()))
+	public DocsReq querySync(IFileDescriptor d) throws IOException, SemanticException {
+		if (d == null || isblank(d.fullpath()))
 			return this;
 
-		File f = new File(p.fullpath());
+		File f = new File(d.fullpath());
 		if (!f.exists())
-			throw new SemanticException("File for querying doesn't exist: %s", p.fullpath());
+			throw new SemanticException("File for querying doesn't exist: %s", d.fullpath());
 		/*
 		if (syncQueries == null)
 			syncQueries = new ArrayList<SyncDoc>();

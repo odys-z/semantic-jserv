@@ -17,14 +17,17 @@ import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.sax.BodyContentHandler;
 
+import io.odysz.common.CheapMath;
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
-import io.oz.album.tier.Photo;
+import io.odysz.semantics.x.SemanticException;
+import io.oz.album.tier.PhotoRec;
 
 /**
  * Exif data format helper
@@ -41,7 +44,7 @@ public class Exif {
 		geoy0 = String.valueOf(y);
 	}
 
-	public static Photo parseExif(Photo photo, String filepath) {
+	public static PhotoRec parseExif(PhotoRec photo, String filepath) {
 
 		try {
 			photo.mime = LangExt.isblank(photo.mime) ?
@@ -74,6 +77,11 @@ public class Exif {
 				photo.month(fd);
 			}
 
+			photo.widthHeight = new int[]
+				{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)};
+
+			photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
+
 			photo.geox = metadata.get(TikaCoreProperties.LONGITUDE);
 			if (photo.geox == null) photo.geox = geox0;
 
@@ -92,9 +100,10 @@ public class Exif {
 	 * @see https://stackoverflow.com/a/12164026
 	 * @param imgFile image file
 	 * @return dimensions of image
-	 * @throws IOException if the file is not a known image
+	 * @throws IOException if the file is not understood or missing
+	 * @throws SemanticException parsing width etc. failed
 	 */
-	public static int[] parseWidthHeight(String pth) throws IOException {
+	public static int[] parseWidthHeight(String pth) throws IOException, SemanticException {
 	  File imgFile = new File(pth);
 	  int pos = imgFile.getName().lastIndexOf(".");
 	  if (pos == -1)
@@ -116,7 +125,7 @@ public class Exif {
 	    }
 	  }
 
-	  throw new IOException("Not a known image file: " + imgFile.getAbsolutePath());
+	  throw new SemanticException("Not a known image file: " + imgFile.getAbsolutePath());
 	}
 
 }
