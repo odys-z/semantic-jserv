@@ -12,8 +12,9 @@ then
     echo "If running on windows (Engine v19.03), this won't work. Please run:"
     echo "cp -r volume-0.6.50/* //wsl$/docker-desktop-data/version-pack-data/community/docker/volumes/album.sqlite/_data"
     sudo cp -r volume-0.6.50/* /var/lib/docker/volumes/album.sqlite/_data
+
 else
     echo "Using existing volume without updating volume data."
 fi
 
-docker run --name album -v album.sqlite:/var/local/volume -p 8082:80 -d --rm odysz/jserv-album:0.6.50
+docker run --name album -v album.sqlite:/var/local/volume -p 8802:80 -d --rm odysz/jserv-album:0.6.50
