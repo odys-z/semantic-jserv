@@ -24,10 +24,13 @@ import org.apache.tika.sax.BodyContentHandler;
 
 import io.odysz.common.CheapMath;
 import io.odysz.common.DateFormat;
-import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.tier.PhotoRec;
+
+import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.split;
 
 /**
  * Exif data format helper
@@ -47,7 +50,7 @@ public class Exif {
 	public static PhotoRec parseExif(PhotoRec photo, String filepath) {
 
 		try {
-			photo.mime = LangExt.isblank(photo.mime) ?
+			photo.mime = isblank(photo.mime) ?
 				Files.probeContentType(Paths.get(filepath)) : photo.mime;
 		} catch (IOException e) { }
 
@@ -64,7 +67,25 @@ public class Exif {
 				String exif = metadata.get(name);
 				photo.exif.add(name + ":" +
 							(exif == null ? "null" : exif.trim().replace("\n", "\\n")));
+				
+				try {
+					if (eq("Content-Type", name))
+						photo.mime = exif; 
+					else if (eq("Image Height", name)) {
+						if (photo.widthHeight == null) photo.widthHeight = new int[2];
+						photo.widthHeight[1] = Integer.valueOf(metadata.get(name));
+					}
+					else if (eq("Image Width", name)) {
+						if (photo.widthHeight == null) photo.widthHeight = new int[2];
+						photo.widthHeight[0] = Integer.valueOf(metadata.get(name));
+					}
+					else if (eq("File Size", name))
+						photo.size = Long.valueOf(split(metadata.get(name), " ")[0]); // 170442 bytes
+				} catch (Exception e) {
+					Utils.warn("Failed for parsiong %s : %s", name, metadata.get(name));
+				}
 			}
+			
 			
 			Date d = metadata.getDate(TikaCoreProperties.CREATED);
 			if (d != null) {
@@ -95,7 +116,9 @@ public class Exif {
 	/**
 	 * Gets image dimensions for given file.
 	 * 
-	 * Can't support ico and svg.
+	 * Can't support webp, ico and svg.
+	 * 
+	 * @deprecated limited image types can be supported.
 	 * 
 	 * @see https://stackoverflow.com/a/12164026
 	 * @param imgFile image file
@@ -104,28 +127,31 @@ public class Exif {
 	 * @throws SemanticException parsing width etc. failed
 	 */
 	public static int[] parseWidthHeight(String pth) throws IOException, SemanticException {
-	  File imgFile = new File(pth);
-	  int pos = imgFile.getName().lastIndexOf(".");
-	  if (pos == -1)
-	    throw new IOException("No extension for file: " + imgFile.getAbsolutePath());
-	  String suffix = imgFile.getName().substring(pos + 1);
-	  Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix(suffix);
-	  while(iter.hasNext()) {
-	    ImageReader reader = iter.next();
-	    try {
-	      ImageInputStream stream = new FileImageInputStream(imgFile);
-	      reader.setInput(stream);
-	      int width = reader.getWidth(reader.getMinIndex());
-	      int height = reader.getHeight(reader.getMinIndex());
-	      return new int[] {width, height};
-	    } catch (IOException e) {
-	      Utils.warn("Error reading: " + imgFile.getAbsolutePath(), e);
-	    } finally {
-	      reader.dispose();
-	    }
-	  }
+		File imgFile = new File(pth);
 
-	  throw new SemanticException("Not a known image file: " + imgFile.getAbsolutePath());
+		int pos = imgFile.getName().lastIndexOf(".");
+		if (pos == -1)
+		throw new IOException("No extension for file: " + imgFile.getAbsolutePath());
+
+		String suffix = imgFile.getName().substring(pos + 1);
+
+		Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix(suffix);
+
+		while(iter.hasNext()) {
+			ImageReader reader = iter.next();
+			try {
+				ImageInputStream stream = new FileImageInputStream(imgFile);
+				reader.setInput(stream);
+				int width = reader.getWidth(reader.getMinIndex());
+				int height = reader.getHeight(reader.getMinIndex());
+				return new int[] {width, height};
+			} catch (IOException e) {
+
+			Utils.warn("Error reading: " + imgFile.getAbsolutePath(), e);
+			} finally { reader.dispose(); }
+		}
+
+		throw new SemanticException("Not a known image file: " + imgFile.getAbsolutePath());
 	}
 
 }

@@ -377,7 +377,7 @@ public class Albums extends ServPort<AlbumReq> {
 		PhotoRec photo = new PhotoRec();
 
 		photo.createDate = chain.cdate;
-		Exif.parseExif(photo, chain.outputPath);
+		// Exif.parseExif(photo, chain.outputPath);
 
 		photo.fullpath(chain.clientpath);
 		photo.pname = chain.clientname;
@@ -590,6 +590,8 @@ public class Albums extends ServPort<AlbumReq> {
 							try { p.widthHeight = Exif.parseWidthHeight(pth); }
 							catch (SemanticException e) {
 								Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
+								p.widthHeight = new int[] { 4, 3 };
+								p.wh = new int[] { 4, 3 };
 							}
 						}
 						if (isblank(p.wh))
@@ -611,27 +613,17 @@ public class Albums extends ServPort<AlbumReq> {
 					if (isblank(rs.getDate(m.createDate)))
 						u.nv(m.createDate, now());
 
-//					if (p.photoDate() != null) {
-//					   u.nv(m.folder, p.folder())
-//						.nv(m.createDate, p.photoDate())
-//						.nv(m.uri, pth)
-//						.nv(m.clientname, rs.getString(m.clientname))
-//						.nv(m.shareby, usr.uid());
 
 						if (!isblank(p.geox) || !isblank(p.geoy))
-						   u.nv(m.exif, p.exif())
-							.nv(m.geox, p.geox)
-							.nv(m.geoy, p.geoy);
+							u.nv(m.geox, p.geox)
+							 .nv(m.geoy, p.geoy);
+						if (!isblank(p.exif()))
+						   u.nv(m.exif, p.exif());
+						else // figure out mime with file extension
+							;
 
 						if (!isblank(p.mime))
 							u.nv(m.mime, p.mime);
-
-//						if (!isblank(p.widthHeight))
-//						 	u.nv(m.css, p.css());
-
-						// u.whereEq("pid", pid)
-						// .u(stx);
-//					}
 					u.u(stx);
 				}
 			} catch (TransException | SQLException | IOException e) {
