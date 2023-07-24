@@ -1,5 +1,6 @@
 echo "Ever finished: 'docker build -t sandbox .' ?"
 echo "remove and re-create volume sandbox.sqlit? [n]"
+echo ""
 read -n 1 -p "y/n:" isdel
 if [ "$isdel" = 'y' ]
 then
@@ -13,4 +14,4 @@ then
 else
     echo "Using existing volume without updating volume data."
 fi
-docker run --name sandbox -v sandbox.sqlite:/var/local/volume -p 8081:8080 -d --rm odysz/jsandbox:treeditor
+docker run --name sandbox -v sandbox.sqlite:/var/local/volume -p 127.0.0.1:8081:8080 -d --rm odysz/jsandbox:treeditor
