@@ -22,3 +22,4 @@ test/res/ignore*.*
 ./
 dist
 winserv.xml
+nginx
