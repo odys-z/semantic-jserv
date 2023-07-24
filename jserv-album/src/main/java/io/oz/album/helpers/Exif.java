@@ -82,7 +82,8 @@ public class Exif {
 					else if (eq("File Size", name))
 						photo.size = Long.valueOf(split(metadata.get(name), " ")[0]); // 170442 bytes
 				} catch (Exception e) {
-					Utils.warn("Failed for parsiong %s : %s", name, metadata.get(name));
+					Utils.warn("Failed for parsing %s : %s,\n%s : %s",
+							photo.device(), photo.fullpath(), name, metadata.get(name));
 				}
 			}
 			

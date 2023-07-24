@@ -607,7 +607,6 @@ public class Albums extends ServPort<AlbumReq> {
 						.update(m.tbl, usr)
 						.nv(m.css, p.css())
 						.nv(m.size, String.valueOf(p.size))
-						// .nv(m.syncflag, SyncFlag.publish)
 						.whereEq(m.pk, pid);
 
 					if (isblank(rs.getDate(m.createDate)))
