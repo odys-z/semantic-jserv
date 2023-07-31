@@ -218,29 +218,38 @@ public abstract class Docs206 {
 		return ranges;
 	}
 
-	protected static File getDoc(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr) throws TransException, SQLException {
+	protected static File getDoc(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr)
+			throws TransException, SQLException, IOException {
+
 		String conn = Connects.uri2conn(req.uri());
 		DocTableMeta meta = getMeta.get(req.uri());
 
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
-				.j("a_users", "u", "u.userId = p.shareby")
-				.col("pid")
-				.col("pname").col("pdate")
-				.col("folder").col("clientpath")
-				.col("uri")
-				.col("userName", "shareby")
-				.col("sharedate").col("tags")
-				.col("geox").col("geoy")
+//				.j("a_users", "u", "u.userId = p.shareby")
+				// .col("pid")
+				.col(meta.pk)
+				// .col("pname").col("pdate")
+				.col(meta.clientname).col(meta.createDate)
+				// .col("folder").col("clientpath")
+				.col(meta.fullpath)
+//				.col("uri")
+				.col(meta.uri)
+//				.col("userName", "shareby")
+//				.col("sharedate").col("tags")
+//				.col("geox").col("geoy")
 				.col("mime")
-				.whereEq("pid", req.docId)
+				.whereEq(meta.pk, req.docId)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 		
 		if (!rs.next())
 			throw new SemanticException("File not found: %s, %s", req.docId, req.docName);
 
 		String p = DocUtils.resolvExtroot(st, conn, req.docId, usr, meta);
-		return new File(p);
+		File f = new File(p);
+		if (f.exists() && f.isFile())
+			return f;
+		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
 	}
 
 	/**
@@ -408,7 +417,8 @@ public abstract class Docs206 {
 	 * Set content headers.
 	 * @throws UnsupportedEncodingException 
 	 */
-	private static String setContentHeaders(HttpServletRequest request, HttpServletResponse response, Resource resource, List<Range> ranges) throws UnsupportedEncodingException {
+	private static String setContentHeaders(HttpServletRequest request, HttpServletResponse response, Resource resource, List<Range> ranges)
+			throws UnsupportedEncodingException {
 		String contentType = getContentType(request, resource.file);
 		String filename = resource.file.getName();
 		boolean attachment = isAttachment(request, contentType);
@@ -486,9 +496,7 @@ public abstract class Docs206 {
 
 					size += outputChannel.write(buffer);
 
-					if (size >= length) {
-						break;
-					}
+					if (size >= length) break;
 
 					buffer.clear();
 				}
@@ -497,14 +505,6 @@ public abstract class Docs206 {
 			}
 		}
 	}
-
-//	public static String encodeURI(String s) throws UnsupportedEncodingException {
-//		return isblank(s) ? null : URLEncoder
-//			.encode(s, UTF_8.name())
-//			.replace("+", "%20")
-//			.replace("*", "%2A")
-//			.replace("%7E", "~");
-//	}
 
 	public static String dispositionHeader(String filename, boolean attachment)
 			throws UnsupportedEncodingException {
