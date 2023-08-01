@@ -144,7 +144,7 @@ class SyncWorkerTest {
 		worker.synctier.synDel(meta.tbl, worker.nodeId(), clientpath);
 
 		// 1. create a public file at this private node
-		PhotoRec photo = new PhotoRec().create(clientpath);
+		PhotoRec photo = new PhotoRec().createTest(clientpath);
 
 		// 2. synchronize to cloud hub ( hub <- kyiv )
 		Docsyncer.init(Kyiv.Synode.nodeId);

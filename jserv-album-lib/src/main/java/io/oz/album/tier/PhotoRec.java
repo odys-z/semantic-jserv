@@ -1,15 +1,18 @@
 package io.oz.album.tier;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.stream.Collectors;
+import java.util.HashMap;
 
+import io.odysz.anson.Anson;
+import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
@@ -19,8 +22,6 @@ import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
-
-import static io.odysz.common.LangExt.isblank;
 /**
  * Server side and jprotocol oriented data record - not BaseFile used by file picker (at Android client).
  *
@@ -28,15 +29,29 @@ import static io.odysz.common.LangExt.isblank;
  *
  */
 public class PhotoRec extends SyncDoc implements IFileDescriptor {
+	public static class Exifield extends Anson {
+		HashMap<String, String> exif;
+
+		public Exifield add(String name, String v) {
+			if (exif == null)
+				exif = new HashMap<String, String>();
+			exif.put(name, v);
+			return this;
+		}
+	}
+	
 	public String geox;
 	public String geoy;
 
 	/** usually ignored when sending request */
-	public ArrayList<String> exif;
-	public String exif() {
-		return exif == null ? null
-				: exif.stream()
-				 .collect(Collectors.joining(","));
+	// public ArrayList<String> exif;
+	public Exifield exif;
+
+	public String exif() throws AnsonException, IOException {
+//		return exif == null ? null
+//				: exif.stream()
+//				 .collect(Collectors.joining(","));
+		return exif.toBlock();
 	}
 
 	/** image size */
@@ -175,8 +190,7 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		return this;
 	}
 
-	@SuppressWarnings("serial")
-	public PhotoRec create(String fullpath) throws IOException {
+	public PhotoRec createTest(String fullpath) throws IOException {
 		File png = new File(fullpath);
 		FileInputStream ifs = new FileInputStream(png);
 		pname = png.getName();
@@ -191,10 +205,14 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		ifs.close();
 
 		fullpath(fullpath);
-		exif = new ArrayList<String>() {
-			{add("location:вулиця Лаврська' 27' Київ");};
-			{add("camera:Bayraktar TB2");}};
 		share("ody@kyiv", Share.pub, new Date());
+
+//		exif = new ArrayList<String>() {
+//			{add("location:вулиця Лаврська' 27' Київ");};
+//			{add("camera:Bayraktar TB2");}};
+		exif = new Exifield()
+				.add("location", "вулиця Лаврська' 27' Київ")
+				.add("camera", "Bayraktar TB2");
 
 		return this;
 	}

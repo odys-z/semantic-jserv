@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -27,6 +26,7 @@ import io.odysz.common.DateFormat;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.tier.PhotoRec;
+import io.oz.album.tier.PhotoRec.Exifield;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
@@ -61,16 +61,17 @@ public class Exif {
 			AutoDetectParser parser = new AutoDetectParser();
 			Metadata metadata = new Metadata();
 
-			photo.exif = new ArrayList<String>();
+			// photo.exif = new ArrayList<String>();
+			photo.exif = new Exifield();
 			parser.parse(stream, handler, metadata);
 			for (String name: metadata.names()) {
-				String exif = metadata.get(name);
-				photo.exif.add(name + ":" +
-							(exif == null ? "null" : exif.trim().replace("\n", "\\n")));
+				String val = metadata.get(name);
+				// photo.exif.add(name + ":" + (exif == null ? "null" : exif.trim().replace("\n", "\\n")));
+				photo.exif.add(name, (val == null ? null : val.trim().replace("\n", "\\n")));
 				
 				try {
 					if (eq("Content-Type", name))
-						photo.mime = exif; 
+						photo.mime = val; 
 					else if (eq("Image Height", name)) {
 						if (photo.widthHeight == null) photo.widthHeight = new int[2];
 						photo.widthHeight[1] = Integer.valueOf(metadata.get(name));
