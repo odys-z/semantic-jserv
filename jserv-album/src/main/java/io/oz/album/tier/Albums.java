@@ -312,9 +312,12 @@ public class Albums extends ServPort<AlbumReq> {
 		String conn = Connects.uri2conn(body.uri());
 		JUserMeta m = (JUserMeta) usr.meta(conn);
 		AnResultset rs = ((AnResultset) st
-				.select(m.tbl)
+				.select(m.tbl, "u")
+				.je("u", orgMeta.tbl, "o", m.org, orgMeta.pk)
 				.col(m.org).col(m.pk)
-				.col("'a-001'", "album") // FIXME
+				// .col("'a-001'", "album")
+				.col(orgMeta.album0, "album") 
+				.col(orgMeta.webroot, "webroot")
 				.whereEq(m.pk, usr.uid())
 				.rs(st.instancontxt(conn, usr))
 				.rs(0)).nxt();

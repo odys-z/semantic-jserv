@@ -7,6 +7,7 @@ public class AOrgMeta extends TreeTableMeta {
 	protected final String orgName;
 	protected final String orgType;
 	protected final String webroot;
+	protected final String album0 ;
 
 	public AOrgMeta(String... conn) {
 		super("a_orgs", conn);
@@ -15,6 +16,7 @@ public class AOrgMeta extends TreeTableMeta {
 		this.orgName = "orgName";
 		this.orgType = "orgType";
 		this.webroot = "webroot";
+		this.album0  = "album0";
 	}
 
 }

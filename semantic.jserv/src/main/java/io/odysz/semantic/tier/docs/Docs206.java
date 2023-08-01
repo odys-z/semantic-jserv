@@ -122,14 +122,14 @@ public abstract class Docs206 {
 	 */
 	public static List<Range> get206Head(HttpServletRequest req, HttpServletResponse resp, IUser usr)
 			throws IOException {
-			AnsonMsg<DocsReq> msg = ansonMsg(req); 
-			try {
-				return replyHeaders(req, resp, msg, usr);
-			} catch (IOException | TransException | SQLException e) {
-				e.printStackTrace();
-				// TODO set error
-				return null;
-			}
+		AnsonMsg<DocsReq> msg = ansonMsg(req); 
+		try {
+			return replyHeaders(req, resp, msg, usr);
+		} catch (IOException | TransException | SQLException e) {
+			e.printStackTrace();
+			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED); // right semantics?
+			return null;
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -226,18 +226,10 @@ public abstract class Docs206 {
 
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
-//				.j("a_users", "u", "u.userId = p.shareby")
-				// .col("pid")
 				.col(meta.pk)
-				// .col("pname").col("pdate")
 				.col(meta.clientname).col(meta.createDate)
-				// .col("folder").col("clientpath")
 				.col(meta.fullpath)
-//				.col("uri")
 				.col(meta.uri)
-//				.col("userName", "shareby")
-//				.col("sharedate").col("tags")
-//				.col("geox").col("geoy")
 				.col("mime")
 				.whereEq(meta.pk, req.docId)
 				.rs(st.instancontxt(conn, usr)).rs(0);
