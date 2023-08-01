@@ -25,8 +25,8 @@ import io.odysz.common.CheapMath;
 import io.odysz.common.DateFormat;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.album.tier.Exifield;
 import io.oz.album.tier.PhotoRec;
-import io.oz.album.tier.PhotoRec.Exifield;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;

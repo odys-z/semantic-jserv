@@ -9,9 +9,7 @@ import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.HashMap;
 
-import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
@@ -29,17 +27,6 @@ import io.odysz.transact.sql.parts.condition.Funcall;
  *
  */
 public class PhotoRec extends SyncDoc implements IFileDescriptor {
-	public static class Exifield extends Anson {
-		HashMap<String, String> exif;
-
-		public Exifield add(String name, String v) {
-			if (exif == null)
-				exif = new HashMap<String, String>();
-			exif.put(name, v);
-			return this;
-		}
-	}
-	
 	public String geox;
 	public String geoy;
 
