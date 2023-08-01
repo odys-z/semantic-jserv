@@ -18,6 +18,7 @@ import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.ext.DocTableMeta.Share;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;
 
@@ -31,7 +32,7 @@ import io.odysz.semantics.x.SemanticException;
  */
 public class SyncDoc extends Anson implements IFileDescriptor {
 	/** Temporary type for album's MVP version */
-	public final class SyncFlag extends Anson {
+	public final static class SyncFlag extends Anson {
 		/** kept as private file ('🔒') at private node.
 		 * TODO rename as jnode */
 		public static final String priv = "🔒";
@@ -63,6 +64,14 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		public static final String close = "Ⓒ";
 		/** This state can not present in database */ 
 		public static final String end = "";
+		
+		public static String start(SynodeMode mode, String share) throws SemanticException {
+			if (SynodeMode.hub == mode)
+				return Share.isPub(share) ? publish : hub;
+			else if (SynodeMode.bridge == mode || SynodeMode.main == mode)
+				return priv;
+			throw new SemanticException("Unhandled state starting: mode %s : share %s.", mode, share);
+	}
 	}
 	
 	protected static String[] synpageCols;

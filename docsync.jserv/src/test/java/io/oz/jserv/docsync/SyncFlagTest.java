@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.semantic.ext.DocTableMeta.Share;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docsync.SyncFlag;
-import io.oz.jserv.docsync.SynodeMode;
 import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 
 /**

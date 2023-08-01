@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import io.odysz.anson.Anson;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 

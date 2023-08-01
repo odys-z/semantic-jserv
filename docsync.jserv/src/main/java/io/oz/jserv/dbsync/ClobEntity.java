@@ -15,6 +15,7 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.syn.DBSynsactBuilder;
 import io.odysz.semantic.syn.SynEntity;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Statement;
@@ -25,7 +26,6 @@ import io.oz.jserv.dbsync.DBSyncReq.A;
 import io.oz.jserv.docsync.SynState;
 import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 import io.oz.jserv.docsync.SyncRobot;
-import io.oz.jserv.docsync.SynodeMode;
 
 /**
  * A db entity record with a c-lob, managing pushing of c-lobs' sequence.
