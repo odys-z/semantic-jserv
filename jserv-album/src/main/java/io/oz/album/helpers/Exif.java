@@ -67,7 +67,8 @@ public class Exif {
 			for (String name: metadata.names()) {
 				String val = metadata.get(name);
 				// photo.exif.add(name + ":" + (exif == null ? "null" : exif.trim().replace("\n", "\\n")));
-				photo.exif.add(name, (val == null ? null : val.trim().replace("\n", "\\n")));
+				// photo.exif.add(name, (val == null ? null : val.trim().replace("\n", "\\n")));
+				photo.exif.add(name, val);
 				
 				try {
 					if (eq("Content-Type", name))
@@ -84,7 +85,8 @@ public class Exif {
 						photo.size = Long.valueOf(split(metadata.get(name), " ")[0]); // 170442 bytes
 				} catch (Exception e) {
 					Utils.warn("Failed for parsing %s : %s,\n%s : %s",
-							photo.device(), photo.fullpath(), name, metadata.get(name));
+								photo.device(), photo.fullpath(),
+								name, metadata.get(name));
 				}
 			}
 			

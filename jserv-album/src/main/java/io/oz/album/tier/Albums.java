@@ -186,8 +186,6 @@ public class Albums extends ServPort<AlbumReq> {
             throws ServletException, IOException {
     	String range = request.getHeader("Range");
     	if (!isblank(range)) {
-    		// FileServlet.download206(request, response);
-
     		Docs206.get206(request, response, robot);
     	}
     	else super.doGet(request, response);
@@ -558,6 +556,7 @@ public class Albums extends ServPort<AlbumReq> {
 		else {
 			String mime = rs.getString("mime");
 			resp.setContentType(mime);
+			
 			try ( OutputStream os = resp.getOutputStream() ) {
 				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.docId, usr, meta));
 				os.close();
@@ -569,23 +568,6 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
-	/**
-	 * Returns true if the given match header matches the given ETag value.
-	 */
-//	private static boolean matches(String matchHeader, String eTag) {
-//		String[] matchValues = matchHeader.split("\\s*,\\s*");
-//		Arrays.sort(matchValues);
-//		return Arrays.binarySearch(matchValues, eTag) > -1
-//			|| Arrays.binarySearch(matchValues, "*") > -1;
-//	}
-//
-//	/**
-//	 * Returns true if the given modified header is older than the given last modified value.
-//	 */
-//	private static boolean modified(long modifiedHeader, long lastModified) {
-//		return (modifiedHeader + ONE_SECOND_IN_MILLIS <= lastModified); // That second is because the header is in seconds, not millis.
-//	}
-	
 	AlbumResp createPhoto(AlbumReq req, IUser usr, Profiles prf)
 			throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
@@ -628,7 +610,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 		PhotoMeta meta = new PhotoMeta(conn);
 
-
 		if (isblank(photo.shareby))
 			photo.share(usr.uid(), Share.priv);
 
@@ -649,68 +630,67 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	static protected void onPhotoCreated(String pid, String conn, PhotoMeta m, IUser usr) {
 		new Thread(() -> {
-			AnResultset rs;
-			try {
-				rs = (AnResultset) st
-					.select(m.tbl, "p")
-					.col(m.folder).col(m.fullpath)
-					.col(m.uri)
-					.col(m.clientname)
-					.col(m.createDate)
-					.whereEq(m.pk, pid)
-					.rs(st.instancontxt(conn, usr))
-					.rs(0);
+		try {
+			AnResultset rs = (AnResultset) st
+				.select(m.tbl, "p")
+				.col(m.folder).col(m.fullpath)
+				.col(m.uri)
+				.col(m.clientname)
+				.col(m.createDate)
+				.whereEq(m.pk, pid)
+				.rs(st.instancontxt(conn, usr))
+				.rs(0);
 
-				if (rs.next()) {
-					ISemantext stx = st.instancontxt(conn, usr);
-					String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
-					PhotoRec p = new PhotoRec();
-					Exif.parseExif(p, pth);
+			if (rs.next()) {
+				ISemantext stx = st.instancontxt(conn, usr);
+				String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
+				PhotoRec p = new PhotoRec();
+				Exif.parseExif(p, pth);
 
-					if (MimeTypes.isImgVideo(p.mime)) {
-						if (isblank(p.widthHeight)) {
-							try { p.widthHeight = Exif.parseWidthHeight(pth); }
-							catch (SemanticException e) {
-								Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
-								p.widthHeight = new int[] { 4, 3 };
-								p.wh = new int[] { 4, 3 };
-							}
-						}
-						if (isblank(p.wh))
-							p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
-						if (p.widthHeight[0] > p.widthHeight[1]) {
-							int w = p.wh[0];
-							p.wh[0] = p.wh[1];
-							p.wh[1] = w;
+				if (MimeTypes.isImgVideo(p.mime)) {
+					if (isblank(p.widthHeight)) {
+						try { p.widthHeight = Exif.parseWidthHeight(pth); }
+						catch (SemanticException e) {
+							Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
+							p.widthHeight = new int[] { 4, 3 };
+							p.wh = new int[] { 4, 3 };
 						}
 					}
-
-					Update u = st
-						.update(m.tbl, usr)
-						.nv(m.css, p.css())
-						.nv(m.size, String.valueOf(p.size))
-						.whereEq(m.pk, pid);
-
-					if (isblank(rs.getDate(m.createDate)))
-						u.nv(m.createDate, now());
-
-
-						if (!isblank(p.geox) || !isblank(p.geoy))
-							u.nv(m.geox, p.geox)
-							 .nv(m.geoy, p.geoy);
-						if (!isblank(p.exif()))
-						   u.nv(m.exif, p.exif());
-						else // figure out mime with file extension
-							;
-
-						if (!isblank(p.mime))
-							u.nv(m.mime, p.mime);
-					u.u(stx);
+					if (isblank(p.wh))
+						p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
+					if (p.widthHeight[0] > p.widthHeight[1]) {
+						int w = p.wh[0];
+						p.wh[0] = p.wh[1];
+						p.wh[1] = w;
+					}
 				}
-			} catch (TransException | SQLException | IOException e) {
-				e.printStackTrace();
+
+				Update u = st
+					.update(m.tbl, usr)
+					.nv(m.css, p.css())
+					.nv(m.size, String.valueOf(p.size))
+					.whereEq(m.pk, pid);
+
+				if (isblank(rs.getDate(m.createDate)))
+					u.nv(m.createDate, now());
+
+
+					if (!isblank(p.geox) || !isblank(p.geoy))
+						u.nv(m.geox, p.geox)
+						 .nv(m.geoy, p.geoy);
+					if (!isblank(p.exif()))
+					   u.nv(m.exif, p.exif());
+					else // figure out mime with file extension
+						;
+
+					if (!isblank(p.mime))
+						u.nv(m.mime, p.mime);
+				u.u(stx);
 			}
-		}).start();
+		} catch (TransException | SQLException | IOException e) {
+			e.printStackTrace();
+		}})
+		.start();
 	}
 
 	/**

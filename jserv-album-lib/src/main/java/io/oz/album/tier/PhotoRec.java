@@ -20,6 +20,7 @@ import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
+
 /**
  * Server side and jprotocol oriented data record - not BaseFile used by file picker (at Android client).
  *
@@ -30,15 +31,17 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public String geox;
 	public String geoy;
 
-	/** usually ignored when sending request */
 	// public ArrayList<String> exif;
+	/** usually ignored when sending request */
 	public Exifield exif;
 
-	public String exif() throws AnsonException, IOException {
+	public Exifield exif() throws AnsonException, IOException {
 //		return exif == null ? null
 //				: exif.stream()
 //				 .collect(Collectors.joining(","));
-		return exif.toBlock();
+
+		// return exif.toBlock(new JsonOpt().escape4DB(true));
+		return exif;
 	}
 
 	/** image size */
@@ -96,7 +99,6 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		}
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
-
 	}
 
 	public PhotoRec(String collectId, AnResultset rs) throws SQLException, IOException {
@@ -104,14 +106,15 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		this.collectId = collectId;
 	}
 
-	/**Set client path and syncFlag
+	/**
+	 * Set client path and syncFlag
+	 * 
 	 * @param rs
 	 * @return this
 	 * @throws SQLException
 	 * @throws IOException
 	 */
 	public PhotoRec asSyncRec(AnResultset rs) throws SQLException, IOException {
-		// this.clientpath = rs.getString("clientpath");
 		fullpath(rs.getString("clientpath"));
 		this.syncFlag = rs.getString("syncFlag");
 		return this;
