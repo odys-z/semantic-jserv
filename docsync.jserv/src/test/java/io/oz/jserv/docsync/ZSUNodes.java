@@ -1,6 +1,6 @@
 package io.oz.jserv.docsync;
 
-import io.oz.jserv.docsync.SynodeMode;
+import io.odysz.semantic.syn.SynodeMode;
 
 /**
  * Consts for testing.

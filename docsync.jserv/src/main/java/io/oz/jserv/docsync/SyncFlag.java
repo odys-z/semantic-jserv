@@ -2,6 +2,7 @@ package io.oz.jserv.docsync;
 
 import io.odysz.anson.Anson;
 import io.odysz.semantic.ext.DocTableMeta.Share;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 
 /**

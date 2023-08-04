@@ -7,14 +7,14 @@ import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IProfileResolver;
 import io.odysz.semantics.IUser;
-import io.oz.jserv.docsync.SynodeMode;
 
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.MimeTypes.*;
-import static io.oz.jserv.docsync.SynodeMode.*;
+import static io.odysz.semantic.syn.SynodeMode.*;
 
 /**
  * Generate saving folder of files at synodes.

@@ -23,6 +23,7 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
@@ -32,7 +33,6 @@ import io.oz.jserv.dbsync.ClobEntity.OnChainStart;
 import io.oz.jserv.dbsync.DBSyncReq.A;
 import io.oz.jserv.docsync.SyncRobot;
 import io.oz.jserv.docsync.SynodeMeta;
-import io.oz.jserv.docsync.SynodeMode;
 
 @WebServlet(description = "Cleaning tasks manager", urlPatterns = { "/sync.db" })
 public class DBSynode extends ServPort<DBSyncReq> {
@@ -42,16 +42,13 @@ public class DBSynode extends ServPort<DBSyncReq> {
 	static DATranscxt st;
 
 	static HashMap<String, TableMeta> metas;
-	private static SynodeMeta synodesMeta;
-	private static SyncRobot anonymous;
-
 	static {
 		try {
 			st = new DATranscxt(null);
 			metas = new HashMap<String, TableMeta>();
-			synodesMeta = new SynodeMeta();
+			new SynodeMeta();
 
-			anonymous = new SyncRobot("TODO: synode.xml/id");
+			new SyncRobot("TODO: synode.xml/id");
 
 			verbose = Configs.getBoolean("docsync.debug");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {

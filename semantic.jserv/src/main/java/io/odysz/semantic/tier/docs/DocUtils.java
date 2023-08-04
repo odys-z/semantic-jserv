@@ -70,7 +70,6 @@ public class DocUtils {
 		
 		// add a synchronizing task
 		// - also triggered as private storage jserv, but no statement will be added
-		/// Docsyncer.onDocreate(ins, photo, photoMeta.tbl, usr);
 		if (onFileCreateSql != null)
 			ins.post(onFileCreateSql);
 

@@ -12,7 +12,9 @@ public class Profiles extends Anson {
 	String uid;
 	String defltAlbum;
 
+	public String webroot;
 	public String home;
+
 	public Profiles home(String h) {
 		home = h;
 		return this;
@@ -40,12 +42,12 @@ public class Profiles extends Anson {
 		this.home = rs.getString(m.org);
 		this.uid = rs.getString(m.pk);
 		this.defltAlbum = rs.getString("album");
-		
+		this.webroot = rs.getString("webroot");
+
 		if (isblank(defltAlbum))
 			this.defltAlbum = "a-001";
 	}
 
-	public String webroot;
 	public Profiles webroot(String cfg) {
 		this.webroot = cfg;
 		return this;

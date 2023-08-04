@@ -23,7 +23,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.meta.TableMeta;
@@ -33,7 +33,6 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docsync.SynState;
 import io.oz.jserv.docsync.SyncRobot;
 import io.oz.jserv.docsync.Synclientier;
-import io.oz.jserv.docsync.SynodeMode;
 
 /**
  * Worker for db synchronization.
