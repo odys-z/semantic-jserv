@@ -1,15 +1,16 @@
 package io.oz.album.tier;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.stream.Collectors;
 
+import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
@@ -20,7 +21,6 @@ import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 
-import static io.odysz.common.LangExt.isblank;
 /**
  * Server side and jprotocol oriented data record - not BaseFile used by file picker (at Android client).
  *
@@ -31,12 +31,17 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public String geox;
 	public String geoy;
 
+	// public ArrayList<String> exif;
 	/** usually ignored when sending request */
-	public ArrayList<String> exif;
-	public String exif() {
-		return exif == null ? null
-				: exif.stream()
-				 .collect(Collectors.joining(","));
+	public Exifield exif;
+
+	public Exifield exif() throws AnsonException, IOException {
+//		return exif == null ? null
+//				: exif.stream()
+//				 .collect(Collectors.joining(","));
+
+		// return exif.toBlock(new JsonOpt().escape4DB(true));
+		return exif;
 	}
 
 	/** image size */
@@ -94,7 +99,6 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		}
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
-
 	}
 
 	public PhotoRec(String collectId, AnResultset rs) throws SQLException, IOException {
@@ -102,14 +106,15 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		this.collectId = collectId;
 	}
 
-	/**Set client path and syncFlag
+	/**
+	 * Set client path and syncFlag
+	 * 
 	 * @param rs
 	 * @return this
 	 * @throws SQLException
 	 * @throws IOException
 	 */
 	public PhotoRec asSyncRec(AnResultset rs) throws SQLException, IOException {
-		// this.clientpath = rs.getString("clientpath");
 		fullpath(rs.getString("clientpath"));
 		this.syncFlag = rs.getString("syncFlag");
 		return this;
@@ -175,8 +180,7 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		return this;
 	}
 
-	@SuppressWarnings("serial")
-	public PhotoRec create(String fullpath) throws IOException {
+	public PhotoRec createTest(String fullpath) throws IOException {
 		File png = new File(fullpath);
 		FileInputStream ifs = new FileInputStream(png);
 		pname = png.getName();
@@ -191,10 +195,14 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		ifs.close();
 
 		fullpath(fullpath);
-		exif = new ArrayList<String>() {
-			{add("location:вулиця Лаврська' 27' Київ");};
-			{add("camera:Bayraktar TB2");}};
 		share("ody@kyiv", Share.pub, new Date());
+
+//		exif = new ArrayList<String>() {
+//			{add("location:вулиця Лаврська' 27' Київ");};
+//			{add("camera:Bayraktar TB2");}};
+		exif = new Exifield()
+				.add("location", "вулиця Лаврська' 27' Київ")
+				.add("camera", "Bayraktar TB2");
 
 		return this;
 	}

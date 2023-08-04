@@ -12,6 +12,7 @@ import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
@@ -30,6 +31,7 @@ import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocUtils;
+import io.odysz.semantic.tier.docs.Docs206;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -40,6 +42,7 @@ import io.oz.album.tier.AlbumReq.A;
 import io.oz.sandbox.protocol.Sandport;
 import io.oz.sandbox.utils.SandFlags;
 
+@SuppressWarnings("deprecation")
 @WebServlet(description = "Semantic sessionless: Album", urlPatterns = { "/album.less" })
 public class AlbumTier extends ServPort<AlbumReq> {
 	private static final long serialVersionUID = 1L;
@@ -71,7 +74,68 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		robot = new JRobot();
 
 		missingFile = "";
+		
+		
+		Docs206.getMeta = (String uri) -> {
+			try { return new PhotoMeta(Connects.uri2conn(uri)); }
+			catch (TransException e) {
+				e.printStackTrace();
+				return null;
+		} };
 	}
+
+	@Override
+	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    	String range = request.getHeader("Range");
+
+    	if (!isblank(range))
+    		Docs206.get206Head(request, response, robot);
+    	else super.doHead(request, response);
+	}
+
+	/**
+	 * Chrome request header for MP4
+	 * <pre>
+	Accept: * / *
+	Accept-Encoding: identity;q=1, *;q=0
+	Accept-Language: en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6
+	Connection: keep-alive
+	Host: localhost:8081
+	Range: bytes=0-
+	Referer: http://localhost:8889/
+	Sec-Fetch-Dest: video
+	Sec-Fetch-Mode: no-cors
+	Sec-Fetch-Site: same-site
+	User-Agent: Mozilla/5.0 ...
+	sec-ch-ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
+	sec-ch-ua-mobile: ?1
+	sec-ch-ua-platform: "Android"
+		</pre>
+	 *
+	 * Chrome request header for MP3<pre>
+	 * 
+	Accept-Encoding:
+	identity;q=1, *;q=0
+	Range:
+	bytes=0-
+	Referer: http://localhost:8889/
+	Sec-Ch-Ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
+	Sec-Ch-Ua-Mobile: ?1
+	Sec-Ch-Ua-Platform: "Android"
+	User-Agent: Mozilla/5.0 ...
+	 </pre>
+	 */
+	@Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+    	String range = request.getHeader("Range");
+    	if (!isblank(range)) {
+    		// FileServlet.download206(request, response);
+
+    		Docs206.get206(request, response, robot);
+    	}
+    	else super.doGet(request, response);
+    }
 
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
@@ -116,6 +180,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next()) {
+			Utils.warn("[AlbumTier#download] Upgrade download 206: %s", missingFile);
 			resp.setContentType("image/png");
 			FileStream.sendFile(resp.getOutputStream(), missingFile);
 		}
@@ -126,6 +191,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 			if (SandFlags.album)
 				Utils.logi(p);
 			try (OutputStream os = resp.getOutputStream()) {
+				Utils.warn("[AlbumTier#download] Upgrade download 206: %s", p);
 				FileStream.sendFile(os, p);
 			} catch (FileNotFoundException e) {
 				Utils.warn("File not found: %s", e.getMessage());

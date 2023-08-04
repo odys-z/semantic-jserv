@@ -3,8 +3,8 @@ package io.oz.album.tier;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.transact.sql.parts.condition.Funcall.now;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
+import static io.odysz.transact.sql.parts.condition.Funcall.now;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,6 +19,7 @@ import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
@@ -44,6 +45,7 @@ import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.Docs206;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
@@ -113,6 +115,13 @@ public class Albums extends ServPort<AlbumReq> {
 			robot = new PhotoUser("Robot Album");
 			// domainMeta = new DomainMeta();
 			orgMeta = new AOrgMeta();
+			
+			Docs206.getMeta = (String uri) -> {
+				try { return new PhotoMeta(Connects.uri2conn(uri)); }
+				catch (TransException e) {
+					e.printStackTrace();
+					return null;
+			} };
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
@@ -130,6 +139,57 @@ public class Albums extends ServPort<AlbumReq> {
 		missingFile = onlyPng;
 		return this;
 	}
+	
+	@Override
+	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    	String range = request.getHeader("Range");
+
+    	if (!isblank(range))
+    		Docs206.get206Head(request, response, robot);
+    	else super.doHead(request, response);
+	}
+
+	/**
+	 * Chrome request header for MP4
+	 * <pre>
+	Accept: * / *
+	Accept-Encoding: identity;q=1, *;q=0
+	Accept-Language: en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6
+	Connection: keep-alive
+	Host: localhost:8081
+	Range: bytes=0-
+	Referer: http://localhost:8889/
+	Sec-Fetch-Dest: video
+	Sec-Fetch-Mode: no-cors
+	Sec-Fetch-Site: same-site
+	User-Agent: Mozilla/5.0 ...
+	sec-ch-ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
+	sec-ch-ua-mobile: ?1
+	sec-ch-ua-platform: "Android"
+		</pre>
+	 *
+	 * Chrome request header for MP3<pre>
+	 * 
+	Accept-Encoding:
+	identity;q=1, *;q=0
+	Range:
+	bytes=0-
+	Referer: http://localhost:8889/
+	Sec-Ch-Ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
+	Sec-Ch-Ua-Mobile: ?1
+	Sec-Ch-Ua-Platform: "Android"
+	User-Agent: Mozilla/5.0 ...
+	 </pre>
+	 */
+	@Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+    	String range = request.getHeader("Range");
+    	if (!isblank(range)) {
+    		Docs206.get206(request, response, robot);
+    	}
+    	else super.doGet(request, response);
+    }
 
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
@@ -250,9 +310,12 @@ public class Albums extends ServPort<AlbumReq> {
 		String conn = Connects.uri2conn(body.uri());
 		JUserMeta m = (JUserMeta) usr.meta(conn);
 		AnResultset rs = ((AnResultset) st
-				.select(m.tbl)
-				.col(m.org).col(m.pk)
-				.col("'a-001'", "album") // FIXME
+				.select(m.tbl, "u")
+				.je("u", orgMeta.tbl, "o", m.org, orgMeta.pk)
+				.col("u." + m.org).col(m.pk)
+				// .col("'a-001'", "album")
+				.col(orgMeta.album0, "album") 
+				.col(orgMeta.webroot)
 				.whereEq(m.pk, usr.uid())
 				.rs(st.instancontxt(conn, usr))
 				.rs(0)).nxt();
@@ -377,7 +440,7 @@ public class Albums extends ServPort<AlbumReq> {
 		PhotoRec photo = new PhotoRec();
 
 		photo.createDate = chain.cdate;
-		Exif.parseExif(photo, chain.outputPath);
+		// Exif.parseExif(photo, chain.outputPath);
 
 		photo.fullpath(chain.clientpath);
 		photo.pname = chain.clientname;
@@ -493,6 +556,7 @@ public class Albums extends ServPort<AlbumReq> {
 		else {
 			String mime = rs.getString("mime");
 			resp.setContentType(mime);
+			
 			try ( OutputStream os = resp.getOutputStream() ) {
 				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.docId, usr, meta));
 				os.close();
@@ -546,7 +610,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 		PhotoMeta meta = new PhotoMeta(conn);
 
-
 		if (isblank(photo.shareby))
 			photo.share(usr.uid(), Share.priv);
 
@@ -567,77 +630,67 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	static protected void onPhotoCreated(String pid, String conn, PhotoMeta m, IUser usr) {
 		new Thread(() -> {
-			AnResultset rs;
-			try {
-				rs = (AnResultset) st
-					.select(m.tbl, "p")
-					.col(m.folder).col(m.fullpath)
-					.col(m.uri)
-					.col(m.clientname)
-					.col(m.createDate)
-					.whereEq(m.pk, pid)
-					.rs(st.instancontxt(conn, usr))
-					.rs(0);
+		try {
+			AnResultset rs = (AnResultset) st
+				.select(m.tbl, "p")
+				.col(m.folder).col(m.fullpath)
+				.col(m.uri)
+				.col(m.clientname)
+				.col(m.createDate)
+				.whereEq(m.pk, pid)
+				.rs(st.instancontxt(conn, usr))
+				.rs(0);
 
-				if (rs.next()) {
-					ISemantext stx = st.instancontxt(conn, usr);
-					String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
-					PhotoRec p = new PhotoRec();
-					Exif.parseExif(p, pth);
+			if (rs.next()) {
+				ISemantext stx = st.instancontxt(conn, usr);
+				String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
+				PhotoRec p = new PhotoRec();
+				Exif.parseExif(p, pth);
 
-					if (MimeTypes.isImgVideo(p.mime)) {
-						if (isblank(p.widthHeight)) {
-							try { p.widthHeight = Exif.parseWidthHeight(pth); }
-							catch (SemanticException e) {
-								Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
-							}
-						}
-						if (isblank(p.wh))
-							p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
-						if (p.widthHeight[0] > p.widthHeight[1]) {
-							int w = p.wh[0];
-							p.wh[0] = p.wh[1];
-							p.wh[1] = w;
+				if (MimeTypes.isImgVideo(p.mime)) {
+					if (isblank(p.widthHeight)) {
+						try { p.widthHeight = Exif.parseWidthHeight(pth); }
+						catch (SemanticException e) {
+							Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
+							p.widthHeight = new int[] { 4, 3 };
+							p.wh = new int[] { 4, 3 };
 						}
 					}
-
-					Update u = st
-						.update(m.tbl, usr)
-						.nv(m.css, p.css())
-						.nv(m.size, String.valueOf(p.size))
-						// .nv(m.syncflag, SyncFlag.publish)
-						.whereEq(m.pk, pid);
-
-					if (isblank(rs.getDate(m.createDate)))
-						u.nv(m.createDate, now());
-
-//					if (p.photoDate() != null) {
-//					   u.nv(m.folder, p.folder())
-//						.nv(m.createDate, p.photoDate())
-//						.nv(m.uri, pth)
-//						.nv(m.clientname, rs.getString(m.clientname))
-//						.nv(m.shareby, usr.uid());
-
-						if (!isblank(p.geox) || !isblank(p.geoy))
-						   u.nv(m.exif, p.exif())
-							.nv(m.geox, p.geox)
-							.nv(m.geoy, p.geoy);
-
-						if (!isblank(p.mime))
-							u.nv(m.mime, p.mime);
-
-//						if (!isblank(p.widthHeight))
-//						 	u.nv(m.css, p.css());
-
-						// u.whereEq("pid", pid)
-						// .u(stx);
-//					}
-					u.u(stx);
+					if (isblank(p.wh))
+						p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
+					if (p.widthHeight[0] > p.widthHeight[1]) {
+						int w = p.wh[0];
+						p.wh[0] = p.wh[1];
+						p.wh[1] = w;
+					}
 				}
-			} catch (TransException | SQLException | IOException e) {
-				e.printStackTrace();
+
+				Update u = st
+					.update(m.tbl, usr)
+					.nv(m.css, p.css())
+					.nv(m.size, String.valueOf(p.size))
+					.whereEq(m.pk, pid);
+
+				if (isblank(rs.getDate(m.createDate)))
+					u.nv(m.createDate, now());
+
+
+					if (!isblank(p.geox) || !isblank(p.geoy))
+						u.nv(m.geox, p.geox)
+						 .nv(m.geoy, p.geoy);
+					if (!isblank(p.exif()))
+					   u.nv(m.exif, p.exif());
+					else // figure out mime with file extension
+						;
+
+					if (!isblank(p.mime))
+						u.nv(m.mime, p.mime);
+				u.u(stx);
 			}
-		}).start();
+		} catch (TransException | SQLException | IOException e) {
+			e.printStackTrace();
+		}})
+		.start();
 	}
 
 	/**
