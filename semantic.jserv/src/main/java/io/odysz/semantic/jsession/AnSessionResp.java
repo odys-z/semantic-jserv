@@ -33,7 +33,7 @@ public class AnSessionResp extends AnsonResp {
 	 * A data package for extra user info for application's extension,
 	 * e.g. default page, login count, etc.
 	 * 
-	 * @since 1.5.0
+	 * @since 1.4.25
 	 */
 	Anson profile;
 	public Anson profile() { return profile; }
@@ -41,7 +41,7 @@ public class AnSessionResp extends AnsonResp {
 	/**
 	 * Set {@link #profile}
 	 * 
-	 * @since 1.5.0
+	 * @since 1.4.25
 	 * 
 	 * @param profile
 	 * @return this

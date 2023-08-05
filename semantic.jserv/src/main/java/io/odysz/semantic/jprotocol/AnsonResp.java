@@ -91,7 +91,7 @@ public class AnsonResp extends AnsonBody {
 	/**
 	 * Find resulved value in data, similar to {@link SemanticObject#resulve(String, String)}. 
 	 * 
-	 * @since 1.5.0
+	 * @since 1.4.25
 	 * @param tbl
 	 * @param autok
 	 * @return resulved auto-key

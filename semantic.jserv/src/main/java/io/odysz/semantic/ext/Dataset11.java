@@ -28,7 +28,7 @@ import io.odysz.transact.x.TransException;
 /**
  * 
  * @deprecated Replaced by {@link Dataset}, and only for protocol backward compatibility.
- * @since 1.5.0
+ * @since 1.4.25
  * @author odys-z@github.com
  */
 @WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv11" })
