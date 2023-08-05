@@ -1,16 +1,17 @@
 echo "Ever finished: 'docker build -t album .' ?"
-echo "remove and re-create volume album.sqlit? [n]"
+echo "remove and re-create volume album-treegrid.sqlit? [n]"
 read -n 1 -p "y/n:" isdel
 if [ "$isdel" = 'y' ]
 then
-    docker volume rm album.sqlite
-    docker volume create album.sqlite
+    docker volume rm album-treegrid.sqlite
+    docker volume create album-treegrid.sqlite
 
     # https://stackoverflow.com/a/64418064else
     echo "If running on windows (Engine v19.03), this won't work. Please run:"
-	echo "cp -r volume/system.db //wsl$/docker-desktop-data/version-pack-data/community/docker/volumes/album.sqlite/_data"
-    sudo cp -r volume/system.db /var/lib/docker/volumes/album.sqlite/_data
+	echo "cp -r volume-treegrid/system.db //wsl$/docker-desktop-data/version-pack-data/community/docker/volumes/album-treegrid.sqlite/_data"
+    sudo cp -r volume-treegrid/system.db /var/lib/docker/volumes/album-treegrid.sqlite/_data
 else
     echo "Using existing volume without updating volume data."
 fi
-docker run --name album -v album.sqlite:/var/local/volume -p 127.0.0.1:8082:80 -d --rm odysz/jserv-album:treegrid
+
+docker run --name album-treegrid -v album-treegrid.sqlite:/var/local/volume -p 127.0.0.1:8082:80 -d --rm odysz/jserv-album:treegrid
