@@ -3,7 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
   <artifactId>semantic.jserv</artifactId>
+<<<<<<< HEAD
   <version>1.4.28-SNAPSHOT</version>
+=======
+  <version>1.4.27</version>
+>>>>>>> 8f4bf4cbd4e6696f0c5dfe11d4d6d624c9362dbe
   <packaging>jar</packaging>
 
   <name>semantic.jserv lib</name>
@@ -79,7 +83,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.DA</artifactId>
-	    <version>1.4.26</version>
+	    <version>1.4.27</version>
 	</dependency>
 
 	<!--
