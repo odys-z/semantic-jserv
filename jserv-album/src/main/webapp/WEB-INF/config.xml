@@ -66,6 +66,7 @@
 	<c>
 		<!-- default saving folder resolver
 			constructor: DocProfile(SynodeMode mode)
+			deprecated in both MVP & Synodes
 		 -->
 		<k>docsync.folder-resolver</k>
 		<v>io.oz.album.tier.DocProfile</v>
