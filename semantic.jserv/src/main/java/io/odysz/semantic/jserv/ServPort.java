@@ -27,7 +27,8 @@ import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
-/**<p>Base serv class for handling json request.</p>
+/**
+ * <p>Base serv class for handling json request.</p>
  * Servlet extending this must subclass this class, and override
  * {@link #onGet(AnsonMsg, HttpServletResponse) onGet()} and {@link #onPost(AnsonMsg, HttpServletResponse) onPost()}.
  * 
@@ -46,7 +47,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	public ServPort(IPort port) { this.p = port; }
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
 		InputStream in;
 		String headstr = req.getParameter("header");
 		String anson64 = req.getParameter("anson64");
@@ -56,12 +58,13 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		}
 		else if (!LangExt.isEmpty(anson64)) {
 			byte[] b = AESHelper.decode64(anson64);
-			// byte[] b = anson64.getBytes();
 			in = new ByteArrayInputStream(b);
 		}
 		else {
-			if (req.getContentLength() == 0)
+			if (req.getContentLength() <= 0) {
+				write(resp, err(MsgCode.exGeneral, "Empty Request"));
 				return ;
+			}
 			in = req.getInputStream();
 		}
 		resp.setCharacterEncoding("UTF-8");
@@ -84,7 +87,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
-	/**Override this to handle null envelop in GET requests.
+	/**
+	 * Override this to handle null envelop in GET requests.
 	 * @param e
 	 * @param resp
 	 * @param map 
@@ -138,7 +142,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
-	/**Response with OK message.
+	/**
+	 * Response with OK message.
 	 * @param arrayList
 	 * @return AnsonMsg code = ok 
 	 */
@@ -175,7 +180,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	protected AnsonMsg<AnsonResp> err(MsgCode code, String templ, Object ... args) {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, code);
 		AnsonResp bd = new AnsonResp(msg,
-				// sql error message can have '%'
+				// sql error messages can have '%'
 				args == null ? templ :
 				String.format(templ == null ? "" : templ, args));
 		return msg.body(bd);

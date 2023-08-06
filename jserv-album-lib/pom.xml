@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
   <artifactId>album-lib</artifactId>
-  <version>0.4.27</version>
+  <version>0.4.28-SNAPSHOT</version>
   <name>Album Common Lib</name>
   <description>Album common lib for Android client and jserv</description>
   <url>https://odys-z.github.io</url>
@@ -59,13 +59,13 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>anclient.java</artifactId>
-	    <version>0.4.26</version>
+	    <version>0.4.28-SNAPSHOT</version>
 	</dependency>
 
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>1.4.25</version>
+	  <version>1.4.27</version>
    	</dependency>
 
 

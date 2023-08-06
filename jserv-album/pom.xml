@@ -98,7 +98,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
-	    <version>[0.4.27,)</version>
+	    <version>[0.4.28-SNAPSHOT,)</version>
 	</dependency>
 
 	<dependency>

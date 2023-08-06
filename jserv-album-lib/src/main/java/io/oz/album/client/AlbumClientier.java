@@ -44,6 +44,7 @@ public class AlbumClientier extends Semantier {
 	private ErrorCtx errCtx;
 	private String clientUri;
 
+	/** See <a href='https://odys-z.github.io/Anclient/dev/issues.html#what-s-next'>Issue: Nginx Request Size</a>. */
 	public static int blocksize = 3 * 1024 * 1024;
 	
 	static {
@@ -90,27 +91,6 @@ public class AlbumClientier extends Semantier {
 		
 		return this;
 	}
-	
-	/*
-	public AlbumClientier asyncVideos_not_used(List<? extends IFileDescriptor> videos,
-				SessionInf user, OnProcess onProc, OnOk onOk, OnError onErr) {
-
-		new Thread(new Runnable() {
-			public void run() {
-			try {
-				List<DocsResp> reslts = syncVideos(videos, user, onProc);
-				DocsResp resp = new DocsResp();
-				resp.data().put("results", reslts);
-				onOk.ok(resp);
-			} catch (IOException e) {
-				onErr.err(MsgCode.exIo, clientUri, e.getClass().getName(), e.getMessage());
-			} catch (AnsonException | SemanticException e) { 
-				onErr.err(MsgCode.exGeneral, clientUri, e.getClass().getName(), e.getMessage());
-			}
-	    } } ).start();
-		return this;
-	}
-	*/
 	
 	/**
 	 * 
