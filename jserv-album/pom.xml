@@ -29,6 +29,13 @@
     </license>
   </licenses>
 
+  <repositories>
+  	<repository>
+  		<id>sonatype-snapshots</id>
+  		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+  	</repository>
+  </repositories>
+
   <scm>
   	<connection>scm:git:git://github.com/odys-z/semantic-jserv.git</connection>
   	<developerConnection>scm:git:odys-z@github.com:odys-z/semantic-jserv.git</developerConnection>
