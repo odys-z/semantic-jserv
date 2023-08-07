@@ -1,5 +1,7 @@
 package io.odysz.semantic.jsession;
 
+import static io.odysz.semantic.jsession.AnSessionReq.A.*;
+
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -46,7 +48,8 @@ import io.odysz.transact.x.TransException;
 
 /**
  * <h5>1. Handle login-obj: {@link AnSessionReq}.</h5>
- *  <p>a: "login | logout | pswd | init | ping(touch)",<br>
+ *  <p>a = {@link AnSessionReq.A}</p>
+ *  <p>for a = A.login,<br>
  *  uid: "user-id",<br>
  *  pswd: "uid-cipher-by-pswd",<br>
  *  iv: "session-iv"</p>
@@ -224,7 +227,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			if (msg != null) {
 				AnSessionReq sessionBody = msg.body(0);
 				String a = sessionBody.a();
-				if ("login".equals(a)) {
+				if (login.equals(a)) {
 					IUser login = loadUser(sessionBody, connId);
 					if (login.login(sessionBody)) {
 						lock.lock();
@@ -242,7 +245,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 							+ "Additional Details: %s",
 							login.notifies() != null && login.notifies().size() > 0 ? login.notifies().get(0) : "");
 				}
-				else if ("logout".equals(a)) {
+				else if (logout.equals(a)) {
 					AnsonHeader header = msg.header();
 					try {verify(header);}
 					catch (SsException sx) {} // logout anyway if session check is failed
@@ -262,7 +265,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						write(response, AnsonMsg.ok(p, "But no such session exists."),
 								msg.opts());
 				}
-				else if ("pswd".equals(a)) {
+				else if (pswd.equals(a)) {
 					// change password
 					AnsonHeader header = msg.header();
 					IUser usr = verify(header);
@@ -295,7 +298,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 					write(response, ok("You must relogin!"));
 				}
-				else if ("init".equals(a)) {
+				else if (init.equals(a)) {
 					// reset password
 					AnsonHeader header = msg.header();
 
@@ -345,7 +348,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 				}
 				else {
 					if (a != null) a = a.toLowerCase().trim();
-					if ("ping".equals(a) || "touch".equals(a)) {
+					if (ping.equals(a) || touch.equals(a)) {
 						AnsonHeader header = msg.header();
 						verify(header);
 						write(response, AnsonMsg.ok(p, ""), msg.opts());
