@@ -351,17 +351,17 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					if (ping.equals(a) || touch.equals(a)) {
 						AnsonHeader header = msg.header();
 						verify(header);
-						write(response, AnsonMsg.ok(p, ""), msg.opts());
+						write(response, AnsonMsg.ok(p, sctx.getSysConnId()), msg.opts());
 					}
 					else throw new SsException ("Session Request not supported: a=%s", a);
 				}
 			}
 			else throw new SsException ("Session request not supported: request body is null");
 		} catch (SsException | TransException e) {
-			write(response, err(MsgCode.exSession, e.getMessage()));
+			write(response, err(MsgCode.exSession, e.getMessage()).uri(sctx.getSysConnId()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			write(response, err(MsgCode.exGeneral, e.getMessage()));
+			write(response, err(MsgCode.exGeneral, e.getMessage()).uri(sctx.getSysConnId()));
 		} finally {
 		}
 	}

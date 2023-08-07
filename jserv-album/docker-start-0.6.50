@@ -1,8 +1,6 @@
-echo "Ever finished: 'docker build -t album .' ?"
-echo "remove and re-create volume album.sqlit? [n]"
-
+echo "Ever finished: 'docker build -t album . && docker tag album odysz/jserv-album:0.6.50 ?"
+echo "remove and re-create volume album-0.6.50.sqlit? [n]"
 read -n 1 -p "y/n:" isdel
-
 if [ "$isdel" = 'y' ]
 then
     docker volume rm album-0.6.50.sqlite
