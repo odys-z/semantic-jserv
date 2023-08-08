@@ -12,6 +12,15 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
  * @author odys-z@github.com
  */
 public class AnSessionReq extends AnsonBody {
+	public static class A {
+		public static final String login = "login";
+		public static final String logout = "logout";
+		public static final String pswd = "pswd";
+		public static final String init = "init";
+		public static final String touch = "touch";
+		public static final String ping = "ping";
+	}
+	
 	public AnSessionReq() {
 		super(null, null); // session's DB access is controlled by server
 	}

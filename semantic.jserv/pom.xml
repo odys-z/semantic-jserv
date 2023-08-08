@@ -34,13 +34,13 @@
   </properties>
 
 	<!--
+	 -->
   <repositories>
   	<repository>
   		<id>sonatype-snapshots</id>
   		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
   	</repository>
   </repositories>
-	 -->
 
   <dependencies>
   	<dependency>
@@ -254,23 +254,26 @@
 			maven-compiler-plugin:3.7.0:compile (default-compile) on
 			project semantic.jserv: Compilation failure: Compilation failure...
 
-		  see https://dzone.com/articles/publish-your-artifacts-to-maven-central -->
+		  see https://dzone.com/articles/publish-your-artifacts-to-maven-central
+		  
+		  For gpg 2.0 or higher, copy this into excution tag 
+			  <configuration>
+				<gpgArguments>
+				  <arg>\-\-pinentry-mode</arg>
+				  <arg>loopback</arg>
+				</gpgArguments>
+		  	  </configuration>
+		  -->
 		<groupId>org.apache.maven.plugins</groupId>
 		<artifactId>maven-gpg-plugin</artifactId>
 		<version>1.5</version>
 		<executions>
 			<execution>
-			  <id>semantics.transact</id>
+			  <id>semantics.jserv</id>
 			  <phase>verify</phase>
 			  <goals>
 				<goal>sign</goal>
 			  </goals>
-			  <configuration>
-				<gpgArguments>
-				  <arg>--pinentry-mode</arg>
-				  <arg>loopback</arg>
-				</gpgArguments>
-		  	  </configuration>
 			</execution>
 		</executions>
 	  </plugin>

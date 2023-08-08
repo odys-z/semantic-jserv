@@ -29,6 +29,13 @@
     </license>
   </licenses>
 
+  <repositories>
+  	<repository>
+  		<id>sonatype-snapshots</id>
+  		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+  	</repository>
+  </repositories>
+
   <scm>
   	<connection>scm:git:git://github.com/odys-z/semantic-jserv.git</connection>
   	<developerConnection>scm:git:odys-z@github.com:odys-z/semantic-jserv.git</developerConnection>
@@ -86,7 +93,7 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>1.4.27</version>
+	  <version>1.4.28-SNAPSHOT</version>
    	</dependency>
 
 	<dependency>
@@ -98,7 +105,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
-	    <version>[0.4.28-SNAPSHOT,)</version>
+	    <version>0.4.28-SNAPSHOT</version>
 	</dependency>
 
 	<dependency>
