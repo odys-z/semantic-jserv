@@ -1,5 +1,7 @@
 package io.odysz.semantic.jserv;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +25,9 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
+import io.odysz.semantic.tier.docs.Docs206;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -46,12 +50,69 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	public ServPort(IPort port) { this.p = port; }
 
+	
+//	@Override
+//    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+//            throws ServletException, IOException {
+//    	String range = request.getHeader("Range");
+//    	if (!isblank(range)) {
+//    		Docs206.get206(request, response, robot);
+//    	}
+//    	else super.doGet(request, response);
+//    }
+
+	/**
+	 * Since 1.4.28, semantic.jserv support for Range header for all ports, which is critical for 
+	 * some steam features a client side, such as resume downloading or play back from a position.
+	 * 
+	 * Example of Chrome request header for MP4
+	 * <pre>
+	Accept: * / *
+	Accept-Encoding: identity;q=1, *;q=0
+	Accept-Language: en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6
+	Connection: keep-alive
+	Host: localhost:8081
+	Range: bytes=0-
+	Referer: http://localhost:8889/
+	Sec-Fetch-Dest: video
+	Sec-Fetch-Mode: no-cors
+	Sec-Fetch-Site: same-site
+	User-Agent: Mozilla/5.0 ...
+	sec-ch-ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
+	sec-ch-ua-mobile: ?1
+	sec-ch-ua-platform: "Android"
+		</pre>
+	 *
+	 * Example of Chrome request header for MP3<pre>
+	 * 
+	Accept-Encoding:
+	identity;q=1, *;q=0
+	Range:
+	bytes=0-
+	Referer: http://localhost:8889/
+	Sec-Ch-Ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
+	Sec-Ch-Ua-Mobile: ?1
+	Sec-Ch-Ua-Platform: "Android"
+	User-Agent: Mozilla/5.0 ...
+	 </pre>
+	 */
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+    	String range = req.getHeader("Range");
+    	if (!isblank(range)) {
+    		try {
+				Docs206.get206(req, resp);
+			} catch (SsException e) {
+				write(resp, err(MsgCode.exSession, e.getMessage()));
+			}
+			return;
+    	}
+
 		InputStream in;
 		String headstr = req.getParameter("header");
 		String anson64 = req.getParameter("anson64");
+
 		if (headstr != null && headstr.length() > 1) {
 			byte[] b = headstr.getBytes();
 			in = new ByteArrayInputStream(b);

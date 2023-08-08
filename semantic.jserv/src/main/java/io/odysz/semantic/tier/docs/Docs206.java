@@ -55,6 +55,8 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jserv.JSingleton;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -153,10 +155,11 @@ public abstract class Docs206 {
 		}
 	}
 
-	public static void get206(HttpServletRequest req, HttpServletResponse resp, IUser usr)
-			throws IOException {
+	public static void get206(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException, SsException {
 		try {
-			AnsonMsg<DocsReq> msg = ansonMsg(req); 
+			AnsonMsg<DocsReq> msg = ansonMsg(req);
+			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			List<Range> ranges = replyHeaders(req, resp, msg, usr);
 			Resource resource = new Resource(getDoc(req, msg.body(0), st, usr), msg.body(0).docId);
 			writeContent(resp, resource, ranges, "");
