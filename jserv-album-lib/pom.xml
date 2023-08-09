@@ -56,11 +56,6 @@
       <scope>test</scope>
     </dependency>
 
-	<dependency>
-	    <groupId>io.github.odys-z</groupId>
-	    <artifactId>anclient.java</artifactId>
-	    <version>0.4.28-SNAPSHOT</version>
-	</dependency>
 
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
@@ -202,12 +197,14 @@
 			  <goals>
 				<goal>sign</goal>
 			  </goals>
+              <!--
 			  <configuration>
 			  <gpgArguments>
-				  <arg>--pinentry-mode</arg>
+				  <arg>- -pinentry-mode</arg>
 				  <arg>loopback</arg>
 			  </gpgArguments>
 		  	  </configuration>
+                -->
 			</execution>
 		</executions>
 	  </plugin>
