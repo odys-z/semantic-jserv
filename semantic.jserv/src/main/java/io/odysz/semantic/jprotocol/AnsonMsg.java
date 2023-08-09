@@ -123,8 +123,8 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		defaultPortImpl = p;
 	}
 	
-	@SuppressWarnings("unused")
-	private String version = "1.0";
+	String version = "1.1";
+
 	int seq;
 	public int seq() { return seq; }
 
@@ -151,7 +151,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * FIXME deprecate IPort 
 	 * 
 	 * @param enport
-	 * @return
+	 * @return this
 	 * @throws SemanticException
 	 */
 	public AnsonMsg<T> port(IPort enport) throws SemanticException {
@@ -234,6 +234,11 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 
 	public static AnsonMsg<? extends AnsonResp> ok(IPort p, AnsonResp resp) {
 		return new AnsonMsg<AnsonResp>(p, MsgCode.ok).body(resp);
+	}
+
+	public AnsonMsg<T> uri(String conn) {
+		this.body.get(0).uri = conn;
+		return this;
 	}
 
 }

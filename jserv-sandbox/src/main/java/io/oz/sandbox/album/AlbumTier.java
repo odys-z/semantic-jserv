@@ -42,7 +42,6 @@ import io.oz.album.tier.AlbumReq.A;
 import io.oz.sandbox.protocol.Sandport;
 import io.oz.sandbox.utils.SandFlags;
 
-@SuppressWarnings("deprecation")
 @WebServlet(description = "Semantic sessionless: Album", urlPatterns = { "/album.less" })
 public class AlbumTier extends ServPort<AlbumReq> {
 	private static final long serialVersionUID = 1L;
@@ -125,17 +124,17 @@ public class AlbumTier extends ServPort<AlbumReq> {
 	User-Agent: Mozilla/5.0 ...
 	 </pre>
 	 */
-	@Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-    	String range = request.getHeader("Range");
-    	if (!isblank(range)) {
-    		// FileServlet.download206(request, response);
-
-    		Docs206.get206(request, response, robot);
-    	}
-    	else super.doGet(request, response);
-    }
+//	@Override
+//    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+//            throws ServletException, IOException {
+//    	String range = request.getHeader("Range");
+//    	if (!isblank(range)) {
+//    		// FileServlet.download206(request, response);
+//
+//    		Docs206.get206(request, response, robot);
+//    	}
+//    	else super.doGet(request, response);
+//    }
 
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)

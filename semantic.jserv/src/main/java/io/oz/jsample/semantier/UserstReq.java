@@ -56,7 +56,7 @@ public class UserstReq extends UserReq {
 
 	/**Setup nv for {@link Insert}
 	 * @param st
-	 * @return
+	 * @return st
 	 * @throws TransException 
 	 */
 	public Statement<?> nvs(Statement<?> st) throws TransException {
