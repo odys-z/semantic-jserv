@@ -256,6 +256,7 @@
 
 		  see https://dzone.com/articles/publish-your-artifacts-to-maven-central
 		  
+		  For gpg 1.5... , delete this into excution tag 
 		  For gpg 2.0 or higher, copy this into excution tag 
 			  <configuration>
 				<gpgArguments>
@@ -274,6 +275,12 @@
 			  <goals>
 				<goal>sign</goal>
 			  </goals>
+			  <configuration>
+				<gpgArguments>
+				  <arg>\-\-pinentry-mode</arg>
+				  <arg>loopback</arg>
+				</gpgArguments>
+			</configuration>
 			</execution>
 		</executions>
 	  </plugin>
