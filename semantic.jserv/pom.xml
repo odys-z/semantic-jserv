@@ -70,7 +70,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantics.transact</artifactId>
-	    <version>1.4.26</version>
+	    <version>1.4.27</version>
 	</dependency>
 
 	<!-- As sonatype SNAPSHOT is updating on a daily base, you may update this with:
@@ -260,7 +260,7 @@
 		<version>1.5</version>
 		<executions>
 			<execution>
-			  <id>semantics.transact</id>
+			  <id>semantics.jserv</id>
 			  <phase>verify</phase>
 			  <goals>
 				<goal>sign</goal>
