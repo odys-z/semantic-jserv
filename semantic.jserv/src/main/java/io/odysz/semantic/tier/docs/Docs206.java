@@ -114,18 +114,17 @@ public abstract class Docs206 {
 	 * [2] HTTP 206: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/206 <br>
 	 * [3] Example: https://balusc.omnifaces.org/2009/02/fileservlet-supporting-resume-and.html <br>
 	 * 
-	 * @param request
-	 * @param response
-	 * @return ranges
+	 * @param req
+	 * @param resp
+	 * @return range headers
 	 * @throws IOException
-	 * @throws SemanticException
-	 * @throws TransException
-	 * @throws SQLException
+	 * @throws SsException
 	 */
-	public static List<Range> get206Head(HttpServletRequest req, HttpServletResponse resp, IUser usr)
-			throws IOException {
+	public static List<Range> get206Head(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException, SsException {
 		AnsonMsg<DocsReq> msg = ansonMsg(req); 
 		try {
+			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			return replyHeaders(req, resp, msg, usr);
 		} catch (IOException | TransException | SQLException e) {
 			e.printStackTrace();

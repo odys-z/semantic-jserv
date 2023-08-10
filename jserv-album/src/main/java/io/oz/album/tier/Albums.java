@@ -140,14 +140,14 @@ public class Albums extends ServPort<AlbumReq> {
 		return this;
 	}
 	
-	@Override
-	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    	String range = request.getHeader("Range");
-
-    	if (!isblank(range))
-    		Docs206.get206Head(request, response, robot);
-    	else super.doHead(request, response);
-	}
+//	@Override
+//	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+//    	String range = request.getHeader("Range");
+//
+//    	if (!isblank(range))
+//    		Docs206.get206Head(request, response, robot);
+//    	else super.doHead(request, response);
+//	}
 
 //	/**
 //	 * Chrome request header for MP4
@@ -679,7 +679,7 @@ public class Albums extends ServPort<AlbumReq> {
 						u.nv(m.geox, p.geox)
 						 .nv(m.geoy, p.geoy);
 					if (!isblank(p.exif()))
-					   u.nv(m.exif, p.exif());
+						u.nv(m.exif, p.exif());
 					else // figure out mime with file extension
 						;
 

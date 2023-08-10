@@ -85,11 +85,16 @@ public class AlbumTier extends ServPort<AlbumReq> {
 
 	@Override
 	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    	String range = request.getHeader("Range");
-
-    	if (!isblank(range))
-    		Docs206.get206Head(request, response, robot);
-    	else super.doHead(request, response);
+		super.doHead(request, response);
+//    	String range = request.getHeader("Range");
+//
+//    	if (!isblank(range))
+//			try {
+//				Docs206.get206Head(request, response);
+//			} catch (SsException e) {
+//				
+//			}
+//		else super.doHead(request, response);
 	}
 
 	/**

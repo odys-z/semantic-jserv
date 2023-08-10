@@ -21,6 +21,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.sax.BodyContentHandler;
 
+import io.odysz.anson.JsonOpt;
 import io.odysz.common.CheapMath;
 import io.odysz.common.DateFormat;
 import io.odysz.common.Utils;
@@ -33,8 +34,13 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.split;
 
 /**
- * Exif data format helper
+ * Exif data format helper.
  * 
+ * <h6>Credits to</h6>
+ * Sean Leary, and the <a href='https://github.com/stleary/JSON-java'>JSON Reference Implementation for Java</a>.
+ * 
+ * <p/>
+ * @since 0.6.50
  * @author Ody
  *
  */
@@ -65,11 +71,12 @@ public class Exif {
 			photo.exif = new Exifield();
 			parser.parse(stream, handler, metadata);
 			for (String name: metadata.names()) {
-				String val = metadata.get(name);
-				// photo.exif.add(name + ":" + (exif == null ? "null" : exif.trim().replace("\n", "\\n")));
-				// photo.exif.add(name, (val == null ? null : val.trim().replace("\n", "\\n")));
-				photo.exif.add(name, val);
-				
+				String val = metadata.get(name); 
+				// whitewash some faulty string
+				// Huawei p30 take pics with 
+				// name: ICC:Profile Description, val: "1 enUS(sRGB\0\0..." where length = 52
+				photo.exif.add(name, escape(val));
+
 				try {
 					if (eq("Content-Type", name))
 						photo.mime = val; 
@@ -116,6 +123,143 @@ public class Exif {
 
 		return photo;
 	}
+
+	/**
+	 * Escape a Java string to a json string. 
+	 * 
+	 * <h6>Reference</h6><p>
+	 * 1. Json validate characters by <a href='https://www.json.org/json-en.html'>json.org</a><br>
+	 * <pre>
+	 * character
+	 * 	'0020' . '10FFFF' - '"' - '\'
+	 * 	'\' escape 
+	 * 
+	 * escape
+	 * 	'"'
+	 * 	'\'
+	 * 	'/'
+	 * 	'b'
+	 * 	'f'
+	 * 	'n'
+	 * 	'r'
+	 * 	't'
+	 * 	'u' hex hex hex hex
+	 *
+	 * hex
+	 * 	digit
+	 * 	'A' . 'F'
+	 * 	'a' . 'f'
+	 * </pre>
+	 * 2. JSON-Java, a Java reference implementation, source at <a href='https://github.com/stleary/JSON-java'>github</a>.</p>
+	 * The XML tag content is escaped by 
+	 * <a href='https://github.com/stleary/JSON-java/blob/60662e2f8384d3449822a3a1179bfe8de67b55bb/src/main/java/org/json/XML.java#L149'>
+	 * org.json.XML#escape()</a> from java string by checking character code point with #mustEscape(int), copied here as {@link #validChar(int)}.
+	 * <pre>
+     * [param] cp code point to test
+     * [return] true if the code point is not valid for an XML
+     * private static boolean mustEscape(int cp) {
+     * 	// isISOControl is true when (cp >= 0 && cp <= 0x1F) || (cp >= 0x7F && cp <= 0x9F)
+     * 	// all ISO control characters are out of range except tabs and new lines
+     * 	return (Character.isISOControl(cp)
+     * 		&& cp != 0x9
+     * 		&& cp != 0xA
+     * 		&& cp != 0xD
+     * 		) || !(
+     * 			// valid the range of acceptable characters that aren't control
+     * 			(cp >= 0x20 && cp <= 0xD7FF)
+     * 			|| (cp >= 0xE000 && cp <= 0xFFFD)
+     * 			|| (cp >= 0x10000 && cp <= 0x10FFFF)) ;
+     * 	}
+	 * </pre>  
+	 * where, the isIsonControl() is checking <pre>"
+	 * Valid range from https://www.w3.org/TR/REC-xml/#charsets
+	 * #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+	 * any Unicode character, excluding the surrogate blocks, FFFE, and FFFF."</pre>
+	 * @param val
+	 * @return The cut off string until the first invalid code point.
+	 */
+	public static String escape(String val, JsonOpt ...jopt) {
+		StringBuilder sb = new StringBuilder(val.length());
+		for (final int cp : codePointIterator(val)) {
+//			if (jopt.escape4DB && cp == '\'')
+//				sb.append("''");
+			if (mustEscape(cp))
+				break;
+			else
+				sb.appendCodePoint(cp);
+		}
+		return sb.toString();
+	}
+
+    /**
+     * https://github.com/stleary/JSON-java/blob/60662e2f8384d3449822a3a1179bfe8de67b55bb/src/main/java/org/json/XML.java#L149
+     * 
+     * @param cp code point to test
+     * @return true if the code point is not valid for an XML
+     */
+    public static boolean mustEscape(int cp) {
+        /* Valid range from https://www.w3.org/TR/REC-xml/#charsets
+         *
+         * #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+         *
+         * any Unicode character, excluding the surrogate blocks, FFFE, and FFFF.
+         */
+        // isISOControl is true when (cp >= 0 && cp <= 0x1F) || (cp >= 0x7F && cp <= 0x9F)
+        // all ISO control characters are out of range except tabs and new lines
+        return (Character.isISOControl(cp)
+                && cp != 0x9
+                && cp != 0xA
+                && cp != 0xD
+            ) || !(
+                // valid the range of acceptable characters that aren't control
+                (cp >= 0x20 && cp <= 0xD7FF)
+                || (cp >= 0xE000 && cp <= 0xFFFD)
+                || (cp >= 0x10000 && cp <= 0x10FFFF)
+            )
+        ;
+    }
+    
+    /**
+     * https://github.com/stleary/JSON-java/blob/60662e2f8384d3449822a3a1179bfe8de67b55bb/src/main/java/org/json/XML.java#L69
+     * 
+     * Creates an iterator for navigating Code Points in a string instead of
+     * characters. Once Java7 support is dropped, this can be replaced with
+     * <code>
+     * string.codePoints()
+     * </code>
+     * which is available in Java8 and above.
+     *
+     * @see <a href=
+     *      "http://stackoverflow.com/a/21791059/6030888">http://stackoverflow.com/a/21791059/6030888</a>
+     */
+    public static Iterable<Integer> codePointIterator(final String string) {
+        return new Iterable<Integer>() {
+            @Override
+            public Iterator<Integer> iterator() {
+                return new Iterator<Integer>() {
+                    private int nextIndex = 0;
+                    private int length = string.length();
+
+                    @Override
+                    public boolean hasNext() {
+                        return this.nextIndex < this.length;
+                    }
+
+                    @Override
+                    public Integer next() {
+                        int result = string.codePointAt(this.nextIndex);
+                        this.nextIndex += Character.charCount(result);
+                        return result;
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+        };
+    }
 
 	/**
 	 * Gets image dimensions for given file.
