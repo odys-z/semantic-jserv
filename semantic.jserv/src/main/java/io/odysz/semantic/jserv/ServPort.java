@@ -50,6 +50,19 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	public ServPort(IPort port) { this.p = port; }
 
+	@Override
+	protected void doHead(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+    	String range = request.getHeader("Range");
+
+    	if (!isblank(range))
+			try {
+				Docs206.get206Head(request, response);
+			} catch (SsException e) {
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+			}
+		else super.doHead(request, response);
+	}
 	
 //	@Override
 //    protected void doGet(HttpServletRequest request, HttpServletResponse response)

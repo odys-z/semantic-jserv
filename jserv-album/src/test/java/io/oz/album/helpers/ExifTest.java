@@ -10,6 +10,11 @@ import org.junit.jupiter.api.Test;
 import io.odysz.semantics.x.SemanticException;
 
 class ExifTest {
+	@Test
+	void testEscape() {
+		String v = Exif.escape("1 enUS(sRGB\0\0\0");
+		assertEquals("1 enUS(sRGB", v);
+	}
 
 	@Test
 	void testParseWidthHeight() throws IOException, SemanticException {
