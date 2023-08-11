@@ -12,7 +12,6 @@ import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
@@ -83,63 +82,19 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		} };
 	}
 
-	@Override
-	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		super.doHead(request, response);
-//    	String range = request.getHeader("Range");
-//
-//    	if (!isblank(range))
-//			try {
-//				Docs206.get206Head(request, response);
-//			} catch (SsException e) {
-//				
-//			}
-//		else super.doHead(request, response);
-	}
-
-	/**
-	 * Chrome request header for MP4
-	 * <pre>
-	Accept: * / *
-	Accept-Encoding: identity;q=1, *;q=0
-	Accept-Language: en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6
-	Connection: keep-alive
-	Host: localhost:8081
-	Range: bytes=0-
-	Referer: http://localhost:8889/
-	Sec-Fetch-Dest: video
-	Sec-Fetch-Mode: no-cors
-	Sec-Fetch-Site: same-site
-	User-Agent: Mozilla/5.0 ...
-	sec-ch-ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
-	sec-ch-ua-mobile: ?1
-	sec-ch-ua-platform: "Android"
-		</pre>
-	 *
-	 * Chrome request header for MP3<pre>
-	 * 
-	Accept-Encoding:
-	identity;q=1, *;q=0
-	Range:
-	bytes=0-
-	Referer: http://localhost:8889/
-	Sec-Ch-Ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
-	Sec-Ch-Ua-Mobile: ?1
-	Sec-Ch-Ua-Platform: "Android"
-	User-Agent: Mozilla/5.0 ...
-	 </pre>
-	 */
 //	@Override
-//    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-//            throws ServletException, IOException {
-//    	String range = request.getHeader("Range");
-//    	if (!isblank(range)) {
-//    		// FileServlet.download206(request, response);
-//
-//    		Docs206.get206(request, response, robot);
-//    	}
-//    	else super.doGet(request, response);
-//    }
+//	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+//		super.doHead(request, response);
+////    	String range = request.getHeader("Range");
+////
+////    	if (!isblank(range))
+////			try {
+////				Docs206.get206Head(request, response);
+////			} catch (SsException e) {
+////				
+////			}
+////		else super.doHead(request, response);
+//	}
 
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
