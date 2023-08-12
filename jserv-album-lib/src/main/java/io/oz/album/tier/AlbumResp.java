@@ -96,7 +96,6 @@ public class AlbumResp extends DocsResp {
 			}
 			collect.addPhoto(rs);
 		}
-		// collectRecords.add(new Collect(rs));
 		if (collect != null)
 			collectRecords.add(collect);
 
