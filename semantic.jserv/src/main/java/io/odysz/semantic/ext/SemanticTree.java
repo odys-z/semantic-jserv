@@ -170,8 +170,9 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	 * 2. if req has an 'sk' parameter, load it from dataset.xml - this way can error prone;<br>
 	 * @param jreq
 	 * @return tree's semantics, {@link TreeSemantics}
+	 * @throws SAXException 
 	 */
-	private TreeSemantics getTreeSemtcs(AnDatasetReq jreq) {
+	private TreeSemantics getTreeSemtcs(AnDatasetReq jreq) throws SAXException {
 		if (jreq == null)
 			return null;
 		TreeSemantics ts = jreq.getTreeSemantics();

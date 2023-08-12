@@ -32,7 +32,7 @@
   group by f.folder
   ) where total > 0 order by fullpath
   </sqlit>
-  <s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags,filesize</s-tree>
+  <s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags</s-tree>
  </c>
 </t>
 </dataset>
