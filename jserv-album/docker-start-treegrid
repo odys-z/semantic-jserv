@@ -9,7 +9,7 @@ then
     # https://stackoverflow.com/a/64418064else
     echo "If running on windows (Engine v19.03), this won't work. Please run:"
 	echo "cp -r volume-treegrid/system.db //wsl$/docker-desktop-data/version-pack-data/community/docker/volumes/album-treegrid.sqlite/_data"
-    echo "sudo cp -r volume-treegrid/system.db /var/lib/docker/volumes/album-treegrid.sqlite/_data"
+    echo "sudo cp -r volume-treegrid/* /var/lib/docker/volumes/album-treegrid.sqlite/_data"
     sudo cp -r volume-treegrid/* /var/lib/docker/volumes/album-treegrid.sqlite/_data
 else
     echo "Using existing volume without updating volume data."
