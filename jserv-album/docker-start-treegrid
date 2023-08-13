@@ -14,4 +14,4 @@ else
     echo "Using existing volume without updating volume data."
 fi
 
-docker run --name album-treegrid -v album-treegrid.sqlite:/var/local/volume -p 127.0.0.1:8082:80 -d --rm odysz/jserv-album:treegrid
+docker run --name album-treegrid -v album-treegrid.sqlite:/var/local/volume -p 127.0.0.1:8082:80 -d --rm odysz/jserv-album:0.6.50
