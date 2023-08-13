@@ -1,4 +1,4 @@
 /target/
 .classpath
-ody
 volume-treeditor
+!*.zip

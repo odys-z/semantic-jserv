@@ -1,7 +1,6 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;

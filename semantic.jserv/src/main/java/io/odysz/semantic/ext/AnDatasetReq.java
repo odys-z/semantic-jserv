@@ -1,5 +1,7 @@
 package io.odysz.semantic.ext;
 
+import org.xml.sax.SAXException;
+
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -51,8 +53,9 @@ public class AnDatasetReq extends AnQueryReq {
 
 	/**Get the tree semantics. Client can provide {@link #s_tree} string as tree semantics.
 	 * @return parsed semantics
+	 * @throws SAXException 
 	 */
-	public TreeSemantics getTreeSemantics() {
+	public TreeSemantics getTreeSemantics() throws SAXException {
 		if (stcs != null)
 			return stcs;
 		else {

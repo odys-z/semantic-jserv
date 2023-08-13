@@ -22,7 +22,6 @@ import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.dbsync.DBSyncReq.A;
 import io.oz.jserv.docsync.SynState;
 import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 import io.oz.jserv.docsync.SyncRobot;
@@ -88,7 +87,7 @@ public class ClobEntity {
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn, usr.deviceId(), body.clientpath, usr);
 
-		syntype typ = body.a().equals(A.pushClobStart) ? syntype.push : syntype.pull;
+//		syntype typ = body.a().equals(A.pushClobStart) ? syntype.push : syntype.pull;
 		SynEntity e = entresolve.onStart(body, usr, meta)
 				// .synTask(new SynTask(typ))
 				.check(conn, (DBSynsactBuilder) st, body.entSubscribes());

@@ -23,8 +23,6 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 
-// import static io.odysz.common.LangExt.isblank;
-
 /**
  * A clean tasks page corresponding to an entity's cleaning tasks for ext-table.
  * <pre>

@@ -42,7 +42,6 @@ import io.oz.album.tier.AlbumReq.A;
 import io.oz.sandbox.protocol.Sandport;
 import io.oz.sandbox.utils.SandFlags;
 
-@SuppressWarnings("deprecation")
 @WebServlet(description = "Semantic sessionless: Album", urlPatterns = { "/album.less" })
 public class AlbumTier extends ServPort<AlbumReq> {
 	private static final long serialVersionUID = 1L;
@@ -87,55 +86,16 @@ public class AlbumTier extends ServPort<AlbumReq> {
 	@Override
 	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     	String range = request.getHeader("Range");
+		super.doHead(request, response);
 
     	if (!isblank(range))
-    		Docs206.get206Head(request, response, robot);
-    	else super.doHead(request, response);
+			try {
+				Docs206.get206Head(request, response);
+			} catch (SsException e) {
+				
+			}
+		else super.doHead(request, response);
 	}
-
-	/**
-	 * Chrome request header for MP4
-	 * <pre>
-	Accept: * / *
-	Accept-Encoding: identity;q=1, *;q=0
-	Accept-Language: en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6
-	Connection: keep-alive
-	Host: localhost:8081
-	Range: bytes=0-
-	Referer: http://localhost:8889/
-	Sec-Fetch-Dest: video
-	Sec-Fetch-Mode: no-cors
-	Sec-Fetch-Site: same-site
-	User-Agent: Mozilla/5.0 ...
-	sec-ch-ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
-	sec-ch-ua-mobile: ?1
-	sec-ch-ua-platform: "Android"
-		</pre>
-	 *
-	 * Chrome request header for MP3<pre>
-	 * 
-	Accept-Encoding:
-	identity;q=1, *;q=0
-	Range:
-	bytes=0-
-	Referer: http://localhost:8889/
-	Sec-Ch-Ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
-	Sec-Ch-Ua-Mobile: ?1
-	Sec-Ch-Ua-Platform: "Android"
-	User-Agent: Mozilla/5.0 ...
-	 </pre>
-	 */
-	@Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-    	String range = request.getHeader("Range");
-    	if (!isblank(range)) {
-    		// FileServlet.download206(request, response);
-
-    		Docs206.get206(request, response, robot);
-    	}
-    	else super.doGet(request, response);
-    }
 
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
@@ -190,15 +150,16 @@ public class AlbumTier extends ServPort<AlbumReq> {
 			String p = DocUtils.resolvExtroot(conn, rs.getString("uri"), meta);
 			if (SandFlags.album)
 				Utils.logi(p);
+
 			try (OutputStream os = resp.getOutputStream()) {
 				Utils.warn("[AlbumTier#download] Upgrade download 206: %s", p);
 				FileStream.sendFile(os, p);
-			} catch (FileNotFoundException e) {
-				Utils.warn("File not found: %s", e.getMessage());
-			} catch (IOException e) {
-				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
-				// This is harmless: https://stackoverflow.com/a/70020526/7362888
-				Utils.warn(e.getMessage());
+//			} catch (FileNotFoundException e) {
+//				Utils.warn("File not found: %s", e.getMessage());
+//			} catch (IOException e) {
+//				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
+//				// This is harmless: https://stackoverflow.com/a/70020526/7362888
+//				Utils.warn(e.getMessage());
 			}
 		}
 	}

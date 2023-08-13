@@ -7,6 +7,13 @@ import java.util.ArrayList;
 import io.odysz.anson.Anson;
 import io.odysz.module.rs.AnResultset;
 
+/**
+ * TODO  to be renamed to PhotoCollect,
+ * 
+ * see Anclient/js/anreact/src/photo-gallery/src/tier/photo-rec.ts
+ * 
+ * @author Ody
+ */
 public class Collect extends Anson {
 
 	String tags;

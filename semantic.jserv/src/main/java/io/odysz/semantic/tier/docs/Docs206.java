@@ -55,6 +55,8 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jserv.JSingleton;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -112,18 +114,17 @@ public abstract class Docs206 {
 	 * [2] HTTP 206: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/206 <br>
 	 * [3] Example: https://balusc.omnifaces.org/2009/02/fileservlet-supporting-resume-and.html <br>
 	 * 
-	 * @param request
-	 * @param response
-	 * @return ranges
+	 * @param req
+	 * @param resp
+	 * @return range headers
 	 * @throws IOException
-	 * @throws SemanticException
-	 * @throws TransException
-	 * @throws SQLException
+	 * @throws SsException
 	 */
-	public static List<Range> get206Head(HttpServletRequest req, HttpServletResponse resp, IUser usr)
-			throws IOException {
+	public static List<Range> get206Head(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException, SsException {
 		AnsonMsg<DocsReq> msg = ansonMsg(req); 
 		try {
+			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			return replyHeaders(req, resp, msg, usr);
 		} catch (IOException | TransException | SQLException e) {
 			e.printStackTrace();
@@ -153,10 +154,11 @@ public abstract class Docs206 {
 		}
 	}
 
-	public static void get206(HttpServletRequest req, HttpServletResponse resp, IUser usr)
-			throws IOException {
+	public static void get206(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException, SsException {
 		try {
-			AnsonMsg<DocsReq> msg = ansonMsg(req); 
+			AnsonMsg<DocsReq> msg = ansonMsg(req);
+			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			List<Range> ranges = replyHeaders(req, resp, msg, usr);
 			Resource resource = new Resource(getDoc(req, msg.body(0), st, usr), msg.body(0).docId);
 			writeContent(resp, resource, ranges, "");
@@ -317,7 +319,6 @@ public abstract class Docs206 {
 		}
 	}
 
-	
 	/**
 	 * Returns true if it's a conditional request which must return 304.
 	 */

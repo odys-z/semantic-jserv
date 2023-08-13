@@ -25,9 +25,11 @@ import io.odysz.transact.x.TransException;
  * 
  * <h6>This should be moved to framework with test</h6>
  * 
- * @deprecated since 1.5.0, upload is replaced by PushBlocks(),
- * download is replaced by {@link Docs206}#get206().
+ * Since 1.4.28, upload is replaced by PushBlocks(), and resumable
+ * downloading is replaced by {@link Docs206}#get206(), but direct steam by
+ * java client is served here.
  * 
+ * @since 1.4.28
  * @author Ody Zhou
  */
 public class FileStream {

@@ -1,9 +1,7 @@
 package io.oz.jserv.dbsync;
 
 import java.util.ArrayList;
-import java.util.List;
 
-import io.odysz.jclient.tier.Tierec;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 
