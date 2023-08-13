@@ -12,6 +12,7 @@ import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
@@ -82,19 +83,19 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		} };
 	}
 
-//	@Override
-//	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//		super.doHead(request, response);
-////    	String range = request.getHeader("Range");
-////
-////    	if (!isblank(range))
-////			try {
-////				Docs206.get206Head(request, response);
-////			} catch (SsException e) {
-////				
-////			}
-////		else super.doHead(request, response);
-//	}
+	@Override
+	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    	String range = request.getHeader("Range");
+		super.doHead(request, response);
+
+    	if (!isblank(range))
+			try {
+				Docs206.get206Head(request, response);
+			} catch (SsException e) {
+				
+			}
+		else super.doHead(request, response);
+	}
 
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
@@ -149,15 +150,16 @@ public class AlbumTier extends ServPort<AlbumReq> {
 			String p = DocUtils.resolvExtroot(conn, rs.getString("uri"), meta);
 			if (SandFlags.album)
 				Utils.logi(p);
+
 			try (OutputStream os = resp.getOutputStream()) {
 				Utils.warn("[AlbumTier#download] Upgrade download 206: %s", p);
 				FileStream.sendFile(os, p);
-			} catch (FileNotFoundException e) {
-				Utils.warn("File not found: %s", e.getMessage());
-			} catch (IOException e) {
-				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
-				// This is harmless: https://stackoverflow.com/a/70020526/7362888
-				Utils.warn(e.getMessage());
+//			} catch (FileNotFoundException e) {
+//				Utils.warn("File not found: %s", e.getMessage());
+//			} catch (IOException e) {
+//				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
+//				// This is harmless: https://stackoverflow.com/a/70020526/7362888
+//				Utils.warn(e.getMessage());
 			}
 		}
 	}

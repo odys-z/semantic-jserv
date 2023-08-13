@@ -59,21 +59,11 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			try {
 				Docs206.get206Head(request, response);
 			} catch (SsException e) {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
 			}
 		else super.doHead(request, response);
 	}
 	
-//	@Override
-//    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-//            throws ServletException, IOException {
-//    	String range = request.getHeader("Range");
-//    	if (!isblank(range)) {
-//    		Docs206.get206(request, response, robot);
-//    	}
-//    	else super.doGet(request, response);
-//    }
-
 	/**
 	 * Since 1.4.28, semantic.jserv support for Range header for all ports, which is critical for 
 	 * some steam features a client side, such as resume downloading or play back from a position.
@@ -118,6 +108,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 				Docs206.get206(req, resp);
 			} catch (SsException e) {
 				write(resp, err(MsgCode.exSession, e.getMessage()));
+				resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 			}
 			return;
     	}

@@ -319,7 +319,6 @@ public abstract class Docs206 {
 		}
 	}
 
-	
 	/**
 	 * Returns true if it's a conditional request which must return 304.
 	 */
