@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
   <artifactId>album-lib</artifactId>
-  <version>0.4.29</version>
+  <version>0.4.30</version>
   <name>Album Common Lib</name>
   <description>Album common lib for Android client and jserv</description>
   <url>https://odys-z.github.io</url>
@@ -60,14 +60,14 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>1.4.28</version>
+	  <version>1.4.29</version>
    	</dependency>
 
 
   </dependencies>
 
   <build>
-    <finalName>jserv-album</finalName>
+    <finalName>jserv-album lib</finalName>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
       <plugin>
@@ -192,7 +192,7 @@
 		<version>1.5</version>
 		<executions>
 			<execution>
-			  <id>Jserv Album</id>
+			  <id>Jserv Album Lib</id>
 			  <phase>verify</phase>
 			  <goals>
 				<goal>sign</goal>
