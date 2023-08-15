@@ -67,7 +67,7 @@
   </dependencies>
 
   <build>
-    <finalName>jserv-album</finalName>
+    <finalName>jserv-album lib</finalName>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
       <plugin>
@@ -192,7 +192,7 @@
 		<version>1.5</version>
 		<executions>
 			<execution>
-			  <id>Jserv Album</id>
+			  <id>Jserv Album Lib</id>
 			  <phase>verify</phase>
 			  <goals>
 				<goal>sign</goal>
