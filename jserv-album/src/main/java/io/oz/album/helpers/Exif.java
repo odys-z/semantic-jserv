@@ -67,7 +67,6 @@ public class Exif {
 			AutoDetectParser parser = new AutoDetectParser();
 			Metadata metadata = new Metadata();
 
-			// photo.exif = new ArrayList<String>();
 			photo.exif = new Exifield();
 			parser.parse(stream, handler, metadata);
 			for (String name: metadata.names()) {
@@ -78,7 +77,7 @@ public class Exif {
 				photo.exif.add(name, escape(val));
 
 				try {
-					if (eq("Content-Type", name))
+					if (eq("Content-Type", name) && isblank(photo.mime)) // can be error
 						photo.mime = val; 
 					else if (eq("Image Height", name)) {
 						if (photo.widthHeight == null) photo.widthHeight = new int[2];
@@ -89,15 +88,14 @@ public class Exif {
 						photo.widthHeight[0] = Integer.valueOf(metadata.get(name));
 					}
 					else if (eq("File Size", name))
-						photo.size = Long.valueOf(split(metadata.get(name), " ")[0]); // 170442 bytes
+						photo.size = Long.valueOf(split(metadata.get(name), " ")[0]);
 				} catch (Exception e) {
 					Utils.warn("Failed for parsing %s : %s,\n%s : %s",
 								photo.device(), photo.fullpath(),
 								name, metadata.get(name));
 				}
 			}
-			
-			
+	
 			Date d = metadata.getDate(TikaCoreProperties.CREATED);
 			if (d != null) {
 				photo.createDate = DateFormat.formatime(d);

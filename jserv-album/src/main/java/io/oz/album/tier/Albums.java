@@ -19,7 +19,6 @@ import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
@@ -43,9 +42,9 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
+import io.odysz.semantic.tier.docs.Docs206;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.Docs206;
 import io.odysz.semantic.tier.docs.FileStream;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
@@ -596,13 +595,17 @@ public class Albums extends ServPort<AlbumReq> {
 				PhotoRec p = new PhotoRec();
 				Exif.parseExif(p, pth);
 
-				if (MimeTypes.isImgVideo(p.mime)) {
+				if (MimeTypes.isAudio(p.mime)) {
+					p.widthHeight = new int[] { 16, 9 };
+					p.wh = new int[] { 16, 9 };
+				}
+				else if (MimeTypes.isImgVideo(p.mime)) {
 					if (isblank(p.widthHeight)) {
 						try { p.widthHeight = Exif.parseWidthHeight(pth); }
 						catch (SemanticException e) {
 							Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
-							p.widthHeight = new int[] { 4, 3 };
-							p.wh = new int[] { 4, 3 };
+							p.widthHeight = new int[] { 3, 4 };
+							p.wh = new int[] { 3, 4 };
 						}
 					}
 					if (isblank(p.wh))
