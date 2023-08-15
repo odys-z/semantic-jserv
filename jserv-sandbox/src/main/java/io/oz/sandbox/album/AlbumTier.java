@@ -4,7 +4,6 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.SQLException;
@@ -12,7 +11,6 @@ import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
@@ -83,19 +81,19 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		} };
 	}
 
-	@Override
-	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    	String range = request.getHeader("Range");
-		super.doHead(request, response);
-
-    	if (!isblank(range))
-			try {
-				Docs206.get206Head(request, response);
-			} catch (SsException e) {
-				
-			}
-		else super.doHead(request, response);
-	}
+//	@Override
+//	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+//    	String range = request.getHeader("Range");
+//		super.doHead(request, response);
+//
+//    	if (!isblank(range))
+//			try {
+//				Docs206.get206Head(request, response);
+//			} catch (SsException e) {
+//				
+//			}
+//		else super.doHead(request, response);
+//	}
 
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
@@ -194,8 +192,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 	}
 
 	private AnDatasetResp insert(AlbumReq jreq) throws TransException, SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new SemanticException("Albumtier#insert(): to be merged with jserv-album.");
 	}
 
 	private AnDatasetResp update(AlbumReq jreq) {
