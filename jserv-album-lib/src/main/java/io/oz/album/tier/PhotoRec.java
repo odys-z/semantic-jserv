@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
 
-import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
@@ -31,18 +30,9 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public String geox;
 	public String geoy;
 
-	// public ArrayList<String> exif;
 	/** usually ignored when sending request */
 	public Exifield exif;
-
-	public Exifield exif() throws AnsonException, IOException {
-//		return exif == null ? null
-//				: exif.stream()
-//				 .collect(Collectors.joining(","));
-
-		// return exif.toBlock(new JsonOpt().escape4DB(true));
-		return exif;
-	}
+	public Exifield exif() { return exif; }
 
 	/** image size */
 	public int[] widthHeight;

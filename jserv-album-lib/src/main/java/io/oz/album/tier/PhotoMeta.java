@@ -10,7 +10,6 @@ public class PhotoMeta extends DocTableMeta {
 	public final String family;
 	public final String geox;
 	public final String geoy;
-	// public String clientname;
 	public final String css;
 
 	public PhotoMeta(String conn) throws TransException {

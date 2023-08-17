@@ -93,25 +93,25 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>1.4.28-SNAPSHOT</version>
+	  <version>1.4.30</version>
    	</dependency>
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>0.1.50-SNAPSHOT</version>
+	    <version>0.1.52</version>
 	</dependency>
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
-	    <version>0.4.28-SNAPSHOT</version>
+	    <version>0.4.30</version>
 	</dependency>
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>albumtier</artifactId>
-	    <version>0.2.3</version>
+	    <version>0.2.4</version>
 	    <scope>test</scope>
 	</dependency>
 

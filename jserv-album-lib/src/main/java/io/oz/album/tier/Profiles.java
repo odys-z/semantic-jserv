@@ -8,6 +8,11 @@ import io.odysz.semantic.jsession.JUser.JUserMeta;
 
 import static io.odysz.common.LangExt.isblank;
 
+/**
+ * User profile.
+ * 
+ * @author odys-z@github.com
+ */
 public class Profiles extends Anson {
 	String uid;
 	String defltAlbum;

@@ -59,7 +59,6 @@ public enum AlbumPort implements IPort {
 	@Override
 	public IJsonable toJson(StringBuffer buf) throws IOException, AnsonException {
 		buf.append('\"');
-		// buf.append(url);
 		buf.append(name());
 		buf.append('\"');
 		return this;
