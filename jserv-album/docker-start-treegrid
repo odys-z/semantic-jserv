@@ -1,5 +1,10 @@
 echo "Ever finished: 'docker build -t album .' ?"
 echo "remove and re-create volume album-treegrid.sqlit? [n]"
+echo "stoping album-treegrid ..."
+
+sudo docker stop album-treegrid
+
+
 read -n 1 -p "y/n:" isdel
 if [ "$isdel" = 'y' ]
 then
