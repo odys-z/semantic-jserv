@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -27,7 +28,9 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
@@ -89,6 +92,13 @@ public class Exif {
 		try (FileInputStream stream = new FileInputStream(f)) {
 			BodyContentHandler handler = new BodyContentHandler();
 			AutoDetectParser parser = new AutoDetectParser(config);
+
+//			{
+//				Map<MediaType, Parser> ps = parser.getParsers();
+//				for (MediaType t : ps.keySet())
+//					Utils.logi("%s, %s", t.getType(), ps.get(t).getClass().getName());
+//			}
+
 			Metadata metadata = new Metadata();
 
 			photo.exif = new Exifield();
@@ -129,9 +139,13 @@ public class Exif {
 				photo.month(fd);
 			}
 
-			if (isblank(photo.widthHeight))
-				photo.widthHeight = new int[]
-					{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)}; // FIXME too brutal
+			if (isblank(photo.widthHeight)) 
+				try {
+					Utils.logi(metadata.names());
+					photo.widthHeight = new int[]
+						// FIXME too brutal
+						{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)};
+				} catch (Exception e) { e.printStackTrace(); }
 
 			if ((eq("90", photo.rotation) || eq("270", photo.rotation)) && gt(photo.widthHeight[0], photo.widthHeight[1]))
 				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);

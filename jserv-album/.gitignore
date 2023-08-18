@@ -19,6 +19,7 @@ volume/2022*
 volume-0.*
 test/results
 test/res/ignore*.*
+test/res/C000000*.mp4
 .extract
 ./
 dist

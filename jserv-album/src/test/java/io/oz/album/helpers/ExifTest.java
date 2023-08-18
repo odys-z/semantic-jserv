@@ -6,9 +6,13 @@ import static io.odysz.common.LangExt.isblank;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.Parser;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
@@ -89,6 +93,13 @@ class ExifTest {
 
 		Exif.init(FilenameUtils.concat(Paths.get(".").toAbsolutePath().toString(), "src/main/webapp/WEB-INF"));
 		
+		{
+			AutoDetectParser parser = new AutoDetectParser(Exif.config);
+			Map<MediaType, Parser> ps = parser.getParsers();
+			for (MediaType t : ps.keySet())
+				Utils.logi("%s, %s", t.getType(), ps.get(t).getClass().getName());
+		}
+		
 		PhotoRec p = new PhotoRec();
 		Exif.parseExif(p, "test/res/C0000006 IMG_20230816_111535.jpg");
 		
@@ -97,6 +108,18 @@ class ExifTest {
 		assertEquals(4896, p.widthHeight[0]);
 		assertEquals(6528, p.widthHeight[1]);
 		assertTrue(isblank(p.rotation));
+		
+		/** This mp4 is too large and the test result won't guarantee the same results in runtime
+		 * (different runs with diffrenct results)
+		p = new PhotoRec();
+		Exif.parseExif(p, "test/res/C0000002 VID_20230816_135143.mp4");
+		
+		assertEquals(9, p.wh[0]);
+		assertEquals(16, p.wh[1]);
+		assertEquals(1920, p.widthHeight[0]);
+		assertEquals(1080, p.widthHeight[1]);
+		assertEquals("90", p.rotation);
+		*/
 	}
 
 }
