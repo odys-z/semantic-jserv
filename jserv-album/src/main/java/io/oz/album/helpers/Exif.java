@@ -1,5 +1,12 @@
 package io.oz.album.helpers;
 
+import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.filesize;
+import static io.odysz.common.LangExt.gt;
+import static io.odysz.common.LangExt.imagesize;
+import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.lt;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.util.Date;
 import java.util.Iterator;
 
 import javax.imageio.ImageIO;
@@ -27,17 +33,11 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.JsonOpt;
 import io.odysz.common.CheapMath;
-import io.odysz.common.DateFormat;
 import io.odysz.common.MimeTypes;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.tier.Exifield;
 import io.oz.album.tier.PhotoRec;
-
-import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.filesize;
-import static io.odysz.common.LangExt.gt;
-import static io.odysz.common.LangExt.isblank;
 
 /**
  * Exif data format helper.
@@ -106,11 +106,11 @@ public class Exif {
 						photo.mime = val; 
 					else if (eq("Image Height", name)) {
 						if (photo.widthHeight == null) photo.widthHeight = new int[2];
-						photo.widthHeight[1] = Integer.valueOf(val);
+						photo.widthHeight[1] = imagesize(val);
 					}
 					else if (eq("Image Width", name)) {
 						if (photo.widthHeight == null) photo.widthHeight = new int[2];
-						photo.widthHeight[0] = Integer.valueOf(val);
+						photo.widthHeight[0] = imagesize(val);
 					}
 					else if (eq("File Size", name))
 						photo.size = filesize(val);
@@ -123,21 +123,19 @@ public class Exif {
 				}
 			}
 	
-			Date d = metadata.getDate(TikaCoreProperties.CREATED);
-			if (d != null) {
-				photo.createDate = DateFormat.formatime(d);
-				photo.month(d);
-			}
-			else {
+			if (isblank(photo.createDate)) {
 				Path file = Paths.get(filepath);
 				FileTime fd = (FileTime) Files.getAttribute(file, "creationTime");
 				photo.month(fd);
 			}
 
-			photo.widthHeight = new int[]
-				{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)}; // FIXME too brutal
+			if (isblank(photo.widthHeight))
+				photo.widthHeight = new int[]
+					{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)}; // FIXME too brutal
 
 			if ((eq("90", photo.rotation) || eq("270", photo.rotation)) && gt(photo.widthHeight[0], photo.widthHeight[1]))
+				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
+			else if ((eq("0", photo.rotation) || eq("180", photo.rotation)) && lt(photo.widthHeight[0], photo.widthHeight[1]))
 				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
 			else
 				photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
@@ -151,7 +149,7 @@ public class Exif {
 			// another way other than by Tika
 			else if (MimeTypes.isImgVideo(photo.mime) && isblank(photo.widthHeight)) {
 				try {
-					photo.rotation = "0";
+					// photo.rotation = "0";
 					photo.widthHeight = Exif.parseWidthHeight(filepath);
 				}
 				catch (SemanticException e) {
@@ -173,7 +171,9 @@ public class Exif {
 
 			photo.geoy = metadata.get(TikaCoreProperties.LATITUDE);
 			if (photo.geoy == null) photo.geoy = geoy0;
-		} catch (Exception ex) { }
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
 
 		return photo;
 	}

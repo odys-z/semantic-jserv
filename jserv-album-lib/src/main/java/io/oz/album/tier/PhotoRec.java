@@ -62,8 +62,8 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 						? CheapMath.reduceFract(widthHeight[1], widthHeight[0])
 						: CheapMath.reduceFract(widthHeight[0], widthHeight[1]);
 
-			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s]}",
-						widthHeight[0], widthHeight[1], wh[0], wh[1]);
+			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s], \"roation\": \"%s\"}",
+						widthHeight[0], widthHeight[1], wh[0], wh[1], isblank(rotation) ? "" : rotation);
 		}
 		else return "";
 	}

@@ -2,12 +2,19 @@ package io.oz.album.helpers;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static io.odysz.common.CheapMath.*;
+import static io.odysz.common.LangExt.isblank;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
+import org.apache.commons.io_odysz.FilenameUtils;
+import org.apache.tika.exception.TikaException;
 import org.junit.jupiter.api.Test;
+import org.xml.sax.SAXException;
 
+import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.album.tier.PhotoRec;
 
 class ExifTest {
 	@Test
@@ -25,8 +32,8 @@ class ExifTest {
 		
 		wh = reduceFract(wh[0], wh[1]);
 		
-		assertEquals(1, wh[0]);
-		assertEquals(2, wh[1]);
+		assertEquals(2, wh[0]);
+		assertEquals(1, wh[1]);
 
 		wh = Exif.parseWidthHeight("test/res/ca-us.png");
 		
@@ -45,8 +52,8 @@ class ExifTest {
 		
 		wh = reduceFract(wh[0], wh[1]);
 		
-		assertEquals(40, wh[0]);
-		assertEquals(71, wh[1]);
+		assertEquals(71, wh[0]);
+		assertEquals(40, wh[1]);
 	
 		wh = Exif.parseWidthHeight("test/res/182x121.png");
 		
@@ -55,8 +62,8 @@ class ExifTest {
 		
 		wh = reduceFract(wh[0], wh[1]);
 		
-		assertEquals(121, wh[0]);
-		assertEquals(182, wh[1]);
+		assertEquals(182, wh[0]);
+		assertEquals(121, wh[1]);
 
 		wh = Exif.parseWidthHeight("test/res/no-exif.jpg");
 		
@@ -65,8 +72,31 @@ class ExifTest {
 		
 		wh = reduceFract(wh[0], wh[1]);
 		
-		assertEquals(9, wh[0]);
-		assertEquals(16, wh[1]);
+		assertEquals(16, wh[0]);
+		assertEquals(9, wh[1]);
+		
+		/** more to be tested
+		 * see test-case-raw-exif.txt
+		 */
+	}
+	
+	@Test
+	void testTika() throws IOException, TikaException, SAXException {
+		
+        Utils.logi(Paths.get(".").toAbsolutePath().toString());
+
+		Utils.logi(FilenameUtils.concat(Paths.get(".").toAbsolutePath().toString(), "src/main/webapp/WEB-INF"));
+
+		Exif.init(FilenameUtils.concat(Paths.get(".").toAbsolutePath().toString(), "src/main/webapp/WEB-INF"));
+		
+		PhotoRec p = new PhotoRec();
+		Exif.parseExif(p, "test/res/C0000006 IMG_20230816_111535.jpg");
+		
+		assertEquals(3, p.wh[0]);
+		assertEquals(4, p.wh[1]);
+		assertEquals(4896, p.widthHeight[0]);
+		assertEquals(6528, p.widthHeight[1]);
+		assertTrue(isblank(p.rotation));
 	}
 
 }
