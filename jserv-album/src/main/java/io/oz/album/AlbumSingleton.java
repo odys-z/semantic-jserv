@@ -7,6 +7,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
+import org.apache.tika.exception.TikaException;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
@@ -15,6 +16,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.transact.x.TransException;
+import io.oz.album.helpers.Exif;
 import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.docsync.Docsyncer;
 import io.oz.jserv.docsync.Synode;
@@ -28,7 +30,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 	public void contextInitialized(ServletContextEvent sce) {
 
 		try {
-			super.onInitialized(sce);
+			String webinf = super.onInitialized(sce);
 			
 			AnsonMsg.understandPorts(AlbumPort.album);
 			
@@ -39,7 +41,9 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			// MVP 0.2.1, temporary way of create meta
 			Docsyncer.metas(Connects.getMeta(Connects.defltConn()));
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
-		} catch (TransException | SAXException | IOException | SQLException | AnsonException | SsException e) {
+			
+			Exif.init(webinf);
+		} catch (TransException | SAXException | TikaException | IOException | SQLException | AnsonException | SsException e) {
 			e.printStackTrace();
 		}
 	}

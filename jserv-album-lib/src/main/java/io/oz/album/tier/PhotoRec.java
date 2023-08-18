@@ -1,6 +1,7 @@
 package io.oz.album.tier;
 
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.eq;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,6 +12,7 @@ import java.text.ParseException;
 import java.util.Date;
 
 import io.odysz.common.AESHelper;
+import io.odysz.common.CheapMath;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta.Share;
@@ -38,6 +40,8 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public int[] widthHeight;
 	/** reduction of image size */
 	public int[] wh;
+	
+	public String rotation;
 
 	/**
 	 * Composed css json, saved as string.
@@ -52,9 +56,15 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	 * @return string of json for saving
 	 */
 	public String css() {
-		if (widthHeight != null)
-			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s]}",
-				widthHeight[0], widthHeight[1], wh[0], wh[1]);
+		if (widthHeight != null) {
+			if (isblank(wh))
+				wh = eq(rotation, "90") || eq(rotation, "270") 
+						? CheapMath.reduceFract(widthHeight[1], widthHeight[0])
+						: CheapMath.reduceFract(widthHeight[0], widthHeight[1]);
+
+			return String.format("{\"type\":\"io.oz.album.tier.PhotoCSS\", \"size\":[%s,%s,%s,%s], \"roation\": \"%s\"}",
+						widthHeight[0], widthHeight[1], wh[0], wh[1], isblank(rotation) ? "" : rotation);
+		}
 		else return "";
 	}
 

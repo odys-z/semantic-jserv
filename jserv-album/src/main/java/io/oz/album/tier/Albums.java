@@ -25,9 +25,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.CheapMath;
 import io.odysz.common.EnvPath;
-import io.odysz.common.MimeTypes;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -595,28 +593,6 @@ public class Albums extends ServPort<AlbumReq> {
 				PhotoRec p = new PhotoRec();
 				Exif.parseExif(p, pth);
 
-				if (MimeTypes.isAudio(p.mime)) {
-					p.widthHeight = new int[] { 16, 9 };
-					p.wh = new int[] { 16, 9 };
-				}
-				else if (MimeTypes.isImgVideo(p.mime)) {
-					if (isblank(p.widthHeight)) {
-						try { p.widthHeight = Exif.parseWidthHeight(pth); }
-						catch (SemanticException e) {
-							Utils.warn("Exif parse failed and can't parse width & height: %s", pth);
-							p.widthHeight = new int[] { 3, 4 };
-							p.wh = new int[] { 3, 4 };
-						}
-					}
-					if (isblank(p.wh))
-						p.wh = CheapMath.reduceFract(p.widthHeight[0], p.widthHeight[1]);
-					if (p.widthHeight[0] > p.widthHeight[1]) {
-						int w = p.wh[0];
-						p.wh[0] = p.wh[1];
-						p.wh[1] = w;
-					}
-				}
-
 				Update u = st
 					.update(m.tbl, usr)
 					.nv(m.css, p.css())
@@ -639,7 +615,7 @@ public class Albums extends ServPort<AlbumReq> {
 						u.nv(m.mime, p.mime);
 				u.u(stx);
 			}
-		} catch (TransException | SQLException | IOException e) {
+		} catch (TransException | SQLException e) {
 			e.printStackTrace();
 		}})
 		.start();
