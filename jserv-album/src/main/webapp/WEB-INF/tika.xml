@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<properties>
+  <parsers>
+    <parser class="org.apache.tika.parser.DefaultParser">
+    </parser>
+    <parser class="org.apache.tika.parser.mp4.MP4Parser">
+      <mime-exclude>video/mp4</mime-exclude>
+    </parser>
+    <parser class="org.apache.tika.parser.external.CompositeExternalParser">
+      <mime>video/mp4</mime>
+    </parser>
+  </parsers>
+</properties>
