@@ -26,6 +26,7 @@ public class JSingleton {
 	public static DATranscxt defltScxt;
 	private static ISessionVerifier ssVerier;
 	private static String webINF;
+	public static boolean health;
 
 	public void onDestroyed(ServletContextEvent arg0) {
 		AnSession.stopScheduled(5);

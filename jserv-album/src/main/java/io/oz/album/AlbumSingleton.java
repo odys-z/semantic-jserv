@@ -43,8 +43,10 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
 			
 			Exif.init(webinf);
+			JSingleton.health = true;
 		} catch (TransException | SAXException | TikaException | IOException | SQLException | AnsonException | SsException e) {
 			e.printStackTrace();
+			JSingleton.health = false;
 		}
 	}
 
