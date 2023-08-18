@@ -15,23 +15,29 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 
+import org.apache.commons.io_odysz.FilenameUtils;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.sax.BodyContentHandler;
+import org.xml.sax.SAXException;
 
 import io.odysz.anson.JsonOpt;
 import io.odysz.common.CheapMath;
 import io.odysz.common.DateFormat;
+import io.odysz.common.MimeTypes;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.tier.Exifield;
 import io.oz.album.tier.PhotoRec;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.filesize;
+import static io.odysz.common.LangExt.gt;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.split;
 
 /**
  * Exif data format helper.
@@ -47,6 +53,24 @@ import static io.odysz.common.LangExt.split;
 public class Exif {
 	static String geox0 = "0";
 	static String geoy0 = "0";
+
+	protected static String cfgFile = "tika.xml";
+	static TikaConfig config;
+	/**
+	 * @param xml
+	 * @return "(... xml)/tika.xml"
+	 * @throws TikaException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	public static String init(String xml) throws TikaException, IOException, SAXException {
+		// TikaConfig config = new TikaConfig("/path/to/tika.xml");
+
+		String absPath = FilenameUtils.concat(xml, cfgFile);
+		Utils.logi("Loading tika configuration:\n%s", absPath);
+		config = new TikaConfig(absPath);
+		return absPath;
+	}
 	
 	public static void geoxy0(int x, int y) {
 		geox0 = String.valueOf(x);
@@ -64,35 +88,38 @@ public class Exif {
 		photo.size = f.length();
 		try (FileInputStream stream = new FileInputStream(f)) {
 			BodyContentHandler handler = new BodyContentHandler();
-			AutoDetectParser parser = new AutoDetectParser();
+			AutoDetectParser parser = new AutoDetectParser(config);
 			Metadata metadata = new Metadata();
 
 			photo.exif = new Exifield();
 			parser.parse(stream, handler, metadata);
 			for (String name: metadata.names()) {
 				String val = metadata.get(name); 
+				val = escape(val);
 				// whitewash some faulty string
 				// Huawei p30 take pics with 
 				// name: ICC:Profile Description, val: "1 enUS(sRGB\0\0..." where length = 52
-				photo.exif.add(name, escape(val));
+				photo.exif.add(name, val);
 
 				try {
 					if (eq("Content-Type", name) && isblank(photo.mime)) // can be error
 						photo.mime = val; 
 					else if (eq("Image Height", name)) {
 						if (photo.widthHeight == null) photo.widthHeight = new int[2];
-						photo.widthHeight[1] = Integer.valueOf(metadata.get(name));
+						photo.widthHeight[1] = Integer.valueOf(val);
 					}
 					else if (eq("Image Width", name)) {
 						if (photo.widthHeight == null) photo.widthHeight = new int[2];
-						photo.widthHeight[0] = Integer.valueOf(metadata.get(name));
+						photo.widthHeight[0] = Integer.valueOf(val);
 					}
 					else if (eq("File Size", name))
-						photo.size = Long.valueOf(split(metadata.get(name), " ")[0]);
+						photo.size = filesize(val);
+					else if (eq("Rotation", name))
+						photo.rotation = val;
 				} catch (Exception e) {
-					Utils.warn("Failed for parsing %s : %s,\n%s : %s",
+					Utils.warn("Failed for parsing devide: %s, path: %s,\nname: %s, value: %s",
 								photo.device(), photo.fullpath(),
-								name, metadata.get(name));
+								name, val);
 				}
 			}
 	
@@ -108,9 +135,38 @@ public class Exif {
 			}
 
 			photo.widthHeight = new int[]
-				{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)};
+				{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)}; // FIXME too brutal
 
-			photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
+			if ((eq("90", photo.rotation) || eq("270", photo.rotation)) && gt(photo.widthHeight[0], photo.widthHeight[1]))
+				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
+			else
+				photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
+			
+			// force audio
+			if (MimeTypes.isAudio(photo.mime)) {
+				photo.widthHeight = new int[] { 16, 9 };
+				photo.wh = new int[] { 16, 9 };
+				photo.rotation = "0";
+			}
+			// another way other than by Tika
+			else if (MimeTypes.isImgVideo(photo.mime) && isblank(photo.widthHeight)) {
+				try {
+					photo.rotation = "0";
+					photo.widthHeight = Exif.parseWidthHeight(filepath);
+				}
+				catch (SemanticException e) {
+					Utils.warn("Exif parse failed and can't parse width & height: %s", filepath);
+					if (isblank(photo.widthHeight)) {
+						photo.widthHeight = new int[] { 3, 4 };
+						photo.wh = new int[] { 3, 4 };
+					}
+				}
+			}
+
+			if (isblank(photo.wh) && !isblank(photo.widthHeight))
+				photo.wh = eq(photo.rotation, "90") || eq(photo.rotation, "270") 
+					? CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0])
+					: CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 
 			photo.geox = metadata.get(TikaCoreProperties.LONGITUDE);
 			if (photo.geox == null) photo.geox = geox0;
@@ -179,8 +235,6 @@ public class Exif {
 	public static String escape(String val, JsonOpt ...jopt) {
 		StringBuilder sb = new StringBuilder(val.length());
 		for (final int cp : codePointIterator(val)) {
-//			if (jopt.escape4DB && cp == '\'')
-//				sb.append("''");
 			if (mustEscape(cp))
 				break;
 			else

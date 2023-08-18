@@ -175,14 +175,9 @@ public class Synode extends ServPort<DocsReq> {
 		}
 	}
 
-//	public static void addSyncTable(TableMeta m) {
-//		metas.put(m.tbl, m);
-//	}
-
 	@Override
 	protected void onGet(AnsonMsg<DocsReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		
 	}
 
 	@Override

@@ -32,7 +32,15 @@ public class JSingleton {
 		Connects.close();
 	}
 
-	public void onInitialized(ServletContextEvent evt)
+	/**
+	 * @param evt
+	 * @return configure's root path, e.g. /WEB-INF
+	 * @throws SemanticException
+	 * @throws SAXException
+	 * @throws IOException
+	 * @throws SQLException
+	 */
+	public String onInitialized(ServletContextEvent evt)
 			throws SemanticException, SAXException, IOException, SQLException {
 		Utils.printCaller(false);
 		Utils.logi("JSingleton initializing...");
@@ -41,6 +49,7 @@ public class JSingleton {
 		webINF = ctx.getRealPath("/WEB-INF");
 		String root = ctx.getRealPath(".");
 		initJserv(root, webINF, ctx.getInitParameter("io.oz.root-key"));
+		return webINF;
 	}
 	
 	/**For initializing from Jetty - it's not able to find root path?
