@@ -72,7 +72,6 @@ public class SysMenu extends SemanticTree {
 			IUser usr = verifier.verify(msg.header());
 
 			AnDatasetReq jreq = msg.body(0);
-			// jreq.treeSemtcs(menuSemtcs);
 
 			String sk = jreq.sk();
 			jreq.sqlArgs = new String[] {usr.uid()};

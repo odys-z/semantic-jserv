@@ -24,10 +24,10 @@
 
   <dependencies>
   	<dependency>
-     	<groupId>org.junit.jupiter</groupId>
-    	<artifactId>junit-jupiter-engine</artifactId>
-    	<version>5.3.1</version>
-    	<scope>test</scope>
+		<groupId>org.junit.jupiter</groupId>
+		<artifactId>junit-jupiter-engine</artifactId>
+		<version>5.3.1</version>
+		<scope>test</scope>
     </dependency>
 
     <dependency>
@@ -42,9 +42,8 @@
 			to update immediately. -->
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>1.5.0-SNAPSHOT</version>
+	    <version>1.4.32</version>
    	</dependency>
-
 
 	<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
 	<dependency>
