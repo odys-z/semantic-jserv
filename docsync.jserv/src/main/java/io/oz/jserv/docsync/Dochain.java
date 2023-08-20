@@ -77,7 +77,7 @@ public class Dochain {
 		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
 
 		String saveFolder = profiles.synodeFolder(body, usr);
-		if (isblank(saveFolder, "/", "\\\\", ":", "."))
+		if (isblank(saveFolder, "/", "\\\\", ":", "\\."))
 			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
 					body.clientpath(), usr.uid(), profiles.getClass().getName());
 		

@@ -165,7 +165,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			HttpServletResponse resp, Map<String, String[]> map) throws IOException, ServletException {
 		if (ServFlags.port)
 			e.printStackTrace();
-		write(resp, err(MsgCode.exSemantic, e.getMessage() + "\n Usually this is an error raised from browser visiting."));
+		write(resp, err(MsgCode.exSemantic, "%s\n%s", e.getMessage(),
+				"Usually this is an error raised from browser visiting."));
 	}
 
 	@Override

@@ -226,7 +226,7 @@ public class DocsReq extends AnsonBody {
 
 	public DocsReq blockStart(IFileDescriptor file, SessionInf usr) throws SemanticException {
 		this.device = usr.device;
-		if (isblank(this.device, ".", "/"))
+		if (isblank(this.device, "\\.", "/"))
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
 		clientpath(file.fullpath()); 
