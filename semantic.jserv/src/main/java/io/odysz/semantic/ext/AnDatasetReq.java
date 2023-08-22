@@ -15,7 +15,12 @@ public class AnDatasetReq extends AnQueryReq {
 		public static final String tagtree  = "tagtree";
 		public static final String tagtrees = "tagtrees";
 		public static final String untagtree= "untagtree";
-		public static final String sqltree  = "sqltree";
+		/**
+		 * @since 1.4.32 This act is supported by {@link SemanticTree},
+		 * which will load the dataset, structure trees according to semantics,
+		 * then format tree indents.
+		 */
+		public static final String ds  = "sqltree";
 	}
 
 	String sk;

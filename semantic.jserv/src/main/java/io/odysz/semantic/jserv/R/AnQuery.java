@@ -8,7 +8,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
-import io.odysz.common.dbtype;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -28,6 +27,8 @@ import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Query.Ix;
 import io.odysz.transact.sql.parts.select.JoinTabl.join;
 import io.odysz.transact.x.TransException;
+
+import static io.odysz.common.LangExt.len;
 
 /**CRUD read service.
  * @author odys-z@github.com
@@ -100,16 +101,18 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	protected static Query buildSelct(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = st.select(msg.mtabl, msg.mAlias);
 		
-		// exclude sqlite paging
-		if (msg.page >= 0 && msg.pgsize > 0
-			&& dbtype.sqlite == Connects.driverType(
-				// msg.conn() == null ? Connects.defltConn() : msg.conn()
-				Connects.uri2conn(msg.uri())
-			)) {
-			Utils.warn("JQuery#buildSelct(): Requesting data from sqlite, but it's not easy to page in sqlite. So page and size are ignored: %s, %s.",
-					msg.page, msg.pgsize);
-		}
-		else selct.page(msg.page, msg.pgsize);
+//		// exclude sqlite paging
+//		if (msg.page >= 0 && msg.pgsize > 0
+//			&& dbtype.sqlite == Connects.driverType(
+//				// msg.conn() == null ? Connects.defltConn() : msg.conn()
+//				Connects.uri2conn(msg.uri())
+//			)) {
+//			Utils.warn("JQuery#buildSelct(): Requesting data from sqlite, but it's not easy to page in sqlite. So page and size are ignored: %s, %s.",
+//					msg.page, msg.pgsize);
+//		}
+//		else selct.page(msg.page, msg.pgsize);
+
+		selct.page(msg.page, msg.pgsize);
 
 		if (msg.exprs != null && msg.exprs.size() > 0)
 			 for (String[] col : msg.exprs)
@@ -148,9 +151,13 @@ public class AnQuery extends ServPort<AnQueryReq> {
 		
 		if (msg.where != null && msg.where.size() > 0)
 			for (Object[] cond : msg.where)
-				selct.where((String)cond[Ix.predicateOper],
-							(String)cond[Ix.predicateL],
-							(String)cond[Ix.predicateR]);
+				if (len(cond) == 2)
+					selct.whereEq((String)cond[0],
+								  (String)cond[1]);
+				else
+					selct.where((String)cond[Ix.predicateOper],
+								(String)cond[Ix.predicateL],
+								(String)cond[Ix.predicateR]);
 		// GROUP BY
 		selct.groupby(msg.groups);
 		

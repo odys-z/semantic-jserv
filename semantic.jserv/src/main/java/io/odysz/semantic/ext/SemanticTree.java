@@ -32,6 +32,7 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.tier.DatasetierReq;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -125,10 +126,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		if (jreq.sk == null || jreq.sk.trim().length() == 0)
 			throw new SQLException("Sementic key must present for s-tree.serv.");
 
-		// String semantic = Configs.getCfg("tree-semantics", semanticKey);
-		AnsonMsg<? extends AnsonResp> r;
-		// t branches: reforest | retree | ds | <empty>
-		// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=reforest
+		AnsonMsg<? extends AnsonResp> r = null;
 		if (A.reforest.equals(a))
 			r = rebuildForest(connId, getTreeSemtcs(jreq), usr);
 		// http://127.0.0.1:8080/ifire/s-tree.serv?sk=easyuitree-area&t=retree&root=002
@@ -147,27 +145,27 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			String root = jreq.root();
 			r = untagSubtree(connId, root, getTreeSemtcs(jreq), usr);
 		}
-		else {
-			if (A.sqltree.equals(a)) {
-				// ds (tree configured in dataset.xml)
-				List<?> lst = DatasetCfg.loadStree(connId,
-						jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-				AnDatasetResp re = new AnDatasetResp(null).forest(lst);
-				r = ok(re);
-			}
-			else {
-				// empty (build tree from general query results with semantic of 'sk')
-				JsonOpt opts = jmsg.opts();
-				r = loadSTree(connId, jreq, getTreeSemtcs(jreq), usr, opts);
-			}
+//		else if (A.ds.equals(a)) {
+//			List<?> lst = DatasetCfg.loadStree(connId,
+//				jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
+//			AnDatasetResp re = new AnDatasetResp(null).forest(lst);
+//			r = ok(re);
+//		}
+//		else if (DatasetierReq.A.stree.equals(a)) {
+		else if (DatasetierReq.A.stree.equals(a) || A.ds.equals(a)) {
+			JsonOpt opts = jmsg.opts();
+			r = loadSTree(connId, jreq, getTreeSemtcs(jreq), usr, opts);
 		}
+		else throw new SemanticException("SemanticTree: request.A is not suppored: %s", a);
 
 		 write(resp, r, jmsg.opts());
 	}
 
-	/**Figure out tree semantics in the following steps:<br>
+	/**
+	 * Figure out tree semantics in the following steps:<br>
 	 * 1. if jreq is not null try get it (may be the client has defined a semantics);<br>
 	 * 2. if req has an 'sk' parameter, load it from dataset.xml - this way can error prone;<br>
+	 * 
 	 * @param jreq
 	 * @return tree's semantics, {@link TreeSemantics}
 	 * @throws SAXException 
@@ -182,7 +180,9 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		return DatasetCfg.getTreeSemtcs(jreq.sk);
 	}
 
-	/**Build s-tree with general query ({@link JQuery#query(QueryReq)}).
+	/**
+	 * Build s-tree with general query ({@link JQuery#query(QueryReq)}).
+	 * 
 	 * @param connId
 	 * @param jreq
 	 * @param treeSmtcs
@@ -195,7 +195,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	 * @throws SsException
 	 * @throws TransException
 	 */
-	private AnsonMsg<AnDatasetResp> loadSTree(String connId, AnDatasetReq jreq, TreeSemantics treeSmtcs, IUser usr, JsonOpt opts)
+	private AnsonMsg<AnDatasetResp> loadSTree(String connId,
+			AnDatasetReq jreq, TreeSemantics treeSmtcs, IUser usr, JsonOpt opts)
 			throws IOException, SQLException, SAXException, SsException, TransException {
 		// for robustness
 		if (treeSmtcs == null)
@@ -223,8 +224,10 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		return msg;
 	}
 
-	/**Rebuild subtree starting at root.<br>
+	/**
+	 * Rebuild subtree starting at root.<br>
 	 * Currently only mysql is supported. You may override this method to adapt to other RDBMS.
+	 * 
 	 * @param connId
 	 * @param rootId
 	 * @param semanticss

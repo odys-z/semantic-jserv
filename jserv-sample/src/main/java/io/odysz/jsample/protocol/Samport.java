@@ -25,8 +25,7 @@ public enum Samport implements IPort {
 	tools("tools.serv"),
 	vec3("vec3.serv"),
 	/** The new experimental serv, extending semantics to the client side */
-	userstier("users.tier"),
-	gpatier("gpa.tier");
+	userstier("users.tier");
 
 	static {
 		JSONAnsonListener.registFactory(Samport.class, 
@@ -38,6 +37,7 @@ public enum Samport implements IPort {
 	private String url;
 	Samport(String v) { url = v; };
 	public String url() { return url; }
+
 	@Override
 	public IPort valof(String pname) throws SemanticException {
 		try {
@@ -48,12 +48,12 @@ public enum Samport implements IPort {
 			catch (IllegalArgumentException ex) {
 				throw new SemanticException(ex.getMessage());
 			}
-			
 		}
 	}
 
 	@Override
-	public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
+	public IJsonable toBlock(OutputStream stream, JsonOpt... opts)
+			throws AnsonException, IOException {
 		stream.write('\"');
 		stream.write(name().getBytes());
 		stream.write('\"');
@@ -66,5 +66,5 @@ public enum Samport implements IPort {
 		buf.append(url);
 		buf.append('\"');
 		return this;
-	}	
+	}
 }
