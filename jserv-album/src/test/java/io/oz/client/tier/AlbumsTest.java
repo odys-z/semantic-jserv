@@ -230,57 +230,6 @@ class AlbumsTest {
 	}
 	 */
 	
-//	@Test
-//	void testSyncImages() throws SemanticException, IOException, GeneralSecurityException, AnsonException, InterruptedException {
-//		String localFolder = "test/res";
-//		String filename = "my.jpg";
-//		String device = "device-2";
-//
-//		SessionClient ssclient = Clients.login("ody", "123456", device);
-//		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
-//
-//		List<IFileDescriptor> imges = new ArrayList<IFileDescriptor>();
-//		imges.add(new IFileDescriptor() {
-//			@Override
-//			public String fullpath() { return FilenameUtils.concat(localFolder, filename); }
-//
-//			@Override
-//			public IFileDescriptor fullpath(String clientpath) throws IOException { return this; }
-//
-//			@Override public String clientname() { return filename; }
-//
-//			@Override public String cdate() { return null; }
-//
-//			@Override public String recId() { return null; }
-//
-//			@Override public String mime() { return null; }
-//
-//			@Override public String device() { return null; }
-//
-//			@Override public String uri() { return null; }
-//		});
-//
-//		try {
-//			tier.syncPhotos((List<? extends IFileDescriptor>)imges, ssclient.ssInfo());
-//			fail("checking duplication failed.");
-//		}
-//		catch (SemanticException e) { }
-//
-//		tier.del(device, FilenameUtils.concat(localFolder, filename));
-//		List<AlbumResp> resp = tier.syncPhotos((List<? extends IFileDescriptor>)imges, ssclient.ssInfo());
-//
-//		String myId = null; 
-//		for (AlbumResp doc : resp) {
-//			myId = doc.photo().recId;
-//			// assertEquals("c-001", doc.photo().collectId()); FXIME collection Id changed?
-//			assertEquals("test/res/my.jpg", doc.photo().fullpath());	
-//		}
-//
-//		Thread.sleep(2000); // wait for exif parsing at server side
-//		AlbumResp rep = tier.selectPhotoRec(myId, errCtx);
-//		assertEquals("2022_03", rep.photo().folder());
-//	}
-
 	@Test
 	void testVideoUp() throws SsException, IOException, GeneralSecurityException, AnsonException, TransException {
 		String localFolder = "test/res";
