@@ -279,7 +279,7 @@ public class Albums extends ServPort<AlbumReq> {
 		// force org-id as first arg
 		PageInf page = isNull(jreq.page)
 				? new PageInf(0, -1, usr.orgId())
-				: eq(jreq.page.condts.get(0), usr.orgId())
+				: eq(jreq.page.arrCondts.get(0), usr.orgId())
 				? jreq.page
 				: jreq.page.insertCondt(usr.orgId());
 

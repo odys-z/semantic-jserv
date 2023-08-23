@@ -81,20 +81,6 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		} };
 	}
 
-//	@Override
-//	protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//    	String range = request.getHeader("Range");
-//		super.doHead(request, response);
-//
-//    	if (!isblank(range))
-//			try {
-//				Docs206.get206Head(request, response);
-//			} catch (SsException e) {
-//				
-//			}
-//		else super.doHead(request, response);
-//	}
-
 	@Override
 	protected void onGet(AnsonMsg<AlbumReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
@@ -213,7 +199,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 		// force org-id as first arg
 		PageInf page = isNull(jreq.page)
 				? new PageInf(0, -1, usr.orgId())
-				: eq(jreq.page.condts.get(0), usr.orgId())
+				: eq(jreq.page.arrCondts.get(0), usr.orgId())
 				? jreq.page
 				: jreq.page.insertCondt(usr.orgId());
 

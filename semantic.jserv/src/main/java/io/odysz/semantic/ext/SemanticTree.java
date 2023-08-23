@@ -12,7 +12,6 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.common.dbtype;
 import io.odysz.module.rs.AnResultset;
@@ -29,13 +28,10 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
-import io.odysz.semantic.jserv.R.AnQuery;
-import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.DatasetierReq;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
-import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.Condit;
@@ -145,16 +141,20 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			String root = jreq.root();
 			r = untagSubtree(connId, root, getTreeSemtcs(jreq), usr);
 		}
-//		else if (A.ds.equals(a)) {
+		else if (A.ds.equals(a)) {
 //			List<?> lst = DatasetCfg.loadStree(connId,
 //				jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-//			AnDatasetResp re = new AnDatasetResp(null).forest(lst);
-//			r = ok(re);
-//		}
-//		else if (DatasetierReq.A.stree.equals(a)) {
-		else if (DatasetierReq.A.stree.equals(a) || A.ds.equals(a)) {
+
 			JsonOpt opts = jmsg.opts();
-			r = loadSTree(connId, jreq, getTreeSemtcs(jreq), usr, opts);
+			List<?> lst = loadStree(connId, jreq, usr, opts);
+			AnDatasetResp re = new AnDatasetResp(null).forest(lst);
+			r = ok(re);
+		}
+		else if (DatasetierReq.A.stree.equals(a)) {
+//			JsonOpt opts = jmsg.opts();
+//			r = loadSTree(connId, jreq, getTreeSemtcs(jreq), usr, opts);
+			throw new SemanticException("%s is a stub function and must be implemented in usr's tier (port).",
+					DatasetierReq.A.stree);
 		}
 		else throw new SemanticException("SemanticTree: request.A is not suppored: %s", a);
 
@@ -194,7 +194,6 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 	 * @throws SAXException
 	 * @throws SsException
 	 * @throws TransException
-	 */
 	private AnsonMsg<AnDatasetResp> loadSTree(String connId,
 			AnDatasetReq jreq, TreeSemantics treeSmtcs, IUser usr, JsonOpt opts)
 			throws IOException, SQLException, SAXException, SsException, TransException {
@@ -214,6 +213,45 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			forest = DatasetHelper.buildForest(rs, treeSmtcs);
 		}
 		return ok(rs.total(), forest);
+	}
+	 */
+	
+	/**
+	 * Build s-tree
+	 * 
+	 * @param connId
+	 * @param jreq
+	 * @param treeSmtcs
+	 * @param usr
+	 * @param opts
+	 * @return forest
+	 * @throws IOException
+	 * @throws SQLException
+	 * @throws SAXException
+	 * @throws SsException
+	 * @throws TransException
+	 */
+	private List<?> loadStree(String connId,
+			AnDatasetReq jreq,  IUser usr, JsonOpt opts)
+			throws IOException, SQLException, SAXException, SsException, TransException {
+		TreeSemantics treeSmtcs = getTreeSemtcs(jreq);
+		// for robustness
+		if (treeSmtcs == null)
+			throw new SemanticException("SemanticTree#loadSTree(): Can't build tree, tree semantics is null.");
+
+		/*
+		String rootId = jreq.root();
+		if (rootId != null && rootId.trim().length() == 0)
+			rootId = null;
+		AnResultset rs = AnQuery.query((AnQueryReq)jreq, usr);
+		*/
+		List<?> forest = DatasetHelper.loadStree(connId, jreq.sk(), jreq.page(), jreq.size(), jreq.sqlArgs);
+//		if (rs != null) {
+//			if (opts != null && opts.doubleFormat != null)
+//				rs.stringFormat(Double.class, LangExt.prefixIfnull("%", opts.doubleFormat));
+//			forest = DatasetHelper.buildForest(rs, treeSmtcs);
+//		}
+		return forest;
 	}
 	
 	protected AnsonMsg<AnDatasetResp> ok(int total, List<?> forest) {
