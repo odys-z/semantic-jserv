@@ -69,9 +69,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 
 		st = new DATranscxt(null);
 		robot = new JRobot();
-
 		missingFile = "";
-		
 		
 		Docs206.getMeta = (String uri) -> {
 			try { return new PhotoMeta(Connects.uri2conn(uri)); }
@@ -140,10 +138,12 @@ public class AlbumTier extends ServPort<AlbumReq> {
 				FileStream.sendFile(os, p);
 //			} catch (FileNotFoundException e) {
 //				Utils.warn("File not found: %s", e.getMessage());
-//			} catch (IOException e) {
-//				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
-//				// This is harmless: https://stackoverflow.com/a/70020526/7362888
-//				Utils.warn(e.getMessage());
+			} catch (IOException e) {
+				// Won't be here
+				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
+				// This is harmless: https://stackoverflow.com/a/70020526/7362888
+				Utils.warn(e.getMessage());
+				e.printStackTrace();
 			}
 		}
 	}

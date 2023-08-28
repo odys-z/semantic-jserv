@@ -141,7 +141,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			String root = jreq.root();
 			r = untagSubtree(connId, root, getTreeSemtcs(jreq), usr);
 		}
-		else if (A.ds.equals(a)) {
+		else if (DatasetierReq.A.stree.equals(a)) {
 //			List<?> lst = DatasetCfg.loadStree(connId,
 //				jreq.sk, jreq.page(), jreq.size(), jreq.sqlArgs);
 
@@ -150,12 +150,12 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 			AnDatasetResp re = new AnDatasetResp(null).forest(lst);
 			r = ok(re);
 		}
-		else if (DatasetierReq.A.stree.equals(a)) {
-//			JsonOpt opts = jmsg.opts();
-//			r = loadSTree(connId, jreq, getTreeSemtcs(jreq), usr, opts);
-			throw new SemanticException("%s is a stub function and must be implemented in usr's tier (port).",
-					DatasetierReq.A.stree);
-		}
+//		else if (DatasetierReq.A.stree.equals(a)) {
+////			JsonOpt opts = jmsg.opts();
+////			r = loadSTree(connId, jreq, getTreeSemtcs(jreq), usr, opts);
+//			throw new SemanticException("%s is a stub function and must be implemented in usr's tier (port).",
+//					DatasetierReq.A.stree);
+//		}
 		else throw new SemanticException("SemanticTree: request.A is not suppored: %s", a);
 
 		 write(resp, r, jmsg.opts());
@@ -297,9 +297,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		else throw new SQLException("TODO...");
 	}
 
-	protected AnsonMsg<AnsonResp> tagTrees(String connId, TreeSemantics sm, IUser usr) throws TransException, SQLException {
-		// This operation is expensive
-
+	protected AnsonMsg<AnsonResp> tagTrees(String connId, TreeSemantics sm, IUser usr)
+			throws TransException, SQLException {
 		ISemantext smtxt = st.instancontxt(connId, usr);
 
 		AnResultset rs = (AnResultset) st.select(sm.tabl(), "t")
