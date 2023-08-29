@@ -101,9 +101,8 @@
 	</c>
 	<c> <sk>max.cube.vec3</sk>
   		<mysql></mysql>
-  		<sqlit>select max(v.val) max, min(v.val) min 
-		from vector v 
-		join s_domain d on v.dim3 = d.did;</sqlit>
+  		<sqlit>select max(v.val) max, min(v.val) min from vector v join s_domain d on v.dim3 = d.did
+  		</sqlit>
 	</c>
 	<!-- 
 	cnt |did         |indust                      |cate      |

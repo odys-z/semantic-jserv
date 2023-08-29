@@ -23,9 +23,7 @@ public enum Samport implements IPort {
 	cheapflow("cheapflow.samplev11"), 
 	/** sample servlet tools.serv */
 	tools("tools.serv"),
-	vec3("vec3.serv"),
-	/** The new experimental serv, extending semantics to the client side */
-	userstier("users.tier");
+	vec3("vec3.serv");
 
 	static {
 		JSONAnsonListener.registFactory(Samport.class, 

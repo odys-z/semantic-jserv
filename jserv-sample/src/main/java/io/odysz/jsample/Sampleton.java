@@ -2,7 +2,6 @@ package io.odysz.jsample;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;

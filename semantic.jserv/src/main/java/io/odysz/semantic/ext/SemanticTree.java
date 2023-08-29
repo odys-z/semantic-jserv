@@ -192,7 +192,8 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		TreeSemantics treeSmtcs = getTreeSemtcs(jreq);
 		// for robustness
 		if (treeSmtcs == null)
-			throw new SemanticException("SemanticTree#loadSTree(): Can't build tree, tree semantics is null.");
+			throw new SemanticException("SemanticTree#loadSTree({s-tree: %s, sk: %s}): Can't build tree, tree semantics is null.",
+					jreq.s_tree, jreq.sk);
 
 		List<?> forest = DatasetHelper.loadStree(connId, jreq.sk(), jreq.page(), jreq.size(), jreq.sqlArgs);
 		return forest;

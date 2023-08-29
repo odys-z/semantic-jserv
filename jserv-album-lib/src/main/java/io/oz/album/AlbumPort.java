@@ -24,7 +24,8 @@ public enum AlbumPort implements IPort {
 	/** editor.less */
 	editor("editor.less"),
 	/** album.less */
-	album("album.less");
+	album("album.less"),
+	menu("menu.serv");
 
 	static {
 		JSONAnsonListener.registFactory(AlbumPort.class, 
