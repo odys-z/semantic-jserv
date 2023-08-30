@@ -15,7 +15,7 @@
   		<usr></usr>
   		<pswd></pswd>
   		<!-- enable sql printing -->
-  		<dbg>false</dbg>
+  		<dbg>true</dbg>
   		<log>false</log>
   		<smtcs>semantics-cloud.xml</smtcs>
   	</c>

@@ -64,6 +64,4 @@ public class UserstReq extends UserReq {
 			st.nv(f, (String)record.get(f));
 		return st;
 	}
-
-
 }

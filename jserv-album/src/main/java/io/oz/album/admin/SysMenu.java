@@ -34,7 +34,7 @@ public class SysMenu extends SemanticTree {
 	}
 
 	/**sk in dataset.xml: menu tree */
-	private static final String defltSk = "sys.menu.jsample";
+	private static final String defltSk = "sys.menu";
 
 	@Override
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
@@ -74,11 +74,11 @@ public class SysMenu extends SemanticTree {
 			AnDatasetReq jreq = msg.body(0);
 
 			// String sk = jreq.sk();
-			String sk = "sys.menu";
+			// or configured with xml?
 			jreq.sqlArgs = new String[] {usr.uid()};
 
 			List<?> lst = DatasetCfg.loadStree(Connects.defltConn(),
-					sk == null ? defltSk : sk, jreq.page(), jreq.size(), jreq.sqlArgs);
+							defltSk, jreq.page(), jreq.size(), jreq.sqlArgs);
 
 			write(resp, ok(lst.size(), lst));
 		} catch (SQLException e) {
