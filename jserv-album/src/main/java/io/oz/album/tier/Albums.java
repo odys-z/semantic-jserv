@@ -370,6 +370,20 @@ public class Albums extends ServPort<AlbumReq> {
 					.fullpath(body.clientpath()));
 	}
 
+	/**
+	 * Finishing doc (block chain) uploading.
+	 * 
+	 * <p>This method will trigger ext-file handling by which the uri is set to file path starting at
+	 * volume environment variable.</p>
+	 * 
+	 * @param body
+	 * @param usr
+	 * @return response
+	 * @throws SQLException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws TransException
+	 */
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.clientpath());
@@ -378,7 +392,7 @@ public class Albums extends ServPort<AlbumReq> {
 			blockChains.get(id).closeChain();
 			chain = blockChains.remove(id);
 		} else
-			throw new SemanticException("Ending block chain is not existing.");
+			throw new SemanticException("Ending block chain which is not existing.");
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
@@ -386,11 +400,9 @@ public class Albums extends ServPort<AlbumReq> {
 		PhotoRec photo = new PhotoRec();
 
 		photo.createDate = chain.cdate;
-		// Exif.parseExif(photo, chain.outputPath);
-
 		photo.fullpath(chain.clientpath);
 		photo.pname = chain.clientname;
-		photo.uri = null;
+		photo.uri = null; // accepting new value
 		String pid = createFile(conn, photo, usr);
 
 		// move file
@@ -573,6 +585,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @param pid
 	 * @param conn
 	 * @param usr
+	 * @return 
 	 */
 	static protected void onPhotoCreated(String pid, String conn, PhotoMeta m, IUser usr) {
 		new Thread(() -> {

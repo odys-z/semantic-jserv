@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -27,7 +28,9 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
@@ -86,7 +89,7 @@ public class Exif {
 
 		File f = new File(filepath);
 		photo.size = f.length();
-		try (FileInputStream stream = new FileInputStream(f)) {
+		try (FileInputStream stream = new FileInputStream(f)) {  // why the hell java.io.FileNotFoundException: ...\C000000D VID_20230831_200144.mp4 (另一个程序正在使用此文件，进程无法访问。)
 			BodyContentHandler handler = new BodyContentHandler();
 			AutoDetectParser parser = new AutoDetectParser(config);
 
@@ -102,6 +105,7 @@ public class Exif {
 			parser.parse(stream, handler, metadata);
 			for (String name: metadata.names()) {
 				String val = metadata.get(name); 
+				Utils.logi(name);
 				val = escape(val);
 				// whitewash some faulty string
 				// Huawei p30 take pics with 
@@ -136,7 +140,7 @@ public class Exif {
 				photo.month(fd);
 			}
 
-			if (isblank(photo.widthHeight)) 
+			if (isblank(photo.widthHeight) && metadata.getInt(TIFF.IMAGE_WIDTH) != null && metadata.getInt(TIFF.IMAGE_LENGTH) != null) 
 				try {
 					Utils.logi(metadata.names());
 					photo.widthHeight = new int[]
@@ -144,13 +148,6 @@ public class Exif {
 						{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)};
 				} catch (Exception e) { e.printStackTrace(); }
 
-			if ((eq("90", photo.rotation) || eq("270", photo.rotation)) && gt(photo.widthHeight[0], photo.widthHeight[1]))
-				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
-			else if ((eq("0", photo.rotation) || eq("180", photo.rotation)) && lt(photo.widthHeight[0], photo.widthHeight[1]))
-				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
-			else
-				photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
-			
 			// force audio
 			if (MimeTypes.isAudio(photo.mime)) {
 				photo.widthHeight = new int[] { 16, 9 };
@@ -177,6 +174,15 @@ public class Exif {
 					? CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0])
 					: CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 
+			try {
+				if ((eq("90", photo.rotation) || eq("270", photo.rotation)) && gt(photo.widthHeight[0], photo.widthHeight[1]))
+					photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
+				else if ((eq("0", photo.rotation) || eq("180", photo.rotation)) && lt(photo.widthHeight[0], photo.widthHeight[1]))
+					photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
+				else
+					photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
+			}catch (Exception e) {e.printStackTrace();}
+			
 			photo.geox = metadata.get(TikaCoreProperties.LONGITUDE);
 			if (photo.geox == null) photo.geox = geox0;
 
