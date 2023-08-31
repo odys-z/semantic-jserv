@@ -78,7 +78,6 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	public PhotoRec(AnResultset rs) throws SQLException, IOException {
 		this.recId = rs.getString("pid");
 		this.pname = rs.getString("pname");
-		// this.uri = rs.getString("uri");
 		this.folder = rs.getString("folder");
 		this.createDate = rs.getString("pdate");
 		this.shareby = rs.getString("shareby");

@@ -23,6 +23,7 @@ import io.oz.album.tier.PhotoRec;
 class ExifTest {
 	@Test
 	void testEscape() {
+		Exif.verbose = false;
 		String v = Exif.escape("1 enUS(sRGB\0\0\0");
 		assertEquals("1 enUS(sRGB", v);
 	}
@@ -86,6 +87,7 @@ class ExifTest {
 	
 	@Test
 	void testTika() throws IOException, TikaException, SAXException {
+		Exif.verbose = false;
 		
         Utils.logi(Paths.get(".").toAbsolutePath().toString());
 
@@ -97,7 +99,7 @@ class ExifTest {
 			AutoDetectParser parser = new AutoDetectParser(Exif.config);
 			Map<MediaType, Parser> ps = parser.getParsers();
 			for (MediaType t : ps.keySet())
-				Utils.logi("%s, %s", t.getType(), ps.get(t).getClass().getName());
+				Utils.logi("[testTika] %s, %s", t.getType(), ps.get(t).getClass().getName());
 		}
 		
 		PhotoRec p = new PhotoRec();
@@ -111,7 +113,6 @@ class ExifTest {
 		
 		/** This mp4 is too large and the test result won't guarantee the same results in runtime
 		 * (different runs with diffrenct results)
-		 */
 		p = new PhotoRec();
 		Exif.parseExif(p, "test/res/C0000002 VID_20230816_135143.mp4");
 		
@@ -120,7 +121,9 @@ class ExifTest {
 		assertEquals(1920, p.widthHeight[0]);
 		assertEquals(1080, p.widthHeight[1]);
 		assertEquals("90", p.rotation);
+		 */
 		
+		Exif.verbose = true;
 		p = new PhotoRec(); 
 		Exif.parseExif(p, "test/res/C000000D VID_20230831_200144.mp4");
 
