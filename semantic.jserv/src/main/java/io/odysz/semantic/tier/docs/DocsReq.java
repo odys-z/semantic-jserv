@@ -66,6 +66,13 @@ public class DocsReq extends AnsonBody {
 
 		public static final String selectSyncs = "r/syncflags";
 
+		/** select devices, requires user org-id as parameter from client */
+		public static final String devices = "r/devices";
+
+		public static final String registDev = "c/device";
+
+		public static final String checkDev = "r/check-dev";
+
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */
 	}

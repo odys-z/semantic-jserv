@@ -3,6 +3,7 @@ package io.oz.album.tier;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.ix;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
 
@@ -31,6 +32,7 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetHelper;
+import io.odysz.semantic.ext.DeviceTableMeta;
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -91,7 +93,9 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static final String tablCollectPhoto = "h_coll_phot";
 
-	static AOrgMeta orgMeta;
+	static final AOrgMeta orgMeta = new AOrgMeta();
+	
+	static final DeviceTableMeta devMeta = new DeviceTableMeta(null);
 
 	static final String tablUser = "a_users";
 
@@ -110,8 +114,6 @@ public class Albums extends ServPort<AlbumReq> {
 		try {
 			st = new DATranscxt(null);
 			robot = new PhotoUser("Robot Album");
-			// domainMeta = new DomainMeta();
-			orgMeta = new AOrgMeta();
 			
 			Docs206.getMeta = (String uri) -> {
 				try { return new PhotoMeta(Connects.uri2conn(uri)); }
@@ -211,6 +213,12 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = endBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockAbort.equals(a))
 					rsp = abortBlock(jmsg.body(0), usr);
+				else if (DocsReq.A.devices.equals(a))
+					rsp = devices(jmsg.body(0), usr);
+				else if (DocsReq.A.checkDev.equals(a))
+					rsp = chkDevname(jmsg.body(0), usr);
+				else if (DocsReq.A.registDev.equals(a))
+					rsp = registDevice(jmsg.body(0), usr);
 
 				else
 					throw new SemanticException("Request.a can not be handled, request.a: %s", jreq.a());
@@ -239,6 +247,7 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
+
 	/**
 	 * Generate user's profile - used at server side,
 	 * yet {@link IUser#profile()} is used for loading profile for client side.
@@ -259,7 +268,6 @@ public class Albums extends ServPort<AlbumReq> {
 				.select(m.tbl, "u")
 				.je("u", orgMeta.tbl, "o", m.org, orgMeta.pk)
 				.col("u." + m.org).col(m.pk)
-				// .col("'a-001'", "album")
 				.col(orgMeta.album0, "album") 
 				.col(orgMeta.webroot)
 				.whereEq(m.pk, usr.uid())
@@ -424,6 +432,64 @@ public class Albums extends ServPort<AlbumReq> {
 		return ack;
 	}
 
+	DocsResp devices(DocsReq body, PhotoUser usr)
+			throws SemanticException, TransException, SQLException {
+		// [user-id, synode0, market]
+		
+		String[] synode0 = ix(body.page.arrCondts, 0); 
+		String[] org     = ix(body.page.arrCondts, 1); 
+		String[] owner   = ix(body.page.arrCondts, 2); 
+		String[] market  = ix(body.page.arrCondts, 3); 
+
+		AnResultset rs = (AnResultset)st
+				.select(devMeta.tbl)
+				.whereEq(devMeta.pk, usr.deviceId())
+				.whereEq(devMeta.synode0, eq(owner[0], devMeta.synode0) ? synode0[1] : null)
+				.whereEq(devMeta.org(), eq(org[0], devMeta.org()) ? org[1] : null)
+				.whereEq(devMeta.owner, eq(owner[0], devMeta.owner) ? owner[1] : null)
+				.whereEq(devMeta.market, eq(market[0], devMeta.market) ? market[1] : null)
+				.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
+				.rs(0)
+				;
+
+		return (DocsResp) new DocsResp().rs(rs);
+	}
+
+	DocsResp chkDevname(DocsReq body, PhotoUser usr) throws SemanticException, TransException, SQLException {
+		String[] synode0 = ix(body.page.arrCondts, 0); 
+		String[] org     = ix(body.page.arrCondts, 1); 
+		String[] owner   = ix(body.page.arrCondts, 2); 
+		String[] market  = ix(body.page.arrCondts, 3); 
+
+		AnResultset rs = ((AnResultset) st
+			.select(devMeta.tbl)
+			.cols(devMeta.devname, devMeta.synode0, devMeta.createDate, devMeta.owner)
+			.whereEq(devMeta.pk, usr.deviceId())
+			.whereEq(devMeta.synode0, eq(owner[0], devMeta.synode0) ? synode0[1] : null)
+			.whereEq(devMeta.org(), eq(org[0], devMeta.org()) ? org[1] : null)
+			.whereEq(devMeta.owner, eq(owner[0], devMeta.owner) ? owner[1] : null)
+			.whereEq(devMeta.market, eq(market[0], devMeta.market) ? market[1] : null)
+			.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
+			.rs(0))
+			.nxt();
+		
+		if (rs.next()) {
+			throw new SemanticException("{\"exists\": true, \"owner\": \"%s\", \"synode0\": \"%s\", \"create_on\": \"%s\"}",
+				rs.getString(devMeta.owner),
+				rs.getString(devMeta.synode0),
+				rs.getString(devMeta.createDate)
+			);
+		}
+		else 
+			return (DocsResp) new DocsResp().doc(new SyncDoc()
+					.share(rs.getString(devMeta.owner), "", rs.getString(devMeta.createDate))
+					.device(rs.getString(devMeta.pk)));
+	}
+	
+	DocsResp registDevice(DocsReq body, PhotoUser usr) {
+		return null;
+	}
+	
 	private String chainId(IUser usr, String clientpathRaw) {
 		return usr.sessionId() + " " + clientpathRaw;
 	}
