@@ -111,6 +111,7 @@ class ExifTest {
 		
 		/** This mp4 is too large and the test result won't guarantee the same results in runtime
 		 * (different runs with diffrenct results)
+		 */
 		p = new PhotoRec();
 		Exif.parseExif(p, "test/res/C0000002 VID_20230816_135143.mp4");
 		
@@ -119,7 +120,16 @@ class ExifTest {
 		assertEquals(1920, p.widthHeight[0]);
 		assertEquals(1080, p.widthHeight[1]);
 		assertEquals("90", p.rotation);
-		*/
+		
+		p = new PhotoRec(); 
+		Exif.parseExif(p, "test/res/C000000D VID_20230831_200144.mp4");
+
+		assertEquals(9, p.wh[0]);
+		assertEquals(20, p.wh[1]);
+		assertEquals(2400, p.widthHeight[0]);
+		assertEquals(1080, p.widthHeight[1]);
+		assertEquals("90", p.rotation);
+		
 	}
 
 }

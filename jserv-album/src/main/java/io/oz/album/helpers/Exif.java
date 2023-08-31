@@ -54,6 +54,8 @@ import io.oz.album.tier.PhotoRec;
  *
  */
 public class Exif {
+	public static boolean verbose = false;
+	
 	static String geox0 = "0";
 	static String geoy0 = "0";
 
@@ -70,7 +72,7 @@ public class Exif {
 		// TikaConfig config = new TikaConfig("/path/to/tika.xml");
 
 		String absPath = FilenameUtils.concat(xml, cfgFile);
-		Utils.logi("Loading tika configuration:\n%s", absPath);
+		if (verbose) Utils.logi("[Tikca.verbose] Loading tika configuration:\n%s", absPath);
 		config = new TikaConfig(absPath);
 		return absPath;
 	}
@@ -94,11 +96,11 @@ public class Exif {
 			BodyContentHandler handler = new BodyContentHandler();
 			AutoDetectParser parser = new AutoDetectParser(config);
 
-//			{
-//				Map<MediaType, Parser> ps = parser.getParsers();
-//				for (MediaType t : ps.keySet())
-//					Utils.logi("%s, %s", t.getType(), ps.get(t).getClass().getName());
-//			}
+			if (verbose) {
+				Map<MediaType, Parser> ps = parser.getParsers();
+				for (MediaType t : ps.keySet())
+					Utils.logi("[Exif.verbose] %s, %s", t.getType(), ps.get(t).getClass().getName());
+			}
 
 			Metadata metadata = new Metadata();
 
@@ -143,7 +145,7 @@ public class Exif {
 
 			if (isblank(photo.widthHeight) && metadata.getInt(TIFF.IMAGE_WIDTH) != null && metadata.getInt(TIFF.IMAGE_LENGTH) != null) 
 				try {
-					Utils.logi(metadata.names());
+					if (verbose) Utils.logi(metadata.names());
 					photo.widthHeight = new int[]
 						// FIXME too brutal
 						{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)};
@@ -162,7 +164,7 @@ public class Exif {
 					photo.widthHeight = Exif.parseWidthHeight(filepath);
 				}
 				catch (SemanticException e) {
-					Utils.warn("Exif parse failed and can't parse width & height: %s", filepath);
+					if (verbose) Utils.warn("[Exif.verbose] Exif parse failed and can't parse width & height: %s", filepath);
 					if (isblank(photo.widthHeight)) {
 						photo.widthHeight = new int[] { 3, 4 };
 						photo.wh = new int[] { 3, 4 };
