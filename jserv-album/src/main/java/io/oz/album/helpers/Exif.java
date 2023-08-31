@@ -91,7 +91,6 @@ public class Exif {
 
 		File f = new File(filepath);
 		photo.size = f.length();
-		// why the hell java.io.FileNotFoundException: ...\C000000D VID_20230831_200144.mp4 (另一个程序正在使用此文件，进程无法访问。)
 		try (FileInputStream stream = new FileInputStream(f)) {
 			BodyContentHandler handler = new BodyContentHandler();
 			AutoDetectParser parser = new AutoDetectParser(config);
