@@ -108,7 +108,7 @@ public class Exif {
 			parser.parse(stream, handler, metadata);
 			for (String name: metadata.names()) {
 				String val = metadata.get(name); 
-				Utils.logi(name);
+				if (verbose) Utils.logi(name);
 				val = escape(val);
 				// whitewash some faulty string
 				// Huawei p30 take pics with 
