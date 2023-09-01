@@ -1,6 +1,7 @@
 package io.oz.album.helpers;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.filesize;
 import static io.odysz.common.LangExt.gt;
 import static io.odysz.common.LangExt.imagesize;
@@ -10,6 +11,7 @@ import static io.odysz.common.LangExt.lt;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,6 +32,9 @@ import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.CompositeParser;
+import org.apache.tika.parser.external.CompositeExternalParser;
+import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
@@ -67,11 +72,46 @@ public class Exif {
 	 * @throws TikaException
 	 * @throws IOException
 	 * @throws SAXException
+	 * @throws SemanticException
+	 * @throws ReflectiveOperationException
 	 */
-	public static String init(String configPath) throws TikaException, IOException, SAXException {
-		String absPath = FilenameUtils.concat(configPath, cfgFile);
-		if (verbose) Utils.logi("[Tikca.verbose] Loading tika configuration:\n%s", absPath);
+	public static String init(String xmlPath)
+			throws TikaException, IOException, SAXException, SemanticException, ReflectiveOperationException {
+
+		String absPath = FilenameUtils.concat(xmlPath, cfgFile);
+		Utils.logi("[Exif.init] Loading tika configuration:\n%s", absPath);
 		config = new TikaConfig(absPath);
+
+		ParseContext context = new ParseContext();
+		Utils.logi("[Exif.init] Tika config:\n%s", config.getParser().getSupportedTypes(context ));
+
+		@SuppressWarnings("deprecation")
+		Parser p = config.getParser(new MediaType("video", "mp4"));
+		Utils.logi("[Exif.init] Parser for video/mp4: %s,\ndeclared (supported types):%s",
+				p.getClass().getName(), p.getSupportedTypes(context)); // p.getClass().getDeclaredField("parser")
+		
+		Utils.logi("\n[Exif.init] ------------ Exteranl tika parser configured for vide/mp4 --------------");
+		Field f = p.getClass().getSuperclass().getDeclaredField("parser");
+		f.setAccessible(true);
+		Object extp = f.get(p);
+		if (extp != null && extp instanceof CompositeExternalParser) {
+			Map<MediaType, Parser> exts = ((CompositeExternalParser)extp).getParsers();
+			if (len(exts) == 0)
+				throw new SemanticException("External parser and depending commands either ffmpeg or exiftool is required"); 
+			Utils.logMap(exts, "\t");
+		}
+//		else {
+//			Utils.warn("\n[Exif.init] No exteranl tika parser configured for vide/mp4? For which the parsing is buggy with default parser.\n");
+//			Utils.logi("\n[Exif.init] One of these two command must working: \n");
+//		}
+
+		if (verbose) {
+			CompositeParser q = (CompositeParser) config.getParser();
+			Utils.logi("[Exif.init] Parser for media types in: %s", q.getClass().getName());
+			for (MediaType m : q.getParsers().keySet())
+				Utils.logi("\t%s:\t%s", m.toString(), q.getParsers().get(m).getClass().getTypeName());
+		}
+
 		return absPath;
 	}
 	
@@ -89,7 +129,6 @@ public class Exif {
 
 		File f = new File(filepath);
 		photo.size = f.length();
-		// why the hell java.io.FileNotFoundException: ...\C000000D VID_20230831_200144.mp4 (另一个程序正在使用此文件，进程无法访问。)
 		try (FileInputStream stream = new FileInputStream(f)) {
 			BodyContentHandler handler = new BodyContentHandler();
 			AutoDetectParser parser = new AutoDetectParser(config);

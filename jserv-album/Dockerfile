@@ -9,7 +9,7 @@ COPY target/jserv-album/index.html $CATALINA_HOME/webapps/ROOT/index.html
 COPY target/jserv-album.war $CATALINA_HOME/webapps
 
 ARG imgtag=jserv-album
-ARG ver=0.6.50.1
+ARG ver=0.6.50.2
 ARG imghub="https://hub.docker.com/u/odysz"
 ARG echo_html="echo.html"
 

@@ -44,7 +44,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			
 			Exif.init(webinf);
 			JSingleton.health = true;
-		} catch (TransException | SAXException | TikaException | IOException | SQLException | AnsonException | SsException e) {
+		} catch (TransException | SAXException | TikaException | IOException | SQLException | AnsonException | SsException | ReflectiveOperationException e) {
 			e.printStackTrace();
 			JSingleton.health = false;
 		}

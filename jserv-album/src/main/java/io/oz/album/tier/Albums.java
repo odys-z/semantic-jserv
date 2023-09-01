@@ -591,6 +591,10 @@ public class Albums extends ServPort<AlbumReq> {
 	static protected void onPhotoCreated(String pid, String conn, PhotoMeta m, IUser usr) {
 		new Thread(() -> {
 		try {
+			// why the hell java.io.FileNotFoundException: ...\C000000D VID_20230831_200144.mp4 (另一个程序正在使用此文件，进程无法访问。)
+//			try { Thread.sleep(1000); }  //
+//			catch (InterruptedException e) { }
+
 			AnResultset rs = (AnResultset) st
 				.select(m.tbl, "p")
 				.col(m.folder).col(m.fullpath)
