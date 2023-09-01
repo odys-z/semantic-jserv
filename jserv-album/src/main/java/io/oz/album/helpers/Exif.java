@@ -73,8 +73,6 @@ public class Exif {
 	 * @throws SAXException
 	 */
 	public static String init(String xml) throws TikaException, IOException, SAXException {
-		// TikaConfig config = new TikaConfig("/path/to/tika.xml");
-
 		String absPath = FilenameUtils.concat(xml, cfgFile);
 		Utils.logi("[Exif.init] Loading tika configuration:\n%s", absPath);
 		config = new TikaConfig(absPath);
