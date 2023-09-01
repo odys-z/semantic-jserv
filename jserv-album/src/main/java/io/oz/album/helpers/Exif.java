@@ -62,16 +62,14 @@ public class Exif {
 	protected static String cfgFile = "tika.xml";
 	static TikaConfig config;
 	/**
-	 * @param xml
+	 * @param configPath
 	 * @return "(... xml)/tika.xml"
 	 * @throws TikaException
 	 * @throws IOException
 	 * @throws SAXException
 	 */
-	public static String init(String xml) throws TikaException, IOException, SAXException {
-		// TikaConfig config = new TikaConfig("/path/to/tika.xml");
-
-		String absPath = FilenameUtils.concat(xml, cfgFile);
+	public static String init(String configPath) throws TikaException, IOException, SAXException {
+		String absPath = FilenameUtils.concat(configPath, cfgFile);
 		if (verbose) Utils.logi("[Tikca.verbose] Loading tika configuration:\n%s", absPath);
 		config = new TikaConfig(absPath);
 		return absPath;

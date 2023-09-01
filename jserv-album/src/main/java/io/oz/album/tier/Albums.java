@@ -59,7 +59,7 @@ import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
 
 /**
- * <h5>The album tier 0.2.1 (MVP)</h5>
+ * <h5>The album tier 0.6.50 (MVP)</h5>
  *
  * Although this tie is using the pattern of <i>less</i>, it's also verifying user when uploading
  * - for subfolder name of user.
@@ -110,7 +110,6 @@ public class Albums extends ServPort<AlbumReq> {
 		try {
 			st = new DATranscxt(null);
 			robot = new PhotoUser("Robot Album");
-			// domainMeta = new DomainMeta();
 			orgMeta = new AOrgMeta();
 			
 			Docs206.getMeta = (String uri) -> {
@@ -411,6 +410,8 @@ public class Albums extends ServPort<AlbumReq> {
 			Utils.logi("   [AlbumFlags.album: end block] %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
+		onPhotoCreated(pid, conn, meta, usr);
+
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
 				.doc((SyncDoc) new SyncDoc()
@@ -532,6 +533,8 @@ public class Albums extends ServPort<AlbumReq> {
 		checkDuplication(req, (PhotoUser) usr);
 
 		String pid = createFile(conn, req.photo, usr);
+		
+		onPhotoCreated(pid, conn, new PhotoMeta(conn), usr);
 		return new AlbumResp().photo(req.photo, pid);
 	}
 
@@ -552,7 +555,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 	/**
 	 * <p>Create photo - call this after duplication is checked.</p>
-	 * <p>TODO: replaced by SyncWorkerTest.createFileB64()</p>
 	 * <p>Photo is created as in the folder of user/month/.</p>
 	 *
 	 * @param conn
@@ -572,7 +574,6 @@ public class Albums extends ServPort<AlbumReq> {
 			photo.share(usr.uid(), Share.priv);
 
 		String pid = DocUtils.createFileB64(conn, photo, usr, meta, st, null);
-		onPhotoCreated(pid, conn, meta, usr);
 
 		return pid;
 	}
