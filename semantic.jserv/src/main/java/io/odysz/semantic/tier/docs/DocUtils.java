@@ -23,8 +23,8 @@ public class DocUtils {
 	/**
 	 * <p>Create a doc record with a local file, e.g. h_photos - call this after duplication is checked.</p>
 	 * <p>This method will insert record, and can trigger ExtFilev2 handling.</p>
-	 * <p>Photo is created as in the folder of user/[photo.folder]/;<br>
-	 * Photo's device and family are replaced with session information.</p>
+	 * <p>Doc is created as in the folder of user/[photo.folder]/;<br>
+	 * Doc's device and family are replaced with session information.</p>
 	 * 
 	 * @since 1.4.19, this method need DB triggering timestamp ({@link DocTableMeta#stamp}).
 	 * <pre>
@@ -105,8 +105,6 @@ public class DocUtils {
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 	
-//		String extroot = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2)).getFileRoot();
-//		return EnvPath.decodeUri(extroot, rs.getString("uri"));
 		return resolvExtroot(conn, rs.getString("uri"), meta);
 	}
 

@@ -61,7 +61,7 @@ import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
 
 /**
- * <h5>The album tier 0.2.1 (MVP)</h5>
+ * <h5>The album tier 0.6.50 (MVP)</h5>
  *
  * Although this tie is using the pattern of <i>less</i>, it's also verifying user when uploading
  * - for subfolder name of user.
@@ -378,6 +378,20 @@ public class Albums extends ServPort<AlbumReq> {
 					.fullpath(body.clientpath()));
 	}
 
+	/**
+	 * Finishing doc (block chain) uploading.
+	 * 
+	 * <p>This method will trigger ext-file handling by which the uri is set to file path starting at
+	 * volume environment variable.</p>
+	 * 
+	 * @param body
+	 * @param usr
+	 * @return response
+	 * @throws SQLException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws TransException
+	 */
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.clientpath());
@@ -386,7 +400,7 @@ public class Albums extends ServPort<AlbumReq> {
 			blockChains.get(id).closeChain();
 			chain = blockChains.remove(id);
 		} else
-			throw new SemanticException("Ending block chain is not existing.");
+			throw new SemanticException("Ending block chain which is not existing.");
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
@@ -394,11 +408,9 @@ public class Albums extends ServPort<AlbumReq> {
 		PhotoRec photo = new PhotoRec();
 
 		photo.createDate = chain.cdate;
-		// Exif.parseExif(photo, chain.outputPath);
-
 		photo.fullpath(chain.clientpath);
 		photo.pname = chain.clientname;
-		photo.uri = null;
+		photo.uri = null; // accepting new value
 		String pid = createFile(conn, photo, usr);
 
 		// move file
@@ -406,6 +418,8 @@ public class Albums extends ServPort<AlbumReq> {
 		if (AlbumFlags.album)
 			Utils.logi("   [AlbumFlags.album: end block] %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+
+		onPhotoCreated(pid, conn, meta, usr);
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
@@ -586,6 +600,8 @@ public class Albums extends ServPort<AlbumReq> {
 		checkDuplication(req, (PhotoUser) usr);
 
 		String pid = createFile(conn, req.photo, usr);
+		
+		onPhotoCreated(pid, conn, new PhotoMeta(conn), usr);
 		return new AlbumResp().photo(req.photo, pid);
 	}
 
@@ -606,7 +622,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 	/**
 	 * <p>Create photo - call this after duplication is checked.</p>
-	 * <p>TODO: replaced by SyncWorkerTest.createFileB64()</p>
 	 * <p>Photo is created as in the folder of user/month/.</p>
 	 *
 	 * @param conn
@@ -626,7 +641,6 @@ public class Albums extends ServPort<AlbumReq> {
 			photo.share(usr.uid(), Share.priv);
 
 		String pid = DocUtils.createFileB64(conn, photo, usr, meta, st, null);
-		onPhotoCreated(pid, conn, meta, usr);
 
 		return pid;
 	}
@@ -639,10 +653,15 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @param pid
 	 * @param conn
 	 * @param usr
+	 * @return 
 	 */
 	static protected void onPhotoCreated(String pid, String conn, PhotoMeta m, IUser usr) {
 		new Thread(() -> {
 		try {
+			// why the hell java.io.FileNotFoundException: ...\C000000D VID_20230831_200144.mp4 (另一个程序正在使用此文件，进程无法访问。)
+//			try { Thread.sleep(1000); }  //
+//			catch (InterruptedException e) { }
+
 			AnResultset rs = (AnResultset) st
 				.select(m.tbl, "p")
 				.col(m.folder).col(m.fullpath)

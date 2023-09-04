@@ -1,6 +1,7 @@
 package io.oz.album.helpers;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.filesize;
 import static io.odysz.common.LangExt.gt;
 import static io.odysz.common.LangExt.imagesize;
@@ -10,11 +11,13 @@ import static io.odysz.common.LangExt.lt;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -27,7 +30,12 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.CompositeParser;
+import org.apache.tika.parser.external.CompositeExternalParser;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
@@ -51,24 +59,59 @@ import io.oz.album.tier.PhotoRec;
  *
  */
 public class Exif {
+	public static boolean verbose = false;
+	
 	static String geox0 = "0";
 	static String geoy0 = "0";
 
 	protected static String cfgFile = "tika.xml";
 	static TikaConfig config;
 	/**
-	 * @param xml
+	 * @param configPath
 	 * @return "(... xml)/tika.xml"
 	 * @throws TikaException
 	 * @throws IOException
 	 * @throws SAXException
+	 * @throws SemanticException
+	 * @throws ReflectiveOperationException
 	 */
-	public static String init(String xml) throws TikaException, IOException, SAXException {
-		// TikaConfig config = new TikaConfig("/path/to/tika.xml");
+	public static String init(String xmlPath)
+			throws TikaException, IOException, SAXException, SemanticException, ReflectiveOperationException {
 
-		String absPath = FilenameUtils.concat(xml, cfgFile);
-		Utils.logi("Loading tika configuration:\n%s", absPath);
+		String absPath = FilenameUtils.concat(xmlPath, cfgFile);
+		Utils.logi("[Exif.init] Loading tika configuration:\n%s", absPath);
 		config = new TikaConfig(absPath);
+
+		ParseContext context = new ParseContext();
+		Utils.logi("[Exif.init] Tika config:\n%s", config.getParser().getSupportedTypes(context ));
+
+		@SuppressWarnings("deprecation")
+		Parser p = config.getParser(new MediaType("video", "mp4"));
+		Utils.logi("[Exif.init] Parser for video/mp4: %s,\ndeclared (supported types):%s",
+				p.getClass().getName(), p.getSupportedTypes(context)); // p.getClass().getDeclaredField("parser")
+		
+		Utils.logi("\n[Exif.init] ------------ Exteranl tika parser configured for vide/mp4 --------------");
+		Field f = p.getClass().getSuperclass().getDeclaredField("parser");
+		f.setAccessible(true);
+		Object extp = f.get(p);
+		if (extp != null && extp instanceof CompositeExternalParser) {
+			Map<MediaType, Parser> exts = ((CompositeExternalParser)extp).getParsers();
+			if (len(exts) == 0)
+				throw new SemanticException("External parser and depending commands either ffmpeg or exiftool is required"); 
+			Utils.logMap(exts, "\t");
+		}
+//		else {
+//			Utils.warn("\n[Exif.init] No exteranl tika parser configured for vide/mp4? For which the parsing is buggy with default parser.\n");
+//			Utils.logi("\n[Exif.init] One of these two command must working: \n");
+//		}
+
+		if (verbose) {
+			CompositeParser q = (CompositeParser) config.getParser();
+			Utils.logi("[Exif.init] Parser for media types in: %s", q.getClass().getName());
+			for (MediaType m : q.getParsers().keySet())
+				Utils.logi("\t%s:\t%s", m.toString(), q.getParsers().get(m).getClass().getTypeName());
+		}
+
 		return absPath;
 	}
 	
@@ -90,11 +133,11 @@ public class Exif {
 			BodyContentHandler handler = new BodyContentHandler();
 			AutoDetectParser parser = new AutoDetectParser(config);
 
-//			{
-//				Map<MediaType, Parser> ps = parser.getParsers();
-//				for (MediaType t : ps.keySet())
-//					Utils.logi("%s, %s", t.getType(), ps.get(t).getClass().getName());
-//			}
+			if (verbose) {
+				Map<MediaType, Parser> ps = parser.getParsers();
+				for (MediaType t : ps.keySet())
+					Utils.logi("[Exif.verbose] %s, %s", t.getType(), ps.get(t).getClass().getName());
+			}
 
 			Metadata metadata = new Metadata();
 
@@ -102,6 +145,7 @@ public class Exif {
 			parser.parse(stream, handler, metadata);
 			for (String name: metadata.names()) {
 				String val = metadata.get(name); 
+				if (verbose) Utils.logi(name);
 				val = escape(val);
 				// whitewash some faulty string
 				// Huawei p30 take pics with 
@@ -136,21 +180,14 @@ public class Exif {
 				photo.month(fd);
 			}
 
-			if (isblank(photo.widthHeight)) 
+			if (isblank(photo.widthHeight) && metadata.getInt(TIFF.IMAGE_WIDTH) != null && metadata.getInt(TIFF.IMAGE_LENGTH) != null) 
 				try {
-					Utils.logi(metadata.names());
+					if (verbose) Utils.logi(metadata.names());
 					photo.widthHeight = new int[]
 						// FIXME too brutal
 						{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)};
 				} catch (Exception e) { e.printStackTrace(); }
 
-			if ((eq("90", photo.rotation) || eq("270", photo.rotation)) && gt(photo.widthHeight[0], photo.widthHeight[1]))
-				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
-			else if ((eq("0", photo.rotation) || eq("180", photo.rotation)) && lt(photo.widthHeight[0], photo.widthHeight[1]))
-				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
-			else
-				photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
-			
 			// force audio
 			if (MimeTypes.isAudio(photo.mime)) {
 				photo.widthHeight = new int[] { 16, 9 };
@@ -164,7 +201,7 @@ public class Exif {
 					photo.widthHeight = Exif.parseWidthHeight(filepath);
 				}
 				catch (SemanticException e) {
-					Utils.warn("Exif parse failed and can't parse width & height: %s", filepath);
+					if (verbose) Utils.warn("[Exif.verbose] Exif parse failed and can't parse width & height: %s", filepath);
 					if (isblank(photo.widthHeight)) {
 						photo.widthHeight = new int[] { 3, 4 };
 						photo.wh = new int[] { 3, 4 };
@@ -177,6 +214,15 @@ public class Exif {
 					? CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0])
 					: CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 
+			try {
+				if ((eq("90", photo.rotation) || eq("270", photo.rotation)) && gt(photo.widthHeight[0], photo.widthHeight[1]))
+					photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
+				else if ((eq("0", photo.rotation) || eq("180", photo.rotation)) && lt(photo.widthHeight[0], photo.widthHeight[1]))
+					photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
+				else
+					photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
+			}catch (Exception e) {e.printStackTrace();}
+			
 			photo.geox = metadata.get(TikaCoreProperties.LONGITUDE);
 			if (photo.geox == null) photo.geox = geox0;
 
