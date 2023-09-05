@@ -32,7 +32,6 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetHelper;
-import io.odysz.semantic.ext.DeviceTableMeta;
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -59,6 +58,7 @@ import io.oz.album.AlbumPort;
 import io.oz.album.PhotoUser;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
+import io.oz.jserv.docsync.DeviceTableMeta;
 
 /**
  * <h5>The album tier 0.6.50 (MVP)</h5>
@@ -246,7 +246,6 @@ public class Albums extends ServPort<AlbumReq> {
 			resp.flushBuffer();
 		}
 	}
-
 
 	/**
 	 * Generate user's profile - used at server side,
@@ -658,10 +657,6 @@ public class Albums extends ServPort<AlbumReq> {
 	static protected void onPhotoCreated(String pid, String conn, PhotoMeta m, IUser usr) {
 		new Thread(() -> {
 		try {
-			// why the hell java.io.FileNotFoundException: ...\C000000D VID_20230831_200144.mp4 (另一个程序正在使用此文件，进程无法访问。)
-//			try { Thread.sleep(1000); }  //
-//			catch (InterruptedException e) { }
-
 			AnResultset rs = (AnResultset) st
 				.select(m.tbl, "p")
 				.col(m.folder).col(m.fullpath)
