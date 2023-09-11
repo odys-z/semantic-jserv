@@ -66,6 +66,13 @@ public class DocsReq extends AnsonBody {
 
 		public static final String selectSyncs = "r/syncflags";
 
+		/** select devices, requires user org-id as parameter from client */
+		public static final String devices = "r/devices";
+
+		public static final String registDev = "c/device";
+
+		public static final String checkDev = "r/check-dev";
+
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */
 	}
@@ -84,7 +91,7 @@ public class DocsReq extends AnsonBody {
 	String clientpath;
 	public String mime;
 	public String subFolder;
-
+	
 	@AnsonField(shortenString = true)
 	public String uri64;
 
@@ -137,7 +144,8 @@ public class DocsReq extends AnsonBody {
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
 		super(parent, uri);
-		device = p.device();
+		// device = p.device();
+		device = new Device(null, null, p.device());
 		clientpath(p.fullpath());
 		docId = p.recId();
 	}
@@ -152,9 +160,9 @@ public class DocsReq extends AnsonBody {
 	protected PathsPage syncing;
 	public PathsPage syncing() { return syncing; }
 
-	protected String device; 
-	public String device() { return device; }
-	public DocsReq device(String d) {
+	protected Device device; 
+	public Device device() { return device; }
+	public DocsReq device(Device d) {
 		device = d;
 		return this;
 	}
@@ -225,7 +233,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq blockStart(IFileDescriptor file, SessionInf usr) throws SemanticException {
-		this.device = usr.device;
+		this.device = new Device(usr.device, null);
 		if (isblank(this.device, "\\.", "/"))
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
@@ -261,7 +269,7 @@ public class DocsReq extends AnsonBody {
 	 * @throws SemanticException
 	 */
 	public DocsReq blockUp(long sequence, IFileDescriptor doc, String s64, SessionInf usr) throws SemanticException {
-		this.device = usr.device;
+		this.device = new Device(usr.device, null);
 		if (isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
 
@@ -276,7 +284,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq blockAbort(DocsResp startAck, SessionInf usr) throws SemanticException {
-		this.device = usr.device;
+		this.device = new Device(usr.device, null);
 
 		this.blockSeq = startAck.blockSeqReply;
 
@@ -288,7 +296,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq blockEnd(DocsResp resp, SessionInf usr) throws SemanticException {
-		this.device = usr.device;
+		this.device = new Device(usr.device, null);
 
 		this.blockSeq = resp.blockSeqReply;
 
@@ -335,7 +343,7 @@ public class DocsReq extends AnsonBody {
 	
 	public DocsReq queryPath(String device, String fullpath) {
 		clientpath(fullpath);
-		this.device = device;
+		this.device = new Device(device, null);
 		return this;
 	}
 }

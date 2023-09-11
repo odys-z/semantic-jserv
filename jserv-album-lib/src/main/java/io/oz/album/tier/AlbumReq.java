@@ -9,6 +9,7 @@ import io.odysz.common.AESHelper;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.tier.DatasetierReq;
+import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.SessionInf;
@@ -49,7 +50,7 @@ public class AlbumReq extends DocsReq {
 	public String sk;
 
 	public AlbumReq device(String device) {
-		this.device = device;
+		this.device = new Device(device, null);
 		return this;
 	}
 
@@ -142,7 +143,7 @@ public class AlbumReq extends DocsReq {
 
 	public AlbumReq del(String device, String clientpath) {
 		this.photo = new PhotoRec();
-		this.device = device;
+		this.device = new Device(device, null);
 		clientpath(clientpath);
 		this.a = A.del;
 		return this;

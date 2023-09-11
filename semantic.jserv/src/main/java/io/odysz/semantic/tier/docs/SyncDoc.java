@@ -95,12 +95,29 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public String fullpath() { return clientpath; }
 
-	/** Non-public: doc' device id is managed by session. */
+	/** Non-public: doc' device id is managed globally.
+	 * @since 0.6.50:temp-try, a device has an auto-key and a name.
+	 */
 	protected String device;
 	@Override
 	public String device() { return device; }
 	public SyncDoc device(String device) {
 		this.device = device;
+		return this;
+	}
+
+	public SyncDoc device(Device device) {
+		this.device = device.id;
+		return this;
+	}
+	
+	/** Non-public: doc' device id is managed globally.
+	 * @since 0.6.50:temp-try, a device has an auto-key and a name.
+	 */
+	protected String devname;
+	public String devname() { return devname; }
+	public SyncDoc devname(String devname) {
+		this.devname = devname;
 		return this;
 	}
 

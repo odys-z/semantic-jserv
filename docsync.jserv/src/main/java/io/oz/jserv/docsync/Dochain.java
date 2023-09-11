@@ -198,7 +198,7 @@ public class Dochain {
 
 	public static String chainId(IUser usr, DocsReq req) {
 		return Stream
-			.of(usr.orgId(), usr.uid(), req.device(), req.clientpath())
+			.of(usr.orgId(), usr.uid(), req.device().id, req.clientpath())
 			.collect(Collectors.joining("."));
 	}
 
