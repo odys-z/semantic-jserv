@@ -42,6 +42,7 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -332,7 +333,7 @@ public class Synclientier extends Semantier {
 			DocsReq req = new DocsReq(tbl)
 					.folder(p.folder())
 					.share(p)
-					.device(user.device)
+					.device(new Device(user.device, null))
 					.resetChain(true)
 					.blockStart(p, user);
 
@@ -465,7 +466,7 @@ public class Synclientier extends Semantier {
 	
 	public DocsResp synDel(String tabl, String device, String clientpath) {
 		DocsReq req = (DocsReq) new DocsReq(tabl)
-				.device(device)
+				.device(new Device(device, null))
 				.clientpath(clientpath)
 				.a(A.del);
 
@@ -622,7 +623,7 @@ public class Synclientier extends Semantier {
 		DocsReq req = (DocsReq) new DocsReq()
 				.syncing(page)
 				.docTabl(tabl)
-				.device(page.device)
+				.device(new Device(page.device, null))
 				.a(A.selectSyncs); // v 0.1.50
 
 		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, port/*MVP 0.2.1 Port.docsync*/, req)

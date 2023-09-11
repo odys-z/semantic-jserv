@@ -140,7 +140,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(req.uri());
 		DocTableMeta meta = (DocTableMeta) metas.get(req.docTabl); 
 
-		String device = req.device();
+		String device = req.device() == null ? null : req.device().id;
 
 		if (!is(isAdmin) && !isblank(device) && !device.equals(usr.deviceId()))
 			throw new SemanticException(

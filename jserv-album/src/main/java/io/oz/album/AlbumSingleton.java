@@ -26,6 +26,12 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 	
 	static public final String winserv_xml = "WEB-INF/winserv.xml";
 
+	/** @since 0.6.50:temp-try */
+	static String node;
+	
+	/** @since 0.6.50:temp-try */
+	public static String synode() { return node; }
+
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
 
@@ -34,7 +40,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			
 			AnsonMsg.understandPorts(AlbumPort.album);
 			
-			String node = System.getProperty("JSERV_NODE");
+			node = System.getProperty("JSERV_NODE");
 			Docsyncer.init(node);
 			Synode.init(node);
 
