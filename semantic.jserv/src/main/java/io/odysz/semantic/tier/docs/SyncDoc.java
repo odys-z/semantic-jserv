@@ -322,19 +322,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = separatorsToUnix(clientpath);
-
-		/* Since 1.5.0, finding file's datetime is supposed to be function of file provider.
-		if (isblank(createDate)) {
-			try {
-				Path p = Paths.get(clientpath);
-				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
-				cdate(fd);
-			}
-			catch (IOException | InvalidPathException ex) {
-				cdate(new Date());
-			}
-		} */
-
 		return this;
 	}
 
