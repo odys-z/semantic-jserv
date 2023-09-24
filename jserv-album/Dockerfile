@@ -4,6 +4,7 @@
 
 FROM tomcat:7.0
 RUN sed -i 's/port="8080"/port="80"/' ${CATALINA_HOME}/conf/server.xml
+RUN apt-get update && apt-get -y install exiftool
 
 COPY target/jserv-album/index.html $CATALINA_HOME/webapps/ROOT/index.html
 COPY target/jserv-album.war $CATALINA_HOME/webapps
