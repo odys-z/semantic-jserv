@@ -64,7 +64,7 @@ import io.odysz.transact.x.TransException;
 /**
  * <p>Feed response with ranged file content.</p>
 
- * @since 0.1.50
+ * @since 1.4.35
  */
 public abstract class Docs206 {
 
