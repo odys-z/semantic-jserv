@@ -101,7 +101,6 @@ public class Albums extends ServPort<AlbumReq> {
 	static final DeviceTableMeta devMeta = new DeviceTableMeta(null);
 
 	static PUserMeta userMeta;
-	// static final String tablUser = "a_users";
 
 	/** uri db field */
 	static final String uri = "uri";
