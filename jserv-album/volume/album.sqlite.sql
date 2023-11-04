@@ -84,3 +84,4 @@ CREATE TABLE doc_devices (
   PRIMARY KEY (synode0, device)
 ); -- registered device names. Name is set by user, prompt if he's device names are duplicated
 
+insert into oz_autoseq (sid, seq, remarks) values ('doc_devices.device', 0, '');
