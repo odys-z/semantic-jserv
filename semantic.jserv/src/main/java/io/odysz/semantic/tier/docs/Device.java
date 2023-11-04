@@ -5,6 +5,10 @@ import static io.odysz.common.LangExt.isNull;
 import io.odysz.anson.Anson;
 
 public class Device extends Anson {
+	public Device() {
+		super();
+	}
+
 	public Device(String id, String synode0, String... devname) {
 		this.id = id;
 		this.synode0 = synode0;

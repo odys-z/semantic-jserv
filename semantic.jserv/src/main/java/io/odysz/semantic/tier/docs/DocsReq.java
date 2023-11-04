@@ -71,6 +71,7 @@ public class DocsReq extends AnsonBody {
 
 		public static final String registDev = "c/device";
 
+		/** check is a new device name valid */
 		public static final String checkDev = "r/check-dev";
 
 		/** Query synchronizing tasks - for pure device client
@@ -84,6 +85,9 @@ public class DocsReq extends AnsonBody {
 		docTabl = tbl;
 		return this;
 	}
+
+	// public String synode0;
+	public String owner;
 
 	public String docId;
 	public String docName;
@@ -188,6 +192,7 @@ public class DocsReq extends AnsonBody {
 	public boolean reset;
 
 	private long limit = -1;
+
 	public long limit() { return limit; }
 	public DocsReq limit(long l) {
 		limit = l;

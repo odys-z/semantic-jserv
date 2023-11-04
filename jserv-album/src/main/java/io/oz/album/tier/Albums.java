@@ -3,7 +3,6 @@ package io.oz.album.tier;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.ix;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
 
@@ -96,7 +95,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static final String tablCollectPhoto = "h_coll_phot";
 
-	static final AOrgMeta orgMeta = new AOrgMeta();
+	static final DocOrgMeta orgMeta = new DocOrgMeta();
 	
 	static final DeviceTableMeta devMeta = new DeviceTableMeta(null);
 
@@ -454,6 +453,8 @@ public class Albums extends ServPort<AlbumReq> {
 	/**
 	 * Query devices.
 	 * 
+	 * @see DocsReq.A#devices
+	 * 
 	 * @param body
 	 * @param usr
 	 * @return respond
@@ -465,30 +466,38 @@ public class Albums extends ServPort<AlbumReq> {
 			throws SemanticException, TransException, SQLException {
 		// [user-id, synode0, market]
 		
-		String[] synode0 = ix(body.page.arrCondts, 0); 
-		String[] org     = ix(body.page.arrCondts, 1); 
-		String[] owner   = ix(body.page.arrCondts, 2); 
-		String[] market  = ix(body.page.arrCondts, 3); 
+		// String synode0 = body.synode0;// (body.page.arrCondts, 0); 
+		// String org     = body.org;	  // (body.page.arrCondts, 1); 
+		// String owner   = body.owner;  // ix(body.page.arrCondts, 2); 
+		// String market  = body.market; // ix(body.page.arrCondts, 3); 
 
 		AnResultset rs = (AnResultset)st
 				.select(devMeta.tbl)
-				.whereEq(devMeta.pk, usr.deviceId())
-				.whereEq(devMeta.synode0, eq(owner[0], devMeta.synode0) ? synode0[1] : null)
-				.whereEq(devMeta.org(), eq(org[0], devMeta.org()) ? org[1] : null)
-				.whereEq(devMeta.owner, eq(owner[0], devMeta.owner) ? owner[1] : null)
-				.whereEq(devMeta.market, eq(market[0], devMeta.market) ? market[1] : null)
+				// .whereEq(devMeta.synode0, synode0)
+				.whereEq(devMeta.org(),   usr.orgId())
+				.whereEq(devMeta.owner,   usr.uid())
+				// .whereEq(devMeta.market,  eq(market, devMeta.market) ? market : null)
 				.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
 				.rs(0)
 				;
 
-		return (DocsResp) new DocsResp().rs(rs);
+		return (DocsResp) new DocsResp().rs(rs)
+				.data(devMeta.owner, usr.uid())
+				.data(devMeta.org(), usr.orgId());
 	}
 
-	DocsResp chkDevname(DocsReq body, PhotoUser usr) throws SemanticException, TransException, SQLException {
-		String[] synode0 = ix(body.page.arrCondts, 0); 
-		String[] org     = ix(body.page.arrCondts, 1); 
-		String[] owner   = ix(body.page.arrCondts, 2); 
-		String[] market  = ix(body.page.arrCondts, 3); 
+	/**
+	 * @see DocsReq.A#checkDev
+	 * 
+	 * @param body
+	 * @param usr
+	 * @return
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	DocsResp chkDevname(DocsReq body, PhotoUser usr)
+			throws SemanticException, TransException, SQLException {
 
 		AnResultset rs = ((AnResultset) st
 			.select(devMeta.tbl, "d")
@@ -496,10 +505,10 @@ public class Albums extends ServPort<AlbumReq> {
 			.j(userMeta.tbl, "u", "u.%s = d.%s", userMeta.pk, devMeta.owner)
 			.cols(devMeta.devname, devMeta.synode0, devMeta.cdate, devMeta.owner)
 			.whereEq(devMeta.pk, usr.deviceId())
-			.whereEq(devMeta.synode0, eq(owner[0], devMeta.synode0) ? synode0[1] : null)
-			.whereEq(devMeta.org(), eq(org[0], devMeta.org()) ? org[1] : null)
-			.whereEq(devMeta.owner, eq(owner[0], devMeta.owner) ? owner[1] : null)
-			.whereEq(devMeta.market, eq(market[0], devMeta.market) ? market[1] : null)
+			// .whereEq(devMeta.synode0, eq(owner, devMeta.synode0) ? synode0 : null)
+			.whereEq(devMeta.org(),   usr.orgId())
+			.whereEq(devMeta.owner,   usr.uid())
+			// .whereEq(devMeta.market, eq(market[0], devMeta.market) ? market[1] : null)
 			.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
 			.rs(0))
 			.nxt();
@@ -517,9 +526,10 @@ public class Albums extends ServPort<AlbumReq> {
 					rs.getString(devMeta.devname)));
 	}
 	
-	DocsResp registDevice(DocsReq body, PhotoUser usr) throws SemanticException, TransException, SQLException {
+	DocsResp registDevice(DocsReq body, PhotoUser usr)
+			throws SemanticException, TransException, SQLException {
 		SemanticObject result = (SemanticObject) st
-				.insert(devMeta.tbl)
+				.insert(devMeta.tbl, usr)
 				.nv(devMeta.synode0, AlbumSingleton.synode())
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())

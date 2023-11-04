@@ -97,7 +97,7 @@ public class Exif {
 		if (extp != null && extp instanceof CompositeExternalParser) {
 			Map<MediaType, Parser> exts = ((CompositeExternalParser)extp).getParsers();
 			if (len(exts) == 0)
-				throw new SemanticException("External parser and depending commands either ffmpeg or exiftool is required"); 
+				throw new SemanticException("External parser and depending commands either ffmpeg or exiftool is required.\nRecommended install on Alpine: exiftool"); 
 			Utils.logMap(exts, "\t");
 		}
 //		else {
@@ -377,7 +377,12 @@ public class Exif {
 	 * 
 	 * @deprecated limited image types can be supported.
 	 * 
+	 * For error java.lang.UnsatisfiedLinkError:
+	 * <pre>Can't load library: /usr/lib/jvm/java-11-openjdk-amd64/lib/libawt_xawt.so</pre>
+	 * See https://stackoverflow.com/a/67756207
+	 * 
 	 * @see https://stackoverflow.com/a/12164026
+	 * 
 	 * @param imgFile image file
 	 * @return dimensions of image
 	 * @throws IOException if the file is not understood or missing
