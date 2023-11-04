@@ -45,6 +45,5 @@ public class DeviceTableMeta extends SyntityMeta {
 		owner   = "owner";
 		mac     = "mac";
 		cdate   = "cdate";
-		// market  = "market";
 	}
 }

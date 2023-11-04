@@ -483,6 +483,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return (DocsResp) new DocsResp().rs(rs)
 				.data(devMeta.owner, usr.uid())
+				.data("owner-name",  usr.userName())
 				.data(devMeta.org(), usr.orgId());
 	}
 

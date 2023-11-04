@@ -168,7 +168,8 @@ public class PhotoUser extends SyncRobot implements IUser {
 	@Override
 	public SessionInf getClientSessionInf(IUser login) { 
 		SessionInf inf = new SessionInf(login.sessionId(), login.uid(), login.roleId());
-		inf.device(login.deviceId());
+		inf .device(login.deviceId())
+			.userName(((PhotoUser)login).userName);
 		return inf;
 	}
 
