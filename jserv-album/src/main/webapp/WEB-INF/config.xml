@@ -71,6 +71,12 @@
 		<k>docsync.folder-resolver</k>
 		<v>io.oz.album.tier.DocProfile</v>
 	</c>
+	
+	<c>
+		<!-- works only when file-sys = windows -->
+		<k>windows:tika-external-parsers.xml</k>
+		<v>./tika-external-parsers.xml</v>
+	</c>
   </t>
 
   <t id="tree-semantics" pk="k" columns="k,v">

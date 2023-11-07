@@ -52,6 +52,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.sql.Update;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
@@ -529,18 +530,33 @@ public class Albums extends ServPort<AlbumReq> {
 	
 	DocsResp registDevice(DocsReq body, PhotoUser usr)
 			throws SemanticException, TransException, SQLException {
-		SemanticObject result = (SemanticObject) st
+		if (isblank(body.device().id)) {
+			SemanticObject result = (SemanticObject) st
 				.insert(devMeta.tbl, usr)
 				.nv(devMeta.synode0, AlbumSingleton.synode())
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
+				.nv(devMeta.cdate, Funcall.now())
 				.nv(devMeta.org(), usr.orgId())
 				// .nv(devMeta.mac, body.mac())
 				.ins(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
-		String resulved = result.resulve(devMeta.tbl, devMeta.pk);
-		return new DocsResp().device(new Device(
+			String resulved = result.resulve(devMeta.tbl, devMeta.pk);
+			return new DocsResp().device(new Device(
 				resulved, AlbumSingleton.synode(), body.device().devname));
+		}
+		else {
+			st  .update(devMeta.tbl, usr)
+				.nv(devMeta.devname, body.device().devname)
+				.nv(devMeta.cdate, Funcall.now())
+				.whereEq(devMeta.org(), usr.orgId())
+				.whereEq(devMeta.owner, usr.uid())
+				.whereEq(devMeta.synode0, AlbumSingleton.synode())
+				.u(st.instancontxt(Connects.uri2conn(body.uri()), usr));
+
+			return new DocsResp().device(new Device(
+				body.device().id, AlbumSingleton.synode(), body.device().devname));
+		}
 	}
 
 	/**

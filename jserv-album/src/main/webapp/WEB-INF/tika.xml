@@ -6,7 +6,12 @@
     <parser class="org.apache.tika.parser.mp4.MP4Parser">
       <mime-exclude>video/mp4</mime-exclude>
     </parser>
+    <!-- 
     <parser class="org.apache.tika.parser.external.CompositeExternalParser">
+      <mime>video/mp4</mime>
+    </parser>
+     -->
+    <parser class="io.oz.album.tika.CompositeExternalParserX">
       <mime>video/mp4</mime>
     </parser>
   </parsers>
