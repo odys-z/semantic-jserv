@@ -465,19 +465,10 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	DocsResp devices(DocsReq body, PhotoUser usr)
 			throws SemanticException, TransException, SQLException {
-		// [user-id, synode0, market]
-		
-		// String synode0 = body.synode0;// (body.page.arrCondts, 0); 
-		// String org     = body.org;	  // (body.page.arrCondts, 1); 
-		// String owner   = body.owner;  // ix(body.page.arrCondts, 2); 
-		// String market  = body.market; // ix(body.page.arrCondts, 3); 
-
 		AnResultset rs = (AnResultset)st
 				.select(devMeta.tbl)
-				// .whereEq(devMeta.synode0, synode0)
 				.whereEq(devMeta.org(),   usr.orgId())
 				.whereEq(devMeta.owner,   usr.uid())
-				// .whereEq(devMeta.market,  eq(market, devMeta.market) ? market : null)
 				.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
 				.rs(0)
 				;
@@ -546,12 +537,13 @@ public class Albums extends ServPort<AlbumReq> {
 				resulved, AlbumSingleton.synode(), body.device().devname));
 		}
 		else {
+			if (isblank(body.device().id))
+				throw new SemanticException("Error for pdating device name without a device id.");
+
 			st  .update(devMeta.tbl, usr)
-				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.cdate, Funcall.now())
 				.whereEq(devMeta.org(), usr.orgId())
-				.whereEq(devMeta.owner, usr.uid())
-				.whereEq(devMeta.synode0, AlbumSingleton.synode())
+				.whereEq(devMeta.pk, body.device().id)
 				.u(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
 			return new DocsResp().device(new Device(

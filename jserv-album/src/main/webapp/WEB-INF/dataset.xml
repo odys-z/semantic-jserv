@@ -30,11 +30,11 @@
 
  <c>
   <sk>sys.menu</sk>
-  <mysql>SELECT funcId, parentId, funcName, funcUrl url, sibling sort, fullpath, css, flags
-	  FROM a_sys_functions f order by f.fullpath
+  <mysql>SELECT funcId, parentId, funcName, url, sibling sort, fullpath, css, flags
+	  FROM a_sys_functions f where flags != '0' order by f.fullpath
   </mysql>
   <sqlit>SELECT funcId, parentId, funcName, url, sibling sort, fullpath, css, flags
-	  FROM a_functions f order by f.fullpath
+	  FROM a_functions f where flags != '0'  order by f.fullpath
   </sqlit>
   <s-tree>,a_sys_functions,funcId id,parentId,funcName text,,,false</s-tree>
  </c>
