@@ -41,6 +41,8 @@ public class AlbumReq extends DocsReq {
 		public static final String selectSyncs = DocsReq.A.selectSyncs; // "r/syncflags";
 
 		public static final String getPrefs = "r/prefs";
+		/** @deprecated */
+		public static final String sharingPolicy = "r/share-relat";
 	}
 	
 	String albumId;
@@ -123,7 +125,8 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-	/**Create a photo. Use this for small file.
+	/**
+	 * Create a photo. Use this for small file.
 	 * @param file
 	 * @param usr
 	 * @return album request

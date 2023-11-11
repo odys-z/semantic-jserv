@@ -123,7 +123,8 @@ public class Albums extends ServPort<AlbumReq> {
 				catch (TransException e) {
 					e.printStackTrace();
 					return null;
-			} };
+				}
+			};
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
