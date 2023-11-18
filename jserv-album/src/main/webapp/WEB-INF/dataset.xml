@@ -94,5 +94,9 @@
   <s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags</s-tree>
  </c>
  
+ <c>
+  <sk>tree-rel-photo-user</sk>
+  <sqlit></sqlit>
+ </c>
 </t>
 </dataset>
