@@ -142,8 +142,8 @@ public class PhotoUser extends SyncRobot implements IUser {
 	}
 
 	/**
-	 * Get a temp dir, and have it deleted when logout.
-	 * 
+	 * <p>Get a temp dir, and have it deleted when logout.</p>
+	 * Since jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot.
 	 * @param conn
 	 * @return the dir
 	 * @throws SemanticException
@@ -160,10 +160,6 @@ public class PhotoUser extends SyncRobot implements IUser {
 		tempDirs.add(tempDir);
 		return tempDir;
 	}
-
-//	public String defaultAlbum() {
-//		return "a-001";
-//	}
 
 	@Override
 	public SessionInf getClientSessionInf(IUser login) { 

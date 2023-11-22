@@ -12,7 +12,8 @@ import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantics.x.SemanticException;
 
-/**<p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort serv11}.</p>
+/**
+ * <p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort serv11}.</p>
  * 1. A incoming json message is parsed by *.serv into JMessage,
  * which can be used to directly to build statements;<br>
  * 2. An outgoing data object which is presented as AnsonMsg&lt;AnsonResp&gt;,
@@ -107,16 +108,21 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext };
 
-	/**The default IPort implelemtation.
+	/**
+	 * The default IPort implelemtation.
 	 * Used for parsing port name (string) to IPort instance, like {@link #Port}.<br>
 	 * */
 	static IPort defaultPortImpl;
 
-	/**Set the default IPort implelemtation, which is used for parsing port name (string)
-	 * to IPort instance, like {@link AnsonMsg.Port}.<br>
-	 * Because {{@link Port} only defined limited ports, user must initialize JMessage with {@link #understandPorts(IPort)}.<br>
-	 * An example of how to use this is shown in jserv-sample/io.odysz.jsample.SysMenu.<br>
-	 * Also check how to implement IPort extending {@link Port}, see example of jserv-sample/io.odysz.jsample.protocol.Samport.
+	/**
+	 * <p>Set the default IPort implementation, which is used for parsing port name (string)
+	 * to IPort instance, like {@link AnsonMsg.Port}.</p>
+	 * <p>Because {{@link Port} only defined limited ports, user must initialize JMessage
+	 * with {@link #understandPorts(IPort)}.</p>
+	 * <p>An example of how to use this is shown in jserv-sample/io.odysz.jsample.SysMenu.</p>
+	 * <p>Also check how to implement IPort extending {@link Port}, see example of
+	 * jserv-sample/io.odysz.jsample.protocol.Samport.</p>
+	 * 
 	 * @param p extended Port
 	 */
 	static public void understandPorts(IPort p) {

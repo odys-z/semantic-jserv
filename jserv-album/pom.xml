@@ -105,7 +105,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
-	    <version>0.4.34</version>
+	    <version>0.4.35-SNAPSHOT</version>
 	</dependency>
 
 	<dependency>
@@ -115,11 +115,13 @@
 	    <scope>test</scope>
 	</dependency>
 
+	<!-- 
 	<dependency>
 	  <groupId>org.xerial</groupId>
 	  <artifactId>sqlite-jdbc</artifactId>
-	  <version>3.36.0</version>
+	  <version>3.44.0.0</version>
 	</dependency>
+	 -->
 
 	<dependency>
 		<groupId>mysql</groupId>

@@ -291,11 +291,11 @@ public class Albums extends ServPort<AlbumReq> {
 
 		String conn = Connects.uri2conn(jreq.uri());
 		// force org-id as first arg
-		PageInf page = isNull(jreq.page)
+		PageInf page = isNull(jreq.pageInf)
 				? new PageInf(0, -1, usr.orgId())
-				: eq(jreq.page.arrCondts.get(0), usr.orgId())
-				? jreq.page
-				: jreq.page.insertCondt(usr.orgId());
+				: eq(jreq.pageInf.arrCondts.get(0), usr.orgId())
+				? jreq.pageInf
+				: jreq.pageInf.insertCondt(usr.orgId());
 
 		List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
 		return new AlbumResp().albumForest(lst);
@@ -326,7 +326,6 @@ public class Albums extends ServPort<AlbumReq> {
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
-		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot.
 		String tempDir = ((PhotoUser)usr).touchTempDir(conn);
 
 		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subFolder);
@@ -774,11 +773,11 @@ public class Albums extends ServPort<AlbumReq> {
 				.col("sharedate").col("tags")
 				.col("geox").col("geoy")
 				.col("mime").col("css")
-				.whereEq("pid", req.docId)
+				.whereEq("pid", req.pageInf.mapCondts.get("pid"))
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next())
-			throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
+			throw new SemanticException("Can't find file for id: '%s' (permission of %s)", req.docId, usr.uid());
 
 		return new AlbumResp().rec(rs);
 	}
@@ -852,7 +851,7 @@ public class Albums extends ServPort<AlbumReq> {
 		AlbumResp album = new AlbumResp().album(rs);
 
 		rs = (AnResultset) st
-				.select(meta.tbl, "p").page(req.page)
+				.select(meta.tbl, "p").page(req.pageInf)
 				.j(tablCollectPhoto , "ch", "ch.pid = p.pid")
 				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
 				.j(tablCollects, "c", "c.cid = ch.cid")

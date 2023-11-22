@@ -96,7 +96,10 @@
  
  <c>
   <sk>tree-rel-photo-user</sk>
-  <sqlit></sqlit>
+  <sqlit>select p.pid is not null checked, o.orgName text, o.orgId, parent, sort, fullpath
+  from a_orgs o left outer join h_photo_org p on p.oid = o.orgId and o.orgId = '%s' order by fullpath;
+  </sqlit>
+  <s-tree>checked,a_orgs,orgId nodeId,parent,fullpath,sort,text,children,false</s-tree>
  </c>
 </t>
 </dataset>

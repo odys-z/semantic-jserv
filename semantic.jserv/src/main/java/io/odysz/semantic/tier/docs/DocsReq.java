@@ -78,7 +78,7 @@ public class DocsReq extends AnsonBody {
 		public static final String selectDocs = "sync/tasks"; */
 	}
 
-	public PageInf page;
+	public PageInf pageInf;
 
 	public String docTabl;
 	public DocsReq docTabl(String tbl) {
@@ -225,8 +225,8 @@ public class DocsReq extends AnsonBody {
 
 		syncQueries.add(new SyncDoc(p, p.fullpath(), null));
 		*/
-		if (page == null) {
-			page = new PageInf();
+		if (pageInf == null) {
+			pageInf = new PageInf();
 		}
 
 		return this;
