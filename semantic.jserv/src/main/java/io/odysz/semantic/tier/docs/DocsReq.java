@@ -322,7 +322,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq share(SyncDoc p) {
-		shareflag = p.shareflag;
+		shareflag = p.shareFlag;
 		shareby = p.shareby;
 		shareDate = p.sharedate;
 		return this;

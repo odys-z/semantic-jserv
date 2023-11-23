@@ -46,11 +46,15 @@ public class PhotoUser extends SyncRobot implements IUser {
 	String roleName;
 	String orgName;
 
-	PUserMeta userMeta;
+	public static PUserMeta userMeta;
+	
+	static {
+		userMeta = new PUserMeta("a_users");
+	}
 
 	public PhotoUser(String userid) {
 		super(userid, null, "Photo Robot");
-		userMeta = (PUserMeta) meta();
+		// userMeta = (PUserMeta) meta();
 	}
 
 	/**
@@ -61,7 +65,7 @@ public class PhotoUser extends SyncRobot implements IUser {
 	 */
 	public PhotoUser(String userid, String pswd, String userName) {
 		super(userid, null, "Photo Robot");
-		userMeta = (PUserMeta) meta();
+		// userMeta = (PUserMeta) meta();
 	}
 	
 	public static class PUserMeta extends JUserMeta {
@@ -73,9 +77,9 @@ public class PhotoUser extends SyncRobot implements IUser {
 			device = "device";
 		}
 	}
-
+	
 	public TableMeta meta() {
-		return new PUserMeta("a_users");
+		return userMeta;
 	}
 
 	@Override

@@ -58,7 +58,7 @@ public class DocUtils {
 				.nv(meta.fullpath, photo.fullpath())
 				.nv(meta.createDate, photo.createDate)
 				.nv(meta.folder, photo.folder())
-				.nv(meta.shareflag, photo.shareflag)
+				.nv(meta.shareflag, photo.shareFlag)
 				.nv(meta.shareby, photo.shareby)
 				.nv(meta.shareDate, photo.sharedate)
 				.nv(meta.size, photo.size)

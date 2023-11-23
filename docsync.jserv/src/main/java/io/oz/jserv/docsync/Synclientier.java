@@ -559,7 +559,7 @@ public class Synclientier extends Semantier {
 				.nv(meta.folder, doc.folder())
 				.nv(meta.size, size)
 				.nv(meta.shareby, doc.shareby)
-				.nv(meta.shareflag, doc.shareflag)
+				.nv(meta.shareflag, doc.shareFlag)
 				.nv(meta.shareDate, doc.sharedate)
 				;
 		

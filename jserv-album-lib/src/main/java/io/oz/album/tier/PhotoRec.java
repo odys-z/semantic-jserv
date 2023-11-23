@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
 
+import io.odysz.anson.AnsonField;
 import io.odysz.common.AESHelper;
 import io.odysz.common.CheapMath;
 import io.odysz.common.DateFormat;
@@ -18,9 +19,11 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
+import io.odysz.transact.x.TransException;
 
 /**
  * Server side and jprotocol oriented data record - not BaseFile used by file picker (at Android client).
@@ -73,23 +76,27 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 
 	public String albumId;
 
+	@AnsonField(ignoreTo=true)
+	PhotoMeta meta;
+
 	public PhotoRec() {}
 
-	public PhotoRec(AnResultset rs) throws SQLException, IOException {
-		this.recId = rs.getString("pid");
-		this.pname = rs.getString("pname");
-		this.folder = rs.getString("folder");
-		this.createDate = rs.getString("pdate");
-		this.shareby = rs.getString("shareby");
-		this.geox = rs.getString("geox");
-		this.geoy = rs.getString("geoy");
-		this.mime = rs.getString("mime");
+	public PhotoRec(AnResultset rs, PhotoMeta m) throws SQLException, IOException {
+		this.meta = m;
+		this.recId = rs.getString(m.pk);
+		this.pname = rs.getString(m.clientname);
+		this.folder = rs.getString(m.folder);
+		this.createDate = rs.getString(m.createDate);
+		this.shareby = rs.getString(m.shareby);
+		this.shareFlag = rs.getString(m.shareflag);
+		this.geox = rs.getString(m.geox);
+		this.geoy = rs.getString(m.geoy);
+		this.mime = rs.getString(m.mime);
 
-		this.css = rs.getString("css");
+		this.css = rs.getString(m.css);
 
-		// this.clientpath =  rs.getString("clientpath");
-		fullpath(rs.getString("clientpath"));
-		this.device =  rs.getString("device");
+		fullpath(rs.getString(m.fullpath));
+		this.device =  rs.getString(m.synoder);
 
 		try {
 			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
@@ -99,10 +106,19 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
 	}
-
-	public PhotoRec(String collectId, AnResultset rs) throws SQLException, IOException {
-		this(rs);
+	
+	public PhotoRec(String collectId, AnResultset rs, PhotoMeta m) throws SQLException, IOException {
+		this(rs, m);
 		this.collectId = collectId;
+	}
+	
+	public static Query cols(Query q, PhotoMeta meta) throws TransException {
+		return q.cols(meta.pk, meta.clientname, meta.createDate,
+					meta.folder, meta.fullpath, meta.synoder,
+					meta.uri, meta.shareDate, meta.tags,
+					meta.geox, meta.geoy,
+					meta.mime, meta.css)
+				.col(Funcall.isnull(meta.shareflag, ExprPart.constr(Share.priv)), meta.shareflag);
 	}
 
 	/**
@@ -114,8 +130,8 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	 * @throws IOException
 	 */
 	public PhotoRec asSyncRec(AnResultset rs) throws SQLException, IOException {
-		fullpath(rs.getString("clientpath"));
-		this.syncFlag = rs.getString("syncFlag");
+		fullpath(rs.getString(meta.fullpath));
+		this.syncFlag = rs.getString(meta.syncflag);
 		return this;
 	}
 
@@ -175,7 +191,7 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	}
 
 	public SyncDoc shareflag(String share) {
-		shareflag = share;
+		shareFlag = share;
 		return this;
 	}
 

@@ -51,7 +51,9 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
+import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Update;
+import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
@@ -100,7 +102,6 @@ public class Albums extends ServPort<AlbumReq> {
 	
 	static final DeviceTableMeta devMeta = new DeviceTableMeta(null);
 
-	static PUserMeta userMeta;
 
 	/** uri db field */
 	static final String uri = "uri";
@@ -113,13 +114,19 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static IUser robot;
 
+	PhotoMeta mphoto;
+	PUserMeta userMeta;
+
 	static {
 		try {
 			st = new DATranscxt(null);
 			robot = new PhotoUser("Robot Album");
 			
 			Docs206.getMeta = (String uri) -> {
-				try { return new PhotoMeta(Connects.uri2conn(uri)); }
+				try {
+					String conn = Connects.uri2conn(uri);
+					return new PhotoMeta(conn);
+				}
 				catch (TransException e) {
 					e.printStackTrace();
 					return null;
@@ -607,12 +614,12 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.j("a_users", "u", "u.userId = p.shareby")
-				.col("pid")
-				.col("pname").col("pdate")
-				.col("folder").col("clientpath")
-				.col("uri")
+				.col(mphoto.pk)
+				.col(mphoto.clientname).col(mphoto.createDate)
+				.col(mphoto.folder).col(mphoto.fullpath)
+				.col(mphoto.uri)
 				.col("userName", "shareby")
-				.col("sharedate").col("tags")
+				.col(mphoto.shareDate).col(mphoto.tags)
 				.col("geox").col("geoy")
 				.col("mime")
 				.whereEq("pid", req.docId)
@@ -762,24 +769,19 @@ public class Albums extends ServPort<AlbumReq> {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 
-		AnResultset rs = (AnResultset) st
+		Query q = st
 				.select(meta.tbl, "p")
-				.j("a_users", "u", "u.userId = p.shareby")
-				.col("pid")
-				.col("pname").col("pdate")
-				.col("folder").col("clientpath").col("device")
-				.col("uri")
+				.j("a_users", "u", "u.userId = p.shareby");
+
+		AnResultset rs = (AnResultset) PhotoRec.cols(q, meta)
 				.col("userName", "shareby")
-				.col("sharedate").col("tags")
-				.col("geox").col("geoy")
-				.col("mime").col("css")
 				.whereEq("pid", req.pageInf.mapCondts.get("pid"))
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: '%s' (permission of %s)", req.docId, usr.uid());
 
-		return new AlbumResp().rec(rs);
+		return new AlbumResp().rec(rs, meta);
 	}
 
 	protected static AlbumResp collect(AlbumReq req, IUser usr)
@@ -808,7 +810,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
 
-		album.photos(cid, rs);
+		album.photos(cid, rs, meta);
 
 		return album;
 	}
@@ -833,13 +835,14 @@ public class Albums extends ServPort<AlbumReq> {
 			IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
-		PhotoMeta meta = new PhotoMeta(conn);
+		PhotoMeta m = new PhotoMeta(conn);
+		PUserMeta musr = new PUserMeta(conn);
 
 		String aid = prf.defltAlbum;
 
 		AnResultset rs = (AnResultset) st
 				.select(tablAlbums, "a")
-				.j(userMeta.tbl, "u", "u.userId = a.shareby")
+				.j(musr.tbl, "u", "u.userId = a.shareby")
 				.cols("a.*", "a.shareby ownerId", "u.userName owner")
 				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
@@ -851,22 +854,23 @@ public class Albums extends ServPort<AlbumReq> {
 		AlbumResp album = new AlbumResp().album(rs);
 
 		rs = (AnResultset) st
-				.select(meta.tbl, "p").page(req.pageInf)
+				.select(m.tbl, "p").page(req.pageInf)
 				.j(tablCollectPhoto , "ch", "ch.pid = p.pid")
 				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
 				.j(tablCollects, "c", "c.cid = ch.cid")
 				.j(tablAlbums, "a", "a.aid = ac.aid")
-				.j(userMeta.tbl, "u", "u.userId = p.shareby")
+				.j(musr.tbl, "u", "u.userId = p.shareby")
 				.cols("ac.aid", "ch.cid",
-					  "p.pid", "pname", "pdate", "p.tags", "mime", "p.css", "folder", "geox", "geoy", "sharedate",
+					  "p.pid", m.clientname, m.createDate, "p." + m.tags,
+					  m.mime, "p.css", m.folder, m.geox, m.geoy, m.shareDate,
 					  "c.shareby collector", "c.cdate",
-					  "clientpath", "device", "p.shareby", "u.userName owner",
+					  m.fullpath, m.synoder, "p." + m.shareby, "u.userName owner",
 					  "storage", "aname", "cname")
 				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
 
-		album.collectPhotos(rs);
+		album.collectPhotos(rs, conn);
 
 		return album;
 	}

@@ -54,7 +54,6 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	protected Set<String> tempDirs;
 	public String orgName;
-	private Object meta;
 	public SyncRobot orgName (String org) {
 		orgName = org;
 		return this;
@@ -86,6 +85,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 		}
 	}
 
+	private TableMeta meta;
 	/**
 	 * User table's meta, not doc table's meta.
 	 * 
