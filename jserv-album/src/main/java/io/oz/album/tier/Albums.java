@@ -53,7 +53,6 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Update;
-import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
