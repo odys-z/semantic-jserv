@@ -95,7 +95,7 @@
  </c>
  
  <c>
-  <sk>tree-rel-photo-user</sk>
+  <sk>tree-rel-photo-orgs</sk>
   <sqlit>select p.pid is not null checked, o.orgName text, o.orgId, parent, sort, fullpath
   from a_orgs o left outer join h_photo_org p on p.oid = o.orgId and o.orgId = '%s' order by fullpath;
   </sqlit>
