@@ -13,7 +13,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.semantics.x.SemanticException;
 
 /**
- * <p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort serv11}.</p>
+ * <p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort }.</p>
  * 1. A incoming json message is parsed by *.serv into JMessage,
  * which can be used to directly to build statements;<br>
  * 2. An outgoing data object which is presented as AnsonMsg&lt;AnsonResp&gt;,
@@ -33,31 +33,43 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * @author odys-z@github.com
 	 */
 	public static enum Port implements IPort {  
-		heartbeat("ping.serv"), session("login.serv11"),
-		query("r.serv11"), update("u.serv11"),
-		insert("c.serv11"), delete("d.serv11"),
+		heartbeat("ping.serv"), session("login.serv"),
+		query("r.serv"), update("u.serv"),
+		insert("c.serv"), delete("d.serv"),
 		echo("echo.less"),
+
 		/** serv port for downloading json/xml file or uploading a file.<br>
 		 * see io.odysz.semantic.jserv.file.JFileServ in semantic.jserv. */
 		file("file.serv"),
-		/**Any user defined request using message body of subclass of JBody must use this port */ 
+
+		/**
+		 * Any user defined request using message body of subclass of JBody must use this port
+		 * @deprecated since 1.4.36
+		 */ 
 		user("user.serv11"),
+
 		/** experimental */
 		userstier("users.tier"),
 		/** semantic tree of dataset extensions<br>
 		 * see io.odysz.semantic.ext.SemanticTree in semantic.jserv. */
 		stree("s-tree.serv"),
+
 		/** @deprecated replaced by {@link #stree} */
 		stree11("s-tree.serv11"),
+
 		/** dataset extensions<br>
 		 * see io.odysz.semantic.ext.Dataset in semantic.jserv. */
 		dataset("ds.serv"),
+
 		/** @deprecated replaced by {@link #dataset} */
 		dataset11("ds.serv11"),
+
 		/** ds.tier, dataset's semantic tier */
 		datasetier("ds.tier"),
+
 		/** document manage's semantic tier */
 		docstier("docs.tier"),
+
 		/**
 		 * <h5>[experimental]</h5>
 		 * This port is implemented by extension docsync.jserv.

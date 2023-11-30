@@ -18,7 +18,7 @@ import io.odysz.semantics.x.SemanticException;
  */
 public enum AlbumPort implements IPort {
 	heartbeat("ping.serv"),
-	session("login.serv11"),
+	session("login.serv"),
 	/** users.less */
 	userstier("users.less"),
 	/** editor.less */

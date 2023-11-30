@@ -76,6 +76,8 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 
 	public String albumId;
 
+	int orgs;
+
 	@AnsonField(ignoreTo=true)
 	PhotoMeta meta;
 
@@ -105,6 +107,8 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		}
 		this.geox = rs.getString("geox");
 		this.geoy = rs.getString("geoy");
+		
+		this.orgs = rs.getInt("orgs", 0);
 	}
 	
 	public PhotoRec(String collectId, AnResultset rs, PhotoMeta m) throws SQLException, IOException {
@@ -113,7 +117,8 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	}
 	
 	public static Query cols(Query q, PhotoMeta meta) throws TransException {
-		return q.cols(meta.pk, meta.clientname, meta.createDate,
+		return q.cols(q.alias().sql(null) + "." + meta.pk,
+					meta.clientname, meta.createDate,
 					meta.folder, meta.fullpath, meta.synoder,
 					meta.uri, meta.shareDate, meta.tags,
 					meta.geox, meta.geoy,

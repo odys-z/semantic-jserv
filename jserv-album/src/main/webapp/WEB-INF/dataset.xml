@@ -96,8 +96,21 @@
  
  <c>
   <sk>tree-rel-photo-orgs</sk>
-  <sqlit>select p.pid is not null checked, o.orgName text, o.orgId, parent, sort, fullpath
-  from a_orgs o left outer join h_photo_org p on p.oid = o.orgId and o.orgId = '%s' order by fullpath;
+  <sqlit>with recursive orgrec(orgId, parent, deep, grpsum) as (
+values('%1$s', (select parent from a_orgs where orgId = '%1$s'), 0, (select ifnull(sum(case when pid is null then 0 else 1 end), 0) grpsum from h_photo_org po where po.oid = '%1$s')) union all 
+select p.orgId, p.parent, (ch.deep + 1), ifnull(cnt.grpsum, 0) + ch.grpsum
+from a_orgs p join orgrec ch on p.orgId = ch.parent
+left join (select oid, sum(case when pid is null then 0 else 1 end) grpsum from h_photo_org po group by oid) cnt on cnt.oid = p.orgId 
+) select po.pid is not null checked, o.orgId, orgName text, o.parent, sort, fullpath, deep, grpsum orgs
+from a_orgs o left join orgrec on o.orgId = orgrec.orgId left join h_photo_org po on po.oid = o.orgId and po.pid = '%2$s' order by fullpath asc;
+  </sqlit>
+  <s-tree>checked,a_orgs,orgId nodeId,parent,fullpath,sort,text,children,false</s-tree>
+ </c>
+
+ <c>
+  <sk>backup: tree-rel-photo-orgs</sk>
+  <sqlit>select p.pid is not null checked, o.orgName text, o.orgId, parent, sort, fullpath, count(p.oid) orgs
+  from a_orgs o left outer join h_photo_org p on p.oid = o.orgId and o.orgId = '%s' group by p.pid order by fullpath;
   </sqlit>
   <s-tree>checked,a_orgs,orgId nodeId,parent,fullpath,sort,text,children,false</s-tree>
  </c>

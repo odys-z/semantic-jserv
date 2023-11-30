@@ -113,7 +113,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static IUser robot;
 
-	PhotoMeta mphoto;
 	PUserMeta userMeta;
 
 	static {
@@ -613,12 +612,12 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.j("a_users", "u", "u.userId = p.shareby")
-				.col(mphoto.pk)
-				.col(mphoto.clientname).col(mphoto.createDate)
-				.col(mphoto.folder).col(mphoto.fullpath)
-				.col(mphoto.uri)
+				.col(meta.pk)
+				.col(meta.clientname).col(meta.createDate)
+				.col(meta.folder).col(meta.fullpath)
+				.col(meta.uri)
 				.col("userName", "shareby")
-				.col(mphoto.shareDate).col(mphoto.tags)
+				.col(meta.shareDate).col(meta.tags)
 				.col("geox").col("geoy")
 				.col("mime")
 				.whereEq("pid", req.docId)
@@ -767,18 +766,28 @@ public class Albums extends ServPort<AlbumReq> {
 
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
+		Photo_OrgMeta mp_o = new Photo_OrgMeta(conn);
 
 		Query q = st
 				.select(meta.tbl, "p")
-				.j("a_users", "u", "u.userId = p.shareby");
+				.j("a_users", "u", "u.userId = p.shareby")
+				.l(mp_o.tbl , "po", "po.pid = p.pid");
 
 		AnResultset rs = (AnResultset) PhotoRec.cols(q, meta)
-				.col("userName", "shareby")
-				.whereEq("pid", req.pageInf.mapCondts.get("pid"))
+				.col(meta.shareby, "shareby").col(count("po.oid"), "orgs")
+				.whereEq("p." + meta.pk, req.pageInf.mapCondts.get("pid"))
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next())
-			throw new SemanticException("Can't find file for id: '%s' (permission of %s)", req.docId, usr.uid());
+			throw new SemanticException("Can't find file for id: '%s' (permission of %s)",
+					!isblank(req.docId)
+					? req.docId
+					: !isblank(req.pageInf)
+					? !isblank(req.pageInf.mapCondts)
+					  ? req.pageInf.mapCondts.get("pid")
+					  : isNull(req.pageInf.arrCondts) ? null : req.pageInf.arrCondts.get(0)[1]
+					: null,
+					usr.uid());
 
 		return new AlbumResp().rec(rs, meta);
 	}

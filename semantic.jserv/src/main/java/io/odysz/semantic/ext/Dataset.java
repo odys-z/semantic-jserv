@@ -54,7 +54,7 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.query)
-			Utils.logi("---------- query (ds.jserv11) get ----------");
+			Utils.logi("---------- query (ds.serv) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			String conn = msg.body(0).uri();
@@ -79,7 +79,7 @@ public class Dataset extends ServPort<AnDatasetReq> {
 			throws IOException {
 		resp.setCharacterEncoding("UTF-8");
 		if (ServFlags.query)
-			Utils.logi("========== query (ds.jserv11) post ==========");
+			Utils.logi("========== query (ds.serv) post ==========");
 		try {
 			String uri = msg.body(0).uri();
 			if (uri == null)

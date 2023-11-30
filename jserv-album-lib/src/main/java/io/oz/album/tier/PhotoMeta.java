@@ -7,7 +7,6 @@ public class PhotoMeta extends DocTableMeta {
 
 	public final String tags;
 	public final String exif;
-//	public final String folder;
 	public final String family;
 	public final String geox;
 	public final String geoy;
@@ -18,7 +17,6 @@ public class PhotoMeta extends DocTableMeta {
 		
 		tags   = "tags";
 		exif   = "exif";
-//		folder = "folder";
 		family = "family";
 		
 		geox = "geox";

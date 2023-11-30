@@ -74,7 +74,7 @@ import io.odysz.transact.x.TransException;
  *
  * @author odys-z@github.com
  */
-@WebServlet(description = "session manager", urlPatterns = { "/login.serv11" })
+@WebServlet(description = "session manager", urlPatterns = { "/login.serv" })
 public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifier {
 	public AnSession() {
 		super(Port.session);

@@ -30,7 +30,7 @@ import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv11" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv" })
 public class AnUpdate extends ServPort<AnUpdateReq> {
 	public AnUpdate() {
 		super(Port.update);
