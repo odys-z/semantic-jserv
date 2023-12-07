@@ -775,7 +775,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		AnResultset rs = (AnResultset) PhotoRec.cols(q, meta)
 				.col(meta.shareby, "shareby").col(count("po.oid"), "orgs")
-				.whereEq("p." + meta.pk, req.pageInf.mapCondts.get("pid"))
+				.whereEq("p." + meta.pk, req.pageInf.mergeArgs().getArg("pid"))
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next())

@@ -14,6 +14,7 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.PageInf;
 
 /**
  * @author Ody
@@ -149,6 +150,11 @@ public class AlbumReq extends DocsReq {
 		this.device = new Device(device, null);
 		clientpath(clientpath);
 		this.a = A.del;
+		return this;
+	}
+
+	public AlbumReq page(int page, int size, String... args) {
+		pageInf = new PageInf(page, size, args);
 		return this;
 	}
 
