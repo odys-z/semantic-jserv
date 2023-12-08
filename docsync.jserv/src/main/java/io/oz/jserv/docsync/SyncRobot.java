@@ -66,11 +66,12 @@ public class SyncRobot extends SemanticObject implements IUser {
 	/**
 	 * for jserv construction
 	 * 
+	 * FIXME a robot don't need password?
+	 * 
 	 * @param userid
-	 * @param pswd
 	 * @param userName
 	 */
-	public SyncRobot(String userid, String pswd, String userName) {
+	public SyncRobot(String userid, String userName) {
 		this.userId = userid;
 		this.userName = userName;
 	}
