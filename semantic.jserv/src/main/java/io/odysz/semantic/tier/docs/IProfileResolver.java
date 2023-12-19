@@ -33,8 +33,8 @@ public interface IProfileResolver {
 	 */
 	default String synodeFolder(AnsonBody reqBody, IUser usr) {
 		DocsReq req = ((DocsReq)reqBody);
-		if (!isblank(req.subFolder))
-			return req.subFolder;
+		if (!isblank(req.subfolder))
+			return req.subfolder;
 		try {
 			if (isblank(req.mime) || image.is(req.mime) || video.is(req.mime))
 				return DateFormat.formatYYmm(DateFormat.parse(req.shareDate));

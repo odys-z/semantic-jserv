@@ -62,16 +62,16 @@
  </c>
 
  <c>
-  <!-- album tree filtered with org tree -->
+  <!-- Album home page, album tree filtered with org tree -->
   <sk>tree-album-family-folder</sk>
   <sqlit>with recursive orgrec(orgId, parent, deep, grpsum) as (
 values('%1$s', (select parent from a_orgs where orgId = '%1$s'), 0, (select ifnull(sum(case when pid is null then 0 else 1 end), 0) grpsum from h_photo_org po where po.oid = '%1$s')) 
 union all select p.orgId, p.parent, (ch.deep + 1), ifnull(cnt.grpsum, 0) + ch.grpsum
 from a_orgs p join orgrec ch on p.orgId = ch.parent
-left join (select oid, sum(case when pid is null then 0 else 1 end) grpsum from h_photo_org po group by oid) cnt on cnt.oid = p.orgId 
-) select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'p' nodetype, css, filesize img, null mov, null wav, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, null fav, mime
-from h_photos h where family = '%1$s' and substring(mime, 0, 6) in ('audio', 'image', 'video') union select * from (
-select '%1$s' || '.' || folder, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
+left join (select oid, sum(case when pid is null then 0 else 1 end) grpsum from h_photo_org po group by oid) cnt on cnt.oid = p.orgId)
+select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'p' nodetype, css, filesize img, null mov, null wav, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, null fav, mime
+from h_photos h where family = '%1$s' and substring(mime, 0, 6) in ('audio', 'image', 'video')
+union select * from (select '%1$s' || '.' || folder pid, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
 sum(case when substring(mime, 0, 6) = 'image' then 1 else 0 end) img, sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov, sum (case when substring(mime, 0, 6) = 'audio' then 1 else 0 end) wav, sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime
 from h_photos f where f.family = '%1$s' group by f.folder
 ) where img > 0 or mov > 0 or wav > 0 order by fullpath</sqlit>
@@ -86,7 +86,7 @@ from h_photos f where f.family = '%1$s' group by f.folder
   case when (geox != 0) then geox || ',' || geoy end geo, null fav, mime
   from h_photos h where family = '%1$s' and (substr(mime, 0, 6) != 'image' and substr(mime, 0, 6) != 'video' and substr(mime, 0, 6) !='audio')
   union select * from (
-  select '%1$s' || '.' || folder, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'dir' nodetype, css, null filesize,
+  select '%1$s' || '.' || folder, folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'dir' nodetype, css, null filesize,
   sum(case when substr(mime, 0, 16) = 'application/pdf' then 1 else 0 end) pdf,
   sum(case when substr(mime, 0, 5) = 'text' then 1 else 0 end) txt,
   sum(case when substr(mime, 0, 16) = 'application/zip' then 1 else 0 end) zip,
@@ -104,7 +104,7 @@ from h_photos f where f.family = '%1$s' group by f.folder
   <sk>tree-album-sharing</sk>
   <sqlit>select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.pname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'p' nodetype, css, filesize img, null mov, null wav, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, null fav, mime
   from h_photos h where family = '%1$s' and substring(mime, 0, 6) in ('audio', 'image', 'video') union select * from (
-  select '%1$s' || '.' || folder, '%1$s' folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
+  select '%1$s' || '.' || folder, folder, max(tags) tags, max(shareby) shareby, folder pname, folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
   sum(case when substring(mime, 0, 6) = 'image' then 1 else 0 end) img, sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov, sum (case when substring(mime, 0, 6) = 'audio' then 1 else 0 end) wav, sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime
   from h_photos f where f.family = '%1$s' group by f.folder
   ) where img > 0 or mov > 0 or wav > 0 order by fullpath</sqlit>
@@ -112,7 +112,7 @@ from h_photos f where f.family = '%1$s' group by f.folder
  </c>
  
  <c>
-  <sk>tree-rel-photo-orgs</sk>
+  <sk>tree-rel-photo-org</sk>
   <sqlit>with recursive orgrec(orgId, parent, deep, grpsum) as (
 values('%1$s', (select parent from a_orgs where orgId = '%1$s'), 0, (select ifnull(sum(case when pid is null then 0 else 1 end), 0) grpsum from h_photo_org po where po.oid = '%1$s')) union all 
 select p.orgId, p.parent, (ch.deep + 1), ifnull(cnt.grpsum, 0) + ch.grpsum
@@ -125,9 +125,14 @@ from a_orgs o left join orgrec on o.orgId = orgrec.orgId left join h_photo_org p
  </c>
 
  <c>
-  <sk>backup: tree-rel-photo-orgs</sk>
-  <sqlit>select p.pid is not null checked, o.orgName text, o.orgId, parent, sort, fullpath, count(p.oid) orgs
-  from a_orgs o left outer join h_photo_org p on p.oid = o.orgId and o.orgId = '%s' group by p.pid order by fullpath;
+  <sk>tree-rel-folder-org</sk>
+  <sqlit>with recursive orgrec(orgId, parent, deep, grpsum) as (
+values('%1$s', (select parent from a_orgs where orgId = '%1$s'), 0, (select ifnull(sum(case when pid is null then 0 else 1 end), 0) grpsum from h_photo_org po where po.oid = '%1$s')) union all 
+select p.orgId, p.parent, (ch.deep + 1), ifnull(cnt.grpsum, 0) + ch.grpsum
+from a_orgs p join orgrec ch on p.orgId = ch.parent
+left join (select oid, sum(case when pid is null then 0 else 1 end) grpsum from h_photo_org po group by oid) cnt on cnt.oid = p.orgId 
+) select po.pid is not null checked, o.orgId, orgName text, o.parent, sort, fullpath, deep, grpsum orgs
+from a_orgs o left join orgrec on o.orgId = orgrec.orgId left join h_photo_org po on po.oid = o.orgId and po.pid in (select pid from h_photos where folder = '%2$s') order by fullpath asc;
   </sqlit>
   <s-tree>checked,a_orgs,orgId nodeId,parent,fullpath,sort,text,children,false</s-tree>
  </c>

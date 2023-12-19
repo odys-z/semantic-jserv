@@ -50,10 +50,13 @@ import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Update;
-import io.odysz.transact.sql.parts.condition.Funcall;
+import io.odysz.transact.sql.parts.Logic;
+import io.odysz.transact.sql.parts.Sql;
+import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
@@ -231,6 +234,8 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = chkDevname(jmsg.body(0), usr);
 				else if (DocsReq.A.registDev.equals(a))
 					rsp = registDevice(jmsg.body(0), usr);
+				else if (AlbumReq.A.updateFolderel.equals(a))
+					rsp = updateFolderel(jmsg.body(0), usr);
 
 				else
 					throw new SemanticException("Request.a can not be handled, request.a: %s", jreq.a());
@@ -257,6 +262,44 @@ public class Albums extends ServPort<AlbumReq> {
 		} finally {
 			resp.flushBuffer();
 		}
+	}
+
+	/**
+	 * Update photo-org relationships for all pid in the folder. No depth recursive for photos (docs)
+	 * sharing are managed by users only in the view of the original folder's structure, the saving
+	 * file system tree structure.
+	 * 
+	 * @param req
+	 * @param usr
+	 * @return resp
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	DocsResp updateFolderel(AlbumReq req, PhotoUser usr) throws TransException, SQLException {
+		String conn = Connects.uri2conn(req.uri());
+		PhotoMeta phm = new PhotoMeta(conn);
+		Photo_OrgMeta pom = new Photo_OrgMeta(conn);
+
+		Delete d = st
+				.delete(pom.tbl, usr)
+				.whereIn(pom.pid, st.select(phm.tbl).col(phm.pk).whereEq(phm.folder, req.subfolder))
+				.whereIn(pom.oid, req.getChecks("oid"));
+		if (!req.clearels) {
+			d.post(st.insert(pom.tbl)
+				.cols(pom.pid, pom.oid)
+				.select(st
+					.select(phm.tbl, "ph")
+					.distinct()
+					.col("ph." + phm.pk).col("po." + pom.oid)
+					.j(pom.tbl, "po", Sql.condt(Logic.op.in, "po.oid", new ExprPart(req.getChecks("oid")))
+									 .and(Sql.condt(Logic.op.eq, "ph.folder", ExprPart.constr(req.subfolder))))// new Predicate(op.in, "po.orgId", req.getChecks("oid")))
+					.whereEq(phm.folder, req.subfolder)));
+		}
+
+		SemanticObject res = (SemanticObject)d
+				.d(st.instancontxt(conn, usr));
+
+		return (DocsResp) new DocsResp().data(res.props());
 	}
 
 	/**
@@ -333,7 +376,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		String tempDir = ((PhotoUser)usr).touchTempDir(conn);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subFolder);
+		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subfolder);
 
 		// FIXME security breach?
 		String id = chainId(usr, chain.clientpath);
@@ -532,7 +575,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv(devMeta.synode0, AlbumSingleton.synode())
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
-				.nv(devMeta.cdate, Funcall.now())
+				.nv(devMeta.cdate, now())
 				.nv(devMeta.org(), usr.orgId())
 				// .nv(devMeta.mac, body.mac())
 				.ins(st.instancontxt(Connects.uri2conn(body.uri()), usr));
@@ -546,7 +589,7 @@ public class Albums extends ServPort<AlbumReq> {
 				throw new SemanticException("Error for pdating device name without a device id.");
 
 			st  .update(devMeta.tbl, usr)
-				.nv(devMeta.cdate, Funcall.now())
+				.nv(devMeta.cdate, now())
 				.whereEq(devMeta.org(), usr.orgId())
 				.whereEq(devMeta.pk, body.device().id)
 				.u(st.instancontxt(Connects.uri2conn(body.uri()), usr));

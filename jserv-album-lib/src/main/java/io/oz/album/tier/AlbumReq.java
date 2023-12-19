@@ -1,10 +1,13 @@
 package io.oz.album.tier;
 
+import static io.odysz.common.LangExt.eq;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import io.odysz.anson.utils.NV;
 import io.odysz.common.AESHelper;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -37,13 +40,19 @@ public class AlbumReq extends DocsReq {
 
 		public static final String del = "d";
 
-		// MVP 0.2.1
+		// MVP 0.3.0
 		/** Query client paths */
 		public static final String selectSyncs = DocsReq.A.selectSyncs; // "r/syncflags";
 
 		public static final String getPrefs = "r/prefs";
 		/** @deprecated */
 		public static final String sharingPolicy = "r/share-relat";
+
+		/**
+		 * Update folder sharing policies,
+		 * arg: req.photo.folder()
+		 */
+		public static final String updateFolderel = "u/folder-rel";
 	}
 	
 	String albumId;
@@ -51,6 +60,14 @@ public class AlbumReq extends DocsReq {
 	public PhotoRec photo;
 	/** s-tree's semantic key */
 	public String sk;
+	
+	/** only clear relationships */
+	public boolean clearels;
+	
+	/**
+	 * Checked items for insert child relation table
+	 */
+	public NV[][] checkRels;
 
 	public AlbumReq device(String device) {
 		this.device = new Device(device, null);
@@ -158,4 +175,16 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
+	public String[] getChecks(String colname) {
+		String[] vals = new String[checkRels.length]; 
+		for (int x = 0; x < checkRels.length; x++) {
+			for (NV nv : checkRels[x]) {
+				while (!eq(nv.name, colname))
+					continue;
+				vals[x] = (String) nv.value;
+				break;
+			}
+		}
+		return vals;
+	}
 }

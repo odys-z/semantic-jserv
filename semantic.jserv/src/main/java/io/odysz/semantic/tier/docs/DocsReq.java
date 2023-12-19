@@ -94,7 +94,7 @@ public class DocsReq extends AnsonBody {
 	public String createDate;
 	String clientpath;
 	public String mime;
-	public String subFolder;
+	public String subfolder;
 	
 	@AnsonField(shortenString = true)
 	public String uri64;
@@ -127,7 +127,7 @@ public class DocsReq extends AnsonBody {
 	public DocsReq() {
 		super(null, null);
 		blockSeq = -1;
-		subFolder = "";
+		subfolder = "";
 	}
 
 	/**
@@ -137,13 +137,13 @@ public class DocsReq extends AnsonBody {
 		super(null, null);
 		blockSeq = -1;
 		docTabl = syncTask;
-		subFolder = "";
+		subfolder = "";
 	}
 
 	protected DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 		blockSeq = -1;
-		subFolder = "";
+		subfolder = "";
 	}
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
@@ -317,7 +317,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq folder(String name) {
-		subFolder = name;
+		subfolder = name;
 		return this;
 	}
 
