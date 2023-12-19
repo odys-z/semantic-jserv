@@ -5,6 +5,8 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
+import static io.odysz.transact.sql.parts.condition.Funcall.sum;
+import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -188,7 +190,7 @@ public class Albums extends ServPort<AlbumReq> {
 			String a = jreq.a();
 			DocsResp rsp = null;
 
-			if (A.collect.equals(a) || A.rec.equals(a) || A.download.equals(a)) {
+			if (A.collect.equals(a) || A.rec.equals(a)  || A.download.equals(a)) {
 				// Session less
 				IUser usr = robot;
 				if (A.collect.equals(a))
@@ -206,7 +208,10 @@ public class Albums extends ServPort<AlbumReq> {
 
 				Profiles prf = verifyProfiles(jmsg.body(0), usr, a);
 
-				if (A.insertPhoto.equals(a))
+				if (A.folder.equals(a))
+					rsp = folder(jmsg.body(0), usr);
+
+				else if (A.insertPhoto.equals(a))
 					rsp = createPhoto(jmsg.body(0), usr, prf);
 				else if (A.del.equals(a))
 					rsp = delPhoto(jmsg.body(0), usr, prf);
@@ -822,7 +827,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next())
-			throw new SemanticException("Can't find file for id: '%s' (permission of %s)",
+			throw new SemanticException("Can't find file for id: '%s' (with permission of %s)",
 					!isblank(req.docId)
 					? req.docId
 					: !isblank(req.pageInf)
@@ -832,7 +837,42 @@ public class Albums extends ServPort<AlbumReq> {
 					: null,
 					usr.uid());
 
-		return new AlbumResp().rec(rs, meta);
+		return new AlbumResp().photo(rs, meta);
+	}
+
+	protected static AlbumResp folder(AlbumReq req, IUser usr)
+			throws SemanticException, TransException, SQLException, IOException {
+
+		String conn = Connects.uri2conn(req.uri());
+		PhotoMeta mph = new PhotoMeta(conn);
+		JUserMeta musr = new JUserMeta(conn);
+
+		/* folder's tree node
+		 select * from (
+		 select '%1$s' || '.' || folder, folder, max(tags) tags, max(shareby) shareby, folder pname,
+		 folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
+		 sum(case when substring(mime, 0, 6) = 'image' then 1 else 0 end) img,
+		 sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov,
+		 sum (case when substring(mime, 0, 6) = 'audio' then 1 else 0 end) wav,
+		 sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime
+		 from h_photos f where f.family = '%1$s' group by f.folder
+		 ) where img > 0 or mov > 0 or wav > 0
+		 */
+		AnResultset rs = (AnResultset) st
+				.select(mph.tbl, "p")
+				.j(musr.tbl, "u", String.format("u.%s = p.%s", musr.pk, mph.shareby))
+				.col(mph.pk).col(mph.css)
+				.col(sum(ifElse("substr(mime, 0, 6) = 'image'", 1, 0)), "img")
+				.col(sum(ifElse("substr(mime, 0, 6) = 'video'", 1, 0)), "mov")
+				.col(sum(ifElse("substr(mime, 0, 6) = 'audio'", 1, 0)), "wav")
+				.col(sum(ifElse("geox != 0", 1, 0)), "geo")
+				.col(mph.mime).col(mph.createDate)
+				.col(mph.folder, mph.clientname)
+				.col(musr.uname, mph.shareby)
+				.whereEq("p." + mph.folder, req.pageInf.mergeArgs().getArg("pid"))
+				.rs(st.instancontxt(conn, usr)).rs(0);
+
+		return new AlbumResp().folder(rs.nxt(), mph);
 	}
 
 	protected static AlbumResp collect(AlbumReq req, IUser usr)

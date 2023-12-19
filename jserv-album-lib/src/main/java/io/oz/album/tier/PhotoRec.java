@@ -217,13 +217,32 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 		fullpath(fullpath);
 		share("ody@kyiv", Share.pub, new Date());
 
-//		exif = new ArrayList<String>() {
-//			{add("location:вулиця Лаврська' 27' Київ");};
-//			{add("camera:Bayraktar TB2");}};
 		exif = new Exifield()
 				.add("location", "вулиця Лаврська' 27' Київ")
 				.add("camera", "Bayraktar TB2");
 
+		return this;
+	}
+
+	/** folder image count */
+	String img; 
+	/** folder video count */
+	String mov; 
+	/** folder audio count */
+	String wav; 
+
+	public PhotoRec folder(AnResultset rs, PhotoMeta m) throws SQLException {
+		this.recId = rs.getString(m.pk);
+		this.css = rs.getString(m.css);
+		this.clientname(rs.getString(m.clientname));
+		this.img = (rs.getString("img"));
+		this.mov = (rs.getString("mov"));
+		this.wav = (rs.getString("wav"));
+		this.mime = rs.getString(m.mime);
+		this.clientname(rs.getString(m.clientname));
+		this.createDate = rs.getString(m.createDate);
+		this.folder(rs.getString("pid"));
+		this.shareby(rs.getString(m.shareby));
 		return this;
 	}
 

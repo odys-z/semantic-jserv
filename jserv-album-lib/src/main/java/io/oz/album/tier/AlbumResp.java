@@ -35,8 +35,13 @@ public class AlbumResp extends DocsResp {
 
 	public AlbumResp() { }
 	
-	public AlbumResp rec(AnResultset rs, PhotoMeta meta) throws SQLException, IOException {
+	public AlbumResp photo(AnResultset rs, PhotoMeta meta) throws SQLException, IOException {
 		this.photo = new PhotoRec(rs, meta);
+		return this;
+	}
+
+	public AlbumResp folder(AnResultset rs, PhotoMeta m) throws SQLException {
+		this.photo = new PhotoRec().folder(rs, m);
 		return this;
 	}
 

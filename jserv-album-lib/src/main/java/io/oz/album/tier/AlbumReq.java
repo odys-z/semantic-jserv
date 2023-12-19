@@ -28,9 +28,11 @@ public class AlbumReq extends DocsReq {
 		public static final String stree = DatasetierReq.A.stree;
 		public static final String sk = DatasetierReq.A.sks;
 
-		public static final String album = "r/collects";
+		public static final String album   = "r/collects";
 		public static final String collect = "r/photos";
-		public static final String rec = "r/photo";
+		public static final String rec     = "r/photo";
+		public static final String folder  = "r/folder";
+		
 		public static final String download = "r/download";
 		public static final String update = "u";
 

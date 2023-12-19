@@ -325,20 +325,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 
-	/**Set (private) jserv node file full path (path replaced with %VOLUME_HOME)
-	 * @param path
-	 * @return
-	 * @throws SemanticException 
-	 * @throws IOException 
-	public IFileDescriptor uri(String path) throws SemanticException, IOException {
-		fullpath(path);
-		pname = FilenameUtils.getName(path);
-		// throw new SemanticException("TODO");
-		this.uri = null;
-		return this;
-	}
-	 */
-
 	protected String folder;
 	public String folder() { return folder; }
 	public SyncDoc folder(String v) {
