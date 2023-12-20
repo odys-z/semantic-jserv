@@ -57,7 +57,7 @@ class AlbumsServTierTest {
 		AlbumReq req = new AlbumReq("/local/test").page(0, -1, "pid", "C000000A");
 		req.docId = "test-00001";
 
-		AlbumResp rep = Albums.rec(req, robot);
+		AlbumResp rep = Albums.doc(req, robot);
 		
 		assertEquals("C000000A", rep.photo.recId);
 		assertEquals("ottawa-canada.jpg", rep.photo.pname);

@@ -50,6 +50,14 @@ public class AlbumReq extends DocsReq {
 		/** @deprecated */
 		public static final String sharingPolicy = "r/share-relat";
 
+		/** read folder's relationship with org
+		 * @deprecated It's better to do with a different A for different sk, e. g. folder-org relatiosn,
+		 * but currently @anclient/anreact wrapped data layer in to component, no way to use a different A.
+		 * So this is not used for a different stree to r/stree, but it's a better parctice for the
+		 * plugin supported version.
+		 */
+		public static final String folderel = "r/rel-folder-org";
+
 		/**
 		 * Update folder sharing policies,
 		 * arg: req.photo.folder()

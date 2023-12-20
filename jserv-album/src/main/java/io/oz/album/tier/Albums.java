@@ -196,7 +196,7 @@ public class Albums extends ServPort<AlbumReq> {
 				if (A.collect.equals(a))
 					rsp = collect(jmsg.body(0), usr);
 				else if (A.rec.equals(a))
-					rsp = rec(jmsg.body(0), usr);
+					rsp = doc(jmsg.body(0), usr);
 				else if (A.download.equals(a))
 					download(resp, jmsg.body(0), usr);
 			} else {
@@ -221,6 +221,7 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = profile(jmsg.body(0), usr, prf);
 				else if (A.album.equals(a)) // load
 					rsp = album(jmsg.body(0), usr, prf);
+
 				else if (A.stree.equals(a))
 					rsp = galleryTree(jmsg.body(0), usr, prf);
 
@@ -280,7 +281,8 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	DocsResp updateFolderel(AlbumReq req, PhotoUser usr) throws TransException, SQLException {
+	DocsResp updateFolderel(AlbumReq req, PhotoUser usr)
+			throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta phm = new PhotoMeta(conn);
 		Photo_OrgMeta pom = new Photo_OrgMeta(conn);
@@ -296,10 +298,13 @@ public class Albums extends ServPort<AlbumReq> {
 					.select(phm.tbl, "ph")
 					.distinct()
 					.col("ph." + phm.pk).col("po." + pom.oid)
-					.j(pom.tbl, "po", Sql.condt(Logic.op.in, "po.oid", new ExprPart(req.getChecks("oid")))
-									 .and(Sql.condt(Logic.op.eq, "ph.folder", ExprPart.constr(req.subfolder))))// new Predicate(op.in, "po.orgId", req.getChecks("oid")))
+					.j(pom.tbl, "po", Sql.condt(Logic.op.in, "po." + pom.oid, new ExprPart(req.getChecks("oid")))
+								 .and(Sql.condt(Logic.op.eq, "ph." + phm.folder, ExprPart.constr(req.subfolder)))
+								 .and(Sql.condt(Logic.op.eq, phm.shareby, usr.uid())))
 					.whereEq(phm.folder, req.subfolder)));
 		}
+		
+		d.post(st.update(phm.tbl).nv(phm.shareflag, req.photo.shareflag()));
 
 		SemanticObject res = (SemanticObject)d
 				.d(st.instancontxt(conn, usr));
@@ -338,20 +343,33 @@ public class Albums extends ServPort<AlbumReq> {
 		return new Profiles(rs, m);
 	}
 
-	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf) throws SQLException, TransException {
-		if (isblank(jreq.sk))
-			throw new SemanticException("AlbumReq.sk is required.");
+	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf)
+			throws SQLException, TransException {
 
 		String conn = Connects.uri2conn(jreq.uri());
 		// force org-id as first arg
-		PageInf page = isNull(jreq.pageInf)
-				? new PageInf(0, -1, usr.orgId())
-				: eq(jreq.pageInf.arrCondts.get(0), usr.orgId())
-				? jreq.pageInf
-				: jreq.pageInf.insertCondt(usr.orgId());
 
-		List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
-		return new AlbumResp().albumForest(lst);
+		if (eq(jreq.sk, "tree-rel-folder-org")) {
+			// force user-id as first arg
+			PageInf page = isNull(jreq.pageInf)
+					? new PageInf(0, -1, usr.uid())
+					: eq(jreq.pageInf.arrCondts.get(0), usr.uid())
+					? jreq.pageInf
+					: jreq.pageInf.insertCondt(usr.uid());
+
+			List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
+			return new AlbumResp().albumForest(lst);
+		}
+		else {//  "tree-rel-photo-org") || "tree-album-sharing" || "tree-docs-folder"
+			PageInf page = isNull(jreq.pageInf)
+					? new PageInf(0, -1, usr.orgId())
+					: eq(jreq.pageInf.arrCondts.get(0), usr.orgId())
+					? jreq.pageInf
+					: jreq.pageInf.insertCondt(usr.orgId());
+
+			List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
+			return new AlbumResp().albumForest(lst);
+		}
 	}
 
 	AlbumResp profile(AlbumReq body, IUser usr, Profiles prf)
@@ -809,7 +827,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws SemanticException
 	 * @throws IOException
 	 */
-	protected static AlbumResp rec(AlbumReq req, IUser usr)
+	protected static AlbumResp doc(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 
 		String conn = Connects.uri2conn(req.uri());
@@ -840,6 +858,16 @@ public class Albums extends ServPort<AlbumReq> {
 		return new AlbumResp().photo(rs, meta);
 	}
 
+	/**
+	 * Load a folder record.
+	 * @param req
+	 * @param usr
+	 * @return response
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws IOException
+	 */
 	protected static AlbumResp folder(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 
