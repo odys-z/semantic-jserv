@@ -77,6 +77,13 @@ public class DocsResp extends AnsonResp {
 		return this;
 	}
 
+	Device device;
+	public Device device() { return device; }
+	public DocsResp device(Device device) {
+		this.device = device;
+		return this;
+	}
+
 	String stamp;
 	public DocsResp stamp(String s) {
 		stamp = s;

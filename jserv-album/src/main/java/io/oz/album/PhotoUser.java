@@ -11,6 +11,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 
 import io.odysz.anson.Anson;
+import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
@@ -46,11 +47,17 @@ public class PhotoUser extends SyncRobot implements IUser {
 	String roleName;
 	String orgName;
 
-	PUserMeta userMeta;
+	private String pswd;
+
+	public static PUserMeta userMeta;
+	
+	static {
+		userMeta = new PUserMeta("a_users");
+	}
 
 	public PhotoUser(String userid) {
-		super(userid, null, "Photo Robot");
-		userMeta = (PUserMeta) meta();
+		super(userid, "Photo Robot");
+		// userMeta = (PUserMeta) meta();
 	}
 
 	/**
@@ -60,8 +67,8 @@ public class PhotoUser extends SyncRobot implements IUser {
 	 * @param userName
 	 */
 	public PhotoUser(String userid, String pswd, String userName) {
-		super(userid, null, "Photo Robot");
-		userMeta = (PUserMeta) meta();
+		super(userid, userName);
+		this.pswd = pswd;
 	}
 	
 	public static class PUserMeta extends JUserMeta {
@@ -73,9 +80,9 @@ public class PhotoUser extends SyncRobot implements IUser {
 			device = "device";
 		}
 	}
-
+	
 	public TableMeta meta() {
-		return new PUserMeta("a_users");
+		return userMeta;
 	}
 
 	@Override
@@ -96,7 +103,6 @@ public class PhotoUser extends SyncRobot implements IUser {
 		if (withSession instanceof AnSessionReq) {
 			deviceId = ((AnSessionReq)withSession).deviceId();
 			if (LangExt.isblank(deviceId, "/", "\\."))
-				// throw new SsException("Photo user's device Id can not be null - used for distinguish files.");
 				Utils.logi("User %s logged in on %s as read only mode.",
 						((AnSessionReq)withSession).uid(), new Date().toString());
 		}
@@ -105,7 +111,22 @@ public class PhotoUser extends SyncRobot implements IUser {
 
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
 
-	@Override public boolean login(Object request) throws TransException { return true; }
+	@Override public boolean login(Object reqObj) throws TransException {
+		AnSessionReq req = (AnSessionReq)reqObj;
+		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
+		byte[] ssiv = AESHelper.decode64(req.iv());
+		String c = null;
+		try { c = AESHelper.encrypt(userId, pswd, ssiv); }
+		catch (Exception e) { throw new TransException (e.getMessage()); }
+
+		// 2. compare pswd-cipher with j.pswd
+		if (c.equals(req.token())) {
+			touch();
+			return true;
+		}
+
+		return false;
+	}
 
 	@Override public IUser touch() {
 		touched = System.currentTimeMillis();
@@ -142,8 +163,8 @@ public class PhotoUser extends SyncRobot implements IUser {
 	}
 
 	/**
-	 * Get a temp dir, and have it deleted when logout.
-	 * 
+	 * <p>Get a temp dir, and have it deleted when logout.</p>
+	 * Since jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot.
 	 * @param conn
 	 * @return the dir
 	 * @throws SemanticException
@@ -161,14 +182,11 @@ public class PhotoUser extends SyncRobot implements IUser {
 		return tempDir;
 	}
 
-//	public String defaultAlbum() {
-//		return "a-001";
-//	}
-
 	@Override
 	public SessionInf getClientSessionInf(IUser login) { 
 		SessionInf inf = new SessionInf(login.sessionId(), login.uid(), login.roleId());
-		inf.device(login.deviceId());
+		inf .device(login.deviceId())
+			.userName(((PhotoUser)login).userName);
 		return inf;
 	}
 

@@ -140,7 +140,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(req.uri());
 		DocTableMeta meta = (DocTableMeta) metas.get(req.docTabl); 
 
-		String device = req.device();
+		String device = req.device() == null ? null : req.device().id;
 
 		if (!is(isAdmin) && !isblank(device) && !device.equals(usr.deviceId()))
 			throw new SemanticException(
@@ -391,7 +391,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				else {
 					Dochain chain = new Dochain((DocTableMeta) metas.get(jreq.docTabl), st);
 					if (DocsReq.A.blockStart.equals(a)) {
-						if (isblank(jreq.subFolder, " - - "))
+						if (isblank(jreq.subfolder, " - - "))
 							throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 						rsp = chain.startBlocks(profilesolver.onStartPush(jmsg.body(0), usr), usr, profilesolver);
 					}

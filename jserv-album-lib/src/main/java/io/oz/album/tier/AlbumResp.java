@@ -7,6 +7,7 @@ import java.util.List;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.transact.x.TransException;
 
 public class AlbumResp extends DocsResp {
 
@@ -34,8 +35,13 @@ public class AlbumResp extends DocsResp {
 
 	public AlbumResp() { }
 	
-	public AlbumResp rec(AnResultset rs) throws SQLException, IOException {
-		this.photo = new PhotoRec(rs);
+	public AlbumResp photo(AnResultset rs, PhotoMeta meta) throws SQLException, IOException {
+		this.photo = new PhotoRec(rs, meta);
+		return this;
+	}
+
+	public AlbumResp folder(AnResultset rs, PhotoMeta m) throws SQLException {
+		this.photo = new PhotoRec().folder(rs, m);
 		return this;
 	}
 
@@ -77,11 +83,13 @@ public class AlbumResp extends DocsResp {
 	 * Construct a 2D array of photos: [collect: photo[]]
 	 * 
 	 * @param rs photos ordered by cid
+	 * @param conn 
 	 * @return this
 	 * @throws SQLException 
 	 * @throws IOException 
+	 * @throws TransException 
 	 */
-	public AlbumResp collectPhotos(AnResultset rs) throws SQLException, IOException {
+	public AlbumResp collectPhotos(AnResultset rs, String conn) throws SQLException, IOException, TransException {
 		String cid = "";
 		Collect collect = null;
 		
@@ -94,7 +102,7 @@ public class AlbumResp extends DocsResp {
 				collect = new Collect(rs);
 				cid = collect.cid;
 			}
-			collect.addPhoto(rs);
+			collect.addPhoto(rs, new PhotoMeta(conn));
 		}
 		if (collect != null)
 			collectRecords.add(collect);
@@ -102,14 +110,14 @@ public class AlbumResp extends DocsResp {
 		return this;
 	}
 
-	public AlbumResp photos(String collectId, AnResultset rs) throws SQLException, IOException {
+	public AlbumResp photos(String collectId, AnResultset rs, PhotoMeta meta) throws SQLException, IOException {
 		if (this.photos == null)
 			this.photos = new ArrayList<PhotoRec[]>(1);
 
 		ArrayList<PhotoRec> photos = new ArrayList<PhotoRec>(rs.total());
 		rs.beforeFirst();
 		while(rs.next()) {
-			photos.add(new PhotoRec(collectId, rs));
+			photos.add(new PhotoRec(collectId, rs, meta));
 		}
 
 		this.photos.add(photos.toArray(new PhotoRec[0]));

@@ -95,7 +95,9 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@Override
 	public String fullpath() { return clientpath; }
 
-	/** Non-public: doc' device id is managed by session. */
+	/** Non-public: doc' device id is managed globally.
+	 * @since 0.6.50:temp-try, a device has an auto-key and a name.
+	 */
 	protected String device;
 	@Override
 	public String device() { return device; }
@@ -104,11 +106,26 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 
+	public SyncDoc device(Device device) {
+		this.device = device.id;
+		return this;
+	}
+	
+	/** Non-public: doc' device id is managed globally.
+	 * @since 0.6.50:temp-try, a device has an auto-key and a name.
+	 */
+	protected String devname;
+	public String devname() { return devname; }
+	public SyncDoc devname(String devname) {
+		this.devname = devname;
+		return this;
+	}
+
 	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
-	public String shareflag;
+	public String shareFlag;
 	@Override
 	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
-	public String shareflag() { return shareflag; }
+	public String shareflag() { return shareFlag; }
 
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;
@@ -166,14 +183,14 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	}
 	
 	public SyncDoc share(String shareby, String flag, String sharedate) {
-		this.shareflag = flag;
+		this.shareFlag = flag;
 		this.shareby = shareby;
 		sharedate(sharedate);
 		return this;
 	}
 
 	public SyncDoc share(String shareby, String flag, Date sharedate) {
-		this.shareflag = flag;
+		this.shareFlag = flag;
 		this.shareby = shareby;
 		sharedate(sharedate);
 		return this;
@@ -251,7 +268,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 			this.sharedate = rs.getString(meta.createDate);
 		}
 		this.shareby = rs.getString(meta.shareby);
-		this.shareflag = rs.getString(meta.shareflag);
+		this.shareFlag = rs.getString(meta.shareflag);
 		this.syncFlag = rs.getString(meta.syncflag);
 	}
 
@@ -298,42 +315,15 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.mime = d.mime();
 		this.fullpath(fullpath);
 		
-        this.shareflag = Share.pub;
+        this.shareFlag = Share.pub;
         this.syncFlag = SyncFlag.device;
 	}
 
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = separatorsToUnix(clientpath);
-
-		/* Since 1.5.0, finding file's datetime is supposed to be function of file provider.
-		if (isblank(createDate)) {
-			try {
-				Path p = Paths.get(clientpath);
-				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
-				cdate(fd);
-			}
-			catch (IOException | InvalidPathException ex) {
-				cdate(new Date());
-			}
-		} */
-
 		return this;
 	}
-
-	/**Set (private) jserv node file full path (path replaced with %VOLUME_HOME)
-	 * @param path
-	 * @return
-	 * @throws SemanticException 
-	 * @throws IOException 
-	public IFileDescriptor uri(String path) throws SemanticException, IOException {
-		fullpath(path);
-		pname = FilenameUtils.getName(path);
-		// throw new SemanticException("TODO");
-		this.uri = null;
-		return this;
-	}
-	 */
 
 	protected String folder;
 	public String folder() { return folder; }
@@ -362,7 +352,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 
 		shareby = chain.shareby;
 		sharedate = chain.shareDate;
-		shareflag = chain.shareflag;
+		shareFlag = chain.shareflag;
 
 		return parseMimeSize(chain.outputPath);
 	}
@@ -376,7 +366,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc parseFlags(String[] flags) {
 		if (!isNull(flags)) {
 			syncFlag = flags[0];
-			shareflag = flags[1];
+			shareFlag = flags[1];
 			shareby = flags[2];
 			sharedate(flags[3]);
 		}

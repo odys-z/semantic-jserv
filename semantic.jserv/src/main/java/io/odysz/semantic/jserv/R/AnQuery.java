@@ -30,10 +30,11 @@ import io.odysz.transact.x.TransException;
 
 import static io.odysz.common.LangExt.len;
 
-/**CRUD read service.
+/**
+ * CRUD read service.
  * @author odys-z@github.com
  */
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv11" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv" })
 public class AnQuery extends ServPort<AnQueryReq> {
 
 	public AnQuery() { super(Port.query); }
@@ -50,7 +51,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	protected void onGet(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.query)
-			Utils.logi("---------- squery (r.serv11) get ----------");
+			Utils.logi("---------- squery (r.serv) get ----------");
 		try {
 			IUser usr = verifier.verify(msg.header());
 			AnResultset rs = query(msg.body(0), usr);
@@ -69,7 +70,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	@Override
 	protected void onPost(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp) throws IOException {
 		if (ServFlags.query)
-			Utils.logi("========== squery (r.serv11) post ==========");
+			Utils.logi("========== squery (r.serv) post ==========");
 
 		try {
 			IUser usr = verifier.verify(msg.header());

@@ -35,9 +35,9 @@ public class AnSessionReq extends AnsonBody {
 	String uid;
 	public String uid() { return uid; }
 	String token;
-	String token() { return token; }
+	public String token() { return token; }
 	String iv;
-	String iv() { return iv; }
+	public String iv() { return iv; }
 
 	HashMap<String, Object> mds;
 	public String md(String k) { return mds == null ? null : (String) mds.get(k); }

@@ -40,10 +40,10 @@ public class Collect extends Anson {
 		this.tags = rs.getString("tags");
 	}
 
-	public Collect addPhoto(AnResultset rs) throws SQLException, IOException {
+	public Collect addPhoto(AnResultset rs, PhotoMeta pm) throws SQLException, IOException {
 		if (photos == null)
 			photos = new ArrayList<PhotoRec>();
-		PhotoRec p = new PhotoRec(rs);
+		PhotoRec p = new PhotoRec(rs, pm);
 		photos.add(p);
 		return this;
 	}

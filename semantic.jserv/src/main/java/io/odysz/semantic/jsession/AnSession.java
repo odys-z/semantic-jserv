@@ -74,7 +74,7 @@ import io.odysz.transact.x.TransException;
  *
  * @author odys-z@github.com
  */
-@WebServlet(description = "session manager", urlPatterns = { "/login.serv11" })
+@WebServlet(description = "session manager", urlPatterns = { "/login.serv" })
 public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifier {
 	public AnSession() {
 		super(Port.session);
@@ -121,15 +121,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		sctx = daSctx;
 
 		lock = new ReentrantLock();
-
-		/*
-		String conn = daSctx.getSysConnId();
-		if (!DATranscxt.alreadyLoaded(conn)) {
-			Utils.logi("Initializing session based on connection %s, basic session tables, users, functions, roles, should located here.", conn);
-			DATranscxt.loadSemantics(conn);
-						// JSingleton.getFileInfPath(JUser.sessionSmtXml), daSctx.getSysDebug());
-		}
-		*/
 
 		users = new HashMap<String, IUser>();
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
@@ -392,12 +383,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		SemanticObject s = sctx.select(usrMeta.tbl, "u")
 			.je("u", usrMeta.roleTbl, "r", usrMeta.role)
 			.je("u", usrMeta.orgTbl, "o", usrMeta.org)
-			/*
-			.col(usrMeta.pk)
-			.col(usrMeta.uname)
-			.col(usrMeta.pswd)
-			.col(usrMeta.iv)
-			*/
 			.col("u.*")
 			.col(usrMeta.orgName)       // v1.4.11
 			.col(usrMeta.roleName)		// v1.4.11
