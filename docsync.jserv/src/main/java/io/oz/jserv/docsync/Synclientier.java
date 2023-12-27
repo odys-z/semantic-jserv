@@ -168,7 +168,7 @@ public class Synclientier extends Semantier {
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
 			 .j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
-			 .whereEq("=", "u." + um.pk, robot.userId);
+			 .whereEq("u." + um.pk, robot.userId);
 
 			AnsonResp resp = client.commit(q, errCtx);
 			AnResultset rs = resp.rs(0).beforeFirst();
