@@ -6,3 +6,5 @@ target
 .settings
 .classpath
 src/test/results/
+*-jdk-bug
+
