@@ -102,17 +102,6 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	protected static Query buildSelct(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = st.select(msg.mtabl, msg.mAlias);
 		
-//		// exclude sqlite paging
-//		if (msg.page >= 0 && msg.pgsize > 0
-//			&& dbtype.sqlite == Connects.driverType(
-//				// msg.conn() == null ? Connects.defltConn() : msg.conn()
-//				Connects.uri2conn(msg.uri())
-//			)) {
-//			Utils.warn("JQuery#buildSelct(): Requesting data from sqlite, but it's not easy to page in sqlite. So page and size are ignored: %s, %s.",
-//					msg.page, msg.pgsize);
-//		}
-//		else selct.page(msg.page, msg.pgsize);
-
 		selct.page(msg.page, msg.pgsize);
 
 		if (msg.exprs != null && msg.exprs.size() > 0)
