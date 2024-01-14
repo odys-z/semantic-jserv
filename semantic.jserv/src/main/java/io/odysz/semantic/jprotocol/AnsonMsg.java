@@ -220,7 +220,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	AnsonHeader header;
 	public AnsonHeader header() { return header; }
 	public AnsonMsg<T> header(AnsonHeader header) {
-		this.header = header;
+		this.header = header.seq(seq);
 		return this;
 	}
 	

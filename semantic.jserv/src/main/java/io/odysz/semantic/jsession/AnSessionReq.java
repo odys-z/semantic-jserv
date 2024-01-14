@@ -7,8 +7,11 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 
-/**<p>Sessin Request<br>
+/**
+ * <p>Session Request<br>
  * a: see {@link AnSession} </p>
+ * session's DB access is controlled by server
+ * 
  * @author odys-z@github.com
  */
 public class AnSessionReq extends AnsonBody {
@@ -22,10 +25,12 @@ public class AnSessionReq extends AnsonBody {
 	}
 	
 	public AnSessionReq() {
-		super(null, null); // session's DB access is controlled by server
+		super(null, null);
 	}
 
-	/**Session connection is ignored and controlled by server.
+	/**
+	 * Session connection is ignored and controlled by server.
+	 * 
 	 * @param parent
 	 */
 	public AnSessionReq(AnsonMsg<AnSessionReq> parent) {
@@ -53,7 +58,9 @@ public class AnSessionReq extends AnsonBody {
 	String deviceId;
 	public String deviceId() { return deviceId; }
 
-	/**Format login request message.
+	/**
+	 * Format login request message.
+	 * 
 	 * @param uid
 	 * @param tk64
 	 * @param iv64

@@ -1,5 +1,9 @@
 package io.odysz.semantic.jsession;
 
+import static io.odysz.common.LangExt.bool;
+import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.jsession.AnSessionReq.A.*;
 
 import java.io.IOException;
@@ -76,8 +80,15 @@ import io.odysz.transact.x.TransException;
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv" })
 public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifier {
+	static final String disableTokenKey = "disable-token";
+	
+	private boolean verfiyToken;
+
 	public AnSession() {
 		super(Port.session);
+		verfiyToken = bool(Configs.getCfg(disableTokenKey));
+		if (!verfiyToken)
+			Utils.warn("Verifying token is recommended but is disabled by config.xml/k=%s", disableTokenKey);
 	}
 
 	private static final long serialVersionUID = 1L;
@@ -104,7 +115,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	IUser jrobot = new JRobot();
 
-	/**Initialize semantext, schedule tasks,
+	/**
+	 * Initialize semantext, schedule tasks,
 	 * load root key from tomcat context.xml.
 	 * To configure root key in tomcat, in context.xml, <pre>
 	&lt;Context&gt;
@@ -162,36 +174,73 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		}
 	}
 
-	/**FIXME where is token verification?
+	/**
+	 * Session Verification
+	 * 
 	 * @param anHeader
+	 * @param seq not used (Semantic-* is not planned to support replay attack prevention)
 	 * @return {@link JUser} if succeed, which can be used for db logging
 	 * - use this to load functions, etc.
 	 * @throws SsException Session checking failed.
-	 * @throws SQLException Reqest payload header.usrAct is null (TODO sure?)
 	 */
 	@Override
-	public IUser verify(AnsonHeader anHeader) throws SsException {
+	public IUser verify(AnsonHeader anHeader, int ...seq) throws SsException {
 		if (anHeader == null)
 			throw new SsException("session header is missing");
 
 		String ssid = (String)anHeader.ssid();
 		if (users.containsKey(ssid)) {
 			IUser usr = users.get(ssid);
-			String slogid = (String)anHeader.logid();
 			// FIXME Album can not be published without fixing this
 			// FIXME
 			// FIXME
-			// FIXME token = (string)anheader.token;
-			// FIXME if (token != null && token.equals(usr.untoken())) {
 			// FIXME
-			if (slogid != null && slogid.equals(usr.uid())) {
-				return usr.touch();
+			// String token = anHeader.token;
+			// if (token != null && token.equals(usr.untoken())) {
+
+			// String slogid = (String)anHeader.logid();
+			// if (slogid != null && slogid.equals(usr.uid())) {
+			// 	return usr.touch();
+			// }
+
+			if (verfiyToken) {
+				touchSessionToken(usr, anHeader.token());
 			}
-			else throw new SsException("session token is not matching");
+			else
+				usr.touch();
+			return usr;
 		}
-		else throw new SsException("session info is missing or timeout");
+		else throw new SsException("Session info is missing or timeout.");
 	}
 
+	/**
+	 * 
+	 * @param usr
+	 * @param token
+	 * @return true if session token is valid.
+	 */
+	private boolean touchSessionToken(IUser usr, String token) throws SsException {
+		
+		byte[] iv;
+		String tk0;
+		try {
+			String[] tokenss = token.split(":");
+			if (isNull(tokenss) || tokenss.length != 2 || isblank(tokenss[0]) || isblank(tokenss[1]))
+				throw new SsException("Session tokens format error.");
+
+			iv = AESHelper.decode64(tokenss[1]);
+			tk0 = AESHelper.decrypt(token, usr.pswd(), iv);
+
+			if (!eq(tk0, usr.sessionKey()))
+				throw new SsException("Session tokens do not match.");
+		} catch (GeneralSecurityException | IOException e) {
+			throw new SsException("Can not decrypt token: %s", token);
+		}
+
+		usr.touch();
+		return true;
+	}
+	
 	public static IUser getUser(SemanticObject jheader) {
 		return users.get(jheader.get("ssid"));
 	}
@@ -366,7 +415,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		return ssid;
 	}
 
-	/**Load user instance form DB table (name = {@link UserMeta#tbl}).
+	/**
+	 * Load user instance form DB table (name = {@link UserMeta#tbl}).
+	 * 
 	 * @param sessionBody
 	 * @param connId
 	 * @return new IUser instance loaded from database (from connId), see {@link #createUser(String, String, String, String, String)}
@@ -407,7 +458,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throw new SsException("User Id not found: ", sessionBody.uid());
 	}
 
-	/**Create a new IUser instance, where the class name is configured in config.xml/k=class-IUser.
+	/**
+	 * Create a new IUser instance, where the class name is configured in config.xml/k=class-IUser.
 	 * For the sample project, jserv-sample coming with this lib, it's configured as <a href='https://github.com/odys-z/semantic-jserv/blob/master/jserv-sample/src/main/webapp/WEB-INF/config.xml'>
 	 * io.odysz.jsample.SampleUser</a>
 	 * @param clsNamekey class name

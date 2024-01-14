@@ -102,6 +102,7 @@ public class JUser extends SemanticObject implements IUser {
 	public String roleId() { return role; }
 
 	private long touched;
+
 	/** current action's business function */
 	String funcId;
 	String funcName;
@@ -111,9 +112,6 @@ public class JUser extends SemanticObject implements IUser {
 
 	private static DATranscxt logsctx;
 	private static String logConn;
-	/** @deprecated */
-//	public static final String sessionSmtXml;
-	/** default "a_logs" */
 	public static final String logTabl;
 
 	static {
@@ -138,7 +136,9 @@ public class JUser extends SemanticObject implements IUser {
 		}
 	}
 
-	/**Constructor for session login
+	/**
+	 * Constructor for session login
+	 * 
 	 * @param uid user Id
 	 * @param pswd pswd in DB (plain text)
 	 * @param usrName
@@ -173,7 +173,9 @@ public class JUser extends SemanticObject implements IUser {
 		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
 	}
 
-	/**jmsg, the response of {@link AnSession}
+	/**
+	 * Handle jmsg.uid, the response of {@link AnSession}
+	 * 
 	 * @param jmsg
 	 */
 	public JUser(SemanticObject jmsg) {
@@ -247,13 +249,24 @@ public class JUser extends SemanticObject implements IUser {
 
 		return false;
 	}
-	
+
+	@Override
+	public String signSessionKey(String ssid)
+			throws GeneralSecurityException, IOException {
+		byte[] iv = AESHelper.getRandom();
+		String token = AESHelper.encode64(AESHelper.getRandom());
+		return AESHelper.encrypt(token, pswd, iv);
+	}
+
+
 	@Override
 	public boolean guessPswd(String pswd64, String iv64)
 			throws TransException, GeneralSecurityException, IOException {
 		return pswd != null && pswd.equals(AESHelper.decrypt(pswd64, this.ssid, AESHelper.decode64(iv64)));
 	}
 
+	@Override
+	public String pswd() { return pswd; }
 
 	@Override
 	public SemanticObject logout() {

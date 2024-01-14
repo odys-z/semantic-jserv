@@ -6,6 +6,11 @@ import java.util.HashSet;
 import io.odysz.common.Utils;
 import io.odysz.semantics.IUser;
 
+/**
+ * Session cleaner
+ * 
+ * @author Ody
+ */
 public class SessionChecker implements Runnable {
 	private final long timeout;
 	private HashMap<String, IUser> sspool;
