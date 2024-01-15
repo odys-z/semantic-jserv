@@ -27,7 +27,8 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
-/**<p>IUser implementation supporting session.</p>
+/**
+ * <p>IUser implementation supporting session.</p>
  * <p>This object is usually created when user logged in,
  * and is used for semantics processing like finger print, etc.</p>
  * <p>The logging connection is configured in configs.xml/k=log-connId.</p>
@@ -36,7 +37,8 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 public class JUser extends SemanticObject implements IUser {
-	/**Hard coded field string of user table information.
+	/**
+	 * Hard coded field string of user table information.
 	 *
 	 * @author odys-z@github.com
 	 */
@@ -249,15 +251,6 @@ public class JUser extends SemanticObject implements IUser {
 
 		return false;
 	}
-
-	@Override
-	public String signSessionKey(String ssid)
-			throws GeneralSecurityException, IOException {
-		byte[] iv = AESHelper.getRandom();
-		String token = AESHelper.encode64(AESHelper.getRandom());
-		return AESHelper.encrypt(token, pswd, iv);
-	}
-
 
 	@Override
 	public boolean guessPswd(String pswd64, String iv64)

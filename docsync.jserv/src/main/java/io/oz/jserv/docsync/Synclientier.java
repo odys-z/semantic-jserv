@@ -128,12 +128,12 @@ public class Synclientier extends Semantier {
 	 * @return this
 	 * @throws SQLException
 	 * @throws AnsonException
-	 * @throws SsException
 	 * @throws IOException
 	 * @throws TransException 
+	 * @throws SsException 
 	 */
 	public Synclientier login(String workerId, String device, String pswd)
-			throws AnsonException, SsException, IOException, TransException {
+			throws AnsonException, IOException, TransException, SsException {
 
 		client = Clients.login(workerId, pswd, device);
 

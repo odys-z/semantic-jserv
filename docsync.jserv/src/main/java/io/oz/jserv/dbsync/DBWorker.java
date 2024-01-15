@@ -87,7 +87,7 @@ public class DBWorker implements Runnable {
 	}
 	
 	public DBWorker login(String pswd)
-			throws SemanticException, AnsonException, SsException, IOException {
+			throws SemanticException, AnsonException, IOException, SsException {
 		client = Clients.login(myId, pswd, myId);
 		return this;
 	}

@@ -1,6 +1,10 @@
 package io.oz.jserv.docsync;
 
-import static io.oz.jserv.docsync.ZSUNodes.*;
+import static io.oz.jserv.docsync.ZSUNodes.clientUri;
+import static io.oz.jserv.docsync.ZSUNodes.family;
+import static io.oz.jserv.docsync.ZSUNodes.jservHub;
+import static io.oz.jserv.docsync.ZSUNodes.volumeDir;
+import static io.oz.jserv.docsync.ZSUNodes.webRoot;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -45,14 +49,8 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
-import io.oz.album.tier.PhotoRec;
 import io.oz.album.tier.PhotoMeta;
-import io.oz.jserv.docsync.Docsyncer;
-import io.oz.jserv.docsync.SyncFlag;
-import io.oz.jserv.docsync.SyncRobot;
-import io.oz.jserv.docsync.SyncWorker;
-import io.oz.jserv.docsync.Synclientier;
-import io.oz.jserv.docsync.SynodeTier;
+import io.oz.album.tier.PhotoRec;
 import io.oz.jserv.docsync.SyncFlag.SyncEvent;
 import io.oz.jserv.docsync.ZSUNodes.AnDevice;
 import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
@@ -99,7 +97,7 @@ class SyncWorkerTest {
 	}
 
 	@Test
-	void testIds() throws SQLException, SAXException, IOException, AnsonException, SsException, TransException {
+	void testIds() throws IOException, AnsonException, TransException, SsException, SAXException, SQLException {
 		SyncWorker worker = new SyncWorker(Kyiv.Synode.mode, Kyiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
 				.stop()
 				.login(Kyiv.Synode.passwd);
@@ -310,6 +308,9 @@ class SyncWorkerTest {
 				} catch (SQLException | SsException e1) {
 					e1.printStackTrace();
 					fail(e1.getMessage());
+				} catch (GeneralSecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 
 				// pushing again should fail

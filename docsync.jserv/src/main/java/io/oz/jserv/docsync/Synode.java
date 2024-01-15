@@ -116,12 +116,12 @@ public class Synode extends ServPort<DocsReq> {
 	 * @throws SQLException
 	 * @throws SAXException
 	 * @throws IOException
-	 * @throws SsException 
 	 * @throws AnsonException 
 	 * @throws TransException 
+	 * @throws SsException 
 	 */
 	public static void init(String nodeId)
-			throws SQLException, SAXException, IOException, AnsonException, SsException, TransException {
+			throws SQLException, SAXException, IOException, AnsonException, TransException, SsException {
 
 		Utils.logi("Starting file synchronizer ...");
 
