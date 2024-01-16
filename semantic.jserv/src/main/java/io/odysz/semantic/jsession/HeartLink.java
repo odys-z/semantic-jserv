@@ -36,7 +36,7 @@ public class HeartLink extends ServPort<HeartBeat> {
 
 	void jsonResp(AnsonMsg<HeartBeat> msg, HttpServletResponse resp) {
 		try {
-			verifier.verify(msg.header());
+			verifier().verify(msg.header());
 			AnsonMsg<AnsonResp> rep = new AnsonMsg<AnsonResp>(p, MsgCode.ok).body(new AnsonResp());
 			write(resp, rep);
 		} catch (SsException e) {

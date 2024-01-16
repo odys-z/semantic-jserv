@@ -1,10 +1,13 @@
 package io.odysz.semantic.jsession;
 
-import static io.odysz.common.LangExt.bool;
-import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.isNull;
-import static io.odysz.common.LangExt.isblank;
-import static io.odysz.semantic.jsession.AnSessionReq.A.*;
+import static io.odysz.common.AESHelper.*;
+
+import static io.odysz.semantic.jsession.AnSessionReq.A.init;
+import static io.odysz.semantic.jsession.AnSessionReq.A.login;
+import static io.odysz.semantic.jsession.AnSessionReq.A.logout;
+import static io.odysz.semantic.jsession.AnSessionReq.A.ping;
+import static io.odysz.semantic.jsession.AnSessionReq.A.pswd;
+import static io.odysz.semantic.jsession.AnSessionReq.A.touch;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -37,8 +40,8 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
@@ -80,13 +83,17 @@ import io.odysz.transact.x.TransException;
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv" })
 public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifier {
-	static final String disableTokenKey = "disable-token";
+	public static final String disableTokenKey = "disable-token";
 	
 	private boolean verfiyToken;
 
 	public AnSession() {
+		this(true);
+	}
+
+	public AnSession(boolean verifyToken) {
 		super(Port.session);
-		verfiyToken = bool(Configs.getCfg(disableTokenKey));
+		verfiyToken = verifyToken;
 		if (!verfiyToken)
 			Utils.warn("Verifying token is recommended but is disabled by config.xml/k=%s", disableTokenKey);
 	}
@@ -204,7 +211,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			// }
 
 			if (verfiyToken) {
-				touchSessionToken(usr, anHeader.token());
+				touchSessionToken(usr, anHeader.token(), usr.sessionKey());
 			}
 			else
 				usr.touch();
@@ -216,29 +223,33 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	/**
 	 * 
 	 * @param usr
-	 * @param token
+	 * @param clientoken
+	 * @param knowledge 
 	 * @return true if session token is valid.
+	 * @throws SsException 
 	 */
-	private boolean touchSessionToken(IUser usr, String token) throws SsException {
-		
-		byte[] iv;
-		String tk0;
+	static void touchSessionToken(IUser usr, String clientoken, String knowledge) throws SsException {
 		try {
+			/*
 			String[] tokenss = token.split(":");
 			if (isNull(tokenss) || tokenss.length != 2 || isblank(tokenss[0]) || isblank(tokenss[1]))
 				throw new SsException("Session tokens format error.");
 
-			iv = AESHelper.decode64(tokenss[1]);
-			tk0 = AESHelper.decrypt(token, usr.pswd(), iv);
+			iv = decode64(tokenss[1]);
+			tk0 = decrypt(tokenss[0], pad16_32(usr.pswd()), iv);
 
 			if (!eq(tk0, usr.sessionKey()))
-				throw new SsException("Session tokens do not match.");
+				return false;
+			*/
+			if (!AESHelper.verifyToken(clientoken, knowledge, usr.uid(), usr.pswd()))
+				throw new SsException("Tokens are not matching");
+			usr.touch();
 		} catch (GeneralSecurityException | IOException e) {
-			throw new SsException("Can not decrypt token: %s", token);
+			e.printStackTrace();
+			throw new SsException("Can not decrypt token: %s. %s", clientoken, e.getMessage());
+		} catch (Exception e) {
+			throw new SsException("Error while verifying tokens: %s. %s", clientoken, e.getMessage());
 		}
-
-		usr.touch();
-		return true;
 	}
 	
 	public static IUser getUser(SemanticObject jheader) {
@@ -365,7 +376,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					}
 
 					// set a new pswd
-					String pswd2 = AESHelper.decrypt(newPswd, jrobot.sessionId(), AESHelper.decode64(iv64));
+					String pswd2 = decrypt(newPswd, jrobot.sessionId(), decode64(iv64));
 					Utils.logi("intialize pswd: %s", pswd2);
 
 					sctx.update(usrMeta.tbl, jrobot)
@@ -462,7 +473,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * Create a new IUser instance, where the class name is configured in config.xml/k=class-IUser.
 	 * For the sample project, jserv-sample coming with this lib, it's configured as <a href='https://github.com/odys-z/semantic-jserv/blob/master/jserv-sample/src/main/webapp/WEB-INF/config.xml'>
 	 * io.odysz.jsample.SampleUser</a>
-	 * @param clsNamekey class name
+	 * @param clsNamekey class name, since 1.4.36, this name can be class name itself
 	 * @param uid user id
 	 * @param pswd
 	 * @param iv auxiliary encryption field
@@ -474,14 +485,22 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * @throws TransException notifying message failed
 	 * @throws IllegalArgumentException
 	 */
-	private static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName)
+	static IUser createUser(String clsNamekey, String uid, String pswd, String iv, String userName)
 			throws ReflectiveOperationException, GeneralSecurityException, IOException, IllegalArgumentException, TransException {
 		if (!Configs.hasCfg(clsNamekey))
 			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 		String clsname = Configs.getCfg(clsNamekey);
+		// if (clsname == null)
+		//	throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 		if (clsname == null)
-			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
+			return createUserByClassname(clsNamekey, uid, pswd, iv, userName);
+		else 
+			return createUserByClassname(clsname, uid, pswd, iv, userName);
 
+	}
+
+	static IUser createUserByClassname(String clsname, String uid, String pswd, String iv, String userName) 
+			throws ReflectiveOperationException, GeneralSecurityException, IOException, IllegalArgumentException, TransException {
 		@SuppressWarnings("unchecked")
 		Class<IUser> cls = (Class<IUser>) Class.forName(clsname);
 		Constructor<IUser> constructor = null;
@@ -496,12 +515,12 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			if (!LangExt.isblank(iv)) {
 				// still can be wrong with messed up data, e.g. with iv and plain pswd
 				try {
-					pswd = AESHelper.decrypt(pswd,
-							DATranscxt.key("user-pswd"), AESHelper.decode64(iv));
+					pswd = decrypt(pswd,
+							DATranscxt.key("user-pswd"), decode64(iv));
 				} catch (Throwable e) {
 					String rootkey = DATranscxt.key("user-pswd");
 					Utils.warn("Decrypting user pswd failed. cipher: %s, iv %s, rootkey: *(%s)",
-							pswd, iv == null ? null : AESHelper.decode64(iv),
+							pswd, iv == null ? null : decode64(iv),
 							rootkey == null ? null : rootkey.length());
 					
 					if (rootkey == null)
@@ -521,6 +540,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throw new SemanticException("create IUser instance failed: %s",
 					ie.getTargetException() == null ? "" : ie.getTargetException().getMessage());
 		}
-	}
 
+	}
 }

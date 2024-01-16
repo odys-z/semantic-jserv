@@ -1,16 +1,14 @@
 package io.odysz.semantic.jsession;
 
-import static io.odysz.common.LangExt.split;
-import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.split;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.xml.sax.SAXException;
 
 import io.odysz.anson.Anson;
 import io.odysz.common.AESHelper;
@@ -117,19 +115,20 @@ public class JUser extends SemanticObject implements IUser {
 	public static final String logTabl;
 
 	static {
-		String conn = Configs.getCfg("log-connId");
-		if (isblank(conn))
-			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
-
-		String[] connss = split(conn, ","); // [conn-id, a_logs]
+		String[] connss = null;
 		try {
+			String conn = Configs.getCfg("log-connId");
+			if (isblank(conn))
+				Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
+
+			connss = split(conn, ","); // [conn-id, a_logs]
 			if (isNull(connss))
 				throw new SemanticException("Parsing log connection config error: %s", conn);
 
 			// logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
 			logsctx = new LogTranscxt(connss[0]);
 			logConn = connss[0];
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		finally {
@@ -214,6 +213,16 @@ public class JUser extends SemanticObject implements IUser {
 	@Override
 	public IUser sessionId(String sessionId) {
 		this.ssid = sessionId;
+		return this;
+	}
+
+	/** Session Token Knowledge */
+	String knoledge;
+	@Override public String sessionKey() { return knoledge; }
+
+	@Override
+	public IUser sessionKey(String k) {
+		this.knoledge = k;
 		return this;
 	}
 
