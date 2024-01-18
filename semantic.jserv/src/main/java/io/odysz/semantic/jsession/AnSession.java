@@ -198,10 +198,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		String ssid = (String)anHeader.ssid();
 		if (users.containsKey(ssid)) {
 			IUser usr = users.get(ssid);
-			// FIXME Album can not be published without fixing this
-			// FIXME
-			// FIXME
-			// FIXME
 			// String token = anHeader.token;
 			// if (token != null && token.equals(usr.untoken())) {
 

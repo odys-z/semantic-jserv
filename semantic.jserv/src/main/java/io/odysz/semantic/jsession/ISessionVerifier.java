@@ -14,7 +14,6 @@ public interface ISessionVerifier {
 	 * @throws SsException
 	 */
 	default IUser verify(AnsonHeader AnsonHeader, int... seq) throws SsException {
-		// default function body for old version
 		return null;
 	};
 

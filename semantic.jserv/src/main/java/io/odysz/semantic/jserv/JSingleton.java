@@ -1,6 +1,7 @@
 package io.odysz.semantic.jserv;
 
 import static io.odysz.common.LangExt.bool;
+import static io.odysz.common.LangExt.isblank;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -94,7 +95,8 @@ public class JSingleton {
 
 	public static ISessionVerifier getSessionVerifier() {
 		if (ssVerier == null) {
-			boolean verifyToken = bool(Configs.getCfg(keys.disableTokenKey));
+			String cfg = Configs.getCfg(keys.disableTokenKey);
+			boolean verifyToken = isblank(cfg) ? true : bool(cfg);
 			if (!verifyToken)
 				Utils.warn("Verifying token is recommended but is disabled by config.xml/k=%s", keys.disableTokenKey);
 			ssVerier = new AnSession(verifyToken);
