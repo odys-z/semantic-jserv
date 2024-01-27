@@ -136,6 +136,8 @@ public class PhotoUser extends SyncRobot implements IUser {
 	@Override public long touchedMs() { return touched; } 
 
 	@Override public String uid() { return userId; }
+	
+	@Override public String pswd() { return pswd; }
 
 	@Override public void writeJsonRespValue(Object writer) throws IOException { }
 
@@ -183,8 +185,9 @@ public class PhotoUser extends SyncRobot implements IUser {
 	}
 
 	@Override
-	public SessionInf getClientSessionInf(IUser login) { 
-		SessionInf inf = new SessionInf(login.sessionId(), login.uid(), login.roleId());
+	public SessionInf getClientSessionInf(IUser login) throws Exception { 
+		// SessionInf inf = new SessionInf(login.sessionId(), login.uid(), login.roleId());
+		SessionInf inf = super.getClientSessionInf(login);
 		inf .device(login.deviceId())
 			.userName(((PhotoUser)login).userName);
 		return inf;

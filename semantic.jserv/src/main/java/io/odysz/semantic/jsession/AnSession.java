@@ -198,13 +198,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		String ssid = (String)anHeader.ssid();
 		if (users.containsKey(ssid)) {
 			IUser usr = users.get(ssid);
-			// String token = anHeader.token;
-			// if (token != null && token.equals(usr.untoken())) {
-
-			// String slogid = (String)anHeader.logid();
-			// if (slogid != null && slogid.equals(usr.uid())) {
-			// 	return usr.touch();
-			// }
 
 			if (verfiyToken) {
 				touchSessionToken(usr, anHeader.token(), usr.sessionKey());
@@ -226,17 +219,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 */
 	static void touchSessionToken(IUser usr, String clientoken, String knowledge) throws SsException {
 		try {
-			/*
-			String[] tokenss = token.split(":");
-			if (isNull(tokenss) || tokenss.length != 2 || isblank(tokenss[0]) || isblank(tokenss[1]))
-				throw new SsException("Session tokens format error.");
-
-			iv = decode64(tokenss[1]);
-			tk0 = decrypt(tokenss[0], pad16_32(usr.pswd()), iv);
-
-			if (!eq(tk0, usr.sessionKey()))
-				return false;
-			*/
 			if (!AESHelper.verifyToken(clientoken, knowledge, usr.uid(), usr.pswd()))
 				throw new SsException("Tokens are not matching");
 			usr.touch();
@@ -277,10 +259,11 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 				if (login.equals(a)) {
 					IUser login = loadUser(sessionBody, connId);
 					if (login.login(sessionBody)) {
-						lock.lock();
-						login.sessionId(allocateSsid());
-						users.put(login.sessionId(), login);
-						lock.unlock();
+						try {
+							lock.lock();
+							login.sessionId(allocateSsid());
+							users.put(login.sessionId(), login);
+						} finally { lock.unlock();}
 
 						SessionInf ssinf = login.getClientSessionInf(login);
 						AnSessionResp bd = new AnSessionResp(null, ssinf).profile(login.profile());
@@ -299,18 +282,19 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					// {uid: “user-id”,  ssid: “session-id-plain/cipher”, vi: "vi-b64"<, sys: “module-id”>}
 					String ssid = (String) header.ssid();
 
-					lock.lock();
-					IUser usr = users.remove(ssid);
-					lock.unlock();
+					try {
+						lock.lock();
+						IUser usr = users.remove(ssid);
 
-					if (usr != null) {
-						SemanticObject resp = usr.logout();
-						write(response, AnsonMsg.ok(p, resp.msg()),
-								msg.opts());
-					}
-					else
-						write(response, AnsonMsg.ok(p, "But no such session exists."),
-								msg.opts());
+						if (usr != null) {
+							SemanticObject resp = usr.logout();
+							write(response, AnsonMsg.ok(p, resp.msg()),
+									msg.opts());
+						}
+						else
+							write(response, AnsonMsg.ok(p, "But no such session exists."),
+									msg.opts());
+					} finally { lock.unlock(); }
 				}
 				else if (pswd.equals(a)) {
 					// change password
@@ -339,9 +323,10 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						.u(sctx.instancontxt(sctx.getSysConnId(), usr));
 
 					// ok, logout
-					lock.lock();
-					users.remove(ssid);
-					lock.unlock();
+					try {
+						lock.lock();
+						users.remove(ssid);
+					} finally { lock.unlock(); }
 
 					write(response, ok("You must relogin!"));
 				}
@@ -384,9 +369,10 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					// remove session if logged in
 					if (users.containsKey(ssid)) {
 						// This happens when log on users IV been reset
-						lock.lock();
-						users.remove(ssid);
-						lock.unlock();
+						try {
+							lock.lock();
+							users.remove(ssid);
+						} finally {lock.unlock();}
 						write(response, ok("You must re-login!"));
 					}
 					else {
@@ -444,7 +430,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col("u.*")
 			.col(usrMeta.orgName)       // v1.4.11
 			.col(usrMeta.roleName)		// v1.4.11
-			.where_("=", "u." + usrMeta.pk, sessionBody.uid())
+			.whereEq("u." + usrMeta.pk, sessionBody.uid())
 			.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
 
 		AnResultset rs = (AnResultset) s.rs(0);;

@@ -226,7 +226,8 @@ public class JUser extends SemanticObject implements IUser {
 		return this;
 	}
 
-	/**Add notifyings
+	/**
+	 * Add notifying
 	 * @param note
 	 * @return this
 	 * @throws TransException
@@ -235,8 +236,9 @@ public class JUser extends SemanticObject implements IUser {
 		return (JUser) add("_notifies_", note);
 	}
 
-	/**Get notified string list.
-	 * @return notifyings
+	/**
+	 * Get notified string list.
+	 * @return notifying
 	 */
 	@SuppressWarnings("unchecked")
 	public List<Object> notifies() {

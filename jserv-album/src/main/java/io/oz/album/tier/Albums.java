@@ -577,7 +577,7 @@ public class Albums extends ServPort<AlbumReq> {
 			.rs(0))
 			.nxt();
 		
-		if (rs.next()) {
+		if (rs != null) {
 			throw new SemanticException("{\"exists\": true, \"owner\": \"%s\", \"synode0\": \"%s\", \"create_on\": \"%s\"}",
 				rs.getString(userMeta.uname),
 				rs.getString(devMeta.synode0),
@@ -587,7 +587,8 @@ public class Albums extends ServPort<AlbumReq> {
 		else 
 			return (DocsResp) new DocsResp().device(new Device(
 					null, AlbumSingleton.synode(),
-					rs.getString(devMeta.devname)));
+					usr.deviceId()));
+					// rs.getString(devMeta.devname)));
 	}
 	
 	DocsResp registDevice(DocsReq body, PhotoUser usr)
