@@ -3,6 +3,7 @@ package io.oz.album.tier;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.startsOneOf;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
 import static io.odysz.transact.sql.parts.condition.Funcall.sum;
@@ -67,6 +68,7 @@ import io.oz.album.PhotoUser;
 import io.oz.album.PhotoUser.PUserMeta;
 import io.oz.album.helpers.Exif;
 import io.oz.album.tier.AlbumReq.A;
+import io.oz.album.x.DocsException;
 import io.oz.jserv.docsync.DeviceTableMeta;
 
 /**
@@ -244,13 +246,15 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = updateFolderel(jmsg.body(0), usr);
 
 				else
-					throw new SemanticException("Request.a can not be handled, request.a: %s", jreq.a());
+					throw new SemanticException("Request.a, %s, can not be handled.", jreq.a());
 			}
 
 			if (rsp != null) { // no rsp for a == download
 				rsp.syncing(jreq.syncing());
 				write(resp, ok(rsp).port(AlbumPort.album));
 			}
+		} catch (DocsException e) {
+			write(resp, err(MsgCode.ext, e.ex().toBlock()));
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
@@ -434,7 +438,8 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(0)).nxt();
 
 		if (rs.getInt("cnt") > 0)
-			throw new SemanticException("Found existing file for device %s, client path: %s",
+			throw new DocsException(0,
+					"Found existing file for device & client path.",
 					device, clientpath);
 	}
 
@@ -685,9 +690,9 @@ public class Albums extends ServPort<AlbumReq> {
 				.col(meta.uri)
 				.col("userName", "shareby")
 				.col(meta.shareDate).col(meta.tags)
-				.col("geox").col("geoy")
-				.col("mime")
-				.whereEq("pid", req.docId)
+				.col(meta.geox).col(meta.geoy)
+				.col(meta.mime)
+				.whereEq(meta.pk, req.docId)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next()) {
@@ -727,7 +732,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		SemanticObject res = (SemanticObject) st
 				.delete(meta.tbl, usr)
-				.whereEq("device", req.device())
+				.whereEq("device", req.device().id)
 				.whereEq("clientpath", req.clientpath())
 				// .post(Docsyncer.onDel(req.clientpath, req.device()))
 				.d(st.instancontxt(conn, usr));
@@ -779,11 +784,12 @@ public class Albums extends ServPort<AlbumReq> {
 				.col(m.uri)
 				.col(m.clientname)
 				.col(m.createDate)
+				.col(m.mime)
 				.whereEq(m.pk, pid)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
 
-			if (rs.next()) {
+			if (rs.next() && isVedioAudio(rs.getString(m.mime))) {
 				ISemantext stx = st.instancontxt(conn, usr);
 				String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
 				PhotoRec p = new PhotoRec();
@@ -815,6 +821,10 @@ public class Albums extends ServPort<AlbumReq> {
 			e.printStackTrace();
 		}})
 		.start();
+	}
+
+	static boolean isVedioAudio(String mime) {
+		return isblank(mime) || startsOneOf(mime, "audio/", "image/");
 	}
 
 	/**
