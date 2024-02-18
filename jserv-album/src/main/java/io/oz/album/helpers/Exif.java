@@ -232,9 +232,10 @@ public class Exif {
 					photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
 				else if ((eq("0", photo.rotation) || eq("180", photo.rotation)) && lt(photo.widthHeight[0], photo.widthHeight[1]))
 					photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
-				else
+				else if (photo.widthHeight != null)
 					photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
-			}catch (Exception e) {e.printStackTrace();}
+				// else possibly not a image or video file
+			} catch (Exception e) {e.printStackTrace();}
 			
 			photo.geox = metadata.get(TikaCoreProperties.LONGITUDE);
 			if (photo.geox == null) photo.geox = geox0;

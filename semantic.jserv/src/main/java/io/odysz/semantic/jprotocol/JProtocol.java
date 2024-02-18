@@ -1,10 +1,12 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
+import java.util.List;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -40,9 +42,21 @@ public class JProtocol {
 			throws IOException, AnsonException, SemanticException;
 	}
 
+	/**
+	 * @deprecated @since 1.4.39 
+	 */
 	@FunctionalInterface
 	public interface OnDocOk {
 		void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException;
+	}
+	
+	/**
+	 * On multiple requests finished, e. g. push multiple videos.
+	 * @since 1.4.39
+	 */
+	@FunctionalInterface
+	public interface OnDocsOk {
+		void ok(List<DocsResp> resps) throws IOException, AnsonException, TransException;
 	}
 	
 	@FunctionalInterface

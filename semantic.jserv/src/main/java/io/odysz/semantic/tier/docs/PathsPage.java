@@ -50,9 +50,9 @@ public class PathsPage extends Anson {
 	protected HashMap<String, String[]> clientPaths;
 	/**
 	 * @see #paths(AnResultset, DocTableMeta)
-	 * @return paths' flags
+	 * @return paths' flags, see {@link #clientPaths}
 	 */
-	public HashMap<String,String[]> paths() { return clientPaths; }
+	public HashMap<String, String[]> paths() { return clientPaths; }
 	
 	/**
 	 * Set paths's flags: [meta.syncflag, share-flag, share-by, share-date].

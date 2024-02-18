@@ -5,9 +5,9 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.startsOneOf;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
+import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
 import static io.odysz.transact.sql.parts.condition.Funcall.sum;
-import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -438,7 +438,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(0)).nxt();
 
 		if (rs.getInt("cnt") > 0)
-			throw new DocsException(0,
+			throw new DocsException(DocsException.Duplicate,
 					"Found existing file for device & client path.",
 					device, clientpath);
 	}

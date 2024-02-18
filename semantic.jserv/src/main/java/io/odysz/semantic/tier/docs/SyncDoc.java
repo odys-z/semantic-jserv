@@ -64,6 +64,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		public static final String close = "Ⓒ";
 		/** This state can not present in database */ 
 		public static final String end = "";
+
+		public static final String deny = "⛔";
 		
 		public static String start(SynodeMode mode, String share) throws SemanticException {
 			if (SynodeMode.hub == mode)
@@ -370,6 +372,11 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 			shareby = flags[2];
 			sharedate(flags[3]);
 		}
+		return this;
+	}
+	
+	public SyncDoc syncFlag(String f) {
+		syncFlag = f;
 		return this;
 	}
 }
