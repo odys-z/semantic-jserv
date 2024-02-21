@@ -66,7 +66,7 @@ import io.oz.album.AlbumPort;
 import io.oz.album.AlbumSingleton;
 import io.oz.album.PhotoUser;
 import io.oz.album.PhotoUser.PUserMeta;
-import io.oz.album.helpers.Exif;
+import io.oz.album.helpers.Exiftool;
 import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.x.DocsException;
 import io.oz.jserv.docsync.DeviceTableMeta;
@@ -793,7 +793,8 @@ public class Albums extends ServPort<AlbumReq> {
 				ISemantext stx = st.instancontxt(conn, usr);
 				String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
 				PhotoRec p = new PhotoRec();
-				Exif.parseExif(p, pth);
+				// Exif.parseExif(p, pth);
+				Exiftool.parseExif(p, pth);
 
 				Update u = st
 					.update(m.tbl, usr)
@@ -817,7 +818,7 @@ public class Albums extends ServPort<AlbumReq> {
 						u.nv(m.mime, p.mime);
 				u.u(stx);
 			}
-		} catch (TransException | SQLException e) {
+		} catch (TransException | SQLException | IOException e) {
 			e.printStackTrace();
 		}})
 		.start();

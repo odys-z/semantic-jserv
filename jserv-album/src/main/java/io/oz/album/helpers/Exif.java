@@ -72,7 +72,7 @@ public class Exif {
 	static TikaConfig config;
 
 	/**
-	 * Initialize tike using external parser, and exiftool is verified only.
+	 * Initialize tika using external parser, and exiftool is verified only.
 	 * @since 0.6.50, an additional parser configure file is used for Windows to configure command path.
 	 * Exiftool is available on Windows. For reasons, see {@link TikaConfig#TikaConfig()}</p>
 	 * @param configPath, e.g. WEB-INF/tika.xml

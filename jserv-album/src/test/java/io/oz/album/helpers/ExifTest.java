@@ -161,4 +161,30 @@ class ExifTest {
 		
 	}
 
+	@Test
+	void testExiftool() throws Exception {
+		Exiftool.cmd = System.getProperty("exiftool");
+		
+		PhotoRec p = new PhotoRec();
+		Exiftool.parseExif(p, "test/res/C0000006 IMG_20230816_111535.jpg");
+		
+		assertEquals(3, p.wh[0]);
+		assertEquals(4, p.wh[1]);
+		assertEquals(4896, p.widthHeight[0]);
+		assertEquals(6528, p.widthHeight[1]);
+		assertEquals("image/jpeg", p.mime);
+		assertTrue(isblank(p.rotation));
+		
+		p = new PhotoRec(); 
+		Exiftool.parseExif(p,"test/res/C000000D VID_20230831_200144.mp4"); 
+
+		assertEquals(9, p.wh[0]);
+		assertEquals(20, p.wh[1]);
+		assertEquals(2400, p.widthHeight[0]);
+		assertEquals(1080, p.widthHeight[1]);
+		assertEquals("video/mp4", p.mime);
+		assertEquals("90", p.rotation);
+		
+	}
+
 }

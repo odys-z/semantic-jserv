@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt.isblank;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.concurrent.TimeoutException;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -19,6 +20,7 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.helpers.Exif;
+import io.oz.album.helpers.Exiftool;
 import io.oz.album.tier.PhotoMeta;
 import io.oz.jserv.docsync.Docsyncer;
 import io.oz.jserv.docsync.Synode;
@@ -51,9 +53,10 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			Docsyncer.metas(Connects.getMeta(Connects.defltConn()));
 			Docsyncer.addSyncTable(new PhotoMeta(Connects.defltConn()));
 			
-			Exif.init(webinf);
+			// Exif.init(webinf);
+			Exiftool.init();
 			JSingleton.health = true;
-		} catch (TransException | SAXException | TikaException | IOException | SQLException | AnsonException | SsException | ReflectiveOperationException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			JSingleton.health = false;
 		}
