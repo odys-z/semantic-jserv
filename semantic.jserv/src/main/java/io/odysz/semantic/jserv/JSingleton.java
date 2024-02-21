@@ -1,5 +1,8 @@
 package io.odysz.semantic.jserv;
 
+import static io.odysz.common.LangExt.bool;
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -10,6 +13,7 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
+import io.odysz.common.Configs.keys;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -18,7 +22,9 @@ import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.x.SemanticException;
 
-/**This jserv lib  initializing and managing module. Subclass must be a web listener.
+/**
+ * This jserv lib  initializing and managing module. Subclass must be a web listener.
+ * 
  * @author odys-z@github.com
  */
 public class JSingleton {
@@ -26,13 +32,22 @@ public class JSingleton {
 	public static DATranscxt defltScxt;
 	private static ISessionVerifier ssVerier;
 	private static String webINF;
+	public static boolean health;
 
 	public void onDestroyed(ServletContextEvent arg0) {
 		AnSession.stopScheduled(5);
 		Connects.close();
 	}
 
-	public void onInitialized(ServletContextEvent evt)
+	/**
+	 * @param evt
+	 * @return configure's root path, e.g. /WEB-INF
+	 * @throws SemanticException
+	 * @throws SAXException
+	 * @throws IOException
+	 * @throws SQLException
+	 */
+	public String onInitialized(ServletContextEvent evt)
 			throws SemanticException, SAXException, IOException, SQLException {
 		Utils.printCaller(false);
 		Utils.logi("JSingleton initializing...");
@@ -41,11 +56,14 @@ public class JSingleton {
 		webINF = ctx.getRealPath("/WEB-INF");
 		String root = ctx.getRealPath(".");
 		initJserv(root, webINF, ctx.getInitParameter("io.oz.root-key"));
+		return webINF;
 	}
 	
-	/**For initializing from Jetty - it's not able to find root path?
+	/**
+	 * For initializing from Jetty - it's not able to find root path?
+	 * 
 	 * @param root
-	 * @param rootINF
+	 * @param rootINF, e.g. WEB-INF
 	 * @param rootKey, e.g. context.xml/parameter=root-key
 	 * @throws IOException 
 	 * @throws SAXException 
@@ -58,15 +76,15 @@ public class JSingleton {
 		webINF = rootINF;
 		Connects.init(rootINF);
 		Configs.init(rootINF);
+
 		DATranscxt.configRoot(rootINF, root);
 		DATranscxt.key("user-pswd", rootKey);
 		
 		DatasetCfg.init(rootINF);
 		
 		for (String connId : Connects.getAllConnIds())
-			// Don't remove this until Docker deployment is verified:
-			// DATranscxt.loadSemantics(connId, JSingleton.getFileInfPath(Connects.getSmtcsPath(connId)));
-			DATranscxt.loadSemantics(connId, Connects.getSmtcsPath(connId), Connects.getDebug(connId));
+			// DATranscxt.loadSemantics(connId, Connects.getSmtcsPath(connId), Connects.getDebug(connId));
+			DATranscxt.loadSemantics(connId);
 
 		defltScxt = new DATranscxt(Connects.defltConn());
 			
@@ -76,9 +94,22 @@ public class JSingleton {
 	}
 
 	public static ISessionVerifier getSessionVerifier() {
-		if (ssVerier == null)
-			ssVerier = new AnSession();
+		if (ssVerier == null) {
+			String cfg = Configs.getCfg(keys.disableTokenKey);
+			boolean verifyToken = isblank(cfg) ? true : bool(cfg);
+			if (!verifyToken)
+				Utils.warn("Verifying token is recommended but is disabled by config.xml/k=%s", keys.disableTokenKey);
+			ssVerier = new AnSession(verifyToken);
+		}
 		return ssVerier;
+	}
+	
+	/**
+	 * @since 1.4.36 avoid using Configs when testing.
+	 * @param verifier
+	 */
+	public static void setSessionVerifier(ISessionVerifier verifier) {
+		ssVerier = verifier;
 	}
 
 	/**Get server root/WEB-INF path (filesystem local)

@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantics.x.SemanticException;
@@ -45,12 +46,13 @@ public class PathsPage extends Anson {
 	/**
 	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date]} 
 	 */
+	@AnsonField(valType="[Ljava.lang.String;")
 	protected HashMap<String, String[]> clientPaths;
 	/**
 	 * @see #paths(AnResultset, DocTableMeta)
-	 * @return paths' flags
+	 * @return paths' flags, see {@link #clientPaths}
 	 */
-	public HashMap<String,String[]> paths() { return clientPaths; }
+	public HashMap<String, String[]> paths() { return clientPaths; }
 	
 	/**
 	 * Set paths's flags: [meta.syncflag, share-flag, share-by, share-date].
@@ -66,7 +68,7 @@ public class PathsPage extends Anson {
 
 		rs.beforeFirst();
 		while(rs.next()) {
-			String dev = rs.getString(meta.device);
+			String dev = rs.getString(meta.synoder);
 			if (isblank(device))
 				device = dev;
 			else if (!device.equals(dev))
@@ -104,6 +106,12 @@ public class PathsPage extends Anson {
 		return (int) start;
 	}
 	
+	/**
+	 * Index after last item, non-inclusive index, and size = end - start.
+	 * 
+	 * @return
+	 * @throws SemanticException
+	 */
 	public int end() throws SemanticException {
 		if (end < 0 || end > Integer.MAX_VALUE)
 			throw new SemanticException("Illegal long value to convert to int: %d", end);

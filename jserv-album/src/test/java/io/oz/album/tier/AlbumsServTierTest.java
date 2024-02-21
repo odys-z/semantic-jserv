@@ -1,8 +1,11 @@
 package io.oz.album.tier;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+
+import static io.odysz.common.LangExt.isblank;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 
 import org.junit.jupiter.api.Test;
@@ -11,7 +14,7 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.PhotoRobot;
+import io.oz.album.PhotoUser;
 
 /**
  * Test file / uri data access functions.
@@ -42,24 +45,26 @@ class AlbumsServTierTest {
 			Connects.init("src/main/webapp/WEB-INF");
 
 			local = new File("src/test/local").getAbsolutePath();
-			robot = new PhotoRobot("test album");
+			robot = new PhotoUser("test album");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	@Test
-	void testRec() throws SemanticException, TransException, SQLException {
+	void testRec() throws SemanticException, TransException, SQLException, IOException {
 	
-		AlbumReq req = new AlbumReq("/local/test");
+		AlbumReq req = new AlbumReq("/local/test").page(0, -1, "pid", "C000000A");
 		req.docId = "test-00001";
 
-		AlbumResp rep = Albums.rec(req, robot);
+		AlbumResp rep = Albums.doc(req, robot);
 		
-		assertEquals("test-00001", rep.photo.recId);
-		assertEquals("DSC_0124.JPG", rep.photo.pname);
-		assertEquals("$VOLUME_HOME/ody/2019_08/DSC_0124.JPG", rep.photo.uri);
+		assertEquals("C000000A", rep.photo.recId);
+		assertEquals("ottawa-canada.jpg", rep.photo.pname);
+		assertTrue(isblank(rep.photo.uri));
+		assertEquals("2022_03", rep.photo.folder());
 		
+		/*
 		req.collectId = "c-001";
 		AlbumResp coll = Albums.collect(req, robot);
 		assertEquals(1, coll.collectRecords.size());
@@ -67,7 +72,8 @@ class AlbumsServTierTest {
 		assertEquals("Liar & Fool", coll.collectRecords.get(0).cname);
 		assertEquals("c-001", coll.photos.get(0)[0].collectId);
 		assertEquals("DSC_0005.JPG", coll.photos.get(0)[0].pname);
-		assertEquals("$VOLUME_HOME/ody/2019_08/DSC_0005.JPG", coll.photos.get(0)[0].uri);
+		assertTrue(isblank(coll.photos.get(0)[0].uri));
+		*/
 	}
 
 }

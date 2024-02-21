@@ -1,17 +1,18 @@
 package io.odysz.semantic.jsession;
 
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.split;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.xml.sax.SAXException;
-
 import io.odysz.anson.Anson;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
-import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -24,7 +25,8 @@ import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
-/**<p>IUser implementation supporting session.</p>
+/**
+ * <p>IUser implementation supporting session.</p>
  * <p>This object is usually created when user logged in,
  * and is used for semantics processing like finger print, etc.</p>
  * <p>The logging connection is configured in configs.xml/k=log-connId.</p>
@@ -33,7 +35,8 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 public class JUser extends SemanticObject implements IUser {
-	/**Hard coded field string of user table information.
+	/**
+	 * Hard coded field string of user table information.
 	 *
 	 * @author odys-z@github.com
 	 */
@@ -41,7 +44,7 @@ public class JUser extends SemanticObject implements IUser {
 
 		public JUserMeta(String... conn) {
 			super("a_users", conn);
-			this.tbl = "a_users";
+			// this.tbl = "a_users";
 			this.pk = "userId";
 			this.uname = "userName";
 			this.pswd = "pswd";
@@ -90,17 +93,16 @@ public class JUser extends SemanticObject implements IUser {
 	protected String org;
 	protected String role;
 	private String pswd;
-	@SuppressWarnings("unused")
-	private String usrName;
 	
-	/** v1.4.11 */
+	/**@since 1.4.11 */
 	@Override
 	public String orgId() { return org; }
-	/** v1.4.11 */
+	/**@since v1.4.11 */
 	@Override
 	public String roleId() { return role; }
 
 	private long touched;
+
 	/** current action's business function */
 	String funcId;
 	String funcName;
@@ -109,27 +111,35 @@ public class JUser extends SemanticObject implements IUser {
 	String orgName;
 
 	private static DATranscxt logsctx;
-	private static String[] connss;
-	public static final String sessionSmtXml;
+	private static String logConn;
 	public static final String logTabl;
+
 	static {
-		String conn = Configs.getCfg("log-connId");
-		if (LangExt.isblank(conn))
-			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
+		String[] connss = null;
 		try {
-			connss = conn.split(","); // [conn-id, log.xml, a_logs]
-			// logsctx = new DATranscxt(connss[0]);
-			logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+			String conn = Configs.getCfg("log-connId");
+			if (isblank(conn))
+				Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
+
+			connss = split(conn, ","); // [conn-id, a_logs]
+			if (isNull(connss))
+				throw new SemanticException("Parsing log connection config error: %s", conn);
+
+			// logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
+			logsctx = new LogTranscxt(connss[0]);
+			logConn = connss[0];
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		finally {
-			sessionSmtXml  = connss != null ? connss[1] : "";
-			logTabl = connss != null ? connss[2] : "";
+			// sessionSmtXml  = connss != null ? connss[1] : "semantics-log.xml";
+			logTabl = connss != null ? connss[1] : "a_logs";
 		}
 	}
 
-	/**Constructor for session login
+	/**
+	 * Constructor for session login
+	 * 
 	 * @param uid user Id
 	 * @param pswd pswd in DB (plain text)
 	 * @param usrName
@@ -138,7 +148,6 @@ public class JUser extends SemanticObject implements IUser {
 	public JUser(String uid, String pswd, String usrName) throws SemanticException {
 		this.uid = uid;
 		this.pswd = pswd;
-		this.usrName = usrName;
 
 		String rootK = DATranscxt.key("user-pswd");
 		if (rootK == null)
@@ -161,11 +170,13 @@ public class JUser extends SemanticObject implements IUser {
 		this.pswd = pswd;
 	}
 
-	public TableMeta meta() {
+	public TableMeta meta(String ... connId) {
 		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
 	}
 
-	/**jmsg, the response of {@link AnSession}
+	/**
+	 * Handle jmsg.uid, the response of {@link AnSession}
+	 * 
 	 * @param jmsg
 	 */
 	public JUser(SemanticObject jmsg) {
@@ -176,7 +187,7 @@ public class JUser extends SemanticObject implements IUser {
 
 	@Override
 	public ArrayList<String> dbLog(ArrayList<String> sqls) {
-		return LoggingUser.genLog(logsctx, logTabl, sqls, this, funcName, funcId);
+		return LoggingUser.genLog(logConn, logsctx, logTabl, sqls, this, funcName, funcId);
 	}
 
 	public JUser touch() {
@@ -205,7 +216,18 @@ public class JUser extends SemanticObject implements IUser {
 		return this;
 	}
 
-	/**Add notifyings
+	/** Session Token Knowledge */
+	String knoledge;
+	@Override public String sessionKey() { return knoledge; }
+
+	@Override
+	public IUser sessionKey(String k) {
+		this.knoledge = k;
+		return this;
+	}
+
+	/**
+	 * Add notifying
 	 * @param note
 	 * @return this
 	 * @throws TransException
@@ -214,8 +236,9 @@ public class JUser extends SemanticObject implements IUser {
 		return (JUser) add("_notifies_", note);
 	}
 
-	/**Get notified string list.
-	 * @return notifyings
+	/**
+	 * Get notified string list.
+	 * @return notifying
 	 */
 	@SuppressWarnings("unchecked")
 	public List<Object> notifies() {
@@ -239,13 +262,15 @@ public class JUser extends SemanticObject implements IUser {
 
 		return false;
 	}
-	
+
 	@Override
 	public boolean guessPswd(String pswd64, String iv64)
 			throws TransException, GeneralSecurityException, IOException {
 		return pswd != null && pswd.equals(AESHelper.decrypt(pswd64, this.ssid, AESHelper.decode64(iv64)));
 	}
 
+	@Override
+	public String pswd() { return pswd; }
 
 	@Override
 	public SemanticObject logout() {

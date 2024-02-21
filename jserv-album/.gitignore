@@ -4,13 +4,11 @@ download
 volume/Robot*
 volume/**/* my.jpg
 volume/**/ignored*.*
-volume/ody/2022_02/*
-volume/ody/2022_03/*
-volume/ody/2022_04/*
-volume/ody/2021_10/*
-volume/ody/2021_12/*
-volume/ody/2022_05/*
-volume/ody/2022_10/*
+volume/ody/2024_*
+volume/ody/2023_*
+volume/ody/2022_*
+volume/ody/2021_*
+volume/ody/2016_*
 volume/ody/ - - /**
 volume/ody/uploading-temp
 volume/admin
@@ -19,9 +17,12 @@ volume/odys-z.github.io
 volume/null
 volume/ody@kyiv
 volume/2022*
+volume-0.*
 test/results
 test/res/ignore*.*
+test/res/C000000*.mp4
 .extract
 ./
 dist
 winserv.xml
+nginx

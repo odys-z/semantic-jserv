@@ -69,3 +69,19 @@ CREATE TABLE h_album_coll (
 ); -- collection-album relationship
 
 SELECT name FROM sqlite_schema WHERE type ='table';
+
+
+
+drop table if exists doc_devices;
+CREATE TABLE doc_devices (
+  synode0 varchar(12)  NOT NULL, -- initial node a device is registered
+  device  varchar(12)  NOT NULL, -- ak, generated when registering, but is used together with synode-0 for file identity.
+  devname varchar(256) NOT NULL, -- set by user, warn on duplicate, use old device id if user confirmed, otherwise generate a new one.
+  mac     varchar(512),          -- an anciliary identity for recognize a device if there are supporting ways to automatically find out a device mac
+  org     varchar(12)  NOT NULL, -- fk-del, usually won't happen
+  owner   varchar(12),           -- or current user, not permenatly bound
+  cdate   datetime,
+  PRIMARY KEY (synode0, device)
+); -- registered device names. Name is set by user, prompt if he's device names are duplicated
+
+insert into oz_autoseq (sid, seq, remarks) values ('doc_devices.device', 0, '');

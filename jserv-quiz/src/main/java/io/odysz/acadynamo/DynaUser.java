@@ -13,7 +13,7 @@ public class DynaUser extends JUser {
 	 */
 	public static class DbUserMeta extends JUserMeta {
 		public DbUserMeta(String tbl, String... conn) {
-			super(tbl, conn);
+			super(conn);
 
 			this.tbl = LangExt.isEmpty(tbl) ? "a_users" : tbl;
 			pk = "userId";

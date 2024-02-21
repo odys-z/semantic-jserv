@@ -7,16 +7,30 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 
-/**<p>Sessin Request<br>
+/**
+ * <p>Session Request<br>
  * a: see {@link AnSession} </p>
+ * session's DB access is controlled by server
+ * 
  * @author odys-z@github.com
  */
 public class AnSessionReq extends AnsonBody {
+	public static class A {
+		public static final String login = "login";
+		public static final String logout = "logout";
+		public static final String pswd = "pswd";
+		public static final String init = "init";
+		public static final String touch = "touch";
+		public static final String ping = "ping";
+	}
+	
 	public AnSessionReq() {
-		super(null, null); // session's DB access is controlled by server
+		super(null, null);
 	}
 
-	/**Session connection is ignored and controlled by server.
+	/**
+	 * Session connection is ignored and controlled by server.
+	 * 
 	 * @param parent
 	 */
 	public AnSessionReq(AnsonMsg<AnSessionReq> parent) {
@@ -26,9 +40,9 @@ public class AnSessionReq extends AnsonBody {
 	String uid;
 	public String uid() { return uid; }
 	String token;
-	String token() { return token; }
+	public String token() { return token; }
 	String iv;
-	String iv() { return iv; }
+	public String iv() { return iv; }
 
 	HashMap<String, Object> mds;
 	public String md(String k) { return mds == null ? null : (String) mds.get(k); }
@@ -44,7 +58,9 @@ public class AnSessionReq extends AnsonBody {
 	String deviceId;
 	public String deviceId() { return deviceId; }
 
-	/**Format login request message.
+	/**
+	 * Format login request message.
+	 * 
 	 * @param uid
 	 * @param tk64
 	 * @param iv64

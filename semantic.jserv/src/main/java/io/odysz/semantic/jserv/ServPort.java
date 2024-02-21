@@ -1,5 +1,7 @@
 package io.odysz.semantic.jserv;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,15 +21,20 @@ import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
+import io.odysz.semantic.tier.docs.Docs206;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
-/**<p>Base serv class for handling json request.</p>
+/**
+ * <p>Base serv class for handling json request.</p>
  * Servlet extending this must subclass this class, and override
  * {@link #onGet(AnsonMsg, HttpServletResponse) onGet()} and {@link #onPost(AnsonMsg, HttpServletResponse) onPost()}.
  * 
@@ -36,32 +43,118 @@ import io.odysz.transact.x.TransException;
  * @param <T> any subclass extends {@link AnsonBody}.
  */
 public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
-	protected static ISessionVerifier verifier;
+	/**
+	 * Can only be non-static for tests running.
+	 * @see io.odysz.semantic.jsession.AnSessionTest
+	 */
+	private ISessionVerifier verifier;
+
 	protected IPort p;
 	
-	static {
-		verifier = JSingleton.getSessionVerifier();
+//	static {
+//		if (verifier == null)
+//			verifier = JSingleton.getSessionVerifier();
+//	}
+
+	/**
+	 * Get session verifier, e. g. instance of {@link AnSession}.
+	 * Use this for avoiding calling of {@link JSingleton} in tests.
+	 * This is supposed to be changed in the future after separated ISessionVerifier and AnSession.
+	 * @param anSession
+	 * @return 
+	 * @since 1.4.36
+	 */
+	public ISessionVerifier verifier() {
+		if (verifier == null)
+			verifier = JSingleton.getSessionVerifier();
+		return verifier;
 	}
 
-	public ServPort(IPort port) { this.p = port; }
+	public ServPort(IPort port) {
+		this.p = port;
+		// this.verifier = JSingleton.getSessionVerifier();
+	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected void doHead(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+    	String range = request.getHeader("Range");
+
+    	if (!isblank(range))
+			try {
+				Docs206.get206Head(request, response);
+			} catch (SsException e) {
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+			}
+		else super.doHead(request, response);
+	}
+	
+	/**
+	 * Since 1.4.28, semantic.jserv support for Range header for all ports, which is critical for 
+	 * some steam features a client side, such as resume downloading or play back from a position.
+	 * 
+	 * Example of Chrome request header for MP4
+	 * <pre>
+	Accept: * / *
+	Accept-Encoding: identity;q=1, *;q=0
+	Accept-Language: en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6
+	Connection: keep-alive
+	Host: localhost:8081
+	Range: bytes=0-
+	Referer: http://localhost:8889/
+	Sec-Fetch-Dest: video
+	Sec-Fetch-Mode: no-cors
+	Sec-Fetch-Site: same-site
+	User-Agent: Mozilla/5.0 ...
+	sec-ch-ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
+	sec-ch-ua-mobile: ?1
+	sec-ch-ua-platform: "Android"
+		</pre>
+	 *
+	 * Example of Chrome request header for MP3<pre>
+	 * 
+	Accept-Encoding:
+	identity;q=1, *;q=0
+	Range:
+	bytes=0-
+	Referer: http://localhost:8889/
+	Sec-Ch-Ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
+	Sec-Ch-Ua-Mobile: ?1
+	Sec-Ch-Ua-Platform: "Android"
+	User-Agent: Mozilla/5.0 ...
+	 </pre>
+	 */
+	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+    	String range = req.getHeader("Range");
+    	if (!isblank(range)) {
+    		try {
+				Docs206.get206(req, resp);
+			} catch (SsException e) {
+				write(resp, err(MsgCode.exSession, e.getMessage()));
+				resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			}
+			return;
+    	}
+
 		InputStream in;
 		String headstr = req.getParameter("header");
 		String anson64 = req.getParameter("anson64");
+
 		if (headstr != null && headstr.length() > 1) {
 			byte[] b = headstr.getBytes();
 			in = new ByteArrayInputStream(b);
 		}
 		else if (!LangExt.isEmpty(anson64)) {
 			byte[] b = AESHelper.decode64(anson64);
-			// byte[] b = anson64.getBytes();
 			in = new ByteArrayInputStream(b);
 		}
 		else {
-			if (req.getContentLength() == 0)
+			if (req.getContentLength() <= 0) {
+				write(resp, err(MsgCode.exGeneral, "Empty Request"));
 				return ;
+			}
 			in = req.getInputStream();
 		}
 		resp.setCharacterEncoding("UTF-8");
@@ -84,7 +177,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
-	/**Override this to handle null envelop in GET requests.
+	/**
+	 * Override this to handle null envelop in GET requests.
 	 * @param e
 	 * @param resp
 	 * @param map 
@@ -96,7 +190,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			HttpServletResponse resp, Map<String, String[]> map) throws IOException, ServletException {
 		if (ServFlags.port)
 			e.printStackTrace();
-		write(resp, err(MsgCode.exSemantic, e.getMessage() + "\n Usually this is an error raised from browser visiting."));
+		write(resp, err(MsgCode.exSemantic, "%s\n%s", e.getMessage(),
+				"Usually this is an error raised from browser visiting."));
 	}
 
 	@Override
@@ -122,7 +217,13 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
-	/**Write message to resp.
+	public IUser verify(AnsonHeader anHeader, int ...seq) throws SsException {
+		return verifier.verify(anHeader, seq);
+	}
+
+	/**
+	 * Write message to resp.
+	 * 
 	 * @param resp can be null if user handled response already
 	 * @param msg
 	 * @param opts
@@ -136,7 +237,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
-	/**Response with OK message.
+	/**
+	 * Response with OK message.
 	 * @param arrayList
 	 * @return AnsonMsg code = ok 
 	 */
@@ -173,7 +275,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	protected AnsonMsg<AnsonResp> err(MsgCode code, String templ, Object ... args) {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, code);
 		AnsonResp bd = new AnsonResp(msg,
-				// sql error message can have '%'
+				// sql error messages can have '%'
 				args == null ? templ :
 				String.format(templ == null ? "" : templ, args));
 		return msg.body(bd);
@@ -184,5 +286,4 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	abstract protected void onPost(AnsonMsg<T> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException;
-
 }

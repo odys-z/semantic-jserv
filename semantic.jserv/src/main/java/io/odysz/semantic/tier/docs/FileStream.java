@@ -10,6 +10,8 @@ import java.sql.SQLException;
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.SAXException;
 
+import io.odysz.common.DocLocks;
+import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -23,6 +25,11 @@ import io.odysz.transact.x.TransException;
  * 
  * <h6>This should be moved to framework with test</h6>
  * 
+ * Since 1.4.28, upload is replaced by PushBlocks(), and resumable
+ * downloading is replaced by {@link Docs206}#get206(), but direct steam by
+ * java client is served here.
+ * 
+ * @since 1.4.28
  * @author Ody Zhou
  */
 public class FileStream {
@@ -67,11 +74,18 @@ public class FileStream {
 		return sendFile(out, srcFile);
 	}
 
-	public static MsgCode sendFile(OutputStream out, String src) throws IOException {
-		FileInputStream in = new FileInputStream(src);
-		IOUtils.copy(in, out);
-		in.close();
-		return MsgCode.ok;
+	public static MsgCode sendFile(OutputStream out, String src)
+			throws IOException {
+		try {
+			DocLocks.reading(src);
+			Utils.logi(src);
+			FileInputStream in = new FileInputStream(src);
+			IOUtils.copy(in, out);
+			in.close();
+			return MsgCode.ok;
+		} finally {
+			DocLocks.readed(src);
+		}
 	}
 
 

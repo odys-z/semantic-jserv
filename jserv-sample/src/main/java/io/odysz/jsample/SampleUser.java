@@ -28,7 +28,8 @@ public class SampleUser extends JUser {
 		super(uid, pswd, usrName);
 	}
 
-	public TableMeta meta() {
+	@Override
+	public TableMeta meta(String... conn) {
 		return new SampleUserMeta();
 	}
 

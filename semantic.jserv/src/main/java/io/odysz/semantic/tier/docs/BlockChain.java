@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.commons.io_odysz.FilenameUtils;
@@ -16,18 +17,19 @@ import io.odysz.transact.x.TransException;
 
 /**
  * Blocks stream, not that block chain:)
+ * 
+ * <p>Block chain is not guarded with file read-write lock as it's not visible to others
+ * until the database is updated with the path.</p>
+ * 
  * @author ody
- *
  */
 public class BlockChain {
 
-	// public final String ssId;
 	public final String saveFolder;
 	public final String clientpath;
 	public final String clientname;
-	public final String cdate;
+	public String cdate;
 
-	// protected final String tempFolder;
 	public final String outputPath;
 	protected final OutputStream ofs;
 	
@@ -38,7 +40,33 @@ public class BlockChain {
 	public String shareflag;
 	public String device;
 
-	/**Create file output stream to $VALUME_HOME/userid/ssid/clientpath
+	/**
+	 * Port to DB-sync
+	 * 
+	 * @param tempDir
+	 * @param saveFolder
+	 * @param clientpath
+	 * @throws IOException
+	 */
+	public BlockChain(String tempDir, String saveFolder, String clientpath) throws IOException {
+
+		this.saveFolder = saveFolder;
+		this.clientpath = clientpath;
+		clientname = FilenameUtils.getName(clientpath);
+		outputPath = EnvPath.decodeUri(tempDir, saveFolder, clientname);
+
+		String parentpath = FilenameUtils.getFullPath(outputPath);
+		new File(parentpath).mkdirs(); 
+
+		File f = new File(outputPath);
+		f.createNewFile();
+		this.ofs = new FileOutputStream(f);
+
+		waitings = new DocsReq().blockSeq(-1);
+	}
+
+	/**
+	 * Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
 	 * @param tempDir
 	 * @param clientpathRaw - client path that can match at client's environment (saving at server side replaced some special characters)
@@ -56,8 +84,6 @@ public class BlockChain {
 		this.cdate = createDate;
 		this.clientpath = clientpathRaw;
 		this.saveFolder = targetFolder;
-
-		// tempDir = FilenameUtils.concat(rootpath, userId, "uploading-temp", ssId);
 
 		String clientpath = clientpathRaw.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
@@ -121,7 +147,8 @@ public class BlockChain {
 		ofs.close();
 
 		if (waitings.nextBlock != null) {
-			try { Files.delete(Paths.get(outputPath)); }
+			Path p = Paths.get(outputPath);
+			try { Files.delete(p); }
 			catch (IOException e) { e.printStackTrace(); }
 
 			// some packages lost

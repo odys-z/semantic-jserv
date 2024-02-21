@@ -32,6 +32,11 @@
   		<mysql></mysql>
   		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId is null order by d.fullpath</sqlit>
 	</c>
+	<c>
+	  	<sk>lvl2.domain.jsample</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId = '%s' order by d.fullpath</sqlit>
+	</c>
 
 	<c>
 	  	<sk>nations.domain.jsample</sk>
@@ -50,23 +55,15 @@
   		<s-tree>,a_sys_functions,funcId id,parentId,funcName text,,,false</s-tree>
   	</c>
   	
-  	<!-- jsample/easyui/users.html -->
-	<c> <sk>projects.ez</sk>
-		<mysql>select projectId, projectName, parentId, fullpath, sort
-		from p_projects p where p.orgId = '%s'</mysql>
-  		<s-tree>,p_projects,projectId id,parentId,fullpath,sort,projectName text,,false</s-tree>
-	</c>
 	<c> <sk>roles</sk>
 		<mysql>select roleId as value,roleName as text from a_roles</mysql>
 		<sqlit>select roleId as value,roleName as text from a_roles</sqlit>
   	</c>
 	<c> <sk>orgs</sk>
-		<mysql>select orgId as value, orgName as text from a_reg_org</mysql>
+		<mysql>select c.orgId, c.orgName as text, c.parent, p.orgName pname, fullpath from a_orgs c join (select orgName, orgId from a_orgs) p on p.orgId = c.parent order by fullpath</mysql>
+  		<s-tree>,a_orgs,orgId,parent parentId,orgName text,,,false</s-tree>
   	</c>
-  	<c> <sk>departs.org</sk>
-  		<mysql>select departId value, orgId, departName text, departState from a_org_depart where orgId = '%s'</mysql>
-  	</c>
-  	
+
   	<!-- orgnization combobox -->
   	<c> <sk>org.all</sk>
   		<mysql>select orgId value, orgName text from a_orgs</mysql>
@@ -104,9 +101,8 @@
 	</c>
 	<c> <sk>max.cube.vec3</sk>
   		<mysql></mysql>
-  		<sqlit>select max(v.val) max, min(v.val) min 
-		from vector v 
-		join s_domain d on v.dim3 = d.did;</sqlit>
+  		<sqlit>select max(v.val) max, min(v.val) min from vector v join s_domain d on v.dim3 = d.did
+  		</sqlit>
 	</c>
 	<!-- 
 	cnt |did         |indust                      |cate      |

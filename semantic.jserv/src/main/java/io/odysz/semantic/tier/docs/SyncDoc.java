@@ -1,9 +1,12 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
+import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
@@ -14,18 +17,66 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.ext.DocTableMeta.Share;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;
-
-import static io.odysz.common.LangExt.*;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
  * used for docsync.jserv. 
  * 
+ * TODO extending SyncEntity
+ * 
  * @author ody
  */
 public class SyncDoc extends Anson implements IFileDescriptor {
+	/** Temporary type for album's MVP version */
+	public final static class SyncFlag extends Anson {
+		/** kept as private file ('🔒') at private node.
+		 * TODO rename as jnode */
+		public static final String priv = "🔒";
+
+		/** to be pushed (shared) to hub ('⇈')
+		 * <p>This is a temporary state and is handled the same as the {@link #priv}
+		 * for {@link io.odysz.semantic.tier.docs.SyncDoc SyncDoc}'s state.
+		 * The only difference is the UI and broken link handling.
+		 * It's complicate but nothing about FSM.</p> */
+		public static final String pushing = "⇈";
+
+		/**
+		 * synchronized (shared) with hub ('🌎')
+		 * */
+		public static final String publish = "🌎";
+		/**created at cloud hub ('✩') by both client and jnode pushing, */
+		public static final String hub = "✩";
+		
+		/**created at a device (client) node ('📱') */
+		public static final String device = "📱";
+		/**The doc is removed, and this record is a propagating record for
+		 * worldwide synchronizing ('Ⓓ')*/
+		public static final String deleting = "Ⓓ";
+		/**The doc is locally removed, and the task is waiting to push to a jnode ('Ⓛ') */
+		public static final String loc_remove = "Ⓛ";
+		/**The deleting task is denied by a device ('ⓧ')*/
+		public static final String del_deny = "ⓧ";
+		/** hub buffering expired or finished ('Ⓒ') */
+		public static final String close = "Ⓒ";
+		/** This state can not present in database */ 
+		public static final String end = "";
+
+		public static final String deny = "⛔";
+		public static final String invalid = "⚠";
+		
+		public static String start(SynodeMode mode, String share) throws SemanticException {
+			if (SynodeMode.hub == mode)
+				return Share.isPub(share) ? publish : hub;
+			else if (SynodeMode.bridge == mode || SynodeMode.main == mode)
+				return priv;
+			throw new SemanticException("Unhandled state starting: mode %s : share %s.", mode, share);
+	}
+	}
+	
 	protected static String[] synpageCols;
 
 	public String recId;
@@ -43,11 +94,13 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 
-	public String clientpath;
+	protected String clientpath;
 	@Override
 	public String fullpath() { return clientpath; }
 
-	/** Non-public: doc' device id is managed by session. */
+	/** Non-public: doc' device id is managed globally.
+	 * @since 0.6.50:temp-try, a device has an auto-key and a name.
+	 */
 	protected String device;
 	@Override
 	public String device() { return device; }
@@ -56,17 +109,34 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return this;
 	}
 
+	public SyncDoc device(Device device) {
+		this.device = device.id;
+		return this;
+	}
+	
+	/** Non-public: doc' device id is managed globally.
+	 * @since 0.6.50:temp-try, a device has an auto-key and a name.
+	 */
+	protected String devname;
+	public String devname() { return devname; }
+	public SyncDoc devname(String devname) {
+		this.devname = devname;
+		return this;
+	}
+
 	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
-	public String shareflag;
+	public String shareFlag;
 	@Override
 	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
-	public String shareflag() { return shareflag; }
+	public String shareflag() { return shareFlag; }
 
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;
 	@Override
 	public String cdate() { return createDate; }
 	public SyncDoc cdate(String cdate) {
+		if (isblank(cdate))
+			return cdate(new Date()); 
 		createDate = cdate;
 		return this;
 	}
@@ -89,6 +159,9 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public String shareby;
 	public String sharedate;
 	
+	/**
+	 * Const string values of {@link SyncFlag}.
+	 */
 	public String syncFlag;
 
 	/** usually ignored when sending request */
@@ -113,21 +186,25 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	}
 	
 	public SyncDoc share(String shareby, String flag, String sharedate) {
-		this.shareflag = flag;
+		this.shareFlag = flag;
 		this.shareby = shareby;
 		sharedate(sharedate);
 		return this;
 	}
 
-	public SyncDoc share(String shareby, String s, Date sharedate) {
-		this.shareflag = s;
+	public SyncDoc share(String shareby, String flag, Date sharedate) {
+		this.shareFlag = flag;
 		this.shareby = shareby;
 		sharedate(sharedate);
 		return this;
 	}
 
+	public SyncDoc share(String shareby, String flag) {
+		return share(shareby, flag, new Date());
+	}
+	
 	@AnsonField(ignoreTo=true)
-	DocTableMeta docMeta;
+	protected DocTableMeta docMeta;
 
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	ISemantext semantxt;
@@ -142,7 +219,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public static String[] nvCols(DocTableMeta meta) {
 		return new String[] {
 				meta.pk,
-				meta.filename,
+				meta.clientname,
 				meta.uri,
 				meta.createDate,
 				meta.shareDate,
@@ -151,7 +228,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 				meta.syncflag,
 				meta.mime,
 				meta.fullpath,
-				meta.device,
+				meta.synoder,
 				meta.folder,
 				meta.size
 		};
@@ -165,7 +242,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		if (synpageCols == null)
 			synpageCols = new String[] {
 					meta.pk,
-					meta.device,
+					meta.synoder,
 					meta.fullpath,
 					meta.shareby,
 					meta.shareDate,
@@ -178,14 +255,14 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc(AnResultset rs, DocTableMeta meta) throws SQLException {
 		this.docMeta = meta;
 		this.recId = rs.getString(meta.pk);
-		this.pname = rs.getString(meta.filename);
+		this.pname = rs.getString(meta.clientname);
 		this.uri = rs.getString(meta.uri);
 		this.createDate = rs.getString(meta.createDate);
 		this.mime = rs.getString(meta.mime);
 		this.size = rs.getLong(meta.size, 0);
 		
 		this.clientpath =  rs.getString(meta.fullpath);
-		this.device =  rs.getString(meta.device);
+		this.device =  rs.getString(meta.synoder);
 		this.folder = rs.getString(meta.folder);
 		
 		try {
@@ -194,7 +271,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 			this.sharedate = rs.getString(meta.createDate);
 		}
 		this.shareby = rs.getString(meta.shareby);
-		this.shareflag = rs.getString(meta.shareflag);
+		this.shareFlag = rs.getString(meta.shareflag);
 		this.syncFlag = rs.getString(meta.syncflag);
 	}
 
@@ -232,8 +309,6 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	 */
 	public SyncDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) throws IOException, SemanticException {
 		this.device = d.device();
-//		if (isblank(this.device))
-//			throw new SemanticException("SyncDoc requiring envelope's device can not be null");
 
 		this.docMeta = meta;
 		this.recId = d.recId();
@@ -242,39 +317,16 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.createDate = d.cdate();
 		this.mime = d.mime();
 		this.fullpath(fullpath);
+		
+        this.shareFlag = Share.pub;
+        this.syncFlag = SyncFlag.device;
 	}
 
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
-		this.clientpath = clientpath;
-
-		if (isblank(createDate)) {
-			try {
-				Path p = Paths.get(clientpath);
-				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
-				cdate(fd);
-			}
-			catch (IOException ex) {
-				cdate(new Date());
-			}
-		}
-
+		this.clientpath = separatorsToUnix(clientpath);
 		return this;
 	}
-
-	/**Set (private) jserv node file full path (path replaced with %VOLUME_HOME)
-	 * @param path
-	 * @return
-	 * @throws SemanticException 
-	 * @throws IOException 
-	public IFileDescriptor uri(String path) throws SemanticException, IOException {
-		fullpath(path);
-		pname = FilenameUtils.getName(path);
-		// throw new SemanticException("TODO");
-		this.uri = null;
-		return this;
-	}
-	 */
 
 	protected String folder;
 	public String folder() { return folder; }
@@ -303,7 +355,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 
 		shareby = chain.shareby;
 		sharedate = chain.shareDate;
-		shareflag = chain.shareflag;
+		shareFlag = chain.shareflag;
 
 		return parseMimeSize(chain.outputPath);
 	}
@@ -317,10 +369,15 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public SyncDoc parseFlags(String[] flags) {
 		if (!isNull(flags)) {
 			syncFlag = flags[0];
-			shareflag = flags[1];
+			shareFlag = flags[1];
 			shareby = flags[2];
 			sharedate(flags[3]);
 		}
+		return this;
+	}
+	
+	public SyncDoc syncFlag(String f) {
+		syncFlag = f;
 		return this;
 	}
 }

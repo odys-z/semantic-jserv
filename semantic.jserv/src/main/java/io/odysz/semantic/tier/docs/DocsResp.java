@@ -32,7 +32,10 @@ public class DocsResp extends AnsonResp {
 	 * @throws SQLException
 	 * @throws SemanticException 
 	 */
-	public DocsResp pathsPage(AnResultset rs, DocTableMeta meta) throws SQLException, SemanticException {
+	public DocsResp pathsPage(AnResultset rs, DocTableMeta meta)
+			throws SQLException, SemanticException {
+		if (syncing == null)
+			syncing = new PathsPage();
 		syncing.paths(rs, meta);
 		return this;
 	}
@@ -60,7 +63,8 @@ public class DocsResp extends AnsonResp {
 		return this;
 	}
 
-	public DocsResp doc(AnResultset rs, DocTableMeta meta) throws SQLException, SemanticException {
+	public DocsResp doc(AnResultset rs, DocTableMeta meta)
+			throws SQLException, SemanticException {
 		if (rs != null && rs.total() > 1)
 			throw new SemanticException("This method can only handling 1 record.");
 		rs.beforeFirst().next();
@@ -72,6 +76,19 @@ public class DocsResp extends AnsonResp {
 	public String org() { return org; }
 	public DocsResp org(String orgId) {
 		this.org = orgId;
+		return this;
+	}
+
+	Device device;
+	public Device device() { return device; }
+	public DocsResp device(Device device) {
+		this.device = device;
+		return this;
+	}
+
+	String stamp;
+	public DocsResp stamp(String s) {
+		stamp = s;
 		return this;
 	}
 

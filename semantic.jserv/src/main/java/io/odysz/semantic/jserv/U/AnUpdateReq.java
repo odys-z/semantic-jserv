@@ -1,8 +1,6 @@
 package io.odysz.semantic.jserv.U;
 
-import static io.odysz.semantic.jprotocol.JProtocol.CRUD.D;
-import static io.odysz.semantic.jprotocol.JProtocol.CRUD.R;
-import static io.odysz.semantic.jprotocol.JProtocol.CRUD.U;
+import static io.odysz.semantic.CRUD.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,11 +14,11 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;
 
-/**<p>Insert Request Message</p>
+/**
+ * <p>Insert Request Message</p>
  * <b>Note:</b>
  * <p>InsertReq is a subclass of UpdateReq, and have no {@link #toBlock(JsonOpt)}
  * and {@link #fromJson(java.io.InputStream)} implementation.
@@ -33,7 +31,7 @@ import io.odysz.transact.sql.Query.Ix;
 public class AnUpdateReq extends AnsonBody {
 	@Override
 	public Anson toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
-		if (CRUD.C.equals(a) && (cols == null || cols.length == 0))
+		if (C.equals(a) && (cols == null || cols.length == 0))
 			Utils.warn("WARN - UpdateReq.toJson():\nFound inserting request but cols are null, this is wrong for no insert statement can be generated.\n" +
 					"Suggestion: call the InsertReq.col(col-name) before serialize this to json for table: %s\n" +
 					"Another common error leads to this is using UpdateReq for inserting with java client.",
@@ -41,7 +39,8 @@ public class AnUpdateReq extends AnsonBody {
 		return super.toBlock(stream, opts);
 	}
 
-	/**Format an update request.
+	/**
+	 * Format an update request.
 	 * @param funcUri
 	 * @param parent
 	 * @param tabl
@@ -49,7 +48,7 @@ public class AnUpdateReq extends AnsonBody {
 	 */
 	public static AnUpdateReq formatUpdateReq(String funcUri, AnsonMsg<AnUpdateReq> parent, String tabl) {
 		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, funcUri)
-				.a(CRUD.U))
+				.a(U))
 				.mtabl(tabl);
 		return bdItem;
 	}
@@ -62,7 +61,7 @@ public class AnUpdateReq extends AnsonBody {
 	 */
 	public static AnUpdateReq formatDelReq(String furi, AnsonMsg<AnUpdateReq> parent, String tabl) {
 		AnUpdateReq bdItem = ((AnUpdateReq) new AnUpdateReq(parent, furi)
-								.a(CRUD.D))
+								.a(D))
 								.mtabl(tabl);
 		return bdItem;
 	}
@@ -81,11 +80,14 @@ public class AnUpdateReq extends AnsonBody {
 	
 	/**inserting values, used for "I". 3d array [[[n, v], ...]] */
 	protected ArrayList<ArrayList<Object[]>> nvss;
-	/**inserting columns, used for "I".
-	 * Here a col shouldn't be an expression - so not Object[], unlike that of query. */
+	/**
+	 * Inserting columns, used for "I".
+	 * Here a col shouldn't be an expression - so not Object[], unlike that of query.
+	 */
 	protected String[] cols;
 
-	/** get columns for sql's insert into COLs. 
+	/**
+	 * Get columns for sql's insert into COLs. 
 	 * @return columns
 	 */
 	public String[] cols() { return cols; }
@@ -106,7 +108,8 @@ public class AnUpdateReq extends AnsonBody {
 		super(null, null);
 	}
 	
-	/**Don't call new InsertReq(), call {@link #formatUpdateReq(String, AnsonMsg, String)}.
+	/**
+	 * Don't call new InsertReq(), call {@link #formatUpdateReq(String, AnsonMsg, String)}.
 	 * This constructor is declared publicly for JHelper.
 	 * @param parent
 	 * @param uri
@@ -133,7 +136,8 @@ public class AnUpdateReq extends AnsonBody {
 		nvss.add(row);
 	}
 
-	/** get values in VALUE-CLAUSE for sql insert into (...) values VALUE-CLAUSE 
+	/**
+	 * Get values in VALUE-CLAUSE for sql insert into (...) values VALUE-CLAUSE 
 	 * @return [[[n, v], ...]]
 	 */
 	public ArrayList<ArrayList<Object[]>> values() {
@@ -172,7 +176,8 @@ public class AnUpdateReq extends AnsonBody {
 		return this;
 	}
 
-	/** calling where("=", lop, "'" + rconst + "'")
+	/**
+	 * Call where("=", lop, "'" + rconst + "'") to add new where condition.
 	 * @param lop
 	 * @param rconst
 	 * @return update request

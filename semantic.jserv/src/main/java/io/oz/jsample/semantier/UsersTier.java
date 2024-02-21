@@ -35,6 +35,8 @@ import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jsample.semantier.UserstReq.A;
 
+import static io.odysz.common.LangExt.isblank;
+
 @WebServlet(description = "Semantic tier: users", urlPatterns = { "/users.tier" })
 public class UsersTier extends ServPort<UserstReq> {
 
@@ -86,9 +88,9 @@ public class UsersTier extends ServPort<UserstReq> {
 			else if (A.del.equals(jreq.a()))
 				rsp = del(jreq, usr);
 			else throw new SemanticException(String.format(
-						"request.body.a can not handled: %s\\n" +
-						"Only a = [%s, %s, %s, %s, %s] are supported.",
-						jreq.a(), A.records, A.rec, A.insert, A.update, A.del));
+				"request.body.a can not handled: %s\\n" +
+				"Only a = [%s, %s, %s, %s, %s] are supported.",
+				jreq.a(), A.records, A.rec, A.insert, A.update, A.del));
 
 			write(resp, ok(rsp));
 		} catch (SemanticException e) {
@@ -131,8 +133,8 @@ public class UsersTier extends ServPort<UserstReq> {
 		}
 
 		SemanticObject res = (SemanticObject)u
-				// .whereEq("userId", jreq.userId)  // TODO FIXME but why this works with the curriculum.js client?
-				.whereEq("userId", jreq.pk)
+				.whereEq("userId", isblank(jreq.pk) ? jreq.userId : jreq.pk)
+				// .whereEq("userId", jreq.pk)
 				.u(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
 
 		return new AnsonResp().msg(res.msg());
@@ -153,7 +155,7 @@ public class UsersTier extends ServPort<UserstReq> {
 
 		rs.beforeFirst().next();
 		if (rs.getInt("c") > 0)
-			throw new SemanticException("record id doesn't exist");
+			throw new SemanticException("User id already exists.");
 
 		SemanticObject res = (SemanticObject)
 				((Insert) jreq.nvs(st.insert(mtabl, usr)))

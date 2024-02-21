@@ -14,7 +14,7 @@ import io.odysz.semantics.x.SemanticException;
 /**Sample project's prots extension
  * This enum replaced jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}. */
 public enum Samport implements IPort {
-	heartbeat("ping.serv"), session("login.serv11"),
+	heartbeat("ping.serv"), session("login.serv"),
 	/**port provided by {@link io.odysz.jsample.SysMenu} */
 	menu("menu.serv"),
 	example("example.serv11"),
@@ -23,10 +23,7 @@ public enum Samport implements IPort {
 	cheapflow("cheapflow.samplev11"), 
 	/** sample servlet tools.serv */
 	tools("tools.serv"),
-	vec3("vec3.serv"),
-	/** The new experimental serv, extending semantics to the client side */
-	userstier("users.tier"),
-	gpatier("gpa.tier");
+	vec3("vec3.serv");
 
 	static {
 		JSONAnsonListener.registFactory(Samport.class, 
@@ -38,6 +35,7 @@ public enum Samport implements IPort {
 	private String url;
 	Samport(String v) { url = v; };
 	public String url() { return url; }
+
 	@Override
 	public IPort valof(String pname) throws SemanticException {
 		try {
@@ -48,12 +46,12 @@ public enum Samport implements IPort {
 			catch (IllegalArgumentException ex) {
 				throw new SemanticException(ex.getMessage());
 			}
-			
 		}
 	}
 
 	@Override
-	public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
+	public IJsonable toBlock(OutputStream stream, JsonOpt... opts)
+			throws AnsonException, IOException {
 		stream.write('\"');
 		stream.write(name().getBytes());
 		stream.write('\"');
@@ -66,5 +64,5 @@ public enum Samport implements IPort {
 		buf.append(url);
 		buf.append('\"');
 		return this;
-	}	
+	}
 }

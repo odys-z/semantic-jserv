@@ -20,7 +20,10 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.echo.EchoReq.A;
 import io.odysz.semantics.x.SemanticException;
 
-/**Service meta data
+/**
+ * <p>Echo serv, on Port {@link Port#echo}.</p>
+ * 
+ * url pattern: /echo.less.
  * 
  * @author ody
  */
@@ -47,7 +50,7 @@ public class Echo extends ServPort<EchoReq> {
 		resp(req.body(0), resp, req.addr());
 	}
 
-	private void resp(EchoReq echoReq, HttpServletResponse resp, String remote) throws IOException {
+	protected void resp(EchoReq echoReq, HttpServletResponse resp, String remote) throws IOException {
 		try {
 			resp.setCharacterEncoding("UTF-8");
 			
@@ -56,7 +59,7 @@ public class Echo extends ServPort<EchoReq> {
 				write(resp, ok(rep));
 			}
 			else
-				write(resp, ok(echoReq.toString()));
+				write(resp, ok(echoReq.a()));
 			resp.flushBuffer();
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
@@ -66,7 +69,7 @@ public class Echo extends ServPort<EchoReq> {
 		}
 	}
 
-    private AnsonResp inet(HttpServletResponse resp, EchoReq req, String remote) throws SocketException, SemanticException {
+    protected AnsonResp inet(HttpServletResponse resp, EchoReq req, String remote) throws SocketException, SemanticException {
     	if ("localhost".equals(remote)) {
     		if (interfaces == null)
     			listInet();

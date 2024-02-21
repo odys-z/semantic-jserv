@@ -1,10 +1,13 @@
 package io.oz.album.tier;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.transact.x.TransException;
 
 public class AlbumResp extends DocsResp {
 
@@ -15,23 +18,34 @@ public class AlbumResp extends DocsResp {
 	/** Album */
 	ArrayList<Collect> collectRecords;
 
-	Profiles profils;
-	public Profiles profiles() { return profils; }
-
-	ArrayList<Photo[]> photos;
-	public Photo[] photos(int px) { return photos == null ? null : photos.get(px); }
-
-	Photo photo;
-	public Photo photo() { return photo; }
-
-	public AlbumResp() { }
-	
-	public AlbumResp rec(AnResultset rs) throws SQLException {
-		this.photo = new Photo(rs);
+	List<?> forest;
+	public AlbumResp albumForest(List<?> forest) {
+		this.forest = forest;
 		return this;
 	}
 
-	public AlbumResp photo(Photo photo, String ... pid) {
+	Profiles profils;
+	public Profiles profiles() { return profils; }
+
+	ArrayList<PhotoRec[]> photos;
+	public PhotoRec[] photos(int px) { return photos == null ? null : photos.get(px); }
+
+	PhotoRec photo;
+	public PhotoRec photo() { return photo; }
+
+	public AlbumResp() { }
+	
+	public AlbumResp photo(AnResultset rs, PhotoMeta meta) throws SQLException, IOException {
+		this.photo = new PhotoRec(rs, meta);
+		return this;
+	}
+
+	public AlbumResp folder(AnResultset rs, PhotoMeta m) throws SQLException {
+		this.photo = new PhotoRec().folder(rs, m);
+		return this;
+	}
+
+	public AlbumResp photo(PhotoRec photo, String ... pid) {
 		this.photo = photo;
 		if (pid != null && pid.length > 0)
 			this.photo.recId = pid[0];
@@ -69,10 +83,13 @@ public class AlbumResp extends DocsResp {
 	 * Construct a 2D array of photos: [collect: photo[]]
 	 * 
 	 * @param rs photos ordered by cid
+	 * @param conn 
 	 * @return this
 	 * @throws SQLException 
+	 * @throws IOException 
+	 * @throws TransException 
 	 */
-	public AlbumResp collectPhotos(AnResultset rs) throws SQLException {
+	public AlbumResp collectPhotos(AnResultset rs, String conn) throws SQLException, IOException, TransException {
 		String cid = "";
 		Collect collect = null;
 		
@@ -85,26 +102,25 @@ public class AlbumResp extends DocsResp {
 				collect = new Collect(rs);
 				cid = collect.cid;
 			}
-			collect.addPhoto(rs);
+			collect.addPhoto(rs, new PhotoMeta(conn));
 		}
-		// collectRecords.add(new Collect(rs));
 		if (collect != null)
 			collectRecords.add(collect);
 
 		return this;
 	}
 
-	public AlbumResp photos(String collectId, AnResultset rs) throws SQLException {
+	public AlbumResp photos(String collectId, AnResultset rs, PhotoMeta meta) throws SQLException, IOException {
 		if (this.photos == null)
-			this.photos = new ArrayList<Photo[]>(1);
+			this.photos = new ArrayList<PhotoRec[]>(1);
 
-		ArrayList<Photo> photos = new ArrayList<Photo>(rs.total());
+		ArrayList<PhotoRec> photos = new ArrayList<PhotoRec>(rs.total());
 		rs.beforeFirst();
 		while(rs.next()) {
-			photos.add(new Photo(collectId, rs));
+			photos.add(new PhotoRec(collectId, rs, meta));
 		}
 
-		this.photos.add(photos.toArray(new Photo[0]));
+		this.photos.add(photos.toArray(new PhotoRec[0]));
 		return this;
 	}
 	

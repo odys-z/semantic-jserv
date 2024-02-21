@@ -22,8 +22,11 @@ public interface IFileDescriptor {
 	String fullpath();
 
 	/**Set client full path.
+	 * @since this method will convert windows paths to linux paths, 
+	 * since a windows path is not a valid json string, which will makes
+	 * {@link io.odysz.anson.Anson} serializing into trouble.
 	 * @param clientpath
-	 * @return
+	 * @return file descriptor
 	 * @throws IOException
 	 */
 	IFileDescriptor fullpath(String clientpath) throws IOException;

@@ -29,6 +29,8 @@ import io.oz.spreadsheet.SpreadsheetReq;
 import io.oz.spreadsheet.SpreadsheetReq.A;
 import io.oz.spreadsheet.SpreadsheetResp;
 
+import static io.odysz.common.LangExt.len;
+
 /**
  * Example &amp; test for <a href='https://github.com/odys-z/Anclient/blob/master/js/anreact/src/react/widgets/spreadsheet.tsx'>
  * Spreadsheet</a>.
@@ -101,8 +103,8 @@ public class CurriculumBookTier extends ServPort<SpreadsheetReq> {
 		String conn = Connects.uri2conn(jreq.uri());
 		Query select = st.select(MyCurriculum.tabl, "c");
 		
-		if (jreq.page != null && jreq.page.condts != null)
-			for (String[] cond : jreq.page.condts) {
+		if (jreq.page != null && len(jreq.page.arrCondts) > 0)
+			for (String[] cond : jreq.page.arrCondts) {
 				if (cond != null && "currName".equals(cond[0]))
 					select.whereLike(cond[0], cond[1]);
 				else

@@ -1,11 +1,18 @@
 package io.odysz.semantic.jprotocol;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import io.odysz.anson.Anson;
+import io.odysz.anson.x.AnsonException;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantics.SemanticObject;
 
-/**Anson message response body
+import static io.odysz.common.LangExt.isblank;
+
+/**
+ * Anson message response body
  * @author odys-z@github.com
  */
 public class AnsonResp extends AnsonBody {
@@ -24,15 +31,27 @@ public class AnsonResp extends AnsonBody {
 
 	public AnsonResp(AnsonMsg<? extends AnsonResp> parent, String txt) {
 		super(parent, null);
-		this.m = txt;
+		this.m = new String(Anson.escape(txt));
 	}
 
 	public AnsonResp(String txt) {
 		super(null, null);
-		this.m = txt;
+		this.m = new String(Anson.escape(txt));
 	}
 
 	public String msg() { return m; }
+
+	/**
+	 * @since 1.4.35 
+	 * @param toMsg message object to be converted to text, and escaped
+	 * @return this
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 */
+	public AnsonResp msg(Anson toMsg) throws AnsonException, IOException {
+		m = new String(Anson.escape(toMsg.toBlock()));
+		return this;
+	}
 
 	public AnsonResp msg(String txt) {
 		this.m = txt;
@@ -83,5 +102,22 @@ public class AnsonResp extends AnsonBody {
 	
 	public HashMap<String, Object> data () {
 		return map;
+	}
+
+	/**
+	 * Find resulved value in data, similar to {@link SemanticObject#resulve(String, String)}. 
+	 * 
+	 * @since 1.4.25
+	 * @param tbl
+	 * @param autok
+	 * @return resulved auto-key
+	 */
+	public String resulvedata(String tbl, String autok) {
+		if (!isblank(data())) {
+			SemanticObject reslv = ((SemanticObject)data().get("resulved")); 
+			if (reslv != null)
+				return (String) ((SemanticObject) reslv.get(tbl)).get(autok);
+		}
+		return null;
 	}
 }

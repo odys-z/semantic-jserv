@@ -8,13 +8,13 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
+import io.odysz.semantic.CRUD;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
-import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
@@ -30,7 +30,7 @@ import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv11" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv" })
 public class AnUpdate extends ServPort<AnUpdateReq> {
 	public AnUpdate() {
 		super(Port.update);
