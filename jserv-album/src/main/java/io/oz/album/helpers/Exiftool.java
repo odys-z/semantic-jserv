@@ -168,7 +168,7 @@ public class Exiftool {
                 throw new TimeoutException();
             }
             int result = process.exitValue();
-            Utils.logi("[Exiftool.check]\n%s\n%s", cmd, result);
+            Utils.logi("[Exiftool.check]\n%s -ver\nexit: %s", cmd, result);
 
         } finally {
             if (process != null) {
