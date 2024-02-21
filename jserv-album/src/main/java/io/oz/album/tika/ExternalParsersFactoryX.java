@@ -25,7 +25,8 @@ public class ExternalParsersFactoryX extends ExternalParsersFactory {
     public static List<ExternalParser> create() throws IOException, TikaException {
     	if (eq("windows", Configs.getCfg(keys.fileSys))) {
     		if (wkpath == null)
-    			throw new IOException("For windows, the Tika patch requires knowing work path (call workDir(p)) first to work.");
+    			throw new IOException("For windows, the Tika patch requires knowing work path (call workDir(p)) first to work.\n" +
+    								"Call #workDir(string) first.");
     			
 			String filepath = FilenameUtils.concat(
 					wkpath, Configs.getCfg(keys.tika_ex_parser_win));

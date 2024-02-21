@@ -66,6 +66,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		public static final String end = "";
 
 		public static final String deny = "⛔";
+		public static final String invalid = "⚠";
 		
 		public static String start(SynodeMode mode, String share) throws SemanticException {
 			if (SynodeMode.hub == mode)
