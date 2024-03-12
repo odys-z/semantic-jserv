@@ -41,7 +41,7 @@ public class DocTableMeta extends SyntityMeta {
 	 */
 	public final String stamp;
 	/** resource's creating node's device id, originally named as device */
-	public final String synoder;
+	// public final String synoder;
 	public final String fullpath;
 	/** aslo named as pname, clientname or filename previously */
 	public final String clientname;
@@ -62,10 +62,10 @@ public class DocTableMeta extends SyntityMeta {
 	final HashSet<String> globalIds;
 
 	public DocTableMeta(String tbl, String pk, String conn) throws TransException {
-		super(tbl, pk, "family", conn);
+		super("h_photos", pk, "family", conn);
 
 		// TODO let's build from sync.xml
-		this.tbl = "h_photos";
+		// this.tbl = "h_photos";
 		this.pk = pk;
 
 		clientname = "pname";
@@ -74,7 +74,7 @@ public class DocTableMeta extends SyntityMeta {
 		createDate = "pdate";
 		mime = "mime";
 		size = "filesize";
-		synoder = "device";
+		// synoder = "device";
 		fullpath = "clientpath";
 		shareDate = "sharedate";
 		shareby = "shareby";

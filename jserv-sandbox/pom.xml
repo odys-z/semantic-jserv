@@ -40,7 +40,13 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>1.4.39</version>
+	    <version>1.4.40</version>
+   	</dependency>
+
+   	<dependency>
+	    <groupId>io.github.odys-z</groupId>
+	    <artifactId>album-lib</artifactId>
+	    <version>0.4.40</version>
    	</dependency>
 
 	<dependency>

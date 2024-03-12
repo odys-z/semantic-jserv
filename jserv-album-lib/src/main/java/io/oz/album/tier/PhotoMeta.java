@@ -22,6 +22,8 @@ public class PhotoMeta extends DocTableMeta {
 		geox = "geox";
 		geoy = "geoy";
 		css = "css";
+		
+		synoder = "device";
 	}
 
 }

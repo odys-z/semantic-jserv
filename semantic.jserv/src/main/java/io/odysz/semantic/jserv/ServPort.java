@@ -47,7 +47,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	 * Can only be non-static for tests running.
 	 * @see io.odysz.semantic.jsession.AnSessionTest
 	 */
-	private ISessionVerifier verifier;
+	protected ISessionVerifier verifier;
 
 	protected IPort p;
 	
