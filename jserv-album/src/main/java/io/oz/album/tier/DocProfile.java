@@ -38,7 +38,7 @@ public class DocProfile implements IProfileResolver {
 	@Override
 	public String synodeFolder(AnsonBody reqBody, IUser usr) {
 		DocsReq req = ((DocsReq)reqBody);
-		String cname = req.subFolder;
+		String cname = req.subfolder;
 		if (this.mode == device)
 			return cname;
 		else

@@ -113,7 +113,7 @@ public class SemanticTree extends ServPort<AnDatasetReq> {
 		connId = Connects.uri2conn(connId);
 
 		// check session
-		IUser usr = verifier.verify(jmsg.header());
+		IUser usr = verifier().verify(jmsg.header());
 
 		AnDatasetReq jreq = jmsg.body(0);
 		String a = jreq.a();
@@ -554,7 +554,9 @@ where p0.parentId is null; </pre>
 		}
 	}
 	
-	/**Update fullpath, recursively.
+	/**
+	 * Update fullpath, recursively.
+	 * 
 	 * TODO oracle 11gr2: https://dev.mysql.com/doc/refman/8.0/en/with.html 
 	 * TODO mysql 8: https://dev.mysql.com/doc/refman/8.0/en/with.html 
 	 * 

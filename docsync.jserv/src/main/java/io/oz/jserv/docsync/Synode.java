@@ -116,12 +116,12 @@ public class Synode extends ServPort<DocsReq> {
 	 * @throws SQLException
 	 * @throws SAXException
 	 * @throws IOException
-	 * @throws SsException 
 	 * @throws AnsonException 
 	 * @throws TransException 
+	 * @throws SsException 
 	 */
 	public static void init(String nodeId)
-			throws SQLException, SAXException, IOException, AnsonException, SsException, TransException {
+			throws SQLException, SAXException, IOException, AnsonException, TransException, SsException {
 
 		Utils.logi("Starting file synchronizer ...");
 
@@ -226,8 +226,8 @@ public class Synode extends ServPort<DocsReq> {
 						m = new DocTableMeta(jreq.docTabl, "pid", Connects.uri2conn(jreq.uri())).replace();
 					Dochain chain = new Dochain((DocTableMeta) m, st);
 					if (DocsReq.A.blockStart.equals(a)) {
-						jreq.subFolder = profilesolver.synodeFolder(jreq, usr);
-						if (isblank(jreq.subFolder, " - - "))
+						jreq.subfolder = profilesolver.synodeFolder(jreq, usr);
+						if (isblank(jreq.subfolder, " - - "))
 							throw new SemanticException("Default saving folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 						rsp = chain.startBlocks(profilesolver.onStartPush(jmsg.body(0), usr), usr, profilesolver);
 					}

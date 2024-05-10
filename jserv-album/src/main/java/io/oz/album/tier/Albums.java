@@ -3,9 +3,10 @@ package io.oz.album.tier;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.ix;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
+import static io.odysz.transact.sql.parts.condition.Funcall.sum;
+import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -51,8 +52,13 @@ import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.PageInf;
+import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Update;
+import io.odysz.transact.sql.parts.Logic;
+import io.odysz.transact.sql.parts.Sql;
+import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
@@ -96,11 +102,10 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static final String tablCollectPhoto = "h_coll_phot";
 
-	static final AOrgMeta orgMeta = new AOrgMeta();
+	static final DocOrgMeta orgMeta = new DocOrgMeta();
 	
 	static final DeviceTableMeta devMeta = new DeviceTableMeta(null);
 
-	static PUserMeta userMeta;
 
 	/** uri db field */
 	static final String uri = "uri";
@@ -113,17 +118,23 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static IUser robot;
 
+	PUserMeta userMeta;
+
 	static {
 		try {
 			st = new DATranscxt(null);
 			robot = new PhotoUser("Robot Album");
 			
 			Docs206.getMeta = (String uri) -> {
-				try { return new PhotoMeta(Connects.uri2conn(uri)); }
+				try {
+					String conn = Connects.uri2conn(uri);
+					return new PhotoMeta(conn);
+				}
 				catch (TransException e) {
 					e.printStackTrace();
 					return null;
-			} };
+				}
+			};
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
@@ -179,13 +190,13 @@ public class Albums extends ServPort<AlbumReq> {
 			String a = jreq.a();
 			DocsResp rsp = null;
 
-			if (A.collect.equals(a) || A.rec.equals(a) || A.download.equals(a)) {
+			if (A.collect.equals(a) || A.rec.equals(a)  || A.download.equals(a)) {
 				// Session less
 				IUser usr = robot;
 				if (A.collect.equals(a))
 					rsp = collect(jmsg.body(0), usr);
 				else if (A.rec.equals(a))
-					rsp = rec(jmsg.body(0), usr);
+					rsp = doc(jmsg.body(0), usr);
 				else if (A.download.equals(a))
 					download(resp, jmsg.body(0), usr);
 			} else {
@@ -197,7 +208,10 @@ public class Albums extends ServPort<AlbumReq> {
 
 				Profiles prf = verifyProfiles(jmsg.body(0), usr, a);
 
-				if (A.insertPhoto.equals(a))
+				if (A.folder.equals(a))
+					rsp = folder(jmsg.body(0), usr);
+
+				else if (A.insertPhoto.equals(a))
 					rsp = createPhoto(jmsg.body(0), usr, prf);
 				else if (A.del.equals(a))
 					rsp = delPhoto(jmsg.body(0), usr, prf);
@@ -207,6 +221,7 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = profile(jmsg.body(0), usr, prf);
 				else if (A.album.equals(a)) // load
 					rsp = album(jmsg.body(0), usr, prf);
+
 				else if (A.stree.equals(a))
 					rsp = galleryTree(jmsg.body(0), usr, prf);
 
@@ -225,6 +240,8 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = chkDevname(jmsg.body(0), usr);
 				else if (DocsReq.A.registDev.equals(a))
 					rsp = registDevice(jmsg.body(0), usr);
+				else if (AlbumReq.A.updateFolderel.equals(a))
+					rsp = updateFolderel(jmsg.body(0), usr);
 
 				else
 					throw new SemanticException("Request.a can not be handled, request.a: %s", jreq.a());
@@ -251,6 +268,48 @@ public class Albums extends ServPort<AlbumReq> {
 		} finally {
 			resp.flushBuffer();
 		}
+	}
+
+	/**
+	 * Update photo-org relationships for all pid in the folder. No depth recursive for photos (docs)
+	 * sharing are managed by users only in the view of the original folder's structure, the saving
+	 * file system tree structure.
+	 * 
+	 * @param req
+	 * @param usr
+	 * @return resp
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	DocsResp updateFolderel(AlbumReq req, PhotoUser usr)
+			throws TransException, SQLException {
+		String conn = Connects.uri2conn(req.uri());
+		PhotoMeta phm = new PhotoMeta(conn);
+		Photo_OrgMeta pom = new Photo_OrgMeta(conn);
+
+		Delete d = st
+				.delete(pom.tbl, usr)
+				.whereIn(pom.pid, st.select(phm.tbl).col(phm.pk).whereEq(phm.folder, req.subfolder))
+				.whereIn(pom.oid, req.getChecks("oid"));
+		if (!req.clearels) {
+			d.post(st.insert(pom.tbl)
+				.cols(pom.pid, pom.oid)
+				.select(st
+					.select(phm.tbl, "ph")
+					.distinct()
+					.col("ph." + phm.pk).col("po." + pom.oid)
+					.j(pom.tbl, "po", Sql.condt(Logic.op.in, "po." + pom.oid, new ExprPart(req.getChecks("oid")))
+								 .and(Sql.condt(Logic.op.eq, "ph." + phm.folder, ExprPart.constr(req.subfolder)))
+								 .and(Sql.condt(Logic.op.eq, phm.shareby, usr.uid())))
+					.whereEq(phm.folder, req.subfolder)));
+		}
+		
+		d.post(st.update(phm.tbl).nv(phm.shareflag, req.photo.shareflag()));
+
+		SemanticObject res = (SemanticObject)d
+				.d(st.instancontxt(conn, usr));
+
+		return (DocsResp) new DocsResp().data(res.props());
 	}
 
 	/**
@@ -284,20 +343,33 @@ public class Albums extends ServPort<AlbumReq> {
 		return new Profiles(rs, m);
 	}
 
-	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf) throws SQLException, TransException {
-		if (isblank(jreq.sk))
-			throw new SemanticException("AlbumReq.sk is required.");
+	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf)
+			throws SQLException, TransException {
 
 		String conn = Connects.uri2conn(jreq.uri());
 		// force org-id as first arg
-		PageInf page = isNull(jreq.page)
-				? new PageInf(0, -1, usr.orgId())
-				: eq(jreq.page.arrCondts.get(0), usr.orgId())
-				? jreq.page
-				: jreq.page.insertCondt(usr.orgId());
 
-		List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
-		return new AlbumResp().albumForest(lst);
+		if (eq(jreq.sk, "tree-rel-folder-org")) {
+			// force user-id as first arg
+			PageInf page = isNull(jreq.pageInf)
+					? new PageInf(0, -1, usr.uid())
+					: eq(jreq.pageInf.arrCondts.get(0), usr.uid())
+					? jreq.pageInf
+					: jreq.pageInf.insertCondt(usr.uid());
+
+			List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
+			return new AlbumResp().albumForest(lst);
+		}
+		else {//  "tree-rel-photo-org") || "tree-album-sharing" || "tree-docs-folder"
+			PageInf page = isNull(jreq.pageInf)
+					? new PageInf(0, -1, usr.orgId())
+					: eq(jreq.pageInf.arrCondts.get(0), usr.orgId())
+					? jreq.pageInf
+					: jreq.pageInf.insertCondt(usr.orgId());
+
+			List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
+			return new AlbumResp().albumForest(lst);
+		}
 	}
 
 	AlbumResp profile(AlbumReq body, IUser usr, Profiles prf)
@@ -325,10 +397,9 @@ public class Albums extends ServPort<AlbumReq> {
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
-		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot.
 		String tempDir = ((PhotoUser)usr).touchTempDir(conn);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subFolder);
+		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subfolder);
 
 		// FIXME security breach?
 		String id = chainId(usr, chain.clientpath);
@@ -454,6 +525,8 @@ public class Albums extends ServPort<AlbumReq> {
 	/**
 	 * Query devices.
 	 * 
+	 * @see DocsReq.A#devices
+	 * 
 	 * @param body
 	 * @param usr
 	 * @return respond
@@ -463,32 +536,32 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	DocsResp devices(DocsReq body, PhotoUser usr)
 			throws SemanticException, TransException, SQLException {
-		// [user-id, synode0, market]
-		
-		String[] synode0 = ix(body.page.arrCondts, 0); 
-		String[] org     = ix(body.page.arrCondts, 1); 
-		String[] owner   = ix(body.page.arrCondts, 2); 
-		String[] market  = ix(body.page.arrCondts, 3); 
-
 		AnResultset rs = (AnResultset)st
 				.select(devMeta.tbl)
-				.whereEq(devMeta.pk, usr.deviceId())
-				.whereEq(devMeta.synode0, eq(owner[0], devMeta.synode0) ? synode0[1] : null)
-				.whereEq(devMeta.org(), eq(org[0], devMeta.org()) ? org[1] : null)
-				.whereEq(devMeta.owner, eq(owner[0], devMeta.owner) ? owner[1] : null)
-				.whereEq(devMeta.market, eq(market[0], devMeta.market) ? market[1] : null)
+				.whereEq(devMeta.org(),   usr.orgId())
+				.whereEq(devMeta.owner,   usr.uid())
 				.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
 				.rs(0)
 				;
 
-		return (DocsResp) new DocsResp().rs(rs);
+		return (DocsResp) new DocsResp().rs(rs)
+				.data(devMeta.owner, usr.uid())
+				.data("owner-name",  usr.userName())
+				.data(devMeta.org(), usr.orgId());
 	}
 
-	DocsResp chkDevname(DocsReq body, PhotoUser usr) throws SemanticException, TransException, SQLException {
-		String[] synode0 = ix(body.page.arrCondts, 0); 
-		String[] org     = ix(body.page.arrCondts, 1); 
-		String[] owner   = ix(body.page.arrCondts, 2); 
-		String[] market  = ix(body.page.arrCondts, 3); 
+	/**
+	 * @see DocsReq.A#checkDev
+	 * 
+	 * @param body
+	 * @param usr
+	 * @return
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	DocsResp chkDevname(DocsReq body, PhotoUser usr)
+			throws SemanticException, TransException, SQLException {
 
 		AnResultset rs = ((AnResultset) st
 			.select(devMeta.tbl, "d")
@@ -496,10 +569,10 @@ public class Albums extends ServPort<AlbumReq> {
 			.j(userMeta.tbl, "u", "u.%s = d.%s", userMeta.pk, devMeta.owner)
 			.cols(devMeta.devname, devMeta.synode0, devMeta.cdate, devMeta.owner)
 			.whereEq(devMeta.pk, usr.deviceId())
-			.whereEq(devMeta.synode0, eq(owner[0], devMeta.synode0) ? synode0[1] : null)
-			.whereEq(devMeta.org(), eq(org[0], devMeta.org()) ? org[1] : null)
-			.whereEq(devMeta.owner, eq(owner[0], devMeta.owner) ? owner[1] : null)
-			.whereEq(devMeta.market, eq(market[0], devMeta.market) ? market[1] : null)
+			// .whereEq(devMeta.synode0, eq(owner, devMeta.synode0) ? synode0 : null)
+			.whereEq(devMeta.org(),   usr.orgId())
+			.whereEq(devMeta.owner,   usr.uid())
+			// .whereEq(devMeta.market, eq(market[0], devMeta.market) ? market[1] : null)
 			.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
 			.rs(0))
 			.nxt();
@@ -517,19 +590,36 @@ public class Albums extends ServPort<AlbumReq> {
 					rs.getString(devMeta.devname)));
 	}
 	
-	DocsResp registDevice(DocsReq body, PhotoUser usr) throws SemanticException, TransException, SQLException {
-		SemanticObject result = (SemanticObject) st
-				.insert(devMeta.tbl)
+	DocsResp registDevice(DocsReq body, PhotoUser usr)
+			throws SemanticException, TransException, SQLException {
+		if (isblank(body.device().id)) {
+			SemanticObject result = (SemanticObject) st
+				.insert(devMeta.tbl, usr)
 				.nv(devMeta.synode0, AlbumSingleton.synode())
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
+				.nv(devMeta.cdate, now())
 				.nv(devMeta.org(), usr.orgId())
 				// .nv(devMeta.mac, body.mac())
 				.ins(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
-		String resulved = result.resulve(devMeta.tbl, devMeta.pk);
-		return new DocsResp().device(new Device(
+			String resulved = result.resulve(devMeta.tbl, devMeta.pk);
+			return new DocsResp().device(new Device(
 				resulved, AlbumSingleton.synode(), body.device().devname));
+		}
+		else {
+			if (isblank(body.device().id))
+				throw new SemanticException("Error for pdating device name without a device id.");
+
+			st  .update(devMeta.tbl, usr)
+				.nv(devMeta.cdate, now())
+				.whereEq(devMeta.org(), usr.orgId())
+				.whereEq(devMeta.pk, body.device().id)
+				.u(st.instancontxt(Connects.uri2conn(body.uri()), usr));
+
+			return new DocsResp().device(new Device(
+				body.device().id, AlbumSingleton.synode(), body.device().devname));
+		}
 	}
 
 	/**
@@ -588,12 +678,12 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.j("a_users", "u", "u.userId = p.shareby")
-				.col("pid")
-				.col("pname").col("pdate")
-				.col("folder").col("clientpath")
-				.col("uri")
+				.col(meta.pk)
+				.col(meta.clientname).col(meta.createDate)
+				.col(meta.folder).col(meta.fullpath)
+				.col(meta.uri)
 				.col("userName", "shareby")
-				.col("sharedate").col("tags")
+				.col(meta.shareDate).col(meta.tags)
 				.col("geox").col("geoy")
 				.col("mime")
 				.whereEq("pid", req.docId)
@@ -737,30 +827,80 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws SemanticException
 	 * @throws IOException
 	 */
-	protected static AlbumResp rec(AlbumReq req, IUser usr)
+	protected static AlbumResp doc(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
+		Photo_OrgMeta mp_o = new Photo_OrgMeta(conn);
 
-		AnResultset rs = (AnResultset) st
+		Query q = st
 				.select(meta.tbl, "p")
 				.j("a_users", "u", "u.userId = p.shareby")
-				.col("pid")
-				.col("pname").col("pdate")
-				.col("folder").col("clientpath").col("device")
-				.col("uri")
-				.col("userName", "shareby")
-				.col("sharedate").col("tags")
-				.col("geox").col("geoy")
-				.col("mime").col("css")
-				.whereEq("pid", req.docId)
+				.l(mp_o.tbl , "po", "po.pid = p.pid");
+
+		AnResultset rs = (AnResultset) PhotoRec.cols(q, meta)
+				.col(meta.shareby, "shareby").col(count("po.oid"), "orgs")
+				.whereEq("p." + meta.pk, req.pageInf.mergeArgs().getArg("pid"))
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next())
-			throw new SemanticException("Can't find file for id: %s (permission of %s)", req.docId, usr.uid());
+			throw new SemanticException("Can't find file for id: '%s' (with permission of %s)",
+					!isblank(req.docId)
+					? req.docId
+					: !isblank(req.pageInf)
+					? !isblank(req.pageInf.mapCondts)
+					  ? req.pageInf.mapCondts.get("pid")
+					  : isNull(req.pageInf.arrCondts) ? null : req.pageInf.arrCondts.get(0)[1]
+					: null,
+					usr.uid());
 
-		return new AlbumResp().rec(rs);
+		return new AlbumResp().photo(rs, meta);
+	}
+
+	/**
+	 * Load a folder record.
+	 * @param req
+	 * @param usr
+	 * @return response
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	protected static AlbumResp folder(AlbumReq req, IUser usr)
+			throws SemanticException, TransException, SQLException, IOException {
+
+		String conn = Connects.uri2conn(req.uri());
+		PhotoMeta mph = new PhotoMeta(conn);
+		JUserMeta musr = new JUserMeta(conn);
+
+		/* folder's tree node
+		 select * from (
+		 select '%1$s' || '.' || folder, folder, max(tags) tags, max(shareby) shareby, folder pname,
+		 folder sort, family || '.' || folder fullpath, 'gallery' nodetype, css,
+		 sum(case when substring(mime, 0, 6) = 'image' then 1 else 0 end) img,
+		 sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov,
+		 sum (case when substring(mime, 0, 6) = 'audio' then 1 else 0 end) wav,
+		 sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime
+		 from h_photos f where f.family = '%1$s' group by f.folder
+		 ) where img > 0 or mov > 0 or wav > 0
+		 */
+		AnResultset rs = (AnResultset) st
+				.select(mph.tbl, "p")
+				.j(musr.tbl, "u", String.format("u.%s = p.%s", musr.pk, mph.shareby))
+				.col(mph.pk).col(mph.css)
+				.col(sum(ifElse("substr(mime, 0, 6) = 'image'", 1, 0)), "img")
+				.col(sum(ifElse("substr(mime, 0, 6) = 'video'", 1, 0)), "mov")
+				.col(sum(ifElse("substr(mime, 0, 6) = 'audio'", 1, 0)), "wav")
+				.col(sum(ifElse("geox != 0", 1, 0)), "geo")
+				.col(mph.mime).col(mph.createDate)
+				.col(mph.folder, mph.clientname)
+				.col(musr.uname, mph.shareby)
+				.whereEq("p." + mph.folder, req.pageInf.mergeArgs().getArg("pid"))
+				.rs(st.instancontxt(conn, usr)).rs(0);
+
+		return new AlbumResp().folder(rs.nxt(), mph);
 	}
 
 	protected static AlbumResp collect(AlbumReq req, IUser usr)
@@ -789,7 +929,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
 
-		album.photos(cid, rs);
+		album.photos(cid, rs, meta);
 
 		return album;
 	}
@@ -814,13 +954,14 @@ public class Albums extends ServPort<AlbumReq> {
 			IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
-		PhotoMeta meta = new PhotoMeta(conn);
+		PhotoMeta m = new PhotoMeta(conn);
+		PUserMeta musr = new PUserMeta(conn);
 
 		String aid = prf.defltAlbum;
 
 		AnResultset rs = (AnResultset) st
 				.select(tablAlbums, "a")
-				.j(userMeta.tbl, "u", "u.userId = a.shareby")
+				.j(musr.tbl, "u", "u.userId = a.shareby")
 				.cols("a.*", "a.shareby ownerId", "u.userName owner")
 				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
@@ -832,22 +973,23 @@ public class Albums extends ServPort<AlbumReq> {
 		AlbumResp album = new AlbumResp().album(rs);
 
 		rs = (AnResultset) st
-				.select(meta.tbl, "p").page(req.page)
+				.select(m.tbl, "p").page(req.pageInf)
 				.j(tablCollectPhoto , "ch", "ch.pid = p.pid")
 				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
 				.j(tablCollects, "c", "c.cid = ch.cid")
 				.j(tablAlbums, "a", "a.aid = ac.aid")
-				.j(userMeta.tbl, "u", "u.userId = p.shareby")
+				.j(musr.tbl, "u", "u.userId = p.shareby")
 				.cols("ac.aid", "ch.cid",
-					  "p.pid", "pname", "pdate", "p.tags", "mime", "p.css", "folder", "geox", "geoy", "sharedate",
+					  "p.pid", m.clientname, m.createDate, "p." + m.tags,
+					  m.mime, "p.css", m.folder, m.geox, m.geoy, m.shareDate,
 					  "c.shareby collector", "c.cdate",
-					  "clientpath", "device", "p.shareby", "u.userName owner",
+					  m.fullpath, m.synoder, "p." + m.shareby, "u.userName owner",
 					  "storage", "aname", "cname")
 				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
 
-		album.collectPhotos(rs);
+		album.collectPhotos(rs, conn);
 
 		return album;
 	}

@@ -21,6 +21,7 @@ import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
@@ -28,6 +29,7 @@ import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantic.tier.docs.Docs206;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -41,14 +43,37 @@ import io.odysz.transact.x.TransException;
  * @param <T> any subclass extends {@link AnsonBody}.
  */
 public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
-	protected static ISessionVerifier verifier;
+	/**
+	 * Can only be non-static for tests running.
+	 * @see io.odysz.semantic.jsession.AnSessionTest
+	 */
+	private ISessionVerifier verifier;
+
 	protected IPort p;
 	
-	static {
-		verifier = JSingleton.getSessionVerifier();
+//	static {
+//		if (verifier == null)
+//			verifier = JSingleton.getSessionVerifier();
+//	}
+
+	/**
+	 * Get session verifier, e. g. instance of {@link AnSession}.
+	 * Use this for avoiding calling of {@link JSingleton} in tests.
+	 * This is supposed to be changed in the future after separated ISessionVerifier and AnSession.
+	 * @param anSession
+	 * @return 
+	 * @since 1.4.36
+	 */
+	public ISessionVerifier verifier() {
+		if (verifier == null)
+			verifier = JSingleton.getSessionVerifier();
+		return verifier;
 	}
 
-	public ServPort(IPort port) { this.p = port; }
+	public ServPort(IPort port) {
+		this.p = port;
+		// this.verifier = JSingleton.getSessionVerifier();
+	}
 
 	@Override
 	protected void doHead(HttpServletRequest request, HttpServletResponse response)
@@ -192,6 +217,10 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		}
 	}
 
+	public IUser verify(AnsonHeader anHeader, int ...seq) throws SsException {
+		return verifier.verify(anHeader, seq);
+	}
+
 	/**
 	 * Write message to resp.
 	 * 
@@ -257,5 +286,4 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	abstract protected void onPost(AnsonMsg<T> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException;
-
 }

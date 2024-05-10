@@ -14,7 +14,7 @@ import io.odysz.semantics.x.SemanticException;
 /**Sample project's prots extension
  * This enum replaced jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}. */
 public enum Samport implements IPort {
-	heartbeat("ping.serv"), session("login.serv11"),
+	heartbeat("ping.serv"), session("login.serv"),
 	/**port provided by {@link io.odysz.jsample.SysMenu} */
 	menu("menu.serv"),
 	example("example.serv11"),

@@ -100,7 +100,7 @@ public class SynodeTier extends Synclientier {
 					public void ok(SyncDoc doc, AnsonResp resp)
 							throws IOException, AnsonException, TransException {
 						String sync0 = doc.syncFlag;
-						String share = doc.shareflag;
+						String share = doc.shareFlag;
 						String f = SyncFlag.to(sync0, SyncEvent.pushubEnd, share);
 						try {
 							setLocalSync(localSt, connPriv, meta, doc, f, robot);

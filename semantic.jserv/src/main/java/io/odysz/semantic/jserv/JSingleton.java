@@ -1,5 +1,7 @@
 package io.odysz.semantic.jserv;
 
+import static io.odysz.common.LangExt.bool;
+
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -10,6 +12,7 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
+import io.odysz.common.Configs.keys;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -18,7 +21,9 @@ import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantics.x.SemanticException;
 
-/**This jserv lib  initializing and managing module. Subclass must be a web listener.
+/**
+ * This jserv lib  initializing and managing module. Subclass must be a web listener.
+ * 
  * @author odys-z@github.com
  */
 public class JSingleton {
@@ -53,7 +58,9 @@ public class JSingleton {
 		return webINF;
 	}
 	
-	/**For initializing from Jetty - it's not able to find root path?
+	/**
+	 * For initializing from Jetty - it's not able to find root path?
+	 * 
 	 * @param root
 	 * @param rootINF, e.g. WEB-INF
 	 * @param rootKey, e.g. context.xml/parameter=root-key
@@ -86,9 +93,21 @@ public class JSingleton {
 	}
 
 	public static ISessionVerifier getSessionVerifier() {
-		if (ssVerier == null)
-			ssVerier = new AnSession();
+		if (ssVerier == null) {
+			boolean verifyToken = bool(Configs.getCfg(keys.disableTokenKey));
+			if (!verifyToken)
+				Utils.warn("Verifying token is recommended but is disabled by config.xml/k=%s", keys.disableTokenKey);
+			ssVerier = new AnSession(verifyToken);
+		}
 		return ssVerier;
+	}
+	
+	/**
+	 * @since 1.4.36 avoid using Configs when testing.
+	 * @param verifier
+	 */
+	public static void setSessionVerifier(ISessionVerifier verifier) {
+		ssVerier = verifier;
 	}
 
 	/**Get server root/WEB-INF path (filesystem local)

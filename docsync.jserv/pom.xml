@@ -56,20 +56,20 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>1.4.35-SNAPSHOT</version>
+	  <version>1.4.35</version>
    	</dependency>
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>anclient.java</artifactId>
-	    <version>0.4.35-SNAPSHOT</version>
+	    <version>0.4.36</version>
 	</dependency>
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
 	    <scope>test</scope>
-	    <version>0.4.34</version>
+	    <version>0.4.36</version>
 	</dependency>
 
   </dependencies>

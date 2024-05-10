@@ -54,7 +54,6 @@ public class SyncRobot extends SemanticObject implements IUser {
 
 	protected Set<String> tempDirs;
 	public String orgName;
-	private Object meta;
 	public SyncRobot orgName (String org) {
 		orgName = org;
 		return this;
@@ -67,11 +66,12 @@ public class SyncRobot extends SemanticObject implements IUser {
 	/**
 	 * for jserv construction
 	 * 
+	 * FIXME a robot don't need password?
+	 * 
 	 * @param userid
-	 * @param pswd
 	 * @param userName
 	 */
-	public SyncRobot(String userid, String pswd, String userName) {
+	public SyncRobot(String userid, String userName) {
 		this.userId = userid;
 		this.userName = userName;
 	}
@@ -86,6 +86,7 @@ public class SyncRobot extends SemanticObject implements IUser {
 		}
 	}
 
+	private TableMeta meta;
 	/**
 	 * User table's meta, not doc table's meta.
 	 * 

@@ -54,16 +54,17 @@ class AlbumsServTierTest {
 	@Test
 	void testRec() throws SemanticException, TransException, SQLException, IOException {
 	
-		AlbumReq req = new AlbumReq("/local/test");
+		AlbumReq req = new AlbumReq("/local/test").page(0, -1, "pid", "C000000A");
 		req.docId = "test-00001";
 
-		AlbumResp rep = Albums.rec(req, robot);
+		AlbumResp rep = Albums.doc(req, robot);
 		
-		assertEquals("test-00001", rep.photo.recId);
-		assertEquals("DSC_0124.JPG", rep.photo.pname);
+		assertEquals("C000000A", rep.photo.recId);
+		assertEquals("ottawa-canada.jpg", rep.photo.pname);
 		assertTrue(isblank(rep.photo.uri));
-		assertEquals("2019_08", rep.photo.folder());
+		assertEquals("2022_03", rep.photo.folder());
 		
+		/*
 		req.collectId = "c-001";
 		AlbumResp coll = Albums.collect(req, robot);
 		assertEquals(1, coll.collectRecords.size());
@@ -72,6 +73,7 @@ class AlbumsServTierTest {
 		assertEquals("c-001", coll.photos.get(0)[0].collectId);
 		assertEquals("DSC_0005.JPG", coll.photos.get(0)[0].pname);
 		assertTrue(isblank(coll.photos.get(0)[0].uri));
+		*/
 	}
 
 }

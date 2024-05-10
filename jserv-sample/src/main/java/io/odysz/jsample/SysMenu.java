@@ -69,7 +69,7 @@ public class SysMenu extends SemanticTree {
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			IUser usr = verifier.verify(msg.header());
+			IUser usr = verifier().verify(msg.header());
 
 			AnDatasetReq jreq = msg.body(0);
 

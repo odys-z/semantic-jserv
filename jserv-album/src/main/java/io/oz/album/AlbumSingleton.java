@@ -1,5 +1,7 @@
 package io.oz.album;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -41,6 +43,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			AnsonMsg.understandPorts(AlbumPort.album);
 			
 			node = System.getProperty("JSERV_NODE");
+			if (isblank(node)) node = "mvp-hub";
 			Docsyncer.init(node);
 			Synode.init(node);
 

@@ -197,11 +197,11 @@ public class AlbumTier extends ServPort<AlbumReq> {
 
 		String conn = Connects.uri2conn(jreq.uri());
 		// force org-id as first arg
-		PageInf page = isNull(jreq.page)
+		PageInf page = isNull(jreq.pageInf)
 				? new PageInf(0, -1, usr.orgId())
-				: eq(jreq.page.arrCondts.get(0), usr.orgId())
-				? jreq.page
-				: jreq.page.insertCondt(usr.orgId());
+				: eq(jreq.pageInf.arrCondts.get(0), usr.orgId())
+				? jreq.pageInf
+				: jreq.pageInf.insertCondt(usr.orgId());
 
 		List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
 		return (AnDatasetResp) new AnDatasetResp().forest(lst);

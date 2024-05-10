@@ -30,7 +30,7 @@ import io.odysz.transact.x.TransException;
 /**CRUD insertion service.
  * @author odys-z@github.com
  */
-@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/c.serv11" })
+@WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/c.serv" })
 public class AnInsert extends ServPort<AnInsertReq> {
 
 	public AnInsert() {
@@ -50,7 +50,7 @@ public class AnInsert extends ServPort<AnInsertReq> {
 	protected void onGet(AnsonMsg<AnInsertReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.update)
-			Utils.logi("---------- insert (c.serv11) get ----------");
+			Utils.logi("---------- insert (c.serv) get ----------");
 		try {
 			IUser usr = verifier.verify(msg.header());
 
@@ -76,7 +76,7 @@ public class AnInsert extends ServPort<AnInsertReq> {
 	@Override
 	protected void onPost(AnsonMsg<AnInsertReq> msg, HttpServletResponse resp) throws IOException {
 		if (ServFlags.update)
-			Utils.logi("========== insert (c.serv11) post ==========");
+			Utils.logi("========== insert (c.serv) post ==========");
 
 		try {
 			IUser usr = verifier.verify(msg.header());

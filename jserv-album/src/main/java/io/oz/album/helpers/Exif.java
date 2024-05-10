@@ -1,11 +1,11 @@
 package io.oz.album.helpers;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.filesize;
 import static io.odysz.common.LangExt.gt;
 import static io.odysz.common.LangExt.imagesize;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.lt;
 
 import java.io.File;
@@ -33,9 +33,10 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.CompositeParser;
-import org.apache.tika.parser.external.CompositeExternalParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.external.CompositeExternalParser;
+import org.apache.tika.parser.external.ExternalParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
@@ -46,6 +47,8 @@ import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.tier.Exifield;
 import io.oz.album.tier.PhotoRec;
+import io.oz.album.tika.CompositeExternalParserX;
+import io.oz.album.tika.ExternalParsersFactoryX;
 
 /**
  * Exif data format helper.
@@ -66,8 +69,12 @@ public class Exif {
 
 	protected static String cfgFile = "tika.xml";
 	static TikaConfig config;
+
 	/**
-	 * @param configPath
+	 * Initialize tike using external parser, and exiftool is verified only.
+	 * @since 0.6.50, an additional parser configure file is used for Windows to configure command path.
+	 * Exiftool is available on Windows. For reasons, see {@link TikaConfig#TikaConfig()}</p>
+	 * @param configPath, e.g. WEB-INF/tika.xml
 	 * @return "(... xml)/tika.xml"
 	 * @throws TikaException
 	 * @throws IOException
@@ -80,6 +87,9 @@ public class Exif {
 
 		String absPath = FilenameUtils.concat(xmlPath, cfgFile);
 		Utils.logi("[Exif.init] Loading tika configuration:\n%s", absPath);
+		
+		// System.setProperty("tika.config", "./tika-external-parser.xml");
+		ExternalParsersFactoryX.workDir(xmlPath);
 		config = new TikaConfig(absPath);
 
 		ParseContext context = new ParseContext();
@@ -94,16 +104,20 @@ public class Exif {
 		Field f = p.getClass().getSuperclass().getDeclaredField("parser");
 		f.setAccessible(true);
 		Object extp = f.get(p);
-		if (extp != null && extp instanceof CompositeExternalParser) {
-			Map<MediaType, Parser> exts = ((CompositeExternalParser)extp).getParsers();
+		if (extp != null) {
+			Map<MediaType, Parser> exts = null; 
+			if (extp instanceof CompositeExternalParserX)
+				exts = ((CompositeExternalParserX)extp).getParsers();
+			else if (extp instanceof CompositeExternalParser)
+				exts = ((CompositeExternalParser)extp).getParsers();
+
 			if (len(exts) == 0)
-				throw new SemanticException("External parser and depending commands either ffmpeg or exiftool is required"); 
+				throw new SemanticException("External parser and depending commands, either ffmpeg or exiftool is required.\nRecommended install on Alpine: exiftool"); 
 			Utils.logMap(exts, "\t");
+			
+			for(Parser v : exts.values())
+				Utils.logi(((ExternalParser)v).getCommand());
 		}
-//		else {
-//			Utils.warn("\n[Exif.init] No exteranl tika parser configured for vide/mp4? For which the parsing is buggy with default parser.\n");
-//			Utils.logi("\n[Exif.init] One of these two command must working: \n");
-//		}
 
 		if (verbose) {
 			CompositeParser q = (CompositeParser) config.getParser();
@@ -197,7 +211,6 @@ public class Exif {
 			// another way other than by Tika
 			else if (MimeTypes.isImgVideo(photo.mime) && isblank(photo.widthHeight)) {
 				try {
-					// photo.rotation = "0";
 					photo.widthHeight = Exif.parseWidthHeight(filepath);
 				}
 				catch (SemanticException e) {
@@ -377,7 +390,12 @@ public class Exif {
 	 * 
 	 * @deprecated limited image types can be supported.
 	 * 
+	 * For error java.lang.UnsatisfiedLinkError:
+	 * <pre>Can't load library: /usr/lib/jvm/java-11-openjdk-amd64/lib/libawt_xawt.so</pre>
+	 * See https://stackoverflow.com/a/67756207
+	 * 
 	 * @see https://stackoverflow.com/a/12164026
+	 * 
 	 * @param imgFile image file
 	 * @return dimensions of image
 	 * @throws IOException if the file is not understood or missing

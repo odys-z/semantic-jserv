@@ -85,14 +85,14 @@ public class SyncWorker implements Runnable {
 	 * @param pswd
 	 * @return this.
 	 * @throws AnsonException
-	 * @throws SsException
 	 * @throws IOException
 	 * @throws SQLException
 	 * @throws SAXException
 	 * @throws TransException 
+	 * @throws SsException 
 	 */
 	public SyncWorker login(String pswd) throws AnsonException,
-			SsException, IOException, SQLException, SAXException, TransException {
+			IOException, SQLException, SAXException, TransException, SsException {
 		synctier = (SynodeTier) new SynodeTier(funcUri, connPriv, errLog)
 				.login(workerId, mac, pswd);
 		return this;

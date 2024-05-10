@@ -91,7 +91,7 @@ public class JFileServ extends ServPort<FileReq> {
 				InputStream in = req.getInputStream(); 
 				@SuppressWarnings("unchecked")
 				AnsonMsg<FileReq> msg = (AnsonMsg<FileReq>) Anson.fromJson(in);
-				verifier.verify(msg.header());
+				verifier().verify(msg.header());
 				jtxt(resp, msg.body(0).file());
 			}
 

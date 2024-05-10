@@ -128,12 +128,12 @@ public class Synclientier extends Semantier {
 	 * @return this
 	 * @throws SQLException
 	 * @throws AnsonException
-	 * @throws SsException
 	 * @throws IOException
 	 * @throws TransException 
+	 * @throws SsException 
 	 */
 	public Synclientier login(String workerId, String device, String pswd)
-			throws AnsonException, SsException, IOException, TransException {
+			throws AnsonException, IOException, TransException, SsException {
 
 		client = Clients.login(workerId, pswd, device);
 
@@ -168,7 +168,7 @@ public class Synclientier extends Semantier {
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
 			 .j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
-			 .whereEq("=", "u." + um.pk, robot.userId);
+			 .whereEq("u." + um.pk, robot.userId);
 
 			AnsonResp resp = client.commit(q, errCtx);
 			AnResultset rs = resp.rs(0).beforeFirst();
@@ -559,7 +559,7 @@ public class Synclientier extends Semantier {
 				.nv(meta.folder, doc.folder())
 				.nv(meta.size, size)
 				.nv(meta.shareby, doc.shareby)
-				.nv(meta.shareflag, doc.shareflag)
+				.nv(meta.shareflag, doc.shareFlag)
 				.nv(meta.shareDate, doc.sharedate)
 				;
 		

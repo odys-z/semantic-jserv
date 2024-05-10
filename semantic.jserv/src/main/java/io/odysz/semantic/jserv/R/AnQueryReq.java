@@ -140,8 +140,8 @@ public class AnQueryReq extends AnsonBody {
 		return this;
 	}
 
-	public AnQueryReq whereEq(String oper, String lop, String constv) {
-		return where(oper, lop, "'" + constv + "'");
+	public AnQueryReq whereEq(String lop, String constv) {
+		return where("=", lop, "'" + constv + "'");
 	}
 
 	public AnQueryReq orderby(String col, boolean... asc) {

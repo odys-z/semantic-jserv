@@ -71,13 +71,14 @@ public class DocsReq extends AnsonBody {
 
 		public static final String registDev = "c/device";
 
+		/** check is a new device name valid */
 		public static final String checkDev = "r/check-dev";
 
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */
 	}
 
-	public PageInf page;
+	public PageInf pageInf;
 
 	public String docTabl;
 	public DocsReq docTabl(String tbl) {
@@ -85,12 +86,15 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
+	// public String synode0;
+	public String owner;
+
 	public String docId;
 	public String docName;
 	public String createDate;
 	String clientpath;
 	public String mime;
-	public String subFolder;
+	public String subfolder;
 	
 	@AnsonField(shortenString = true)
 	public String uri64;
@@ -123,7 +127,7 @@ public class DocsReq extends AnsonBody {
 	public DocsReq() {
 		super(null, null);
 		blockSeq = -1;
-		subFolder = "";
+		subfolder = "";
 	}
 
 	/**
@@ -133,13 +137,13 @@ public class DocsReq extends AnsonBody {
 		super(null, null);
 		blockSeq = -1;
 		docTabl = syncTask;
-		subFolder = "";
+		subfolder = "";
 	}
 
 	protected DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 		blockSeq = -1;
-		subFolder = "";
+		subfolder = "";
 	}
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
@@ -188,6 +192,7 @@ public class DocsReq extends AnsonBody {
 	public boolean reset;
 
 	private long limit = -1;
+
 	public long limit() { return limit; }
 	public DocsReq limit(long l) {
 		limit = l;
@@ -220,8 +225,8 @@ public class DocsReq extends AnsonBody {
 
 		syncQueries.add(new SyncDoc(p, p.fullpath(), null));
 		*/
-		if (page == null) {
-			page = new PageInf();
+		if (pageInf == null) {
+			pageInf = new PageInf();
 		}
 
 		return this;
@@ -312,12 +317,12 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq folder(String name) {
-		subFolder = name;
+		subfolder = name;
 		return this;
 	}
 
 	public DocsReq share(SyncDoc p) {
-		shareflag = p.shareflag;
+		shareflag = p.shareFlag;
 		shareby = p.shareby;
 		shareDate = p.sharedate;
 		return this;
