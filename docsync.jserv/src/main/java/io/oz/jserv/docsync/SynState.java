@@ -34,7 +34,7 @@ public class SynState extends Anson {
 	public SynState to(SyncEvent e) throws SemanticException {
 		clear();
 		
-		if (priv.equals(now) || (pushing.equals(now) && me == SynodeMode.bridge)) {
+		if (priv.equals(now) || (pushing.equals(now) && me == SynodeMode.hub)) {
 			if (e == SyncEvent.pushubEnd)
 				now = hub;
 			else if (e == SyncEvent.push)
@@ -43,11 +43,11 @@ public class SynState extends Anson {
 		else if (hub.equals(now)) {
 			if (e == SyncEvent.close)
 				now = close;
-			else if (e == SyncEvent.pull && me == SynodeMode.bridge)
+			else if (e == SyncEvent.pull && me == SynodeMode.hub)
 				now = priv;
 		}
-		else if (device.equals(now) || (pushing.equals(now) && me == SynodeMode.device)) {
-			if (me != SynodeMode.device)
+		else if (device.equals(now) || (pushing.equals(now) && me == SynodeMode.child)) {
+			if (me != SynodeMode.child)
 				throw new SemanticException("SyncState = device can only exists on a device.");
 
 			// me == device

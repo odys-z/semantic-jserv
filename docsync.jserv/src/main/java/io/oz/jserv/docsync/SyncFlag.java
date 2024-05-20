@@ -108,8 +108,8 @@ public final class SyncFlag extends Anson {
 	public static String start(SynodeMode mode, String share) throws SemanticException {
 			if (SynodeMode.hub == mode)
 				return Share.isPub(share) ? publish : hub;
-			else if (SynodeMode.bridge == mode || SynodeMode.main == mode)
-				return priv;
+//			else if (SynodeMode.bridge == mode || SynodeMode.main == mode)
+//				return priv;
 			throw new SemanticException("Unhandled state starting: mode %s : share %s.", mode, share);
 	}
 }

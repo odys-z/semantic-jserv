@@ -251,7 +251,7 @@ class SyncWorkerTest {
 		// downward synchronize the file, hub -> Kharkiv (working as main node)
 		SyncWorker.blocksize = 32 * 3;
 		DocTableMeta meta = new PhotoMeta(conn);
-		worker = new SyncWorker(SynodeMode.main, Kharkiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
+		worker = new SyncWorker(SynodeMode.hub, Kharkiv.Synode.nodeId, conn, Kyiv.Synode.worker, meta)
 				.stop();
 		ArrayList<DocsResp> ids = worker
 				.login(Kharkiv.Synode.passwd)

@@ -142,10 +142,10 @@ public class Synode extends ServPort<DocsReq> {
 		}
 		else {
 			if (mainode.equals(cfg))
-				mode = SynodeMode.main;
-			else if (privnode.equals(cfg))
-				mode = SynodeMode.bridge;
-			else mode = SynodeMode.device;
+				mode = SynodeMode.hub;
+//			else if (privnode.equals(cfg))
+//				mode = SynodeMode.bridge;
+			else mode = SynodeMode.child;
 		
 			// FIXME oo design error TODO
 			// TODO can be find out from semantics

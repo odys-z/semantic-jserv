@@ -16,13 +16,13 @@ class SynStateTest {
 
 	@Test
 	void testTo() throws SemanticException {
-		assertEquals(SyncFlag.hub, new SynState(SynodeMode.main, SyncFlag.priv).to(SyncEvent.pushubEnd));
+		assertEquals(SyncFlag.hub, new SynState(SynodeMode.hub, SyncFlag.priv).to(SyncEvent.pushubEnd));
 		
-		SynState s = new SynState(SynodeMode.main, SyncFlag.priv).to(SyncEvent.push);
+		SynState s = new SynState(SynodeMode.hub, SyncFlag.priv).to(SyncEvent.push);
 		assertEquals(SyncFlag.pushing, s);
 		assertEquals(SyncFlag.hub, s.to(SyncEvent.pushubEnd));
 
-		s = new SynState(SynodeMode.device, SyncFlag.device).to(SyncEvent.push);
+		s = new SynState(SynodeMode.child, SyncFlag.device).to(SyncEvent.push);
 		assertEquals(SyncFlag.pushing, s);
 		try {
 			assertEquals(SyncFlag.hub, s.to(SyncEvent.pushubEnd));

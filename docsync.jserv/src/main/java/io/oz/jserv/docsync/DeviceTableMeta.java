@@ -1,6 +1,12 @@
 package io.oz.jserv.docsync;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
+import io.odysz.transact.x.TransException;
 
 /**
  * Document records' table meta.
@@ -45,5 +51,19 @@ public class DeviceTableMeta extends SyntityMeta {
 		owner   = "owner";
 		mac     = "mac";
 		cdate   = "cdate";
+	}
+
+	@Override
+	public ArrayList<Object[]> updateEntNvs(SynChangeMeta chgm, String entid, AnResultset entities,
+			AnResultset challenges) throws TransException, SQLException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
+			throws TransException, SQLException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

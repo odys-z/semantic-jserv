@@ -161,7 +161,7 @@ public class SyncWorker implements Runnable {
 	 * @return this
 	 */
 	public SyncWorker push() {
-		if (mode == SynodeMode.main || mode == SynodeMode.bridge || mode == SynodeMode.device) {
+		if (mode == SynodeMode.hub || mode == SynodeMode.child) {
 			try {
 				// find local records with shareflag = pub
 				AnResultset rs = ((AnResultset) localSt
@@ -227,7 +227,7 @@ public class SyncWorker implements Runnable {
 	 */
 	public ArrayList<String> synodes() {
 
-		if (this.mode == SynodeMode.device)
+		if (this.mode == SynodeMode.child)
 			try {
 				return synodes(synctier.robot.orgId);
 			} catch (AnsonException | TransException | SQLException | IOException e) {

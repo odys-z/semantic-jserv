@@ -40,7 +40,7 @@ public class ZSUNodes {
 
 		public static class Synode {
 			public static final String nodeId = "jnode-kharkiv";
-			public static final SynodeMode mode = SynodeMode.main;
+			public static final SynodeMode mode = SynodeMode.hub;
 
 			public static final String worker = "syrskyi";
 			public static final String passwd = "слава україні";

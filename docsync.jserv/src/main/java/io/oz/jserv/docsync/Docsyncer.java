@@ -279,10 +279,10 @@ public class Docsyncer extends ServPort<DocsReq> {
 		}
 		else {
 			if (Docsyncer.mainode.equals(cfg))
-				mode = SynodeMode.main;
-			else if (Docsyncer.privnode.equals(cfg))
-				mode = SynodeMode.bridge;
-			else mode = SynodeMode.device;
+				mode = SynodeMode.hub;
+//			else if (Docsyncer.privnode.equals(cfg))
+//				mode = SynodeMode.bridge;
+			else mode = SynodeMode.child;
 		
 			/*
 			schedualed = scheduler.scheduleAtFixedRate(new SyncWorker(
@@ -463,7 +463,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
-				.cols(SyncDoc.synPageCols(meta))
+				.cols((Object[])SyncDoc.synPageCols(meta))
 				.whereEq(meta.org(), jreq.org == null ? usr.orgId() : jreq.org)
 				.whereEq(meta.synoder, usr.deviceId())
 				// .whereEq(meta.shareby, usr.uid())
@@ -598,7 +598,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 		AnResultset rs = ((AnResultset) st
 				.select(jreq.docTabl, "t")
-				.cols(SyncDoc.nvCols(meta))
+				.cols((Object[])SyncDoc.nvCols(meta))
 				.whereEq(meta.org(), jreq.org == null ? usr.orgId() : jreq.org)
 				.where(op.lt, meta.stamp, jreq.stamp())
 				.limit(jreq.limit())
@@ -613,7 +613,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 		DocTableMeta meta = (DocTableMeta) metas.get(jreq.docTabl);
 		AnResultset rs = (AnResultset) st
 				.select(jreq.docTabl, "t")
-				.cols(SyncDoc.nvCols(meta))
+				.cols((Object[])SyncDoc.nvCols(meta))
 				.whereEq(meta.org(), jreq.org == null ? usr.orgId() : jreq.org)
 				.whereEq(meta.pk, jreq.docId)
 				.rs(st.instancontxt(synconn, usr))

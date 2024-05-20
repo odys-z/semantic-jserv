@@ -1,7 +1,11 @@
 package io.odysz.semantic.ext;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 
+import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.transact.x.TransException;
 
@@ -90,6 +94,20 @@ public class DocTableMeta extends SyntityMeta {
 	@Override
 	public HashSet<String> globalIds() {
 		return globalIds;
+	}
+
+	@Override
+	public ArrayList<Object[]> updateEntNvs(SynChangeMeta chgm, String entid, AnResultset entities,
+			AnResultset challenges) throws TransException, SQLException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
+			throws TransException, SQLException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

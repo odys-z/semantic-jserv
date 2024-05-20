@@ -42,8 +42,8 @@ class SyncFlagTest {
 
 	@Test
 	void testStart() throws SemanticException {
-		assertEquals(SyncFlag.priv, SyncFlag.start(SynodeMode.bridge, Share.pub));
-		assertEquals(SyncFlag.priv, SyncFlag.start(SynodeMode.bridge, Share.priv));
+		assertEquals(SyncFlag.priv, SyncFlag.start(SynodeMode.hub, Share.pub));
+		assertEquals(SyncFlag.priv, SyncFlag.start(SynodeMode.hub, Share.priv));
 
 		assertEquals(SyncFlag.hub, SyncFlag.start(SynodeMode.hub, Share.priv));
 		assertEquals(SyncFlag.publish, SyncFlag.start(SynodeMode.hub, Share.pub));
