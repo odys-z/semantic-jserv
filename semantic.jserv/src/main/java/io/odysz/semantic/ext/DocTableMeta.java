@@ -65,11 +65,9 @@ public class DocTableMeta extends SyntityMeta {
 	public final String shareflag;
 	final HashSet<String> globalIds;
 
-	public DocTableMeta(String tbl, String pk, String conn) throws TransException {
-		super("h_photos", pk, "family", conn);
+	public DocTableMeta(String tbl, String pk, String domain, String synode, String conn) throws TransException {
+		super(tbl, pk, domain, synode, conn);
 
-		// TODO let's build from sync.xml
-		// this.tbl = "h_photos";
 		this.pk = pk;
 
 		clientname = "pname";
@@ -78,7 +76,6 @@ public class DocTableMeta extends SyntityMeta {
 		createDate = "pdate";
 		mime = "mime";
 		size = "filesize";
-		// synoder = "device";
 		fullpath = "clientpath";
 		shareDate = "sharedate";
 		shareby = "shareby";
@@ -87,20 +84,12 @@ public class DocTableMeta extends SyntityMeta {
 		syncflag = "sync";
 		shareflag = "shareflag";
 		
-		// sharelog = new SharelogMeta(tbl, pk, conn); 
 		globalIds = new HashSet<String>() { {add(synoder);}; {add(fullpath);}; };
 	}
 
 	@Override
 	public HashSet<String> globalIds() {
 		return globalIds;
-	}
-
-	@Override
-	public ArrayList<Object[]> updateEntNvs(SynChangeMeta chgm, String entid, AnResultset entities,
-			AnResultset challenges) throws TransException, SQLException {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
