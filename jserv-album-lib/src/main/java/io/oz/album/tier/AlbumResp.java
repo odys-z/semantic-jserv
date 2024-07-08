@@ -102,7 +102,7 @@ public class AlbumResp extends DocsResp {
 				collect = new Collect(rs);
 				cid = collect.cid;
 			}
-			collect.addPhoto(rs, new PhotoMeta(conn));
+			collect.addPhoto(rs, new PhotoMeta(conn, null, null));
 		}
 		if (collect != null)
 			collectRecords.add(collect);
