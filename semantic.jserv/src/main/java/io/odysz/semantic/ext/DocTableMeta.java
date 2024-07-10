@@ -1,7 +1,6 @@
 package io.odysz.semantic.ext;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import io.odysz.module.rs.AnResultset;

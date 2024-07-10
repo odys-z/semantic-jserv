@@ -49,17 +49,17 @@ In the chapter 4 of the thesis, the process and change-tracking schema is detail
     Two triggers of data table
 
 ```
-    CREATE TRIGGER authors_inserted ON dbo.authors AFTER INSERT, UPDATE AS 
-    UPDATE dbo.authors 
-    SET last_changed = getdate() 
+    CREATE TRIGGER authors_inserted ON dbo.authors AFTER INSERT, UPDATE AS
+    UPDATE dbo.authors
+    SET last_changed = getdate()
     WHERE au_id = inserted.au_id;
 
-    CREATE TRIGGER authors_deleted ON dbo.authors BEFORE DELETE AS 
-    UPDATE dbo.authors 
-    SET last_changed = getdate() 
+    CREATE TRIGGER authors_deleted ON dbo.authors BEFORE DELETE AS
+    UPDATE dbo.authors
+    SET last_changed = getdate()
     WHERE au_id = deleted.au_id;
 ```
- 
+
 &emsp;Then the synchronization is based upon SQL Server Publication & Subscription.
 
 [8] [Dotmim.Sync](https://github.com/Mimetis/Dotmim.Sync) at Github.
@@ -80,7 +80,7 @@ In the chapter 4 of the thesis, the process and change-tracking schema is detail
 - [BaseOrchestractor.InternalSetCommandParametersValues(SyncContext context, DbCommand command, ...)](https://github.com/Mimetis/Dotmim.Sync/blob/2f77ac3c1bdec414125943ed6c16c35a98c734e4/Projects/Dotmim.Sync.Core/Orchestrators/Commands/BaseOrchestrator.Commands.cs#L117-L118)
 
 ```
-    foreach (DbParameter parameter in command.Parameters) 
+    foreach (DbParameter parameter in command.Parameters)
     {
         var column = schemaTable.Columns[parameter.SourceColumn];
 

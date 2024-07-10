@@ -12,8 +12,8 @@ public class PhotoMeta extends DocTableMeta {
 	public final String geoy;
 	public final String css;
 
-	public PhotoMeta(String conn, String domain, String synode) throws TransException {
-		super("h_photos", "pid", domain, synode, conn);
+	public PhotoMeta(String conn) throws TransException {
+		super("h_photos", "pid", "domain", "synode", conn);
 		
 		tags   = "tags";
 		exif   = "exif";

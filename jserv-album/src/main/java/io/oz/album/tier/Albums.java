@@ -69,7 +69,6 @@ import io.oz.album.PhotoUser.PUserMeta;
 import io.oz.album.helpers.Exiftool;
 import io.oz.album.tier.AlbumReq.A;
 import io.oz.album.x.DocsException;
-import io.oz.jserv.docsync.DeviceTableMeta;
 
 /**
  * <h5>The album tier 0.6.50 (MVP)</h5>
@@ -104,9 +103,9 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static final String tablCollectPhoto = "h_coll_phot";
 
-	static final DocOrgMeta orgMeta = new DocOrgMeta();
+	// final DocOrgMeta orgMeta; // = new DocOrgMeta(null);
 	
-	static final DeviceTableMeta devMeta = new DeviceTableMeta(null);
+	// final DeviceTableMeta devMeta; // = new DeviceTableMeta(null);
 
 
 	/** uri db field */
@@ -125,7 +124,7 @@ public class Albums extends ServPort<AlbumReq> {
 	static {
 		try {
 			st = new DATranscxt(null);
-			robot = new PhotoUser("Robot Album");
+			robot = new PhotoUser("Robot Album", "TODO what's here?");
 			
 			Docs206.getMeta = (String uri) -> {
 				try {
@@ -332,6 +331,8 @@ public class Albums extends ServPort<AlbumReq> {
 			throws SemanticException, SQLException, TransException {
 		String conn = Connects.uri2conn(body.uri());
 		JUserMeta m = (JUserMeta) usr.meta(conn);
+		DocOrgMeta orgMeta = new DocOrgMeta(conn);
+
 		AnResultset rs = ((AnResultset) st
 				.select(m.tbl, "u")
 				.je("u", orgMeta.tbl, "o", m.org, orgMeta.pk)
@@ -379,10 +380,13 @@ public class Albums extends ServPort<AlbumReq> {
 	AlbumResp profile(AlbumReq body, IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException {
 
+		String conn = Connects.uri2conn(body.uri());
+		DocOrgMeta orgMeta = new DocOrgMeta(conn);
+
 		AnResultset rs = (AnResultset) st
 				.select(orgMeta.tbl)
 				.whereEq(orgMeta.pk, usr.orgId())
-				.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
+				.rs(st.instancontxt(conn, usr))
 				.rs(0);
 
 		rs.beforeFirst().next();
@@ -541,18 +545,21 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	DocsResp devices(DocsReq body, PhotoUser usr)
 			throws SemanticException, TransException, SQLException {
+		String conn = Connects.uri2conn(body.uri());
+		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
+
 		AnResultset rs = (AnResultset)st
 				.select(devMeta.tbl)
-				.whereEq(devMeta.org(),   usr.orgId())
+				.whereEq(devMeta.domain,   usr.orgId())
 				.whereEq(devMeta.owner,   usr.uid())
-				.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
+				.rs(st.instancontxt(conn, usr))
 				.rs(0)
 				;
 
 		return (DocsResp) new DocsResp().rs(rs)
 				.data(devMeta.owner, usr.uid())
 				.data("owner-name",  usr.userName())
-				.data(devMeta.org(), usr.orgId());
+				.data(devMeta.domain, usr.orgId());
 	}
 
 	/**
@@ -567,25 +574,25 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	DocsResp chkDevname(DocsReq body, PhotoUser usr)
 			throws SemanticException, TransException, SQLException {
+		String conn = Connects.uri2conn(body.uri());
+		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 
 		AnResultset rs = ((AnResultset) st
 			.select(devMeta.tbl, "d")
 			.cols("d.*", "u." + userMeta.uname)
 			.j(userMeta.tbl, "u", "u.%s = d.%s", userMeta.pk, devMeta.owner)
-			.cols(devMeta.devname, devMeta.synode0, devMeta.cdate, devMeta.owner)
+			.cols(devMeta.devname, devMeta.synoder, devMeta.cdate, devMeta.owner)
 			.whereEq(devMeta.pk, usr.deviceId())
-			// .whereEq(devMeta.synode0, eq(owner, devMeta.synode0) ? synode0 : null)
-			.whereEq(devMeta.org(),   usr.orgId())
+			.whereEq(devMeta.domain,   usr.orgId())
 			.whereEq(devMeta.owner,   usr.uid())
-			// .whereEq(devMeta.market, eq(market[0], devMeta.market) ? market[1] : null)
-			.rs(st.instancontxt(Connects.uri2conn(body.uri()), usr))
+			.rs(st.instancontxt(conn, usr))
 			.rs(0))
 			.nxt();
 		
 		if (rs != null) {
 			throw new SemanticException("{\"exists\": true, \"owner\": \"%s\", \"synode0\": \"%s\", \"create_on\": \"%s\"}",
 				rs.getString(userMeta.uname),
-				rs.getString(devMeta.synode0),
+				rs.getString(devMeta.synoder),
 				rs.getString(devMeta.cdate)
 			);
 		}
@@ -598,14 +605,17 @@ public class Albums extends ServPort<AlbumReq> {
 	
 	DocsResp registDevice(DocsReq body, PhotoUser usr)
 			throws SemanticException, TransException, SQLException {
+		String conn = Connects.uri2conn(body.uri());
+		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
+
 		if (isblank(body.device().id)) {
 			SemanticObject result = (SemanticObject) st
 				.insert(devMeta.tbl, usr)
-				.nv(devMeta.synode0, AlbumSingleton.synode())
+				.nv(devMeta.synoder, AlbumSingleton.synode())
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
 				.nv(devMeta.cdate, now())
-				.nv(devMeta.org(), usr.orgId())
+				.nv(devMeta.domain, usr.orgId())
 				// .nv(devMeta.mac, body.mac())
 				.ins(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
@@ -619,7 +629,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 			st  .update(devMeta.tbl, usr)
 				.nv(devMeta.cdate, now())
-				.whereEq(devMeta.org(), usr.orgId())
+				.whereEq(devMeta.domain, usr.orgId())
 				.whereEq(devMeta.pk, body.device().id)
 				.u(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
@@ -660,7 +670,7 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = ((AnResultset) st
 				.select(req.docTabl, "t")
 				.cols(SyncDoc.synPageCols(meta))
-				.whereEq(meta.org(), req.org == null ? usr.orgId() : req.org)
+				.whereEq(meta.domain, req.org == null ? usr.orgId() : req.org)
 				.whereEq(meta.synoder, usr.deviceId())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
 				// TODO add file type for performance
@@ -829,7 +839,7 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 
 	/**
-	 * Read a media file record (id, uri), TODO touch LRU.
+	 * Read a media file record (id, uri)
 	 *
 	 * @param req
 	 * @param usr

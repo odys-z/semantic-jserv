@@ -45,7 +45,7 @@ class AlbumsServTierTest {
 			Connects.init("src/main/webapp/WEB-INF");
 
 			local = new File("src/test/local").getAbsolutePath();
-			robot = new PhotoUser("test album");
+			robot = new PhotoUser("test album", "DOMAIN-TEST");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
