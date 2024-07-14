@@ -619,7 +619,7 @@ public class Albums extends ServPort<AlbumReq> {
 				// .nv(devMeta.mac, body.mac())
 				.ins(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
-			String resulved = result.resulve(devMeta.tbl, devMeta.pk);
+			String resulved = result.resulve(devMeta.tbl, devMeta.pk, -1);
 			return new DocsResp().device(new Device(
 				resulved, AlbumSingleton.synode(), body.device().devname));
 		}
@@ -669,7 +669,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		AnResultset rs = ((AnResultset) st
 				.select(req.docTabl, "t")
-				.cols(SyncDoc.synPageCols(meta))
+				.cols((Object[])SyncDoc.synPageCols(meta))
 				.whereEq(meta.domain, req.org == null ? usr.orgId() : req.org)
 				.whereEq(meta.synoder, usr.deviceId())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
