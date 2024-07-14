@@ -25,7 +25,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Query.Ix;
-import io.odysz.transact.sql.parts.select.JoinTabl.join;
+import io.odysz.transact.sql.parts.JoinTabl.join;
 import io.odysz.transact.x.TransException;
 
 import static io.odysz.common.LangExt.len;

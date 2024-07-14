@@ -75,7 +75,7 @@ public class DocUtils {
 
 		ISemantext insCtx = st.instancontxt(conn, usr);
 		SemanticObject res = (SemanticObject) ins.ins(insCtx);
-		String pid = res.resulve(meta.tbl, meta.pk);
+		String pid = res.resulve(meta.tbl, meta.pk, -1);
 		return pid;
 	}
 
