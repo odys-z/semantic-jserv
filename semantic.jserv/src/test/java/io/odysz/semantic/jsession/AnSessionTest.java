@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.common.AESHelper;
+import io.odysz.common.Configs;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -14,6 +15,9 @@ import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantics.SessionInf;
 
 class AnSessionTest {
+	static {
+		Configs.init("src/main/webapp/WEB-INF");
+	}
 
 	@Test
 	void testAllocateSsid() {

@@ -121,20 +121,25 @@ public class JUser extends SemanticObject implements IUser {
 		try {
 			String conn = Configs.getCfg("log-connId");
 			if (isblank(conn))
-				Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
+				; // Utils.warn("ERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
+			else
+				connss = split(conn, ","); // [conn-id, a_logs]
 
-			connss = split(conn, ","); // [conn-id, a_logs]
 			if (isNull(connss))
-				throw new SemanticException("Parsing log connection config error: %s", conn);
-
-			// logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
-			logsctx = new LogTranscxt(connss[0]);
-			logConn = connss[0];
+				// throw new SemanticException("Parsing log connection config error: %s", conn);
+				Utils.warnT(new Object() {},
+					"JUser need a log connection id configured in configs.xml, but get an empty conn-id.\n" +
+					"DB log is disabled.",
+					conn);
+			else {
+				// logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
+				logsctx = new LogTranscxt(connss[0]);
+				logConn = connss[0];
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		finally {
-			// sessionSmtXml  = connss != null ? connss[1] : "semantics-log.xml";
 			logTabl = connss != null ? connss[1] : "a_logs";
 		}
 	}
