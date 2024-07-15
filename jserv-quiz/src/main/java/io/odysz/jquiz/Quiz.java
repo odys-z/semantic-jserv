@@ -239,7 +239,7 @@ public class Quiz extends ServPort<UserReq> {
 		insquz.ins(smtxt);
 		
 		return ok(new QuizResp()
-				.quizId((String)smtxt.resulvedVal("quizzes", "qid"))
+				.quizId((String)smtxt.resulvedVal("quizzes", "qid", -1))
 				.title(titl)
 				.questions(total)
 				.msg("inserted"));

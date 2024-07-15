@@ -77,6 +77,10 @@
 		<k>windows:tika-external-parsers.xml</k>
 		<v>./tika-external-parsers.xml</v>
 	</c>
+	
+	<c> <k>exiftool</k>
+		<v>C:/Users/Alice/bin/exiftool</v>
+	</c>
   </t>
 
   <t id="tree-semantics" pk="k" columns="k,v">

@@ -1,7 +1,10 @@
 package io.odysz.semantic.ext;
 
+import java.sql.SQLException;
 import java.util.HashSet;
 
+import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.transact.x.TransException;
 
@@ -41,7 +44,7 @@ public class DocTableMeta extends SyntityMeta {
 	 */
 	public final String stamp;
 	/** resource's creating node's device id, originally named as device */
-	public final String synoder;
+	// public final String synoder;
 	public final String fullpath;
 	/** aslo named as pname, clientname or filename previously */
 	public final String clientname;
@@ -61,11 +64,9 @@ public class DocTableMeta extends SyntityMeta {
 	public final String shareflag;
 	final HashSet<String> globalIds;
 
-	public DocTableMeta(String tbl, String pk, String conn) throws TransException {
-		super(tbl, pk, "family", conn);
+	public DocTableMeta(String tbl, String pk, String domain, String synode, String conn) throws TransException {
+		super(tbl, pk, domain, synode, conn);
 
-		// TODO let's build from sync.xml
-		this.tbl = "h_photos";
 		this.pk = pk;
 
 		clientname = "pname";
@@ -74,7 +75,6 @@ public class DocTableMeta extends SyntityMeta {
 		createDate = "pdate";
 		mime = "mime";
 		size = "filesize";
-		synoder = "device";
 		fullpath = "clientpath";
 		shareDate = "sharedate";
 		shareby = "shareby";
@@ -83,13 +83,19 @@ public class DocTableMeta extends SyntityMeta {
 		syncflag = "sync";
 		shareflag = "shareflag";
 		
-		// sharelog = new SharelogMeta(tbl, pk, conn); 
 		globalIds = new HashSet<String>() { {add(synoder);}; {add(fullpath);}; };
 	}
 
 	@Override
 	public HashSet<String> globalIds() {
 		return globalIds;
+	}
+
+	@Override
+	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
+			throws TransException, SQLException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

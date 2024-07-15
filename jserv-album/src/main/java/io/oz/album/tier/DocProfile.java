@@ -39,7 +39,7 @@ public class DocProfile implements IProfileResolver {
 	public String synodeFolder(AnsonBody reqBody, IUser usr) {
 		DocsReq req = ((DocsReq)reqBody);
 		String cname = req.subfolder;
-		if (this.mode == device)
+		if (this.mode == nondb)
 			return cname;
 		else
 			try {

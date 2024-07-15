@@ -4,6 +4,7 @@ download
 volume/Robot*
 volume/**/* my.jpg
 volume/**/ignored*.*
+volume/ody/2024_*
 volume/ody/2023_*
 volume/ody/2022_*
 volume/ody/2021_*

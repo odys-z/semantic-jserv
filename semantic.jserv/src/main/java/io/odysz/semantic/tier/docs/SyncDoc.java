@@ -66,12 +66,13 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		public static final String end = "";
 
 		public static final String deny = "⛔";
+		public static final String invalid = "⚠";
 		
 		public static String start(SynodeMode mode, String share) throws SemanticException {
-			if (SynodeMode.hub == mode)
+			if (SynodeMode.peer == mode)
 				return Share.isPub(share) ? publish : hub;
-			else if (SynodeMode.bridge == mode || SynodeMode.main == mode)
-				return priv;
+//			else if (SynodeMode.bridge == mode || SynodeMode.main == mode)
+//				return priv;
 			throw new SemanticException("Unhandled state starting: mode %s : share %s.", mode, share);
 	}
 	}

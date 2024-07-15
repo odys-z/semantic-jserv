@@ -51,7 +51,7 @@ public class DocUtils {
 			throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
 
 		Insert ins = st.insert(meta.tbl, usr)
-				.nv(meta.org(), usr.orgId())
+				.nv(meta.domain, usr.orgId())
 				.nv(meta.uri, photo.uri)
 				.nv(meta.clientname, photo.pname)
 				.nv(meta.synoder, usr.deviceId())

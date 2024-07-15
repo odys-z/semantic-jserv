@@ -22,6 +22,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
@@ -30,7 +31,6 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.PhotoMeta;
 import io.oz.album.tier.Profiles;
-import io.oz.jserv.docsync.SyncRobot;
 
 /**
  * Album user.
@@ -55,9 +55,8 @@ public class PhotoUser extends SyncRobot implements IUser {
 		userMeta = new PUserMeta("a_users");
 	}
 
-	public PhotoUser(String userid) {
-		super(userid, "Photo Robot");
-		// userMeta = (PUserMeta) meta();
+	public PhotoUser(String userid, String domain) {
+		super(userid, "Photo Robot", domain);
 	}
 
 	/**
@@ -66,8 +65,8 @@ public class PhotoUser extends SyncRobot implements IUser {
 	 * @param pswd
 	 * @param userName
 	 */
-	public PhotoUser(String userid, String pswd, String userName) {
-		super(userid, userName);
+	public PhotoUser(String userid, String pswd, String userName, String syndomain) {
+		super(userid, userName, syndomain);
 		this.pswd = pswd;
 	}
 	

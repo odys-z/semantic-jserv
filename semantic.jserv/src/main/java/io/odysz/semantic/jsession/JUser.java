@@ -31,28 +31,30 @@ import io.odysz.transact.x.TransException;
  * and is used for semantics processing like finger print, etc.</p>
  * <p>The logging connection is configured in configs.xml/k=log-connId.</p>
  * <p>A subclass can be used for handling serv without login.</p>
- *
+ * 
  * @author odys-z@github.com
  */
 public class JUser extends SemanticObject implements IUser {
 	/**
 	 * Hard coded field string of user table information.
 	 *
+	 * which will use this for data synchronizing robot's creation,
+	 * {@link io.odysz.semantic.meta.JUserMeta} 
+	 * 
 	 * @author odys-z@github.com
 	 */
 	public static class JUserMeta extends TableMeta {
 
 		public JUserMeta(String... conn) {
 			super("a_users", conn);
-			// this.tbl = "a_users";
-			this.pk = "userId";
-			this.uname = "userName";
-			this.pswd = "pswd";
-			this.iv = "encAuxiliary";
-			this.org = "orgId";
+			this.pk      = "userId";
+			this.uname   = "userName";
+			this.pswd    = "pswd";
+			this.iv      = "encAuxiliary";
+			this.org     = "orgId";
 			this.orgName = "orgName";
-			this.role = "roleId";
-			this.roleName = "roleName";
+			this.role    = "roleId";
+			this.roleName= "roleName";
 		}
 
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */

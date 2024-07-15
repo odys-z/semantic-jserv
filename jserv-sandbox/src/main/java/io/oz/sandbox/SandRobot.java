@@ -42,7 +42,7 @@ public class SandRobot extends SemanticObject implements IUser {
 		public SandRobotMeta(String tbl, String... conn) {
 			super(conn);
 
-			this.tbl = "a_users";
+			// this.tbl = "a_users";
 			pk = "userId";
 			uname = "userName";
 			pswd = "pswd";

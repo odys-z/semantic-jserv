@@ -6,7 +6,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <version>0.6.50</version>
+  <version>0.7.0-SNAPSHOT</version>
   <!-- see git branch jetty-winsrv for building jetty embedded app -->
   <packaging>war</packaging>
 
@@ -93,25 +93,27 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>1.4.39</version>
+	  <version>2.0.0-SNAPSHOT</version>
    	</dependency>
 
+	<!-- 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
 	    <version>0.1.54-SNAPSHOT</version>
 	</dependency>
+	 -->
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
-	    <version>0.4.39</version>
+	    <version>0.5.0-SNAPSHOT</version>
 	</dependency>
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>albumtier</artifactId>
-	    <version>[0.3.0,)</version>
+	    <version>0.5.0-SNAPSHOT</version>
 	    <scope>test</scope>
 	</dependency>
 

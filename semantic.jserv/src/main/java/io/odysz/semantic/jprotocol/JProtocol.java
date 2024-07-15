@@ -62,23 +62,6 @@ public class JProtocol {
 	@FunctionalInterface
 	public interface OnError { void err(MsgCode code, String msg, String ... args ); }
 
-//	/**Function interface: 
-//	 * @deprecated replaced by {@link OnOk}
-//	 *
-//	 */
-//	@FunctionalInterface
-//	public interface SCallbackV11 {
-//		/**call back function called by semantic.transact
-//		 * @param msgCode 'ok' | 'ex...'
-//		 * @param resp response message
-//		 * @throws IOException
-//		 * @throws SQLException
-//		 * @throws SemanticException
-//		 */
-//		void onCallback(MsgCode msgCode, AnsonResp resp)
-//				throws IOException, SQLException, AnsonException, SemanticException;
-//	}
-
 	public static SemanticObject err(IPort port, String code, String err) {
 		SemanticObject obj = new SemanticObject();
 		obj.put("code", code);

@@ -7,6 +7,7 @@ import static io.odysz.common.LangExt.imagesize;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.lt;
+import static io.odysz.common.LangExt.str;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -71,7 +72,7 @@ public class Exif {
 	static TikaConfig config;
 
 	/**
-	 * Initialize tike using external parser, and exiftool is verified only.
+	 * Initialize tika using external parser, and exiftool is verified only.
 	 * @since 0.6.50, an additional parser configure file is used for Windows to configure command path.
 	 * Exiftool is available on Windows. For reasons, see {@link TikaConfig#TikaConfig()}</p>
 	 * @param configPath, e.g. WEB-INF/tika.xml
@@ -115,8 +116,9 @@ public class Exif {
 				throw new SemanticException("External parser and depending commands, either ffmpeg or exiftool is required.\nRecommended install on Alpine: exiftool"); 
 			Utils.logMap(exts, "\t");
 			
-			for(Parser v : exts.values())
-				Utils.logi(((ExternalParser)v).getCommand());
+			Utils.logi("\nCommands:");
+			for(MediaType k : exts.keySet())
+				Utils.logi("%s\t%s", k.toString(), str(((ExternalParser)exts.get(k)).getCommand()));
 		}
 
 		if (verbose) {

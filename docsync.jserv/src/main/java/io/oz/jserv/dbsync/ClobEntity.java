@@ -29,7 +29,7 @@ import io.oz.jserv.docsync.SyncRobot;
 /**
  * A db entity record with a c-lob, managing pushing of c-lobs' sequence.
  * 
- * (Pulling is response and handled in file stream way)
+ * (Pulling is responsed and handled in a way of file streaming)
  * 
  * @author odys-z@github.com
  *
