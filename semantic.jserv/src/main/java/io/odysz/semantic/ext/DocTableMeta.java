@@ -38,6 +38,12 @@ public class DocTableMeta extends SyntityMeta {
 			return false;
 		}
 	}
+	
+	/**
+	 * Design memo 2.0.0: 
+	 * All assets should has an owner's ognizeion
+	 */
+	public final String org;
 
 	/** DB column for automantic timesamp. 
 	 * Sqlite:<pre>syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL</pre>
@@ -68,6 +74,8 @@ public class DocTableMeta extends SyntityMeta {
 		super(tbl, pk, domain, synode, conn);
 
 		this.pk = pk;
+		
+		org = "org";
 
 		clientname = "pname";
 		uri = "uri";
@@ -83,7 +91,10 @@ public class DocTableMeta extends SyntityMeta {
 		syncflag = "sync";
 		shareflag = "shareflag";
 		
-		globalIds = new HashSet<String>() { {add(synoder);}; {add(fullpath);}; };
+		globalIds = new HashSet<String>() {
+			{add(synoder);};
+			{add(fullpath);};
+		};
 	}
 
 	@Override

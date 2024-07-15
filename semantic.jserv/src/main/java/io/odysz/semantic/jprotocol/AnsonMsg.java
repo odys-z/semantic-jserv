@@ -80,7 +80,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		
 		/** @deprecated for MVP album v0.2.1 only */
 		album21("docs.album21");
-
+		
 		static {
 			JSONAnsonListener.registFactory(IPort.class, 
 				(s) -> {

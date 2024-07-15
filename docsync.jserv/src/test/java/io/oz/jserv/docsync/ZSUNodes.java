@@ -28,7 +28,7 @@ public class ZSUNodes {
 
 		public static class Synode {
 			public static final String nodeId = "jnode-kyiv";
-			public static final SynodeMode mode = SynodeMode.hub;
+			public static final SynodeMode mode = SynodeMode.peer;
 
 			public static final String worker = "odys-z.github.io";
 			public static final String passwd = "слава україні";
@@ -40,7 +40,7 @@ public class ZSUNodes {
 
 		public static class Synode {
 			public static final String nodeId = "jnode-kharkiv";
-			public static final SynodeMode mode = SynodeMode.hub;
+			public static final SynodeMode mode = SynodeMode.peer;
 
 			public static final String worker = "syrskyi";
 			public static final String passwd = "слава україні";

@@ -32,38 +32,19 @@ CREATE TABLE doc_devices (
  * </pre>
  * @author odys-z@github.com
  */
-public class DeviceTableMeta extends SyntityMeta {
+public class DeviceTableMeta extends SynodeMeta {
 
-	/** initial node a device is registered */
-	public final String synode0;
-	public final String devname;
 	/** owner or current user */
 	public final String owner;
 	public final String mac;
 	public final String cdate  ;
-	// public final String market;
 
 	public DeviceTableMeta(String conn) {
-		super("doc_devices", "device", "org", conn);
+		super(conn);
 
-		synode0 = "synode0";
-		devname = "devname";
 		owner   = "owner";
 		mac     = "mac";
 		cdate   = "cdate";
 	}
 
-	@Override
-	public ArrayList<Object[]> updateEntNvs(SynChangeMeta chgm, String entid, AnResultset entities,
-			AnResultset challenges) throws TransException, SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
-			throws TransException, SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

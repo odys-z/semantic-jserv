@@ -15,6 +15,7 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.syn.DBSynsactBuilder;
 import io.odysz.semantic.syn.SynEntity;
+import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -22,9 +23,6 @@ import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docsync.SynState;
-import io.oz.jserv.docsync.SyncFlag.SyncEvent;
-import io.oz.jserv.docsync.SyncRobot;
 
 /**
  * A db entity record with a c-lob, managing pushing of c-lobs' sequence.
@@ -131,7 +129,7 @@ public class ClobEntity {
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
-				.whereEq(meta.org(), usr.orgId())
+				.whereEq(meta.domain, usr.orgId())
 				.whereEq(meta.synoder, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
@@ -177,7 +175,7 @@ public class ClobEntity {
 			String conn = Connects.uri2conn(body.uri());
 			Statement<?> stmt = null;
 			if (st.exists(conn, meta.tbl, id))
-				stmt = updatent(meta, st, synmode, conn, chain, usr);
+				; //stmt = updatent(meta, st, synmode, conn, chain, usr);
 			else
 				stmt = creatent(meta, st, synmode, chain, usr);
 
@@ -199,24 +197,24 @@ public class ClobEntity {
 				.nv("", "");
 	}
 
-	// TODO static for moving to DocTablemeta?
-	static Statement<?> updatent(DocTableMeta m, DATranscxt st, SynodeMode mode, String conn,
-			Clobs chain, IUser usr) throws TransException {
-
-		SynState from = loadState(m, st, mode, chain);
-
-		SyncEvent e = SyncEvent.pushJnodend;
-		
-		return st.update(m.tbl, usr)
-				// here is where the finite state machine used
-				.nv(m.syncflag, from.to(e).toString())
-				.whereEq(m.synoder, chain.device)
-				.whereEq(m.fullpath, chain.clientpath);
-	}
-
-	static SynState loadState(DocTableMeta met, DATranscxt st, SynodeMode mod, Clobs chain) {
-		return new SynState(null, null);
-	}
+//	// TODO static for moving to DocTablemeta?
+//	static Statement<?> updatent(DocTableMeta m, DATranscxt st, SynodeMode mode, String conn,
+//			Clobs chain, IUser usr) throws TransException {
+//
+//		SynState from = loadState(m, st, mode, chain);
+//
+//		SyncEvent e = SyncEvent.pushJnodend;
+//		
+//		return st.update(m.tbl, usr)
+//				// here is where the finite state machine used
+//				.nv(m.syncflag, from.to(e).toString())
+//				.whereEq(m.synoder, chain.device)
+//				.whereEq(m.fullpath, chain.clientpath);
+//	}
+//
+//	static SynState loadState(DocTableMeta met, DATranscxt st, SynodeMode mod, Clobs chain) {
+//		return new SynState(null, null);
+//	}
 
 	DBSyncResp abortBlock(DBSyncReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {

@@ -71,9 +71,9 @@ public class DBSyncReq extends AnsonBody {
 		this.tabl = tabl;
 	}
 
-	public DBSyncReq(String uri, CleanTask cleanTask) {
-		super(null, uri);
-	}
+//	public DBSyncReq(String uri, CleanTask cleanTask) {
+//		super(null, uri);
+//	}
 
 //	public DBSyncReq openClean() {
 ////		return new TimeWindow(taskName, blocksize)

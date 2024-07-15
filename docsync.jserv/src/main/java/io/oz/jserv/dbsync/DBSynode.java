@@ -23,6 +23,7 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.meta.TableMeta;
@@ -31,7 +32,6 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.dbsync.ClobEntity.OnChainOk;
 import io.oz.jserv.dbsync.ClobEntity.OnChainStart;
 import io.oz.jserv.dbsync.DBSyncReq.A;
-import io.oz.jserv.docsync.SyncRobot;
 import io.oz.jserv.docsync.SynodeMeta;
 
 @WebServlet(description = "Cleaning tasks manager", urlPatterns = { "/sync.db" })
@@ -48,7 +48,7 @@ public class DBSynode extends ServPort<DBSyncReq> {
 			metas = new HashMap<String, TableMeta>();
 			new SynodeMeta();
 
-			new SyncRobot("TODO: synode.xml/id");
+			new SyncRobot("TODO: synode.xml/id", null, null);
 
 			verbose = Configs.getBoolean("docsync.debug");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {
@@ -62,7 +62,7 @@ public class DBSynode extends ServPort<DBSyncReq> {
 
 	public DBSynode() {
 		super(Port.dbsyncer);
-		mode = SynodeMode.hub; // FIXME, load syndoe.xml
+		mode = SynodeMode.peer;
 	}
 
 	@Override

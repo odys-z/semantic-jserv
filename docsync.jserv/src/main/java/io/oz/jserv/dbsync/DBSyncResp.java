@@ -14,13 +14,13 @@ public class DBSyncResp extends AnsonResp {
 	// Clobs clobchain;
 	SynEntity entity;
 
-	List<CleanTask> tasks;
+//	List<CleanTask> tasks;
 	
 	TimeWindow cleanWin;
 
-	public List<CleanTask> cleanTasks() {
-		return tasks;
-	}
+//	public List<CleanTask> cleanTasks() {
+//		return tasks;
+//	}
 
 	/**
 	 * <p>A page of records to be merged.</p>

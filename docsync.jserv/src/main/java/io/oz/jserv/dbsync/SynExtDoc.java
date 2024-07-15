@@ -6,9 +6,11 @@ import java.sql.SQLException;
 import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.SynEntity;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Insert;
 
 /**
  * A synchronizable entity managed by the package, also a server side
@@ -85,12 +87,18 @@ public class SynExtDoc extends SynEntity {
 	 * @throws IOException checking local file failed
 	 * @throws SemanticException device is null
 	 */
-	public SynExtDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) {
-		super(meta);
+	public SynExtDoc(IFileDescriptor d, String domain, String fullpath, DocTableMeta meta) {
+		super(meta, domain);
 		// this.synode = d.device();
 
 		// this.entMeta = meta;
 		this.recId = d.recId();
 		this.uri = d.uri();
+	}
+
+	@Override
+	public Insert insertEntity(SyntityMeta m, Insert ins) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

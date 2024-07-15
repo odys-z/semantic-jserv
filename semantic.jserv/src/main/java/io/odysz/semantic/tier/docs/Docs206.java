@@ -62,7 +62,8 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 /**
- * <p>Feed response with ranged file content.</p>
+ * <p>Helper class for handling http 206 request,
+ * feeding response with ranged file content.</p>
 
  * @since 1.4.35
  */
