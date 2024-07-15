@@ -57,7 +57,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
-public class Synclientier extends Semantier {
+public class Doclientier extends Semantier {
 	public boolean verbose = false;
 
 	protected SessionClient client;
@@ -81,7 +81,7 @@ public class Synclientier extends Semantier {
 		blocksize = s;
 	}
 	
-	public Synclientier blockSize(int size) {
+	public Doclientier blockSize(int size) {
 		blocksize = size;
 		return this;
 	}
@@ -94,7 +94,7 @@ public class Synclientier extends Semantier {
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public Synclientier(String clientUri, OnError errCtx)
+	public Doclientier(String clientUri, OnError errCtx)
 			throws SemanticException, IOException {
 		this.errCtx = errCtx;
 		this.uri = clientUri;
@@ -108,7 +108,7 @@ public class Synclientier extends Semantier {
 	 * @param root
 	 * @return this
 	 */
-	public Synclientier tempRoot(String root) {
+	public Doclientier tempRoot(String root) {
 		tempath = root; 
 		return this;
 	}
@@ -126,7 +126,7 @@ public class Synclientier extends Semantier {
 	 * @throws TransException 
 	 * @throws SsException 
 	 */
-	public Synclientier login(String workerId, String device, String pswd)
+	public Doclientier login(String workerId, String device, String pswd)
 			throws AnsonException, IOException, TransException, SsException {
 
 		client = Clients.login(workerId, pswd, device);
@@ -143,7 +143,7 @@ public class Synclientier extends Semantier {
 	 * @return this
 	 * @throws TransException 
 	 */
-	public Synclientier onLogin(SessionClient client) {
+	public Doclientier onLogin(SessionClient client) {
 		SessionInf ssinf = client.ssInfo();
 		try {
 			robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath);

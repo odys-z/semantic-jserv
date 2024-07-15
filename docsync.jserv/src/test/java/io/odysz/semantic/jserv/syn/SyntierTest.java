@@ -120,7 +120,7 @@ class SyntierTest {
 		int bsize = 72 * 1024;
 
 		// app is using Synclientier for synchronizing 
-		Synclientier apptier = new Synclientier(clientUri, errLog)
+		Doclientier apptier = new Doclientier(clientUri, errLog)
 				.tempRoot("app.kharkiv")
 				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
