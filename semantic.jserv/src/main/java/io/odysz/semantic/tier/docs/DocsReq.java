@@ -140,7 +140,7 @@ public class DocsReq extends AnsonBody {
 		subfolder = "";
 	}
 
-	protected DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
+	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 		blockSeq = -1;
 		subfolder = "";

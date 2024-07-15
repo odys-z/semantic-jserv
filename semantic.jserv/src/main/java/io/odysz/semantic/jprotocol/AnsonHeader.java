@@ -18,14 +18,15 @@ public class AnsonHeader extends Anson {
 	 * 
 	 * @since 1.4.36
 	 */
-	String token;
+	String ssToken;
+
 	/** @since 1.4.36 */
-	public String token() { return token; }
+	public String token() { return ssToken; }
 
 	public AnsonHeader(String ssid, String uid, String ssToken) {
 		this.uid = uid;
 		this.ssid = ssid;
-		this.token = ssToken;
+		this.ssToken = ssToken;
 	}
 	
 	public AnsonHeader() { }

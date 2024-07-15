@@ -183,4 +183,16 @@ public class SyncRobot extends SemanticObject implements IUser {
 		deviceId = dev;
 		return this;
 	}
+	
+	/** Session Token Knowledge
+	 * @since 0.4.38 with Semantic.jserv 1.4.38
+	 */
+	String knoledge;
+	@Override public String sessionKey() { return knoledge; }
+
+	@Override
+	public IUser sessionKey(String k) {
+		this.knoledge = k;
+		return this;
+	}
 }

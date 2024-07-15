@@ -1,5 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.eq;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.BufferedReader;
@@ -39,8 +41,10 @@ class BlockChainTest {
 		String tempDir = IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid);
 		chain = new BlockChain(tempDir, clientpath, "1911-10-10 10:10:10", "");
 
-		assertEquals("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath);
-		assertEquals("/sdcard/0/Downloads/test.3gp", chain.clientpath);
+		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
+				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
+		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.clientpath));
 
 		DocsResp resp = (DocsResp) new DocsResp()
 				.doc( (SyncDoc) new SyncDoc()
@@ -90,8 +94,10 @@ class BlockChainTest {
 		String uid = "tester";
 		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid), clientpath, "1911-10-10 10:10:10", "");
 
-		assertEquals("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath);
-		assertEquals("/sdcard/0/Downloads/test.3gp", chain.clientpath);
+		assertTrue(eq("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
+				|| eq("src\\test\\results\\tester\\temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
+		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.clientpath));
 
 		DocsResp resp = (DocsResp) new DocsResp().doc((SyncDoc) new SyncDoc().fullpath(clientpath));
 
@@ -158,8 +164,10 @@ class BlockChainTest {
 		String uid = "tester";
 		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid), clientpath, "1911-10-10 10:10:10", "");
 
-		assertEquals("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath);
-		assertEquals("/sdcard/0/Downloads/test.aborting", chain.clientpath);
+		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath)
+				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.aborting", chain.outputPath));
+		assertTrue(eq("/sdcard/0/Downloads/test.aborting", chain.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.aborting", chain.clientpath));
 
 		String b64;
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");
