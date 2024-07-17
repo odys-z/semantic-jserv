@@ -56,7 +56,7 @@ public class PhotoUser extends SyncRobot implements IUser {
 	}
 
 	public PhotoUser(String userid, String domain) {
-		super(userid, "Photo Robot", domain);
+		super(userid, "Photo Robot", domain, null);
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class PhotoUser extends SyncRobot implements IUser {
 	 * @param userName
 	 */
 	public PhotoUser(String userid, String pswd, String userName, String syndomain) {
-		super(userid, userName, syndomain);
+		super(userid, userName, syndomain, null);
 		this.pswd = pswd;
 	}
 	

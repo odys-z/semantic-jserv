@@ -26,7 +26,7 @@ public class DocUtils {
 	 * <p>Doc is created as in the folder of user/[photo.folder]/;<br>
 	 * Doc's device and family are replaced with session information.</p>
 	 * 
-	 * @since 1.4.19, this method need DB triggering timestamp ({@link DocTableMeta#stamp}).
+	 * @since 1.4.19, this method needs the DB can triggering timestamp ({@link DocTableMeta#stamp}).
 	 * <pre>
 	 * sqlite example:
 	 * syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL
@@ -42,28 +42,30 @@ public class DocUtils {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFileB64(String conn, SyncDoc photo, IUser usr, DocTableMeta meta, DATranscxt st, Update onFileCreateSql)
+	public static String createFileB64(DATranscxt st, String conn, SyncDoc photo,
+			IUser usr, DocTableMeta meta, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
 		if (LangExt.isblank(photo.fullpath()))
-			throw new SemanticException("Client path can't be null/empty.");
+			throw new SemanticException("The client path can't be null/empty.");
 		
 		if (LangExt.isblank(photo.folder(), " - - "))
-			throw new SemanticException("Folder of managed doc can not be empty - which is important for saving file. It's required for creating media file.");
+			throw new SemanticException("Folder of managed docs cannot be empty - which is required for creating media files.");
 
-		Insert ins = st.insert(meta.tbl, usr)
-				.nv(meta.domain, usr.orgId())
-				.nv(meta.uri, photo.uri)
-				.nv(meta.clientname, photo.pname)
-				.nv(meta.synoder, usr.deviceId())
-				.nv(meta.fullpath, photo.fullpath())
-				.nv(meta.createDate, photo.createDate)
-				.nv(meta.folder, photo.folder())
-				.nv(meta.shareflag, photo.shareFlag)
-				.nv(meta.shareby, photo.shareby)
-				.nv(meta.shareDate, photo.sharedate)
-				.nv(meta.size, photo.size)
-				.nv(meta.syncflag, SyncFlag.publish) // temp for MVP 0.2.1
-				;
+		Insert ins = st
+			.insert(meta.tbl, usr)
+			.nv(meta.domain, usr.orgId())
+			.nv(meta.uri, photo.uri)
+			.nv(meta.clientname, photo.pname)
+			.nv(meta.synoder, usr.deviceId())
+			.nv(meta.fullpath, photo.fullpath())
+			.nv(meta.createDate, photo.createDate)
+			.nv(meta.folder, photo.folder())
+			.nv(meta.shareflag, photo.shareFlag)
+			.nv(meta.shareby, photo.shareby)
+			.nv(meta.shareDate, photo.sharedate)
+			.nv(meta.size, photo.size)
+			.nv(meta.syncflag, SyncFlag.publish) // temp for MVP 0.2.1
+			;
 		
 		if (!LangExt.isblank(photo.mime))
 			ins.nv(meta.mime, photo.mime);

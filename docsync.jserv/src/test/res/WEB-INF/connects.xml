@@ -14,7 +14,7 @@
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
   		<dbg>true</dbg>
-  		<smtcs>semantics-sys.xml</smtcs>
+  		<smtcs>semantics-syn.xml</smtcs>
   	</c>
   	
   </t>

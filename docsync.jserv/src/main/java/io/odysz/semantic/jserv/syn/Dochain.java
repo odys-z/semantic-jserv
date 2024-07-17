@@ -225,7 +225,7 @@ public class Dochain {
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);
 
-		return DocUtils.createFileB64(conn, photo, usr, meta, st, post);
+		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
 	}
 
 	/**

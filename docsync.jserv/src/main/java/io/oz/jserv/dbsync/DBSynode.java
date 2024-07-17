@@ -48,7 +48,7 @@ public class DBSynode extends ServPort<DBSyncReq> {
 			metas = new HashMap<String, TableMeta>();
 			new SynodeMeta();
 
-			new SyncRobot("TODO: synode.xml/id", null, null);
+			new SyncRobot("TODO: synode.xml/id", null, null, null);
 
 			verbose = Configs.getBoolean("docsync.debug");
 		} catch (SemanticException | SQLException | SAXException | IOException e) {

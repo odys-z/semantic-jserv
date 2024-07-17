@@ -770,7 +770,7 @@ public class Albums extends ServPort<AlbumReq> {
 		if (isblank(photo.shareby))
 			photo.share(usr.uid(), Share.priv);
 
-		String pid = DocUtils.createFileB64(conn, photo, usr, meta, st, null);
+		String pid = DocUtils.createFileB64(st, conn, photo, usr, meta, null);
 
 		return pid;
 	}

@@ -146,7 +146,7 @@ public class Doclientier extends Semantier {
 	public Doclientier onLogin(SessionClient client) {
 		SessionInf ssinf = client.ssInfo();
 		try {
-			robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath);
+			robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath, ssinf.device);
 			tempath = FilenameUtils.concat(tempath,
 					String.format("io.oz.sync.%s.%s", ssinf.device, ssinf.uid()));
 			
@@ -177,36 +177,35 @@ public class Doclientier extends Semantier {
 	}
 	
 	/**
-	 * Synchronizing files to hub using block chain, accessing port {@link Port#docsync}.
+	 * Synchronizing files to a {@link Syntier} using block chain, accessing port {@link Port#docsync}.
 	 * This method will use meta to create entity object of doc.
 	 * @param meta for creating {@link SyncDoc} object 
 	 * @param rs tasks, rows should be limited
-	 * @param workerId 
 	 * @param onProc
 	 * @return Sync response list
 	 * @throws TransException 
 	 * @throws AnsonException 
 	 * @throws IOException 
 	 */
-	List<DocsResp> syncUp(DocTableMeta meta, AnResultset rs, String workerId, OnProcess onProc)
+	List<DocsResp> syncUp(DocTableMeta meta, AnResultset rs, OnProcess onProc)
 			throws TransException, AnsonException, IOException {
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		try {
 			while (rs.next())
 				videos.add(new SyncDoc(rs, meta));
 
-			return syncUp(meta.tbl, videos, workerId, onProc);
+			return syncUp(meta.tbl, videos, onProc);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
 
-	public List<DocsResp> syncUp(String tabl, List<? extends SyncDoc> videos, String workerId,
+	public List<DocsResp> syncUp(String tabl, List<? extends SyncDoc> videos,
 			OnProcess onProc, OnOk... docOk)
 			throws TransException, AnsonException, IOException {
 		SessionInf photoUser = client.ssInfo();
-		photoUser.device = workerId;
+		// photoUser.device = workerId;
 
 		return pushBlocks(
 				tabl, videos, onProc,

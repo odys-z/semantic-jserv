@@ -116,7 +116,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 			verbose = Configs.getBoolean("docsync.debug");
 
 			synodesMeta = new SynodeMeta(synconn);
-			anonymous = new SyncRobot("Robot Syncer", synconn, synconn);
+			anonymous = new SyncRobot("Robot Syncer", synconn, synconn, synconn);
 		} catch (SQLException | SAXException | IOException | TransException e) {
 			e.printStackTrace();
 		}
@@ -281,7 +281,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 				mode = SynodeMode.peer;
 //			else if (Docsyncer.privnode.equals(cfg))
 //				mode = SynodeMode.bridge;
-			else mode = SynodeMode.child;
+			else mode = SynodeMode.leaf;
 		
 			/*
 			schedualed = scheduler.scheduleAtFixedRate(new SyncWorker(

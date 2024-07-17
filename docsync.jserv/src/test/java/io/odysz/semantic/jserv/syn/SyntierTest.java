@@ -1,5 +1,7 @@
 package io.odysz.semantic.jserv.syn;
 
+import static io.odysz.semantic.syn.ExessionAct.close;
+import static io.odysz.semantic.syn.ExessionAct.ready;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
@@ -17,7 +21,9 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
+import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
+import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -26,12 +32,15 @@ import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.jprotocol.AnsonResp;
-import io.odysz.semantic.jprotocol.JProtocol.OnOk;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
+import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
+import io.oz.album.tier.PhotoRec;
 import io.oz.jserv.docsync.ZSUNodes.AnDevice;
 import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
 
@@ -46,6 +55,7 @@ class SyntierTest {
 	public static final String webRoot = "./src/test/res/WEB-INF";
 	public static final String volumeDir = "./src/test/res/volume";
 
+	static final String uri64 = "iVBORw0KGgoAAAANSUhEUgAAADwAAAAoCAIAAAAt2Q6oAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AYSCBkDT4nw4QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABjSURBVFjD7dXBCYAwEATAO7FE27QNu7GFxA424EN8zH6XwHAEtus4K2SO2M7Udsd2e93Gl38NNDQ0NPS/sy82LydvXs5ia4fvAQ0NDQ39Zfq+XBoaGhoaGhoaGhoaGhq6qqoeVmUNAc7sDO0AAAAASUVORK5CYII=";
 
 	static String conn;
 	static ErrorCtx errLog;
@@ -54,14 +64,21 @@ class SyntierTest {
 	static DocTableMeta docm;
 	
 	static String passwd = "abc";
-	static String domain   = "zsu";
+	static String domain = "zsu";
+	static DATranscxt st;
 	
 	static final int X = 0;
 	static final int Y = 1;
 	static final int Z = 2;
 	static final int W = 3;
 	
-	static Syntier[] tiers = new Syntier[4];
+	static Syntier[] syntiers  = new Syntier[4];
+	static HashMap<String, String[]> jservcons;
+	
+	
+	static final int U = 0;
+	static final int V = 1;
+	static Doclientier[] doctiers = new Doclientier[2];
 	
 	static {
 		try {
@@ -79,8 +96,8 @@ class SyntierTest {
 			AnsonMsg.understandPorts(Port.docsync);
 			AnSession.init(defltSt);
 			
-			for (int tx = 0; tx < tiers.length; tx++) {
-				tiers[tx] = new Syntier()
+			for (int tx = 0; tx < syntiers.length; tx++) {
+				syntiers[tx] = new Syntier()
 						.regist(docm);
 			}
 
@@ -90,32 +107,126 @@ class SyntierTest {
 					fail(msg);
 				}
 			};
+
+			st = new DATranscxt(null);
 		} catch (TransException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	@Test
-	void testJoin() {
-		Syntier x = tiers[X];
+	void testSyntiers() throws Exception {
+		int no = 0;
+		setupeers(++no);
+		// uploadocs(++no);
+		savephotos(++no);
+		syncpeers(++no);
+	}
 
-		Syntier y = tiers[Y].joinpeer(tiers[X].jserv,
-				tiers[Y].synode, passwd);
+	void setupeers(int no) {
+		Syntier x = syntiers[X].start(SynodeMode.peer);
+
+		Syntier y = syntiers[Y]
+				.start(SynodeMode.peer)
+				.joinpeer(jservcons.get(x.synode)[Syntier.jservx], syntiers[Y].synode, passwd);
 
 		assertEquals(x.nyquence(domain, y).n, y.n0(domain).n);
 
-		Syntier z = tiers[Z].joinpeer( x.jserv,
-				tiers[Z].synode, passwd);
+		Syntier z = syntiers[Z]
+				.start(SynodeMode.peer)
+				.joinpeer(jservcons.get(x.synode)[Syntier.jservx], syntiers[Z].synode, passwd);
 		
 		assertEquals(x.nyquence(domain, z).n, z.n0(domain).n);
 	}
+	
+	void savephotos(int no) throws SQLException, SAXException, IOException, TransException {
+		int sect = 0;
+		Utils.logrst("Insert pohotos", no, ++sect);
+		
+		String[] pids = new String[] {
+				createPhoto(X),
+				createPhoto(Y)
+			};
+		
+		Utils.logrst(pids, no, ++sect);
+	}
 
-	@Test
-	void testPhotos() {
-		if (tiers[X].nyquence(domain).size() <= 1)
-			testJoin();
+	private String createPhoto(int synx) throws IOException, TransException, SQLException {
+		PhotoRec photo = new PhotoRec();
+
+		photo.createDate = DateFormat.format(new Date());
+		photo.pname = "photo-" + synx;
+		photo.fullpath(syntiers[0].synode + ":/sdcard/" + photo.pname);
+		photo.uri = uri64; // accepting new value
+		IUser robot = syntiers[0].trb(domain).synrobot();
+
+		return DocUtils.createFileB64(st, conn, photo, robot, docm, null);
+	}
+
+	/**
+	 * @deprecated needs to setup jserv
+	 * @param no
+	 * @throws AnsonException
+	 * @throws TransException
+	 * @throws IOException
+	 * @throws SsException
+	 * @throws InterruptedException
+	 */
+	void uploadocs(int no) throws AnsonException, TransException, IOException, SsException, InterruptedException {
+		Doclientier u = doctiers[U];
+		u.login(u.robot.uid(), u.robot.deviceId(), passwd);
+		Doclientier v = doctiers[V];
+		v.login(v.robot.uid(), v.robot.deviceId(), passwd);
+		
+		boolean[] green = new boolean[2];
+		List<SyncDoc> p = null;
+		u.syncUp(docm.tbl, p, null, (resp) -> {
+			green[U] = true;
+		});
+
+		v.syncUp(docm.tbl, p, null, (resp) -> {
+			green[V] = true;
+		});
+		
+		await10s(green);
 	}
 	
+	void syncpeers(int no) throws SQLException, TransException, SAXException, IOException {
+		Syntier x = syntiers[X];
+		Syntier y = syntiers[Y];
+		
+		syncpeer(x, y);
+
+		assertEquals(1, x.trb(domain).entities(docm));
+
+		Syntier z = syntiers[Z];
+		syncpeer(x, z);
+
+		assertEquals(2, x.trb(domain).entities(docm));
+		assertEquals(2, z.trb(domain).entities(docm));
+
+		syncpeer(x, y);
+		assertEquals(2, y.trb(domain).entities(docm));
+	}
+	
+	void syncpeer(Syntier s, Syntier c) throws SQLException, TransException, SAXException, IOException {
+		String sconn = jservcons.get(s.synode)[Syntier.myconx];
+		SyncReq req  = c.syninit(s.synode,
+				jservcons.get(s.synode)[Syntier.jservx],
+				sconn, domain);
+
+		String cconn = jservcons.get(c.synode)[Syntier.myconx];
+		SyncResp rep = s.onsyninit(c.synode, cconn, req);
+
+		while (rep.synact() != close && req.synact() != ready) {
+			req = c.syncdb(domain, s.synode, rep);
+			rep = c.onsyncdb(domain, c.synode, req);
+		}
+		
+		req = c.synclose(domain, s.synode, rep);
+		c.onsynclose(domain, s.synode, req);
+	}
+
 	static String videoUpByApp(DocTableMeta meta) throws Exception {
 		int bsize = 72 * 1024;
 
@@ -131,13 +242,7 @@ class SyntierTest {
 					.share(apptier.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);
-		DocsResp resp = apptier.synInsertDoc(meta.tbl, doc, new OnOk() {
-			@Override
-			public void ok(AnsonResp resp)
-					throws IOException, AnsonException {
-
-			}
-		});
+		DocsResp resp = apptier.synInsertDoc(meta.tbl, doc, (r) -> { });
 
 		assertNotNull(resp);
 
@@ -151,6 +256,17 @@ class SyntierTest {
 		assertEquals(AnDevice.localFile, rp.doc.fullpath());
 
 		return AnDevice.localFile;
+	}
+
+	static void await10s(boolean[] green) throws InterruptedException {
+		int wait = 0;
+		while (wait++ < 100) {
+			for (boolean g : green)
+				if (!g) Thread.sleep(100);
+		}
+		
+		for (boolean g : green)
+			if (!g) fail("Green light");
 	}
 
 }
