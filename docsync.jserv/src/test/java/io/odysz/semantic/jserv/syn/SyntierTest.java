@@ -1,5 +1,6 @@
 package io.odysz.semantic.jserv.syn;
 
+import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +36,14 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
+import io.odysz.semantic.meta.PeersMeta;
+import io.odysz.semantic.meta.SynChangeMeta;
+import io.odysz.semantic.meta.SynSessionMeta;
+import io.odysz.semantic.meta.SynSubsMeta;
+import io.odysz.semantic.meta.SynchangeBuffMeta;
+import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.syn.T_PhotoMeta;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
@@ -53,11 +62,12 @@ import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
 class SyntierTest {
 	public static final String clientUri = "/jnode";
 	public static final String webRoot = "./src/test/res/WEB-INF";
+	public static final String testDir = "./src/test/res/";
 	public static final String volumeDir = "./src/test/res/volume";
 
 	static final String uri64 = "iVBORw0KGgoAAAANSUhEUgAAADwAAAAoCAIAAAAt2Q6oAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AYSCBkDT4nw4QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABjSURBVFjD7dXBCYAwEATAO7FE27QNu7GFxA424EN8zH6XwHAEtus4K2SO2M7Udsd2e93Gl38NNDQ0NPS/sy82LydvXs5ia4fvAQ0NDQ39Zfq+XBoaGhoaGhoaGhoaGhq6qqoeVmUNAc7sDO0AAAAASUVORK5CYII=";
 
-	static String conn;
+	// static String conn;
 	static ErrorCtx errLog;
 
 	static DATranscxt defltSt;
@@ -79,11 +89,15 @@ class SyntierTest {
 	static final int U = 0;
 	static final int V = 1;
 	static Doclientier[] doctiers = new Doclientier[2];
+
+	private static SynChangeMeta chm;
+	private static SynSubsMeta sbm;
+	private static SynchangeBuffMeta xbm;
+	private static SynSessionMeta ssm;
+	private static PeersMeta prm;
 	
 	static {
 		try {
-			conn = "main-sqlite";
-
 			Path currentRelativePath = Paths.get("");
 			String p = currentRelativePath.toAbsolutePath().toString();
 			System.setProperty("VOLUME_HOME", FilenameUtils.concat(p, volumeDir));
@@ -96,9 +110,37 @@ class SyntierTest {
 			AnsonMsg.understandPorts(Port.docsync);
 			AnSession.init(defltSt);
 			
+			chm = new SynChangeMeta();
+			sbm = new SynSubsMeta(chm);
+			xbm = new SynchangeBuffMeta(chm);
+			ssm = new SynSessionMeta();
+			prm = new PeersMeta();
+			
+			jservcons = new HashMap<String, String[]>();
 			for (int tx = 0; tx < syntiers.length; tx++) {
-				syntiers[tx] = new Syntier()
-						.regist(docm);
+				String conn = "no-jserv-db.0" + tx;
+
+				SynodeMeta snm = new SynodeMeta(conn);
+				docm = new T_PhotoMeta(conn).replace();
+				setupSqliTables(conn, snm, chm, sbm, xbm, prm, ssm, docm);
+				
+				syntiers[tx] = new Syntier().regist(docm);
+				jservcons.put(syntiers[tx].synode, new String[] {
+					"http://127.0.0.1:809" + tx + "/docsync.jserv",
+					conn
+				});
+				
+				ArrayList<String> sqls = new ArrayList<String>();
+				sqls.add("delete from oz_autoseq;");
+				sqls.add(Utils.loadTxt("../oz_autoseq.sql"));
+				sqls.add(String.format( "update oz_autoseq set seq = %d where sid = '%s.%s'",
+										(long) Math.pow(64, tx+1), docm.tbl, docm.pk));
+
+				sqls.add(String.format("delete from %s", snm.tbl));
+
+				// sqls.add(String.format("delete from %s", docm.tbl));
+
+				Connects.commit(conn, DATranscxt.dummyUser(), sqls);
 			}
 
 			errLog = new ErrorCtx() {
@@ -160,6 +202,7 @@ class SyntierTest {
 		photo.uri = uri64; // accepting new value
 		IUser robot = syntiers[0].trb(domain).synrobot();
 
+		String conn = jservcons.get(syntiers[synx].synode)[Syntier.myconx];
 		return DocUtils.createFileB64(st, conn, photo, robot, docm, null);
 	}
 
