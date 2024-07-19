@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.syn;
+package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.*;
 
@@ -14,12 +14,8 @@ public class SyncReq extends AnsonBody {
 		return this;
 	}
 
-//	protected SyncReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
-//		super(parent, uri);
-//	}
-
-	public SyncReq(AnsonMsg<? extends AnsonBody> parent, String domain, String synode) {
-		super(parent, "/syn/" + domain + "/" + synode);
+	public SyncReq(AnsonMsg<? extends AnsonBody> parent, String domain) {
+		super(parent, "/syn/" + domain);
 	}
 
 	public int synact() {

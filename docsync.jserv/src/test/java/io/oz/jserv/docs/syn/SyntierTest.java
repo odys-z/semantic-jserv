@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.syn;
+package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.syn.ExessionAct.close;
@@ -35,7 +35,8 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.jsession.AnSession;
+import io.odysz.semantic.meta.AutoSeqMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.PeersMeta;
 import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynSessionMeta;
@@ -43,13 +44,16 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantic.syn.T_PhotoMeta;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.PhotoRec;
+import io.oz.jserv.docs.syn.Doclientier;
+import io.oz.jserv.docs.syn.SyncReq;
+import io.oz.jserv.docs.syn.SyncResp;
+import io.oz.jserv.docs.syn.Syntier;
 import io.oz.jserv.docsync.ZSUNodes.AnDevice;
 import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
 
@@ -70,8 +74,8 @@ class SyntierTest {
 	// static String conn;
 	static ErrorCtx errLog;
 
-	static DATranscxt defltSt;
-	static DocTableMeta docm;
+	// static DATranscxt defltSt;
+	static T_PhotoMeta docm;
 	
 	static String passwd = "abc";
 	static String domain = "zsu";
@@ -90,6 +94,7 @@ class SyntierTest {
 	static final int V = 1;
 	static Doclientier[] doctiers = new Doclientier[2];
 
+	private static AutoSeqMeta aum;
 	private static SynChangeMeta chm;
 	private static SynSubsMeta sbm;
 	private static SynchangeBuffMeta xbm;
@@ -106,9 +111,12 @@ class SyntierTest {
 			String wwwinf = FilenameUtils.concat(p, webRoot);
 			Configs.init(wwwinf);
 			Connects.init(wwwinf);
-			defltSt = new DATranscxt(Connects.defltConn());
+			// defltSt = new DATranscxt(Connects.defltConn());
+			// defltSt = new DBSyntableBuilder(Connects.defltConn(), "n-a", SynodeMode.peer);
 			AnsonMsg.understandPorts(Port.docsync);
-			AnSession.init(defltSt);
+			// AnSession.init(defltSt);
+
+			aum = new AutoSeqMeta();
 			
 			chm = new SynChangeMeta();
 			sbm = new SynSubsMeta(chm);
@@ -118,27 +126,25 @@ class SyntierTest {
 			
 			jservcons = new HashMap<String, String[]>();
 			for (int tx = 0; tx < syntiers.length; tx++) {
-				String conn = "no-jserv-db.0" + tx;
+				String conn = "no-jserv.0" + tx;
 
 				SynodeMeta snm = new SynodeMeta(conn);
-				docm = new T_PhotoMeta(conn).replace();
-				setupSqliTables(conn, snm, chm, sbm, xbm, prm, ssm, docm);
+				docm = new T_PhotoMeta(conn); // .replace();
+				setupSqliTables(conn, aum, snm, chm, sbm, xbm, prm, ssm, docm);
 				
-				syntiers[tx] = new Syntier().regist(docm);
+				syntiers[tx] = new Syntier("syn-" + tx); //.regist(docm);
 				jservcons.put(syntiers[tx].synode, new String[] {
 					"http://127.0.0.1:809" + tx + "/docsync.jserv",
 					conn
 				});
 				
 				ArrayList<String> sqls = new ArrayList<String>();
-				sqls.add("delete from oz_autoseq;");
-				sqls.add(Utils.loadTxt("../oz_autoseq.sql"));
+				sqls.add(String.format("delete from %s;", aum.tbl));
+				sqls.add(Utils.loadTxt("./oz_autoseq.sql"));
 				sqls.add(String.format( "update oz_autoseq set seq = %d where sid = '%s.%s'",
 										(long) Math.pow(64, tx+1), docm.tbl, docm.pk));
 
 				sqls.add(String.format("delete from %s", snm.tbl));
-
-				// sqls.add(String.format("delete from %s", docm.tbl));
 
 				Connects.commit(conn, DATranscxt.dummyUser(), sqls);
 			}
@@ -165,19 +171,32 @@ class SyntierTest {
 		syncpeers(++no);
 	}
 
-	void setupeers(int no) {
-		Syntier x = syntiers[X].start(SynodeMode.peer);
+	void setupeers(int no) throws SQLException, TransException, SAXException, IOException {
+		Syntier x = syntiers[X].start(domain, SynodeMode.peer);
 
-		Syntier y = syntiers[Y]
-				.start(SynodeMode.peer)
-				.joinpeer(jservcons.get(x.synode)[Syntier.jservx], syntiers[Y].synode, passwd);
+		Syntier y = syntiers[Y].start(domain, SynodeMode.peer);
+		SyncReq req = y.joinpeer(
+				jservcons.get(x.synode)[Syntier.jservx],
+				jservcons.get(y.synode)[Syntier.myconx],
+				x.synode, passwd);
+		
+		SyncResp rep = x.onjoin(req, jservcons.get(x.synode)[Syntier.myconx]);
+
+		y.closejoin(rep);
 
 		assertEquals(x.nyquence(domain, y).n, y.n0(domain).n);
 
-		Syntier z = syntiers[Z]
-				.start(SynodeMode.peer)
-				.joinpeer(jservcons.get(x.synode)[Syntier.jservx], syntiers[Z].synode, passwd);
+		//
+		Syntier z = syntiers[Z].start(domain, SynodeMode.peer);
+		req = z.joinpeer(
+				jservcons.get(x.synode)[Syntier.jservx],
+				jservcons.get(z.synode)[Syntier.myconx],
+				x.synode, passwd);
 		
+		rep = x.onjoin(req, jservcons.get(x.synode)[Syntier.myconx]);
+
+		z.closejoin(rep);
+
 		assertEquals(x.nyquence(domain, z).n, z.n0(domain).n);
 	}
 	
@@ -203,7 +222,7 @@ class SyntierTest {
 		IUser robot = syntiers[0].trb(domain).synrobot();
 
 		String conn = jservcons.get(syntiers[synx].synode)[Syntier.myconx];
-		return DocUtils.createFileB64(st, conn, photo, robot, docm, null);
+		return DocUtils.createFileB64(st, conn, photo, robot, (ExpDocTableMeta)docm, null);
 	}
 
 	/**

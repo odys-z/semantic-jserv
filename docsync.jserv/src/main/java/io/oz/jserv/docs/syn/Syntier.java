@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.syn;
+package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.*;
 
@@ -35,6 +35,9 @@ public class Syntier extends ServPort<SyncReq> {
 
 	String synode;
 
+	/** The domain id for client before joined a domain. */
+	public static final String domain0 = "io.oz.jserv.syn.init";
+
 	HashMap<String, HashMap<String, ExessionPersist>> domains;
 	
 	/**
@@ -70,18 +73,61 @@ public class Syntier extends ServPort<SyncReq> {
 		domains.get(domain).put(peer, cp);
 	}
 
-	public Syntier(SyntityMeta ... meta) {
+	private ExessionPersist delession(String dom, String peer) {
+		if (domains != null && domains.containsKey(dom))
+			return domains.get(dom).remove(peer);
+		return null;
+	}
+
+	public Syntier(String myid, SyntityMeta ... meta) {
 		super(Port.dbsyncer);
+		synode = myid;
 	}
 
-	public Syntier joinpeer(String peerserv, String synode, String passwd) {
+	public SyncReq joinpeer(String peerserv, String myconn, String admin, String passwd)
+			throws SQLException, TransException, SAXException, IOException {
 
-		return this;
+		DBSyntableBuilder cltb = new DBSyntableBuilder(myconn, synode, SynodeMode.peer)
+				.loadNyquvect0(myconn);
+
+		// sign up as a new domain
+		ExessionPersist cltp = new ExessionPersist(cltb, admin);
+
+		ExchangeBlock req  = cltb.domainSignup(cltp, admin);
+
+//		// admin on sign up request
+//		// applicant
+//		ExchangeBlock ack  = cltb.initDomain(cltp, admin, resp);
+//		// applicant
+//		HashMap<String, Nyquence> closenv = cltb.closeJoining(cltp, Nyquence.clone(admb.nyquvect));
+//		admb.closeJoining(admp, closenv);
+
+		synssion(domain0, admin, cltp);
+		return new SyncReq(null, null).exblock(req);
 	}
 
-	public Syntier regist(SyntityMeta meta) {
-		return this;
+	public SyncResp onjoin(SyncReq req, String myconn)
+			throws SQLException, TransException, SAXException, IOException {
+		DBSyntableBuilder admb = new DBSyntableBuilder(myconn, synode, SynodeMode.peer)
+				.loadNyquvect0(myconn);
+
+		ExessionPersist admp = new ExessionPersist(admb, req.exblock.srcnode);
+		ExchangeBlock resp = admb.addMyChild(admp, req.exblock, "TODO org");
+
+		return new SyncResp().exblock(resp);
 	}
+
+	public SyncResp closejoin(SyncResp rep) throws TransException, SQLException {
+		String admin = rep.exblock.srcnode;
+		ExessionPersist cltp = synssion(domain0, admin);
+		ExchangeBlock ack  = cltp.trb.initDomain(cltp, admin, rep.exblock);
+		delession(domain0, admin);
+		return new SyncResp().exblock(ack);
+	}
+
+//	public Syntier regist(SyntityMeta meta) {
+//		return this;
+//	}
 
 	public Nyquence nyquence(String domain, Syntier y) {
 		Map<String, Nyquence> nv = nyquence(domain);
@@ -103,7 +149,12 @@ public class Syntier extends ServPort<SyncReq> {
 		return synssion(domain, synode).trb.n0();
 	}
 
-	public Syntier start(SynodeMode peer) {
+	/**
+	 * Start this node running on {@code domain}.
+	 * @param mod
+	 * @return
+	 */
+	public Syntier start(String domain, SynodeMode mod) {
 		return this;
 	}
 
@@ -116,7 +167,7 @@ public class Syntier extends ServPort<SyncReq> {
 		synssion(domain, peer, xp);
 		ExchangeBlock b = b0.initExchange(xp, peer);
 
-		return new SyncReq(null, domain, synode)
+		return new SyncReq(null, domain)
 				.exblock(b);
 	}
 
@@ -136,7 +187,7 @@ public class Syntier extends ServPort<SyncReq> {
 		ExchangeBlock reqb = synssion(domain, peer)
 				.nextExchange(rep.exblock);
 
-		SyncReq req = new SyncReq(null, domain, synode)
+		SyncReq req = new SyncReq(null, domain)
 				.exblock(reqb);
 		return req;
 	}
@@ -153,7 +204,7 @@ public class Syntier extends ServPort<SyncReq> {
 			throws TransException, SQLException {
 		ExessionPersist xp = synssion(domain, peer);
 		ExchangeBlock b = xp.trb.closexchange(xp, rep.exblock);
-		return new SyncReq(null, domain, synode).exblock(b);
+		return new SyncReq(null, domain).exblock(b);
 	}
 
 	public SyncResp onsynclose(String domain, String peer, SyncReq req)

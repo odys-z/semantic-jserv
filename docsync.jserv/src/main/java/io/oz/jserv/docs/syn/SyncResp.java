@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.syn;
+package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.*;
 

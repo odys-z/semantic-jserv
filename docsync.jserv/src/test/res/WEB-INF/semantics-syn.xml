@@ -38,7 +38,7 @@
 		<smtc>syn-change</smtc>
 		<tabl>h_photos</tabl>
 		<pk>pid</pk>
-		<args></args>
+		<args>io.oz.jserv.docs.syn.T_PhotoMeta</args>
     </s>
 
   </t>

@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.syn;
+package io.oz.jserv.docs.syn;
 
 import java.io.IOException;
 import java.nio.file.Files;

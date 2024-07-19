@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.syn;
+package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.isblank;
@@ -32,7 +32,6 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
-import io.odysz.semantic.jserv.syn.Dochain.OnChainOk;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SyncRobot;
@@ -55,6 +54,7 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.Resulving;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.Dochain.OnChainOk;
 
 /**
  * Branch for MVP policy, semantic-* v1.5.0, album.and 0.2.1,
