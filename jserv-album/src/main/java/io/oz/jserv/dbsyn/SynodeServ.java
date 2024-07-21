@@ -42,9 +42,7 @@ public class SynodeServ {
 			throw new ExchangeException(Exchanging.init, null, "The domain value is not configured.");
 		
 
-		trb = new DBSyntableBuilder(conn, node,
-				// mod == SynodeMode.peer ? DBSyntableBuilder.peermode : DBSyntableBuilder.leafmode)
-				mod)
+		trb = new DBSyntableBuilder("omni", conn, node, mod)
 			  .loadNyquvect0(conn);
 		
 	}

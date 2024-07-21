@@ -43,6 +43,7 @@ import io.odysz.semantic.meta.SynSessionMeta;
 import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.syn.DBSynsactBuilder.SynmanticsMap;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -50,10 +51,6 @@ import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.PhotoRec;
-import io.oz.jserv.docs.syn.Doclientier;
-import io.oz.jserv.docs.syn.SyncReq;
-import io.oz.jserv.docs.syn.SyncResp;
-import io.oz.jserv.docs.syn.Syntier;
 import io.oz.jserv.docsync.ZSUNodes.AnDevice;
 import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
 
@@ -78,7 +75,7 @@ class SynoderTest {
 	static T_PhotoMeta docm;
 	
 	static String passwd = "abc";
-	static String domain = "zsu";
+	static String zsu = "zsu";
 	static String ura = "URA";
 	static DATranscxt st;
 	
@@ -93,6 +90,7 @@ class SynoderTest {
 	
 	static final int U = 0;
 	static final int V = 1;
+	private static final int _8080 = 8090;
 	static Doclientier[] doctiers = new Doclientier[2];
 
 	private static AutoSeqMeta aum;
@@ -113,7 +111,6 @@ class SynoderTest {
 			Configs.init(wwwinf);
 			Connects.init(wwwinf);
 			// defltSt = new DATranscxt(Connects.defltConn());
-			// defltSt = new DBSyntableBuilder(Connects.defltConn(), "n-a", SynodeMode.peer);
 			AnsonMsg.understandPorts(Port.docsync);
 			// AnSession.init(defltSt);
 
@@ -135,7 +132,7 @@ class SynoderTest {
 				
 				syntiers[tx] = new Syntier("syn-" + tx); // .born(conn, 0, 0, ura);
 				jservcons.put(syntiers[tx].synode, new String[] {
-					"http://127.0.0.1:809" + tx + "/docsync.jserv",
+					"http://127.0.0.1:" + (_8080 + tx) + "/docsync.jserv",
 					conn
 				});
 				
@@ -148,6 +145,10 @@ class SynoderTest {
 				sqls.add(String.format("delete from %s", snm.tbl));
 
 				Connects.commit(conn, DATranscxt.dummyUser(), sqls);
+
+				String synode = syntiers[tx].synode;
+				DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
+					(c) -> new SynmanticsMap(synode, c));
 			}
 
 			errLog = new ErrorCtx() {
@@ -156,8 +157,6 @@ class SynoderTest {
 					fail(msg);
 				}
 			};
-
-			st = new DATranscxt(null);
 		} catch (TransException | SQLException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
@@ -173,32 +172,34 @@ class SynoderTest {
 	}
 
 	void setupeers(int no) throws SQLException, TransException, SAXException, IOException {
-		Synoder x = syntiers[X].start(domain, SynodeMode.peer);
+		Syntier xtier = syntiers[X];
+		Synoder x = xtier
+				.start(ura, zsu, jservcons.get(xtier.synode)[Syntier.myconx], SynodeMode.peer);
 
-		Synoder y = syntiers[Y].start(domain, SynodeMode.peer);
-		SyncReq req = y.joinpeer(domain,
+		Syntier ytier = syntiers[Y];
+		Synoder y = syntiers[Y].start(ura, zsu,
+				jservcons.get(ytier.synode)[Syntier.myconx], SynodeMode.peer);
+		SyncReq req = y.joinpeer(
 				jservcons.get(x.synode)[Syntier.jservx],
-				jservcons.get(y.synode)[Syntier.myconx],
 				x.synode, passwd);
 		
-		SyncResp rep = x.onjoin(req, jservcons.get(x.synode)[Syntier.myconx]);
+		SyncResp rep = x.onjoin(req);
 
-		y.closejoin(domain, rep);
-
-		assertEquals(x.nyquence(domain, y.synode).n, y.n0(domain).n);
+		assertEquals(x.nyquence(y.synode).n, y.n0(x.synode).n);
+		y.closejoin(rep);
 
 		//
-		Synoder z = syntiers[Z].start(domain, SynodeMode.peer);
-		req = z.joinpeer(domain,
+		Syntier ztier = syntiers[Z];
+		Synoder z = syntiers[Z]
+				.start(ura, zsu, jservcons.get(ztier.synode)[Syntier.myconx], SynodeMode.peer);
+		req = z.joinpeer(
 				jservcons.get(x.synode)[Syntier.jservx],
-				jservcons.get(z.synode)[Syntier.myconx],
 				x.synode, passwd);
 		
-		rep = x.onjoin(req, jservcons.get(x.synode)[Syntier.myconx]);
+		rep = x.onjoin(req);
 
-		z.closejoin(domain, rep);
-
-		assertEquals(x.nyquence(domain, z.synode).n, z.n0(domain).n);
+		assertEquals(x.nyquence(z.synode).n, z.n0(x.synode).n);
+		z.closejoin(rep);
 	}
 	
 	void savephotos(int no) throws SQLException, SAXException, IOException, TransException {
@@ -220,7 +221,7 @@ class SynoderTest {
 		photo.pname = "photo-" + synx;
 		photo.fullpath(syntiers[0].synode + ":/sdcard/" + photo.pname);
 		photo.uri = uri64; // accepting new value
-		IUser robot = syntiers[0].synoder.trb(domain).synrobot();
+		IUser robot = syntiers[0].synoder(zsu).trb().synrobot();
 
 		String conn = jservcons.get(syntiers[synx].synode)[Syntier.myconx];
 		return DocUtils.createFileB64(st, conn, photo, robot, (ExpDocTableMeta)docm, null);
@@ -255,39 +256,39 @@ class SynoderTest {
 	}
 	
 	void syncpeers(int no) throws SQLException, TransException, SAXException, IOException {
-		Synoder x = syntiers[X].synoder;
-		Synoder y = syntiers[Y].synoder;
+		Synoder x = syntiers[X].synoder(zsu);
+		Synoder y = syntiers[Y].synoder(zsu);
 		
 		syncpeer(x, y);
 
-		assertEquals(1, x.trb(domain).entities(docm));
+		assertEquals(1, x.trb().entities(docm));
 
-		Synoder z = syntiers[Z].synoder;
+		Synoder z = syntiers[Z].synoder(zsu);
 		syncpeer(x, z);
 
-		assertEquals(2, x.trb(domain).entities(docm));
-		assertEquals(2, z.trb(domain).entities(docm));
+		assertEquals(2, x.trb().entities(docm));
+		assertEquals(2, z.trb().entities(docm));
 
 		syncpeer(x, y);
-		assertEquals(2, y.trb(domain).entities(docm));
+		assertEquals(2, y.trb().entities(docm));
 	}
 	
 	void syncpeer(Synoder srv, Synoder clt) throws SQLException, TransException, SAXException, IOException {
 		String sconn = jservcons.get(srv.synode)[Syntier.myconx];
 		SyncReq req  = clt.syninit(srv.synode,
 				jservcons.get(srv.synode)[Syntier.jservx],
-				sconn, domain);
+				sconn, zsu);
 
 		String cconn = jservcons.get(clt.synode)[Syntier.myconx];
 		SyncResp rep = srv.onsyninit(clt.synode, cconn, req);
 
 		while (rep.synact() != close && req.synact() != ready) {
-			req = clt.syncdb(domain, srv.synode, rep);
-			rep = clt.onsyncdb(domain, clt.synode, req);
+			req = clt.syncdb(srv.synode, rep);
+			rep = clt.onsyncdb(clt.synode, req);
 		}
 		
-		req = clt.synclose(domain, srv.synode, rep);
-		clt.onsynclose(domain, srv.synode, req);
+		req = clt.synclose(zsu, srv.synode, rep);
+		clt.onsynclose(zsu, srv.synode, req);
 	}
 
 	static String videoUpByApp(DocTableMeta meta) throws Exception {

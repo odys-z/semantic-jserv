@@ -12,7 +12,6 @@ import org.xml.sax.SAXException;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
@@ -25,122 +24,132 @@ import io.odysz.transact.x.TransException;
 
 public class Synoder {
 	final String synode;
+	final String myconn;
+	final String domain;
+	final String org;
+	final SynodeMode mod;
 	
-	HashMap<String, HashMap<String, ExessionPersist>> domains;
-	
+	/** {synode: session-persist } */
+	HashMap<String, ExessionPersist> sessions;
+
+	// final DBSyntableBuilder st0;
+
 	/**
 	 * Get my syn-transact-builder for the domain. 
-	 * @param domain
 	 * @return builder
 	 */
-	DBSyntableBuilder trb(String domain) {
-		return synssion(domain, synode).trb;
+	DBSyntableBuilder trb() {
+		ExessionPersist xp = synssion(synode);
+		return xp == null ? null : xp.trb;
 	}
 
-	HashMap<String, ExessionPersist> synssions(String domain) {
-		return domains != null ? domains.get(domain) : null;
+	ExessionPersist synssion(String peer) {
+		return sessions != null
+				? sessions.get(peer)
+				: null;
 	}
 
-	ExessionPersist synssion(String domain, String jserv) {
-		return domains != null && domains.containsKey(domain)
-			? domains.get(domain).get(jserv)
-			: null;
-	}
+	void synssion(String peer, ExessionPersist cp) throws ExchangeException {
+		if (sessions == null)
+			sessions = new HashMap<String, ExessionPersist>();
 
-	void synssion(String domain, String peer, ExessionPersist cp) throws ExchangeException {
-		if (domains == null)
-			domains = new HashMap<String, HashMap<String, ExessionPersist>>();
-		if (!domains.containsKey(domain))
-			domains.put(domain, new HashMap<String, ExessionPersist>());
-
-		if (synssion(domain, peer) != null || synssion(domain, peer).exstate() != ready)
-			throw new ExchangeException(ready, synssion(domain, peer),
+		if (synssion(peer) != null && synssion(peer).exstate() != ready)
+			throw new ExchangeException(ready, synssion(peer),
 				"Session for synching to %s already exists at %s",
 				peer, synode);
 
-		domains.get(domain).put(peer, cp);
+		sessions.put(peer, cp);
 	}
 
-	private ExessionPersist delession(String dom, String peer) {
-		if (domains != null && domains.containsKey(dom))
-			return domains.get(dom).remove(peer);
+	private ExessionPersist delession(String peer) {
+		if (sessions != null && sessions.containsKey(peer))
+			return sessions.remove(peer);
 		return null;
 	}
 
-	public Synoder(String myid, SyntityMeta ... meta) {
-		synode = myid;
+	public Synoder(String org, String dom, String myid, String conn, SynodeMode mod)
+			throws SQLException, SAXException, IOException, TransException {
+		synode   = myid;
+		myconn   = conn;
+		domain   = dom;
+		this.org = org;
+		this.mod = mod;
+
+		// st0 = new DBSyntableBuilder(domain, myconn, synode, mod);
 	}
 
-	public SyncReq joinpeer(String domain, String peerserv, String myconn, String admin, String passwd)
+	public SyncReq joinpeer(String peerserv, String peeradmin, String passwd)
 			throws SQLException, TransException, SAXException, IOException {
 
-		DBSyntableBuilder cltb = new DBSyntableBuilder(myconn, synode, SynodeMode.peer)
+		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect0(myconn);
 
 		// sign up as a new domain
-		ExessionPersist cltp = new ExessionPersist(cltb, admin);
+		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
 
-		ExchangeBlock req  = cltb.domainSignup(cltp, admin);
+		ExchangeBlock req  = cltb.domainSignup(cltp, peeradmin);
 
-		synssion(domain, admin, cltp);
-		return new SyncReq(null, null).exblock(req);
+		synssion(peeradmin, cltp);
+		return new SyncReq(null, domain).exblock(req);
 	}
 
-	public SyncResp onjoin(SyncReq req, String myconn)
+	public SyncResp onjoin(SyncReq req)
 			throws SQLException, TransException, SAXException, IOException {
-		DBSyntableBuilder admb = new DBSyntableBuilder(myconn, synode, SynodeMode.peer)
+		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect0(myconn);
 
 		ExessionPersist admp = new ExessionPersist(admb, req.exblock.srcnode);
 		ExchangeBlock resp = admb.addMyChild(admp, req.exblock, "TODO org");
 
+		synssion(req.exblock.srcnode, admp.exstate(ready));
+	
 		return new SyncResp().exblock(resp);
 	}
 
-	public SyncResp closejoin(String domain, SyncResp rep) throws TransException, SQLException {
+	public SyncResp closejoin(SyncResp rep) throws TransException, SQLException {
 		String admin = rep.exblock.srcnode;
-		ExessionPersist cltp = synssion(domain, admin);
+		ExessionPersist cltp = synssion(admin);
 		ExchangeBlock ack  = cltp.trb.initDomain(cltp, admin, rep.exblock);
-		delession(domain, admin);
+		delession(admin);
 		return new SyncResp().exblock(ack);
 	}
 
-	public Nyquence nyquence(String domain, String node) {
-		Map<String, Nyquence> nv = nyquvect(domain);
+	public Nyquence nyquence(String node) {
+		Map<String, Nyquence> nv = nyquvect(node);
 		return nv == null ? null
 			: nv.get(node);
 	}
 
-	public Map<String, Nyquence> nyquvect(String domain) {
-		return synssion(domain, synode).trb.nyquvect;
+	public Map<String, Nyquence> nyquvect(String peer) {
+		return synssion(peer).trb.nyquvect;
 	}
 
 	/**
-	 * N0 in all domain should be the same.
+	 * Get n0 of the session with the {@link peer} synode.
 	 * 
-	 * @param domain
-	 * @return n0
+	 * @param peer to which peer the session's n0 to be retrieved
+	 * @return n0 N0 in all sessions should be the same.
 	 */
-	public Nyquence n0(String domain) {
-		return synssion(domain, synode).trb.n0();
+	public Nyquence n0(String peer) {
+		return synssion(peer).trb.n0();
 	}
 
 	/**
 	 * Start this node running on {@code domain}.
 	 * @param mod
 	 * @return
-	 */
-	public Synoder start(String domain, SynodeMode mod) {
+	public Synoder start(SynodeMode mod) {
 		return this;
 	}
+	 */
 
 	public SyncReq syninit(String peer, String jserv, String myconn, String domain)
 			throws SQLException, TransException, SAXException, IOException {
-		DBSyntableBuilder b0 = new DBSyntableBuilder(myconn, synode, SynodeMode.peer)
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect0(myconn);
 
 		ExessionPersist xp = new ExessionPersist(b0, peer);
-		synssion(domain, peer, xp);
+		synssion(peer, xp);
 		ExchangeBlock b = b0.initExchange(xp, peer);
 
 		return new SyncReq(null, domain)
@@ -149,7 +158,7 @@ public class Synoder {
 
 	public SyncResp onsyninit(String peer, String myconn, SyncReq ini)
 			throws SQLException, TransException, SAXException, IOException {
-		DBSyntableBuilder b0 = new DBSyntableBuilder(myconn, synode, SynodeMode.peer)
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect0(myconn);
 
 		ExessionPersist sp = new ExessionPersist(b0, peer, ini.exblock);
@@ -159,8 +168,10 @@ public class Synoder {
 				.exblock(b);
 	}
 
-	public SyncReq syncdb(String domain, String peer, SyncResp rep) throws SQLException, TransException {
-		ExchangeBlock reqb = synssion(domain, peer)
+	public SyncReq syncdb(String peer, SyncResp rep)
+			throws SQLException, TransException {
+
+		ExchangeBlock reqb = synssion(peer)
 				.nextExchange(rep.exblock);
 
 		SyncReq req = new SyncReq(null, domain)
@@ -168,9 +179,9 @@ public class Synoder {
 		return req;
 	}
 	
-	public SyncResp onsyncdb(String domain, String peer, SyncReq req)
+	public SyncResp onsyncdb(String peer, SyncReq req)
 			throws SQLException, TransException {
-		ExchangeBlock repb = synssion(domain, peer)
+		ExchangeBlock repb = synssion(peer)
 				.nextExchange(req.exblock);
 
 		return new SyncResp().exblock(repb);
@@ -178,44 +189,49 @@ public class Synoder {
 
 	public SyncReq synclose(String domain, String peer, SyncResp rep)
 			throws TransException, SQLException {
-		ExessionPersist xp = synssion(domain, peer);
+		ExessionPersist xp = synssion(peer);
 		ExchangeBlock b = xp.trb.closexchange(xp, rep.exblock);
 		return new SyncReq(null, domain).exblock(b);
 	}
 
 	public SyncResp onsynclose(String domain, String peer, SyncReq req)
 			throws TransException, SQLException {
-		ExessionPersist xp = synssion(domain, peer);
+		ExessionPersist xp = synssion(peer);
 		ExchangeBlock b = xp.trb.onclosexchange(xp, req.exblock);
 		return new SyncResp().exblock(b);
 	}
 
 	/**
 	 * Initialize n0 and samp.
-	 * @param n0
-	 * @param stamp
+	 * @param n0 accept as start nyquence if no records exists
+	 * @param stamp accept as start stamp if no records exists
 	 * @return this
 	 * @throws TransException 
 	 * @throws SQLException 
 	 * @throws IOException 
 	 * @throws SAXException 
 	 */
-	public Synoder born(String conn, long n0, long stamp0, String org)
+	public Synoder born(long n0, long stamp0)
 			throws SQLException, TransException, SAXException, IOException {
-		SynodeMeta snm = new SynodeMeta(conn);
-		DATranscxt t0 = new DATranscxt(conn);
+		SynodeMeta snm = new SynodeMeta(myconn);
+		DATranscxt b0 = new DATranscxt(null);
 		IUser robot = new JRobot();
 
-		if (DAHelper.count(t0, conn, snm.tbl, snm.synuid, synode) > 0)
-			DAHelper.updateFieldsByPk(robot, t0, conn, snm, synode, snm.nyquence, n0, snm.nstamp, stamp0);
+		if (DAHelper.count(b0, myconn, snm.tbl, snm.synuid, synode) > 0)
+			; // DAHelper.updateFieldsByPk(robot, t0, myconn, snm, synode, snm.nyquence, n0, snm.nstamp, stamp0);
 		else
-			DAHelper.insert(robot, t0, conn, snm,
+			DAHelper.insert(robot, b0, myconn, snm,
 					snm.synuid, synode,
+					snm.pk, synode,
+					snm.domain, domain,
 					snm.nyquence, n0,
 					snm.nstamp, stamp0,
 					snm.org, org,
 					snm.mac, "#"
 					);
+		
+		DBSyntableBuilder synb0 = new DBSyntableBuilder(domain, myconn, synode, mod);
+		synb0.loadNyquvect0(myconn);
 
 		return this;
 	}
