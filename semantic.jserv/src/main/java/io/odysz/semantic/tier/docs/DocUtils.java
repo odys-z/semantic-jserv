@@ -11,6 +11,7 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.syn.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -34,7 +35,7 @@ public class DocUtils {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFileB64(DATranscxt st, String conn, SyncDoc photo,
+	public static String createFileB64(DATranscxt st, String conn, ExpSyncDoc photo,
 			IUser usr, ExpDocTableMeta meta, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
 		if (LangExt.isblank(photo.fullpath()))
@@ -45,14 +46,15 @@ public class DocUtils {
 
 		Insert ins = st
 			.insert(meta.tbl, usr)
-			.nv(meta.domain, usr.orgId())
+			.nv(meta.org, photo.org)
 			.nv(meta.uri, photo.uri)
+			.nv(meta.device, photo.device())
 			.nv(meta.resname, photo.pname)
 			.nv(meta.synoder, usr.deviceId())
 			.nv(meta.fullpath, photo.fullpath())
 			.nv(meta.createDate, photo.createDate)
 			.nv(meta.folder, photo.folder())
-			.nv(meta.shareflag, photo.shareFlag)
+			.nv(meta.shareflag, photo.shareflag)
 			.nv(meta.shareby, photo.shareby)
 			.nv(meta.shareDate, photo.sharedate)
 			.nv(meta.size, photo.size)
@@ -106,7 +108,8 @@ public class DocUtils {
 
 		Insert ins = st
 			.insert(meta.tbl, usr)
-			.nv(meta.domain, usr.orgId())
+			// .nv(meta.domain, usr.orgId())
+			.nv(meta.org, photo.org)
 			.nv(meta.uri, photo.uri)
 			.nv(meta.clientname, photo.pname)
 			.nv(meta.synoder, usr.deviceId())
@@ -171,4 +174,5 @@ public class DocUtils {
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
 	}
+
 }

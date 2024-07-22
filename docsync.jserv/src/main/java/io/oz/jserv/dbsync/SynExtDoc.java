@@ -87,8 +87,8 @@ public class SynExtDoc extends SynEntity {
 	 * @throws IOException checking local file failed
 	 * @throws SemanticException device is null
 	 */
-	public SynExtDoc(IFileDescriptor d, String domain, String fullpath, DocTableMeta meta) {
-		super(meta, domain);
+	public SynExtDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) {
+		super(meta);
 		// this.synode = d.device();
 
 		// this.entMeta = meta;

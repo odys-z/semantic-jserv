@@ -32,8 +32,6 @@ public class Synoder {
 	/** {synode: session-persist } */
 	HashMap<String, ExessionPersist> sessions;
 
-	// final DBSyntableBuilder st0;
-
 	/**
 	 * Get my syn-transact-builder for the domain. 
 	 * @return builder
@@ -74,8 +72,6 @@ public class Synoder {
 		domain   = dom;
 		this.org = org;
 		this.mod = mod;
-
-		// st0 = new DBSyntableBuilder(domain, myconn, synode, mod);
 	}
 
 	public SyncReq joinpeer(String peerserv, String peeradmin, String passwd)
@@ -135,15 +131,17 @@ public class Synoder {
 	}
 
 	/**
-	 * Start this node running on {@code domain}.
-	 * @param mod
-	 * @return
-	public Synoder start(SynodeMode mod) {
-		return this;
-	}
+	 * Initiate a synchronization exchange sesseion using my connection.
+	 * @param peer
+	 * @param jserv
+	 * @param domain
+	 * @return init request
+	 * @throws SQLException
+	 * @throws TransException
+	 * @throws SAXException
+	 * @throws IOException
 	 */
-
-	public SyncReq syninit(String peer, String jserv, String myconn, String domain)
+	public SyncReq syninit(String peer, String jserv, String domain)
 			throws SQLException, TransException, SAXException, IOException {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect0(myconn);
@@ -156,7 +154,7 @@ public class Synoder {
 				.exblock(b);
 	}
 
-	public SyncResp onsyninit(String peer, String myconn, SyncReq ini)
+	public SyncResp onsyninit(String peer, SyncReq ini)
 			throws SQLException, TransException, SAXException, IOException {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect0(myconn);

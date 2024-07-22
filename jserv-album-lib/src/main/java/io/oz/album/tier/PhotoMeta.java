@@ -13,7 +13,7 @@ public class PhotoMeta extends DocTableMeta {
 	public final String css;
 
 	public PhotoMeta(String conn) throws TransException {
-		super("h_photos", "pid", "domain", "synode", conn);
+		super("h_photos", "pid", "synode", conn);
 		
 		tags   = "tags";
 		exif   = "exif";

@@ -10,10 +10,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -21,9 +23,16 @@ public class Syntier extends ServPort<SyncReq> {
 	/** {domain: {jserv: exession-persist}} */
 	HashMap<String, Synoder> domains;
 
-	public Syntier(String synoderId) {
+	public final DATranscxt doctrb;
+
+	public final String myconn;
+
+	public Syntier(String synoderId, String loconn)
+			throws SemanticException, SQLException, SAXException, IOException {
 		super(Port.dbsyncer);
 		synode = synoderId;
+		doctrb = new DATranscxt(loconn);
+		myconn = loconn;
 	}
 
 	private static final long serialVersionUID = 1L;
@@ -33,9 +42,15 @@ public class Syntier extends ServPort<SyncReq> {
 
 	final String synode;
 
+	protected Synodebot locrobot;
+	public IUser locrobot() {
+		if (locrobot == null)
+			locrobot = new Synodebot(synode);
+		return locrobot;
+	}
+
 	/** The domain id for client before joined a domain. */
 	public static final String domain0 = "io.oz.jserv.syn.init";
-
 
 	@Override
 	protected void onGet(AnsonMsg<SyncReq> msg, HttpServletResponse resp)
@@ -66,5 +81,4 @@ public class Syntier extends ServPort<SyncReq> {
 	Synoder synssions(String domain) {
 		return domains != null ? domains.get(domain) : null;
 	}
-
 }

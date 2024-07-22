@@ -16,6 +16,8 @@ import io.odysz.transact.x.TransException;
  *
  * FIXME shouldn't subclassed from SynTableMeta?
  * 
+ * @deprecated to be merged by {@link io.odysz.semantic.meta.ExpDocTableMeta}
+ * 
  * @author odys-z@github.com
  */
 public class DocTableMeta extends SyntityMeta {
@@ -70,8 +72,8 @@ public class DocTableMeta extends SyntityMeta {
 	public final String shareflag;
 	final HashSet<String> globalIds;
 
-	public DocTableMeta(String tbl, String pk, String domain, String synode, String conn) throws TransException {
-		super(tbl, pk, domain, synode, conn);
+	public DocTableMeta(String tbl, String pk, String synode, String conn) throws TransException {
+		super(tbl, pk, synode, conn);
 
 		this.pk = pk;
 		

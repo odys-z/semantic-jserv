@@ -81,7 +81,7 @@ public class PhotoRec extends SyncDoc implements IFileDescriptor {
 	@AnsonField(ignoreTo=true)
 	PhotoMeta meta;
 
-	public PhotoRec() {}
+	public PhotoRec() { }
 
 	public PhotoRec(AnResultset rs, PhotoMeta m) throws SQLException, IOException {
 		this.meta = m;

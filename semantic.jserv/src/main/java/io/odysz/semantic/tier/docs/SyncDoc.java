@@ -21,6 +21,7 @@ import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.AbsPart;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
@@ -327,6 +328,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.clientpath = separatorsToUnix(clientpath);
 		return this;
 	}
+
+	public String org;
 
 	protected String folder;
 	public String folder() { return folder; }

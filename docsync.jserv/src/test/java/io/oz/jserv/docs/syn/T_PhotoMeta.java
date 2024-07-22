@@ -16,7 +16,7 @@ public class T_PhotoMeta extends ExpDocTableMeta {
 	public final String exif;
 
 	public T_PhotoMeta(String conn) throws TransException {
-		super("h_photos", "pid", "family", "device", conn);
+		super("h_photos", "pid", "device", conn);
 
 		exif = "exif";
 		synoder = "device";
