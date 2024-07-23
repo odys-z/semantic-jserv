@@ -10,10 +10,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.semantic.DASemantics.SemanticHandler;
+import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DATranscxt.SemanticsMap;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
+import io.odysz.semantic.syn.DBSynsactBuilder.SynmanticsMap;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -23,7 +27,12 @@ public class Syntier extends ServPort<SyncReq> {
 	/** {domain: {jserv: exession-persist}} */
 	HashMap<String, Synoder> domains;
 
-	public final DATranscxt doctrb;
+	public DATranscxt doctrb;
+	public DATranscxt doctrb() throws SemanticException, SQLException, SAXException, IOException {
+		if (doctrb == null)
+			doctrb = new DATranscxt(myconn);
+		return doctrb;
+	}
 
 	public final String myconn;
 
@@ -31,7 +40,6 @@ public class Syntier extends ServPort<SyncReq> {
 			throws SemanticException, SQLException, SAXException, IOException {
 		super(Port.dbsyncer);
 		synode = synoderId;
-		doctrb = new DATranscxt(loconn);
 		myconn = loconn;
 	}
 
@@ -71,11 +79,16 @@ public class Syntier extends ServPort<SyncReq> {
 		if (!domains.containsKey(domain))
 			domains.put(domain, new Synoder(org, domain, synode, conn, mod));
 
-		return domains.get(domain).born(0, 0);
+		SemanticsMap ss = DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
+			(c) -> new SynmanticsMap(synode, c));
+		
+//		for (SemanticHandler h : ss.get(smtype.synChange)) ;
+	
+		return domains.get(domain).born(ss.get(smtype.synChange), 0, 0);
 	}
 
-	public Synoder synoder(String peer) {
-		return domains.get(peer);
+	public Synoder synoder(String domain) {
+		return domains.get(domain);
 	}
 
 	Synoder synssions(String domain) {

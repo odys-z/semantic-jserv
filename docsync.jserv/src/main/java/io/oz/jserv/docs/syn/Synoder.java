@@ -1,17 +1,22 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.*;
+import static io.odysz.semantic.syn.Nyquence.maxn;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.semantic.DASemantics;
+import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.syn.DBSynmantics.ShSynChange;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
@@ -95,19 +100,41 @@ public class Synoder {
 				.loadNyquvect0(myconn);
 
 		ExessionPersist admp = new ExessionPersist(admb, req.exblock.srcnode);
-		ExchangeBlock resp = admb.addMyChild(admp, req.exblock, "TODO org");
+		ExchangeBlock resp = admb.addMyChild(admp, req.exblock, org);
 
 		synssion(req.exblock.srcnode, admp.exstate(ready));
 	
 		return new SyncResp().exblock(resp);
 	}
 
-	public SyncResp closejoin(SyncResp rep) throws TransException, SQLException {
+	public SyncReq closejoin(SyncResp rep) throws TransException, SQLException {
 		String admin = rep.exblock.srcnode;
-		ExessionPersist cltp = synssion(admin);
-		ExchangeBlock ack  = cltp.trb.initDomain(cltp, admin, rep.exblock);
-		delession(admin);
-		return new SyncResp().exblock(ack);
+		try {
+			ExessionPersist xp = synssion(admin);
+			// ExchangeBlock ack  = 
+			xp.trb.initDomain(xp, admin, rep.exblock);
+
+			// ExchangeBlock ack  = cltp.trb.closeJoining(cltp, rep.exblock);
+
+			// HashMap<String, Nyquence> snapshot = xp.trb.synyquvectMax(admin, rep.exblock.nv, xp.trb.nyquvect);
+			// xp.trb.persistamp(maxn(xp.trb.stampN(), xp.trb.n0()));
+
+			// return new SyncReq(null, domain).exblock(ack);
+
+			ExchangeBlock req = xp.trb.closeJoining(xp, rep.exblock);
+			return new SyncReq(null, domain)
+					.exblock(req);
+					// .exblock(xp.closexchange(rep.exblock).nv(snapshot));
+		} finally { delession(admin); }
+	}
+
+	public SyncResp onclosejoin(SyncReq req) throws TransException, SQLException {
+		String apply = req.exblock.srcnode;
+		try {
+			ExessionPersist sp = synssion(apply);
+			ExchangeBlock ack  = sp.trb.closeJoining(sp, req.exblock);
+			return new SyncResp().exblock(ack);
+		} finally { delession(apply); }
 	}
 
 	public Nyquence nyquence(String node) {
@@ -147,9 +174,9 @@ public class Synoder {
 				.loadNyquvect0(myconn);
 
 		ExessionPersist xp = new ExessionPersist(b0, peer);
-		synssion(peer, xp);
 		ExchangeBlock b = b0.initExchange(xp, peer);
 
+		synssion(peer, xp);
 		return new SyncReq(null, domain)
 				.exblock(b);
 	}
@@ -159,9 +186,10 @@ public class Synoder {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect0(myconn);
 
-		ExessionPersist sp = new ExessionPersist(b0, peer, ini.exblock);
-		ExchangeBlock b = b0.onInit(sp, ini.exblock);
+		ExessionPersist xp = new ExessionPersist(b0, peer, ini.exblock);
+		ExchangeBlock b = b0.onInit(xp, ini.exblock);
 
+		synssion(peer, xp);
 		return new SyncResp()
 				.exblock(b);
 	}
@@ -201,6 +229,7 @@ public class Synoder {
 
 	/**
 	 * Initialize n0 and samp.
+	 * @param handlers syn handlers  
 	 * @param n0 accept as start nyquence if no records exists
 	 * @param stamp accept as start stamp if no records exists
 	 * @return this
@@ -209,7 +238,7 @@ public class Synoder {
 	 * @throws IOException 
 	 * @throws SAXException 
 	 */
-	public Synoder born(long n0, long stamp0)
+	public Synoder born(List<SemanticHandler> handlers, long n0, long stamp0)
 			throws SQLException, TransException, SAXException, IOException {
 		SynodeMeta snm = new SynodeMeta(myconn);
 		DATranscxt b0 = new DATranscxt(null);
@@ -228,8 +257,13 @@ public class Synoder {
 					snm.mac, "#"
 					);
 		
-		DBSyntableBuilder synb0 = new DBSyntableBuilder(domain, myconn, synode, mod);
-		synb0.loadNyquvect0(myconn);
+		DBSyntableBuilder synb0 = new DBSyntableBuilder(domain, myconn, synode, mod)
+									.loadNyquvect0(myconn);
+	
+		if (handlers != null)
+		for (SemanticHandler h : handlers)
+			if (h instanceof ShSynChange)
+			synb0.registerEntity(myconn, ((ShSynChange)h).entm);
 
 		return this;
 	}
