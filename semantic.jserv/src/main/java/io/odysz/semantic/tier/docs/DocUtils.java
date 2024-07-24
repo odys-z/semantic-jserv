@@ -30,12 +30,12 @@ public class DocUtils {
 	 * @param meta 
 	 * @param st 
 	 * @param onFileCreateSql 
-	 * @return doc id, e.g. pid
+	 * @return doc id
 	 * @throws TransException
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFileB64(DATranscxt st, String conn, ExpSyncDoc photo,
+	public static String createFileBy64(DATranscxt st, String conn, ExpSyncDoc photo,
 			IUser usr, ExpDocTableMeta meta, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
 		if (LangExt.isblank(photo.fullpath()))
@@ -68,7 +68,7 @@ public class DocUtils {
 		if (onFileCreateSql != null)
 			ins.post(onFileCreateSql);
 
-		ISemantext insCtx = st.instancontxt(conn, usr);
+		ISemantext insCtx = st.instancontxt(conn, usr).creator(st);
 		SemanticObject res = (SemanticObject) ins.ins(insCtx);
 		String pid = res.resulve(meta.tbl, meta.pk, -1);
 		return pid;
@@ -85,14 +85,14 @@ public class DocUtils {
 	 * sqlite example:
 	 * syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL
 	 * </pre>
-	 * @deprecated replaced by {@link #createFileB64(DATranscxt, String, SyncDoc, IUser, ExpDocTableMeta, Update)}
+	 * @deprecated replaced by {@link #createFileBy64(DATranscxt, String, SyncDoc, IUser, ExpDocTableMeta, Update)}
 	 * @param st
 	 * @param conn
 	 * @param photo
 	 * @param usr
 	 * @param meta
 	 * @param onFileCreateSql
-	 * @return
+	 * @return doc id
 	 * @throws TransException
 	 * @throws SQLException
 	 * @throws IOException

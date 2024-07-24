@@ -1,7 +1,6 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.*;
-import static io.odysz.semantic.syn.Nyquence.maxn;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -36,13 +35,16 @@ public class Synoder {
 	
 	/** {synode: session-persist } */
 	HashMap<String, ExessionPersist> sessions;
+	DBSyntableBuilder mysynbuilder;
+	public DBSyntableBuilder trb() { return mysynbuilder; }
 
 	/**
-	 * Get my syn-transact-builder for the domain. 
+	 * Get my syn-transact-builder for the session with the peer {@code withPeer}. 
+	 * @param withPeer 
 	 * @return builder
 	 */
-	DBSyntableBuilder trb() {
-		ExessionPersist xp = synssion(synode);
+	DBSyntableBuilder trb(String withPeer) {
+		ExessionPersist xp = synssion(withPeer);
 		return xp == null ? null : xp.trb;
 	}
 
@@ -83,7 +85,7 @@ public class Synoder {
 			throws SQLException, TransException, SAXException, IOException {
 
 		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod)
-				.loadNyquvect0(myconn);
+				.loadNyquvect(myconn);
 
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
@@ -97,10 +99,10 @@ public class Synoder {
 	public SyncResp onjoin(SyncReq req)
 			throws SQLException, TransException, SAXException, IOException {
 		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod)
-				.loadNyquvect0(myconn);
+				.loadNyquvect(myconn);
 
 		ExessionPersist admp = new ExessionPersist(admb, req.exblock.srcnode);
-		ExchangeBlock resp = admb.addMyChild(admp, req.exblock, org);
+		ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
 		synssion(req.exblock.srcnode, admp.exstate(ready));
 	
@@ -112,19 +114,11 @@ public class Synoder {
 		try {
 			ExessionPersist xp = synssion(admin);
 			// ExchangeBlock ack  = 
-			xp.trb.initDomain(xp, admin, rep.exblock);
+			xp.trb.domainitMe(xp, admin, rep.exblock);
 
-			// ExchangeBlock ack  = cltp.trb.closeJoining(cltp, rep.exblock);
-
-			// HashMap<String, Nyquence> snapshot = xp.trb.synyquvectMax(admin, rep.exblock.nv, xp.trb.nyquvect);
-			// xp.trb.persistamp(maxn(xp.trb.stampN(), xp.trb.n0()));
-
-			// return new SyncReq(null, domain).exblock(ack);
-
-			ExchangeBlock req = xp.trb.closeJoining(xp, rep.exblock);
+			ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 			return new SyncReq(null, domain)
 					.exblock(req);
-					// .exblock(xp.closexchange(rep.exblock).nv(snapshot));
 		} finally { delession(admin); }
 	}
 
@@ -132,7 +126,7 @@ public class Synoder {
 		String apply = req.exblock.srcnode;
 		try {
 			ExessionPersist sp = synssion(apply);
-			ExchangeBlock ack  = sp.trb.closeJoining(sp, req.exblock);
+			ExchangeBlock ack  = sp.trb.domainCloseJoin(sp, req.exblock);
 			return new SyncResp().exblock(ack);
 		} finally { delession(apply); }
 	}
@@ -171,7 +165,7 @@ public class Synoder {
 	public SyncReq syninit(String peer, String jserv, String domain)
 			throws SQLException, TransException, SAXException, IOException {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
-				.loadNyquvect0(myconn);
+				.loadNyquvect(myconn);
 
 		ExessionPersist xp = new ExessionPersist(b0, peer);
 		ExchangeBlock b = b0.initExchange(xp, peer);
@@ -184,7 +178,7 @@ public class Synoder {
 	public SyncResp onsyninit(String peer, SyncReq ini)
 			throws SQLException, TransException, SAXException, IOException {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
-				.loadNyquvect0(myconn);
+				.loadNyquvect(myconn);
 
 		ExessionPersist xp = new ExessionPersist(b0, peer, ini.exblock);
 		ExchangeBlock b = b0.onInit(xp, ini.exblock);
@@ -257,13 +251,13 @@ public class Synoder {
 					snm.mac, "#"
 					);
 		
-		DBSyntableBuilder synb0 = new DBSyntableBuilder(domain, myconn, synode, mod)
-									.loadNyquvect0(myconn);
+		mysynbuilder = new DBSyntableBuilder(domain, myconn, synode, mod)
+									.loadNyquvect(myconn);
 	
 		if (handlers != null)
 		for (SemanticHandler h : handlers)
 			if (h instanceof ShSynChange)
-			synb0.registerEntity(myconn, ((ShSynChange)h).entm);
+			mysynbuilder.registerEntity(myconn, ((ShSynChange)h).entm);
 
 		return this;
 	}

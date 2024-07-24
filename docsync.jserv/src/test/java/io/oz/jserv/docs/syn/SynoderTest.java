@@ -40,7 +40,6 @@ import io.odysz.semantic.meta.SynSessionMeta;
 import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.syn.DBSynsactBuilder.SynmanticsMap;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.ExpSyncDoc;
 import io.odysz.semantic.syn.SynodeMode;
@@ -133,8 +132,6 @@ class SynoderTest {
 
 				
 				String synode = String.valueOf((char)(Integer.valueOf('X') + (s == W ? -1 : s)));
-//				DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
-//					(c) -> new SynmanticsMap(synode, c));
 
 				syntiers[s] = new Syntier(synode, conn); // .born(conn, 0, 0, ura);
 				jservs[s]   = "http://" + IP + ":" + (_8080 + s) + "/docsync.jserv";
@@ -161,6 +158,8 @@ class SynoderTest {
 	}
 
 	void setupeers(int test) throws Exception {
+		Utils.logrst("setupeers()", test);
+
 		int no = 0;
 		Utils.logrst("X starting", test, ++no);
 		Syntier xtier = syntiers[X];
@@ -242,16 +241,19 @@ class SynoderTest {
 		// ck[Y].synodes(X, Y);
 	}
 
-	void savephotos(int no) throws SQLException, SAXException, IOException, TransException {
-		int sect = 0;
-		Utils.logrst("Insert pohotos", no, ++sect);
+	void savephotos(int test) throws SQLException, SAXException, IOException, TransException {
+		Utils.logrst("savephotos()", test);
+
+		int no = 0;
 		
 		String[] pids = new String[] {
-				createPhoto(X),
-				createPhoto(Y)
+				"  X:", createPhoto(X),
+				", Y:", createPhoto(Y)
 			};
 		
-		Utils.logrst(pids, no, ++sect);
+		Utils.logrst(pids, test, ++no);
+		printChangeLines(ck);
+		printNyquv(ck);
 	}
 
 	private String createPhoto(int synx) throws IOException, TransException, SQLException, SAXException {
@@ -265,7 +267,7 @@ class SynoderTest {
 		photo.folder("synoder-test");
 		photo.share("ody", Share.pub, new Date());
 
-		return DocUtils.createFileB64(syntier.doctrb(), syntier.myconn,
+		return DocUtils.createFileBy64(syntier.doctrb(), syntier.myconn,
 				(ExpSyncDoc)photo, syntier.locrobot(), (ExpDocTableMeta)docm, null);
 	}
 
@@ -298,22 +300,32 @@ class SynoderTest {
 	}
 	
 	void syncpeers(int test) throws SQLException, TransException, SAXException, IOException {
+		Utils.logrst("syncpeers()", test);
 		int no = 0;
 		
 		Synoder x = syntiers[X].synoder(zsu);
 		Synoder y = syntiers[Y].synoder(zsu);
 		
-		syncpeer(zsu, X, Y, test, ++no);
+		Utils.logrst("X sync by Y", test, ++no);
+		syncpeer(zsu, X, Y, test, no);
+		printChangeLines(ck);
+		printNyquv(ck);
 
 		assertEquals(1, x.trb().entities(docm));
 
+		Utils.logrst("X sync by Z", test, ++no);
 		Synoder z = syntiers[Z].synoder(zsu);
-		syncpeer(zsu, X, Y, test, ++no);
+		syncpeer(zsu, X, Z, test, no);
+		printChangeLines(ck);
+		printNyquv(ck);
 
 		assertEquals(2, x.trb().entities(docm));
 		assertEquals(2, z.trb().entities(docm));
 
-		syncpeer(zsu, X, Y, test, ++no);
+		Utils.logrst("X sync by Y", test, ++no);
+		syncpeer(zsu, X, Y, test, no);
+		printChangeLines(ck);
+		printNyquv(ck);
 		assertEquals(2, y.trb().entities(docm));
 	}
 	
@@ -336,7 +348,7 @@ class SynoderTest {
 		printNyquv(ck);
 		Utils.logrst("exchanges", testno, subno, ++no);
 		
-		while (rep.synact() != close && req.synact() != close) {
+		while (rep.synact() != close || req.synact() != close) {
 			Utils.logrst("client exchange", testno, subno, no, ++ex);
 			req = clt.syncdb(srv.synode, rep);
 			req.exblock.print(System.out);

@@ -204,7 +204,7 @@ public class Docsyncer extends ServPort<DocsReq> {
 	 * this method will create insert statement into the share-log tasks table, meta.sharelog.</p>
 	 * <p>The update statement should committed with insert statement.</p> 
 	 * <p>NOTE: syncstamp is automatically set on insert.
-	 * see {@link io.odysz.semantic.tier.docs.DocUtils#createFileB64(String, SyncDoc, IUser, DocTableMeta, DATranscxt, Update) createFile64()}
+	 * see {@link io.odysz.semantic.tier.docs.DocUtils#createFileBy64(String, SyncDoc, IUser, DocTableMeta, DATranscxt, Update) createFile64()}
 	 * 
 	 * @see SyncFlag
 	 * 
