@@ -82,13 +82,14 @@ public class Syntier extends ServPort<SyncReq> {
 		SemanticsMap ss = DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
 			(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
 		
-//		for (SemanticHandler h : ss.get(smtype.synChange)) ;
-	
 		Synoder synoder = domains
 				.get(domain)
 				.born(ss.get(smtype.synChange), 0, 0);
 		
-		doctrb =  new DBSyntableBuilder("N-A", myconn, synode, mod);
+		doctrb =  new DBSyntableBuilder(
+				domain, // FIXME this is not correct. 
+						// FIXME See {@link DBSyntableBuilder}'s issue ee153bcb30c3f3b868413beace8cc1f3cb5c3f7c. 
+				myconn, synode, mod);
 		return synoder;
 	}
 
