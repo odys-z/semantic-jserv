@@ -30,7 +30,6 @@ public class Syntier extends ServPort<SyncReq> {
 	public DATranscxt doctrb() throws SQLException, SAXException, IOException, TransException {
 		if (doctrb == null)
 			doctrb = new DATranscxt(myconn);
-//			doctrb =  new DBSyntableBuilder("N-A", myconn, synode, SynodeMode.peer);
 		return doctrb;
 	}
 
