@@ -88,7 +88,8 @@ public class Syntier extends ServPort<SyncReq> {
 		doctrb =  new DBSyntableBuilder(
 				domain, // FIXME this is not correct. 
 						// FIXME See {@link DBSyntableBuilder}'s issue ee153bcb30c3f3b868413beace8cc1f3cb5c3f7c. 
-				myconn, synode, mod);
+				myconn, synode, mod)
+				.loadNyquvect(conn);
 		return synoder;
 	}
 

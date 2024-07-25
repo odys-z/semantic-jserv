@@ -78,8 +78,6 @@ class SynoderTest {
 	static final int Y = 1;
 	static final int Z = 2;
 	static final int W = 3;
-
-	// public static Docheck[] ck; // = new Docheck[4];
 	
 	static Doclientier[] doctiers = new Doclientier[2];
 	static Syntier[] syntiers  = new Syntier[4];
@@ -209,7 +207,7 @@ class SynoderTest {
 		printNyquv(ck);
 		
 		Utils.logrst("X <= Y", test, ++no);
-		syncpeer(zsu, X, Y, test, no);
+		syncpair(zsu, X, Y, test, no);
 		ck[X].synodes(X, Y, Z);
 		ck[Y].synodes(X, Y, Z);
 		ck[Z].synodes(X, -1, Z);
@@ -226,8 +224,6 @@ class SynoderTest {
 		Utils.logrst("A on B joining", test, sub, ++no);
 		SyncResp rep = x.onjoin(req);
 
-		// ck[X].synodes(X, Y);
-		// ck[Y].synodes(-1, Y);
 		assertEquals(x.nyquence(y.synode).n, y.n0(x.synode).n);
 
 		Utils.logrst("A answering to B", test, no, 1);
@@ -237,8 +233,6 @@ class SynoderTest {
 		req = y.closejoin(rep);
 
 		rep = x.onclosejoin(req);
-		// ck[X].synodes(X, Y);
-		// ck[Y].synodes(X, Y);
 	}
 
 	void savephotos(int test) throws SQLException, SAXException, IOException, TransException {
@@ -264,8 +258,8 @@ class SynoderTest {
 		photo.pname = "photo-" + synx;
 		photo.fullpath(syntier.synode + ":/sdcard/" + photo.pname);
 		photo.uri = uri64; // accepting new value
-		photo.folder("synoder-test");
-		photo.share("ody", Share.pub, new Date());
+		photo.folder(syntier.synode);
+		photo.share("ody-" + syntier.synode, Share.pub, new Date());
 
 		return DocUtils.createFileBy64(syntier.doctrb(), syntier.myconn,
 				(ExpSyncDoc)photo, syntier.locrobot(), (ExpDocTableMeta)docm, null);
@@ -296,7 +290,7 @@ class SynoderTest {
 			green[V] = true;
 		});
 		
-		await10s(green);
+		awaitAll(green);
 	}
 	
 	void syncpeers(int test) throws SQLException, TransException, SAXException, IOException {
@@ -307,7 +301,7 @@ class SynoderTest {
 		Synoder y = syntiers[Y].synoder(zsu);
 		
 		Utils.logrst("X sync by Y", test, ++no);
-		syncpeer(zsu, X, Y, test, no);
+		syncpair(zsu, X, Y, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
 
@@ -315,7 +309,7 @@ class SynoderTest {
 
 		Utils.logrst("X sync by Z", test, ++no);
 		Synoder z = syntiers[Z].synoder(zsu);
-		syncpeer(zsu, X, Z, test, no);
+		syncpair(zsu, X, Z, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
 
@@ -323,14 +317,15 @@ class SynoderTest {
 		assertEquals(2, z.trb().entities(docm));
 
 		Utils.logrst("X sync by Y", test, ++no);
-		syncpeer(zsu, X, Y, test, no);
+		syncpair(zsu, X, Y, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
 		assertEquals(2, y.trb().entities(docm));
 	}
 	
-	void syncpeer(String domain, int sx, int cx, int testno, int subno)
+	void syncpair(String domain, int sx, int cx, int testno, int subno)
 			throws SQLException, TransException, SAXException, IOException {
+		Utils.logrst("syncpair()", testno, subno);
 		int no = 0;
 		Synoder srv = syntiers[sx].synoder(domain);
 		Synoder clt = syntiers[cx].synoder(domain);
@@ -341,28 +336,31 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 		Utils.logrst("server on-initate", testno, subno, ++no);
-		SyncResp rep = srv.onsyninit(clt.synode, req);
+		SyncResp rep = srv.onsyninit(clt.synode, req.exblock);
 
 		int ex = 0;
 		printChangeLines(ck);
 		printNyquv(ck);
 		Utils.logrst("exchanges", testno, subno, ++no);
 		
-		while (rep.synact() != close || req.synact() != close) {
-			Utils.logrst("client exchange", testno, subno, no, ++ex);
-			req = clt.syncdb(srv.synode, rep);
-			req.exblock.print(System.out);
+		if (rep != null)
+			clt.onsyninit(srv.synode, rep.exblock);
+			while (rep.synact() != close || req.synact() != close) {
+				Utils.logrst("client exchange", testno, subno, no, ++ex);
+				req = clt.syncdb(srv.synode, rep);
+				req.exblock.print(System.out);
 
-			Utils.logrst("server on-exchange", testno, subno, no, ++ex);
-			rep = srv.onsyncdb(clt.synode, req);
-			rep.exblock.print(System.out);
-		}
+				Utils.logrst("server on-exchange", testno, subno, no, ++ex);
+				rep = srv.onsyncdb(clt.synode, req);
+				rep.exblock.print(System.out);
+			}
 		
-		printChangeLines(ck);
-		printNyquv(ck);
 		Utils.logrst("close exchange", testno, subno, ++no);
 		req = clt.synclose(zsu, srv.synode, rep);
 		srv.onsynclose(zsu, clt.synode, req);
+
+		printChangeLines(ck);
+		printNyquv(ck);
 	}
 
 	static String videoUpByApp(ExpDocTableMeta meta) throws Exception {
@@ -395,14 +393,21 @@ class SynoderTest {
 		return AnDevice.localFile;
 	}
 
-	static void await10s(boolean[] green) throws InterruptedException {
+	/**
+	 * Wait untile all lights turn int green (true).
+	 * @param greenlights
+	 * @param x100ms default 100 times
+	 * @throws InterruptedException
+	 */
+	static void awaitAll(boolean[] greenlights, int... x100ms) throws InterruptedException {
 		int wait = 0;
-		while (wait++ < 100) {
-			for (boolean g : green)
+		int times = (x100ms == null ? 100 : x100ms[0]);
+		while (wait++ < times) {
+			for (boolean g : greenlights)
 				if (!g) Thread.sleep(100);
 		}
 		
-		for (boolean g : green)
+		for (boolean g : greenlights)
 			if (!g) fail("Green light");
 	}
 

@@ -170,18 +170,18 @@ public class Synoder {
 		ExessionPersist xp = new ExessionPersist(b0, peer);
 		ExchangeBlock b = b0.initExchange(xp, peer);
 
-		synssion(peer, xp);
+		// synssion(peer, xp);
 		return new SyncReq(null, domain)
 				.exblock(b);
 	}
 
-	public SyncResp onsyninit(String peer, SyncReq ini)
+	public SyncResp onsyninit(String peer, ExchangeBlock ini)
 			throws SQLException, TransException, SAXException, IOException {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect(myconn);
 
-		ExessionPersist xp = new ExessionPersist(b0, peer, ini.exblock);
-		ExchangeBlock b = b0.onInit(xp, ini.exblock);
+		ExessionPersist xp = new ExessionPersist(b0, peer, ini);
+		ExchangeBlock b = b0.onInit(xp, ini);
 
 		synssion(peer, xp);
 		return new SyncResp()
