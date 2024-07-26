@@ -65,11 +65,6 @@ public class DocUtils {
 		if (!LangExt.isblank(photo.mime))
 			ins.nv(meta.mime, photo.mime);
 		
-		// add a synchronizing task
-		// - also triggered as private storage jserv, but no statement will be added
-//		if (onFileCreateSql != null)
-//			ins.post(onFileCreateSql);
-
 		SemanticObject res = (SemanticObject) ins
 				.ins(syb.instancontxt(conn, usr)
 						.creator(((DBSyntableBuilder) syb)

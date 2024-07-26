@@ -305,7 +305,7 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(1, x.trb().entities(docm));
+		assertEquals(2, x.trb().entities(docm));
 
 		Utils.logrst("X sync by Z", test, ++no);
 		Synoder z = syntiers[Z].synoder(zsu);

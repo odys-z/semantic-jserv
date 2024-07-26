@@ -1,6 +1,6 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.semantic.syn.ExessionAct.*;
+import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -10,7 +10,6 @@ import java.util.Map;
 
 import org.xml.sax.SAXException;
 
-import io.odysz.semantic.DASemantics;
 import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.JRobot;
