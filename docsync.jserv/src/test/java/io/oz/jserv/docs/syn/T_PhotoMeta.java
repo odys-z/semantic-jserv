@@ -45,13 +45,15 @@ public class T_PhotoMeta extends ExpDocTableMeta {
 	}
 
 	@Override
-	public Query onselect(Query select) throws TransException {
+	public Query onselectSyntities(Query select) throws TransException {
 		String a = tbl; 
 		if (select.alias() != null)
 			a = select.alias().toString();
 
 		return select
-				.col_ases(a, replacele(entCols(), uri, extfile(a + "." + uri)));
+				.clos_clear()
+				.cols_byAlias(a,
+				replacele(entCols(), uri, extfile(a + "." + uri)));
 	}
 
 }

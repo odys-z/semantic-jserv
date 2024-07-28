@@ -155,6 +155,30 @@ class SynoderTest {
 		syncpeers(++no);
 	}
 
+	/**
+	 * <ol>
+	 * <li>x start, y start</li>
+	 * <li>x accept y, no propagaion for z</li>
+	 * <li>x accept z, with propagation to y</li>
+	 * <li>x, y exchange, and x, y know z; z dosen't know y</li>
+	 * </ol>
+	 * Results:<br>
+	 * x, y know each others
+	 * y knows z, 
+	 * z don't know y
+	 * <pre>
+	 * FIXME z should know both x, y when signed up.
+	 * 
+	 *                   X                 |                  Y                 |                  Z                 
+	 * ------------------------------------+------------------------------------+------------------------------------
+	 * 
+	 *       X    Y    Z
+	 * X [   3,   2,   1 ]
+	 * Y [   3,   3,   1 ]
+	 * Z [   1,    ,   2 ]</pre>
+	 * @param test
+	 * @throws Exception
+	 */
 	void setupeers(int test) throws Exception {
 		Utils.logrst("setupeers()", test);
 
@@ -221,15 +245,15 @@ class SynoderTest {
 
 		SyncReq req = y.joinpeer(jservs[X], x.synode, passwd);
 		
-		Utils.logrst("A on B joining", test, sub, ++no);
+		Utils.logrst(new String[] {x.synode, "on", y.synode, "joining"}, test, sub, ++no);
 		SyncResp rep = x.onjoin(req);
 
 		assertEquals(x.nyquence(y.synode).n, y.n0(x.synode).n);
 
-		Utils.logrst("A answering to B", test, no, 1);
+		Utils.logrst(new String[] {x.synode, "answer to", y.synode}, test, sub, ++no);
 		rep.exblock.print(System.out);
 
-		Utils.logrst("B close joining", test, ++no);
+		Utils.logrst(new String[] {y.synode, "close joining"}, test, ++no);
 		req = y.closejoin(rep);
 
 		rep = x.onclosejoin(req);
