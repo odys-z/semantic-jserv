@@ -67,6 +67,7 @@ public class Doclientier extends Semantier {
 
 	protected String tempath;
 
+	/** Must be multiple of 12. Default 3 MiB */
 	int blocksize = 3 * 1024 * 1024;
 
 	/**

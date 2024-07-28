@@ -14,7 +14,6 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
@@ -44,7 +43,6 @@ import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.ExpSyncDoc;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocUtils;
-import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docsync.ZSUNodes.AnDevice;
 
@@ -297,7 +295,6 @@ class SynoderTest {
 	 * @throws IOException
 	 * @throws SsException
 	 * @throws InterruptedException
-	 */
 	void uploadocs(int no) throws AnsonException, TransException, IOException, SsException, InterruptedException {
 		Doclientier u = doctiers[U];
 		u.login(u.robot.uid(), u.robot.deviceId(), passwd);
@@ -316,6 +313,7 @@ class SynoderTest {
 		
 		awaitAll(green);
 	}
+	 */
 	
 	void syncpeers(int test) throws SQLException, TransException, SAXException, IOException {
 		Utils.logrst("syncpeers()", test);
