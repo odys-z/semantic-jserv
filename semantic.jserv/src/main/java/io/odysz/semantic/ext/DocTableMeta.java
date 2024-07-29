@@ -16,7 +16,7 @@ import io.odysz.transact.x.TransException;
  *
  * FIXME shouldn't subclassed from SynTableMeta?
  * 
- * @deprecated to be merged by {@link io.odysz.semantic.syn.ExpDocTableMeta}
+ * @deprecated to be merged by {@link io.odysz.semantic.meta.ExpDocTableMeta}
  * 
  * @author odys-z@github.com
  */

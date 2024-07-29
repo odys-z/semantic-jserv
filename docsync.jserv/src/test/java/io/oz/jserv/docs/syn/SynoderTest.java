@@ -1,10 +1,10 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
-import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
+import static io.odysz.semantic.syn.ExessionAct.close;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -31,6 +31,8 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.AutoSeqMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.meta.PeersMeta;
 import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynSessionMeta;
@@ -38,15 +40,12 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
-import io.odysz.semantic.syn.ExpDocTableMeta;
 import io.odysz.semantic.syn.ExpSyncDoc;
 import io.odysz.semantic.syn.IAssert;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantic.syn.ExpDocTableMeta.Share;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
-import io.oz.jserv.docsync.ZSUNodes.AnDevice;
 
 /**
  * 4 Syntiers running on a static DA helper, but communicate over
@@ -388,36 +387,6 @@ class SynoderTest {
 
 		printChangeLines(ck);
 		printNyquv(ck);
-	}
-
-	static String videoUpByApp(ExpDocTableMeta meta) throws Exception {
-//		int bsize = 72 * 1024;
-//		// app is using Synclientier for synchronizing 
-//		Doclientier apptier = new Doclientier(clientUri, errLog)
-//				.tempRoot("app.kharkiv")
-//				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
-//				.blockSize(bsize);
-//
-//		apptier.synDel(meta.tbl, AnDevice.device, AnDevice.localFile);
-//		
-//		SyncDoc doc = (SyncDoc) new SyncDoc()
-//					.share(apptier.robot.uid(), Share.pub, new Date())
-//					.folder(Kharkiv.folder)
-//					.fullpath(AnDevice.localFile);
-//		DocsResp resp = apptier.synInsertDoc(meta.tbl, doc, (r) -> { });
-//
-//		assertNotNull(resp);
-//
-//		String docId = resp.doc.recId();
-//		assertEquals(8, docId.length());
-//
-//		DocsResp rp = apptier.selectDoc(meta.tbl, docId);
-//
-//		assertTrue(LangExt.isblank(rp.msg()));
-//		assertEquals(AnDevice.device, rp.doc.device());
-//		assertEquals(AnDevice.localFile, rp.doc.fullpath());
-
-		return AnDevice.localFile;
 	}
 
 	/**

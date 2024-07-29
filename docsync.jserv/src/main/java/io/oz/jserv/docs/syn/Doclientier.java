@@ -41,7 +41,7 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.syn.ExpDocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -50,7 +50,6 @@ import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.SyncDoc;
-import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
@@ -65,6 +64,7 @@ public class Doclientier extends Semantier {
 
 	protected SyncRobot robot;
 
+	/** for download? */
 	protected String tempath;
 
 	/** Must be multiple of 12. Default 3 MiB */
@@ -218,6 +218,7 @@ public class Doclientier extends Semantier {
 				errCtx);
 	}
 
+	/*
 	public static void setLocalSync(DATranscxt localSt, String conn,
 			ExpDocTableMeta meta, SyncDoc doc, String syncflag, SyncRobot robot)
 			throws TransException, SQLException {
@@ -226,6 +227,7 @@ public class Doclientier extends Semantier {
 			.whereEq(meta.pk, doc.recId)
 			.u(localSt.instancontxt(conn, robot));
 	}
+	*/
 
 	/**
 	 * Downward synchronizing.
@@ -570,24 +572,22 @@ public class Doclientier extends Semantier {
 	}
 
 	/**
-	 * Create a doc record at server side.
+	 * Create a doc record at server side, then start pushing.
 	 * <p>Using block chain for file upload.</p>
 	 * 
 	 * @param tabl
 	 * @param doc
-	 * @param ok
+	 * @param follows handling following pushes.
 	 * @param errorCtx
 	 * @return 
 	 * @throws TransException
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	public DocsResp synInsertDoc(String tabl, SyncDoc doc, OnOk ok, ErrorCtx ... errorCtx)
+	public DocsResp startPush(String tabl, SyncDoc doc, OnOk follows, ErrorCtx ... errorCtx)
 			throws TransException, IOException, SQLException {
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		videos.add(doc);
-
-		// SessionInf ssInf = client.ssInfo(); // simulating pushing from app
 
 		List<DocsResp> resps = pushBlocks(tabl, videos, 
 				new OnProcess() {
@@ -595,16 +595,14 @@ public class Doclientier extends Semantier {
 					public void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
 							throws IOException, AnsonException, SemanticException {
 					}},
-				ok, isNull(errorCtx) ? errCtx : errorCtx[0]);
+				follows, isNull(errorCtx) ? errCtx : errorCtx[0]);
 		return isNull(resps) ? null : resps.get(0);
 	}
 	
 	/**
-	 * @deprecated now clients only match paths with local DB.
-	 * 
 	 * @param page
 	 * @param tabl
-	 * @return
+	 * @return reply
 	 * @throws TransException
 	 * @throws IOException
 	 */

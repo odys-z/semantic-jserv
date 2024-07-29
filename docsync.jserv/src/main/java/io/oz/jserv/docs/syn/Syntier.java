@@ -29,9 +29,8 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.syn.ExpDocTableMeta;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -74,8 +73,8 @@ public class Syntier extends ServPort<AnsonBody> {
 
 	final String synode;
 
-	protected Synodebot locrobot;
-	public IUser locrobot() {
+	Synodebot locrobot;
+	IUser locrobot() {
 		if (locrobot == null)
 			locrobot = new Synodebot(synode);
 		return locrobot;

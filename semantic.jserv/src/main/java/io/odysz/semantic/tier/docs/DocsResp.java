@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonResp;
-import io.odysz.semantic.syn.ExpDocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.x.SemanticException;
 
 /**

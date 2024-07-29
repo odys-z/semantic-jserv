@@ -18,7 +18,7 @@ import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.ext.DocTableMeta.Share;
-import io.odysz.semantic.syn.ExpDocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;

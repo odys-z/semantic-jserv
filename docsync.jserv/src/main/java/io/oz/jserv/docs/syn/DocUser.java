@@ -9,7 +9,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.oz.album.tier.Profiles;
 
 /**
- * Album user.
+ * Doc User.
  * 
  * @author odys-z@github.com
  */
@@ -36,29 +36,6 @@ public class DocUser extends JUser implements IUser {
 	}
 
 	/**
-	 * Reflect constructor
-	 * @param userid
-	 * @param pswd
-	 * @param userName
-	 * @throws SemanticException 
-	public DocUser(String userid, String pswd, String userName, String syndomain) throws SemanticException {
-		super(userid, pswd, userName);
-		this.pswd = pswd;
-	}
-	
-	public static class PUserMeta extends JUserMeta {
-		String device;
-		public PUserMeta(String... conn) {
-			super(conn);
-
-			iv = "iv";
-			device = "device";
-		}
-	}
-	
-	public TableMeta meta() {
-		return userMeta;
-	}
 
 	@Override
 	public IUser onCreate(Anson withSession) throws SsException {
