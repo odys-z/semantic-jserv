@@ -80,7 +80,7 @@ public class Synoder {
 		this.mod = mod;
 	}
 
-	public SyncReq joinpeer(String peerserv, String peeradmin, String passwd)
+	public SyncReq joinpeer(String peeradmin, String passwd)
 			throws SQLException, TransException, SAXException, IOException {
 
 		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod)
@@ -161,7 +161,7 @@ public class Synoder {
 	 * @throws SAXException
 	 * @throws IOException
 	 */
-	public SyncReq syninit(String peer, String jserv, String domain)
+	public SyncReq syninit(String peer, String domain)
 			throws SQLException, TransException, SAXException, IOException {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect(myconn);

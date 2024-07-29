@@ -10,9 +10,10 @@ import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.ExpSyncDoc;
 import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.odysz.semantic.syn.ExchangeBlock;
+import io.odysz.semantic.syn.ExpDocTableMeta;
 import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -171,6 +172,12 @@ public class DocUtils {
 					conn, meta.tbl);
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
+	}
+
+	public static String createFileB64(DATranscxt doctrb, String conn,
+			DocsReq req, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

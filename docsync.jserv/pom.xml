@@ -55,6 +55,12 @@
 
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
+	  <artifactId>semantic.DA</artifactId>
+	  <version>2.0.0-SNAPSHOT</version>
+   	</dependency>
+
+   	<dependency>
+	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
 	  <version>2.0.0-SNAPSHOT</version>
    	</dependency>
@@ -65,12 +71,14 @@
 	    <version>0.5.0-SNAPSHOT</version>
 	</dependency>
 
+	<!-- 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>album-lib</artifactId>
 	    <scope>test</scope>
 	    <version>0.5.0-SNAPSHOT</version>
 	</dependency>
+	 -->
 
   </dependencies>
 

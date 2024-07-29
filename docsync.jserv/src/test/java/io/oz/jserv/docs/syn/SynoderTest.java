@@ -31,8 +31,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.AutoSeqMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.meta.PeersMeta;
 import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynSessionMeta;
@@ -40,10 +38,14 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
+import io.odysz.semantic.syn.ExpDocTableMeta;
 import io.odysz.semantic.syn.ExpSyncDoc;
+import io.odysz.semantic.syn.IAssert;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.syn.ExpDocTableMeta.Share;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docsync.ZSUNodes.AnDevice;
 
 /**
@@ -61,7 +63,7 @@ class SynoderTest {
 	static final String uri64 = "iVBORw0KGgoAAAANSUhEUgAAADwAAAAoCAIAAAAt2Q6oAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AYSCBkDT4nw4QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABjSURBVFjD7dXBCYAwEATAO7FE27QNu7GFxA424EN8zH6XwHAEtus4K2SO2M7Udsd2e93Gl38NNDQ0NPS/sy82LydvXs5ia4fvAQ0NDQ39Zfq+XBoaGhoaGhoaGhoaGhq6qqoeVmUNAc7sDO0AAAAASUVORK5CYII=";
 	static final int U = 0;
 	static final int V = 1;
-	static final int _8080 = 8090;
+	// static final int _8080 = 8090;
 	static final String IP = "127.0.0.1";
 
 	static ErrorCtx errLog;
@@ -77,9 +79,9 @@ class SynoderTest {
 	static final int Z = 2;
 	static final int W = 3;
 	
-	static Doclientier[] doctiers = new Doclientier[2];
+	// static Doclientier[] doctiers = new Doclientier[2];
+	// static String[] jservs;
 	static Syntier[] syntiers  = new Syntier[4];
-	static String[] jservs;
 	
 	private static AutoSeqMeta aum;
 	private static SynChangeMeta chm;
@@ -108,7 +110,7 @@ class SynoderTest {
 			ssm = new SynSessionMeta();
 			prm = new PeersMeta();
 			
-			jservs = new String[4];
+			// jservs = new String[4];
 			for (int s = 0; s < syntiers.length; s++) {
 				String conn = "no-jserv.0" + s;
 
@@ -130,7 +132,7 @@ class SynoderTest {
 				String synode = String.valueOf((char)(Integer.valueOf('X') + (s == W ? -1 : s)));
 
 				syntiers[s] = new Syntier(synode, conn); // .born(conn, 0, 0, ura);
-				jservs[s]   = "http://" + IP + ":" + (_8080 + s) + "/docsync.jserv";
+				// jservs[s]   = "http://" + IP + ":" + (_8080 + s) + "/docsync.jserv";
 			}
 
 			errLog = new ErrorCtx() {
@@ -143,6 +145,8 @@ class SynoderTest {
 			e.printStackTrace();
 		}
 	}
+
+	static IAssert azert = new AssertImpl();
 
 	@Test
 	void testSyntiers() throws Exception {
@@ -185,13 +189,13 @@ class SynoderTest {
 		Syntier xtier = syntiers[X];
 		Synoder x = xtier.start(ura, zsu, xtier.myconn, SynodeMode.peer);
 
-		ck[X] = new Docheck(zsu, x.myconn, x.synode, SynodeMode.peer, docm);
+		ck[X] = new Docheck(azert, zsu, x.myconn, x.synode, SynodeMode.peer, docm);
 		ck[X].synodes(X);
 
 		Utils.logrst("Y starting", test, ++no);
 		Syntier ytier = syntiers[Y];
 		Synoder y = ytier.start(ura, zsu, ytier.myconn, SynodeMode.peer);
-		ck[Y] = new Docheck(zsu, y.myconn, y.synode, SynodeMode.peer, docm);
+		ck[Y] = new Docheck(azert, zsu, y.myconn, y.synode, SynodeMode.peer, docm);
 		ck[Y].synodes(-1, Y);
 
 		printChangeLines(ck);
@@ -213,7 +217,7 @@ class SynoderTest {
 
 		Syntier ztier = syntiers[Z];
 		Synoder z = syntiers[Z].start(ura, zsu, ztier.myconn, SynodeMode.peer);
-		ck[Z] = new Docheck(zsu, z.myconn, z.synode, SynodeMode.peer, docm);
+		ck[Z] = new Docheck(azert, zsu, z.myconn, z.synode, SynodeMode.peer, docm);
 
 		Utils.logrst("X is joining by Z", test, ++no);
 		joinby(X, Z, test, no);
@@ -241,7 +245,8 @@ class SynoderTest {
 		Synoder y = syntiers[by].synoder(zsu);
 		Synoder x = syntiers[at].synoder(zsu);
 
-		SyncReq req = y.joinpeer(jservs[X], x.synode, passwd);
+		// SyncReq req = y.joinpeer(jservs[X], x.synode, passwd);
+		SyncReq req = y.joinpeer(x.synode, passwd);
 		
 		Utils.logrst(new String[] {x.synode, "on", y.synode, "joining"}, test, sub, ++no);
 		SyncResp rep = x.onjoin(req);
@@ -288,7 +293,6 @@ class SynoderTest {
 	}
 
 	/**
-	 * @deprecated needs to setup jserv
 	 * @param no
 	 * @throws AnsonException
 	 * @throws TransException
@@ -353,7 +357,8 @@ class SynoderTest {
 		Synoder clt = syntiers[cx].synoder(domain);
 
 		Utils.logrst("client initate", testno, subno, ++no);
-		SyncReq req  = clt.syninit(srv.synode, jservs[sx], zsu);
+		// SyncReq req  = clt.syninit(srv.synode, jservs[sx], zsu);
+		SyncReq req  = clt.syninit(srv.synode, zsu);
 
 		printChangeLines(ck);
 		printNyquv(ck);

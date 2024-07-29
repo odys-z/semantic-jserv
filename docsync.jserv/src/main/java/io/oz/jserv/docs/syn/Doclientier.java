@@ -29,7 +29,6 @@ import io.odysz.jclient.tier.Semantier;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -42,6 +41,7 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.syn.ExpDocTableMeta;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -188,7 +188,7 @@ public class Doclientier extends Semantier {
 	 * @throws AnsonException 
 	 * @throws IOException 
 	 */
-	List<DocsResp> syncUp(DocTableMeta meta, AnResultset rs, OnProcess onProc)
+	List<DocsResp> syncUp(ExpDocTableMeta meta, AnResultset rs, OnProcess onProc)
 			throws TransException, AnsonException, IOException {
 		List<SyncDoc> videos = new ArrayList<SyncDoc>();
 		try {
@@ -219,10 +219,10 @@ public class Doclientier extends Semantier {
 	}
 
 	public static void setLocalSync(DATranscxt localSt, String conn,
-			DocTableMeta meta, SyncDoc doc, String syncflag, SyncRobot robot)
+			ExpDocTableMeta meta, SyncDoc doc, String syncflag, SyncRobot robot)
 			throws TransException, SQLException {
 		localSt.update(meta.tbl, robot)
-			.nv(meta.syncflag, SyncFlag.hub)
+			// .nv(meta.syncflag, SyncFlag.hub)
 			.whereEq(meta.pk, doc.recId)
 			.u(localSt.instancontxt(conn, robot));
 	}
@@ -237,7 +237,7 @@ public class Doclientier extends Semantier {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	SyncDoc synStreamPull(SyncDoc p, DocTableMeta meta)
+	SyncDoc synStreamPull(SyncDoc p, ExpDocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 
 		if (!verifyDel(p, meta)) {
@@ -253,7 +253,7 @@ public class Doclientier extends Semantier {
 		return p;
 	}
 
-	protected boolean verifyDel(SyncDoc f, DocTableMeta meta) {
+	protected boolean verifyDel(SyncDoc f, ExpDocTableMeta meta) {
 		String pth = tempath(f);
 		File file = new File(pth);
 		if (!file.exists())
@@ -535,7 +535,7 @@ public class Doclientier extends Semantier {
 	 * @throws SQLException
 	 */
 	static String insertLocalFile(DATranscxt st, String conn, String localPath,
-			SyncDoc doc, SyncRobot usr, DocTableMeta meta)
+			SyncDoc doc, SyncRobot usr, ExpDocTableMeta meta)
 			throws TransException, SQLException {
 
 		if (isblank(localPath))
@@ -546,7 +546,7 @@ public class Doclientier extends Semantier {
 		Insert ins = st.insert(meta.tbl, usr)
 				// .nv(meta.org(), usr.orgId())
 				.nv(meta.uri, doc.uri)
-				.nv(meta.clientname, doc.pname)
+				.nv(meta.resname, doc.pname)
 				.nv(meta.synoder, usr.deviceId())
 				.nv(meta.fullpath, doc.fullpath())
 				.nv(meta.folder, doc.folder())
@@ -559,7 +559,7 @@ public class Doclientier extends Semantier {
 		if (!isblank(doc.mime))
 			ins.nv(meta.mime, doc.mime);
 		
-		ins.post(Docsyncer.onDocreate(doc, meta, usr));
+		// ins.post(Docsyncer.onDocreate(doc, meta, usr));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))

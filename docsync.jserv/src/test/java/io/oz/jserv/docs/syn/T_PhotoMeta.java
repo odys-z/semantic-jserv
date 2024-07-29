@@ -9,7 +9,7 @@ import java.sql.SQLException;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.SynChangeMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.syn.ExpDocTableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.x.TransException;
