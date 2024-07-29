@@ -43,7 +43,7 @@ public class SynodeServ {
 		
 
 		trb = new DBSyntableBuilder("omni", conn, node, mod)
-			  .loadNyquvect0(conn);
+			  .loadNyquvect(conn);
 		
 	}
 	

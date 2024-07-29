@@ -220,7 +220,7 @@ public class Dochain {
 	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
 			DocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
-		Update post = Docsyncer.onDocreate(photo, meta, usr);
+		Update post = null; // Docsyncer.onDocreate(photo, meta, usr);
 
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);

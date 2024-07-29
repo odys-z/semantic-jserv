@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.oz.jserv.docs.meta;
 
 import java.sql.SQLException;
 
@@ -33,6 +33,7 @@ public class DeviceTableMeta extends SyntityMeta {
 	public final String owner;
 	public final String mac;
 	public final String cdate;
+	public final String org;
 
 	public DeviceTableMeta(String conn) {
 		super("doc_devices", "device", "device", conn);
@@ -42,6 +43,7 @@ public class DeviceTableMeta extends SyntityMeta {
 		owner   = "owner";
 		mac     = "mac";
 		cdate   = "cdate";
+		org     = "org";
 	}
 
 	@Override

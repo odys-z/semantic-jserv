@@ -18,16 +18,21 @@ import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.ext.DocTableMeta.Share;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.parts.AbsPart;
+import io.odysz.transact.sql.Query;
+import io.odysz.transact.sql.parts.condition.ExprPart;
+import io.odysz.transact.sql.parts.condition.Funcall;
+import io.odysz.transact.x.TransException;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
  * used for docsync.jserv. 
  * 
- * TODO extending SyncEntity
+ * For both 1.4 and 2.0.
+ * TODO extending SynEntity
  * 
  * @author ody
  */
@@ -162,6 +167,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	
 	/**
 	 * Const string values of {@link SyncFlag}.
+	 * @deprecated
 	 */
 	public String syncFlag;
 
@@ -206,6 +212,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	
 	@AnsonField(ignoreTo=true)
 	protected DocTableMeta docMeta;
+	protected ExpDocTableMeta xpdocMeta;
 
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	ISemantext semantxt;
@@ -308,7 +315,8 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	 * @throws IOException checking local file failed
 	 * @throws SemanticException device is null
 	 */
-	public SyncDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) throws IOException, SemanticException {
+	public SyncDoc(IFileDescriptor d, String fullpath, DocTableMeta meta)
+			throws IOException, SemanticException {
 		this.device = d.device();
 
 		this.docMeta = meta;
@@ -323,6 +331,28 @@ public class SyncDoc extends Anson implements IFileDescriptor {
         this.syncFlag = SyncFlag.device;
 	}
 
+	public SyncDoc(AnResultset rs, ExpDocTableMeta meta) throws SQLException {
+		this.xpdocMeta = meta;
+		this.recId = rs.getString(meta.pk);
+		this.pname = rs.getString(meta.resname);
+		this.uri = rs.getString(meta.uri);
+		this.createDate = rs.getString(meta.createDate);
+		this.mime = rs.getString(meta.mime);
+		this.size = rs.getLong(meta.size, 0);
+		
+		this.clientpath =  rs.getString(meta.fullpath);
+		this.device =  rs.getString(meta.synoder);
+		this.folder = rs.getString(meta.folder);
+		
+		try {
+			this.sharedate = DateFormat.formatime(rs.getDate(meta.shareDate));
+		} catch (Exception ex) {
+			this.sharedate = rs.getString(meta.createDate);
+		}
+		this.shareby = rs.getString(meta.shareby);
+		this.shareFlag = rs.getString(meta.shareflag);
+		// this.syncFlag = rs.getString(meta.syncflag);
+	}
 	@Override
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = separatorsToUnix(clientpath);
@@ -335,6 +365,11 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	public String folder() { return folder; }
 	public SyncDoc folder(String v) {
 		this.folder = v;
+		return this;
+	}
+
+	public SyncDoc folder(AnResultset nxt, ExpDocTableMeta mph) throws SQLException {
+		this.folder = nxt.getString(mph.folder);
 		return this;
 	}
 
@@ -383,4 +418,16 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		syncFlag = f;
 		return this;
 	}
+
+	public static Query cols(Query q, ExpDocTableMeta meta) throws TransException {
+		return q.cols(
+				q.alias().sql(null) + "." + meta.pk,
+				meta.resname, meta.createDate,
+				meta.folder, meta.fullpath, meta.synoder,
+				meta.uri, meta.shareDate,
+				// meta.tags, meta.geox, meta.css, meta.geoy, 
+				meta.mime)
+			.col(Funcall.isnull(meta.shareflag, ExprPart.constr(Share.priv)), meta.shareflag);
+	}
+
 }

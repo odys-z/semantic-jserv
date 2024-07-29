@@ -3,7 +3,7 @@ package io.oz.album.tier;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.startsOneOf;
+import static io.odysz.common.LangExt.prefixOneOf;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
@@ -550,7 +550,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		AnResultset rs = (AnResultset)st
 				.select(devMeta.tbl)
-				.whereEq(devMeta.domain,   usr.orgId())
+				// .whereEq(devMeta.domain,   usr.orgId())
 				.whereEq(devMeta.owner,   usr.uid())
 				.rs(st.instancontxt(conn, usr))
 				.rs(0)
@@ -559,7 +559,8 @@ public class Albums extends ServPort<AlbumReq> {
 		return (DocsResp) new DocsResp().rs(rs)
 				.data(devMeta.owner, usr.uid())
 				.data("owner-name",  usr.userName())
-				.data(devMeta.domain, usr.orgId());
+				// .data(devMeta.domain, usr.orgId())
+				;
 	}
 
 	/**
@@ -583,7 +584,7 @@ public class Albums extends ServPort<AlbumReq> {
 			.j(userMeta.tbl, "u", "u.%s = d.%s", userMeta.pk, devMeta.owner)
 			.cols(devMeta.devname, devMeta.synoder, devMeta.cdate, devMeta.owner)
 			.whereEq(devMeta.pk, usr.deviceId())
-			.whereEq(devMeta.domain,   usr.orgId())
+			// .whereEq(devMeta.domain,   usr.orgId())
 			.whereEq(devMeta.owner,   usr.uid())
 			.rs(st.instancontxt(conn, usr))
 			.rs(0))
@@ -615,8 +616,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
 				.nv(devMeta.cdate, now())
-				.nv(devMeta.domain, usr.orgId())
-				// .nv(devMeta.mac, body.mac())
+				// .nv(devMeta.domain, usr.orgId())
 				.ins(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
 			String resulved = result.resulve(devMeta.tbl, devMeta.pk, -1);
@@ -629,7 +629,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 			st  .update(devMeta.tbl, usr)
 				.nv(devMeta.cdate, now())
-				.whereEq(devMeta.domain, usr.orgId())
+				// .whereEq(devMeta.domain, usr.orgId())
 				.whereEq(devMeta.pk, body.device().id)
 				.u(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
@@ -670,7 +670,7 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = ((AnResultset) st
 				.select(req.docTabl, "t")
 				.cols((Object[])SyncDoc.synPageCols(meta))
-				.whereEq(meta.domain, req.org == null ? usr.orgId() : req.org)
+				// .whereEq(meta.domain, req.org == null ? usr.orgId() : req.org)
 				.whereEq(meta.synoder, usr.deviceId())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
 				// TODO add file type for performance
@@ -835,7 +835,7 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 
 	static boolean isVedioAudio(String mime) {
-		return isblank(mime) || startsOneOf(mime, "audio/", "image/");
+		return isblank(mime) || prefixOneOf(mime, "audio/", "image/");
 	}
 
 	/**

@@ -15,7 +15,7 @@ public class DocOrgMeta extends SyntityMeta {
 	protected final String album0 ;
 
 	public DocOrgMeta(String conn) {
-		super("a_orgs", "orgId", "TODO: domain", "todo: synid", conn);
+		super("a_orgs", "orgId", "todo: synid", conn);
 
 		this.pk = "orgId";
 		this.orgName = "orgName";

@@ -53,6 +53,7 @@ public class DocTableMeta extends SyntityMeta {
 	public final String stamp;
 	/** resource's creating node's device id, originally named as device */
 	// public final String synoder;
+	/** */
 	public final String fullpath;
 	/** aslo named as pname, clientname or filename previously */
 	public final String clientname;

@@ -12,6 +12,8 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.ExpSyncDoc;
+import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -28,14 +30,14 @@ public class DocUtils {
 	 * @param photo with photo.uri that is the entire base-64 encoded string
 	 * @param usr
 	 * @param meta 
-	 * @param st 
+	 * @param syb 
 	 * @param onFileCreateSql 
 	 * @return doc id
 	 * @throws TransException
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFileBy64(DATranscxt st, String conn, ExpSyncDoc photo,
+	public static String createFileBy64(DATranscxt syb, String conn, ExpSyncDoc photo,
 			IUser usr, ExpDocTableMeta meta, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
 		if (LangExt.isblank(photo.fullpath()))
@@ -44,7 +46,7 @@ public class DocUtils {
 		if (LangExt.isblank(photo.folder(), " - - "))
 			throw new SemanticException("Folder of managed docs cannot be empty - which is required for creating media files.");
 
-		Insert ins = st
+		Insert ins = syb
 			.insert(meta.tbl, usr)
 			.nv(meta.org, photo.org)
 			.nv(meta.uri, photo.uri)
@@ -58,20 +60,17 @@ public class DocUtils {
 			.nv(meta.shareby, photo.shareby)
 			.nv(meta.shareDate, photo.sharedate)
 			.nv(meta.size, photo.size)
+			.post(onFileCreateSql);
 			;
 		
 		if (!LangExt.isblank(photo.mime))
 			ins.nv(meta.mime, photo.mime);
 		
-		// add a synchronizing task
-		// - also triggered as private storage jserv, but no statement will be added
-		if (onFileCreateSql != null)
-			ins.post(onFileCreateSql);
-
-		ISemantext insCtx = st.instancontxt(conn, usr).creator(st);
-		SemanticObject res = (SemanticObject) ins.ins(insCtx);
-		String pid = res.resulve(meta.tbl, meta.pk, -1);
-		return pid;
+		SemanticObject res = (SemanticObject) ins
+				.ins(syb.instancontxt(conn, usr)
+						.creator(((DBSyntableBuilder) syb)
+						.loadNyquvect(conn)));
+		return res.resulve(meta.tbl, meta.pk, -1);
 	}
 
 	/**
@@ -173,6 +172,12 @@ public class DocUtils {
 					conn, meta.tbl);
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
+	}
+
+	public static String createFileB64(DATranscxt doctrb, String conn,
+			DocsReq req, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

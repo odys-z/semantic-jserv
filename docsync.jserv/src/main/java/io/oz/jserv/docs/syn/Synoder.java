@@ -1,6 +1,6 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.semantic.syn.ExessionAct.*;
+import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -10,7 +10,6 @@ import java.util.Map;
 
 import org.xml.sax.SAXException;
 
-import io.odysz.semantic.DASemantics;
 import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.JRobot;
@@ -81,7 +80,7 @@ public class Synoder {
 		this.mod = mod;
 	}
 
-	public SyncReq joinpeer(String peerserv, String peeradmin, String passwd)
+	public SyncReq joinpeer(String peeradmin, String passwd)
 			throws SQLException, TransException, SAXException, IOException {
 
 		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod)
@@ -162,7 +161,7 @@ public class Synoder {
 	 * @throws SAXException
 	 * @throws IOException
 	 */
-	public SyncReq syninit(String peer, String jserv, String domain)
+	public SyncReq syninit(String peer, String domain)
 			throws SQLException, TransException, SAXException, IOException {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect(myconn);
@@ -170,18 +169,18 @@ public class Synoder {
 		ExessionPersist xp = new ExessionPersist(b0, peer);
 		ExchangeBlock b = b0.initExchange(xp, peer);
 
-		synssion(peer, xp);
+		// synssion(peer, xp);
 		return new SyncReq(null, domain)
 				.exblock(b);
 	}
 
-	public SyncResp onsyninit(String peer, SyncReq ini)
+	public SyncResp onsyninit(String peer, ExchangeBlock ini)
 			throws SQLException, TransException, SAXException, IOException {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect(myconn);
 
-		ExessionPersist xp = new ExessionPersist(b0, peer, ini.exblock);
-		ExchangeBlock b = b0.onInit(xp, ini.exblock);
+		ExessionPersist xp = new ExessionPersist(b0, peer, ini);
+		ExchangeBlock b = b0.onInit(xp, ini);
 
 		synssion(peer, xp);
 		return new SyncResp()

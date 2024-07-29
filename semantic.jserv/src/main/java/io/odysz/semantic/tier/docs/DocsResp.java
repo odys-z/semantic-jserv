@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.x.SemanticException;
 
 /**
@@ -62,6 +63,8 @@ public class DocsResp extends AnsonResp {
 		this.doc = d;
 		return this;
 	}
+
+	public DocsResp doc(AnResultset rs, ExpDocTableMeta meta) { return null; }
 
 	public DocsResp doc(AnResultset rs, DocTableMeta meta)
 			throws SQLException, SemanticException {
