@@ -11,14 +11,19 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.jsession.AnSession;
+import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -27,6 +32,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docsync.ZSUNodes.AnDevice;
 import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
+import io.oz.jserv.test.JettyHelper;
 
 class DoclientierTest {
 	static int bsize;
@@ -36,7 +42,9 @@ class DoclientierTest {
 	
 	static Doclientier doclient;
 
+	static final String synode = "test-0";
 	static final String clientconn = "main-sqlite";
+	static final String serv_conn = "what?";
 
 	static {
 		try {
@@ -56,10 +64,30 @@ class DoclientierTest {
 			e.printStackTrace();
 		}
 	}
+	
+	@BeforeAll
+	static void init() throws Exception {
 
+//    	Configs.init("src/test/res/WEB-INF");
+//    	String vol = Configs.getCfg(key_volume);
+//    	vol = vol == null ? "" : vol.replace("\\", "\\\\");
+//    	System.setProperty("VOLUME_HOME", vol);
+//    	Utils.logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+
+		JettyHelper.startJserv("localhost", 8090,
+				new AnSession(),
+				new HeartLink(),
+				new Syntier(synode, serv_conn));
+	}
+
+	@AfterAll
+	static void close() throws Exception {
+		JettyHelper.stop();
+	}
 
 	@Test
 	void testLogin() {
+		Utils.pause("Press enter to conitnue ...");
 		fail("Not yet implemented");
 	}
 

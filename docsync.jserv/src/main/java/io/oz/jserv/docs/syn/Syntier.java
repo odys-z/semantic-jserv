@@ -12,11 +12,13 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
@@ -46,18 +48,22 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DeviceTableMeta;
 import io.oz.jserv.docs.x.DocsException;
 
-public class Syntier extends ServPort<AnsonBody> {
+@WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.syn" })
+public class Syntier extends ServPort<DocsReq> {
 	/** {domain: {jserv: exession-persist}} */
 	HashMap<String, Synoder> domains;
 
 	DBSyntableBuilder doctrb;
-	public DBSyntableBuilder doctrb() throws SQLException, SAXException, IOException, TransException {
-//		if (doctrb == null)
-//			doctrb = new DATranscxt(myconn);
+	public DBSyntableBuilder doctrb() {
 		return doctrb;
 	}
 
-	public final String myconn;
+	final String synode;
+	final String myconn;
+
+	public Syntier() throws SemanticException, SQLException, SAXException, IOException {
+		this("test", "test");
+	}
 
 	public Syntier(String synoderId, String loconn)
 			throws SemanticException, SQLException, SAXException, IOException {
@@ -71,8 +77,6 @@ public class Syntier extends ServPort<AnsonBody> {
 	public static final int jservx = 0;
 	public static final int myconx = 1;
 
-	final String synode;
-
 	Synodebot locrobot;
 	IUser locrobot() {
 		if (locrobot == null)
@@ -80,18 +84,16 @@ public class Syntier extends ServPort<AnsonBody> {
 		return locrobot;
 	}
 
-	/** The domain id for client before joined a domain. */
-	// public static final String domain0 = "io.oz.jserv.syn.init";
-
 	@Override
-	protected void onGet(AnsonMsg<AnsonBody> msg, HttpServletResponse resp)
+	protected void onGet(AnsonMsg<DocsReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		// TODO Auto-generated method stub
+		Utils.logi("-- %s", msg.toBlock());
 	}
 
 	@Override
-	protected void onPost(AnsonMsg<AnsonBody> jmsg, HttpServletResponse resp)
+	protected void onPost(AnsonMsg<DocsReq> jmsg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
+		Utils.logi("== %s", jmsg.toBlock());
 		
 		AnsonBody jreq = jmsg.body(0); // SyncReq | DocsReq
 		String a = jreq.a();

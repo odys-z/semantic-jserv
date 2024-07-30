@@ -87,6 +87,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	
 	private boolean verfiyToken;
 
+	/** url pattern: /login.serv */
 	public AnSession() {
 		this(true);
 	}

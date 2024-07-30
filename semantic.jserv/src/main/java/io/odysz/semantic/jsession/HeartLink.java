@@ -15,9 +15,17 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.x.SemanticException;
 
+/**
+ * 
+ * url pattern: /ping.serv
+ * 
+ * @author odys-z@github.com
+ *
+ */
 @WebServlet(description = "session manager", urlPatterns = { "/ping.serv" })
 public class HeartLink extends ServPort<HeartBeat> {
 
+	/** url pattern: /ping.serv */
 	public HeartLink() {
 		super(Port.heartbeat);
 	}
