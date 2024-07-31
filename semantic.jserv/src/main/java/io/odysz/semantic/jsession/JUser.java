@@ -99,6 +99,13 @@ public class JUser extends SemanticObject implements IUser {
 	/**@since 1.4.11 */
 	@Override
 	public String orgId() { return org; }
+
+	/**@since 2.0.0 */
+	public JUser orgId(String id) {
+		org = id;
+		return this;
+	}
+
 	/**@since v1.4.11 */
 	@Override
 	public String roleId() { return role; }
@@ -110,7 +117,12 @@ public class JUser extends SemanticObject implements IUser {
 	String funcName;
 	String userName;
 	String roleName;
+
 	String orgName;
+	public IUser orgName(String n) {
+		orgName = n;
+		return this;
+	}
 
 	private static DATranscxt logsctx;
 	private static String logConn;
@@ -154,7 +166,7 @@ public class JUser extends SemanticObject implements IUser {
 	 */
 	public JUser(String uid, String pswd, String usrName) throws SemanticException {
 		this.uid = uid;
-		this.pswd = pswd;
+		this.pswd = pswd == null ? this.pswd : pswd;
 
 		String rootK = DATranscxt.key("user-pswd");
 		if (rootK == null)

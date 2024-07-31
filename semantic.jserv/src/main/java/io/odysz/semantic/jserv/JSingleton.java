@@ -30,9 +30,12 @@ import io.odysz.semantics.x.SemanticException;
 public class JSingleton {
 
 	public static DATranscxt defltScxt;
-	private static ISessionVerifier ssVerier;
-	private static String webINF;
 	public static boolean health;
+
+	protected static ISessionVerifier ssVerier;
+	
+	/** @deprecated 2.0 */
+	protected static String webINF;
 
 	public void onDestroyed(ServletContextEvent arg0) {
 		AnSession.stopScheduled(5);
@@ -62,6 +65,8 @@ public class JSingleton {
 	/**
 	 * For initializing from Jetty - it's not able to find root path?
 	 * 
+	 * @deprecated can't load smtype.synchange for 2.0
+	 * 
 	 * @param root
 	 * @param rootINF, e.g. WEB-INF
 	 * @param rootKey, e.g. context.xml/parameter=root-key
@@ -83,7 +88,6 @@ public class JSingleton {
 		DatasetCfg.init(rootINF);
 		
 		for (String connId : Connects.getAllConnIds())
-			// DATranscxt.loadSemantics(connId, Connects.getSmtcsPath(connId), Connects.getDebug(connId));
 			DATranscxt.loadSemantics(connId);
 
 		defltScxt = new DATranscxt(Connects.defltConn());
@@ -98,7 +102,8 @@ public class JSingleton {
 			String cfg = Configs.getCfg(keys.disableTokenKey);
 			boolean verifyToken = isblank(cfg) ? true : bool(cfg);
 			if (!verifyToken)
-				Utils.warn("Verifying token is recommended but is disabled by config.xml/k=%s", keys.disableTokenKey);
+				Utils.warn("Verifying token is recommended but is disabled by config.xml/k=%s",
+						keys.disableTokenKey);
 			ssVerier = new AnSession(verifyToken);
 		}
 		return ssVerier;
@@ -114,14 +119,14 @@ public class JSingleton {
 
 	/**Get server root/WEB-INF path (filesystem local)
 	 * @return WEB-INF root path
-	 */
 	public static String rootINF() { return webINF; }
+	 */
 
 	/**Get WEB-INF file path
 	 * @param filename
 	 * @return rootINF() + filename
 	 */
 	public static String getFileInfPath(String filename) {
-		return FilenameUtils.concat(rootINF(), filename);
+		return FilenameUtils.concat(webINF, filename);
 	}
 }

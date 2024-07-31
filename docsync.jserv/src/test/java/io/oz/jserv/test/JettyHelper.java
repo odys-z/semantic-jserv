@@ -12,7 +12,11 @@ import org.eclipse.jetty.server.ServerConnector;
 
 import io.odysz.anson.Anson;
 import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
+import io.oz.jserv.docs.syn.Syngleton;
+import io.oz.jserv.docs.syn.Syntier;
 
 /**
  * Start an embedded Jetty server for ee8.
@@ -33,12 +37,16 @@ import io.odysz.semantic.jserv.ServPort;
  */
 public class JettyHelper {
 	static Server server;
+	private static ServletContextHandler schandler;
+	/** one singleton / container per tier per org? */
+	// static String configxml = "per servlet container";
 
     /**
      * Start an embedded Jetty 12 server, evn ee8, for test etc.
      * 
      * <p>Note: all serv-port types must have a default contructor (zero parameters).
      * If this is not possible, use {@link #registerServlets(ServletContextHandler, ServPort)}</p>
+     * @param configxml e. g. config.xml
      * @param ip
      * @param port
      * @param servports
@@ -46,12 +54,12 @@ public class JettyHelper {
      * @since 2.0.0
      */
     @SafeVarargs
-	public static void startJserv(String ip, int port, Class<? extends ServPort<?>> ... servports)
+	public static void startJserv(String configxml, String ip, int port, Class<? extends ServPort<?>> ... servports)
     		throws Exception {
 
-        instanserver(ip, port);
+        instanserver(ip, port, configxml);
 
-        ServletContextHandler schandler = new ServletContextHandler(server, "/");
+        schandler = new ServletContextHandler(server, "/");
         for (Class<? extends ServPort<?>> c : servports) {
         	registerServlets(schandler, c);
         }
@@ -59,8 +67,11 @@ public class JettyHelper {
         server.start();
     }
 
-	private static void instanserver(String ip, int port) throws Exception {
+	private static void instanserver(String ip, int port, String configxml) throws Exception {
         Anson.verbose = false;
+
+    	Syngleton.initSynodetier(configxml, ".", "src/test/res/WEB-INF", "ABCDEF0123456789");
+        AnsonMsg.understandPorts(Port.docsync);
         
         if (server != null)
         	server.stop();
@@ -75,12 +86,12 @@ public class JettyHelper {
 	}
 
 	@SafeVarargs
-	public static <T extends ServPort<? extends AnsonBody>> void startJserv(String ip, int port, T ... servports)
-    		throws Exception {
+	public static <T extends ServPort<? extends AnsonBody>> void startJserv(String configxml,
+			String ip, int port, T ... servports) throws Exception {
 
-        instanserver(ip, port);
+        instanserver(ip, port, configxml);
 
-        ServletContextHandler schandler = new ServletContextHandler(server, "/");
+        schandler = new ServletContextHandler(server, "/");
         for (T t : servports) {
         	registerServlets(schandler, t);
         }
@@ -103,6 +114,10 @@ public class JettyHelper {
 			HttpServlet servlet = type.getConstructor().newInstance();
 			context.addServlet(new ServletHolder(servlet), pattern);
 		}
+	}
+
+	public static void addPort(ServPort p) {
+       	registerServlets(schandler, p);
 	}
 	
 	public static void stop() throws Exception {

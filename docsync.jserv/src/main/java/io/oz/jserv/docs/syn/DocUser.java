@@ -14,6 +14,11 @@ import io.oz.album.tier.Profiles;
  * @author odys-z@github.com
  */
 public class DocUser extends JUser implements IUser {
+	public static JUserMeta userMeta;
+	
+	static {
+		userMeta = new JUserMeta("a_users");
+	}
 
 	static final String WebRoot = "web-root";
 
@@ -23,16 +28,19 @@ public class DocUser extends JUser implements IUser {
 	String roleName;
 	String orgName;
 
-	private String pswd;
-
-	public static JUserMeta userMeta;
-	
-	static {
-		userMeta = new JUserMeta("a_users");
+	protected String deviceId;
+	public String deviceId() { return deviceId; }
+	public DocUser deviceId(String id) {
+		deviceId = id;
+		return this;
 	}
 
 	public DocUser(String userid, String passwd) throws SemanticException {
 		super(userid, passwd, userid);
+	}
+
+	public DocUser(String userid) throws SemanticException {
+		super(userid, null, userid);
 	}
 
 	/**

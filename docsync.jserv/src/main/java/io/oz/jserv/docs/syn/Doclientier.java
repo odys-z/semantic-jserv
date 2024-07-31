@@ -62,7 +62,7 @@ public class Doclientier extends Semantier {
 	protected SessionClient client;
 	protected OnError errCtx;
 
-	protected SyncRobot robot;
+	protected DocUser robot;
 
 	/** for download? */
 	protected String tempath;
@@ -121,6 +121,7 @@ public class Doclientier extends Semantier {
 	 * @param device
 	 * @param pswd
 	 * @return this
+	 * @throws SemanticException 
 	 * @throws SQLException
 	 * @throws AnsonException
 	 * @throws IOException
@@ -128,7 +129,7 @@ public class Doclientier extends Semantier {
 	 * @throws SsException 
 	 */
 	public Doclientier login(String workerId, String device, String pswd)
-			throws AnsonException, IOException, TransException, SsException {
+			throws SemanticException, AnsonException, SsException, IOException {
 
 		client = Clients.login(workerId, pswd, device);
 
@@ -147,17 +148,16 @@ public class Doclientier extends Semantier {
 	public Doclientier onLogin(SessionClient client) {
 		SessionInf ssinf = client.ssInfo();
 		try {
-			robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath, ssinf.device);
+			// robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath, ssinf.device);
+			robot = new DocUser(ssinf.uid());
 			tempath = FilenameUtils.concat(tempath,
-					String.format("io.oz.sync.%s.%s", ssinf.device, ssinf.uid()));
+					String.format("io.oz.doc.%s.%s", ssinf.device, ssinf.uid()));
 			
 			new File(tempath).mkdirs(); 
 			
-			JUserMeta um = null;
-			if (!isNull(Connects.getAllConnIds()))
-				um = (JUserMeta) robot.meta();
-			else // a temporary solution for client without DB connections
-				um = new JUserMeta();
+			JUserMeta um = isNull(Connects.getAllConnIds())
+					? new JUserMeta() // a temporary solution for client without DB connections
+					: (JUserMeta) robot.meta();
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
@@ -205,7 +205,7 @@ public class Doclientier extends Semantier {
 	public List<DocsResp> syncUp(String tabl, List<? extends SyncDoc> videos,
 			OnProcess onProc, OnOk... docOk)
 			throws TransException, AnsonException, IOException {
-		SessionInf photoUser = client.ssInfo();
+		// SessionInf photoUser = client.ssInfo();
 		// photoUser.device = workerId;
 
 		return pushBlocks(
@@ -285,14 +285,15 @@ public class Doclientier extends Semantier {
 	}
 	
 	/**
-	 * Upward pushing with BlockChain
+	 * [Synchronously]
+	 * Upward pushing with BlockChain.
 	 * 
 	 * @param tbl doc table name
 	 * @param videos any doc-table managed records, of which uri shouldn't be loaded,
 	 * e.g. use {@link io.odysz.transact.sql.parts.condition.Funcall#extFile(String) extFile()} as sql select expression.
 	 * - the method is working in stream mode
-	 * @param proc
-	 * @param docOk
+	 * @param proc reporting at each block finished
+	 * @param docOk callback for implementing asynchronous wrapper
 	 * @param onErr
 	 * @return list of response
 	 */
@@ -384,7 +385,8 @@ public class Doclientier extends Semantier {
 
 				if (ex instanceof IOException)
 					continue;
-				else errHandler.err(MsgCode.exGeneral, ex.getMessage(), ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
+				else errHandler.err(MsgCode.exGeneral, ex.getMessage(),
+					ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
 			}
 			finally {
 				if (ifs != null)
@@ -572,6 +574,7 @@ public class Doclientier extends Semantier {
 	}
 
 	/**
+	 * [Synchronously]
 	 * Create a doc record at server side, then start pushing.
 	 * <p>Using block chain for file upload.</p>
 	 * 

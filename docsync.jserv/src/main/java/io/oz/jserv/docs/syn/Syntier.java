@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.smtype;
@@ -59,17 +60,38 @@ public class Syntier extends ServPort<DocsReq> {
 	}
 
 	final String synode;
+	/** DB connection id for this node to synchronize. */
 	final String myconn;
 
 	public Syntier() throws SemanticException, SQLException, SAXException, IOException {
 		this("test", "test");
 	}
 
+	/**
+	 * <h5>note</h5>
+	 * 
+	 * <p>If synoderId is null, will be loaded from
+	 * {@link Configs#cfgFile}/table/v [k={@link Configs.keys#synode}], and
+	 * {@code null} can not be used before
+	 * {@link Syngleton#initSynodetier(String, String, String, String)} or
+	 * {@link Configs#init(String, String, String...)} has been called.
+	 * 
+	 * @param synoderId optional
+	 * @param loconn local connection id for this node tier, see {@link #myconn}.
+	 * @throws SemanticException
+	 * @throws SQLException
+	 * @throws SAXException
+	 * @throws IOException
+	 */
 	public Syntier(String synoderId, String loconn)
 			throws SemanticException, SQLException, SAXException, IOException {
 		super(Port.dbsyncer);
-		synode = synoderId;
+		synode = isblank(synoderId) ? Configs.getCfg(Configs.keys.synode) : synoderId;
 		myconn = loconn;
+		
+		if (synode == null)
+			throw new SemanticException("Synode id must be configured in %s. table %s, k = %s",
+					Configs.cfgFile, Configs.keys.deftXTableId, Configs.keys.synode);
 	}
 
 	private static final long serialVersionUID = 1L;

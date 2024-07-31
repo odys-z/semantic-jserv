@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<configs>
+  <t id="default" pk="k" columns="k,v">
+    <c>
+    	<k>file-sys</k>
+    	<v></v>
+    </c>
+    <c>
+    	<k>id-len</k>
+    	<v>4</v>
+    </c>
+
+    <c>
+    	<k>io.oz.syn.synode</k>
+    	<v>synode-0</v>
+    </c>
+
+	<c>
+		<!-- Class name of SUser Implementation -->
+		<k>class-IUser</k>
+		<v>io.oz.jserv.docsync.SyncRobot</v>
+	</c>
+	<c>
+		<!-- home id is the same as remote id. Only registered home can get one -->
+		<k>home-id</k>
+		<v>test.odyzhou</v>
+	</c>
+	<c>
+		<k>sync.log.on-verbose</k>
+		<v>false</v>
+	</c>
+	<c>
+		<k>ss-timeout-min</k>
+		<v>3</v>
+	</c>
+	<c>
+		<k>ss-timeout-min.debugMode</k>
+		<v>false</v>
+	</c>
+	<c>
+        <!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml)
+             Since v1.3.0, when creating log-id, jserv will use system default conn-id;
+             when inserting log, it will use this conn-id.
+         -->
+		<k>log-connId</k>
+		<v>main-sqlite,semantic-log.xml,a_logs</v>
+	</c>
+	<c>
+		<!-- (center) hub, (main) storage, (private) storage -->
+		<k>sync-mode</k>
+		<v>main</v>
+	</c>
+	<c>
+		<!-- connect id for where to save downloaded file, e.g default connection key -->
+		<k>sync-conn-id</k>
+		<v>main-sqlite</v>
+	</c>
+	<c>
+		<!-- sync task name (multiple threads for the future), i.e. table name, of which table's records to be synchronized) -->
+		<k>sync-table-name</k>
+		<v>h_photos</v>
+	</c>
+  </t>
+
+</configs>

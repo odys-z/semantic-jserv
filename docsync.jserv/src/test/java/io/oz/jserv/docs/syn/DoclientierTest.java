@@ -1,7 +1,11 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.logT;
+import static io.odysz.common.Utils.pause;
 import static io.oz.jserv.docsync.ZSUNodes.clientUri;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,11 +20,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.Utils;
+import io.odysz.jclient.Clients;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
+import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
@@ -40,9 +45,9 @@ class DoclientierTest {
 	static ExpDocTableMeta docm;
 	static ErrorCtx errLog;
 	
-	static Doclientier doclient;
+	// static Doclientier doclient;
 
-	static final String synode = "test-0";
+	// static final String synode = "test-0";
 	static final String clientconn = "main-sqlite";
 	static final String serv_conn = "what?";
 
@@ -51,7 +56,7 @@ class DoclientierTest {
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
 			
-			doclient = new Doclientier(clientUri, errLog);
+			// doclient = new Doclientier(clientUri, errLog);
 
 			errLog = new ErrorCtx() {
 				@Override
@@ -60,7 +65,7 @@ class DoclientierTest {
 				}
 			};
 
-		} catch (TransException | IOException e) {
+		} catch (TransException e) {
 			e.printStackTrace();
 		}
 	}
@@ -68,88 +73,91 @@ class DoclientierTest {
 	@BeforeAll
 	static void init() throws Exception {
 
-//    	Configs.init("src/test/res/WEB-INF");
-//    	String vol = Configs.getCfg(key_volume);
-//    	vol = vol == null ? "" : vol.replace("\\", "\\\\");
-//    	System.setProperty("VOLUME_HOME", vol);
-//    	Utils.logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+    	System.setProperty("VOLUME_HOME", "../volume");
+    	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
-		JettyHelper.startJserv("localhost", 8090,
+		String servIP = "localhost";
+		int port = 8090;
+
+
+		JettyHelper.startJserv("config-0.xml", servIP, port,
 				new AnSession(),
-				new HeartLink(),
-				new Syntier(synode, serv_conn));
+				new HeartLink());
+
+		JettyHelper.addPort(new Syntier(null, serv_conn));
+
+		// client
+		String jserv = String.format("http://%s:%s", servIP, port);
+		logi("Server started at %s", jserv);
+		Clients.init(jserv);
 	}
 
 	@AfterAll
 	static void close() throws Exception {
 		JettyHelper.stop();
-	}
 
-	@Test
-	void testLogin() {
-		Utils.pause("Press enter to conitnue ...");
-		fail("Not yet implemented");
+		logi("Server closed");
 	}
 
 	@Test
 	void testSyncUp() throws Exception {
+
 		videoUpByApp(docm);
+
+		pause("Press enter to quite ...");
 	}
 
 	static String videoUpByApp(ExpDocTableMeta docm)
 			throws AnsonException, SsException, SemanticException, IOException, TransException, SQLException {
 
 		// app is using Doclientier for synchronizing 
-		Doclientier clientier = new Doclientier(clientUri, errLog)
+		Doclientier doclient = new Doclientier(clientUri, errLog)
 				.tempRoot("app.kharkiv")
 				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
-		clientier.synDel(docm.tbl, AnDevice.device, AnDevice.localFile);
+		doclient.synDel(docm.tbl, AnDevice.device, AnDevice.localFile);
 
 		SyncDoc doc = (SyncDoc) new SyncDoc()
-					.share(clientier.robot.uid(), Share.pub, new Date())
+					.share(doclient.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);
 
-		DocsResp resp = clientier.startPush(docm.tbl, doc, new OnOk() {
+		DocsResp resp = doclient.startPush(docm.tbl, doc, new OnOk() {
 
 			@Override
 			public void ok(AnsonResp resp)
 					throws IOException, AnsonException {
 				SyncDoc doc = ((DocsResp) resp).doc; 
 
-//				try {
-//					doclient.tempRoot("synode.kharkiv")
-//							.login(Kharkiv.Synode.worker, Kharkiv.Synode.nodeId, Kharkiv.Synode.passwd)
-//							.blockSize(bsize);
-//				} catch (SsException e1) {
-//					e1.printStackTrace();
-//					fail(e1.getMessage());
-//				} catch (TransException e) {
-//					e.printStackTrace();
-//				}
+				try {
+					doclient.login(Kharkiv.Synode.worker, Kharkiv.Synode.nodeId, Kharkiv.Synode.passwd)
+							.blockSize(bsize);
+				} catch (SsException e1) {
+					e1.printStackTrace();
+					fail(e1.getMessage());
+				} catch (TransException e) {
+					e.printStackTrace();
+				}
 
 				// pushing again should fail
 				// List<DocsResp> resps2 = null;
-				@SuppressWarnings("unused")
-				DocsResp resp2 = null;
 				try {
-
-					resp2 = clientier.startPush(docm.tbl, doc,
-					new OnOk() {
-						@Override
-						public void ok(AnsonResp resp)
-								throws IOException, AnsonException {
-							fail("Double checking failed.");
-						}
-					},
-					new ErrorCtx() {
-						@Override
-						public void err(MsgCode code, String msg, String...args) {
-							// expected
-						}
-					});
+					DocsResp resp2 = doclient.startPush(docm.tbl, doc,
+						new OnOk() {
+							@Override
+							public void ok(AnsonResp resp)
+									throws IOException, AnsonException {
+								logT(new Object() {}, resp.msg());
+								fail("Double checking failed.");
+							}
+						},
+						new ErrorCtx() {
+							@Override
+							public void err(MsgCode code, String msg, String...args) {
+								// expected
+							}
+						});
 				} catch (TransException | IOException | SQLException e) {
 					e.printStackTrace();
 					fail(e.getMessage());
@@ -162,7 +170,7 @@ class DoclientierTest {
 		String docId = resp.doc.recId();
 		assertEquals(8, docId.length());
 
-		DocsResp rp = clientier.selectDoc(docm.tbl, docId);
+		DocsResp rp = doclient.selectDoc(docm.tbl, docId);
 
 		assertTrue(isblank(rp.msg()));
 		assertEquals(AnDevice.device, rp.doc.device());
@@ -171,12 +179,10 @@ class DoclientierTest {
 		return AnDevice.localFile;
 	}
 
-	@Test
 	void testSynDel() {
 		fail("Not yet implemented");
 	}
 
-	@Test
 	void testSynQueryPathsPage() throws Exception {
 		Doclientier clientier = new Doclientier(clientUri, errLog)
 				.tempRoot("app.kharkiv")
@@ -192,9 +198,8 @@ class DoclientierTest {
 
 		DocsResp resp = clientier.startPush(docm.tbl, doc, new OnOk() {
 			@Override
-			public void ok(AnsonResp resp) throws IOException, AnsonException, SemanticException {
+			public void ok(AnsonResp resp) throws IOException, AnsonException, TransException {
 			}
 		});
 	}
-
 }

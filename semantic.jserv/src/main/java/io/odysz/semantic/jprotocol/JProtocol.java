@@ -9,7 +9,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.SemanticObject;
-import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 public class JProtocol {
@@ -27,7 +26,7 @@ public class JProtocol {
 
 	@FunctionalInterface
 	public interface OnOk {
-		void ok(AnsonResp resp) throws IOException, AnsonException, SemanticException;
+		void ok(AnsonResp resp) throws IOException, AnsonException, TransException;
 	}
 	
 	/**
@@ -36,10 +35,8 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
-		// void proc(int listIndx, int totalBlocks, DocsResp blockResp) throws IOException, AnsonException, SemanticException;
-
 		void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
-			throws IOException, AnsonException, SemanticException;
+			throws IOException, AnsonException, TransException;
 	}
 
 	/**

@@ -251,7 +251,7 @@ public class Synoder {
 					);
 		
 		mysynbuilder = new DBSyntableBuilder(domain, myconn, synode, mod)
-									.loadNyquvect(myconn);
+							.loadNyquvect(myconn);
 	
 		if (handlers != null)
 		for (SemanticHandler h : handlers)
