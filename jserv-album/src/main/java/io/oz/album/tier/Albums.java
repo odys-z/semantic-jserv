@@ -3,7 +3,7 @@ package io.oz.album.tier;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.startsOneOf;
+import static io.odysz.common.LangExt.prefixOneOf;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
@@ -824,7 +824,7 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 
 	static boolean isVedioAudio(String mime) {
-		return isblank(mime) || startsOneOf(mime, "audio/", "image/");
+		return isblank(mime) || prefixOneOf(mime, "audio/", "image/");
 	}
 
 	/**

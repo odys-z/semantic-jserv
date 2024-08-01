@@ -11,7 +11,7 @@ package io.odysz.semantic.tier.docs;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.split;
-import static io.odysz.common.LangExt.startsOneOf;
+import static io.odysz.common.LangExt.prefixOneOf;
 import static io.odysz.common.Utils.logi;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -272,7 +272,7 @@ public abstract class Docs206 {
 
 	static boolean isAttachment(HttpServletRequest request, String contentType) {
 		String accept = request.getHeader("Accept");
-		return !startsOneOf(contentType, "text", "image") && (accept == null || !accepts(accept, contentType));
+		return !prefixOneOf(contentType, "text", "image") && (accept == null || !accepts(accept, contentType));
 	}
 
 	/**
