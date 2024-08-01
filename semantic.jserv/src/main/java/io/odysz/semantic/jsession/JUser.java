@@ -131,7 +131,7 @@ public class JUser extends SemanticObject implements IUser {
 	static {
 		String[] connss = null;
 		try {
-			String conn = Configs.getCfg("log-connId");
+			String conn = Configs.getCfg(Configs.keys.logConnId); // "log-connId"
 			if (isblank(conn))
 				; // Utils.warn("ERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
 			else
@@ -139,8 +139,8 @@ public class JUser extends SemanticObject implements IUser {
 
 			if (isNull(connss))
 				// throw new SemanticException("Parsing log connection config error: %s", conn);
-				Utils.warnT(new Object() {},
-					"JUser need a log connection id configured in configs.xml, but get an empty conn-id.\n" +
+				Utils.logi(
+					"JUser uses a log connection id configured in configs.xml, but get an empty conn-id.\n" +
 					"DB log is disabled.",
 					conn);
 			else {
@@ -190,7 +190,8 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	public TableMeta meta(String ... connId) {
-		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
+		// return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
+		return new JUserMeta("a_user", isNull(connId) ? null : connId[0]);
 	}
 
 	/**

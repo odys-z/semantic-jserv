@@ -39,12 +39,9 @@
 		<v>false</v>
 	</c>
 	<c>
-        <!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml)
-             Since v1.3.0, when creating log-id, jserv will use system default conn-id;
-             when inserting log, it will use this conn-id.
-         -->
+        <!-- empty for disabling db log -->
 		<k>log-connId</k>
-		<v>main-sqlite,semantic-log.xml,a_logs</v>
+		<v></v>
 	</c>
 
 	<!-- (center) hub, (main) storage, (private) storage

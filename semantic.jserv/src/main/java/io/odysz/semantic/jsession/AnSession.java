@@ -146,7 +146,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		try {
 			IUser tmp = createUser(keys.usrClzz, "temp", "pswd", null, "temp user");
-			usrMeta = (JUserMeta) tmp.meta(daSctx.getSysConnId());
+			// usrMeta = (JUserMeta) tmp.meta(daSctx.getSysConnId());
+			usrMeta = (JUserMeta) tmp.meta();
 		}
 		catch (Exception ex) {
 			Utils.warn("SSesion: Implementation class of IUser hasn't been configured correctly in: %s/t[id=%s]/k=%s, check the value.",
@@ -245,9 +246,10 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	}
 
 	protected void jsonResp(AnsonMsg<AnSessionReq> msg, HttpServletResponse response) throws IOException {
+		String connId = null;
 		try {
 			if (msg != null) {
-				String connId = isblank(msg.body(0).uri())
+				connId = isblank(msg.body(0).uri())
 					? Connects.defltConn() : Connects.uri2conn(msg.body(0).uri());
 //			if (connId == null || connId.trim().length() == 0)
 //				connId = Connects.defltConn();
@@ -320,7 +322,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						.nv(usrMeta.pswd, sessionBody.md("pswd")) // depends on semantics: dencrypt
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, usr.uid())
-						.u(sctx.instancontxt(sctx.getSysConnId(), usr));
+						.u(sctx.instancontxt(connId, usr));
 
 					// ok, logout
 					try {
@@ -347,7 +349,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					SemanticObject s = sctx.select(usrMeta.tbl, "u")
 							.col(usrMeta.iv, "iv")
 							.where_("=", "u." + usrMeta.pk, sessionBody.uid())
-							.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
+							// .rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
+							.rs(sctx.instancontxt(connId, jrobot));
 
 					AnResultset rs = (AnResultset) s.rs(0);;
 					if (rs.beforeFirst().next()) {
@@ -364,7 +367,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						.nv(usrMeta.pswd, pswd2)
 						.nv(usrMeta.iv, iv64)
 						.whereEq(usrMeta.pk, header.logid())
-						.u(sctx.instancontxt(sctx.getSysConnId(), jrobot));
+						// .u(sctx.instancontxt(sctx.getSysConnId(), jrobot));
+						.u(sctx.instancontxt(connId, jrobot));
 
 					// remove session if logged in
 					if (users.containsKey(ssid)) {
@@ -384,17 +388,18 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 					if (ping.equals(a) || touch.equals(a)) {
 						AnsonHeader header = msg.header();
 						verify(header);
-						write(response, AnsonMsg.ok(p, sctx.getSysConnId()), msg.opts());
+						// write(response, AnsonMsg.ok(p, sctx.getSysConnId()), msg.opts());
+						write(response, AnsonMsg.ok(p, connId), msg.opts());
 					}
 					else throw new SsException ("Session Request not supported: a=%s", a);
 				}
 			}
 			else throw new SsException ("Session request not supported: request body is null");
 		} catch (SsException | TransException e) {
-			write(response, err(MsgCode.exSession, e.getMessage()).uri(sctx.getSysConnId()));
+			write(response, err(MsgCode.exSession, e.getMessage()).uri(connId));
 		} catch (Exception e) {
 			e.printStackTrace();
-			write(response, err(MsgCode.exGeneral, e.getMessage()).uri(sctx.getSysConnId()));
+			write(response, err(MsgCode.exGeneral, e.getMessage()).uri(connId));
 		} finally {
 		}
 	}
@@ -432,7 +437,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.orgName)       // v1.4.11
 			.col(usrMeta.roleName)		// v1.4.11
 			.whereEq("u." + usrMeta.pk, sessionBody.uid())
-			.rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
+			// .rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
+			.rs(sctx.instancontxt(connId, jrobot));
 
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {

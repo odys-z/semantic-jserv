@@ -44,10 +44,10 @@ public class Syngleton extends JSingleton {
 		DatasetCfg.init(configFolder);
 		String synode = Configs.getCfg(Configs.keys.synode);
 
-		for (String conn : Connects.getAllConnIds())
+		// for (String conn : Connects.getAllConnIds())
 			// DATranscxt.loadSemantics(connId);
-			DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
-				(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
+		DATranscxt.initConfigs(conn0, DATranscxt.loadSemantics(conn0),
+			(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
 			
 		defltScxt = new DATranscxt(conn0);
 			
