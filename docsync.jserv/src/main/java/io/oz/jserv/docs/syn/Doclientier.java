@@ -326,7 +326,7 @@ public class Doclientier extends Semantier {
 			int totalBlocks = 0;
 
 			SyncDoc p = videos.get(px);
-			DocsReq req = new DocsReq(tbl)
+			DocsReq req = new DocsReq(tbl, uri)
 					.folder(p.folder())
 					.share(p)
 					.device(new Device(user.device, null))
@@ -351,7 +351,7 @@ public class Doclientier extends Semantier {
 
 				String b64 = AESHelper.encode64(ifs, blocksize);
 				while (b64 != null) {
-					req = new DocsReq(tbl).blockUp(seq, p, b64, user);
+					req = new DocsReq(tbl, uri).blockUp(seq, p, b64, user);
 					seq++;
 
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
@@ -362,7 +362,7 @@ public class Doclientier extends Semantier {
 
 					b64 = AESHelper.encode64(ifs, blocksize);
 				}
-				req = new DocsReq(tbl).blockEnd(respi, user);
+				req = new DocsReq(tbl, uri).blockEnd(respi, user);
 
 				q = client.<DocsReq>userReq(uri, Port.docsync, req)
 							.header(header);
@@ -376,7 +376,7 @@ public class Doclientier extends Semantier {
 				Utils.warn(ex.getMessage());
 
 				if (resp0 != null) {
-					req = new DocsReq(tbl).blockAbort(resp0, user);
+					req = new DocsReq(tbl, uri).blockAbort(resp0, user);
 					req.a(DocsReq.A.blockAbort);
 					q = client.<DocsReq>userReq(uri, Port.docsync, req)
 								.header(header);
@@ -400,7 +400,7 @@ public class Doclientier extends Semantier {
 
 	public String download(String clientUri, String syname, SyncDoc photo, String localpath)
 			throws SemanticException, AnsonException, IOException {
-		DocsReq req = (DocsReq) new DocsReq(syname).uri(clientUri);
+		DocsReq req = (DocsReq) new DocsReq(syname, uri);
 		req.docId = photo.recId;
 		req.a(A.download);
 		return client.download(clientUri, Port.docsync, req, localpath);
@@ -419,7 +419,7 @@ public class Doclientier extends Semantier {
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
-		DocsReq req = new DocsReq(docTabl);
+		DocsReq req = new DocsReq(docTabl, uri);
 		req.a(A.rec);
 		req.docId = docId;
 
@@ -442,7 +442,7 @@ public class Doclientier extends Semantier {
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
-		DocsReq req = new DocsReq(docTabl);
+		DocsReq req = new DocsReq(docTabl, uri);
 		req.a(A.orgNodes);
 		req.org = org;
 
@@ -462,7 +462,7 @@ public class Doclientier extends Semantier {
 	}
 	
 	public DocsResp synDel(String tabl, String device, String clientpath) {
-		DocsReq req = (DocsReq) new DocsReq(tabl)
+		DocsReq req = (DocsReq) new DocsReq(tabl, uri)
 				.device(new Device(device, null))
 				.clientpath(clientpath)
 				.a(A.del);

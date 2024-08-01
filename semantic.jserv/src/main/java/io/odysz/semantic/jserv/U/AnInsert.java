@@ -39,10 +39,10 @@ public class AnInsert extends ServPort<AnInsertReq> {
 	}
 
 	protected static ISessionVerifier verifier;
-	protected static DATranscxt st;
+	// protected static DATranscxt st;
 
 	static {
-		st = JSingleton.defltScxt;
+		// st = JSingleton.defltScxt;
 		verifier = JSingleton.getSessionVerifier();
 	}
 
@@ -127,7 +127,7 @@ public class AnInsert extends ServPort<AnInsertReq> {
 				.cols(cols)
 				.values(msg.values())
 				.where(AnUpdate.tolerateNv(msg.where))
-				.post(AnUpdate.postUpds(msg.postUpds, usr))
+				.post(AnUpdate.postUpds(st, msg.postUpds, usr))
 				.ins(st.instancontxt(connId, usr));
 		if (res == null)
 			return new AnsonMsg<AnsonResp>(p, MsgCode.ok);

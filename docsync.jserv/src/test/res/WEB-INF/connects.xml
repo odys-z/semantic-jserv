@@ -102,12 +102,12 @@
   	     It's planned to try configure connections via user requests, in the future.
   	-->
    	<c>
-  		<uri>session</uri>
-  		<conn>sys-sqlite</conn>
+  		<uri>client-at-00</uri>
+  		<conn>no-jserv.00</conn>
   	</c>
    	<c>
-  		<uri>/sys/*</uri>
-  		<conn>sys-sqlite</conn>
+  		<uri>client-at-01</uri>
+  		<conn>no-jserv.01</conn>
   	</c>
   	
   </t>

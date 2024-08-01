@@ -13,7 +13,7 @@
 	<c>
 		<!-- Class name of SUser Implementation -->
 		<k>class-IUser</k>
-		<v>io.oz.jserv.docsync.SyncRobot</v>
+		<v>io.oz.jserv.docs.syn.DocUser</v>
 	</c>
 	<c>
 		<!-- home id is the same as remote id. Only registered home can get one -->
@@ -50,16 +50,25 @@
 		<k>sync-interval-min</k>
 		<v>1</v>
 	</c>
+	
 	<c>
-		<!-- connect id for where to save downloaded file, e.g default connection key -->
+		<k>io.oz.syn.synode</k>
+		<v>syn-00</v>
+	</c>
+ 
+	<!-- connect id for where to save downloaded file, e.g default connection key
+	<c>
 		<k>sync-conn-id</k>
 		<v>main-sqlite</v>
 	</c>
+	-->
+
+	<!-- sync task name (multiple threads for the future), i.e. table name, of which table's records to be synchronized)
 	<c>
-		<!-- sync task name (multiple threads for the future), i.e. table name, of which table's records to be synchronized) -->
 		<k>sync-table-name</k>
 		<v>h_photos</v>
 	</c>
+	-->
   </t>
 
   <t id="tree-semantics" pk="k" columns="k,v">

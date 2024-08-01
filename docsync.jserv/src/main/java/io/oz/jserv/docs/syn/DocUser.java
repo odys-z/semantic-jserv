@@ -35,6 +35,10 @@ public class DocUser extends JUser implements IUser {
 		return this;
 	}
 
+	public DocUser(String userid, String passwd, String userName) throws SemanticException {
+		super(userid, passwd, userName);
+	}
+
 	public DocUser(String userid, String passwd) throws SemanticException {
 		super(userid, passwd, userid);
 	}
@@ -42,7 +46,7 @@ public class DocUser extends JUser implements IUser {
 	public DocUser(String userid) throws SemanticException {
 		super(userid, null, userid);
 	}
-
+	
 	/**
 
 	@Override

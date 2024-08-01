@@ -85,11 +85,11 @@ public class AlbumReq extends DocsReq {
 	}
 
 	public AlbumReq() {
-		super(null, null);
+		super(null);
 	}
 	
 	public AlbumReq(String funcUri) {
-		super(null, funcUri);
+		super(funcUri);
 	}
 
 	protected AlbumReq(AnsonMsg<? extends AnsonBody> parent, String uri) {

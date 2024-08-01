@@ -254,8 +254,8 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		return new AnsonMsg<AnsonResp>(p, MsgCode.ok).body(resp);
 	}
 
-	public AnsonMsg<T> uri(String conn) {
-		this.body.get(0).uri = conn;
+	public AnsonMsg<T> uri(String uri) {
+		this.body.get(0).uri = uri;
 		return this;
 	}
 

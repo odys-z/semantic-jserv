@@ -50,7 +50,7 @@ public class JUser extends SemanticObject implements IUser {
 			this.pk      = "userId";
 			this.uname   = "userName";
 			this.pswd    = "pswd";
-			this.iv      = "encAuxiliary";
+			this.iv      = "iv"; // since 2.0.0
 			this.org     = "orgId";
 			this.orgName = "orgName";
 			this.role    = "roleId";

@@ -9,7 +9,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -40,12 +39,24 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	public AnQuery() { super(Port.query); }
 
 	protected static ISessionVerifier verifier;
-	protected static DATranscxt st;
+	// protected static DATranscxt st;
 
 	static {
-		st = JSingleton.defltScxt;
+		// st = JSingleton.defltScxt;
 		verifier = JSingleton.getSessionVerifier();
 	}
+	
+	/**
+	 * Set default transaction builder.
+	 * 
+	 * @since 2.0.0, default {@link #st} is not always prividen by {@link JSingleton}.
+	 * @param stb
+	 * @return 
+	public AnQuery st(DATranscxt stb) {
+		st = stb;
+		return this;
+	}
+	 */
 
 	@Override
 	protected void onGet(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp)
@@ -100,7 +111,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	 * @throws TransException
 	 */
 	protected static Query buildSelct(AnQueryReq msg, IUser usr) throws SQLException, TransException {
-		Query selct = st.select(msg.mtabl, msg.mAlias);
+		Query selct = st0.select(msg.mtabl, msg.mAlias);
 		
 		selct.page(msg.page, msg.pgsize);
 
@@ -176,7 +187,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	 */
 	public static AnResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = buildSelct(msg, usr);
-		SemanticObject s = selct.rs(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
+		SemanticObject s = selct.rs(st0.instancontxt(Connects.uri2conn(msg.uri()), usr));
 		return (AnResultset) s.rs(0);
 	}
 }

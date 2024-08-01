@@ -133,10 +133,16 @@ public class DocsReq extends AnsonBody {
 	/**
 	 * @param syncTask i.e. docTable name, could be a design problem?
 	 */
-	public DocsReq(String syncTask) {
-		super(null, null);
+	public DocsReq(String syncTask, String uri) {
+		super(null, uri);
 		blockSeq = -1;
 		docTabl = syncTask;
+		subfolder = "";
+	}
+
+	public DocsReq(String uri) {
+		super(null, uri);
+		blockSeq = -1;
 		subfolder = "";
 	}
 

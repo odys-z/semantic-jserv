@@ -11,6 +11,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 
 import io.odysz.anson.Anson;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -53,10 +54,10 @@ public class JettyHelper {
      * @since 2.0.0
      */
     @SafeVarargs
-	public static void startJserv(String configxml, String ip, int port, Class<? extends ServPort<?>> ... servports)
+	public static void startJserv(String configPath, String conn, String configxml, String ip, int port, Class<? extends ServPort<?>> ... servports)
     		throws Exception {
 
-        instanserver(ip, port, configxml);
+        instanserver(configPath, conn, configxml, ip, port);
 
         schandler = new ServletContextHandler(server, "/");
         for (Class<? extends ServPort<?>> c : servports) {
@@ -66,10 +67,10 @@ public class JettyHelper {
         server.start();
     }
 
-	private static void instanserver(String ip, int port, String configxml) throws Exception {
+	private static void instanserver(String configPath, String conn0, String configxml, String ip, int port) throws Exception {
         Anson.verbose = false;
 
-    	Syngleton.initSynodetier(configxml, ".", "src/test/res/WEB-INF", "ABCDEF0123456789");
+    	Syngleton.initSynodetier(configxml, conn0, ".", configPath, "ABCDEF0123456789");
         AnsonMsg.understandPorts(Port.docsync);
         
         if (server != null)
@@ -85,14 +86,15 @@ public class JettyHelper {
 	}
 
 	@SafeVarargs
-	public static <T extends ServPort<? extends AnsonBody>> void startJserv(String configxml,
+	public static <T extends ServPort<? extends AnsonBody>> void startJserv(
+			String configPath, String conn, String configxml,
 			String ip, int port, T ... servports) throws Exception {
 
-        instanserver(ip, port, configxml);
+        instanserver(configPath, conn, configxml, ip, port);
 
         schandler = new ServletContextHandler(server, "/");
         for (T t : servports) {
-        	registerServlets(schandler, t);
+        	registerServlets(schandler, t.trb(new DATranscxt(conn)));
         }
 
         server.start();

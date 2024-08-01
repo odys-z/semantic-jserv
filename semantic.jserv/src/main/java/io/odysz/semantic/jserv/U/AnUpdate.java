@@ -38,13 +38,26 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 
 	private static final long serialVersionUID = 1L;
 
-	private static DATranscxt st;
+	// private static DATranscxt st;
 	protected static ISessionVerifier verifier;
 
 	static {
-		st = JSingleton.defltScxt;
+		// st = JSingleton.defltScxt;
 		verifier = JSingleton.getSessionVerifier();
 	}
+
+	/**
+	 * Set default transaction builder.
+	 * 
+	 * @since 2.0.0, default {@link #st} is not always prividen by {@link JSingleton}.
+	 * @param stb
+	 * @return 
+	 */
+	public AnUpdate st(DATranscxt stb) {
+		st = stb;
+		return this;
+	}
+
 
 	@Override
 	protected void onGet(AnsonMsg<AnUpdateReq> msg, HttpServletResponse resp)
@@ -116,7 +129,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 		SemanticObject res = (SemanticObject) upd
 				.nvs(msg.nvs)
 				.where(tolerateNv(msg.where))
-				.post(postUpds(msg.postUpds, usr))
+				.post(postUpds(st, msg.postUpds, usr))
 				// .attachs(msg.attacheds)
 				.limit(msg.limt)
 				.u(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
@@ -163,7 +176,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 	 * @return statements
 	 * @throws TransException 
 	 */
-	public static ArrayList<Statement<?>> postUpds(ArrayList<AnUpdateReq> updreq, IUser usr) throws TransException {
+	public static ArrayList<Statement<?>> postUpds(DATranscxt st, ArrayList<AnUpdateReq> updreq, IUser usr) throws TransException {
 		if (updreq != null) {
 			ArrayList<Statement<?>> posts = new ArrayList<Statement<?>>(updreq.size());
 			for (AnUpdateReq pst : updreq) {
@@ -182,7 +195,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 				}
 
 				posts.add(upd.where(AnUpdate.tolerateNv(pst.where))
-							.post(postUpds(pst.postUpds, usr)));
+							.post(postUpds(st, pst.postUpds, usr)));
 			}
 			return posts;
 		}
@@ -202,7 +215,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 		
 		SemanticObject res = (SemanticObject) del
 				.where(tolerateNv(msg.where))
-				.post(postUpds(msg.postUpds, usr))
+				.post(postUpds(st, msg.postUpds, usr))
 				.d(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
 
 		if (res == null)

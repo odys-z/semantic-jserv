@@ -15,7 +15,7 @@ odys-z.github.io |Ody Zelensky      |r02    |f/zsu |UA       |слава укр�
  */
 public class ZSUNodes {
 	public static final String clientUri = "/jnode";
-	public static final String webRoot = "./src/test/res/WEB-INF";
+	public static final String webRoot   = "./src/test/res/WEB-INF";
 	public static final String volumeDir = "./src/test/res/volume";
 
 	public static final String jservHub = "http://localhost:8081/jserv-album";

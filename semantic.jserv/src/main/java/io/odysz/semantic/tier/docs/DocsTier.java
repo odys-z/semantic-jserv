@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -31,14 +30,14 @@ import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.tier" })
 public class DocsTier extends ServPort<DocsReq> {
-	static DATranscxt st;
+	// static DATranscxt st;
 
 	static {
-		try {
-			st = new DATranscxt(null);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//		try {
+//			st = new DATranscxt(null);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	public DocsTier() {

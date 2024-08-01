@@ -20,6 +20,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -73,6 +74,23 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	public ServPort(IPort port) {
 		this.p = port;
 		// this.verifier = JSingleton.getSessionVerifier();
+	}
+
+	protected static DATranscxt st0; 
+	protected DATranscxt st; 
+
+	/**
+	 * @since 2.0.0, this setter gives the singleton a chance to set 
+	 * default transaction builder after the extended semantics have been 
+	 * loaded.
+	 * 
+	 * @param trb0
+	 * @return this
+	 */
+	public ServPort<T> trb(DATranscxt trb0) {
+		st = trb0;
+		if (st0 == null) st0 = trb0;
+		return this;
 	}
 
 	@Override

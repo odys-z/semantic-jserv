@@ -1,7 +1,7 @@
 package io.odysz.semantic.jsession;
 
 import static io.odysz.common.AESHelper.*;
-
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.jsession.AnSessionReq.A.init;
 import static io.odysz.semantic.jsession.AnSessionReq.A.login;
 import static io.odysz.semantic.jsession.AnSessionReq.A.logout;
@@ -31,6 +31,7 @@ import org.xml.sax.SAXException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
+import io.odysz.common.Configs.keys;
 import io.odysz.common.LangExt;
 import io.odysz.common.Radix64;
 import io.odysz.common.Utils;
@@ -87,6 +88,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	
 	private boolean verfiyToken;
 
+	static DATranscxt sctx;
+
 	/** url pattern: /login.serv */
 	public AnSession() {
 		this(true);
@@ -113,11 +116,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	/** Session checking task buffer */
 	private static ScheduledFuture<?> schedualed;
-
-	static DATranscxt sctx;
-
-	/** key of JUser class name, "class-IUser" used in config.xml */
-	public static final String usrClzz = "class-IUser";
 
 	private static JUserMeta usrMeta;
 
@@ -147,12 +145,12 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		scheduler = Executors.newScheduledThreadPool(1);
 
 		try {
-			IUser tmp = createUser(usrClzz, "temp", "pswd", null, "temp user");
+			IUser tmp = createUser(keys.usrClzz, "temp", "pswd", null, "temp user");
 			usrMeta = (JUserMeta) tmp.meta(daSctx.getSysConnId());
 		}
 		catch (Exception ex) {
-			Utils.warn("SSesion: Implementation class of IUser doesn't be configured correctly in: config.xml/t[id=default]/k=%s, check the value.",
-					usrClzz);
+			Utils.warn("SSesion: Implementation class of IUser hasn't been configured correctly in: %s/t[id=%s]/k=%s, check the value.",
+					Configs.cfgFile, Configs.keys.deftXTableId, Configs.keys.usrClzz);
 			ex.printStackTrace();
 		}
 
@@ -248,13 +246,14 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	protected void jsonResp(AnsonMsg<AnSessionReq> msg, HttpServletResponse response) throws IOException {
 		try {
-			String connId = Connects.defltConn();
-			if (connId == null || connId.trim().length() == 0)
-				connId = Connects.defltConn();
+			if (msg != null) {
+				String connId = isblank(msg.body(0).uri())
+					? Connects.defltConn() : Connects.uri2conn(msg.body(0).uri());
+//			if (connId == null || connId.trim().length() == 0)
+//				connId = Connects.defltConn();
 
 			// find user and check login info
 			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
-			if (msg != null) {
 				AnSessionReq sessionBody = msg.body(0);
 				String a = sessionBody.a();
 				if (login.equals(a)) {
@@ -411,6 +410,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	/**
 	 * Load user instance form DB table (name = {@link UserMeta#tbl}).
+	 * <p>Since 2.0.0, uses left join to a_orgs and a_roles from a_users.</p>
 	 * 
 	 * @param sessionBody
 	 * @param connId
@@ -426,8 +426,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throws TransException, SQLException, SsException,
 			ReflectiveOperationException, GeneralSecurityException, IOException {
 		SemanticObject s = sctx.select(usrMeta.tbl, "u")
-			.je("u", usrMeta.roleTbl, "r", usrMeta.role)
-			.je("u", usrMeta.orgTbl, "o", usrMeta.org)
+			.l_(usrMeta.roleTbl, "r", usrMeta.role, "roleId")
+			.l_(usrMeta.orgTbl, "o", usrMeta.org, "orgId")
 			.col("u.*")
 			.col(usrMeta.orgName)       // v1.4.11
 			.col(usrMeta.roleName)		// v1.4.11
@@ -437,7 +437,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
 			String uid = rs.getString(usrMeta.pk);
-			IUser obj = createUser(usrClzz, uid,
+			IUser obj = createUser(keys.usrClzz, uid,
 							rs.getString(usrMeta.pswd),
 							rs.getString(usrMeta.iv),
 							rs.getString(usrMeta.uname))
@@ -449,7 +449,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throw new SemanticException("IUser implementation must extend SemanticObject.");
 		}
 		else
-			throw new SsException("User Id not found: ", sessionBody.uid());
+			throw new SsException("User Id not found: %s", sessionBody.uid());
 	}
 
 	/**
@@ -491,7 +491,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		try {
 			constructor = cls.getConstructor(String.class, String.class, String.class);
 		} catch (NoSuchMethodException ne) {
-			throw new SemanticException("Class %s needs a consturctor like JUser(String, String, String).", cls.getTypeName());
+			throw new SemanticException("Class %s needs a consturctor like JUser(String uid, String pswd, String usrName).", cls.getTypeName());
 		}
 
 		try {
