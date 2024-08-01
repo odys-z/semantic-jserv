@@ -168,7 +168,7 @@ public class Syntier extends ServPort<DocsReq> {
 	}
 
 	public Synoder start(String org, String domain, String conn, SynodeMode mod)
-			throws SQLException, TransException, SAXException, IOException {
+			throws Exception {
 		if (domains == null)
 			domains = new HashMap<String, Synoder>();
 		if (!domains.containsKey(domain))

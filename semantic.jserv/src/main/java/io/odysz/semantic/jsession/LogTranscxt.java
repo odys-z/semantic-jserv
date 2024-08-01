@@ -23,13 +23,10 @@ public class LogTranscxt extends DATranscxt {
 	 * @param conn e.g. the defualt system connection Id, the a_log table will be used for meta checking.
 	 * @param xml
 	 * @param logTabl 
-	 * @throws SQLException
-	 * @throws SAXException
-	 * @throws IOException
-	 * @throws SemanticException
+	 * @throws Exception 
 	 */
 	public LogTranscxt(String conn)
-			throws SQLException, SAXException, IOException, SemanticException {
+			throws Exception {
 		 super(conn);
 
 		initConfigs(conn, loadSemantics(conn), 

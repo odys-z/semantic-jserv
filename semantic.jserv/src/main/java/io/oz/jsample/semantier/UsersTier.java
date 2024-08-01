@@ -49,7 +49,7 @@ public class UsersTier extends ServPort<UserstReq> {
 	static {
 		try {
 			st = new DATranscxt(null);
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

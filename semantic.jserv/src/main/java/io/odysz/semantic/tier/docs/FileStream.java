@@ -42,7 +42,7 @@ public class FileStream {
 		try {
 			st = new DATranscxt(null);
 			tabl = uriTabl;
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

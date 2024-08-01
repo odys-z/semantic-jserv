@@ -24,13 +24,10 @@ public class Syngleton extends JSingleton {
 	 * @param runtimeRoot
 	 * @param configFolder, folder of connects.xml, config.xml and semnatics.xml
 	 * @param rootKey, e.g. context.xml/parameter=root-key
-	 * @throws IOException 
-	 * @throws SAXException 
-	 * @throws SQLException 
-	 * @throws SemanticException 
+	 * @throws Exception 
 	 */
 	public static void initSynodetier(String cfgxml, String runtimeRoot, String configFolder, String rootKey)
-			throws SAXException, IOException, SemanticException, SQLException {
+			throws Exception {
 		Utils.logi("Initializing synode with configuration file %s\n"
 				+ "runtime root: %s\n"
 				+ "configure folder: %s\n"

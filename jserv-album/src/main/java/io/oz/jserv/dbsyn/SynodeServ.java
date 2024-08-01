@@ -2,11 +2,6 @@ package io.oz.jserv.dbsyn;
 
 import static io.odysz.common.LangExt.isblank;
 
-import java.io.IOException;
-import java.sql.SQLException;
-
-import org.xml.sax.SAXException;
-
 import io.odysz.common.Configs;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.SynodeMeta;
@@ -15,7 +10,6 @@ import io.odysz.semantic.syn.Exchanging;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.x.ExchangeException;
-import io.odysz.transact.x.TransException;
 
 public class SynodeServ {
 
@@ -30,7 +24,7 @@ public class SynodeServ {
 
 	DBSyntableBuilder trb;
 
-	public SynodeServ(String node, SynodeMode mod) throws SQLException, SAXException, IOException, TransException {
+	public SynodeServ(String node, SynodeMode mod) throws Exception {
 		String conn = Configs.getCfg(synconnId);
 
 		SynodeMeta synm = new SynodeMeta(conn);

@@ -3,14 +3,10 @@ package io.odysz.semantic.jserv;
 import static io.odysz.common.LangExt.bool;
 import static io.odysz.common.LangExt.isblank;
 
-import java.io.IOException;
-import java.sql.SQLException;
-
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
 import org.apache.commons.io_odysz.FilenameUtils;
-import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.Configs.keys;
@@ -20,7 +16,6 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.ISessionVerifier;
-import io.odysz.semantics.x.SemanticException;
 
 /**
  * This jserv lib  initializing and managing module. Subclass must be a web listener.
@@ -45,13 +40,10 @@ public class JSingleton {
 	/**
 	 * @param evt
 	 * @return configure's root path, e.g. /WEB-INF
-	 * @throws SemanticException
-	 * @throws SAXException
-	 * @throws IOException
-	 * @throws SQLException
+	 * @throws Exception 
 	 */
 	public String onInitialized(ServletContextEvent evt)
-			throws SemanticException, SAXException, IOException, SQLException {
+			throws Exception {
 		Utils.printCaller(false);
 		Utils.logi("JSingleton initializing...");
 
@@ -70,13 +62,10 @@ public class JSingleton {
 	 * @param root
 	 * @param rootINF, e.g. WEB-INF
 	 * @param rootKey, e.g. context.xml/parameter=root-key
-	 * @throws IOException 
-	 * @throws SAXException 
-	 * @throws SQLException 
-	 * @throws SemanticException 
+	 * @throws Exception 
 	 */
 	public static void initJserv(String root, String rootINF, String rootKey)
-			throws SAXException, IOException, SemanticException, SQLException {
+			throws Exception {
 
 		webINF = rootINF;
 		Connects.init(rootINF);

@@ -291,34 +291,7 @@ class SynoderTest {
 				(ExpSyncDoc)photo, syntier.locrobot(), (ExpDocTableMeta)docm, null);
 	}
 
-	/**
-	 * @param no
-	 * @throws AnsonException
-	 * @throws TransException
-	 * @throws IOException
-	 * @throws SsException
-	 * @throws InterruptedException
-	void uploadocs(int no) throws AnsonException, TransException, IOException, SsException, InterruptedException {
-		Doclientier u = doctiers[U];
-		u.login(u.robot.uid(), u.robot.deviceId(), passwd);
-		Doclientier v = doctiers[V];
-		v.login(v.robot.uid(), v.robot.deviceId(), passwd);
-		
-		boolean[] green = new boolean[2];
-		List<SyncDoc> p = null;
-		u.syncUp(docm.tbl, p, null, (resp) -> {
-			green[U] = true;
-		});
-
-		v.syncUp(docm.tbl, p, null, (resp) -> {
-			green[V] = true;
-		});
-		
-		awaitAll(green);
-	}
-	 */
-	
-	void syncpeers(int test) throws SQLException, TransException, SAXException, IOException {
+	void syncpeers(int test) throws Exception {
 		Utils.logrst("syncpeers()", test);
 		int no = 0;
 		
@@ -349,7 +322,7 @@ class SynoderTest {
 	}
 	
 	void syncpair(String domain, int sx, int cx, int testno, int subno)
-			throws SQLException, TransException, SAXException, IOException {
+			throws Exception {
 		Utils.logrst("syncpair()", testno, subno);
 		int no = 0;
 		Synoder srv = syntiers[sx].synoder(domain);

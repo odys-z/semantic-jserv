@@ -136,7 +136,7 @@ public class Albums extends ServPort<AlbumReq> {
 					return null;
 				}
 			};
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

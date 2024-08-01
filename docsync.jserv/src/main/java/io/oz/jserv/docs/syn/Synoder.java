@@ -80,8 +80,7 @@ public class Synoder {
 		this.mod = mod;
 	}
 
-	public SyncReq joinpeer(String peeradmin, String passwd)
-			throws SQLException, TransException, SAXException, IOException {
+	public SyncReq joinpeer(String peeradmin, String passwd) throws Exception {
 
 		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect(myconn);
@@ -96,7 +95,7 @@ public class Synoder {
 	}
 
 	public SyncResp onjoin(SyncReq req)
-			throws SQLException, TransException, SAXException, IOException {
+			throws Exception {
 		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect(myconn);
 
@@ -156,13 +155,10 @@ public class Synoder {
 	 * @param jserv
 	 * @param domain
 	 * @return init request
-	 * @throws SQLException
-	 * @throws TransException
-	 * @throws SAXException
-	 * @throws IOException
+	 * @throws Exception 
 	 */
 	public SyncReq syninit(String peer, String domain)
-			throws SQLException, TransException, SAXException, IOException {
+			throws Exception {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect(myconn);
 
@@ -175,7 +171,7 @@ public class Synoder {
 	}
 
 	public SyncResp onsyninit(String peer, ExchangeBlock ini)
-			throws SQLException, TransException, SAXException, IOException {
+			throws Exception {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect(myconn);
 
@@ -226,13 +222,10 @@ public class Synoder {
 	 * @param n0 accept as start nyquence if no records exists
 	 * @param stamp accept as start stamp if no records exists
 	 * @return this
-	 * @throws TransException 
-	 * @throws SQLException 
-	 * @throws IOException 
-	 * @throws SAXException 
+	 * @throws Exception 
 	 */
 	public Synoder born(List<SemanticHandler> handlers, long n0, long stamp0)
-			throws SQLException, TransException, SAXException, IOException {
+			throws Exception {
 		SynodeMeta snm = new SynodeMeta(myconn);
 		DATranscxt b0 = new DATranscxt(null);
 		IUser robot = new JRobot();

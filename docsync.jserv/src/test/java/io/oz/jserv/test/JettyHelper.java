@@ -16,7 +16,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
 import io.oz.jserv.docs.syn.Syngleton;
-import io.oz.jserv.docs.syn.Syntier;
 
 /**
  * Start an embedded Jetty server for ee8.
@@ -116,7 +115,7 @@ public class JettyHelper {
 		}
 	}
 
-	public static void addPort(ServPort p) {
+	public static void addPort(ServPort<?> p) {
        	registerServlets(schandler, p);
 	}
 	
