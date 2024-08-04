@@ -1,5 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.isNull;
+
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -11,7 +13,6 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.syn.ExpSyncDoc;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.ISemantext;
@@ -48,7 +49,7 @@ public class DocUtils {
 		Insert ins = syb
 			.insert(meta.tbl, usr)
 			.nv(meta.org, photo.org)
-			.nv(meta.uri, photo.uri)
+			.nv(meta.uri, photo.uri64)
 			.nv(meta.device, photo.device())
 			.nv(meta.resname, photo.pname)
 			.nv(meta.synoder, usr.deviceId())
@@ -135,6 +136,43 @@ public class DocUtils {
 		return pid;
 	}
 	
+	public static String createFileB64(DBSyntableBuilder st, String conn,
+			ExpSyncDoc photo, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) throws TransException, SQLException {
+		if (LangExt.isblank(photo.fullpath()))
+			throw new SemanticException("The client path can't be null/empty.");
+		
+		if (LangExt.isblank(photo.folder(), " - - "))
+			throw new SemanticException("Folder of managed docs cannot be empty - which is required for creating media files.");
+
+		Insert ins = st
+			.insert(meta.tbl, usr)
+			.nv(meta.org, photo.org)
+			.nv(meta.uri, photo.uri64)
+			.nv(meta.resname, photo.pname)
+			.nv(meta.synoder, usr.deviceId())
+			.nv(meta.fullpath, photo.fullpath())
+			.nv(meta.createDate, photo.createDate)
+			.nv(meta.folder, photo.folder())
+			.nv(meta.shareflag, photo.shareflag)
+			.nv(meta.shareby, photo.shareby)
+			.nv(meta.shareDate, photo.sharedate)
+			.nv(meta.size, photo.size)
+			;
+		
+		if (!LangExt.isblank(photo.mime))
+			ins.nv(meta.mime, photo.mime);
+		
+		// add a synchronizing task
+		// - also triggered as private storage jserv, but no statement will be added
+		if (!isNull(onFileCreateSql))
+			ins.post(onFileCreateSql[0]);
+
+		ISemantext insCtx = st.instancontxt(conn, usr);
+		SemanticObject res = (SemanticObject) ins.ins(insCtx);
+		String pid = res.resulve(meta.tbl, meta.pk, -1);
+		return pid;
+	}
+
 	/**
 	 * Resolve file uri with configured Semantics handler, {@link smtype#extFile}.
 	 * @param uri
@@ -197,11 +235,4 @@ public class DocUtils {
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
 	}
-
-	public static String createFileB64(DATranscxt doctrb, String conn,
-			DocsReq req, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

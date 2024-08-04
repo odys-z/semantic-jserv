@@ -49,6 +49,7 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
@@ -202,7 +203,7 @@ class DoclientierTest {
 
 		doclient.synDel(docm.tbl, AnDevice.device, AnDevice.localFile);
 
-		SyncDoc doc = (SyncDoc) new SyncDoc()
+		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(doclient.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);
@@ -212,7 +213,7 @@ class DoclientierTest {
 			@Override
 			public void ok(AnsonResp resp)
 					throws IOException, AnsonException {
-				SyncDoc doc = ((DocsResp) resp).doc; 
+				ExpSyncDoc doc = ((DocsResp) resp).xdoc; 
 
 				try {
 					doclient.loginWithUri(clientUri0, AnDevice.userId, AnDevice.device, AnDevice.passwd)
@@ -275,7 +276,7 @@ class DoclientierTest {
 
 		clientier.synDel(docm.tbl, AnDevice.device, AnDevice.localFile);
 
-		SyncDoc doc = (SyncDoc) new SyncDoc()
+		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(clientier.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);

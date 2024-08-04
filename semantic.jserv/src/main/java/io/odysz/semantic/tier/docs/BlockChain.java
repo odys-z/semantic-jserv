@@ -118,7 +118,7 @@ public class BlockChain {
 			throw new TransException("Handling block's sequence error.");
 
 		while (waitings.nextBlock != null && waitings.blockSeq + 1 == waitings.nextBlock.blockSeq) {
-			ofs.write(AESHelper.decode64(waitings.nextBlock.uri64));
+			ofs.write(AESHelper.decode64(waitings.nextBlock.doc.uri64));
 
 			waitings.blockSeq = waitings.nextBlock.blockSeq;
 			waitings.nextBlock = waitings.nextBlock.nextBlock;
@@ -140,9 +140,10 @@ public class BlockChain {
 			throw new TransException("Some packages lost. path: %s", clientpath);
 	}
 
-	public String closeChain() throws IOException, InterruptedException, TransException {
+	public String closeChain() throws IOException, TransException {
 		if (waitings.nextBlock != null)
-			Thread.sleep(1000);
+			try { Thread.sleep(1000);
+			} catch (InterruptedException e1) { }
 
 		ofs.close();
 

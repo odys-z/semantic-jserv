@@ -44,6 +44,7 @@ import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -313,7 +314,7 @@ public class Syntier extends ServPort<DocsReq> {
 
 		String tempDir = ((DocUser)usr).touchTempDir(conn, "TODO");
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subfolder);
+		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.doc.createDate, body.doc.folder());
 
 		// FIXME security breach?
 		String id = chainId(usr, chain.clientpath);
@@ -326,7 +327,7 @@ public class Syntier extends ServPort<DocsReq> {
 				.blockSeq(-1)
 				.doc((SyncDoc) new SyncDoc()
 					.clientname(chain.clientname)
-					.cdate(body.createDate)
+					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
 	}
 
@@ -368,7 +369,7 @@ public class Syntier extends ServPort<DocsReq> {
 				.blockSeq(body.blockSeq())
 				.doc((SyncDoc) new SyncDoc()
 					.clientname(chain.clientname)
-					.cdate(body.createDate)
+					.cdate(body.doc.createDate)
 					.fullpath(body.clientpath()));
 	}
 
@@ -393,19 +394,16 @@ public class Syntier extends ServPort<DocsReq> {
 			blockChains.get(id).closeChain();
 			chain = blockChains.remove(id);
 		} else
-			throw new SemanticException("Ending block chain which is not existing.");
+			throw new SemanticException("Ending a block chain which is not exists.");
 
 		// insert photo (empty uri)
-		PhotoRec photo = new PhotoRec(chain);
 
 		String conn = Connects.uri2conn(body.uri());
-		ExpDocTableMeta meta = Connects.getMeta(conn, DocsReq.doc.tabl);
+		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, body.doc.pname);
 
-		photo.createDate = chain.cdate;
-		photo.fullpath(chain.clientpath);
-		photo.pname = chain.clientname;
-		photo.uri = null; // accepting new value
-		String pid = createFile(conn, photo, usr);
+		ExpSyncDoc photo = new ExpSyncDoc(meta, usr.orgId()).createByChain(chain);
+
+		String pid = DocUtils.createFileB64(doctrb(), conn, photo, usr, meta);
 
 		// move file
 		String targetPath = DocUtils.resolvExtroot(st, conn, pid, usr, meta);
@@ -424,7 +422,7 @@ public class Syntier extends ServPort<DocsReq> {
 					.device(body.device())
 					.folder(photo.folder())
 					.clientname(chain.clientname)
-					.cdate(body.createDate)
+					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
 	}
 
@@ -444,12 +442,14 @@ public class Syntier extends ServPort<DocsReq> {
 
 	DocsResp createPhoto(DocsReq docreq, IUser usr)
 			throws TransException, SQLException, IOException, SAXException {
+		Utils.warnT(new Object() {}, "Is this really happenning?");
+
 		String conn = Connects.uri2conn(docreq.uri());
 
-		// ExpDocTableMeta docm = (ExpDocTableMeta) doctrb().getSyntityMeta(docreq.docTabl);
 		ExpDocTableMeta docm = checkDuplication(docreq, (DocUser) usr);
 
-		String pid = createFile(conn, docreq, usr, docm);
+		ExpSyncDoc photo = new ExpSyncDoc(docm, usr.orgId()).createByReq(docreq);
+		String pid = DocUtils.createFileB64(doctrb(), conn, photo, usr, docm);
 	
 		SyncDoc doc = onPhotoCreated(pid, conn, docm, usr);
 		return new DocsResp().doc(doc);
@@ -504,8 +504,8 @@ public class Syntier extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * <p>Create photo - call this after duplication is checked.</p>
-	 * <p>Photo is created as in the folder of user/month/.</p>
+	 * <p>Create synchronized doc - call this after duplication is checked.</p>
+	 * <p>Doc is created as in the folder of user/month/.</p>
 	 *
 	 * @param conn
 	 * @param exblock
@@ -515,18 +515,12 @@ public class Syntier extends ServPort<DocsReq> {
 	 * @throws SQLException
 	 * @throws IOException
 	 * @throws SAXException 
-	 */
 	public String createFile(String conn, DocsReq docreq, IUser usr, ExpDocTableMeta meta)
 			throws TransException, SQLException, IOException, SAXException {
-
-		// ExpDocTableMeta meta = null; // new ExpDocTableMeta();
-
-		// exblock.share(usr.uid(), Share.priv);
-
 		String pid = DocUtils.createFileB64(doctrb(), conn, docreq, usr, meta);
-
 		return pid;
 	}
+	 */
 
 	/**
 	 * Read a document (id, uri).
@@ -561,8 +555,8 @@ public class Syntier extends ServPort<DocsReq> {
 
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: '%s' (with permission of %s)",
-					!isblank(req.docId)
-					? req.docId
+					!isblank(req.doc.recId)
+					? req.doc.recId
 					: !isblank(req.pageInf)
 					? !isblank(req.pageInf.mapCondts)
 					  ? req.pageInf.mapCondts.get("pid")

@@ -109,8 +109,8 @@ public class AlbumReq extends DocsReq {
 	public AlbumReq download(PhotoRec photo) {
 		this.albumId = photo.albumId;
 		this.collectId = photo.collectId;
-		this.docId = photo.recId;
 		this.photo = photo;
+		// this.docId = photo.recId;
 		this.a = A.download;
 		return this;
 	}
@@ -167,7 +167,7 @@ public class AlbumReq extends DocsReq {
 	}
 
 	public AlbumReq selectPhoto(String docId) {
-		this.docId = docId;
+		this.doc.recId = docId;
 		this.a = A.rec;
 		return this;
 	}

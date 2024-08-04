@@ -47,9 +47,9 @@ import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.PathsPage;
-import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
@@ -202,7 +202,7 @@ public class Doclientier extends Semantier {
 	/**
 	 * Synchronizing files to a {@link Syntier} using block chain, accessing port {@link Port#docsync}.
 	 * This method will use meta to create entity object of doc.
-	 * @param meta for creating {@link SyncDoc} object 
+	 * @param meta for creating {@link ExpSyncDoc} object 
 	 * @param rs tasks, rows should be limited
 	 * @param onProc
 	 * @return Sync response list
@@ -212,10 +212,10 @@ public class Doclientier extends Semantier {
 	 */
 	List<DocsResp> syncUp(ExpDocTableMeta meta, AnResultset rs, OnProcess onProc)
 			throws TransException, AnsonException, IOException {
-		List<SyncDoc> videos = new ArrayList<SyncDoc>();
+		List<ExpSyncDoc> videos = new ArrayList<ExpSyncDoc>();
 		try {
 			while (rs.next())
-				videos.add(new SyncDoc(rs, meta));
+				videos.add(new ExpSyncDoc(rs, meta));
 
 			return syncUp(meta.tbl, videos, onProc);
 		} catch (SQLException e) {
@@ -224,7 +224,7 @@ public class Doclientier extends Semantier {
 		}
 	}
 
-	public List<DocsResp> syncUp(String tabl, List<? extends SyncDoc> videos,
+	public List<DocsResp> syncUp(String tabl, List<? extends ExpSyncDoc> videos,
 			OnProcess onProc, OnOk... docOk)
 			throws TransException, AnsonException, IOException {
 		// SessionInf photoUser = client.ssInfo();
@@ -261,7 +261,7 @@ public class Doclientier extends Semantier {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	SyncDoc synStreamPull(SyncDoc p, ExpDocTableMeta meta)
+	ExpSyncDoc synStreamPull(ExpSyncDoc p, ExpDocTableMeta meta)
 			throws AnsonException, IOException, TransException, SQLException {
 
 		if (!verifyDel(p, meta)) {
@@ -277,7 +277,7 @@ public class Doclientier extends Semantier {
 		return p;
 	}
 
-	protected boolean verifyDel(SyncDoc f, ExpDocTableMeta meta) {
+	protected boolean verifyDel(ExpSyncDoc f, ExpDocTableMeta meta) {
 		String pth = tempath(f);
 		File file = new File(pth);
 		if (!file.exists())
@@ -319,7 +319,7 @@ public class Doclientier extends Semantier {
 	 * @param onErr
 	 * @return list of response
 	 */
-	public List<DocsResp> pushBlocks(String tbl, List<? extends SyncDoc> videos,
+	public List<DocsResp> pushBlocks(String tbl, List<? extends ExpSyncDoc> videos,
 				OnProcess proc, OnOk docOk, OnError ... onErr)
 				throws TransException, IOException {
 		OnError err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
@@ -327,7 +327,7 @@ public class Doclientier extends Semantier {
 	}
 
 	public static List<DocsResp> pushBlocks(SessionClient client, String uri, String tbl,
-			List<? extends SyncDoc> videos, int blocksize,
+			List<? extends ExpSyncDoc> videos, int blocksize,
 			OnProcess proc, OnOk docOk, OnError errHandler)
 			throws TransException, IOException {
 
@@ -347,7 +347,7 @@ public class Doclientier extends Semantier {
 			int seq = 0;
 			int totalBlocks = 0;
 
-			SyncDoc p = videos.get(px);
+			ExpSyncDoc p = videos.get(px);
 			DocsReq req = new DocsReq(tbl, uri)
 					.folder(p.folder())
 					.share(p)
@@ -420,10 +420,10 @@ public class Doclientier extends Semantier {
 		return reslts;
 	}
 
-	public String download(String clientUri, String syname, SyncDoc photo, String localpath)
+	public String download(String clientUri, String syname, ExpSyncDoc photo, String localpath)
 			throws SemanticException, AnsonException, IOException {
 		DocsReq req = (DocsReq) new DocsReq(syname, uri);
-		req.docId = photo.recId;
+		req.doc.recId = photo.recId;
 		req.a(A.download);
 		return client.download(clientUri, Port.docsync, req, localpath);
 	}
@@ -443,7 +443,7 @@ public class Doclientier extends Semantier {
 
 		DocsReq req = new DocsReq(docTabl, uri);
 		req.a(A.rec);
-		req.docId = docId;
+		req.doc.recId = docId;
 
 		DocsResp resp = null;
 		try {
@@ -506,7 +506,7 @@ public class Doclientier extends Semantier {
 		return resp;
 	}
 
-	DocsResp synClosePush(SyncDoc p, String docTabl)
+	DocsResp synClosePush(ExpSyncDoc p, String docTabl)
 			throws AnsonException, IOException, TransException, SQLException {
 
 		DocsReq clsReq = (DocsReq) new DocsReq()
@@ -531,7 +531,7 @@ public class Doclientier extends Semantier {
 	 * @throws AnsonException
 	 * @throws IOException
 	 */
-	DocsResp synClosePull(SyncDoc p, String docTabl)
+	DocsResp synClosePull(ExpSyncDoc p, String docTabl)
 			throws SemanticException, AnsonException, IOException {
 		DocsReq clsReq = (DocsReq) new DocsReq()
 						.docTabl(docTabl)
@@ -561,7 +561,7 @@ public class Doclientier extends Semantier {
 	 * @throws SQLException
 	 */
 	static String insertLocalFile(DATranscxt st, String conn, String localPath,
-			SyncDoc doc, SyncRobot usr, ExpDocTableMeta meta)
+			ExpSyncDoc doc, SyncRobot usr, ExpDocTableMeta meta)
 			throws TransException, SQLException {
 
 		if (isblank(localPath))
@@ -571,14 +571,14 @@ public class Doclientier extends Semantier {
 
 		Insert ins = st.insert(meta.tbl, usr)
 				// .nv(meta.org(), usr.orgId())
-				.nv(meta.uri, doc.uri)
+				.nv(meta.uri, doc.uri64)
 				.nv(meta.resname, doc.pname)
 				.nv(meta.synoder, usr.deviceId())
 				.nv(meta.fullpath, doc.fullpath())
 				.nv(meta.folder, doc.folder())
 				.nv(meta.size, size)
 				.nv(meta.shareby, doc.shareby)
-				.nv(meta.shareflag, doc.shareFlag)
+				.nv(meta.shareflag, doc.shareflag)
 				.nv(meta.shareDate, doc.sharedate)
 				;
 		
@@ -609,9 +609,9 @@ public class Doclientier extends Semantier {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	public DocsResp startPush(String tabl, SyncDoc doc, OnOk follows, ErrorCtx ... errorCtx)
+	public DocsResp startPush(String tabl, ExpSyncDoc doc, OnOk follows, ErrorCtx ... errorCtx)
 			throws TransException, IOException, SQLException {
-		List<SyncDoc> videos = new ArrayList<SyncDoc>();
+		List<ExpSyncDoc> videos = new ArrayList<ExpSyncDoc>();
 		videos.add(doc);
 
 		List<DocsResp> resps = pushBlocks(tabl, videos, 

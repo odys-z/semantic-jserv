@@ -16,7 +16,10 @@ import io.odysz.semantics.x.SemanticException;
  *
  */
 public class DocsResp extends AnsonResp {
+	/**@deprecated */
 	public SyncDoc doc;
+
+	public ExpSyncDoc xdoc;
 
 	protected PathsPage syncing;
 

@@ -86,40 +86,10 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	// public String synode0;
-	public String owner;
-
-	public String docId;
-	public String docName;
-	public String createDate;
-	String clientpath;
-	public String mime;
-	public String subfolder;
-	
-	@AnsonField(shortenString = true)
-	public String uri64;
+	public ExpSyncDoc doc;
 
 	String[] deletings;
 
-	/**
-	 * Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub}
-	 * or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}.
-	 */
-	public String shareflag;
-
-	public String shareby;
-	public DocsReq shareby(String uid) {
-		shareby = uid;
-		return this;
-	}
-
-	public String shareDate;
-	public String shareDate() {
-		if (isblank(shareDate))
-			shareDate = DateFormat.format(new Date());
-		return shareDate;
-	}
-	
 	/**
 	 * <b>Note: use {@link #DocsReq(String)}</b><br>
 	 * Don't use this constructor - should only be used by json deserializer. 
@@ -127,7 +97,7 @@ public class DocsReq extends AnsonBody {
 	public DocsReq() {
 		super(null, null);
 		blockSeq = -1;
-		subfolder = "";
+		// doc.folder = "";
 	}
 
 	/**
@@ -137,27 +107,28 @@ public class DocsReq extends AnsonBody {
 		super(null, uri);
 		blockSeq = -1;
 		docTabl = syncTask;
-		subfolder = "";
+		// doc.folder = "";
 	}
 
 	public DocsReq(String uri) {
 		super(null, uri);
 		blockSeq = -1;
-		subfolder = "";
+		// subfolder = "";
 	}
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 		blockSeq = -1;
-		subfolder = "";
+		// subfolder = "";
 	}
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
 		super(parent, uri);
-		// device = p.device();
 		device = new Device(null, null, p.device());
+		doc = new ExpSyncDoc(p);
 		clientpath(p.fullpath());
-		docId = p.recId();
+		// docId = p.recId();
+		// device = p.device();
 	}
 
 
@@ -248,9 +219,10 @@ public class DocsReq extends AnsonBody {
 		if (isblank(this.device, "\\.", "/"))
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
+		doc = new ExpSyncDoc(file);
 		clientpath(file.fullpath()); 
-		this.docName = file.clientname();
-		this.createDate = file.cdate();
+		// this.docName = file.clientname();
+		// this.createDate = file.cdate();
 		this.blockSeq = 0;
 		
 		this.a = A.blockStart;
@@ -286,9 +258,9 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = sequence;
 
-		this.docId = doc.recId();
+		this.doc.recId = doc.recId();
 		clientpath(doc.fullpath());
-		this.uri64 = s64;
+		this.doc.uri64 = s64;
 
 		this.a = A.blockUp;
 		return this;
@@ -299,7 +271,7 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = startAck.blockSeqReply;
 
-		this.docId = startAck.doc.recId();
+		this.doc.recId = startAck.doc.recId();
 		clientpath(startAck.doc.fullpath());
 
 		this.a = A.blockAbort;
@@ -311,7 +283,7 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = resp.blockSeqReply;
 
-		this.docId = resp.doc.recId();
+		this.doc.recId = resp.doc.recId();
 		clientpath(resp.doc.fullpath())
 			.a = A.blockEnd;
 		return this;
@@ -323,14 +295,14 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq folder(String name) {
-		subfolder = name;
+		doc.folder = name;
 		return this;
 	}
 
-	public DocsReq share(SyncDoc p) {
-		shareflag = p.shareFlag;
-		shareby = p.shareby;
-		shareDate = p.sharedate;
+	public DocsReq share(ExpSyncDoc p) {
+		doc.shareflag = p.shareflag;
+		doc.shareby = p.shareby;
+		doc.sharedate = p.sharedate;
 		return this;
 	}
 
@@ -341,11 +313,11 @@ public class DocsReq extends AnsonBody {
 	 * @return
 	 */
 	public DocsReq clientpath(String path) {
-		clientpath = separatorsToUnix(path);
+		doc.clientpath = separatorsToUnix(path);
 		return this;
 	}
 
-	public String clientpath() { return clientpath; }
+	public String clientpath() { return doc.clientpath; }
 
 	public DocsReq resetChain(boolean set) {
 		this.reset = set;

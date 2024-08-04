@@ -38,10 +38,10 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
-import io.odysz.semantic.syn.ExpSyncDoc;
 import io.odysz.semantic.syn.IAssert;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocUtils;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
 
@@ -286,7 +286,7 @@ class SynoderTest {
 		photo.createDate = DateFormat.format(new Date());
 		photo.pname = "photo-" + synx;
 		photo.fullpath(syntier.synode + ":/sdcard/" + photo.pname);
-		photo.uri = uri64; // accepting new value
+		photo.uri64 = uri64; // accepting new value
 		photo.folder(syntier.synode);
 		photo.share("ody-" + syntier.synode, Share.pub, new Date());
 

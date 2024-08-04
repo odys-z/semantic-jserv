@@ -160,7 +160,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 	@AnsonField(shortenString=true)
 	public String uri;
 	@Override
-	public String uri() { return uri; }
+	public String uri64() { return uri; }
 
 	public String shareby;
 	public String sharedate;
@@ -322,7 +322,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.docMeta = meta;
 		this.recId = d.recId();
 		this.pname = d.clientname();
-		this.uri = d.uri();
+		this.uri = d.uri64();
 		this.createDate = d.cdate();
 		this.mime = d.mime();
 		this.fullpath(fullpath);

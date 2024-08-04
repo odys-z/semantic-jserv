@@ -161,7 +161,7 @@ public abstract class Docs206 {
 			AnsonMsg<DocsReq> msg = ansonMsg(req);
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			List<Range> ranges = replyHeaders(req, resp, msg, usr);
-			Resource resource = new Resource(getDoc(req, msg.body(0), st, usr), msg.body(0).docId);
+			Resource resource = new Resource(getDoc(req, msg.body(0), st, usr), msg.body(0).doc.recId);
 			writeContent(resp, resource, ranges, "");
 		}
 		catch (IllegalArgumentException e) {
@@ -181,7 +181,7 @@ public abstract class Docs206 {
 		Resource resource;
 
 		try {
-			resource = new Resource(getDoc(request, msg.body(0), st, usr), msg.body(0).docId);
+			resource = new Resource(getDoc(request, msg.body(0), st, usr), msg.body(0).doc.recId);
 		}
 		catch (IllegalArgumentException e) {
 			logi("%s Got an IllegalArgumentException from user code; interpreting it as 400 Bad Request.\n%s",
@@ -234,13 +234,13 @@ public abstract class Docs206 {
 				.col(meta.fullpath)
 				.col(meta.uri)
 				.col("mime")
-				.whereEq(meta.pk, req.docId)
+				.whereEq(meta.pk, req.doc.recId)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 		
 		if (!rs.next())
-			throw new SemanticException("File not found: %s, %s", req.docId, req.docName);
+			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
 
-		String p = DocUtils.resolvExtroot(st, conn, req.docId, usr, meta);
+		String p = DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta);
 		File f = new File(p);
 		if (f.exists() && f.isFile())
 			return f;

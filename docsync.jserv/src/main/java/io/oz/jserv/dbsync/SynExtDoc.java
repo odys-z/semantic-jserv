@@ -93,7 +93,7 @@ public class SynExtDoc extends SynEntity {
 
 		// this.entMeta = meta;
 		this.recId = d.recId();
-		this.uri = d.uri();
+		this.uri = d.uri64();
 	}
 
 	@Override

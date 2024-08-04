@@ -104,9 +104,9 @@ public class DocsTier extends ServPort<DocsReq> {
 		ISemantext stx = st.instancontxt(conn, usr);
 
 		SemanticObject doc = (SemanticObject) st.delete("n_docs", usr)
-			.whereEq("docId", jreq.docId)
+			.whereEq("docId", jreq.doc.recId)
 			.post(st.insert("n_docs")
-				.nv("docName", jreq.docName).nv("mime", jreq.mime).nv("uri", jreq.uri64).nv("userId", usr.uid()))
+				.nv("docName", jreq.doc.pname).nv("mime", jreq.doc.mime).nv("uri", jreq.doc.uri64).nv("userId", usr.uid()))
 			.d(stx);
 		
 		return new AnsonResp().msg("ok").data(doc.props());
@@ -118,7 +118,7 @@ public class DocsTier extends ServPort<DocsReq> {
 
 		AnResultset doc = ((AnResultset) st.select("n_docs", "d")
 			.col("d.docId").col("docName").col("mime").col(Funcall.extfile("uri"), "uri64")
-			.whereEq("d.docId", jreq.docId)
+			.whereEq("d.docId", jreq.doc.recId)
 			.rs(stx)
 			.rs(0));
 		
@@ -140,14 +140,14 @@ public class DocsTier extends ServPort<DocsReq> {
 			.groupby("d.docId")
 			.orderby("d.optime", "desc");
 		
-		if (!LangExt.isblank(req.docName))
-			q.whereLike("dk.state", req.docName);
+		if (!LangExt.isblank(req.doc.pname))
+			q.whereLike("dk.state", req.doc.pname);
 		
-		if (!LangExt.isblank(req.mime))
-			q.where_(op.rlike, "d.mime", (LangExt.isblank(req.mime) ? "" : req.mime));
+		if (!LangExt.isblank(req.doc.mime))
+			q.where_(op.rlike, "d.mime", (LangExt.isblank(req.doc.mime) ? "" : req.doc.mime));
 
-		if (!LangExt.isblank(req.shareflag))
-			q.whereEq("dk.state", req.shareflag);
+		if (!LangExt.isblank(req.doc.shareflag))
+			q.whereEq("dk.state", req.doc.shareflag);
 
 		AnResultset docs = ((AnResultset) q
 			.rs(stx)
@@ -178,7 +178,7 @@ public class DocsTier extends ServPort<DocsReq> {
 			 * .col(Funcall.count(Funcall.ifElse(String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
 			 */
 			.whereEq("d.userId", usr.uid())
-			.where(op.rlike, "d.mime", "'" + (LangExt.isblank(req.mime) ? "" : req.mime) + "'")
+			.where(op.rlike, "d.mime", "'" + (LangExt.isblank(req.doc.mime) ? "" : req.doc.mime) + "'")
 			.groupby("d.docId")
 			.orderby("d.optime", "desc")
 			.rs(stx)

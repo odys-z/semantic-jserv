@@ -33,13 +33,13 @@ public interface IProfileResolver {
 	 */
 	default String synodeFolder(AnsonBody reqBody, IUser usr) {
 		DocsReq req = ((DocsReq)reqBody);
-		if (!isblank(req.subfolder))
-			return req.subfolder;
+		if (!isblank(req.doc.folder))
+			return req.doc.folder;
 		try {
-			if (isblank(req.mime) || image.is(req.mime) || video.is(req.mime))
-				return DateFormat.formatYYmm(DateFormat.parse(req.shareDate));
+			if (isblank(req.doc.mime) || image.is(req.doc.mime) || video.is(req.doc.mime))
+				return DateFormat.formatYYmm(DateFormat.parse(req.doc.sharedate));
 			else
-				return DateFormat.formatYYmm(DateFormat.parse(req.createDate));
+				return DateFormat.formatYYmm(DateFormat.parse(req.doc.createDate));
 		} catch (ParseException e) {
 			return usr.deviceId() + "-" + DateFormat.formatYYmm(new Date());
 		}	

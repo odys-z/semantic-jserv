@@ -18,6 +18,7 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -38,7 +39,7 @@ public class Dochain {
 
 	public interface OnChainOk {
 		/**
-		 * {@link Docsyncer} use this as a chance of update user's data
+		 * {@link Syntier} use this as a chance of update user's data
 		 * when block chain finished successfully.
 		 * 
 		 * @param post
@@ -47,6 +48,7 @@ public class Dochain {
 		 * @param robot
 		 * @return either the original post statement or a new one.
 		 */
+		Update onDocreate(Update post, SyncDoc d, ExpDocTableMeta meta, IUser robot);
 		Update onDocreate(Update post, SyncDoc d, DocTableMeta meta, IUser robot);
 	}
 
@@ -58,9 +60,9 @@ public class Dochain {
 	static HashMap<String, BlockChain> blockChains;
 
 	@AnsonField(ignoreTo=true)
-	DocTableMeta meta;
+	ExpDocTableMeta meta;
 	
-	public Dochain (DocTableMeta meta, DATranscxt deflst) {
+	public Dochain (ExpDocTableMeta meta, DATranscxt deflst) {
 		this.meta = meta;
 		this.st = deflst;
 	}
@@ -82,9 +84,9 @@ public class Dochain {
 			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
 					body.clientpath(), usr.uid(), profiles.getClass().getName());
 		
-		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, saveFolder)
+		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.doc.createDate, saveFolder)
 				.device(usr.deviceId())
-				.share(body.shareby, body.shareDate, body.shareflag);
+				.share(body.doc.shareby, body.doc.sharedate, body.doc.shareflag);
 
 		String id = chainId(usr, body);
 
@@ -98,7 +100,7 @@ public class Dochain {
 				.blockSeq(-1)
 				.doc((SyncDoc) new SyncDoc()
 					.clientname(chain.clientname)
-					.cdate(body.createDate)
+					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
 	}
 
@@ -141,7 +143,7 @@ public class Dochain {
 				.blockSeq(body.blockSeq())
 				.doc((SyncDoc) new SyncDoc()
 					.clientname(chain.clientname)
-					.cdate(body.createDate)
+					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
 	}
 
@@ -219,6 +221,17 @@ public class Dochain {
 	 */
 	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
 			DocTableMeta meta, IUser usr, OnChainOk end)
+			throws TransException, SQLException, IOException {
+		Update post = null; // Docsyncer.onDocreate(photo, meta, usr);
+
+		if (end != null)
+			post = end.onDocreate(post, photo, meta, usr);
+
+		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
+	}
+
+	public static String createFile(DATranscxt st, String conn, ExpSyncDoc photo,
+			ExpDocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
 		Update post = null; // Docsyncer.onDocreate(photo, meta, usr);
 

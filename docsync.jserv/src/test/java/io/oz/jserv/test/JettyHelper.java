@@ -1,7 +1,5 @@
 package io.oz.jserv.test;
 
-import java.lang.reflect.InvocationTargetException;
-
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 
@@ -109,8 +107,7 @@ public class JettyHelper {
 	}
 
 	static void registerServlets(ServletContextHandler context, Class<? extends HttpServlet> type)
-    		throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-
+			throws ReflectiveOperationException {
 		WebServlet info = type.getAnnotation(WebServlet.class);
 		for (String pattern : info.urlPatterns()) {
 			HttpServlet servlet = type.getConstructor().newInstance();
@@ -126,5 +123,4 @@ public class JettyHelper {
 		if (server != null)
 			server.stop();
 	}
-
 }

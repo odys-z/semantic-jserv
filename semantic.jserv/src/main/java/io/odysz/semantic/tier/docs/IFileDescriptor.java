@@ -44,7 +44,7 @@ public interface IFileDescriptor {
 	String device();
 
 	/** @return file uri */
-	String uri();
+	String uri64();
 
 	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
 	default String shareflag() { return DocTableMeta.Share.priv; }

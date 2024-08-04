@@ -15,7 +15,7 @@ import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
-import io.odysz.semantic.syn.ExpSyncDoc;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
@@ -75,7 +75,7 @@ public class T_Photo extends ExpSyncDoc {
 		super(rs, m);
 		this.recId = rs.getString(m.pk);
 		this.pname = rs.getString(m.resname);
-		this.uri = rs.getString(m.uri);
+		this.uri64 = rs.getString(m.uri);
 		this.folder = rs.getString(m.folder);
 		this.createDate = rs.getString(m.shareDate);
 		this.shareby = rs.getString(m.shareby);
@@ -172,11 +172,11 @@ public class T_Photo extends ExpSyncDoc {
 		pname = png.getName();
 
 		String b64 = AESHelper.encode64(ifs, 216); // 12 | 216, length = 219
-		uri = b64;
+		uri64 = b64;
 		while (b64 != null) {
 			b64 = AESHelper.encode64(ifs, 216);
 			if (b64 != null)
-				uri += b64;
+				uri64 += b64;
 		}
 		ifs.close();
 
