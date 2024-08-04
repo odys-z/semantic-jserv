@@ -115,8 +115,9 @@ public class Doclientier extends Semantier {
 	}
 	
 	/**
-	 * Login to hub, where hub root url is initialized with {@link Clients#init(String, boolean...)}.
+	 * use {@link #loginWithUri(String, String, String, String)} instead
 	 * 
+	 * @deprecated 
 	 * @param workerId
 	 * @param device
 	 * @param pswd
@@ -135,7 +136,28 @@ public class Doclientier extends Semantier {
 
 		return onLogin(client);
 	}
-	
+
+	/**
+	 * Login to hub, where hub root url is initialized with {@link Clients#init(String, boolean...)}.
+	 * 
+	 * @param uri
+	 * @param workerId
+	 * @param device
+	 * @param pswd
+	 * @return
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws SsException
+	 * @throws IOException
+	 */
+	public Doclientier loginWithUri(String uri, String workerId, String device, String pswd)
+			throws SemanticException, AnsonException, SsException, IOException {
+
+		client = Clients.loginWithUri(uri, workerId, pswd, device);
+
+		return onLogin(client);
+	}
+
 	/**
 	 * Start heart beat, create robot for synchronizing,
 	 * clean and create local temporary directory for downloading,
@@ -161,7 +183,7 @@ public class Doclientier extends Semantier {
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
-			 .j(um.orgTbl, "o", String.format("o.%1$s = u.%1$s", um.org))
+			 .l(um.om.tbl, "o", String.format("o.%1$s = u.%1$s", um.org))
 			 .whereEq("u." + um.pk, robot.uid());
 
 			AnsonResp resp = client.commit(q, errCtx);
@@ -169,8 +191,8 @@ public class Doclientier extends Semantier {
 			if (rs.next())
 				robot.orgId(rs.getString(um.org))
 					.orgName(rs.getString(um.orgName));
-			else throw new SemanticException("Synode haven't been reqistered: %s", robot.uid());
-		} catch (TransException | AnsonException | SQLException | IOException e) {
+			else throw new SemanticException("User identity haven't been reqistered: %s", robot.uid());
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

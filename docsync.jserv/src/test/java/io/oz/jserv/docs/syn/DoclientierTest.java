@@ -6,7 +6,7 @@ import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
-import static io.oz.jserv.docsync.ZSUNodes.clientUri;
+import static io.oz.jserv.docsync.ZSUNodes.clientUriZsu;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,9 +35,13 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
+import io.odysz.semantic.jsession.JUser;
+import io.odysz.semantic.jsession.JUser.JOrgMeta;
+import io.odysz.semantic.jsession.JUser.JRoleMeta;
 import io.odysz.semantic.meta.AutoSeqMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.meta.PeersMeta;
 import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynSessionMeta;
@@ -53,16 +57,14 @@ import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
 import io.oz.jserv.test.JettyHelper;
 
 class DoclientierTest {
-	static final String clientAt0 = "client-at-00";
+	static final String clientUri0 = "client-at-00";
+	static final String clientUri1 = "client-at-01";
 
 	static int bsize;
 
 	static ExpDocTableMeta docm;
 	static ErrorCtx errLog;
 	
-	// static Doclientier doclient;
-
-	// static final String synode = "test-0";
 	static final String clientconn = "main-sqlite";
 	static final String serv_conn = "no-jserv.00";
 
@@ -93,13 +95,12 @@ class DoclientierTest {
     	System.setProperty("VOLUME_HOME", "../volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
-		// main-sqlite
-		// String conn = "main-sqlite";
-
 		Configs.init(wwwinf);
 		Connects.init(wwwinf);
 
-		AutoSeqMeta aum = new AutoSeqMeta();
+		AutoSeqMeta asqm = new AutoSeqMeta();
+		JRoleMeta arlm = new JUser.JRoleMeta();
+		JOrgMeta  aorgm = new JUser.JOrgMeta();
 		
 		SynChangeMeta chm = new SynChangeMeta();
 		SynSubsMeta sbm = new SynSubsMeta(chm);
@@ -107,15 +108,15 @@ class DoclientierTest {
 		SynSessionMeta ssm = new SynSessionMeta();
 		PeersMeta prm = new PeersMeta();
 		
-		SynodeMeta snm = new SynodeMeta(clientconn);
-		docm = new T_PhotoMeta(clientconn); // .replace();
-		setupSqliTables(clientconn, aum, snm, chm, sbm, xbm, prm, ssm, docm);
-		setupSqliTables(clientconn, aum, snm, chm, sbm, xbm, prm, ssm, docm);
+//		SynodeMeta snm = new SynodeMeta(clientconn);
+//		docm = new T_PhotoMeta(clientconn); // .replace();
+//		setupSqliTables(clientconn, asqm, snm, chm, sbm, xbm, prm, ssm, docm);
+//		setupSqliTables(clientconn, asqm, snm, chm, sbm, xbm, prm, ssm, docm);
 		
-		snm = new SynodeMeta(serv_conn);
+		SynodeMeta snm = new SynodeMeta(serv_conn);
 		docm = new T_PhotoMeta(serv_conn); // .replace();
-		setupSqliTables(serv_conn, aum, snm, chm, sbm, xbm, prm, ssm, docm);
-		setupSqliTables(serv_conn, aum, snm, chm, sbm, xbm, prm, ssm, docm);
+		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
+		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
 
 		/*
 		ArrayList<String> sqls = new ArrayList<String>();
@@ -139,7 +140,8 @@ class DoclientierTest {
 				new AnSession(), new AnQuery(), new AnUpdate(),
 				new HeartLink());
 
-		JettyHelper.addPort(new Syntier(null, serv_conn));
+		JettyHelper.addPort(new Syntier(Configs.getCfg(Configs.keys.synode), serv_conn)
+				   .start(SynoderTest.ura, SynoderTest.zsu, serv_conn, SynodeMode.peer));
 
 		// client
 		String jserv = String.format("http://%s:%s", servIP, port);
@@ -193,9 +195,9 @@ class DoclientierTest {
 	static String videoUpByApp(ExpDocTableMeta docm) throws Exception {
 
 		// app is using Doclientier for synchronizing 
-		Doclientier doclient = new Doclientier(clientAt0, errLog)
+		Doclientier doclient = new Doclientier(clientUri0, errLog)
 				.tempRoot("app.kharkiv")
-				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
+				.loginWithUri(clientUri0, AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
 		doclient.synDel(docm.tbl, AnDevice.device, AnDevice.localFile);
@@ -213,7 +215,7 @@ class DoclientierTest {
 				SyncDoc doc = ((DocsResp) resp).doc; 
 
 				try {
-					doclient.login(Kharkiv.Synode.worker, Kharkiv.Synode.nodeId, Kharkiv.Synode.passwd)
+					doclient.loginWithUri(clientUri0, AnDevice.userId, AnDevice.device, AnDevice.passwd)
 							.blockSize(bsize);
 				} catch (SsException e1) {
 					e1.printStackTrace();
@@ -266,9 +268,9 @@ class DoclientierTest {
 	}
 
 	void testSynQueryPathsPage() throws Exception {
-		Doclientier clientier = new Doclientier(clientUri, errLog)
+		Doclientier clientier = new Doclientier(clientUriZsu, errLog)
 				.tempRoot("app.kharkiv")
-				.login(AnDevice.userId, AnDevice.device, AnDevice.passwd)
+				.loginWithUri(clientUri0, AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
 		clientier.synDel(docm.tbl, AnDevice.device, AnDevice.localFile);

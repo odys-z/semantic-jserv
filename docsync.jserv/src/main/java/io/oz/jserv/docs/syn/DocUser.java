@@ -1,11 +1,18 @@
 package io.oz.jserv.docs.syn;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.odysz.common.Configs;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
+import io.odysz.semantic.DASemantics.smtype;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jsession.JUser;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 import io.oz.album.tier.Profiles;
 
 /**
@@ -47,8 +54,7 @@ public class DocUser extends JUser implements IUser {
 		super(userid, null, userid);
 	}
 	
-	/**
-
+	/*
 	@Override
 	public IUser onCreate(Anson withSession) throws SsException {
 		if (withSession instanceof AnResultset) {
@@ -98,56 +104,26 @@ public class DocUser extends JUser implements IUser {
 //		return this;
 //	} 
 
-//	@Override public long touchedMs() { return touched; } 
-
-//	@Override public String uid() { return userId; }
-	
-//	@Override public String pswd() { return pswd; }
-
-//	@Override public void writeJsonRespValue(Object writer) throws IOException { }
-
-//	@Override public IUser logAct(String funcName, String funcId) { return this; }
-
-//	@Override public String sessionId() { return ssid; }
-
-//	@Override public IUser sessionId(String ssid) { this.ssid = ssid; return this; }
-
-//	@Override public IUser notify(Object note) throws TransException { return this; }
-
-//	@Override public List<Object> notifies() { return null; }
-
-//	@Override public SemanticObject logout() {
-//		if (tempDirs != null)
-//		for (String temp : tempDirs) {
-//			try {
-//				Utils.logi("Deleting: %s", temp);
-//				FileUtils.deleteDirectory(new File(temp));
-//			} catch (IOException e) {
-//				Utils.warn("Can not delete folder: %s.\n%s", temp, e.getMessage());
-//			}
-//		}
-//		return null;
-//	}
-
+	protected Set<String> tempDirs;
 	/**
 	 * <p>Get a temp dir, and have it deleted when logout.</p>
 	 * Since jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot.
 	 * @param conn
 	 * @return the dir
 	 * @throws SemanticException
-	public String touchTempDir(String conn) throws TransException {
+	 */
+	public String touchTempDir(String conn, String doctbl) throws TransException {
 
 		String extroot = ((ShExtFilev2) DATranscxt
-						.getHandler(conn, new PhotoMeta(conn).tbl, smtype.extFilev2))
+						.getHandler(conn, doctbl, smtype.extFilev2))
 						.getFileRoot();
 
-		String tempDir = IUser.tempDir(extroot, userId, "uploading-temp", ssid);
+		String tempDir = IUser.tempDir(extroot, uid(), "uploading-temp", ssid);
 		if (tempDirs == null)
 			tempDirs= new HashSet<String>(1);
 		tempDirs.add(tempDir);
 		return tempDir;
 	}
-	 */
 
 //	@Override
 //	public SessionInf getClientSessionInf(IUser login) throws Exception { 

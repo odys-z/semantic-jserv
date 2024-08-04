@@ -19,6 +19,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.SemanticTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
@@ -43,10 +44,13 @@ public class JUser extends SemanticObject implements IUser {
 	 * 
 	 * @author odys-z@github.com
 	 */
-	public static class JUserMeta extends TableMeta {
+	public static class JUserMeta extends SemanticTableMeta {
 
 		public JUserMeta(String... conn) {
 			super("a_users", conn);
+			rm = new JRoleMeta(conn);
+			om = new JOrgMeta(conn);
+
 			this.pk      = "userId";
 			this.uname   = "userName";
 			this.pswd    = "pswd";
@@ -56,9 +60,12 @@ public class JUser extends SemanticObject implements IUser {
 			this.role    = "roleId";
 			this.roleName= "roleName";
 		}
-
+		
+		public final JRoleMeta rm;
+		public final JOrgMeta  om;
+		
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-		public String pk; // = "userId";
+		// public final String pk; // = "userId";
 		public String uname; // = "userName";
 		public String pswd; // = "pswd";
 		public String iv; // = "encAuxiliary";
@@ -71,8 +78,8 @@ public class JUser extends SemanticObject implements IUser {
 		/** v1.4.11, column of role name */
 		public String roleName;
 
-		public String orgTbl = "a_orgs";
-		public String roleTbl = "a_roles";
+		// public String orgTbl = "a_orgs";
+		// public String roleTbl = "a_roles";
 
 		public JUserMeta userName(String unamefield) {
 			uname = unamefield;
@@ -89,7 +96,61 @@ public class JUser extends SemanticObject implements IUser {
 			return this;
 		}
 	}
+
+	public static class JRoleMeta extends SemanticTableMeta {
+		public final String roleName;
+		public final String remarks;
+		public final String org;
+
+		public JRoleMeta (String... conn) {
+			super("a_roles", conn);
+			
+			pk = "roleId";
+			roleName = "roleName";
+			remarks  = "remarks";
+			org      = "org";
+			
+			ddlSqlite = "CREATE TABLE a_roles(\r\n"
+						+ "roleId TEXT(20) not null, \r\n"
+						+ "roleName TEXT(50), \r\n"
+						+ "remarks TEXT(200),\r\n"
+						+ "orgId TEXT(20),\r\n"
+						+ "CONSTRAINT a_roles_pk PRIMARY KEY (roleId)"
+						+ ");";
+		}
+	}
 	
+	public static class JOrgMeta extends SemanticTableMeta {
+		public final String orgName;
+		public final String orgType;
+		public final String parent;
+		public final String sort;
+		public final String fullpath;
+
+		public JOrgMeta(String... conn) {
+			super("a_orgs", conn);
+			
+			pk = "orgId";
+			orgName = "orgName";
+			orgType = "orgType";
+			parent  = "parent";
+			sort    = "sort";
+			fullpath= "fullpath";
+
+			ddlSqlite =
+					"CREATE TABLE a_orgs (\r\n"
+					+ "	orgId   varchar2(12) NOT NULL,\r\n"
+					+ "	orgName varchar2(50),\r\n"
+					+ "	orgType varchar2(40) , -- a reference to a_domain.domainId (parent = 'a_orgs')\r\n"
+					+ "	parent  varchar2(12),\r\n"
+					+ "	sort    int DEFAULT 0,\r\n"
+					+ "	fullpath varchar2(200), webroot TEXT, album0 varchar2(16),\r\n"
+					+ "\r\n"
+					+ "	PRIMARY KEY (orgId)\r\n"
+					+ ");";
+		}
+	}
+
 	protected String ssid;
 	protected String uid;
 	protected String org;

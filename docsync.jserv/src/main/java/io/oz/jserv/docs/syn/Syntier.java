@@ -8,6 +8,9 @@ import static io.odysz.transact.sql.parts.condition.Funcall.now;
 import static io.odysz.transact.sql.parts.condition.Funcall.sum;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 
@@ -35,6 +38,7 @@ import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -49,13 +53,15 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DeviceTableMeta;
 import io.oz.jserv.docs.x.DocsException;
 
-@WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.syn" })
+@WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.sync" })
 public class Syntier extends ServPort<DocsReq> {
 	/** {domain: {jserv: exession-persist}} */
 	HashMap<String, Synoder> domains;
 
 	DBSyntableBuilder doctrb;
-	public DBSyntableBuilder doctrb() {
+	public DBSyntableBuilder doctrb() throws SemanticException {
+		if (doctrb == null)
+			throw new SemanticException("This synode haven't been started.");
 		return doctrb;
 	}
 
@@ -135,14 +141,14 @@ public class Syntier extends ServPort<DocsReq> {
 				rsp = querySyncs((DocsReq)jmsg.body(0), usr);
 
 			//
-	//		else if (DocsReq.A.blockStart.equals(a))
-	//			rsp = startBlocks(jmsg.body(0), usr);
-	//		else if (DocsReq.A.blockUp.equals(a))
-	//			rsp = uploadBlock(jmsg.body(0), usr);
-	//		else if (DocsReq.A.blockEnd.equals(a))
-	//			rsp = endBlock(jmsg.body(0), usr);
-	//		else if (DocsReq.A.blockAbort.equals(a))
-	//			rsp = abortBlock(jmsg.body(0), usr);
+			else if (DocsReq.A.blockStart.equals(a))
+				rsp = startBlocks(jmsg.body(0), usr);
+			else if (DocsReq.A.blockUp.equals(a))
+				rsp = uploadBlock(jmsg.body(0), usr);
+			else if (DocsReq.A.blockEnd.equals(a))
+				rsp = endBlock(jmsg.body(0), usr);
+			else if (DocsReq.A.blockAbort.equals(a))
+				rsp = abortBlock(jmsg.body(0), usr);
 	//		else if (DocsReq.A.devices.equals(a))
 	//			rsp = devices(jmsg.body(0), usr);
 	//		else if (DocsReq.A.checkDev.equals(a))
@@ -158,16 +164,29 @@ public class Syntier extends ServPort<DocsReq> {
 			if (rsp != null) {
 				write(resp, ok(rsp));
 			}
-		} catch (SsException | SAXException e) {
+		} catch (SsException | SAXException | SQLException e) {
 			e.printStackTrace();
 		} catch (TransException e) {
 			e.printStackTrace();
-		} catch (SQLException e) {
+		} catch (InterruptedException e) {
+			// by abortBlock
 			e.printStackTrace();
 		}
 	}
 
-	public Synoder start(String org, String domain, String conn, SynodeMode mod)
+	/**
+	 * Start this Syntier.
+	 * 
+	 * <p>This will created an instance of DBSytableBuilder for the domain.</p>
+	 * 
+	 * @param org
+	 * @param domain
+	 * @param conn
+	 * @param mod
+	 * @return
+	 * @throws Exception
+	 */
+	public Syntier start(String org, String domain, String conn, SynodeMode mod)
 			throws Exception {
 		if (domains == null)
 			domains = new HashMap<String, Synoder>();
@@ -177,6 +196,7 @@ public class Syntier extends ServPort<DocsReq> {
 		SemanticsMap ss = DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
 			(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
 		
+		@SuppressWarnings("unused")
 		Synoder synoder = domains
 				.get(domain)
 				.born(ss.get(smtype.synChange), 0, 0);
@@ -186,7 +206,7 @@ public class Syntier extends ServPort<DocsReq> {
 						// FIXME See {@link DBSyntableBuilder}'s issue ee153bcb30c3f3b868413beace8cc1f3cb5c3f7c. 
 				myconn, synode, mod)
 				.loadNyquvect(conn);
-		return synoder;
+		return this;
 	}
 
 	public Synoder synoder(String domain) {
@@ -227,6 +247,9 @@ public class Syntier extends ServPort<DocsReq> {
 		}
 	}
 
+	private HashMap<String, BlockChain> blockChains;
+
+	private boolean debug;
 	/**
 	 * Query client paths
 	 * @param docsReq
@@ -276,12 +299,155 @@ public class Syntier extends ServPort<DocsReq> {
 		return null;
 	}
 
+	DocsResp startBlocks(DocsReq body, IUser usr)
+			throws IOException, TransException, SQLException, SAXException {
+
+		String conn = Connects.uri2conn(body.uri());
+		/// ExpDocTableMeta docm = new T_PhotoMeta(conn);
+
+		// checkDuplicate(conn, ((DocUser)usr).deviceId(), body.clientpath(), usr);
+		checkDuplication(body, (DocUser) usr);
+
+		if (blockChains == null)
+			blockChains = new HashMap<String, BlockChain>(2);
+
+		String tempDir = ((DocUser)usr).touchTempDir(conn, "TODO");
+
+		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subfolder);
+
+		// FIXME security breach?
+		String id = chainId(usr, chain.clientpath);
+
+		if (blockChains.containsKey(id))
+			throw new SemanticException("Why started again?");
+
+		blockChains.put(id, chain);
+		return new DocsResp()
+				.blockSeq(-1)
+				.doc((SyncDoc) new SyncDoc()
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(chain.clientpath));
+	}
+
+	ExpDocTableMeta checkDuplication(String conn, String tabl, SyncDoc doc, DocUser usr)
+			throws TransException, SQLException, SAXException, IOException {
+		// String conn = Connects.uri2conn(body.uri());
+		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, tabl);
+
+		checkDuplicate(conn, docm,
+				usr.deviceId(), doc.fullpath(), usr);
+		return docm;
+	}
+
+//	private void checkDuplicate(String conn, String device, String clientpath, IUser usr, ExpDocTableMeta meta)
+//			throws SemanticException, TransException, SQLException {
+//		AnResultset rs = ((AnResultset) st
+//				.select(meta.tbl, "p")
+//				.col(count(meta.pk), "cnt")
+//				.whereEq(meta.synoder, device)
+//				.whereEq(meta.fullpath, clientpath)
+//				.rs(st.instancontxt(conn, usr))
+//				.rs(0)).nxt();
+//
+//		if (rs.getInt("cnt") > 0)
+//			throw new DocsException(DocsException.Duplicate,
+//					"Found existing file for device & client path.",
+//					device, clientpath);
+//	}
+
+	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
+		String id = chainId(usr, body.clientpath());
+		if (!blockChains.containsKey(id))
+			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
+
+		BlockChain chain = blockChains.get(id);
+		chain.appendBlock(body);
+
+		return new DocsResp()
+				.blockSeq(body.blockSeq())
+				.doc((SyncDoc) new SyncDoc()
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(body.clientpath()));
+	}
+
+	/**
+	 * Finishing doc (block chain) uploading.
+	 * 
+	 * <p>This method will trigger ext-file handling by which the uri is set to file path starting at
+	 * volume environment variable.</p>
+	 * 
+	 * @param body
+	 * @param usr
+	 * @return response
+	 * @throws SQLException
+	 * @throws IOException
+	 * @throws TransException
+	 */
+	DocsResp endBlock(DocsReq body, IUser usr)
+			throws SQLException, IOException, TransException {
+		String id = chainId(usr, body.clientpath());
+		BlockChain chain;
+		if (blockChains.containsKey(id)) {
+			blockChains.get(id).closeChain();
+			chain = blockChains.remove(id);
+		} else
+			throw new SemanticException("Ending block chain which is not existing.");
+
+		// insert photo (empty uri)
+		PhotoRec photo = new PhotoRec(chain);
+
+		String conn = Connects.uri2conn(body.uri());
+		ExpDocTableMeta meta = Connects.getMeta(conn, DocsReq.doc.tabl);
+
+		photo.createDate = chain.cdate;
+		photo.fullpath(chain.clientpath);
+		photo.pname = chain.clientname;
+		photo.uri = null; // accepting new value
+		String pid = createFile(conn, photo, usr);
+
+		// move file
+		String targetPath = DocUtils.resolvExtroot(st, conn, pid, usr, meta);
+
+		if (debug)
+			Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
+
+		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+
+		onPhotoCreated(pid, conn, meta, usr);
+
+		return new DocsResp()
+				.blockSeq(body.blockSeq())
+				.doc((SyncDoc) new SyncDoc()
+					.recId(pid)
+					.device(body.device())
+					.folder(photo.folder())
+					.clientname(chain.clientname)
+					.cdate(body.createDate)
+					.fullpath(chain.clientpath));
+	}
+
+	DocsResp abortBlock(DocsReq body, IUser usr)
+			throws SQLException, IOException, InterruptedException, TransException {
+		String id = chainId(usr, body.clientpath());
+		DocsResp ack = new DocsResp();
+		if (blockChains.containsKey(id)) {
+			blockChains.get(id).abortChain();
+			blockChains.remove(id);
+			ack.blockSeqReply = body.blockSeq();
+		} else
+			ack.blockSeqReply = -1;
+
+		return ack;
+	}
+
 	DocsResp createPhoto(DocsReq docreq, IUser usr)
 			throws TransException, SQLException, IOException, SAXException {
 		String conn = Connects.uri2conn(docreq.uri());
-		ExpDocTableMeta docm = (ExpDocTableMeta) doctrb().getSyntityMeta(docreq.docTabl);
 
-		checkDuplication(docreq, (DocUser) usr, docm);
+		// ExpDocTableMeta docm = (ExpDocTableMeta) doctrb().getSyntityMeta(docreq.docTabl);
+		ExpDocTableMeta docm = checkDuplication(docreq, (DocUser) usr);
 
 		String pid = createFile(conn, docreq, usr, docm);
 	
@@ -294,15 +460,17 @@ public class Syntier extends ServPort<DocsReq> {
 		return null;
 	}
 
-	void checkDuplication(DocsReq docreq, DocUser usr, ExpDocTableMeta docm)
+	ExpDocTableMeta checkDuplication(DocsReq docreq, DocUser usr)
 			throws SemanticException, TransException, SQLException, SAXException, IOException {
 		String conn = Connects.uri2conn(docreq.uri());
-		checkDuplicate(conn, usr.deviceId(), docreq.clientpath(), usr, docm);
+
+		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, docreq.docTabl);
+		checkDuplicate(conn, docm, usr.deviceId(), docreq.clientpath(), usr);
+		return docm;
 	}
 
-	private void checkDuplicate(String conn, String device, String clientpath,
-			IUser usr, ExpDocTableMeta meta)
-			throws SemanticException, TransException, SQLException, SAXException, IOException {
+	private void checkDuplicate(String conn, ExpDocTableMeta meta, String device, String clientpath, IUser usr)
+			throws TransException, SQLException, SAXException, IOException {
 		DBSyntableBuilder st = (DBSyntableBuilder) doctrb();
 		AnResultset rs = ((AnResultset) st
 				.select(meta.tbl, "p")

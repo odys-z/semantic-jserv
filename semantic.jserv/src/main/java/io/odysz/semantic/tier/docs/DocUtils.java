@@ -13,7 +13,6 @@ import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.ExpSyncDoc;
 import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -151,7 +150,23 @@ public class DocUtils {
 		return EnvPath.decodeUri(extroot, uri);
 	}
 
-	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, DocTableMeta meta) throws TransException, SQLException {
+	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, DocTableMeta meta)
+			throws TransException, SQLException {
+		ISemantext stx = st.instancontxt(conn, usr);
+		AnResultset rs = (AnResultset) st
+				.select(meta.tbl)
+				.col("uri").col("folder")
+				.whereEq("pid", docId).rs(stx)
+				.rs(0);
+	
+		if (!rs.next())
+			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
+	
+		return resolvExtroot(conn, rs.getString("uri"), meta);
+	}
+
+	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, ExpDocTableMeta meta)
+			throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl)
@@ -166,6 +181,15 @@ public class DocUtils {
 	}
 
 	public static String resolvExtroot(String conn, String extUri, DocTableMeta meta) throws TransException, SQLException {
+		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
+		if (h2 == null)
+			throw new SemanticException("To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",
+					conn, meta.tbl);
+		String extroot = h2.getFileRoot();
+		return EnvPath.decodeUri(extroot, extUri);
+	}
+
+	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta) throws TransException, SQLException {
 		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
 		if (h2 == null)
 			throw new SemanticException("To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",

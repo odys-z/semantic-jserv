@@ -21,11 +21,14 @@
 		<k>class-IUser</k>
 		<v>io.oz.jserv.docs.syn.DocUser</v>
 	</c>
+
+	<!-- home id is the same as remote id. Only registered home can get one 
 	<c>
-		<!-- home id is the same as remote id. Only registered home can get one -->
 		<k>home-id</k>
 		<v>test.odyzhou</v>
 	</c>
+	-->
+
 	<c>
 		<k>sync.log.on-verbose</k>
 		<v>false</v>

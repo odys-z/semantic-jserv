@@ -54,8 +54,8 @@ public class JettyHelper {
      * @since 2.0.0
      */
     @SafeVarargs
-	public static void startJserv(String configPath, String conn, String configxml, String ip, int port, Class<? extends ServPort<?>> ... servports)
-    		throws Exception {
+	public static void startJserv(String configPath, String conn, String configxml, String ip, int port,
+			Class<? extends ServPort<?>> ... servports) throws Exception {
 
         instanserver(configPath, conn, configxml, ip, port);
 
@@ -67,7 +67,8 @@ public class JettyHelper {
         server.start();
     }
 
-	private static void instanserver(String configPath, String conn0, String configxml, String ip, int port) throws Exception {
+	public static void instanserver(String configPath, String conn0, String configxml, String ip, int port)
+			throws Exception {
         Anson.verbose = false;
 
     	Syngleton.initSynodetier(configxml, conn0, ".", configPath, "ABCDEF0123456789");

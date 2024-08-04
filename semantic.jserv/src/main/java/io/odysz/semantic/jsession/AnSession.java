@@ -249,13 +249,18 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		String connId = null;
 		try {
 			if (msg != null) {
-				connId = isblank(msg.body(0).uri())
-					? Connects.defltConn() : Connects.uri2conn(msg.body(0).uri());
-//			if (connId == null || connId.trim().length() == 0)
-//				connId = Connects.defltConn();
+				if (isblank(msg.body(0).uri()))
+					throw new SsException("Since 2.0.0, client uri cannot be empty for session checking, logging in, etc.");
 
-			// find user and check login info
-			// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
+				if (msg != null)
+					connId = Connects.uri2conn(msg.body(0).uri());
+
+				if (isblank(connId))
+					throw new SsException("Since 2.0.0, connection id for logging is mandatory. See uri(%s) - connId mappings in connects.xml.",
+							msg.body(0).uri());
+
+				// find user and check login info
+				// request-obj: {a: "login/logout", uid: "user-id", pswd: "uid-cipher-by-pswd", iv: "session-iv"}
 				AnSessionReq sessionBody = msg.body(0);
 				String a = sessionBody.a();
 				if (login.equals(a)) {
@@ -431,8 +436,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throws TransException, SQLException, SsException,
 			ReflectiveOperationException, GeneralSecurityException, IOException {
 		SemanticObject s = sctx.select(usrMeta.tbl, "u")
-			.l_(usrMeta.roleTbl, "r", usrMeta.role, "roleId")
-			.l_(usrMeta.orgTbl, "o", usrMeta.org, "orgId")
+			.l_(usrMeta.rm.tbl, "r", usrMeta.role, "roleId")
+			.l_(usrMeta.om.tbl, "o", usrMeta.org, "orgId")
 			.col("u.*")
 			.col(usrMeta.orgName)       // v1.4.11
 			.col(usrMeta.roleName)		// v1.4.11
@@ -460,8 +465,10 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	/**
 	 * Create a new IUser instance, where the class name is configured in config.xml/k=class-IUser.
-	 * For the sample project, jserv-sample coming with this lib, it's configured as <a href='https://github.com/odys-z/semantic-jserv/blob/master/jserv-sample/src/main/webapp/WEB-INF/config.xml'>
+	 * For the sample project, jserv-sample coming with this lib, it's configured as
+	 * <a href='https://github.com/odys-z/semantic-jserv/blob/master/jserv-sample/src/main/webapp/WEB-INF/config.xml'>
 	 * io.odysz.jsample.SampleUser</a>
+	 * 
 	 * @param clsNamekey class name, since 1.4.36, this name can be class name itself
 	 * @param uid user id
 	 * @param pswd

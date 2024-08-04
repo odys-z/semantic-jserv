@@ -19,7 +19,6 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
-import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
 import io.odysz.common.Utils;
@@ -29,7 +28,6 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.AutoSeqMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
@@ -185,15 +183,18 @@ class SynoderTest {
 
 		int no = 0;
 		Utils.logrst("X starting", test, ++no);
-		Syntier xtier = syntiers[X];
-		Synoder x = xtier.start(ura, zsu, xtier.myconn, SynodeMode.peer);
+		Syntier xtir = syntiers[X];
+		Synoder x = xtir.start(ura, zsu, xtir.myconn, SynodeMode.peer)
+						.synoder(zsu);
 
 		ck[X] = new Docheck(azert, zsu, x.myconn, x.synode, SynodeMode.peer, docm);
 		ck[X].synodes(X);
 
 		Utils.logrst("Y starting", test, ++no);
-		Syntier ytier = syntiers[Y];
-		Synoder y = ytier.start(ura, zsu, ytier.myconn, SynodeMode.peer);
+		Syntier ytir = syntiers[Y];
+		Synoder y = ytir.start(ura, zsu, ytir.myconn, SynodeMode.peer)
+						.synoder(zsu);
+
 		ck[Y] = new Docheck(azert, zsu, y.myconn, y.synode, SynodeMode.peer, docm);
 		ck[Y].synodes(-1, Y);
 
@@ -214,8 +215,10 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		Syntier ztier = syntiers[Z];
-		Synoder z = syntiers[Z].start(ura, zsu, ztier.myconn, SynodeMode.peer);
+		Syntier ztir = syntiers[Z];
+		Synoder z = ztir.start(ura, zsu, ztir.myconn, SynodeMode.peer)
+						.synoder(zsu);
+
 		ck[Z] = new Docheck(azert, zsu, z.myconn, z.synode, SynodeMode.peer, docm);
 
 		Utils.logrst("X is joining by Z", test, ++no);
