@@ -175,7 +175,7 @@ public class AlbumReq extends DocsReq {
 	public AlbumReq del(String device, String clientpath) {
 		this.photo = new PhotoRec();
 		this.device = new Device(device, null);
-		clientpath(clientpath);
+		this.photo.clientpath = clientpath;
 		this.a = A.del;
 		return this;
 	}

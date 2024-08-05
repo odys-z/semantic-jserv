@@ -313,7 +313,8 @@ public class Syntier extends ServPort<DocsReq> {
 
 		String tempDir = ((DocUser)usr).touchTempDir(conn, "TODO");
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.doc.createDate, body.doc.folder());
+		BlockChain chain = new BlockChain(tempDir, body.doc.clientpath,
+				body.doc.createDate, body.doc.folder());
 
 		// FIXME security breach?
 		String id = chainId(usr, chain.clientpath);
@@ -357,7 +358,7 @@ public class Syntier extends ServPort<DocsReq> {
 //	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
-		String id = chainId(usr, body.clientpath());
+		String id = chainId(usr, body.doc.clientpath);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
 
@@ -369,7 +370,7 @@ public class Syntier extends ServPort<DocsReq> {
 				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.doc.createDate)
-					.fullpath(body.clientpath()));
+					.fullpath(body.doc.clientpath));
 	}
 
 	/**
@@ -387,7 +388,7 @@ public class Syntier extends ServPort<DocsReq> {
 	 */
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, TransException {
-		String id = chainId(usr, body.clientpath());
+		String id = chainId(usr, body.doc.clientpath);
 		BlockChain chain;
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
@@ -427,7 +428,7 @@ public class Syntier extends ServPort<DocsReq> {
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		String id = chainId(usr, body.clientpath());
+		String id = chainId(usr, body.doc.clientpath);
 		DocsResp ack = new DocsResp();
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).abortChain();
@@ -464,7 +465,7 @@ public class Syntier extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(docreq.uri());
 
 		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, docreq.docTabl);
-		checkDuplicate(conn, docm, usr.deviceId(), docreq.clientpath(), usr);
+		checkDuplicate(conn, docm, usr.deviceId(), docreq.doc.clientpath, usr);
 		return docm;
 	}
 
@@ -495,7 +496,7 @@ public class Syntier extends ServPort<DocsReq> {
 		SemanticObject res = (SemanticObject) st
 				.delete(docm.tbl, usr)
 				.whereEq("device", docsReq.device().id)
-				.whereEq("clientpath", docsReq.clientpath())
+				.whereEq("clientpath", docsReq.doc.clientpath)
 				// .post(Docsyncer.onDel(req.clientpath, req.device()))
 				.d(st.instancontxt(conn, usr));
 

@@ -44,7 +44,6 @@ import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
-import io.odysz.semantic.tier.docs.Docs206;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
@@ -402,14 +401,14 @@ public class Albums extends ServPort<AlbumReq> {
 			throws IOException, TransException, SQLException {
 
 		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, ((PhotoUser)usr).deviceId(), body.clientpath(), usr, new PhotoMeta(conn));
+		checkDuplicate(conn, ((PhotoUser)usr).deviceId(), body.doc.clientpath, usr, new PhotoMeta(conn));
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
 		String tempDir = ((PhotoUser)usr).touchTempDir(conn);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.doc.createDate, body.doc.folder());
+		BlockChain chain = new BlockChain(tempDir, body.doc.clientpath, body.doc.createDate, body.doc.folder());
 
 		// FIXME security breach?
 		String id = chainId(usr, chain.clientpath);
@@ -450,7 +449,7 @@ public class Albums extends ServPort<AlbumReq> {
 	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
-		String id = chainId(usr, body.clientpath());
+		String id = chainId(usr, body.doc.clientpath);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
 
@@ -462,7 +461,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.doc.createDate)
-					.fullpath(body.clientpath()));
+					.fullpath(body.doc.clientpath));
 	}
 
 	/**
@@ -481,7 +480,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 */
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		String id = chainId(usr, body.clientpath());
+		String id = chainId(usr, body.doc.clientpath);
 		BlockChain chain;
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).closeChain();
@@ -521,7 +520,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
-		String id = chainId(usr, body.clientpath());
+		String id = chainId(usr, body.doc.clientpath);
 		DocsResp ack = new DocsResp();
 		if (blockChains.containsKey(id)) {
 			blockChains.get(id).abortChain();
@@ -745,7 +744,7 @@ public class Albums extends ServPort<AlbumReq> {
 		SemanticObject res = (SemanticObject) st
 				.delete(meta.tbl, usr)
 				.whereEq("device", req.device().id)
-				.whereEq("clientpath", req.clientpath())
+				.whereEq("clientpath", req.doc.clientpath)
 				// .post(Docsyncer.onDel(req.clientpath, req.device()))
 				.d(st.instancontxt(conn, usr));
 

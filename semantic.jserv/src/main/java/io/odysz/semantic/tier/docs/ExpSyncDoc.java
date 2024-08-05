@@ -1,5 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
+import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -404,6 +406,11 @@ String clientpath;
 		this.createDate = rs.getString(m.createDate);
 		this.folder(rs.getString("pid"));
 		this.shareby(rs.getString(m.shareby));
+		return this;
+	}
+
+	public ExpSyncDoc clientpath(String fullpath) {
+		clientpath = separatorsToUnix(fullpath);
 		return this;
 	}
 	

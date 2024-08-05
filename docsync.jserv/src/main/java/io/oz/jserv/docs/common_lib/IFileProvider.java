@@ -6,9 +6,11 @@ import java.io.InputStream;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
 /**
- * <p>A file accessor used by AlbumTier etc., for accessing files without visiting traditional file system.</p>
+ * <p>A file accessor used by AlbumTier etc., for accessing files without visiting
+ * traditional file system.</p>
  *
- * This is a special bridge (interface) that semantiers can access file through Android content providers or so.
+ * This is a special bridge (interface) that semantiers can access file through
+ * Android content providers or so.
  */
 public interface IFileProvider {
     /**
@@ -20,8 +22,6 @@ public interface IFileProvider {
 
     /**
      * <p>Open file input stream.</p>
-     * Example for normal file system implementation:<pre>
-     * new FileInputStream(new File(path));</pre>
      * 
      * @return readable stream
      */
@@ -29,11 +29,12 @@ public interface IFileProvider {
 
     /**
      * <p>Resolve the initial folder (with Policies).</p>
-     * Currently, the save folder policy is simple last modified date for documents and creating date
-     * for medias if API version later than Build.VERSION_CODES.O, otherwise use last modified.
-     * (Audio file in Andriod is named with date string).
+     * Currently, the save folder policy is simple last modified date for documents
+     * and creating date for medias if API version later than Build.VERSION_CODES.O,
+     * otherwise use last modified.
+     * (Audio file in Android is named with date string).
      *
-     * @since 0.2.1 (Albumtier)
+     * @since 0.2.0
      * @return initial folder to save the file at server side
      */
     String saveFolder();
