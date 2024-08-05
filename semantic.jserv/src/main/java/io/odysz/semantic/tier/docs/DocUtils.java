@@ -134,7 +134,7 @@ public class DocUtils {
 		return pid;
 	}
 	
-	public static String createFileB64(DBSyntableBuilder st, String conn,
+	public static String createFileBy64(DBSyntableBuilder st, String conn,
 			ExpSyncDoc doc, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) throws TransException, SQLException {
 		if (LangExt.isblank(doc.fullpath()))
 			throw new SemanticException("The client path can't be null/empty.");
@@ -209,4 +209,9 @@ public class DocUtils {
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
 	}
+
+//	public static String createFileBy64(DATranscxt st, String conn, ExpSyncDoc photo, IUser usr, ExpDocTableMeta meta,
+//			Update ... post) {
+//		return null;
+//	}
 }

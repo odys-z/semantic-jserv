@@ -85,6 +85,10 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	@AnsonField(shortenString=true)
 	public String uri64;
 	public String uri64() { return uri64; }
+	public ExpSyncDoc uri64(String v64) {
+		uri64 = v64;
+		return this;
+	}
 
 	public String shareby;
 	public String sharedate;
@@ -328,19 +332,18 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return ins;
 	}
 
-	public ExpSyncDoc createByChain(BlockChain chain) throws IOException {
-		createDate = chain.cdate;
-		fullpath(chain.clientpath);
-		pname = chain.clientname;
-		folder = chain.saveFolder;
-		device = chain.device;
-		return this;
-	}
+//	public ExpSyncDoc createByChain(BlockChain chain) throws IOException {
+//		createDate = chain.cdate;
+//		fullpath(chain.clientpath);
+//		pname = chain.clientname;
+//		folder = chain.saveFolder;
+//		device = chain.device;
+//		return this;
+//	}
 
-	public ExpSyncDoc createByReq(DocsReq docreq) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	public ExpSyncDoc createByReq(DocsReq docreq) {
+//		return docreq.doc;
+//	}
 
 	public ExpSyncDoc folder(AnResultset rs, ExpDocTableMeta m) throws SQLException {
 		this.recId = rs.getString(m.pk);

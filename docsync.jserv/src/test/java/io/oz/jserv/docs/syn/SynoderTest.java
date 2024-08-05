@@ -290,7 +290,7 @@ class SynoderTest {
 		photo.folder(syntier.synode);
 		photo.share("ody-" + syntier.synode, Share.pub, new Date());
 
-		return DocUtils.createFileB64(syntier.doctrb(), syntier.myconn,
+		return DocUtils.createFileBy64(syntier.doctrb(), syntier.myconn,
 				(ExpSyncDoc)photo, syntier.locrobot(), (ExpDocTableMeta)docm);
 	}
 

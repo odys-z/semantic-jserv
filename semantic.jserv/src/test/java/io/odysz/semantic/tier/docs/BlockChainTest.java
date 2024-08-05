@@ -43,8 +43,8 @@ class BlockChainTest {
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
-		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.clientpath)
-				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.clientpath));
+		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.doc.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.doc.clientpath));
 
 		DocsResp resp = (DocsResp) new DocsResp()
 				.doc( (ExpSyncDoc) new ExpSyncDoc()
@@ -97,8 +97,8 @@ class BlockChainTest {
 
 		assertTrue(eq("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
-		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.clientpath)
-				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.clientpath));
+		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.doc.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.doc.clientpath));
 
 		DocsResp resp = (DocsResp) new DocsResp()
 					.doc((ExpSyncDoc) new ExpSyncDoc().fullpath(clientpath));
@@ -170,8 +170,8 @@ class BlockChainTest {
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.aborting", chain.outputPath));
-		assertTrue(eq("/sdcard/0/Downloads/test.aborting", chain.clientpath)
-				|| eq("\\sdcard\\0\\Downloads\\test.aborting", chain.clientpath));
+		assertTrue(eq("/sdcard/0/Downloads/test.aborting", chain.doc.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.aborting", chain.doc.clientpath));
 
 		String b64;
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");

@@ -323,10 +323,11 @@ public class Syntier extends ServPort<DocsReq> {
 		String tempDir = ((DocUser)usr).touchTempDir(conn, body.docTabl);
 
 		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id,
-				body.doc.clientpath, body.doc.createDate, body.doc.folder());
+				// body.doc.clientpath, body.doc.createDate, body.doc.folder());
+				body.doc);
 
 		// FIXME security breach?
-		String id = chainId(usr, chain.clientpath);
+		String id = chainId(usr, chain.doc.clientpath);
 
 		if (blockChains.containsKey(id))
 			throw new SemanticException("Why started again?");
@@ -335,9 +336,9 @@ public class Syntier extends ServPort<DocsReq> {
 		return new DocsResp()
 				.blockSeq(-1)
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.clientname)
+					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
-					.fullpath(chain.clientpath));
+					.fullpath(chain.doc.clientpath));
 	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
@@ -351,7 +352,7 @@ public class Syntier extends ServPort<DocsReq> {
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.clientname)
+					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(body.doc.clientpath));
 	}
@@ -384,10 +385,11 @@ public class Syntier extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(body.uri());
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, chain.docTabl);
 
-		ExpSyncDoc photo = new ExpSyncDoc(meta, usr.orgId())
-							.createByChain(chain);
+//		ExpSyncDoc photo = new ExpSyncDoc(meta, usr.orgId())
+//							.createByChain(chain);
+		ExpSyncDoc photo = chain.doc;
 
-		String pid = DocUtils.createFileB64(doctrb(), conn, photo, usr, meta);
+		String pid = DocUtils.createFileBy64(doctrb(), conn, photo, usr, meta);
 
 		// move file
 		String targetPath = DocUtils.resolvExtroot(st, conn, pid, usr, meta);
@@ -405,9 +407,9 @@ public class Syntier extends ServPort<DocsReq> {
 					.recId(pid)
 					.device(body.device())
 					.folder(photo.folder())
-					.clientname(chain.clientname)
+					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
-					.fullpath(chain.clientpath));
+					.fullpath(chain.doc.clientpath));
 	}
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
@@ -432,8 +434,9 @@ public class Syntier extends ServPort<DocsReq> {
 
 		ExpDocTableMeta docm = checkDuplication(doctrb(), docreq, (DocUser) usr);
 
-		ExpSyncDoc photo = new ExpSyncDoc(docm, usr.orgId()).createByReq(docreq);
-		String pid = DocUtils.createFileB64(doctrb(), conn, photo, usr, docm);
+		// ExpSyncDoc photo = new ExpSyncDoc(docm, usr.orgId()).createByReq(docreq);
+		ExpSyncDoc photo = docreq.doc;
+		String pid = DocUtils.createFileBy64(doctrb(), conn, photo, usr, docm);
 	
 		onDocreated(pid, conn, docm, usr);
 		return new DocsResp().doc(photo);
@@ -452,6 +455,9 @@ public class Syntier extends ServPort<DocsReq> {
 	
 		if (body.device() == null)
 			throw new DocsException(DocsException.SemanticsError, "Starting a block chain without device specified?");
+
+		if (isblank(body.doc.clientpath))
+			throw new TransException("Client path is neccessary to start a block chain transaction. Cannot be empty.");
 
 		if (!Connects.getMeta(conn).containsKey(body.docTabl))
 			throw new DocsException(DocsException.IOError,

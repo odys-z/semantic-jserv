@@ -412,7 +412,7 @@ public class Albums extends ServPort<AlbumReq> {
 				body.doc.clientpath, body.doc.createDate, body.doc.folder());
 
 		// FIXME security breach?
-		String id = chainId(usr, chain.clientpath);
+		String id = chainId(usr, chain.doc.clientpath);
 
 		if (blockChains.containsKey(id))
 			throw new SemanticException("Why started again?");
@@ -421,9 +421,9 @@ public class Albums extends ServPort<AlbumReq> {
 		return new DocsResp()
 				.blockSeq(-1)
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.clientname)
+					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
-					.fullpath(chain.clientpath));
+					.fullpath(chain.doc.clientpath));
 	}
 
 	void checkDuplication(AlbumReq body, PhotoUser usr)
@@ -460,7 +460,7 @@ public class Albums extends ServPort<AlbumReq> {
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.clientname)
+					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(body.doc.clientpath));
 	}
@@ -494,9 +494,9 @@ public class Albums extends ServPort<AlbumReq> {
 		PhotoMeta meta = new PhotoMeta(conn);
 		PhotoRec photo = new PhotoRec();
 
-		photo.createDate = chain.cdate;
-		photo.fullpath(chain.clientpath);
-		photo.pname = chain.clientname;
+		photo.createDate = chain.doc.createDate;
+		photo.fullpath(chain.doc.clientpath);
+		photo.pname = chain.doc.clientname();
 		photo.uri64 = null; // accepting new value
 		String pid = createFile(conn, photo, usr);
 
@@ -510,13 +510,16 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
+				/*
 				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.recId(pid)
 					.device(body.device())
 					.folder(photo.folder())
-					.clientname(chain.clientname)
+					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
-					.fullpath(chain.clientpath));
+					.fullpath(chain.doc.clientpath));
+				*/
+				.doc(photo.uri64(null));
 	}
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
@@ -772,7 +775,7 @@ public class Albums extends ServPort<AlbumReq> {
 		if (isblank(photo.shareby))
 			photo.share(usr.uid(), Share.priv, new Date());
 
-		String pid = DocUtils.createFileB64((DBSyntableBuilder)st, conn, photo, usr, meta);
+		String pid = DocUtils.createFileBy64((DBSyntableBuilder)st, conn, photo, usr, meta);
 
 		return pid;
 	}

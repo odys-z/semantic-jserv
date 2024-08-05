@@ -25,22 +25,28 @@ import io.odysz.transact.x.TransException;
  */
 public class BlockChain {
 
-	public final String saveFolder;
-	public final String clientpath;
-	public final String clientname;
-	public String cdate;
+//	public final String saveFolder;
+//	public final String clientpath;
+//	public final String clientname;
+//	public String cdate;
 
 	public final String outputPath;
 	protected final OutputStream ofs;
 	
 	protected final DocsReq waitings;
 
-	public String shareby;
-	public String shareDate;
-	public String shareflag;
-	public String device;
+//	public String shareby;
+//	public String shareDate;
+//	public String shareflag;
+//	public String device;
 
 	public final String docTabl;
+
+	public ExpSyncDoc doc;
+	public BlockChain doc(ExpSyncDoc doc) {
+		this.doc = doc;
+		return this;
+	}
 
 	/**
 	 * Port to DB-sync
@@ -69,6 +75,7 @@ public class BlockChain {
 //	}
 
 	/**
+	 * @deprecated
 	 * Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
 	 * @param tempDir
@@ -86,15 +93,15 @@ public class BlockChain {
 			throw new TransException("Client path is neccessary to start a block chain transaction.");
 
 		this.docTabl = docTabl;
-		this.cdate = createDate;
-		this.clientpath = clientpathRaw;
-		this.saveFolder = targetFolder;
-		this.device = devid;
+		// this.cdate = createDate;
+		// this.clientpath = clientpathRaw;
+		// this.saveFolder = targetFolder;
+		// this.device = devid;
 
 		String clientpath = clientpathRaw.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
 
-		clientname = FilenameUtils.getName(clientpath);
+		// clientname = FilenameUtils.getName(clientpath);
 		outputPath = EnvPath.decodeUri(tempDir, clientpath);
 
 		String parentpath = FilenameUtils.getFullPath(outputPath);
@@ -105,6 +112,26 @@ public class BlockChain {
 		this.ofs = new FileOutputStream(f);
 
 		waitings = new DocsReq().blockSeq(-1);
+	}
+
+	public BlockChain(String docTabl, String tempDir, String devid, ExpSyncDoc doc) throws IOException {
+		// doc.clientpath, body.doc.createDate, body.doc.folder()
+		this.docTabl = docTabl;
+		String clientpath = doc.clientpath.replaceFirst("^/", "");
+		clientpath = clientpath.replaceAll(":", "");
+
+		outputPath = EnvPath.decodeUri(tempDir, clientpath);
+
+		String parentpath = FilenameUtils.getFullPath(outputPath);
+		new File(parentpath).mkdirs(); 
+
+		File f = new File(outputPath);
+		f.createNewFile();
+		this.ofs = new FileOutputStream(f);
+
+		waitings = new DocsReq().blockSeq(-1);
+		
+		this.doc = doc;
 	}
 
 	public BlockChain appendBlock(DocsReq blockReq) throws IOException, TransException {
@@ -145,7 +172,7 @@ public class BlockChain {
 			// some packages lost
 			throw new TransException("Aborting block chain. " + 
 					"Blocks starting at block-seq = %s will be dropped. path: %s",
-					waitings.nextBlock.blockSeq, clientpath);
+					waitings.nextBlock.blockSeq, doc.clientpath);
 	}
 
 	public String closeChain() throws IOException, TransException {
@@ -162,21 +189,21 @@ public class BlockChain {
 			// some packages lost
 			throw new TransException("Closing block chain. " +
 					"Blocks starting at block-seq = %s will be dropped. path: %s",
-					waitings.nextBlock.blockSeq, clientpath);
+					waitings.nextBlock.blockSeq, doc.clientpath);
 		}
 
 		return outputPath;
 	}
 
-	public BlockChain share(String shareby, String shareDate, String shareflag) {
-		this.shareby = shareby;
-		this.shareDate = shareDate;
-		this.shareflag = shareflag;
-		return this;
-	}
+//	public BlockChain share(String shareby, String shareDate, String shareflag) {
+//		this.shareby = shareby;
+//		this.shareDate = shareDate;
+//		this.shareflag = shareflag;
+//		return this;
+//	}
 
-	public BlockChain device(String device) {
-		this.device = device;
-		return this;
-	}
+//	public BlockChain device(String device) {
+//		this.device = device;
+//		return this;
+//	}
 }

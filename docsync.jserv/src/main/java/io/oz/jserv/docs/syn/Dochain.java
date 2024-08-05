@@ -18,6 +18,7 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -82,10 +83,11 @@ public class Dochain {
 			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
 					body.doc.clientpath, usr.uid(), profiles.getClass().getName());
 		
-		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id,
-					body.doc.clientpath, body.doc.createDate, saveFolder)
-				.device(usr.deviceId())
-				.share(body.doc.shareby, body.doc.sharedate, body.doc.shareflag);
+//		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id,
+//					body.doc.clientpath, body.doc.createDate, saveFolder)
+//				.device(usr.deviceId())
+//				.share(body.doc.shareby, body.doc.sharedate, body.doc.shareflag);
+		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
 
 		String id = chainId(usr, body);
 
@@ -97,10 +99,13 @@ public class Dochain {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
+				/*
 				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
+				*/
+				.doc(chain.doc.uri64(null));
 	}
 
 	void checkDuplication(DocsReq body, SyncRobot usr)
@@ -141,9 +146,9 @@ public class Dochain {
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.clientname)
+					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
-					.fullpath(chain.clientpath));
+					.fullpath(chain.doc.clientpath));
 	}
 
 	/**
@@ -168,7 +173,8 @@ public class Dochain {
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
-		ExpSyncDoc photo = new ExpSyncDoc().createByChain(chain);
+		// ExpSyncDoc photo = new ExpSyncDoc().createByChain(chain);
+		ExpSyncDoc photo = chain.doc;
 		photo.uri64 = null; // suppress semantics ExtFile, and support me (query befor move?).
 		
 		String pid = createFile(st, conn, photo, meta, usr, ok);
@@ -218,7 +224,6 @@ public class Dochain {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-
 	public static String createFile(DATranscxt st, String conn, ExpSyncDoc photo,
 			ExpDocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
@@ -227,7 +232,7 @@ public class Dochain {
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);
 
-		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
+		return DocUtils.createFileBy64((DBSyntableBuilder)st, conn, photo, usr, meta, post);
 	}
 
 //	public static String createFile(DATranscxt st, String conn, ExpSyncDoc photo,
