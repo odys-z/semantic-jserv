@@ -288,31 +288,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return this;
 	}
 
-//	public SyncDoc parseMimeSize(String abspath) throws IOException {
-//		mime = isblank(mime)
-//				? Files.probeContentType(Paths.get(abspath))
-//				: mime;
-//
-//		File f = new File(abspath);
-//		size = f.length();
-//		return this;
-//	}
-
-//	public SyncDoc parseChain(BlockChain chain) throws IOException {
-//		createDate = chain.cdate;
-//
-//		device = chain.device;
-//		clientpath = chain.clientpath;
-//		pname = chain.clientname;
-//		folder(chain.saveFolder);
-//
-//		shareby = chain.shareby;
-//		sharedate = chain.shareDate;
-//		shareflag = chain.shareflag;
-//
-//		return parseMimeSize(chain.outputPath);
-//	}
-
 	/**
 	 * @deprecated deleting ...
 	 * 
@@ -321,16 +296,19 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	 * @param flags
 	 * @return this
 	 */
-	public ExpSyncDoc parseFlags(String[] flags) {
-		if (!isNull(flags)) {
-			// syncFlag = flags[0];
-			shareflag = flags[1];
-			shareby = flags[2];
-			sharedate(flags[3]);
-		}
-		return this;
-	}
+//	public ExpSyncDoc parseFlags(String[] flags) {
+//		if (!isNull(flags)) {
+//			// syncFlag = flags[0];
+//			shareflag = flags[1];
+//			shareby = flags[2];
+//			sharedate(flags[3]);
+//		}
+//		return this;
+//	}
 	
+	/**
+	 * @see io.odysz.semantic.syn.SynEntity#insertEntity(io.odysz.semantic.meta.SyntityMeta, io.odysz.transact.sql.Insert)
+	 */
 	@Override
 	public Insert insertEntity(SyntityMeta m, Insert ins) {
 		ExpDocTableMeta md = (ExpDocTableMeta) m;
