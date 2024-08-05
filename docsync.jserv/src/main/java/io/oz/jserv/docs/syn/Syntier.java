@@ -30,6 +30,7 @@ import io.odysz.semantic.DATranscxt.SemanticsMap;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
@@ -97,7 +98,7 @@ public class Syntier extends ServPort<DocsReq> {
 		
 		if (synode == null)
 			throw new SemanticException("Synode id must be configured in %s. table %s, k = %s",
-					Configs.cfgFile, Configs.keys.deftXTableId, Configs.keys.synode);
+					Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.synode);
 	}
 
 	private static final long serialVersionUID = 1L;
@@ -134,7 +135,7 @@ public class Syntier extends ServPort<DocsReq> {
 			// ExpDocTableMeta docm = (ExpDocTableMeta) doctrb().getSyntityMeta(docreq.docTabl);
 
 			if (A.upload.equals(a))
-				rsp = createPhoto(docreq, usr);
+				rsp = createDoc(docreq, usr);
 			else if (A.del.equals(a))
 				rsp = delDoc(docreq, usr);
 			else if (A.selectSyncs.equals(a))
@@ -164,13 +165,24 @@ public class Syntier extends ServPort<DocsReq> {
 			if (rsp != null) {
 				write(resp, ok(rsp));
 			}
-		} catch (SsException | SAXException | SQLException e) {
-			e.printStackTrace();
-		} catch (TransException e) {
-			e.printStackTrace();
+		} catch (DocsException e) {
+			write(resp, err(MsgCode.ext, e.ex().toBlock()));
+		} catch (SemanticException e) {
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
+		} catch (SQLException | TransException e) {
+			if (debug)
+				e.printStackTrace();
+			write(resp, err(MsgCode.exTransct, e.getMessage()));
+		} catch (SsException e) {
+			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (InterruptedException e) {
-			// by abortBlock
+			if (debug)
+				e.printStackTrace();
+		} catch (Throwable e) {
 			e.printStackTrace();
+			write(resp, err(MsgCode.exGeneral, "%s\n%s", e.getClass().getName(), e.getMessage()));
+		} finally {
+			resp.flushBuffer();
 		}
 	}
 
@@ -301,20 +313,17 @@ public class Syntier extends ServPort<DocsReq> {
 
 	DocsResp startBlocks(DocsReq body, IUser usr)
 			throws IOException, TransException, SQLException, SAXException {
-
 		String conn = Connects.uri2conn(body.uri());
-		/// ExpDocTableMeta docm = new T_PhotoMeta(conn);
 
-		// checkDuplicate(conn, ((DocUser)usr).deviceId(), body.clientpath(), usr);
-		checkDuplication(body, (DocUser) usr);
+		checkBlock0(doctrb(), conn, body, (DocUser) usr);
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
-		String tempDir = ((DocUser)usr).touchTempDir(conn, "TODO");
+		String tempDir = ((DocUser)usr).touchTempDir(conn, body.docTabl);
 
-		BlockChain chain = new BlockChain(tempDir, body.doc.clientpath,
-				body.doc.createDate, body.doc.folder());
+		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id,
+				body.doc.clientpath, body.doc.createDate, body.doc.folder());
 
 		// FIXME security breach?
 		String id = chainId(usr, chain.clientpath);
@@ -330,32 +339,6 @@ public class Syntier extends ServPort<DocsReq> {
 					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
 	}
-
-	ExpDocTableMeta checkDuplication(String conn, String tabl, ExpSyncDoc doc, DocUser usr)
-			throws TransException, SQLException, SAXException, IOException {
-		// String conn = Connects.uri2conn(body.uri());
-		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, tabl);
-
-		checkDuplicate(conn, docm,
-				usr.deviceId(), doc.fullpath(), usr);
-		return docm;
-	}
-
-//	private void checkDuplicate(String conn, String device, String clientpath, IUser usr, ExpDocTableMeta meta)
-//			throws SemanticException, TransException, SQLException {
-//		AnResultset rs = ((AnResultset) st
-//				.select(meta.tbl, "p")
-//				.col(count(meta.pk), "cnt")
-//				.whereEq(meta.synoder, device)
-//				.whereEq(meta.fullpath, clientpath)
-//				.rs(st.instancontxt(conn, usr))
-//				.rs(0)).nxt();
-//
-//		if (rs.getInt("cnt") > 0)
-//			throw new DocsException(DocsException.Duplicate,
-//					"Found existing file for device & client path.",
-//					device, clientpath);
-//	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		String id = chainId(usr, body.doc.clientpath);
@@ -388,20 +371,21 @@ public class Syntier extends ServPort<DocsReq> {
 	 */
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, TransException {
-		String id = chainId(usr, body.doc.clientpath);
-		BlockChain chain;
-		if (blockChains.containsKey(id)) {
-			blockChains.get(id).closeChain();
-			chain = blockChains.remove(id);
+		String chaid = chainId(usr, body.doc.clientpath); // shouldn't reply chain-id to the client?
+		BlockChain chain = null;
+		if (blockChains.containsKey(chaid)) {
+			blockChains.get(chaid).closeChain();
+			chain = blockChains.remove(chaid);
 		} else
 			throw new SemanticException("Ending a block chain which is not exists.");
 
 		// insert photo (empty uri)
 
 		String conn = Connects.uri2conn(body.uri());
-		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, body.doc.pname);
+		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, chain.docTabl);
 
-		ExpSyncDoc photo = new ExpSyncDoc(meta, usr.orgId()).createByChain(chain);
+		ExpSyncDoc photo = new ExpSyncDoc(meta, usr.orgId())
+							.createByChain(chain);
 
 		String pid = DocUtils.createFileB64(doctrb(), conn, photo, usr, meta);
 
@@ -413,7 +397,7 @@ public class Syntier extends ServPort<DocsReq> {
 
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
-		onPhotoCreated(pid, conn, meta, usr);
+		onDocreated(pid, conn, meta, usr);
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
@@ -440,38 +424,65 @@ public class Syntier extends ServPort<DocsReq> {
 		return ack;
 	}
 
-	DocsResp createPhoto(DocsReq docreq, IUser usr)
+	DocsResp createDoc(DocsReq docreq, IUser usr)
 			throws TransException, SQLException, IOException, SAXException {
 		Utils.warnT(new Object() {}, "Is this really happenning?");
 
 		String conn = Connects.uri2conn(docreq.uri());
 
-		ExpDocTableMeta docm = checkDuplication(docreq, (DocUser) usr);
+		ExpDocTableMeta docm = checkDuplication(doctrb(), docreq, (DocUser) usr);
 
 		ExpSyncDoc photo = new ExpSyncDoc(docm, usr.orgId()).createByReq(docreq);
 		String pid = DocUtils.createFileB64(doctrb(), conn, photo, usr, docm);
 	
-		ExpSyncDoc doc = onPhotoCreated(pid, conn, docm, usr);
-		return new DocsResp().doc(doc);
+		onDocreated(pid, conn, docm, usr);
+		return new DocsResp().doc(photo);
 	}
 
-	private ExpSyncDoc onPhotoCreated(String pid, String conn, ExpDocTableMeta docm, IUser usr) {
-		// TODO Auto-generated method stub
-		return null;
+	private void onDocreated(String pid, String conn, ExpDocTableMeta docm, IUser usr) {
 	}
 
-	ExpDocTableMeta checkDuplication(DocsReq docreq, DocUser usr)
-			throws SemanticException, TransException, SQLException, SAXException, IOException {
+	static void checkBlock0(DBSyntableBuilder st, String conn, DocsReq body, DocUser usr)
+			throws TransException, SQLException, IOException {
+		if (isblank(body.docTabl))
+			throw new DocsException(DocsException.IOError, "DocsReq.docTabl is empty");
+	
+		if (body.doc == null || isblank(body.doc.folder()))
+			throw new DocsException(DocsException.SemanticsError, "Starting a block chain without doc & folder specified?");
+	
+		if (body.device() == null)
+			throw new DocsException(DocsException.SemanticsError, "Starting a block chain without device specified?");
+
+		if (!Connects.getMeta(conn).containsKey(body.docTabl))
+			throw new DocsException(DocsException.IOError,
+					"DocTabl is unknown to this node: %s, conn: %s",
+					body.docTabl, conn);
+	
+		checkDuplication(st, body, usr);
+	}
+
+	static ExpDocTableMeta checkDuplication(DBSyntableBuilder st, DocsReq docreq, DocUser usr)
+			throws SemanticException, TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(docreq.uri());
 
 		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, docreq.docTabl);
-		checkDuplicate(conn, docm, usr.deviceId(), docreq.doc.clientpath, usr);
+		checkDuplicate(st, conn, docm, usr.deviceId(), docreq.doc.clientpath, usr);
 		return docm;
 	}
 
-	private void checkDuplicate(String conn, ExpDocTableMeta meta, String device, String clientpath, IUser usr)
-			throws TransException, SQLException, SAXException, IOException {
-		DBSyntableBuilder st = (DBSyntableBuilder) doctrb();
+//	ExpDocTableMeta checkDuplication(DBSyntableBuilder st, String conn, String tabl, ExpSyncDoc doc, DocUser usr)
+//			throws TransException, SQLException, SAXException, IOException {
+//		// String conn = Connects.uri2conn(body.uri());
+//		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, tabl);
+//	
+//		checkDuplicate(st, conn, docm,
+//				usr.deviceId(), doc.fullpath(), usr);
+//		return docm;
+//	}
+
+	static void checkDuplicate(DBSyntableBuilder st, String conn, ExpDocTableMeta meta, String device, String clientpath, IUser usr)
+			throws TransException, SQLException, IOException {
+		// DBSyntableBuilder st = (DBSyntableBuilder) doctrb();
 		AnResultset rs = ((AnResultset) st
 				.select(meta.tbl, "p")
 				.col(count(meta.pk), "cnt")

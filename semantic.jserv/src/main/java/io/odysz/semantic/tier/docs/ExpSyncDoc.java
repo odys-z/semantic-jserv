@@ -28,41 +28,6 @@ import static io.odysz.common.LangExt.*;
  */
 public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
-	/*
-	public String owner;
-	public String docId;
-	public String docName;
-	public String createDate;
-	public String mime;
-	public String subfolder;
-
-	/**
-	 * Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub}
-	 * or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}.
-	 * /
-	public String shareflag;
-
-	public String shareby;
-	public DocsReq shareby(String uid) {
-		shareby = uid;
-		return this;
-	}
-
-	public String shareDate;
-	public String shareDate() {
-		if (isblank(shareDate))
-			shareDate = DateFormat.format(new Date());
-		return shareDate;
-	}
-	
-String clientpath;
-	
-	@AnsonField(shortenString = true)
-	public String uri64;
-	*/
-
-	// protected static String[] synpageCols;
-
 	public String recId;
 	public String recId() { return recId; }
 	public ExpSyncDoc recId(String did) {
@@ -389,7 +354,8 @@ String clientpath;
 		createDate = chain.cdate;
 		fullpath(chain.clientpath);
 		pname = chain.clientname;
-		// uri = null; // accepting new value
+		folder = chain.saveFolder;
+		device = chain.device;
 		return this;
 	}
 
@@ -409,8 +375,24 @@ String clientpath;
 		return this;
 	}
 
+	/**
+	 * @see #escapeClientpath()
+	 * @param fullpath
+	 * @return
+	 */
 	public ExpSyncDoc clientpath(String fullpath) {
 		clientpath = separatorsToUnix(fullpath);
+		return this;
+	}
+
+	/**
+	 * Converts all separators to the Unix separator of forward slash,
+	 * which is a valid json character.
+	 * 
+	 * @return this
+	 */
+	public ExpSyncDoc escapeClientpath() {
+		clientpath = separatorsToUnix(clientpath);
 		return this;
 	}
 	

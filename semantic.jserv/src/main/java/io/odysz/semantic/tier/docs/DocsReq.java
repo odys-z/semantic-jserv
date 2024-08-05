@@ -128,6 +128,13 @@ public class DocsReq extends AnsonBody {
 	}
 
 
+	public DocsReq(String entityname, ExpSyncDoc doc, String uri) {
+		super(null, uri);
+		this.device = new Device(null, null, doc.device());
+		this.doc = doc.escapeClientpath();
+		this.docTabl = entityname;
+	}
+
 	protected String stamp;
 	public String stamp() { return stamp; }
 
@@ -139,6 +146,10 @@ public class DocsReq extends AnsonBody {
 
 	protected Device device; 
 	public Device device() { return device; }
+	public DocsReq device(String devid) {
+		device = new Device(devid, null);
+		return this;
+	}
 	public DocsReq device(Device d) {
 		device = d;
 		return this;
@@ -215,8 +226,9 @@ public class DocsReq extends AnsonBody {
 		if (isblank(this.device, "\\.", "/"))
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
-		doc = new ExpSyncDoc(file)
-				.clientpath(file.fullpath()); 
+		doc = doc == null
+			? new ExpSyncDoc(file).clientpath(file.fullpath()).folder(usr.device + "-" + usr.uid())
+			: doc; 
 
 		// this.docName = file.clientname();
 		// this.createDate = file.cdate();
@@ -243,21 +255,24 @@ public class DocsReq extends AnsonBody {
 	 * 
 	 * @param sequence
 	 * @param doc
-	 * @param s64
+	 * @param b64
 	 * @param usr
 	 * @return this
 	 * @throws SemanticException
 	 */
-	public DocsReq blockUp(long sequence, IFileDescriptor doc, String s64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(long sequence, IFileDescriptor doc, String b64, SessionInf usr) throws SemanticException {
 		this.device = new Device(usr.device, null);
 		if (isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
 
 		this.blockSeq = sequence;
 
-		this.doc.recId = doc.recId();
-		this.doc.clientpath(doc.fullpath());
-		this.doc.uri64 = s64;
+		this.doc = doc instanceof ExpSyncDoc
+				? (ExpSyncDoc) doc : new ExpSyncDoc(doc);
+
+//		this.doc.recId = doc.recId();
+//		this.doc.clientpath(doc.fullpath());
+		this.doc.uri64 = b64;
 
 		this.a = A.blockUp;
 		return this;
@@ -267,9 +282,9 @@ public class DocsReq extends AnsonBody {
 		this.device = new Device(usr.device, null);
 
 		this.blockSeq = startAck.blockSeqReply;
-
-		this.doc.recId = startAck.xdoc.recId();
-		this.doc.clientpath(startAck.xdoc.fullpath());
+		this.doc = startAck.xdoc;
+		// this.doc.recId = startAck.xdoc.recId();
+		// this.doc.clientpath(startAck.xdoc.fullpath());
 
 		this.a = A.blockAbort;
 		return this;
@@ -281,8 +296,9 @@ public class DocsReq extends AnsonBody {
 		this.blockSeq = resp.blockSeqReply;
 		this.a = A.blockEnd;
 
-		this.doc.recId = resp.xdoc.recId();
-		this.doc.clientpath(resp.xdoc.fullpath());
+		this.doc = resp.xdoc;
+		// this.doc.recId = resp.xdoc.recId();
+		// this.doc.clientpath(resp.xdoc.fullpath());
 		return this;
 	}
 
@@ -291,17 +307,17 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public DocsReq folder(String name) {
-		doc.folder = name;
-		return this;
-	}
+//	public DocsReq folder(String name) {
+//		doc.folder = name;
+//		return this;
+//	}
 
-	public DocsReq share(ExpSyncDoc p) {
-		doc.shareflag = p.shareflag;
-		doc.shareby = p.shareby;
-		doc.sharedate = p.sharedate;
-		return this;
-	}
+//	public DocsReq share(ExpSyncDoc p) {
+//		doc.shareflag = p.shareflag;
+//		doc.shareby = p.shareby;
+//		doc.sharedate = p.sharedate;
+//		return this;
+//	}
 
 	/**
 	 * @since 1.4.25, path is converted to unix format since a windows path 
@@ -322,8 +338,14 @@ public class DocsReq extends AnsonBody {
 	}
 	
 	public DocsReq queryPath(String device, String fullpath) {
-		doc.clientpath = fullpath;
+		this.doc.clientpath = fullpath;
 		this.device = new Device(device, null);
+		return this;
+	}
+
+	public DocsReq doc(String device, String fullpath) {
+		this.device = new Device(device, null);
+		this.doc = new ExpSyncDoc().device(device).clientpath(fullpath);
 		return this;
 	}
 }

@@ -348,10 +348,8 @@ public class Doclientier extends Semantier {
 			int totalBlocks = 0;
 
 			ExpSyncDoc p = videos.get(px);
-			DocsReq req = new DocsReq(tbl, uri)
-					.folder(p.folder())
-					.share(p)
-					.device(new Device(user.device, null))
+			DocsReq req  = new DocsReq(tbl, p, uri)
+					.device(user.device)
 					.resetChain(true)
 					.blockStart(p, user);
 
@@ -363,7 +361,8 @@ public class Doclientier extends Semantier {
 
 				String pth = p.fullpath();
 				if (!pth.equals(resp0.xdoc.fullpath()))
-					Utils.warn("Resp is not replied with exactly the same path: %s", resp0.xdoc.fullpath());
+					Utils.warn("Resp is not replied with exactly the same path: %s",
+							resp0.xdoc.fullpath());
 
 				totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
 				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp0);
@@ -485,10 +484,11 @@ public class Doclientier extends Semantier {
 	
 	public DocsResp synDel(String tabl, String device, String clientpath) {
 		DocsReq req = (DocsReq) new DocsReq(tabl, uri)
-				.device(new Device(device, null))
+				// .device(new Device(device, null))
+				.doc(device, clientpath)
 				.a(A.del);
 
-		req.doc.clientpath(clientpath);
+		//req.doc.clientpath(clientpath);
 
 		DocsResp resp = null;
 		try {

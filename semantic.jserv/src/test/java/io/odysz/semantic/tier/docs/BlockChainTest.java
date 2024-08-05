@@ -39,7 +39,7 @@ class BlockChainTest {
 		String uid = "tester";
 		// chain = new BlockChain("$VOLUME_HOME", uid, ssid, clientpath, "1911-10-10 10:10:10");
 		String tempDir = IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid);
-		chain = new BlockChain(tempDir, clientpath, "1911-10-10 10:10:10", "");
+		chain = new BlockChain("h_photos", tempDir, "dev-id", clientpath, "1911-10-10 10:10:10", "");
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
@@ -92,7 +92,8 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.3gp";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid), clientpath, "1911-10-10 10:10:10", "");
+		chain = new BlockChain("h_photos", IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid),
+				"dev-id2", clientpath, "1911-10-10 10:10:10", "");
 
 		assertTrue(eq("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
@@ -163,7 +164,9 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.aborting";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid), clientpath, "1911-10-10 10:10:10", "");
+		chain = new BlockChain("h_photos",
+				IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid),
+				"dev-id3", clientpath, "1911-10-10 10:10:10", "");
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.aborting", chain.outputPath));

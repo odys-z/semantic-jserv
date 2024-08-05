@@ -9,11 +9,11 @@ import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jsession.JUser;
-import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.Profiles;
+import io.oz.jserv.docs.x.DocsException;
 
 /**
  * Doc User.
@@ -105,14 +105,19 @@ public class DocUser extends JUser implements IUser {
 //	} 
 
 	protected Set<String> tempDirs;
+	
 	/**
 	 * <p>Get a temp dir, and have it deleted when logout.</p>
-	 * Since jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by PhotoRobot.
+	 * Since jserv 1.4.3 and album 0.5.2, deleting temp dirs are handled by session users.
 	 * @param conn
 	 * @return the dir
 	 * @throws SemanticException
 	 */
 	public String touchTempDir(String conn, String doctbl) throws TransException {
+		if (!DATranscxt.hasSemantics(conn, doctbl, smtype.extFilev2))
+			throw new DocsException(DocsException.SemanticsError,
+					"No smtype.extFilev handler is configured for conn %s, table %s.",
+					conn, doctbl);
 
 		String extroot = ((ShExtFilev2) DATranscxt
 						.getHandler(conn, doctbl, smtype.extFilev2))

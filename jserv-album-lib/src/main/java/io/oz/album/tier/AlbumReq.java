@@ -14,6 +14,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.tier.DatasetierReq;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
@@ -94,6 +95,11 @@ public class AlbumReq extends DocsReq {
 
 	protected AlbumReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
+	}
+
+	public AlbumReq(ExpSyncDoc p, String uri) {
+		super(uri);
+		this.doc = p;
 	}
 
 	public AlbumReq collectId(String cid) {

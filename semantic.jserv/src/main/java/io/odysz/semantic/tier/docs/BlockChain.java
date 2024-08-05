@@ -40,6 +40,8 @@ public class BlockChain {
 	public String shareflag;
 	public String device;
 
+	public final String docTabl;
+
 	/**
 	 * Port to DB-sync
 	 * 
@@ -48,22 +50,23 @@ public class BlockChain {
 	 * @param clientpath
 	 * @throws IOException
 	 */
-	public BlockChain(String tempDir, String saveFolder, String clientpath) throws IOException {
-
-		this.saveFolder = saveFolder;
-		this.clientpath = clientpath;
-		clientname = FilenameUtils.getName(clientpath);
-		outputPath = EnvPath.decodeUri(tempDir, saveFolder, clientname);
-
-		String parentpath = FilenameUtils.getFullPath(outputPath);
-		new File(parentpath).mkdirs(); 
-
-		File f = new File(outputPath);
-		f.createNewFile();
-		this.ofs = new FileOutputStream(f);
-
-		waitings = new DocsReq().blockSeq(-1);
-	}
+//	public BlockChain(String docTabl, String tempDir, String saveFolder, String clientpath) throws IOException {
+//
+//		this.docTabl = docTabl;
+//		this.saveFolder = saveFolder;
+//		this.clientpath = clientpath;
+//		clientname = FilenameUtils.getName(clientpath);
+//		outputPath = EnvPath.decodeUri(tempDir, saveFolder, clientname);
+//
+//		String parentpath = FilenameUtils.getFullPath(outputPath);
+//		new File(parentpath).mkdirs(); 
+//
+//		File f = new File(outputPath);
+//		f.createNewFile();
+//		this.ofs = new FileOutputStream(f);
+//
+//		waitings = new DocsReq().blockSeq(-1);
+//	}
 
 	/**
 	 * Create file output stream to $VALUME_HOME/userid/ssid/clientpath
@@ -75,15 +78,18 @@ public class BlockChain {
 	 * @throws IOException
 	 * @throws TransException 
 	 */
-	public BlockChain(String tempDir, String clientpathRaw, String createDate, String targetFolder)
+	public BlockChain(String docTabl, String tempDir, String devid,
+			String clientpathRaw, String createDate, String targetFolder)
 			throws IOException, TransException {
 
 		if (LangExt.isblank(clientpathRaw))
 			throw new TransException("Client path is neccessary to start a block chain transaction.");
-		// this.ssId = ssId;
+
+		this.docTabl = docTabl;
 		this.cdate = createDate;
 		this.clientpath = clientpathRaw;
 		this.saveFolder = targetFolder;
+		this.device = devid;
 
 		String clientpath = clientpathRaw.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
@@ -137,7 +143,9 @@ public class BlockChain {
 
 		if (waitings.nextBlock != null)
 			// some packages lost
-			throw new TransException("Some packages lost. path: %s", clientpath);
+			throw new TransException("Aborting block chain. " + 
+					"Blocks starting at block-seq = %s will be dropped. path: %s",
+					waitings.nextBlock.blockSeq, clientpath);
 	}
 
 	public String closeChain() throws IOException, TransException {
@@ -151,9 +159,10 @@ public class BlockChain {
 			Path p = Paths.get(outputPath);
 			try { Files.delete(p); }
 			catch (IOException e) { e.printStackTrace(); }
-
 			// some packages lost
-			throw new TransException("Some packages lost. path: %s", clientpath);
+			throw new TransException("Closing block chain. " +
+					"Blocks starting at block-seq = %s will be dropped. path: %s",
+					waitings.nextBlock.blockSeq, clientpath);
 		}
 
 		return outputPath;

@@ -82,7 +82,8 @@ public class Dochain {
 			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
 					body.doc.clientpath, usr.uid(), profiles.getClass().getName());
 		
-		BlockChain chain = new BlockChain(tempDir, body.doc.clientpath, body.doc.createDate, saveFolder)
+		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id,
+					body.doc.clientpath, body.doc.createDate, saveFolder)
 				.device(usr.deviceId())
 				.share(body.doc.shareby, body.doc.sharedate, body.doc.shareflag);
 

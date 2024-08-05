@@ -408,7 +408,8 @@ public class Albums extends ServPort<AlbumReq> {
 
 		String tempDir = ((PhotoUser)usr).touchTempDir(conn);
 
-		BlockChain chain = new BlockChain(tempDir, body.doc.clientpath, body.doc.createDate, body.doc.folder());
+		BlockChain chain = new BlockChain("h_photos", tempDir, body.device().id,
+				body.doc.clientpath, body.doc.createDate, body.doc.folder());
 
 		// FIXME security breach?
 		String id = chainId(usr, chain.clientpath);

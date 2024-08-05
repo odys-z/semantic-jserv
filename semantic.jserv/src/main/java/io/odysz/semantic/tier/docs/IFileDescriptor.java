@@ -40,7 +40,6 @@ public interface IFileDescriptor {
 
 	String cdate();
 
-	/** @return device name */
 	String device();
 
 	/** @return file uri */

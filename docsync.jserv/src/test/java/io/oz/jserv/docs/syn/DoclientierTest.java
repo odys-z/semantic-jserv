@@ -7,6 +7,9 @@ import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.oz.jserv.docsync.ZSUNodes.clientUriZsu;
+
+import static io.oz.jserv.docs.syn.SynoderTest.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -68,7 +71,7 @@ class DoclientierTest {
 	static final String clientconn = "main-sqlite";
 	static final String serv_conn = "no-jserv.00";
 
-	static final String wwwinf = "src/test/res/WEB-INF";
+	// static final String wwwinf = "src/test/res/WEB-INF";
 
 
 	static {
@@ -95,8 +98,8 @@ class DoclientierTest {
     	System.setProperty("VOLUME_HOME", "../volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
-		Configs.init(wwwinf);
-		Connects.init(wwwinf);
+		Configs.init(webinf);
+		Connects.init(webinf);
 
 		AutoSeqMeta asqm = new AutoSeqMeta();
 		JRoleMeta arlm = new JUser.JRoleMeta();
@@ -107,11 +110,6 @@ class DoclientierTest {
 		SynchangeBuffMeta xbm = new SynchangeBuffMeta(chm);
 		SynSessionMeta ssm = new SynSessionMeta();
 		PeersMeta prm = new PeersMeta();
-		
-//		SynodeMeta snm = new SynodeMeta(clientconn);
-//		docm = new T_PhotoMeta(clientconn); // .replace();
-//		setupSqliTables(clientconn, asqm, snm, chm, sbm, xbm, prm, ssm, docm);
-//		setupSqliTables(clientconn, asqm, snm, chm, sbm, xbm, prm, ssm, docm);
 		
 		SynodeMeta snm = new SynodeMeta(serv_conn);
 		docm = new T_PhotoMeta(serv_conn); // .replace();
@@ -129,13 +127,13 @@ class DoclientierTest {
 		*/
 		initRecords(serv_conn);
 		
-		Connects.reinit(wwwinf); // reload metas
+		Connects.reload(webinf); // reload metas
 
 		// synode
 		String servIP = "localhost";
 		int port = 8090;
 
-		JettyHelper.startJserv(wwwinf, serv_conn, "config-0.xml",
+		JettyHelper.startJserv(webinf, serv_conn, "config-0.xml",
 				servIP, port,
 				new AnSession(), new AnQuery(), new AnUpdate(),
 				new HeartLink());
@@ -169,8 +167,7 @@ class DoclientierTest {
 				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
 				sqls.clear();
 			}
-			Connects.reinit(wwwinf); // reload metas
-			// st = new DATranscxt(connId);
+			Connects.reload(webinf); // reload metas
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -187,12 +184,12 @@ class DoclientierTest {
 	@Test
 	void testSyncUp() throws Exception {
 
-		videoUpByApp(docm);
+		videoUpByApp(docm.tbl);
 
 		pause("Press enter to quite ...");
 	}
 
-	static String videoUpByApp(ExpDocTableMeta docm) throws Exception {
+	static String videoUpByApp(String entityName) throws Exception {
 
 		// app is using Doclientier for synchronizing 
 		Doclientier doclient = new Doclientier(clientUri0, errLog)
@@ -200,14 +197,14 @@ class DoclientierTest {
 				.loginWithUri(clientUri0, AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
-		doclient.synDel(docm.tbl, AnDevice.device, AnDevice.localFile);
+		doclient.synDel(entityName, AnDevice.device, AnDevice.localFile);
 
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(doclient.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);
 
-		DocsResp resp = doclient.startPush(docm.tbl, doc, new OnOk() {
+		DocsResp resp = doclient.startPush(entityName, doc, new OnOk() {
 
 			@Override
 			public void ok(AnsonResp resp)
@@ -227,7 +224,7 @@ class DoclientierTest {
 				// pushing again should fail
 				// List<DocsResp> resps2 = null;
 				try {
-					DocsResp resp2 = doclient.startPush(docm.tbl, doc,
+					DocsResp resp2 = doclient.startPush(entityName, doc,
 						new OnOk() {
 							@Override
 							public void ok(AnsonResp resp)
@@ -254,7 +251,7 @@ class DoclientierTest {
 		String docId = resp.xdoc.recId();
 		assertEquals(8, docId.length());
 
-		DocsResp rp = doclient.selectDoc(docm.tbl, docId);
+		DocsResp rp = doclient.selectDoc(entityName, docId);
 
 		assertTrue(isblank(rp.msg()));
 		assertEquals(AnDevice.device, rp.xdoc.device());
@@ -267,20 +264,20 @@ class DoclientierTest {
 		fail("Not yet implemented");
 	}
 
-	void testSynQueryPathsPage() throws Exception {
+	void testSynQueryPathsPage(String entityName) throws Exception {
 		Doclientier clientier = new Doclientier(clientUriZsu, errLog)
 				.tempRoot("app.kharkiv")
 				.loginWithUri(clientUri0, AnDevice.userId, AnDevice.device, AnDevice.passwd)
 				.blockSize(bsize);
 
-		clientier.synDel(docm.tbl, AnDevice.device, AnDevice.localFile);
+		clientier.synDel(entityName, AnDevice.device, AnDevice.localFile);
 
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(clientier.robot.uid(), Share.pub, new Date())
 					.folder(Kharkiv.folder)
 					.fullpath(AnDevice.localFile);
 
-		DocsResp resp = clientier.startPush(docm.tbl, doc, new OnOk() {
+		DocsResp resp = clientier.startPush(entityName, doc, new OnOk() {
 			@Override
 			public void ok(AnsonResp resp) throws IOException, AnsonException, TransException {
 			}
