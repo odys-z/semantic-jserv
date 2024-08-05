@@ -17,15 +17,14 @@ import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IProfileResolver;
-import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -48,8 +47,7 @@ public class Dochain {
 		 * @param robot
 		 * @return either the original post statement or a new one.
 		 */
-		Update onDocreate(Update post, SyncDoc d, ExpDocTableMeta meta, IUser robot);
-		Update onDocreate(Update post, SyncDoc d, DocTableMeta meta, IUser robot);
+		Update onDocreate(Update post, ExpSyncDoc d, ExpDocTableMeta meta, IUser robot);
 	}
 
 	public static final boolean verbose = true;
@@ -98,7 +96,7 @@ public class Dochain {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
-				.doc((SyncDoc) new SyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
@@ -141,7 +139,7 @@ public class Dochain {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((SyncDoc) new SyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
@@ -169,8 +167,8 @@ public class Dochain {
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
-		SyncDoc photo = new SyncDoc().parseChain(chain);
-		photo.uri = null; // suppress semantics ExtFile, and support me (query befor move?).
+		ExpSyncDoc photo = new ExpSyncDoc().createByChain(chain);
+		photo.uri64 = null; // suppress semantics ExtFile, and support me (query befor move?).
 		
 		String pid = createFile(st, conn, photo, meta, usr, ok);
 
@@ -219,16 +217,6 @@ public class Dochain {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
-			DocTableMeta meta, IUser usr, OnChainOk end)
-			throws TransException, SQLException, IOException {
-		Update post = null; // Docsyncer.onDocreate(photo, meta, usr);
-
-		if (end != null)
-			post = end.onDocreate(post, photo, meta, usr);
-
-		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
-	}
 
 	public static String createFile(DATranscxt st, String conn, ExpSyncDoc photo,
 			ExpDocTableMeta meta, IUser usr, OnChainOk end)
@@ -240,6 +228,18 @@ public class Dochain {
 
 		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
 	}
+
+//	public static String createFile(DATranscxt st, String conn, ExpSyncDoc photo,
+//			DocTableMeta meta, IUser usr, OnChainOk end)
+//			throws TransException, SQLException, IOException {
+//		Update post = null; // Docsyncer.onDocreate(photo, meta, usr);
+//
+//		if (end != null)
+//			post = end.onDocreate(post, photo, meta, usr);
+//
+//		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
+//	}
+
 
 	/**
 	 * Resolve file root with samantics handler of {@link smtype#extFilev2}.
@@ -253,7 +253,7 @@ public class Dochain {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	static String resolvExtroot(DATranscxt defltst, String conn, String docId, IUser usr, DocTableMeta meta)
+	static String resolvExtroot(DATranscxt defltst, String conn, String docId, IUser usr, ExpDocTableMeta meta)
 			throws TransException, SQLException {
 		ISemantext stx = defltst.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) defltst

@@ -104,7 +104,7 @@ public class T_Photo extends ExpSyncDoc {
 	 */
 	public T_Photo asSyncRec(AnResultset rs) throws SQLException {
 		this.clientpath = rs.getString("clientpath"); 
-		this.syncFlag = rs.getString("syncFlag"); 
+		// this.syncFlag = rs.getString("syncFlag"); 
 		return this;
 	}
 

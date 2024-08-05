@@ -45,7 +45,6 @@ import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
-import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -325,13 +324,13 @@ public class Syntier extends ServPort<DocsReq> {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
-				.doc((SyncDoc) new SyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
 	}
 
-	ExpDocTableMeta checkDuplication(String conn, String tabl, SyncDoc doc, DocUser usr)
+	ExpDocTableMeta checkDuplication(String conn, String tabl, ExpSyncDoc doc, DocUser usr)
 			throws TransException, SQLException, SAXException, IOException {
 		// String conn = Connects.uri2conn(body.uri());
 		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, tabl);
@@ -367,7 +366,7 @@ public class Syntier extends ServPort<DocsReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((SyncDoc) new SyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.doc.createDate)
 					.fullpath(body.clientpath()));
@@ -417,7 +416,7 @@ public class Syntier extends ServPort<DocsReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((SyncDoc) new SyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.recId(pid)
 					.device(body.device())
 					.folder(photo.folder())
@@ -451,11 +450,11 @@ public class Syntier extends ServPort<DocsReq> {
 		ExpSyncDoc photo = new ExpSyncDoc(docm, usr.orgId()).createByReq(docreq);
 		String pid = DocUtils.createFileB64(doctrb(), conn, photo, usr, docm);
 	
-		SyncDoc doc = onPhotoCreated(pid, conn, docm, usr);
+		ExpSyncDoc doc = onPhotoCreated(pid, conn, docm, usr);
 		return new DocsResp().doc(doc);
 	}
 
-	private SyncDoc onPhotoCreated(String pid, String conn, ExpDocTableMeta docm, IUser usr) {
+	private ExpSyncDoc onPhotoCreated(String pid, String conn, ExpDocTableMeta docm, IUser usr) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -548,8 +547,12 @@ public class Syntier extends ServPort<DocsReq> {
 				.j("a_users", "u", "u.userId = p.shareby")
 				.l("a_orgs" , "po", "po.pid = p.pid");
 
-		AnResultset rs = (AnResultset) SyncDoc.cols(q, meta)
-				.col(meta.shareby, "shareby").col(count("po.oid"), "orgs")
+		AnResultset rs = (AnResultset) q // ExpSyncDoc.cols(q, meta)
+				.cols_byAlias("p", meta.pk,
+					meta.resname, meta.createDate, meta.folder,
+					meta.fullpath, meta.synoder, meta.uri,
+					meta.shareDate, meta.mime, meta.shareby)
+				.col(count("po.oid"), "orgs")
 				.whereEq("p." + meta.pk, req.pageInf.mergeArgs().getArg("pid"))
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
@@ -611,7 +614,7 @@ public class Syntier extends ServPort<DocsReq> {
 				.whereEq("p." + mph.folder, req.pageInf.mergeArgs().getArg("pid"))
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
-		return new DocsResp().doc(new SyncDoc().folder(rs.nxt(), mph));
+		return new DocsResp().doc(new ExpSyncDoc().folder(rs.nxt(), mph));
 	}
 	
 	static String chainId(IUser usr, String clientpathRaw) {

@@ -133,7 +133,7 @@ public class AlbumReq extends DocsReq {
 		this.photo = new PhotoRec();
 		this.photo.collectId = collId;
 		this.photo.fullpath(fullpath);
-		this.photo.uri = b64;
+		this.photo.uri64 = b64;
 		this.photo.pname = p.getFileName().toString();
 		
 		this.a = A.insertPhoto;

@@ -3,7 +3,7 @@ package io.oz.jserv.docs.common_lib;
 import java.io.IOException;
 import java.io.InputStream;
 
-import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
 /**
  * <p>A file accessor used by AlbumTier etc., for accessing files without visiting traditional file system.</p>
@@ -16,7 +16,7 @@ public interface IFileProvider {
      * <pre>return Files.size(Paths.get(f.fullpath());</pre>
      * @return size
      */
-    long meta(SyncDoc f) throws IOException;
+    long meta(ExpSyncDoc f) throws IOException;
 
     /**
      * <p>Open file input stream.</p>
@@ -25,7 +25,7 @@ public interface IFileProvider {
      * 
      * @return readable stream
      */
-    InputStream open(SyncDoc f) throws IOException;
+    InputStream open(ExpSyncDoc f) throws IOException;
 
     /**
      * <p>Resolve the initial folder (with Policies).</p>

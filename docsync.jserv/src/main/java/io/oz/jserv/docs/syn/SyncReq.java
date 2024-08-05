@@ -5,12 +5,12 @@ import static io.odysz.semantic.syn.ExessionAct.*;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
 public class SyncReq extends AnsonBody {
 
 	ExchangeBlock exblock;
-	public SyncDoc doc;
+	public ExpSyncDoc doc;
 
 	public SyncReq exblock(ExchangeBlock b) {
 		exblock = b;

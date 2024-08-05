@@ -5,8 +5,8 @@ import java.util.Date;
 
 import io.odysz.common.DateFormat;
 import io.odysz.common.LangExt;
-import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IProfileResolver;
@@ -38,15 +38,15 @@ public class DocProfile implements IProfileResolver {
 	@Override
 	public String synodeFolder(AnsonBody reqBody, IUser usr) {
 		DocsReq req = ((DocsReq)reqBody);
-		String cname = req.subfolder;
+		String cname = req.doc.folder();
 		if (this.mode == nonsyn)
 			return cname;
 		else
 			try {
-				if (isblank(req.mime) || image.is(req.mime) || video.is(req.mime))
-					return DateFormat.formatYYmm(DateFormat.parse(req.shareDate()));
+				if (isblank(req.doc.mime) || image.is(req.doc.mime) || video.is(req.doc.mime))
+					return DateFormat.formatYYmm(DateFormat.parse(req.doc.sharedate));
 				else
-					return DateFormat.formatYYmm(DateFormat.parse(req.createDate));
+					return DateFormat.formatYYmm(DateFormat.parse(req.doc.createDate));
 			} catch (ParseException e) {
 				return usr.deviceId() + "-" + DateFormat.formatYYmm(new Date());
 			}
@@ -62,9 +62,9 @@ public class DocProfile implements IProfileResolver {
 	@Override
 	public DocsReq onStartPush(DocsReq req, IUser usr) {
 		if (isDevice(req.uri()))
-			req.shareby(usr.uid());
-		if (isblank(req.shareflag))
-			req.shareflag = Share.pub;
+			req.doc.shareby(usr.uid());
+		if (isblank(req.doc.shareflag))
+			req.doc.shareflag = Share.pub;
 		return req;
 	}
 

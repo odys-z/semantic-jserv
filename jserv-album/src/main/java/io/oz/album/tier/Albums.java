@@ -17,6 +17,7 @@ import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,21 +33,22 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetHelper;
-import io.odysz.semantic.ext.DocTableMeta.Share;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta.Share;
+import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.Docs206;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.FileStream;
-import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -124,16 +126,18 @@ public class Albums extends ServPort<AlbumReq> {
 			st = new DATranscxt(null);
 			robot = new PhotoUser("Robot Album", "TODO what's here?");
 			
-			Docs206.getMeta = (String uri) -> {
-				try {
-					String conn = Connects.uri2conn(uri);
-					return new PhotoMeta(conn);
-				}
-				catch (TransException e) {
-					e.printStackTrace();
-					return null;
-				}
-			};
+			String conn = Connects.uri2conn(uri);
+			new PhotoMeta(conn).replace();
+//			Docs206.getMeta = (String uri) -> {
+//				try {
+//					String conn = Connects.uri2conn(uri);
+//					return new PhotoMeta(conn);
+//				}
+//				catch (TransException e) {
+//					e.printStackTrace();
+//					return null;
+//				}
+//			};
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -290,7 +294,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		Delete d = st
 				.delete(pom.tbl, usr)
-				.whereIn(pom.pid, st.select(phm.tbl).col(phm.pk).whereEq(phm.folder, req.subfolder))
+				.whereIn(pom.pid, st.select(phm.tbl).col(phm.pk).whereEq(phm.folder, req.doc.folder()))
 				.whereIn(pom.oid, req.getChecks("oid"));
 		if (!req.clearels) {
 			d.post(st.insert(pom.tbl)
@@ -300,9 +304,9 @@ public class Albums extends ServPort<AlbumReq> {
 					.distinct()
 					.col("ph." + phm.pk).col("po." + pom.oid)
 					.j(pom.tbl, "po", Sql.condt(Logic.op.in, "po." + pom.oid, new ExprPart(req.getChecks("oid")))
-								 .and(Sql.condt(Logic.op.eq, "ph." + phm.folder, ExprPart.constr(req.subfolder)))
+								 .and(Sql.condt(Logic.op.eq, "ph." + phm.folder, ExprPart.constr(req.doc.folder())))
 								 .and(Sql.condt(Logic.op.eq, phm.shareby, usr.uid())))
-					.whereEq(phm.folder, req.subfolder)));
+					.whereEq(phm.folder, req.doc.folder())));
 		}
 		
 		d.post(st.update(phm.tbl).nv(phm.shareflag, req.photo.shareflag()));
@@ -405,7 +409,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		String tempDir = ((PhotoUser)usr).touchTempDir(conn);
 
-		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.createDate, body.subfolder);
+		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.doc.createDate, body.doc.folder());
 
 		// FIXME security breach?
 		String id = chainId(usr, chain.clientpath);
@@ -416,9 +420,9 @@ public class Albums extends ServPort<AlbumReq> {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
-				.doc((SyncDoc) new SyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
-					.cdate(body.createDate)
+					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
 	}
 
@@ -455,9 +459,9 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((SyncDoc) new SyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
-					.cdate(body.createDate)
+					.cdate(body.doc.createDate)
 					.fullpath(body.clientpath()));
 	}
 
@@ -493,7 +497,7 @@ public class Albums extends ServPort<AlbumReq> {
 		photo.createDate = chain.cdate;
 		photo.fullpath(chain.clientpath);
 		photo.pname = chain.clientname;
-		photo.uri = null; // accepting new value
+		photo.uri64 = null; // accepting new value
 		String pid = createFile(conn, photo, usr);
 
 		// move file
@@ -506,12 +510,12 @@ public class Albums extends ServPort<AlbumReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((SyncDoc) new SyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.recId(pid)
 					.device(body.device())
 					.folder(photo.folder())
 					.clientname(chain.clientname)
-					.cdate(body.createDate)
+					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
 	}
 
@@ -667,7 +671,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		AnResultset rs = ((AnResultset) st
 				.select(req.docTabl, "t")
-				.cols((Object[])SyncDoc.synPageCols(meta))
+				.cols((Object[])ExpSyncDoc.synPageCols(meta))
 				// .whereEq(meta.domain, req.org == null ? usr.orgId() : req.org)
 				.whereEq(meta.synoder, usr.deviceId())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
@@ -693,14 +697,14 @@ public class Albums extends ServPort<AlbumReq> {
 				.select(meta.tbl, "p")
 				.j("a_users", "u", "u.userId = p.shareby")
 				.col(meta.pk)
-				.col(meta.clientname).col(meta.createDate)
+				.col(meta.resname).col(meta.createDate)
 				.col(meta.folder).col(meta.fullpath)
 				.col(meta.uri)
 				.col("userName", "shareby")
 				.col(meta.shareDate).col(meta.tags)
 				.col(meta.geox).col(meta.geoy)
 				.col(meta.mime)
-				.whereEq(meta.pk, req.docId)
+				.whereEq(meta.pk, req.doc.recId)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next()) {
@@ -712,7 +716,7 @@ public class Albums extends ServPort<AlbumReq> {
 			resp.setContentType(mime);
 			
 			try ( OutputStream os = resp.getOutputStream() ) {
-				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.docId, usr, meta));
+				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta));
 				os.close();
 			} catch (IOException e) {
 				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
@@ -766,9 +770,9 @@ public class Albums extends ServPort<AlbumReq> {
 		PhotoMeta meta = new PhotoMeta(conn);
 
 		if (isblank(photo.shareby))
-			photo.share(usr.uid(), Share.priv);
+			photo.share(usr.uid(), Share.priv, new Date());
 
-		String pid = DocUtils.createFileB64(st, conn, photo, usr, meta, null);
+		String pid = DocUtils.createFileB64((DBSyntableBuilder)st, conn, photo, usr, meta);
 
 		return pid;
 	}
@@ -790,7 +794,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.select(m.tbl, "p")
 				.col(m.folder).col(m.fullpath)
 				.col(m.uri)
-				.col(m.clientname)
+				.col(m.resname)
 				.col(m.createDate)
 				.col(m.mime)
 				.whereEq(m.pk, pid)
@@ -806,7 +810,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 				Update u = st
 					.update(m.tbl, usr)
-					.nv(m.css, p.css())
+					.nv(m.css, p.css)
 					.nv(m.size, String.valueOf(p.size))
 					.whereEq(m.pk, pid);
 
@@ -817,8 +821,8 @@ public class Albums extends ServPort<AlbumReq> {
 					if (!isblank(p.geox) || !isblank(p.geoy))
 						u.nv(m.geox, p.geox)
 						 .nv(m.geoy, p.geoy);
-					if (!isblank(p.exif()))
-						u.nv(m.exif, p.exif());
+					if (!isblank(p.exif))
+						u.nv(m.exif, p.exif);
 					else // figure out mime with file extension
 						;
 
@@ -859,15 +863,19 @@ public class Albums extends ServPort<AlbumReq> {
 				.j("a_users", "u", "u.userId = p.shareby")
 				.l(mp_o.tbl , "po", "po.pid = p.pid");
 
-		AnResultset rs = (AnResultset) PhotoRec.cols(q, meta)
-				.col(meta.shareby, "shareby").col(count("po.oid"), "orgs")
+		AnResultset rs = (AnResultset) q // PhotoRec.cols(q, meta)
+				.cols_byAlias("p", meta.pk,
+					meta.resname, meta.createDate, meta.folder,
+					meta.fullpath, meta.synoder, meta.uri,
+					meta.shareDate, meta.mime, meta.shareby)
+				.col(count("po.oid"), "orgs")
 				.whereEq("p." + meta.pk, req.pageInf.mergeArgs().getArg("pid"))
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: '%s' (with permission of %s)",
-					!isblank(req.docId)
-					? req.docId
+					!isblank(req.doc.recId)
+					? req.doc.recId
 					: !isblank(req.pageInf)
 					? !isblank(req.pageInf.mapCondts)
 					  ? req.pageInf.mapCondts.get("pid")
@@ -915,7 +923,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.col(sum(ifElse("substr(mime, 0, 6) = 'audio'", 1, 0)), "wav")
 				.col(sum(ifElse("geox != 0", 1, 0)), "geo")
 				.col(mph.mime).col(mph.createDate)
-				.col(mph.folder, mph.clientname)
+				.col(mph.folder, mph.resname)
 				.col(musr.uname, mph.shareby)
 				.whereEq("p." + mph.folder, req.pageInf.mergeArgs().getArg("pid"))
 				.rs(st.instancontxt(conn, usr)).rs(0);
@@ -1000,7 +1008,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.j(tablAlbums, "a", "a.aid = ac.aid")
 				.j(musr.tbl, "u", "u.userId = p.shareby")
 				.cols("ac.aid", "ch.cid",
-					  "p.pid", m.clientname, m.createDate, "p." + m.tags,
+					  "p.pid", m.resname, m.createDate, "p." + m.tags,
 					  m.mime, "p.css", m.folder, m.geox, m.geoy, m.shareDate,
 					  "c.shareby collector", "c.cdate",
 					  m.fullpath, m.synoder, "p." + m.shareby, "u.userName owner",

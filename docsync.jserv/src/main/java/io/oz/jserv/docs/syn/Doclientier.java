@@ -362,8 +362,8 @@ public class Doclientier extends Semantier {
 				resp0 = client.commit(q, errHandler);
 
 				String pth = p.fullpath();
-				if (!pth.equals(resp0.doc.fullpath()))
-					Utils.warn("Resp is not replied with exactly the same path: %s", resp0.doc.fullpath());
+				if (!pth.equals(resp0.xdoc.fullpath()))
+					Utils.warn("Resp is not replied with exactly the same path: %s", resp0.xdoc.fullpath());
 
 				totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
 				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp0);

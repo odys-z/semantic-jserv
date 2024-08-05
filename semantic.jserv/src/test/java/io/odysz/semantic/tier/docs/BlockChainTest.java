@@ -47,7 +47,7 @@ class BlockChainTest {
 				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.clientpath));
 
 		DocsResp resp = (DocsResp) new DocsResp()
-				.doc( (SyncDoc) new SyncDoc()
+				.doc( (ExpSyncDoc) new ExpSyncDoc()
 						.fullpath(clientpath));
 
 		// client side 
@@ -99,7 +99,8 @@ class BlockChainTest {
 		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.clientpath)
 				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.clientpath));
 
-		DocsResp resp = (DocsResp) new DocsResp().doc((SyncDoc) new SyncDoc().fullpath(clientpath));
+		DocsResp resp = (DocsResp) new DocsResp()
+					.doc((ExpSyncDoc) new ExpSyncDoc().fullpath(clientpath));
 
 		// client side 
 		String b64;
@@ -173,7 +174,8 @@ class BlockChainTest {
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");
 		ssinf.device = "local junit";
 		
-		DocsResp resp = (DocsResp) new DocsResp().doc((SyncDoc) new SyncDoc().fullpath(clientpath));
+		DocsResp resp = (DocsResp) new DocsResp()
+				.doc((ExpSyncDoc) new ExpSyncDoc().fullpath(clientpath));
 
 		b64 = AESHelper.encode64("1. Hello\n".getBytes());
 		DocsReq b0 = new DocsReq().blockUp(0, resp, b64, ssinf);

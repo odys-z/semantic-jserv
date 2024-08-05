@@ -55,13 +55,13 @@ class AlbumsServTierTest {
 	void testRec() throws SemanticException, TransException, SQLException, IOException {
 	
 		AlbumReq req = new AlbumReq("/local/test").page(0, -1, "pid", "C000000A");
-		req.docId = "test-00001";
+		req.doc.recId = "test-00001";
 
 		AlbumResp rep = Albums.doc(req, robot);
 		
 		assertEquals("C000000A", rep.photo.recId);
 		assertEquals("ottawa-canada.jpg", rep.photo.pname);
-		assertTrue(isblank(rep.photo.uri));
+		assertTrue(isblank(rep.photo.uri64));
 		assertEquals("2022_03", rep.photo.folder());
 		
 		/*

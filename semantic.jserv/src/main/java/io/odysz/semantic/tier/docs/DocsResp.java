@@ -3,7 +3,6 @@ package io.odysz.semantic.tier.docs;
 import java.sql.SQLException;
 
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.x.SemanticException;
@@ -16,9 +15,6 @@ import io.odysz.semantics.x.SemanticException;
  *
  */
 public class DocsResp extends AnsonResp {
-	/**@deprecated */
-	public SyncDoc doc;
-
 	public ExpSyncDoc xdoc;
 
 	protected PathsPage syncing;
@@ -36,7 +32,7 @@ public class DocsResp extends AnsonResp {
 	 * @throws SQLException
 	 * @throws SemanticException 
 	 */
-	public DocsResp pathsPage(AnResultset rs, DocTableMeta meta)
+	public DocsResp pathsPage(AnResultset rs, ExpDocTableMeta meta)
 			throws SQLException, SemanticException {
 		if (syncing == null)
 			syncing = new PathsPage();
@@ -62,19 +58,17 @@ public class DocsResp extends AnsonResp {
 		return this;
 	}
 
-	public DocsResp doc(SyncDoc d) {
-		this.doc = d;
+	public DocsResp doc(ExpSyncDoc d) {
+		this.xdoc = d;
 		return this;
 	}
 
-	public DocsResp doc(AnResultset rs, ExpDocTableMeta meta) { return null; }
-
-	public DocsResp doc(AnResultset rs, DocTableMeta meta)
+	public DocsResp doc(AnResultset rs, ExpDocTableMeta meta)
 			throws SQLException, SemanticException {
 		if (rs != null && rs.total() > 1)
 			throw new SemanticException("This method can only handling 1 record.");
 		rs.beforeFirst().next();
-		this.doc = new SyncDoc(rs, meta);
+		this.xdoc = new ExpSyncDoc(rs, meta);
 		return this;
 	}
 

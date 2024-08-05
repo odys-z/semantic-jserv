@@ -1,26 +1,17 @@
 package io.oz.jserv.dbsync;
 
-import java.util.List;
-
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.syn.SynEntity;
-import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.transact.sql.PageInf;
 
 public class DBSyncResp extends AnsonResp {
 	
 	PageInf pageInf;
 	long blockSeqReply;
-	// Clobs clobchain;
 	SynEntity entity;
 
-//	List<CleanTask> tasks;
-	
 	TimeWindow cleanWin;
-
-//	public List<CleanTask> cleanTasks() {
-//		return tasks;
-//	}
 
 	/**
 	 * <p>A page of records to be merged.</p>
@@ -39,17 +30,10 @@ public class DBSyncResp extends AnsonResp {
 		return this;
 	}
 
-	public DBSyncResp doc(SyncDoc fullpath) {
+	public DBSyncResp doc(ExpSyncDoc d) {
 		// TODO Auto-generated method stub
 		return this;
 	}
-
-	/*
-	public DBSyncResp start(Clobs chain) {
-		this.clobchain = chain;
-		return this;
-	}
-	*/
 
 	public DBSyncResp entity(SynEntity e) {
 		this.entity = e;
@@ -65,5 +49,4 @@ public class DBSyncResp extends AnsonResp {
 		cleanWin = win;
 		return this;
 	}
-
 }

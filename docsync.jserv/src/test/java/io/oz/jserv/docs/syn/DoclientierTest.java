@@ -50,7 +50,6 @@ import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
-import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docsync.ZSUNodes.AnDevice;
@@ -252,14 +251,14 @@ class DoclientierTest {
 
 		assertNotNull(resp);
 
-		String docId = resp.doc.recId();
+		String docId = resp.xdoc.recId();
 		assertEquals(8, docId.length());
 
 		DocsResp rp = doclient.selectDoc(docm.tbl, docId);
 
 		assertTrue(isblank(rp.msg()));
-		assertEquals(AnDevice.device, rp.doc.device());
-		assertEquals(AnDevice.localFile, rp.doc.fullpath());
+		assertEquals(AnDevice.device, rp.xdoc.device());
+		assertEquals(AnDevice.localFile, rp.xdoc.fullpath());
 
 		return AnDevice.localFile;
 	}

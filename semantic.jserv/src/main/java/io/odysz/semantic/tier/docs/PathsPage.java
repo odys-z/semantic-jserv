@@ -6,7 +6,7 @@ import java.util.HashMap;
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.x.SemanticException;
 
 import static io.odysz.common.LangExt.isblank;
@@ -63,7 +63,7 @@ public class PathsPage extends Anson {
 	 * @throws SQLException accessing rs failed.
 	 * @throws SemanticException 
 	 */
-	public PathsPage paths(AnResultset rs, DocTableMeta meta) throws SQLException, SemanticException {
+	public PathsPage paths(AnResultset rs, ExpDocTableMeta meta) throws SQLException, SemanticException {
 		clientPaths = new HashMap<String, String[]>();
 
 		rs.beforeFirst();
@@ -76,7 +76,7 @@ public class PathsPage extends Anson {
 			clientPaths.put(
 				rs.getString(meta.fullpath),
 				new String[] {
-					rs.getString(meta.syncflag),
+					"syncflag", // rs.getString(meta.syncflag),
 					rs.getString(meta.shareflag),
 					rs.getString(meta.shareby),
 					rs.getString(meta.shareDate)

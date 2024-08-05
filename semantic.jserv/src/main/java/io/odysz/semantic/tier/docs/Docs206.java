@@ -45,18 +45,16 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.xml.sax.SAXException;
-
 import io.odysz.anson.Anson;
 import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -74,7 +72,6 @@ public abstract class Docs206 {
 	 * to provide doc table meta. 
 	 * 
 	 * @author Ody
-	 */
 	@FunctionalInterface
 	public interface IDocMeta {
 		/**
@@ -84,9 +81,10 @@ public abstract class Docs206 {
 		 * </pre>
 		 * @param uri
 		 * @return
-		 */
-		DocTableMeta get(String uri);
+		 * /
+		ExpDocTableMeta get(String uri);
 	}
+	 */
 
 	private static final String Disposition_Header = "%s;filename=\"%2$s\"; filename*=UTF-8''%2$s";
 	private static final long Expire_1Hour = 3600L;
@@ -98,7 +96,7 @@ public abstract class Docs206 {
 
 	public static DATranscxt st;
 
-	public static IDocMeta getMeta;
+	// public static IDocMeta getMeta;
 
 	static {
 		try {
@@ -225,12 +223,13 @@ public abstract class Docs206 {
 			throws TransException, SQLException, IOException {
 
 		String conn = Connects.uri2conn(req.uri());
-		DocTableMeta meta = getMeta.get(req.uri());
+		// ExpDocTableMeta meta = getMeta.get(req.uri());
+		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
 
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
 				.col(meta.pk)
-				.col(meta.clientname).col(meta.createDate)
+				.col(meta.resname).col(meta.createDate)
 				.col(meta.fullpath)
 				.col(meta.uri)
 				.col("mime")

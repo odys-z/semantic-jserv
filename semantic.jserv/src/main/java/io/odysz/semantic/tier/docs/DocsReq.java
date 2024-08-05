@@ -149,7 +149,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	/** @deprecated */
-	protected ArrayList<SyncDoc> syncQueries;
+	protected ArrayList<ExpSyncDoc> syncQueries;
 	/**@deprecated replaced by DocsPage.paths */
 	public Set<String> syncQueries() { return syncing.clientPaths.keySet(); }
 
@@ -230,7 +230,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq blockUp(int seq, DocsResp resp, String b64, SessionInf ssinf) throws SemanticException {
-		return blockUp(seq, resp.doc, b64, ssinf);
+		return blockUp(seq, resp.xdoc, b64, ssinf);
 	}
 
 	public DocsReq blockUp(long sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
@@ -271,8 +271,8 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = startAck.blockSeqReply;
 
-		this.doc.recId = startAck.doc.recId();
-		clientpath(startAck.doc.fullpath());
+		this.doc.recId = startAck.xdoc.recId();
+		clientpath(startAck.xdoc.fullpath());
 
 		this.a = A.blockAbort;
 		return this;
@@ -283,8 +283,8 @@ public class DocsReq extends AnsonBody {
 
 		this.blockSeq = resp.blockSeqReply;
 
-		this.doc.recId = resp.doc.recId();
-		clientpath(resp.doc.fullpath())
+		this.doc.recId = resp.xdoc.recId();
+		clientpath(resp.xdoc.fullpath())
 			.a = A.blockEnd;
 		return this;
 	}
