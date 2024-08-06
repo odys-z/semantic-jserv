@@ -438,7 +438,7 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = ((AnResultset) st
 				.select(meta.tbl, "p")
 				.col(count(meta.pk), "cnt")
-				.whereEq(meta.synoder, device)
+				.whereEq(meta.device, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0)).nxt();
@@ -676,7 +676,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.select(req.docTabl, "t")
 				.cols((Object[])ExpSyncDoc.synPageCols(meta))
 				// .whereEq(meta.domain, req.org == null ? usr.orgId() : req.org)
-				.whereEq(meta.synoder, usr.deviceId())
+				.whereEq(meta.device, usr.deviceId())
 				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
 				// TODO add file type for performance
 				// FIXME issue: what if paths length > limit ?
@@ -869,7 +869,7 @@ public class Albums extends ServPort<AlbumReq> {
 		AnResultset rs = (AnResultset) q // PhotoRec.cols(q, meta)
 				.cols_byAlias("p", meta.pk,
 					meta.resname, meta.createDate, meta.folder,
-					meta.fullpath, meta.synoder, meta.uri,
+					meta.fullpath, meta.device, meta.uri,
 					meta.shareDate, meta.mime, meta.shareby)
 				.col(count("po.oid"), "orgs")
 				.whereEq("p." + meta.pk, req.pageInf.mergeArgs().getArg("pid"))
@@ -1014,7 +1014,7 @@ public class Albums extends ServPort<AlbumReq> {
 					  "p.pid", m.resname, m.createDate, "p." + m.tags,
 					  m.mime, "p.css", m.folder, m.geox, m.geoy, m.shareDate,
 					  "c.shareby collector", "c.cdate",
-					  m.fullpath, m.synoder, "p." + m.shareby, "u.userName owner",
+					  m.fullpath, m.device, "p." + m.shareby, "u.userName owner",
 					  "storage", "aname", "cname")
 				.whereEq("a.aid", aid)
 				.rs(st.instancontxt(conn, usr))

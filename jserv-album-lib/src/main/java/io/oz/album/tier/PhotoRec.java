@@ -55,7 +55,7 @@ public class PhotoRec extends ExpSyncDoc implements IFileDescriptor {
 				meta.shareflag,
 				meta.mime,
 				meta.fullpath,
-				meta.synoder,
+				meta.device,
 				meta.folder,
 				meta.size
 		};
@@ -69,7 +69,7 @@ public class PhotoRec extends ExpSyncDoc implements IFileDescriptor {
 		if (synpageCols == null)
 			synpageCols = new String[] {
 					meta.pk,
-					meta.synoder,
+					meta.device,
 					meta.fullpath,
 					meta.shareby,
 					meta.shareDate,

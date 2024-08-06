@@ -29,6 +29,7 @@ import io.odysz.jclient.tier.Semantier;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -54,6 +55,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
 
 public class Doclientier extends Semantier {
@@ -440,14 +442,15 @@ public class Doclientier extends Semantier {
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
-		DocsReq req = new DocsReq(docTabl, uri);
-		req.a(A.rec);
-		req.doc.recId = docId;
+		DocsReq req = (DocsReq) new DocsReq(docTabl, uri)
+					.pageInf(0, -1, "pid", docId)
+					.a(A.rec);
 
 		DocsResp resp = null;
 		try {
-			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
-										.header(header);
+			AnsonMsg<DocsReq> q = client
+								.<DocsReq>userReq(uri, Port.docsync, req)
+								.header(header);
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
@@ -574,7 +577,7 @@ public class Doclientier extends Semantier {
 				// .nv(meta.org(), usr.orgId())
 				.nv(meta.uri, doc.uri64)
 				.nv(meta.resname, doc.pname)
-				.nv(meta.synoder, usr.deviceId())
+				.nv(meta.device, usr.deviceId())
 				.nv(meta.fullpath, doc.fullpath())
 				.nv(meta.folder, doc.folder())
 				.nv(meta.size, size)

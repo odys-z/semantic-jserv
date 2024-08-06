@@ -1,10 +1,13 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Date;
 
+import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
@@ -12,6 +15,7 @@ import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -109,7 +113,7 @@ public class DocUtils {
 			.nv(meta.org, photo.org)
 			.nv(meta.uri, photo.uri64)
 			.nv(meta.resname, photo.pname)
-			.nv(meta.synoder, usr.deviceId())
+			.nv(meta.device, usr.deviceId())
 			.nv(meta.fullpath, photo.fullpath())
 			.nv(meta.createDate, photo.createDate)
 			.nv(meta.folder, photo.folder())
@@ -147,13 +151,14 @@ public class DocUtils {
 			.nv(meta.org, doc.org)
 			.nv(meta.uri, doc.uri64)
 			.nv(meta.resname, doc.pname)
-			.nv(meta.synoder, doc.device)
+			// .nv(meta.synoder, doc.device)
+			.nv(meta.device, doc.device)
 			.nv(meta.fullpath, doc.fullpath())
 			.nv(meta.createDate, doc.createDate)
 			.nv(meta.folder, doc.folder())
-			.nv(meta.shareflag, doc.shareflag)
-			.nv(meta.shareby, doc.shareby)
-			.nv(meta.shareDate, doc.sharedate)
+			.nv(meta.shareflag, ifnull(doc.shareflag, Share.priv))
+			.nv(meta.shareby, ifnull(doc.shareby, usr.uid()))
+			.nv(meta.shareDate, ifnull(doc.sharedate, DateFormat.format(new Date())))
 			.nv(meta.size, doc.size)
 			;
 		

@@ -9,12 +9,13 @@ import java.util.Set;
 
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 
-public class DocsReq extends AnsonBody {
+public class DocsReq extends UserReq {
 	public static class A {
 		/**
 		 * Action: read records for synodes synchronizing.
@@ -39,6 +40,7 @@ public class DocsReq extends AnsonBody {
 		public static final String setstamp = "u/stamp";
 
 		public static final String mydocs = "r/my-docs";
+		/** query doc / entity with entity fields, id, etc. */
 		public static final String rec = "r/rec";
 		public static final String download = "r/download";
 		public static final String upload = "c";
@@ -75,6 +77,10 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public PageInf pageInf;
+	public DocsReq pageInf(int page, int size, String... args) {
+		pageInf = new PageInf(page, size, args);
+		return this;
+	}
 
 	public String docTabl;
 	public DocsReq docTabl(String tbl) {
@@ -346,6 +352,11 @@ public class DocsReq extends AnsonBody {
 	public DocsReq doc(String device, String fullpath) {
 		this.device = new Device(device, null);
 		this.doc = new ExpSyncDoc().device(device).clientpath(fullpath);
+		return this;
+	}
+
+	public AnsonBody doc(ExpSyncDoc doc) {
+		this.doc = doc;
 		return this;
 	}
 }

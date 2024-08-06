@@ -160,7 +160,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 				meta.shareflag,
 				meta.mime,
 				meta.fullpath,
-				meta.synoder,
+				meta.device,
 				meta.folder,
 				meta.size
 		};
@@ -174,7 +174,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		if (synpageCols == null)
 			synpageCols = new String[] {
 					meta.pk,
-					meta.synoder,
+					meta.device, // FIXME meta.synoder ?
 					meta.fullpath,
 					meta.shareby,
 					meta.shareDate,
@@ -195,7 +195,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		this.size = rs.getLong(meta.size, 0);
 		
 		this.clientpath =  rs.getString(meta.fullpath);
-		this.device =  rs.getString(meta.synoder);
+		this.device =  rs.getString(meta.device);
 		this.folder = rs.getString(meta.folder);
 		
 		try {
@@ -324,7 +324,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 			.nv(md.size, size)
 			.nv(md.createDate, createDate)
 			.nv(md.resname, pname)
-			.nv(md.synoder, device)
+			.nv(md.device, device)
 			.nv(md.shareby, shareby)
 			.nv(md.shareDate, sharedate)
 			.nv(md.shareflag, shareflag)

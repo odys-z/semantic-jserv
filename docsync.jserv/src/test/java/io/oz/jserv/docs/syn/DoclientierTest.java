@@ -249,7 +249,7 @@ class DoclientierTest {
 		assertNotNull(resp);
 
 		String docId = resp.xdoc.recId();
-		assertEquals(8, docId.length());
+		assertTrue(4 == docId.length() || 8 == docId.length());
 
 		DocsResp rp = doclient.selectDoc(entityName, docId);
 

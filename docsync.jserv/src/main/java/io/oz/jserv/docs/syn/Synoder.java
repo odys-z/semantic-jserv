@@ -240,7 +240,7 @@ public class Synoder {
 					snm.nyquence, n0,
 					snm.nstamp, stamp0,
 					snm.org, org,
-					snm.mac, "#"
+					snm.device, "#" + synode
 					);
 		
 		mysynbuilder = new DBSyntableBuilder(domain, myconn, synode, mod)

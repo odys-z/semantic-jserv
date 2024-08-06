@@ -124,7 +124,7 @@ public class Dochain {
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
 				.whereEq(meta.org, usr.orgId())
-				.whereEq(meta.synoder, device)
+				.whereEq(meta.device, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
