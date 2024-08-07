@@ -510,45 +510,45 @@ public class Doclientier extends Semantier {
 		return resp;
 	}
 
-	DocsResp synClosePush(ExpSyncDoc p, String docTabl)
-			throws AnsonException, IOException, TransException, SQLException {
-
-		DocsReq clsReq = (DocsReq) new DocsReq()
-						.docTabl(docTabl)
-						// .org(robot.orgId)
-						.queryPath(p.device(), p.fullpath())
-						.a(A.synclosePush);
-
-		AnsonMsg<DocsReq> q = client
-				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
-
-		DocsResp r = client.commit(q, errCtx);
-		return r;
-	}
+//	DocsResp synClosePush(ExpSyncDoc p, String docTabl)
+//			throws AnsonException, IOException, TransException, SQLException {
+//
+//		DocsReq clsReq = (DocsReq) new DocsReq()
+//						.docTabl(docTabl)
+//						// .org(robot.orgId)
+//						.queryPath(p.device(), p.fullpath())
+//						.a(A.synclosePush);
+//
+//		AnsonMsg<DocsReq> q = client
+//				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
+//
+//		DocsResp r = client.commit(q, errCtx);
+//		return r;
+//	}
 	
-	/**
-	 * Tell upper synode to close the doc downloading.
-	 * @param p
-	 * @param docTabl
-	 * @return
-	 * @throws SemanticException
-	 * @throws AnsonException
-	 * @throws IOException
-	 */
-	DocsResp synClosePull(ExpSyncDoc p, String docTabl)
-			throws SemanticException, AnsonException, IOException {
-		DocsReq clsReq = (DocsReq) new DocsReq()
-						.docTabl(docTabl)
-						// .org(robot.orgId)
-						.queryPath(p.device(), p.fullpath())
-						.a(A.synclosePull);
-
-		AnsonMsg<DocsReq> q = client
-				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
-
-		DocsResp r = client.commit(q, errCtx);
-		return r;
-	}
+//	/**
+//	 * Tell upper synode to close the doc downloading.
+//	 * @param p
+//	 * @param docTabl
+//	 * @return
+//	 * @throws SemanticException
+//	 * @throws AnsonException
+//	 * @throws IOException
+//	 */
+//	DocsResp synClosePull(ExpSyncDoc p, String docTabl)
+//			throws SemanticException, AnsonException, IOException {
+//		DocsReq clsReq = (DocsReq) new DocsReq()
+//						.docTabl(docTabl)
+//						// .org(robot.orgId)
+//						.queryPath(p.device(), p.fullpath())
+//						.a(A.synclosePull);
+//
+//		AnsonMsg<DocsReq> q = client
+//				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
+//
+//		DocsResp r = client.commit(q, errCtx);
+//		return r;
+//	}
 	
 	/**
 	 * Insert the locally ready doc (localpath) into table.

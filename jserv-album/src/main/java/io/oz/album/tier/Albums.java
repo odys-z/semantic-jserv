@@ -606,7 +606,6 @@ public class Albums extends ServPort<AlbumReq> {
 			return (DocsResp) new DocsResp().device(new Device(
 					null, AlbumSingleton.synode(),
 					usr.deviceId()));
-					// rs.getString(devMeta.devname)));
 	}
 	
 	DocsResp registDevice(DocsReq body, PhotoUser usr)

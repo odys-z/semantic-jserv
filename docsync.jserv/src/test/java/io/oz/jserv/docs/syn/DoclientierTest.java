@@ -4,12 +4,8 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
-import static io.odysz.common.Utils.pause;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
-import static io.oz.jserv.docsync.ZSUNodes.clientUriZsu;
-
-import static io.oz.jserv.docs.syn.SynoderTest.*;
-
+import static io.oz.jserv.docs.syn.SynoderTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,6 +27,9 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.AnsonHeader;
+import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jserv.R.AnQuery;
@@ -44,24 +43,59 @@ import io.odysz.semantic.jsession.JUser.JRoleMeta;
 import io.odysz.semantic.meta.AutoSeqMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.meta.PeersMeta;
 import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynSessionMeta;
 import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.Device;
+import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.odysz.semantic.tier.docs.PathsPage;
+import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docsync.ZSUNodes.AnDevice;
-import io.oz.jserv.docsync.ZSUNodes.Kharkiv;
 import io.oz.jserv.test.JettyHelper;
 
 class DoclientierTest {
-	static final String clientUri0 = "client-at-00";
-	static final String clientUri1 = "client-at-01";
+	public static class Dev_0_0 {
+		public static final String uri = "client-at-00";
+		public static final String uid = "syrskyi";
+		public static final String psw = "слава україні";
+		public static final String dev = "0-0";
+		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
+		public static final String folder = "zsu";
+	}
+
+	public static class Dev_0_1 {
+		public static final String uri = "client-at-00";
+		public static final String uid = "syrskyi";
+		public static final String psw = "слава україні";
+		public static final String dev = "0-1";
+		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
+		public static final String folder = "zsu";
+	}
+
+	public static class Dev_1_0 {
+		public static final String uri = "client-at-01";
+		public static final String uid = "ody";
+		public static final String psw = "123456";
+		public static final String dev = "1-0";
+		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
+		public static final String folder = "zsu";
+	}
+
+	public static class Dev_1_1 {
+		public static final String uri = "client-at-01";
+		public static final String uid = "syrskyi";
+		public static final String psw = "слава україні";
+		public static final String dev = "1-1";
+		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
+		public static final String folder = "zsu";
+	}
 
 	static int bsize;
 
@@ -71,16 +105,11 @@ class DoclientierTest {
 	static final String clientconn = "main-sqlite";
 	static final String serv_conn = "no-jserv.00";
 
-	// static final String wwwinf = "src/test/res/WEB-INF";
-
-
 	static {
 		try {
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
 			
-			// doclient = new Doclientier(clientUri, errLog);
-
 			errLog = new ErrorCtx() {
 				@Override
 				public void err(MsgCode code, String msg, String...args) {
@@ -116,15 +145,6 @@ class DoclientierTest {
 		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
 		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
 
-		/*
-		ArrayList<String> sqls = new ArrayList<String>();
-		sqls.add(String.format("delete from %s;", aum.tbl));
-		sqls.add(Utils.loadTxt("./oz_autoseq.sql"));
-		sqls.add(String.format( "update oz_autoseq set seq = %d where sid = '%s.%s'",
-								(long) Math.pow(64, 2), docm.tbl, docm.pk));
-		sqls.add(String.format("delete from %s", snm.tbl));
-		Connects.commit(conn, DATranscxt.dummyUser(), sqls);
-		*/
 		initRecords(serv_conn);
 		
 		Connects.reload(webinf); // reload metas
@@ -167,7 +187,6 @@ class DoclientierTest {
 				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
 				sqls.clear();
 			}
-			Connects.reload(webinf); // reload metas
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -183,53 +202,50 @@ class DoclientierTest {
 
 	@Test
 	void testSyncUp() throws Exception {
-
-		videoUpByApp(docm.tbl);
-
-		pause("Press enter to quite ...");
-	}
-
-	static String videoUpByApp(String entityName) throws Exception {
-
-		// app is using Doclientier for synchronizing 
-		Doclientier doclient = new Doclientier(clientUri0, errLog)
+		Doclientier client00 = new Doclientier(Dev_0_0.uri, errLog)
 				.tempRoot("app.kharkiv")
-				.loginWithUri(clientUri0, AnDevice.userId, AnDevice.device, AnDevice.passwd)
+				.loginWithUri(Dev_0_0.uri, Dev_0_0.uid, Dev_0_0.dev, Dev_0_0.psw)
 				.blockSize(bsize);
 
-		doclient.synDel(entityName, AnDevice.device, AnDevice.localFile);
+		client00.synDel(docm.tbl, Dev_0_0.dev, Dev_0_0.mp4);
+
+		videoUpByApp(client00, docm.tbl);
+
+		// queryPathsPage(client00, docm.tbl);
+
+		// pause("Press enter to quite ...");
+	}
+
+	static String videoUpByApp(Doclientier doclient, String entityName) throws Exception {
+
 
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(doclient.robot.uid(), Share.pub, new Date())
-					.folder(Kharkiv.folder)
-					.fullpath(AnDevice.localFile);
+					.folder(Dev_0_0.folder)
+					.fullpath(Dev_0_0.mp4);
 
-		DocsResp resp = doclient.startPush(entityName, doc, new OnOk() {
+		DocsResp resp = doclient.startPush(entityName, doc,
+			(AnsonResp rep) -> {
+				ExpSyncDoc d = ((DocsResp) rep).xdoc; 
 
-			@Override
-			public void ok(AnsonResp resp)
-					throws IOException, AnsonException {
-				ExpSyncDoc doc = ((DocsResp) resp).xdoc; 
-
-				try {
-					doclient.loginWithUri(clientUri0, AnDevice.userId, AnDevice.device, AnDevice.passwd)
-							.blockSize(bsize);
-				} catch (SsException e1) {
-					e1.printStackTrace();
-					fail(e1.getMessage());
-				} catch (TransException e) {
-					e.printStackTrace();
-				}
+//				try {
+//					doclient.loginWithUri(Dev_0_0.uri, Dev_0_0.uid, Dev_0_0.dev, Dev_0_0.psw)
+//							.blockSize(bsize);
+//				} catch (SsException e1) {
+//					e1.printStackTrace();
+//					fail(e1.getMessage());
+//				} catch (TransException e) {
+//					e.printStackTrace();
+//				}
 
 				// pushing again should fail
-				// List<DocsResp> resps2 = null;
 				try {
-					DocsResp resp2 = doclient.startPush(entityName, doc,
+					DocsResp resp2 = doclient.startPush(entityName, d,
 						new OnOk() {
 							@Override
-							public void ok(AnsonResp resp)
+							public void ok(AnsonResp rep)
 									throws IOException, AnsonException {
-								logT(new Object() {}, resp.msg());
+								logT(new Object() {}, rep.msg());
 								fail("Double checking failed.");
 							}
 						},
@@ -243,8 +259,7 @@ class DoclientierTest {
 					e.printStackTrace();
 					fail(e.getMessage());
 				}
-			}
-		});
+			});
 
 		assertNotNull(resp);
 
@@ -254,30 +269,28 @@ class DoclientierTest {
 		DocsResp rp = doclient.selectDoc(entityName, docId);
 
 		assertTrue(isblank(rp.msg()));
-		assertEquals(AnDevice.device, rp.xdoc.device());
-		assertEquals(AnDevice.localFile, rp.xdoc.fullpath());
+		assertEquals(Dev_0_0.dev, rp.xdoc.device());
+		assertEquals(Dev_0_0.mp4, rp.xdoc.fullpath());
 
-		return AnDevice.localFile;
+		return Dev_0_0.mp4;
 	}
 
 	void testSynDel() {
 		fail("Not yet implemented");
 	}
 
-	void testSynQueryPathsPage(String entityName) throws Exception {
-		Doclientier clientier = new Doclientier(clientUriZsu, errLog)
-				.tempRoot("app.kharkiv")
-				.loginWithUri(clientUri0, AnDevice.userId, AnDevice.device, AnDevice.passwd)
-				.blockSize(bsize);
+	void queryPathsPage(Doclientier clientier, String entityName) throws Exception {
+		
+		PathsPage page = new PathsPage();
 
-		clientier.synDel(entityName, AnDevice.device, AnDevice.localFile);
+		DocsResp resp = clientier.synQueryPathsPage(page, entityName, Port.docsync);
 
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(clientier.robot.uid(), Share.pub, new Date())
-					.folder(Kharkiv.folder)
-					.fullpath(AnDevice.localFile);
+					.folder(Dev_0_0.folder)
+					.fullpath(Dev_0_0.mp4);
 
-		DocsResp resp = clientier.startPush(entityName, doc, new OnOk() {
+		DocsResp resp2 = clientier.startPush(entityName, doc, new OnOk() {
 			@Override
 			public void ok(AnsonResp resp) throws IOException, AnsonException, TransException {
 			}
