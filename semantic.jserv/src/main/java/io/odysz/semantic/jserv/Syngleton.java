@@ -1,4 +1,4 @@
-package io.oz.jserv.docs.syn;
+package io.odysz.semantic.jserv;
 
 import static io.odysz.common.LangExt.len;
 
@@ -7,10 +7,15 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
-import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 
+/**
+ * Singleton for synodes.
+ * 
+ * @author odys-z@github.com
+ *
+ */
 public class Syngleton extends JSingleton {
 
 	public static void initSynodetier(String cfgxml, String runtimeRoot, String configFolder, String rootKey)

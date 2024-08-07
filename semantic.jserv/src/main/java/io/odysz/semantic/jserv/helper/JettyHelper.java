@@ -1,4 +1,4 @@
-package io.oz.jserv.test;
+package io.odysz.semantic.jserv.helper;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -14,7 +14,7 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
-import io.oz.jserv.docs.syn.Syngleton;
+import io.odysz.semantic.jserv.Syngleton;
 
 /**
  * Start an embedded Jetty server for ee8.

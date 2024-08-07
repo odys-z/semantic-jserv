@@ -35,6 +35,7 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
+import io.odysz.semantic.jserv.helper.JettyHelper;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.jsession.JUser;
@@ -55,7 +56,6 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.test.JettyHelper;
 
 class DoclientierTest {
 	public static class Dev_0_0 {
