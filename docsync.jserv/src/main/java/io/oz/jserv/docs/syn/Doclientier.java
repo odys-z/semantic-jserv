@@ -29,7 +29,6 @@ import io.odysz.jclient.tier.Semantier;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -55,7 +54,6 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
-import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
 
 public class Doclientier extends Semantier {
@@ -229,9 +227,6 @@ public class Doclientier extends Semantier {
 	public List<DocsResp> syncUp(String tabl, List<? extends ExpSyncDoc> videos,
 			OnProcess onProc, OnOk... docOk)
 			throws TransException, AnsonException, IOException {
-		// SessionInf photoUser = client.ssInfo();
-		// photoUser.device = workerId;
-
 		return pushBlocks(
 				tabl, videos, onProc,
 				isNull(docOk) ? new OnOk() {
@@ -241,17 +236,6 @@ public class Doclientier extends Semantier {
 				} : docOk[0],
 				errCtx);
 	}
-
-	/*
-	public static void setLocalSync(DATranscxt localSt, String conn,
-			ExpDocTableMeta meta, SyncDoc doc, String syncflag, SyncRobot robot)
-			throws TransException, SQLException {
-		localSt.update(meta.tbl, robot)
-			// .nv(meta.syncflag, SyncFlag.hub)
-			.whereEq(meta.pk, doc.recId)
-			.u(localSt.instancontxt(conn, robot));
-	}
-	*/
 
 	/**
 	 * Downward synchronizing.
@@ -491,8 +475,6 @@ public class Doclientier extends Semantier {
 				.doc(device, clientpath)
 				.a(A.del);
 
-		//req.doc.clientpath(clientpath);
-
 		DocsResp resp = null;
 		try {
 			String[] act = AnsonHeader.usrAct("synclient.java", "del", "d/photo", "");
@@ -588,8 +570,6 @@ public class Doclientier extends Semantier {
 		
 		if (!isblank(doc.mime))
 			ins.nv(meta.mime, doc.mime);
-		
-		// ins.post(Docsyncer.onDocreate(doc, meta, usr));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
@@ -646,8 +626,9 @@ public class Doclientier extends Semantier {
 				.device(new Device(page.device, null))
 				.a(A.selectSyncs); // v 0.1.50
 
-		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, port/*MVP 0.2.1 Port.docsync*/, req)
-								.header(header);
+		AnsonMsg<DocsReq> q = client
+				.<DocsReq>userReq(uri, port/*MVP 0.2.1 Port.docsync*/, req)
+				.header(header);
 
 		DocsResp resp = client.commit(q, errCtx);
 

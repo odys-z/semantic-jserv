@@ -109,19 +109,16 @@ public class DocsReq extends UserReq {
 		super(null, uri);
 		blockSeq = -1;
 		docTabl = syncTask;
-		// doc.folder = "";
 	}
 
 	public DocsReq(String uri) {
 		super(null, uri);
 		blockSeq = -1;
-		// subfolder = "";
 	}
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 		blockSeq = -1;
-		// subfolder = "";
 	}
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
@@ -129,8 +126,6 @@ public class DocsReq extends UserReq {
 		device = new Device(null, null, p.device());
 		doc = new ExpSyncDoc(p)
 				.clientpath(p.fullpath());
-		// docId = p.recId();
-		// device = p.device();
 	}
 
 
@@ -147,8 +142,8 @@ public class DocsReq extends UserReq {
 	/**
 	 * The page of quirying client files status - not for used between jservs. 
 	 */
-	protected PathsPage syncing;
-	public PathsPage syncing() { return syncing; }
+	protected PathsPage syncingPage;
+	public PathsPage syncingPage() { return syncingPage; }
 
 	protected Device device; 
 	public Device device() { return device; }
@@ -161,10 +156,8 @@ public class DocsReq extends UserReq {
 		return this;
 	}
 
-	/** @deprecated */
 	protected ArrayList<ExpSyncDoc> syncQueries;
-	/**@deprecated replaced by DocsPage.paths */
-	public Set<String> syncQueries() { return syncing.clientPaths.keySet(); }
+	public Set<String> syncQueries() { return syncingPage.clientPaths.keySet(); }
 
 	/** TODO visibility = package */
 	public long blockSeq;
@@ -223,7 +216,7 @@ public class DocsReq extends UserReq {
 	}
 
 	public DocsReq syncing(PathsPage page) {
-		this.syncing = page;
+		this.syncingPage = page;
 		return this;
 	}
 

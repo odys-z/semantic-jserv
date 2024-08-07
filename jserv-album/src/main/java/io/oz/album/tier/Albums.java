@@ -250,7 +250,7 @@ public class Albums extends ServPort<AlbumReq> {
 			}
 
 			if (rsp != null) { // no rsp for a == download
-				rsp.syncing(jreq.syncing());
+				rsp.syncing(jreq.syncingPage());
 				write(resp, ok(rsp).port(AlbumPort.album));
 			}
 		} catch (DocsException e) {
@@ -668,8 +668,8 @@ public class Albums extends ServPort<AlbumReq> {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 
-		Object[] kpaths = req.syncing().paths() == null ? new Object[0]
-				: req.syncing().paths().keySet().toArray();
+		Object[] kpaths = req.syncingPage().paths() == null ? new Object[0]
+				: req.syncingPage().paths().keySet().toArray();
 
 		AnResultset rs = ((AnResultset) st
 				.select(req.docTabl, "t")
@@ -684,7 +684,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(0))
 				.beforeFirst();
 
-		DocsResp album = new DocsResp().syncing(req).pathsPage(rs, meta);
+		DocsResp album = new DocsResp().syncingPage(req).pathsPage(rs, meta);
 
 		return album;
 	}

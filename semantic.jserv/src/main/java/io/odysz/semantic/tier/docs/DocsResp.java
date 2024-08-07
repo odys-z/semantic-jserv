@@ -17,11 +17,11 @@ import io.odysz.semantics.x.SemanticException;
 public class DocsResp extends AnsonResp {
 	public ExpSyncDoc xdoc;
 
-	protected PathsPage syncing;
+	protected PathsPage syncingPage;
 
 	protected String collectId;
 
-	public PathsPage pathsPage() { return syncing; }
+	public PathsPage pathsPage() { return syncingPage; }
 	
 	/**
 	 * <p>Set clientpaths page (rs).</p>
@@ -34,19 +34,19 @@ public class DocsResp extends AnsonResp {
 	 */
 	public DocsResp pathsPage(AnResultset rs, ExpDocTableMeta meta)
 			throws SQLException, SemanticException {
-		if (syncing == null)
-			syncing = new PathsPage();
-		syncing.paths(rs, meta);
+		if (syncingPage == null)
+			syncingPage = new PathsPage();
+		syncingPage.paths(rs, meta);
 		return this;
 	}
 
-	public PathsPage syncing() { return syncing; }
+	public PathsPage syncing() { return syncingPage; }
 	public DocsResp syncing(PathsPage page) {
-		syncing = page;
+		syncingPage = page;
 		return this;
 	}
-	public DocsResp syncing(DocsReq req) {
-		syncing = req.syncing;
+	public DocsResp syncingPage(DocsReq req) {
+		syncingPage = req.syncingPage;
 		return this;
 	}
 	
@@ -83,6 +83,10 @@ public class DocsResp extends AnsonResp {
 	public Device device() { return device; }
 	public DocsResp device(Device device) {
 		this.device = device;
+		return this;
+	}
+	public DocsResp device(String deviceId) {
+		this.device = new Device(deviceId, null);
 		return this;
 	}
 
