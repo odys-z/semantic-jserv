@@ -54,6 +54,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
 
 public class Doclientier extends Semantier {
@@ -545,7 +546,6 @@ public class Doclientier extends Semantier {
 	 * @return new doc id
 	 * @throws TransException
 	 * @throws SQLException
-	 */
 	static String insertLocalFile(DATranscxt st, String conn, String localPath,
 			ExpSyncDoc doc, SyncRobot usr, ExpDocTableMeta meta)
 			throws TransException, SQLException {
@@ -578,6 +578,7 @@ public class Doclientier extends Semantier {
 		
 		return pid;
 	}
+	 */
 
 	/**
 	 * [Synchronously]
@@ -635,6 +636,41 @@ public class Doclientier extends Semantier {
 		return resp;
 	}
 
+	/**
+	 * Implementing new device registering together with {@link #queryDevices(String)}.
+	 * 
+	 * <pre>CREATE TABLE doc_devices (
+      synode0 varchar(12)  NOT NULL, -- initial node a device is registered
+      device  varchar(12)  NOT NULL, -- ak, generated when registering, but is used together with synode-0 for file identity.
+      devname varchar(256) NOT NULL, -- set by user, warn on duplicate, use old device id if user confirmed, otherwise generate a new one.
+      mac     varchar(512),          -- an anciliary identity for recognize a device if there are supporting ways to automatically find out a device mac
+      orgId   varchar(12)  NOT NULL, -- fk-del, usually won't happen
+      owner   varchar(12),           -- or current user, not permenatly bound
+      PRIMARY KEY (synode0, device)
+      ); -- registered device names. Name is set by user, prompt if he's device names are duplicated
+	 * </pre>
+	 * @return this
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
+	 * @since 0.2.0
+	 */
+	public DocsResp registerDevice(String devname)
+			throws SemanticException, AnsonException, IOException {
+		String[] act = AnsonHeader.usrAct("synclient.java", "register", A.devices, Port.docsync.name());
+		AnsonHeader header = client.header().act(act);
+
+		DocsReq req = (DocsReq) new DocsReq("doc_devices", uri);
+		req.pageInf = new PageInf(0, -1, devname);
+		req.a(A.registDev);
+
+		AnsonMsg<DocsReq> q = client
+			.<DocsReq>userReq(uri, Port.docsync, req)
+			.header(header);
+
+		return client.commit(q, errCtx);
+	}
+	
 	public String tempath(IFileDescriptor f) {
 		String clientpath = f.fullpath().replaceAll(":", "");
 		return EnvPath.decodeUri(tempath, f.device(), FilenameUtils.getName(clientpath));
