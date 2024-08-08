@@ -53,7 +53,7 @@ import io.oz.jserv.docs.AssertImpl;
  */
 class SynoderTest {
 	public static final String clientUri = "/jnode";
-	public static final String webRoot = "./src/test/res/WEB-INF";
+	public static final String webinf = "./src/test/res/WEB-INF";
 	public static final String testDir = "./src/test/res/";
 	public static final String volumeDir = "./src/test/res/volume";
 
@@ -94,7 +94,7 @@ class SynoderTest {
 			System.setProperty("VOLUME_HOME", FilenameUtils.concat(p, volumeDir));
 
 			// Test with docker?
-			String wwwinf = FilenameUtils.concat(p, webRoot);
+			String wwwinf = FilenameUtils.concat(p, webinf);
 			Configs.init(wwwinf);
 			Connects.init(wwwinf);
 			AnsonMsg.understandPorts(Port.docsync);
@@ -291,7 +291,7 @@ class SynoderTest {
 		photo.share("ody-" + syntier.synode, Share.pub, new Date());
 
 		return DocUtils.createFileBy64(syntier.doctrb(), syntier.myconn,
-				(ExpSyncDoc)photo, syntier.locrobot(), (ExpDocTableMeta)docm, null);
+				(ExpSyncDoc)photo, syntier.locrobot(), (ExpDocTableMeta)docm);
 	}
 
 	void syncpeers(int test) throws Exception {

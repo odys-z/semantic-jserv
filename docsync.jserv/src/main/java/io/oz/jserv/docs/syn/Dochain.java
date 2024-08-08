@@ -17,15 +17,15 @@ import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IProfileResolver;
-import io.odysz.semantic.tier.docs.SyncDoc;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -48,8 +48,7 @@ public class Dochain {
 		 * @param robot
 		 * @return either the original post statement or a new one.
 		 */
-		Update onDocreate(Update post, SyncDoc d, ExpDocTableMeta meta, IUser robot);
-		Update onDocreate(Update post, SyncDoc d, DocTableMeta meta, IUser robot);
+		Update onDocreate(Update post, ExpSyncDoc d, ExpDocTableMeta meta, IUser robot);
 	}
 
 	public static final boolean verbose = true;
@@ -71,7 +70,7 @@ public class Dochain {
 			throws IOException, TransException, SQLException, InterruptedException {
 
 		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, usr.deviceId(), body.clientpath(), usr);
+		checkDuplicate(conn, usr.deviceId(), body.doc.clientpath, usr);
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
@@ -82,11 +81,13 @@ public class Dochain {
 		String saveFolder = profiles.synodeFolder(body, usr);
 		if (isblank(saveFolder, "/", "\\\\", ":", "\\."))
 			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
-					body.clientpath(), usr.uid(), profiles.getClass().getName());
+					body.doc.clientpath, usr.uid(), profiles.getClass().getName());
 		
-		BlockChain chain = new BlockChain(tempDir, body.clientpath(), body.doc.createDate, saveFolder)
-				.device(usr.deviceId())
-				.share(body.doc.shareby, body.doc.sharedate, body.doc.shareflag);
+//		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id,
+//					body.doc.clientpath, body.doc.createDate, saveFolder)
+//				.device(usr.deviceId())
+//				.share(body.doc.shareby, body.doc.sharedate, body.doc.shareflag);
+		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
 
 		String id = chainId(usr, body);
 
@@ -98,16 +99,19 @@ public class Dochain {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
-				.doc((SyncDoc) new SyncDoc()
+				/*
+				.doc((ExpSyncDoc) new ExpSyncDoc()
 					.clientname(chain.clientname)
 					.cdate(body.doc.createDate)
 					.fullpath(chain.clientpath));
+				*/
+				.doc(chain.doc.uri64(null));
 	}
 
 	void checkDuplication(DocsReq body, SyncRobot usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, usr.deviceId(), body.clientpath(), usr);
+		checkDuplicate(conn, usr.deviceId(), body.doc.clientpath, usr);
 	}
 
 	void checkDuplicate(String conn, String device, String clientpath, IUser usr)
@@ -120,7 +124,7 @@ public class Dochain {
 				.select(meta.tbl, "p")
 				.col(Funcall.count(meta.pk), "cnt")
 				.whereEq(meta.org, usr.orgId())
-				.whereEq(meta.synoder, device)
+				.whereEq(meta.device, device)
 				.whereEq(meta.fullpath, clientpath)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
@@ -141,10 +145,10 @@ public class Dochain {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((SyncDoc) new SyncDoc()
-					.clientname(chain.clientname)
+				.doc((ExpSyncDoc) new ExpSyncDoc()
+					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
-					.fullpath(chain.clientpath));
+					.fullpath(chain.doc.clientpath));
 	}
 
 	/**
@@ -169,8 +173,9 @@ public class Dochain {
 
 		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
-		SyncDoc photo = new SyncDoc().parseChain(chain);
-		photo.uri = null; // suppress semantics ExtFile, and support me (query befor move?).
+		// ExpSyncDoc photo = new ExpSyncDoc().createByChain(chain);
+		ExpSyncDoc photo = chain.doc;
+		photo.uri64 = null; // suppress semantics ExtFile, and support me (query befor move?).
 		
 		String pid = createFile(st, conn, photo, meta, usr, ok);
 
@@ -201,7 +206,7 @@ public class Dochain {
 
 	public static String chainId(IUser usr, DocsReq req) {
 		return Stream
-			.of(usr.orgId(), usr.uid(), req.device().id, req.clientpath())
+			.of(usr.orgId(), usr.uid(), req.device().id, req.doc.clientpath)
 			.collect(Collectors.joining("."));
 	}
 
@@ -219,17 +224,6 @@ public class Dochain {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFile(DATranscxt st, String conn, SyncDoc photo,
-			DocTableMeta meta, IUser usr, OnChainOk end)
-			throws TransException, SQLException, IOException {
-		Update post = null; // Docsyncer.onDocreate(photo, meta, usr);
-
-		if (end != null)
-			post = end.onDocreate(post, photo, meta, usr);
-
-		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
-	}
-
 	public static String createFile(DATranscxt st, String conn, ExpSyncDoc photo,
 			ExpDocTableMeta meta, IUser usr, OnChainOk end)
 			throws TransException, SQLException, IOException {
@@ -238,8 +232,20 @@ public class Dochain {
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);
 
-		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
+		return DocUtils.createFileBy64((DBSyntableBuilder)st, conn, photo, usr, meta, post);
 	}
+
+//	public static String createFile(DATranscxt st, String conn, ExpSyncDoc photo,
+//			DocTableMeta meta, IUser usr, OnChainOk end)
+//			throws TransException, SQLException, IOException {
+//		Update post = null; // Docsyncer.onDocreate(photo, meta, usr);
+//
+//		if (end != null)
+//			post = end.onDocreate(post, photo, meta, usr);
+//
+//		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
+//	}
+
 
 	/**
 	 * Resolve file root with samantics handler of {@link smtype#extFilev2}.
@@ -253,7 +259,7 @@ public class Dochain {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	static String resolvExtroot(DATranscxt defltst, String conn, String docId, IUser usr, DocTableMeta meta)
+	static String resolvExtroot(DATranscxt defltst, String conn, String docId, IUser usr, ExpDocTableMeta meta)
 			throws TransException, SQLException {
 		ISemantext stx = defltst.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) defltst

@@ -1,6 +1,6 @@
 package org.omnifaces.servlet;
 
-import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 
 @FunctionalInterface
 public interface IGetMeta {
@@ -12,5 +12,5 @@ public interface IGetMeta {
 	 * @param uri
 	 * @return
 	 */
-	DocTableMeta get(String uri);
+	ExpDocTableMeta get(String uri);
 }

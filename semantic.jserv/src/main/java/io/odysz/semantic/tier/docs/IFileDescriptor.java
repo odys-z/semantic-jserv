@@ -2,7 +2,7 @@ package io.odysz.semantic.tier.docs;
 
 import java.io.IOException;
 
-import io.odysz.semantic.ext.DocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 
 /**
  * Since jserv 1.4.11, a file is an object shared across nodes, so this
@@ -40,14 +40,13 @@ public interface IFileDescriptor {
 
 	String cdate();
 
-	/** @return device name */
 	String device();
 
 	/** @return file uri */
 	String uri64();
 
 	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
-	default String shareflag() { return DocTableMeta.Share.priv; }
+	default String shareflag() { return ExpDocTableMeta.Share.priv; }
 	
 //	/**
 //	 * Set statement semantics context (for resulving pkval etc.)

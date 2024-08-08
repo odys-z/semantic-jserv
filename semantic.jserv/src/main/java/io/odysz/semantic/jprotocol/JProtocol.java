@@ -7,7 +7,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.x.TransException;
 
@@ -44,7 +44,7 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnDocOk {
-		void ok(SyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException;
+		void ok(ExpSyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException;
 	}
 	
 	/**

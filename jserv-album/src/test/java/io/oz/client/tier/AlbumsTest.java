@@ -30,7 +30,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.SyncDoc;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
@@ -240,8 +240,8 @@ class AlbumsTest {
 		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier("test/album", "device-test", errCtx)
 								.blockSize(bsize);
 
-		List<SyncDoc> videos = new ArrayList<SyncDoc>();
-		videos.add((SyncDoc) new SyncDoc()
+		List<ExpSyncDoc> videos = new ArrayList<ExpSyncDoc>();
+		videos.add((ExpSyncDoc) new ExpSyncDoc()
 					.fullpath(FilenameUtils.concat(localFolder, filename)));
 
 		SessionInf photoUser = ssclient.ssInfo();
@@ -266,7 +266,7 @@ class AlbumsTest {
 						assertEquals(1, resps.size());
 
 						for (DocsResp d : resps) {
-							String docId = d.doc.recId();
+							String docId = d.xdoc.recId();
 							assertEquals(8, docId.length());
 
 							AlbumResp rp = tier.selectPhotoRec(docId);

@@ -81,7 +81,7 @@ public class T_Photo extends ExpSyncDoc {
 		this.shareby = rs.getString(m.shareby);
 		
 		this.clientpath =  rs.getString(m.fullpath);
-		this.device =  rs.getString(m.device());
+		this.device =  rs.getString(m.device);
 		
 		try {
 			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
@@ -104,7 +104,7 @@ public class T_Photo extends ExpSyncDoc {
 	 */
 	public T_Photo asSyncRec(AnResultset rs) throws SQLException {
 		this.clientpath = rs.getString("clientpath"); 
-		this.syncFlag = rs.getString("syncFlag"); 
+		// this.syncFlag = rs.getString("syncFlag"); 
 		return this;
 	}
 

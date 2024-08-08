@@ -1,24 +1,21 @@
 package io.odysz.semantic.tier.docs;
 
 import static io.odysz.common.LangExt.isblank;
-import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Set;
 
-import io.odysz.anson.AnsonField;
-import io.odysz.common.DateFormat;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 
-public class DocsReq extends AnsonBody {
+public class DocsReq extends UserReq {
 	public static class A {
 		/**
 		 * Action: read records for synodes synchronizing.
@@ -43,6 +40,7 @@ public class DocsReq extends AnsonBody {
 		public static final String setstamp = "u/stamp";
 
 		public static final String mydocs = "r/my-docs";
+		/** query doc / entity with entity fields, id, etc. */
 		public static final String rec = "r/rec";
 		public static final String download = "r/download";
 		public static final String upload = "c";
@@ -79,6 +77,10 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public PageInf pageInf;
+	public DocsReq pageInf(int page, int size, String... args) {
+		pageInf = new PageInf(page, size, args);
+		return this;
+	}
 
 	public String docTabl;
 	public DocsReq docTabl(String tbl) {
@@ -107,30 +109,32 @@ public class DocsReq extends AnsonBody {
 		super(null, uri);
 		blockSeq = -1;
 		docTabl = syncTask;
-		// doc.folder = "";
 	}
 
 	public DocsReq(String uri) {
 		super(null, uri);
 		blockSeq = -1;
-		// subfolder = "";
 	}
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
 		super(parent, uri);
 		blockSeq = -1;
-		// subfolder = "";
 	}
 
 	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
 		super(parent, uri);
 		device = new Device(null, null, p.device());
-		doc = new ExpSyncDoc(p);
-		clientpath(p.fullpath());
-		// docId = p.recId();
-		// device = p.device();
+		doc = new ExpSyncDoc(p)
+				.clientpath(p.fullpath());
 	}
 
+
+	public DocsReq(String entityname, ExpSyncDoc doc, String uri) {
+		super(null, uri);
+		this.device = new Device(null, null, doc.device());
+		this.doc = doc.escapeClientpath();
+		this.docTabl = entityname;
+	}
 
 	protected String stamp;
 	public String stamp() { return stamp; }
@@ -138,20 +142,22 @@ public class DocsReq extends AnsonBody {
 	/**
 	 * The page of quirying client files status - not for used between jservs. 
 	 */
-	protected PathsPage syncing;
-	public PathsPage syncing() { return syncing; }
+	protected PathsPage syncingPage;
+	public PathsPage syncingPage() { return syncingPage; }
 
 	protected Device device; 
 	public Device device() { return device; }
+	public DocsReq device(String devid) {
+		device = new Device(devid, null);
+		return this;
+	}
 	public DocsReq device(Device d) {
 		device = d;
 		return this;
 	}
 
-	/** @deprecated */
-	protected ArrayList<SyncDoc> syncQueries;
-	/**@deprecated replaced by DocsPage.paths */
-	public Set<String> syncQueries() { return syncing.clientPaths.keySet(); }
+	protected ArrayList<ExpSyncDoc> syncQueries;
+	public Set<String> syncQueries() { return syncingPage.clientPaths.keySet(); }
 
 	/** TODO visibility = package */
 	public long blockSeq;
@@ -210,7 +216,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq syncing(PathsPage page) {
-		this.syncing = page;
+		this.syncingPage = page;
 		return this;
 	}
 
@@ -219,8 +225,10 @@ public class DocsReq extends AnsonBody {
 		if (isblank(this.device, "\\.", "/"))
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
-		doc = new ExpSyncDoc(file);
-		clientpath(file.fullpath()); 
+		doc = doc == null
+			? new ExpSyncDoc(file).clientpath(file.fullpath()).folder(usr.device + "-" + usr.uid())
+			: doc; 
+
 		// this.docName = file.clientname();
 		// this.createDate = file.cdate();
 		this.blockSeq = 0;
@@ -230,7 +238,7 @@ public class DocsReq extends AnsonBody {
 	}
 
 	public DocsReq blockUp(int seq, DocsResp resp, String b64, SessionInf ssinf) throws SemanticException {
-		return blockUp(seq, resp.doc, b64, ssinf);
+		return blockUp(seq, resp.xdoc, b64, ssinf);
 	}
 
 	public DocsReq blockUp(long sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
@@ -246,21 +254,24 @@ public class DocsReq extends AnsonBody {
 	 * 
 	 * @param sequence
 	 * @param doc
-	 * @param s64
+	 * @param b64
 	 * @param usr
 	 * @return this
 	 * @throws SemanticException
 	 */
-	public DocsReq blockUp(long sequence, IFileDescriptor doc, String s64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(long sequence, IFileDescriptor doc, String b64, SessionInf usr) throws SemanticException {
 		this.device = new Device(usr.device, null);
 		if (isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
 
 		this.blockSeq = sequence;
 
-		this.doc.recId = doc.recId();
-		clientpath(doc.fullpath());
-		this.doc.uri64 = s64;
+		this.doc = doc instanceof ExpSyncDoc
+				? (ExpSyncDoc) doc : new ExpSyncDoc(doc);
+
+//		this.doc.recId = doc.recId();
+//		this.doc.clientpath(doc.fullpath());
+		this.doc.uri64 = b64;
 
 		this.a = A.blockUp;
 		return this;
@@ -270,9 +281,9 @@ public class DocsReq extends AnsonBody {
 		this.device = new Device(usr.device, null);
 
 		this.blockSeq = startAck.blockSeqReply;
-
-		this.doc.recId = startAck.doc.recId();
-		clientpath(startAck.doc.fullpath());
+		this.doc = startAck.xdoc;
+		// this.doc.recId = startAck.xdoc.recId();
+		// this.doc.clientpath(startAck.xdoc.fullpath());
 
 		this.a = A.blockAbort;
 		return this;
@@ -282,10 +293,11 @@ public class DocsReq extends AnsonBody {
 		this.device = new Device(usr.device, null);
 
 		this.blockSeq = resp.blockSeqReply;
+		this.a = A.blockEnd;
 
-		this.doc.recId = resp.doc.recId();
-		clientpath(resp.doc.fullpath())
-			.a = A.blockEnd;
+		this.doc = resp.xdoc;
+		// this.doc.recId = resp.xdoc.recId();
+		// this.doc.clientpath(resp.xdoc.fullpath());
 		return this;
 	}
 
@@ -294,30 +306,30 @@ public class DocsReq extends AnsonBody {
 		return this;
 	}
 
-	public DocsReq folder(String name) {
-		doc.folder = name;
-		return this;
-	}
+//	public DocsReq folder(String name) {
+//		doc.folder = name;
+//		return this;
+//	}
 
-	public DocsReq share(ExpSyncDoc p) {
-		doc.shareflag = p.shareflag;
-		doc.shareby = p.shareby;
-		doc.sharedate = p.sharedate;
-		return this;
-	}
+//	public DocsReq share(ExpSyncDoc p) {
+//		doc.shareflag = p.shareflag;
+//		doc.shareby = p.shareby;
+//		doc.sharedate = p.sharedate;
+//		return this;
+//	}
 
 	/**
 	 * @since 1.4.25, path is converted to unix format since a windows path 
-	 * is not a valide json string.
+	 * is not a valid json string.
 	 * @param path
 	 * @return
-	 */
 	public DocsReq clientpath(String path) {
 		doc.clientpath = separatorsToUnix(path);
 		return this;
 	}
 
 	public String clientpath() { return doc.clientpath; }
+	 */
 
 	public DocsReq resetChain(boolean set) {
 		this.reset = set;
@@ -325,8 +337,19 @@ public class DocsReq extends AnsonBody {
 	}
 	
 	public DocsReq queryPath(String device, String fullpath) {
-		clientpath(fullpath);
+		this.doc.clientpath = fullpath;
 		this.device = new Device(device, null);
+		return this;
+	}
+
+	public DocsReq doc(String device, String fullpath) {
+		this.device = new Device(device, null);
+		this.doc = new ExpSyncDoc().device(device).clientpath(fullpath);
+		return this;
+	}
+
+	public AnsonBody doc(ExpSyncDoc doc) {
+		this.doc = doc;
 		return this;
 	}
 }

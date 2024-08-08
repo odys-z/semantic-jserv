@@ -39,15 +39,15 @@ class BlockChainTest {
 		String uid = "tester";
 		// chain = new BlockChain("$VOLUME_HOME", uid, ssid, clientpath, "1911-10-10 10:10:10");
 		String tempDir = IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid);
-		chain = new BlockChain(tempDir, clientpath, "1911-10-10 10:10:10", "");
+		chain = new BlockChain("h_photos", tempDir, "dev-id", clientpath, "1911-10-10 10:10:10", "");
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
-		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.clientpath)
-				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.clientpath));
+		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.doc.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.doc.clientpath));
 
 		DocsResp resp = (DocsResp) new DocsResp()
-				.doc( (SyncDoc) new SyncDoc()
+				.doc( (ExpSyncDoc) new ExpSyncDoc()
 						.fullpath(clientpath));
 
 		// client side 
@@ -92,14 +92,16 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.3gp";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid), clientpath, "1911-10-10 10:10:10", "");
+		chain = new BlockChain("h_photos", IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid),
+				"dev-id2", clientpath, "1911-10-10 10:10:10", "");
 
 		assertTrue(eq("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
-		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.clientpath)
-				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.clientpath));
+		assertTrue(eq("/sdcard/0/Downloads/test.3gp", chain.doc.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.doc.clientpath));
 
-		DocsResp resp = (DocsResp) new DocsResp().doc((SyncDoc) new SyncDoc().fullpath(clientpath));
+		DocsResp resp = (DocsResp) new DocsResp()
+					.doc((ExpSyncDoc) new ExpSyncDoc().fullpath(clientpath));
 
 		// client side 
 		String b64;
@@ -162,18 +164,21 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.aborting";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain(IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid), clientpath, "1911-10-10 10:10:10", "");
+		chain = new BlockChain("h_photos",
+				IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid),
+				"dev-id3", clientpath, "1911-10-10 10:10:10", "");
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.aborting", chain.outputPath));
-		assertTrue(eq("/sdcard/0/Downloads/test.aborting", chain.clientpath)
-				|| eq("\\sdcard\\0\\Downloads\\test.aborting", chain.clientpath));
+		assertTrue(eq("/sdcard/0/Downloads/test.aborting", chain.doc.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.aborting", chain.doc.clientpath));
 
 		String b64;
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");
 		ssinf.device = "local junit";
 		
-		DocsResp resp = (DocsResp) new DocsResp().doc((SyncDoc) new SyncDoc().fullpath(clientpath));
+		DocsResp resp = (DocsResp) new DocsResp()
+				.doc((ExpSyncDoc) new ExpSyncDoc().fullpath(clientpath));
 
 		b64 = AESHelper.encode64("1. Hello\n".getBytes());
 		DocsReq b0 = new DocsReq().blockUp(0, resp, b64, ssinf);

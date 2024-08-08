@@ -1,20 +1,22 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Date;
 
+import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.tier.docs.SyncDoc.SyncFlag;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -37,41 +39,41 @@ public class DocUtils {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFileBy64(DATranscxt syb, String conn, ExpSyncDoc photo,
-			IUser usr, ExpDocTableMeta meta, Update onFileCreateSql)
-			throws TransException, SQLException, IOException {
-		if (LangExt.isblank(photo.fullpath()))
-			throw new SemanticException("The client path can't be null/empty.");
-		
-		if (LangExt.isblank(photo.folder(), " - - "))
-			throw new SemanticException("Folder of managed docs cannot be empty - which is required for creating media files.");
-
-		Insert ins = syb
-			.insert(meta.tbl, usr)
-			.nv(meta.org, photo.org)
-			.nv(meta.uri, photo.uri64)
-			.nv(meta.device, photo.device())
-			.nv(meta.resname, photo.pname)
-			.nv(meta.synoder, usr.deviceId())
-			.nv(meta.fullpath, photo.fullpath())
-			.nv(meta.createDate, photo.createDate)
-			.nv(meta.folder, photo.folder())
-			.nv(meta.shareflag, photo.shareflag)
-			.nv(meta.shareby, photo.shareby)
-			.nv(meta.shareDate, photo.sharedate)
-			.nv(meta.size, photo.size)
-			.post(onFileCreateSql);
-			;
-		
-		if (!LangExt.isblank(photo.mime))
-			ins.nv(meta.mime, photo.mime);
-		
-		SemanticObject res = (SemanticObject) ins
-				.ins(syb.instancontxt(conn, usr)
-						.creator(((DBSyntableBuilder) syb)
-						.loadNyquvect(conn)));
-		return res.resulve(meta.tbl, meta.pk, -1);
-	}
+//	public static String createFileBy64(DATranscxt syb, String conn, ExpSyncDoc photo,
+//			IUser usr, ExpDocTableMeta meta, Update onFileCreateSql)
+//			throws TransException, SQLException, IOException {
+//		if (LangExt.isblank(photo.fullpath()))
+//			throw new SemanticException("The client path can't be null/empty.");
+//		
+//		if (LangExt.isblank(photo.folder(), " - - "))
+//			throw new SemanticException("Folder of managed docs cannot be empty - which is required for creating media files.");
+//
+//		Insert ins = syb
+//			.insert(meta.tbl, usr)
+//			.nv(meta.org, photo.org)
+//			.nv(meta.uri, photo.uri64)
+//			.nv(meta.device, photo.device())
+//			.nv(meta.resname, photo.pname)
+//			.nv(meta.synoder, usr.deviceId())
+//			.nv(meta.fullpath, photo.fullpath())
+//			.nv(meta.createDate, photo.createDate)
+//			.nv(meta.folder, photo.folder())
+//			.nv(meta.shareflag, photo.shareflag)
+//			.nv(meta.shareby, photo.shareby)
+//			.nv(meta.shareDate, photo.sharedate)
+//			.nv(meta.size, photo.size)
+//			.post(onFileCreateSql);
+//			;
+//		
+//		if (!LangExt.isblank(photo.mime))
+//			ins.nv(meta.mime, photo.mime);
+//		
+//		SemanticObject res = (SemanticObject) ins
+//				.ins(syb.instancontxt(conn, usr)
+//						.creator(((DBSyntableBuilder) syb)
+//						.loadNyquvect(conn)));
+//		return res.resulve(meta.tbl, meta.pk, -1);
+//	}
 
 	/**
 	 * <p>Create a doc record with a local file, e.g. h_photos - call this after duplication is checked.</p>
@@ -96,8 +98,8 @@ public class DocUtils {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static String createFileB64(DATranscxt st, String conn, SyncDoc photo,
-			IUser usr, DocTableMeta meta, Update onFileCreateSql)
+	public static String createFileB64(DATranscxt st, String conn, ExpSyncDoc photo,
+			IUser usr, ExpDocTableMeta meta, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
 		if (LangExt.isblank(photo.fullpath()))
 			throw new SemanticException("The client path can't be null/empty.");
@@ -109,17 +111,17 @@ public class DocUtils {
 			.insert(meta.tbl, usr)
 			// .nv(meta.domain, usr.orgId())
 			.nv(meta.org, photo.org)
-			.nv(meta.uri, photo.uri)
-			.nv(meta.clientname, photo.pname)
-			.nv(meta.synoder, usr.deviceId())
+			.nv(meta.uri, photo.uri64)
+			.nv(meta.resname, photo.pname)
+			.nv(meta.device, usr.deviceId())
 			.nv(meta.fullpath, photo.fullpath())
 			.nv(meta.createDate, photo.createDate)
 			.nv(meta.folder, photo.folder())
-			.nv(meta.shareflag, photo.shareFlag)
+			.nv(meta.shareflag, photo.shareflag)
 			.nv(meta.shareby, photo.shareby)
 			.nv(meta.shareDate, photo.sharedate)
 			.nv(meta.size, photo.size)
-			.nv(meta.syncflag, SyncFlag.publish) // temp for MVP 0.2.1
+			// .nv(meta.syncflag, SyncFlag.publish) // temp for MVP 0.2.1
 			;
 		
 		if (!LangExt.isblank(photo.mime))
@@ -136,31 +138,32 @@ public class DocUtils {
 		return pid;
 	}
 	
-	public static String createFileB64(DBSyntableBuilder st, String conn,
-			ExpSyncDoc photo, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) throws TransException, SQLException {
-		if (LangExt.isblank(photo.fullpath()))
+	public static String createFileBy64(DBSyntableBuilder st, String conn,
+			ExpSyncDoc doc, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) throws TransException, SQLException {
+		if (LangExt.isblank(doc.fullpath()))
 			throw new SemanticException("The client path can't be null/empty.");
 		
-		if (LangExt.isblank(photo.folder(), " - - "))
+		if (LangExt.isblank(doc.folder(), " - - "))
 			throw new SemanticException("Folder of managed docs cannot be empty - which is required for creating media files.");
 
 		Insert ins = st
 			.insert(meta.tbl, usr)
-			.nv(meta.org, photo.org)
-			.nv(meta.uri, photo.uri64)
-			.nv(meta.resname, photo.pname)
-			.nv(meta.synoder, usr.deviceId())
-			.nv(meta.fullpath, photo.fullpath())
-			.nv(meta.createDate, photo.createDate)
-			.nv(meta.folder, photo.folder())
-			.nv(meta.shareflag, photo.shareflag)
-			.nv(meta.shareby, photo.shareby)
-			.nv(meta.shareDate, photo.sharedate)
-			.nv(meta.size, photo.size)
+			.nv(meta.org, doc.org)
+			.nv(meta.uri, doc.uri64)
+			.nv(meta.resname, doc.pname)
+			// .nv(meta.synoder, doc.device)
+			.nv(meta.device, doc.device)
+			.nv(meta.fullpath, doc.fullpath())
+			.nv(meta.createDate, doc.createDate)
+			.nv(meta.folder, doc.folder())
+			.nv(meta.shareflag, ifnull(doc.shareflag, Share.priv))
+			.nv(meta.shareby, ifnull(doc.shareby, usr.uid()))
+			.nv(meta.shareDate, ifnull(doc.sharedate, DateFormat.format(new Date())))
+			.nv(meta.size, doc.size)
 			;
 		
-		if (!LangExt.isblank(photo.mime))
-			ins.nv(meta.mime, photo.mime);
+		if (!LangExt.isblank(doc.mime))
+			ins.nv(meta.mime, doc.mime);
 		
 		// add a synchronizing task
 		// - also triggered as private storage jserv, but no statement will be added
@@ -181,26 +184,11 @@ public class DocUtils {
 	 * @return decode then concatenated absolute path, for file accessing.
 	 * @see EnvPath#decodeUri(String, String)
 	 */
-	public static String resolvePrivRoot(String uri, DocTableMeta meta, String conn) {
+	public static String resolvePrivRoot(String uri, ExpDocTableMeta meta, String conn) {
 		String extroot = ((ShExtFilev2) DATranscxt
 				.getHandler(conn, meta.tbl, smtype.extFilev2))
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, uri);
-	}
-
-	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, DocTableMeta meta)
-			throws TransException, SQLException {
-		ISemantext stx = st.instancontxt(conn, usr);
-		AnResultset rs = (AnResultset) st
-				.select(meta.tbl)
-				.col("uri").col("folder")
-				.whereEq("pid", docId).rs(stx)
-				.rs(0);
-	
-		if (!rs.next())
-			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
-	
-		return resolvExtroot(conn, rs.getString("uri"), meta);
 	}
 
 	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, ExpDocTableMeta meta)
@@ -218,15 +206,6 @@ public class DocUtils {
 		return resolvExtroot(conn, rs.getString("uri"), meta);
 	}
 
-	public static String resolvExtroot(String conn, String extUri, DocTableMeta meta) throws TransException, SQLException {
-		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
-		if (h2 == null)
-			throw new SemanticException("To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",
-					conn, meta.tbl);
-		String extroot = h2.getFileRoot();
-		return EnvPath.decodeUri(extroot, extUri);
-	}
-
 	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta) throws TransException, SQLException {
 		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
 		if (h2 == null)
@@ -235,4 +214,9 @@ public class DocUtils {
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
 	}
+
+//	public static String createFileBy64(DATranscxt st, String conn, ExpSyncDoc photo, IUser usr, ExpDocTableMeta meta,
+//			Update ... post) {
+//		return null;
+//	}
 }

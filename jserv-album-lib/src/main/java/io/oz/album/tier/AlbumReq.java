@@ -14,6 +14,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.tier.DatasetierReq;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
@@ -96,6 +97,11 @@ public class AlbumReq extends DocsReq {
 		super(parent, uri);
 	}
 
+	public AlbumReq(ExpSyncDoc p, String uri) {
+		super(uri);
+		this.doc = p;
+	}
+
 	public AlbumReq collectId(String cid) {
 		this.collectId = cid;
 		return this;
@@ -133,7 +139,7 @@ public class AlbumReq extends DocsReq {
 		this.photo = new PhotoRec();
 		this.photo.collectId = collId;
 		this.photo.fullpath(fullpath);
-		this.photo.uri = b64;
+		this.photo.uri64 = b64;
 		this.photo.pname = p.getFileName().toString();
 		
 		this.a = A.insertPhoto;
@@ -175,7 +181,7 @@ public class AlbumReq extends DocsReq {
 	public AlbumReq del(String device, String clientpath) {
 		this.photo = new PhotoRec();
 		this.device = new Device(device, null);
-		clientpath(clientpath);
+		this.photo.clientpath = clientpath;
 		this.a = A.del;
 		return this;
 	}

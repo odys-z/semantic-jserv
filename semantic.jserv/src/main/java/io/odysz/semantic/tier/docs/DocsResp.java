@@ -3,7 +3,6 @@ package io.odysz.semantic.tier.docs;
 import java.sql.SQLException;
 
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.x.SemanticException;
@@ -16,16 +15,13 @@ import io.odysz.semantics.x.SemanticException;
  *
  */
 public class DocsResp extends AnsonResp {
-	/**@deprecated */
-	public SyncDoc doc;
-
 	public ExpSyncDoc xdoc;
 
-	protected PathsPage syncing;
+	protected PathsPage syncingPage;
 
 	protected String collectId;
 
-	public PathsPage pathsPage() { return syncing; }
+	public PathsPage pathsPage() { return syncingPage; }
 	
 	/**
 	 * <p>Set clientpaths page (rs).</p>
@@ -36,21 +32,21 @@ public class DocsResp extends AnsonResp {
 	 * @throws SQLException
 	 * @throws SemanticException 
 	 */
-	public DocsResp pathsPage(AnResultset rs, DocTableMeta meta)
+	public DocsResp pathsPage(AnResultset rs, ExpDocTableMeta meta)
 			throws SQLException, SemanticException {
-		if (syncing == null)
-			syncing = new PathsPage();
-		syncing.paths(rs, meta);
+		if (syncingPage == null)
+			syncingPage = new PathsPage();
+		syncingPage.paths(rs, meta);
 		return this;
 	}
 
-	public PathsPage syncing() { return syncing; }
+	public PathsPage syncing() { return syncingPage; }
 	public DocsResp syncing(PathsPage page) {
-		syncing = page;
+		syncingPage = page;
 		return this;
 	}
-	public DocsResp syncing(DocsReq req) {
-		syncing = req.syncing;
+	public DocsResp syncingPage(DocsReq req) {
+		syncingPage = req.syncingPage;
 		return this;
 	}
 	
@@ -62,19 +58,17 @@ public class DocsResp extends AnsonResp {
 		return this;
 	}
 
-	public DocsResp doc(SyncDoc d) {
-		this.doc = d;
+	public DocsResp doc(ExpSyncDoc d) {
+		this.xdoc = d;
 		return this;
 	}
 
-	public DocsResp doc(AnResultset rs, ExpDocTableMeta meta) { return null; }
-
-	public DocsResp doc(AnResultset rs, DocTableMeta meta)
+	public DocsResp doc(AnResultset rs, ExpDocTableMeta meta)
 			throws SQLException, SemanticException {
 		if (rs != null && rs.total() > 1)
 			throw new SemanticException("This method can only handling 1 record.");
 		rs.beforeFirst().next();
-		this.doc = new SyncDoc(rs, meta);
+		this.xdoc = new ExpSyncDoc(rs, meta);
 		return this;
 	}
 
@@ -89,6 +83,10 @@ public class DocsResp extends AnsonResp {
 	public Device device() { return device; }
 	public DocsResp device(Device device) {
 		this.device = device;
+		return this;
+	}
+	public DocsResp device(String deviceId) {
+		this.device = new Device(deviceId, null);
 		return this;
 	}
 

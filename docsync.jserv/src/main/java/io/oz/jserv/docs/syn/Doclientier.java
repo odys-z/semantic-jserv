@@ -227,9 +227,6 @@ public class Doclientier extends Semantier {
 	public List<DocsResp> syncUp(String tabl, List<? extends ExpSyncDoc> videos,
 			OnProcess onProc, OnOk... docOk)
 			throws TransException, AnsonException, IOException {
-		// SessionInf photoUser = client.ssInfo();
-		// photoUser.device = workerId;
-
 		return pushBlocks(
 				tabl, videos, onProc,
 				isNull(docOk) ? new OnOk() {
@@ -239,17 +236,6 @@ public class Doclientier extends Semantier {
 				} : docOk[0],
 				errCtx);
 	}
-
-	/*
-	public static void setLocalSync(DATranscxt localSt, String conn,
-			ExpDocTableMeta meta, SyncDoc doc, String syncflag, SyncRobot robot)
-			throws TransException, SQLException {
-		localSt.update(meta.tbl, robot)
-			// .nv(meta.syncflag, SyncFlag.hub)
-			.whereEq(meta.pk, doc.recId)
-			.u(localSt.instancontxt(conn, robot));
-	}
-	*/
 
 	/**
 	 * Downward synchronizing.
@@ -348,10 +334,8 @@ public class Doclientier extends Semantier {
 			int totalBlocks = 0;
 
 			ExpSyncDoc p = videos.get(px);
-			DocsReq req = new DocsReq(tbl, uri)
-					.folder(p.folder())
-					.share(p)
-					.device(new Device(user.device, null))
+			DocsReq req  = new DocsReq(tbl, p, uri)
+					.device(user.device)
 					.resetChain(true)
 					.blockStart(p, user);
 
@@ -362,8 +346,9 @@ public class Doclientier extends Semantier {
 				resp0 = client.commit(q, errHandler);
 
 				String pth = p.fullpath();
-				if (!pth.equals(resp0.doc.fullpath()))
-					Utils.warn("Resp is not replied with exactly the same path: %s", resp0.doc.fullpath());
+				if (!pth.equals(resp0.xdoc.fullpath()))
+					Utils.warn("Resp is not replied with exactly the same path: %s",
+							resp0.xdoc.fullpath());
 
 				totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
 				if (proc != null) proc.proc(videos.size(), px, 0, totalBlocks, resp0);
@@ -441,14 +426,15 @@ public class Doclientier extends Semantier {
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
-		DocsReq req = new DocsReq(docTabl, uri);
-		req.a(A.rec);
-		req.doc.recId = docId;
+		DocsReq req = (DocsReq) new DocsReq(docTabl, uri)
+					.pageInf(0, -1, "pid", docId)
+					.a(A.rec);
 
 		DocsResp resp = null;
 		try {
-			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
-										.header(header);
+			AnsonMsg<DocsReq> q = client
+								.<DocsReq>userReq(uri, Port.docsync, req)
+								.header(header);
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
@@ -485,8 +471,8 @@ public class Doclientier extends Semantier {
 	
 	public DocsResp synDel(String tabl, String device, String clientpath) {
 		DocsReq req = (DocsReq) new DocsReq(tabl, uri)
-				.device(new Device(device, null))
-				.clientpath(clientpath)
+				// .device(new Device(device, null))
+				.doc(device, clientpath)
 				.a(A.del);
 
 		DocsResp resp = null;
@@ -506,45 +492,45 @@ public class Doclientier extends Semantier {
 		return resp;
 	}
 
-	DocsResp synClosePush(ExpSyncDoc p, String docTabl)
-			throws AnsonException, IOException, TransException, SQLException {
-
-		DocsReq clsReq = (DocsReq) new DocsReq()
-						.docTabl(docTabl)
-						// .org(robot.orgId)
-						.queryPath(p.device(), p.fullpath())
-						.a(A.synclosePush);
-
-		AnsonMsg<DocsReq> q = client
-				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
-
-		DocsResp r = client.commit(q, errCtx);
-		return r;
-	}
+//	DocsResp synClosePush(ExpSyncDoc p, String docTabl)
+//			throws AnsonException, IOException, TransException, SQLException {
+//
+//		DocsReq clsReq = (DocsReq) new DocsReq()
+//						.docTabl(docTabl)
+//						// .org(robot.orgId)
+//						.queryPath(p.device(), p.fullpath())
+//						.a(A.synclosePush);
+//
+//		AnsonMsg<DocsReq> q = client
+//				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
+//
+//		DocsResp r = client.commit(q, errCtx);
+//		return r;
+//	}
 	
-	/**
-	 * Tell upper synode to close the doc downloading.
-	 * @param p
-	 * @param docTabl
-	 * @return
-	 * @throws SemanticException
-	 * @throws AnsonException
-	 * @throws IOException
-	 */
-	DocsResp synClosePull(ExpSyncDoc p, String docTabl)
-			throws SemanticException, AnsonException, IOException {
-		DocsReq clsReq = (DocsReq) new DocsReq()
-						.docTabl(docTabl)
-						// .org(robot.orgId)
-						.queryPath(p.device(), p.fullpath())
-						.a(A.synclosePull);
-
-		AnsonMsg<DocsReq> q = client
-				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
-
-		DocsResp r = client.commit(q, errCtx);
-		return r;
-	}
+//	/**
+//	 * Tell upper synode to close the doc downloading.
+//	 * @param p
+//	 * @param docTabl
+//	 * @return
+//	 * @throws SemanticException
+//	 * @throws AnsonException
+//	 * @throws IOException
+//	 */
+//	DocsResp synClosePull(ExpSyncDoc p, String docTabl)
+//			throws SemanticException, AnsonException, IOException {
+//		DocsReq clsReq = (DocsReq) new DocsReq()
+//						.docTabl(docTabl)
+//						// .org(robot.orgId)
+//						.queryPath(p.device(), p.fullpath())
+//						.a(A.synclosePull);
+//
+//		AnsonMsg<DocsReq> q = client
+//				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
+//
+//		DocsResp r = client.commit(q, errCtx);
+//		return r;
+//	}
 	
 	/**
 	 * Insert the locally ready doc (localpath) into table.
@@ -573,7 +559,7 @@ public class Doclientier extends Semantier {
 				// .nv(meta.org(), usr.orgId())
 				.nv(meta.uri, doc.uri64)
 				.nv(meta.resname, doc.pname)
-				.nv(meta.synoder, usr.deviceId())
+				.nv(meta.device, usr.deviceId())
 				.nv(meta.fullpath, doc.fullpath())
 				.nv(meta.folder, doc.folder())
 				.nv(meta.size, size)
@@ -584,8 +570,6 @@ public class Doclientier extends Semantier {
 		
 		if (!isblank(doc.mime))
 			ins.nv(meta.mime, doc.mime);
-		
-		// ins.post(Docsyncer.onDocreate(doc, meta, usr));
 
 		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
 		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
@@ -642,8 +626,9 @@ public class Doclientier extends Semantier {
 				.device(new Device(page.device, null))
 				.a(A.selectSyncs); // v 0.1.50
 
-		AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, port/*MVP 0.2.1 Port.docsync*/, req)
-								.header(header);
+		AnsonMsg<DocsReq> q = client
+				.<DocsReq>userReq(uri, port/*MVP 0.2.1 Port.docsync*/, req)
+				.header(header);
 
 		DocsResp resp = client.commit(q, errCtx);
 
