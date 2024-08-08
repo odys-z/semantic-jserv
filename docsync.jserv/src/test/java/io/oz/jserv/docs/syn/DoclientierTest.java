@@ -254,6 +254,7 @@ class DoclientierTest {
 								// expected
 							}
 						});
+					Utils.logAnson(resp2);
 				} catch (TransException | IOException | SQLException e) {
 					e.printStackTrace();
 					fail(e.getMessage());
