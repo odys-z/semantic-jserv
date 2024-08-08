@@ -12,7 +12,6 @@ import org.apache.commons.io_odysz.FilenameUtils;
 
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
-import io.odysz.common.LangExt;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -84,7 +83,6 @@ public class BlockChain {
 	 * @param targetFolder the file should finally saved to this sub folder (specified by client) 
 	 * @throws IOException
 	 * @throws TransException 
-	 */
 	public BlockChain(String docTabl, String tempDir, String devid,
 			String clientpathRaw, String createDate, String targetFolder)
 			throws IOException, TransException {
@@ -113,7 +111,16 @@ public class BlockChain {
 
 		waitings = new DocsReq().blockSeq(-1);
 	}
+	 */
 
+	/**
+	 * 
+	 * @param docTabl
+	 * @param tempDir
+	 * @param devid
+	 * @param doc
+	 * @throws IOException
+	 */
 	public BlockChain(String docTabl, String tempDir, String devid, ExpSyncDoc doc) throws IOException {
 		// doc.clientpath, body.doc.createDate, body.doc.folder()
 		this.docTabl = docTabl;

@@ -266,8 +266,7 @@ public class DocsReq extends UserReq {
 
 		this.blockSeq = sequence;
 
-		this.doc = doc instanceof ExpSyncDoc
-				? (ExpSyncDoc) doc : new ExpSyncDoc(doc);
+		this.doc = new ExpSyncDoc(doc);
 
 //		this.doc.recId = doc.recId();
 //		this.doc.clientpath(doc.fullpath());
