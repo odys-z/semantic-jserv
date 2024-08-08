@@ -1,14 +1,8 @@
 package io.oz.jserv.docsync;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-
-import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.meta.SynChangeMeta;
-import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.transact.x.TransException;
-
 /**
+ * @deprecated replaced by {@link io.oz.jserv.docs.meta.DeviceTableMeta}
+ * 
  * Document records' table meta.
  * <p>For Docsync.jserv, this meta is used for both client and server side.
  * But the client should never use it as a parameter of API - only use a
