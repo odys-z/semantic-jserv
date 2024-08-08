@@ -236,7 +236,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 				meta.syncflag,
 				meta.mime,
 				meta.fullpath,
-				meta.synoder,
+				meta.device,
 				meta.folder,
 				meta.size
 		};
@@ -250,7 +250,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		if (synpageCols == null)
 			synpageCols = new String[] {
 					meta.pk,
-					meta.synoder,
+					meta.device,
 					meta.fullpath,
 					meta.shareby,
 					meta.shareDate,
@@ -270,7 +270,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.size = rs.getLong(meta.size, 0);
 		
 		this.clientpath =  rs.getString(meta.fullpath);
-		this.device =  rs.getString(meta.synoder);
+		this.device =  rs.getString(meta.device);
 		this.folder = rs.getString(meta.folder);
 		
 		try {
@@ -341,7 +341,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		this.size = rs.getLong(meta.size, 0);
 		
 		this.clientpath =  rs.getString(meta.fullpath);
-		this.device =  rs.getString(meta.synoder);
+		this.device =  rs.getString(meta.device);
 		this.folder = rs.getString(meta.folder);
 		
 		try {
@@ -423,7 +423,7 @@ public class SyncDoc extends Anson implements IFileDescriptor {
 		return q.cols(
 				q.alias().sql(null) + "." + meta.pk,
 				meta.resname, meta.createDate,
-				meta.folder, meta.fullpath, meta.synoder,
+				meta.folder, meta.fullpath, meta.device,
 				meta.uri, meta.shareDate,
 				// meta.tags, meta.geox, meta.css, meta.geoy, 
 				meta.mime)

@@ -151,7 +151,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		}
 		catch (Exception ex) {
 			Utils.warn("SSesion: Implementation class of IUser hasn't been configured correctly in: %s/t[id=%s]/k=%s, check the value.",
-					Configs.cfgFile, Configs.keys.deftXTableId, Configs.keys.usrClzz);
+					Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.usrClzz);
 			ex.printStackTrace();
 		}
 

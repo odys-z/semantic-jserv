@@ -95,15 +95,15 @@ public class DocTableMeta extends SyntityMeta {
 		shareflag = "shareflag";
 		
 		globalIds = new HashSet<String>() {
-			{add(synoder);};
+			{add(device);};
 			{add(fullpath);};
 		};
 	}
 
-	@Override
-	public HashSet<String> globalIds() {
-		return globalIds;
-	}
+//	@Override
+//	public HashSet<String> globalIds() {
+//		return globalIds;
+//	}
 
 	@Override
 	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
