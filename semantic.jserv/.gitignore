@@ -5,4 +5,5 @@ target/
 /.metadata/
 RemoteSystemsTempFiles
 *.jar
-tester
+**/tester
+test/results
