@@ -1,5 +1,7 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
@@ -10,10 +12,12 @@ import java.util.Map;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.common.Utils;
 import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSynmantics.ShSynChange;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
@@ -25,6 +29,10 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.transact.x.TransException;
 
+/**
+ * Syn-domain's sessions manager.
+ * @see #sessions
+ */
 public class Synoder {
 	final String synode;
 	final String myconn;
@@ -32,10 +40,11 @@ public class Synoder {
 	final String org;
 	final SynodeMode mod;
 	
-	/** {synode: session-persist } */
+	/** {peer: session-persist } */
 	HashMap<String, ExessionPersist> sessions;
-	DBSyntableBuilder mysynbuilder;
-	public DBSyntableBuilder trb() { return mysynbuilder; }
+
+	// DBSyntableBuilder mysynbuilder;
+	// public DBSyntableBuilder trb() { return mysynbuilder; }
 
 	/**
 	 * Get my syn-transact-builder for the session with the peer {@code withPeer}. 
@@ -150,22 +159,25 @@ public class Synoder {
 	}
 
 	/**
-	 * Initiate a synchronization exchange sesseion using my connection.
+	 * Initiate a synchronization exchange session using my connection.
 	 * @param peer
 	 * @param jserv
 	 * @param domain
-	 * @return init request
+	 * @return initiate request
 	 * @throws Exception 
 	 */
 	public SyncReq syninit(String peer, String domain)
 			throws Exception {
+		// TO BE CONTINUED:
+		// Move stamp to ExessionPersist.
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
 				.loadNyquvect(myconn);
 
-		ExessionPersist xp = new ExessionPersist(b0, peer);
+		ExessionPersist xp = new ExessionPersist(domain, myconn, peer)
+				.loadNyquvect(myconn);
+		b0 = xp.trb;
 		ExchangeBlock b = b0.initExchange(xp, peer);
 
-		// synssion(peer, xp);
 		return new SyncReq(null, domain)
 				.exblock(b);
 	}
@@ -243,15 +255,23 @@ public class Synoder {
 					snm.device, "#" + synode
 					);
 		
-		mysynbuilder = new DBSyntableBuilder(domain, myconn, synode, mod)
-							.loadNyquvect(myconn);
+//		mysynbuilder = new DBSyntableBuilder(domain, myconn, synode, mod)
+//							.loadNyquvect(myconn);
 	
 		if (handlers != null)
 		for (SemanticHandler h : handlers)
 			if (h instanceof ShSynChange)
-			mysynbuilder.registerEntity(myconn, ((ShSynChange)h).entm);
+			DBSyntableBuilder.registerEntity(myconn, ((ShSynChange)h).entm);
 
 		return this;
+	}
+
+	public int entities(SyntityMeta docm, String ... domain) throws SQLException, TransException {
+		if (!isNull(domain) && !eq(this.domain, domain[0]))
+			Utils.warnT(new Object() {},
+					"Loading data from domain (%s) other than managed (%s) by me?",
+					domain, this.domain);
+		return this.trb(this.domain).entities(docm);
 	}
 
 }

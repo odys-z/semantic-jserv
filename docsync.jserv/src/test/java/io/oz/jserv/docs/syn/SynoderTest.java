@@ -299,7 +299,7 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.trb().entities(docm));
+		assertEquals(2, x.entities(docm));
 
 		Utils.logrst("X sync by Z", test, ++no);
 		Synoder z = syntiers[Z].synoder(zsu);
@@ -307,14 +307,14 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.trb().entities(docm));
-		assertEquals(2, z.trb().entities(docm));
+		assertEquals(2, x.entities(docm));
+		assertEquals(2, z.entities(docm));
 
 		Utils.logrst("X sync by Y", test, ++no);
 		syncpair(zsu, X, Y, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
-		assertEquals(2, y.trb().entities(docm));
+		assertEquals(2, y.entities(docm));
 	}
 	
 	void syncpair(String domain, int sx, int cx, int testno, int subno)
