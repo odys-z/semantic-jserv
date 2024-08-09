@@ -17,7 +17,6 @@ import java.util.Date;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
-import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
@@ -57,10 +56,10 @@ class SynoderTest {
 	public static final String testDir = "./src/test/res/";
 	public static final String volumeDir = "./src/test/res/volume";
 
-	static final String uri64 = "iVBORw0KGgoAAAANSUhEUgAAADwAAAAoCAIAAAAt2Q6oAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AYSCBkDT4nw4QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABjSURBVFjD7dXBCYAwEATAO7FE27QNu7GFxA424EN8zH6XwHAEtus4K2SO2M7Udsd2e93Gl38NNDQ0NPS/sy82LydvXs5ia4fvAQ0NDQ39Zfq+XBoaGhoaGhoaGhoaGhq6qqoeVmUNAc7sDO0AAAAASUVORK5CYII=";
+	static final String _uri64 = "iVBORw0KGgoAAAANSUhEUgAAADwAAAAoCAIAAAAt2Q6oAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AYSCBkDT4nw4QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABjSURBVFjD7dXBCYAwEATAO7FE27QNu7GFxA424EN8zH6XwHAEtus4K2SO2M7Udsd2e93Gl38NNDQ0NPS/sy82LydvXs5ia4fvAQ0NDQ39Zfq+XBoaGhoaGhoaGhoaGhq6qqoeVmUNAc7sDO0AAAAASUVORK5CYII=";
 	static final int U = 0;
 	static final int V = 1;
-	// static final int _8080 = 8090;
+
 	static final String IP = "127.0.0.1";
 
 	static ErrorCtx errLog;
@@ -76,8 +75,6 @@ class SynoderTest {
 	static final int Z = 2;
 	static final int W = 3;
 	
-	// static Doclientier[] doctiers = new Doclientier[2];
-	// static String[] jservs;
 	static Syntier[] syntiers  = new Syntier[4];
 	
 	private static AutoSeqMeta aum;
@@ -107,7 +104,6 @@ class SynoderTest {
 			ssm = new SynSessionMeta();
 			prm = new PeersMeta();
 			
-			// jservs = new String[4];
 			for (int s = 0; s < syntiers.length; s++) {
 				String conn = "no-jserv.0" + s;
 
@@ -128,8 +124,7 @@ class SynoderTest {
 				
 				String synode = String.valueOf((char)(Integer.valueOf('X') + (s == W ? -1 : s)));
 
-				syntiers[s] = new Syntier(synode, conn); // .born(conn, 0, 0, ura);
-				// jservs[s]   = "http://" + IP + ":" + (_8080 + s) + "/docsync.jserv";
+				syntiers[s] = new Syntier(synode, conn);
 			}
 
 			errLog = new ErrorCtx() {
@@ -138,7 +133,7 @@ class SynoderTest {
 					fail(msg);
 				}
 			};
-		} catch (TransException | SQLException | SAXException | IOException e) {
+		} catch (TransException | SQLException | IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -149,7 +144,6 @@ class SynoderTest {
 	void testSyntiers() throws Exception {
 		int no = 0;
 		setupeers(++no);
-		// uploadocs(++no);
 		savephotos(++no);
 		syncpeers(++no);
 	}
@@ -247,7 +241,6 @@ class SynoderTest {
 		Synoder y = syntiers[by].synoder(zsu);
 		Synoder x = syntiers[at].synoder(zsu);
 
-		// SyncReq req = y.joinpeer(jservs[X], x.synode, passwd);
 		SyncReq req = y.joinpeer(x.synode, passwd);
 		
 		Utils.logrst(new String[] {x.synode, "on", y.synode, "joining"}, test, sub, ++no);
@@ -264,7 +257,7 @@ class SynoderTest {
 		rep = x.onclosejoin(req);
 	}
 
-	void savephotos(int test) throws SQLException, SAXException, IOException, TransException {
+	void savephotos(int test) throws SQLException, IOException, TransException {
 		Utils.logrst("savephotos()", test);
 
 		int no = 0;
@@ -279,14 +272,14 @@ class SynoderTest {
 		printNyquv(ck);
 	}
 
-	private String createPhoto(int synx) throws IOException, TransException, SQLException, SAXException {
+	private String createPhoto(int synx) throws IOException, TransException, SQLException {
 		Syntier syntier = syntiers[synx];
-		T_Photo photo = new T_Photo(docm, zsu, syntier.synode);
+		T_Photo photo = new T_Photo(docm, ura, syntier.synode);
 
 		photo.createDate = DateFormat.format(new Date());
 		photo.pname = "photo-" + synx;
 		photo.fullpath(syntier.synode + ":/sdcard/" + photo.pname);
-		photo.uri64 = uri64; // accepting new value
+		photo.uri64 = _uri64;
 		photo.folder(syntier.synode);
 		photo.share("ody-" + syntier.synode, Share.pub, new Date());
 
@@ -332,7 +325,6 @@ class SynoderTest {
 		Synoder clt = syntiers[cx].synoder(domain);
 
 		Utils.logrst("client initate", testno, subno, ++no);
-		// SyncReq req  = clt.syninit(srv.synode, jservs[sx], zsu);
 		SyncReq req  = clt.syninit(srv.synode, zsu);
 
 		printChangeLines(ck);
@@ -366,8 +358,8 @@ class SynoderTest {
 	}
 
 	/**
-	 * Wait untile all lights turn int green (true).
-	 * @param greenlights
+	 * Wait until all lights turn into green (true).
+	 * @param green lights
 	 * @param x100ms default 100 times
 	 * @throws InterruptedException
 	 */

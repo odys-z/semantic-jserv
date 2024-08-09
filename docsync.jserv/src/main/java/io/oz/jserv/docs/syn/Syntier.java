@@ -91,7 +91,7 @@ public class Syntier extends ServPort<DocsReq> {
 	 * @throws IOException
 	 */
 	public Syntier(String synoderId, String loconn)
-			throws SemanticException, SQLException, SAXException, IOException {
+			throws SemanticException, SQLException, IOException {
 		super(Port.dbsyncer);
 		synode = isblank(synoderId) ? Configs.getCfg(Configs.keys.synode) : synoderId;
 		myconn = loconn;
@@ -216,12 +216,12 @@ public class Syntier extends ServPort<DocsReq> {
 		SemanticsMap ss = DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
 			(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
 		
-		@SuppressWarnings("unused")
-		Synoder synoder = domains
-				.get(domain)
+		// @SuppressWarnings("unused")
+		// Synoder synoder =
+		domains .get(domain)
 				.born(ss.get(smtype.synChange), 0, 0);
 		
-		doctrb =  new DBSyntableBuilder(
+		doctrb = new DBSyntableBuilder(
 				domain, // FIXME this is not correct. 
 						// FIXME See {@link DBSyntableBuilder}'s issue ee153bcb30c3f3b868413beace8cc1f3cb5c3f7c. 
 				myconn, synode, mod)

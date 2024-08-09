@@ -151,7 +151,6 @@ public class DocUtils {
 			.nv(meta.org, doc.org)
 			.nv(meta.uri, doc.uri64)
 			.nv(meta.resname, doc.pname)
-			// .nv(meta.synoder, doc.device)
 			.nv(meta.device, doc.device)
 			.nv(meta.fullpath, doc.fullpath())
 			.nv(meta.createDate, doc.createDate)
@@ -214,9 +213,4 @@ public class DocUtils {
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
 	}
-
-//	public static String createFileBy64(DATranscxt st, String conn, ExpSyncDoc photo, IUser usr, ExpDocTableMeta meta,
-//			Update ... post) {
-//		return null;
-//	}
 }
