@@ -138,6 +138,18 @@ public class DocUtils {
 		return pid;
 	}
 	
+	/**
+	 * Create doc record and trigger syn-change semantics.
+	 * @param st
+	 * @param conn
+	 * @param doc
+	 * @param usr
+	 * @param meta
+	 * @param onFileCreateSql
+	 * @return doc-id
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	public static String createFileBy64(DBSyntableBuilder st, String conn,
 			ExpSyncDoc doc, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) throws TransException, SQLException {
 		if (LangExt.isblank(doc.fullpath()))
@@ -171,8 +183,7 @@ public class DocUtils {
 
 		ISemantext insCtx = st.instancontxt(conn, usr);
 		SemanticObject res = (SemanticObject) ins.ins(insCtx);
-		String pid = res.resulve(meta.tbl, meta.pk, -1);
-		return pid;
+		return res.resulve(meta.tbl, meta.pk, -1);
 	}
 
 	/**

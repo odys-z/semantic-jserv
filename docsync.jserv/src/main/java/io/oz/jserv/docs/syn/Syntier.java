@@ -225,7 +225,7 @@ public class Syntier extends ServPort<DocsReq> {
 				domain, // FIXME this is not correct. 
 						// FIXME See {@link DBSyntableBuilder}'s issue ee153bcb30c3f3b868413beace8cc1f3cb5c3f7c. 
 				myconn, synode, mod)
-				.loadNyquvect(conn);
+				; // .loadNyquvect(conn);
 		return this;
 	}
 
@@ -356,7 +356,7 @@ public class Syntier extends ServPort<DocsReq> {
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		String id = chainId(usr, body.doc.clientpath);
 		if (!blockChains.containsKey(id))
-			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
+			throw new SemanticException("Uploading blocks must be accessed after starting chain is confirmed.");
 
 		BlockChain chain = blockChains.get(id);
 		chain.appendBlock(body);

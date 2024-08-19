@@ -1,18 +1,14 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.isNull;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.xml.sax.SAXException;
 
-import io.odysz.common.Utils;
 import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.JRobot;
@@ -92,10 +88,11 @@ public class Synoder {
 	public SyncReq joinpeer(String peeradmin, String passwd) throws Exception {
 
 		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod)
-				.loadNyquvect(myconn);
+				; // .loadNyquvect(myconn);
 
 		// sign up as a new domain
-		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
+		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin)
+								.loadNyquvect(myconn);
 
 		ExchangeBlock req  = cltb.domainSignup(cltp, peeradmin);
 
@@ -106,9 +103,11 @@ public class Synoder {
 	public SyncResp onjoin(SyncReq req)
 			throws Exception {
 		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod)
-				.loadNyquvect(myconn);
+				; // .loadNyquvect(myconn);
 
-		ExessionPersist admp = new ExessionPersist(admb, req.exblock.srcnode);
+		ExessionPersist admp = new ExessionPersist(admb, req.exblock.srcnode)
+								.loadNyquvect(myconn);
+
 		ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
 		synssion(req.exblock.srcnode, admp.exstate(ready));
@@ -138,15 +137,15 @@ public class Synoder {
 		} finally { delession(apply); }
 	}
 
-	public Nyquence nyquence(String node) {
-		Map<String, Nyquence> nv = nyquvect(node);
-		return nv == null ? null
-			: nv.get(node);
-	}
-
-	public Map<String, Nyquence> nyquvect(String peer) {
-		return synssion(peer).trb.nyquvect;
-	}
+//	public Nyquence nyquence(String node) {
+//		Map<String, Nyquence> nv = nyquvect(node);
+//		return nv == null ? null
+//			: nv.get(node);
+//	}
+//
+//	public Map<String, Nyquence> nyquvect(String peer) {
+//		return synssion(peer).nyquvect();
+//	}
 
 	/**
 	 * Get n0 of the session with the {@link peer} synode.
@@ -155,7 +154,7 @@ public class Synoder {
 	 * @return n0 N0 in all sessions should be the same.
 	 */
 	public Nyquence n0(String peer) {
-		return synssion(peer).trb.n0();
+		return synssion(peer).n0();
 	}
 
 	/**
@@ -171,12 +170,13 @@ public class Synoder {
 		// TO BE CONTINUED:
 		// Move stamp to ExessionPersist.
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
-				.loadNyquvect(myconn);
+								; // .loadNyquvect(myconn);
 
-		ExessionPersist xp = new ExessionPersist(domain, myconn, peer)
-				.loadNyquvect(myconn);
+		ExessionPersist xp = new ExessionPersist(b0, peer)
+								.loadNyquvect(myconn);
+
 		b0 = xp.trb;
-		ExchangeBlock b = b0.initExchange(xp, peer);
+		ExchangeBlock b = b0.initExchange(xp);
 
 		return new SyncReq(null, domain)
 				.exblock(b);
@@ -185,9 +185,11 @@ public class Synoder {
 	public SyncResp onsyninit(String peer, ExchangeBlock ini)
 			throws Exception {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
-				.loadNyquvect(myconn);
+								; // .loadNyquvect(myconn);
 
-		ExessionPersist xp = new ExessionPersist(b0, peer, ini);
+		ExessionPersist xp = new ExessionPersist(b0, peer, ini)
+								.loadNyquvect(myconn);
+
 		ExchangeBlock b = b0.onInit(xp, ini);
 
 		synssion(peer, xp);
@@ -266,12 +268,12 @@ public class Synoder {
 		return this;
 	}
 
-	public int entities(SyntityMeta docm, String ... domain) throws SQLException, TransException {
-		if (!isNull(domain) && !eq(this.domain, domain[0]))
-			Utils.warnT(new Object() {},
-					"Loading data from domain (%s) other than managed (%s) by me?",
-					domain, this.domain);
-		return this.trb(this.domain).entities(docm);
+	public int entities(SyntityMeta docm, String peer) throws SQLException, TransException {
+//		if (!isNull(domain) && !eq(this.domain, domain[0]))
+//			Utils.warnT(new Object() {},
+//					"Loading data from domain (%s) other than managed (%s) by me?",
+//					domain, this.domain);
+		return this.trb(peer).entities(docm);
 	}
 
 }

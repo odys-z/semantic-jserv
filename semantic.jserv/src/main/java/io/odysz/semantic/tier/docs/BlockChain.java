@@ -157,8 +157,13 @@ public class BlockChain {
 		if (waitings.nextBlock != null && waitings.blockSeq >= waitings.nextBlock.blockSeq)
 			throw new TransException("Handling block's sequence error.");
 
+		// 1.4.45
+		// OutputStreamWriter outputStreamWriter = new OutputStreamWriter(ofs, "UTF-8");
+        // Writer writer = new BufferedWriter(outputStreamWriter);
+
 		while (waitings.nextBlock != null && waitings.blockSeq + 1 == waitings.nextBlock.blockSeq) {
 			ofs.write(AESHelper.decode64(waitings.nextBlock.doc.uri64));
+			// writer.write(AESHelper.decode64(waitings.nextBlock.doc.uri64));
 
 			waitings.blockSeq = waitings.nextBlock.blockSeq;
 			waitings.nextBlock = waitings.nextBlock.nextBlock;

@@ -215,7 +215,7 @@ class SynoderTest {
 
 		ck[Z] = new Docheck(azert, zsu, z.myconn, z.synode, SynodeMode.peer, docm);
 
-		Utils.logrst("X is joining by Z", test, ++no);
+		Utils.logrst("X <= join = Z", test, ++no);
 		joinby(X, Z, test, no);
 
 		ck[X].synodes(X, Y, Z);
@@ -246,12 +246,13 @@ class SynoderTest {
 		Utils.logrst(new String[] {x.synode, "on", y.synode, "joining"}, test, sub, ++no);
 		SyncResp rep = x.onjoin(req);
 
-		assertEquals(x.nyquence(y.synode).n, y.n0(x.synode).n);
+		// assertEquals(x.nyquence(y.synode).n, y.n0(x.synode).n);
+		assertEquals(ck[at].n0().n, y.n0(x.synode).n);
 
 		Utils.logrst(new String[] {x.synode, "answer to", y.synode}, test, sub, ++no);
 		rep.exblock.print(System.out);
 
-		Utils.logrst(new String[] {y.synode, "close joining"}, test, ++no);
+		Utils.logrst(new String[] {y.synode, "close joining"}, test, sub, ++no);
 		req = y.closejoin(rep);
 
 		rep = x.onclosejoin(req);
@@ -299,7 +300,7 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.entities(docm));
+		assertEquals(2, x.entities(docm, y.synode));
 
 		Utils.logrst("X sync by Z", test, ++no);
 		Synoder z = syntiers[Z].synoder(zsu);
@@ -307,14 +308,14 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.entities(docm));
-		assertEquals(2, z.entities(docm));
+		assertEquals(2, x.entities(docm, z.synode));
+		assertEquals(2, z.entities(docm, x.synode));
 
 		Utils.logrst("X sync by Y", test, ++no);
 		syncpair(zsu, X, Y, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
-		assertEquals(2, y.entities(docm));
+		assertEquals(2, y.entities(docm, x.synode));
 	}
 	
 	void syncpair(String domain, int sx, int cx, int testno, int subno)
