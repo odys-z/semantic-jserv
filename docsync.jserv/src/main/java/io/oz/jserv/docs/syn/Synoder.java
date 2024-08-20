@@ -38,9 +38,12 @@ public class Synoder {
 	
 	/** {peer: session-persist } */
 	HashMap<String, ExessionPersist> sessions;
-
-	// DBSyntableBuilder mysynbuilder;
-	// public DBSyntableBuilder trb() { return mysynbuilder; }
+	
+	/** Expired, only for tests. */
+	public ExessionPersist expiredxp;
+	public Nyquence lastn0(String peer) {
+		return expiredxp == null ? null : expiredxp.n0();
+	}
 
 	/**
 	 * Get my syn-transact-builder for the session with the peer {@code withPeer}. 
@@ -58,7 +61,7 @@ public class Synoder {
 				: null;
 	}
 
-	void synssion(String peer, ExessionPersist cp) throws ExchangeException {
+	Synoder synssion(String peer, ExessionPersist cp) throws ExchangeException {
 		if (sessions == null)
 			sessions = new HashMap<String, ExessionPersist>();
 
@@ -68,6 +71,7 @@ public class Synoder {
 				peer, synode);
 
 		sessions.put(peer, cp);
+		return this;
 	}
 
 	private ExessionPersist delession(String peer) {
@@ -92,7 +96,7 @@ public class Synoder {
 
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin)
-								.loadNyquvect(myconn);
+								; // .loadNyquvect(myconn);
 
 		ExchangeBlock req  = cltb.domainSignup(cltp, peeradmin);
 
@@ -102,15 +106,16 @@ public class Synoder {
 
 	public SyncResp onjoin(SyncReq req)
 			throws Exception {
+		String peer = req.exblock.srcnode;
 		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod)
 				; // .loadNyquvect(myconn);
 
-		ExessionPersist admp = new ExessionPersist(admb, req.exblock.srcnode)
-								.loadNyquvect(myconn);
+		ExessionPersist admp = new ExessionPersist(admb, peer)
+								; // .loadNyquvect(myconn);
 
 		ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
-		synssion(req.exblock.srcnode, admp.exstate(ready));
+		synssion(peer, admp.exstate(ready));
 	
 		return new SyncResp().exblock(resp);
 	}
@@ -125,7 +130,7 @@ public class Synoder {
 			ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 			return new SyncReq(null, domain)
 					.exblock(req);
-		} finally { delession(admin); }
+		} finally { expiredxp = delession(admin); }
 	}
 
 	public SyncResp onclosejoin(SyncReq req) throws TransException, SQLException {
@@ -134,7 +139,7 @@ public class Synoder {
 			ExessionPersist sp = synssion(apply);
 			ExchangeBlock ack  = sp.trb.domainCloseJoin(sp, req.exblock);
 			return new SyncResp().exblock(ack);
-		} finally { delession(apply); }
+		} finally { expiredxp = delession(apply); }
 	}
 
 //	public Nyquence nyquence(String node) {
@@ -218,16 +223,20 @@ public class Synoder {
 
 	public SyncReq synclose(String domain, String peer, SyncResp rep)
 			throws TransException, SQLException {
+		try {
 		ExessionPersist xp = synssion(peer);
 		ExchangeBlock b = xp.trb.closexchange(xp, rep.exblock);
 		return new SyncReq(null, domain).exblock(b);
+		} finally { expiredxp = delession(peer); }
 	}
 
 	public SyncResp onsynclose(String domain, String peer, SyncReq req)
 			throws TransException, SQLException {
+		try {
 		ExessionPersist xp = synssion(peer);
 		ExchangeBlock b = xp.trb.onclosexchange(xp, req.exblock);
 		return new SyncResp().exblock(b);
+		} finally { expiredxp = delession(peer); }
 	}
 
 	/**

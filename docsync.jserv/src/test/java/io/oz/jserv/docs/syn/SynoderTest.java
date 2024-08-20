@@ -1,9 +1,11 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
+import static io.odysz.semantic.syn.ExessionPersist.loadNyquvect;
 import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
+import static io.odysz.semantic.syn.Docheck.pushDebug;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -121,7 +123,7 @@ class SynoderTest {
 
 				Connects.commit(conn, DATranscxt.dummyUser(), sqls);
 
-				
+				// X, Y, Z, W
 				String synode = String.valueOf((char)(Integer.valueOf('X') + (s == W ? -1 : s)));
 
 				syntiers[s] = new Syntier(synode, conn);
@@ -141,7 +143,7 @@ class SynoderTest {
 	static IAssert azert = new AssertImpl();
 
 	@Test
-	void testSyntiers() throws Exception {
+	void testSynoders() throws Exception {
 		int no = 0;
 		setupeers(++no);
 		savephotos(++no);
@@ -179,7 +181,7 @@ class SynoderTest {
 		Utils.logrst("X starting", test, ++no);
 		Syntier xtir = syntiers[X];
 		Synoder x = xtir.start(ura, zsu, xtir.myconn, SynodeMode.peer)
-						.synoder(zsu);
+						.domanager(zsu);
 
 		ck[X] = new Docheck(azert, zsu, x.myconn, x.synode, SynodeMode.peer, docm);
 		ck[X].synodes(X);
@@ -187,7 +189,7 @@ class SynoderTest {
 		Utils.logrst("Y starting", test, ++no);
 		Syntier ytir = syntiers[Y];
 		Synoder y = ytir.start(ura, zsu, ytir.myconn, SynodeMode.peer)
-						.synoder(zsu);
+						.domanager(zsu);
 
 		ck[Y] = new Docheck(azert, zsu, y.myconn, y.synode, SynodeMode.peer, docm);
 		ck[Y].synodes(-1, Y);
@@ -211,7 +213,7 @@ class SynoderTest {
 
 		Syntier ztir = syntiers[Z];
 		Synoder z = ztir.start(ura, zsu, ztir.myconn, SynodeMode.peer)
-						.synoder(zsu);
+						.domanager(zsu);
 
 		ck[Z] = new Docheck(azert, zsu, z.myconn, z.synode, SynodeMode.peer, docm);
 
@@ -238,16 +240,18 @@ class SynoderTest {
 	void joinby(int at, int by, int test, int sub) throws Exception {
 
 		int no = 0;
-		Synoder y = syntiers[by].synoder(zsu);
-		Synoder x = syntiers[at].synoder(zsu);
+		Synoder y = syntiers[by].domanager(zsu);
+		Synoder x = syntiers[at].domanager(zsu);
 
 		SyncReq req = y.joinpeer(x.synode, passwd);
 		
 		Utils.logrst(new String[] {x.synode, "on", y.synode, "joining"}, test, sub, ++no);
 		SyncResp rep = x.onjoin(req);
 
+		printChangeLines(ck);
+		printNyquv(ck);
 		// assertEquals(x.nyquence(y.synode).n, y.n0(x.synode).n);
-		assertEquals(ck[at].n0().n, y.n0(x.synode).n);
+		// assertEquals(ck[at].n0().n, y.n0(x.synode).n);
 
 		Utils.logrst(new String[] {x.synode, "answer to", y.synode}, test, sub, ++no);
 		rep.exblock.print(System.out);
@@ -256,6 +260,21 @@ class SynoderTest {
 		req = y.closejoin(rep);
 
 		rep = x.onclosejoin(req);
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		// assertEquals(ck[by].n0().n, loadNyquvect(y.expiredxp.trb).get(x.synode).n + 1);
+		// assertEquals(ck[at].n0().n, loadNyquvect(x.expiredxp.trb).get(y.synode).n + 1);
+
+		// assertEquals(ck[at].n0().n, y.lastn0(x.synode).n);
+		// assertEquals(ck[at].n0().n, ck[by].n0().n);
+		pushDebug()
+		.assertl(
+			ck[by].n0().n, loadNyquvect(y.expiredxp.trb).get(x.synode).n + 1,
+			ck[at].n0().n, loadNyquvect(x.expiredxp.trb).get(y.synode).n + 1,
+			ck[at].n0().n, y.lastn0(x.synode).n,
+			ck[at].n0().n, ck[by].n0().n)
+		.popDebug();
 	}
 
 	void savephotos(int test) throws SQLException, IOException, TransException {
@@ -292,8 +311,8 @@ class SynoderTest {
 		Utils.logrst("syncpeers()", test);
 		int no = 0;
 		
-		Synoder x = syntiers[X].synoder(zsu);
-		Synoder y = syntiers[Y].synoder(zsu);
+		Synoder x = syntiers[X].domanager(zsu);
+		Synoder y = syntiers[Y].domanager(zsu);
 		
 		Utils.logrst("X sync by Y", test, ++no);
 		syncpair(zsu, X, Y, test, no);
@@ -303,7 +322,7 @@ class SynoderTest {
 		assertEquals(2, x.entities(docm, y.synode));
 
 		Utils.logrst("X sync by Z", test, ++no);
-		Synoder z = syntiers[Z].synoder(zsu);
+		Synoder z = syntiers[Z].domanager(zsu);
 		syncpair(zsu, X, Z, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -322,8 +341,8 @@ class SynoderTest {
 			throws Exception {
 		Utils.logrst("syncpair()", testno, subno);
 		int no = 0;
-		Synoder srv = syntiers[sx].synoder(domain);
-		Synoder clt = syntiers[cx].synoder(domain);
+		Synoder srv = syntiers[sx].domanager(domain);
+		Synoder clt = syntiers[cx].domanager(domain);
 
 		Utils.logrst("client initate", testno, subno, ++no);
 		SyncReq req  = clt.syninit(srv.synode, zsu);

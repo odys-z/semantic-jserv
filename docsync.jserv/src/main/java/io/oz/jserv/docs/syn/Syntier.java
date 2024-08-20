@@ -229,7 +229,7 @@ public class Syntier extends ServPort<DocsReq> {
 		return this;
 	}
 
-	public Synoder synoder(String domain) {
+	public Synoder domanager(String domain) {
 		return domains.get(domain);
 	}
 	
