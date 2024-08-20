@@ -277,12 +277,12 @@ public class Synoder {
 		return this;
 	}
 
-	public int entities(SyntityMeta docm, String peer) throws SQLException, TransException {
-//		if (!isNull(domain) && !eq(this.domain, domain[0]))
-//			Utils.warnT(new Object() {},
-//					"Loading data from domain (%s) other than managed (%s) by me?",
-//					domain, this.domain);
-		return this.trb(peer).entities(docm);
-	}
+//	public int entities(SyntityMeta docm, String peer) throws SQLException, TransException {
+////		if (!isNull(domain) && !eq(this.domain, domain[0]))
+////			Utils.warnT(new Object() {},
+////					"Loading data from domain (%s) other than managed (%s) by me?",
+////					domain, this.domain);
+//		return this.trb(peer).entities(docm);
+//	}
 
 }

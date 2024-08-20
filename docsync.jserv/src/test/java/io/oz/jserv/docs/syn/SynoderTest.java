@@ -319,7 +319,7 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.entities(docm, y.synode));
+		assertEquals(2, x.expiredxp.trb.entities(docm));
 
 		Utils.logrst("X sync by Z", test, ++no);
 		Synoder z = syntiers[Z].domanager(zsu);
@@ -327,14 +327,14 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.entities(docm, z.synode));
-		assertEquals(2, z.entities(docm, x.synode));
+		assertEquals(2, x.expiredxp.trb.entities(docm));
+		assertEquals(2, z.expiredxp.trb.entities(docm));
 
 		Utils.logrst("X sync by Y", test, ++no);
 		syncpair(zsu, X, Y, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
-		assertEquals(2, y.entities(docm, x.synode));
+		assertEquals(2, y.expiredxp.trb.entities(docm));
 	}
 	
 	void syncpair(String domain, int sx, int cx, int testno, int subno)
