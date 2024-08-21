@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logT;
@@ -206,11 +207,14 @@ class DoclientierTest {
 		Utils.logi("-------------- Logged in. %s",
 				client00.client.ssInfo().toString());
 
-		client00.synDel(docm.tbl, Dev_0_0.dev, Dev_0_0.mp4);
-
 		String fpth = videoUpByApp(client00, docm.tbl);
 
 		verifyPathsPage(client00, docm.tbl, fpth);
+
+		DocsResp rep = client00.synDel(docm.tbl, Dev_0_0.dev, Dev_0_0.mp4);
+		assertEquals(1, rep.total(0));
+
+		verifyPathsPageNegative(client00, docm.tbl, fpth);
 
 		// pause("Press enter to quite ...");
 	}
@@ -267,6 +271,14 @@ class DoclientierTest {
 		fail("Not yet implemented");
 	}
 
+	/**
+	 * Verify paths are presenting at server.
+	 * 
+	 * @param clientier
+	 * @param entityName
+	 * @param paths
+	 * @throws Exception
+	 */
 	void verifyPathsPage(Doclientier clientier, String entityName, String... paths) throws Exception {
 		PathsPage pths = new PathsPage(clientier.client.ssInfo().device, 0, 1);
 		HashSet<String> pathpool = new HashSet<String>();
@@ -287,4 +299,25 @@ class DoclientierTest {
 
 		assertEquals(0, pathpool.size());
 	}
+
+	void verifyPathsPageNegative(Doclientier clientier, String entityName, String... paths) throws Exception {
+		PathsPage pths = new PathsPage(clientier.client.ssInfo().device, 0, 1);
+		HashSet<String> pathpool = new HashSet<String>();
+		for (String pth : paths) {
+			pths.add(pth);
+			pathpool.add(pth);
+		}
+
+		DocsResp rep = clientier.synQueryPathsPage(pths, entityName, Port.docsync);
+
+		PathsPage pthpage = rep.pathsPage();
+		assertEquals(clientier.client.ssInfo().device, pthpage.device);
+		assertEquals(0, pthpage.paths().size());
+
+		for (String pth : pthpage.paths().keySet())
+			pathpool.remove(pth);
+
+		assertEquals(isNull(paths) ? 0 : paths.length, pathpool.size());
+	}
+
 }

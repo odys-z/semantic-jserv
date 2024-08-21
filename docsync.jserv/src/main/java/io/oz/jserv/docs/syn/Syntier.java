@@ -216,8 +216,6 @@ public class Syntier extends ServPort<DocsReq> {
 		SemanticsMap ss = DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
 			(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
 		
-		// @SuppressWarnings("unused")
-		// Synoder synoder =
 		domains .get(domain)
 				.born(ss.get(smtype.synChange), 0, 0);
 		
@@ -287,7 +285,7 @@ public class Syntier extends ServPort<DocsReq> {
 			throws SemanticException, TransException, SQLException {
 
 		if (syncReq.syncQueries() == null)
-			throw new SemanticException("Null Query - invalide request.");
+			throw new SemanticException("Null Query - invalid request.");
 
 		ArrayList<String> paths = new ArrayList<String>(syncReq.syncQueries().size());
 		for (String s : syncReq.syncQueries()) {
@@ -357,6 +355,9 @@ public class Syntier extends ServPort<DocsReq> {
 	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
+		if (isblank(body.doc.clientpath))
+			throw new SemanticException("Doc's client-path must presents in each pushing blocks.");
+
 		String id = chainId(usr, body.doc.clientpath);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must be accessed after starting chain is confirmed.");
@@ -519,7 +520,7 @@ public class Syntier extends ServPort<DocsReq> {
 				.delete(docm.tbl, usr)
 				.whereEq("device", docsReq.device().id)
 				.whereEq("clientpath", docsReq.doc.clientpath)
-				.d(st.instancontxt(conn, usr));
+				.d(b.instancontxt(conn, usr));
 
 		return (DocsResp) new DocsResp().data(res.props());
 	}

@@ -120,4 +120,15 @@ public class AnsonResp extends AnsonBody {
 		}
 		return null;
 	}
+	
+	/**
+	 * Get {@code total} results from data map.
+	 * 
+	 * @param ix
+	 * @return integer
+	 * @since 2.0.0
+	 */
+	public int total(int ix) {
+		return (int) ((ArrayList<?>)data().get("total")).get(ix);
+	}
 }

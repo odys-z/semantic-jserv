@@ -157,7 +157,11 @@ public class DocsReq extends UserReq {
 	}
 
 	protected ArrayList<ExpSyncDoc> syncQueries;
-	public Set<String> syncQueries() { return syncingPage.clientPaths.keySet(); }
+	public Set<String> syncQueries() {
+		return syncingPage.clientPaths == null
+				? null
+				: syncingPage.clientPaths.keySet();
+	}
 
 	/** TODO visibility = package */
 	public long blockSeq;
@@ -226,7 +230,9 @@ public class DocsReq extends UserReq {
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
 		doc = doc == null
-			? new ExpSyncDoc(file).clientpath(file.fullpath()).folder(usr.device + "-" + usr.uid())
+			? new ExpSyncDoc(file)
+				.clientpath(file.fullpath())
+				.folder(usr.device + "-" + usr.uid())
 			: doc; 
 
 		// this.docName = file.clientname();
@@ -266,11 +272,9 @@ public class DocsReq extends UserReq {
 
 		this.blockSeq = sequence;
 
-		this.doc = new ExpSyncDoc(doc);
-
-//		this.doc.recId = doc.recId();
-//		this.doc.clientpath(doc.fullpath());
-		this.doc.uri64 = b64;
+		this.doc = new ExpSyncDoc(doc)
+				.clientpath(doc.fullpath())
+				.uri64(b64);
 
 		this.a = A.blockUp;
 		return this;
