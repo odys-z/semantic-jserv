@@ -59,11 +59,11 @@ public class Syntier extends ServPort<DocsReq> {
 	/** {domain: {jserv: exession-persist}} */
 	HashMap<String, Synoder> domains;
 
-	DBSyntableBuilder doctrb;
-	public DBSyntableBuilder doctrb() throws SemanticException {
-		if (doctrb == null)
+	private DBSyntableBuilder stampBuilder;
+	public DBSyntableBuilder stampbuilder() throws SQLException, TransException {
+		if (stampBuilder == null)
 			throw new SemanticException("This synode haven't been started.");
-		return doctrb;
+		return stampBuilder.loadNstamp();
 	}
 
 	final String synode;
@@ -221,7 +221,7 @@ public class Syntier extends ServPort<DocsReq> {
 		domains .get(domain)
 				.born(ss.get(smtype.synChange), 0, 0);
 		
-		doctrb = new DBSyntableBuilder(
+		stampBuilder = new DBSyntableBuilder(
 				domain, // FIXME this is not correct. 
 						// FIXME See {@link DBSyntableBuilder}'s issue ee153bcb30c3f3b868413beace8cc1f3cb5c3f7c. 
 				myconn, synode, mod)
@@ -238,15 +238,17 @@ public class Syntier extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(body.uri());
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 
+		DBSyntableBuilder b = stampbuilder();
+
 		if (isblank(body.device().id)) {
-			SemanticObject result = (SemanticObject) doctrb()
+			SemanticObject result = (SemanticObject) b
 				.insert(devMeta.tbl, usr)
 				.nv(devMeta.synoder, synode)
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
 				.nv(devMeta.cdate, now())
 				.nv(devMeta.org, usr.orgId())
-				.ins(doctrb().instancontxt(Connects.uri2conn(body.uri()), usr));
+				.ins(b.instancontxt(Connects.uri2conn(body.uri()), usr));
 
 			String resulved = result.resulve(devMeta.tbl, devMeta.pk, -1);
 			return new DocsResp().device(new Device(
@@ -256,11 +258,11 @@ public class Syntier extends ServPort<DocsReq> {
 			if (isblank(body.device().id))
 				throw new SemanticException("Error for pdating device name without a device id.");
 
-			doctrb().update(devMeta.tbl, usr)
+			b.update(devMeta.tbl, usr)
 				.nv(devMeta.cdate, now())
 				// .whereEq(devMeta.domain, usr.orgId())
 				.whereEq(devMeta.pk, body.device().id)
-				.u(doctrb().instancontxt(Connects.uri2conn(body.uri()), usr));
+				.u(b.instancontxt(Connects.uri2conn(body.uri()), usr));
 
 			return new DocsResp().device(new Device(
 				body.device().id, synode, body.device().devname));
@@ -304,8 +306,9 @@ public class Syntier extends ServPort<DocsReq> {
 				: syncReq.device().id
 				: syncReq.syncingPage().device;
 
+		DBSyntableBuilder b = stampbuilder();
 		AnResultset rs = ((AnResultset) meta
-				.selectSynPaths(doctrb(), syncReq.docTabl)
+				.selectSynPaths(b, syncReq.docTabl)
 				.col(meta.fullpath)
 				.whereEq(meta.device, devid)
 				.whereIn(meta.fullpath, kpaths)
@@ -313,7 +316,7 @@ public class Syntier extends ServPort<DocsReq> {
 				// TODO add file type for performance
 				// FIXME issue: what if paths length > limit ?
 				.limit(syncReq.limit())
-				.rs(doctrb().instancontxt(conn, usr))
+				.rs(b.instancontxt(conn, usr))
 				.rs(0))
 				.beforeFirst();
 
@@ -327,7 +330,7 @@ public class Syntier extends ServPort<DocsReq> {
 			throws IOException, TransException, SQLException, SAXException {
 		String conn = Connects.uri2conn(body.uri());
 
-		checkBlock0(doctrb(), conn, body, (DocUser) usr);
+		checkBlock0(stampBuilder, conn, body, (DocUser) usr);
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
@@ -397,10 +400,11 @@ public class Syntier extends ServPort<DocsReq> {
 
 		ExpSyncDoc photo = chain.doc;
 
-		String pid = DocUtils.createFileBy64(doctrb(), conn, photo, usr, meta);
+		DBSyntableBuilder b = stampbuilder();
+		String pid = DocUtils.createFileBy64(b, conn, photo, usr, meta);
 
 		// move file
-		String targetPath = DocUtils.resolvExtroot(doctrb(), conn, pid, usr, meta);
+		String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
 
 		if (debug)
 			Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
@@ -440,10 +444,11 @@ public class Syntier extends ServPort<DocsReq> {
 
 		String conn = Connects.uri2conn(docreq.uri());
 
-		ExpDocTableMeta docm = checkDuplication(doctrb(), docreq, (DocUser) usr);
+		DBSyntableBuilder b = stampbuilder();
+		ExpDocTableMeta docm = checkDuplication(b, docreq, (DocUser) usr);
 
 		ExpSyncDoc photo = docreq.doc;
-		String pid = DocUtils.createFileBy64(doctrb(), conn, photo, usr, docm);
+		String pid = DocUtils.createFileBy64(b, conn, photo, usr, docm);
 	
 		onDocreated(pid, conn, docm, usr);
 		return new DocsResp().doc(photo);
@@ -507,10 +512,10 @@ public class Syntier extends ServPort<DocsReq> {
 	DocsResp delDoc(DocsReq docsReq, IUser usr)
 			throws TransException, SQLException, SAXException, IOException {
 		String conn = Connects.uri2conn(docsReq.uri());
-		ExpDocTableMeta docm = (ExpDocTableMeta) doctrb().getSyntityMeta(docsReq.docTabl);
+		DBSyntableBuilder b = stampbuilder();
+		ExpDocTableMeta docm = (ExpDocTableMeta) b.getSyntityMeta(docsReq.docTabl);
 
-		DBSyntableBuilder st = (DBSyntableBuilder) doctrb();
-		SemanticObject res = (SemanticObject) st
+		SemanticObject res = (SemanticObject) b
 				.delete(docm.tbl, usr)
 				.whereEq("device", docsReq.device().id)
 				.whereEq("clientpath", docsReq.doc.clientpath)
@@ -536,7 +541,7 @@ public class Syntier extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(req.uri());
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
 
-		DATranscxt st = doctrb();
+		DATranscxt st = stampbuilder();
 
 		AnResultset rs = (AnResultset) st.select(meta.tbl, "p")
 				.cols_byAlias("p", meta.pk, meta.org,
@@ -589,8 +594,8 @@ public class Syntier extends ServPort<DocsReq> {
 		 from h_photos f where f.family = '%1$s' group by f.folder
 		 ) where img > 0 or mov > 0 or wav > 0
 		 */
-		DATranscxt st = doctrb();
-		AnResultset rs = (AnResultset) st
+		DATranscxt b = stampbuilder();
+		AnResultset rs = (AnResultset) b
 				.select(mph.tbl, "p")
 				.j(musr.tbl, "u", String.format("u.%s = p.%s", musr.pk, mph.shareby))
 				.col(mph.pk) // .col(mph.css)
@@ -602,7 +607,7 @@ public class Syntier extends ServPort<DocsReq> {
 				.col(mph.folder, mph.resname)
 				.col(musr.uname, mph.shareby)
 				.whereEq("p." + mph.folder, req.pageInf.mergeArgs().getArg("pid"))
-				.rs(st.instancontxt(conn, usr)).rs(0);
+				.rs(b.instancontxt(conn, usr)).rs(0);
 
 		return new DocsResp().doc(new ExpSyncDoc().folder(rs.nxt(), mph));
 	}

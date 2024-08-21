@@ -47,8 +47,8 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
 
 /**
- * 4 Syntiers running on a static DA helper, but communicate over
- * Semnatic.jserv protocol layer.
+ * The synchronizing tiers running on a static DA helper, but communicating
+ * over the Semnatic.jserv protocol layer.
  * 
  * @author odys-z@github.com
  */
@@ -263,11 +263,6 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		// assertEquals(ck[by].n0().n, loadNyquvect(y.expiredxp.trb).get(x.synode).n + 1);
-		// assertEquals(ck[at].n0().n, loadNyquvect(x.expiredxp.trb).get(y.synode).n + 1);
-
-		// assertEquals(ck[at].n0().n, y.lastn0(x.synode).n);
-		// assertEquals(ck[at].n0().n, ck[by].n0().n);
 		pushDebug()
 		.assertl(
 			ck[by].n0().n, loadNyquvect(y.expiredxp.trb).get(x.synode).n + 1,
@@ -303,7 +298,7 @@ class SynoderTest {
 		photo.folder(syntier.synode);
 		photo.share("ody-" + syntier.synode, Share.pub, new Date());
 
-		return DocUtils.createFileBy64(syntier.doctrb(), syntier.myconn,
+		return DocUtils.createFileBy64(syntier.stampbuilder(), syntier.myconn,
 				(ExpSyncDoc)photo, syntier.locrobot(), (ExpDocTableMeta)docm);
 	}
 

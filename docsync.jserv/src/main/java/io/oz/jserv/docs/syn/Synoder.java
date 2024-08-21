@@ -13,7 +13,6 @@ import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSynmantics.ShSynChange;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
@@ -49,11 +48,11 @@ public class Synoder {
 	 * Get my syn-transact-builder for the session with the peer {@code withPeer}. 
 	 * @param withPeer 
 	 * @return builder
-	 */
 	DBSyntableBuilder trb(String withPeer) {
 		ExessionPersist xp = synssion(withPeer);
 		return xp == null ? null : xp.trb;
 	}
+	 */
 
 	ExessionPersist synssion(String peer) {
 		return sessions != null
@@ -276,13 +275,4 @@ public class Synoder {
 
 		return this;
 	}
-
-//	public int entities(SyntityMeta docm, String peer) throws SQLException, TransException {
-////		if (!isNull(domain) && !eq(this.domain, domain[0]))
-////			Utils.warnT(new Object() {},
-////					"Loading data from domain (%s) other than managed (%s) by me?",
-////					domain, this.domain);
-//		return this.trb(peer).entities(docm);
-//	}
-
 }
