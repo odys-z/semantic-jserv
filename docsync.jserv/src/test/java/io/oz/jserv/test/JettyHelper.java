@@ -115,7 +115,7 @@ public class JettyHelper {
 		}
 	}
 
-	public static void addPort(ServPort<?> p) {
+	public static void addServPort(ServPort<?> p) {
        	registerServlets(schandler, p);
 	}
 	
