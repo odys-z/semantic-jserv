@@ -39,6 +39,7 @@ public class JettyHelper {
 	Server server;
 	ServletContextHandler schandler;
 	String jserv;
+	public String jserv() { return jserv; }
 
 	static JettyHelper instanserver(String configPath, String conn0, String configxml, String ip, int port)
 			throws Exception {
@@ -60,8 +61,20 @@ public class JettyHelper {
         return helper;
 	}
 
+	/**
+	 * Start jserv with Jetty.
+	 * @param <T> subclass of {@link ServPort}
+	 * @param configPath
+	 * @param conn
+	 * @param configxml name of config.xml, to be optimized
+	 * @param ip
+	 * @param port
+	 * @param servports
+	 * @return a helper instance
+	 * @throws Exception
+	 */
 	@SafeVarargs
-	static public <T extends ServPort<? extends AnsonBody>> JettyHelper startJserv(
+	static public <T extends ServPort<? extends AnsonBody>> JettyHelper startJettyServ(
 			String configPath, String conn, String configxml, String ip, int port,
 			T ... servports) throws Exception {
 
@@ -73,8 +86,7 @@ public class JettyHelper {
         }
 
         helper.server.start();
-        
-        
+
 		helper.jserv = String.format("http://%s:%s", ip, port);
 		logi("Server started at %s", helper.jserv);
         return helper;

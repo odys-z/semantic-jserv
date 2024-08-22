@@ -112,7 +112,7 @@ public class JettyHelperTest {
 		Connects.commit(conn, usr, sqls, Connects.flag_nothing);
 
 		return JettyHelper
-			.startJserv(webinf, conn, "config-0.xml",
+			.startJettyServ(webinf, conn, "config-0.xml",
 				servIP, port,
 				new AnSession(),
 				new HeartLink())

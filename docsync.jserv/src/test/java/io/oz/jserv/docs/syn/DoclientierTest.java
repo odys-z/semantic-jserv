@@ -59,12 +59,14 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.test.JettyHelper;
 
 class DoclientierTest {
+	public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
+
 	public static class Dev_0_0 {
 		public static final String uri = "client-at-00";
 		public static final String uid = "syrskyi";
 		public static final String psw = "слава україні";
 		public static final String dev = "0-0";
-		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
+		// public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
 		public static final String folder = "zsu";
 	}
 
@@ -73,16 +75,16 @@ class DoclientierTest {
 		public static final String uid = "syrskyi";
 		public static final String psw = "слава україні";
 		public static final String dev = "0-1";
-		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
+		// public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
 		public static final String folder = "zsu";
 	}
 
 	public static class Dev_1_0 {
 		public static final String uri = "client-at-01";
-		public static final String uid = "ody";
-		public static final String psw = "123456";
+		public static final String uid = "odyz";
+		public static final String psw = "8964";
 		public static final String dev = "1-0";
-		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
+		// public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
 		public static final String folder = "zsu";
 	}
 
@@ -91,7 +93,7 @@ class DoclientierTest {
 		public static final String uid = "syrskyi";
 		public static final String psw = "слава україні";
 		public static final String dev = "1-1";
-		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
+		// public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
 		public static final String folder = "zsu";
 	}
 
@@ -112,6 +114,7 @@ class DoclientierTest {
 			this.psw = pswd;
 			this.dev = device;
 			this.folder = folder;
+			this.mp4_clientpath = mp4;
 		}
 	}
 
@@ -135,6 +138,7 @@ class DoclientierTest {
 
 	static {
 		try {
+			jetties = new JettyHelper[4];
 			devs = new Dev[4];
 			devs[_0_0] = new Dev(Dev_0_0.uri, Dev_0_0.uid, Dev_0_0.psw, Dev_0_0.dev, Dev_0_0.folder);
 			devs[_0_1] = new Dev(Dev_0_1.uri, Dev_0_1.uid, Dev_0_1.psw, Dev_0_1.dev, Dev_0_1.folder);
@@ -169,9 +173,9 @@ class DoclientierTest {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			jetties[i] = startSyndoctier(servs_conn[i], port++);
+			devs[i].jserv = jetties[i].jserv();
+			initRecords(servs_conn[i]);
 		}
-
-		initRecords(servs_conn[0]);
 	}
 	
 	static JettyHelper startSyndoctier(String serv_conn, int port) throws Exception {
@@ -192,7 +196,7 @@ class DoclientierTest {
 		// synode
 		String servIP = "localhost";
 
-		return JettyHelper.startJserv(webinf, serv_conn, "config-0.xml",
+		return JettyHelper.startJettyServ(webinf, serv_conn, "config-0.xml",
 				servIP, port,
 				new AnSession(), new AnQuery(), new AnUpdate(),
 				new HeartLink())
@@ -276,18 +280,20 @@ class DoclientierTest {
 		Utils.logi("-------------- Logged in. %s",
 				client.client.ssInfo().toString());
 
-		String fpth = videoUpByApp(client, docm.tbl);
+		ExpSyncDoc xdoc = videoUpByApp(dev, client, docm.tbl);
+		assertEquals(dev.dev, xdoc.device());
+		assertEquals(dev.mp4_clientpath, xdoc.fullpath());
 
-		verifyPathsPage(client, docm.tbl, fpth);
-		return fpth;
+		verifyPathsPage(client, docm.tbl, xdoc.clientpath);
+		return xdoc.clientpath;
 	}
 
- 	static String videoUpByApp(Doclientier doclient, String entityName) throws Exception {
+ 	static ExpSyncDoc videoUpByApp(Dev atdev, Doclientier doclient, String entityName) throws Exception {
 
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(doclient.robot.uid(), Share.pub, new Date())
-					.folder(Dev_0_0.folder)
-					.fullpath(Dev_0_0.mp4);
+					.folder(atdev.folder)
+					.fullpath(atdev.mp4_clientpath);
 
 		DocsResp resp = doclient.startPush(entityName, doc,
 			(AnsonResp rep) -> {
@@ -324,10 +330,13 @@ class DoclientierTest {
 		DocsResp rp = doclient.selectDoc(entityName, docId);
 
 		assertTrue(isblank(rp.msg()));
+
+		/*
 		assertEquals(Dev_0_0.dev, rp.xdoc.device());
 		assertEquals(Dev_0_0.mp4, rp.xdoc.fullpath());
+		*/
 
-		return Dev_0_0.mp4;
+		return rp.xdoc;
 	}
 
 	void testSynDel() {
