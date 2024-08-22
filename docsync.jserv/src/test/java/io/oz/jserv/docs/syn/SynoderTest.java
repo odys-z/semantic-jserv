@@ -246,8 +246,6 @@ class SynoderTest {
 
 		printChangeLines(ck);
 		printNyquv(ck);
-		// assertEquals(x.nyquence(y.synode).n, y.n0(x.synode).n);
-		// assertEquals(ck[at].n0().n, y.n0(x.synode).n);
 
 		Utils.logrst(new String[] {x.synode, "answer to", y.synode}, test, sub, ++no);
 		rep.exblock.print(System.out);

@@ -141,16 +141,6 @@ public class Synoder {
 		} finally { expiredxp = delession(apply); }
 	}
 
-//	public Nyquence nyquence(String node) {
-//		Map<String, Nyquence> nv = nyquvect(node);
-//		return nv == null ? null
-//			: nv.get(node);
-//	}
-//
-//	public Map<String, Nyquence> nyquvect(String peer) {
-//		return synssion(peer).nyquvect();
-//	}
-
 	/**
 	 * Get n0 of the session with the {@link peer} synode.
 	 * 

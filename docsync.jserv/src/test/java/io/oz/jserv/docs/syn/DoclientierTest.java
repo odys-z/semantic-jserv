@@ -59,29 +59,10 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.test.JettyHelper;
 
 class DoclientierTest {
-	static String[] fpths = new String[] {
-		"src/test/res/anclient.java/1-pdf.pdf",
-		"src/test/res/anclient.java/2-ontario.gif",
-		/** https://elements.envato.com/sound-effects */
-		 "src/test/res/anclient.java/3-birds.wav",
-		"src/test/res/anclient.java/Amelia Anisovych.mp4"
-	};
-
-	public static class Dev_0_0 {
-		public static final String uri = "client-at-00";
-		public static final String uid = "syrskyi";
-		public static final String psw = "слава україні";
-		public static final String dev = "0-0";
-		public static final String folder = "zsu";
-	}
-
-	public static class Dev_0_1 {
-		public static final String uri = "client-at-00";
-		public static final String uid = "syrskyi";
-		public static final String psw = "слава україні";
-		public static final String dev = "0-1";
-		public static final String folder = "zsu";
-	}
+	public final static int X = 0;
+	public final static int Y = 1;
+	public final static int Z = 2;
+	public final static int W = 3;
 
 	public static class Dev_1_0 {
 		public static final String uri = "client-at-01";
@@ -133,19 +114,27 @@ class DoclientierTest {
 	static Dev[] devs; // = new Dev[4];
 	static JettyHelper[] jetties;
 	
-	static final int _0_0 = 0;
-	static final int _0_1 = 1;
-	static final int _1_0 = 2;
-	static final int _1_1 = 3;
+	static final int X_0 = 0;
+	static final int X_1 = 1;
+	static final int Y_0 = 2;
+	static final int Y_1 = 3;
 
 	static {
 		try {
 			jetties = new JettyHelper[4];
 			devs = new Dev[4];
-			devs[_0_0] = new Dev(Dev_0_0.uri, Dev_0_0.uid, Dev_0_0.psw, Dev_0_0.dev, Dev_0_0.folder, fpths[_0_0]);
-			devs[_0_1] = new Dev(Dev_0_1.uri, Dev_0_1.uid, Dev_0_1.psw, Dev_0_1.dev, Dev_0_1.folder, fpths[_0_1]);
-			devs[_1_0] = new Dev(Dev_1_0.uri, Dev_1_0.uid, Dev_1_0.psw, Dev_1_0.dev, Dev_1_0.folder, fpths[_1_0]);
-			devs[_1_1] = new Dev(Dev_1_1.uri, Dev_1_1.uid, Dev_1_1.psw, Dev_1_1.dev, Dev_1_1.folder, fpths[_1_1]);
+			devs[X_0] = new Dev("client-at-00", "syrskyi", "слава україні", "0-0", "zsu",
+								"src/test/res/anclient.java/1-pdf.pdf");
+
+			devs[X_1] = new Dev("client-at-00", "syrskyi", "слава україні", "0-1", "zsu",
+								"src/test/res/anclient.java/2-ontario.gif");
+
+			devs[Y_0] = new Dev(Dev_1_0.uri, Dev_1_0.uid, Dev_1_0.psw, Dev_1_0.dev, Dev_1_0.folder,
+					// https://elements.envato.com/sound-effects
+					"src/test/res/anclient.java/3-birds.wav");
+
+			devs[Y_1] = new Dev(Dev_1_1.uri, Dev_1_1.uid, Dev_1_1.psw, Dev_1_1.dev, Dev_1_1.folder,
+					"src/test/res/anclient.java/Amelia Anisovych.mp4");
 
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
@@ -246,19 +235,23 @@ class DoclientierTest {
 
 	@Test
 	void testSyncUp() throws Exception {
+		
+		setupDomain();
+
 		// 00 create
-		String fpth00 = clientPush(_0_0);
-		verifyPathsPage(devs[_0_0].client, docm.tbl, fpth00);
+		String fpth00 = clientPush(X_0);
+		verifyPathsPage(devs[X_0].client, docm.tbl, fpth00);
 
 		// 10 create
-		clientPush(_1_0);
+		clientPush(Y_0);
 
 		// 11 create
-		clientPush(_1_1);
+		clientPush(Y_1);
 
+		synctiers(1, 0);
 
 		// 00 delete
-		Dev d00 = devs[_0_0];
+		Dev d00 = devs[X_0];
 		Clients.init(d00.jserv);
 		DocsResp rep = d00.client.synDel(docm.tbl, d00.dev, d00.res);
 		assertEquals(1, rep.total(0));
@@ -268,6 +261,16 @@ class DoclientierTest {
 		// pause("Press enter to quite ...");
 	}
 	
+	void setupDomain() {
+		joinby(jetties[X], jetties[Y]);
+		joinby(jetties[X], jetties[Z]);
+		synctiers(X, Z);
+		synctiers(X, Y);
+	}
+
+	void joinby(JettyHelper hub, JettyHelper prv) {
+	}
+
 	String clientPush(int cix) throws Exception {
 		Dev dev = devs[cix];
 
@@ -337,8 +340,7 @@ class DoclientierTest {
 		return rp.xdoc;
 	}
 
-	void testSynDel() {
-		fail("Not yet implemented");
+	void synctiers(int x, int y) {
 	}
 
 	/**
