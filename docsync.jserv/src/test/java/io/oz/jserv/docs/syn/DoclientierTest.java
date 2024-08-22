@@ -122,15 +122,9 @@ class DoclientierTest {
 	
 	static final String clientconn = "main-sqlite";
 
-//	static final String serv0_conn = "no-jserv.00";
-//	static final String serv1_conn = "no-jserv.01";
-//	static final String serv2_conn = "no-jserv.02";
-//	static final String serv3_conn = "no-jserv.03";
 	static final String[] servs_conn = new String[] {
 			"no-jserv.00", "no-jserv.01", "no-jserv.02", "no-jserv.03"};
 	
-//	static final String[] jservs = new String[4];
-//	static final Doclientier[] clients = new Doclientier[4];
 	static Dev[] devs; // = new Dev[4];
 	
 	static final int _0_0 = 0;
@@ -169,72 +163,30 @@ class DoclientierTest {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-//		AutoSeqMeta asqm = new AutoSeqMeta();
-//		JRoleMeta arlm = new JUser.JRoleMeta();
-//		JOrgMeta  aorgm = new JUser.JOrgMeta();
-//		
-//		SynChangeMeta chm = new SynChangeMeta();
-//		SynSubsMeta sbm = new SynSubsMeta(chm);
-//		SynchangeBuffMeta xbm = new SynchangeBuffMeta(chm);
-//		SynSessionMeta ssm = new SynSessionMeta();
-//		PeersMeta prm = new PeersMeta();
-//		
-//		SynodeMeta snm = new SynodeMeta(serv0_conn);
-//		docm = new T_PhotoMeta(serv0_conn); // .replace();
-//		setupSqliTables(serv0_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
-//		setupSqliTables(serv1_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
-//		setupSqliTables(serv2_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
-//		setupSqliTables(serv3_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
-//
-//		initRecords(serv0_conn);
-//		
-//		Connects.reload(webinf); // reload metas
-//
-//		// synode
-//		String servIP = "localhost";
-//		int port = 8090;
-//
-//		JettyHelper.startJserv(webinf, serv0_conn, "config-0.xml",
-//				servIP, port,
-//				new AnSession(), new AnQuery(), new AnUpdate(),
-//				new HeartLink());
-//
-//		JettyHelper.addServPort(new Syntier(Configs.getCfg(Configs.keys.synode), serv0_conn)
-//				   .start(SynoderTest.ura, SynoderTest.zsu, serv0_conn, SynodeMode.peer));
-//
-//		// client
-//		String jserv = String.format("http://%s:%s", servIP, port);
-//		logi("Server started at %s", jserv);
-
-		// Clients.init(startSyndoctier(serv0_conn));
-		
 		int port = 8090;
 		for (int i = 0; i < servs_conn.length; i++)
 			devs[i].jserv = startSyndoctier(servs_conn[i], port++);
+
+		initRecords(servs_conn[0]);
 	}
 	
 	static String startSyndoctier(String serv_conn, int port) throws Exception {
 		AutoSeqMeta asqm = new AutoSeqMeta();
 		JRoleMeta arlm = new JUser.JRoleMeta();
 		JOrgMeta  aorgm = new JUser.JOrgMeta();
-		
+	
 		SynChangeMeta chm = new SynChangeMeta();
 		SynSubsMeta sbm = new SynSubsMeta(chm);
 		SynchangeBuffMeta xbm = new SynchangeBuffMeta(chm);
 		SynSessionMeta ssm = new SynSessionMeta();
 		PeersMeta prm = new PeersMeta();
-		
+	
 		SynodeMeta snm = new SynodeMeta(serv_conn);
-		docm = new T_PhotoMeta(serv_conn); // .replace();
+		docm = new T_PhotoMeta(serv_conn);
 		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
-
-		initRecords(serv_conn);
-		
-		Connects.reload(webinf); // reload metas
 
 		// synode
 		String servIP = "localhost";
-		// int port = 8090;
 
 		JettyHelper.startJserv(webinf, serv_conn, "config-0.xml",
 				servIP, port,

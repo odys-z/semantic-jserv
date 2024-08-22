@@ -34,8 +34,8 @@ import io.oz.jserv.docs.syn.Syngleton;
  *
  */
 public class JettyHelper {
-	static Server server;
-	private static ServletContextHandler schandler;
+	Server server;
+	ServletContextHandler schandler;
 	/** one singleton / container per tier per org? */
 	// static String configxml = "per servlet container";
 
