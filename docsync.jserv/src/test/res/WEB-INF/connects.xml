@@ -110,5 +110,17 @@
   		<conn>no-jserv.01</conn>
   	</c>
   	
+  	<c>
+  		<uri>jetty-0</uri>
+  		<conn>no-jserv.00</conn>
+  	</c>
+  	<c>
+  		<uri>jetty-1</uri>
+  		<conn>no-jserv.01</conn>
+  	</c>
+  	<c>
+  		<uri>jetty-2</uri>
+  		<conn>no-jserv.02</conn>
+  	</c>
   </t>
 </conns>

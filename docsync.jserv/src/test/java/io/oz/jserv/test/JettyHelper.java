@@ -1,5 +1,7 @@
 package io.oz.jserv.test;
 
+import static io.odysz.common.Utils.logi;
+
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 
@@ -38,6 +40,7 @@ public class JettyHelper {
 	ServletContextHandler schandler;
 	/** one singleton / container per tier per org? */
 	// static String configxml = "per servlet container";
+	String jserv;
 
     /**
      * Start an embedded Jetty 12 server, evn ee8, for test etc.
@@ -50,10 +53,9 @@ public class JettyHelper {
      * @param servports
      * @throws Exception
      * @since 2.0.0
-     */
-    @SafeVarargs
-	public static void startJserv(String configPath, String conn, String configxml, String ip, int port,
-			Class<? extends ServPort<?>> ... servports) throws Exception {
+    public void startJserv(String configPath, String conn, String configxml, String ip, int port,
+			@SuppressWarnings("unchecked")
+    		Class<? extends ServPort<?>> ... servports) throws Exception {
 
         instanserver(configPath, conn, configxml, ip, port);
 
@@ -64,46 +66,54 @@ public class JettyHelper {
 		
         server.start();
     }
+     */
 
-	public static void instanserver(String configPath, String conn0, String configxml, String ip, int port)
+	static JettyHelper instanserver(String configPath, String conn0, String configxml, String ip, int port)
 			throws Exception {
         Anson.verbose = false;
 
     	Syngleton.initSynodetier(configxml, conn0, ".", configPath, "ABCDEF0123456789");
         AnsonMsg.understandPorts(Port.docsync);
         
-        if (server != null)
-        	server.stop();
+        JettyHelper helper = new JettyHelper();
 
-        server = new Server();
+        helper.server = new Server();
 
-        ServerConnector httpConnector = new ServerConnector(server);
+        ServerConnector httpConnector = new ServerConnector(helper.server);
         httpConnector.setHost(ip);
         httpConnector.setPort(port);
         httpConnector.setIdleTimeout(5000);
-        server.addConnector(httpConnector);
+        helper.server.addConnector(httpConnector);
+        
+        return helper;
 	}
 
 	@SafeVarargs
-	public static <T extends ServPort<? extends AnsonBody>> void startJserv(
-			String configPath, String conn, String configxml,
-			String ip, int port, T ... servports) throws Exception {
+	static public <T extends ServPort<? extends AnsonBody>> JettyHelper startJserv(
+			String configPath, String conn, String configxml, String ip, int port,
+			T ... servports) throws Exception {
 
-        instanserver(configPath, conn, configxml, ip, port);
+		JettyHelper helper = instanserver(configPath, conn, configxml, ip, port);
 
-        schandler = new ServletContextHandler(server, "/");
+        helper.schandler = new ServletContextHandler(helper.server, "/");
         for (T t : servports) {
-        	registerServlets(schandler, t.trb(new DATranscxt(conn)));
+        	helper.registerServlets(helper.schandler, t.trb(new DATranscxt(conn)));
         }
 
-        server.start();
+        helper.server.start();
+        
+        
+		helper.jserv = String.format("http://%s:%s", ip, port);
+		logi("Server started at %s", helper.jserv);
+        return helper;
 	}
 
-    static <T extends ServPort<? extends AnsonBody>> void registerServlets(ServletContextHandler context, T t) {
+    <T extends ServPort<? extends AnsonBody>> JettyHelper registerServlets(ServletContextHandler context, T t) {
 		WebServlet info = t.getClass().getAnnotation(WebServlet.class);
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
 		}
+		return this;
 	}
 
 	static void registerServlets(ServletContextHandler context, Class<? extends HttpServlet> type)
@@ -115,11 +125,12 @@ public class JettyHelper {
 		}
 	}
 
-	public static void addServPort(ServPort<?> p) {
+	public JettyHelper addServPort(ServPort<?> p) {
        	registerServlets(schandler, p);
+       	return this;
 	}
 	
-	public static void stop() throws Exception {
+	public void stop() throws Exception {
 		if (server != null)
 			server.stop();
 	}

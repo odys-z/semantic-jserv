@@ -7,7 +7,7 @@ import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
-import static io.oz.jserv.docs.syn.SynoderTest.webinf;
+import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -126,6 +126,7 @@ class DoclientierTest {
 			"no-jserv.00", "no-jserv.01", "no-jserv.02", "no-jserv.03"};
 	
 	static Dev[] devs; // = new Dev[4];
+	static JettyHelper[] jetties;
 	
 	static final int _0_0 = 0;
 	static final int _0_1 = 1;
@@ -164,13 +165,16 @@ class DoclientierTest {
 		Connects.init(webinf);
 
 		int port = 8090;
-		for (int i = 0; i < servs_conn.length; i++)
-			devs[i].jserv = startSyndoctier(servs_conn[i], port++);
+		for (int i = 0; i < servs_conn.length; i++) {
+			if (jetties[i] != null)
+				jetties[i].stop();
+			jetties[i] = startSyndoctier(servs_conn[i], port++);
+		}
 
 		initRecords(servs_conn[0]);
 	}
 	
-	static String startSyndoctier(String serv_conn, int port) throws Exception {
+	static JettyHelper startSyndoctier(String serv_conn, int port) throws Exception {
 		AutoSeqMeta asqm = new AutoSeqMeta();
 		JRoleMeta arlm = new JUser.JRoleMeta();
 		JOrgMeta  aorgm = new JUser.JOrgMeta();
@@ -188,18 +192,12 @@ class DoclientierTest {
 		// synode
 		String servIP = "localhost";
 
-		JettyHelper.startJserv(webinf, serv_conn, "config-0.xml",
+		return JettyHelper.startJserv(webinf, serv_conn, "config-0.xml",
 				servIP, port,
 				new AnSession(), new AnQuery(), new AnUpdate(),
-				new HeartLink());
-
-		JettyHelper.addServPort(new Syntier(Configs.getCfg(Configs.keys.synode), serv_conn)
-				   .start(SynoderTest.ura, SynoderTest.zsu, serv_conn, SynodeMode.peer));
-
-		// client
-		String jserv = String.format("http://%s:%s", servIP, port);
-		logi("Server started at %s", jserv);
-		return jserv;
+				new HeartLink())
+			.addServPort(new Syntier(Configs.getCfg(Configs.keys.synode), serv_conn)
+			.start(SynoderTest.ura, SynoderTest.zsu, serv_conn, SynodeMode.peer)) ;
 	}
 
 	/**
@@ -234,7 +232,8 @@ class DoclientierTest {
 
 	@AfterAll
 	static void close() throws Exception {
-		JettyHelper.stop();
+		for (JettyHelper h : jetties)
+			h.stop();
 
 		logi("Server closed");
 	}
@@ -242,17 +241,6 @@ class DoclientierTest {
 	@Test
 	void testSyncUp() throws Exception {
 		// 00 create
-//		Clients.init(devs[0].jserv);
-//		Doclientier client00 = new Doclientier(Dev_0_0.uri, errLog)
-//				.tempRoot(Dev_0_0.uri)
-//				.loginWithUri(Dev_0_0.uri, Dev_0_0.uid, Dev_0_0.dev, Dev_0_0.psw)
-//				.blockSize(bsize);
-//		
-//		Utils.logi("-------------- Logged in. %s",
-//				client00.client.ssInfo().toString());
-//
-//		String fpth00 = videoUpByApp(client00, docm.tbl);
-
 		String fpth00 = clientPush(_0_0);
 		verifyPathsPage(devs[_0_0].client, docm.tbl, fpth00);
 
