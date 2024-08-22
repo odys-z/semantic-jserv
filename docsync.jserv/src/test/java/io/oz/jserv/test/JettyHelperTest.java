@@ -90,6 +90,16 @@ public class JettyHelperTest {
 		pause("Errors because of no r.serv port can be ignred. Press any key to continue ...");
 	}
 	
+	/**
+	 * Start Jetty and allow uid to login.
+	 * 
+	 * @param conn
+	 * @param uid
+	 * @param port
+	 * @return JettyHelper
+	 * @throws IOException
+	 * @throws Exception
+	 */
 	private JettyHelper startJetty(String conn, String uid, int port) throws IOException, Exception {
 		IUser usr = DATranscxt.dummyUser();
 		ArrayList<String> sqls = new ArrayList<String>();
@@ -109,6 +119,5 @@ public class JettyHelperTest {
 			.addServPort(new Syntier(Configs.getCfg(Configs.keys.synode), conn)
 			.start("URA", "zsu", conn, SynodeMode.peer))
 			;
-
 	}
 }

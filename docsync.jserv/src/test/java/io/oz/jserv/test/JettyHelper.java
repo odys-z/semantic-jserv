@@ -38,35 +38,7 @@ import io.oz.jserv.docs.syn.Syngleton;
 public class JettyHelper {
 	Server server;
 	ServletContextHandler schandler;
-	/** one singleton / container per tier per org? */
-	// static String configxml = "per servlet container";
 	String jserv;
-
-    /**
-     * Start an embedded Jetty 12 server, evn ee8, for test etc.
-     * 
-     * <p>Note: all serv-port types must have a default contructor (zero parameters).
-     * If this is not possible, use {@link #registerServlets(ServletContextHandler, ServPort)}</p>
-     * @param configxml e. g. config.xml
-     * @param ip
-     * @param port
-     * @param servports
-     * @throws Exception
-     * @since 2.0.0
-    public void startJserv(String configPath, String conn, String configxml, String ip, int port,
-			@SuppressWarnings("unchecked")
-    		Class<? extends ServPort<?>> ... servports) throws Exception {
-
-        instanserver(configPath, conn, configxml, ip, port);
-
-        schandler = new ServletContextHandler(server, "/");
-        for (Class<? extends ServPort<?>> c : servports) {
-        	registerServlets(schandler, c);
-        }
-		
-        server.start();
-    }
-     */
 
 	static JettyHelper instanserver(String configPath, String conn0, String configxml, String ip, int port)
 			throws Exception {
