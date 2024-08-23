@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.common.Utils;
 import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.JRobot;
@@ -228,7 +229,8 @@ public class Synoder {
 		IUser robot = new JRobot();
 
 		if (DAHelper.count(b0, myconn, snm.tbl, snm.synuid, synode) > 0)
-			; // DAHelper.updateFieldsByPk(robot, t0, myconn, snm, synode, snm.nyquence, n0, snm.nstamp, stamp0);
+			// DAHelper.updateFieldsByPk(robot, t0, myconn, snm, synode, snm.nyquence, n0, snm.nstamp, stamp0);
+			Utils.warnT(new Object() {}, "What's it when reached here?");
 		else
 			DAHelper.insert(robot, b0, myconn, snm,
 					snm.synuid, synode,
@@ -240,9 +242,6 @@ public class Synoder {
 					snm.device, "#" + synode
 					);
 		
-//		mysynbuilder = new DBSyntableBuilder(domain, myconn, synode, mod)
-//							.loadNyquvect(myconn);
-	
 		if (handlers != null)
 		for (SemanticHandler h : handlers)
 			if (h instanceof ShSynChange)
