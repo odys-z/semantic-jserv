@@ -64,7 +64,7 @@ public class Doclientier extends Semantier {
 
 	protected DocUser robot;
 
-	/** for download? */
+	/** For download. */
 	protected String tempath;
 
 	/** Must be multiple of 12. Default 3 MiB */
@@ -274,7 +274,7 @@ public class Doclientier extends Semantier {
 
 		if ( size == length ) {
 			// move temporary file
-			String targetPath = ""; //resolvePrivRoot(f.uri, meta);
+			String targetPath = "";
 			if (verbose)
 				Utils.logi("   %s\n-> %s", pth, targetPath);
 			try {
@@ -471,7 +471,6 @@ public class Doclientier extends Semantier {
 	
 	public DocsResp synDel(String tabl, String device, String clientpath) {
 		DocsReq req = (DocsReq) new DocsReq(tabl, uri)
-				// .device(new Device(device, null))
 				.doc(device, clientpath)
 				.a(A.del);
 
@@ -556,7 +555,6 @@ public class Doclientier extends Semantier {
 		long size = new File(localPath).length();
 
 		Insert ins = st.insert(meta.tbl, usr)
-				// .nv(meta.org(), usr.orgId())
 				.nv(meta.uri, doc.uri64)
 				.nv(meta.resname, doc.pname)
 				.nv(meta.device, usr.deviceId())

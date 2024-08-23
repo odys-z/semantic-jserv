@@ -44,16 +44,6 @@ public class Synoder {
 		return expiredxp == null ? null : expiredxp.n0();
 	}
 
-	/**
-	 * Get my syn-transact-builder for the session with the peer {@code withPeer}. 
-	 * @param withPeer 
-	 * @return builder
-	DBSyntableBuilder trb(String withPeer) {
-		ExessionPersist xp = synssion(withPeer);
-		return xp == null ? null : xp.trb;
-	}
-	 */
-
 	ExessionPersist synssion(String peer) {
 		return sessions != null
 				? sessions.get(peer)
@@ -90,12 +80,10 @@ public class Synoder {
 
 	public SyncReq joinpeer(String peeradmin, String passwd) throws Exception {
 
-		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod)
-				; // .loadNyquvect(myconn);
+		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod);
 
 		// sign up as a new domain
-		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin)
-								; // .loadNyquvect(myconn);
+		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
 
 		ExchangeBlock req  = cltb.domainSignup(cltp, peeradmin);
 
@@ -106,11 +94,9 @@ public class Synoder {
 	public SyncResp onjoin(SyncReq req)
 			throws Exception {
 		String peer = req.exblock.srcnode;
-		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod)
-				; // .loadNyquvect(myconn);
+		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod);
 
-		ExessionPersist admp = new ExessionPersist(admb, peer)
-								; // .loadNyquvect(myconn);
+		ExessionPersist admp = new ExessionPersist(admb, peer);
 
 		ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
@@ -123,7 +109,6 @@ public class Synoder {
 		String admin = rep.exblock.srcnode;
 		try {
 			ExessionPersist xp = synssion(admin);
-			// ExchangeBlock ack  = 
 			xp.trb.domainitMe(xp, admin, rep.exblock);
 
 			ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);

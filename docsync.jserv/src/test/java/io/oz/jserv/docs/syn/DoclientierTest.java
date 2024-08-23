@@ -306,7 +306,7 @@ class DoclientierTest {
 
 				// pushing again should fail
 				try {
-					DocsResp resp2 = doclient.startPush(entityName, d,
+					doclient.startPush(entityName, d,
 						new OnOk() {
 							@Override
 							public void ok(AnsonResp rep)
