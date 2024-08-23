@@ -59,7 +59,7 @@ public class Syntier extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 
 	/** {domain: {jserv: exession-persist}} */
-	HashMap<String, Synoder> domains;
+	HashMap<String, SynDomanager> domains;
 
 	private DBSyntableBuilder dom0builder;
 	public DBSyntableBuilder stampbuilder() throws SQLException, TransException {
@@ -210,9 +210,9 @@ public class Syntier extends ServPort<DocsReq> {
 	public Syntier start(String org, String domain, String conn, SynodeMode mod)
 			throws Exception {
 		if (domains == null)
-			domains = new HashMap<String, Synoder>();
+			domains = new HashMap<String, SynDomanager>();
 		if (!domains.containsKey(domain))
-			domains.put(domain, new Synoder(org, domain, synode, conn, mod));
+			domains.put(domain, new SynDomanager(org, domain, synode, conn, mod));
 
 		SemanticsMap ss = DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
 			(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
@@ -228,7 +228,7 @@ public class Syntier extends ServPort<DocsReq> {
 		return this;
 	}
 
-	public Synoder domanager(String domain) {
+	public SynDomanager domanager(String domain) {
 		return domains.get(domain);
 	}
 	

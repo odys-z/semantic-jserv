@@ -1,10 +1,8 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
-import java.net.UnixDomainSocketAddress;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +30,7 @@ import io.odysz.transact.x.TransException;
  * Syn-domain's sessions manager.
  * @see #sessions
  */
-public class Synoder {
+public class SynDomanager {
 	final String synode;
 	final String myconn;
 	final String domain;
@@ -40,40 +38,43 @@ public class Synoder {
 	final SynodeMode mod;
 	
 	/** {peer: session-persist} */
-	HashMap<String, ExessionPersist> sessions;
+	HashMap<String, SynDomClientier> sessions;
 	
 	/** Expired, only for tests. */
-	public ExessionPersist expiredxp;
+	public SynDomClientier expiredClientier;
+//	ExessionPersist expiredxp;
+
 	public Nyquence lastn0(String peer) {
-		return expiredxp == null ? null : expiredxp.n0();
+		return expiredClientier == null || expiredClientier.xp == null ?
+				null : expiredClientier.xp.n0();
 	}
 
-	ExessionPersist synssion(String peer) {
+	SynDomClientier synssion(String peer) {
 		return sessions != null
 				? sessions.get(peer)
 				: null;
 	}
 
-	Synoder synssion(String peer, ExessionPersist cp) throws ExchangeException {
+	SynDomanager synssion(String peer, SynDomClientier client) throws ExchangeException {
 		if (sessions == null)
-			sessions = new HashMap<String, ExessionPersist>();
+			sessions = new HashMap<String, SynDomClientier>();
 
-		if (synssion(peer) != null && synssion(peer).exstate() != ready)
-			throw new ExchangeException(ready, synssion(peer),
+		if (synssion(peer) != null && synssion(peer).xp.exstate() != ready)
+			throw new ExchangeException(ready, synssion(peer).xp,
 				"Session for synching to %s already exists at %s",
 				peer, synode);
 
-		sessions.put(peer, cp);
+		sessions.put(peer, client);
 		return this;
 	}
 
-	private ExessionPersist delession(String peer) {
+	private SynDomClientier delession(String peer) {
 		if (sessions != null && sessions.containsKey(peer))
 			return sessions.remove(peer);
 		return null;
 	}
 
-	public Synoder(String org, String dom, String myid, String conn, SynodeMode mod)
+	public SynDomanager(String org, String dom, String myid, String conn, SynodeMode mod)
 			throws SQLException, SAXException, IOException, TransException {
 		synode   = myid;
 		myconn   = conn;
@@ -91,7 +92,8 @@ public class Synoder {
 
 		ExchangeBlock req  = cltb.domainSignup(cltp, peeradmin);
 
-		synssion(peeradmin, cltp);
+		// synssion(peeradmin, new SynDomClientier(cltp));
+		synssion(peeradmin, new SynDomClientier(this, peeradmin, domain).xp(cltp));
 		return new SyncReq(null, domain).exblock(req);
 	}
 
@@ -104,7 +106,7 @@ public class Synoder {
 
 		ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
-		synssion(peer, admp.exstate(ready));
+		synssion(peer, new SynDomClientier(this, peer, domain).xp(admp.exstate(ready)));
 	
 		return new SyncResp().exblock(resp);
 	}
@@ -112,22 +114,22 @@ public class Synoder {
 	public SyncReq closejoin(SyncResp rep) throws TransException, SQLException {
 		String admin = rep.exblock.srcnode;
 		try {
-			ExessionPersist xp = synssion(admin);
+			ExessionPersist xp = synssion(admin).xp;
 			xp.trb.domainitMe(xp, admin, rep.exblock);
 
 			ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 			return new SyncReq(null, domain)
 					.exblock(req);
-		} finally { expiredxp = delession(admin); }
+		} finally { expiredClientier = delession(admin); }
 	}
 
 	public SyncResp onclosejoin(SyncReq req) throws TransException, SQLException {
 		String apply = req.exblock.srcnode;
 		try {
-			ExessionPersist sp = synssion(apply);
+			ExessionPersist sp = synssion(apply).xp;
 			ExchangeBlock ack  = sp.trb.domainCloseJoin(sp, req.exblock);
 			return new SyncResp().exblock(ack);
-		} finally { expiredxp = delession(apply); }
+		} finally { expiredClientier = delession(apply); }
 	}
 
 	/**
@@ -137,7 +139,7 @@ public class Synoder {
 	 * @return n0 N0 in all sessions should be the same.
 	 */
 	public Nyquence n0(String peer) {
-		return synssion(peer).n0();
+		return synssion(peer).xp.n0();
 	}
 
 	/**
@@ -161,8 +163,14 @@ public class Synoder {
 					.exblock(b);
 	}
 
-	public SyncResp onsyninit(String peer, ExchangeBlock ini)
-			throws Exception {
+	/**
+	 * @deprecated Only for test, mimicking onPost() handling.
+	 * @param peer
+	 * @param ini initial request
+	 * @return exchange block
+	 * @throws Exception
+	 */
+	public SyncResp onsyninit(String peer, ExchangeBlock ini) throws Exception {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod);
 
 		ExessionPersist xp = new ExessionPersist(b0, peer, ini)
@@ -170,47 +178,47 @@ public class Synoder {
 
 		ExchangeBlock b = b0.onInit(xp, ini);
 
-		synssion(peer, xp);
-		return new SyncResp()
-				.exblock(b);
-	}
+		synssion(peer, new SynDomClientier(this, peer, domain).xp(xp));
 
-	public SyncReq syncdb(String peer, SyncResp rep)
-			throws SQLException, TransException {
-
-		ExchangeBlock reqb = synssion(peer)
-						.nextExchange(rep.exblock);
-
-		SyncReq req = new SyncReq(null, domain)
-						.exblock(reqb);
-		return req;
-	}
-	
-	public SyncResp onsyncdb(String peer, SyncReq req)
-			throws SQLException, TransException {
-		ExchangeBlock repb = synssion(peer)
-				.nextExchange(req.exblock);
-
-		return new SyncResp().exblock(repb);
-	}
-
-	public SyncReq synclose(String domain, String peer, SyncResp rep)
-			throws TransException, SQLException {
-		try {
-		ExessionPersist xp = synssion(peer);
-		ExchangeBlock b = xp.trb.closexchange(xp, rep.exblock);
-		return new SyncReq(null, domain).exblock(b);
-		} finally { expiredxp = delession(peer); }
-	}
-
-	public SyncResp onsynclose(String domain, String peer, SyncReq req)
-			throws TransException, SQLException {
-		try {
-		ExessionPersist xp = synssion(peer);
-		ExchangeBlock b = xp.trb.onclosexchange(xp, req.exblock);
 		return new SyncResp().exblock(b);
-		} finally { expiredxp = delession(peer); }
 	}
+
+//	public SyncReq syncdb(String peer, SyncResp rep)
+//			throws SQLException, TransException {
+//
+//		ExchangeBlock reqb = synssion(peer)
+//						.nextExchange(rep.exblock);
+//
+//		SyncReq req = new SyncReq(null, domain)
+//						.exblock(reqb);
+//		return req;
+//	}
+//	
+//	public SyncResp onsyncdb(String peer, SyncReq req)
+//			throws SQLException, TransException {
+//		ExchangeBlock repb = synssion(peer)
+//				.nextExchange(req.exblock);
+//
+//		return new SyncResp().exblock(repb);
+//	}
+//
+//	public SyncReq synclose(String domain, String peer, SyncResp rep)
+//			throws TransException, SQLException {
+//		try {
+//		ExessionPersist xp = synssion(peer);
+//		ExchangeBlock b = xp.trb.closexchange(xp, rep.exblock);
+//		return new SyncReq(null, domain).exblock(b);
+//		} finally { expiredxp = delession(peer); }
+//	}
+//
+//	public SyncResp onsynclose(String domain, String peer, SyncReq req)
+//			throws TransException, SQLException {
+//		try {
+//		ExessionPersist xp = synssion(peer);
+//		ExchangeBlock b = xp.trb.onclosexchange(xp, req.exblock);
+//		return new SyncResp().exblock(b);
+//		} finally { expiredxp = delession(peer); }
+//	}
 
 	/**
 	 * Initialize n0 and samp.
@@ -220,7 +228,7 @@ public class Synoder {
 	 * @return this
 	 * @throws Exception 
 	 */
-	public Synoder born(List<SemanticHandler> handlers, long n0, long stamp0)
+	public SynDomanager born(List<SemanticHandler> handlers, long n0, long stamp0)
 			throws Exception {
 		SynodeMeta snm = new SynodeMeta(myconn);
 		DATranscxt b0 = new DATranscxt(null);
@@ -255,45 +263,14 @@ public class Synoder {
 	 * Can be called by request handler and timer.
 	 * @return this
 	 */
-	public Synoder updomain() {
+	public SynDomanager updomain() {
 		if (knownpeers != null)
 		for (String peer : knownpeers)
-			if (sessions.containsKey(peer) && sessions.get(peer).exstate() != ready)
+			if (sessions.containsKey(peer) && sessions.get(peer).xp.exstate() != ready)
 				continue;
-			else new Thread(() -> { 
-				try {
-					// start session
-					SyncReq req  = syninit(peer, domain);
-					SyncResp rep = exestart(sessions, peer, req);
-					if (rep != null) {
-						onsyninit(peer, rep.exblock);
-						while (rep.synact() != close || req.synact() != close) {
-							// req = syncdb(peer, rep);
-							// 
-							// rep = srv.onsyncdb(clt.synode, req);
-							req = syncdb(peer, rep);
-							rep = exespush(sessions.get(peer), peer, req);
-						}
-						req = synclose(domain, peer, rep);
-						rep = exesclose(sessions.get(peer), peer, req);
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}).start();
+			else new SynDomClientier(this, peer, domain).start();
 
 		return this;
 	}
 
-	SyncResp exestart(final HashMap<String, ExessionPersist> sessions, String peer, SyncReq req) {
-		return null;
-	}
-
-	SyncResp exespush(final ExessionPersist exession, String peer, SyncReq req) {
-		return null;
-	}
-
-	SyncResp exesclose(final ExessionPersist exession, String peer, SyncReq req) {
-		return null;
-	}
 }

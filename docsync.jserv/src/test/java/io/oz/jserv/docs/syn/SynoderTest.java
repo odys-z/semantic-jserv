@@ -176,7 +176,7 @@ class SynoderTest {
 		int no = 0;
 		Utils.logrst("X starting", test, ++no);
 		Syntier xtir = syntiers[X];
-		Synoder x = xtir.start(ura, zsu, xtir.myconn, SynodeMode.peer)
+		SynDomanager x = xtir.start(ura, zsu, xtir.myconn, SynodeMode.peer)
 						.domanager(zsu);
 
 		ck[X] = new Docheck(azert, zsu, x.myconn, x.synode, SynodeMode.peer, docm);
@@ -184,7 +184,7 @@ class SynoderTest {
 
 		Utils.logrst("Y starting", test, ++no);
 		Syntier ytir = syntiers[Y];
-		Synoder y = ytir.start(ura, zsu, ytir.myconn, SynodeMode.peer)
+		SynDomanager y = ytir.start(ura, zsu, ytir.myconn, SynodeMode.peer)
 						.domanager(zsu);
 
 		ck[Y] = new Docheck(azert, zsu, y.myconn, y.synode, SynodeMode.peer, docm);
@@ -208,7 +208,7 @@ class SynoderTest {
 		printNyquv(ck);
 
 		Syntier ztir = syntiers[Z];
-		Synoder z = ztir.start(ura, zsu, ztir.myconn, SynodeMode.peer)
+		SynDomanager z = ztir.start(ura, zsu, ztir.myconn, SynodeMode.peer)
 						.domanager(zsu);
 
 		ck[Z] = new Docheck(azert, zsu, z.myconn, z.synode, SynodeMode.peer, docm);
@@ -236,8 +236,8 @@ class SynoderTest {
 	void joinby(int at, int by, int test, int sub) throws Exception {
 
 		int no = 0;
-		Synoder y = syntiers[by].domanager(zsu);
-		Synoder x = syntiers[at].domanager(zsu);
+		SynDomanager y = syntiers[by].domanager(zsu);
+		SynDomanager x = syntiers[at].domanager(zsu);
 
 		SyncReq req = y.joinpeer(x.synode, passwd);
 		
@@ -259,8 +259,10 @@ class SynoderTest {
 
 		pushDebug()
 		.assertl(
-			ck[by].n0().n, loadNyquvect(y.expiredxp.trb).get(x.synode).n + 1,
-			ck[at].n0().n, loadNyquvect(x.expiredxp.trb).get(y.synode).n + 1,
+			// ck[by].n0().n, loadNyquvect(y.expiredxp.trb).get(x.synode).n + 1,
+			ck[by].n0().n, loadNyquvect(y.expiredClientier.xp.trb).get(x.synode).n + 1,
+			// ck[at].n0().n, loadNyquvect(x.expiredxp.trb).get(y.synode).n + 1,
+			ck[at].n0().n, loadNyquvect(x.expiredClientier.xp.trb).get(y.synode).n + 1,
 			ck[at].n0().n, y.lastn0(x.synode).n,
 			ck[at].n0().n, ck[by].n0().n)
 		.popDebug();
@@ -300,41 +302,43 @@ class SynoderTest {
 		Utils.logrst("syncpeers()", test);
 		int no = 0;
 		
-		Synoder x = syntiers[X].domanager(zsu);
-		Synoder y = syntiers[Y].domanager(zsu);
+		SynDomanager x = syntiers[X].domanager(zsu);
+		SynDomanager y = syntiers[Y].domanager(zsu);
 		
 		Utils.logrst("X sync by Y", test, ++no);
 		syncpair(zsu, X, Y, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.expiredxp.trb.entities(docm));
+		assertEquals(2, x.synssion(y.synode).xp.trb.entities(docm));
 
 		Utils.logrst("X sync by Z", test, ++no);
-		Synoder z = syntiers[Z].domanager(zsu);
+		SynDomanager z = syntiers[Z].domanager(zsu);
 		syncpair(zsu, X, Z, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.expiredxp.trb.entities(docm));
-		assertEquals(2, z.expiredxp.trb.entities(docm));
+		assertEquals(2, x.synssion(z.synode).xp.trb.entities(docm));
+		assertEquals(2, z.synssion(x.synode).xp.trb.entities(docm));
 
 		Utils.logrst("X sync by Y", test, ++no);
 		syncpair(zsu, X, Y, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
-		assertEquals(2, y.expiredxp.trb.entities(docm));
+
+		assertEquals(2, y.synssion(x.synode).xp.trb.entities(docm));
 	}
 	
 	void syncpair(String domain, int sx, int cx, int testno, int subno)
 			throws Exception {
 		Utils.logrst("syncpair()", testno, subno);
 		int no = 0;
-		Synoder srv = syntiers[sx].domanager(domain);
-		Synoder clt = syntiers[cx].domanager(domain);
+		SynDomanager srv = syntiers[sx].domanager(domain);
+		SynDomanager clt = syntiers[cx].domanager(domain);
 
 		Utils.logrst("client initate", testno, subno, ++no);
-		SyncReq req  = clt.syninit(srv.synode, zsu);
+		// SyncReq req  = clt.synssion(srv.synode).syninit();
+		SyncReq req  = clt.syninit(srv.synode, domain);
 
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -346,21 +350,23 @@ class SynoderTest {
 		printNyquv(ck);
 		Utils.logrst("exchanges", testno, subno, ++no);
 		
-		if (rep != null)
+		if (rep != null) {
+			// clt.synssion(srv.synode).onsyninit(rep.exblock);
 			clt.onsyninit(srv.synode, rep.exblock);
 			while (rep.synact() != close || req.synact() != close) {
 				Utils.logrst("client exchange", testno, subno, no, ++ex);
-				req = clt.syncdb(srv.synode, rep);
+				req = clt.synssion(srv.synode).syncdb(rep);
 				req.exblock.print(System.out);
 
 				Utils.logrst("server on-exchange", testno, subno, no, ++ex);
-				rep = srv.onsyncdb(clt.synode, req);
+				rep = srv.synssion(clt.synode).onsyncdb(req);
 				rep.exblock.print(System.out);
 			}
 		
-		Utils.logrst("close exchange", testno, subno, ++no);
-		req = clt.synclose(zsu, srv.synode, rep);
-		srv.onsynclose(zsu, clt.synode, req);
+			Utils.logrst("close exchange", testno, subno, ++no);
+			req = clt.synssion(srv.synode).synclose(rep);
+			srv.synssion(clt.synode).onsynclose(req);
+		}
 
 		printChangeLines(ck);
 		printNyquv(ck);
