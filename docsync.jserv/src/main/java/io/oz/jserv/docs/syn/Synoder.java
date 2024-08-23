@@ -1,9 +1,12 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
+import java.net.UnixDomainSocketAddress;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -36,7 +39,7 @@ public class Synoder {
 	final String org;
 	final SynodeMode mod;
 	
-	/** {peer: session-persist } */
+	/** {peer: session-persist} */
 	HashMap<String, ExessionPersist> sessions;
 	
 	/** Expired, only for tests. */
@@ -145,12 +148,8 @@ public class Synoder {
 	 * @return initiate request
 	 * @throws Exception 
 	 */
-	public SyncReq syninit(String peer, String domain)
-			throws Exception {
-		// TO BE CONTINUED:
-		// Move stamp to ExessionPersist.
-		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
-								; // .loadNyquvect(myconn);
+	public SyncReq syninit(String peer, String domain) throws Exception {
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod);
 
 		ExessionPersist xp = new ExessionPersist(b0, peer)
 								.loadNyquvect(myconn);
@@ -159,7 +158,7 @@ public class Synoder {
 		ExchangeBlock b = b0.initExchange(xp);
 
 		return new SyncReq(null, domain)
-				.exblock(b);
+					.exblock(b);
 	}
 
 	public SyncResp onsyninit(String peer, ExchangeBlock ini)
@@ -180,10 +179,10 @@ public class Synoder {
 			throws SQLException, TransException {
 
 		ExchangeBlock reqb = synssion(peer)
-				.nextExchange(rep.exblock);
+						.nextExchange(rep.exblock);
 
 		SyncReq req = new SyncReq(null, domain)
-				.exblock(reqb);
+						.exblock(reqb);
 		return req;
 	}
 	
@@ -247,5 +246,54 @@ public class Synoder {
 			DBSyntableBuilder.registerEntity(myconn, ((ShSynChange)h).entm);
 
 		return this;
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	ArrayList<String> knownpeers;
+	/**
+	 * Update domain, and start all possible sessions, in a new thread.
+	 * Can be called by request handler and timer.
+	 * @return this
+	 */
+	public Synoder updomain() {
+		if (knownpeers != null)
+		for (String peer : knownpeers)
+			if (sessions.containsKey(peer) && sessions.get(peer).exstate() != ready)
+				continue;
+			else new Thread(() -> { 
+				try {
+					// start session
+					SyncReq req  = syninit(peer, domain);
+					SyncResp rep = exestart(sessions, peer, req);
+					if (rep != null) {
+						onsyninit(peer, rep.exblock);
+						while (rep.synact() != close || req.synact() != close) {
+							// req = syncdb(peer, rep);
+							// 
+							// rep = srv.onsyncdb(clt.synode, req);
+							req = syncdb(peer, rep);
+							rep = exespush(sessions.get(peer), peer, req);
+						}
+						req = synclose(domain, peer, rep);
+						rep = exesclose(sessions.get(peer), peer, req);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}).start();
+
+		return this;
+	}
+
+	SyncResp exestart(final HashMap<String, ExessionPersist> sessions, String peer, SyncReq req) {
+		return null;
+	}
+
+	SyncResp exespush(final ExessionPersist exession, String peer, SyncReq req) {
+		return null;
+	}
+
+	SyncResp exesclose(final ExessionPersist exession, String peer, SyncReq req) {
+		return null;
 	}
 }

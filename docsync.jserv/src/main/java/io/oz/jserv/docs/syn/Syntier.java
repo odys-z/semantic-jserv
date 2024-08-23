@@ -172,7 +172,7 @@ public class Syntier extends ServPort<DocsReq> {
 
 			if (rsp != null) {
 				write(resp, ok(rsp.syndomain(dom0builder.domain())));
-				dom0builder.domain();
+				domanager(dom0builder.domain()).updomain();
 			}
 		} catch (DocsException e) {
 			write(resp, err(MsgCode.ext, e.ex().toBlock()));
