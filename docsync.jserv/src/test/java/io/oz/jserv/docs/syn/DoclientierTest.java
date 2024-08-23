@@ -32,8 +32,6 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.jprotocol.AnsonHeader;
-import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jserv.R.AnQuery;
@@ -53,14 +51,10 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
-import io.odysz.semantic.tier.docs.DocsReq.A;
 import io.odysz.semantics.IUser;
-import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.test.JettyHelper;
 
@@ -143,7 +137,7 @@ class DoclientierTest {
 					"src/test/res/anclient.java/Amelia Anisovych.mp4");
 
 			bsize = 72 * 1024;
-			docm = new T_PhotoMeta(serv_conn);
+			docm = new T_PhotoMeta(clientconn);
 			
 			errLog = new ErrorCtx() {
 				@Override
@@ -327,7 +321,6 @@ class DoclientierTest {
 								// expected
 							}
 						});
-					Utils.logAnson(resp2);
 				} catch (TransException | IOException | SQLException e) {
 					e.printStackTrace();
 					fail(e.getMessage());
