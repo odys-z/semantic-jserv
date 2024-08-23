@@ -242,24 +242,14 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	}
 	 */
 
-//	public SyncDoc(IFileDescriptor d, String fullpath, DocTableMeta meta) throws IOException, SemanticException {
-//		this.device = d.device();
-//
-//		this.docMeta = meta;
-//		this.recId = d.recId();
-//		this.pname = d.clientname();
-//		this.uri = d.uri();
-//		this.createDate = d.cdate();
-//		this.mime = d.mime();
-//		this.fullpath(fullpath);
-//	}
-
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = clientpath;
+		Path p = Paths.get(clientpath);
+		this.pname = p.getFileName().toString();
 
 		if (isblank(createDate)) {
 			try {
-				Path p = Paths.get(clientpath);
+				// p = Paths.get(clientpath);
 				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
 				cdate(fd);
 			}
@@ -376,15 +366,4 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		clientpath = separatorsToUnix(clientpath);
 		return this;
 	}
-	
-//	public static Query cols(Query q, ExpDocTableMeta meta) throws TransException {
-//		return q.cols(
-//				q.alias().sql(null) + "." + meta.pk,
-//				meta.resname, meta.createDate,
-//				meta.folder, meta.fullpath, meta.synoder,
-//				meta.uri, meta.shareDate,
-//				// meta.tags, meta.geox, meta.css, meta.geoy, 
-//				meta.mime)
-//			.col(isnull(meta.shareflag, ExprPart.constr(Share.priv)), meta.shareflag);
-//	}
 }

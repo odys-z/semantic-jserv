@@ -1,10 +1,13 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
+import static io.odysz.semantic.syn.ExessionPersist.loadNyquvect;
 import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
+import static io.odysz.semantic.syn.Docheck.pushDebug;
 import static io.odysz.semantic.syn.ExessionAct.close;
+import static io.oz.jserv.test.JettyHelperTest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -17,7 +20,6 @@ import java.util.Date;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
-import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
@@ -46,21 +48,16 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
 
 /**
- * 4 Syntiers running on a static DA helper, but communicate over
- * Semnatic.jserv protocol layer.
+ * The synchronizing tiers running on a static DA helper, but communicating
+ * over the Semnatic.jserv protocol layer.
  * 
  * @author odys-z@github.com
  */
 class SynoderTest {
-	public static final String clientUri = "/jnode";
-	public static final String webinf = "./src/test/res/WEB-INF";
-	public static final String testDir = "./src/test/res/";
-	public static final String volumeDir = "./src/test/res/volume";
-
-	static final String uri64 = "iVBORw0KGgoAAAANSUhEUgAAADwAAAAoCAIAAAAt2Q6oAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AYSCBkDT4nw4QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABjSURBVFjD7dXBCYAwEATAO7FE27QNu7GFxA424EN8zH6XwHAEtus4K2SO2M7Udsd2e93Gl38NNDQ0NPS/sy82LydvXs5ia4fvAQ0NDQ39Zfq+XBoaGhoaGhoaGhoaGhq6qqoeVmUNAc7sDO0AAAAASUVORK5CYII=";
+	static final String _uri64 = "iVBORw0KGgoAAAANSUhEUgAAADwAAAAoCAIAAAAt2Q6oAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AYSCBkDT4nw4QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABjSURBVFjD7dXBCYAwEATAO7FE27QNu7GFxA424EN8zH6XwHAEtus4K2SO2M7Udsd2e93Gl38NNDQ0NPS/sy82LydvXs5ia4fvAQ0NDQ39Zfq+XBoaGhoaGhoaGhoaGhq6qqoeVmUNAc7sDO0AAAAASUVORK5CYII=";
 	static final int U = 0;
 	static final int V = 1;
-	// static final int _8080 = 8090;
+
 	static final String IP = "127.0.0.1";
 
 	static ErrorCtx errLog;
@@ -76,8 +73,6 @@ class SynoderTest {
 	static final int Z = 2;
 	static final int W = 3;
 	
-	// static Doclientier[] doctiers = new Doclientier[2];
-	// static String[] jservs;
 	static Syntier[] syntiers  = new Syntier[4];
 	
 	private static AutoSeqMeta aum;
@@ -107,7 +102,6 @@ class SynoderTest {
 			ssm = new SynSessionMeta();
 			prm = new PeersMeta();
 			
-			// jservs = new String[4];
 			for (int s = 0; s < syntiers.length; s++) {
 				String conn = "no-jserv.0" + s;
 
@@ -118,18 +112,17 @@ class SynoderTest {
 				ArrayList<String> sqls = new ArrayList<String>();
 				sqls.add(String.format("delete from %s;", aum.tbl));
 				sqls.add(Utils.loadTxt("./oz_autoseq.sql"));
-				sqls.add(String.format( "update oz_autoseq set seq = %d where sid = '%s.%s'",
+				sqls.add(String.format("update oz_autoseq set seq = %d where sid = '%s.%s'",
 										(long) Math.pow(64, s+1), docm.tbl, docm.pk));
 
 				sqls.add(String.format("delete from %s", snm.tbl));
 
 				Connects.commit(conn, DATranscxt.dummyUser(), sqls);
 
-				
+				// X, Y, Z, W
 				String synode = String.valueOf((char)(Integer.valueOf('X') + (s == W ? -1 : s)));
 
-				syntiers[s] = new Syntier(synode, conn); // .born(conn, 0, 0, ura);
-				// jservs[s]   = "http://" + IP + ":" + (_8080 + s) + "/docsync.jserv";
+				syntiers[s] = new Syntier(synode, conn);
 			}
 
 			errLog = new ErrorCtx() {
@@ -138,7 +131,7 @@ class SynoderTest {
 					fail(msg);
 				}
 			};
-		} catch (TransException | SQLException | SAXException | IOException e) {
+		} catch (TransException | SQLException | IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -146,10 +139,9 @@ class SynoderTest {
 	static IAssert azert = new AssertImpl();
 
 	@Test
-	void testSyntiers() throws Exception {
+	void testSynoders() throws Exception {
 		int no = 0;
 		setupeers(++no);
-		// uploadocs(++no);
 		savephotos(++no);
 		syncpeers(++no);
 	}
@@ -185,7 +177,7 @@ class SynoderTest {
 		Utils.logrst("X starting", test, ++no);
 		Syntier xtir = syntiers[X];
 		Synoder x = xtir.start(ura, zsu, xtir.myconn, SynodeMode.peer)
-						.synoder(zsu);
+						.domanager(zsu);
 
 		ck[X] = new Docheck(azert, zsu, x.myconn, x.synode, SynodeMode.peer, docm);
 		ck[X].synodes(X);
@@ -193,7 +185,7 @@ class SynoderTest {
 		Utils.logrst("Y starting", test, ++no);
 		Syntier ytir = syntiers[Y];
 		Synoder y = ytir.start(ura, zsu, ytir.myconn, SynodeMode.peer)
-						.synoder(zsu);
+						.domanager(zsu);
 
 		ck[Y] = new Docheck(azert, zsu, y.myconn, y.synode, SynodeMode.peer, docm);
 		ck[Y].synodes(-1, Y);
@@ -217,11 +209,11 @@ class SynoderTest {
 
 		Syntier ztir = syntiers[Z];
 		Synoder z = ztir.start(ura, zsu, ztir.myconn, SynodeMode.peer)
-						.synoder(zsu);
+						.domanager(zsu);
 
 		ck[Z] = new Docheck(azert, zsu, z.myconn, z.synode, SynodeMode.peer, docm);
 
-		Utils.logrst("X is joining by Z", test, ++no);
+		Utils.logrst("X <= join = Z", test, ++no);
 		joinby(X, Z, test, no);
 
 		ck[X].synodes(X, Y, Z);
@@ -244,27 +236,37 @@ class SynoderTest {
 	void joinby(int at, int by, int test, int sub) throws Exception {
 
 		int no = 0;
-		Synoder y = syntiers[by].synoder(zsu);
-		Synoder x = syntiers[at].synoder(zsu);
+		Synoder y = syntiers[by].domanager(zsu);
+		Synoder x = syntiers[at].domanager(zsu);
 
-		// SyncReq req = y.joinpeer(jservs[X], x.synode, passwd);
 		SyncReq req = y.joinpeer(x.synode, passwd);
 		
 		Utils.logrst(new String[] {x.synode, "on", y.synode, "joining"}, test, sub, ++no);
 		SyncResp rep = x.onjoin(req);
 
-		assertEquals(x.nyquence(y.synode).n, y.n0(x.synode).n);
+		printChangeLines(ck);
+		printNyquv(ck);
 
 		Utils.logrst(new String[] {x.synode, "answer to", y.synode}, test, sub, ++no);
 		rep.exblock.print(System.out);
 
-		Utils.logrst(new String[] {y.synode, "close joining"}, test, ++no);
+		Utils.logrst(new String[] {y.synode, "close joining"}, test, sub, ++no);
 		req = y.closejoin(rep);
 
 		rep = x.onclosejoin(req);
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		pushDebug()
+		.assertl(
+			ck[by].n0().n, loadNyquvect(y.expiredxp.trb).get(x.synode).n + 1,
+			ck[at].n0().n, loadNyquvect(x.expiredxp.trb).get(y.synode).n + 1,
+			ck[at].n0().n, y.lastn0(x.synode).n,
+			ck[at].n0().n, ck[by].n0().n)
+		.popDebug();
 	}
 
-	void savephotos(int test) throws SQLException, SAXException, IOException, TransException {
+	void savephotos(int test) throws SQLException, IOException, TransException {
 		Utils.logrst("savephotos()", test);
 
 		int no = 0;
@@ -279,18 +281,18 @@ class SynoderTest {
 		printNyquv(ck);
 	}
 
-	private String createPhoto(int synx) throws IOException, TransException, SQLException, SAXException {
+	private String createPhoto(int synx) throws IOException, TransException, SQLException {
 		Syntier syntier = syntiers[synx];
-		T_Photo photo = new T_Photo(docm, zsu, syntier.synode);
+		T_Photo photo = new T_Photo(docm, ura, syntier.synode);
 
 		photo.createDate = DateFormat.format(new Date());
 		photo.pname = "photo-" + synx;
 		photo.fullpath(syntier.synode + ":/sdcard/" + photo.pname);
-		photo.uri64 = uri64; // accepting new value
+		photo.uri64 = _uri64;
 		photo.folder(syntier.synode);
 		photo.share("ody-" + syntier.synode, Share.pub, new Date());
 
-		return DocUtils.createFileBy64(syntier.doctrb(), syntier.myconn,
+		return DocUtils.createFileBy64(syntier.stampbuilder(), syntier.myconn,
 				(ExpSyncDoc)photo, syntier.locrobot(), (ExpDocTableMeta)docm);
 	}
 
@@ -298,41 +300,40 @@ class SynoderTest {
 		Utils.logrst("syncpeers()", test);
 		int no = 0;
 		
-		Synoder x = syntiers[X].synoder(zsu);
-		Synoder y = syntiers[Y].synoder(zsu);
+		Synoder x = syntiers[X].domanager(zsu);
+		Synoder y = syntiers[Y].domanager(zsu);
 		
 		Utils.logrst("X sync by Y", test, ++no);
 		syncpair(zsu, X, Y, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.trb().entities(docm));
+		assertEquals(2, x.expiredxp.trb.entities(docm));
 
 		Utils.logrst("X sync by Z", test, ++no);
-		Synoder z = syntiers[Z].synoder(zsu);
+		Synoder z = syntiers[Z].domanager(zsu);
 		syncpair(zsu, X, Z, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assertEquals(2, x.trb().entities(docm));
-		assertEquals(2, z.trb().entities(docm));
+		assertEquals(2, x.expiredxp.trb.entities(docm));
+		assertEquals(2, z.expiredxp.trb.entities(docm));
 
 		Utils.logrst("X sync by Y", test, ++no);
 		syncpair(zsu, X, Y, test, no);
 		printChangeLines(ck);
 		printNyquv(ck);
-		assertEquals(2, y.trb().entities(docm));
+		assertEquals(2, y.expiredxp.trb.entities(docm));
 	}
 	
 	void syncpair(String domain, int sx, int cx, int testno, int subno)
 			throws Exception {
 		Utils.logrst("syncpair()", testno, subno);
 		int no = 0;
-		Synoder srv = syntiers[sx].synoder(domain);
-		Synoder clt = syntiers[cx].synoder(domain);
+		Synoder srv = syntiers[sx].domanager(domain);
+		Synoder clt = syntiers[cx].domanager(domain);
 
 		Utils.logrst("client initate", testno, subno, ++no);
-		// SyncReq req  = clt.syninit(srv.synode, jservs[sx], zsu);
 		SyncReq req  = clt.syninit(srv.synode, zsu);
 
 		printChangeLines(ck);
@@ -366,8 +367,8 @@ class SynoderTest {
 	}
 
 	/**
-	 * Wait untile all lights turn int green (true).
-	 * @param greenlights
+	 * Wait until all lights turn into green (true).
+	 * @param green lights
 	 * @param x100ms default 100 times
 	 * @throws InterruptedException
 	 */

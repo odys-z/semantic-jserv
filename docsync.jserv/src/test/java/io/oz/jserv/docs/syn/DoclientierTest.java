@@ -1,12 +1,13 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
-import static io.oz.jserv.docs.syn.SynoderTest.webinf;
+import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -64,30 +65,16 @@ import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
 
 class DoclientierTest {
-	public static class Dev_0_0 {
-		public static final String uri = "client-at-00";
-		public static final String uid = "syrskyi";
-		public static final String psw = "слава україні";
-		public static final String dev = "0-0";
-		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
-		public static final String folder = "zsu";
-	}
-
-	public static class Dev_0_1 {
-		public static final String uri = "client-at-00";
-		public static final String uid = "syrskyi";
-		public static final String psw = "слава україні";
-		public static final String dev = "0-1";
-		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
-		public static final String folder = "zsu";
-	}
+	public final static int X = 0;
+	public final static int Y = 1;
+	public final static int Z = 2;
+	public final static int W = 3;
 
 	public static class Dev_1_0 {
 		public static final String uri = "client-at-01";
-		public static final String uid = "ody";
-		public static final String psw = "123456";
+		public static final String uid = "odyz";
+		public static final String psw = "8964";
 		public static final String dev = "1-0";
-		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
 		public static final String folder = "zsu";
 	}
 
@@ -96,8 +83,28 @@ class DoclientierTest {
 		public static final String uid = "syrskyi";
 		public static final String psw = "слава україні";
 		public static final String dev = "1-1";
-		public static final String mp4 = "src/test/res/anclient.java/Amelia Anisovych.mp4";
 		public static final String folder = "zsu";
+	}
+
+	public static class Dev {
+		public final String uri;
+		public final String uid;
+		public final String psw;
+		public final String dev;
+		public final String folder;
+
+		public String res;
+		public String jserv;
+		public Doclientier client;
+
+		Dev(String uri, String uid, String pswd, String device, String folder, String fres) {
+			this.uri = uri;
+			this.uid = uid;
+			this.psw = pswd;
+			this.dev = "test-doclient/" + device;
+			this.folder = folder;
+			this.res = fres;
+		}
 	}
 
 	static int bsize;
@@ -105,11 +112,36 @@ class DoclientierTest {
 	static ExpDocTableMeta docm;
 	static ErrorCtx errLog;
 	
-	// static final String clientconn = "main-sqlite";
-	static final String serv_conn = "no-jserv.00";
+	static final String clientconn = "main-sqlite";
+
+	static final String[] servs_conn = new String[] {
+			"no-jserv.00", "no-jserv.01", "no-jserv.02", "no-jserv.03"};
+	
+	static Dev[] devs; // = new Dev[4];
+	static JettyHelper[] jetties;
+	
+	static final int X_0 = 0;
+	static final int X_1 = 1;
+	static final int Y_0 = 2;
+	static final int Y_1 = 3;
 
 	static {
 		try {
+			jetties = new JettyHelper[4];
+			devs = new Dev[4];
+			devs[X_0] = new Dev("client-at-00", "syrskyi", "слава україні", "0-0", "zsu",
+								"src/test/res/anclient.java/1-pdf.pdf");
+
+			devs[X_1] = new Dev("client-at-00", "syrskyi", "слава україні", "0-1", "zsu",
+								"src/test/res/anclient.java/2-ontario.gif");
+
+			devs[Y_0] = new Dev(Dev_1_0.uri, Dev_1_0.uid, Dev_1_0.psw, Dev_1_0.dev, Dev_1_0.folder,
+					// https://elements.envato.com/sound-effects
+					"src/test/res/anclient.java/3-birds.wav");
+
+			devs[Y_1] = new Dev(Dev_1_1.uri, Dev_1_1.uid, Dev_1_1.psw, Dev_1_1.dev, Dev_1_1.folder,
+					"src/test/res/anclient.java/Amelia Anisovych.mp4");
+
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(serv_conn);
 			
@@ -133,43 +165,47 @@ class DoclientierTest {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
+		int port = 8090;
+		for (int i = 0; i < servs_conn.length; i++) {
+			if (jetties[i] != null)
+				jetties[i].stop();
+			jetties[i] = startSyndoctier(servs_conn[i], port++);
+			devs[i].jserv = jetties[i].jserv();
+			initRecords(servs_conn[i]);
+		}
+	}
+	
+	static JettyHelper startSyndoctier(String serv_conn, int port) throws Exception {
 		AutoSeqMeta asqm = new AutoSeqMeta();
 		JRoleMeta arlm = new JUser.JRoleMeta();
 		JOrgMeta  aorgm = new JUser.JOrgMeta();
-		
+	
 		SynChangeMeta chm = new SynChangeMeta();
 		SynSubsMeta sbm = new SynSubsMeta(chm);
 		SynchangeBuffMeta xbm = new SynchangeBuffMeta(chm);
 		SynSessionMeta ssm = new SynSessionMeta();
 		PeersMeta prm = new PeersMeta();
-		
+	
 		SynodeMeta snm = new SynodeMeta(serv_conn);
-		docm = new T_PhotoMeta(serv_conn); // .replace();
+		docm = new T_PhotoMeta(serv_conn);
 		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
-		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
-
-		initRecords(serv_conn);
-		
-		Connects.reload(webinf); // reload metas
 
 		// synode
 		String servIP = "localhost";
-		int port = 8090;
 
-		JettyHelper.startJserv(webinf, serv_conn, "config-0.xml",
+		return JettyHelper.startJettyServ(webinf, serv_conn, "config-0.xml",
 				servIP, port,
 				new AnSession(), new AnQuery(), new AnUpdate(),
-				new HeartLink());
-
-		JettyHelper.addPort(new Syntier(Configs.getCfg(Configs.keys.synode), serv_conn)
-				   .start(SynoderTest.ura, SynoderTest.zsu, serv_conn, SynodeMode.peer));
-
-		// client
-		String jserv = String.format("http://%s:%s", servIP, port);
-		logi("Server started at %s", jserv);
-		Clients.init(jserv);
+				new HeartLink())
+			.addServPort(new Syntier(Configs.getCfg(Configs.keys.synode), serv_conn)
+			.start(SynoderTest.ura, SynoderTest.zsu, serv_conn, SynodeMode.peer)) ;
 	}
 
+	/**
+	 * initialize with files, i. e. oz_autoseq.sql, a_users.sqlite.sql.
+	 * 
+	 * @param conn
+	 */
 	private static void initRecords(String conn) {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
@@ -197,41 +233,78 @@ class DoclientierTest {
 
 	@AfterAll
 	static void close() throws Exception {
-		JettyHelper.stop();
+		for (JettyHelper h : jetties)
+			h.stop();
 
 		logi("Server closed");
 	}
 
 	@Test
 	void testSyncUp() throws Exception {
-		Doclientier client00 = new Doclientier(Dev_0_0.uri, errLog)
-				.tempRoot("app.kharkiv")
-				.loginWithUri(Dev_0_0.uri, Dev_0_0.uid, Dev_0_0.dev, Dev_0_0.psw)
-				.blockSize(bsize);
 		
-		Utils.logi("-------------- Logged in. %s",
-				client00.client.ssInfo().toString());
+		setupDomain();
 
-		client00.synDel(docm.tbl, Dev_0_0.dev, Dev_0_0.mp4);
+		// 00 create
+		String fpth00 = clientPush(X_0);
+		verifyPathsPage(devs[X_0].client, docm.tbl, fpth00);
 
-		String fpth = videoUpByApp(client00, docm.tbl);
+		// 10 create
+		clientPush(Y_0);
 
-		verifyPathsPage(client00, docm.tbl, fpth);
+		// 11 create
+		clientPush(Y_1);
+
+		synctiers(1, 0);
+
+		// 00 delete
+		Dev d00 = devs[X_0];
+		Clients.init(d00.jserv);
+		DocsResp rep = d00.client.synDel(docm.tbl, d00.dev, d00.res);
+		assertEquals(1, rep.total(0));
+
+		verifyPathsPageNegative(d00.client, docm.tbl, fpth00);
 
 		// pause("Press enter to quite ...");
 	}
 	
-	String registDevice(Doclientier clientier, String devname) throws SemanticException, AnsonException, IOException {
-		DocsResp resp = clientier.registerDevice(devname);
-		return resp.xdoc.device();
+	void setupDomain() {
+		joinby(jetties[X], jetties[Y]);
+		joinby(jetties[X], jetties[Z]);
+		synctiers(X, Z);
+		synctiers(X, Y);
 	}
 
-	static String videoUpByApp(Doclientier doclient, String entityName) throws Exception {
+	void joinby(JettyHelper hub, JettyHelper prv) {
+	}
+
+	String clientPush(int cix) throws Exception {
+		Dev dev = devs[cix];
+
+		Clients.init(dev.jserv);
+
+		Doclientier client = new Doclientier(dev.uri, errLog)
+				.tempRoot(dev.uri)
+				.loginWithUri(dev.uri, dev.uid, dev.dev, dev.psw)
+				.blockSize(bsize);
+		dev.client = client;
+		
+		Utils.logi("-------------- Logged in. %s",
+				client.client.ssInfo().toString());
+
+		ExpSyncDoc xdoc = videoUpByApp(dev, client, docm.tbl);
+		assertEquals(dev.dev, xdoc.device());
+		assertEquals(dev.res, xdoc.fullpath());
+
+		verifyPathsPage(client, docm.tbl, xdoc.clientpath);
+		return xdoc.clientpath;
+	}
+
+ 	static ExpSyncDoc videoUpByApp(Dev atdev, Doclientier doclient, String entityName) throws Exception {
 
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(doclient.robot.uid(), Share.pub, new Date())
-					.folder(Dev_0_0.folder)
-					.fullpath(Dev_0_0.mp4);
+					.folder(atdev.folder)
+					.fullpath(atdev.res);
 
 		DocsResp resp = doclient.startPush(entityName, doc,
 			(AnsonResp rep) -> {
@@ -239,7 +312,7 @@ class DoclientierTest {
 
 				// pushing again should fail
 				try {
-					DocsResp resp2 = doclient.startPush(entityName, d,
+					doclient.startPush(entityName, d,
 						new OnOk() {
 							@Override
 							public void ok(AnsonResp rep)
@@ -269,17 +342,23 @@ class DoclientierTest {
 		DocsResp rp = doclient.selectDoc(entityName, docId);
 
 		assertTrue(isblank(rp.msg()));
-		assertEquals(Dev_0_0.dev, rp.xdoc.device());
-		assertEquals(Dev_0_0.mp4, rp.xdoc.fullpath());
+		assertNotNull(rp.xdoc);
 
-		return Dev_0_0.mp4;
+		return rp.xdoc;
 	}
 
-	void testSynDel() {
-		fail("Not yet implemented");
+	void synctiers(int x, int y) {
 	}
 
-	void verifyPathsPage(Doclientier clientier, String entityName, String... paths) throws Exception {
+	/**
+	 * Verify paths are presenting at server.
+	 * 
+	 * @param clientier
+	 * @param entityName
+	 * @param paths
+	 * @throws Exception
+	 */
+	static void verifyPathsPage(Doclientier clientier, String entityName, String... paths) throws Exception {
 		PathsPage pths = new PathsPage(clientier.client.ssInfo().device, 0, 1);
 		HashSet<String> pathpool = new HashSet<String>();
 		for (String pth : paths) {
@@ -299,4 +378,25 @@ class DoclientierTest {
 
 		assertEquals(0, pathpool.size());
 	}
+
+	static void verifyPathsPageNegative(Doclientier clientier, String entityName, String... paths) throws Exception {
+		PathsPage pths = new PathsPage(clientier.client.ssInfo().device, 0, 1);
+		HashSet<String> pathpool = new HashSet<String>();
+		for (String pth : paths) {
+			pths.add(pth);
+			pathpool.add(pth);
+		}
+
+		DocsResp rep = clientier.synQueryPathsPage(pths, entityName, Port.docsync);
+
+		PathsPage pthpage = rep.pathsPage();
+		assertEquals(clientier.client.ssInfo().device, pthpage.device);
+		assertEquals(0, pthpage.paths().size());
+
+		for (String pth : pthpage.paths().keySet())
+			pathpool.remove(pth);
+
+		assertEquals(isNull(paths) ? 0 : paths.length, pathpool.size());
+	}
+
 }

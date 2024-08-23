@@ -39,7 +39,9 @@ class BlockChainTest {
 		String uid = "tester";
 		// chain = new BlockChain("$VOLUME_HOME", uid, ssid, clientpath, "1911-10-10 10:10:10");
 		String tempDir = IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid);
-		chain = new BlockChain("h_photos", tempDir, "dev-id", clientpath, "1911-10-10 10:10:10", "");
+		// chain = new BlockChain("h_photos", tempDir, "dev-id", clientpath, "1911-10-10 10:10:10", "");
+		chain = new BlockChain("h_photos", tempDir, "dev-id",
+				new ExpSyncDoc().clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
@@ -84,16 +86,25 @@ class BlockChainTest {
 		}
 	}
 
+	/**
+	 * FIXME this test won't work in Windows Maven CLI, via VS Code.
+	 * 
+	 * @throws IOException
+	 * @throws TransException
+	 * @throws InterruptedException
+	 * @throws AnsonException
+	 */
 	@Test
-	void tesBlockLost() throws IOException, TransException, InterruptedException, AnsonException {
+	void tesBlockOrder() throws IOException, TransException, InterruptedException, AnsonException {
 		System.setProperty("VOLUME_HOME", "src/test/results");
 
 		// server side
 		String clientpath = "/sdcard/0/Downloads/test.3gp";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain("h_photos", IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid),
-				"dev-id2", clientpath, "1911-10-10 10:10:10", "");
+		chain = new BlockChain("h_photos",
+				IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid), "dev-id",
+				new ExpSyncDoc().clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
 
 		assertTrue(eq("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
@@ -166,7 +177,8 @@ class BlockChainTest {
 		String uid = "tester";
 		chain = new BlockChain("h_photos",
 				IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid),
-				"dev-id3", clientpath, "1911-10-10 10:10:10", "");
+				"dev-id3",
+				new ExpSyncDoc().clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.aborting", chain.outputPath));
