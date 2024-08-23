@@ -1,6 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonResp;
@@ -93,6 +94,17 @@ public class DocsResp extends AnsonResp {
 	String stamp;
 	public DocsResp stamp(String s) {
 		stamp = s;
+		return this;
+	}
+
+	String syndomain;
+	/**
+	 * Tell the client the request is handled in the {@code domain}.
+	 * @param domain
+	 * @return this
+	 */
+	public DocsResp syndomain(String dom) {
+		syndomain = dom;
 		return this;
 	}
 

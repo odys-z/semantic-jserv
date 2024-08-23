@@ -164,8 +164,7 @@ public class Synoder {
 
 	public SyncResp onsyninit(String peer, ExchangeBlock ini)
 			throws Exception {
-		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod)
-								; // .loadNyquvect(myconn);
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod);
 
 		ExessionPersist xp = new ExessionPersist(b0, peer, ini)
 								.loadNyquvect(myconn);

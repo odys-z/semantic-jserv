@@ -56,21 +56,23 @@ import io.oz.jserv.docs.x.DocsException;
 
 @WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.sync" })
 public class Syntier extends ServPort<DocsReq> {
+	private static final long serialVersionUID = 1L;
+
 	/** {domain: {jserv: exession-persist}} */
 	HashMap<String, Synoder> domains;
 
-	private DBSyntableBuilder stampBuilder;
+	private DBSyntableBuilder dom0builder;
 	public DBSyntableBuilder stampbuilder() throws SQLException, TransException {
-		if (stampBuilder == null)
+		if (dom0builder == null)
 			throw new SemanticException("This synode haven't been started.");
-		return stampBuilder.loadNstamp();
+		return dom0builder.loadNstamp();
 	}
 
 	final String synode;
 	/** DB connection id for this node to synchronize. */
 	final String myconn;
 
-	public Syntier() throws SemanticException, SQLException, SAXException, IOException {
+	public Syntier() throws SemanticException, SQLException, IOException {
 		this("test", "test");
 	}
 
@@ -101,10 +103,8 @@ public class Syntier extends ServPort<DocsReq> {
 					Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.synode);
 	}
 
-	private static final long serialVersionUID = 1L;
-
-	public static final int jservx = 0;
-	public static final int myconx = 1;
+	static final int jservx = 0;
+	static final int myconx = 1;
 
 	Synodebot locrobot;
 
@@ -171,7 +171,8 @@ public class Syntier extends ServPort<DocsReq> {
 			}
 
 			if (rsp != null) {
-				write(resp, ok(rsp));
+				write(resp, ok(rsp.syndomain(dom0builder.domain())));
+				dom0builder.domain();
 			}
 		} catch (DocsException e) {
 			write(resp, err(MsgCode.ext, e.ex().toBlock()));
@@ -219,11 +220,11 @@ public class Syntier extends ServPort<DocsReq> {
 		domains .get(domain)
 				.born(ss.get(smtype.synChange), 0, 0);
 		
-		stampBuilder = new DBSyntableBuilder(
+		dom0builder = new DBSyntableBuilder(
 				domain, // FIXME this is not correct. 
 						// FIXME See {@link DBSyntableBuilder}'s issue ee153bcb30c3f3b868413beace8cc1f3cb5c3f7c. 
-				myconn, synode, mod)
-				; // .loadNyquvect(conn);
+				myconn, synode, mod);
+
 		return this;
 	}
 
@@ -328,7 +329,7 @@ public class Syntier extends ServPort<DocsReq> {
 			throws IOException, TransException, SQLException, SAXException {
 		String conn = Connects.uri2conn(body.uri());
 
-		checkBlock0(stampBuilder, conn, body, (DocUser) usr);
+		checkBlock0(dom0builder, conn, body, (DocUser) usr);
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
