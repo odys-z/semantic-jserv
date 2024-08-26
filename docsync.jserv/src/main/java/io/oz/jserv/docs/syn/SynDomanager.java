@@ -163,7 +163,6 @@ public class SynDomanager {
 	}
 
 	/**
-	 * @deprecated Only for test, emulating onPost() handling.
 	 * @param peer
 	 * @param ini initial request
 	 * @return exchange block

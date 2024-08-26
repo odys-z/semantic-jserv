@@ -43,7 +43,7 @@ public class SynssionClientier {
 						// See SynoderTest
 						// req = syncdb(peer, rep);
 						// rep = srv.onsyncdb(clt.synode, req);
-						req = syncdb(rep);
+						req = syncdb(rep.exblock);
 						rep = exespush(peer, req);
 					}
 					
@@ -90,23 +90,25 @@ public class SynssionClientier {
 				.exblock(b);
 	}
 
-	SyncReq syncdb(SyncResp rep)
+	ExchangeBlock syncdb(ExchangeBlock rep)
 			throws SQLException, TransException {
 
 		ExchangeBlock reqb = xp // domanager.synssion(peer)
-						.nextExchange(rep.exblock);
+						.nextExchange(rep);
 
-		SyncReq req = new SyncReq(null, domain)
-						.exblock(reqb);
-		return req;
+//		SyncReq req = new SyncReq(null, domain)
+//						.exblock(reqb);
+//		return req;
+		return reqb;
 	}
 	
-	SyncResp onsyncdb(SyncReq req)
+	ExchangeBlock onsyncdb(SyncReq req)
 			throws SQLException, TransException {
 		ExchangeBlock repb = xp //synssion(peer)
 				.nextExchange(req.exblock);
 
-		return new SyncResp().exblock(repb);
+		// return new SyncResp().exblock(repb);
+		return repb;
 	}
 
 	SyncReq synclose(SyncResp rep)

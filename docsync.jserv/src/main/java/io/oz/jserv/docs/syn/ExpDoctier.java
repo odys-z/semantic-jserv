@@ -124,7 +124,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	@Override
 	protected void onPost(AnsonMsg<DocsReq> jmsg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		Utils.logi("== %s", jmsg.toString());
+		// Utils.logi("== %s", jmsg.toString());
 		
 		AnsonBody jreq = jmsg.body(0); // SyncReq | DocsReq
 		String a = jreq.a();
