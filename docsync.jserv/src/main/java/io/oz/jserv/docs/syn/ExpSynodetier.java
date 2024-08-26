@@ -57,18 +57,20 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		try {
 			SyncReq req = jmsg.body(0);
 
-			if (A.peering.equals(a)) {
+			if (A.syncpeer.equals(a)) {
 			}
-			else if (A.syncini.equals(a)) {
-				rsp = domanager.onsyninit(req.exblock.srcnode, req.exblock);
+			else if (A.syncinit.equals(a)) {
+				rsp = domanager.onjoin(req);
 				write(resp, ok(rsp.syndomain(domain)));
 			}
-			else if (A.syncent.equals(a)) {
+			else if (A.syncexch.equals(a)) {
 				ExchangeBlock b = domanager.synssion(req.exblock.srcnode).syncdb(req.exblock);
 				write(resp, ok(new SyncResp().exblock(b).syndomain(domain)));
 			}
+			else if (A.synclose.equals(a)) {
+			}
 			else 
-				throw new SemanticException("Request.a, %s, can not be handled. Port: %s",
+				throw new SemanticException("Request.a, %s, can not be handled at port %s",
 						jreq.a(), p.name());
 		} catch (SQLException | TransException e) {
 			e.printStackTrace();

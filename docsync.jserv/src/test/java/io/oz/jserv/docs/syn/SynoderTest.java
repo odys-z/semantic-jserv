@@ -240,8 +240,11 @@ class SynoderTest {
 		SynDomanager y = syntiers[by].domanager(zsu);
 		SynDomanager x = syntiers[at].domanager(zsu);
 
-		SyncReq req = y.joinpeer(x.synode, passwd);
-		
+		// SyncReq req = y.joinpeer(x.synode, passwd);
+		SynssionClientier c = y.joinpeer(x.synode, passwd);
+		// ExchangeBlock req  = c.xp.trb.domainSignup(c.xp, x.synode);
+		SyncReq req  = c.signup(x.synode); // .xp.trb.domainSignup(c.xp, x.synode);
+
 		Utils.logrst(new String[] {x.synode, "on", y.synode, "joining"}, test, sub, ++no);
 		SyncResp rep = x.onjoin(req);
 

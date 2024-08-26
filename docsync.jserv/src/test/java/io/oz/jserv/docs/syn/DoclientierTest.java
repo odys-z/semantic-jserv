@@ -245,14 +245,25 @@ class DoclientierTest {
 		// pause("Press enter to quite ...");
 	}
 	
-	void setupDomain() {
-		joinby(jetties[X], jetties[Y]);
-		joinby(jetties[X], jetties[Z]);
+	void setupDomain() throws Exception {
+		joinby(jetties[X], jetties[Y], devs[Y]);
+		joinby(jetties[X], jetties[Z], devs[Z]);
 		synctiers(X, Z);
 		synctiers(X, Y);
 	}
-
-	void joinby(JettyHelper hub, JettyHelper prv) {
+	
+	void joinby(JettyHelper hub, JettyHelper prv, Dev dev) throws Exception {
+		for (String servpattern : hub.syndomains.keySet()) {
+			if (len(hub.syndomains.get(servpattern)) > 1 || len(prv.syndomains.get(servpattern)) > 1)
+				fail("Multiple domain schema is an issue not handled in v 2.0.0.");
+			
+			for (String dom : hub.syndomains.get(servpattern).keySet()) {
+				SynDomanager hubmanger = hub.syndomains.get(servpattern).get(dom);
+				SynDomanager prvmanger = hub.syndomains.get(servpattern).get(dom);
+	
+				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), dev.uid, dev.psw);
+			}
+		}
 	}
 
 	String clientPush(int cix) throws Exception {

@@ -2,7 +2,6 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.eq;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
@@ -60,7 +59,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 
 	/** {domain: {jserv: exession-persist}} */
-	HashMap<String, SynDomanager> domains;
+	public HashMap<String, SynDomanager> domains;
 
 	private DBSyntableBuilder dom0builder;
 	public DBSyntableBuilder stampbuilder() throws SQLException, TransException {
@@ -175,7 +174,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				write(resp, ok(rsp.syndomain(dom0builder.domain())));
 				
 				domains.get(dom0builder.domain()).updomains();
-				searchDomains(dom0builder.domain());
 			}
 		} catch (DocsException e) {
 			write(resp, err(MsgCode.ext, e.ex().toBlock()));
@@ -235,15 +233,15 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return domains.get(dom);
 	}
 
-	void searchDomains(String lastdom) {
-		if (domains!= null)
-			if (domains.containsKey(lastdom))
-				domains.get(lastdom).searchDomain();
-
-		for (String dom : domains.keySet())
-			if (!eq(lastdom, dom))
-				domains.get(dom).searchDomain();
-	}
+//	void searchDomains(String lastdom) {
+//		if (domains!= null)
+//			if (domains.containsKey(lastdom))
+//				domains.get(lastdom).searchDomain();
+//
+//		for (String dom : domains.keySet())
+//			if (!eq(lastdom, dom))
+//				domains.get(dom).searchDomain();
+//	}
 
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException, SAXException, IOException {

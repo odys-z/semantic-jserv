@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.ready;
+import static io.odysz.semantic.syn.ExessionAct.close;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -82,21 +83,28 @@ public class SynDomanager {
 		this.mod = mod;
 	}
 
-	public SyncReq joinpeer(String peeradmin, String passwd) throws Exception {
+	/**
+	 * @param peeradmin
+	 * @param passwd
+	 * @return SynssionClient (already in been put into synssions), with xp for persisting and for req construction.
+	 * @throws Exception
+	 */
+	public SynssionClientier joinpeer(String peeradmin, String passwd) throws Exception {
 
 		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod);
 
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
 
-		ExchangeBlock req  = cltb.domainSignup(cltp, peeradmin);
+		// ExchangeBlock req  = cltb.domainSignup(cltp, peeradmin);
 
-		synssion(peeradmin, new SynssionClientier(this, peeradmin, domain).xp(cltp));
-		return new SyncReq(null, domain).exblock(req);
+		SynssionClientier c = new SynssionClientier(this, peeradmin, domain).xp(cltp);
+		synssion(peeradmin, c);
+		return c;
+		// return new Object[] {new SyncReq(null, domain).exblock(req), c};
 	}
 
-	public SyncResp onjoin(SyncReq req)
-			throws Exception {
+	public SyncResp onjoin(SyncReq req) throws Exception {
 		String peer = req.exblock.srcnode;
 		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod);
 
@@ -112,12 +120,15 @@ public class SynDomanager {
 	public SyncReq closejoin(SyncResp rep) throws TransException, SQLException {
 		String admin = rep.exblock.srcnode;
 		try {
+			return synssion(admin).closejoin(admin, rep);
+		/*
 			ExessionPersist xp = synssion(admin).xp;
 			xp.trb.domainitMe(xp, admin, rep.exblock);
 
 			ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 			return new SyncReq(null, domain)
 					.exblock(req);
+		*/
 		} finally { expiredClientier = delession(admin); }
 	}
 
@@ -181,43 +192,6 @@ public class SynDomanager {
 		return new SyncResp().exblock(b);
 	}
 
-//	public SyncReq syncdb(String peer, SyncResp rep)
-//			throws SQLException, TransException {
-//
-//		ExchangeBlock reqb = synssion(peer)
-//						.nextExchange(rep.exblock);
-//
-//		SyncReq req = new SyncReq(null, domain)
-//						.exblock(reqb);
-//		return req;
-//	}
-//	
-//	public SyncResp onsyncdb(String peer, SyncReq req)
-//			throws SQLException, TransException {
-//		ExchangeBlock repb = synssion(peer)
-//				.nextExchange(req.exblock);
-//
-//		return new SyncResp().exblock(repb);
-//	}
-//
-//	public SyncReq synclose(String domain, String peer, SyncResp rep)
-//			throws TransException, SQLException {
-//		try {
-//		ExessionPersist xp = synssion(peer);
-//		ExchangeBlock b = xp.trb.closexchange(xp, rep.exblock);
-//		return new SyncReq(null, domain).exblock(b);
-//		} finally { expiredxp = delession(peer); }
-//	}
-//
-//	public SyncResp onsynclose(String domain, String peer, SyncReq req)
-//			throws TransException, SQLException {
-//		try {
-//		ExessionPersist xp = synssion(peer);
-//		ExchangeBlock b = xp.trb.onclosexchange(xp, req.exblock);
-//		return new SyncResp().exblock(b);
-//		} finally { expiredxp = delession(peer); }
-//	}
-
 	/**
 	 * Initialize n0 and samp.
 	 * @param handlers syn handlers  
@@ -259,6 +233,9 @@ public class SynDomanager {
 	/**
 	 * Update domain, and start all possible sessions, each in a new thread.
 	 * Can be called by request handler and timer.
+	 * 
+	 * <p>Updating event is ignored if the clientier is running.</p>
+	 * 
 	 * @return this
 	 */
 	public SynDomanager updomains() {
@@ -266,17 +243,32 @@ public class SynDomanager {
 		for (String peer : knownpeers)
 			if (sessions.containsKey(peer) && sessions.get(peer).xp.exstate() != ready)
 				continue;
-			else new SynssionClientier(this, peer, domain).start();
+			else {
+				sessions.put(peer,
+					new SynssionClientier(this, peer, domain).update());
+			}
 
 		return this;
 	}
 
-	public void searchDomain() {
-		if (knownpeers != null)
-		for (String peer : knownpeers)
-			if (sessions.containsKey(peer) && sessions.get(peer).xp.exstate() != ready)
-				continue;
-			else new SynssionClientier(this, peer, domain).pingPeers();
-	}
+	/**
+	 * Background sign up.
+	 * @param dom
+	 * @param admid
+	 * @param admserv
+	 * @param myuid
+	 * @param mypswd
+	 * @throws Exception
+	 */
+	public void joinDomain(String dom, String admid, String admserv,
+			String myuid, String mypswd) throws Exception {
 
+		if (sessions.containsKey(admid))
+			throw new ExchangeException(close, null,
+				"SynssionClientier already exists. Duplicated singup?");
+		
+		SynssionClientier c = joinpeer(admid, mypswd);
+
+		c.joindomain(admid, myuid, mypswd);
+	}
 }

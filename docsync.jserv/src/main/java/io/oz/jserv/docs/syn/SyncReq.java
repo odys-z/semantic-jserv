@@ -9,11 +9,12 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
 public class SyncReq extends AnsonBody {
 	public static class A {
-		public static final String syncini = "sync/ini";
-		public static final String syncent = "sync/ent";
-		public static final String synclos = "sync/close";
-		public static final String synrest = "sync/rest";
-		public static final String peering = "sync/peering";
+		/** on joining */
+		public static final String syncinit = "sync/ini";
+		public static final String syncexch = "sync/ent";
+		public static final String synclose = "sync/close";
+		public static final String syncrest = "sync/rest";
+		public static final String syncpeer = "sync/peering";
 	}
 
 	ExchangeBlock exblock;

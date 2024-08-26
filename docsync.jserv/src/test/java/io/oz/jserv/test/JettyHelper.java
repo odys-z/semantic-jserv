@@ -2,6 +2,8 @@ package io.oz.jserv.test;
 
 import static io.odysz.common.Utils.logi;
 
+import java.util.HashMap;
+
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 
@@ -16,6 +18,8 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
+import io.oz.jserv.docs.syn.ExpDoctier;
+import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.Syngleton;
 
 /**
@@ -40,6 +44,12 @@ public class JettyHelper {
 	ServletContextHandler schandler;
 	String jserv;
 	public String jserv() { return jserv; }
+
+	/**
+	 * { url-pattern: { domain: domanager } },<br>
+	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
+	 */
+	public HashMap<String, HashMap<String, SynDomanager>> syndomains;
 
 	static JettyHelper instanserver(String configPath, String conn0, String configxml, String ip, int port)
 			throws Exception {
@@ -96,6 +106,9 @@ public class JettyHelper {
 		WebServlet info = t.getClass().getAnnotation(WebServlet.class);
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
+			
+			if (t instanceof ExpDoctier)
+				syndomains.put(pattern, ((ExpDoctier)t).domains);
 		}
 		return this;
 	}
