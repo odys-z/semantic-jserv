@@ -33,23 +33,23 @@ public class SynssionClientier {
 		new Thread(() -> { 
 			try {
 				// start session
-				SyncReq req  = exesinit();
-				SyncResp rep = exespush(peer, req);
+				ExchangeBlock reqb  = exesinit();
+				SyncResp rep = exespush(peer, reqb);
 
 				if (rep != null) {
 					// on start reply
 					exesOninit(rep);
-					while (rep.synact() != close || req.synact() != close) {
+					while (rep.synact() != close || reqb.synact() != close) {
 						// See SynoderTest
 						// req = syncdb(peer, rep);
 						// rep = srv.onsyncdb(clt.synode, req);
-						req = syncdb(rep.exblock);
-						rep = exespush(peer, req);
+						ExchangeBlock exb = syncdb(rep.exblock);
+						rep = exespush(peer, exb);
 					}
 					
 					// close
-					req = synclose(rep);
-					rep = exesclose(peer, req);
+					reqb = synclose(rep.exblock);
+					rep = exesclose(peer, reqb);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -63,7 +63,7 @@ public class SynssionClientier {
 	 * @return initiate request
 	 * @throws Exception 
 	 */
-	SyncReq exesinit() throws Exception {
+	ExchangeBlock exesinit() throws Exception {
 		// DBSyntableBuilder b0 = new DBSyntableBuilder(domain, conn, mynid, mode);
 
 		// ExessionPersist xp = new ExessionPersist(b0, peer)
@@ -72,8 +72,9 @@ public class SynssionClientier {
 		// b0 = xp.trb;
 		ExchangeBlock b = xp.trb.initExchange(xp);
 
-		return new SyncReq(null, domain)
-					.exblock(b);
+//		return new SyncReq(null, domain)
+//					.exblock(b);
+		return b;
 	}
 
 	SyncResp onsyninit(ExchangeBlock ini)
@@ -104,27 +105,30 @@ public class SynssionClientier {
 	
 	ExchangeBlock onsyncdb(SyncReq req)
 			throws SQLException, TransException {
-		ExchangeBlock repb = xp //synssion(peer)
-				.nextExchange(req.exblock);
+		return onsyncdb(req.exblock);
+	}
 
-		// return new SyncResp().exblock(repb);
+	public ExchangeBlock onsyncdb(ExchangeBlock reqb)
+			throws SQLException, TransException {
+		ExchangeBlock repb = xp.nextExchange(reqb);
 		return repb;
 	}
 
-	SyncReq synclose(SyncResp rep)
+	ExchangeBlock synclose(ExchangeBlock rep)
 			throws TransException, SQLException {
 		// try {
 		// ExessionPersist xp = synssion(peer);
-			ExchangeBlock b = xp.trb.closexchange(xp, rep.exblock);
-			return new SyncReq(null, domain).exblock(b);
+			ExchangeBlock b = xp.trb.closexchange(xp, rep);
+			// return new SyncReq(null, domain).exblock(b);
+			return b;
 		// } finally { expiredxp = delession(peer); }
 	}
 
-	SyncResp onsynclose(SyncReq req)
+	SyncResp onsynclose(ExchangeBlock reqb)
 			throws TransException, SQLException {
 		// try {
 		// ExessionPersist xp = synssion(peer);
-		ExchangeBlock b = xp.trb.onclosexchange(xp, req.exblock);
+		ExchangeBlock b = xp.trb.onclosexchange(xp, reqb);
 		return new SyncResp().exblock(b);
 		// } finally { expiredxp = delession(peer); }
 	}
@@ -148,11 +152,11 @@ public class SynssionClientier {
 		return new SyncResp().exblock(b);
 	}
 
-	SyncResp exespush(String peer, SyncReq req) {
+	SyncResp exespush(String peer, ExchangeBlock req) {
 		return null;
 	}
 
-	SyncResp exesclose(String peer, SyncReq req) {
+	SyncResp exesclose(String peer, ExchangeBlock req) {
 		return null;
 	}
 

@@ -40,6 +40,7 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
+import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.IAssert;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -354,17 +355,19 @@ class SynoderTest {
 			clt.onsyninit(srv.synode, rep.exblock);
 			while (rep.synact() != close || req.synact() != close) {
 				Utils.logrst("client exchange", testno, subno, no, ++ex);
-				req = clt.synssion(srv.synode).syncdb(rep);
+				ExchangeBlock reqb = clt.synssion(srv.synode).syncdb(rep.exblock);
+				req = new SyncReq(null, domain).exblock(reqb);
 				req.exblock.print(System.out);
 
 				Utils.logrst("server on-exchange", testno, subno, no, ++ex);
-				rep = srv.synssion(clt.synode).onsyncdb(req);
-				rep.exblock.print(System.out);
+				ExchangeBlock repb = srv.synssion(clt.synode).onsyncdb(reqb);
+				repb.print(System.out);
+				rep = new SyncResp().exblock(repb);
 			}
 		
 			Utils.logrst("close exchange", testno, subno, ++no);
-			req = clt.synssion(srv.synode).synclose(rep);
-			srv.synssion(clt.synode).onsynclose(req);
+			ExchangeBlock reqb = clt.synssion(srv.synode).synclose(rep.exblock);
+			srv.synssion(clt.synode).onsynclose(reqb);
 		}
 
 		printChangeLines(ck);

@@ -83,7 +83,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		} finally {
 			resp.flushBuffer();
 		}
-			
 	}
 
 }
