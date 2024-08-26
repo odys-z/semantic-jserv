@@ -38,26 +38,25 @@ public class SynDomanager {
 	final SynodeMode mod;
 	
 	/** {peer: session-persist} */
-	HashMap<String, SynDomClientier> sessions;
+	HashMap<String, SynssionClientier> sessions;
 	
 	/** Expired, only for tests. */
-	public SynDomClientier expiredClientier;
-//	ExessionPersist expiredxp;
+	public SynssionClientier expiredClientier;
 
 	public Nyquence lastn0(String peer) {
 		return expiredClientier == null || expiredClientier.xp == null ?
 				null : expiredClientier.xp.n0();
 	}
 
-	SynDomClientier synssion(String peer) {
+	SynssionClientier synssion(String peer) {
 		return sessions != null
 				? sessions.get(peer)
 				: null;
 	}
 
-	SynDomanager synssion(String peer, SynDomClientier client) throws ExchangeException {
+	SynDomanager synssion(String peer, SynssionClientier client) throws ExchangeException {
 		if (sessions == null)
-			sessions = new HashMap<String, SynDomClientier>();
+			sessions = new HashMap<String, SynssionClientier>();
 
 		if (synssion(peer) != null && synssion(peer).xp.exstate() != ready)
 			throw new ExchangeException(ready, synssion(peer).xp,
@@ -68,7 +67,7 @@ public class SynDomanager {
 		return this;
 	}
 
-	private SynDomClientier delession(String peer) {
+	private SynssionClientier delession(String peer) {
 		if (sessions != null && sessions.containsKey(peer))
 			return sessions.remove(peer);
 		return null;
@@ -92,8 +91,7 @@ public class SynDomanager {
 
 		ExchangeBlock req  = cltb.domainSignup(cltp, peeradmin);
 
-		// synssion(peeradmin, new SynDomClientier(cltp));
-		synssion(peeradmin, new SynDomClientier(this, peeradmin, domain).xp(cltp));
+		synssion(peeradmin, new SynssionClientier(this, peeradmin, domain).xp(cltp));
 		return new SyncReq(null, domain).exblock(req);
 	}
 
@@ -106,7 +104,7 @@ public class SynDomanager {
 
 		ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
-		synssion(peer, new SynDomClientier(this, peer, domain).xp(admp.exstate(ready)));
+		synssion(peer, new SynssionClientier(this, peer, domain).xp(admp.exstate(ready)));
 	
 		return new SyncResp().exblock(resp);
 	}
@@ -144,6 +142,7 @@ public class SynDomanager {
 
 	/**
 	 * Initiate a synchronization exchange session using my connection.
+	 * @deprecated only for tests. Call {@link SynssionClientier#exesinit(SyncReq)} instead.
 	 * @param peer
 	 * @param jserv
 	 * @param domain
@@ -164,7 +163,7 @@ public class SynDomanager {
 	}
 
 	/**
-	 * @deprecated Only for test, mimicking onPost() handling.
+	 * @deprecated Only for test, emulating onPost() handling.
 	 * @param peer
 	 * @param ini initial request
 	 * @return exchange block
@@ -178,7 +177,7 @@ public class SynDomanager {
 
 		ExchangeBlock b = b0.onInit(xp, ini);
 
-		synssion(peer, new SynDomClientier(this, peer, domain).xp(xp));
+		synssion(peer, new SynssionClientier(this, peer, domain).xp(xp));
 
 		return new SyncResp().exblock(b);
 	}
@@ -259,18 +258,26 @@ public class SynDomanager {
 	///////////////////////////////////////////////////////////////////////////
 	ArrayList<String> knownpeers;
 	/**
-	 * Update domain, and start all possible sessions, in a new thread.
+	 * Update domain, and start all possible sessions, each in a new thread.
 	 * Can be called by request handler and timer.
 	 * @return this
 	 */
-	public SynDomanager updomain() {
+	public SynDomanager updomains() {
 		if (knownpeers != null)
 		for (String peer : knownpeers)
 			if (sessions.containsKey(peer) && sessions.get(peer).xp.exstate() != ready)
 				continue;
-			else new SynDomClientier(this, peer, domain).start();
+			else new SynssionClientier(this, peer, domain).start();
 
 		return this;
+	}
+
+	public void searchDomain() {
+		if (knownpeers != null)
+		for (String peer : knownpeers)
+			if (sessions.containsKey(peer) && sessions.get(peer).xp.exstate() != ready)
+				continue;
+			else new SynssionClientier(this, peer, domain).pingPeers();
 	}
 
 }

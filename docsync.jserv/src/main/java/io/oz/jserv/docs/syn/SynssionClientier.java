@@ -10,7 +10,7 @@ import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.transact.x.TransException;
 
-public class SynDomClientier {
+public class SynssionClientier {
 
 	String mynid;
 	String conn;
@@ -20,7 +20,7 @@ public class SynDomClientier {
 	SynodeMode mode;
 	SynDomanager domanager;
 
-	public SynDomClientier(SynDomanager domanager, String peer, String domain) {
+	public SynssionClientier(SynDomanager domanager, String peer, String domain) {
 		this.conn = domanager.myconn;
 		this.mynid = domanager.synode;
 		this.domanager = domanager;
@@ -31,18 +31,17 @@ public class SynDomClientier {
 
 	public void start() {
 		new Thread(() -> { 
-			// HashMap<String, ExessionPersist> ss = domanager.sessions;
 			try {
 				// start session
-				SyncReq req  = syninit();
-				SyncResp rep = exestart(req);
+				SyncReq req  = exesinit();
+				SyncResp rep = exespush(peer, req);
 
 				if (rep != null) {
 					// on start reply
-					onsyninit(rep.exblock);
+					exesOninit(rep);
 					while (rep.synact() != close || req.synact() != close) {
+						// See SynoderTest
 						// req = syncdb(peer, rep);
-						// 
 						// rep = srv.onsyncdb(clt.synode, req);
 						req = syncdb(rep);
 						rep = exespush(peer, req);
@@ -64,7 +63,7 @@ public class SynDomClientier {
 	 * @return initiate request
 	 * @throws Exception 
 	 */
-	private SyncReq syninit() throws Exception {
+	SyncReq exesinit() throws Exception {
 		// DBSyntableBuilder b0 = new DBSyntableBuilder(domain, conn, mynid, mode);
 
 		// ExessionPersist xp = new ExessionPersist(b0, peer)
@@ -77,7 +76,7 @@ public class SynDomClientier {
 					.exblock(b);
 	}
 
-	public SyncResp onsyninit(ExchangeBlock ini)
+	SyncResp onsyninit(ExchangeBlock ini)
 			throws Exception {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, conn, mynid, mode);
 
@@ -91,7 +90,7 @@ public class SynDomClientier {
 				.exblock(b);
 	}
 
-	public SyncReq syncdb(SyncResp rep)
+	SyncReq syncdb(SyncResp rep)
 			throws SQLException, TransException {
 
 		ExchangeBlock reqb = xp // domanager.synssion(peer)
@@ -102,7 +101,7 @@ public class SynDomClientier {
 		return req;
 	}
 	
-	public SyncResp onsyncdb(SyncReq req)
+	SyncResp onsyncdb(SyncReq req)
 			throws SQLException, TransException {
 		ExchangeBlock repb = xp //synssion(peer)
 				.nextExchange(req.exblock);
@@ -110,7 +109,7 @@ public class SynDomClientier {
 		return new SyncResp().exblock(repb);
 	}
 
-	public SyncReq synclose(SyncResp rep)
+	SyncReq synclose(SyncResp rep)
 			throws TransException, SQLException {
 		// try {
 		// ExessionPersist xp = synssion(peer);
@@ -119,7 +118,7 @@ public class SynDomClientier {
 		// } finally { expiredxp = delession(peer); }
 	}
 
-	public SyncResp onsynclose(SyncReq req)
+	SyncResp onsynclose(SyncReq req)
 			throws TransException, SQLException {
 		// try {
 		// ExessionPersist xp = synssion(peer);
@@ -128,8 +127,23 @@ public class SynDomClientier {
 		// } finally { expiredxp = delession(peer); }
 	}
 
-	SyncResp exestart(SyncReq req) {
-		return null;
+	/**
+	 * Initialize an exchange session.
+	 * @param ini
+	 * @return initializing request
+	 * @throws Exception 
+	 */
+	SyncResp exesOninit(SyncResp ini) throws Exception {
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, conn, mynid, mode);
+
+		xp = new ExessionPersist(b0, peer, ini.exblock)
+								.loadNyquvect(conn);
+
+		ExchangeBlock b = b0.onInit(xp, ini.exblock);
+
+		// synssion(peer, new SynssionClientier(this, peer, domain).xp(xp));
+
+		return new SyncResp().exblock(b);
 	}
 
 	SyncResp exespush(String peer, SyncReq req) {
@@ -143,13 +157,11 @@ public class SynDomClientier {
 
 	ExessionPersist xp;
 
-//	public SynDomClientier exstate(int s) {
-//		xp.exstate(s);
-//		return this;
-//	}
-
-	public SynDomClientier xp(ExessionPersist xp) {
+	public SynssionClientier xp(ExessionPersist xp) {
 		this.xp = xp;
 		return this;
+	}
+
+	public void pingPeers() {
 	}
 }

@@ -73,7 +73,7 @@ class SynoderTest {
 	static final int Z = 2;
 	static final int W = 3;
 	
-	static Syntier[] syntiers  = new Syntier[4];
+	static ExpDoctier[] syntiers  = new ExpDoctier[4];
 	
 	private static AutoSeqMeta aum;
 	private static SynChangeMeta chm;
@@ -122,7 +122,7 @@ class SynoderTest {
 				// X, Y, Z, W
 				String synode = String.valueOf((char)(Integer.valueOf('X') + (s == W ? -1 : s)));
 
-				syntiers[s] = new Syntier(synode, conn);
+				syntiers[s] = new ExpDoctier(synode, conn);
 			}
 
 			errLog = new ErrorCtx() {
@@ -175,7 +175,7 @@ class SynoderTest {
 
 		int no = 0;
 		Utils.logrst("X starting", test, ++no);
-		Syntier xtir = syntiers[X];
+		ExpDoctier xtir = syntiers[X];
 		SynDomanager x = xtir.start(ura, zsu, xtir.myconn, SynodeMode.peer)
 						.domanager(zsu);
 
@@ -183,7 +183,7 @@ class SynoderTest {
 		ck[X].synodes(X);
 
 		Utils.logrst("Y starting", test, ++no);
-		Syntier ytir = syntiers[Y];
+		ExpDoctier ytir = syntiers[Y];
 		SynDomanager y = ytir.start(ura, zsu, ytir.myconn, SynodeMode.peer)
 						.domanager(zsu);
 
@@ -207,7 +207,7 @@ class SynoderTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		Syntier ztir = syntiers[Z];
+		ExpDoctier ztir = syntiers[Z];
 		SynDomanager z = ztir.start(ura, zsu, ztir.myconn, SynodeMode.peer)
 						.domanager(zsu);
 
@@ -284,7 +284,7 @@ class SynoderTest {
 	}
 
 	private String createPhoto(int synx) throws IOException, TransException, SQLException {
-		Syntier syntier = syntiers[synx];
+		ExpDoctier syntier = syntiers[synx];
 		T_Photo photo = new T_Photo(docm, ura, syntier.synode);
 
 		photo.createDate = DateFormat.format(new Date());
@@ -329,6 +329,7 @@ class SynoderTest {
 		assertEquals(2, y.synssion(x.synode).xp.trb.entities(docm));
 	}
 	
+	@SuppressWarnings("deprecation")
 	void syncpair(String domain, int sx, int cx, int testno, int subno)
 			throws Exception {
 		Utils.logrst("syncpair()", testno, subno);
@@ -337,7 +338,6 @@ class SynoderTest {
 		SynDomanager clt = syntiers[cx].domanager(domain);
 
 		Utils.logrst("client initate", testno, subno, ++no);
-		// SyncReq req  = clt.synssion(srv.synode).syninit();
 		SyncReq req  = clt.syninit(srv.synode, domain);
 
 		printChangeLines(ck);
@@ -351,7 +351,6 @@ class SynoderTest {
 		Utils.logrst("exchanges", testno, subno, ++no);
 		
 		if (rep != null) {
-			// clt.synssion(srv.synode).onsyninit(rep.exblock);
 			clt.onsyninit(srv.synode, rep.exblock);
 			while (rep.synact() != close || req.synact() != close) {
 				Utils.logrst("client exchange", testno, subno, no, ++ex);

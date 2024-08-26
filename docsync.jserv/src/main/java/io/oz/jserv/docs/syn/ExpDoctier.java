@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.eq;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
@@ -55,7 +56,7 @@ import io.oz.jserv.docs.meta.DeviceTableMeta;
 import io.oz.jserv.docs.x.DocsException;
 
 @WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.sync" })
-public class Syntier extends ServPort<DocsReq> {
+public class ExpDoctier extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 
 	/** {domain: {jserv: exession-persist}} */
@@ -72,7 +73,7 @@ public class Syntier extends ServPort<DocsReq> {
 	/** DB connection id for this node to synchronize. */
 	final String myconn;
 
-	public Syntier() throws SemanticException, SQLException, IOException {
+	public ExpDoctier() throws SemanticException, SQLException, IOException {
 		this("test", "test");
 	}
 
@@ -92,7 +93,7 @@ public class Syntier extends ServPort<DocsReq> {
 	 * @throws SAXException
 	 * @throws IOException
 	 */
-	public Syntier(String synoderId, String loconn)
+	public ExpDoctier(String synoderId, String loconn)
 			throws SemanticException, SQLException, IOException {
 		super(Port.dbsyncer);
 		synode = isblank(synoderId) ? Configs.getCfg(Configs.keys.synode) : synoderId;
@@ -172,7 +173,9 @@ public class Syntier extends ServPort<DocsReq> {
 
 			if (rsp != null) {
 				write(resp, ok(rsp.syndomain(dom0builder.domain())));
-				domanager(dom0builder.domain()).updomain();
+				
+				domains.get(dom0builder.domain()).updomains();
+				searchDomains(dom0builder.domain());
 			}
 		} catch (DocsException e) {
 			write(resp, err(MsgCode.ext, e.ex().toBlock()));
@@ -207,7 +210,7 @@ public class Syntier extends ServPort<DocsReq> {
 	 * @return
 	 * @throws Exception
 	 */
-	public Syntier start(String org, String domain, String conn, SynodeMode mod)
+	public ExpDoctier start(String org, String domain, String conn, SynodeMode mod)
 			throws Exception {
 		if (domains == null)
 			domains = new HashMap<String, SynDomanager>();
@@ -228,10 +231,20 @@ public class Syntier extends ServPort<DocsReq> {
 		return this;
 	}
 
-	public SynDomanager domanager(String domain) {
-		return domains.get(domain);
+	SynDomanager domanager(String dom) {
+		return domains.get(dom);
 	}
-	
+
+	void searchDomains(String lastdom) {
+		if (domains!= null)
+			if (domains.containsKey(lastdom))
+				domains.get(lastdom).searchDomain();
+
+		for (String dom : domains.keySet())
+			if (!eq(lastdom, dom))
+				domains.get(dom).searchDomain();
+	}
+
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException, SAXException, IOException {
 		String conn = Connects.uri2conn(body.uri());

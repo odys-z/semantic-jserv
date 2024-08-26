@@ -64,22 +64,6 @@ class DoclientierTest {
 	public final static int Z = 2;
 	public final static int W = 3;
 
-	public static class Dev_1_0 {
-		public static final String uri = "client-at-01";
-		public static final String uid = "odyz";
-		public static final String psw = "8964";
-		public static final String dev = "1-0";
-		public static final String folder = "zsu";
-	}
-
-	public static class Dev_1_1 {
-		public static final String uri = "client-at-01";
-		public static final String uid = "syrskyi";
-		public static final String psw = "слава україні";
-		public static final String dev = "1-1";
-		public static final String folder = "zsu";
-	}
-
 	public static class Dev {
 		public final String uri;
 		public final String uid;
@@ -129,12 +113,12 @@ class DoclientierTest {
 			devs[X_1] = new Dev("client-at-00", "syrskyi", "слава україні", "0-1", "zsu",
 								"src/test/res/anclient.java/2-ontario.gif");
 
-			devs[Y_0] = new Dev(Dev_1_0.uri, Dev_1_0.uid, Dev_1_0.psw, Dev_1_0.dev, Dev_1_0.folder,
-					// https://elements.envato.com/sound-effects
-					"src/test/res/anclient.java/3-birds.wav");
+			devs[Y_0] = new Dev("client-at-01", "odyz", "8964", "1-0", "zsu",
+								// https://elements.envato.com/sound-effects
+								"src/test/res/anclient.java/3-birds.wav");
 
-			devs[Y_1] = new Dev(Dev_1_1.uri, Dev_1_1.uid, Dev_1_1.psw, Dev_1_1.dev, Dev_1_1.folder,
-					"src/test/res/anclient.java/Amelia Anisovych.mp4");
+			devs[Y_1] = new Dev("client-at-01", "syrskyi", "слава україні", "1-1", "zsu",
+								"src/test/res/anclient.java/Amelia Anisovych.mp4");
 
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
@@ -191,7 +175,7 @@ class DoclientierTest {
 				servIP, port,
 				new AnSession(), new AnQuery(), new AnUpdate(),
 				new HeartLink())
-			.addServPort(new Syntier(Configs.getCfg(Configs.keys.synode), serv_conn)
+			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), serv_conn)
 			.start(SynoderTest.ura, SynoderTest.zsu, serv_conn, SynodeMode.peer)) ;
 	}
 

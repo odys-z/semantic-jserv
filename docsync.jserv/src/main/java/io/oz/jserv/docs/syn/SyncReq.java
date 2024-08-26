@@ -8,6 +8,12 @@ import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
 public class SyncReq extends AnsonBody {
+	public static class A {
+		public static final String syncini = "r/sync-ini";
+		public static final String syncent = "r/sync-ent";
+		public static final String synclos = "r/sync-close";
+		public static final String synrest = "r/sync-rest";
+	}
 
 	ExchangeBlock exblock;
 	public ExpSyncDoc doc;

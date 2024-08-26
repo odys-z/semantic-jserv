@@ -22,6 +22,7 @@ public class DocsReq extends UserReq {
 		 * For client querying matching (syncing) docs, use {@link #records} instead. 
 		 * @see DocsTier#list(DocsReq req, IUser usr)
 		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
+		 * @deprecated replaced by SyncDoc.syncent
 		 * */
 		public static final String syncdocs = "r/syncs";
 

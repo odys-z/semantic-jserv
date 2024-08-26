@@ -39,7 +39,7 @@ public class Dochain {
 
 	public interface OnChainOk {
 		/**
-		 * {@link Syntier} use this as a chance of update user's data
+		 * {@link ExpDoctier} use this as a chance of update user's data
 		 * when block chain finished successfully.
 		 * 
 		 * @param post

@@ -22,7 +22,7 @@ import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.oz.jserv.docs.syn.Doclientier;
-import io.oz.jserv.docs.syn.Syntier;
+import io.oz.jserv.docs.syn.ExpDoctier;
 
 /**
  * Start 3 jservs and ping the login.serv port.
@@ -116,7 +116,7 @@ public class JettyHelperTest {
 				servIP, port,
 				new AnSession(),
 				new HeartLink())
-			.addServPort(new Syntier(Configs.getCfg(Configs.keys.synode), conn)
+			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
 			.start("URA", "zsu", conn, SynodeMode.peer))
 			;
 	}

@@ -197,7 +197,7 @@ public class Doclientier extends Semantier {
 	}
 	
 	/**
-	 * Synchronizing files to a {@link Syntier} using block chain, accessing port {@link Port#docsync}.
+	 * Synchronizing files to a {@link ExpDoctier} using block chain, accessing port {@link Port#docsync}.
 	 * This method will use meta to create entity object of doc.
 	 * @param meta for creating {@link ExpSyncDoc} object 
 	 * @param rs tasks, rows should be limited
