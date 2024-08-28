@@ -25,9 +25,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.DATranscxt.SemanticsMap;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -57,9 +55,6 @@ import io.oz.jserv.docs.x.DocsException;
 @WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.sync" })
 public class ExpDoctier extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
-
-	/** {domain: {jserv: exession-persist}} */
-	public HashMap<String, SynDomanager> domains;
 
 	private DBSyntableBuilder dom0builder;
 	public DBSyntableBuilder stampbuilder() throws SQLException, TransException {
@@ -173,7 +168,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			if (rsp != null) {
 				write(resp, ok(rsp.syndomain(dom0builder.domain())));
 				
-				domains.get(dom0builder.domain()).updomains();
+				// domains.get(dom0builder.domain()).updomains();
 			}
 		} catch (DocsException e) {
 			write(resp, err(MsgCode.ext, e.ex().toBlock()));
@@ -208,19 +203,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @return
 	 * @throws Exception
 	 */
-	public ExpDoctier start(String org, String domain, String conn, SynodeMode mod)
+	public ExpDoctier start(String org, String domain, SynodeMode mod)
 			throws Exception {
-		if (domains == null)
-			domains = new HashMap<String, SynDomanager>();
-		if (!domains.containsKey(domain))
-			domains.put(domain, new SynDomanager(org, domain, synode, conn, mod));
-
-		SemanticsMap ss = DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
-			(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
-		
-		domains .get(domain)
-				.born(ss.get(smtype.synChange), 0, 0);
-		
 		dom0builder = new DBSyntableBuilder(
 				domain, // FIXME this is not correct. 
 						// FIXME See {@link DBSyntableBuilder}'s issue ee153bcb30c3f3b868413beace8cc1f3cb5c3f7c. 
@@ -229,19 +213,13 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return this;
 	}
 
-	SynDomanager domanager(String dom) {
-		return domains.get(dom);
+	/** {domain: {jserv: exession-persist}} */
+	HashMap<String, SynDomanager> domains;
+	SynDomanager domanager(String dom) { return domains.get(dom); }
+	ExpDoctier domains(HashMap<String, SynDomanager> domains) {
+		this.domains = domains;
+		return this;
 	}
-
-//	void searchDomains(String lastdom) {
-//		if (domains!= null)
-//			if (domains.containsKey(lastdom))
-//				domains.get(lastdom).searchDomain();
-//
-//		for (String dom : domains.keySet())
-//			if (!eq(lastdom, dom))
-//				domains.get(dom).searchDomain();
-//	}
 
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException, SAXException, IOException {

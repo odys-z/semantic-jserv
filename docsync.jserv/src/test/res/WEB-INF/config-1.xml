@@ -13,7 +13,7 @@
 
     <c>
     	<k>io.oz.syn.synode</k>
-    	<v>X</v>
+    	<v>Y</v>
     </c>
 
 	<c>
@@ -21,7 +21,6 @@
 		<k>class-IUser</k>
 		<v>io.oz.jserv.docs.syn.DocUser</v>
 	</c>
-
 
 	<c>
 		<k>sync.log.on-verbose</k>

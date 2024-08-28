@@ -1,19 +1,19 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.semantic.syn.ExessionAct.ready;
+import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.syn.ExessionAct.close;
+import static io.odysz.semantic.syn.ExessionAct.ready;
 
-import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import org.xml.sax.SAXException;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSynmantics.ShSynChange;
@@ -31,7 +31,9 @@ import io.odysz.transact.x.TransException;
  * Syn-domain's sessions manager.
  * @see #sessions
  */
-public class SynDomanager {
+public class SynDomanager implements OnError {
+	static final String dom_unknown = null;
+	
 	final String synode;
 	final String myconn;
 	final String domain;
@@ -74,34 +76,49 @@ public class SynDomanager {
 		return null;
 	}
 
-	public SynDomanager(String org, String dom, String myid, String conn, SynodeMode mod)
-			throws SQLException, SAXException, IOException, TransException {
+	public SynDomanager(String org, String dom, String myid, String conn, SynodeMode mod) {
 		synode   = myid;
 		myconn   = conn;
 		domain   = dom;
 		this.org = org;
 		this.mod = mod;
 	}
+	
+	public static SynDomanager clone(SynDomanager dm) {
+		return new SynDomanager(dm.org, dm.domain, dm.synode, dm.myconn, dm.mod);
+	}
 
 	/**
+	 * @param adminjserv jserv root path, must be null for testing
+	 * locally without login to the service
 	 * @param peeradmin
 	 * @param passwd
-	 * @return SynssionClient (already in been put into synssions), with xp for persisting and for req construction.
+	 * @return SynssionClient (already in been put into synssions),
+	 * with xp for persisting and for req construction.
 	 * @throws Exception
 	 */
-	public SynssionClientier joinpeer(String peeradmin, String passwd) throws Exception {
+	public SynssionClientier joinpeer(String adminjserv, String peeradmin, String userId, String passwd) throws Exception {
 
-		DBSyntableBuilder cltb = new DBSyntableBuilder(domain, myconn, synode, mod);
+		DBSyntableBuilder cltb = new DBSyntableBuilder(dom_unknown, myconn, synode, mod);
 
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
 
-		// ExchangeBlock req  = cltb.domainSignup(cltp, peeradmin);
+		SynssionClientier c = new SynssionClientier(this, peeradmin, dom_unknown)
+							.xp(cltp)
+							.onErr(this);
 
-		SynssionClientier c = new SynssionClientier(this, peeradmin, domain).xp(cltp);
+		if (isblank(adminjserv))
+			Utils.warnT(new Object() {},
+				"The root jserv path is empty. This should only happens when testing.\npeer: %s, user id: %s",
+				peeradmin, userId);
+		else {
+			c.loginWithUri(adminjserv, userId, passwd, synode);
+			Utils.logi("%s logged into %s", synode, peeradmin);
+		}
+
 		synssion(peeradmin, c);
 		return c;
-		// return new Object[] {new SyncReq(null, domain).exblock(req), c};
 	}
 
 	public SyncResp onjoin(SyncReq req) throws Exception {
@@ -114,13 +131,16 @@ public class SynDomanager {
 
 		synssion(peer, new SynssionClientier(this, peer, domain).xp(admp.exstate(ready)));
 	
-		return new SyncResp().exblock(resp);
+		return new SyncResp(domain).exblock(resp);
 	}
 
 	public SyncReq closejoin(SyncResp rep) throws TransException, SQLException {
+		if (!eq(domain, rep.domain))
+			throw new ExchangeException(close, null, "So what?");
+
 		String admin = rep.exblock.srcnode;
 		try {
-			return synssion(admin).closejoin(admin, rep);
+			return synssion(admin).domain(domain).closejoin(admin, rep);
 		/*
 			ExessionPersist xp = synssion(admin).xp;
 			xp.trb.domainitMe(xp, admin, rep.exblock);
@@ -137,7 +157,7 @@ public class SynDomanager {
 		try {
 			ExessionPersist sp = synssion(apply).xp;
 			ExchangeBlock ack  = sp.trb.domainCloseJoin(sp, req.exblock);
-			return new SyncResp().exblock(ack);
+			return new SyncResp(domain).exblock(ack);
 		} finally { expiredClientier = delession(apply); }
 	}
 
@@ -180,6 +200,7 @@ public class SynDomanager {
 	 * @throws Exception
 	 */
 	public SyncResp onsyninit(String peer, ExchangeBlock ini) throws Exception {
+		/*
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod);
 
 		ExessionPersist xp = new ExessionPersist(b0, peer, ini)
@@ -190,10 +211,19 @@ public class SynDomanager {
 		synssion(peer, new SynssionClientier(this, peer, domain).xp(xp));
 
 		return new SyncResp().exblock(b);
+		*/
+		SynssionClientier c = new SynssionClientier(this, peer, domain);
+		synssion(peer, c);
+		return c.onsyninit(ini);
+	}
+
+	public SyncResp onclosex(SyncReq req) throws TransException, SQLException {
+		SynssionClientier c = synssion(req.exblock.srcnode);
+		return c.onsynclose(req.exblock);
 	}
 
 	/**
-	 * Initialize n0 and samp.
+	 * Insert synode record with n0 and stamp.
 	 * @param handlers syn handlers  
 	 * @param n0 accept as start nyquence if no records exists
 	 * @param stamp accept as start stamp if no records exists
@@ -207,7 +237,6 @@ public class SynDomanager {
 		IUser robot = new JRobot();
 
 		if (DAHelper.count(b0, myconn, snm.tbl, snm.synuid, synode) > 0)
-			// DAHelper.updateFieldsByPk(robot, t0, myconn, snm, synode, snm.nyquence, n0, snm.nstamp, stamp0);
 			Utils.warnT(new Object() {}, "What's it when reached here?");
 		else
 			DAHelper.insert(robot, b0, myconn, snm,
@@ -229,7 +258,7 @@ public class SynDomanager {
 	}
 
 	///////////////////////////////////////////////////////////////////////////
-	ArrayList<String> knownpeers;
+	// ArrayList<String> knownpeers;
 	/**
 	 * Update domain, and start all possible sessions, each in a new thread.
 	 * Can be called by request handler and timer.
@@ -239,8 +268,8 @@ public class SynDomanager {
 	 * @return this
 	 */
 	public SynDomanager updomains() {
-		if (knownpeers != null)
-		for (String peer : knownpeers)
+		if (sessions != null)
+		for (String peer : sessions.keySet())
 			if (sessions.containsKey(peer) && sessions.get(peer).xp.exstate() != ready)
 				continue;
 			else {
@@ -263,12 +292,18 @@ public class SynDomanager {
 	public void joinDomain(String dom, String admid, String admserv,
 			String myuid, String mypswd) throws Exception {
 
-		if (sessions.containsKey(admid))
+		if (sessions != null && sessions.containsKey(admid))
 			throw new ExchangeException(close, null,
 				"SynssionClientier already exists. Duplicated singup?");
 		
-		SynssionClientier c = joinpeer(admid, mypswd);
+		SynssionClientier c = joinpeer(admserv, admid, myuid, mypswd);
 
 		c.joindomain(admid, myuid, mypswd);
+	}
+
+	@Override
+	public void err(MsgCode code, String msg, String... args) {
+		Utils.warn("Error Code: %s", code.name());
+		Utils.warn(msg, (Object[])args);
 	}
 }

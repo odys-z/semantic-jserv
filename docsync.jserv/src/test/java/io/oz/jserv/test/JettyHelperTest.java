@@ -117,7 +117,7 @@ public class JettyHelperTest {
 				new AnSession(),
 				new HeartLink())
 			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
-			.start("URA", "zsu", conn, SynodeMode.peer))
+			.start("URA", "zsu", SynodeMode.peer))
 			;
 	}
 }

@@ -14,7 +14,7 @@
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
   		<dbg>true</dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	
   	<c>
@@ -111,16 +111,20 @@
   	</c>
   	
   	<c>
-  		<uri>jetty-0</uri>
+  		<uri>/syn/X</uri>
   		<conn>no-jserv.00</conn>
   	</c>
   	<c>
-  		<uri>jetty-1</uri>
+  		<uri>/syn/Y</uri>
   		<conn>no-jserv.01</conn>
   	</c>
   	<c>
-  		<uri>jetty-2</uri>
+  		<uri>/syn/Z</uri>
   		<conn>no-jserv.02</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/W</uri>
+  		<conn>no-jserv.03</conn>
   	</c>
   </t>
 </conns>

@@ -79,7 +79,13 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		dbsyncer("clean.db"),
 		
 		/** @deprecated for MVP album v0.2.1 only */
-		album21("docs.album21");
+		album21("docs.album21"),
+		
+		/**
+		 * Synode tier service: sync.tier
+		 * @since 2.0.0
+		 */
+		syntier("sync.tier");
 		
 		static {
 			JSONAnsonListener.registFactory(IPort.class, 

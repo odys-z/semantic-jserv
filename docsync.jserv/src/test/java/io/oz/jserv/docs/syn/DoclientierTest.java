@@ -6,8 +6,11 @@ import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.pause;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
+import static io.oz.jserv.docs.syn.ExpSynodetier.setupDomanagers;
+import static io.oz.jserv.docs.syn.SynoderTest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,6 +20,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import org.junit.jupiter.api.AfterAll;
@@ -92,8 +96,11 @@ class DoclientierTest {
 	
 	static final String clientconn = "main-sqlite";
 
-	static final String[] servs_conn = new String[] {
+	static final String[] servs_conn  = new String[] {
 			"no-jserv.00", "no-jserv.01", "no-jserv.02", "no-jserv.03"};
+
+	static final String[] config_xmls = new String[] {
+			"config-0.xml", "config-1.xml", "config-2.xml", "config-3.xml"};
 	
 	static Dev[] devs; // = new Dev[4];
 	static JettyHelper[] jetties;
@@ -147,13 +154,13 @@ class DoclientierTest {
 		for (int i = 0; i < servs_conn.length; i++) {
 			if (jetties[i] != null)
 				jetties[i].stop();
-			jetties[i] = startSyndoctier(servs_conn[i], port++);
+			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++);
 			devs[i].jserv = jetties[i].jserv();
 			initRecords(servs_conn[i]);
 		}
 	}
 	
-	static JettyHelper startSyndoctier(String serv_conn, int port) throws Exception {
+	static JettyHelper startSyndoctier(String serv_conn, String config_xml, int port) throws Exception {
 		AutoSeqMeta asqm = new AutoSeqMeta();
 		JRoleMeta arlm = new JUser.JRoleMeta();
 		JOrgMeta  aorgm = new JUser.JOrgMeta();
@@ -170,14 +177,28 @@ class DoclientierTest {
 
 		// synode
 		String servIP = "localhost";
+		
+		Configs.init(webinf, config_xml);
+		String synid  = Configs.getCfg(Configs.keys.synode);
+		Utils.logi("------------ Starting %s ... --------------", synid);
 
-		return JettyHelper.startJettyServ(webinf, serv_conn, "config-0.xml",
+		HashMap<String,SynDomanager> domains = setupDomanagers(ura, zsu, synid, serv_conn, SynodeMode.peer);
+
+		ExpDoctier doctier  = new ExpDoctier(synid, serv_conn)
+							.start(ura, zsu, SynodeMode.peer)
+							.domains(domains);
+		ExpSynodetier syner = new ExpSynodetier(ura, zsu, synid, serv_conn, SynodeMode.peer)
+							.domains(domains);
+		
+		return JettyHelper.startJettyServ(webinf, serv_conn, config_xml, // "config-0.xml",
 				servIP, port,
 				new AnSession(), new AnQuery(), new AnUpdate(),
 				new HeartLink())
-			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), serv_conn)
-			.start(SynoderTest.ura, SynoderTest.zsu, serv_conn, SynodeMode.peer)) ;
+			.addServPort(doctier)
+			.addServPort(syner)
+			;
 	}
+
 
 	/**
 	 * initialize with files, i. e. oz_autoseq.sql, a_users.sqlite.sql.
@@ -218,48 +239,54 @@ class DoclientierTest {
 	}
 
 	@Test
-	void testSyncUp() throws Exception {
-		
-		setupDomain();
+	void testSyncUp() {
+		try {
+			setupDomain();
 
-		// 00 create
-		String fpth00 = clientPush(X_0);
-		verifyPathsPage(devs[X_0].client, docm.tbl, fpth00);
+			// 00 create
+			String fpth00 = clientPush(X_0);
+			verifyPathsPage(devs[X_0].client, docm.tbl, fpth00);
 
-		// 10 create
-		clientPush(Y_0);
+			// 10 create
+			clientPush(Y_0);
 
-		// 11 create
-		clientPush(Y_1);
+			// 11 create
+			clientPush(Y_1);
 
-		synctiers(1, 0);
+			syncdomain(Y);
 
-		// 00 delete
-		Dev d00 = devs[X_0];
-		Clients.init(d00.jserv);
-		DocsResp rep = d00.client.synDel(docm.tbl, d00.dev, d00.res);
-		assertEquals(1, rep.total(0));
+			// 00 delete
+			Dev d00 = devs[X_0];
+			Clients.init(d00.jserv);
+			DocsResp rep = d00.client.synDel(docm.tbl, d00.dev, d00.res);
+			assertEquals(1, rep.total(0));
 
-		verifyPathsPageNegative(d00.client, docm.tbl, fpth00);
+			verifyPathsPageNegative(d00.client, docm.tbl, fpth00);
 
-		// pause("Press enter to quite ...");
+			pause("Press enter to quite ...");
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			pause(e.getMessage());
+			fail(e.getMessage());
+		}
 	}
 	
 	void setupDomain() throws Exception {
 		joinby(jetties[X], jetties[Y], devs[Y]);
 		joinby(jetties[X], jetties[Z], devs[Z]);
-		synctiers(X, Z);
-		synctiers(X, Y);
+		syncdomain(Z);
+		syncdomain(Y);
 	}
 	
 	void joinby(JettyHelper hub, JettyHelper prv, Dev dev) throws Exception {
-		for (String servpattern : hub.syndomains.keySet()) {
-			if (len(hub.syndomains.get(servpattern)) > 1 || len(prv.syndomains.get(servpattern)) > 1)
-				fail("Multiple domain schema is an issue not handled in v 2.0.0.");
+		for (String servpattern : hub.synodetiers.keySet()) {
+			if (len(hub.synodetiers.get(servpattern)) > 1 || len(prv.synodetiers.get(servpattern)) > 1)
+				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
 			
-			for (String dom : hub.syndomains.get(servpattern).keySet()) {
-				SynDomanager hubmanger = hub.syndomains.get(servpattern).get(dom);
-				SynDomanager prvmanger = hub.syndomains.get(servpattern).get(dom);
+			for (String dom : hub.synodetiers.get(servpattern).keySet()) {
+				SynDomanager hubmanger = hub.synodetiers.get(servpattern).get(dom);
+				SynDomanager prvmanger = prv.synodetiers.get(servpattern).get(dom);
 	
 				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), dev.uid, dev.psw);
 			}
@@ -335,7 +362,16 @@ class DoclientierTest {
 		return rp.xdoc;
 	}
 
-	void synctiers(int x, int y) {
+	void syncdomain(int tx) {
+		JettyHelper t = jetties[tx];
+
+		for (String servpattern : t.synodetiers.keySet()) {
+			if (len(t.synodetiers.get(servpattern)) > 1)
+				fail("Multiple synchronizing domainschema is an issue not handled in v 2.0.0.");
+
+			for (String dom : t.synodetiers.get(servpattern).keySet())
+				t.synodetiers.get(servpattern).get(dom).updomains();
+		}
 	}
 
 	/**

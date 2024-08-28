@@ -1,10 +1,7 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.semantic.syn.ExessionAct.*;
+import static io.odysz.semantic.syn.ExessionAct.unexpected;
 
-import java.util.ArrayList;
-
-import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.syn.ExchangeBlock;
 
@@ -12,6 +9,12 @@ public class SyncResp extends AnsonResp {
 	String domain;
 
 	ExchangeBlock exblock;
+
+	public SyncResp() { }
+	
+	public SyncResp(String domain) {
+		this.domain = domain;
+	}
 
 	public SyncResp exblock(ExchangeBlock b) {
 		exblock = b;

@@ -10,15 +10,21 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 public class SyncReq extends AnsonBody {
 	public static class A {
 		/** on joining */
-		public static final String syncinit = "sync/ini";
-		public static final String syncexch = "sync/ent";
-		public static final String synclose = "sync/close";
-		public static final String syncrest = "sync/rest";
-		public static final String syncpeer = "sync/peering";
+		public static final String exchange= "ex/exchange";
+		public static final String exclose = "ex/close";
+		public static final String exrest  = "ex/rest";
+		public static final String exinit  = "ex/init";
+
+		public static final String initjoin = "join/init";
+		public static final String closejoin= "join/close";
 	}
 
 	ExchangeBlock exblock;
 	public ExpSyncDoc doc;
+	
+	public SyncReq() {
+		super(null, null);
+	}
 
 	public SyncReq exblock(ExchangeBlock b) {
 		exblock = b;

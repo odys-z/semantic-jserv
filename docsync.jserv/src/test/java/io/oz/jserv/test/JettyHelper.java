@@ -18,7 +18,7 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
-import io.oz.jserv.docs.syn.ExpDoctier;
+import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.Syngleton;
 
@@ -49,7 +49,7 @@ public class JettyHelper {
 	 * { url-pattern: { domain: domanager } },<br>
 	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
 	 */
-	public HashMap<String, HashMap<String, SynDomanager>> syndomains;
+	public HashMap<String, HashMap<String, SynDomanager>> synodetiers;
 
 	static JettyHelper instanserver(String configPath, String conn0, String configxml, String ip, int port)
 			throws Exception {
@@ -67,6 +67,8 @@ public class JettyHelper {
         httpConnector.setPort(port);
         httpConnector.setIdleTimeout(5000);
         helper.server.addConnector(httpConnector);
+        
+        helper.synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
         
         return helper;
 	}
@@ -107,8 +109,8 @@ public class JettyHelper {
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
 			
-			if (t instanceof ExpDoctier)
-				syndomains.put(pattern, ((ExpDoctier)t).domains);
+			if (t instanceof ExpSynodetier)
+				synodetiers.put(pattern, ((ExpSynodetier)t).domains);
 		}
 		return this;
 	}
