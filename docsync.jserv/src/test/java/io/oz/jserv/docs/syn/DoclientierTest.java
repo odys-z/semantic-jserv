@@ -3,6 +3,7 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
@@ -40,6 +41,7 @@ import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.jsession.JUser;
@@ -59,6 +61,7 @@ import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.test.JettyHelper;
 
@@ -121,7 +124,6 @@ class DoclientierTest {
 								"src/test/res/anclient.java/2-ontario.gif");
 
 			devs[Y_0] = new Dev("client-at-01", "odyz", "8964", "1-0", "zsu",
-								// https://elements.envato.com/sound-effects
 								"src/test/res/anclient.java/3-birds.wav");
 
 			devs[Y_1] = new Dev("client-at-01", "syrskyi", "слава україні", "1-1", "zsu",
@@ -199,7 +201,6 @@ class DoclientierTest {
 			;
 	}
 
-
 	/**
 	 * initialize with files, i. e. oz_autoseq.sql, a_users.sqlite.sql.
 	 * 
@@ -273,13 +274,19 @@ class DoclientierTest {
 	}
 	
 	void setupDomain() throws Exception {
-		joinby(jetties[X], jetties[Y], devs[Y]);
-		joinby(jetties[X], jetties[Z], devs[Z]);
+		boolean[] lights = new boolean[] {true, false, false};
+		joinby(lights, X, Y);
+		joinby(lights, X, Z);
+
+		awaitAll(lights);
 		syncdomain(Z);
 		syncdomain(Y);
 	}
 	
-	void joinby(JettyHelper hub, JettyHelper prv, Dev dev) throws Exception {
+	void joinby(boolean[] lights, int to, int by) throws Exception {
+		JettyHelper hub = jetties[to];
+		JettyHelper prv = jetties[by];
+		Dev dev = devs[by];
 		for (String servpattern : hub.synodetiers.keySet()) {
 			if (len(hub.synodetiers.get(servpattern)) > 1 || len(prv.synodetiers.get(servpattern)) > 1)
 				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
@@ -288,7 +295,8 @@ class DoclientierTest {
 				SynDomanager hubmanger = hub.synodetiers.get(servpattern).get(dom);
 				SynDomanager prvmanger = prv.synodetiers.get(servpattern).get(dom);
 	
-				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), dev.uid, dev.psw);
+				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), dev.uid, dev.psw,
+						(rep) -> { lights[by] = true; });
 			}
 		}
 	}
@@ -362,7 +370,7 @@ class DoclientierTest {
 		return rp.xdoc;
 	}
 
-	void syncdomain(int tx) {
+	void syncdomain(int tx) throws SemanticException, AnsonException, SsException, IOException {
 		JettyHelper t = jetties[tx];
 
 		for (String servpattern : t.synodetiers.keySet()) {

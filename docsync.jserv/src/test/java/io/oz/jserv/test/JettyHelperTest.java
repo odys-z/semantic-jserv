@@ -3,8 +3,6 @@ package io.oz.jserv.test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import static io.odysz.common.Utils.pause;
-
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -65,21 +63,21 @@ public class JettyHelperTest {
 		
 		Clients.init(h1.jserv);
 		Doclientier client = new Doclientier("jetty-0", errLog)
-				.tempRoot("odyx")
+				.tempRoot("temp/odyx")
 				.loginWithUri("jetty-0", "odyx", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
 
 		Clients.init(h2.jserv);
 		client = new Doclientier("jetty-1", errLog)
-				.tempRoot("odyy")
+				.tempRoot("temp/odyy")
 				.loginWithUri("jetty-1", "odyy", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
 				
 		Clients.init(h3.jserv);
 		client = new Doclientier("jetty-2", errLog)
-				.tempRoot("odyz")
+				.tempRoot("temp/odyz")
 				.loginWithUri("jetty-2", "odyz", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
@@ -87,7 +85,9 @@ public class JettyHelperTest {
 		Utils.logi(h1.jserv + "/login.serv");
 		Utils.logi(h2.jserv + "/login.serv");
 		Utils.logi(h3.jserv + "/login.serv");
-		pause("Errors because of no r.serv port can be ignred. Press any key to continue ...");
+
+		// pause("Errors because of no r.serv port can be ignred. Press any key to continue ...");
+		// awaitAll(lights );
 	}
 	
 	/**

@@ -383,22 +383,4 @@ class SynoderTest {
 		printNyquv(ck);
 	}
 
-	/**
-	 * Wait until all lights turn into green (true).
-	 * @param green lights
-	 * @param x100ms default 100 times
-	 * @throws InterruptedException
-	 */
-	static void awaitAll(boolean[] greenlights, int... x100ms) throws InterruptedException {
-		int wait = 0;
-		int times = (x100ms == null ? 100 : x100ms[0]);
-		while (wait++ < times) {
-			for (boolean g : greenlights)
-				if (!g) Thread.sleep(100);
-		}
-		
-		for (boolean g : greenlights)
-			if (!g) fail("Green light");
-	}
-
 }

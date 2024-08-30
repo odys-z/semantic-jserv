@@ -5,16 +5,20 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
+import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
+import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jserv.JRobot;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSynmantics.ShSynChange;
 import io.odysz.semantic.syn.DBSyntableBuilder;
@@ -25,6 +29,7 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
+import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -104,7 +109,7 @@ public class SynDomanager implements OnError {
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
 
-		SynssionClientier c = new SynssionClientier(this, peeradmin, dom_unknown)
+		SynssionClientier c = new SynssionClientier(this, peeradmin)
 							.xp(cltp)
 							.onErr(this);
 
@@ -129,7 +134,7 @@ public class SynDomanager implements OnError {
 
 		ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
-		synssion(peer, new SynssionClientier(this, peer, domain).xp(admp.exstate(ready)));
+		synssion(peer, new SynssionClientier(this, peer).xp(admp.exstate(ready)).domain(domain));
 	
 		return new SyncResp(domain).exblock(resp);
 	}
@@ -212,9 +217,9 @@ public class SynDomanager implements OnError {
 
 		return new SyncResp().exblock(b);
 		*/
-		SynssionClientier c = new SynssionClientier(this, peer, domain);
+		SynssionClientier c = new SynssionClientier(this, peer);
 		synssion(peer, c);
-		return c.onsyninit(ini);
+		return c.onsyninit(ini, domain);
 	}
 
 	public SyncResp onclosex(SyncReq req) throws TransException, SQLException {
@@ -266,16 +271,27 @@ public class SynDomanager implements OnError {
 	 * <p>Updating event is ignored if the clientier is running.</p>
 	 * 
 	 * @return this
+	 * @throws IOException 
+	 * @throws SsException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
 	 */
-	public SynDomanager updomains() {
+	public SynDomanager updomains() throws SemanticException, AnsonException, SsException, IOException {
 		if (sessions != null)
 		for (String peer : sessions.keySet())
-			if (sessions.containsKey(peer) && sessions.get(peer).xp.exstate() != ready)
+			if (sessions.containsKey(peer)
+				&& sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
+				sessions.get(peer).update2peer();
+			// else sessions.put(peer, new SynssionClientier(this, peer, domain).updateWith());
+			else if (!sessions.containsKey(peer))
+				Utils.warnT(new Object() {}, "Updating domain should be done after logged into %s, by %s",
+						peer, synode);
+			else if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
 				continue;
-			else {
-				sessions.put(peer,
-					new SynssionClientier(this, peer, domain).update());
-			}
+			else
+				Utils.warnT(new Object() {}, "TODO updating %s <- %s",
+						peer, synode);
+				
 
 		return this;
 	}
@@ -287,10 +303,11 @@ public class SynDomanager implements OnError {
 	 * @param admserv
 	 * @param myuid
 	 * @param mypswd
+	 * @param ok 
 	 * @throws Exception
 	 */
 	public void joinDomain(String dom, String admid, String admserv,
-			String myuid, String mypswd) throws Exception {
+			String myuid, String mypswd, OnOk... ok) throws Exception {
 
 		if (sessions != null && sessions.containsKey(admid))
 			throw new ExchangeException(close, null,
@@ -298,7 +315,7 @@ public class SynDomanager implements OnError {
 		
 		SynssionClientier c = joinpeer(admserv, admid, myuid, mypswd);
 
-		c.joindomain(admid, myuid, mypswd);
+		c.joindomain(admid, myuid, mypswd, ok);
 	}
 
 	@Override
