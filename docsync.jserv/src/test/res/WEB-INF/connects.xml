@@ -115,16 +115,36 @@
   		<conn>no-jserv.00</conn>
   	</c>
   	<c>
+  		<uri>jetty-0</uri>
+  		<conn>no-jserv.00</conn>
+  	</c>
+
+  	<c>
   		<uri>/syn/Y</uri>
   		<conn>no-jserv.01</conn>
   	</c>
+  	<c>
+  		<uri>jetty-1</uri>
+  		<conn>no-jserv.01</conn>
+  	</c>
+
   	<c>
   		<uri>/syn/Z</uri>
   		<conn>no-jserv.02</conn>
   	</c>
   	<c>
+  		<uri>jetty-2</uri>
+  		<conn>no-jserv.02</conn>
+  	</c>
+
+  	<c>
   		<uri>/syn/W</uri>
   		<conn>no-jserv.03</conn>
   	</c>
+  	<c>
+  		<uri>jetty-3</uri>
+  		<conn>no-jserv.03</conn>
+  	</c>
+
   </t>
 </conns>
