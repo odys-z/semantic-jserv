@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ import io.odysz.semantic.meta.SynSessionMeta;
 import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
@@ -107,6 +109,7 @@ class DoclientierTest {
 	
 	static Dev[] devs; // = new Dev[4];
 	static JettyHelper[] jetties;
+	private static Docheck[] ck;
 	
 	static final int X_0 = 0;
 	static final int X_1 = 1;
@@ -117,16 +120,16 @@ class DoclientierTest {
 		try {
 			jetties = new JettyHelper[4];
 			devs = new Dev[4];
-			devs[X_0] = new Dev("client-at-00", "syrskyi", "слава україні", "0-0", "zsu",
+			devs[X_0] = new Dev("client-at-00", "syrskyi", "слава україні", "X-0", zsu,
 								"src/test/res/anclient.java/1-pdf.pdf");
 
-			devs[X_1] = new Dev("client-at-00", "syrskyi", "слава україні", "0-1", "zsu",
+			devs[X_1] = new Dev("client-at-00", "syrskyi", "слава україні", "X-1", zsu,
 								"src/test/res/anclient.java/2-ontario.gif");
 
-			devs[Y_0] = new Dev("client-at-01", "odyz", "8964", "1-0", "zsu",
+			devs[Y_0] = new Dev("client-at-01", "odyz", "8964", "Y-0", zsu,
 								"src/test/res/anclient.java/3-birds.wav");
 
-			devs[Y_1] = new Dev("client-at-01", "syrskyi", "слава україні", "1-1", "zsu",
+			devs[Y_1] = new Dev("client-at-01", "syrskyi", "слава україні", "Y-1", zsu,
 								"src/test/res/anclient.java/Amelia Anisovych.mp4");
 
 			bsize = 72 * 1024;
@@ -146,12 +149,15 @@ class DoclientierTest {
 	
 	@BeforeAll
 	static void init() throws Exception {
-    	System.setProperty("VOLUME_HOME", "../volume");
+		String p = new File("src/test/res").getAbsolutePath();
+    	System.setProperty("VOLUME_HOME", p + "/../volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
 		Configs.init(webinf);
 		Connects.init(webinf);
 
+		ck = new Docheck[servs_conn.length];
+		
 		int port = 8090;
 		for (int i = 0; i < servs_conn.length; i++) {
 			if (jetties[i] != null)
@@ -159,9 +165,45 @@ class DoclientierTest {
 			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++);
 			devs[i].jserv = jetties[i].jserv();
 			initRecords(servs_conn[i]);
+
+			ck[i] = new Docheck(azert, zsu, servs_conn[i], zsu, SynodeMode.peer, docm);
 		}
 	}
 	
+	@Test
+	void testSyncUp() {
+		try {
+			setupDomain();
+	
+			// 00 create
+			String fpth00 = clientPush(X_0);
+			verifyPathsPage(devs[X_0].client, docm.tbl, fpth00);
+	
+			// 10 create
+			clientPush(Y_0);
+	
+			// 11 create
+			clientPush(Y_1);
+	
+			syncdomain(Y);
+	
+			// 00 delete
+			Dev d00 = devs[X_0];
+			Clients.init(d00.jserv);
+			DocsResp rep = d00.client.synDel(docm.tbl, d00.dev, d00.res);
+			assertEquals(1, rep.total(0));
+	
+			verifyPathsPageNegative(d00.client, docm.tbl, fpth00);
+	
+			pause("Press enter to quite ...");
+		} catch (Exception e) {
+			e.printStackTrace();
+	
+			pause(e.getMessage());
+			fail(e.getMessage());
+		}
+	}
+
 	static JettyHelper startSyndoctier(String serv_conn, String config_xml, int port) throws Exception {
 		AutoSeqMeta asqm = new AutoSeqMeta();
 		JRoleMeta arlm = new JUser.JRoleMeta();
@@ -206,7 +248,7 @@ class DoclientierTest {
 	 * 
 	 * @param conn
 	 */
-	private static void initRecords(String conn) {
+	static void initRecords(String conn) {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
 
@@ -239,46 +281,16 @@ class DoclientierTest {
 		logi("Server closed");
 	}
 
-	@Test
-	void testSyncUp() {
-		try {
-			setupDomain();
-
-			// 00 create
-			String fpth00 = clientPush(X_0);
-			verifyPathsPage(devs[X_0].client, docm.tbl, fpth00);
-
-			// 10 create
-			clientPush(Y_0);
-
-			// 11 create
-			clientPush(Y_1);
-
-			syncdomain(Y);
-
-			// 00 delete
-			Dev d00 = devs[X_0];
-			Clients.init(d00.jserv);
-			DocsResp rep = d00.client.synDel(docm.tbl, d00.dev, d00.res);
-			assertEquals(1, rep.total(0));
-
-			verifyPathsPageNegative(d00.client, docm.tbl, fpth00);
-
-			pause("Press enter to quite ...");
-		} catch (Exception e) {
-			e.printStackTrace();
-
-			pause(e.getMessage());
-			fail(e.getMessage());
-		}
-	}
-	
+	/**
+	 * X ←join- Y, X ←join- Z; X ←sync- Z, X ←sync- Y
+	 * @throws Exception
+	 */
 	void setupDomain() throws Exception {
 		boolean[] lights = new boolean[] {true, false, false};
 		joinby(lights, X, Y);
 		joinby(lights, X, Z);
 
-		awaitAll(lights);
+		awaitAll(lights, 36000);
 		syncdomain(Z);
 		syncdomain(Y);
 	}
@@ -377,13 +389,14 @@ class DoclientierTest {
 			if (len(t.synodetiers.get(servpattern)) > 1)
 				fail("Multiple synchronizing domainschema is an issue not handled in v 2.0.0.");
 
-			for (String dom : t.synodetiers.get(servpattern).keySet())
+			for (String dom : t.synodetiers.get(servpattern).keySet()) {
 				t.synodetiers.get(servpattern).get(dom).updomains();
+			}
 		}
 	}
 
 	/**
-	 * Verify paths are presenting at server.
+	 * Verify device &amp; client-paths are presenting at server.
 	 * 
 	 * @param clientier
 	 * @param entityName
@@ -411,6 +424,14 @@ class DoclientierTest {
 		assertEquals(0, pathpool.size());
 	}
 
+	/**
+	 * Verify device &amp; client-paths isn't presenting at server.
+	 * 
+	 * @param clientier
+	 * @param entityName
+	 * @param paths
+	 * @throws Exception
+	 */
 	static void verifyPathsPageNegative(Doclientier clientier, String entityName, String... paths) throws Exception {
 		PathsPage pths = new PathsPage(clientier.client.ssInfo().device, 0, 1);
 		HashSet<String> pathpool = new HashSet<String>();

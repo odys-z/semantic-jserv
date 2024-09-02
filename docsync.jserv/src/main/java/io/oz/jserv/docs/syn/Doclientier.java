@@ -366,7 +366,7 @@ public class Doclientier extends Semantier {
 
 					b64 = AESHelper.encode64(ifs, blocksize);
 				}
-				req = new DocsReq(tbl, uri).blockEnd(respi, user);
+				req = new DocsReq(tbl, uri).blockEnd(respi == null ? resp0 : respi, user);
 
 				q = client.<DocsReq>userReq(uri, Port.docsync, req)
 							.header(header);

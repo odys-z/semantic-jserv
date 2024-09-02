@@ -69,7 +69,6 @@ public class SynssionClientier {
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
 		this.peer      = peer;
-		// this.domain    = domain;
 		this.mymode    = domanager.mod;
 		
 		lock = new ReentrantLock();
@@ -92,17 +91,17 @@ public class SynssionClientier {
 				// start session
 				lock.lock();
 				ExchangeBlock reqb = exesinit();
-				SyncResp rep = exespush(peer, reqb);
+				SyncResp rep = exespush(peer, A.exinit, reqb);
 
 				if (rep != null) {
 					// on start reply
 					onsyninit(rep.exblock, rep.domain);
-					while (rep.synact() != close || reqb.synact() != close) {
+					while (rep.synact() != close) {
 						// See SynoderTest
 						// req = syncdb(peer, rep);
 						// rep = srv.onsyncdb(clt.synode, req);
 						ExchangeBlock exb = syncdb(rep.exblock);
-						rep = exespush(peer, exb);
+						rep = exespush(peer, A.exchange, exb);
 					}
 					
 					// close
@@ -188,8 +187,11 @@ public class SynssionClientier {
 //		return new SyncResp().exblock(b);
 //	}
 
-	SyncResp exespush(String peer, ExchangeBlock reqb) {
-		SyncReq req = new SyncReq(null, peer).exblock(reqb);
+	SyncResp exespush(String peer, String a, ExchangeBlock reqb) {
+		SyncReq req = (SyncReq) new SyncReq(null, peer)
+					.exblock(reqb)
+					.a(a);
+
 		return exespush(peer, req);
 	}
 
@@ -221,7 +223,6 @@ public class SynssionClientier {
 	SyncResp exesclose(String peer, ExchangeBlock req) {
 		return null;
 	}
-
 
 	ExessionPersist xp;
 	public SynssionClientier xp(ExessionPersist xp) {

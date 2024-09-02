@@ -222,6 +222,10 @@ public class SynDomanager implements OnError {
 		return c.onsyninit(ini, domain);
 	}
 
+	public SyncResp onsyninit(SyncReq req) throws Exception {
+		return onsyninit(req.exblock.srcnode, req.exblock);
+	}
+
 	public SyncResp onclosex(SyncReq req) throws TransException, SQLException {
 		SynssionClientier c = synssion(req.exblock.srcnode);
 		return c.onsynclose(req.exblock);
@@ -282,7 +286,6 @@ public class SynDomanager implements OnError {
 			if (sessions.containsKey(peer)
 				&& sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
 				sessions.get(peer).update2peer();
-			// else sessions.put(peer, new SynssionClientier(this, peer, domain).updateWith());
 			else if (!sessions.containsKey(peer))
 				Utils.warnT(new Object() {}, "Updating domain should be done after logged into %s, by %s",
 						peer, synode);
@@ -291,7 +294,6 @@ public class SynDomanager implements OnError {
 			else
 				Utils.warnT(new Object() {}, "TODO updating %s <- %s",
 						peer, synode);
-				
 
 		return this;
 	}

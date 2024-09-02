@@ -97,16 +97,18 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 			if (A.initjoin.equals(a))
 				rsp = domanager0.onjoin(req);
+
 			else if (A.closejoin.equals(a))
 				rsp = domanager0.onclosejoin(req);
 
 			else if (A.exinit.equals(a)) 
-				rsp = domanager0.onjoin(req);
+				rsp = domanager0.onsyninit(req);
 
 			else if (A.exchange.equals(a)) {
 				if (domanager0.synssion(req.exblock.srcnode) == null)
-					throw new SemanticException("The sync-session for %s to exchange pages at %s desen't exist. A = %s",
-							req.exblock.srcnode, domanager0.synode, A.exchange);
+					throw new SemanticException(
+						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
+						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.myconn, domanager0.domain);
 
 				ExchangeBlock b = domanager0
 						.synssion(req.exblock.srcnode)
