@@ -150,7 +150,7 @@ class DoclientierTest {
 	@BeforeAll
 	static void init() throws Exception {
 		String p = new File("src/test/res").getAbsolutePath();
-    	System.setProperty("VOLUME_HOME", p + "/../volume");
+    	System.setProperty("VOLUME_HOME", p + "/volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
 		Configs.init(webinf);
