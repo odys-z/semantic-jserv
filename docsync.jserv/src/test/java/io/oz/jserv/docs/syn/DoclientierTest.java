@@ -65,6 +65,7 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
 
 class DoclientierTest {
 	public final static int X = 0;
@@ -107,7 +108,7 @@ class DoclientierTest {
 			"config-0.xml", "config-1.xml", "config-2.xml", "config-3.xml"};
 	
 	static Dev[] devs; // = new Dev[4];
-	static JettyHelper[] jetties;
+	static SynotierJettyApp[] jetties;
 	private static Docheck[] ck;
 	
 	static final int X_0 = 0;
@@ -117,7 +118,7 @@ class DoclientierTest {
 
 	static {
 		try {
-			jetties = new JettyHelper[4];
+			jetties = new SynotierJettyApp[4];
 			devs = new Dev[4];
 			devs[X_0] = new Dev("client-at-00", "syrskyi", "слава україні", "X-0", zsu,
 								"src/test/res/anclient.java/1-pdf.pdf");
@@ -206,7 +207,7 @@ class DoclientierTest {
 		}
 	}
 
-	static JettyHelper startSyndoctier(String serv_conn, String config_xml, int port) throws Exception {
+	static SynotierJettyApp startSyndoctier(String serv_conn, String config_xml, int port) throws Exception {
 		AutoSeqMeta asqm = new AutoSeqMeta();
 		JRoleMeta arlm = new JUser.JRoleMeta();
 		JOrgMeta  aorgm = new JUser.JOrgMeta();
@@ -236,7 +237,7 @@ class DoclientierTest {
 		ExpSynodetier syner = new ExpSynodetier(ura, zsu, synid, serv_conn, SynodeMode.peer)
 							.domains(domains);
 		
-		return JettyHelper.startJettyServ(webinf, serv_conn, config_xml, // "config-0.xml",
+		return SynotierJettyApp.startJettyServ(webinf, serv_conn, config_xml, // "config-0.xml",
 				servIP, port,
 				new AnSession(), new AnQuery(), new AnUpdate(),
 				new HeartLink())
@@ -277,7 +278,7 @@ class DoclientierTest {
 
 	@AfterAll
 	static void close() throws Exception {
-		for (JettyHelper h : jetties)
+		for (SynotierJettyApp h : jetties)
 			h.stop();
 
 		logi("Server closed");
@@ -298,8 +299,8 @@ class DoclientierTest {
 	}
 	
 	void joinby(boolean[] lights, int to, int by) throws Exception {
-		JettyHelper hub = jetties[to];
-		JettyHelper prv = jetties[by];
+		SynotierJettyApp hub = jetties[to];
+		SynotierJettyApp prv = jetties[by];
 		Dev dev = devs[by];
 		for (String servpattern : hub.synodetiers.keySet()) {
 			if (len(hub.synodetiers.get(servpattern)) > 1 || len(prv.synodetiers.get(servpattern)) > 1)
@@ -385,7 +386,7 @@ class DoclientierTest {
 	}
 
 	void syncdomain(int tx) throws SemanticException, AnsonException, SsException, IOException {
-		JettyHelper t = jetties[tx];
+		SynotierJettyApp t = jetties[tx];
 
 		for (String servpattern : t.synodetiers.keySet()) {
 			if (len(t.synodetiers.get(servpattern)) > 1)

@@ -21,7 +21,7 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
-import io.oz.jserv.docs.syn.jetty.JettyHelper;
+import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
 
 /**
  * Start 3 jservs and ping the login.serv port.
@@ -58,9 +58,9 @@ public class JettyHelperTest {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-		JettyHelper h1 = startJetty(servs_conn[0], "odyx", port++);
-		JettyHelper h2 = startJetty(servs_conn[1], "odyy", port++);	
-		JettyHelper h3 = startJetty(servs_conn[2], "odyz", port++);	
+		SynotierJettyApp h1 = startJetty(servs_conn[0], "odyx", port++);
+		SynotierJettyApp h2 = startJetty(servs_conn[1], "odyy", port++);	
+		SynotierJettyApp h3 = startJetty(servs_conn[2], "odyz", port++);	
 		
 		Clients.init(h1.jserv());
 		Doclientier client = new Doclientier("jetty-0", errLog)
@@ -101,7 +101,7 @@ public class JettyHelperTest {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private JettyHelper startJetty(String conn, String uid, int port) throws IOException, Exception {
+	private SynotierJettyApp startJetty(String conn, String uid, int port) throws IOException, Exception {
 		IUser usr = DATranscxt.dummyUser();
 		ArrayList<String> sqls = new ArrayList<String>();
 		sqls.add("delete from a_users;");
@@ -112,7 +112,7 @@ public class JettyHelperTest {
 
 		Connects.commit(conn, usr, sqls, Connects.flag_nothing);
 
-		return JettyHelper
+		return SynotierJettyApp
 			.startJettyServ(webinf, conn, "config-0.xml",
 				servIP, port,
 				new AnSession(),

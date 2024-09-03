@@ -39,7 +39,7 @@ import io.oz.jserv.docs.syn.Syngleton;
  * @author odys-z@github.com
  *
  */
-public class JettyHelper {
+public class SynotierJettyApp {
 	Server server;
 	ServletContextHandler schandler;
 	String jserv;
@@ -51,14 +51,14 @@ public class JettyHelper {
 	 */
 	public HashMap<String, HashMap<String, SynDomanager>> synodetiers;
 
-	static JettyHelper instanserver(String configPath, String conn0, String configxml, String ip, int port)
+	static SynotierJettyApp instanserver(String configPath, String conn0, String configxml, String ip, int port)
 			throws Exception {
         Anson.verbose = false;
 
     	Syngleton.initSynodetier(configxml, conn0, ".", configPath, "ABCDEF0123456789");
         AnsonMsg.understandPorts(Port.docsync);
         
-        JettyHelper helper = new JettyHelper();
+        SynotierJettyApp helper = new SynotierJettyApp();
 
         helper.server = new Server();
 
@@ -86,11 +86,11 @@ public class JettyHelper {
 	 * @throws Exception
 	 */
 	@SafeVarargs
-	static public <T extends ServPort<? extends AnsonBody>> JettyHelper startJettyServ(
+	static public <T extends ServPort<? extends AnsonBody>> SynotierJettyApp startJettyServ(
 			String configPath, String conn, String configxml, String ip, int port,
 			T ... servports) throws Exception {
 
-		JettyHelper helper = instanserver(configPath, conn, configxml, ip, port);
+		SynotierJettyApp helper = instanserver(configPath, conn, configxml, ip, port);
 
         helper.schandler = new ServletContextHandler(helper.server, "/");
         for (T t : servports) {
@@ -104,7 +104,7 @@ public class JettyHelper {
         return helper;
 	}
 
-    <T extends ServPort<? extends AnsonBody>> JettyHelper registerServlets(ServletContextHandler context, T t) {
+    <T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerServlets(ServletContextHandler context, T t) {
 		WebServlet info = t.getClass().getAnnotation(WebServlet.class);
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
@@ -124,7 +124,7 @@ public class JettyHelper {
 		}
 	}
 
-	public JettyHelper addServPort(ServPort<?> p) {
+	public SynotierJettyApp addServPort(ServPort<?> p) {
        	registerServlets(schandler, p);
        	return this;
 	}
