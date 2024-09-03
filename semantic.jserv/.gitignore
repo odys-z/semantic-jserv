@@ -7,3 +7,4 @@ RemoteSystemsTempFiles
 *.jar
 **/tester
 test/results
+**/64A+B=C02

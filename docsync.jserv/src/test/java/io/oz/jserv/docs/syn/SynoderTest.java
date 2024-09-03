@@ -278,7 +278,8 @@ class SynoderTest {
 		.popDebug();
 	}
 
-	void savephotos(int test) throws SQLException, IOException, TransException {
+	void savephotos(int test) throws SQLException,
+			SAXException, IOException, TransException {
 		Utils.logrst("savephotos()", test);
 
 		int no = 0;
@@ -293,9 +294,10 @@ class SynoderTest {
 		printNyquv(ck);
 	}
 
-	private String createPhoto(int synx) throws IOException, TransException, SQLException {
-		ExpDoctier syntier = syntiers[synx];
-		T_Photo photo = new T_Photo(docm, ura, syntier.synode);
+	private String createPhoto(int synx) throws IOException,
+			TransException, SQLException, SAXException {
+		Syntier syntier = syntiers[synx];
+		T_Photo photo = new T_Photo(docm, zsu, syntier.synode);
 
 		photo.createDate = DateFormat.format(new Date());
 		photo.pname = "photo-" + synx;
