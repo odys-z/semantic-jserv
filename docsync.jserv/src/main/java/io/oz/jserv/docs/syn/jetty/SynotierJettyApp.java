@@ -45,6 +45,9 @@ public class SynotierJettyApp {
 	String jserv;
 	public String jserv() { return jserv; }
 
+	int main(String[] args) {
+	}
+
 	/**
 	 * { url-pattern: { domain: domanager } },<br>
 	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
