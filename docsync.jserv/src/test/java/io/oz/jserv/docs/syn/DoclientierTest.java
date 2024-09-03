@@ -65,7 +65,6 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.test.JettyHelper;
 
 class DoclientierTest {
 	public final static int X = 0;

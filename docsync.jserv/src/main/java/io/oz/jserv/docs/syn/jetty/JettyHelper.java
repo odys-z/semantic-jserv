@@ -1,4 +1,4 @@
-package io.oz.jserv.test;
+package io.oz.jserv.docs.syn.jetty;
 
 import static io.odysz.common.Utils.logi;
 

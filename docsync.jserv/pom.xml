@@ -76,7 +76,6 @@
 	<dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
-	    <scope>test</scope>
 		<version>${jetty.version}</version>
     </dependency>
 
@@ -84,7 +83,6 @@
       <!-- https://stackoverflow.com/a/66368511 -->
       <groupId>org.eclipse.jetty.ee8</groupId>
       <artifactId>jetty-ee8-webapp</artifactId>
-	    <scope>test</scope>
       <version>${jetty-ee8.version}</version>
     </dependency>
  

@@ -21,6 +21,7 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
+import io.oz.jserv.docs.syn.jetty.JettyHelper;
 
 /**
  * Start 3 jservs and ping the login.serv port.
@@ -61,30 +62,30 @@ public class JettyHelperTest {
 		JettyHelper h2 = startJetty(servs_conn[1], "odyy", port++);	
 		JettyHelper h3 = startJetty(servs_conn[2], "odyz", port++);	
 		
-		Clients.init(h1.jserv);
+		Clients.init(h1.jserv());
 		Doclientier client = new Doclientier("jetty-0", errLog)
 				.tempRoot("temp/odyx")
 				.loginWithUri("jetty-0", "odyx", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
 
-		Clients.init(h2.jserv);
+		Clients.init(h2.jserv());
 		client = new Doclientier("jetty-1", errLog)
 				.tempRoot("temp/odyy")
 				.loginWithUri("jetty-1", "odyy", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
 				
-		Clients.init(h3.jserv);
+		Clients.init(h3.jserv());
 		client = new Doclientier("jetty-2", errLog)
 				.tempRoot("temp/odyz")
 				.loginWithUri("jetty-2", "odyz", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
 		
-		Utils.logi(h1.jserv + "/login.serv");
-		Utils.logi(h2.jserv + "/login.serv");
-		Utils.logi(h3.jserv + "/login.serv");
+		Utils.logi(h1.jserv() + "/login.serv");
+		Utils.logi(h2.jserv() + "/login.serv");
+		Utils.logi(h3.jserv() + "/login.serv");
 
 		// pause("Errors because of no r.serv port can be ignred. Press any key to continue ...");
 		// awaitAll(lights );
