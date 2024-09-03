@@ -169,15 +169,15 @@ class DoclientierTest {
 			ck[i] = new Docheck(azert, zsu, servs_conn[i], zsu, SynodeMode.peer, docm);
 		}
 	}
-	
+
 	@Test
 	void testSyncUp() {
 		try {
 			setupDomain();
 	
 			// 00 create
-			String fpth00 = clientPush(X_0);
-			verifyPathsPage(devs[X_0].client, docm.tbl, fpth00);
+			ExpSyncDoc dx = clientPush(X_0);
+			verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
 	
 			// 10 create
 			clientPush(Y_0);
@@ -186,6 +186,9 @@ class DoclientierTest {
 			clientPush(Y_1);
 	
 			syncdomain(Y);
+
+			ck[Y].doc(2);
+			ck[X].doc(2);
 	
 			// 00 delete
 			Dev d00 = devs[X_0];
@@ -193,7 +196,7 @@ class DoclientierTest {
 			DocsResp rep = d00.client.synDel(docm.tbl, d00.dev, d00.res);
 			assertEquals(1, rep.total(0));
 	
-			verifyPathsPageNegative(d00.client, docm.tbl, fpth00);
+			verifyPathsPageNegative(d00.client, docm.tbl, dx.clientpath);
 	
 			pause("Press enter to quite ...");
 		} catch (Exception e) {
@@ -313,7 +316,7 @@ class DoclientierTest {
 		}
 	}
 
-	String clientPush(int cix) throws Exception {
+	ExpSyncDoc clientPush(int cix) throws Exception {
 		Dev dev = devs[cix];
 
 		Clients.init(dev.jserv);
@@ -332,7 +335,7 @@ class DoclientierTest {
 		assertEquals(dev.res, xdoc.fullpath());
 
 		verifyPathsPage(client, docm.tbl, xdoc.clientpath);
-		return xdoc.clientpath;
+		return xdoc;
 	}
 
  	static ExpSyncDoc videoUpByApp(Dev atdev, Doclientier doclient, String entityName) throws Exception {
