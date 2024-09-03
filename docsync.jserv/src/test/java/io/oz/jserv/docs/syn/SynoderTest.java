@@ -22,6 +22,7 @@ import java.util.Date;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
+import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
@@ -296,7 +297,7 @@ class SynoderTest {
 
 	private String createPhoto(int synx) throws IOException,
 			TransException, SQLException, SAXException {
-		Syntier syntier = syntiers[synx];
+		ExpDoctier syntier = syntiers[synx];
 		T_Photo photo = new T_Photo(docm, zsu, syntier.synode);
 
 		photo.createDate = DateFormat.format(new Date());
