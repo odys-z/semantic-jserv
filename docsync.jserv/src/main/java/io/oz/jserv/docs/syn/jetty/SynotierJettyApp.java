@@ -45,7 +45,8 @@ public class SynotierJettyApp {
 	String jserv;
 	public String jserv() { return jserv; }
 
-	int main(String[] args) {
+	static void main(String[] args) {
+
 	}
 
 	/**
