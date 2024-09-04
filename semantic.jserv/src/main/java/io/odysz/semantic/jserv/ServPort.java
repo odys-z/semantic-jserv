@@ -5,6 +5,7 @@ import static io.odysz.common.LangExt.isblank;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -14,11 +15,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
+
 import io.odysz.anson.Anson;
 import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
+import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonBody;
@@ -52,11 +56,6 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	protected IPort p;
 	
-//	static {
-//		if (verifier == null)
-//			verifier = JSingleton.getSessionVerifier();
-//	}
-
 	/**
 	 * Get session verifier, e. g. instance of {@link AnSession}.
 	 * Use this for avoiding calling of {@link JSingleton} in tests.
@@ -73,10 +72,11 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	public ServPort(IPort port) {
 		this.p = port;
-		// this.verifier = JSingleton.getSessionVerifier();
+
 	}
 
-	protected static DATranscxt st0; 
+	protected static DATranscxt st0;
+
 	protected DATranscxt st; 
 
 	/**
@@ -145,6 +145,26 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+
+		if (os == null && rolloverOut != null) {
+			try {
+				os = new PrintStream(new RolloverFileOutputStream(rolloverOut, true));
+				Utils.logOut(os);
+				rolloverOut = null;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if (es == null && rolloverErr != null)
+			try {
+				es = new PrintStream(new RolloverFileOutputStream(rolloverErr, true));
+				Utils.logErr(es);
+				rolloverErr = null;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
     	String range = req.getHeader("Range");
     	if (!isblank(range)) {
     		try {
@@ -306,4 +326,24 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	abstract protected void onPost(AnsonMsg<T> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException;
+
+	protected static PrintStream os; 
+	public static void outstream(PrintStream out) {
+		os = out;
+	}
+
+	static PrintStream es; 
+	public static void errstream(PrintStream err) {
+		es = err;
+	}
+
+	static String rolloverOut;
+	public static void rolloverLog(String logfile) {
+		rolloverOut = logfile;
+	}
+	static String rolloverErr;
+	public static void rolloverErr(String errfile) {
+		rolloverErr = errfile;
+	}
+
 }

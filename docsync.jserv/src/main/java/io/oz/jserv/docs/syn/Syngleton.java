@@ -19,6 +19,8 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
+	 * Load configurations, setup connections and semantics, setup session module.
+	 * 
 	 * @param cfgxml name of config.xml, to be optimized
 	 * @param conn0 default connection accept updatings from doclients
 	 * @param runtimeRoot

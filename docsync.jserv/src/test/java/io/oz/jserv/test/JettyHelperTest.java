@@ -113,8 +113,7 @@ public class JettyHelperTest {
 
 		return SynotierJettyApp
 			.startJettyServ(webinf, conn, "config-0.xml",
-				// servIP,
-				port,
+				null, port,
 				new AnSession(),
 				new HeartLink())
 			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
