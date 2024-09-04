@@ -57,7 +57,7 @@ import io.oz.jserv.docs.AssertImpl;
  * 
  * @author odys-z@github.com
  */
-class SynoderTest {
+public class SynoderTest {
 	static final String _uri64 = "iVBORw0KGgoAAAANSUhEUgAAADwAAAAoCAIAAAAt2Q6oAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AYSCBkDT4nw4QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABjSURBVFjD7dXBCYAwEATAO7FE27QNu7GFxA424EN8zH6XwHAEtus4K2SO2M7Udsd2e93Gl38NNDQ0NPS/sy82LydvXs5ia4fvAQ0NDQ39Zfq+XBoaGhoaGhoaGhoaGhq6qqoeVmUNAc7sDO0AAAAASUVORK5CYII=";
 	static final int U = 0;
 	static final int V = 1;
@@ -70,8 +70,8 @@ class SynoderTest {
 	
 	static String owner  = "ody";
 	static String passwd = "abc";
-	static String zsu = "zsu";
-	static String ura = "URA";
+	public static String zsu = "zsu";
+	public static String ura = "URA";
 	
 	static final int X = 0;
 	static final int Y = 1;
@@ -141,7 +141,7 @@ class SynoderTest {
 		}
 	}
 
-	static IAssert azert = new AssertImpl();
+	public static IAssert azert = new AssertImpl();
 
 	@Test
 	void testSynoders() throws Exception {

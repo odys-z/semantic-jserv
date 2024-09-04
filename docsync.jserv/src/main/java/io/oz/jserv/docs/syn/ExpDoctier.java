@@ -27,7 +27,6 @@ import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -120,11 +119,10 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			throws ServletException, IOException, AnsonException, SemanticException {
 		// Utils.logi("== %s", jmsg.toString());
 		
-		AnsonBody jreq = jmsg.body(0); // SyncReq | DocsReq
-		String a = jreq.a();
 		DocsResp rsp = null;
 		try {
 			DocsReq docreq = jmsg.body(0);
+			String a = docreq.a();
 
 			if (A.rec.equals(a) || A.download.equals(a)) {
 				// Session less
@@ -162,13 +160,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		//			rsp = updateFolderel(jmsg.body(0), usr);
 
 				else
-					throw new SemanticException("Request.a, %s, can not be handled.", jreq.a());
+					throw new SemanticException("Request.a, %s, can not be handled.", docreq.a());
 			}
 
 			if (rsp != null) {
 				write(resp, ok(rsp.syndomain(dom0builder.domain())));
-				
-				// domains.get(dom0builder.domain()).updomains();
 			}
 		} catch (DocsException e) {
 			write(resp, err(MsgCode.ext, e.ex().toBlock()));
@@ -216,7 +212,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	/** {domain: {jserv: exession-persist}} */
 	HashMap<String, SynDomanager> domains;
 	SynDomanager domanager(String dom) { return domains.get(dom); }
-	ExpDoctier domains(HashMap<String, SynDomanager> domains) {
+	public ExpDoctier domains(HashMap<String, SynDomanager> domains) {
 		this.domains = domains;
 		return this;
 	}

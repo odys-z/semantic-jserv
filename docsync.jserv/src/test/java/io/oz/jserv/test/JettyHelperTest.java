@@ -39,7 +39,6 @@ public class JettyHelperTest {
 	static ErrorCtx errLog;	
 	static int bsize = 12 * 64;
 
-	final String servIP = "localhost";
 	int port = 8964;
 
 	static {
@@ -114,7 +113,8 @@ public class JettyHelperTest {
 
 		return SynotierJettyApp
 			.startJettyServ(webinf, conn, "config-0.xml",
-				servIP, port,
+				// servIP,
+				port,
 				new AnSession(),
 				new HeartLink())
 			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)

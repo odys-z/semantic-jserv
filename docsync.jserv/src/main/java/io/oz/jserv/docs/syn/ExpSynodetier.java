@@ -34,7 +34,7 @@ import io.odysz.transact.x.TransException;
 public class ExpSynodetier extends ServPort<SyncReq> {
 	private static final long serialVersionUID = 1L;
 	
-	static HashMap<String, SynDomanager> setupDomanagers(
+	public static HashMap<String, SynDomanager> setupDomanagers(
 			String org, String domain, String synode, String conn, SynodeMode mod) throws Exception {
 		
 		HashMap<String, SynDomanager> domains = new HashMap<String, SynDomanager>();

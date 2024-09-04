@@ -1,7 +1,9 @@
 package io.oz.jserv.docs.syn.jetty;
 
 import static io.odysz.common.Utils.logi;
+import static io.oz.jserv.docs.syn.ExpSynodetier.setupDomanagers;
 
+import java.net.InetAddress;
 import java.util.HashMap;
 
 import javax.servlet.annotation.WebServlet;
@@ -13,11 +15,20 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 
 import io.odysz.anson.Anson;
+import io.odysz.common.Configs;
+import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
+import io.odysz.semantic.jserv.R.AnQuery;
+import io.odysz.semantic.jserv.U.AnUpdate;
+import io.odysz.semantic.jsession.AnSession;
+import io.odysz.semantic.jsession.HeartLink;
+import io.odysz.semantic.meta.SemanticTableMeta;
+import io.odysz.semantic.syn.SynodeMode;
+import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.Syngleton;
@@ -48,13 +59,62 @@ public class SynotierJettyApp {
 	static void main(String[] args) {
 	}
 
+	public static SynotierJettyApp startSyndoctier(String serv_conn, String config_xml, int port,
+			String webinf, String ura, String zsu, SemanticTableMeta ... docm) throws Exception {
+		// AutoSeqMeta asqm = new AutoSeqMeta();
+		// JRoleMeta arlm = new JUser.JRoleMeta();
+		// JOrgMeta  aorgm = new JUser.JOrgMeta();
+	
+		// SynChangeMeta chm = new SynChangeMeta();
+		// SynSubsMeta sbm = new SynSubsMeta(chm);
+		// SynchangeBuffMeta xbm = new SynchangeBuffMeta(chm);
+		// SynSessionMeta ssm = new SynSessionMeta();
+		// PeersMeta prm = new PeersMeta();
+	
+		// SynodeMeta snm = new SynodeMeta(serv_conn);
+		// docm = new T_PhotoMeta(serv_conn);
+		// setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
+
+		// synode
+		// String servIP = "localhost";
+		
+		Configs.init(webinf, config_xml);
+		String synid  = Configs.getCfg(Configs.keys.synode);
+		Utils.logi("------------ Starting %s ... --------------", synid);
+
+		HashMap<String,SynDomanager> domains = setupDomanagers(ura, zsu, synid, serv_conn, SynodeMode.peer);
+
+		ExpDoctier doctier  = new ExpDoctier(synid, serv_conn)
+							.start(ura, zsu, SynodeMode.peer)
+							.domains(domains);
+		ExpSynodetier syner = new ExpSynodetier(ura, zsu, synid, serv_conn, SynodeMode.peer)
+							.domains(domains);
+		
+		return SynotierJettyApp.startJettyServ(webinf, serv_conn, config_xml, // "config-0.xml",
+				// servIP,
+				port,
+				new AnSession(), new AnQuery(), new AnUpdate(),
+				new HeartLink())
+			.addServPort(doctier)
+			.addServPort(syner)
+			;
+	}
 	/**
 	 * { url-pattern: { domain: domanager } },<br>
 	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
 	 */
 	public HashMap<String, HashMap<String, SynDomanager>> synodetiers;
 
-	static SynotierJettyApp instanserver(String configPath, String conn0, String configxml, String ip, int port)
+	/**
+	 * Create a Jetty App at local host.
+	 * @param configPath
+	 * @param conn0
+	 * @param configxml
+	 * @param port
+	 * @return Jetty App
+	 * @throws Exception
+	 */
+	static SynotierJettyApp instanserver(String configPath, String conn0, String configxml, int port)
 			throws Exception {
         Anson.verbose = false;
 
@@ -65,8 +125,13 @@ public class SynotierJettyApp {
 
         helper.server = new Server();
 
+        // httpConnector.setHost(ip);
+        InetAddress inet = InetAddress.getLocalHost();
+        String addrhost  = inet.getHostAddress();
+		helper.jserv = String.format("http://%s:%s", addrhost, port);
+
         ServerConnector httpConnector = new ServerConnector(helper.server);
-        httpConnector.setHost(ip);
+        httpConnector.setHost(addrhost);
         httpConnector.setPort(port);
         httpConnector.setIdleTimeout(5000);
         helper.server.addConnector(httpConnector);
@@ -90,10 +155,10 @@ public class SynotierJettyApp {
 	 */
 	@SafeVarargs
 	static public <T extends ServPort<? extends AnsonBody>> SynotierJettyApp startJettyServ(
-			String configPath, String conn, String configxml, String ip, int port,
+			String configPath, String conn, String configxml, int port,
 			T ... servports) throws Exception {
 
-		SynotierJettyApp helper = instanserver(configPath, conn, configxml, ip, port);
+		SynotierJettyApp helper = instanserver(configPath, conn, configxml, port);
 
         helper.schandler = new ServletContextHandler(helper.server, "/");
         for (T t : servports) {
@@ -102,8 +167,7 @@ public class SynotierJettyApp {
 
         helper.server.start();
 
-		helper.jserv = String.format("http://%s:%s", ip, port);
-		logi("Server started at %s", helper.jserv);
+		logi("Server started at %s\nURI: %s", helper.jserv, helper.server.getURI());
         return helper;
 	}
 

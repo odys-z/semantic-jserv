@@ -65,6 +65,7 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
 
 class DoclientierTest {
@@ -222,28 +223,29 @@ class DoclientierTest {
 		docm = new T_PhotoMeta(serv_conn);
 		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
 
-		// synode
-		String servIP = "localhost";
-		
-		Configs.init(webinf, config_xml);
-		String synid  = Configs.getCfg(Configs.keys.synode);
-		Utils.logi("------------ Starting %s ... --------------", synid);
-
-		HashMap<String,SynDomanager> domains = setupDomanagers(ura, zsu, synid, serv_conn, SynodeMode.peer);
-
-		ExpDoctier doctier  = new ExpDoctier(synid, serv_conn)
-							.start(ura, zsu, SynodeMode.peer)
-							.domains(domains);
-		ExpSynodetier syner = new ExpSynodetier(ura, zsu, synid, serv_conn, SynodeMode.peer)
-							.domains(domains);
-		
-		return SynotierJettyApp.startJettyServ(webinf, serv_conn, config_xml, // "config-0.xml",
-				servIP, port,
-				new AnSession(), new AnQuery(), new AnUpdate(),
-				new HeartLink())
-			.addServPort(doctier)
-			.addServPort(syner)
-			;
+		return SynotierJettyApp.startSyndoctier(serv_conn, config_xml, port, webinf, ura, zsu);
+//		// synode
+//		String servIP = "localhost";
+//		
+//		Configs.init(webinf, config_xml);
+//		String synid  = Configs.getCfg(Configs.keys.synode);
+//		Utils.logi("------------ Starting %s ... --------------", synid);
+//
+//		HashMap<String,SynDomanager> domains = setupDomanagers(ura, zsu, synid, serv_conn, SynodeMode.peer);
+//
+//		ExpDoctier doctier  = new ExpDoctier(synid, serv_conn)
+//							.start(ura, zsu, SynodeMode.peer)
+//							.domains(domains);
+//		ExpSynodetier syner = new ExpSynodetier(ura, zsu, synid, serv_conn, SynodeMode.peer)
+//							.domains(domains);
+//		
+//		return SynotierJettyApp.startJettyServ(webinf, serv_conn, config_xml, // "config-0.xml",
+//				servIP, port,
+//				new AnSession(), new AnQuery(), new AnUpdate(),
+//				new HeartLink())
+//			.addServPort(doctier)
+//			.addServPort(syner)
+//			;
 	}
 
 	/**

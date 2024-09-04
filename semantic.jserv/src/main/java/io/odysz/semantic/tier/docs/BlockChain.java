@@ -83,6 +83,7 @@ public class BlockChain {
 	 * @param targetFolder the file should finally saved to this sub folder (specified by client) 
 	 * @throws IOException
 	 * @throws TransException 
+	 */
 	public BlockChain(String docTabl, String tempDir, String devid,
 			String clientpathRaw, String createDate, String targetFolder)
 			throws IOException, TransException {
@@ -111,7 +112,6 @@ public class BlockChain {
 
 		waitings = new DocsReq().blockSeq(-1);
 	}
-	 */
 
 	/**
 	 * 
