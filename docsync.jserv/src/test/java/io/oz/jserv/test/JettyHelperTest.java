@@ -1,5 +1,6 @@
 package io.oz.jserv.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -8,9 +9,12 @@ import static io.odysz.common.Utils.touchDir;
 // import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.logOut;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
 import org.junit.jupiter.api.Test;
@@ -69,6 +73,19 @@ public class JettyHelperTest {
 			}
 		};
 	}
+	
+	@Test
+	void testAzertFile() throws FileNotFoundException {
+		azertFile("src/test/res/lines.txt", 0, "8961");
+		azertFile("src/test/res/lines.txt", 1, "8962");
+		azertFile("src/test/res/lines.txt", 2, "8963");
+		azertFile("src/test/res/lines.txt", 3, "8964");
+
+		azertFile("src/test/res/lines.txt", -1, "8964");
+		azertFile("src/test/res/lines.txt", -2, "8963");
+		azertFile("src/test/res/lines.txt", -3, "8962");
+		azertFile("src/test/res/lines.txt", -4, "8961");
+	}
 
 	@Test
 	void test3jetties() throws Exception {
@@ -124,11 +141,44 @@ public class JettyHelperTest {
 		awaitAll(lights);
 		os.close(); es.close();
 		
-		azertFile(outfile, "Echo: 127.0.0.1 : jetty-2", -1);
+		azertFile(outfile, -1, "Echo: 127.0.0.1 : jetty-2");
 	}
 	
-	static void azertFile(String outfile, String string, int lindex) {
-		
+	/**
+	 * Assert n-th line of file fn equals to str.
+	 * @param fn
+	 * @param lindex n-th, start from 0, -1 for last line
+	 * @param str
+	 * @throws FileNotFoundException
+	 */
+	static void azertFile(String fn, int lindex, String str)
+			throws FileNotFoundException {
+		File f = new File(fn);
+		Scanner freader = new Scanner(f);
+
+		if (lindex < 0) {
+			ArrayList<String> linebuf = new ArrayList<String> (-lindex);
+
+			while (freader.hasNextLine()) {
+				String ln = freader.nextLine();
+				linebuf.add(ln);
+				if (linebuf.size() > -lindex)
+					linebuf.remove(0);
+			}
+			assertEquals(linebuf.get(0), str);
+		}
+
+		else {
+			while (lindex >= 0 && freader.hasNextLine()) {
+				String data = freader.nextLine();
+				if (lindex == 0) {
+					assertEquals(str, data);
+					break;
+				}
+				else lindex--;
+			}
+		}
+	   freader.close();
 	}
 
 	/**
