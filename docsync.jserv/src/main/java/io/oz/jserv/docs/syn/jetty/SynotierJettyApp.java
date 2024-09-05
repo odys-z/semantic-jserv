@@ -16,7 +16,6 @@ import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 
-import io.odysz.anson.Anson;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
@@ -60,6 +59,20 @@ public class SynotierJettyApp {
 
 	public String jserv() { return jserv; }
 
+	/**
+	 * Eclipse run configuration example:
+	 * <pre>Run - Run Configurations - Arguments
+	 * Program Arguments
+	 * 192.168.0.100 8964 ura zsu src/test/res/WEB-INF config-0.xml no-jserv.00
+	 * 
+	 * VM Arguments
+	 * -DVOLUME_HOME=../volume
+	 * </pre>
+	 * volume home = relative path to web-inf.
+	 * 
+	 * @param args [0] ip, [1] port, [2] org, [3] domain, [4] web-inf, [5] config.xml, [6] conn-id
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
 		try {
 			String bind = args[0];
@@ -90,10 +103,10 @@ public class SynotierJettyApp {
 		}
 	}
 
-
-	public static SynotierJettyApp createSyndoctierApp(String serv_conn, String config_xml,
-			String bindIp, int port,
+	public static SynotierJettyApp createSyndoctierApp(String serv_conn,
+			String config_xml, String bindIp, int port,
 			String webinf, String org, String domain) throws Exception {
+
 		Configs.init(webinf, config_xml);
 		String synid  = Configs.getCfg(Configs.keys.synode);
 		Utils.logi("------------ Starting %s ... --------------", synid);
@@ -101,7 +114,7 @@ public class SynotierJettyApp {
 		HashMap<String,SynDomanager> domains = setupDomanagers(org, domain, synid, serv_conn, SynodeMode.peer);
 	
 		ExpDoctier doctier  = new ExpDoctier(synid, serv_conn)
-							.start(org, domain, SynodeMode.peer)
+							.startier(org, domain, SynodeMode.peer)
 							.domains(domains);
 		ExpSynodetier syner = new ExpSynodetier(org, domain, synid, serv_conn, SynodeMode.peer)
 							.domains(domains);
@@ -111,16 +124,13 @@ public class SynotierJettyApp {
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addServPort(doctier)
 			.addServPort(syner)
-			// .start()
 			;
 	}
 
-	public SynotierJettyApp start(PrintstreamProvider... out_err) throws Exception {
-		if (out_err != null && out_err.length > 0) {
-			printout = out_err[0];
-			if (out_err.length > 1)
-				printerr = out_err[1];
-		}
+	public SynotierJettyApp start(PrintstreamProvider out, PrintstreamProvider err) throws Exception {
+		printout = out;
+		printerr = err;
+
 		ServPort.outstream(printout);
 		ServPort.errstream(printout);
 
@@ -153,13 +163,6 @@ public class SynotierJettyApp {
         	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(conn)));
         }
 
-//		touchDir("jetty-log");
-//        RolloverFileOutputStream os = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.log", true);
-//        PrintStream logStream = new PrintStream(os);
-        // Utils.logOut(System.out);
-        // Utils.logErr(System.err);
-       
-        // synapp.server.start();
 		logi("Server is bound to %s\nURI: %s", synapp.jserv, synapp.server.getURI());
         return synapp;
 	}
@@ -176,10 +179,9 @@ public class SynotierJettyApp {
 	 * @return Jetty App
 	 * @throws Exception
 	 */
-	static SynotierJettyApp instanserver(String configPath, String conn0, String configxml, String bindIp, int port
-			// , PrintstreamProvider... out_err
-			) throws Exception {
-	    Anson.verbose = false;
+	static SynotierJettyApp instanserver(String configPath, String conn0, String configxml,
+			String bindIp, int port) throws Exception {
+	    // Anson.verbose = false;
 	
 		Syngleton.initSynodetier(configxml, conn0, ".", configPath, "ABCDEF0123456789");
 	    AnsonMsg.understandPorts(Port.syntier);
@@ -191,7 +193,6 @@ public class SynotierJettyApp {
 	    else
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
 	
-	    // httpConnector.setHost(ip);
 	    InetAddress inet = InetAddress.getLocalHost();
 	    String addrhost  = inet.getHostAddress();
 		synapp.jserv = String.format("http://%s:%s", addrhost, port);

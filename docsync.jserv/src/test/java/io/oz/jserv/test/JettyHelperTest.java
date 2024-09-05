@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.touchDir;
 // import static io.odysz.common.Utils.pause;
@@ -215,8 +216,8 @@ public class JettyHelperTest {
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
 			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
-			.start("URA", "zsu", SynodeMode.peer))
-			.start(oe)
+			.startier("URA", "zsu", SynodeMode.peer))
+			.start(isNull(oe) ? oe[0] : () -> System.out, isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;
 	}
 }

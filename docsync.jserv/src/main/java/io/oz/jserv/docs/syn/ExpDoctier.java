@@ -199,7 +199,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @return
 	 * @throws Exception
 	 */
-	public ExpDoctier start(String org, String domain, SynodeMode mod)
+	public ExpDoctier startier(String org, String domain, SynodeMode mod)
 			throws Exception {
 		dom0builder = new DBSyntableBuilder(
 				domain, // FIXME this is not correct. 

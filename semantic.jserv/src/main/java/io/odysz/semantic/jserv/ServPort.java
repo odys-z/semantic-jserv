@@ -244,7 +244,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 				write(resp, err(MsgCode.exGeneral, String.format(
 					"Empty Request, calling to Servport, %s.onGet(), is ignored.",
 					this.getClass().getName())));
-				Utils.logi("%s: Empty Request, calling to Servport, onGet(), is ignored.", p.name());
+				// Utils.logi("%s: Empty Request, calling to Servport, onGet(), is ignored.", p.name());
 				return ;
 			}
 			in = req.getInputStream();
