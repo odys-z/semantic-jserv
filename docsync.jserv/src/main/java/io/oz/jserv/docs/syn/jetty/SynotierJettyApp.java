@@ -187,10 +187,10 @@ public class SynotierJettyApp {
         }
 
 		touchDir("jetty-log");
-        RolloverFileOutputStream os = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.log", true);
-        PrintStream logStream = new PrintStream(os);
-        Utils.logOut(logStream);
-        Utils.logErr(logStream);
+//        RolloverFileOutputStream os = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.log", true);
+//        PrintStream logStream = new PrintStream(os);
+        Utils.logOut(System.out);
+        Utils.logErr(System.err);
        
         synapp.server.start();
 
@@ -199,9 +199,7 @@ public class SynotierJettyApp {
 	}
 
     <T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerServlets(
-    		ServletContextHandler context, T t
-    		// , PrintStream... out_err
-    		) {
+    		ServletContextHandler context, T t) {
 //    	if(!isNull(out_err)) {
 //    		// Utils.logOut(out_err[0]);
 //    		ServPort.outstream(out_err[0]);
