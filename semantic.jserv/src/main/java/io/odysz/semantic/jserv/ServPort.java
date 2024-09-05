@@ -1,6 +1,7 @@
 package io.odysz.semantic.jserv;
 
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -10,12 +11,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.JsonOpt;
@@ -48,6 +48,33 @@ import io.odysz.transact.x.TransException;
  * @param <T> any subclass extends {@link AnsonBody}.
  */
 public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
+	@FunctionalInterface
+	public interface PrintstreamProvider {
+		PrintStream get();
+	}
+
+	@FunctionalInterface
+	public interface OnHttpCallback {
+		void onHttp();
+	}
+
+	@Override
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
+		
+		if (os != null) {
+			Utils.logOut(os.get());
+			os = null;
+		}
+			
+		if (es != null) {
+			Utils.logErr(es.get());
+			es = null;
+		}
+		
+		Utils.logT(new Object() {}, config.getServletName());
+	}
+
 	/**
 	 * Can only be non-static for tests running.
 	 * @see io.odysz.semantic.jsession.AnSessionTest
@@ -77,7 +104,25 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	protected static DATranscxt st0;
 
-	protected DATranscxt st; 
+	protected DATranscxt st;
+
+	private OnHttpCallback ongetback;
+	private OnHttpCallback onpostback; 
+
+	/**
+	 * Set call back handlers when {@link #onGet(AnsonMsg, HttpServletResponse)} &amp;
+	 * {@link #onPost(AnsonMsg, HttpServletResponse)} are returned successfully, a schema
+	 * to notify subscribers out of the servlet containers, e. g. the Jetty main thread.
+	 * @since 2.0.0
+	 * @param onpost
+	 * @param onget
+	 * @return this
+	 */
+	public ServPort<T> setCallbacks(OnHttpCallback onpost, OnHttpCallback... onget) {
+		this.onpostback = onpost;
+		this.ongetback = isNull(onget) ? null : onget[0];
+		return this;
+	}
 
 	/**
 	 * @since 2.0.0, this setter gives the singleton a chance to set 
@@ -145,25 +190,31 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+//
+//		if (os != null) {
+//			Utils.logOut(os.get());
+//			os = null;
+//		}
 
-		if (os == null && rolloverOut != null) {
-			try {
-				os = new PrintStream(new RolloverFileOutputStream(rolloverOut, true));
-				Utils.logOut(os);
-				rolloverOut = null;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		if (es == null && rolloverErr != null)
-			try {
-				es = new PrintStream(new RolloverFileOutputStream(rolloverErr, true));
-				Utils.logErr(es);
-				rolloverErr = null;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+//		if (os == null && rolloverOut != null) {
+//			try {
+//				os = new PrintStream(new RolloverFileOutputStream(rolloverOut, true));
+//				Utils.logOut(os);
+//				rolloverOut = null;
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//		os.print("--------------------------------");
+//		
+//		if (es == null && rolloverErr != null)
+//			try {
+//				es = new PrintStream(new RolloverFileOutputStream(rolloverErr, true));
+//				Utils.logErr(es);
+//				rolloverErr = null;
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
 
     	String range = req.getHeader("Range");
     	if (!isblank(range)) {
@@ -193,6 +244,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 				write(resp, err(MsgCode.exGeneral, String.format(
 					"Empty Request, calling to Servport, %s.onGet(), is ignored.",
 					this.getClass().getName())));
+				Utils.logi("%s: Empty Request, calling to Servport, onGet(), is ignored.", p.name());
 				return ;
 			}
 			in = req.getInputStream();
@@ -203,6 +255,9 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
 			onGet(msg.addr(req.getRemoteAddr()), resp);
+			
+			if (ongetback != null)
+				ongetback.onHttp();
 		} catch (AnsonException e) {
 			onGetAnsonException(e, resp, req.getParameterMap());
 		} catch (SemanticException e) {
@@ -247,6 +302,9 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
 
 			onPost(msg.addr(req.getRemoteAddr()), resp);
+
+			if (onpostback != null)
+				onpostback.onHttp();
 		} catch (SemanticException | AnsonException e) {
 			if (ServFlags.query)
 				e.printStackTrace();
@@ -327,23 +385,23 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	abstract protected void onPost(AnsonMsg<T> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException;
 
-	protected static PrintStream os; 
-	public static void outstream(PrintStream out) {
+	protected static PrintstreamProvider os; 
+	public static void outstream(PrintstreamProvider out) {
 		os = out;
 	}
 
-	static PrintStream es; 
-	public static void errstream(PrintStream err) {
+	static PrintstreamProvider es; 
+	public static void errstream(PrintstreamProvider err) {
 		es = err;
 	}
 
-	static String rolloverOut;
-	public static void rolloverLog(String logfile) {
-		rolloverOut = logfile;
-	}
-	static String rolloverErr;
-	public static void rolloverErr(String errfile) {
-		rolloverErr = errfile;
-	}
+//	static String rolloverOut;
+//	public static void rolloverLog(String logfile) {
+//		rolloverOut = logfile;
+//	}
+//	static String rolloverErr;
+//	public static void rolloverErr(String errfile) {
+//		rolloverErr = errfile;
+//	}
 
 }

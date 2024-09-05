@@ -216,7 +216,8 @@ class DoclientierTest {
 		docm = new T_PhotoMeta(serv_conn);
 		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
 
-		return SynotierJettyApp.startSyndoctier(serv_conn, config_xml, null, port, webinf, ura, zsu);
+		return SynotierJettyApp.createSyndoctierApp(serv_conn, config_xml, null, port, webinf, ura, zsu)
+				.start();
 	}
 
 	/**

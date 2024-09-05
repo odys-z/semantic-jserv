@@ -1,6 +1,7 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
+import java.io.PrintStream;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -26,7 +27,8 @@ import io.odysz.semantics.x.SemanticException;
 @WebServlet(description = "session manager", urlPatterns = { "/ping.serv" })
 public class HeartLink extends ServPort<HeartBeat> {
 
-	/** url pattern: /ping.serv */
+	/** url pattern: /ping.serv 
+	 * @param out */
 	public HeartLink() {
 		super(Port.heartbeat);
 	}
@@ -34,9 +36,6 @@ public class HeartLink extends ServPort<HeartBeat> {
 	@Override
 	protected void onGet(AnsonMsg<HeartBeat> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		if (os != null)
-			Utils.logOut(os);
-			// throw new NullPointerException("TRYYYYYY");
 		Utils.logi("msg.addr()");
 		Utils.logi(msg.addr());
 		jsonResp(msg, resp);

@@ -3,9 +3,16 @@ package io.oz.jserv.test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import static io.odysz.common.Utils.awaitAll;
+import static io.odysz.common.Utils.touchDir;
+// import static io.odysz.common.Utils.pause;
+import static io.odysz.common.Utils.logOut;
+
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
+import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.common.Configs;
@@ -15,18 +22,31 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jserv.R.AnQuery;
+import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
+import io.odysz.semantic.jserv.echo.Echo;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
+import io.oz.jserv.docs.syn.SynoderTest;
 import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
 
 /**
  * Start 3 jservs and ping the login.serv port.
  */
 public class JettyHelperTest {
+	public class PrintStream1 extends PrintStream {
+		String tag;
+
+		public PrintStream1(RolloverFileOutputStream os, String tag) {
+			super(os);
+			this.tag = tag;
+		}
+	}
+
 	public static final String clientUri = "/jnode";
 	public static final String webinf    = "./src/test/res/WEB-INF";
 	public static final String testDir   = "./src/test/res/";
@@ -57,9 +77,18 @@ public class JettyHelperTest {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-		SynotierJettyApp h1 = startJetty(servs_conn[0], "odyx", port++);
-		SynotierJettyApp h2 = startJetty(servs_conn[1], "odyy", port++);	
-		SynotierJettyApp h3 = startJetty(servs_conn[2], "odyz", port++);	
+		SynotierJettyApp h1 = startJetty(null, servs_conn[0], "odyx", port++);
+		SynotierJettyApp h2 = startJetty(null, servs_conn[1], "odyy", port++);	
+
+		boolean[] lights = new boolean[] {false};
+		touchDir("jetty-log");
+        RolloverFileOutputStream os = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.out", true);
+        RolloverFileOutputStream es = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.err", true);
+        String outfile = os.getDatedFilename();
+
+		SynotierJettyApp h3 = startJetty(lights, servs_conn[2], "odyz", port++,
+							() -> { return new PrintStream1(os, "3-out"); }, 
+							() -> { return new PrintStream1(es, "3-err"); });
 		
 		Clients.init(h1.jserv());
 		Doclientier client = new Doclientier("jetty-0", errLog)
@@ -86,13 +115,25 @@ public class JettyHelperTest {
 		Utils.logi(h2.jserv() + "/login.serv");
 		Utils.logi(h3.jserv() + "/login.serv");
 
+		Clients.pingLess("jetty-2", errLog);
+		
+		os.flush(); es.flush();
+
+		logOut(System.out);
 		// pause("Errors because of no r.serv port can be ignred. Press any key to continue ...");
-		// awaitAll(lights );
+		awaitAll(lights);
+		os.close(); es.close();
+		
+		azertFile(outfile, "Echo: 127.0.0.1 : jetty-2", -1);
 	}
 	
+	static void azertFile(String outfile, String string, int lindex) {
+		
+	}
+
 	/**
 	 * Start Jetty and allow uid to login.
-	 * 
+	 * @param echolights green lights for {@link Echo}'s call-backing signals, paused on by awaitAll().
 	 * @param conn
 	 * @param uid
 	 * @param port
@@ -100,9 +141,16 @@ public class JettyHelperTest {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private SynotierJettyApp startJetty(String conn, String uid, int port) throws IOException, Exception {
+	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String uid, int port, PrintstreamProvider ... oe) throws IOException, Exception {
 		IUser usr = DATranscxt.dummyUser();
 		ArrayList<String> sqls = new ArrayList<String>();
+		sqls.add("drop table if exists a_users;");
+		sqls.add("drop table if exists a_orgs;");
+		sqls.add("drop table if exists a_roles;");
+		sqls.add(Utils.loadTxt(SynoderTest.class, "a_users.sqlite.ddl"));
+		sqls.add(Utils.loadTxt(SynoderTest.class, "a_orgs.sqlite.ddl"));
+		sqls.add(Utils.loadTxt(SynoderTest.class, "a_roles.sqlite.ddl"));
+
 		sqls.add("delete from a_users;");
 		sqls.add(String.format("INSERT INTO "
 				+ "a_users (userId, userName, roleId, orgId, counter, birthday, pswd,   iv)\n"
@@ -112,12 +160,13 @@ public class JettyHelperTest {
 		Connects.commit(conn, usr, sqls, Connects.flag_nothing);
 
 		return SynotierJettyApp
-			.startJettyServ(webinf, conn, "config-0.xml",
-				null, port,
-				new AnSession(),
-				new HeartLink())
+			.registerPorts(webinf, conn, "config-0.xml",
+				"127.0.0.1", port,
+				new AnSession(), new AnQuery(), new HeartLink(),
+				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
 			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
 			.start("URA", "zsu", SynodeMode.peer))
+			.start(oe)
 			;
 	}
 }
