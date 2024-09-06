@@ -158,7 +158,7 @@ class SynodetierJoinTest {
 		syncdomain(lights, Y);
 		awaitAll(lights, 12000);
 		ck[X].synodes(X, Y, Z);
-		ck[Y].synodes(X, Y, -1);
+		ck[Y].synodes(X, Y, Z);
 		ck[Z].synodes(X, -1, Z);
 	}
 	

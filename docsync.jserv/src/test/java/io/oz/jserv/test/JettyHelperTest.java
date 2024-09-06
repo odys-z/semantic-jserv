@@ -217,7 +217,7 @@ public class JettyHelperTest {
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
 			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
 			.startier("URA", "zsu", SynodeMode.peer))
-			.start(isNull(oe) ? oe[0] : () -> System.out, isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
+			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;
 	}
 }
