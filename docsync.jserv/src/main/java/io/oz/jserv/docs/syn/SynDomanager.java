@@ -31,15 +31,21 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 
 /**
  * Syn-domain's sessions manager.
  * @see #sessions
  */
 public class SynDomanager implements OnError {
+	@FunctionalInterface
+	public interface OnDomainUpdate {
+		public void ok(String domain, String mynid, String peer, ExessionPersist xp);
+	}
+
 	static final String dom_unknown = null;
 	
-	final String synode;
+	public final String synode;
 	final String myconn;
 	final String domain;
 	final String org;
@@ -280,12 +286,12 @@ public class SynDomanager implements OnError {
 	 * @throws AnsonException 
 	 * @throws SemanticException 
 	 */
-	public SynDomanager updomains() throws SemanticException, AnsonException, SsException, IOException {
+	public SynDomanager updomains(OnDomainUpdate onUpdate) throws SemanticException, AnsonException, SsException, IOException {
 		if (sessions != null)
 		for (String peer : sessions.keySet())
 			if (sessions.containsKey(peer)
 				&& sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
-				sessions.get(peer).update2peer();
+				sessions.get(peer).update2peer(onUpdate);
 			else if (!sessions.containsKey(peer))
 				Utils.warnT(new Object() {}, "Updating domain should be done after logged into %s, by %s",
 						peer, synode);
@@ -309,7 +315,7 @@ public class SynDomanager implements OnError {
 	 * @throws Exception
 	 */
 	public void joinDomain(String dom, String admid, String admserv,
-			String myuid, String mypswd, OnOk... ok) throws Exception {
+			String myuid, String mypswd, OnOk ok) throws Exception {
 
 		if (sessions != null && sessions.containsKey(admid))
 			throw new ExchangeException(close, null,

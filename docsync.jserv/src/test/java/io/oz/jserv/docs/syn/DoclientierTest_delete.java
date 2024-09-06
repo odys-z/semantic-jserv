@@ -373,7 +373,7 @@ class DoclientierTest_delete {
 				fail("Multiple synchronizing domainschema is an issue not handled in v 2.0.0.");
 
 			for (String dom : t.synodetiers.get(servpattern).keySet()) {
-				t.synodetiers.get(servpattern).get(dom).updomains();
+				t.synodetiers.get(servpattern).get(dom).updomains(null);
 			}
 		}
 	}

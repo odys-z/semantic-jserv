@@ -163,7 +163,7 @@ public class SynotierJettyApp {
         	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(conn)));
         }
 
-		logi("Server is bound to %s\nURI: %s", synapp.jserv, synapp.server.getURI());
+		logi("Server is bound to %s\nFirst bound URI: %s", synapp.jserv, synapp.server.getURI());
         return synapp;
 	}
 
@@ -213,6 +213,11 @@ public class SynotierJettyApp {
 	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
 	 */
 	public HashMap<String, HashMap<String, SynDomanager>> synodetiers;
+	
+	/**
+	 * Url pattern (key in {@link #synodetiers}) of {@link ExpSynodetier}.
+	 */
+	String syntier_url;
 
 	PrintstreamProvider printout;
 	PrintstreamProvider printerr;
@@ -223,8 +228,10 @@ public class SynotierJettyApp {
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
 			
-			if (t instanceof ExpSynodetier)
+			if (t instanceof ExpSynodetier) {
 				synodetiers.put(pattern, ((ExpSynodetier)t).domains);
+				syntier_url = pattern;
+			}
 		}
 		
 		return this;
@@ -238,5 +245,16 @@ public class SynotierJettyApp {
 	public void stop() throws Exception {
 		if (server != null)
 			server.stop();
+	}
+	
+	/**
+	 * Synode id for the default domain upon which the {@link ExpSynodetier} works.
+	 * @return synode id
+	 */
+	public String synode() {
+		if (synodetiers != null && synodetiers.containsKey(syntier_url))
+			for (SynDomanager domanager : synodetiers.get(syntier_url).values())
+				return domanager.synode;
+		return null;
 	}
 }

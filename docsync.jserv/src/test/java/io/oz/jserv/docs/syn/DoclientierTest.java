@@ -164,7 +164,7 @@ class DoclientierTest {
 			// 11 create
 			clientPush(Y_1);
 	
-			SynodetierJoinTest.syncdomain(Y);
+			SynodetierJoinTest.syncdomain(null, Y);
 
 			ck[Y].doc(2);
 			ck[X].doc(2);

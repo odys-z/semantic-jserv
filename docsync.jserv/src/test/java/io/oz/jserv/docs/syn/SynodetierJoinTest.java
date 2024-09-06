@@ -1,9 +1,11 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
+import static io.odysz.semantic.syn.Docheck.ck;
 import static io.oz.jserv.docs.syn.DoclientierTest.devs;
 import static io.oz.jserv.docs.syn.SynoderTest.*;
 import static io.oz.jserv.test.JettyHelperTest.*;
@@ -55,7 +57,7 @@ class SynodetierJoinTest {
 	
 	// static Dev[] devs; // = new Dev[4];
 	static SynotierJettyApp[] jetties;
-	private static Docheck[] ck;
+//	private static Docheck[] ck;
 	
 //	static final int X_0 = 0;
 //	static final int X_1 = 1;
@@ -108,11 +110,13 @@ class SynodetierJoinTest {
 		for (int i = 0; i < servs_conn.length; i++) {
 			if (jetties[i] != null)
 				jetties[i].stop();
+
 			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++);
-//			devs[i].jserv = jetties[i].jserv();
+
 			DoclientierTest.initRecords(servs_conn[i]);
 
-			ck[i] = new Docheck(azert, zsu, servs_conn[i], zsu, SynodeMode.peer, docm);
+			ck[i] = new Docheck(azert, zsu, servs_conn[i],
+								jetties[i].synode(), SynodeMode.peer, docm);
 		}
 	}
 
@@ -130,12 +134,44 @@ class SynodetierJoinTest {
 	 */
 	void setupDomain() throws Exception {
 		boolean[] lights = new boolean[] {true, false, false};
-		joinby(lights, X, Y);
-		joinby(lights, X, Z);
+		
+		waiting(lights, Y);
+		joinby(lights, X, Y); // no subscription of Z
+		awaitAll(lights);
+		ck[X].synodes(X, Y);
+		ck[Y].synodes(X, Y);
 
-		awaitAll(lights, 36000);
-		syncdomain(Z);
-		syncdomain(Y);
+		waiting(lights, Z);
+		joinby(lights, X, Z);
+		awaitAll(lights);
+		ck[X].synodes(X, Y, Z);
+		ck[Z].synodes(X, -1, Z);
+
+		waiting(lights, Z);
+		syncdomain(lights, Z);
+		awaitAll(lights, 12000);
+		ck[X].synodes(X, Y, Z);
+		ck[Y].synodes(X, Y, -1);
+		ck[Z].synodes(X, -1, Z); // Z joined latter, no subs or Y's joining 
+
+		waiting(lights, Y);
+		syncdomain(lights, Y);
+		awaitAll(lights, 12000);
+		ck[X].synodes(X, Y, Z);
+		ck[Y].synodes(X, Y, -1);
+		ck[Z].synodes(X, -1, Z);
+	}
+	
+	void waiting(boolean[] signals, int redx) {
+		for (int i = 0; i < signals.length; i++)
+			if (i != redx)
+				signals[i] = true;
+			else signals[i] = false;
+	}
+	
+	void turnred(boolean[] signals) {
+		for (int i = 0; i < signals.length; i++)
+			signals[i] = false;
 	}
 	
 	void joinby(boolean[] lights, int to, int by) throws Exception {
@@ -156,7 +192,9 @@ class SynodetierJoinTest {
 		}
 	}
 
-	static void syncdomain(int tx) throws SemanticException, AnsonException, SsException, IOException {
+	static void syncdomain(boolean[] lights, int tx)
+			throws SemanticException, AnsonException, SsException, IOException {
+
 		SynotierJettyApp t = jetties[tx];
 
 		for (String servpattern : t.synodetiers.keySet()) {
@@ -164,7 +202,14 @@ class SynodetierJoinTest {
 				fail("Multiple synchronizing domainschema is an issue not handled in v 2.0.0.");
 
 			for (String dom : t.synodetiers.get(servpattern).keySet()) {
-				t.synodetiers.get(servpattern).get(dom).updomains();
+				t.synodetiers.get(servpattern).get(dom).updomains(
+					(domain, mynid, peer, xp) -> {
+						if (eq(domain, dom) && eq(mynid, jetties[tx].synode()))
+							lights[tx] = true;
+						else throw new NullPointerException(String.format(
+							"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
+							domain, mynid, peer, xp == null || xp.trb == null ? "unknown" : xp.trb.synconn()));
+					});
 			}
 		}
 	}
@@ -182,6 +227,7 @@ class SynodetierJoinTest {
 	
 		SynodeMeta snm = new SynodeMeta(serv_conn);
 		docm = new T_PhotoMeta(serv_conn);
+
 		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
 
 		return SynotierJettyApp .createSyndoctierApp(serv_conn, config_xml, null, port, webinf, ura, zsu)

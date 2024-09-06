@@ -28,6 +28,7 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
 public class SynssionClientier {
@@ -78,10 +79,11 @@ public class SynssionClientier {
 
 	/**
 	 * Start updating with peer, in this domain.
+	 * @param object 
 	 * @return this
 	 * @throws ExchangeException not ready yet.
 	 */
-	public SynssionClientier update2peer() throws ExchangeException {
+	public SynssionClientier update2peer(OnDomainUpdate onup) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null, "Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
 					peer, domain(), client == null ? ", client is null" : "");
@@ -107,6 +109,9 @@ public class SynssionClientier {
 					// close
 					reqb = synclose(rep.exblock);
 					rep = exesclose(peer, reqb);
+					
+					if (onup != null)
+						onup.ok(domain(), mynid, peer, xp);
 				}
 			} catch (IOException e) {
 				Utils.warn(e.getMessage());
@@ -233,7 +238,7 @@ public class SynssionClientier {
 	public void pingPeers() {
 	}
 
-	public void joindomain(String admid, String myuid, String mypswd, OnOk... ok) {
+	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) {
 		new Thread(() -> { 
 			try {
 				lock.lock();
@@ -247,7 +252,7 @@ public class SynssionClientier {
 				rep = exespush(admid, (SyncReq)req.a(A.closejoin));
 
 				if (!isNull(ok))
-					ok[0].ok(rep);
+					ok.ok(rep);
 			} catch (TransException | SQLException | AnsonException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
