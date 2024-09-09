@@ -1,39 +1,36 @@
 package io.oz.jserv.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.Utils.awaitAll;
+// import static io.odysz.common.Utils.pause;
+import static io.odysz.common.Utils.logOut;
+import static io.odysz.common.Utils.touchDir;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import static io.odysz.common.LangExt.isNull;
-import static io.odysz.common.Utils.awaitAll;
-import static io.odysz.common.Utils.touchDir;
-// import static io.odysz.common.Utils.pause;
-import static io.odysz.common.Utils.logOut;
-
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.common.Configs;
+import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
-import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
+import io.odysz.semantic.jserv.R.AnQuery;
+import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
-import io.odysz.semantic.jserv.echo.Echo;
+import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.SynoderTest;
@@ -65,6 +62,8 @@ public class JettyHelperTest {
 	static int bsize = 12 * 64;
 
 	int port = 8964;
+	
+	static IAssert azert;
 
 	static {
 		errLog = new ErrorCtx() {
@@ -73,19 +72,8 @@ public class JettyHelperTest {
 				fail(msg);
 			}
 		};
-	}
-	
-	@Test
-	void testAzertFile() throws FileNotFoundException {
-		azertFile("src/test/res/lines.txt", 0, "8961");
-		azertFile("src/test/res/lines.txt", 1, "8962");
-		azertFile("src/test/res/lines.txt", 2, "8963");
-		azertFile("src/test/res/lines.txt", 3, "8964");
-
-		azertFile("src/test/res/lines.txt", -1, "8964");
-		azertFile("src/test/res/lines.txt", -2, "8963");
-		azertFile("src/test/res/lines.txt", -3, "8962");
-		azertFile("src/test/res/lines.txt", -4, "8961");
+		
+		azert = new AssertImpl();
 	}
 
 	@Test
@@ -142,44 +130,7 @@ public class JettyHelperTest {
 		awaitAll(lights);
 		os.close(); es.close();
 		
-		azertFile(outfile, -1, "Echo: 127.0.0.1 : jetty-2");
-	}
-	
-	/**
-	 * Assert n-th line of file fn equals to str.
-	 * @param fn
-	 * @param lindex n-th, start from 0, -1 for last line
-	 * @param str
-	 * @throws FileNotFoundException
-	 */
-	static void azertFile(String fn, int lindex, String str)
-			throws FileNotFoundException {
-		File f = new File(fn);
-		Scanner freader = new Scanner(f);
-
-		if (lindex < 0) {
-			ArrayList<String> linebuf = new ArrayList<String> (-lindex);
-
-			while (freader.hasNextLine()) {
-				String ln = freader.nextLine();
-				linebuf.add(ln);
-				if (linebuf.size() > -lindex)
-					linebuf.remove(0);
-			}
-			assertEquals(linebuf.get(0), str);
-		}
-
-		else {
-			while (lindex >= 0 && freader.hasNextLine()) {
-				String data = freader.nextLine();
-				if (lindex == 0) {
-					assertEquals(str, data);
-					break;
-				}
-				else lindex--;
-			}
-		}
-	   freader.close();
+		azert.lineEq(outfile, -1, "Echo: 127.0.0.1 : jetty-2");
 	}
 
 	/**
@@ -192,7 +143,8 @@ public class JettyHelperTest {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String uid, int port, PrintstreamProvider ... oe) throws IOException, Exception {
+	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String uid, int port,
+			PrintstreamProvider ... oe) throws IOException, Exception {
 		IUser usr = DATranscxt.dummyUser();
 		ArrayList<String> sqls = new ArrayList<String>();
 		sqls.add("drop table if exists a_users;");
@@ -210,9 +162,11 @@ public class JettyHelperTest {
 
 		Connects.commit(conn, usr, sqls, Connects.flag_nothing);
 
+		// SynotierJettyApp synapp = SynotierJettyApp.instanserver(webinf, conn, "config-0.xml", "127.0.0.1", port);
 		return SynotierJettyApp
-			.registerPorts(webinf, conn, "config-0.xml",
-				"127.0.0.1", port,
+			.registerPorts(
+				SynotierJettyApp.instanserver(webinf, conn, "config-0.xml", "127.0.0.1", port),
+				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
 			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)

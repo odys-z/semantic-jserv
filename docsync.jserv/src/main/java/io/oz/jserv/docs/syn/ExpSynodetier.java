@@ -49,7 +49,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		return domains;
 	}
 
-	
 	final String domain;
 	final String synid;
 	final SynodeMode mode;

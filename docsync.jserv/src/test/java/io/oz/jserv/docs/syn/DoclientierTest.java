@@ -1,5 +1,7 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.Utils.awaitAll;
+import static io.odysz.common.Utils.waiting;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
@@ -7,8 +9,16 @@ import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
+import static io.oz.jserv.docs.syn.SynoderTest.azert;
+import static io.oz.jserv.docs.syn.SynoderTest.zsu;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.docm;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.initSysRecords;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.slava;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.syrskyi;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
-import static io.oz.jserv.docs.syn.SynoderTest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,7 +46,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
-import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
@@ -60,7 +69,6 @@ class DoclientierTest {
 		public final String folder;
 
 		public String res;
-		public String jserv;
 		public Doclientier client;
 
 		Dev(String uri, String uid, String pswd, String device, String folder, String fres) {
@@ -75,8 +83,8 @@ class DoclientierTest {
 
 	static int bsize;
 
-	static ExpDocTableMeta docm;
-	static ErrorCtx errLog;
+	// static ExpDocTableMeta docm;
+	// static ErrorCtx errLog;
 	
 	static final String clientconn = "main-sqlite";
 
@@ -86,8 +94,7 @@ class DoclientierTest {
 	static final String[] config_xmls = new String[] {
 			"config-0.xml", "config-1.xml", "config-2.xml", "config-3.xml"};
 	
-	static Dev[] devs; // = new Dev[4];
-	// static SynotierJettyApp[] jetties;
+	static Dev[] devs;
 	private static Docheck[] ck;
 	
 	static final int X_0 = 0;
@@ -97,9 +104,8 @@ class DoclientierTest {
 
 	static {
 		try {
-			// jetties = new SynotierJettyApp[4];
 			devs = new Dev[4];
-			devs[X_0] = new Dev("client-at-00", "syrskyi", "слава україні", "X-0", zsu,
+			devs[X_0] = new Dev("client-at-00", syrskyi, slava, "X-0", zsu,
 								"src/test/res/anclient.java/1-pdf.pdf");
 
 			devs[X_1] = new Dev("client-at-00", "syrskyi", "слава україні", "X-1", zsu,
@@ -114,12 +120,12 @@ class DoclientierTest {
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
 			
-			errLog = new ErrorCtx() {
-				@Override
-				public void err(MsgCode code, String msg, String...args) {
-					fail(msg);
-				}
-			};
+//			errLog = new ErrorCtx() {
+//				@Override
+//				public void err(MsgCode code, String msg, String...args) {
+//					fail(msg);
+//				}
+//			};
 
 		} catch (TransException e) {
 			e.printStackTrace();
@@ -137,45 +143,56 @@ class DoclientierTest {
 
 		ck = new Docheck[servs_conn.length];
 		
-//		int port = 8090;
+		int port = 8090;
 		for (int i = 0; i < servs_conn.length; i++) {
-//			if (jetties[i] != null)
-//				jetties[i].stop();
-//			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++);
-//			devs[i].jserv = jetties[i].jserv();
-			initRecords(servs_conn[i]);
+			if (jetties[i] != null)
+				jetties[i].stop();
 
-			ck[i] = new Docheck(azert, zsu, servs_conn[i], zsu, SynodeMode.peer, docm);
+			initSysRecords(servs_conn[i]);
+
+			initSynodeRecs(servs_conn[i]);
+			
+			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++, false);
+
+
+			ck[i] = new Docheck(azert, zsu, servs_conn[i],
+								jetties[i].synode(), SynodeMode.peer, docm);
 		}
 	}
 
 	@Test
 	void testSyncUp() {
 		try {
-			// setupDomain();
-	
 			// 00 create
-			ExpSyncDoc dx = clientPush(X_0);
+			ExpSyncDoc dx = clientPush(X, X_0);
 			verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
 	
 			// 10 create
-			clientPush(Y_0);
+			clientPush(Y, Y_0);
 	
 			// 11 create
-			clientPush(Y_1);
+			clientPush(Y, Y_1);
 	
-			SynodetierJoinTest.syncdomain(null, Y);
+			boolean[] lights = new boolean[] {true, false};
+			SynodetierJoinTest.syncdomain(lights, Y);
+			awaitAll(lights, -1);
 
-			ck[Y].doc(2);
-			ck[X].doc(2);
+			ck[Y].doc(3);
+			ck[X].doc(3);
 	
 			// 00 delete
-			Dev d00 = devs[X_0];
-			Clients.init(d00.jserv);
-			DocsResp rep = d00.client.synDel(docm.tbl, d00.dev, d00.res);
+			Dev devx0 = devs[X_0];
+			Clients.init(jetties[X].jserv());
+			DocsResp rep = devx0.client.synDel(docm.tbl, devx0.dev, devx0.res);
 			assertEquals(1, rep.total(0));
 	
-			verifyPathsPageNegative(d00.client, docm.tbl, dx.clientpath);
+			verifyPathsPageNegative(devx0.client, docm.tbl, dx.clientpath);
+
+			waiting(lights, Y);
+			SynodetierJoinTest.syncdomain(lights, Y);
+			awaitAll(lights);
+			ck[Y].doc(2);
+			ck[X].doc(2);
 	
 			pause("Press enter to quite ...");
 		} catch (Exception e) {
@@ -186,82 +203,16 @@ class DoclientierTest {
 		}
 	}
 
-	/**
-	 * initialize with files, i. e. oz_autoseq.sql, a_users.sqlite.sql.
-	 * 
-	 * @param conn
-	 */
-	static void initRecords(String conn) {
-		ArrayList<String> sqls = new ArrayList<String>();
-		IUser usr = DATranscxt.dummyUser();
-
-		try {
-			for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
-				sqls.add("drop table if exists " + tbl);
-				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
-				sqls.clear();
-			}
-
-			for (String tbl : new String[] {
-					"oz_autoseq.ddl",  "oz_autoseq.sql",
-					"a_users.sqlite.ddl", "a_users.sqlite.sql"}) {
-
-				sqls.add(loadTxt(DoclientierTest.class, tbl));
-				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
-				sqls.clear();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
-	}
 
 	@AfterAll
 	static void close() throws Exception {
-//		for (SynotierJettyApp h : jetties)
-//			h.stop();
-		logi("Close servers manually.");
+		logi("Server is closed.");
 	}
 
-//	/**
-//	 * <pre>
-//	 * X ←join- Y, X ←join- Z;
-//	 * X ←sync- Z, X ←sync- Y.
-//	 * </pre>
-//	 * @throws Exception
-//	 */
-//	void setupDomain() throws Exception {
-//		boolean[] lights = new boolean[] {true, false, false};
-//		joinby(lights, X, Y);
-//		joinby(lights, X, Z);
-//
-//		awaitAll(lights, 36000);
-//		syncdomain(Z);
-//		syncdomain(Y);
-//	}
-//	
-//	void joinby(boolean[] lights, int to, int by) throws Exception {
-//		SynotierJettyApp hub = jetties[to];
-//		SynotierJettyApp prv = jetties[by];
-//		Dev dev = devs[by];
-//		for (String servpattern : hub.synodetiers.keySet()) {
-//			if (len(hub.synodetiers.get(servpattern)) > 1 || len(prv.synodetiers.get(servpattern)) > 1)
-//				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
-//			
-//			for (String dom : hub.synodetiers.get(servpattern).keySet()) {
-//				SynDomanager hubmanger = hub.synodetiers.get(servpattern).get(dom);
-//				SynDomanager prvmanger = prv.synodetiers.get(servpattern).get(dom);
-//	
-//				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), dev.uid, dev.psw,
-//						(rep) -> { lights[by] = true; });
-//			}
-//		}
-//	}
-
-	ExpSyncDoc clientPush(int cix) throws Exception {
+	ExpSyncDoc clientPush(int to, int cix) throws Exception {
 		Dev dev = devs[cix];
 
-		Clients.init(dev.jserv);
+		Clients.init(jetties[to].jserv());
 
 		Doclientier client = new Doclientier(dev.uri, errLog)
 				.tempRoot(dev.uri)
@@ -285,6 +236,7 @@ class DoclientierTest {
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(doclient.robot.uid(), Share.pub, new Date())
 					.folder(atdev.folder)
+					.device(atdev.dev)
 					.fullpath(atdev.res);
 
 		DocsResp resp = doclient.startPush(entityName, doc,
@@ -326,19 +278,6 @@ class DoclientierTest {
 
 		return rp.xdoc;
 	}
-
-//	void syncdomain(int tx) throws SemanticException, AnsonException, SsException, IOException {
-//		SynotierJettyApp t = jetties[tx];
-//
-//		for (String servpattern : t.synodetiers.keySet()) {
-//			if (len(t.synodetiers.get(servpattern)) > 1)
-//				fail("Multiple synchronizing domainschema is an issue not handled in v 2.0.0.");
-//
-//			for (String dom : t.synodetiers.get(servpattern).keySet()) {
-//				t.synodetiers.get(servpattern).get(dom).updomains();
-//			}
-//		}
-//	}
 
 	/**
 	 * Verify device &amp; client-paths are presenting at server.
@@ -397,4 +336,26 @@ class DoclientierTest {
 		assertEquals(isNull(paths) ? 0 : paths.length, pathpool.size());
 	}
 
+	/**
+	 * Initialize syn_* tables' records, must be called after #SynodetierJoinTest#setupSqliTables()}.
+	 * 
+	 * @param conn
+	 */
+	static void initSynodeRecs(String conn) {
+		ArrayList<String> sqls = new ArrayList<String>();
+		IUser usr = DATranscxt.dummyUser();
+
+		try {
+			for (String tbl : new String[] {
+					"syn_synode_all_ready.sqlite.sql"}) {
+
+				sqls.add(loadTxt(DoclientierTest.class, tbl));
+				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+				sqls.clear();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
 }

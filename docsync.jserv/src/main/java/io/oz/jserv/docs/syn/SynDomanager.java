@@ -31,13 +31,16 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 
 /**
  * Syn-domain's sessions manager.
  * @see #sessions
+ * @since 0.2.0
  */
 public class SynDomanager implements OnError {
+	/**
+	 * @since 0.2.0
+	 */
 	@FunctionalInterface
 	public interface OnDomainUpdate {
 		public void ok(String domain, String mynid, String peer, ExessionPersist xp);
@@ -51,10 +54,16 @@ public class SynDomanager implements OnError {
 	final String org;
 	final SynodeMode mod;
 	
-	/** {peer: session-persist} */
+	/**
+	 * {peer: session-persist}
+	 * @since 0.2.0
+	 */
 	HashMap<String, SynssionClientier> sessions;
 	
-	/** Expired, only for tests. */
+	/**
+	 * Expired, only for tests.
+	 * @since 0.2.0
+	 */
 	public SynssionClientier expiredClientier;
 
 	public Nyquence lastn0(String peer) {
@@ -100,15 +109,18 @@ public class SynDomanager implements OnError {
 	}
 
 	/**
+	 * Sing up, then start a synssion to the peer, peeradmin.
+	 * 
 	 * @param adminjserv jserv root path, must be null for testing
 	 * locally without login to the service
 	 * @param peeradmin
 	 * @param passwd
-	 * @return SynssionClient (already in been put into synssions),
+	 * @return SynssionClient (alneed to be put into synssions),
 	 * with xp for persisting and for req construction.
 	 * @throws Exception
+	 * @since 0.2.0
 	 */
-	public SynssionClientier joinpeer(String adminjserv, String peeradmin, String userId, String passwd) throws Exception {
+	public SynssionClientier join2peer(String adminjserv, String peeradmin, String userId, String passwd) throws Exception {
 
 		DBSyntableBuilder cltb = new DBSyntableBuilder(dom_unknown, myconn, synode, mod);
 
@@ -132,6 +144,13 @@ public class SynDomanager implements OnError {
 		return c;
 	}
 
+	/**
+	 * @see #join2peer(String, String, String, String)
+	 * @param req
+	 * @return response
+	 * @throws Exception
+	 * @since 0.2.0
+	 */
 	public SyncResp onjoin(SyncReq req) throws Exception {
 		String peer = req.exblock.srcnode;
 		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod);
@@ -177,6 +196,7 @@ public class SynDomanager implements OnError {
 	 * 
 	 * @param peer to which peer the session's n0 to be retrieved
 	 * @return n0 N0 in all sessions should be the same.
+	 * @since 0.2.0
 	 */
 	public Nyquence n0(String peer) {
 		return synssion(peer).xp.n0();
@@ -190,6 +210,7 @@ public class SynDomanager implements OnError {
 	 * @param domain
 	 * @return initiate request
 	 * @throws Exception 
+	 * @since 0.2.0
 	 */
 	public SyncReq syninit(String peer, String domain) throws Exception {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod);
@@ -209,6 +230,7 @@ public class SynDomanager implements OnError {
 	 * @param ini initial request
 	 * @return exchange block
 	 * @throws Exception
+	 * @since 0.2.0
 	 */
 	public SyncResp onsyninit(String peer, ExchangeBlock ini) throws Exception {
 		/*
@@ -244,6 +266,7 @@ public class SynDomanager implements OnError {
 	 * @param stamp accept as start stamp if no records exists
 	 * @return this
 	 * @throws Exception 
+	 * @since 0.2.0
 	 */
 	public SynDomanager born(List<SemanticHandler> handlers, long n0, long stamp0)
 			throws Exception {
@@ -251,7 +274,7 @@ public class SynDomanager implements OnError {
 		DATranscxt b0 = new DATranscxt(null);
 		IUser robot = new JRobot();
 
-		if (DAHelper.count(b0, myconn, snm.tbl, snm.synuid, synode) > 0)
+		if (DAHelper.count(b0, myconn, snm.tbl, snm.synoder, synode, snm.domain, domain) > 0)
 			Utils.warnT(new Object() {}, "What's it when reached here?");
 		else
 			DAHelper.insert(robot, b0, myconn, snm,
@@ -285,9 +308,13 @@ public class SynDomanager implements OnError {
 	 * @throws SsException 
 	 * @throws AnsonException 
 	 * @throws SemanticException 
+	 * @since 0.2.0
 	 */
 	public SynDomanager updomains(OnDomainUpdate onUpdate) throws SemanticException, AnsonException, SsException, IOException {
-		if (sessions != null)
+		if (sessions == null || sessions.size() == 0)
+			throw new ExchangeException(ready, null,
+						"Session pool is null at %s", synode);
+
 		for (String peer : sessions.keySet())
 			if (sessions.containsKey(peer)
 				&& sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
@@ -313,6 +340,7 @@ public class SynDomanager implements OnError {
 	 * @param mypswd
 	 * @param ok 
 	 * @throws Exception
+	 * @since 0.2.0
 	 */
 	public void joinDomain(String dom, String admid, String admserv,
 			String myuid, String mypswd, OnOk ok) throws Exception {
@@ -321,9 +349,12 @@ public class SynDomanager implements OnError {
 			throw new ExchangeException(close, null,
 				"SynssionClientier already exists. Duplicated singup?");
 		
-		SynssionClientier c = joinpeer(admserv, admid, myuid, mypswd);
+		SynssionClientier c = join2peer(admserv, admid, myuid, mypswd);
 
-		c.joindomain(admid, myuid, mypswd, ok);
+		c.asynJoindomain(admid, myuid, mypswd, (resp) -> {
+			sessions.put(admid, c);
+			ok.ok(resp);
+		});
 	}
 
 	@Override

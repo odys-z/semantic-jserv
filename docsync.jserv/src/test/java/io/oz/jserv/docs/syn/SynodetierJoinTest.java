@@ -3,16 +3,23 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
+import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.syn.Docheck.ck;
-import static io.oz.jserv.docs.syn.DoclientierTest.devs;
-import static io.oz.jserv.docs.syn.SynoderTest.*;
-import static io.oz.jserv.test.JettyHelperTest.*;
+import static io.oz.jserv.docs.syn.SynoderTest.X;
+import static io.oz.jserv.docs.syn.SynoderTest.Y;
+import static io.oz.jserv.docs.syn.SynoderTest.Z;
+import static io.oz.jserv.docs.syn.SynoderTest.azert;
+import static io.oz.jserv.docs.syn.SynoderTest.ura;
+import static io.oz.jserv.docs.syn.SynoderTest.zsu;
+import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,13 +27,10 @@ import org.junit.jupiter.api.Test;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.jsession.JUser;
-import io.odysz.semantic.jsession.JUser.JOrgMeta;
-import io.odysz.semantic.jsession.JUser.JRoleMeta;
-import io.odysz.semantic.meta.AutoSeqMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.PeersMeta;
 import io.odysz.semantic.meta.SynChangeMeta;
@@ -36,9 +40,9 @@ import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docs.syn.DoclientierTest.Dev;
 import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
 
 class SynodetierJoinTest {
@@ -48,6 +52,8 @@ class SynodetierJoinTest {
 	static ErrorCtx errLog;
 	
 	static final String clientconn = "main-sqlite";
+	static final String syrskyi = "syrskyi";
+	static final String slava = "слава україні";
 
 	static final String[] servs_conn  = new String[] {
 			"no-jserv.00", "no-jserv.01", "no-jserv.02", "no-jserv.03"};
@@ -55,30 +61,11 @@ class SynodetierJoinTest {
 	static final String[] config_xmls = new String[] {
 			"config-0.xml", "config-1.xml", "config-2.xml", "config-3.xml"};
 	
-	// static Dev[] devs; // = new Dev[4];
 	static SynotierJettyApp[] jetties;
-//	private static Docheck[] ck;
-	
-//	static final int X_0 = 0;
-//	static final int X_1 = 1;
-//	static final int Y_0 = 2;
-//	static final int Y_1 = 3;
 
 	static {
 		try {
 			jetties = new SynotierJettyApp[4];
-//			devs = new Dev[4];
-//			devs[X_0] = new Dev("client-at-00", "syrskyi", "слава україні", "X-0", zsu,
-//								"src/test/res/anclient.java/1-pdf.pdf");
-//
-//			devs[X_1] = new Dev("client-at-00", "syrskyi", "слава україні", "X-1", zsu,
-//								"src/test/res/anclient.java/2-ontario.gif");
-//
-//			devs[Y_0] = new Dev("client-at-01", "odyz", "8964", "Y-0", zsu,
-//								"src/test/res/anclient.java/3-birds.wav");
-//
-//			devs[Y_1] = new Dev("client-at-01", "syrskyi", "слава україні", "Y-1", zsu,
-//								"src/test/res/anclient.java/Amelia Anisovych.mp4");
 
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
@@ -111,9 +98,9 @@ class SynodetierJoinTest {
 			if (jetties[i] != null)
 				jetties[i].stop();
 
-			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++);
+			initSysRecords(servs_conn[i]);
 
-			DoclientierTest.initRecords(servs_conn[i]);
+			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++, true);
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
@@ -137,47 +124,35 @@ class SynodetierJoinTest {
 		
 		waiting(lights, Y);
 		joinby(lights, X, Y); // no subscription of Z
-		awaitAll(lights);
+		awaitAll(lights, -1);
 		ck[X].synodes(X, Y);
 		ck[Y].synodes(X, Y);
 
 		waiting(lights, Z);
 		joinby(lights, X, Z);
-		awaitAll(lights);
+		awaitAll(lights, -1);
 		ck[X].synodes(X, Y, Z);
 		ck[Z].synodes(X, -1, Z);
 
 		waiting(lights, Z);
 		syncdomain(lights, Z);
-		awaitAll(lights, 12000);
+		awaitAll(lights, -1);
 		ck[X].synodes(X, Y, Z);
 		ck[Y].synodes(X, Y, -1);
 		ck[Z].synodes(X, -1, Z); // Z joined latter, no subs or Y's joining 
 
 		waiting(lights, Y);
 		syncdomain(lights, Y);
-		awaitAll(lights, 12000);
+		awaitAll(lights, -1);
 		ck[X].synodes(X, Y, Z);
 		ck[Y].synodes(X, Y, Z);
 		ck[Z].synodes(X, -1, Z);
 	}
 	
-	void waiting(boolean[] signals, int redx) {
-		for (int i = 0; i < signals.length; i++)
-			if (i != redx)
-				signals[i] = true;
-			else signals[i] = false;
-	}
-	
-	void turnred(boolean[] signals) {
-		for (int i = 0; i < signals.length; i++)
-			signals[i] = false;
-	}
-	
 	void joinby(boolean[] lights, int to, int by) throws Exception {
 		SynotierJettyApp hub = jetties[to];
 		SynotierJettyApp prv = jetties[by];
-		Dev dev = devs[by];
+		// Dev dev = devs[by];
 		for (String servpattern : hub.synodetiers.keySet()) {
 			if (len(hub.synodetiers.get(servpattern)) > 1 || len(prv.synodetiers.get(servpattern)) > 1)
 				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
@@ -186,7 +161,7 @@ class SynodetierJoinTest {
 				SynDomanager hubmanger = hub.synodetiers.get(servpattern).get(dom);
 				SynDomanager prvmanger = prv.synodetiers.get(servpattern).get(dom);
 	
-				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), dev.uid, dev.psw,
+				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 						(rep) -> { lights[by] = true; });
 			}
 		}
@@ -214,11 +189,7 @@ class SynodetierJoinTest {
 		}
 	}
 
-	static SynotierJettyApp startSyndoctier(String serv_conn, String config_xml, int port) throws Exception {
-		AutoSeqMeta asqm = new AutoSeqMeta();
-		JRoleMeta arlm = new JUser.JRoleMeta();
-		JOrgMeta  aorgm = new JUser.JOrgMeta();
-	
+	static SynotierJettyApp startSyndoctier(String serv_conn, String config_xml, int port, boolean drop_syntbls) throws Exception {
 		SynChangeMeta chm = new SynChangeMeta();
 		SynSubsMeta sbm = new SynSubsMeta(chm);
 		SynchangeBuffMeta xbm = new SynchangeBuffMeta(chm);
@@ -228,10 +199,41 @@ class SynodetierJoinTest {
 		SynodeMeta snm = new SynodeMeta(serv_conn);
 		docm = new T_PhotoMeta(serv_conn);
 
-		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
+		setupSqliTables(serv_conn, drop_syntbls, snm, chm, sbm, xbm, prm, ssm, docm);
 
 		return SynotierJettyApp .createSyndoctierApp(serv_conn, config_xml, null, port, webinf, ura, zsu)
-								.start(() -> System.out, () -> System.err);
+								.start(() -> System.out, () -> System.err)
+								.openDomains()
+								;
 	}
 
+	/**
+	 * initialize with files, i. e. oz_autoseq.sql, a_users.sqlite.sql.
+	 * 
+	 * @param conn
+	 */
+	static void initSysRecords(String conn) {
+		ArrayList<String> sqls = new ArrayList<String>();
+		IUser usr = DATranscxt.dummyUser();
+
+		try {
+			for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
+				sqls.add("drop table if exists " + tbl);
+				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+				sqls.clear();
+			}
+
+			for (String tbl : new String[] {
+					"oz_autoseq.ddl",  "oz_autoseq.sql",
+					"a_users.sqlite.ddl", "a_users.sqlite.sql"}) {
+
+				sqls.add(loadTxt(SynodetierJoinTest.class, tbl));
+				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+				sqls.clear();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
 }

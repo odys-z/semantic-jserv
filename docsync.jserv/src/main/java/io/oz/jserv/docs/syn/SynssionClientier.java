@@ -175,23 +175,6 @@ public class SynssionClientier {
 		return new SyncResp(domain()).exblock(b);
 	}
 
-//	/**
-//	 * Initialize an exchange session.
-//	 * @param ini
-//	 * @return initializing request
-//	 * @throws Exception 
-//	 */
-//	SyncResp exesOninit(SyncResp ini) throws Exception {
-//		b0 = new DBSyntableBuilder(domain, conn, mynid, mymode);
-//
-//		xp = new ExessionPersist(b0, peer, ini.exblock)
-//								.loadNyquvect(conn);
-//
-//		ExchangeBlock b = b0.onInit(xp, ini.exblock);
-//
-//		return new SyncResp().exblock(b);
-//	}
-
 	SyncResp exespush(String peer, String a, ExchangeBlock reqb) {
 		SyncReq req = (SyncReq) new SyncReq(null, peer)
 					.exblock(reqb)
@@ -238,7 +221,16 @@ public class SynssionClientier {
 	public void pingPeers() {
 	}
 
-	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) {
+	/**
+	 * Go through the handshaking process of sing up to a domain. 
+	 * 
+	 * @param admid
+	 * @param myuid
+	 * @param mypswd
+	 * @param ok
+	 * @since 0.2.0
+	 */
+	public void asynJoindomain(String admid, String myuid, String mypswd, OnOk ok) {
 		new Thread(() -> { 
 			try {
 				lock.lock();
@@ -263,7 +255,8 @@ public class SynssionClientier {
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
 			throws SemanticException, AnsonException, SsException, IOException {
-		client = new SessionClient(jservroot, null).loginWithUri(clienturi, myuid, pswd, device);
+		client = new SessionClient(jservroot, null)
+				.loginWithUri(clienturi, myuid, pswd, device);
 		return client;
 	}
 

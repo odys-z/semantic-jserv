@@ -119,8 +119,8 @@ public class SynotierJettyApp {
 		ExpSynodetier syner = new ExpSynodetier(org, domain, synid, serv_conn, SynodeMode.peer)
 							.domains(domains);
 		
-		return registerPorts(webinf, serv_conn, config_xml, // "config-0.xml",
-				bindIp, port,
+		SynotierJettyApp synapp = instanserver(webinf, serv_conn, config_xml, bindIp, port);
+		return registerPorts(synapp, serv_conn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addServPort(doctier)
 			.addServPort(syner)
@@ -142,21 +142,17 @@ public class SynotierJettyApp {
 	 * Start jserv with Jetty, register jserv-ports to Jetty.
 	 * 
 	 * @param <T> subclass of {@link ServPort}
-	 * @param configPath
+	 * @param synapp
 	 * @param conn
-	 * @param configxml name of config.xml, to be optimized
-	 * @param ip
-	 * @param port
 	 * @param servports
 	 * @return Jetty server, the {@link SynotierJettyApp}
 	 * @throws Exception
 	 */
 	@SafeVarargs
 	static public <T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerPorts(
-			String configPath, String conn, String configxml, String bindIp, int port,
-			T ... servports) throws Exception {
+			SynotierJettyApp synapp, String conn, T ... servports) throws Exception {
 
-		SynotierJettyApp synapp = instanserver(configPath, conn, configxml, bindIp, port);
+		// SynotierJettyApp synapp = instanserver(configPath, conn, configxml, bindIp, port);
 
         synapp.schandler = new ServletContextHandler(synapp.server, "/");
         for (T t : servports) {
@@ -179,7 +175,7 @@ public class SynotierJettyApp {
 	 * @return Jetty App
 	 * @throws Exception
 	 */
-	static SynotierJettyApp instanserver(String configPath, String conn0, String configxml,
+	public static SynotierJettyApp instanserver(String configPath, String conn0, String configxml,
 			String bindIp, int port) throws Exception {
 	    // Anson.verbose = false;
 	
@@ -256,5 +252,13 @@ public class SynotierJettyApp {
 			for (SynDomanager domanager : synodetiers.get(syntier_url).values())
 				return domanager.synode;
 		return null;
+	}
+
+	/**
+	 * Try join (login) known domains
+	 * @return
+	 */
+	public SynotierJettyApp openDomains() {
+		return this;
 	}
 }

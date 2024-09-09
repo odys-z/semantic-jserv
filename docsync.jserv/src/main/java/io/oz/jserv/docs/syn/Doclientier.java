@@ -52,6 +52,7 @@ import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.x.DocsException;
 
 public class Doclientier extends Semantier {
 	public boolean verbose = false;
@@ -331,11 +332,17 @@ public class Doclientier extends Semantier {
 			int totalBlocks = 0;
 
 			ExpSyncDoc p = videos.get(px);
+			if (isblank(p.clientpath) || isblank(p.device()))
+				throw new DocsException(DocsException.SemanticsError,
+						"Docs' pushing requires device id and clientpath.\n" +
+						"Doc Id: %s, device id: %s, client-path: %s, resource name: %s",
+						p.recId, p.device(), p.clientpath, p.pname);
+
 			DocsReq req  = new DocsReq(tbl, p, uri)
 					.device(user.device)
 					.resetChain(true)
 					.blockStart(p, user);
-
+			
 			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
 									.header(header);
 

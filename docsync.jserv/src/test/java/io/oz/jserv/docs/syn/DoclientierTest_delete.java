@@ -11,6 +11,7 @@ import static io.odysz.common.Utils.pause;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static io.oz.jserv.docs.syn.SynoderTest.*;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -160,7 +161,7 @@ class DoclientierTest_delete {
 				jetties[i].stop();
 			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++);
 			devs[i].jserv = jetties[i].jserv();
-			initRecords(servs_conn[i]);
+			initSysRecords(servs_conn[i]);
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i], zsu, SynodeMode.peer, docm);
 		}
@@ -217,7 +218,7 @@ class DoclientierTest_delete {
 	
 		SynodeMeta snm = new SynodeMeta(serv_conn);
 		docm = new T_PhotoMeta(serv_conn);
-		setupSqliTables(serv_conn, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
+		setupSqliTables(serv_conn, false, asqm, arlm, aorgm, snm, chm, sbm, xbm, prm, ssm, docm);
 
 		return SynotierJettyApp .createSyndoctierApp(serv_conn, config_xml, null, port, webinf, ura, zsu)
 								.start(() -> System.out, () -> System.err);
