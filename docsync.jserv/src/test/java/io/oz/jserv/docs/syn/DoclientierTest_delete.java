@@ -322,7 +322,7 @@ class DoclientierTest_delete {
  	static ExpSyncDoc videoUpByApp(Dev atdev, Doclientier doclient, String entityName) throws Exception {
 
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
-					.share(doclient.robot.uid(), Share.pub, new Date())
+					.share(doclient.robt.uid(), Share.pub, new Date())
 					.folder(atdev.folder)
 					.fullpath(atdev.res);
 

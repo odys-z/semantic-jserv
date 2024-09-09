@@ -60,7 +60,7 @@ public class Doclientier extends Semantier {
 	protected SessionClient client;
 	protected OnError errCtx;
 
-	protected DocUser robot;
+	protected DocUser robt;
 
 	/** For download. */
 	protected String tempath;
@@ -169,7 +169,7 @@ public class Doclientier extends Semantier {
 		SessionInf ssinf = client.ssInfo();
 		try {
 			// robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath, ssinf.device);
-			robot = new DocUser(ssinf.uid());
+			robt = new DocUser(ssinf.uid());
 			tempath = FilenameUtils.concat(tempath,
 					String.format("io.oz.doc.%s.%s", ssinf.device, ssinf.uid()));
 			
@@ -177,19 +177,19 @@ public class Doclientier extends Semantier {
 			
 			JUserMeta um = isNull(Connects.getAllConnIds())
 					? new JUserMeta() // a temporary solution for client without DB connections
-					: (JUserMeta) robot.meta();
+					: (JUserMeta) robt.meta();
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
 			 .l(um.om.tbl, "o", String.format("o.%1$s = u.%1$s", um.org))
-			 .whereEq("u." + um.pk, robot.uid());
+			 .whereEq("u." + um.pk, robt.uid());
 
 			AnsonResp resp = client.commit(q, errCtx);
 			AnResultset rs = resp.rs(0).beforeFirst();
 			if (rs.next())
-				robot.orgId(rs.getString(um.org))
+				robt.orgId(rs.getString(um.org))
 					.orgName(rs.getString(um.orgName));
-			else throw new SemanticException("User identity haven't been reqistered: %s", robot.uid());
+			else throw new SemanticException("User identity haven't been reqistered: %s", robt.uid());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

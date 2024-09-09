@@ -5,6 +5,7 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.Utils.logi;
 import static io.oz.jserv.docs.syn.ExpSynodetier.setupDomanagers;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -16,8 +17,10 @@ import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 
+import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
@@ -27,9 +30,14 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
+import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -54,8 +62,11 @@ import io.oz.jserv.docs.syn.Syngleton;
  */
 public class SynotierJettyApp {
 	Server server;
+
 	ServletContextHandler schandler;
+
 	String jserv;
+	String conn0;
 
 	public String jserv() { return jserv; }
 
@@ -177,12 +188,12 @@ public class SynotierJettyApp {
 	 */
 	public static SynotierJettyApp instanserver(String configPath, String conn0, String configxml,
 			String bindIp, int port) throws Exception {
-	    // Anson.verbose = false;
 	
 		Syngleton.initSynodetier(configxml, conn0, ".", configPath, "ABCDEF0123456789");
 	    AnsonMsg.understandPorts(Port.syntier);
 	    
 	    SynotierJettyApp synapp = new SynotierJettyApp();
+	    synapp.conn0 = conn0;
 	
 	    if (isblank(bindIp))
 	    	synapp.server = new Server();
@@ -202,6 +213,15 @@ public class SynotierJettyApp {
 	    synapp.synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
 	    
 	    return synapp;
+	}
+
+	SynodeMeta synm;
+	ExpDocTableMeta docm;
+
+	public SynotierJettyApp metas(SynodeMeta synm, ExpDocTableMeta docm) {
+		this.synm = synm;
+		this.docm = docm;
+		return this;
 	}
 
 	/**
@@ -254,11 +274,48 @@ public class SynotierJettyApp {
 		return null;
 	}
 
+	public SynotierJettyApp loadDomains(SynodeMode synmod) throws Exception {
+		if (synodetiers == null)
+			synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
+		
+		DATranscxt t0 = new DATranscxt(null);
+		IUser usr = DATranscxt.dummyUser();
+
+		AnResultset rs = (AnResultset) t0
+				.select(synm.tbl)
+				.groupby(synm.domain)
+				.groupby(synm.synuid)
+				.rs(t0.instancontxt(conn0, usr))
+				.rs(0);
+		
+		while (rs.next()) {
+			String domain = rs.getString(synm.domain);
+			SynDomanager domanger = new SynDomanager(
+					rs.getString(synm.org),
+					domain,
+					rs.getString(synm.synoder),
+					conn0, synmod);
+			synodetiers.get(syntier_url).put(domain, domanger);
+		}
+
+		return this;
+	}
+
 	/**
 	 * Try join (login) known domains
 	 * @return
+	 * @throws IOException 
+	 * @throws SsException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
 	 */
-	public SynotierJettyApp openDomains() {
+	public SynotierJettyApp openDomains() throws SemanticException, AnsonException, SsException, IOException {
+		if (synodetiers != null && synodetiers.containsKey(syntier_url))
+			for (SynDomanager domanager : synodetiers.get(syntier_url).values())
+				domanager.updomains((domain, mynid, peer, xp) -> {
+					Utils.logi("%s: domain is bringing up: %s : %s", mynid, domain, peer);
+				});
+
 		return this;
 	}
 }

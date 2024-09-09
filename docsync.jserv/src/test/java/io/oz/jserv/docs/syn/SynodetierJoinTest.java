@@ -49,6 +49,7 @@ class SynodetierJoinTest {
 	static int bsize;
 
 	static ExpDocTableMeta docm;
+
 	static ErrorCtx errLog;
 	
 	static final String clientconn = "main-sqlite";
@@ -189,22 +190,26 @@ class SynodetierJoinTest {
 		}
 	}
 
-	static SynotierJettyApp startSyndoctier(String serv_conn, String config_xml, int port, boolean drop_syntbls) throws Exception {
+	static SynotierJettyApp startSyndoctier(String serv_conn, String config_xml,
+			int port, boolean drop_syntbls) throws Exception {
+
 		SynChangeMeta chm = new SynChangeMeta();
 		SynSubsMeta sbm = new SynSubsMeta(chm);
 		SynchangeBuffMeta xbm = new SynchangeBuffMeta(chm);
 		SynSessionMeta ssm = new SynSessionMeta();
 		PeersMeta prm = new PeersMeta();
 	
-		SynodeMeta snm = new SynodeMeta(serv_conn);
+		SynodeMeta synm = new SynodeMeta(serv_conn);
 		docm = new T_PhotoMeta(serv_conn);
 
-		setupSqliTables(serv_conn, drop_syntbls, snm, chm, sbm, xbm, prm, ssm, docm);
+		setupSqliTables(serv_conn, drop_syntbls, synm, chm, sbm, xbm, prm, ssm, docm);
 
-		return SynotierJettyApp .createSyndoctierApp(serv_conn, config_xml, null, port, webinf, ura, zsu)
-								.start(() -> System.out, () -> System.err)
-								.openDomains()
-								;
+		return SynotierJettyApp 
+			.createSyndoctierApp(serv_conn, config_xml, null, port, webinf, ura, zsu)
+			.metas(synm, docm)
+			.start(() -> System.out, () -> System.err)
+			.openDomains()
+			;
 	}
 
 	/**

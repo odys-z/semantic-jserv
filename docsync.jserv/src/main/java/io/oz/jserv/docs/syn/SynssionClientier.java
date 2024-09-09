@@ -78,12 +78,12 @@ public class SynssionClientier {
 	}
 
 	/**
-	 * Start updating with peer, in this domain.
+	 * Start a domain updating process (handshaking) with this.peer, in this.domain.
 	 * @param object 
 	 * @return this
 	 * @throws ExchangeException not ready yet.
 	 */
-	public SynssionClientier update2peer(OnDomainUpdate onup) throws ExchangeException {
+	public SynssionClientier asynUpdate2peer(OnDomainUpdate onup) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null, "Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
 					peer, domain(), client == null ? ", client is null" : "");

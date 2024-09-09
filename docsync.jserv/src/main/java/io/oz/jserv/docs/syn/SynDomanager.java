@@ -298,7 +298,7 @@ public class SynDomanager implements OnError {
 	///////////////////////////////////////////////////////////////////////////
 	// ArrayList<String> knownpeers;
 	/**
-	 * Update domain, and start all possible sessions, each in a new thread.
+	 * Update (synchronize) this domain, each peer in a new thread.
 	 * Can be called by request handler and timer.
 	 * 
 	 * <p>Updating event is ignored if the clientier is running.</p>
@@ -318,7 +318,7 @@ public class SynDomanager implements OnError {
 		for (String peer : sessions.keySet())
 			if (sessions.containsKey(peer)
 				&& sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
-				sessions.get(peer).update2peer(onUpdate);
+				sessions.get(peer).asynUpdate2peer(onUpdate);
 			else if (!sessions.containsKey(peer))
 				Utils.warnT(new Object() {}, "Updating domain should be done after logged into %s, by %s",
 						peer, synode);

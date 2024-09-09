@@ -83,9 +83,6 @@ class DoclientierTest {
 
 	static int bsize;
 
-	// static ExpDocTableMeta docm;
-	// static ErrorCtx errLog;
-	
 	static final String clientconn = "main-sqlite";
 
 	static final String[] servs_conn  = new String[] {
@@ -119,14 +116,6 @@ class DoclientierTest {
 
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
-			
-//			errLog = new ErrorCtx() {
-//				@Override
-//				public void err(MsgCode code, String msg, String...args) {
-//					fail(msg);
-//				}
-//			};
-
 		} catch (TransException e) {
 			e.printStackTrace();
 		}
@@ -152,8 +141,9 @@ class DoclientierTest {
 
 			initSynodeRecs(servs_conn[i]);
 			
-			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++, false);
-
+			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++, false)
+						.loadDomains(SynodeMode.peer)
+						.openDomains();
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
@@ -161,8 +151,8 @@ class DoclientierTest {
 	}
 
 	@Test
-	void testSyncUp() {
-		try {
+	void testSyncUp() throws Exception {
+//		try {
 			// 00 create
 			ExpSyncDoc dx = clientPush(X, X_0);
 			verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
@@ -195,12 +185,14 @@ class DoclientierTest {
 			ck[X].doc(2);
 	
 			pause("Press enter to quite ...");
-		} catch (Exception e) {
-			e.printStackTrace();
-	
-			pause(e.getMessage());
-			fail(e.getMessage());
-		}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//	
+//			Utils.warn(e.getMessage());
+//			pause("Press enter to quite ...");
+//
+//			fail(e.getMessage());
+//		}
 	}
 
 
@@ -234,7 +226,7 @@ class DoclientierTest {
  	static ExpSyncDoc videoUpByApp(Dev atdev, Doclientier doclient, String entityName) throws Exception {
 
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
-					.share(doclient.robot.uid(), Share.pub, new Date())
+					.share(doclient.robt.uid(), Share.pub, new Date())
 					.folder(atdev.folder)
 					.device(atdev.dev)
 					.fullpath(atdev.res);
