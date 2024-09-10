@@ -43,7 +43,7 @@ public class SynDomanager implements OnError {
 	 */
 	@FunctionalInterface
 	public interface OnDomainUpdate {
-		public void ok(String domain, String mynid, String peer, ExessionPersist xp);
+		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
 	}
 
 	static final String dom_unknown = null;
@@ -53,6 +53,8 @@ public class SynDomanager implements OnError {
 	final String domain;
 	final String org;
 	final SynodeMode mod;
+	
+	boolean dbg;
 	
 	/**
 	 * {peer: session-persist}
@@ -71,7 +73,7 @@ public class SynDomanager implements OnError {
 				null : expiredClientier.xp.n0();
 	}
 
-	SynssionClientier synssion(String peer) {
+	public SynssionClientier synssion(String peer) {
 		return sessions != null
 				? sessions.get(peer)
 				: null;
@@ -96,16 +98,17 @@ public class SynDomanager implements OnError {
 		return null;
 	}
 
-	public SynDomanager(String org, String dom, String myid, String conn, SynodeMode mod) {
+	public SynDomanager(String org, String dom, String myid, String conn, SynodeMode mod, boolean debug) {
 		synode   = myid;
 		myconn   = conn;
 		domain   = dom;
 		this.org = org;
 		this.mod = mod;
+		this.dbg = debug;
 	}
 	
 	public static SynDomanager clone(SynDomanager dm) {
-		return new SynDomanager(dm.org, dm.domain, dm.synode, dm.myconn, dm.mod);
+		return new SynDomanager(dm.org, dm.domain, dm.synode, dm.myconn, dm.mod, dm.dbg);
 	}
 
 	/**
@@ -365,5 +368,16 @@ public class SynDomanager implements OnError {
 	public void err(MsgCode code, String msg, String... args) {
 		Utils.warn("Error Code: %s", code.name());
 		Utils.warn(msg, (Object[])args);
+	}
+
+	public SynDomanager loadSynssions() {
+		if (dbg)
+			;
+
+		return this;
+	}
+
+	public SynDomanager openSynssions(OnDomainUpdate onEachOpen) {
+		return this;
 	}
 }

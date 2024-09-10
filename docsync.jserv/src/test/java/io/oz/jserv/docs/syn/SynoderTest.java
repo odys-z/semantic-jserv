@@ -184,7 +184,8 @@ public class SynoderTest {
 		Utils.logrst("X starting", test, ++no);
 		ExpDoctier xtir = syntiers[X];
 		SynDomanager x = xtir.startier(ura, zsu, SynodeMode.peer)
-						.domains(setupDomanagers(ura, zsu, xtir.synode, xtir.myconn, SynodeMode.peer))
+						.domains(setupDomanagers(ura, zsu, xtir.synode, xtir.myconn,
+								 SynodeMode.peer, Connects.getDebug(xtir.myconn)))
 						.domanager(zsu);
 
 		ck[X] = new Docheck(azert, zsu, x.myconn, x.synode, SynodeMode.peer, docm);
@@ -193,7 +194,8 @@ public class SynoderTest {
 		Utils.logrst("Y starting", test, ++no);
 		ExpDoctier ytir = syntiers[Y];
 		SynDomanager y = ytir.startier(ura, zsu, SynodeMode.peer)
-						.domains(setupDomanagers(ura, zsu, ytir.synode, ytir.myconn, SynodeMode.peer))
+						.domains(setupDomanagers(ura, zsu, ytir.synode, ytir.myconn,
+								 SynodeMode.peer, Connects.getDebug(xtir.myconn)))
 						.domanager(zsu);
 
 		ck[Y] = new Docheck(azert, zsu, y.myconn, y.synode, SynodeMode.peer, docm);
@@ -218,7 +220,8 @@ public class SynoderTest {
 
 		ExpDoctier ztir = syntiers[Z];
 		SynDomanager z = ztir.startier(ura, zsu, SynodeMode.peer)
-						.domains(setupDomanagers(ura, zsu, ztir.synode, ztir.myconn, SynodeMode.peer))
+						.domains(setupDomanagers(ura, zsu, ztir.synode, ztir.myconn,
+								 SynodeMode.peer, Connects.getDebug(ztir.myconn)))
 						.domanager(zsu);
 
 		ck[Z] = new Docheck(azert, zsu, z.myconn, z.synode, SynodeMode.peer, docm);

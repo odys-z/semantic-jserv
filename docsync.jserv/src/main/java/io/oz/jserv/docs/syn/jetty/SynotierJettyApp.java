@@ -36,6 +36,7 @@ import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
@@ -121,7 +122,7 @@ public class SynotierJettyApp {
 		String synid  = Configs.getCfg(Configs.keys.synode);
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
-		HashMap<String,SynDomanager> domains = setupDomanagers(org, domain, synid, serv_conn, SynodeMode.peer);
+		HashMap<String,SynDomanager> domains = setupDomanagers(org, domain, synid, serv_conn, SynodeMode.peer, Connects.getDebug(serv_conn));
 	
 		ExpDoctier doctier  = new ExpDoctier(synid, serv_conn)
 							.startier(org, domain, SynodeMode.peer)
@@ -214,15 +215,6 @@ public class SynotierJettyApp {
 	    return synapp;
 	}
 
-	// SynodeMeta synm;
-	// ExpDocTableMeta docm;
-
-//	public SynotierJettyApp metas(SynodeMeta synm) {
-//		this.synm = synm;
-//		// this.docm = docm;
-//		return this;
-//	}
-
 	/**
 	 * { url-pattern: { domain: domanager } },<br>
 	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
@@ -293,7 +285,7 @@ public class SynotierJettyApp {
 					rs.getString(synm.org),
 					domain,
 					rs.getString(synm.synoder),
-					conn0, synmod);
+					conn0, synmod, Connects.getDebug(conn0));
 			synodetiers.get(syntier_url).put(domain, domanger);
 		}
 
@@ -302,7 +294,7 @@ public class SynotierJettyApp {
 
 	/**
 	 * Try join (login) known domains
-	 * @return
+	 * @return this
 	 * @throws IOException 
 	 * @throws SsException 
 	 * @throws AnsonException 
@@ -310,10 +302,23 @@ public class SynotierJettyApp {
 	 */
 	public SynotierJettyApp openDomains() throws SemanticException, AnsonException, SsException, IOException {
 		if (synodetiers != null && synodetiers.containsKey(syntier_url))
-			for (SynDomanager domanager : synodetiers.get(syntier_url).values())
-				domanager.updomains((domain, mynid, peer, xp) -> {
-					Utils.logi("%s: domain is bringing up: %s : %s", mynid, domain, peer);
-				});
+			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
+				dmgr.loadSynssions(Connects.getDebug(conn0))
+					.openSynssions((domain, mynid, peer, xp) -> {
+						try {
+							dmgr.synssion(peer).asynUpdate2peer(null);
+						} catch (ExchangeException e) {
+							Utils.warnT(new Object() {},
+								"Update synssion with peer failed. conn-id: %s, domain: %s, synid: %s, peer %s",
+								conn0, domain, mynid, peer);
+
+							e.printStackTrace();
+						}
+					});
+//				domanager.updomains((domain, mynid, peer, xp) -> {
+//					Utils.logi("%s: domain is bringing up: %s : %s", mynid, domain, peer);
+//				});
+			}
 
 		return this;
 	}

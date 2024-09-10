@@ -37,8 +37,8 @@ public class Syngleton extends JSingleton {
 				+ "root-key length: %s",
 				cfgxml, runtimeRoot, configFolder, len(rootKey));
 
-		Connects.init(configFolder);
 		Configs.init(configFolder, cfgxml);
+		Connects.init(configFolder);
 
 		DATranscxt.configRoot(configFolder, runtimeRoot);
 		DATranscxt.key("user-pswd", rootKey);

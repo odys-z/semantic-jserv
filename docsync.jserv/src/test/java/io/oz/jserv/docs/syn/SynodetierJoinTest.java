@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logi;
@@ -38,6 +39,7 @@ import io.odysz.semantic.meta.SynSessionMeta;
 import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
@@ -182,9 +184,12 @@ class SynodetierJoinTest {
 					(domain, mynid, peer, xp) -> {
 						if (eq(domain, dom) && eq(mynid, jetties[tx].synode()))
 							lights[tx] = true;
-						else throw new NullPointerException(String.format(
+						else {
+							DBSyntableBuilder trb = isNull(xp) ? null : xp[0].trb;
+							throw new NullPointerException(String.format(
 							"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
-							domain, mynid, peer, xp == null || xp.trb == null ? "unknown" : xp.trb.synconn()));
+							domain, mynid, peer, xp == null || trb == null ? "unknown" : trb.synconn()));
+						}
 					});
 			}
 		}
