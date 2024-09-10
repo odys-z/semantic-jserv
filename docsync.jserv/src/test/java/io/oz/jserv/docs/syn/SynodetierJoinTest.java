@@ -206,9 +206,9 @@ class SynodetierJoinTest {
 
 		return SynotierJettyApp 
 			.createSyndoctierApp(serv_conn, config_xml, null, port, webinf, ura, zsu)
-			.metas(synm, docm)
 			.start(() -> System.out, () -> System.err)
-			.openDomains()
+			.loadDomains(synm, SynodeMode.peer)
+			// .openDomains()
 			;
 	}
 

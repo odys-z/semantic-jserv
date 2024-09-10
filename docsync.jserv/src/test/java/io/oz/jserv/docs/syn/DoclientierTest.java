@@ -142,7 +142,6 @@ class DoclientierTest {
 			initSynodeRecs(servs_conn[i]);
 			
 			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++, false)
-						.loadDomains(SynodeMode.peer)
 						.openDomains();
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],

@@ -33,7 +33,6 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
@@ -215,14 +214,14 @@ public class SynotierJettyApp {
 	    return synapp;
 	}
 
-	SynodeMeta synm;
-	ExpDocTableMeta docm;
+	// SynodeMeta synm;
+	// ExpDocTableMeta docm;
 
-	public SynotierJettyApp metas(SynodeMeta synm, ExpDocTableMeta docm) {
-		this.synm = synm;
-		this.docm = docm;
-		return this;
-	}
+//	public SynotierJettyApp metas(SynodeMeta synm) {
+//		this.synm = synm;
+//		// this.docm = docm;
+//		return this;
+//	}
 
 	/**
 	 * { url-pattern: { domain: domanager } },<br>
@@ -274,7 +273,7 @@ public class SynotierJettyApp {
 		return null;
 	}
 
-	public SynotierJettyApp loadDomains(SynodeMode synmod) throws Exception {
+	public SynotierJettyApp loadDomains(SynodeMeta synm, SynodeMode synmod) throws Exception {
 		if (synodetiers == null)
 			synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
 		
@@ -284,7 +283,7 @@ public class SynotierJettyApp {
 		AnResultset rs = (AnResultset) t0
 				.select(synm.tbl)
 				.groupby(synm.domain)
-				.groupby(synm.synuid)
+				.groupby(synm.synoder)
 				.rs(t0.instancontxt(conn0, usr))
 				.rs(0);
 		

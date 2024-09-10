@@ -260,7 +260,9 @@ public class SynDomanager implements OnError {
 	}
 
 	/**
-	 * Insert synode record with n0 and stamp.
+	 * Born or reborn, with synode's n0 and stamp created, then load all configured
+	 * tables of {@link ShSynChange}.
+	 * 
 	 * @param handlers syn handlers  
 	 * @param n0 accept as start nyquence if no records exists
 	 * @param stamp accept as start stamp if no records exists
@@ -275,7 +277,7 @@ public class SynDomanager implements OnError {
 		IUser robot = new JRobot();
 
 		if (DAHelper.count(b0, myconn, snm.tbl, snm.synoder, synode, snm.domain, domain) > 0)
-			Utils.warnT(new Object() {}, "What's it when reached here?");
+			Utils.warnT(new Object() {}, "\n== ♻.✩ == Syn-domain manager restart upon domain '%s' ...", domain);
 		else
 			DAHelper.insert(robot, b0, myconn, snm,
 					snm.synuid, synode,
@@ -289,8 +291,10 @@ public class SynDomanager implements OnError {
 		
 		if (handlers != null)
 		for (SemanticHandler h : handlers)
-			if (h instanceof ShSynChange)
-			DBSyntableBuilder.registerEntity(myconn, ((ShSynChange)h).entm);
+			if (h instanceof ShSynChange) {
+				DBSyntableBuilder.registerEntity(myconn, ((ShSynChange)h).entm);
+				Utils.logi("SynEntity registed: %s - %s : %s", myconn, domain, ((ShSynChange)h).entm.tbl);
+			}
 
 		return this;
 	}
