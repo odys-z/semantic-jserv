@@ -67,6 +67,8 @@ public class SynotierJettyApp {
 
 	String jserv;
 	String conn0;
+	DATranscxt t0; 
+	IUser robot;
 
 	public String jserv() { return jserv; }
 
@@ -194,7 +196,9 @@ public class SynotierJettyApp {
 	    
 	    SynotierJettyApp synapp = new SynotierJettyApp();
 	    synapp.conn0 = conn0;
-	
+		synapp.t0 = new DATranscxt(conn0);
+		synapp.robot = DATranscxt.dummyUser();
+
 	    if (isblank(bindIp))
 	    	synapp.server = new Server();
 	    else
@@ -268,15 +272,12 @@ public class SynotierJettyApp {
 	public SynotierJettyApp loadDomains(SynodeMeta synm, SynodeMode synmod) throws Exception {
 		if (synodetiers == null)
 			synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
-		
-		DATranscxt t0 = new DATranscxt(null);
-		IUser usr = DATranscxt.dummyUser();
 
 		AnResultset rs = (AnResultset) t0
 				.select(synm.tbl)
 				.groupby(synm.domain)
 				.groupby(synm.synoder)
-				.rs(t0.instancontxt(conn0, usr))
+				.rs(t0.instancontxt(conn0, robot))
 				.rs(0);
 		
 		while (rs.next()) {
@@ -301,10 +302,10 @@ public class SynotierJettyApp {
 	 * @throws SemanticException 
 	 */
 	public SynotierJettyApp openDomains() throws SemanticException, AnsonException, SsException, IOException {
-		if (synodetiers != null && synodetiers.containsKey(syntier_url))
+		if (synodetiers != null && synodetiers.containsKey(syntier_url)) {
 			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
-				dmgr.loadSynssions(Connects.getDebug(conn0))
-					.openSynssions((domain, mynid, peer, xp) -> {
+				dmgr.loadSynssions(t0, robot)
+					.linkSynssions((domain, mynid, peer, xp) -> {
 						try {
 							dmgr.synssion(peer).asynUpdate2peer(null);
 						} catch (ExchangeException e) {
@@ -315,10 +316,8 @@ public class SynotierJettyApp {
 							e.printStackTrace();
 						}
 					});
-//				domanager.updomains((domain, mynid, peer, xp) -> {
-//					Utils.logi("%s: domain is bringing up: %s : %s", mynid, domain, peer);
-//				});
 			}
+		}
 
 		return this;
 	}

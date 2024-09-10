@@ -12,6 +12,7 @@ import java.util.List;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -30,6 +31,7 @@ import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -52,7 +54,7 @@ public class SynDomanager implements OnError {
 	final String myconn;
 	final String domain;
 	final String org;
-	final SynodeMode mod;
+	final SynodeMode synmod;
 	
 	boolean dbg;
 	
@@ -102,13 +104,13 @@ public class SynDomanager implements OnError {
 		synode   = myid;
 		myconn   = conn;
 		domain   = dom;
+		synmod   = mod;
 		this.org = org;
-		this.mod = mod;
 		this.dbg = debug;
 	}
 	
 	public static SynDomanager clone(SynDomanager dm) {
-		return new SynDomanager(dm.org, dm.domain, dm.synode, dm.myconn, dm.mod, dm.dbg);
+		return new SynDomanager(dm.org, dm.domain, dm.synode, dm.myconn, dm.synmod, dm.dbg);
 	}
 
 	/**
@@ -125,7 +127,7 @@ public class SynDomanager implements OnError {
 	 */
 	public SynssionClientier join2peer(String adminjserv, String peeradmin, String userId, String passwd) throws Exception {
 
-		DBSyntableBuilder cltb = new DBSyntableBuilder(dom_unknown, myconn, synode, mod);
+		DBSyntableBuilder cltb = new DBSyntableBuilder(dom_unknown, myconn, synode, synmod);
 
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
@@ -156,7 +158,7 @@ public class SynDomanager implements OnError {
 	 */
 	public SyncResp onjoin(SyncReq req) throws Exception {
 		String peer = req.exblock.srcnode;
-		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, mod);
+		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, synmod);
 
 		ExessionPersist admp = new ExessionPersist(admb, peer);
 
@@ -216,7 +218,7 @@ public class SynDomanager implements OnError {
 	 * @since 0.2.0
 	 */
 	public SyncReq syninit(String peer, String domain) throws Exception {
-		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod);
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, synmod);
 
 		ExessionPersist xp = new ExessionPersist(b0, peer)
 								.loadNyquvect(myconn);
@@ -303,7 +305,6 @@ public class SynDomanager implements OnError {
 	}
 
 	///////////////////////////////////////////////////////////////////////////
-	// ArrayList<String> knownpeers;
 	/**
 	 * Update (synchronize) this domain, each peer in a new thread.
 	 * Can be called by request handler and timer.
@@ -370,14 +371,43 @@ public class SynDomanager implements OnError {
 		Utils.warn(msg, (Object[])args);
 	}
 
-	public SynDomanager loadSynssions() {
-		if (dbg)
-			;
+	public SynDomanager loadSynclients(SynodeMeta synm, DATranscxt t0, IUser robot) throws TransException, SQLException {
+		
+		AnResultset rs = (AnResultset) t0
+				.select(synm.tbl)
+				.col(synm.synoder, "peer")
+				.groupby(synm.domain)
+				.groupby(synm.synoder)
+				.where(op.ne, synm.synoder, synode)
+				.whereEq(synm.domain, domain)
+				.rs(t0.instancontxt(myconn, robot))
+				.rs(0);
+		
+		while (rs.next()) {
+			String domain = rs.getString(synm.domain);
+			SynssionClientier c = new SynssionClientier(this, domain);
+			String peer = rs.getString("peer");
+
+			if (dbg && sessions.containsKey(peer)) {
+				SynssionClientier target = sessions.get(peer);
+				if ( !eq(c.domain(), target.domain())
+				  || !eq(c.conn, target.conn)
+				  || c.mymode != target.mymode
+				  || c.peer != target.peer
+				  || target.xp != null)
+					throw new ExchangeException(ready, target.xp, "Forced verification failed.");
+			}
+
+			sessions.put(peer, c);
+		}
 
 		return this;
 	}
 
-	public SynDomanager openSynssions(OnDomainUpdate onEachOpen) {
+	public SynDomanager linkSynssions(OnDomainUpdate onEachOpen) throws ExchangeException {
+		for (SynssionClientier c : sessions.values()) {
+			c.asynUpdate2peer(onEachOpen);
+		}
 		return this;
 	}
 }

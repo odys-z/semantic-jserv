@@ -70,7 +70,7 @@ public class SynssionClientier {
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
 		this.peer      = peer;
-		this.mymode    = domanager.mod;
+		this.mymode    = domanager.synmod;
 		
 		lock = new ReentrantLock();
 		
