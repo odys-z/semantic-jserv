@@ -155,7 +155,7 @@ class SynodetierJoinTest {
 	void joinby(boolean[] lights, int to, int by) throws Exception {
 		SynotierJettyApp hub = jetties[to];
 		SynotierJettyApp prv = jetties[by];
-		// Dev dev = devs[by];
+
 		for (String servpattern : hub.synodetiers.keySet()) {
 			if (len(hub.synodetiers.get(servpattern)) > 1 || len(prv.synodetiers.get(servpattern)) > 1)
 				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
