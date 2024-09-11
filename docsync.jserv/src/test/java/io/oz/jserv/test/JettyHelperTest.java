@@ -162,7 +162,6 @@ public class JettyHelperTest {
 
 		Connects.commit(conn, usr, sqls, Connects.flag_nothing);
 
-		// SynotierJettyApp synapp = SynotierJettyApp.instanserver(webinf, conn, "config-0.xml", "127.0.0.1", port);
 		return SynotierJettyApp
 			.registerPorts(
 				SynotierJettyApp.instanserver(webinf, conn, "config-0.xml", "127.0.0.1", port),

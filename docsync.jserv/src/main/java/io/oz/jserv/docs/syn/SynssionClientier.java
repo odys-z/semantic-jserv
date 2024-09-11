@@ -38,9 +38,10 @@ public class SynssionClientier {
 	/** {@link #uri_syn}/[peer] */
 	final String clienturi;
 
-	String mynid;
-	String conn;
-	String peer;
+	final String mynid;
+	final String conn;
+	final String peer;
+	public final String peerjserv;
 
 	String domain() {
 		return xp != null && xp.trb != null ? xp.trb.domain() : null;
@@ -65,12 +66,13 @@ public class SynssionClientier {
 
 	final ReentrantLock lock;
 
-	public SynssionClientier(SynDomanager domanager, String peer) {
+	public SynssionClientier(SynDomanager domanager, String peer, String jserv) {
 		this.conn      = domanager.myconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
 		this.peer      = peer;
 		this.mymode    = domanager.synmod;
+		this.peerjserv = jserv;
 		
 		lock = new ReentrantLock();
 		
@@ -213,6 +215,7 @@ public class SynssionClientier {
 	}
 
 	ExessionPersist xp;
+
 	public SynssionClientier xp(ExessionPersist xp) {
 		this.xp = xp;
 		return this;
@@ -273,7 +276,7 @@ public class SynssionClientier {
 	}
 
 	public SyncReq closejoin(String admin, SyncResp rep) throws TransException, SQLException {
-		xp.trb.domainitMe(xp, admin, rep.exblock);
+		xp.trb.domainitMe(xp, admin, peerjserv, rep.exblock);
 
 		ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 		return new SyncReq(null, xp.trb.domain())

@@ -26,6 +26,7 @@ import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.Nyquence;
+import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
@@ -55,6 +56,7 @@ public class SynDomanager implements OnError {
 	final String domain;
 	final String org;
 	final SynodeMode synmod;
+	final SynodeMeta synm;
 	
 	boolean dbg;
 	
@@ -100,17 +102,18 @@ public class SynDomanager implements OnError {
 		return null;
 	}
 
-	public SynDomanager(String org, String dom, String myid, String conn, SynodeMode mod, boolean debug) {
+	public SynDomanager(SynodeMeta synm, String org, String dom, String myid, String conn, SynodeMode mod, boolean debug) {
 		synode   = myid;
 		myconn   = conn;
 		domain   = dom;
 		synmod   = mod;
 		this.org = org;
 		this.dbg = debug;
+		this.synm= synm;
 	}
 	
 	public static SynDomanager clone(SynDomanager dm) {
-		return new SynDomanager(dm.org, dm.domain, dm.synode, dm.myconn, dm.synmod, dm.dbg);
+		return new SynDomanager(dm.synm, dm.org, dm.domain, dm.synode, dm.myconn, dm.synmod, dm.dbg);
 	}
 
 	/**
@@ -132,7 +135,7 @@ public class SynDomanager implements OnError {
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
 
-		SynssionClientier c = new SynssionClientier(this, peeradmin)
+		SynssionClientier c = new SynssionClientier(this, peeradmin, adminjserv)
 							.xp(cltp)
 							.onErr(this);
 
@@ -164,7 +167,10 @@ public class SynDomanager implements OnError {
 
 		ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
-		synssion(peer, new SynssionClientier(this, peer).xp(admp.exstate(ready)).domain(domain));
+		// FIXME why need a Synssion here?
+		synssion(peer, new SynssionClientier(this, peer, null)
+				.xp(admp.exstate(ready))
+				.domain(domain));
 	
 		return new SyncResp(domain).exblock(resp);
 	}
@@ -250,7 +256,7 @@ public class SynDomanager implements OnError {
 
 		return new SyncResp().exblock(b);
 		*/
-		SynssionClientier c = new SynssionClientier(this, peer);
+		SynssionClientier c = new SynssionClientier(this, peer, null);
 		synssion(peer, c);
 		return c.onsyninit(ini, domain);
 	}
@@ -282,7 +288,7 @@ public class SynDomanager implements OnError {
 		IUser robot = new JRobot();
 
 		if (DAHelper.count(b0, myconn, snm.tbl, snm.synoder, synode, snm.domain, domain) > 0)
-			Utils.warnT(new Object() {}, "\n== ♻.✩ == Syn-domain manager restart upon domain '%s' ...", domain);
+			Utils.warnT(new Object() {}, "\n[ ♻.✩ ] Syn-domain manager restart upon domain '%s' ...", domain);
 		else
 			DAHelper.insert(robot, b0, myconn, snm,
 					snm.synuid, synode,
@@ -371,21 +377,25 @@ public class SynDomanager implements OnError {
 		Utils.warn(msg, (Object[])args);
 	}
 
-	public SynDomanager loadSynclients(SynodeMeta synm, DATranscxt t0, IUser robot) throws TransException, SQLException {
+	public SynDomanager loadSynclients(DATranscxt t0, IUser robot)
+			throws TransException, SQLException {
 		
 		AnResultset rs = (AnResultset) t0
 				.select(synm.tbl)
-				.col(synm.synoder, "peer")
-				.groupby(synm.domain)
+				.col(synm.synoder, "peer").col(synm.domain).col(synm.jserv)
+				// .groupby(synm.domain)
 				.groupby(synm.synoder)
-				.where(op.ne, synm.synoder, synode)
+				.where_(op.ne, synm.synoder, synode)
 				.whereEq(synm.domain, domain)
 				.rs(t0.instancontxt(myconn, robot))
 				.rs(0);
 		
+		if (sessions == null)
+			sessions = new HashMap<String, SynssionClientier>();
+		
 		while (rs.next()) {
-			String domain = rs.getString(synm.domain);
-			SynssionClientier c = new SynssionClientier(this, domain);
+			// String domain = rs.getString(synm.domain);
+			SynssionClientier c = new SynssionClientier(this, rs.getString("peer"), rs.getString(synm.jserv));
 			String peer = rs.getString("peer");
 
 			if (dbg && sessions.containsKey(peer)) {
@@ -399,13 +409,19 @@ public class SynDomanager implements OnError {
 			}
 
 			sessions.put(peer, c);
+			
+			Utils.logi("[ ♻.✩ %s ] SynssionClienter created: {clienturi: %s, conn: %s, mode: %s, peer: %s, peer-jserv: %s}",
+					synode, c.clienturi, c.conn, c.mymode.name(), c.peer, c.peerjserv);
 		}
 
 		return this;
 	}
 
-	public SynDomanager linkSynssions(OnDomainUpdate onEachOpen) throws ExchangeException {
+	public SynDomanager openSynssions(SyncRobot dbrobot, OnDomainUpdate onEachOpen)
+			throws AnsonException, SsException, IOException, TransException {
+
 		for (SynssionClientier c : sessions.values()) {
+			c.loginWithUri(c.peerjserv, dbrobot.uid(), dbrobot.pswd(), dbrobot.deviceId());
 			c.asynUpdate2peer(onEachOpen);
 		}
 		return this;

@@ -47,6 +47,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
+import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -142,11 +143,29 @@ class DoclientierTest {
 			initSynodeRecs(servs_conn[i]);
 			
 			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++, false)
-						.openDomains();
-
+						; // .loadSynclients();
+			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
 		}
+		
+		IUser robot = DATranscxt.dummyUser();
+		for (int i = 0; i < servs_conn.length; i++) {
+			Utils.logi("Jservs at %s", servs_conn[i]);
+
+			for (int j = 0; j < jetties.length; j++) {
+				SynodeMeta synm = ck[i].trb.synm;
+
+				ck[i].b0.update(synm.tbl, robot)
+					.nv(synm.jserv, jetties[j].jserv())
+					.whereEq(synm.pk, jetties[j].synode())
+					.whereEq(synm.domain, ck[i].trb.domain())
+					.u(ck[i].b0.instancontxt(servs_conn[i], robot));
+			}
+		}
+
+		for (int i = 0; i < servs_conn.length; i++)
+			jetties[i].openDomains();
 	}
 
 	@Test

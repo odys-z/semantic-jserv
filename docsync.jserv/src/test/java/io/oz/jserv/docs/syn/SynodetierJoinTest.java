@@ -195,16 +195,31 @@ class SynodetierJoinTest {
 		}
 	}
 
+	/**
+	 * 
+	 * @param serv_conn
+	 * @param config_xml
+	 * @param port
+	 * @param drop_syntbls force dropping table before commit TableMeta.ddlSqlite.
+	 * @return the Jetty App, with a servlet server.
+	 * @throws Exception
+	 */
 	static SynotierJettyApp startSyndoctier(String serv_conn, String config_xml,
 			int port, boolean drop_syntbls) throws Exception {
 
-		SynChangeMeta chm = new SynChangeMeta();
-		SynSubsMeta sbm = new SynSubsMeta(chm);
-		SynchangeBuffMeta xbm = new SynchangeBuffMeta(chm);
-		SynSessionMeta ssm = new SynSessionMeta();
-		PeersMeta prm = new PeersMeta();
-	
-		SynodeMeta synm = new SynodeMeta(serv_conn);
+		SynChangeMeta chm;
+		SynSubsMeta sbm;
+		SynchangeBuffMeta xbm;
+		SynSessionMeta ssm;
+		PeersMeta prm;
+		SynodeMeta synm;
+
+		chm  = new SynChangeMeta();
+		sbm  = new SynSubsMeta(chm);
+		xbm  = new SynchangeBuffMeta(chm);
+		ssm  = new SynSessionMeta();
+		prm  = new PeersMeta();
+		synm = new SynodeMeta(serv_conn);
 		docm = new T_PhotoMeta(serv_conn);
 
 		setupSqliTables(serv_conn, drop_syntbls, synm, chm, sbm, xbm, prm, ssm, docm);
@@ -213,7 +228,6 @@ class SynodetierJoinTest {
 			.createSyndoctierApp(serv_conn, config_xml, null, port, webinf, ura, zsu)
 			.start(() -> System.out, () -> System.err)
 			.loadDomains(synm, SynodeMode.peer)
-			// .openDomains()
 			;
 	}
 

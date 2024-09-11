@@ -8,6 +8,7 @@ import static io.oz.jserv.docs.syn.ExpSynodetier.setupDomanagers;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.sql.SQLException;
 import java.util.HashMap;
 
 import javax.servlet.annotation.WebServlet;
@@ -34,10 +35,10 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
-import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -67,8 +68,13 @@ public class SynotierJettyApp {
 
 	String jserv;
 	String conn0;
+	String synode;
 	DATranscxt t0; 
-	IUser robot;
+	SyncRobot robot;
+
+	public SynotierJettyApp(String synid) {
+		this.synode = synid;
+	}
 
 	public String jserv() { return jserv; }
 
@@ -105,8 +111,9 @@ public class SynotierJettyApp {
 			SynotierJettyApp app = createSyndoctierApp(synconn, cfgxml, bind, port, webinf, org, domain)
 								.start(() -> System.out, () -> System.err);
 
-			Utils.pause(String.format("[Synodetier] started at port %s, org %s, domain %s, configure file %s, conn %s",
-					port, org, domain, cfgxml, synconn));
+			Utils.pause(String.format(
+					"[%s] started at port %s, org %s, domain %s, configure file %s, conn %s",
+					"SynotierJettyApp", port, org, domain, cfgxml, synconn));
 			
 			app.stop();
 		}
@@ -124,7 +131,8 @@ public class SynotierJettyApp {
 		String synid  = Configs.getCfg(Configs.keys.synode);
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
-		HashMap<String,SynDomanager> domains = setupDomanagers(org, domain, synid, serv_conn, SynodeMode.peer, Connects.getDebug(serv_conn));
+		HashMap<String,SynDomanager> domains = setupDomanagers(org, domain, synid,
+				serv_conn, SynodeMode.peer, Connects.getDebug(serv_conn));
 	
 		ExpDoctier doctier  = new ExpDoctier(synid, serv_conn)
 							.startier(org, domain, SynodeMode.peer)
@@ -190,14 +198,16 @@ public class SynotierJettyApp {
 	 */
 	public static SynotierJettyApp instanserver(String configPath, String conn0, String configxml,
 			String bindIp, int port) throws Exception {
-	
-		Syngleton.initSynodetier(configxml, conn0, ".", configPath, "ABCDEF0123456789");
+
 	    AnsonMsg.understandPorts(Port.syntier);
-	    
-	    SynotierJettyApp synapp = new SynotierJettyApp();
+	
+		String synid = Syngleton.initSynodetier(configxml, conn0, ".", configPath, "ABCDEF0123456789");
+
+	    SynotierJettyApp synapp = new SynotierJettyApp(synid);
+
 	    synapp.conn0 = conn0;
 		synapp.t0 = new DATranscxt(conn0);
-		synapp.robot = DATranscxt.dummyUser();
+		synapp.robot = new SyncRobot("rob-" + synid, "pswd:??", "Robot@" + synid, synid);
 
 	    if (isblank(bindIp))
 	    	synapp.server = new Server();
@@ -277,15 +287,15 @@ public class SynotierJettyApp {
 				.select(synm.tbl)
 				.groupby(synm.domain)
 				.groupby(synm.synoder)
+				.whereEq(synm.pk, synode)
 				.rs(t0.instancontxt(conn0, robot))
 				.rs(0);
 		
 		while (rs.next()) {
 			String domain = rs.getString(synm.domain);
 			SynDomanager domanger = new SynDomanager(
-					rs.getString(synm.org),
-					domain,
-					rs.getString(synm.synoder),
+					synm, rs.getString(synm.org),
+					domain, synode,
 					conn0, synmod, Connects.getDebug(conn0));
 			synodetiers.get(syntier_url).put(domain, domanger);
 		}
@@ -295,27 +305,30 @@ public class SynotierJettyApp {
 
 	/**
 	 * Try join (login) known domains
+	 * 
 	 * @return this
 	 * @throws IOException 
 	 * @throws SsException 
 	 * @throws AnsonException 
-	 * @throws SemanticException 
+	 * @throws SQLException 
+	 * @throws TransException 
 	 */
-	public SynotierJettyApp openDomains() throws SemanticException, AnsonException, SsException, IOException {
+	public SynotierJettyApp openDomains() throws AnsonException, SsException, IOException, TransException, SQLException {
 		if (synodetiers != null && synodetiers.containsKey(syntier_url)) {
 			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
-				dmgr.loadSynssions(t0, robot)
-					.linkSynssions((domain, mynid, peer, xp) -> {
-						try {
-							dmgr.synssion(peer).asynUpdate2peer(null);
-						} catch (ExchangeException e) {
-							Utils.warnT(new Object() {},
-								"Update synssion with peer failed. conn-id: %s, domain: %s, synid: %s, peer %s",
-								conn0, domain, mynid, peer);
+				dmgr.loadSynclients(t0, robot)
+					.openSynssions(robot,
+						(domain, mynid, peer, xp) -> {
+							try {
+								dmgr.synssion(peer).asynUpdate2peer(null);
+							} catch (ExchangeException e) {
+								Utils.warnT(new Object() {},
+									"Update synssion with peer failed. conn-id: %s, domain: %s, synid: %s, peer %s",
+									conn0, domain, mynid, peer);
 
-							e.printStackTrace();
-						}
-					});
+								e.printStackTrace();
+							}
+						});
 			}
 		}
 

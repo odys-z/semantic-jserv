@@ -24,6 +24,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.SynodeMode;
@@ -38,7 +39,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			String synode, String conn, SynodeMode mod, boolean debug) throws Exception {
 		
 		HashMap<String, SynDomanager> domains = new HashMap<String, SynDomanager>();
-		domains.put(domain, new SynDomanager(org, domain, synode, conn, mod, debug));
+		domains.put(domain, new SynDomanager(new SynodeMeta(conn), org, domain, synode, conn, mod, debug));
 
 		SemanticsMap ss = DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
 			(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));

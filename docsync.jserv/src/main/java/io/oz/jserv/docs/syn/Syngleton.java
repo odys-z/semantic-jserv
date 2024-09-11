@@ -26,9 +26,10 @@ public class Syngleton extends JSingleton {
 	 * @param runtimeRoot
 	 * @param configFolder, folder of connects.xml, config.xml and semnatics.xml
 	 * @param rootKey, e.g. context.xml/parameter=root-key
+	 * @return synode id (configured in @{code cfgxml})
 	 * @throws Exception 
 	 */
-	public static void initSynodetier(String cfgxml, String conn0, String runtimeRoot,
+	public static String initSynodetier(String cfgxml, String conn0, String runtimeRoot,
 			String configFolder, String rootKey) throws Exception {
 
 		Utils.logi("Initializing synode with configuration file %s\n"
@@ -54,6 +55,7 @@ public class Syngleton extends JSingleton {
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 
 		AnSession.init(defltScxt);
-
+		
+		return synode;
 	}
 }
