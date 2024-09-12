@@ -19,9 +19,10 @@ shouldn't be the case.
 User Accounts management for cloud applications is a wild world, of which the
 patterns can be vary in a wide range of schemas [x.5, x.6, x.7, x.8].
 
-The first version will experment an architecture based upon a centrialized users
-management platform, for downloading user information to synodes, supposing happend
-before synchronizations begin.
+[refact-docsync: cfec2ea65f4b4ba4271c49f0bcdef9fb1d385c70] The first version will
+experment an architecture based upon a centrialized users management platform, for
+downloading user information to synodes, supposing happend before synchronizations
+begin.
 
 # References
 

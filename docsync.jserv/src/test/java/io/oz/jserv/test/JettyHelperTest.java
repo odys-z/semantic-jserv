@@ -28,6 +28,7 @@ import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
+import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.oz.jserv.docs.AssertImpl;
@@ -161,10 +162,12 @@ public class JettyHelperTest {
 				uid, port));
 
 		Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+		
+		SyncRobot tierob = new SyncRobot("odyz", "8964", "Ody by robot");
 
 		return SynotierJettyApp
 			.registerPorts(
-				SynotierJettyApp.instanserver(webinf, conn, "config-0.xml", "127.0.0.1", port),
+				SynotierJettyApp.instanserver(webinf, conn, "config-0.xml", "127.0.0.1", port, tierob),
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))

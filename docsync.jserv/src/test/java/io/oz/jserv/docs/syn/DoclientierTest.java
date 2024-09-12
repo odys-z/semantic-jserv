@@ -213,7 +213,6 @@ class DoclientierTest {
 //		}
 	}
 
-
 	@AfterAll
 	static void close() throws Exception {
 		logi("Server is closed.");

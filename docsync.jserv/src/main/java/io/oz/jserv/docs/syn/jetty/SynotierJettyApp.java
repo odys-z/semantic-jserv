@@ -34,6 +34,7 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
+import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
@@ -82,14 +83,21 @@ public class SynotierJettyApp {
 	 * Eclipse run configuration example:
 	 * <pre>Run - Run Configurations - Arguments
 	 * Program Arguments
-	 * 192.168.0.100 8964 ura zsu src/test/res/WEB-INF config-0.xml no-jserv.00
+	 * 192.168.0.100 8964 ura zsu src/test/res/WEB-INF config-0.xml no-jserv.00 odyz
 	 * 
 	 * VM Arguments
 	 * -DVOLUME_HOME=../volume
 	 * </pre>
 	 * volume home = relative path to web-inf.
 	 * 
-	 * @param args [0] ip, [1] port, [2] org, [3] domain, [4] web-inf, [5] config.xml, [6] conn-id
+	 * @param args [0] ip,
+	 *             [1] port,
+	 *             [2] org,
+	 *             [3] domain,
+	 *             [4] web-inf,
+	 *             [5] config.xml,
+	 *             [6] conn-id,
+	 *             [7] robot id already registered on each peers
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
@@ -101,6 +109,7 @@ public class SynotierJettyApp {
 			String webinf  = args.length > 4 ? args[4] : "WEB-INF";
 			String cfgxml  = !isNull(args) && args.length > 5 ? args[5] : "config.xml";
 			String synconn = !isNull(args) && args.length > 6 ? args[6] : "sqlite-main";
+			String robid   = !isNull(args) && args.length > 7 ? args[7] : System.getenv("robot-id");
 		
 			Utils.logi("Starting Synodetier at port %s, org %s, domain %s, configure file %s, conn %s",
 					port, org, domain, cfgxml, synconn);
@@ -108,7 +117,8 @@ public class SynotierJettyApp {
 			Configs.init(webinf);
 			Connects.init(webinf);
 
-			SynotierJettyApp app = createSyndoctierApp(synconn, cfgxml, bind, port, webinf, org, domain)
+			SynotierJettyApp app = createSyndoctierApp(synconn, cfgxml, bind, port, webinf, domain,
+								new SyncRobot(robid, SynotierJettyApp.loadRobot(synconn)))
 								.start(() -> System.out, () -> System.err);
 
 			Utils.pause(String.format(
@@ -122,25 +132,51 @@ public class SynotierJettyApp {
 			throw e;
 		}
 	}
+	
+	/**
+	 * This test helper supposes the user is authorized to login to every peer. 
+	 * @return passwd
+	 */
+ 	static String retrievePasswd(String conn) {
+ 		JUserMeta usrm = new JUserMeta();
+// 		new DATranscxt(conn).select(usrm.tbl)
+// 			.col(usrm.org, usrm.iv)
+// 			;
+		return "слава україні";
+	}
 
+
+	/**
+	 * Create an application instance working as a synode tier.
+	 * @param serv_conn db connection of which to be synchronized
+	 * @param config_xml name of config file, e.g. config.xml
+	 * @param bindIp, optional, null for localhost
+	 * @param port
+	 * @param webinf
+	 * @param domain
+	 * @param robot
+	 * @return Synode-tier Jetty App
+	 * @throws Exception
+	 */
 	public static SynotierJettyApp createSyndoctierApp(String serv_conn,
-			String config_xml, String bindIp, int port,
-			String webinf, String org, String domain) throws Exception {
+			String config_xml, String bindIp, int port, String webinf,
+			String domain, SyncRobot robot) throws Exception {
 
 		Configs.init(webinf, config_xml);
 		String synid  = Configs.getCfg(Configs.keys.synode);
+		robot.deviceId(synid);
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
-		HashMap<String,SynDomanager> domains = setupDomanagers(org, domain, synid,
+		HashMap<String,SynDomanager> domains = setupDomanagers(robot.orgId(), domain, synid,
 				serv_conn, SynodeMode.peer, Connects.getDebug(serv_conn));
 	
 		ExpDoctier doctier  = new ExpDoctier(synid, serv_conn)
-							.startier(org, domain, SynodeMode.peer)
+							.startier(robot.orgId(), domain, SynodeMode.peer)
 							.domains(domains);
-		ExpSynodetier syner = new ExpSynodetier(org, domain, synid, serv_conn, SynodeMode.peer)
+		ExpSynodetier syner = new ExpSynodetier(robot.orgId(), domain, synid, serv_conn, SynodeMode.peer)
 							.domains(domains);
 		
-		SynotierJettyApp synapp = instanserver(webinf, serv_conn, config_xml, bindIp, port);
+		SynotierJettyApp synapp = instanserver(webinf, serv_conn, config_xml, bindIp, port, robot);
 		return registerPorts(synapp, serv_conn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addServPort(doctier)
@@ -191,13 +227,14 @@ public class SynotierJettyApp {
 	 * @param configPath
 	 * @param conn0
 	 * @param configxml
+	 * @param bindIp
 	 * @param port
-	 * @param out 
+	 * @param robotInf information for creating robot, i. e. the user identity for login to peer synodes.
 	 * @return Jetty App
 	 * @throws Exception
 	 */
 	public static SynotierJettyApp instanserver(String configPath, String conn0, String configxml,
-			String bindIp, int port) throws Exception {
+			String bindIp, int port, SyncRobot robt) throws Exception {
 
 	    AnsonMsg.understandPorts(Port.syntier);
 	
@@ -207,7 +244,7 @@ public class SynotierJettyApp {
 
 	    synapp.conn0 = conn0;
 		synapp.t0 = new DATranscxt(conn0);
-		synapp.robot = new SyncRobot("rob-" + synid, "pswd:??", "Robot@" + synid, synid);
+		synapp.robot = robt;
 
 	    if (isblank(bindIp))
 	    	synapp.server = new Server();
@@ -313,7 +350,8 @@ public class SynotierJettyApp {
 	 * @throws SQLException 
 	 * @throws TransException 
 	 */
-	public SynotierJettyApp openDomains() throws AnsonException, SsException, IOException, TransException, SQLException {
+	public SynotierJettyApp openDomains()
+			throws AnsonException, SsException, IOException, TransException, SQLException {
 		if (synodetiers != null && synodetiers.containsKey(syntier_url)) {
 			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
 				dmgr.loadSynclients(t0, robot)

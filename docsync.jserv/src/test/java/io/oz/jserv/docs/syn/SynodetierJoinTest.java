@@ -13,7 +13,6 @@ import static io.oz.jserv.docs.syn.SynoderTest.X;
 import static io.oz.jserv.docs.syn.SynoderTest.Y;
 import static io.oz.jserv.docs.syn.SynoderTest.Z;
 import static io.oz.jserv.docs.syn.SynoderTest.azert;
-import static io.oz.jserv.docs.syn.SynoderTest.ura;
 import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -41,11 +40,13 @@ import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.Docheck;
+import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
+import io.oz.synode.jclient.YellowPages;
 
 class SynodetierJoinTest {
 	static int bsize;
@@ -196,6 +197,8 @@ class SynodetierJoinTest {
 	}
 
 	/**
+	 * Start a synode tier with the user identity which is authorized
+	 * to login to every peer. 
 	 * 
 	 * @param serv_conn
 	 * @param config_xml
@@ -224,8 +227,11 @@ class SynodetierJoinTest {
 
 		setupSqliTables(serv_conn, drop_syntbls, synm, chm, sbm, xbm, prm, ssm, docm);
 
+		// SyncRobot tierobot = new SyncRobot(syrskyi, retrievePasswd(serv_conn), syrskyi + "@" + ura).orgId(ura);
+		SyncRobot tierobot = YellowPages.loadRobot(syrskyi);
+
 		return SynotierJettyApp 
-			.createSyndoctierApp(serv_conn, config_xml, null, port, webinf, ura, zsu)
+			.createSyndoctierApp(serv_conn, config_xml, null, port, webinf, zsu, tierobot)
 			.start(() -> System.out, () -> System.err)
 			.loadDomains(synm, SynodeMode.peer)
 			;
