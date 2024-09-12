@@ -14,6 +14,7 @@ import static io.oz.jserv.docs.syn.SynoderTest.Y;
 import static io.oz.jserv.docs.syn.SynoderTest.Z;
 import static io.oz.jserv.docs.syn.SynoderTest.azert;
 import static io.oz.jserv.docs.syn.SynoderTest.zsu;
+import static io.oz.jserv.docs.syn.SynoderTest.ura;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -227,8 +228,8 @@ class SynodetierJoinTest {
 
 		setupSqliTables(serv_conn, drop_syntbls, synm, chm, sbm, xbm, prm, ssm, docm);
 
-		// SyncRobot tierobot = new SyncRobot(syrskyi, retrievePasswd(serv_conn), syrskyi + "@" + ura).orgId(ura);
 		SyncRobot tierobot = YellowPages.loadRobot(syrskyi);
+		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 
 			.createSyndoctierApp(serv_conn, config_xml, null, port, webinf, zsu, tierobot)
