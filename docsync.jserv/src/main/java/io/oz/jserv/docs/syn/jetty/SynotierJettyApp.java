@@ -34,7 +34,6 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
@@ -44,6 +43,7 @@ import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.Syngleton;
+import io.oz.synode.jclient.YellowPages;
 
 /**
  * Start an embedded Jetty server for ee8.
@@ -117,8 +117,9 @@ public class SynotierJettyApp {
 			Configs.init(webinf);
 			Connects.init(webinf);
 
-			SynotierJettyApp app = createSyndoctierApp(synconn, cfgxml, bind, port, webinf, domain,
-								new SyncRobot(robid, SynotierJettyApp.loadRobot(synconn)))
+			SynotierJettyApp app = createSyndoctierApp(
+								synconn, cfgxml, bind, port, webinf, domain,
+								YellowPages.getRobot(robid))
 								.start(() -> System.out, () -> System.err);
 
 			Utils.pause(String.format(
@@ -133,17 +134,17 @@ public class SynotierJettyApp {
 		}
 	}
 	
-	/**
-	 * This test helper supposes the user is authorized to login to every peer. 
-	 * @return passwd
-	 */
- 	static String retrievePasswd(String conn) {
- 		JUserMeta usrm = new JUserMeta();
-// 		new DATranscxt(conn).select(usrm.tbl)
-// 			.col(usrm.org, usrm.iv)
-// 			;
-		return "слава україні";
-	}
+//	/**
+//	 * This test helper supposes the user is authorized to login to every peer. 
+//	 * @return passwd
+//	 */
+// 	static String retrievePasswd(String conn) {
+// 		JUserMeta usrm = new JUserMeta();
+//// 		new DATranscxt(conn).select(usrm.tbl)
+//// 			.col(usrm.org, usrm.iv)
+//// 			;
+//		return "слава україні";
+//	}
 
 
 	/**

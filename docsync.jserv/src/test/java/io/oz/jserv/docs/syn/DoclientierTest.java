@@ -55,6 +55,7 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
+import io.oz.synode.jclient.YellowPages;
 
 class DoclientierTest {
 	public final static int X = 0;
@@ -130,6 +131,7 @@ class DoclientierTest {
 
 		Configs.init(webinf);
 		Connects.init(webinf);
+		YellowPages.load("$VOLUME_HOME");
 
 		ck = new Docheck[servs_conn.length];
 		

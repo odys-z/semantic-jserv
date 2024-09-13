@@ -2,7 +2,10 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.len;
 
+import org.apache.commons.io_odysz.FilenameUtils;
+
 import io.odysz.common.Configs;
+import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -10,6 +13,7 @@ import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.oz.synode.jclient.YellowPages;
 
 public class Syngleton extends JSingleton {
 
@@ -55,6 +59,8 @@ public class Syngleton extends JSingleton {
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 
 		AnSession.init(defltScxt);
+		
+		YellowPages.load(FilenameUtils.concat(configFolder, EnvPath.replaceEnv("$VOLUME_HOME")));
 		
 		return synode;
 	}

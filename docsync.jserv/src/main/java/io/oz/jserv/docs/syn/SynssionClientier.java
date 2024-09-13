@@ -44,13 +44,14 @@ public class SynssionClientier {
 	public final String peerjserv;
 
 	String domain() {
-		return xp != null && xp.trb != null ? xp.trb.domain() : null;
+		// return xp != null && xp.trb != null ? xp.trb.domain() : null;
+		return domanager.domain;
 	}
 
-	SynssionClientier domain(String domain) {
-		this.xp.trb.domain(domain);
-		return this;
-	}
+//	SynssionClientier domain(String domain) {
+//		this.xp.trb.domain(domain);
+//		return this;
+//	}
 
 	SynodeMode mymode;
 	SynDomanager domanager;
@@ -189,15 +190,11 @@ public class SynssionClientier {
 		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", A.exchange, "by " + mynid);
 		AnsonHeader header = client.header().act(act);
 
-		// req.a(A.exchange);
-		// req.org = org;
-
-		SyncResp resp = null;
 		try {
 			AnsonMsg<SyncReq> q = client.<SyncReq>userReq(clienturi, Port.syntier, req)
 								.header(header);
 
-			resp = client.commit(q, errHandler);
+			return client.commit(q, errHandler);
 		} catch (AnsonException | SemanticException e) {
 			errHandler.err(MsgCode.exSemantic,
 					e.getMessage() + " " + (e.getCause() == null
@@ -207,7 +204,7 @@ public class SynssionClientier {
 					e.getMessage() + " " + (e.getCause() == null
 					? "" : e.getCause().getMessage()));
 		}
-		return resp;
+		return null;
 	}
 
 	SyncResp exesclose(String peer, ExchangeBlock req) {

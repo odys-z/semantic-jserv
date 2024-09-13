@@ -3,3 +3,4 @@ target
 .settings
 res-temp
 jetty-log
+client-at-*

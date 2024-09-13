@@ -95,6 +95,7 @@ class SynodetierJoinTest {
 
 		Configs.init(webinf);
 		Connects.init(webinf);
+		YellowPages.load("$VOLUME_HOME");
 
 		ck = new Docheck[servs_conn.length];
 		
@@ -228,7 +229,7 @@ class SynodetierJoinTest {
 
 		setupSqliTables(serv_conn, drop_syntbls, synm, chm, sbm, xbm, prm, ssm, docm);
 
-		SyncRobot tierobot = YellowPages.loadRobot(syrskyi);
+		SyncRobot tierobot = YellowPages.getRobot(syrskyi);
 		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 

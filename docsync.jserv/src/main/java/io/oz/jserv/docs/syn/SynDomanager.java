@@ -72,6 +72,8 @@ public class SynDomanager implements OnError {
 	 */
 	public SynssionClientier expiredClientier;
 
+	OnError errHandler;
+
 	public Nyquence lastn0(String peer) {
 		return expiredClientier == null || expiredClientier.xp == null ?
 				null : expiredClientier.xp.n0();
@@ -110,6 +112,10 @@ public class SynDomanager implements OnError {
 		this.org = org;
 		this.dbg = debug;
 		this.synm= synm;
+		
+		errHandler = (e, r, a) -> {
+			Utils.warn("Error code: %s,\n%s", e.name(), String.format(r, (Object[])a));
+		};
 	}
 	
 	public static SynDomanager clone(SynDomanager dm) {
@@ -170,7 +176,8 @@ public class SynDomanager implements OnError {
 		// FIXME why need a Synssion here?
 		synssion(peer, new SynssionClientier(this, peer, null)
 				.xp(admp.exstate(ready))
-				.domain(domain));
+				// .domain(domain)
+				);
 	
 		return new SyncResp(domain).exblock(resp);
 	}
@@ -181,7 +188,7 @@ public class SynDomanager implements OnError {
 
 		String admin = rep.exblock.srcnode;
 		try {
-			return synssion(admin).domain(domain).closejoin(admin, rep);
+			return synssion(admin).closejoin(admin, rep);
 		/*
 			ExessionPersist xp = synssion(admin).xp;
 			xp.trb.domainitMe(xp, admin, rep.exblock);
@@ -395,7 +402,8 @@ public class SynDomanager implements OnError {
 		
 		while (rs.next()) {
 			// String domain = rs.getString(synm.domain);
-			SynssionClientier c = new SynssionClientier(this, rs.getString("peer"), rs.getString(synm.jserv));
+			SynssionClientier c = new SynssionClientier(this, rs.getString("peer"), rs.getString(synm.jserv))
+								.onErr(errHandler);
 			String peer = rs.getString("peer");
 
 			if (dbg && sessions.containsKey(peer)) {
