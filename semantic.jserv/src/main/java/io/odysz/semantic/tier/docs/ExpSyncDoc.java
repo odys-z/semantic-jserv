@@ -16,7 +16,6 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.SynEntity;
-import io.odysz.semantics.ISemantext;
 import io.odysz.transact.sql.Insert;
 import static io.odysz.common.LangExt.*;
 
@@ -28,10 +27,11 @@ import static io.odysz.common.LangExt.*;
  */
 public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
-	public String recId;
-	public String recId() { return recId; }
+//	public String recId;
+//	public String recId() { return recId; }
+	@Override
 	public ExpSyncDoc recId(String did) {
-		recId = did;
+		super.recId(did);
 		return this;
 	}
 
@@ -129,8 +129,8 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	@AnsonField(ignoreTo=true)
 	ExpDocTableMeta docMeta;
 
-	@AnsonField(ignoreTo=true, ignoreFrom=true)
-	ISemantext semantxt;
+//	@AnsonField(ignoreTo=true, ignoreFrom=true)
+//	ISemantext semantxt;
 
 	public String mime;
 	
@@ -215,6 +215,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		device = file.device();
 		pname = file.clientname();
 		createDate = file.cdate();
+		clientpath = file.fullpath();
 	}
 
 	/**

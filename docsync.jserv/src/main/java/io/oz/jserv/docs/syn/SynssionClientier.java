@@ -28,6 +28,7 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
 public class SynssionClientier {
@@ -37,18 +38,20 @@ public class SynssionClientier {
 	/** {@link #uri_syn}/[peer] */
 	final String clienturi;
 
-	String mynid;
-	String conn;
-	String peer;
+	final String mynid;
+	final String conn;
+	final String peer;
+	public final String peerjserv;
 
 	String domain() {
-		return xp != null && xp.trb != null ? xp.trb.domain() : null;
+		// return xp != null && xp.trb != null ? xp.trb.domain() : null;
+		return domanager.domain;
 	}
 
-	SynssionClientier domain(String domain) {
-		this.xp.trb.domain(domain);
-		return this;
-	}
+//	SynssionClientier domain(String domain) {
+//		this.xp.trb.domain(domain);
+//		return this;
+//	}
 
 	SynodeMode mymode;
 	SynDomanager domanager;
@@ -64,12 +67,13 @@ public class SynssionClientier {
 
 	final ReentrantLock lock;
 
-	public SynssionClientier(SynDomanager domanager, String peer) {
+	public SynssionClientier(SynDomanager domanager, String peer, String jserv) {
 		this.conn      = domanager.myconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
 		this.peer      = peer;
-		this.mymode    = domanager.mod;
+		this.mymode    = domanager.synmod;
+		this.peerjserv = jserv;
 		
 		lock = new ReentrantLock();
 		
@@ -77,11 +81,12 @@ public class SynssionClientier {
 	}
 
 	/**
-	 * Start updating with peer, in this domain.
+	 * Start a domain updating process (handshaking) with this.peer, in this.domain.
+	 * @param object 
 	 * @return this
 	 * @throws ExchangeException not ready yet.
 	 */
-	public SynssionClientier update2peer() throws ExchangeException {
+	public SynssionClientier asynUpdate2peer(OnDomainUpdate onup) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null, "Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
 					peer, domain(), client == null ? ", client is null" : "");
@@ -107,6 +112,9 @@ public class SynssionClientier {
 					// close
 					reqb = synclose(rep.exblock);
 					rep = exesclose(peer, reqb);
+					
+					if (onup != null)
+						onup.ok(domain(), mynid, peer, xp);
 				}
 			} catch (IOException e) {
 				Utils.warn(e.getMessage());
@@ -170,23 +178,6 @@ public class SynssionClientier {
 		return new SyncResp(domain()).exblock(b);
 	}
 
-//	/**
-//	 * Initialize an exchange session.
-//	 * @param ini
-//	 * @return initializing request
-//	 * @throws Exception 
-//	 */
-//	SyncResp exesOninit(SyncResp ini) throws Exception {
-//		b0 = new DBSyntableBuilder(domain, conn, mynid, mymode);
-//
-//		xp = new ExessionPersist(b0, peer, ini.exblock)
-//								.loadNyquvect(conn);
-//
-//		ExchangeBlock b = b0.onInit(xp, ini.exblock);
-//
-//		return new SyncResp().exblock(b);
-//	}
-
 	SyncResp exespush(String peer, String a, ExchangeBlock reqb) {
 		SyncReq req = (SyncReq) new SyncReq(null, peer)
 					.exblock(reqb)
@@ -199,15 +190,11 @@ public class SynssionClientier {
 		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", A.exchange, "by " + mynid);
 		AnsonHeader header = client.header().act(act);
 
-		// req.a(A.exchange);
-		// req.org = org;
-
-		SyncResp resp = null;
 		try {
 			AnsonMsg<SyncReq> q = client.<SyncReq>userReq(clienturi, Port.syntier, req)
 								.header(header);
 
-			resp = client.commit(q, errHandler);
+			return client.commit(q, errHandler);
 		} catch (AnsonException | SemanticException e) {
 			errHandler.err(MsgCode.exSemantic,
 					e.getMessage() + " " + (e.getCause() == null
@@ -217,7 +204,7 @@ public class SynssionClientier {
 					e.getMessage() + " " + (e.getCause() == null
 					? "" : e.getCause().getMessage()));
 		}
-		return resp;
+		return null;
 	}
 
 	SyncResp exesclose(String peer, ExchangeBlock req) {
@@ -225,6 +212,7 @@ public class SynssionClientier {
 	}
 
 	ExessionPersist xp;
+
 	public SynssionClientier xp(ExessionPersist xp) {
 		this.xp = xp;
 		return this;
@@ -233,7 +221,16 @@ public class SynssionClientier {
 	public void pingPeers() {
 	}
 
-	public void joindomain(String admid, String myuid, String mypswd, OnOk... ok) {
+	/**
+	 * Go through the handshaking process of sing up to a domain. 
+	 * 
+	 * @param admid
+	 * @param myuid
+	 * @param mypswd
+	 * @param ok
+	 * @since 0.2.0
+	 */
+	public void asynJoindomain(String admid, String myuid, String mypswd, OnOk ok) {
 		new Thread(() -> { 
 			try {
 				lock.lock();
@@ -247,7 +244,7 @@ public class SynssionClientier {
 				rep = exespush(admid, (SyncReq)req.a(A.closejoin));
 
 				if (!isNull(ok))
-					ok[0].ok(rep);
+					ok.ok(rep);
 			} catch (TransException | SQLException | AnsonException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
@@ -258,7 +255,8 @@ public class SynssionClientier {
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
 			throws SemanticException, AnsonException, SsException, IOException {
-		client = new SessionClient(jservroot, null).loginWithUri(clienturi, myuid, pswd, device);
+		client = new SessionClient(jservroot, null)
+				.loginWithUri(clienturi, myuid, pswd, device);
 		return client;
 	}
 
@@ -275,7 +273,7 @@ public class SynssionClientier {
 	}
 
 	public SyncReq closejoin(String admin, SyncResp rep) throws TransException, SQLException {
-		xp.trb.domainitMe(xp, admin, rep.exblock);
+		xp.trb.domainitMe(xp, admin, peerjserv, rep.exblock);
 
 		ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 		return new SyncReq(null, xp.trb.domain())

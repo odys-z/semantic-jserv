@@ -199,7 +199,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @return
 	 * @throws Exception
 	 */
-	public ExpDoctier start(String org, String domain, SynodeMode mod)
+	public ExpDoctier startier(String org, String domain, SynodeMode mod)
 			throws Exception {
 		dom0builder = new DBSyntableBuilder(
 				domain, // FIXME this is not correct. 
@@ -342,7 +342,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		if (isblank(body.doc.clientpath))
-			throw new SemanticException("Doc's client-path must presents in each pushing blocks.");
+			throw new SemanticException("Doc's client-path must presenting in each pushing blocks.");
 
 		String id = chainId(usr, body.doc.clientpath);
 		if (!blockChains.containsKey(id))

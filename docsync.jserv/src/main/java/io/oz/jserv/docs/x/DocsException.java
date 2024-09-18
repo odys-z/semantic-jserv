@@ -14,6 +14,9 @@ public class DocsException extends SemanticException {
 
 	/**
 	 * ex(new SemanticObject().put("code", code).put("reason", reason));
+	 * 
+	 * @param code, {@link #Succeed}, ...
+	 * @param reasons
 	 */
 	public DocsException(int code, String... reasons) {
 		super("Details in #ex field.");

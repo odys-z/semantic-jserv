@@ -4,7 +4,7 @@ import static io.odysz.common.LangExt.isNull;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.odysz.semantic.syn.IAssert;
+import io.odysz.common.IAssert;
 
 public class AssertImpl implements IAssert {
 

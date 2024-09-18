@@ -52,6 +52,7 @@ import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.x.DocsException;
 
 public class Doclientier extends Semantier {
 	public boolean verbose = false;
@@ -59,7 +60,7 @@ public class Doclientier extends Semantier {
 	protected SessionClient client;
 	protected OnError errCtx;
 
-	protected DocUser robot;
+	protected DocUser robt;
 
 	/** For download. */
 	protected String tempath;
@@ -168,7 +169,7 @@ public class Doclientier extends Semantier {
 		SessionInf ssinf = client.ssInfo();
 		try {
 			// robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath, ssinf.device);
-			robot = new DocUser(ssinf.uid());
+			robt = new DocUser(ssinf.uid());
 			tempath = FilenameUtils.concat(tempath,
 					String.format("io.oz.doc.%s.%s", ssinf.device, ssinf.uid()));
 			
@@ -176,19 +177,19 @@ public class Doclientier extends Semantier {
 			
 			JUserMeta um = isNull(Connects.getAllConnIds())
 					? new JUserMeta() // a temporary solution for client without DB connections
-					: (JUserMeta) robot.meta();
+					: (JUserMeta) robt.meta();
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
 			 .l(um.om.tbl, "o", String.format("o.%1$s = u.%1$s", um.org))
-			 .whereEq("u." + um.pk, robot.uid());
+			 .whereEq("u." + um.pk, robt.uid());
 
 			AnsonResp resp = client.commit(q, errCtx);
 			AnResultset rs = resp.rs(0).beforeFirst();
 			if (rs.next())
-				robot.orgId(rs.getString(um.org))
+				robt.orgId(rs.getString(um.org))
 					.orgName(rs.getString(um.orgName));
-			else throw new SemanticException("User identity haven't been reqistered: %s", robot.uid());
+			else throw new SemanticException("User identity haven't been reqistered: %s", robt.uid());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -331,11 +332,17 @@ public class Doclientier extends Semantier {
 			int totalBlocks = 0;
 
 			ExpSyncDoc p = videos.get(px);
+			if (isblank(p.clientpath) || isblank(p.device()))
+				throw new DocsException(DocsException.SemanticsError,
+						"Docs' pushing requires device id and clientpath.\n" +
+						"Doc Id: %s, device id: %s, client-path: %s, resource name: %s",
+						p.recId, p.device(), p.clientpath, p.pname);
+
 			DocsReq req  = new DocsReq(tbl, p, uri)
 					.device(user.device)
 					.resetChain(true)
 					.blockStart(p, user);
-
+			
 			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
 									.header(header);
 
@@ -487,92 +494,6 @@ public class Doclientier extends Semantier {
 		}
 		return resp;
 	}
-
-//	DocsResp synClosePush(ExpSyncDoc p, String docTabl)
-//			throws AnsonException, IOException, TransException, SQLException {
-//
-//		DocsReq clsReq = (DocsReq) new DocsReq()
-//						.docTabl(docTabl)
-//						// .org(robot.orgId)
-//						.queryPath(p.device(), p.fullpath())
-//						.a(A.synclosePush);
-//
-//		AnsonMsg<DocsReq> q = client
-//				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
-//
-//		DocsResp r = client.commit(q, errCtx);
-//		return r;
-//	}
-	
-//	/**
-//	 * Tell upper synode to close the doc downloading.
-//	 * @param p
-//	 * @param docTabl
-//	 * @return
-//	 * @throws SemanticException
-//	 * @throws AnsonException
-//	 * @throws IOException
-//	 */
-//	DocsResp synClosePull(ExpSyncDoc p, String docTabl)
-//			throws SemanticException, AnsonException, IOException {
-//		DocsReq clsReq = (DocsReq) new DocsReq()
-//						.docTabl(docTabl)
-//						// .org(robot.orgId)
-//						.queryPath(p.device(), p.fullpath())
-//						.a(A.synclosePull);
-//
-//		AnsonMsg<DocsReq> q = client
-//				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
-//
-//		DocsResp r = client.commit(q, errCtx);
-//		return r;
-//	}
-	
-	/**
-	 * Insert the locally ready doc (localpath) into table.
-	 * Also update meta.syncflag.
-	 * 
-	 * @param st
-	 * @param conn
-	 * @param localPath
-	 * @param doc
-	 * @param usr
-	 * @param meta
-	 * @return new doc id
-	 * @throws TransException
-	 * @throws SQLException
-	static String insertLocalFile(DATranscxt st, String conn, String localPath,
-			ExpSyncDoc doc, SyncRobot usr, ExpDocTableMeta meta)
-			throws TransException, SQLException {
-
-		if (isblank(localPath))
-			throw new SemanticException("Client path can't be null/empty.");
-		
-		long size = new File(localPath).length();
-
-		Insert ins = st.insert(meta.tbl, usr)
-				.nv(meta.uri, doc.uri64)
-				.nv(meta.resname, doc.pname)
-				.nv(meta.device, usr.deviceId())
-				.nv(meta.fullpath, doc.fullpath())
-				.nv(meta.folder, doc.folder())
-				.nv(meta.size, size)
-				.nv(meta.shareby, doc.shareby)
-				.nv(meta.shareflag, doc.shareflag)
-				.nv(meta.shareDate, doc.sharedate)
-				;
-		
-		if (!isblank(doc.mime))
-			ins.nv(meta.mime, doc.mime);
-
-		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
-		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
-				.get(meta.tbl))
-				.getString(meta.pk);
-		
-		return pid;
-	}
-	 */
 
 	/**
 	 * [Synchronously]

@@ -26,6 +26,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
+import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DATranscxt;
@@ -44,7 +45,6 @@ import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.syn.IAssert;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
@@ -112,7 +112,7 @@ public class SynoderTest {
 
 				SynodeMeta snm = new SynodeMeta(conn);
 				docm = new T_PhotoMeta(conn); // .replace();
-				setupSqliTables(conn, aum, snm, chm, sbm, xbm, prm, ssm, docm);
+				setupSqliTables(conn, true, aum, snm, chm, sbm, xbm, prm, ssm, docm);
 				
 				ArrayList<String> sqls = new ArrayList<String>();
 				sqls.add(String.format("delete from %s;", aum.tbl));
@@ -183,8 +183,9 @@ public class SynoderTest {
 
 		Utils.logrst("X starting", test, ++no);
 		ExpDoctier xtir = syntiers[X];
-		SynDomanager x = xtir.start(ura, zsu, SynodeMode.peer)
-						.domains(setupDomanagers(ura, zsu, xtir.synode, xtir.myconn, SynodeMode.peer))
+		SynDomanager x = xtir.startier(ura, zsu, SynodeMode.peer)
+						.domains(setupDomanagers(ura, zsu, xtir.synode, xtir.myconn,
+								 SynodeMode.peer, Connects.getDebug(xtir.myconn)))
 						.domanager(zsu);
 
 		ck[X] = new Docheck(azert, zsu, x.myconn, x.synode, SynodeMode.peer, docm);
@@ -192,8 +193,9 @@ public class SynoderTest {
 
 		Utils.logrst("Y starting", test, ++no);
 		ExpDoctier ytir = syntiers[Y];
-		SynDomanager y = ytir.start(ura, zsu, SynodeMode.peer)
-						.domains(setupDomanagers(ura, zsu, ytir.synode, ytir.myconn, SynodeMode.peer))
+		SynDomanager y = ytir.startier(ura, zsu, SynodeMode.peer)
+						.domains(setupDomanagers(ura, zsu, ytir.synode, ytir.myconn,
+								 SynodeMode.peer, Connects.getDebug(xtir.myconn)))
 						.domanager(zsu);
 
 		ck[Y] = new Docheck(azert, zsu, y.myconn, y.synode, SynodeMode.peer, docm);
@@ -217,8 +219,9 @@ public class SynoderTest {
 		printNyquv(ck);
 
 		ExpDoctier ztir = syntiers[Z];
-		SynDomanager z = ztir.start(ura, zsu, SynodeMode.peer)
-						.domains(setupDomanagers(ura, zsu, ztir.synode, ztir.myconn, SynodeMode.peer))
+		SynDomanager z = ztir.startier(ura, zsu, SynodeMode.peer)
+						.domains(setupDomanagers(ura, zsu, ztir.synode, ztir.myconn,
+								 SynodeMode.peer, Connects.getDebug(ztir.myconn)))
 						.domanager(zsu);
 
 		ck[Z] = new Docheck(azert, zsu, z.myconn, z.synode, SynodeMode.peer, docm);
@@ -249,7 +252,7 @@ public class SynoderTest {
 		SynDomanager y = syntiers[by].domanager(zsu);
 		SynDomanager x = syntiers[at].domanager(zsu);
 
-		SynssionClientier c = y.joinpeer(null, x.synode, owner, passwd);
+		SynssionClientier c = y.join2peer(null, x.synode, owner, passwd);
 		SyncReq req  = c.signup(x.synode); // .xp.trb.domainSignup(c.xp, x.synode);
 
 		Utils.logrst(new String[] {x.synode, "on", y.synode, "joining"}, test, sub, ++no);
