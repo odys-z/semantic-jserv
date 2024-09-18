@@ -6,7 +6,6 @@ import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.touchDir;
 import static io.oz.jserv.docs.syn.ExpSynodetier.setupDomanagers;
 
-import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -17,8 +16,6 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
-
 import io.odysz.anson.Anson;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
