@@ -209,11 +209,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return this;
 	}
 
-	/** {domain: {jserv: exession-persist}} */
-	HashMap<String, SynDomanager> domains;
-	SynDomanager domanager(String dom) { return domains.get(dom); }
+	/** {domain: SynDomanager} */
+	HashMap<String, SynDomanager> domanagers;
+	SynDomanager domanager(String dom) { return domanagers.get(dom); }
 	public ExpDoctier domains(HashMap<String, SynDomanager> domains) {
-		this.domains = domains;
+		this.domanagers = domains;
 		return this;
 	}
 

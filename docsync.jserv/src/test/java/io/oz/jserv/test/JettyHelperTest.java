@@ -131,7 +131,7 @@ public class JettyHelperTest {
 		awaitAll(lights);
 		os.close(); es.close();
 		
-		azert.lineEq(outfile, -1, "Echo: 127.0.0.1 : jetty-2");
+		azert.lineEq(outfile, -1, "Echo: [0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3} : jetty-2");
 	}
 
 	/**

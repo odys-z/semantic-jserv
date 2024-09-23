@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.ready;
+import static io.odysz.semantic.syn.ExessionAct.init;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -73,6 +74,8 @@ public class SynDomanager implements OnError {
 	public SynssionClientier expiredClientier;
 
 	OnError errHandler;
+	
+	final DATranscxt tb0;
 
 	public Nyquence lastn0(String peer) {
 		return expiredClientier == null || expiredClientier.xp == null ?
@@ -104,7 +107,9 @@ public class SynDomanager implements OnError {
 		return null;
 	}
 
-	public SynDomanager(SynodeMeta synm, String org, String dom, String myid, String conn, SynodeMode mod, boolean debug) {
+	public SynDomanager(SynodeMeta synm, String org, String dom, String myid,
+			String conn, SynodeMode mod, boolean debug) throws Exception {
+
 		synode   = myid;
 		myconn   = conn;
 		domain   = dom;
@@ -116,9 +121,11 @@ public class SynDomanager implements OnError {
 		errHandler = (e, r, a) -> {
 			Utils.warn("Error code: %s,\n%s", e.name(), String.format(r, (Object[])a));
 		};
+		
+		tb0 = new DATranscxt(conn);
 	}
 	
-	public static SynDomanager clone(SynDomanager dm) {
+	public static SynDomanager clone(SynDomanager dm) throws Exception {
 		return new SynDomanager(dm.synm, dm.org, dm.domain, dm.synode, dm.myconn, dm.synmod, dm.dbg);
 	}
 
@@ -263,12 +270,19 @@ public class SynDomanager implements OnError {
 
 		return new SyncResp().exblock(b);
 		*/
+		if (DAHelper.count(tb0, myconn, synm.tbl, synm.synoder, peer, synm.domain, domain) == 0)
+			throw new ExchangeException(init, null,
+					"This synode, %s, cannot respond to exchange initiation without knowledge of %s.",
+					synode, peer);
+
 		SynssionClientier c = new SynssionClientier(this, peer, null);
-		synssion(peer, c);
+		synssion(peer, c); // rename clientier to worker?
 		return c.onsyninit(ini, domain);
 	}
 
 	public SyncResp onsyninit(SyncReq req) throws Exception {
+		if (eq(synode, "Z") && eq(req.exblock.srcnode, "W"))
+			;
 		return onsyninit(req.exblock.srcnode, req.exblock);
 	}
 
@@ -337,13 +351,14 @@ public class SynDomanager implements OnError {
 						"Session pool is null at %s", synode);
 
 		for (String peer : sessions.keySet())
-			if (sessions.containsKey(peer)
-				&& sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
+			if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
 				sessions.get(peer).asynUpdate2peer(onUpdate);
-			else if (!sessions.containsKey(peer))
-				Utils.warnT(new Object() {}, "Updating domain should be done after logged into %s, by %s",
-						peer, synode);
-			else if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
+//			else if (!sessions.containsKey(peer))
+//				Utils.warnT(new Object() {}, "Updating domain should be done after logged into %s, by %s",
+//						peer, synode);
+//			else if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == init)
+//				continue;
+			else if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() != ready)
 				continue;
 			else
 				Utils.warnT(new Object() {}, "TODO updating %s <- %s",

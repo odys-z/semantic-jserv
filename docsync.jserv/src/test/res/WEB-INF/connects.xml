@@ -19,7 +19,7 @@
   	
   	<c>
 		<id>no-jserv.00</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>no-jserv-db.00</src>
   		<usr></usr>
@@ -29,7 +29,7 @@
 	</c>
 	<c>
 		<id>no-jserv.01</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>no-jserv-db.01</src>
   		<usr></usr>
@@ -39,7 +39,7 @@
 	</c>
 	<c>
 		<id>no-jserv.02</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>no-jserv-db.02</src>
   		<usr></usr>
@@ -49,7 +49,7 @@
 	</c>
 	<c>
 		<id>no-jserv.03</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>no-jserv-db.03</src>
   		<usr></usr>

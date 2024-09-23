@@ -5,6 +5,7 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.Utils.logi;
 import static io.oz.jserv.docs.syn.ExpSynodetier.setupDomanagers;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
@@ -34,13 +35,14 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantics.x.ExchangeException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
+import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 import io.oz.jserv.docs.syn.Syngleton;
 import io.oz.synode.jclient.YellowPages;
 
@@ -132,19 +134,6 @@ public class SynotierJettyApp {
 			throw e;
 		}
 	}
-	
-//	/**
-//	 * This test helper supposes the user is authorized to login to every peer. 
-//	 * @return passwd
-//	 */
-// 	static String retrievePasswd(String conn) {
-// 		JUserMeta usrm = new JUserMeta();
-//// 		new DATranscxt(conn).select(usrm.tbl)
-//// 			.col(usrm.org, usrm.iv)
-//// 			;
-//		return "слава україні";
-//	}
-
 
 	/**
 	 * Create an application instance working as a synode tier.
@@ -163,8 +152,13 @@ public class SynotierJettyApp {
 			String domain, SyncRobot robot) throws Exception {
 
 		Configs.init(webinf, config_xml);
+		
 		String synid  = Configs.getCfg(Configs.keys.synode);
 		robot.deviceId(synid);
+
+		DATranscxt.initConfigs(serv_conn, DATranscxt.loadSemantics(serv_conn),
+		        (con) -> new DBSyntableBuilder.SynmanticsMap(synid, con));
+
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
 		HashMap<String,SynDomanager> domains = setupDomanagers(robot.orgId(), domain, synid,
@@ -267,13 +261,13 @@ public class SynotierJettyApp {
 	}
 
 	/**
-	 * { url-pattern: { domain: domanager } },<br>
+	 * { servlet-url-pattern: { domain: domanager } }, only instance of {@link ExpSynodetier},<br>
 	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
 	 */
 	public HashMap<String, HashMap<String, SynDomanager>> synodetiers;
 	
 	/**
-	 * Url pattern (key in {@link #synodetiers}) of {@link ExpSynodetier}.
+	 * Last (bug?) url pattern (key in {@link #synodetiers}) of {@link ExpSynodetier}.
 	 */
 	String syntier_url;
 
@@ -350,22 +344,24 @@ public class SynotierJettyApp {
 	 * @throws SQLException 
 	 * @throws TransException 
 	 */
-	public SynotierJettyApp openDomains()
+	public SynotierJettyApp openDomains(OnDomainUpdate ... onok)
 			throws AnsonException, SsException, IOException, TransException, SQLException {
 		if (synodetiers != null && synodetiers.containsKey(syntier_url)) {
 			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
 				dmgr.loadSynclients(t0, robot)
 					.openSynssions(robot,
 						(domain, mynid, peer, xp) -> {
-							try {
-								dmgr.synssion(peer).asynUpdate2peer(null);
-							} catch (ExchangeException e) {
-								Utils.warnT(new Object() {},
-									"Update synssion with peer failed. conn-id: %s, domain: %s, synid: %s, peer %s",
-									conn0, domain, mynid, peer);
-
-								e.printStackTrace();
-							}
+//							try {
+//								dmgr.synssion(peer).asynUpdate2peer(null);
+//							} catch (ExchangeException e) {
+//								Utils.warnT(new Object() {},
+//									"Update synssion with peer failed. conn-id: %s, domain: %s, synid: %s, peer %s",
+//									conn0, domain, mynid, peer);
+//
+//								e.printStackTrace();
+//							}
+							if (!isNull(onok))
+								onok[0].ok(domain, mynid, peer, xp);
 						});
 			}
 		}

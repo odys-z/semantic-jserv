@@ -58,7 +58,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 	/** {domain: {jserv: exession-persist}} */
 	public HashMap<String, SynDomanager> domains;
-	public ExpSynodetier domains(HashMap<String, SynDomanager> domains) {
+	public ExpSynodetier domains(HashMap<String, SynDomanager> domains) throws Exception {
 		this.domains = domains;
 		if (len(domains) > 1)
 			Utils.warnT(new Object() {}, "Multiple domains is an issue for v 2.0.0.");

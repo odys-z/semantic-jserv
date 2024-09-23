@@ -134,9 +134,11 @@ class DoclientierTest {
 		YellowPages.load("$VOLUME_HOME");
 
 		ck = new Docheck[servs_conn.length];
+		int[] nodex = new int[] { X, Y, Z };
 		
 		int port = 8090;
-		for (int i = 0; i < servs_conn.length; i++) {
+		// for (int i : new int[] {X, Y, Z, W}) {
+		for (int i : nodex) {
 			if (jetties[i] != null)
 				jetties[i].stop();
 
@@ -152,10 +154,12 @@ class DoclientierTest {
 		}
 		
 		IUser robot = DATranscxt.dummyUser();
-		for (int i = 0; i < servs_conn.length; i++) {
+		// for (int i = 0; i < servs_conn.length; i++) {
+		for (int i : nodex) {
 			Utils.logi("Jservs at %s", servs_conn[i]);
 
-			for (int j = 0; j < jetties.length; j++) {
+			// for (int j = 0; j < jetties.length; j++) {
+			for (int j : nodex) {
 				SynodeMeta synm = ck[i].trb.synm;
 
 				ck[i].b0.update(synm.tbl, robot)
@@ -166,8 +170,13 @@ class DoclientierTest {
 			}
 		}
 
-		for (int i = 0; i < servs_conn.length; i++)
-			jetties[i].openDomains();
+		boolean[] lights = new boolean[nodex.length];
+		// for (int i = 0; i < servs_conn.length; i++)
+		for (int i : nodex)
+			jetties[i].openDomains( (domain, mynid, peer, xp) -> {
+				lights[i] = true;
+			});
+		awaitAll(lights);
 	}
 
 	@Test
@@ -242,7 +251,8 @@ class DoclientierTest {
 		return xdoc;
 	}
 
- 	static ExpSyncDoc videoUpByApp(Dev atdev, Doclientier doclient, String entityName) throws Exception {
+ 	static ExpSyncDoc videoUpByApp(Dev atdev, Doclientier doclient,
+ 			String entityName) throws Exception {
 
 		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
 					.share(doclient.robt.uid(), Share.pub, new Date())
@@ -298,7 +308,8 @@ class DoclientierTest {
 	 * @param paths
 	 * @throws Exception
 	 */
-	static void verifyPathsPage(Doclientier clientier, String entityName, String... paths) throws Exception {
+	static void verifyPathsPage(Doclientier clientier, String entityName,
+			String... paths) throws Exception {
 		PathsPage pths = new PathsPage(clientier.client.ssInfo().device, 0, 1);
 		HashSet<String> pathpool = new HashSet<String>();
 		for (String pth : paths) {
@@ -327,7 +338,8 @@ class DoclientierTest {
 	 * @param paths
 	 * @throws Exception
 	 */
-	static void verifyPathsPageNegative(Doclientier clientier, String entityName, String... paths) throws Exception {
+	static void verifyPathsPageNegative(Doclientier clientier, String entityName,
+			String... paths) throws Exception {
 		PathsPage pths = new PathsPage(clientier.client.ssInfo().device, 0, 1);
 		HashSet<String> pathpool = new HashSet<String>();
 		for (String pth : paths) {

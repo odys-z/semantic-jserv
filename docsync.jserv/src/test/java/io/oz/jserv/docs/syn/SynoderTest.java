@@ -52,7 +52,7 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
 
 /**
- * The synchronizing tiers running on a static DA helper, but communicating
+ * The synchronizing tiers running on a static DA tier, but communicating
  * over the Semnatic.jserv protocol layer.
  * 
  * @author odys-z@github.com

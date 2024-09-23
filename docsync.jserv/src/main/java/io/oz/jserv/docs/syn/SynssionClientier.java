@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.semantic.syn.ExessionAct.close;
@@ -92,11 +93,12 @@ public class SynssionClientier {
 					peer, domain(), client == null ? ", client is null" : "");
 
 		new Thread(() -> { 
+			SyncResp rep = null;
 			try {
 				// start session
 				lock.lock();
 				ExchangeBlock reqb = exesinit();
-				SyncResp rep = exespush(peer, A.exinit, reqb);
+				rep = exespush(peer, A.exinit, reqb);
 
 				if (rep != null) {
 					// on start reply
@@ -107,6 +109,10 @@ public class SynssionClientier {
 						// rep = srv.onsyncdb(clt.synode, req);
 						ExchangeBlock exb = syncdb(rep.exblock);
 						rep = exespush(peer, A.exchange, exb);
+						if (rep == null)
+							throw new ExchangeException(exb.synact(), xp,
+									"Got null reply for exchange session. %s : %s -> %s",
+									domain(), domanager.synode, peer);
 					}
 					
 					// close
@@ -120,11 +126,12 @@ public class SynssionClientier {
 				Utils.warn(e.getMessage());
 			} catch (Exception e) {
 				e.printStackTrace();
+				exesclose(peer, rep == null ? null : rep.exblock);
 			}
 			finally {
 				lock.unlock();
 			}
-		}).start();
+		}, domanager.synode + ":" + peer).start();
 		return this;
 	}
 
@@ -207,6 +214,12 @@ public class SynssionClientier {
 		return null;
 	}
 
+	/**
+	 * Close the session, in either failed or succeed.
+	 * @param peer
+	 * @param req can be null
+	 * @return
+	 */
 	SyncResp exesclose(String peer, ExchangeBlock req) {
 		return null;
 	}
@@ -237,8 +250,8 @@ public class SynssionClientier {
 				SyncReq  req = signup(admid);
 				SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
-				if (rep != null)
-					xp.trb.domain(rep.domain);
+//				if (rep != null)
+//					xp.trb.domain(rep.domain);
 
 				req = closejoin(admid, rep);
 				rep = exespush(admid, (SyncReq)req.a(A.closejoin));
@@ -250,7 +263,7 @@ public class SynssionClientier {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally { lock.unlock(); }
-		}).start();
+		}, f("Join domain %s <- %s", admid, myuid)).start();
 	}
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
@@ -273,7 +286,12 @@ public class SynssionClientier {
 	}
 
 	public SyncReq closejoin(String admin, SyncResp rep) throws TransException, SQLException {
-		xp.trb.domainitMe(xp, admin, peerjserv, rep.exblock);
+		if (!eq(rep.domain, domanager.domain))
+			throw new ExchangeException(close, xp,
+				"Close joining session for different ids? Rep.domain: %s, Domanager.domain: %s",
+				rep.domain, domanager.domain);
+
+		xp.trb.domainitMe(xp, admin, peerjserv, domanager.domain, rep.exblock);
 
 		ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 		return new SyncReq(null, xp.trb.domain())
