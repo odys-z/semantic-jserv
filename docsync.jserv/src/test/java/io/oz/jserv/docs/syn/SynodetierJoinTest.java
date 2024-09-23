@@ -9,6 +9,7 @@ import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.syn.Docheck.ck;
+import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynoderTest.X;
 import static io.oz.jserv.docs.syn.SynoderTest.Y;
 import static io.oz.jserv.docs.syn.SynoderTest.Z;
@@ -32,7 +33,6 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.PeersMeta;
 import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynSessionMeta;
@@ -50,9 +50,8 @@ import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
 import io.oz.synode.jclient.YellowPages;
 
 class SynodetierJoinTest {
-	static int bsize;
-
-	static ExpDocTableMeta docm;
+	// static int bsize;
+	// static ExpDocTableMeta docm;
 
 	static ErrorCtx errLog;
 	
@@ -72,7 +71,7 @@ class SynodetierJoinTest {
 		try {
 			jetties = new SynotierJettyApp[4];
 
-			bsize = 72 * 1024;
+			// bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
 			
 			errLog = new ErrorCtx() {
