@@ -41,6 +41,12 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
 
+/**
+ * 
+ * Run SynodetierJoinTest for creating table a_orgs.
+ * 
+ * @author ody
+ */
 public class ExpDoctierserv4clientTest {
 	public final static int X = 0;
 	public final static int Y = 1;

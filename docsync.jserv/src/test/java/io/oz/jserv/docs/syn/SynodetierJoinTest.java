@@ -49,6 +49,12 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
 import io.oz.synode.jclient.YellowPages;
 
+/**
+ * 
+ * Run JettyHelperTest to initialoze table a_roles.
+ * 
+ * @author ody
+ */
 class SynodetierJoinTest {
 	// static int bsize;
 	// static ExpDocTableMeta docm;
