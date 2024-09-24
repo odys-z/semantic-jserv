@@ -45,6 +45,8 @@ import io.odysz.semantics.IUser;
  * 
  * Run SynodetierJoinTest for creating table a_orgs.
  * 
+ * -Dsyndocs.ip="host-ip"
+ * 
  * @author ody
  */
 public class ExpDoctierserv4clientTest {
@@ -61,6 +63,7 @@ public class ExpDoctierserv4clientTest {
 	
 	private static Docheck[] ck;
 
+	/** -Dsyndocs.ip="host-ip" */
 	@BeforeAll
 	static void init() throws Exception {
 		String p = new File("src/test/res").getAbsolutePath();
@@ -76,6 +79,7 @@ public class ExpDoctierserv4clientTest {
 	@Test
 	void runDoctiers() throws Exception {
 		int[] nodex = new int[] { X, Y, Z };
+		String host = System.getProperty("syndocs.ip");
 		
 		int port = 8090;
 		// for (int i : new int[] {X, Y, Z, W}) {
@@ -87,7 +91,7 @@ public class ExpDoctierserv4clientTest {
 
 			initSynodeRecs(servs_conn[i]);
 			
-			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++, false)
+			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], host, port++, false)
 						; // .loadSynclients();
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
@@ -113,12 +117,14 @@ public class ExpDoctierserv4clientTest {
 
 		final boolean[] lights = new boolean[nodex.length];
 		// for (int i = 0; i < servs_conn.length; i++)
-		for (int i : nodex)
-			jetties[i].openDomains( (domain, mynid, peer, xp) -> {
+		for (int i : nodex) { // should block X's starting sessions
+			jetties[i].openDomains( (domain, mynid, peer, repb, xp) -> {
 				lights[i] = true;
 			});
-		awaitAll(lights);
-		pause("Press Enter for starting synchronizing.");
+			// Thread.sleep(20 - i * 10);
+		}
+		awaitAll(lights, -1);
+		pause("Press Enter after pushed with client for starting synchronizing.");
 
 		// lights = new boolean[] {true, false};
 		waiting(lights, Y);

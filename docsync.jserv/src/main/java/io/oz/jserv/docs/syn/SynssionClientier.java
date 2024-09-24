@@ -2,9 +2,10 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
-import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.syn.ExessionAct.close;
+import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.init;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
@@ -101,26 +102,28 @@ public class SynssionClientier {
 				rep = exespush(peer, A.exinit, reqb);
 
 				if (rep != null) {
-					// on start reply
-					onsyninit(rep.exblock, rep.domain);
-					while (rep.synact() != close) {
-						// See SynoderTest
-						// req = syncdb(peer, rep);
-						// rep = srv.onsyncdb(clt.synode, req);
-						ExchangeBlock exb = syncdb(rep.exblock);
-						rep = exespush(peer, A.exchange, exb);
-						if (rep == null)
-							throw new ExchangeException(exb.synact(), xp,
-									"Got null reply for exchange session. %s : %s -> %s",
-									domain(), domanager.synode, peer);
+					if (rep.exblock != null && rep.exblock.synact() != deny) {
+						// on start reply
+						onsyninit(rep.exblock, rep.domain);
+						while (rep.synact() != close) {
+							// See SynoderTest
+							// req = syncdb(peer, rep);
+							// rep = srv.onsyncdb(clt.synode, req);
+							ExchangeBlock exb = syncdb(rep.exblock);
+							rep = exespush(peer, A.exchange, exb);
+							if (rep == null)
+								throw new ExchangeException(exb.synact(), xp,
+										"Got null reply for exchange session. %s : %s -> %s",
+										domain(), domanager.synode, peer);
+						}
+						
+						// close
+						reqb = synclose(rep.exblock);
+						rep = exesclose(peer, reqb);
 					}
 					
-					// close
-					reqb = synclose(rep.exblock);
-					rep = exesclose(peer, reqb);
-					
 					if (onup != null)
-						onup.ok(domain(), mynid, peer, xp);
+						onup.ok(domain(), mynid, peer, rep == null ? null : rep.exblock, xp);
 				}
 			} catch (IOException e) {
 				Utils.warn(e.getMessage());

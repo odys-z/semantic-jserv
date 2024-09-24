@@ -53,11 +53,11 @@ import io.oz.synode.jclient.YellowPages;
  * 
  * Run JettyHelperTest to initialoze table a_roles.
  * 
+ * -Dsyndocs.ip="host-ip"
+ * 
  * @author ody
  */
 class SynodetierJoinTest {
-	// static int bsize;
-	// static ExpDocTableMeta docm;
 
 	static ErrorCtx errLog;
 	
@@ -77,7 +77,6 @@ class SynodetierJoinTest {
 		try {
 			jetties = new SynotierJettyApp[4];
 
-			// bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
 			
 			errLog = new ErrorCtx() {
@@ -111,7 +110,8 @@ class SynodetierJoinTest {
 
 			initSysRecords(servs_conn[i]);
 
-			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], port++, true);
+			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i],
+					System.getProperty("syndocs.ip"), port++, true);
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
@@ -189,14 +189,14 @@ class SynodetierJoinTest {
 
 			for (String dom : t.synodetiers.get(servpattern).keySet()) {
 				t.synodetiers.get(servpattern).get(dom).updomains(
-					(domain, mynid, peer, xp) -> {
+					(domain, mynid, peer, repb, xp) -> {
 						if (eq(domain, dom) && eq(mynid, jetties[tx].synode()))
 							lights[tx] = true;
 						else {
 							DBSyntableBuilder trb = isNull(xp) ? null : xp[0].trb;
 							throw new NullPointerException(String.format(
-							"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
-							domain, mynid, peer, xp == null || trb == null ? "unknown" : trb.synconn()));
+								"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
+								domain, mynid, peer, xp == null || trb == null ? "unknown" : trb.synconn()));
 						}
 					});
 			}
@@ -215,7 +215,7 @@ class SynodetierJoinTest {
 	 * @throws Exception
 	 */
 	static SynotierJettyApp startSyndoctier(String serv_conn, String config_xml,
-			int port, boolean drop_syntbls) throws Exception {
+			String host, int port, boolean drop_syntbls) throws Exception {
 
 		SynChangeMeta chm;
 		SynSubsMeta sbm;
@@ -238,7 +238,7 @@ class SynodetierJoinTest {
 		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 
-			.createSyndoctierApp(serv_conn, config_xml, null, port, webinf, zsu, tierobot)
+			.createSyndoctierApp(serv_conn, config_xml, host, port, webinf, zsu, tierobot)
 			.start(() -> System.out, () -> System.err)
 			.loadDomains(synm, SynodeMode.peer)
 			;

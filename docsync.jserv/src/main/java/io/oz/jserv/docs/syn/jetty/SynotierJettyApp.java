@@ -218,6 +218,10 @@ public class SynotierJettyApp {
 	 * Create a Jetty instance at local host, jserv-root
 	 * for accessing online is in field {@link #jserv}.
 	 * 
+	 * Tip: list all local tcp listening ports:
+	 * sudo netstat -ntlp
+	 * see https://askubuntu.com/a/328293
+	 * 
 	 * @param configPath
 	 * @param conn0
 	 * @param configxml
@@ -240,20 +244,26 @@ public class SynotierJettyApp {
 		synapp.t0 = new DATranscxt(conn0);
 		synapp.robot = robt;
 
-	    if (isblank(bindIp))
+	    if (isblank(bindIp)) {
 	    	synapp.server = new Server();
+	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
+	        httpConnector.setHost("0.0.0.0"); // <--------- !
+	        httpConnector.setPort(port);
+	        httpConnector.setIdleTimeout(5000);
+	        synapp.server.addConnector(httpConnector);
+	    }
 	    else
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
 	
 	    InetAddress inet = InetAddress.getLocalHost();
 	    String addrhost  = inet.getHostAddress();
-		synapp.jserv = String.format("http://%s:%s", addrhost, port);
+		synapp.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
 	
-	    ServerConnector httpConnector = new ServerConnector(synapp.server);
-	    httpConnector.setHost(addrhost);
-	    httpConnector.setPort(port);
-	    httpConnector.setIdleTimeout(5000);
-	    synapp.server.addConnector(httpConnector);
+//	    ServerConnector httpConnector = new ServerConnector(synapp.server);
+//	    httpConnector.setHost(addrhost);
+//	    httpConnector.setPort(port);
+//	    httpConnector.setIdleTimeout(5000);
+//	    synapp.server.addConnector(httpConnector);
 	    
 	    synapp.synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
 	    
@@ -350,7 +360,7 @@ public class SynotierJettyApp {
 			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
 				dmgr.loadSynclients(t0, robot)
 					.openSynssions(robot,
-						(domain, mynid, peer, xp) -> {
+						(domain, mynid, peer, repb, xp) -> {
 //							try {
 //								dmgr.synssion(peer).asynUpdate2peer(null);
 //							} catch (ExchangeException e) {
@@ -361,7 +371,7 @@ public class SynotierJettyApp {
 //								e.printStackTrace();
 //							}
 							if (!isNull(onok))
-								onok[0].ok(domain, mynid, peer, xp);
+								onok[0].ok(domain, mynid, peer, repb, xp);
 						});
 			}
 		}
