@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.syn.jetty;
 
+import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.Utils.logi;
@@ -91,7 +92,7 @@ public class SynotierJettyApp {
 	 * </pre>
 	 * volume home = relative path to web-inf.
 	 * 
-	 * @param args [0] ip,
+	 * @param args [0] ip, * for all hosts
 	 *             [1] port,
 	 *             [2] org,
 	 *             [3] domain,
@@ -139,7 +140,7 @@ public class SynotierJettyApp {
 	 * Create an application instance working as a synode tier.
 	 * @param serv_conn db connection of which to be synchronized
 	 * @param config_xml name of config file, e.g. config.xml
-	 * @param bindIp, optional, null for localhost
+	 * @param bindIp, optional, null or '*' for all inet interface
 	 * @param port
 	 * @param webinf
 	 * @param domain
@@ -240,7 +241,7 @@ public class SynotierJettyApp {
 		synapp.t0 = new DATranscxt(conn0);
 		synapp.robot = robt;
 
-	    if (isblank(bindIp))
+	    if (isblank(bindIp) || eq("*", bindIp))
 	    	synapp.server = new Server();
 	    else
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));

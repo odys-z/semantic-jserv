@@ -250,9 +250,6 @@ public class SynssionClientier {
 				SyncReq  req = signup(admid);
 				SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
-//				if (rep != null)
-//					xp.trb.domain(rep.domain);
-
 				req = closejoin(admid, rep);
 				rep = exespush(admid, (SyncReq)req.a(A.closejoin));
 
