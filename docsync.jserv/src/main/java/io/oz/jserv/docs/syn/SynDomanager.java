@@ -3,8 +3,11 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.syn.ExessionAct.close;
+import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 import static io.odysz.semantic.syn.ExessionAct.init;
+import static io.odysz.semantic.syn.ExessionAct.mode_client;
+import static io.odysz.semantic.syn.ExessionAct.mode_server;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,6 +28,7 @@ import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSynmantics.ShSynChange;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
+import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.Nyquence;
 import io.odysz.semantic.syn.SyncRobot;
@@ -47,7 +51,7 @@ public class SynDomanager implements OnError {
 	 */
 	@FunctionalInterface
 	public interface OnDomainUpdate {
-		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
+		public void ok(String domain, String mynid, String peer, ExchangeBlock rep, ExessionPersist... xp);
 	}
 
 	static final String dom_unknown = null;
@@ -281,8 +285,22 @@ public class SynDomanager implements OnError {
 	}
 
 	public SyncResp onsyninit(SyncReq req) throws Exception {
-		if (eq(synode, "Z") && eq(req.exblock.srcnode, "W"))
-			;
+		if (synssion(req.exblock.srcnode) != null) {
+			ExessionPersist xp = synssion(req.exblock.srcnode).xp;
+			
+			if (!eq(xp.peer(), req.exblock.srcnode))
+				// shouldn't happen
+				throw new ExchangeException(null, xp,
+						"A session persisting context's peers are not matching, %s : %s",
+						req.exblock.srcnode, xp.peer());
+
+			if (xp.exstate() != ready || xp.exstate() != close)
+				return new SyncResp(domain)
+						.exblock(new ExchangeBlock(synode,
+									xp.peer(), xp.session(),
+									new ExessionAct(xp.exstat().exmode() == mode_server
+										? mode_client : mode_server, deny)));
+		}
 		return onsyninit(req.exblock.srcnode, req.exblock);
 	}
 

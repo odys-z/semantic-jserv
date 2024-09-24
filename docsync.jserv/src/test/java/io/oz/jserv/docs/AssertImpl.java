@@ -5,8 +5,6 @@ import static io.odysz.common.LangExt.isNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Assert;
-
 import io.odysz.common.IAssert;
 
 public class AssertImpl implements IAssert {
@@ -14,9 +12,8 @@ public class AssertImpl implements IAssert {
 	@Override
 	public <T> void equals(T a, T b, String... msg) throws Error {
 		if ((b == null || a == null) && a != b)
-			Assert.fail(isNull(msg) ? "a != b" : msg[0]);
+			fail(isNull(msg) ? "a != b" : msg[0]);
 		else if (b instanceof String)
-			// assertEquals(a, b, isNull(msg) ? null : msg[0]);
 			assertTrue(((String)b).matches((String)a));
 		else
 			assertEquals(a, b, isNull(msg) ? null : msg[0]);
