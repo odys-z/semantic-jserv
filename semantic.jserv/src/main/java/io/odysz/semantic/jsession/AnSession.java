@@ -582,6 +582,5 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throw new SemanticException("create IUser instance failed: %s",
 					ie.getTargetException() == null ? "" : ie.getTargetException().getMessage());
 		}
-
 	}
 }

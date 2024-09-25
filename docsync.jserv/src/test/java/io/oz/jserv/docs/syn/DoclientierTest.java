@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
@@ -16,12 +17,12 @@ import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.ExpDoctierserv4clientTest.X;
 import static io.oz.jserv.docs.syn.ExpDoctierserv4clientTest.Y;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
@@ -48,9 +49,15 @@ import io.odysz.transact.x.TransException;
 import io.oz.synode.jclient.YellowPages;
 
 class DoclientierTest {
+	static String[] jserv_xyzw;
 	@BeforeAll
-	void init() throws Exception {
+	static void init() throws Exception {
+		String p = new File("src/test/res").getAbsolutePath();
+    	System.setProperty("VOLUME_HOME", p + "/volume");
+    	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+
 		YellowPages.load("$VOLUME_HOME");
+		jserv_xyzw = f(System.getProperty("jservs").split(","), "http://");
 	}
 
 	@Test
@@ -88,7 +95,7 @@ class DoclientierTest {
 	
 			// 00 delete
 			Dev devx0 = devs[X_0];
-			Clients.init(jetties[X].jserv());
+			Clients.init(jserv_xyzw[X]);
 			DocsResp rep = devx0.client.synDel(docm.tbl, devx0.dev, devx0.res);
 			assertEquals(1, rep.total(0));
 	
@@ -113,13 +120,13 @@ class DoclientierTest {
 
 	@AfterAll
 	static void close() throws Exception {
-		logi("Server is closed.");
+		logi("Pushes are closed.");
 	}
 
 	ExpSyncDoc clientPush(int to, int cix) throws Exception {
 		Dev dev = devs[cix];
 
-		Clients.init(jetties[to].jserv());
+		Clients.init(jserv_xyzw[to]);
 
 		Doclientier client = new Doclientier(dev.uri, errLog)
 				.tempRoot(dev.uri)

@@ -248,7 +248,7 @@ public class SynotierJettyApp {
 	    if (isblank(bindIp) || eq("*", bindIp)) {
 	    	synapp.server = new Server();
 	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
-	        httpConnector.setHost("0.0.0.0"); // <--------- !
+	        httpConnector.setHost("0.0.0.0");
 	        httpConnector.setPort(port);
 	        httpConnector.setIdleTimeout(5000);
 	        synapp.server.addConnector(httpConnector);
@@ -260,12 +260,6 @@ public class SynotierJettyApp {
 	    String addrhost  = inet.getHostAddress();
 		synapp.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
 	
-//	    ServerConnector httpConnector = new ServerConnector(synapp.server);
-//	    httpConnector.setHost(addrhost);
-//	    httpConnector.setPort(port);
-//	    httpConnector.setIdleTimeout(5000);
-//	    synapp.server.addConnector(httpConnector);
-	    
 	    synapp.synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
 	    
 	    return synapp;

@@ -169,7 +169,7 @@ public class Doclientier extends Semantier {
 		SessionInf ssinf = client.ssInfo();
 		try {
 			// robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath, ssinf.device);
-			robt = new DocUser(ssinf.uid());
+			robt = new DocUser(ssinf.uid(), ssinf.userName());
 			tempath = FilenameUtils.concat(tempath,
 					String.format("io.oz.doc.%s.%s", ssinf.device, ssinf.uid()));
 			
