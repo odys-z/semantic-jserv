@@ -1,19 +1,20 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.common.Utils.awaitAll;
-import static io.odysz.common.Utils.waiting;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
-import static io.oz.jserv.docs.syn.Dev.docm;
-import static io.oz.jserv.docs.syn.Dev.devs;
+import static io.odysz.common.Utils.waiting;
 import static io.oz.jserv.docs.syn.Dev.X_0;
+import static io.oz.jserv.docs.syn.Dev.devs;
+import static io.oz.jserv.docs.syn.Dev.docm;
+import static io.oz.jserv.docs.syn.SynoderTest.azert;
+import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.initSysRecords;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
-import static io.oz.jserv.docs.syn.SynoderTest.azert;
-import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -32,6 +33,7 @@ import io.odysz.jclient.Clients;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
@@ -49,7 +51,7 @@ import io.odysz.semantics.IUser;
  * 
  * @author ody
  */
-public class ExpDoctierserv4clientTest {
+public class ExpDoctierservTest {
 	public final static int X = 0;
 	public final static int Y = 1;
 	public final static int Z = 2;
@@ -91,6 +93,8 @@ public class ExpDoctierserv4clientTest {
 
 			initSynodeRecs(servs_conn[i]);
 			
+			cleanPhotos(docm, servs_conn[i], devs[i].dev);
+			
 			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], host, port++, false)
 						; // .loadSynclients();
 			
@@ -121,7 +125,6 @@ public class ExpDoctierserv4clientTest {
 			jetties[i].openDomains( (domain, mynid, peer, repb, xp) -> {
 				lights[i] = true;
 			});
-			// Thread.sleep(20 - i * 10);
 		}
 		awaitAll(lights, -1);
 		pause("Press Enter after pushed with client for starting synchronizing.");
@@ -179,6 +182,13 @@ public class ExpDoctierserv4clientTest {
 		}
 	}
 
+	static void cleanPhotos(ExpDocTableMeta docm, String conn, String ofDevice) throws Exception {
+		ArrayList<String> sqls = new ArrayList<String>();
+		IUser usr = DATranscxt.dummyUser();
+		sqls.add(f("delete from %s where %s = '%s'", docm.tbl, docm.device, ofDevice));
+		Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+	}
+	
 	/**
 	 * Verify device &amp; client-paths isn't presenting at server.
 	 * 
