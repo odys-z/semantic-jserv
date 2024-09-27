@@ -33,6 +33,9 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
+/**
+ * TODO rename to Synssion, for this is used in both sides?
+ */
 public class SynssionClientier {
 
 	static String uri_syn = "/syn";
@@ -50,14 +53,19 @@ public class SynssionClientier {
 		return domanager.domain;
 	}
 
-//	SynssionClientier domain(String domain) {
-//		this.xp.trb.domain(domain);
-//		return this;
-//	}
-
 	SynodeMode mymode;
+
 	SynDomanager domanager;
 	DBSyntableBuilder b0; 
+
+	/** Exclusive lock for avoiding Synssions initiated from both side */
+	final Object peerlock;
+
+	/**
+	 * Exclusive lock for starting threads of differnt tasks for both
+	 * joining and Synssions type.
+	 */
+	final ReentrantLock tasklock;
 
 	OnError errHandler;
 	public SynssionClientier onErr(OnError err) {
@@ -67,8 +75,6 @@ public class SynssionClientier {
 
 	protected SessionClient client;
 
-	final ReentrantLock lock;
-
 	public SynssionClientier(SynDomanager domanager, String peer, String jserv) {
 		this.conn      = domanager.myconn;
 		this.mynid     = domanager.synode;
@@ -77,9 +83,10 @@ public class SynssionClientier {
 		this.mymode    = domanager.synmod;
 		this.peerjserv = jserv;
 		
-		lock = new ReentrantLock();
+		this.tasklock  = new ReentrantLock();
+		this.peerlock  = new Object();
 		
-		clienturi = uri_syn + "/" + peer;
+		this.clienturi = uri_syn + "/" + peer;
 	}
 
 	/**
@@ -97,7 +104,7 @@ public class SynssionClientier {
 			SyncResp rep = null;
 			try {
 				// start session
-				lock.lock();
+				tasklock.lock();
 				ExchangeBlock reqb = exesinit();
 				rep = exespush(peer, A.exinit, reqb);
 
@@ -119,7 +126,8 @@ public class SynssionClientier {
 						
 						// close
 						reqb = synclose(rep.exblock);
-						rep = exesclose(peer, reqb);
+						// rep  = exesclose(peer, reqb);
+						rep = exespush(peer, A.exclose, reqb);
 					}
 					
 					if (onup != null)
@@ -127,12 +135,20 @@ public class SynssionClientier {
 				}
 			} catch (IOException e) {
 				Utils.warn(e.getMessage());
+			} catch (ExchangeException e) {
+				e.printStackTrace();
+				// exesclose(peer, rep == null ? null : rep.exblock);
+				try {
+					ExchangeBlock reqb = synclose(rep.exblock);
+					rep = exespush(peer, A.exclose, reqb);
+				} catch (TransException | SQLException e1) {
+					e1.printStackTrace();
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				exesclose(peer, rep == null ? null : rep.exblock);
 			}
 			finally {
-				lock.unlock();
+				tasklock.unlock();
 			}
 		}, domanager.synode + ":" + peer).start();
 		return this;
@@ -152,7 +168,16 @@ public class SynssionClientier {
 		return b0.initExchange(xp);
 	}
 
-	SyncResp onsyninit(ExchangeBlock ini, String domain) throws Exception {
+	/**
+	 * Handle syn-init request.
+	 * 
+	 * @param ini request's exchange block
+	 * @param domain
+	 * @return respond
+	 * @throws ExchangeException peer id from {@code ini} doesn't match with mine.
+	 * @throws Exception
+	 */
+	SyncResp onsyninit(ExchangeBlock ini, String domain) throws ExchangeException, Exception {
 		if (!eq(ini.srcnode, peer))
 			throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
@@ -222,10 +247,10 @@ public class SynssionClientier {
 	 * @param peer
 	 * @param req can be null
 	 * @return
-	 */
 	SyncResp exesclose(String peer, ExchangeBlock req) {
 		return null;
 	}
+	 */
 
 	ExessionPersist xp;
 
@@ -249,7 +274,7 @@ public class SynssionClientier {
 	public void asynJoindomain(String admid, String myuid, String mypswd, OnOk ok) {
 		new Thread(() -> { 
 			try {
-				lock.lock();
+				tasklock.lock();
 				SyncReq  req = signup(admid);
 				SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
@@ -262,7 +287,7 @@ public class SynssionClientier {
 				e.printStackTrace();
 			} catch (Exception e) {
 				e.printStackTrace();
-			} finally { lock.unlock(); }
+			} finally { tasklock.unlock(); }
 		}, f("Join domain %s <- %s", admid, myuid)).start();
 	}
 

@@ -72,7 +72,7 @@ public class SynDomanager implements OnError {
 	HashMap<String, SynssionClientier> sessions;
 	
 	/**
-	 * Expired, only for tests.
+	 * Expired synssion, only for tests.
 	 * @since 0.2.0
 	 */
 	public SynssionClientier expiredClientier;
@@ -262,18 +262,6 @@ public class SynDomanager implements OnError {
 	 * @since 0.2.0
 	 */
 	public SyncResp onsyninit(String peer, ExchangeBlock ini) throws Exception {
-		/*
-		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, mod);
-
-		ExessionPersist xp = new ExessionPersist(b0, peer, ini)
-								.loadNyquvect(myconn);
-
-		ExchangeBlock b = b0.onInit(xp, ini);
-
-		synssion(peer, new SynssionClientier(this, peer, domain).xp(xp));
-
-		return new SyncResp().exblock(b);
-		*/
 		if (DAHelper.count(tb0, myconn, synm.tbl, synm.synoder, peer, synm.domain, domain) == 0)
 			throw new ExchangeException(init, null,
 					"This synode, %s, cannot respond to exchange initiation without knowledge of %s.",
@@ -289,7 +277,6 @@ public class SynDomanager implements OnError {
 			ExessionPersist xp = synssion(req.exblock.srcnode).xp;
 			
 			if (!eq(xp.peer(), req.exblock.srcnode))
-				// shouldn't happen
 				throw new ExchangeException(null, xp,
 						"A session persisting context's peers are not matching, %s : %s",
 						req.exblock.srcnode, xp.peer());

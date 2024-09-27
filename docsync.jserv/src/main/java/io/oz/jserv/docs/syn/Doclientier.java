@@ -307,7 +307,7 @@ public class Doclientier extends Semantier {
 				OnProcess proc, OnOk docOk, OnError ... onErr)
 				throws TransException, IOException {
 		OnError err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
-		return pushBlocks(client, uri, tbl, videos, blocksize, proc, docOk, err);
+		return pushBlocks(client, uri, tbl, videos, blocksize, proc, docOk, isNull(onErr) ? err : onErr[0]);
 	}
 
 	public static List<DocsResp> pushBlocks(SessionClient client, String uri, String tbl,
