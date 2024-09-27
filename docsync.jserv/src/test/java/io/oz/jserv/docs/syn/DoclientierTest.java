@@ -2,7 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
-import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.prefix;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
@@ -57,7 +57,7 @@ class DoclientierTest {
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
 		YellowPages.load("$VOLUME_HOME");
-		jserv_xyzw = f(System.getProperty("jservs").split(","), "http://");
+		jserv_xyzw = prefix(System.getProperty("jservs").split(","), "http://");
 	}
 
 	@Test
