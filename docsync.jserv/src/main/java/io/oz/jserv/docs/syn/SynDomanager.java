@@ -281,7 +281,7 @@ public class SynDomanager implements OnError {
 						"A session persisting context's peers are not matching, %s : %s",
 						req.exblock.srcnode, xp.peer());
 
-			if (xp.exstate() != ready || xp.exstate() != close)
+			if (xp.exstate() != ready && xp.exstate() != close)
 				return new SyncResp(domain)
 						.exblock(new ExchangeBlock(synode,
 									xp.peer(), xp.session(),
@@ -342,6 +342,7 @@ public class SynDomanager implements OnError {
 	 * Can be called by request handler and timer.
 	 * 
 	 * <p>Updating event is ignored if the clientier is running.</p>
+	 * @param onUpdate callback 
 	 * 
 	 * @return this
 	 * @throws IOException 

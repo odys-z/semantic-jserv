@@ -117,8 +117,13 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				rsp = new SyncResp(domain).exblock(b);
 			}
 
-			else if (A.exclose.equals(a))
+			else if (A.exclose.equals(a)) {
+				if (domanager0.synssion(req.exblock.srcnode) == null)
+					throw new SemanticException(
+						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
+						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.myconn, domanager0.domain);
 				rsp = domanager0.onclosex(req);
+			}
 
 			else 
 				throw new SemanticException("Request.a, %s, can not be handled at port %s",

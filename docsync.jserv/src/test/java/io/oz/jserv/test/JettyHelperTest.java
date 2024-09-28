@@ -161,7 +161,7 @@ public class JettyHelperTest {
 				+ "values  ('%s',  'Ody %s',  'r01',  'zsu', 0, '1989-06-04', '123456', null);",
 				uid, port));
 
-		Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+		Connects.commit(conn, usr, sqls);
 		
 		SyncRobot tierob = new SyncRobot("odyz", "8964", "Ody by robot");
 

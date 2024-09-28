@@ -7,6 +7,8 @@ import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.waiting;
+import static io.odysz.semantic.syn.Docheck.printChangeLines;
+import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
@@ -103,11 +105,9 @@ public class ExpDoctierservTest {
 		}
 		
 		IUser robot = DATranscxt.dummyUser();
-		// for (int i = 0; i < servs_conn.length; i++) {
 		for (int i : nodex) {
 			Utils.logi("Jservs at %s", servs_conn[i]);
 
-			// for (int j = 0; j < jetties.length; j++) {
 			for (int j : nodex) {
 				SynodeMeta synm = ck[i].trb.synm;
 
@@ -120,7 +120,6 @@ public class ExpDoctierservTest {
 		}
 
 		final boolean[] lights = new boolean[nodex.length];
-		// for (int i = 0; i < servs_conn.length; i++)
 		for (int i : nodex) { // should block X's starting sessions
 			jetties[i].openDomains( (domain, mynid, peer, repb, xp) -> {
 				lights[i] = true;
@@ -129,10 +128,16 @@ public class ExpDoctierservTest {
 		awaitAll(lights, -1);
 		pause("Press Enter after pushed with client for starting synchronizing.");
 
+		printChangeLines(ck);
+		printNyquv(ck);
+
 		// lights = new boolean[] {true, false};
 		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y);
+		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
+
+		printChangeLines(ck);
+		printNyquv(ck);
 
 		ck[Y].doc(3);
 		ck[X].doc(3);
@@ -173,7 +178,7 @@ public class ExpDoctierservTest {
 					"syn_synode_all_ready.sqlite.sql"}) {
 
 				sqls.add(loadTxt(DoclientierTest.class, tbl));
-				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+				Connects.commit(conn, usr, sqls);
 				sqls.clear();
 			}
 		} catch (Exception e) {
@@ -186,7 +191,7 @@ public class ExpDoctierservTest {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
 		sqls.add(f("delete from %s where %s = '%s'", docm.tbl, docm.device, ofDevice));
-		Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+		Connects.commit(conn, usr, sqls);
 	}
 	
 	/**
