@@ -9,6 +9,8 @@ import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.syn.Docheck.ck;
+import static io.odysz.semantic.syn.Docheck.printChangeLines;
+import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynoderTest.X;
 import static io.oz.jserv.docs.syn.SynoderTest.Y;
@@ -21,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -178,7 +181,7 @@ class SynodetierJoinTest {
 		}
 	}
 
-	static void syncdomain(boolean[] lights, int tx)
+	static void syncdomain(boolean[] lights, int tx, Docheck... ck)
 			throws SemanticException, AnsonException, SsException, IOException {
 
 		SynotierJettyApp t = jetties[tx];
@@ -190,6 +193,14 @@ class SynodetierJoinTest {
 			for (String dom : t.synodetiers.get(servpattern).keySet()) {
 				t.synodetiers.get(servpattern).get(dom).updomains(
 					(domain, mynid, peer, repb, xp) -> {
+						if (!isNull(ck))
+							try {
+								printChangeLines(ck);
+								printNyquv(ck);
+							} catch (TransException | SQLException e) {
+								e.printStackTrace();
+							}
+
 						if (eq(domain, dom) && eq(mynid, jetties[tx].synode()))
 							lights[tx] = true;
 						else {
@@ -256,7 +267,7 @@ class SynodetierJoinTest {
 		try {
 			for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
 				sqls.add("drop table if exists " + tbl);
-				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+				Connects.commit(conn, usr, sqls);
 				sqls.clear();
 			}
 
@@ -265,7 +276,7 @@ class SynodetierJoinTest {
 					"a_users.sqlite.ddl", "a_users.sqlite.sql"}) {
 
 				sqls.add(loadTxt(SynodetierJoinTest.class, tbl));
-				Connects.commit(conn, usr, sqls, Connects.flag_nothing);
+				Connects.commit(conn, usr, sqls);
 				sqls.clear();
 			}
 		} catch (Exception e) {

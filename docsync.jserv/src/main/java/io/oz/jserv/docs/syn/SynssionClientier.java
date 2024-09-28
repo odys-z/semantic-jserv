@@ -91,6 +91,7 @@ public class SynssionClientier {
 
 	/**
 	 * Start a domain updating process (handshaking) with this.peer, in this.domain.
+	 * @param ck 
 	 * @param object 
 	 * @return this
 	 * @throws ExchangeException not ready yet.
@@ -113,9 +114,6 @@ public class SynssionClientier {
 						// on start reply
 						onsyninit(rep.exblock, rep.domain);
 						while (rep.synact() != close) {
-							// See SynoderTest
-							// req = syncdb(peer, rep);
-							// rep = srv.onsyncdb(clt.synode, req);
 							ExchangeBlock exb = syncdb(rep.exblock);
 							rep = exespush(peer, A.exchange, exb);
 							if (rep == null)
@@ -150,7 +148,8 @@ public class SynssionClientier {
 			finally {
 				tasklock.unlock();
 			}
-		}, domanager.synode + ":" + peer).start();
+		}, f("%1$s [%2$s <- %1$s]", domanager.synode, peer))
+		.start();
 		return this;
 	}
 
