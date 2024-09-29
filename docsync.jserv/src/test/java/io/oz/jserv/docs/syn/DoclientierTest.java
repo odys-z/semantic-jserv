@@ -134,8 +134,8 @@ class DoclientierTest {
 				.blockSize(bsize);
 		dev.client = client;
 		
-		Utils.logi("-------------- Logged in. %s",
-				client.client.ssInfo().toString());
+		Utils.logi("-------------- client pushing: uid %s, device %s",
+				client.client.ssInfo().uid(), client.client.ssInfo().device);
 
 		ExpSyncDoc xdoc = videoUpByApp(dev, client, docm.tbl);
 		assertEquals(dev.dev, xdoc.device());
