@@ -444,7 +444,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	private void onDocreated(String pid, String conn, ExpDocTableMeta docm, IUser usr) {
-		// Albums.onPhotoCreated()
+		// TODO Albums.onPhotoCreated()
 	}
 
 	static void checkBlock0(DBSyntableBuilder st, String conn, DocsReq body, DocUser usr)
