@@ -11,7 +11,6 @@ import static io.odysz.common.Utils.waiting;
 import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.Y_0;
 import static io.oz.jserv.docs.syn.Dev.Y_1;
-import static io.oz.jserv.docs.syn.Dev.bsize;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.ExpDoctierservTest.X;
@@ -128,20 +127,15 @@ class DoclientierTest {
 
 		Clients.init(jserv_xyzw[to]);
 
-		Doclientier client = new Doclientier(dev.uri, errLog)
-				.tempRoot(dev.uri)
-				.loginWithUri(dev.uri, dev.uid, dev.dev, dev.psw)
-				.blockSize(bsize);
-		dev.client = client;
-		
+		dev.login(errLog);
 		Utils.logi("-------------- client pushing: uid %s, device %s",
-				client.client.ssInfo().uid(), client.client.ssInfo().device);
+				dev.client.client.ssInfo().uid(), dev.client.client.ssInfo().device);
 
-		ExpSyncDoc xdoc = videoUpByApp(dev, client, docm.tbl);
+		ExpSyncDoc xdoc = videoUpByApp(dev, dev.client, docm.tbl);
 		assertEquals(dev.dev, xdoc.device());
 		assertEquals(dev.res, xdoc.fullpath());
 
-		verifyPathsPage(client, docm.tbl, xdoc.clientpath);
+		verifyPathsPage(dev.client, docm.tbl, xdoc.clientpath);
 		return xdoc;
 	}
 

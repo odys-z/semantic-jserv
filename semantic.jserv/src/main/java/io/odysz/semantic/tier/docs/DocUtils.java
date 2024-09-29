@@ -139,7 +139,9 @@ public class DocUtils {
 	}
 	
 	/**
-	 * Create doc record and trigger syn-change semantics.
+	 * Create doc record in table meta.tbl, and trigger syn-change semantics,
+	 * if configured semantics.xml/t/s [id = syn-change, t = meta.tbl]
+	 * 
 	 * @param st
 	 * @param conn
 	 * @param doc

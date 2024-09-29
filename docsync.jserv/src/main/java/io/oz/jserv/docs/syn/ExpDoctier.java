@@ -95,6 +95,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		if (synode == null)
 			throw new SemanticException("Synode id must be configured in %s. table %s, k = %s",
 					Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.synode);
+		
+		try {debug = Connects.getDebug(loconn); } catch (Exception e) {debug = false;}
 	}
 
 	static final int jservx = 0;
@@ -442,6 +444,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	private void onDocreated(String pid, String conn, ExpDocTableMeta docm, IUser usr) {
+		// Albums.onPhotoCreated()
 	}
 
 	static void checkBlock0(DBSyntableBuilder st, String conn, DocsReq body, DocUser usr)
