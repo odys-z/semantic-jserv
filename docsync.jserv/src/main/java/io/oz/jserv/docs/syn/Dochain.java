@@ -39,7 +39,7 @@ public class Dochain {
 
 	public interface OnChainOk {
 		/**
-		 * {@link Syntier} use this as a chance of update user's data
+		 * {@link ExpDoctier} use this as a chance of update user's data
 		 * when block chain finished successfully.
 		 * 
 		 * @param post
@@ -138,7 +138,7 @@ public class Dochain {
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		String id = chainId(usr, body);
 		if (!blockChains.containsKey(id))
-			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
+			throw new SemanticException("Uploading blocks must be accessed after starting chain is confirmed.");
 
 		BlockChain chain = blockChains.get(id);
 		chain.appendBlock(body);

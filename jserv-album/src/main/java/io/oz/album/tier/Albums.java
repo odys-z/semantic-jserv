@@ -653,7 +653,6 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	@SuppressWarnings("deprecation")
 	DocsResp querySyncs(DocsReq req, IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException {
 

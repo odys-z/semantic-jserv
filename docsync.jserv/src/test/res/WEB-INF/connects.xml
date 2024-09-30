@@ -14,12 +14,12 @@
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
   		<dbg>true</dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	
   	<c>
 		<id>no-jserv.00</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>no-jserv-db.00</src>
   		<usr></usr>
@@ -29,7 +29,7 @@
 	</c>
 	<c>
 		<id>no-jserv.01</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>no-jserv-db.01</src>
   		<usr></usr>
@@ -39,7 +39,7 @@
 	</c>
 	<c>
 		<id>no-jserv.02</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>no-jserv-db.02</src>
   		<usr></usr>
@@ -49,7 +49,7 @@
 	</c>
 	<c>
 		<id>no-jserv.03</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>no-jserv-db.03</src>
   		<usr></usr>
@@ -110,5 +110,41 @@
   		<conn>no-jserv.01</conn>
   	</c>
   	
+  	<c>
+  		<uri>/syn/X</uri>
+  		<conn>no-jserv.00</conn>
+  	</c>
+  	<c>
+  		<uri>jetty-0</uri>
+  		<conn>no-jserv.00</conn>
+  	</c>
+
+  	<c>
+  		<uri>/syn/Y</uri>
+  		<conn>no-jserv.01</conn>
+  	</c>
+  	<c>
+  		<uri>jetty-1</uri>
+  		<conn>no-jserv.01</conn>
+  	</c>
+
+  	<c>
+  		<uri>/syn/Z</uri>
+  		<conn>no-jserv.02</conn>
+  	</c>
+  	<c>
+  		<uri>jetty-2</uri>
+  		<conn>no-jserv.02</conn>
+  	</c>
+
+  	<c>
+  		<uri>/syn/W</uri>
+  		<conn>no-jserv.03</conn>
+  	</c>
+  	<c>
+  		<uri>jetty-3</uri>
+  		<conn>no-jserv.03</conn>
+  	</c>
+
   </t>
 </conns>

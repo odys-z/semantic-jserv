@@ -138,6 +138,20 @@ public class DocUtils {
 		return pid;
 	}
 	
+	/**
+	 * Create doc record in table meta.tbl, and trigger syn-change semantics,
+	 * if configured semantics.xml/t/s [id = syn-change, t = meta.tbl]
+	 * 
+	 * @param st
+	 * @param conn
+	 * @param doc
+	 * @param usr
+	 * @param meta
+	 * @param onFileCreateSql
+	 * @return doc-id
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	public static String createFileBy64(DBSyntableBuilder st, String conn,
 			ExpSyncDoc doc, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) throws TransException, SQLException {
 		if (LangExt.isblank(doc.fullpath()))
@@ -151,7 +165,6 @@ public class DocUtils {
 			.nv(meta.org, doc.org)
 			.nv(meta.uri, doc.uri64)
 			.nv(meta.resname, doc.pname)
-			// .nv(meta.synoder, doc.device)
 			.nv(meta.device, doc.device)
 			.nv(meta.fullpath, doc.fullpath())
 			.nv(meta.createDate, doc.createDate)
@@ -172,8 +185,7 @@ public class DocUtils {
 
 		ISemantext insCtx = st.instancontxt(conn, usr);
 		SemanticObject res = (SemanticObject) ins.ins(insCtx);
-		String pid = res.resulve(meta.tbl, meta.pk, -1);
-		return pid;
+		return res.resulve(meta.tbl, meta.pk, -1);
 	}
 
 	/**
@@ -214,9 +226,4 @@ public class DocUtils {
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
 	}
-
-//	public static String createFileBy64(DATranscxt st, String conn, ExpSyncDoc photo, IUser usr, ExpDocTableMeta meta,
-//			Update ... post) {
-//		return null;
-//	}
 }

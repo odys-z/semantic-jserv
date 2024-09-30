@@ -27,7 +27,6 @@ import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.jclient.tier.Semantier;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -42,7 +41,6 @@ import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
@@ -50,11 +48,11 @@ import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.PathsPage;
-import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.x.DocsException;
 
 public class Doclientier extends Semantier {
 	public boolean verbose = false;
@@ -62,9 +60,9 @@ public class Doclientier extends Semantier {
 	protected SessionClient client;
 	protected OnError errCtx;
 
-	protected DocUser robot;
+	protected DocUser robt;
 
-	/** for download? */
+	/** For download. */
 	protected String tempath;
 
 	/** Must be multiple of 12. Default 3 MiB */
@@ -171,7 +169,7 @@ public class Doclientier extends Semantier {
 		SessionInf ssinf = client.ssInfo();
 		try {
 			// robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath, ssinf.device);
-			robot = new DocUser(ssinf.uid());
+			robt = new DocUser(ssinf.uid(), ssinf.userName());
 			tempath = FilenameUtils.concat(tempath,
 					String.format("io.oz.doc.%s.%s", ssinf.device, ssinf.uid()));
 			
@@ -179,19 +177,19 @@ public class Doclientier extends Semantier {
 			
 			JUserMeta um = isNull(Connects.getAllConnIds())
 					? new JUserMeta() // a temporary solution for client without DB connections
-					: (JUserMeta) robot.meta();
+					: (JUserMeta) robt.meta();
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
 			 .l(um.om.tbl, "o", String.format("o.%1$s = u.%1$s", um.org))
-			 .whereEq("u." + um.pk, robot.uid());
+			 .whereEq("u." + um.pk, robt.uid());
 
 			AnsonResp resp = client.commit(q, errCtx);
 			AnResultset rs = resp.rs(0).beforeFirst();
 			if (rs.next())
-				robot.orgId(rs.getString(um.org))
+				robt.orgId(rs.getString(um.org))
 					.orgName(rs.getString(um.orgName));
-			else throw new SemanticException("User identity haven't been reqistered: %s", robot.uid());
+			else throw new SemanticException("User identity haven't been reqistered: %s", robt.uid());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -200,7 +198,7 @@ public class Doclientier extends Semantier {
 	}
 	
 	/**
-	 * Synchronizing files to a {@link Syntier} using block chain, accessing port {@link Port#docsync}.
+	 * Synchronizing files to a {@link ExpDoctier} using block chain, accessing port {@link Port#docsync}.
 	 * This method will use meta to create entity object of doc.
 	 * @param meta for creating {@link ExpSyncDoc} object 
 	 * @param rs tasks, rows should be limited
@@ -274,7 +272,7 @@ public class Doclientier extends Semantier {
 
 		if ( size == length ) {
 			// move temporary file
-			String targetPath = ""; //resolvePrivRoot(f.uri, meta);
+			String targetPath = "";
 			if (verbose)
 				Utils.logi("   %s\n-> %s", pth, targetPath);
 			try {
@@ -309,7 +307,7 @@ public class Doclientier extends Semantier {
 				OnProcess proc, OnOk docOk, OnError ... onErr)
 				throws TransException, IOException {
 		OnError err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
-		return pushBlocks(client, uri, tbl, videos, blocksize, proc, docOk, err);
+		return pushBlocks(client, uri, tbl, videos, blocksize, proc, docOk, isNull(onErr) ? err : onErr[0]);
 	}
 
 	public static List<DocsResp> pushBlocks(SessionClient client, String uri, String tbl,
@@ -334,11 +332,17 @@ public class Doclientier extends Semantier {
 			int totalBlocks = 0;
 
 			ExpSyncDoc p = videos.get(px);
+			if (isblank(p.clientpath) || isblank(p.device()))
+				throw new DocsException(DocsException.SemanticsError,
+						"Docs' pushing requires device id and clientpath.\n" +
+						"Doc Id: %s, device id: %s, client-path: %s, resource name: %s",
+						p.recId, p.device(), p.clientpath, p.pname);
+
 			DocsReq req  = new DocsReq(tbl, p, uri)
 					.device(user.device)
 					.resetChain(true)
 					.blockStart(p, user);
-
+			
 			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
 									.header(header);
 
@@ -369,7 +373,7 @@ public class Doclientier extends Semantier {
 
 					b64 = AESHelper.encode64(ifs, blocksize);
 				}
-				req = new DocsReq(tbl, uri).blockEnd(respi, user);
+				req = new DocsReq(tbl, uri).blockEnd(respi == null ? resp0 : respi, user);
 
 				q = client.<DocsReq>userReq(uri, Port.docsync, req)
 							.header(header);
@@ -471,7 +475,6 @@ public class Doclientier extends Semantier {
 	
 	public DocsResp synDel(String tabl, String device, String clientpath) {
 		DocsReq req = (DocsReq) new DocsReq(tabl, uri)
-				// .device(new Device(device, null))
 				.doc(device, clientpath)
 				.a(A.del);
 
@@ -490,93 +493,6 @@ public class Doclientier extends Semantier {
 			errCtx.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
 		}
 		return resp;
-	}
-
-//	DocsResp synClosePush(ExpSyncDoc p, String docTabl)
-//			throws AnsonException, IOException, TransException, SQLException {
-//
-//		DocsReq clsReq = (DocsReq) new DocsReq()
-//						.docTabl(docTabl)
-//						// .org(robot.orgId)
-//						.queryPath(p.device(), p.fullpath())
-//						.a(A.synclosePush);
-//
-//		AnsonMsg<DocsReq> q = client
-//				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
-//
-//		DocsResp r = client.commit(q, errCtx);
-//		return r;
-//	}
-	
-//	/**
-//	 * Tell upper synode to close the doc downloading.
-//	 * @param p
-//	 * @param docTabl
-//	 * @return
-//	 * @throws SemanticException
-//	 * @throws AnsonException
-//	 * @throws IOException
-//	 */
-//	DocsResp synClosePull(ExpSyncDoc p, String docTabl)
-//			throws SemanticException, AnsonException, IOException {
-//		DocsReq clsReq = (DocsReq) new DocsReq()
-//						.docTabl(docTabl)
-//						// .org(robot.orgId)
-//						.queryPath(p.device(), p.fullpath())
-//						.a(A.synclosePull);
-//
-//		AnsonMsg<DocsReq> q = client
-//				.<DocsReq>userReq(uri, AnsonMsg.Port.docsync, clsReq);
-//
-//		DocsResp r = client.commit(q, errCtx);
-//		return r;
-//	}
-	
-	/**
-	 * Insert the locally ready doc (localpath) into table.
-	 * Also update meta.syncflag.
-	 * 
-	 * @param st
-	 * @param conn
-	 * @param localPath
-	 * @param doc
-	 * @param usr
-	 * @param meta
-	 * @return new doc id
-	 * @throws TransException
-	 * @throws SQLException
-	 */
-	static String insertLocalFile(DATranscxt st, String conn, String localPath,
-			ExpSyncDoc doc, SyncRobot usr, ExpDocTableMeta meta)
-			throws TransException, SQLException {
-
-		if (isblank(localPath))
-			throw new SemanticException("Client path can't be null/empty.");
-		
-		long size = new File(localPath).length();
-
-		Insert ins = st.insert(meta.tbl, usr)
-				// .nv(meta.org(), usr.orgId())
-				.nv(meta.uri, doc.uri64)
-				.nv(meta.resname, doc.pname)
-				.nv(meta.device, usr.deviceId())
-				.nv(meta.fullpath, doc.fullpath())
-				.nv(meta.folder, doc.folder())
-				.nv(meta.size, size)
-				.nv(meta.shareby, doc.shareby)
-				.nv(meta.shareflag, doc.shareflag)
-				.nv(meta.shareDate, doc.sharedate)
-				;
-		
-		if (!isblank(doc.mime))
-			ins.nv(meta.mime, doc.mime);
-
-		SemanticObject res = (SemanticObject) ins.ins(st.instancontxt(conn, usr));
-		String pid = ((SemanticObject) ((SemanticObject) res.get("resulved"))
-				.get(meta.tbl))
-				.getString(meta.pk);
-		
-		return pid;
 	}
 
 	/**
@@ -635,6 +551,41 @@ public class Doclientier extends Semantier {
 		return resp;
 	}
 
+	/**
+	 * Implementing new device registering together with {@link #queryDevices(String)}.
+	 * 
+	 * <pre>CREATE TABLE doc_devices (
+      synode0 varchar(12)  NOT NULL, -- initial node a device is registered
+      device  varchar(12)  NOT NULL, -- ak, generated when registering, but is used together with synode-0 for file identity.
+      devname varchar(256) NOT NULL, -- set by user, warn on duplicate, use old device id if user confirmed, otherwise generate a new one.
+      mac     varchar(512),          -- an anciliary identity for recognize a device if there are supporting ways to automatically find out a device mac
+      orgId   varchar(12)  NOT NULL, -- fk-del, usually won't happen
+      owner   varchar(12),           -- or current user, not permenatly bound
+      PRIMARY KEY (synode0, device)
+      ); -- registered device names. Name is set by user, prompt if he's device names are duplicated
+	 * </pre>
+	 * @return this
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
+	 * @since 0.2.0
+	 */
+	public DocsResp registerDevice(String devname)
+			throws SemanticException, AnsonException, IOException {
+		String[] act = AnsonHeader.usrAct("synclient.java", "register", A.devices, Port.docsync.name());
+		AnsonHeader header = client.header().act(act);
+
+		DocsReq req = (DocsReq) new DocsReq("doc_devices", uri);
+		req.pageInf = new PageInf(0, -1, devname);
+		req.a(A.registDev);
+
+		AnsonMsg<DocsReq> q = client
+			.<DocsReq>userReq(uri, Port.docsync, req)
+			.header(header);
+
+		return client.commit(q, errCtx);
+	}
+	
 	public String tempath(IFileDescriptor f) {
 		String clientpath = f.fullpath().replaceAll(":", "");
 		return EnvPath.decodeUri(tempath, f.device(), FilenameUtils.getName(clientpath));

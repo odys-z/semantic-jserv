@@ -13,7 +13,7 @@
 
     <c>
     	<k>io.oz.syn.synode</k>
-    	<v>synode-0</v>
+    	<v>X</v>
     </c>
 
 	<c>
@@ -22,12 +22,6 @@
 		<v>io.oz.jserv.docs.syn.DocUser</v>
 	</c>
 
-	<!-- home id is the same as remote id. Only registered home can get one 
-	<c>
-		<k>home-id</k>
-		<v>test.odyzhou</v>
-	</c>
-	-->
 
 	<c>
 		<k>sync.log.on-verbose</k>
@@ -35,7 +29,7 @@
 	</c>
 	<c>
 		<k>ss-timeout-min</k>
-		<v>3</v>
+		<v>60</v>
 	</c>
 	<c>
 		<k>ss-timeout-min.debugMode</k>
@@ -47,26 +41,6 @@
 		<v></v>
 	</c>
 
-	<!-- (center) hub, (main) storage, (private) storage
-	<c>
-		<k>sync-mode</k>
-		<v>main</v>
-	</c>
-	-->
-
-	<!-- connect id for where to save downloaded file, e.g default connection key
-	<c>
-		<k>sync-conn-id</k>
-		<v>main-sqlite</v>
-	</c>
-	-->
-
-	<!-- sync task name (multiple threads for the future), i.e. table name, of which table's records to be synchronized)
-	<c>
-		<k>sync-table-name</k>
-		<v>h_photos</v>
-	</c>
-	-->
   </t>
 
 </configs>

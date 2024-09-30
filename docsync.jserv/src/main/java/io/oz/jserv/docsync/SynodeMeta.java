@@ -3,7 +3,7 @@ package io.oz.jserv.docsync;
 import io.odysz.semantics.meta.TableMeta;
 
 /**
- * @deprecated using {@link io.odysz.semantic.meta.SynodeMeta}
+ * @deprecated replaced by {@link io.odysz.semantic.meta.SynodeMeta}
  * a_synodes table meta
  * 
  * <pre>DDL

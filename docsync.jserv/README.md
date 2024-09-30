@@ -14,6 +14,16 @@ or confliction resolving.
 [Operational Transform](https://en.wikipedia.org/wiki/Operational_transformation)
 shouldn't be the case.
 
+- User / Owner Account vs. Synchronizing Policies
+
+User Accounts management for cloud applications is a wild world, of which the
+patterns can be vary in a wide range of schemas [x.5, x.6, x.7, x.8].
+
+[refact-docsync: cfec2ea65f4b4ba4271c49f0bcdef9fb1d385c70] The first version will
+experment an architecture based upon a centrialized users management platform, for
+downloading user information to synodes, supposing happend before synchronizations
+begin.
+
 # References
 
 [1] Mopati Bernerdict Kekgathetse, Keletso Letsholo,
@@ -112,7 +122,7 @@ Appendix A is a useful table for mapping data types across RDBMS.
 
 &emsp;A lot of router rules need to be configured, and synchroniztion is fixed according to group settings.
 
->    ![sym_data pattern](https://www.symmetricds.org/images/how-symmetricds-works/change-data-capture-small.png)
+>    ![sym_data pattern](https://symmetricds.org/wp-content/uploads/2012/09/change-data-capture.png)
 <br>Image Copyright © JumpMind, Inc
 
 - Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
@@ -131,3 +141,11 @@ Appendix A is a useful table for mapping data types across RDBMS.
 [x.4] [Azure SQL Edge Deployment Models](https://learn.microsoft.com/en-us/azure/azure-sql-edge/overview#deployment-models)
 
 >    [deploy model](https://learn.microsoft.com/en-us/azure/azure-sql-edge/media/overview/overview.png)
+
+[x.5] Gilad David Maayan, [The Importance of User Management for Your Applications: Technologies and Best Practices](https://www.codemotion.com/magazine/backend/the-importance-of-user-management-for-your-applications-technologies-and-best-practices/), April 11, 2024, Code Motion, Retrieved on Sep 11, 2024.
+
+[x.6] [How can you manage user accounts and permissions in cloud computing?](https://www.linkedin.com/advice/0/how-can-you-manage-user-accounts-permissions-wzy4f), All/IT/Services/Network Administration, LinkedIn, Retrieved on Sep 11, 2024.
+
+[x.7] [What is the best practice for managing Application Specific Users in GCP](https://serverfault.com/questions/1038774/what-is-the-best-practice-for-managing-application-specific-users-in-gcp), serverfault, StackExchange, Retrieved on Sep 11, 2024.
+
+[x.8] [9 User Access Management Best Practices](https://www.cloudeagle.ai/blogs/user-access-management-best-practices), CloudEagle.ai, June 24, 2024, Retrieved on Sep 11, 2024.

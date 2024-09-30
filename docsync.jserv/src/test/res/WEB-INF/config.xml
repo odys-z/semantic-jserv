@@ -26,7 +26,7 @@
 	</c>
 	<c>
 		<k>ss-timeout-min</k>
-		<v>3</v>
+		<v>30</v>
 	</c>
 	<c>
 		<k>ss-timeout-min.debugMode</k>
@@ -51,10 +51,12 @@
 		<v>1</v>
 	</c>
 	
+	<!-- 
 	<c>
 		<k>io.oz.syn.synode</k>
 		<v>syn-00</v>
 	</c>
+	 -->
  
 	<!-- connect id for where to save downloaded file, e.g default connection key
 	<c>

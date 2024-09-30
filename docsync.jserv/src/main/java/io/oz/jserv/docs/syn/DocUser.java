@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import io.odysz.common.Configs;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
@@ -12,7 +11,6 @@ import io.odysz.semantic.jsession.JUser;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.tier.Profiles;
 import io.oz.jserv.docs.x.DocsException;
 
 /**
@@ -129,25 +127,4 @@ public class DocUser extends JUser implements IUser {
 		tempDirs.add(tempDir);
 		return tempDir;
 	}
-
-//	@Override
-//	public SessionInf getClientSessionInf(IUser login) throws Exception { 
-//		// SessionInf inf = new SessionInf(login.sessionId(), login.uid(), login.roleId());
-//		SessionInf inf = super.getClientSessionInf(login);
-//		inf .device(login.deviceId())
-//			.userName(((DocUser)login).userName);
-//		return inf;
-//	}
-
-	@Override
-	public Profiles profile() {
-		return new Profiles().webroot(Configs.getCfg(WebRoot));
-	}
-
-//	@Override
-//	public TableMeta meta(String... connId) {
-//		return new JUserMeta("a_users")
-//				.clone(Connects.getMeta(
-//				isNull(connId) ? null : connId[0], "a_users"));
-//	}
 }

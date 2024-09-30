@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<configs>
+  <t id="default" pk="k" columns="k,v">
+    <c>
+    	<k>file-sys</k>
+    	<v></v>
+    </c>
+    <c>
+    	<k>id-len</k>
+    	<v>4</v>
+    </c>
+
+    <c>
+    	<k>io.oz.syn.synode</k>
+    	<v>Y</v>
+    </c>
+
+	<c>
+		<!-- Class name of SUser Implementation -->
+		<k>class-IUser</k>
+		<v>io.oz.jserv.docs.syn.DocUser</v>
+	</c>
+
+	<c>
+		<k>sync.log.on-verbose</k>
+		<v>false</v>
+	</c>
+	<c>
+		<k>ss-timeout-min</k>
+		<v>3</v>
+	</c>
+	<c>
+		<k>ss-timeout-min.debugMode</k>
+		<v>false</v>
+	</c>
+	<c>
+        <!-- empty for disabling db log -->
+		<k>log-connId</k>
+		<v></v>
+	</c>
+
+  </t>
+
+</configs>

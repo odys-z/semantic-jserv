@@ -75,7 +75,6 @@ public class BlockChain {
 //	}
 
 	/**
-	 * @deprecated
 	 * Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
 	 * @param tempDir
@@ -114,7 +113,16 @@ public class BlockChain {
 		waitings = new DocsReq().blockSeq(-1);
 	}
 
-	public BlockChain(String docTabl, String tempDir, String devid, ExpSyncDoc doc) throws IOException {
+	/**
+	 * 
+	 * @param docTabl
+	 * @param tempDir
+	 * @param devid
+	 * @param doc
+	 * @throws IOException
+	 */
+	public BlockChain(String docTabl, String tempDir, String devid, ExpSyncDoc doc)
+		throws IOException {
 		// doc.clientpath, body.doc.createDate, body.doc.folder()
 		this.docTabl = docTabl;
 		String clientpath = doc.clientpath.replaceFirst("^/", "");
@@ -146,12 +154,17 @@ public class BlockChain {
 		blockReq.nextBlock = nxt;
 
 		// assertNotNull(ofs); makes out going stream in trouble?
-		if (ofs == null) throw new IOException("Output stream broken!");
+		if (ofs == null) throw new IOException("Output stream is broken!");
 		if (waitings.nextBlock != null && waitings.blockSeq >= waitings.nextBlock.blockSeq)
 			throw new TransException("Handling block's sequence error.");
 
+		// 1.4.45
+		// OutputStreamWriter outputStreamWriter = new OutputStreamWriter(ofs, "UTF-8");
+        // Writer writer = new BufferedWriter(outputStreamWriter);
+
 		while (waitings.nextBlock != null && waitings.blockSeq + 1 == waitings.nextBlock.blockSeq) {
 			ofs.write(AESHelper.decode64(waitings.nextBlock.doc.uri64));
+			// writer.write(AESHelper.decode64(waitings.nextBlock.doc.uri64));
 
 			waitings.blockSeq = waitings.nextBlock.blockSeq;
 			waitings.nextBlock = waitings.nextBlock.nextBlock;
