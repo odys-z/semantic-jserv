@@ -189,7 +189,7 @@ class SynodetierJoinTest {
 
 		for (String servpattern : t.synodetiers.keySet()) {
 			if (len(t.synodetiers.get(servpattern)) > 1)
-				fail("Multiple synchronizing domainschema is an issue not handled in v 2.0.0.");
+				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
 
 			for (String dom : t.synodetiers.get(servpattern).keySet()) {
 				t.synodetiers.get(servpattern).get(dom).updomains(
