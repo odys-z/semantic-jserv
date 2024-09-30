@@ -83,11 +83,14 @@ public class ExpDoctierservTest {
 	
 	@Test
 	void runDoctiers() throws Exception {
+		int section = 0;
+		
 		int[] nodex = new int[] { X, Y, Z };
 		String host = System.getProperty("syndocs.ip");
-		
 		int port = 8090;
-		// for (int i : new int[] {X, Y, Z, W}) {
+		
+		Utils.logrst("Starting synode-tiers", ++section);
+
 		for (int i : nodex) {
 			if (jetties[i] != null)
 				jetties[i].stop();
@@ -119,6 +122,8 @@ public class ExpDoctierservTest {
 			}
 		}
 
+		Utils.logrst("Open domains", ++section);
+
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
 			// should block X's starting sessions
@@ -127,14 +132,18 @@ public class ExpDoctierservTest {
 			});
 		}
 		awaitAll(lights, -1);
+
+		Utils.logrst("Pause for client's pushing", ++section);
 		pause("Press Enter after pushed with client for starting synchronizing.");
 
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y, ck);
-		awaitAll(lights, -1);
+		Utils.logrst("Synchronizing between synodes", ++section);
+		final boolean[] lights2 = new boolean[nodex.length];
+		waiting(lights2, Y);
+		SynodetierJoinTest.syncdomain(lights2, Y, ck);
+		awaitAll(lights2, -1);
 
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -142,10 +151,13 @@ public class ExpDoctierservTest {
 		ck[Y].doc(3);
 		ck[X].doc(3);
 
+		Utils.logrst("Bring up dev-x0 and delete", ++section);
 		// 00 delete
 		Clients.init(jetties[X].jserv());
 
 		Dev devx0 = devs[X_0];
+		Utils.logrst(new String[] {"Deleting", devx0.res}, section, 1);
+
 		devx0.login(errLog);
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.dev, devx0.res);
 		assertEquals(1, rep.total(0));
@@ -156,12 +168,16 @@ public class ExpDoctierservTest {
 					.device(devx0.dev)
 					.fullpath(devx0.res);
 
+		Utils.logrst(new String[] {"Verifying", devx0.res}, section, 2);
 		verifyPathsPageNegative(devx0.client, docm.tbl, dx0.clientpath);
 
-		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y);
-		awaitAll(lights);
+		Utils.logrst("Synchronizing synodes", ++section);
+		final boolean[] lights3 = new boolean[nodex.length];
+		waiting(lights3, Y);
+		SynodetierJoinTest.syncdomain(lights3, Y);
+		awaitAll(lights3, -1);
 
+		Utils.logrst("Finish", ++section);
 		printChangeLines(ck);
 		printNyquv(ck);
 
@@ -170,7 +186,7 @@ public class ExpDoctierservTest {
 	}
 
 	/**
-	 * Initialize syn_* tables' records, must be called after #SynodetierJoinTest#setupSqliTables()}.
+	 * Initialize syn_* tables' records, must be called after {@link SynodetierJoinTest#initSysRecords()}.
 	 * 
 	 * @param conn
 	 */

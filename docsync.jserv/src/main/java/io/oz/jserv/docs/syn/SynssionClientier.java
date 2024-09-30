@@ -98,7 +98,8 @@ public class SynssionClientier {
 	 */
 	public SynssionClientier asynUpdate2peer(OnDomainUpdate onup) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
-			throw new ExchangeException(ready, null, "Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
+			throw new ExchangeException(ready, null,
+					"Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
 					peer, domain(), client == null ? ", client is null" : "");
 
 		new Thread(() -> { 

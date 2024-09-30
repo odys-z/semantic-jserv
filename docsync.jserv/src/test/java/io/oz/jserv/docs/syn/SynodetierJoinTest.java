@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
+import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -201,8 +202,10 @@ class SynodetierJoinTest {
 								e.printStackTrace();
 							}
 
-						if (eq(domain, dom) && eq(mynid, jetties[tx].synode()))
+						if (eq(domain, dom) && eq(mynid, jetties[tx].synode())) {
 							lights[tx] = true;
+							Utils.logi("lights[%s] = true", tx);
+						}
 						else {
 							DBSyntableBuilder trb = isNull(xp) ? null : xp[0].trb;
 							throw new NullPointerException(String.format(
@@ -256,7 +259,8 @@ class SynodetierJoinTest {
 	}
 
 	/**
-	 * initialize with files, i. e. oz_autoseq.sql, a_users.sqlite.sql.
+	 * initialize oz_autoseq, a_users with sql script files,
+	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
 	 * 
 	 * @param conn
 	 */
