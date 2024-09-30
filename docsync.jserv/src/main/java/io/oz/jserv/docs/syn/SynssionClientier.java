@@ -116,7 +116,7 @@ public class SynssionClientier {
 						while (rep.synact() != close) {
 							ExchangeBlock exb = syncdb(rep.exblock);
 							rep = exespush(peer, A.exchange, exb);
-							if (rep == null) break: TO BE CONTINUED
+							if (rep == null) // break: TO BE CONTINUED
 								throw new ExchangeException(exb.synact(), xp,
 										"Got null reply for exchange session. %s : %s -> %s",
 										domain(), domanager.synode, peer);

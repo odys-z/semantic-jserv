@@ -143,8 +143,11 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		int m = 20;
 		try { m = Integer.valueOf(Configs.getCfg("ss-timeout-min"));} catch (Exception e) {}
-		if (ServFlags.session)
+		if (ServFlags.session) {
+			Utils.logi("[AnSession] timeout = %s minutes (configure: %s)",
+					m, Configs.cfgFullpath);
 			Utils.warn("[ServFlags.session] SSession debug mode true (ServFlage.session)");
+		}
 
         schedualed = scheduler.scheduleAtFixedRate(
         		new SessionChecker(users, m),
