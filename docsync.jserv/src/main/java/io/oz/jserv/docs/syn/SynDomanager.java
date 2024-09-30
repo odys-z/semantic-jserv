@@ -358,7 +358,7 @@ public class SynDomanager implements OnError {
 
 		for (String peer : sessions.keySet())
 			if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
-				sessions.get(peer).asynUpdate2peer(onUpdate);
+				sessions.get(peer).update2peer(onUpdate);
 //			else if (!sessions.containsKey(peer))
 //				Utils.warnT(new Object() {}, "Updating domain should be done after logged into %s, by %s",
 //						peer, synode);
@@ -393,7 +393,7 @@ public class SynDomanager implements OnError {
 		
 		SynssionClientier c = join2peer(admserv, admid, myuid, mypswd);
 
-		c.asynJoindomain(admid, myuid, mypswd, (resp) -> {
+		c.joindomain(admid, myuid, mypswd, (resp) -> {
 			sessions.put(admid, c);
 			ok.ok(resp);
 		});
@@ -451,7 +451,7 @@ public class SynDomanager implements OnError {
 
 		for (SynssionClientier c : sessions.values()) {
 			c.loginWithUri(c.peerjserv, dbrobot.uid(), dbrobot.pswd(), dbrobot.deviceId());
-			c.asynUpdate2peer(onEachOpen);
+			c.update2peer(onEachOpen);
 		}
 		return this;
 	}

@@ -96,13 +96,13 @@ public class SynssionClientier {
 	 * @return this
 	 * @throws ExchangeException not ready yet.
 	 */
-	public SynssionClientier asynUpdate2peer(OnDomainUpdate onup) throws ExchangeException {
+	public SynssionClientier update2peer(OnDomainUpdate onup) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
 					"Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
 					peer, domain(), client == null ? ", client is null" : "");
 
-		new Thread(() -> { 
+//		new Thread(() -> { 
 			SyncResp rep = null;
 			try {
 				// start session
@@ -149,8 +149,7 @@ public class SynssionClientier {
 			finally {
 				tasklock.unlock();
 			}
-		}, f("%1$s [%2$s <- %1$s]", domanager.synode, peer))
-		.start();
+//		}, f("%1$s [%2$s <- %1$s]", domanager.synode, peer)) .start();
 		return this;
 	}
 
@@ -271,8 +270,8 @@ public class SynssionClientier {
 	 * @param ok
 	 * @since 0.2.0
 	 */
-	public void asynJoindomain(String admid, String myuid, String mypswd, OnOk ok) {
-		new Thread(() -> { 
+	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) {
+//		new Thread(() -> { 
 			try {
 				tasklock.lock();
 				SyncReq  req = signup(admid);
@@ -288,7 +287,7 @@ public class SynssionClientier {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally { tasklock.unlock(); }
-		}, f("Join domain %s <- %s", admid, myuid)).start();
+//		}, f("Join domain %s <- %s", admid, myuid)).start();
 	}
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
