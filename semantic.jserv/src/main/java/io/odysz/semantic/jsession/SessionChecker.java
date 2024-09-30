@@ -32,7 +32,7 @@ public class SessionChecker implements Runnable {
 			}
 
 			if (ss.size() > 0) {
-				Utils.logi ("Sesssion refeshed, expired session(s) in last %s minutes:", timeout / 60000);
+				Utils.logi ("Sesssion refeshed. Session(s) idled (expired) in last %s minutes:", timeout / 60000);
 			}
 
 			for (String ssid : ss) {

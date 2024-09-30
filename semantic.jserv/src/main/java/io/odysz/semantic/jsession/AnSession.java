@@ -111,9 +111,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * Initialize semantext, schedule tasks,
 	 * load root key from tomcat context.xml.
 	 * To configure root key in tomcat, in context.xml, <pre>
-	&lt;Context&gt;
-		&lt;Parameter name="io.oz.root-key" value="*************" override="false"/&gt;
-	&lt;/Context&gt;</pre>
+	 * &lt;Context&gt;
+	 *   &lt;Parameter name="io.oz.root-key" value="*************" override="false"/&gt;
+	 * &lt;/Context&gt;</pre>
 	 * @param daSctx
 	 * @throws SAXException something wrong with configuration files
 	 * @throws IOException file accessing failed

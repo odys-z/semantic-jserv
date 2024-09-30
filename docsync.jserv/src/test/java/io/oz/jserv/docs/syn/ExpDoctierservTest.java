@@ -16,6 +16,7 @@ import static io.oz.jserv.docs.syn.SynoderTest.azert;
 import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.initSysRecords;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -97,8 +98,7 @@ public class ExpDoctierservTest {
 			
 			cleanPhotos(docm, servs_conn[i], devs[i].dev);
 			
-			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], host, port++, false)
-						; // .loadSynclients();
+			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], host, port++, false);
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
@@ -120,7 +120,8 @@ public class ExpDoctierservTest {
 		}
 
 		final boolean[] lights = new boolean[nodex.length];
-		for (int i : nodex) { // should block X's starting sessions
+		for (int i : nodex) {
+			// should block X's starting sessions
 			jetties[i].openDomains( (domain, mynid, peer, repb, xp) -> {
 				lights[i] = true;
 			});
@@ -131,7 +132,6 @@ public class ExpDoctierservTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		// lights = new boolean[] {true, false};
 		waiting(lights, Y);
 		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
@@ -143,8 +143,10 @@ public class ExpDoctierservTest {
 		ck[X].doc(3);
 
 		// 00 delete
-		Dev devx0 = devs[X_0];
 		Clients.init(jetties[X].jserv());
+
+		Dev devx0 = devs[X_0];
+		devx0.login(errLog);
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.dev, devx0.res);
 		assertEquals(1, rep.total(0));
 
@@ -158,8 +160,11 @@ public class ExpDoctierservTest {
 
 		waiting(lights, Y);
 		SynodetierJoinTest.syncdomain(lights, Y);
-
 		awaitAll(lights);
+
+		printChangeLines(ck);
+		printNyquv(ck);
+
 		ck[Y].doc(2);
 		ck[X].doc(2);
 	}

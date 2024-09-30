@@ -4,7 +4,13 @@ import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.slava;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.syrskyi;
 
+import java.io.IOException;
+
+import io.odysz.anson.x.AnsonException;
+import io.odysz.semantic.jprotocol.JProtocol.OnError;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 public class Dev {
@@ -57,5 +63,13 @@ public class Dev {
 		this.dev = "test-doclient/" + device;
 		this.folder = folder;
 		this.res = fres;
+	}
+
+	public void login(OnError errLog) throws SemanticException, AnsonException, SsException, IOException {
+		client = new Doclientier(uri, errLog)
+				.tempRoot(uri)
+				.loginWithUri(uri, uid, dev, psw)
+				.blockSize(bsize);
+		// dev.client = client;
 	}
 }
