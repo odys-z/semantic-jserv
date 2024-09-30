@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import io.odysz.common.Utils;
+import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantics.IUser;
 
 /**
@@ -18,6 +19,8 @@ public class SessionChecker implements Runnable {
 	public SessionChecker(HashMap<String, IUser> ssPool, long timeoutMin) {
 		this.sspool = ssPool;
 		timeout = timeoutMin * 60 * 1000;
+		if (ServFlags.session)
+			Utils.logi("SessionChecker: timeout = %d minute", timeoutMin);
 	}
 
 	@Override
