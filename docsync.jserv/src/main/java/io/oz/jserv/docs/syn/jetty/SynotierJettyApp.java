@@ -383,7 +383,7 @@ public class SynotierJettyApp {
 	}
 
 	/**
-	 * initialize oz_autoseq, a_users with sql script files,
+	 * Setup sqlite manage database tables, oz_autoseq, a_users with sql script files,
 	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
 	 * 
 	 * Should be called on for installation.
@@ -391,37 +391,37 @@ public class SynotierJettyApp {
 	 * @param conn
 	 * @throws Exception 
 	 */
-	public static void initSysRecords(SynodeConfig cfg, Iterable<SyncRobot> robots) throws Exception {
+	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncRobot> robots) throws Exception {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
 	
-			for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
-				sqls.add("drop table if exists " + tbl);
-				Connects.commit(cfg.sysconn, usr, sqls);
-				sqls.clear();
+		for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
+			sqls.add("drop table if exists " + tbl);
+			Connects.commit(cfg.sysconn, usr, sqls);
+			sqls.clear();
+		}
+
+		for (String tbl : new String[] {
+					"oz_autoseq.ddl",
+					"oz_autoseq.sql",
+					"a_users.sqlite.ddl",}) {
+
+			sqls.add(loadTxt(SynotierJettyApp.class, tbl));
+			Connects.commit(cfg.sysconn, usr, sqls);
+			sqls.clear();
+		}
+		
+		if (robots != null) {
+			syst = new DATranscxt(cfg.sysconn);
+			JUserMeta um = new JUserMeta();
+			Insert ins = null;
+			for (SyncRobot robot : robots) {
+				Insert i = robot.insert(syst.insert(um.tbl));
+				if (ins == null)
+					ins = i;
+				else ins.post(i);
 			}
-	
-			for (String tbl : new String[] {
-						"oz_autoseq.ddl",
-						"oz_autoseq.sql",
-						"a_users.sqlite.ddl",}) {
-	
-				sqls.add(loadTxt(SynotierJettyApp.class, tbl));
-				Connects.commit(cfg.sysconn, usr, sqls);
-				sqls.clear();
-			}
-			
-			if (robots != null) {
-				syst = new DATranscxt(cfg.sysconn);
-				JUserMeta um = new JUserMeta();
-				Insert ins = null;
-				for (SyncRobot robot : robots) {
-					Insert i = robot.insert(syst.insert(um.tbl));
-					if (ins == null)
-						ins = i;
-					else ins.post(i);
-				}
-			}
+		}
 	}
 	
 	public static void setupSyntables(String synconn) throws SQLException, TransException {

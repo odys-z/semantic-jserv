@@ -33,11 +33,6 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.meta.PeersMeta;
-import io.odysz.semantic.meta.SynChangeMeta;
-import io.odysz.semantic.meta.SynSessionMeta;
-import io.odysz.semantic.meta.SynSubsMeta;
-import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.Docheck;
@@ -112,7 +107,7 @@ class SynodetierJoinTest {
 			config.synconn = servs_conn[i];
 			config.sysconn = servs_conn[i];
 
-			SynotierJettyApp.initSysRecords(config, YellowPages.robots());
+			SynotierJettyApp.setupSysRecords(config, YellowPages.robots());
 
 			jetties[i] = startSyndoctier(config);
 					// System.getProperty("syndocs.ip"), port++, true);

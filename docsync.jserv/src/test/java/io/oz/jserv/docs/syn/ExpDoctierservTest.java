@@ -13,7 +13,7 @@ import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynoderTest.azert;
 import static io.oz.jserv.docs.syn.SynoderTest.zsu;
-import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.initSysRecords;
+import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.setupSysRecords;
 import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.setupSyntables;
 import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.initSynodeRecs;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
@@ -86,43 +86,6 @@ public class ExpDoctierservTest {
 	void runDoctiers() throws Exception {
 		int section = 0;
 		
-		/*
-		int[] nodex = new int[] { X, Y, Z };
-		String host = System.getProperty("syndocs.ip");
-		int port = 8090;
-		
-
-		for (int i : nodex) {
-			if (jetties[i] != null)
-				jetties[i].stop();
-
-			initSysRecords(servs_conn[i]);
-
-			initSynodeRecs(servs_conn[i]);
-			
-			cleanPhotos(docm, servs_conn[i], devs[i].dev);
-			
-			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], host, port++, false);
-			
-			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-								jetties[i].synode(), SynodeMode.peer, docm);
-		}
-		
-		IUser robot = DATranscxt.dummyUser();
-		for (int i : nodex) {
-			Utils.logi("Jservs at %s", servs_conn[i]);
-
-			for (int j : nodex) {
-				SynodeMeta synm = ck[i].trb.synm;
-
-				ck[i].b0.update(synm.tbl, robot)
-					.nv(synm.jserv, jetties[j].jserv())
-					.whereEq(synm.pk, jetties[j].synode())
-					.whereEq(synm.domain, ck[i].trb.domain())
-					.u(ck[i].b0.instancontxt(servs_conn[i], robot));
-			}
-		}
-		*/
 		Utils.logrst("Starting synode-tiers", ++section);
 		int[] nodex = initDoctiers(jetties, ck);
 
@@ -208,7 +171,7 @@ public class ExpDoctierservTest {
 			cfgs[i].host = host;
 			cfgs[i].port = port++;
 
-			initSysRecords(cfgs[i], YellowPages.robots());
+			setupSysRecords(cfgs[i], YellowPages.robots());
 			
 			setupSyntables(cfgs[i].synconn);
 
