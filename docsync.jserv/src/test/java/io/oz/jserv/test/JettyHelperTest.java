@@ -39,7 +39,9 @@ import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 
 /**
- * Start 3 jservs and ping the login.serv port.
+ * Start 3 jservs, ping the login.serv port, and verify the print streams.
+ * 
+ * @since 0.2.0
  */
 public class JettyHelperTest {
 	public class PrintStream1 extends PrintStream {
@@ -152,9 +154,9 @@ public class JettyHelperTest {
 		sqls.add("drop table if exists a_users;");
 		sqls.add("drop table if exists a_orgs;");
 		sqls.add("drop table if exists a_roles;");
-		sqls.add(Utils.loadTxt(SynoderTest.class, "a_users.sqlite.ddl"));
-		sqls.add(Utils.loadTxt(SynoderTest.class, "a_orgs.sqlite.ddl"));
-		sqls.add(Utils.loadTxt(SynoderTest.class, "a_roles.sqlite.ddl"));
+		sqls.add(Utils.loadTxt(Syngleton.class, "a_users.sqlite.ddl"));
+		sqls.add(Utils.loadTxt(Syngleton.class, "a_orgs.sqlite.ddl"));
+		sqls.add(Utils.loadTxt(Syngleton.class, "a_roles.sqlite.ddl"));
 
 		sqls.add("delete from a_users;");
 		sqls.add(String.format("INSERT INTO "
