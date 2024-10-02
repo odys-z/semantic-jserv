@@ -1,7 +1,7 @@
 {"type": "io.oz.synode.AnDictionary",
  "config": {
-   "sysconn": "main-sqlite",
-   "synconn": "no-jserv-db.00",
+   "sysconn": "../vol-2/main-sqlite",
+   "synconn": "../vol-2/no-jserv-db.02",
    "host": "",
    "port": 8964 
  },

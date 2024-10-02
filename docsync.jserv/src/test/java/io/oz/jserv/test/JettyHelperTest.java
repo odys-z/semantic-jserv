@@ -50,7 +50,7 @@ public class JettyHelperTest {
 		}
 	}
 
-	public static final String clientUri = "/jnode";
+	public static final String clientUri = "/jetty";
 	public static final String webinf    = "./src/test/res/WEB-INF";
 	public static final String testDir   = "./src/test/res/";
 	public static final String volumeDir = "./src/test/res/volume";

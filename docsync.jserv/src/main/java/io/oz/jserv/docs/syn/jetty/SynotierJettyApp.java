@@ -3,13 +3,16 @@ package io.oz.jserv.docs.syn.jetty;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logi;
 import static io.oz.jserv.docs.syn.ExpSynodetier.setupDomanagers;
+import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.servlet.annotation.WebServlet;
@@ -35,16 +38,28 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
+import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.meta.PeersMeta;
+import io.odysz.semantic.meta.SynChangeMeta;
+import io.odysz.semantic.meta.SynSessionMeta;
+import io.odysz.semantic.meta.SynSubsMeta;
+import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 import io.oz.jserv.docs.syn.Syngleton;
+import io.oz.synode.jclient.SynodeConfig;
 import io.oz.synode.jclient.YellowPages;
 
 /**
@@ -65,6 +80,8 @@ import io.oz.synode.jclient.YellowPages;
  *
  */
 public class SynotierJettyApp {
+	static DATranscxt syst;
+
 	Server server;
 
 	ServletContextHandler schandler;
@@ -354,17 +371,8 @@ public class SynotierJettyApp {
 		if (synodetiers != null && synodetiers.containsKey(syntier_url)) {
 			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
 				dmgr.loadSynclients(t0, robot)
-					.openSynssions(robot,
+					.openUpdateSynssions(robot,
 						(domain, mynid, peer, repb, xp) -> {
-//							try {
-//								dmgr.synssion(peer).asynUpdate2peer(null);
-//							} catch (ExchangeException e) {
-//								Utils.warnT(new Object() {},
-//									"Update synssion with peer failed. conn-id: %s, domain: %s, synid: %s, peer %s",
-//									conn0, domain, mynid, peer);
-//
-//								e.printStackTrace();
-//							}
 							if (!isNull(onok))
 								onok[0].ok(domain, mynid, peer, repb, xp);
 						});
@@ -372,5 +380,81 @@ public class SynotierJettyApp {
 		}
 
 		return this;
+	}
+
+	/**
+	 * initialize oz_autoseq, a_users with sql script files,
+	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
+	 * 
+	 * Should be called on for installation.
+	 * 
+	 * @param conn
+	 * @throws Exception 
+	 */
+	public static void initSysRecords(SynodeConfig cfg, Iterable<SyncRobot> robots) throws Exception {
+		ArrayList<String> sqls = new ArrayList<String>();
+		IUser usr = DATranscxt.dummyUser();
+	
+			for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
+				sqls.add("drop table if exists " + tbl);
+				Connects.commit(cfg.sysconn, usr, sqls);
+				sqls.clear();
+			}
+	
+			for (String tbl : new String[] {
+						"oz_autoseq.ddl",
+						"oz_autoseq.sql",
+						"a_users.sqlite.ddl",}) {
+	
+				sqls.add(loadTxt(SynotierJettyApp.class, tbl));
+				Connects.commit(cfg.sysconn, usr, sqls);
+				sqls.clear();
+			}
+			
+			if (robots != null) {
+				syst = new DATranscxt(cfg.sysconn);
+				JUserMeta um = new JUserMeta();
+				Insert ins = null;
+				for (SyncRobot robot : robots) {
+					Insert i = robot.insert(syst.insert(um.tbl));
+					if (ins == null)
+						ins = i;
+					else ins.post(i);
+				}
+			}
+	}
+	
+	public static void setupSyntables(String synconn) throws SQLException, TransException {
+		SynChangeMeta chm;
+		SynSubsMeta sbm;
+		SynchangeBuffMeta xbm;
+		SynSessionMeta ssm;
+		PeersMeta prm;
+		SynodeMeta synm;
+
+		chm  = new SynChangeMeta();
+		sbm  = new SynSubsMeta(chm);
+		xbm  = new SynchangeBuffMeta(chm);
+		ssm  = new SynSessionMeta();
+		prm  = new PeersMeta();
+		synm = new SynodeMeta(synconn);
+		// docm = new T_PhotoMeta(cfg.synconn);
+
+		setupSqliTables(synconn, false, synm, chm, sbm, xbm, prm, ssm);
+		
+		SyntityMeta[] entm = new SyntityMeta[0];
+		setupSqliTables(synconn, false, entm);
+	}
+
+	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain) throws TransException, SQLException {
+		if (!eq(domain, cfg.domain))
+			throw new SemanticException("Updating domain %s, but got configuration of %s.", domain, cfg.domain);
+
+		for (Synode sn : cfg.peers())
+			syst.update(synm.tbl, robot)
+				.nv(synm.jserv, jserv)
+				.whereEq(synm.pk, sn.jserv)
+				.whereEq(synm.domain, cfg.domain)
+				.u(syst.instancontxt(cfg.sysconn, robot));
 	}
 }

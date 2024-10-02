@@ -1,7 +1,6 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.syn.ExessionAct.close;
@@ -30,7 +29,6 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
 /**
@@ -90,13 +88,13 @@ public class SynssionClientier {
 	}
 
 	/**
+	 * [Synchronous]<br>
 	 * Start a domain updating process (handshaking) with this.peer, in this.domain.
-	 * @param ck 
-	 * @param object 
 	 * @return this
 	 * @throws ExchangeException not ready yet.
+	 * @since 0.2.0
 	 */
-	public SynssionClientier update2peer(OnDomainUpdate onup) throws ExchangeException {
+	public SynssionClientier update2peer() throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
 					"Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
@@ -129,8 +127,8 @@ public class SynssionClientier {
 						rep = exespush(peer, A.exclose, reqb);
 					}
 					
-					if (onup != null)
-						onup.ok(domain(), mynid, peer, rep == null ? null : rep.exblock, xp);
+//					if (onup != null)
+//						onup.ok(domain(), mynid, peer, rep == null ? null : rep.exblock, xp);
 				}
 			} catch (IOException e) {
 				Utils.warn(e.getMessage());

@@ -1,13 +1,11 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
-import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.waiting;
-import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
@@ -16,15 +14,14 @@ import static io.oz.jserv.docs.syn.SynoderTest.X;
 import static io.oz.jserv.docs.syn.SynoderTest.Y;
 import static io.oz.jserv.docs.syn.SynoderTest.Z;
 import static io.oz.jserv.docs.syn.SynoderTest.azert;
-import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.docs.syn.SynoderTest.ura;
+import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -33,7 +30,6 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
@@ -47,10 +43,10 @@ import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
+import io.oz.synode.jclient.SynodeConfig;
 import io.oz.synode.jclient.YellowPages;
 
 /**
@@ -107,15 +103,19 @@ class SynodetierJoinTest {
 
 		ck = new Docheck[servs_conn.length];
 		
-		int port = 8090;
+		// int port = 8090;
 		for (int i = 0; i < servs_conn.length; i++) {
 			if (jetties[i] != null)
 				jetties[i].stop();
+			
+			SynodeConfig config = new SynodeConfig();
+			config.synconn = servs_conn[i];
+			config.sysconn = servs_conn[i];
 
-			initSysRecords(servs_conn[i]);
+			SynotierJettyApp.initSysRecords(config, YellowPages.robots());
 
-			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i],
-					System.getProperty("syndocs.ip"), port++, true);
+			jetties[i] = startSyndoctier(config);
+					// System.getProperty("syndocs.ip"), port++, true);
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
@@ -228,25 +228,28 @@ class SynodetierJoinTest {
 	 * @return the Jetty App, with a servlet server.
 	 * @throws Exception
 	 */
-	static SynotierJettyApp startSyndoctier(String serv_conn, String config_xml,
-			String host, int port, boolean drop_syntbls) throws Exception {
+	static SynotierJettyApp startSyndoctier(SynodeConfig cfg) throws Exception {
+		String serv_conn = cfg.synconn;
+		String config_xml= cfg.confxml;
+		String host = cfg.host;
+		int port = cfg.port;
 
-		SynChangeMeta chm;
-		SynSubsMeta sbm;
-		SynchangeBuffMeta xbm;
-		SynSessionMeta ssm;
-		PeersMeta prm;
+//		SynChangeMeta chm;
+//		SynSubsMeta sbm;
+//		SynchangeBuffMeta xbm;
+//		SynSessionMeta ssm;
+//		PeersMeta prm;
 		SynodeMeta synm;
-
-		chm  = new SynChangeMeta();
-		sbm  = new SynSubsMeta(chm);
-		xbm  = new SynchangeBuffMeta(chm);
-		ssm  = new SynSessionMeta();
-		prm  = new PeersMeta();
+//
+//		chm  = new SynChangeMeta();
+//		sbm  = new SynSubsMeta(chm);
+//		xbm  = new SynchangeBuffMeta(chm);
+//		ssm  = new SynSessionMeta();
+//		prm  = new PeersMeta();
 		synm = new SynodeMeta(serv_conn);
-		docm = new T_PhotoMeta(serv_conn);
-
-		setupSqliTables(serv_conn, drop_syntbls, synm, chm, sbm, xbm, prm, ssm, docm);
+//		docm = new T_PhotoMeta(serv_conn);
+//
+//		// setupSqliTables(serv_conn, false, synm, chm, sbm, xbm, prm, ssm, docm);
 
 		SyncRobot tierobot = YellowPages.getRobot(syrskyi);
 		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
@@ -263,29 +266,8 @@ class SynodetierJoinTest {
 	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
 	 * 
 	 * @param conn
-	 */
-	static void initSysRecords(String conn) {
-		ArrayList<String> sqls = new ArrayList<String>();
-		IUser usr = DATranscxt.dummyUser();
-
-		try {
-			for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
-				sqls.add("drop table if exists " + tbl);
-				Connects.commit(conn, usr, sqls);
-				sqls.clear();
-			}
-
-			for (String tbl : new String[] {
-					"oz_autoseq.ddl",  "oz_autoseq.sql",
-					"a_users.sqlite.ddl", "a_users.sqlite.sql"}) {
-
-				sqls.add(loadTxt(SynodetierJoinTest.class, tbl));
-				Connects.commit(conn, usr, sqls);
-				sqls.clear();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
+	static void initSysRecords(SynodeConfig cfg, SyncRobot[] robots) {
+		SynotierJettyApp.initSysRecords(cfg, robots);
 	}
+	 */
 }

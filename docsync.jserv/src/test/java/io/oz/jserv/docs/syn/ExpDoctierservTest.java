@@ -14,7 +14,8 @@ import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynoderTest.azert;
 import static io.oz.jserv.docs.syn.SynoderTest.zsu;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.initSysRecords;
+import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.initSysRecords;
+import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.setupSyntables;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
@@ -38,13 +39,15 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
-import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
+import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
+import io.oz.synode.jclient.SynodeConfig;
+import io.oz.synode.jclient.YellowPages;
 
 /**
  * 
@@ -85,11 +88,11 @@ public class ExpDoctierservTest {
 	void runDoctiers() throws Exception {
 		int section = 0;
 		
+		/*
 		int[] nodex = new int[] { X, Y, Z };
 		String host = System.getProperty("syndocs.ip");
 		int port = 8090;
 		
-		Utils.logrst("Starting synode-tiers", ++section);
 
 		for (int i : nodex) {
 			if (jetties[i] != null)
@@ -121,6 +124,9 @@ public class ExpDoctierservTest {
 					.u(ck[i].b0.instancontxt(servs_conn[i], robot));
 			}
 		}
+		*/
+		Utils.logrst("Starting synode-tiers", ++section);
+		int[] nodex = initDoctiers(jetties, ck);
 
 		Utils.logrst("Open domains", ++section);
 
@@ -183,6 +189,63 @@ public class ExpDoctierservTest {
 
 		ck[Y].doc(2);
 		ck[X].doc(2);
+	}
+
+	private static int[] initDoctiers(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
+		int[] nodex = new int[] { X, Y, Z };
+		String host = System.getProperty("syndocs.ip");
+		int port = 8090;
+		
+		SynodeConfig[] cfgs = new SynodeConfig[nodex.length]; 
+
+		for (int i : nodex) {
+			if (jetties[i] != null)
+				jetties[i].stop();
+			
+			String p = new File("src/test/res").getAbsolutePath();
+			System.setProperty("VOLUME_HOME", p + "/vol-" + i);
+
+			YellowPages.load(p);
+			cfgs[i] = YellowPages.synconfig();
+			cfgs[i].host = host;
+			cfgs[i].port = port++;
+
+			initSysRecords(cfgs[i], YellowPages.robots());
+			
+			setupSyntables(cfgs[i].synconn);
+
+			initSynodeRecs(cfgs[i].synconn);
+			
+			cleanPhotos(docm, servs_conn[i], devs[i].dev);
+			
+			jetties[i] = startSyndoctier(cfgs[i]);
+			
+			ck[i] = new Docheck(azert, zsu, servs_conn[i],
+								jetties[i].synode(), SynodeMode.peer, docm);
+		}
+		
+		/*
+		IUser robot = DATranscxt.dummyUser();
+		for (int i : nodex) {
+			Utils.logi("Jservs at %s", servs_conn[i]);
+
+			for (int j : nodex) {
+				SynodeMeta synm = ck[i].trb.synm;
+
+				ck[i].b0.update(synm.tbl, robot)
+					.nv(synm.jserv, jetties[j].jserv())
+					.whereEq(synm.pk, jetties[j].synode())
+					.whereEq(synm.domain, ck[i].trb.domain())
+					.u(ck[i].b0.instancontxt(servs_conn[i], robot));
+			}
+		}
+		*/
+
+		for (int i : nodex) {
+			jetties[i].updateJservs(ck[i].trb.synm, cfgs[i], zsu);
+		}
+
+		return nodex;
 	}
 
 	/**

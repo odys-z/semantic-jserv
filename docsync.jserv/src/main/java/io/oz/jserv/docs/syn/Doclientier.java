@@ -112,6 +112,10 @@ public class Doclientier extends Semantier {
 		return this;
 	}
 	
+	public String device() {
+		return client != null && client.ssInfo() != null ? client.ssInfo().device : null;
+	}
+
 	/**
 	 * use {@link #loginWithUri(String, String, String, String)} instead
 	 * 
@@ -590,6 +594,4 @@ public class Doclientier extends Semantier {
 		String clientpath = f.fullpath().replaceAll(":", "");
 		return EnvPath.decodeUri(tempath, f.device(), FilenameUtils.getName(clientpath));
 	}
-
-
 }
