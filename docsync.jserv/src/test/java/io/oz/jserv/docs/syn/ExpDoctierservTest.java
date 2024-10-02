@@ -140,10 +140,9 @@ public class ExpDoctierservTest {
 		printNyquv(ck);
 
 		Utils.logrst("Synchronizing between synodes", ++section);
-		final boolean[] lights2 = new boolean[nodex.length];
-		waiting(lights2, Y);
-		SynodetierJoinTest.syncdomain(lights2, Y, ck);
-		awaitAll(lights2, -1);
+		waiting(lights, Y);
+		SynodetierJoinTest.syncdomain(lights, Y, ck);
+		awaitAll(lights, -1);
 
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -172,10 +171,9 @@ public class ExpDoctierservTest {
 		verifyPathsPageNegative(devx0.client, docm.tbl, dx0.clientpath);
 
 		Utils.logrst("Synchronizing synodes", ++section);
-		final boolean[] lights3 = new boolean[nodex.length];
-		waiting(lights3, Y);
-		SynodetierJoinTest.syncdomain(lights3, Y);
-		awaitAll(lights3, -1);
+		waiting(lights, Y);
+		SynodetierJoinTest.syncdomain(lights, Y);
+		awaitAll(lights, -1);
 
 		Utils.logrst("Finish", ++section);
 		printChangeLines(ck);
