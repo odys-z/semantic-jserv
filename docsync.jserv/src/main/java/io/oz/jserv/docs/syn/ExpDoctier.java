@@ -189,7 +189,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * Start this Syntier.
+	 * Create this Syntier.
 	 * 
 	 * <p>This will created an instance of DBSytableBuilder for the domain.</p>
 	 * 
@@ -199,8 +199,9 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @param mod
 	 * @return
 	 * @throws Exception
+	 * @since 0.2.0
 	 */
-	public ExpDoctier startier(String org, String domain, SynodeMode mod)
+	public ExpDoctier create(String org, String domain, SynodeMode mod)
 			throws Exception {
 		dom0builder = new DBSyntableBuilder(
 				domain, // FIXME this is not correct. 

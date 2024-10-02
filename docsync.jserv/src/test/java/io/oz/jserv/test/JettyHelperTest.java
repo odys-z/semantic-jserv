@@ -35,7 +35,8 @@ import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.SynoderTest;
-import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
+import io.oz.jserv.docs.syn.singleton.Syngleton;
+import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 
 /**
  * Start 3 jservs and ping the login.serv port.
@@ -167,12 +168,12 @@ public class JettyHelperTest {
 
 		return SynotierJettyApp
 			.registerPorts(
-				SynotierJettyApp.instanserver(webinf, conn, "config-0.xml", "127.0.0.1", port, tierob),
+				Syngleton.instanserver(webinf, conn, "config-0.xml", "127.0.0.1", port, tierob),
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
 			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
-			.startier("URA", "zsu", SynodeMode.peer))
+			.create("URA", "zsu", SynodeMode.peer))
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;
 	}

@@ -33,14 +33,13 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
+import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.synode.jclient.SynodeConfig;
 import io.oz.synode.jclient.YellowPages;
 
@@ -163,13 +162,13 @@ class SynodetierJoinTest {
 		SynotierJettyApp hub = jetties[to];
 		SynotierJettyApp prv = jetties[by];
 
-		for (String servpattern : hub.synodetiers.keySet()) {
-			if (len(hub.synodetiers.get(servpattern)) > 1 || len(prv.synodetiers.get(servpattern)) > 1)
+		for (String servpattern : hub.synodetiers().keySet()) {
+			if (len(hub.synodetiers().get(servpattern)) > 1 || len(prv.synodetiers().get(servpattern)) > 1)
 				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
 			
-			for (String dom : hub.synodetiers.get(servpattern).keySet()) {
-				SynDomanager hubmanger = hub.synodetiers.get(servpattern).get(dom);
-				SynDomanager prvmanger = prv.synodetiers.get(servpattern).get(dom);
+			for (String dom : hub.synodetiers().get(servpattern).keySet()) {
+				SynDomanager hubmanger = hub.synodetiers().get(servpattern).get(dom);
+				SynDomanager prvmanger = prv.synodetiers().get(servpattern).get(dom);
 	
 				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 						(rep) -> { lights[by] = true; });
@@ -182,12 +181,12 @@ class SynodetierJoinTest {
 
 		SynotierJettyApp t = jetties[tx];
 
-		for (String servpattern : t.synodetiers.keySet()) {
-			if (len(t.synodetiers.get(servpattern)) > 1)
+		for (String servpattern : t.synodetiers().keySet()) {
+			if (len(t.synodetiers().get(servpattern)) > 1)
 				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
 
-			for (String dom : t.synodetiers.get(servpattern).keySet()) {
-				t.synodetiers.get(servpattern).get(dom).updomains(
+			for (String dom : t.synodetiers().get(servpattern).keySet()) {
+				t.synodetiers().get(servpattern).get(dom).updomains(
 					(domain, mynid, peer, repb, xp) -> {
 						if (!isNull(ck))
 							try {
@@ -234,16 +233,16 @@ class SynodetierJoinTest {
 //		SynchangeBuffMeta xbm;
 //		SynSessionMeta ssm;
 //		PeersMeta prm;
-		SynodeMeta synm;
-//
+//		SynodeMeta synm;
+
 //		chm  = new SynChangeMeta();
 //		sbm  = new SynSubsMeta(chm);
 //		xbm  = new SynchangeBuffMeta(chm);
 //		ssm  = new SynSessionMeta();
 //		prm  = new PeersMeta();
-		synm = new SynodeMeta(serv_conn);
+//		synm = new SynodeMeta(serv_conn);
 //		docm = new T_PhotoMeta(serv_conn);
-//
+
 //		// setupSqliTables(serv_conn, false, synm, chm, sbm, xbm, prm, ssm, docm);
 
 		SyncRobot tierobot = YellowPages.getRobot(syrskyi);
@@ -252,17 +251,7 @@ class SynodetierJoinTest {
 		return SynotierJettyApp 
 			.createSyndoctierApp(serv_conn, config_xml, host, port, webinf, zsu, tierobot)
 			.start(() -> System.out, () -> System.err)
-			.loadDomains(synm, SynodeMode.peer)
+			.loadDomains(SynodeMode.peer)
 			;
 	}
-
-	/**
-	 * initialize oz_autoseq, a_users with sql script files,
-	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
-	 * 
-	 * @param conn
-	static void initSysRecords(SynodeConfig cfg, SyncRobot[] robots) {
-		SynotierJettyApp.initSysRecords(cfg, robots);
-	}
-	 */
 }

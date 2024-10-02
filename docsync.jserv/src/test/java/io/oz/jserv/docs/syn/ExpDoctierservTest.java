@@ -13,12 +13,11 @@ import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynoderTest.azert;
 import static io.oz.jserv.docs.syn.SynoderTest.zsu;
-import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.setupSysRecords;
-import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.setupSyntables;
-import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.initSynodeRecs;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
+import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.setupSyntables;
+import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.setupSysRecords;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
@@ -43,7 +42,8 @@ import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
-import io.oz.jserv.docs.syn.jetty.SynotierJettyApp;
+import io.oz.jserv.docs.syn.singleton.Syngleton;
+import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.synode.jclient.SynodeConfig;
 import io.oz.synode.jclient.YellowPages;
 
@@ -87,7 +87,7 @@ public class ExpDoctierservTest {
 		int section = 0;
 		
 		Utils.logrst("Starting synode-tiers", ++section);
-		int[] nodex = initDoctiers(jetties, ck);
+		int[] nodex = runtimeEnv(jetties, ck);
 
 		Utils.logrst("Open domains", ++section);
 
@@ -152,7 +152,7 @@ public class ExpDoctierservTest {
 		ck[X].doc(2);
 	}
 
-	private static int[] initDoctiers(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
+	private static int[] runtimeEnv(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z };
 		String host = System.getProperty("syndocs.ip");
 		int port = 8090;
@@ -175,7 +175,7 @@ public class ExpDoctierservTest {
 			
 			setupSyntables(cfgs[i].synconn);
 
-			initSynodeRecs(cfgs[i], cfgs[i].peers());
+			Syngleton.initSynodeRecs(cfgs[i], cfgs[i].peers());
 			
 			cleanPhotos(docm, servs_conn[i], devs[i].dev);
 			

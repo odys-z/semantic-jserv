@@ -183,7 +183,7 @@ public class SynoderTest {
 
 		Utils.logrst("X starting", test, ++no);
 		ExpDoctier xtir = syntiers[X];
-		SynDomanager x = xtir.startier(ura, zsu, SynodeMode.peer)
+		SynDomanager x = xtir.create(ura, zsu, SynodeMode.peer)
 						.domains(setupDomanagers(ura, zsu, xtir.synode, xtir.myconn,
 								 SynodeMode.peer, Connects.getDebug(xtir.myconn)))
 						.domanager(zsu);
@@ -193,7 +193,7 @@ public class SynoderTest {
 
 		Utils.logrst("Y starting", test, ++no);
 		ExpDoctier ytir = syntiers[Y];
-		SynDomanager y = ytir.startier(ura, zsu, SynodeMode.peer)
+		SynDomanager y = ytir.create(ura, zsu, SynodeMode.peer)
 						.domains(setupDomanagers(ura, zsu, ytir.synode, ytir.myconn,
 								 SynodeMode.peer, Connects.getDebug(xtir.myconn)))
 						.domanager(zsu);
@@ -219,7 +219,7 @@ public class SynoderTest {
 		printNyquv(ck);
 
 		ExpDoctier ztir = syntiers[Z];
-		SynDomanager z = ztir.startier(ura, zsu, SynodeMode.peer)
+		SynDomanager z = ztir.create(ura, zsu, SynodeMode.peer)
 						.domains(setupDomanagers(ura, zsu, ztir.synode, ztir.myconn,
 								 SynodeMode.peer, Connects.getDebug(ztir.myconn)))
 						.domanager(zsu);
