@@ -50,6 +50,7 @@ import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
+import io.oz.jserv.docs.syn.singleton.Syngleton;
 
 /**
  * The synchronizing tiers running on a static DA tier, but communicating
@@ -111,12 +112,12 @@ public class SynoderTest {
 				String conn = "no-jserv.0" + s;
 
 				SynodeMeta snm = new SynodeMeta(conn);
-				docm = new T_PhotoMeta(conn); // .replace();
+				docm = new T_PhotoMeta(conn);
 				setupSqliTables(conn, true, aum, snm, chm, sbm, xbm, prm, ssm, docm);
 				
 				ArrayList<String> sqls = new ArrayList<String>();
 				sqls.add(String.format("delete from %s;", aum.tbl));
-				sqls.add(Utils.loadTxt("./oz_autoseq.sql"));
+				sqls.add(Utils.loadTxt(Syngleton.class, "./oz_autoseq.sql"));
 				sqls.add(String.format("update oz_autoseq set seq = %d where sid = '%s.%s'",
 										(long) Math.pow(64, s+1), docm.tbl, docm.pk));
 
