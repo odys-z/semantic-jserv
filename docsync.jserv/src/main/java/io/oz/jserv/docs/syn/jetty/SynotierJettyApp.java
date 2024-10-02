@@ -445,6 +445,41 @@ public class SynotierJettyApp {
 		SyntityMeta[] entm = new SyntityMeta[0];
 		setupSqliTables(synconn, false, entm);
 	}
+	
+	/**
+	 * Initialize syn_* tables' records, must be called after {@link SynodetierJoinTest#initSysRecords()}.
+	 * 
+	 * @param conn
+	 * @throws TransException 
+	 * @throws SQLException 
+	 */
+	public static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws TransException, SQLException {
+		ArrayList<String> sqls = new ArrayList<String>();
+		IUser usr = DATranscxt.dummyUser();
+
+		/*
+		try {
+			for (String tbl : new String[] {
+					"syn_synode_all_ready.sqlite.sql"}) {
+
+				sqls.add(loadTxt(DoclientierTest.class, tbl));
+				Connects.commit(conn, usr, sqls);
+				sqls.clear();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		*/
+		
+		if (peers != null && peers.length > 0) {
+			Insert inst = syst.insert("", usr);
+			SynodeMeta synm = new SynodeMeta(cfg.synconn);
+			for (Synode sn : peers)
+				sn.insertRow(synm, inst);
+			inst.ins(syst.instancontxt(cfg.synconn, usr));
+		}
+	}	
 
 	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain) throws TransException, SQLException {
 		if (!eq(domain, cfg.domain))

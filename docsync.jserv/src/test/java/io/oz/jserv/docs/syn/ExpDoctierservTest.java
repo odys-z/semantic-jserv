@@ -3,7 +3,6 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
-import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.waiting;
@@ -16,13 +15,12 @@ import static io.oz.jserv.docs.syn.SynoderTest.azert;
 import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.initSysRecords;
 import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.setupSyntables;
+import static io.oz.jserv.docs.syn.jetty.SynotierJettyApp.initSynodeRecs;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -214,7 +212,7 @@ public class ExpDoctierservTest {
 			
 			setupSyntables(cfgs[i].synconn);
 
-			initSynodeRecs(cfgs[i].synconn);
+			initSynodeRecs(cfgs[i], cfgs[i].peers());
 			
 			cleanPhotos(docm, servs_conn[i], devs[i].dev);
 			
@@ -252,7 +250,6 @@ public class ExpDoctierservTest {
 	 * Initialize syn_* tables' records, must be called after {@link SynodetierJoinTest#initSysRecords()}.
 	 * 
 	 * @param conn
-	 */
 	static void initSynodeRecs(String conn) {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
@@ -270,6 +267,7 @@ public class ExpDoctierservTest {
 			fail(e.getMessage());
 		}
 	}
+	 */
 
 	static void cleanPhotos(ExpDocTableMeta docm, String conn, String ofDevice) throws Exception {
 		ArrayList<String> sqls = new ArrayList<String>();
