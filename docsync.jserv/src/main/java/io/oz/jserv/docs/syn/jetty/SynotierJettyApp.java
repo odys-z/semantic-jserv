@@ -56,9 +56,9 @@ import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
+import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
-import io.oz.jserv.docs.syn.Syngleton;
 import io.oz.synode.jclient.SynodeConfig;
 import io.oz.synode.jclient.YellowPages;
 
@@ -120,6 +120,7 @@ public class SynotierJettyApp {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+		/*
 		try {
 			String bind = args[0];
 			int    port = Integer.valueOf(args[1]);
@@ -151,6 +152,7 @@ public class SynotierJettyApp {
 			e.printStackTrace();
 			throw e;
 		}
+		*/
 	}
 
 	/**
@@ -454,10 +456,10 @@ public class SynotierJettyApp {
 	 * @throws SQLException 
 	 */
 	public static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws TransException, SQLException {
-		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
 
 		/*
+		ArrayList<String> sqls = new ArrayList<String>();
 		try {
 			for (String tbl : new String[] {
 					"syn_synode_all_ready.sqlite.sql"}) {

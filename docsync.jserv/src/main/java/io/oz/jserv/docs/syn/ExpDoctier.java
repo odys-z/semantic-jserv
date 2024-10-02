@@ -51,6 +51,12 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DeviceTableMeta;
 import io.oz.jserv.docs.x.DocsException;
 
+/**
+ * Document synode tier.
+ *
+ * @since 0.2.0
+ * @author ody
+ */
 @WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.sync" })
 public class ExpDoctier extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
@@ -71,14 +77,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * <h5>note</h5>
-	 * 
-	 * <p>If synoderId is null, will be loaded from
-	 * {@link Configs#cfgFile}/table/v [k={@link Configs.keys#synode}], and
-	 * {@code null} can not be used before
-	 * {@link Syngleton#initSynodetier(String, String, String, String)} or
-	 * {@link Configs#init(String, String, String...)} has been called.
-	 * 
+	 * @since 0.2.0
 	 * @param synoderId optional
 	 * @param loconn local connection id for this node tier, see {@link #myconn}.
 	 * @throws SemanticException

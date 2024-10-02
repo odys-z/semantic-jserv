@@ -1,4 +1,4 @@
-package io.oz.jserv.docs.syn;
+package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.len;
 
@@ -16,11 +16,6 @@ import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.oz.synode.jclient.YellowPages;
 
 public class Syngleton extends JSingleton {
-
-	public static void initSynodetier(String cfgxml, String runtimeRoot, String configFolder, String rootKey)
-			throws Exception {
-		initSynodetier(cfgxml, Connects.defltConn(), runtimeRoot, configFolder, rootKey);
-	}
 
 	/**
 	 * Load configurations, setup connections and semantics, setup session module.
