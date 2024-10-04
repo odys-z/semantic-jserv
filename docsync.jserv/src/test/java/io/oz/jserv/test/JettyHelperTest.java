@@ -34,9 +34,9 @@ import io.odysz.semantics.IUser;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
-import io.oz.jserv.docs.syn.SynoderTest;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
+import io.oz.synode.jclient.SynodeConfig;
 
 /**
  * Start 3 jservs, ping the login.serv port, and verify the print streams.
@@ -168,13 +168,18 @@ public class JettyHelperTest {
 		
 		SyncRobot tierob = new SyncRobot("odyz", "8964", "Ody by robot");
 
+		SynodeConfig cfg = new SynodeConfig("X");
+		cfg.sysconn = conn;
+		cfg.synconn = conn;
+		
 		return SynotierJettyApp
 			.registerPorts(
-				Syngleton.instanserver(webinf, conn, "config-0.xml", "127.0.0.1", port, tierob),
+				Syngleton.instanserver(webinf, cfg, "config-0.xml", "127.0.0.1", port, tierob),
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
-			.addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
+			// .addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
+			.addServPort(new ExpDoctier(cfg.synode(), conn)
 			.create("URA", "zsu", SynodeMode.peer))
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;

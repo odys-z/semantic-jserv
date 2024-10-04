@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -88,12 +87,12 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	public ExpDoctier(String synoderId, String loconn)
 			throws SemanticException, SQLException, IOException {
 		super(Port.dbsyncer);
-		synode = isblank(synoderId) ? Configs.getCfg(Configs.keys.synode) : synoderId;
+		synode = synoderId; // isblank(synoderId) ? Configs.getCfg(Configs.keys.synode) : synoderId;
 		myconn = loconn;
 		
 		if (synode == null)
-			throw new SemanticException("Synode id must be configured in %s. table %s, k = %s",
-					Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.synode);
+			throw new SemanticException("Synode id is null.");
+					// Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.synode);
 		
 		try {debug = Connects.getDebug(loconn); } catch (Exception e) {debug = false;}
 	}

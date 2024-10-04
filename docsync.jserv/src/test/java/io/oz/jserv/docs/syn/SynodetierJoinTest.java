@@ -231,7 +231,7 @@ class SynodetierJoinTest {
 	 * @throws Exception
 	 */
 	static SynotierJettyApp startSyndoctier(SynodeConfig cfg) throws Exception {
-		String serv_conn = cfg.synconn;
+		// String serv_conn = cfg.synconn;
 		// String config_xml= cfg.confxml;
 		String host = cfg.host;
 		int port = cfg.port;
@@ -240,7 +240,7 @@ class SynodetierJoinTest {
 		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 
-			.createSyndoctierApp(serv_conn, "config-0.xml", host, port, webinf, zsu, tierobot)
+			.createSyndoctierApp("config-0.xml", cfg, host, port, webinf, zsu, tierobot)
 			.start(() -> System.out, () -> System.err)
 			.loadDomains(SynodeMode.peer)
 			;

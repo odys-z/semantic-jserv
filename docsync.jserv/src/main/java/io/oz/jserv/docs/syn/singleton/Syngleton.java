@@ -56,7 +56,7 @@ public class Syngleton extends JSingleton {
 	 * @return synode id (configured in @{code cfgxml})
 	 * @throws Exception 
 	 */
-	public static String initSynodetier(String cfgxml, String conn0, String runtimeRoot,
+	public static String initSynodetier(SynodeConfig cfg, String cfgxml, String runtimeRoot,
 			String configFolder, String rootKey) throws Exception {
 
 		Utils.logi("Initializing synode with configuration file %s\n"
@@ -72,12 +72,12 @@ public class Syngleton extends JSingleton {
 		DATranscxt.key("user-pswd", rootKey);
 		
 		DatasetCfg.init(configFolder);
-		String synode = Configs.getCfg(Configs.keys.synode);
+		// String synode = Configs.getCfg(Configs.keys.synode);
 
-		DATranscxt.initConfigs(conn0, DATranscxt.loadSemantics(conn0),
-			(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
+		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
+			(c) -> new DBSyntableBuilder.SynmanticsMap(cfg.synode(), c));
 			
-		defltScxt = new DATranscxt(conn0);
+		defltScxt = new DATranscxt(cfg.sysconn);
 			
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 
@@ -85,7 +85,7 @@ public class Syngleton extends JSingleton {
 		
 		// YellowPages.load(FilenameUtils.concat(configFolder, EnvPath.replaceEnv("$VOLUME_HOME")));
 		
-		return synode;
+		return cfg.synode();
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class Syngleton extends JSingleton {
 	 * see https://askubuntu.com/a/328293
 	 * 
 	 * @param configPath
-	 * @param conn0
+	 * @param cfg
 	 * @param configxml
 	 * @param bindIp
 	 * @param port
@@ -105,20 +105,20 @@ public class Syngleton extends JSingleton {
 	 * @return Jetty App
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp instanserver(String configPath, String conn0, String configxml,
+	public static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
 			String bindIp, int port, SyncRobot robt) throws Exception {
 	
 	    AnsonMsg.understandPorts(Port.syntier);
 	
-		String synid = initSynodetier(configxml, conn0, ".", configPath, "ABCDEF0123456789");
+		String synid = initSynodetier(cfg, configxml, ".", configPath, "ABCDEF0123456789");
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(synid);
 	    
 	    // Syngleton single = getInstance();
 	
-		syst = new DATranscxt(conn0);
+		syst = new DATranscxt(cfg.sysconn);
 
-	    synapp.syngleton.synconn = conn0;
+	    synapp.syngleton.synconn = cfg.synconn;
 		synapp.syngleton.robot = robt;
 	
 	    if (isblank(bindIp) || eq("*", bindIp)) {

@@ -148,31 +148,31 @@ public class SynotierJettyApp {
 	 * @return Synode-tier Jetty App
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp createSyndoctierApp(String serv_conn,
-			String config_xml, String bindIp, int port, String webinf,
+	public static SynotierJettyApp createSyndoctierApp( String config_xml,
+			SynodeConfig cfg, String bindIp, int port, String webinf,
 			String domain, SyncRobot robot) throws Exception {
 
 		Configs.init(webinf, config_xml);
 		
-		String synid  = Configs.getCfg(Configs.keys.synode);
+		String synid  = cfg.synode(); //Configs.getCfg(Configs.keys.synode);
 		robot.deviceId(synid);
 
-		DATranscxt.initConfigs(serv_conn, DATranscxt.loadSemantics(serv_conn),
+		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
 		        (con) -> new DBSyntableBuilder.SynmanticsMap(synid, con));
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
 		HashMap<String,SynDomanager> domains = setupDomanagers(robot.orgId(), domain, synid,
-				serv_conn, SynodeMode.peer, Connects.getDebug(serv_conn));
+				cfg.synconn, SynodeMode.peer, Connects.getDebug(cfg.synconn));
 	
-		ExpDoctier doctier  = new ExpDoctier(synid, serv_conn)
+		ExpDoctier doctier  = new ExpDoctier(synid, cfg.synconn)
 							.create(robot.orgId(), domain, SynodeMode.peer)
 							.domains(domains);
-		ExpSynodetier syner = new ExpSynodetier(robot.orgId(), domain, synid, serv_conn, SynodeMode.peer)
+		ExpSynodetier syner = new ExpSynodetier(robot.orgId(), domain, synid, cfg.synconn, SynodeMode.peer)
 							.domains(domains);
 		
-		SynotierJettyApp synapp = Syngleton.instanserver(webinf, serv_conn, config_xml, bindIp, port, robot);
-		return registerPorts(synapp, serv_conn,
+		SynotierJettyApp synapp = Syngleton.instanserver(webinf, cfg, config_xml, bindIp, port, robot);
+		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addServPort(doctier)
 			.addServPort(syner)
