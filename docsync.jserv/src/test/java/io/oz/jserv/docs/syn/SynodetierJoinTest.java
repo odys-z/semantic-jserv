@@ -101,6 +101,8 @@ class SynodetierJoinTest {
 		ck = new Docheck[servs_conn.length];
 		
 		int port = 8090;
+		String[] nodes = new String[] { "X", "Y", "Z", "W" };
+
 		for (int i = 0; i < servs_conn.length; i++) {
 			if (jetties[i] != null)
 				jetties[i].stop();
@@ -108,7 +110,7 @@ class SynodetierJoinTest {
 			SyncRobot me = new SyncRobot(syrskyi, slava, syrskyi, "#-" + i);
 			ArrayList<SyncRobot> robots = new ArrayList<SyncRobot>() { {add(me);} };
 
-			SynodeConfig config = new SynodeConfig();
+			SynodeConfig config = new SynodeConfig(nodes[i]);
 			config.synconn = servs_conn[i];
 			config.sysconn = sys_conn;
 			config.port    = port++;
