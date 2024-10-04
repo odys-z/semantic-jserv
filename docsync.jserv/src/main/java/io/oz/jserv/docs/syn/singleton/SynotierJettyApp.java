@@ -313,6 +313,7 @@ public class SynotierJettyApp {
 	 * @throws Exception 
 	 */
 	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncRobot> robots) throws Exception {
+
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
 	
@@ -333,15 +334,24 @@ public class SynotierJettyApp {
 		}
 		
 		if (robots != null) {
+			JUserMeta usrm = new JUserMeta(cfg.sysconn);
 			Syngleton.syst = new DATranscxt(cfg.sysconn);
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
 			for (SyncRobot robot : robots) {
-				Insert i = robot.insert(Syngleton.syst.insert(um.tbl));
+				Insert i = Syngleton.syst.insert(um.tbl, usr)
+						.nv(usrm.org, robot.orgId())
+						.nv(usrm.pk, robot.uid())
+						.nv(usrm.pswd, robot.pswd())
+						.nv(usrm.uname, robot.userName())
+						;
+
 				if (ins == null)
 					ins = i;
 				else ins.post(i);
 			}
+			if (ins != null)
+				ins.ins(Syngleton.syst.instancontxt(cfg.sysconn, usr));
 		}
 	}
 	

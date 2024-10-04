@@ -37,6 +37,7 @@ import io.oz.jserv.docs.syn.SyncReq.A;
 public class SynssionClientier {
 
 	static String uri_syn = "/syn";
+	static String uri_sys = "/sys";
 
 	/** {@link #uri_syn}/[peer] */
 	final String clienturi;
@@ -84,7 +85,8 @@ public class SynssionClientier {
 		this.tasklock  = new ReentrantLock();
 		this.peerlock  = new Object();
 		
-		this.clienturi = uri_syn + "/" + peer;
+		// this.clienturi = uri_syn + "/" + peer;
+		this.clienturi = uri_sys;
 	}
 
 	/**
@@ -223,7 +225,7 @@ public class SynssionClientier {
 		AnsonHeader header = client.header().act(act);
 
 		try {
-			AnsonMsg<SyncReq> q = client.<SyncReq>userReq(clienturi, Port.syntier, req)
+			AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
 								.header(header);
 
 			return client.commit(q, errHandler);

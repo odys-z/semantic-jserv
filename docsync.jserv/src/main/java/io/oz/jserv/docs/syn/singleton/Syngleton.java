@@ -116,8 +116,9 @@ public class Syngleton extends JSingleton {
 	    
 	    // Syngleton single = getInstance();
 	
-	    synapp.syngleton.conn0 = conn0;
-		synapp.syngleton.t0 = new DATranscxt(conn0);
+		syst = new DATranscxt(conn0);
+
+	    synapp.syngleton.synconn = conn0;
 		synapp.syngleton.robot = robt;
 	
 	    if (isblank(bindIp) || eq("*", bindIp)) {
@@ -148,9 +149,15 @@ public class Syngleton extends JSingleton {
 //	}
 
 	String jserv;
-	String conn0;
+
+	String synconn;
+	DBSyntableBuilder synb;
+
+	String sysconn;
+	static DATranscxt syst;
+
 	String synode;
-	DATranscxt t0; 
+	// DATranscxt t0; 
 	SyncRobot robot;
 
 	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain) throws TransException, SQLException {
@@ -174,8 +181,9 @@ public class Syngleton extends JSingleton {
 	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
 	 */
 	public HashMap<String, HashMap<String, SynDomanager>> synodetiers;
-	static DATranscxt syst;
-	
+
+	SynodeMeta synm; 
+
 	/**
 	 * Load domains from syn_synode, create {@link SynDomanager} for each domain.
 	 * 
@@ -188,14 +196,14 @@ public class Syngleton extends JSingleton {
 		if (synodetiers == null)
 			synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
 
-		SynodeMeta synm = null; 
+		synm = new SynodeMeta(synconn); 
 
-		AnResultset rs = (AnResultset) t0
+		AnResultset rs = (AnResultset) syst
 				.select(synm.tbl)
 				.groupby(synm.domain)
 				.groupby(synm.synoder)
 				.whereEq(synm.pk, synode)
-				.rs(t0.instancontxt(conn0, robot))
+				.rs(syst.instancontxt(synconn, robot))
 				.rs(0);
 		
 		while (rs.next()) {
@@ -203,7 +211,7 @@ public class Syngleton extends JSingleton {
 			SynDomanager domanger = new SynDomanager(
 					synm, rs.getString(synm.org),
 					domain, synode,
-					conn0, synmod, Connects.getDebug(conn0));
+					synconn, synmod, Connects.getDebug(synconn));
 			synodetiers.get(syntier_url).put(domain, domanger);
 		}
 
@@ -224,7 +232,7 @@ public class Syngleton extends JSingleton {
 			throws AnsonException, SsException, IOException, TransException, SQLException {
 		if (synodetiers != null && synodetiers.containsKey(syntier_url)) {
 			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
-				dmgr.loadSynclients(t0, robot)
+				dmgr.loadSynclients(synb, robot)
 					.openUpdateSynssions(robot,
 						(domain, mynid, peer, repb, xp) -> {
 							if (!isNull(onok))

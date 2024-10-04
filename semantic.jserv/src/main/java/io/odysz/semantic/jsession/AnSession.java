@@ -508,7 +508,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throw new SemanticException("IUser implementation must extend SemanticObject.");
 		}
 		else
-			throw new SsException("User Id not found: %s", uid);
+			throw new SsException("User Id is not found: %s", uid);
 	}
 
 

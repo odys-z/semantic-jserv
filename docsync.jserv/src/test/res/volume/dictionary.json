@@ -1,4 +1,4 @@
-{"type": "io.oz.synode.AnDictionary",
+{"type": "io.oz.synode.jclient.AnRegistry",
  "config": {
    "sysconn": "main-sqlite",
    "synconn": "no-jserv-db.00",

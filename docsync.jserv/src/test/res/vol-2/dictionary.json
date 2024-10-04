@@ -1,9 +1,10 @@
 {"type": "io.oz.synode.AnDictionary",
  "config": {
-   "sysconn": "../vol-2/main-sqlite",
-   "synconn": "../vol-2/no-jserv-db.02",
+   "id": "Z",
+   "sysconn": "main-sqlite",
+   "synconn": "no-jserv-db.02",
    "host": "",
-   "port": 8964 
+   "port": 8966 
  },
  "synrobots": [
    {"userId": "ody", "pswd": "8964", "iv": null},

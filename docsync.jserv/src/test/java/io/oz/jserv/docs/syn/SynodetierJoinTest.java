@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -62,6 +63,8 @@ class SynodetierJoinTest {
 	static final String[] servs_conn  = new String[] {
 			"no-jserv.00", "no-jserv.01", "no-jserv.02", "no-jserv.03"};
 
+	static final String sys_conn  = "main-sqlite";
+
 	static final String[] config_xmls = new String[] {
 			"config-0.xml", "config-1.xml", "config-2.xml", "config-3.xml"};
 	
@@ -97,19 +100,24 @@ class SynodetierJoinTest {
 
 		ck = new Docheck[servs_conn.length];
 		
-		// int port = 8090;
+		int port = 8090;
 		for (int i = 0; i < servs_conn.length; i++) {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			
+			SyncRobot me = new SyncRobot(syrskyi, slava, syrskyi, "#-" + i);
+			ArrayList<SyncRobot> robots = new ArrayList<SyncRobot>() { {add(me);} };
+
 			SynodeConfig config = new SynodeConfig();
 			config.synconn = servs_conn[i];
-			config.sysconn = servs_conn[i];
+			config.sysconn = sys_conn;
+			config.port    = port++;
 
-			SynotierJettyApp.setupSysRecords(config, YellowPages.robots());
+			SynotierJettyApp.setupSysRecords(config, robots);
+			
+			SynotierJettyApp.setupSyntables(config.synconn);
 
 			jetties[i] = startSyndoctier(config);
-					// System.getProperty("syndocs.ip"), port++, true);
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
@@ -224,32 +232,15 @@ class SynodetierJoinTest {
 	 */
 	static SynotierJettyApp startSyndoctier(SynodeConfig cfg) throws Exception {
 		String serv_conn = cfg.synconn;
-		String config_xml= cfg.confxml;
+		// String config_xml= cfg.confxml;
 		String host = cfg.host;
 		int port = cfg.port;
-
-//		SynChangeMeta chm;
-//		SynSubsMeta sbm;
-//		SynchangeBuffMeta xbm;
-//		SynSessionMeta ssm;
-//		PeersMeta prm;
-//		SynodeMeta synm;
-
-//		chm  = new SynChangeMeta();
-//		sbm  = new SynSubsMeta(chm);
-//		xbm  = new SynchangeBuffMeta(chm);
-//		ssm  = new SynSessionMeta();
-//		prm  = new PeersMeta();
-//		synm = new SynodeMeta(serv_conn);
-//		docm = new T_PhotoMeta(serv_conn);
-
-//		// setupSqliTables(serv_conn, false, synm, chm, sbm, xbm, prm, ssm, docm);
 
 		SyncRobot tierobot = YellowPages.getRobot(syrskyi);
 		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 
-			.createSyndoctierApp(serv_conn, config_xml, host, port, webinf, zsu, tierobot)
+			.createSyndoctierApp(serv_conn, "config-0.xml", host, port, webinf, zsu, tierobot)
 			.start(() -> System.out, () -> System.err)
 			.loadDomains(SynodeMode.peer)
 			;

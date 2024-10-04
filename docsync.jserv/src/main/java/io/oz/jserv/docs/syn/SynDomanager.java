@@ -444,8 +444,8 @@ public class SynDomanager implements OnError {
 
 			sessions.put(peer, c);
 			
-			Utils.logi("[ ♻.✩ %s ] SynssionClienter created: {clienturi: %s, conn: %s, mode: %s, peer: %s, peer-jserv: %s}",
-					synode, c.clienturi, c.conn, c.mymode.name(), c.peer, c.peerjserv);
+			Utils.logi("[ ♻.✩ %s ] SynssionClienter created: {conn: %s, mode: %s, peer: %s, peer-jserv: %s}",
+					synode, c.conn, c.mymode.name(), c.peer, c.peerjserv);
 		}
 
 		return this;
