@@ -38,7 +38,7 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
-import io.oz.synode.jclient.SynodeConfig;
+import io.oz.syn.SynodeConfig;
 
 /**
  * @since 0.2.0

@@ -46,7 +46,7 @@ import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
-import io.oz.synode.jclient.SynodeConfig;
+import io.oz.syn.SynodeConfig;
 
 /**
  * Start an embedded Jetty server for ee8.

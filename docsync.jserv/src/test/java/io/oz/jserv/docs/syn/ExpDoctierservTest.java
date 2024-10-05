@@ -44,8 +44,8 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
-import io.oz.synode.jclient.SynodeConfig;
-import io.oz.synode.jclient.YellowPages;
+import io.oz.syn.SynodeConfig;
+import io.oz.syn.YellowPages;
 
 /**
  * 
@@ -163,10 +163,12 @@ public class ExpDoctierservTest {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			
+
 			String p = new File("src/test/res").getAbsolutePath();
 			System.setProperty("VOLUME_HOME", p + "/vol-" + i);
 
-			YellowPages.load(p);
+			YellowPages.load("$VOLUME_HOME");
+
 			cfgs[i] = YellowPages.synconfig();
 			cfgs[i].host = host;
 			cfgs[i].port = port++;
@@ -182,7 +184,7 @@ public class ExpDoctierservTest {
 			jetties[i] = startSyndoctier(cfgs[i]);
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-								jetties[i].synode(), SynodeMode.peer, docm);
+						jetties[i].synode(), SynodeMode.peer, docm);
 		}
 		
 		/*

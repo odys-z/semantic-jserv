@@ -41,8 +41,8 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
-import io.oz.synode.jclient.SynodeConfig;
-import io.oz.synode.jclient.YellowPages;
+import io.oz.syn.SynodeConfig;
+import io.oz.syn.YellowPages;
 
 /**
  * 

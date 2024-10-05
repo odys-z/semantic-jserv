@@ -36,7 +36,7 @@ import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
-import io.oz.synode.jclient.SynodeConfig;
+import io.oz.syn.SynodeConfig;
 
 /**
  * Start 3 jservs, ping the login.serv port, and verify the print streams.

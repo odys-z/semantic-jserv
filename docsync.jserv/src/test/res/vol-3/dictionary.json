@@ -1,4 +1,4 @@
-{"type": "io.oz.synode.AnDictionary",
+{"type": "io.oz.syn.AnRegistry",
  "config": {
    "id": "W",
    "sysconn": "main-sqlite",
