@@ -208,6 +208,17 @@ public class Syngleton extends JSingleton {
 		return null;
 	}
 
+	/**
+	 * Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:
+	 * Syn-change handlers cannot be created without syntity tables are created.
+	 * 
+	 * @param cfg
+	 * @param configFolder
+	 * @param cfgxml
+	 * @param runtimeRoot
+	 * @param rootKey
+	 * @throws Exception
+	 */
 	public static void setupSyntables(SynodeConfig cfg, String configFolder, String cfgxml,
 			String runtimeRoot, String rootKey) throws Exception {
 
