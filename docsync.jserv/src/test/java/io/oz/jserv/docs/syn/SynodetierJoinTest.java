@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
+
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
@@ -10,12 +11,6 @@ import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.docm;
-import static io.oz.jserv.docs.syn.SynoderTest.X;
-import static io.oz.jserv.docs.syn.SynoderTest.Y;
-import static io.oz.jserv.docs.syn.SynoderTest.Z;
-import static io.oz.jserv.docs.syn.SynoderTest.azert;
-import static io.oz.jserv.docs.syn.SynoderTest.ura;
-import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -29,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
+import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DA.Connects;
@@ -40,19 +36,32 @@ import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.AssertImpl;
+import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
 
 /**
  * 
- * Run JettyHelperTest to initialoze table a_roles.
+ * Run JettyHelperTest to initialize table a_roles.
  * 
  * -Dsyndocs.ip="host-ip"
  * 
  * @author ody
  */
 class SynodetierJoinTest {
+	static String owner  = "ody";
+	static String passwd = "abc";
+	public static String zsu = "zsu";
+	public static String ura = "URA";
+	
+	static final int X = 0;
+	static final int Y = 1;
+	static final int Z = 2;
+	static final int W = 3;
+
+	public static IAssert azert = new AssertImpl();
 
 	static ErrorCtx errLog;
 	
@@ -115,9 +124,9 @@ class SynodetierJoinTest {
 			config.sysconn = sys_conn;
 			config.port    = port++;
 
-			SynotierJettyApp.setupSysRecords(config, robots);
-			
-			SynotierJettyApp.setupSyntables(config.synconn);
+			Syngleton.setupSysRecords(config, robots);
+			// Syngleton.setupSyntables(config.synconn);
+			Syngleton.setupSyntables(config, webinf, "config.xml", ".", "ABCDEF0123465789");
 
 			jetties[i] = startSyndoctier(config);
 

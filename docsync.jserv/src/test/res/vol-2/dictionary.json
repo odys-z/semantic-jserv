@@ -1,17 +1,19 @@
 {"type": "io.oz.syn.AnRegistry",
  "config": {
-   "id": "Z",
+   "synid": "Z",
    "sysconn": "main-sqlite",
-   "synconn": "no-jserv-db.02",
+   "synconn": "no-jserv.02",
+   "domain": "zsu",
    "host": "",
-   "port": 8966 
+   "port": 8966,
+
+   "peers": [
+     {"synid": "X", "org": "URA", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
+     {"synid": "Y", "org": "URA", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"},
+     {"synid": "Z", "org": "URA", "mac": "#URA.Z", "nyq": 0, "domain": "zsu", "syn_uid": "Z,Z"}]
  },
  "synrobots": [
    {"userId": "ody", "pswd": "8964", "iv": null},
    {"userId": "syrskyi", "pswd": "слава україні", "iv": null}
- ],
- "peers": [
-   {"synid": "X", "org": "URA", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "io_oz_synuid": "X,X"},
-   {"synid": "Y", "org": "URA", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "io_oz_synuid": "Y,Y"},
-   {"synid": "Z", "org": "URA", "mac": "#URA.Z", "nyq": 0, "domain": "zsu", "io_oz_synuid": "Z,Z"}]
+ ]
 }

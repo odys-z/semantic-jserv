@@ -2,7 +2,6 @@ package io.oz.jserv.test;
 
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
-// import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.logOut;
 import static io.odysz.common.Utils.touchDir;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -20,7 +19,6 @@ import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.tier.ErrorCtx;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
@@ -30,7 +28,6 @@ import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantics.IUser;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
@@ -149,36 +146,39 @@ public class JettyHelperTest {
 	 */
 	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String uid, int port,
 			PrintstreamProvider ... oe) throws IOException, Exception {
-		IUser usr = DATranscxt.dummyUser();
-		ArrayList<String> sqls = new ArrayList<String>();
-		sqls.add("drop table if exists a_users;");
-		sqls.add("drop table if exists a_orgs;");
-		sqls.add("drop table if exists a_roles;");
-		sqls.add(Utils.loadTxt(Syngleton.class, "a_users.sqlite.ddl"));
-		sqls.add(Utils.loadTxt(Syngleton.class, "a_orgs.sqlite.ddl"));
-		sqls.add(Utils.loadTxt(Syngleton.class, "a_roles.sqlite.ddl"));
-
-		sqls.add("delete from a_users;");
-		sqls.add(String.format("INSERT INTO "
-				+ "a_users (userId, userName, roleId, orgId, counter, birthday, pswd,   iv)\n"
-				+ "values  ('%s',  'Ody %s',  'r01',  'zsu', 0, '1989-06-04', '123456', null);",
-				uid, port));
-
-		Connects.commit(conn, usr, sqls);
+//		IUser usr = DATranscxt.dummyUser();
+//		ArrayList<String> sqls = new ArrayList<String>();
+//		sqls.add("drop table if exists a_users;");
+//		sqls.add("drop table if exists a_orgs;");
+//		// sqls.add("drop table if exists a_roles;");
+//		sqls.add(Utils.loadTxt(Syngleton.class, "a_users.sqlite.ddl"));
+//		sqls.add(Utils.loadTxt(Syngleton.class, "a_orgs.sqlite.ddl"));
+//		// sqls.add(Utils.loadTxt(Syngleton.class, "a_roles.sqlite.ddl"));
+//
+//		sqls.add("delete from a_users;");
+//		sqls.add(String.format("INSERT INTO "
+//				+ "a_users (userId, userName, roleId, orgId, counter, birthday, pswd,   iv)\n"
+//				+ "values  ('%s',  'Ody %s',  'r01',  'zsu', 0, '1989-06-04', '123456', null);",
+//				uid, port));
+//
+//
+//		// Connects.commit(conn, usr, sqls);
 		
-		SyncRobot tierob = new SyncRobot("odyz", "8964", "Ody by robot");
+		ArrayList<SyncRobot> tierob = new ArrayList<SyncRobot>() { {add(new SyncRobot(uid, "123456", "Ody by robot"));} };
 
 		SynodeConfig cfg = new SynodeConfig("X");
 		cfg.sysconn = conn;
 		cfg.synconn = conn;
 		
+		// Syngleton.initSynconn(cfg, webinf, "config.xml", ".", "ABCDEF0123456789");
+		Syngleton.setupSysRecords(cfg, tierob);
+
 		return SynotierJettyApp
 			.registerPorts(
-				Syngleton.instanserver(webinf, cfg, "config-0.xml", "127.0.0.1", port, tierob),
+				SynotierJettyApp.instanserver(webinf, cfg, "config-0.xml", "127.0.0.1", port, tierob.get(0)),
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
-			// .addServPort(new ExpDoctier(Configs.getCfg(Configs.keys.synode), conn)
 			.addServPort(new ExpDoctier(cfg.synode(), conn)
 			.create("URA", "zsu", SynodeMode.peer))
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)

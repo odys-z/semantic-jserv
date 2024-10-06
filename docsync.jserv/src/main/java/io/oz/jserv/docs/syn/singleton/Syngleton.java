@@ -2,32 +2,40 @@ package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
-import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.Utils.loadTxt;
+import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
+import static io.odysz.semantic.meta.SemanticTableMeta.setupSqlitables;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
-
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantics.SemanticHandler;
+import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DATranscxt.SemanticsMap;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
-import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
+import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.meta.PeersMeta;
+import io.odysz.semantic.meta.SynChangeMeta;
+import io.odysz.semantic.meta.SynSessionMeta;
+import io.odysz.semantic.meta.SynSubsMeta;
+import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.meta.SyntityMeta;
+import io.odysz.semantic.syn.DBSynmantics.ShSynChange;
 import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.odysz.semantic.syn.DBSyntableBuilder.SynmanticsMap;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
@@ -44,20 +52,25 @@ import io.oz.syn.SynodeConfig;
  * @since 0.2.0
  */
 public class Syngleton extends JSingleton {
+	static SynmanticsMap synmap;
 
 	/**
-	 * Load configurations, setup connections and semantics, setup session module.
+	 * Load {@link SynmanticsMap} as a static copy, setup connections, then initialize
+	 * AnSession with sys_conn.
 	 * 
-	 * @param cfgxml name of config.xml, to be optimized
-	 * @param conn0 default connection accept updatings from doclients
-	 * @param runtimeRoot
+	 * As this method is responsible for parsing the syn_change handler, it must
+	 * be called before initSysRecords();
+	 * 
+	 * @param cfg configuration load from AnRegistry.
 	 * @param configFolder, folder of connects.xml, config.xml and semnatics.xml
+	 * @param cfgxml name of config.xml, to be optimized
+	 * @param runtimeRoot
 	 * @param rootKey, e.g. context.xml/parameter=root-key
-	 * @return synode id (configured in @{code cfgxml})
-	 * @throws Exception 
-	 */
-	public static String initSynodetier(SynodeConfig cfg, String cfgxml, String runtimeRoot,
-			String configFolder, String rootKey) throws Exception {
+	 * @return
+	 * @throws Exception
+	 * @since 0.2.0
+	public static SemanticsMap initSynconn(SynodeConfig cfg, String configFolder,
+			String cfgxml, String runtimeRoot, String rootKey) throws Exception {
 
 		Utils.logi("Initializing synode with configuration file %s\n"
 				+ "runtime root: %s\n"
@@ -72,104 +85,44 @@ public class Syngleton extends JSingleton {
 		DATranscxt.key("user-pswd", rootKey);
 		
 		DatasetCfg.init(configFolder);
-		// String synode = Configs.getCfg(Configs.keys.synode);
 
-		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
+		synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
 			(c) -> new DBSyntableBuilder.SynmanticsMap(cfg.synode(), c));
 			
-		defltScxt = new DATranscxt(cfg.sysconn);
+		synb = new DBSyntableBuilder(cfg.domain, cfg.synconn, cfg.synode(), cfg.mode);
 			
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 
 		AnSession.init(defltScxt);
 		
-		// YellowPages.load(FilenameUtils.concat(configFolder, EnvPath.replaceEnv("$VOLUME_HOME")));
-		
-		return cfg.synode();
+		return synmap;
 	}
-
-	/**
-	 * Create a Jetty instance at local host, jserv-root
-	 * for accessing online is in field {@link #jserv}.
-	 * 
-	 * Tip: list all local tcp listening ports:
-	 * sudo netstat -ntlp
-	 * see https://askubuntu.com/a/328293
-	 * 
-	 * @param configPath
-	 * @param cfg
-	 * @param configxml
-	 * @param bindIp
-	 * @param port
-	 * @param robotInf information for creating robot, i. e. the user identity for login to peer synodes.
-	 * @return Jetty App
-	 * @throws Exception
 	 */
-	public static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
-			String bindIp, int port, SyncRobot robt) throws Exception {
-	
-	    AnsonMsg.understandPorts(Port.syntier);
-	
-		String synid = initSynodetier(cfg, configxml, ".", configPath, "ABCDEF0123456789");
-	
-	    SynotierJettyApp synapp = new SynotierJettyApp(synid);
-	    
-	    // Syngleton single = getInstance();
-	
-		syst = new DATranscxt(cfg.sysconn);
-
-	    synapp.syngleton.synconn = cfg.synconn;
-		synapp.syngleton.robot = robt;
-	
-	    if (isblank(bindIp) || eq("*", bindIp)) {
-	    	synapp.server = new Server();
-	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
-	        httpConnector.setHost("0.0.0.0");
-	        httpConnector.setPort(port);
-	        httpConnector.setIdleTimeout(5000);
-	        synapp.server.addConnector(httpConnector);
-	    }
-	    else
-	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
-	
-	    InetAddress inet = InetAddress.getLocalHost();
-	    String addrhost  = inet.getHostAddress();
-		synapp.syngleton.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
-	
-	    synapp.syngleton.synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
-	    
-	    return synapp;
-	}
-
-//	private static Syngleton syngleton; 
-//	public static Syngleton getInstance() {
-//		if (syngleton == null)
-//			syngleton = new Syngleton();
-//		return syngleton;
-//	}
 
 	String jserv;
 
 	String synconn;
-	DBSyntableBuilder synb;
+	static DBSyntableBuilder synb;
 
 	String sysconn;
-	static DATranscxt syst;
+	// static DATranscxt syst;
 
 	String synode;
-	// DATranscxt t0; 
 	SyncRobot robot;
 
-	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain) throws TransException, SQLException {
+	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
+			throws TransException, SQLException {
 		if (!eq(domain, cfg.domain))
-			throw new SemanticException("Updating domain %s, but got configuration of %s.", domain, cfg.domain);
+			throw new SemanticException(
+				"Updating domain %s, but got configuration of %s.",
+				domain, cfg.domain);
 
 		for (Synode sn : cfg.peers())
-			syst.update(synm.tbl, robot)
+			defltScxt.update(synm.tbl, robot)
 				.nv(synm.jserv, jserv)
 				.whereEq(synm.pk, sn.jserv)
 				.whereEq(synm.domain, cfg.domain)
-				.u(syst.instancontxt(cfg.sysconn, robot));
+				.u(defltScxt.instancontxt(cfg.sysconn, robot));
 	}
 
 	/**
@@ -198,12 +151,12 @@ public class Syngleton extends JSingleton {
 
 		synm = new SynodeMeta(synconn); 
 
-		AnResultset rs = (AnResultset) syst
+		AnResultset rs = (AnResultset) defltScxt
 				.select(synm.tbl)
 				.groupby(synm.domain)
 				.groupby(synm.synoder)
 				.whereEq(synm.pk, synode)
-				.rs(syst.instancontxt(synconn, robot))
+				.rs(defltScxt.instancontxt(synconn, robot))
 				.rs(0);
 		
 		while (rs.next()) {
@@ -255,6 +208,120 @@ public class Syngleton extends JSingleton {
 		return null;
 	}
 
+	public static void setupSyntables(SynodeConfig cfg, String configFolder, String cfgxml,
+			String runtimeRoot, String rootKey) throws Exception {
+
+		// 1. connection
+		// Syngleton.initSynconn(cfgs[i], webinf, f("config-%s.xml", i), p, host);
+		Utils.logi("Initializing synode singleton with configuration file %s\n"
+				+ "runtime root: %s\n"
+				+ "configure folder: %s\n"
+				+ "root-key length: %s",
+				cfgxml, runtimeRoot, configFolder, len(rootKey));
+
+		Configs.init(configFolder, cfgxml);
+		Connects.init(configFolder);
+
+		DATranscxt.configRoot(configFolder, runtimeRoot);
+		DATranscxt.key("user-pswd", rootKey);
+		
+		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
+
+		AnSession.init(defltScxt);
+		
+		// 2. syn-tables
+		SynChangeMeta chm;
+		SynSubsMeta sbm;
+		SynchangeBuffMeta xbm;
+		SynSessionMeta ssm;
+		PeersMeta prm;
+		SynodeMeta synm;
+	
+		chm  = new SynChangeMeta();
+		sbm  = new SynSubsMeta(chm);
+		xbm  = new SynchangeBuffMeta(chm);
+		ssm  = new SynSessionMeta();
+		prm  = new PeersMeta();
+		synm = new SynodeMeta(cfg.synconn);
+	
+		setupSqliTables(cfg.synconn, false, synm, chm, sbm, xbm, prm, ssm);
+		
+		// 3 symantics and entities 
+		synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
+			(c) -> new DBSyntableBuilder.SynmanticsMap(cfg.synode(), c));
+
+		ArrayList<SyntityMeta> entm = new ArrayList<SyntityMeta>();
+		for (SemanticHandler m : Syngleton.synmap.get(smtype.synChange)) {
+			entm.add(((ShSynChange)m).entm);
+		}
+		setupSqlitables(cfg.synconn, false, entm);
+
+		DatasetCfg.init(configFolder);
+			
+		synb = new DBSyntableBuilder(cfg.domain, cfg.synconn, cfg.synode(), cfg.mode);
+			
+
+		// 4. synodes
+		initSynodeRecs(cfg, cfg.peers());
+	}
+
+	/**
+	 * Setup sqlite manage database tables, oz_autoseq, a_users with sql script files,
+	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
+	 * 
+	 * Should be called on for installation.
+	 * 
+	 * Triggering semantics handler parsing.
+	 * 
+	 * @since 0.2.0
+	 * 
+	 * @param conn
+	 * @throws Exception 
+	 */
+	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncRobot> robots) throws Exception {
+	
+		ArrayList<String> sqls = new ArrayList<String>();
+		IUser usr = DATranscxt.dummyUser();
+		defltScxt = new DATranscxt(cfg.sysconn);
+	
+		for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
+			sqls.add("drop table if exists " + tbl);
+			Connects.commit(cfg.sysconn, usr, sqls);
+			sqls.clear();
+		}
+	
+		for (String tbl : new String[] {
+					"oz_autoseq.ddl",
+					"oz_autoseq.sql",
+					"a_users.sqlite.ddl",}) {
+	
+			sqls.add(loadTxt(SynotierJettyApp.class, tbl));
+			Connects.commit(cfg.sysconn, usr, sqls);
+			sqls.clear();
+		}
+		
+		if (robots != null) {
+			JUserMeta usrm = new JUserMeta(cfg.sysconn);
+			// defltScxt = new DATranscxt(cfg.sysconn);
+			JUserMeta um = new JUserMeta();
+			Insert ins = null;
+			for (SyncRobot robot : robots) {
+				Insert i = defltScxt.insert(um.tbl, usr)
+						.nv(usrm.org, robot.orgId())
+						.nv(usrm.pk, robot.uid())
+						.nv(usrm.pswd, robot.pswd())
+						.nv(usrm.uname, robot.userName())
+						;
+	
+				if (ins == null)
+					ins = i;
+				else ins.post(i);
+			}
+			if (ins != null)
+				ins.ins(defltScxt.instancontxt(cfg.sysconn, usr));
+		}
+	}
+
 	/**
 	 * Initialize syn_* tables' records, must be called after {@link SynodetierJoinTest#initSysRecords()}.
 	 * 
@@ -262,7 +329,7 @@ public class Syngleton extends JSingleton {
 	 * @throws TransException 
 	 * @throws SQLException 
 	 */
-	public static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws TransException, SQLException {
+	static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws TransException, SQLException {
 		IUser usr = DATranscxt.dummyUser();
 	
 		/*
@@ -282,11 +349,12 @@ public class Syngleton extends JSingleton {
 		*/
 		
 		if (peers != null && peers.length > 0) {
-			Insert inst = syst.insert("", usr);
 			SynodeMeta synm = new SynodeMeta(cfg.synconn);
-			for (Synode sn : peers)
+			for (Synode sn : peers) {
+				Insert inst = synb.insert(synm.tbl, usr);
 				sn.insertRow(synm, inst);
-			inst.ins(syst.instancontxt(cfg.synconn, usr));
+				inst.ins(synb.instancontxt(cfg.synconn, usr));
+			}
 		}
 	}
 

@@ -1,26 +1,31 @@
 package io.oz.jserv.docs.syn.singleton;
 
-import static io.odysz.common.Utils.loadTxt;
-import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
-import static io.oz.jserv.docs.syn.ExpSynodetier.setupDomanagers;
+import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isblank;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.servlet.annotation.WebServlet;
 
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.Configs;
 import io.odysz.common.Utils;
+import io.odysz.semantic.DASemantics.SemanticHandler;
+import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
@@ -28,19 +33,9 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.meta.PeersMeta;
-import io.odysz.semantic.meta.SynChangeMeta;
-import io.odysz.semantic.meta.SynSessionMeta;
-import io.odysz.semantic.meta.SynSubsMeta;
-import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantics.IUser;
-import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
@@ -66,15 +61,21 @@ import io.oz.syn.SynodeConfig;
  *
  */
 public class SynotierJettyApp {
+	final Syngleton syngleton;
+
 	Server server;
 
 	ServletContextHandler schandler;
 
+	List<SemanticHandler> synchandlers;
 
-	public SynotierJettyApp(String synid) {
-		// Syngleton.getInstance().synode = synid;
+	public SynotierJettyApp(String synid, String syn_conn, SyncRobot synrobt,
+			List<SemanticHandler> synchangeHandlers) {
 		syngleton = new Syngleton();
 		syngleton.synode = synid;
+		synchandlers = synchangeHandlers;
+	    syngleton.synconn = syn_conn;
+	    syngleton.robot = synrobt;
 	}
 
 	// public String jserv() { return jserv; }
@@ -152,18 +153,20 @@ public class SynotierJettyApp {
 			SynodeConfig cfg, String bindIp, int port, String webinf,
 			String domain, SyncRobot robot) throws Exception {
 
-		Configs.init(webinf, config_xml);
-		
-		String synid  = cfg.synode(); //Configs.getCfg(Configs.keys.synode);
+		String synid  = cfg.synode();
 		robot.deviceId(synid);
 
-		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
-		        (con) -> new DBSyntableBuilder.SynmanticsMap(synid, con));
+		// Syngleton.initSynconn(cfg, webinf, config_xml, ".", "ABCDEF0123456789");
+		SynotierJettyApp synapp = SynotierJettyApp.instanserver(webinf, cfg, config_xml, bindIp, port, robot);
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
-		HashMap<String,SynDomanager> domains = setupDomanagers(robot.orgId(), domain, synid,
-				cfg.synconn, SynodeMode.peer, Connects.getDebug(cfg.synconn));
+		HashMap<String, SynDomanager> domains = new HashMap<String, SynDomanager>();
+		domains.put(domain, new SynDomanager(new SynodeMeta(cfg.synconn), robot.orgId(),
+				domain, synid, cfg.synconn, SynodeMode.peer, Connects.getDebug(cfg.synconn)));
+
+		domains .get(domain)
+				.born(synapp.synchandlers, 0, 0);
 	
 		ExpDoctier doctier  = new ExpDoctier(synid, cfg.synconn)
 							.create(robot.orgId(), domain, SynodeMode.peer)
@@ -171,7 +174,6 @@ public class SynotierJettyApp {
 		ExpSynodetier syner = new ExpSynodetier(robot.orgId(), domain, synid, cfg.synconn, SynodeMode.peer)
 							.domains(domains);
 		
-		SynotierJettyApp synapp = Syngleton.instanserver(webinf, cfg, config_xml, bindIp, port, robot);
 		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addServPort(doctier)
@@ -303,81 +305,6 @@ public class SynotierJettyApp {
 //		return this;
 //	}
 
-	/**
-	 * Setup sqlite manage database tables, oz_autoseq, a_users with sql script files,
-	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
-	 * 
-	 * Should be called on for installation.
-	 * 
-	 * @param conn
-	 * @throws Exception 
-	 */
-	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncRobot> robots) throws Exception {
-
-		ArrayList<String> sqls = new ArrayList<String>();
-		IUser usr = DATranscxt.dummyUser();
-	
-		for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
-			sqls.add("drop table if exists " + tbl);
-			Connects.commit(cfg.sysconn, usr, sqls);
-			sqls.clear();
-		}
-
-		for (String tbl : new String[] {
-					"oz_autoseq.ddl",
-					"oz_autoseq.sql",
-					"a_users.sqlite.ddl",}) {
-
-			sqls.add(loadTxt(SynotierJettyApp.class, tbl));
-			Connects.commit(cfg.sysconn, usr, sqls);
-			sqls.clear();
-		}
-		
-		if (robots != null) {
-			JUserMeta usrm = new JUserMeta(cfg.sysconn);
-			Syngleton.syst = new DATranscxt(cfg.sysconn);
-			JUserMeta um = new JUserMeta();
-			Insert ins = null;
-			for (SyncRobot robot : robots) {
-				Insert i = Syngleton.syst.insert(um.tbl, usr)
-						.nv(usrm.org, robot.orgId())
-						.nv(usrm.pk, robot.uid())
-						.nv(usrm.pswd, robot.pswd())
-						.nv(usrm.uname, robot.userName())
-						;
-
-				if (ins == null)
-					ins = i;
-				else ins.post(i);
-			}
-			if (ins != null)
-				ins.ins(Syngleton.syst.instancontxt(cfg.sysconn, usr));
-		}
-	}
-	
-	public static void setupSyntables(String synconn) throws SQLException, TransException {
-		SynChangeMeta chm;
-		SynSubsMeta sbm;
-		SynchangeBuffMeta xbm;
-		SynSessionMeta ssm;
-		PeersMeta prm;
-		SynodeMeta synm;
-
-		chm  = new SynChangeMeta();
-		sbm  = new SynSubsMeta(chm);
-		xbm  = new SynchangeBuffMeta(chm);
-		ssm  = new SynSessionMeta();
-		prm  = new PeersMeta();
-		synm = new SynodeMeta(synconn);
-		// docm = new T_PhotoMeta(cfg.synconn);
-
-		setupSqliTables(synconn, false, synm, chm, sbm, xbm, prm, ssm);
-		
-		SyntityMeta[] entm = new SyntityMeta[0];
-		setupSqliTables(synconn, false, entm);
-	}
-
-	Syngleton syngleton;
 	public HashMap<String,HashMap<String,SynDomanager>> synodetiers() {
 		return syngleton.synodetiers;
 	}
@@ -403,6 +330,54 @@ public class SynotierJettyApp {
 	public SynotierJettyApp loadDomains(SynodeMode peer) throws Exception {
 		syngleton.loadDomains(peer);
 		return this;
+	}
+
+	/**
+	 * Create a Jetty instance at local host, jserv-root
+	 * for accessing online is in field {@link #jserv}.
+	 * 
+	 * Tip: list all local tcp listening ports:
+	 * sudo netstat -ntlp
+	 * see https://askubuntu.com/a/328293
+	 * 
+	 * @param configPath
+	 * @param cfg
+	 * @param configxml
+	 * @param bindIp
+	 * @param port
+	 * @param robotInf information for creating robot, i. e. the user identity for login to peer synodes.
+	 * @return Jetty App
+	 * @throws Exception
+	 */
+	public static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
+			String bindIp, int port, SyncRobot robt) throws Exception {
+	
+	    AnsonMsg.understandPorts(Port.syntier);
+	
+		// SemanticsMap ss = Syngleton.initSynconn(cfg, configxml, ".", configPath, "ABCDEF0123456789");
+	    // SynotierJettyApp synapp = new SynotierJettyApp(cfg.synode(), cfg.synconn, robt, ss.get(smtype.synChange));
+	    SynotierJettyApp synapp = new SynotierJettyApp(cfg.synode(), cfg.synconn, robt, Syngleton.synmap.get(smtype.synChange));
+
+		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
+	
+	    if (isblank(bindIp) || eq("*", bindIp)) {
+	    	synapp.server = new Server();
+	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
+	        httpConnector.setHost("0.0.0.0");
+	        httpConnector.setPort(port);
+	        httpConnector.setIdleTimeout(5000);
+	        synapp.server.addConnector(httpConnector);
+	    }
+	    else
+	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
+	
+	    InetAddress inet = InetAddress.getLocalHost();
+	    String addrhost  = inet.getHostAddress();
+		synapp.syngleton.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
+	
+	    synapp.syngleton.synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
+	    
+	    return synapp;
 	}	
 
 }

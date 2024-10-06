@@ -11,13 +11,11 @@ import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
-import static io.oz.jserv.docs.syn.SynoderTest.azert;
-import static io.oz.jserv.docs.syn.SynoderTest.zsu;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
-import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.setupSyntables;
-import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.setupSysRecords;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.zsu;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
@@ -72,12 +70,9 @@ public class ExpDoctierservTest {
 	/** -Dsyndocs.ip="host-ip" */
 	@BeforeAll
 	static void init() throws Exception {
-		String p = new File("src/test/res").getAbsolutePath();
-    	System.setProperty("VOLUME_HOME", p + "/volume");
-    	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+		// String p = new File("src/test/res").getAbsolutePath();
 
 		Configs.init(webinf);
-		Connects.init(webinf);
 
 		ck = new Docheck[servs_conn.length];
 	}
@@ -166,6 +161,9 @@ public class ExpDoctierservTest {
 
 			String p = new File("src/test/res").getAbsolutePath();
 			System.setProperty("VOLUME_HOME", p + "/vol-" + i);
+			logi("VOLUME_HOME : %s\n", System.getProperty("VOLUME_HOME"));
+
+			Connects.init(webinf);
 
 			YellowPages.load("$VOLUME_HOME");
 
@@ -173,11 +171,12 @@ public class ExpDoctierservTest {
 			cfgs[i].host = host;
 			cfgs[i].port = port++;
 
-			setupSysRecords(cfgs[i], YellowPages.robots());
+			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
 			
-			setupSyntables(cfgs[i].synconn);
-
-			Syngleton.initSynodeRecs(cfgs[i], cfgs[i].peers());
+			// Syngleton.initSynconn(cfgs[i], webinf, f("config-%s.xml", i), p, host);
+			// Syngleton.setupSyntables(cfgs[i].synconn);
+			// Syngleton.initSynodeRecs(cfgs[i], cfgs[i].peers());
+			Syngleton.setupSyntables(cfgs[i], webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 			
 			cleanPhotos(docm, servs_conn[i], devs[i].dev);
 			

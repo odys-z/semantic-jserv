@@ -1,7 +1,8 @@
-{"type": "io.oz.synode.jclient.AnRegistry",
+{"type": "io.oz.syn.AnRegistry",
  "config": {
+   "synid": "X",
    "sysconn": "main-sqlite",
-   "synconn": "no-jserv-db.00",
+   "synconn": "no-jserv.00",
    "host": "",
    "port": 8964 
  },
