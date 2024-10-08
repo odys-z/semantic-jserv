@@ -1,9 +1,12 @@
 package io.oz.jserv.test;
 
+import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logOut;
 import static io.odysz.common.Utils.touchDir;
+import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -19,6 +22,8 @@ import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DATranscxt.SemanticsMap;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
@@ -26,11 +31,14 @@ import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
+import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
+import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.SynodeConfig;
@@ -146,31 +154,21 @@ public class JettyHelperTest {
 	 */
 	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String uid, int port,
 			PrintstreamProvider ... oe) throws IOException, Exception {
-//		IUser usr = DATranscxt.dummyUser();
-//		ArrayList<String> sqls = new ArrayList<String>();
-//		sqls.add("drop table if exists a_users;");
-//		sqls.add("drop table if exists a_orgs;");
-//		// sqls.add("drop table if exists a_roles;");
-//		sqls.add(Utils.loadTxt(Syngleton.class, "a_users.sqlite.ddl"));
-//		sqls.add(Utils.loadTxt(Syngleton.class, "a_orgs.sqlite.ddl"));
-//		// sqls.add(Utils.loadTxt(Syngleton.class, "a_roles.sqlite.ddl"));
-//
-//		sqls.add("delete from a_users;");
-//		sqls.add(String.format("INSERT INTO "
-//				+ "a_users (userId, userName, roleId, orgId, counter, birthday, pswd,   iv)\n"
-//				+ "values  ('%s',  'Ody %s',  'r01',  'zsu', 0, '1989-06-04', '123456', null);",
-//				uid, port));
-//
-//
-//		// Connects.commit(conn, usr, sqls);
-		
 		ArrayList<SyncRobot> tierob = new ArrayList<SyncRobot>() { {add(new SyncRobot(uid, "123456", "Ody by robot"));} };
 
 		SynodeConfig cfg = new SynodeConfig("X");
 		cfg.sysconn = conn;
 		cfg.synconn = conn;
 		
-		// Syngleton.initSynconn(cfg, webinf, "config.xml", ".", "ABCDEF0123456789");
+		Syngleton.setupSyntables(cfg,
+				cfg.syntityMeta((c, synreg) -> {
+					if (eq(synreg.name, "T_PhotoMeta"))
+						return new T_PhotoMeta(c.synconn);
+					else
+						throw new SemanticException("TODO %s", synreg.name);
+				}),
+				webinf, "config.xml", ".", "ABCDEF0123465789");
+
 		Syngleton.setupSysRecords(cfg, tierob);
 
 		return SynotierJettyApp

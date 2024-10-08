@@ -30,22 +30,6 @@ import io.odysz.transact.x.TransException;
 public class ExpSynodetier extends ServPort<SyncReq> {
 	private static final long serialVersionUID = 1L;
 	
-//	public static HashMap<String, SynDomanager> setupDomanagers(String org, String domain,
-//			SemanticsMap ss,
-//			String synode, String conn, SynodeMode mod, boolean debug) throws Exception {
-//		
-//		HashMap<String, SynDomanager> domains = new HashMap<String, SynDomanager>();
-//		domains.put(domain, new SynDomanager(new SynodeMeta(conn), org, domain, synode, conn, mod, debug));
-//
-//		// SemanticsMap ss = DATranscxt.initConfigs(conn, DATranscxt.loadSemantics(conn),
-//		//	(c) -> new DBSyntableBuilder.SynmanticsMap(synode, c));
-//
-//		domains .get(domain)
-//				.born(ss.get(smtype.synChange), 0, 0);
-//		
-//		return domains;
-//	}
-
 	final String domain;
 	final String synid;
 	final SynodeMode mode;
