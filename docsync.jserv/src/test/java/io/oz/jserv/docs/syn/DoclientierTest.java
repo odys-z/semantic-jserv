@@ -45,7 +45,7 @@ import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.transact.x.TransException;
-import io.oz.synode.jclient.YellowPages;
+import io.oz.syn.YellowPages;
 
 class DoclientierTest {
 	static String[] jserv_xyzw;

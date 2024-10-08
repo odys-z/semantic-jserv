@@ -1,9 +1,9 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
-import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.waiting;
@@ -12,15 +12,13 @@ import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
-import static io.oz.jserv.docs.syn.SynoderTest.azert;
-import static io.oz.jserv.docs.syn.SynoderTest.zsu;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.initSysRecords;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.zsu;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,13 +36,17 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
-import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.SemanticException;
+import io.oz.jserv.docs.syn.singleton.Syngleton;
+import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
+import io.oz.syn.SynodeConfig;
+import io.oz.syn.YellowPages;
 
 /**
  * 
@@ -71,12 +73,9 @@ public class ExpDoctierservTest {
 	/** -Dsyndocs.ip="host-ip" */
 	@BeforeAll
 	static void init() throws Exception {
-		String p = new File("src/test/res").getAbsolutePath();
-    	System.setProperty("VOLUME_HOME", p + "/volume");
-    	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+		// String p = new File("src/test/res").getAbsolutePath();
 
 		Configs.init(webinf);
-		Connects.init(webinf);
 
 		ck = new Docheck[servs_conn.length];
 	}
@@ -85,42 +84,8 @@ public class ExpDoctierservTest {
 	void runDoctiers() throws Exception {
 		int section = 0;
 		
-		int[] nodex = new int[] { X, Y, Z };
-		String host = System.getProperty("syndocs.ip");
-		int port = 8090;
-		
 		Utils.logrst("Starting synode-tiers", ++section);
-
-		for (int i : nodex) {
-			if (jetties[i] != null)
-				jetties[i].stop();
-
-			initSysRecords(servs_conn[i]);
-
-			initSynodeRecs(servs_conn[i]);
-			
-			cleanPhotos(docm, servs_conn[i], devs[i].dev);
-			
-			jetties[i] = startSyndoctier(servs_conn[i], config_xmls[i], host, port++, false);
-			
-			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-								jetties[i].synode(), SynodeMode.peer, docm);
-		}
-		
-		IUser robot = DATranscxt.dummyUser();
-		for (int i : nodex) {
-			Utils.logi("Jservs at %s", servs_conn[i]);
-
-			for (int j : nodex) {
-				SynodeMeta synm = ck[i].trb.synm;
-
-				ck[i].b0.update(synm.tbl, robot)
-					.nv(synm.jserv, jetties[j].jserv())
-					.whereEq(synm.pk, jetties[j].synode())
-					.whereEq(synm.domain, ck[i].trb.domain())
-					.u(ck[i].b0.instancontxt(servs_conn[i], robot));
-			}
-		}
+		int[] nodex = runtimeEnv(jetties, ck);
 
 		Utils.logrst("Open domains", ++section);
 
@@ -183,11 +148,80 @@ public class ExpDoctierservTest {
 		ck[X].doc(2);
 	}
 
+	private static int[] runtimeEnv(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
+		int[] nodex = new int[] { X, Y, Z };
+		String host = System.getProperty("syndocs.ip");
+		int port = 8090;
+		
+		SynodeConfig[] cfgs = new SynodeConfig[nodex.length]; 
+
+		for (int i : nodex) {
+			if (jetties[i] != null)
+				jetties[i].stop();
+			
+
+			String p = new File("src/test/res").getAbsolutePath();
+			System.setProperty("VOLUME_HOME", p + "/vol-" + i);
+			logi("VOLUME_HOME : %s\n", System.getProperty("VOLUME_HOME"));
+
+			Connects.init(webinf);
+
+			YellowPages.load("$VOLUME_HOME");
+
+			cfgs[i] = YellowPages.synconfig();
+			cfgs[i].host = host;
+			cfgs[i].port = port++;
+
+			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
+			
+			// Syngleton.initSynconn(cfgs[i], webinf, f("config-%s.xml", i), p, host);
+			// Syngleton.setupSyntables(cfgs[i].synconn);
+			// Syngleton.initSynodeRecs(cfgs[i], cfgs[i].peers());
+			Syngleton.setupSyntables(cfgs[i],
+					cfgs[i].syntityMeta((cfg, synreg) -> {
+						if (eq(synreg.name, "T_PhotoMeta"))
+							return new T_PhotoMeta(cfg.synconn);
+						else
+							throw new SemanticException("TODO %s", synreg.name);
+					}),
+					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
+			
+			cleanPhotos(docm, servs_conn[i], devs[i].dev);
+			
+			jetties[i] = startSyndoctier(cfgs[i]);
+			
+			ck[i] = new Docheck(azert, zsu, servs_conn[i],
+						jetties[i].synode(), SynodeMode.peer, docm);
+		}
+		
+		/*
+		IUser robot = DATranscxt.dummyUser();
+		for (int i : nodex) {
+			Utils.logi("Jservs at %s", servs_conn[i]);
+
+			for (int j : nodex) {
+				SynodeMeta synm = ck[i].trb.synm;
+
+				ck[i].b0.update(synm.tbl, robot)
+					.nv(synm.jserv, jetties[j].jserv())
+					.whereEq(synm.pk, jetties[j].synode())
+					.whereEq(synm.domain, ck[i].trb.domain())
+					.u(ck[i].b0.instancontxt(servs_conn[i], robot));
+			}
+		}
+		*/
+
+		for (int i : nodex) {
+			jetties[i].updateJservs(ck[i].trb.synm, cfgs[i], zsu);
+		}
+
+		return nodex;
+	}
+
 	/**
 	 * Initialize syn_* tables' records, must be called after {@link SynodetierJoinTest#initSysRecords()}.
 	 * 
 	 * @param conn
-	 */
 	static void initSynodeRecs(String conn) {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
@@ -205,6 +239,7 @@ public class ExpDoctierservTest {
 			fail(e.getMessage());
 		}
 	}
+	 */
 
 	static void cleanPhotos(ExpDocTableMeta docm, String conn, String ofDevice) throws Exception {
 		ArrayList<String> sqls = new ArrayList<String>();

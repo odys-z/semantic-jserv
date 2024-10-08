@@ -1,7 +1,6 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.syn.ExessionAct.close;
@@ -30,7 +29,6 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
 /**
@@ -39,6 +37,7 @@ import io.oz.jserv.docs.syn.SyncReq.A;
 public class SynssionClientier {
 
 	static String uri_syn = "/syn";
+	static String uri_sys = "/sys";
 
 	/** {@link #uri_syn}/[peer] */
 	final String clienturi;
@@ -75,7 +74,7 @@ public class SynssionClientier {
 
 	protected SessionClient client;
 
-	public SynssionClientier(SynDomanager domanager, String peer, String jserv) {
+	public SynssionClientier(SynDomanager domanager, String peer, String jserv) throws ExchangeException {
 		this.conn      = domanager.myconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
@@ -86,23 +85,27 @@ public class SynssionClientier {
 		this.tasklock  = new ReentrantLock();
 		this.peerlock  = new Object();
 		
-		this.clienturi = uri_syn + "/" + peer;
+		// this.clienturi = uri_syn + "/" + peer;
+		this.clienturi = uri_sys;
+
+//		if (isblank(this.peerjserv))
+//			throw new AnsonException(0, "Initialized final field peerjserv is empty.");
 	}
 
 	/**
+	 * [Synchronous]<br>
 	 * Start a domain updating process (handshaking) with this.peer, in this.domain.
-	 * @param ck 
-	 * @param object 
 	 * @return this
 	 * @throws ExchangeException not ready yet.
+	 * @since 0.2.0
 	 */
-	public SynssionClientier asynUpdate2peer(OnDomainUpdate onup) throws ExchangeException {
+	public SynssionClientier update2peer() throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
 					"Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
 					peer, domain(), client == null ? ", client is null" : "");
 
-		new Thread(() -> { 
+//		new Thread(() -> { 
 			SyncResp rep = null;
 			try {
 				// start session
@@ -129,8 +132,8 @@ public class SynssionClientier {
 						rep = exespush(peer, A.exclose, reqb);
 					}
 					
-					if (onup != null)
-						onup.ok(domain(), mynid, peer, rep == null ? null : rep.exblock, xp);
+//					if (onup != null)
+//						onup.ok(domain(), mynid, peer, rep == null ? null : rep.exblock, xp);
 				}
 			} catch (IOException e) {
 				Utils.warn(e.getMessage());
@@ -149,8 +152,7 @@ public class SynssionClientier {
 			finally {
 				tasklock.unlock();
 			}
-		}, f("%1$s [%2$s <- %1$s]", domanager.synode, peer))
-		.start();
+//		}, f("%1$s [%2$s <- %1$s]", domanager.synode, peer)) .start();
 		return this;
 	}
 
@@ -226,7 +228,7 @@ public class SynssionClientier {
 		AnsonHeader header = client.header().act(act);
 
 		try {
-			AnsonMsg<SyncReq> q = client.<SyncReq>userReq(clienturi, Port.syntier, req)
+			AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
 								.header(header);
 
 			return client.commit(q, errHandler);
@@ -271,8 +273,8 @@ public class SynssionClientier {
 	 * @param ok
 	 * @since 0.2.0
 	 */
-	public void asynJoindomain(String admid, String myuid, String mypswd, OnOk ok) {
-		new Thread(() -> { 
+	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) {
+//		new Thread(() -> { 
 			try {
 				tasklock.lock();
 				SyncReq  req = signup(admid);
@@ -288,7 +290,7 @@ public class SynssionClientier {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally { tasklock.unlock(); }
-		}, f("Join domain %s <- %s", admid, myuid)).start();
+//		}, f("Join domain %s <- %s", admid, myuid)).start();
 	}
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)

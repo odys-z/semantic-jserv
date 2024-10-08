@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -51,6 +50,12 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DeviceTableMeta;
 import io.oz.jserv.docs.x.DocsException;
 
+/**
+ * Document synode tier.
+ *
+ * @since 0.2.0
+ * @author ody
+ */
 @WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.sync" })
 public class ExpDoctier extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
@@ -71,14 +76,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * <h5>note</h5>
-	 * 
-	 * <p>If synoderId is null, will be loaded from
-	 * {@link Configs#cfgFile}/table/v [k={@link Configs.keys#synode}], and
-	 * {@code null} can not be used before
-	 * {@link Syngleton#initSynodetier(String, String, String, String)} or
-	 * {@link Configs#init(String, String, String...)} has been called.
-	 * 
+	 * @since 0.2.0
 	 * @param synoderId optional
 	 * @param loconn local connection id for this node tier, see {@link #myconn}.
 	 * @throws SemanticException
@@ -89,12 +87,12 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	public ExpDoctier(String synoderId, String loconn)
 			throws SemanticException, SQLException, IOException {
 		super(Port.dbsyncer);
-		synode = isblank(synoderId) ? Configs.getCfg(Configs.keys.synode) : synoderId;
+		synode = synoderId; // isblank(synoderId) ? Configs.getCfg(Configs.keys.synode) : synoderId;
 		myconn = loconn;
 		
 		if (synode == null)
-			throw new SemanticException("Synode id must be configured in %s. table %s, k = %s",
-					Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.synode);
+			throw new SemanticException("Synode id is null.");
+					// Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.synode);
 		
 		try {debug = Connects.getDebug(loconn); } catch (Exception e) {debug = false;}
 	}
@@ -190,7 +188,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	/**
-	 * Start this Syntier.
+	 * Create this Syntier.
 	 * 
 	 * <p>This will created an instance of DBSytableBuilder for the domain.</p>
 	 * 
@@ -200,8 +198,9 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @param mod
 	 * @return
 	 * @throws Exception
+	 * @since 0.2.0
 	 */
-	public ExpDoctier startier(String org, String domain, SynodeMode mod)
+	public ExpDoctier create(String org, String domain, SynodeMode mod)
 			throws Exception {
 		dom0builder = new DBSyntableBuilder(
 				domain, // FIXME this is not correct. 

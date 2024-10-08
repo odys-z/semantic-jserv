@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
@@ -351,24 +352,30 @@ public class SynDomanager implements OnError {
 	 * @throws SemanticException 
 	 * @since 0.2.0
 	 */
-	public SynDomanager updomains(OnDomainUpdate onUpdate) throws SemanticException, AnsonException, SsException, IOException {
+	public SynDomanager updomains(OnDomainUpdate onUpdate)
+			throws SemanticException, AnsonException, SsException, IOException {
 		if (sessions == null || sessions.size() == 0)
 			throw new ExchangeException(ready, null,
 						"Session pool is null at %s", synode);
 
+
+		new Thread(() -> { 
 		for (String peer : sessions.keySet())
 			if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
-				sessions.get(peer).asynUpdate2peer(onUpdate);
-//			else if (!sessions.containsKey(peer))
-//				Utils.warnT(new Object() {}, "Updating domain should be done after logged into %s, by %s",
-//						peer, synode);
-//			else if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == init)
-//				continue;
+				try {
+					sessions.get(peer).update2peer();
+				} catch (ExchangeException e) {
+					e.printStackTrace();
+				}
 			else if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() != ready)
 				continue;
 			else
 				Utils.warnT(new Object() {}, "TODO updating %s <- %s",
 						peer, synode);
+
+		if (onUpdate != null)
+			onUpdate.ok(domain, synode, null, null);
+		}, f("%1$s [%2$s]", synode, domain)) .start();
 
 		return this;
 	}
@@ -393,7 +400,7 @@ public class SynDomanager implements OnError {
 		
 		SynssionClientier c = join2peer(admserv, admid, myuid, mypswd);
 
-		c.asynJoindomain(admid, myuid, mypswd, (resp) -> {
+		c.joindomain(admid, myuid, mypswd, (resp) -> {
 			sessions.put(admid, c);
 			ok.ok(resp);
 		});
@@ -411,7 +418,6 @@ public class SynDomanager implements OnError {
 		AnResultset rs = (AnResultset) t0
 				.select(synm.tbl)
 				.col(synm.synoder, "peer").col(synm.domain).col(synm.jserv)
-				// .groupby(synm.domain)
 				.groupby(synm.synoder)
 				.where_(op.ne, synm.synoder, synode)
 				.whereEq(synm.domain, domain)
@@ -422,7 +428,6 @@ public class SynDomanager implements OnError {
 			sessions = new HashMap<String, SynssionClientier>();
 		
 		while (rs.next()) {
-			// String domain = rs.getString(synm.domain);
 			SynssionClientier c = new SynssionClientier(this, rs.getString("peer"), rs.getString(synm.jserv))
 								.onErr(errHandler);
 			String peer = rs.getString("peer");
@@ -439,19 +444,30 @@ public class SynDomanager implements OnError {
 
 			sessions.put(peer, c);
 			
-			Utils.logi("[ ♻.✩ %s ] SynssionClienter created: {clienturi: %s, conn: %s, mode: %s, peer: %s, peer-jserv: %s}",
-					synode, c.clienturi, c.conn, c.mymode.name(), c.peer, c.peerjserv);
+			Utils.logi("[ ♻.✩ %s ] SynssionClienter created: {conn: %s, mode: %s, peer: %s, peer-jserv: %s}",
+					synode, c.conn, c.mymode.name(), c.peer, c.peerjserv);
 		}
 
 		return this;
 	}
 
-	public SynDomanager openSynssions(SyncRobot dbrobot, OnDomainUpdate onEachOpen)
+	/**
+	 * Login to peers and synchronize.
+	 * 
+	 * @param dbrobot
+	 * @param onEachOpen
+	 * @return this
+	 * @throws AnsonException
+	 * @throws SsException
+	 * @throws IOException
+	 * @throws TransException
+	 */
+	public SynDomanager openUpdateSynssions(SyncRobot dbrobot, OnDomainUpdate onEachOpen)
 			throws AnsonException, SsException, IOException, TransException {
 
 		for (SynssionClientier c : sessions.values()) {
 			c.loginWithUri(c.peerjserv, dbrobot.uid(), dbrobot.pswd(), dbrobot.deviceId());
-			c.asynUpdate2peer(onEachOpen);
+			c.update2peer();
 		}
 		return this;
 	}
