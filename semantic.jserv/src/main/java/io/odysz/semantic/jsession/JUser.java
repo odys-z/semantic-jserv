@@ -65,7 +65,6 @@ public class JUser extends SemanticObject implements IUser {
 		public final JOrgMeta  om;
 		
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-		// public final String pk; // = "userId";
 		public String uname; // = "userName";
 		public String pswd; // = "pswd";
 		public String iv; // = "encAuxiliary";
@@ -77,9 +76,6 @@ public class JUser extends SemanticObject implements IUser {
 		public String role;
 		/** v1.4.11, column of role name */
 		public String roleName;
-
-		// public String orgTbl = "a_orgs";
-		// public String roleTbl = "a_roles";
 
 		public JUserMeta userName(String unamefield) {
 			uname = unamefield;

@@ -1,8 +1,8 @@
 package io.oz.jserv.docs.syn;
 
-import static io.oz.jserv.docs.syn.SynoderTest.zsu;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.slava;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.syrskyi;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.zsu;
 
 import java.io.IOException;
 
