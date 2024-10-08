@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
@@ -12,12 +13,13 @@ import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.zsu;
 import static io.oz.jserv.test.JettyHelperTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,6 +42,7 @@ import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.SynodeConfig;
@@ -176,7 +179,14 @@ public class ExpDoctierservTest {
 			// Syngleton.initSynconn(cfgs[i], webinf, f("config-%s.xml", i), p, host);
 			// Syngleton.setupSyntables(cfgs[i].synconn);
 			// Syngleton.initSynodeRecs(cfgs[i], cfgs[i].peers());
-			Syngleton.setupSyntables(cfgs[i], webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
+			Syngleton.setupSyntables(cfgs[i],
+					cfgs[i].syntityMeta((cfg, synreg) -> {
+						if (eq(synreg.name, "T_PhotoMeta"))
+							return new T_PhotoMeta(cfg.synconn);
+						else
+							throw new SemanticException("TODO %s", synreg.name);
+					}),
+					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 			
 			cleanPhotos(docm, servs_conn[i], devs[i].dev);
 			

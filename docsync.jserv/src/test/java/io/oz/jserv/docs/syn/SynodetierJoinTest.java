@@ -30,6 +30,7 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncRobot;
@@ -126,7 +127,9 @@ class SynodetierJoinTest {
 
 			Syngleton.setupSysRecords(config, robots);
 			// Syngleton.setupSyntables(config.synconn);
-			Syngleton.setupSyntables(config, webinf, "config.xml", ".", "ABCDEF0123465789");
+			Syngleton.setupSyntables(config,
+					new ArrayList<SyntityMeta>() {{add(new T_PhotoMeta(config.synconn));}},
+					webinf, "config.xml", ".", "ABCDEF0123465789");
 
 			jetties[i] = startSyndoctier(config);
 

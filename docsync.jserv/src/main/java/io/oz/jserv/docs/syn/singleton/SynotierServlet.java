@@ -20,7 +20,11 @@ public class SynotierServlet extends Syngleton implements ServletContextListener
 
 			Syngleton.setupSysRecords(cfg, YellowPages.robots());
 			
-			Syngleton.setupSyntables(cfg, "WEB-INF", "config.xml", ".", "********");
+			Syngleton.setupSyntables(cfg, 
+					cfg.syntityMeta((c, synreg) -> {
+						return null;
+					}),
+					"WEB-INF", "config.xml", ".", "********");
 
 			Syngleton.initSynodeRecs(cfg, cfg.peers());
 		} catch (Exception e) {

@@ -74,7 +74,7 @@ public class SynssionClientier {
 
 	protected SessionClient client;
 
-	public SynssionClientier(SynDomanager domanager, String peer, String jserv) {
+	public SynssionClientier(SynDomanager domanager, String peer, String jserv) throws ExchangeException {
 		this.conn      = domanager.myconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
@@ -87,6 +87,9 @@ public class SynssionClientier {
 		
 		// this.clienturi = uri_syn + "/" + peer;
 		this.clienturi = uri_sys;
+
+//		if (isblank(this.peerjserv))
+//			throw new AnsonException(0, "Initialized final field peerjserv is empty.");
 	}
 
 	/**

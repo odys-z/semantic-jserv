@@ -16,10 +16,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.SemanticHandler;
-import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.DATranscxt.SemanticsMap;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jserv.JSingleton;
@@ -33,7 +30,6 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantic.syn.DBSynmantics.ShSynChange;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.DBSyntableBuilder.SynmanticsMap;
 import io.odysz.semantic.syn.SyncRobot;
@@ -41,6 +37,7 @@ import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpSynodetier;
@@ -118,11 +115,11 @@ public class Syngleton extends JSingleton {
 				domain, cfg.domain);
 
 		for (Synode sn : cfg.peers())
-			defltScxt.update(synm.tbl, robot)
+			synb.update(synm.tbl, robot)
 				.nv(synm.jserv, jserv)
-				.whereEq(synm.pk, sn.jserv)
+				.whereEq(synm.pk, sn.synid)
 				.whereEq(synm.domain, cfg.domain)
-				.u(defltScxt.instancontxt(cfg.sysconn, robot));
+				.u(synb.instancontxt(cfg.synconn, robot));
 	}
 
 	/**
@@ -213,14 +210,15 @@ public class Syngleton extends JSingleton {
 	 * Syn-change handlers cannot be created without syntity tables are created.
 	 * 
 	 * @param cfg
+	 * @param entms Syntity metas
 	 * @param configFolder
 	 * @param cfgxml
 	 * @param runtimeRoot
 	 * @param rootKey
 	 * @throws Exception
 	 */
-	public static void setupSyntables(SynodeConfig cfg, String configFolder, String cfgxml,
-			String runtimeRoot, String rootKey) throws Exception {
+	public static void setupSyntables(SynodeConfig cfg, ArrayList<SyntityMeta> entms,
+			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
 
 		// 1. connection
 		// Syngleton.initSynconn(cfgs[i], webinf, f("config-%s.xml", i), p, host);
@@ -256,16 +254,16 @@ public class Syngleton extends JSingleton {
 		synm = new SynodeMeta(cfg.synconn);
 	
 		setupSqliTables(cfg.synconn, false, synm, chm, sbm, xbm, prm, ssm);
-		
+
+//		ArrayList<SyntityMeta> entm = new ArrayList<SyntityMeta>();
+//		for (SemanticHandler m : Syngleton.synmap.get(smtype.synChange)) {
+//			entm.add(((ShSynChange)m).entm);
+//		}
+		setupSqlitables(cfg.synconn, false, entms);
+
 		// 3 symantics and entities 
 		synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
 			(c) -> new DBSyntableBuilder.SynmanticsMap(cfg.synode(), c));
-
-		ArrayList<SyntityMeta> entm = new ArrayList<SyntityMeta>();
-		for (SemanticHandler m : Syngleton.synmap.get(smtype.synChange)) {
-			entm.add(((ShSynChange)m).entm);
-		}
-		setupSqlitables(cfg.synconn, false, entm);
 
 		DatasetCfg.init(configFolder);
 			
@@ -295,7 +293,7 @@ public class Syngleton extends JSingleton {
 		IUser usr = DATranscxt.dummyUser();
 		defltScxt = new DATranscxt(cfg.sysconn);
 	
-		for (String tbl : new String[] {"oz_autoseq", "a_users"}) {
+		for (String tbl : new String[] {"oz_autoseq", "a_users", "a_roles", "a_orgs"}) {
 			sqls.add("drop table if exists " + tbl);
 			Connects.commit(cfg.sysconn, usr, sqls);
 			sqls.clear();
@@ -304,7 +302,9 @@ public class Syngleton extends JSingleton {
 		for (String tbl : new String[] {
 					"oz_autoseq.ddl",
 					"oz_autoseq.sql",
-					"a_users.sqlite.ddl",}) {
+					"a_users.sqlite.ddl",
+					"a_roles.sqlite.ddl",
+					"a_orgs.sqlite.ddl",}) {
 	
 			sqls.add(loadTxt(SynotierJettyApp.class, tbl));
 			Connects.commit(cfg.sysconn, usr, sqls);
@@ -361,11 +361,16 @@ public class Syngleton extends JSingleton {
 		
 		if (peers != null && peers.length > 0) {
 			SynodeMeta synm = new SynodeMeta(cfg.synconn);
+			Delete del = synb.delete(synm.tbl, usr)
+						.whereEq(synm.domain, cfg.domain);
 			for (Synode sn : peers) {
-				Insert inst = synb.insert(synm.tbl, usr);
-				sn.insertRow(synm, inst);
-				inst.ins(synb.instancontxt(cfg.synconn, usr));
+//				Insert inst = synb.insert(synm.tbl, usr);
+//				sn.insertRow(synm, inst);
+//				inst.ins(synb.instancontxt(cfg.synconn, usr));
+				del.post(sn.insertRow(synm, 
+						synb.insert(synm.tbl, usr)));
 			}
+			del.d(synb.instancontxt(cfg.synconn, usr));
 		}
 	}
 

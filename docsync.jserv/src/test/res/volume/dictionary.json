@@ -4,7 +4,9 @@
    "sysconn": "main-sqlite",
    "synconn": "no-jserv.00",
    "host": "",
-   "port": 8964 
+   "port": 8964, 
+   
+   "syntities": [{"name": "T_PhotoMeta"}]
  },
  "synrobots": [
    {"userId": "ody", "pswd": "8964", "iv": null},

@@ -6,6 +6,8 @@
    "domain": "zsu",
    "host": "",
    "port": 8967, 
+   
+   "syntities": [{"name": "T_PhotoMeta"}],
 
    "peers": [
      {"synid": "X", "org": "URA", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
