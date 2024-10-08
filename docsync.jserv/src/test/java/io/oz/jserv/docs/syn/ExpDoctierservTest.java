@@ -73,10 +73,7 @@ public class ExpDoctierservTest {
 	/** -Dsyndocs.ip="host-ip" */
 	@BeforeAll
 	static void init() throws Exception {
-		// String p = new File("src/test/res").getAbsolutePath();
-
 		Configs.init(webinf);
-
 		ck = new Docheck[servs_conn.length];
 	}
 	
@@ -194,52 +191,12 @@ public class ExpDoctierservTest {
 						jetties[i].synode(), SynodeMode.peer, docm);
 		}
 		
-		/*
-		IUser robot = DATranscxt.dummyUser();
-		for (int i : nodex) {
-			Utils.logi("Jservs at %s", servs_conn[i]);
-
-			for (int j : nodex) {
-				SynodeMeta synm = ck[i].trb.synm;
-
-				ck[i].b0.update(synm.tbl, robot)
-					.nv(synm.jserv, jetties[j].jserv())
-					.whereEq(synm.pk, jetties[j].synode())
-					.whereEq(synm.domain, ck[i].trb.domain())
-					.u(ck[i].b0.instancontxt(servs_conn[i], robot));
-			}
-		}
-		*/
-
 		for (int i : nodex) {
 			jetties[i].updateJservs(ck[i].trb.synm, cfgs[i], zsu);
 		}
 
 		return nodex;
 	}
-
-	/**
-	 * Initialize syn_* tables' records, must be called after {@link SynodetierJoinTest#initSysRecords()}.
-	 * 
-	 * @param conn
-	static void initSynodeRecs(String conn) {
-		ArrayList<String> sqls = new ArrayList<String>();
-		IUser usr = DATranscxt.dummyUser();
-
-		try {
-			for (String tbl : new String[] {
-					"syn_synode_all_ready.sqlite.sql"}) {
-
-				sqls.add(loadTxt(DoclientierTest.class, tbl));
-				Connects.commit(conn, usr, sqls);
-				sqls.clear();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
-	}
-	 */
 
 	static void cleanPhotos(ExpDocTableMeta docm, String conn, String ofDevice) throws Exception {
 		ArrayList<String> sqls = new ArrayList<String>();
