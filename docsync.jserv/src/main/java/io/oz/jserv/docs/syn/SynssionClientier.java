@@ -57,6 +57,8 @@ public class SynssionClientier {
 	SynDomanager domanager;
 	DBSyntableBuilder b0; 
 
+	ExessionPersist xp;
+
 	/** Exclusive lock for avoiding Synssions initiated from both side */
 	final Object peerlock;
 
@@ -85,11 +87,7 @@ public class SynssionClientier {
 		this.tasklock  = new ReentrantLock();
 		this.peerlock  = new Object();
 		
-		// this.clienturi = uri_syn + "/" + peer;
 		this.clienturi = uri_sys;
-
-//		if (isblank(this.peerjserv))
-//			throw new AnsonException(0, "Initialized final field peerjserv is empty.");
 	}
 
 	/**
@@ -105,54 +103,47 @@ public class SynssionClientier {
 					"Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
 					peer, domain(), client == null ? ", client is null" : "");
 
-//		new Thread(() -> { 
-			SyncResp rep = null;
-			try {
-				// start session
-				tasklock.lock();
-				ExchangeBlock reqb = exesinit();
-				rep = exespush(peer, A.exinit, reqb);
+		SyncResp rep = null;
+		try {
+			// start session
+			tasklock.lock();
+			ExchangeBlock reqb = exesinit();
+			rep = exespush(peer, A.exinit, reqb);
 
-				if (rep != null) {
-					if (rep.exblock != null && rep.exblock.synact() != deny) {
-						// on start reply
-						onsyninit(rep.exblock, rep.domain);
-						while (rep.synact() != close) {
-							ExchangeBlock exb = syncdb(rep.exblock);
-							rep = exespush(peer, A.exchange, exb);
-							if (rep == null)
-								throw new ExchangeException(exb.synact(), xp,
-										"Got null reply for exchange session. %s : %s -> %s",
-										domain(), domanager.synode, peer);
-						}
-						
-						// close
-						reqb = synclose(rep.exblock);
-						// rep  = exesclose(peer, reqb);
-						rep = exespush(peer, A.exclose, reqb);
+			if (rep != null) {
+				if (rep.exblock != null && rep.exblock.synact() != deny) {
+					// on start reply
+					onsyninit(rep.exblock, rep.domain);
+					while (rep.synact() != close) {
+						ExchangeBlock exb = syncdb(rep.exblock);
+						rep = exespush(peer, A.exchange, exb);
+						if (rep == null)
+							throw new ExchangeException(exb.synact(), xp,
+									"Got null reply for exchange session. %s : %s -> %s",
+									domain(), domanager.synode, peer);
 					}
 					
-//					if (onup != null)
-//						onup.ok(domain(), mynid, peer, rep == null ? null : rep.exblock, xp);
-				}
-			} catch (IOException e) {
-				Utils.warn(e.getMessage());
-			} catch (ExchangeException e) {
-				e.printStackTrace();
-				// exesclose(peer, rep == null ? null : rep.exblock);
-				try {
-					ExchangeBlock reqb = synclose(rep.exblock);
+					// close
+					reqb = synclose(rep.exblock);
 					rep = exespush(peer, A.exclose, reqb);
-				} catch (TransException | SQLException e1) {
-					e1.printStackTrace();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
-			finally {
-				tasklock.unlock();
+		} catch (IOException e) {
+			Utils.warn(e.getMessage());
+		} catch (ExchangeException e) {
+			e.printStackTrace();
+			try {
+				ExchangeBlock reqb = synclose(rep.exblock);
+				rep = exespush(peer, A.exclose, reqb);
+			} catch (TransException | SQLException e1) {
+				e1.printStackTrace();
 			}
-//		}, f("%1$s [%2$s <- %1$s]", domanager.synode, peer)) .start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			tasklock.unlock();
+		}
 		return this;
 	}
 
@@ -244,18 +235,6 @@ public class SynssionClientier {
 		return null;
 	}
 
-	/**
-	 * Close the session, in either failed or succeed.
-	 * @param peer
-	 * @param req can be null
-	 * @return
-	SyncResp exesclose(String peer, ExchangeBlock req) {
-		return null;
-	}
-	 */
-
-	ExessionPersist xp;
-
 	public SynssionClientier xp(ExessionPersist xp) {
 		this.xp = xp;
 		return this;
@@ -274,23 +253,21 @@ public class SynssionClientier {
 	 * @since 0.2.0
 	 */
 	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) {
-//		new Thread(() -> { 
-			try {
-				tasklock.lock();
-				SyncReq  req = signup(admid);
-				SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
+		try {
+			tasklock.lock();
+			SyncReq  req = signup(admid);
+			SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
-				req = closejoin(admid, rep);
-				rep = exespush(admid, (SyncReq)req.a(A.closejoin));
+			req = closejoin(admid, rep);
+			rep = exespush(admid, (SyncReq)req.a(A.closejoin));
 
-				if (!isNull(ok))
-					ok.ok(rep);
-			} catch (TransException | SQLException | AnsonException e) {
-				e.printStackTrace();
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally { tasklock.unlock(); }
-//		}, f("Join domain %s <- %s", admid, myuid)).start();
+			if (!isNull(ok))
+				ok.ok(rep);
+		} catch (TransException | SQLException | AnsonException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally { tasklock.unlock(); }
 	}
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
@@ -309,7 +286,8 @@ public class SynssionClientier {
 	 */
 	SyncReq signup(String admid) throws TransException, SQLException {
 		ExchangeBlock xb  = xp.trb.domainSignup(xp, admid);
-		return new SyncReq(null, admid).exblock(xb);
+		return new SyncReq(null, admid)
+				.exblock(xb);
 	}
 
 	public SyncReq closejoin(String admin, SyncResp rep) throws TransException, SQLException {

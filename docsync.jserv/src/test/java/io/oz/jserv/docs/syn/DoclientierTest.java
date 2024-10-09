@@ -13,8 +13,8 @@ import static io.oz.jserv.docs.syn.Dev.Y_0;
 import static io.oz.jserv.docs.syn.Dev.Y_1;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
-import static io.oz.jserv.docs.syn.ExpDoctierservTest.X;
-import static io.oz.jserv.docs.syn.ExpDoctierservTest.Y;
+import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.X;
+import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.Y;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -74,47 +74,37 @@ class DoclientierTest {
 	@Test
 	@Disabled
 	void testSyncUp() throws Exception {
-//		try {
-			// 00 create
-			ExpSyncDoc dx = clientPush(X, X_0);
-			verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
-	
-			// 10 create
-			clientPush(Y, Y_0);
-	
-			// 11 create
-			clientPush(Y, Y_1);
-	
-			boolean[] lights = new boolean[] {true, false};
-			SynodetierJoinTest.syncdomain(lights, Y);
-			awaitAll(lights, -1);
+		ExpSyncDoc dx = clientPush(X, X_0);
+		verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
 
-			// ck[Y].doc(3);
-			// ck[X].doc(3);
-	
-			// 00 delete
-			Dev devx0 = devs[X_0];
-			Clients.init(jserv_xyzw[X]);
-			DocsResp rep = devx0.client.synDel(docm.tbl, devx0.dev, devx0.res);
-			assertEquals(1, rep.total(0));
-	
-			// verifyPathsPageNegative(devx0.client, docm.tbl, dx.clientpath);
+		// 10 create
+		clientPush(Y, Y_0);
 
-			waiting(lights, Y);
-			SynodetierJoinTest.syncdomain(lights, Y);
-			awaitAll(lights);
-			// ck[Y].doc(2);
-			// ck[X].doc(2);
-	
-			pause("Press enter to quite ...");
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//	
-//			Utils.warn(e.getMessage());
-//			pause("Press enter to quite ...");
-//
-//			fail(e.getMessage());
-//		}
+		// 11 create
+		clientPush(Y, Y_1);
+
+		boolean[] lights = new boolean[] {true, false};
+		SynodetierJoinTest.syncdomain(lights, Y);
+		awaitAll(lights, -1);
+
+		// ck[Y].doc(3);
+		// ck[X].doc(3);
+
+		// 00 delete
+		Dev devx0 = devs[X_0];
+		Clients.init(jserv_xyzw[X]);
+		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.dev, devx0.res);
+		assertEquals(1, rep.total(0));
+
+		// verifyPathsPageNegative(devx0.client, docm.tbl, dx.clientpath);
+
+		waiting(lights, Y);
+		SynodetierJoinTest.syncdomain(lights, Y);
+		awaitAll(lights);
+		// ck[Y].doc(2);
+		// ck[X].doc(2);
+
+		pause("Press enter to quite ...");
 	}
 
 	@AfterAll

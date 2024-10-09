@@ -1,4 +1,4 @@
-package io.oz.jserv.docs.syn;
+package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
@@ -43,8 +43,10 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
-import io.oz.jserv.docs.syn.singleton.Syngleton;
-import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
+import io.oz.jserv.docs.syn.Dev;
+import io.oz.jserv.docs.syn.Doclientier;
+import io.oz.jserv.docs.syn.SynodetierJoinTest;
+import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
 
@@ -171,9 +173,6 @@ public class ExpDoctierservTest {
 
 			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
 			
-			// Syngleton.initSynconn(cfgs[i], webinf, f("config-%s.xml", i), p, host);
-			// Syngleton.setupSyntables(cfgs[i].synconn);
-			// Syngleton.initSynodeRecs(cfgs[i], cfgs[i].peers());
 			Syngleton.setupSyntables(cfgs[i],
 					cfgs[i].syntityMeta((cfg, synreg) -> {
 						if (eq(synreg.name, "T_PhotoMeta"))
@@ -185,12 +184,17 @@ public class ExpDoctierservTest {
 			
 			cleanPhotos(docm, servs_conn[i], devs[i].dev);
 			
-			jetties[i] = startSyndoctier(cfgs[i]);
+			jetties[i] = startSyndoctier(cfgs[i], "config.xml");
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 						jetties[i].synode(), SynodeMode.peer, docm);
 		}
 		
+		for (int i : nodex) {
+			for (int j = 0; j < Math.min(jetties.length, cfgs.length); j++)
+				cfgs[i].synodes()[j].jserv = jetties[j].syngleton.jserv;
+		}
+
 		for (int i : nodex) {
 			jetties[i].updateJservs(ck[i].trb.synm, cfgs[i], zsu);
 		}

@@ -284,7 +284,7 @@ public class SynDomanager implements OnError {
 
 			if (xp.exstate() != ready && xp.exstate() != close)
 				return new SyncResp(domain)
-						.exblock(new ExchangeBlock(synode,
+						.exblock(new ExchangeBlock(domain, synode,
 									xp.peer(), xp.session(),
 									new ExessionAct(xp.exstat().exmode() == mode_server
 										? mode_client : mode_server, deny)));

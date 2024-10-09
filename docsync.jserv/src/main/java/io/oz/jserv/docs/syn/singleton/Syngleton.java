@@ -107,7 +107,7 @@ public class Syngleton extends JSingleton {
 	String synode;
 	SyncRobot robot;
 
-	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
+	public void updatePeerJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
 			throws TransException, SQLException {
 		if (!eq(domain, cfg.domain))
 			throw new SemanticException(
@@ -116,7 +116,7 @@ public class Syngleton extends JSingleton {
 
 		for (Synode sn : cfg.peers())
 			synb.update(synm.tbl, robot)
-				.nv(synm.jserv, jserv)
+				.nv(synm.jserv, sn.jserv)
 				.whereEq(synm.pk, sn.synid)
 				.whereEq(synm.domain, cfg.domain)
 				.u(synb.instancontxt(cfg.synconn, robot));

@@ -244,67 +244,6 @@ public class SynotierJettyApp {
 			server.stop();
 	}
 	
-//	/**
-//	 * Synode id for the default domain upon which the {@link ExpSynodetier} works.
-//	 * @return synode id
-//	 */
-//	public String synode() {
-//		if (synodetiers != null && synodetiers.containsKey(syntier_url))
-//			for (SynDomanager domanager : synodetiers.get(syntier_url).values())
-//				return domanager.synode;
-//		return null;
-//	}
-
-//	public SynotierJettyApp loadDomains(SynodeMeta synm, SynodeMode synmod) throws Exception {
-//		if (synodetiers == null)
-//			synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
-//
-//		AnResultset rs = (AnResultset) t0
-//				.select(synm.tbl)
-//				.groupby(synm.domain)
-//				.groupby(synm.synoder)
-//				.whereEq(synm.pk, synode)
-//				.rs(t0.instancontxt(conn0, robot))
-//				.rs(0);
-//		
-//		while (rs.next()) {
-//			String domain = rs.getString(synm.domain);
-//			SynDomanager domanger = new SynDomanager(
-//					synm, rs.getString(synm.org),
-//					domain, synode,
-//					conn0, synmod, Connects.getDebug(conn0));
-//			synodetiers.get(syntier_url).put(domain, domanger);
-//		}
-//
-//		return this;
-//	}
-//
-//	/**
-//	 * Try join (login) known domains
-//	 * 
-//	 * @return this
-//	 * @throws IOException 
-//	 * @throws SsException 
-//	 * @throws AnsonException 
-//	 * @throws SQLException 
-//	 * @throws TransException 
-//	 */
-//	public SynotierJettyApp openDomains(OnDomainUpdate ... onok)
-//			throws AnsonException, SsException, IOException, TransException, SQLException {
-//		if (synodetiers != null && synodetiers.containsKey(syntier_url)) {
-//			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
-//				dmgr.loadSynclients(t0, robot)
-//					.openUpdateSynssions(robot,
-//						(domain, mynid, peer, repb, xp) -> {
-//							if (!isNull(onok))
-//								onok[0].ok(domain, mynid, peer, repb, xp);
-//						});
-//			}
-//		}
-//
-//		return this;
-//	}
-
 	public HashMap<String,HashMap<String,SynDomanager>> synodetiers() {
 		return syngleton.synodetiers;
 	}
@@ -324,7 +263,7 @@ public class SynotierJettyApp {
 
 	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
 			throws TransException, SQLException {
-		syngleton.updateJservs(synm, cfg, domain);
+		syngleton.updatePeerJservs(synm, cfg, domain);
 	}
 
 	public SynotierJettyApp loadDomains(SynodeMode peer) throws Exception {

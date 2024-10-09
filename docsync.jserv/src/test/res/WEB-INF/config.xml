@@ -40,11 +40,12 @@
 		<k>log-connId</k>
 		<v>main-sqlite,semantic-log.xml,a_logs</v>
 	</c>
+	<!-- (center) hub, (main) storage, (private) storage
 	<c>
-		<!-- (center) hub, (main) storage, (private) storage -->
 		<k>sync-mode</k>
 		<v>main</v>
 	</c>
+	-->
 	<c>
 		<!-- worker interval -->
 		<k>sync-interval-min</k>

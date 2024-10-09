@@ -57,7 +57,7 @@ import io.oz.jserv.docs.x.DocsException;
 public class Doclientier extends Semantier {
 	public boolean verbose = false;
 
-	protected SessionClient client;
+	public SessionClient client;
 	protected OnError errCtx;
 
 	protected DocUser robt;

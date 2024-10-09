@@ -25,15 +25,15 @@ public class Dev {
 	public String res;
 	public Doclientier client;
 
-	static Dev[] devs;
+	public static Dev[] devs;
 
-	static final int X_0 = 0;
-	static final int X_1 = 1;
-	static final int Y_0 = 2;
-	static final int Y_1 = 3;
+	public static final int X_0 = 0;
+	public static final int X_1 = 1;
+	public static final int Y_0 = 2;
+	public static final int Y_1 = 3;
 
 	static final String clientconn = "main-sqlite";
-	static ExpDocTableMeta docm;
+	public static ExpDocTableMeta docm;
 
 	static {
 		try {

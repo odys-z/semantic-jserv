@@ -1,8 +1,10 @@
 package io.oz.jserv.docs.syn;
 
 import static io.oz.jserv.docs.syn.SyncReq.A;
+import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -23,6 +25,7 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -72,8 +75,17 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		try {
 			SyncReq req = jmsg.body(0);
 			
-			if (req.exblock != null && isblank(req.exblock.srcnode))
-				throw new SemanticException("req.exblock.srcnode is null. Requests to (Exp)Synodetier must present the souce identity.");
+			if (req.exblock != null) {
+				if (!isblank(req.exblock.domain) && !eq(req.exblock.domain, domain))
+					throw new ExchangeException(ready, null,
+							"domain is %s, while expecting %s", req.exblock.domain, domain);
+				else if (isblank(req.exblock.srcnode))
+					throw new ExchangeException(ready, null,
+							"req.exblock.srcnode is null. Requests to (Exp)Synodetier must present the souce identity.");
+				else if (eq(req.exblock.srcnode, synid))
+					throw new ExchangeException(ready, null,
+							"req.exblock.srcnode is identical to this synode's.");
+			}
 
 			if (A.initjoin.equals(a))
 				rsp = domanager0.onjoin(req);

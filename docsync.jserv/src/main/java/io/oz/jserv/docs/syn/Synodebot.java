@@ -29,7 +29,6 @@ import io.odysz.transact.x.TransException;
 public class Synodebot extends SemanticObject implements IUser {
 
 	protected long touched;
-	// public final String userId;
 	protected String userName;
 	public final String synode;
 
@@ -144,8 +143,4 @@ public class Synodebot extends SemanticObject implements IUser {
 	public String defaultAlbum() {
 		return "a-001";
 	}
-
-//	public SessionInf sessionInf() {
-//		return new SessionInf().device(synode);
-//	}
 }

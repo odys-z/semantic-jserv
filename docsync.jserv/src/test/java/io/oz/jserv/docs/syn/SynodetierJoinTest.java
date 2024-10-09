@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
 
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
@@ -51,34 +52,34 @@ import io.oz.syn.YellowPages;
  * 
  * @author ody
  */
-class SynodetierJoinTest {
-	static String owner  = "ody";
-	static String passwd = "abc";
+public class SynodetierJoinTest {
+	public static String owner  = "ody";
+	public static String passwd = "abc";
 	public static String zsu = "zsu";
 	public static String ura = "URA";
 	
-	static final int X = 0;
-	static final int Y = 1;
-	static final int Z = 2;
-	static final int W = 3;
+	public static final int X = 0;
+	public static final int Y = 1;
+	public static final int Z = 2;
+	public static final int W = 3;
 
 	public static IAssert azert = new AssertImpl();
 
-	static ErrorCtx errLog;
+	public static ErrorCtx errLog;
 	
-	static final String clientconn = "main-sqlite";
-	static final String syrskyi = "syrskyi";
-	static final String slava = "слава україні";
+	public static final String clientconn = "main-sqlite";
+	public static final String syrskyi = "syrskyi";
+	public static final String slava = "слава україні";
 
-	static final String[] servs_conn  = new String[] {
+	public static final String[] servs_conn  = new String[] {
 			"no-jserv.00", "no-jserv.01", "no-jserv.02", "no-jserv.03"};
 
-	static final String sys_conn  = "main-sqlite";
+	public static final String sys_conn  = "main-sqlite";
 
-	static final String[] config_xmls = new String[] {
+	public static final String[] config_xmls = new String[] {
 			"config-0.xml", "config-1.xml", "config-2.xml", "config-3.xml"};
 	
-	static SynotierJettyApp[] jetties;
+	public static SynotierJettyApp[] jetties;
 
 	static {
 		try {
@@ -131,7 +132,7 @@ class SynodetierJoinTest {
 					new ArrayList<SyntityMeta>() {{add(new T_PhotoMeta(config.synconn));}},
 					webinf, "config.xml", ".", "ABCDEF0123465789");
 
-			jetties[i] = startSyndoctier(config);
+			jetties[i] = startSyndoctier(config, f("config-%s.xml", i));
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
@@ -198,7 +199,7 @@ class SynodetierJoinTest {
 		}
 	}
 
-	static void syncdomain(boolean[] lights, int tx, Docheck... ck)
+	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
 			throws SemanticException, AnsonException, SsException, IOException {
 
 		SynotierJettyApp t = jetties[tx];
@@ -237,16 +238,10 @@ class SynodetierJoinTest {
 	 * Start a synode tier with the user identity which is authorized
 	 * to login to every peer. 
 	 * 
-	 * @param serv_conn
-	 * @param config_xml
-	 * @param port
-	 * @param drop_syntbls force dropping table before commit TableMeta.ddlSqlite.
 	 * @return the Jetty App, with a servlet server.
 	 * @throws Exception
 	 */
-	static SynotierJettyApp startSyndoctier(SynodeConfig cfg) throws Exception {
-		// String serv_conn = cfg.synconn;
-		// String config_xml= cfg.confxml;
+	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml) throws Exception {
 		String host = cfg.host;
 		int port = cfg.port;
 
@@ -254,7 +249,7 @@ class SynodetierJoinTest {
 		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 
-			.createSyndoctierApp("config-0.xml", cfg, host, port, webinf, zsu, tierobot)
+			.createSyndoctierApp(cfg_xml, cfg, host, port, webinf, zsu, tierobot)
 			.start(() -> System.out, () -> System.err)
 			.loadDomains(SynodeMode.peer)
 			;
