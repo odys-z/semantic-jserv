@@ -36,6 +36,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
@@ -51,6 +52,8 @@ class DoclientierTest {
 	static String[] jserv_xyzw;
 	@BeforeAll
 	static void init() throws Exception {
+		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
+
 		String p = new File("src/test/res").getAbsolutePath();
     	System.setProperty("VOLUME_HOME", p + "/volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
