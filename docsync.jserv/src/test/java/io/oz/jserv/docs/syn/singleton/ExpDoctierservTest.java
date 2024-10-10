@@ -28,7 +28,6 @@ import java.util.HashSet;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.semantic.DATranscxt;
@@ -75,7 +74,6 @@ public class ExpDoctierservTest {
 	/** -Dsyndocs.ip="host-ip" */
 	@BeforeAll
 	static void init() throws Exception {
-		Configs.init(webinf);
 		ck = new Docheck[servs_conn.length];
 	}
 	
@@ -154,18 +152,20 @@ public class ExpDoctierservTest {
 		
 		SynodeConfig[] cfgs = new SynodeConfig[nodex.length]; 
 
+		String p = new File("src/test/res").getAbsolutePath();
+		System.setProperty("VOLUME_HOME", p + "/volume");
+		for (int c = 0; c < 4; c++) {
+			System.setProperty(f("VOLUME_%s", c), p + "/vol-" + c);
+			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
+		}
+
+		Connects.init(webinf);
+
 		for (int i : nodex) {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			
-
-			String p = new File("src/test/res").getAbsolutePath();
-			System.setProperty("VOLUME_HOME", p + "/vol-" + i);
-			logi("VOLUME_HOME : %s\n", System.getProperty("VOLUME_HOME"));
-
-			Connects.init(webinf);
-
-			YellowPages.load("$VOLUME_HOME");
+			YellowPages.load(f("$VOLUME_%s", i));
 
 			cfgs[i] = YellowPages.synconfig();
 			cfgs[i].host = host;

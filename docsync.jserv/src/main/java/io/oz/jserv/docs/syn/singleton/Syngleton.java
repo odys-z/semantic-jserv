@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
@@ -39,6 +40,8 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.parts.Logic.op;
+import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -181,14 +184,19 @@ public class Syngleton extends JSingleton {
 	public Syngleton openDomains(OnDomainUpdate ... onok)
 			throws AnsonException, SsException, IOException, TransException, SQLException {
 		if (synodetiers != null && synodetiers.containsKey(syntier_url)) {
-			for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
-				dmgr.loadSynclients(synb, robot)
-					.openUpdateSynssions(robot,
-						(domain, mynid, peer, repb, xp) -> {
-							if (!isNull(onok))
-								onok[0].ok(domain, mynid, peer, repb, xp);
-						});
-			}
+			new Thread(()->{
+				for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
+					try {
+						dmgr.loadSynclients(synb, robot)
+							.openUpdateSynssions(robot);
+					} catch (AnsonException | SsException | IOException | TransException | SQLException e) {
+						e.printStackTrace();
+					}
+				}
+				if (!isNull(onok))
+					onok[0].ok(null, synode, null, null);
+			}, f("[%s] Open Domain", synode))
+			.start();
 		}
 
 		return (Syngleton) this;
@@ -342,36 +350,37 @@ public class Syngleton extends JSingleton {
 	 */
 	static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws TransException, SQLException {
 		IUser usr = DATranscxt.dummyUser();
-	
-		/*
-		ArrayList<String> sqls = new ArrayList<String>();
-		try {
-			for (String tbl : new String[] {
-					"syn_synode_all_ready.sqlite.sql"}) {
-	
-				sqls.add(loadTxt(DoclientierTest.class, tbl));
-				Connects.commit(conn, usr, sqls);
-				sqls.clear();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
-		*/
 		
 		if (peers != null && peers.length > 0) {
 			SynodeMeta synm = new SynodeMeta(cfg.synconn);
 			Delete del = synb.delete(synm.tbl, usr)
 						.whereEq(synm.domain, cfg.domain);
 			for (Synode sn : peers) {
-//				Insert inst = synb.insert(synm.tbl, usr);
-//				sn.insertRow(synm, inst);
-//				inst.ins(synb.instancontxt(cfg.synconn, usr));
 				del.post(sn.insertRow(synm, 
 						synb.insert(synm.tbl, usr)));
 			}
 			del.d(synb.instancontxt(cfg.synconn, usr));
 		}
+	}
+
+	public static void cleanDomain(SynodeConfig cfg)
+			throws TransException, SQLException {
+		IUser usr = DATranscxt.dummyUser();
+
+		SynodeMeta synm = new SynodeMeta(cfg.synconn);
+		SynChangeMeta chgm = new SynChangeMeta (cfg.synconn);
+		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
+		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
+
+		synb.delete(synm.tbl, usr)
+			.whereEq(synm.domain, cfg.domain)
+			.post(synb.delete(chgm.tbl)
+					.whereEq(chgm.domain, cfg.domain))
+			.post(synb.delete(subm.tbl)
+					.where(op.isNotnull, subm.changeId, new ExprPart()))
+			.post(synb.delete(xbfm.tbl)
+					.where(op.isNotnull, xbfm.changeId, new ExprPart()))
+			.d(synb.instancontxt(cfg.synconn, usr));
 	}
 
 }

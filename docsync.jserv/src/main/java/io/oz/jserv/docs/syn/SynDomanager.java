@@ -455,14 +455,13 @@ public class SynDomanager implements OnError {
 	 * Login to peers and synchronize.
 	 * 
 	 * @param dbrobot
-	 * @param onEachOpen
 	 * @return this
 	 * @throws AnsonException
 	 * @throws SsException
 	 * @throws IOException
 	 * @throws TransException
 	 */
-	public SynDomanager openUpdateSynssions(SyncRobot dbrobot, OnDomainUpdate onEachOpen)
+	public SynDomanager openUpdateSynssions(SyncRobot dbrobot)
 			throws AnsonException, SsException, IOException, TransException {
 
 		for (SynssionClientier c : sessions.values()) {

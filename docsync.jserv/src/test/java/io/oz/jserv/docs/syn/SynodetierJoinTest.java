@@ -125,12 +125,16 @@ public class SynodetierJoinTest {
 			config.synconn = servs_conn[i];
 			config.sysconn = sys_conn;
 			config.port    = port++;
+			config.mode    = SynodeMode.peer;
+			config.domain  = zsu;
 
 			Syngleton.setupSysRecords(config, robots);
 			// Syngleton.setupSyntables(config.synconn);
 			Syngleton.setupSyntables(config,
-					new ArrayList<SyntityMeta>() {{add(new T_PhotoMeta(config.synconn));}},
+					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789");
+
+			Syngleton.cleanDomain(config);
 
 			jetties[i] = startSyndoctier(config, f("config-%s.xml", i));
 

@@ -9,7 +9,7 @@
   		<id>main-sqlite</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>
-  		<src>$VOLUME_HOME/jserv-main.db</src>
+  		<src>../volume/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
@@ -18,10 +18,55 @@
   	</c>
   	
   	<c>
+  		<id>main-sqlite-0</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>../vol-0/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+  	<c>
+  		<id>main-sqlite-1</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>../vol-1/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+  	<c>
+  		<id>main-sqlite-2</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>../vol-2/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+  	<c>
+  		<id>main-sqlite-3</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>../vol-3/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+
+  	<c>
 		<id>no-jserv.00</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>$VOLUME_HOME/no-jserv-db.00</src>
+  		<src>../vol-0/no-jserv-db.00</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>true</dbg>
@@ -31,7 +76,7 @@
 		<id>no-jserv.01</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>$VOLUME_HOME/no-jserv-db.01</src>
+  		<src>../vol-1/no-jserv-db.01</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>true</dbg>
@@ -41,7 +86,7 @@
 		<id>no-jserv.02</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>$VOLUME_HOME/no-jserv-db.02</src>
+  		<src>../vol-2/no-jserv-db.02</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>true</dbg>
@@ -51,7 +96,7 @@
 		<id>no-jserv.03</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>$VOLUME_HOME/no-jserv-db.03</src>
+  		<src>../vol-3/no-jserv-db.03</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>true</dbg>

@@ -79,7 +79,7 @@ public class JettyHelperTest {
 		
 		azert = new AssertImpl();
 	}
-
+	
 	@Test
 	void test3jetties() throws Exception {
     	System.setProperty("VOLUME_HOME", "../volume");
@@ -87,8 +87,8 @@ public class JettyHelperTest {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-		SynotierJettyApp h1 = startJetty(null, servs_conn[0], "odyx", port++);
-		SynotierJettyApp h2 = startJetty(null, servs_conn[1], "odyy", port++);	
+		SynotierJettyApp h1 = startJetty(null, servs_conn[0], "X", "odyx", port++);
+		SynotierJettyApp h2 = startJetty(null, servs_conn[1], "Y", "odyy", port++);	
 
 		boolean[] lights = new boolean[] {false};
 		touchDir("jetty-log");
@@ -96,7 +96,7 @@ public class JettyHelperTest {
         RolloverFileOutputStream es = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.err", true);
         String outfile = os.getDatedFilename();
 
-		SynotierJettyApp h3 = startJetty(lights, servs_conn[2], "odyz", port++,
+		SynotierJettyApp h3 = startJetty(lights, servs_conn[2], "Z", "odyz", port++,
 							() -> { return new PrintStream1(os, "3-out"); }, 
 							() -> { return new PrintStream1(es, "3-err"); });
 		
@@ -147,11 +147,11 @@ public class JettyHelperTest {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String uid, int port,
-			PrintstreamProvider ... oe) throws IOException, Exception {
+	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String synode,
+			String uid, int port, PrintstreamProvider ... oe) throws IOException, Exception {
 		ArrayList<SyncRobot> tierob = new ArrayList<SyncRobot>() { {add(new SyncRobot(uid, "123456", "Ody by robot"));} };
 
-		SynodeConfig cfg = new SynodeConfig("X");
+		SynodeConfig cfg = new SynodeConfig(synode);
 		cfg.sysconn = conn;
 		cfg.synconn = conn;
 		
@@ -168,7 +168,7 @@ public class JettyHelperTest {
 
 		return SynotierJettyApp
 			.registerPorts(
-				SynotierJettyApp.instanserver(webinf, cfg, "config-0.xml", "127.0.0.1", port, tierob.get(0)),
+				SynotierJettyApp.instanserver(webinf, cfg, "config.xml", "127.0.0.1", port, tierob.get(0)),
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
