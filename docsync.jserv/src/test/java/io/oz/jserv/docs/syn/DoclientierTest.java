@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.prefix;
@@ -64,13 +65,18 @@ class DoclientierTest {
 
 	@Test
 	void testSynclientUp() throws Exception {
+		int no = 0;
+		Utils.logrst(f("X <- %s", devs[X_0].dev), ++no);
+
 		ExpSyncDoc dx = clientPush(X, X_0);
 		verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
 
 		// 10 create
+		Utils.logrst(f("X <- %s", devs[X_0].dev), ++no);
 		clientPush(Y, Y_0);
 
 		// 11 create
+		Utils.logrst(f("X <- %s", devs[X_0].dev), ++no);
 		clientPush(Y, Y_1);
 	}
 
