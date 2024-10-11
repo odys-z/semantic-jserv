@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.f;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,7 +28,6 @@ import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.jclient.tier.Semantier;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -60,7 +60,7 @@ public class Doclientier extends Semantier {
 	public SessionClient client;
 	protected OnError errCtx;
 
-	protected DocUser robt;
+	protected ExpDocRobot robt;
 
 	/** For download. */
 	protected String tempath;
@@ -172,16 +172,13 @@ public class Doclientier extends Semantier {
 	public Doclientier onLogin(SessionClient client) {
 		SessionInf ssinf = client.ssInfo();
 		try {
-			// robot = new SyncRobot(ssinf.uid(), ssinf.device, tempath, ssinf.device);
-			robt = new DocUser(ssinf.uid(), ssinf.userName());
+			robt = new ExpDocRobot(ssinf.uid(), null, ssinf.userName());
 			tempath = FilenameUtils.concat(tempath,
-					String.format("io.oz.doc.%s.%s", ssinf.device, ssinf.uid()));
+						f("io.oz.doc.%s.%s", ssinf.device, ssinf.uid()));
 			
 			new File(tempath).mkdirs(); 
 			
-			JUserMeta um = isNull(Connects.getAllConnIds())
-					? new JUserMeta() // a temporary solution for client without DB connections
-					: (JUserMeta) robt.meta();
+			JUserMeta um = new JUserMeta(); // a temporary solution for client without DB connections
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)

@@ -70,6 +70,5 @@ public class Dev {
 				.tempRoot(uri)
 				.loginWithUri(uri, uid, dev, psw)
 				.blockSize(bsize);
-		// dev.client = client;
 	}
 }

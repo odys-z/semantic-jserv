@@ -54,59 +54,13 @@ import io.oz.syn.SynodeConfig;
 public class Syngleton extends JSingleton {
 	static SynmanticsMap synmap;
 
-	/**
-	 * Load {@link SynmanticsMap} as a static copy, setup connections, then initialize
-	 * AnSession with sys_conn.
-	 * 
-	 * As this method is responsible for parsing the syn_change handler, it must
-	 * be called before initSysRecords();
-	 * 
-	 * @param cfg configuration load from AnRegistry.
-	 * @param configFolder, folder of connects.xml, config.xml and semnatics.xml
-	 * @param cfgxml name of config.xml, to be optimized
-	 * @param runtimeRoot
-	 * @param rootKey, e.g. context.xml/parameter=root-key
-	 * @return
-	 * @throws Exception
-	 * @since 0.2.0
-	public static SemanticsMap initSynconn(SynodeConfig cfg, String configFolder,
-			String cfgxml, String runtimeRoot, String rootKey) throws Exception {
-
-		Utils.logi("Initializing synode with configuration file %s\n"
-				+ "runtime root: %s\n"
-				+ "configure folder: %s\n"
-				+ "root-key length: %s",
-				cfgxml, runtimeRoot, configFolder, len(rootKey));
-
-		Configs.init(configFolder, cfgxml);
-		Connects.init(configFolder);
-
-		DATranscxt.configRoot(configFolder, runtimeRoot);
-		DATranscxt.key("user-pswd", rootKey);
-		
-		DatasetCfg.init(configFolder);
-
-		synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
-			(c) -> new DBSyntableBuilder.SynmanticsMap(cfg.synode(), c));
-			
-		synb = new DBSyntableBuilder(cfg.domain, cfg.synconn, cfg.synode(), cfg.mode);
-			
-		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
-
-		AnSession.init(defltScxt);
-		
-		return synmap;
-	}
-	 */
+	static DBSyntableBuilder synb;
 
 	String jserv;
 
 	String synconn;
-	static DBSyntableBuilder synb;
 
 	String sysconn;
-	// static DATranscxt syst;
-
 	String synode;
 	SyncRobot robot;
 
@@ -229,7 +183,6 @@ public class Syngleton extends JSingleton {
 			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
 
 		// 1. connection
-		// Syngleton.initSynconn(cfgs[i], webinf, f("config-%s.xml", i), p, host);
 		Utils.logi("Initializing synode singleton with configuration file %s\n"
 				+ "runtime root: %s\n"
 				+ "configure folder: %s\n"
@@ -263,10 +216,6 @@ public class Syngleton extends JSingleton {
 	
 		setupSqliTables(cfg.synconn, false, synm, chm, sbm, xbm, prm, ssm);
 
-//		ArrayList<SyntityMeta> entm = new ArrayList<SyntityMeta>();
-//		for (SemanticHandler m : Syngleton.synmap.get(smtype.synChange)) {
-//			entm.add(((ShSynChange)m).entm);
-//		}
 		setupSqlitables(cfg.synconn, false, entms);
 
 		// 3 symantics and entities 
@@ -321,7 +270,6 @@ public class Syngleton extends JSingleton {
 		
 		if (robots != null) {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);
-			// defltScxt = new DATranscxt(cfg.sysconn);
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
 			for (SyncRobot robot : robots) {
@@ -367,7 +315,7 @@ public class Syngleton extends JSingleton {
 			throws TransException, SQLException {
 		IUser usr = DATranscxt.dummyUser();
 
-		SynodeMeta synm = new SynodeMeta(cfg.synconn);
+		SynodeMeta    synm = new SynodeMeta(cfg.synconn);
 		SynChangeMeta chgm = new SynChangeMeta (cfg.synconn);
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
