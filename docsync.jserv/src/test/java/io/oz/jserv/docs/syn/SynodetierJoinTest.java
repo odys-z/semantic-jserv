@@ -129,7 +129,6 @@ public class SynodetierJoinTest {
 			config.domain  = zsu;
 
 			Syngleton.setupSysRecords(config, robots);
-			// Syngleton.setupSyntables(config.synconn);
 			Syngleton.setupSyntables(config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789");

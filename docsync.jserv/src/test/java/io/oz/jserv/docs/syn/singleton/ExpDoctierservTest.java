@@ -182,8 +182,10 @@ public class ExpDoctierservTest {
 					}),
 					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 			
-			cleanPhotos(docm, servs_conn[i], devs[i].dev);
+			cleanPhotos(docm, servs_conn[i], devs);
 			
+			Syngleton.cleanDomain(cfgs[i]);
+
 			jetties[i] = startSyndoctier(cfgs[i], "config.xml");
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
@@ -202,10 +204,11 @@ public class ExpDoctierservTest {
 		return nodex;
 	}
 
-	static void cleanPhotos(ExpDocTableMeta docm, String conn, String ofDevice) throws Exception {
+	static void cleanPhotos(ExpDocTableMeta docm, String conn, Dev[] devs) throws Exception {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
-		sqls.add(f("delete from %s where %s = '%s'", docm.tbl, docm.device, ofDevice));
+		for (Dev d : devs)
+			sqls.add(f("delete from %s where %s = '%s'", docm.tbl, docm.device, d.dev));
 		Connects.commit(conn, usr, sqls);
 	}
 	
