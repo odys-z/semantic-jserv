@@ -95,8 +95,12 @@ public class ExpDoctierservTest {
 		}
 		awaitAll(lights, -1);
 
+		ck[Z].doc(0);
+		ck[Y].doc(0);
+		ck[X].doc(0);
+
 		Utils.logrst("Pause for client's pushing", ++section);
-		pause("Press Enter after pushed with client for starting synchronizing.");
+		pause("Press Enter after pushed with clients for starting synchronizing.");
 
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -133,6 +137,9 @@ public class ExpDoctierservTest {
 		verifyPathsPageNegative(devx0.client, docm.tbl, dx0.clientpath);
 
 		Utils.logrst("Synchronizing synodes", ++section);
+		ck[Y].doc(3);
+		ck[X].doc(2);
+
 		waiting(lights, Y);
 		SynodetierJoinTest.syncdomain(lights, Y);
 		awaitAll(lights, -1);
@@ -184,7 +191,8 @@ public class ExpDoctierservTest {
 			
 			cleanPhotos(docm, servs_conn[i], devs);
 			
-			Syngleton.cleanDomain(cfgs[i]);
+			// Syngleton.cleanDomain(cfgs[i]);
+			Syngleton.cleanSynssions(cfgs[i]);
 
 			jetties[i] = startSyndoctier(cfgs[i], "config.xml");
 			
@@ -213,7 +221,7 @@ public class ExpDoctierservTest {
 	}
 	
 	/**
-	 * Verify device &amp; client-paths isn't presenting at server.
+	 * Verify device &amp; client-paths doesn't present at server.
 	 * 
 	 * @param clientier
 	 * @param entityName

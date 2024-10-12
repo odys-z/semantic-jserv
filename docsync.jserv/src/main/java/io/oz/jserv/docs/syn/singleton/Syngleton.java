@@ -331,4 +331,21 @@ public class Syngleton extends JSingleton {
 			.d(synb.instancontxt(cfg.synconn, usr));
 	}
 
+	public static void cleanSynssions(SynodeConfig cfg)
+			throws TransException, SQLException {
+		IUser usr = DATranscxt.dummyUser();
+
+		// SynodeMeta    synm = new SynodeMeta(cfg.synconn);
+		SynChangeMeta chgm = new SynChangeMeta (cfg.synconn);
+		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
+		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
+
+		synb.delete(chgm.tbl, usr)
+			.whereEq(chgm.domain, cfg.domain)
+			.post(synb.delete(subm.tbl)
+					.where(op.isNotnull, subm.changeId, new ExprPart()))
+			.post(synb.delete(xbfm.tbl)
+					.where(op.isNotnull, xbfm.changeId, new ExprPart()))
+			.d(synb.instancontxt(cfg.synconn, usr));
+	}
 }
