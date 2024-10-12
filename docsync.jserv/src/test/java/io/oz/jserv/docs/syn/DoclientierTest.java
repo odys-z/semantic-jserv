@@ -72,7 +72,7 @@ class DoclientierTest {
 		verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
 
 		// 10 create
-		Utils.logrst(f("X <- %s", devs[X_0].dev), ++no);
+		Utils.logrst(f("Y <- %s", devs[Y_0].dev), ++no);
 		clientPush(Y, Y_0);
 
 		// 11 create
@@ -127,8 +127,9 @@ class DoclientierTest {
 		Clients.init(jserv_xyzw[to]);
 
 		dev.login(errLog);
-		Utils.logi("-------------- client pushing: uid %s, device %s",
+		Utils.logi("client pushing: uid %s, device %s",
 				dev.client.client.ssInfo().uid(), dev.client.client.ssInfo().device);
+		Utils.logi(dev.res);
 
 		ExpSyncDoc xdoc = videoUpByApp(dev, dev.client, docm.tbl);
 		assertEquals(dev.dev, xdoc.device());
@@ -165,8 +166,7 @@ class DoclientierTest {
 						new ErrorCtx() {
 							@Override
 							public void err(MsgCode code, String msg, String...args) {
-								// expected
-								Utils.logi("Fail on pushing again test passed. doc: %s, device: %s, clientpath: %s",
+								Utils.logi("Expected: Fail on pushing again test passed. doc: %s, device: %s, clientpath: %s",
 									doc.recId, doc.device(), doc.clientpath);
 							}
 						});
