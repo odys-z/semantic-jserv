@@ -505,7 +505,7 @@ public class Doclientier extends Semantier {
 	 * @param doc
 	 * @param follows handling following pushes.
 	 * @param errorCtx
-	 * @return 
+	 * @return doc response
 	 * @throws TransException
 	 * @throws IOException
 	 * @throws SQLException
@@ -541,10 +541,10 @@ public class Doclientier extends Semantier {
 				.syncing(page)
 				.docTabl(tabl)
 				.device(new Device(page.device, null))
-				.a(A.selectSyncs); // v 0.1.50
+				.a(A.selectSyncs); 
 
 		AnsonMsg<DocsReq> q = client
-				.<DocsReq>userReq(uri, port/*MVP 0.2.1 Port.docsync*/, req)
+				.<DocsReq>userReq(uri, port, req)
 				.header(header);
 
 		DocsResp resp = client.commit(q, errCtx);
