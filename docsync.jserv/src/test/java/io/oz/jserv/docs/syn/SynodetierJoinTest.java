@@ -216,6 +216,8 @@ public class SynodetierJoinTest {
 					(domain, mynid, peer, repb, xp) -> {
 						if (!isNull(ck))
 							try {
+								Utils.logi("On domain updated: %s : %s", mynid, dom);
+								Utils.logi("==========================\n", mynid, dom);
 								printChangeLines(ck);
 								printNyquv(ck);
 							} catch (TransException | SQLException e) {

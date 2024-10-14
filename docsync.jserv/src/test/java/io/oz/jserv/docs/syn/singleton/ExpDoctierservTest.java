@@ -137,11 +137,14 @@ public class ExpDoctierservTest {
 		verifyPathsPageNegative(devx0.client, docm.tbl, dx0.clientpath);
 
 		Utils.logrst("Synchronizing synodes", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
 		ck[Y].doc(3);
 		ck[X].doc(2);
 
 		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y);
+		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
 
 		Utils.logrst("Finish", ++section);
