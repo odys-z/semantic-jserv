@@ -15,6 +15,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
+import org.eclipse.jetty.server.Session;
+
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -52,7 +54,14 @@ public class SynDomanager implements OnError {
 	 */
 	@FunctionalInterface
 	public interface OnDomainUpdate {
-		public void ok(String domain, String mynid, String peer, ExchangeBlock rep, ExessionPersist... xp);
+		/**
+		 * On domain update event, for each peer. Additional calling for all peers cleared (peer == null).
+		 * @param domain
+		 * @param mynid
+		 * @param peer
+		 * @param xp
+		 */
+		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
 	}
 
 	static final String dom_unknown = null;
@@ -360,21 +369,26 @@ public class SynDomanager implements OnError {
 
 
 		new Thread(() -> { 
-		for (String peer : sessions.keySet())
-			if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
+		for (String peer : sessions.keySet()) {
+			ExessionPersist xp = sessions.get(peer).xp;
+			if (xp != null && xp.exstate() == ready)
 				try {
 					sessions.get(peer).update2peer();
 				} catch (ExchangeException e) {
 					e.printStackTrace();
 				}
-			else if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() != ready)
+			else if (xp != null && xp.exstate() != ready)
 				continue;
 			else
 				Utils.warnT(new Object() {}, "TODO updating %s <- %s",
 						peer, synode);
 
+			if (onUpdate != null)
+				onUpdate.ok(domain, synode, peer, xp);
+		}
+
 		if (onUpdate != null)
-			onUpdate.ok(domain, synode, null, null);
+			onUpdate.ok(domain, synode, null);
 		}, f("%1$s [%2$s]", synode, domain)) .start();
 
 		return this;

@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.isblank;
 
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
@@ -213,17 +214,18 @@ public class SynodetierJoinTest {
 
 			for (String dom : t.synodetiers().get(servpattern).keySet()) {
 				t.synodetiers().get(servpattern).get(dom).updomains(
-					(domain, mynid, peer, repb, xp) -> {
-						if (!isNull(ck))
+					(domain, mynid, peer, xp) -> {
+						if (!isNull(ck) && !isblank(peer))
 							try {
-								Utils.logi("On domain updated: %s : %s", mynid, dom);
-								Utils.logi("==========================\n", mynid, dom);
+								Utils.logi("On domain updated: %s : %s <-> %s", dom, mynid, peer);
+								Utils.logi("============================================\n");
 								printChangeLines(ck);
 								printNyquv(ck);
 							} catch (TransException | SQLException e) {
 								e.printStackTrace();
 							}
 
+						if (isblank(peer))
 						if (eq(domain, dom) && eq(mynid, jetties[tx].synode())) {
 							lights[tx] = true;
 							Utils.logi("lights[%s] = true", tx);

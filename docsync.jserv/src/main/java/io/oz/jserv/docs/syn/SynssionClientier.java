@@ -15,6 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -75,6 +76,7 @@ public class SynssionClientier {
 	}
 
 	protected SessionClient client;
+	private boolean debug;
 
 	public SynssionClientier(SynDomanager domanager, String peer, String jserv) throws ExchangeException {
 		this.conn      = domanager.myconn;
@@ -88,6 +90,8 @@ public class SynssionClientier {
 		this.peerlock  = new Object();
 		
 		this.clienturi = uri_sys;
+		
+		this.debug     = Connects.getDebug(domanager.myconn);
 	}
 
 	/**
@@ -106,6 +110,12 @@ public class SynssionClientier {
 		SyncResp rep = null;
 		try {
 			// start session
+
+			if (debug)
+				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
+						+ "\n=============================================================\n",
+						domain(), mynid, peer);
+
 			tasklock.lock();
 			ExchangeBlock reqb = exesinit();
 			rep = exespush(peer, A.exinit, reqb);

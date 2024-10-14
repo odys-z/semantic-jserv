@@ -89,7 +89,7 @@ public class ExpDoctierservTest {
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
 			// should block X's starting sessions
-			jetties[i].openDomains( (domain, mynid, peer, repb, xp) -> {
+			jetties[i].openDomains( (domain, mynid, peer, xp) -> {
 				lights[i] = true;
 			});
 		}
