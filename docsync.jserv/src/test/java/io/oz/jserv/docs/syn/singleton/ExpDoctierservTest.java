@@ -194,7 +194,6 @@ public class ExpDoctierservTest {
 			
 			cleanPhotos(docm, servs_conn[i], devs);
 			
-			// Syngleton.cleanDomain(cfgs[i]);
 			Syngleton.cleanSynssions(cfgs[i]);
 
 			jetties[i] = startSyndoctier(cfgs[i], "config.xml");
