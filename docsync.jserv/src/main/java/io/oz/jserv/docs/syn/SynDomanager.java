@@ -338,8 +338,6 @@ public class SynDomanager implements OnError {
 		if (handlers != null)
 		for (SemanticHandler h : handlers)
 			if (h instanceof ShSynChange) {
-				// DBSyntableBuilder.registerEntity(myconn, ((ShSynChange)h).entm);
-
 				Utils.logi("SynEntity registed: %s - %s : %s", myconn, domain, ((ShSynChange)h).entm.tbl);
 			}
 
