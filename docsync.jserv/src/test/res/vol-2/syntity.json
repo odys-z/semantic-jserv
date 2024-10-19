@@ -1,0 +1,4 @@
+{"type": "io.odysz.semantic.syn.registry.Syntities",
+ "conn": "no-jserv.02",
+ "syntities": [{"table": "h_photos", "meta": "io.oz.jserv.docs.syn.T_PhotoMeta"}]
+}

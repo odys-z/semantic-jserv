@@ -1,6 +1,5 @@
 package io.oz.jserv.docs.syn.singleton;
 
-import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
@@ -37,6 +36,7 @@ import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
@@ -45,7 +45,6 @@ import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.syn.Dev;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.SynodetierJoinTest;
-import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
 
@@ -89,7 +88,7 @@ public class ExpDoctierservTest {
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
 			// should block X's starting sessions
-			jetties[i].openDomains( (domain, mynid, peer, repb, xp) -> {
+			jetties[i].openDomains( (domain, mynid, peer, xp) -> {
 				lights[i] = true;
 			});
 		}
@@ -137,11 +136,14 @@ public class ExpDoctierservTest {
 		verifyPathsPageNegative(devx0.client, docm.tbl, dx0.clientpath);
 
 		Utils.logrst("Synchronizing synodes", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
 		ck[Y].doc(3);
 		ck[X].doc(2);
 
 		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y);
+		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
 
 		Utils.logrst("Finish", ++section);
@@ -180,21 +182,20 @@ public class ExpDoctierservTest {
 
 			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
 			
-			Syngleton.setupSyntables(cfgs[i],
-					cfgs[i].syntityMeta((cfg, synreg) -> {
-						if (eq(synreg.name, "T_PhotoMeta"))
-							return new T_PhotoMeta(cfg.synconn);
-						else
-							throw new SemanticException("TODO %s", synreg.name);
-					}),
+
+			Syntities regists = Syntities.load(webinf, f("$VOLUME_%s/syntity.json", i), 
+				(synreg) -> {
+					throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
+				});
+			
+			Syngleton.setupSyntables(cfgs[i], regists.metas.values(),
 					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 			
 			cleanPhotos(docm, servs_conn[i], devs);
 			
-			// Syngleton.cleanDomain(cfgs[i]);
 			Syngleton.cleanSynssions(cfgs[i]);
 
-			jetties[i] = startSyndoctier(cfgs[i], "config.xml");
+			jetties[i] = startSyndoctier(cfgs[i], "config.xml", f("$VOLUME_%s/syntity.json", i));
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 						jetties[i].synode(), SynodeMode.peer, docm);

@@ -3,12 +3,13 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
-import static io.odysz.semantic.syn.ExessionAct.ready;
 import static io.odysz.semantic.syn.ExessionAct.init;
 import static io.odysz.semantic.syn.ExessionAct.mode_client;
 import static io.odysz.semantic.syn.ExessionAct.mode_server;
+import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -52,7 +53,14 @@ public class SynDomanager implements OnError {
 	 */
 	@FunctionalInterface
 	public interface OnDomainUpdate {
-		public void ok(String domain, String mynid, String peer, ExchangeBlock rep, ExessionPersist... xp);
+		/**
+		 * On domain update event, for each peer. Additional calling for all peers cleared (peer == null).
+		 * @param domain
+		 * @param mynid
+		 * @param peer
+		 * @param xp
+		 */
+		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
 	}
 
 	static final String dom_unknown = null;
@@ -330,7 +338,8 @@ public class SynDomanager implements OnError {
 		if (handlers != null)
 		for (SemanticHandler h : handlers)
 			if (h instanceof ShSynChange) {
-				DBSyntableBuilder.registerEntity(myconn, ((ShSynChange)h).entm);
+				// DBSyntableBuilder.registerEntity(myconn, ((ShSynChange)h).entm);
+
 				Utils.logi("SynEntity registed: %s - %s : %s", myconn, domain, ((ShSynChange)h).entm.tbl);
 			}
 
@@ -360,21 +369,26 @@ public class SynDomanager implements OnError {
 
 
 		new Thread(() -> { 
-		for (String peer : sessions.keySet())
-			if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() == ready)
+		for (String peer : sessions.keySet()) {
+			ExessionPersist xp = sessions.get(peer).xp;
+			if (xp != null && xp.exstate() == ready)
 				try {
 					sessions.get(peer).update2peer();
 				} catch (ExchangeException e) {
 					e.printStackTrace();
 				}
-			else if (sessions.get(peer).xp != null && sessions.get(peer).xp.exstate() != ready)
+			else if (xp != null && xp.exstate() != ready)
 				continue;
 			else
 				Utils.warnT(new Object() {}, "TODO updating %s <- %s",
 						peer, synode);
 
+			if (onUpdate != null)
+				onUpdate.ok(domain, synode, peer, xp);
+		}
+
 		if (onUpdate != null)
-			onUpdate.ok(domain, synode, null, null);
+			onUpdate.ok(domain, synode, null);
 		}, f("%1$s [%2$s]", synode, domain)) .start();
 
 		return this;
@@ -455,19 +469,24 @@ public class SynDomanager implements OnError {
 	 * Login to peers and synchronize.
 	 * 
 	 * @param dbrobot
+	 * @param onok 
 	 * @return this
 	 * @throws AnsonException
 	 * @throws SsException
 	 * @throws IOException
 	 * @throws TransException
 	 */
-	public SynDomanager openUpdateSynssions(SyncRobot dbrobot)
+	public SynDomanager openUpdateSynssions(SyncRobot dbrobot, OnDomainUpdate... onok)
 			throws AnsonException, SsException, IOException, TransException {
 
 		for (SynssionClientier c : sessions.values()) {
 			c.loginWithUri(c.peerjserv, dbrobot.uid(), dbrobot.pswd(), dbrobot.deviceId());
 			c.update2peer();
 		}
+
+		if (!isNull(onok))
+				onok[0].ok(domain, synode, null);
+
 		return this;
 	}
 }

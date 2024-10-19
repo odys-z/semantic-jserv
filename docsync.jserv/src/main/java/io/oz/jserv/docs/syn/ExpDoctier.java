@@ -34,6 +34,7 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.BlockChain;
@@ -60,11 +61,11 @@ import io.oz.jserv.docs.x.DocsException;
 public class ExpDoctier extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 
-	private DBSyntableBuilder dom0builder;
-	public DBSyntableBuilder stampbuilder() throws SQLException, TransException {
-		if (dom0builder == null)
+	private DBSynTransBuilder syntb0;
+	public DBSynTransBuilder syntransBuilder() throws SQLException, TransException {
+		if (syntb0 == null)
 			throw new SemanticException("This synode haven't been started.");
-		return dom0builder.loadNstamp();
+		return syntb0; // .loadNstamp();
 	}
 
 	final String synode;
@@ -164,7 +165,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			}
 
 			if (rsp != null) {
-				write(resp, ok(rsp.syndomain(dom0builder.domain())));
+				write(resp, ok(rsp.syndomain(syntb0.perdomain)));
 			}
 		} catch (DocsException e) {
 			write(resp, err(MsgCode.ext, e.ex().toBlock()));
@@ -200,12 +201,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public ExpDoctier create(String org, String domain, SynodeMode mod)
-			throws Exception {
-		dom0builder = new DBSyntableBuilder(
-				domain, // FIXME this is not correct. 
-						// FIXME See {@link DBSyntableBuilder}'s issue ee153bcb30c3f3b868413beace8cc1f3cb5c3f7c. 
-				myconn, synode, mod);
+	public ExpDoctier create(String org, String domain,
+			String syntity_json, SynodeMode mod) throws Exception {
+
+		new DBSynTransBuilder(domain, myconn, synode, syntity_json, mod,
+			new DBSyntableBuilder(domain, myconn, synode, mod));
 
 		return this;
 	}
@@ -223,7 +223,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(body.uri());
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 
-		DBSyntableBuilder b = stampbuilder();
+		DBSynTransBuilder b = syntransBuilder();
 
 		if (isblank(body.device().id)) {
 			SemanticObject result = (SemanticObject) b
@@ -291,7 +291,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				: syncReq.device().id
 				: syncReq.syncingPage().device;
 
-		DBSyntableBuilder b = stampbuilder();
+		DBSynTransBuilder b = syntransBuilder();
 		AnResultset rs = ((AnResultset) meta
 				.selectSynPaths(b, syncReq.docTabl)
 				.col(meta.fullpath)
@@ -315,7 +315,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			throws IOException, TransException, SQLException, SAXException {
 		String conn = Connects.uri2conn(body.uri());
 
-		checkBlock0(dom0builder, conn, body, (DocUser) usr);
+		checkBlock0(syntb0, conn, body, (DocUser) usr);
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
@@ -388,7 +388,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		ExpSyncDoc photo = chain.doc;
 
-		DBSyntableBuilder b = stampbuilder();
+		DBSynTransBuilder b = syntransBuilder();
 		String pid = DocUtils.createFileBy64(b, conn, photo, usr, meta);
 
 		// move file
@@ -432,7 +432,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		String conn = Connects.uri2conn(docreq.uri());
 
-		DBSyntableBuilder b = stampbuilder();
+		DBSynTransBuilder b = syntransBuilder();
 		ExpDocTableMeta docm = checkDuplication(b, docreq, (DocUser) usr);
 
 		ExpSyncDoc photo = docreq.doc;
@@ -446,7 +446,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		// TODO Albums.onPhotoCreated()
 	}
 
-	static void checkBlock0(DBSyntableBuilder st, String conn, DocsReq body, DocUser usr)
+	static void checkBlock0(DBSynTransBuilder st, String conn, DocsReq body, DocUser usr)
 			throws TransException, SQLException, IOException {
 		if (isblank(body.docTabl))
 			throw new DocsException(DocsException.IOError, "DocsReq.docTabl is empty");
@@ -471,7 +471,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		checkDuplication(st, body, usr);
 	}
 
-	static ExpDocTableMeta checkDuplication(DBSyntableBuilder st, DocsReq docreq, DocUser usr)
+	static ExpDocTableMeta checkDuplication(DBSynTransBuilder st, DocsReq docreq, DocUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(docreq.uri());
 
@@ -482,8 +482,10 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return docm;
 	}
 
-	static void checkDuplicate(DBSyntableBuilder st, String conn, ExpDocTableMeta meta, String device, String clientpath, IUser usr)
+	static void checkDuplicate(DBSynTransBuilder st, String conn, ExpDocTableMeta meta,
+			String device, String clientpath, IUser usr)
 			throws TransException, SQLException, IOException {
+
 		AnResultset rs = ((AnResultset) st
 				.select(meta.tbl, "p")
 				.col(count(meta.pk), "cnt")
@@ -501,8 +503,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	DocsResp delDoc(DocsReq docsReq, IUser usr)
 			throws TransException, SQLException, SAXException, IOException {
 		String conn = Connects.uri2conn(docsReq.uri());
-		DBSyntableBuilder b = stampbuilder();
-		ExpDocTableMeta docm = (ExpDocTableMeta) Syntities.getSyntityMeta(docsReq.docTabl);
+		DBSynTransBuilder b = syntransBuilder();
+		ExpDocTableMeta docm = (ExpDocTableMeta) DBSynTransBuilder.getEntityMeta(conn, docsReq.docTabl);
 
 		SemanticObject res = (SemanticObject) b
 				.delete(docm.tbl, usr)
@@ -530,7 +532,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(req.uri());
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
 
-		DATranscxt st = stampbuilder();
+		DATranscxt st = syntransBuilder();
 
 		AnResultset rs = (AnResultset) st.select(meta.tbl, "p")
 				.cols_byAlias("p", meta.pk, meta.org,
@@ -583,7 +585,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		 from h_photos f where f.family = '%1$s' group by f.folder
 		 ) where img > 0 or mov > 0 or wav > 0
 		 */
-		DATranscxt b = stampbuilder();
+		DATranscxt b = syntransBuilder();
 		AnResultset rs = (AnResultset) b
 				.select(mph.tbl, "p")
 				.j(musr.tbl, "u", String.format("u.%s = p.%s", musr.pk, mph.shareby))
