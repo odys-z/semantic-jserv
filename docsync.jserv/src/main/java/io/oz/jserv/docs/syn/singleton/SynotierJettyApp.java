@@ -150,14 +150,13 @@ public class SynotierJettyApp {
 	 * @throws Exception
 	 */
 	public static SynotierJettyApp createSyndoctierApp( String config_xml,
-			SynodeConfig cfg, String bindIp, int port, String webinf,
+			String syntity_json, SynodeConfig cfg, String webinf,
 			String domain, SyncRobot robot) throws Exception {
 
 		String synid  = cfg.synode();
 		robot.deviceId(synid);
 
-		// Syngleton.initSynconn(cfg, webinf, config_xml, ".", "ABCDEF0123456789");
-		SynotierJettyApp synapp = SynotierJettyApp.instanserver(webinf, cfg, config_xml, bindIp, port, robot);
+		SynotierJettyApp synapp = SynotierJettyApp.instanserver(webinf, cfg, config_xml, cfg.host, cfg.port, robot);
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
@@ -169,7 +168,7 @@ public class SynotierJettyApp {
 				.born(synapp.synchandlers, 0, 0);
 	
 		ExpDoctier doctier  = new ExpDoctier(synid, cfg.synconn)
-							.create(robot.orgId(), domain, SynodeMode.peer)
+							.create(robot.orgId(), domain, syntity_json, SynodeMode.peer)
 							.domains(domains);
 		ExpSynodetier syner = new ExpSynodetier(robot.orgId(), domain, synid, cfg.synconn, SynodeMode.peer)
 							.domains(domains);
@@ -293,9 +292,8 @@ public class SynotierJettyApp {
 	
 	    AnsonMsg.understandPorts(Port.syntier);
 	
-		// SemanticsMap ss = Syngleton.initSynconn(cfg, configxml, ".", configPath, "ABCDEF0123456789");
-	    // SynotierJettyApp synapp = new SynotierJettyApp(cfg.synode(), cfg.synconn, robt, ss.get(smtype.synChange));
-	    SynotierJettyApp synapp = new SynotierJettyApp(cfg.synode(), cfg.synconn, robt, Syngleton.synmap.get(smtype.synChange));
+	    SynotierJettyApp synapp = new SynotierJettyApp(cfg.synode(),
+	    						cfg.synconn, robt, Syngleton.synmap.get(smtype.synChange));
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	

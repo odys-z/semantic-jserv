@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
@@ -31,8 +30,8 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
+import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.DBSyntableBuilder.SynmanticsMap;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
@@ -52,7 +51,7 @@ import io.oz.syn.SynodeConfig;
  * @since 0.2.0
  */
 public class Syngleton extends JSingleton {
-	static SynmanticsMap synmap;
+	static DBSynTransBuilder.SynmanticsMap synmap;
 
 	static DBSyntableBuilder synb;
 
@@ -142,13 +141,13 @@ public class Syngleton extends JSingleton {
 				for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
 					try {
 						dmgr.loadSynclients(synb, robot)
-							.openUpdateSynssions(robot);
+							.openUpdateSynssions(robot, onok);
 					} catch (AnsonException | SsException | IOException | TransException | SQLException e) {
 						e.printStackTrace();
 					}
 				}
 				if (!isNull(onok))
-					onok[0].ok(null, synode, null, null);
+					onok[0].ok(null, synode, null);
 			}, f("[%s] Open Domain", synode))
 			.start();
 		}
@@ -169,17 +168,16 @@ public class Syngleton extends JSingleton {
 
 	/**
 	 * Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:
-	 * Syn-change handlers cannot be created without syntity tables are created.
+	 * Syn-change handlers cannot be created without syntity tables have beeb created.
 	 * 
 	 * @param cfg
-	 * @param entms Syntity metas
 	 * @param configFolder
 	 * @param cfgxml
 	 * @param runtimeRoot
 	 * @param rootKey
 	 * @throws Exception
 	 */
-	public static void setupSyntables(SynodeConfig cfg, ArrayList<SyntityMeta> entms,
+	public static void setupSyntables(SynodeConfig cfg, Iterable<SyntityMeta> entms,
 			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
 
 		// 1. connection
@@ -220,7 +218,7 @@ public class Syngleton extends JSingleton {
 
 		// 3 symantics and entities 
 		synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
-			(c) -> new DBSyntableBuilder.SynmanticsMap(cfg.synode(), c));
+			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 
 		DatasetCfg.init(configFolder);
 			

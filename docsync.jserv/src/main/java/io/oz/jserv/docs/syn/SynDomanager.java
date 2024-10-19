@@ -3,19 +3,18 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
-import static io.odysz.semantic.syn.ExessionAct.ready;
 import static io.odysz.semantic.syn.ExessionAct.init;
 import static io.odysz.semantic.syn.ExessionAct.mode_client;
 import static io.odysz.semantic.syn.ExessionAct.mode_server;
+import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-
-import org.eclipse.jetty.server.Session;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
@@ -339,7 +338,8 @@ public class SynDomanager implements OnError {
 		if (handlers != null)
 		for (SemanticHandler h : handlers)
 			if (h instanceof ShSynChange) {
-				DBSyntableBuilder.registerEntity(myconn, ((ShSynChange)h).entm);
+				// DBSyntableBuilder.registerEntity(myconn, ((ShSynChange)h).entm);
+
 				Utils.logi("SynEntity registed: %s - %s : %s", myconn, domain, ((ShSynChange)h).entm.tbl);
 			}
 
@@ -469,19 +469,24 @@ public class SynDomanager implements OnError {
 	 * Login to peers and synchronize.
 	 * 
 	 * @param dbrobot
+	 * @param onok 
 	 * @return this
 	 * @throws AnsonException
 	 * @throws SsException
 	 * @throws IOException
 	 * @throws TransException
 	 */
-	public SynDomanager openUpdateSynssions(SyncRobot dbrobot)
+	public SynDomanager openUpdateSynssions(SyncRobot dbrobot, OnDomainUpdate... onok)
 			throws AnsonException, SsException, IOException, TransException {
 
 		for (SynssionClientier c : sessions.values()) {
 			c.loginWithUri(c.peerjserv, dbrobot.uid(), dbrobot.pswd(), dbrobot.deviceId());
 			c.update2peer();
 		}
+
+		if (!isNull(onok))
+				onok[0].ok(domain, synode, null);
+
 		return this;
 	}
 }

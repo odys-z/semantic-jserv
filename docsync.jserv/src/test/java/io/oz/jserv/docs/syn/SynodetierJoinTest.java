@@ -106,6 +106,12 @@ public class SynodetierJoinTest {
     	System.setProperty("VOLUME_HOME", p + "/volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
+		System.setProperty("VOLUME_HOME", p + "/volume");
+		for (int c = 0; c < 4; c++) {
+			System.setProperty(f("VOLUME_%s", c), p + "/vol-" + c);
+			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
+		}
+
 		Configs.init(webinf);
 		Connects.init(webinf);
 		YellowPages.load("$VOLUME_HOME");
@@ -136,7 +142,7 @@ public class SynodetierJoinTest {
 
 			Syngleton.cleanDomain(config);
 
-			jetties[i] = startSyndoctier(config, f("config-%s.xml", i));
+			jetties[i] = startSyndoctier(config, f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
@@ -248,15 +254,12 @@ public class SynodetierJoinTest {
 	 * @return the Jetty App, with a servlet server.
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml) throws Exception {
-		String host = cfg.host;
-		int port = cfg.port;
-
+	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml, String syntity_json) throws Exception {
 		SyncRobot tierobot = YellowPages.getRobot(syrskyi);
 		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 
-			.createSyndoctierApp(cfg_xml, cfg, host, port, webinf, zsu, tierobot)
+			.createSyndoctierApp(cfg_xml, syntity_json, cfg, webinf, zsu, tierobot)
 			.start(() -> System.out, () -> System.err)
 			.loadDomains(SynodeMode.peer)
 			;
