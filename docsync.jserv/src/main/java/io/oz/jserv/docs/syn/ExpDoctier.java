@@ -502,7 +502,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			throws TransException, SQLException, SAXException, IOException {
 		String conn = Connects.uri2conn(docsReq.uri());
 		DBSyntableBuilder b = stampbuilder();
-		ExpDocTableMeta docm = (ExpDocTableMeta) b.getSyntityMeta(docsReq.docTabl);
+		ExpDocTableMeta docm = (ExpDocTableMeta) Syntities.getSyntityMeta(docsReq.docTabl);
 
 		SemanticObject res = (SemanticObject) b
 				.delete(docm.tbl, usr)
