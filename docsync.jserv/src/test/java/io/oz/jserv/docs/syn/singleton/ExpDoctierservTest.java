@@ -99,6 +99,9 @@ public class ExpDoctierservTest {
 		ck[X].doc(0);
 
 		Utils.logrst("Pause for client's pushing", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
 		pause("Press Enter after pushed with clients for starting synchronizing.");
 
 		printChangeLines(ck);

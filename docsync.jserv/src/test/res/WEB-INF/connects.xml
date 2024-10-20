@@ -148,14 +148,39 @@
   	     It's planned to try configure connections via user requests, in the future.
   	-->
    	<c>
-  		<uri>client-at-00</uri>
+  		<uri>doclient-00</uri>
   		<conn>no-jserv.00</conn>
   	</c>
    	<c>
-  		<uri>client-at-01</uri>
+  		<uri>doclient-01</uri>
   		<conn>no-jserv.01</conn>
   	</c>
-  	
+    <c>
+  		<uri>doclient-02</uri>
+  		<conn>no-jserv.02</conn>
+  	</c>
+   	<c>
+  		<uri>doclient-03</uri>
+  		<conn>no-jserv.03</conn>
+  	</c>
+ 	
+   	<c>
+  		<uri>sys-00</uri>
+  		<conn>main-sqlite-0</conn>
+  	</c>
+   	<c>
+  		<uri>sys-01</uri>
+  		<conn>main-sqlite-1</conn>
+  	</c>
+    <c>
+  		<uri>sys-02</uri>
+  		<conn>main-sqlite-2</conn>
+  	</c>
+   	<c>
+  		<uri>sys-03</uri>
+  		<conn>main-sqlite-3</conn>
+  	</c>
+
   	<c>
   		<uri>/syn/X</uri>
   		<conn>no-jserv.00</conn>

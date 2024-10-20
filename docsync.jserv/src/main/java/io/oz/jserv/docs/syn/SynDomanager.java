@@ -387,7 +387,8 @@ public class SynDomanager implements OnError {
 
 		if (onUpdate != null)
 			onUpdate.ok(domain, synode, null);
-		}, f("%1$s [%2$s]", synode, domain)) .start();
+		}, f("%1$s [%2$s]", synode, domain))
+		.start();
 
 		return this;
 	}
