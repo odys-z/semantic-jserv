@@ -2,9 +2,8 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
-import static io.odysz.common.LangExt.isblank;
-
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logi;
@@ -33,7 +32,6 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
@@ -237,7 +235,7 @@ public class SynodetierJoinTest {
 							Utils.logi("lights[%s] = true", tx);
 						}
 						else {
-							DBSyntableBuilder trb = isNull(xp) ? null : xp[0].trb;
+							// DBSyntableBuilder trb = isNull(xp) ? null : xp[0].trb;
 							throw new NullPointerException(String.format(
 								"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
 								domain, mynid, peer));
