@@ -210,7 +210,7 @@ public class ExpDoctierservTest {
 		}
 
 		for (int i : nodex) {
-			jetties[i].updateJservs(ck[i].trb.synm, cfgs[i], zsu);
+			jetties[i].updateJservs(ck[i].synb.syndomx.synm, cfgs[i], zsu);
 		}
 
 		return nodex;

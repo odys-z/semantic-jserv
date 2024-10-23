@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.locks.ReentrantLock;
+
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
@@ -88,7 +90,7 @@ public class Syngleton extends JSingleton {
 	 */
 	public HashMap<String, HashMap<String, SynDomanager>> synodetiers;
 
-	SynodeMeta synm; 
+	SynodeMeta synm;
 
 	/**
 	 * Load domains from syn_synode, create {@link SynDomanager} for each domain.
@@ -142,7 +144,7 @@ public class Syngleton extends JSingleton {
 					try {
 						dmgr.loadSynclients(synb, robot)
 							.openUpdateSynssions(robot, onok);
-					} catch (AnsonException | SsException | IOException | TransException | SQLException e) {
+					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
