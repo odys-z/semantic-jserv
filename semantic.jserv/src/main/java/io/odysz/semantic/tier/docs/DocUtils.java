@@ -81,7 +81,7 @@ public class DocUtils {
 	 * <p>Doc is created as in the folder of user/[photo.folder]/;<br>
 	 * Doc's device and family are replaced with session information.</p>
 	 * 
-	 * @since 1.4.19, this method needs the DB can triggering timestamp ({@link DocTableMeta#stamp}).
+	 * @since 1.4.19, this method needs the DB can triggering time stamp ({@link DocTableMeta#stamp}).
 	 * <pre>
 	 * sqlite example:
 	 * syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL

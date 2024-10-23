@@ -72,30 +72,29 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	/** DB connection id for this node to synchronize. */
 	final String myconn;
 
-	public ExpDoctier() throws SemanticException, SQLException, IOException {
-		this("test", "test");
+	public ExpDoctier() throws Exception {
+		this("test", "test", "test");
 	}
 
 	/**
 	 * @since 0.2.0
 	 * @param synoderId optional
-	 * @param loconn local connection id for this node tier, see {@link #myconn}.
-	 * @throws SemanticException
-	 * @throws SQLException
+	 * @param synconn local connection id for this node tier, see {@link #myconn}.
+	 * @throws Exception 
 	 * @throws SAXException
-	 * @throws IOException
 	 */
-	public ExpDoctier(String synoderId, String loconn)
-			throws SemanticException, SQLException, IOException {
+	public ExpDoctier(String synoderId, String sysconn, String synconn) throws Exception {
 		super(Port.dbsyncer);
 		synode = synoderId; // isblank(synoderId) ? Configs.getCfg(Configs.keys.synode) : synoderId;
-		myconn = loconn;
+		myconn = synconn;
 		
+		st0 = new DATranscxt(sysconn);
+
 		if (synode == null)
 			throw new SemanticException("Synode id is null.");
 					// Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.synode);
 		
-		try {debug = Connects.getDebug(loconn); } catch (Exception e) {debug = false;}
+		try {debug = Connects.getDebug(synconn); } catch (Exception e) {debug = false;}
 	}
 
 	static final int jservx = 0;
@@ -204,7 +203,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	public ExpDoctier create(String org, String domain,
 			String syntity_json, SynodeMode mod) throws Exception {
 
-		new DBSynTransBuilder(domain, myconn, synode, syntity_json, mod,
+		syntb0 = new DBSynTransBuilder(domain, myconn, synode, syntity_json, mod,
 			new DBSyntableBuilder(domain, myconn, synode, mod));
 
 		return this;

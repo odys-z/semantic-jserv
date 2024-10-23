@@ -240,7 +240,7 @@ public class SynodetierJoinTest {
 							DBSyntableBuilder trb = isNull(xp) ? null : xp[0].trb;
 							throw new NullPointerException(String.format(
 								"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
-								domain, mynid, peer, xp == null || trb == null ? "unknown" : trb.synconn()));
+								domain, mynid, peer));
 						}
 					});
 			}

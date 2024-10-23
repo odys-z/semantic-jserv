@@ -247,7 +247,6 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	public TableMeta meta(String ... connId) {
-		// return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
 		return new JUserMeta("a_user", isNull(connId) ? null : connId[0]);
 	}
 

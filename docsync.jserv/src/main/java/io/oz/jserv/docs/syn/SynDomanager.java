@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
@@ -44,6 +45,16 @@ import io.odysz.transact.x.TransException;
 
 /**
  * Syn-domain's sessions manager.
+ * 
+ * <pre>Avoid dead lock ring
+ *        A
+ *       / \
+ *      B - C
+ * 
+ * A is waiting B, B is waiting C, C is waiting A</pre>
+ * 
+ * To avoide this, a client will quite once the request is denied.
+ * 
  * @see #sessions
  * @since 0.2.0
  */
@@ -71,6 +82,8 @@ public class SynDomanager implements OnError {
 	final String org;
 	final SynodeMode synmod;
 	final SynodeMeta synm;
+	
+	final ReentrantLock synlock = new ReentrantLock(); 
 	
 	boolean dbg;
 	
@@ -186,39 +199,43 @@ public class SynDomanager implements OnError {
 	 * @since 0.2.0
 	 */
 	public SyncResp onjoin(SyncReq req) throws Exception {
+
 		String peer = req.exblock.srcnode;
-		DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, synmod);
 
-		ExessionPersist admp = new ExessionPersist(admb, peer);
-
-		ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
-
-		// FIXME why need a Synssion here?
-		synssion(peer, new SynssionClientier(this, peer, null)
-				.xp(admp.exstate(ready))
-				// .domain(domain)
-				);
-	
-		return new SyncResp(domain).exblock(resp);
-	}
-
-	public SyncReq closejoin(SyncResp rep) throws TransException, SQLException {
-		if (!eq(domain, rep.domain))
-			throw new ExchangeException(close, null, "So what?");
-
-		String admin = rep.exblock.srcnode;
 		try {
-			return synssion(admin).closejoin(admin, rep);
-		/*
-			ExessionPersist xp = synssion(admin).xp;
-			xp.trb.domainitMe(xp, admin, rep.exblock);
+			if (synlock.tryLock())  {
+				DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, synmod);
 
-			ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
-			return new SyncReq(null, domain)
-					.exblock(req);
-		*/
-		} finally { expiredClientier = delession(admin); }
+				ExessionPersist admp = new ExessionPersist(admb, peer);
+
+				ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
+
+				// FIXME why need a Synssion here?
+				synssion(peer, new SynssionClientier(this, peer, null)
+						.xp(admp.exstate(ready)));
+			
+				return new SyncResp(domain).exblock(resp);
+			}
+			else return new SyncResp(domain).exblock(
+					new ExchangeBlock(domain, synode, peer, null,
+							new ExessionAct(mode_server, ExessionAct.trylater)));
+		} catch (Exception e) {
+			synlock.unlock();
+			throw e;
+		}
 	}
+
+//	public SyncReq closejoin(SyncResp rep) throws TransException, SQLException {
+//		if (!eq(domain, rep.domain))
+//			throw new ExchangeException(close, null, "So what?");
+//
+//		String admin = rep.exblock.srcnode;
+//		try {
+//			return synssion(admin).closejoin(admin, rep);
+//		} finally {
+//			expiredClientier = delession(admin);
+//		}
+//	}
 
 	public SyncResp onclosejoin(SyncReq req) throws TransException, SQLException {
 		String apply = req.exblock.srcnode;
@@ -226,7 +243,11 @@ public class SynDomanager implements OnError {
 			ExessionPersist sp = synssion(apply).xp;
 			ExchangeBlock ack  = sp.trb.domainCloseJoin(sp, req.exblock);
 			return new SyncResp(domain).exblock(ack);
-		} finally { expiredClientier = delession(apply); }
+		} finally {
+			try { expiredClientier = delession(apply); }
+			catch (Throwable t) { t.printStackTrace(); }
+			synlock.unlock();
+		}
 	}
 
 	/**
@@ -249,12 +270,10 @@ public class SynDomanager implements OnError {
 	 * @return initiate request
 	 * @throws Exception 
 	 * @since 0.2.0
-	 */
 	public SyncReq syninit(String peer, String domain) throws Exception {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, synmod);
 
-		ExessionPersist xp = new ExessionPersist(b0, peer)
-								.loadNyquvect(myconn);
+		ExessionPersist xp = new ExessionPersist(b0, peer);
 
 		b0 = xp.trb;
 		ExchangeBlock b = b0.initExchange(xp);
@@ -262,6 +281,7 @@ public class SynDomanager implements OnError {
 		return new SyncReq(null, domain)
 					.exblock(b);
 	}
+	 */
 
 	/**
 	 * @param peer
@@ -387,7 +407,8 @@ public class SynDomanager implements OnError {
 
 		if (onUpdate != null)
 			onUpdate.ok(domain, synode, null);
-		}, f("%1$s [%2$s]", synode, domain)) .start();
+		}, f("%1$s [%2$s]", synode, domain))
+		.start();
 
 		return this;
 	}

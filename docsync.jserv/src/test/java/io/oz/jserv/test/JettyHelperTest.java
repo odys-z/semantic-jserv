@@ -164,7 +164,7 @@ public class JettyHelperTest {
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
-			.addServPort(new ExpDoctier(cfg.synode(), conn)
+			.addServPort(new ExpDoctier(cfg.synode(), conn, conn)
 			.create("URA", "zsu", "syntity.json", SynodeMode.peer))
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;

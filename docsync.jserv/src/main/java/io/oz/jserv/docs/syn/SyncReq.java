@@ -36,6 +36,6 @@ public class SyncReq extends AnsonBody {
 	}
 
 	public int synact() {
-		return exblock == null ? unexpected : exblock.synact();
+		return exblock == null ? unexpect : exblock.synact();
 	}
 }
