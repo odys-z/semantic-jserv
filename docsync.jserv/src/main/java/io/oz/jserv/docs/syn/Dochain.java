@@ -18,7 +18,7 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -232,7 +232,7 @@ public class Dochain {
 		if (end != null)
 			post = end.onDocreate(post, photo, meta, usr);
 
-		return DocUtils.createFileBy64((DBSyntableBuilder)st, conn, photo, usr, meta, post);
+		return DocUtils.createFileBy64((DBSynTransBuilder)st, conn, photo, usr, meta, post);
 	}
 
 //	public static String createFile(DATranscxt st, String conn, ExpSyncDoc photo,

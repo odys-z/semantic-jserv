@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.prefix;
@@ -36,6 +37,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
@@ -51,6 +53,8 @@ class DoclientierTest {
 	static String[] jserv_xyzw;
 	@BeforeAll
 	static void init() throws Exception {
+		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
+
 		String p = new File("src/test/res").getAbsolutePath();
     	System.setProperty("VOLUME_HOME", p + "/volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
@@ -61,13 +65,18 @@ class DoclientierTest {
 
 	@Test
 	void testSynclientUp() throws Exception {
+		int no = 0;
+		Utils.logrst(f("X <- %s", devs[X_0].dev), ++no);
+
 		ExpSyncDoc dx = clientPush(X, X_0);
 		verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
 
 		// 10 create
+		Utils.logrst(f("Y <- %s", devs[Y_0].dev), ++no);
 		clientPush(Y, Y_0);
 
 		// 11 create
+		Utils.logrst(f("X <- %s", devs[X_0].dev), ++no);
 		clientPush(Y, Y_1);
 	}
 
@@ -118,8 +127,9 @@ class DoclientierTest {
 		Clients.init(jserv_xyzw[to]);
 
 		dev.login(errLog);
-		Utils.logi("-------------- client pushing: uid %s, device %s",
+		Utils.logi("client pushing: uid %s, device %s",
 				dev.client.client.ssInfo().uid(), dev.client.client.ssInfo().device);
+		Utils.logi(dev.res);
 
 		ExpSyncDoc xdoc = videoUpByApp(dev, dev.client, docm.tbl);
 		assertEquals(dev.dev, xdoc.device());
@@ -142,7 +152,7 @@ class DoclientierTest {
 			(AnsonResp rep) -> {
 				ExpSyncDoc d = ((DocsResp) rep).xdoc; 
 
-				// pushing again should fail
+				// push again should fail
 				try {
 					doclient.startPush(entityName, d,
 						new OnOk() {
@@ -156,14 +166,13 @@ class DoclientierTest {
 						new ErrorCtx() {
 							@Override
 							public void err(MsgCode code, String msg, String...args) {
-								// expected
-								Utils.logi("Pushing again failed test passed. doc: %s, device: %s, clientpath: %s",
+								Utils.logi("Expected: Fail on pushing again test passed. doc: %s, device: %s, clientpath: %s",
 									doc.recId, doc.device(), doc.clientpath);
 							}
 						});
 				} catch (TransException | IOException | SQLException e) {
 					e.printStackTrace();
-					// fail(e.getMessage());
+					fail(e.getMessage());
 				}
 			});
 

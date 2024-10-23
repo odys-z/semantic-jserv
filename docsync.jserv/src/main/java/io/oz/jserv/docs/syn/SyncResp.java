@@ -1,6 +1,6 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.semantic.syn.ExessionAct.unexpected;
+import static io.odysz.semantic.syn.ExessionAct.unexpect;
 
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.syn.ExchangeBlock;
@@ -22,7 +22,7 @@ public class SyncResp extends AnsonResp {
 	}
 
 	public int synact() {
-		return exblock == null ? unexpected : exblock.synact();
+		return exblock == null ? unexpect : exblock.synact();
 	}
 
 	public SyncResp syndomain(String domain) {

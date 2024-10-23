@@ -14,7 +14,7 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.x.DocsException;
 
 /**
- * Doc User.
+ * Doc User, can only be created at server side.
  * 
  * @author odys-z@github.com
  */

@@ -1,6 +1,5 @@
 package io.oz.jserv.test;
 
-import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logOut;
@@ -29,11 +28,9 @@ import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
-import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.SynodeConfig;
@@ -156,12 +153,7 @@ public class JettyHelperTest {
 		cfg.synconn = conn;
 		
 		Syngleton.setupSyntables(cfg,
-				cfg.syntityMeta((c, synreg) -> {
-					if (eq(synreg.name, "T_PhotoMeta"))
-						return new T_PhotoMeta(c.synconn);
-					else
-						throw new SemanticException("TODO %s", synreg.name);
-				}),
+				null,
 				webinf, "config.xml", ".", "ABCDEF0123465789");
 
 		Syngleton.setupSysRecords(cfg, tierob);
@@ -172,8 +164,8 @@ public class JettyHelperTest {
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
-			.addServPort(new ExpDoctier(cfg.synode(), conn)
-			.create("URA", "zsu", SynodeMode.peer))
+			.addServPort(new ExpDoctier(cfg.synode(), conn, conn)
+			.create("URA", "zsu", "syntity.json", SynodeMode.peer))
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;
 	}

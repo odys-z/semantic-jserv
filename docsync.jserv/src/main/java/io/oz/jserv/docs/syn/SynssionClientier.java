@@ -3,6 +3,7 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.init;
@@ -15,6 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -62,12 +64,6 @@ public class SynssionClientier {
 	/** Exclusive lock for avoiding Synssions initiated from both side */
 	final Object peerlock;
 
-	/**
-	 * Exclusive lock for starting threads of differnt tasks for both
-	 * joining and Synssions type.
-	 */
-	final ReentrantLock tasklock;
-
 	OnError errHandler;
 	public SynssionClientier onErr(OnError err) {
 		errHandler = err;
@@ -75,6 +71,7 @@ public class SynssionClientier {
 	}
 
 	protected SessionClient client;
+	private boolean debug;
 
 	public SynssionClientier(SynDomanager domanager, String peer, String jserv) throws ExchangeException {
 		this.conn      = domanager.myconn;
@@ -84,10 +81,12 @@ public class SynssionClientier {
 		this.mymode    = domanager.synmod;
 		this.peerjserv = jserv;
 		
-		this.tasklock  = new ReentrantLock();
+		// this.synlock  = new ReentrantLock();
 		this.peerlock  = new Object();
 		
 		this.clienturi = uri_sys;
+		
+		this.debug     = Connects.getDebug(domanager.myconn);
 	}
 
 	/**
@@ -106,7 +105,13 @@ public class SynssionClientier {
 		SyncResp rep = null;
 		try {
 			// start session
-			tasklock.lock();
+
+			if (debug)
+				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
+						+ "\n=============================================================\n",
+						domain(), mynid, peer);
+
+//			synlock.lock();
 			ExchangeBlock reqb = exesinit();
 			rep = exespush(peer, A.exinit, reqb);
 
@@ -141,9 +146,7 @@ public class SynssionClientier {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		finally {
-			tasklock.unlock();
-		}
+//		finally { synlock.unlock(); }
 		return this;
 	}
 
@@ -156,7 +159,7 @@ public class SynssionClientier {
 	ExchangeBlock exesinit() throws Exception {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain(), conn, mynid, mymode);
 		xp = new ExessionPersist(b0, peer, null)
-						.loadNyquvect(conn);
+						; // .loadNyquvect(conn);
 
 		return b0.initExchange(xp);
 	}
@@ -177,7 +180,7 @@ public class SynssionClientier {
 		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, conn, mynid, mymode);
 
 		xp = new ExessionPersist(b0, peer, ini)
-						.loadNyquvect(conn);
+						; //.loadNyquvect(conn);
 
 		ExchangeBlock b = b0.onInit(xp, ini);
 
@@ -254,7 +257,7 @@ public class SynssionClientier {
 	 */
 	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) {
 		try {
-			tasklock.lock();
+//			synlock.lock();
 			SyncReq  req = signup(admid);
 			SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
@@ -267,7 +270,8 @@ public class SynssionClientier {
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally { tasklock.unlock(); }
+		}
+//		finally { synlock.unlock(); }
 	}
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
@@ -291,15 +295,15 @@ public class SynssionClientier {
 	}
 
 	public SyncReq closejoin(String admin, SyncResp rep) throws TransException, SQLException {
-		if (!eq(rep.domain, domanager.domain))
+		if (!eq(notNull(rep.domain), domanager.domain))
 			throw new ExchangeException(close, xp,
 				"Close joining session for different ids? Rep.domain: %s, Domanager.domain: %s",
 				rep.domain, domanager.domain);
 
-		xp.trb.domainitMe(xp, admin, peerjserv, domanager.domain, rep.exblock);
+		xp.trb.domainitMe(xp, admin, peerjserv, rep.domain, rep.exblock);
 
 		ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
-		return new SyncReq(null, xp.trb.domain())
+		return new SyncReq(null, domanager.domain)
 				.exblock(req);
 	}
 }
