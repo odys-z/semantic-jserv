@@ -126,7 +126,7 @@ public class SynodetierJoinTest {
 			SyncRobot me = new SyncRobot(syrskyi, slava, syrskyi, "#-" + i);
 			ArrayList<SyncRobot> robots = new ArrayList<SyncRobot>() { {add(me);} };
 
-			SynodeConfig config = new SynodeConfig(nodes[i]);
+			SynodeConfig config = new SynodeConfig(nodes[i], SynodeMode.peer);
 			config.synconn = servs_conn[i];
 			config.sysconn = sys_conn;
 			config.port    = port++;

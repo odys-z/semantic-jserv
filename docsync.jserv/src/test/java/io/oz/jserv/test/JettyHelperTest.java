@@ -148,7 +148,7 @@ public class JettyHelperTest {
 			String uid, int port, PrintstreamProvider ... oe) throws IOException, Exception {
 		ArrayList<SyncRobot> tierob = new ArrayList<SyncRobot>() { {add(new SyncRobot(uid, "123456", "Ody by robot"));} };
 
-		SynodeConfig cfg = new SynodeConfig(synode);
+		SynodeConfig cfg = new SynodeConfig(synode, SynodeMode.peer);
 		cfg.sysconn = conn;
 		cfg.synconn = conn;
 		
