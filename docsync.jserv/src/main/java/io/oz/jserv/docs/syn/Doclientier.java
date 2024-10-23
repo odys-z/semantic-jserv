@@ -68,6 +68,8 @@ public class Doclientier extends Semantier {
 	/** Must be multiple of 12. Default 3 MiB */
 	int blocksize = 3 * 1024 * 1024;
 
+	String synuri;
+
 	/**
 	 * Change default block size for performance. Default is 3 Mib.
 	 * 
@@ -93,10 +95,11 @@ public class Doclientier extends Semantier {
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public Doclientier(String clientUri, OnError errCtx)
+	public Doclientier(String sysuri, String synuri, OnError errCtx)
 			throws SemanticException, IOException {
 		this.errCtx = errCtx;
-		this.uri = clientUri;
+		this.uri = sysuri;
+		this.synuri = synuri;
 		
 		tempath = ".";
 	}
@@ -257,7 +260,7 @@ public class Doclientier extends Semantier {
 							.a(A.download);
 
 			String tempath = tempath(p);
-			tempath = client.download(uri, Port.docsync, req, tempath);
+			tempath = client.download(synuri, Port.docsync, req, tempath);
 		}
 		return p;
 	}
@@ -308,7 +311,7 @@ public class Doclientier extends Semantier {
 				OnProcess proc, OnOk docOk, OnError ... onErr)
 				throws TransException, IOException {
 		OnError err = onErr == null || onErr.length == 0 ? errCtx : onErr[0];
-		return pushBlocks(client, uri, tbl, videos, blocksize, proc, docOk, isNull(onErr) ? err : onErr[0]);
+		return pushBlocks(client, synuri, tbl, videos, blocksize, proc, docOk, isNull(onErr) ? err : onErr[0]);
 	}
 
 	public static List<DocsResp> pushBlocks(SessionClient client, String uri, String tbl,
@@ -412,7 +415,7 @@ public class Doclientier extends Semantier {
 
 	public String download(String clientUri, String syname, ExpSyncDoc photo, String localpath)
 			throws SemanticException, AnsonException, IOException {
-		DocsReq req = (DocsReq) new DocsReq(syname, uri);
+		DocsReq req = (DocsReq) new DocsReq(syname, synuri);
 		req.doc.recId = photo.recId;
 		req.a(A.download);
 		return client.download(clientUri, Port.docsync, req, localpath);
@@ -431,21 +434,25 @@ public class Doclientier extends Semantier {
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
-		DocsReq req = (DocsReq) new DocsReq(docTabl, uri)
+		DocsReq req = (DocsReq) new DocsReq(docTabl, synuri)
 					.pageInf(0, -1, "pid", docId)
 					.a(A.rec);
 
 		DocsResp resp = null;
 		try {
 			AnsonMsg<DocsReq> q = client
-								.<DocsReq>userReq(uri, Port.docsync, req)
-								.header(header);
+					.<DocsReq>userReq(synuri, Port.docsync, req)
+					.header(header);
 
 			resp = client.commit(q, errCtx);
 		} catch (AnsonException | SemanticException e) {
-			errHandler.err(MsgCode.exSemantic, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errHandler.err(MsgCode.exSemantic,
+				e.getMessage() + " " + (e.getCause() == null ?
+				"" : e.getCause().getMessage()));
 		} catch (IOException e) {
-			errHandler.err(MsgCode.exIo, e.getMessage() + " " + (e.getCause() == null ? "" : e.getCause().getMessage()));
+			errHandler.err(MsgCode.exIo,
+				e.getMessage() + " " + (e.getCause() == null ?
+				"" : e.getCause().getMessage()));
 		}
 		return resp;
 	}
@@ -455,13 +462,13 @@ public class Doclientier extends Semantier {
 		String[] act = AnsonHeader.usrAct("synclient.java", "synch", "c/photo", "multi synch");
 		AnsonHeader header = client.header().act(act);
 
-		DocsReq req = new DocsReq(docTabl, uri);
+		DocsReq req = new DocsReq(docTabl, synuri);
 		req.a(A.orgNodes);
 		req.org = org;
 
 		DocsResp resp = null;
 		try {
-			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
+			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(synuri, Port.docsync, req)
 										.header(header);
 
 			resp = client.commit(q, errCtx);
@@ -475,7 +482,7 @@ public class Doclientier extends Semantier {
 	}
 	
 	public DocsResp synDel(String tabl, String device, String clientpath) {
-		DocsReq req = (DocsReq) new DocsReq(tabl, uri)
+		DocsReq req = (DocsReq) new DocsReq(tabl, synuri)
 				.doc(device, clientpath)
 				.a(A.del);
 
@@ -483,7 +490,7 @@ public class Doclientier extends Semantier {
 		try {
 			String[] act = AnsonHeader.usrAct("synclient.java", "del", "d/photo", "");
 			AnsonHeader header = client.header().act(act);
-			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(uri, Port.docsync, req)
+			AnsonMsg<DocsReq> q = client.<DocsReq>userReq(synuri, Port.docsync, req)
 										.header(header);
 
 			resp = client.commit(q, errCtx);
@@ -544,7 +551,7 @@ public class Doclientier extends Semantier {
 				.a(A.selectSyncs); 
 
 		AnsonMsg<DocsReq> q = client
-				.<DocsReq>userReq(uri, port, req)
+				.<DocsReq>userReq(synuri, port, req)
 				.header(header);
 
 		DocsResp resp = client.commit(q, errCtx);
@@ -576,12 +583,12 @@ public class Doclientier extends Semantier {
 		String[] act = AnsonHeader.usrAct("synclient.java", "register", A.devices, Port.docsync.name());
 		AnsonHeader header = client.header().act(act);
 
-		DocsReq req = (DocsReq) new DocsReq("doc_devices", uri);
+		DocsReq req = (DocsReq) new DocsReq("doc_devices", synuri);
 		req.pageInf = new PageInf(0, -1, devname);
 		req.a(A.registDev);
 
 		AnsonMsg<DocsReq> q = client
-			.<DocsReq>userReq(uri, Port.docsync, req)
+			.<DocsReq>userReq(synuri, Port.docsync, req)
 			.header(header);
 
 		return client.commit(q, errCtx);
