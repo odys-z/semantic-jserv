@@ -98,21 +98,21 @@ public class JettyHelperTest {
 							() -> { return new PrintStream1(es, "3-err"); });
 		
 		Clients.init(h1.jserv());
-		Doclientier client = new Doclientier("jetty-0", errLog)
+		Doclientier client = new Doclientier("jetty-0", "jetty-0", errLog)
 				.tempRoot("temp/odyx")
 				.loginWithUri("jetty-0", "odyx", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
 
 		Clients.init(h2.jserv());
-		client = new Doclientier("jetty-1", errLog)
+		client = new Doclientier("jetty-1", "jetty-1", errLog)
 				.tempRoot("temp/odyy")
 				.loginWithUri("jetty-1", "odyy", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
 				
 		Clients.init(h3.jserv());
-		client = new Doclientier("jetty-2", errLog)
+		client = new Doclientier("jetty-2", "jetty-2", errLog)
 				.tempRoot("temp/odyz")
 				.loginWithUri("jetty-2", "odyz", "test", "123456")
 				.blockSize(bsize);
