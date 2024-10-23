@@ -22,6 +22,7 @@ public class DocsReq extends UserReq {
 		 * For client querying matching (syncing) docs, use {@link #records} instead. 
 		 * @see DocsTier#list(DocsReq req, IUser usr)
 		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
+		 * @deprecated replaced by SyncDoc.syncent
 		 * */
 		public static final String syncdocs = "r/syncs";
 
@@ -260,7 +261,7 @@ public class DocsReq extends UserReq {
 	 * 
 	 * @param sequence
 	 * @param doc
-	 * @param b64
+	 * @param b64 for multi-thread style, this must be copied as it is used as a reference
 	 * @param usr
 	 * @return this
 	 * @throws SemanticException
@@ -272,9 +273,9 @@ public class DocsReq extends UserReq {
 
 		this.blockSeq = sequence;
 
-		this.doc = new ExpSyncDoc(doc)
-				.clientpath(doc.fullpath())
-				.uri64(b64);
+		this.doc = new ExpSyncDoc(doc);
+
+		this.doc.uri64 = b64;
 
 		this.a = A.blockUp;
 		return this;

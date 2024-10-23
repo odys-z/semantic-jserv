@@ -36,9 +36,7 @@ public class SynodeServ {
 			throw new ExchangeException(Exchanging.init, null, "The domain value is not configured.");
 		
 
-		trb = new DBSyntableBuilder("omni", conn, node, mod)
-			  .loadNyquvect(conn);
-		
+		trb = new DBSyntableBuilder("omni", conn, node, mod);
 	}
 	
 	public SynodeServ start(String domain) {

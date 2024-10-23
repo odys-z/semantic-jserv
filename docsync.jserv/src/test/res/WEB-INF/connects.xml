@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!DOCTYPE xml>
 <conns>
   <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,smtcs">
@@ -9,19 +10,64 @@
   		<id>main-sqlite</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>
-  		<src>$VOLUME_HOME/jserv-main.db</src>
+  		<src>../volume/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<!-- enable sql printing -->
   		<dbg>true</dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	
   	<c>
-		<id>no-jserv.00</id>
+  		<id>main-sqlite-0</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>no-jserv-db.00</src>
+  		<src>../vol-0/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+  	<c>
+  		<id>main-sqlite-1</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>../vol-1/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+  	<c>
+  		<id>main-sqlite-2</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>../vol-2/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+  	<c>
+  		<id>main-sqlite-3</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>../vol-3/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+
+  	<c>
+		<id>no-jserv.00</id>
+  		<type>sqlit-queue</type>
+  		<isdef></isdef>
+  		<src>../vol-0/no-jserv-db.00</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>true</dbg>
@@ -29,9 +75,9 @@
 	</c>
 	<c>
 		<id>no-jserv.01</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>no-jserv-db.01</src>
+  		<src>../vol-1/no-jserv-db.01</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>true</dbg>
@@ -39,9 +85,9 @@
 	</c>
 	<c>
 		<id>no-jserv.02</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>no-jserv-db.02</src>
+  		<src>../vol-2/no-jserv-db.02</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>true</dbg>
@@ -49,9 +95,9 @@
 	</c>
 	<c>
 		<id>no-jserv.03</id>
-  		<type>sqlite</type>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>no-jserv-db.03</src>
+  		<src>../vol-3/no-jserv-db.03</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>true</dbg>
@@ -102,25 +148,74 @@
   	     It's planned to try configure connections via user requests, in the future.
   	-->
    	<c>
-  		<uri>client-at-00</uri>
+  		<uri>doclient-00</uri>
   		<conn>no-jserv.00</conn>
   	</c>
    	<c>
-  		<uri>client-at-01</uri>
+  		<uri>doclient-01</uri>
   		<conn>no-jserv.01</conn>
   	</c>
-  	
+    <c>
+  		<uri>doclient-02</uri>
+  		<conn>no-jserv.02</conn>
+  	</c>
+   	<c>
+  		<uri>doclient-03</uri>
+  		<conn>no-jserv.03</conn>
+  	</c>
+ 	
+   	<c>
+  		<uri>sys-00</uri>
+  		<conn>main-sqlite-0</conn>
+  	</c>
+   	<c>
+  		<uri>sys-01</uri>
+  		<conn>main-sqlite-1</conn>
+  	</c>
+    <c>
+  		<uri>sys-02</uri>
+  		<conn>main-sqlite-2</conn>
+  	</c>
+   	<c>
+  		<uri>sys-03</uri>
+  		<conn>main-sqlite-3</conn>
+  	</c>
+
+  	<c>
+  		<uri>/syn/X</uri>
+  		<conn>no-jserv.00</conn>
+  	</c>
   	<c>
   		<uri>jetty-0</uri>
   		<conn>no-jserv.00</conn>
+  	</c>
+
+  	<c>
+  		<uri>/syn/Y</uri>
+  		<conn>no-jserv.01</conn>
   	</c>
   	<c>
   		<uri>jetty-1</uri>
   		<conn>no-jserv.01</conn>
   	</c>
+
+  	<c>
+  		<uri>/syn/Z</uri>
+  		<conn>no-jserv.02</conn>
+  	</c>
   	<c>
   		<uri>jetty-2</uri>
   		<conn>no-jserv.02</conn>
   	</c>
+
+  	<c>
+  		<uri>/syn/W</uri>
+  		<conn>no-jserv.03</conn>
+  	</c>
+  	<c>
+  		<uri>jetty-3</uri>
+  		<conn>no-jserv.03</conn>
+  	</c>
+
   </t>
 </conns>

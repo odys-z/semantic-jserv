@@ -98,6 +98,11 @@ public class DocsResp extends AnsonResp {
 	}
 
 	String syndomain;
+	/**
+	 * Tell the client the request is handled in the {@code domain}.
+	 * @param domain
+	 * @return this
+	 */
 	public DocsResp syndomain(String dom) {
 		syndomain = dom;
 		return this;

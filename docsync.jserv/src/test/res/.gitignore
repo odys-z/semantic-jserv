@@ -1,2 +1,4 @@
-volume
+volume/**
 **/no-jserv-db.*
+!volume/*.json
+vol-*/*.db

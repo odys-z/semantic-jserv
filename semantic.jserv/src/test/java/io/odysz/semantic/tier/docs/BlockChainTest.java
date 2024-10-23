@@ -39,9 +39,15 @@ class BlockChainTest {
 		String uid = "tester";
 		// chain = new BlockChain("$VOLUME_HOME", uid, ssid, clientpath, "1911-10-10 10:10:10");
 		String tempDir = IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid);
-		// chain = new BlockChain("h_photos", tempDir, "dev-id", clientpath, "1911-10-10 10:10:10", "");
-		chain = new BlockChain("h_photos", tempDir, "dev-id",
-				new ExpSyncDoc().clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
+		/*
+		 * 
+		chain = new BlockChain("h_photos", tempDir, "dev-id", clientpath, "1911-10-10 10:10:10", "");
+		 */
+		chain = new BlockChain("h_photos", tempDir,
+					"dev-id",
+					new ExpSyncDoc()
+						.clientpath(clientpath)
+						.sharedate("1911-10-10 10:10:10"));
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
@@ -102,9 +108,17 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.3gp";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
-		chain = new BlockChain("h_photos",
-				IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid), "dev-id",
-				new ExpSyncDoc().clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
+		/*
+		chain = new BlockChain("h_photos", IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid),
+				"dev-id2", clientpath, "1911-10-10 10:10:10", "");
+		 */
+		chain = new BlockChain(
+					"h_photos",
+					IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid),
+					"dev-id2",
+					new ExpSyncDoc()
+						.clientpath(clientpath)
+						.sharedate("1911-10-10 10:10:10"));
 
 		assertTrue(eq("src/test/results/tester/temp/64A+B=C02/sdcard/0/Downloads/test.3gp", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.3gp", chain.outputPath));
@@ -118,19 +132,19 @@ class BlockChainTest {
 		String b64;
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");
 		ssinf.device = "local junit";
-		
+		//  
 		b64 = AESHelper.encode64("1. Hello\n".getBytes());
-		DocsReq b0 = new DocsReq().blockUp(0, resp, b64, ssinf);
+		DocsReq b0 = new DocsReq().blockUp(0, resp, new String(b64), ssinf);
 		b64 = AESHelper.encode64("2. Bonjour\n".getBytes());
-		DocsReq b1 = new DocsReq().blockUp(1, resp, b64, ssinf);
+		DocsReq b1 = new DocsReq().blockUp(1, resp, new String(b64), ssinf);
 		b64 = AESHelper.encode64("3. こんにちは\n".getBytes());
-		DocsReq b2 = new DocsReq().blockUp(2, resp, b64, ssinf);
+		DocsReq b2 = new DocsReq().blockUp(2, resp, new String(b64), ssinf);
 		b64 = AESHelper.encode64("4. Привет\n".getBytes());
-		DocsReq b3 = new DocsReq().blockUp(3, resp, b64, ssinf);
+		DocsReq b3 = new DocsReq().blockUp(3, resp, new String(b64), ssinf);
 		b64 = AESHelper.encode64("5. 안녕하세요\n".getBytes());
-		DocsReq b4 = new DocsReq().blockUp(4, resp, b64, ssinf);
+		DocsReq b4 = new DocsReq().blockUp(4, resp, new String(b64), ssinf);
 		b64 = AESHelper.encode64("6. नमस्ते \n".getBytes());
-		DocsReq b5 = new DocsReq().blockUp(5, resp, b64, ssinf);
+		DocsReq b5 = new DocsReq().blockUp(5, resp, new String(b64), ssinf);
 
 		chain.appendBlock(b0)
 			.appendBlock(b4)
@@ -175,10 +189,15 @@ class BlockChainTest {
 		String clientpath = "/sdcard/0/Downloads/test.aborting";
 		String ssid = "64A+B=C02";
 		String uid = "tester";
+		/*
 		chain = new BlockChain("h_photos",
 				IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid),
-				"dev-id3",
-				new ExpSyncDoc().clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
+				"dev-id3", clientpath, "1911-10-10 10:10:10", "");
+		*/
+		chain = new BlockChain("h_photos",
+					IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid),
+					"dev-id3",
+					new ExpSyncDoc().clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath)
 				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.aborting", chain.outputPath));

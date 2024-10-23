@@ -87,7 +87,7 @@ class AlbumsTest {
 			jserv = "http://localhost:8080/jserv-album";
 			Clients.init(jserv);
 
-			client = new InsecureClient();
+			client = new InsecureClient(jserv);
 			local = new File("src/test/local").getAbsolutePath();
 
 			SessionClient.verbose(false);

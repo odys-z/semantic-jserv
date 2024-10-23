@@ -12,6 +12,7 @@ import org.apache.commons.io_odysz.FilenameUtils;
 
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
+import io.odysz.common.LangExt;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -74,7 +75,6 @@ public class BlockChain {
 //	}
 
 	/**
-	 * @deprecated
 	 * Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
 	 * @param tempDir
@@ -83,6 +83,7 @@ public class BlockChain {
 	 * @param targetFolder the file should finally saved to this sub folder (specified by client) 
 	 * @throws IOException
 	 * @throws TransException 
+	 */
 	public BlockChain(String docTabl, String tempDir, String devid,
 			String clientpathRaw, String createDate, String targetFolder)
 			throws IOException, TransException {
@@ -111,7 +112,6 @@ public class BlockChain {
 
 		waitings = new DocsReq().blockSeq(-1);
 	}
-	 */
 
 	/**
 	 * 
@@ -121,7 +121,8 @@ public class BlockChain {
 	 * @param doc
 	 * @throws IOException
 	 */
-	public BlockChain(String docTabl, String tempDir, String devid, ExpSyncDoc doc) throws IOException {
+	public BlockChain(String docTabl, String tempDir, String devid, ExpSyncDoc doc)
+		throws IOException {
 		// doc.clientpath, body.doc.createDate, body.doc.folder()
 		this.docTabl = docTabl;
 		String clientpath = doc.clientpath.replaceFirst("^/", "");
@@ -153,7 +154,7 @@ public class BlockChain {
 		blockReq.nextBlock = nxt;
 
 		// assertNotNull(ofs); makes out going stream in trouble?
-		if (ofs == null) throw new IOException("Output stream broken!");
+		if (ofs == null) throw new IOException("Output stream is broken!");
 		if (waitings.nextBlock != null && waitings.blockSeq >= waitings.nextBlock.blockSeq)
 			throw new TransException("Handling block's sequence error.");
 

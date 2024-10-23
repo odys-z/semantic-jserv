@@ -40,7 +40,7 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
-import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -653,7 +653,6 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	@SuppressWarnings("deprecation")
 	DocsResp querySyncs(DocsReq req, IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException {
 
@@ -774,7 +773,7 @@ public class Albums extends ServPort<AlbumReq> {
 		if (isblank(photo.shareby))
 			photo.share(usr.uid(), Share.priv, new Date());
 
-		String pid = DocUtils.createFileBy64((DBSyntableBuilder)st, conn, photo, usr, meta);
+		String pid = DocUtils.createFileBy64((DBSynTransBuilder)st, conn, photo, usr, meta);
 
 		return pid;
 	}

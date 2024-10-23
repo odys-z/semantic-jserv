@@ -84,27 +84,13 @@ import io.odysz.transact.x.TransException;
  */
 @WebServlet(description = "session manager", urlPatterns = { "/login.serv" })
 public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifier {
-	public static final String disableTokenKey = "disable-token";
-	
-	private boolean verfiyToken;
-
-	static DATranscxt sctx;
-
-	/** url pattern: /login.serv */
-	public AnSession() {
-		this(true);
-	}
-
-	public AnSession(boolean verifyToken) {
-		super(Port.session);
-		verfiyToken = verifyToken;
-		if (!verfiyToken)
-			Utils.warn("Verifying token is recommended but is disabled by config.xml/k=%s", disableTokenKey);
-	}
-
 	private static final long serialVersionUID = 1L;
 
+	public static final String disableTokenKey = "disable-token";
+
 	public static enum Notify { changePswd, todo }
+	
+	protected static DATranscxt sctx;
 
 	/**[session-id, SUser]*/
 	static HashMap<String, IUser> users;
@@ -125,9 +111,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * Initialize semantext, schedule tasks,
 	 * load root key from tomcat context.xml.
 	 * To configure root key in tomcat, in context.xml, <pre>
-	&lt;Context&gt;
-		&lt;Parameter name="io.oz.root-key" value="*************" override="false"/&gt;
-	&lt;/Context&gt;</pre>
+	 * &lt;Context&gt;
+	 *   &lt;Parameter name="io.oz.root-key" value="*************" override="false"/&gt;
+	 * &lt;/Context&gt;</pre>
 	 * @param daSctx
 	 * @throws SAXException something wrong with configuration files
 	 * @throws IOException file accessing failed
@@ -157,8 +143,11 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		int m = 20;
 		try { m = Integer.valueOf(Configs.getCfg("ss-timeout-min"));} catch (Exception e) {}
-		if (ServFlags.session)
+		if (ServFlags.session) {
+			Utils.logi("[AnSession] timeout = %s minutes (configure: %s)",
+					m, Configs.cfgFullpath);
 			Utils.warn("[ServFlags.session] SSession debug mode true (ServFlage.session)");
+		}
 
         schedualed = scheduler.scheduleAtFixedRate(
         		new SessionChecker(users, m),
@@ -179,6 +168,20 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		} catch (InterruptedException e) {
 		    scheduler.shutdownNow();
 		}
+	}
+
+	private boolean verfiyToken;
+
+	/** url pattern: /login.serv */
+	public AnSession() {
+		this(true);
+	}
+
+	public AnSession(boolean verifyToken) {
+		super(Port.session);
+		verfiyToken = verifyToken;
+		if (!verfiyToken)
+			Utils.warn("Verifying token is recommended but is disabled by config.xml/k=%s", disableTokenKey);
 	}
 
 	/**
@@ -335,7 +338,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						users.remove(ssid);
 					} finally { lock.unlock(); }
 
-					write(response, ok("You must relogin!"));
+					write(response, ok("You must re-login!"));
 				}
 				else if (init.equals(a)) {
 					// reset password
@@ -435,33 +438,53 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	private IUser loadUser(AnSessionReq sessionBody, String connId)
 			throws TransException, SQLException, SsException,
 			ReflectiveOperationException, GeneralSecurityException, IOException {
+		return loadUser(sessionBody.uid(), connId, jrobot)
+				.onCreate(sessionBody);
+	}
+	
+	/**
+	 * 
+	 * @since 2.0.0
+	 * @param sessionBody
+	 * @param connId
+	 * @param jrobt
+	 * @return user object
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws SsException
+	 * @throws ReflectiveOperationException
+	 * @throws GeneralSecurityException
+	 * @throws IOException
+	 */
+	public static IUser loadUser(String uid, String connId, IUser jrobt)
+			throws TransException, SQLException, SsException,
+			ReflectiveOperationException, GeneralSecurityException, IOException {
 		SemanticObject s = sctx.select(usrMeta.tbl, "u")
 			.l_(usrMeta.rm.tbl, "r", usrMeta.role, "roleId")
 			.l_(usrMeta.om.tbl, "o", usrMeta.org, "orgId")
 			.col("u.*")
 			.col(usrMeta.orgName)       // v1.4.11
 			.col(usrMeta.roleName)		// v1.4.11
-			.whereEq("u." + usrMeta.pk, sessionBody.uid())
-			// .rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
-			.rs(sctx.instancontxt(connId, jrobot));
+			.whereEq("u." + usrMeta.pk, uid)
+			.rs(sctx.instancontxt(connId, jrobt));
 
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
-			String uid = rs.getString(usrMeta.pk);
 			IUser obj = createUser(keys.usrClzz, uid,
 							rs.getString(usrMeta.pswd),
 							rs.getString(usrMeta.iv),
 							rs.getString(usrMeta.uname))
 						.onCreate(rs) // v1.4.11
-						.onCreate(sessionBody)
+						// .onCreate(sessionBody)
 						.touch();
 			if (obj instanceof SemanticObject)
 				return obj;
 			throw new SemanticException("IUser implementation must extend SemanticObject.");
 		}
 		else
-			throw new SsException("User Id not found: %s", sessionBody.uid());
+			throw new SsException("User Id is not found: %s", uid);
 	}
+
 
 	/**
 	 * Create a new IUser instance, where the class name is configured in config.xml/k=class-IUser.
@@ -486,8 +509,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		if (!Configs.hasCfg(clsNamekey))
 			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 		String clsname = Configs.getCfg(clsNamekey);
-		// if (clsname == null)
-		//	throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 		if (clsname == null)
 			return createUserByClassname(clsNamekey, uid, pswd, iv, userName);
 		else 
@@ -536,6 +557,5 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throw new SemanticException("create IUser instance failed: %s",
 					ie.getTargetException() == null ? "" : ie.getTargetException().getMessage());
 		}
-
 	}
 }

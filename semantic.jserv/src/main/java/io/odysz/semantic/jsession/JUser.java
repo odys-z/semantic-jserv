@@ -65,7 +65,6 @@ public class JUser extends SemanticObject implements IUser {
 		public final JOrgMeta  om;
 		
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-		// public final String pk; // = "userId";
 		public String uname; // = "userName";
 		public String pswd; // = "pswd";
 		public String iv; // = "encAuxiliary";
@@ -77,9 +76,6 @@ public class JUser extends SemanticObject implements IUser {
 		public String role;
 		/** v1.4.11, column of role name */
 		public String roleName;
-
-		// public String orgTbl = "a_orgs";
-		// public String roleTbl = "a_roles";
 
 		public JUserMeta userName(String unamefield) {
 			uname = unamefield;
@@ -229,9 +225,9 @@ public class JUser extends SemanticObject implements IUser {
 		this.uid = uid;
 		this.pswd = pswd == null ? this.pswd : pswd;
 
-		String rootK = DATranscxt.key("user-pswd");
-		if (rootK == null)
-			throw new SemanticException("Session rootKey not initialized. Have checked context prameter like server's context.xml/Parameter/name='io.oz.root-key'?");
+//		String rootK = DATranscxt.key("user-pswd");
+//		if (rootK == null)
+//			throw new SemanticException("Session rootKey not initialized. Have checked context prameter like server's context.xml/Parameter/name='io.oz.root-key'?");
 
 		// decrypt db-pswd-cipher with sys-key and db-iv => db-pswd
 //		try {
@@ -251,7 +247,6 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	public TableMeta meta(String ... connId) {
-		// return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
 		return new JUserMeta("a_user", isNull(connId) ? null : connId[0]);
 	}
 
@@ -298,12 +293,12 @@ public class JUser extends SemanticObject implements IUser {
 	}
 
 	/** Session Token Knowledge */
-	String knoledge;
-	@Override public String sessionKey() { return knoledge; }
+	String knowledge;
+	@Override public String sessionKey() { return knowledge; }
 
 	@Override
 	public IUser sessionKey(String k) {
-		this.knoledge = k;
+		this.knowledge = k;
 		return this;
 	}
 

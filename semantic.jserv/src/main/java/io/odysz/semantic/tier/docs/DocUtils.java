@@ -16,7 +16,7 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
-import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -81,7 +81,7 @@ public class DocUtils {
 	 * <p>Doc is created as in the folder of user/[photo.folder]/;<br>
 	 * Doc's device and family are replaced with session information.</p>
 	 * 
-	 * @since 1.4.19, this method needs the DB can triggering timestamp ({@link DocTableMeta#stamp}).
+	 * @since 1.4.19, this method needs the DB can triggering time stamp ({@link DocTableMeta#stamp}).
 	 * <pre>
 	 * sqlite example:
 	 * syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL
@@ -139,7 +139,9 @@ public class DocUtils {
 	}
 	
 	/**
-	 * Create doc record and trigger syn-change semantics.
+	 * Create doc record in table meta.tbl, and trigger syn-change semantics,
+	 * if configured semantics.xml/t/s [id = syn-change, t = meta.tbl]
+	 * 
 	 * @param st
 	 * @param conn
 	 * @param doc
@@ -150,7 +152,7 @@ public class DocUtils {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	public static String createFileBy64(DBSyntableBuilder st, String conn,
+	public static String createFileBy64(DBSynTransBuilder st, String conn,
 			ExpSyncDoc doc, IUser usr, ExpDocTableMeta meta, Update... onFileCreateSql) throws TransException, SQLException {
 		if (LangExt.isblank(doc.fullpath()))
 			throw new SemanticException("The client path can't be null/empty.");

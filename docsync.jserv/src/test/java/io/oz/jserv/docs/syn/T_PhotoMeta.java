@@ -22,13 +22,10 @@ public class T_PhotoMeta extends ExpDocTableMeta {
 		super("h_photos", "pid", "device", conn);
 
 		exif = "exif";
-		// synoder = "device";
 
 		try { ddlSqlite = loadTxt(T_PhotoMeta.class, "h_photos.sqlite.ddl"); }
 		catch (Exception e) { e.printStackTrace(); }
 	}
-
-	// public String device() { return synoder; }
 
 	@Override
 	public Object[] insertSelectItems(SynChangeMeta chgm, String entid,

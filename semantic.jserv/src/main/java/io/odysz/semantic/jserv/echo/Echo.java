@@ -1,5 +1,8 @@
 package io.odysz.semantic.jserv.echo;
 
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.Utils.logi;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -32,7 +35,16 @@ public class Echo extends ServPort<EchoReq> {
 
 	private static ArrayList<String> interfaces;
 
-	public Echo() { super(Port.echo); }
+	protected boolean fingerprint;
+
+	/**
+	 * Create echo port.
+	 * @param fingerprint (since 2.0.0) print echo message to output stream (Utils.os).
+	 */
+	public Echo(boolean... fingerprint) {
+		super(Port.echo);
+		this.fingerprint = isNull(fingerprint) ? false : fingerprint[0];
+	}
 
 	/** * */
 	private static final long serialVersionUID = 1L;
@@ -61,6 +73,9 @@ public class Echo extends ServPort<EchoReq> {
 			else
 				write(resp, ok(echoReq.a()));
 			resp.flushBuffer();
+			
+			if (fingerprint)
+				logi("Echo: %s : %s", remote, echoReq.uri());
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (IOException e) {
