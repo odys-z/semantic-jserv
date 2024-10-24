@@ -168,7 +168,7 @@ public class SynotierJettyApp {
 				.born(synapp.synchandlers, 0, 0);
 	
 		ExpDoctier doctier  = new ExpDoctier(synid, cfg.sysconn, cfg.synconn)
-							.create(robot.orgId(), domain, syntity_json, SynodeMode.peer)
+							.create(robot.orgId(), syntity_json, domains.get(domain))
 							.domains(domains);
 		ExpSynodetier syner = new ExpSynodetier(robot.orgId(), domain, synid, cfg.synconn, SynodeMode.peer)
 							.domains(domains);

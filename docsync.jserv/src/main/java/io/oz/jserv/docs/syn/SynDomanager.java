@@ -297,7 +297,7 @@ public class SynDomanager implements OnError {
 					synode, peer);
 
 		SynssionClientier c = new SynssionClientier(this, peer, null);
-		synssion(peer, c); // rename clientier to worker?
+		synssion(peer, c); 
 		return c.onsyninit(ini, domain);
 	}
 

@@ -102,11 +102,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 	static final String tablCollectPhoto = "h_coll_phot";
 
-	// final DocOrgMeta orgMeta; // = new DocOrgMeta(null);
-	
-	// final DeviceTableMeta devMeta; // = new DeviceTableMeta(null);
-
-
 	/** uri db field */
 	static final String uri = "uri";
 	/** file state db field */

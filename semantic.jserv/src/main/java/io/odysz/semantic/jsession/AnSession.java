@@ -132,7 +132,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		try {
 			IUser tmp = createUser(keys.usrClzz, "temp", "pswd", null, "temp user");
-			// usrMeta = (JUserMeta) tmp.meta(daSctx.getSysConnId());
 			usrMeta = (JUserMeta) tmp.meta();
 		}
 		catch (Exception ex) {
