@@ -152,7 +152,9 @@ public class JettyHelperTest {
 		cfg.sysconn = conn;
 		cfg.synconn = conn;
 		
-		Syngleton.setupSyntables(cfg,
+		Syngleton syngleton = new Syngleton(cfg.sysconn, cfg.synode(), cfg.synconn);
+		
+		Syngleton.setupSyntables(syngleton, cfg,
 				null,
 				webinf, "config.xml", ".", "ABCDEF0123465789");
 

@@ -191,7 +191,9 @@ public class ExpDoctierservTest {
 					throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
 				});
 			
-			Syngleton.setupSyntables(cfgs[i], regists.metas.values(),
+			Syngleton syngleton = new Syngleton(cfgs[i].sysconn, cfgs[i].synode(), cfgs[i].synconn);
+
+			Syngleton.setupSyntables(syngleton, cfgs[i], regists.metas.values(),
 					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 			
 			cleanPhotos(docm, servs_conn[i], devs);

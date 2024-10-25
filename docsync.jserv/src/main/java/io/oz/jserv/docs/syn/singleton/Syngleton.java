@@ -58,10 +58,17 @@ public class Syngleton extends JSingleton {
 	String jserv;
 
 	String synconn;
-
 	String sysconn;
 	String synode;
+
 	SyncRobot robot;
+
+	public Syngleton(String sys_conn, String synid, String syn_conn) {
+		synode = synid;
+		synconn = syn_conn;
+		sysconn = sys_conn;
+		synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
+	}
 
 	public void updatePeerJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
 			throws TransException, SQLException {
@@ -87,6 +94,11 @@ public class Syngleton extends JSingleton {
 	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
 	 */
 	public HashMap<String, HashMap<String, SynDomanager>> synodetiers;
+
+
+	public void domanagers(HashMap<String, SynDomanager> domains) {
+		this.synodetiers.put(syntier_url, domains);
+	}
 
 	SynodeMeta synm;
 
@@ -175,9 +187,10 @@ public class Syngleton extends JSingleton {
 	 * @param cfgxml
 	 * @param runtimeRoot
 	 * @param rootKey
+	 * @param peers 
 	 * @throws Exception
 	 */
-	public static void setupSyntables(SynodeConfig cfg, Iterable<SyntityMeta> entms,
+	public static void setupSyntables(Syngleton syngleton, SynodeConfig cfg, Iterable<SyntityMeta> entms,
 			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
 
 		// 1. connection
@@ -197,7 +210,7 @@ public class Syngleton extends JSingleton {
 
 		AnSession.init(defltScxt);
 		
-		// 2. syn-tables
+		// 2 syn-tables
 		SynChangeMeta chm;
 		SynSubsMeta sbm;
 		SynchangeBuffMeta xbm;
@@ -222,11 +235,37 @@ public class Syngleton extends JSingleton {
 
 		DatasetCfg.init(configFolder);
 			
-		synb = new DBSyntableBuilder(cfg.domain, cfg.synconn, cfg.synode(), cfg.mode);
+		//synb = new DBSyntableBuilder(synodetiers.get(syntier_url).get(cfg.domain).syndomx);
+//		synb = syngleton
+////				.synodetiers
+////				.get(syngleton.syntier_url)
+////				.get(cfg.domain)
+//				.syntierManager(cfg.org, cfg.domain, cfg.mode)
+//				.loadDomainContext(cfg.domain)
+//				.createSyntabuilder(cfg);
 			
 
 		// 4. synodes
-		initSynodeRecs(cfg, cfg.peers());
+		initSynodeRecs(cfg, cfg.peers);
+	}
+
+	/**
+	 * Get SynDomanager of domian {@code domain}, used by ServPort {@link #syntier_url}.
+	 * 
+	 * @param domain
+	 * @return SynDomanager
+	 * @throws Exception 
+	 */
+	private SynDomanager syntierManager(String org, String domain, SynodeMode mode) throws Exception {
+		if (!synodetiers.containsKey(syntier_url))
+			synodetiers.put(syntier_url, new HashMap<String, SynDomanager>());
+		
+		if (!synodetiers.get(syntier_url).containsKey(domain)) {
+			synodetiers.get(syntier_url).put(domain,
+				new SynDomanager(synm, org, domain, synode, synconn, mode,
+								Connects.getDebug(sysconn)));
+		}
+		return synodetiers.get(syntier_url).get(domain);
 	}
 
 	/**

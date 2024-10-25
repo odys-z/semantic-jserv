@@ -1,7 +1,6 @@
 package io.odysz.semantic.jsession;
 
 import java.io.IOException;
-import java.io.PrintStream;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;

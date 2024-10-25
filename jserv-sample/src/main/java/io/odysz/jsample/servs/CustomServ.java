@@ -12,24 +12,24 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantics.x.SemanticException;
 
-/**<p>Sample serv (Port = user.serv) shows how user can extend basic serv API
+/**<p>Sample serv (Port = user.serv) shows how user can extended basic jserv API
  * with help of semantic-transact SQL builder<br>
- * This also shows how user can extend {@link ServPort} with typed message handler,
- * antson, which is new to v1.1.</p>
- * function branch: a = "A" | "B" | "C";<br>
+ * This also shows how users can extend {@link ServPort} with typed message handler,
+ * antson, which is introduced since v1.1.</p>
+ * function act code: a = "A" | "B" | "C";<br>
  * The js client request should do something like this:<pre>
-var conn = jconsts.conn;
-function saveTooleA() {
+  var conn = jconsts.conn;
+  function saveTooleA() {
 	var dat = {borrowId: 'borrow-001', items: []};
 	dat.items.push(['item001', 3]); // return 3 of tiem001
 
 	var usrReq = new jvue.UserReq(conn, "r_tools_borrows")
-						// turn back tools - or any function branch tag handled by tools.serv
-						.a("A")
+				// turn back tools - or any function branch tag handled by tools.serv
+				.a("A")
 
-						// or reaplace these 2 set() with data(dat)
-						.set('borrowId', 'borrow-001')
-						.set('items', [['item001', 3]]);
+				// or reaplace these 2 set() with data(dat)
+				.set('borrowId', 'borrow-001')
+				.set('items', [['item001', 3]]);
 
 	var jmsg = ssClient
 		// ssClient's current user action is handled by jeasy when loading menu
@@ -43,7 +43,7 @@ function saveTooleA() {
 	ssClient.commit(jmsg, function(resp) {
 				EasyMsger.ok(EasyMsger.m.saved);
 			}, EasyMsger.error);
-}</pre>
+  }</pre>
  * @author odys-z@github.com
  */
 @WebServlet(description = "jserv.sample example: extend serv handler", urlPatterns = { "/custom.serv11" })

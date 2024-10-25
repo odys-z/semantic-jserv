@@ -36,6 +36,7 @@ import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
@@ -92,7 +93,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		if (synode == null)
 			throw new SemanticException("Synode id is null.");
-					// Configs.cfgFullpath, Configs.keys.deftXTableId, Configs.keys.synode);
 		
 		try {debug = Connects.getDebug(synconn); } catch (Exception e) {debug = false;}
 	}
@@ -101,6 +101,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	static final int myconx = 1;
 
 	Synodebot locrobot;
+
+	private SyndomContext syndomx;
 
 	IUser locrobot() {
 		if (locrobot == null)
@@ -203,8 +205,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	public ExpDoctier create(String org, String domain,
 			String syntity_json, SynodeMode mod) throws Exception {
 
-		syntb0 = new DBSynTransBuilder(domain, myconn, synode, syntity_json, mod,
-			new DBSyntableBuilder(domain, myconn, synode, mod));
+		syntb0 = new DBSynTransBuilder(syndomx, syntity_json,
+							new DBSyntableBuilder(syndomx));
 
 		return this;
 	}

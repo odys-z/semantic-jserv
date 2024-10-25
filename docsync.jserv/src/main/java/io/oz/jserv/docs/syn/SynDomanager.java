@@ -4,6 +4,8 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.init;
@@ -35,6 +37,7 @@ import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.Nyquence;
 import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
@@ -42,6 +45,7 @@ import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
+import io.oz.syn.SynodeConfig;
 
 /**
  * Syn-domain's sessions manager.
@@ -74,16 +78,33 @@ public class SynDomanager implements OnError {
 		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
 	}
 
+	/**
+	 * @since 0.2.0
+	 */
+	@FunctionalInterface
+	public interface OnBlocked {
+		public int blockms(SyncJUser synlocker);
+	 }
+
 	static final String dom_unknown = null;
-	
+
+//	static SyndomContext loadomx(String dom, DATranscxt tb0) {
+//		return null;
+//	}
+
 	public final String synode;
-	final String myconn;
+
+	/**
+	 * Privately managed syn-domain context
+	 */
+	final SyndomContext syndomx;
+	
+	final String myconn; // TODO delete
 	final String domain;
 	final String org;
 	final SynodeMode synmod;
+
 	final SynodeMeta synm;
-	
-	final ReentrantLock synlock = new ReentrantLock(); 
 	
 	boolean dbg;
 	
@@ -149,6 +170,8 @@ public class SynDomanager implements OnError {
 		};
 		
 		tb0 = new DATranscxt(conn);
+		
+		// syndomx = loadomx(dom, tb0);
 	}
 	
 	public static SynDomanager clone(SynDomanager dm) throws Exception {
@@ -169,7 +192,8 @@ public class SynDomanager implements OnError {
 	 */
 	public SynssionClientier join2peer(String adminjserv, String peeradmin, String userId, String passwd) throws Exception {
 
-		DBSyntableBuilder cltb = new DBSyntableBuilder(dom_unknown, myconn, synode, synmod);
+		// DBSyntableBuilder cltb = new DBSyntableBuilder(dom_unknown, myconn, synode, synmod);
+		DBSyntableBuilder cltb = new DBSyntableBuilder(syndomx);
 
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
@@ -194,17 +218,23 @@ public class SynDomanager implements OnError {
 	/**
 	 * @see #join2peer(String, String, String, String)
 	 * @param req
+	 * @param usr 
 	 * @return response
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public SyncResp onjoin(SyncReq req) throws Exception {
+	public SyncResp onjoin(SyncReq req, SyncJUser usr) throws Exception {
 
 		String peer = req.exblock.srcnode;
 
 		try {
-			if (synlock.tryLock())  {
-				DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, synmod);
+			if (lockx(usr))  {
+//			if (synlock.tryLock())  {
+//				synlocker = peer;
+//				synlockid = usr.sessionId();
+
+				// DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, synmod);
+				DBSyntableBuilder admb = new DBSyntableBuilder(syndomx);
 
 				ExessionPersist admp = new ExessionPersist(admb, peer);
 
@@ -216,26 +246,25 @@ public class SynDomanager implements OnError {
 			
 				return new SyncResp(domain).exblock(resp);
 			}
-			else return new SyncResp(domain).exblock(
-					new ExchangeBlock(domain, synode, peer, null,
-							new ExessionAct(mode_server, ExessionAct.trylater)));
+			else return trylater(peer);
 		} catch (Exception e) {
 			synlock.unlock();
 			throw e;
 		}
 	}
 
-//	public SyncReq closejoin(SyncResp rep) throws TransException, SQLException {
-//		if (!eq(domain, rep.domain))
-//			throw new ExchangeException(close, null, "So what?");
-//
-//		String admin = rep.exblock.srcnode;
-//		try {
-//			return synssion(admin).closejoin(admin, rep);
-//		} finally {
-//			expiredClientier = delession(admin);
-//		}
-//	}
+	private SyncResp trylater(String peer) {
+		return new SyncResp(domain).exblock(
+				new ExchangeBlock(domain, synode, peer, null,
+				new ExessionAct(mode_server, ExessionAct.trylater)));
+
+	}
+	
+	private SyncResp lockerr(String peer) {
+		return new SyncResp(domain).exblock(
+				new ExchangeBlock(domain, synode, peer, null,
+				new ExessionAct(mode_server, ExessionAct.lockerr)));
+	}
 
 	public SyncResp onclosejoin(SyncReq req) throws TransException, SQLException {
 		String apply = req.exblock.srcnode;
@@ -284,24 +313,32 @@ public class SynDomanager implements OnError {
 	 */
 
 	/**
-	 * @param peer
-	 * @param ini initial request
+	 * @param req
+	 * @param usr initial request
 	 * @return exchange block
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public SyncResp onsyninit(String peer, ExchangeBlock ini) throws Exception {
-		if (DAHelper.count(tb0, myconn, synm.tbl, synm.synoder, peer, synm.domain, domain) == 0)
+	private SyncResp onsyninit(ExchangeBlock req, SyncJUser usr) throws Exception {
+		if (DAHelper.count(tb0, myconn, synm.tbl, synm.synoder, req, synm.domain, domain) == 0)
 			throw new ExchangeException(init, null,
 					"This synode, %s, cannot respond to exchange initiation without knowledge of %s.",
-					synode, peer);
+					synode, req);
+
+		String peer = req.srcnode;
+		musteq(peer, usr.deviceId());
+
+		if (!synlock.tryLock())
+			return trylater(peer);
+		
+		synlocker = usr;
 
 		SynssionClientier c = new SynssionClientier(this, peer, null);
 		synssion(peer, c); // rename clientier to worker?
-		return c.onsyninit(ini, domain);
+		return c.onsyninit(req, domain);
 	}
 
-	public SyncResp onsyninit(SyncReq req) throws Exception {
+	public SyncResp onsyninit(SyncReq req, SyncJUser usr) throws Exception {
 		if (synssion(req.exblock.srcnode) != null) {
 			ExessionPersist xp = synssion(req.exblock.srcnode).xp;
 			
@@ -317,12 +354,19 @@ public class SynDomanager implements OnError {
 									new ExessionAct(xp.exstat().exmode() == mode_server
 										? mode_client : mode_server, deny)));
 		}
-		return onsyninit(req.exblock.srcnode, req.exblock);
+		
+		return onsyninit(req.exblock, usr);
 	}
 
-	public SyncResp onclosex(SyncReq req) throws TransException, SQLException {
+	public SyncResp onclosex(SyncReq req, SyncJUser usr) throws TransException, SQLException {
 		SynssionClientier c = synssion(req.exblock.srcnode);
-		return c.onsynclose(req.exblock);
+		
+		if (!eq(synlocker.sessionId(), usr.sessionId()))
+			return lockerr(c.peer);
+		else {
+			try { return c.onsynclose(req.exblock); }
+			finally { synlock.unlock(); }
+		}
 	}
 
 	/**
@@ -364,7 +408,6 @@ public class SynDomanager implements OnError {
 		return this;
 	}
 
-	///////////////////////////////////////////////////////////////////////////
 	/**
 	 * Update (synchronize) this domain, each peer in a new thread.
 	 * Can be called by request handler and timer.
@@ -377,14 +420,21 @@ public class SynDomanager implements OnError {
 	 * @throws SsException 
 	 * @throws AnsonException 
 	 * @throws SemanticException 
+	 * @throws InterruptedException 
 	 * @since 0.2.0
 	 */
-	public SynDomanager updomains(OnDomainUpdate onUpdate)
-			throws SemanticException, AnsonException, SsException, IOException {
+	public SynDomanager updomains(OnDomainUpdate onUpdate, OnBlocked block)
+			throws SemanticException, AnsonException, SsException, IOException, InterruptedException {
 		if (sessions == null || sessions.size() == 0)
 			throw new ExchangeException(ready, null,
 						"Session pool is null at %s", synode);
-
+		
+		while (!synlock.tryLock()) {
+			int wait = block.blockms(synlocker);
+			if (wait < 0)
+				return this;
+			Thread.sleep(wait * 1000);
+		}
 
 		new Thread(() -> { 
 		for (String peer : sessions.keySet()) {
@@ -461,9 +511,9 @@ public class SynDomanager implements OnError {
 			sessions = new HashMap<String, SynssionClientier>();
 		
 		while (rs.next()) {
-			SynssionClientier c = new SynssionClientier(this, rs.getString("peer"), rs.getString(synm.jserv))
-								.onErr(errHandler);
 			String peer = rs.getString("peer");
+			SynssionClientier c = new SynssionClientier(this, peer, rs.getString(synm.jserv))
+								.onErr(errHandler);
 
 			if (dbg && sessions.containsKey(peer)) {
 				SynssionClientier target = sessions.get(peer);
@@ -507,5 +557,35 @@ public class SynDomanager implements OnError {
 				onok[0].ok(domain, synode, null);
 
 		return this;
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////
+	final ReentrantLock synlock = new ReentrantLock(); 
+	SyncJUser synlocker;
+//	int locktouchms = Integer.MIN_VALUE;
+//	int lockexpire  = Integer.MAX_VALUE;
+	
+	public void unlockx(SyncJUser usr) {
+		if (synlocker != null && eq(synlocker.sessionId(), usr.sessionId())) {
+			synlock.unlock();
+			synlocker = null;
+		}
+	}
+
+	private boolean lockx(SyncJUser usr) {
+		if (synlock.tryLock())
+			synlocker = usr;
+		return true;
+	}
+
+	public DBSyntableBuilder createSyntabuilder(SynodeConfig cfg) throws Exception {
+		notNull(syndomx);
+		notNull(cfg);
+		musteq(syndomx.domain(), cfg.domain);
+		musteq(syndomx.synode, cfg.synode());
+		musteq(syndomx.synconn, cfg.synconn);
+
+		return new DBSyntableBuilder(syndomx);
 	}
 }

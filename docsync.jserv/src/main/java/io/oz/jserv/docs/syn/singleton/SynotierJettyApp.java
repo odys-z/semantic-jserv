@@ -69,16 +69,12 @@ public class SynotierJettyApp {
 
 	List<SemanticHandler> synchandlers;
 
-	public SynotierJettyApp(String synid, String syn_conn, SyncRobot synrobt,
+	public SynotierJettyApp(String sys_conn, String synid, String syn_conn, SyncRobot synrobt,
 			List<SemanticHandler> synchangeHandlers) {
-		syngleton = new Syngleton();
-		syngleton.synode = synid;
+		syngleton = new Syngleton(sys_conn, synid, syn_conn);
 		synchandlers = synchangeHandlers;
-	    syngleton.synconn = syn_conn;
 	    syngleton.robot = synrobt;
 	}
-
-	// public String jserv() { return jserv; }
 
 	/**
 	 * Eclipse run configuration example:
@@ -102,39 +98,6 @@ public class SynotierJettyApp {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		/*
-		try {
-			String bind = args[0];
-			int    port = Integer.valueOf(args[1]);
-			String org     = args[2];
-			String domain  = args[3];
-			String webinf  = args.length > 4 ? args[4] : "WEB-INF";
-			String cfgxml  = !isNull(args) && args.length > 5 ? args[5] : "config.xml";
-			String synconn = !isNull(args) && args.length > 6 ? args[6] : "sqlite-main";
-			String robid   = !isNull(args) && args.length > 7 ? args[7] : System.getenv("robot-id");
-		
-			Utils.logi("Starting Synodetier at port %s, org %s, domain %s, configure file %s, conn %s",
-					port, org, domain, cfgxml, synconn);
-
-			Configs.init(webinf);
-			Connects.init(webinf);
-
-			SynotierJettyApp app = createSyndoctierApp(
-								synconn, cfgxml, bind, port, webinf, domain,
-								YellowPages.getRobot(robid))
-								.start(() -> System.out, () -> System.err);
-
-			Utils.pause(String.format(
-					"[%s] started at port %s, org %s, domain %s, configure file %s, conn %s",
-					"SynotierJettyApp", port, org, domain, cfgxml, synconn));
-			
-			app.stop();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		}
-		*/
 	}
 
 	/**
@@ -166,6 +129,8 @@ public class SynotierJettyApp {
 
 		domains .get(domain)
 				.born(synapp.synchandlers, 0, 0);
+		
+		synapp.syngleton.domanagers(domains);
 	
 		ExpDoctier doctier  = new ExpDoctier(synid, cfg.sysconn, cfg.synconn)
 							.create(robot.orgId(), domain, syntity_json, SynodeMode.peer)
@@ -292,7 +257,8 @@ public class SynotierJettyApp {
 	
 	    AnsonMsg.understandPorts(Port.syntier);
 	
-	    SynotierJettyApp synapp = new SynotierJettyApp(cfg.synode(),
+	    SynotierJettyApp synapp = new SynotierJettyApp(
+	    						cfg.sysconn, cfg.synode(),
 	    						cfg.synconn, robt, Syngleton.synmap.get(smtype.synChange));
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);

@@ -11,7 +11,6 @@ import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.concurrent.locks.ReentrantLock;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
@@ -73,13 +72,13 @@ public class SynssionClientier {
 	protected SessionClient client;
 	private boolean debug;
 
-	public SynssionClientier(SynDomanager domanager, String peer, String jserv) throws ExchangeException {
+	public SynssionClientier(SynDomanager domanager, String peer, String peerjserv) throws ExchangeException {
 		this.conn      = domanager.myconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
 		this.peer      = peer;
 		this.mymode    = domanager.synmod;
-		this.peerjserv = jserv;
+		this.peerjserv = peerjserv;
 		
 		// this.synlock  = new ReentrantLock();
 		this.peerlock  = new Object();
@@ -157,10 +156,8 @@ public class SynssionClientier {
 	 * @throws Exception 
 	 */
 	ExchangeBlock exesinit() throws Exception {
-		DBSyntableBuilder b0 = new DBSyntableBuilder(domain(), conn, mynid, mymode);
-		xp = new ExessionPersist(b0, peer, null)
-						; // .loadNyquvect(conn);
-
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domanager.syndomx);
+		xp = new ExessionPersist(b0, peer, null);
 		return b0.initExchange(xp);
 	}
 
@@ -177,11 +174,8 @@ public class SynssionClientier {
 		if (!eq(ini.srcnode, peer))
 			throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
-		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, conn, mynid, mymode);
-
-		xp = new ExessionPersist(b0, peer, ini)
-						; //.loadNyquvect(conn);
-
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domanager.syndomx);
+		xp = new ExessionPersist(b0, peer, ini);
 		ExchangeBlock b = b0.onInit(xp, ini);
 
 		return new SyncResp(domain()).exblock(b);

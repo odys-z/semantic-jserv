@@ -1,4 +1,5 @@
 {"type": "io.odysz.semantic.syn.registry.Syntities",
  "conn": "no-jserv.00",
+ "mode": "peer",
  "syntities": [{"table": "h_photos", "meta": "io.oz.jserv.docs.syn.T_PhotoMeta"}]
 }

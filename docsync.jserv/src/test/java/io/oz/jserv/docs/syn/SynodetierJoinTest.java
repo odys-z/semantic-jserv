@@ -134,7 +134,7 @@ public class SynodetierJoinTest {
 			config.domain  = zsu;
 
 			Syngleton.setupSysRecords(config, robots);
-			Syngleton.setupSyntables(config,
+			Syngleton.setupSyntables(getSyngleton(), config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789");
 
@@ -145,6 +145,11 @@ public class SynodetierJoinTest {
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].synode(), SynodeMode.peer, docm);
 		}
+	}
+
+	private static Syngleton getSyngleton() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Test
@@ -208,7 +213,7 @@ public class SynodetierJoinTest {
 	}
 
 	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
-			throws SemanticException, AnsonException, SsException, IOException {
+			throws SemanticException, AnsonException, SsException, IOException, InterruptedException {
 
 		SynotierJettyApp t = jetties[tx];
 
@@ -240,6 +245,9 @@ public class SynodetierJoinTest {
 								"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
 								domain, mynid, peer));
 						}
+					}, (blockby) -> {
+						Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);
+						return 2000;
 					});
 			}
 		}

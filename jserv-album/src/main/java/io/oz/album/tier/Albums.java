@@ -127,16 +127,6 @@ public class Albums extends ServPort<AlbumReq> {
 			
 			String conn = Connects.uri2conn(uri);
 			new PhotoMeta(conn).replace();
-//			Docs206.getMeta = (String uri) -> {
-//				try {
-//					String conn = Connects.uri2conn(uri);
-//					return new PhotoMeta(conn);
-//				}
-//				catch (TransException e) {
-//					e.printStackTrace();
-//					return null;
-//				}
-//			};
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
