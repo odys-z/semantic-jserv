@@ -62,7 +62,7 @@ import io.oz.syn.SynodeConfig;
  * @see #sessions
  * @since 0.2.0
  */
-public class SynDomanager implements OnError {
+public class SynDomanager extends SyndomContext implements OnError {
 	/**
 	 * @since 0.2.0
 	 */
@@ -92,19 +92,19 @@ public class SynDomanager implements OnError {
 //		return null;
 //	}
 
-	public final String synode;
+//	public final String synode;
 
 	/**
 	 * Privately managed syn-domain context
-	 */
 	final SyndomContext syndomx;
+	 */
 	
-	final String myconn; // TODO delete
-	final String domain;
+//	final String myconn; // TODO delete
+//	final String domain;
 	final String org;
-	final SynodeMode synmod;
+//	final SynodeMode synmod;
 
-	final SynodeMeta synm;
+//	final SynodeMeta synm;
 	
 	boolean dbg;
 	
@@ -157,13 +157,16 @@ public class SynDomanager implements OnError {
 	public SynDomanager(SynodeMeta synm, String org, String dom, String myid,
 			String conn, SynodeMode mod, boolean debug) throws Exception {
 
-		synode   = myid;
-		myconn   = conn;
-		domain   = dom;
-		synmod   = mod;
+		super(mod, dom, myid, conn);
+
+//		synode   = myid;
+//		myconn   = conn;
+//		domain   = dom;
+//		synmod   = mod;
+
 		this.org = org;
 		this.dbg = debug;
-		this.synm= synm;
+//		this.synm= synm;
 		
 		errHandler = (e, r, a) -> {
 			Utils.warn("Error code: %s,\n%s", e.name(), String.format(r, (Object[])a));
@@ -174,12 +177,12 @@ public class SynDomanager implements OnError {
 		// syndomx = loadomx(dom, tb0);
 	}
 	
-	public static SynDomanager clone(SynDomanager dm) throws Exception {
-		return new SynDomanager(dm.synm, dm.org, dm.domain, dm.synode, dm.myconn, dm.synmod, dm.dbg);
-	}
+//	public static SynDomanager clone(SynDomanager dm) throws Exception {
+//		return new SynDomanager(dm.synm, dm.org, dm.domain, dm.synode, dm.myconn, dm.synmod, dm.dbg);
+//	}
 
 	/**
-	 * Sing up, then start a synssion to the peer, peeradmin.
+	 * Sing up, then start a synssion to the peer, {@code peeradmin}.
 	 * 
 	 * @param adminjserv jserv root path, must be null for testing
 	 * locally without login to the service
@@ -192,8 +195,7 @@ public class SynDomanager implements OnError {
 	 */
 	public SynssionClientier join2peer(String adminjserv, String peeradmin, String userId, String passwd) throws Exception {
 
-		// DBSyntableBuilder cltb = new DBSyntableBuilder(dom_unknown, myconn, synode, synmod);
-		DBSyntableBuilder cltb = new DBSyntableBuilder(syndomx);
+		DBSyntableBuilder cltb = new DBSyntableBuilder(this);
 
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
@@ -234,7 +236,7 @@ public class SynDomanager implements OnError {
 //				synlockid = usr.sessionId();
 
 				// DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, synmod);
-				DBSyntableBuilder admb = new DBSyntableBuilder(syndomx);
+				DBSyntableBuilder admb = new DBSyntableBuilder(this);
 
 				ExessionPersist admp = new ExessionPersist(admb, peer);
 
@@ -244,7 +246,7 @@ public class SynDomanager implements OnError {
 				synssion(peer, new SynssionClientier(this, peer, null)
 						.xp(admp.exstate(ready)));
 			
-				return new SyncResp(domain).exblock(resp);
+				return new SyncResp(domain()).exblock(resp);
 			}
 			else return trylater(peer);
 		} catch (Exception e) {
@@ -254,15 +256,15 @@ public class SynDomanager implements OnError {
 	}
 
 	private SyncResp trylater(String peer) {
-		return new SyncResp(domain).exblock(
-				new ExchangeBlock(domain, synode, peer, null,
+		return new SyncResp(domain()).exblock(
+				new ExchangeBlock(domain(), synode, peer, null,
 				new ExessionAct(mode_server, ExessionAct.trylater)));
 
 	}
 	
 	private SyncResp lockerr(String peer) {
-		return new SyncResp(domain).exblock(
-				new ExchangeBlock(domain, synode, peer, null,
+		return new SyncResp(domain()).exblock(
+				new ExchangeBlock(domain(), synode, peer, null,
 				new ExessionAct(mode_server, ExessionAct.lockerr)));
 	}
 
@@ -271,7 +273,7 @@ public class SynDomanager implements OnError {
 		try {
 			ExessionPersist sp = synssion(apply).xp;
 			ExchangeBlock ack  = sp.trb.domainCloseJoin(sp, req.exblock);
-			return new SyncResp(domain).exblock(ack);
+			return new SyncResp(domain()).exblock(ack);
 		} finally {
 			try { expiredClientier = delession(apply); }
 			catch (Throwable t) { t.printStackTrace(); }
@@ -320,7 +322,7 @@ public class SynDomanager implements OnError {
 	 * @since 0.2.0
 	 */
 	private SyncResp onsyninit(ExchangeBlock req, SyncJUser usr) throws Exception {
-		if (DAHelper.count(tb0, myconn, synm.tbl, synm.synoder, req, synm.domain, domain) == 0)
+		if (DAHelper.count(tb0, synconn, synm.tbl, synm.synoder, req, synm.domain, domain()) == 0)
 			throw new ExchangeException(init, null,
 					"This synode, %s, cannot respond to exchange initiation without knowledge of %s.",
 					synode, req);
@@ -335,7 +337,7 @@ public class SynDomanager implements OnError {
 
 		SynssionClientier c = new SynssionClientier(this, peer, null);
 		synssion(peer, c); // rename clientier to worker?
-		return c.onsyninit(req, domain);
+		return c.onsyninit(req, domain());
 	}
 
 	public SyncResp onsyninit(SyncReq req, SyncJUser usr) throws Exception {
@@ -348,8 +350,8 @@ public class SynDomanager implements OnError {
 						req.exblock.srcnode, xp.peer());
 
 			if (xp.exstate() != ready && xp.exstate() != close)
-				return new SyncResp(domain)
-						.exblock(new ExchangeBlock(domain, synode,
+				return new SyncResp(domain())
+						.exblock(new ExchangeBlock(domain(), synode,
 									xp.peer(), xp.session(),
 									new ExessionAct(xp.exstat().exmode() == mode_server
 										? mode_client : mode_server, deny)));
@@ -368,8 +370,14 @@ public class SynDomanager implements OnError {
 			finally { synlock.unlock(); }
 		}
 	}
+	
+	public SynDomanager loadomain() {
+		
+		return this;
+	}
 
 	/**
+	 * @deprecated replaced by {@link #loadb()}
 	 * Born or reborn, with synode's n0 and stamp created, then load all configured
 	 * tables of {@link ShSynChange}.
 	 * 
@@ -382,27 +390,27 @@ public class SynDomanager implements OnError {
 	 */
 	public SynDomanager born(List<SemanticHandler> handlers, long n0, long stamp0)
 			throws Exception {
-		SynodeMeta snm = new SynodeMeta(myconn);
+		// SynodeMeta snm = new SynodeMeta(synconn);
 		DATranscxt b0 = new DATranscxt(null);
 		IUser robot = new JRobot();
 
-		if (DAHelper.count(b0, myconn, snm.tbl, snm.synoder, synode, snm.domain, domain) > 0)
-			Utils.warnT(new Object() {}, "\n[ ♻.✩ ] Syn-domain manager restart upon domain '%s' ...", domain);
+		if (DAHelper.count(b0, synconn, synm.tbl, synm.synoder, synode, synm.domain, domain()) > 0)
+			Utils.warnT(new Object() {}, "\n[ ♻.✩ ] Syn-domain manager restart upon domain '%s' ...", domain());
 		else
-			DAHelper.insert(robot, b0, myconn, snm,
-					snm.synuid, synode,
-					snm.pk, synode,
-					snm.domain, domain,
-					snm.nyquence, n0,
-					snm.nstamp, stamp0,
-					snm.org, org,
-					snm.device, "#" + synode
+			DAHelper.insert(robot, b0, synconn, synm,
+					synm.synuid, synode,
+					synm.pk, synode,
+					synm.domain, domain(),
+					synm.nyquence, n0,
+					synm.nstamp, stamp0,
+					synm.org, org,
+					synm.device, "#" + synode
 					);
 		
 		if (handlers != null)
 		for (SemanticHandler h : handlers)
 			if (h instanceof ShSynChange) {
-				Utils.logi("SynEntity registed: %s - %s : %s", myconn, domain, ((ShSynChange)h).entm.tbl);
+				Utils.logi("SynEntity registed: %s - %s : %s", synconn, domain(), ((ShSynChange)h).entm.tbl);
 			}
 
 		return this;
@@ -452,12 +460,12 @@ public class SynDomanager implements OnError {
 						peer, synode);
 
 			if (onUpdate != null)
-				onUpdate.ok(domain, synode, peer, xp);
+				onUpdate.ok(domain(), synode, peer, xp);
 		}
 
 		if (onUpdate != null)
-			onUpdate.ok(domain, synode, null);
-		}, f("%1$s [%2$s]", synode, domain))
+			onUpdate.ok(domain(), synode, null);
+		}, f("%1$s [%2$s]", synode, domain()))
 		.start();
 
 		return this;
@@ -503,8 +511,8 @@ public class SynDomanager implements OnError {
 				.col(synm.synoder, "peer").col(synm.domain).col(synm.jserv)
 				.groupby(synm.synoder)
 				.where_(op.ne, synm.synoder, synode)
-				.whereEq(synm.domain, domain)
-				.rs(t0.instancontxt(myconn, robot))
+				.whereEq(synm.domain, domain())
+				.rs(t0.instancontxt(synconn, robot))
 				.rs(0);
 		
 		if (sessions == null)
@@ -554,7 +562,7 @@ public class SynDomanager implements OnError {
 		}
 
 		if (!isNull(onok))
-				onok[0].ok(domain, synode, null);
+				onok[0].ok(domain(), synode, null);
 
 		return this;
 	}
@@ -580,12 +588,11 @@ public class SynDomanager implements OnError {
 	}
 
 	public DBSyntableBuilder createSyntabuilder(SynodeConfig cfg) throws Exception {
-		notNull(syndomx);
 		notNull(cfg);
-		musteq(syndomx.domain(), cfg.domain);
-		musteq(syndomx.synode, cfg.synode());
-		musteq(syndomx.synconn, cfg.synconn);
+		musteq(domain(), cfg.domain);
+		musteq(synode, cfg.synode());
+		musteq(synconn, cfg.synconn);
 
-		return new DBSyntableBuilder(syndomx);
+		return new DBSyntableBuilder(this);
 	}
 }

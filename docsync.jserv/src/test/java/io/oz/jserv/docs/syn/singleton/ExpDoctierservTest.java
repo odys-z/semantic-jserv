@@ -203,7 +203,7 @@ public class ExpDoctierservTest {
 			jetties[i] = startSyndoctier(cfgs[i], "config.xml", f("$VOLUME_%s/syntity.json", i));
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-						jetties[i].synode(), SynodeMode.peer, docm);
+						cfgs[i].synode(), SynodeMode.peer, docm);
 		}
 		
 		for (int i : nodex) {

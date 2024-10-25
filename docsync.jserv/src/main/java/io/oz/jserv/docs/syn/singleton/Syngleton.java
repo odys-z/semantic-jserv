@@ -53,21 +53,43 @@ import io.oz.syn.SynodeConfig;
 public class Syngleton extends JSingleton {
 	static DBSynTransBuilder.SynmanticsMap synmap;
 
+	/** @deprecated TODO delete */
 	static DBSyntableBuilder synb;
 
 	String jserv;
 
+	/** @deprecated TODO delete */
 	String synconn;
+	/** @deprecated TODO delete */
 	String sysconn;
+	/** @deprecated TODO delete */
 	String synode;
 
 	SyncRobot robot;
+
+	/**
+	 * Last (bug?) url pattern (key in {@link #syndomanagers}) of {@link ExpSynodetier}.
+	 */
+	String syntier_url;
+
+	/**
+	 * { servlet-url-pattern: { domain: domanager } }, only instance of {@link ExpSynodetier},<br>
+	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
+	 */
+	public HashMap<String, HashMap<String, SynDomanager>> syndomanagers;
+
+
+	public void domanagers(HashMap<String, SynDomanager> domains) {
+		this.syndomanagers.put(syntier_url, domains);
+	}
+
+	SynodeMeta synm;
 
 	public Syngleton(String sys_conn, String synid, String syn_conn) {
 		synode = synid;
 		synconn = syn_conn;
 		sysconn = sys_conn;
-		synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
+		syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
 	}
 
 	public void updatePeerJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
@@ -86,23 +108,6 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
-	 * Last (bug?) url pattern (key in {@link #synodetiers}) of {@link ExpSynodetier}.
-	 */
-	String syntier_url;
-	/**
-	 * { servlet-url-pattern: { domain: domanager } }, only instance of {@link ExpSynodetier},<br>
-	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
-	 */
-	public HashMap<String, HashMap<String, SynDomanager>> synodetiers;
-
-
-	public void domanagers(HashMap<String, SynDomanager> domains) {
-		this.synodetiers.put(syntier_url, domains);
-	}
-
-	SynodeMeta synm;
-
-	/**
 	 * Load domains from syn_synode, create {@link SynDomanager} for each domain.
 	 * 
 	 * @param synmod synode mode, peer, hub, etc.
@@ -111,8 +116,8 @@ public class Syngleton extends JSingleton {
 	 * @since 0.2.0
 	 */
 	public Syngleton loadDomains(SynodeMode synmod) throws Exception {
-		if (synodetiers == null)
-			synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
+		if (syndomanagers == null)
+			syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
 
 		synm = new SynodeMeta(synconn); 
 
@@ -130,7 +135,7 @@ public class Syngleton extends JSingleton {
 					synm, rs.getString(synm.org),
 					domain, synode,
 					synconn, synmod, Connects.getDebug(synconn));
-			synodetiers.get(syntier_url).put(domain, domanger);
+			syndomanagers.get(syntier_url).put(domain, domanger);
 		}
 
 		return this;
@@ -148,9 +153,9 @@ public class Syngleton extends JSingleton {
 	 */
 	public Syngleton openDomains(OnDomainUpdate ... onok)
 			throws AnsonException, SsException, IOException, TransException, SQLException {
-		if (synodetiers != null && synodetiers.containsKey(syntier_url)) {
+		if (syndomanagers != null && syndomanagers.containsKey(syntier_url)) {
 			new Thread(()->{
-				for (SynDomanager dmgr : synodetiers.get(syntier_url).values()) {
+				for (SynDomanager dmgr : syndomanagers.get(syntier_url).values()) {
 					try {
 						dmgr.loadSynclients(synb, robot)
 							.openUpdateSynssions(robot, onok);
@@ -172,8 +177,8 @@ public class Syngleton extends JSingleton {
 	 * @return synode id
 	 */
 	public String synode() {
-		if (synodetiers != null && synodetiers.containsKey(syntier_url))
-			for (SynDomanager domanager : synodetiers.get(syntier_url).values())
+		if (syndomanagers != null && syndomanagers.containsKey(syntier_url))
+			for (SynDomanager domanager : syndomanagers.get(syntier_url).values())
 				return domanager.synode;
 		return null;
 	}
@@ -255,18 +260,18 @@ public class Syngleton extends JSingleton {
 	 * @param domain
 	 * @return SynDomanager
 	 * @throws Exception 
-	 */
 	private SynDomanager syntierManager(String org, String domain, SynodeMode mode) throws Exception {
-		if (!synodetiers.containsKey(syntier_url))
-			synodetiers.put(syntier_url, new HashMap<String, SynDomanager>());
+		if (!syndomanagers.containsKey(syntier_url))
+			syndomanagers.put(syntier_url, new HashMap<String, SynDomanager>());
 		
-		if (!synodetiers.get(syntier_url).containsKey(domain)) {
-			synodetiers.get(syntier_url).put(domain,
+		if (!syndomanagers.get(syntier_url).containsKey(domain)) {
+			syndomanagers.get(syntier_url).put(domain,
 				new SynDomanager(synm, org, domain, synode, synconn, mode,
 								Connects.getDebug(sysconn)));
 		}
-		return synodetiers.get(syntier_url).get(domain);
+		return syndomanagers.get(syntier_url).get(domain);
 	}
+	 */
 
 	/**
 	 * Setup sqlite manage database tables, oz_autoseq, a_users with sql script files,

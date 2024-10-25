@@ -47,8 +47,11 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		if (len(domains) > 1)
 			Utils.warnT(new Object() {}, "Multiple domains is an issue for v 2.0.0.");
 
-		for (SynDomanager dm : domains.values())
-			domanager0 = SynDomanager.clone(dm);
+		for (SynDomanager dm : domains.values()) {
+			// domanager0 = SynDomanager.clone(dm);
+			domanager0 = dm; // FIXME Error prone!
+			break;
+		}
 		return this;
 	}
 
@@ -103,7 +106,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (domanager0.synssion(req.exblock.srcnode) == null)
 					throw new SemanticException(
 						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
-						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.myconn, domanager0.domain);
+						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
 
 				ExchangeBlock b = domanager0
 						.synssion(req.exblock.srcnode)
@@ -116,7 +119,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (domanager0.synssion(req.exblock.srcnode) == null)
 					throw new SemanticException(
 						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
-						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.myconn, domanager0.domain);
+						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
 				rsp = domanager0.onclosex(req, usr);
 			}
 

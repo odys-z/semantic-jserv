@@ -125,10 +125,10 @@ public class SynotierJettyApp {
 	
 		HashMap<String, SynDomanager> domains = new HashMap<String, SynDomanager>();
 		domains.put(domain, new SynDomanager(new SynodeMeta(cfg.synconn), robot.orgId(),
-				domain, synid, cfg.synconn, SynodeMode.peer, Connects.getDebug(cfg.synconn)));
+				domain, synid, cfg.synconn, SynodeMode.peer, Connects.getDebug(cfg.synconn)).loadomain());
 
-		domains .get(domain)
-				.born(synapp.synchandlers, 0, 0);
+		// domains.get(domain).loadomain();
+			// .born(synapp.synchandlers, 0, 0);
 		
 		synapp.syngleton.domanagers(domains);
 	
@@ -190,7 +190,7 @@ public class SynotierJettyApp {
 			context.addServlet(new ServletHolder(t), pattern);
 			
 			if (t instanceof ExpSynodetier) {
-				syngleton.synodetiers.put(pattern, ((ExpSynodetier)t).domains);
+				syngleton.syndomanagers.put(pattern, ((ExpSynodetier)t).domains);
 				syngleton.syntier_url = pattern;
 			}
 		}
@@ -209,12 +209,12 @@ public class SynotierJettyApp {
 	}
 	
 	public HashMap<String,HashMap<String,SynDomanager>> synodetiers() {
-		return syngleton.synodetiers;
+		return syngleton.syndomanagers;
 	}
 
-	public String synode() {
-		return syngleton.synode;
-	}
+//	public String synode() {
+//		return syngleton.synode;
+//	}
 
 	public String jserv() {
 		return syngleton.jserv;
@@ -278,7 +278,7 @@ public class SynotierJettyApp {
 	    String addrhost  = inet.getHostAddress();
 		synapp.syngleton.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
 	
-	    synapp.syngleton.synodetiers = new HashMap<String, HashMap<String, SynDomanager>>();
+	    synapp.syngleton.syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
 	    
 	    return synapp;
 	}	

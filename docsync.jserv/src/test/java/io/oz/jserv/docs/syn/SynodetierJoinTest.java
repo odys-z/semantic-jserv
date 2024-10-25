@@ -143,7 +143,7 @@ public class SynodetierJoinTest {
 			jetties[i] = startSyndoctier(config, f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-								jetties[i].synode(), SynodeMode.peer, docm);
+								config.synode(), SynodeMode.peer, docm);
 		}
 	}
 
@@ -235,9 +235,9 @@ public class SynodetierJoinTest {
 							}
 
 						if (isblank(peer))
-						if (eq(domain, dom) && eq(mynid, jetties[tx].synode())) {
+						if (eq(domain, dom)) {
 							lights[tx] = true;
-							Utils.logi("lights[%s] = true", tx);
+							Utils.logi("lights[%s] (%s) = true", tx, mynid);
 						}
 						else {
 							// DBSyntableBuilder trb = isNull(xp) ? null : xp[0].trb;

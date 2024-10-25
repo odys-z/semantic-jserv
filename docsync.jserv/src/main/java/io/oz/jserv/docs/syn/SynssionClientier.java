@@ -50,7 +50,7 @@ public class SynssionClientier {
 
 	String domain() {
 		// return xp != null && xp.trb != null ? xp.trb.domain() : null;
-		return domanager.domain;
+		return domanager.domain();
 	}
 
 	SynodeMode mymode;
@@ -73,11 +73,11 @@ public class SynssionClientier {
 	private boolean debug;
 
 	public SynssionClientier(SynDomanager domanager, String peer, String peerjserv) throws ExchangeException {
-		this.conn      = domanager.myconn;
+		this.conn      = domanager.synconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
 		this.peer      = peer;
-		this.mymode    = domanager.synmod;
+		this.mymode    = domanager.mode;
 		this.peerjserv = peerjserv;
 		
 		// this.synlock  = new ReentrantLock();
@@ -85,7 +85,7 @@ public class SynssionClientier {
 		
 		this.clienturi = uri_sys;
 		
-		this.debug     = Connects.getDebug(domanager.myconn);
+		this.debug     = Connects.getDebug(domanager.synconn);
 	}
 
 	/**
@@ -156,7 +156,7 @@ public class SynssionClientier {
 	 * @throws Exception 
 	 */
 	ExchangeBlock exesinit() throws Exception {
-		DBSyntableBuilder b0 = new DBSyntableBuilder(domanager.syndomx);
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domanager);
 		xp = new ExessionPersist(b0, peer, null);
 		return b0.initExchange(xp);
 	}
@@ -174,7 +174,7 @@ public class SynssionClientier {
 		if (!eq(ini.srcnode, peer))
 			throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
-		DBSyntableBuilder b0 = new DBSyntableBuilder(domanager.syndomx);
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domanager);
 		xp = new ExessionPersist(b0, peer, ini);
 		ExchangeBlock b = b0.onInit(xp, ini);
 
@@ -289,15 +289,15 @@ public class SynssionClientier {
 	}
 
 	public SyncReq closejoin(String admin, SyncResp rep) throws TransException, SQLException {
-		if (!eq(notNull(rep.domain), domanager.domain))
+		if (!eq(notNull(rep.domain), domanager.domain()))
 			throw new ExchangeException(close, xp,
 				"Close joining session for different ids? Rep.domain: %s, Domanager.domain: %s",
-				rep.domain, domanager.domain);
+				rep.domain, domanager.domain());
 
 		xp.trb.domainitMe(xp, admin, peerjserv, rep.domain, rep.exblock);
 
 		ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
-		return new SyncReq(null, domanager.domain)
+		return new SyncReq(null, domanager.domain())
 				.exblock(req);
 	}
 }
