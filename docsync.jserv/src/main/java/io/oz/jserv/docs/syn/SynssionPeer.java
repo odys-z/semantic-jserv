@@ -33,7 +33,7 @@ import io.oz.jserv.docs.syn.SyncReq.A;
 /**
  * TODO rename to Synssion, for this is used in both sides?
  */
-public class SynssionClientier {
+public class SynssionPeer {
 
 	static String uri_syn = "/syn";
 	static String uri_sys = "/sys";
@@ -62,7 +62,7 @@ public class SynssionClientier {
 	final Object peerlock;
 
 	OnError errHandler;
-	public SynssionClientier onErr(OnError err) {
+	public SynssionPeer onErr(OnError err) {
 		errHandler = err;
 		return this;
 	}
@@ -70,7 +70,7 @@ public class SynssionClientier {
 	protected SessionClient client;
 	private boolean debug;
 
-	public SynssionClientier(SynDomanager domanager, String peer, String peerjserv) throws ExchangeException {
+	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv) throws ExchangeException {
 		this.conn      = domanager.synconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
@@ -94,7 +94,7 @@ public class SynssionClientier {
 	 * @throws ExchangeException not ready yet.
 	 * @since 0.2.0
 	 */
-	public SynssionClientier update2peer(OnMutexLock onMutext) throws ExchangeException {
+	public SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
 					"Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
@@ -241,7 +241,7 @@ public class SynssionClientier {
 		return null;
 	}
 
-	public SynssionClientier xp(ExessionPersist xp) {
+	public SynssionPeer xp(ExessionPersist xp) {
 		this.xp = xp;
 		return this;
 	}

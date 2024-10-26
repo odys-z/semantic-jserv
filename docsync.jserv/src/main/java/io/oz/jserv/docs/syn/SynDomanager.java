@@ -120,13 +120,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * {peer: session-persist}
 	 * @since 0.2.0
 	 */
-	HashMap<String, SynssionClientier> sessions;
+	HashMap<String, SynssionPeer> sessions;
 	
 	/**
 	 * Expired synssion, only for tests.
 	 * @since 0.2.0
 	 */
-	public SynssionClientier expiredClientier;
+	public SynssionPeer expiredClientier;
 
 	OnError errHandler;
 	
@@ -137,15 +137,15 @@ public class SynDomanager extends SyndomContext implements OnError {
 				null : expiredClientier.xp.n0();
 	}
 
-	public SynssionClientier synssion(String peer) {
+	public SynssionPeer synssion(String peer) {
 		return sessions != null
 				? sessions.get(peer)
 				: null;
 	}
 
-	SynDomanager synssion(String peer, SynssionClientier client) throws ExchangeException {
+	SynDomanager synssion(String peer, SynssionPeer client) throws ExchangeException {
 		if (sessions == null)
-			sessions = new HashMap<String, SynssionClientier>();
+			sessions = new HashMap<String, SynssionPeer>();
 
 		if (synssion(peer) != null && synssion(peer).xp.exstate() != ready)
 			throw new ExchangeException(ready, synssion(peer).xp,
@@ -156,7 +156,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 
-	private SynssionClientier delession(String peer) {
+	private SynssionPeer delession(String peer) {
 		if (sessions != null && sessions.containsKey(peer))
 			return sessions.remove(peer);
 		return null;
@@ -201,14 +201,14 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public SynssionClientier join2peer(String adminjserv, String peeradmin, String userId, String passwd) throws Exception {
+	public SynssionPeer join2peer(String adminjserv, String peeradmin, String userId, String passwd) throws Exception {
 
 		DBSyntableBuilder cltb = new DBSyntableBuilder(this);
 
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
 
-		SynssionClientier c = new SynssionClientier(this, peeradmin, adminjserv)
+		SynssionPeer c = new SynssionPeer(this, peeradmin, adminjserv)
 							.xp(cltp)
 							.onErr(this);
 
@@ -251,7 +251,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 				ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
 				// FIXME why need a Synssion here?
-				synssion(peer, new SynssionClientier(this, peer, null)
+				synssion(peer, new SynssionPeer(this, peer, null)
 						.xp(admp.exstate(ready)));
 			
 				return new SyncResp(domain()).exblock(resp);
@@ -344,7 +344,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		
 		synlocker = usr;
 
-		SynssionClientier c = new SynssionClientier(this, peer, null);
+		SynssionPeer c = new SynssionPeer(this, peer, null);
 		synssion(peer, c); // rename clientier to worker?
 		return c.onsyninit(req, domain());
 	}
@@ -370,7 +370,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	public SyncResp onclosex(SyncReq req, DocUser usr) throws TransException, SQLException {
-		SynssionClientier c = synssion(req.exblock.srcnode);
+		SynssionPeer c = synssion(req.exblock.srcnode);
 		
 		if (!eq(synlocker.sessionId(), usr.sessionId()))
 			return lockerr(c.peer);
@@ -501,7 +501,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			throw new ExchangeException(close, null,
 				"SynssionClientier already exists. Duplicated singup?");
 		
-		SynssionClientier c = join2peer(admserv, admid, myuid, mypswd);
+		SynssionPeer c = join2peer(admserv, admid, myuid, mypswd);
 
 		c.joindomain(admid, myuid, mypswd, (resp) -> {
 			sessions.put(admid, c);
@@ -528,15 +528,15 @@ public class SynDomanager extends SyndomContext implements OnError {
 				.rs(0);
 		
 		if (sessions == null)
-			sessions = new HashMap<String, SynssionClientier>();
+			sessions = new HashMap<String, SynssionPeer>();
 		
 		while (rs.next()) {
 			String peer = rs.getString("peer");
-			SynssionClientier c = new SynssionClientier(this, peer, rs.getString(synm.jserv))
+			SynssionPeer c = new SynssionPeer(this, peer, rs.getString(synm.jserv))
 								.onErr(errHandler);
 
 			if (dbg && sessions.containsKey(peer)) {
-				SynssionClientier target = sessions.get(peer);
+				SynssionPeer target = sessions.get(peer);
 				if ( !eq(c.domain(), target.domain())
 				  || !eq(c.conn, target.conn)
 				  || c.mymode != target.mymode
@@ -568,7 +568,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager openUpdateSynssions(SyncRobot dbrobot, OnDomainUpdate... onok)
 			throws AnsonException, SsException, IOException, TransException {
 
-		for (SynssionClientier c : sessions.values()) {
+		for (SynssionPeer c : sessions.values()) {
 			c.loginWithUri(c.peerjserv, dbrobot.uid(), dbrobot.pswd(), dbrobot.deviceId());
 			c.update2peer(() -> 3);
 		}
