@@ -99,7 +99,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				rsp = domanager0.onjoin(req, usr);
 
 			else if (A.closejoin.equals(a))
-				rsp = domanager0.onclosejoin(req);
+				rsp = domanager0.onclosejoin(req, usr);
 
 			else if (A.exinit.equals(a)) 
 				rsp = domanager0.onsyninit(req, usr);

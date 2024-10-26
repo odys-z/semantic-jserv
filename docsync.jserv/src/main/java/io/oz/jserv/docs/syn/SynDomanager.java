@@ -167,28 +167,16 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 		super(mod, dom, myid, conn);
 
-//		synode   = myid;
-//		myconn   = conn;
-//		domain   = dom;
-//		synmod   = mod;
-
 		this.org = org;
 		this.dbg = debug;
-//		this.synm= synm;
 		
 		errHandler = (e, r, a) -> {
 			Utils.warn("Error code: %s,\n%s", e.name(), String.format(r, (Object[])a));
 		};
 		
 		tb0 = new DATranscxt(conn);
-		
-		// syndomx = loadomx(dom, tb0);
 	}
 	
-//	public static SynDomanager clone(SynDomanager dm) throws Exception {
-//		return new SynDomanager(dm.synm, dm.org, dm.domain, dm.synode, dm.myconn, dm.synmod, dm.dbg);
-//	}
-
 	/**
 	 * Sing up, then start a synssion to the peer, {@code peeradmin}.
 	 * 
@@ -258,7 +246,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 			}
 			else return trylater(peer);
 		} catch (Exception e) {
-			synlock.unlock();
+			// synlock.unlock();
+			unlockx(usr);
 			throw e;
 		}
 	}
@@ -276,7 +265,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 				new ExessionAct(mode_server, ExessionAct.lockerr)));
 	}
 
-	public SyncResp onclosejoin(SyncReq req) throws TransException, SQLException {
+	public SyncResp onclosejoin(SyncReq req, IUser usr) throws TransException, SQLException {
 		String apply = req.exblock.srcnode;
 		try {
 			ExessionPersist sp = synssion(apply).xp;
@@ -285,7 +274,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 		} finally {
 			try { expiredClientier = delession(apply); }
 			catch (Throwable t) { t.printStackTrace(); }
-			synlock.unlock();
+			// synlock.unlock();
+			unlockx(usr);
 		}
 	}
 
@@ -339,10 +329,14 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 		// musteq(peer, usr.deviceId());
 
+		/*
 		if (!synlock.tryLock())
 			return trylater(peer);
 		
 		synlocker = usr;
+		*/
+		if (!lockx(usr))
+			return trylater(peer);
 
 		SynssionPeer c = new SynssionPeer(this, peer, null);
 		synssion(peer, c); // rename clientier to worker?
@@ -376,7 +370,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			return lockerr(c.peer);
 		else {
 			try { return c.onsynclose(req.exblock); }
-			finally { synlock.unlock(); }
+			finally { unlockx(usr); }
 		}
 	}
 	
@@ -449,7 +443,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			throw new ExchangeException(ready, null,
 						"Session pool is null at %s", synode);
 		
-		while (!synlock.tryLock()) {
+		while (!lockx(robot)) {
 			int wait = block.blockms(synlocker);
 			if (wait < 0)
 				return this;
@@ -581,20 +575,21 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 
 	////////////////////////////////////////////////////////////////////////////
-	final ReentrantLock synlock = new ReentrantLock(); 
+	final ReentrantLock sylock = new ReentrantLock(); 
 	IUser synlocker;
 //	int locktouchms = Integer.MIN_VALUE;
 //	int lockexpire  = Integer.MAX_VALUE;
 	
 	public void unlockx(IUser usr) {
 		if (synlocker != null && eq(synlocker.sessionId(), usr.sessionId())) {
-			synlock.unlock();
+			System.err.print(f("---------- unlocking -------\nlock at %s : %s\nuser: %s\n%s", synode, sylock, synlocker.uid(), synlocker));
+			sylock.unlock();
 			synlocker = null;
 		}
 	}
 
 	private boolean lockx(IUser usr) {
-		if (synlock.tryLock())
+		if (sylock.tryLock())
 			synlocker = usr;
 		return true;
 	}

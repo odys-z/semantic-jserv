@@ -23,6 +23,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
+import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
@@ -58,9 +59,6 @@ public class SynssionPeer {
 
 	ExessionPersist xp;
 
-	/** Exclusive lock for avoiding Synssions initiated from both side */
-	final Object peerlock;
-
 	OnError errHandler;
 	public SynssionPeer onErr(OnError err) {
 		errHandler = err;
@@ -77,12 +75,7 @@ public class SynssionPeer {
 		this.peer      = peer;
 		this.mymode    = domanager.mode;
 		this.peerjserv = peerjserv;
-		
-		// this.synlock  = new ReentrantLock();
-		this.peerlock  = new Object();
-		
 		this.clienturi = uri_sys;
-		
 		this.debug     = Connects.getDebug(domanager.synconn);
 	}
 

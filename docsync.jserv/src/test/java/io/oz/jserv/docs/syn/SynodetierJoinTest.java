@@ -35,6 +35,7 @@ import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
