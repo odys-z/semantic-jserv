@@ -5,6 +5,7 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
+import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqlitables;
 
@@ -54,7 +55,9 @@ public class Syngleton extends JSingleton {
 	static DBSynTransBuilder.SynmanticsMap synmap;
 
 	/** @deprecated TODO delete */
-	static DBSyntableBuilder synb;
+	// static DBSyntableBuilder synb;
+	/** */
+	static DATranscxt synb;
 
 	String jserv;
 
@@ -116,8 +119,13 @@ public class Syngleton extends JSingleton {
 	 * @since 0.2.0
 	 */
 	public Syngleton loadDomains(SynodeMode synmod) throws Exception {
+		notNull(syntier_url);
+		
 		if (syndomanagers == null)
 			syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
+
+		if (!syndomanagers.containsKey(syntier_url))
+			syndomanagers.put(syntier_url, new HashMap<String, SynDomanager>());
 
 		synm = new SynodeMeta(synconn); 
 
@@ -335,13 +343,13 @@ public class Syngleton extends JSingleton {
 	 * Initialize syn_* tables' records, must be called after {@link SynodetierJoinTest#initSysRecords()}.
 	 * 
 	 * @param conn
-	 * @throws TransException 
-	 * @throws SQLException 
+	 * @throws Exception 
 	 */
-	static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws TransException, SQLException {
+	static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 		
 		if (peers != null && peers.length > 0) {
+			synb = new DATranscxt(cfg.synconn);
 			SynodeMeta synm = new SynodeMeta(cfg.synconn);
 			Delete del = synb.delete(synm.tbl, usr)
 						.whereEq(synm.domain, cfg.domain);
@@ -354,7 +362,7 @@ public class Syngleton extends JSingleton {
 	}
 
 	public static void cleanDomain(SynodeConfig cfg)
-			throws TransException, SQLException {
+			throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 
 		SynodeMeta    synm = new SynodeMeta(cfg.synconn);
@@ -362,6 +370,9 @@ public class Syngleton extends JSingleton {
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
 
+		if (synb == null)
+			synb = new DATranscxt(cfg.synconn);
+		
 		synb.delete(synm.tbl, usr)
 			.whereEq(synm.domain, cfg.domain)
 			.post(synb.delete(chgm.tbl)
@@ -373,14 +384,16 @@ public class Syngleton extends JSingleton {
 			.d(synb.instancontxt(cfg.synconn, usr));
 	}
 
-	public static void cleanSynssions(SynodeConfig cfg)
-			throws TransException, SQLException {
+	public static void cleanSynssions(SynodeConfig cfg) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 
 		// SynodeMeta    synm = new SynodeMeta(cfg.synconn);
 		SynChangeMeta chgm = new SynChangeMeta (cfg.synconn);
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
+
+		if (synb == null)
+			synb = new DATranscxt(cfg.synconn);
 
 		synb.delete(chgm.tbl, usr)
 			.whereEq(chgm.domain, cfg.domain)

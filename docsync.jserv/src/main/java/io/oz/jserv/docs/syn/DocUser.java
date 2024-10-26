@@ -9,6 +9,7 @@ import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jsession.JUser;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.x.DocsException;
@@ -51,56 +52,8 @@ public class DocUser extends JUser implements IUser {
 	public DocUser(String userid) throws SemanticException {
 		super(userid, null, userid);
 	}
-	
-	/*
-	@Override
-	public IUser onCreate(Anson withSession) throws SsException {
-		if (withSession instanceof AnResultset) {
-			AnResultset rs = (AnResultset) withSession;
-			try {
-				rs.beforeFirst().next();
-				roleId = rs.getString(userMeta.role);
-				userName = rs.getString(userMeta.uname);
-				orgId = rs.getString(userMeta.org);
-				roleName = rs.getString(userMeta.org);
-				orgName = rs.getString(userMeta.orgName);
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-		if (withSession instanceof AnSessionReq) {
-			deviceId = ((AnSessionReq)withSession).deviceId();
-			if (LangExt.isblank(deviceId, "/", "\\."))
-				Utils.logi("User %s logged in on %s as read only mode.",
-						((AnSessionReq)withSession).uid(), new Date().toString());
-		}
-		return this;
-	}
-	 */
 
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
-
-//	@Override public boolean login(Object reqObj) throws TransException {
-//		AnSessionReq req = (AnSessionReq)reqObj;
-//		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
-//		byte[] ssiv = AESHelper.decode64(req.iv());
-//		String c = null;
-//		try { c = AESHelper.encrypt(userId, pswd, ssiv); }
-//		catch (Exception e) { throw new TransException (e.getMessage()); }
-//
-//		// 2. compare pswd-cipher with j.pswd
-//		if (c.equals(req.token())) {
-//			touch();
-//			return true;
-//		}
-//
-//		return false;
-//	}
-
-//	@Override public IUser touch() {
-//		touched = System.currentTimeMillis();
-//		return this;
-//	} 
 
 	protected Set<String> tempDirs;
 	
@@ -127,4 +80,14 @@ public class DocUser extends JUser implements IUser {
 		tempDirs.add(tempDir);
 		return tempDir;
 	}
+	
+	SynDomanager domanager;
+
+	@Override
+	public SemanticObject logout() {
+		if (domanager != null)
+			domanager.unlockx(this);
+		return super.logout();
+	}
+
 }

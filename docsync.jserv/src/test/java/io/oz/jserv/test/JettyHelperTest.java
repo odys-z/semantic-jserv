@@ -50,6 +50,7 @@ public class JettyHelperTest {
 		}
 	}
 
+	public static final String syntity_json = "syntity.json";
 	public static final String clientUri = "/jetty";
 	public static final String webinf    = "./src/test/res/WEB-INF";
 	public static final String testDir   = "./src/test/res/";
@@ -160,14 +161,16 @@ public class JettyHelperTest {
 
 		Syngleton.setupSysRecords(cfg, tierobot);
 
-		return SynotierJettyApp
+		SynotierJettyApp app = SynotierJettyApp
 			.registerPorts(
 				SynotierJettyApp.instanserver(webinf, cfg, "config.xml", "127.0.0.1", port, tierobot.get(0)),
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
-				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
-			.addServPort(new ExpDoctier(cfg.synode(), conn, conn)
-			.create("URA", "zsu", "syntity.json", SynodeMode.peer))
+				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }));
+		
+		ExpDoctier expDoctier = new ExpDoctier(cfg.synode(), conn, conn);
+		
+		return app.addServPort(expDoctier)
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;
 	}

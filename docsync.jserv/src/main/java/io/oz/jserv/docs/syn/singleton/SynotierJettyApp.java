@@ -35,6 +35,7 @@ import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
@@ -123,20 +124,22 @@ public class SynotierJettyApp {
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
-		HashMap<String, SynDomanager> domains = new HashMap<String, SynDomanager>();
-		domains.put(domain, new SynDomanager(new SynodeMeta(cfg.synconn), robot.orgId(),
-				domain, synid, cfg.synconn, SynodeMode.peer, Connects.getDebug(cfg.synconn)).loadomain());
+		HashMap<String, SynDomanager> domanagers = new HashMap<String, SynDomanager>();
+		domanagers.put(domain,
+				new SynDomanager(new SynodeMeta(cfg.synconn), robot.orgId(),
+						domain, synid, cfg.synconn, SynodeMode.peer, Connects.getDebug(cfg.synconn)
+				).loadomainx(robot));
 
 		// domains.get(domain).loadomain();
 			// .born(synapp.synchandlers, 0, 0);
 		
-		synapp.syngleton.domanagers(domains);
-	
+		SynDomanager domanger = domanagers.get(cfg.domain);
 		ExpDoctier doctier  = new ExpDoctier(synid, cfg.sysconn, cfg.synconn)
-							.create(robot.orgId(), domain, syntity_json, SynodeMode.peer)
-							.domains(domains);
-		ExpSynodetier syner = new ExpSynodetier(robot.orgId(), domain, synid, cfg.synconn, SynodeMode.peer)
-							.domains(domains);
+							.create(domanger, syntity_json);
+
+//		ExpSynodetier syner = new ExpSynodetier(cfg.org, domain, synid, cfg.synconn, SynodeMode.peer)
+//							.domains(domanagers);
+		ExpSynodetier syner = new ExpSynodetier(domanger);
 		
 		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
@@ -190,7 +193,7 @@ public class SynotierJettyApp {
 			context.addServlet(new ServletHolder(t), pattern);
 			
 			if (t instanceof ExpSynodetier) {
-				syngleton.syndomanagers.put(pattern, ((ExpSynodetier)t).domains);
+//				syngleton.syndomanagers.put(pattern, ((ExpSynodetier)t).domains);
 				syngleton.syntier_url = pattern;
 			}
 		}
@@ -211,10 +214,6 @@ public class SynotierJettyApp {
 	public HashMap<String,HashMap<String,SynDomanager>> synodetiers() {
 		return syngleton.syndomanagers;
 	}
-
-//	public String synode() {
-//		return syngleton.synode;
-//	}
 
 	public String jserv() {
 		return syngleton.jserv;
@@ -281,6 +280,10 @@ public class SynotierJettyApp {
 	    synapp.syngleton.syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
 	    
 	    return synapp;
+	}
+
+	public Syngleton syngleton() {
+		return syngleton;
 	}	
 
 }

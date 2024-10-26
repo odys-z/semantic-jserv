@@ -77,13 +77,21 @@ public class SynDomanager extends SyndomContext implements OnError {
 		 */
 		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
 	}
+	
+	@FunctionalInterface
+	public interface OnMutexLock {
+		/**
+		 * @return sleeping seconds for a next try.
+		 */
+		public int locked();
+	}
 
 	/**
 	 * @since 0.2.0
 	 */
 	@FunctionalInterface
 	public interface OnBlocked {
-		public int blockms(SyncJUser synlocker);
+		public int blockms(IUser synlocker);
 	 }
 
 	static final String dom_unknown = null;
@@ -225,7 +233,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public SyncResp onjoin(SyncReq req, SyncJUser usr) throws Exception {
+	public SyncResp onjoin(SyncReq req, DocUser usr) throws Exception {
 
 		String peer = req.exblock.srcnode;
 
@@ -321,14 +329,15 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	private SyncResp onsyninit(ExchangeBlock req, SyncJUser usr) throws Exception {
-		if (DAHelper.count(tb0, synconn, synm.tbl, synm.synoder, req, synm.domain, domain()) == 0)
+	private SyncResp onsyninit(ExchangeBlock req, DocUser usr) throws Exception {
+		String peer = req.srcnode;
+
+		if (DAHelper.count(tb0, synconn, synm.tbl, synm.synoder, peer, synm.domain, domain()) == 0)
 			throw new ExchangeException(init, null,
 					"This synode, %s, cannot respond to exchange initiation without knowledge of %s.",
 					synode, req);
 
-		String peer = req.srcnode;
-		musteq(peer, usr.deviceId());
+		// musteq(peer, usr.deviceId());
 
 		if (!synlock.tryLock())
 			return trylater(peer);
@@ -340,7 +349,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return c.onsyninit(req, domain());
 	}
 
-	public SyncResp onsyninit(SyncReq req, SyncJUser usr) throws Exception {
+	public SyncResp onsyninit(SyncReq req, DocUser usr) throws Exception {
 		if (synssion(req.exblock.srcnode) != null) {
 			ExessionPersist xp = synssion(req.exblock.srcnode).xp;
 			
@@ -360,7 +369,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return onsyninit(req.exblock, usr);
 	}
 
-	public SyncResp onclosex(SyncReq req, SyncJUser usr) throws TransException, SQLException {
+	public SyncResp onclosex(SyncReq req, DocUser usr) throws TransException, SQLException {
 		SynssionClientier c = synssion(req.exblock.srcnode);
 		
 		if (!eq(synlocker.sessionId(), usr.sessionId()))
@@ -371,13 +380,16 @@ public class SynDomanager extends SyndomContext implements OnError {
 		}
 	}
 	
-	public SynDomanager loadomain() {
+	public SynDomanager loadomainx(IUser usr) throws TransException, SQLException {
+		Utils.logi("\n[ ♻.%s ] loading domain %s ...", synode, domain());
+
+		loadNvstamp(tb0, usr);
 		
 		return this;
 	}
 
 	/**
-	 * @deprecated replaced by {@link #loadb()}
+	 * @deprecated replaced by {@link #loadomainx(IUser)}
 	 * Born or reborn, with synode's n0 and stamp created, then load all configured
 	 * tables of {@link ShSynChange}.
 	 * 
@@ -390,14 +402,14 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 */
 	public SynDomanager born(List<SemanticHandler> handlers, long n0, long stamp0)
 			throws Exception {
-		// SynodeMeta snm = new SynodeMeta(synconn);
-		DATranscxt b0 = new DATranscxt(null);
 		IUser robot = new JRobot();
 
-		if (DAHelper.count(b0, synconn, synm.tbl, synm.synoder, synode, synm.domain, domain()) > 0)
-			Utils.warnT(new Object() {}, "\n[ ♻.✩ ] Syn-domain manager restart upon domain '%s' ...", domain());
+		if (DAHelper.count(tb0, synconn, synm.tbl, synm.synoder, synode, synm.domain, domain()) > 0)
+			Utils.warnT(new Object() {},
+					"\n[ ♻.✩ ] Syn-domain manager restart upon domain '%s' ...",
+					domain());
 		else
-			DAHelper.insert(robot, b0, synconn, synm,
+			DAHelper.insert(robot, tb0, synconn, synm,
 					synm.synuid, synode,
 					synm.pk, synode,
 					synm.domain, domain(),
@@ -449,7 +461,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			ExessionPersist xp = sessions.get(peer).xp;
 			if (xp != null && xp.exstate() == ready)
 				try {
-					sessions.get(peer).update2peer();
+					sessions.get(peer).update2peer(() -> 3);
 				} catch (ExchangeException e) {
 					e.printStackTrace();
 				}
@@ -558,7 +570,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 		for (SynssionClientier c : sessions.values()) {
 			c.loginWithUri(c.peerjserv, dbrobot.uid(), dbrobot.pswd(), dbrobot.deviceId());
-			c.update2peer();
+			c.update2peer(() -> 3);
 		}
 
 		if (!isNull(onok))
@@ -570,18 +582,18 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	////////////////////////////////////////////////////////////////////////////
 	final ReentrantLock synlock = new ReentrantLock(); 
-	SyncJUser synlocker;
+	IUser synlocker;
 //	int locktouchms = Integer.MIN_VALUE;
 //	int lockexpire  = Integer.MAX_VALUE;
 	
-	public void unlockx(SyncJUser usr) {
+	public void unlockx(IUser usr) {
 		if (synlocker != null && eq(synlocker.sessionId(), usr.sessionId())) {
 			synlock.unlock();
 			synlocker = null;
 		}
 	}
 
-	private boolean lockx(SyncJUser usr) {
+	private boolean lockx(IUser usr) {
 		if (synlock.tryLock())
 			synlocker = usr;
 		return true;

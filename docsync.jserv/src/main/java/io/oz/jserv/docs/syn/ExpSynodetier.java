@@ -2,14 +2,11 @@ package io.oz.jserv.docs.syn;
 
 import static io.oz.jserv.docs.syn.SyncReq.A;
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -41,26 +38,31 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	SynDomanager domanager0;
 
 	/** {domain: {jserv: exession-persist}} */
-	public HashMap<String, SynDomanager> domains;
-	public ExpSynodetier domains(HashMap<String, SynDomanager> domains) throws Exception {
-		this.domains = domains;
-		if (len(domains) > 1)
-			Utils.warnT(new Object() {}, "Multiple domains is an issue for v 2.0.0.");
+//	public HashMap<String, SynDomanager> domains;
+//	public ExpSynodetier domains(HashMap<String, SynDomanager> domains) throws Exception {
+//		this.domains = domains;
+//		if (len(domains) > 1)
+//			Utils.warnT(new Object() {}, "Multiple domains is an issue for v 2.0.0.");
+//
+//		for (SynDomanager dm : domains.values()) {
+//			// domanager0 = SynDomanager.clone(dm);
+//			domanager0 = dm; // FIXME Error prone!
+//			break;
+//		}
+//		return this;
+//	}
 
-		for (SynDomanager dm : domains.values()) {
-			// domanager0 = SynDomanager.clone(dm);
-			domanager0 = dm; // FIXME Error prone!
-			break;
-		}
-		return this;
-	}
-
-	public ExpSynodetier(String org, String domain, String synode, String conn, SynodeMode mode)
+	ExpSynodetier(String org, String domain, String synode, String conn, SynodeMode mode)
 			throws SQLException, SAXException, IOException, TransException {
 		super(Port.syntier);
 		this.domain = domain;
 		this.synid  = synode;
 		this.mode   = mode;
+	}
+
+	public ExpSynodetier(SynDomanager domanger) throws SQLException, SAXException, IOException, TransException {
+		this(domanger.org, domanger.domain(), domanger.synode, domanger.synconn, domanger.mode);
+		domanager0 = domanger;
 	}
 
 	@Override
@@ -79,7 +81,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		try {
 			SyncReq req = jmsg.body(0);
 
-			SyncJUser usr = (SyncJUser) JSingleton.getSessionVerifier().verify(jmsg.header());
+			DocUser usr = (DocUser) JSingleton.getSessionVerifier().verify(jmsg.header());
 			
 			if (req.exblock != null) {
 				if (!isblank(req.exblock.domain) && !eq(req.exblock.domain, domain))

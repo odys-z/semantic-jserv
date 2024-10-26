@@ -4,10 +4,7 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
-import static io.odysz.semantic.syn.ExessionAct.close;
-import static io.odysz.semantic.syn.ExessionAct.deny;
-import static io.odysz.semantic.syn.ExessionAct.init;
-import static io.odysz.semantic.syn.ExessionAct.ready;
+import static io.odysz.semantic.syn.ExessionAct.*;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -30,6 +27,7 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.SynDomanager.OnMutexLock;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
 /**
@@ -91,11 +89,12 @@ public class SynssionClientier {
 	/**
 	 * [Synchronous]<br>
 	 * Start a domain updating process (handshaking) with this.peer, in this.domain.
+	 * @param onMutext 
 	 * @return this
 	 * @throws ExchangeException not ready yet.
 	 * @since 0.2.0
 	 */
-	public SynssionClientier update2peer() throws ExchangeException {
+	public SynssionClientier update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
 					"Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
@@ -110,14 +109,24 @@ public class SynssionClientier {
 						+ "\n=============================================================\n",
 						domain(), mynid, peer);
 
-//			synlock.lock();
 			ExchangeBlock reqb = exesinit();
 			rep = exespush(peer, A.exinit, reqb);
 
 			if (rep != null) {
+				while (rep.synact() == trylater) {
+					int sleep = onMutext.locked();
+					if (sleep > 0)
+						Thread.sleep(sleep * 1000);
+					else if (sleep < 0)
+						return this;
+					else
+						rep = exespush(peer, A.exinit, reqb);
+				}
+
 				if (rep.exblock != null && rep.exblock.synact() != deny) {
 					// on start reply
 					onsyninit(rep.exblock, rep.domain);
+						
 					while (rep.synact() != close) {
 						ExchangeBlock exb = syncdb(rep.exblock);
 						rep = exespush(peer, A.exchange, exb);
