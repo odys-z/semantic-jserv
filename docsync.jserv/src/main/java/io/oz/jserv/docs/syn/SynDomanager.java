@@ -568,7 +568,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		}
 
 		if (!isNull(onok))
-				onok[0].ok(domain(), synode, null);
+			onok[0].ok(domain(), synode, null);
 
 		return this;
 	}
@@ -577,21 +577,26 @@ public class SynDomanager extends SyndomContext implements OnError {
 	////////////////////////////////////////////////////////////////////////////
 	final ReentrantLock sylock = new ReentrantLock(); 
 	IUser synlocker;
-//	int locktouchms = Integer.MIN_VALUE;
-//	int lockexpire  = Integer.MAX_VALUE;
 	
 	public void unlockx(IUser usr) {
 		if (synlocker != null && eq(synlocker.sessionId(), usr.sessionId())) {
-			System.err.print(f("---------- unlocking -------\nlock at %s : %s\nuser: %s\n%s", synode, sylock, synlocker.uid(), synlocker));
+			System.err.print(f("\n---------- unlocking -------\n"
+					+ "lock at %s : %s\nuser: %s\n%s",
+					synode, sylock, synlocker.uid(), synlocker));
 			sylock.unlock();
 			synlocker = null;
 		}
 	}
 
 	private boolean lockx(IUser usr) {
-		if (sylock.tryLock())
+		if (sylock.tryLock()) {
 			synlocker = usr;
-		return true;
+			System.err.print(f("\n----------- locked  --------\n"
+					+ "lock at %s : %s\nuser: %s\n%s",
+					synode, sylock, usr.uid(), synlocker));
+			return true;
+		}
+		else return false;
 	}
 
 	public DBSyntableBuilder createSyntabuilder(SynodeConfig cfg) throws Exception {
