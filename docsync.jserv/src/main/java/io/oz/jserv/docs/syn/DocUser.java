@@ -7,6 +7,7 @@ import java.util.Set;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -20,6 +21,17 @@ import io.oz.jserv.docs.x.DocsException;
  * @author odys-z@github.com
  */
 public class DocUser extends JUser implements IUser {
+	@Override
+	public boolean login(Object reqObj) throws TransException {
+
+		if (super.login(reqObj)) {
+			AnSessionReq req = (AnSessionReq)reqObj;
+			deviceId = req.deviceId();
+			return true;
+		}
+		return false;
+	}
+
 	public static JUserMeta userMeta;
 	
 	static {
@@ -85,8 +97,8 @@ public class DocUser extends JUser implements IUser {
 
 	@Override
 	public SemanticObject logout() {
-		if (domanager != null)
-			domanager.unlockx(this);
+		// if (domanager != null)
+		domanager.unlockx(this);
 		return super.logout();
 	}
 

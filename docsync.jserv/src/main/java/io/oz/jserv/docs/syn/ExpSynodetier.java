@@ -3,6 +3,7 @@ package io.oz.jserv.docs.syn;
 import static io.oz.jserv.docs.syn.SyncReq.A;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
@@ -37,21 +38,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 	SynDomanager domanager0;
 
-	/** {domain: {jserv: exession-persist}} */
-//	public HashMap<String, SynDomanager> domains;
-//	public ExpSynodetier domains(HashMap<String, SynDomanager> domains) throws Exception {
-//		this.domains = domains;
-//		if (len(domains) > 1)
-//			Utils.warnT(new Object() {}, "Multiple domains is an issue for v 2.0.0.");
-//
-//		for (SynDomanager dm : domains.values()) {
-//			// domanager0 = SynDomanager.clone(dm);
-//			domanager0 = dm; // FIXME Error prone!
-//			break;
-//		}
-//		return this;
-//	}
-
 	ExpSynodetier(String org, String domain, String synode, String conn, SynodeMode mode)
 			throws SQLException, SAXException, IOException, TransException {
 		super(Port.syntier);
@@ -82,6 +68,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			SyncReq req = jmsg.body(0);
 
 			DocUser usr = (DocUser) JSingleton.getSessionVerifier().verify(jmsg.header());
+			notNull(usr.deviceId);
 			
 			if (req.exblock != null) {
 				if (!isblank(req.exblock.domain) && !eq(req.exblock.domain, domain))

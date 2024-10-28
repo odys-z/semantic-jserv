@@ -6,6 +6,7 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.LangExt.shouldeq;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqlitables;
 
@@ -32,7 +33,6 @@ import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SyncRobot;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
@@ -68,7 +68,7 @@ public class Syngleton extends JSingleton {
 	/** @deprecated TODO delete */
 	String synode;
 
-	SyncRobot robot;
+	// SyncRobot robot;
 
 	/**
 	 * Last (bug?) url pattern (key in {@link #syndomanagers}) of {@link ExpSynodetier}.
@@ -101,6 +101,8 @@ public class Syngleton extends JSingleton {
 			throw new SemanticException(
 				"Updating domain %s, but got configuration of %s.",
 				domain, cfg.domain);
+		
+		IUser robot = DATranscxt.dummyUser();
 
 		for (Synode sn : cfg.peers())
 			synb.update(synm.tbl, robot)
@@ -114,12 +116,14 @@ public class Syngleton extends JSingleton {
 	 * Load domains from syn_synode, create {@link SynDomanager} for each domain.
 	 * 
 	 * @param synmod synode mode, peer, hub, etc.
+	 * @param cfg 
 	 * @return singleton
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public Syngleton loadDomains(SynodeMode synmod) throws Exception {
+	public Syngleton loadDomains(SynodeConfig cfg) throws Exception {
 		notNull(syntier_url);
+		shouldeq(new Object() {}, cfg.mode, SynodeMode.peer);
 		
 		if (syndomanagers == null)
 			syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
@@ -127,23 +131,27 @@ public class Syngleton extends JSingleton {
 		if (!syndomanagers.containsKey(syntier_url))
 			syndomanagers.put(syntier_url, new HashMap<String, SynDomanager>());
 
-		synm = new SynodeMeta(synconn); 
+		synm = new SynodeMeta(cfg.synconn); 
 
 		AnResultset rs = (AnResultset) defltScxt
 				.select(synm.tbl)
 				.groupby(synm.domain)
 				.groupby(synm.synoder)
-				.whereEq(synm.pk, synode)
-				.rs(defltScxt.instancontxt(synconn, robot))
+				.whereEq(synm.pk, cfg.synode())
+				.rs(defltScxt.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
 				.rs(0);
 		
 		while (rs.next()) {
 			String domain = rs.getString(synm.domain);
 			SynDomanager domanger = new SynDomanager(
 					synm, rs.getString(synm.org),
-					domain, synode,
-					synconn, synmod, Connects.getDebug(synconn));
-			syndomanagers.get(syntier_url).put(domain, domanger);
+					domain, cfg.synode(),
+					cfg.synconn, cfg.mode, Connects.getDebug(cfg.synconn));
+
+			syndomanagers.get(syntier_url)
+					.put(domain, (SynDomanager) domanger
+							.loadNvstamp(defltScxt, domanger.robot)
+							.synrobot(domanger.robot));
 		}
 
 		return this;
@@ -165,8 +173,12 @@ public class Syngleton extends JSingleton {
 			new Thread(()->{
 				for (SynDomanager dmgr : syndomanagers.get(syntier_url).values()) {
 					try {
-						dmgr.loadSynclients(synb, robot)
-							.openUpdateSynssions(robot, onok);
+						SyncRobot usr = ((SyncRobot)AnSession
+									.loadUser(admin, dmgr.synconn))
+									.deviceId(dmgr.synode);
+
+						dmgr.loadSynclients(synb)
+							.openUpdateSynssions(usr, onok);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -294,7 +306,7 @@ public class Syngleton extends JSingleton {
 	 * @param conn
 	 * @throws Exception 
 	 */
-	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncRobot> robots) throws Exception {
+	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncRobot> tieradmins) throws Exception {
 	
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
@@ -318,16 +330,16 @@ public class Syngleton extends JSingleton {
 			sqls.clear();
 		}
 		
-		if (robots != null) {
+		if (tieradmins != null) {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
-			for (SyncRobot robot : robots) {
+			for (SyncRobot admin : tieradmins) {
 				Insert i = defltScxt.insert(um.tbl, usr)
-						.nv(usrm.org, robot.orgId())
-						.nv(usrm.pk, robot.uid())
-						.nv(usrm.pswd, robot.pswd())
-						.nv(usrm.uname, robot.userName())
+						.nv(usrm.org, admin.orgId())
+						.nv(usrm.pk, admin.uid())
+						.nv(usrm.pswd, admin.pswd())
+						.nv(usrm.uname, admin.userName())
 						;
 	
 				if (ins == null)

@@ -2,6 +2,7 @@ package io.odysz.semantic.jsession;
 
 import static io.odysz.common.AESHelper.*;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.semantic.jsession.AnSessionReq.A.init;
 import static io.odysz.semantic.jsession.AnSessionReq.A.login;
 import static io.odysz.semantic.jsession.AnSessionReq.A.logout;
@@ -456,7 +457,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * @throws GeneralSecurityException
 	 * @throws IOException
 	 */
-	public static IUser loadUser(String uid, String connId, IUser jrobt)
+	public static IUser loadUser(String uid, String connId, IUser... jrobt)
 			throws TransException, SQLException, SsException,
 			ReflectiveOperationException, GeneralSecurityException, IOException {
 		SemanticObject s = sctx.select(usrMeta.tbl, "u")
@@ -466,7 +467,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.orgName)       // v1.4.11
 			.col(usrMeta.roleName)		// v1.4.11
 			.whereEq("u." + usrMeta.pk, uid)
-			.rs(sctx.instancontxt(connId, jrobt));
+			.rs(sctx.instancontxt(connId,
+				isNull(jrobt) ? jrobt[0] : DATranscxt.dummyUser()));
 
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {

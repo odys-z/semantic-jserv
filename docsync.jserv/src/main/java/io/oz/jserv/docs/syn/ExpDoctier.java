@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.notNull;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
@@ -35,7 +36,6 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
@@ -49,7 +49,6 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DeviceTableMeta;
-import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.x.DocsException;
 
 /**
@@ -69,10 +68,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return syntb0; // .loadNstamp();
 	}
 
-//	final String synode;
-	/** DB connection id for this node to synchronize. */
-//	final String myconn;
-
 	public ExpDoctier() throws Exception {
 		this("test", "test", "test");
 	}
@@ -86,14 +81,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 */
 	public ExpDoctier(String synoderId, String sysconn, String synconn) throws Exception {
 		super(Port.dbsyncer);
-		// synode = synoderId; // isblank(synoderId) ? Configs.getCfg(Configs.keys.synode) : synoderId;
-		// myconn = synconn;
-		
 		st0 = new DATranscxt(sysconn);
 
-//		if (domx.synode == null)
-//			throw new SemanticException("Synode id is null.");
-		
 		try {debug = Connects.getDebug(synconn); } catch (Exception e) {debug = false;}
 	}
 
@@ -102,9 +91,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 	Synodebot locrobot;
 
+	/// FIXME TODO move lock to SyndomContext?
 	private SyndomContext domx;
-
-//	private SyndomContext syndomx;
 
 	IUser locrobot() {
 		if (locrobot == null)
@@ -121,7 +109,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	@Override
 	protected void onPost(AnsonMsg<DocsReq> jmsg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		// Utils.logi("== %s", jmsg.toString());
 		
 		DocsResp rsp = null;
 		try {
@@ -135,8 +122,10 @@ public class ExpDoctier extends ServPort<DocsReq> {
 //				else if (A.download.equals(a))
 //					download(resp, jmsg.body(0), usr);
 			} else {
-				DocUser usr;
-				usr = (DocUser) JSingleton.getSessionVerifier().verify(jmsg.header());
+				DocUser usr = (DocUser) JSingleton
+						.getSessionVerifier()
+						.verify(jmsg.header());
+				notNull(usr.deviceId);
 
 				if (A.upload.equals(a))
 					rsp = createDoc(docreq, usr);
@@ -212,14 +201,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		return this;
 	}
-
-	/** {domain: SynDomanager} */
-//	HashMap<String, SynDomanager> domanagers;
-//	SynDomanager domanager(String dom) { return domanagers.get(dom); }
-//	public ExpDoctier domains(HashMap<String, SynDomanager> domains) {
-//		this.domanagers = domains;
-//		return this;
-//	}
 
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException, SAXException, IOException {

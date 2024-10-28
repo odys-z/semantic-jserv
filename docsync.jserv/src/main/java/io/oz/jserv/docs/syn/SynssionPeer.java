@@ -102,10 +102,20 @@ public class SynssionPeer {
 						+ "\n=============================================================\n",
 						domain(), mynid, peer);
 
+			/// lock local syndomx
+			while (domanager.lockme()) {
+				int sleep = onMutext.locked();
+				if (sleep > 0)
+					Thread.sleep(sleep * 1000);
+				else if (sleep < 0)
+					return this;
+			}
+
 			ExchangeBlock reqb = exesinit();
 			rep = exespush(peer, A.exinit, reqb);
 
 			if (rep != null) {
+				// lock remote
 				while (rep.synact() == trylater) {
 					int sleep = onMutext.locked();
 					if (sleep > 0)

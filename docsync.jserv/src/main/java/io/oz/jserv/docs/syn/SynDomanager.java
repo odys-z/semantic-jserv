@@ -2,9 +2,10 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
-import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
@@ -17,7 +18,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
@@ -96,23 +96,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	static final String dom_unknown = null;
 
-//	static SyndomContext loadomx(String dom, DATranscxt tb0) {
-//		return null;
-//	}
-
-//	public final String synode;
-
-	/**
-	 * Privately managed syn-domain context
-	final SyndomContext syndomx;
-	 */
-	
-//	final String myconn; // TODO delete
-//	final String domain;
 	final String org;
-//	final SynodeMode synmod;
-
-//	final SynodeMeta synm;
 	
 	boolean dbg;
 	
@@ -274,7 +258,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 		} finally {
 			try { expiredClientier = delession(apply); }
 			catch (Throwable t) { t.printStackTrace(); }
-			// synlock.unlock();
 			unlockx(usr);
 		}
 	}
@@ -374,10 +357,12 @@ public class SynDomanager extends SyndomContext implements OnError {
 		}
 	}
 	
-	public SynDomanager loadomainx(IUser usr) throws TransException, SQLException {
+	public SynDomanager loadomainx() throws TransException, SQLException {
 		Utils.logi("\n[ ♻.%s ] loading domain %s ...", synode, domain());
+		
+		robot = new SyncRobot(synode, "pswd: local null", synode);
 
-		loadNvstamp(tb0, usr);
+		loadNvstamp(tb0, robot);
 		
 		return this;
 	}
@@ -509,7 +494,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		Utils.warn(msg, (Object[])args);
 	}
 
-	public SynDomanager loadSynclients(DATranscxt t0, IUser robot)
+	public SynDomanager loadSynclients(DATranscxt t0)
 			throws TransException, SQLException {
 		
 		AnResultset rs = (AnResultset) t0
@@ -551,7 +536,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	/**
 	 * Login to peers and synchronize.
 	 * 
-	 * @param dbrobot
+	 * @param docuser
 	 * @param onok 
 	 * @return this
 	 * @throws AnsonException
@@ -559,11 +544,11 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws IOException
 	 * @throws TransException
 	 */
-	public SynDomanager openUpdateSynssions(SyncRobot dbrobot, OnDomainUpdate... onok)
+	public SynDomanager openUpdateSynssions(SyncRobot docuser, OnDomainUpdate... onok)
 			throws AnsonException, SsException, IOException, TransException {
 
 		for (SynssionPeer c : sessions.values()) {
-			c.loginWithUri(c.peerjserv, dbrobot.uid(), dbrobot.pswd(), dbrobot.deviceId());
+			c.loginWithUri(c.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
 			c.update2peer(() -> 3);
 		}
 
@@ -575,25 +560,40 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 
 	////////////////////////////////////////////////////////////////////////////
-	final ReentrantLock sylock = new ReentrantLock(); 
+	// final ReentrantLock sylock = new ReentrantLock(); 
+	// final Object sylock = new Object(); 
+	final int[] sylock = new int[1];
 	IUser synlocker;
 	
-	public void unlockx(IUser usr) {
+	synchronized void unlockx(IUser usr) {
+		notNull(usr);
+		notNull(usr.deviceId());
+
 		if (synlocker != null && eq(synlocker.sessionId(), usr.sessionId())) {
-			System.err.print(f("\n---------- unlocking -------\n"
-					+ "lock at %s : %s\nuser: %s\n%s",
-					synode, sylock, synlocker.uid(), synlocker));
-			sylock.unlock();
+			musteq(sylock[0], 1);
+			sylock[0] = 0;
+			if (dbg) System.err.print(
+					f("\n+++++++++- unlocked +++++++++\n"
+					+ "lock at %s <- %s\nuser: %s\n%s",
+					synode, usr.deviceId(), synlocker.uid(), synlocker));
+			// sylock.unlock();
 			synlocker = null;
 		}
 	}
 
-	private boolean lockx(IUser usr) {
-		if (sylock.tryLock()) {
+	public boolean lockme() { return lockx(robot); }
+
+	private synchronized boolean lockx(IUser usr) {
+		notNull(usr);
+		notNull(usr.deviceId());
+
+		if (sylock[0] == 0) {
+			sylock[0] = 1;
 			synlocker = usr;
-			System.err.print(f("\n----------- locked  --------\n"
-					+ "lock at %s : %s\nuser: %s\n%s",
-					synode, sylock, usr.uid(), synlocker));
+			if (dbg) System.err.print(
+					f("\n----------- locked  ---------\n"
+					+ "lock at %s <- %s\nuser: %s\n%s",
+					synode, usr.deviceId(), usr.uid(), synlocker));
 			return true;
 		}
 		else return false;
@@ -601,9 +601,9 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	public DBSyntableBuilder createSyntabuilder(SynodeConfig cfg) throws Exception {
 		notNull(cfg);
-		musteq(domain(), cfg.domain);
-		musteq(synode, cfg.synode());
-		musteq(synconn, cfg.synconn);
+		musteqs(domain(), cfg.domain);
+		musteqs(synode, cfg.synode());
+		musteqs(synconn, cfg.synconn);
 
 		return new DBSyntableBuilder(this);
 	}

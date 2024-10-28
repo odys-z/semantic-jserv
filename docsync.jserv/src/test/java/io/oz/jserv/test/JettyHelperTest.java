@@ -147,7 +147,7 @@ public class JettyHelperTest {
 	 */
 	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String synode,
 			String uid, int port, PrintstreamProvider ... oe) throws IOException, Exception {
-		ArrayList<SyncRobot> tierobot = new ArrayList<SyncRobot>() { {add(new SyncRobot(uid, "123456", "Ody by robot"));} };
+		ArrayList<SyncRobot> tieradmins = new ArrayList<SyncRobot>() { {add(new SyncRobot(uid, "123456", "Ody by robot"));} };
 
 		SynodeConfig cfg = new SynodeConfig(synode, SynodeMode.peer);
 		cfg.sysconn = conn;
@@ -155,15 +155,14 @@ public class JettyHelperTest {
 		
 		Syngleton syngleton = new Syngleton(cfg.sysconn, cfg.synode(), cfg.synconn);
 		
-		Syngleton.setupSyntables(syngleton, cfg,
-				null,
+		Syngleton.setupSyntables(syngleton, cfg, null,
 				webinf, "config.xml", ".", "ABCDEF0123465789");
 
-		Syngleton.setupSysRecords(cfg, tierobot);
+		Syngleton.setupSysRecords(cfg, tieradmins);
 
 		SynotierJettyApp app = SynotierJettyApp
 			.registerPorts(
-				SynotierJettyApp.instanserver(webinf, cfg, "config.xml", "127.0.0.1", port, tierobot.get(0)),
+				SynotierJettyApp.instanserver(webinf, cfg, "config.xml", "127.0.0.1", port),
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }));

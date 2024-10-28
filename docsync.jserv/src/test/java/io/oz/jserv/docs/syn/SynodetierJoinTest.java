@@ -263,12 +263,12 @@ public class SynodetierJoinTest {
 	 */
 	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml, String syntity_json) throws Exception {
 		SyncRobot tierobot = YellowPages.getRobot(syrskyi);
-		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
+		// tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 
-			.createSyndoctierApp(cfg_xml, syntity_json, cfg, webinf, zsu, tierobot)
+			.createSyndoctierApp(cfg_xml, syntity_json, cfg, webinf)
 			.start(() -> System.out, () -> System.err)
-			.loadDomains(SynodeMode.peer)
+			.loadDomains(cfg)
 			;
 	}
 }

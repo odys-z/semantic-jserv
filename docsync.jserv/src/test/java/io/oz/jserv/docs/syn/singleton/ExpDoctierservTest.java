@@ -180,7 +180,7 @@ public class ExpDoctierservTest {
 			YellowPages.load(f("$VOLUME_%s", i));
 
 			cfgs[i] = YellowPages.synconfig();
-			cfgs[i].host = host;
+			cfgs[i].localhost = host;
 			cfgs[i].port = port++;
 
 			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
