@@ -33,7 +33,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.Docheck;
-import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -124,8 +124,8 @@ public class SynodetierJoinTest {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			
-			SyncRobot me = new SyncRobot(syrskyi, slava, syrskyi, "#-" + i);
-			ArrayList<SyncRobot> robots = new ArrayList<SyncRobot>() { {add(me);} };
+			SyncUser me = new SyncUser(syrskyi, slava, syrskyi, "#-" + i);
+			ArrayList<SyncUser> robots = new ArrayList<SyncUser>() { {add(me);} };
 
 			SynodeConfig config = new SynodeConfig(nodes[i], SynodeMode.peer);
 			config.synconn = servs_conn[i];
@@ -262,7 +262,7 @@ public class SynodetierJoinTest {
 	 * @throws Exception
 	 */
 	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml, String syntity_json) throws Exception {
-		SyncRobot tierobot = YellowPages.getRobot(syrskyi);
+		SyncUser tierobot = YellowPages.getRobot(syrskyi);
 		// tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 

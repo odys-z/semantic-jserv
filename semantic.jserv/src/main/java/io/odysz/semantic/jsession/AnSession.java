@@ -3,6 +3,7 @@ package io.odysz.semantic.jsession;
 import static io.odysz.common.AESHelper.*;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.notBlank;
 import static io.odysz.semantic.jsession.AnSessionReq.A.init;
 import static io.odysz.semantic.jsession.AnSessionReq.A.login;
 import static io.odysz.semantic.jsession.AnSessionReq.A.logout;
@@ -222,6 +223,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * @throws SsException 
 	 */
 	static void touchSessionToken(IUser usr, String clientoken, String knowledge) throws SsException {
+		notBlank(knowledge);
 		try {
 			if (!AESHelper.verifyToken(clientoken, knowledge, usr.uid(), usr.pswd()))
 				throw new SsException("Tokens are not matching");
@@ -468,7 +470,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.roleName)		// v1.4.11
 			.whereEq("u." + usrMeta.pk, uid)
 			.rs(sctx.instancontxt(connId,
-				isNull(jrobt) ? jrobt[0] : DATranscxt.dummyUser()));
+				isNull(jrobt) ? DATranscxt.dummyUser() : jrobt[0]));
 
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {

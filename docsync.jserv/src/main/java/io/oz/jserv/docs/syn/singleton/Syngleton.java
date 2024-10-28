@@ -33,7 +33,7 @@ import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
@@ -54,21 +54,18 @@ import io.oz.syn.SynodeConfig;
 public class Syngleton extends JSingleton {
 	static DBSynTransBuilder.SynmanticsMap synmap;
 
-	/** @deprecated TODO delete */
-	// static DBSyntableBuilder synb;
 	/** */
-	static DATranscxt synb;
+	static DATranscxt tb0;
+	
+	SynodeConfig syncfg;
 
 	String jserv;
 
-	/** @deprecated TODO delete */
-	String synconn;
-	/** @deprecated TODO delete */
-	String sysconn;
-	/** @deprecated TODO delete */
-	String synode;
-
-	// SyncRobot robot;
+//	/** @deprecated TODO delete */
+//	String synconn;
+	final String sysconn;
+//	/** @deprecated TODO delete */
+//	String synode;
 
 	/**
 	 * Last (bug?) url pattern (key in {@link #syndomanagers}) of {@link ExpSynodetier}.
@@ -88,10 +85,12 @@ public class Syngleton extends JSingleton {
 
 	SynodeMeta synm;
 
-	public Syngleton(String sys_conn, String synid, String syn_conn) {
-		synode = synid;
-		synconn = syn_conn;
-		sysconn = sys_conn;
+	// public Syngleton(String sys_conn, String synid, String syn_conn) {
+	public Syngleton(SynodeConfig cfg) {
+//		synode = synid;
+//		synconn = syn_conn;
+		sysconn = cfg.sysconn;
+		syncfg = cfg;
 		syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
 	}
 
@@ -105,11 +104,11 @@ public class Syngleton extends JSingleton {
 		IUser robot = DATranscxt.dummyUser();
 
 		for (Synode sn : cfg.peers())
-			synb.update(synm.tbl, robot)
+			tb0.update(synm.tbl, robot)
 				.nv(synm.jserv, sn.jserv)
 				.whereEq(synm.pk, sn.synid)
 				.whereEq(synm.domain, cfg.domain)
-				.u(synb.instancontxt(cfg.synconn, robot));
+				.u(tb0.instancontxt(cfg.synconn, robot));
 	}
 
 	/**
@@ -144,14 +143,15 @@ public class Syngleton extends JSingleton {
 		while (rs.next()) {
 			String domain = rs.getString(synm.domain);
 			SynDomanager domanger = new SynDomanager(
-					synm, rs.getString(synm.org),
-					domain, cfg.synode(),
-					cfg.synconn, cfg.mode, Connects.getDebug(cfg.synconn));
+						synm, rs.getString(synm.org),
+						domain, cfg.synode(),
+						cfg.synconn, cfg.mode, Connects.getDebug(cfg.synconn))
+					.loadomainx();
 
 			syndomanagers.get(syntier_url)
 					.put(domain, (SynDomanager) domanger
-							.loadNvstamp(defltScxt, domanger.robot)
-							.synrobot(domanger.robot));
+						.loadNvstamp(defltScxt, domanger.robot)
+						.synrobot(domanger.robot));
 		}
 
 		return this;
@@ -173,19 +173,19 @@ public class Syngleton extends JSingleton {
 			new Thread(()->{
 				for (SynDomanager dmgr : syndomanagers.get(syntier_url).values()) {
 					try {
-						SyncRobot usr = ((SyncRobot)AnSession
-									.loadUser(admin, dmgr.synconn))
-									.deviceId(dmgr.synode);
+						SyncUser usr = ((SyncUser)AnSession
+							.loadUser(syncfg.admin, sysconn))
+							.deviceId(dmgr.synode);
 
-						dmgr.loadSynclients(synb)
+						dmgr.loadSynclients(tb0)
 							.openUpdateSynssions(usr, onok);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
 				if (!isNull(onok))
-					onok[0].ok(null, synode, null);
-			}, f("[%s] Open Domain", synode))
+					onok[0].ok(null, syncfg.synode(), null);
+			}, f("[%s] Open Domain", syncfg.synode()))
 			.start();
 		}
 
@@ -275,25 +275,6 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
-	 * Get SynDomanager of domian {@code domain}, used by ServPort {@link #syntier_url}.
-	 * 
-	 * @param domain
-	 * @return SynDomanager
-	 * @throws Exception 
-	private SynDomanager syntierManager(String org, String domain, SynodeMode mode) throws Exception {
-		if (!syndomanagers.containsKey(syntier_url))
-			syndomanagers.put(syntier_url, new HashMap<String, SynDomanager>());
-		
-		if (!syndomanagers.get(syntier_url).containsKey(domain)) {
-			syndomanagers.get(syntier_url).put(domain,
-				new SynDomanager(synm, org, domain, synode, synconn, mode,
-								Connects.getDebug(sysconn)));
-		}
-		return syndomanagers.get(syntier_url).get(domain);
-	}
-	 */
-
-	/**
 	 * Setup sqlite manage database tables, oz_autoseq, a_users with sql script files,
 	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
 	 * 
@@ -306,7 +287,7 @@ public class Syngleton extends JSingleton {
 	 * @param conn
 	 * @throws Exception 
 	 */
-	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncRobot> tieradmins) throws Exception {
+	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncUser> tieradmins) throws Exception {
 	
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
@@ -334,7 +315,7 @@ public class Syngleton extends JSingleton {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
-			for (SyncRobot admin : tieradmins) {
+			for (SyncUser admin : tieradmins) {
 				Insert i = defltScxt.insert(um.tbl, usr)
 						.nv(usrm.org, admin.orgId())
 						.nv(usrm.pk, admin.uid())
@@ -361,15 +342,15 @@ public class Syngleton extends JSingleton {
 		IUser usr = DATranscxt.dummyUser();
 		
 		if (peers != null && peers.length > 0) {
-			synb = new DATranscxt(cfg.synconn);
+			tb0 = new DATranscxt(cfg.synconn);
 			SynodeMeta synm = new SynodeMeta(cfg.synconn);
-			Delete del = synb.delete(synm.tbl, usr)
+			Delete del = tb0.delete(synm.tbl, usr)
 						.whereEq(synm.domain, cfg.domain);
 			for (Synode sn : peers) {
 				del.post(sn.insertRow(synm, 
-						synb.insert(synm.tbl, usr)));
+						tb0.insert(synm.tbl, usr)));
 			}
-			del.d(synb.instancontxt(cfg.synconn, usr));
+			del.d(tb0.instancontxt(cfg.synconn, usr));
 		}
 	}
 
@@ -382,18 +363,18 @@ public class Syngleton extends JSingleton {
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
 
-		if (synb == null)
-			synb = new DATranscxt(cfg.synconn);
+		if (tb0 == null)
+			tb0 = new DATranscxt(cfg.synconn);
 		
-		synb.delete(synm.tbl, usr)
+		tb0.delete(synm.tbl, usr)
 			.whereEq(synm.domain, cfg.domain)
-			.post(synb.delete(chgm.tbl)
+			.post(tb0.delete(chgm.tbl)
 					.whereEq(chgm.domain, cfg.domain))
-			.post(synb.delete(subm.tbl)
+			.post(tb0.delete(subm.tbl)
 					.where(op.isNotnull, subm.changeId, new ExprPart()))
-			.post(synb.delete(xbfm.tbl)
+			.post(tb0.delete(xbfm.tbl)
 					.where(op.isNotnull, xbfm.changeId, new ExprPart()))
-			.d(synb.instancontxt(cfg.synconn, usr));
+			.d(tb0.instancontxt(cfg.synconn, usr));
 	}
 
 	public static void cleanSynssions(SynodeConfig cfg) throws Exception {
@@ -404,15 +385,15 @@ public class Syngleton extends JSingleton {
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
 
-		if (synb == null)
-			synb = new DATranscxt(cfg.synconn);
+		if (tb0 == null)
+			tb0 = new DATranscxt(cfg.synconn);
 
-		synb.delete(chgm.tbl, usr)
+		tb0.delete(chgm.tbl, usr)
 			.whereEq(chgm.domain, cfg.domain)
-			.post(synb.delete(subm.tbl)
+			.post(tb0.delete(subm.tbl)
 					.where(op.isNotnull, subm.changeId, new ExprPart()))
-			.post(synb.delete(xbfm.tbl)
+			.post(tb0.delete(xbfm.tbl)
 					.where(op.isNotnull, xbfm.changeId, new ExprPart()))
-			.d(synb.instancontxt(cfg.synconn, usr));
+			.d(tb0.instancontxt(cfg.synconn, usr));
 	}
 }

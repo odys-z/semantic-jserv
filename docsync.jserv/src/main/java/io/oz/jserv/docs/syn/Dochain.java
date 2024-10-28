@@ -19,7 +19,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -76,7 +76,7 @@ public class Dochain {
 			blockChains = new HashMap<String, BlockChain>(2);
 
 		// in jserv 1.4.3 and album 0.5.2, deleting temp dir is handled by SyncRobot. 
-		String tempDir = ((SyncRobot)usr).touchTempDir(conn, meta.tbl);
+		String tempDir = ((SyncUser)usr).touchTempDir(conn, meta.tbl);
 
 		String saveFolder = profiles.synodeFolder(body, usr);
 		if (isblank(saveFolder, "/", "\\\\", ":", "\\."))
@@ -108,7 +108,7 @@ public class Dochain {
 				.doc(chain.doc.uri64(null));
 	}
 
-	void checkDuplication(DocsReq body, SyncRobot usr)
+	void checkDuplication(DocsReq body, SyncUser usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn, usr.deviceId(), body.doc.clientpath, usr);

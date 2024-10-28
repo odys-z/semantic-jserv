@@ -34,8 +34,6 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.syn.SyncRobot;
-import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
@@ -70,11 +68,9 @@ public class SynotierJettyApp {
 
 	List<SemanticHandler> synchandlers;
 
-	public SynotierJettyApp(String sys_conn, String synid, String syn_conn,
-			List<SemanticHandler> synchangeHandlers) {
-		syngleton = new Syngleton(sys_conn, synid, syn_conn);
+	public SynotierJettyApp(SynodeConfig cfg, List<SemanticHandler> synchangeHandlers) {
+		syngleton = new Syngleton(cfg);
 		synchandlers = synchangeHandlers;
-	    // syngleton.robot = synrobt;
 	}
 
 	/**
@@ -256,9 +252,8 @@ public class SynotierJettyApp {
 	
 	    AnsonMsg.understandPorts(Port.syntier);
 	
-	    SynotierJettyApp synapp = new SynotierJettyApp(
-	    						cfg.sysconn, cfg.synode(),
-	    						cfg.synconn, Syngleton.synmap.get(smtype.synChange));
+	    SynotierJettyApp synapp = new SynotierJettyApp( cfg,
+	    						Syngleton.synmap.get(smtype.synChange));
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	

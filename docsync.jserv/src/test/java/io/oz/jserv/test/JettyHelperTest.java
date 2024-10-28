@@ -26,7 +26,7 @@ import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
@@ -147,13 +147,14 @@ public class JettyHelperTest {
 	 */
 	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String synode,
 			String uid, int port, PrintstreamProvider ... oe) throws IOException, Exception {
-		ArrayList<SyncRobot> tieradmins = new ArrayList<SyncRobot>() { {add(new SyncRobot(uid, "123456", "Ody by robot"));} };
+		ArrayList<SyncUser> tieradmins = new ArrayList<SyncUser>() { {add(new SyncUser(uid, "123456", "Ody by robot"));} };
 
 		SynodeConfig cfg = new SynodeConfig(synode, SynodeMode.peer);
 		cfg.sysconn = conn;
 		cfg.synconn = conn;
+		cfg.admin = "ody";
 		
-		Syngleton syngleton = new Syngleton(cfg.sysconn, cfg.synode(), cfg.synconn);
+		Syngleton syngleton = new Syngleton(cfg);
 		
 		Syngleton.setupSyntables(syngleton, cfg, null,
 				webinf, "config.xml", ".", "ABCDEF0123465789");

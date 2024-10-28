@@ -182,6 +182,7 @@ public class ExpDoctierservTest {
 			cfgs[i] = YellowPages.synconfig();
 			cfgs[i].localhost = host;
 			cfgs[i].port = port++;
+			cfgs[i].mode = SynodeMode.peer;
 
 			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
 			
@@ -191,7 +192,7 @@ public class ExpDoctierservTest {
 					throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
 				});
 			
-			Syngleton syngleton = new Syngleton(cfgs[i].sysconn, cfgs[i].synode(), cfgs[i].synconn);
+			Syngleton syngleton = new Syngleton(cfgs[i]);
 
 			Syngleton.setupSyntables(syngleton, cfgs[i], regists.metas.values(),
 					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
