@@ -1,6 +1,5 @@
 package io.oz.jserv.docs.syn.singleton;
 
-import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
@@ -37,6 +36,7 @@ import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
@@ -45,7 +45,6 @@ import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.syn.Dev;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.SynodetierJoinTest;
-import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
 
@@ -88,15 +87,23 @@ public class ExpDoctierservTest {
 
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
-			// should block X's starting sessions
-			jetties[i].openDomains( (domain, mynid, peer, repb, xp) -> {
-				lights[i] = true;
-			});
+			// jetties[i].syngleton().domanager(zsu).dbg = true;
+			jetties[i].syngleton().openDomains(
+				(domain, mynid, peer, xp) -> {
+					lights[i] = true;
+				});
 		}
 		awaitAll(lights, -1);
 
+		ck[Z].doc(0);
+		ck[Y].doc(0);
+		ck[X].doc(0);
+
 		Utils.logrst("Pause for client's pushing", ++section);
-		pause("Press Enter after pushed with client for starting synchronizing.");
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		pause("Press Enter after pushed with clients for starting synchronizing.");
 
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -133,8 +140,14 @@ public class ExpDoctierservTest {
 		verifyPathsPageNegative(devx0.client, docm.tbl, dx0.clientpath);
 
 		Utils.logrst("Synchronizing synodes", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		ck[Y].doc(3);
+		ck[X].doc(2);
+
 		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y);
+		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
 
 		Utils.logrst("Finish", ++section);
@@ -168,26 +181,32 @@ public class ExpDoctierservTest {
 			YellowPages.load(f("$VOLUME_%s", i));
 
 			cfgs[i] = YellowPages.synconfig();
-			cfgs[i].host = host;
+			cfgs[i].localhost = host;
 			cfgs[i].port = port++;
+			cfgs[i].mode = SynodeMode.peer;
+			// cfgs[i].debug= Connects.getDebug(cfgs[i].synconn);
 
 			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
 			
-			Syngleton.setupSyntables(cfgs[i],
-					cfgs[i].syntityMeta((cfg, synreg) -> {
-						if (eq(synreg.name, "T_PhotoMeta"))
-							return new T_PhotoMeta(cfg.synconn);
-						else
-							throw new SemanticException("TODO %s", synreg.name);
-					}),
+
+			Syntities regists = Syntities.load(webinf, f("$VOLUME_%s/syntity.json", i), 
+				(synreg) -> {
+					throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
+				});
+			
+			Syngleton syngleton = new Syngleton(cfgs[i]);
+
+			Syngleton.setupSyntables(syngleton, cfgs[i], regists.metas.values(),
 					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 			
-			cleanPhotos(docm, servs_conn[i], devs[i].dev);
+			cleanPhotos(docm, servs_conn[i], devs);
 			
-			jetties[i] = startSyndoctier(cfgs[i], "config.xml");
+			Syngleton.cleanSynssions(cfgs[i]);
+
+			jetties[i] = startSyndoctier(cfgs[i], "config.xml", f("$VOLUME_%s/syntity.json", i));
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-						jetties[i].synode(), SynodeMode.peer, docm);
+						cfgs[i].synode(), SynodeMode.peer, docm, cfgs[i].debug);
 		}
 		
 		for (int i : nodex) {
@@ -196,21 +215,22 @@ public class ExpDoctierservTest {
 		}
 
 		for (int i : nodex) {
-			jetties[i].updateJservs(ck[i].trb.synm, cfgs[i], zsu);
+			jetties[i].updateJservs(ck[i].synb.syndomx.synm, cfgs[i], zsu);
 		}
 
 		return nodex;
 	}
 
-	static void cleanPhotos(ExpDocTableMeta docm, String conn, String ofDevice) throws Exception {
+	static void cleanPhotos(ExpDocTableMeta docm, String conn, Dev[] devs) throws Exception {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
-		sqls.add(f("delete from %s where %s = '%s'", docm.tbl, docm.device, ofDevice));
+		for (Dev d : devs)
+			sqls.add(f("delete from %s where %s = '%s'", docm.tbl, docm.device, d.dev));
 		Connects.commit(conn, usr, sqls);
 	}
 	
 	/**
-	 * Verify device &amp; client-paths isn't presenting at server.
+	 * Verify device &amp; client-paths doesn't present at server.
 	 * 
 	 * @param clientier
 	 * @param entityName

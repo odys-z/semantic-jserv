@@ -2,6 +2,8 @@ package io.odysz.semantic.jsession;
 
 import static io.odysz.common.AESHelper.*;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.notBlank;
 import static io.odysz.semantic.jsession.AnSessionReq.A.init;
 import static io.odysz.semantic.jsession.AnSessionReq.A.login;
 import static io.odysz.semantic.jsession.AnSessionReq.A.logout;
@@ -221,6 +223,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * @throws SsException 
 	 */
 	static void touchSessionToken(IUser usr, String clientoken, String knowledge) throws SsException {
+		notBlank(knowledge);
 		try {
 			if (!AESHelper.verifyToken(clientoken, knowledge, usr.uid(), usr.pswd()))
 				throw new SsException("Tokens are not matching");
@@ -438,32 +441,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	private IUser loadUser(AnSessionReq sessionBody, String connId)
 			throws TransException, SQLException, SsException,
 			ReflectiveOperationException, GeneralSecurityException, IOException {
-//		SemanticObject s = sctx.select(usrMeta.tbl, "u")
-//			.l_(usrMeta.rm.tbl, "r", usrMeta.role, "roleId")
-//			.l_(usrMeta.om.tbl, "o", usrMeta.org, "orgId")
-//			.col("u.*")
-//			.col(usrMeta.orgName)       // v1.4.11
-//			.col(usrMeta.roleName)		// v1.4.11
-//			.whereEq("u." + usrMeta.pk, sessionBody.uid())
-//			// .rs(sctx.instancontxt(sctx.getSysConnId(), jrobot));
-//			.rs(sctx.instancontxt(connId, jrobot));
-//
-//		AnResultset rs = (AnResultset) s.rs(0);;
-//		if (rs.beforeFirst().next()) {
-//			String uid = rs.getString(usrMeta.pk);
-//			IUser obj = createUser(keys.usrClzz, uid,
-//							rs.getString(usrMeta.pswd),
-//							rs.getString(usrMeta.iv),
-//							rs.getString(usrMeta.uname))
-//						.onCreate(rs) // v1.4.11
-//						.onCreate(sessionBody)
-//						.touch();
-//			if (obj instanceof SemanticObject)
-//				return obj;
-//			throw new SemanticException("IUser implementation must extend SemanticObject.");
-//		}
-//		else
-//			throw new SsException("User Id not found: %s", sessionBody.uid());
 		return loadUser(sessionBody.uid(), connId, jrobot)
 				.onCreate(sessionBody);
 	}
@@ -482,7 +459,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * @throws GeneralSecurityException
 	 * @throws IOException
 	 */
-	public static IUser loadUser(String uid, String connId, IUser jrobt)
+	public static IUser loadUser(String uid, String connId, IUser... jrobt)
 			throws TransException, SQLException, SsException,
 			ReflectiveOperationException, GeneralSecurityException, IOException {
 		SemanticObject s = sctx.select(usrMeta.tbl, "u")
@@ -492,7 +469,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			.col(usrMeta.orgName)       // v1.4.11
 			.col(usrMeta.roleName)		// v1.4.11
 			.whereEq("u." + usrMeta.pk, uid)
-			.rs(sctx.instancontxt(connId, jrobt));
+			.rs(sctx.instancontxt(connId,
+				isNull(jrobt) ? DATranscxt.dummyUser() : jrobt[0]));
 
 		AnResultset rs = (AnResultset) s.rs(0);;
 		if (rs.beforeFirst().next()) {
@@ -535,8 +513,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		if (!Configs.hasCfg(clsNamekey))
 			throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 		String clsname = Configs.getCfg(clsNamekey);
-		// if (clsname == null)
-		//	throw new SemanticException("No class name configured for creating user information, check config.xml/k=%s", clsNamekey);
 		if (clsname == null)
 			return createUserByClassname(clsNamekey, uid, pswd, iv, userName);
 		else 

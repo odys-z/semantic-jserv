@@ -10,6 +10,10 @@ import io.oz.syn.YellowPages;
 
 public class SynotierServlet extends Syngleton implements ServletContextListener {
 
+	public SynotierServlet(SynodeConfig cfg) {
+		super(cfg);
+	}
+
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
 		String p = new File(".").getAbsolutePath();
@@ -20,10 +24,7 @@ public class SynotierServlet extends Syngleton implements ServletContextListener
 
 			Syngleton.setupSysRecords(cfg, YellowPages.robots());
 			
-			Syngleton.setupSyntables(cfg, 
-					cfg.syntityMeta((c, synreg) -> {
-						return null;
-					}),
+			Syngleton.setupSyntables(this, cfg, null,
 					"WEB-INF", "config.xml", ".", "********");
 
 			Syngleton.initSynodeRecs(cfg, cfg.peers());
@@ -35,5 +36,4 @@ public class SynotierServlet extends Syngleton implements ServletContextListener
 	@Override
 	public void contextDestroyed(ServletContextEvent sce) {
 	}
-
 }

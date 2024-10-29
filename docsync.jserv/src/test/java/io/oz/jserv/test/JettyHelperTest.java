@@ -1,6 +1,5 @@
 package io.oz.jserv.test;
 
-import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logOut;
@@ -27,13 +26,11 @@ import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
-import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.SynodeConfig;
@@ -53,6 +50,7 @@ public class JettyHelperTest {
 		}
 	}
 
+	public static final String syntity_json = "syntity.json";
 	public static final String clientUri = "/jetty";
 	public static final String webinf    = "./src/test/res/WEB-INF";
 	public static final String testDir   = "./src/test/res/";
@@ -101,21 +99,21 @@ public class JettyHelperTest {
 							() -> { return new PrintStream1(es, "3-err"); });
 		
 		Clients.init(h1.jserv());
-		Doclientier client = new Doclientier("jetty-0", errLog)
+		Doclientier client = new Doclientier("jetty-0", "jetty-0", errLog)
 				.tempRoot("temp/odyx")
 				.loginWithUri("jetty-0", "odyx", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
 
 		Clients.init(h2.jserv());
-		client = new Doclientier("jetty-1", errLog)
+		client = new Doclientier("jetty-1", "jetty-1", errLog)
 				.tempRoot("temp/odyy")
 				.loginWithUri("jetty-1", "odyy", "test", "123456")
 				.blockSize(bsize);
 		assertNotNull(client);
 				
 		Clients.init(h3.jserv());
-		client = new Doclientier("jetty-2", errLog)
+		client = new Doclientier("jetty-2", "jetty-2", errLog)
 				.tempRoot("temp/odyz")
 				.loginWithUri("jetty-2", "odyz", "test", "123456")
 				.blockSize(bsize);
@@ -149,31 +147,30 @@ public class JettyHelperTest {
 	 */
 	private SynotierJettyApp startJetty(boolean[] echolights, String conn, String synode,
 			String uid, int port, PrintstreamProvider ... oe) throws IOException, Exception {
-		ArrayList<SyncRobot> tierob = new ArrayList<SyncRobot>() { {add(new SyncRobot(uid, "123456", "Ody by robot"));} };
+		ArrayList<SyncUser> tieradmins = new ArrayList<SyncUser>() { {add(new SyncUser(uid, "123456", "Ody by robot"));} };
 
-		SynodeConfig cfg = new SynodeConfig(synode);
+		SynodeConfig cfg = new SynodeConfig(synode, SynodeMode.peer);
 		cfg.sysconn = conn;
 		cfg.synconn = conn;
+		cfg.admin = "ody";
 		
-		Syngleton.setupSyntables(cfg,
-				cfg.syntityMeta((c, synreg) -> {
-					if (eq(synreg.name, "T_PhotoMeta"))
-						return new T_PhotoMeta(c.synconn);
-					else
-						throw new SemanticException("TODO %s", synreg.name);
-				}),
+		Syngleton syngleton = new Syngleton(cfg);
+		
+		Syngleton.setupSyntables(syngleton, cfg, null,
 				webinf, "config.xml", ".", "ABCDEF0123465789");
 
-		Syngleton.setupSysRecords(cfg, tierob);
+		Syngleton.setupSysRecords(cfg, tieradmins);
 
-		return SynotierJettyApp
+		SynotierJettyApp app = SynotierJettyApp
 			.registerPorts(
-				SynotierJettyApp.instanserver(webinf, cfg, "config.xml", "127.0.0.1", port, tierob.get(0)),
+				SynotierJettyApp.instanserver(webinf, cfg, "config.xml", "127.0.0.1", port),
 				conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
-				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
-			.addServPort(new ExpDoctier(cfg.synode(), conn)
-			.create("URA", "zsu", SynodeMode.peer))
+				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }));
+		
+		ExpDoctier expDoctier = new ExpDoctier(cfg.synode(), conn, conn);
+		
+		return app.addServPort(expDoctier)
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;
 	}

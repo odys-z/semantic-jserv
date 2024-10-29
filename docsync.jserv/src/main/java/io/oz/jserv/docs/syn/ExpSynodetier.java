@@ -2,14 +2,12 @@ package io.oz.jserv.docs.syn;
 
 import static io.oz.jserv.docs.syn.SyncReq.A;
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -21,6 +19,7 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.syn.ExchangeBlock;
@@ -39,24 +38,17 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 	SynDomanager domanager0;
 
-	/** {domain: {jserv: exession-persist}} */
-	public HashMap<String, SynDomanager> domains;
-	public ExpSynodetier domains(HashMap<String, SynDomanager> domains) throws Exception {
-		this.domains = domains;
-		if (len(domains) > 1)
-			Utils.warnT(new Object() {}, "Multiple domains is an issue for v 2.0.0.");
-
-		for (SynDomanager dm : domains.values())
-			domanager0 = SynDomanager.clone(dm);
-		return this;
-	}
-
-	public ExpSynodetier(String org, String domain, String synode, String conn, SynodeMode mode)
+	ExpSynodetier(String org, String domain, String synode, String conn, SynodeMode mode)
 			throws SQLException, SAXException, IOException, TransException {
 		super(Port.syntier);
 		this.domain = domain;
 		this.synid  = synode;
 		this.mode   = mode;
+	}
+
+	public ExpSynodetier(SynDomanager domanger) throws SQLException, SAXException, IOException, TransException {
+		this(domanger.org, domanger.domain(), domanger.synode, domanger.synconn, domanger.mode);
+		domanager0 = domanger;
 	}
 
 	@Override
@@ -74,6 +66,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		SyncResp rsp = null;
 		try {
 			SyncReq req = jmsg.body(0);
+
+			DocUser usr = (DocUser) JSingleton.getSessionVerifier().verify(jmsg.header());
+			notNull(usr.deviceId);
 			
 			if (req.exblock != null) {
 				if (!isblank(req.exblock.domain) && !eq(req.exblock.domain, domain))
@@ -88,19 +83,19 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			}
 
 			if (A.initjoin.equals(a))
-				rsp = domanager0.onjoin(req);
+				rsp = domanager0.onjoin(req, usr);
 
 			else if (A.closejoin.equals(a))
-				rsp = domanager0.onclosejoin(req);
+				rsp = domanager0.onclosejoin(req, usr);
 
 			else if (A.exinit.equals(a)) 
-				rsp = domanager0.onsyninit(req);
+				rsp = domanager0.onsyninit(req, usr);
 
 			else if (A.exchange.equals(a)) {
 				if (domanager0.synssion(req.exblock.srcnode) == null)
 					throw new SemanticException(
 						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
-						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.myconn, domanager0.domain);
+						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
 
 				ExchangeBlock b = domanager0
 						.synssion(req.exblock.srcnode)
@@ -113,8 +108,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (domanager0.synssion(req.exblock.srcnode) == null)
 					throw new SemanticException(
 						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
-						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.myconn, domanager0.domain);
-				rsp = domanager0.onclosex(req);
+						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
+				rsp = domanager0.onclosex(req, usr);
 			}
 
 			else 

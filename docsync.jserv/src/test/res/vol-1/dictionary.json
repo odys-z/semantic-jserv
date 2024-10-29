@@ -1,20 +1,19 @@
 {"type": "io.oz.syn.AnRegistry",
  "config": {
    "synid": "Y",
+   "domain": "zsu",
+   "admin": "ody",
    "sysconn": "main-sqlite",
    "synconn": "no-jserv.01",
-   "domain": "zsu",
    "host": "",
    "port": 8965,
    
-   "syntities": [{"name": "T_PhotoMeta"}],
-
    "peers": [
      {"synid": "X", "org": "URA", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
      {"synid": "Y", "org": "URA", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"},
      {"synid": "Z", "org": "URA", "mac": "#URA.Z", "nyq": 0, "domain": "zsu", "syn_uid": "Z,Z"}]
    },
- "synrobots": [
-   {"userId": "ody", "pswd": "8964", "iv": null},
-   {"userId": "syrskyi", "pswd": "слава україні", "iv": null}
- ]}
+ "synusers": [
+   {"userId": "ody", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"},
+   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "ura", "domain": "zsu"} ]
+ }

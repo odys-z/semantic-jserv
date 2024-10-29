@@ -2,8 +2,8 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
-
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logi;
@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,9 +33,8 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.Docheck;
-import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -105,6 +105,12 @@ public class SynodetierJoinTest {
     	System.setProperty("VOLUME_HOME", p + "/volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
+		System.setProperty("VOLUME_HOME", p + "/volume");
+		for (int c = 0; c < 4; c++) {
+			System.setProperty(f("VOLUME_%s", c), p + "/vol-" + c);
+			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
+		}
+
 		Configs.init(webinf);
 		Connects.init(webinf);
 		YellowPages.load("$VOLUME_HOME");
@@ -118,10 +124,10 @@ public class SynodetierJoinTest {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			
-			SyncRobot me = new SyncRobot(syrskyi, slava, syrskyi, "#-" + i);
-			ArrayList<SyncRobot> robots = new ArrayList<SyncRobot>() { {add(me);} };
+			SyncUser me = new SyncUser(syrskyi, slava, syrskyi, "#-" + i);
+			ArrayList<SyncUser> robots = new ArrayList<SyncUser>() { {add(me);} };
 
-			SynodeConfig config = new SynodeConfig(nodes[i]);
+			SynodeConfig config = new SynodeConfig(nodes[i], SynodeMode.peer);
 			config.synconn = servs_conn[i];
 			config.sysconn = sys_conn;
 			config.port    = port++;
@@ -129,18 +135,22 @@ public class SynodetierJoinTest {
 			config.domain  = zsu;
 
 			Syngleton.setupSysRecords(config, robots);
-			// Syngleton.setupSyntables(config.synconn);
-			Syngleton.setupSyntables(config,
+			Syngleton.setupSyntables(getSyngleton(), config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789");
 
 			Syngleton.cleanDomain(config);
 
-			jetties[i] = startSyndoctier(config, f("config-%s.xml", i));
+			jetties[i] = startSyndoctier(config, f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-								jetties[i].synode(), SynodeMode.peer, docm);
+								config.synode(), SynodeMode.peer, docm, config.debug);
 		}
+	}
+
+	private static Syngleton getSyngleton() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Test
@@ -189,53 +199,61 @@ public class SynodetierJoinTest {
 		SynotierJettyApp hub = jetties[to];
 		SynotierJettyApp prv = jetties[by];
 
-		for (String servpattern : hub.synodetiers().keySet()) {
-			if (len(hub.synodetiers().get(servpattern)) > 1 || len(prv.synodetiers().get(servpattern)) > 1)
+		HashMap<String, SynDomanager> synodetiers = hub.syngleton().syndomanagers;
+//		for (String servpattern : synodetiers.keySet()) {
+			if (len(synodetiers) > 1 || len(prv.syngleton().syndomanagers) > 1)
 				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
 			
-			for (String dom : hub.synodetiers().get(servpattern).keySet()) {
-				SynDomanager hubmanger = hub.synodetiers().get(servpattern).get(dom);
-				SynDomanager prvmanger = prv.synodetiers().get(servpattern).get(dom);
+			for (String dom : synodetiers.keySet()) {
+				SynDomanager hubmanger = synodetiers.get(dom);
+				SynDomanager prvmanger = prv.syngleton().syndomanagers.get(dom);
 	
 				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 						(rep) -> { lights[by] = true; });
 			}
-		}
+//		}
 	}
 
 	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
-			throws SemanticException, AnsonException, SsException, IOException {
+			throws SemanticException, AnsonException, SsException, IOException, InterruptedException {
 
 		SynotierJettyApp t = jetties[tx];
 
-		for (String servpattern : t.synodetiers().keySet()) {
-			if (len(t.synodetiers().get(servpattern)) > 1)
-				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
+//		for (String servpattern : t.synodetiers().keySet()) {
+			HashMap<String, SynDomanager> doms = t.syngleton().syndomanagers;
 
-			for (String dom : t.synodetiers().get(servpattern).keySet()) {
-				t.synodetiers().get(servpattern).get(dom).updomains(
-					(domain, mynid, peer, repb, xp) -> {
-						if (!isNull(ck))
+//			if (len(doms) > 1)
+//				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
+			
+			for (String dom : doms.keySet()) {
+				doms.get(dom).updomains(
+					(domain, mynid, peer, xp) -> {
+						if (!isNull(ck) && !isblank(peer))
 							try {
+								Utils.logi("On domain updated: %s : %s <-> %s", dom, mynid, peer);
+								Utils.logi("============================================\n");
 								printChangeLines(ck);
 								printNyquv(ck);
 							} catch (TransException | SQLException e) {
 								e.printStackTrace();
 							}
 
-						if (eq(domain, dom) && eq(mynid, jetties[tx].synode())) {
+						if (isblank(peer))
+						if (eq(domain, dom)) {
 							lights[tx] = true;
-							Utils.logi("lights[%s] = true", tx);
+							Utils.logi("lights[%s] (%s) = true", tx, mynid);
 						}
 						else {
-							DBSyntableBuilder trb = isNull(xp) ? null : xp[0].trb;
 							throw new NullPointerException(String.format(
 								"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
-								domain, mynid, peer, xp == null || trb == null ? "unknown" : trb.synconn()));
+								domain, mynid, peer));
 						}
+					}, (blockby) -> {
+						Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);
+						return 2000;
 					});
 			}
-		}
+//		}
 	}
 
 	/**
@@ -245,17 +263,14 @@ public class SynodetierJoinTest {
 	 * @return the Jetty App, with a servlet server.
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml) throws Exception {
-		String host = cfg.host;
-		int port = cfg.port;
-
-		SyncRobot tierobot = YellowPages.getRobot(syrskyi);
-		tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
+	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml, String syntity_json) throws Exception {
+		// SyncUser tierobot = YellowPages.getRobot(syrskyi);
+		// tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 
-			.createSyndoctierApp(cfg_xml, cfg, host, port, webinf, zsu, tierobot)
+			.createSyndoctierApp(cfg_xml, syntity_json, cfg, webinf)
 			.start(() -> System.out, () -> System.err)
-			.loadDomains(SynodeMode.peer)
+			.loadDomains(cfg)
 			;
 	}
 }
