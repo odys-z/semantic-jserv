@@ -120,16 +120,21 @@ public class SynotierJettyApp {
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
-		HashMap<String, SynDomanager> domanagers = new HashMap<String, SynDomanager>();
-		domanagers.put(cfg.domain,
-				new SynDomanager(new SynodeMeta(cfg.synconn), cfg.org,
-						cfg.domain, synid, cfg.synconn, SynodeMode.peer, Connects.getDebug(cfg.synconn)
-				).loadomainx());
+//		HashMap<String, SynDomanager> domanagers = new HashMap<String, SynDomanager>();
+//		domanagers.put(cfg.domain,
+//				new SynDomanager(new SynodeMeta(cfg.synconn), cfg.org,
+//						cfg.domain, synid, cfg.synconn, SynodeMode.peer, cfg.debug
+//				).loadomainx());
+
+		// HashMap<String,HashMap<String,SynDomanager>> domanagers = synapp.syngleton.loadDomains(cfg);
+		synapp.loadDomains(cfg);
 
 		// domains.get(domain).loadomain();
 			// .born(synapp.synchandlers, 0, 0);
 		
-		SynDomanager domanger = domanagers.get(cfg.domain);
+		// SynDomanager domanger = domanagers.get(synsrv_url).cfg.domain);
+		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
+		
 		ExpDoctier doctier  = new ExpDoctier(synid, cfg.sysconn, cfg.synconn)
 							.create(domanger, syntity_json);
 
@@ -189,7 +194,6 @@ public class SynotierJettyApp {
 			context.addServlet(new ServletHolder(t), pattern);
 			
 			if (t instanceof ExpSynodetier) {
-//				syngleton.syndomanagers.put(pattern, ((ExpSynodetier)t).domains);
 				syngleton.syntier_url = pattern;
 			}
 		}
@@ -215,10 +219,10 @@ public class SynotierJettyApp {
 		return syngleton.jserv;
 	}
 
-	public void openDomains(OnDomainUpdate onupdate)
-			throws AnsonException, SsException, IOException, TransException, SQLException {
-		syngleton.openDomains(onupdate);
-	}
+//	public void openDomains(OnDomainUpdate onupdate)
+//			throws AnsonException, SsException, IOException, TransException, SQLException {
+//		syngleton.openDomains(onupdate);
+//	}
 
 	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
 			throws TransException, SQLException {

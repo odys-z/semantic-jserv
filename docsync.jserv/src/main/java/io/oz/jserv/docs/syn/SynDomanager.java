@@ -76,14 +76,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 		 */
 		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
 	}
-	
-	@FunctionalInterface
-	public interface OnMutexLock {
-		/**
-		 * @return sleeping seconds for a next try.
-		 */
-		public int locked();
-	}
 
 	/**
 	 * @since 0.2.0
@@ -146,10 +138,9 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager(SynodeMeta synm, String org, String dom, String myid,
 			String conn, SynodeMode mod, boolean debug) throws Exception {
 
-		super(mod, dom, myid, conn);
+		super(mod, dom, myid, conn, debug);
 
 		this.org = org;
-		this.dbg = debug;
 		
 		errHandler = (e, r, a) -> {
 			Utils.warn("Error code: %s,\n%s", e.name(), String.format(r, (Object[])a));
@@ -210,11 +201,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 		try {
 			if (lockx(usr))  {
-//			if (synlock.tryLock())  {
-//				synlocker = peer;
-//				synlockid = usr.sessionId();
 
-				// DBSyntableBuilder admb = new DBSyntableBuilder(domain, myconn, synode, synmod);
 				DBSyntableBuilder admb = new DBSyntableBuilder(this);
 
 				ExessionPersist admp = new ExessionPersist(admb, peer);
@@ -229,7 +216,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 			}
 			else return trylater(peer);
 		} catch (Exception e) {
-			// synlock.unlock();
 			unlockx(usr);
 			throw e;
 		}
@@ -238,7 +224,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 	private SyncResp trylater(String peer) {
 		return new SyncResp(domain()).exblock(
 				new ExchangeBlock(domain(), synode, peer, null,
-				new ExessionAct(mode_server, ExessionAct.trylater)));
+				new ExessionAct(mode_server, ExessionAct.trylater))
+				.sleep(2));
 
 	}
 	
@@ -273,28 +260,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
-	 * Initiate a synchronization exchange session using my connection.
-	 * @deprecated only for tests. Call {@link SynssionClientier#exesinit(SyncReq)} instead.
-	 * @param peer
-	 * @param jserv
-	 * @param domain
-	 * @return initiate request
-	 * @throws Exception 
-	 * @since 0.2.0
-	public SyncReq syninit(String peer, String domain) throws Exception {
-		DBSyntableBuilder b0 = new DBSyntableBuilder(domain, myconn, synode, synmod);
-
-		ExessionPersist xp = new ExessionPersist(b0, peer);
-
-		b0 = xp.trb;
-		ExchangeBlock b = b0.initExchange(xp);
-
-		return new SyncReq(null, domain)
-					.exblock(b);
-	}
-	 */
-
-	/**
 	 * @param req
 	 * @param usr initial request
 	 * @return exchange block
@@ -309,14 +274,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 					"This synode, %s, cannot respond to exchange initiation without knowledge of %s.",
 					synode, req);
 
-		// musteq(peer, usr.deviceId());
-
-		/*
-		if (!synlock.tryLock())
-			return trylater(peer);
-		
-		synlocker = usr;
-		*/
 		if (!lockx(usr))
 			return trylater(peer);
 
@@ -548,6 +505,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 			throws AnsonException, SsException, IOException, TransException {
 
 		for (SynssionPeer c : sessions.values()) {
+			if (eq(c.peer, synode))
+					continue;
 			c.loginWithUri(c.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
 			c.update2peer(() -> 3);
 		}
@@ -567,45 +526,4 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return new DBSyntableBuilder(this);
 	}
 	
-//	////////////////////////////////////////////////////////////////////////////
-//	// final ReentrantLock sylock = new ReentrantLock(); 
-//	// final Object sylock = new Object(); 
-//	final int[] sylock = new int[1];
-//	IUser synlocker;
-//	
-//	synchronized void unlockx(IUser usr) {
-//		notNull(usr);
-//		notNull(usr.deviceId());
-//
-//		if (synlocker != null && eq(synlocker.sessionId(), usr.sessionId())) {
-//			musteq(sylock[0], 1);
-//			sylock[0] = 0;
-//			if (dbg) System.err.print(
-//					f("\n+++++++++- unlocked +++++++++\n"
-//					+ "lock at %s <- %s\nuser: %s\n%s",
-//					synode, usr.deviceId(), synlocker.uid(), synlocker));
-//			// sylock.unlock();
-//			synlocker = null;
-//		}
-//	}
-//
-//	public boolean lockme() { return lockx(robot); }
-//
-//	private synchronized boolean lockx(IUser usr) {
-//		notNull(usr);
-//		notNull(usr.deviceId());
-//
-//		if (sylock[0] == 0) {
-//			sylock[0] = 1;
-//			synlocker = usr;
-//			if (dbg) System.err.print(
-//					f("\n----------- locked  ---------\n"
-//					+ "lock at %s <- %s\nuser: %s\n%s",
-//					synode, usr.deviceId(), usr.uid(), synlocker));
-//			return true;
-//		}
-//		else return false;
-//	}
-//
-
 }

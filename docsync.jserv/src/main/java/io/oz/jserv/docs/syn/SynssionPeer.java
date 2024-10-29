@@ -24,11 +24,11 @@ import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyncUser;
+import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docs.syn.SynDomanager.OnMutexLock;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
 /**
@@ -102,14 +102,8 @@ public class SynssionPeer {
 						+ "\n=============================================================\n",
 						domain(), mynid, peer);
 
-			/// lock local syndomx
-			while (domanager.lockme()) {
-				int sleep = onMutext.locked();
-				if (sleep > 0)
-					Thread.sleep(sleep * 1000);
-				else if (sleep < 0)
-					return this;
-			}
+			/// lock and wait local syndomx
+			domanager.lockme(onMutext);
 
 			ExchangeBlock reqb = exesinit();
 			rep = exespush(peer, A.exinit, reqb);
@@ -117,13 +111,16 @@ public class SynssionPeer {
 			if (rep != null) {
 				// lock remote
 				while (rep.synact() == trylater) {
-					int sleep = onMutext.locked();
+					domanager.unlockme();
+
+					int sleep = rep.exblock.sleeps;
 					if (sleep > 0)
 						Thread.sleep(sleep * 1000);
 					else if (sleep < 0)
 						return this;
-					else
-						rep = exespush(peer, A.exinit, reqb);
+
+					domanager.lockme(onMutext);
+					rep = exespush(peer, A.exinit, reqb);
 				}
 
 				if (rep.exblock != null && rep.exblock.synact() != deny) {
@@ -157,7 +154,7 @@ public class SynssionPeer {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-//		finally { synlock.unlock(); }
+		finally { domanager.unlockme(); }
 		return this;
 	}
 

@@ -35,7 +35,6 @@ import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
@@ -144,7 +143,7 @@ public class SynodetierJoinTest {
 			jetties[i] = startSyndoctier(config, f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-								config.synode(), SynodeMode.peer, docm);
+								config.synode(), SynodeMode.peer, docm, config.debug);
 		}
 	}
 
@@ -241,7 +240,6 @@ public class SynodetierJoinTest {
 							Utils.logi("lights[%s] (%s) = true", tx, mynid);
 						}
 						else {
-							// DBSyntableBuilder trb = isNull(xp) ? null : xp[0].trb;
 							throw new NullPointerException(String.format(
 								"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
 								domain, mynid, peer));
@@ -262,7 +260,7 @@ public class SynodetierJoinTest {
 	 * @throws Exception
 	 */
 	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml, String syntity_json) throws Exception {
-		SyncUser tierobot = YellowPages.getRobot(syrskyi);
+		// SyncUser tierobot = YellowPages.getRobot(syrskyi);
 		// tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 

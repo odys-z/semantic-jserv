@@ -87,10 +87,11 @@ public class ExpDoctierservTest {
 
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
-			// should block X's starting sessions
-			jetties[i].openDomains( (domain, mynid, peer, xp) -> {
-				lights[i] = true;
-			});
+			// jetties[i].syngleton().domanager(zsu).dbg = true;
+			jetties[i].syngleton().openDomains(
+				(domain, mynid, peer, xp) -> {
+					lights[i] = true;
+				});
 		}
 		awaitAll(lights, -1);
 
@@ -183,6 +184,7 @@ public class ExpDoctierservTest {
 			cfgs[i].localhost = host;
 			cfgs[i].port = port++;
 			cfgs[i].mode = SynodeMode.peer;
+			// cfgs[i].debug= Connects.getDebug(cfgs[i].synconn);
 
 			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
 			
@@ -204,7 +206,7 @@ public class ExpDoctierservTest {
 			jetties[i] = startSyndoctier(cfgs[i], "config.xml", f("$VOLUME_%s/syntity.json", i));
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-						cfgs[i].synode(), SynodeMode.peer, docm);
+						cfgs[i].synode(), SynodeMode.peer, docm, cfgs[i].debug);
 		}
 		
 		for (int i : nodex) {

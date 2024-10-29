@@ -5,6 +5,7 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
+import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.LangExt.shouldeq;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
@@ -78,6 +79,11 @@ public class Syngleton extends JSingleton {
 	 */
 	public HashMap<String, HashMap<String, SynDomanager>> syndomanagers;
 
+	public SynDomanager domanager(String domain) {
+		return (syndomanagers != null && syndomanagers.get(syntier_url).containsKey(domain)) ?
+				syndomanagers.get(syntier_url).get(domain) : null;
+
+	}
 
 	public void domanagers(HashMap<String, SynDomanager> domains) {
 		this.syndomanagers.put(syntier_url, domains);
@@ -120,7 +126,7 @@ public class Syngleton extends JSingleton {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public Syngleton loadDomains(SynodeConfig cfg) throws Exception {
+	public HashMap<String,HashMap<String,SynDomanager>> loadDomains(SynodeConfig cfg) throws Exception {
 		notNull(syntier_url);
 		shouldeq(new Object() {}, cfg.mode, SynodeMode.peer);
 		
@@ -145,7 +151,7 @@ public class Syngleton extends JSingleton {
 			SynDomanager domanger = new SynDomanager(
 						synm, rs.getString(synm.org),
 						domain, cfg.synode(),
-						cfg.synconn, cfg.mode, Connects.getDebug(cfg.synconn))
+						cfg.synconn, cfg.mode, cfg.debug)
 					.loadomainx();
 
 			syndomanagers.get(syntier_url)
@@ -154,7 +160,7 @@ public class Syngleton extends JSingleton {
 						.synrobot(domanger.robot));
 		}
 
-		return this;
+		return syndomanagers;
 	}
 
 	/**
@@ -173,6 +179,8 @@ public class Syngleton extends JSingleton {
 			new Thread(()->{
 				for (SynDomanager dmgr : syndomanagers.get(syntier_url).values()) {
 					try {
+						musteqs(syncfg.domain, dmgr.domain());
+
 						SyncUser usr = ((SyncUser)AnSession
 							.loadUser(syncfg.admin, sysconn))
 							.deviceId(dmgr.synode);
