@@ -6,7 +6,6 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.LangExt.musteqs;
-import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.LangExt.shouldeq;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqlitables;
@@ -70,34 +69,32 @@ public class Syngleton extends JSingleton {
 
 	/**
 	 * Last (bug?) url pattern (key in {@link #syndomanagers}) of {@link ExpSynodetier}.
-	 */
 	String syntier_url;
+	 */
 
 	/**
 	 * { servlet-url-pattern: { domain: domanager } }, only instance of {@link ExpSynodetier},<br>
 	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
 	 */
-	public HashMap<String, HashMap<String, SynDomanager>> syndomanagers;
+	public HashMap<String, SynDomanager> syndomanagers;
 
 	public SynDomanager domanager(String domain) {
-		return (syndomanagers != null && syndomanagers.get(syntier_url).containsKey(domain)) ?
-				syndomanagers.get(syntier_url).get(domain) : null;
+		return (syndomanagers != null && syndomanagers.containsKey(domain)) ?
+				syndomanagers.get(domain) : null;
 
 	}
 
-	public void domanagers(HashMap<String, SynDomanager> domains) {
-		this.syndomanagers.put(syntier_url, domains);
+	public Syngleton domanagers(HashMap<String, SynDomanager> domains) {
+		this.syndomanagers = domains;
+		return this;
 	}
 
 	SynodeMeta synm;
 
-	// public Syngleton(String sys_conn, String synid, String syn_conn) {
 	public Syngleton(SynodeConfig cfg) {
-//		synode = synid;
-//		synconn = syn_conn;
 		sysconn = cfg.sysconn;
 		syncfg = cfg;
-		syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
+		syndomanagers = new HashMap<String, SynDomanager>();
 	}
 
 	public void updatePeerJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
@@ -126,15 +123,15 @@ public class Syngleton extends JSingleton {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public HashMap<String,HashMap<String,SynDomanager>> loadDomains(SynodeConfig cfg) throws Exception {
-		notNull(syntier_url);
+	public HashMap<String,SynDomanager> loadDomains(SynodeConfig cfg) throws Exception {
+		// notNull(syntier_url);
 		shouldeq(new Object() {}, cfg.mode, SynodeMode.peer);
 		
 		if (syndomanagers == null)
-			syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
+			syndomanagers = new HashMap<String, SynDomanager>();
 
-		if (!syndomanagers.containsKey(syntier_url))
-			syndomanagers.put(syntier_url, new HashMap<String, SynDomanager>());
+//		if (!syndomanagers.containsKey(syntier_url))
+//			syndomanagers.put(syntier_url, new HashMap<String, SynDomanager>());
 
 		synm = new SynodeMeta(cfg.synconn); 
 
@@ -154,8 +151,7 @@ public class Syngleton extends JSingleton {
 						cfg.synconn, cfg.mode, cfg.debug)
 					.loadomainx();
 
-			syndomanagers.get(syntier_url)
-					.put(domain, (SynDomanager) domanger
+			syndomanagers.put(domain, (SynDomanager) domanger
 						.loadNvstamp(defltScxt, domanger.robot)
 						.synrobot(domanger.robot));
 		}
@@ -175,9 +171,9 @@ public class Syngleton extends JSingleton {
 	 */
 	public Syngleton openDomains(OnDomainUpdate ... onok)
 			throws AnsonException, SsException, IOException, TransException, SQLException {
-		if (syndomanagers != null && syndomanagers.containsKey(syntier_url)) {
+		if (syndomanagers != null) {
 			new Thread(()->{
-				for (SynDomanager dmgr : syndomanagers.get(syntier_url).values()) {
+				for (SynDomanager dmgr : syndomanagers.values()) {
 					try {
 						musteqs(syncfg.domain, dmgr.domain());
 
@@ -205,8 +201,8 @@ public class Syngleton extends JSingleton {
 	 * @return synode id
 	 */
 	public String synode() {
-		if (syndomanagers != null && syndomanagers.containsKey(syntier_url))
-			for (SynDomanager domanager : syndomanagers.get(syntier_url).values())
+		if (syndomanagers != null)
+			for (SynDomanager domanager : syndomanagers.values())
 				return domanager.synode;
 		return null;
 	}

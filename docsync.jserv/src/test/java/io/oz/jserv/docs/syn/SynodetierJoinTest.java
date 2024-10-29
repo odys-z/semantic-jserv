@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -198,18 +199,19 @@ public class SynodetierJoinTest {
 		SynotierJettyApp hub = jetties[to];
 		SynotierJettyApp prv = jetties[by];
 
-		for (String servpattern : hub.synodetiers().keySet()) {
-			if (len(hub.synodetiers().get(servpattern)) > 1 || len(prv.synodetiers().get(servpattern)) > 1)
+		HashMap<String, SynDomanager> synodetiers = hub.syngleton().syndomanagers;
+//		for (String servpattern : synodetiers.keySet()) {
+			if (len(synodetiers) > 1 || len(prv.syngleton().syndomanagers) > 1)
 				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
 			
-			for (String dom : hub.synodetiers().get(servpattern).keySet()) {
-				SynDomanager hubmanger = hub.synodetiers().get(servpattern).get(dom);
-				SynDomanager prvmanger = prv.synodetiers().get(servpattern).get(dom);
+			for (String dom : synodetiers.keySet()) {
+				SynDomanager hubmanger = synodetiers.get(dom);
+				SynDomanager prvmanger = prv.syngleton().syndomanagers.get(dom);
 	
 				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 						(rep) -> { lights[by] = true; });
 			}
-		}
+//		}
 	}
 
 	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
@@ -217,12 +219,14 @@ public class SynodetierJoinTest {
 
 		SynotierJettyApp t = jetties[tx];
 
-		for (String servpattern : t.synodetiers().keySet()) {
-			if (len(t.synodetiers().get(servpattern)) > 1)
-				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
+//		for (String servpattern : t.synodetiers().keySet()) {
+			HashMap<String, SynDomanager> doms = t.syngleton().syndomanagers;
 
-			for (String dom : t.synodetiers().get(servpattern).keySet()) {
-				t.synodetiers().get(servpattern).get(dom).updomains(
+//			if (len(doms) > 1)
+//				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
+			
+			for (String dom : doms.keySet()) {
+				doms.get(dom).updomains(
 					(domain, mynid, peer, xp) -> {
 						if (!isNull(ck) && !isblank(peer))
 							try {
@@ -249,7 +253,7 @@ public class SynodetierJoinTest {
 						return 2000;
 					});
 			}
-		}
+//		}
 	}
 
 	/**

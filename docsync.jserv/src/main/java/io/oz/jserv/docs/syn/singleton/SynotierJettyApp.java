@@ -3,7 +3,6 @@ package io.oz.jserv.docs.syn.singleton;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
@@ -17,12 +16,10 @@ import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 
-import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -30,16 +27,13 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
-import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
-import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
 import io.oz.syn.SynodeConfig;
 
 /**
@@ -193,9 +187,9 @@ public class SynotierJettyApp {
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
 			
-			if (t instanceof ExpSynodetier) {
-				syngleton.syntier_url = pattern;
-			}
+//			if (t instanceof ExpSynodetier) {
+//				syngleton.syntier_url = pattern;
+//			}
 		}
 		
 		return this;
@@ -211,9 +205,9 @@ public class SynotierJettyApp {
 			server.stop();
 	}
 	
-	public HashMap<String,HashMap<String,SynDomanager>> synodetiers() {
-		return syngleton.syndomanagers;
-	}
+//	public HashMap<String,SynDomanager> synodetiers() {
+//		return syngleton.syndomanagers;
+//	}
 
 	public String jserv() {
 		return syngleton.jserv;
@@ -276,7 +270,7 @@ public class SynotierJettyApp {
 	    String addrhost  = inet.getHostAddress();
 		synapp.syngleton.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
 	
-	    synapp.syngleton.syndomanagers = new HashMap<String, HashMap<String, SynDomanager>>();
+	    synapp.syngleton.syndomanagers = new HashMap<String, SynDomanager>();
 	    
 	    return synapp;
 	}
