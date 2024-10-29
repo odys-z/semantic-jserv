@@ -107,33 +107,18 @@ public class SynotierJettyApp {
 			String syntity_json, SynodeConfig cfg, String webinf) throws Exception {
 
 		String synid  = cfg.synode();
-//		SyncRobot robot = new SyncRobot(cfg); 
-//		robot.deviceId(synid);
 
 		SynotierJettyApp synapp = SynotierJettyApp.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port);
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
-//		HashMap<String, SynDomanager> domanagers = new HashMap<String, SynDomanager>();
-//		domanagers.put(cfg.domain,
-//				new SynDomanager(new SynodeMeta(cfg.synconn), cfg.org,
-//						cfg.domain, synid, cfg.synconn, SynodeMode.peer, cfg.debug
-//				).loadomainx());
-
-		// HashMap<String,HashMap<String,SynDomanager>> domanagers = synapp.syngleton.loadDomains(cfg);
 		synapp.loadDomains(cfg);
 
-		// domains.get(domain).loadomain();
-			// .born(synapp.synchandlers, 0, 0);
-		
-		// SynDomanager domanger = domanagers.get(synsrv_url).cfg.domain);
 		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
 		
 		ExpDoctier doctier  = new ExpDoctier(synid, cfg.sysconn, cfg.synconn)
 							.create(domanger, syntity_json);
 
-//		ExpSynodetier syner = new ExpSynodetier(cfg.org, domain, synid, cfg.synconn, SynodeMode.peer)
-//							.domains(domanagers);
 		ExpSynodetier syner = new ExpSynodetier(domanger);
 		
 		return registerPorts(synapp, cfg.synconn,
@@ -186,10 +171,6 @@ public class SynotierJettyApp {
 		WebServlet info = t.getClass().getAnnotation(WebServlet.class);
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
-			
-//			if (t instanceof ExpSynodetier) {
-//				syngleton.syntier_url = pattern;
-//			}
 		}
 		
 		return this;
@@ -205,18 +186,9 @@ public class SynotierJettyApp {
 			server.stop();
 	}
 	
-//	public HashMap<String,SynDomanager> synodetiers() {
-//		return syngleton.syndomanagers;
-//	}
-
 	public String jserv() {
 		return syngleton.jserv;
 	}
-
-//	public void openDomains(OnDomainUpdate onupdate)
-//			throws AnsonException, SsException, IOException, TransException, SQLException {
-//		syngleton.openDomains(onupdate);
-//	}
 
 	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
 			throws TransException, SQLException {

@@ -23,7 +23,6 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
-import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
@@ -48,7 +47,6 @@ public class SynssionPeer {
 	public final String peerjserv;
 
 	String domain() {
-		// return xp != null && xp.trb != null ? xp.trb.domain() : null;
 		return domanager.domain();
 	}
 
