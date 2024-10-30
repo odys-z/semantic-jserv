@@ -31,6 +31,7 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.ExpDoctier;
+import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.SynodeConfig;
@@ -168,7 +169,7 @@ public class JettyHelperTest {
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }));
 		
-		ExpDoctier expDoctier = new ExpDoctier(cfg.synode(), conn, conn);
+		ExpDoctier expDoctier = new ExpDoctier(new SynDomanager(cfg));
 		
 		return app.addServPort(expDoctier)
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)

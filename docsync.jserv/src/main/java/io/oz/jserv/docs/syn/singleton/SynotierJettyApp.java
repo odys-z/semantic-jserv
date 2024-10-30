@@ -116,7 +116,7 @@ public class SynotierJettyApp {
 
 		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
 		
-		ExpDoctier doctier  = new ExpDoctier(synid, cfg.sysconn, cfg.synconn)
+		ExpDoctier doctier  = new ExpDoctier(domanger)
 							.create(domanger, syntity_json);
 
 		ExpSynodetier syner = new ExpSynodetier(domanger);

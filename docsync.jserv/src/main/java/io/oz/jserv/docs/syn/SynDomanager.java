@@ -135,6 +135,10 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return null;
 	}
 
+	public SynDomanager(SynodeConfig cfg) throws Exception {
+		this(new SynodeMeta(cfg.synconn), cfg.org, cfg.domain, cfg.synode(), cfg.synconn, cfg.mode, cfg.debug);
+	}
+
 	public SynDomanager(SynodeMeta synm, String org, String dom, String myid,
 			String conn, SynodeMode mod, boolean debug) throws Exception {
 

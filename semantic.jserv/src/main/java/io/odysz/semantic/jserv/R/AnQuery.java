@@ -111,7 +111,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	 * @throws TransException
 	 */
 	protected static Query buildSelct(AnQueryReq msg, IUser usr) throws SQLException, TransException {
-		Query selct = st0.select(msg.mtabl, msg.mAlias);
+		Query selct = synt0.select(msg.mtabl, msg.mAlias);
 		
 		selct.page(msg.page, msg.pgsize);
 
@@ -187,7 +187,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	 */
 	public static AnResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
 		Query selct = buildSelct(msg, usr);
-		SemanticObject s = selct.rs(st0.instancontxt(Connects.uri2conn(msg.uri()), usr));
+		SemanticObject s = selct.rs(synt0.instancontxt(Connects.uri2conn(msg.uri()), usr));
 		return (AnResultset) s.rs(0);
 	}
 }
