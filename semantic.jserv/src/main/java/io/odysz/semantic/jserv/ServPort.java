@@ -102,7 +102,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	}
 
-	protected static DATranscxt st0;
+	protected static DATranscxt synt0;
 
 	protected DATranscxt st;
 
@@ -134,7 +134,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	 */
 	public ServPort<T> trb(DATranscxt trb0) {
 		st = trb0;
-		if (st0 == null) st0 = trb0;
+		if (synt0 == null) synt0 = trb0;
 		return this;
 	}
 

@@ -68,22 +68,20 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return syntb0; // .loadNstamp();
 	}
 
-	public ExpDoctier() throws Exception {
-		this("test", "test", "test");
-	}
+//	public ExpDoctier() throws Exception {
+//		this(null);
+//	}
 
 	/**
 	 * @since 0.2.0
-	 * @param synoderId optional
-	 * @param synconn local connection id for this node tier, see {@link #myconn}.
 	 * @throws Exception 
-	 * @throws SAXException
 	 */
-	public ExpDoctier(String synoderId, String sysconn, String synconn) throws Exception {
+	public ExpDoctier(SynDomanager syndomanager) throws Exception {
 		super(Port.dbsyncer);
-		st0 = new DATranscxt(sysconn);
+		synt0 = new DATranscxt(syndomanager.synconn);
 
-		try {debug = Connects.getDebug(synconn); } catch (Exception e) {debug = false;}
+		try {debug = Connects.getDebug(syndomanager.synconn); }
+		catch (Exception e) {debug = false;}
 	}
 
 	static final int jservx = 0;
@@ -92,7 +90,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	Synodebot locrobot;
 
 	/// FIXME TODO move lock to SyndomContext?
-	private SyndomContext domx;
+	private SynDomanager domx;
 
 	IUser locrobot() {
 		if (locrobot == null)
