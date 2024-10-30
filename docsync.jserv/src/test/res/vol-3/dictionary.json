@@ -5,7 +5,7 @@
    "admin": "ody",
    "sysconn": "main-sqlite",
    "synconn": "no-jserv.03",
-   "host": "",
+   "localhost": "",
    "port": 8967, 
    
    "peers": [
