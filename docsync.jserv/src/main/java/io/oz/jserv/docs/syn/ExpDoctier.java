@@ -36,7 +36,8 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.SyndomContext;
+import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -61,25 +62,33 @@ import io.oz.jserv.docs.x.DocsException;
 public class ExpDoctier extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 
-	private DATranscxt syntb0;
+	DBSynTransBuilder trb0;
+
 	public DATranscxt syntransBuilder() throws SQLException, TransException {
-		if (syntb0 == null)
+		if (st == null)
 			throw new SemanticException("This synode haven't been started.");
-		return syntb0; // .loadNstamp();
+		return st; // .loadNstamp();
 	}
 
-//	public ExpDoctier() throws Exception {
-//		this(null);
-//	}
+	public ExpDoctier() throws Exception {
+		super(Port.docstier);
+	}
 
 	/**
+	 * 
 	 * @since 0.2.0
-	 * @throws Exception 
+	 * @param syndomanager
+	 * @throws Exception
 	 */
 	public ExpDoctier(SynDomanager syndomanager) throws Exception {
 		super(Port.dbsyncer);
-		synt0 = new DATranscxt(syndomanager.synconn);
-
+		
+		domx = syndomanager;
+		
+		trb0 = new DBSynTransBuilder(domx);
+		
+		// DBSynTransBuilder.synSemantics(trb0, domx.synconn, domx.synode, syntities);
+		
 		try {debug = Connects.getDebug(syndomanager.synconn); }
 		catch (Exception e) {debug = false;}
 	}
@@ -191,11 +200,13 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public ExpDoctier create(SynDomanager synx, String syntity_json) throws Exception {
+	public ExpDoctier domx(SynDomanager synx) throws Exception {
 
 //		syntb0 = new DBSynTransBuilder(synx, syntity_json,
 //							new DBSyntableBuilder(synx));
-		syntb0 = new DATranscxt(synx.synconn);
+		domx = synx;
+		st = new DATranscxt(synx.synconn);
+		trb0 = new DBSynTransBuilder(synx);
 
 		return this;
 	}
@@ -298,7 +309,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			throws IOException, TransException, SQLException, SAXException {
 		String conn = Connects.uri2conn(body.uri());
 
-		checkBlock0(syntb0, conn, body, (DocUser) usr);
+		checkBlock0(st, conn, body, (DocUser) usr);
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
@@ -352,12 +363,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @param body
 	 * @param usr
 	 * @return response
-	 * @throws SQLException
-	 * @throws IOException
-	 * @throws TransException
+	 * @throws Exception 
+	 * @throws SAXException 
 	 */
 	DocsResp endBlock(DocsReq body, IUser usr)
-			throws SQLException, IOException, TransException {
+			throws SAXException, Exception {
 		String chaid = chainId(usr, body.doc.clientpath); // shouldn't reply chain-id to the client?
 		BlockChain chain = null;
 		if (blockChains.containsKey(chaid)) {
@@ -371,7 +381,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		ExpSyncDoc photo = chain.doc;
 
-		DATranscxt b = syntransBuilder();
+		// DATranscxt b = syntransBuilder();
+		DBSynTransBuilder b = new DBSynTransBuilder(domx);
 		String pid = DocUtils.createFileBy64(b, conn, photo, usr, meta);
 
 		// move file

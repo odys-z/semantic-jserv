@@ -77,7 +77,7 @@ public class JSingleton {
 		DatasetCfg.init(rootINF);
 		
 		for (String connId : Connects.getAllConnIds())
-			DATranscxt.loadSemantics(connId);
+			DATranscxt.loadSemanticsXml(connId);
 
 		defltScxt = new DATranscxt(Connects.defltConn());
 			

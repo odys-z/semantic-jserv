@@ -12,7 +12,8 @@ import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.docm;
-import static io.oz.jserv.test.JettyHelperTest.webinf;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -55,8 +56,6 @@ import io.oz.syn.YellowPages;
 public class SynodetierJoinTest {
 	public static String owner  = "ody";
 	public static String passwd = "abc";
-	public static String zsu = "zsu";
-	public static String ura = "URA";
 	
 	public static final int X = 0;
 	public static final int Y = 1;
@@ -264,13 +263,11 @@ public class SynodetierJoinTest {
 	 * @throws Exception
 	 */
 	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml, String syntity_json) throws Exception {
-		// SyncUser tierobot = YellowPages.getRobot(syrskyi);
-		// tierobot = new SyncRobot(syrskyi, slava, syrskyi + "@" + ura).orgId(ura);
 
 		return SynotierJettyApp 
 			.createSyndoctierApp(cfg_xml, syntity_json, cfg, webinf)
+			// .loadDomains(cfg)
 			.start(() -> System.out, () -> System.err)
-			.loadDomains(cfg)
 			;
 	}
 }

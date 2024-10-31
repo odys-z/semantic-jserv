@@ -15,8 +15,8 @@ import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.zsu;
-import static io.oz.jserv.test.JettyHelperTest.webinf;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
@@ -87,7 +87,6 @@ public class ExpDoctierservTest {
 
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
-			// jetties[i].syngleton().domanager(zsu).dbg = true;
 			jetties[i].syngleton().openDomains(
 				(domain, mynid, peer, xp) -> {
 					lights[i] = true;
@@ -184,10 +183,9 @@ public class ExpDoctierservTest {
 			cfgs[i].localhost = host;
 			cfgs[i].port = port++;
 			cfgs[i].mode = SynodeMode.peer;
-			// cfgs[i].debug= Connects.getDebug(cfgs[i].synconn);
 
+			// install
 			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
-			
 
 			Syntities regists = Syntities.load(webinf, f("$VOLUME_%s/syntity.json", i), 
 				(synreg) -> {
@@ -201,6 +199,7 @@ public class ExpDoctierservTest {
 			
 			cleanPhotos(docm, servs_conn[i], devs);
 			
+			// reboot
 			Syngleton.cleanSynssions(cfgs[i]);
 
 			jetties[i] = startSyndoctier(cfgs[i], "config.xml", f("$VOLUME_%s/syntity.json", i));

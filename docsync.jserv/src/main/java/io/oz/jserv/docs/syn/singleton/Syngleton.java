@@ -259,7 +259,7 @@ public class Syngleton extends JSingleton {
 		setupSqlitables(cfg.synconn, false, entms);
 
 		// 3 symantics and entities 
-		synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemantics(cfg.synconn),
+		synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 
 		DatasetCfg.init(configFolder);

@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.notNull;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -30,6 +31,9 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.registry.Syntities;
+import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
@@ -107,25 +111,51 @@ public class SynotierJettyApp {
 			String syntity_json, SynodeConfig cfg, String webinf) throws Exception {
 
 		String synid  = cfg.synode();
+		String sync = cfg.synconn;
 
-		SynotierJettyApp synapp = SynotierJettyApp.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port);
+		SynotierJettyApp synapp = SynotierJettyApp.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
+								.loadomains(cfg);
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
-		synapp.loadDomains(cfg);
+		Syntities regists = Syntities.load(webinf, syntity_json, 
+				(synreg) -> {
+					throw new SemanticException("TODO %s (configure an entity table with meta type)", synreg.table);
+				});	
+
+		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
 		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
 		
-		ExpDoctier doctier  = new ExpDoctier(domanger)
-							.create(domanger, syntity_json);
-
 		ExpSynodetier syner = new ExpSynodetier(domanger);
 		
 		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
-			.addServPort(doctier)
+			.addDocServPort(cfg.domain, webinf, syntity_json)
 			.addServPort(syner)
 			;
+	}
+
+	SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
+		syngleton.loadDomains(cfg);
+		return this;
+	}
+
+	public SynotierJettyApp addDocServPort(String domain, String cfgroot, String syntity_json) throws Exception {
+		notNull(domain);
+		SynDomanager domanger = syngleton.domanager(domain);
+
+		addServPort(new ExpDoctier(domanger
+//				Syntities.load(
+//					cfgroot, syntity_json, 
+//					(synreg) -> {
+//						throw new SemanticException(
+//							"TODO syntity name: %s (Configure syntity.meta to avoid this error)",
+//							synreg.table);
+//					})
+					)
+				.domx(domanger));
+		return this;
 	}
 
 	public SynotierJettyApp start(PrintstreamProvider out, PrintstreamProvider err) throws Exception {
@@ -195,10 +225,10 @@ public class SynotierJettyApp {
 		syngleton.updatePeerJservs(synm, cfg, domain);
 	}
 
-	public SynotierJettyApp loadDomains(SynodeConfig cfg) throws Exception {
-		syngleton.loadDomains(cfg);
-		return this;
-	}
+//	public SynotierJettyApp loadDomains(SynodeConfig cfg) throws Exception {
+//		syngleton.loadDomains(cfg);
+//		return this;
+//	}
 
 	/**
 	 * Create a Jetty instance at local host, jserv-root
