@@ -6,6 +6,7 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.init;
@@ -139,7 +140,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		this(new SynodeMeta(cfg.synconn), cfg.org, cfg.domain, cfg.synode(), cfg.synconn, cfg.mode, cfg.debug);
 	}
 
-	public SynDomanager(SynodeMeta synm, String org, String dom, String myid,
+	protected SynDomanager(SynodeMeta synm, String org, String dom, String myid,
 			String conn, SynodeMode mod, boolean debug) throws Exception {
 
 		super(mod, dom, myid, conn, debug);
@@ -290,12 +291,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 		if (synssion(req.exblock.srcnode) != null) {
 			ExessionPersist xp = synssion(req.exblock.srcnode).xp;
 			
-			if (!eq(xp.peer(), req.exblock.srcnode))
+			shouldnull(new Object() {}, xp);
+			if (xp != null && !eq(xp.peer(), req.exblock.srcnode))
 				throw new ExchangeException(null, xp,
 						"A session persisting context's peers are not matching, %s : %s",
 						req.exblock.srcnode, xp.peer());
 
-			if (xp.exstate() != ready && xp.exstate() != close)
+			if (xp != null && xp.exstate() != ready && xp.exstate() != close)
 				return new SyncResp(domain())
 						.exblock(new ExchangeBlock(domain(), synode,
 									xp.peer(), xp.session(),

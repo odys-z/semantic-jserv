@@ -145,10 +145,10 @@ public class Syngleton extends JSingleton {
 		
 		while (rs.next()) {
 			String domain = rs.getString(synm.domain);
-			SynDomanager domanger = new SynDomanager(
-						synm, rs.getString(synm.org),
-						domain, cfg.synode(),
-						cfg.synconn, cfg.mode, cfg.debug)
+			SynDomanager domanger = new SynDomanager(cfg)
+						// synm, rs.getString(synm.org),
+						// domain, cfg.synode(),
+						// cfg.synconn, cfg.mode, cfg.debug)
 					.loadomainx();
 
 			syndomanagers.put(domain, (SynDomanager) domanger
