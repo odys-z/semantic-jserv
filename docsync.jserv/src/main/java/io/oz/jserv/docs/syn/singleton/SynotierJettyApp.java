@@ -145,15 +145,7 @@ public class SynotierJettyApp {
 		notNull(domain);
 		SynDomanager domanger = syngleton.domanager(domain);
 
-		addServPort(new ExpDoctier(domanger
-//				Syntities.load(
-//					cfgroot, syntity_json, 
-//					(synreg) -> {
-//						throw new SemanticException(
-//							"TODO syntity name: %s (Configure syntity.meta to avoid this error)",
-//							synreg.table);
-//					})
-					)
+		addServPort(new ExpDoctier(domanger)
 				.domx(domanger));
 		return this;
 	}

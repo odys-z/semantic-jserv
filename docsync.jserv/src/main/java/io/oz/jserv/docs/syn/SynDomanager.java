@@ -78,14 +78,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
 	}
 
-	/**
-	 * @since 0.2.0
-	 */
-	@FunctionalInterface
-	public interface OnBlocked {
-		public int blockms(IUser synlocker);
-	 }
-
 	static final String dom_unknown = null;
 
 	final String org;
@@ -175,7 +167,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		// sign up as a new domain
 		ExessionPersist cltp = new ExessionPersist(cltb, peeradmin);
 
-		SynssionPeer c = new SynssionPeer(this, peeradmin, adminjserv)
+		SynssionPeer c = new SynssionPeer(this, peeradmin, adminjserv, dbg)
 							.xp(cltp)
 							.onErr(this);
 
@@ -214,7 +206,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 				ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, org);
 
 				// FIXME why need a Synssion here?
-				synssion(peer, new SynssionPeer(this, peer, null)
+				synssion(peer, new SynssionPeer(this, peer, null, dbg)
 						.xp(admp.exstate(ready)));
 			
 				return new SyncResp(domain()).exblock(resp);
@@ -282,7 +274,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		if (!lockx(usr))
 			return trylater(peer);
 
-		SynssionPeer c = new SynssionPeer(this, peer, null);
+		SynssionPeer c = new SynssionPeer(this, peer, null, dbg);
 		synssion(peer, c); // rename clientier to worker?
 		return c.onsyninit(req, domain());
 	}
@@ -385,17 +377,17 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws InterruptedException 
 	 * @since 0.2.0
 	 */
-	public SynDomanager updomains(OnDomainUpdate onUpdate, OnBlocked block)
+	public SynDomanager updomains(OnDomainUpdate onUpdate, OnMutexLock block)
 			throws SemanticException, AnsonException, SsException, IOException, InterruptedException {
 		if (sessions == null || sessions.size() == 0)
 			throw new ExchangeException(ready, null,
 						"Session pool is null at %s", synode);
 		
 		while (!lockx(robot)) {
-			int wait = block.blockms(synlocker);
+			float wait = block.onlocked(synlocker);
 			if (wait < 0)
 				return this;
-			Thread.sleep(wait * 1000);
+			Thread.sleep((long) (wait * 1000));
 		}
 
 		new Thread(() -> { 
@@ -403,7 +395,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			ExessionPersist xp = sessions.get(peer).xp;
 			if (xp != null && xp.exstate() == ready)
 				try {
-					sessions.get(peer).update2peer(() -> 3);
+					sessions.get(peer).update2peer((lockby) -> 0.31f);
 				} catch (ExchangeException e) {
 					e.printStackTrace();
 				}
@@ -474,7 +466,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		
 		while (rs.next()) {
 			String peer = rs.getString("peer");
-			SynssionPeer c = new SynssionPeer(this, peer, rs.getString(synm.jserv))
+			SynssionPeer c = new SynssionPeer(this, peer, rs.getString(synm.jserv), dbg)
 								.onErr(errHandler);
 
 			if (dbg && sessions.containsKey(peer)) {
@@ -514,7 +506,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			if (eq(c.peer, synode))
 					continue;
 			c.loginWithUri(c.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
-			c.update2peer(() -> 3);
+			c.update2peer((lockby) -> 0.3f);
 		}
 
 		if (!isNull(onok))

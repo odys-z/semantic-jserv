@@ -12,7 +12,6 @@ import java.sql.SQLException;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
-import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -66,7 +65,7 @@ public class SynssionPeer {
 	protected SessionClient client;
 	private boolean debug;
 
-	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv) throws ExchangeException {
+	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) throws ExchangeException {
 		this.conn      = domanager.synconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
@@ -74,7 +73,7 @@ public class SynssionPeer {
 		this.mymode    = domanager.mode;
 		this.peerjserv = peerjserv;
 		this.clienturi = uri_sys;
-		this.debug     = Connects.getDebug(domanager.synconn);
+		this.debug     = debug; // Connects.getDebug(domanager.synconn);
 	}
 
 	/**

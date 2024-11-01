@@ -36,8 +36,6 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -201,9 +199,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @since 0.2.0
 	 */
 	public ExpDoctier domx(SynDomanager synx) throws Exception {
-
-//		syntb0 = new DBSynTransBuilder(synx, syntity_json,
-//							new DBSyntableBuilder(synx));
 		domx = synx;
 		st = new DATranscxt(synx.synconn);
 		trb0 = new DBSynTransBuilder(synx);
