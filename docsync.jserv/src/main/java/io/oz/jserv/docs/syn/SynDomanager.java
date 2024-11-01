@@ -17,20 +17,15 @@ import static io.odysz.semantic.syn.ExessionAct.ready;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
-
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.SemanticHandler;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
-import io.odysz.semantic.jserv.JRobot;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.syn.DBSynmantics.ShSynChange;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
@@ -271,11 +266,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 					"This synode, %s, cannot respond to exchange initiation without knowledge of %s.",
 					synode, req);
 
+		SynssionPeer c = new SynssionPeer(this, peer, null, dbg);
+
 		if (!lockx(usr))
 			return trylater(peer);
 
-		SynssionPeer c = new SynssionPeer(this, peer, null, dbg);
-		synssion(peer, c); // rename clientier to worker?
+		// synssion(peer, c); // rename clientier to worker?
+
 		return c.onsyninit(req, domain());
 	}
 
@@ -334,33 +331,33 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws Exception 
 	 * @since 0.2.0
 	 */
-	public SynDomanager born(List<SemanticHandler> handlers, long n0, long stamp0)
-			throws Exception {
-		IUser robot = new JRobot();
-
-		if (DAHelper.count(tb0, synconn, synm.tbl, synm.synoder, synode, synm.domain, domain()) > 0)
-			Utils.warnT(new Object() {},
-					"\n[ ♻.✩ ] Syn-domain manager restart upon domain '%s' ...",
-					domain());
-		else
-			DAHelper.insert(robot, tb0, synconn, synm,
-					synm.synuid, synode,
-					synm.pk, synode,
-					synm.domain, domain(),
-					synm.nyquence, n0,
-					synm.nstamp, stamp0,
-					synm.org, org,
-					synm.device, "#" + synode
-					);
-		
-		if (handlers != null)
-		for (SemanticHandler h : handlers)
-			if (h instanceof ShSynChange) {
-				Utils.logi("SynEntity registed: %s - %s : %s", synconn, domain(), ((ShSynChange)h).entm.tbl);
-			}
-
-		return this;
-	}
+//	public SynDomanager born(List<SemanticHandler> handlers, long n0, long stamp0)
+//			throws Exception {
+//		IUser robot = new JRobot();
+//
+//		if (DAHelper.count(tb0, synconn, synm.tbl, synm.synoder, synode, synm.domain, domain()) > 0)
+//			Utils.warnT(new Object() {},
+//					"\n[ ♻.✩ ] Syn-domain manager restart upon domain '%s' ...",
+//					domain());
+//		else
+//			DAHelper.insert(robot, tb0, synconn, synm,
+//					synm.synuid, synode,
+//					synm.pk, synode,
+//					synm.domain, domain(),
+//					synm.nyquence, n0,
+//					synm.nstamp, stamp0,
+//					synm.org, org,
+//					synm.device, "#" + synode
+//					);
+//		
+//		if (handlers != null)
+//		for (SemanticHandler h : handlers)
+//			if (h instanceof ShSynChange) {
+//				Utils.logi("SynEntity registed: %s - %s : %s", synconn, domain(), ((ShSynChange)h).entm.tbl);
+//			}
+//
+//		return this;
+//	}
 
 	/**
 	 * Update (synchronize) this domain, each peer in a new thread.
@@ -377,41 +374,48 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws InterruptedException 
 	 * @since 0.2.0
 	 */
-	public SynDomanager updomains(OnDomainUpdate onUpdate, OnMutexLock block)
-			throws SemanticException, AnsonException, SsException, IOException, InterruptedException {
+	public SynDomanager updomain(OnDomainUpdate onUpdate, OnMutexLock block)
+			throws SemanticException, AnsonException, SsException, IOException {
 		if (sessions == null || sessions.size() == 0)
 			throw new ExchangeException(ready, null,
 						"Session pool is null at %s", synode);
 		
-		while (!lockx(robot)) {
-			float wait = block.onlocked(synlocker);
-			if (wait < 0)
-				return this;
-			Thread.sleep((long) (wait * 1000));
-		}
+//		while (!lockx(robot)) {
+//			float wait = block.onlocked(synlocker);
+//			if (wait < 0)
+//				return this;
+//			Thread.sleep((long) (wait * 1000));
+//		}
 
 		new Thread(() -> { 
-		for (String peer : sessions.keySet()) {
-			ExessionPersist xp = sessions.get(peer).xp;
-			if (xp != null && xp.exstate() == ready)
-				try {
-					sessions.get(peer).update2peer((lockby) -> 0.31f);
-				} catch (ExchangeException e) {
-					e.printStackTrace();
-				}
-			else if (xp != null && xp.exstate() != ready)
-				continue;
-			else
-				Utils.warnT(new Object() {}, "TODO updating %s <- %s",
-						peer, synode);
+		try { 
+			lockme(block);
+			for (String peer : sessions.keySet()) {
+				ExessionPersist xp = sessions.get(peer).xp;
+				if (xp != null && xp.exstate() == ready)
+					try {
+						sessions.get(peer).update2peer((lockby) -> 0.31f);
+					} catch (ExchangeException e) {
+						e.printStackTrace();
+					}
+				else if (xp != null && xp.exstate() != ready)
+					continue;
+				else
+					Utils.warnT(new Object() {}, "TODO updating %s <- %s",
+							peer, synode);
+
+				if (onUpdate != null)
+					onUpdate.ok(domain(), synode, peer, xp);
+			}
 
 			if (onUpdate != null)
-				onUpdate.ok(domain(), synode, peer, xp);
+				onUpdate.ok(domain(), synode, null);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
 		}
-
-		if (onUpdate != null)
-			onUpdate.ok(domain(), synode, null);
-		}, f("%1$s [%2$s]", synode, domain()))
+		finally {
+			unlockme(); 
+		} }, f("%1$s [%2$s]", synode, domain()))
 		.start();
 
 		return this;

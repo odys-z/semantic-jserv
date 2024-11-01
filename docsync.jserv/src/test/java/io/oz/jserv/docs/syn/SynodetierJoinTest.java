@@ -218,41 +218,36 @@ public class SynodetierJoinTest {
 
 		SynotierJettyApp t = jetties[tx];
 
-//		for (String servpattern : t.synodetiers().keySet()) {
-			HashMap<String, SynDomanager> doms = t.syngleton().syndomanagers;
+		HashMap<String, SynDomanager> doms = t.syngleton().syndomanagers;
 
-//			if (len(doms) > 1)
-//				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
-			
-			for (String dom : doms.keySet()) {
-				doms.get(dom).updomains(
-					(domain, mynid, peer, xp) -> {
-						if (!isNull(ck) && !isblank(peer))
-							try {
-								Utils.logi("On domain updated: %s : %s <-> %s", dom, mynid, peer);
-								Utils.logi("============================================\n");
-								printChangeLines(ck);
-								printNyquv(ck);
-							} catch (TransException | SQLException e) {
-								e.printStackTrace();
-							}
+		for (String dom : doms.keySet()) {
+			doms.get(dom).updomain(
+				(domain, mynid, peer, xp) -> {
+					if (!isNull(ck) && !isblank(peer))
+						try {
+							Utils.logi("On domain updated: %s : %s <-> %s", dom, mynid, peer);
+							Utils.logi("============================================\n");
+							printChangeLines(ck);
+							printNyquv(ck);
+						} catch (TransException | SQLException e) {
+							e.printStackTrace();
+						}
 
-						if (isblank(peer))
-						if (eq(domain, dom)) {
-							lights[tx] = true;
-							Utils.logi("lights[%s] (%s) = true", tx, mynid);
-						}
-						else {
-							throw new NullPointerException(String.format(
-								"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
-								domain, mynid, peer));
-						}
-					}, (blockby) -> {
-						Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);
-						return 2000;
-					});
-			}
-//		}
+					if (isblank(peer))
+					if (eq(domain, dom)) {
+						lights[tx] = true;
+						Utils.logi("lights[%s] (%s) = true", tx, mynid);
+					}
+					else {
+						throw new NullPointerException(String.format(
+							"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
+							domain, mynid, peer));
+					}
+				}, (blockby) -> {
+					Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);
+					return 2000;
+				});
+		}
 	}
 
 	/**
