@@ -5,6 +5,9 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logOut;
 import static io.odysz.common.Utils.touchDir;
+import static io.odysz.semantic.syn.Docheck.printChangeLines;
+import static io.odysz.semantic.syn.Docheck.printNyquv;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -13,6 +16,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 
 import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.common.Configs;
@@ -29,6 +33,7 @@ import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
@@ -72,6 +77,14 @@ public class CreateSyndocTierTest {
 	
 	static IAssert azert;
 
+	private static Docheck[] ck;
+
+	/** -Dsyndocs.ip="host-ip" */
+	@BeforeAll
+	static void init() throws Exception {
+		ck = new Docheck[servs_conn.length];
+	}
+	
 	static {
 		errLog = new ErrorCtx() {
 			@Override
@@ -91,7 +104,14 @@ public class CreateSyndocTierTest {
 		Connects.init(webinf);
 
 		SynotierJettyApp h1 = createStartSyndocTierTest(null, servs_conn[0], "X", "odyx", port++);
+		T_PhotoMeta docm = new T_PhotoMeta(servs_conn[0]);
+		ck[0] = new Docheck(azert, zsu, servs_conn[0],
+					"X", SynodeMode.peer, docm, true);
+
 		SynotierJettyApp h2 = createStartSyndocTierTest(null, servs_conn[1], "Y", "odyy", port++);	
+		docm = new T_PhotoMeta(servs_conn[1]);
+		ck[1] = new Docheck(azert, zsu, servs_conn[1],
+					"Y", SynodeMode.peer, docm, true);
 
 		boolean[] lights = new boolean[] {false};
 		touchDir("jetty-log");
@@ -103,6 +123,10 @@ public class CreateSyndocTierTest {
 							() -> { return new PrintStream1(os, "3-out"); }, 
 							() -> { return new PrintStream1(es, "3-err"); });
 		
+		docm = new T_PhotoMeta(servs_conn[2]);
+		ck[2] = new Docheck(azert, zsu, servs_conn[2],
+					"Z", SynodeMode.peer, docm, true);
+
 		Clients.init(h1.jserv());
 		Doclientier client = new Doclientier("jetty-0", "jetty-0", errLog)
 				.tempRoot("temp/odyx")
@@ -136,6 +160,9 @@ public class CreateSyndocTierTest {
 		// pause("Errors because of no r.serv port can be ignred. Press any key to continue ...");
 		awaitAll(lights);
 		os.close(); es.close();
+		
+		printChangeLines(ck);
+		printNyquv(ck);
 		
 		azert.lineEq(outfile, -1, "Echo: [0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3} : jetty-2");
 	}

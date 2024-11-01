@@ -130,9 +130,6 @@ public class Syngleton extends JSingleton {
 		if (syndomanagers == null)
 			syndomanagers = new HashMap<String, SynDomanager>();
 
-//		if (!syndomanagers.containsKey(syntier_url))
-//			syndomanagers.put(syntier_url, new HashMap<String, SynDomanager>());
-
 		synm = new SynodeMeta(cfg.synconn); 
 
 		AnResultset rs = (AnResultset) defltScxt
@@ -146,9 +143,6 @@ public class Syngleton extends JSingleton {
 		while (rs.next()) {
 			String domain = rs.getString(synm.domain);
 			SynDomanager domanger = new SynDomanager(cfg)
-						// synm, rs.getString(synm.org),
-						// domain, cfg.synode(),
-						// cfg.synconn, cfg.mode, cfg.debug)
 					.loadomainx();
 
 			syndomanagers.put(domain, (SynDomanager) domanger
@@ -263,16 +257,6 @@ public class Syngleton extends JSingleton {
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 
 		DatasetCfg.init(configFolder);
-			
-		//synb = new DBSyntableBuilder(synodetiers.get(syntier_url).get(cfg.domain).syndomx);
-//		synb = syngleton
-////				.synodetiers
-////				.get(syngleton.syntier_url)
-////				.get(cfg.domain)
-//				.syntierManager(cfg.org, cfg.domain, cfg.mode)
-//				.loadDomainContext(cfg.domain)
-//				.createSyntabuilder(cfg);
-			
 
 		// 4. synodes
 		initSynodeRecs(cfg, cfg.peers);
@@ -384,7 +368,6 @@ public class Syngleton extends JSingleton {
 	public static void cleanSynssions(SynodeConfig cfg) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 
-		// SynodeMeta    synm = new SynodeMeta(cfg.synconn);
 		SynChangeMeta chgm = new SynChangeMeta (cfg.synconn);
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);

@@ -192,7 +192,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public SyncResp onjoin(SyncReq req, DocUser usr) throws Exception {
+	public SyncResp onjoin(SyncReq req, SyncUser usr) throws Exception {
 
 		String peer = req.exblock.srcnode;
 
@@ -263,7 +263,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	private SyncResp onsyninit(ExchangeBlock req, DocUser usr) throws Exception {
+	private SyncResp onsyninit(ExchangeBlock req, SyncUser usr) throws Exception {
 		String peer = req.srcnode;
 
 		if (DAHelper.count(tb0, synconn, synm.tbl, synm.synoder, peer, synm.domain, domain()) == 0)
@@ -279,7 +279,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return c.onsyninit(req, domain());
 	}
 
-	public SyncResp onsyninit(SyncReq req, DocUser usr) throws Exception {
+	public SyncResp onsyninit(SyncReq req, SyncUser usr) throws Exception {
 		if (synssion(req.exblock.srcnode) != null) {
 			ExessionPersist xp = synssion(req.exblock.srcnode).xp;
 			
@@ -300,7 +300,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return onsyninit(req.exblock, usr);
 	}
 
-	public SyncResp onclosex(SyncReq req, DocUser usr) throws TransException, SQLException {
+	public SyncResp onclosex(SyncReq req, SyncUser usr) throws TransException, SQLException {
 		SynssionPeer c = synssion(req.exblock.srcnode);
 		
 		if (!eq(synlocker.sessionId(), usr.sessionId()))

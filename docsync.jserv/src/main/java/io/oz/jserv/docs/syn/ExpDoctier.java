@@ -36,9 +36,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.SyndomContext;
-import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -96,17 +94,14 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		catch (Exception e) {debug = false;}
 	}
 
-//	static final int jservx = 0;
-//	static final int myconx = 1;
+	SyncUser locrobot;
 
-	Synodebot locrobot;
-
-	/// FIXME TODO move lock to SyndomContext?
 	private SynDomanager domx;
 
 	IUser locrobot() {
 		if (locrobot == null)
-			locrobot = new Synodebot(domx.synode);
+			locrobot = new SyncUser(domx.synode, null, "robot@" + domx.synconn)
+							.deviceId(domx.synode);
 		return locrobot;
 	}
 
@@ -210,19 +205,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		return this;
 	}
-
-//	public ExpDoctier create(String org, 
-//			String syntity_json, SynDomanager domanager) throws Exception {
-//
-//		SyndomContext c = domanager.syndomContext();
-//
-//		syntb0 = new DBSynTransBuilder(domanager.domain, myconn, synode,
-//					syntity_json, c.mode,
-//					new DBSyntableBuilder(c));
-//
-//		return this;
-//	}
-
 
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException, SAXException, IOException {
