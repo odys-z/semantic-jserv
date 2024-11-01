@@ -380,13 +380,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 			throw new ExchangeException(ready, null,
 						"Session pool is null at %s", synode);
 		
-//		while (!lockx(robot)) {
-//			float wait = block.onlocked(synlocker);
-//			if (wait < 0)
-//				return this;
-//			Thread.sleep((long) (wait * 1000));
-//		}
-
 		new Thread(() -> { 
 		try { 
 			lockme(block);
