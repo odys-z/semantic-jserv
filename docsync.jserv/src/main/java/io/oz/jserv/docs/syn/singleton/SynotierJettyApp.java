@@ -128,6 +128,7 @@ public class SynotierJettyApp {
 		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
 		
 		ExpSynodetier syner = new ExpSynodetier(domanger);
+
 		
 		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())

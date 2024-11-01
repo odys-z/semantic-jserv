@@ -36,6 +36,9 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.DBSyntableBuilder;
+import io.odysz.semantic.syn.SyndomContext;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -51,7 +54,9 @@ import io.oz.jserv.docs.meta.DeviceTableMeta;
 import io.oz.jserv.docs.x.DocsException;
 
 /**
- * Document synode tier.
+ * The access point of document client tiers, accepting doc's pushing.
+ * 
+ * This ServPort requires a Syndomanager to work, but is actually can support only one domain.
  *
  * @since 0.2.0
  * @author ody
@@ -91,8 +96,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		catch (Exception e) {debug = false;}
 	}
 
-	static final int jservx = 0;
-	static final int myconx = 1;
+//	static final int jservx = 0;
+//	static final int myconx = 1;
 
 	Synodebot locrobot;
 
@@ -205,6 +210,19 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		return this;
 	}
+
+//	public ExpDoctier create(String org, 
+//			String syntity_json, SynDomanager domanager) throws Exception {
+//
+//		SyndomContext c = domanager.syndomContext();
+//
+//		syntb0 = new DBSynTransBuilder(domanager.domain, myconn, synode,
+//					syntity_json, c.mode,
+//					new DBSyntableBuilder(c));
+//
+//		return this;
+//	}
+
 
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException, SAXException, IOException {
