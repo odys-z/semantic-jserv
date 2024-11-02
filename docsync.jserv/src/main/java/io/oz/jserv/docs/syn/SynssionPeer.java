@@ -30,7 +30,6 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
 /**
- * TODO rename to Synssion, for this is used in both sides?
  */
 public class SynssionPeer {
 
@@ -65,7 +64,7 @@ public class SynssionPeer {
 	protected SessionClient client;
 	private boolean debug;
 
-	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) throws ExchangeException {
+	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
 		this.conn      = domanager.synconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
@@ -73,7 +72,7 @@ public class SynssionPeer {
 		this.mymode    = domanager.mode;
 		this.peerjserv = peerjserv;
 		this.clienturi = uri_sys;
-		this.debug     = debug; // Connects.getDebug(domanager.synconn);
+		this.debug     = debug;
 	}
 
 	/**
@@ -111,18 +110,20 @@ public class SynssionPeer {
 					domanager.unlockme();
 
 					int sleep = rep.exblock.sleeps;
-					if (sleep > 0)
-						Thread.sleep(sleep * 1000);
-					else if (sleep < 0)
-						return this;
+//					if (sleep > 0)
+//						Thread.sleep(sleep * 1000);
+//					else if (sleep < 0)
+//						return this;
 
-					domanager.lockme(onMutext);
+//					domanager.lockme(onMutext);
+					domanager.lockme((u) -> sleep);
+
 					rep = exespush(peer, A.exinit, reqb);
 				}
 
 				if (rep.exblock != null && rep.exblock.synact() != deny) {
 					// on start reply
-					onsyninit(rep.exblock, rep.domain);
+					onsyninitRep(rep.exblock, rep.domain);
 						
 					while (rep.synact() != close) {
 						ExchangeBlock exb = syncdb(rep.exblock);
@@ -176,7 +177,7 @@ public class SynssionPeer {
 	 * @throws ExchangeException peer id from {@code ini} doesn't match with mine.
 	 * @throws Exception
 	 */
-	SyncResp onsyninit(ExchangeBlock ini, String domain) throws ExchangeException, Exception {
+	SyncResp onsyninitRep(ExchangeBlock ini, String domain) throws ExchangeException, Exception {
 		if (!eq(ini.srcnode, peer))
 			throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
@@ -192,22 +193,22 @@ public class SynssionPeer {
 		return xp.nextExchange(rep);
 	}
 	
-	public ExchangeBlock onsyncdb(ExchangeBlock reqb)
-			throws SQLException, TransException {
-		ExchangeBlock repb = xp.nextExchange(reqb);
-		return repb;
-	}
+//	public ExchangeBlock onsyncdb(ExchangeBlock reqb)
+//			throws SQLException, TransException {
+//		ExchangeBlock repb = xp.nextExchange(reqb);
+//		return repb;
+//	}
 
 	ExchangeBlock synclose(ExchangeBlock rep)
 			throws TransException, SQLException {
 		return xp.trb.closexchange(xp, rep);
 	}
 
-	SyncResp onsynclose(ExchangeBlock reqb)
-			throws TransException, SQLException {
-		ExchangeBlock b = xp.trb.onclosexchange(xp, reqb);
-		return new SyncResp(domain()).exblock(b);
-	}
+//	SyncResp onsynclose(ExchangeBlock reqb)
+//			throws TransException, SQLException {
+//		ExchangeBlock b = xp.trb.onclosexchange(xp, reqb);
+//		return new SyncResp(domain()).exblock(b);
+//	}
 
 	SyncResp exespush(String peer, String a, ExchangeBlock reqb) {
 		SyncReq req = (SyncReq) new SyncReq(null, peer)
@@ -257,7 +258,6 @@ public class SynssionPeer {
 	 */
 	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) {
 		try {
-//			synlock.lock();
 			SyncReq  req = signup(admid);
 			SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
@@ -266,12 +266,9 @@ public class SynssionPeer {
 
 			if (!isNull(ok))
 				ok.ok(rep);
-		} catch (TransException | SQLException | AnsonException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
+		} catch (TransException | SQLException | AnsonException | IOException e) {
 			e.printStackTrace();
 		}
-//		finally { synlock.unlock(); }
 	}
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
