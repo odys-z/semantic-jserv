@@ -199,7 +199,7 @@ public class ExpDoctierservTest {
 			
 			cleanPhotos(docm, servs_conn[i], devs);
 			
-			// reboot
+			// clean and reboot
 			Syngleton.cleanSynssions(cfgs[i]);
 
 			jetties[i] = startSyndoctier(cfgs[i], "config.xml", f("$VOLUME_%s/syntity.json", i));

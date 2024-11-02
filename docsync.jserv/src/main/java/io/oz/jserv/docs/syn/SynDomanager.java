@@ -35,7 +35,6 @@ import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.util.DAHelper;
-import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
@@ -190,6 +189,9 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SyncResp onjoin(SyncReq req, SyncUser usr) throws Exception {
 
 		String peer = req.exblock.srcnode;
+		
+		if (eq(peer, synode))
+			throw new ExchangeException(init, null, "Can't join by same synode id: %s.", synode);
 
 		try {
 			if (lockx(usr))  {
@@ -300,6 +302,9 @@ public class SynDomanager extends SyndomContext implements OnError {
 		// return onsyninit(req.exblock, usr);
 		String peer = req.exblock.srcnode;
 
+		if (dbg)
+			Utils.logi("On syn-init, %s <- %s", synode, peer);;
+
 		if (DAHelper.count(tb0, synconn, synm.tbl, synm.synoder, peer, synm.domain, domain()) == 0)
 			throw new ExchangeException(init, null,
 					"This synode, %s, cannot respond to exchange initiation without knowledge of %s.",
@@ -309,10 +314,10 @@ public class SynDomanager extends SyndomContext implements OnError {
 		SynssionServ s = new SynssionServ(this, usr, peer, dbg);
 
 		try {
-		if (!lockx(usr))
-			return trylater(peer);
+			if (!lockx(usr))
+				return trylater(peer);
 
-		// synssion(peer, c); // rename clientier to worker?
+			// synssion(peer, c); // rename clientier to worker?
 			return s.onsyninit(req.exblock, domain);
 		} catch (Exception e) {
 			unlockx(usr);
@@ -423,7 +428,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		
 		new Thread(() -> { 
 		try { 
-			lockme(block);
+			// lockme(block);
 			for (String peer : sessions.keySet()) {
 				ExessionPersist xp = sessions.get(peer).xp;
 				if (xp != null && xp.exstate() == ready)
@@ -444,11 +449,11 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 			if (onUpdate != null)
 				onUpdate.ok(domain(), synode, null);
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
+//		} catch (InterruptedException e1) {
+//			e1.printStackTrace();
 		}
 		finally {
-			unlockme(); 
+			// unlockme(); 
 		} }, f("%1$s [%2$s]", synode, domain()))
 		.start();
 
@@ -536,9 +541,10 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws SsException
 	 * @throws IOException
 	 * @throws TransException
+	 * @throws InterruptedException 
 	 */
 	public SynDomanager openUpdateSynssions(SyncUser docuser, OnDomainUpdate... onok)
-			throws AnsonException, SsException, IOException, TransException {
+			throws AnsonException, SsException, IOException, TransException, InterruptedException {
 
 		for (SynssionPeer c : sessions.values()) {
 			if (eq(c.peer, synode))

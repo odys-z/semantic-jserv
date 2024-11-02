@@ -113,8 +113,9 @@ public class SynotierJettyApp {
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
 
-		SynotierJettyApp synapp = SynotierJettyApp.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
-								.loadomains(cfg);
+		SynotierJettyApp synapp = SynotierJettyApp
+						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
+						.loadomains(cfg);
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
@@ -245,7 +246,7 @@ public class SynotierJettyApp {
 	
 	    AnsonMsg.understandPorts(Port.syntier);
 	
-	    SynotierJettyApp synapp = new SynotierJettyApp( cfg,
+	    SynotierJettyApp synapp = new SynotierJettyApp(cfg,
 	    						Syngleton.synmap.get(smtype.synChange));
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);

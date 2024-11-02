@@ -107,15 +107,14 @@ public class SynssionPeer {
 			if (rep != null) {
 				// lock remote
 				while (rep.synact() == trylater) {
+					if (debug)
+						Utils.logT(new Object() {},
+								"%s: %s is locked, waiting...",
+								mynid, peer);
+						
 					domanager.unlockme();
 
 					int sleep = rep.exblock.sleeps;
-//					if (sleep > 0)
-//						Thread.sleep(sleep * 1000);
-//					else if (sleep < 0)
-//						return this;
-
-//					domanager.lockme(onMutext);
 					domanager.lockme((u) -> sleep);
 
 					rep = exespush(peer, A.exinit, reqb);

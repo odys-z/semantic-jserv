@@ -199,18 +199,17 @@ public class SynodetierJoinTest {
 		SynotierJettyApp prv = jetties[by];
 
 		HashMap<String, SynDomanager> synodetiers = hub.syngleton().syndomanagers;
-//		for (String servpattern : synodetiers.keySet()) {
-			if (len(synodetiers) > 1 || len(prv.syngleton().syndomanagers) > 1)
-				fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
-			
-			for (String dom : synodetiers.keySet()) {
-				SynDomanager hubmanger = synodetiers.get(dom);
-				SynDomanager prvmanger = prv.syngleton().syndomanagers.get(dom);
-	
-				prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
-						(rep) -> { lights[by] = true; });
-			}
-//		}
+
+		if (len(synodetiers) > 1 || len(prv.syngleton().syndomanagers) > 1)
+			fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
+		
+		for (String dom : synodetiers.keySet()) {
+			SynDomanager hubmanger = synodetiers.get(dom);
+			SynDomanager prvmanger = prv.syngleton().syndomanagers.get(dom);
+
+			prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
+					(rep) -> { lights[by] = true; });
+		}
 	}
 
 	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
