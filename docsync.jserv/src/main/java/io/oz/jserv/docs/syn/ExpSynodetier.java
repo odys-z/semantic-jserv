@@ -97,9 +97,11 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
 						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
 
-				ExchangeBlock b = domanager0
-						.synssion(req.exblock.srcnode)
-						.syncdb(req.exblock);
+//				ExchangeBlock b = domanager0
+//						.synssion(req.exblock.srcnode)
+//						.syncdb(req.exblock);
+				ExchangeBlock b = new SynssionServ(domanager0, usr)
+						.onsyncdb(req.exblock);
 
 				rsp = new SyncResp(domain).exblock(b);
 			}
