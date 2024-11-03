@@ -213,7 +213,7 @@ public class Syngleton extends JSingleton {
 	 * @param peers 
 	 * @throws Exception
 	 */
-	public static void setupSyntables(Syngleton syngleton, SynodeConfig cfg, Iterable<SyntityMeta> entms,
+	public static void setupSyntables(SynodeConfig cfg, Iterable<SyntityMeta> entms,
 			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
 
 		// 1. connection

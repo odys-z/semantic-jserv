@@ -134,7 +134,7 @@ public class SynodetierJoinTest {
 			config.domain  = zsu;
 
 			Syngleton.setupSysRecords(config, robots);
-			Syngleton.setupSyntables(getSyngleton(), config,
+			Syngleton.setupSyntables(config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789");
 
@@ -147,10 +147,10 @@ public class SynodetierJoinTest {
 		}
 	}
 
-	private static Syngleton getSyngleton() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	private static Syngleton getSyngleton() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	@Test
 	void testSynodetierJoin() throws Exception {

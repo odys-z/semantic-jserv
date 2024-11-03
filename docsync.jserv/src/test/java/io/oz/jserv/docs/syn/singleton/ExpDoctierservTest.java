@@ -194,7 +194,7 @@ public class ExpDoctierservTest {
 			
 			Syngleton syngleton = new Syngleton(cfgs[i]);
 
-			Syngleton.setupSyntables(syngleton, cfgs[i], regists.metas.values(),
+			Syngleton.setupSyntables(cfgs[i], regists.metas.values(),
 					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 			
 			cleanPhotos(docm, servs_conn[i], devs);
