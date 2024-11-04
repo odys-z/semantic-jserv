@@ -225,7 +225,7 @@ public class SynodetierJoinTest {
 					if (!isNull(ck) && !isblank(peer))
 						try {
 							Utils.logi("On domain updated: %s : %s <-> %s", dom, mynid, peer);
-							Utils.logi("============================================\n");
+							Utils.logi("===============================\n");
 							printChangeLines(ck);
 							printNyquv(ck);
 						} catch (TransException | SQLException e) {

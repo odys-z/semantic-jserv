@@ -8,8 +8,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
-
 import javax.servlet.annotation.WebServlet;
 
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
@@ -18,8 +16,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 
 import io.odysz.common.Utils;
-import io.odysz.semantic.DASemantics.SemanticHandler;
-import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -64,11 +60,15 @@ public class SynotierJettyApp {
 
 	ServletContextHandler schandler;
 
-	List<SemanticHandler> synchandlers;
+//	List<SemanticHandler> synchandlers;
 
-	public SynotierJettyApp(SynodeConfig cfg, List<SemanticHandler> synchangeHandlers) {
+//	public SynotierJettyApp(SynodeConfig cfg, List<SemanticHandler> synchangeHandlers) {
+//		syngleton = new Syngleton(cfg);
+//		synchandlers = synchangeHandlers;
+//	}
+
+	public SynotierJettyApp(SynodeConfig cfg) {
 		syngleton = new Syngleton(cfg);
-		synchandlers = synchangeHandlers;
 	}
 
 	/**
@@ -130,7 +130,6 @@ public class SynotierJettyApp {
 		
 		ExpSynodetier syner = new ExpSynodetier(domanger);
 
-		
 		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addDocServPort(cfg.domain, webinf, syntity_json)
@@ -183,7 +182,6 @@ public class SynotierJettyApp {
         	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(conn)));
         }
 
-		// logi("Server is bound to %s\nFirst bound URI: %s", synapp.jserv, synapp.server.getURI());
         return synapp;
 	}
 
@@ -219,11 +217,6 @@ public class SynotierJettyApp {
 		syngleton.updatePeerJservs(synm, cfg, domain);
 	}
 
-//	public SynotierJettyApp loadDomains(SynodeConfig cfg) throws Exception {
-//		syngleton.loadDomains(cfg);
-//		return this;
-//	}
-
 	/**
 	 * Create a Jetty instance at local host, jserv-root
 	 * for accessing online is in field {@link #jserv}.
@@ -246,8 +239,8 @@ public class SynotierJettyApp {
 	
 	    AnsonMsg.understandPorts(Port.syntier);
 	
-	    SynotierJettyApp synapp = new SynotierJettyApp(cfg,
-	    						Syngleton.synmap.get(smtype.synChange));
+	    SynotierJettyApp synapp = new SynotierJettyApp(cfg);
+	    				// Syngleton.synmap.get(smtype.synChange));
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	

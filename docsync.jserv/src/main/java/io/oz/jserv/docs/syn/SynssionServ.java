@@ -9,7 +9,6 @@ import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyncUser;
-import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.transact.x.TransException;
 
