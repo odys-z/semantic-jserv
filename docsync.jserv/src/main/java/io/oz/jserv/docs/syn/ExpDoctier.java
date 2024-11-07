@@ -422,6 +422,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		String conn = Connects.uri2conn(docreq.uri());
 
 		DATranscxt b = syntransBuilder();
+		DBSynTransBuilder b = new DBSynTransBuilder(domx);
 		ExpDocTableMeta docm = checkDuplication(b, docreq, (DocUser) usr);
 
 		ExpSyncDoc photo = docreq.doc;
