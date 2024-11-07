@@ -1,6 +1,5 @@
 package io.oz.jserv.docs.syn;
 
-import static io.oz.jserv.docs.syn.SyncReq.A;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
@@ -8,6 +7,7 @@ import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -22,11 +22,11 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.SyncReq.A;
 
 @WebServlet(description = "Synode Tier Workder", urlPatterns = { "/sync.tier" })
 public class ExpSynodetier extends ServPort<SyncReq> {
@@ -82,36 +82,38 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 							"req.exblock.srcnode is identical to this synode's.");
 			}
 
-			if (A.initjoin.equals(a))
-				rsp = domanager0.onjoin(req, usr);
+			if (A.initjoin.equals(a)) {
+//				rsp = domanager0.onjoin(req, usr);
+				rsp = new SynssionServ(domanager0, req.exblock.srcnode, usr)
+						.onjoin(req);
+			}
 
 			else if (A.closejoin.equals(a))
-				rsp = domanager0.onclosejoin(req, usr);
+//				rsp = domanager0.onclosejoin(req, usr);
+				rsp = usr.<SynssionServ>synssion().onclosejoin(req, usr);
 
 			else if (A.exinit.equals(a)) 
-				rsp = domanager0.onsyninit(req, usr);
+//				rsp = domanager0.onsyninit(req, usr);
+				rsp = new SynssionServ(domanager0, req.exblock.srcnode, usr)
+					.onsyninit(req.exblock);
 
 			else if (A.exchange.equals(a)) {
-				if (domanager0.synssion(req.exblock.srcnode) == null)
-					throw new SemanticException(
-						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
-						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
+//				if (domanager0.synssion(req.exblock.srcnode) == null)
+//					throw new SemanticException(
+//						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
+//						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
 
-//				ExchangeBlock b = domanager0
-//						.synssion(req.exblock.srcnode)
-//						.syncdb(req.exblock);
-				ExchangeBlock b = new SynssionServ(domanager0, usr)
-						.onsyncdb(req.exblock);
+				rsp = usr.<SynssionServ>synssion().onsyncdb(req.exblock);
 
-				rsp = new SyncResp(domain).exblock(b);
 			}
 
 			else if (A.exclose.equals(a)) {
-				if (domanager0.synssion(req.exblock.srcnode) == null)
-					throw new SemanticException(
-						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
-						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
-				rsp = domanager0.onclosex(req, usr);
+//				if (domanager0.synssion(req.exblock.srcnode) == null)
+//					throw new SemanticException(
+//						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
+//						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
+//				rsp = domanager0.onclosex(req, usr);
+				rsp = usr.<SynssionServ>synssion().onclosex(req, usr);
 			}
 
 			else 

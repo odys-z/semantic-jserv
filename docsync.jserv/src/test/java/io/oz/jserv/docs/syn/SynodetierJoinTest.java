@@ -12,8 +12,8 @@ import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.docm;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -25,7 +25,6 @@ import java.util.HashMap;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
@@ -213,7 +212,7 @@ public class SynodetierJoinTest {
 	}
 
 	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
-			throws SemanticException, AnsonException, SsException, IOException, InterruptedException {
+			throws SemanticException, SsException, IOException {
 
 		SynotierJettyApp t = jetties[tx];
 

@@ -91,6 +91,7 @@ public class ExpDoctierservTest {
 				(domain, mynid, peer, xp) -> {
 					lights[i] = true;
 				});
+			// Thread.sleep(1500);
 		}
 		awaitAll(lights, -1);
 

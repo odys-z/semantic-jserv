@@ -282,7 +282,7 @@ public class Syngleton extends JSingleton {
 	 * @param conn
 	 * @throws Exception 
 	 */
-	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncUser> tieradmins) throws Exception {
+	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncUser> iterable) throws Exception {
 	
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
@@ -306,11 +306,11 @@ public class Syngleton extends JSingleton {
 			sqls.clear();
 		}
 		
-		if (tieradmins != null) {
+		if (iterable != null) {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
-			for (SyncUser admin : tieradmins) {
+			for (SyncUser admin : iterable) {
 				Insert i = defltScxt.insert(um.tbl, usr)
 						.nv(usrm.org, admin.orgId())
 						.nv(usrm.pk, admin.uid())
