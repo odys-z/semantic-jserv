@@ -158,6 +158,7 @@ public class ExpDoctierservTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
+		ck[Z].doc(2);
 		ck[Y].doc(2);
 		ck[X].doc(2);
 	}

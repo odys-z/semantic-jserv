@@ -189,8 +189,6 @@ public class CreateSyndocTierTest {
 		cfg.admin = "ody";
 		cfg.domain = zsu;
 		
-		// Syngleton syngleton = new Syngleton(cfg);
-		
 		Syngleton.setupSyntables(cfg, null,
 				webinf, "config.xml", ".", "ABCDEF0123465789");
 
