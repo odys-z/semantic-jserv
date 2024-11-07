@@ -49,6 +49,11 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.transact.x.TransException;
 import io.oz.syn.YellowPages;
 
+/**
+ * JUnit configuration:
+ * 
+ * -Djservs=<ip-x>:8090,<ip-y>:8091,<ip-z>:8092
+ */
 class DoclientierTest {
 	static String[] jserv_xyzw;
 	@BeforeAll
