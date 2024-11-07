@@ -115,7 +115,8 @@ public class SynssionPeer {
 					domanager.unlockme();
 
 					int sleep = rep.exblock.sleeps;
-					domanager.lockme((u) -> sleep);
+					Thread.sleep(sleep * 1000); // wait for next try
+					domanager.lockme(onMutext);
 
 					rep = exespush(peer, A.exinit, reqb);
 				}
@@ -191,23 +192,11 @@ public class SynssionPeer {
 			throws SQLException, TransException {
 		return xp.nextExchange(rep);
 	}
-	
-//	public ExchangeBlock onsyncdb(ExchangeBlock reqb)
-//			throws SQLException, TransException {
-//		ExchangeBlock repb = xp.nextExchange(reqb);
-//		return repb;
-//	}
 
 	ExchangeBlock synclose(ExchangeBlock rep)
 			throws TransException, SQLException {
 		return xp.trb.closexchange(xp, rep);
 	}
-
-//	SyncResp onsynclose(ExchangeBlock reqb)
-//			throws TransException, SQLException {
-//		ExchangeBlock b = xp.trb.onclosexchange(xp, reqb);
-//		return new SyncResp(domain()).exblock(b);
-//	}
 
 	SyncResp exespush(String peer, String a, ExchangeBlock reqb) {
 		SyncReq req = (SyncReq) new SyncReq(null, peer)

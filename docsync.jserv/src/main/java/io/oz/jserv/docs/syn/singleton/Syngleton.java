@@ -33,6 +33,7 @@ import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.DBSynTransBuilder.SynmanticsMap;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
@@ -52,7 +53,13 @@ import io.oz.syn.SynodeConfig;
  * @since 0.2.0
  */
 public class Syngleton extends JSingleton {
-	static DBSynTransBuilder.SynmanticsMap synmap;
+	/**
+	 * Call
+	 * <pre>DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+	 * 	(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
+	 * </pre>to load.
+	 */
+	static SynmanticsMap synmap;
 
 	/** */
 	static DATranscxt tb0;
@@ -275,7 +282,7 @@ public class Syngleton extends JSingleton {
 	 * @param conn
 	 * @throws Exception 
 	 */
-	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncUser> tieradmins) throws Exception {
+	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncUser> iterable) throws Exception {
 	
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
@@ -299,11 +306,11 @@ public class Syngleton extends JSingleton {
 			sqls.clear();
 		}
 		
-		if (tieradmins != null) {
+		if (iterable != null) {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
-			for (SyncUser admin : tieradmins) {
+			for (SyncUser admin : iterable) {
 				Insert i = defltScxt.insert(um.tbl, usr)
 						.nv(usrm.org, admin.orgId())
 						.nv(usrm.pk, admin.uid())

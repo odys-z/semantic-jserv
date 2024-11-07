@@ -43,6 +43,7 @@
   </s>
 	
   <s>
+   <!--  deprected -->
 	<id>ph.change-log</id>
 	<smtc>syn-change</smtc>
 	<tabl>h_photos</tabl>

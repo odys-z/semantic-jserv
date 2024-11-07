@@ -91,6 +91,7 @@ public class ExpDoctierservTest {
 				(domain, mynid, peer, xp) -> {
 					lights[i] = true;
 				});
+			// Thread.sleep(1500);
 		}
 		awaitAll(lights, -1);
 
@@ -106,6 +107,10 @@ public class ExpDoctierservTest {
 
 		printChangeLines(ck);
 		printNyquv(ck);
+
+		ck[X].doc(1);
+		ck[Y].doc(2);
+		ck[Z].doc(0);
 
 		Utils.logrst("Synchronizing between synodes", ++section);
 		waiting(lights, Y);
