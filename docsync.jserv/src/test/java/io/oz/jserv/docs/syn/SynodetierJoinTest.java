@@ -14,6 +14,7 @@ import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.ura;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -35,6 +36,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncUser;
+import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -131,13 +133,16 @@ public class SynodetierJoinTest {
 			config.port    = port++;
 			config.mode    = SynodeMode.peer;
 			config.domain  = zsu;
+			config.org     = ura;
+			config.peers   = new Synode[] {new Synode(nodes[i], nodes[i] + "," + nodes[i], ura, zsu)};
 
 			Syngleton.setupSysRecords(config, robots);
 			Syngleton.setupSyntables(config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789");
 
-			Syngleton.cleanDomain(config);
+			// Syngleton.cleanDomain(config);
+			Syngleton.cleanSynssions(config);
 
 			jetties[i] = startSyndoctier(config, f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
 
@@ -145,11 +150,6 @@ public class SynodetierJoinTest {
 								config.synode(), SynodeMode.peer, docm, config.debug);
 		}
 	}
-
-//	private static Syngleton getSyngleton() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
 
 	@Test
 	void testSynodetierJoin() throws Exception {
@@ -259,7 +259,6 @@ public class SynodetierJoinTest {
 
 		return SynotierJettyApp 
 			.createSyndoctierApp(cfg_xml, syntity_json, cfg, webinf)
-			// .loadDomains(cfg)
 			.start(() -> System.out, () -> System.err)
 			;
 	}

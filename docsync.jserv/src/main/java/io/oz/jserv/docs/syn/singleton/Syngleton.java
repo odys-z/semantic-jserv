@@ -68,16 +68,7 @@ public class Syngleton extends JSingleton {
 
 	String jserv;
 
-//	/** @deprecated TODO delete */
-//	String synconn;
 	final String sysconn;
-//	/** @deprecated TODO delete */
-//	String synode;
-
-	/**
-	 * Last (bug?) url pattern (key in {@link #syndomanagers}) of {@link ExpSynodetier}.
-	String syntier_url;
-	 */
 
 	/**
 	 * { servlet-url-pattern: { domain: domanager } }, only instance of {@link ExpSynodetier},<br>

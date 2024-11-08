@@ -60,13 +60,6 @@ public class SynotierJettyApp {
 
 	ServletContextHandler schandler;
 
-//	List<SemanticHandler> synchandlers;
-
-//	public SynotierJettyApp(SynodeConfig cfg, List<SemanticHandler> synchangeHandlers) {
-//		syngleton = new Syngleton(cfg);
-//		synchandlers = synchangeHandlers;
-//	}
-
 	public SynotierJettyApp(SynodeConfig cfg) {
 		syngleton = new Syngleton(cfg);
 	}

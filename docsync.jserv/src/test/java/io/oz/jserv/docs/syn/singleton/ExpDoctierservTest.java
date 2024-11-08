@@ -54,7 +54,7 @@ import io.oz.syn.YellowPages;
  * 
  * -Dsyndocs.ip="host-ip"
  * 
- * <p>When paused, run {@link io.oz.jserv.docs.syn.Doclientier}, press return</p>
+ * <p>When paused, run {@link io.oz.jserv.docs.syn.DoclientierTest}, press return</p>
  * 
  * @author ody
  */
