@@ -458,7 +458,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 				if (eq(c.peer, synode))
 						continue;
 				c.loginWithUri(c.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
-				c.update2peer((lockby) -> 0.3f);
+				c.update2peer((lockby) -> Math.random());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

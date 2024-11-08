@@ -7,7 +7,7 @@
    "synconn": "no-jserv.00",
    "localhost": "",
    "port": 8964,
-   "debug": false,
+   "debug": true,
     
    "peers": [
      {"synid": "X", "org": "URA", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},

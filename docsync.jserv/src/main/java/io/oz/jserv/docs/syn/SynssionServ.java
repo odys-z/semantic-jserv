@@ -24,13 +24,6 @@ public class SynssionServ {
 
 	ExessionPersist srvp;
 
-//	public SynssionServ(SynDomanager syndomanager, SyncUser<SynssionServ> usr, String peer, boolean debug) {
-//		this.syndomxerv = syndomanager;
-//		this.peer  = peer;
-//		this.usr   = usr;
-//		this.debug = debug;
-//	}
-
 	public SynssionServ(SynDomanager domx, String peer, SyncUser usr) throws Exception {
 
 		DBSyntableBuilder admb = new DBSyntableBuilder(domx);
@@ -88,10 +81,8 @@ public class SynssionServ {
 
 	public SyncResp onclosejoin(SyncReq req, SyncUser usr)
 			throws TransException, SQLException {
-		// String apply = req.exblock.srcnode;
 
 		try {
-			// ExessionPersist sp = usr.xp;
 			ExchangeBlock ack  = srvp.trb.domainCloseJoin(srvp, req.exblock);
 			return new SyncResp(syndomxerv.domain()).exblock(ack);
 		} finally {
@@ -115,15 +106,10 @@ public class SynssionServ {
 
 		try {
 			if (syndomxerv.lockx(usr))  {
-
 				DBSyntableBuilder admb = new DBSyntableBuilder(syndomxerv);
-
 				ExessionPersist admp = new ExessionPersist(admb, peer);
-
 				ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, usr.orgId());
 
-				// usr.servPersist(admp);
-			
 				return new SyncResp(syndomxerv.domain()).exblock(resp);
 			}
 			else return trylater(peer);
@@ -137,7 +123,7 @@ public class SynssionServ {
 		return new SyncResp(syndomxerv.domain()).exblock(
 				new ExchangeBlock(syndomxerv.domain(), syndomxerv.synode, peer, null,
 				new ExessionAct(mode_server, ExessionAct.trylater))
-				.sleep(2));
+				.sleep(Math.random() + 0.1));
 
 	}
 }

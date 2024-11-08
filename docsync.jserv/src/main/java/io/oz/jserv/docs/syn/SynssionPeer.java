@@ -114,8 +114,8 @@ public class SynssionPeer {
 						
 					domanager.unlockme();
 
-					int sleep = rep.exblock.sleeps;
-					Thread.sleep(sleep * 1000); // wait for next try
+					double sleep = rep.exblock.sleeps;
+					Thread.sleep((long) (sleep * 1000)); // wait for next try
 					domanager.lockme(onMutext);
 
 					rep = exespush(peer, A.exinit, reqb);
