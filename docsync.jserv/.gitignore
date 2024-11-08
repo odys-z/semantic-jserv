@@ -2,3 +2,5 @@ io.oz.sync*
 target
 .settings
 res-temp
+*.log
+jetty-log
