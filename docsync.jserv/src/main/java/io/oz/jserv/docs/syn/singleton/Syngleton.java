@@ -61,13 +61,14 @@ public class Syngleton extends JSingleton {
 	 * 	(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 	 * </pre>to load.
 	 */
-	static SynmanticsMap synmap;
+	SynmanticsMap synmap;
 
 	/** */
-	static DATranscxt tb0;
+	final DATranscxt tb0;
 	
-	SynodeConfig syncfg;
+	final SynodeConfig syncfg;
 
+	/** TODO move to be the app.ip_port */
 	String jserv;
 
 	final String sysconn;
@@ -91,10 +92,12 @@ public class Syngleton extends JSingleton {
 
 	SynodeMeta synm;
 
-	public Syngleton(SynodeConfig cfg) {
+	public Syngleton(SynodeConfig cfg) throws Exception {
 		sysconn = cfg.sysconn;
 		syncfg = cfg;
 		syndomanagers = new HashMap<String, SynDomanager>();
+
+		tb0 = new DATranscxt(cfg.synconn);
 	}
 
 	public void updatePeerJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
@@ -141,7 +144,7 @@ public class Syngleton extends JSingleton {
 				.rs(0);
 		
 		if (rs.getRowCount() > 1)
-			throw new ExchangeException(ExessionAct.ready, null, "V0.2 only supports one domain.");
+			throw new ExchangeException(ExessionAct.ready, null, "V0.2 only supports one domain. Found multiple domains in %s", cfg.synconn);
 		
 		if (rs.next()) {
 			String domain = rs.getString(synm.domain);
@@ -256,7 +259,7 @@ public class Syngleton extends JSingleton {
 		setupSqlitables(cfg.synconn, false, entms);
 
 		// 3 symantics and entities 
-		synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 
 		DatasetCfg.init(configFolder);
@@ -331,9 +334,10 @@ public class Syngleton extends JSingleton {
 	 */
 	static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
-		
+
+		DATranscxt tb0 = new DATranscxt(cfg.synconn);
+
 		if (peers != null && peers.length > 0) {
-			tb0 = new DATranscxt(cfg.synconn);
 			SynodeMeta synm = new SynodeMeta(cfg.synconn);
 			Delete del = tb0
 						.delete(synm.tbl, usr)
@@ -363,11 +367,9 @@ public class Syngleton extends JSingleton {
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
 
-		if (tb0 == null) {
-			synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
 				(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
-			tb0 = new DATranscxt(cfg.synconn);
-		}
+		DATranscxt tb0 = new DATranscxt(cfg.synconn);
 		
 		tb0.delete(synm.tbl, usr)
 			.whereEq(synm.domain, cfg.domain)
@@ -387,8 +389,7 @@ public class Syngleton extends JSingleton {
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
 
-		if (tb0 == null)
-			tb0 = new DATranscxt(cfg.synconn);
+		DATranscxt tb0 = new DATranscxt(cfg.synconn);
 
 		tb0.delete(chgm.tbl, usr)
 			.whereEq(chgm.domain, cfg.domain)

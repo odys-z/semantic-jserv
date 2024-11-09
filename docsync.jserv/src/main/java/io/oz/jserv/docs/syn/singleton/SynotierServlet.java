@@ -10,7 +10,7 @@ import io.oz.syn.YellowPages;
 
 public class SynotierServlet extends Syngleton implements ServletContextListener {
 
-	public SynotierServlet(SynodeConfig cfg) {
+	public SynotierServlet(SynodeConfig cfg) throws Exception {
 		super(cfg);
 	}
 

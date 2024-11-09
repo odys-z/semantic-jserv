@@ -61,7 +61,7 @@ public class SynotierJettyApp {
 
 	ServletContextHandler schandler;
 
-	public SynotierJettyApp(SynodeConfig cfg) {
+	public SynotierJettyApp(SynodeConfig cfg) throws Exception {
 		syngleton = new Syngleton(cfg);
 	}
 

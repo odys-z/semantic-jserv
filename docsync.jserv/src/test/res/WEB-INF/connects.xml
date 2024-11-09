@@ -70,7 +70,7 @@
   		<src>../vol-0/no-jserv-db.00</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>true</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
 	<c>
@@ -80,7 +80,7 @@
   		<src>../vol-1/no-jserv-db.01</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
 	<c>
