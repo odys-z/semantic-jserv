@@ -2,12 +2,13 @@ package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.LangExt.shouldnull;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.HashMap;
+
 import javax.servlet.annotation.WebServlet;
 
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
@@ -136,7 +137,7 @@ public class SynotierJettyApp {
 	}
 
 	public SynotierJettyApp addDocServPort(String domain, String cfgroot, String syntity_json) throws Exception {
-		notNull(domain);
+		shouldnull(new Object() {}, domain);
 		SynDomanager domanger = syngleton.domanager(domain);
 
 		addServPort(new ExpDoctier(domanger)

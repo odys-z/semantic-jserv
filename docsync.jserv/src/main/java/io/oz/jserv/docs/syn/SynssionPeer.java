@@ -242,10 +242,14 @@ public class SynssionPeer {
 	 * @param myuid
 	 * @param mypswd
 	 * @param ok
+	 * @throws TransException 
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SQLException 
 	 * @since 0.2.0
 	 */
-	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) {
-		try {
+	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) throws AnsonException, IOException, TransException, SQLException {
+//		try {
 			SyncReq  req = signup(admid);
 			SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
@@ -254,9 +258,9 @@ public class SynssionPeer {
 
 			if (!isNull(ok))
 				ok.ok(rep);
-		} catch (TransException | SQLException | AnsonException | IOException e) {
-			e.printStackTrace();
-		}
+//		} catch (TransException | SQLException | AnsonException | IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)

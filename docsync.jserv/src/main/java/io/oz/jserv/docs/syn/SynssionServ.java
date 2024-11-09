@@ -1,6 +1,8 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.shouldeq;
 import static io.odysz.semantic.syn.ExessionAct.init;
 import static io.odysz.semantic.syn.ExessionAct.mode_server;
@@ -104,6 +106,10 @@ public class SynssionServ {
 		if (eq(peer, syndomxerv.synode))
 			throw new ExchangeException(init, null, "Can't join by same synode id: %s.", syndomxerv.synode);
 
+		mustnonull(usr.orgId(),
+				f("Client user's org id must not be null to join this domain: %s, user: %s.",
+				syndomxerv.domain(), usr.uid()));
+		
 		try {
 			if (syndomxerv.lockx(usr))  {
 				DBSyntableBuilder admb = new DBSyntableBuilder(syndomxerv);

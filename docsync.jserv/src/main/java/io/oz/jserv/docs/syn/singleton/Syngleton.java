@@ -34,10 +34,12 @@ import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.DBSynTransBuilder.SynmanticsMap;
+import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
@@ -138,7 +140,10 @@ public class Syngleton extends JSingleton {
 				.rs(defltScxt.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
 				.rs(0);
 		
-		while (rs.next()) {
+		if (rs.getRowCount() > 1)
+			throw new ExchangeException(ExessionAct.ready, null, "V0.2 only supports one domain.");
+		
+		if (rs.next()) {
 			String domain = rs.getString(synm.domain);
 			SynDomanager domanger = new SynDomanager(cfg)
 					.loadomainx();
@@ -200,8 +205,8 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
-	 * Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:
-	 * Syn-change handlers cannot be created without syntity tables have beeb created.
+	 * Resolved Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:<br>
+	 * Syn-change handlers cannot be created without syntity tables have been created.
 	 * 
 	 * @param cfg
 	 * @param configFolder
@@ -330,16 +335,25 @@ public class Syngleton extends JSingleton {
 		if (peers != null && peers.length > 0) {
 			tb0 = new DATranscxt(cfg.synconn);
 			SynodeMeta synm = new SynodeMeta(cfg.synconn);
-			Delete del = tb0.delete(synm.tbl, usr)
+			Delete del = tb0
+						.delete(synm.tbl, usr)
 						.whereEq(synm.domain, cfg.domain);
+
 			for (Synode sn : peers) {
-				del.post(sn.insertRow(synm, 
-						tb0.insert(synm.tbl, usr)));
+				musteqs(cfg.domain, sn.domain());
+				del.post(sn.insertRow(cfg.domain,
+						synm, tb0.insert(synm.tbl, usr)));
 			}
+
 			del.d(tb0.instancontxt(cfg.synconn, usr));
 		}
 	}
 
+	/**
+	 * @deprecated useless
+	 * @param cfg
+	 * @throws Exception
+	 */
 	public static void cleanDomain(SynodeConfig cfg)
 			throws Exception {
 		IUser usr = DATranscxt.dummyUser();
@@ -349,8 +363,11 @@ public class Syngleton extends JSingleton {
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
 
-		if (tb0 == null)
+		if (tb0 == null) {
+			synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+				(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 			tb0 = new DATranscxt(cfg.synconn);
+		}
 		
 		tb0.delete(synm.tbl, usr)
 			.whereEq(synm.domain, cfg.domain)

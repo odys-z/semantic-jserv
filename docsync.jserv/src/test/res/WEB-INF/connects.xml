@@ -100,7 +100,7 @@
   		<src>../vol-3/no-jserv-db.03</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
   </t>

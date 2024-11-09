@@ -4,6 +4,8 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.ready;
+import static io.odysz.semantic.syn.ExessionAct.deny;
+import static io.odysz.semantic.syn.ExessionAct.mode_server;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -22,6 +24,8 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.syn.ExchangeBlock;
+import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
@@ -84,7 +88,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 			if (A.initjoin.equals(a)) {
 //				rsp = domanager0.onjoin(req, usr);
-				rsp = new SynssionServ(domanager0, req.exblock.srcnode, usr)
+				if (!eq(usr.orgId(), domanager0.org))
+					rsp = (SyncResp) deny(req.exblock).msg("Org id is not matched for joining.");
+				else
+					rsp = new SynssionServ(domanager0, req.exblock.srcnode, usr)
 						.onjoin(req);
 			}
 
@@ -136,6 +143,13 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		} finally {
 			resp.flushBuffer();
 		}
+	}
+
+	private SyncResp deny(ExchangeBlock exblock) {
+		return new SyncResp(domanager0.domain()).exblock(
+				new ExchangeBlock(domanager0.domain(), domanager0.synode, exblock.srcnode, null,
+				new ExessionAct(mode_server, deny)));
+
 	}
 
 }

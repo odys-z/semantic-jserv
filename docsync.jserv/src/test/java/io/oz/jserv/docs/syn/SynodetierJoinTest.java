@@ -132,16 +132,18 @@ public class SynodetierJoinTest {
 			config.sysconn = sys_conn;
 			config.port    = port++;
 			config.mode    = SynodeMode.peer;
-			config.domain  = zsu;
+			config.domain  = eq(nodes[i], "X") ? zsu : null;
 			config.org     = ura;
-			config.peers   = new Synode[] {new Synode(nodes[i], nodes[i] + "," + nodes[i], ura, zsu)};
+			config.peers   = new Synode[] {new Synode(nodes[i], nodes[i] + "," + nodes[i], ura, config.domain)};
 
 			Syngleton.setupSysRecords(config, robots);
+			
+			Syngleton.cleanDomain(config);
+
 			Syngleton.setupSyntables(config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789");
 
-			// Syngleton.cleanDomain(config);
 			Syngleton.cleanSynssions(config);
 
 			jetties[i] = startSyndoctier(config, f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
@@ -197,14 +199,14 @@ public class SynodetierJoinTest {
 		SynotierJettyApp hub = jetties[to];
 		SynotierJettyApp prv = jetties[by];
 
-		HashMap<String, SynDomanager> synodetiers = hub.syngleton().syndomanagers;
+		HashMap<String, SynDomanager> clientworkers = prv.syngleton().syndomanagers;
 
-		if (len(synodetiers) > 1 || len(prv.syngleton().syndomanagers) > 1)
+		if (len(clientworkers) > 1 || len(prv.syngleton().syndomanagers) > 1)
 			fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
 		
-		for (String dom : synodetiers.keySet()) {
-			SynDomanager hubmanger = synodetiers.get(dom);
-			SynDomanager prvmanger = prv.syngleton().syndomanagers.get(dom);
+		for (String dom : clientworkers.keySet()) {
+			SynDomanager hubmanger = hub.syngleton().syndomanagers.get(dom);
+			SynDomanager prvmanger = clientworkers.get(dom);
 
 			prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 					(rep) -> { lights[by] = true; });
@@ -249,8 +251,7 @@ public class SynodetierJoinTest {
 	}
 
 	/**
-	 * Start a synode tier with the user identity which is authorized
-	 * to login to every peer. 
+	 * Start a Jetty app with system print stream for logging.
 	 * 
 	 * @return the Jetty App, with a servlet server.
 	 * @throws Exception
