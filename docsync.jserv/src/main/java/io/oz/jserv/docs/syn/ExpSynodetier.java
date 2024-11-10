@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.ready;
@@ -87,47 +88,35 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			}
 
 			if (A.initjoin.equals(a)) {
-//				rsp = domanager0.onjoin(req, usr);
 				if (!eq(usr.orgId(), domanager0.org))
-					rsp = (SyncResp) deny(req.exblock).msg("Org id is not matched for joining.");
+					rsp = (SyncResp) deny(req.exblock).msg(f(
+							"User's org id, %s, is not matched for joining %s.",
+							usr.orgId(), domanager0.org));
 				else
 					rsp = new SynssionServ(domanager0, req.exblock.srcnode, usr)
 						.onjoin(req);
 			}
 
 			else if (A.closejoin.equals(a))
-//				rsp = domanager0.onclosejoin(req, usr);
 				rsp = usr.<SynssionServ>synssion().onclosejoin(req, usr);
 
 			else if (A.exinit.equals(a)) 
-//				rsp = domanager0.onsyninit(req, usr);
 				rsp = new SynssionServ(domanager0, req.exblock.srcnode, usr)
 					.onsyninit(req.exblock);
 
-			else if (A.exchange.equals(a)) {
-//				if (domanager0.synssion(req.exblock.srcnode) == null)
-//					throw new SemanticException(
-//						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
-//						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
-
+			else if (A.exchange.equals(a))
 				rsp = usr.<SynssionServ>synssion().onsyncdb(req.exblock);
 
-			}
-
-			else if (A.exclose.equals(a)) {
-//				if (domanager0.synssion(req.exblock.srcnode) == null)
-//					throw new SemanticException(
-//						"The sync-session for %s to exchange pages at %s desen't exist. A = %s, conn %s, domain %s.",
-//						req.exblock.srcnode, domanager0.synode, A.exchange, domanager0.synconn, domanager0.domain());
-//				rsp = domanager0.onclosex(req, usr);
+			else if (A.exclose.equals(a))
 				rsp = usr.<SynssionServ>synssion().onclosex(req, usr);
-			}
 
 			else 
 				throw new SemanticException("Request.a, %s, can not be handled at port %s",
 						jreq.a(), p.name());
 
 			write(resp, ok(rsp.syndomain(domain)));
+		} catch (ExchangeException e) {
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (SemanticException e) {

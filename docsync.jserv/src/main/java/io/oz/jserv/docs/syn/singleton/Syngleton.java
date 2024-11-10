@@ -137,14 +137,16 @@ public class Syngleton extends JSingleton {
 
 		AnResultset rs = (AnResultset) defltScxt
 				.select(synm.tbl)
-				.groupby(synm.domain)
+				// .groupby(synm.domain)
 				.groupby(synm.synoder)
 				.whereEq(synm.pk, cfg.synode())
+				.whereEq(synm.domain, cfg.domain)
 				.rs(defltScxt.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
 				.rs(0);
 		
 		if (rs.getRowCount() > 1)
-			throw new ExchangeException(ExessionAct.ready, null, "V0.2 only supports one domain. Found multiple domains in %s", cfg.synconn);
+			throw new ExchangeException(ExessionAct.ready, null,
+					"V0.2 only supports one domain. Found multiple domains in %s", cfg.synconn);
 		
 		if (rs.next()) {
 			String domain = rs.getString(synm.domain);

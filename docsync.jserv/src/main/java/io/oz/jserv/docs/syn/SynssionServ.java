@@ -1,8 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.f;
-import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.shouldeq;
 import static io.odysz.semantic.syn.ExessionAct.init;
 import static io.odysz.semantic.syn.ExessionAct.mode_server;
@@ -99,6 +98,12 @@ public class SynssionServ {
 				new ExessionAct(mode_server, ExessionAct.lockerr)));
 	}
 
+	/**
+	 * 
+	 * @param req
+	 * @return response
+	 * @throws ExchangeException synode or synssion user.org invalid
+	 */
 	public SyncResp onjoin(SyncReq req) throws Exception {
 
 		String peer = req.exblock.srcnode;
@@ -106,9 +111,10 @@ public class SynssionServ {
 		if (eq(peer, syndomxerv.synode))
 			throw new ExchangeException(init, null, "Can't join by same synode id: %s.", syndomxerv.synode);
 
-		mustnonull(usr.orgId(),
-				f("Client user's org id must not be null to join this domain: %s, user: %s.",
-				syndomxerv.domain(), usr.uid()));
+		if (isblank(usr.orgId()))
+			throw new ExchangeException(init, null,
+				"Client syn-user's org id must not be null to join this domain: %s, user: %s.",
+				syndomxerv.domain(), usr.uid());
 		
 		try {
 			if (syndomxerv.lockx(usr))  {

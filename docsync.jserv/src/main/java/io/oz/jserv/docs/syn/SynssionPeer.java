@@ -284,11 +284,11 @@ public class SynssionPeer {
 	}
 
 	public SyncReq closejoin(String admin, SyncResp rep) throws TransException, SQLException {
-		if (!eq(notNull(rep.domain), domanager.domain()))
+		if (!isblank(domanager.domain()) && !eq(notNull(rep.domain), domanager.domain()))
 			throw new ExchangeException(close, xp,
 				"Close joining session for different ids? Rep.domain: %s, Domanager.domain: %s",
 				rep.domain, domanager.domain());
-
+		
 		xp.trb.domainitMe(xp, admin, peerjserv, rep.domain, rep.exblock);
 
 		ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
