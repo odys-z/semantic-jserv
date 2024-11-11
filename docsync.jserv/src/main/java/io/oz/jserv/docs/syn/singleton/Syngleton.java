@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
@@ -33,10 +34,13 @@ import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.DBSynTransBuilder.SynmanticsMap;
+import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
@@ -52,25 +56,23 @@ import io.oz.syn.SynodeConfig;
  * @since 0.2.0
  */
 public class Syngleton extends JSingleton {
-	static DBSynTransBuilder.SynmanticsMap synmap;
+	/**
+	 * Call
+	 * <pre>DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+	 * 	(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
+	 * </pre>to load.
+	 */
+	SynmanticsMap synmap;
 
 	/** */
-	static DATranscxt tb0;
+	final DATranscxt tb0;
 	
-	SynodeConfig syncfg;
+	final SynodeConfig syncfg;
 
+	/** TODO move to be the app.ip_port */
 	String jserv;
 
-//	/** @deprecated TODO delete */
-//	String synconn;
 	final String sysconn;
-//	/** @deprecated TODO delete */
-//	String synode;
-
-	/**
-	 * Last (bug?) url pattern (key in {@link #syndomanagers}) of {@link ExpSynodetier}.
-	String syntier_url;
-	 */
 
 	/**
 	 * { servlet-url-pattern: { domain: domanager } }, only instance of {@link ExpSynodetier},<br>
@@ -91,10 +93,12 @@ public class Syngleton extends JSingleton {
 
 	SynodeMeta synm;
 
-	public Syngleton(SynodeConfig cfg) {
+	public Syngleton(SynodeConfig cfg) throws Exception {
 		sysconn = cfg.sysconn;
 		syncfg = cfg;
 		syndomanagers = new HashMap<String, SynDomanager>();
+
+		tb0 = new DATranscxt(cfg.synconn);
 	}
 
 	public void updatePeerJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
@@ -134,13 +138,18 @@ public class Syngleton extends JSingleton {
 
 		AnResultset rs = (AnResultset) defltScxt
 				.select(synm.tbl)
-				.groupby(synm.domain)
+				// .groupby(synm.domain)
 				.groupby(synm.synoder)
 				.whereEq(synm.pk, cfg.synode())
+				.whereEq(synm.domain, cfg.domain)
 				.rs(defltScxt.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
 				.rs(0);
 		
-		while (rs.next()) {
+		if (rs.getRowCount() > 1)
+			throw new ExchangeException(ExessionAct.ready, null,
+					"V0.2 only supports one domain. Found multiple domains in %s", cfg.synconn);
+		
+		if (rs.next()) {
 			String domain = rs.getString(synm.domain);
 			SynDomanager domanger = new SynDomanager(cfg)
 					.loadomainx();
@@ -202,8 +211,8 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
-	 * Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:
-	 * Syn-change handlers cannot be created without syntity tables have beeb created.
+	 * Resolved Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:<br>
+	 * Syn-change handlers cannot be created without syntity tables have been created.
 	 * 
 	 * @param cfg
 	 * @param configFolder
@@ -211,10 +220,11 @@ public class Syngleton extends JSingleton {
 	 * @param runtimeRoot
 	 * @param rootKey
 	 * @param peers 
+	 * @param forcedrop optional, default false 
 	 * @throws Exception
 	 */
-	public static void setupSyntables(Syngleton syngleton, SynodeConfig cfg, Iterable<SyntityMeta> entms,
-			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
+	public static void setupSyntables(SynodeConfig cfg, Iterable<SyntityMeta> entms,
+			String configFolder, String cfgxml, String runtimeRoot, String rootKey, boolean ... forcedrop) throws Exception {
 
 		// 1. connection
 		Utils.logi("Initializing synode singleton with configuration file %s\n"
@@ -248,12 +258,12 @@ public class Syngleton extends JSingleton {
 		prm  = new PeersMeta();
 		synm = new SynodeMeta(cfg.synconn);
 	
-		setupSqliTables(cfg.synconn, false, synm, chm, sbm, xbm, prm, ssm);
+		setupSqliTables(cfg.synconn, is(forcedrop), synm, chm, sbm, xbm, prm, ssm);
 
-		setupSqlitables(cfg.synconn, false, entms);
+		setupSqlitables(cfg.synconn, is(forcedrop), entms);
 
 		// 3 symantics and entities 
-		synmap = DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 
 		DatasetCfg.init(configFolder);
@@ -275,7 +285,7 @@ public class Syngleton extends JSingleton {
 	 * @param conn
 	 * @throws Exception 
 	 */
-	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncUser> tieradmins) throws Exception {
+	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncUser> iterable) throws Exception {
 	
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
@@ -299,11 +309,11 @@ public class Syngleton extends JSingleton {
 			sqls.clear();
 		}
 		
-		if (tieradmins != null) {
+		if (iterable != null) {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
-			for (SyncUser admin : tieradmins) {
+			for (SyncUser admin : iterable) {
 				Insert i = defltScxt.insert(um.tbl, usr)
 						.nv(usrm.org, admin.orgId())
 						.nv(usrm.pk, admin.uid())
@@ -328,20 +338,30 @@ public class Syngleton extends JSingleton {
 	 */
 	static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
-		
+
+		DATranscxt tb0 = new DATranscxt(cfg.synconn);
+
 		if (peers != null && peers.length > 0) {
-			tb0 = new DATranscxt(cfg.synconn);
 			SynodeMeta synm = new SynodeMeta(cfg.synconn);
-			Delete del = tb0.delete(synm.tbl, usr)
+			Delete del = tb0
+						.delete(synm.tbl, usr)
 						.whereEq(synm.domain, cfg.domain);
+
 			for (Synode sn : peers) {
-				del.post(sn.insertRow(synm, 
-						tb0.insert(synm.tbl, usr)));
+				musteqs(cfg.domain, sn.domain());
+				del.post(sn.insertRow(cfg.domain,
+						synm, tb0.insert(synm.tbl, usr)));
 			}
+
 			del.d(tb0.instancontxt(cfg.synconn, usr));
 		}
 	}
 
+	/**
+	 * @deprecated useless
+	 * @param cfg
+	 * @throws Exception
+	 */
 	public static void cleanDomain(SynodeConfig cfg)
 			throws Exception {
 		IUser usr = DATranscxt.dummyUser();
@@ -351,8 +371,9 @@ public class Syngleton extends JSingleton {
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
 
-		if (tb0 == null)
-			tb0 = new DATranscxt(cfg.synconn);
+		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+				(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
+		DATranscxt tb0 = new DATranscxt(cfg.synconn);
 		
 		tb0.delete(synm.tbl, usr)
 			.whereEq(synm.domain, cfg.domain)
@@ -365,6 +386,12 @@ public class Syngleton extends JSingleton {
 			.d(tb0.instancontxt(cfg.synconn, usr));
 	}
 
+	/**
+	 * Clean change logs and syssion buffer.
+	 * 
+	 * @param cfg
+	 * @throws Exception
+	 */
 	public static void cleanSynssions(SynodeConfig cfg) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 
@@ -372,8 +399,7 @@ public class Syngleton extends JSingleton {
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
 
-		if (tb0 == null)
-			tb0 = new DATranscxt(cfg.synconn);
+		DATranscxt tb0 = new DATranscxt(cfg.synconn);
 
 		tb0.delete(chgm.tbl, usr)
 			.whereEq(chgm.domain, cfg.domain)

@@ -130,7 +130,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				DocUser usr = (DocUser) JSingleton
 						.getSessionVerifier()
 						.verify(jmsg.header());
-				notNull(usr.deviceId);
+				notNull(usr.deviceId());
 
 				if (A.upload.equals(a))
 					rsp = createDoc(docreq, usr);
@@ -415,13 +415,13 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return ack;
 	}
 
-	DocsResp createDoc(DocsReq docreq, IUser usr)
-			throws TransException, SQLException, IOException, SAXException {
+	DocsResp createDoc(DocsReq docreq, IUser usr) throws Exception {
 		Utils.warnT(new Object() {}, "Is this really happenning?");
 
 		String conn = Connects.uri2conn(docreq.uri());
 
-		DATranscxt b = syntransBuilder();
+		// DATranscxt b = syntransBuilder();
+		DBSynTransBuilder b = new DBSynTransBuilder(domx);
 		ExpDocTableMeta docm = checkDuplication(b, docreq, (DocUser) usr);
 
 		ExpSyncDoc photo = docreq.doc;
@@ -489,10 +489,10 @@ public class ExpDoctier extends ServPort<DocsReq> {
 					device, clientpath);
 	}
 
-	DocsResp delDoc(DocsReq docsReq, IUser usr)
-			throws TransException, SQLException, SAXException, IOException {
+	DocsResp delDoc(DocsReq docsReq, IUser usr) throws Exception {
 		String conn = Connects.uri2conn(docsReq.uri());
-		DATranscxt b = syntransBuilder();
+		// DATranscxt b = syntransBuilder();
+		DBSynTransBuilder b = new DBSynTransBuilder(domx);
 		ExpDocTableMeta docm = (ExpDocTableMeta) DBSynTransBuilder.getEntityMeta(conn, docsReq.docTabl);
 
 		SemanticObject res = (SemanticObject) b

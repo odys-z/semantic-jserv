@@ -54,6 +54,8 @@ import io.oz.syn.YellowPages;
  * 
  * -Dsyndocs.ip="host-ip"
  * 
+ * <p>When paused, run {@link io.oz.jserv.docs.syn.DoclientierTest}, press return</p>
+ * 
  * @author ody
  */
 public class ExpDoctierservTest {
@@ -91,6 +93,7 @@ public class ExpDoctierservTest {
 				(domain, mynid, peer, xp) -> {
 					lights[i] = true;
 				});
+			// Thread.sleep(1500);
 		}
 		awaitAll(lights, -1);
 
@@ -106,6 +109,10 @@ public class ExpDoctierservTest {
 
 		printChangeLines(ck);
 		printNyquv(ck);
+
+		ck[X].doc(1);
+		ck[Y].doc(2);
+		ck[Z].doc(0);
 
 		Utils.logrst("Synchronizing between synodes", ++section);
 		waiting(lights, Y);
@@ -153,6 +160,7 @@ public class ExpDoctierservTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
+		ck[Z].doc(2);
 		ck[Y].doc(2);
 		ck[X].doc(2);
 	}
@@ -192,14 +200,12 @@ public class ExpDoctierservTest {
 					throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
 				});
 			
-			Syngleton syngleton = new Syngleton(cfgs[i]);
-
-			Syngleton.setupSyntables(syngleton, cfgs[i], regists.metas.values(),
+			Syngleton.setupSyntables(cfgs[i], regists.metas.values(),
 					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 			
 			cleanPhotos(docm, servs_conn[i], devs);
 			
-			// reboot
+			// clean and reboot
 			Syngleton.cleanSynssions(cfgs[i]);
 
 			jetties[i] = startSyndoctier(cfgs[i], "config.xml", f("$VOLUME_%s/syntity.json", i));

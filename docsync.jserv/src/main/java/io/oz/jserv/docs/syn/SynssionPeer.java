@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.ev;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
@@ -14,7 +15,6 @@ import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
@@ -33,8 +33,8 @@ import io.oz.jserv.docs.syn.SyncReq.A;
  */
 public class SynssionPeer {
 
-	static String uri_syn = "/syn";
-	static String uri_sys = "/sys";
+	final String uri_syn; //  = "/syn";
+	final String uri_sys; //  = "/sys";
 
 	/** {@link #uri_syn}/[peer] */
 	final String clienturi;
@@ -65,6 +65,8 @@ public class SynssionPeer {
 	private boolean debug;
 
 	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
+		this.uri_syn   = "/syn/" + domanager.synode;
+		this.uri_sys   = "sys-" + domanager.synode;
 		this.conn      = domanager.synconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
@@ -107,16 +109,16 @@ public class SynssionPeer {
 			if (rep != null) {
 				// lock remote
 				while (rep.synact() == trylater) {
+					if (debug)
+						Utils.logT(new Object() {},
+								"%s: %s is locked, waiting...",
+								mynid, peer);
+						
 					domanager.unlockme();
 
-					int sleep = rep.exblock.sleeps;
-//					if (sleep > 0)
-//						Thread.sleep(sleep * 1000);
-//					else if (sleep < 0)
-//						return this;
-
-//					domanager.lockme(onMutext);
-					domanager.lockme((u) -> sleep);
+					double sleep = rep.exblock.sleeps;
+					Thread.sleep((long) (sleep * 1000)); // wait for next try
+					domanager.lockme(onMutext);
 
 					rep = exespush(peer, A.exinit, reqb);
 				}
@@ -146,7 +148,7 @@ public class SynssionPeer {
 			try {
 				ExchangeBlock reqb = synclose(rep.exblock);
 				rep = exespush(peer, A.exclose, reqb);
-			} catch (TransException | SQLException e1) {
+			} catch (TransException | SQLException | AnsonException | IOException e1) {
 				e1.printStackTrace();
 			}
 		} catch (Exception e) {
@@ -192,25 +194,15 @@ public class SynssionPeer {
 			throws SQLException, TransException {
 		return xp.nextExchange(rep);
 	}
-	
-//	public ExchangeBlock onsyncdb(ExchangeBlock reqb)
-//			throws SQLException, TransException {
-//		ExchangeBlock repb = xp.nextExchange(reqb);
-//		return repb;
-//	}
 
 	ExchangeBlock synclose(ExchangeBlock rep)
 			throws TransException, SQLException {
 		return xp.trb.closexchange(xp, rep);
 	}
 
-//	SyncResp onsynclose(ExchangeBlock reqb)
-//			throws TransException, SQLException {
-//		ExchangeBlock b = xp.trb.onclosexchange(xp, reqb);
-//		return new SyncResp(domain()).exblock(b);
-//	}
+	SyncResp exespush(String peer, String a, ExchangeBlock reqb)
+			throws SemanticException, AnsonException, IOException {
 
-	SyncResp exespush(String peer, String a, ExchangeBlock reqb) {
 		SyncReq req = (SyncReq) new SyncReq(null, peer)
 					.exblock(reqb)
 					.a(a);
@@ -218,25 +210,25 @@ public class SynssionPeer {
 		return exespush(peer, req);
 	}
 
-	SyncResp exespush(String peer, SyncReq req) {
+	SyncResp exespush(String peer, SyncReq req) throws SemanticException, AnsonException, IOException {
 		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", A.exchange, "by " + mynid);
 		AnsonHeader header = client.header().act(act);
 
-		try {
+//		try {
 			AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
 								.header(header);
 
 			return client.commit(q, errHandler);
-		} catch (AnsonException | SemanticException e) {
-			errHandler.err(MsgCode.exSemantic,
-					e.getMessage() + " " + (e.getCause() == null
-					? "" : e.getCause().getMessage()));
-		} catch (IOException e) {
-			errHandler.err(MsgCode.exIo,
-					e.getMessage() + " " + (e.getCause() == null
-					? "" : e.getCause().getMessage()));
-		}
-		return null;
+//		} catch (AnsonException | SemanticException e) {
+//			errHandler.err(MsgCode.exSemantic,
+//					e.getMessage() + " " + (e.getCause() == null
+//					? "" : e.getCause().getMessage()));
+//		} catch (IOException e) {
+//			errHandler.err(MsgCode.exIo,
+//					e.getMessage() + " " + (e.getCause() == null
+//					? "" : e.getCause().getMessage()));
+//		}
+//		return null;
 	}
 
 	public SynssionPeer xp(ExessionPersist xp) {
@@ -254,10 +246,14 @@ public class SynssionPeer {
 	 * @param myuid
 	 * @param mypswd
 	 * @param ok
+	 * @throws TransException 
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SQLException 
 	 * @since 0.2.0
 	 */
-	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) {
-		try {
+	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) throws AnsonException, IOException, TransException, SQLException {
+//		try {
 			SyncReq  req = signup(admid);
 			SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
@@ -266,9 +262,9 @@ public class SynssionPeer {
 
 			if (!isNull(ok))
 				ok.ok(rep);
-		} catch (TransException | SQLException | AnsonException | IOException e) {
-			e.printStackTrace();
-		}
+//		} catch (TransException | SQLException | AnsonException | IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
@@ -292,10 +288,15 @@ public class SynssionPeer {
 	}
 
 	public SyncReq closejoin(String admin, SyncResp rep) throws TransException, SQLException {
-		if (!eq(notNull(rep.domain), domanager.domain()))
+		if (!isblank(domanager.domain()) && !eq(notNull(rep.domain), domanager.domain()))
 			throw new ExchangeException(close, xp,
 				"Close joining session for different ids? Rep.domain: %s, Domanager.domain: %s",
 				rep.domain, domanager.domain());
+		
+		if (!ev(setupDom, rep.exblock.synact()))
+			throw new ExchangeException(setupDom, xp,
+					"Joining domain information indicates an action of code %s, rather than %s (setupDom).\n%s",
+					rep.exblock.synact(), setupDom, rep.msg());
 
 		xp.trb.domainitMe(xp, admin, peerjserv, rep.domain, rep.exblock);
 

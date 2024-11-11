@@ -10,7 +10,7 @@ import io.oz.syn.YellowPages;
 
 public class SynotierServlet extends Syngleton implements ServletContextListener {
 
-	public SynotierServlet(SynodeConfig cfg) {
+	public SynotierServlet(SynodeConfig cfg) throws Exception {
 		super(cfg);
 	}
 
@@ -24,7 +24,7 @@ public class SynotierServlet extends Syngleton implements ServletContextListener
 
 			Syngleton.setupSysRecords(cfg, YellowPages.robots());
 			
-			Syngleton.setupSyntables(this, cfg, null,
+			Syngleton.setupSyntables(cfg, null,
 					"WEB-INF", "config.xml", ".", "********");
 
 			Syngleton.initSynodeRecs(cfg, cfg.peers());

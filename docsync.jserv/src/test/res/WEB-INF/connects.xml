@@ -13,7 +13,6 @@
   		<src>../volume/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<!-- enable sql printing -->
   		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
@@ -24,9 +23,8 @@
   		<isdef></isdef>
   		<src>../vol-0/jserv-main.db</src>
   		<usr>test</usr>
-  		<pswd>test</pswd>
-  		<!-- enable sql printing -->
-  		<dbg>true</dbg>
+  		<pswd></pswd>
+  		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
@@ -36,8 +34,7 @@
   		<src>../vol-1/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<!-- enable sql printing -->
-  		<dbg>true</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
@@ -47,7 +44,6 @@
   		<src>../vol-2/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<!-- enable sql printing -->
   		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
@@ -58,7 +54,6 @@
   		<src>../vol-3/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<!-- enable sql printing -->
   		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
@@ -67,27 +62,27 @@
 		<id>no-jserv.00</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>../vol-0/no-jserv-db.00</src>
+  		<src>$VOLUME_0/no-jserv-db.00</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
 	<c>
 		<id>no-jserv.01</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>../vol-1/no-jserv-db.01</src>
+  		<src>$VOLUME_1/no-jserv-db.01</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
 	<c>
 		<id>no-jserv.02</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>../vol-2/no-jserv-db.02</src>
+  		<src>$VOLUME_2/no-jserv-db.02</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg></dbg>
@@ -97,10 +92,10 @@
 		<id>no-jserv.03</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>../vol-3/no-jserv-db.03</src>
+  		<src>$VOLUME_3/no-jserv-db.03</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
   </t>
@@ -165,19 +160,19 @@
   	</c>
  	
    	<c>
-  		<uri>sys-00</uri>
+  		<uri>sys-X</uri>
   		<conn>main-sqlite-0</conn>
   	</c>
    	<c>
-  		<uri>sys-01</uri>
+  		<uri>sys-Y</uri>
   		<conn>main-sqlite-1</conn>
   	</c>
     <c>
-  		<uri>sys-02</uri>
+  		<uri>sys-Z</uri>
   		<conn>main-sqlite-2</conn>
   	</c>
    	<c>
-  		<uri>sys-03</uri>
+  		<uri>sys-W</uri>
   		<conn>main-sqlite-3</conn>
   	</c>
 
