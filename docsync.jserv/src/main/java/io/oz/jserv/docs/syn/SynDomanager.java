@@ -58,7 +58,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		 * On domain update event, for each peer. Additional calling for all peers cleared (peer == null).
 		 * @param domain
 		 * @param mynid
-		 * @param peer
+		 * @param peer if null, all peers in the domain has finished updating
 		 * @param xp
 		 */
 		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
@@ -254,7 +254,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public void joinDomain(String dom, String admid, String admserv,
+	public void joinDomain(String org, String dom, String admid, String admserv,
 			String myuid, String mypswd, OnOk ok) throws Exception {
 
 		if (sessions != null && sessions.containsKey(admid))

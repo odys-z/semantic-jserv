@@ -130,7 +130,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				DocUser usr = (DocUser) JSingleton
 						.getSessionVerifier()
 						.verify(jmsg.header());
-				notNull(usr.deviceId);
+				notNull(usr.deviceId());
 
 				if (A.upload.equals(a))
 					rsp = createDoc(docreq, usr);

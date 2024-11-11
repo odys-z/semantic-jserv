@@ -478,6 +478,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 							rs.getString(usrMeta.iv),
 							rs.getString(usrMeta.uname))
 						.onCreate(rs) // v1.4.11
+						.orgId(rs.getString(usrMeta.org))
+						.roleId(rs.getString(usrMeta.role))
 						// .onCreate(sessionBody)
 						.touch();
 			if (obj instanceof SemanticObject)

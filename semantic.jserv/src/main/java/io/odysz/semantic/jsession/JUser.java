@@ -157,7 +157,8 @@ public class JUser extends SemanticObject implements IUser {
 	@Override
 	public String orgId() { return org; }
 
-	/**@since 2.0.0 */
+	/**@since 1.5.0 */
+	@Override
 	public JUser orgId(String id) {
 		org = id;
 		return this;
@@ -166,6 +167,11 @@ public class JUser extends SemanticObject implements IUser {
 	/**@since v1.4.11 */
 	@Override
 	public String roleId() { return role; }
+
+	public IUser roleId(String role) {
+		this.role = role;
+		return this;
+	}
 
 	private long touched;
 

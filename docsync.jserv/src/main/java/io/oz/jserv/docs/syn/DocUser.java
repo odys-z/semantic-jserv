@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Set;
 
+import io.odysz.common.AESHelper;
 import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.syn.SyncUser;
@@ -18,16 +19,6 @@ import io.odysz.transact.x.TransException;
  * @author odys-z@github.com
  */
 public class DocUser extends SyncUser implements IUser {
-	@Override
-	public boolean login(Object reqObj) throws TransException {
-
-		if (super.login(reqObj)) {
-			AnSessionReq req = (AnSessionReq)reqObj;
-			deviceId = req.deviceId();
-			return true;
-		}
-		return false;
-	}
 
 	public static JUserMeta userMeta;
 	
@@ -39,16 +30,8 @@ public class DocUser extends SyncUser implements IUser {
 
 	long touched;
 
-	String roleId;
 	String roleName;
 	String orgName;
-
-	protected String deviceId;
-	public String deviceId() { return deviceId; }
-	public DocUser deviceId(String id) {
-		deviceId = id;
-		return this;
-	}
 
 	public DocUser(String userid, String passwd, String userName) throws SemanticException {
 		super(userid, passwd, userName);
@@ -69,7 +52,6 @@ public class DocUser extends SyncUser implements IUser {
 	@Override
 	public TableMeta meta(String ... connId) throws SQLException, TransException {
 		return new JUserMeta("a_users");
-				// .clone(Connects.getMeta(isNull(connId) ? null : connId[0], "a_users"));
 	}
 
 	@Override
@@ -80,41 +62,27 @@ public class DocUser extends SyncUser implements IUser {
 
 	/** Session Token Knowledge */
 	String knowledge;
+
 	@Override
 	public String sessionKey() { return knowledge; }
 
-	/**
-	 * <p>Get a temp dir, and have it deleted when logout.</p>
-	 * Since jserv 1.4.3 and album 0.5.2, deleting temp dirs are handled by session users.
-	 * @param conn
-	 * @return the dir
-	 * @throws DocsException 
-	 * @throws SemanticException
-	public String touchTempDir(String conn, String doctbl) throws DocsException {
-		if (!DATranscxt.hasSemantics(conn, doctbl, smtype.extFilev2))
-			throw new DocsException(DocsException.SemanticsError,
-					"No smtype.extFilev handler is configured for conn %s, table %s.",
-					conn, doctbl);
+	@Override
+	public boolean login(Object reqObj) throws TransException {
+		AnSessionReq req = (AnSessionReq)reqObj;
+		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
+		byte[] ssiv = AESHelper.decode64(req.iv());
+		String c = null;
+		try { c = AESHelper.encrypt(userId, pswd, ssiv); }
+		catch (Exception e) { throw new TransException (e.getMessage()); }
 
-		String extroot = ((ShExtFilev2) DATranscxt
-						.getHandler(conn, doctbl, smtype.extFilev2))
-						.getFileRoot();
+		// 2. compare pswd-cipher with j.pswd
+		if (c.equals(req.token())) {
+			touch();
+			deviceId = req.deviceId();
+			return true;
+		}
 
-		String tempDir = IUser.tempDir(extroot, uid(), "uploading-temp", ssid);
-		if (tempDirs == null)
-			tempDirs= new HashSet<String>(1);
-		tempDirs.add(tempDir);
-		return tempDir;
+		return false;
 	}
-	 */
-	
-//	SynDomanager domanager;
-
-//	@Override
-//	public SemanticObject logout() {
-//		// if (domanager != null)
-//		domanager.unlockx(this);
-//		return super.logout();
-//	}
 
 }

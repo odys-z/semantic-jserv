@@ -2,7 +2,6 @@ package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.shouldnull;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -137,7 +136,7 @@ public class SynotierJettyApp {
 	}
 
 	public SynotierJettyApp addDocServPort(String domain, String cfgroot, String syntity_json) throws Exception {
-		shouldnull(new Object() {}, domain);
+		// shouldnull(new Object() {}, domain);
 		SynDomanager domanger = syngleton.domanager(domain);
 
 		addServPort(new ExpDoctier(domanger)

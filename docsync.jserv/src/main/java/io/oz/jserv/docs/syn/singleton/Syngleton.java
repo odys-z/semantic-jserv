@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
@@ -219,10 +220,11 @@ public class Syngleton extends JSingleton {
 	 * @param runtimeRoot
 	 * @param rootKey
 	 * @param peers 
+	 * @param forcedrop optional, default false 
 	 * @throws Exception
 	 */
 	public static void setupSyntables(SynodeConfig cfg, Iterable<SyntityMeta> entms,
-			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
+			String configFolder, String cfgxml, String runtimeRoot, String rootKey, boolean ... forcedrop) throws Exception {
 
 		// 1. connection
 		Utils.logi("Initializing synode singleton with configuration file %s\n"
@@ -256,9 +258,9 @@ public class Syngleton extends JSingleton {
 		prm  = new PeersMeta();
 		synm = new SynodeMeta(cfg.synconn);
 	
-		setupSqliTables(cfg.synconn, false, synm, chm, sbm, xbm, prm, ssm);
+		setupSqliTables(cfg.synconn, is(forcedrop), synm, chm, sbm, xbm, prm, ssm);
 
-		setupSqlitables(cfg.synconn, false, entms);
+		setupSqlitables(cfg.synconn, is(forcedrop), entms);
 
 		// 3 symantics and entities 
 		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
@@ -384,6 +386,12 @@ public class Syngleton extends JSingleton {
 			.d(tb0.instancontxt(cfg.synconn, usr));
 	}
 
+	/**
+	 * Clean change logs and syssion buffer.
+	 * 
+	 * @param cfg
+	 * @throws Exception
+	 */
 	public static void cleanSynssions(SynodeConfig cfg) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 

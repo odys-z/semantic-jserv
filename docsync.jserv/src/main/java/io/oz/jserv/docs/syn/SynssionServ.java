@@ -109,7 +109,9 @@ public class SynssionServ {
 		String peer = req.exblock.srcnode;
 		
 		if (eq(peer, syndomxerv.synode))
-			throw new ExchangeException(init, null, "Can't join by same synode id: %s.", syndomxerv.synode);
+			throw new ExchangeException(init, null,
+					"Can't join by same synode id: %s.",
+					syndomxerv.synode);
 
 		if (isblank(usr.orgId()))
 			throw new ExchangeException(init, null,

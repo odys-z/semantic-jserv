@@ -30,15 +30,19 @@ import io.odysz.common.Configs;
 import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Delete;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
@@ -107,7 +111,7 @@ public class SynodetierJoinTest {
 
 		System.setProperty("VOLUME_HOME", p + "/volume");
 		for (int c = 0; c < 4; c++) {
-			System.setProperty(f("VOLUME_%s", c), p + "/vol-" + c);
+			System.setProperty(f("VOLUME_%s", c), p + "/v-" + c);
 			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
 		}
 
@@ -118,18 +122,18 @@ public class SynodetierJoinTest {
 		ck = new Docheck[servs_conn.length];
 		
 		int port = 8090;
-		String[] nodes = new String[] { "X", "Y", "Z", "W" };
+		String[] nodes = new String[] { "X", "Y", "Z" };
 
-		for (int i = 0; i < servs_conn.length; i++) {
+		for (int i = 0; i < nodes.length; i++) {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			
-			SyncUser me = new SyncUser(syrskyi, slava, syrskyi, "#-" + i);
+			SyncUser me = new SyncUser(syrskyi, slava, syrskyi, "#-" + i).orgId(ura);
 			ArrayList<SyncUser> robots = new ArrayList<SyncUser>() { {add(me);} };
 
 			SynodeConfig config = new SynodeConfig(nodes[i], SynodeMode.peer);
 			config.synconn = servs_conn[i];
-			config.sysconn = sys_conn;
+			config.sysconn = f("main-sqlite-%s", i);
 			config.port    = port++;
 			config.mode    = SynodeMode.peer;
 			config.domain  = eq(nodes[i], "X") ? zsu : null;
@@ -139,6 +143,14 @@ public class SynodetierJoinTest {
 			Syngleton.setupSysRecords(config, robots);
 			
 			Syngleton.cleanDomain(config);
+
+			// also clean relic of joined domain.
+			IUser rob = DATranscxt.dummyUser();
+			SynodeMeta synm = new SynodeMeta(config.synconn);
+			DATranscxt trb0 = new DATranscxt(config.synconn);
+			trb0.delete(synm.tbl, rob)
+				.whereEq(synm.domain, zsu)
+				.d(trb0.instancontxt(config.synconn, rob));
 
 			Syngleton.setupSyntables(config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
@@ -168,28 +180,45 @@ public class SynodetierJoinTest {
 	void setupDomain() throws Exception {
 		boolean[] lights = new boolean[] {true, false, false};
 		
+		int no = 0;
+		Utils.logrst("X <- join - Y", ++no);
 		waiting(lights, Y);
 		joinby(lights, X, Y); // no subscription of Z
 		awaitAll(lights, -1);
+
+		printChangeLines(ck);
+		printNyquv(ck, true);
 		ck[X].synodes(X, Y);
 		ck[Y].synodes(X, Y);
 
+		Utils.logrst("X <- join - Z", ++no);
 		waiting(lights, Z);
 		joinby(lights, X, Z);
 		awaitAll(lights, -1);
+
+		printChangeLines(ck);
+		printNyquv(ck, true);
 		ck[X].synodes(X, Y, Z);
 		ck[Z].synodes(X, -1, Z);
 
+		Utils.logrst("Z sync domain", ++no);
 		waiting(lights, Z);
 		syncdomain(lights, Z);
 		awaitAll(lights, -1);
+
+		printChangeLines(ck);
+		printNyquv(ck, true);
 		ck[X].synodes(X, Y, Z);
 		ck[Y].synodes(X, Y, -1);
 		ck[Z].synodes(X, -1, Z); // Z joined latter, no subs or Y's joining 
 
+		Utils.logrst("Y sync domain", ++no);
 		waiting(lights, Y);
 		syncdomain(lights, Y);
 		awaitAll(lights, -1);
+
+		printChangeLines(ck);
+		printNyquv(ck, true);
 		ck[X].synodes(X, Y, Z);
 		ck[Y].synodes(X, Y, Z);
 		ck[Z].synodes(X, -1, Z);
@@ -208,7 +237,7 @@ public class SynodetierJoinTest {
 			SynDomanager hubmanger = hubdoms.get(dom);
 			SynDomanager prvmanger = prv.syngleton().syndomanagers.get(null);
 
-			prvmanger.joinDomain(dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
+			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 					(rep) -> { lights[by] = true; });
 			
 			break;
@@ -235,15 +264,19 @@ public class SynodetierJoinTest {
 							e.printStackTrace();
 						}
 
-					if (isblank(peer))
-					if (eq(domain, dom)) {
-						lights[tx] = true;
-						Utils.logi("lights[%s] (%s) = true", tx, mynid);
-					}
-					else {
-						throw new NullPointerException(String.format(
-							"Unexpected callback for domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
-							domain, mynid, peer));
+					if (isblank(peer)) {
+						// finished domain, with or without errors
+						lights[tx] = true; 
+
+						if (eq(domain, dom)) {
+							Utils.logi("lights[%s] (%s) = true", tx, mynid);
+						}
+						else {
+							throw new NullPointerException(f(
+								"While updating domain, there is an error on unexpected domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",
+								domain, mynid, peer,
+								isNull(xp) || xp[0].trb == null ? "N/A" : xp[0].trb.syndomx.synconn));
+						}
 					}
 				}, (blockby) -> {
 					Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);

@@ -73,7 +73,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			SyncReq req = jmsg.body(0);
 
 			DocUser usr = (DocUser) JSingleton.getSessionVerifier().verify(jmsg.header());
-			notNull(usr.deviceId);
+			notNull(usr.deviceId());
 			
 			if (req.exblock != null) {
 				if (!isblank(req.exblock.domain) && !eq(req.exblock.domain, domain))
@@ -90,8 +90,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			if (A.initjoin.equals(a)) {
 				if (!eq(usr.orgId(), domanager0.org))
 					rsp = (SyncResp) deny(req.exblock).msg(f(
-							"User's org id, %s, is not matched for joining %s.",
-							usr.orgId(), domanager0.org));
+							"User's org id, %s, is not matched for joining %s. Domain: %s",
+							usr.orgId(), domanager0.org, domanager0.domain()));
 				else
 					rsp = new SynssionServ(domanager0, req.exblock.srcnode, usr)
 						.onjoin(req);
