@@ -311,9 +311,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		String tempDir = ((DocUser)usr).touchTempDir(conn, body.docTabl);
 
-		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id,
-				// body.doc.clientpath, body.doc.createDate, body.doc.folder());
-				body.doc);
+		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
 
 		// FIXME security breach?
 		String id = chainId(usr, chain.doc.clientpath);
@@ -420,7 +418,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		String conn = Connects.uri2conn(docreq.uri());
 
-		// DATranscxt b = syntransBuilder();
 		DBSynTransBuilder b = new DBSynTransBuilder(domx);
 		ExpDocTableMeta docm = checkDuplication(b, docreq, (DocUser) usr);
 

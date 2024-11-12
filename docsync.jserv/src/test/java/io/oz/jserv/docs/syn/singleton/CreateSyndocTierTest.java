@@ -1,9 +1,11 @@
 package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logOut;
+import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.touchDir;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
@@ -11,6 +13,7 @@ import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -98,7 +101,9 @@ public class CreateSyndocTierTest {
 	
 	@Test
 	void test3jetties() throws Exception {
-    	System.setProperty("VOLUME_HOME", "../volume");
+		setVolumeEnv("v-");
+
+
 
 		Configs.init(webinf);
 		Connects.init(webinf);
@@ -165,6 +170,18 @@ public class CreateSyndocTierTest {
 		printNyquv(ck);
 		
 		azert.lineEq(outfile, -1, "Echo: [0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3} : jetty-2");
+	}
+
+	public static void setVolumeEnv(String vol_prefix) {
+		String p = new File("src/test/res").getAbsolutePath();
+    	System.setProperty("VOLUME_HOME", p + "/volume");
+    	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+
+		System.setProperty("VOLUME_HOME", p + "/volume");
+		for (int c = 0; c < 4; c++) {
+			System.setProperty(f("VOLUME_%s", c), f("%s/%s%s", p, vol_prefix, c));
+			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
+		}
 	}
 
 	/**

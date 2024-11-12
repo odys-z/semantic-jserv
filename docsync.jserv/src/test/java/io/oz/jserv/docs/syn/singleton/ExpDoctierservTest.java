@@ -3,7 +3,6 @@ package io.oz.jserv.docs.syn.singleton;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
-import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
@@ -15,11 +14,11 @@ import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.setVolumeEnv;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -75,6 +74,8 @@ public class ExpDoctierservTest {
 	/** -Dsyndocs.ip="host-ip" */
 	@BeforeAll
 	static void init() throws Exception {
+		setVolumeEnv("vol-");
+
 		ck = new Docheck[servs_conn.length];
 	}
 	
@@ -172,12 +173,12 @@ public class ExpDoctierservTest {
 		
 		SynodeConfig[] cfgs = new SynodeConfig[nodex.length]; 
 
-		String p = new File("src/test/res").getAbsolutePath();
-		System.setProperty("VOLUME_HOME", p + "/volume");
-		for (int c = 0; c < 4; c++) {
-			System.setProperty(f("VOLUME_%s", c), p + "/vol-" + c);
-			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
-		}
+//		String p = new File("src/test/res").getAbsolutePath();
+//		System.setProperty("VOLUME_HOME", p + "/volume");
+//		for (int c = 0; c < 4; c++) {
+//			System.setProperty(f("VOLUME_%s", c), p + "/vol-" + c);
+//			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
+//		}
 
 		Connects.init(webinf);
 

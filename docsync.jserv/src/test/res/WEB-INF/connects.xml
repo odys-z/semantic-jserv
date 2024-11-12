@@ -10,7 +10,7 @@
   		<id>main-sqlite</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>
-  		<src>../volume/jserv-main.db</src>
+  		<src>$VOLUME_HOME/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<dbg></dbg>
@@ -21,40 +21,40 @@
   		<id>main-sqlite-0</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>../vol-0/jserv-main.db</src>
+  		<src>$VOLUME_0/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
   		<id>main-sqlite-1</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>../vol-1/jserv-main.db</src>
+  		<src>$VOLUME_1/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
   		<id>main-sqlite-2</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>../vol-2/jserv-main.db</src>
+  		<src>$VOLUME_2/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
   		<id>main-sqlite-3</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>../vol-3/jserv-main.db</src>
+  		<src>$VOLUME_3/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
 
