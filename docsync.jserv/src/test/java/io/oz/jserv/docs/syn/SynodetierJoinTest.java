@@ -12,9 +12,9 @@ import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.docm;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.ura;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.ura;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -42,7 +42,6 @@ import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.Delete;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.singleton.Syngleton;

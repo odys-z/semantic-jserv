@@ -358,7 +358,6 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
-	 * @deprecated useless
 	 * @param cfg
 	 * @throws Exception
 	 */
