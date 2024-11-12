@@ -3,7 +3,7 @@
    "synid": "Z",
    "domain": "zsu",
    "admin": "ody",
-   "sysconn": "main-sqlite-3",
+   "sysconn": "main-sqlite-2",
    "synconn": "no-jserv.02",
    "localhost": "",
    "port": 8966,

@@ -6,7 +6,6 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
-import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
@@ -15,9 +14,9 @@ import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.ura;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.setVolumeEnv;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -104,15 +103,7 @@ public class SynodetierJoinTest {
 	
 	@BeforeAll
 	static void init() throws Exception {
-		String p = new File("src/test/res").getAbsolutePath();
-    	System.setProperty("VOLUME_HOME", p + "/volume");
-    	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
-
-		System.setProperty("VOLUME_HOME", p + "/volume");
-		for (int c = 0; c < 4; c++) {
-			System.setProperty(f("VOLUME_%s", c), p + "/v-" + c);
-			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
-		}
+		setVolumeEnv("v-");
 
 		Configs.init(webinf);
 		Connects.init(webinf);

@@ -250,6 +250,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		jsonResp(msg, resp);
 	}
 
+	@SuppressWarnings("deprecation")
 	protected void jsonResp(AnsonMsg<AnSessionReq> msg, HttpServletResponse response) throws IOException {
 		String connId = null;
 		try {
@@ -487,7 +488,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throw new SemanticException("IUser implementation must extend SemanticObject.");
 		}
 		else
-			throw new SsException("User Id is not found: %s", uid);
+			throw new SsException("Cannot find user id: %s", uid);
 	}
 
 
@@ -521,6 +522,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	}
 
+	@SuppressWarnings("deprecation")
 	static IUser createUserByClassname(String clsname, String uid, String pswd, String iv, String userName) 
 			throws ReflectiveOperationException, GeneralSecurityException, IOException, IllegalArgumentException, TransException {
 		@SuppressWarnings("unchecked")
