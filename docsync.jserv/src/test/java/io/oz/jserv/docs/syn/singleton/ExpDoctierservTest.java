@@ -166,7 +166,7 @@ public class ExpDoctierservTest {
 		ck[X].doc(2);
 	}
 
-	private static int[] runtimeEnv(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
+	private static int[] runtimeEnv(T_SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z };
 		String host = System.getProperty("syndocs.ip");
 		int port = 8090;

@@ -84,7 +84,7 @@ public class Exif {
 	 * @throws ReflectiveOperationException
 	 */
 	public static String init(String xmlPath)
-			throws TikaException, IOException, SAXException, SemanticException, ReflectiveOperationException {
+			throws TikaException, IOException, SemanticException, ReflectiveOperationException, SAXException {
 
 		String absPath = FilenameUtils.concat(xmlPath, cfgFile);
 		Utils.logi("[Exif.init] Loading tika configuration:\n%s", absPath);
@@ -96,8 +96,11 @@ public class Exif {
 		ParseContext context = new ParseContext();
 		Utils.logi("[Exif.init] Tika config:\n%s", config.getParser().getSupportedTypes(context ));
 
-		@SuppressWarnings("deprecation")
-		Parser p = config.getParser(new MediaType("video", "mp4"));
+		// deprecated
+		// TODO test or remove Tika dependency
+		// Parser p = config.getParser(new MediaType("video", "mp4"));
+		Parser p = config.getParser();
+
 		Utils.logi("[Exif.init] Parser for video/mp4: %s,\ndeclared (supported types):%s",
 				p.getClass().getName(), p.getSupportedTypes(context)); // p.getClass().getDeclaredField("parser")
 		

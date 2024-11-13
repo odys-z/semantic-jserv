@@ -1,4 +1,4 @@
-package io.oz.jserv.docs.syn.singleton;
+package io.oz.synserv;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
@@ -34,6 +34,7 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
+import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.syn.SynodeConfig;
 
 /**
@@ -233,7 +234,6 @@ public class SynotierJettyApp {
 	    AnsonMsg.understandPorts(Port.syntier);
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg);
-	    				// Syngleton.synmap.get(smtype.synChange));
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	

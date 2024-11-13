@@ -108,12 +108,12 @@ public class CreateSyndocTierTest {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-		SynotierJettyApp h1 = createStartSyndocTierTest(null, servs_conn[0], "X", "odyx", port++);
+		T_SynotierJettyApp h1 = createStartSyndocTierTest(null, servs_conn[0], "X", "odyx", port++);
 		T_PhotoMeta docm = new T_PhotoMeta(servs_conn[0]);
 		ck[0] = new Docheck(azert, zsu, servs_conn[0],
 					"X", SynodeMode.peer, docm, true);
 
-		SynotierJettyApp h2 = createStartSyndocTierTest(null, servs_conn[1], "Y", "odyy", port++);	
+		T_SynotierJettyApp h2 = createStartSyndocTierTest(null, servs_conn[1], "Y", "odyy", port++);	
 		docm = new T_PhotoMeta(servs_conn[1]);
 		ck[1] = new Docheck(azert, zsu, servs_conn[1],
 					"Y", SynodeMode.peer, docm, true);
@@ -124,7 +124,7 @@ public class CreateSyndocTierTest {
         RolloverFileOutputStream es = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.err", true);
         String outfile = os.getDatedFilename();
 
-		SynotierJettyApp h3 = createStartSyndocTierTest(lights, servs_conn[2], "Z", "odyz", port++,
+		T_SynotierJettyApp h3 = createStartSyndocTierTest(lights, servs_conn[2], "Z", "odyz", port++,
 							() -> { return new PrintStream1(os, "3-out"); }, 
 							() -> { return new PrintStream1(es, "3-err"); });
 		
@@ -194,7 +194,7 @@ public class CreateSyndocTierTest {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private SynotierJettyApp createStartSyndocTierTest(boolean[] echolights, String conn, String synode,
+	private T_SynotierJettyApp createStartSyndocTierTest(boolean[] echolights, String conn, String synode,
 			String uid, int port, PrintstreamProvider ... oe) throws IOException, Exception {
 		ArrayList<SyncUser> tieradmins = new ArrayList<SyncUser>() {
 			{add(new SyncUser(uid, "123456", "Ody by robot"));}
@@ -221,11 +221,11 @@ public class CreateSyndocTierTest {
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(conn), conn, synode, regists);
 
-		SynotierJettyApp app = SynotierJettyApp
+		T_SynotierJettyApp app = T_SynotierJettyApp
 				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", port)
 				.loadomains(cfg);
 
-		return SynotierJettyApp
+		return T_SynotierJettyApp
 			.registerPorts(app, conn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
