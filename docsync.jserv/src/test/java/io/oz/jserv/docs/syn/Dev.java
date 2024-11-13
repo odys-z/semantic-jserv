@@ -40,16 +40,16 @@ public class Dev {
 	static {
 		try {
 			devs = new Dev[4];
-			devs[X_0] = new Dev("sys-00", "doclient-00", syrskyi, slava, "X-0", zsu,
+			devs[X_0] = new Dev("sys-X", "doclient-00", syrskyi, slava, "X-0", zsu,
 								"src/test/res/anclient.java/1-pdf.pdf");
 
-			devs[X_1] = new Dev("sys-01", "doclient-00", "syrskyi", "слава україні", "X-1", zsu,
+			devs[X_1] = new Dev("sys-Y", "doclient-00", "syrskyi", "слава україні", "X-1", zsu,
 								"src/test/res/anclient.java/2-ontario.gif");
 
-			devs[Y_0] = new Dev("sys-02", "doclient-01", "odyz", "8964", "Y-0", zsu,
+			devs[Y_0] = new Dev("sys-Z", "doclient-01", "ody", "8964", "Y-0", zsu,
 								"src/test/res/anclient.java/3-birds.wav");
 
-			devs[Y_1] = new Dev("sys-03", "doclient-01", "syrskyi", "слава україні", "Y-1", zsu,
+			devs[Y_1] = new Dev("sys-W", "doclient-01", "syrskyi", "слава україні", "Y-1", zsu,
 								"src/test/res/anclient.java/Amelia Anisovych.mp4");
 
 			bsize = 72 * 1024;

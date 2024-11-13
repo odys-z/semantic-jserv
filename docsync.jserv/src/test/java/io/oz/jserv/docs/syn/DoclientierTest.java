@@ -171,6 +171,7 @@ class DoclientierTest {
 						new ErrorCtx() {
 							@Override
 							public void err(MsgCode code, String msg, String...args) {
+								Utils.warn("There should be some error message from server.");
 								Utils.logi("Expected: Fail on pushing again test passed. doc: %s, device: %s, clientpath: %s",
 									doc.recId, doc.device(), doc.clientpath);
 							}
