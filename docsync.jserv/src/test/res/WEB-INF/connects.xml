@@ -24,7 +24,7 @@
   		<src>$VOLUME_0/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd></pswd>
-  		<dbg>1</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
@@ -34,7 +34,7 @@
   		<src>$VOLUME_1/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg>1</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
@@ -44,7 +44,7 @@
   		<src>$VOLUME_2/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg>1</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
@@ -54,7 +54,7 @@
   		<src>$VOLUME_3/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg>1</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
 
@@ -65,7 +65,7 @@
   		<src>$VOLUME_0/no-jserv-db.00</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>true</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
 	<c>
@@ -75,7 +75,7 @@
   		<src>$VOLUME_1/no-jserv-db.01</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>true</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
 	<c>
@@ -85,7 +85,7 @@
   		<src>$VOLUME_2/no-jserv-db.02</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>true</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
 	<c>
@@ -95,7 +95,7 @@
   		<src>$VOLUME_3/no-jserv-db.03</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>true</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
   </t>
