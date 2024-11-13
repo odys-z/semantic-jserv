@@ -8,9 +8,7 @@ import javax.servlet.annotation.WebListener;
 
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.semantic.syn.SynodeMode;
 import io.oz.album.helpers.Exiftool;
-import io.oz.jserv.dbsyn.SynodeServ;
 
 @WebListener
 public class AlbumSingleton extends JSingleton implements ServletContextListener {
@@ -23,7 +21,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 	/** @since 0.6.50:temp-try */
 	public static String synode() { return node; }
 
-	SynodeServ synodeServ;
+	// SynodeServ synodeServ;
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
@@ -36,7 +34,7 @@ public class AlbumSingleton extends JSingleton implements ServletContextListener
 			
 			node = System.getProperty("JSERV_NODE");
 			if (isblank(node)) node = "mvp-hub";
-			synodeServ = new SynodeServ(node, SynodeMode.peer);
+			// synodeServ = new SynodeServ(node, SynodeMode.peer);
 
 			// MVP 0.2.1, temporary way of create meta
 			// Docsyncer.metas(Connects.getMeta(Connects.defltConn()));

@@ -84,13 +84,15 @@
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
 		<version>${jetty.version}</version>
-    </dependency>
+		<scope>test</scope>
+	</dependency>
 
     <dependency>
       <!-- https://stackoverflow.com/a/66368511 -->
       <groupId>org.eclipse.jetty.ee8</groupId>
       <artifactId>jetty-ee8-webapp</artifactId>
       <version>${jetty-ee8.version}</version>
+      <scope>test</scope>
     </dependency>
  
   </dependencies>

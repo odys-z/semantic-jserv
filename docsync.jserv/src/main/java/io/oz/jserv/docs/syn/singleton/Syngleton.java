@@ -304,7 +304,7 @@ public class Syngleton extends JSingleton {
 					"a_roles.sqlite.ddl",
 					"a_orgs.sqlite.ddl",}) {
 	
-			sqls.add(loadTxt(SynotierJettyApp.class, tbl));
+			sqls.add(loadTxt(Syngleton.class, tbl));
 			Connects.commit(cfg.sysconn, usr, sqls);
 			sqls.clear();
 		}

@@ -22,7 +22,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.syn.SyncRobot;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.SessionInf;
@@ -37,7 +37,7 @@ import io.oz.album.tier.Profiles;
  * 
  * @author odys-z@github.com
  */
-public class PhotoUser extends SyncRobot implements IUser {
+public class PhotoUser extends SyncUser implements IUser {
 
 	static final String WebRoot = "web-root";
 
@@ -90,11 +90,11 @@ public class PhotoUser extends SyncRobot implements IUser {
 			AnResultset rs = (AnResultset) withSession;
 			try {
 				rs.beforeFirst().next();
-				roleId = rs.getString(userMeta.role);
+				roleId   = rs.getString(userMeta.role);
 				userName = rs.getString(userMeta.uname);
-				orgId = rs.getString(userMeta.org);
+				org      = rs.getString(userMeta.org);
 				roleName = rs.getString(userMeta.org);
-				orgName = rs.getString(userMeta.orgName);
+				orgName  = rs.getString(userMeta.orgName);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
