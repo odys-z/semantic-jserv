@@ -173,13 +173,6 @@ public class ExpDoctierservTest {
 		
 		SynodeConfig[] cfgs = new SynodeConfig[nodex.length]; 
 
-//		String p = new File("src/test/res").getAbsolutePath();
-//		System.setProperty("VOLUME_HOME", p + "/volume");
-//		for (int c = 0; c < 4; c++) {
-//			System.setProperty(f("VOLUME_%s", c), p + "/vol-" + c);
-//			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
-//		}
-
 		Connects.init(webinf);
 
 		for (int i : nodex) {
@@ -204,7 +197,7 @@ public class ExpDoctierservTest {
 			Syngleton.setupSyntables(cfgs[i], regists.metas.values(),
 					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 			
-			cleanPhotos(docm, servs_conn[i], devs);
+			cleanPhotos(docm, cfgs[i].synconn, devs);
 			
 			// clean and reboot
 			Syngleton.cleanSynssions(cfgs[i]);
