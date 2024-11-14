@@ -231,7 +231,8 @@ public class Exiftool {
      * @return The thread that is created and started
      */
     private static Thread ignoreStream(final InputStream stream, boolean waitForDeath) {
-        Thread t = new Thread(() -> {
+        @SuppressWarnings("deprecation")
+		Thread t = new Thread(() -> {
             try { IOUtils.copy(stream, NULL_OUTPUT_STREAM); }
             catch (IOException e) { }
             finally { IOUtils.closeQuietly(stream); }
