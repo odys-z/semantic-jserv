@@ -11,7 +11,6 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
-import io.odysz.jsample.semantier.UserstReq.A;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -30,6 +29,8 @@ import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
+import io.oz.jsample.semantier.UserstReq;
+import io.oz.jsample.semantier.UserstReq.A;
 import io.oz.sandbox.SandRobot;
 import io.oz.sandbox.protocol.Sandport;
 import io.oz.sandbox.utils.StrRes;
@@ -70,12 +71,12 @@ public class UsersLess extends ServPort<UserstReq> {
 					rsp = rec(jreq, usr);
 				else if (UserstReq.A.avatar.equals(jreq.a()))
 					throw new SemanticException("Please use POST to update database!");
-				else if (UserstReq.A.regist.equals(jreq.a()))
+				else if (UserstReq.A.insert.equals(jreq.a()))
 					throw new SemanticException("Please use POST to update database!");
 				else throw new SemanticException(String.format(
 							"request.body.a can not handled: %s\\n" +
 							"Only a = [%s, %s, %s, %s] are supported.",
-							jreq.a(), A.records, A.rec, A.avatar, A.regist));
+							jreq.a(), A.records, A.rec, A.avatar, A.insert));
 
 				resp.getWriter().write(Html.rs((AnResultset)((AnsonResp) rsp.body()).rs(0)));
 			} catch (TransException | SQLException e) {
@@ -101,12 +102,12 @@ public class UsersLess extends ServPort<UserstReq> {
 				rsp = rec(jreq, usr);
 			else if (UserstReq.A.avatar.equals(jreq.a()))
 				rsp = avatar(jreq, usr);
-			else if (UserstReq.A.regist.equals(jreq.a()))
+			else if (UserstReq.A.insert.equals(jreq.a()))
 				rsp = ins(jreq, usr);
 			else throw new SemanticException(String.format(
 						"request.body.a can not handled: %s\\n" +
 						"Only a = [%s, %s, %s, %s] are supported.",
-						jreq.a(), A.records, A.rec, A.avatar, A.regist));
+						jreq.a(), A.records, A.rec, A.avatar, A.insert));
 
 			write(resp, rsp);
 		} catch (SemanticException e) {
@@ -132,8 +133,10 @@ public class UsersLess extends ServPort<UserstReq> {
 				u.post(r.update(st));
 		}
 
+		if (LangExt.isblank(jreq.pk()))
+			throw new TransException("FIXME");
 		SemanticObject res = (SemanticObject)u
-				.whereEq("userId", jreq.pk)
+				.whereEq("userId", jreq.pk())// FIXME jreq.userId?
 				.u(st.instancontxt(Connects.uri2conn(jreq.uri()), usr));
 
 		return ok(new AnsonResp().msg(res.msg()));
@@ -148,7 +151,7 @@ public class UsersLess extends ServPort<UserstReq> {
 
 		AnResultset rs = (AnResultset) st.select(mtabl, "u")
 				.col(Funcall.count("userId"), "c")
-				.whereEq("userId", jreq.userId)
+				.whereEq("userId", jreq.userId())
 				.rs(stx)
 				.rs(0);
 
@@ -168,7 +171,7 @@ public class UsersLess extends ServPort<UserstReq> {
 			.select(mtabl, "u")
 			.col("userId").col("userName").col("roleId").col("orgId").col("nationId").col("birthday")
 			.col("''", "pswd")
-			.whereEq("userId", jreq.userId)
+			.whereEq("userId", jreq.userId())
 			.rs(st.instancontxt(Connects.uri2conn(jreq.uri()), usr))
 			.rs(0);
 
@@ -182,17 +185,17 @@ public class UsersLess extends ServPort<UserstReq> {
 				.l("a_orgs", "o", "o.orgId = u.orgId")
 				.l("a_roles", "r", "r.roleId = u.roleId");
 
-		if (!LangExt.isEmpty(jreq.userName))
-			q.whereLike("userName", jreq.userName);
+		if (!LangExt.isEmpty(jreq.userName()))
+			q.whereLike("userName", jreq.userName());
 
-		if (!LangExt.isEmpty(jreq.userId))
-			q.whereEq("userId", jreq.userId);
+		if (!LangExt.isEmpty(jreq.userId()))
+			q.whereEq("userId", jreq.userId());
 
-		if (!LangExt.isEmpty(jreq.roleId))
-			q.whereEq("u.roleId", jreq.roleId);
+		if (!LangExt.isEmpty(jreq.roleId()))
+			q.whereEq("u.roleId", jreq.roleId());
 
-		if (!LangExt.isEmpty(jreq.orgId))
-			q.whereEq("u.orgId", jreq.orgId);
+		if (!LangExt.isEmpty(jreq.orgId()))
+			q.whereEq("u.orgId", jreq.orgId());
 
 		AnResultset rs = (AnResultset) q
 			.rs(st.instancontxt(Connects.uri2conn(jreq.uri()), usr))

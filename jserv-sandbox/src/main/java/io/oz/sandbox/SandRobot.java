@@ -1,9 +1,13 @@
 package io.oz.sandbox;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.odysz.anson.Anson;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -14,11 +18,17 @@ import io.odysz.transact.x.TransException;
  * If you are implementin a servlet without login, subclassing a {@link io.odysz.semantic.jserv.jsession.JUser JUser} instead.
  * @author odys-z@github.com
  */
-public class SandRobot implements IUser {
+public class SandRobot extends SemanticObject implements IUser {
 
 	long touched;
 
 	String remote;
+	String org;
+	String orgName;
+	String role;
+	String roleName;
+
+	String ssid;
 
 	public SandRobot(String userid) {
 		this.remote = userid;
@@ -30,9 +40,9 @@ public class SandRobot implements IUser {
 
 	public static class SandRobotMeta extends JUserMeta {
 		public SandRobotMeta(String tbl, String... conn) {
-			super(tbl, conn);
+			super(conn);
 
-			this.tbl = "a_users";
+			// this.tbl = "a_users";
 			pk = "userId";
 			uname = "userName";
 			pswd = "pswd";
@@ -40,8 +50,31 @@ public class SandRobot implements IUser {
 		}
 	}
 
-	public TableMeta meta() {
-		return new SandRobotMeta("");
+	/**
+	 * Special implementation for iv = 'iv'.
+	 */
+	public TableMeta meta(String ... connId) {
+		JUserMeta m = new JUserMeta();
+		m.iv = "iv";
+		return m;
+	}
+	
+	@Override
+	public IUser onCreate(Anson rs) throws GeneralSecurityException {
+		if (rs instanceof AnResultset) {
+			JUserMeta m = (JUserMeta) meta();
+			try {
+				this.org      = ((AnResultset) rs).getString(m.org);
+				this.orgName  = ((AnResultset) rs).getString(m.orgName);
+				this.role     = ((AnResultset) rs).getString(m.role);
+				this.roleName = ((AnResultset) rs).getString(m.roleName);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				throw new GeneralSecurityException(e.getMessage());
+			}
+		}
+
+		return this;
 	}
 
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
@@ -53,6 +86,7 @@ public class SandRobot implements IUser {
 	@Override public long touchedMs() { return touched; } 
 
 	@Override public String uid() { return remote; }
+	@Override public String orgId() { return org; }
 
 	@Override public SemanticObject logout() { return null; }
 
@@ -60,13 +94,15 @@ public class SandRobot implements IUser {
 
 	@Override public IUser logAct(String funcName, String funcId) { return this; }
 
-	@Override public String sessionId() { return null; }
+	@Override public String sessionId() { return ssid; }
+	@Override public IUser sessionId(String rad64num) {
+		this.ssid = rad64num;
+		return this;
+	}
 
 	@Override public IUser notify(Object note) throws TransException { return this; }
 
 	@Override public List<Object> notifies() { return null; }
-
-	// @Override public TableMeta meta() { return null; }
 
 	@Override public IUser sessionKey(String string) { return this; }
 

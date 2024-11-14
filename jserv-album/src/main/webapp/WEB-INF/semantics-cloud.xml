@@ -9,12 +9,59 @@
 		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
    -->
 	<s>
+		<id>dev.ak</id>
+		<smtc>a-k</smtc>
+		<tabl>doc_devices</tabl>
+		<pk>device</pk>
+		<args>device</args>
+    </s>
+
+    <s>
+		<id>pho.ak</id>
+		<smtc>a-k</smtc>
+		<tabl>h_photos</tabl>
+		<pk>pid</pk>
+		<args>pid</args>
+    </s>
+
+	<s>
 		<id>pho.oper</id>
 		<smtc>o-t</smtc>
-		<tabl>photos</tabl>
+		<tabl>h_photos</tabl>
 		<pk>pid</pk>
-		<args>oper,optime</args>
+		<args>oper,opertime</args>
 	</s>
 	
+	<s>
+		<id>pho.extfile</id>
+		<smtc>ef2.0</smtc>
+		<tabl>h_photos</tabl>
+		<pk>pid</pk>
+		<args>$VOLUME_HOME,uri,shareby,folder,pname</args>
+	</s>
+	
+	<s>
+		<id>cll.ak</id>
+		<smtc>a-k</smtc>
+		<tabl>h_collects</tabl>
+		<pk>cid</pk>
+		<args>cid</args>
+    </s>
+
+	<s>
+		<id>cll.oper</id>
+		<smtc>o-t</smtc>
+		<tabl>h_collects</tabl>
+		<pk>cid</pk>
+		<args>oper,opertime</args>
+	</s>
+	
+	<s>
+		<id>collect_photo.fk-pid</id>
+		<tabl>h_coll_phot</tabl>
+  		<smtc>pkref</smtc>
+  		<pk></pk>
+		<args>pid,h_photos,pid</args>
+	</s>
   </t>
 </semantics>

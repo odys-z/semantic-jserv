@@ -20,7 +20,11 @@ public enum Sandport implements IPort {
 	/** The new experimental serv, extending semantics to the client side */
 	userstier("users.less"),
 	/** editor.less */
-	editor("editor.less");
+	editor("editor.less"),
+
+	workbook("sheet.less"),
+	
+	album("album.less");
 
 	static {
 		JSONAnsonListener.registFactory(Sandport.class, 
@@ -48,13 +52,13 @@ public enum Sandport implements IPort {
 
 	@Override
 	public IJsonable toBlock(OutputStream stream, JsonOpt... opts) throws AnsonException, IOException {
-		throw new AnsonException(0, "FIXME: shouldn't use name()?", opts);
+		// throw new AnsonException(0, "FIXME: shouldn't use name()?", opts);
 		// url can't been deserialized in newer version, should use name.
 
-//		stream.write('\"');
-//		stream.write(url.getBytes());
-//		stream.write('\"');
-//		return this;
+		stream.write('\"');
+		stream.write(url.getBytes());
+		stream.write('\"');
+		return this;
 	}
 
 	@Override

@@ -7,17 +7,14 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import org.xml.sax.SAXException;
-
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
@@ -33,14 +30,14 @@ import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.tier" })
 public class DocsTier extends ServPort<DocsReq> {
-	static DATranscxt st;
+	// static DATranscxt st;
 
 	static {
-		try {
-			st = new DATranscxt(null);
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			st = new DATranscxt(null);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	public DocsTier() {
@@ -63,7 +60,7 @@ public class DocsTier extends ServPort<DocsReq> {
 			DocsReq jreq = jmsg.body(0);
 
 			AnsonResp rsp = null;
-			if (A.records.equals(jreq.a()))
+			if (A.syncdocs.equals(jreq.a()))
 				rsp = list(jreq, usr);
 			else if (A.mydocs.equals(jreq.a()))
 				rsp = mydocs(jreq, usr);
@@ -76,7 +73,7 @@ public class DocsTier extends ServPort<DocsReq> {
 			else throw new SemanticException(String.format(
 						"request.body.a can not handled: %s\\n" +
 						"Only a = [%s, %s, %s, %s, %s] are supported.",
-						jreq.a(), A.records, A.mydocs, A.rec, A.upload, A.del));
+						jreq.a(), A.syncdocs, A.mydocs, A.rec, A.upload, A.del));
 
 			write(resp, ok(rsp));
 		} catch (SemanticException e) {
@@ -107,9 +104,9 @@ public class DocsTier extends ServPort<DocsReq> {
 		ISemantext stx = st.instancontxt(conn, usr);
 
 		SemanticObject doc = (SemanticObject) st.delete("n_docs", usr)
-			.whereEq("docId", jreq.docId)
+			.whereEq("docId", jreq.doc.recId)
 			.post(st.insert("n_docs")
-				.nv("docName", jreq.docName).nv("mime", jreq.mime).nv("uri", jreq.uri64).nv("userId", usr.uid()))
+				.nv("docName", jreq.doc.pname).nv("mime", jreq.doc.mime).nv("uri", jreq.doc.uri64).nv("userId", usr.uid()))
 			.d(stx);
 		
 		return new AnsonResp().msg("ok").data(doc.props());
@@ -120,8 +117,8 @@ public class DocsTier extends ServPort<DocsReq> {
 		ISemantext stx = st.instancontxt(conn, usr);
 
 		AnResultset doc = ((AnResultset) st.select("n_docs", "d")
-			.col("d.docId").col("docName").col("mime").col(Funcall.extFile("uri"), "uri64")
-			.whereEq("d.docId", jreq.docId)
+			.col("d.docId").col("docName").col("mime").col(Funcall.extfile("uri"), "uri64")
+			.whereEq("d.docId", jreq.doc.recId)
 			.rs(stx)
 			.rs(0));
 		
@@ -135,19 +132,22 @@ public class DocsTier extends ServPort<DocsReq> {
 		Query q = st.select("n_docs", "d")
 			.j("n_doc_kid", "dk", "d.docId = dk.docId")
 			.col("d.docId").col("docName").col("mime").col("d.userId", "sharer") // .col("uri") - too big
-			.col(Funcall.count(Funcall.ifElse(String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
+			/* MEMO:
+			 * This makes Ever-Connect/docs-share unavailable
+			 * .col(Funcall.count(Funcall.ifElse(String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
+			 */
 			.whereEq("dk.userId", usr.uid())
 			.groupby("d.docId")
 			.orderby("d.optime", "desc");
 		
-		if (!LangExt.isblank(req.docName))
-			q.whereLike("dk.state", req.docName);
+		if (!LangExt.isblank(req.doc.pname))
+			q.whereLike("dk.state", req.doc.pname);
 		
-		if (!LangExt.isblank(req.mime))
-			q.where_(op.rlike, "d.mime", (LangExt.isblank(req.mime) ? "" : req.mime));
+		if (!LangExt.isblank(req.doc.mime))
+			q.where_(op.rlike, "d.mime", (LangExt.isblank(req.doc.mime) ? "" : req.doc.mime));
 
-		if (!LangExt.isblank(req.docState))
-			q.whereEq("dk.state", req.docState);
+		if (!LangExt.isblank(req.doc.shareflag))
+			q.whereEq("dk.state", req.doc.shareflag);
 
 		AnResultset docs = ((AnResultset) q
 			.rs(stx)
@@ -156,9 +156,16 @@ public class DocsTier extends ServPort<DocsReq> {
 		return new AnsonResp().msg("ok").rs(docs);
 	}
 
-	private AnsonResp list(DocsReq req, IUser usr) throws TransException, SQLException {
-		System.out.print("docker tag: v1.3.0.1");
-
+	/**
+	 * Get n_docs records where userId and mime matched.
+	 *  
+	 * @param req
+	 * @param usr
+	 * @return response with doc result set
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	protected AnsonResp list(DocsReq req, IUser usr) throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 		ISemantext stx = st.instancontxt(conn, usr);
 
@@ -166,9 +173,12 @@ public class DocsTier extends ServPort<DocsReq> {
 			.l("n_doc_kid", "dk", "d.docId = dk.docId")
 			.col("d.docId").col("docName").col("mime") // .col("uri") - too big
 			.col(Funcall.count("dk.userId"), "sharings")
-			.col(Funcall.count(Funcall.ifElse(String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
+			/* Memo:
+			 * Ever-connect/docs-share is no more available.
+			 * .col(Funcall.count(Funcall.ifElse(String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
+			 */
 			.whereEq("d.userId", usr.uid())
-			.where(op.rlike, "d.mime", "'" + (LangExt.isblank(req.mime) ? "" : req.mime) + "'")
+			.where(op.rlike, "d.mime", "'" + (LangExt.isblank(req.doc.mime) ? "" : req.doc.mime) + "'")
 			.groupby("d.docId")
 			.orderby("d.optime", "desc")
 			.rs(stx)

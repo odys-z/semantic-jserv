@@ -2,9 +2,9 @@ package io.odysz.semantic.jserv.U;
 
 import java.util.ArrayList;
 
+import io.odysz.semantic.CRUD;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.semantics.x.SemanticException;
 
 /**<p>Insert Request helper</p>

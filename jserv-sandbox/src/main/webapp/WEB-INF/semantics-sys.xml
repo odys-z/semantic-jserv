@@ -115,5 +115,21 @@
 		<args>oper,optime</args>
 	</s>
 	
+	<!-- curriculum -->
+	<s>
+		<id>cur.ak</id>
+		<smtc>autopk</smtc>
+		<tabl>b_curriculums</tabl>
+		<pk>cId</pk>
+		<args>cId</args>
+	</s>
+	<s>
+		<id>cur.oper</id>
+		<smtc>o-t</smtc>
+		<tabl>b_curriculums</tabl>
+		<pk>cId</pk>
+		<args>oper,optime</args>
+	</s>
+
   </t>
 </semantics>

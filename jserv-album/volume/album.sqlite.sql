@@ -8,20 +8,21 @@ CREATE TABLE h_photos (
   uri varchar(512) NOT NULL, -- storage/userId/folder/recId-clientname
   pdate datetime,     -- picture taken time
   device varchar(12), -- 'original device ID',
-  clientpath TEXT DEFAULT '/' NOT NULL, -- device + clientpath = identity
   shareby varchar(12), -- 'shared by / creator',
   sharedate datetime not null, -- 'shared date time',
   tags varchar(512) DEFAULT NULL ,
   geox double DEFAULT 0,
   geoy double DEFAULT 0,
   exif text default null,
-  mime varchar(64),
   oper varchar(12) not null,
   opertime datetime not null,
+  clientpath TEXT DEFAULT '/' NOT NULL,
+  mime TEXT(64),       -- e.g. image/png;base64,
+  css text,            -- ui styles, v0.5.5: {type: NA, size: [width, height, w, h]}, where w/h is reduction of width/height
 
   PRIMARY KEY (pid)
 );
--- ALTER TABLE h_photos ADD mime TEXT(64);
+
 
 DROP table if exists h_collects ;
 CREATE TABLE h_collects (
@@ -68,3 +69,19 @@ CREATE TABLE h_album_coll (
 ); -- collection-album relationship
 
 SELECT name FROM sqlite_schema WHERE type ='table';
+
+
+
+drop table if exists doc_devices;
+CREATE TABLE doc_devices (
+  synode0 varchar(12)  NOT NULL, -- initial node a device is registered
+  device  varchar(12)  NOT NULL, -- ak, generated when registering, but is used together with synode-0 for file identity.
+  devname varchar(256) NOT NULL, -- set by user, warn on duplicate, use old device id if user confirmed, otherwise generate a new one.
+  mac     varchar(512),          -- an anciliary identity for recognize a device if there are supporting ways to automatically find out a device mac
+  org     varchar(12)  NOT NULL, -- fk-del, usually won't happen
+  owner   varchar(12),           -- or current user, not permenatly bound
+  cdate   datetime,
+  PRIMARY KEY (synode0, device)
+); -- registered device names. Name is set by user, prompt if he's device names are duplicated
+
+insert into oz_autoseq (sid, seq, remarks) values ('doc_devices.device', 0, '');

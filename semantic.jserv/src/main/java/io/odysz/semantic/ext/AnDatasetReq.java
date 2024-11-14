@@ -1,17 +1,36 @@
 package io.odysz.semantic.ext;
 
+import org.xml.sax.SAXException;
+
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 
 public class AnDatasetReq extends AnQueryReq {
+	
+	public static class A {
+		public static final String reforest = "reforest";
+		public static final String retree   = "retree";
+		public static final String tagtree  = "tagtree";
+		public static final String tagtrees = "tagtrees";
+		public static final String untagtree= "untagtree";
+		/**
+		 * @since 1.4.32 This act is supported by {@link SemanticTree},
+		 * which will load the dataset, structure trees according to semantics,
+		 * then format tree indents.
+		 */
+		public static final String ds  = "sqltree";
+	}
 
 	String sk;
 	public String[] sqlArgs;
 	/**String array of tree semantics from client, same as dataset.xml/t/c/s-tree */
 	protected String s_tree;
-	/**{@link TreeSemantics} of tree from {@link #s_tree} or set with {@link #treeSemtcs} ({@link TreeSemantics}) */
+	/**
+	 * The {@link TreeSemantics} of tree from {@link #s_tree} or set
+	 * with {@link #treeSemtcs} ({@link TreeSemantics})
+	 */
 	protected TreeSemantics stcs;
 
 	public String rootId;
@@ -39,8 +58,9 @@ public class AnDatasetReq extends AnQueryReq {
 
 	/**Get the tree semantics. Client can provide {@link #s_tree} string as tree semantics.
 	 * @return parsed semantics
+	 * @throws SAXException 
 	 */
-	public TreeSemantics getTreeSemantics() {
+	public TreeSemantics getTreeSemantics() throws SAXException {
 		if (stcs != null)
 			return stcs;
 		else {

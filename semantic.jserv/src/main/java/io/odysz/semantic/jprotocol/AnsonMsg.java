@@ -12,7 +12,8 @@ import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantics.x.SemanticException;
 
-/**<p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort serv11}.</p>
+/**
+ * <p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort }.</p>
  * 1. A incoming json message is parsed by *.serv into JMessage,
  * which can be used to directly to build statements;<br>
  * 2. An outgoing data object which is presented as AnsonMsg&lt;AnsonResp&gt;,
@@ -32,26 +33,60 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * @author odys-z@github.com
 	 */
 	public static enum Port implements IPort {  
-			heartbeat("ping.serv"), session("login.serv11"),
-			query("r.serv11"), update("u.serv11"),
-			insert("c.serv11"), delete("d.serv11"),
-			echo("echo.serv11"),
-			/** serv port for downloading json/xml file or uploading a file.<br>
-			 * see io.odysz.semantic.jserv.file.JFileServ in semantic.jserv. */
-			file("file.serv"),
-			/**Any user defined request using message body of subclass of JBody must use this port */ 
-			user("user.serv11"),
-			/** semantic tree of dataset extensions<br>
-			 * see io.odysz.semantic.ext.SemanticTree in semantic.jserv. */
-			stree("s-tree.serv11"),
-			/** dataset extensions<br>
-			 * see io.odysz.semantic.ext.Dataset in semantic.jserv. */
-			dataset("ds.serv11"),
-			/** ds.tier, dataset's semantic tier */
-			datasetier("ds.tier"),
-			/** document manage's semantic tier */
-			docstier("docs.tier");
+		heartbeat("ping.serv"), session("login.serv"),
+		query("r.serv"), update("u.serv"),
+		insert("c.serv"), delete("d.serv"),
+		echo("echo.less"),
 
+		/** serv port for downloading json/xml file or uploading a file.<br>
+		 * see io.odysz.semantic.jserv.file.JFileServ in semantic.jserv. */
+		file("file.serv"),
+
+		/**
+		 * Any user defined request using message body of subclass of JBody must use this port
+		 * @deprecated since 1.4.36
+		 */ 
+		user("user.serv11"),
+
+		/** experimental */
+		userstier("users.tier"),
+		/** semantic tree of dataset extensions<br>
+		 * see io.odysz.semantic.ext.SemanticTree in semantic.jserv. */
+		stree("s-tree.serv"),
+
+		/** @deprecated replaced by {@link #stree} */
+		stree11("s-tree.serv11"),
+
+		/** dataset extensions<br>
+		 * see io.odysz.semantic.ext.Dataset in semantic.jserv. */
+		dataset("ds.serv"),
+
+		/** @deprecated replaced by {@link #dataset} */
+		dataset11("ds.serv11"),
+
+		/** ds.tier, dataset's semantic tier */
+		datasetier("ds.tier"),
+
+		/** document manage's semantic tier */
+		docstier("docs.tier"),
+
+		/**
+		 * <h5>[experimental]</h5>
+		 * This port is implemented by extension docsync.jserv.
+		 * */
+		docsync("docs.sync"),
+
+		dbsyncer("clean.db"),
+		
+		/** @deprecated for MVP album v0.2.1 only */
+		album21("docs.album21"),
+		
+		/**
+		 * Synode tier service: sync.tier
+		 * @since 2.0.0
+		 */
+		syntier("sync.tier");
+		
 		static {
 			JSONAnsonListener.registFactory(IPort.class, 
 				(s) -> {
@@ -89,32 +124,31 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		}	
 	};
 
-	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext;
-		public boolean eq(String code) {
-			if (code == null) return false;
-			MsgCode c = MsgCode.valueOf(MsgCode.class, code);
-			return this == c;
-		}
-	};
+	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext };
 
-	/**The default IPort implelemtation.
+	/**
+	 * The default IPort implelemtation.
 	 * Used for parsing port name (string) to IPort instance, like {@link #Port}.<br>
 	 * */
 	static IPort defaultPortImpl;
 
-	/**Set the default IPort implelemtation, which is used for parsing port name (string)
-	 * to IPort instance, like {@link AnsonMsg.Port}.<br>
-	 * Because {{@link Port} only defined limited ports, user must initialize JMessage with {@link #understandPorts(IPort)}.<br>
-	 * An example of how to use this is shown in jserv-sample/io.odysz.jsample.SysMenu.<br>
-	 * Also check how to implement IPort extending {@link Port}, see example of jserv-sample/io.odysz.jsample.protocol.Samport.
+	/**
+	 * <p>Set the default IPort implementation, which is used for parsing port name (string)
+	 * to IPort instance, like {@link AnsonMsg.Port}.</p>
+	 * <p>Because {{@link Port} only defined limited ports, user must initialize JMessage
+	 * with {@link #understandPorts(IPort)}.</p>
+	 * <p>An example of how to use this is shown in jserv-sample/io.odysz.jsample.SysMenu.</p>
+	 * <p>Also check how to implement IPort extending {@link Port}, see example of
+	 * jserv-sample/io.odysz.jsample.protocol.Samport.</p>
+	 * 
 	 * @param p extended Port
 	 */
 	static public void understandPorts(IPort p) {
 		defaultPortImpl = p;
 	}
 	
-	@SuppressWarnings("unused")
-	private String version = "1.0";
+	String version = "1.1";
+
 	int seq;
 	public int seq() { return seq; }
 
@@ -141,7 +175,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * FIXME deprecate IPort 
 	 * 
 	 * @param enport
-	 * @return
+	 * @return this
 	 * @throws SemanticException
 	 */
 	public AnsonMsg<T> port(IPort enport) throws SemanticException {
@@ -192,7 +226,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	AnsonHeader header;
 	public AnsonHeader header() { return header; }
 	public AnsonMsg<T> header(AnsonHeader header) {
-		this.header = header;
+		this.header = header; // .seq(seq);
 		return this;
 	}
 	
@@ -224,6 +258,11 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 
 	public static AnsonMsg<? extends AnsonResp> ok(IPort p, AnsonResp resp) {
 		return new AnsonMsg<AnsonResp>(p, MsgCode.ok).body(resp);
+	}
+
+	public AnsonMsg<T> uri(String uri) {
+		this.body.get(0).uri = uri;
+		return this;
 	}
 
 }

@@ -21,11 +21,12 @@ import io.odysz.semantic.jserv.helper.Html;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
 public class SysMenu extends SemanticTree {
 	private static final long serialVersionUID = 1L;
-	
+
 	@Override
 	public void init() throws ServletException {
 		super.init();
@@ -50,7 +51,7 @@ public class SysMenu extends SemanticTree {
 					sk == null ? defltSk : sk, 0, -1, "admin");
 
 			resp.getWriter().write(Html.listAnson(lst));
-		} catch (SemanticException e) {
+		} catch (TransException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -68,17 +69,16 @@ public class SysMenu extends SemanticTree {
 
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			IUser usr = verifier.verify(msg.header());
+			IUser usr = verifier().verify(msg.header());
 
 			AnDatasetReq jreq = msg.body(0);
-			// jreq.treeSemtcs(menuSemtcs);
 
 			String sk = jreq.sk();
 			jreq.sqlArgs = new String[] {usr.uid()};
 
 			List<?> lst = DatasetCfg.loadStree(Connects.defltConn(),
 					sk == null ? defltSk : sk, jreq.page(), jreq.size(), jreq.sqlArgs);
-			
+
 			write(resp, ok(lst.size(), lst));
 		} catch (SQLException e) {
 			if (SampleFlags.menu)
@@ -88,6 +88,8 @@ public class SysMenu extends SemanticTree {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
 		} catch (ClassCastException e) {
 			write(resp, err(MsgCode.exGeneral, e.getMessage()));
+		} catch (TransException e) {
+			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} finally {
 			resp.flushBuffer();
 		}

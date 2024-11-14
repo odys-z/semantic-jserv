@@ -1,55 +1,81 @@
 package io.odysz.semantic.jsession;
 
+import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.split;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.xml.sax.SAXException;
-
+import io.odysz.anson.Anson;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
-import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.LoggingUser;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.SemanticTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
-/**<p>IUser implementation supporting session.</p>
+/**
+ * <p>IUser implementation supporting session.</p>
  * <p>This object is usually created when user logged in,
  * and is used for semantics processing like finger print, etc.</p>
  * <p>The logging connection is configured in configs.xml/k=log-connId.</p>
  * <p>A subclass can be used for handling serv without login.</p>
- *
+ * 
  * @author odys-z@github.com
  */
 public class JUser extends SemanticObject implements IUser {
-	/**Hard coded field string of user table information.
+	/**
+	 * Hard coded field string of user table information.
 	 *
+	 * which will use this for data synchronizing robot's creation,
+	 * {@link io.odysz.semantic.meta.JUserMeta} 
+	 * 
 	 * @author odys-z@github.com
 	 */
-	public static class JUserMeta extends TableMeta {
-		public JUserMeta(String tbl, String... conn) {
-			super(tbl, conn);
-			this.tbl = "a_user";
-			this.pk = "userId";
-			this.uname = "userName";
-			this.pswd = "pswd";
-			this.iv = "encAuxiliary";
-		}
+	public static class JUserMeta extends SemanticTableMeta {
 
+		public JUserMeta(String... conn) {
+			super("a_users", conn);
+			rm = new JRoleMeta(conn);
+			om = new JOrgMeta(conn);
+
+			this.pk      = "userId";
+			this.uname   = "userName";
+			this.pswd    = "pswd";
+			this.iv      = "iv"; // since 2.0.0
+			this.org     = "orgId";
+			this.orgName = "orgName";
+			this.role    = "roleId";
+			this.roleName= "roleName";
+		}
+		
+		public final JRoleMeta rm;
+		public final JOrgMeta  om;
+		
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-		protected String tbl; // = "a_user";
-		protected String pk; // = "userId";
-		protected String uname; // = "userName";
-		protected String pswd; // = "pswd";
-		protected String iv; // = "encAuxiliary";
+		public String uname; // = "userName";
+		public String pswd; // = "pswd";
+		public String iv; // = "encAuxiliary";
+		/** v1.4.11, column of org id */
+		public String org;
+		/** v1.4.11, column of org name */
+		public String orgName;
+		/** v1.4.11, column of role id */
+		public String role;
+		/** v1.4.11, column of role name */
+		public String roleName;
 
 		public JUserMeta userName(String unamefield) {
 			uname = unamefield;
@@ -67,38 +93,135 @@ public class JUser extends SemanticObject implements IUser {
 		}
 	}
 
-	protected String ssid;
-	protected String uid;
-	private String pswd;
-	@SuppressWarnings("unused")
-	private String usrName;
+	public static class JRoleMeta extends SemanticTableMeta {
+		public final String roleName;
+		public final String remarks;
+		public final String org;
 
-	private long touched;
-	private String funcId;
-	private String funcName;
-
-	private static DATranscxt logsctx;
-	private static String[] connss;
-	public static final String sessionSmtXml;
-	public static final String logTabl;
-	static {
-		String conn = Configs.getCfg("log-connId");
-		if (LangExt.isblank(conn))
-			Utils.warn("ERROR\nERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
-		try {
-			connss = conn.split(","); // [conn-id, log.xml, a_logs]
-			// logsctx = new DATranscxt(connss[0]);
-			logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
-			e.printStackTrace();
+		public JRoleMeta (String... conn) {
+			super("a_roles", conn);
+			
+			pk = "roleId";
+			roleName = "roleName";
+			remarks  = "remarks";
+			org      = "org";
+			
+			ddlSqlite = "CREATE TABLE a_roles(\r\n"
+						+ "roleId TEXT(20) not null, \r\n"
+						+ "roleName TEXT(50), \r\n"
+						+ "remarks TEXT(200),\r\n"
+						+ "orgId TEXT(20),\r\n"
+						+ "CONSTRAINT a_roles_pk PRIMARY KEY (roleId)"
+						+ ");";
 		}
-		finally {
-			sessionSmtXml  = connss != null ? connss[1] : "";
-			logTabl = connss != null ? connss[2] : "";
+	}
+	
+	public static class JOrgMeta extends SemanticTableMeta {
+		public final String orgName;
+		public final String orgType;
+		public final String parent;
+		public final String sort;
+		public final String fullpath;
+
+		public JOrgMeta(String... conn) {
+			super("a_orgs", conn);
+			
+			pk = "orgId";
+			orgName = "orgName";
+			orgType = "orgType";
+			parent  = "parent";
+			sort    = "sort";
+			fullpath= "fullpath";
+
+			ddlSqlite =
+					"CREATE TABLE a_orgs (\r\n"
+					+ "	orgId   varchar2(12) NOT NULL,\r\n"
+					+ "	orgName varchar2(50),\r\n"
+					+ "	orgType varchar2(40) , -- a reference to a_domain.domainId (parent = 'a_orgs')\r\n"
+					+ "	parent  varchar2(12),\r\n"
+					+ "	sort    int DEFAULT 0,\r\n"
+					+ "	fullpath varchar2(200), webroot TEXT, album0 varchar2(16),\r\n"
+					+ "\r\n"
+					+ "	PRIMARY KEY (orgId)\r\n"
+					+ ");";
 		}
 	}
 
-	/**Constructor for session login
+	protected String ssid;
+	protected String uid;
+	protected String org;
+	protected String role;
+	private String pswd;
+	
+	/**@since 1.4.11 */
+	@Override
+	public String orgId() { return org; }
+
+	/**@since 1.5.0 */
+	@Override
+	public JUser orgId(String id) {
+		org = id;
+		return this;
+	}
+
+	/**@since v1.4.11 */
+	@Override
+	public String roleId() { return role; }
+
+	public IUser roleId(String role) {
+		this.role = role;
+		return this;
+	}
+
+	private long touched;
+
+	/** current action's business function */
+	String funcId;
+	String funcName;
+	String userName;
+	String roleName;
+
+	String orgName;
+	public IUser orgName(String n) {
+		orgName = n;
+		return this;
+	}
+
+	private static DATranscxt logsctx;
+	private static String logConn;
+	public static final String logTabl;
+
+	static {
+		String[] connss = null;
+		try {
+			String conn = Configs.getCfg(Configs.keys.logConnId); // "log-connId"
+			if (isblank(conn))
+				; // Utils.warn("ERROR JUser need a log connection id configured in configs.xml, but get: ", conn);
+			else
+				connss = split(conn, ","); // [conn-id, a_logs]
+
+			if (isNull(connss))
+				// throw new SemanticException("Parsing log connection config error: %s", conn);
+				Utils.logi(
+					"JUser uses a log connection id configured in configs.xml, but get an empty conn-id.\n" +
+					"DB log is disabled.",
+					conn);
+			else {
+				// logsctx = new LogTranscxt(connss[0], connss[1], connss[2]);
+				logsctx = new LogTranscxt(connss[0]);
+				logConn = connss[0];
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			logTabl = connss != null ? connss[1] : "a_logs";
+		}
+	}
+
+	/**
+	 * Constructor for session login
+	 * 
 	 * @param uid user Id
 	 * @param pswd pswd in DB (plain text)
 	 * @param usrName
@@ -106,12 +229,11 @@ public class JUser extends SemanticObject implements IUser {
 	 */
 	public JUser(String uid, String pswd, String usrName) throws SemanticException {
 		this.uid = uid;
-		this.pswd = pswd;
-		this.usrName = usrName;
+		this.pswd = pswd == null ? this.pswd : pswd;
 
-		String rootK = DATranscxt.key("user-pswd");
-		if (rootK == null)
-			throw new SemanticException("Session rootKey not initialized. Have checked context prameter like server's context.xml/Parameter/name='io.oz.root-key'?");
+//		String rootK = DATranscxt.key("user-pswd");
+//		if (rootK == null)
+//			throw new SemanticException("Session rootKey not initialized. Have checked context prameter like server's context.xml/Parameter/name='io.oz.root-key'?");
 
 		// decrypt db-pswd-cipher with sys-key and db-iv => db-pswd
 //		try {
@@ -130,11 +252,13 @@ public class JUser extends SemanticObject implements IUser {
 		this.pswd = pswd;
 	}
 
-	public TableMeta meta() {
-		return new JUserMeta("a_user", AnSession.sctx.getSysConnId());
+	public TableMeta meta(String ... connId) {
+		return new JUserMeta("a_user", isNull(connId) ? null : connId[0]);
 	}
 
-	/**jmsg, the response of {@link AnSession}
+	/**
+	 * Handle jmsg.uid, the response of {@link AnSession}
+	 * 
 	 * @param jmsg
 	 */
 	public JUser(SemanticObject jmsg) {
@@ -145,7 +269,7 @@ public class JUser extends SemanticObject implements IUser {
 
 	@Override
 	public ArrayList<String> dbLog(ArrayList<String> sqls) {
-		return LoggingUser.genLog(logsctx, logTabl, sqls, this, funcName, funcId);
+		return LoggingUser.genLog(logConn, logsctx, logTabl, sqls, this, funcName, funcId);
 	}
 
 	public JUser touch() {
@@ -174,7 +298,18 @@ public class JUser extends SemanticObject implements IUser {
 		return this;
 	}
 
-	/**Add notifyings
+	/** Session Token Knowledge */
+	String knowledge;
+	@Override public String sessionKey() { return knowledge; }
+
+	@Override
+	public IUser sessionKey(String k) {
+		this.knowledge = k;
+		return this;
+	}
+
+	/**
+	 * Add notifying
 	 * @param note
 	 * @return this
 	 * @throws TransException
@@ -183,8 +318,9 @@ public class JUser extends SemanticObject implements IUser {
 		return (JUser) add("_notifies_", note);
 	}
 
-	/**Get notified string list.
-	 * @return notifyings
+	/**
+	 * Get notified string list.
+	 * @return notifying
 	 */
 	@SuppressWarnings("unchecked")
 	public List<Object> notifies() {
@@ -208,26 +344,43 @@ public class JUser extends SemanticObject implements IUser {
 
 		return false;
 	}
-	
+
 	@Override
 	public boolean guessPswd(String pswd64, String iv64)
 			throws TransException, GeneralSecurityException, IOException {
 		return pswd != null && pswd.equals(AESHelper.decrypt(pswd64, this.ssid, AESHelper.decode64(iv64)));
 	}
 
+	@Override
+	public String pswd() { return pswd; }
 
 	@Override
 	public SemanticObject logout() {
 		return new SemanticObject().code(MsgCode.ok.name());
 	}
+	
+	@Override
+	public IUser validatePassword() throws SsException, SQLException, TransException {
+		return this;
+	}
+	
+	@Override
+	public IUser onCreate(Anson with) throws SsException {
+		if (with instanceof AnResultset) {
+			JUserMeta meta = (JUserMeta) meta();
+			AnResultset rs = (AnResultset) with;
+			try {
+				rs.beforeFirst().next();
+				userName = rs.getString(meta.uname);
+				role = rs.getString(meta.role);
+				org = rs.getString(meta.org);
+				roleName = rs.getString(meta.roleName);
+				orgName = rs.getString(meta.orgName);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 
-// TODO this change must be verified
-//	@Override
-//	public IUser sessionKey(String skey) {
-//		// ssid = skey; - but why this is commented out?
-//		return this;
-//	}
-//
-//	@Override
-//	public String sessionKey() { return null; }
+		return this;
+	}
 }

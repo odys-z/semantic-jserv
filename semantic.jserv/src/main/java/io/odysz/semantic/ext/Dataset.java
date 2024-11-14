@@ -32,7 +32,7 @@ import io.odysz.transact.x.TransException;
  * The client request ({@link DatasetReq}) provide configure key and parameter, the port answer with queried results.
  * @author odys-z@github.com
  */
-@WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv11" })
+@WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv" })
 public class Dataset extends ServPort<AnDatasetReq> {
 	public Dataset() {
 		super(Port.dataset);
@@ -54,7 +54,7 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	protected void onGet(AnsonMsg<AnDatasetReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (ServFlags.query)
-			Utils.logi("---------- query (ds.jserv11) get ----------");
+			Utils.logi("---------- query (ds.serv) get ----------");
 		resp.setCharacterEncoding("UTF-8");
 		try {
 			String conn = msg.body(0).uri();
@@ -79,7 +79,7 @@ public class Dataset extends ServPort<AnDatasetReq> {
 			throws IOException {
 		resp.setCharacterEncoding("UTF-8");
 		if (ServFlags.query)
-			Utils.logi("========== query (ds.jserv11) post ==========");
+			Utils.logi("========== query (ds.serv) post ==========");
 		try {
 			String uri = msg.body(0).uri();
 			if (uri == null)
@@ -112,13 +112,11 @@ public class Dataset extends ServPort<AnDatasetReq> {
 			throws SQLException, TransException {
 		AnDatasetReq msg = msgBody.body().get(0);
 		// List<SemanticObject> ds = DatasetCfg.loadStree(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
-		AnResultset ds = DatasetCfg.select(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
+		AnResultset ds = DatasetCfg.dataset(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
 
 		// Shall be moved to Protocol?
 		AnDatasetResp respMsg = new AnDatasetResp();
 		respMsg.rs(ds, ds.total());
 		return respMsg;
 	}
-
-
 }

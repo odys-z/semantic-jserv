@@ -1,27 +1,32 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
-import java.sql.SQLException;
+import java.util.List;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.SemanticObject;
-import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 
 public class JProtocol {
-	/** Typical operation's common names */
+	/**
+	 * Typical operation's common names
+	 * @deprecated replaced by Semantic.DA/{@link io.odysz.semantic.CRUD}.
+	 * @since v1.4.12 requires semantic.DA v1.4.12
+	 * */
 	public static class CRUD {
-		public static final String C = "I";
-		public static final String R = "R";
-		public static final String U = "U";
-		public static final String D = "D";
+		public static final String C = io.odysz.semantic.CRUD.C;
+		public static final String R = io.odysz.semantic.CRUD.R;
+		public static final String U = io.odysz.semantic.CRUD.U;
+		public static final String D = io.odysz.semantic.CRUD.D;
 	}
 
 	@FunctionalInterface
 	public interface OnOk {
-		void ok(AnsonResp resp) throws IOException, AnsonException, SemanticException;
+		void ok(AnsonResp resp) throws IOException, AnsonException, TransException;
 	}
 	
 	/**
@@ -30,28 +35,29 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
-		void proc(int listIndx, int totalBlocks, DocsResp blockResp) throws IOException, AnsonException, SemanticException;
+		void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
+			throws IOException, AnsonException, TransException;
 	}
 
-	@FunctionalInterface
-	public interface OnError { void err(MsgCode ok, String msg, String ... args ); }
-
-	/**Function interface: 
-	 * @deprecated replaced by {@link OnOk}
-	 *
+	/**
+	 * @deprecated @since 1.4.39 
 	 */
 	@FunctionalInterface
-	public interface SCallbackV11 {
-		/**call back function called by semantic.transact
-		 * @param msgCode 'ok' | 'ex...'
-		 * @param resp response message
-		 * @throws IOException
-		 * @throws SQLException
-		 * @throws SemanticException
-		 */
-		void onCallback(MsgCode msgCode, AnsonResp resp)
-				throws IOException, SQLException, AnsonException, SemanticException;
+	public interface OnDocOk {
+		void ok(ExpSyncDoc doc, AnsonResp resp) throws IOException, AnsonException, TransException;
 	}
+	
+	/**
+	 * On multiple requests finished, e. g. push multiple videos.
+	 * @since 1.4.39
+	 */
+	@FunctionalInterface
+	public interface OnDocsOk {
+		void ok(List<DocsResp> resps) throws IOException, AnsonException, TransException;
+	}
+	
+	@FunctionalInterface
+	public interface OnError { void err(MsgCode code, String msg, String ... args ); }
 
 	public static SemanticObject err(IPort port, String code, String err) {
 		SemanticObject obj = new SemanticObject();
@@ -80,5 +86,4 @@ public class JProtocol {
 									.body(obj);
 		return msg;
 	}
-
 }

@@ -38,6 +38,7 @@ import io.odysz.semantics.x.SemanticException;
  * See <a href='https://ursaj.com/upload-files-in-java-with-servlet-api'>Handle upload request</a></p>
  * 
  * @author odys-z@github.com
+ * @deprecated
  */
 @MultipartConfig
 @WebServlet(description = "Serving text files", urlPatterns = { "/file.serv11" })
@@ -90,7 +91,7 @@ public class JFileServ extends ServPort<FileReq> {
 				InputStream in = req.getInputStream(); 
 				@SuppressWarnings("unchecked")
 				AnsonMsg<FileReq> msg = (AnsonMsg<FileReq>) Anson.fromJson(in);
-				verifier.verify(msg.header());
+				verifier().verify(msg.header());
 				jtxt(resp, msg.body(0).file());
 			}
 

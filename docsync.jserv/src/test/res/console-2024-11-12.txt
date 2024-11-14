@@ -1,0 +1,295 @@
+VOLUME_HOME : ~/semantic-jserv/docsync.jserv/src/test/res/volume
+VOLUME 0 : ~/semantic-jserv/docsync.jserv/src/test/res/vol-0
+
+VOLUME 1 : ~/semantic-jserv/docsync.jserv/src/test/res/vol-1
+
+VOLUME 2 : ~/semantic-jserv/docsync.jserv/src/test/res/vol-2
+
+VOLUME 3 : ~/semantic-jserv/docsync.jserv/src/test/res/vol-3
+
+
+1 Starting synode-tiers
+=======================
+
+Initializing connects with path to ./src/test/res/WEB-INF
+~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/connects.xml
+[main-sqlite]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_HOME/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/volume/jserv-main.db
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+[main-sqlite-0]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_0/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/vol-0/jserv-main.db
+[main-sqlite-1]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_1/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/vol-1/jserv-main.db
+[main-sqlite-2]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_2/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/vol-2/jserv-main.db
+[main-sqlite-3]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_3/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/vol-3/jserv-main.db
+[no-jserv.00]
+Resolving sqlite db (queued), xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_0/no-jserv-db.00
+	Using sqlite db (queued): ~/semantic-jserv/docsync.jserv/src/test/res/vol-0/no-jserv-db.00
+[no-jserv.01]
+Resolving sqlite db (queued), xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_1/no-jserv-db.01
+	Using sqlite db (queued): ~/semantic-jserv/docsync.jserv/src/test/res/vol-1/no-jserv-db.01
+[no-jserv.02]
+Resolving sqlite db (queued), xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_2/no-jserv-db.02
+	Using sqlite db (queued): ~/semantic-jserv/docsync.jserv/src/test/res/vol-2/no-jserv-db.02
+[no-jserv.03]
+Resolving sqlite db (queued), xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_3/no-jserv-db.03
+	Using sqlite db (queued): ~/semantic-jserv/docsync.jserv/src/test/res/vol-3/no-jserv-db.03
+~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/connects.xml
+~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/connects.xml
+INFO - JDBC initialized using main-sqlite (sqlite) as default connection.
+Field ignored: field: nyq, value: "nyq":0
+Field ignored: field: nyq, value: "nyq":0
+Field ignored: field: nyq, value: "nyq":0
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection main-sqlite-0
+Loading syntities registry: ~/semantic-jserv/docsync.jserv/src/test/res/vol-0/syntity.json
+Field ignored: field: mode, value: "mode":"peer"
+Initializing synode singleton with configuration file config-0.xml
+runtime root: .
+configure folder: ./src/test/res/WEB-INF
+root-key length: 16
+============= Semantic.DA 2.0.0 built on 2024-08-08 =============
+config file : ~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/config-0.xml
+Initializing connects with path to ./src/test/res/WEB-INF
+Configuration root path: ./src/test/res/WEB-INF
+Runtime root path: .
+Initializing session with default jdbc connection main-sqlite ...
+[AnSession] timeout = 60 minutes (configure: src/test/res/WEB-INF/config-0.xml)
+[ServFlags.session] SSession debug mode true (ServFlage.session)
+SessionChecker: timeout = 60 minute
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection no-jserv.00
+The syn-change semantics is silenced as a newer design decision
+The syn-change semantics is silenced as a newer design decision
+WARN - Can't find dataset.xml, configuration ignored. Check src/test/res/WEB-INF/dataset.xml
+
+[ ♻.X ] loading domain zsu ...
+------------ Starting X ... --------------
+Loading syntities registry: ~/semantic-jserv/docsync.jserv/src/test/res/vol-0/syntity.json
+Field ignored: field: mode, value: "mode":"peer"
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.R.AnQuery-1941a8ff
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.U.AnUpdate-22d7b4f8
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.AnSession-1a6c1270
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.HeartLink-149dd36b
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpDoctier-22295ec4
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpSynodetier-5adb0db3
+Field ignored: field: nyq, value: "nyq":0
+Field ignored: field: nyq, value: "nyq":0
+Field ignored: field: nyq, value: "nyq":0
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection main-sqlite-1
+Loading syntities registry: ~/semantic-jserv/docsync.jserv/src/test/res/vol-1/syntity.json
+Initializing synode singleton with configuration file config-1.xml
+runtime root: .
+configure folder: ./src/test/res/WEB-INF
+root-key length: 16
+config file : ~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/config-1.xml
+Initializing connects with path to ./src/test/res/WEB-INF
+Configuration root path: ./src/test/res/WEB-INF
+Runtime root path: .
+Initializing session with default jdbc connection main-sqlite ...
+[AnSession] timeout = 3 minutes (configure: src/test/res/WEB-INF/config-1.xml)
+[ServFlags.session] SSession debug mode true (ServFlage.session)
+SessionChecker: timeout = 3 minute
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection no-jserv.01
+The syn-change semantics is silenced as a newer design decision
+The syn-change semantics is silenced as a newer design decision
+
+[ ♻.Y ] loading domain zsu ...
+------------ Starting Y ... --------------
+Loading syntities registry: ~/semantic-jserv/docsync.jserv/src/test/res/vol-1/syntity.json
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.R.AnQuery-101639ae
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.U.AnUpdate-4c550889
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.AnSession-44e3a2b2
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.HeartLink-1d2bd371
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpDoctier-26bab2f1
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpSynodetier-3724af13
+Field ignored: field: nyq, value: "nyq":0
+Field ignored: field: nyq, value: "nyq":0
+Field ignored: field: nyq, value: "nyq":0
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection main-sqlite-2
+Loading syntities registry: ~/semantic-jserv/docsync.jserv/src/test/res/vol-2/syntity.json
+Initializing synode singleton with configuration file config-2.xml
+runtime root: .
+configure folder: ./src/test/res/WEB-INF
+root-key length: 16
+config file : ~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/config-2.xml
+Initializing connects with path to ./src/test/res/WEB-INF
+Configuration root path: ./src/test/res/WEB-INF
+Runtime root path: .
+Initializing session with default jdbc connection main-sqlite ...
+[AnSession] timeout = 3 minutes (configure: src/test/res/WEB-INF/config-2.xml)
+[ServFlags.session] SSession debug mode true (ServFlage.session)
+SessionChecker: timeout = 3 minute
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection no-jserv.02
+The syn-change semantics is silenced as a newer design decision
+The syn-change semantics is silenced as a newer design decision
+
+[ ♻.Z ] loading domain zsu ...
+------------ Starting Z ... --------------
+Loading syntities registry: ~/semantic-jserv/docsync.jserv/src/test/res/vol-2/syntity.json
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.R.AnQuery-40dff0b7
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.U.AnUpdate-7966baa7
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.AnSession-53142455
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.HeartLink-60975100
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpDoctier-366c4480
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpSynodetier-2c7b5824
+
+2 Open domains
+==============
+
+[ ♻.✩ X ] Synssion clientier created: {conn: no-jserv.00, mode: peer, peer: Y, peer-jserv: http://127.0.1.1:8091}
+[ ♻.✩ Z ] Synssion clientier created: {conn: no-jserv.02, mode: peer, peer: X, peer-jserv: http://127.0.1.1:8090}
+[ ♻.✩ Y ] Synssion clientier created: {conn: no-jserv.01, mode: peer, peer: X, peer-jserv: http://127.0.1.1:8090}
+[ ♻.✩ Z ] Synssion clientier created: {conn: no-jserv.02, mode: peer, peer: Y, peer-jserv: http://127.0.1.1:8091}
+[ ♻.✩ X ] Synssion clientier created: {conn: no-jserv.00, mode: peer, peer: Z, peer-jserv: http://127.0.1.1:8092}
+[ ♻.✩ Y ] Synssion clientier created: {conn: no-jserv.01, mode: peer, peer: Z, peer-jserv: http://127.0.1.1:8092}
+
+3 Pause for client's pushing
+============================
+
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+
+      X    Y    Z
+X [   4,   2,   3 ] {  }
+Y [   3,   6,   5 ] {  }
+Z [   3,   5,   6 ] {  }
+Press Enter after pushed with clients for starting synchronizing.
+========== squery (r.serv) post ==========
+[io.odysz.module.rs.AnResultset#ICRconstructor()] WARN: As duplicated col name been found, only the last one's index is reserved: ORGID
+========== squery (r.serv) post ==========
+[io.odysz.module.rs.AnResultset#ICRconstructor()] WARN: As duplicated col name been found, only the last one's index is reserved: ORGID
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection main-sqlite-3
+========== squery (r.serv) post ==========
+[io.odysz.module.rs.AnResultset#ICRconstructor()] WARN: As duplicated col name been found, only the last one's index is reserved: ORGID
+
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ I    X.000x    X,000H  4  Y [    ] |                                    |                                    |                                    
+                                    | I    Y.0005    Y,0007  6  Z [    ] |                                    |                                    
+                                    | I    Y.0006    Y,0008  6  Z [    ] |                                    |                                    
+ I    X.000x    X,000H  4  Z [    ] |                                    |                                    |                                    
+                                    | I    Y.0005    Y,0007  6  X [    ] |                                    |                                    
+                                    | I    Y.0006    Y,0008  6  X [    ] |                                    |                                    
+      X    Y    Z
+X [   4,   2,   3 ] { X,000H }
+Y [   3,   6,   5 ] { Y,0007 Y,0008 }
+Z [   3,   5,   6 ] {  }
+
+4 Synchronizing between synodes
+===============================
+
+[io.odysz.semantic.syn.ExessionPersist#commitAnswers()] Locally committing answers to X ...
+[io.odysz.semantic.syn.ExessionPersist#commitAnswers()] Locally committing answers to Y ...
+On domain updated: zsu : Y <-> X
+===============================
+
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ I    Y.0005    Y,0007  6  Z [    ] | I    Y.0005    Y,0007  6  Z [    ] |                                    |                                    
+ I    Y.0006    Y,0008  6  Z [    ] | I    Y.0006    Y,0008  6  Z [    ] |                                    |                                    
+ I    X.000x    X,000H  4  Z [    ] | I    X.000x    X,000H  4  Z [    ] |                                    |                                    
+      X    Y    Z
+X [   7,   6,   5 ] { X,000H Y,0007 Y,0008 }
+Y [   4,   7,   5 ] { X,000H Y,0007 Y,0008 }
+Z [   3,   5,   6 ] {  }
+On domain updated: zsu : Y <-> Z
+===============================
+
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ I    Y.0005    Y,0007  6  Z [    ] |                                    |                                    |                                    
+ I    Y.0006    Y,0008  6  Z [    ] |                                    |                                    |                                    
+ I    X.000x    X,000H  4  Z [    ] |                                    |                                    |                                    
+      X    Y    Z
+X [   7,   6,   5 ] { X,000H Y,0007 Y,0008 }
+Y [   4,   8,   6 ] { X,000H Y,0007 Y,0008 }
+Z [   4,   7,   8 ] { X,000H Y,0007 Y,0008 }
+lights[1] (Y) = true
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ I    Y.0005    Y,0007  6  Z [    ] |                                    |                                    |                                    
+ I    Y.0006    Y,0008  6  Z [    ] |                                    |                                    |                                    
+ I    X.000x    X,000H  4  Z [    ] |                                    |                                    |                                    
+      X    Y    Z
+X [   7,   6,   5 ] { X,000H Y,0007 Y,0008 }
+Y [   4,   8,   6 ] { X,000H Y,0007 Y,0008 }
+Z [   4,   7,   8 ] { X,000H Y,0007 Y,0008 }
+
+5 Bring up dev-x0 and delete
+============================
+
+
+5.1 Deleting src/test/res/anclient.java/1-pdf.pdf
+-------------------------------------------------
+
+========== squery (r.serv) post ==========
+[io.odysz.module.rs.AnResultset#ICRconstructor()] WARN: As duplicated col name been found, only the last one's index is reserved: ORGID
+
+5.2 Verifying src/test/res/anclient.java/1-pdf.pdf
+--------------------------------------------------
+
+
+6 Synchronizing synodes
+=======================
+
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ I    Y.0005    Y,0007  6  Z [    ] |                                    |                                    |                                    
+ I    Y.0006    Y,0008  6  Z [    ] |                                    |                                    |                                    
+ I    X.000x    X,000H  4  Z [    ] |                                    |                                    |                                    
+ D    X.000y    X,000H  7  Y [    ] |                                    |                                    |                                    
+ D    X.000y    X,000H  7  Z [    ] |                                    |                                    |                                    
+      X    Y    Z
+X [   7,   6,   5 ] { Y,0007 Y,0008 }
+Y [   4,   8,   6 ] { X,000H Y,0007 Y,0008 }
+Z [   4,   7,   8 ] { X,000H Y,0007 Y,0008 }
+[io.odysz.semantic.syn.ExessionPersist#commitAnswers()] Locally committing answers to Y ...
+On domain updated: zsu : Y <-> X
+===============================
+
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ D    X.000y    X,000H  7  Z [    ] | D    X.000y    X,000H  7  Z [    ] |                                    |                                    
+      X    Y    Z
+X [   9,   8,   6 ] { Y,0007 Y,0008 }
+Y [   7,   9,   6 ] { Y,0007 Y,0008 }
+Z [   4,   7,   8 ] { X,000H Y,0007 Y,0008 }
+On domain updated: zsu : Y <-> Z
+===============================
+
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ D    X.000y    X,000H  7  Z [    ] |                                    |                                    |                                    
+      X    Y    Z
+X [   9,   8,   6 ] { Y,0007 Y,0008 }
+Y [   7,  10,   8 ] { Y,0007 Y,0008 }
+Z [   7,   9,  10 ] { Y,0007 Y,0008 }
+lights[1] (Y) = true
+
+7 Finish
+========
+
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ D    X.000y    X,000H  7  Z [    ] |                                    |                                    |                                    
+      X    Y    Z
+X [   9,   8,   6 ] { Y,0007 Y,0008 }
+Y [   7,  10,   8 ] { Y,0007 Y,0008 }
+Z [   7,   9,  10 ] { Y,0007 Y,0008 }

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
   <artifactId>semantic.jserv</artifactId>
-  <version>1.4.4</version>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>semantic.jserv lib</name>
@@ -19,7 +19,7 @@
 
   <developers>
     <developer>
-      <name>Odys Zhou</name>
+      <name>Ody Zhou</name>
       <email>odys.zhou@gmail.com</email>
       <organization>odysz.github.io</organization>
       <organizationUrl>https://odysz.github.io</organizationUrl>
@@ -30,32 +30,34 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	<maven.compiler.source>1.8</maven.compiler.source>
 	<maven.compiler.target>1.8</maven.compiler.target>
+	<jetty.version>12.0.10</jetty.version>
+	<jetty-ee8.version>12.0.11</jetty-ee8.version>
 	<failOnMissingWebXml>false</failOnMissingWebXml>
   </properties>
 
-	<!-- 
+	<!--
+	 -->
   <repositories>
   	<repository>
   		<id>sonatype-snapshots</id>
   		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
   	</repository>
   </repositories>
-	 -->
 
   <dependencies>
   	<dependency>
     	<groupId>org.junit.jupiter</groupId>
     	<artifactId>junit-jupiter-engine</artifactId>
-  		<version>5.3.1</version>
+  		<version>5.9.1</version>
   		<scope>test</scope>
     </dependency>
 
 	<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
-	<dependency>
+  	<dependency>
 		<groupId>commons-io</groupId>
 		<artifactId>commons-io</artifactId>
-		<version>2.11.0</version>
-	</dependency>
+		<version>[2.15.0,)</version>
+    </dependency>
 
     <dependency>
     	<groupId>javax.servlet</groupId>
@@ -70,7 +72,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantics.transact</artifactId>
-	    <version>[1.4.2,)</version>
+	    <version>1.5.0-SNAPSHOT</version>
 	</dependency>
 
 	<!-- As sonatype SNAPSHOT is updating on a daily base, you may update this with:
@@ -79,7 +81,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.DA</artifactId>
-	    <version>[1.4.2,)</version>
+	    <version>2.0.0-SNAPSHOT</version>
 	</dependency>
 
 	<!--
@@ -93,7 +95,7 @@
 	<dependency>
 	    <groupId>org.xerial</groupId>
 	    <artifactId>sqlite-jdbc</artifactId>
-	    <version>3.25.2</version>
+	    <version>3.44.1.0</version>
 	</dependency>
 
 	<!-- ojdbc7.jar
@@ -108,13 +110,27 @@
 	    <scope>provided</scope>
 	</dependency>
 
-	<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+	<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java
 	<dependency>
 		<groupId>mysql</groupId>
 		<artifactId>mysql-connector-java</artifactId>
-		<version>8.0.21</version>
+		<version>[8.0.28,)</version>
 	</dependency>
+	-->
 
+	<dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+		<version>${jetty.version}</version>
+    </dependency>
+
+    <dependency>
+      <!-- https://stackoverflow.com/a/66368511 -->
+      <groupId>org.eclipse.jetty.ee8</groupId>
+      <artifactId>jetty-ee8-webapp</artifactId>
+      <version>${jetty-ee8.version}</version>
+    </dependency>
+ 
     <!-- for echoing simple html -->
     <dependency>
     	<groupId>com.j2html</groupId>
@@ -153,12 +169,12 @@
       			default: 2.17
       			otherwise name convention filter will fail
       		-->
-      		<version>2.22.0</version>
+      		<version>3.3.1</version>
         </plugin>
 
     	<plugin>
     		<artifactId>maven-compiler-plugin</artifactId>
-    		<version>3.7.0</version>
+    		<version>3.13.0</version>
     		<configuration>
     			<source>1.8</source>
     			<target>1.8</target>
@@ -232,7 +248,7 @@
 		<plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-javadoc-plugin</artifactId>
-	      <version>2.9.1</version>
+	      <version>3.5.0</version>
 	      <executions>
 	        <execution>
 	          <id>attach-javadocs</id>
@@ -246,20 +262,30 @@
 	      	<additionalJOption>-Xdoclint:none</additionalJOption>
 	      </configuration>
 	 	</plugin>
-	 	
+
 	  <plugin>
 		<!-- For troubleshooting like
 			[ERROR] Failed to execute goal org.apache.maven.plugins:
 			maven-compiler-plugin:3.7.0:compile (default-compile) on
 			project semantic.jserv: Compilation failure: Compilation failure...
 
-		  see https://dzone.com/articles/publish-your-artifacts-to-maven-central -->
+		  see https://dzone.com/articles/publish-your-artifacts-to-maven-central
+		  
+		  For gpg 1.5... , delete this into excution tag 
+		  For gpg 2.0 or higher, copy this into excution tag 
+			  <configuration>
+				<gpgArguments>
+				  <arg>\-\-pinentry-mode</arg>
+				  <arg>loopback</arg>
+				</gpgArguments>
+		  	  </configuration>
+		  -->
 		<groupId>org.apache.maven.plugins</groupId>
 		<artifactId>maven-gpg-plugin</artifactId>
 		<version>1.5</version>
 		<executions>
 			<execution>
-			  <id>semantics.transact</id>
+			  <id>semantics.jserv</id>
 			  <phase>verify</phase>
 			  <goals>
 				<goal>sign</goal>

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import io.odysz.anson.AnsonField;
-import io.odysz.anson.utils.AnsonNvs;
+import io.odysz.common.NVs;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonResp;
 
@@ -23,8 +23,8 @@ public class XChartResp extends AnsonResp{
 	String[] legend;
 	String[] yrange;
 
-	ArrayList<AnsonNvs> x;
-	ArrayList<AnsonNvs> z;
+	ArrayList<NVs> x;
+	ArrayList<NVs> z;
 
 	@AnsonField(valType="[Ljava.lang.Integer;")
 	ArrayList<ArrayList<Integer>> vector;
@@ -40,17 +40,17 @@ public class XChartResp extends AnsonResp{
 		ready = true;
 	}
 	
-	protected ArrayList<AnsonNvs> toMap(AnResultset labels) throws SQLException {
-		HashMap<String, AnsonNvs>mp = new HashMap<String, AnsonNvs>();
+	protected ArrayList<NVs> toMap(AnResultset labels) throws SQLException {
+		HashMap<String, NVs>mp = new HashMap<String, NVs>();
 		labels.beforeFirst();
 		while (labels.next()) {
 			String cat = labels.getString("cate");
 			if (!mp.containsKey(cat)) {
-				mp.put(cat, new AnsonNvs().name(cat));
+				mp.put(cat, new NVs().name(cat));
 			}
 			mp.get(cat).value(labels.getString("indust"));
 		}
-		return new ArrayList<AnsonNvs>(mp.values());
+		return new ArrayList<NVs>(mp.values());
 	}
 	
 	public XChartResp axis(String u, String v, String w) {

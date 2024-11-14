@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<configs>
+  <t id="default" pk="k" columns="k,v">
+    <c>
+    	<k>file-sys</k>
+    	<v></v>
+    </c>
+    <c>
+    	<k>id-len</k>
+    	<v>4</v>
+    </c>
+	<c>
+		<!-- Class name of SUser Implementation -->
+		<k>class-IUser</k>
+		<v>io.oz.jserv.docs.syn.DocUser</v>
+	</c>
+	<c>
+		<!-- home id is the same as remote id. Only registered home can get one -->
+		<k>home-id</k>
+		<v>test.odyzhou</v>
+	</c>
+	<c>
+		<k>sync.log.on-verbose</k>
+		<v>false</v>
+	</c>
+	<c>
+		<k>ss-timeout-min</k>
+		<v>30</v>
+	</c>
+	<c>
+		<k>ss-timeout-min.debugMode</k>
+		<v>false</v>
+	</c>
+	<c>
+        <!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml)
+             Since v1.3.0, when creating log-id, jserv will use system default conn-id;
+             when inserting log, it will use this conn-id.
+         -->
+		<k>log-connId</k>
+		<v>main-sqlite,semantic-log.xml,a_logs</v>
+	</c>
+	<!-- (center) hub, (main) storage, (private) storage
+	<c>
+		<k>sync-mode</k>
+		<v>main</v>
+	</c>
+	-->
+	<c>
+		<!-- worker interval -->
+		<k>sync-interval-min</k>
+		<v>1</v>
+	</c>
+	
+	<!-- 
+	<c>
+		<k>io.oz.syn.synode</k>
+		<v>syn-00</v>
+	</c>
+	 -->
+ 
+	<!-- connect id for where to save downloaded file, e.g default connection key
+	<c>
+		<k>sync-conn-id</k>
+		<v>main-sqlite</v>
+	</c>
+	-->
+
+	<!-- sync task name (multiple threads for the future), i.e. table name, of which table's records to be synchronized)
+	<c>
+		<k>sync-table-name</k>
+		<v>h_photos</v>
+	</c>
+	-->
+  </t>
+
+  <t id="tree-semantics" pk="k" columns="k,v">
+  	<!-- for v fields, see SemanticTree.ix* -->
+	<!--See SemanticTree for v difinetion.
+			All fields here are alias used to access rs columns.
+  			js-node-type: easyui, checked: null, tabl: e_areas, recId: areaId, parent id: parentId, text: areaName, full path: fullpath
+  			for easyui, only parentId is mandatory?
+  			Troubleshooting:
+  			1. too much recusive error report by jquery.
+  			set easyui table data-options idfield as areaId (data-options="idField: 'areaId',...)
+  		<v>easyui,,e_areas,areaId,parentId,areaName,fullpath</v>
+	-->
+  	<c> <k>templ-treegrid</k>
+  		<v>checked,table,rec-id,parentId,text,fullpath,sibling-sort,paging-at-server</v>
+  	</c>
+  </t>
+
+  <!-- 
+  <t id="cheap" pk="k" columns="k,v">
+	<c> <k>config-path</k>
+		<v>workflow-meta.xml</v>
+	</c>
+  </t>
+   -->
+</configs>

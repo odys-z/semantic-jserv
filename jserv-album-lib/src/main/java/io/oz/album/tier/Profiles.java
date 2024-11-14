@@ -1,21 +1,61 @@
 package io.oz.album.tier;
 
+import java.sql.SQLException;
+
 import io.odysz.anson.Anson;
+import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.jsession.JUser.JUserMeta;
 
+import static io.odysz.common.LangExt.isblank;
+
+/**
+ * User profile.
+ * 
+ * @author odys-z@github.com
+ */
 public class Profiles extends Anson {
+	String uid;
+	String defltAlbum;
 
-	String home;
-	public String home() { return home; }
+	public String webroot;
+	public String home;
 
-	int maxUsers;
-	public int maxusers() { return maxUsers; }
+	public Profiles home(String h) {
+		home = h;
+		return this;
+	}
+
+	public int maxUsers;
+	public Profiles maxusers(int max) {
+		maxUsers = max;
+		return this;
+	}
 	
-	int servtype;
-	public int servtype() { return servtype; }
+	public int servtype;
+	public Profiles servtype(int t) {
+		servtype = t;
+		return this;
+	}
 
 	public Profiles() {}
 	
 	public Profiles(String home) {
 		this.home = home;
 	}
+
+	public Profiles(AnResultset rs, JUserMeta m) throws SQLException {
+		this.home = rs.getString(m.org);
+		this.uid = rs.getString(m.pk);
+		this.defltAlbum = rs.getString("album");
+		this.webroot = rs.getString("webroot");
+
+		if (isblank(defltAlbum))
+			this.defltAlbum = "a-001";
+	}
+
+	public Profiles webroot(String cfg) {
+		this.webroot = cfg;
+		return this;
+	}
+
 }

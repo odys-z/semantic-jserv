@@ -11,17 +11,21 @@ import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantics.x.SemanticException;
 
-/**Sample project's prots extension
- * This enum replaced jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}. */
+/**
+ * <p>Sample project's prots extension.</p>
+ * 
+ * This enum replaces jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}.
+ */
 public enum AlbumPort implements IPort {
 	heartbeat("ping.serv"),
-	session("login.serv11"),
+	session("login.serv"),
 	/** users.less */
 	userstier("users.less"),
 	/** editor.less */
 	editor("editor.less"),
 	/** album.less */
-	album("album.less");
+	album("album.less"),
+	menu("menu.serv");
 
 	static {
 		JSONAnsonListener.registFactory(AlbumPort.class, 
@@ -56,7 +60,6 @@ public enum AlbumPort implements IPort {
 	@Override
 	public IJsonable toJson(StringBuffer buf) throws IOException, AnsonException {
 		buf.append('\"');
-		// buf.append(url);
 		buf.append(name());
 		buf.append('\"');
 		return this;

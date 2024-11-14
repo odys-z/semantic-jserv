@@ -15,4 +15,6 @@ public class ServFlags {
 	/** common of port handler */
 	public static final boolean port = true;
 
+	public static final boolean jsample = false;
+
 }

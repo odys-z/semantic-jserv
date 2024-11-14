@@ -1,0 +1,17 @@
+{"type": "io.oz.syn.AnRegistry",
+ "config": {
+   "synid": "X",
+   "domain": "zsu",
+   "admin": "ody",
+   "sysconn": "main-sqlite-3",
+   "synconn": "no-jserv.00",
+   "localhost": "",
+   "port": 8964,
+   "debug": true,
+    
+   "peers": [{"synid": "X", "org": "URA", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"}]
+ },
+ "synusers": [
+   {"userId": "ody", "pswd": "8964", "iv": null, "org": "URA", "domain": "zsu"},
+   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "URA", "domain": "zsu"} ]
+}

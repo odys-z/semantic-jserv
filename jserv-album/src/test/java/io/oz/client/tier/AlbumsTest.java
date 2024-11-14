@@ -29,19 +29,19 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.jsession.SessionInf;
 import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.IFileDescriptor;
-import io.odysz.semantic.tier.docs.SyncRec;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumPort;
-import io.oz.album.client.AlbumClientier;
 import io.oz.album.tier.AlbumResp;
-import io.oz.album.tier.Photo;
+import io.oz.album.tier.PhotoRec;
+import io.oz.albumtier.PhotoSyntier;
 
 /**
+ * @deprecated
  * <pre>
  * INSERT INTO h_photos (pid,uri,pname,pdate,cdate,tags,oper,opertime) VALUES
 	 ('test-00000','omni/ody/2019_08/DSC_0005.JPG','DSC_0005.JPG','2019-08-24','2021-08-24','#Qing Hai Lake','ody','2022-01-13'),
@@ -94,10 +94,8 @@ class AlbumsTest {
 			Anson.verbose = false;
 
 			errCtx = new ErrorCtx() {
-				// @Override public void onError(MsgCode c, AnsonResp rep) { fail(rep.msg()); }
-
 				@Override
-				public void onError(MsgCode c, String rep) {
+				public void err(MsgCode c, String rep, String...args) {
 					fail(String.format("code %s, msg: %s", c.name(), rep));
 				}
 			};
@@ -112,10 +110,10 @@ class AlbumsTest {
 		String localFolder = "test/results";
 
 		AlbumResp resp = getCollection("c-001");
-		Photo[] collect = resp.photos(0);
-		Photo ph1 = collect[0];
-		Photo ph2 = collect[1];
-		Photo ph3 = collect[2];
+		PhotoRec[] collect = resp.photos(0);
+		PhotoRec ph1 = collect[0];
+		PhotoRec ph2 = collect[1];
+		PhotoRec ph3 = collect[2];
 		try { FileUtils.delete(new File(ph1.pname)); } catch (Exception ex) {}
 		try { FileUtils.delete(new File(ph2.pname)); } catch (Exception ex) {}
 		try { FileUtils.delete(new File(ph3.pname)); } catch (Exception ex) {}
@@ -140,6 +138,7 @@ class AlbumsTest {
 		String a = resultSuppliers[0].get();
 		assertTrue(a.toLowerCase().contains(".jpg"));
 		assertFalse(a.toLowerCase().contains("msg:"));
+		assertTrue(new File(a).exists());
 		assertTrue(FileUtils.sizeOf(new File(a)) > 5000);
 
 		String b = resultSuppliers[1].get();
@@ -152,8 +151,8 @@ class AlbumsTest {
 	}
 
 	AlbumResp getCollection(String collectId) {
-		AlbumClientier tier = new AlbumClientier("test/album", client, errCtx);
 		try {
+			PhotoSyntier tier = new PhotoSyntier("test/album", client.ssInfo().device, errCtx);
 			return tier.getCollect(collectId);
 		} catch (SemanticException | IOException | AnsonException e) {
 			e.printStackTrace();
@@ -162,9 +161,9 @@ class AlbumsTest {
 		}
 	}
 
-	String getDownloadResult(Photo photo, String filepath) {
-		AlbumClientier tier = new AlbumClientier("test/album", client, errCtx);
+	String getDownloadResult(PhotoRec photo, String filepath) {
 		try {
+			PhotoSyntier tier = new PhotoSyntier("test/album", client.ssInfo().device, errCtx);
 			return tier.download(photo, filepath);
 		} catch (IOException | AnsonException | SemanticException e) {
 			e.printStackTrace();
@@ -179,14 +178,13 @@ class AlbumsTest {
 	 * @throws AnsonException
 	 * @throws GeneralSecurityException
 	 * @throws SsException
-	 */
 	@Test
 	void testAppend2Collect() throws TransException, IOException, AnsonException, GeneralSecurityException, SsException {
 		String localFolder = "test/res";
 		String filename = "my.jpg";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
-		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
+		PhotoSyntier tier = new PhotoSyntier("test/album", ssclient.ssInfo().device, errCtx);
 
 		try {
 			tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
@@ -201,6 +199,7 @@ class AlbumsTest {
 
 		assertEquals(8, rep.photo().recId.length());
 	}
+	 */
 	
 	/**
 	 * Suppose multiple files are picked, then synchronize into repository.
@@ -208,16 +207,15 @@ class AlbumsTest {
 	 * @throws GeneralSecurityException 
 	 * @throws IOException 
 	 * @throws SsException 
-	 * @throws SemanticException 
-	 */
-	@Test
+	 * @throws TransException 
+	 * @Test
 	void testSyncInsertPhotos() throws SemanticException, IOException, GeneralSecurityException, AnsonException {
 		String localFolder = "test/res";
 		// String filename = "my.jpg";
 		String filename = "no-exif.jpg";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-1");
-		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
+		PhotoSyntier tier = new PhotoSyntier("test/album", ssclient.ssInfo().device, errCtx);
 		try {
 			tier.insertPhoto("c-001", FilenameUtils.concat(localFolder, filename), filename);
 			fail("checking duplication failed.");
@@ -230,89 +228,54 @@ class AlbumsTest {
 		assertEquals("c-001", resp.photo().collectId);
 		assertEquals(8, resp.photo().recId.length());	
 	}
+	 */
 	
 	@Test
-	void testSyncImages() throws SemanticException, IOException, GeneralSecurityException, AnsonException, InterruptedException {
-		String localFolder = "test/res";
-		String filename = "my.jpg";
-		String device = "device-2";
-
-		SessionClient ssclient = Clients.login("ody", "123456", device);
-		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx);
-
-		List<IFileDescriptor> imges = new ArrayList<IFileDescriptor>();
-		imges.add(new IFileDescriptor() {
-			@Override
-			public String fullpath() { return FilenameUtils.concat(localFolder, filename); }
-
-			@Override
-			public IFileDescriptor fullpath(String clientpath) throws IOException { return this; }
-
-			@Override public String clientname() { return filename; }
-
-			@Override public String cdate() { return null; } 
-		});
-
-		try {
-			tier.syncPhotos((List<? extends IFileDescriptor>)imges, ssclient.ssInfo());
-			fail("checking duplication failed.");
-		}
-		catch (SemanticException e) { }
-
-		tier.del(device, FilenameUtils.concat(localFolder, filename));
-		List<AlbumResp> resp = tier.syncPhotos((List<? extends IFileDescriptor>)imges, ssclient.ssInfo());
-
-		String myId = null; 
-		for (AlbumResp doc : resp) {
-			myId = doc.photo().recId;
-			// assertEquals("c-001", doc.photo().collectId()); FXIME collection Id changed?
-			assertEquals("test/res/my.jpg", doc.photo().clientpath);	
-		}
-
-		Thread.sleep(2000); // wait for exif parsing at server side
-		AlbumResp rep = tier.selectPhotoRec(myId, errCtx);
-		assertEquals("2019_08", rep.photo().month());
-	}
-
-	@Test
-	void testVideoUp() throws SemanticException, SsException, IOException, GeneralSecurityException, AnsonException {
+	void testVideoUp() throws SsException, IOException, GeneralSecurityException, AnsonException, TransException {
 		String localFolder = "test/res";
 		 int bsize = 72 * 1024;
 		 String filename = "my.jpg";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
-		AlbumClientier tier = new AlbumClientier("test/album", ssclient, errCtx)
+		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier("test/album", "device-test", errCtx)
 								.blockSize(bsize);
 
-		List<SyncRec> videos = new ArrayList<SyncRec>();
-		videos.add((SyncRec) new SyncRec()
+		List<ExpSyncDoc> videos = new ArrayList<ExpSyncDoc>();
+		videos.add((ExpSyncDoc) new ExpSyncDoc()
 					.fullpath(FilenameUtils.concat(localFolder, filename)));
 
 		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = "device-test";
 
-		tier.syncVideos( videos, photoUser,
-			(c, v, resp) -> {
-				fail("duplicate checking not working");
+		tier.asyVideos( videos,
+			(ix, total, c, pth, resp) -> {
+				fail("Duplicate checking not working on " + pth);
 			},
+			null,
 			new ErrorCtx() {
 				@Override
-				public void onError(MsgCode c, String msg) {
+				public void err(MsgCode c, String msg, String ...args) {
 					if (!MsgCode.exGeneral.equals(c))
-						fail("Not expected code");
+						fail("Not expected error for this handling.");
 
 					tier.del("device-test", videos.get(0).fullpath());
-					List<DocsResp> resps = tier.syncVideos(videos, photoUser, null);
-					assertNotNull(resps);
-					assertEquals(1, resps.size());
+					List<DocsResp> resps;
+					try {
+						resps = tier.syncVideos(videos, null, null, null);
+						assertNotNull(resps);
+						assertEquals(1, resps.size());
 
-					for (DocsResp d : resps) {
-						String docId = d.recId();
-						assertEquals(8, docId.length());
+						for (DocsResp d : resps) {
+							String docId = d.xdoc.recId();
+							assertEquals(8, docId.length());
 
-						AlbumResp rp = tier.selectPhotoRec(docId);
-						assertNotNull(rp.photo().pname);
-						assertEquals(rp.photo().pname, filename);
+							AlbumResp rp = tier.selectPhotoRec(docId);
+							assertNotNull(rp.photo().pname);
+							assertEquals(rp.photo().pname, filename);
+						}
+					} catch (TransException | IOException e) {
+						e.printStackTrace();
+						fail(msg);
 					}
 				}
 			});

@@ -1,0 +1,225 @@
+VOLUME_HOME : ~/semantic-jserv/docsync.jserv/src/test/res/volume
+VOLUME 0 : ~/semantic-jserv/docsync.jserv/src/test/res/v-0
+
+VOLUME 1 : ~/semantic-jserv/docsync.jserv/src/test/res/v-1
+
+VOLUME 2 : ~/semantic-jserv/docsync.jserv/src/test/res/v-2
+
+VOLUME 3 : ~/semantic-jserv/docsync.jserv/src/test/res/v-3
+
+============= Semantic.DA 2.0.0 built on 2024-08-08 =============
+config file : ~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/config.xml
+Initializing connects with path to ./src/test/res/WEB-INF
+~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/connects.xml
+[main-sqlite]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_HOME/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/volume/jserv-main.db
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+[main-sqlite-0]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_0/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/v-0/jserv-main.db
+[main-sqlite-1]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_1/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/v-1/jserv-main.db
+[main-sqlite-2]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_2/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/v-2/jserv-main.db
+[main-sqlite-3]
+Resolving sqlite db, xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_3/jserv-main.db
+	Using sqlite db: ~/semantic-jserv/docsync.jserv/src/test/res/v-3/jserv-main.db
+[no-jserv.00]
+Resolving sqlite db (queued), xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_0/no-jserv-db.00
+	Using sqlite db (queued): ~/semantic-jserv/docsync.jserv/src/test/res/v-0/no-jserv-db.00
+[no-jserv.01]
+Resolving sqlite db (queued), xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_1/no-jserv-db.01
+	Using sqlite db (queued): ~/semantic-jserv/docsync.jserv/src/test/res/v-1/no-jserv-db.01
+[no-jserv.02]
+Resolving sqlite db (queued), xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_2/no-jserv-db.02
+	Using sqlite db (queued): ~/semantic-jserv/docsync.jserv/src/test/res/v-2/no-jserv-db.02
+[no-jserv.03]
+Resolving sqlite db (queued), xmlDir: ./src/test/res/WEB-INF,
+	jdbcUrl: $VOLUME_3/no-jserv-db.03
+	Using sqlite db (queued): ~/semantic-jserv/docsync.jserv/src/test/res/v-3/no-jserv-db.03
+~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/connects.xml
+~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/connects.xml
+INFO - JDBC initialized using main-sqlite (sqlite) as default connection.
+Field ignored: field: host, value: "host":""
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection main-sqlite-0
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection no-jserv.00
+The syn-change semantics is silenced as a newer design decision
+The syn-change semantics is silenced as a newer design decision
+Initializing synode singleton with configuration file config.xml
+runtime root: .
+configure folder: ./src/test/res/WEB-INF
+root-key length: 16
+config file : ~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/config.xml
+Initializing connects with path to ./src/test/res/WEB-INF
+Configuration root path: ./src/test/res/WEB-INF
+Runtime root path: .
+Initializing session with default jdbc connection main-sqlite ...
+[AnSession] timeout = 30 minutes (configure: src/test/res/WEB-INF/config.xml)
+[ServFlags.session] SSession debug mode true (ServFlage.session)
+SessionChecker: timeout = 30 minute
+WARN - Can't find dataset.xml, configuration ignored. Check src/test/res/WEB-INF/dataset.xml
+
+[ ♻.X ] loading domain zsu ...
+------------ Starting X ... --------------
+Loading syntities registry: ~/semantic-jserv/docsync.jserv/src/test/res/v-0/syntity.json
+Field ignored: field: mode, value: "mode":"peer"
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.R.AnQuery-6995bf68
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.U.AnUpdate-5143c662
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.AnSession-40238dd0
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.HeartLink-77825085
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpDoctier-6e950bcf
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpSynodetier-16414e40
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection main-sqlite-1
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection no-jserv.01
+The syn-change semantics is silenced as a newer design decision
+The syn-change semantics is silenced as a newer design decision
+Initializing synode singleton with configuration file config.xml
+runtime root: .
+configure folder: ./src/test/res/WEB-INF
+root-key length: 16
+config file : ~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/config.xml
+Initializing connects with path to ./src/test/res/WEB-INF
+Configuration root path: ./src/test/res/WEB-INF
+Runtime root path: .
+Initializing session with default jdbc connection main-sqlite ...
+[AnSession] timeout = 30 minutes (configure: src/test/res/WEB-INF/config.xml)
+[ServFlags.session] SSession debug mode true (ServFlage.session)
+SessionChecker: timeout = 30 minute
+
+[ ♻.Y ] loading domain null ...
+------------ Starting Y ... --------------
+Loading syntities registry: ~/semantic-jserv/docsync.jserv/src/test/res/v-1/syntity.json
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.R.AnQuery-35a9782c
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.U.AnUpdate-70a36a66
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.AnSession-50ecde95
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.HeartLink-45815ffc
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpDoctier-23fb172e
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpSynodetier-64ba3208
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection main-sqlite-2
+[io.odysz.semantic.DATranscxt#initConfigs()] Loading semantics of connection no-jserv.02
+The syn-change semantics is silenced as a newer design decision
+The syn-change semantics is silenced as a newer design decision
+Initializing synode singleton with configuration file config.xml
+runtime root: .
+configure folder: ./src/test/res/WEB-INF
+root-key length: 16
+config file : ~/semantic-jserv/docsync.jserv/src/test/res/WEB-INF/config.xml
+Initializing connects with path to ./src/test/res/WEB-INF
+Configuration root path: ./src/test/res/WEB-INF
+Runtime root path: .
+Initializing session with default jdbc connection main-sqlite ...
+[AnSession] timeout = 30 minutes (configure: src/test/res/WEB-INF/config.xml)
+[ServFlags.session] SSession debug mode true (ServFlage.session)
+SessionChecker: timeout = 30 minute
+
+[ ♻.Z ] loading domain null ...
+------------ Starting Z ... --------------
+Loading syntities registry: ~/semantic-jserv/docsync.jserv/src/test/res/v-2/syntity.json
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.R.AnQuery-49872d67
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jserv.U.AnUpdate-56303b57
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.AnSession-3a6f2de3
+[io.odysz.semantic.jserv.ServPort#init()] io.odysz.semantic.jsession.HeartLink-4b2a01d4
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpDoctier-753432a2
+[io.odysz.semantic.jserv.ServPort#init()] io.oz.jserv.docs.syn.ExpSynodetier-23bff419
+
+1 X <- join - Y
+===============
+
+Y logged into X
+-- -- lock at X <- Y
+user: syrskyi, ssid: 0Kl8oMfc
+++ ++ unlocked X <- Y
+user: syrskyi, ssid: 0Kl8oMfc
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+
+      X    Y    Z
+X [   1,   0,     ] { X,X Y,Y }
+Y [   0,   1,     ] { X,X Y,Y }
+Z [    ,    ,     ] { Z,Z }
+
+2 X <- join - Z
+===============
+
+Z logged into X
+-- -- lock at X <- Z
+user: syrskyi, ssid: 2Y6QNUJC
+++ ++ unlocked X <- Z
+user: syrskyi, ssid: 2Y6QNUJC
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ I    X.0004       Z,Z  2  Y [    ] |                                    |                                    |                                    
+      X    Y    Z
+X [   2,   0,   1 ] { X,X Y,Y Z,Z }
+Y [   0,   1,     ] { X,X Y,Y }
+Z [   1,    ,   2 ] { X,X Z,Z }
+
+3 Z sync domain
+===============
+
+Locking and starting thread on domain updating: zsu : Z -> X
+=============================================================
+
+
+-------- locking on self Z  ------
+
+-- -- lock at Z <- Z
+user: Z, ssid: null
+-- -- lock at X <- Z
+user: syrskyi, ssid: 2Y6QNUJC
+++ ++ unlocked X <- Z
+user: syrskyi, ssid: 2Y6QNUJC
+
+++++++++ unlocking self Z ++++++
+
+++ ++ unlocked Z <- Z
+user: Z, ssid: null
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+ I    X.0004       Z,Z  2  Y [    ] |                                    |                                    |                                    
+      X    Y    Z
+X [   3,   0,   2 ] { X,X Y,Y Z,Z }
+Y [   0,   1,     ] { X,X Y,Y }
+Z [   2,    ,   3 ] { X,X Z,Z }
+
+4 Y sync domain
+===============
+
+Locking and starting thread on domain updating: zsu : Y -> X
+=============================================================
+
+
+-------- locking on self Y  ------
+
+-- -- lock at Y <- Y
+user: Y, ssid: null
+-- -- lock at X <- Y
+user: syrskyi, ssid: 0Kl8oMfc
+[io.odysz.semantic.syn.ExessionPersist#commitAnswers()] Locally committing answers to Y ...
+++ ++ unlocked X <- Y
+user: syrskyi, ssid: 0Kl8oMfc
+
+++++++++ unlocking self Y ++++++
+
+++ ++ unlocked Y <- Y
+user: Y, ssid: null
+                  X                 |                  Y                 |                  Z                 
+------------------------------------+------------------------------------+------------------------------------
+
+      X    Y    Z
+X [   4,   3,   2 ] { X,X Y,Y Z,Z }
+Y [   3,   4,   2 ] { X,X Y,Y Z,Z }
+Z [   2,    ,   3 ] { X,X Z,Z }

@@ -2,9 +2,9 @@ package io.odysz.semantic.jserv.R;
 
 import java.util.ArrayList;
 
+import io.odysz.semantic.CRUD;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.JProtocol.CRUD;
 import io.odysz.transact.sql.Query.Ix;
 
 /**Query Request Body Item.<br>
@@ -60,8 +60,8 @@ public class AnQueryReq extends AnsonBody {
 		a = CRUD.R;
 	}
 
-	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String conn, String fromTbl, String... alias) {
-		super(parent, conn);
+	public AnQueryReq(AnsonMsg<? extends AnsonBody> parent, String uri, String fromTbl, String... alias) {
+		super(parent, uri);
 		a = CRUD.R;
 
 		mtabl = fromTbl;
@@ -138,6 +138,10 @@ public class AnQueryReq extends AnsonBody {
 
 		where.add(predicate);
 		return this;
+	}
+
+	public AnQueryReq whereEq(String lop, String constv) {
+		return where("=", lop, "'" + constv + "'");
 	}
 
 	public AnQueryReq orderby(String col, boolean... asc) {

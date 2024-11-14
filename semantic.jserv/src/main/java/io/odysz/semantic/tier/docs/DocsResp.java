@@ -1,61 +1,110 @@
 package io.odysz.semantic.tier.docs;
 
-import java.util.HashMap;
+import java.sql.SQLException;
+import java.util.ArrayList;
 
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantics.x.SemanticException;
 
-/**This structure is recommend used as Parcel between Android activities.
+/**
+ * Docsyncer response.
+ * 
+ * This structure is recommend used as Parcel between Android activities.
  * @author ody
  *
  */
 public class DocsResp extends AnsonResp {
-	long size;
-	long size() { return size; } 
+	public ExpSyncDoc xdoc;
+
+	protected PathsPage syncingPage;
+
+	protected String collectId;
+
+	public PathsPage pathsPage() { return syncingPage; }
 	
-	public DocsResp() {
-		super();
-		map = new HashMap<String, Object>();
-	}
-
-	SyncingPage syncing;
-	public SyncingPage syncing() { return syncing; }
-	public DocsResp syncing(SyncingPage page) {
-		syncing = page;
+	/**
+	 * <p>Set clientpaths page (rs).</p>
+	 * Rs must have columns specified with {@link SyncDoc#synPageCols(DocTableMeta)}.
+	 * @param rs
+	 * @param meta
+	 * @return this
+	 * @throws SQLException
+	 * @throws SemanticException 
+	 */
+	public DocsResp pathsPage(AnResultset rs, ExpDocTableMeta meta)
+			throws SQLException, SemanticException {
+		if (syncingPage == null)
+			syncingPage = new PathsPage();
+		syncingPage.paths(rs, meta);
 		return this;
 	}
 
-	String recId;
-	public String recId() { return recId; }
-	public DocsResp recId(String recid) {
-		recId = recid;
+	public PathsPage syncing() { return syncingPage; }
+	public DocsResp syncing(PathsPage page) {
+		syncingPage = page;
 		return this;
 	}
-
-	String fullpath;
-	public String fullpath() { return fullpath; }
-	public DocsResp fullpath(String fullpath) {
-		this.fullpath = fullpath;
+	public DocsResp syncingPage(DocsReq req) {
+		syncingPage = req.syncingPage;
 		return this;
 	}
-
-	String filename;
-	public String clientname() { return filename; }
-	public DocsResp  clientname(String clientname) {
-		this.filename = clientname;
-		return this;
-	}
-
+	
 	public long blockSeqReply;
+
 	public long blockSeq() { return blockSeqReply; }
 	public DocsResp blockSeq(long seq) {
 		blockSeqReply = seq;
 		return this;
 	}
-	
-	String cdate;
-	public String cdate() { return cdate; }
-	public DocsResp cdate(String cdate) {
-		this.cdate = cdate;
+
+	public DocsResp doc(ExpSyncDoc d) {
+		this.xdoc = d;
+		return this;
+	}
+
+	public DocsResp doc(AnResultset rs, ExpDocTableMeta meta)
+			throws SQLException, SemanticException {
+		if (rs != null && rs.total() > 1)
+			throw new SemanticException("This method can only handling 1 record.");
+		rs.beforeFirst().next();
+		this.xdoc = new ExpSyncDoc(rs, meta);
+		return this;
+	}
+
+	String org;
+	public String org() { return org; }
+	public DocsResp org(String orgId) {
+		this.org = orgId;
+		return this;
+	}
+
+	Device device;
+	public Device device() { return device; }
+	public DocsResp device(Device device) {
+		this.device = device;
+		return this;
+	}
+	public DocsResp device(String deviceId) {
+		this.device = new Device(deviceId, null);
+		return this;
+	}
+
+	String stamp;
+	public DocsResp stamp(String s) {
+		stamp = s;
+		return this;
+	}
+
+	String syndomain;
+	/**
+	 * Tell the client the request is handled in the {@code domain}.
+	 * @param domain
+	 * @return this
+	 */
+	public DocsResp syndomain(String dom) {
+		syndomain = dom;
 		return this;
 	}
 
