@@ -1,4 +1,4 @@
-package io.oz.synserv;
+package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
@@ -60,6 +60,8 @@ public class SynotierJettyApp {
 	Server server;
 
 	ServletContextHandler schandler;
+	public Syngleton syngleton() { return syngleton; }	
+	public String jserv() { return syngleton.jserv; }
 
 	public SynotierJettyApp(SynodeConfig cfg) throws Exception {
 		syngleton = new Syngleton(cfg);
@@ -137,7 +139,6 @@ public class SynotierJettyApp {
 	}
 
 	public SynotierJettyApp addDocServPort(String domain, String cfgroot, String syntity_json) throws Exception {
-		// shouldnull(new Object() {}, domain);
 		SynDomanager domanger = syngleton.domanager(domain);
 
 		addServPort(new ExpDoctier(domanger)
@@ -201,10 +202,6 @@ public class SynotierJettyApp {
 		if (server != null)
 			server.stop();
 	}
-	
-	public String jserv() {
-		return syngleton.jserv;
-	}
 
 	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
 			throws TransException, SQLException {
@@ -256,9 +253,5 @@ public class SynotierJettyApp {
 	    
 	    return synapp;
 	}
-
-	public Syngleton syngleton() {
-		return syngleton;
-	}	
 
 }

@@ -65,30 +65,6 @@ public class T_SynotierJettyApp {
 	}
 
 	/**
-	 * Eclipse run configuration example:
-	 * <pre>Run - Run Configurations - Arguments
-	 * Program Arguments
-	 * 192.168.0.100 8964 ura zsu src/test/res/WEB-INF config-0.xml no-jserv.00 odyz
-	 * 
-	 * VM Arguments
-	 * -DVOLUME_HOME=../volume
-	 * </pre>
-	 * volume home = relative path to web-inf.
-	 * 
-	 * @param args [0] ip, * for all hosts
-	 *             [1] port,
-	 *             [2] org,
-	 *             [3] domain,
-	 *             [4] web-inf,
-	 *             [5] config.xml,
-	 *             [6] conn-id,
-	 *             [7] robot id already registered on each peers
-	 * @throws Exception
-	 */
-	public static void main(String[] args) throws Exception {
-	}
-
-	/**
 	 * Create an application instance working as a synode tier.
 	 * @param serv_conn db connection of which to be synchronized
 	 * @param config_xml name of config file, e.g. config.xml
