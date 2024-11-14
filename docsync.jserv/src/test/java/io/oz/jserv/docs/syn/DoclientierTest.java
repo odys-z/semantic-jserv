@@ -25,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.HashSet;
 
 import org.junit.jupiter.api.AfterAll;
@@ -42,7 +41,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
-import io.odysz.semantic.meta.ExpDocTableMeta.Share;
+import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
@@ -71,17 +70,17 @@ class DoclientierTest {
 	@Test
 	void testSynclientUp() throws Exception {
 		int no = 0;
-		Utils.logrst(f("X <- %s", devs[X_0].dev), ++no);
+		Utils.logrst(f("X <- %s", devs[X_0].device.id), ++no);
 
 		ExpSyncDoc dx = clientPush(X, X_0);
 		verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
 
 		// 10 create
-		Utils.logrst(f("Y <- %s", devs[Y_0].dev), ++no);
+		Utils.logrst(f("Y <- %s", devs[Y_0].device.id), ++no);
 		clientPush(Y, Y_0);
 
 		// 11 create
-		Utils.logrst(f("X <- %s", devs[X_0].dev), ++no);
+		Utils.logrst(f("X <- %s", devs[X_0].device.id), ++no);
 		clientPush(Y, Y_1);
 	}
 
@@ -107,7 +106,7 @@ class DoclientierTest {
 		// 00 delete
 		Dev devx0 = devs[X_0];
 		Clients.init(jserv_xyzw[X]);
-		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.dev, devx0.res);
+		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
 		// verifyPathsPageNegative(devx0.client, docm.tbl, dx.clientpath);
@@ -136,30 +135,24 @@ class DoclientierTest {
 				dev.client.client.ssInfo().uid(), dev.client.client.ssInfo().device);
 		Utils.logi(dev.res);
 
-		ExpSyncDoc xdoc = videoUpByApp(dev, dev.client, docm.tbl);
-		assertEquals(dev.dev, xdoc.device());
+		ExpSyncDoc xdoc = videoUpByApp(dev.client, dev.device, dev.res, docm.tbl);
+		assertEquals(dev.device.id, xdoc.device());
 		assertEquals(dev.res, xdoc.fullpath());
 
 		verifyPathsPage(dev.client, docm.tbl, xdoc.clientpath);
 		return xdoc;
 	}
 
- 	static ExpSyncDoc videoUpByApp(Dev atdev, Doclientier doclient,
+	static ExpSyncDoc videoUpByApp(Doclientier doclient, Device atdev, String respath,
  			String entityName) throws Exception {
 
-		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
-					.share(doclient.robt.uid(), Share.pub, new Date())
-					.folder(atdev.folder)
-					.device(atdev.dev)
-					.fullpath(atdev.res);
-
-		DocsResp resp = doclient.startPush(entityName, doc,
+		ExpSyncDoc xdoc = Doclientier.videoUpByApp(doclient, atdev, respath, entityName, 
 			(AnsonResp rep) -> {
-				ExpSyncDoc d = ((DocsResp) rep).xdoc; 
+				ExpSyncDoc doc = ((DocsResp) rep).xdoc; 
 
 				// push again should fail
 				try {
-					doclient.startPush(entityName, d,
+					doclient.startPush(entityName, doc,
 						new OnOk() {
 							@Override
 							public void ok(AnsonResp rep)
@@ -182,9 +175,9 @@ class DoclientierTest {
 				}
 			});
 
-		assertNotNull(resp);
+		assertNotNull(xdoc);
 
-		String docId = resp.xdoc.recId();
+		String docId = xdoc.recId();
 		assertTrue(4 == docId.length() || 8 == docId.length());
 
 		DocsResp rp = doclient.selectDoc(entityName, docId);

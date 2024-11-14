@@ -35,6 +35,7 @@ import io.oz.album.tier.Profiles;
 /**
  * Album user.
  * 
+ * @deprecated
  * @author odys-z@github.com
  */
 public class PhotoUser extends SyncUser implements IUser {

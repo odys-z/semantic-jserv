@@ -134,13 +134,13 @@ public class ExpDoctierservTest {
 		Utils.logrst(new String[] {"Deleting", devx0.res}, section, 1);
 
 		devx0.login(errLog);
-		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.dev, devx0.res);
+		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
 		ExpSyncDoc dx0 = (ExpSyncDoc) new ExpSyncDoc()
 					.share(devx0.uid, Share.pub, new Date())
-					.folder(devx0.folder)
-					.device(devx0.dev)
+					.folder(devx0.tofolder)
+					.device(devx0.device.id)
 					.fullpath(devx0.res);
 
 		Utils.logrst(new String[] {"Verifying", devx0.res}, section, 2);
@@ -224,7 +224,7 @@ public class ExpDoctierservTest {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
 		for (Dev d : devs)
-			sqls.add(f("delete from %s where %s = '%s'", docm.tbl, docm.device, d.dev));
+			sqls.add(f("delete from %s where %s = '%s'", docm.tbl, docm.device, d.device.id));
 		Connects.commit(conn, usr, sqls);
 	}
 	

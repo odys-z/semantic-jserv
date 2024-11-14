@@ -1,8 +1,8 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.f;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -41,6 +42,7 @@ import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsReq.A;
@@ -58,7 +60,9 @@ public class Doclientier extends Semantier {
 	public boolean verbose = false;
 
 	public SessionClient client;
-	protected OnError errCtx;
+	
+	/** @since 2.0.0 changed to static */
+	protected static ErrorCtx errCtx;
 
 	protected ExpDocRobot robt;
 
@@ -95,9 +99,9 @@ public class Doclientier extends Semantier {
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public Doclientier(String sysuri, String synuri, OnError errCtx)
+	public Doclientier(String sysuri, String synuri, ErrorCtx errCtx)
 			throws SemanticException, IOException {
-		this.errCtx = errCtx;
+		Doclientier.errCtx = errCtx;
 		this.uri = sysuri;
 		this.synuri = synuri;
 		
@@ -201,6 +205,67 @@ public class Doclientier extends Semantier {
 		return this;
 	}
 	
+	static ExpSyncDoc videoUpByApp(Doclientier doclient, Device atdev, String respath,
+ 			String entityName, OnOk ok, OnProcess ...process) throws Exception {
+
+		ExpSyncDoc doc = (ExpSyncDoc) new ExpSyncDoc()
+					.share(doclient.robt.uid(), Share.pub, new Date())
+					.folder(atdev.tofolder)
+					.device(atdev.id)
+					.fullpath(respath);
+
+		DocsResp resp = doclient.startPush(entityName, doc, ok);
+//			(AnsonResp rep) -> {
+//				ExpSyncDoc d = ((DocsResp) rep).xdoc; 
+//
+//				// push again should fail
+//				// doclient.startPush(entityName, d, ok, errCtx);
+//			}
+
+//		assertNotNull(resp);
+
+		String docId = resp.xdoc.recId();
+//		assertTrue(4 == docId.length() || 8 == docId.length());
+
+		DocsResp rp = doclient.selectDoc(entityName, docId);
+
+//		assertTrue(isblank(rp.msg()));
+//		assertNotNull(rp.xdoc);
+
+		return rp.xdoc;
+	}
+
+//	/**
+//	 * Verify device &amp; client-paths are presenting at server.
+//	 * 
+//	 * @param clientier
+//	 * @param entityName
+//	 * @param paths
+//	 * @throws Exception
+//	 */
+//	static void verifyPathsPage(Doclientier clientier, String entityName,
+//			String... paths) throws Exception {
+//		PathsPage pths = new PathsPage(clientier.client.ssInfo().device, 0, 1);
+//		HashSet<String> pathpool = new HashSet<String>();
+//		for (String pth : paths) {
+//			pths.add(pth);
+//			pathpool.add(pth);
+//		}
+//
+//		DocsResp rep = clientier.synQueryPathsPage(pths, entityName, Port.docsync);
+//
+//		PathsPage pthpage = rep.pathsPage();
+//
+//		assertEquals(clientier.client.ssInfo().device, pthpage.device);
+//		assertEquals(len(paths), pthpage.paths().size());
+//
+//		for (String pth : paths)
+//			pathpool.remove(pth);
+//
+//		assertEquals(0, pathpool.size());
+//	}
+
+
 	/**
 	 * Synchronizing files to a {@link ExpDoctier} using block chain, accessing port {@link Port#docsync}.
 	 * This method will use meta to create entity object of doc.
@@ -387,7 +452,7 @@ public class Doclientier extends Semantier {
 				if (docOk != null) docOk.ok(respi);
 				reslts.add(respi);
 			}
-			catch (IOException | TransException | AnsonException ex) { 
+			catch (IOException | TransException | AnsonException | SQLException ex) { 
 				Utils.warn(ex.getMessage());
 
 				if (resp0 != null) {

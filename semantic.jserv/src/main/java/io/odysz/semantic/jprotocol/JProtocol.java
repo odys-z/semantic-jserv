@@ -1,6 +1,7 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
 import io.odysz.anson.x.AnsonException;
@@ -26,7 +27,7 @@ public class JProtocol {
 
 	@FunctionalInterface
 	public interface OnOk {
-		void ok(AnsonResp resp) throws IOException, AnsonException, TransException;
+		void ok(AnsonResp resp) throws IOException, AnsonException, TransException, SQLException;
 	}
 	
 	/**
@@ -36,7 +37,7 @@ public class JProtocol {
 	@FunctionalInterface
 	public interface OnProcess {
 		void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
-			throws IOException, AnsonException, TransException;
+			throws IOException, AnsonException, TransException, SQLException;
 	}
 
 	/**

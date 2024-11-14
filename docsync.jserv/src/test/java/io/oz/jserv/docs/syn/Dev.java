@@ -7,9 +7,10 @@ import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
 import java.io.IOException;
 
 import io.odysz.anson.x.AnsonException;
-import io.odysz.semantic.jprotocol.JProtocol.OnError;
+import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -21,11 +22,13 @@ public class Dev {
 
 	public final String uid;
 	public final String psw;
-	public final String dev;
-	public final String folder;
+	// public final String dev;
+	public final String tofolder;
+	public final Device device;
 
 	public String res;
 	public Doclientier client;
+
 
 	public static Dev[] devs;
 
@@ -64,15 +67,16 @@ public class Dev {
 		this.synuri = synuri;
 		this.uid = uid;
 		this.psw = pswd;
-		this.dev = "test-doclient/" + device;
-		this.folder = folder;
+//		this.dev = "test-doclient/" + device;
+		this.tofolder = folder;
 		this.res = fres;
+		this.device = new Device(device, device, "test-doclient/" + device);
 	}
 
-	public void login(OnError errLog) throws SemanticException, AnsonException, SsException, IOException {
+	public void login(ErrorCtx errLog) throws SemanticException, AnsonException, SsException, IOException {
 		client = new Doclientier(sysuri, synuri, errLog)
 				.tempRoot(sysuri)
-				.loginWithUri(sysuri, uid, dev, psw)
+				.loginWithUri(sysuri, uid, device.id, psw)
 				.blockSize(bsize);
 	}
 }
