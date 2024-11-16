@@ -76,15 +76,15 @@ public class T_SynotierJettyApp {
 	 * @return Synode-tier Jetty App
 	 * @throws Exception
 	 */
-	public static T_SynotierJettyApp createSyndoctierApp( String config_xml,
-			String syntity_json, SynodeConfig cfg, String webinf) throws Exception {
+	public static T_SynotierJettyApp createSyndoctierApp(String webinf, SynodeConfig cfg,
+			String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
 
 		T_SynotierJettyApp synapp = T_SynotierJettyApp
-						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
-						.loadomains(cfg);
+						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port);
+		synapp.syngleton.loadomains(cfg);
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
@@ -106,13 +106,12 @@ public class T_SynotierJettyApp {
 			;
 	}
 
-	T_SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
-		syngleton.loadDomains(cfg);
-		return this;
-	}
+//	T_SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
+//		syngleton.loadDomains(cfg);
+//		return this;
+//	}
 
 	public T_SynotierJettyApp addDocServPort(String domain, String cfgroot, String syntity_json) throws Exception {
-		// shouldnull(new Object() {}, domain);
 		SynDomanager domanger = syngleton.domanager(domain);
 
 		addServPort(new ExpDoctier(domanger)
@@ -137,18 +136,18 @@ public class T_SynotierJettyApp {
 	 * 
 	 * @param <T> subclass of {@link ServPort}
 	 * @param synapp
-	 * @param conn
+	 * @param sysconn
 	 * @param servports
 	 * @return Jetty server, the {@link T_SynotierJettyApp}
 	 * @throws Exception
 	 */
 	@SafeVarargs
 	static public <T extends ServPort<? extends AnsonBody>> T_SynotierJettyApp registerPorts(
-			T_SynotierJettyApp synapp, String conn, T ... servports) throws Exception {
+			T_SynotierJettyApp synapp, String sysconn, T ... servports) throws Exception {
 
         synapp.schandler = new ServletContextHandler(synapp.server, "/");
         for (T t : servports) {
-        	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(conn)));
+        	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(sysconn)));
         }
 
         return synapp;
@@ -216,7 +215,8 @@ public class T_SynotierJettyApp {
 	    if (isblank(bindIp) || eq("*", bindIp)) {
 	    	synapp.server = new Server();
 	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
-	        httpConnector.setHost("0.0.0.0");
+
+	        httpConnector.setHost("0.0.0.0"); // TODO httpConnector.setHost(cfg.localhost);
 	        httpConnector.setPort(port);
 	        httpConnector.setIdleTimeout(5000);
 	        synapp.server.addConnector(httpConnector);

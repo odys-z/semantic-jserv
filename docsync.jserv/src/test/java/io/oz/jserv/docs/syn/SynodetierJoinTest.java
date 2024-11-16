@@ -281,10 +281,11 @@ public class SynodetierJoinTest {
 	 * @return the Jetty App, with a servlet server.
 	 * @throws Exception
 	 */
-	public static T_SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml, String syntity_json) throws Exception {
+	public static T_SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml,
+			String syntity_json) throws Exception {
 
 		return T_SynotierJettyApp 
-			.createSyndoctierApp(cfg_xml, syntity_json, cfg, webinf)
+			.createSyndoctierApp(webinf, cfg, cfg_xml, syntity_json)
 			.start(() -> System.out, () -> System.err)
 			;
 	}

@@ -127,7 +127,7 @@ public class Syngleton extends JSingleton {
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public HashMap<String,SynDomanager> loadDomains(SynodeConfig cfg) throws Exception {
+	public HashMap<String,SynDomanager> loadomains(SynodeConfig cfg) throws Exception {
 		// notNull(syntier_url);
 		shouldeq(new Object() {}, cfg.mode, SynodeMode.peer);
 		
@@ -145,9 +145,9 @@ public class Syngleton extends JSingleton {
 				.rs(defltScxt.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
 				.rs(0);
 		
-		if (rs.getRowCount() > 1)
+		if (rs.getRowCount() != 1)
 			throw new ExchangeException(ExessionAct.ready, null,
-					"V0.2 only supports one domain. Found multiple domains in %s", cfg.synconn);
+					"V0.2 only supports one and only one domain. Found multiple domains in %s", cfg.synconn);
 		
 		if (rs.next()) {
 			String domain = rs.getString(synm.domain);

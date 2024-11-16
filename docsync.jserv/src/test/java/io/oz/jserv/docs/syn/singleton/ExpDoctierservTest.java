@@ -35,12 +35,10 @@ import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
-import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.syn.Dev;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.SynodetierJoinTest;
@@ -180,23 +178,25 @@ public class ExpDoctierservTest {
 				jetties[i].stop();
 			
 			YellowPages.load(f("$VOLUME_%s", i));
-
+//
 			cfgs[i] = YellowPages.synconfig();
 			cfgs[i].localhost = host;
 			cfgs[i].port = port++;
 			cfgs[i].mode = SynodeMode.peer;
 
 			// install
-			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
-
-			Syntities regists = Syntities.load(webinf, f("$VOLUME_%s/syntity.json", i), 
-				(synreg) -> {
-					throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
-				});
+//			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
+//
+//			Syntities regists = Syntities.load(webinf, f("$VOLUME_%s/syntity.json", i), 
+//				(synreg) -> {
+//					throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
+//				});
+//			
+//			Syngleton.setupSyntables(cfgs[i], regists.metas.values(),
+//					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
+//			
 			
-			Syngleton.setupSyntables(cfgs[i], regists.metas.values(),
-					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
-			
+			AppSettings.setupdb(cfgs[i], webinf, f("$VOLUME_%s", i), f("config-%s.xml", i));
 			cleanPhotos(docm, cfgs[i].synconn, devs);
 			
 			// clean and reboot

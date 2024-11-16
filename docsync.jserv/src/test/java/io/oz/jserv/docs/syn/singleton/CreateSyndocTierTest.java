@@ -1,6 +1,5 @@
 package io.oz.jserv.docs.syn.singleton;
 
-import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
@@ -16,8 +15,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-
 import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -27,7 +24,6 @@ import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.tier.ErrorCtx;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
@@ -35,16 +31,13 @@ import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.Docheck;
-import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantic.syn.registry.Syntities;
-import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.syn.SynodeConfig;
+import io.oz.syn.YellowPages;
 
 /**
  * Start 3 jservs, ping the login.serv port, and verify the print streams.
@@ -76,7 +69,7 @@ public class CreateSyndocTierTest {
 	static ErrorCtx errLog;	
 	static int bsize = 12 * 64;
 
-	int port = 8964;
+	// int port = 8964;
 	
 	static IAssert azert;
 
@@ -103,17 +96,15 @@ public class CreateSyndocTierTest {
 	void test3jetties() throws Exception {
 		setVolumeEnv("v-");
 
-
-
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-		T_SynotierJettyApp h1 = createStartSyndocTierTest(null, servs_conn[0], "X", "odyx", port++);
+		T_SynotierJettyApp h1 = createStartSyndocTierTest(null, "X", "$VOLUME_0");
 		T_PhotoMeta docm = new T_PhotoMeta(servs_conn[0]);
 		ck[0] = new Docheck(azert, zsu, servs_conn[0],
 					"X", SynodeMode.peer, docm, true);
 
-		T_SynotierJettyApp h2 = createStartSyndocTierTest(null, servs_conn[1], "Y", "odyy", port++);	
+		T_SynotierJettyApp h2 = createStartSyndocTierTest(null, "Y", "$VOLUME_1");	
 		docm = new T_PhotoMeta(servs_conn[1]);
 		ck[1] = new Docheck(azert, zsu, servs_conn[1],
 					"Y", SynodeMode.peer, docm, true);
@@ -124,7 +115,7 @@ public class CreateSyndocTierTest {
         RolloverFileOutputStream es = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.err", true);
         String outfile = os.getDatedFilename();
 
-		T_SynotierJettyApp h3 = createStartSyndocTierTest(lights, servs_conn[2], "Z", "odyz", port++,
+		T_SynotierJettyApp h3 = createStartSyndocTierTest(lights, "Z", "$VOLUME_2",
 							() -> { return new PrintStream1(os, "3-out"); }, 
 							() -> { return new PrintStream1(es, "3-err"); });
 		
@@ -133,23 +124,23 @@ public class CreateSyndocTierTest {
 					"Z", SynodeMode.peer, docm, true);
 
 		Clients.init(h1.jserv());
-		Doclientier client = new Doclientier("jetty-0", "jetty-0", errLog)
+		Doclientier client = new Doclientier("/sys/X", "/syn/X", errLog)
 				.tempRoot("temp/odyx")
-				.loginWithUri("jetty-0", "odyx", "test", "123456")
+				.loginWithUri("ody", "test", "8964")
 				.blockSize(bsize);
 		assertNotNull(client);
 
 		Clients.init(h2.jserv());
-		client = new Doclientier("jetty-1", "jetty-1", errLog)
+		client = new Doclientier("/sys/Y", "/syn/Y", errLog)
 				.tempRoot("temp/odyy")
-				.loginWithUri("jetty-1", "odyy", "test", "123456")
+				.loginWithUri("ody", "test", "8964")
 				.blockSize(bsize);
 		assertNotNull(client);
 				
 		Clients.init(h3.jserv());
-		client = new Doclientier("jetty-2", "jetty-2", errLog)
+		client = new Doclientier("/sys/Z", "/syn/Z", errLog)
 				.tempRoot("temp/odyz")
-				.loginWithUri("jetty-2", "odyz", "test", "123456")
+				.loginWithUri("ody", "test", "8964")
 				.blockSize(bsize);
 		assertNotNull(client);
 		
@@ -186,49 +177,53 @@ public class CreateSyndocTierTest {
 
 	/**
 	 * Start Jetty and allow uid to login.
-	 * @param echolights green lights for {@link Echo}'s call-backing signals, paused on by awaitAll().
+	 * @param greenlights green lights for {@link Echo}'s call-backing signals, paused on by awaitAll().
 	 * @param conn
-	 * @param uid
 	 * @param port
 	 * @return JettyHelper
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private T_SynotierJettyApp createStartSyndocTierTest(boolean[] echolights, String conn, String synode,
-			String uid, int port, PrintstreamProvider ... oe) throws IOException, Exception {
-		ArrayList<SyncUser> tieradmins = new ArrayList<SyncUser>() {
-			{add(new SyncUser(uid, "123456", "Ody by robot"));}
-		};
+	private T_SynotierJettyApp createStartSyndocTierTest(boolean[] greenlights, String synode, String envolume,
+			PrintstreamProvider ... oe) throws IOException, Exception {
+//		ArrayList<SyncUser> tieradmins = new ArrayList<SyncUser>() {
+//			{add(new SyncUser(uid, "123456", "Ody by robot"));}
+//		};
 
-		SynodeConfig cfg = new SynodeConfig(synode, SynodeMode.peer);
-		cfg.sysconn = conn;
-		cfg.synconn = conn;
-		cfg.admin = "ody";
-		cfg.domain = zsu;
+		YellowPages.load(envolume);
+		// SynodeConfig cfg = new SynodeConfig(synode, SynodeMode.peer);
+		SynodeConfig cfg = YellowPages.synconfig();
+		// cfg.sysconn = conn;
+		// cfg.synconn = conn;
+		// cfg.admin   = "ody";
+		// cfg.domain  = zsu;
+		cfg.mode = SynodeMode.peer;
 		
-		Syngleton.setupSyntables(cfg, null,
-				webinf, "config.xml", ".", "ABCDEF0123465789");
+//		Syngleton.setupSyntables(cfg, null,
+//				webinf, "config.xml", ".", "ABCDEF0123465789");
+//
+//		Syngleton.setupSysRecords(cfg, tieradmins);
+//
+//		Syntities regists = Syntities.load(webinf, "syntity.json", 
+//				(synreg) -> {
+//					if (eq(synreg.table, "h_photos"))
+//						return new T_PhotoMeta(conn);
+//					else
+//						throw new SemanticException("TODO %s", synreg.table);
+//				});	
+//
+//		DBSynTransBuilder.synSemantics(new DATranscxt(conn), conn, synode, regists);
 
-		Syngleton.setupSysRecords(cfg, tieradmins);
-
-		Syntities regists = Syntities.load(webinf, "syntity.json", 
-				(synreg) -> {
-					if (eq(synreg.table, "h_photos"))
-						return new T_PhotoMeta(conn);
-					else
-						throw new SemanticException("TODO %s", synreg.table);
-				});	
-
-		DBSynTransBuilder.synSemantics(new DATranscxt(conn), conn, synode, regists);
+		AppSettings.setupdb(cfg, webinf, envolume, "config.xml");
 
 		T_SynotierJettyApp app = T_SynotierJettyApp
-				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", port)
-				.loadomains(cfg);
+				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", cfg.port);
+		app.syngleton.loadomains(cfg);
 
 		return T_SynotierJettyApp
-			.registerPorts(app, conn,
+			.registerPorts(app, cfg.sysconn,
 				new AnSession(), new AnQuery(), new HeartLink(),
-				new Echo(true).setCallbacks(() -> { if (echolights != null) echolights[0] = true; }))
+				new Echo(true).setCallbacks(() -> { if (greenlights != null) greenlights[0] = true; }))
 			.addDocServPort(cfg.domain, webinf, syntity_json)
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;

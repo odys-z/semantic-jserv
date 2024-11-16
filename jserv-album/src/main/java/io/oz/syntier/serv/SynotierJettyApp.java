@@ -71,24 +71,32 @@ public class SynotierJettyApp {
 	 * Eclipse run configuration example:
 	 * <pre>Run - Run Configurations - Arguments
 	 * Program Arguments
-	 * 192.168.0.100 8964 ura zsu src/test/res/WEB-INF config-0.xml no-jserv.00 odyz
+	 * 192.168.0.100 8964
 	 * 
 	 * VM Arguments
 	 * -DVOLUME_HOME=../volume
 	 * </pre>
 	 * volume home = relative path to web-inf.
 	 * 
-	 * @param args [0] ip, * for all hosts
-	 *             [1] port,
-	 *             [2] org,
-	 *             [3] domain,
-	 *             [4] web-inf,
-	 *             [5] config.xml,
-	 *             [6] conn-id,
-	 *             [7] robot id already registered on each peers
+	 * @param
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+	}
+	
+	/**
+	 * Start a Jetty app with system print stream for logging.
+	 * 
+	 * @return the Jetty App, with a servlet server.
+	 * @throws Exception
+	 */
+	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg,
+			String webinf, String cfg_xml, String syntity_json) throws Exception {
+
+		return SynotierJettyApp 
+			.createSyndoctierApp(cfg, webinf, cfg_xml, syntity_json)
+			.start(() -> System.out, () -> System.err)
+			;
 	}
 
 	/**
@@ -103,8 +111,8 @@ public class SynotierJettyApp {
 	 * @return Synode-tier Jetty App
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp createSyndoctierApp( String config_xml,
-			String syntity_json, SynodeConfig cfg, String webinf) throws Exception {
+	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg,
+			String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
@@ -134,7 +142,7 @@ public class SynotierJettyApp {
 	}
 
 	SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
-		syngleton.loadDomains(cfg);
+		syngleton.loadomains(cfg);
 		return this;
 	}
 
