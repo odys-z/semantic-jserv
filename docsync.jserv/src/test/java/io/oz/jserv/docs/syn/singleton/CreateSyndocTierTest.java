@@ -99,12 +99,12 @@ public class CreateSyndocTierTest {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-		T_SynotierJettyApp h1 = createStartSyndocTierTest(null, "X", "$VOLUME_0");
+		T_SynotierJettyApp h1 = createStartSyndocTierTest(null, "X", "$VOLUME_0", "ABCDEF0123465789");
 		T_PhotoMeta docm = new T_PhotoMeta(servs_conn[0]);
 		ck[0] = new Docheck(azert, zsu, servs_conn[0],
 					"X", SynodeMode.peer, docm, true);
 
-		T_SynotierJettyApp h2 = createStartSyndocTierTest(null, "Y", "$VOLUME_1");	
+		T_SynotierJettyApp h2 = createStartSyndocTierTest(null, "Y", "$VOLUME_1", "ABCDEF0123465789");	
 		docm = new T_PhotoMeta(servs_conn[1]);
 		ck[1] = new Docheck(azert, zsu, servs_conn[1],
 					"Y", SynodeMode.peer, docm, true);
@@ -115,7 +115,7 @@ public class CreateSyndocTierTest {
         RolloverFileOutputStream es = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.err", true);
         String outfile = os.getDatedFilename();
 
-		T_SynotierJettyApp h3 = createStartSyndocTierTest(lights, "Z", "$VOLUME_2",
+		T_SynotierJettyApp h3 = createStartSyndocTierTest(lights, "Z", "$VOLUME_2", "ABCDEF0123465789", 
 							() -> { return new PrintStream1(os, "3-out"); }, 
 							() -> { return new PrintStream1(es, "3-err"); });
 		
@@ -168,7 +168,7 @@ public class CreateSyndocTierTest {
     	System.setProperty("VOLUME_HOME", p + "/volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
-		System.setProperty("VOLUME_HOME", p + "/volume");
+		// System.setProperty("VOLUME_HOME", p + "/volume");
 		for (int c = 0; c < 4; c++) {
 			System.setProperty(f("VOLUME_%s", c), f("%s/%s%s", p, vol_prefix, c));
 			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
@@ -184,8 +184,8 @@ public class CreateSyndocTierTest {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private T_SynotierJettyApp createStartSyndocTierTest(boolean[] greenlights, String synode, String envolume,
-			PrintstreamProvider ... oe) throws IOException, Exception {
+	private T_SynotierJettyApp createStartSyndocTierTest(boolean[] greenlights, String synode, String envolume, 
+			String rootkey, PrintstreamProvider ... oe) throws IOException, Exception {
 //		ArrayList<SyncUser> tieradmins = new ArrayList<SyncUser>() {
 //			{add(new SyncUser(uid, "123456", "Ody by robot"));}
 //		};
@@ -214,7 +214,7 @@ public class CreateSyndocTierTest {
 //
 //		DBSynTransBuilder.synSemantics(new DATranscxt(conn), conn, synode, regists);
 
-		AppSettings.setupdb(cfg, webinf, envolume, "config.xml");
+		AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey);
 
 		T_SynotierJettyApp app = T_SynotierJettyApp
 				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", cfg.port);

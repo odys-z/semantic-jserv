@@ -1,8 +1,11 @@
 package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
@@ -10,13 +13,18 @@ import java.util.HashMap;
 
 import javax.servlet.annotation.WebServlet;
 
+import org.apache.commons.io_odysz.FilenameUtils;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.kohsuke.args4j.CmdLineParser;
 
+import io.odysz.common.Configs;
+import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -24,18 +32,22 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
+import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
+import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.syn.SynodeConfig;
+import io.oz.syn.YellowPages;
 
 /**
  * Start an embedded Jetty server for ee8.
@@ -55,6 +67,9 @@ import io.oz.syn.SynodeConfig;
  *
  */
 public class SynotierJettyApp {
+
+	public static final String webinf = "./src/main/webapp/WEB-INF";
+
 	final Syngleton syngleton;
 
 	Server server;
@@ -82,6 +97,60 @@ public class SynotierJettyApp {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+		CliArgs cli = new CliArgs();
+		CmdLineParser parser = new CmdLineParser(cli);
+		parser.parseArgument(args);
+
+        Utils.logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+
+		Configs.init(webinf);
+		Connects.init(webinf);
+
+		if (!isblank(cli.installkey)) {
+			YellowPages.load(FilenameUtils.concat(
+					new File(".").getAbsolutePath(),
+					webinf,
+					EnvPath.replaceEnv("$VOLUME_HOME")));
+			SynodeConfig cfg = YellowPages.synconfig();
+			AppSettings.setupdb(cfg, webinf, "$VOLUME_HOME", "config.xml", cli.installkey);
+			createStartSyndocTier("$VOLUME_HOME", webinf, "syntity.json", cli.installkey, cli.ip, cli.port);
+		}
+		else {
+			createStartSyndocTier("$VOLUME_HOME", webinf, "syntity.json", cli.rootkey, cli.ip, cli.port);
+		}
+	}
+
+	/**
+	 * Start Jetty and allow uid to login.
+	 * 
+	 * <p>Test equivolant: {@code io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest#createStartSyndocTierTest(...)}</p>
+	 * @param conn
+	 * @param port
+	 * @return JettyHelper
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	private static SynotierJettyApp createStartSyndocTier(String envolume, String webinf, String syntity_json,
+			String rootkey, String ip, int port, PrintstreamProvider ... oe) throws IOException, Exception {
+
+		String volpath = FilenameUtils.concat(webinf, EnvPath.replaceEnv(envolume));
+		YellowPages.load(volpath);
+		SynodeConfig cfg = YellowPages.synconfig();
+		cfg.mode = SynodeMode.peer;
+		
+		AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey);
+
+		SynotierJettyApp app = SynotierJettyApp
+				.instanserver(webinf, cfg, "config.xml", ip, port);
+		app.syngleton.loadomains(cfg);
+
+		return SynotierJettyApp
+			.registerPorts(app, cfg.sysconn,
+				new AnSession(), new AnQuery(), new HeartLink(),
+				new Echo(true))
+			.addDocServPort(cfg.domain, webinf, syntity_json)
+			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
+			;
 	}
 	
 	/**

@@ -196,7 +196,7 @@ public class ExpDoctierservTest {
 //					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
 //			
 			
-			AppSettings.setupdb(cfgs[i], webinf, f("$VOLUME_%s", i), f("config-%s.xml", i));
+			AppSettings.setupdb(cfgs[i], webinf, f("$VOLUME_%s", i), f("config-%s.xml", i), "ABCDEF0123465789");
 			cleanPhotos(docm, cfgs[i].synconn, devs);
 			
 			// clean and reboot
