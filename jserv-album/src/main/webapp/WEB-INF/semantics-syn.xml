@@ -42,14 +42,15 @@
 	<args>$VOLUME_HOME,uri,family,shareby,folder,docname</args>
   </s>
 	
+  <!--  deprected 
   <s>
-   <!--  deprected -->
 	<id>ph.change-log</id>
 	<smtc>syn-change</smtc>
 	<tabl>h_photos</tabl>
 	<pk>pid</pk>
 	<args>io.oz.jserv.docs.syn.T_PhotoMeta</args>
   </s>
+  -->
  </t>
 
  <t id="metas" pk="tabl" columns="tabl,semanticlass">

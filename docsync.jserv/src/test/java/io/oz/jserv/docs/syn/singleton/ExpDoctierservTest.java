@@ -178,24 +178,13 @@ public class ExpDoctierservTest {
 				jetties[i].stop();
 			
 			YellowPages.load(f("$VOLUME_%s", i));
-//
+
 			cfgs[i] = YellowPages.synconfig();
 			cfgs[i].localhost = host;
 			cfgs[i].port = port++;
 			cfgs[i].mode = SynodeMode.peer;
 
 			// install
-//			Syngleton.setupSysRecords(cfgs[i], YellowPages.robots());
-//
-//			Syntities regists = Syntities.load(webinf, f("$VOLUME_%s/syntity.json", i), 
-//				(synreg) -> {
-//					throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
-//				});
-//			
-//			Syngleton.setupSyntables(cfgs[i], regists.metas.values(),
-//					webinf, f("config-%s.xml", i), ".", "ABCDEF0123465789");
-//			
-			
 			AppSettings.setupdb(cfgs[i], webinf, f("$VOLUME_%s", i), f("config-%s.xml", i), "ABCDEF0123465789");
 			cleanPhotos(docm, cfgs[i].synconn, devs);
 			
