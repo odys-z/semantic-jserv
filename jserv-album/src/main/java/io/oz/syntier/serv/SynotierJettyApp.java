@@ -93,7 +93,7 @@ public class SynotierJettyApp {
 	 * </pre>
 	 * volume home = relative path to web-inf.
 	 * 
-	 * @param
+	 * @param args
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
