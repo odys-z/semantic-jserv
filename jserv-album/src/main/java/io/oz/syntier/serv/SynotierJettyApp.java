@@ -1,8 +1,11 @@
 package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
@@ -10,13 +13,18 @@ import java.util.HashMap;
 
 import javax.servlet.annotation.WebServlet;
 
+import org.apache.commons.io_odysz.FilenameUtils;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.kohsuke.args4j.CmdLineParser;
 
+import io.odysz.common.Configs;
+import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -24,18 +32,22 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
+import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
+import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.syn.SynodeConfig;
+import io.oz.syn.YellowPages;
 
 /**
  * Start an embedded Jetty server for ee8.
@@ -55,6 +67,9 @@ import io.oz.syn.SynodeConfig;
  *
  */
 public class SynotierJettyApp {
+
+	public static final String webinf = "./src/main/webapp/WEB-INF";
+
 	final Syngleton syngleton;
 
 	Server server;
@@ -71,24 +86,97 @@ public class SynotierJettyApp {
 	 * Eclipse run configuration example:
 	 * <pre>Run - Run Configurations - Arguments
 	 * Program Arguments
-	 * 192.168.0.100 8964 ura zsu src/test/res/WEB-INF config-0.xml no-jserv.00 odyz
+	 * 192.168.0.100 8964
 	 * 
 	 * VM Arguments
 	 * -DVOLUME_HOME=../volume
 	 * </pre>
 	 * volume home = relative path to web-inf.
 	 * 
-	 * @param args [0] ip, * for all hosts
-	 *             [1] port,
-	 *             [2] org,
-	 *             [3] domain,
-	 *             [4] web-inf,
-	 *             [5] config.xml,
-	 *             [6] conn-id,
-	 *             [7] robot id already registered on each peers
+	 * @param args
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+		main_("$VOLUME_HOME", args);
+	}
+
+	/**
+	 * Test API for {@link #main(String[])}.
+	 * @param vol_home e. g. "$VOLUME_HOME"
+	 * @param args
+	 * @return 
+	 * @throws Exception
+	 */
+	public static SynotierJettyApp main_(String vol_home, String[] args) throws Exception {
+		CliArgs cli = new CliArgs();
+		CmdLineParser parser = new CmdLineParser(cli);
+		parser.parseArgument(args);
+
+        Utils.logi("VOLUME_HOME : %s", System.getProperty(vol_home));
+
+		Configs.init(webinf);
+		Connects.init(webinf);
+
+		if (!isblank(cli.installkey)) {
+			YellowPages.load(FilenameUtils.concat(
+					new File(".").getAbsolutePath(),
+					webinf,
+					EnvPath.replaceEnv(vol_home)));
+			SynodeConfig cfg = YellowPages.synconfig();
+			AppSettings.setupdb(cfg, webinf, vol_home, "config.xml", cli.installkey);
+			return createStartSyndocTier(vol_home, webinf, "syntity.json", cli.installkey, cli.ip, cli.port);
+		}
+		else {
+			return createStartSyndocTier(vol_home, webinf, "syntity.json", cli.rootkey, cli.ip, cli.port);
+		}
+	}
+
+	/**
+	 * Start Jetty and allow doc user to login.
+	 * 
+	 * <p>Test equivolant: {@code io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest#createStartSyndocTierTest(...)}</p>
+	 * @param conn
+	 * @param port
+	 * @return JettyHelper
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	private static SynotierJettyApp createStartSyndocTier(String envolume, String webinf, String syntity_json,
+			String rootkey, String ip, int port, PrintstreamProvider ... oe) throws IOException, Exception {
+
+		String volpath = FilenameUtils.concat(webinf, EnvPath.replaceEnv(envolume));
+		YellowPages.load(volpath);
+		SynodeConfig cfg = YellowPages.synconfig();
+		cfg.mode = SynodeMode.peer;
+		
+		AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey);
+
+		SynotierJettyApp app = SynotierJettyApp
+				.instanserver(webinf, cfg, "config.xml", ip, port);
+		app.syngleton.loadomains(cfg);
+
+		return SynotierJettyApp
+			.registerPorts(app, cfg.sysconn,
+				new AnSession(), new AnQuery(), new HeartLink(),
+				new Echo(true))
+			.addDocServPort(cfg.domain, webinf, syntity_json)
+			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
+			;
+	}
+	
+	/**
+	 * Start a Jetty app with system print stream for logging.
+	 * 
+	 * @return the Jetty App, with a servlet server.
+	 * @throws Exception
+	 */
+	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg,
+			String webinf, String cfg_xml, String syntity_json) throws Exception {
+
+		return SynotierJettyApp 
+			.createSyndoctierApp(cfg, webinf, cfg_xml, syntity_json)
+			.start(() -> System.out, () -> System.err)
+			;
 	}
 
 	/**
@@ -103,8 +191,8 @@ public class SynotierJettyApp {
 	 * @return Synode-tier Jetty App
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp createSyndoctierApp( String config_xml,
-			String syntity_json, SynodeConfig cfg, String webinf) throws Exception {
+	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg,
+			String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
@@ -134,7 +222,7 @@ public class SynotierJettyApp {
 	}
 
 	SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
-		syngleton.loadDomains(cfg);
+		syngleton.loadomains(cfg);
 		return this;
 	}
 

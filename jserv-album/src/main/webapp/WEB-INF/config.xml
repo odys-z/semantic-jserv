@@ -4,106 +4,40 @@
   <t id="default" pk="k" columns="k,v">
     <c>
     	<k>file-sys</k>
-    	<v>windows</v>
+    	<v></v>
     </c>
+    <c>
+    	<k>id-len</k>
+    	<v>4</v>
+    </c>
+
+	<!-- <c> <k>io.oz.syn.synode</k> <v>X</v> </c> -->
+
 	<c>
 		<!-- Class name of SUser Implementation -->
 		<k>class-IUser</k>
-		<v>io.oz.album.PhotoUser</v>
+		<v>io.oz.jserv.docs.syn.DocUser</v>
 	</c>
-	<c>
-		<!-- home id is the same as remote id. Only registered home can get one -->
-		<k>home-id</k>
-		<v>test.odyzhou</v>
-	</c>
+
+
 	<c>
 		<k>sync.log.on-verbose</k>
 		<v>false</v>
 	</c>
 	<c>
 		<k>ss-timeout-min</k>
-		<v>30</v>
+		<v>60</v>
 	</c>
 	<c>
 		<k>ss-timeout-min.debugMode</k>
 		<v>false</v>
 	</c>
 	<c>
-        <!-- automatic loging session user's db operation (sqls) with this connect id (from connects.xml)
-             Since v1.3.0, when creating log-id, jserv will use system default conn-id;
-             when inserting log, it will use this conn-id.
-         -->
+        <!-- empty for disabling db log -->
 		<k>log-connId</k>
-		<v>sys-sqlite,semantic-log.xml,a_logs</v>
-	</c>
-	<c>
-		<!-- (center) hub, main (storage), private (storage) -->
-		<k>sync-mode</k>
-		<v>hub</v>
-	</c>
-	<c>
-		<!-- worker interval -->
-		<k>sync-interval-min</k>
-		<v>1</v>
-	</c>
-	<c>
-		<!-- connect id for where to save downloaded file, e.g default connection key -->
-		<k>sync-conn-id</k>
-		<v>sys-sqlite</v>
-	</c>
-	<c>
-		<!-- sync task name (multiple threads for the future), i.e. table name, of which table's records to be synchronized) -->
-		<k>sync-table-name</k>
-		<v>h_photos</v>
-	</c>
-	
-	<c>
-		<!-- verbose and doc deleting safe mode -->
-		<k>docsync.debug</k>
-		<v>true</v>
+		<v></v>
 	</c>
 
-	<c>
-		<!-- default saving folder resolver
-			constructor: DocProfile(SynodeMode mode)
-			deprecated in both MVP & Synodes
-		 -->
-		<k>docsync.folder-resolver</k>
-		<v>io.oz.album.tier.DocProfile</v>
-	</c>
-	
-	<c>
-		<!-- works only when file-sys = windows -->
-		<k>windows:tika-external-parsers.xml</k>
-		<v>./tika-external-parsers.xml</v>
-	</c>
-	
-	<c> <k>exiftool</k>
-		<v>C:/Users/Alice/bin/exiftool</v>
-	</c>
   </t>
 
-  <t id="tree-semantics" pk="k" columns="k,v">
-  	<!-- for v fields, see SemanticTree.ix* -->
-	<!--See SemanticTree for v difinetion.
-			All fields here are alias used to access rs columns.
-  			js-node-type: easyui, checked: null, tabl: e_areas, recId: areaId, parent id: parentId, text: areaName, full path: fullpath
-  			for easyui, only parentId is mandatory?
-  			Troubleshooting:
-  			1. too much recusive error report by jquery.
-  			set easyui table data-options idfield as areaId (data-options="idField: 'areaId',...)
-  		<v>easyui,,e_areas,areaId,parentId,areaName,fullpath</v>
-	-->
-  	<c> <k>templ-treegrid</k>
-  		<v>checked,table,rec-id,parentId,text,fullpath,sibling-sort,paging-at-server</v>
-  	</c>
-  </t>
-
-  <!-- 
-  <t id="cheap" pk="k" columns="k,v">
-	<c> <k>config-path</k>
-		<v>workflow-meta.xml</v>
-	</c>
-  </t>
-   -->
 </configs>

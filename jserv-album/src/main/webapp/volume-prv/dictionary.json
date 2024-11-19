@@ -1,0 +1,20 @@
+{"type": "io.oz.syn.AnRegistry",
+ "config": {
+   "synid": "X",
+   "domain": "zsu",
+   "admin": "ody",
+   "sysconn": "sys-prv",
+   "synconn": "docsyn-prv",
+   "localhost": "",
+   "port": 8964,
+   "debug": false,
+    
+   "peers": [
+     {"synid": "X", "org": "URA", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
+     {"synid": "Y", "org": "URA", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"},
+     {"synid": "Z", "org": "URA", "mac": "#URA.Z", "nyq": 0, "domain": "zsu", "syn_uid": "Z,Z"} ]
+ },
+ "synusers": [
+   {"userId": "ody", "pswd": "8964", "iv": null, "org": "URA", "domain": "zsu"},
+   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "URA", "domain": "zsu"} ]
+}

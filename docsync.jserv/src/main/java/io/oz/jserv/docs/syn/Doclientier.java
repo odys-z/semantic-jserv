@@ -149,7 +149,6 @@ public class Doclientier extends Semantier {
 	/**
 	 * Login to hub, where hub root url is initialized with {@link Clients#init(String, boolean...)}.
 	 * 
-	 * @param uri
 	 * @param workerId
 	 * @param device
 	 * @param pswd
@@ -159,7 +158,7 @@ public class Doclientier extends Semantier {
 	 * @throws SsException
 	 * @throws IOException
 	 */
-	public Doclientier loginWithUri(String uri, String workerId, String device, String pswd)
+	public Doclientier loginWithUri(String workerId, String device, String pswd)
 			throws SemanticException, AnsonException, SsException, IOException {
 
 		client = Clients.loginWithUri(uri, workerId, pswd, device);

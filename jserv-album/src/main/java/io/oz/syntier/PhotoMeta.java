@@ -1,4 +1,6 @@
-package io.oz.album.tier;
+package io.oz.syntier;
+
+import static io.odysz.common.Utils.loadTxt;
 
 import java.sql.SQLException;
 
@@ -9,7 +11,6 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 /**
- * @deprecated replaced by album-jserv/io.oz.syntier.PhotoMeta
  * @author ody
  *
  */
@@ -23,7 +24,7 @@ public class PhotoMeta extends ExpDocTableMeta {
 	public final String css;
 
 	public PhotoMeta(String conn) throws TransException {
-		super("h_photos", "pid", "synode", conn);
+		super("h_photos", "pid", "device", conn);
 		
 		tags   = "tags";
 		exif   = "exif";
@@ -32,6 +33,8 @@ public class PhotoMeta extends ExpDocTableMeta {
 		geox = "geox";
 		geoy = "geoy";
 		css = "css";
+
+		ddlSqlite = loadTxt(PhotoMeta.class, "h_photos.sqlite.ddl");
 	}
 
 	@Override

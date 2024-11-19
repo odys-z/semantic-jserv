@@ -34,7 +34,7 @@
   		<src>$VOLUME_1/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
@@ -75,7 +75,7 @@
   		<src>$VOLUME_1/no-jserv-db.01</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
 	<c>
@@ -177,38 +177,39 @@
   	</c>
 
   	<c>
+  		<uri>/sys/X</uri>
+  		<conn>main-sqlite-0</conn>
+  	</c>
+  	<c>
   		<uri>/syn/X</uri>
   		<conn>no-jserv.00</conn>
   	</c>
-  	<c>
-  		<uri>jetty-0</uri>
-  		<conn>no-jserv.00</conn>
-  	</c>
 
+
+  	<c>
+  		<uri>/sys/Y</uri>
+  		<conn>main-sqlite-1</conn>
+  	</c>
   	<c>
   		<uri>/syn/Y</uri>
   		<conn>no-jserv.01</conn>
   	</c>
-  	<c>
-  		<uri>jetty-1</uri>
-  		<conn>no-jserv.01</conn>
-  	</c>
 
+  	<c>
+  		<uri>/sys/Z</uri>
+  		<conn>main-sqlite-2</conn>
+  	</c>
   	<c>
   		<uri>/syn/Z</uri>
   		<conn>no-jserv.02</conn>
   	</c>
-  	<c>
-  		<uri>jetty-2</uri>
-  		<conn>no-jserv.02</conn>
-  	</c>
 
   	<c>
-  		<uri>/syn/W</uri>
-  		<conn>no-jserv.03</conn>
+  		<uri>/sys/W</uri>
+  		<conn>main-sqlite-3</conn>
   	</c>
   	<c>
-  		<uri>jetty-3</uri>
+  		<uri>/syn/W</uri>
   		<conn>no-jserv.03</conn>
   	</c>
 

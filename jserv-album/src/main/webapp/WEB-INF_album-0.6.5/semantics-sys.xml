@@ -8,6 +8,14 @@
 		pk:
 		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
    -->
+	<s>
+		<id>dev.ak</id>
+		<smtc>a-k</smtc>
+		<tabl>doc_devices</tabl>
+		<pk>device</pk>
+		<args>device</args>
+    </s>
+
     <s>
 		<id>pho.ak</id>
 		<smtc>a-k</smtc>
@@ -26,11 +34,10 @@
 	
 	<s>
 		<id>pho.extfile</id>
-		<smtc>ef2.0</smtc>
+		<smtc>ef</smtc>
 		<tabl>h_photos</tabl>
 		<pk>pid</pk>
-		<!-- args 0: upload-root, 1: uri, 2: sub ..., -1: client-name (mandatory) -->
-		<args>$VOLUME_HOME,uri,family,shareby,folder,pname</args>
+		<args>$VOLUME_HOME,uri,shareby,folder,pname</args>
 	</s>
 	
 	<s>
