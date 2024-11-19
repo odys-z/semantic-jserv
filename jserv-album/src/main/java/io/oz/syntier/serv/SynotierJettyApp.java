@@ -97,11 +97,22 @@ public class SynotierJettyApp {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+		main_("$VOLUME_HOME", args);
+	}
+
+	/**
+	 * Test API for {@link #main(String[])}.
+	 * @param vol_home e. g. "$VOLUME_HOME"
+	 * @param args
+	 * @return 
+	 * @throws Exception
+	 */
+	public static SynotierJettyApp main_(String vol_home, String[] args) throws Exception {
 		CliArgs cli = new CliArgs();
 		CmdLineParser parser = new CmdLineParser(cli);
 		parser.parseArgument(args);
 
-        Utils.logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+        Utils.logi("VOLUME_HOME : %s", System.getProperty(vol_home));
 
 		Configs.init(webinf);
 		Connects.init(webinf);
@@ -110,18 +121,18 @@ public class SynotierJettyApp {
 			YellowPages.load(FilenameUtils.concat(
 					new File(".").getAbsolutePath(),
 					webinf,
-					EnvPath.replaceEnv("$VOLUME_HOME")));
+					EnvPath.replaceEnv(vol_home)));
 			SynodeConfig cfg = YellowPages.synconfig();
-			AppSettings.setupdb(cfg, webinf, "$VOLUME_HOME", "config.xml", cli.installkey);
-			createStartSyndocTier("$VOLUME_HOME", webinf, "syntity.json", cli.installkey, cli.ip, cli.port);
+			AppSettings.setupdb(cfg, webinf, vol_home, "config.xml", cli.installkey);
+			return createStartSyndocTier(vol_home, webinf, "syntity.json", cli.installkey, cli.ip, cli.port);
 		}
 		else {
-			createStartSyndocTier("$VOLUME_HOME", webinf, "syntity.json", cli.rootkey, cli.ip, cli.port);
+			return createStartSyndocTier(vol_home, webinf, "syntity.json", cli.rootkey, cli.ip, cli.port);
 		}
 	}
 
 	/**
-	 * Start Jetty and allow uid to login.
+	 * Start Jetty and allow doc user to login.
 	 * 
 	 * <p>Test equivolant: {@code io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest#createStartSyndocTierTest(...)}</p>
 	 * @param conn

@@ -7,7 +7,7 @@
   	<!-- smtcs: semantics configuration used only for the connection.
   		(And a global semantics configuration?) -->
   	<c>
-  		<id>main-hub</id>
+  		<id>sys-hub</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>
   		<src>$VOLUME_HUB/jserv-main.db</src>
@@ -18,7 +18,7 @@
   	</c>
   	
   	<c>
-		<id>doc-hub</id>
+		<id>docsyn-hub</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>$VOLUME_HUB/doc-jserv.db</src>
@@ -29,7 +29,7 @@
 	</c>
 
   	<c>
-  		<id>main-prv</id>
+  		<id>sys-prv</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>
   		<src>$VOLUME_PRV/jserv-main.db</src>
@@ -40,7 +40,7 @@
   	</c>
   	
   	<c>
-		<id>doc-prv</id>
+		<id>docsyn-prv</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
   		<src>$VOLUME_PRV/doc-jserv.db</src>
