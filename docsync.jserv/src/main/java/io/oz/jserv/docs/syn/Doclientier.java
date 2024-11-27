@@ -59,6 +59,8 @@ import io.oz.jserv.docs.x.DocsException;
 public class Doclientier extends Semantier {
 	public boolean verbose = false;
 
+	protected final String doctbl;
+
 	public SessionClient client;
 	
 	/** @since 2.0.0 changed to static */
@@ -73,6 +75,7 @@ public class Doclientier extends Semantier {
 	int blocksize = 3 * 1024 * 1024;
 
 	String synuri;
+	public String synuri() { return synuri; }
 
 	/**
 	 * Change default block size for performance. Default is 3 Mib.
@@ -99,8 +102,9 @@ public class Doclientier extends Semantier {
 	 * @throws SQLException 
 	 * @throws SemanticException 
 	 */
-	public Doclientier(String sysuri, String synuri, ErrorCtx errCtx)
+	public Doclientier(String doctbl, String sysuri, String synuri, ErrorCtx errCtx)
 			throws SemanticException, IOException {
+		this.doctbl = doctbl;
 		Doclientier.errCtx = errCtx;
 		this.uri = sysuri;
 		this.synuri = synuri;
@@ -603,14 +607,14 @@ public class Doclientier extends Semantier {
 	 * @throws TransException
 	 * @throws IOException
 	 */
-	public <T extends IPort> DocsResp synQueryPathsPage(PathsPage page, String tabl, T port)
+	public <T extends IPort> DocsResp synQueryPathsPage(PathsPage page, T port)
 			throws TransException, IOException {
 		String[] act = AnsonHeader.usrAct("synclient.java", "query", "r/states", "query sync");
 		AnsonHeader header = client.header().act(act);
 
 		DocsReq req = (DocsReq) new DocsReq()
 				.syncing(page)
-				.docTabl(tabl)
+				.docTabl(doctbl)
 				.device(new Device(page.device, null))
 				.a(A.selectSyncs); 
 

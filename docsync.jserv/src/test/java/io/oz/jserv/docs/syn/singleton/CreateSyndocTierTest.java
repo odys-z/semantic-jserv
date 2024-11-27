@@ -124,21 +124,21 @@ public class CreateSyndocTierTest {
 					"Z", SynodeMode.peer, docm, true);
 
 		Clients.init(h1.jserv());
-		Doclientier client = new Doclientier("/sys/X", "/syn/X", errLog)
+		Doclientier client = new Doclientier(docm.tbl, "/sys/X", "/syn/X", errLog)
 				.tempRoot("temp/odyx")
 				.loginWithUri("ody", "test", "8964")
 				.blockSize(bsize);
 		assertNotNull(client);
 
 		Clients.init(h2.jserv());
-		client = new Doclientier("/sys/Y", "/syn/Y", errLog)
+		client = new Doclientier(docm.tbl, "/sys/Y", "/syn/Y", errLog)
 				.tempRoot("temp/odyy")
 				.loginWithUri("ody", "test", "8964")
 				.blockSize(bsize);
 		assertNotNull(client);
 				
 		Clients.init(h3.jserv());
-		client = new Doclientier("/sys/Z", "/syn/Z", errLog)
+		client = new Doclientier(docm.tbl, "/sys/Z", "/syn/Z", errLog)
 				.tempRoot("temp/odyz")
 				.loginWithUri("ody", "test", "8964")
 				.blockSize(bsize);
@@ -186,17 +186,9 @@ public class CreateSyndocTierTest {
 	 */
 	private T_SynotierJettyApp createStartSyndocTierTest(boolean[] greenlights, String synode, String envolume, 
 			String rootkey, PrintstreamProvider ... oe) throws IOException, Exception {
-//		ArrayList<SyncUser> tieradmins = new ArrayList<SyncUser>() {
-//			{add(new SyncUser(uid, "123456", "Ody by robot"));}
-//		};
 
 		YellowPages.load(envolume);
-		// SynodeConfig cfg = new SynodeConfig(synode, SynodeMode.peer);
 		SynodeConfig cfg = YellowPages.synconfig();
-		// cfg.sysconn = conn;
-		// cfg.synconn = conn;
-		// cfg.admin   = "ody";
-		// cfg.domain  = zsu;
 		cfg.mode = SynodeMode.peer;
 		
 //		Syngleton.setupSyntables(cfg, null,

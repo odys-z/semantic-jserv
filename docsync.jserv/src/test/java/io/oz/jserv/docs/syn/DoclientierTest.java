@@ -205,7 +205,7 @@ class DoclientierTest {
 			pathpool.add(pth);
 		}
 
-		DocsResp rep = clientier.synQueryPathsPage(pths, entityName, Port.docsync);
+		DocsResp rep = clientier.synQueryPathsPage(pths, Port.docsync);
 
 		PathsPage pthpage = rep.pathsPage();
 

@@ -38,7 +38,7 @@ import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumPort;
 import io.oz.album.tier.AlbumResp;
 import io.oz.album.tier.PhotoRec;
-import io.oz.albumtier.PhotoSyntier;
+import io.oz.albumtier.PhotoSyntierDel;
 
 /**
  * @deprecated
@@ -152,7 +152,7 @@ class AlbumsTest {
 
 	AlbumResp getCollection(String collectId) {
 		try {
-			PhotoSyntier tier = new PhotoSyntier("test/album", client.ssInfo().device, errCtx);
+			PhotoSyntierDel tier = new PhotoSyntierDel("test/album", client.ssInfo().device, errCtx);
 			return tier.getCollect(collectId);
 		} catch (SemanticException | IOException | AnsonException e) {
 			e.printStackTrace();
@@ -163,7 +163,7 @@ class AlbumsTest {
 
 	String getDownloadResult(PhotoRec photo, String filepath) {
 		try {
-			PhotoSyntier tier = new PhotoSyntier("test/album", client.ssInfo().device, errCtx);
+			PhotoSyntierDel tier = new PhotoSyntierDel("test/album", client.ssInfo().device, errCtx);
 			return tier.download(photo, filepath);
 		} catch (IOException | AnsonException | SemanticException e) {
 			e.printStackTrace();
@@ -237,7 +237,7 @@ class AlbumsTest {
 		 String filename = "my.jpg";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
-		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier("test/album", "device-test", errCtx)
+		PhotoSyntierDel tier = (PhotoSyntierDel) new PhotoSyntierDel("test/album", "device-test", errCtx)
 								.blockSize(bsize);
 
 		List<ExpSyncDoc> videos = new ArrayList<ExpSyncDoc>();

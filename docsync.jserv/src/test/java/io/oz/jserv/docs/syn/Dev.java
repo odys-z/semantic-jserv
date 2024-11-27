@@ -74,7 +74,7 @@ public class Dev {
 	}
 
 	public void login(ErrorCtx errLog) throws SemanticException, AnsonException, SsException, IOException {
-		client = new Doclientier(sysuri, synuri, errLog)
+		client = new Doclientier(docm.tbl, sysuri, synuri, errLog)
 				.tempRoot(sysuri)
 				.loginWithUri(uid, device.id, psw)
 				.blockSize(bsize);

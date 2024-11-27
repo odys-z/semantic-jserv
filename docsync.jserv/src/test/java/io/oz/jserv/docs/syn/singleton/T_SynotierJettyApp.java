@@ -106,11 +106,6 @@ public class T_SynotierJettyApp {
 			;
 	}
 
-//	T_SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
-//		syngleton.loadDomains(cfg);
-//		return this;
-//	}
-
 	public T_SynotierJettyApp addDocServPort(String domain, String cfgroot, String syntity_json) throws Exception {
 		SynDomanager domanger = syngleton.domanager(domain);
 
@@ -208,7 +203,6 @@ public class T_SynotierJettyApp {
 	    AnsonMsg.understandPorts(Port.syntier);
 	
 	    T_SynotierJettyApp synapp = new T_SynotierJettyApp(cfg);
-	    				// Syngleton.synmap.get(smtype.synChange));
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	

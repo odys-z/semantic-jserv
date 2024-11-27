@@ -261,6 +261,9 @@ public class Syngleton extends JSingleton {
 		setupSqliTables(cfg.synconn, is(forcedrop), synm, chm, sbm, xbm, prm, ssm);
 
 		setupSqlitables(cfg.synconn, is(forcedrop), entms);
+		
+		for (SyntityMeta m : entms)
+			m.replace();
 
 		// 3 symantics and entities 
 		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
