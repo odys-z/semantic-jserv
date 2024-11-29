@@ -27,8 +27,8 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.SessionInf;
 import io.odysz.transact.x.TransException;
 import io.oz.album.tier.AlbumResp;
-import io.oz.albumtier.PhotoSyntierDel;
 import io.oz.syndoc.client.PhotoSyntier;
+import io.oz.syntier.PhotoMeta;
 
 @SuppressWarnings("unused")
 class SynotierJettyAppTest {
@@ -63,7 +63,7 @@ class SynotierJettyAppTest {
 		 int bsize = 72 * 1024;
 		 String filename = "my.jpg";
 
-		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier("h_photos", "test/album", "device-test", errCtx)
+		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier(new PhotoMeta(null), "test/album", errCtx)
 								.blockSize(bsize);
 		SessionClient ssclient = Clients.loginWithUri(tier.uri(), "ody", "123456", "device-test");
 

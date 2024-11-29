@@ -35,6 +35,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
+import io.odysz.semantic.jprotocol.JProtocol.OnDocsOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
@@ -74,7 +75,7 @@ public class Doclientier extends Semantier {
 	/** Must be multiple of 12. Default 3 MiB */
 	int blocksize = 3 * 1024 * 1024;
 
-	String synuri;
+	protected String synuri;
 	public String synuri() { return synuri; }
 
 	/**
@@ -480,6 +481,28 @@ public class Doclientier extends Semantier {
 
 		return reslts;
 	}
+	
+	/**
+	 * Helper for compose file uploading responses to readable string
+	 * @param resps e.g response of calling {@link #pushBlocks(String, List, OnProcess, OnDocsOk, OnError...)}. 
+	 * @return [size, denied, invalid]
+	 */
+	public static int[] parseErrorCodes(List<DocsResp> resps) {
+		if (resps != null) {
+			int ignored = 0;
+			int invalid = 0;
+			int size = 0;
+			for(DocsResp r : resps) {
+				if (r.xdoc == null)
+					ignored++;
+				size++;
+			}
+			return new int[] { size, ignored, invalid };
+		}
+
+		return new int[] {0, 0, 0};
+	}
+
 
 	public String download(String clientUri, String syname, ExpSyncDoc photo, String localpath)
 			throws SemanticException, AnsonException, IOException {
