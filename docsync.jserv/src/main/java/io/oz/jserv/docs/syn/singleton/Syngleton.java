@@ -262,6 +262,7 @@ public class Syngleton extends JSingleton {
 
 		setupSqlitables(cfg.synconn, is(forcedrop), entms);
 		
+		// 2.1 inject synmantics after syn-tables have been set.
 		for (SyntityMeta m : entms)
 			m.replace();
 
