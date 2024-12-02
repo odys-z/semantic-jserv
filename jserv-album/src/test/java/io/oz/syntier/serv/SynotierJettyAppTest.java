@@ -48,13 +48,16 @@ class SynotierJettyAppTest {
 	void testSyndocApp() throws Exception {
 		final String vhub = "VOLUME_HUB";
 		final String vprv = "VOLUME_PRV";
-		String p = new File("src/main/webapp/vol_hub").getAbsolutePath();
+		String p = new File("src/main/webapp/volume-hub").getAbsolutePath();
     	System.setProperty(vhub, p);
-		p = new File("src/main/webapp/vol_prv").getAbsolutePath();
+		p = new File("src/main/webapp/volume-prv").getAbsolutePath();
     	System.setProperty(vprv, p);
 
 		SynotierJettyApp hub = SynotierJettyApp.main_("$" + vhub,  new String[] {});
+		hub.print();
 		SynotierJettyApp prv = SynotierJettyApp.main_("$" + vprv,  new String[] {});
+		hub.print();
+		prv.print();
 		pause("...");
 	}
 

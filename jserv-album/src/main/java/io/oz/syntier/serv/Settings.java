@@ -19,14 +19,16 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.AlbumPort;
+import io.oz.syn.YellowPages;
 
 @WebServlet(description = "Portfolio Synode Settings", urlPatterns = { "/settings.less" })
 public class Settings extends ServPort<UserReq> {
 	private static final long serialVersionUID = 1L;
 
-	public Settings() {
+	public Settings() throws Exception {
 		super(AlbumPort.settings);
-		// TODO Auto-generated constructor stub
+		YellowPages.load("");
+		genQrcode(YellowPages.synconfig().localhost);
 	}
 
 	@Override

@@ -101,9 +101,9 @@ public class SynotierJettyApp {
 	}
 
 	/**
-	 * Test API for {@link #main(String[])}.
-	 * @param vol_home e. g. "$VOLUME_HOME"
-	 * @param args
+	 * Test API equivalent of {@link #main(String[])}.
+	 * @param vol_home environment variable name for volume path, e. g. "$VOLUME_HOME"
+	 * @param args cli args
 	 * @return 
 	 * @throws Exception
 	 */
@@ -340,6 +340,10 @@ public class SynotierJettyApp {
 	    synapp.syngleton.syndomanagers = new HashMap<String, SynDomanager>();
 	    
 	    return synapp;
+	}
+
+	public void print() {
+		Utils.logi("Synode %s: %s", syngleton.synode(), syngleton.jserv);
 	}
 
 }

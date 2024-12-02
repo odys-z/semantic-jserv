@@ -116,6 +116,16 @@
   </distributionManagement>
 
   <build>
+    <resources>
+      <resource>
+        <directory>${project.basedir}/src/main/java</directory>
+        <includes>
+          <include>**/*.ddl</include>
+          <include>**/*.sql</include>
+          <include>**/*.txt</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
       	<groupId>org.apache.maven.plugins</groupId>

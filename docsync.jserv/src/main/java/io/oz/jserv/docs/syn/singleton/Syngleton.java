@@ -303,7 +303,7 @@ public class Syngleton extends JSingleton {
 	
 		for (String tbl : new String[] {
 					"oz_autoseq.ddl",
-					"oz_autoseq.sql",
+//					"oz_autoseq.sql",
 					"a_users.sqlite.ddl",
 					"a_roles.sqlite.ddl",
 					"a_orgs.sqlite.ddl",}) {
