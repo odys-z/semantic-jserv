@@ -14,7 +14,7 @@
 	<smtc>a-k</smtc>
 	<tabl>syn_change</tabl>
 	<pk>cid</pk>
-	<args>cid,synoder</args>
+	<args>cid,0,synoder</args>
   </s>
 
   <s>
@@ -22,7 +22,7 @@
 	<smtc>a-k</smtc>
 	<tabl>h_photos</tabl>
 	<pk>pid</pk>
-	<args>pid</args>
+	<args>pid,4096</args>
   </s>
 
   <s>
@@ -42,14 +42,14 @@
 	<args>$VOLUME_HOME,uri,family,shareby,folder,docname</args>
   </s>
 	
+  <!--  deprected
   <s>
-   <!--  deprected -->
 	<id>ph.change-log</id>
 	<smtc>syn-change</smtc>
 	<tabl>h_photos</tabl>
 	<pk>pid</pk>
 	<args>io.oz.jserv.docs.syn.T_PhotoMeta</args>
-  </s>
+  </s> -->
  </t>
 
  <t id="metas" pk="tabl" columns="tabl,semanticlass">

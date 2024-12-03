@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
+
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
@@ -26,6 +28,7 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.meta.AutoSeqMeta;
 import io.odysz.semantic.meta.PeersMeta;
 import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynSessionMeta;
@@ -75,10 +78,10 @@ public class Syngleton extends JSingleton {
 	final String sysconn;
 
 	/**
-	 * { servlet-url-pattern: { domain: domanager } }, only instance of {@link ExpSynodetier},<br>
-	 * e. g. { docs.sync: { zsu: { new SnyDomanger(x, y) } }
+	 * { domain: domanager },<br>
+	 * e. g. { zsu: new SnyDomanger(x, y) }
 	 */
-	public HashMap<String, SynDomanager> syndomanagers;
+	HashMap<String, SynDomanager> syndomanagers;
 
 	public SynDomanager domanager(String domain) {
 		return (syndomanagers != null && syndomanagers.containsKey(domain)) ?
@@ -128,7 +131,6 @@ public class Syngleton extends JSingleton {
 	 * @since 0.2.0
 	 */
 	public HashMap<String,SynDomanager> loadomains(SynodeConfig cfg) throws Exception {
-		// notNull(syntier_url);
 		shouldeq(new Object() {}, cfg.mode, SynodeMode.peer);
 		
 		if (syndomanagers == null)
@@ -147,7 +149,8 @@ public class Syngleton extends JSingleton {
 		
 		if (rs.getRowCount() != 1)
 			throw new ExchangeException(ExessionAct.ready, null,
-					"V0.2 only supports one and only one domain. Found multiple domains in %s", cfg.synconn);
+					"Docsync.jserv 0.2 can support one and only one domain, but found %s domain(s) in %s",
+					rs.getRowCount(), cfg.synconn);
 		
 		if (rs.next()) {
 			String domain = rs.getString(synm.domain);
@@ -244,6 +247,7 @@ public class Syngleton extends JSingleton {
 		AnSession.init(defltScxt);
 		
 		// 2 syn-tables
+		AutoSeqMeta akm;
 		SynChangeMeta chm;
 		SynSubsMeta sbm;
 		SynchangeBuffMeta xbm;
@@ -251,6 +255,7 @@ public class Syngleton extends JSingleton {
 		PeersMeta prm;
 		SynodeMeta synm;
 	
+		akm  = new AutoSeqMeta();
 		chm  = new SynChangeMeta();
 		sbm  = new SynSubsMeta(chm);
 		xbm  = new SynchangeBuffMeta(chm);
@@ -258,7 +263,7 @@ public class Syngleton extends JSingleton {
 		prm  = new PeersMeta();
 		synm = new SynodeMeta(cfg.synconn);
 	
-		setupSqliTables(cfg.synconn, is(forcedrop), synm, chm, sbm, xbm, prm, ssm);
+		setupSqliTables(cfg.synconn, is(forcedrop), akm, synm, chm, sbm, xbm, prm, ssm);
 
 		setupSqlitables(cfg.synconn, is(forcedrop), entms);
 		
@@ -369,7 +374,7 @@ public class Syngleton extends JSingleton {
 			throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 
-		SynodeMeta    synm = new SynodeMeta(cfg.synconn);
+		// SynodeMeta    synm = new SynodeMeta(cfg.synconn);
 		SynChangeMeta chgm = new SynChangeMeta (cfg.synconn);
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
@@ -378,10 +383,11 @@ public class Syngleton extends JSingleton {
 				(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 		DATranscxt tb0 = new DATranscxt(cfg.synconn);
 		
-		tb0.delete(synm.tbl, usr)
-			.whereEq(synm.domain, cfg.domain)
-			.post(tb0.delete(chgm.tbl)
-					.whereEq(chgm.domain, cfg.domain))
+//		tb0.delete(synm.tbl, usr)
+//			.whereEq(synm.domain, cfg.domain)
+//			.post(tb0.delete(chgm.tbl)
+		tb0.delete(chgm.tbl, usr)
+			.whereEq(chgm.domain, cfg.domain)
 			.post(tb0.delete(subm.tbl)
 					.where(op.isNotnull, subm.changeId, new ExprPart()))
 			.post(tb0.delete(xbfm.tbl)
@@ -412,4 +418,10 @@ public class Syngleton extends JSingleton {
 					.where(op.isNotnull, xbfm.changeId, new ExprPart()))
 			.d(tb0.instancontxt(cfg.synconn, usr));
 	}
+
+	public Set<String> domains() {
+		return syndomanagers.keySet();
+	}
+
+//	public SynDomanager domanager(String domain) { return syndomanagers.get(domain); }
 }

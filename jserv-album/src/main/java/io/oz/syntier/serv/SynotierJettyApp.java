@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
-import java.util.HashMap;
 
 import javax.servlet.annotation.WebServlet;
 
@@ -337,7 +336,7 @@ public class SynotierJettyApp {
 	    String addrhost  = inet.getHostAddress();
 		synapp.syngleton.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
 	
-	    synapp.syngleton.syndomanagers = new HashMap<String, SynDomanager>();
+	    // synapp.syngleton.syndomanagers = new HashMap<String, SynDomanager>();
 	    
 	    return synapp;
 	}

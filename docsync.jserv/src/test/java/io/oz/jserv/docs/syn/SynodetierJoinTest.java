@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -29,17 +30,14 @@ import io.odysz.common.Configs;
 import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
@@ -132,19 +130,19 @@ public class SynodetierJoinTest {
 
 			Syngleton.setupSysRecords(config, robots);
 			
-			Syngleton.cleanDomain(config);
-
-			// also clean relic of joined domain.
-			IUser rob = DATranscxt.dummyUser();
-			SynodeMeta synm = new SynodeMeta(config.synconn);
-			DATranscxt trb0 = new DATranscxt(config.synconn);
-			trb0.delete(synm.tbl, rob)
-				.whereEq(synm.domain, zsu)
-				.d(trb0.instancontxt(config.synconn, rob));
-
 			Syngleton.setupSyntables(config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789");
+
+			Syngleton.cleanDomain(config);
+
+			// also clean relic of joined domain.
+//			IUser rob = DATranscxt.dummyUser();
+//			SynodeMeta synm = new SynodeMeta(config.synconn);
+//			DATranscxt trb0 = new DATranscxt(config.synconn);
+//			trb0.delete(synm.tbl, rob)
+//				.whereEq(synm.domain, zsu)
+//				.d(trb0.instancontxt(config.synconn, rob));
 
 			Syngleton.cleanSynssions(config);
 
@@ -218,14 +216,15 @@ public class SynodetierJoinTest {
 		T_SynotierJettyApp hub = jetties[to];
 		T_SynotierJettyApp prv = jetties[by];
 
-		HashMap<String, SynDomanager> hubdoms = hub.syngleton().syndomanagers;
-
-		if (len(hubdoms) > 1 || len(prv.syngleton().syndomanagers) > 1)
+		// HashMap<String, SynDomanager> hubdoms = hub.syngleton().syndomanagers;
+		Set<String> hubdoms = hub.syngleton().domains();
+		// if (len(hubdoms) > 1 || len(prv.syngleton().syndomanagers) > 1)
+		if (len(prv.syngleton().domains()) > 1)
 			fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
 		
-		for (String dom : hubdoms.keySet()) {
-			SynDomanager hubmanger = hubdoms.get(dom);
-			SynDomanager prvmanger = prv.syngleton().syndomanagers.get(null);
+		for (String dom : hubdoms) {
+			SynDomanager hubmanger = hub.syngleton().domanager(dom);
+			SynDomanager prvmanger = prv.syngleton().domanager(null);
 
 			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 					(rep) -> { lights[by] = true; });
@@ -239,10 +238,11 @@ public class SynodetierJoinTest {
 
 		T_SynotierJettyApp t = jetties[tx];
 
-		HashMap<String, SynDomanager> doms = t.syngleton().syndomanagers;
-
-		for (String dom : doms.keySet()) {
-			doms.get(dom).updomain(
+		// HashMap<String, SynDomanager> doms = t.syngleton().syndomanagers;
+		// for (String dom : doms.keySet()) {
+		for (String dom : t.syngleton().domains()) {
+			// doms.get(dom).updomain(
+			t.syngleton().domanager(dom).updomain(
 				(domain, mynid, peer, xp) -> {
 					if (!isNull(ck) && !isblank(peer))
 						try {
