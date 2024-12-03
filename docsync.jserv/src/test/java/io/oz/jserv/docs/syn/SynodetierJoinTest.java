@@ -11,16 +11,15 @@ import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.docm;
+import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.setVolumeEnv;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.ura;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.setVolumeEnv;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -169,7 +168,11 @@ public class SynodetierJoinTest {
 		boolean[] lights = new boolean[] {true, false, false};
 		
 		int no = 0;
+
+		printChangeLines(ck);
+		printNyquv(ck, true);
 		Utils.logrst("X <- join - Y", ++no);
+
 		waiting(lights, Y);
 		joinby(lights, X, Y); // no subscription of Z
 		awaitAll(lights, -1);
@@ -238,10 +241,7 @@ public class SynodetierJoinTest {
 
 		T_SynotierJettyApp t = jetties[tx];
 
-		// HashMap<String, SynDomanager> doms = t.syngleton().syndomanagers;
-		// for (String dom : doms.keySet()) {
 		for (String dom : t.syngleton().domains()) {
-			// doms.get(dom).updomain(
 			t.syngleton().domanager(dom).updomain(
 				(domain, mynid, peer, xp) -> {
 					if (!isNull(ck) && !isblank(peer))

@@ -298,7 +298,7 @@ public class Syngleton extends JSingleton {
 	
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
-		defltScxt = new DATranscxt(cfg.sysconn);
+		defltScxt = new DATranscxt();
 	
 		for (String tbl : new String[] {"oz_autoseq", "a_users", "a_roles", "a_orgs"}) {
 			sqls.add("drop table if exists " + tbl);
@@ -317,6 +317,8 @@ public class Syngleton extends JSingleton {
 			Connects.commit(cfg.sysconn, usr, sqls);
 			sqls.clear();
 		}
+
+		defltScxt = new DATranscxt(cfg.sysconn);
 		
 		if (iterable != null) {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);
