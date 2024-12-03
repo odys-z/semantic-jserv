@@ -219,9 +219,7 @@ public class SynodetierJoinTest {
 		T_SynotierJettyApp hub = jetties[to];
 		T_SynotierJettyApp prv = jetties[by];
 
-		// HashMap<String, SynDomanager> hubdoms = hub.syngleton().syndomanagers;
 		Set<String> hubdoms = hub.syngleton().domains();
-		// if (len(hubdoms) > 1 || len(prv.syngleton().syndomanagers) > 1)
 		if (len(prv.syngleton().domains()) > 1)
 			fail("Multiple synchronizing domain schema is an issue not handled in v 2.0.0.");
 		
