@@ -22,7 +22,7 @@
 	<smtc>a-k</smtc>
 	<tabl>h_photos</tabl>
 	<pk>pid</pk>
-	<args>pid</args>
+	<args>pid,4096</args>
   </s>
 
   <s>
@@ -41,16 +41,6 @@
 	<!-- args 0: upload-root, 1: uri, 2: sub ..., -1: client-name (mandatory) -->
 	<args>$VOLUME_HOME,uri,family,shareby,folder,docname</args>
   </s>
-	
-  <!--  deprected 
-  <s>
-	<id>ph.change-log</id>
-	<smtc>syn-change</smtc>
-	<tabl>h_photos</tabl>
-	<pk>pid</pk>
-	<args>io.oz.jserv.docs.syn.T_PhotoMeta</args>
-  </s>
-  -->
  </t>
 
  <t id="metas" pk="tabl" columns="tabl,semanticlass">
