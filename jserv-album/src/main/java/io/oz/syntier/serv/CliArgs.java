@@ -15,4 +15,11 @@ public class CliArgs {
 	
 	@Option(name="-key", usage="root key used while initalize db")
 	String rootkey;
+	
+	@Option(name="-urlpath", usage="url root path to server, e. g. jserv-album (no first slash)")
+	String urlpath;
+
+	public CliArgs() {
+		port = 8964;
+	}
 }

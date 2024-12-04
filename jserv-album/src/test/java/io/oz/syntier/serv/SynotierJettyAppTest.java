@@ -53,12 +53,12 @@ class SynotierJettyAppTest {
 		p = new File("src/main/webapp/volume-prv").getAbsolutePath();
     	System.setProperty(vprv, p);
 
-		SynotierJettyApp hub = SynotierJettyApp.main_("$" + vhub,  new String[] {});
+		SynotierJettyApp hub = SynotierJettyApp.main_("$" + vhub,  new String[] {"-urlpath", "/jserv-album"});
 		hub.print();
-		SynotierJettyApp prv = SynotierJettyApp.main_("$" + vprv,  new String[] {});
+		SynotierJettyApp prv = SynotierJettyApp.main_("$" + vprv,  new String[] {"-urlpath", "/jserv-album", "-port", "8965"});
 		hub.print();
 		prv.print();
-		pause("...");
+		pause("Press enter to quite ...");
 	}
 
 	void testVideoUp(boolean[] lights) throws SsException, IOException, GeneralSecurityException, AnsonException, TransException {
