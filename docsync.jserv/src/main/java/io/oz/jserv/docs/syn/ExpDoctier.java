@@ -24,6 +24,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
+import io.odysz.jclient.syn.DocsException;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -49,7 +50,6 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DeviceTableMeta;
-import io.oz.jserv.docs.x.DocsException;
 
 /**
  * The access point of document client tiers, accepting doc's pushing.

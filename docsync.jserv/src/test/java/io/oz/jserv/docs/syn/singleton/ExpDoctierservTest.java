@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
+import io.odysz.jclient.syn.Doclientier;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -40,7 +41,6 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
 import io.oz.jserv.docs.syn.Dev;
-import io.oz.jserv.docs.syn.Doclientier;
 import io.oz.jserv.docs.syn.SynodetierJoinTest;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
