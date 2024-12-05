@@ -1,0 +1,4 @@
+touch src/main/webapp/volume-hub/doc-jserv.db
+touch src/main/webapp/volume-hub/jserv-main.db
+touch src/main/webapp/volume-prv/doc-jserv.db
+touch src/main/webapp/volume-prv/jserv-main.db
