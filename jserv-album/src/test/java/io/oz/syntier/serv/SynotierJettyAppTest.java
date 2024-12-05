@@ -54,7 +54,7 @@ class SynotierJettyAppTest {
     	System.setProperty(vprv, p);
 
     	// -Dip=<bind-ip>
-    	String bindip = System.getProperty("ip", p);
+    	String bindip = System.getProperty("ip", "127.0.0.1");
 
 		SynotierJettyApp hub = SynotierJettyApp.main_("$" + vhub,
 				new String[] {"-ip", bindip, "-urlpath", "/jserv-album"});

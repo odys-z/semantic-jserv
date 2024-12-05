@@ -1,71 +1,23 @@
-v-0:
-total 110
--rw-r--r-- 1 Alice 197121   551 Dec  3 16:08 dictionary.json
--rw-r--r-- 1 Alice 197121 36864 Dec  3 15:58 jserv-main.db
--rw-r--r-- 1 Alice 197121 73728 Dec  3 15:58 no-jserv-db.00
--rw-r--r-- 1 Alice 197121   183 Nov 13 08:51 syntity.json
+touch v-0/jserv-main.db
+touch v-0/no-jserv-db.00
 
-v-1:
-total 110
--rw-r--r-- 1 Alice 197121   529 Dec  3 16:08 dictionary.json
--rw-r--r-- 1 Alice 197121 36864 Dec  3 15:58 jserv-main.db
--rw-r--r-- 1 Alice 197121 73728 Dec  3 15:58 no-jserv-db.01
--rw-r--r-- 1 Alice 197121   165 Nov 13 08:51 syntity.json
+touch v-1/jserv-main.db
+touch v-1/no-jserv-db.01
 
-v-2:
-total 110
--rw-r--r-- 1 Alice 197121   514 Dec  3 16:08 dictionary.json
--rw-r--r-- 1 Alice 197121 36864 Dec  3 15:58 jserv-main.db
--rw-r--r-- 1 Alice 197121 73728 Dec  3 15:58 no-jserv-db.02
--rw-r--r-- 1 Alice 197121   165 Nov 13 08:51 syntity.json
+touch v-2/jserv-main.db
+touch v-2/no-jserv-db.02
 
-v-3:
-total 2
--rw-r--r-- 1 Alice 197121 553 Nov 13 08:51 dictionary.json
--rw-r--r-- 1 Alice 197121   0 Nov 27 17:14 jserv-main.db
--rw-r--r-- 1 Alice 197121   0 Nov 27 17:12 no-jserv-db.03
--rw-r--r-- 1 Alice 197121 165 Nov 13 08:51 syntity.json
+touch v-3/jserv-main.db
+touch v-3/no-jserv-db.03
 
-vol-0:
-total 265
--rw-r--r-- 1 Alice 197121   756 Dec  3 16:08 dictionary.json
--rw-r--r-- 1 Alice 197121 36864 Dec  3 15:31 jserv-main.db
--rw-r--r-- 1 Alice 197121     0 Oct  3 06:52 main-sqlite.db
--rw-r--r-- 1 Alice 197121 98304 Dec  3 15:31 no-jserv-db.00
--rw-r--r-- 1 Alice 197121 65536 Oct 10 00:41 no-jserv-db.01
--rw-r--r-- 1 Alice 197121 65536 Oct 10 00:41 no-jserv-db.02
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.03
--rw-r--r-- 1 Alice 197121   183 Nov 12 02:42 syntity.json
+touch vol-0/jserv-main.db
+touch vol-0/no-jserv-db.00
 
-vol-1:
-total 137
--rw-r--r-- 1 Alice 197121   757 Dec  3 16:08 dictionary.json
--rw-r--r-- 1 Alice 197121 36864 Dec  3 15:31 jserv-main.db
--rw-r--r-- 1 Alice 197121     0 Oct  3 06:52 main-sqlite.db
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.00
--rw-r--r-- 1 Alice 197121 98304 Dec  3 15:31 no-jserv-db.01
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.02
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.03
--rw-r--r-- 1 Alice 197121   165 Nov 12 02:42 syntity.json
+touch vol-1/jserv-main.db
+touch vol-1/no-jserv-db.01
 
-vol-2:
-total 137
--rw-r--r-- 1 Alice 197121   754 Dec  3 16:08 dictionary.json
--rw-r--r-- 1 Alice 197121 36864 Dec  3 15:31 jserv-main.db
--rw-r--r-- 1 Alice 197121     0 Oct  3 06:53 main-sqlite.db
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.00
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.01
--rw-r--r-- 1 Alice 197121 98304 Dec  3 15:31 no-jserv-db.02
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.03
--rw-r--r-- 1 Alice 197121   165 Nov 12 02:42 syntity.json
+touch vol-2/jserv-main.db
+touch vol-2/no-jserv-db.02
 
-vol-3:
-total 66
--rw-r--r-- 1 Alice 197121   554 Dec  3 16:08 dictionary.json
--rw-r--r-- 1 Alice 197121     0 Oct  6 23:19 jserv-main.db
--rw-r--r-- 1 Alice 197121     0 Oct  3 06:53 main-sqlite.db
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.00
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.01
--rw-r--r-- 1 Alice 197121     0 Oct  7 03:01 no-jserv-db.02
--rw-r--r-- 1 Alice 197121 65536 Oct 10 09:22 no-jserv-db.03
--rw-r--r-- 1 Alice 197121   165 Nov 12 02:42 syntity.json
+touch vol-3/jserv-main.db
+touch vol-3/no-jserv-db.03
