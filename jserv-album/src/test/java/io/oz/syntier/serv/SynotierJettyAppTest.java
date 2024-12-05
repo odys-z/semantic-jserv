@@ -53,9 +53,14 @@ class SynotierJettyAppTest {
 		p = new File("src/main/webapp/volume-prv").getAbsolutePath();
     	System.setProperty(vprv, p);
 
-		SynotierJettyApp hub = SynotierJettyApp.main_("$" + vhub,  new String[] {"-urlpath", "/jserv-album"});
+    	// -Dip=<bind-ip>
+    	String bindip = System.getProperty("ip", p);
+
+		SynotierJettyApp hub = SynotierJettyApp.main_("$" + vhub,
+				new String[] {"-ip", bindip, "-urlpath", "/jserv-album"});
 		hub.print();
-		SynotierJettyApp prv = SynotierJettyApp.main_("$" + vprv,  new String[] {"-urlpath", "/jserv-album", "-port", "8965"});
+		SynotierJettyApp prv = SynotierJettyApp.main_("$" + vprv,
+				new String[] {"-ip", bindip, "-urlpath", "/jserv-album", "-port", "8965"});
 		hub.print();
 		prv.print();
 		pause("Press enter to quite ...");

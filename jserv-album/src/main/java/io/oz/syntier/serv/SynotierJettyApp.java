@@ -102,7 +102,7 @@ public class SynotierJettyApp {
 	/**
 	 * Test API equivalent of {@link #main(String[])}.
 	 * @param vol_home environment variable name for volume path, e. g. "$VOLUME_HOME"
-	 * @param args cli args
+	 * @param args cli args, e. g. -ip <bind-ip>, where the binding IP will override the dictionary.json.
 	 * @return 
 	 * @throws Exception
 	 */
@@ -116,18 +116,23 @@ public class SynotierJettyApp {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
+		YellowPages.load(vol_home);
+		SynodeConfig cfg = YellowPages.synconfig();
+		String[] ip_urlpath = new String[] {isblank(cli.ip) ? cfg.localhost : cli.ip, cli.urlpath};
+
 		if (!isblank(cli.installkey)) {
 			YellowPages.load(FilenameUtils.concat(
 					new File(".").getAbsolutePath(),
 					webinf,
 					EnvPath.replaceEnv(vol_home)));
-			SynodeConfig cfg = YellowPages.synconfig();
 			AppSettings.setupdb(cfg, webinf, vol_home, "config.xml", cli.installkey);
-			return createStartSyndocTier(vol_home, webinf, "syntity.json", cli.installkey, new String[] {cli.ip, cli.urlpath}, cli.port);
+//			return createStartSyndocTier(vol_home, webinf, "syntity.json",
+//					cli.installkey, ip_urlpath, cli.port);
 		}
-		else {
-			return createStartSyndocTier(vol_home, webinf, "syntity.json", cli.rootkey, new String[] {cli.ip, cli.urlpath}, cli.port);
-		}
+//		else {
+			return createStartSyndocTier(vol_home, webinf, "syntity.json",
+					cli.rootkey, ip_urlpath, cli.port);
+//		}
 	}
 
 	/**
@@ -315,7 +320,7 @@ public class SynotierJettyApp {
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	
 	    InetAddress inet = InetAddress.getLocalHost();
-	    String addrhost  = inet.getHostAddress();
+	    String addrhost  = inet.getHostAddress(); // this result is different between Windows and Linux
 
 	    if (isblank(bindIp) || eq("*", bindIp)) {
 	    	synapp.server = new Server();
