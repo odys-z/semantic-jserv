@@ -42,6 +42,7 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.R.AnQueryReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
+import io.odysz.semantic.jsession.JUser.JOrgMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.tier.docs.Device;
@@ -190,10 +191,11 @@ public class Doclientier extends Semantier {
 			new File(tempath).mkdirs(); 
 			
 			JUserMeta um = new JUserMeta(); // a temporary solution for client without DB connections
+			JOrgMeta om  = new JOrgMeta();
 
 			AnsonMsg<AnQueryReq> q = client.query(uri, um.tbl, "u", 0, -1);
 			q.body(0)
-			 .l(um.om.tbl, "o", String.format("o.%1$s = u.%1$s", um.org))
+			 .l(um.om.tbl, "o", String.format("o.%1$s = u.%1$s", om.pk, um.org))
 			 .whereEq("u." + um.pk, robt.uid());
 
 			AnsonResp resp = client.commit(q, errCtx);
