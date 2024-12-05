@@ -26,3 +26,5 @@ test/res/C000000*.mp4
 dist
 winserv.xml
 nginx
+**/volume-hub
+**/volume-prv
