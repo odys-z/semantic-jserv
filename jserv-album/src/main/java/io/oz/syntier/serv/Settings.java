@@ -18,7 +18,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantics.x.SemanticException;
-import io.oz.album.AlbumPort;
+import io.oz.album.peer.AlbumPort;
 import io.oz.syn.YellowPages;
 
 @WebServlet(description = "Portfolio Synode Settings", urlPatterns = { "/settings.less" })
