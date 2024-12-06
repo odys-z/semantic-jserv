@@ -1,4 +1,4 @@
 {"type": "io.odysz.semantic.syn.registry.Syntities",
  "conn": "docsyn-prv",
- "syntities": [{"table": "h_photos", "meta": "io.oz.syntier.PhotoMeta"}]
+ "syntities": [{"table": "h_photos", "meta": "io.oz.album.peer.PhotoMeta"}]
 }
