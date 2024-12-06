@@ -85,7 +85,7 @@
   		<src>$VOLUME_2/no-jserv-db.02</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
 	<c>
