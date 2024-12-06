@@ -9,6 +9,7 @@ import javax.servlet.annotation.WebListener;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.oz.album.helpers.Exiftool;
+import io.oz.album.peer.AlbumPort;
 
 @WebListener
 public class AlbumSingleton extends JSingleton implements ServletContextListener {
