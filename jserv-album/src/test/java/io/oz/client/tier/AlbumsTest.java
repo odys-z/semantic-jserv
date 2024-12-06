@@ -29,10 +29,10 @@ import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumPort;
-import io.oz.album.tier.AlbumResp;
-import io.oz.album.tier.PhotoRec;
+import io.oz.album.peer.AlbumResp;
+import io.oz.album.peer.PhotoMeta;
+import io.oz.album.peer.PhotoRec;
 import io.oz.syndoc.client.PhotoSyntier;
-import io.oz.syntier.PhotoMeta;
 
 /**
  * @deprecated

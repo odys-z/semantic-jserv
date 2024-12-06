@@ -75,6 +75,18 @@
 
   <build>
     <finalName>jserv-album lib</finalName>
+
+    <resources>
+      <resource>
+        <directory>${project.basedir}/src/main/java</directory>
+        <includes>
+          <include>**/*.ddl</include>
+          <include>**/*.sql</include>
+          <include>**/*.txt</include>
+        </includes>
+      </resource>
+    </resources>
+
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
       <plugin>

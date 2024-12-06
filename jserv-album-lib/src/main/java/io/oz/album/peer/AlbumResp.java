@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.oz.album.peer;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -30,7 +30,7 @@ public class AlbumResp extends DocsResp {
 	ArrayList<PhotoRec[]> photos;
 	public PhotoRec[] photos(int px) { return photos == null ? null : photos.get(px); }
 
-	PhotoRec photo;
+	public PhotoRec photo;
 	public PhotoRec photo() { return photo; }
 
 	public AlbumResp() { }

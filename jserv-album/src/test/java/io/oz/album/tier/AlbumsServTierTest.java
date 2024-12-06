@@ -15,6 +15,8 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.PhotoUser;
+import io.oz.album.peer.AlbumReq;
+import io.oz.album.peer.AlbumResp;
 
 /**
  * Test file / uri data access functions.

@@ -64,10 +64,15 @@ import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumPort;
 import io.oz.album.AlbumSingleton;
 import io.oz.album.PhotoUser;
-import io.oz.album.tier.Profiles;
 import io.oz.album.PhotoUser.PUserMeta;
 import io.oz.album.helpers.Exiftool;
-import io.oz.album.tier.AlbumReq.A;
+import io.oz.album.peer.AlbumReq;
+import io.oz.album.peer.AlbumResp;
+import io.oz.album.peer.PhotoMeta;
+import io.oz.album.peer.PhotoRec;
+import io.oz.album.peer.Photo_OrgMeta;
+import io.oz.album.peer.Profiles;
+import io.oz.album.peer.AlbumReq.A;
 import io.oz.album.x.DocsException;
 
 /**

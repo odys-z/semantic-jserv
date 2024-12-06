@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.oz.album.peer;
 
 import java.io.IOException;
 import java.sql.SQLException;
