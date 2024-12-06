@@ -24,6 +24,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
+import io.odysz.jclient.DocsException;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -48,7 +49,6 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.x.DocsException;
 import io.oz.jserv.docs.meta.DeviceTableMeta;
 
 /**
@@ -164,8 +164,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			if (rsp != null) {
 				write(resp, ok(rsp.syndomain(domx.synode)));
 			}
-		} catch (DocsException e) {
-			write(resp, err(MsgCode.ext, e.ex().toBlock()));
+//		} catch (DocsException e) {
+//			write(resp, err(MsgCode.ext, e.ex().toBlock()));
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {
