@@ -10,11 +10,11 @@ import java.sql.SQLException;
 
 import org.junit.jupiter.api.Test;
 
+import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.PhotoUser;
 import io.oz.album.peer.AlbumReq;
 import io.oz.album.peer.AlbumResp;
 
@@ -47,7 +47,7 @@ class AlbumsServTierTest {
 			Connects.init("src/main/webapp/WEB-INF");
 
 			local = new File("src/test/local").getAbsolutePath();
-			robot = new PhotoUser("test album", "DOMAIN-TEST");
+			robot = new ExpDocRobot("test album");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
