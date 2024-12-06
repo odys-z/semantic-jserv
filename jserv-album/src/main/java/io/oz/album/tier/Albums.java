@@ -29,6 +29,7 @@ import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
+import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -61,11 +62,9 @@ import io.odysz.transact.sql.parts.Sql;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
-import io.oz.album.AlbumPort;
 import io.oz.album.AlbumSingleton;
-import io.oz.album.PhotoUser;
-import io.oz.album.PhotoUser.PUserMeta;
 import io.oz.album.helpers.Exiftool;
+import io.oz.album.peer.AlbumPort;
 import io.oz.album.peer.AlbumReq;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
@@ -74,6 +73,7 @@ import io.oz.album.peer.Photo_OrgMeta;
 import io.oz.album.peer.Profiles;
 import io.oz.album.peer.AlbumReq.A;
 import io.oz.album.x.DocsException;
+import io.oz.jserv.docs.syn.DocUser;
 
 /**
  * <h5>The album tier 0.6.50 (MVP)</h5>
@@ -117,14 +117,18 @@ public class Albums extends ServPort<AlbumReq> {
 
 	public static DATranscxt st;
 
-	static IUser robot;
+	final IUser robot;
 
-	PUserMeta userMeta;
+	// PUserMeta userMeta;
+	JUserMeta userMeta;
+
+	final String synode;
+	final PhotoMeta phm;
 
 	static {
 		try {
 			st = new DATranscxt(null);
-			robot = new PhotoUser("Robot Album", "TODO what's here?");
+			// robot = new PhotoUser("Robot Album", "TODO what's here?");
 			
 			String conn = Connects.uri2conn(uri);
 			new PhotoMeta(conn).replace();
@@ -133,8 +137,11 @@ public class Albums extends ServPort<AlbumReq> {
 		}
 	}
 
-	public Albums() {
+	public Albums(String synode) throws TransException {
 		super(AlbumPort.album);
+		this.synode = synode;
+		this.phm    = new PhotoMeta(null);
+		this.robot = new ExpDocRobot("Rob.Album@" + synode);
 		
 		missingFile = "";
 	}
@@ -194,10 +201,12 @@ public class Albums extends ServPort<AlbumReq> {
 					download(resp, jmsg.body(0), usr);
 			} else {
 				// session required
-				PhotoUser usr = (PhotoUser) JSingleton.getSessionVerifier().verify(jmsg.header());
+				// PhotoUser usr = (PhotoUser) JSingleton.getSessionVerifier().verify(jmsg.header());
+				DocUser usr = (DocUser) JSingleton.getSessionVerifier().verify(jmsg.header());
 				
 				if (userMeta == null)
-					userMeta = (PUserMeta) usr.meta();
+					// userMeta = (PUserMeta) usr.meta();
+					userMeta = (JUserMeta) usr.meta();
 
 				Profiles prf = verifyProfiles(jmsg.body(0), usr, a);
 
@@ -276,7 +285,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	DocsResp updateFolderel(AlbumReq req, PhotoUser usr)
+	DocsResp updateFolderel(AlbumReq req, DocUser usr)
 			throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta phm = new PhotoMeta(conn);
@@ -392,12 +401,12 @@ public class Albums extends ServPort<AlbumReq> {
 			throws IOException, TransException, SQLException {
 
 		String conn = Connects.uri2conn(body.uri());
-		checkDuplicate(conn, ((PhotoUser)usr).deviceId(), body.doc.clientpath, usr, new PhotoMeta(conn));
+		checkDuplicate(conn, ((DocUser)usr).deviceId(), body.doc.clientpath, usr, new PhotoMeta(conn));
 
 		if (blockChains == null)
 			blockChains = new HashMap<String, BlockChain>(2);
 
-		String tempDir = ((PhotoUser)usr).touchTempDir(conn);
+		String tempDir = ((DocUser)usr).touchTempDir(conn, phm.tbl);
 
 		BlockChain chain = new BlockChain("h_photos", tempDir, body.device().id,
 				body.doc.clientpath, body.doc.createDate, body.doc.folder());
@@ -417,7 +426,7 @@ public class Albums extends ServPort<AlbumReq> {
 					.fullpath(chain.doc.clientpath));
 	}
 
-	void checkDuplication(AlbumReq body, PhotoUser usr)
+	void checkDuplication(AlbumReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
 		checkDuplicate(conn,
@@ -539,7 +548,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	DocsResp devices(DocsReq body, PhotoUser usr)
+	DocsResp devices(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
@@ -569,7 +578,7 @@ public class Albums extends ServPort<AlbumReq> {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	DocsResp chkDevname(DocsReq body, PhotoUser usr)
+	DocsResp chkDevname(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
@@ -599,7 +608,7 @@ public class Albums extends ServPort<AlbumReq> {
 					usr.deviceId()));
 	}
 	
-	DocsResp registDevice(DocsReq body, PhotoUser usr)
+	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.uri());
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
@@ -721,7 +730,7 @@ public class Albums extends ServPort<AlbumReq> {
 	AlbumResp createPhoto(AlbumReq req, IUser usr, Profiles prf)
 			throws TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
-		checkDuplication(req, (PhotoUser) usr);
+		checkDuplication(req, (DocUser) usr);
 
 		String pid = createFile(conn, req.photo, usr);
 		
@@ -975,7 +984,7 @@ public class Albums extends ServPort<AlbumReq> {
 			throws SemanticException, TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta m = new PhotoMeta(conn);
-		PUserMeta musr = new PUserMeta(conn);
+		JUserMeta musr = new JUserMeta(conn);
 
 		String aid = prf.defltAlbum;
 

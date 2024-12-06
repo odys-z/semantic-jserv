@@ -1,4 +1,4 @@
-package io.oz.album;
+package io.oz.album.peer;
 
 import java.io.IOException;
 import java.io.OutputStream;
