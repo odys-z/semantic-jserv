@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.oz.album.peer;
 
 import java.sql.SQLException;
 
@@ -15,7 +15,7 @@ import static io.odysz.common.LangExt.isblank;
  */
 public class Profiles extends Anson {
 	String uid;
-	String defltAlbum;
+	public String defltAlbum;
 
 	public String webroot;
 	public String home;

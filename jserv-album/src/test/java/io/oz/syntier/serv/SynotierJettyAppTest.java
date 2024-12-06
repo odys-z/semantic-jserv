@@ -26,9 +26,9 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.SessionInf;
 import io.odysz.transact.x.TransException;
-import io.oz.album.tier.AlbumResp;
+import io.oz.album.peer.AlbumResp;
+import io.oz.album.peer.PhotoMeta;
 import io.oz.syndoc.client.PhotoSyntier;
-import io.oz.syntier.PhotoMeta;
 
 @SuppressWarnings("unused")
 class SynotierJettyAppTest {

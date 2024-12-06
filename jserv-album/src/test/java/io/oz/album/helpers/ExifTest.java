@@ -17,7 +17,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
-import io.oz.album.tier.PhotoRec;
+import io.oz.album.peer.PhotoRec;
 
 class ExifTest {
 	static {

@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.oz.album.peer;
 
 import static io.odysz.common.LangExt.isblank;
 

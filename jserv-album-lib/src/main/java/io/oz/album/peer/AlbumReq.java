@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.oz.album.peer;
 
 import static io.odysz.common.LangExt.eq;
 
@@ -67,7 +67,7 @@ public class AlbumReq extends DocsReq {
 	}
 	
 	String albumId;
-	String collectId;
+	public String collectId;
 	public PhotoRec photo;
 	/** s-tree's semantic key */
 	public String sk;

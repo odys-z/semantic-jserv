@@ -29,8 +29,8 @@ import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.tier.PhotoMeta;
-import io.oz.album.tier.Profiles;
+import io.oz.album.peer.PhotoMeta;
+import io.oz.album.peer.Profiles;
 
 /**
  * Album user.
