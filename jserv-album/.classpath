@@ -31,6 +31,7 @@
 			<attribute name="optional" value="true"/>
 		</attributes>
 	</classpathentry>
+<<<<<<< HEAD
 	<classpathentry excluding="**" kind="src" output="target/test-classes" path="src/test/resources">
 		<attributes>
 			<attribute name="test" value="true"/>
@@ -38,5 +39,7 @@
 			<attribute name="optional" value="true"/>
 		</attributes>
 	</classpathentry>
+=======
+>>>>>>> 62006f8c (refactor: move Doclientier to jclient (merge))
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
