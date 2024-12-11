@@ -29,6 +29,7 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jserv.x.SsException;
@@ -113,6 +114,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	 * Set call back handlers when {@link #onGet(AnsonMsg, HttpServletResponse)} &amp;
 	 * {@link #onPost(AnsonMsg, HttpServletResponse)} are returned successfully, a schema
 	 * to notify subscribers out of the servlet containers, e. g. the Jetty main thread.
+	 * <pre>new Echo(true).setCallbacks(() -> { if (greenlights != null) greenlights[0] = true; }))</pre>
 	 * @since 2.0.0
 	 * @param onpost
 	 * @param onget
@@ -301,8 +303,12 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
 
-			onPost(msg.addr(req.getRemoteAddr()), resp);
+			if (ServFlags.port)
+				Utils.logi("[ServFlags.port] Dispatching %s : %s - %s",
+						req.getRemoteAddr(), msg.port(), msg.body(0).a());
 
+			onPost(msg.addr(req.getRemoteAddr()), resp);
+	
 			if (onpostback != null)
 				onpostback.onHttp();
 		} catch (SemanticException | AnsonException e) {

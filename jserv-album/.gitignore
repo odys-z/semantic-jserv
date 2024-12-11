@@ -28,3 +28,4 @@ winserv.xml
 nginx
 **/volume-hub
 **/volume-prv
+.classpath

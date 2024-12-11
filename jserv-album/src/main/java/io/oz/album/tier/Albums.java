@@ -29,6 +29,7 @@ import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
+import io.odysz.jclient.DocsException;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -72,7 +73,6 @@ import io.oz.album.peer.PhotoRec;
 import io.oz.album.peer.Photo_OrgMeta;
 import io.oz.album.peer.Profiles;
 import io.oz.album.peer.AlbumReq.A;
-import io.oz.album.x.DocsException;
 import io.oz.jserv.docs.syn.DocUser;
 
 /**

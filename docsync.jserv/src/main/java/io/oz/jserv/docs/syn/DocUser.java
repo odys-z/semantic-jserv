@@ -1,5 +1,7 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.isblank;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Set;
