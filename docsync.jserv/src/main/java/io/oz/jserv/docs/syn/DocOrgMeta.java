@@ -3,14 +3,19 @@ package io.oz.jserv.docs.syn;
 import java.sql.SQLException;
 
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
+import io.odysz.semantics.IUser;
+import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.x.TransException;
+import io.oz.syn.SynodeConfig;
 
 public class DocOrgMeta extends SyntityMeta {
 
 	public final String orgName;
 	public final String orgType;
+	public final String market;
 	public final String webroot;
 	public final String album0 ;
 
@@ -20,6 +25,7 @@ public class DocOrgMeta extends SyntityMeta {
 		this.pk = "orgId";
 		this.orgName = "orgName";
 		this.orgType = "orgType";
+		this.market  = "market";
 		this.webroot = "webroot";
 		this.album0  = "album0";
 	}
@@ -29,6 +35,20 @@ public class DocOrgMeta extends SyntityMeta {
 			throws TransException, SQLException {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public int generecord(SynodeConfig cfg) throws Exception {
+		DATranscxt t = new DATranscxt(cfg.sysconn);
+		IUser rob = DATranscxt.dummyUser();
+		SemanticObject res = (SemanticObject) t.insert(tbl, rob)
+				.nv(pk, cfg.org.orgId)
+				.nv(orgName, cfg.org.orgName)
+				.nv(orgType, cfg.org.orgType)
+				.nv(webroot, cfg.org.webroot)
+				.nv(album0, cfg.org.album0)
+				.nv(market, cfg.org.market)
+				.ins(t.instancontxt(cfg.sysconn, rob));
+		return res.getInt("total");
 	}
 
 }

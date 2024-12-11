@@ -50,6 +50,7 @@ import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.DocOrgMeta;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
@@ -337,6 +338,18 @@ public class Syngleton extends JSingleton {
 			if (ins != null)
 				ins.ins(defltScxt.instancontxt(cfg.sysconn, usr));
 		}
+		
+		if (cfg.org != null) {
+			DocOrgMeta orgm = buildOrgMeta(cfg); 
+			if (orgm.generecord(cfg) != 1)
+				throw new SemanticException("Initializing market/org with configuration failed:\n%s", cfg.org.toBlock());
+		}
+	}
+	
+	static DocOrgMeta buildOrgMeta(SynodeConfig cfg) throws SemanticException {
+		if (!eq(cfg.org.meta, DocOrgMeta.class.getName()))
+			throw new SemanticException("todo");
+		return new DocOrgMeta(cfg.sysconn);
 	}
 
 	/**
