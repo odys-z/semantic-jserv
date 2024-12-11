@@ -35,7 +35,7 @@
   		<src>$VOLUME_PRV/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	

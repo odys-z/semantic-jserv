@@ -40,6 +40,8 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.album.peer.AlbumPort;
+import io.oz.album.tier.Albums;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -126,13 +128,9 @@ public class SynotierJettyApp {
 					webinf,
 					EnvPath.replaceEnv(vol_home)));
 			AppSettings.setupdb(cfg, webinf, vol_home, "config.xml", cli.installkey);
-//			return createStartSyndocTier(vol_home, webinf, "syntity.json",
-//					cli.installkey, ip_urlpath, cli.port);
 		}
-//		else {
-			return createStartSyndocTier(vol_home, webinf, "syntity.json",
-					cli.rootkey, ip_urlpath, cli.port);
-//		}
+		return createStartSyndocTier(vol_home, webinf, "syntity.json",
+				cli.rootkey, ip_urlpath, cli.port);
 	}
 
 	/**
@@ -159,10 +157,12 @@ public class SynotierJettyApp {
 				.instanserver(webinf, cfg, "config.xml", ip_urlpath[0], port);
 		app.syngleton.loadomains(cfg);
 
+		AnsonMsg.understandPorts(AlbumPort.album);
+
 		return SynotierJettyApp
 			.registerPorts(app, ip_urlpath[1], cfg.sysconn,
 				new AnSession(), new AnQuery(), new HeartLink(),
-				new Echo(true))
+				new Echo(true), new Albums(cfg.synode(), cfg.synconn))
 			.addDocServPort(cfg.domain, webinf, syntity_json)
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;

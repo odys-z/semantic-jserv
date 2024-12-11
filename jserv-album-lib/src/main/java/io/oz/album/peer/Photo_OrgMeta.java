@@ -3,6 +3,9 @@ package io.oz.album.peer;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.transact.x.TransException;
 
+/**
+ * @deprecated replaced by {@code io.oz.jserv.docs.syn.DocOrgMeta}.
+ */
 public class Photo_OrgMeta extends TableMeta {
 
 	public final String oid;
