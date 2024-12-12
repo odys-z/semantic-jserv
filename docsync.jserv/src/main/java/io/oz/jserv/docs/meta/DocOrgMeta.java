@@ -1,14 +1,9 @@
-package io.oz.jserv.docs.syn;
+package io.oz.jserv.docs.meta;
 
-import java.sql.SQLException;
-
-import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
-import io.odysz.transact.x.TransException;
 import io.oz.syn.SynodeConfig;
 
 public class DocOrgMeta extends SyntityMeta {
@@ -30,12 +25,12 @@ public class DocOrgMeta extends SyntityMeta {
 		this.album0  = "album0";
 	}
 
-	@Override
-	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
-			throws TransException, SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
+//			throws TransException, SQLException {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	public int generecord(SynodeConfig cfg) throws Exception {
 		DATranscxt t = new DATranscxt(cfg.sysconn);
@@ -48,7 +43,7 @@ public class DocOrgMeta extends SyntityMeta {
 				.nv(album0, cfg.org.album0)
 				.nv(market, cfg.org.market)
 				.ins(t.instancontxt(cfg.sysconn, rob));
-		return res.getInt("total");
+		return res.total();
 	}
 
 }

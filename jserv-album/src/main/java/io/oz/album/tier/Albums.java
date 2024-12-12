@@ -73,7 +73,7 @@ import io.oz.album.peer.PhotoRec;
 import io.oz.album.peer.Photo_OrgMeta;
 import io.oz.album.peer.Profiles;
 import io.oz.album.peer.AlbumReq.A;
-import io.oz.jserv.docs.syn.DocOrgMeta;
+import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.jserv.docs.syn.DocUser;
 
 /**
@@ -345,7 +345,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(st.instancontxt(conn, usr))
 				.rs(0)).nxt();
 
-		if (isblank(rs.getString(m.org)))
+		if (rs == null || isblank(rs.getString(m.org)))
 			throw new SemanticException("Verifying user's profiles needs target user belongs to an organization / family.");
 		return new Profiles(rs, m);
 	}

@@ -10,17 +10,17 @@
    "debug": false,
 
   "org": {
-	   "meta": "io.oz.jserv.docs.syn.DocOrgMeta",
-	   "orgId": "ura",
+	 "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
+	 "orgId": "ura",
      "orgName": "URA",
      "orgType": "nation"
 	},
 
    "peers": [
-     {"synid": "X", "org": "URA", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
-     {"synid": "Y", "org": "URA", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"} ]
+     {"synid": "X", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
+     {"synid": "Y", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"} ]
  },
  "synusers": [
-   {"userId": "ody", "pswd": "8964", "iv": null, "org": "URA", "domain": "zsu"},
-   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "URA", "domain": "zsu"} ]
+   {"userId": "ody", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"},
+   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "ura", "domain": "zsu"} ]
 }
