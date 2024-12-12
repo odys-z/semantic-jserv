@@ -291,10 +291,9 @@ public class Syngleton extends JSingleton {
 	 * 
 	 * @since 0.2.0
 	 * 
-	 * @param conn
 	 * @throws Exception 
 	 */
-	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncUser> iterable) throws Exception {
+	public static void setupSysRecords(SynodeConfig cfg, Iterable<SyncUser> synusers) throws Exception {
 	
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
@@ -308,7 +307,6 @@ public class Syngleton extends JSingleton {
 	
 		for (String tbl : new String[] {
 					"oz_autoseq.ddl",
-//					"oz_autoseq.sql",
 					"a_users.sqlite.ddl",
 					"a_roles.sqlite.ddl",
 					"a_orgs.sqlite.ddl",}) {
@@ -320,11 +318,11 @@ public class Syngleton extends JSingleton {
 
 		defltScxt = new DATranscxt(cfg.sysconn);
 		
-		if (iterable != null) {
+		if (synusers != null) {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
-			for (SyncUser admin : iterable) {
+			for (SyncUser admin : synusers) {
 				Insert i = defltScxt.insert(um.tbl, usr)
 						.nv(usrm.org, admin.orgId())
 						.nv(usrm.pk, admin.uid())

@@ -124,7 +124,7 @@ public class SynodetierJoinTest {
 			config.port    = port++;
 			config.mode    = SynodeMode.peer;
 			config.domain  = eq(nodes[i], "X") ? zsu : null;
-			config.org     = ura;
+			// config.org     = ura;
 			config.peers   = new Synode[] {new Synode(nodes[i], nodes[i] + "," + nodes[i], ura, config.domain)};
 
 			Syngleton.setupSysRecords(config, robots);

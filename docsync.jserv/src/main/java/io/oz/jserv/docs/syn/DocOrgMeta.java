@@ -1,4 +1,4 @@
-package io.oz.album.tier;
+package io.oz.jserv.docs.syn;
 
 import java.sql.SQLException;
 
@@ -9,10 +9,10 @@ import io.odysz.transact.x.TransException;
 
 public class DocOrgMeta extends SyntityMeta {
 
-	protected final String orgName;
-	protected final String orgType;
-	protected final String webroot;
-	protected final String album0 ;
+	public final String orgName;
+	public final String orgType;
+	public final String webroot;
+	public final String album0 ;
 
 	public DocOrgMeta(String conn) {
 		super("a_orgs", "orgId", "todo: synid", conn);
