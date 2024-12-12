@@ -30,12 +30,12 @@ public class DocOrgMeta extends SyntityMeta {
 		this.album0  = "album0";
 	}
 
-	@Override
-	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
-			throws TransException, SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
+//			throws TransException, SQLException {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	public int generecord(SynodeConfig cfg) throws Exception {
 		DATranscxt t = new DATranscxt(cfg.sysconn);
