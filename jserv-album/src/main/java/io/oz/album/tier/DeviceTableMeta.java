@@ -1,11 +1,6 @@
 package io.oz.album.tier;
 
-import java.sql.SQLException;
-
-import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.transact.x.TransException;
 
 /**
  * <pre>

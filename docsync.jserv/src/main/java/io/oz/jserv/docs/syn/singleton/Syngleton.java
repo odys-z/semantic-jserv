@@ -50,7 +50,7 @@ import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docs.syn.DocOrgMeta;
+import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
