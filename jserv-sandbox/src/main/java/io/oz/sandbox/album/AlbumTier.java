@@ -26,6 +26,7 @@ import io.odysz.semantic.ext.DocTableMeta;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.JRobot;
+import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -155,7 +156,7 @@ public class AlbumTier extends ServPort<AlbumReq> {
 
 		try {
 			AnDatasetResp rsp = null;
-			IUser usr = verifier.verify(msg.header());
+			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			if (A.insertPhoto.equals(jreq.a()))
 				rsp = insert(jreq);
 			else if (A.update.equals(jreq.a()))
