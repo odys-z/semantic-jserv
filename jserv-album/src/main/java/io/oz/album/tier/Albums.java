@@ -129,10 +129,6 @@ public class Albums extends ServPort<AlbumReq> {
 	static {
 		try {
 			st = new DATranscxt(null);
-			// robot = new PhotoUser("Robot Album", "TODO what's here?");
-			
-			// String conn = Connects.uri2conn(uri);
-			// new PhotoMeta(conn).replace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -202,11 +198,9 @@ public class Albums extends ServPort<AlbumReq> {
 					download(resp, jmsg.body(0), usr);
 			} else {
 				// session required
-				// PhotoUser usr = (PhotoUser) JSingleton.getSessionVerifier().verify(jmsg.header());
 				DocUser usr = (DocUser) JSingleton.getSessionVerifier().verify(jmsg.header());
 				
 				if (userMeta == null)
-					// userMeta = (PUserMeta) usr.meta();
 					userMeta = (JUserMeta) usr.meta();
 
 				Profiles prf = verifyProfiles(jmsg.body(0), usr, a);
@@ -392,7 +386,7 @@ public class Albums extends ServPort<AlbumReq> {
 				.rs(0);
 
 		rs.beforeFirst().next();
-		String home = rs.getString(orgMeta.orgName);
+		String home = rs.getString(orgMeta.homepage);
 		String webroot = rs.getString(orgMeta.webroot);
 
 		return new AlbumResp().profiles(new Profiles(home).webroot(webroot));

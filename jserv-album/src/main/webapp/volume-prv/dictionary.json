@@ -13,7 +13,11 @@
 	 "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
 	 "orgId": "ura",
      "orgName": "URA",
-     "orgType": "nation"
+     "orgType": "nation",
+     "market":  "test",
+     "webroot": "$WEB_ROOT:8888",
+     "homepage": "",
+     "album0":  "album-test"
 	},
 
    "peers": [

@@ -1,5 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.len;
+
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 
@@ -20,10 +22,17 @@ public class DocsException extends SemanticException {
 	 */
 	public DocsException(int code, String... reasons) {
 		super("Details in #ex field.");
-		ex(new SemanticObject().put("code", code).put("reasons", reasons));
+		ex(new SemanticObject()
+			.put("code", code)
+			.put("reasons", reasons));
 	}
 
 	public int code() {
 		return (int) ex().get("code");
+	}
+	
+	public String reason(int i) {
+		return ex().get("reasons") == null || i >= len((String[])ex().get("reasons")) ?
+				null : ((String[])ex().get("reasons"))[i];
 	}
 }

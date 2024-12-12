@@ -435,6 +435,4 @@ public class Syngleton extends JSingleton {
 	public Set<String> domains() {
 		return syndomanagers.keySet();
 	}
-
-//	public SynDomanager domanager(String domain) { return syndomanagers.get(domain); }
 }
