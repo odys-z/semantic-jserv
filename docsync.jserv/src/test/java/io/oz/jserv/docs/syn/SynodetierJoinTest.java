@@ -98,6 +98,7 @@ public class SynodetierJoinTest {
 		}
 	}
 	
+	@SuppressWarnings("serial")
 	@BeforeAll
 	static void init() throws Exception {
 		setVolumeEnv("v-");
@@ -124,7 +125,6 @@ public class SynodetierJoinTest {
 			config.port    = port++;
 			config.mode    = SynodeMode.peer;
 			config.domain  = eq(nodes[i], "X") ? zsu : null;
-			// config.org     = ura;
 			config.peers   = new Synode[] {new Synode(nodes[i], nodes[i] + "," + nodes[i], ura, config.domain)};
 
 			Syngleton.setupSysRecords(config, robots);
@@ -134,14 +134,6 @@ public class SynodetierJoinTest {
 					webinf, "config.xml", ".", "ABCDEF0123465789");
 
 			Syngleton.cleanDomain(config);
-
-			// also clean relic of joined domain.
-//			IUser rob = DATranscxt.dummyUser();
-//			SynodeMeta synm = new SynodeMeta(config.synconn);
-//			DATranscxt trb0 = new DATranscxt(config.synconn);
-//			trb0.delete(synm.tbl, rob)
-//				.whereEq(synm.domain, zsu)
-//				.d(trb0.instancontxt(config.synconn, rob));
 
 			Syngleton.cleanSynssions(config);
 

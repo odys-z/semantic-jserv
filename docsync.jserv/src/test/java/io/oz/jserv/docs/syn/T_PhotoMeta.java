@@ -1,16 +1,9 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.replacele;
-import static io.odysz.common.Utils.loadTxt;
-import static io.odysz.transact.sql.parts.condition.Funcall.constr;
 import static io.odysz.transact.sql.parts.condition.Funcall.extfile;
 
-import java.sql.SQLException;
-
-import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.meta.SynChangeMeta;
-import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.x.TransException;
 
@@ -23,7 +16,7 @@ public class T_PhotoMeta extends ExpDocTableMeta {
 
 		exif = "exif";
 
-		try { ddlSqlite = loadTxt(T_PhotoMeta.class, "h_photos.sqlite.ddl"); }
+		try { ddlSqlite = loadSqlite(T_PhotoMeta.class, "h_photos.sqlite.ddl"); }
 		catch (Exception e) { e.printStackTrace(); }
 	}
 

@@ -34,7 +34,7 @@ public class PhotoMeta extends ExpDocTableMeta {
 		geoy = "geoy";
 		css = "css";
 
-		ddlSqlite = loadTxt(PhotoMeta.class, "h_photos.sqlite.ddl");
+		ddlSqlite = loadSqlite(PhotoMeta.class, "h_photos.sqlite.ddl");
 	}
 
 //	@Override
