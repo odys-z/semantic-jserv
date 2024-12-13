@@ -25,20 +25,10 @@ import io.odysz.transact.x.TransException;
  */
 public class BlockChain {
 
-//	public final String saveFolder;
-//	public final String clientpath;
-//	public final String clientname;
-//	public String cdate;
-
 	public final String outputPath;
 	protected final OutputStream ofs;
 	
 	protected final DocsReq waitings;
-
-//	public String shareby;
-//	public String shareDate;
-//	public String shareflag;
-//	public String device;
 
 	public final String docTabl;
 
