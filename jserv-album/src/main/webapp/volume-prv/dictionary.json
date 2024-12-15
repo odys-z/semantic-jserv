@@ -15,7 +15,7 @@
      "orgName": "URA",
      "orgType": "nation",
      "market":  "test",
-     "webroot": "$WEB_ROOT:8888",
+     "webroot": "$WEB_ROOT",
      "homepage": "",
      "album0":  "album-test"
 	},
