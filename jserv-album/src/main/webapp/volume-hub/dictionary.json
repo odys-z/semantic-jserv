@@ -15,7 +15,7 @@
      "orgName": "URA",
      "orgType": "nation",
      "market":  "test",
-     "webroot": "$INFORISE_DEV",
+     "webroot": "$WEBROOT_HUB",
      "homepage": "",
      "album0":  "album-test"
 	},
