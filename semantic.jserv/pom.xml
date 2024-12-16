@@ -3,6 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
   <artifactId>semantic.jserv</artifactId>
+  <version>1.5.1</version>
   <packaging>jar</packaging>
 
   <name>semantic.jserv lib</name>
@@ -296,5 +297,4 @@
     </plugins>
   </build>
 
-  <version>1.5.0</version>
 </project>

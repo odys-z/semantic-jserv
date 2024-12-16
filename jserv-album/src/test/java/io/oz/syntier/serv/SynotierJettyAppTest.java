@@ -23,6 +23,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.SessionInf;
 import io.odysz.transact.x.TransException;
@@ -75,7 +76,7 @@ class SynotierJettyAppTest {
 								.blockSize(bsize);
 		SessionClient ssclient = Clients.loginWithUri(tier.uri(), "ody", "123456", "device-test");
 
-		List<ExpSyncDoc> videos = new ArrayList<ExpSyncDoc>();
+		List<IFileDescriptor> videos = new ArrayList<IFileDescriptor>();
 		videos.add((ExpSyncDoc) new ExpSyncDoc()
 					.fullpath(FilenameUtils.concat(localFolder, filename)));
 
@@ -111,7 +112,7 @@ class SynotierJettyAppTest {
 
 						PathsPage page = new PathsPage();
 						for (int i = 0; i < videos.size(); i++) {
-							ExpSyncDoc p = videos.get((int)i);
+							ExpSyncDoc p = videos.get((int)i).syndoc();
 							if (isblank(p.fullpath()))
 								continue;
 							else page.add(p.fullpath());

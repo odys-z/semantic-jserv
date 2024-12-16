@@ -5,7 +5,7 @@ import java.io.IOException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 
 /**
- * Since jserv 1.4.11, a file is an object shared across nodes, so this
+ * @since 1.4.11, a file is an object shared across nodes, so this
  * interface is also used for synchronizing.
  * 
  * @author ody
@@ -33,7 +33,7 @@ public interface IFileDescriptor {
 
 	String clientname();
 
-	String mime();
+	// String mime();
 
 	/** @deprecated */
 	default public String doctype() { return null; }

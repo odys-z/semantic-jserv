@@ -17,7 +17,7 @@ public class PhotoMeta extends ExpDocTableMeta {
 	public final String css;
 
 	public PhotoMeta(String conn) throws TransException {
-		super("h_photos", "pid", "synode", conn);
+		super("h_photos", "pid", "device", conn);
 		
 		tags   = "tags";
 		exif   = "exif";

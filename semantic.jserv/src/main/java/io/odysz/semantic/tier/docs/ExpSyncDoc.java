@@ -45,7 +45,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	public String clientpath;
 	@Override public String fullpath() { return clientpath; }
 
-	@Override public String mime() { return mime; }
+	// @Override public String mime() { return mime; }
 
 	/** Non-public: doc' device id is managed by session. */
 	protected String device;
