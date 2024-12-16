@@ -47,6 +47,8 @@ public interface IFileDescriptor {
 
 	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
 	default String shareflag() { return ExpDocTableMeta.Share.priv; }
+
+	default ExpSyncDoc syndoc() { return (ExpSyncDoc) this; }
 	
 //	/**
 //	 * Set statement semantics context (for resulving pkval etc.)

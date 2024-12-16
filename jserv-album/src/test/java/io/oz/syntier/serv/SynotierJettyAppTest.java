@@ -71,7 +71,7 @@ class SynotierJettyAppTest {
 		 int bsize = 72 * 1024;
 		 String filename = "my.jpg";
 
-		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier(new PhotoMeta(null), "test/album", errCtx)
+		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier("test/album", errCtx)
 								.blockSize(bsize);
 		SessionClient ssclient = Clients.loginWithUri(tier.uri(), "ody", "123456", "device-test");
 
