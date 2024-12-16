@@ -1,11 +1,6 @@
 package io.oz.jserv.docs.meta;
 
-import java.sql.SQLException;
-
-import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.transact.x.TransException;
 
 /**
  * <pre>
@@ -45,12 +40,4 @@ public class DeviceTableMeta extends SyntityMeta {
 		cdate   = "cdate";
 		org     = "org";
 	}
-
-//	@Override
-//	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
-//			throws TransException, SQLException {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-
 }

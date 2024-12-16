@@ -24,6 +24,7 @@ import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
@@ -146,7 +147,7 @@ class AlbumsTest {
 
 	AlbumResp getCollection(String collectId) throws TransException {
 		try {
-			PhotoSyntier tier = new PhotoSyntier(new PhotoMeta(null), "test/album", errCtx);
+			PhotoSyntier tier = new PhotoSyntier("test/album", errCtx);
 			return null; // tier.getCollect(collectId);
 		} catch (SemanticException | IOException | AnsonException e) {
 			e.printStackTrace();
@@ -157,7 +158,7 @@ class AlbumsTest {
 
 	String getDownloadResult(PhotoRec photo, String filepath) throws TransException {
 		try {
-			PhotoSyntier tier = new PhotoSyntier(new PhotoMeta(null), "test/album", errCtx);
+			PhotoSyntier tier = new PhotoSyntier("test/album", errCtx);
 			return tier.download(filepath, photo, filepath);
 		} catch (IOException | AnsonException | SemanticException e) {
 			e.printStackTrace();
@@ -232,10 +233,10 @@ class AlbumsTest {
 		 String filename = "my.jpg";
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
-		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier(new PhotoMeta(null), "test/album", errCtx)
+		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier("test/album", errCtx)
 								.blockSize(bsize);
 
-		List<ExpSyncDoc> videos = new ArrayList<ExpSyncDoc>();
+		List<IFileDescriptor> videos = new ArrayList<IFileDescriptor>();
 		videos.add((ExpSyncDoc) new ExpSyncDoc()
 					.fullpath(FilenameUtils.concat(localFolder, filename)));
 

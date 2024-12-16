@@ -1,13 +1,6 @@
 package io.oz.album.peer;
 
-import static io.odysz.common.Utils.loadTxt;
-
-import java.sql.SQLException;
-
-import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.meta.SynChangeMeta;
-import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 /**
