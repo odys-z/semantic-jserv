@@ -41,6 +41,7 @@ import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.peer.AlbumPort;
+import io.oz.album.peer.SynDocollPort;
 import io.oz.album.tier.Albums;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
@@ -157,12 +158,12 @@ public class SynotierJettyApp {
 				.instanserver(webinf, cfg, "config.xml", ip_urlpath[0], port);
 		app.syngleton.loadomains(cfg);
 
-		AnsonMsg.understandPorts(AlbumPort.album);
+		AnsonMsg.understandPorts(SynDocollPort.docoll);
 
 		return SynotierJettyApp
 			.registerPorts(app, ip_urlpath[1], cfg.sysconn,
 				new AnSession(), new AnQuery(), new HeartLink(),
-				new Echo(true), new Albums(cfg.synode(), cfg.synconn))
+				new Echo(true), new SynDocollects(cfg.synode(), cfg.sysconn, cfg.synconn))
 			.addDocServPort(cfg.domain, webinf, syntity_json)
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;
