@@ -58,14 +58,33 @@
   </t>
 
   <t id="conn-uri" pk='uri' columns="uri, conn">
+  	<!-- Test section  -->
+  	<c>
+  		<uri>/album/sys/X</uri>
+  		<conn>sys-hub</conn>
+  	</c>
+  	<c>
+  		<uri>/album/syn/X</uri>
+  		<conn>docsyn-hub</conn>
+  	</c>
+
+  	<c>
+  		<uri>/album/sys/Y</uri>
+  		<conn>sys-prv</conn>
+  	</c>
+  	<c>
+  		<uri>/album/syn/Y</uri>
+  		<conn>docsyn-prv</conn>
+  	</c>
+
+	<!--  products section -->
   	<c>
   		<uri>/album/sys</uri>
-  		<conn>main-sqlite</conn>
+  		<conn>sys-hub</conn>
   	</c>
   	<c>
   		<uri>/album/syn</uri>
-  		<conn>syn-jserv</conn>
+  		<conn>docsyn-hub</conn>
   	</c>
-
   </t>
 </conns>

@@ -17,6 +17,7 @@ CREATE TABLE doc_devices (
   PRIMARY KEY (synode0, device)
 ); -- registered device names. Name is set by user, prompt if he's device names are duplicated
  * </pre>
+ * @deprecated replaced by {@link io.oz.jserv.docs.meta.DeviceTableMeta}
  * @author odys-z@github.com
  */
 public class DeviceTableMeta extends SyntityMeta {
