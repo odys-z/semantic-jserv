@@ -29,3 +29,4 @@ nginx
 **/volume-hub
 **/volume-prv
 .classpath
+**/uploading-temp

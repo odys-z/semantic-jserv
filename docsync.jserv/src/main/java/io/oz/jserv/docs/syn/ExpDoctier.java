@@ -164,8 +164,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			if (rsp != null) {
 				write(resp, ok(rsp.syndomain(domx.synode)));
 			}
-//		} catch (DocsException e) {
-//			write(resp, err(MsgCode.ext, e.ex().toBlock()));
+		} catch (DocsException e) {
+			write(resp, err(MsgCode.ext, e.ex().toBlock()));
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (SQLException | TransException e) {

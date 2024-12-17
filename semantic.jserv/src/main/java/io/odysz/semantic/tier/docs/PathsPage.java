@@ -47,12 +47,12 @@ public class PathsPage extends Anson {
 	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date]} 
 	 */
 	@AnsonField(valType="[Ljava.lang.String;")
-	protected HashMap<String, String[]> clientPaths;
+	protected HashMap<String, Object[]> clientPaths;
 	/**
 	 * @see #paths(AnResultset, ExpDocTableMeta)
 	 * @return paths' flags, see {@link #clientPaths}
 	 */
-	public HashMap<String, String[]> paths() { return clientPaths; }
+	public HashMap<String, Object[]> paths() { return clientPaths; }
 	
 	/**
 	 * Set paths's flags: [rs.device, rs.share-flag, rs.share-by, rs.share-date].
@@ -64,7 +64,7 @@ public class PathsPage extends Anson {
 	 * @throws SemanticException 
 	 */
 	public PathsPage paths(AnResultset rs, ExpDocTableMeta meta) throws SQLException, SemanticException {
-		clientPaths = new HashMap<String, String[]>();
+		clientPaths = new HashMap<String, Object[]>();
 
 		rs.beforeFirst();
 		while(rs.next()) {
@@ -74,7 +74,7 @@ public class PathsPage extends Anson {
 			else if (!device.equals(dev))
 				throw new SemanticException("Found different devices in a single page: %s : %s.", device, dev);
 
-			clientPaths.put(rs.getString(meta.fullpath), (String[]) meta.getPathInfo(rs));
+			clientPaths.put(rs.getString(meta.fullpath), meta.getPathInfo(rs));
 		}
 		
 		return this;
@@ -82,14 +82,14 @@ public class PathsPage extends Anson {
 
 	public PathsPage clear() {
 		if (clientPaths == null)
-			clientPaths = new HashMap<String, String[]>();
+			clientPaths = new HashMap<String, Object[]>();
 		clientPaths.clear();
 		return this;
 	}
 	
 	public PathsPage add(String path) {
 		if (clientPaths == null)
-			clientPaths = new HashMap<String, String[]>();
+			clientPaths = new HashMap<String, Object[]>();
 		clientPaths.put(path, null);
 		return this;
 	}

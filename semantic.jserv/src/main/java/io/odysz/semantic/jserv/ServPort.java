@@ -310,8 +310,6 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	
 			if (onpostback != null)
 				onpostback.onHttp();
-		// } catch (ClassNotFoundException e) {
-			
 		} catch (SemanticException | AnsonException e) {
 			if (ServFlags.port)
 				e.printStackTrace();
