@@ -33,13 +33,13 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.IUser;
+import io.oz.album.peer.ShareFlag;
 import io.oz.jserv.docs.syn.Dev;
 import io.oz.jserv.docs.syn.SynodetierJoinTest;
 import io.oz.syn.SynodeConfig;
@@ -136,7 +136,7 @@ public class ExpDoctierservTest {
 		assertEquals(1, rep.total(0));
 
 		ExpSyncDoc dx0 = (ExpSyncDoc) new ExpSyncDoc()
-					.share(devx0.uid, Share.pub, new Date())
+					.share(devx0.uid, ShareFlag.publish.name(), new Date())
 					.folder(devx0.tofolder)
 					.device(devx0.device.id)
 					.fullpath(devx0.res);

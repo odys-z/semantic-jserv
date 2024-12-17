@@ -15,7 +15,6 @@ import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -168,7 +167,8 @@ public class DocUtils {
 			.nv(meta.fullpath, doc.fullpath())
 			.nv(meta.createDate, doc.createDate)
 			.nv(meta.folder, doc.folder())
-			.nv(meta.shareflag, ifnull(doc.shareflag, Share.priv))
+			// .nv(meta.shareflag, ifnull(doc.shareflag, Share.priv))
+			.nv(meta.shareflag, doc.shareflag)
 			.nv(meta.shareby, ifnull(doc.shareby, usr.uid()))
 			.nv(meta.shareDate, ifnull(doc.sharedate, DateFormat.format(new Date())))
 			.nv(meta.size, doc.size)

@@ -40,7 +40,6 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
@@ -70,7 +69,6 @@ import io.oz.album.peer.AlbumReq;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.PhotoRec;
-import io.oz.album.peer.Photo_OrgMeta;
 import io.oz.album.peer.Profiles;
 import io.oz.album.peer.AlbumReq.A;
 import io.oz.jserv.docs.meta.DocOrgMeta;
@@ -766,7 +764,7 @@ public class Albums extends ServPort<AlbumReq> {
 		PhotoMeta meta = new PhotoMeta(conn);
 
 		if (isblank(photo.shareby))
-			photo.share(usr.uid(), Share.priv, new Date());
+			photo.share(usr.uid(), photo.shareflag, new Date());
 
 		String pid = DocUtils.createFileBy64((DBSynTransBuilder)st, conn, photo, usr, meta);
 
