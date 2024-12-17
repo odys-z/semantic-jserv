@@ -5,6 +5,14 @@ import java.io.IOException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 
 /**
+ * A bridge (interface) between semantic.jserv nodes, {@link ExpSyncDoc},
+ * and local file information, e. g. file object on Android.
+ * 
+ * <h5>Note:</h5>
+ * <p>Do not confused with IFileProvider in Albumtier,
+ * an interface bridging local file system for unified access across rumtime
+ * platfoms, e. g. Android file content provider vs. the general JDK file system. </p>
+ * 
  * @since 1.4.11, a file is an object shared across nodes, so this
  * interface is also used for synchronizing.
  * 
