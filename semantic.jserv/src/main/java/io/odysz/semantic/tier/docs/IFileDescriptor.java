@@ -44,7 +44,7 @@ public interface IFileDescriptor {
 	// String mime();
 
 	/** @deprecated */
-	default public String doctype() { return null; }
+	// default public String doctype() { return null; }
 
 	String cdate();
 
@@ -57,19 +57,4 @@ public interface IFileDescriptor {
 	default String shareflag() { return ExpDocTableMeta.Share.priv; }
 
 	default ExpSyncDoc syndoc() { return (ExpSyncDoc) this; }
-	
-//	/**
-//	 * Set statement semantics context (for resulving pkval etc.)
-//	 * @since v1.4.12
-//	 * @param insCtx
-//	 * @return
-//	 */
-//	default public IFileDescriptor semantext(ISemantext stmtCtx) { return this; }
-//	
-//	/**
-//	 * Get statement semantics context (for resulving pkval etc.)
-//	 * @since v1.4.12
-//	 * @return
-//	 */
-//	default public ISemantext semantext() { return null; }
 }
