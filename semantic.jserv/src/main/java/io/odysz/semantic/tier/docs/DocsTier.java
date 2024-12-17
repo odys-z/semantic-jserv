@@ -30,16 +30,6 @@ import io.odysz.transact.x.TransException;
 
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.tier" })
 public class DocsTier extends ServPort<DocsReq> {
-	// static DATranscxt st;
-
-	static {
-//		try {
-//			st = new DATranscxt(null);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-	}
-
 	public DocsTier() {
 		super(Port.docstier);
 	}
@@ -47,7 +37,6 @@ public class DocsTier extends ServPort<DocsReq> {
 	@Override
 	protected void onGet(AnsonMsg<DocsReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		
 	}
 
 	@Override

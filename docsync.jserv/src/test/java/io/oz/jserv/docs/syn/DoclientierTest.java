@@ -47,6 +47,7 @@ import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.transact.x.TransException;
+import io.oz.album.peer.ShareFlag;
 import io.oz.syn.YellowPages;
 
 /**
@@ -136,7 +137,7 @@ class DoclientierTest {
 				dev.client.client.ssInfo().uid(), dev.client.client.ssInfo().device);
 		Utils.logi(dev.res);
 
-		ExpSyncDoc xdoc = videoUpByApp(dev.client, dev.device, dev.res, docm.tbl);
+		ExpSyncDoc xdoc = videoUpByApp(dev.client, dev.device, dev.res, docm.tbl, ShareFlag.publish);
 		assertEquals(dev.device.id, xdoc.device());
 		assertEquals(dev.res, xdoc.fullpath());
 
@@ -145,9 +146,9 @@ class DoclientierTest {
 	}
 
 	static ExpSyncDoc videoUpByApp(Doclientier doclient, Device atdev, String respath,
- 			String entityName) throws Exception {
+ 			String entityName, ShareFlag share) throws Exception {
 
-		ExpSyncDoc xdoc = Doclientier.videoUpByApp(doclient, atdev, respath, entityName, 
+		ExpSyncDoc xdoc = Doclientier.videoUpByApp(doclient, atdev, respath, entityName, share,
 			(AnsonResp rep) -> {
 				ExpSyncDoc doc = ((DocsResp) rep).xdoc; 
 

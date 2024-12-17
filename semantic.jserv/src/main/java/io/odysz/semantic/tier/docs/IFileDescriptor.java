@@ -2,8 +2,6 @@ package io.odysz.semantic.tier.docs;
 
 import java.io.IOException;
 
-import io.odysz.semantic.meta.ExpDocTableMeta;
-
 /**
  * A bridge (interface) between semantic.jserv nodes, {@link ExpSyncDoc},
  * and local file information, e. g. file object on Android.
@@ -43,7 +41,6 @@ public interface IFileDescriptor {
 
 	// String mime();
 
-	/** @deprecated */
 	// default public String doctype() { return null; }
 
 	String cdate();
@@ -53,8 +50,8 @@ public interface IFileDescriptor {
 	/** @return file uri */
 	String uri64();
 
-	/** Either {@link io.odysz.semantic.ext.DocTableMeta.Share#pub pub} or {@link io.odysz.semantic.ext.DocTableMeta.Share#pub priv}. */
-	default String shareflag() { return ExpDocTableMeta.Share.priv; }
+	// default String shareflag() { return ExpDocTableMeta.Share.priv; }
+	String shareflag();
 
 	default ExpSyncDoc syndoc() { return (ExpSyncDoc) this; }
 }

@@ -18,7 +18,6 @@ import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantics.ISemantext;
@@ -167,7 +166,7 @@ public class PhotoRec extends ExpSyncDoc implements IFileDescriptor {
 		ifs.close();
 
 		fullpath(fullpath);
-		share("ody@kyiv", Share.pub, new Date());
+		share("ody@kyiv", ShareFlag.publish.name(), new Date());
 
 		exif = new Exifield()
 				.add("location", "вулиця Лаврська' 27' Київ")
@@ -187,21 +186,21 @@ public class PhotoRec extends ExpSyncDoc implements IFileDescriptor {
 
 	
 	public void month(Date d) {
-		folder = DateFormat.formatYYmm(d);
+		folder = DateFormat.formatYY_mm(d);
 	}
 
 	public void month(FileTime d) {
-		folder = DateFormat.formatYYmm(d);
+		folder = DateFormat.formatYY_mm(d);
 	}
 
 	public void month(String d) {
 		try {
 			folder = isblank(d) ?
-				DateFormat.formatYYmm(new Date()) :
-				DateFormat.formatYYmm(DateFormat.parse(d));
+				DateFormat.formatYY_mm(new Date()) :
+				DateFormat.formatYY_mm(DateFormat.parse(d));
 		} catch (ParseException e) {
 			e.printStackTrace();
-			folder = DateFormat.formatYYmm(new Date());
+			folder = DateFormat.formatYY_mm(new Date());
 		}
 	}
 	

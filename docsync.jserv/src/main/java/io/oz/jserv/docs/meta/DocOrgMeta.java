@@ -2,12 +2,12 @@ package io.oz.jserv.docs.meta;
 
 import io.odysz.common.EnvPath;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.meta.SyntityMeta;
+import io.odysz.semantic.meta.SemanticTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.oz.syn.SynodeConfig;
 
-public class DocOrgMeta extends SyntityMeta {
+public class DocOrgMeta extends SemanticTableMeta {
 
 	public final String orgName;
 	public final String orgType;

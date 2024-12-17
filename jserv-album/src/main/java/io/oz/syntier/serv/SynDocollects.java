@@ -42,7 +42,6 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
@@ -72,7 +71,6 @@ import io.oz.album.peer.AlbumReq;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.PhotoRec;
-import io.oz.album.peer.Photo_OrgMeta;
 import io.oz.album.peer.Profiles;
 import io.oz.album.peer.SynDocollPort;
 import io.oz.album.peer.AlbumReq.A;
@@ -290,20 +288,20 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta phm = new PhotoMeta(conn);
-		Photo_OrgMeta pom = new Photo_OrgMeta(conn);
+		DocOrgMeta pom = new DocOrgMeta(conn);
 
 		Delete d = st
 				.delete(pom.tbl, usr)
-				.whereIn(pom.pid, st.select(phm.tbl).col(phm.pk).whereEq(phm.folder, req.doc.folder()))
-				.whereIn(pom.oid, req.getChecks("oid"));
+				.whereIn(phm.pk, st.select(phm.tbl).col(phm.pk).whereEq(phm.folder, req.doc.folder()))
+				.whereIn(pom.pk, req.getChecks("oid"));
 		if (!req.clearels) {
 			d.post(st.insert(pom.tbl)
-				.cols(pom.pid, pom.oid)
+				.cols(phm.pk, pom.pk)
 				.select(st
 					.select(phm.tbl, "ph")
 					.distinct()
-					.col("ph." + phm.pk).col("po." + pom.oid)
-					.j(pom.tbl, "po", Sql.condt(Logic.op.in, "po." + pom.oid, new ExprPart(req.getChecks("oid")))
+					.col("ph." + phm.pk).col("po." + pom.pk)
+					.j(pom.tbl, "po", Sql.condt(Logic.op.in, "po." + pom.pk, new ExprPart(req.getChecks("oid")))
 								 .and(Sql.condt(Logic.op.eq, "ph." + phm.folder, ExprPart.constr(req.doc.folder())))
 								 .and(Sql.condt(Logic.op.eq, phm.shareby, usr.uid())))
 					.whereEq(phm.folder, req.doc.folder())));
@@ -778,7 +776,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		PhotoMeta meta = new PhotoMeta(conn);
 
 		if (isblank(photo.shareby))
-			photo.share(usr.uid(), Share.priv, new Date());
+			photo.share(usr.uid(), photo.shareflag, new Date());
 
 		String pid = DocUtils.createFileBy64((DBSynTransBuilder)st, conn, photo, usr, meta);
 
@@ -864,7 +862,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
-		Photo_OrgMeta mp_o = new Photo_OrgMeta(conn);
+		DocOrgMeta mp_o = new DocOrgMeta(conn);
 
 		Query q = st
 				.select(meta.tbl, "p")
