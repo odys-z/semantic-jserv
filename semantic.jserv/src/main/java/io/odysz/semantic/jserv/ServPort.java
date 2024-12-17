@@ -29,7 +29,6 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
-import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jserv.x.SsException;
@@ -156,9 +155,9 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	
 	/**
 	 * Since 1.4.28, semantic.jserv support for Range header for all ports, which is critical for 
-	 * some steam features a client side, such as resume downloading or play back from a position.
+	 * some streaming features at client side, such as resuming downloading or back playing from a broken position.
 	 * 
-	 * Example of Chrome request header for MP4
+	 * An example of a Chrome request header for MP4
 	 * <pre>
 	Accept: * / *
 	Accept-Encoding: identity;q=1, *;q=0
@@ -176,7 +175,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	sec-ch-ua-platform: "Android"
 		</pre>
 	 *
-	 * Example of Chrome request header for MP3<pre>
+	 * The example of Chrome request header for MP3<pre>
 	 * 
 	Accept-Encoding:
 	identity;q=1, *;q=0
@@ -311,8 +310,10 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	
 			if (onpostback != null)
 				onpostback.onHttp();
+		// } catch (ClassNotFoundException e) {
+			
 		} catch (SemanticException | AnsonException e) {
-			if (ServFlags.query)
+			if (ServFlags.port)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (Exception e) {
