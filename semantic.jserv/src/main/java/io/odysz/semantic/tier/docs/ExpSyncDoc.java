@@ -27,8 +27,6 @@ import static io.odysz.common.LangExt.*;
  */
 public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
-//	public String recId;
-//	public String recId() { return recId; }
 	@Override
 	public ExpSyncDoc recId(String did) {
 		super.recId(did);
@@ -129,10 +127,11 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	@AnsonField(ignoreTo=true)
 	ExpDocTableMeta docMeta;
 
-//	@AnsonField(ignoreTo=true, ignoreFrom=true)
-//	ISemantext semantxt;
-
 	public String mime;
+	public ExpSyncDoc mime(String mime) {
+		this.mime = mime;
+		return this;
+	}
 	
 	public ExpSyncDoc(SyntityMeta m, String orgId) {
 		super(m);
