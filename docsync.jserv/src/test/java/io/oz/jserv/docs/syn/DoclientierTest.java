@@ -163,6 +163,7 @@ class DoclientierTest {
 								fail("Double checking failed.");
 							}
 						},
+						null,
 						new ErrorCtx() {
 							@Override
 							public void err(MsgCode code, String msg, String...args) {
@@ -175,7 +176,7 @@ class DoclientierTest {
 					e.printStackTrace();
 					fail(e.getMessage());
 				}
-			});
+			}, null);
 
 		assertNotNull(xdoc);
 

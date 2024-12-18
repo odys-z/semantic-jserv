@@ -33,6 +33,7 @@ import io.oz.album.peer.AlbumPort;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.PhotoRec;
+import io.oz.album.peer.ShareFlag;
 import io.oz.syndoc.client.PhotoSyntier;
 
 /**
@@ -243,7 +244,7 @@ class AlbumsTest {
 		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = "device-test";
 
-		tier.asyVideos( videos,
+		tier.asyVideos(ShareFlag.publish, videos,
 			(ix, total, c, pth, resp) -> {
 				fail("Duplicate checking not working on " + pth);
 			},
@@ -256,22 +257,17 @@ class AlbumsTest {
 
 					tier.del("device-test", videos.get(0).fullpath());
 					List<DocsResp> resps = null;
-					try {
-						tier.asyVideos(videos, null, null, null);
-//						assertNotNull(resps);
-//						assertEquals(1, resps.size());
+					tier.asyVideos(ShareFlag.publish, videos, null, null);
+//					assertNotNull(resps);
+//					assertEquals(1, resps.size());
 
-						for (DocsResp d : resps) {
-							String docId = d.xdoc.recId();
-							assertEquals(8, docId.length());
+					for (DocsResp d : resps) {
+						String docId = d.xdoc.recId();
+						assertEquals(8, docId.length());
 
-							PhotoSyntier rp = tier.asynQueryDocs(videos, null, null, errCtx);
-//							assertNotNull(rp.photo().pname);
-//							assertEquals(rp.photo().pname, filename);
-						}
-					} catch (TransException | IOException e) {
-						e.printStackTrace();
-						fail(msg);
+						PhotoSyntier rp = tier.asynQueryDocs(videos, null, null, errCtx);
+//						assertNotNull(rp.photo().pname);
+//						assertEquals(rp.photo().pname, filename);
 					}
 				}
 			});

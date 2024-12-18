@@ -29,6 +29,7 @@ import io.odysz.semantics.SessionInf;
 import io.odysz.transact.x.TransException;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
+import io.oz.album.peer.ShareFlag;
 import io.oz.syndoc.client.PhotoSyntier;
 
 @SuppressWarnings("unused")
@@ -83,7 +84,7 @@ class SynotierJettyAppTest {
 		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = "device-test";
 
-		tier.asyVideos(videos,
+		tier.asyVideos(ShareFlag.publish, videos,
 			(ix, total, c, pth, resp) -> {
 				fail("Duplicate checking not working on " + pth);
 			},
@@ -97,7 +98,7 @@ class SynotierJettyAppTest {
 					tier.del("device-test", videos.get(0).fullpath());
 					List<DocsResp> resps;
 					try {
-						tier.asyVideos(videos, null, null);
+						tier.asyVideos(ShareFlag.publish, videos, null, null);
 						// assertNotNull(resps);
 						// assertEquals(1, resps.size());
 
