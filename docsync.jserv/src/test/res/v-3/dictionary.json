@@ -8,7 +8,14 @@
    "localhost": "",
    "port": 8967, 
    "debug": true,
-   
+
+   "org": {
+	 "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
+	 "orgId": "ura",
+     "orgName": "URA",
+     "orgType": "nation"
+	},
+  
    "peers": [ {"synid": "W", "org": "URA", "mac": "#URA.W", "nyq": 0, "domain": null, "syn_uid": "W,W"} ]
  },
  "synusers": [
