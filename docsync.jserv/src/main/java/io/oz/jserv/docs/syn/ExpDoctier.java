@@ -443,6 +443,10 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		if (body.device() == null || isblank(body.device().id))
 			throw new DocsException(DocsException.SemanticsError, "Starting a block chain without device specified?");
 
+		if (isblank(body.doc.shareflag))
+			throw new DocsException(DocsException.SemanticsError, "Document's sharing flag is not specified. Doc: [%s] %s",
+					body.doc.recId, body.doc.pname);
+
 		if (isblank(body.doc.device()))
 			body.doc.device(body.device());
 
