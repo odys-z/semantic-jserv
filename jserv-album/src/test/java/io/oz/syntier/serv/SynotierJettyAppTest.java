@@ -84,7 +84,7 @@ class SynotierJettyAppTest {
 		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = "device-test";
 
-		tier.asyVideos(ShareFlag.publish, videos,
+		tier.asyVideos(null, videos,
 			(ix, total, c, pth, resp) -> {
 				fail("Duplicate checking not working on " + pth);
 			},
@@ -98,7 +98,7 @@ class SynotierJettyAppTest {
 					tier.del("device-test", videos.get(0).fullpath());
 					List<DocsResp> resps;
 					try {
-						tier.asyVideos(ShareFlag.publish, videos, null, null);
+						tier.asyVideos(null, videos, null, null);
 						// assertNotNull(resps);
 						// assertEquals(1, resps.size());
 
@@ -113,7 +113,7 @@ class SynotierJettyAppTest {
 
 						PathsPage page = new PathsPage();
 						for (int i = 0; i < videos.size(); i++) {
-							ExpSyncDoc p = videos.get((int)i).syndoc();
+							ExpSyncDoc p = videos.get((int)i).syndoc(null);
 							if (isblank(p.fullpath()))
 								continue;
 							else page.add(p.fullpath());

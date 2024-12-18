@@ -154,7 +154,7 @@ class DoclientierTest {
 
 				// push again should fail
 				try {
-					doclient.startPush(entityName, doc,
+					doclient.startPush(null, entityName, doc,
 						new OnOk() {
 							@Override
 							public void ok(AnsonResp rep)

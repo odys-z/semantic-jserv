@@ -244,7 +244,7 @@ class AlbumsTest {
 		SessionInf photoUser = ssclient.ssInfo();
 		photoUser.device = "device-test";
 
-		tier.asyVideos(ShareFlag.publish, videos,
+		tier.asyVideos(null, videos,
 			(ix, total, c, pth, resp) -> {
 				fail("Duplicate checking not working on " + pth);
 			},
@@ -257,7 +257,7 @@ class AlbumsTest {
 
 					tier.del("device-test", videos.get(0).fullpath());
 					List<DocsResp> resps = null;
-					tier.asyVideos(ShareFlag.publish, videos, null, null);
+					tier.asyVideos(null, videos, null, null);
 //					assertNotNull(resps);
 //					assertEquals(1, resps.size());
 

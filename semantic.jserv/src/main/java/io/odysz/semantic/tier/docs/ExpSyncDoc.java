@@ -61,6 +61,10 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
 	public String shareflag;
 	public String shareflag() { return shareflag; }
+	public ExpSyncDoc shareflag(String f) {
+		shareflag = f;
+		return this;
+	}
 
 	/** usally reported by client file system, overriden by exif date, if exits */
 	public String createDate;

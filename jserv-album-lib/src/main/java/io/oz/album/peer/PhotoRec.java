@@ -26,9 +26,10 @@ import io.odysz.semantics.ISemantext;
  * A sync object, server side and jprotocol oriented data record,
  * used for docsync.jserv. 
  * 
+ * @deprecated
  * @author ody
  */
-public class PhotoRec extends ExpSyncDoc implements IFileDescriptor {
+public class PhotoRec extends ExpSyncDoc {
 
 	public String albumId;
 	public String collectId;

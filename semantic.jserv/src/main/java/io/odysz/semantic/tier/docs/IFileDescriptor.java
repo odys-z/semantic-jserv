@@ -53,5 +53,5 @@ public interface IFileDescriptor {
 	// default String shareflag() { return ExpDocTableMeta.Share.priv; }
 	String shareflag();
 
-	default ExpSyncDoc syndoc() { return (ExpSyncDoc) this; }
+	default ExpSyncDoc syndoc(ExpSyncDoc defaultConfig) { return (ExpSyncDoc) this; }
 }
