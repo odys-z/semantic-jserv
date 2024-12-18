@@ -139,7 +139,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>syndoc-lib</artifactId>
-	    <version>0.5.4</version>
+	    <version>[0.5.7,)</version>
 	</dependency>
 
 	<dependency>

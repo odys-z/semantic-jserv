@@ -34,8 +34,11 @@ public enum ShareFlag implements IJsonable  {
 	loc_remove("Ⓛ"),
 
 	/** what's this for ? */
-	deny("⛔");
+	deny("⛔"),
 	
+	/** what's this for ? */
+	unknown("⚠");
+
 	final String v;
 	// public String name() { return v; }
 	ShareFlag(String f) { v = f; }
