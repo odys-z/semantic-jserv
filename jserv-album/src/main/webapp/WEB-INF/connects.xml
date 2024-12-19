@@ -25,7 +25,7 @@
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>T</dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<smtcs>semantics-syn-hub.xml</smtcs>
 	</c>
 
   	<c>
@@ -47,7 +47,7 @@
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>T</dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<smtcs>semantics-syn-prv.xml</smtcs>
 	</c>
 
   </t>

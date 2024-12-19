@@ -1,5 +1,6 @@
 package io.odysz.semantic.jserv;
 
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
 
@@ -379,8 +380,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, code);
 		AnsonResp bd = new AnsonResp(msg,
 				// sql error messages can have '%'
-				args == null ? templ :
-				String.format(templ == null ? "" : templ, args));
+				isNull(args) ? templ :
+				f(templ, args));
 		return msg.body(bd);
 	}
 	
