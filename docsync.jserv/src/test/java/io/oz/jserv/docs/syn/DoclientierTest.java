@@ -66,6 +66,9 @@ class DoclientierTest {
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
 		YellowPages.load("$VOLUME_HOME");
+
+		// -Djservs="ip-1:port-1,ip-2:port-2"
+		// see console log of ExpDoctierservTest
 		jserv_xyzw = prefix(System.getProperty("jservs").split(","), "http://");
 	}
 
@@ -159,8 +162,11 @@ class DoclientierTest {
 							@Override
 							public void ok(AnsonResp rep)
 									throws IOException, AnsonException {
-								logT(new Object() {}, rep.msg());
-								fail("Double checking failed.");
+								if (rep != null) {
+									logT(new Object() {}, rep.msg());
+									fail("Double checking failed.");
+								}
+								else Utils.logi("No docs pushed, which is expected.");
 							}
 						},
 						null,
@@ -170,6 +176,10 @@ class DoclientierTest {
 								Utils.warn("There should be some error message from server.");
 								Utils.logi("Expected: Fail on pushing again test passed. doc: %s, device: %s, clientpath: %s",
 									doc.recId, doc.device(), doc.clientpath);
+								try {
+									// avoid existing without error logs.
+									Thread.sleep(200);
+								} catch (InterruptedException e) { }
 							}
 						});
 				} catch (TransException | IOException | SQLException e) {

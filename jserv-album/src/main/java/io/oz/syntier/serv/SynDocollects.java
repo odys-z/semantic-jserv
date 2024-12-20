@@ -490,7 +490,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		} else
 			throw new SemanticException("Ending block chain which is not existing.");
 
-		// insert photo (empty uri)
 		String conn = Connects.uri2conn(body.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 		PhotoRec photo = new PhotoRec();

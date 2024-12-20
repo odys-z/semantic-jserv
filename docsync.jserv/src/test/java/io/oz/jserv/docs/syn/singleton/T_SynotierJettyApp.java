@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
-import java.util.HashMap;
 
 import javax.servlet.annotation.WebServlet;
 

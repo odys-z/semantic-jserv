@@ -394,6 +394,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 					.recId(pid)
 					.device(body.device())
 					.folder(photo.folder())
+					.share(photo.shareby, photo.shareflag, photo.sharedate)
 					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(chain.doc.clientpath));

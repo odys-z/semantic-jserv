@@ -191,21 +191,6 @@ public class CreateSyndocTierTest {
 		SynodeConfig cfg = YellowPages.synconfig();
 		cfg.mode = SynodeMode.peer;
 		
-//		Syngleton.setupSyntables(cfg, null,
-//				webinf, "config.xml", ".", "ABCDEF0123465789");
-//
-//		Syngleton.setupSysRecords(cfg, tieradmins);
-//
-//		Syntities regists = Syntities.load(webinf, "syntity.json", 
-//				(synreg) -> {
-//					if (eq(synreg.table, "h_photos"))
-//						return new T_PhotoMeta(conn);
-//					else
-//						throw new SemanticException("TODO %s", synreg.table);
-//				});	
-//
-//		DBSynTransBuilder.synSemantics(new DATranscxt(conn), conn, synode, regists);
-
 		AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey);
 
 		T_SynotierJettyApp app = T_SynotierJettyApp
@@ -213,7 +198,7 @@ public class CreateSyndocTierTest {
 		app.syngleton.loadomains(cfg);
 
 		return T_SynotierJettyApp
-			.registerPorts(app, cfg.sysconn,
+			.registerPorts(app, "/", cfg.sysconn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (greenlights != null) greenlights[0] = true; }))
 			.addDocServPort(cfg.domain, webinf, syntity_json)

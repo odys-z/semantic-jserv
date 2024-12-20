@@ -24,7 +24,7 @@ public class Dev {
 	public final String uid;
 	public final String psw;
 	// public final String dev;
-	public final String tofolder;
+	// public final String tofolder;
 	public final Device device;
 
 	public String res;
@@ -69,9 +69,10 @@ public class Dev {
 		this.uid = uid;
 		this.psw = pswd;
 //		this.dev = "test-doclient/" + device;
-		this.tofolder = folder;
+		// this.tofolder = folder;
 		this.res = fres;
-		this.device = new Device(device, device, "test-doclient/" + device);
+		this.device = new Device(device, device, "test-doclient/" + device)
+				.folder(folder);
 	}
 
 	public void login(ErrorCtx errLog) throws SemanticException, AnsonException, SsException, IOException {

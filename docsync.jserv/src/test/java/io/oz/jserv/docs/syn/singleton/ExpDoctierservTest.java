@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.pause;
@@ -103,6 +104,9 @@ public class ExpDoctierservTest {
 		Utils.logrst("Pause for client's pushing", ++section);
 		printChangeLines(ck);
 		printNyquv(ck);
+		
+		for (T_SynotierJettyApp j : jetties)
+			if (j != null) j.print();
 
 		pause("Press Enter after pushed with clients for starting synchronizing.");
 
@@ -137,7 +141,7 @@ public class ExpDoctierservTest {
 
 		ExpSyncDoc dx0 = (ExpSyncDoc) new ExpSyncDoc()
 					.share(devx0.uid, ShareFlag.publish.name(), new Date())
-					.folder(devx0.tofolder)
+					.folder(devx0.device.tofolder)
 					.device(devx0.device.id)
 					.fullpath(devx0.res);
 
@@ -165,7 +169,7 @@ public class ExpDoctierservTest {
 	}
 
 	private static int[] runtimeEnv(T_SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
-		int[] nodex = new int[] { X, Y, Z };
+		int[] nodex = new int[] { X, Y, Z, W };
 		String host = System.getProperty("syndocs.ip");
 		int port = 8090;
 		
@@ -198,12 +202,13 @@ public class ExpDoctierservTest {
 		}
 		
 		for (int i : nodex) {
-			for (int j = 0; j < Math.min(jetties.length, cfgs.length); j++)
+			for (int j = 0; j < Math.min(jetties.length, cfgs[i].synodes().length); j++)
 				cfgs[i].synodes()[j].jserv = jetties[j].syngleton.jserv;
 		}
 
 		for (int i : nodex) {
-			jetties[i].updateJservs(ck[i].synb.syndomx.synm, cfgs[i], zsu);
+			if (!isblank(cfgs[i].domain))
+				jetties[i].updateJservs(ck[i].synb.syndomx.synm, cfgs[i], zsu);
 		}
 
 		return nodex;

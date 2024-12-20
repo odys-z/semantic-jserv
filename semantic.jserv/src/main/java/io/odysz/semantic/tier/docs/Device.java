@@ -20,4 +20,9 @@ public class Device extends Anson {
 		this.synode0 = synode0;
 		this.devname = isNull(devname) ? null : devname[0];
 	}
+	
+	public Device folder(String f) {
+		tofolder = f;
+		return this;
+	}
 }

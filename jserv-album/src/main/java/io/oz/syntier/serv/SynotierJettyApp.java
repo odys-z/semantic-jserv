@@ -79,10 +79,6 @@ public class SynotierJettyApp {
 	public Syngleton syngleton() { return syngleton; }	
 	public String jserv() { return syngleton.jserv; }
 
-	public SynotierJettyApp(SynodeConfig cfg) throws Exception {
-		syngleton = new Syngleton(cfg);
-	}
-
 	/**
 	 * Eclipse run configuration example:
 	 * <pre>Run - Run Configurations - Arguments
@@ -168,6 +164,10 @@ public class SynotierJettyApp {
 			;
 	}
 	
+	public SynotierJettyApp(SynodeConfig cfg) throws Exception {
+		syngleton = new Syngleton(cfg);
+	}
+
 	/**
 	 * Start a Jetty app with system print stream for logging.
 	 * 
