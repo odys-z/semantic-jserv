@@ -319,14 +319,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws InterruptedException 
 	 */
 	public SynDomanager openUpdateSynssions(SyncUser docuser, OnDomainUpdate... onok) {
-			// throws AnsonException, SsException, IOException, TransException, InterruptedException {
 
-		for (SynssionPeer c : sessions.values()) {
+		for (SynssionPeer peer : sessions.values()) {
 			try {
-				if (eq(c.peer, synode))
+				if (eq(peer.peer, synode))
 						continue;
-				c.loginWithUri(c.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
-				c.update2peer((lockby) -> Math.random());
+				peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
+				peer.update2peer((lockby) -> Math.random());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
