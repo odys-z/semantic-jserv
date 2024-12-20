@@ -18,6 +18,7 @@ import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.kohsuke.args4j.CmdLineParser;
+import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
@@ -40,9 +41,7 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.peer.AlbumPort;
 import io.oz.album.peer.SynDocollPort;
-import io.oz.album.tier.Albums;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -114,7 +113,7 @@ public class SynotierJettyApp {
 		CmdLineParser parser = new CmdLineParser(cli);
 		parser.parseArgument(args);
 
-        Utils.logi("VOLUME_HOME : %s", System.getProperty(vol_home));
+		Utils.logi("VOLUME_HOME : %s", System.getProperty(vol_home));
 
 		Configs.init(webinf);
 		Connects.init(webinf);
@@ -208,15 +207,20 @@ public class SynotierJettyApp {
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
-		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
-		
-		ExpSynodetier syner = new ExpSynodetier(domanger);
-
 		return registerPorts(synapp, urlpath, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addDocServPort(cfg.domain, webinf, syntity_json)
-			.addServPort(syner)
+			// .addServPort(syncer)
+			.addSynodetier(synapp, cfg.domain)
 			;
+	}
+
+	private SynotierJettyApp addSynodetier(SynotierJettyApp synapp, String domain)
+			throws SQLException, SAXException, IOException, TransException {
+		SynDomanager domanger = synapp.syngleton.domanager(domain);
+		ExpSynodetier syncer = new ExpSynodetier(domanger);
+		addServPort(syncer);
+		return this;
 	}
 
 	SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
@@ -249,18 +253,18 @@ public class SynotierJettyApp {
 	 * 
 	 * @param <T> subclass of {@link ServPort}
 	 * @param synapp
-	 * @param conn
+	 * @param sysconn
 	 * @param servports
 	 * @return Jetty server, the {@link SynotierJettyApp}
 	 * @throws Exception
 	 */
 	@SafeVarargs
 	static public <T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerPorts(
-			SynotierJettyApp synapp, String urlpath, String conn, T ... servports) throws Exception {
+			SynotierJettyApp synapp, String urlpath, String sysconn, T ... servports) throws Exception {
 
         synapp.schandler = new ServletContextHandler(synapp.server, urlpath);
         for (T t : servports) {
-        	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(conn)));
+        	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(sysconn)));
         }
 
         return synapp;

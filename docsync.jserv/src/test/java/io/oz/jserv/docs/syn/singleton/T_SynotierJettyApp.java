@@ -3,6 +3,7 @@ package io.oz.jserv.docs.syn.singleton;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
@@ -14,6 +15,7 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.xml.sax.SAXException;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
@@ -59,6 +61,8 @@ public class T_SynotierJettyApp {
 	Server server;
 
 	ServletContextHandler schandler;
+	public Syngleton syngleton() { return syngleton; }	
+	public String jserv() { return syngleton.jserv; }
 
 	public T_SynotierJettyApp(SynodeConfig cfg) throws Exception {
 		syngleton = new Syngleton(cfg);
@@ -66,25 +70,18 @@ public class T_SynotierJettyApp {
 
 	/**
 	 * Create an application instance working as a synode tier.
-	 * @param serv_conn db connection of which to be synchronized
-	 * @param config_xml name of config file, e.g. config.xml
-	 * @param bindIp, optional, null or '*' for all inet interface
-	 * @param port
-	 * @param webinf
-	 * @param domain
-	 * @param robot
-	 * @return Synode-tier Jetty App
+	 * @param urlpath e. g. jserv-album
 	 * @throws Exception
 	 */
-	public static T_SynotierJettyApp createSyndoctierApp(String webinf, SynodeConfig cfg,
-			String config_xml, String syntity_json) throws Exception {
+	public static T_SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, String urlpath,
+			String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
 
 		T_SynotierJettyApp synapp = T_SynotierJettyApp
-						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port);
-		synapp.syngleton.loadomains(cfg);
+						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
+						.loadomains(cfg);
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
@@ -95,15 +92,25 @@ public class T_SynotierJettyApp {
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
-		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
-		
-		ExpSynodetier syner = new ExpSynodetier(domanger);
-
-		return registerPorts(synapp, cfg.synconn,
+		return registerPorts(synapp, urlpath, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addDocServPort(cfg.domain, webinf, syntity_json)
-			.addServPort(syner)
+			// .addServPort(syncer)
+			.addSynodetier(synapp, cfg.domain)
 			;
+	}
+
+	private T_SynotierJettyApp addSynodetier(T_SynotierJettyApp synapp, String domain)
+			throws SQLException, SAXException, IOException, TransException {
+		SynDomanager domanger = synapp.syngleton.domanager(domain);
+		ExpSynodetier syncer = new ExpSynodetier(domanger);
+		addServPort(syncer);
+		return this;
+	}
+
+	T_SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
+		syngleton.loadomains(cfg);
+		return this;
 	}
 
 	public T_SynotierJettyApp addDocServPort(String domain, String cfgroot, String syntity_json) throws Exception {
@@ -138,9 +145,9 @@ public class T_SynotierJettyApp {
 	 */
 	@SafeVarargs
 	static public <T extends ServPort<? extends AnsonBody>> T_SynotierJettyApp registerPorts(
-			T_SynotierJettyApp synapp, String sysconn, T ... servports) throws Exception {
+			T_SynotierJettyApp synapp, String urlpath, String sysconn, T ... servports) throws Exception {
 
-        synapp.schandler = new ServletContextHandler(synapp.server, "/");
+        synapp.schandler = new ServletContextHandler(synapp.server, urlpath);
         for (T t : servports) {
         	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(sysconn)));
         }
@@ -169,10 +176,6 @@ public class T_SynotierJettyApp {
 	public void stop() throws Exception {
 		if (server != null)
 			server.stop();
-	}
-	
-	public String jserv() {
-		return syngleton.jserv;
 	}
 
 	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
@@ -206,11 +209,14 @@ public class T_SynotierJettyApp {
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	
+	    InetAddress inet = InetAddress.getLocalHost();
+	    String addrhost  = inet.getHostAddress(); // this result is different between Windows and Linux
+
 	    if (isblank(bindIp) || eq("*", bindIp)) {
 	    	synapp.server = new Server();
 	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
-
-	        httpConnector.setHost("0.0.0.0"); // TODO httpConnector.setHost(cfg.localhost);
+	        // httpConnector.setHost("0.0.0.0");
+	        httpConnector.setHost(addrhost);
 	        httpConnector.setPort(port);
 	        httpConnector.setIdleTimeout(5000);
 	        synapp.server.addConnector(httpConnector);
@@ -218,17 +224,13 @@ public class T_SynotierJettyApp {
 	    else
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
 	
-	    InetAddress inet = InetAddress.getLocalHost();
-	    String addrhost  = inet.getHostAddress();
 		synapp.syngleton.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
 	
-	    synapp.syngleton.syndomanagers = new HashMap<String, SynDomanager>();
-	    
 	    return synapp;
 	}
 
-	public Syngleton syngleton() {
-		return syngleton;
-	}	
+	public void print() {
+		Utils.logi("Synode %s: %s", syngleton.synode(), syngleton.jserv);
+	}
 
 }

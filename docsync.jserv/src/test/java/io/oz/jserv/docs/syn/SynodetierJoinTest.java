@@ -275,7 +275,7 @@ public class SynodetierJoinTest {
 			String syntity_json) throws Exception {
 
 		return T_SynotierJettyApp 
-			.createSyndoctierApp(webinf, cfg, cfg_xml, syntity_json)
+			.createSyndoctierApp(cfg, "/", webinf, cfg_xml, syntity_json)
 			.start(() -> System.out, () -> System.err)
 			;
 	}
