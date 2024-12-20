@@ -84,6 +84,11 @@ public class Syngleton extends JSingleton {
 	 */
 	HashMap<String, SynDomanager> syndomanagers;
 
+	/**
+	 * Get domain manager
+	 * @param domain
+	 * @return the manager
+	 */
 	public SynDomanager domanager(String domain) {
 		return (syndomanagers != null && syndomanagers.containsKey(domain)) ?
 				syndomanagers.get(domain) : null;
