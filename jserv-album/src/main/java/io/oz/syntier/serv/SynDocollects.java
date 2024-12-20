@@ -503,7 +503,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		// move file
 		String targetPath = DocUtils.resolvExtroot(st, conn, pid, usr, meta);
 		if (AlbumFlags.album)
-			Utils.logi("   [AlbumFlags.album: end block] %s\n-> %s", chain.outputPath, targetPath);
+			Utils.logi("   [AlbumFlags.album: end block]\n   %s\n-> %s", chain.outputPath, targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
 		onPhotoCreated(pid, conn, meta, usr);

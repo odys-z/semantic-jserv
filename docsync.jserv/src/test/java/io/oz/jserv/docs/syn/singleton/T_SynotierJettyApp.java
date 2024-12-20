@@ -94,7 +94,6 @@ public class T_SynotierJettyApp {
 		return registerPorts(synapp, urlpath, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addDocServPort(cfg.domain, webinf, syntity_json)
-			// .addServPort(syncer)
 			.addSynodetier(synapp, cfg.domain)
 			;
 	}

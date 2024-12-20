@@ -208,11 +208,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			throw new ExchangeException(ready, null,
 						"Session pool is null at %s", synode);
 		new Thread(() -> { 
-		// TODO FIXME
-		// TODO FIXME
-		// TODO FIXME
-		// TODO FIXME tasks looping until finished
-//		try { 
+			// tasks looping until finished
 			for (String peer : sessions.keySet()) {
 				ExessionPersist xp = sessions.get(peer).xp;
 				if (xp != null && xp.exstate() == ready)
@@ -233,10 +229,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 			if (onUpdate != null)
 				onUpdate.ok(domain(), synode, null);
-//		}
-//		finally {
-//			// unlockme(); 
-//		}
 		}, f("%1$s [%2$s]", synode, domain()))
 		.start();
 

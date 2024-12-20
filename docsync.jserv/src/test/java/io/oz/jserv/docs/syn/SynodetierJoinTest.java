@@ -226,6 +226,10 @@ public class SynodetierJoinTest {
 		}
 	}
 
+	/////////
+	/////////
+	/////////
+	/////////
 	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
 			throws SemanticException, SsException, IOException {
 
