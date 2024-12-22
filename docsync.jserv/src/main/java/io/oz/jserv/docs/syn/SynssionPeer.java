@@ -33,7 +33,9 @@ import io.oz.jserv.docs.syn.SyncReq.A;
  */
 public class SynssionPeer {
 
+	/** /syn/[synode-id] */
 	final String uri_syn; //  = "/syn";
+	/** /sys/[synode-id] */
 	final String uri_sys; //  = "/sys";
 
 	/** {@link #uri_syn}/[peer] */
@@ -66,7 +68,7 @@ public class SynssionPeer {
 
 	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
 		this.uri_syn   = "/syn/" + domanager.synode;
-		this.uri_sys   = "sys-" + domanager.synode;
+		this.uri_sys   = "/sys/" + domanager.synode;
 		this.conn      = domanager.synconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;

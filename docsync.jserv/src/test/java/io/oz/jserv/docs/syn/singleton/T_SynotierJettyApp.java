@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import javax.servlet.annotation.WebServlet;
 
@@ -30,6 +31,7 @@ import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.registry.Syntities;
+import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
@@ -93,7 +95,7 @@ public class T_SynotierJettyApp {
 
 		return registerPorts(synapp, urlpath, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
-			.addDocServPort(cfg.domain, webinf, syntity_json)
+			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg.domain)
 			;
 	}
@@ -111,11 +113,11 @@ public class T_SynotierJettyApp {
 		return this;
 	}
 
-	public T_SynotierJettyApp addDocServPort(String domain, String cfgroot, String syntity_json) throws Exception {
-		SynDomanager domanger = syngleton.domanager(domain);
+	public T_SynotierJettyApp addDocServPort(SynodeConfig cfg, ArrayList<SyntityReg> syntities) throws Exception {
+		SynDomanager domanger = syngleton.domanager(cfg.domain);
 
 		addServPort(new ExpDoctier(domanger)
-				.domx(domanger));
+				.registSynEvent(cfg, syntities));
 		return this;
 	}
 
@@ -213,7 +215,6 @@ public class T_SynotierJettyApp {
 	    if (isblank(bindIp) || eq("*", bindIp)) {
 	    	synapp.server = new Server();
 	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
-	        // httpConnector.setHost("0.0.0.0");
 	        httpConnector.setHost(addrhost);
 	        httpConnector.setPort(port);
 	        httpConnector.setIdleTimeout(5000);

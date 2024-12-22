@@ -34,6 +34,8 @@ import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.syn.registry.Syntities;
+import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.syn.SynodeConfig;
@@ -191,6 +193,11 @@ public class CreateSyndocTierTest {
 		SynodeConfig cfg = YellowPages.synconfig();
 		cfg.mode = SynodeMode.peer;
 		
+		Syntities regists = Syntities.load(webinf, syntity_json, 
+				(synreg) -> {
+					throw new SemanticException("TODO %s (configure an entity table with meta type)", synreg.table);
+				});	
+		
 		AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey);
 
 		T_SynotierJettyApp app = T_SynotierJettyApp
@@ -201,7 +208,7 @@ public class CreateSyndocTierTest {
 			.registerPorts(app, "/", cfg.sysconn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (greenlights != null) greenlights[0] = true; }))
-			.addDocServPort(cfg.domain, webinf, syntity_json)
+			.addDocServPort(cfg, regists.syntities)
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;
 	}

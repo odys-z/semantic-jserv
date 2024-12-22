@@ -159,7 +159,7 @@ public class SynotierJettyApp {
 			.registerPorts(app, ip_urlpath[1], cfg.sysconn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true), new SynDocollects(cfg.synode(), cfg.sysconn, cfg.synconn))
-			.addDocServPort(cfg.domain, webinf, syntity_json)
+			.addDocServPort(cfg.domain)
 			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 			;
 	}
@@ -209,7 +209,7 @@ public class SynotierJettyApp {
 
 		return registerPorts(synapp, urlpath, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
-			.addDocServPort(cfg.domain, webinf, syntity_json)
+			.addDocServPort(cfg.domain)
 			.addSynodetier(synapp, cfg.domain)
 			;
 	}
@@ -227,11 +227,10 @@ public class SynotierJettyApp {
 		return this;
 	}
 
-	public SynotierJettyApp addDocServPort(String domain, String cfgroot, String syntity_json) throws Exception {
+	public SynotierJettyApp addDocServPort(String domain) throws Exception {
 		SynDomanager domanger = syngleton.domanager(domain);
 
-		addServPort(new ExpDoctier(domanger)
-				.domx(domanger));
+		addServPort(new ExpDoctier(domanger));
 		return this;
 	}
 
@@ -329,7 +328,6 @@ public class SynotierJettyApp {
 	    if (isblank(bindIp) || eq("*", bindIp)) {
 	    	synapp.server = new Server();
 	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
-	        // httpConnector.setHost("0.0.0.0");
 	        httpConnector.setHost(addrhost);
 	        httpConnector.setPort(port);
 	        httpConnector.setIdleTimeout(5000);
@@ -338,7 +336,7 @@ public class SynotierJettyApp {
 	    else
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
 	
-		synapp.syngleton.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
+		synapp.syngleton.jserv = String.format("%s:%s", bindIp == null ? addrhost : bindIp, port);
 	
 	    return synapp;
 	}

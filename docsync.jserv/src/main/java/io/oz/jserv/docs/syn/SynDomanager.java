@@ -20,13 +20,11 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.Nyquence;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SyndomContext;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
@@ -110,21 +108,22 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	public SynDomanager(SynodeConfig c) throws Exception {
-		this(new SynodeMeta(c.synconn), c.org.orgId, c.domain, c.synode(), c.synconn, c.mode, c.debug);
-	}
+//		this(new SynodeMeta(c.synconn), c.org.orgId, c.domain, c.synode(), c.synconn, c.mode, c.debug);
+//	}
+//
+//	protected SynDomanager(SynodeMeta synm, String org, String dom, String myid,
+//			String conn, SynodeMode mod, boolean debug) throws Exception {
+//
+//		super(mod, dom, myid, conn, debug);
+		super(c.mode, c.domain, c.synode(), c.synconn, c.debug);
 
-	protected SynDomanager(SynodeMeta synm, String org, String dom, String myid,
-			String conn, SynodeMode mod, boolean debug) throws Exception {
-
-		super(mod, dom, myid, conn, debug);
-
-		this.org = org;
+		this.org = c.org.orgId;
 		
 		errHandler = (e, r, a) -> {
 			Utils.warn("Error code: %s,\n%s", e.name(), String.format(r, (Object[])a));
 		};
 		
-		tb0 = new DATranscxt(conn);
+		tb0 = new DATranscxt(c.synconn);
 
 		robot = new SyncUser();
 	}

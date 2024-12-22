@@ -51,7 +51,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		this.mode   = mode;
 	}
 
-	public ExpSynodetier(SynDomanager domanger) throws SQLException, SAXException, IOException, TransException {
+	public ExpSynodetier(SynDomanager domanger)
+			throws SQLException, SAXException, IOException, TransException {
 		this(domanger.org, domanger.domain(), domanger.synode, domanger.synconn, domanger.mode);
 		domanager0 = domanger;
 	}

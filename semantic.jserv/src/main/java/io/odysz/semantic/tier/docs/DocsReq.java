@@ -73,6 +73,9 @@ public class DocsReq extends UserReq {
 		/** check is a new device name valid */
 		public static final String checkDev = "r/check-dev";
 
+		/** Requests works start synodes' synchronization */
+		public static String requestSyn = "u/syn";
+
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */
 	}

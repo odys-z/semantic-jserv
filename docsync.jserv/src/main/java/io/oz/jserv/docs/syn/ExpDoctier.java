@@ -15,6 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -37,6 +38,7 @@ import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.SyncUser;
+import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -50,6 +52,7 @@ import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DeviceTableMeta;
+import io.oz.syn.SynodeConfig;
 
 /**
  * The access point of document client tiers, accepting doc's pushing.
@@ -86,9 +89,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		
 		domx = syndomanager;
 		
+		st   = new DATranscxt(syndomanager.synconn);
 		trb0 = new DBSynTransBuilder(domx);
-		
-		// DBSynTransBuilder.synSemantics(trb0, domx.synconn, domx.synode, syntities);
 		
 		try {debug = Connects.getDebug(syndomanager.synconn); }
 		catch (Exception e) {debug = false;}
@@ -157,6 +159,9 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		//		else if (AlbumReq.A.updateFolderel.equals(a))
 		//			rsp = updateFolderel(jmsg.body(0), usr);
 
+				else if (DocsReq.A.requestSyn.equals(a))
+					rsp = notifySyndom(jmsg.body(0));
+
 				else
 					throw new SemanticException("Request.a, %s, can not be handled.", docreq.a());
 			}
@@ -185,25 +190,16 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		}
 	}
 
-	/**
-	 * Create this Syntier.
-	 * 
-	 * <p>This will created an instance of DBSytableBuilder for the domain.</p>
-	 * 
-	 * @param org
-	 * @param domain
-	 * @param conn
-	 * @param mod
-	 * @return
-	 * @throws Exception
-	 * @since 0.2.0
-	 */
-	public ExpDoctier domx(SynDomanager synx) throws Exception {
-		domx = synx;
-		st = new DATranscxt(synx.synconn);
-		trb0 = new DBSynTransBuilder(synx);
-
-		return this;
+	DocsResp notifySyndom(DocsReq body)
+			throws SemanticException, AnsonException, SsException, IOException {
+		domx.updomain((dom, synid, peer, xp) -> {
+				if (debug)
+					Utils.logT(new Object(){}, 
+						"Notification is handled: %s, %s, %s", dom, synid, peer);
+			},
+			(usr) -> Math.random());
+		
+		return new DocsResp().device(body.device());
 	}
 
 	DocsResp registDevice(DocsReq body, DocUser usr)
@@ -246,6 +242,10 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	private HashMap<String, BlockChain> blockChains;
 
 	private boolean debug;
+
+	/** DB updating event targets */
+	private HashMap<String, SynDomanager> notifies;
+
 	/**
 	 * Query client paths
 	 * @param docsReq
@@ -562,7 +562,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			throws SemanticException, TransException, SQLException, IOException, SAXException {
 
 		String conn = Connects.uri2conn(req.uri());
-		// ExpDocTableMeta mph = null; // new ExpDocTableMeta(conn);
 		JUserMeta musr = new JUserMeta(conn);
 
 		/* folder's tree node
@@ -596,5 +595,13 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	
 	static String chainId(IUser usr, String clientpathRaw) {
 		return usr.sessionId() + " " + clientpathRaw;
+	}
+
+	public ServPort<?> registSynEvent(SynodeConfig cfg, List<SyntityReg> onSyntities) {
+		if (cfg.syncInms > 0 && !isNull(onSyntities))
+		for (SyntityReg syntity : onSyntities)
+			// one domainx for multiple Syntities
+			notifies.put(syntity.table, domx);
+		return this;
 	}
 }
