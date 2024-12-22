@@ -598,7 +598,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	public ServPort<?> registSynEvent(SynodeConfig cfg, List<SyntityReg> onSyntities) {
-		if (cfg.syncInms > 0 && !isNull(onSyntities))
+		if (cfg.syncIns > 0 && !isNull(onSyntities))
 		for (SyntityReg syntity : onSyntities)
 			// one domainx for multiple Syntities
 			notifies.put(syntity.table, domx);
