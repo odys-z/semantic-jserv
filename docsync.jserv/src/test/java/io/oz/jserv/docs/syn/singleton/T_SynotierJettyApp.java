@@ -3,7 +3,6 @@ package io.oz.jserv.docs.syn.singleton;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isblank;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
@@ -15,7 +14,6 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.xml.sax.SAXException;
 
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
@@ -72,6 +70,7 @@ public class T_SynotierJettyApp {
 	/**
 	 * Create an application instance working as a synode tier.
 	 * @param urlpath e. g. jserv-album
+	 * @param syntity_json e. g. $VOLUME_HOME/syntity.json
 	 * @throws Exception
 	 */
 	public static T_SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, String urlpath,
@@ -96,14 +95,15 @@ public class T_SynotierJettyApp {
 		return registerPorts(synapp, urlpath, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
 			.addDocServPort(cfg, regists.syntities)
-			.addSynodetier(synapp, cfg.domain)
+			.addSynodetier(synapp, cfg)
 			;
 	}
 
-	private T_SynotierJettyApp addSynodetier(T_SynotierJettyApp synapp, String domain)
-			throws SQLException, SAXException, IOException, TransException {
-		SynDomanager domanger = synapp.syngleton.domanager(domain);
-		ExpSynodetier syncer = new ExpSynodetier(domanger);
+	private T_SynotierJettyApp addSynodetier(T_SynotierJettyApp synapp, SynodeConfig cfg)
+			throws Exception {
+		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
+		ExpSynodetier syncer = new ExpSynodetier(domanger)
+								.syncIn(cfg.syncIns);
 		addServPort(syncer);
 		return this;
 	}
@@ -185,9 +185,9 @@ public class T_SynotierJettyApp {
 
 	/**
 	 * Create a Jetty instance at local host, jserv-root
-	 * for accessing online is in field {@link #jserv}.
+	 * for accessing online Synodes.
 	 * 
-	 * Tip: list all local tcp listening ports:
+	 * <p>Debug Tip:</p> list all local tcp listening ports:
 	 * sudo netstat -ntlp
 	 * see https://askubuntu.com/a/328293
 	 * 
@@ -223,7 +223,9 @@ public class T_SynotierJettyApp {
 	    else
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
 	
-		synapp.syngleton.jserv = String.format("http://%s:%s", bindIp == null ? addrhost : bindIp, port);
+		synapp.syngleton.jserv = String.format("%s://%s:%s",
+				"http", // TODO FIXME cfg.https,
+				bindIp == null ? addrhost : bindIp, port);
 	
 	    return synapp;
 	}

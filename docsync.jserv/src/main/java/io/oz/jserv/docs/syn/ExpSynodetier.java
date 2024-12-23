@@ -3,6 +3,7 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 import static io.odysz.semantic.syn.ExessionAct.deny;
@@ -10,6 +11,10 @@ import static io.odysz.semantic.syn.ExessionAct.mode_server;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -18,6 +23,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Utils;
+import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -42,6 +49,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	final SynodeMode mode;
 
 	SynDomanager domanager0;
+	
+	public boolean debug;
+
+	private DATranscxt synt0;
 
 	ExpSynodetier(String org, String domain, String synode, String conn, SynodeMode mode)
 			throws SQLException, SAXException, IOException, TransException {
@@ -49,12 +60,14 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		this.domain = domain;
 		this.synid  = synode;
 		this.mode   = mode;
+		this.debug  = Connects.getDebug(conn);
 	}
 
 	public ExpSynodetier(SynDomanager domanger)
-			throws SQLException, SAXException, IOException, TransException {
+			throws Exception {
 		this(domanger.org, domanger.domain(), domanger.synode, domanger.synconn, domanger.mode);
 		domanager0 = domanger;
+		synt0 = new DATranscxt(domanger.synconn);
 	}
 
 	@Override
@@ -142,4 +155,73 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 	}
 
+	//////////////////////////////  worker    ///////////////////////////////////
+	public static int maxSyncInSnds = (int) (60.0 * (5 + Math.random())); // 5-6 minutes
+
+	final Runnable[] worker = new Runnable[] {null};
+
+	float syncInSnds;
+
+	private ScheduledExecutorService scheduler;
+	private static ScheduledFuture<?> schedualed;
+
+	@Override
+	public void destroy() {
+		super.destroy();
+		stopScheduled(5);
+	}
+
+	public ExpSynodetier syncIn(float syncIns) {
+		this.syncInSnds = syncIns;
+		if ((int)(this.syncInSnds) <= 0)
+			return this;
+
+		worker[0] = () -> {
+
+			if (debug)
+			Utils.logi("Checking Syndomain ...");
+
+			try {
+				if (len(this.domanager0.sessions) == 0) {
+					// Memo: joining behaviour can impacting here
+					this.domanager0
+						.loadSynclients(synt0)
+						.opendomain();
+				}
+
+				if (len(this.domanager0.sessions) > 0)
+				this.domanager0.updomain(
+					(dom, synode, peer, xp) -> {
+						if (debug) Utils.logi("On update: %s", dom);
+					},
+					(synlocker) -> Math.random());
+			} catch (IOException e) {
+				syncInSnds = Math.min(maxSyncInSnds, syncInSnds + 5);
+				schedualed.cancel(false);
+				schedualed = scheduler.scheduleWithFixedDelay(
+						worker[0], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
+						TimeUnit.MILLISECONDS);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		};
+
+		scheduler = Executors.newScheduledThreadPool(1);
+        schedualed = scheduler.scheduleWithFixedDelay(
+        		worker[0], 5000, (int)(syncInSnds * 1000), TimeUnit.MILLISECONDS);
+		return this;
+	}
+
+	public void stopScheduled(int sDelay) {
+		Utils.logi("cancling sync-worker ... ");
+		schedualed.cancel(true);
+		scheduler.shutdown();
+		try {
+		    if (!scheduler.awaitTermination(sDelay, TimeUnit.SECONDS)) {
+		        scheduler.shutdownNow();
+		    }
+		} catch (InterruptedException e) {
+		    scheduler.shutdownNow();
+		}
+	}
 }

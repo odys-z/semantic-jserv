@@ -76,6 +76,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 	public ExpDoctier() throws Exception {
 		super(Port.docstier);
+		notifies = new HashMap<String, SynDomanager>();
 	}
 
 	/**
@@ -94,6 +95,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		
 		try {debug = Connects.getDebug(syndomanager.synconn); }
 		catch (Exception e) {debug = false;}
+
+		notifies = new HashMap<String, SynDomanager>();
 	}
 
 	SyncUser locrobot;
@@ -244,7 +247,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	private boolean debug;
 
 	/** DB updating event targets */
-	private HashMap<String, SynDomanager> notifies;
+	private final HashMap<String, SynDomanager> notifies;
 
 	/**
 	 * Query client paths

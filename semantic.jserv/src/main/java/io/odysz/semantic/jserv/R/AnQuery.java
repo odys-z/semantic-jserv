@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -65,7 +66,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 			Utils.logi("---------- squery (r.serv) get ----------");
 		try {
 			IUser usr = verifier.verify(msg.header());
-			AnResultset rs = query(msg.body(0), usr);
+			AnResultset rs = query(msg.body(0), usr, st);
 			resp.getWriter().write(Html.rs(rs));
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -85,7 +86,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 
 		try {
 			IUser usr = verifier.verify(msg.header());
-			AnResultset rs = query(msg.body(0), usr);
+			AnResultset rs = query(msg.body(0), usr, st);
 
 			write(resp, ok(rs), msg.opts());
 		} catch (SsException e) {
@@ -106,12 +107,13 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	/**
 	 * @param msg
 	 * @param usr 
+	 * @param st0 
 	 * @return {code: "ok", port: {@link AnsonMsg.Port#query}, rs: [{@link AnResultset}, ...]}
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	protected static Query buildSelct(AnQueryReq msg, IUser usr) throws SQLException, TransException {
-		Query selct = synt0.select(msg.mtabl, msg.mAlias);
+	protected static Query buildSelct(AnQueryReq msg, IUser usr, DATranscxt st0) throws SQLException, TransException {
+		Query selct = st0.select(msg.mtabl, msg.mAlias);
 		
 		selct.page(msg.page, msg.pgsize);
 
@@ -137,7 +139,7 @@ public class AnQuery extends ServPort<AnQueryReq> {
 		if (msg.joins != null && msg.joins.size() > 0) {
 			for (Object[] j : msg.joins)
 				if (j[Ix.joinTabl] instanceof AnQueryReq) {
-					Query q = buildSelct((AnQueryReq)j[Ix.joinTabl], usr);
+					Query q = buildSelct((AnQueryReq)j[Ix.joinTabl], usr, st0);
 					selct.j(join.parse((String)j[Ix.joinType]),
 							q,
 							(String)j[Ix.joinAlias],
@@ -181,13 +183,14 @@ public class AnQuery extends ServPort<AnQueryReq> {
 	/**Query with help of {@link #buildSelct(AnQueryReq, IUser)}.
 	 * @param msg
 	 * @param usr
+	 * @param st 
 	 * @return result set
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	public static AnResultset query(AnQueryReq msg, IUser usr) throws SQLException, TransException {
-		Query selct = buildSelct(msg, usr);
-		SemanticObject s = selct.rs(synt0.instancontxt(Connects.uri2conn(msg.uri()), usr));
+	public static AnResultset query(AnQueryReq msg, IUser usr, DATranscxt st) throws SQLException, TransException {
+		Query selct = buildSelct(msg, usr, st);
+		SemanticObject s = selct.rs(st.instancontxt(Connects.uri2conn(msg.uri()), usr));
 		return (AnResultset) s.rs(0);
 	}
 }

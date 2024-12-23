@@ -10,6 +10,7 @@ import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import io.odysz.anson.x.AnsonException;
@@ -185,6 +186,18 @@ public class SynDomanager extends SyndomContext implements OnError {
 		
 		return this;
 	}
+	
+	public void opendomain(OnDomainUpdate... onok) 
+		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
+		// musteqs(syncfg.domain, dmgr.domain());
+
+//		SyncUser usr = ((SyncUser)AnSession
+//				.loadUser(admin, sysconn))
+//				.deviceId(dmgr.synode);
+
+		loadSynclients(tb0);
+		openSynssions(robot, onok);
+	}
 
 	/**
 	 * Update (synchronize) this domain, each peer in a new thread.
@@ -307,7 +320,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	/**
 	 * Login to peers and synchronize.
-	 * 
+	 * @deprecated
 	 * @param docuser
 	 * @param onok 
 	 * @return this
@@ -335,6 +348,34 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 		return this;
 	}
+
+	public SynDomanager openSynssions(SyncUser docuser, OnDomainUpdate... onok) throws SemanticException, AnsonException, SsException, IOException {
+		for (SynssionPeer peer : sessions.values()) {
+			if (eq(peer.peer, synode))
+					continue;
+				peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
+		}
+
+		if (!isNull(onok))
+			onok[0].ok(domain(), synode, null);
+
+		return this;
+	}
+
+	public SynDomanager updateSynssions(SyncUser docuser, OnDomainUpdate... onok) throws ExchangeException {
+
+		for (SynssionPeer peer : sessions.values()) {
+			if (eq(peer.peer, synode))
+					continue;
+			peer.update2peer((lockby) -> Math.random());
+		}
+
+		if (!isNull(onok))
+			onok[0].ok(domain(), synode, null);
+
+		return this;
+	}
+
 
 	public DBSyntableBuilder createSyntabuilder(SynodeConfig cfg) throws Exception {
 		notNull(cfg);

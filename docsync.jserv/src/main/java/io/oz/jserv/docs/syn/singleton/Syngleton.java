@@ -12,6 +12,7 @@ import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqlitables;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +26,6 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.AutoSeqMeta;
@@ -99,6 +99,12 @@ public class Syngleton extends JSingleton {
 		this.syndomanagers = domains;
 		return this;
 	}
+
+//	@Override
+//	public void onDestroyed(ServletContextEvent sce) {
+//		super.onDestroyed(sce);
+//		stopScheduled(5000);
+//	}
 
 	SynodeMeta synm;
 
@@ -181,20 +187,21 @@ public class Syngleton extends JSingleton {
 	 * @throws SQLException 
 	 * @throws TransException 
 	 */
-	public Syngleton openDomains(OnDomainUpdate ... onok)
-			throws AnsonException, SsException, IOException, TransException, SQLException {
+	public Syngleton asyOpenDomains(OnDomainUpdate ... onok) {
+		// throws AnsonException, SsException, IOException, TransException, SQLException {
 		if (syndomanagers != null) {
 			new Thread(()->{
 				for (SynDomanager dmgr : syndomanagers.values()) {
 					try {
-						musteqs(syncfg.domain, dmgr.domain());
-
-						SyncUser usr = ((SyncUser)AnSession
-							.loadUser(syncfg.admin, sysconn))
-							.deviceId(dmgr.synode);
-
-						dmgr.loadSynclients(tb0)
-							.openUpdateSynssions(usr, onok);
+//						musteqs(syncfg.domain, dmgr.domain());
+//
+//						SyncUser usr = ((SyncUser)AnSession
+//							.loadUser(syncfg.admin, sysconn))
+//							.deviceId(dmgr.synode);
+//
+//						dmgr.loadSynclients(tb0)
+//							.openUpdateSynssions(usr, onok);
+						opendomain(dmgr.domain(), dmgr, onok);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -206,6 +213,37 @@ public class Syngleton extends JSingleton {
 		}
 
 		return (Syngleton) this;
+	}
+	
+	public Syngleton openDomains(OnDomainUpdate... onok)
+		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
+		for (SynDomanager dmgr : syndomanagers.values()) {
+			dmgr.opendomain(onok);
+//			musteqs(syncfg.domain, dmgr.domain());
+//
+//			SyncUser usr = ((SyncUser)AnSession
+//				.loadUser(syncfg.admin, sysconn))
+//				.deviceId(dmgr.synode);
+//
+//			dmgr.loadSynclients(tb0)
+//				.openUpdateSynssions(usr);
+		}
+		return this;
+	}
+	
+
+	private void opendomain(String domain, SynDomanager dmgr, OnDomainUpdate... onok) 
+		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
+		musteqs(syncfg.domain, dmgr.domain());
+
+		SyncUser usr = ((SyncUser)AnSession
+				.loadUser(syncfg.admin, sysconn))
+				.deviceId(dmgr.synode);
+
+		dmgr.loadSynclients(tb0)
+			// .openUpdateSynssions(usr, onok);
+			.openSynssions(usr)
+			.updateSynssions(usr, onok);
 	}
 
 	/**

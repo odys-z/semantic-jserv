@@ -89,7 +89,7 @@ public class ExpDoctierservTest {
 
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
-			jetties[i].syngleton().openDomains(
+			jetties[i].syngleton().asyOpenDomains(
 				(domain, mynid, peer, xp) -> {
 					lights[i] = true;
 				});
