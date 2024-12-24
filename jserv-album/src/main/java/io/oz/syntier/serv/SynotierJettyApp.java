@@ -4,11 +4,10 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-
+import static io.odysz.common.LangExt.mustnonull;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.annotation.WebServlet;
@@ -34,13 +33,11 @@ import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -98,24 +95,28 @@ public class SynotierJettyApp {
 
 	/**
 	 * Test API equivalent of {@link #main(String[])}.
-	 * @param vol_home environment variable name for volume path, e. g. "$VOLUME_HOME"
+	 * @param _vol_home environment variable name for volume path, e. g. "VOLUME_HOME", without '$'
 	 * @param args cli args, e. g. -ip <bind-ip>, where the binding IP will override the dictionary.json.
-	 * @return 
+	 * @return  Jetty application
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp main_(String vol_home, String[] args, PrintstreamProvider ... oe)
+	public static SynotierJettyApp main_(String _vol_home, String[] args, PrintstreamProvider ... oe)
 			throws Exception {
 
 		CliArgs cli = new CliArgs();
 		CmdLineParser parser = new CmdLineParser(cli);
 		parser.parseArgument(args);
 
-		Utils.logi("%s : %s", vol_home, System.getProperty(vol_home));
+		mustnonull(cli.ip, "JUnit args for IDE bug: -ea -Dip=127.0.0.1 -DWEBROOT_PRV=#.#.#.# -DWEBROOT_HUB=#.#.#.#, jservs=\"X:127.0.0.1:8964 Y:127.0.0.1:8965\"");
+		
+		Utils.logi("%s : %s", _vol_home, System.getProperty(_vol_home));
 
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-		YellowPages.load(vol_home);
+		String $vol_home = "$" + _vol_home;
+		
+		YellowPages.load(_vol_home);
 		SynodeConfig cfg = YellowPages.synconfig();
 		if (cfg.mode == null)
 			cfg.mode = SynodeMode.peer;
@@ -123,15 +124,21 @@ public class SynotierJettyApp {
 		String[] ip_urlpath = new String[] {isblank(cli.ip) ? cfg.localhost : cli.ip, cli.urlpath};
 
 		if (!isblank(cli.installkey)) {
+			mustnonull(cli.jservs);
+
 			YellowPages.load(FilenameUtils.concat(
 					new File(".").getAbsolutePath(),
 					webinf,
-					EnvPath.replaceEnv(vol_home)));
-			AppSettings.setupdb(cfg, webinf, vol_home, "config.xml", cli.installkey);
+					EnvPath.replaceEnv($vol_home)));
+
+			AppSettings.setupdb(cfg, webinf, $vol_home, "config.xml", cli.installkey, cli.jservs);
 		}
-		return createSyndoctierApp(cfg, ip_urlpath[1], webinf, "config.xml", f("%s/%s", vol_home, "syntity.json"))
-			.start(isNull(oe) ? () -> System.out : oe[0], !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
-			;
+		
+		return createSyndoctierApp( cfg, ip_urlpath[1], webinf, "config.xml",
+									f("%s/%s", _vol_home, "syntity.json"))
+				.start(isNull(oe) ? () -> System.out : oe[0],
+					  !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
+				;
 	}
 
 	public SynotierJettyApp(SynodeConfig cfg) throws Exception {
@@ -247,11 +254,6 @@ public class SynotierJettyApp {
 	public void stop() throws Exception {
 		if (server != null)
 			server.stop();
-	}
-
-	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
-			throws TransException, SQLException {
-		syngleton.updatePeerJservs(synm, cfg, domain);
 	}
 
 	/**

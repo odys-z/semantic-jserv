@@ -1,6 +1,6 @@
 .. Community documentation master file, created by
 
-Welcome to Dev Community!
+Welcome to Docsync.jserv!
 =========================
 
 .. toctree::

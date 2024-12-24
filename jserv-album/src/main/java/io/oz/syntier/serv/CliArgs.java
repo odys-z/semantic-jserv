@@ -19,6 +19,9 @@ public class CliArgs {
 	@Option(name="-urlpath", usage="url root path to server, e. g. jserv-album (no first slash)")
 	String urlpath;
 
+	@Option(name="-peer-jservs", usage="only for test, e. g. \"X:http://127.0.0.1:8964/album-jserv Y:http://127.0.0.1/album-jserv\"")
+	public String jservs;
+
 	public CliArgs() {
 		port = 8964;
 	}

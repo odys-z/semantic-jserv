@@ -180,7 +180,7 @@ public class T_SynotierJettyApp {
 
 	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
 			throws TransException, SQLException {
-		syngleton.updatePeerJservs(synm, cfg, domain);
+		syngleton.updatePeerJservs(cfg, domain);
 	}
 
 	/**

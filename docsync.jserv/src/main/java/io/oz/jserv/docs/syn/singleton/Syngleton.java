@@ -116,21 +116,23 @@ public class Syngleton extends JSingleton {
 		tb0 = new DATranscxt(cfg.synconn);
 	}
 
-	public void updatePeerJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
-			throws TransException, SQLException {
+	public void updatePeerJservs(SynodeConfig cfg, String domain)
+			throws SemanticException {
 		if (!eq(domain, cfg.domain))
 			throw new SemanticException(
 				"Updating domain %s, but got configuration of %s.",
 				domain, cfg.domain);
-		
-		IUser robot = DATranscxt.dummyUser();
-
-		for (Synode sn : cfg.peers())
-			tb0.update(synm.tbl, robot)
-				.nv(synm.jserv, sn.jserv)
-				.whereEq(synm.pk, sn.synid)
-				.whereEq(synm.domain, cfg.domain)
-				.u(tb0.instancontxt(cfg.synconn, robot));
+//		
+//		IUser robot = DATranscxt.dummyUser();
+//		SynodeMeta synm = domanager(domain).synm;
+//
+//		for (Synode sn : cfg.peers())
+//			tb0.update(synm.tbl, robot)
+//				.nv(synm.jserv, sn.jserv)
+//				.whereEq(synm.pk, sn.synid)
+//				.whereEq(synm.domain, cfg.domain)
+//				.u(tb0.instancontxt(cfg.synconn, robot));
+		AppSettings.updatePeerJservs(cfg, domanager(domain).synm);
 	}
 
 	/**

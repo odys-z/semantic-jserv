@@ -6,6 +6,35 @@ Issues
     When the application server is installed, it should know peer jservs
     through dictionary.json, wich is version controlled in source.
 
-    The tests uses a simple cheap way to setup this.
+    The test uses a simple cheap way to setup this.
+
+.. code-block:: java
+
+    public static SynotierJettyApp main_(String vol_home,
+        String[] args, PrintstreamProvider ... oe) {
+
+        // @Option(name="-peer-jservs",
+        // usage=only for test, e. g.
+        // "X:http://127.0.0.1:8964/album-jserv Y:http://127.0.0.1/album-jserv")
+        // public String CliArgs.jservs;
+        CliArgs cli = new CliArgs();
+
+        CmdLineParser parser = new CmdLineParser(cli);
+        parser.parseArgument(args);
+
+        if (!isblank(cli.installkey)) {
+            YellowPages.load(FilenameUtils.concat(
+                new File(".").getAbsolutePath(),
+                webinf,
+                EnvPath.replaceEnv(vol_home)));
+            AppSettings.setupdb(cfg, webinf, vol_home, "config.xml", cli.installkey,
+                    // inject jservs args to the peers' configuration
+                    cli.jservs);
+        }
+    }
+..
+
+    Where the *jservs* for peers are injected into SynodeConfig, and then updated into
+    table *syn_nodes*, planning future extension for providing *jservs* in a separate json. 
 
 #. and more ...
