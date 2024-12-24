@@ -57,12 +57,15 @@ class SynotierJettyAppTest {
 
     	// -Dip=<bind-ip>
     	String bindip = System.getProperty("ip", "127.0.0.1");
+    	String jservs = System.getProperty("jservs");
 
-		SynotierJettyApp hub = SynotierJettyApp.main_("$" + vhub,
-				new String[] {"-ip", bindip, "-urlpath", "/jserv-album"});
+		SynotierJettyApp hub = SynotierJettyApp.main_(vhub,
+				new String[] {"-ip", bindip, "-urlpath", "/jserv-album",
+							"-peer-jservs", jservs, "-install-key", "0123456789ABCDEF"});
 		hub.print();
-		SynotierJettyApp prv = SynotierJettyApp.main_("$" + vprv,
-				new String[] {"-ip", bindip, "-urlpath", "/jserv-album", "-port", "8965"});
+		SynotierJettyApp prv = SynotierJettyApp.main_(vprv,
+				new String[] {"-ip", bindip, "-urlpath", "/jserv-album", "-port", "8965",
+							"-peer-jservs", jservs, "-install-key", "0123456789ABCDEF"});
 		hub.print();
 		prv.print();
 		pause("Press enter to quite ...");

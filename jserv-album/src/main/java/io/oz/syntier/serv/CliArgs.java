@@ -11,7 +11,7 @@ public class CliArgs {
 	String ip;
 
 	@Option(name="-install-key", usage="Install root key")
-	String installkey;
+	String install;
 	
 	@Option(name="-key", usage="root key used while initalize db")
 	String rootkey;

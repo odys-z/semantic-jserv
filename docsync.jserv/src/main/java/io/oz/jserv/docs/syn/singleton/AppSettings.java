@@ -62,10 +62,11 @@ public class AppSettings {
 			setupJservs(cfg, jservs);
 	}
 
-	private static void setupJservs(SynodeConfig cfg, String[] jservs) throws TransException {
+	private static void setupJservs(SynodeConfig cfg, String[] jservss) throws TransException {
+		String[] jservs = jservss[0].split(" ");
 		for (String jserv : jservs) {
 			String[] sid_url = jserv.split(":");
-			if (isNull(sid_url) || len(sid_url) != 2)
+			if (isNull(sid_url) || len(sid_url) < 2)
 				throw new IllegalArgumentException("jserv: " + jserv);
 			
 			String url = jserv.replaceFirst(sid_url[0] + ":", "");

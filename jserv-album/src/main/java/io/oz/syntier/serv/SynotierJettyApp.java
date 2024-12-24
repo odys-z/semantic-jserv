@@ -107,7 +107,7 @@ public class SynotierJettyApp {
 		CmdLineParser parser = new CmdLineParser(cli);
 		parser.parseArgument(args);
 
-		mustnonull(cli.ip, "JUnit args for IDE bug: -ea -Dip=127.0.0.1 -DWEBROOT_PRV=#.#.#.# -DWEBROOT_HUB=#.#.#.#, jservs=\"X:127.0.0.1:8964 Y:127.0.0.1:8965\"");
+		mustnonull(cli.ip, "JUnit args for IDE bug: -ea -Dip=127.0.0.1 -Dinstall-key=### -DWEBROOT_PRV=#.#.#.# -DWEBROOT_HUB=#.#.#.#, -Djservs=\"X:127.0.0.1:8964 Y:127.0.0.1:8965\"");
 		
 		Utils.logi("%s : %s", _vol_home, System.getProperty(_vol_home));
 
@@ -116,14 +116,14 @@ public class SynotierJettyApp {
 
 		String $vol_home = "$" + _vol_home;
 		
-		YellowPages.load(_vol_home);
+		YellowPages.load($vol_home);
 		SynodeConfig cfg = YellowPages.synconfig();
 		if (cfg.mode == null)
 			cfg.mode = SynodeMode.peer;
 		
 		String[] ip_urlpath = new String[] {isblank(cli.ip) ? cfg.localhost : cli.ip, cli.urlpath};
 
-		if (!isblank(cli.installkey)) {
+		if (!isblank(cli.install)) {
 			mustnonull(cli.jservs);
 
 			YellowPages.load(FilenameUtils.concat(
@@ -131,11 +131,11 @@ public class SynotierJettyApp {
 					webinf,
 					EnvPath.replaceEnv($vol_home)));
 
-			AppSettings.setupdb(cfg, webinf, $vol_home, "config.xml", cli.installkey, cli.jservs);
+			AppSettings.setupdb(cfg, webinf, $vol_home, "config.xml", cli.install, cli.jservs);
 		}
 		
-		return createSyndoctierApp( cfg, ip_urlpath[1], webinf, "config.xml",
-									f("%s/%s", _vol_home, "syntity.json"))
+		return createSyndoctierApp( cfg.ip(ip_urlpath[0]), ip_urlpath[1], webinf, "config.xml",
+									f("%s/%s", $vol_home, "syntity.json"))
 				.start(isNull(oe) ? () -> System.out : oe[0],
 					  !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 				;
