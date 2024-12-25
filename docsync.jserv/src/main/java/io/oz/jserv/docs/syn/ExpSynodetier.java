@@ -172,20 +172,29 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	}
 
 	boolean running;
+
+	/**
+	 * <h4>Debug Notes</h4>
+	 * Multiple threads cannot be scheduled ad a single test running.
+	 * 
+	 * @param syncIns
+	 * @return this
+	 * @since 0.7.0
+	 */
 	public ExpSynodetier syncIn(float syncIns) {
 		this.syncInSnds = syncIns;
 		if ((int)(this.syncInSnds) <= 0)
 			return this;
 
 		worker[0] = () -> {
-			if (running)
-				return;
-			running = true;
-
-			if (debug)
-			Utils.logi("Checking Syndomain ...");
-
 			try {
+				if (running)
+					return;
+				running = true;
+
+				if (debug)
+				Utils.logi("[X] : Checking Syndomain ...", synid);
+
 				if (len(this.domanager0.sessions) == 0) {
 					// Memo: joining behaviour can impacting here
 					this.domanager0
@@ -208,9 +217,13 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			finally { running = false; }
 		};
 
-		scheduler = Executors.newScheduledThreadPool(1);
+		scheduler = Executors.newSingleThreadScheduledExecutor(
+				(r) -> new Thread(r, f("synworker-%s", synid)));
+
+		scheduler.submit(worker[0]);
         schedualed = scheduler.scheduleWithFixedDelay(
         		worker[0], 5000, (int)(syncInSnds * 1000), TimeUnit.MILLISECONDS);
 
@@ -229,5 +242,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		} catch (InterruptedException e) {
 		    scheduler.shutdownNow();
 		}
+		finally { running = false; }
 	}
 }

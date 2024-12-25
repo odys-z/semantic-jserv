@@ -10,6 +10,7 @@ import java.util.List;
 
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.Utils.pause;
+import static io.odysz.common.Utils.warn;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
@@ -68,6 +69,10 @@ class SynotierJettyAppTest {
 							"-peer-jservs", jservs, "-install-key", "0123456789ABCDEF"});
 		hub.print();
 		prv.print();
+
+		warn("Multiple synodes initialed in a single process, of which only the first (%s) syn-worker is enabled.",
+				hub.syngleton.synode());
+		warn("See ExpSynodetier.syncIns(secondes).");
 		pause("Press enter to quite ...");
 	}
 
@@ -102,17 +107,6 @@ class SynotierJettyAppTest {
 					List<DocsResp> resps;
 					try {
 						tier.asyVideos(null, videos, null, null);
-						// assertNotNull(resps);
-						// assertEquals(1, resps.size());
-
-//						for (DocsResp d : resps) {
-//							String docId = d.xdoc.recId();
-//							assertEquals(8, docId.length());
-//
-//							AlbumResp rp = tier.selectPhotoRec(docId);
-//							assertNotNull(rp.xdoc.pname);
-//							assertEquals(rp.xdoc.pname, filename);
-//						}
 
 						PathsPage page = new PathsPage();
 						for (int i = 0; i < videos.size(); i++) {
