@@ -42,6 +42,7 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.T_SynotierJettyApp;
+import io.oz.syn.SynOrg;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
 
@@ -124,6 +125,9 @@ public class SynodetierJoinTest {
 			config.sysconn = f("main-sqlite-%s", i);
 			config.port    = port++;
 			config.mode    = SynodeMode.peer;
+			config.org     = new SynOrg();
+			config.org.orgId= ura;
+			config.org.meta = "io.oz.jserv.docs.meta.DocOrgMeta";
 			config.domain  = eq(nodes[i], "X") ? zsu : null;
 			config.peers   = new Synode[] {new Synode(nodes[i], nodes[i] + "," + nodes[i], ura, config.domain)};
 

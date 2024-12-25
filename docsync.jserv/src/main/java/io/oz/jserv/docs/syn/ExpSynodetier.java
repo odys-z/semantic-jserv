@@ -171,12 +171,16 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		stopScheduled(5);
 	}
 
+	boolean running;
 	public ExpSynodetier syncIn(float syncIns) {
 		this.syncInSnds = syncIns;
 		if ((int)(this.syncInSnds) <= 0)
 			return this;
 
 		worker[0] = () -> {
+			if (running)
+				return;
+			running = true;
 
 			if (debug)
 			Utils.logi("Checking Syndomain ...");
@@ -209,6 +213,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		scheduler = Executors.newScheduledThreadPool(1);
         schedualed = scheduler.scheduleWithFixedDelay(
         		worker[0], 5000, (int)(syncInSnds * 1000), TimeUnit.MILLISECONDS);
+
+        running = false;
 		return this;
 	}
 
