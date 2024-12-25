@@ -205,7 +205,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 					try {
 						// Memo: joining behaviour can impacting here
-						if (this.domanager0.sessions.get(domain).client == null)
+						// if (this.domanager0.sessions.get(domain).client == null)
 						this.domanager0
 							// .loadSynclients(synt0)
 							// .opendomain();
