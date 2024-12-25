@@ -135,12 +135,18 @@ public class SynodetierJoinTest {
 			
 			Syngleton.setupSyntables(config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
-					webinf, "config.xml", ".", "ABCDEF0123465789");
+					webinf, "config.xml", ".", "ABCDEF0123465789", true);
 
 			Syngleton.cleanDomain(config);
 
 			Syngleton.cleanSynssions(config);
 
+			// DB is dirty when testing again
+			String top = config.domain;
+			config.domain = zsu;
+			Syngleton.cleanDomain(config);
+			config.domain = top;
+			
 			jetties[i] = startSyndoctier(config, f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
@@ -151,6 +157,7 @@ public class SynodetierJoinTest {
 	@Test
 	void testSynodetierJoin() throws Exception {
 		setupDomain();
+		// Utils.pause("Press Enter...");
 	}
 	
 	/**
@@ -230,10 +237,6 @@ public class SynodetierJoinTest {
 		}
 	}
 
-	/////////
-	/////////
-	/////////
-	/////////
 	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
 			throws SemanticException, SsException, IOException {
 
@@ -256,9 +259,12 @@ public class SynodetierJoinTest {
 						// finished domain, with or without errors
 						lights[tx] = true; 
 
-						if (eq(domain, dom)) {
+						if (eq(domain, dom)) 
 							Utils.logi("lights[%s] (%s) = true", tx, mynid);
-						}
+						else if (isblank(dom)) 
+							Utils.warnT(new Object() {},
+										"This can only be reached while joining (updating) a domain, to %s",
+										domain);
 						else {
 							throw new NullPointerException(f(
 								"While updating domain, there is an error on unexpected domain: %s, my-synode-id: %s, to peer: %s, synconn: %s",

@@ -123,7 +123,7 @@ public class SynotierJettyApp {
 		
 		String[] ip_urlpath = new String[] {isblank(cli.ip) ? cfg.localhost : cli.ip, cli.urlpath};
 
-		if (!isblank(cli.install)) {
+		if (!isblank(cli.installkey)) {
 			mustnonull(cli.jservs);
 
 			YellowPages.load(FilenameUtils.concat(
@@ -131,7 +131,7 @@ public class SynotierJettyApp {
 					webinf,
 					EnvPath.replaceEnv($vol_home)));
 
-			AppSettings.setupdb(cfg, webinf, $vol_home, "config.xml", cli.install, cli.jservs);
+			AppSettings.setupdb(cfg, webinf, $vol_home, "config.xml", cli.installkey, cli.jservs);
 		}
 		
 		return createSyndoctierApp( cfg.ip(ip_urlpath[0]), ip_urlpath[1], webinf, "config.xml",

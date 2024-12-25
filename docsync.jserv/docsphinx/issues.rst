@@ -1,12 +1,13 @@
 Issues
 ======
 
-#. Injecting *jservs* at runtime
+Injecting *jservs* at runtime
+-----------------------------
 
-    When the application server is installed, it should know peer jservs
-    through dictionary.json, wich is version controlled in source.
+When the application server is installed, it should know peer jservs
+through dictionary.json, wich is version controlled in source.
 
-    The test uses a simple cheap way to setup this.
+The test uses a simple cheap way to setup this.
 
 .. code-block:: java
 
@@ -34,7 +35,19 @@ Issues
     }
 ..
 
-    Where the *jservs* for peers are injected into SynodeConfig, and then updated into
-    table *syn_nodes*, planning future extension for providing *jservs* in a separate json. 
+Where the *jservs* for peers are injected into SynodeConfig, and then updated into
+table *syn_nodes*, planning future extension for providing *jservs* in a separate json. 
 
-#. and more ...
+Only one syn-worker thread
+--------------------------
+
+Multiple synodes cannot work in one (test) running.
+
+commit: 2079991c2cfda1a46ac532b94ebb836e41590377
+
+See ExpSynodetier.syncIns().
+
+Overhaul: sending exception to client
+-------------------------------------
+
+Re-design ServPort.err(MsgCode code, Exceptiion e);

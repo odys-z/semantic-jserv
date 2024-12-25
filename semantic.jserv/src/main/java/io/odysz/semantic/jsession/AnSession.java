@@ -250,7 +250,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		jsonResp(msg, resp);
 	}
 
-	@SuppressWarnings("deprecation")
 	protected void jsonResp(AnsonMsg<AnSessionReq> msg, HttpServletResponse response) throws IOException {
 		String connId = null;
 		try {

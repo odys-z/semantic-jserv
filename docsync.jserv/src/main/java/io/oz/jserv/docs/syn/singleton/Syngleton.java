@@ -243,7 +243,6 @@ public class Syngleton extends JSingleton {
 				.deviceId(dmgr.synode);
 
 		dmgr.loadSynclients(tb0)
-			// .openUpdateSynssions(usr, onok);
 			.openSynssions(usr)
 			.updateSynssions(usr, onok);
 	}

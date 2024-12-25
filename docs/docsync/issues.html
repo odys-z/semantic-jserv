@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Issues &mdash; Docsync.jserv 1.0 documentation</title>
+  <title>1. Issues &mdash; Docsync.jserv 1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -19,6 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="2. Closed Issues" href="issues-closed.html" />
     <link rel="prev" title="Welcome to Docsync.jserv!" href="index.html" /> 
 </head>
 
@@ -43,7 +44,13 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Issues</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1. Issues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#injecting-jservs-at-runtime">1.1. Injecting <em>jservs</em> at runtime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#only-one-syn-worker-thread">1.2. Only one syn-worker thread</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overhaul-sending-exception-to-client">1.3. Overhaul: sending exception to client</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="issues-closed.html">2. Closed Issues</a></li>
 </ul>
 
         </div>
@@ -60,7 +67,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Issues</li>
+      <li class="breadcrumb-item active"><span class="section-number">1. </span>Issues</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -70,16 +77,12 @@
            <div itemprop="articleBody">
              
   <section id="issues">
-<h1>Issues<a class="headerlink" href="#issues" title="Link to this heading"></a></h1>
-<ol class="arabic">
-<li><p>Injecting <em>jservs</em> at runtime</p>
-<blockquote>
-<div><p>When the application server is installed, it should know peer jservs
+<h1><span class="section-number">1. </span>Issues<a class="headerlink" href="#issues" title="Link to this heading"></a></h1>
+<section id="injecting-jservs-at-runtime">
+<h2><span class="section-number">1.1. </span>Injecting <em>jservs</em> at runtime<a class="headerlink" href="#injecting-jservs-at-runtime" title="Link to this heading"></a></h2>
+<p>When the application server is installed, it should know peer jservs
 through dictionary.json, wich is version controlled in source.</p>
 <p>The test uses a simple cheap way to setup this.</p>
-</div></blockquote>
-</li>
-</ol>
 <div class="highlight-java notranslate"><div class="highlight"><pre><span></span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">SynotierJettyApp</span><span class="w"> </span><span class="nf">main_</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">vol_home</span><span class="p">,</span>
 <span class="w">    </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">,</span><span class="w"> </span><span class="n">PrintstreamProvider</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="n">oe</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 
@@ -104,13 +107,19 @@ through dictionary.json, wich is version controlled in source.</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-<blockquote>
-<div><p>Where the <em>jservs</em> for peers are injected into SynodeConfig, and then updated into
+<p>Where the <em>jservs</em> for peers are injected into SynodeConfig, and then updated into
 table <em>syn_nodes</em>, planning future extension for providing <em>jservs</em> in a separate json.</p>
-</div></blockquote>
-<ol class="arabic simple">
-<li><p>and more …</p></li>
-</ol>
+</section>
+<section id="only-one-syn-worker-thread">
+<h2><span class="section-number">1.2. </span>Only one syn-worker thread<a class="headerlink" href="#only-one-syn-worker-thread" title="Link to this heading"></a></h2>
+<p>Multiple synodes cannot work in one (test) running.</p>
+<p>commit: 2079991c2cfda1a46ac532b94ebb836e41590377</p>
+<p>See ExpSynodetier.syncIns().</p>
+</section>
+<section id="overhaul-sending-exception-to-client">
+<h2><span class="section-number">1.3. </span>Overhaul: sending exception to client<a class="headerlink" href="#overhaul-sending-exception-to-client" title="Link to this heading"></a></h2>
+<p>Re-design ServPort.err(MsgCode code, Exceptiion e);</p>
+</section>
 </section>
 
 
@@ -118,6 +127,7 @@ table <em>syn_nodes</em>, planning future extension for providing <em>jservs</em
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Docsync.jserv!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="issues-closed.html" class="btn btn-neutral float-right" title="2. Closed Issues" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -5,10 +5,11 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.notNull;
-import static io.odysz.semantic.syn.ExessionAct.ready;
 import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.mode_server;
+import static io.odysz.semantic.syn.ExessionAct.ready;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.Executors;
@@ -23,7 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Utils;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -46,13 +46,15 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	
 	final String domain;
 	final String synid;
+	
+	/** peer | non-syn | leaf */
 	final SynodeMode mode;
 
 	SynDomanager domanager0;
 	
 	public boolean debug;
 
-	private DATranscxt synt0;
+	// private DATranscxt synt0;
 
 	ExpSynodetier(String org, String domain, String synode, String conn, SynodeMode mode)
 			throws SQLException, SAXException, IOException, TransException {
@@ -67,7 +69,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			throws Exception {
 		this(domanger.org, domanger.domain(), domanger.synode, domanger.synconn, domanger.mode);
 		domanager0 = domanger;
-		synt0 = new DATranscxt(domanger.synconn);
+		// synt0 = new DATranscxt(domanger.synconn);
 	}
 
 	@Override
@@ -152,7 +154,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		return new SyncResp(domanager0.domain()).exblock(
 				new ExchangeBlock(domanager0.domain(), domanager0.synode, exblock.srcnode, null,
 				new ExessionAct(mode_server, deny)));
-
 	}
 
 	//////////////////////////////  worker    ///////////////////////////////////
@@ -193,21 +194,38 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				running = true;
 
 				if (debug)
-				Utils.logi("[X] : Checking Syndomain ...", synid);
+				Utils.logi("[%s] : Checking Syndomain ...", synid);
 
 				if (len(this.domanager0.sessions) == 0) {
 					// Memo: joining behaviour can impacting here
-					this.domanager0
-						.loadSynclients(synt0)
-						.opendomain();
+					try {
+						this.domanager0
+							// .loadSynclients(synt0)
+							.opendomain();
+					} catch (SemanticException e) {
+						// ISSUE
+						// TODO FXIME we need overhaul the ServPort.err()
+						// e.msg = Code: exSession, Message:\nCannot find user <id>
+						// if (e.ex().toString() == MsgCode.exSession.name())
+						// login denied
+
+						schedualed.cancel(false);
+						scheduler.shutdown();
+						e.printStackTrace();
+					}
 				}
 
 				if (len(this.domanager0.sessions) > 0)
 				this.domanager0.updomain(
 					(dom, synode, peer, xp) -> {
-						if (debug) Utils.logi("On update: %s", dom);
+						if (debug) Utils.logi("[%s] On update: %s", synid, dom);
 					},
 					(synlocker) -> Math.random());
+			} catch (FileNotFoundException e) {
+				// v 0.2.0, something wrong in url, such as wrong configurations, and etc.
+				schedualed.cancel(false);
+				scheduler.shutdown();
+				e.printStackTrace();
 			} catch (IOException e) {
 				syncInSnds = Math.min(maxSyncInSnds, syncInSnds + 5);
 				schedualed.cancel(false);
@@ -223,7 +241,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		scheduler = Executors.newSingleThreadScheduledExecutor(
 				(r) -> new Thread(r, f("synworker-%s", synid)));
 
-		scheduler.submit(worker[0]);
+		// scheduler.submit(worker[0]);
         schedualed = scheduler.scheduleWithFixedDelay(
         		worker[0], 5000, (int)(syncInSnds * 1000), TimeUnit.MILLISECONDS);
 
@@ -232,7 +250,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	}
 
 	public void stopScheduled(int sDelay) {
-		Utils.logi("cancling sync-worker ... ");
+		Utils.logi("[%s] cancling sync-worker ... ", synid);
 		schedualed.cancel(true);
 		scheduler.shutdown();
 		try {

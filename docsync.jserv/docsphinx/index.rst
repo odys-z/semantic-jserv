@@ -4,10 +4,12 @@ Welcome to Docsync.jserv!
 =========================
 
 .. toctree::
-   :maxdepth: 2
+   :numbered:
+   :maxdepth: 4
    :caption: Contents:
 
    issues
+   issues-closed
 
 Indices and tables
 ==================

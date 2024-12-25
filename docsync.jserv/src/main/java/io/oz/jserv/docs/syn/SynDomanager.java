@@ -187,7 +187,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 	
-	public void opendomain(OnDomainUpdate... onok) 
+	public SynDomanager opendomain(OnDomainUpdate... onok) 
 		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
 		// musteqs(syncfg.domain, dmgr.domain());
 
@@ -196,7 +196,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 //				.deviceId(dmgr.synode);
 
 		loadSynclients(tb0);
-		openSynssions(robot, onok);
+		return openSynssions(robot, onok);
 	}
 
 	/**
@@ -223,7 +223,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			// tasks looping until finished
 			for (String peer : sessions.keySet()) {
 				ExessionPersist xp = sessions.get(peer).xp;
-				if (xp != null && xp.exstate() == ready)
+				if (xp == null || xp.exstate() == ready)
 					try {
 						sessions.get(peer).update2peer((lockby) -> 0.31f);
 					} catch (ExchangeException e) {
@@ -279,6 +279,16 @@ public class SynDomanager extends SyndomContext implements OnError {
 		Utils.warn(msg, (Object[])args);
 	}
 
+	/**
+	 * Load {@link SyndomContext#synm}.tbl and build all SynssionPeers to every peers.
+	 * 
+	 * SynssionPeer.xp should be null.
+	 * 
+	 * @param t0
+	 * @return this
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	public SynDomanager loadSynclients(DATranscxt t0)
 			throws TransException, SQLException {
 		
@@ -311,7 +321,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 			sessions.put(peer, c);
 			
-			Utils.logi("[ ♻.✩ %s ] Synssion clientier created: {conn: %s, mode: %s, peer: %s, peer-jserv: %s}",
+			Utils.logi("[ ♻.✩ %s ] Synssion Opened (clientier created): {conn: %s, mode: %s, peer: %s, peer-jserv: %s}",
 					synode, c.conn, c.mymode.name(), c.peer, c.peerjserv);
 		}
 
