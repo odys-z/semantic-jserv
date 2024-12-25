@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Utils;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -196,13 +197,26 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (debug)
 				Utils.logi("[%s] : Checking Syndomain ...", synid);
 
+				DATranscxt syntb = new DATranscxt(domanager0.synconn);
+
 				if (len(this.domanager0.sessions) == 0) {
-					// Memo: joining behaviour can impacting here
+
+					this.domanager0.loadSynclients(syntb);
+
 					try {
+						// Memo: joining behaviour can impacting here
+						if (this.domanager0.sessions.get(domain).client == null)
 						this.domanager0
 							// .loadSynclients(synt0)
-							.opendomain();
-					} catch (SemanticException e) {
+							// .opendomain();
+							.openSynssions(domanager0.admin);
+					} catch (IOException e) {
+						syncInSnds = Math.min(maxSyncInSnds, syncInSnds + 5);
+						schedualed.cancel(false);
+						schedualed = scheduler.scheduleWithFixedDelay(
+								worker[0], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
+								TimeUnit.MILLISECONDS);
+					} catch (Exception e) {
 						// ISSUE
 						// TODO FXIME we need overhaul the ServPort.err()
 						// e.msg = Code: exSession, Message:\nCannot find user <id>

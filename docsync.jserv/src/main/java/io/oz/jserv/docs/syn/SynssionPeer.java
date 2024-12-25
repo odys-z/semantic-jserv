@@ -90,8 +90,8 @@ public class SynssionPeer {
 	public SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
-					"Synchronizing information is not ready, or not logged in. peer %s, domain %s%s.",
-					peer, domain(), client == null ? ", client is null" : "");
+					"Synchronizing information is not ready, or not logged in. From synode %s, peer %s, domain %s%s.",
+					domanager.synode, peer, domain(), client == null ? ", client is null" : "");
 
 		SyncResp rep = null;
 		try {

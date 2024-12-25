@@ -34,10 +34,12 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -134,8 +136,11 @@ public class SynotierJettyApp {
 			AppSettings.setupdb(cfg, webinf, $vol_home, "config.xml", cli.installkey, cli.jservs);
 		}
 		
-		return createSyndoctierApp( cfg.ip(ip_urlpath[0]), ip_urlpath[1], webinf, "config.xml",
+		return createSyndoctierApp( cfg.ip(ip_urlpath[0]),
+									((ArrayList<SyncUser>) YellowPages.robots()).get(0),
+									ip_urlpath[1], webinf, "config.xml",
 									f("%s/%s", $vol_home, "syntity.json"))
+
 				.start(isNull(oe) ? () -> System.out : oe[0],
 					  !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 				;
@@ -149,17 +154,18 @@ public class SynotierJettyApp {
 	 * Create an application instance working as a synode tier.
 	 * @param urlpath e. g. jserv-album
 	 * @param syntity_json e. g. $VOLUME_HOME/syntity.json
+	 * @param admin 
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, String urlpath,
-			String webinf, String config_xml, String syntity_json) throws Exception {
+	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, SyncUser admin,
+			String urlpath, String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
 
 		SynotierJettyApp synapp = SynotierJettyApp
 						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
-						.loadomains(cfg);
+						.loadomains(cfg, new DocUser(admin));
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
@@ -186,8 +192,8 @@ public class SynotierJettyApp {
 		return this;
 	}
 
-	SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
-		syngleton.loadomains(cfg);
+	SynotierJettyApp loadomains(SynodeConfig cfg, DocUser admin) throws Exception {
+		syngleton.loadomains(cfg, admin);
 		return this;
 	}
 

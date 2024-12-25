@@ -15,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+
 import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -33,10 +35,12 @@ import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.Docheck;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.jserv.docs.AssertImpl;
+import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
@@ -202,7 +206,7 @@ public class CreateSyndocTierTest {
 
 		T_SynotierJettyApp app = T_SynotierJettyApp
 				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", cfg.port);
-		app.syngleton.loadomains(cfg);
+		app.syngleton.loadomains(cfg, new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)));
 
 		return T_SynotierJettyApp
 			.registerPorts(app, "/", cfg.sysconn,

@@ -181,6 +181,7 @@ public class T_Photo extends ExpSyncDoc {
 
 		this.clientpath = fullpath;
 		exif = new ArrayList<String>() {
+			private static final long serialVersionUID = 1;
 			{add("location:вулиця Лаврська' 27' Київ");};
 			{add("camera:Bayraktar TB2");}};
 		share("ody@kyiv", ShareFlag.publish.name(), new Date());

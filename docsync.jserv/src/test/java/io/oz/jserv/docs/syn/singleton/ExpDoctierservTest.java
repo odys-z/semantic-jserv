@@ -35,6 +35,7 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.Docheck;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
@@ -195,7 +196,9 @@ public class ExpDoctierservTest {
 			// clean and reboot
 			Syngleton.cleanSynssions(cfgs[i]);
 
-			jetties[i] = startSyndoctier(cfgs[i], "config.xml", f("$VOLUME_%s/syntity.json", i));
+			jetties[i] = startSyndoctier(cfgs[i],
+					((ArrayList<SyncUser>) YellowPages.robots()).get(0),
+					"config.xml", f("$VOLUME_%s/syntity.json", i));
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 						cfgs[i].synode(), SynodeMode.peer, docm, cfgs[i].debug);

@@ -45,6 +45,14 @@ public class DocUser extends SyncUser implements IUser {
 		super(userid, null, userid);
 	}
 
+	public DocUser(SyncUser admin) throws SemanticException {
+		this(admin.uid(), admin.pswd(), admin.userName());
+
+		super.roleId(admin.roleId());
+		org = admin.orgId();
+		orgName = admin.orgName;
+	}
+
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
 
 	protected Set<String> tempDirs;

@@ -147,7 +147,8 @@ public class SynodetierJoinTest {
 			Syngleton.cleanDomain(config);
 			config.domain = top;
 			
-			jetties[i] = startSyndoctier(config, f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
+			jetties[i] = startSyndoctier(config, robots.get(0),
+					f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								config.synode(), SynodeMode.peer, docm, config.debug);
@@ -285,11 +286,12 @@ public class SynodetierJoinTest {
 	 * @return the Jetty App, with a servlet server.
 	 * @throws Exception
 	 */
-	public static T_SynotierJettyApp startSyndoctier(SynodeConfig cfg, String cfg_xml,
-			String syntity_json) throws Exception {
+	public static T_SynotierJettyApp startSyndoctier(SynodeConfig cfg, SyncUser admin,
+			String cfg_xml, String syntity_json) throws Exception {
 
 		return T_SynotierJettyApp 
-			.createSyndoctierApp(cfg, "/", webinf, cfg_xml, syntity_json)
+			.createSyndoctierApp(cfg, new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)),
+					"/", webinf, cfg_xml, syntity_json)
 			.start(() -> System.out, () -> System.err)
 			;
 	}

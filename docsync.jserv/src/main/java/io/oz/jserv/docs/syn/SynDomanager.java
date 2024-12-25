@@ -10,7 +10,6 @@ import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import io.odysz.anson.x.AnsonException;
@@ -126,7 +125,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		
 		tb0 = new DATranscxt(c.synconn);
 
-		robot = new SyncUser();
+		admin = new SyncUser();
 	}
 	
 	/**
@@ -179,7 +178,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager loadomainx() throws TransException, SQLException {
 		Utils.logi("\n[ ♻.%s ] loading domain %s ...", synode, domain());
 		
-		robot = new SyncUser(synode, "pswd: local null", synode)
+		SyncUser robot = new SyncUser(synode, "pswd: local null", synode)
 				.deviceId(synode);
 
 		loadNvstamp(tb0, robot);
@@ -187,17 +186,17 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 	
-	public SynDomanager opendomain(OnDomainUpdate... onok) 
-		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
-		// musteqs(syncfg.domain, dmgr.domain());
-
-//		SyncUser usr = ((SyncUser)AnSession
-//				.loadUser(admin, sysconn))
-//				.deviceId(dmgr.synode);
-
-		loadSynclients(tb0);
-		return openSynssions(robot, onok);
-	}
+//	public SynDomanager opendomain(OnDomainUpdate... onok) 
+//		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
+//		// musteqs(syncfg.domain, dmgr.domain());
+//
+////		SyncUser usr = ((SyncUser)AnSession
+////				.loadUser(admin, sysconn))
+////				.deviceId(dmgr.synode);
+//
+//		loadSynclients(tb0);
+//		return openSynssions(admin, onok);
+//	}
 
 	/**
 	 * Update (synchronize) this domain, each peer in a new thread.
@@ -298,7 +297,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 				.groupby(synm.synoder)
 				.where_(op.ne, synm.synoder, synode)
 				.whereEq(synm.domain, domain())
-				.rs(t0.instancontxt(synconn, robot))
+				.rs(t0.instancontxt(synconn, admin))
 				.rs(0);
 		
 		if (sessions == null)

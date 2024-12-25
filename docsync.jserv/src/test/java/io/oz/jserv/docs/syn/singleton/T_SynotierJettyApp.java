@@ -32,6 +32,7 @@ import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -73,7 +74,7 @@ public class T_SynotierJettyApp {
 	 * @param syntity_json e. g. $VOLUME_HOME/syntity.json
 	 * @throws Exception
 	 */
-	public static T_SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, String urlpath,
+	public static T_SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, DocUser admin, String urlpath,
 			String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
@@ -81,7 +82,7 @@ public class T_SynotierJettyApp {
 
 		T_SynotierJettyApp synapp = T_SynotierJettyApp
 						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
-						.loadomains(cfg);
+						.loadomains(cfg, admin);
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
@@ -108,8 +109,8 @@ public class T_SynotierJettyApp {
 		return this;
 	}
 
-	T_SynotierJettyApp loadomains(SynodeConfig cfg) throws Exception {
-		syngleton.loadomains(cfg);
+	T_SynotierJettyApp loadomains(SynodeConfig cfg, DocUser admin) throws Exception {
+		syngleton.loadomains(cfg, admin);
 		return this;
 	}
 

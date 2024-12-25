@@ -51,6 +51,7 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DocOrgMeta;
+import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
@@ -140,11 +141,12 @@ public class Syngleton extends JSingleton {
 	 * 
 	 * @param synmod synode mode, peer, hub, etc.
 	 * @param cfg 
+	 * @param admin 
 	 * @return singleton
 	 * @throws Exception
 	 * @since 0.2.0
 	 */
-	public HashMap<String,SynDomanager> loadomains(SynodeConfig cfg) throws Exception {
+	public HashMap<String,SynDomanager> loadomains(SynodeConfig cfg, DocUser admin) throws Exception {
 		shouldeq(new Object() {}, cfg.mode, SynodeMode.peer);
 		
 		if (syndomanagers == null)
@@ -168,12 +170,13 @@ public class Syngleton extends JSingleton {
 		
 		if (rs.next()) {
 			String domain = rs.getString(synm.domain);
-			SynDomanager domanger = new SynDomanager(cfg)
+			SynDomanager domanger = ((SynDomanager) new SynDomanager(cfg)
+					.admin(admin.deviceId(cfg.synode())))
 					.loadomainx();
 
 			syndomanagers.put(domain, (SynDomanager) domanger
-						.loadNvstamp(defltScxt, domanger.robot)
-						.synrobot(domanger.robot));
+						.loadNvstamp(defltScxt, domanger.admin)
+						); // .admin(domanger.admin));
 		}
 
 		return syndomanagers;
@@ -217,21 +220,21 @@ public class Syngleton extends JSingleton {
 		return (Syngleton) this;
 	}
 	
-	public Syngleton openDomains(OnDomainUpdate... onok)
-		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
-		for (SynDomanager dmgr : syndomanagers.values()) {
-			dmgr.opendomain(onok);
-//			musteqs(syncfg.domain, dmgr.domain());
-//
-//			SyncUser usr = ((SyncUser)AnSession
-//				.loadUser(syncfg.admin, sysconn))
-//				.deviceId(dmgr.synode);
-//
-//			dmgr.loadSynclients(tb0)
-//				.openUpdateSynssions(usr);
-		}
-		return this;
-	}
+//	public Syngleton openDomains(OnDomainUpdate... onok)
+//		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
+//		for (SynDomanager dmgr : syndomanagers.values()) {
+//			dmgr.opendomain(onok);
+////			musteqs(syncfg.domain, dmgr.domain());
+////
+////			SyncUser usr = ((SyncUser)AnSession
+////				.loadUser(syncfg.admin, sysconn))
+////				.deviceId(dmgr.synode);
+////
+////			dmgr.loadSynclients(tb0)
+////				.openUpdateSynssions(usr);
+//		}
+//		return this;
+//	}
 	
 
 	private void opendomain(String domain, SynDomanager dmgr, OnDomainUpdate... onok) 
