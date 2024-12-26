@@ -211,7 +211,7 @@ public class ExpDoctierservTest {
 
 		for (int i : nodex) {
 			if (!isblank(cfgs[i].domain))
-				jetties[i].updateJservs(ck[i].synb.syndomx.synm, cfgs[i], zsu);
+				jetties[i].syngleton.updatePeerJservs(cfgs[i], zsu);
 		}
 
 		return nodex;

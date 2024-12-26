@@ -205,17 +205,13 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 					try {
 						// Memo: joining behaviour can impacting here
-						if (this.domanager0.sessions.get(domain).client == null)
 						this.domanager0
 							// .loadSynclients(synt0)
 							// .opendomain();
 							.openSynssions(domanager0.admin);
 					} catch (IOException e) {
-						syncInSnds = Math.min(maxSyncInSnds, syncInSnds + 5);
 						schedualed.cancel(false);
-						schedualed = scheduler.scheduleWithFixedDelay(
-								worker[0], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
-								TimeUnit.MILLISECONDS);
+						reschedule(5);
 					} catch (Exception e) {
 						// ISSUE
 						// TODO FXIME we need overhaul the ServPort.err()
@@ -241,11 +237,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				scheduler.shutdown();
 				e.printStackTrace();
 			} catch (IOException e) {
-				syncInSnds = Math.min(maxSyncInSnds, syncInSnds + 5);
 				schedualed.cancel(false);
-				schedualed = scheduler.scheduleWithFixedDelay(
-						worker[0], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
-						TimeUnit.MILLISECONDS);
+				schedualed = reschedule(5);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -255,12 +248,18 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		scheduler = Executors.newSingleThreadScheduledExecutor(
 				(r) -> new Thread(r, f("synworker-%s", synid)));
 
-		// scheduler.submit(worker[0]);
         schedualed = scheduler.scheduleWithFixedDelay(
         		worker[0], 5000, (int)(syncInSnds * 1000), TimeUnit.MILLISECONDS);
 
         running = false;
 		return this;
+	}
+
+	private ScheduledFuture<?> reschedule(int waitmore) {
+		syncInSnds = Math.min(maxSyncInSnds, syncInSnds + waitmore);
+		return scheduler.scheduleWithFixedDelay(
+				worker[0], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
+				TimeUnit.MILLISECONDS);
 	}
 
 	public void stopScheduled(int sDelay) {

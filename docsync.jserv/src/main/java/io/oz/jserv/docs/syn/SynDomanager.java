@@ -108,13 +108,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	public SynDomanager(SynodeConfig c) throws Exception {
-//		this(new SynodeMeta(c.synconn), c.org.orgId, c.domain, c.synode(), c.synconn, c.mode, c.debug);
-//	}
-//
-//	protected SynDomanager(SynodeMeta synm, String org, String dom, String myid,
-//			String conn, SynodeMode mod, boolean debug) throws Exception {
-//
-//		super(mod, dom, myid, conn, debug);
 		super(c.mode, c.domain, c.synode(), c.synconn, c.debug);
 
 		this.org = c.org.orgId;

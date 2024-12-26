@@ -76,7 +76,7 @@ class SynotierJettyAppTest {
 		pause("Press enter to quite ...");
 	}
 
-	void testVideoUp(boolean[] lights) throws SsException, IOException, GeneralSecurityException, AnsonException, TransException {
+	void testVideoUp(boolean[] lights) throws SsException, IOException, AnsonException, TransException {
 		String localFolder = "test/res";
 		 int bsize = 72 * 1024;
 		 String filename = "my.jpg";

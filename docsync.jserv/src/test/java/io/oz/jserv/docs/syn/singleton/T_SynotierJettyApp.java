@@ -5,7 +5,6 @@ import static io.odysz.common.LangExt.isblank;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.annotation.WebServlet;
@@ -26,12 +25,11 @@ import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
@@ -72,9 +70,10 @@ public class T_SynotierJettyApp {
 	 * Create an application instance working as a synode tier.
 	 * @param urlpath e. g. jserv-album
 	 * @param syntity_json e. g. $VOLUME_HOME/syntity.json
+	 * @param admin 
 	 * @throws Exception
 	 */
-	public static T_SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, DocUser admin, String urlpath,
+	public static T_SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, SyncUser admin, String urlpath,
 			String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
@@ -82,7 +81,7 @@ public class T_SynotierJettyApp {
 
 		T_SynotierJettyApp synapp = T_SynotierJettyApp
 						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
-						.loadomains(cfg, admin);
+						.loadomains(cfg, new DocUser(admin));
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
@@ -179,11 +178,6 @@ public class T_SynotierJettyApp {
 			server.stop();
 	}
 
-	public void updateJservs(SynodeMeta synm, SynodeConfig cfg, String domain)
-			throws TransException, SQLException {
-		syngleton.updatePeerJservs(cfg, domain);
-	}
-
 	/**
 	 * Create a Jetty instance at local host, jserv-root
 	 * for accessing online Synodes.
@@ -225,7 +219,7 @@ public class T_SynotierJettyApp {
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
 	
 		synapp.syngleton.jserv = String.format("%s://%s:%s",
-				"http", // TODO FIXME cfg.https,
+				cfg.https ? "https" : "http",
 				bindIp == null ? addrhost : bindIp, port);
 	
 	    return synapp;

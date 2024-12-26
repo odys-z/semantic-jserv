@@ -302,7 +302,9 @@ public class SynotierJettyApp {
 	    else
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
 	
-		synapp.syngleton.jserv = String.format("%s:%s", bindIp == null ? addrhost : bindIp, port);
+		synapp.syngleton.jserv = String.format("%s://%s:%s",
+				cfg.https ? "https" : "http",
+				bindIp == null ? addrhost : bindIp, port);
 	
 	    return synapp;
 	}
