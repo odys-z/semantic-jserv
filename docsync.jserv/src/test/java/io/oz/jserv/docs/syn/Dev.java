@@ -66,8 +66,6 @@ public class Dev {
 		this.synuri = synuri;
 		this.uid = uid;
 		this.psw = pswd;
-//		this.dev = "test-doclient/" + device;
-		// this.tofolder = folder;
 		this.res = fres;
 		this.device = new Device(device, device, "test-doclient/" + device)
 				.folder(folder);
