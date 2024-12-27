@@ -12,7 +12,6 @@ import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqlitables;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -183,7 +182,9 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
-	 * Try join (login) known domains
+	 * Try join (login) known domains.
+	 * 
+	 * @deprecated only for tests
 	 * 
 	 * @return this
 	 * @throws IOException 
@@ -198,15 +199,16 @@ public class Syngleton extends JSingleton {
 			new Thread(()->{
 				for (SynDomanager dmgr : syndomanagers.values()) {
 					try {
-//						musteqs(syncfg.domain, dmgr.domain());
-//
-//						SyncUser usr = ((SyncUser)AnSession
-//							.loadUser(syncfg.admin, sysconn))
-//							.deviceId(dmgr.synode);
-//
-//						dmgr.loadSynclients(tb0)
-//							.openUpdateSynssions(usr, onok);
-						opendomain(dmgr.domain(), dmgr, onok);
+						// opendomain(dmgr.domain(), dmgr, onok);
+						musteqs(syncfg.domain, dmgr.domain());
+
+						SyncUser usr = ((SyncUser)AnSession
+								.loadUser(syncfg.admin, sysconn))
+								.deviceId(dmgr.synode);
+
+						dmgr.loadSynclients(tb0)
+							.openSynssions(usr)
+							.updateSynssions(usr, onok);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -220,35 +222,18 @@ public class Syngleton extends JSingleton {
 		return (Syngleton) this;
 	}
 	
-//	public Syngleton openDomains(OnDomainUpdate... onok)
+//	private void openupdteDomain(String domain, SynDomanager dmgr, OnDomainUpdate... onok) 
 //		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
-//		for (SynDomanager dmgr : syndomanagers.values()) {
-//			dmgr.opendomain(onok);
-////			musteqs(syncfg.domain, dmgr.domain());
-////
-////			SyncUser usr = ((SyncUser)AnSession
-////				.loadUser(syncfg.admin, sysconn))
-////				.deviceId(dmgr.synode);
-////
-////			dmgr.loadSynclients(tb0)
-////				.openUpdateSynssions(usr);
-//		}
-//		return this;
+//		musteqs(syncfg.domain, dmgr.domain());
+//
+//		SyncUser usr = ((SyncUser)AnSession
+//				.loadUser(syncfg.admin, sysconn))
+//				.deviceId(dmgr.synode);
+//
+//		dmgr.loadSynclients(tb0)
+//			.openSynssions(usr)
+//			.updateSynssions(usr, onok);
 //	}
-	
-
-	private void opendomain(String domain, SynDomanager dmgr, OnDomainUpdate... onok) 
-		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
-		musteqs(syncfg.domain, dmgr.domain());
-
-		SyncUser usr = ((SyncUser)AnSession
-				.loadUser(syncfg.admin, sysconn))
-				.deviceId(dmgr.synode);
-
-		dmgr.loadSynclients(tb0)
-			.openSynssions(usr)
-			.updateSynssions(usr, onok);
-	}
 
 	/**
 	 * Synode id for the default domain upon which the {@link ExpSynodetier} works.

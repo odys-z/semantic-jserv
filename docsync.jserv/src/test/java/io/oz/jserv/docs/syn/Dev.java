@@ -23,8 +23,6 @@ public class Dev {
 
 	public final String uid;
 	public final String psw;
-	// public final String dev;
-	// public final String tofolder;
 	public final Device device;
 
 	public String res;

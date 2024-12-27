@@ -11,6 +11,7 @@ import static io.odysz.semantic.syn.ExessionAct.ready;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.sql.SQLException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -181,24 +183,67 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * 
 	 * @param syncIns
 	 * @return this
+	 * @throws Exception 
 	 * @since 0.7.0
 	 */
-	public ExpSynodetier syncIn(float syncIns) {
+	public ExpSynodetier syncIn(float syncIns) throws Exception {
 		this.syncInSnds = syncIns;
 		if ((int)(this.syncInSnds) <= 0)
 			return this;
 
-		worker[0] = () -> {
-			try {
-				if (running)
-					return;
-				running = true;
+		DATranscxt syntb = new DATranscxt(domanager0.synconn);
 
-				if (debug)
+		worker[0] = () -> {
+			if (running)
+				return;
+			running = true;
+
+			if (debug)
 				Utils.logi("[%s] : Checking Syndomain ...", synid);
 
-				DATranscxt syntb = new DATranscxt(domanager0.synconn);
+			try {
+				if (len(this.domanager0.sessions) == 0)
+					this.domanager0.loadSynclients(syntb);
 
+				this.domanager0
+					.openSynssions(domanager0.admin);
+
+				this.domanager0.asyUpdomains(
+					(dom, synode, peer, xp) -> {
+						if (debug) Utils.logi("[%s] On update: %s [%s:%s]",
+								synid, dom, domanager0.n0(), domanager0.stamp());
+					},
+					(synlocker) -> Math.random());
+
+			} catch (ExchangeException e) {
+				// e. g. login failed, try again
+				if (debug) e.printStackTrace();
+			} catch (TransException | SQLException e) {
+				// local errors, stop for fixing
+				e.printStackTrace();
+				schedualed.cancel(false);
+				scheduler.shutdown();
+			} catch (FileNotFoundException | AnsonException | SsException e) {
+				// configuration errors
+				if (debug) e.printStackTrace();
+				Utils.warn("(Login | Configure) Error: synode %s, user %s. Syn-worker is shutting down.",
+						domanager0.synode, domanager0.admin.uid());
+				schedualed.cancel(false);
+				scheduler.shutdown();
+			} catch (InterruptedIOException e) {
+				// wait for network
+				reschedule(5);
+			} catch (Exception e) {
+				// ??
+				e.printStackTrace();
+				schedualed.cancel(false);
+				scheduler.shutdown();
+			} finally {
+				running = false;
+			}
+
+
+				/*
 				if (len(this.domanager0.sessions) == 0) {
 
 					this.domanager0.loadSynclients(syntb);
@@ -206,9 +251,16 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					try {
 						// Memo: joining behaviour can impacting here
 						this.domanager0
-							// .loadSynclients(synt0)
-							// .opendomain();
 							.openSynssions(domanager0.admin);
+					} catch (FileNotFoundException e) {
+						// v 0.2.0, something wrong in url, such as wrong configurations, and etc.
+						schedualed.cancel(false);
+						scheduler.shutdown();
+						Utils.warn("Login Error: synode %s, user %s. Syn-worker is shutdown.",
+								domanager0.synode, domanager0.admin.uid());
+						e.printStackTrace();
+					} catch (InterruptedIOException e) {
+						// TODO reset connection, including login
 					} catch (IOException e) {
 						schedualed.cancel(false);
 						reschedule(5);
@@ -226,7 +278,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				}
 
 				if (len(this.domanager0.sessions) > 0)
-				this.domanager0.updomain(
+				this.domanager0.asyUpdomains(
 					(dom, synode, peer, xp) -> {
 						if (debug) Utils.logi("[%s] On update: %s", synid, dom);
 					},
@@ -235,6 +287,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				// v 0.2.0, something wrong in url, such as wrong configurations, and etc.
 				schedualed.cancel(false);
 				scheduler.shutdown();
+				Utils.warn("Synchronization Error: synode %s, user %s. Syn-worker is shutdown.",
+						domanager0.synode, domanager0.admin.uid());
 				e.printStackTrace();
 			} catch (IOException e) {
 				schedualed.cancel(false);
@@ -243,13 +297,12 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				e.printStackTrace();
 			}
 			finally { running = false; }
+			 */
 		};
 
 		scheduler = Executors.newSingleThreadScheduledExecutor(
 				(r) -> new Thread(r, f("synworker-%s", synid)));
-
-        schedualed = scheduler.scheduleWithFixedDelay(
-        		worker[0], 5000, (int)(syncInSnds * 1000), TimeUnit.MILLISECONDS);
+		schedualed = reschedule(0);
 
         running = false;
 		return this;

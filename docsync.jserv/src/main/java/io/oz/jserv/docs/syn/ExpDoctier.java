@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
@@ -195,7 +196,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 	DocsResp notifySyndom(DocsReq body)
 			throws SemanticException, AnsonException, SsException, IOException {
-		domx.updomain((dom, synid, peer, xp) -> {
+		// FIXME instead of re-schedule the syn-worker?
+		domx.asyUpdomains((dom, synid, peer, xp) -> {
 				if (debug)
 					Utils.logT(new Object(){}, 
 						"Notification is handled: %s, %s, %s", dom, synid, peer);
@@ -458,9 +460,9 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			throw new TransException("Client path is neccessary to start a block chain transaction. Cannot be empty.");
 
 		if (!Connects.getMeta(conn).containsKey(body.docTabl))
-			throw new DocsException(DocsException.IOError,
-					"DocTabl is unknown to this node: %s, conn: %s",
-					body.docTabl, conn);
+			throw new DocsException(DocsException.IOError, f(
+					"DocTabl is unknown to this node: %s, uri %s -> conn %s",
+					body.docTabl, body.uri(), conn));
 	
 		checkDuplication(st, body, usr);
 	}

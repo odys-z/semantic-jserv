@@ -206,7 +206,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws InterruptedException 
 	 * @since 0.2.0
 	 */
-	public SynDomanager updomain(OnDomainUpdate onUpdate, OnMutexLock block)
+	public SynDomanager asyUpdomains(OnDomainUpdate onUpdate, OnMutexLock block)
 			throws SemanticException, AnsonException, SsException, IOException {
 		if (sessions == null || sessions.size() == 0)
 			throw new ExchangeException(ready, null,
@@ -233,7 +233,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 			if (onUpdate != null)
 				onUpdate.ok(domain(), synode, null);
-		}, f("%1$s [%2$s]", synode, domain()))
+		}, f("%1$s update [%2$s]", synode, domain()))
 		.start();
 
 		return this;
@@ -352,10 +352,11 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	public SynDomanager openSynssions(SyncUser docuser, OnDomainUpdate... onok) throws SemanticException, AnsonException, SsException, IOException {
+		if (sessions != null)
 		for (SynssionPeer peer : sessions.values()) {
-			if (eq(peer.peer, synode))
+			if (eq(peer.peer, synode) || peer.client != null)
 					continue;
-				peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
+			peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
 		}
 
 		if (!isNull(onok))

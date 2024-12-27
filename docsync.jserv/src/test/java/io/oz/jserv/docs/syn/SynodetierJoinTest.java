@@ -17,6 +17,7 @@ import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
 import static org.junit.jupiter.api.Assertions.fail;
 
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -244,7 +245,7 @@ public class SynodetierJoinTest {
 		T_SynotierJettyApp t = jetties[tx];
 
 		for (String dom : t.syngleton().domains()) {
-			t.syngleton().domanager(dom).updomain(
+			t.syngleton().domanager(dom).asyUpdomains(
 				(domain, mynid, peer, xp) -> {
 					if (!isNull(ck) && !isblank(peer))
 						try {

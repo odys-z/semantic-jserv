@@ -63,7 +63,13 @@ public class SynssionPeer {
 		return this;
 	}
 
+	/**
+	 * This field is also used as a flag of login state - not logged in if null
+	 * 
+	 * @since 0.2.0
+	 */
 	protected SessionClient client;
+
 	private boolean debug;
 
 	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
@@ -90,7 +96,7 @@ public class SynssionPeer {
 	public SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
-					"Synchronizing information is not ready, or not logged in. From synode %s, peer %s, domain %s%s.",
+					"Synchronizing information is not ready, or not logged in. From synode %s to peer %s, domain %s%s.",
 					domanager.synode, peer, domain(), client == null ? ", client is null" : "");
 
 		SyncResp rep = null;
