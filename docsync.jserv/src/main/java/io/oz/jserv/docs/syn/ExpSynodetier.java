@@ -241,63 +241,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} finally {
 				running = false;
 			}
-
-
-				/*
-				if (len(this.domanager0.sessions) == 0) {
-
-					this.domanager0.loadSynclients(syntb);
-
-					try {
-						// Memo: joining behaviour can impacting here
-						this.domanager0
-							.openSynssions(domanager0.admin);
-					} catch (FileNotFoundException e) {
-						// v 0.2.0, something wrong in url, such as wrong configurations, and etc.
-						schedualed.cancel(false);
-						scheduler.shutdown();
-						Utils.warn("Login Error: synode %s, user %s. Syn-worker is shutdown.",
-								domanager0.synode, domanager0.admin.uid());
-						e.printStackTrace();
-					} catch (InterruptedIOException e) {
-						// TODO reset connection, including login
-					} catch (IOException e) {
-						schedualed.cancel(false);
-						reschedule(5);
-					} catch (Exception e) {
-						// ISSUE
-						// TODO FXIME we need overhaul the ServPort.err()
-						// e.msg = Code: exSession, Message:\nCannot find user <id>
-						// if (e.ex().toString() == MsgCode.exSession.name())
-						// login denied
-
-						schedualed.cancel(false);
-						scheduler.shutdown();
-						e.printStackTrace();
-					}
-				}
-
-				if (len(this.domanager0.sessions) > 0)
-				this.domanager0.asyUpdomains(
-					(dom, synode, peer, xp) -> {
-						if (debug) Utils.logi("[%s] On update: %s", synid, dom);
-					},
-					(synlocker) -> Math.random());
-			} catch (FileNotFoundException e) {
-				// v 0.2.0, something wrong in url, such as wrong configurations, and etc.
-				schedualed.cancel(false);
-				scheduler.shutdown();
-				Utils.warn("Synchronization Error: synode %s, user %s. Syn-worker is shutdown.",
-						domanager0.synode, domanager0.admin.uid());
-				e.printStackTrace();
-			} catch (IOException e) {
-				schedualed.cancel(false);
-				schedualed = reschedule(5);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			finally { running = false; }
-			 */
 		};
 
 		scheduler = Executors.newSingleThreadScheduledExecutor(
