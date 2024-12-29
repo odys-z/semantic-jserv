@@ -41,9 +41,8 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	}
 
 	public String clientpath;
-	@Override public String fullpath() { return clientpath; }
-
-	// @Override public String mime() { return mime; }
+	@Override
+	public String fullpath() { return clientpath; }
 
 	/** Non-public: doc' device id is managed by session. */
 	protected String device;
@@ -66,7 +65,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return this;
 	}
 
-	/** usally reported by client file system, overriden by exif date, if exits */
+	/** Usually reported by client file system, and be overriden by exif date, if exits */
 	public String createDate;
 	public String cdate() { return createDate; }
 	public ExpSyncDoc cdate(String cdate) {
@@ -77,12 +76,10 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		createDate = DateFormat.formatime(fd);
 		return this;
 	}
-
 	public ExpSyncDoc cdate(Date date) {
 		createDate = DateFormat.format(date);
 		return this;
 	}
-
 	
 	@AnsonField(shortenString=true)
 	public String uri64;
@@ -95,8 +92,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	public String shareby;
 	public String sharedate;
 	
-	// public String syncFlag;
-
 	/** usually ignored when sending request */
 	public long size;
 
@@ -221,31 +216,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		clientpath = file.fullpath();
 	}
 
-	/**
-	 * Load local file, take current time as sharing date.
-	 * @param meta 
-	 * @param fullpath
-	 * @param owner
-	 * @param shareflag
-	 * @return this
-	 * @throws IOException
-	public SyncDoc loadFile(String fullpath, IUser owner, String shareflag) throws IOException {
-		Path p = Paths.get(fullpath);
-		byte[] f = Files.readAllBytes(p);
-		String b64 = AESHelper.encode64(f);
-		this.uri = b64;
-
-		fullpath(fullpath);
-		this.pname = p.getFileName().toString();
-		
-		this.shareby = owner.uid();
-		this.shareflag = shareflag;
-		sharedate(new Date());
-
-		return this;
-	}
-	 */
-
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = clientpath;
 		Path p = Paths.get(clientpath);
@@ -253,7 +223,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
 		if (isblank(createDate)) {
 			try {
-				// p = Paths.get(clientpath);
 				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
 				cdate(fd);
 			}
@@ -265,20 +234,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return this;
 	}
 
-	/**Set (private) jserv node file full path (path replaced with %VOLUME_HOME)
-	 * @param path
-	 * @return
-	 * @throws SemanticException 
-	 * @throws IOException 
-	public IFileDescriptor uri(String path) throws SemanticException, IOException {
-		fullpath(path);
-		pname = FilenameUtils.getName(path);
-		// throw new SemanticException("TODO");
-		this.uri = null;
-		return this;
-	}
-	 */
-
 	protected String folder;
 	public String folder() { return folder; }
 	public ExpSyncDoc folder(String v) {
@@ -286,24 +241,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return this;
 	}
 
-	/**
-	 * @deprecated deleting ...
-	 * 
-	 * Parse {@link PathsPage#clientPaths}.
-	 * 
-	 * @param flags
-	 * @return this
-	 */
-//	public ExpSyncDoc parseFlags(String[] flags) {
-//		if (!isNull(flags)) {
-//			// syncFlag = flags[0];
-//			shareflag = flags[1];
-//			shareby = flags[2];
-//			sharedate(flags[3]);
-//		}
-//		return this;
-//	}
-	
 	/**
 	 * @see io.odysz.semantic.syn.SynEntity#insertEntity(io.odysz.semantic.meta.SyntityMeta, io.odysz.transact.sql.Insert)
 	 */
@@ -325,19 +262,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 			.nv(md.fullpath, clientpath);
 		return ins;
 	}
-
-//	public ExpSyncDoc createByChain(BlockChain chain) throws IOException {
-//		createDate = chain.cdate;
-//		fullpath(chain.clientpath);
-//		pname = chain.clientname;
-//		folder = chain.saveFolder;
-//		device = chain.device;
-//		return this;
-//	}
-
-//	public ExpSyncDoc createByReq(DocsReq docreq) {
-//		return docreq.doc;
-//	}
 
 	public ExpSyncDoc folder(AnResultset rs, ExpDocTableMeta m) throws SQLException {
 		this.recId = rs.getString(m.pk);
