@@ -75,8 +75,6 @@ public class CreateSyndocTierTest {
 	static ErrorCtx errLog;	
 	static int bsize = 12 * 64;
 
-	// int port = 8964;
-	
 	static IAssert azert;
 
 	private static Docheck[] ck;
@@ -174,7 +172,6 @@ public class CreateSyndocTierTest {
     	System.setProperty("VOLUME_HOME", p + "/volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
-		// System.setProperty("VOLUME_HOME", p + "/volume");
 		for (int c = 0; c < 4; c++) {
 			System.setProperty(f("VOLUME_%s", c), f("%s/%s%s", p, vol_prefix, c));
 			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));

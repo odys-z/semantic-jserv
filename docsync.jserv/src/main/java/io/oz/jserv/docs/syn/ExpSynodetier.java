@@ -32,6 +32,7 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
@@ -186,7 +187,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @throws Exception 
 	 * @since 0.7.0
 	 */
-	public ExpSynodetier syncIn(float syncIns) throws Exception {
+	public ExpSynodetier syncIn(float syncIns, OnError err) throws Exception {
 		this.syncInSnds = syncIns;
 		if ((int)(this.syncInSnds) <= 0)
 			return this;
@@ -223,8 +224,15 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				e.printStackTrace();
 				schedualed.cancel(false);
 				scheduler.shutdown();
-			} catch (FileNotFoundException | AnsonException | SsException e) {
+			} catch (FileNotFoundException e) {
 				// configuration errors
+				if (debug) e.printStackTrace();
+				Utils.warn("Configure Error: synode %s, user %s. Syn-worker is shutting down.\n"
+						+ " (Tip: jserv url must inclue root path, e. g. /jserv-album)",
+						domanager0.synode, domanager0.admin.uid());
+				schedualed.cancel(false);
+				scheduler.shutdown();
+			} catch (AnsonException | SsException e) {
 				if (debug) e.printStackTrace();
 				Utils.warn("(Login | Configure) Error: synode %s, user %s. Syn-worker is shutting down.",
 						domanager0.synode, domanager0.admin.uid());

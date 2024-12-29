@@ -54,12 +54,14 @@ import io.oz.syn.SynodeConfig;
  *
  */
 public class T_SynotierJettyApp {
-	final Syngleton syngleton;
 
 	Server server;
 
 	ServletContextHandler schandler;
+
+	final Syngleton syngleton;
 	public Syngleton syngleton() { return syngleton; }	
+
 	public String jserv() { return syngleton.jserv; }
 
 	public T_SynotierJettyApp(SynodeConfig cfg) throws Exception {
@@ -103,7 +105,7 @@ public class T_SynotierJettyApp {
 			throws Exception {
 		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
 		ExpSynodetier syncer = new ExpSynodetier(domanger)
-								.syncIn(cfg.syncIns);
+								.syncIn(cfg.syncIns, (c, r, args) -> Utils.warn("[Syn-worker ERROR] code: %s, msg: %s", r));
 		addServPort(syncer);
 		return this;
 	}
