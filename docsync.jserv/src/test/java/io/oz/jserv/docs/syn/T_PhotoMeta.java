@@ -1,10 +1,6 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.common.LangExt.replacele;
-import static io.odysz.transact.sql.parts.condition.Funcall.extfile;
-
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.transact.sql.Query;
 import io.odysz.transact.x.TransException;
 
 public class T_PhotoMeta extends ExpDocTableMeta {
