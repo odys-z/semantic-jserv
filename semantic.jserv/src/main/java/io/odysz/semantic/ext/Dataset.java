@@ -29,7 +29,7 @@ import io.odysz.transact.x.TransException;
 
 /**CRUD read service extension: dataset.<br>
  * This port use a configure file (dataset.xml) as data definition.
- * The client request ({@link DatasetReq}) provide configure key and parameter, the port answer with queried results.
+ * The client request ({@link AnDatasetReq}) provide configure key and parameter, the port answer with queried results.
  * @author odys-z@github.com
  */
 @WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv" })

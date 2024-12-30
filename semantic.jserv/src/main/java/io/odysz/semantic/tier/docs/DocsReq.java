@@ -196,8 +196,8 @@ public class DocsReq extends UserReq {
 	 * <p>Note: if the file path is empty, the query is ignored.</p>
 	 * @param d
 	 * @return this
-	 * @throws IOException see {@link SyncDoc} constructor
-	 * @throws SemanticException fule doesn't exists. see {@link SyncDoc} constructor 
+	 * @throws IOException
+	 * @throws SemanticException file doesn't exist.
 	 */
 	public DocsReq querySync(IFileDescriptor d) throws IOException, SemanticException {
 		if (d == null || isblank(d.fullpath()))

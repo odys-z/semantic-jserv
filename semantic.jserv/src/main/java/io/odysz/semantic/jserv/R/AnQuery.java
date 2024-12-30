@@ -47,18 +47,6 @@ public class AnQuery extends ServPort<AnQueryReq> {
 		verifier = JSingleton.getSessionVerifier();
 	}
 	
-	/**
-	 * Set default transaction builder.
-	 * 
-	 * @since 2.0.0, default {@link #st} is not always prividen by {@link JSingleton}.
-	 * @param stb
-	 * @return 
-	public AnQuery st(DATranscxt stb) {
-		st = stb;
-		return this;
-	}
-	 */
-
 	@Override
 	protected void onGet(AnsonMsg<AnQueryReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException {
@@ -180,7 +168,9 @@ public class AnQuery extends ServPort<AnQueryReq> {
 		return selct;
 	}
 
-	/**Query with help of {@link #buildSelct(AnQueryReq, IUser)}.
+	/**
+	 * Query with help of {@link #buildSelct(AnQueryReq, IUser, DATranscxt)}.
+	 * 
 	 * @param msg
 	 * @param usr
 	 * @param st 

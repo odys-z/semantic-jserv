@@ -447,16 +447,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	/**
 	 * 
 	 * @since 2.0.0
-	 * @param sessionBody
 	 * @param connId
 	 * @param jrobt
 	 * @return user object
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws SsException
-	 * @throws ReflectiveOperationException
-	 * @throws GeneralSecurityException
-	 * @throws IOException
 	 */
 	public static IUser loadUser(String uid, String connId, IUser... jrobt)
 			throws TransException, SQLException, SsException,
