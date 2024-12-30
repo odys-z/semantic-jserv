@@ -58,7 +58,7 @@ How long will the syn-worker can work without clean buffered data
 The maximum distance between stamps in syn-change and synode's stamp is half of
 Nyquence range, Long.MAX_VALUE, 2 ^ 63 -1 in Java. Each time the stamp will be
 increased by 1 for syn-workers looping. The longest buffering is the difference
-of earlest buffered change logs and the latest stamp.
+of the earliest buffered change logs and the latest stamp.
 
 If each interval is one second, a year has 3.15 * 10 ^ 7 seconds, the longest time
 can be correctly buffered is approx. 300 billion years.
