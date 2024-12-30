@@ -9,12 +9,16 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.commons.io_odysz.FilenameUtils;
+import org.eclipse.jetty.ee8.servlet.FilterHolder;
+import org.eclipse.jetty.ee8.servlet.FilterMapping;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee8.servlet.ServletHandler;
+// import org.eclipse.jetty.ee8.servlet.ServletHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.kohsuke.args4j.CmdLineParser;
@@ -26,7 +30,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
@@ -39,6 +43,7 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.album.peer.SynDocollPort;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
@@ -177,7 +182,8 @@ public class SynotierJettyApp {
 		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
 		return registerPorts(synapp, urlpath, cfg.synconn,
-				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
+				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink(), new Echo(),
+				new SynDocollects(cfg.synode(), cfg.sysconn, cfg.synconn))
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)
 			;
@@ -283,7 +289,7 @@ public class SynotierJettyApp {
 	public static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
 			String bindIp, int port) throws Exception {
 	
-	    AnsonMsg.understandPorts(Port.syntier);
+        AnsonMsg.understandPorts(SynDocollPort.docoll);
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg);
 
@@ -302,12 +308,58 @@ public class SynotierJettyApp {
 	    }
 	    else
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
+	    
+	    allowCors(synapp.server);
 	
 		synapp.syngleton.jserv = String.format("%s://%s:%s",
 				cfg.https ? "https" : "http",
 				bindIp == null ? addrhost : bindIp, port);
 	
 	    return synapp;
+	}
+
+    // Request headers
+    private static final String ORIGIN_HEADER = "Origin";
+    private static final String ACCESS_CONTROL_REQUEST_METHOD_HEADER = "Access-Control-Request-Method";
+    private static final String ACCESS_CONTROL_REQUEST_HEADERS_HEADER = "Access-Control-Request-Headers";
+    // Response headers
+    private static final String ACCESS_CONTROL_ALLOW_ORIGIN_HEADER = "Access-Control-Allow-Origin";
+    private static final String ACCESS_CONTROL_ALLOW_METHODS_HEADER = "Access-Control-Allow-Methods";
+    private static final String ACCESS_CONTROL_ALLOW_HEADERS_HEADER = "Access-Control-Allow-Headers";
+    private static final String ACCESS_CONTROL_MAX_AGE_HEADER = "Access-Control-Max-Age";
+    private static final String ACCESS_CONTROL_ALLOW_CREDENTIALS_HEADER = "Access-Control-Allow-Credentials";
+    // Implementation constants
+    private static final String ALLOWED_ORIGINS_PARAM = "allowedOrigins";
+    private static final String ALLOWED_METHODS_PARAM = "allowedMethods";
+    private static final String ALLOWED_HEADERS_PARAM = "allowedHeaders";
+    private static final String PREFLIGHT_MAX_AGE_PARAM = "preflightMaxAge";
+    private static final String ALLOWED_CREDENTIALS_PARAM = "allowCredentials";
+    private static final String ANY_ORIGIN = "*";
+    // private static final List<String> SIMPLE_HTTP_METHODS = Arrays.asList("GET", "POST", "HEAD");
+
+    
+	private static void allowCors(Server server2) {
+		FilterHolder holder = new FilterHolder();
+		holder.setInitParameter(ALLOWED_ORIGINS_PARAM, "*");
+		holder.setInitParameter(ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+		holder.setInitParameter(ALLOWED_METHODS_PARAM, "GET,POST,HEAD");
+		holder.setInitParameter(ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin");
+		holder.setName("cross-origin");
+		FilterMapping fm = new FilterMapping();
+		fm.setFilterName("cross-origin");
+		fm.setPathSpec("*");
+		
+		
+		ServletHandler handler = new ServletHandler();
+		// handler.addServletWithMapping(ServerPageRoot.class, "/servlet/*");
+
+		handler.addFilter(holder, fm );
+		
+		// HandlerList handlers = new HandlerList();
+		// Make sure DefaultHandler is last (for error handling reasons)
+		// handlers.setHandlers(new Handler[] { context, new DefaultHandler() });
+
+		server2.setHandler(handler);
 	}
 
 	public void print() {
