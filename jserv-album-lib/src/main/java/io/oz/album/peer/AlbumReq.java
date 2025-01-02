@@ -203,4 +203,9 @@ public class AlbumReq extends DocsReq {
 		}
 		return vals;
 	}
+
+	public String synuri() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

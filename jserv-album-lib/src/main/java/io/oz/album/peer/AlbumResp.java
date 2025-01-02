@@ -14,6 +14,11 @@ public class AlbumResp extends DocsResp {
 	String albumId;
 	String ownerId;
 	String owner;
+	
+	/** jserv-synode id */
+	String synode;
+	String domain;
+	String synconn;
 
 	/** Album */
 	ArrayList<Collect> collectRecords;
@@ -35,6 +40,12 @@ public class AlbumResp extends DocsResp {
 
 	public AlbumResp() { }
 	
+	public AlbumResp(String synode, String perdomain, String synconn) {
+		this.synode  = synode;
+		this.domain  = (perdomain);
+		this.synconn = synconn;
+	}
+
 	public AlbumResp photo(AnResultset rs, PhotoMeta meta) throws SQLException, IOException {
 		this.photo = new PhotoRec(rs, meta);
 		return this;

@@ -1,11 +1,8 @@
 package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.musteqs;
-import static io.odysz.common.LangExt.prefixOneOf;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
@@ -13,23 +10,14 @@ import static io.odysz.transact.sql.parts.condition.Funcall.sum;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
@@ -44,33 +32,27 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.tier.docs.Device;
-import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.FileStream;
-import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.sql.Query;
-import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.Logic;
 import io.odysz.transact.sql.parts.Sql;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.AlbumSingleton;
-import io.oz.album.helpers.Exiftool;
 import io.oz.album.peer.AlbumPort;
 import io.oz.album.peer.AlbumReq;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
-import io.oz.album.peer.PhotoRec;
 import io.oz.album.peer.Profiles;
 import io.oz.album.peer.SynDocollPort;
 import io.oz.album.peer.AlbumReq.A;
@@ -116,7 +98,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	/** file state db field */
 	static final String state = "state";
 
-	private HashMap<String, BlockChain> blockChains;
+	// private HashMap<String, BlockChain> blockChains;
 
 	public static DATranscxt st;
 
@@ -148,6 +130,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	}
 
 	String missingFile = "";
+
+	private DBSynTransBuilder synt;
 
 	public SynDocollects missingFile(String onlyPng) {
 		missingFile = onlyPng;
@@ -588,8 +572,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			.cols("d.*", "u." + userMeta.uname)
 			.j(userMeta.tbl, "u", "u.%s = d.%s", userMeta.pk, devMeta.owner)
 			.cols(devMeta.devname, devMeta.synoder, devMeta.cdate, devMeta.owner)
+			.whereEq(devMeta.org,   usr.orgId())
 			.whereEq(devMeta.pk, usr.deviceId())
-			// .whereEq(devMeta.domain,   usr.orgId())
 			.whereEq(devMeta.owner,   usr.uid())
 			.rs(st.instancontxt(conn, usr))
 			.rs(0))
@@ -620,7 +604,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
 				.nv(devMeta.cdate, now())
-				// .nv(devMeta.domain, usr.orgId())
+				.nv(devMeta.org, usr.orgId())
 				.ins(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
 			String resulved = result.resulve(devMeta.tbl, devMeta.pk, -1);
@@ -633,7 +617,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 			st  .update(devMeta.tbl, usr)
 				.nv(devMeta.cdate, now())
-				// .whereEq(devMeta.domain, usr.orgId())
+				.whereEq(devMeta.org, usr.orgId())
 				.whereEq(devMeta.pk, body.device().id)
 				.u(st.instancontxt(Connects.uri2conn(body.uri()), usr));
 
@@ -859,7 +843,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	protected static AlbumResp doc(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 
-		String conn = Connects.uri2conn(req.uri());
+		String conn = Connects.uri2conn(req.synuri());
 		PhotoMeta meta = new PhotoMeta(conn);
 		DocOrgMeta mp_o = new DocOrgMeta(conn);
 
@@ -983,7 +967,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	protected static AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
+	protected AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
 			IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException, IOException {
 		String conn = Connects.uri2conn(req.uri());
@@ -992,18 +976,19 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		String aid = prf.defltAlbum;
 
-		AnResultset rs = (AnResultset) st
+		AnResultset rs = (AnResultset) synt
 				.select(tablAlbums, "a")
 				.j(musr.tbl, "u", "u.userId = a.shareby")
 				.cols("a.*", "a.shareby ownerId", "u.userName owner")
 				.whereEq("a.aid", aid)
-				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+				.rs(synt.instancontxt())
 				.rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
 
-		AlbumResp album = new AlbumResp().album(rs);
+		AlbumResp album = new AlbumResp(synode, synt.perdomain, synt.basictx().connId())
+						.album(rs);
 
 		rs = (AnResultset) st
 				.select(m.tbl, "p").page(req.pageInf)
