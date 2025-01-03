@@ -42,7 +42,7 @@
 			to update immediately. -->
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>1.4.41</version>
+	    <version>[1.4.41,1.5.0-SNAPSHOT)</version>
    	</dependency>
 
 	<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
