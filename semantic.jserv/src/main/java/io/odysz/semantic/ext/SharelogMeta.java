@@ -23,7 +23,7 @@ import io.odysz.semantics.meta.TableMeta;
 	org    varchar2(12) NOT NULL, -- family, fk-on-del
 	tabl   varchar2(64) NOT NULL, -- doc's business name, e.g. 'h_photos'
 	docId  varchar2(12) NOT NULL, -- fk-on-del
-	synid  varchar2(64) NOT NULL, -- fk-on-del, synode & device
+	synid  varchar2(64) NOT NULL, -- fk-on-del, synode &amp; device
 	clientpath text     NOT NULL,
 	expire date
  );</pre>

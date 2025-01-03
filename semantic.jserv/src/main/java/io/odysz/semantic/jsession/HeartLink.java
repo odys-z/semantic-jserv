@@ -26,8 +26,7 @@ import io.odysz.semantics.x.SemanticException;
 @WebServlet(description = "session manager", urlPatterns = { "/ping.serv" })
 public class HeartLink extends ServPort<HeartBeat> {
 
-	/** url pattern: /ping.serv 
-	 * @param out */
+	/** url pattern: /ping.serv */
 	public HeartLink() {
 		super(Port.heartbeat);
 	}

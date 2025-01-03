@@ -19,9 +19,8 @@ public class DocsReq extends UserReq {
 		/**
 		 * Action: read records for synodes synchronizing.
 		 * For client querying matching (syncing) docs, use {@link #records} instead. 
-		 * @see DocsTier#list(DocsReq req, IUser usr)
-		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
-		 * @deprecated replaced by {@link ExpSyncDoc#syncent}
+		 * @see DocsTier#list(DocsReq, IUser)
+		 * @deprecated
 		 * */
 		public static final String syncdocs = "r/syncs";
 

@@ -24,7 +24,7 @@ public class DocsResp extends AnsonResp {
 	
 	/**
 	 * <p>Set clientpaths page (rs).</p>
-	 * Rs must have columns specified with {@link SyncDoc#synPageCols(DocTableMeta)}.
+	 * Arg {@code rs} must have columns specified with {@link ExpSyncDoc#synPageCols(ExpDocTableMeta)}.
 	 * @param rs
 	 * @param meta
 	 * @return this

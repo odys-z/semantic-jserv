@@ -84,7 +84,7 @@ public class DocUtils {
 	 * sqlite example:
 	 * syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL
 	 * </pre>
-	 * @deprecated replaced by {@link #createFileBy64(DATranscxt, String, SyncDoc, IUser, ExpDocTableMeta, Update)}
+	 * @deprecated replaced by {@link #createFileBy64(DATranscxt, String, ExpSyncDoc, IUser, ExpDocTableMeta, Update...)}
 	 * @param st
 	 * @param conn
 	 * @param photo

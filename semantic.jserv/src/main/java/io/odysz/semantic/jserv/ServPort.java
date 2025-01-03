@@ -85,7 +85,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	protected IPort p;
 	
 	/**
-	 * Get session verifier, e. g. instance of {@link AnSession}.
+	 * Get session verifier, e. g. instance of {@link io.odysz.semantic.jsession.AnSession}.
 	 * Use this for avoiding calling of {@link JSingleton} in tests.
 	 * This is supposed to be changed in the future after separated ISessionVerifier and AnSession.
 	 * @param anSession
