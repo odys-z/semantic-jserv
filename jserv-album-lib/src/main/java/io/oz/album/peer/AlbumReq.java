@@ -43,13 +43,12 @@ public class AlbumReq extends DocsReq {
 
 		public static final String del = "d";
 
-		// MVP 0.3.0
 		/** Query client paths */
 		public static final String selectSyncs = DocsReq.A.selectSyncs; // "r/syncflags";
 
 		public static final String getPrefs = "r/prefs";
-		/** @deprecated */
-		public static final String sharingPolicy = "r/share-relat";
+
+//		public static final String sharingPolicy = "r/share-relat";
 
 		/** read folder's relationship with org
 		 * @deprecated It's better to do with a different A for different sk, e. g. folder-org relatiosn,
@@ -186,8 +185,12 @@ public class AlbumReq extends DocsReq {
 		return this;
 	}
 
-	public AlbumReq page(int page, int size, String... args) {
-		pageInf = new PageInf(page, size, args);
+	/**
+	 * @param whereqs (n0, v0), (n1, v1), ..., must be even number of elements.
+	 * @return this
+	 */
+	public AlbumReq page(int page, int size, String... whereqs) {
+		pageInf = new PageInf(page, size, whereqs);
 		return this;
 	}
 
@@ -202,10 +205,5 @@ public class AlbumReq extends DocsReq {
 			}
 		}
 		return vals;
-	}
-
-	public String synuri() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

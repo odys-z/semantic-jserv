@@ -1,4 +1,4 @@
-package io.oz.jserv.docs.meta;
+package io.odysz.semantic.tier.docs;
 
 import io.odysz.semantic.meta.SyntityMeta;
 

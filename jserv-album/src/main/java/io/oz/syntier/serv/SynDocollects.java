@@ -32,6 +32,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.tier.docs.Device;
+import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -56,7 +57,6 @@ import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.Profiles;
 import io.oz.album.peer.SynDocollPort;
 import io.oz.album.peer.AlbumReq.A;
-import io.oz.jserv.docs.meta.DeviceTableMeta;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.jserv.docs.syn.DocUser;
 
@@ -337,13 +337,13 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf)
 			throws SQLException, TransException {
 
-		String conn = Connects.uri2conn(jreq.uri());
+		String conn = Connects.uri2conn(jreq.synuri);
 		// force org-id as first arg
 
 		if (eq(jreq.sk, "tree-rel-folder-org")) {
 			// force user-id as first arg
 			PageInf page = isNull(jreq.pageInf)
-					? new PageInf(0, -1, usr.uid())
+					? new PageInf(0, -1, usr.uid(), null)
 					: eq(jreq.pageInf.arrCondts.get(0), usr.uid())
 					? jreq.pageInf
 					: jreq.pageInf.insertCondt(usr.uid());
@@ -413,7 +413,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 	void checkDuplication(AlbumReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(body.uri());
+		String conn = Connects.uri2conn(body.synuri);
 		checkDuplicate(conn,
 				usr.deviceId(), body.photo.fullpath(), usr, new PhotoMeta(conn));
 	}
@@ -679,7 +679,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
 
-		String conn = Connects.uri2conn(req.uri());
+		String conn = Connects.uri2conn(req.synuri);
 		PhotoMeta meta = new PhotoMeta(conn);
 
 		AnResultset rs = (AnResultset) st
@@ -843,7 +843,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	protected static AlbumResp doc(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 
-		String conn = Connects.uri2conn(req.synuri());
+		String conn = Connects.uri2conn(req.synuri);
 		PhotoMeta meta = new PhotoMeta(conn);
 		DocOrgMeta mp_o = new DocOrgMeta(conn);
 
@@ -888,7 +888,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	protected static AlbumResp folder(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 
-		String conn = Connects.uri2conn(req.uri());
+		String conn = Connects.uri2conn(req.synuri);
 		PhotoMeta mph = new PhotoMeta(conn);
 		JUserMeta musr = new JUserMeta(conn);
 
@@ -970,7 +970,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	protected AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
 			IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException, IOException {
-		String conn = Connects.uri2conn(req.uri());
+		String conn = Connects.uri2conn(req.synuri);
 		PhotoMeta m = new PhotoMeta(conn);
 		JUserMeta musr = new JUserMeta(conn);
 

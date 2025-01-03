@@ -10,7 +10,6 @@ import java.util.Set;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
-import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
@@ -22,7 +21,7 @@ public class DocsReq extends UserReq {
 		 * For client querying matching (syncing) docs, use {@link #records} instead. 
 		 * @see DocsTier#list(DocsReq req, IUser usr)
 		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
-		 * @deprecated replaced by SyncDoc.syncent
+		 * @deprecated replaced by {@link ExpSyncDoc#syncent}
 		 * */
 		public static final String syncdocs = "r/syncs";
 
@@ -37,10 +36,12 @@ public class DocsReq extends UserReq {
 		 */
 		public static final String records = "r/list";
 		
-		public static final String getstamp = "r/stamp";
-		public static final String setstamp = "u/stamp";
+//		public static final String getstamp = "r/stamp";
+//		public static final String setstamp = "u/stamp";
 
+		/** @deprecated function not used */
 		public static final String mydocs = "r/my-docs";
+
 		/** query doc / entity with entity fields, id, etc. */
 		public static final String rec = "r/rec";
 		public static final String download = "r/download";
@@ -57,12 +58,13 @@ public class DocsReq extends UserReq {
 		/**
 		 * Action: close synchronizing push task
 		 */
-		public static final String synclosePush = "u/close";
+//		public static final String synclosePush = "u/close";
 		/**
 		 * Action: close synchronizing pull task
 		 */
-		public static final String synclosePull = "r/close";
+//		public static final String synclosePull = "r/close";
 
+		/** Query client paths, the sync-page */
 		public static final String selectSyncs = "r/syncflags";
 
 		/** select devices, requires user org-id as parameter from client */
@@ -80,9 +82,16 @@ public class DocsReq extends UserReq {
 		public static final String selectDocs = "sync/tasks"; */
 	}
 
+	public String synuri;
+
 	public PageInf pageInf;
-	public DocsReq pageInf(int page, int size, String... args) {
-		pageInf = new PageInf(page, size, args);
+
+	/**
+	 * @param whereqs (n0, v0), (n1, v1), ..., must be even number of elements.
+	 * @return this
+	 */
+	public DocsReq pageInf(int page, int size, String... whereqs) {
+		pageInf = new PageInf(page, size, whereqs);
 		return this;
 	}
 
@@ -325,18 +334,12 @@ public class DocsReq extends UserReq {
 //		return this;
 //	}
 
-	/**
-	 * @since 1.4.25, path is converted to unix format since a windows path 
-	 * is not a valid json string.
-	 * @param path
-	 * @return
-	public DocsReq clientpath(String path) {
-		doc.clientpath = separatorsToUnix(path);
-		return this;
-	}
+//	public DocsReq clientpath(String path) {
+//		doc.clientpath = separatorsToUnix(path);
+//		return this;
+//	}
 
-	public String clientpath() { return doc.clientpath; }
-	 */
+//	public String clientpath() { return doc.clientpath; }
 
 	public DocsReq resetChain(boolean set) {
 		this.reset = set;

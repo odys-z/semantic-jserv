@@ -42,6 +42,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.tier.docs.Device;
+import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
@@ -351,7 +352,7 @@ public class Albums extends ServPort<AlbumReq> {
 		if (eq(jreq.sk, "tree-rel-folder-org")) {
 			// force user-id as first arg
 			PageInf page = isNull(jreq.pageInf)
-					? new PageInf(0, -1, usr.uid())
+					? new PageInf(0, -1, "deprected", usr.uid())
 					: eq(jreq.pageInf.arrCondts.get(0), usr.uid())
 					? jreq.pageInf
 					: jreq.pageInf.insertCondt(usr.uid());

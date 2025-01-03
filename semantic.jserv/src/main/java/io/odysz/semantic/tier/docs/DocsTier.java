@@ -1,5 +1,8 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.isblank;
+
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -8,7 +11,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -39,6 +41,7 @@ public class DocsTier extends ServPort<DocsReq> {
 			throws ServletException, IOException, AnsonException, SemanticException {
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void onPost(AnsonMsg<DocsReq> jmsg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
@@ -50,19 +53,20 @@ public class DocsTier extends ServPort<DocsReq> {
 
 			AnsonResp rsp = null;
 			if (A.syncdocs.equals(jreq.a()))
-				rsp = list(jreq, usr);
+				throw new SemanticException("Function not used.");
+				// rsp = list(jreq, usr);
 			else if (A.mydocs.equals(jreq.a()))
-				rsp = mydocs(jreq, usr);
+				// rsp = mydocs(jreq, usr);
+				throw new SemanticException("Function not used.");
 			else if (A.rec.equals(jreq.a()))
 				rsp = doc(jreq, usr);
 			else if (A.upload.equals(jreq.a()))
 				rsp = upload(jreq, usr);
 			else if (A.del.equals(jreq.a()))
 				rsp = del(jreq, usr);
-			else throw new SemanticException(String.format(
-						"request.body.a can not handled: %s\\n" +
-						"Only a = [%s, %s, %s, %s, %s] are supported.",
-						jreq.a(), A.syncdocs, A.mydocs, A.rec, A.upload, A.del));
+			else throw new SemanticException(f(
+						"request.body.a can not handled: %s\\n",
+						jreq.a()));
 
 			write(resp, ok(rsp));
 		} catch (SemanticException e) {
@@ -114,7 +118,15 @@ public class DocsTier extends ServPort<DocsReq> {
 		return new AnsonResp().msg("ok").rs(doc);
 	}
 
-	private AnsonResp mydocs(DocsReq req, IUser usr) throws TransException, SQLException {
+	/**
+	 * @deprecated function not used
+	 * @param req
+	 * @param usr
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	AnsonResp mydocs(DocsReq req, IUser usr) throws TransException, SQLException {
 		String conn = Connects.uri2conn(req.uri());
 		ISemantext stx = st.instancontxt(conn, usr);
 
@@ -129,13 +141,13 @@ public class DocsTier extends ServPort<DocsReq> {
 			.groupby("d.docId")
 			.orderby("d.optime", "desc");
 		
-		if (!LangExt.isblank(req.doc.pname))
+		if (!isblank(req.doc.pname))
 			q.whereLike("dk.state", req.doc.pname);
 		
-		if (!LangExt.isblank(req.doc.mime))
-			q.where_(op.rlike, "d.mime", (LangExt.isblank(req.doc.mime) ? "" : req.doc.mime));
+		if (!isblank(req.doc.mime))
+			q.where_(op.rlike, "d.mime", (isblank(req.doc.mime) ? "" : req.doc.mime));
 
-		if (!LangExt.isblank(req.doc.shareflag))
+		if (!isblank(req.doc.shareflag))
 			q.whereEq("dk.state", req.doc.shareflag);
 
 		AnResultset docs = ((AnResultset) q
@@ -148,6 +160,7 @@ public class DocsTier extends ServPort<DocsReq> {
 	/**
 	 * Get n_docs records where userId and mime matched.
 	 *  
+	 * @deprecated function not used
 	 * @param req
 	 * @param usr
 	 * @return response with doc result set
@@ -167,7 +180,7 @@ public class DocsTier extends ServPort<DocsReq> {
 			 * .col(Funcall.count(Funcall.ifElse(String.format("dk.state = '%s'", DocsReq.State.confirmed), "1", "null")), "confirmed")
 			 */
 			.whereEq("d.userId", usr.uid())
-			.where(op.rlike, "d.mime", "'" + (LangExt.isblank(req.doc.mime) ? "" : req.doc.mime) + "'")
+			.where(op.rlike, "d.mime", "'" + (isblank(req.doc.mime) ? "" : req.doc.mime) + "'")
 			.groupby("d.docId")
 			.orderby("d.optime", "desc")
 			.rs(stx)

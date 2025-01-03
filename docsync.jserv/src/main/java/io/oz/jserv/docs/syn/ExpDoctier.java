@@ -42,6 +42,7 @@ import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.Device;
+import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -52,7 +53,6 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docs.meta.DeviceTableMeta;
 import io.oz.syn.SynodeConfig;
 
 /**
