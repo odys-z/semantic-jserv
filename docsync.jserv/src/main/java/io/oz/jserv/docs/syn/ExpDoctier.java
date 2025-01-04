@@ -379,7 +379,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		ExpSyncDoc photo = chain.doc;
 
-		// DATranscxt b = syntransBuilder();
 		DBSynTransBuilder b = new DBSynTransBuilder(domx);
 		String pid = DocUtils.createFileBy64(b, conn, photo, usr, meta);
 
@@ -602,6 +601,13 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return usr.sessionId() + " " + clientpathRaw;
 	}
 
+	/**
+	 * Register notifying of syn-worker.
+	 * 
+	 * @param cfg
+	 * @param onSyntities
+	 * @return this
+	 */
 	public ServPort<?> registSynEvent(SynodeConfig cfg, List<SyntityReg> onSyntities) {
 		if (cfg.syncIns > 0 && !isNull(onSyntities))
 		for (SyntityReg syntity : onSyntities)

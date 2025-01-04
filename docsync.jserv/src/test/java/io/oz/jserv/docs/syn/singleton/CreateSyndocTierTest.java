@@ -106,12 +106,12 @@ public class CreateSyndocTierTest {
 		T_SynotierJettyApp h1 = createStartSyndocTierTest(null, "X", "$VOLUME_0", "ABCDEF0123465789");
 		T_PhotoMeta docm = new T_PhotoMeta(servs_conn[0]);
 		ck[0] = new Docheck(azert, zsu, servs_conn[0],
-					"X", SynodeMode.peer, docm, true);
+					"X", SynodeMode.peer, docm, null, true);
 
 		T_SynotierJettyApp h2 = createStartSyndocTierTest(null, "Y", "$VOLUME_1", "ABCDEF0123465789");	
 		docm = new T_PhotoMeta(servs_conn[1]);
 		ck[1] = new Docheck(azert, zsu, servs_conn[1],
-					"Y", SynodeMode.peer, docm, true);
+					"Y", SynodeMode.peer, docm, null, true);
 
 		boolean[] lights = new boolean[] {false};
 		touchDir("jetty-log");
@@ -125,7 +125,7 @@ public class CreateSyndocTierTest {
 		
 		docm = new T_PhotoMeta(servs_conn[2]);
 		ck[2] = new Docheck(azert, zsu, servs_conn[2],
-					"Z", SynodeMode.peer, docm, true);
+					"Z", SynodeMode.peer, docm, null, true);
 
 		Clients.init(h1.jserv());
 		Doclientier client = new Doclientier(docm.tbl, "/sys/X", "/syn/X", errLog)
