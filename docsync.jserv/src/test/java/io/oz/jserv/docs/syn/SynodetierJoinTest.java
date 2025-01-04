@@ -152,7 +152,7 @@ public class SynodetierJoinTest {
 					f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
 
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-								config.synode(), SynodeMode.peer, docm, config.debug);
+								config.synode(), SynodeMode.peer, docm, null, config.debug);
 		}
 	}
 

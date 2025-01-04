@@ -31,7 +31,7 @@ public class DeviceTableMeta extends SyntityMeta {
 	public final String org;
 
 	public DeviceTableMeta(String conn) {
-		super("doc_devices", "device", "device", conn);
+		super("doc_devices", "synode0", "device", conn);
 
 		synoder = "synode0";
 		devname = "devname";

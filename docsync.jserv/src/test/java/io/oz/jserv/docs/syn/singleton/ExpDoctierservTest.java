@@ -203,7 +203,7 @@ public class ExpDoctierservTest {
 					"config.xml", f("$VOLUME_%s/syntity.json", i));
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-						cfgs[i].synode(), SynodeMode.peer, docm, cfgs[i].debug);
+						cfgs[i].synode(), SynodeMode.peer, docm, null, cfgs[i].debug);
 		}
 		
 		for (int i : nodex) {
