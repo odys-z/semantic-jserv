@@ -47,6 +47,7 @@ public class DeviceTableMeta extends SyntityMeta {
 			+ "  org     varchar(12)  NOT NULL, -- fk-del, usually won't happen\r\n"
 			+ "  owner   varchar(12),           -- or current user, not permenatly bound\r\n"
 			+ "  cdate   datetime,\r\n"
+			+ "  io_oz_synuid varchar25, \r\n"
 			+ "  PRIMARY KEY (synode0, device)\r\n"
 			+ "); -- registered device names. Name is set by user, prompt if he's device names are duplicated";
 	}
