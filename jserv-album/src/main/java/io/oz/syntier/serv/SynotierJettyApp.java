@@ -183,7 +183,7 @@ public class SynotierJettyApp {
 
 		return registerPorts(synapp, urlpath, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink(), new Echo(),
-				new SynDocollects(cfg.synode(), cfg.sysconn, cfg.synconn))
+				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain)))
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)
 			.allowCors(synapp.schandler)

@@ -31,6 +31,7 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -98,9 +99,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	/** file state db field */
 	static final String state = "state";
 
-	// private HashMap<String, BlockChain> blockChains;
-
 	public static DATranscxt st;
+	DBSynTransBuilder synt;
 
 	final IUser robot;
 
@@ -119,19 +119,18 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		}
 	}
 
-	public SynDocollects(String synode, String sysconn, String synconn) throws TransException {
+	public SynDocollects(String sysconn, SyndomContext domx) throws Exception {
 		super(SynDocollPort.docoll);
-		this.synode = synode;
-		this.phm    = new PhotoMeta(synconn);
+		this.synode = domx.synode;
+		this.phm    = new PhotoMeta(domx.synconn);
 		this.sysconn= sysconn;
 		this.robot = new ExpDocRobot("Rob.Album@" + synode);
 		
+		synt = new DBSynTransBuilder(domx);
 		missingFile = "";
 	}
 
 	String missingFile = "";
-
-	private DBSynTransBuilder synt;
 
 	public SynDocollects missingFile(String onlyPng) {
 		missingFile = onlyPng;
@@ -537,11 +536,11 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		String conn = Connects.uri2conn(body.uri());
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 
-		AnResultset rs = (AnResultset)st
+		AnResultset rs = (AnResultset)synt
 				.select(devMeta.tbl)
 				// .whereEq(devMeta.domain,   usr.orgId())
 				.whereEq(devMeta.owner,   usr.uid())
-				.rs(st.instancontxt(conn, usr))
+				.rs(synt.instancontxt(conn, usr))
 				.rs(0)
 				;
 
@@ -564,10 +563,10 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 */
 	DocsResp chkDevname(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(body.uri());
+		String conn = Connects.uri2conn(body.synuri);
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 
-		AnResultset rs = ((AnResultset) st
+		AnResultset rs = ((AnResultset) synt
 			.select(devMeta.tbl, "d")
 			.cols("d.*", "u." + userMeta.uname)
 			.j(userMeta.tbl, "u", "u.%s = d.%s", userMeta.pk, devMeta.owner)
@@ -575,7 +574,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			.whereEq(devMeta.org,   usr.orgId())
 			.whereEq(devMeta.pk, usr.deviceId())
 			.whereEq(devMeta.owner,   usr.uid())
-			.rs(st.instancontxt(conn, usr))
+			.rs(synt.instancontxt())
 			.rs(0))
 			.nxt();
 		
@@ -594,18 +593,18 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(body.uri());
+		String conn = Connects.uri2conn(body.synuri);
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 
 		if (isblank(body.device().id)) {
-			SemanticObject result = (SemanticObject) st
+			SemanticObject result = (SemanticObject) synt
 				.insert(devMeta.tbl, usr)
 				.nv(devMeta.synoder, AlbumSingleton.synode())
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
 				.nv(devMeta.cdate, now())
 				.nv(devMeta.org, usr.orgId())
-				.ins(st.instancontxt(Connects.uri2conn(body.uri()), usr));
+				.ins(synt.instancontxt());
 
 			String resulved = result.resulve(devMeta.tbl, devMeta.pk, -1);
 			return new DocsResp().device(new Device(
@@ -615,11 +614,11 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			if (isblank(body.device().id))
 				throw new SemanticException("Error for pdating device name without a device id.");
 
-			st  .update(devMeta.tbl, usr)
+			synt.update(devMeta.tbl, usr)
 				.nv(devMeta.cdate, now())
 				.whereEq(devMeta.org, usr.orgId())
 				.whereEq(devMeta.pk, body.device().id)
-				.u(st.instancontxt(Connects.uri2conn(body.uri()), usr));
+				.u(synt.instancontxt());
 
 			return new DocsResp().device(new Device(
 				body.device().id, AlbumSingleton.synode(), body.device().devname));
@@ -1011,8 +1010,4 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		return album;
 	}
-	
-//	static String chainId(IUser usr, String clientpathRaw) {
-//		return usr.sessionId() + " " + clientpathRaw;
-//	}
 }

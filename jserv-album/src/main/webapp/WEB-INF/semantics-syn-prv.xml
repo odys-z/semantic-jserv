@@ -13,7 +13,7 @@
 	<smtc>a-k</smtc>
 	<tabl>doc_devices</tabl>
 	<pk>device</pk>
-	<args>synoder0,64</args>
+	<args>device,64</args>
   </s>
   
   <s>
