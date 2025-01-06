@@ -23,8 +23,11 @@ public enum SynDocollPort implements IPort {
 	userstier("users.less"),
 	/** editor.less */
 	editor("editor.less"),
-	/** album.less */
+	/** docoll.syn */
 	docoll("docoll.syn"),
+	/** docs.tier : {@link io.oz.jserv.docs.syn.ExpDoctier} */
+	docstier("docs.tier"),
+	
 	menu("menu.serv"), settings("settings.less");
 
 	static {
