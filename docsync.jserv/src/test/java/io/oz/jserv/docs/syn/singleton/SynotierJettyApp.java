@@ -74,8 +74,8 @@ public class SynotierJettyApp {
 	 * @param admin 
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, SyncUser admin, String urlpath,
-			String webinf, String config_xml, String syntity_json) throws Exception {
+	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, SyncUser admin,
+			String urlpath, String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
