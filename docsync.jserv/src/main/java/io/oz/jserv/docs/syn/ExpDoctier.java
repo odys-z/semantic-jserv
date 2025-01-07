@@ -84,7 +84,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @throws Exception
 	 */
 	public ExpDoctier(SynDomanager syndomanager) throws Exception {
-		super(Port.dbsyncer);
+		super(Port.docstier);
 		
 		domx = syndomanager;
 		
@@ -127,8 +127,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				// Session less
 				if (A.rec.equals(a))
 					rsp = doc(jmsg.body(0));
-//				else if (A.download.equals(a))
-//					download(resp, jmsg.body(0), usr);
+				else if (A.download.equals(a))
+					download(resp, jmsg.body(0), locrobot);
 			} else {
 				DocUser usr = (DocUser) JSingleton
 						.getSessionVerifier()
@@ -594,6 +594,52 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return new DocsResp().doc(new ExpSyncDoc().folder(rs.nxt(), mph));
 	}
 	
+	String missingFile = "";
+
+	public ExpDoctier missingFile(String onlyPng) {
+		missingFile = onlyPng;
+		return this;
+	}
+	
+	void download(HttpServletResponse resp, DocsReq req, IUser usr)
+			throws IOException, SemanticException, TransException, SQLException {
+
+//		String conn = Connects.uri2conn(req.uri());
+//		ExpDocTableMeta meta = new ExpDocTableMeta(conn);
+//
+//		AnResultset rs = (AnResultset) st
+//				.select(meta.tbl, "p")
+//				.j("a_users", "u", "u.userId = p.shareby")
+//				.col(meta.pk)
+//				.col(meta.resname).col(meta.createDate)
+//				.col(meta.folder).col(meta.fullpath)
+//				.col(meta.uri)
+//				.col("userName", "shareby")
+//				.col(meta.shareDate)
+//				// .col(meta.geox).col(meta.geoy).col(meta.tags)
+//				.col(meta.mime)
+//				.whereEq(meta.pk, req.doc.recId)
+//				.rs(st.instancontxt(conn, usr)).rs(0);
+//
+//		if (!rs.next()) {
+//			resp.setContentType("image/png");
+//			FileStream.sendFile(resp.getOutputStream(), missingFile);
+//		}
+//		else {
+//			String mime = rs.getString("mime");
+//			resp.setContentType(mime);
+//			
+//			try ( OutputStream os = resp.getOutputStream() ) {
+//				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta));
+//				os.close();
+//			} catch (IOException e) {
+//				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
+//				// This is harmless: https://stackoverflow.com/a/70020526/7362888
+//				// Utils.warn(e.getMessage());
+//			}
+//		}
+	}
+
 	static String chainId(IUser usr, String clientpathRaw) {
 		return usr.sessionId() + " " + clientpathRaw;
 	}

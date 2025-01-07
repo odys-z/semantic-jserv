@@ -116,7 +116,7 @@ class SynotierJettyAppTest {
 							else page.add(p.fullpath());
 						}
 
-						DocsResp rp = tier.synQueryPathsPage(page, Port.docsync);
+						DocsResp rp = tier.synQueryPathsPage(page, Port.docstier);
 						for (int i = page.start(); i < page.end(); i++) {
 							assertNotNull(page.paths().get(videos.get(i).fullpath()));
 						}
