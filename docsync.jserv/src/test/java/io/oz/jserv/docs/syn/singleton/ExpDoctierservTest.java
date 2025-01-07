@@ -244,7 +244,7 @@ public class ExpDoctierservTest {
 			pathpool.add(pth);
 		}
 
-		DocsResp rep = clientier.synQueryPathsPage(pths, Port.docsync);
+		DocsResp rep = clientier.synQueryPathsPage(pths, Port.docstier);
 
 		PathsPage pthpage = rep.pathsPage();
 		assertEquals(clientier.client.ssInfo().device, pthpage.device);
