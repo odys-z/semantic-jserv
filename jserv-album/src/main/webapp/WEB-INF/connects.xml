@@ -24,7 +24,7 @@
   		<src>$VOLUME_HUB/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-syn-hub.xml</smtcs>
 	</c>
 
@@ -46,7 +46,7 @@
   		<src>$VOLUME_PRV/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-syn-prv.xml</smtcs>
 	</c>
 

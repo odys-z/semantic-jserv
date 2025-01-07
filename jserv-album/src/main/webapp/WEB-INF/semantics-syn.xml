@@ -13,7 +13,7 @@
 	<smtc>a-k</smtc>
 	<tabl>doc_devices</tabl>
 	<pk>device</pk>
-	<args>device</args>
+	<args>device,0</args>
   </s>
   
   <s>

@@ -6,7 +6,6 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
-import static io.odysz.transact.sql.parts.condition.Funcall.now;
 import static io.odysz.transact.sql.parts.condition.Funcall.sum;
 
 import java.io.IOException;
@@ -41,8 +40,6 @@ import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantic.tier.docs.BlockChain;
-import io.odysz.semantic.tier.docs.Device;
-import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
 import io.odysz.semantic.tier.docs.DocsReq;
@@ -158,8 +155,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		//			rsp = devices(jmsg.body(0), usr);
 		//		else if (DocsReq.A.checkDev.equals(a))
 		//			rsp = chkDevname(jmsg.body(0), usr);
-				else if (DocsReq.A.registDev.equals(a))
-					rsp = registDevice((DocsReq) jmsg.body(0), usr);
+//				else if (DocsReq.A.registDev.equals(a))
+//					rsp = registDevice((DocsReq) jmsg.body(0), usr);
 		//		else if (AlbumReq.A.updateFolderel.equals(a))
 		//			rsp = updateFolderel(jmsg.body(0), usr);
 
@@ -207,42 +204,42 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return new DocsResp().device(body.device());
 	}
 
-	DocsResp registDevice(DocsReq body, DocUser usr)
-			throws SemanticException, TransException, SQLException, SAXException, IOException {
-		String conn = Connects.uri2conn(body.uri());
-		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
-
-		DATranscxt b = syntransBuilder();
-
-		if (isblank(body.device().id)) {
-			SemanticObject result = (SemanticObject) b
-				.insert(devMeta.tbl, usr)
-				.nv(devMeta.synoder, body.device().id)
-				.nv(devMeta.devname, body.device().devname)
-				.nv(devMeta.owner, usr.uid())
-				.nv(devMeta.cdate, now())
-				.nv(devMeta.org, usr.orgId())
-				.ins(b.instancontxt(Connects.uri2conn(body.uri()), usr));
-
-			String resulved = result.resulve(devMeta.tbl, devMeta.pk, -1);
-			return new DocsResp().device(new Device(
-				resulved, body.device().id, body.device().devname));
-		}
-		else {
-			if (isblank(body.device().id))
-				throw new SemanticException("Error for pdating device name without a device id.");
-
-			b.update(devMeta.tbl, usr)
-				.nv(devMeta.cdate, now())
-				// .whereEq(devMeta.domain, usr.orgId())
-				.whereEq(devMeta.pk, body.device().id)
-				.u(b.instancontxt(Connects.uri2conn(body.uri()), usr));
-
+//	DocsResp registDevice(DocsReq body, DocUser usr)
+//			throws SemanticException, TransException, SQLException, SAXException, IOException {
+//		String conn = Connects.uri2conn(body.uri());
+//		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
+//
+//		DATranscxt b = syntransBuilder();
+//
+//		if (isblank(body.device().id)) {
+//			SemanticObject result = (SemanticObject) b
+//				.insert(devMeta.tbl, usr)
+//				.nv(devMeta.synoder, body.device().id)
+//				.nv(devMeta.devname, body.device().devname)
+//				.nv(devMeta.owner, usr.uid())
+//				.nv(devMeta.cdate, now())
+//				.nv(devMeta.org, usr.orgId())
+//				.ins(b.instancontxt(Connects.uri2conn(body.uri()), usr));
+//
+//			String resulved = result.resulve(devMeta.tbl, devMeta.pk, -1);
 //			return new DocsResp().device(new Device(
-//				body.device().id, body.device().id, body.device().devname));
-			return new DocsResp().device(body.device());
-		}
-	}
+//				resulved, body.device().id, body.device().devname));
+//		}
+//		else {
+//			if (isblank(body.device().id))
+//				throw new SemanticException("Error for pdating device name without a device id.");
+//
+//			b.update(devMeta.tbl, usr)
+//				.nv(devMeta.cdate, now())
+//				// .whereEq(devMeta.domain, usr.orgId())
+//				.whereEq(devMeta.pk, body.device().id)
+//				.u(b.instancontxt(Connects.uri2conn(body.uri()), usr));
+//
+////			return new DocsResp().device(new Device(
+////				body.device().id, body.device().id, body.device().devname));
+//			return new DocsResp().device(body.device());
+//		}
+//	}
 
 	private HashMap<String, BlockChain> blockChains;
 

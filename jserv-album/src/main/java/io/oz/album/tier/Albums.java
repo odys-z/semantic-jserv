@@ -211,7 +211,7 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = createPhoto(jmsg.body(0), usr, prf);
 				else if (A.del.equals(a))
 					rsp = delPhoto(jmsg.body(0), usr, prf);
-				else if (A.selectSyncs.equals(a))
+				else if (DocsReq.A.selectSyncs.equals(a))
 					rsp = querySyncs(jmsg.body(0), usr, prf);
 				else if (A.getPrefs.equals(a))
 					rsp = profile(jmsg.body(0), usr, prf);
@@ -583,8 +583,8 @@ public class Albums extends ServPort<AlbumReq> {
 			.j(userMeta.tbl, "u", "u.%s = d.%s", userMeta.pk, devMeta.owner)
 			.cols(devMeta.devname, devMeta.synoder, devMeta.cdate, devMeta.owner)
 			.whereEq(devMeta.pk, usr.deviceId())
-			// .whereEq(devMeta.domain,   usr.orgId())
-			.whereEq(devMeta.owner,   usr.uid())
+			.whereEq(devMeta.org, usr.orgId())
+			.whereEq(devMeta.owner, usr.uid())
 			.rs(st.instancontxt(conn, usr))
 			.rs(0))
 			.nxt();

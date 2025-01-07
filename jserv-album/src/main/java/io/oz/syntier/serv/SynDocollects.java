@@ -50,7 +50,6 @@ import io.odysz.transact.sql.parts.Sql;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
-import io.oz.album.AlbumSingleton;
 import io.oz.album.peer.AlbumPort;
 import io.oz.album.peer.AlbumReq;
 import io.oz.album.peer.AlbumResp;
@@ -107,9 +106,11 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	// PUserMeta userMeta;
 	JUserMeta userMeta;
 
+	final SyndomContext domx;
 	final String sysconn;
-	final String synode;
+//	final String synode;
 	final PhotoMeta phm;
+
 
 	static {
 		try {
@@ -121,12 +122,13 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 	public SynDocollects(String sysconn, SyndomContext domx) throws Exception {
 		super(SynDocollPort.docoll);
-		this.synode = domx.synode;
+//		this.synode = domx.synode;
 		this.phm    = new PhotoMeta(domx.synconn);
 		this.sysconn= sysconn;
-		this.robot = new ExpDocRobot("Rob.Album@" + synode);
+		this.robot = new ExpDocRobot("Rob.Album@" + domx.synode);
 		
 		synt = new DBSynTransBuilder(domx);
+		this.domx = domx;
 		missingFile = "";
 	}
 
@@ -586,9 +588,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			);
 		}
 		else 
-			return (DocsResp) new DocsResp().device(new Device(
-					null, AlbumSingleton.synode(),
-					usr.deviceId()));
+			return (DocsResp) new DocsResp().device(
+					new Device(null, domx.synode, usr.deviceId()));
 	}
 	
 	DocsResp registDevice(DocsReq body, DocUser usr)
@@ -599,7 +600,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		if (isblank(body.device().id)) {
 			SemanticObject result = (SemanticObject) synt
 				.insert(devMeta.tbl, usr)
-				.nv(devMeta.synoder, AlbumSingleton.synode())
+				.nv(devMeta.synoder, domx.synode)
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
 				.nv(devMeta.cdate, now())
@@ -607,8 +608,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				.ins(synt.instancontxt());
 
 			String resulved = result.resulve(devMeta.tbl, devMeta.pk, -1);
-			return new DocsResp().device(new Device(
-				resulved, AlbumSingleton.synode(), body.device().devname));
+			return new DocsResp().device(
+					new Device(resulved, domx.synode, body.device().devname));
 		}
 		else {
 			if (isblank(body.device().id))
@@ -620,8 +621,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				.whereEq(devMeta.pk, body.device().id)
 				.u(synt.instancontxt());
 
-			return new DocsResp().device(new Device(
-				body.device().id, AlbumSingleton.synode(), body.device().devname));
+			return new DocsResp().device(
+					new Device(body.device().id, domx.synode, body.device().devname));
 		}
 	}
 
@@ -986,7 +987,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		if (!rs.next())
 			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
 
-		AlbumResp album = new AlbumResp(synode, synt.perdomain, synt.basictx().connId())
+		AlbumResp album = new AlbumResp(domx.synode, synt.perdomain, synt.basictx().connId())
 						.album(rs);
 
 		rs = (AnResultset) st

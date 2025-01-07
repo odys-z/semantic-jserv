@@ -189,8 +189,11 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 */
 	public ExpSynodetier syncIn(float syncIns, OnError err) throws Exception {
 		this.syncInSnds = syncIns;
-		if ((int)(this.syncInSnds) <= 0)
+		if ((int)(this.syncInSnds) <= 0) {
+			Utils.warn("Syn-worker is disabled. %s : %s [%s]",
+					domanager0.domain(), domanager0.synode, domanager0.synconn);
 			return this;
+		}
 
 		DATranscxt syntb = new DATranscxt(domanager0.synconn);
 
