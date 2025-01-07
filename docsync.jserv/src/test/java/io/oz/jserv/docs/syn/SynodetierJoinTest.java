@@ -42,7 +42,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
-import io.oz.jserv.docs.syn.singleton.T_SynotierJettyApp;
+import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.SynOrg;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
@@ -80,11 +80,11 @@ public class SynodetierJoinTest {
 	public static final String[] config_xmls = new String[] {
 			"config-0.xml", "config-1.xml", "config-2.xml", "config-3.xml"};
 	
-	public static T_SynotierJettyApp[] jetties;
+	public static SynotierJettyApp[] jetties;
 
 	static {
 		try {
-			jetties = new T_SynotierJettyApp[4];
+			jetties = new SynotierJettyApp[4];
 
 			docm = new T_PhotoMeta(clientconn);
 			
@@ -221,8 +221,8 @@ public class SynodetierJoinTest {
 	}
 	
 	void joinby(boolean[] lights, int to, int by) throws Exception {
-		T_SynotierJettyApp hub = jetties[to];
-		T_SynotierJettyApp prv = jetties[by];
+		SynotierJettyApp hub = jetties[to];
+		SynotierJettyApp prv = jetties[by];
 
 		Set<String> hubdoms = hub.syngleton().domains();
 		if (len(prv.syngleton().domains()) > 1)
@@ -242,7 +242,7 @@ public class SynodetierJoinTest {
 	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
 			throws SemanticException, SsException, IOException {
 
-		T_SynotierJettyApp t = jetties[tx];
+		SynotierJettyApp t = jetties[tx];
 
 		for (String dom : t.syngleton().domains()) {
 			t.syngleton().domanager(dom).asyUpdomains(
@@ -287,10 +287,10 @@ public class SynodetierJoinTest {
 	 * @return the Jetty App, with a servlet server.
 	 * @throws Exception
 	 */
-	public static T_SynotierJettyApp startSyndoctier(SynodeConfig cfg, SyncUser admin,
+	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, SyncUser admin,
 			String cfg_xml, String syntity_json) throws Exception {
 
-		return T_SynotierJettyApp 
+		return SynotierJettyApp 
 			.createSyndoctierApp(cfg, new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)),
 					"/", webinf, cfg_xml, syntity_json)
 			.start(() -> System.out, () -> System.err)

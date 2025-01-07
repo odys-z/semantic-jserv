@@ -182,8 +182,9 @@ public class SynotierJettyApp {
 		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
 		return registerPorts(synapp, urlpath, cfg.synconn,
-				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink(), new Echo(),
-				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain)))
+				new AnSession(), new AnQuery(), new AnUpdate(),
+				new Echo(), new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain)),
+				new HeartLink())
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)
 			.allowCors(synapp.schandler)
@@ -290,7 +291,7 @@ public class SynotierJettyApp {
 	public static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
 			String bindIp, int port) throws Exception {
 	
-        AnsonMsg.understandPorts(SynDocollPort.docoll);
+	    AnsonMsg.understandPorts(SynDocollPort.docoll);
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg);
 

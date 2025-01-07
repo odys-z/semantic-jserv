@@ -108,7 +108,7 @@ public class ExpDoctierservTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 		
-		for (T_SynotierJettyApp j : jetties)
+		for (SynotierJettyApp j : jetties)
 			if (j != null) j.print();
 
 		pause("Press Enter after pushed with clients for starting synchronizing.");
@@ -171,7 +171,7 @@ public class ExpDoctierservTest {
 		ck[X].doc(2);
 	}
 
-	private static int[] runtimeEnv(T_SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
+	private static int[] runtimeEnv(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
 		String host = System.getProperty("syndocs.ip");
 		int port = 8090;
