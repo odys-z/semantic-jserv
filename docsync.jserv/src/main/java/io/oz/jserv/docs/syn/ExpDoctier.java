@@ -3,7 +3,6 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.notNull;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.sum;
@@ -60,7 +59,7 @@ import io.oz.syn.SynodeConfig;
  * @since 0.2.0
  * @author ody
  */
-@WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.sync" })
+@WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.tier" })
 public class ExpDoctier extends ServPort<DocsReq> {
 	private static final long serialVersionUID = 1L;
 
@@ -133,7 +132,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				DocUser usr = (DocUser) JSingleton
 						.getSessionVerifier()
 						.verify(jmsg.header());
-				notNull(usr.deviceId());
+				// notNull(usr.deviceId(), "Device id of session user is null: %s", usr.uid());
 
 				if (A.upload.equals(a))
 					rsp = createDoc(docreq, usr);
