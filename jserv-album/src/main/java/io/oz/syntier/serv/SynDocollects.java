@@ -612,8 +612,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 					new Device(resulved, domx.synode, body.device().devname));
 		}
 		else {
-			if (isblank(body.device().id))
-				throw new SemanticException("Error for pdating device name without a device id.");
+//			if (isblank(body.device().id))
+//				throw new SemanticException("Error for pdating device name without a device id.");
 
 			synt.update(devMeta.tbl, usr)
 				.nv(devMeta.cdate, now())
