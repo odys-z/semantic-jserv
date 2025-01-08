@@ -94,7 +94,7 @@ class SynotierJettyAppTest {
 
 		tier.asyVideos(null, videos,
 			(ix, total, c, pth, resp) -> {
-				fail("Duplicate checking not working on " + pth);
+				fail("The duplicate checking is not working on " + pth);
 			},
 			null,
 			new ErrorCtx() {

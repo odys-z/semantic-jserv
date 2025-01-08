@@ -160,7 +160,7 @@ public class DocsReq extends UserReq {
 	protected Device device; 
 	public Device device() { return device; }
 	public DocsReq device(String devid) {
-		device = new Device(devid, null);
+		device = new Device(devid, devid);
 		return this;
 	}
 	public DocsReq device(Device d) {
@@ -188,6 +188,7 @@ public class DocsReq extends UserReq {
 	public String org;
 	public DocsReq org(String org) { this.org = org; return this; }
 
+	/** If the chain already exists when starting, reset it. */
 	public boolean reset;
 
 	private long limit = -1;
