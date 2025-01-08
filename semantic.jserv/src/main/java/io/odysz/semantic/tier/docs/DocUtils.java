@@ -79,11 +79,6 @@ public class DocUtils {
 	 * <p>Doc is created as in the folder of user/[photo.folder]/;<br>
 	 * Doc's device and family are replaced with session information.</p>
 	 * 
-	 * @since 1.4.19, this method needs the DB can triggering time stamp ({@link DocTableMeta#stamp}).
-	 * <pre>
-	 * sqlite example:
-	 * syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL
-	 * </pre>
 	 * @deprecated replaced by {@link #createFileBy64(DATranscxt, String, ExpSyncDoc, IUser, ExpDocTableMeta, Update...)}
 	 * @param st
 	 * @param conn
@@ -160,15 +155,14 @@ public class DocUtils {
 
 		Insert ins = st
 			.insert(meta.tbl, usr)
-			.nv(meta.org, doc.org)
-			.nv(meta.uri, doc.uri64)
+			.nv(meta.org, ifnull(doc.org, usr.orgId()))
+			.nv(meta.uri, ifnull(doc.uri64, ""))
 			.nv(meta.resname, doc.pname)
 			.nv(meta.device, doc.device)
 			.nv(meta.fullpath, doc.fullpath())
-			.nv(meta.createDate, doc.createDate)
+			.nv(meta.createDate, ifnull(doc.createDate, DateFormat.formatime(new Date())))
 			.nv(meta.folder, doc.folder())
-			// .nv(meta.shareflag, ifnull(doc.shareflag, Share.priv))
-			.nv(meta.shareflag, doc.shareflag)
+			.nv(meta.shareflag, ifnull(doc.shareflag, ShareFlag.prv.name()))
 			.nv(meta.shareby, ifnull(doc.shareby, usr.uid()))
 			.nv(meta.shareDate, ifnull(doc.sharedate, DateFormat.format(new Date())))
 			.nv(meta.size, doc.size)

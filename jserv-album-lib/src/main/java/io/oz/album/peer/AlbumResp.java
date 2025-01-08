@@ -128,8 +128,10 @@ public class AlbumResp extends DocsResp {
 		ArrayList<PhotoRec> photos = new ArrayList<PhotoRec>(rs.total());
 		rs.beforeFirst();
 		while(rs.next()) {
-			photos.add(new PhotoRec(rs, meta).collect(collectId));
+			// photos.add(new PhotoRec(rs, meta).collect(collectId));
+			photos.add(new PhotoRec(rs, meta));
 		}
+		this.collectId = collectId;
 
 		this.photos.add(photos.toArray(new PhotoRec[0]));
 		return this;

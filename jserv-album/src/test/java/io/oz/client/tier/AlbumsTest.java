@@ -25,6 +25,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
@@ -33,7 +34,6 @@ import io.oz.album.peer.AlbumPort;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.PhotoRec;
-import io.oz.album.peer.ShareFlag;
 import io.oz.syndoc.client.PhotoSyntier;
 
 /**

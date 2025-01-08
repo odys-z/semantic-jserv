@@ -1,0 +1,396 @@
+HUB insert 0103, 0104, 0105
+===========================
+
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSynTransBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn-hub]
+select io_oz_synuid from h_photos  where pid = '0103'
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'syn_change.cid'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'syn_change.cid'
+[docsyn-hub]
+insert into h_photos (family, uri, docname, device, clientpath, pdate, folder, shareflag, shareby, sharedate, filesize, pid, opertime, oper) values ('ura', '$VOLUME_HUB/ura/ody/2025-01/0103 IMG_20241214_141319.jpg', 'IMG_20241214_141319.jpg', '0002', '/storage/emulated/0/DCIM/Camera/IMG_20241214_141319.jpg', '2025-01-08', '2025-01', 'publish', 'ody', '2025-01-08', 0, '0103', datetime('now'), 'ody')
+update h_photos set io_oz_synuid='X' || ',' || '0103', opertime=datetime('now'), oper='ody' where pid = '0103'
+insert into syn_change (tabl, crud, synoder, nyquence, seq, domain, uids, cid) values ('h_photos', 'I', 'X', 224, 1, 'zsu', 'X' || ',' || '0103', '0005')
+insert into syn_subscribe (changeId, synodee) select '0005', synid from syn_node  where synid <> 'X' AND domain = 'zsu'
+[docsyn-hub]
+select uri, folder from h_photos  where pid = '0103'
+[io.oz.jserv.docs.syn.ExpDoctier#endBlock()]  /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ody/uploading-temp/vtbyQVqP/storage/emulated/0/DCIM/Camera/IMG_20241214_141319.jpg
+-> /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ura/ody/2025-01/0103 IMG_20241214_141319.jpg
+[docsyn-hub]
+select count(pid) cnt from h_photos p where device = '0002' AND clientpath = '/storage/emulated/0/DCIM/Camera/IMG_20241214_140811.jpg'
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSynTransBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn-hub]
+select io_oz_synuid from h_photos  where pid = '0104'
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'syn_change.cid'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'syn_change.cid'
+[docsyn-hub]
+insert into h_photos (family, uri, docname, device, clientpath, pdate, folder, shareflag, shareby, sharedate, filesize, pid, opertime, oper) values ('ura', '$VOLUME_HUB/ura/ody/2025-01/0104 IMG_20241214_140811.jpg', 'IMG_20241214_140811.jpg', '0002', '/storage/emulated/0/DCIM/Camera/IMG_20241214_140811.jpg', '2025-01-08', '2025-01', 'publish', 'ody', '2025-01-08', 0, '0104', datetime('now'), 'ody')
+update h_photos set io_oz_synuid='X' || ',' || '0104', opertime=datetime('now'), oper='ody' where pid = '0104'
+insert into syn_change (tabl, crud, synoder, nyquence, seq, domain, uids, cid) values ('h_photos', 'I', 'X', 224, 1, 'zsu', 'X' || ',' || '0104', '0006')
+insert into syn_subscribe (changeId, synodee) select '0006', synid from syn_node  where synid <> 'X' AND domain = 'zsu'
+[docsyn-hub]
+select uri, folder from h_photos  where pid = '0104'
+[io.oz.jserv.docs.syn.ExpDoctier#endBlock()]  /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ody/uploading-temp/vtbyQVqP/storage/emulated/0/DCIM/Camera/IMG_20241214_140811.jpg
+-> /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ura/ody/2025-01/0104 IMG_20241214_140811.jpg
+[docsyn-hub]
+select count(pid) cnt from h_photos p where device = '0002' AND clientpath = '/storage/emulated/0/DCIM/Camera/IMG_20241214_135931.jpg'
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSynTransBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn-hub]
+select io_oz_synuid from h_photos  where pid = '0105'
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'syn_change.cid'
+[Y] : Checking Syndomain ...
+[docsyn-prv]
+select count(*) cnt from syn_node  where synid = 'Y' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-prv]
+select count(*) cnt from syn_exchange_buf  where peer = 'X'
+[docsyn-prv]
+select synid, nyq, nstamp from syn_node  where domain = 'zsu'
+[docsyn-prv]
+select count(*) cnt from syn_exchange_buf  where peer = 'X'
+[docsyn-prv]
+delete from syn_sessions where peer = 'X'
+insert into syn_sessions (peer, chpage, answerx, expansx) values ('X', -1, -1, -1)
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'syn_change.cid'
+[docsyn-hub]
+insert into h_photos (family, uri, docname, device, clientpath, pdate, folder, shareflag, shareby, sharedate, filesize, pid, opertime, oper) values ('ura', '$VOLUME_HUB/ura/ody/2025-01/0105 IMG_20241214_135931.jpg', 'IMG_20241214_135931.jpg', '0002', '/storage/emulated/0/DCIM/Camera/IMG_20241214_135931.jpg', '2025-01-08', '2025-01', 'publish', 'ody', '2025-01-08', 0, '0105', datetime('now'), 'ody')
+update h_photos set io_oz_synuid='X' || ',' || '0105', opertime=datetime('now'), oper='ody' where pid = '0105'
+insert into syn_change (tabl, crud, synoder, nyquence, seq, domain, uids, cid) values ('h_photos', 'I', 'X', 224, 1, 'zsu', 'X' || ',' || '0105', '0007')
+insert into syn_subscribe (changeId, synodee) select '0007', synid from syn_node  where synid <> 'X' AND domain = 'zsu'
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+select uri, folder from h_photos  where pid = '0105'
+[io.oz.jserv.docs.syn.ExpDoctier#endBlock()]  /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ody/uploading-temp/vtbyQVqP/storage/emulated/0/DCIM/Camera/IMG_20241214_135931.jpg
+-> /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ura/ody/2025-01/0105 IMG_20241214_135931.jpg
+
+X[224] <- Y[224]
+================
+
+X -> Y: 3
+---------
+
+
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+Cleaning staleness at X, peer Y ...
+[docsyn-hub]
+delete from syn_peers where peer = 'Y' AND domain = 'zsu'
+insert into syn_peers (synid, peer, domain, nyq) values ('X', 'Y', 'zsu', 223), ('Y', 'Y', 'zsu', 224)
+[docsyn-hub]
+select count(pid) cnt from h_photos p where device = '0002' AND clientpath = '/storage/emulated/0/DCIM/Camera/IMG_20241214_135732.jpg'
+[docsyn-hub]
+delete from syn_subscribe where exists ( with cl as (select cl.*, synodee from syn_change cl join syn_subscribe sb on 'Y' = sb.synodee AND cl.cid = sb.changeId join syn_peers nv on cl.synoder = nv.synid AND 'zsu' = nv.domain AND 'Y' = nv.peer where cl.nyquence - nv.nyq <= 0) select * from cl  where changeId = cid AND syn_subscribe.synodee = cl.synodee )
+delete from syn_subscribe where exists ( with cl as (select cl.*, synodee from syn_change cl join syn_subscribe sb on cid = changeId AND 'Y' <> synodee join syn_node sn on cl.synoder = sn.synid AND 'zsu' = sn.domain join syn_peers nver on cl.synoder = nver.synid AND 'zsu' = nver.domain AND 'Y' = nver.peer join syn_peers nvee on sb.synodee = nvee.synid AND 'zsu' = nvee.domain AND 'Y' = nvee.peer where cl.nyquence - nver.nyq <= 0 AND cl.nyquence - nvee.nyq <= 0) select * from cl  where changeId = cid AND syn_subscribe.synodee = cl.synodee )
+delete from syn_change where not exists ( with cl as (select changeId, domain, tabl, synodee from syn_change cl join syn_subscribe sb on cl.cid = sb.changeId) select * from cl  join syn_change ch on ch.domain = cl.domain AND ch.tabl = cl.tabl AND changeId = ch.cid )
+[docsyn-hub]
+select synid, nyq, nstamp from syn_node  where domain = 'zsu'
+[docsyn-hub]
+insert into syn_exchange_buf (peer, changeId, pagex) select 'Y', cid, -1 from syn_change cl join syn_subscribe sb on 'Y' = sb.synodee AND cl.cid = sb.changeId AND cl.synoder = 'X' join syn_peers nv on cl.synoder = nv.synid AND 'zsu' = nv.domain AND 'Y' = nv.peer where cl.nyquence - nv.nyq > 0 union select 'Y', cid, -1 from syn_change cl join syn_subscribe sb on cid = changeId AND 'X' <> synodee join syn_peers nvee on cl.synoder = nvee.synid AND 'zsu' = nvee.domain AND 'Y' = nvee.peer where cl.nyquence - nvee.nyq > 0
+
+Changes in buffer for X -> Y: 3
+
+[docsyn-hub]
+select count(*) cnt from syn_exchange_buf  where peer = 'Y'
+[docsyn-hub]
+delete from syn_sessions where peer = 'Y'
+insert into syn_sessions (peer, chpage, answerx, expansx) values ('Y', -1, -1, -1)
+[docsyn-hub]
+update syn_node set nstamp=225 where synid = 'X' AND domain = 'zsu'
+[docsyn-prv]
+select count(*) cnt from syn_node  where synid = 'Y' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+Cleaning staleness at Y, peer X ...
+[docsyn-prv]
+delete from syn_peers where peer = 'X' AND domain = 'zsu'
+insert into syn_peers (synid, peer, domain, nyq) values ('X', 'X', 'zsu', 224), ('Y', 'X', 'zsu', 223)
+[docsyn-prv]
+delete from syn_subscribe where exists ( with cl as (select cl.*, synodee from syn_change cl join syn_subscribe sb on 'X' = sb.synodee AND cl.cid = sb.changeId join syn_peers nv on cl.synoder = nv.synid AND 'zsu' = nv.domain AND 'X' = nv.peer where cl.nyquence - nv.nyq <= 0) select * from cl  where changeId = cid AND syn_subscribe.synodee = cl.synodee )
+delete from syn_subscribe where exists ( with cl as (select cl.*, synodee from syn_change cl join syn_subscribe sb on cid = changeId AND 'X' <> synodee join syn_node sn on cl.synoder = sn.synid AND 'zsu' = sn.domain join syn_peers nver on cl.synoder = nver.synid AND 'zsu' = nver.domain AND 'X' = nver.peer join syn_peers nvee on sb.synodee = nvee.synid AND 'zsu' = nvee.domain AND 'X' = nvee.peer where cl.nyquence - nver.nyq <= 0 AND cl.nyquence - nvee.nyq <= 0) select * from cl  where changeId = cid AND syn_subscribe.synodee = cl.synodee )
+delete from syn_change where not exists ( with cl as (select changeId, domain, tabl, synodee from syn_change cl join syn_subscribe sb on cl.cid = sb.changeId) select * from cl  join syn_change ch on ch.domain = cl.domain AND ch.tabl = cl.tabl AND changeId = ch.cid )
+[docsyn-prv]
+select synid, nyq, nstamp from syn_node  where domain = 'zsu'
+[docsyn-prv]
+insert into syn_exchange_buf (peer, changeId, pagex) select 'X', cid, -1 from syn_change cl join syn_subscribe sb on 'X' = sb.synodee AND cl.cid = sb.changeId AND cl.synoder = 'Y' join syn_peers nv on cl.synoder = nv.synid AND 'zsu' = nv.domain AND 'X' = nv.peer where cl.nyquence - nv.nyq > 0 union select 'X', cid, -1 from syn_change cl join syn_subscribe sb on cid = changeId AND 'Y' <> synodee join syn_peers nvee on cl.synoder = nvee.synid AND 'zsu' = nvee.domain AND 'X' = nvee.peer where cl.nyquence - nvee.nyq > 0
+[docsyn-prv]
+select count(*) cnt from syn_exchange_buf  where peer = 'X'
+[docsyn-prv]
+delete from syn_sessions where peer = 'X'
+insert into syn_sessions (peer, chpage, answerx, expansx) values ('X', -1, -1, -1)
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSynTransBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn-prv]
+update syn_node set nstamp=225 where synid = 'Y' AND domain = 'zsu'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn-hub]
+select io_oz_synuid from h_photos  where pid = '0106'
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'syn_change.cid'
+[docsyn-prv]
+update syn_exchange_buf set pagex=0 where changeId in  ( select * from (select changeId from (select pagex page, bf.changeId, sub.synodee from syn_exchange_buf bf join syn_change chg on bf.changeId = chg.cid AND bf.peer = 'X' join syn_subscribe sub on chg.cid = sub.changeId where peer = 'X')) limit 480 offset 0 )
+[docsyn-prv]
+select tabl from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND bf.peer = 'X' AND 0 = bf.pagex group by tabl
+[docsyn-prv]
+select pagex, ch.*, sb.synodee from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND 'X' = bf.peer AND 0 = bf.pagex join syn_subscribe sb on ch.cid = sb.changeId order by synoder asc, tabl asc, seq asc
+[docsyn-prv]
+update syn_sessions set chpage=0, answerx=-1, expansx=-1, mode=0, state=3 where peer = 'X'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'syn_change.cid'
+
+HUB insert 0106, nstamp = 225
+=============================
+
+[docsyn-hub]
+insert into h_photos (family, uri, docname, device, clientpath, pdate, folder, shareflag, shareby, sharedate, filesize, pid, opertime, oper) values ('ura', '$VOLUME_HUB/ura/ody/2025-01/0106 IMG_20241214_135732.jpg', 'IMG_20241214_135732.jpg', '0002', '/storage/emulated/0/DCIM/Camera/IMG_20241214_135732.jpg', '2025-01-08', '2025-01', 'publish', 'ody', '2025-01-08', 0, '0106', datetime('now'), 'ody')
+update h_photos set io_oz_synuid='X' || ',' || '0106', opertime=datetime('now'), oper='ody' where pid = '0106'
+
+insert into syn_change (tabl, crud, synoder, nyquence, seq, domain, uids, cid) values ('h_photos', 'I', 'X', 225, 1, 'zsu', 'X' || ',' || '0106', '0008')
+                                             ^                                                               ^ 
+
+insert into syn_subscribe (changeId, synodee) select '0008', synid from syn_node  where synid <> 'X' AND domain = 'zsu'
+
+Suspicious updating
+-------------------
+
+[docsyn-hub]
+update syn_exchange_buf set pagex=0 where changeId in  ( select * from (select changeId from (select pagex page, bf.changeId, sub.synodee from syn_exchange_buf bf join syn_change chg on bf.changeId = chg.cid AND bf.peer = 'Y' join syn_subscribe sub on chg.cid = sub.changeId where peer = 'Y')) limit 480 offset 0 )
+
+[docsyn-hub]
+select uri, folder from h_photos  where pid = '0106'
+[io.oz.jserv.docs.syn.ExpDoctier#endBlock()]  /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ody/uploading-temp/vtbyQVqP/storage/emulated/0/DCIM/Camera/IMG_20241214_135732.jpg
+-> /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ura/ody/2025-01/0106 IMG_20241214_135732.jpg
+[docsyn-hub]
+select tabl from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND bf.peer = 'Y' AND 0 = bf.pagex group by tabl
+[docsyn-hub]
+select e.css, e.shareby, e.pdate, e.mime, e.opertime, e.filesize, e.uri, e.io_oz_synuid, e.tags, e.clientpath, e.folder, e.sharedate, e.geox, e.shareflag, e.geoy, e.oper, e.family, e.docname, e.syncstamp, e.device, e.exif from h_photos e join syn_change ch on ch.tabl = 'h_photos' AND e.io_oz_synuid = ch.uids join syn_exchange_buf bf on ch.cid = bf.changeId AND 'Y' = bf.peer AND 0 = bf.pagex
+[docsyn-hub]
+select count(pid) cnt from h_photos p where device = '0002' AND clientpath = '/storage/emulated/0/DCIM/Camera/IMG_20241214_135627.jpg'
+[docsyn-hub]
+select pagex, ch.*, sb.synodee from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND 'Y' = bf.peer AND 0 = bf.pagex join syn_subscribe sb on ch.cid = sb.changeId order by synoder asc, tabl asc, seq asc
+[io.odysz.semantic.syn.ExessionPersist#saveChanges()] 
+[X <- Y] : X saving changes to local entities...
+[docsyn-hub]
+[docsyn-hub]
+update syn_sessions set chpage=0, answerx=-1, expansx=0, mode=0, state=2 where peer = 'Y'
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSynTransBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn-hub]
+select io_oz_synuid from h_photos  where pid = '0107'
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'syn_change.cid'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'syn_change.cid'
+
+HUB insert 0107, nstamp/nyq = 225
+---------------------------------
+
+[docsyn-hub]
+insert into h_photos (family, uri, docname, device, clientpath, pdate, folder, shareflag, shareby, sharedate, filesize, pid, opertime, oper) values ('ura', '$VOLUME_HUB/ura/ody/2025-01/0107 IMG_20241214_135627.jpg', 'IMG_20241214_135627.jpg', '0002', '/storage/emulated/0/DCIM/Camera/IMG_20241214_135627.jpg', '2025-01-08', '2025-01', 'publish', 'ody', '2025-01-08', 0, '0107', datetime('now'), 'ody')
+update h_photos set io_oz_synuid='X' || ',' || '0107', opertime=datetime('now'), oper='ody' where pid = '0107'
+insert into syn_change (tabl, crud, synoder, nyquence, seq, domain, uids, cid) values ('h_photos', 'I', 'X', 225, 1, 'zsu', 'X' || ',' || '0107', '0009')
+                                             ^                                                               ^
+                                             
+insert into syn_subscribe (changeId, synodee) select '0009', synid from syn_node  where synid <> 'X' AND domain = 'zsu'
+[docsyn-hub]
+select uri, folder from h_photos  where pid = '0107'
+[io.oz.jserv.docs.syn.ExpDoctier#endBlock()]  /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ody/uploading-temp/vtbyQVqP/storage/emulated/0/DCIM/Camera/IMG_20241214_135627.jpg
+-> /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ura/ody/2025-01/0107 IMG_20241214_135627.jpg
+[docsyn-hub]
+select count(pid) cnt from h_photos p where device = '0002' AND clientpath = '/storage/emulated/0/DCIM/Camera/IMG_20241214_135529.jpg'
+[docsyn-prv]
+select tabl from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND bf.peer = 'X' AND 0 = bf.pagex group by tabl
+[docsyn-prv]
+select pagex, ch.*, sb.synodee from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND 'X' = bf.peer AND 0 = bf.pagex join syn_subscribe sb on ch.cid = sb.changeId order by synoder asc, tabl asc, seq asc
+[io.odysz.semantic.syn.ExessionPersist#saveChanges()] 
+[Y <- X] : Y saving changes to local entities...
+[docsyn-prv]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn-prv]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn-prv]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSyntableBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+select count(*) cnt from syn_node  where synid = 'X' AND domain = 'zsu'
+[io.odysz.semantic.syn.DBSynTransBuilder#static?()] Transaction builder created with forcing cleaning stale subscriptions.
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn-prv]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn-hub]
+select io_oz_synuid from h_photos  where pid = '0108'
+[docsyn-hub]
+update oz_autoseq set seq = seq + 1 where sid = 'syn_change.cid'
+[docsyn-prv]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn-hub]
+select seq from oz_autoseq  where sid = 'syn_change.cid'
+
+HUB insert 0108, nstamp/nyq = 225
+---------------------------------
+
+[docsyn-hub]
+insert into h_photos (family, uri, docname, device, clientpath, pdate, folder, shareflag, shareby, sharedate, filesize, pid, opertime, oper) values ('ura', '$VOLUME_HUB/ura/ody/2025-01/0108 IMG_20241214_135529.jpg', 'IMG_20241214_135529.jpg', '0002', '/storage/emulated/0/DCIM/Camera/IMG_20241214_135529.jpg', '2025-01-08', '2025-01', 'publish', 'ody', '2025-01-08', 0, '0108', datetime('now'), 'ody')
+update h_photos set io_oz_synuid='X' || ',' || '0108', opertime=datetime('now'), oper='ody' where pid = '0108'
+insert into syn_change (tabl, crud, synoder, nyquence, seq, domain, uids, cid) values ('h_photos', 'I', 'X', 225, 1, 'zsu', 'X' || ',' || '0108', '000A')
+                                             ^                                                               ^
+
+insert into syn_subscribe (changeId, synodee) select '000A', synid from syn_node  where synid <> 'X' AND domain = 'zsu'
+[docsyn-prv]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn-hub]
+select uri, folder from h_photos  where pid = '0108'
+[io.oz.jserv.docs.syn.ExpDoctier#endBlock()]  /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ody/uploading-temp/vtbyQVqP/storage/emulated/0/DCIM/Camera/IMG_20241214_135529.jpg
+-> /home/ody/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub/ura/ody/2025-01/0108 IMG_20241214_135529.jpg
+
+PRV synchronize 0103, 0104, 0105
+================================
+
+[docsyn-prv]
+insert into h_photos (css, shareby, pdate, mime, opertime, filesize, uri, io_oz_synuid, tags, clientpath, folder, sharedate, geox, shareflag, geoy, oper, family, docname, syncstamp, device, exif, pid) values (null, 'ody', '2025-01-08', null, datetime('now'), 0, '$VOLUME_PRV/ody/2025-01/0103 IMG_20241214_141319.jpg', 'X,0103', null, '/storage/emulated/0/DCIM/Camera/IMG_20241214_141319.jpg', '2025-01', '2025-01-08', '0.0', 'publish', '0.0', 'Y', 'ura', 'IMG_20241214_141319.jpg', '2025-01-08 08:59:18', '0002', null, '0103')
+insert into h_photos (css, shareby, pdate, mime, opertime, filesize, uri, io_oz_synuid, tags, clientpath, folder, sharedate, geox, shareflag, geoy, oper, family, docname, syncstamp, device, exif, pid) values (null, 'ody', '2025-01-08', null, datetime('now'), 0, '$VOLUME_PRV/ody/2025-01/0104 IMG_20241214_140811.jpg', 'X,0104', null, '/storage/emulated/0/DCIM/Camera/IMG_20241214_140811.jpg', '2025-01', '2025-01-08', '0.0', 'publish', '0.0', 'Y', 'ura', 'IMG_20241214_140811.jpg', '2025-01-08 08:59:20', '0002', null, '0104')
+insert into h_photos (css, shareby, pdate, mime, opertime, filesize, uri, io_oz_synuid, tags, clientpath, folder, sharedate, geox, shareflag, geoy, oper, family, docname, syncstamp, device, exif, pid) values (null, 'ody', '2025-01-08', null, datetime('now'), 0, '$VOLUME_PRV/ody/2025-01/0105 IMG_20241214_135931.jpg', 'X,0105', null, '/storage/emulated/0/DCIM/Camera/IMG_20241214_135931.jpg', '2025-01', '2025-01-08', '0.0', 'publish', '0.0', 'Y', 'ura', 'IMG_20241214_135931.jpg', '2025-01-08 08:59:22', '0002', null, '0105')
+[docsyn-prv]
+update syn_sessions set chpage=0, answerx=0, expansx=-1, mode=0, state=3 where peer = 'X'
+[docsyn-hub]
+update syn_exchange_buf set pagex=1 where changeId in  ( select * from (select changeId from (select pagex page, bf.changeId, sub.synodee from syn_exchange_buf bf join syn_change chg on bf.changeId = chg.cid AND bf.peer = 'Y' join syn_subscribe sub on chg.cid = sub.changeId where peer = 'Y')) limit 480 offset 480 )
+[io.odysz.semantic.syn.ExessionPersist#commitAnswers()] Locally committing answers to Y ...
+[docsyn-hub]
+delete from syn_subscribe where changeId = '0005' AND synodee = 'Y'
+delete from syn_change where cid = '0005' AND tabl = 'h_photos' AND domain = 'zsu' AND synoder = 'X' AND 0 =  ( select count(synodee) from syn_subscribe  where cid = '0005' AND cid = changeId AND synodee <> 'Y' )
+delete from syn_subscribe where changeId = '0006' AND synodee = 'Y'
+delete from syn_change where cid = '0006' AND tabl = 'h_photos' AND domain = 'zsu' AND synoder = 'X' AND 0 =  ( select count(synodee) from syn_subscribe  where cid = '0006' AND cid = changeId AND synodee <> 'Y' )
+delete from syn_subscribe where changeId = '0007' AND synodee = 'Y'
+delete from syn_change where cid = '0007' AND tabl = 'h_photos' AND domain = 'zsu' AND synoder = 'X' AND 0 =  ( select count(synodee) from syn_subscribe  where cid = '0007' AND cid = changeId AND synodee <> 'Y' )
+[docsyn-hub]
+select tabl from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND bf.peer = 'Y' AND 1 = bf.pagex group by tabl
+[docsyn-hub]
+select pagex, ch.*, sb.synodee from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND 'Y' = bf.peer AND 1 = bf.pagex join syn_subscribe sb on ch.cid = sb.changeId order by synoder asc, tabl asc, seq asc
+[io.odysz.semantic.syn.ExessionPersist#saveChanges()] 
+[X <- Y] : X saving changes to local entities...
+[docsyn-hub]
+[docsyn-hub]
+update syn_sessions set chpage=1, answerx=-1, expansx=-1, mode=0, state=3 where peer = 'Y'
+[docsyn-prv]
+update syn_node set nyq=225 where synid = 'Y' AND domain = 'zsu'
+
+Y.x = 224
+---------
+
+[docsyn-prv]
+update syn_node set nyq=224 where domain = 'zsu' AND synid = 'X'
+
+[docsyn-prv]
+select synid, nyq, nstamp from syn_node  where domain = 'zsu'
+[docsyn-prv]
+update syn_node set nstamp=225 where synid = 'Y' AND domain = 'zsu'
+[docsyn-prv]
+update syn_node set nyq=225 where synid = 'Y' AND domain = 'zsu'
+[docsyn-prv]
+delete from syn_exchange_buf where peer = 'X'
+[io.odysz.semantic.syn.DBSyntableBuilder#cleanStaleSubs()] Cleaning changes that's not accepted in session Y -> X.
+[docsyn-prv]
+select cid, uids, nyquence, synodee from syn_change ch join syn_subscribe sb on ch.cid = sb.changeId where synodee = 'X'
+1 : cid	2 : uids	3 : nyquence	4 : synodee	
+row count: 0
+[docsyn-prv]
+delete from syn_subscribe where synodee = 'X'
+delete from syn_change where domain = 'zsu' AND 0 =  ( select count(synodee) from syn_subscribe  where cid = changeId )
+[docsyn-hub]
+update syn_node set nyq=225 where synid = 'X' AND domain = 'zsu'
+[docsyn-hub]
+update syn_node set nyq=224 where domain = 'zsu' AND synid = 'Y'
+[docsyn-hub]
+select synid, nyq, nstamp from syn_node  where domain = 'zsu'
+[docsyn-hub]
+update syn_node set nstamp=225 where synid = 'X' AND domain = 'zsu'
+[docsyn-hub]
+update syn_node set nyq=225 where synid = 'X' AND domain = 'zsu'
+[docsyn-hub]
+delete from syn_exchange_buf where peer = 'Y'
+[io.odysz.semantic.syn.DBSyntableBuilder#cleanStaleSubs()] Cleaning changes that's not accepted in session X -> Y.
+[docsyn-hub]
+select cid, uids, nyquence, synodee from syn_change ch join syn_subscribe sb on ch.cid = sb.changeId where synodee = 'Y'
+1 : cid	2 : uids	3 : nyquence	4 : synodee	
+row count: 3
+
+
+THIS BRUTAL ?
+=============
+
+[docsyn-hub]
+delete from syn_subscribe where synodee = 'Y'
+
+
+delete from syn_change where domain = 'zsu' AND 0 =  ( select count(synodee) from syn_subscribe  where cid = changeId )
+
+[io.odysz.semantic.syn.DBSyntableBuilder#cleanStaleSubs()] Cleaned changes in X -> Y: 3 changes
+
+[Y] On update: zsu [225:225]
+[Y] On update: zsu [225:225]
+[Y] : Checking Syndomain ...
+
+Nothing happends
+----------------
+
+ ...
+
+[Y] On update: zsu [226:226]
+[Y] On update: zsu [226:226]
+[Y] : Checking Syndomain ...
+
+ ...
+

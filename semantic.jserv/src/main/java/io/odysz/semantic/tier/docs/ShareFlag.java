@@ -1,4 +1,4 @@
-package io.oz.album.peer;
+package io.odysz.semantic.tier.docs;
 
 import java.io.IOException;
 import java.io.OutputStream;

@@ -46,8 +46,8 @@ import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
+import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.x.TransException;
-import io.oz.album.peer.ShareFlag;
 import io.oz.syn.YellowPages;
 
 /**

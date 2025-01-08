@@ -61,6 +61,16 @@ import io.oz.syn.SynodeConfig;
  */
 @WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.tier" })
 public class ExpDoctier extends ServPort<DocsReq> {
+	/**
+	 * The callback each time triggered by {@link ExpDoctier#endBlock()}. 
+	 *
+	 * The function is always called in a background thread.
+	 */
+	@FunctionalInterface
+	public interface IOnDocreate {
+		void onCreate(String conn, String docId, IUser usr, ExpDocTableMeta docm, String... path);
+	}
+
 	private static final long serialVersionUID = 1L;
 
 	DBSynTransBuilder trb0;
@@ -80,9 +90,10 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * 
 	 * @since 0.2.0
 	 * @param syndomanager
+	 * @param docreateHandler 
 	 * @throws Exception
 	 */
-	public ExpDoctier(SynDomanager syndomanager) throws Exception {
+	public ExpDoctier(SynDomanager syndomanager, IOnDocreate docreateHandler) throws Exception {
 		super(Port.docstier);
 		
 		domx = syndomanager;
@@ -99,6 +110,12 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	SyncUser locrobot;
 
 	private SynDomanager domx;
+
+	IOnDocreate onCreate;
+	public ExpDoctier onCreate(IOnDocreate callback) {
+		onCreate = callback;
+		return this;
+	}
 
 	IUser locrobot() {
 		if (locrobot == null)
@@ -147,7 +164,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				else if (DocsReq.A.blockUp.equals(a))
 					rsp = uploadBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockEnd.equals(a))
-					rsp = endBlock(jmsg.body(0), usr);
+					rsp = endBlock(jmsg.body(0), usr, onCreate);
 				else if (DocsReq.A.blockAbort.equals(a))
 					rsp = abortBlock(jmsg.body(0), usr);
 		//		else if (DocsReq.A.devices.equals(a))
@@ -356,11 +373,12 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * 
 	 * @param body
 	 * @param usr
+	 * @param oncreate 
 	 * @return response
 	 * @throws Exception 
 	 * @throws SAXException 
 	 */
-	DocsResp endBlock(DocsReq body, IUser usr)
+	DocsResp endBlock(DocsReq body, IUser usr, IOnDocreate oncreate)
 			throws SAXException, Exception {
 		String chaid = chainId(usr, body.doc.clientpath); // shouldn't reply chain-id to the client?
 		BlockChain chain = null;
@@ -386,7 +404,12 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
-		onDocreated(pid, conn, meta, usr);
+		// onDocreated(pid, conn, meta, usr);
+		if (oncreate != null)
+			new Thread(() ->
+				oncreate.onCreate(conn, pid, usr, meta, targetPath),
+				f("On doc %s.%s [%s] create", meta.tbl, pid, conn))
+			.start();
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
@@ -414,6 +437,13 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return ack;
 	}
 
+	/**
+	 * Upload a doc, with an Anson block.
+	 * @param docreq
+	 * @param usr
+	 * @return response
+	 * @throws Exception
+	 */
 	DocsResp createDoc(DocsReq docreq, IUser usr) throws Exception {
 		Utils.warnT(new Object() {}, "Is this really happenning?");
 
@@ -425,12 +455,9 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		ExpSyncDoc photo = docreq.doc;
 		String pid = DocUtils.createFileBy64(b, conn, photo, usr, docm);
 	
-		onDocreated(pid, conn, docm, usr);
+		// onDocreated(pid, conn, docm, usr);
+		onCreate.onCreate(conn, pid, usr, docm);
 		return new DocsResp().doc(photo);
-	}
-
-	private void onDocreated(String pid, String conn, ExpDocTableMeta docm, IUser usr) {
-		// TODO Albums.onPhotoCreated()
 	}
 
 	static void checkBlock0(DATranscxt st, String conn, DocsReq body, DocUser usr)

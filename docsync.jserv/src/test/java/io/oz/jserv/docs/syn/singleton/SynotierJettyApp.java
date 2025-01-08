@@ -119,7 +119,7 @@ public class SynotierJettyApp {
 	public SynotierJettyApp addDocServPort(SynodeConfig cfg, ArrayList<SyntityReg> syntities) throws Exception {
 		SynDomanager domanger = syngleton.domanager(cfg.domain);
 
-		addServPort(new ExpDoctier(domanger)
+		addServPort(new ExpDoctier(domanger, null)
 				.registSynEvent(cfg, syntities));
 		return this;
 	}

@@ -5,9 +5,6 @@ import static io.odysz.common.LangExt.isblank;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -17,67 +14,65 @@ import io.odysz.anson.AnsonField;
 import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
-import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.ISemantext;
 
 /**
  * A sync object, server side and jprotocol oriented data record,
  * used for docsync.jserv. 
  * 
- * @deprecated
  * @author ody
  */
 public class PhotoRec extends ExpSyncDoc {
 
-	public String albumId;
-	public String collectId;
+//	public String albumId;
+//	public String collectId;
 
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	ISemantext semantxt;
 
 	public String mime;
 	
-	/**
-	 * A helper used to make sure query fields are correct.
-	 * @param meta
-	 * @return cols for Select.cols()
-	 */
-	public static String[] nvCols(ExpDocTableMeta meta) {
-		return new String[] {
-				meta.pk,
-				meta.resname,
-				meta.uri,
-				meta.createDate,
-				meta.shareDate,
-				meta.shareby,
-				meta.shareflag,
-				meta.mime,
-				meta.fullpath,
-				meta.device,
-				meta.folder,
-				meta.size
-		};
-	}
+//	/**
+//	 * A helper used to make sure query fields are correct.
+//	 * @param meta
+//	 * @return cols for Select.cols()
+//	 */
+//	public static String[] nvCols(ExpDocTableMeta meta) {
+//		return new String[] {
+//				meta.pk,
+//				meta.resname,
+//				meta.uri,
+//				meta.createDate,
+//				meta.shareDate,
+//				meta.shareby,
+//				meta.shareflag,
+//				meta.mime,
+//				meta.fullpath,
+//				meta.device,
+//				meta.folder,
+//				meta.size
+//		};
+//	}
 	
-	/**
-	 * @param meta
-	 * @return String [meta.pk, meta.shareDate, meta.shareflag, meta.syncflag]
-	 */
-	public static String[] synPageCols(ExpDocTableMeta meta) {
-		if (synpageCols == null)
-			synpageCols = new String[] {
-					meta.pk,
-					meta.device,
-					meta.fullpath,
-					meta.shareby,
-					meta.shareDate,
-					meta.shareflag,
-					meta.mime
-			};
-		return synpageCols;
-	}
+//	/**
+//	 * @param meta
+//	 * @return String [meta.pk, meta.shareDate, meta.shareflag, meta.syncflag]
+//	 */
+//	public static String[] synPageCols(ExpDocTableMeta meta) {
+//		if (synpageCols == null)
+//			synpageCols = new String[] {
+//					meta.pk,
+//					meta.device,
+//					meta.fullpath,
+//					meta.shareby,
+//					meta.shareDate,
+//					meta.shareflag,
+//					meta.mime
+//			};
+//		return synpageCols;
+//	}
 
 	public PhotoRec(AnResultset rs, PhotoMeta meta) throws SQLException {
 		super(rs, meta);
@@ -85,55 +80,30 @@ public class PhotoRec extends ExpSyncDoc {
 
 	public PhotoRec() { }
 
-	/**
-	 * Load local file, take current time as sharing date.
-	 * @param meta 
-	 * @param fullpath
-	 * @param owner
-	 * @param shareflag
-	 * @return this
-	 * @throws IOException
-	public SyncDoc loadFile(String fullpath, IUser owner, String shareflag) throws IOException {
-		Path p = Paths.get(fullpath);
-		byte[] f = Files.readAllBytes(p);
-		String b64 = AESHelper.encode64(f);
-		this.uri = b64;
-
-		fullpath(fullpath);
-		this.pname = p.getFileName().toString();
-		
-		this.shareby = owner.uid();
-		this.shareflag = shareflag;
-		sharedate(new Date());
-
-		return this;
-	}
-	 */
-
-	public IFileDescriptor fullpath(String clientpath) throws IOException {
-		this.clientpath = clientpath;
-
-		if (isblank(createDate)) {
-			try {
-				Path p = Paths.get(clientpath);
-				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
-				cdate(fd);
-			}
-			catch (IOException ex) {
-				cdate(new Date());
-			}
-		}
-
-		return this;
-	}
+//	public IFileDescriptor fullpath(String clientpath) throws IOException {
+//		this.clientpath = clientpath;
+//
+//		if (isblank(createDate)) {
+//			try {
+//				Path p = Paths.get(clientpath);
+//				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
+//				cdate(fd);
+//			}
+//			catch (IOException ex) {
+//				cdate(new Date());
+//			}
+//		}
+//
+//		return this;
+//	}
 
 	public Exifield exif;
 	public String geox;
 	public String geoy;
 	public String css;
-	private String img;
-	private String mov;
-	private String wav;
+//	private String img;
+//	private String mov;
+//	private String wav;
 	public String rotation;
 	/** image size */
 	public int[] widthHeight;
@@ -147,12 +117,12 @@ public class PhotoRec extends ExpSyncDoc {
 		return this;
 	}
 
-	public PhotoRec collect(String cid) {
-		collectId = cid;
-		return this;
-	}
+//	public PhotoRec collect(String cid) {
+//		collectId = cid;
+//		return this;
+//	}
 
-	public PhotoRec createTest(String fullpath) throws IOException {
+	public PhotoRec exifTest(String fullpath) throws IOException {
 		File png = new File(fullpath);
 		FileInputStream ifs = new FileInputStream(png);
 		pname = png.getName();
@@ -179,9 +149,9 @@ public class PhotoRec extends ExpSyncDoc {
 	public PhotoRec folder(AnResultset rs, PhotoMeta m) throws SQLException {
 		super.folder(rs, m);
 		this.css = rs.getString(m.css);
-		this.img = rs.getString("img");
-		this.mov = rs.getString("mov");
-		this.wav = rs.getString("wav");
+//		this.img = rs.getString("img");
+//		this.mov = rs.getString("mov");
+//		this.wav = rs.getString("wav");
 		return this;
 	}
 

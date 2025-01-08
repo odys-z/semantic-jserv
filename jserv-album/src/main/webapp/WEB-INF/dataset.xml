@@ -63,7 +63,7 @@
 
  <c>
   <!-- Album home page, album tree filtered with org tree -->
-  <sk>tree-album-family-folder</sk>
+  <sk>tree-album-family-folder(backup 0.6.5)</sk>
   <sqlit>with recursive orgrec(orgId, parent, deep, grpsum) as (
 values('%1$s', (select parent from a_orgs where orgId = '%1$s'), 0, (select ifnull(sum(case when pid is null then 0 else 1 end), 0) grpsum from h_photo_org po where po.oid = '%1$s')) 
 union all select p.orgId, p.parent, (ch.deep + 1), ifnull(cnt.grpsum, 0) + ch.grpsum
@@ -76,6 +76,22 @@ sum(case when substring(mime, 0, 6) = 'image' then 1 else 0 end) img, sum(case w
 from h_photos f where f.family = '%1$s' group by f.folder
 ) where img > 0 or mov > 0 or wav > 0 order by fullpath</sqlit>
   <s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags</s-tree>
+ </c>
+ 
+ <c>
+   <sk>tree-album-family-folder</sk>
+   <sqlit>
+select family || '.' || h.folder || '-' || h.pid fullpath, 'p' nodetype, h.pid, family || '.' || h.folder folder, h.tags, h.shareby, h.docname, h.pdate sort, css, filesize img, null mov, null wav, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, h.device fav, mime
+from h_photos h where family = '%1$s' and substring(ifnull(mime, 'bin'), 0, 6) in ('audio', 'image', 'video', 'bin')
+union 
+select * from (
+select family || '.' || folder fullpath, 'gallery' nodetype, family || '.' || folder pid, 'null' folder, max(tags) tags, max(shareby) shareby, folder docname, folder sort, css,
+sum(case when substring(ifnull(mime, 'image'), 0, 6) = 'image' then 1 else 0 end) img, sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov, 
+sum (case when substring(mime, 0, 6) = 'audio' then 1 else 0 end) wav, sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo, 
+'' fav, count(ifnull(mime, 1)) mime
+from h_photos f where f.family = '%1$s' group by f.folder
+) where mime > 0 order by fullpath;</sqlit>
+   <s-tree>,h_photos,pid,folder,fullpath,sort,tags text,nodetype,false,tags</s-tree>
  </c>
 
  <c>

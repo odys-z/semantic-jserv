@@ -58,6 +58,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	
 	public String org;
 
+	/** A constant field of {@link io.oz.album.peer.ShareFlag}. */
 	public String shareflag;
 	public String shareflag() { return shareflag; }
 	public ExpSyncDoc shareflag(String f) {

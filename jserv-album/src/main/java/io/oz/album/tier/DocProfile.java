@@ -9,8 +9,8 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.IProfileResolver;
+import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.IUser;
-import io.oz.album.peer.ShareFlag;
 
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.MimeTypes.*;

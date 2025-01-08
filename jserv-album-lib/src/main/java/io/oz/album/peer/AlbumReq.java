@@ -112,8 +112,8 @@ public class AlbumReq extends DocsReq {
 	 * @return request
 	 */
 	public AlbumReq download(PhotoRec photo) {
-		this.albumId = photo.albumId;
-		this.collectId = photo.collectId;
+//		this.albumId = photo.albumId;
+//		this.collectId = photo.collectId;
 		this.photo = photo;
 		// this.docId = photo.recId;
 		this.a = A.download;
@@ -136,7 +136,7 @@ public class AlbumReq extends DocsReq {
 		String b64 = AESHelper.encode64(f);
 
 		this.photo = new PhotoRec();
-		this.photo.collectId = collId;
+//		this.photo.collectId = collId;
 		this.photo.fullpath(fullpath);
 		this.photo.uri64 = b64;
 		this.photo.pname = p.getFileName().toString();
