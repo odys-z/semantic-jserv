@@ -9,8 +9,6 @@ import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.X_0;
-import static io.oz.jserv.docs.syn.Dev.Y_0;
-import static io.oz.jserv.docs.syn.Dev.Y_1;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
