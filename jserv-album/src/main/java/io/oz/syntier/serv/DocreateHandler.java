@@ -43,7 +43,7 @@ public class DocreateHandler implements IOnDocreate {
 				ISemantext stx = st.instancontxt(conn, usr);
 
 				String pth = isNull(path)
-							? EnvPath.decodeUri(stx, rs.getString("uri"))
+							? EnvPath.decodeUri(stx, rs.getString(docm.uri))
 							: path[0];
 
 				PhotoRec p = new PhotoRec();
