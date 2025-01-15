@@ -676,13 +676,27 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //		return album;
 //	}
 
+	/**
+	 * [0.7.0] This method uses req's sys-uri for loading media files, as
+	 * the client is unable to understand synodes' domain.
+	 * 
+	 * @param resp
+	 * @param req
+	 * @param usr
+	 * @throws IOException
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
-
-		String conn = Connects.uri2conn(req.synuri);
+		
+		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 
-		AnResultset rs = (AnResultset) st
+		AnResultset rs = req.doc == null || isblank(req.doc.recId()) ?
+				null :
+				(AnResultset) st
 				.select(meta.tbl, "p")
 				.j("a_users", "u", "u.userId = p.shareby")
 				.col(meta.pk)
@@ -696,7 +710,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				.whereEq(meta.pk, req.doc.recId)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
-		if (!rs.next()) {
+		if (rs == null || !rs.next()) {
 			resp.setContentType("image/png");
 			FileStream.sendFile(resp.getOutputStream(), missingFile);
 		}

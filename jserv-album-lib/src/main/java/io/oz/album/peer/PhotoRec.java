@@ -32,8 +32,6 @@ public class PhotoRec extends ExpSyncDoc {
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	ISemantext semantxt;
 
-	public String mime;
-	
 //	/**
 //	 * A helper used to make sure query fields are correct.
 //	 * @param meta
@@ -98,6 +96,7 @@ public class PhotoRec extends ExpSyncDoc {
 //	}
 
 	public Exifield exif;
+//	public String mime;
 	public String geox;
 	public String geoy;
 	public String css;
@@ -110,12 +109,12 @@ public class PhotoRec extends ExpSyncDoc {
 	/** reduction of image size */
 	public int[] wh;
 	
-	protected String folder;
-	public String folder() { return folder; }
-	public ExpSyncDoc folder(String v) {
-		this.folder = v;
-		return this;
-	}
+//	protected String folder;
+//	public String folder() { return folder; }
+//	public ExpSyncDoc folder(String v) {
+//		this.folder = v;
+//		return this;
+//	}
 
 //	public PhotoRec collect(String cid) {
 //		collectId = cid;

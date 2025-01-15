@@ -83,6 +83,14 @@ public class DocsReq extends UserReq {
 
 	public String synuri;
 
+	public String docTabl;
+	public DocsReq docTabl(String tbl) {
+		docTabl = tbl;
+		return this;
+	}
+
+	public ExpSyncDoc doc;
+
 	public PageInf pageInf;
 
 	/**
@@ -94,14 +102,6 @@ public class DocsReq extends UserReq {
 		return this;
 	}
 
-	public String docTabl;
-	public DocsReq docTabl(String tbl) {
-		docTabl = tbl;
-		return this;
-	}
-
-	public ExpSyncDoc doc;
-
 	String[] deletings;
 
 	/**
@@ -111,7 +111,6 @@ public class DocsReq extends UserReq {
 	public DocsReq() {
 		super(null, null);
 		blockSeq = -1;
-		// doc.folder = "";
 	}
 
 	/**
@@ -320,25 +319,6 @@ public class DocsReq extends UserReq {
 		blockSeq = i;
 		return this;
 	}
-
-//	public DocsReq folder(String name) {
-//		doc.folder = name;
-//		return this;
-//	}
-
-//	public DocsReq share(ExpSyncDoc p) {
-//		doc.shareflag = p.shareflag;
-//		doc.shareby = p.shareby;
-//		doc.sharedate = p.sharedate;
-//		return this;
-//	}
-
-//	public DocsReq clientpath(String path) {
-//		doc.clientpath = separatorsToUnix(path);
-//		return this;
-//	}
-
-//	public String clientpath() { return doc.clientpath; }
 
 	public DocsReq resetChain(boolean set) {
 		this.reset = set;
