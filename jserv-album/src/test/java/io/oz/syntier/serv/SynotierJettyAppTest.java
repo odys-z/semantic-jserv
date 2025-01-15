@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,18 +21,13 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.PathsPage;
-import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.SessionInf;
 import io.odysz.transact.x.TransException;
-import io.oz.album.peer.AlbumResp;
-import io.oz.album.peer.PhotoMeta;
 import io.oz.syndoc.client.PhotoSyntier;
 
-@SuppressWarnings("unused")
 class SynotierJettyAppTest {
 
 	static ErrorCtx errCtx;
@@ -104,7 +98,7 @@ class SynotierJettyAppTest {
 						fail("Not expected error for this handling.");
 
 					tier.del("device-test", videos.get(0).fullpath());
-					List<DocsResp> resps;
+					// List<DocsResp> resps;
 					try {
 						tier.asyVideos(null, videos, null, null);
 
@@ -116,7 +110,8 @@ class SynotierJettyAppTest {
 							else page.add(p.fullpath());
 						}
 
-						DocsResp rp = tier.synQueryPathsPage(page, Port.docstier);
+						// DocsResp rp =
+						tier.synQueryPathsPage(page, Port.docstier);
 						for (int i = page.start(); i < page.end(); i++) {
 							assertNotNull(page.paths().get(videos.get(i).fullpath()));
 						}

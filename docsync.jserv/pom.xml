@@ -4,7 +4,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>docsync.jserv</artifactId>
-  <version>0.2.1</version>
+  <version>0.2.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>docsync.jserv</name>
@@ -14,8 +14,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	<maven.compiler.source>17</maven.compiler.source>
 	<maven.compiler.target>17</maven.compiler.target>
-	<jetty.version>12.0.10</jetty.version>
-	<jetty-ee8.version>12.0.11</jetty-ee8.version>
+	<jetty.version>12.0.16</jetty.version>
+	<jetty-ee8.version>12.0.16</jetty-ee8.version>
   </properties>
 
   <licenses>
@@ -58,7 +58,7 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.DA</artifactId>
-	  <version>1.5.13</version>
+	  <version>[1.5.14-SNAPSHOT,2.0.0-SNAPSHOT)</version>
    	</dependency>
 
 <!-- 
@@ -100,7 +100,7 @@
     <dependency>
     	<groupId>io.github.odys-z</groupId>
     	<artifactId>syndoc-lib</artifactId>
-    	<version>[0.5.13,)</version>
+    	<version>[0.5.14,)</version>
     	<scope>test</scope>
     </dependency>
   </dependencies>

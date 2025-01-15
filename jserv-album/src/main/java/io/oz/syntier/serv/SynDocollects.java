@@ -354,7 +354,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		}
 		else {//  "tree-rel-photo-org") || "tree-album-sharing" || "tree-docs-folder"
 			PageInf page = isNull(jreq.pageInf)
-					? new PageInf(0, -1, usr.orgId())
+					? new PageInf(0, -1, "orgId", usr.orgId())
 					: eq(jreq.pageInf.arrCondts.get(0), usr.orgId())
 					? jreq.pageInf
 					: jreq.pageInf.insertCondt(usr.orgId());

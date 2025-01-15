@@ -175,8 +175,7 @@ public class DocsReq extends UserReq {
 				: syncingPage.clientPaths.keySet();
 	}
 
-	/** TODO visibility = package */
-	public long blockSeq;
+	long blockSeq;
 	public long blockSeq() { return blockSeq; } 
 
 	public DocsReq nextBlock;

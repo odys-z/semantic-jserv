@@ -13,6 +13,7 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
+import io.odysz.common.Utils;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -154,28 +155,32 @@ public class BlockChain {
 
 		while (waitings.nextBlock != null && waitings.blockSeq + 1 == waitings.nextBlock.blockSeq) {
 			ofs.write(AESHelper.decode64(waitings.nextBlock.doc.uri64));
-			// writer.write(AESHelper.decode64(waitings.nextBlock.doc.uri64));
 
+			// Let's try this: waitings = waitings.nextBlock;
 			waitings.blockSeq = waitings.nextBlock.blockSeq;
 			waitings.nextBlock = waitings.nextBlock.nextBlock;
 		}
 		return this;
 	}
 
-	public void abortChain() throws IOException, InterruptedException, TransException {
+	public void abortChain() throws IOException, TransException {
 		if (waitings.nextBlock != null)
-			Thread.sleep(1000);
+			try { Thread.sleep(1000); } catch (InterruptedException e) {}
 
 		ofs.close();
 
 		try { Files.delete(Paths.get(outputPath)); }
-		catch (IOException e) { e.printStackTrace(); }
+		catch (IOException e) {
+			Utils.warn("Deleting file failed while aborting block-chain. output-path: %s. Error: %s",
+					outputPath, e.getMessage());
+			e.printStackTrace();
+		}
 
-		if (waitings.nextBlock != null)
-			// some packages lost
-			throw new TransException("Aborting block chain. " + 
-					"Blocks starting at block-seq = %s will be dropped. path: %s",
-					waitings.nextBlock.blockSeq, doc.clientpath);
+//		if (waitings.nextBlock != null)
+//			// some packages lost
+//			throw new TransException("Aborting block chain. " + 
+//					"Blocks starting at block-seq = %s will be dropped. path: %s",
+//					waitings.nextBlock.blockSeq, doc.clientpath);
 	}
 
 	public String closeChain() throws IOException, TransException {
