@@ -241,7 +241,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		this.folder = v;
 		return this;
 	}
-
+	
 	/**
 	 * @see io.odysz.semantic.syn.SynEntity#insertEntity(io.odysz.semantic.meta.SyntityMeta, io.odysz.transact.sql.Insert)
 	 */

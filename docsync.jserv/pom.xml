@@ -73,7 +73,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>anclient.java</artifactId>
-	    <version>0.5.12</version>
+	    <version>[0.5.13-SNAPSHOT,)</version>
 	</dependency>
 
 	<dependency>
@@ -100,7 +100,7 @@
     <dependency>
     	<groupId>io.github.odys-z</groupId>
     	<artifactId>syndoc-lib</artifactId>
-    	<version>[0.5.14,)</version>
+    	<version>[0.5.15-SNAPSHOT,)</version>
     	<scope>test</scope>
     </dependency>
   </dependencies>

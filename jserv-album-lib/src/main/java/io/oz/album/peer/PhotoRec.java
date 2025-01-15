@@ -26,74 +26,14 @@ import io.odysz.semantics.ISemantext;
  */
 public class PhotoRec extends ExpSyncDoc {
 
-//	public String albumId;
-//	public String collectId;
-
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	ISemantext semantxt;
-
-//	/**
-//	 * A helper used to make sure query fields are correct.
-//	 * @param meta
-//	 * @return cols for Select.cols()
-//	 */
-//	public static String[] nvCols(ExpDocTableMeta meta) {
-//		return new String[] {
-//				meta.pk,
-//				meta.resname,
-//				meta.uri,
-//				meta.createDate,
-//				meta.shareDate,
-//				meta.shareby,
-//				meta.shareflag,
-//				meta.mime,
-//				meta.fullpath,
-//				meta.device,
-//				meta.folder,
-//				meta.size
-//		};
-//	}
-	
-//	/**
-//	 * @param meta
-//	 * @return String [meta.pk, meta.shareDate, meta.shareflag, meta.syncflag]
-//	 */
-//	public static String[] synPageCols(ExpDocTableMeta meta) {
-//		if (synpageCols == null)
-//			synpageCols = new String[] {
-//					meta.pk,
-//					meta.device,
-//					meta.fullpath,
-//					meta.shareby,
-//					meta.shareDate,
-//					meta.shareflag,
-//					meta.mime
-//			};
-//		return synpageCols;
-//	}
 
 	public PhotoRec(AnResultset rs, PhotoMeta meta) throws SQLException {
 		super(rs, meta);
 	}
 
 	public PhotoRec() { }
-
-//	public IFileDescriptor fullpath(String clientpath) throws IOException {
-//		this.clientpath = clientpath;
-//
-//		if (isblank(createDate)) {
-//			try {
-//				Path p = Paths.get(clientpath);
-//				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
-//				cdate(fd);
-//			}
-//			catch (IOException ex) {
-//				cdate(new Date());
-//			}
-//		}
-//
-//		return this;
-//	}
 
 	public Exifield exif;
 //	public String mime;
@@ -109,18 +49,6 @@ public class PhotoRec extends ExpSyncDoc {
 	/** reduction of image size */
 	public int[] wh;
 	
-//	protected String folder;
-//	public String folder() { return folder; }
-//	public ExpSyncDoc folder(String v) {
-//		this.folder = v;
-//		return this;
-//	}
-
-//	public PhotoRec collect(String cid) {
-//		collectId = cid;
-//		return this;
-//	}
-
 	public PhotoRec exifTest(String fullpath) throws IOException {
 		File png = new File(fullpath);
 		FileInputStream ifs = new FileInputStream(png);
@@ -182,67 +110,5 @@ public class PhotoRec extends ExpSyncDoc {
 //		File f = new File(abspath);
 //		size = f.length();
 //		return this;
-//	}
-
-//	public SyncDoc parseChain(BlockChain chain) throws IOException {
-//		createDate = chain.cdate;
-//
-//		device = chain.device;
-//		clientpath = chain.clientpath;
-//		pname = chain.clientname;
-//		folder(chain.saveFolder);
-//
-//		shareby = chain.shareby;
-//		sharedate = chain.shareDate;
-//		shareflag = chain.shareflag;
-//
-//		return parseMimeSize(chain.outputPath);
-//	}
-
-	/**
-	 * Parse {@link PathsPage#clientPaths}.
-	 * 
-	 * @param flags
-	 * @return this
-	public ExpSyncDoc parseFlags(String[] flags) {
-		if (!isNull(flags)) {
-			syncFlag = flags[0];
-			shareflag = flags[1];
-			shareby = flags[2];
-			sharedate(flags[3]);
-		}
-		return this;
-	}
-	 */
-	
-//	@Override
-//	public Insert insertEntity(SyntityMeta m, Insert ins) {
-//		ExpDocTableMeta md = (ExpDocTableMeta) m;
-//		ins // .nv(md.domain, domain)
-//			.nv(md.folder, folder)
-//			.nv(md.org, org)
-//			.nv(md.mime, mime)
-//			.nv(md.uri, uri64)
-//			.nv(md.size, size)
-//			.nv(md.createDate, createDate)
-//			.nv(md.resname, pname)
-//			.nv(md.synoder, device)
-//			.nv(md.shareby, shareby)
-//			.nv(md.shareDate, sharedate)
-//			.nv(md.shareflag, shareflag)
-//			.nv(md.fullpath, clientpath);
-//		return ins;
-//	}
-
-//	public ExpSyncDoc createByChain(BlockChain chain) throws IOException {
-//		createDate = chain.cdate;
-//		fullpath(chain.clientpath);
-//		pname = chain.clientname;
-//		return this;
-//	}
-
-//	public ExpSyncDoc createByReq(DocsReq docreq) {
-//		// TODO Auto-generated method stub
-//		return null;
 //	}
 }
