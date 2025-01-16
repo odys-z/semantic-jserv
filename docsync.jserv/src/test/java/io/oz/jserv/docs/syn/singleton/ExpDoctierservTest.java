@@ -79,6 +79,10 @@ public class ExpDoctierservTest {
 		ck = new Docheck[servs_conn.length];
 	}
 	
+	/**
+	 * Use -Dwati-clients for waiting client's pushing, by running {@link DoclientierTest#testSynclientUp()}.
+	 * @throws Exception
+	 */
 	@SuppressWarnings("deprecation")
 	@Test
 	void runDoctiers() throws Exception {
@@ -108,6 +112,12 @@ public class ExpDoctierservTest {
 		
 		for (SynotierJettyApp j : jetties)
 			if (j != null) j.print();
+
+		if (System.getProperty("wait-clients") == null) {
+			Utils.warnT(new Object() {}, "Test is running in automatic style, quite without waiting clients' pushing!");
+			return;
+		}
+			
 
 		pause("Press Enter after pushed with clients for starting synchronizing.");
 

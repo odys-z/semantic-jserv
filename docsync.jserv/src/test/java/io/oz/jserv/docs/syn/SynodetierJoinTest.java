@@ -100,7 +100,6 @@ public class SynodetierJoinTest {
 		}
 	}
 	
-	@SuppressWarnings("serial")
 	@BeforeAll
 	static void init() throws Exception {
 		setVolumeEnv("v-");
@@ -231,6 +230,8 @@ public class SynodetierJoinTest {
 		for (String dom : hubdoms) {
 			SynDomanager hubmanger = hub.syngleton().domanager(dom);
 			SynDomanager prvmanger = prv.syngleton().domanager(null);
+
+			Utils.logi("%s Joining By %s\n''''''''''''''", prvmanger.synode, hubmanger.synode);
 
 			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 					(rep) -> { lights[by] = true; });

@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 
 import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -85,6 +86,12 @@ public class CreateSyndocTierTest {
 		ck = new Docheck[servs_conn.length];
 	}
 	
+	@AfterAll
+	static void clear() {
+		Utils.logErr(System.err);
+		Utils.logOut(System.out);
+	}
+
 	static {
 		errLog = new ErrorCtx() {
 			@Override

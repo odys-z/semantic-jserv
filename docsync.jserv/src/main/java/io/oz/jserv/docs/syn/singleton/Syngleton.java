@@ -272,6 +272,7 @@ public class Syngleton extends JSingleton {
 		Configs.init(configFolder, cfgxml);
 		Connects.init(configFolder);
 
+		DATranscxt.clearSemanticsMaps();
 		DATranscxt.configRoot(configFolder, runtimeRoot);
 		DATranscxt.key("user-pswd", rootKey);
 		
