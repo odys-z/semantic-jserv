@@ -108,7 +108,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 	final SyndomContext domx;
 	final String sysconn;
-//	final String synode;
 	final PhotoMeta phm;
 
 
@@ -122,7 +121,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 	public SynDocollects(String sysconn, SyndomContext domx) throws Exception {
 		super(SynDocollPort.docoll);
-//		this.synode = domx.synode;
 		this.phm    = new PhotoMeta(domx.synconn);
 		this.sysconn= sysconn;
 		this.robot = new ExpDocRobot("Rob.Album@" + domx.synode);
@@ -690,20 +688,20 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 */
 	void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
+		if (req.doc == null || isblank(req.doc.recId()))
+			throw new SemanticException("Requiring file's informantion is empty (Req.doc).");
 		
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 
-		AnResultset rs = req.doc == null || isblank(req.doc.recId()) ?
-				null :
-				(AnResultset) st
+		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
-				.j("a_users", "u", "u.userId = p.shareby")
+				// .j("a_users", "u", "u.userId = p.shareby")
 				.col(meta.pk)
 				.col(meta.resname).col(meta.createDate)
 				.col(meta.folder).col(meta.fullpath)
 				.col(meta.uri)
-				.col("userName", "shareby")
+				// .col("userName", "shareby")
 				.col(meta.shareDate).col(meta.tags)
 				.col(meta.geox).col(meta.geoy)
 				.col(meta.mime)
