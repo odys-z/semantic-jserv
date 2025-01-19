@@ -1,6 +1,7 @@
 package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
@@ -714,7 +715,13 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		}
 		else {
 			String mime = rs.getString("mime");
-			resp.setContentType(mime);
+			if (!isblank(mime))
+				resp.setContentType(mime);
+			else {
+				// mime parsing has failed, downloading is the best option?
+				resp.setContentType("application/octet-stream");
+				resp.setHeader("Content-Disposition", f("attachment; filename=\"%s\"", rs.getString(meta.resname)));
+			}
 			
 			try ( OutputStream os = resp.getOutputStream() ) {
 				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta));
