@@ -6,12 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Paths;
-import java.util.Map;
-
 import org.apache.commons.io_odysz.FilenameUtils;
-import org.apache.tika.exception.TikaException;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
@@ -20,10 +17,10 @@ import io.odysz.semantics.x.SemanticException;
 import io.oz.album.peer.PhotoRec;
 
 class ExifTest {
-	static {
-		setEnv("org.apache.tika.service.error.warn", "true");
-		// assertEquals("true", System.getenv("org.apache.tika.service.error.warn"));
-	}
+//	static {
+//		// setEnv("org.apache.tika.service.error.warn", "true");
+//		// assertEquals("true", System.getenv("org.apache.tika.service.error.warn"));
+//	}
 		
 	/**
 	 * For <a href='https://cwiki.apache.org/confluence/display/TIKA/Troubleshooting+Tika#TroubleshootingTika-IdentifyingifanyParsersfailedtobeloaded'>
@@ -37,7 +34,6 @@ class ExifTest {
 	 * 
 	 * @param key
 	 * @param value
-	 */
 	static void setEnv(String key, String value) {
 	    try {
 	        Map<String, String> env = System.getenv();
@@ -51,7 +47,16 @@ class ExifTest {
 	        throw new IllegalStateException("Failed to set environment variable", e);
 	    }
 	}
+	 */
 
+	@BeforeAll
+	static void init () {
+		try {
+			Exif.init("WEBINF");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	@Test
 	void testEscape() {
@@ -119,7 +124,7 @@ class ExifTest {
 	}
 	
 	@Test
-	void testTika() throws IOException, TikaException, SAXException, SemanticException, ReflectiveOperationException {
+	void testTika() throws IOException, SAXException, SemanticException, ReflectiveOperationException {
 		Exif.verbose = false;
 		
         Utils.logi(Paths.get(".").toAbsolutePath().toString());
@@ -163,7 +168,7 @@ class ExifTest {
 
 	@Test
 	void testExiftool() throws Exception {
-		Exiftool.cmd = System.getProperty("exiftool");
+		// Exiftool.cmd = "exiftool";// System.getProperty("exiftool");
 		
 		PhotoRec p = new PhotoRec();
 		Exiftool.parseExif(p, "test/res/C0000006 IMG_20230816_111535.jpg");

@@ -5,40 +5,21 @@ import static io.odysz.common.LangExt.filesize;
 import static io.odysz.common.LangExt.gt;
 import static io.odysz.common.LangExt.imagesize;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.lt;
-import static io.odysz.common.LangExt.str;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
-import java.util.Map;
-
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
-
 import org.apache.commons.io_odysz.FilenameUtils;
-import org.apache.tika.config.TikaConfig;
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TIFF;
-import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.parser.CompositeParser;
-import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.external.CompositeExternalParser;
-import org.apache.tika.parser.external.ExternalParser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.JsonOpt;
@@ -48,8 +29,6 @@ import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.peer.Exifield;
 import io.oz.album.peer.PhotoRec;
-import io.oz.album.tika.CompositeExternalParserX;
-import io.oz.album.tika.ExternalParsersFactoryX;
 
 /**
  * Exif data format helper.
@@ -68,8 +47,7 @@ public class Exif {
 	static String geox0 = "0";
 	static String geoy0 = "0";
 
-	protected static String cfgFile = "tika.xml";
-	static TikaConfig config;
+	protected static String cfgFile = "config.xml";
 
 	/**
 	 * Initialize tika using external parser, and exiftool is verified only.
@@ -84,60 +62,60 @@ public class Exif {
 	 * @throws ReflectiveOperationException
 	 */
 	public static String init(String xmlPath)
-			throws TikaException, IOException, SemanticException, ReflectiveOperationException, SAXException {
+			throws IOException, SemanticException, ReflectiveOperationException, SAXException {
 
 		String absPath = FilenameUtils.concat(xmlPath, cfgFile);
 		Utils.logi("[Exif.init] Loading tika configuration:\n%s", absPath);
 		
 		// System.setProperty("tika.config", "./tika-external-parser.xml");
-		ExternalParsersFactoryX.workDir(xmlPath);
-		config = new TikaConfig(absPath);
-
-		ParseContext context = new ParseContext();
-		Utils.logi("[Exif.init] Tika config:\n%s", config.getParser().getSupportedTypes(context ));
-
-		// deprecated
-		// TODO test or remove Tika dependency
-		// Parser p = config.getParser(new MediaType("video", "mp4"));
-		Parser p = config.getParser();
-
-		Utils.logi("[Exif.init] Parser for video/mp4: %s,\ndeclared (supported types):%s",
-				p.getClass().getName(), p.getSupportedTypes(context)); // p.getClass().getDeclaredField("parser")
-		
-		Utils.logi("\n[Exif.init] ------------ Exteranl tika parser configured for vide/mp4 --------------");
-		Field f = p.getClass().getSuperclass().getDeclaredField("parser");
-		f.setAccessible(true);
-		Object extp = f.get(p);
-		if (extp != null) {
-			Map<MediaType, Parser> exts = null; 
-			if (extp instanceof CompositeExternalParserX)
-				exts = ((CompositeExternalParserX)extp).getParsers();
-			else if (extp instanceof CompositeExternalParser)
-				exts = ((CompositeExternalParser)extp).getParsers();
-
-			if (len(exts) == 0)
-				throw new SemanticException("External parser and depending commands, either ffmpeg or exiftool is required.\nRecommended install on Alpine: exiftool"); 
-			Utils.logMap(exts, "\t");
-			
-			Utils.logi("\nCommands:");
-			for(MediaType k : exts.keySet())
-				Utils.logi("%s\t%s", k.toString(), str(((ExternalParser)exts.get(k)).getCommand()));
-		}
-
-		if (verbose) {
-			CompositeParser q = (CompositeParser) config.getParser();
-			Utils.logi("[Exif.init] Parser for media types in: %s", q.getClass().getName());
-			for (MediaType m : q.getParsers().keySet())
-				Utils.logi("\t%s:\t%s", m.toString(), q.getParsers().get(m).getClass().getTypeName());
-		}
-
+//		ExternalParsersFactoryX.workDir(xmlPath);
+//		config = new TikaConfig(absPath);
+//
+//		ParseContext context = new ParseContext();
+//		Utils.logi("[Exif.init] Tika config:\n%s", config.getParser().getSupportedTypes(context ));
+//
+//		// deprecated
+//		// TODO test or remove Tika dependency
+//		// Parser p = config.getParser(new MediaType("video", "mp4"));
+//		Parser p = config.getParser();
+//
+//		Utils.logi("[Exif.init] Parser for video/mp4: %s,\ndeclared (supported types):%s",
+//				p.getClass().getName(), p.getSupportedTypes(context)); // p.getClass().getDeclaredField("parser")
+//		
+//		Utils.logi("\n[Exif.init] ------------ Exteranl tika parser configured for vide/mp4 --------------");
+//		Field f = p.getClass().getSuperclass().getDeclaredField("parser");
+//		f.setAccessible(true);
+//		Object extp = f.get(p);
+//		if (extp != null) {
+//			Map<MediaType, Parser> exts = null; 
+//			if (extp instanceof CompositeExternalParserX)
+//				exts = ((CompositeExternalParserX)extp).getParsers();
+//			else if (extp instanceof CompositeExternalParser)
+//				exts = ((CompositeExternalParser)extp).getParsers();
+//
+//			if (len(exts) == 0)
+//				throw new SemanticException("External parser and depending commands, either ffmpeg or exiftool is required.\nRecommended install on Alpine: exiftool"); 
+//			Utils.logMap(exts, "\t");
+//			
+//			Utils.logi("\nCommands:");
+//			for(MediaType k : exts.keySet())
+//				Utils.logi("%s\t%s", k.toString(), str(((ExternalParser)exts.get(k)).getCommand()));
+//		}
+//
+//		if (verbose) {
+//			CompositeParser q = (CompositeParser) config.getParser();
+//			Utils.logi("[Exif.init] Parser for media types in: %s", q.getClass().getName());
+//			for (MediaType m : q.getParsers().keySet())
+//				Utils.logi("\t%s:\t%s", m.toString(), q.getParsers().get(m).getClass().getTypeName());
+//		}
+//
 		return absPath;
 	}
 	
-	public static void geoxy0(int x, int y) {
-		geox0 = String.valueOf(x);
-		geoy0 = String.valueOf(y);
-	}
+//	public static void geoxy0(int x, int y) {
+//		geox0 = String.valueOf(x);
+//		geoy0 = String.valueOf(y);
+//	}
 
 	public static PhotoRec parseExif(PhotoRec photo, String filepath) {
 
@@ -149,21 +127,24 @@ public class Exif {
 		File f = new File(filepath);
 		photo.size = f.length();
 		try (FileInputStream stream = new FileInputStream(f)) {
-			BodyContentHandler handler = new BodyContentHandler();
-			AutoDetectParser parser = new AutoDetectParser(config);
+//			BodyContentHandler handler = new BodyContentHandler();
+//			AutoDetectParser parser = new AutoDetectParser(config);
 
-			if (verbose) {
-				Map<MediaType, Parser> ps = parser.getParsers();
-				for (MediaType t : ps.keySet())
-					Utils.logi("[Exif.verbose] %s, %s", t.getType(), ps.get(t).getClass().getName());
-			}
+//			if (verbose) {
+//				Map<MediaType, Parser> ps = parser.getParsers();
+//				for (MediaType t : ps.keySet())
+//					Utils.logi("[Exif.verbose] %s, %s", t.getType(), ps.get(t).getClass().getName());
+//			}
 
-			Metadata metadata = new Metadata();
+			// Metadata metadata = new Metadata();
+			// Exiftool parser = new Exiftool();
 
 			photo.exif = new Exifield();
-			parser.parse(stream, handler, metadata);
+			// parser.parse(stream, handler, metadata);
+			Metadata metadata = Exiftool.parse(filepath);
+
 			for (String name: metadata.names()) {
-				String val = metadata.get(name); 
+				String val = (String) metadata.get(name); 
 				if (verbose) Utils.logi(name);
 				val = escape(val);
 				// whitewash some faulty string
@@ -199,7 +180,7 @@ public class Exif {
 				photo.month(fd);
 			}
 
-			if (isblank(photo.widthHeight) && metadata.getInt(TIFF.IMAGE_WIDTH) != null && metadata.getInt(TIFF.IMAGE_LENGTH) != null) 
+			if (isblank(photo.widthHeight) && metadata.has(TIFF.IMAGE_WIDTH) && metadata.has(TIFF.IMAGE_LENGTH)) 
 				try {
 					if (verbose) Utils.logi(metadata.names());
 					photo.widthHeight = new int[]
@@ -242,10 +223,10 @@ public class Exif {
 				// else possibly not a image or video file
 			} catch (Exception e) {e.printStackTrace();}
 			
-			photo.geox = metadata.get(TikaCoreProperties.LONGITUDE);
+			photo.geox = metadata.getLongitude();
 			if (photo.geox == null) photo.geox = geox0;
 
-			photo.geoy = metadata.get(TikaCoreProperties.LATITUDE);
+			photo.geoy = metadata.getLatitude();
 			if (photo.geoy == null) photo.geoy = geoy0;
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -346,7 +327,7 @@ public class Exif {
             )
         ;
     }
-    
+
     /**
      * https://github.com/stleary/JSON-java/blob/60662e2f8384d3449822a3a1179bfe8de67b55bb/src/main/java/org/json/XML.java#L69
      * 
