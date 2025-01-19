@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
+import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.peer.PhotoRec;
@@ -52,7 +53,9 @@ class ExifTest {
 	@BeforeAll
 	static void init () {
 		try {
-			Exif.init("WEBINF");
+			// Exiftool.init("./src/main/java/webapp/WEBINF");
+			Configs.init("./src/main/webapp/WEB-INF");
+			Exiftool.init();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

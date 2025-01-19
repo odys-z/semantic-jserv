@@ -79,7 +79,7 @@
 	</c>
 	
 	<c> <k>exiftool</k>
-		<v>C:/Users/Alice/bin/exiftool</v>
+		<v>$BIN/exiftool</v>
 	</c>
   </t>
 

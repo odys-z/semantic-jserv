@@ -38,6 +38,10 @@
 		<v></v>
 	</c>
 
+	<c>
+		<k>exiftool</k>
+		<v>$BIN/exiftool</v>
+	</c>
   </t>
 
 </configs>

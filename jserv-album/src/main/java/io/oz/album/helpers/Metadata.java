@@ -1,26 +1,24 @@
 package io.oz.album.helpers;
 
+import java.util.Set;
+
 import io.odysz.semantics.SemanticObject;
 
 public class Metadata extends SemanticObject {
 
-	public String[] names() {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<String> names() {
+		return props.keySet();
 	}
 
-	public String name() {
-
-		return null;
-	}
+//	public String name() {
+//		return null;
+//	}
 
 	public String getLatitude() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public String getLongitude() {
-		// TODO Auto-generated method stub
-		return null;
+	public int getLongitude() {
+		return (int) props.get(TIFF.);
 	}
 }

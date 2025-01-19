@@ -25,6 +25,7 @@ import org.apache.commons.io.IOUtils;
 
 import io.odysz.common.CheapMath;
 import io.odysz.common.Configs;
+import io.odysz.common.EnvPath;
 import io.odysz.common.MimeTypes;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
@@ -43,7 +44,7 @@ public class Exiftool {
 	static String cmd;
 
 	public static String init() throws InterruptedException, IOException, TimeoutException {
-		cmd = Configs.getCfg("exiftool");
+		cmd = EnvPath.replaceEnv(Configs.getCfg("exiftool"));
 		Utils.logi("[Exiftool.init] command: %s", cmd);
 		
 		check();
