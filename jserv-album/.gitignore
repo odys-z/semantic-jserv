@@ -27,6 +27,8 @@ dist
 winserv.xml
 nginx
 **/volume-hub
+**/settings.hub.json
 **/volume-prv
+**/settings.prv.json
 .classpath
 **/uploading-temp

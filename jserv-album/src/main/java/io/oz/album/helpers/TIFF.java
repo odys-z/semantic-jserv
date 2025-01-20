@@ -1,13 +1,7 @@
 package io.oz.album.helpers;
 
 /**
- * XMP Exif TIFF schema. This is a collection of
- * {@link String property definition} constants for the Exif TIFF
- * properties defined in the XMP standard.
- *
- * @see <a href="http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/xmp/pdfs/cc-201306/XMPSpecificationPart2.pdf"
- * >XMP Specification, Part 2: Standard Schemas</a>
- * @since Apache Tika 0.8
+ * EXIF property names.
  */
 public interface TIFF {
     /**

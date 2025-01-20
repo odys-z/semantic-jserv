@@ -26,6 +26,7 @@ import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantics.SessionInf;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.syndoc.client.PhotoSyntier;
 
 class SynotierJettyAppTest {
@@ -40,27 +41,41 @@ class SynotierJettyAppTest {
 			}
 		};
 	}
+	
+	@Test
+	void testAppSettings() throws AnsonException, IOException {
+		AppSettings hset = AppSettings.load("src/main/webapp/WEB-INF", "settings.json");
+
+		String bindip = hset.bindip;
+		System.out.print(bindip);
+		assertEquals("127.0.0.1", bindip);
+
+		assertEquals("/home/ody/album", hset.volume);
+	}
 
 	@Test
 	void testSyndocApp() throws Exception {
-		final String vhub = "VOLUME_HUB";
-		final String vprv = "VOLUME_PRV";
-		String p = new File("src/main/webapp/volume-hub").getAbsolutePath();
-    	System.setProperty(vhub, p);
-		p = new File("src/main/webapp/volume-prv").getAbsolutePath();
-    	System.setProperty(vprv, p);
+		String webinf = "src/main/webapp/WEB-INF";
+		AppSettings hset = AppSettings.load(webinf, "settings.hub.json");
+		String p = new File(FilenameUtils.concat(webinf, hset.volume)).getAbsolutePath();
+		System.setProperty(hset.vol_name, p);
 
-    	// -Dip=<bind-ip>
-    	String bindip = System.getProperty("ip", "127.0.0.1");
-    	String jservs = System.getProperty("jservs");
+		AppSettings pset = AppSettings.load(webinf, "settings.prv.json");
+		p = new File(FilenameUtils.concat(webinf, pset.volume)).getAbsolutePath();
+		System.setProperty(pset.vol_name, p);
 
-		SynotierJettyApp hub = SynotierJettyApp.main_(vhub,
-				new String[] {"-ip", bindip, "-urlpath", "/jserv-album",
-							"-peer-jservs", jservs, "-install-key", "0123456789ABCDEF"});
+		SynotierJettyApp hub = SynotierJettyApp.main_(hset.vol_name,
+				new String[] {"-ip", hset.bindip,
+							"-urlpath", "/jserv-album",
+							"-peer-jservs", hset.webroots,
+							"-install-key", "0123456789ABCDEF"});
 		hub.print();
-		SynotierJettyApp prv = SynotierJettyApp.main_(vprv,
-				new String[] {"-ip", bindip, "-urlpath", "/jserv-album", "-port", "8965",
-							"-peer-jservs", jservs, "-install-key", "0123456789ABCDEF"});
+		SynotierJettyApp prv = SynotierJettyApp.main_(pset.vol_name,
+				new String[] {"-ip", hset.bindip,
+							"-urlpath", "/jserv-album",
+							"-port", "8965",
+							"-peer-jservs", hset.webroots,
+							"-install-key", "0123456789ABCDEF"});
 		hub.print();
 		prv.print();
 
@@ -98,7 +113,6 @@ class SynotierJettyAppTest {
 						fail("Not expected error for this handling.");
 
 					tier.del("device-test", videos.get(0).fullpath());
-					// List<DocsResp> resps;
 					try {
 						tier.asyVideos(null, videos, null, null);
 
@@ -110,7 +124,6 @@ class SynotierJettyAppTest {
 							else page.add(p.fullpath());
 						}
 
-						// DocsResp rp =
 						tier.synQueryPathsPage(page, Port.docstier);
 						for (int i = page.start(); i < page.end(); i++) {
 							assertNotNull(page.paths().get(videos.get(i).fullpath()));

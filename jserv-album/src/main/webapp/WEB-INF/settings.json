@@ -1,0 +1,6 @@
+{ "type"     : "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "vol_name" : "VOLUME_HOME",
+  "volume"   : "/home/ody/album",
+  "bindip"   : "127.0.0.1",
+  "webroots" : "X:web-x-ip:port/jserv-album Y:web-y-ip:port/jserv-album"
+}

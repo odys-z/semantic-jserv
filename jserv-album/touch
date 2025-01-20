@@ -2,3 +2,6 @@ touch src/main/webapp/volume-hub/doc-jserv.db
 touch src/main/webapp/volume-hub/jserv-main.db
 touch src/main/webapp/volume-prv/doc-jserv.db
 touch src/main/webapp/volume-prv/jserv-main.db
+
+cp -f src/main/webapp/WEB-INF/settings.json src/main/webapp/WEB-INF/settings.hub.json
+cp -f src/main/webapp/WEB-INF/settings.json src/main/webapp/WEB-INF/settings.prv.json
