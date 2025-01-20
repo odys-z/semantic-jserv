@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeoutException;
+
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -48,17 +50,16 @@ class ExifTest {
 	        throw new IllegalStateException("Failed to set environment variable", e);
 	    }
 	}
+	 * @throws TimeoutException 
+	 * @throws IOException 
+	 * @throws InterruptedException 
 	 */
 
 	@BeforeAll
-	static void init () {
-		try {
-			// Exiftool.init("./src/main/java/webapp/WEBINF");
-			Configs.init("./src/main/webapp/WEB-INF");
-			Exiftool.init();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	static void init () throws InterruptedException, IOException, TimeoutException {
+		// Exiftool.init("./src/main/java/webapp/WEBINF");
+		Configs.init("./src/main/webapp/WEB-INF");
+		Exiftool.init();
 	}
 
 	@Test
@@ -128,7 +129,7 @@ class ExifTest {
 	
 	@Test
 	void testTika() throws IOException, SAXException, SemanticException, ReflectiveOperationException {
-		Exif.verbose = false;
+		Exif.verbose = true;
 		
         Utils.logi(Paths.get(".").toAbsolutePath().toString());
 

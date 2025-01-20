@@ -144,8 +144,9 @@ public class Exif {
 			Metadata metadata = Exiftool.parse(filepath);
 
 			for (String name: metadata.names()) {
-				String val = (String) metadata.get(name); 
-				if (verbose) Utils.logi(name);
+				String val = (String) metadata.meta(name); 
+				if (verbose) Utils.logi("%s :\t%s", name, val);
+
 				val = escape(val);
 				// whitewash some faulty string
 				// Huawei p30 take pics with 

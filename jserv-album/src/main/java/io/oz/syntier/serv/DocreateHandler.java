@@ -5,6 +5,9 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.prefixOneOf;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
 
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+
 import io.odysz.common.EnvPath;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -18,28 +21,32 @@ import io.oz.album.peer.PhotoRec;
 import io.oz.jserv.docs.syn.ExpDoctier.IOnDocreate;
 
 public class DocreateHandler implements IOnDocreate {
+	
+	public DocreateHandler() throws InterruptedException, IOException, TimeoutException {
+		Exiftool.init();
+	}
 
 	@Override
-	public void onCreate(String conn, String docId, IUser usr, ExpDocTableMeta docm, String... path) {
+	public void onCreate(String conn, String docId, DATranscxt st, IUser usr, ExpDocTableMeta docm, String... path) {
 
 		if (!(docm instanceof PhotoMeta)) return;
 		
-		PhotoMeta m = (PhotoMeta) docm;
+		PhotoMeta phm = (PhotoMeta) docm;
 
 		try {
-			DATranscxt st = new DATranscxt(conn);
+			// DATranscxt st = new DATranscxt(conn);
 			AnResultset rs = (AnResultset) st
-				.select(m.tbl, "p")
-				.col(m.folder).col(m.fullpath)
-				.col(m.uri)
-				.col(m.resname)
-				.col(m.createDate)
-				.col(m.mime)
-				.whereEq(m.pk, docId)
+				.select(docm.tbl, "p")
+				.col(docm.folder).col(docm.fullpath)
+				.col(docm.uri)
+				.col(docm.resname)
+				.col(docm.createDate)
+				.col(docm.mime)
+				.whereEq(docm.pk, docId)
 				.rs(st.instancontxt(conn, usr))
 				.rs(0);
 
-			if (rs.next() && isVedioAudio(rs.getString(m.mime))) {
+			if (rs.next() && isVedioAudio(rs.getString(docm.mime))) {
 				ISemantext stx = st.instancontxt(conn, usr);
 
 				String pth = isNull(path)
@@ -50,25 +57,25 @@ public class DocreateHandler implements IOnDocreate {
 				Exiftool.parseExif(p, pth);
 
 				Update u = st
-					.update(m.tbl, usr)
-					.nv(m.css, p.css)
-					.nv(m.size, String.valueOf(p.size))
-					.whereEq(m.pk, docId);
+					.update(docm.tbl, usr)
+					.nv(phm.css, p.css)
+					.nv(docm.size, String.valueOf(p.size))
+					.whereEq(docm.pk, docId);
 
-				if (isblank(rs.getDate(m.createDate)))
-					u.nv(m.createDate, now());
+				if (isblank(rs.getDate(docm.createDate)))
+					u.nv(docm.createDate, now());
 
 
 					if (!isblank(p.geox) || !isblank(p.geoy))
-						u.nv(m.geox, p.geox)
-						 .nv(m.geoy, p.geoy);
+						u.nv(phm.geox, p.geox)
+						 .nv(phm.geoy, p.geoy);
 					if (!isblank(p.exif))
-						u.nv(m.exif, p.exif);
+						u.nv(phm.exif, p.exif);
 					else // figure out mime with file extension
 						;
 
 					if (!isblank(p.mime))
-						u.nv(m.mime, p.mime);
+						u.nv(docm.mime, p.mime);
 				u.u(stx);
 			}
 		} catch (Exception e) {

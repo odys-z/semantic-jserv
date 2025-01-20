@@ -68,7 +68,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 */
 	@FunctionalInterface
 	public interface IOnDocreate {
-		void onCreate(String conn, String docId, IUser usr, ExpDocTableMeta docm, String... path);
+		void onCreate(String conn, String docId, DATranscxt st, IUser usr, ExpDocTableMeta docm, String... path);
 	}
 
 	private static final long serialVersionUID = 1L;
@@ -100,6 +100,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		
 		st   = new DATranscxt(syndomanager.synconn);
 		trb0 = new DBSynTransBuilder(domx);
+
+		onCreate = docreateHandler;
 		
 		try {debug = Connects.getDebug(syndomanager.synconn); }
 		catch (Exception e) {debug = false;}
@@ -143,8 +145,8 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				// Session less
 				if (A.rec.equals(a))
 					rsp = doc(jmsg.body(0));
-				else if (A.download.equals(a))
-					download(resp, jmsg.body(0), locrobot);
+//				else if (A.download.equals(a))
+//					download(resp, jmsg.body(0), locrobot);
 			} else {
 				DocUser usr = (DocUser) JSingleton
 						.getSessionVerifier()
@@ -164,7 +166,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				else if (DocsReq.A.blockUp.equals(a))
 					rsp = uploadBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockEnd.equals(a))
-					rsp = endBlock(jmsg.body(0), usr, onCreate);
+					rsp = endBlock(jmsg.body(0), usr);
 				else if (DocsReq.A.blockAbort.equals(a))
 					rsp = abortBlock(jmsg.body(0), usr);
 		//		else if (DocsReq.A.devices.equals(a))
@@ -378,7 +380,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @throws Exception 
 	 * @throws SAXException 
 	 */
-	DocsResp endBlock(DocsReq body, IUser usr, IOnDocreate oncreate)
+	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SAXException, Exception {
 		String chaid = chainId(usr, body.doc.clientpath); // shouldn't reply chain-id to the client?
 		BlockChain chain = null;
@@ -396,6 +398,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		DBSynTransBuilder b = new DBSynTransBuilder(domx);
 		String pid = DocUtils.createFileBy64(b, conn, photo, usr, meta);
 
+		// TODO FIXME move this to DocUtils.createFileBy64()
 		// move file
 		String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
 
@@ -403,11 +406,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
 
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+		///////////////////////////////////////////////////////
 
-		// onDocreated(pid, conn, meta, usr);
-		if (oncreate != null)
+		if (onCreate != null)
 			new Thread(() ->
-				oncreate.onCreate(conn, pid, usr, meta, targetPath),
+				onCreate.onCreate(conn, pid, b, usr, meta, targetPath),
 				f("On doc %s.%s [%s] create", meta.tbl, pid, conn))
 			.start();
 
@@ -456,7 +459,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		String pid = DocUtils.createFileBy64(b, conn, photo, usr, docm);
 	
 		// onDocreated(pid, conn, docm, usr);
-		onCreate.onCreate(conn, pid, usr, docm);
+		onCreate.onCreate(conn, pid, b, usr, docm);
 		return new DocsResp().doc(photo);
 	}
 
@@ -627,44 +630,44 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return this;
 	}
 	
-	void download(HttpServletResponse resp, DocsReq req, IUser usr)
-			throws IOException, SemanticException, TransException, SQLException {
-
-//		String conn = Connects.uri2conn(req.uri());
-//		ExpDocTableMeta meta = new ExpDocTableMeta(conn);
+//	void download(HttpServletResponse resp, DocsReq req, IUser usr)
+//			throws IOException, SemanticException, TransException, SQLException {
 //
-//		AnResultset rs = (AnResultset) st
-//				.select(meta.tbl, "p")
-//				.j("a_users", "u", "u.userId = p.shareby")
-//				.col(meta.pk)
-//				.col(meta.resname).col(meta.createDate)
-//				.col(meta.folder).col(meta.fullpath)
-//				.col(meta.uri)
-//				.col("userName", "shareby")
-//				.col(meta.shareDate)
-//				// .col(meta.geox).col(meta.geoy).col(meta.tags)
-//				.col(meta.mime)
-//				.whereEq(meta.pk, req.doc.recId)
-//				.rs(st.instancontxt(conn, usr)).rs(0);
-//
-//		if (!rs.next()) {
-//			resp.setContentType("image/png");
-//			FileStream.sendFile(resp.getOutputStream(), missingFile);
-//		}
-//		else {
-//			String mime = rs.getString("mime");
-//			resp.setContentType(mime);
-//			
-//			try ( OutputStream os = resp.getOutputStream() ) {
-//				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta));
-//				os.close();
-//			} catch (IOException e) {
-//				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
-//				// This is harmless: https://stackoverflow.com/a/70020526/7362888
-//				// Utils.warn(e.getMessage());
-//			}
-//		}
-	}
+////		String conn = Connects.uri2conn(req.uri());
+////		ExpDocTableMeta meta = new ExpDocTableMeta(conn);
+////
+////		AnResultset rs = (AnResultset) st
+////				.select(meta.tbl, "p")
+////				.j("a_users", "u", "u.userId = p.shareby")
+////				.col(meta.pk)
+////				.col(meta.resname).col(meta.createDate)
+////				.col(meta.folder).col(meta.fullpath)
+////				.col(meta.uri)
+////				.col("userName", "shareby")
+////				.col(meta.shareDate)
+////				// .col(meta.geox).col(meta.geoy).col(meta.tags)
+////				.col(meta.mime)
+////				.whereEq(meta.pk, req.doc.recId)
+////				.rs(st.instancontxt(conn, usr)).rs(0);
+////
+////		if (!rs.next()) {
+////			resp.setContentType("image/png");
+////			FileStream.sendFile(resp.getOutputStream(), missingFile);
+////		}
+////		else {
+////			String mime = rs.getString("mime");
+////			resp.setContentType(mime);
+////			
+////			try ( OutputStream os = resp.getOutputStream() ) {
+////				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta));
+////				os.close();
+////			} catch (IOException e) {
+////				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
+////				// This is harmless: https://stackoverflow.com/a/70020526/7362888
+////				// Utils.warn(e.getMessage());
+////			}
+////		}
+//	}
 
 	static String chainId(IUser usr, String clientpathRaw) {
 		return usr.sessionId() + " " + clientpathRaw;
