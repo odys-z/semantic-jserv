@@ -204,7 +204,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //					rsp = querySyncs(jmsg.body(0), usr, prf);
 				else if (A.getPrefs.equals(a))
 					rsp = profile(jmsg.body(0), usr, prf);
-				else if (A.album.equals(a)) // FXIME what's the equivalent of Portfolio?
+				else if (A.album.equals(a)) // FIXME what's the equivalent of Portfolio?
 					rsp = album(jmsg.body(0), usr, prf);
 
 				else if (A.stree.equals(a))

@@ -1,5 +1,6 @@
 package io.oz.album.helpers;
 
+import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.filesize;
 import static io.odysz.common.LangExt.gt;
@@ -18,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -51,7 +53,7 @@ public class Exiftool {
 		return cmd;
 	}
 
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation", "unchecked" })
 	public static PhotoRec parseExif(PhotoRec photo, String filepath) throws IOException {
 		try {
 			photo.mime = isblank(photo.mime) ?
@@ -65,8 +67,10 @@ public class Exiftool {
 		Metadata metadata = parse(filepath);
 		
 		for (String name: metadata.names()) {
-			String val = (String) metadata.get(name); 
-			if (verbose) Utils.logi(name);
+			ArrayList<String> vals = ((ArrayList<String>) metadata.get(name)); 
+			String val = _0(vals);
+			if (verbose) Utils.logi("%s :\t%s", name, val);
+
 			val = Exif.escape(val);
 			// white-wash some faulty string
 			// Huawei p30 take pics with 
