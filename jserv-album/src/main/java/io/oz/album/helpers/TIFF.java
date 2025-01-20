@@ -1,4 +1,3 @@
-
 package io.oz.album.helpers;
 
 /**
@@ -11,7 +10,21 @@ package io.oz.album.helpers;
  * @since Apache Tika 0.8
  */
 public interface TIFF {
+    /**
+     * The WGS84 Latitude of the Point
+     */
+    String LATITUDE = "geo:lat";
 
+    /**
+     * The WGS84 Longitude of the Point
+     */
+    String LONGITUDE = "geo:long";
+
+    /**
+     * The WGS84 Altitude of the Point
+     */
+    String ALTITUDE = "geo:alt";
+    
     /**
      * "Number of bits per component in each channel."
      */

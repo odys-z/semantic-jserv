@@ -1,13 +1,13 @@
 package io.oz.album.helpers;
 
-import java.util.Set;
+import java.util.ArrayList;
 
 import io.odysz.semantics.SemanticObject;
 
 public class Metadata extends SemanticObject {
 
-	public Set<String> names() {
-		return props.keySet();
+	public ArrayList<String> names() {
+		return new ArrayList<String>(props.keySet());
 	}
 
 //	public String name() {
@@ -15,10 +15,10 @@ public class Metadata extends SemanticObject {
 //	}
 
 	public String getLatitude() {
-		return null;
+		return String.valueOf(props.get(TIFF.LATITUDE));
 	}
 
-	public int getLongitude() {
-		return (int) props.get(TIFF.);
+	public String getLongitude() {
+		return String.valueOf(props.get(TIFF.LONGITUDE));
 	}
 }
