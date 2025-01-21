@@ -1,5 +1,5 @@
 # buld mvn war package or
-# mvn clean package && docker build -t jserv-sandbox .
+# mvn clean package && docker build -t jserv-album .
 # Be careful clean maven first.
 
 FROM tomcat:9.0.98-jdk17-corretto-al2
@@ -7,7 +7,7 @@ RUN sed -i 's/port="8080"/port="80"/' ${CATALINA_HOME}/conf/server.xml
 RUN apt-get update && apt-get -y install exiftool
 
 COPY target/jserv-album/index.html $CATALINA_HOME/webapps/ROOT/index.html
-COPY target/jserv-album.war $CATALINA_HOME/webapps
+COPY target/jserv-album-0.7*.war $CATALINA_HOME/webapps
 
 ARG imgtag=jserv-album
 ARG ver=0.7.0
