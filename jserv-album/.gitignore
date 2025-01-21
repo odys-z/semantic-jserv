@@ -18,6 +18,7 @@ volume/null
 volume/ody@kyiv
 volume/2022*
 volume-0.*
+volumes-0.7
 test/results
 test/res/ignore*.*
 test/res/C000000*.mp4
