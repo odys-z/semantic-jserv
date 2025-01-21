@@ -53,7 +53,7 @@ class SynotierJettyAppTest {
 		String bindip = hset.bindip;
 		assertEquals("127.0.0.1", bindip);
 
-		assertEquals("/home/ody/album", hset.volume);
+		assertEquals("../../../../volumes-0.7/volume-hub", hset.volume);
 		
 		
 	    String ip;
@@ -112,7 +112,10 @@ class SynotierJettyAppTest {
 		warn("Multiple synodes initialed in a single process, of which only the first (%s) syn-worker is enabled.",
 				hub.syngleton.synode());
 		warn("See ExpSynodetier.syncIns(secondes).");
-		pause("Press enter to quite ...");
+		
+		if (System.getProperty("wait-clients") != null)
+			pause("Press enter to quite ...");
+		else Utils.warn("To wait for clients accessing, define 'wait-clients'.");
 	}
 
 	void testVideoUp(boolean[] lights) throws SsException, IOException, AnsonException, TransException {

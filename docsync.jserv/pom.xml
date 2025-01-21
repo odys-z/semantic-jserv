@@ -64,7 +64,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>anclient.java</artifactId>
-	    <version>[0.5.13-SNAPSHOT,)</version>
+	    <version>[0.5.13,)</version>
 	</dependency>
 
 	<dependency>
