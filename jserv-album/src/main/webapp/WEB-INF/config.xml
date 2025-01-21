@@ -40,7 +40,7 @@
 
 	<c>
 		<k>exiftool</k>
-		<v>exiftool</v>
+		<v>$BIN/exiftool</v>
 	</c>
   </t>
 

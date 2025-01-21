@@ -12,6 +12,7 @@ import static io.odysz.semantic.syn.ExessionAct.ready;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.SocketException;
 import java.sql.SQLException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -241,8 +242,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 						domanager0.synode, domanager0.admin.uid());
 				schedualed.cancel(false);
 				scheduler.shutdown();
-			} catch (InterruptedIOException e) {
+			} catch (InterruptedIOException | SocketException e) {
 				// wait for network
+				// TODO we need API for immediately trying
 				reschedule(5);
 			} catch (Exception e) {
 				// ??

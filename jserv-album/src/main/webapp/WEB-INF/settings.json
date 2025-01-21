@@ -1,6 +1,8 @@
 { "type"     : "io.oz.jserv.docs.syn.singleton.AppSettings",
   "vol_name" : "VOLUME_HOME",
-  "volume"   : "/home/ody/album",
+  "volume"   : "e. g. /home/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub",
+  "exifpath" : "/usr/bin",
   "bindip"   : "127.0.0.1",
+  "port"     : 8964,
   "webroots" : "X:web-x-ip:port/jserv-album Y:web-y-ip:port/jserv-album"
 }

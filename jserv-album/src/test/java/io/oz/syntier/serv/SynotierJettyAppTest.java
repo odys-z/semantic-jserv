@@ -4,7 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 import static io.odysz.common.LangExt.isblank;
@@ -15,6 +19,7 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.tier.ErrorCtx;
@@ -45,35 +50,60 @@ class SynotierJettyAppTest {
 	@Test
 	void testAppSettings() throws AnsonException, IOException {
 		AppSettings hset = AppSettings.load("src/main/webapp/WEB-INF", "settings.json");
-
 		String bindip = hset.bindip;
-		System.out.print(bindip);
 		assertEquals("127.0.0.1", bindip);
 
 		assertEquals("/home/ody/album", hset.volume);
+		
+		
+	    String ip;
+	    try {
+	        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+	        while (interfaces.hasMoreElements()) {
+	            NetworkInterface iface = interfaces.nextElement();
+	            // filters out 127.0.0.1 and inactive interfaces
+	            if (iface.isLoopback() || !iface.isUp())
+	                continue;
+
+	            Enumeration<InetAddress> addresses = iface.getInetAddresses();
+	            while(addresses.hasMoreElements()) {
+	                InetAddress addr = addresses.nextElement();
+	                ip = addr.getHostAddress();
+	                Utils.logi("%s - %s", ip, iface.getDisplayName());
+	            }
+	        }
+	    } catch (SocketException e) {
+	        throw new RuntimeException(e);
+	    }
 	}
 
 	@Test
 	void testSyndocApp() throws Exception {
 		String webinf = "src/main/webapp/WEB-INF";
+
+		Utils.logi("Loading PRV settings: %s", "settings.hub.json");
 		AppSettings hset = AppSettings.load(webinf, "settings.hub.json");
 		String p = new File(FilenameUtils.concat(webinf, hset.volume)).getAbsolutePath();
 		System.setProperty(hset.vol_name, p);
+		Utils.logi("HUB settings: %s", p);
 
+		Utils.logi("Loading PRV settings: %s", "settings.prv.json");
 		AppSettings pset = AppSettings.load(webinf, "settings.prv.json");
 		p = new File(FilenameUtils.concat(webinf, pset.volume)).getAbsolutePath();
 		System.setProperty(pset.vol_name, p);
+		Utils.logi("PRV settings: %s", p);
 
 		SynotierJettyApp hub = SynotierJettyApp.main_(hset.vol_name,
 				new String[] {"-ip", hset.bindip,
 							"-urlpath", "/jserv-album",
 							"-peer-jservs", hset.webroots,
 							"-install-key", "0123456789ABCDEF"});
-		hub.print();
+		// hub.print();
+
 		SynotierJettyApp prv = SynotierJettyApp.main_(pset.vol_name,
-				new String[] {"-ip", hset.bindip,
+				new String[] {"-ip", pset.bindip,
 							"-urlpath", "/jserv-album",
-							"-port", "8965",
+							"-port", pset.port(),
 							"-peer-jservs", hset.webroots,
 							"-install-key", "0123456789ABCDEF"});
 		hub.print();

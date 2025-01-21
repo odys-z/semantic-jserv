@@ -3,5 +3,15 @@ touch src/main/webapp/volume-hub/jserv-main.db
 touch src/main/webapp/volume-prv/doc-jserv.db
 touch src/main/webapp/volume-prv/jserv-main.db
 
-cp -f src/main/webapp/WEB-INF/settings.json src/main/webapp/WEB-INF/settings.hub.json
-cp -f src/main/webapp/WEB-INF/settings.json src/main/webapp/WEB-INF/settings.prv.json
+echo "{ \"type\"     : \"io.oz.jserv.docs.syn.singleton.AppSettings\",
+  \"vol_name\" : \"VOLUME_HOME\",
+  \"volume\"   : \"e. g. /home/github/semantic-jserv/jserv-album/src/main/webapp/volume-hub\",
+  \"exifpath\" : \"/usr/bin\",
+  \"bindip\"   : \"127.0.0.1\",
+  \"port\"     : 8964,
+  \"webroots\" : \"X:web-x-ip:port/jserv-album Y:web-y-ip:port/jserv-album\"
+}" > src/main/webapp/WEB-INF/settings.json
+
+echo "copy and modify settings:"
+echo "cp -f src/main/webapp/WEB-INF/settings.json src/main/webapp/WEB-INF/settings.hub.json"
+echo "cp -f src/main/webapp/WEB-INF/settings.json src/main/webapp/WEB-INF/settings.prv.json"

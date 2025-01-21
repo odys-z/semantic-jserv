@@ -121,6 +121,10 @@ public class AppSettings extends Anson {
 	public String volume;
 	public String bindip;
 	public String webroots;
+
+	public int port;
+	public String port() { return String.valueOf(port); }
+
 	/**
 	 * Should only be used in win-serv mode.
 	 * @param web_inf
@@ -140,4 +144,5 @@ public class AppSettings extends Anson {
 	}
 	
 	public AppSettings() {}
+
 }
