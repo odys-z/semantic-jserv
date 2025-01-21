@@ -95,18 +95,29 @@ class Deviclientx {
 		}
 	}
 	
+	private static boolean disabled;
+	
 	@BeforeAll
 	static void init() throws Exception {
 		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
 
 		// -Djservs="ip-1:port-1,ip-2:port-2"
-		jserv_xyzw = prefix(System.getProperty("jservs").split(","), "http://");
+		String jservs = System.getProperty("jservs");
+		if (jservs == null) {
+			disabled = true;
+			Utils.warn("Define 'jservs' and bring up SynotierJettyAppTest with 'waite-client' for testing.");
+			return;
+		}
+
+		jserv_xyzw = prefix(jservs.split(","), "http://");
 		
 		dev = new Dev("ody", "8964", "dev-x-00", "src/test/resources/182x121.png");
 	}
 
 	@Test
 	void testSyncUp() throws Exception {
+		if (disabled) return;
+		
 		ExpSyncDoc dx = clientPush(X);
 		verifyPathsPage(dev.client, docm.tbl, dx.clientpath);
 

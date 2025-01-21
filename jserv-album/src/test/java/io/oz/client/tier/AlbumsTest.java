@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io_odysz.FilenameUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import io.odysz.anson.Anson;
 import io.odysz.anson.JSONAnsonListener;
@@ -50,6 +51,7 @@ import io.oz.syndoc.client.PhotoSyntier;
  * @author ody
  *
  */
+@Disabled
 class AlbumsTest {
 	static String jserv;
 

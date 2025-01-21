@@ -81,7 +81,7 @@ class SynotierJettyAppTest {
 	void testSyndocApp() throws Exception {
 		String webinf = "src/main/webapp/WEB-INF";
 
-		Utils.logi("Loading PRV settings: %s", "settings.hub.json");
+		Utils.logi("Loading HUB settings: %s", "settings.hub.json");
 		AppSettings hset = AppSettings.load(webinf, "settings.hub.json");
 		String p = new File(FilenameUtils.concat(webinf, hset.volume)).getAbsolutePath();
 		System.setProperty(hset.vol_name, p);
