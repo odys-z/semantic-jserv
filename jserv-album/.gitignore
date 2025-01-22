@@ -26,6 +26,7 @@ test/res/C000000*.mp4
 ./
 dist
 winserv.xml
+dependency-reduced-pom.xml
 nginx
 **/volume-hub
 **/settings.hub.json
