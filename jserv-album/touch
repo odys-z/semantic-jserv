@@ -9,7 +9,8 @@ echo "{ \"type\"     : \"io.oz.jserv.docs.syn.singleton.AppSettings\",
   \"exifpath\" : \"/usr/bin\",
   \"bindip\"   : \"127.0.0.1\",
   \"port\"     : 8964,
-  \"webroots\" : \"X:web-x-ip:port/jserv-album Y:web-y-ip:port/jserv-album\"
+  \"jservs\"   : \"X:web-x-ip:port/jserv-album Y:web-y-ip:port/jserv-album\",
+  \"envars\"   : {\"WEBROOT_HUB\": \"\", \"WEBROOT_PRV\": \"\"}
 }" > src/main/webapp/WEB-INF/settings.json
 
 echo "copy and modify settings:"

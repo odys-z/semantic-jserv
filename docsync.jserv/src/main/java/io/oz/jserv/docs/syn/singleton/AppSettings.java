@@ -4,14 +4,18 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.LangExt.mustnonull;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.apache.commons.io_odysz.FilenameUtils;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonField;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
@@ -26,7 +30,11 @@ import io.odysz.transact.x.TransException;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
 
+/**
+ * @since 0.7.0
+ */
 public class AppSettings extends Anson {
+
 	/** 
 	 * Install configurations.
 	 * <pre> {
@@ -38,21 +46,42 @@ public class AppSettings extends Anson {
 	 * }</pre>
 	 */
 	static String serv_json = "settings.json";
+
+	String webinf;
 	
 	/**
 	 * 
+	 * @param webinf 
 	 * @param webinf config root, path of cocnfig.xml, e. g. WEB-INF
+	 * @param config_xml 
 	 * @param envolume volume home variable, e. g. $VOLUME_HOME
 	 * @param config_xml config file name, e. g. config.xml
 	 * @throws Exception
-	 */
 	static void setupdb(String webinf, AppSettings settings, String config_xml) throws Exception {
 		YellowPages.load(settings.vol_name);
 
-		SynodeConfig cfg = YellowPages.synconfig();
+		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 		setupdb(cfg, webinf, settings.vol_name, config_xml, "ABCDEF0123465789");
 	}
+	 */
 
+	public AppSettings setupdb(String config_xml) throws Exception {
+		YellowPages.load(vol_name);
+
+		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
+		
+		mustnonull(jservs);
+
+		String $vol_home = "$" + vol_name;
+		YellowPages.load(FilenameUtils.concat(
+				new File(".").getAbsolutePath(),
+				webinf,
+				EnvPath.replaceEnv($vol_home)));
+
+		AppSettings.setupdb(cfg, webinf, $vol_home, config_xml, installkey, jservs);
+		return this;
+	}
+	
 	/**
 	 * 
 	 * @param cfg
@@ -65,7 +94,7 @@ public class AppSettings extends Anson {
 	 * @throws Exception
 	 */
 	public static void setupdb(SynodeConfig cfg, String webinf, String envolume, String config_xml,
-			String rootkey, String... jservs) throws Exception {
+			String rootkey, String jservs) throws Exception {
 		
 		Syngleton.setupSysRecords(cfg, YellowPages.robots());
 
@@ -82,9 +111,24 @@ public class AppSettings extends Anson {
 		if (!isNull(jservs))
 			setupJservs(cfg, jservs);
 	}
+	
+	public static void rebootdb(SynodeConfig cfg, String webinf, String envolume, String config_xml,
+			String rootkey) throws Exception {
+		
+		Syngleton.setupSysRecords(cfg, YellowPages.robots());
 
-	private static void setupJservs(SynodeConfig cfg, String[] jservss) throws TransException {
-		String[] jservs = jservss[0].split(" ");
+		Syntities regists = Syntities.load(webinf, f("%s/syntity.json", envolume), 
+			(synreg) -> {
+				throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
+			});
+		
+		Syngleton.bootSyntables(cfg, webinf, config_xml, ".", rootkey);
+
+		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
+	}
+
+	private static void setupJservs(SynodeConfig cfg, String jservss) throws TransException {
+		String[] jservs = jservss.split(" ");
 		for (String jserv : jservs) {
 			String[] sid_url = jserv.split(":");
 			if (isNull(sid_url) || len(sid_url) < 2)
@@ -120,10 +164,21 @@ public class AppSettings extends Anson {
 	public String vol_name;
 	public String volume;
 	public String bindip;
-	public String webroots;
+	public String jservs;
+	public String installkey;
+	public String rootkey;
 
 	public int port;
 	public String port() { return String.valueOf(port); }
+
+	private HashMap<String, String> envars;
+
+
+	/**
+	 * Json file path.
+	 */
+	@AnsonField(ignoreTo=true, ignoreFrom=true)
+	private String json; 
 
 	/**
 	 * Should only be used in win-serv mode.
@@ -133,16 +188,51 @@ public class AppSettings extends Anson {
 	 * @throws IOException
 	 */
 	public static AppSettings load(String web_inf, String... json) throws AnsonException, IOException {
-		String jettyxml = FilenameUtils.concat(EnvPath.replaceEnv(web_inf), _0(json, serv_json));
-		Utils.logi("Loading serv_xml, %s", jettyxml);
+		String abs_json = FilenameUtils.concat(EnvPath.replaceEnv(web_inf), _0(json, serv_json));
+		Utils.logi("Loading serv_xml, %s", abs_json);
 
-		FileInputStream inf = new FileInputStream(new File(jettyxml));
+		FileInputStream inf = new FileInputStream(new File(abs_json));
 
 		AppSettings settings = (AppSettings) Anson.fromJson(inf); 
+		settings.webinf = web_inf;
+		settings.json = abs_json;
 
 		return settings;
 	}
 	
-	public AppSettings() {}
+	
+	/**
+	 * Move to Antson?
+	 * @return
+	 * @throws AnsonException
+	 * @throws IOException
+	 */
+	public AppSettings save() throws AnsonException, IOException {
+		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
+			toBlock(inf);
+		} 
+		return this;
+	}
+	
+	public AppSettings() {
+		installkey = "0123456789ABCDEF";
+	}
+	
+	public AppSettings replaceEnvs() {
+		System.setProperty(vol_name, volume);
+		
+		for (String v : envars.keySet())
+			System.setProperty(v, envars.get(v));
+		
+		return this;
+	}
 
+	/**
+	 * Find the correct ip and return the suitable one, "0.0.0.0" as the last one.
+	 * @return ip to be bound
+	 */
+	public String bindip() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
