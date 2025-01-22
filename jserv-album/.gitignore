@@ -1,22 +1,7 @@
 bin
 /target/
 download
-volume/Robot*
-volume/**/* my.jpg
-volume/**/ignored*.*
-volume/ody/2024_*
-volume/ody/2023_*
-volume/ody/2022_*
-volume/ody/2021_*
-volume/ody/2016_*
-volume/ody/ - - /**
-volume/ody/uploading-temp
-volume/admin
-volume/syrskyi
-volume/odys-z.github.io
-volume/null
-volume/ody@kyiv
-volume/2022*
+volume/
 volume-0.*
 volumes-0.7
 test/results
