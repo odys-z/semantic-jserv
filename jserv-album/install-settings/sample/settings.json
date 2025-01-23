@@ -1,0 +1,9 @@
+{ "type"     : "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "vol_name" : "VOLUME_HOME",
+  "volume"   : "/home/`$USER`/volume/",
+  "exifpath" : "/usr/bin",
+  "bindip"   : "0.0.0.0",
+  "port"     : 8964,
+  "jservs"   : "X:192.168.0.201:8964/jserv-album Y:192.168.0.201:8965/jserv-album",
+  "envars"   : {"WEBROOT_HUB": "119.8.29.27"}
+}

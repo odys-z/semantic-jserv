@@ -1,9 +1,8 @@
 bin
 /target/
 download
-volume/
-volume-0.*
-volumes-0.7
+volume-*
+volume/*.db
 test/results
 test/res/ignore*.*
 test/res/C000000*.mp4
@@ -19,3 +18,7 @@ nginx
 **/settings.prv.json
 .classpath
 **/uploading-temp
+
+# temporary install program
+install-settings/*
+!install-settings/sample/
