@@ -22,6 +22,7 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.kohsuke.args4j.CmdLineParser;
 
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
@@ -195,7 +196,7 @@ public class SynotierJettyApp {
 			AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, cli.rootkey);
 		}
 		
-		return createSyndoctierApp( cfg.ip(ip_urlpath[0]),
+		return createSyndoctierApp( cfg.ip(ip_urlpath[0]), null,
 									((ArrayList<SyncUser>) YellowPages.robots()).get(0),
 									ip_urlpath[1], webinf, "config.xml",
 									f("%s/%s", $vol_home, "syntity.json"))
