@@ -2,6 +2,7 @@ package io.oz.syntier.serv;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.warn;
 import static io.oz.syntier.serv.SynotierJettyApp.boot;
@@ -18,8 +19,11 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 
@@ -46,9 +50,9 @@ class SynotierJettyAppTest {
 	void testAppSettings() throws AnsonException, IOException {
 		AppSettings hset = AppSettings.load(webinf, "settings.json");
 		String bindip = hset.bindip;
-		assertEquals("127.0.0.1", bindip);
+		assertTrue(eq("127.0.0.1", bindip) || eq("0.0.0.0", bindip));
 
-		assertEquals("../../../../volumes-0.7/volume-hub", hset.volume);
+		assertEquals("../../../../volume", hset.volume);
 		
 		
 	    String ip;
@@ -72,22 +76,23 @@ class SynotierJettyAppTest {
 	    }
 	}
 
-	void testSyndocApp() throws Exception {
+	@Test
+	void testSetupRunApp() throws Exception {
 		resettings();
 
-		@SuppressWarnings("unused")
+		Configs.init(webinf);
+
 		AppSettings hubset = AppSettings
 							.load(webinf, settings_hub)
-							.replaceEnvs()
-							.setupdb(config_xml)
-							.save();
-
-		@SuppressWarnings("unused")
+							.setEnvs(true);
 		AppSettings prvset = AppSettings
 							.load(webinf, settings_prv)
-							.replaceEnvs()
-							.setupdb(config_xml)
-							.save();
+							.setEnvs(true);
+
+		Connects.init(webinf);
+
+		hubset.setupdb(config_xml).save();
+		prvset.setupdb(config_xml).save();
 	
 		SynotierJettyApp hub = boot(webinf, config_xml, settings_hub);
 		SynotierJettyApp prv = boot(webinf, config_xml, settings_prv);
@@ -101,7 +106,7 @@ class SynotierJettyAppTest {
 		
 		if (System.getProperty("wait-clients") != null)
 			pause("Press enter to quite ...");
-		else Utils.warn("To wait for clients accessing, define 'wait-clients'.");
+		else Utils.warn("Quit test running. To wait for clients accessing, define 'wait-clients'.");
 	}
 
 	private void resettings() throws AnsonException, IOException {

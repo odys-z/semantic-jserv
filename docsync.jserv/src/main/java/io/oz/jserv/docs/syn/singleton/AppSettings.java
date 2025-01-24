@@ -66,19 +66,20 @@ public class AppSettings extends Anson {
 	 */
 
 	public AppSettings setupdb(String config_xml) throws Exception {
-		YellowPages.load(vol_name);
+		String $vol_home = "$" + vol_name;
 
-		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
-		
 		mustnonull(jservs);
 
-		String $vol_home = "$" + vol_name;
 		YellowPages.load(FilenameUtils.concat(
 				new File(".").getAbsolutePath(),
 				webinf,
 				EnvPath.replaceEnv($vol_home)));
 
+		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
+
 		AppSettings.setupdb(cfg, webinf, $vol_home, config_xml, installkey, jservs);
+		rootkey = installkey;
+		installkey = null;
 		return this;
 	}
 	
@@ -218,11 +219,20 @@ public class AppSettings extends Anson {
 		installkey = "0123456789ABCDEF";
 	}
 	
-	public AppSettings replaceEnvs() {
+	/**
+	 * Update env-vars to system properties.
+	 * @return this
+	 */
+	public AppSettings setEnvs(boolean print) {
 		System.setProperty(vol_name, volume);
+		if (print)
+			Utils.logi("%s\t: %s", vol_name, volume);
 		
-		for (String v : envars.keySet())
+		for (String v : envars.keySet()) {
 			System.setProperty(v, envars.get(v));
+			if (print)
+				Utils.logi("%s\t: %s", v, envars.get(v));
+		}
 		
 		return this;
 	}
@@ -232,7 +242,7 @@ public class AppSettings extends Anson {
 	 * @return ip to be bound
 	 */
 	public String bindip() {
-		// TODO Auto-generated method stub
-		return null;
+		Utils.warn("Find the correct ip and return the suitable one, '0.0.0.0' as the last one.");
+		return bindip;
 	}
 }

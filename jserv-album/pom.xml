@@ -351,7 +351,7 @@
 
 			<transformers>
 				<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-					<mainClass>io.oz.album.JettyApp</mainClass>
+					<mainClass>io.oz.syntier.serv.SynotierJettyApp</mainClass>
 				</transformer>
 				<!--
 				<transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
@@ -365,9 +365,11 @@
     </plugins>
 
     <resources>
+      <!-- Packed via Makefile. Uncomment for war.
       <resource>
     	<directory>src/main/webapp</directory>
       </resource>
+      -->
     </resources>
   </build>
 </project>

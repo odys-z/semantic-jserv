@@ -22,7 +22,6 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.kohsuke.args4j.CmdLineParser;
 
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
@@ -87,7 +86,7 @@ public class SynotierJettyApp {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		boot("WEB-INF", "config.xml", _0(args, "settings.xml"));
+		boot("WEB-INF", "config.xml", _0(args, "settings.json"));
 	}
 	
 	static SynotierJettyApp boot(String webinf, String config_xml, String settings_json, PrintstreamProvider ... oe) throws Exception {
@@ -110,13 +109,6 @@ public class SynotierJettyApp {
 
 	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings, PrintstreamProvider ... oe)
 			throws Exception {
-
-//		CliArgs cli = new CliArgs();
-//		CmdLineParser parser = new CmdLineParser(cli);
-//		parser.parseArgument(args);
-
-//		mustnonull(cli.ip, "JUnit args for IDE bug: -ea -Dip=127.0.0.1 -Dinstall-key=### -DWEBROOT_PRV=#.#.#.# -DWEBROOT_HUB=#.#.#.#, -Djservs=\"X:127.0.0.1:8964 Y:127.0.0.1:8965\"");
-		
 		Utils.logi("%s : %s", settings.vol_name, System.getProperty(settings.vol_name));
 
 		Configs.init(webinf);
@@ -132,7 +124,7 @@ public class SynotierJettyApp {
 		String[] ip_urlpath = new String[] {settings.bindip(), urlpath};
 
 			// the un-tested branch
-			mustnonull(settings.rootkey);
+			mustnonull(settings.rootkey, "Rootkey cannot be null for starting App.");
 
 			YellowPages.load(FilenameUtils.concat(
 					new File(".").getAbsolutePath(),
@@ -141,7 +133,8 @@ public class SynotierJettyApp {
 
 			AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
 		
-		return createSyndoctierApp( cfg.ip(ip_urlpath[0]),
+		// return createSyndoctierApp( cfg.ip(ip_urlpath[0]),
+		return createSyndoctierApp( cfg, settings,
 									((ArrayList<SyncUser>) YellowPages.robots()).get(0),
 									ip_urlpath[1], webinf, config_xml,
 									f("%s/%s", $vol_home, "syntity.json"))
@@ -158,7 +151,6 @@ public class SynotierJettyApp {
 	 * @param args cli args, e. g. -ip <bind-ip>, where the binding IP will override the dictionary.json.
 	 * @return  Jetty application
 	 * @throws Exception
-	 */
 	static SynotierJettyApp boot(String _vol_home, String webinf, String config_xml, String[] args, PrintstreamProvider ... oe)
 			throws Exception {
 
@@ -212,7 +204,12 @@ public class SynotierJettyApp {
 					  !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
 				;
 	}
-
+	 */
+	
+	/**
+	 * @param cfg
+	 * @throws Exception
+	 */
 	public SynotierJettyApp(SynodeConfig cfg) throws Exception {
 		syngleton = new Syngleton(cfg);
 	}
@@ -224,14 +221,14 @@ public class SynotierJettyApp {
 	 * @param admin 
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, SyncUser admin,
-			String urlpath, String webinf, String config_xml, String syntity_json) throws Exception {
+	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, AppSettings settings,
+			SyncUser admin, String urlpath, String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
 
 		SynotierJettyApp synapp = SynotierJettyApp
-						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
+						.instanserver(webinf, cfg, settings, config_xml)
 						.loadomains(cfg, new DocUser(admin));
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
@@ -331,6 +328,11 @@ public class SynotierJettyApp {
 	public void stop() throws Exception {
 		if (server != null)
 			server.stop();
+	}
+	
+	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, AppSettings settings,
+			String config_xml) throws Exception {
+		return instanserver(configPath, cfg, config_xml, settings.bindip(), Integer.valueOf(settings.port()));
 	}
 
 	/**
