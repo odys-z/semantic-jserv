@@ -195,8 +195,8 @@ public class ExpDoctierservTest {
 			YellowPages.load(f("$VOLUME_%s", i));
 
 			cfgs[i] = YellowPages.synconfig();
-			cfgs[i].localhost = host;
-			cfgs[i].port = port++;
+			// cfgs[i].localhost = host;
+			// cfgs[i].port = port++;
 			cfgs[i].mode = SynodeMode.peer;
 
 			// install

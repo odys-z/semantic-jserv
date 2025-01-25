@@ -57,7 +57,6 @@ class ExifTest {
 
 	@BeforeAll
 	static void init () throws InterruptedException, IOException, TimeoutException {
-		// Exiftool.init("./src/main/java/webapp/WEBINF");
 		Configs.init("./src/main/webapp/WEB-INF");
 		Exiftool.init();
 	}

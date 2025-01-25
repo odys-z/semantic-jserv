@@ -5,7 +5,7 @@ touch volumes-0.7/volume-prv/jserv-main.db
 
 echo "{ \"type\"     : \"io.oz.jserv.docs.syn.singleton.AppSettings\",
   \"vol_name\" : \"VOLUME_HOME\",
-  \"volume\"   : \"../../../../volumes-0.7/volume-hub\",
+  \"volume\"   : \"../../../../../volumes-0.7/volume-hub\",
   \"exifpath\" : \"/usr/bin\",
   \"bindip\"   : \"127.0.0.1\",
   \"port\"     : 8964,

@@ -81,7 +81,7 @@ public class SynotierJettyApp {
 		String sync = cfg.synconn;
 
 		SynotierJettyApp synapp = SynotierJettyApp
-						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
+						.instanserver(webinf, cfg, config_xml, "0.0.0.0", 8964)
 						.loadomains(cfg, new DocUser(admin));
 
 		Utils.logi("------------ Starting %s ... --------------", synid);

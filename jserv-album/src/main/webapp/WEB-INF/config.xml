@@ -40,7 +40,13 @@
 
 	<c>
 		<k>exiftool</k>
-		<v>exiftool</v>
+		<!-- Tip: path configuration in windows can be very different, say,
+		c:\\Users\\User\\bin\\exiftool
+		or 
+		$BIN/exiftool
+		-DBIN=C:/Users/User/bin
+		 -->
+		<v>$BIN/exiftool</v>
 	</c>
   </t>
 

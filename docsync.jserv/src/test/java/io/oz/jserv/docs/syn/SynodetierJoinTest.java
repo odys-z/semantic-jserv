@@ -123,7 +123,7 @@ public class SynodetierJoinTest {
 			SynodeConfig config = new SynodeConfig(nodes[i], SynodeMode.peer);
 			config.synconn = servs_conn[i];
 			config.sysconn = f("main-sqlite-%s", i);
-			config.port    = port++;
+			// config.port    = port++;
 			config.mode    = SynodeMode.peer;
 			config.org     = new SynOrg();
 			config.org.orgId= ura;

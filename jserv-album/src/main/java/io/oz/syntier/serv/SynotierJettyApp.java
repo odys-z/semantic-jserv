@@ -6,6 +6,9 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.warn;
+
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -22,8 +25,6 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.kohsuke.args4j.CmdLineParser;
-
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
@@ -86,14 +87,31 @@ public class SynotierJettyApp {
 	 * @param args [0] settings.xml
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {
-		boot("WEB-INF", "config.xml", _0(args, "settings.json"));
+	public static void main(String[] args) {
+		try {
+			boot("WEB-INF", "config.xml", _0(args, "settings.json"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			
+			warn("Fatal errors, process is stopped.");
+			System.exit(-1);
+		}
 	}
 	
-	static SynotierJettyApp boot(String webinf, String config_xml, String settings_json, PrintstreamProvider ... oe) throws Exception {
-		Utils.logi("Loading settings: %s", settings_json);
+	static SynotierJettyApp boot(String webinf, String config_xml, String settings_json,
+			PrintstreamProvider ... oe) throws Exception {
+
+		logi("Loading settings: %s", settings_json);
 		AppSettings pset = AppSettings.load(webinf, settings_json);
-		String p = new File(FilenameUtils.concat(webinf, pset.volume)).getAbsolutePath();
+		
+		String p = pset.volume;
+		if (!new File(p).exists()) // absolute
+			p = new File(FilenameUtils.concat(webinf, pset.volume)).getAbsolutePath();
+		if (!new File(p).exists()) { // relative
+			warn("Can't find volume: settings.json: %s\nvolume: %s\nconfig-root: %s", pset.json, pset.volume, webinf);
+			throw new SemanticException("Can't find volume with settings.json/[volume] in absolute and relative to WEB-INF.", pset.volume);
+		}
+
 		System.setProperty(pset.vol_name, p);
 		Utils.logi("%s:\n%s\n%s", settings_json, p, pset.toString());
 		
@@ -108,8 +126,9 @@ public class SynotierJettyApp {
 		return boot(webinf, config_xml, pset, oe);
 	}
 
-	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings, PrintstreamProvider ... oe)
-			throws Exception {
+	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings,
+			PrintstreamProvider ... oe) throws Exception {
+
 		Utils.logi("%s : %s", settings.vol_name, System.getProperty(settings.vol_name));
 
 		Configs.init(webinf);
@@ -124,18 +143,19 @@ public class SynotierJettyApp {
 		
 		String[] ip_urlpath = new String[] {settings.bindip(), urlpath};
 
-			// the un-tested branch
-			mustnonull(settings.rootkey, "Rootkey cannot be null for starting App.");
+		// the un-tested branch
+		mustnonull(settings.rootkey, f(
+				"Rootkey cannot be null for starting App. settings:\n%s", 
+				settings.toBlock()));
 
-			YellowPages.load(FilenameUtils.concat(
-					new File(".").getAbsolutePath(),
-					webinf,
-					EnvPath.replaceEnv($vol_home)));
+		YellowPages.load(FilenameUtils.concat(
+				new File(".").getAbsolutePath(),
+				webinf,
+				EnvPath.replaceEnv($vol_home)));
 
-			AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
+		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
 		
-		// return createSyndoctierApp( cfg.ip(ip_urlpath[0]),
-		return createSyndoctierApp( cfg, settings,
+		return createSyndoctierApp(cfg, settings,
 									((ArrayList<SyncUser>) YellowPages.robots()).get(0),
 									ip_urlpath[1], webinf, config_xml,
 									f("%s/%s", $vol_home, "syntity.json"))

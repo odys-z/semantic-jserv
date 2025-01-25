@@ -32,8 +32,12 @@ jserv-sqlite:
 	@cp -r $(SRC_WEB) WEB-INF
 #	@mkdir $(VOLUME)/$(node)
 #	@cp -a volumes-0.7/volume-hub/. $(VOLUME)/$(node)
-	@zip -FSr jserv-album-$(VERSION).zip \
+
+#	@zip -FSr jserv-album-$(VERSION).zip \
 	Makefile $(BUILDDIR)/jserv-album-*.jar install-settings $(VOLUME) WEB-INF install.sh
+	@jar -cMf jserv-album-$(VERSION).zip \
+	Makefile $(BUILDDIR)/jserv-album-*.jar install-settings $(VOLUME) WEB-INF install.sh
+
 	@mv jserv-album-$(VERSION).zip $(BUILDDIR)
 	@rm $(BUILDDIR)/jserv-album-*.jar
 	@rm -rf WEB-INF

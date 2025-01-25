@@ -209,7 +209,7 @@ public class CreateSyndocTierTest {
 		AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey, "jserv-stub");
 
 		SynotierJettyApp app = SynotierJettyApp
-				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", cfg.port);
+				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", 8964);
 		app.syngleton.loadomains(cfg, new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)));
 
 		return SynotierJettyApp

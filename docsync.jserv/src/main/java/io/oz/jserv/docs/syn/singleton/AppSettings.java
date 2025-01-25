@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.mustnonull;
@@ -17,9 +18,11 @@ import org.apache.commons.io_odysz.FilenameUtils;
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.Synode;
@@ -47,39 +50,41 @@ public class AppSettings extends Anson {
 	 */
 	static String serv_json = "settings.json";
 
+	@AnsonField(ignoreFrom=true, ignoreTo=true)
 	String webinf;
 	
-	/**
-	 * 
-	 * @param webinf 
-	 * @param webinf config root, path of cocnfig.xml, e. g. WEB-INF
-	 * @param config_xml 
-	 * @param envolume volume home variable, e. g. $VOLUME_HOME
-	 * @param config_xml config file name, e. g. config.xml
+	/** <pre>
+	 *  install && !root: install
+	 * !install &&  root: boot
+	 *  
+	 * !install && !root: error
+	 *  install &&  root: boot
+	 * </pre>
+	 * @param config_xml
+	 * @return
 	 * @throws Exception
-	static void setupdb(String webinf, AppSettings settings, String config_xml) throws Exception {
-		YellowPages.load(settings.vol_name);
-
-		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
-		setupdb(cfg, webinf, settings.vol_name, config_xml, "ABCDEF0123465789");
-	}
 	 */
-
 	public AppSettings setupdb(String config_xml) throws Exception {
-		String $vol_home = "$" + vol_name;
+		if (!isblank(installkey) && isblank(rootkey)) {
+			String $vol_home = "$" + vol_name;
 
-		mustnonull(jservs);
+			mustnonull(jservs);
 
-		YellowPages.load(FilenameUtils.concat(
-				new File(".").getAbsolutePath(),
-				webinf,
-				EnvPath.replaceEnv($vol_home)));
+			YellowPages.load(FilenameUtils.concat(
+					new File(".").getAbsolutePath(),
+					webinf,
+					EnvPath.replaceEnv($vol_home)));
 
-		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
+			SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 
-		AppSettings.setupdb(cfg, webinf, $vol_home, config_xml, installkey, jservs);
-		rootkey = installkey;
-		installkey = null;
+			AppSettings.setupdb(cfg, webinf, $vol_home, config_xml, installkey, jservs);
+			rootkey = installkey;
+			installkey = null;
+		}
+		else if (isblank(installkey)) {
+			mustnonull(rootkey, "[AppSettings] Rootkey cannot be null if installing key is empty.");
+			// else go to booting
+		}
 		return this;
 	}
 	
@@ -174,12 +179,11 @@ public class AppSettings extends Anson {
 
 	private HashMap<String, String> envars;
 
-
 	/**
 	 * Json file path.
 	 */
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
-	private String json; 
+	public String json; 
 
 	/**
 	 * Should only be used in win-serv mode.
@@ -190,7 +194,7 @@ public class AppSettings extends Anson {
 	 */
 	public static AppSettings load(String web_inf, String... json) throws AnsonException, IOException {
 		String abs_json = FilenameUtils.concat(EnvPath.replaceEnv(web_inf), _0(json, serv_json));
-		Utils.logi("Loading serv_xml, %s", abs_json);
+		Utils.logi("[AppSettings] Loading settings from %s", abs_json);
 
 		FileInputStream inf = new FileInputStream(new File(abs_json));
 
@@ -200,7 +204,6 @@ public class AppSettings extends Anson {
 
 		return settings;
 	}
-	
 	
 	/**
 	 * Move to Antson?
@@ -228,6 +231,7 @@ public class AppSettings extends Anson {
 		if (print)
 			Utils.logi("%s\t: %s", vol_name, volume);
 		
+		if (envars != null)
 		for (String v : envars.keySet()) {
 			System.setProperty(v, envars.get(v));
 			if (print)
@@ -244,5 +248,34 @@ public class AppSettings extends Anson {
 	public String bindip() {
 		Utils.warn("Find the correct ip and return the suitable one, '0.0.0.0' as the last one.");
 		return bindip;
+	}
+
+	/**
+	 * Install process: <br>
+	 * 1. load settings.json<br>
+	 * 2. update env-variables<br>
+	 * 3. initiate connects<br>
+	 * 4. setup db, create tables it's sqlite drivers. <br>
+	 * 
+	 * <h5>Note:</h5>
+	 * Multiple App instance must avoid defining same variables.
+	 * 
+	 * @param webinf
+	 * @param settings_json
+	 * @return AppSettings
+	 * @throws Exception 
+	 */
+	public static AppSettings checkInstall(String webinf, String config_xml, String settings_json) throws Exception {
+		Configs.init(webinf);
+		AppSettings settings = AppSettings
+							.load(webinf, settings_json)
+							.setEnvs(true);
+
+		Connects.init(webinf);
+
+		if (!isblank(settings.installkey))
+			settings.setupdb(config_xml).save();
+		
+		return settings;
 	}
 }

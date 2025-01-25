@@ -1,9 +1,9 @@
 { "type"     : "io.oz.jserv.docs.syn.singleton.AppSettings",
   "vol_name" : "VOLUME_HOME",
-  "volume"   : "../../../../volume",
+  "volume"   : "../../../../../volumes-0.7/volume-hub",
   "exifpath" : "/usr/bin",
-  "bindip"   : "0.0.0.0",
+  "bindip"   : "127.0.0.1",
   "port"     : 8964,
   "jservs"   : "X:web-x-ip:port/jserv-album Y:web-y-ip:port/jserv-album",
-  "envars"   : {"WEBROOT": ""}
+  "envars"   : {"WEBROOT_HUB": "", "WEBROOT_PRV": ""}
 }

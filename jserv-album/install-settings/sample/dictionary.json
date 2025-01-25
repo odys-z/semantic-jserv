@@ -1,12 +1,10 @@
 {"type": "io.oz.syn.AnRegistry",
  "config": {
-   "synid": "Y",
+   "synid": "SAMPLE-X",
    "domain": "zsu",
    "admin": "ody",
-   "sysconn": "sys-prv",
-   "synconn": "docsyn-prv",
-   "localhost": "",
-   "port": 8965,
+   "sysconn": "sys",
+   "synconn": "docsyn",
    "debug": false,
 
   "org": {
@@ -15,7 +13,7 @@
    "orgName": "URA",
    "orgType": "nation",
    "market":  "test",
-   "webroot": "$WEBROOT_PRV",
+   "webroot": "$WEBROOT_HUB",
    "homepage": "",
    "album0":  "album-test"
 	},
