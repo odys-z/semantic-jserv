@@ -13,7 +13,7 @@
    "orgName": "URA",
    "orgType": "nation",
    "market":  "test",
-   "webroot": "$WEBROOT_HUB",
+   "webroot": "$WEBROOT_Album-web-in-settings.json",
    "homepage": "",
    "album0":  "album-test"
 	},

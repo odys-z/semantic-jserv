@@ -3,23 +3,34 @@ package io.oz.syntier.serv;
 import static org.junit.jupiter.api.Assertions.*;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.prefixWith;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.warn;
 import static io.oz.syntier.serv.SynotierJettyApp.boot;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
+import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.x.AnsonException;
+import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.syn.Synode;
+import io.odysz.semantic.util.DAHelper;
+import io.odysz.transact.sql.Transcxt;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
+import io.oz.syn.SynodeConfig;
+import io.oz.syn.YellowPages;
 
 class SynotierJettyAppTest {
 
@@ -41,13 +52,12 @@ class SynotierJettyAppTest {
 	}
 	
 	@Test
-	void testAppSettings() throws AnsonException, IOException {
+	void testAppSettings() throws Exception {
 		AppSettings hset = AppSettings.load(webinf, "settings.json");
 		String bindip = hset.bindip;
 		assertTrue(eq("127.0.0.1", bindip) || eq("0.0.0.0", bindip));
+		assertEquals("../../../../volumes-0.7/volume-hub", hset.volume);
 
-		assertEquals("../../../../../volumes-0.7/volume-hub", hset.volume);
-		
 	    String ip;
 	    try {
 	        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -68,10 +78,44 @@ class SynotierJettyAppTest {
 	        throw new RuntimeException(e);
 	    }
 	}
+	
+	@Test
+	void testInstallJervs() throws Exception {
+		resettingsKeys("settings.json");
+
+		AppSettings settings = AppSettings.load(webinf, "settings.json");
+		assertNull(settings.rootkey);
+		assertEquals("0123456789ABCDEF", settings.installkey);
+
+		settings = AppSettings.checkInstall(webinf, config_xml, "settings.json");
+
+		assertNull(settings.installkey);
+		assertEquals("0123456789ABCDEF", settings.rootkey);
+
+		String $vol_home = "$" + settings.vol_name;
+		YellowPages.load(FilenameUtils.concat(
+				new File(".").getAbsolutePath(),
+				webinf,
+				EnvPath.replaceEnv($vol_home)));
+
+		SynodeConfig cfg = YellowPages.synconfig();
+		AppSettings.setupJservs(cfg, settings.jservs);
+
+		Transcxt st = new DATranscxt(cfg.synconn);
+		SynodeMeta m = new SynodeMeta(cfg.synconn);
+		
+		for (Synode peer : cfg.peers)
+			assertTrue(prefixWith(
+				DAHelper.getValstr(st, cfg.synconn, m, m.jserv, m.domain, cfg.domain, m.synoder, peer.synid), "http:"),
+				"See WEB-INF/settings.json for what's expected.");
+	}
 
 	@Test
 	void testSetupRunApp() throws Exception {
-		resettings();
+		resettingsKeys(settings_hub);
+		resettingsKeys(settings_prv);
+
+		preventSettingsError("settings.prv.json");
 
 		AppSettings.checkInstall(webinf, config_xml, settings_hub);
 		AppSettings.checkInstall(webinf, config_xml, settings_prv);
@@ -105,13 +149,13 @@ class SynotierJettyAppTest {
 		else Utils.warn("Quit test running. To wait for clients accessing, define 'wait-clients'.");
 	}
 
-	private void resettings() throws AnsonException, IOException {
-		for (String json : new String[] {settings_hub, settings_prv}) {
-			AppSettings s = AppSettings.load(webinf, json);
+	private void resettingsKeys(String settings_json) throws AnsonException, IOException {
+		// for (String json : new String[] {settings_hub, settings_prv}) {
+			AppSettings s = AppSettings.load(webinf, settings_json);
 			s.installkey = "0123456789ABCDEF";
 			s.rootkey = null;
 			s.save();
-		}
+		// }
 	}
 
 //	/** @deprecated */
@@ -155,15 +199,15 @@ class SynotierJettyAppTest {
 //		else Utils.warn("To wait for clients accessing, define 'wait-clients'.");
 //	}
 
-//	/**
-//	 * Prevent error of lack of environment variables when main_() is calling Connects.init().
-//	 * @throws IOException 
-//	 * @throws AnsonException 
-//	 */
-//	private void preventSettingsError() throws AnsonException, IOException {
-//		AppSettings set = AppSettings.load(webinf, "settings.prv.json");
-//		System.setProperty(set.vol_name, set.volume);
-//	}
+	/**
+	 * Prevent error of lack of environment variables when main_() is calling Connects.init().
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 */
+	private void preventSettingsError(String settings_prefly) throws AnsonException, IOException {
+		AppSettings set = AppSettings.load(webinf, settings_prefly);
+		System.setProperty(set.vol_name, set.volume);
+	}
 
 	/*
 	void testVideoUp(boolean[] lights) throws SsException, IOException, AnsonException, TransException {

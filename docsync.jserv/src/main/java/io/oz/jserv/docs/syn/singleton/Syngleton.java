@@ -116,8 +116,16 @@ public class Syngleton extends JSingleton {
 		tb0 = new DATranscxt(cfg.synconn);
 	}
 
-	public void updatePeerJservs(SynodeConfig cfg, String domain)
-			throws SemanticException {
+	/**
+	 * 
+	 * @param cfg
+	 * @param domain
+	 * @param jservss e. g. "X:https://host-ip:port/jserv-album Y:https://..."
+	 * @throws SQLException 
+	 * @throws TransException 
+	 */
+	public void updatePeerJservs(SynodeConfig cfg, String domain, String jservss)
+			throws TransException, SQLException {
 		if (!eq(domain, cfg.domain))
 			throw new SemanticException(
 				"Updating domain %s, but got configuration of %s.",
@@ -132,7 +140,7 @@ public class Syngleton extends JSingleton {
 //				.whereEq(synm.pk, sn.synid)
 //				.whereEq(synm.domain, cfg.domain)
 //				.u(tb0.instancontxt(cfg.synconn, robot));
-		AppSettings.updatePeerJservs(cfg, domanager(domain).synm);
+		AppSettings.setupJservs(cfg, jservss);
 	}
 
 	/**

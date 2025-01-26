@@ -30,4 +30,4 @@ echo $vpath
 # sed -i "s/\"volume\"\s*:\s*\".*\"/\"volume\"   : \"$vpath\"/" WEB-INF/settings.json
 # touch $2/doc-jserv.db $2/jserv-main.db
 sed -i "s@\"volume\"\s*:\s*\".*\"@\"volume\"   : \"$vpath\"@" WEB-INF/settings.json
-sed -i "s@\"rootkey\"\s*:\s*\".*\"@\"rootkey\"   : \"$3\"@" WEB-INF/settings.json
+sed -i "s@\"installkey\"\s*:\s*\".*\"@\"installkey\"   : \"$3\"@" WEB-INF/settings.json

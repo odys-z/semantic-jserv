@@ -215,6 +215,7 @@ public class ExpDoctierservTest {
 						cfgs[i].synode(), SynodeMode.peer, docm, null, cfgs[i].debug);
 		}
 		
+		/*
 		for (int i : nodex) {
 			for (int j = 0; j < Math.min(jetties.length, cfgs[i].synodes().length); j++)
 				cfgs[i].synodes()[j].jserv = jetties[j].syngleton.jserv;
@@ -226,6 +227,8 @@ public class ExpDoctierservTest {
 		}
 
 		return nodex;
+		*/
+		throw new Exception("TODO");
 	}
 
 	static void cleanPhotos(ExpDocTableMeta docm, String conn, Dev[] devs) throws Exception {

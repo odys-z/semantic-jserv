@@ -5,8 +5,6 @@
    "admin": "ody",
    "sysconn": "sys-hub",
    "synconn": "docsyn-hub",
-   "localhost": "",
-   "port": 8964,
    "debug": false,
     
   "org": {

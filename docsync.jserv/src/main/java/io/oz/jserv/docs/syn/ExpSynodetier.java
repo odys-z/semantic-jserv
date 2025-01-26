@@ -223,34 +223,41 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} catch (ExchangeException e) {
 				// e. g. login failed, try again
 				if (debug) e.printStackTrace();
+			} catch (InterruptedIOException | SocketException e) {
+				// wait for network
+				// TODO we need API for immediately trying
+				if (debug)
+					e.printStackTrace();
+				Utils.logi("reschedule syn-worker with error: %s", e.getMessage());
+				reschedule(5);
 			} catch (TransException | SQLException e) {
 				// local errors, stop for fixing
 				e.printStackTrace();
-				schedualed.cancel(false);
-				scheduler.shutdown();
+				// schedualed.cancel(false);
+				// scheduler.shutdown();
+				stopScheduled(2);
 			} catch (FileNotFoundException e) {
 				// configuration errors
 				if (debug) e.printStackTrace();
 				Utils.warn("Configure Error: synode %s, user %s. Syn-worker is shutting down.\n"
 						+ " (Tip: jserv url must inclue root path, e. g. /jserv-album)",
 						domanager0.synode, domanager0.admin.uid());
-				schedualed.cancel(false);
-				scheduler.shutdown();
+				// schedualed.cancel(false);
+				// scheduler.shutdown();
+				stopScheduled(2);
 			} catch (AnsonException | SsException e) {
 				if (debug) e.printStackTrace();
 				Utils.warn("(Login | Configure) Error: synode %s, user %s. Syn-worker is shutting down.",
 						domanager0.synode, domanager0.admin.uid());
-				schedualed.cancel(false);
-				scheduler.shutdown();
-			} catch (InterruptedIOException | SocketException e) {
-				// wait for network
-				// TODO we need API for immediately trying
-				reschedule(5);
+				// schedualed.cancel(false);
+				// scheduler.shutdown();
+				stopScheduled(2);
 			} catch (Exception e) {
-				// ??
+				// error 1: male format url
 				e.printStackTrace();
-				schedualed.cancel(false);
-				scheduler.shutdown();
+				// schedualed.cancel(false);
+				// scheduler.shutdown();
+				stopScheduled(2);
 			} finally {
 				running = false;
 			}
@@ -271,12 +278,12 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				TimeUnit.MILLISECONDS);
 	}
 
-	public void stopScheduled(int sDelay) {
+	public void stopScheduled(int sTimeout) {
 		Utils.logi("[%s] cancling sync-worker ... ", synid);
 		schedualed.cancel(true);
 		scheduler.shutdown();
 		try {
-		    if (!scheduler.awaitTermination(sDelay, TimeUnit.SECONDS)) {
+		    if (!scheduler.awaitTermination(sTimeout, TimeUnit.SECONDS)) {
 		        scheduler.shutdownNow();
 		    }
 		} catch (InterruptedException e) {
