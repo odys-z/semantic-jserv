@@ -191,8 +191,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	public ExpSynodetier syncIn(float syncIns, OnError err) throws Exception {
 		this.syncInSnds = syncIns;
 		if ((int)(this.syncInSnds) <= 0) {
-			Utils.warn("Syn-worker is disabled. %s : %s [%s]",
-					domanager0.domain(), domanager0.synode, domanager0.synconn);
+			Utils.warn("Syn-worker is disabled (synching in = %s seconds). %s : %s [%s]",
+					syncIns, domanager0.domain(), domanager0.synode, domanager0.synconn);
 			return this;
 		}
 
@@ -233,8 +233,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} catch (TransException | SQLException e) {
 				// local errors, stop for fixing
 				e.printStackTrace();
-				// schedualed.cancel(false);
-				// scheduler.shutdown();
 				stopScheduled(2);
 			} catch (FileNotFoundException e) {
 				// configuration errors
@@ -242,21 +240,15 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				Utils.warn("Configure Error: synode %s, user %s. Syn-worker is shutting down.\n"
 						+ " (Tip: jserv url must inclue root path, e. g. /jserv-album)",
 						domanager0.synode, domanager0.admin.uid());
-				// schedualed.cancel(false);
-				// scheduler.shutdown();
 				stopScheduled(2);
 			} catch (AnsonException | SsException e) {
 				if (debug) e.printStackTrace();
 				Utils.warn("(Login | Configure) Error: synode %s, user %s. Syn-worker is shutting down.",
 						domanager0.synode, domanager0.admin.uid());
-				// schedualed.cancel(false);
-				// scheduler.shutdown();
 				stopScheduled(2);
 			} catch (Exception e) {
 				// error 1: male format url
 				e.printStackTrace();
-				// schedualed.cancel(false);
-				// scheduler.shutdown();
 				stopScheduled(2);
 			} finally {
 				running = false;

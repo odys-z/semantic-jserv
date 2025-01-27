@@ -124,6 +124,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 */
 	public static void init(DATranscxt daSctx)
 			throws SAXException, IOException, SemanticException, SQLException {
+		if (daSctx == null)
+			throw new AnsonException(0, "AnSession needs a non-null DAtrans builder.");
+
 		sctx = daSctx;
 
 		lock = new ReentrantLock();

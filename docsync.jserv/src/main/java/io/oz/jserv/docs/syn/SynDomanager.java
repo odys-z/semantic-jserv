@@ -322,7 +322,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	/**
 	 * Login to peers and synchronize.
-	 * @deprecated
 	 * @param docuser
 	 * @param onok 
 	 * @return this
@@ -331,7 +330,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws IOException
 	 * @throws TransException
 	 * @throws InterruptedException 
-	 */
 	public SynDomanager openUpdateSynssions(SyncUser docuser, OnDomainUpdate... onok) {
 
 		for (SynssionPeer peer : sessions.values()) {
@@ -350,13 +348,31 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 		return this;
 	}
+	 */
 
-	public SynDomanager openSynssions(SyncUser docuser, OnDomainUpdate... onok) throws SemanticException, AnsonException, SsException, IOException {
+	/**
+	 * 
+	 * @param docuser
+	 * @param onok
+	 * @return this
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws SsException
+	 * @throws IOException
+	 */
+	public SynDomanager openSynssions(SyncUser docuser, OnDomainUpdate... onok)
+			throws SemanticException, AnsonException, SsException, IOException {
 		if (sessions != null)
 		for (SynssionPeer peer : sessions.values()) {
 			if (eq(peer.peer, synode) || peer.client != null)
 					continue;
-			peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
+
+			if (peer.client == null || !peer.client.isSessionValid()) {
+				Utils.logT(new Object(){},
+						"Opening domain %s, logging into: %s, jserv: %s",
+						domain, peer.peer, peer.peerjserv);
+				peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
+			}
 		}
 
 		if (!isNull(onok))

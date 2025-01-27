@@ -200,8 +200,8 @@ public class ExpDoctierservTest {
 			cfgs[i].mode = SynodeMode.peer;
 
 			// install
-			AppSettings.setupdb(cfgs[i], webinf,
-					f("$VOLUME_%s", i), f("config-%s.xml", i), "ABCDEF0123465789", "jserv-stub");
+			AppSettings.setupdb(cfgs[i], "jserv-stub", webinf,
+					f("$VOLUME_%s", i), f("config-%s.xml", i), "ABCDEF0123465789", null);
 			cleanPhotos(docm, cfgs[i].synconn, devs);
 			
 			// clean and reboot

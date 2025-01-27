@@ -10,11 +10,6 @@ import static io.oz.syntier.serv.SynotierJettyApp.boot;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
-
 import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.Test;
 
@@ -58,25 +53,38 @@ class SynotierJettyAppTest {
 		assertTrue(eq("127.0.0.1", bindip) || eq("0.0.0.0", bindip));
 		assertEquals("../../../../volumes-0.7/volume-hub", hset.volume);
 
-	    String ip;
-	    try {
-	        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-	        while (interfaces.hasMoreElements()) {
-	            NetworkInterface iface = interfaces.nextElement();
-	            // filters out 127.0.0.1 and inactive interfaces
-	            if (iface.isLoopback() || !iface.isUp())
-	                continue;
+//	    String ip;
+//	    try {
+//	        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+//	        while (interfaces.hasMoreElements()) {
+//	            NetworkInterface iface = interfaces.nextElement();
+//
+//	            Enumeration<InetAddress> addresses = iface.getInetAddresses();
+////                InetAddress addr = addresses.nextElement();
+////                ip = addr.getHostAddress();
+//
+//	            if (iface.isLoopback() || !iface.isUp() || iface.isVirtual())
+//	                continue;
+//	            if (addresses.hasMoreElements())
+//	            	Utils.logi("Iface: %s", iface.getDisplayName());
+//
+//	            while(addresses.hasMoreElements()) {
+//	                InetAddress addr = addresses.nextElement();
+//	                ip = addr.getHostAddress();
+//	                Utils.logi("\n%s [%s] %s - %s - %s",
+//	                		iface.isUp() ? "UP" : "--", 
+//	                		iface.isVirtual() ? "virtual" : "physic", ip,
+//	                		iface.getHardwareAddress(), iface.getDisplayName());
+//	            }
+//	            Utils.logi("=========== ===========");
+//	        }
+//	    } catch (SocketException e) {
+//	        throw new RuntimeException(e);
+//	    }
+	    
 
-	            Enumeration<InetAddress> addresses = iface.getInetAddresses();
-	            while(addresses.hasMoreElements()) {
-	                InetAddress addr = addresses.nextElement();
-	                ip = addr.getHostAddress();
-	                Utils.logi("%s - %s", ip, iface.getDisplayName());
-	            }
-	        }
-	    } catch (SocketException e) {
-	        throw new RuntimeException(e);
-	    }
+	   Utils.logi("Thanks to https://stackoverflow.com/a/38342964/7362888: %s",
+			   AppSettings.getLocalIp());
 	}
 	
 	@Test
@@ -87,7 +95,7 @@ class SynotierJettyAppTest {
 		assertNull(settings.rootkey);
 		assertEquals("0123456789ABCDEF", settings.installkey);
 
-		settings = AppSettings.checkInstall(webinf, config_xml, "settings.json");
+		settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, "settings.json");
 
 		assertNull(settings.installkey);
 		assertEquals("0123456789ABCDEF", settings.rootkey);
@@ -99,7 +107,7 @@ class SynotierJettyAppTest {
 				EnvPath.replaceEnv($vol_home)));
 
 		SynodeConfig cfg = YellowPages.synconfig();
-		AppSettings.setupJservs(cfg, settings.jservs);
+		AppSettings.setupJserv(cfg, settings, SynotierJettyApp.servpath);
 
 		Transcxt st = new DATranscxt(cfg.synconn);
 		SynodeMeta m = new SynodeMeta(cfg.synconn);
@@ -117,8 +125,8 @@ class SynotierJettyAppTest {
 
 		preventSettingsError("settings.prv.json");
 
-		AppSettings.checkInstall(webinf, config_xml, settings_hub);
-		AppSettings.checkInstall(webinf, config_xml, settings_prv);
+		AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, settings_hub);
+		AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, settings_prv);
 		/*
 		Configs.init(webinf);
 		AppSettings hubset = AppSettings
@@ -150,54 +158,11 @@ class SynotierJettyAppTest {
 	}
 
 	private void resettingsKeys(String settings_json) throws AnsonException, IOException {
-		// for (String json : new String[] {settings_hub, settings_prv}) {
-			AppSettings s = AppSettings.load(webinf, settings_json);
-			s.installkey = "0123456789ABCDEF";
-			s.rootkey = null;
-			s.save();
-		// }
+		AppSettings s = AppSettings.load(webinf, settings_json);
+		s.installkey = "0123456789ABCDEF";
+		s.rootkey = null;
+		s.save();
 	}
-
-//	/** @deprecated */
-//	@Disabled
-//	@Test
-//	void testSyndocApp_del() throws Exception {
-//		// String webinf = "src/main/webapp/WEB-INF";
-//		preventSettingsError();
-//
-//		Utils.logi("Loading HUB settings: %s", settings_hub);
-//		AppSettings hset = AppSettings.load(webinf, settings_hub);
-//		String p = new File(FilenameUtils.concat(webinf, hset.volume)).getAbsolutePath();
-//		System.setProperty(hset.vol_name, p);
-//		Utils.logi("HUB settings: %s", p);
-//
-////		Utils.logi("Loading PRV settings: %s", "settings.prv.json");
-////		AppSettings pset = AppSettings.load(webinf, "settings.prv.json");
-////		p = new File(FilenameUtils.concat(webinf, pset.volume)).getAbsolutePath();
-////		System.setProperty(pset.vol_name, p);
-////		Utils.logi("PRV settings: %s", p);
-//
-////		SynotierJettyApp hub = SynotierJettyApp.boot(hset.vol_name, webinf, config_xml,
-////				new String[] {"-ip", hset.bindip,
-////							"-urlpath", SynotierJettyApp.urlpath,
-////							"-peer-jservs", hset.jservs,
-////							"-install-key", "0123456789ABCDEF"});
-//		SynotierJettyApp hub = SynotierJettyApp.boot(webinf, config_xml, settings_hub);
-//
-//		// hub.print();
-//		SynotierJettyApp prv = SynotierJettyApp.boot(webinf, config_xml, settings_prv);
-//
-//		hub.print();
-//		prv.print();
-//
-//		warn("Multiple synodes initialed in a single process, of which only the first (%s) syn-worker is enabled.",
-//				hub.syngleton.synode());
-//		warn("See ExpSynodetier.syncIns(secondes).");
-//		
-//		if (System.getProperty("wait-clients") != null)
-//			pause("Press enter to quite ...");
-//		else Utils.warn("To wait for clients accessing, define 'wait-clients'.");
-//	}
 
 	/**
 	 * Prevent error of lack of environment variables when main_() is calling Connects.init().

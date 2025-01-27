@@ -116,32 +116,32 @@ public class Syngleton extends JSingleton {
 		tb0 = new DATranscxt(cfg.synconn);
 	}
 
-	/**
-	 * 
-	 * @param cfg
-	 * @param domain
-	 * @param jservss e. g. "X:https://host-ip:port/jserv-album Y:https://..."
-	 * @throws SQLException 
-	 * @throws TransException 
-	 */
-	public void updatePeerJservs(SynodeConfig cfg, String domain, String jservss)
-			throws TransException, SQLException {
-		if (!eq(domain, cfg.domain))
-			throw new SemanticException(
-				"Updating domain %s, but got configuration of %s.",
-				domain, cfg.domain);
-//		
-//		IUser robot = DATranscxt.dummyUser();
-//		SynodeMeta synm = domanager(domain).synm;
-//
-//		for (Synode sn : cfg.peers())
-//			tb0.update(synm.tbl, robot)
-//				.nv(synm.jserv, sn.jserv)
-//				.whereEq(synm.pk, sn.synid)
-//				.whereEq(synm.domain, cfg.domain)
-//				.u(tb0.instancontxt(cfg.synconn, robot));
-		AppSettings.setupJservs(cfg, jservss);
-	}
+//	/**
+//	 * 
+//	 * @param cfg
+//	 * @param domain
+//	 * @param settings.jservss e. g. "X:https://host-ip:port/jserv-album Y:https://..."
+//	 * @throws SQLException 
+//	 * @throws TransException 
+//	 */
+//	public void updatePeerJservs(String url_path, SynodeConfig cfg, String domain, AppSettings settings)
+//			throws TransException, SQLException {
+//		if (!eq(domain, cfg.domain))
+//			throw new SemanticException(
+//				"Updating domain %s, but got configuration of %s.",
+//				domain, cfg.domain);
+////		
+////		IUser robot = DATranscxt.dummyUser();
+////		SynodeMeta synm = domanager(domain).synm;
+////
+////		for (Synode sn : cfg.peers())
+////			tb0.update(synm.tbl, robot)
+////				.nv(synm.jserv, sn.jserv)
+////				.whereEq(synm.pk, sn.synid)
+////				.whereEq(synm.domain, cfg.domain)
+////				.u(tb0.instancontxt(cfg.synconn, robot));
+//		AppSettings.setupJserv(cfg, settings, url_path);
+//	}
 
 	/**
 	 * Load domains from syn_synode, create {@link SynDomanager} for each domain.
@@ -312,9 +312,19 @@ public class Syngleton extends JSingleton {
 		initSynodeRecs(cfg, cfg.peers);
 	}
 
+	/**
+	 * Load Configs and Connects, and load Semantics configurations.
+	 * 
+	 * @param cfg
+	 * @param configFolder
+	 * @param cfgxml
+	 * @param runtimeRoot
+	 * @param rootKey
+	 * @throws Exception
+	 */
 	public static void bootSyntables(SynodeConfig cfg,
 			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
-		Utils.logi("Initializing synode singleton with configuration file %s\n"
+		Utils.logi("Booting synode singleton with configuration file %s\n"
 				+ "runtime root: %s\n"
 				+ "configure folder: %s\n"
 				+ "root-key length: %s",
@@ -337,12 +347,12 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
-	 * Setup sqlite manage database tables, oz_autoseq, a_users with sql script files,
+	 * Setup system database tables, oz_autoseq, a_users with sql script files,
 	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
 	 * 
-	 * Should be called on for installation.
+	 * Should only be called for installation.
 	 * 
-	 * Triggering semantics handler parsing.
+	 * Note: This method requires {@link #defltScxt} has been created already.
 	 * 
 	 * @since 0.2.0
 	 * 
@@ -352,7 +362,6 @@ public class Syngleton extends JSingleton {
 	
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
-		// defltScxt = new DATranscxt();
 	
 		for (String tbl : new String[] {"oz_autoseq", "a_users", "a_roles", "a_orgs"}) {
 			sqls.add("drop table if exists " + tbl);
@@ -370,8 +379,6 @@ public class Syngleton extends JSingleton {
 			Connects.commit(cfg.sysconn, usr, sqls);
 			sqls.clear();
 		}
-
-		defltScxt = new DATranscxt(cfg.sysconn);
 		
 		if (synusers != null) {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);

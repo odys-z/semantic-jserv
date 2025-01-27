@@ -9,12 +9,17 @@ import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.warn;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.HashMap;
 
@@ -25,9 +30,11 @@ import io.odysz.anson.AnsonField;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
+import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.meta.SynodeMeta;
+import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantics.IUser;
@@ -67,7 +74,7 @@ public class AppSettings extends Anson {
 	 * @return
 	 * @throws Exception
 	 */
-	public AppSettings setupdb(String config_xml) throws Exception {
+	public AppSettings setupdb(String url_path, String config_xml) throws Exception {
 		if (isblank(rootkey)) {
 			mustnonull(installkey, "[AppSettings] Install-key cannot be null if root-key is empty.");
 
@@ -82,12 +89,14 @@ public class AppSettings extends Anson {
 
 			SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 
-			AppSettings.setupdb(cfg, webinf, $vol_home, config_xml, installkey, jservs);
+			Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
+			AppSettings.setupdb(cfg, url_path, webinf, $vol_home, config_xml, installkey, this);
+
 			rootkey = installkey;
 			installkey = null;
 		}
 		else if (isblank(installkey)) {
-			shouldnull(installkey, "[AppSettings] Install key is cleared with root-key been set.");
+			shouldnull(installkey, "[AppSettings] Install-key must be cleared after root-key has been set.");
 			installkey = null;
 		}
 		return this;
@@ -104,9 +113,10 @@ public class AppSettings extends Anson {
 	 * will be written through into table SynodeMeta.tbl. 
 	 * @throws Exception
 	 */
-	public static void setupdb(SynodeConfig cfg, String webinf, String envolume, String config_xml,
-			String rootkey, String jservs) throws Exception {
+	public static void setupdb(SynodeConfig cfg, String url_path, String webinf, String envolume, String config_xml,
+			String rootkey, AppSettings settings) throws Exception {
 		
+		// Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 		Syngleton.setupSysRecords(cfg, YellowPages.robots());
 
 		Syntities regists = Syntities.load(webinf, f("%s/syntity.json", envolume), 
@@ -122,12 +132,11 @@ public class AppSettings extends Anson {
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
 
-		if (!isNull(jservs))
-			setupJservs(cfg, jservs);
+		if (!isNull(settings.jservs))
+			setupJserv(cfg, settings, url_path);
 	}
 	
 	/**
-	 * @deprecated not correct, by calling setupSysRecords().
 	 * @param cfg
 	 * @param webinf
 	 * @param envolume
@@ -138,7 +147,7 @@ public class AppSettings extends Anson {
 	public static void rebootdb(SynodeConfig cfg, String webinf, String envolume, String config_xml,
 			String rootkey) throws Exception {
 		
-		Syngleton.setupSysRecords(cfg, YellowPages.robots());
+		// Syngleton.setupSysRecords(cfg, YellowPages.robots());
 
 		Syntities regists = Syntities.load(webinf, f("%s/syntity.json", envolume), 
 			(synreg) -> {
@@ -147,17 +156,24 @@ public class AppSettings extends Anson {
 		
 		Syngleton.bootSyntables(cfg, webinf, config_xml, ".", rootkey);
 
+		for (SyntityMeta m : regists.metas.values())
+			m.replace();
+
 		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
 	}
 
 	/**
 	 * @param cfg
 	 * @param jservss e. g. "X:https://host-ip:port/jserv-album Y:https://..."
+	 * @return 
 	 * @throws TransException
 	 * @throws SQLException 
 	 */
-	public static void setupJservs(SynodeConfig cfg, String jservss) throws TransException, SQLException {
-		String[] jservs = jservss.split(" ");
+	public static String setupJserv(SynodeConfig cfg, AppSettings settings, String jserv_album) throws TransException, SQLException {
+		String[] jservs = settings.jservs.split(" ");
+		SynodeMeta synm = new SynodeMeta(cfg.synconn);
+
+		String localserv = null;
 		for (String jserv : jservs) {
 			String[] sid_url = jserv.split(":");
 			if (isNull(sid_url) || len(sid_url) < 2)
@@ -165,35 +181,82 @@ public class AppSettings extends Anson {
 			
 			String url = jserv.replaceFirst(sid_url[0] + ":", "");
 			// cfg.jserv(sid_url[0], url);
-
-			updatePeerJservs(cfg.synconn, cfg.domain, new SynodeMeta(cfg.synconn), cfg.synode(), sid_url[0], url);
+			
+			if (eq(cfg.synode(), sid_url[0])) {
+				logT(new Object() {}, "Ignoring updating jserv to local node: %s");
+				localserv = updateLocalJserv(sid_url,
+						settings.port, jserv_album, cfg.synconn, synm, cfg.synode());
+			}
+			else
+				updatePeerJservs(cfg.synconn, cfg.domain, synm, sid_url[0], url);
 		}
+		return localserv;
 		
 		// updatePeerJservs(cfg, new SynodeMeta(cfg.synconn));
 	}
 
-//	public static void updatePeerJservs(SynodeConfig cfg, SynodeMeta synm)
-//			throws SemanticException {
-//
-//		IUser robot = DATranscxt.dummyUser();
-//
-//		try {
-//			DATranscxt tb = new DATranscxt(cfg.synconn);
-//			for (Synode sn : cfg.peers())
-//				tb.update(synm.tbl, robot)
-//					.nv(synm.jserv, sn.jserv)
-//					.whereEq(synm.pk, sn.synid)
-//					.whereEq(synm.domain, cfg.domain)
-//					.u(tb.instancontxt(cfg.synconn, robot));
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			throw new SemanticException("Failed to setup peers jserv:\n" + e.getMessage());
-//		}
-//	}
+
+	/**
+	 * @param settings e. g. "X:http://ip:port/jserv-album".split()
+	 * @param synconn
+	 * @param synm
+	 * @param mysid
+	 * @return 
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	private static String updateLocalJserv(String[] settings, int setting_port, String jserv_album,
+			String synconn, SynodeMeta synm, String mysid) throws TransException, SQLException {
+		String ip = null;
+		try { ip = getLocalIp();
+		} catch (IOException e) {
+			e.printStackTrace();
+			ip = settings[2].replaceAll("^//", "");
+		}
+
+		if (len(settings) <= 4 || !eq(settings[2], f("//%s", ip)))
+			Utils.warn(
+				"Local Ip is not the same as configured Ip, replacing %s with %s.",
+				settings[2], ip);
+		
+		IUser robot = DATranscxt.dummyUser();
+		try {
+			String servurl = f("%s://%s:%s%s", settings[1],
+					ip, setting_port == 0 ? 80 : setting_port, 
+					isblank(jserv_album) ? "" :
+					jserv_album.startsWith("/") ? jserv_album : "/" + jserv_album);
+
+			DATranscxt tb = new DATranscxt(synconn);
+			tb.update(synm.tbl, robot)
+			.nv(synm.jserv, servurl)
+			.whereEq(synm.pk, mysid)
+			// .whereEq(synm.domain, domain)
+			.u(tb.instancontxt(synconn, robot));
+	
+			return servurl;
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new TransException(e.getMessage());
+		}
+		
+	}
+	
+	/**
+	 * Thanks to https://stackoverflow.com/a/38342964/7362888
+	 * @return local ip
+	 * @throws SocketException 
+	 * @throws UnknownHostException 
+	 */
+	public static String getLocalIp() throws IOException {
+	    try(final DatagramSocket socket = new DatagramSocket()) {
+		  socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+		  return socket.getLocalAddress().getHostAddress();
+		}
+	}
 
 	private static void updatePeerJservs(String synconn, String domain, SynodeMeta synm,
-			String mysid, String peer, String servurl) throws TransException, SQLException {
-		logi("[%s : %s] Setting peer %s's jserv: %s", mysid, domain, peer, servurl);
+			String peer, String servurl) throws TransException, SQLException {
+		logi("[%s] Setting peer %s's jserv: %s", domain, peer, servurl);
 
 		IUser robot = DATranscxt.dummyUser();
 		DATranscxt tb;
@@ -303,12 +366,13 @@ public class AppSettings extends Anson {
 	 * <h5>Note:</h5>
 	 * Multiple App instance must avoid defining same variables.
 	 * 
+	 * @param url_path e. g. "jserv-album"
 	 * @param webinf
 	 * @param settings_json
 	 * @return AppSettings
 	 * @throws Exception 
 	 */
-	public static AppSettings checkInstall(String webinf, String config_xml, String settings_json) throws Exception {
+	public static AppSettings checkInstall(String url_path, String webinf, String config_xml, String settings_json) throws Exception {
 		logi("[INSTALL-CHECK] checking ...");
 		Configs.init(webinf);
 
@@ -322,25 +386,28 @@ public class AppSettings extends Anson {
 
 		if (!isblank(settings.installkey)) {
 			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
-			settings.setupdb(config_xml).save();
+			settings.setupdb(url_path, config_xml).save();
 		}
 		else {
-			// inject semantics
-			logi("[INSTALL-CHECK] reboot: Replacing semantics with syn-table metas ...");
-			// settings.rebootdb(cfg, webinf, webinf, config_xml, settings_json);
-			String $vol_home = "$" + settings.vol_name;
-			YellowPages.load(FilenameUtils.concat(
-					new File(".").getAbsolutePath(),
-					webinf,
-					EnvPath.replaceEnv($vol_home)));
-
-			Syntities regists = Syntities.load(webinf, f("%s/syntity.json", settings.volume), 
-					(synreg) -> {
-						throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
-					});
-			
-			SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
-			DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
+//			// inject semantics
+//			logi("[INSTALL-CHECK] reboot: Replacing semantics with syn-table metas ...");
+//			// settings.rebootdb(cfg, webinf, webinf, config_xml, settings_json);
+//			String $vol_home = "$" + settings.vol_name;
+//			YellowPages.load(FilenameUtils.concat(
+//					new File(".").getAbsolutePath(),
+//					webinf,
+//					EnvPath.replaceEnv($vol_home)));
+//
+//			Syntities regists = Syntities.load(webinf, f("%s/syntity.json", settings.volume), 
+//					(synreg) -> {
+//						throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
+//					});
+//			
+//			SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
+//			DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
+//
+//			if (!isNull(settings.jservs))
+//				setupJserv(cfg, settings, url_path);
 		}
 		
 		return settings;

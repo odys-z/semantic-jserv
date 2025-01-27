@@ -206,7 +206,9 @@ public class CreateSyndocTierTest {
 					throw new SemanticException("TODO %s (configure an entity table with meta type)", synreg.table);
 				});	
 		
-		AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey, "jserv-stub");
+		// AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey, "jserv-stub");
+		// needed test? to be fixed ?
+		AppSettings.setupdb(cfg, "jserv-album", webinf, envolume, "config.xml", rootkey, null);
 
 		SynotierJettyApp app = SynotierJettyApp
 				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", 8964);

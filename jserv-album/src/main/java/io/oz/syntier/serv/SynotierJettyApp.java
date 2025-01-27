@@ -74,7 +74,7 @@ import io.oz.syn.YellowPages;
  *
  */
 public class SynotierJettyApp {
-	public static final String urlpath = "/jserv-album";
+	public static final String servpath = "/jserv-album";
 	
 	public static final String webinf = "WEB-INF";
 	public static final String config_xml = "config.xml";
@@ -97,7 +97,7 @@ public class SynotierJettyApp {
 			// For Eclipse's running as Java Application
 			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
 
-			AppSettings.checkInstall(srcwebinf, config_xml, settings_json);
+			AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json);
 
 			boot(srcwebinf, config_xml, _0(args, settings_json))
 			.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
@@ -152,9 +152,8 @@ public class SynotierJettyApp {
 		if (cfg.mode == null)
 			cfg.mode = SynodeMode.peer;
 		
-		String[] ip_urlpath = new String[] {settings.bindip(), urlpath};
+		// String[] ip_urlpath = new String[] {settings.bindip(), servpath};
 
-		// the un-tested branch
 		mustnonull(settings.rootkey, f(
 				"Rootkey cannot be null for starting App. settings:\n%s", 
 				settings.toBlock()));
@@ -164,11 +163,12 @@ public class SynotierJettyApp {
 				webinf,
 				EnvPath.replaceEnv($vol_home)));
 
+		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
 		
 		return createSyndoctierApp(cfg, settings,
 									((ArrayList<SyncUser>) YellowPages.robots()).get(0),
-									ip_urlpath[1], webinf, config_xml,
+									webinf, config_xml,
 									f("%s/%s", $vol_home, "syntity.json"))
 
 				.start(isNull(oe) ? () -> System.out : oe[0],
@@ -254,7 +254,7 @@ public class SynotierJettyApp {
 	 * @throws Exception
 	 */
 	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, AppSettings settings,
-			SyncUser admin, String urlpath, String webinf, String config_xml, String syntity_json) throws Exception {
+			SyncUser admin, String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
@@ -272,7 +272,7 @@ public class SynotierJettyApp {
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
-		return registerPorts(synapp, urlpath, cfg.synconn,
+		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(),
 				new Echo(), new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain)),
 				new HeartLink())
@@ -329,9 +329,9 @@ public class SynotierJettyApp {
 	 */
 	@SafeVarargs
 	static public <T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerPorts(
-			SynotierJettyApp synapp, String urlpath, String sysconn, T ... servports) throws Exception {
+			SynotierJettyApp synapp, String sysconn, T ... servports) throws Exception {
 
-        synapp.schandler = new ServletContextHandler(synapp.server, urlpath);
+        synapp.schandler = new ServletContextHandler(synapp.server, servpath);
         for (T t : servports) {
         	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(sysconn)));
         }

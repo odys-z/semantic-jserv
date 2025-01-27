@@ -18,7 +18,7 @@
    "album0":  "album-test"
 	},
 
-   "syncIns": 0,
+   "syncIns": 12,
 
    "peers": [
      {"synid": "X", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},

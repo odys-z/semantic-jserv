@@ -1,1 +1,6 @@
-{"type": "io.oz.jserv.docs.syn.singleton.AppSettings", "vol_name": "VOLUME_HUB", "volume": "../../../../volumes-0.7/volume-hub", "bindip": "0.0.0.0", "port": 8964, "jservs": "X:http://web-x-ip:port/jserv-album Y:http://web-y-ip:port/jserv-album", "envars": {"WEBROOT_HUB": "", "VOLUME_PRV": "../../../../volumes-0.7/volume-prv"}, "installkey": null, "rootkey": "0123456789ABCDEF"}
+{"type": "io.oz.jserv.docs.syn.singleton.AppSettings",
+ "vol_name": "VOLUME_HUB", "volume": "../../../../volumes-0.7/volume-hub",
+ "bindip": "0.0.0.0", "port": 8964,
+ "jservs": "X:http://web-x-ip:port/jserv-album Y:http://web-y-ip:port/jserv-album",
+ "envars": {"WEBROOT_HUB": "", "VOLUME_PRV": "../../../../volumes-0.7/volume-prv", "Why-VOLUME_PRV": "this is not used but needed for suppressing errors in connects.xml"},
+ "installkey": "0123456789ABCDEF", "rootkey": null} 

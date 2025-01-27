@@ -30,6 +30,7 @@ import io.odysz.common.Configs;
 import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
@@ -110,7 +111,7 @@ public class SynodetierJoinTest {
 
 		ck = new Docheck[servs_conn.length];
 		
-		int port = 8090;
+//		int port = 8090;
 		String[] nodes = new String[] { "X", "Y", "Z" };
 
 		for (int i = 0; i < nodes.length; i++) {
@@ -131,6 +132,8 @@ public class SynodetierJoinTest {
 			config.domain  = eq(nodes[i], "X") ? zsu : null;
 			config.peers   = new Synode[] {new Synode(nodes[i], nodes[i] + "," + nodes[i], ura, config.domain)};
 
+
+			Syngleton.defltScxt = new DATranscxt(config.sysconn);
 			Syngleton.setupSysRecords(config, robots);
 			
 			Syngleton.setupSyntables(config,
