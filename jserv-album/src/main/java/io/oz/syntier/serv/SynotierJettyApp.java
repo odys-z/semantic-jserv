@@ -1,17 +1,14 @@
 package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt._0;
-import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
-import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -25,7 +22,6 @@ import org.eclipse.jetty.ee8.servlet.FilterMapping;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
@@ -86,7 +82,13 @@ public class SynotierJettyApp {
 
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
-	public String jserv() { return syngleton.jserv; }
+
+	String jserv;
+	public String jserv() { return jserv; }
+	public SynotierJettyApp jserv(String url) {
+		jserv = url;
+		return this;
+	}
 
 	/**
 	 * @param args [0] settings.xml
@@ -97,9 +99,10 @@ public class SynotierJettyApp {
 			// For Eclipse's running as Java Application
 			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
 
-			AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json);
+			String jserv = AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json);
 
 			boot(srcwebinf, config_xml, _0(args, settings_json))
+			.jserv(jserv)
 			.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -126,14 +129,6 @@ public class SynotierJettyApp {
 		System.setProperty(pset.vol_name, p);
 		Utils.logi("%s:\n%s\n%s", settings_json, p, pset.toString());
 		
-		/*
-		return boot(pset.vol_name, webinf, config_xml, new String[] {
-				"-ip", pset.bindip,
-				"-urlpath", urlpath,
-				"-port", pset.port(),
-				"-peer-jservs", pset.webroots,
-				"-install-key", pset.installkey}, oe);
-				*/
 		return boot(webinf, config_xml, pset, oe);
 	}
 
@@ -152,16 +147,12 @@ public class SynotierJettyApp {
 		if (cfg.mode == null)
 			cfg.mode = SynodeMode.peer;
 		
-		// String[] ip_urlpath = new String[] {settings.bindip(), servpath};
-
 		mustnonull(settings.rootkey, f(
 				"Rootkey cannot be null for starting App. settings:\n%s", 
 				settings.toBlock()));
 
-		YellowPages.load(FilenameUtils.concat(
-				new File(".").getAbsolutePath(),
-				webinf,
-				EnvPath.replaceEnv($vol_home)));
+		YellowPages.load(FilenameUtils.concat(new File(".").getAbsolutePath(),
+				webinf, EnvPath.replaceEnv($vol_home)));
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
@@ -242,8 +233,8 @@ public class SynotierJettyApp {
 	 * @param cfg
 	 * @throws Exception
 	 */
-	public SynotierJettyApp(SynodeConfig cfg) throws Exception {
-		syngleton = new Syngleton(cfg);
+	public SynotierJettyApp(SynodeConfig cfg, AppSettings settings) throws Exception {
+		syngleton = new Syngleton(cfg, settings);
 	}
 
 	/**
@@ -364,53 +355,60 @@ public class SynotierJettyApp {
 	
 	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, AppSettings settings,
 			String config_xml) throws Exception {
-		return instanserver(configPath, cfg, config_xml, settings.bindip(), Integer.valueOf(settings.port()));
-	}
-
-	/**
-	 * Create a Jetty instance at local host, jserv-root
-	 * for accessing online Synodes.
-	 * 
-	 * <p>Debug Tip:</p> list all local tcp listening ports:
-	 * sudo netstat -ntlp
-	 * see https://askubuntu.com/a/328293
-	 * 
-	 * @param configPath
-	 * @param cfg
-	 * @param configxml
-	 * @param bindIp
-	 * @param port
-	 * @param robotInf information for creating robot, i. e. the user identity for login to peer synodes.
-	 * @return Jetty App
-	 * @throws Exception
-	 */
-	public static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
-			String bindIp, int port) throws Exception {
+//		return instanserver(configPath, cfg, config_xml, settings.bindip(), Integer.valueOf(settings.port()));
+//	}
+//
+//	/**
+//	 * Create a Jetty instance at local host, jserv-root
+//	 * for accessing online Synodes.
+//	 * 
+//	 * <p>Debug Tip:</p> list all local tcp listening ports:
+//	 * sudo netstat -ntlp
+//	 * see https://askubuntu.com/a/328293
+//	 * 
+//	 * @param configPath
+//	 * @param cfg
+//	 * @param configxml
+//	 * @param bindIp
+//	 * @param port
+//	 * @param robotInf information for creating robot, i. e. the user identity for login to peer synodes.
+//	 * @return Jetty App
+//	 * @throws Exception
+//	 */
+//	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
+//			String bindIp, int port) throws Exception {
 	
 	    AnsonMsg.understandPorts(SynDocollPort.docoll);
 	
-	    SynotierJettyApp synapp = new SynotierJettyApp(cfg);
+	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	
-	    InetAddress inet = InetAddress.getLocalHost();
-	    String addrhost  = inet.getHostAddress(); // this result is different between Windows and Linux
 
-	    if (isblank(bindIp) || eq("*", bindIp)) {
-	    	synapp.server = new Server();
-	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
-	        httpConnector.setHost(addrhost);
-	        httpConnector.setPort(port);
-	        httpConnector.setIdleTimeout(5000);
-	        synapp.server.addConnector(httpConnector);
-	    }
-	    else
-	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
+	    // always bind to 0.0.0.0, report IP automatically, by AppSettins
+
+//	    InetAddress inet = InetAddress.getLocalHost();
+//	    String addrhost  = inet.getHostAddress(); // this result is different between Windows and Linux
+
+//	    if (isblank(settings.bindip) || eq("*", settings.bindip)) {
+//	    	synapp.server = new Server();
+//	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
+//	        httpConnector.setHost(addrhost);
+//	        httpConnector.setPort(settings.port);
+//	        httpConnector.setIdleTimeout(5000);
+//	        synapp.server.addConnector(httpConnector);
+//	    }
+//	    else
+//	    	synapp.server = new Server(new InetSocketAddress(settings.bindip, settings.port));
+//	
+////		synapp.syngleton.jserv =
+//////				String.format("%s://%s:%s",
+//////				cfg.https ? "https" : "http",
+//////				settings.bindip == null ? addrhost : settings.bindip, settings.port);
+////				settings.localserv;
 	
-		synapp.syngleton.jserv = String.format("%s://%s:%s",
-				cfg.https ? "https" : "http",
-				bindIp == null ? addrhost : bindIp, port);
-	
+    	synapp.server = new Server(new InetSocketAddress("0.0.0.0", settings.port));
+
 	    return synapp;
 	}
 
@@ -433,6 +431,7 @@ public class SynotierJettyApp {
 	}
 
 	public void print(String... msg) {
-		Utils.logi("%s\nSynode %s: %s", _0(msg, ""), syngleton.synode(), syngleton.jserv);
+		Utils.logi("%s\nSynode %s: %s", _0(msg, ""),
+				syngleton.synode(), jserv);
 	}
 }

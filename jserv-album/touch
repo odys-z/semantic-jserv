@@ -4,15 +4,15 @@ touch volumes-0.7/volume-prv/doc-jserv.db
 touch volumes-0.7/volume-prv/jserv-main.db
 
 echo "{ \"type\"      : \"io.oz.jserv.docs.syn.singleton.AppSettings\",
-  \"vol_name\"  : \"VOLUME_HOME\",
+  \"vol_name\"  : \"VOLUME_HUB\",
   \"volume\"    : \"../../../../volumes-0.7/volume-hub\",
   \"exifpath\"  : \"/usr/bin\",
-  \"bindip\"    : \"127.0.0.1\",
   \"port\"      : 8964,
   \"installkey\": \"ABCDEF0123456789\",
   \"rootkey\"   : null,
   \"jservs\"    : \"X:web-x-ip:port/jserv-album Y:web-y-ip:port/jserv-album\",
-  \"envars\"    : {\"WEBROOT_HUB\": \"\", \"WEBROOT_PRV\": \"\"}
+  \"envars\"    : {\"WEBROOT_HUB\": \"\", \"VOLUME_PRV\": \"../../../../volumes-0.7/volume-prv\",
+                 \"Why-VOLUME_PRV\": \"this is not used but needed for suppressing errors in connects.xml\"},
 }" > src/main/webapp/WEB-INF/settings.json
 
 echo "copy and modify settings:"

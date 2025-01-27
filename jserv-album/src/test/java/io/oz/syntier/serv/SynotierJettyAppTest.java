@@ -2,7 +2,6 @@ package io.oz.syntier.serv;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.prefixWith;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.warn;
@@ -49,8 +48,8 @@ class SynotierJettyAppTest {
 	@Test
 	void testAppSettings() throws Exception {
 		AppSettings hset = AppSettings.load(webinf, "settings.json");
-		String bindip = hset.bindip;
-		assertTrue(eq("127.0.0.1", bindip) || eq("0.0.0.0", bindip));
+		// String bindip = hset.bindip;
+		// assertTrue(eq("127.0.0.1", bindip) || eq("0.0.0.0", bindip));
 		assertEquals("../../../../volumes-0.7/volume-hub", hset.volume);
 
 //	    String ip;
@@ -95,8 +94,10 @@ class SynotierJettyAppTest {
 		assertNull(settings.rootkey);
 		assertEquals("0123456789ABCDEF", settings.installkey);
 
-		settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, "settings.json");
+		@SuppressWarnings("unused")
+		String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, "settings.json");
 
+		settings = AppSettings.load(webinf, "settings.json");
 		assertNull(settings.installkey);
 		assertEquals("0123456789ABCDEF", settings.rootkey);
 
@@ -107,7 +108,7 @@ class SynotierJettyAppTest {
 				EnvPath.replaceEnv($vol_home)));
 
 		SynodeConfig cfg = YellowPages.synconfig();
-		AppSettings.setupJserv(cfg, settings, SynotierJettyApp.servpath);
+		settings.setupJserv(cfg, SynotierJettyApp.servpath);
 
 		Transcxt st = new DATranscxt(cfg.synconn);
 		SynodeMeta m = new SynodeMeta(cfg.synconn);

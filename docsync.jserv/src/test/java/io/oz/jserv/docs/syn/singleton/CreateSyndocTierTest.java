@@ -50,6 +50,8 @@ import io.oz.syn.YellowPages;
  * Start 3 jservs, ping the login.serv port, and verify the print streams.
  * 
  * @since 0.2.0
+ * 
+ * @disabled
  */
 public class CreateSyndocTierTest {
 	public class PrintStream1 extends PrintStream {
@@ -208,7 +210,9 @@ public class CreateSyndocTierTest {
 		
 		// AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey, "jserv-stub");
 		// needed test? to be fixed ?
-		AppSettings.setupdb(cfg, "jserv-album", webinf, envolume, "config.xml", rootkey, null);
+		AppSettings settings = new AppSettings();
+		settings.vol_name = envolume;
+		settings.setupdb(cfg, "jserv-album", webinf, "config.xml", rootkey);
 
 		SynotierJettyApp app = SynotierJettyApp
 				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", 8964);

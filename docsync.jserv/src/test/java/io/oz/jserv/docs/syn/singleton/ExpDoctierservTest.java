@@ -1,7 +1,6 @@
 package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.f;
-import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.pause;
@@ -56,6 +55,8 @@ import io.oz.syn.YellowPages;
  * <p>When paused, run {@link io.oz.jserv.docs.syn.DoclientierTest}, press return</p>
  * 
  * @author ody
+ * 
+ * @disabled
  */
 public class ExpDoctierservTest {
 	public final static int X = 0;
@@ -181,8 +182,8 @@ public class ExpDoctierservTest {
 
 	private static int[] runtimeEnv(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
-		String host = System.getProperty("syndocs.ip");
-		int port = 8090;
+//		String host = System.getProperty("syndocs.ip");
+//		int port = 8090;
 		
 		SynodeConfig[] cfgs = new SynodeConfig[nodex.length]; 
 
@@ -200,8 +201,11 @@ public class ExpDoctierservTest {
 			cfgs[i].mode = SynodeMode.peer;
 
 			// install
-			AppSettings.setupdb(cfgs[i], "jserv-stub", webinf,
-					f("$VOLUME_%s", i), f("config-%s.xml", i), "ABCDEF0123465789", null);
+			AppSettings settings = new AppSettings();
+			settings.vol_name = f("$VOLUME_%s", i);
+
+			settings.setupdb(cfgs[i], "jserv-stub", webinf,
+					 f("config-%s.xml", i), "ABCDEF0123465789");
 			cleanPhotos(docm, cfgs[i].synconn, devs);
 			
 			// clean and reboot

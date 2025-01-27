@@ -61,10 +61,11 @@ public class SynotierJettyApp {
 	final Syngleton syngleton;
 	public Syngleton syngleton() { return syngleton; }	
 
-	public String jserv() { return syngleton.jserv; }
+	String jserv;
+	public String jserv() { return jserv; }
 
 	public SynotierJettyApp(SynodeConfig cfg) throws Exception {
-		syngleton = new Syngleton(cfg);
+		syngleton = new Syngleton(cfg, null);
 	}
 
 	/**
@@ -221,14 +222,14 @@ public class SynotierJettyApp {
 	    else
 	    	synapp.server = new Server(new InetSocketAddress(bindIp, port));
 	
-		synapp.syngleton.jserv = String.format("%s://%s:%s",
-				cfg.https ? "https" : "http",
-				bindIp == null ? addrhost : bindIp, port);
+//		synapp.syngleton.jserv = String.format("%s://%s:%s",
+//				cfg.https ? "https" : "http",
+//				bindIp == null ? addrhost : bindIp, port);
 	
 	    return synapp;
 	}
 
 	public void print() {
-		Utils.logi("Synode %s: %s", syngleton.synode(), syngleton.jserv);
+		Utils.logi("Synode %s: %s", syngleton.synode(), jserv);
 	}
 }

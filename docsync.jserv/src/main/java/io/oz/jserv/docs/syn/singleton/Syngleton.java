@@ -74,7 +74,8 @@ public class Syngleton extends JSingleton {
 	final SynodeConfig syncfg;
 
 	/** TODO move to be the app.ip_port */
-	public String jserv;
+	// public String jserv;
+	public final AppSettings settings;
 
 	final String sysconn;
 
@@ -108,10 +109,12 @@ public class Syngleton extends JSingleton {
 
 	SynodeMeta synm;
 
-	public Syngleton(SynodeConfig cfg) throws Exception {
+	public Syngleton(SynodeConfig cfg, AppSettings settings) throws Exception {
 		sysconn = cfg.sysconn;
 		syncfg = cfg;
+		this.settings = settings;
 		syndomanagers = new HashMap<String, SynDomanager>();
+		
 
 		tb0 = new DATranscxt(cfg.synconn);
 	}
@@ -379,6 +382,9 @@ public class Syngleton extends JSingleton {
 			Connects.commit(cfg.sysconn, usr, sqls);
 			sqls.clear();
 		}
+		Connects.clearMeta(cfg.sysconn);
+		DATranscxt.clearSemanticsMaps();
+		defltScxt = new DATranscxt(cfg.sysconn);
 		
 		if (synusers != null) {
 			JUserMeta usrm = new JUserMeta(cfg.sysconn);
