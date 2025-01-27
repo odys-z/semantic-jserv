@@ -126,6 +126,15 @@ public class AppSettings extends Anson {
 			setupJservs(cfg, jservs);
 	}
 	
+	/**
+	 * @deprecated not correct, by calling setupSysRecords().
+	 * @param cfg
+	 * @param webinf
+	 * @param envolume
+	 * @param config_xml
+	 * @param rootkey
+	 * @throws Exception
+	 */
 	public static void rebootdb(SynodeConfig cfg, String webinf, String envolume, String config_xml,
 			String rootkey) throws Exception {
 		
@@ -312,8 +321,26 @@ public class AppSettings extends Anson {
 		Connects.init(webinf);
 
 		if (!isblank(settings.installkey)) {
-			logi("[INSTALL-CHECK] Calling setupdb() with configurations in %s ...", config_xml);
+			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
 			settings.setupdb(config_xml).save();
+		}
+		else {
+			// inject semantics
+			logi("[INSTALL-CHECK] reboot: Replacing semantics with syn-table metas ...");
+			// settings.rebootdb(cfg, webinf, webinf, config_xml, settings_json);
+			String $vol_home = "$" + settings.vol_name;
+			YellowPages.load(FilenameUtils.concat(
+					new File(".").getAbsolutePath(),
+					webinf,
+					EnvPath.replaceEnv($vol_home)));
+
+			Syntities regists = Syntities.load(webinf, f("%s/syntity.json", settings.volume), 
+					(synreg) -> {
+						throw new SemanticException("Configure meta as class name in syntity.json %s", synreg.table);
+					});
+			
+			SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
+			DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
 		}
 		
 		return settings;

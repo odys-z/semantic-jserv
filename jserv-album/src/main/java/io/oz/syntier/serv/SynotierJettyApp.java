@@ -3,6 +3,7 @@ package io.oz.syntier.serv;
 import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.mustnonull;
@@ -93,12 +94,17 @@ public class SynotierJettyApp {
 	 */
 	public static void main(String[] args) {
 		try {
-			AppSettings.checkInstall(webinf, config_xml, settings_json);
-			boot(webinf, config_xml, _0(args, settings_json));
+			// For Eclipse's running as Java Application
+			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
+
+			AppSettings.checkInstall(srcwebinf, config_xml, settings_json);
+
+			boot(srcwebinf, config_xml, _0(args, settings_json))
+			.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 		} catch (Exception e) {
 			e.printStackTrace();
 			
-			warn("Fatal errors, process is stopped.");
+			warn("Fatal errors there. The process is stopped.");
 			System.exit(-1);
 		}
 	}
@@ -426,7 +432,7 @@ public class SynotierJettyApp {
 		return this;
 	}
 
-	public void print() {
-		Utils.logi("Synode %s: %s", syngleton.synode(), syngleton.jserv);
+	public void print(String... msg) {
+		Utils.logi("%s\nSynode %s: %s", _0(msg, ""), syngleton.synode(), syngleton.jserv);
 	}
 }
