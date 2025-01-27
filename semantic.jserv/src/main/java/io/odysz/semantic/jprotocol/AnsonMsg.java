@@ -74,8 +74,9 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		 * <h5>[experimental]</h5>
 		 * This port is implemented by extension docsync.jserv.
 		 * */
-		docsync("docs.sync"),
+		// docsync("docs.sync"),
 
+		/** @deprecated ? */
 		dbsyncer("clean.db"),
 		
 		/** @deprecated for MVP album v0.2.1 only */

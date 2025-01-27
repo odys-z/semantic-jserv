@@ -9,6 +9,14 @@
 		args: arguments for sementics handlers. For args for different handlers, see above javadoc link.
    -->
   <s>
+	<id>dev.ak</id>
+	<smtc>a-k</smtc>
+	<tabl>doc_devices</tabl>
+	<pk>device</pk>
+	<args>device,0</args>
+  </s>
+  
+  <s>
 	<!-- Issue: this configuration should be removed as this is a forced semantics iff the DB synchronization is supported -->
 	<id>synch.ak</id>
 	<smtc>a-k</smtc>

@@ -28,7 +28,7 @@ public class Settings extends ServPort<UserReq> {
 	public Settings() throws Exception {
 		super(AlbumPort.settings);
 		YellowPages.load("");
-		genQrcode(YellowPages.synconfig().localhost);
+		// genQrcode(YellowPages.synconfig().localhost);
 	}
 
 	@Override

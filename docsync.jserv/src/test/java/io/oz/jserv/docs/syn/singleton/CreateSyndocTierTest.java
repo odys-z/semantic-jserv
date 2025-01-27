@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 
 import org.eclipse.jetty.util_ody.RolloverFileOutputStream;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -85,6 +86,12 @@ public class CreateSyndocTierTest {
 		ck = new Docheck[servs_conn.length];
 	}
 	
+	@AfterAll
+	static void clear() {
+		Utils.logErr(System.err);
+		Utils.logOut(System.out);
+	}
+
 	static {
 		errLog = new ErrorCtx() {
 			@Override
@@ -103,15 +110,15 @@ public class CreateSyndocTierTest {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-		T_SynotierJettyApp h1 = createStartSyndocTierTest(null, "X", "$VOLUME_0", "ABCDEF0123465789");
+		SynotierJettyApp h1 = createStartSyndocTierTest(null, "X", "$VOLUME_0", "ABCDEF0123465789");
 		T_PhotoMeta docm = new T_PhotoMeta(servs_conn[0]);
 		ck[0] = new Docheck(azert, zsu, servs_conn[0],
-					"X", SynodeMode.peer, docm, true);
+					"X", SynodeMode.peer, docm, null, true);
 
-		T_SynotierJettyApp h2 = createStartSyndocTierTest(null, "Y", "$VOLUME_1", "ABCDEF0123465789");	
+		SynotierJettyApp h2 = createStartSyndocTierTest(null, "Y", "$VOLUME_1", "ABCDEF0123465789");	
 		docm = new T_PhotoMeta(servs_conn[1]);
 		ck[1] = new Docheck(azert, zsu, servs_conn[1],
-					"Y", SynodeMode.peer, docm, true);
+					"Y", SynodeMode.peer, docm, null, true);
 
 		boolean[] lights = new boolean[] {false};
 		touchDir("jetty-log");
@@ -119,13 +126,13 @@ public class CreateSyndocTierTest {
         RolloverFileOutputStream es = new RolloverFileOutputStream("jetty-log/yyyy_mm_dd.err", true);
         String outfile = os.getDatedFilename();
 
-		T_SynotierJettyApp h3 = createStartSyndocTierTest(lights, "Z", "$VOLUME_2", "ABCDEF0123465789", 
+		SynotierJettyApp h3 = createStartSyndocTierTest(lights, "Z", "$VOLUME_2", "ABCDEF0123465789", 
 							() -> { return new PrintStream1(os, "3-out"); }, 
 							() -> { return new PrintStream1(es, "3-err"); });
 		
 		docm = new T_PhotoMeta(servs_conn[2]);
 		ck[2] = new Docheck(azert, zsu, servs_conn[2],
-					"Z", SynodeMode.peer, docm, true);
+					"Z", SynodeMode.peer, docm, null, true);
 
 		Clients.init(h1.jserv());
 		Doclientier client = new Doclientier(docm.tbl, "/sys/X", "/syn/X", errLog)
@@ -187,7 +194,7 @@ public class CreateSyndocTierTest {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private T_SynotierJettyApp createStartSyndocTierTest(boolean[] greenlights, String synode, String envolume, 
+	private SynotierJettyApp createStartSyndocTierTest(boolean[] greenlights, String synode, String envolume, 
 			String rootkey, PrintstreamProvider ... oe) throws IOException, Exception {
 
 		YellowPages.load(envolume);
@@ -199,13 +206,13 @@ public class CreateSyndocTierTest {
 					throw new SemanticException("TODO %s (configure an entity table with meta type)", synreg.table);
 				});	
 		
-		AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey);
+		AppSettings.setupdb(cfg, webinf, envolume, "config.xml", rootkey, "jserv-stub");
 
-		T_SynotierJettyApp app = T_SynotierJettyApp
-				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", cfg.port);
+		SynotierJettyApp app = SynotierJettyApp
+				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", 8964);
 		app.syngleton.loadomains(cfg, new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)));
 
-		return T_SynotierJettyApp
+		return SynotierJettyApp
 			.registerPorts(app, "/", cfg.sysconn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (greenlights != null) greenlights[0] = true; }))

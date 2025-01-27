@@ -9,8 +9,6 @@ import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.X_0;
-import static io.oz.jserv.docs.syn.Dev.Y_0;
-import static io.oz.jserv.docs.syn.Dev.Y_1;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
@@ -42,8 +40,8 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
+import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.IUser;
-import io.oz.album.peer.ShareFlag;
 import io.oz.jserv.docs.syn.Dev;
 import io.oz.jserv.docs.syn.SynodetierJoinTest;
 import io.oz.syn.SynodeConfig;
@@ -81,6 +79,10 @@ public class ExpDoctierservTest {
 		ck = new Docheck[servs_conn.length];
 	}
 	
+	/**
+	 * Use -Dwati-clients for waiting client's pushing, by running {@link DoclientierTest#testSynclientUp()}.
+	 * @throws Exception
+	 */
 	@SuppressWarnings("deprecation")
 	@Test
 	void runDoctiers() throws Exception {
@@ -108,8 +110,14 @@ public class ExpDoctierservTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 		
-		for (T_SynotierJettyApp j : jetties)
+		for (SynotierJettyApp j : jetties)
 			if (j != null) j.print();
+
+		if (System.getProperty("wait-clients") == null) {
+			Utils.warnT(new Object() {}, "Test is running in automatic style, quite without waiting clients' pushing!");
+			return;
+		}
+			
 
 		pause("Press Enter after pushed with clients for starting synchronizing.");
 
@@ -171,7 +179,7 @@ public class ExpDoctierservTest {
 		ck[X].doc(2);
 	}
 
-	private static int[] runtimeEnv(T_SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
+	private static int[] runtimeEnv(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
 		String host = System.getProperty("syndocs.ip");
 		int port = 8090;
@@ -187,12 +195,13 @@ public class ExpDoctierservTest {
 			YellowPages.load(f("$VOLUME_%s", i));
 
 			cfgs[i] = YellowPages.synconfig();
-			cfgs[i].localhost = host;
-			cfgs[i].port = port++;
+			// cfgs[i].localhost = host;
+			// cfgs[i].port = port++;
 			cfgs[i].mode = SynodeMode.peer;
 
 			// install
-			AppSettings.setupdb(cfgs[i], webinf, f("$VOLUME_%s", i), f("config-%s.xml", i), "ABCDEF0123465789");
+			AppSettings.setupdb(cfgs[i], webinf,
+					f("$VOLUME_%s", i), f("config-%s.xml", i), "ABCDEF0123465789", "jserv-stub");
 			cleanPhotos(docm, cfgs[i].synconn, devs);
 			
 			// clean and reboot
@@ -203,9 +212,10 @@ public class ExpDoctierservTest {
 					"config.xml", f("$VOLUME_%s/syntity.json", i));
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-						cfgs[i].synode(), SynodeMode.peer, docm, cfgs[i].debug);
+						cfgs[i].synode(), SynodeMode.peer, docm, null, cfgs[i].debug);
 		}
 		
+		/*
 		for (int i : nodex) {
 			for (int j = 0; j < Math.min(jetties.length, cfgs[i].synodes().length); j++)
 				cfgs[i].synodes()[j].jserv = jetties[j].syngleton.jserv;
@@ -217,6 +227,8 @@ public class ExpDoctierservTest {
 		}
 
 		return nodex;
+		*/
+		throw new Exception("TODO");
 	}
 
 	static void cleanPhotos(ExpDocTableMeta docm, String conn, Dev[] devs) throws Exception {
@@ -244,7 +256,7 @@ public class ExpDoctierservTest {
 			pathpool.add(pth);
 		}
 
-		DocsResp rep = clientier.synQueryPathsPage(pths, Port.docsync);
+		DocsResp rep = clientier.synQueryPathsPage(pths, Port.docstier);
 
 		PathsPage pthpage = rep.pathsPage();
 		assertEquals(clientier.client.ssInfo().device, pthpage.device);

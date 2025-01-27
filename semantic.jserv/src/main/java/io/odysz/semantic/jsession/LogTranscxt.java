@@ -21,8 +21,6 @@ public class LogTranscxt extends DATranscxt {
 	 * which use a special semantic-log.xml for semantics and use 
 	 * different connId for a_log datatable sql generating.  
 	 * @param conn e.g. the defualt system connection Id, the a_log table will be used for meta checking.
-	 * @param xml
-	 * @param logTabl 
 	 * @throws Exception 
 	 */
 	public LogTranscxt(String conn)

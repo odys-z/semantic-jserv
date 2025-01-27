@@ -46,8 +46,8 @@ import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
+import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.x.TransException;
-import io.oz.album.peer.ShareFlag;
 import io.oz.syn.YellowPages;
 
 /**
@@ -56,6 +56,8 @@ import io.oz.syn.YellowPages;
  * -Djservs=<ip-x>:8090,<ip-y>:8091,<ip-z>:8092
  */
 class DoclientierTest {
+	static boolean disabled = false;
+	
 	static String[] jserv_xyzw;
 	@BeforeAll
 	static void init() throws Exception {
@@ -69,11 +71,19 @@ class DoclientierTest {
 
 		// -Djservs="ip-1:port-1,ip-2:port-2"
 		// see console log of ExpDoctierservTest
-		jserv_xyzw = prefix(System.getProperty("jservs").split(","), "http://");
+		String jservs = System.getProperty("jservs");
+		if (!isblank(jservs))
+			jserv_xyzw = prefix(jservs.split(","), "http://");
+		else {
+			disabled = true;
+			Utils.warnT(new Object() {}, "DoclienterTest can not be tested automatically.");
+		}
 	}
 
 	@Test
 	void testSynclientUp() throws Exception {
+		if (disabled) return;
+
 		int no = 0;
 		Utils.logrst(f("X <- %s", devs[X_0].device.id), ++no);
 
@@ -218,7 +228,7 @@ class DoclientierTest {
 			pathpool.add(pth);
 		}
 
-		DocsResp rep = clientier.synQueryPathsPage(pths, Port.docsync);
+		DocsResp rep = clientier.synQueryPathsPage(pths, Port.docstier);
 
 		PathsPage pthpage = rep.pathsPage();
 

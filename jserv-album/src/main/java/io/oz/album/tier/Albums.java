@@ -42,6 +42,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.tier.docs.Device;
+import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
@@ -210,7 +211,7 @@ public class Albums extends ServPort<AlbumReq> {
 					rsp = createPhoto(jmsg.body(0), usr, prf);
 				else if (A.del.equals(a))
 					rsp = delPhoto(jmsg.body(0), usr, prf);
-				else if (A.selectSyncs.equals(a))
+				else if (DocsReq.A.selectSyncs.equals(a))
 					rsp = querySyncs(jmsg.body(0), usr, prf);
 				else if (A.getPrefs.equals(a))
 					rsp = profile(jmsg.body(0), usr, prf);
@@ -351,7 +352,7 @@ public class Albums extends ServPort<AlbumReq> {
 		if (eq(jreq.sk, "tree-rel-folder-org")) {
 			// force user-id as first arg
 			PageInf page = isNull(jreq.pageInf)
-					? new PageInf(0, -1, usr.uid())
+					? new PageInf(0, -1, "deprected", usr.uid())
 					: eq(jreq.pageInf.arrCondts.get(0), usr.uid())
 					? jreq.pageInf
 					: jreq.pageInf.insertCondt(usr.uid());
@@ -582,8 +583,8 @@ public class Albums extends ServPort<AlbumReq> {
 			.j(userMeta.tbl, "u", "u.%s = d.%s", userMeta.pk, devMeta.owner)
 			.cols(devMeta.devname, devMeta.synoder, devMeta.cdate, devMeta.owner)
 			.whereEq(devMeta.pk, usr.deviceId())
-			// .whereEq(devMeta.domain,   usr.orgId())
-			.whereEq(devMeta.owner,   usr.uid())
+			.whereEq(devMeta.org, usr.orgId())
+			.whereEq(devMeta.owner, usr.uid())
 			.rs(st.instancontxt(conn, usr))
 			.rs(0))
 			.nxt();

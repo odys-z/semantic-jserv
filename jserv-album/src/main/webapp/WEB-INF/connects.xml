@@ -13,7 +13,7 @@
   		<src>$VOLUME_HUB/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg>1</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	
@@ -24,7 +24,7 @@
   		<src>$VOLUME_HUB/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>T</dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-syn-hub.xml</smtcs>
 	</c>
 
@@ -35,7 +35,7 @@
   		<src>$VOLUME_PRV/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg>1</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	
@@ -46,7 +46,7 @@
   		<src>$VOLUME_PRV/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>T</dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-syn-prv.xml</smtcs>
 	</c>
 

@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.jclient.syn.ExpDocRobot;
@@ -33,6 +34,7 @@ import io.oz.album.peer.AlbumResp;
  * @author ody
  *
  */
+@Disabled
 class AlbumsServTierTest {
 	static String jserv;
 

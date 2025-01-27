@@ -5,22 +5,20 @@
    "admin": "ody",
    "sysconn": "sys-hub",
    "synconn": "docsyn-hub",
-   "localhost": "",
-   "port": 8964,
    "debug": false,
     
   "org": {
 	 "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
 	 "orgId": "ura",
-     "orgName": "URA",
-     "orgType": "nation",
-     "market":  "test",
-     "webroot": "$WEBROOT_HUB",
-     "homepage": "",
-     "album0":  "album-test"
+   "orgName": "URA",
+   "orgType": "nation",
+   "market":  "test",
+   "webroot": "$WEBROOT_HUB",
+   "homepage": "",
+   "album0":  "album-test"
 	},
 
-   "syncIns": 16.6,
+   "syncIns": 0,
 
    "peers": [
      {"synid": "X", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},

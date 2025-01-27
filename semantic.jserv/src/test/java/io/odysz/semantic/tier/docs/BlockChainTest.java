@@ -221,10 +221,10 @@ class BlockChainTest {
 
 		try {
 			chain.abortChain();
-			fail("not reporting the package lost error.");
-		} catch (TransException e) {
 			assertFalse(Files.exists(Paths.get(chain.outputPath)));
 			assertTrue(Files.exists(Paths.get(chain.outputPath).getParent()));
+		} catch (TransException e) {
+			fail("not reporting the package lost error.");
 		}
 	}
 }

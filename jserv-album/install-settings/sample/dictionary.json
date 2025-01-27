@@ -1,0 +1,30 @@
+{"type": "io.oz.syn.AnRegistry",
+ "config": {
+   "synid": "SAMPLE-X",
+   "domain": "zsu",
+   "admin": "ody",
+   "sysconn": "sys",
+   "synconn": "docsyn",
+   "debug": false,
+
+  "org": {
+	 "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
+	 "orgId": "ura",
+   "orgName": "URA",
+   "orgType": "nation",
+   "market":  "test",
+   "webroot": "$WEBROOT_Album-web-in-settings.json",
+   "homepage": "",
+   "album0":  "album-test"
+	},
+
+   "syncIns": 20,
+	
+   "peers": [
+     {"synid": "X", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
+     {"synid": "Y", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"} ]
+ },
+ "synusers": [
+   {"userId": "ody", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"},
+   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "ura", "domain": "zsu"} ]
+}

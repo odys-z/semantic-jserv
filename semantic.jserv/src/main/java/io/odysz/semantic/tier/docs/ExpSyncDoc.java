@@ -58,12 +58,26 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	
 	public String org;
 
+	/** A constant field of {@link io.oz.album.peer.ShareFlag}. */
 	public String shareflag;
 	public String shareflag() { return shareflag; }
 	public ExpSyncDoc shareflag(String f) {
 		shareflag = f;
 		return this;
 	}
+
+	/** Only for status report while uploading. */
+	String shareMsg;
+	/**
+	 * @param f
+	 * @param msg Only for status report while uploading.
+	 * @return
+	 */
+	public ExpSyncDoc shareflag(ShareFlag f, String... msg) {
+		shareflag(f.name());
+		shareMsg = _0(msg);
+		return this;
+	}	
 
 	/** Usually reported by client file system, and be overriden by exif date, if exits */
 	public String createDate;
@@ -240,7 +254,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		this.folder = v;
 		return this;
 	}
-
+	
 	/**
 	 * @see io.odysz.semantic.syn.SynEntity#insertEntity(io.odysz.semantic.meta.SyntityMeta, io.odysz.transact.sql.Insert)
 	 */

@@ -116,8 +116,16 @@ public class Syngleton extends JSingleton {
 		tb0 = new DATranscxt(cfg.synconn);
 	}
 
-	public void updatePeerJservs(SynodeConfig cfg, String domain)
-			throws SemanticException {
+	/**
+	 * 
+	 * @param cfg
+	 * @param domain
+	 * @param jservss e. g. "X:https://host-ip:port/jserv-album Y:https://..."
+	 * @throws SQLException 
+	 * @throws TransException 
+	 */
+	public void updatePeerJservs(SynodeConfig cfg, String domain, String jservss)
+			throws TransException, SQLException {
 		if (!eq(domain, cfg.domain))
 			throw new SemanticException(
 				"Updating domain %s, but got configuration of %s.",
@@ -132,7 +140,7 @@ public class Syngleton extends JSingleton {
 //				.whereEq(synm.pk, sn.synid)
 //				.whereEq(synm.domain, cfg.domain)
 //				.u(tb0.instancontxt(cfg.synconn, robot));
-		AppSettings.updatePeerJservs(cfg, domanager(domain).synm);
+		AppSettings.setupJservs(cfg, jservss);
 	}
 
 	/**
@@ -221,19 +229,6 @@ public class Syngleton extends JSingleton {
 
 		return (Syngleton) this;
 	}
-	
-//	private void openupdteDomain(String domain, SynDomanager dmgr, OnDomainUpdate... onok) 
-//		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
-//		musteqs(syncfg.domain, dmgr.domain());
-//
-//		SyncUser usr = ((SyncUser)AnSession
-//				.loadUser(syncfg.admin, sysconn))
-//				.deviceId(dmgr.synode);
-//
-//		dmgr.loadSynclients(tb0)
-//			.openSynssions(usr)
-//			.updateSynssions(usr, onok);
-//	}
 
 	/**
 	 * Synode id for the default domain upon which the {@link ExpSynodetier} works.
@@ -247,12 +242,14 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
+	 * <p>Setup syntables, can be called both while installation and reboot.</p>
+	 * 
 	 * Resolved Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:<br>
 	 * Syn-change handlers cannot be created without syntity tables have been created.
 	 * 
 	 * @param cfg
 	 * @param configFolder
-	 * @param cfgxml
+	 * @param cfgxml e. g. config.xml
 	 * @param runtimeRoot
 	 * @param rootKey
 	 * @param peers 
@@ -272,11 +269,12 @@ public class Syngleton extends JSingleton {
 		Configs.init(configFolder, cfgxml);
 		Connects.init(configFolder);
 
+		DATranscxt.clearSemanticsMaps();
 		DATranscxt.configRoot(configFolder, runtimeRoot);
-		DATranscxt.key("user-pswd", rootKey);
-		
-		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
+		DATranscxt.rootkey(rootKey);
 
+		// TODO FIXME, move to the right place
+		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 		AnSession.init(defltScxt);
 		
 		// 2 syn-tables
@@ -314,6 +312,30 @@ public class Syngleton extends JSingleton {
 		initSynodeRecs(cfg, cfg.peers);
 	}
 
+	public static void bootSyntables(SynodeConfig cfg,
+			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
+		Utils.logi("Initializing synode singleton with configuration file %s\n"
+				+ "runtime root: %s\n"
+				+ "configure folder: %s\n"
+				+ "root-key length: %s",
+				cfgxml, runtimeRoot, configFolder, len(rootKey));
+
+		Configs.init(configFolder, cfgxml);
+		Connects.init(configFolder);
+
+		DATranscxt.clearSemanticsMaps();
+		DATranscxt.configRoot(configFolder, runtimeRoot);
+		DATranscxt.rootkey(rootKey);
+		
+		// TODO FIXME, move to the right place
+		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
+		AnSession.init(defltScxt);
+
+		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
+		DatasetCfg.init(configFolder);
+	}
+
 	/**
 	 * Setup sqlite manage database tables, oz_autoseq, a_users with sql script files,
 	 * i. e., oz_autoseq.ddl, oz_autoseq.sql, a_users.sqlite.sql.
@@ -330,7 +352,7 @@ public class Syngleton extends JSingleton {
 	
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
-		defltScxt = new DATranscxt();
+		// defltScxt = new DATranscxt();
 	
 		for (String tbl : new String[] {"oz_autoseq", "a_users", "a_roles", "a_orgs"}) {
 			sqls.add("drop table if exists " + tbl);

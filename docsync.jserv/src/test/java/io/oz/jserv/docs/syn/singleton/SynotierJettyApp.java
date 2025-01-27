@@ -6,7 +6,6 @@ import static io.odysz.common.LangExt.isblank;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-
 import javax.servlet.annotation.WebServlet;
 
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
@@ -53,7 +52,7 @@ import io.oz.syn.SynodeConfig;
  * @author odys-z@github.com
  *
  */
-public class T_SynotierJettyApp {
+public class SynotierJettyApp {
 
 	Server server;
 
@@ -64,7 +63,7 @@ public class T_SynotierJettyApp {
 
 	public String jserv() { return syngleton.jserv; }
 
-	public T_SynotierJettyApp(SynodeConfig cfg) throws Exception {
+	public SynotierJettyApp(SynodeConfig cfg) throws Exception {
 		syngleton = new Syngleton(cfg);
 	}
 
@@ -75,14 +74,14 @@ public class T_SynotierJettyApp {
 	 * @param admin 
 	 * @throws Exception
 	 */
-	public static T_SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, SyncUser admin, String urlpath,
-			String webinf, String config_xml, String syntity_json) throws Exception {
+	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, SyncUser admin,
+			String urlpath, String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
 
-		T_SynotierJettyApp synapp = T_SynotierJettyApp
-						.instanserver(webinf, cfg, config_xml, cfg.localhost, cfg.port)
+		SynotierJettyApp synapp = SynotierJettyApp
+						.instanserver(webinf, cfg, config_xml, "0.0.0.0", 8964)
 						.loadomains(cfg, new DocUser(admin));
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
@@ -95,35 +94,37 @@ public class T_SynotierJettyApp {
 		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
 		return registerPorts(synapp, urlpath, cfg.synconn,
-				new AnSession(), new AnQuery(), new AnUpdate(), new HeartLink())
+				new AnSession(), new AnQuery(), new AnUpdate(),
+				new HeartLink())
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)
 			;
 	}
 
-	private T_SynotierJettyApp addSynodetier(T_SynotierJettyApp synapp, SynodeConfig cfg)
+	private SynotierJettyApp addSynodetier(SynotierJettyApp synapp, SynodeConfig cfg)
 			throws Exception {
 		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
 		ExpSynodetier syncer = new ExpSynodetier(domanger)
-								.syncIn(cfg.syncIns, (c, r, args) -> Utils.warn("[Syn-worker ERROR] code: %s, msg: %s", r));
+								.syncIn(cfg.syncIns,
+									(c, r, args) -> Utils.warn("[Syn-worker ERROR] code: %s, msg: %s", r));
 		addServPort(syncer);
 		return this;
 	}
 
-	T_SynotierJettyApp loadomains(SynodeConfig cfg, DocUser admin) throws Exception {
+	SynotierJettyApp loadomains(SynodeConfig cfg, DocUser admin) throws Exception {
 		syngleton.loadomains(cfg, admin);
 		return this;
 	}
 
-	public T_SynotierJettyApp addDocServPort(SynodeConfig cfg, ArrayList<SyntityReg> syntities) throws Exception {
+	public SynotierJettyApp addDocServPort(SynodeConfig cfg, ArrayList<SyntityReg> syntities) throws Exception {
 		SynDomanager domanger = syngleton.domanager(cfg.domain);
 
-		addServPort(new ExpDoctier(domanger)
+		addServPort(new ExpDoctier(domanger, null)
 				.registSynEvent(cfg, syntities));
 		return this;
 	}
 
-	public T_SynotierJettyApp start(PrintstreamProvider out, PrintstreamProvider err) throws Exception {
+	public SynotierJettyApp start(PrintstreamProvider out, PrintstreamProvider err) throws Exception {
 		printout = out;
 		printerr = err;
 
@@ -142,12 +143,12 @@ public class T_SynotierJettyApp {
 	 * @param synapp
 	 * @param sysconn
 	 * @param servports
-	 * @return Jetty server, the {@link T_SynotierJettyApp}
+	 * @return Jetty server, the {@link SynotierJettyApp}
 	 * @throws Exception
 	 */
 	@SafeVarargs
-	static public <T extends ServPort<? extends AnsonBody>> T_SynotierJettyApp registerPorts(
-			T_SynotierJettyApp synapp, String urlpath, String sysconn, T ... servports) throws Exception {
+	static public <T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerPorts(
+			SynotierJettyApp synapp, String urlpath, String sysconn, T ... servports) throws Exception {
 
         synapp.schandler = new ServletContextHandler(synapp.server, urlpath);
         for (T t : servports) {
@@ -160,7 +161,7 @@ public class T_SynotierJettyApp {
     PrintstreamProvider printout;
 	PrintstreamProvider printerr;
 
-	<T extends ServPort<? extends AnsonBody>> T_SynotierJettyApp registerServlets(
+	<T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerServlets(
     		ServletContextHandler context, T t) {
 		WebServlet info = t.getClass().getAnnotation(WebServlet.class);
 		for (String pattern : info.urlPatterns()) {
@@ -170,7 +171,7 @@ public class T_SynotierJettyApp {
 		return this;
 	}
 
-	public T_SynotierJettyApp addServPort(ServPort<?> p) {
+	public SynotierJettyApp addServPort(ServPort<?> p) {
        	registerServlets(schandler, p);
        	return this;
 	}
@@ -197,12 +198,12 @@ public class T_SynotierJettyApp {
 	 * @return Jetty App
 	 * @throws Exception
 	 */
-	public static T_SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
+	public static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
 			String bindIp, int port) throws Exception {
 	
 	    AnsonMsg.understandPorts(Port.syntier);
 	
-	    T_SynotierJettyApp synapp = new T_SynotierJettyApp(cfg);
+	    SynotierJettyApp synapp = new SynotierJettyApp(cfg);
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	
@@ -230,5 +231,4 @@ public class T_SynotierJettyApp {
 	public void print() {
 		Utils.logi("Synode %s: %s", syngleton.synode(), syngleton.jserv);
 	}
-
 }

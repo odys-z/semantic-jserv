@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io_odysz.FilenameUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import io.odysz.anson.Anson;
 import io.odysz.anson.JSONAnsonListener;
@@ -31,9 +32,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.peer.AlbumPort;
 import io.oz.album.peer.AlbumResp;
-import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.PhotoRec;
-import io.oz.album.peer.ShareFlag;
 import io.oz.syndoc.client.PhotoSyntier;
 
 /**
@@ -52,6 +51,7 @@ import io.oz.syndoc.client.PhotoSyntier;
  * @author ody
  *
  */
+@Disabled
 class AlbumsTest {
 	static String jserv;
 

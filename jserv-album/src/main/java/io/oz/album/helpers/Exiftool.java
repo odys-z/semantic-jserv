@@ -1,5 +1,6 @@
 package io.oz.album.helpers;
 
+import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.filesize;
 import static io.odysz.common.LangExt.gt;
@@ -18,19 +19,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TIFF;
-import org.apache.tika.metadata.TikaCoreProperties;
 
 import io.odysz.common.CheapMath;
 import io.odysz.common.Configs;
+import io.odysz.common.EnvPath;
 import io.odysz.common.MimeTypes;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 import io.oz.album.peer.Exifield;
 import io.oz.album.peer.PhotoRec;
 
@@ -45,14 +46,14 @@ public class Exiftool {
 	static String cmd;
 
 	public static String init() throws InterruptedException, IOException, TimeoutException {
-		cmd = Configs.getCfg("exiftool");
+		cmd = EnvPath.replaceEnv(Configs.getCfg("exiftool"));
 		Utils.logi("[Exiftool.init] command: %s", cmd);
 		
 		check();
 		return cmd;
 	}
 
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation", "unchecked" })
 	public static PhotoRec parseExif(PhotoRec photo, String filepath) throws IOException {
 		try {
 			photo.mime = isblank(photo.mime) ?
@@ -66,8 +67,10 @@ public class Exiftool {
 		Metadata metadata = parse(filepath);
 		
 		for (String name: metadata.names()) {
-			String val = metadata.get(name); 
-			if (verbose) Utils.logi(name);
+			ArrayList<String> vals = ((ArrayList<String>) metadata.get(name)); 
+			String val = _0(vals);
+			if (verbose) Utils.logi("%s :\t%s", name, val);
+
 			val = Exif.escape(val);
 			// white-wash some faulty string
 			// Huawei p30 take pics with 
@@ -102,7 +105,7 @@ public class Exiftool {
 			photo.month(fd);
 		}
 
-		if (isblank(photo.widthHeight) && metadata.getInt(TIFF.IMAGE_WIDTH) != null && metadata.getInt(TIFF.IMAGE_LENGTH) != null) 
+		if (isblank(photo.widthHeight) && metadata.getInt(TIFF.IMAGE_WIDTH) < 0 && metadata.getInt(TIFF.IMAGE_LENGTH) < 0) 
 			try {
 				if (verbose) Utils.logi(metadata.names());
 				photo.widthHeight = new int[]
@@ -145,10 +148,10 @@ public class Exiftool {
 			// else possibly not a image or video file
 		} catch (Exception e) {e.printStackTrace();}
 		
-		photo.geox = metadata.get(TikaCoreProperties.LONGITUDE);
+		photo.geox = metadata.getLongitude();
 		if (photo.geox == null) photo.geox = geox0;
 
-		photo.geoy = metadata.get(TikaCoreProperties.LATITUDE);
+		photo.geoy = metadata.getLatitude();
 		if (photo.geoy == null) photo.geoy = geoy0;
 
 		return photo;
@@ -180,9 +183,10 @@ public class Exiftool {
     public static Metadata parse(String path) throws IOException {
 		String[] cmds = new String[] {cmd, path};
 		Process process = null;
-		try {
 			process = Runtime.getRuntime().exec(cmds);
 
+		if (process != null)
+		try {
 			process.getOutputStream().close();
 
 			try (InputStream out = process.getInputStream();
@@ -199,6 +203,8 @@ public class Exiftool {
 			try { process.waitFor(); }
 			catch (InterruptedException ignore) { }
 		}
+		else 
+			Utils.warn("Checking exiftool failed: %s", cmds[0]);
 		return null;
     }
     
@@ -209,9 +215,12 @@ public class Exiftool {
                 while ((line = reader.readLine()) != null) {
                 	String[] kv = line.split(":");
                 	if (kv != null && kv.length > 0)
-                		metadata.add(kv[0].trim(), kv[1].trim());              }
+                		metadata.add(kv[0].trim(), kv[1].trim());
+                }
             } catch (IOException e) {
-            }
+            } catch (TransException e) {
+				e.printStackTrace();
+			}
         });
         t.start();
         try {

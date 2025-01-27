@@ -4,8 +4,6 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.musteqs;
-import static io.odysz.common.LangExt.prefixOneOf;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
@@ -13,23 +11,14 @@ import static io.odysz.transact.sql.parts.condition.Funcall.sum;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import io.odysz.anson.Anson;
 import io.odysz.anson.x.AnsonException;
-import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
@@ -43,38 +32,32 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
+import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.tier.docs.Device;
-import io.odysz.semantic.tier.docs.BlockChain;
+import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
-import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.FileStream;
-import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.sql.Query;
-import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.Logic;
 import io.odysz.transact.sql.parts.Sql;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
-import io.oz.album.AlbumSingleton;
-import io.oz.album.helpers.Exiftool;
 import io.oz.album.peer.AlbumPort;
 import io.oz.album.peer.AlbumReq;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
-import io.oz.album.peer.PhotoRec;
 import io.oz.album.peer.Profiles;
 import io.oz.album.peer.SynDocollPort;
 import io.oz.album.peer.AlbumReq.A;
-import io.oz.jserv.docs.meta.DeviceTableMeta;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.jserv.docs.syn.DocUser;
 
@@ -116,18 +99,18 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	/** file state db field */
 	static final String state = "state";
 
-	private HashMap<String, BlockChain> blockChains;
-
 	public static DATranscxt st;
+	DBSynTransBuilder synt;
 
 	final IUser robot;
 
 	// PUserMeta userMeta;
 	JUserMeta userMeta;
 
+	final SyndomContext domx;
 	final String sysconn;
-	final String synode;
 	final PhotoMeta phm;
+
 
 	static {
 		try {
@@ -137,13 +120,14 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		}
 	}
 
-	public SynDocollects(String synode, String sysconn, String synconn) throws TransException {
+	public SynDocollects(String sysconn, SyndomContext domx) throws Exception {
 		super(SynDocollPort.docoll);
-		this.synode = synode;
-		this.phm    = new PhotoMeta(synconn);
+		this.phm    = new PhotoMeta(domx.synconn);
 		this.sysconn= sysconn;
-		this.robot = new ExpDocRobot("Rob.Album@" + synode);
+		this.robot = new ExpDocRobot("Rob.Album@" + domx.synode);
 		
+		synt = new DBSynTransBuilder(domx);
+		this.domx = domx;
 		missingFile = "";
 	}
 
@@ -220,7 +204,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //					rsp = querySyncs(jmsg.body(0), usr, prf);
 				else if (A.getPrefs.equals(a))
 					rsp = profile(jmsg.body(0), usr, prf);
-				else if (A.album.equals(a)) // FXIME what's the equivalent of Portfolio?
+				else if (A.album.equals(a)) // FIXME what's the equivalent of Portfolio?
 					rsp = album(jmsg.body(0), usr, prf);
 
 				else if (A.stree.equals(a))
@@ -353,13 +337,13 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf)
 			throws SQLException, TransException {
 
-		String conn = Connects.uri2conn(jreq.uri());
+		String conn = Connects.uri2conn(jreq.synuri);
 		// force org-id as first arg
 
 		if (eq(jreq.sk, "tree-rel-folder-org")) {
 			// force user-id as first arg
 			PageInf page = isNull(jreq.pageInf)
-					? new PageInf(0, -1, usr.uid())
+					? new PageInf(0, -1, usr.uid(), null)
 					: eq(jreq.pageInf.arrCondts.get(0), usr.uid())
 					? jreq.pageInf
 					: jreq.pageInf.insertCondt(usr.uid());
@@ -369,7 +353,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		}
 		else {//  "tree-rel-photo-org") || "tree-album-sharing" || "tree-docs-folder"
 			PageInf page = isNull(jreq.pageInf)
-					? new PageInf(0, -1, usr.orgId())
+					? new PageInf(0, -1, "orgId", usr.orgId())
 					: eq(jreq.pageInf.arrCondts.get(0), usr.orgId())
 					? jreq.pageInf
 					: jreq.pageInf.insertCondt(usr.orgId());
@@ -429,7 +413,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 	void checkDuplication(AlbumReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(body.uri());
+		String conn = Connects.uri2conn(body.synuri);
 		checkDuplicate(conn,
 				usr.deviceId(), body.photo.fullpath(), usr, new PhotoMeta(conn));
 	}
@@ -553,11 +537,11 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		String conn = Connects.uri2conn(body.uri());
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 
-		AnResultset rs = (AnResultset)st
+		AnResultset rs = (AnResultset)synt
 				.select(devMeta.tbl)
 				// .whereEq(devMeta.domain,   usr.orgId())
 				.whereEq(devMeta.owner,   usr.uid())
-				.rs(st.instancontxt(conn, usr))
+				.rs(synt.instancontxt(conn, usr))
 				.rs(0)
 				;
 
@@ -580,18 +564,18 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 */
 	DocsResp chkDevname(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(body.uri());
+		String conn = Connects.uri2conn(body.synuri);
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 
-		AnResultset rs = ((AnResultset) st
+		AnResultset rs = ((AnResultset) synt
 			.select(devMeta.tbl, "d")
 			.cols("d.*", "u." + userMeta.uname)
 			.j(userMeta.tbl, "u", "u.%s = d.%s", userMeta.pk, devMeta.owner)
 			.cols(devMeta.devname, devMeta.synoder, devMeta.cdate, devMeta.owner)
+			.whereEq(devMeta.org,   usr.orgId())
 			.whereEq(devMeta.pk, usr.deviceId())
-			// .whereEq(devMeta.domain,   usr.orgId())
 			.whereEq(devMeta.owner,   usr.uid())
-			.rs(st.instancontxt(conn, usr))
+			.rs(synt.instancontxt())
 			.rs(0))
 			.nxt();
 		
@@ -603,42 +587,41 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			);
 		}
 		else 
-			return (DocsResp) new DocsResp().device(new Device(
-					null, AlbumSingleton.synode(),
-					usr.deviceId()));
+			return (DocsResp) new DocsResp().device(
+					new Device(null, domx.synode, usr.deviceId()));
 	}
 	
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(body.uri());
+		String conn = Connects.uri2conn(body.synuri);
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 
 		if (isblank(body.device().id)) {
-			SemanticObject result = (SemanticObject) st
+			SemanticObject result = (SemanticObject) synt
 				.insert(devMeta.tbl, usr)
-				.nv(devMeta.synoder, AlbumSingleton.synode())
+				.nv(devMeta.synoder, domx.synode)
 				.nv(devMeta.devname, body.device().devname)
 				.nv(devMeta.owner, usr.uid())
 				.nv(devMeta.cdate, now())
-				// .nv(devMeta.domain, usr.orgId())
-				.ins(st.instancontxt(Connects.uri2conn(body.uri()), usr));
+				.nv(devMeta.org, usr.orgId())
+				.ins(synt.instancontxt());
 
 			String resulved = result.resulve(devMeta.tbl, devMeta.pk, -1);
-			return new DocsResp().device(new Device(
-				resulved, AlbumSingleton.synode(), body.device().devname));
+			return new DocsResp().device(
+					new Device(resulved, domx.synode, body.device().devname));
 		}
 		else {
-			if (isblank(body.device().id))
-				throw new SemanticException("Error for pdating device name without a device id.");
+//			if (isblank(body.device().id))
+//				throw new SemanticException("Error for pdating device name without a device id.");
 
-			st  .update(devMeta.tbl, usr)
+			synt.update(devMeta.tbl, usr)
 				.nv(devMeta.cdate, now())
-				// .whereEq(devMeta.domain, usr.orgId())
+				.whereEq(devMeta.org, usr.orgId())
 				.whereEq(devMeta.pk, body.device().id)
-				.u(st.instancontxt(Connects.uri2conn(body.uri()), usr));
+				.u(synt.instancontxt());
 
-			return new DocsResp().device(new Device(
-				body.device().id, AlbumSingleton.synode(), body.device().devname));
+			return new DocsResp().device(
+					new Device(body.device().id, domx.synode, body.device().devname));
 		}
 	}
 
@@ -692,33 +675,53 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //		return album;
 //	}
 
+	/**
+	 * [0.7.0] This method uses req's sys-uri for loading media files, as
+	 * the client is unable to understand synodes' domain.
+	 * 
+	 * @param resp
+	 * @param req
+	 * @param usr
+	 * @throws IOException
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	void download(HttpServletResponse resp, DocsReq req, IUser usr)
 			throws IOException, SemanticException, TransException, SQLException {
-
+		if (req.doc == null || isblank(req.doc.recId()))
+			throw new SemanticException("Requiring file's informantion is empty (Req.doc).");
+		
 		String conn = Connects.uri2conn(req.uri());
 		PhotoMeta meta = new PhotoMeta(conn);
 
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
-				.j("a_users", "u", "u.userId = p.shareby")
+				// .j("a_users", "u", "u.userId = p.shareby")
 				.col(meta.pk)
 				.col(meta.resname).col(meta.createDate)
 				.col(meta.folder).col(meta.fullpath)
 				.col(meta.uri)
-				.col("userName", "shareby")
+				// .col("userName", "shareby")
 				.col(meta.shareDate).col(meta.tags)
 				.col(meta.geox).col(meta.geoy)
 				.col(meta.mime)
 				.whereEq(meta.pk, req.doc.recId)
 				.rs(st.instancontxt(conn, usr)).rs(0);
 
-		if (!rs.next()) {
+		if (rs == null || !rs.next()) {
 			resp.setContentType("image/png");
 			FileStream.sendFile(resp.getOutputStream(), missingFile);
 		}
 		else {
 			String mime = rs.getString("mime");
-			resp.setContentType(mime);
+			if (!isblank(mime))
+				resp.setContentType(mime);
+			else {
+				// mime parsing has failed, downloading is the best option?
+				resp.setContentType("application/octet-stream");
+				resp.setHeader("Content-Disposition", f("attachment; filename=\"%s\"", rs.getString(meta.resname)));
+			}
 			
 			try ( OutputStream os = resp.getOutputStream() ) {
 				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta));
@@ -859,7 +862,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	protected static AlbumResp doc(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 
-		String conn = Connects.uri2conn(req.uri());
+		String conn = Connects.uri2conn(req.synuri);
 		PhotoMeta meta = new PhotoMeta(conn);
 		DocOrgMeta mp_o = new DocOrgMeta(conn);
 
@@ -904,7 +907,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	protected static AlbumResp folder(AlbumReq req, IUser usr)
 			throws SemanticException, TransException, SQLException, IOException {
 
-		String conn = Connects.uri2conn(req.uri());
+		String conn = Connects.uri2conn(req.synuri);
 		PhotoMeta mph = new PhotoMeta(conn);
 		JUserMeta musr = new JUserMeta(conn);
 
@@ -983,27 +986,28 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	protected static AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
+	protected AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
 			IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException, IOException {
-		String conn = Connects.uri2conn(req.uri());
+		String conn = Connects.uri2conn(req.synuri);
 		PhotoMeta m = new PhotoMeta(conn);
 		JUserMeta musr = new JUserMeta(conn);
 
 		String aid = prf.defltAlbum;
 
-		AnResultset rs = (AnResultset) st
+		AnResultset rs = (AnResultset) synt
 				.select(tablAlbums, "a")
 				.j(musr.tbl, "u", "u.userId = a.shareby")
 				.cols("a.*", "a.shareby ownerId", "u.userName owner")
 				.whereEq("a.aid", aid)
-				.rs(st.instancontxt(Connects.uri2conn(req.uri()), usr))
+				.rs(synt.instancontxt())
 				.rs(0);
 
 		if (!rs.next())
 			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
 
-		AlbumResp album = new AlbumResp().album(rs);
+		AlbumResp album = new AlbumResp(domx.synode, synt.perdomain, synt.basictx().connId())
+						.album(rs);
 
 		rs = (AnResultset) st
 				.select(m.tbl, "p").page(req.pageInf)
@@ -1026,8 +1030,4 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		return album;
 	}
-	
-//	static String chainId(IUser usr, String clientpathRaw) {
-//		return usr.sessionId() + " " + clientpathRaw;
-//	}
 }

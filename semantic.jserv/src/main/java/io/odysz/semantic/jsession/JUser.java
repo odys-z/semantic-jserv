@@ -39,8 +39,7 @@ public class JUser extends SemanticObject implements IUser {
 	/**
 	 * Hard coded field string of user table information.
 	 *
-	 * which will use this for data synchronizing robot's creation,
-	 * {@link io.odysz.semantic.meta.JUserMeta} 
+	 * which will use this for data synchronizing robot's creation
 	 * 
 	 * @author odys-z@github.com
 	 */

@@ -1,23 +1,8 @@
 bin
 /target/
 download
-volume/Robot*
-volume/**/* my.jpg
-volume/**/ignored*.*
-volume/ody/2024_*
-volume/ody/2023_*
-volume/ody/2022_*
-volume/ody/2021_*
-volume/ody/2016_*
-volume/ody/ - - /**
-volume/ody/uploading-temp
-volume/admin
-volume/syrskyi
-volume/odys-z.github.io
-volume/null
-volume/ody@kyiv
-volume/2022*
-volume-0.*
+volume-*
+volume/*.db
 test/results
 test/res/ignore*.*
 test/res/C000000*.mp4
@@ -25,8 +10,15 @@ test/res/C000000*.mp4
 ./
 dist
 winserv.xml
+dependency-reduced-pom.xml
 nginx
 **/volume-hub
+**/settings.hub.json
 **/volume-prv
+**/settings.prv.json
 .classpath
 **/uploading-temp
+
+# temporary install program
+install-settings/*
+!install-settings/sample/

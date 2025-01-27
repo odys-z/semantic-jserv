@@ -32,10 +32,10 @@ import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
+import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.peer.PhotoMeta;
-import io.oz.album.peer.ShareFlag;
 
 class Deviclientx {
 	
@@ -95,18 +95,29 @@ class Deviclientx {
 		}
 	}
 	
+	private static boolean disabled;
+	
 	@BeforeAll
 	static void init() throws Exception {
 		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
 
 		// -Djservs="ip-1:port-1,ip-2:port-2"
-		jserv_xyzw = prefix(System.getProperty("jservs").split(","), "http://");
+		String jservs = System.getProperty("jservs");
+		if (jservs == null) {
+			disabled = true;
+			Utils.warn("Define 'jservs' and bring up SynotierJettyAppTest with 'waite-client' for testing.");
+			return;
+		}
+
+		jserv_xyzw = prefix(jservs.split(","), "http://");
 		
 		dev = new Dev("ody", "8964", "dev-x-00", "src/test/resources/182x121.png");
 	}
 
 	@Test
 	void testSyncUp() throws Exception {
+		if (disabled) return;
+		
 		ExpSyncDoc dx = clientPush(X);
 		verifyPathsPage(dev.client, docm.tbl, dx.clientpath);
 
@@ -224,7 +235,7 @@ class Deviclientx {
 			pathpool.add(pth);
 		}
 
-		DocsResp rep = clientier.synQueryPathsPage(pths, Port.docsync);
+		DocsResp rep = clientier.synQueryPathsPage(pths, Port.docstier);
 
 		PathsPage pthpage = rep.pathsPage();
 

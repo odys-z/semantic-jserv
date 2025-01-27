@@ -126,7 +126,7 @@ public class AnsonResp extends AnsonBody {
 	 * 
 	 * @param ix
 	 * @return integer
-	 * @since 2.0.0
+	 * @since 1.5.5
 	 */
 	public int total(int ix) {
 		return (int) ((ArrayList<?>)data().get("total")).get(ix);
