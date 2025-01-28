@@ -139,6 +139,7 @@ public class SynotierJettyApp {
 
 		Configs.init(webinf);
 		Connects.init(webinf);
+		Syngleton.appName = ifnull(Configs.getCfg("app-name"), "Portfolio 0.7");
 
 		String $vol_home = "$" + settings.vol_name;
 		
@@ -413,7 +414,7 @@ public class SynotierJettyApp {
 	}
 
 	private SynotierJettyApp allowCors(ServletContextHandler context) {
-		CrossOriginFilter.synode(syngleton().synode());
+		CrossOriginFilter.synode(Syngleton.appName, syngleton().synode());
 
 		FilterHolder holder = new FilterHolder(CrossOriginFilter.class);
 		holder.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");

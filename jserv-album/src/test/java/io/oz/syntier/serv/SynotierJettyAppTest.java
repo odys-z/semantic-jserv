@@ -48,41 +48,10 @@ class SynotierJettyAppTest {
 	@Test
 	void testAppSettings() throws Exception {
 		AppSettings hset = AppSettings.load(webinf, "settings.json");
-		// String bindip = hset.bindip;
-		// assertTrue(eq("127.0.0.1", bindip) || eq("0.0.0.0", bindip));
+
 		assertEquals("../../../../volumes-0.7/volume-hub", hset.volume);
 
-//	    String ip;
-//	    try {
-//	        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-//	        while (interfaces.hasMoreElements()) {
-//	            NetworkInterface iface = interfaces.nextElement();
-//
-//	            Enumeration<InetAddress> addresses = iface.getInetAddresses();
-////                InetAddress addr = addresses.nextElement();
-////                ip = addr.getHostAddress();
-//
-//	            if (iface.isLoopback() || !iface.isUp() || iface.isVirtual())
-//	                continue;
-//	            if (addresses.hasMoreElements())
-//	            	Utils.logi("Iface: %s", iface.getDisplayName());
-//
-//	            while(addresses.hasMoreElements()) {
-//	                InetAddress addr = addresses.nextElement();
-//	                ip = addr.getHostAddress();
-//	                Utils.logi("\n%s [%s] %s - %s - %s",
-//	                		iface.isUp() ? "UP" : "--", 
-//	                		iface.isVirtual() ? "virtual" : "physic", ip,
-//	                		iface.getHardwareAddress(), iface.getDisplayName());
-//	            }
-//	            Utils.logi("=========== ===========");
-//	        }
-//	    } catch (SocketException e) {
-//	        throw new RuntimeException(e);
-//	    }
-	    
-
-	   Utils.logi("Thanks to https://stackoverflow.com/a/38342964/7362888: %s",
+		Utils.logi("Thanks to https://stackoverflow.com/a/38342964/7362888: %s",
 			   AppSettings.getLocalIp());
 	}
 	

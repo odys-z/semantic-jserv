@@ -23,6 +23,7 @@ import io.odysz.semantic.jsession.ISessionVerifier;
  * @author odys-z@github.com
  */
 public class JSingleton {
+	public static String appName;
 
 	public static DATranscxt defltScxt;
 	public static boolean health;

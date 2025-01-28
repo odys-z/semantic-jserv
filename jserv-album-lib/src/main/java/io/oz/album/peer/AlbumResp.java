@@ -146,4 +146,5 @@ public class AlbumResp extends DocsResp {
 		collectId = id;
 		return this;
 	}
+
 }

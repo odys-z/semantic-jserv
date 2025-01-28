@@ -60,6 +60,7 @@ import io.oz.syn.SynodeConfig;
  * @since 0.2.0
  */
 public class Syngleton extends JSingleton {
+
 	/**
 	 * Call
 	 * <pre>DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),

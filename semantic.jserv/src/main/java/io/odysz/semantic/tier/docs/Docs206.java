@@ -8,6 +8,7 @@
  */
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.split;
@@ -165,9 +166,13 @@ public abstract class Docs206 {
 		catch (IllegalArgumentException e) {
 			logi("%s Got an IllegalArgumentException from user code; interpreting it as 400 Bad Request.\n%s",
 					FINE, e.getMessage());
+//			resp.setHeader("Error", e.getMessage());
+//			resp.setHeader("Server", e.getMessage());
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 		} catch (TransException | SQLException e) {
 			e.printStackTrace();
+//			resp.setHeader("Error", e.getMessage());
+//			resp.setHeader("Server", e.getMessage());
 			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
 		}
 	}
@@ -184,6 +189,8 @@ public abstract class Docs206 {
 		catch (IllegalArgumentException e) {
 			logi("%s Got an IllegalArgumentException from user code; interpreting it as 400 Bad Request.\n%s",
 					FINE, e.getMessage());
+			response.setHeader("Error", e.getMessage());
+			response.setHeader("Server", JSingleton.appName);
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return null;
 		}
@@ -224,6 +231,10 @@ public abstract class Docs206 {
 
 		String conn = Connects.uri2conn(req.uri());
 		// ExpDocTableMeta meta = getMeta.get(req.uri());
+		if (req.doc == null || isblank(req.doc.recId) || isblank(req.docTabl))
+			throw new IllegalArgumentException(f("File informoation is missing: doc: %s, table %s",
+					req.doc == null ? null : req.doc.recId, req.docTabl));
+
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
 
 		AnResultset rs = (AnResultset) st

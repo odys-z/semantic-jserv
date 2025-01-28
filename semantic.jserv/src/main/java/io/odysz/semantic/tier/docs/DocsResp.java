@@ -15,6 +15,13 @@ import io.odysz.semantics.x.SemanticException;
  */
 public class DocsResp extends AnsonResp {
 	public ExpSyncDoc xdoc;
+	
+	/**
+	 * Issue: this shouldn't be known to client.
+	 * There are use cases that needing this value, e. g. get doc-tree with only dataset's sk.
+	 * <p>Should be removed in the future, once sk's semantics are extended.</p>
+	 */
+	public String docTabl;
 
 	protected PathsPage syncingPage;
 
@@ -106,4 +113,18 @@ public class DocsResp extends AnsonResp {
 		return this;
 	}
 
+	/**
+	 * Set entity name.
+	 * 
+	 * <h4>Issue:</h4>
+	 * Responding with entity's name per record / doc. 
+	 * 
+	 * @param tbl
+	 * @return 
+	 * @return
+	 */
+	public DocsResp docTabl(String tbl) {
+		docTabl = tbl;
+		return this;
+	}
 }

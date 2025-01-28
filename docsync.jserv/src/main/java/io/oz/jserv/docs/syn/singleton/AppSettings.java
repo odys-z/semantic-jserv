@@ -10,8 +10,6 @@ import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.logT;
-import static io.odysz.common.Utils.warn;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -272,8 +270,7 @@ public class AppSettings extends Anson {
 
 	public String vol_name;
 	public String volume;
-	/** @deprecated */
-	public String bindip;
+	// public String bindip;
 	public String jservs;
 	public String installkey;
 	public String rootkey;
@@ -356,10 +353,10 @@ public class AppSettings extends Anson {
 	 * Find the correct ip and return the suitable one, "0.0.0.0" as the last one.
 	 * @return ip to be bound
 	 */
-	public String bindip() {
-		warn("Find the correct ip and return the suitable one, '0.0.0.0' as the last one.");
-		return bindip;
-	}
+//	public String bindip() {
+//		warn("Find the correct ip and return the suitable one, '0.0.0.0' as the last one.");
+//		return bindip;
+//	}
 
 	/**
 	 * Install process: <br>

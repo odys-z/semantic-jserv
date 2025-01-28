@@ -53,11 +53,11 @@ import io.odysz.transact.x.TransException;
 import io.oz.album.AlbumFlags;
 import io.oz.album.peer.AlbumPort;
 import io.oz.album.peer.AlbumReq;
+import io.oz.album.peer.AlbumReq.A;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.Profiles;
 import io.oz.album.peer.SynDocollPort;
-import io.oz.album.peer.AlbumReq.A;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.jserv.docs.syn.DocUser;
 
@@ -340,6 +340,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		String conn = Connects.uri2conn(jreq.synuri);
 		// force org-id as first arg
 
+		PhotoMeta meta = new PhotoMeta(conn);
+
 		if (eq(jreq.sk, "tree-rel-folder-org")) {
 			// force user-id as first arg
 			PageInf page = isNull(jreq.pageInf)
@@ -359,7 +361,9 @@ public class SynDocollects extends ServPort<AlbumReq> {
 					: jreq.pageInf.insertCondt(usr.orgId());
 
 			List<?> lst = DatasetHelper.loadStree(conn, jreq.sk, page);
-			return new AlbumResp().albumForest(lst);
+			return ((AlbumResp) new AlbumResp()
+					.docTabl(meta.tbl))
+					.albumForest(lst);
 		}
 	}
 

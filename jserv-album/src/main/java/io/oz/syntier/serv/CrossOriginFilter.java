@@ -314,7 +314,7 @@ public class CrossOriginFilter implements Filter
             }
         }
 
-        response.setHeader(SERVER, "Portfolio 0.7");
+        response.setHeader(SERVER, serverName);
         response.setHeader(SYNODE, synode);
 
         chain.doFilter(request, response);
@@ -516,8 +516,11 @@ public class CrossOriginFilter implements Filter
         allowCredentials = false;
     }
 
+    
+    static String serverName;
     static String synode;
-	public static void synode(String synode) {
+	public static void synode(String serverName, String synode) {
 		CrossOriginFilter.synode = synode;
+		CrossOriginFilter.serverName = serverName;
 	}
 }
