@@ -178,7 +178,7 @@ public class AppSettings extends Anson {
 			
 			if (eq(cfg.synode(), sid_url[0])) {
 				logT(new Object() {}, "Ignoring updating jserv to local node: %s");
-				local_serv = updateLocalJserv(cfg.https, jserv_album, cfg.synconn, synm, cfg.synode());
+				// local_serv = updateLocalJserv(cfg.https, jserv_album, cfg.synconn, synm, cfg.synode());
 			}
 			else
 				updatePeerJservs(cfg.synconn, cfg.domain, synm, sid_url[0], url);
@@ -227,7 +227,7 @@ public class AppSettings extends Anson {
 				// .whereEq(synm.domain, domain)
 				.u(tb.instancontxt(synconn, robot));
 			}
-	
+			this.local_serv = servurl;
 			return servurl;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -399,10 +399,13 @@ public class AppSettings extends Anson {
 		if (!isblank(settings.installkey)) {
 			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
 			settings.setupdb(url_path, config_xml, cfg).save();
+			
+			// also update db
+			settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		}
 		else {
 			logi("[INSTALL-CHECK] Starting application without db setting ...", config_xml);
-			settings.local_serv = settings.updateLocalJserv(cfg.https, url_path, null, null, null) ;
+			settings.updateLocalJserv(cfg.https, url_path, null, null, null) ;
 		}
 		
 		return settings.local_serv;
