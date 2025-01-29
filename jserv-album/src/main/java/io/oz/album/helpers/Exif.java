@@ -167,7 +167,17 @@ public class Exif {
 					else if (eq("File Size", name))
 						photo.size = filesize(val);
 					else if (eq("Rotation", name))
-						photo.rotation = val;
+						// photo.rotation = val;
+						try {
+							int orient = Integer.valueOf(val);
+							photo.rotation = orient == 1 || orient == 2
+									? 0   : orient == 3 || orient == 4
+									? 180 : orient == 6 || orient == 5
+									? 90  : orient == 8 || orient == 7
+									? 270 : 0;
+						} catch (Exception e) {
+							photo.rotation = 0;
+						}
 				} catch (Exception e) {
 					Utils.warn("Failed for parsing devide: %s, path: %s,\nname: %s, value: %s",
 								photo.device(), photo.fullpath(),
@@ -193,7 +203,7 @@ public class Exif {
 			if (MimeTypes.isAudio(photo.mime)) {
 				photo.widthHeight = new int[] { 16, 9 };
 				photo.wh = new int[] { 16, 9 };
-				photo.rotation = "0";
+				photo.rotation = 0;
 			}
 			// another way other than by Tika
 			else if (MimeTypes.isImgVideo(photo.mime) && isblank(photo.widthHeight)) {
@@ -210,14 +220,14 @@ public class Exif {
 			}
 
 			if (isblank(photo.wh) && !isblank(photo.widthHeight))
-				photo.wh = eq(photo.rotation, "90") || eq(photo.rotation, "270") 
+				photo.wh = photo.rotation == 90 || photo.rotation == 270 
 					? CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0])
 					: CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 
 			try {
-				if ((eq("90", photo.rotation) || eq("270", photo.rotation)) && gt(photo.widthHeight[0], photo.widthHeight[1]))
+				if ((90 == photo.rotation || 270 == photo.rotation) && gt(photo.widthHeight[0], photo.widthHeight[1]))
 					photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
-				else if ((eq("0", photo.rotation) || eq("180", photo.rotation)) && lt(photo.widthHeight[0], photo.widthHeight[1]))
+				else if ((0 == photo.rotation || 180 == photo.rotation) && lt(photo.widthHeight[0], photo.widthHeight[1]))
 					photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
 				else if (photo.widthHeight != null)
 					photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);

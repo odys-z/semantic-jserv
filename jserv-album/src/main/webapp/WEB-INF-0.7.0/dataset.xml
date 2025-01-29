@@ -81,11 +81,11 @@ from h_photos f where f.family = '%1$s' group by f.folder
  <c>
    <sk>tree-album-family-folder</sk>
    <sqlit>
-select family || '.' || h.folder || '-' || h.pid fullpath, 'p' nodetype, h.pid, family || '.' || h.folder folder, h.docname, h.shareby, h.docname, h.pdate sort, css, filesize img, null mov, null wav, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, h.device fav, mime
+select family || '.' || h.folder || '-' || h.pid fullpath, 'p' nodetype, h.pid, family || '.' || h.folder folder, h.docname, h.shareby, 'h_photos' doctabl, h.pdate sort, css, filesize img, null mov, null wav, case when (geox &lt;&gt; 0) then geox || ',' || geoy end geo, h.device fav, mime
 from h_photos h where family = '%1$s' and substring(ifnull(mime, 'bin'), 0, 6) in ('audio', 'image', 'video', 'bin')
 union 
 select * from (
-select family || '.' || folder fullpath, 'gallery' nodetype, family || '.' || folder pid, 'null' folder, folder docname, max(shareby) shareby, folder docname, folder sort, css,
+select family || '.' || folder fullpath, 'gallery' nodetype, family || '.' || folder pid, 'null' folder, folder docname, max(shareby) shareby, 'h_photos' doctabl, folder sort, css,
 sum(case when substring(ifnull(mime, 'image'), 0, 6) = 'image' then 1 else 0 end) img, sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov, 
 sum (case when substring(mime, 0, 6) = 'audio' then 1 else 0 end) wav, sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo, 
 '' fav, count(ifnull(mime, 1)) mime

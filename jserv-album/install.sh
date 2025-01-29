@@ -1,5 +1,8 @@
 echo "Usage: make install node-id volume-path(e.g. /var/local/volume) rootkey"
 echo "For Windows, run this in the VS Code's Bash terminal. (Needing the 'sed' command)"
+echo "For Linux error: '\r': command not found"
+echo "Run sed -i 's/\r$//' install.sh"
+echo 
 
 if test "$#" -ne 3; then
     echo "Illegal number of parameters"

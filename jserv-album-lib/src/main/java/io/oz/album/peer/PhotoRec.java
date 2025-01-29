@@ -10,7 +10,9 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
 
+import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
+import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
@@ -26,6 +28,17 @@ import io.odysz.semantics.ISemantext;
  */
 public class PhotoRec extends ExpSyncDoc {
 
+	public static class MediaCss extends Anson {
+		int[] widthHeight;
+		int[] wh;
+		int rotation;
+		public MediaCss(int[] widthHeight, int[] wh, int rotation) {
+			this.widthHeight = widthHeight;
+			this.wh = wh;
+			this.rotation = rotation;
+		}
+	}
+
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	ISemantext semantxt;
 
@@ -39,11 +52,11 @@ public class PhotoRec extends ExpSyncDoc {
 //	public String mime;
 	public String geox;
 	public String geoy;
-	public String css;
+//	public String css;
 //	private String img;
 //	private String mov;
 //	private String wav;
-	public String rotation;
+	public int rotation;
 	/** image size */
 	public int[] widthHeight;
 	/** reduction of image size */
@@ -75,7 +88,7 @@ public class PhotoRec extends ExpSyncDoc {
 
 	public PhotoRec folder(AnResultset rs, PhotoMeta m) throws SQLException {
 		super.folder(rs, m);
-		this.css = rs.getString(m.css);
+//		this.css = rs.getString(m.css);
 //		this.img = rs.getString("img");
 //		this.mov = rs.getString("mov");
 //		this.wav = rs.getString("wav");
@@ -111,4 +124,12 @@ public class PhotoRec extends ExpSyncDoc {
 //		size = f.length();
 //		return this;
 //	}
+	
+	public String css() {
+		try {
+			return new MediaCss(widthHeight, wh, rotation).toBlock();
+		} catch (AnsonException | IOException e) {
+			return "{\"w\": 4, \"h\": 3, \"rotation\": 0}";
+		}
+	}
 }

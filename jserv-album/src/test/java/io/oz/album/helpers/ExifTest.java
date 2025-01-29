@@ -181,7 +181,7 @@ class ExifTest {
 		assertEquals(4896, p.widthHeight[0]);
 		assertEquals(6528, p.widthHeight[1]);
 		assertEquals("image/jpeg", p.mime);
-		assertTrue(isblank(p.rotation));
+		assertEquals(0, p.rotation);
 		
 		p = new PhotoRec(); 
 		Exiftool.parseExif(p,"test/res/C000000D VID_20230831_200144.mp4"); 
@@ -191,7 +191,7 @@ class ExifTest {
 		assertEquals(2400, p.widthHeight[0]);
 		assertEquals(1080, p.widthHeight[1]);
 		assertEquals("video/mp4", p.mime);
-		assertEquals("90", p.rotation);
+		assertEquals(90, p.rotation);
 		
 	}
 

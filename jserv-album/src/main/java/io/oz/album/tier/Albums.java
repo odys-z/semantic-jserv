@@ -805,7 +805,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 				Update u = st
 					.update(m.tbl, usr)
-					.nv(m.css, p.css)
+					.nv(m.css, p.css())
 					.nv(m.size, String.valueOf(p.size))
 					.whereEq(m.pk, pid);
 

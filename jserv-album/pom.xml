@@ -141,7 +141,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>syndoc-lib</artifactId>
-	    <version>[0.5.15-SNAPSHOT,)</version>
+	    <version>[0.5.16,)</version>
 	</dependency>
 
 	<dependency>

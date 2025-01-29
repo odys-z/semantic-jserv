@@ -58,7 +58,7 @@ public class DocreateHandler implements IOnDocreate {
 
 				Update u = st
 					.update(docm.tbl, usr)
-					.nv(phm.css, p.css)
+					.nv(phm.css, p.css())
 					.nv(docm.size, String.valueOf(p.size))
 					.whereEq(docm.pk, docId);
 

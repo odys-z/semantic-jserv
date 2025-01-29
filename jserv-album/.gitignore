@@ -9,6 +9,7 @@ test/res/C000000*.mp4
 .extract
 ./
 dist
+runtime
 winserv.xml
 dependency-reduced-pom.xml
 nginx

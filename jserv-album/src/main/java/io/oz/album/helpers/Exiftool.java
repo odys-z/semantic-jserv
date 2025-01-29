@@ -6,6 +6,7 @@ import static io.odysz.common.LangExt.filesize;
 import static io.odysz.common.LangExt.gt;
 import static io.odysz.common.LangExt.imagesize;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.lt;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
@@ -36,7 +37,7 @@ import io.oz.album.peer.Exifield;
 import io.oz.album.peer.PhotoRec;
 
 public class Exiftool {
-	public static boolean verbose = false;
+	public static boolean verbose = true;
 	
 	public static final String exiftool = "exiftool";
 	
@@ -90,8 +91,20 @@ public class Exiftool {
 				}
 				else if (eq("File Size", name))
 					photo.size = filesize(val);
-				else if (eq("Rotation", name))
-					photo.rotation = val;
+				else if (eq("Orientation", name) || eq("Rotation", name))
+					// photo.rotation = val;
+					try {
+						int orient = Integer.valueOf(val);
+						photo.rotation = orient == 1 || orient == 2
+								? 0   : orient == 3 || orient == 4
+								? 180 : orient == 6 || orient == 5
+								? 90  : orient == 8 || orient == 7
+								? 270 : 0;
+					} catch (Exception e) {
+						photo.rotation = 0;
+					}
+				else if (eq("GPS Latitude", name) || eq("GPS Longitude", name))
+					parseXY(photo, name, val);
 			} catch (Exception e) {
 				Utils.warn("Failed for parsing devide: %s, path: %s,\nname: %s, value: %s",
 							photo.device(), photo.fullpath(),
@@ -105,7 +118,7 @@ public class Exiftool {
 			photo.month(fd);
 		}
 
-		if (isblank(photo.widthHeight) && metadata.getInt(TIFF.IMAGE_WIDTH) < 0 && metadata.getInt(TIFF.IMAGE_LENGTH) < 0) 
+		if (isNull(photo.widthHeight) && metadata.getInt(TIFF.IMAGE_WIDTH) < 0 && metadata.getInt(TIFF.IMAGE_LENGTH) < 0) 
 			try {
 				if (verbose) Utils.logi(metadata.names());
 				photo.widthHeight = new int[]
@@ -117,7 +130,7 @@ public class Exiftool {
 		if (MimeTypes.isAudio(photo.mime)) {
 			photo.widthHeight = new int[] { 16, 9 };
 			photo.wh = new int[] { 16, 9 };
-			photo.rotation = "0";
+			photo.rotation = 0;
 		}
 		// another way other than by Tika
 		else if (MimeTypes.isImgVideo(photo.mime) && isblank(photo.widthHeight)) {
@@ -133,31 +146,36 @@ public class Exiftool {
 			}
 		}
 
-		if (isblank(photo.wh) && !isblank(photo.widthHeight))
-			photo.wh = eq(photo.rotation, "90") || eq(photo.rotation, "270") 
+		if (isNull(photo.wh) && !isblank(photo.widthHeight))
+			photo.wh = photo.rotation == 90 || photo.rotation == 270
 				? CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0])
 				: CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 
 		try {
-			if ((eq("90", photo.rotation) || eq("270", photo.rotation)) && gt(photo.widthHeight[0], photo.widthHeight[1]))
+			if ((90 == photo.rotation || 270 == photo.rotation) && gt(photo.widthHeight[0], photo.widthHeight[1]))
 				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
-			else if ((eq("0", photo.rotation) || eq("180", photo.rotation)) && lt(photo.widthHeight[0], photo.widthHeight[1]))
+			else if ((0 == photo.rotation || 180 == photo.rotation) && lt(photo.widthHeight[0], photo.widthHeight[1]))
 				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
 			else if (photo.widthHeight != null)
 				photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 			// else possibly not a image or video file
 		} catch (Exception e) {e.printStackTrace();}
 		
-		photo.geox = metadata.getLongitude();
-		if (photo.geox == null) photo.geox = geox0;
-
-		photo.geoy = metadata.getLatitude();
-		if (photo.geoy == null) photo.geoy = geoy0;
+//		photo.geox = metadata.getLongitude();
+//		if (photo.geox == null) photo.geox = geox0;
+//
+//		photo.geoy = metadata.getLatitude();
+//		if (photo.geoy == null) photo.geoy = geoy0;
 
 		return photo;
 	}
 	
-    public static void check() throws InterruptedException, IOException, TimeoutException {
+    static void parseXY(PhotoRec photo, String name, String val) {
+    	if (eq("GPS Longitude", name))
+    		;
+	}
+
+	public static void check() throws InterruptedException, IOException, TimeoutException {
         Process process = null;
         try {
             process = Runtime.getRuntime().exec(String.format("%s -ver", cmd));
