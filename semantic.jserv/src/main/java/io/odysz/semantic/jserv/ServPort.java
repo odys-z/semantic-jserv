@@ -223,7 +223,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 				Docs206.get206(req, resp);
 			} catch (SsException e) {
 				write(resp, err(MsgCode.exSession, e.getMessage()));
-				resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+				resp.setHeader("Error", e.getMessage());
+				// resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
 			}
 			return;
     	}

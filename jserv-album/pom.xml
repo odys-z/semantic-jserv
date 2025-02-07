@@ -141,7 +141,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>syndoc-lib</artifactId>
-	    <version>[0.5.17,)</version>
+	    <version>[0.5.18-SNAPSHOT,)</version>
 	</dependency>
 
 	<dependency>
@@ -182,7 +182,7 @@
   </dependencies>
 
   <build>
-    <finalName>jserv-album-${version}</finalName>
+    <finalName>jserv-album-${project.version}</finalName>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
      <plugins>
      <plugin>

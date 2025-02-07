@@ -10,6 +10,7 @@ test/res/C000000*.mp4
 ./
 dist
 runtime
+runtime-*
 winserv.xml
 dependency-reduced-pom.xml
 nginx
@@ -23,3 +24,4 @@ nginx
 # temporary install program
 install-settings/*
 !install-settings/sample/
+deploy

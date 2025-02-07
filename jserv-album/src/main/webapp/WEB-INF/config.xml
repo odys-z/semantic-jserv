@@ -45,6 +45,9 @@
 		or 
 		$BIN/exiftool
 		-DBIN=C:/Users/User/bin
+
+		or for windows,
+		C:/Users/Ody/bin/exiftool
 		 -->
 		<v>$BIN/exiftool</v>
 	</c>

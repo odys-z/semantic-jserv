@@ -97,6 +97,7 @@ public class SynotierJettyApp {
 	public static void main(String[] args) {
 		try {
 			// For Eclipse's running as Java Application
+			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
 			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
 
 			String jserv = AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json);

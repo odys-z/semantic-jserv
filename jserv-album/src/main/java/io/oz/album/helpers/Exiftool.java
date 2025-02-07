@@ -89,7 +89,7 @@ public class Exiftool {
 					if (photo.widthHeight == null) photo.widthHeight = new int[2];
 					photo.widthHeight[0] = imagesize(val);
 				}
-				else if (eq("File Size", name))
+				else if (eq("File Size", name) && photo.size == 0)
 					photo.size = filesize(val);
 				else if (eq("Orientation", name) || eq("Rotation", name))
 					// photo.rotation = val;
@@ -151,6 +151,7 @@ public class Exiftool {
 				? CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0])
 				: CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 
+		/** Not correct by calling exiftool directly
 		try {
 			if ((90 == photo.rotation || 270 == photo.rotation) && gt(photo.widthHeight[0], photo.widthHeight[1]))
 				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
@@ -160,6 +161,7 @@ public class Exiftool {
 				photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 			// else possibly not a image or video file
 		} catch (Exception e) {e.printStackTrace();}
+		*/
 		
 //		photo.geox = metadata.getLongitude();
 //		if (photo.geox == null) photo.geox = geox0;
@@ -171,7 +173,7 @@ public class Exiftool {
 	}
 	
     static void parseXY(PhotoRec photo, String name, String val) {
-    	if (eq("GPS Longitude", name))
+    	if (eq("GPS Longitude", name)) // e. g. (name, val) == (GPS Latitude, 23 deg 27' 54.30" N), (GPS Longitude, 103 deg 24' 37.30" E)
     		;
 	}
 

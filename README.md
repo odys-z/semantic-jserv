@@ -57,11 +57,3 @@ The client side communicating with semantic-jserv.
 Currently a java client and a js client together with React is basically working. And a C# client project is also came with a lib in Nuget (stoped for a while). Java client to Android also tested.
 
 The js client together with a vue client is also in tense developing.
-
-# Credits
-
-This project is inspired by:
-
-- [omnifaces / omnifaces](https://github.com/omnifaces/omnifaces)
-
-...

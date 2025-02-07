@@ -166,13 +166,15 @@ public abstract class Docs206 {
 		catch (IllegalArgumentException e) {
 			logi("%s Got an IllegalArgumentException from user code; interpreting it as 400 Bad Request.\n%s",
 					FINE, e.getMessage());
-//			resp.setHeader("Error", e.getMessage());
+			resp.setHeader("Error", e.getMessage());
 //			resp.setHeader("Server", e.getMessage());
+			resp.setHeader("Server", JSingleton.appName);
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 		} catch (TransException | SQLException e) {
 			e.printStackTrace();
-//			resp.setHeader("Error", e.getMessage());
+			resp.setHeader("Error", e.getMessage());
 //			resp.setHeader("Server", e.getMessage());
+			resp.setHeader("Server", JSingleton.appName);
 			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
 		}
 	}
@@ -450,8 +452,10 @@ public abstract class Docs206 {
 	 */
 	public static void writeContent(HttpServletResponse response, Resource resource, List<Range> ranges, String contentType) throws IOException {
 		ServletOutputStream output = response.getOutputStream();
-
-		if (ranges.size() == 1) {
+		if (ranges == null) {
+			stream(resource.file, output, 0, Math.max(resource.length - 1, 0));
+		}
+		else if (ranges.size() == 1) {
 			Range range = ranges.get(0);
 			stream(resource.file, output, range.start, range.length);
 		}

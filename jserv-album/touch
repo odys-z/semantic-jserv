@@ -1,9 +1,11 @@
+echo setting up tests
 touch volumes-0.7/volume-hub/doc-jserv.db
 touch volumes-0.7/volume-hub/jserv-main.db
 touch volumes-0.7/volume-prv/doc-jserv.db
 touch volumes-0.7/volume-prv/jserv-main.db
 
-echo "{ \"type\"      : \"io.oz.jserv.docs.syn.singleton.AppSettings\",
+echo "{
+  \"type\"      : \"io.oz.jserv.docs.syn.singleton.AppSettings\",
   \"vol_name\"  : \"VOLUME_HUB\",
   \"volume\"    : \"../../../../volumes-0.7/volume-hub\",
   \"exifpath\"  : \"/usr/bin\",
