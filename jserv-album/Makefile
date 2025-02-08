@@ -35,8 +35,10 @@ jserv-sqlite:
 
 #	@zip -FSr jserv-album-$(VERSION).zip \
 	Makefile $(BUILDDIR)/jserv-album-*.jar install-settings $(VOLUME) WEB-INF install.sh
+	mv install-settings/install.sh .
 	@jar -cMf jserv-album-$(VERSION).zip \
 	Makefile $(BUILDDIR)/jserv-album-*.jar install-settings $(VOLUME) WEB-INF install.sh
+	mv install.sh install-settings/
 
 	@mv jserv-album-$(VERSION).zip $(BUILDDIR)
 	@rm $(BUILDDIR)/jserv-album-*.jar

@@ -26,4 +26,5 @@ nginx
 # temporary install program
 install-settings/*
 !install-settings/sample/
+!install-settings/*.sh
 deploy
