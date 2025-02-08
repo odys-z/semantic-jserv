@@ -75,17 +75,7 @@ public class AppSettings extends Anson {
 	public AppSettings setupdb(String url_path, String config_xml, SynodeConfig cfg) throws Exception {
 		if (isblank(rootkey)) {
 			mustnonull(installkey, "[AppSettings] Install-key cannot be null if root-key is empty.");
-
-			// String $vol_home = "$" + vol_name;
-
 			mustnonull(jservs);
-
-//			YellowPages.load(FilenameUtils.concat(
-//					new File(".").getAbsolutePath(),
-//					webinf,
-//					EnvPath.replaceEnv($vol_home)));
-//
-//			SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 
 			Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 			setupdb(cfg, url_path, webinf, config_xml, installkey);
@@ -190,11 +180,13 @@ public class AppSettings extends Anson {
 
 
 	/**
+	 * 
 	 * @param https
+	 * @param jserv_album jserv's url path
 	 * @param synconn can be null, for ignoring db update
 	 * @param synm can be null, for ignoring db update
 	 * @param mysid
-	 * @return jserv url
+	 * @return
 	 * @throws TransException
 	 * @throws SQLException
 	 */
@@ -204,14 +196,8 @@ public class AppSettings extends Anson {
 		try { ip = getLocalIp();
 		} catch (IOException e) {
 			e.printStackTrace();
-			// ip = settings[2].replaceAll("^//", "");
 		}
 
-//		if (len(settings) <= 4 || !eq(settings[2], f("//%s", ip)))
-//			Utils.warn(
-//				"Local Ip is not the same as configured Ip, replacing %s with %s.",
-//				settings[2], ip);
-		
 		IUser robot = DATranscxt.dummyUser();
 		try {
 			String servurl = f("http%s://%s:%s%s",
@@ -410,4 +396,5 @@ public class AppSettings extends Anson {
 		
 		return settings.local_serv;
 	}
+
 }

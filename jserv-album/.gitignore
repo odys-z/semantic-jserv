@@ -18,6 +18,8 @@ nginx
 **/settings.hub.json
 **/volume-prv
 **/settings.prv.json
+**/volume-x29
+**/settings.x29.json
 .classpath
 **/uploading-temp
 

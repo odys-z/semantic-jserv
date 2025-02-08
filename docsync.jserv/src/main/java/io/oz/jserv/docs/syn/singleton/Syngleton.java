@@ -39,6 +39,7 @@ import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.DBSynTransBuilder.SynmanticsMap;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SyncUser;
+import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
@@ -314,10 +315,24 @@ public class Syngleton extends JSingleton {
 
 		// 4. synodes
 		initSynodeRecs(cfg, cfg.peers);
+
+		// initiate n-stamp & n0 at the first time,
+		// the equivalent to DA/DBSytableTest.testInit() -> incN0()
+		SyndomContext.incN0Stamp(cfg.synconn, synm, cfg.synode());
 	}
 
+//	/**
+//	 * Inc n0 &amp; n-stamp, avoiding synmantics triggering by using lower transaction API.
+//	 * @throws TransException 
+//	 * @throws SQLException 
+//	 */
+//	static void initNStamp(String conn, SynodeMeta m) throws SQLException, TransException {
+//		Connects.commit(conn, DATranscxt.dummyUser(),
+//				f("update %1$s set %2$s = %3$s + 1, %3$s = %3$s + 1;", m.tbl, m.nstamp, m.nyquence));
+//	}
+
 	/**
-	 * Load Configs and Connects, and load Semantics configurations.
+	 * Load Configures and Connections, and load Semantics' configurations.
 	 * 
 	 * @param cfg
 	 * @param configFolder
