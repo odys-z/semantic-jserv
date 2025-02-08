@@ -3,11 +3,9 @@ package io.oz.album.helpers;
 import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.filesize;
-import static io.odysz.common.LangExt.gt;
 import static io.odysz.common.LangExt.imagesize;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
-import static io.odysz.common.LangExt.lt;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
 
