@@ -36,8 +36,15 @@ jserv-sqlite:
 #	@zip -FSr jserv-album-$(VERSION).zip \
 	Makefile $(BUILDDIR)/jserv-album-*.jar install-settings $(VOLUME) WEB-INF install.sh
 	mv install-settings/install.sh .
+	chmod +x install.sh
+	mv install-settings/set-jdk-exiftool.sh .
+	chmod +x set-jdk-exiftool.sh
+
 	@jar -cMf jserv-album-$(VERSION).zip \
-	Makefile $(BUILDDIR)/jserv-album-*.jar install-settings $(VOLUME) WEB-INF install.sh
+	Makefile $(BUILDDIR)/jserv-album-*.jar install-settings $(VOLUME) WEB-INF install.sh \
+	set-jdk-exiftool.sh
+
+	mv set-jdk-exiftool.sh install-settings/
 	mv install.sh install-settings/
 
 	@mv jserv-album-$(VERSION).zip $(BUILDDIR)

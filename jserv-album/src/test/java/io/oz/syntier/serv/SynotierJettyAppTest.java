@@ -51,8 +51,7 @@ class SynotierJettyAppTest {
 
 		assertEquals("../../../../volumes-0.7/volume-hub", hset.volume);
 
-		Utils.logi("Thanks to https://stackoverflow.com/a/38342964/7362888: %s",
-			   AppSettings.getLocalIp());
+		Utils.logi(AppSettings.getLocalIp());
 	}
 	
 	@Test

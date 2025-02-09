@@ -34,3 +34,9 @@ echo $vpath
 # touch $2/doc-jserv.db $2/jserv-main.db
 sed -i "s@\"volume\"\s*:\s*\".*\"@\"volume\"    : \"$vpath\"@" WEB-INF/settings.json
 sed -i "s@\"installkey\"\s*:\s*\".*\"@\"installkey\": \"$3\"@" WEB-INF/settings.json
+
+echo "Run 'java -version' to check the JDK version. If not 17, please set JAVA_HOME and PATH manually."
+echo "Run 'exiftool -ver' to check the ExifTool version."
+echo "See set-jdk-exiftool.sh for the manual setting."
+echo "Run 'java -jar bin/jserv-album.jar' to start the server."
+echo "For linux, run 'nohup java -jar bin/jserv-album.jar &' to start the server in the background."
