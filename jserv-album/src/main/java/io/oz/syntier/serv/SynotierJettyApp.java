@@ -170,68 +170,6 @@ public class SynotierJettyApp {
 	}
 
 	/**
-	 * @deprecated
-	 * Test API equivalent of {@link #main(String[])}.
-	 * @param _vol_home environment variable name for volume path, e. g. "VOLUME_HOME", without '$'
-	 * @param args cli args, e. g. -ip <bind-ip>, where the binding IP will override the dictionary.json.
-	 * @return  Jetty application
-	 * @throws Exception
-	static SynotierJettyApp boot(String _vol_home, String webinf, String config_xml, String[] args, PrintstreamProvider ... oe)
-			throws Exception {
-
-		CliArgs cli = new CliArgs();
-		CmdLineParser parser = new CmdLineParser(cli);
-		parser.parseArgument(args);
-
-		mustnonull(cli.ip, "JUnit args for IDE bug: -ea -Dip=127.0.0.1 -Dinstall-key=### -DWEBROOT_PRV=#.#.#.# -DWEBROOT_HUB=#.#.#.#, -Djservs=\"X:127.0.0.1:8964 Y:127.0.0.1:8965\"");
-		
-		Utils.logi("%s : %s", _vol_home, System.getProperty(_vol_home));
-
-		Configs.init(webinf);
-		Connects.init(webinf);
-
-		String $vol_home = "$" + _vol_home;
-		
-		YellowPages.load($vol_home);
-		SynodeConfig cfg = YellowPages.synconfig();
-		if (cfg.mode == null)
-			cfg.mode = SynodeMode.peer;
-		
-		String[] ip_urlpath = new String[] {isblank(cli.ip) ? cfg.localhost : cli.ip, cli.urlpath};
-
-		if (!isblank(cli.installkey)) {
-			mustnonull(cli.jservs);
-
-			YellowPages.load(FilenameUtils.concat(
-					new File(".").getAbsolutePath(),
-					webinf,
-					EnvPath.replaceEnv($vol_home)));
-
-			AppSettings.setupdb(cfg, webinf, $vol_home, config_xml, cli.installkey, cli.jservs);
-		}
-		else {
-			mustnonull(cli.rootkey);
-
-			YellowPages.load(FilenameUtils.concat(
-					new File(".").getAbsolutePath(),
-					webinf,
-					EnvPath.replaceEnv($vol_home)));
-
-			AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, cli.rootkey);
-		}
-		
-		return createSyndoctierApp( cfg.ip(ip_urlpath[0]), null,
-									((ArrayList<SyncUser>) YellowPages.robots()).get(0),
-									ip_urlpath[1], webinf, "config.xml",
-									f("%s/%s", $vol_home, "syntity.json"))
-
-				.start(isNull(oe) ? () -> System.out : oe[0],
-					  !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
-				;
-	}
-	 */
-	
-	/**
 	 * @param cfg
 	 * @throws Exception
 	 */
@@ -357,57 +295,12 @@ public class SynotierJettyApp {
 	
 	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, AppSettings settings,
 			String config_xml) throws Exception {
-//		return instanserver(configPath, cfg, config_xml, settings.bindip(), Integer.valueOf(settings.port()));
-//	}
-//
-//	/**
-//	 * Create a Jetty instance at local host, jserv-root
-//	 * for accessing online Synodes.
-//	 * 
-//	 * <p>Debug Tip:</p> list all local tcp listening ports:
-//	 * sudo netstat -ntlp
-//	 * see https://askubuntu.com/a/328293
-//	 * 
-//	 * @param configPath
-//	 * @param cfg
-//	 * @param configxml
-//	 * @param bindIp
-//	 * @param port
-//	 * @param robotInf information for creating robot, i. e. the user identity for login to peer synodes.
-//	 * @return Jetty App
-//	 * @throws Exception
-//	 */
-//	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, String configxml,
-//			String bindIp, int port) throws Exception {
 	
 	    AnsonMsg.understandPorts(SynDocollPort.docoll);
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
-	
-
-	    // always bind to 0.0.0.0, report IP automatically, by AppSettins
-
-//	    InetAddress inet = InetAddress.getLocalHost();
-//	    String addrhost  = inet.getHostAddress(); // this result is different between Windows and Linux
-
-//	    if (isblank(settings.bindip) || eq("*", settings.bindip)) {
-//	    	synapp.server = new Server();
-//	    	ServerConnector httpConnector = new ServerConnector(synapp.server);
-//	        httpConnector.setHost(addrhost);
-//	        httpConnector.setPort(settings.port);
-//	        httpConnector.setIdleTimeout(5000);
-//	        synapp.server.addConnector(httpConnector);
-//	    }
-//	    else
-//	    	synapp.server = new Server(new InetSocketAddress(settings.bindip, settings.port));
-//	
-////		synapp.syngleton.jserv =
-//////				String.format("%s://%s:%s",
-//////				cfg.https ? "https" : "http",
-//////				settings.bindip == null ? addrhost : settings.bindip, settings.port);
-////				settings.localserv;
 	
     	synapp.server = new Server(new InetSocketAddress("0.0.0.0", settings.port));
 

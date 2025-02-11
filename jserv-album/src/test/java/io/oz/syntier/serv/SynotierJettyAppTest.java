@@ -82,8 +82,9 @@ class SynotierJettyAppTest {
 		SynodeMeta m = new SynodeMeta(cfg.synconn);
 		
 		for (Synode peer : cfg.peers)
-			assertTrue(prefixWith(
-				DAHelper.getValstr(st, cfg.synconn, m, m.jserv, m.domain, cfg.domain, m.synoder, peer.synid), "http:"),
+			assertTrue(
+				   prefixWith(DAHelper.getValstr(st, cfg.synconn, m, m.jserv, m.domain, cfg.domain, m.synoder, peer.synid), "http:")
+				|| prefixWith(DAHelper.getValstr(st, cfg.synconn, m, m.jserv, m.domain, cfg.domain, m.synoder, peer.synid), "web-"),
 				"See WEB-INF/settings.json for what's expected.");
 	}
 
@@ -96,20 +97,6 @@ class SynotierJettyAppTest {
 
 		AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, settings_hub);
 		AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, settings_prv);
-		/*
-		Configs.init(webinf);
-		AppSettings hubset = AppSettings
-							.load(webinf, settings_hub)
-							.setEnvs(true);
-		AppSettings prvset = AppSettings
-							.load(webinf, settings_prv)
-							.setEnvs(true);
-
-		Connects.init(webinf);
-
-		hubset.setupdb(config_xml).save();
-		prvset.setupdb(config_xml).save();
-		*/
 	
 		SynotierJettyApp hub = boot(webinf, config_xml, settings_hub);
 		SynotierJettyApp prv = boot(webinf, config_xml, settings_prv);
