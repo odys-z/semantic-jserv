@@ -4,8 +4,6 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.isNull;
-import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.logi;
@@ -155,27 +153,31 @@ public class AppSettings extends Anson {
 	 * @throws SQLException 
 	 */
 	public AppSettings setupJserv(SynodeConfig cfg, String jserv_album) throws TransException, SQLException {
-		String[] jservs = this.jservs.split(" ");
 		SynodeMeta synm = new SynodeMeta(cfg.synconn);
 
+		/*
+		String[] jservs = this.jservs.split(" ");
 		for (String jserv : jservs) {
 			String[] sid_url = jserv.split(":");
 			if (isNull(sid_url) || len(sid_url) < 2)
 				throw new IllegalArgumentException("jserv: " + jserv);
 			
 			String url = jserv.replaceFirst(sid_url[0] + ":", "");
-			// cfg.jserv(sid_url[0], url);
 			
 			if (eq(cfg.synode(), sid_url[0])) {
 				logT(new Object() {}, "Ignoring updating jserv to local node: %s");
-				// local_serv = updateLocalJserv(cfg.https, jserv_album, cfg.synconn, synm, cfg.synode());
 			}
 			else
 				updatePeerJservs(cfg.synconn, cfg.domain, synm, sid_url[0], url);
 		}
+		*/
+		for (String peer : jservs.keySet()) {
+			if (eq(cfg.synode(), peer)) 
+				logT(new Object() {}, "Ignoring updating jserv to local node: %s");
+			else
+				updatePeerJservs(cfg.synconn, cfg.domain, synm, peer, jservs.get(peer));
+		}
 		return this;
-		
-		// updatePeerJservs(cfg, new SynodeMeta(cfg.synconn));
 	}
 
 
@@ -235,6 +237,17 @@ public class AppSettings extends Anson {
 		}
 	}
 
+	/**
+	 * Persist jsev url into table syn_synode.
+	 * 
+	 * @param synconn
+	 * @param domain
+	 * @param synm
+	 * @param peer
+	 * @param servurl
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	private static void updatePeerJservs(String synconn, String domain, SynodeMeta synm,
 			String peer, String servurl) throws TransException, SQLException {
 		logi("[%s] Setting peer %s's jserv: %s", domain, peer, servurl);
@@ -257,7 +270,7 @@ public class AppSettings extends Anson {
 	public String vol_name;
 	public String volume;
 	// public String bindip;
-	public String jservs;
+	public HashMap<String, String> jservs;
 	public String installkey;
 	public String rootkey;
 
