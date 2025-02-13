@@ -101,6 +101,7 @@ public class SynodetierJoinTest {
 		}
 	}
 	
+	@SuppressWarnings("serial")
 	@BeforeAll
 	static void init() throws Exception {
 		setVolumeEnv("v-");

@@ -52,6 +52,7 @@ import io.oz.syndoc.client.PhotoSyntier;
  *
  */
 @Disabled
+@SuppressWarnings("null")
 class AlbumsTest {
 	static String jserv;
 
