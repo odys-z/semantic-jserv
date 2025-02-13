@@ -1,13 +1,7 @@
 package io.odysz.semantic.jsession;
 
-import java.io.IOException;
-import java.sql.SQLException;
-
-import org.xml.sax.SAXException;
-
 import io.odysz.semantic.DASemantics;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantics.x.SemanticException;
 
 /**
  * LogTranscxt also uses {@link DASemantics}.

@@ -148,6 +148,7 @@ class AlbumsTest {
 
 	AlbumResp getCollection(String collectId) throws TransException {
 		try {
+			@SuppressWarnings("unused")
 			PhotoSyntier tier = new PhotoSyntier("test/album", errCtx);
 			return null; // tier.getCollect(collectId);
 		} catch (SemanticException | IOException | AnsonException e) {
@@ -265,6 +266,7 @@ class AlbumsTest {
 						String docId = d.xdoc.recId();
 						assertEquals(8, docId.length());
 
+						@SuppressWarnings("unused")
 						PhotoSyntier rp = tier.asynQueryDocs(videos, null, null, errCtx);
 //						assertNotNull(rp.photo().pname);
 //						assertEquals(rp.photo().pname, filename);

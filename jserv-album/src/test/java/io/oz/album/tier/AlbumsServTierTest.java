@@ -32,7 +32,7 @@ import io.oz.album.peer.AlbumResp;
 	 ('test-00006','omni/ody/2021_12/DSG_0880.JPG','DSG_0880.JPG','2021-12-31','2021-12-31','#Toronto','ody','2022-01-13');
    </pre>
  * @author ody
- *
+ * @deprecated
  */
 @Disabled
 class AlbumsServTierTest {
