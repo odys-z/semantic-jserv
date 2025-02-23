@@ -103,12 +103,6 @@ public class Syngleton extends JSingleton {
 		return this;
 	}
 
-//	@Override
-//	public void onDestroyed(ServletContextEvent sce) {
-//		super.onDestroyed(sce);
-//		stopScheduled(5000);
-//	}
-
 	SynodeMeta synm;
 
 	public Syngleton(SynodeConfig cfg, AppSettings settings) throws Exception {
@@ -120,33 +114,6 @@ public class Syngleton extends JSingleton {
 
 		tb0 = new DATranscxt(cfg.synconn);
 	}
-
-//	/**
-//	 * 
-//	 * @param cfg
-//	 * @param domain
-//	 * @param settings.jservss e. g. "X:https://host-ip:port/jserv-album Y:https://..."
-//	 * @throws SQLException 
-//	 * @throws TransException 
-//	 */
-//	public void updatePeerJservs(String url_path, SynodeConfig cfg, String domain, AppSettings settings)
-//			throws TransException, SQLException {
-//		if (!eq(domain, cfg.domain))
-//			throw new SemanticException(
-//				"Updating domain %s, but got configuration of %s.",
-//				domain, cfg.domain);
-////		
-////		IUser robot = DATranscxt.dummyUser();
-////		SynodeMeta synm = domanager(domain).synm;
-////
-////		for (Synode sn : cfg.peers())
-////			tb0.update(synm.tbl, robot)
-////				.nv(synm.jserv, sn.jserv)
-////				.whereEq(synm.pk, sn.synid)
-////				.whereEq(synm.domain, cfg.domain)
-////				.u(tb0.instancontxt(cfg.synconn, robot));
-//		AppSettings.setupJserv(cfg, settings, url_path);
-//	}
 
 	/**
 	 * Load domains from syn_synode, create {@link SynDomanager} for each domain.
@@ -442,7 +409,9 @@ public class Syngleton extends JSingleton {
 						.whereEq(synm.domain, cfg.domain);
 
 			for (Synode sn : peers) {
-				musteqs(cfg.domain, sn.domain());
+				musteqs(cfg.domain, sn.domain(),
+						"cfg.domain, %s != peer.domain, %s", cfg.domain, sn.domain());
+
 				del.post(sn.insertRow(cfg.domain,
 						synm, tb0.insert(synm.tbl, usr)));
 			}
@@ -468,9 +437,6 @@ public class Syngleton extends JSingleton {
 				(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 		DATranscxt tb0 = new DATranscxt(cfg.synconn);
 		
-//		tb0.delete(synm.tbl, usr)
-//			.whereEq(synm.domain, cfg.domain)
-//			.post(tb0.delete(chgm.tbl)
 		tb0.delete(chgm.tbl, usr)
 			.whereEq(chgm.domain, cfg.domain)
 			.post(tb0.delete(subm.tbl)
