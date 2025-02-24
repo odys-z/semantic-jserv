@@ -102,7 +102,6 @@ public class AppSettings extends Anson {
 	public void setupdb(SynodeConfig cfg, String url_path, String webinf, String config_xml,
 			String rootkey) throws Exception {
 		
-		// Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 		Syngleton.setupSysRecords(cfg, YellowPages.robots());
 
 		Syntities regists = Syntities.load(webinf, f("%s/syntity.json", "$" + vol_name), 
@@ -270,7 +269,7 @@ public class AppSettings extends Anson {
 
 	public String vol_name;
 	public String volume;
-	// public String bindip;
+	/** Fault: this should, must, be moved to dictionary.json */
 	public HashMap<String, String> jservs;
 	public String installkey;
 	public String rootkey;
@@ -348,15 +347,6 @@ public class AppSettings extends Anson {
 		
 		return this;
 	}
-
-	/**
-	 * Find the correct ip and return the suitable one, "0.0.0.0" as the last one.
-	 * @return ip to be bound
-	 */
-//	public String bindip() {
-//		warn("Find the correct ip and return the suitable one, '0.0.0.0' as the last one.");
-//		return bindip;
-//	}
 
 	/**
 	 * Install process: <br>

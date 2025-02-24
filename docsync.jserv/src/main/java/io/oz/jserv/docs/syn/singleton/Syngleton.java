@@ -75,8 +75,6 @@ public class Syngleton extends JSingleton {
 	
 	final SynodeConfig syncfg;
 
-	/** TODO move to be the app.ip_port */
-	// public String jserv;
 	public final AppSettings settings;
 
 	final String sysconn;
