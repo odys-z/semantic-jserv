@@ -8,3 +8,4 @@ target
 src/test/results/
 *-jdk-bug
 commit.comments*
+exiftool.exe
