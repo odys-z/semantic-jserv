@@ -1,0 +1,38 @@
+echo "Usage: make install node-id volume-path(e.g. /var/local/volume) rootkey"
+echo "For Windows, run this in the VS Code's Bash terminal. (Needing the 'sed' command)"
+echo "For Linux error: '\r': command not found"
+echo "Run sed -i 's/\r$//' install.sh"
+echo 
+
+if test "$#" -ne 3; then
+    echo "Illegal number of parameters"
+    exit
+fi
+
+echo 
+echo building $1
+echo configurations:
+ls -l install-settings/$1
+
+mkdir $2
+cp volume/*.db $2
+cp install-settings/$1/dictionary.json $2
+cp install-settings/$1/syntity.json $2
+
+cp install-settings/$1/settings.json WEB-INF/settings.json
+
+# realpath $2
+vpath=$(realpath $2)
+# Windows path
+vpath=$(echo $vpath | sed "s@^\/[a-zA-Z]\/@\/@")
+
+echo Volume is mounted to:
+echo $vpath
+sed -i "s@\"volume\"\s*:\s*\".*\"@\"volume\"    : \"$vpath\"@" WEB-INF/settings.json
+sed -i "s@\"installkey\"\s*:\s*\".*\"@\"installkey\": \"$3\"@" WEB-INF/settings.json
+
+echo "Run 'java -version' to check the JDK version. If not 17, please set JAVA_HOME and PATH manually."
+echo "Run 'exiftool -ver' to check the ExifTool version."
+echo "See set-jdk-exiftool.sh for the manual setting."
+echo "Run 'java -jar bin/jserv-album.jar' to start the server."
+echo "For linux, run 'nohup java -jar bin/jserv-album.jar &' to start the server in the background."
