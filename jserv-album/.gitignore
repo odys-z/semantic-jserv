@@ -24,7 +24,7 @@ nginx
 **/uploading-temp
 
 # temporary install program
-install-settings/*
+install-settings-delete/*
 !install-settings/sample/
 !install-settings/*.sh
 deploy
