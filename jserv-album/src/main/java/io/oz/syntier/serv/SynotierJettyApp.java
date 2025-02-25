@@ -113,6 +113,17 @@ public class SynotierJettyApp {
 		}
 	}
 	
+	/**
+	 * Response to SCM stop commands. This is a stub and won't work as
+	 * the method is called in different process than the main process.
+	 * 
+	 * @param args
+	 * @throws Exception
+	 */
+	public static void stop(String[] args) throws Exception {
+		// if (server != null) server.stop();
+	}
+	
 	static SynotierJettyApp boot(String webinf, String config_xml, String settings_json,
 			PrintstreamProvider ... oe) throws Exception {
 
@@ -288,6 +299,12 @@ public class SynotierJettyApp {
        	return this;
 	}
 	
+	/**
+	 * A stub for implementing SCM stop command. This won't work currently as the method
+	 * is called in a different process.
+	 * 
+	 * @throws Exception
+	 */
 	public void stop() throws Exception {
 		if (server != null)
 			server.stop();

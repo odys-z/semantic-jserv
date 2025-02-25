@@ -7,6 +7,7 @@ JAR_DIR   = target
 ZIP       = jserv-album-bin.zip
 VOLUME    = volume
 SRC_WEB   = src/main/webapp/WEB-INF-$(VERSION)
+EXIFTOOL_ZIP = exiftool-*.zip 
 
 default: jserv-sqlite
 
@@ -14,14 +15,21 @@ help:
 	@cat Makefile
 
 #
+check:
+	echo "checke resources ..."
 
-jserv-sqlite:
-#   @mvn clean dependency:tree | @grep io.github.odys-z
+	echo "$(wildcard exiftool-*.zip)"
+ifeq ("$(wildcard exiftool-*.zip)","")
+	${error "Exiftool zip does not exist."}
+endif
+
+jserv-sqlite: check
 	@rm -f $(ZIP)
 	@rm -rf $(BUILDDIR)
 	@mkdir  $(BUILDDIR)
 	@mvn clean compile package -DskipTests
 	@cp $(JAR_DIR)/jserv-album-*.jar $(BUILDDIR)
+	@cp $(EXIFTOOL_ZIP) $(BUILDDIR)
 
 	@rm -rf $(VOLUME)
 	@mkdir $(VOLUME)
@@ -30,29 +38,29 @@ jserv-sqlite:
 
 	@rm -rf WEB-INF
 	@cp -r $(SRC_WEB) WEB-INF
-#	@mkdir $(VOLUME)/$(node)
-#	@cp -a volumes-0.7/volume-hub/. $(VOLUME)/$(node)
 
-#	@zip -FSr jserv-album-$(VERSION).zip \
-	Makefile $(BUILDDIR)/jserv-album-*.jar install-settings $(VOLUME) WEB-INF install.sh
-	mv install-settings/install.sh .
-	mv install-settings/exiftool.exe .
-	chmod +x install.sh
-	mv install-settings/set-jdk-exiftool.sh .
-	chmod +x set-jdk-exiftool.sh
+#	mv install-settings/install.sh .
+#	mv install-settings/exiftool.exe .
+#	chmod +x install.sh
+#	mv install-settings/set-jdk-exiftool.sh .
+#	chmod +x set-jdk-exiftool.sh
 
-	@jar -cMf jserv-album-$(VERSION).zip \
-	Makefile $(BUILDDIR)/jserv-album-*.jar install-settings $(VOLUME) WEB-INF install.sh \
-	exiftool.exe \
-	set-jdk-exiftool.sh
+#	@jar -cMf jserv-album-$(VERSION).zip \
+	Makefile $(BUILDDIR)/jserv-album-*.jar $(VOLUME) WEB-INF
+	@jar -cMf jserv-album-$(VERSION).zip $(BUILDDIR) $(VOLUME) WEB-INF
+	
+#	install.sh install-settings \
+#	set-jdk-exiftool.sh
 
-	mv set-jdk-exiftool.sh install-settings/
-	mv exiftool.exe install-settings/
-	mv install.sh install-settings/
+#	mv set-jdk-exiftool.sh install-settings/
+#	mv exiftool.exe install-settings/
+#	mv install.sh install-settings/
 
 	@mv jserv-album-$(VERSION).zip $(BUILDDIR)
 	@rm $(BUILDDIR)/jserv-album-*.jar
+	@rm $(BUILDDIR)/$(EXIFTOOL_ZIP)
 	@rm -rf WEB-INF
+	@mvn dependency:tree | grep io.github.odys-z
 
 # install:
 # 	@echo "Usage: make install node=X volume=/var/local/volume"
@@ -72,8 +80,8 @@ jserv-sqlite:
 # 	@sed -i "s/\"volume\"\s*:\s*\".*\"/\"volume\"   : \"$v_path\"/" WEB-INF/settings.json
 
 clean:
-	@rm -rf bin install-settings $(VOLUME) WEB-INF
-	@echo "You need also remove volume path manually."
+#	@rm -rf bin install-settings $(VOLUME) WEB-INF
+	@rm -rf bin $(VOLUME) WEB-INF
 
 .PHONY: help
 
