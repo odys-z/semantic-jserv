@@ -36,6 +36,7 @@ import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
 
@@ -399,6 +400,20 @@ public class AppSettings extends Anson {
 		}
 		
 		return settings.local_serv;
+	}
+
+	
+	/**
+	 * Must called after DA layer initiation is finished.
+	 * @throws Exception 
+	 */
+	public static void updateOrgConfig(SynodeConfig cfg, AppSettings settings) throws Exception {
+		DocOrgMeta orgMeta = new DocOrgMeta(cfg.sysconn);
+		IUser rob = DATranscxt.dummyUser();
+		DATranscxt st = new DATranscxt(cfg.sysconn);
+		st.update(orgMeta.tbl)
+			.nv(orgMeta.webroot, EnvPath.replaceEnv(cfg.org.webroot))
+			.u(st.instancontxt(cfg.synconn, rob));
 	}
 
 }

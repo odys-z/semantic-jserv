@@ -17,6 +17,7 @@ public class Profiles extends Anson {
 	String uid;
 	public String defltAlbum;
 
+	/** Personal web page url */
 	public String webroot;
 	public String home;
 
