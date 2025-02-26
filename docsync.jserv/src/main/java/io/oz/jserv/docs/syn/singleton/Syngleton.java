@@ -12,7 +12,6 @@ import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqlitables;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -49,7 +48,6 @@ import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.ExprPart;
-import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpSynodetier;

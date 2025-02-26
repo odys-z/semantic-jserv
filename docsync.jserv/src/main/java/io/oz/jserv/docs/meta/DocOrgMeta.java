@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.meta;
 
+import io.odysz.common.EnvPath;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.SemanticTableMeta;
 import io.odysz.semantics.IUser;
@@ -36,11 +37,11 @@ public class DocOrgMeta extends SemanticTableMeta {
 				.nv(pk, cfg.org.orgId)
 				.nv(orgName, cfg.org.orgName)
 				.nv(orgType, cfg.org.orgType)
-//				.nv(webroot,  EnvPath.replaceEnv(cfg.org.webroot))
+				.nv(webroot,  EnvPath.replaceEnv(cfg.org.webroot))
 //				.nv(homepage, EnvPath.replaceEnv(cfg.org.homepage))
 //				.nv(album0,   EnvPath.replaceEnv(cfg.org.album0))
 //				.nv(market,   EnvPath.replaceEnv(cfg.org.market))
-				.nv(webroot,  cfg.org.webroot)
+//				.nv(webroot,  cfg.org.webroot)
 				.nv(homepage, cfg.org.homepage)
 				.nv(album0,   cfg.org.album0)
 				.nv(market,   cfg.org.market)

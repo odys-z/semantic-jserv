@@ -381,7 +381,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		rs.beforeFirst().next();
 		String home = rs.getString(orgMeta.homepage);
-		String webroot = rs.getString(orgMeta.webroot);
+		String webroot = rs.getString(orgMeta.webroot); //  in 0.7.0, webroot is configured via settings.json
 
 		return new AlbumResp().profiles(new Profiles(home).webroot(webroot));
 	}

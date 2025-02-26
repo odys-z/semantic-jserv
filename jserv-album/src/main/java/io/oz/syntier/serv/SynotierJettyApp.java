@@ -169,6 +169,9 @@ public class SynotierJettyApp {
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
+
+		// updating configuration that's allowed to be re-configured at each time of booting
+		AppSettings.updateOrgConfig(cfg, settings);
 		
 		return createSyndoctierApp(cfg, settings,
 									((ArrayList<SyncUser>) YellowPages.robots()).get(0),
