@@ -149,24 +149,6 @@ public class Exiftool {
 				? CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0])
 				: CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 
-		/** Not correct by calling exiftool directly
-		try {
-			if ((90 == photo.rotation || 270 == photo.rotation) && gt(photo.widthHeight[0], photo.widthHeight[1]))
-				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
-			else if ((0 == photo.rotation || 180 == photo.rotation) && lt(photo.widthHeight[0], photo.widthHeight[1]))
-				photo.wh = CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0]);
-			else if (photo.widthHeight != null)
-				photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
-			// else possibly not a image or video file
-		} catch (Exception e) {e.printStackTrace();}
-		*/
-		
-//		photo.geox = metadata.getLongitude();
-//		if (photo.geox == null) photo.geox = geox0;
-//
-//		photo.geoy = metadata.getLatitude();
-//		if (photo.geoy == null) photo.geoy = geoy0;
-
 		return photo;
 	}
 	

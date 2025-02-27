@@ -9,6 +9,7 @@ VOLUME    = volume
 SRC_WEB   = src/main/webapp/WEB-INF-$(VERSION)
 EXIFTOOL_ZIP = exiftool-*.zip 
 PORTFOLIO_07 = portfolio-0.7.0-py3-none-any.whl
+ALBUM_WEB    = album-web-0.4
 
 default: jserv-sqlite
 
@@ -53,7 +54,7 @@ jserv-sqlite: check
 
 #	@jar -cMf jserv-album-$(VERSION).zip \
 	Makefile $(BUILDDIR)/jserv-album-*.jar $(VOLUME) WEB-INF
-	@jar -cMf jserv-album-$(VERSION).zip $(PORTFOLIO_07) $(BUILDDIR) $(VOLUME) WEB-INF
+	@jar -cMf jserv-album-$(VERSION).zip $(PORTFOLIO_07) $(BUILDDIR) $(VOLUME) WEB-INF $(ALBUM_WEB)
 	
 #	install.sh install-settings \
 #	set-jdk-exiftool.sh

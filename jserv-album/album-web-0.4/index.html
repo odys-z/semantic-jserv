@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
+  <title>Album Home</title>
+</head>
+
+<body>
+  <!-- To load page, in console: loadAlbum(uid, pswd) -->
+  <div id="app">Album Web v0.4.0
+      <img src=''></img>
+      <hr>
+      <p>If you see this message at the first time, it's probaly we cannot reach you through a fast network connection.</p>
+      <p>Currently the only option is to wait for a while. We are sorry about that!</p>
+      <p>Another cause is that this moblie device can not open some large resources.<br>
+      Currently you can browse this page with a PC browser. The URL is what you see when logged in successfully,<br>
+      e.g. http://192.169.0.1:8900<br>
+      We are keeping fixing problems.</p>
+  </div>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <script src="./Album-0.4.0.min.js" type="text/javascript"></script>
+  <script>
+    let searchParams = new URLSearchParams(window.location.search)
+    let aid = searchParams ? searchParams.get('album') : 'album-landing';
+    let serv = searchParams ? searchParams.get('serv') : 'landing';
+
+    function loadAlbum(uid, pswd) {
+      album.App.bindHtml('app', {uid, pswd,
+        aid, serv, Window, portal: 'index.html'});
+    }
+    loadAlbum('ody', '8964');
+  </script>
+
+</body>
+</html>

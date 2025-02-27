@@ -28,3 +28,4 @@ install-settings-delete/*
 !install-settings-delete/sample/
 !install-settings-delete/*.sh
 deploy
+host.json
