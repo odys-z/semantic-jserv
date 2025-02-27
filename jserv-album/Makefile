@@ -8,6 +8,7 @@ ZIP       = jserv-album-bin.zip
 VOLUME    = volume
 SRC_WEB   = src/main/webapp/WEB-INF-$(VERSION)
 EXIFTOOL_ZIP = exiftool-*.zip 
+PORTFOLIO_07 = portfolio-0.7.0-py3-none-any.whl
 
 default: jserv-sqlite
 
@@ -16,11 +17,16 @@ help:
 
 #
 check:
-	echo "checke resources ..."
+	@echo "checke resources ..."
 
-	echo "$(wildcard exiftool-*.zip)"
+	@echo "$(wildcard exiftool-*.zip)"
 ifeq ("$(wildcard exiftool-*.zip)","")
-	${error "Exiftool zip does not exist."}
+	${error "Exiftool zip doesn't exist."}
+endif
+
+	@echo "$(wildcard $(PORTFOLIO_07))"
+ifeq ("$(wildcard $(PORTFOLIO_07))","")
+	${error "Portfolio py3 package doesn't exist."}
 endif
 
 jserv-sqlite: check
@@ -47,7 +53,7 @@ jserv-sqlite: check
 
 #	@jar -cMf jserv-album-$(VERSION).zip \
 	Makefile $(BUILDDIR)/jserv-album-*.jar $(VOLUME) WEB-INF
-	@jar -cMf jserv-album-$(VERSION).zip $(BUILDDIR) $(VOLUME) WEB-INF
+	@jar -cMf jserv-album-$(VERSION).zip $(PORTFOLIO_07) $(BUILDDIR) $(VOLUME) WEB-INF
 	
 #	install.sh install-settings \
 #	set-jdk-exiftool.sh
