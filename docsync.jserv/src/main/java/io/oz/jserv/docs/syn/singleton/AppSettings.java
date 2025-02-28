@@ -411,9 +411,10 @@ public class AppSettings extends Anson {
 		DocOrgMeta orgMeta = new DocOrgMeta(cfg.sysconn);
 		IUser rob = DATranscxt.dummyUser();
 		DATranscxt st = new DATranscxt(cfg.sysconn);
-		st.update(orgMeta.tbl)
+		st.update(orgMeta.tbl, rob)
 			.nv(orgMeta.webroot, EnvPath.replaceEnv(cfg.org.webroot))
-			.u(st.instancontxt(cfg.synconn, rob));
+			.whereEq(orgMeta.pk, cfg.org.orgId)
+			.u(st.instancontxt(cfg.sysconn, rob));
 	}
 
 }
