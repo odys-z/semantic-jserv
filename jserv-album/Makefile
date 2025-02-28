@@ -8,7 +8,7 @@ ZIP       = jserv-album-bin.zip
 VOLUME    = volume
 SRC_WEB   = src/main/webapp/WEB-INF-$(VERSION)
 EXIFTOOL_ZIP = exiftool-*.zip 
-PORTFOLIO_07 = portfolio-0.7.0-py3-none-any.whl
+PORTFOLIO_07 = portfolio_synode-0.7.0-py3-none-any.whl
 ALBUM_WEB    = album-web-0.4
 
 default: jserv-sqlite
