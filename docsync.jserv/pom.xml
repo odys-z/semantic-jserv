@@ -4,7 +4,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>docsync.jserv</artifactId>
-  <version>0.2.2</version>
+  <version>0.2.3-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>docsync.jserv</name>
@@ -64,7 +64,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>anclient.java</artifactId>
-	    <version>[0.5.16,)</version>
+	    <version>[0.5.17,)</version>
 	</dependency>
 
 	<dependency>
