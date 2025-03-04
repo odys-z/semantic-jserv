@@ -41,10 +41,6 @@ public interface IFileDescriptor {
 
 	String clientname();
 
-	// String mime();
-
-	// default public String doctype() { return null; }
-
 	String cdate();
 
 	String device();
@@ -52,7 +48,6 @@ public interface IFileDescriptor {
 	/** @return file uri */
 	String uri64();
 
-	// default String shareflag() { return ExpDocTableMeta.Share.priv; }
 	String shareflag();
 
 	default ExpSyncDoc syndoc(ExpSyncDoc defaultConfig) { return (ExpSyncDoc) this; }

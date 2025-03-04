@@ -1,5 +1,8 @@
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.DateFormat.formatYYmm;
+import static io.odysz.common.DateFormat.parse;
+
 import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
 
 import java.io.IOException;
@@ -8,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.Date;
 
 import io.odysz.anson.AnsonField;
@@ -106,8 +110,11 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	public String shareby;
 	public String sharedate;
 	
-	/** usually ignored when sending request */
 	public long size;
+	public ExpSyncDoc size(long size) {
+		this.size = size;
+		return this;
+	}
 
 	public ExpSyncDoc shareby(String share) {
 		this.shareby = share;
@@ -250,8 +257,24 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
 	protected String folder;
 	public String folder() { return folder; }
+	
+	/**
+	 * Set saving folder name. This method will trigger default folder name generation.
+	 * 
+	 * @param v
+	 * @return this
+	 * @since 0.5.16
+	 */
 	public ExpSyncDoc folder(String v) {
 		this.folder = v;
+
+        if (isblank(this.folder))
+			try {
+				folder = formatYYmm(isblank(createDate) ? new Date() : parse(createDate));
+			} catch (ParseException e) {
+				folder = formatYYmm(new Date());
+			}
+ 
 		return this;
 	}
 	
