@@ -204,8 +204,9 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //					rsp = querySyncs(jmsg.body(0), usr, prf);
 				else if (A.getPrefs.equals(a))
 					rsp = profile(jmsg.body(0), usr, prf);
-				else if (A.album.equals(a)) // FIXME what's the equivalent of Portfolio?
-					rsp = album(jmsg.body(0), usr, prf);
+
+//				else if (A.album.equals(a)) // FIXME what's the equivalent of Portfolio?
+//					rsp = album(jmsg.body(0), usr, prf);
 
 				else if (A.stree.equals(a))
 					rsp = galleryTree(jmsg.body(0), usr, prf);
@@ -234,7 +235,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 			if (rsp != null) { // no rsp for a == download
 				rsp.syncing(jreq.syncingPage());
-				write(resp, ok(rsp).port(AlbumPort.album));
+				write(resp, ok(rsp).port(p));
 			}
 		} catch (DocsException e) {
 			write(resp, err(MsgCode.ext, e.ex().toBlock()));
@@ -974,64 +975,64 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		return album;
 	}
 
-	/**
-	 * <h4>Load album (aid = req.albumId)</h4>
-	 * MEMO TODO Android client shouldn't reach here until now.
-	 *
-	 * <p>If albumId is empty, load according to the session's profile.
-	 * </p>
-	 *
-	 * @param req
-	 * @param usr
-	 * @param prf
-	 * @return album
-	 * @throws SemanticException
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	protected AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
-			IUser usr, Profiles prf)
-			throws SemanticException, TransException, SQLException, IOException {
-		String conn = Connects.uri2conn(req.synuri);
-		PhotoMeta m = new PhotoMeta(conn);
-		JUserMeta musr = new JUserMeta(conn);
-
-		String aid = prf.defltAlbum;
-
-		AnResultset rs = (AnResultset) synt
-				.select(tablAlbums, "a")
-				.j(musr.tbl, "u", "u.userId = a.shareby")
-				.cols("a.*", "a.shareby ownerId", "u.userName owner")
-				.whereEq("a.aid", aid)
-				.rs(synt.instancontxt())
-				.rs(0);
-
-		if (!rs.next())
-			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
-
-		AlbumResp album = new AlbumResp(domx.synode, synt.perdomain, synt.basictx().connId())
-						.album(rs);
-
-		rs = (AnResultset) st
-				.select(m.tbl, "p").page(req.pageInf)
-				.j(tablCollectPhoto , "ch", "ch.pid = p.pid")
-				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
-				.j(tablCollects, "c", "c.cid = ch.cid")
-				.j(tablAlbums, "a", "a.aid = ac.aid")
-				.j(musr.tbl, "u", "u.userId = p.shareby")
-				.cols("ac.aid", "ch.cid",
-					  "p.pid", m.resname, m.createDate, "p." + m.tags,
-					  m.mime, "p.css", m.folder, m.geox, m.geoy, m.shareDate,
-					  "c.shareby collector", "c.cdate",
-					  m.fullpath, m.device, "p." + m.shareby, "u.userName owner",
-					  "storage", "aname", "cname")
-				.whereEq("a.aid", aid)
-				.rs(st.instancontxt(conn, usr))
-				.rs(0);
-
-		album.collectPhotos(rs, conn);
-
-		return album;
-	}
+//	/**
+//	 * <h4>Load album (aid = req.albumId)</h4>
+//	 * MEMO TODO Android client shouldn't reach here until now.
+//	 *
+//	 * <p>If albumId is empty, load according to the session's profile.
+//	 * </p>
+//	 *
+//	 * @param req
+//	 * @param usr
+//	 * @param prf
+//	 * @return album
+//	 * @throws SemanticException
+//	 * @throws TransException
+//	 * @throws SQLException
+//	 * @throws IOException
+//	 */
+//	protected AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
+//			IUser usr, Profiles prf)
+//			throws SemanticException, TransException, SQLException, IOException {
+//		String conn = Connects.uri2conn(req.synuri);
+//		PhotoMeta m = new PhotoMeta(conn);
+//		JUserMeta musr = new JUserMeta(conn);
+//
+//		String aid = prf.defltAlbum;
+//
+//		AnResultset rs = (AnResultset) synt
+//				.select(tablAlbums, "a")
+//				.j(musr.tbl, "u", "u.userId = a.shareby")
+//				.cols("a.*", "a.shareby ownerId", "u.userName owner")
+//				.whereEq("a.aid", aid)
+//				.rs(synt.instancontxt())
+//				.rs(0);
+//
+//		if (!rs.next())
+//			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
+//
+//		AlbumResp album = new AlbumResp(domx.synode, synt.perdomain, synt.basictx().connId())
+//						.album(rs);
+//
+//		rs = (AnResultset) st
+//				.select(m.tbl, "p").page(req.pageInf)
+//				.j(tablCollectPhoto , "ch", "ch.pid = p.pid")
+//				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
+//				.j(tablCollects, "c", "c.cid = ch.cid")
+//				.j(tablAlbums, "a", "a.aid = ac.aid")
+//				.j(musr.tbl, "u", "u.userId = p.shareby")
+//				.cols("ac.aid", "ch.cid",
+//					  "p.pid", m.resname, m.createDate, "p." + m.tags,
+//					  m.mime, "p.css", m.folder, m.geox, m.geoy, m.shareDate,
+//					  "c.shareby collector", "c.cdate",
+//					  m.fullpath, m.device, "p." + m.shareby, "u.userName owner",
+//					  "storage", "aname", "cname")
+//				.whereEq("a.aid", aid)
+//				.rs(st.instancontxt(conn, usr))
+//				.rs(0);
+//
+//		album.collectPhotos(rs, conn);
+//
+//		return album;
+//	}
 }

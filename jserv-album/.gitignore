@@ -2,6 +2,7 @@ bin
 /target/
 download
 volume-*
+vol
 volume/*.db
 test/results
 test/res/ignore*.*
