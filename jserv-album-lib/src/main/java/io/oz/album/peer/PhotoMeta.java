@@ -29,11 +29,4 @@ public class PhotoMeta extends ExpDocTableMeta {
 
 		ddlSqlite = loadSqlite(PhotoMeta.class, "h_photos.sqlite.ddl");
 	}
-
-//	@Override
-//	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
-//			throws TransException, SQLException {
-//		throw new SemanticException("PhotoMeta should be deprecated in 2.0.0");
-//	}
-
 }
