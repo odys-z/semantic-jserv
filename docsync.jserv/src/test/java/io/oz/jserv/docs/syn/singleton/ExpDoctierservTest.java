@@ -13,7 +13,7 @@ import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.startSyndoctier;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.testSyndoctier;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.setVolumeEnv;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
@@ -211,27 +211,14 @@ public class ExpDoctierservTest {
 			// clean and reboot
 			Syngleton.cleanSynssions(cfgs[i]);
 
-			jetties[i] = startSyndoctier(cfgs[i],
+			jetties[i] = testSyndoctier(cfgs[i],
 					((ArrayList<SyncUser>) YellowPages.robots()).get(0),
-					"config.xml", f("$VOLUME_%s/syntity.json", i));
+					"config.xml", f("$VOLUME_%s/syntity.json", i), settings);
 			
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 						cfgs[i].synode(), SynodeMode.peer, docm, null, cfgs[i].debug);
 		}
 		
-		/*
-		for (int i : nodex) {
-			for (int j = 0; j < Math.min(jetties.length, cfgs[i].synodes().length); j++)
-				cfgs[i].synodes()[j].jserv = jetties[j].syngleton.jserv;
-		}
-
-		for (int i : nodex) {
-			if (!isblank(cfgs[i].domain))
-				jetties[i].syngleton.updatePeerJservs(cfgs[i], zsu);
-		}
-
-		return nodex;
-		*/
 		throw new Exception("TODO");
 	}
 

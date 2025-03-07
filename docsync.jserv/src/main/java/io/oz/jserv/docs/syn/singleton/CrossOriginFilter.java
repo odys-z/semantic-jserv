@@ -1,4 +1,6 @@
 //
+// Credits to org.eclipse.jetty.util;
+//
 // ========================================================================
 // Copyright (c) 1995-2021 Mort Bay Consulting Pty Ltd and others.
 //
@@ -11,7 +13,7 @@
 // ========================================================================
 //
 
-package io.oz.syntier.serv;
+package io.oz.jserv.docs.syn.singleton;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,7 +33,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -181,7 +182,7 @@ public class CrossOriginFilter implements Filter
         if (allowedMethodsConfig == null)
             allowedMethods.addAll(DEFAULT_ALLOWED_METHODS);
         else
-            allowedMethods.addAll(Arrays.asList(StringUtil.csvSplit(allowedMethodsConfig)));
+            allowedMethods.addAll(Arrays.asList(StringUtil2.csvSplit(allowedMethodsConfig)));
 
         String allowedHeadersConfig = config.getInitParameter(ALLOWED_HEADERS_PARAM);
         if (allowedHeadersConfig == null)
@@ -189,7 +190,7 @@ public class CrossOriginFilter implements Filter
         else if ("*".equals(allowedHeadersConfig))
             anyHeadersAllowed = true;
         else
-            allowedHeaders.addAll(Arrays.asList(StringUtil.csvSplit(allowedHeadersConfig)));
+            allowedHeaders.addAll(Arrays.asList(StringUtil2.csvSplit(allowedHeadersConfig)));
 
         String preflightMaxAgeConfig = config.getInitParameter(PREFLIGHT_MAX_AGE_PARAM);
         if (preflightMaxAgeConfig == null)
@@ -211,7 +212,7 @@ public class CrossOriginFilter implements Filter
         String exposedHeadersConfig = config.getInitParameter(EXPOSED_HEADERS_PARAM);
         if (exposedHeadersConfig == null)
             exposedHeadersConfig = "";
-        exposedHeaders.addAll(Arrays.asList(StringUtil.csvSplit(exposedHeadersConfig)));
+        exposedHeaders.addAll(Arrays.asList(StringUtil2.csvSplit(exposedHeadersConfig)));
 
         String chainPreflightConfig = config.getInitParameter(OLD_CHAIN_PREFLIGHT_PARAM);
         if (chainPreflightConfig != null)
@@ -241,7 +242,7 @@ public class CrossOriginFilter implements Filter
     {
         if (allowedOriginsConfig == null)
             allowedOriginsConfig = defaultOrigin;
-        String[] allowedOrigins = StringUtil.csvSplit(allowedOriginsConfig);
+        String[] allowedOrigins = StringUtil2.csvSplit(allowedOriginsConfig);
         for (String allowedOrigin : allowedOrigins)
         {
             if (allowedOrigin.length() > 0)
@@ -365,8 +366,8 @@ public class CrossOriginFilter implements Filter
 
     private String parseAllowedWildcardOriginToRegex(String allowedOrigin)
     {
-        String regex = StringUtil.replace(allowedOrigin, ".", "\\.");
-        return StringUtil.replace(regex, "*", ".*"); // we want to be greedy here to match multiple subdomains, thus we use .*
+        String regex = StringUtil2.replace(allowedOrigin, ".", "\\.");
+        return StringUtil2.replace(regex, "*", ".*"); // we want to be greedy here to match multiple subdomains, thus we use .*
     }
 
     private boolean isSimpleRequest(HttpServletRequest request)
@@ -448,7 +449,7 @@ public class CrossOriginFilter implements Filter
             return Collections.emptyList();
 
         List<String> requestedHeaders = new ArrayList<String>();
-        String[] headers = StringUtil.csvSplit(accessControlRequestHeaders);
+        String[] headers = StringUtil2.csvSplit(accessControlRequestHeaders);
         for (String header : headers)
         {
             String h = header.trim();

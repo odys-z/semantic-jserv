@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.logi;
@@ -27,6 +28,7 @@ import io.odysz.anson.AnsonField;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
+import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.meta.SynodeMeta;
@@ -75,7 +77,8 @@ public class AppSettings extends Anson {
 	public AppSettings setupdb(String url_path, String config_xml, SynodeConfig cfg) throws Exception {
 		if (isblank(rootkey)) {
 			mustnonull(installkey, "[AppSettings] Install-key cannot be null if root-key is empty.");
-			mustnonull(jservs);
+			if (jservs == null || len(jservs) == 0)
+				Utils.warn("Jservs Shouldn't be empty, unless this node is setup for joining a domain. synode: %s", cfg.synode());
 
 			Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 			setupdb(cfg, url_path, webinf, config_xml, installkey);

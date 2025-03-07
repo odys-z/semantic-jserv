@@ -6,6 +6,7 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
+import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
@@ -17,16 +18,19 @@ import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
 import static org.junit.jupiter.api.Assertions.fail;
 
-
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Set;
 
+import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import io.odysz.anson.JsonOpt;
 import io.odysz.common.Configs;
+import io.odysz.common.EnvPath;
 import io.odysz.common.IAssert;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
@@ -37,14 +41,13 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SyncUser;
-import io.odysz.semantic.syn.Synode;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
+import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
-import io.oz.syn.SynOrg;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
 
@@ -101,7 +104,6 @@ public class SynodetierJoinTest {
 		}
 	}
 	
-	@SuppressWarnings("serial")
 	@BeforeAll
 	static void init() throws Exception {
 		setVolumeEnv("v-");
@@ -112,7 +114,6 @@ public class SynodetierJoinTest {
 
 		ck = new Docheck[servs_conn.length];
 		
-//		int port = 8090;
 		String[] nodes = new String[] { "X", "Y", "Z" };
 
 		for (int i = 0; i < nodes.length; i++) {
@@ -122,6 +123,7 @@ public class SynodetierJoinTest {
 			SyncUser me = new SyncUser(syrskyi, slava, syrskyi, "#-" + i).orgId(ura);
 			ArrayList<SyncUser> robots = new ArrayList<SyncUser>() { {add(me);} };
 
+			/*
 			SynodeConfig config = new SynodeConfig(nodes[i], SynodeMode.peer);
 			config.synconn = servs_conn[i];
 			config.sysconn = f("main-sqlite-%s", i);
@@ -132,7 +134,9 @@ public class SynodetierJoinTest {
 			config.org.meta = "io.oz.jserv.docs.meta.DocOrgMeta";
 			config.domain  = eq(nodes[i], "X") ? zsu : null;
 			config.peers   = new Synode[] {new Synode(nodes[i], nodes[i] + "," + nodes[i], ura, config.domain)};
-
+			
+			AppSettings settings = new AppSettings();
+			settings.port = 8964 + i;
 
 			Syngleton.defltScxt = new DATranscxt(config.sysconn);
 			Syngleton.setupSysRecords(config, robots);
@@ -151,11 +155,55 @@ public class SynodetierJoinTest {
 			Syngleton.cleanDomain(config);
 			config.domain = top;
 			
-			jetties[i] = startSyndoctier(config, robots.get(0),
-					f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i));
+			jetties[i] = testSyndoctier(config, robots.get(0),
+					f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i), settings);
+			*/
+			
+			String $vol_home = f("$VOLUME_%s", i);
+			logi("[...] load dictionary configuration %s/* ...", $vol_home); 
+			YellowPages.load(FilenameUtils.concat(
+					new File(".").getAbsolutePath(),
+					webinf,
+					EnvPath.replaceEnv($vol_home)));
 
-			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-								config.synode(), SynodeMode.peer, docm, null, config.debug);
+
+			String cfgxml = f("config-%s.xml", i);
+			String stjson = f("settings-%s.json", i);
+
+			SynodeConfig config = YellowPages.synconfig().replaceEnvs();
+			Syngleton.defltScxt = new DATranscxt(config.sysconn);
+
+			AppSettings settings = AppSettings.load(webinf, stjson);
+			settings.installkey = "0123456789ABCDEF";	
+			settings.rootkey = null;
+			settings.toFile(FilenameUtils.concat(webinf, stjson), JsonOpt.beautify());
+
+			Syngleton.setupSysRecords(config, robots);
+			
+			Syngleton.setupSyntables(config,
+					new ArrayList<SyntityMeta>() {{add(docm);}},
+					webinf, "config.xml", ".", "ABCDEF0123465789", true);
+
+			Syngleton.cleanDomain(config);
+
+			Syngleton.cleanSynssions(config);
+
+			// DB is dirty when testing again
+			String buf = config.domain;
+			config.domain = zsu;
+			Syngleton.cleanDomain(config);
+			config.domain = buf;
+
+			// main()
+			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson);
+
+			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, stjson)
+						.jserv(jserv)
+						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
+			
+			// checker
+			ck[i] = new Docheck(azert, zsu, servs_conn[i], jetties[i].syngleton().domanager(zsu).synode,
+							SynodeMode.peer, docm, null, true);
 		}
 	}
 
@@ -292,12 +340,12 @@ public class SynodetierJoinTest {
 	 * @return the Jetty App, with a servlet server.
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp startSyndoctier(SynodeConfig cfg, SyncUser admin,
-			String cfg_xml, String syntity_json) throws Exception {
+	public static SynotierJettyApp testSyndoctier(SynodeConfig cfg, SyncUser admin,
+			String cfg_xml, String syntity_json, AppSettings settings) throws Exception {
 
+		// String admid = new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)).uid();
 		return SynotierJettyApp 
-			.createSyndoctierApp(cfg, new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)),
-					"/", webinf, cfg_xml, syntity_json)
+			.createSyndoctierApp(cfg, settings, admin, webinf, cfg_xml, syntity_json)
 			.start(() -> System.out, () -> System.err)
 			;
 	}

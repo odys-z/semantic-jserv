@@ -215,11 +215,11 @@ public class CreateSyndocTierTest {
 		settings.setupdb(cfg, "jserv-album", webinf, "config.xml", rootkey);
 
 		SynotierJettyApp app = SynotierJettyApp
-				.instanserver(webinf, cfg, "config.xml", "127.0.0.1", 8964);
+				.instanserver(webinf, cfg, settings, "config.xml");
 		app.syngleton.loadomains(cfg, new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)));
 
 		return SynotierJettyApp
-			.registerPorts(app, "/", cfg.sysconn,
+			.registerPorts(app, cfg.sysconn,
 				new AnSession(), new AnQuery(), new HeartLink(),
 				new Echo(true).setCallbacks(() -> { if (greenlights != null) greenlights[0] = true; }))
 			.addDocServPort(cfg, regists.syntities)

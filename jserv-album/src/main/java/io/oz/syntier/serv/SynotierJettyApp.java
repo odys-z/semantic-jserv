@@ -48,6 +48,7 @@ import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
+import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.syn.SynodeConfig;
 import io.oz.syn.YellowPages;
@@ -345,8 +346,9 @@ public class SynotierJettyApp {
 		return this;
 	}
 
-	public void print(String... msg) {
+	public SynotierJettyApp print(String... msg) {
 		Utils.logi("%s\nSynode %s: %s", _0(msg, ""),
 				syngleton.synode(), jserv);
+		return this;
 	}
 }

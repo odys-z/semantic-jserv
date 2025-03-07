@@ -37,6 +37,9 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.peer.PhotoMeta;
 
+/**
+ * @deprecated in branch refact-docsync, replaced by Docsync.jserv/test/DoclientierTest.
+ */
 class Deviclientx {
 	
 	static class Dev {

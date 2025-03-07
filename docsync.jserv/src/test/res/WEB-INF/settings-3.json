@@ -1,0 +1,13 @@
+{"type": "io.oz.jserv.docs.syn.singleton.AppSettings",
+ "vol_name": "VOLUME_3",
+ "volume": "../vol-3",
+ "port": 8967,
+ "jservs": null,
+ "envars": {
+   "Why-VOLUME_PRV": "this is not used but needed for suppressing errors in connects.xml",
+   "WEBROOT_HUB": "http://119.8.29.27:8965",
+   "VOLUME_PRV": "../../../../volumes-0.7/volume-prv"
+ },
+ "installkey": "0123456789ABCDEF",
+ "rootkey": null
+}

@@ -283,7 +283,10 @@ public class SynssionPeer {
 	}
 
 	/**
+	 * Create a sign up request.
+	 * <p>[Synode sign up in a hub, not user sign up.]</p>
 	 * Step n-stamp, create a request package.
+	 * 
 	 * @param admid
 	 * @return the request
 	 * @throws TransException
