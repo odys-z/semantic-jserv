@@ -13,7 +13,6 @@ import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.setVolumeEnv;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.ura;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
 import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
 import static org.junit.jupiter.api.Assertions.fail;
