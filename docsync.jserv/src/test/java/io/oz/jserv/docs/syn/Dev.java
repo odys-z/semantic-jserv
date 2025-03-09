@@ -2,7 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.slava;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.syrskyi;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
+import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
 
 import java.io.IOException;
 

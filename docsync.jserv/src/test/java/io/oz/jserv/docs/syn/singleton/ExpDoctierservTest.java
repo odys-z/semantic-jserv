@@ -14,9 +14,9 @@ import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.testSyndoctier;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.setVolumeEnv;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.setVolumeEnv;
+import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.webinf;
+import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;

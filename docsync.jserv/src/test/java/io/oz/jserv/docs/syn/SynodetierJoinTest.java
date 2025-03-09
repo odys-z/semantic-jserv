@@ -11,10 +11,9 @@ import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
+import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.webinf;
+import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
 import static io.oz.jserv.docs.syn.Dev.docm;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.setVolumeEnv;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.webinf;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -102,7 +101,18 @@ public class SynodetierJoinTest {
 			e.printStackTrace();
 		}
 	}
-	
+
+	public static void setVolumeEnv(String vol_prefix) {
+		String p = new File("src/test/res").getAbsolutePath();
+    	System.setProperty("VOLUME_HOME", p + "/volume");
+    	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
+
+		for (int c = 0; c < 4; c++) {
+			System.setProperty(f("VOLUME_%s", c), f("%s/%s%s", p, vol_prefix, c));
+			logi("VOLUME %s : %s\n", c, System.getProperty(f("VOLUME_%s", c)));
+		}
+	}
+
 	@BeforeAll
 	static void init() throws Exception {
 		setVolumeEnv("v-");
