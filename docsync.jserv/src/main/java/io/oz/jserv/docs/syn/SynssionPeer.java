@@ -304,10 +304,13 @@ public class SynssionPeer {
 				"Close joining session for different ids? Rep.domain: %s, Domanager.domain: %s",
 				rep.domain, domanager.domain());
 		
+		if (ev(deny, rep.exblock.synact()))
+			throw new ExchangeException(setupDom, xp,
+					"Joining domain is denied: %s", rep.msg());
 		if (!ev(setupDom, rep.exblock.synact()))
 			throw new ExchangeException(setupDom, xp,
-					"Joining domain information indicates an action of code %s, rather than %s (setupDom).\n%s",
-					rep.exblock.synact(), setupDom, rep.msg());
+					"Joining domain information indicates an action of code (setupDom)%s, rather than %s.\n%s",
+					setupDom, rep.exblock.synact(), rep.msg());
 
 		xp.trb.domainitMe(xp, admin, peerjserv, rep.domain, rep.exblock);
 

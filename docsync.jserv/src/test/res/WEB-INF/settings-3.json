@@ -1,6 +1,6 @@
 {"type": "io.oz.jserv.docs.syn.singleton.AppSettings",
  "vol_name": "VOLUME_3",
- "volume": "../vol-3",
+ "volume": "../v-3",
  "port": 8967,
  "jservs": null,
  "envars": {

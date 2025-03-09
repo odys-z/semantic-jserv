@@ -120,10 +120,10 @@ public class SynodetierJoinTest {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			
+			/*
 			SyncUser me = new SyncUser(syrskyi, slava, syrskyi, "#-" + i).orgId(ura);
 			ArrayList<SyncUser> robots = new ArrayList<SyncUser>() { {add(me);} };
 
-			/*
 			SynodeConfig config = new SynodeConfig(nodes[i], SynodeMode.peer);
 			config.synconn = servs_conn[i];
 			config.sysconn = f("main-sqlite-%s", i);
@@ -178,7 +178,7 @@ public class SynodetierJoinTest {
 			settings.rootkey = null;
 			settings.toFile(FilenameUtils.concat(webinf, stjson), JsonOpt.beautify());
 
-			Syngleton.setupSysRecords(config, robots);
+			Syngleton.setupSysRecords(config, YellowPages.robots());
 			
 			Syngleton.setupSyntables(config,
 					new ArrayList<SyntityMeta>() {{add(docm);}},
@@ -281,9 +281,13 @@ public class SynodetierJoinTest {
 		
 		for (String dom : hubdoms) {
 			SynDomanager hubmanger = hub.syngleton().domanager(dom);
-			SynDomanager prvmanger = prv.syngleton().domanager(null);
+			
+			// 2025-03-09 decision:
+			// To join a domain, it means notifying other nodes in the domain, with prerequisite registration.
+			// SynDomanager prvmanger = prv.syngleton().domanager(null);
+			   SynDomanager prvmanger = prv.syngleton().domanager(dom);
 
-			Utils.logi("%s Joining By %s\n''''''''''''''", prvmanger.synode, hubmanger.synode);
+			Utils.logi("%s Joining By %s\n''''''''''''''", hubmanger.synode, prvmanger.synode);
 
 			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 					(rep) -> { lights[by] = true; });

@@ -14,10 +14,10 @@
      "orgType": "nation"
 	},
   
-   "peers": [ {"synid": "W", "org": "URA", "mac": "#URA.W", "nyq": 0, "domain": "zsu", "syn_uid": "W,W"} ]
+   "peers": [ {"synid": "W", "org": "ura", "mac": "#URA.W", "nyq": 0, "domain": "zsu", "syn_uid": "W,W"} ]
  },
  "synusers": [
-   {"userId": "ody", "pswd": "8964", "iv": null, "org": "URA", "domain": "zsu"},
-   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "URA", "domain": "zsu"}
+   {"userId": "ody", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"},
+   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "ura", "domain": "zsu"}
  ]
 }

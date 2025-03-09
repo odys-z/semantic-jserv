@@ -25,6 +25,7 @@ import org.apache.commons.io_odysz.FilenameUtils;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
+import io.odysz.anson.JsonOpt;
 import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
@@ -324,7 +325,7 @@ public class AppSettings extends Anson {
 	 */
 	public AppSettings save() throws AnsonException, IOException {
 		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
-			toBlock(inf);
+			toBlock(inf, JsonOpt.beautify());
 		} 
 		return this;
 	}

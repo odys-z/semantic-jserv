@@ -15,10 +15,10 @@
 	},
 
    "peers": [
-     {"synid": "Y", "org": "URA", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"}
+     {"synid": "Y", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"}
    ]
  },
  "synusers": [
-   {"userId": "ody", "pswd": "8964", "iv": "null", "org": "URA"},
-   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "URA"} ]
+   {"userId": "ody", "pswd": "8964", "iv": "null", "org": "ura"},
+   {"userId": "syrskyi", "pswd": "слава україні", "iv": null, "org": "ura"} ]
  }
