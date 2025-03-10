@@ -3,12 +3,14 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
-import static io.odysz.common.LangExt.prefix;
+import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.waiting;
+import static io.odysz.common.Utils.warn;
 import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.Y_0;
 import static io.oz.jserv.docs.syn.Dev.Y_1;
@@ -36,6 +38,7 @@ import io.odysz.anson.x.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.syn.Doclientier;
+import io.odysz.jclient.syn.IFileProvider;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -48,17 +51,17 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.syn.singleton.ExpDoctierservTest;
 import io.oz.syn.YellowPages;
 
 /**
- * JUnit configuration:
- * 
- * -Djservs=<ip-x>:8090,<ip-y>:8091,<ip-z>:8092
  */
 class DoclientierTest {
-	static boolean disabled = false;
 	
 	static String[] jserv_xyzw;
+
+	static final boolean[] light = new boolean[1];
+
 	@BeforeAll
 	static void init() throws Exception {
 		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
@@ -69,21 +72,40 @@ class DoclientierTest {
 
 		YellowPages.load("$VOLUME_HOME");
 
-		// -Djservs="ip-1:port-1,ip-2:port-2"
-		// see console log of ExpDoctierservTest
-		String jservs = System.getProperty("jservs");
-		if (!isblank(jservs))
-			jserv_xyzw = prefix(jservs.split(","), "http://");
-		else {
-			disabled = true;
-			Utils.warnT(new Object() {}, "DoclienterTest can not be tested automatically.");
-		}
+//		// -Djservs="ip-1:port-1,ip-2:port-2"
+//		// see console log of ExpDoctierservTest
+//		String jservs = System.getProperty("jservs");
+//		if (!isblank(jservs))
+//			jserv_xyzw = prefix(jservs.split(","), "http://");
+//		else {
+//			disabled = true;
+//			Utils.warnT(new Object() {}, "DoclienterTest can not be tested automatically.");
+//		}
+		
+		ExpDoctierservTest.init();
+
+		Utils.logrst("Starting synode-tiers", 0);
+		int[] nodex = ExpDoctierservTest.startJetties(SynodetierJoinTest.jetties, ExpDoctierservTest.ck);
+		//must finished
+		musteq(4, len(SynodetierJoinTest.jetties));
+		mustnonull(SynodetierJoinTest.jetties[0]);
+
+		new Thread(() -> {
+			try {
+				ExpDoctierservTest.runDoctiers(nodex, light);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}, "X Y Z W").start();
+
+		Thread.sleep(500);
+		jserv_xyzw = ExpDoctierservTest.jservs();
 	}
 
 	@Test
 	void testSynclientUp() throws Exception {
-		if (disabled) return;
-
 		int no = 0;
 		Utils.logrst(f("X <- %s", devs[X_0].device.id), ++no);
 
@@ -138,6 +160,8 @@ class DoclientierTest {
 	@AfterAll
 	static void close() throws Exception {
 		logi("Pushes are closed.");
+		logi("Closing service...");
+		light[0] = true;
 	}
 
 	ExpSyncDoc clientPush(int to, int cix) throws Exception {
@@ -146,6 +170,9 @@ class DoclientierTest {
 		Clients.init(jserv_xyzw[to]);
 
 		dev.login(errLog);
+
+		dev.client.fileProvider(new IFileProvider() {});
+
 		Utils.logi("client pushing: uid %s, device %s",
 				dev.client.client.ssInfo().uid(), dev.client.client.ssInfo().device);
 		Utils.logi(dev.res);
@@ -167,6 +194,7 @@ class DoclientierTest {
 
 				// push again should fail
 				try {
+					warn("******** ********\n*** Can safely ignore the following file duplicate error:");
 					doclient.startPush(null, entityName, doc,
 						new OnOk() {
 							@Override
