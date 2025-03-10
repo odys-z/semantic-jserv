@@ -18,6 +18,9 @@ import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.X;
 import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.Y;
+import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.ck;
+import static io.odysz.semantic.syn.Docheck.printChangeLines;
+import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -72,20 +75,10 @@ class DoclientierTest {
 
 		YellowPages.load("$VOLUME_HOME");
 
-//		// -Djservs="ip-1:port-1,ip-2:port-2"
-//		// see console log of ExpDoctierservTest
-//		String jservs = System.getProperty("jservs");
-//		if (!isblank(jservs))
-//			jserv_xyzw = prefix(jservs.split(","), "http://");
-//		else {
-//			disabled = true;
-//			Utils.warnT(new Object() {}, "DoclienterTest can not be tested automatically.");
-//		}
-		
 		ExpDoctierservTest.init();
 
 		Utils.logrst("Starting synode-tiers", 0);
-		int[] nodex = ExpDoctierservTest.startJetties(SynodetierJoinTest.jetties, ExpDoctierservTest.ck);
+		int[] nodex = ExpDoctierservTest.startJetties(SynodetierJoinTest.jetties, ck);
 		//must finished
 		musteq(4, len(SynodetierJoinTest.jetties));
 		mustnonull(SynodetierJoinTest.jetties[0]);
@@ -98,7 +91,7 @@ class DoclientierTest {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}, "X Y Z W").start();
+		}, "X Y Z W by DoclientierTest").start();
 
 		Thread.sleep(500);
 		jserv_xyzw = ExpDoctierservTest.jservs();
@@ -109,16 +102,34 @@ class DoclientierTest {
 		int no = 0;
 		Utils.logrst(f("X <- %s", devs[X_0].device.id), ++no);
 
+		// 10 create X
+		printChangeLines(ck);
+		printNyquv(ck);
 		ExpSyncDoc dx = clientPush(X, X_0);
 		verifyPathsPage(devs[X_0].client, docm.tbl, dx.clientpath);
 
-		// 10 create
+		// 10 create Y
+		printChangeLines(ck);
+		printNyquv(ck);
 		Utils.logrst(f("Y <- %s", devs[Y_0].device.id), ++no);
 		clientPush(Y, Y_0);
 
-		// 11 create
-		Utils.logrst(f("X <- %s", devs[X_0].device.id), ++no);
+		// 11 create Y
+		printChangeLines(ck);
+		printNyquv(ck);
+		Utils.logrst(f("Y <- %s", devs[X_0].device.id), ++no);
 		clientPush(Y, Y_1);
+
+
+		boolean[] lights = new boolean[] {true, false};
+		waiting(lights, Y);
+		SynodetierJoinTest.syncdomain(lights, Y);
+		awaitAll(lights);
+
+		printChangeLines(ck);
+		printNyquv(ck);
+		ck[Y].doc(3);
+		ck[X].doc(3);
 	}
 
 	@Test
