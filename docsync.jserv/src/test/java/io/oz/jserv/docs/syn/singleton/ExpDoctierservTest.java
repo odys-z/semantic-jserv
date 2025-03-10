@@ -13,7 +13,6 @@ import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.testSyndoctier;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.setVolumeEnv;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.webinf;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
@@ -21,11 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 
+import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import io.odysz.anson.JsonOpt;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.syn.Doclientier;
@@ -34,7 +36,6 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.Docheck;
-import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
@@ -182,45 +183,84 @@ public class ExpDoctierservTest {
 
 	private static int[] runtimeEnv(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
-//		String host = System.getProperty("syndocs.ip");
-//		int port = 8090;
 		
 		SynodeConfig[] cfgs = new SynodeConfig[nodex.length]; 
 
 		Connects.init(webinf);
+		
+		String[] nodes = new String[] { "X", "Y", "Z", "W" };
+		
+		HashMap<String, String> jservs = new HashMap<String, String>(4);
+		for (int i : nodex) {
+			jservs.put(nodes[i], f("http://127.0.0.1:%s/jserv-album", 8964 + i));
+		}
 
 		for (int i : nodex) {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			
-			YellowPages.load(f("$VOLUME_%s", i));
-
-			cfgs[i] = YellowPages.synconfig();
-			// cfgs[i].localhost = host;
-			// cfgs[i].port = port++;
-			cfgs[i].mode = SynodeMode.peer;
-
+			String cfgxml = f("config-%s.xml", i);
+			
 			// install
 			AppSettings settings = new AppSettings();
-			settings.vol_name = f("$VOLUME_%s", i);
+			settings.jservs = jservs;
+			settings.vol_name = f("VOLUME_%s", i);
+			settings.volume = f("../vol-%s", i);
+			settings.port = 8964 + i;
+			settings.installkey = "0123456789ABCDEF";	
+			settings.rootkey = null;
+			settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
+
+			YellowPages.load("$" + settings.vol_name);
+			cfgs[i] = YellowPages.synconfig();
+			// cfgs[i].mode = SynodeMode.peer;
 
 			settings.setupdb(cfgs[i], "jserv-stub", webinf,
-					 f("config-%s.xml", i), "ABCDEF0123465789");
+					 cfgxml, "ABCDEF0123465789");
+
 			cleanPhotos(docm, cfgs[i].synconn, devs);
-			
+		
 			// clean and reboot
+			Syngleton.cleanDomain(cfgs[i]);
 			Syngleton.cleanSynssions(cfgs[i]);
 
-			jetties[i] = testSyndoctier(cfgs[i],
-					((ArrayList<SyncUser>) YellowPages.robots()).get(0),
-					"config.xml", f("$VOLUME_%s/syntity.json", i), settings);
+			// main()
+			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json");
+
+			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, "settings.json")
+						.jserv(jserv)
+						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
-			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-						cfgs[i].synode(), SynodeMode.peer, docm, null, cfgs[i].debug);
+			// checker
+			ck[i] = new Docheck(azert, zsu, servs_conn[i], jetties[i].syngleton().domanager(zsu).synode,
+							SynodeMode.peer, docm, null, true);
+			
+//			jetties[i] = testSyndoctier(cfgs[i],
+//					((ArrayList<SyncUser>) YellowPages.robots()).get(0),
+//					"config.xml", f("$%s/syntity.json", settings.vol_name), settings);
+//			
+//			ck[i] = new Docheck(azert, zsu, servs_conn[i],
+//						cfgs[i].synode(), SynodeMode.peer, docm, null, cfgs[i].debug);
 		}
 		
-		throw new Exception("TODO");
+		return nodex;
 	}
+
+	/**
+	 * Start a Jetty app with system print stream for logging.
+	 * 
+	 * @return the Jetty App, with a servlet server.
+	 * @throws Exception
+	private static SynotierJettyApp testSyndoctier(SynodeConfig cfg, SyncUser admin,
+			String cfg_xml, String syntity_json, AppSettings settings) throws Exception {
+
+		// String admid = new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)).uid();
+		return SynotierJettyApp 
+			.createSyndoctierApp(cfg, settings, admin, webinf, cfg_xml, syntity_json)
+			.start(() -> System.out, () -> System.err)
+			;
+	}
+	 */
 
 	static void cleanPhotos(ExpDocTableMeta docm, String conn, Dev[] devs) throws Exception {
 		ArrayList<String> sqls = new ArrayList<String>();

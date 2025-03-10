@@ -78,7 +78,7 @@ public class AppSettings extends Anson {
 	public AppSettings setupdb(String url_path, String config_xml, SynodeConfig cfg) throws Exception {
 		if (isblank(rootkey)) {
 			mustnonull(installkey, "[AppSettings] Install-key cannot be null if root-key is empty.");
-			if (jservs == null || len(jservs) == 0)
+			if (len(jservs) == 0)
 				Utils.warn("Jservs Shouldn't be empty, unless this node is setup for joining a domain. synode: %s", cfg.synode());
 
 			Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
@@ -122,8 +122,7 @@ public class AppSettings extends Anson {
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
 
-		if (!isblank(this.jservs))
-			setupJserv(cfg, url_path);
+		setupJserv(cfg, url_path);
 	}
 	
 	/**
@@ -158,6 +157,10 @@ public class AppSettings extends Anson {
 	 * @throws SQLException 
 	 */
 	public AppSettings setupJserv(SynodeConfig cfg, String jserv_album) throws TransException, SQLException {
+
+		if (len(this.jservs) == 0)
+			throw new SemanticException("Design 0.2.3: AppSettings.jservs, from settings.json, cannot be empty.");
+
 		SynodeMeta synm = new SynodeMeta(cfg.synconn);
 
 		/*

@@ -193,15 +193,15 @@ public class SynodetierJoinTest {
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789", true);
 
-			Syngleton.cleanDomain(config);
+			// Syngleton.cleanDomain(config);
 
 			Syngleton.cleanSynssions(config);
 
 			// DB is dirty when testing again
-			String buf = config.domain;
-			config.domain = zsu;
+//			String buf = config.domain;
+//			config.domain = zsu;
 			Syngleton.cleanDomain(config);
-			config.domain = buf;
+//			config.domain = buf;
 
 			// main()
 			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson);
@@ -347,19 +347,4 @@ public class SynodetierJoinTest {
 		}
 	}
 
-	/**
-	 * Start a Jetty app with system print stream for logging.
-	 * 
-	 * @return the Jetty App, with a servlet server.
-	 * @throws Exception
-	 */
-	public static SynotierJettyApp testSyndoctier(SynodeConfig cfg, SyncUser admin,
-			String cfg_xml, String syntity_json, AppSettings settings) throws Exception {
-
-		// String admid = new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)).uid();
-		return SynotierJettyApp 
-			.createSyndoctierApp(cfg, settings, admin, webinf, cfg_xml, syntity_json)
-			.start(() -> System.out, () -> System.err)
-			;
-	}
 }

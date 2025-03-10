@@ -1,0 +1,12 @@
+{ "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "vol_name": "VOLUME_3",
+  "volume": "../vol-3",
+  "port": 8967,
+  "jservs": {"W": "http://127.0.0.1:8967/jserv-album",
+      "X": "http://127.0.0.1:8964/jserv-album",
+      "Y": "http://127.0.0.1:8965/jserv-album",
+      "Z": "http://127.0.0.1:8966/jserv-album"},
+  "envars": null,
+  "installkey": null,
+  "rootkey": "0123456789ABCDEF"
+}
