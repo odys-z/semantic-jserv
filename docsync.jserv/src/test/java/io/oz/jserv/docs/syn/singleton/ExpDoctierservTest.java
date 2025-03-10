@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.waiting;
@@ -71,11 +72,11 @@ public class ExpDoctierservTest {
 	static final String[] config_xmls = new String[] {
 			"config-0.xml", "config-1.xml", "config-2.xml", "config-3.xml"};
 	
-	private static Docheck[] ck;
+	public static Docheck[] ck;
 
 	/** -Dsyndocs.ip="host-ip" */
 	@BeforeAll
-	static void init() throws Exception {
+	public static void init() throws Exception {
 		setVolumeEnv("vol-");
 
 		ck = new Docheck[servs_conn.length];
@@ -85,14 +86,31 @@ public class ExpDoctierservTest {
 	 * Use -Dwati-clients for waiting client's pushing, by running {@link DoclientierTest#testSynclientUp()}.
 	 * @throws Exception
 	 */
-	@SuppressWarnings("deprecation")
 	@Test
 	void runDoctiers() throws Exception {
+		if (System.getProperty("wait-clients") == null) {
+
+			Utils.logrst("Starting synode-tiers", 0);
+			int[] nodex = startJetties(jetties, ck);
+			runDoctiers(nodex, null);
+
+			Utils.warnT(new Object() {}, "Test is running in automatic style, quite without waiting clients' pushing!");
+		}
+		else {
+			Utils.logrst("Starting synode-tiers", 0);
+			int[] nodex = startJetties(jetties, ck);
+
+			final boolean[] light = new boolean[1];
+			runDoctiers(nodex, light);
+			pause("This thread will be killed asap when main thread quite.");
+			light[0] = true;
+		}
+	}
+
+	@SuppressWarnings("deprecation")
+	public static void runDoctiers(int[] nodex, boolean[] pausing) throws Exception {
 		int section = 0;
 		
-		Utils.logrst("Starting synode-tiers", ++section);
-		int[] nodex = runtimeEnv(jetties, ck);
-
 		Utils.logrst("Open domains", ++section);
 
 		final boolean[] lights = new boolean[nodex.length];
@@ -102,7 +120,7 @@ public class ExpDoctierservTest {
 					lights[i] = true;
 				});
 		}
-		awaitAll(lights, -1);
+		awaitAll(lights);
 
 		ck[Z].doc(0);
 		ck[Y].doc(0);
@@ -115,13 +133,10 @@ public class ExpDoctierservTest {
 		for (SynotierJettyApp j : jetties)
 			if (j != null) j.print();
 
-		if (System.getProperty("wait-clients") == null) {
-			Utils.warnT(new Object() {}, "Test is running in automatic style, quite without waiting clients' pushing!");
-			return;
-		}
-			
+		if (pausing == null) return;
+		// else wait on lights (turn on by clients or users)
 
-		pause("Press Enter after pushed with clients for starting synchronizing.");
+		awaitAll(pausing, -1);
 
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -181,7 +196,7 @@ public class ExpDoctierservTest {
 		ck[X].doc(2);
 	}
 
-	private static int[] runtimeEnv(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
+	public static int[] startJetties(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
 		
 		SynodeConfig[] cfgs = new SynodeConfig[nodex.length]; 
@@ -297,6 +312,18 @@ public class ExpDoctierservTest {
 			pathpool.remove(pth);
 
 		assertEquals(isNull(paths) ? 0 : paths.length, pathpool.size());
+	}
+
+	public static String[] jservs() {
+		if (len(jetties) < 4 || jetties[0] == null)
+			throw new NullPointerException("Initialize first.");
+
+		String[] jrvs = new String[jetties.length];
+
+		for (int i = 0; i < jetties.length; i++) 
+			jrvs[i] = jetties[i].jserv;
+
+		return jrvs;
 	}
 
 }

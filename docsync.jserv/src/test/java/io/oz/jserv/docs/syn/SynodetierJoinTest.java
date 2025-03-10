@@ -38,7 +38,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.Docheck;
-import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -113,6 +112,7 @@ public class SynodetierJoinTest {
 		}
 	}
 
+	@SuppressWarnings("serial")
 	@BeforeAll
 	static void init() throws Exception {
 		setVolumeEnv("v-");
