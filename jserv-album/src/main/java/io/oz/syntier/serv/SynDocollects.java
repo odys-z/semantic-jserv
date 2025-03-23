@@ -61,7 +61,7 @@ import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.jserv.docs.syn.DocUser;
 
 /**
- * <h5>The album tier 0.6.50 (MVP)</h5>
+ * <h5>The album tier 0.7.0 (MVP)</h5>
  *
  * Although this tie is using the pattern of <i>less</i>, it's also verifying user when uploading
  * - for subfolder name of user.
