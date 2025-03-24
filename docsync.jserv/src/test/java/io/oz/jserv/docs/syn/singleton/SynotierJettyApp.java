@@ -351,8 +351,8 @@ public class SynotierJettyApp {
 	}
 
 	public SynotierJettyApp print(String... msg) {
-		Utils.logi("%s\nSynode %s: %s", _0(msg, ""),
-				syngleton.synode(), jserv);
+		Utils.logi("%s\nSynode %s: %s",
+				_0(msg, ""), syngleton.synode(), jserv);
 		return this;
 	}
 }

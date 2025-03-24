@@ -223,7 +223,6 @@ public class AppSettings extends Anson {
 				// .whereEq(synm.domain, domain)
 				.u(tb.instancontxt(synconn, robot));
 			}
-			this.local_serv = servurl;
 			return servurl;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -297,8 +296,8 @@ public class AppSettings extends Anson {
 	 * Updated by {@link #setupJserv(SynodeConfig, AppSettings, String)},
 	 * reporting runtime local jserv.
 	 */
-	@AnsonField(ignoreTo=true, ignoreFrom=true)
-	public String local_serv; 
+	// @AnsonField(ignoreTo=true, ignoreFrom=true)
+	// public String local_serv; 
 
 	/**
 	 * Should only be used in win-serv mode.
@@ -394,19 +393,20 @@ public class AppSettings extends Anson {
 
 		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 		
+		String jserv;
 		if (!isblank(settings.installkey)) {
 			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
 			settings.setupdb(url_path, config_xml, cfg).save();
 			
 			// also update db
-			settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
+			jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		}
 		else {
 			logi("[INSTALL-CHECK] Starting application without db setting ...", config_xml);
-			settings.updateLocalJserv(cfg.https, url_path, null, null, null) ;
+			jserv = settings.updateLocalJserv(cfg.https, url_path, null, null, null) ;
 		}
 		
-		return settings.local_serv;
+		return jserv; // settings.local_serv
 	}
 
 	

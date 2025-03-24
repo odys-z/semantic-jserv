@@ -22,6 +22,9 @@ import org.eclipse.jetty.ee8.servlet.FilterMapping;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
+
+import com.google.zxing.WriterException;
+
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
@@ -42,6 +45,8 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.syn.registry.Syntities;
 import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.album.helpers.QrProps;
+import io.oz.album.helpers.QrTerminal;
 import io.oz.album.peer.SynDocollPort;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpDoctier;
@@ -347,8 +352,13 @@ public class SynotierJettyApp {
 	}
 
 	public SynotierJettyApp print(String... msg) {
-		Utils.logi("%s\nSynode %s: %s", _0(msg, ""),
-				syngleton.synode(), jserv);
+		try {
+			String qr = f("%s\n%s", syngleton.synode(), jserv);
+			Utils.logi("%s\nSynode %s", _0(msg, ""), qr);
+			QrTerminal.print(qr, new QrProps(true));
+		} catch (WriterException e) {
+			e.printStackTrace();
+		}
 		return this;
 	}
 }

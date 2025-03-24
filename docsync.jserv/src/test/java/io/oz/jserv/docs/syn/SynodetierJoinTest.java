@@ -193,15 +193,10 @@ public class SynodetierJoinTest {
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789", true);
 
-			// Syngleton.cleanDomain(config);
-
 			Syngleton.cleanSynssions(config);
 
 			// DB is dirty when testing again
-//			String buf = config.domain;
-//			config.domain = zsu;
 			Syngleton.cleanDomain(config);
-//			config.domain = buf;
 
 			// main()
 			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson);
