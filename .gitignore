@@ -8,4 +8,12 @@ target
 src/test/results/
 *-jdk-bug
 commit.comments*
+comments
 exiftool.exe
+.qtcreator
+*.pyproject.user
+*.egg-info
+dist
+web-dist
+vol
+*.exe
