@@ -10,7 +10,9 @@ VOLUME    = volume
 SRC_WEB   = src/main/webapp/WEB-INF-$(VERSION)
 EXIFTOOL_ZIP = exiftool-*.zip 
 PORTFOLIO_07 = portfolio_synode-0.7.0-py3-none-any.whl
-ALBUM_WEB    = album-web-0.4
+
+# ln -s ../../../Anclient/examples/example.js/album/web-dist web-dist
+ALBUM_WEB    = web-dist
 
 default: jserv-sqlite
 
