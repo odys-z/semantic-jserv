@@ -163,22 +163,6 @@ public class AppSettings extends Anson {
 
 		SynodeMeta synm = new SynodeMeta(cfg.synconn);
 
-		/*
-		String[] jservs = this.jservs.split(" ");
-		for (String jserv : jservs) {
-			String[] sid_url = jserv.split(":");
-			if (isNull(sid_url) || len(sid_url) < 2)
-				throw new IllegalArgumentException("jserv: " + jserv);
-			
-			String url = jserv.replaceFirst(sid_url[0] + ":", "");
-			
-			if (eq(cfg.synode(), sid_url[0])) {
-				logT(new Object() {}, "Ignoring updating jserv to local node: %s");
-			}
-			else
-				updatePeerJservs(cfg.synconn, cfg.domain, synm, sid_url[0], url);
-		}
-		*/
 		for (String peer : jservs.keySet()) {
 			if (eq(cfg.synode(), peer)) 
 				logT(new Object() {}, "Ignoring updating jserv to local node: %s", peer);
@@ -187,7 +171,6 @@ public class AppSettings extends Anson {
 		}
 		return this;
 	}
-
 
 	/**
 	 * 
