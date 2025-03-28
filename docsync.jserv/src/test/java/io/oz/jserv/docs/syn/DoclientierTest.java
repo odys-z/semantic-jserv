@@ -66,8 +66,13 @@ class DoclientierTest {
 
 	private static Thread thr;
 
+	/** Stop service node quit automatically. */
 	static final boolean[] serviceLight = new boolean[1];
+	
+	/** Permission to push docs by clients, this test. */
 	static final boolean[] pushingLight = new boolean[] {false};
+
+	/** Tell service node pushings are done. */
 	static final boolean[] pushingDone  = new boolean[] {false};
 
 	@BeforeAll
