@@ -96,6 +96,12 @@ public class SynotierJettyApp {
 		return this;
 	}
 
+	public static void StartWinsrv() {
+	}
+	
+	public static void StopWinsrv() {
+	}
+
 	/**
 	 * @param args [0] settings.xml
 	 * @throws Exception
