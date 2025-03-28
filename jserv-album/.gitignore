@@ -32,3 +32,5 @@ install-settings-delete/*
 !install-settings-delete/*.sh
 deploy
 host.json
+
+web-dist

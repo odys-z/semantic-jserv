@@ -106,7 +106,7 @@ public class SynotierJettyApp {
 			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
 			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
 
-			String jserv = AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json);
+			String jserv = AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json, false);
 
 			boot(srcwebinf, config_xml, _0(args, settings_json))
 			.jserv(jserv)

@@ -63,7 +63,7 @@ class SynotierJettyAppTest {
 		assertEquals("0123456789ABCDEF", settings.installkey);
 
 		@SuppressWarnings("unused")
-		String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, "settings.json");
+		String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, "settings.json", true);
 
 		settings = AppSettings.load(webinf, "settings.json");
 		assertNull(settings.installkey);
@@ -95,8 +95,8 @@ class SynotierJettyAppTest {
 
 		preventSettingsError("settings.prv.json");
 
-		AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, settings_hub);
-		AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, settings_prv);
+		AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, settings_hub, true);
+		AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, settings_prv, true);
 	
 		SynotierJettyApp hub = boot(webinf, config_xml, settings_hub);
 		SynotierJettyApp prv = boot(webinf, config_xml, settings_prv);
