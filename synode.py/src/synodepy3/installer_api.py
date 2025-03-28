@@ -19,8 +19,8 @@ import sys
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from src.io.oz.syn import AnRegistry
 
-if sys.version_info > (3, 10, 0):
-    pass
+# if sys.version_info > (3, 10, 0):
+#     pass
 
 
 def ping(peerid: str, peerserv: str):
@@ -172,6 +172,7 @@ host_json = f'{host_private}/host.json'
 dictionary_json = 'dictionary.json'
 settings_json = 'settings.json'
 web_inf = 'WEB-INF'
+index_html = 'index.html'
 syn_db = 'doc-jserv.db'
 sys_db = 'jserv-main.db'
 jserv_07_jar = 'jserv-album-0.7.0.jar'
@@ -571,6 +572,8 @@ class InstallerCli:
 
         if not os.path.isdir(album_web):
             raise PortfolioException(f'Cannot find web root folder: {album_web}')
+        if not os.path.isfile(os.path.join(album_web, index_html)):
+            raise FileNotFoundError(f'Cannot find {index_html} in {album_web}')
 
         InstallerCli.update_private(jservport)
 

@@ -82,6 +82,7 @@ public class SynotierJettyApp {
 	public static final String config_xml = "config.xml";
 	public static final String settings_json = "settings.json";
 
+
 	final Syngleton syngleton;
 
 	Server server;
@@ -96,32 +97,15 @@ public class SynotierJettyApp {
 		return this;
 	}
 
-	public static void StartWinsrv() {
-	}
-	
-	public static void StopWinsrv() {
-	}
-
-	/**
-	 * @param args [0] settings.xml
-	 * @throws Exception
-	 */
-	public static void main(String[] args) {
+	private static Winsrv winsrv;
+	public static void jvmStart() {
+		SynotierJettyApp app = _main(null);
 		try {
-			// For Eclipse's running as Java Application
-			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
-			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
-
-			String jserv = AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json, false);
-
-			boot(srcwebinf, config_xml, _0(args, settings_json))
-			.jserv(jserv)
-			.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
-		} catch (Exception e) {
+			winsrv = new Winsrv("ok", app);
+			app.server.join();
+		} catch (InterruptedException e) {
 			e.printStackTrace();
-			
-			warn("Fatal errors there. The process is stopped.");
-			System.exit(-1);
+			winsrv = new Winsrv(e.getClass().getName(), e.getMessage());
 		}
 	}
 	
@@ -132,8 +116,42 @@ public class SynotierJettyApp {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void stop(String[] args) throws Exception {
-		// if (server != null) server.stop();
+	public static void jvmStop() {
+		if (winsrv != null && winsrv.app != null)
+			try {
+				winsrv.app.stop();
+			} catch (Exception e) {
+				e.printStackTrace();
+				winsrv = new Winsrv(e.getClass().getName(), e.getMessage());
+			}
+	}
+
+	public static void main(String[] args) {
+		_main(args);
+	}
+
+	/**
+	 * @param args [0] settings.xml
+	 * @throws Exception
+	 */
+	public static SynotierJettyApp _main(String[] args) {
+		try {
+			// For Eclipse's running as Java Application
+			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
+			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
+
+			String jserv = AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json, false);
+
+			return boot(srcwebinf, config_xml, _0(args, settings_json))
+			.jserv(jserv)
+			.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
+		} catch (Exception e) {
+			e.printStackTrace();
+			
+			warn("Fatal errors there. The process is stopped.");
+			System.exit(-1);
+			return null;
+		}
 	}
 	
 	static SynotierJettyApp boot(String webinf, String config_xml, String settings_json,

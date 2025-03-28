@@ -9,7 +9,9 @@ ZIP       = jserv-album-bin.zip
 VOLUME    = volume
 SRC_WEB   = src/main/webapp/WEB-INF-$(VERSION)
 EXIFTOOL_ZIP = exiftool-*.zip 
-PORTFOLIO_07 = portfolio_synode-0.7.1-py3-none-any.whl
+
+# ln -s ../synode.py/dist/synode_py3-0.1.0-py3-none-any.whl portfolio-synode-0.7-py3-none-any.wh
+PORTFOLIO_07 = portfolio-synode-0.7-py3-none-any.whl
 
 # ln -s ../../Anclient/examples/example.js/album/web-dist web-dist
 ALBUM_WEB    = web-dist
