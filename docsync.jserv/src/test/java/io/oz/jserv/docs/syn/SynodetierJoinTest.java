@@ -199,7 +199,7 @@ public class SynodetierJoinTest {
 			Syngleton.cleanDomain(config);
 
 			// main()
-			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson);
+			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson, true);
 
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, stjson)
 						.jserv(jserv)

@@ -1,6 +1,6 @@
 { "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "vol_name": "VOLUME_1",
-  "volume": "../v-1",
+  "vol_name": "VOLUME_2",
+  "volume": "../v-2",
   "port": 8966,
   "jservs": {"X": "127.0.0.1:8964/jserv-alubm",
       "Y": "127.0.0.1:8965/jserv-album",

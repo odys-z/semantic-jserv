@@ -75,14 +75,14 @@ public class AppSettings extends Anson {
 	 * @return
 	 * @throws Exception
 	 */
-	public AppSettings setupdb(String url_path, String config_xml, SynodeConfig cfg) throws Exception {
+	public AppSettings setupdb(String url_path, String config_xml, SynodeConfig cfg, boolean forceTest) throws Exception {
 		if (isblank(rootkey)) {
 			mustnonull(installkey, "[AppSettings] Install-key cannot be null if root-key is empty.");
 			if (len(jservs) == 0)
 				Utils.warn("Jservs Shouldn't be empty, unless this node is setup for joining a domain. synode: %s", cfg.synode());
 
 			Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
-			setupdb(cfg, url_path, webinf, config_xml, installkey);
+			setupdb(cfg, url_path, webinf, config_xml, installkey, forceTest);
 
 			rootkey = installkey;
 			installkey = null;
@@ -105,7 +105,7 @@ public class AppSettings extends Anson {
 	 * @throws Exception
 	 */
 	public void setupdb(SynodeConfig cfg, String url_path, String webinf, String config_xml,
-			String rootkey) throws Exception {
+			String rootkey, boolean forceTest) throws Exception {
 		
 		Syngleton.setupSysRecords(cfg, YellowPages.robots());
 
@@ -118,7 +118,7 @@ public class AppSettings extends Anson {
 			throw new SemanticException("Synode configuration's syn-conn dosen't match regists' conn id (which can be null), %s != %s.");
 		
 		Syngleton.setupSyntables(cfg, regists.metas.values(),
-				webinf, config_xml, ".", rootkey, true);
+				webinf, config_xml, ".", rootkey, forceTest);
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
 
@@ -371,7 +371,7 @@ public class AppSettings extends Anson {
 	 * @return local jserv (IP is self-detected)
 	 * @throws Exception 
 	 */
-	public static String checkInstall(String url_path, String webinf, String config_xml, String settings_json) throws Exception {
+	public static String checkInstall(String url_path, String webinf, String config_xml, String settings_json, boolean forceTest) throws Exception {
 		logi("[INSTALL-CHECK] checking ...");
 		Configs.init(webinf);
 
@@ -396,7 +396,7 @@ public class AppSettings extends Anson {
 		String jserv;
 		if (!isblank(settings.installkey)) {
 			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
-			settings.setupdb(url_path, config_xml, cfg).save();
+			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
 			
 			// also update db
 			jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());

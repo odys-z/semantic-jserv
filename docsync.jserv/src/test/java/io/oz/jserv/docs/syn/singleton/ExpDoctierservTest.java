@@ -5,6 +5,7 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.pause;
+import static io.odysz.common.Utils.turngreen;
 import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
@@ -92,7 +93,7 @@ public class ExpDoctierservTest {
 
 			Utils.logrst("Starting synode-tiers", 0);
 			int[] nodex = startJetties(jetties, ck);
-			runDoctiers(nodex, null);
+			runDoctiers(nodex, null, null, null);
 
 			Utils.warnT(new Object() {}, "Test is running in automatic style, quite without waiting clients' pushing!");
 		}
@@ -100,15 +101,30 @@ public class ExpDoctierservTest {
 			Utils.logrst("Starting synode-tiers", 0);
 			int[] nodex = startJetties(jetties, ck);
 
-			final boolean[] light = new boolean[1];
-			runDoctiers(nodex, light);
+			final boolean[] noAutoQuit = new boolean[] { true };
+			final boolean[] canPush = new boolean[] { false };
+			final boolean[] pushDone = new boolean[] { false };
+
+			runDoctiers(nodex, noAutoQuit, canPush, pushDone);
+
+			awaitAll(canPush);
+			pause("Now can run DoclienterTest. Press Enter once manully uploaded");
+
+			turngreen(pushDone);
 			pause("This thread will be killed asap when main thread quite.");
-			light[0] = true;
 		}
 	}
 
+	/**
+	 * 
+	 * @param nodex
+	 * @param waitClients [in] wait for client's pushing, otherwise quit immediately after boot.
+	 * @param canPush [out] wait my checking
+	 * @param pushDone [in] pushes are finished as expected (1 to X, 2 to Y)
+	 * @throws Exception
+	 */
 	@SuppressWarnings("deprecation")
-	public static void runDoctiers(int[] nodex, boolean[] pausing) throws Exception {
+	public static void runDoctiers(int[] nodex, boolean[] waitClients, boolean[] canPush, boolean[] pushDone) throws Exception {
 		int section = 0;
 		
 		Utils.logrst("Open domains", ++section);
@@ -122,6 +138,7 @@ public class ExpDoctierservTest {
 		}
 		awaitAll(lights);
 
+		// This won't pass if h_photos is not cleared
 		ck[Z].doc(0);
 		ck[Y].doc(0);
 		ck[X].doc(0);
@@ -133,10 +150,12 @@ public class ExpDoctierservTest {
 		for (SynotierJettyApp j : jetties)
 			if (j != null) j.print();
 
-		if (pausing == null) return;
+		if (waitClients == null) return;
 		// else wait on lights (turn on by clients or users)
 
-		awaitAll(pausing, -1);
+
+		turngreen(canPush); // Tell clients can push now
+		awaitAll(pushDone, -1);
 
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -228,10 +247,9 @@ public class ExpDoctierservTest {
 
 			YellowPages.load("$" + settings.vol_name);
 			cfgs[i] = YellowPages.synconfig();
-			// cfgs[i].mode = SynodeMode.peer;
 
 			settings.setupdb(cfgs[i], "jserv-stub", webinf,
-					 cfgxml, "ABCDEF0123465789");
+					 cfgxml, "ABCDEF0123465789", true);
 
 			cleanPhotos(docm, cfgs[i].synconn, devs);
 		
@@ -240,7 +258,7 @@ public class ExpDoctierservTest {
 			Syngleton.cleanSynssions(cfgs[i]);
 
 			// main()
-			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json");
+			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
 
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, "settings.json")
 						.jserv(jserv)
@@ -249,33 +267,10 @@ public class ExpDoctierservTest {
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i], jetties[i].syngleton().domanager(zsu).synode,
 							SynodeMode.peer, docm, null, true);
-			
-//			jetties[i] = testSyndoctier(cfgs[i],
-//					((ArrayList<SyncUser>) YellowPages.robots()).get(0),
-//					"config.xml", f("$%s/syntity.json", settings.vol_name), settings);
-//			
-//			ck[i] = new Docheck(azert, zsu, servs_conn[i],
-//						cfgs[i].synode(), SynodeMode.peer, docm, null, cfgs[i].debug);
 		}
 		
 		return nodex;
 	}
-
-	/**
-	 * Start a Jetty app with system print stream for logging.
-	 * 
-	 * @return the Jetty App, with a servlet server.
-	 * @throws Exception
-	private static SynotierJettyApp testSyndoctier(SynodeConfig cfg, SyncUser admin,
-			String cfg_xml, String syntity_json, AppSettings settings) throws Exception {
-
-		// String admid = new DocUser(((ArrayList<SyncUser>) YellowPages.robots()).get(0)).uid();
-		return SynotierJettyApp 
-			.createSyndoctierApp(cfg, settings, admin, webinf, cfg_xml, syntity_json)
-			.start(() -> System.out, () -> System.err)
-			;
-	}
-	 */
 
 	static void cleanPhotos(ExpDocTableMeta docm, String conn, Dev[] devs) throws Exception {
 		ArrayList<String> sqls = new ArrayList<String>();

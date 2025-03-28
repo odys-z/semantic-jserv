@@ -9,6 +9,7 @@ import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.pause;
+import static io.odysz.common.Utils.turngreen;
 import static io.odysz.common.Utils.waiting;
 import static io.odysz.common.Utils.warn;
 import static io.oz.jserv.docs.syn.Dev.X_0;
@@ -63,7 +64,11 @@ class DoclientierTest {
 	
 	static String[] jserv_xyzw;
 
-	static final boolean[] light = new boolean[1];
+	private static Thread thr;
+
+	static final boolean[] serviceLight = new boolean[1];
+	static final boolean[] pushingLight = new boolean[] {false};
+	static final boolean[] pushingDone  = new boolean[] {false};
 
 	@BeforeAll
 	static void init() throws Exception {
@@ -83,23 +88,28 @@ class DoclientierTest {
 		musteq(4, len(SynodetierJoinTest.jetties));
 		mustnonull(SynodetierJoinTest.jetties[0]);
 
-		new Thread(() -> {
+		// Wait for ExpDoctierservTest.runDoctiers() check the initial state
+		waiting(serviceLight, -1);
+
+		thr = new Thread(() -> {
 			try {
-				ExpDoctierservTest.runDoctiers(nodex, light);
+				ExpDoctierservTest.runDoctiers(nodex, serviceLight, pushingLight, pushingDone);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}, "X Y Z W by DoclientierTest").start();
+		}, "X Y Z W by DoclientierTest");
+		thr.start();
 
-		Thread.sleep(500);
 		jserv_xyzw = ExpDoctierservTest.jservs();
 	}
 
 	@Test
 	void testSynclientUp() throws Exception {
 		int no = 0;
+		awaitAll(pushingLight);
+
 		Utils.logrst(f("X <- %s", devs[X_0].device.id), ++no);
 
 		// 10 create X
@@ -120,16 +130,13 @@ class DoclientierTest {
 		Utils.logrst(f("Y <- %s", devs[X_0].device.id), ++no);
 		clientPush(Y, Y_1);
 
-
-		boolean[] lights = new boolean[] {true, false};
-		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y);
-		awaitAll(lights);
+		turngreen(pushingDone);
+		thr.join();
 
 		printChangeLines(ck);
 		printNyquv(ck);
-		ck[Y].doc(3);
-		ck[X].doc(3);
+		ck[Y].doc(2);
+		ck[X].doc(2);
 	}
 
 	@Test
@@ -148,22 +155,15 @@ class DoclientierTest {
 		SynodetierJoinTest.syncdomain(lights, Y);
 		awaitAll(lights, -1);
 
-		// ck[Y].doc(3);
-		// ck[X].doc(3);
-
 		// 00 delete
 		Dev devx0 = devs[X_0];
 		Clients.init(jserv_xyzw[X]);
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
-		// verifyPathsPageNegative(devx0.client, docm.tbl, dx.clientpath);
-
 		waiting(lights, Y);
 		SynodetierJoinTest.syncdomain(lights, Y);
 		awaitAll(lights);
-		// ck[Y].doc(2);
-		// ck[X].doc(2);
 
 		pause("Press enter to quite ...");
 	}
@@ -172,7 +172,8 @@ class DoclientierTest {
 	static void close() throws Exception {
 		logi("Pushes are closed.");
 		logi("Closing service...");
-		light[0] = true;
+		serviceLight[0] = true;
+		thr.join();
 	}
 
 	ExpSyncDoc clientPush(int to, int cix) throws Exception {
@@ -205,7 +206,7 @@ class DoclientierTest {
 
 				// push again should fail
 				try {
-					warn("******** ********\n*** Can safely ignore the following file duplicate error:");
+					warn("******** ********\n*** Can safely ignore the following file's duplicating error:");
 					doclient.startPush(null, entityName, doc,
 						new OnOk() {
 							@Override
