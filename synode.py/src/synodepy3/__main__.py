@@ -1,7 +1,4 @@
-# This Python file uses the following encoding: utf-8
 import sys
-# sys.path.insert(0, '')
-# from io import BytesIO
 import io as std_io
 from typing import Optional
 
@@ -76,6 +73,7 @@ def warn_msg(warn: str, details: object = None):
     msg.setIcon(QMessageBox.Icon.Warning)
     result = msg.exec()
     return result
+
 
 class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
@@ -252,7 +250,11 @@ class InstallerForm(QMainWindow):
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bSetup.clicked.connect(self.setup)
             self.ui.bValidate.clicked.connect(self.test_run)
-            self.ui.bWinserv.clicked.connect(self.installWinsrv)
+
+            if get_os() == 'Windows':
+                self.ui.bWinserv.clicked.connect(self.installWinsrv)
+            else:
+                self.ui.bWinserv.setEnabled(False)
 
             self.httpd = InstallerCli.start_web()
 
