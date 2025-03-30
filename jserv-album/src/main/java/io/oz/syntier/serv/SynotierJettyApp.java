@@ -98,7 +98,7 @@ public class SynotierJettyApp {
 	}
 
 	private static Winsrv winsrv;
-	public static void jvmStart() {
+	public static void jvmStart(String[] args) {
 		SynotierJettyApp app = _main(null);
 		try {
 			winsrv = new Winsrv("ok", app);
@@ -116,7 +116,7 @@ public class SynotierJettyApp {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void jvmStop() {
+	public static void jvmStop(String[] args) {
 		if (winsrv != null && winsrv.app != null)
 			try {
 				winsrv.app.stop();

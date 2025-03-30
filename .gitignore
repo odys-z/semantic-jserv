@@ -17,3 +17,5 @@ dist
 vol
 *.exe
 web-dist
+logs
+*.log
