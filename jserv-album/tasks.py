@@ -25,11 +25,9 @@ def create_volume(c):
 @task
 def build(c):
     buildcmds = {
-        '../../anclient/examples/example.js/album': 'webpack',
-        '.': 'mvn clean compile package -DskipTests',
-        # 'python3 -m build': '../../../semantic-jserv/synode.py',
-        # f'set SYNODE_VERSION={version} && py -m build': '../../../semantic-jserv/synode.py',
-        '../synode.py': lambda: f'set SYNODE_VERSION="{version}" && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION="{version}" && python3 -m build',
+        # '../../Anclient/examples/example.js/album': 'webpack',
+        # '.': 'mvn clean compile package -DskipTests',
+        '../synode.py': lambda: f'set SYNODE_VERSION={version} && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && python3 -m build',
     }
 
     for pth, cmd in buildcmds.items():
