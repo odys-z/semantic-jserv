@@ -8,7 +8,7 @@ from pathlib import Path
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
-version = os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.0'
+version = os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.1'
 print(version)
 version = version.strip()
 print(f'--{version}--'),

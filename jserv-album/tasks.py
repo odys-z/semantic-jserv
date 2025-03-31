@@ -25,9 +25,9 @@ def create_volume(c):
 @task
 def build(c):
     buildcmds = {
-        '../../Anclient/examples/example.js/album': 'webpack',
+        '../../anclient/examples/example.js/album': 'webpack',
         '.': 'mvn clean compile package -DskipTests',
-        '../synode.py': lambda: f'set SYNODE_VERSION={version} && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && python3 -m build',
+        '../synode.py': lambda: f'set SYNODE_VERSION={version} && rm -rf dist && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && rm -rf dist && python3 -m build',
     }
 
     for pth, cmd in buildcmds.items():
@@ -56,7 +56,7 @@ def make(c, zip=f'jserv-portfolio-{version}.zip'):
     resources = {
         "bin/jserv-album-0.7.1.jar": "target/jserv-album-0.7.1.jar",
         "bin/exiftool.zip": "./exiftool-13.21_64.zip",
-        "bin/portfolio-synode-0.7-py3-none-any.whl": f"../synode.py/dist/synode_py3-{version}-py3-none-any.whl",
+        "bin/synode_py3-0.7-py3-none-any.whl": f"../synode.py/dist/synode_py3-{version}-py3-none-any.whl",
         "WEB-INF": "src/main/webapp/WEB-INF-0.7.1/*",
         "winsrv": "../synode.py/winsrv/*",
         "web-dist": "web-dist/*"    # use a link for different Anclient folder name

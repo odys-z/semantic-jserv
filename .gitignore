@@ -5,6 +5,7 @@ build
 target
 .settings
 .classpath
+__pycache__
 src/test/results/
 *-jdk-bug
 commit.comments*
@@ -19,5 +20,7 @@ vol
 *.jar
 web-dist
 web-dist-backup
+exiftool_files
+exiftool-*
 logs
 *.log

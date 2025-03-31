@@ -1,8 +1,8 @@
 { "type"      : "io.oz.jserv.docs.syn.singleton.AppSettings",
   "vol_name"  : "VOLUME_HOME",
-  "volume"    : "../vol",
+  "volume"    : "./vol",
   "port"      : 8964,
-  "jservs"    : {"X29":"10.0.0.1:8964/jserv-album", "Y201":"10.0.0.1:8965/jserv-album"},
+  "jservs"    : {"X29":"10.0.0.1:8964/jserv-album"},
   "envars"    : {"WEBROOT_HUB": "example.com"},
   "installkey": "0123456789ABCDEF",
   "rootkey"   : ""
