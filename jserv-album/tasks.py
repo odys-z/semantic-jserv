@@ -34,7 +34,8 @@ def build(c):
         try:
             if isinstance(cmd, LambdaType):
                 cmd = cmd()
-            print(pth, cmd)
+                print(cmd)
+            print(pth, '&&', cmd)
             ret = c.run(f'cd {pth} && {cmd}')
             print('OK:', ret.ok, ret.stderr)
         except Exception as e:

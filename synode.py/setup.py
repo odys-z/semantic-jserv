@@ -8,11 +8,14 @@ from pathlib import Path
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
-print(f'--{os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.0'}--'),
+version = os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.0'
+print(version)
+version = version.strip()
+print(f'--{version}--'),
 
 setup(
     name='synode.py3',
-    version=os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.0',
+    version=version, # os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.0',
     description='Portfolio Synode Stand Alone Service',
     author='Ody Z',
     zip_safe=False,
