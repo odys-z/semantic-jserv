@@ -208,7 +208,7 @@ class InstallerForm(QMainWindow):
                 return
 
     def installWinsrv(self):
-        msg_box("Coming soon ...")
+            self.cli.install_winsrv()
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         super().showEvent(event)

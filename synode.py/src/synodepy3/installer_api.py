@@ -676,3 +676,11 @@ class InstallerCli:
         p = subprocess.Popen(cmd)
         p.communicate()
 
+    def install_winsrv(v):
+        if get_os() == 'Windows':
+
+        else:
+            raise PortfolioException('This is only for Windows. To install service on Linux, add this to system service:\n'
+                                     'java -jar bin/jserv-album-0.#.#.jar\n'
+                                     'Modify WEB-INF/settings.json/{port} for binding to different port.')
+

@@ -102,6 +102,7 @@ public class SynotierJettyApp {
 		SynotierJettyApp app = _main(null);
 		try {
 			winsrv = new Winsrv("ok", app);
+
 			app.server.join();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -142,9 +143,26 @@ public class SynotierJettyApp {
 
 			String jserv = AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json, false);
 
-			return boot(srcwebinf, config_xml, _0(args, settings_json))
+			SynotierJettyApp app = boot(srcwebinf, config_xml, _0(args, settings_json))
 			.jserv(jserv)
 			.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
+			
+			// Ctrl+C
+			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+	            System.out.println("Received shutdown signal. Stopping Jetty server...");
+	            try {
+	                if (app.server != null && app.server.isStarted()) {
+	                    app.server.stop();
+	                    app.server.join(); // Wait for server to stop
+	                    System.out.println("Jetty server stopped gracefully.");
+	                }
+	            } catch (Exception e) {
+	                System.err.println("Error during shutdown: " + e.getMessage());
+	            }
+	        }));
+			
+			return app;
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			
