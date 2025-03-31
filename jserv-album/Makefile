@@ -15,6 +15,8 @@ PORTFOLIO_07 = portfolio-synode-0.7-py3-none-any.whl
 
 # ln -s ../../Anclient/examples/example.js/album/web-dist web-dist
 ALBUM_WEB    = web-dist
+#WEBPACK_REPORT=$(ALBUM_WEB)/report.html
+WEBPACK_REPORT=$(ALBUM_WEB)/report.html
 
 default: jserv-sqlite
 
@@ -23,7 +25,7 @@ help:
 
 #
 check:
-	@echo "checke resources ..."
+	@echo "checking zip resources ..."
 
 	@echo "$(wildcard exiftool-*.zip)"
 ifeq ("$(wildcard exiftool-*.zip)","")
@@ -34,6 +36,26 @@ endif
 ifeq ("$(wildcard $(PORTFOLIO_07))","")
 	${error "Portfolio py3 package doesn't exist."}
 endif
+
+check-web:
+	@echo "checking web-dist..."
+	@if ! command -v stat >/dev/null 2>&1; then echo "[ERROR] Checking $(WEBPACK_REPORT) failed. stat command not found" && exit 1; fi
+	stat -c '%w' pom.xml
+	creation_time=$$(stat -c '%w' pom.xml)
+	@echo $(creation_time)
+	@if [ -z "$$creation_time" ]; then echo "[ERROR] Checking web-dist failed. No $(WEBPACK_REPORT) creation time available"; exit 1; fi
+
+	@current_time=$$(date +%s)
+	@one_hour_ago=$$((current_time - 3600))
+	@creation_seconds=$$(date -d "$$creation_time" +%s 2>/dev/null)
+
+	@if [ -z "$$creation_seconds" ]; then echo "Could not convert creation time of report.html"; exit 1; fi
+
+	@if [ "$$creation_seconds" -le "$$one_hour_ago" ]; then \
+		echo "WERNING: File $(WEBPACK_REPORT) was created 1 hour ago or earlier (creation time: $$creation_time)"; \
+	else \
+		echo "File $(WEBPACK_REPORT) was created at: $$creation_time"; \
+	fi
 
 jserv-sqlite: check
 	@rm -f $(ZIP)
