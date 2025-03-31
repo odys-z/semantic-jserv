@@ -16,6 +16,8 @@ exiftool.exe
 dist
 vol
 *.exe
+*.jar
 web-dist
+web-dist-backup
 logs
 *.log

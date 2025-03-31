@@ -1,17 +1,25 @@
+import os
 from setuptools import setup, find_packages
 
 # import py2exe
 # pip install wheel
 # python setup.py bdist_wheel sdist
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+
+print(f'--{os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.0'}--'),
 
 setup(
     name='synode.py3',
-    version='0.1.0',
+    version=os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.0',
     description='Portfolio Synode Stand Alone Service',
     author='Ody Z',
     zip_safe=False,
     author_email='odys.zhou@gmail.com',
     keywords='Documents Files Relational Database Synchronization',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     # py_modules=["src"],
     # package_dir={"": "src"},  # Tell setuptools that packages are under 'src'
 
