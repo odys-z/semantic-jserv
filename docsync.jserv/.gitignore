@@ -9,3 +9,4 @@ jetty-log
 client-at-*
 build
 _build
+/bin/

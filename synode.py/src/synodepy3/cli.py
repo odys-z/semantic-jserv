@@ -3,6 +3,9 @@ import sys
 from src.synodepy3.installer_api import InstallerCli, ping
 # Why above line works but not this? See https://stackoverflow.com/a/28154841
 from src.synodepy3.commands import install_winservice, uninstall_winservice
+from synodepy3 import websrv
+from synodepy3.websrv import AlbumWeb
+
 
 def clean(vol: str = None):
     cli = InstallerCli()
@@ -11,8 +14,10 @@ def clean(vol: str = None):
 
 
 def startweb(port: int = 8900):
+    httpd = None
     try:
-        httpd = InstallerCli.start_web(8900 if port is None else port)
+        # httpd = InstallerCli.start_web(8900 if port is None else port)
+        httpd = AlbumWeb.start_web(8900 if port is None else port)
         input("Press Enter to close web server...")
     finally:
         if httpd is not None:

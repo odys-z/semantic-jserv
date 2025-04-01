@@ -156,7 +156,6 @@ def checkinstall_exiftool():
 web_port = 8900
 webroot = 'WEBROOT_HUB'
 
-album_web = 'web-dist'
 """
     Suppose there are both github/Anclient & github/semantic-jserv,
     then in semantic-jserv/synode.py3:
@@ -169,7 +168,7 @@ host_json = f'{host_private}/host.json'
 dictionary_json = 'dictionary.json'
 settings_json = 'settings.json'
 web_inf = 'WEB-INF'
-index_html = 'index.html'
+# index_html = 'index.html'
 syn_db = 'doc-jserv.db'
 sys_db = 'jserv-main.db'
 jserv_07_jar = 'jserv-album-0.7.1.jar'
@@ -527,63 +526,63 @@ class InstallerCli:
         with open(host_path, "w") as file:
             file.write(f'{{"host": "http://{InstallerCli.reportIp()}:{jservport}/jserv-album"}}')
 
-    @staticmethod
-    def start_web(webport=8900, jservport=8964):
-        import http.server
-        import socketserver
-        import threading
-
-        # PORT = 8900
-        httpdeamon: [socketserver.TCPServer] = [None]
-
-        # To serve gzip, see
-        # https://github.com/ksmith97/GzipSimpleHTTPServer/blob/master/GzipSimpleHTTPServer.py#L244
-        class WebHandler(http.server.SimpleHTTPRequestHandler):
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, directory=album_web, **kwargs)
-                self.extensions_map.update({".mjs": "text/javascript"})
-
-            def send_response(self, code, message=None):
-                """Add the response header to the headers buffer and log the
-                response code.
-
-                Also send two standard headers with the server software
-                version and the current date.
-
-                """
-                self.log_request(code)
-                self.send_response_only(code, message)
-                # self.send_header('Server', self.version_string())
-                self.send_header("server", "Portfolio Synode 0.7/web")
-                self.send_header('Date', self.date_time_string())
-
-            def end_headers(self):
-                self.send_header("Access-Control-Allow-Origin", "*")
-                super().end_headers()
-
-        def create_server():
-            with socketserver.TCPServer(("", webport), WebHandler) as httpd:
-                httpdeamon[0] = httpd
-                print("Starting web at port", webport)
-                httpd.serve_forever()
-
-        if not os.path.isdir(album_web):
-            raise PortfolioException(f'Cannot find web root folder: {album_web}')
-        if not os.path.isfile(os.path.join(album_web, index_html)):
-            raise FileNotFoundError(f'Cannot find {index_html} in {album_web}')
-
-        InstallerCli.update_private(jservport)
-
-        thr = threading.Thread(target=create_server)
-        thr.start()
-
-        count = 0
-        while count < 5 and httpdeamon[0] is None:
-            count += 1
-            time.sleep(0.2)
-
-        print(httpdeamon[0])
-        return httpdeamon[0]
+    # @staticmethod
+    # def start_web(webport=8900, jservport=8964):
+    #     import http.server
+    #     import socketserver
+    #     import threading
+    #
+    #     # PORT = 8900
+    #     httpdeamon: [socketserver.TCPServer] = [None]
+    #
+    #     # To serve gzip, see
+    #     # https://github.com/ksmith97/GzipSimpleHTTPServer/blob/master/GzipSimpleHTTPServer.py#L244
+    #     class WebHandler(http.server.SimpleHTTPRequestHandler):
+    #         def __init__(self, *args, **kwargs):
+    #             super().__init__(*args, directory=album_web, **kwargs)
+    #             self.extensions_map.update({".mjs": "text/javascript"})
+    #
+    #         def send_response(self, code, message=None):
+    #             """Add the response header to the headers buffer and log the
+    #             response code.
+    #
+    #             Also send two standard headers with the server software
+    #             version and the current date.
+    #
+    #             """
+    #             self.log_request(code)
+    #             self.send_response_only(code, message)
+    #             # self.send_header('Server', self.version_string())
+    #             self.send_header("server", "Portfolio Synode 0.7/web")
+    #             self.send_header('Date', self.date_time_string())
+    #
+    #         def end_headers(self):
+    #             self.send_header("Access-Control-Allow-Origin", "*")
+    #             super().end_headers()
+    #
+    #     def create_server():
+    #         with socketserver.TCPServer(("", webport), WebHandler) as httpd:
+    #             httpdeamon[0] = httpd
+    #             print("Starting web at port", webport)
+    #             httpd.serve_forever()
+    #
+    #     if not os.path.isdir(album_web):
+    #         raise PortfolioException(f'Cannot find web root folder: {album_web}')
+    #     if not os.path.isfile(os.path.join(album_web, index_html)):
+    #         raise FileNotFoundError(f'Cannot find {index_html} in {album_web}')
+    #
+    #     InstallerCli.update_private(jservport)
+    #
+    #     thr = threading.Thread(target=create_server)
+    #     thr.start()
+    #
+    #     count = 0
+    #     while count < 5 and httpdeamon[0] is None:
+    #         count += 1
+    #         time.sleep(0.2)
+    #
+    #     print(httpdeamon[0])
+    #     return httpdeamon[0]
 
     def runjserv_deprecated(self) -> subprocess.Popen:
         """
@@ -625,6 +624,7 @@ class InstallerCli:
 
     def stop_test(self, proc: subprocess.Popen) -> [str]:
         """
+        @deprecated
         Stop jetty server.
 
         NOTE
@@ -673,11 +673,11 @@ class InstallerCli:
         p = subprocess.Popen(cmd)
         p.communicate()
 
-    def install_winsrv(v):
-        if get_os() == 'Windows':
-            pass
-        else:
-            raise PortfolioException('This is only for Windows. To install service on Linux, add this to system service:\n'
-                                     'java -jar bin/jserv-album-0.#.#.jar\n'
-                                     'Modify WEB-INF/settings.json/{port} for binding to different port.')
+    # def install_winsrv(v):
+    #     if get_os() == 'Windows':
+    #         pass
+    #     else:
+    #         raise PortfolioException('This is only for Windows. To install service on Linux, add this to system service:\n'
+    #                                  'java -jar bin/jserv-album-0.#.#.jar\n'
+    #                                  'Modify WEB-INF/settings.json/{port} for binding to different port.')
 
