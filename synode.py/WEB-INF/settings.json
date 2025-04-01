@@ -1,8 +1,8 @@
 {
   "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "envars": {"WEBROOT_HUB": "192.168.0.180:8900"},
+  "envars": {"WEBROOT_HUB": "192.168.0.200:8900"},
   "vol_name": "VOLUME_HOME",
-  "volume": "C:/Users/Alice/github/semantic-jserv/vol",
+  "volume": "C:/Users/Alice/github/semantic-jserv/jserv-album/vol",
   "port": 8964,
   "jservs": {"X29": "10.0.0.1:8964/jserv-album"},
   "installkey": null,

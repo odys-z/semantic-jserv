@@ -1,6 +1,8 @@
 import sys
 
 from src.synodepy3.installer_api import InstallerCli, ping
+# Why above line works but not this? See https://stackoverflow.com/a/28154841
+from src.synodepy3.commands import install_winservice, uninstall_winservice
 
 def clean(vol: str = None):
     cli = InstallerCli()
@@ -27,7 +29,13 @@ if __name__ == '__main__':
         "list": "list known synodes.",
         "load": "load deploy-path, load configurations",
         "install": "arg[0]: res-path, arg[1] volume-path\n\
-        -install the synode service with registration in res-path, volume at volume-path",
+        - install the synode service with registration in res-path, volume at volume-path",
+
+        "install-winsrv": "or i-w, arg[0] synode id (readable alais only), arg[1] bin resources path, default 'winsrv'\n\
+        - install the synode service as a Windows service",
+
+        "uninstall-winsrv": "or ui-w, arg[0] bin resources path, default 'winsrv'\n\
+        - uninstall the synode service installed as a Windows service",
 
         "start": "arg[0]: volume\n\
         - Start the node. Configurations must be setup correctly.\n\
@@ -55,6 +63,14 @@ if __name__ == '__main__':
     elif cmd == 'install' or cmd == 'i':
         cli = InstallerCli(arg)
         cli.install(arg, arg2)
+
+    elif cmd == 'uninstall-winsrv' or cmd == 'ui-w':
+        cli.loadInitial()
+        uninstall_winservice(arg)
+
+    elif cmd == 'install-winsrv' or cmd == 'i-w':
+        cli.loadInitial()
+        install_winservice(cli.registry.config.synid, arg)
 
     elif cmd == 'clean':
         clean(arg)

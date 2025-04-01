@@ -1,6 +1,8 @@
 *.zip
 main.net
-bin
+bin/**
+!bin/*.bat
+!bin/*.sh
 build
 target
 .settings
@@ -24,3 +26,4 @@ exiftool_files
 exiftool-*
 logs
 *.log
+.idea/encodings.xml

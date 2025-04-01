@@ -19,9 +19,6 @@ import sys
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from src.io.oz.syn import AnRegistry
 
-# if sys.version_info > (3, 10, 0):
-#     pass
-
 
 def ping(peerid: str, peerserv: str):
     pass # raise PortfolioException('TODO')
@@ -110,7 +107,7 @@ def get_zipath(zipath):
 
 def install_exiftool_win():
     """
-    If it's windows, unzip exiftool-13.21_64 and move to root path
+    If in Windows, unzip exiftool-13.21_64 and move to root path
     :return: None
     """
 
@@ -678,7 +675,7 @@ class InstallerCli:
 
     def install_winsrv(v):
         if get_os() == 'Windows':
-
+            pass
         else:
             raise PortfolioException('This is only for Windows. To install service on Linux, add this to system service:\n'
                                      'java -jar bin/jserv-album-0.#.#.jar\n'

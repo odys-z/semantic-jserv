@@ -1,3 +1,6 @@
+"""
+invoke make
+"""
 import fnmatch
 import re
 import sys
