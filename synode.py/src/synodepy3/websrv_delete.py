@@ -170,7 +170,7 @@ class AlbumWeb(win32serviceutil.ServiceFramework):
         # pythonClassStr = '"C:\\Users\\Alice\\github\\semantic-jserv\\synode.py\\src\\synodepy3\\cli.py start-web" run'
         pythonClassStr = f"{__name__}.{cls.__name__}"
         # exeArg = f'"{os.path.abspath(__file__)}" run'
-        # '"C:\\Users\\Alice\\github\\semantic-jserv\\synode.py\\src\\synodepy3\\websrv.py" run'
+        # '"C:\\Users\\Alice\\github\\semantic-jserv\\synode.py\\src\\synodepy3\\websrv_delete.py" run'
 
         # exeArg = f'"py -m src.synodepy3.cli start-web" run'
         exeArg = f'"{os.path.abspath(__file__)}" run'

@@ -1,0 +1,83 @@
+import platform
+from socketserver import TCPServer
+from threading import Thread
+
+import pywintypes
+import win32serviceutil
+import win32service
+import win32event
+import servicemanager
+import logging
+import logging.handlers
+import os
+import sys
+import time
+
+index_html = 'index.html'
+album_web_dir = 'web-dist'
+
+
+# Configuration (embedded for simplicity)
+class Config:
+    LOG_FILE = os.path.join(os.path.dirname(__file__), "logs", "service.log")
+    LOG_LEVEL = logging.INFO
+    MAX_LOG_BYTES = 1024 * 1024  # 1 MB
+    BACKUP_COUNT = 3  # Keep 3 backup files
+
+# Setup logging with rotation
+def setup_logging():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(Config.LOG_LEVEL)
+
+    # Ensure log directory exists
+    log_dir = os.path.dirname(Config.LOG_FILE)
+    if log_dir and not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # RotatingFileHandler for size control
+    handler = logging.handlers.RotatingFileHandler(
+        filename = Config.LOG_FILE,
+        maxBytes = Config.MAX_LOG_BYTES,
+        backupCount = Config.BACKUP_COUNT
+    )
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    # Console handler for debugging (remove in production if desired)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    logger.info("Logger is running...")
+    return logger
+
+
+# Service class
+class AlbumWeb(win32serviceutil.ServiceFramework):
+    @classmethod
+    def install(cls):
+        pass
+
+    @classmethod
+    def uninstall(cls):
+        pass
+
+
+if __name__ == "__main__":
+    print('websrv main', sys.argv)
+    if len(sys.argv) == 1:
+        servicemanager.Initialize()
+        servicemanager.PrepareToHostSingle(AlbumWeb)
+        servicemanager.StartServiceCtrlDispatcher()
+    else:
+        if sys.argv[1] == "install":
+            AlbumWeb.install()
+        elif sys.argv[1] == "remove":
+            AlbumWeb.uninstall()
+        elif sys.argv[1] == "run":
+            print("This is only for run the service by SC. See https://grok.com/chat/5eaf268d-0137-4ac3-89c9-6648d1c95bcf, can't wrap my head.")
+            print('Only for debug!')
+
+        else:
+            print("Unknown command. Use 'install', 'remove', or run implicitly.")

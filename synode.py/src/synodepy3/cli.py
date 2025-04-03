@@ -4,25 +4,27 @@ import time
 
 from src.synodepy3.installer_api import InstallerCli, ping
 # Why above line works but not this? See https://stackoverflow.com/a/28154841
-from src.synodepy3.commands import install_winservice, uninstall_winservice
-from src.synodepy3 import websrv
-from src.synodepy3.websrv import AlbumWeb
+from src.synodepy3.commands import install_jserv, uninstall_jserv, run_htmlsrv
+from src.synodepy3 import websrv_delete
+from src.synodepy3.websrv_delete import AlbumWeb
+from synodepy3.commands import install_htmlsrv, uninstall_htmlsrv
+from synodepy3.websrv_delete import album_web_dir
 
 
-def is_winadmin():
-    try:
-        # Open the current process token
-        import win32security
-        import win32con
-        token = win32security.OpenProcessToken(
-            win32api.GetCurrentProcess(),
-            win32con.TOKEN_QUERY
-        )
-        # Get elevation information
-        elevation = win32security.GetTokenInformation(token, win32security.TokenElevation)
-        return elevation  # Returns True if elevated, False if not
-    except:
-        return False
+# def is_winadmin():
+#     try:
+#         # Open the current process token
+#         import win32security
+#         import win32con
+#         token = win32security.OpenProcessToken(
+#             win32api.GetCurrentProcess(),
+#             win32con.TOKEN_QUERY
+#         )
+#         # Get elevation information
+#         elevation = win32security.GetTokenInformation(token, win32security.TokenElevation)
+#         return elevation  # Returns True if elevated, False if not
+#     except:
+#         return False
 
 
 def clean(vol: str = None):
@@ -96,80 +98,68 @@ if __name__ == '__main__':
 
     elif cmd == 'uninstall-winsrv' or cmd == 'ui-w':
         cli.loadInitial()
-        uninstall_winservice(arg)
+        uninstall_jserv(arg)
 
     elif cmd == 'install-winsrv' or cmd == 'i-w':
         cli.loadInitial()
-        install_winservice(cli.registry.config.synid, arg)
+        install_jserv(cli.registry.config.synid, arg)
 
     elif cmd == 'clean':
         clean(arg)
 
-    # elif cmd == 'start':
-    #     cli.loadInitial(arg)
-    #     proc = cli.runjserv_deprecated()
-    #     try:
-    #         input("Press any key to quit.")
-    #     except KeyboardInterrupt:
-    #         pass
-    #     cli.stop_test(proc)
-
-    # elif cmd == 'test':
-    #     cli.loadInitial(arg)
-    #     proc = cli.test_run()
-    #     try:
-    #         input("Press any key to quit.")
-    #     except KeyboardInterrupt:
-    #         pass
-    #     cli.stop_test(proc)
-
-    # works: 2025-03-21
-
     elif cmd == 'start-web':
-        startweb(8900 if arg is None else arg)
+        run_htmlsrv()
     elif cmd == 'install-web' or cmd == 'i-web':
-        import win32api
-        import win32com.shell.shell as shell
-
-        print(1, cmd)
-
-        if platform.system() == "Windows" and not is_winadmin():
-            py_args = '-m src.synodepy3.cli i-web'
-            print(2, f"Requesting administrative privileges for {py_args}...")
-            shell.ShellExecuteEx(
-                lpVerb="runas",
-                lpFile=sys.executable,
-                lpParameters=py_args,
-                nShow=1  # Show the window
-            )
-        else:
-            input(3)
-            exe_cmd = f'{" ".join(sys.argv)}'
-            print(exe_cmd)
-            print('===========================')
-            AlbumWeb.install()
-            input('pausing elevated...')
-
+        install_htmlsrv(album_web_dir)
     elif cmd == 'uninstall-web' or cmd == 'u-web':
-        import win32api
-        import win32com.shell.shell as shell
+        uninstall_htmlsrv()
 
-        print(1, cmd)
-
-        if platform.system() == "Windows" and not is_winadmin():
-            py_args = '-m src.synodepy3.cli u-web'
-            print(2, f"Requesting administrative privileges for py {py_args}...")
-            shell.ShellExecuteEx(
-                lpVerb="runas",
-                lpFile=sys.executable,
-                lpParameters=py_args,
-                nShow=1  # Show the window
-            )
-            # sys.exit(0)
-        else:
-            input(3)
-            AlbumWeb.uninstall()
-            input('pausing elevated...')
+    # deleting
+    # elif cmd == 'start-web':
+    #     startweb(8900 if arg is None else arg)
+    # elif cmd == 'install-web' or cmd == 'i-web':
+    #     import win32api
+    #     import win32com.shell.shell as shell
+    #
+    #     print(1, cmd)
+    #
+    #     if platform.system() == "Windows" and not is_winadmin():
+    #         py_args = '-m src.synodepy3.cli i-web'
+    #         print(2, f"Requesting administrative privileges for {py_args}...")
+    #         shell.ShellExecuteEx(
+    #             lpVerb="runas",
+    #             lpFile=sys.executable,
+    #             lpParameters=py_args,
+    #             nShow=1  # Show the window
+    #         )
+    #     else:
+    #         input(3)
+    #         exe_cmd = f'{" ".join(sys.argv)}'
+    #         print(exe_cmd)
+    #         print('===========================')
+    #         AlbumWeb.install()
+    #         input('pausing elevated...')
+    #
+    # elif cmd == 'uninstall-web' or cmd == 'u-web':
+    #     import win32api
+    #     import win32com.shell.shell as shell
+    #
+    #     print(1, cmd)
+    #
+    #     if platform.system() == "Windows" and not is_winadmin():
+    #         py_args = '-m src.synodepy3.cli u-web'
+    #         print(2, f"Requesting administrative privileges for py {py_args}...")
+    #         shell.ShellExecuteEx(
+    #             lpVerb="runas",
+    #             lpFile=sys.executable,
+    #             lpParameters=py_args,
+    #             nShow=1  # Show the window
+    #         )
+    #         # sys.exit(0)
+    #     else:
+    #         input(3)
+    #         AlbumWeb.uninstall()
+    #         input('pausing elevated...')
 
     elif cmd == 'sync_in':
         cli.loadInitial()

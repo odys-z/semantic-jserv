@@ -49,7 +49,7 @@
 		or for windows,
 		C:/Users/Ody/bin/exiftool
 		 -->
-		<v>$BIN/exiftool</v>
+		<v>exiftool</v>
 	</c>
   </t>
 

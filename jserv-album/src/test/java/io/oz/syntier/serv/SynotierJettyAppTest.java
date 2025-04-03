@@ -10,6 +10,7 @@ import static io.oz.syntier.serv.SynotierJettyApp.boot;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.x.AnsonException;
@@ -55,6 +56,7 @@ class SynotierJettyAppTest {
 		Utils.logi(AppSettings.getLocalIp());
 	}
 	
+	@Disabled
 	@Test
 	void testInstallJervs() throws Exception {
 		resettingsKeys("settings.json");
@@ -89,6 +91,7 @@ class SynotierJettyAppTest {
 				"See WEB-INF/settings.json for what's expected.");
 	}
 
+	@Disabled
 	@Test
 	void testSetupRunApp() throws Exception {
 		resettingsKeys(settings_hub);

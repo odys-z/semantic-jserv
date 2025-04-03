@@ -2,6 +2,7 @@ package io.oz.album.helpers;
 
 /**
  * EXIF property names.
+ * @deprecated Not for exiftool 12
  */
 public interface TIFF {
     /**
