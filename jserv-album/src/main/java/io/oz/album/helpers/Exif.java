@@ -19,11 +19,12 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
-import org.apache.commons.io_odysz.FilenameUtils;
+
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.JsonOpt;
 import io.odysz.common.CheapMath;
+import io.odysz.common.FilenameUtils;
 import io.odysz.common.MimeTypes;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;

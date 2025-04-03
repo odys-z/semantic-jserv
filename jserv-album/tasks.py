@@ -30,6 +30,7 @@ def build(c):
     buildcmds = {
         '../../anclient/examples/example.js/album': 'webpack',
         '.': 'mvn clean compile package -DskipTests',
+        '../../html-service/java': 'mvn clean compile package',
         '../synode.py': lambda: f'set SYNODE_VERSION={version} && rm -rf dist && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && rm -rf dist && python3 -m build',
     }
 
@@ -57,6 +58,7 @@ def make(c, zip=f'jserv-portfolio-{version}.zip'):
         zip: Name of the output ZIP file (default: "jserv-album.zip").
     """
     resources = {
+        "bin/html-web-0.7.1.jar": "target/html-web-0.7.1.jar",
         "bin/jserv-album-0.7.1.jar": "target/jserv-album-0.7.1.jar",
         "bin/exiftool.zip": "./exiftool-13.21_64.zip",
         "bin/synode_py3-0.7-py3-none-any.whl": f"../synode.py/dist/synode_py3-{version}-py3-none-any.whl",

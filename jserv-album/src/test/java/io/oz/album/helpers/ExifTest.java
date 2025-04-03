@@ -9,12 +9,12 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.io_odysz.FilenameUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
+import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.peer.PhotoRec;
