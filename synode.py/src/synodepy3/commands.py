@@ -27,16 +27,16 @@ def run_jserv(c, bin = 'bin'):
         print('KeyboardInterrupt', e)
         time.sleep(.5)
 
-@task
-def install_winsrv(c, winsrv: str = 'winsrv'):
-    cd = winsrv or 'winsrv'
-    if os.name == 'nt':
-        try:
-            ret = c.run(f'cd {cd} && install.bat')
-            print(ret.ok)
-        except KeyboardInterrupt as e:
-            print('KeyboardInterrupt', e)
-            time.sleep(.5)
+# @task
+# def install_winsrv(c, winsrv: str = 'winsrv'):
+#     cd = winsrv or 'winsrv'
+#     if os.name == 'nt':
+#         try:
+#             ret = c.run(f'cd {cd} && install.bat')
+#             print(ret.ok)
+#         except KeyboardInterrupt as e:
+#             print('KeyboardInterrupt', e)
+#             time.sleep(.5)
 
 def uninstall_winservice(winsrv: str = 'winsrv'):
     ctx = Context()
