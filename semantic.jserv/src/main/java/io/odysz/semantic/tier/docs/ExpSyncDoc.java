@@ -2,8 +2,7 @@ package io.odysz.semantic.tier.docs;
 
 import static io.odysz.common.DateFormat.formatYYmm;
 import static io.odysz.common.DateFormat.parse;
-
-import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
+import static io.odysz.common.FilenameUtils.separatorsToUnix;
 
 import java.io.IOException;
 import java.nio.file.Files;
