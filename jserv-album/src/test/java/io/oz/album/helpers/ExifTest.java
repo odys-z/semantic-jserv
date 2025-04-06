@@ -74,50 +74,6 @@ class ExifTest {
 		assertEquals(9, p.wh[1]);
 	}
 	
-//	@Test
-//	@Disabled
-//	void testTika() throws IOException, SAXException, SemanticException, ReflectiveOperationException {
-//		Exif.verbose = true;
-//		
-//        Utils.logi(Paths.get(".").toAbsolutePath().toString());
-//
-//		Utils.logi(FilenameUtils.concat(Paths.get(".").toAbsolutePath().toString(), "src/main/webapp/WEB-INF"));
-//
-//		Exif.init(FilenameUtils.concat(Paths.get(".").toAbsolutePath().toString(), "src/main/webapp/WEB-INF"));
-//		
-//		PhotoRec p = new PhotoRec();
-//		Exif.parseExif(p, "test/res/C0000006 IMG_20230816_111535.jpg");
-//		
-//		assertEquals(3, p.wh[0]);
-//		assertEquals(4, p.wh[1]);
-//		assertEquals(4896, p.widthHeight[0]);
-//		assertEquals(6528, p.widthHeight[1]);
-//		assertTrue(isblank(p.rotation));
-//		
-//		/** This mp4 is too large and the test result won't guarantee the same results in runtime
-//		 * (different runs with diffrenct results)
-//		p = new PhotoRec();
-//		Exif.parseExif(p, "test/res/C0000002 VID_20230816_135143.mp4");
-//		
-//		assertEquals(9, p.wh[0]);
-//		assertEquals(16, p.wh[1]);
-//		assertEquals(1920, p.widthHeight[0]);
-//		assertEquals(1080, p.widthHeight[1]);
-//		assertEquals("90", p.rotation);
-//		 */
-//		
-//		Exif.verbose = false;
-//		p = new PhotoRec(); 
-//		Exif.parseExif(p, "test/res/C000000D VID_20230831_200144.mp4");
-//
-//		assertEquals(9, p.wh[0]);
-//		assertEquals(20, p.wh[1]);
-//		assertEquals(2400, p.widthHeight[0]);
-//		assertEquals(1080, p.widthHeight[1]);
-//		assertEquals("90", p.rotation);
-//		
-//	}
-
 	@Test
 	void testExiftool() throws Exception {
 		// Exiftool.cmd = "exiftool";// System.getProperty("exiftool");

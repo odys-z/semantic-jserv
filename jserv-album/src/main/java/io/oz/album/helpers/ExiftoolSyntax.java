@@ -25,7 +25,7 @@ public class ExiftoolSyntax {
 
 			if (verbose) logi("%s :\t%s", name, val);
 
-			// val = Exif.escape(val);
+			val = Exiftool.escape(val);
 			// white-wash some faulty string
 			// Huawei p30 take pics with 
 			// name: ICC:Profile Description, val: "1 enUS(sRGB\0\0..." where length = 52
@@ -49,9 +49,9 @@ public class ExiftoolSyntax {
    	
     	try {
     		String sw = metadata.getString(width);
-			int w = Integer.valueOf(sw.replaceFirst("\\[", "").replaceAll("\\]", ""));
+			int w = Integer.valueOf(sw.replaceAll("\\[|\\]", ""));
 			String sh = metadata.getString(height);
-			int h = Integer.valueOf(sh.replaceFirst("\\[", "").replaceAll("\\]", ""));
+			int h = Integer.valueOf(sh.replaceAll("\\[|\\]", ""));
 			
 
 			if ((photo.rotation == 90 || photo.rotation == 270) && h < w)
@@ -60,6 +60,4 @@ public class ExiftoolSyntax {
     	} catch (Exception e){ }
     	
 	}
-
-
 }

@@ -62,67 +62,11 @@ public class Exiftool {
 		Metadata metadata = parse(filepath);
 		ExiftoolSyntax.extract(photo, metadata);
 
-		/*
-		// {"type": "io.oz.album.helpers.Metadata", "props": {"Minor Version": ["0.0.0"], "Next Track ID": ["3"], "Modify Date": ["2024"], "Media Modify Date": ["2024"], "Current Time": ["0 s"], "Track Layer": ["0"], "File Type Extension": ["mp4"], "Media Duration": ["9.33 s"], "Graphics Mode": ["srcCopy"], "File Creation Date/Time": ["2025"], "Time Scale": ["1000"], "Track Header Version": ["0"], "X Resolution": ["72"], "Handler Description": ["SoundHandle"], "Color Profiles": ["nclx"], "Audio Bits Per Sample": ["16"], "Audio Channels": ["2"], "GPS Coordinates": ["30 deg 40' 12.00\" N, 104 deg 0' 11.16\" E"], "GPS Position": ["30 deg 40' 12.00\" N, 104 deg 0' 11.16\" E"], "Media Data Offset": ["810340"], "Poster Time": ["0 s"], "Media Header Version": ["0"], "Create Date": ["2024"], "ExifTool Version Number": ["13.21"], "Track ID": ["1"], "Movie Header Version": ["0"], "Preferred Rate": ["1"], "File Type": ["MP4"], "GPS Longitude": ["104 deg 0' 11.16\" E"], "Duration": ["9.33 s"], "Image Size": ["2400x1080"], "Compressor ID": ["avc1"], "File Access Date/Time": ["2025"], "Major Brand": ["MP4 v2 [ISO 14496-14]"], "Track Volume": ["0.00%"], "Audio Sample Rate": ["48000"], "File Modification Date/Time": ["2025"], "File Permissions": ["-rw-rw-rw-"], "Megapixels": ["2.6"], "Preferred Volume": ["100.00%"], "Track Duration": ["9.33 s"], "Selection Duration": ["0 s"], "Preview Duration": ["0 s"], "Track Modify Date": ["2024"], "Balance": ["0"], "Y Resolution": ["72"], "Handler Type": ["Audio Track"], "Warning": ["Unknown trailer with truncated 'dVer' data at offset 0x17d7486"], "GPS Latitude": ["30 deg 40' 12.00\" N"], "Android Version": ["10"], "Video Frame Rate": ["29.689"], "Compatible Brands": ["isom, mp42"], "Audio Format": ["mp4a"], "Op Color": ["0 0 0"], "File Size": ["25 MB"], "File Name": ["0105 VID_20241219_204417.mp4"], "Directory": ["C"], "Selection Time": ["0 s"], "Track Create Date": ["2024"], "Source Image Height": ["1080"], "Matrix Coefficients": ["BT.709"], "Media Time Scale": ["48000"], "Avg Bitrate": ["20.7 Mbps"], "Preview Time": ["0 s"], "Media Create Date": ["2024"], "Bit Depth": ["24"], "Image Height": ["1080"], "Pixel Aspect Ratio": ["65536"], "Rotation": ["90"], "Color Primaries": ["BT.709"], "Image Width": ["2400"], "Source Image Width": ["2400"], "MIME Type": ["video/mp4"], "Transfer Characteristics": ["BT.709"], "Video Full Range Flag": ["Limited"], "Media Data Size": ["24188706"], "Matrix Structure": ["1 0 0 0 1 0 0 0 1"]}}
-		for (String name: metadata.names()) {
-			ArrayList<String> vals = ((ArrayList<String>) metadata.get(name)); 
-			String val = _0(vals);
-			if (verbose) Utils.logi("%s :\t%s", name, val);
-
-			val = Exif.escape(val);
-			// white-wash some faulty string
-			// Huawei p30 take pics with 
-			// name: ICC:Profile Description, val: "1 enUS(sRGB\0\0..." where length = 52
-			photo.exif.add(name, val);
-
-			try {
-				if (eq("Content-Type", name) && isblank(photo.mime)) // can be error
-					photo.mime = val; 
-				else if (eq("Image Height", name)) {
-					if (photo.widthHeight == null) photo.widthHeight = new int[2];
-					photo.widthHeight[1] = imagesize(val);
-				}
-				else if (eq("Image Width", name)) {
-					if (photo.widthHeight == null) photo.widthHeight = new int[2];
-					photo.widthHeight[0] = imagesize(val);
-				}
-				else if (eq("File Size", name) && photo.size == 0)
-					photo.size = filesize(val);
-				else if (eq("Orientation", name) || eq("Rotation", name))
-					// photo.rotation = val;
-					try {
-						int orient = Integer.valueOf(val);
-						photo.rotation = orient == 1 || orient == 2
-								? 0   : orient == 3 || orient == 4
-								? 180 : orient == 6 || orient == 5
-								? 90  : orient == 8 || orient == 7
-								? 270 : 0;
-					} catch (Exception e) {
-						photo.rotation = 0;
-					}
-				else if (eq("GPS Latitude", name) || eq("GPS Longitude", name))
-					parseXY(photo, name, val);
-			} catch (Exception e) {
-				Utils.warn("Failed for parsing devide: %s, path: %s,\nname: %s, value: %s",
-							photo.device(), photo.fullpath(),
-							name, val);
-			}
-		}
-		*/
-
 		if (isblank(photo.createDate)) {
 			Path file = Paths.get(filepath);
 			FileTime fd = (FileTime) Files.getAttribute(file, "creationTime");
 			photo.month(fd);
 		}
-
-//		if (isNull(photo.widthHeight) && metadata.getInt(TIFF.IMAGE_WIDTH) < 0 && metadata.getInt(TIFF.IMAGE_LENGTH) < 0) 
-//			try {
-//				if (verbose) Utils.logi(metadata.names());
-//				photo.widthHeight = new int[]
-//					// FIXME too brutal
-//					{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)};
-//			} catch (Exception e) { e.printStackTrace(); }
 
 		// force audio
 		if (MimeTypes.isAudio(photo.mime)) {
@@ -130,24 +74,8 @@ public class Exiftool {
 			photo.wh = new int[] { 16, 9 };
 			photo.rotation = 0;
 		}
-		// another way other than by Tika
-//		else if (MimeTypes.isImgVideo(photo.mime) && isblank(photo.widthHeight)) {
-//			try {
-//				photo.widthHeight = Exif.parseWidthHeight(filepath);
-//			}
-//			catch (SemanticException e) {
-//				if (verbose) Utils.warn("[Exif.verbose] Exif parse failed and can't parse width & height: %s", filepath);
-//				if (isblank(photo.widthHeight)) {
-//					photo.widthHeight = new int[] { 4, 3 };
-//					photo.wh = new int[] { 4, 3 };
-//				}
-//			}
-//		}
 
 		if (isNull(photo.wh) && !isblank(photo.widthHeight))
-//			photo.wh = photo.rotation == 90 || photo.rotation == 270
-//				? CheapMath.reduceFract(photo.widthHeight[1], photo.widthHeight[0])
-//				: CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 			photo.wh = CheapMath.reduceFract(photo.widthHeight[0], photo.widthHeight[1]);
 
 		return photo;
