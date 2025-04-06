@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -221,7 +222,19 @@ public class AppSettings extends Anson {
 	 */
 	public static String getLocalIp() throws IOException {
 	    try(final DatagramSocket socket = new DatagramSocket()) {
-		  socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+	    	boolean succeed = false;
+	    	int tried = 0;
+	    	while (!succeed && tried++ < 12)
+	    		try {
+	    			socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+	    			succeed = true;
+	    		} catch (UncheckedIOException  e) {
+	    			// starting service at network interface not ready yet
+	    			Utils.warn("Network interface is not ready yet? Try again ...");
+	    			try {
+						Thread.sleep(3000);
+					} catch (InterruptedException e1) { }
+	    		}
 		  return socket.getLocalAddress().getHostAddress();
 		}
 	}
