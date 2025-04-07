@@ -1,4 +1,5 @@
 import sys
+
 import io as std_io
 from typing import Optional
 
@@ -9,9 +10,11 @@ from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel, QSpacerItem, QSizePolicy
 from anson.io.odysz.common import Utils
 
-from src.synodepy3.installer_api import InstallerCli, get_os, iswindows
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from src.io.oz.syn import AnRegistry, SyncUser
+from src.synodepy3.commands import install_htmlsrv, install_jserv
+from src.synodepy3.installer_api import InstallerCli, get_os, iswindows, jserv_url_path
+
 
 # Important:
 # You need to run the following command to generate the ui_form.py file
@@ -133,7 +136,7 @@ class InstallerForm(QMainWindow):
 
         iport = f'{ip}:{port}'
         synode = self.ui.txtSynode.text()
-        data = f'{synode}-{iport}\nhttp://{iport}'
+        data = f'{synode}-{iport}\nhttp://{iport}/{jserv_url_path}'
 
         set_qr_label(self.ui.lbQr, data)
         return {"ip": ip, "port": port, "synodepy3": synode}
@@ -208,7 +211,9 @@ class InstallerForm(QMainWindow):
                 return
 
     def installWinsrv(self):
-            self.cli.install_winsrv()
+        self.cli.stop_web(self.httpd)
+        install_jserv()
+        install_htmlsrv()
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         super().showEvent(event)
@@ -320,6 +325,7 @@ class InstallerForm(QMainWindow):
         try:
             if self.httpd is not None:
                 self.httpd.shutdown()
+                self.httpd = None
             else:
                 print("No???")
         finally:

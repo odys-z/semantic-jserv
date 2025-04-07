@@ -31,34 +31,34 @@ def run_jserv(c, bin = 'bin'):
 def uninstall_jserv(winsrv: str = 'winsrv'):
     ctx = Context()
     bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, 'uninstall.bat')} {bin}'
+    cmd = f'{os.path.join(bin, 'install-jserv-w.bat')} uninstall'
     print(cmd)
     ctx.run(cmd)
 
 
-def install_jserv(synode: str, winsrv: str = 'winsrv'):
+def install_jserv(winsrv: str = 'winsrv'):
     ctx = Context()
     bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, 'install.bat')} {synode}'
+    cmd = f'{os.path.join(bin, 'install-jserv-w.bat')}'
     print(cmd)
     ctx.run(cmd)
 
 
-# def run_htmlsrv(c, bin = 'bin'):
-#     pass
+def run_htmlsrv(c, bin = 'bin'):
+    pass
 
 def uninstall_htmlsrv(winsrv: str = 'winsrv'):
     ctx = Context()
     bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, 'uninstall-html.bat')}'
+    cmd = f'{os.path.join(bin, 'install-html-w.bat')}'
     print(cmd)
-    ctx.run(cmd)
+    ctx.run(f'{cmd} uninstall')
 
 
-def install_htmlsrv(respath: str, winsrv: str = 'winsrv'):
+def install_htmlsrv(winsrv: str = 'winsrv'):
     ctx = Context()
     bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, 'install-html.bat')} {respath}'
+    cmd = f'{os.path.join(bin, 'install-html-w.bat')}'
     print(cmd)
     ctx.run(cmd)
 

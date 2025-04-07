@@ -9,6 +9,7 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
+from socketserver import TCPServer
 
 import psutil
 from anson.io.odysz.ansons import Anson
@@ -168,6 +169,7 @@ host_json = f'{host_private}/host.json'
 
 album_web_dist = 'web-dist'
 
+jserv_url_path = 'jserv-album'
 dictionary_json = 'dictionary.json'
 settings_json = 'settings.json'
 web_inf = 'WEB-INF'
@@ -178,7 +180,7 @@ jserv_07_jar = 'jserv-album-0.7.1.jar'
 doc_jserv_db = 'doc-jserv.db'
 jserv_main_db = 'jserv-main.db'
 syntity_json = 'syntity.json'
-exiftool_zip = 'exiftool-*.zip'
+exiftool_zip = 'exiftool.zip'
 exiftool_v_exe = 'exiftool*.exe'
 exiftool_exe = 'exiftool.exe'
 exiftool_testver = 'exiftool -ver'
@@ -413,8 +415,8 @@ class InstallerCli:
 
     def install(self, respth: str, volpath: str = None):
         """
-        Install synodepy3, by moving /update dictionary to vol-path, settings.json
-        to WEB-INF, and check bin/jar first.
+        Install / setup synodepy3, by moving /update dictionary to vol-path, settings.json
+        to WEB-INF, unzip exiftool.zip, and check bin/jar first.
         Note: this is not installing Windows service.
         :param respth:
         :param volpath:
@@ -475,28 +477,28 @@ class InstallerCli:
                 try: os.remove(res)
                 except FileNotFoundError or IOError or OSError: pass
 
-    def test_run(self) -> None:
-        """
-        @deprecated
-        """
-        sins = self.registry.config.syncIns
-        volume = self.settings.Volume()
-        self.registry.toFile(os.path.join(volume, dictionary_json))
-        try:
-            self.test_in_term()
-        except Exception as e:
-            print(e)
-            raise PortfolioException("Starting local synodepy3 failed.", e)
-        finally:
-            self.registry.config.syncIns = sins
-            self.registry.toFile(os.path.join(volume, dictionary_json))
+    # def test_run(self) -> None:
+    #     """
+    #     @deprecated
+    #     """
+    #     sins = self.registry.config.syncIns
+    #     volume = self.settings.Volume()
+    #     self.registry.toFile(os.path.join(volume, dictionary_json))
+    #     try:
+    #         self.test_in_term()
+    #     except Exception as e:
+    #         print(e)
+    #         raise PortfolioException("Starting local synodepy3 failed.", e)
+    #     finally:
+    #         self.registry.config.syncIns = sins
+    #         self.registry.toFile(os.path.join(volume, dictionary_json))
 
     def test_in_term(self):
         self.updateWithUi(syncins=0, envars={webroot: f'{InstallerCli.reportIp()}:{web_port}'})
 
         system = get_os()
         jar = os.path.join('bin', jserv_07_jar)
-        command = f'java -jar {jar}'
+        command = f'java -jar -Dfile.encoding=UTF-8 {jar}'
         if system == "Windows":
             return subprocess.Popen(['cmd', '/k', command], creationflags=subprocess.CREATE_NEW_CONSOLE)
         elif system == "Linux" or system == "macOS":
@@ -528,6 +530,14 @@ class InstallerCli:
 
         with open(host_path, "w") as file:
             file.write(f'{{"host": "http://{InstallerCli.reportIp()}:{jservport}/jserv-album"}}')
+
+    @staticmethod
+    def stop_web(httpd: TCPServer):
+        if httpd is not None:
+            try:
+                httpd.shutdown()
+            except OSError as e:
+                print(e)
 
     @staticmethod
     def start_web(webport=8900, jservport=8964):
@@ -565,9 +575,12 @@ class InstallerCli:
     
         def create_server():
             with socketserver.TCPServer(("", webport), WebHandler) as httpd:
-                httpdeamon[0] = httpd
                 print("Starting web at port", webport)
-                httpd.serve_forever()
+                try:
+                    httpd.serve_forever()
+                    httpdeamon[0] = httpd
+                except OSError:
+                    Utils.warn("Address already in use. (Possible html-web service is running.)")
     
         if not os.path.isdir(album_web_dist):
             raise PortfolioException(f'Cannot find web root folder: {album_web_dist}')

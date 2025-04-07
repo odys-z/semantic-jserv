@@ -1,14 +1,10 @@
-import platform
 import sys
-import time
 
 from src.synodepy3.installer_api import InstallerCli, ping
-# Why above line works but not this? See https://stackoverflow.com/a/28154841
+# For why only above line works? See https://stackoverflow.com/a/28154841
 from src.synodepy3.commands import install_jserv, uninstall_jserv, run_htmlsrv
-from src.synodepy3 import websrv_delete
 from src.synodepy3.websrv_delete import AlbumWeb
-from synodepy3.commands import install_htmlsrv, uninstall_htmlsrv
-from synodepy3.websrv_delete import album_web_dir
+from src.synodepy3.commands import install_htmlsrv, uninstall_htmlsrv
 
 
 # def is_winadmin():
@@ -26,6 +22,17 @@ from synodepy3.websrv_delete import album_web_dir
 #     except:
 #         return False
 
+def uninst_srv():
+    import invoke
+    try:
+        uninstall_jserv()
+    except invoke.exceptions.UnexpectedExit as e:
+        print(f"Error uninstalling jserv-album: {e}", file=sys.stderr)
+
+    try:
+        uninstall_htmlsrv()
+    except invoke.exceptions.UnexpectedExit as e:
+        print(f"Error uninstalling html-service: {e}", file=sys.stderr)
 
 def clean(vol: str = None):
     cli = InstallerCli()
@@ -57,7 +64,7 @@ if __name__ == '__main__':
         "list": "list known synodes.",
         "load": "load deploy-path, load configurations",
         "install": "arg[0]: res-path, arg[1] volume-path\n\
-        - install the synode service with registration in res-path, volume at volume-path",
+        - setup the synode service resources by registering settings path and volume",
 
         "install-winsrv": "or i-w, arg[0] synode id (readable alais only), arg[1] bin resources path, default 'winsrv'\n\
         - install the synode service as a Windows service",
@@ -94,15 +101,15 @@ if __name__ == '__main__':
 
     elif cmd == 'install' or cmd == 'i':
         cli = InstallerCli(arg)
-        cli.install(arg, arg2)
+        cli.install(arg, arg2) # setup
 
     elif cmd == 'uninstall-winsrv' or cmd == 'ui-w':
-        cli.loadInitial()
-        uninstall_jserv(arg)
+        uninstall_jserv()
+        uninstall_htmlsrv()
 
     elif cmd == 'install-winsrv' or cmd == 'i-w':
-        cli.loadInitial()
-        install_jserv(cli.registry.config.synid, arg)
+        install_jserv()
+        install_htmlsrv()
 
     elif cmd == 'clean':
         clean(arg)
@@ -110,7 +117,7 @@ if __name__ == '__main__':
     elif cmd == 'start-web':
         run_htmlsrv()
     elif cmd == 'install-web' or cmd == 'i-web':
-        install_htmlsrv(album_web_dir)
+        install_htmlsrv()
     elif cmd == 'uninstall-web' or cmd == 'u-web':
         uninstall_htmlsrv()
 

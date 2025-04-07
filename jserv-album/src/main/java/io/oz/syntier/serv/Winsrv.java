@@ -5,8 +5,10 @@ package io.oz.syntier.serv;
  */
 public class Winsrv {
 
+	@SuppressWarnings("unused")
 	private String code;
 	SynotierJettyApp app;
+	@SuppressWarnings("unused")
 	private String err;
 
 	public Winsrv(String code, String err) {

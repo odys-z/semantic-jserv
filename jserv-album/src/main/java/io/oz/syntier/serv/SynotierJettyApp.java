@@ -11,6 +11,7 @@ import static io.odysz.common.Utils.warn;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
@@ -99,15 +100,14 @@ public class SynotierJettyApp {
 
 	private static Winsrv winsrv;
 	public static void jvmStart(String[] args) {
-		SynotierJettyApp app = _main(null);
-		try {
+//		try {
+			SynotierJettyApp app = _main(null);
 			winsrv = new Winsrv("ok", app);
-
-			app.server.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			winsrv = new Winsrv(e.getClass().getName(), e.getMessage());
-		}
+			Utils.logi("=== Service jvmStart() finished [%s: %s] ===", winsrv.app.syngleton.synode(), winsrv.app.jserv);
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//			winsrv = new Winsrv(e.getClass().getName(), e.getMessage());
+//		}
 	}
 	
 	/**
@@ -116,19 +116,107 @@ public class SynotierJettyApp {
 	 * 
 	 * @param args
 	 * @throws Exception
-	 */
 	public static void jvmStop(String[] args) {
-		if (winsrv != null && winsrv.app != null)
+		if (winsrv != null && winsrv.app != null && winsrv.app.server != null)
 			try {
-				winsrv.app.stop();
+				Utils.logi("Active threads before stop: " + Thread.getAllStackTraces().keySet().size());
+				winsrv.app.server.stop();
+				Utils.logi("Active threads after stop: " + Thread.getAllStackTraces().keySet().size());
+				winsrv.app.server.join();
+				Utils.logi("Active threads after join: " + Thread.getAllStackTraces().keySet().size());
 			} catch (Exception e) {
 				e.printStackTrace();
 				winsrv = new Winsrv(e.getClass().getName(), e.getMessage());
 			}
+		else
+			Utils.warn("jvmStop(): Can't stop synode app. Not start correctly.");
+	}
+	 */
+	
+	public static void jvmStop(String[] args) {
+	    if (winsrv != null && winsrv.app != null && winsrv.app.server != null) {
+	        try {
+	            Utils.logi("Starting service shutdown at " + new Date());
+	            Server server = winsrv.app.server;
+
+	            Utils.logi("Active threads before stop: " + Thread.getAllStackTraces().keySet().size());
+	            Utils.logi("Stopping Jetty server ...");
+	            server.stop();
+
+	            Utils.logi("Active threads after stop: " + Thread.getAllStackTraces().keySet().size());
+	            Utils.logi("Joining server ...");
+	            server.join();
+
+	            Utils.logi("Active threads after join: " + Thread.getAllStackTraces().keySet().size());
+
+	            // Shut down custom resources
+	            // shutdownCustomResources();
+
+	            // List all lingering threads
+	            listAllThreads("After resource cleanup");
+
+	            // Interrupt remaining non-daemon threads
+	            Thread.getAllStackTraces().keySet().forEach(thread -> {
+	                if (!thread.isDaemon() && !thread.getName().equals(Thread.currentThread().getName())) {
+	                    Utils.logi("Interrupting thread: " + thread.getName());
+	                    thread.interrupt();
+	                }
+	            });
+
+	            // Wait briefly for threads to terminate
+	            Thread.sleep(5000); // 5-second grace period
+	            int remainingThreads = Thread.getAllStackTraces().keySet().size();
+	            Utils.logi("Final thread count: " + remainingThreads);
+
+	            // List threads again after interruption
+	            listAllThreads("After thread interruption");
+
+	            if (remainingThreads > 1) {
+	                Utils.warn("Forcing JVM exit due to " + (remainingThreads - 1) + " lingering threads...");
+	                System.exit(0);
+	            }
+
+	            Utils.logi("Service stopped cleanly at " + new Date());
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            Utils.logi("Failed to stop service: " + e.getMessage());
+	            winsrv = new Winsrv(e.getClass().getName(), e.getMessage());
+	        }
+	    } else {
+	        Utils.warn("Can't stop synode app. Not started correctly.");
+	    }
+	}
+
+	private static void listAllThreads(String phase) {
+	    Utils.logi("Listing all threads at phase: " + phase);
+	    Thread.getAllStackTraces().forEach((thread, stack) -> {
+	        StringBuilder threadInfo = new StringBuilder();
+	        threadInfo.append("Thread Name: ").append(thread.getName())
+	                  .append(", ID: ").append(thread.getId())
+	                  .append(", State: ").append(thread.getState())
+	                  .append(", Is Daemon: ").append(thread.isDaemon())
+	                  .append(", Priority: ").append(thread.getPriority());
+	        Utils.logi(threadInfo.toString());
+
+	        // Optionally log the stack trace for more detail
+	        if (stack.length > 0) {
+	            Utils.logi("  Stack Trace:");
+	            for (StackTraceElement element : stack) {
+	                Utils.logi("    " + element.toString());
+	            }
+	        }
+	    });
+	    Utils.logi("Total threads: " + Thread.getAllStackTraces().keySet().size());
 	}
 
 	public static void main(String[] args) {
-		_main(args);
+		SynotierJettyApp app = _main(args);
+		if (app.server != null)
+			try {
+				app.server.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 	}
 
 	/**
@@ -148,18 +236,18 @@ public class SynotierJettyApp {
 			.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
 			// Ctrl+C
-			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-	            System.out.println("Received shutdown signal. Stopping Jetty server...");
-	            try {
-	                if (app.server != null && app.server.isStarted()) {
-	                    app.server.stop();
-	                    app.server.join(); // Wait for server to stop
-	                    System.out.println("Jetty server stopped gracefully.");
-	                }
-	            } catch (Exception e) {
-	                System.err.println("Error during shutdown: " + e.getMessage());
-	            }
-	        }));
+//			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//	            System.out.println("Received shutdown signal. Stopping Jetty server...");
+//	            try {
+//	                if (app.server != null && app.server.isStarted()) {
+//	                    app.server.stop();
+//	                    // app.server.join(); // Wait for server to stop
+//	                    System.out.println("Jetty server stopped gracefully.");
+//	                }
+//	            } catch (Exception e) {
+//	                System.err.println("Error during shutdown: " + e.getMessage());
+//	            }
+//	        }));
 			
 			return app;
 			

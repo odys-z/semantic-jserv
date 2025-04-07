@@ -1,0 +1,4 @@
+{"type": "io.oz.srv.WebConfig",
+ "port": 8900,
+ "paths": [{"path": "/", "resource": "web-dist"}]
+}
