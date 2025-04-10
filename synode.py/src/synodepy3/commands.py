@@ -44,8 +44,8 @@ def install_jserv(winsrv: str = 'winsrv'):
     ctx.run(cmd)
 
 
-def run_htmlsrv(c, bin = 'bin'):
-    pass
+# def run_htmlsrv(bin = 'bin'):
+#     pass
 
 def uninstall_htmlsrv(winsrv: str = 'winsrv'):
     ctx = Context()

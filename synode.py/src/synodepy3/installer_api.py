@@ -46,22 +46,22 @@ def decode(warns: bytes):
     return lines
 
 
-def get_os():
-    """
-    :return: Windows | Linux | macOS
-    """
-    if os.name == 'nt':
-        return 'Windows'
-    elif os.name == 'posix':
-        if sys.platform.startswith('linux') or sys.platform.startswith('freebsd'):
-          return 'Linux'
-        elif sys.platform.startswith('darwin'):
-            return 'macOS'
-    return 'Unknown'
+# def get_os():
+#     """
+#     :return: Windows | Linux | macOS
+#     """
+#     if os.name == 'nt':
+#         return 'Windows'
+#     elif os.name == 'posix':
+#         if sys.platform.startswith('linux') or sys.platform.startswith('freebsd'):
+#           return 'Linux'
+#         elif sys.platform.startswith('darwin'):
+#             return 'macOS'
+#     return 'Unknown'
 
 
-def iswindows():
-    return get_os() == 'Windows'
+# def iswindows():
+#     return get_os() == 'Windows'
 
 
 def valid_registry(reg: AnRegistry):

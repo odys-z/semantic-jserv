@@ -5,7 +5,7 @@ from typing import Optional
 
 import PySide6
 import qrcode
-from PySide6.QtCore import QEvent
+from PySide6.QtCore import QEvent, QSize
 from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel, QSpacerItem, QSizePolicy
 from anson.io.odysz.common import Utils
@@ -35,9 +35,9 @@ def msg_box(info: str, details: object = None):
 def err_msg(err: str, details: object = None):
     msg = QMessageBox()
     if get_os() != 'Windows':
-        msg.setStyleSheet("QLabel{min-width:200px;}")
+        msg.setStyleSheet("QMessageBox{min-width:6em;}")
     else:
-        msg.setStyleSheet("QLabel{min-width:100px;}")
+        msg.setStyleSheet("QLabel{min-width:10em}")
 
     qt_msgbox_label = msg.findChild(QLabel, "qt_msgbox_label")
     msg.layout().children()
@@ -198,9 +198,12 @@ class InstallerForm(QMainWindow):
 
     def test_run(self):
         if self.validate():
-            msg_box('The settings is valid. You can close the opening terminal once you need to stop it by press Ctrl+C,'
-                    'A stand alone running is recommended. Please close it and run the service with command:\njava -jar bin/jserv-album-#.#.#.jar')
+            msg_box('The settings is valid. You can close the opening terminal once you need to stop it.\n'
+                    'A stand alone running is recommended. Install the service on Windows or start:\n'
+                    'java -jar bin/jserv-album-#.#.#.jar\n'
+                    'java -jar bin/html-web-#.#.#.jar')
             try:
+                self.httpd = InstallerCli.start_web()
                 self.cli.test_in_term()
                 qr_data = self.gen_qr()
                 print(qr_data)
@@ -212,8 +215,14 @@ class InstallerForm(QMainWindow):
 
     def installWinsrv(self):
         self.cli.stop_web(self.httpd)
+        msg_box('Please close any service Window if any been started\n'
+                'Click Ok to continue, and confirm all permission requests (window can be hidden).')
+
         install_jserv()
         install_htmlsrv()
+
+        msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
+                'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         super().showEvent(event)
@@ -261,7 +270,7 @@ class InstallerForm(QMainWindow):
             else:
                 self.ui.bWinserv.setEnabled(False)
 
-            self.httpd = InstallerCli.start_web()
+            # self.httpd = InstallerCli.start_web()
 
     def bindIdentity(self, registry: AnRegistry):
         def findUser(usrs: [SyncUser], usrid):
@@ -279,7 +288,9 @@ class InstallerForm(QMainWindow):
         self.ui.txtSynode.setText(cfg.synid)
 
         credits_link = 'https://odys-z.github.io/products/album/credits.html'
+        help_install_link = 'https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps'
         self.ui.lblink.setText(f'Portfolio is based on <a href="{credits_link}">open source projects</a>.')
+        self.ui.lbHelplink.setText(f'<a href="{help_install_link}">Help</a>.')
 
     def bindSettings(self, settings: AppSettings):
         self.ui.txtPort.setText(str(settings.port))
@@ -299,37 +310,24 @@ class InstallerForm(QMainWindow):
             self.ui.bWinserv.setEnabled(installed)
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
+        super().closeEvent(event)
         if self.httpd is not None:
-            InstallerCli.closeWeb(self.httpd)
+            try:
+                InstallerCli.closeWeb(self.httpd)
+            finally:
+                event.accept()
+        else:
+            event.accept()
+
 
         # try:
-        #     if get_os() != 'Windows' and self.cli.isinstalled() and self.cli.hasrun():
-        #         port = self.cli.settings.port
-        #         reply = QMessageBox.question(
-        #             self,
-        #             "Close Confirmation",
-        #             f"Kill process listening port {port}?",
-        #             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        #             QMessageBox.StandardButton.No,
-        #         )
-        #         if reply == QMessageBox.StandardButton.Yes:
-        #             # try: self.cli.kill_bashport(port)
-        #             # except:
-        #             #     # event.ignore()
-        #             #     # return
-        #             #     pass
-        #
+        #     if self.httpd is not None:
+        #         self.httpd.shutdown()
+        #         self.httpd = None
+        #     else:
+        #         print("No???")
+        # finally:
         #     event.accept()
-        # except:
-        #     event.accept()
-        try:
-            if self.httpd is not None:
-                self.httpd.shutdown()
-                self.httpd = None
-            else:
-                print("No???")
-        finally:
-            event.accept()
 
 
 if __name__ == "__main__":

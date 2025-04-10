@@ -142,6 +142,7 @@ public class SynotierJettyApp {
 	            Utils.logi("Active threads before stop: " + Thread.getAllStackTraces().keySet().size());
 	            Utils.logi("Stopping Jetty server ...");
 	            server.stop();
+	            Connects.close();
 
 	            Utils.logi("Active threads after stop: " + Thread.getAllStackTraces().keySet().size());
 	            Utils.logi("Joining server ...");
@@ -164,7 +165,7 @@ public class SynotierJettyApp {
 	            });
 
 	            // Wait briefly for threads to terminate
-	            Thread.sleep(5000); // 5-second grace period
+	            Thread.sleep(2000); // 5-second grace period
 	            int remainingThreads = Thread.getAllStackTraces().keySet().size();
 	            Utils.logi("Final thread count: " + remainingThreads);
 

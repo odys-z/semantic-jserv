@@ -1,26 +1,11 @@
 import sys
 
+# See https://stackoverflow.com/a/28154841
 from src.synodepy3.installer_api import InstallerCli, ping
-# For why only above line works? See https://stackoverflow.com/a/28154841
-from src.synodepy3.commands import install_jserv, uninstall_jserv, run_htmlsrv
+from src.synodepy3.commands import install_jserv, uninstall_jserv
 from src.synodepy3.websrv_delete import AlbumWeb
 from src.synodepy3.commands import install_htmlsrv, uninstall_htmlsrv
 
-
-# def is_winadmin():
-#     try:
-#         # Open the current process token
-#         import win32security
-#         import win32con
-#         token = win32security.OpenProcessToken(
-#             win32api.GetCurrentProcess(),
-#             win32con.TOKEN_QUERY
-#         )
-#         # Get elevation information
-#         elevation = win32security.GetTokenInformation(token, win32security.TokenElevation)
-#         return elevation  # Returns True if elevated, False if not
-#     except:
-#         return False
 
 def uninst_srv():
     import invoke
@@ -41,6 +26,9 @@ def clean(vol: str = None):
 
 
 def startweb(port: int = 8900):
+    """
+    Entry-point: synode-start-web
+    """
     worker = None
     httpd = None
     try:
@@ -84,7 +72,7 @@ if __name__ == '__main__':
         "test": "try bring up the synode without triggering synchronization.",
 
         "start-web": "start-web <web-port, e.g. 8900> <jserv-port, e.g. 8964>\
-        - start the web server, album-web 0.4, at localhost.",
+        - start the python3 web server, album-web 0.4, at localhost.",
 
         "sync_in": "arg[0]: volume, arg[1]: number of seconds\n\
         - Update synchronization interval's setting.",
@@ -115,58 +103,11 @@ if __name__ == '__main__':
         clean(arg)
 
     elif cmd == 'start-web':
-        run_htmlsrv()
+        startweb(int(arg))
     elif cmd == 'install-web' or cmd == 'i-web':
         install_htmlsrv()
     elif cmd == 'uninstall-web' or cmd == 'u-web':
         uninstall_htmlsrv()
-
-    # deleting
-    # elif cmd == 'start-web':
-    #     startweb(8900 if arg is None else arg)
-    # elif cmd == 'install-web' or cmd == 'i-web':
-    #     import win32api
-    #     import win32com.shell.shell as shell
-    #
-    #     print(1, cmd)
-    #
-    #     if platform.system() == "Windows" and not is_winadmin():
-    #         py_args = '-m src.synodepy3.cli i-web'
-    #         print(2, f"Requesting administrative privileges for {py_args}...")
-    #         shell.ShellExecuteEx(
-    #             lpVerb="runas",
-    #             lpFile=sys.executable,
-    #             lpParameters=py_args,
-    #             nShow=1  # Show the window
-    #         )
-    #     else:
-    #         input(3)
-    #         exe_cmd = f'{" ".join(sys.argv)}'
-    #         print(exe_cmd)
-    #         print('===========================')
-    #         AlbumWeb.install()
-    #         input('pausing elevated...')
-    #
-    # elif cmd == 'uninstall-web' or cmd == 'u-web':
-    #     import win32api
-    #     import win32com.shell.shell as shell
-    #
-    #     print(1, cmd)
-    #
-    #     if platform.system() == "Windows" and not is_winadmin():
-    #         py_args = '-m src.synodepy3.cli u-web'
-    #         print(2, f"Requesting administrative privileges for py {py_args}...")
-    #         shell.ShellExecuteEx(
-    #             lpVerb="runas",
-    #             lpFile=sys.executable,
-    #             lpParameters=py_args,
-    #             nShow=1  # Show the window
-    #         )
-    #         # sys.exit(0)
-    #     else:
-    #         input(3)
-    #         AlbumWeb.uninstall()
-    #         input('pausing elevated...')
 
     elif cmd == 'sync_in':
         cli.loadInitial()

@@ -1,6 +1,6 @@
 {
     "files": [
-        "portfolio-synode.py",
+        "__main__.py",
         "form.ui"
     ]
 }

@@ -33,7 +33,7 @@ setup(
         "synodepy3": ["form.ui"],  # Include the form.ui file in the package
     },
 
-    entry_points={'console_scripts': ['synode-uninstall = src.synodepy3.cli:uninst_srv', 'synode-clean = src.synodepy3.cli:clean', 'synode-start-web = src.synodepy3.cli:startweb']},
+    entry_points={'console_scripts': ['synode-uninstall-srv = src.synodepy3.cli:uninst_srv', 'synode-clean = src.synodepy3.cli:clean', 'synode-start-web = src.synodepy3.cli:startweb']},
 
     # package_data={'Portfolio.bin': ['../resources/portfolio-srv.exe']},
     # data_files=[('bin', ['bin/jserv-album-0.7.0.jar', '../resources/portfolio-srv.exe'])],

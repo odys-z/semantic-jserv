@@ -42,9 +42,9 @@ def create_volume(c):
 @task
 def build(c):
     buildcmds = {
-        # '../../anclient/examples/example.js/album': 'webpack',
+        '../../anclient/examples/example.js/album': 'webpack',
         '.': 'mvn clean compile package -DskipTests',
-        # '../../html-service/java': 'mvn clean compile package',
+        '../../html-service/java': 'mvn clean compile package',
         '../synode.py': lambda: f'set SYNODE_VERSION={version} && rm -rf dist && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && rm -rf dist && python3 -m build',
     }
 
