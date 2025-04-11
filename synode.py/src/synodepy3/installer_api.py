@@ -10,13 +10,13 @@ import zipfile
 from glob import glob
 from pathlib import Path
 from socketserver import TCPServer
+from typing import cast
 
 import psutil
 from anson.io.odysz.ansons import Anson
 from anson.io.odysz.common import Utils, LangExt
 
 import sys
-
 
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from src.io.oz.syn import AnRegistry
@@ -38,7 +38,7 @@ def decode(warns: bytes):
                     try:
                         s = b.decode('gbk')
                     except UnicodeDecodeError:
-                        s = ''.join(chr, b)
+                        s = ''.join(chr(int(b)))
                 if s is not None:
                     lines.extend(s.split('\n'))
             else:
@@ -133,7 +133,7 @@ def install_exiftool_win():
 
 
 def check_exiftool():
-    if iswindows():
+    if Utils.iswindows():
         return os.path.isfile(exiftool_exe)
     else:
         p = subprocess.Popen(['exiftool', '-ver'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -148,7 +148,7 @@ def check_exiftool():
 def checkinstall_exiftool():
     check = check_exiftool()
 
-    if iswindows() and not check:
+    if Utils.iswindows() and not check:
         install_exiftool_win()
         return True
     else:
@@ -202,8 +202,8 @@ class InstallerCli:
         return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
 
     def __init__(self):
-        self.registry = None
-        self.settings = None
+        self.registry = cast(AnRegistry, None)
+        self.settings = cast(AppSettings, None)
 
         Anson.java_src('src')
 
@@ -227,7 +227,7 @@ class InstallerCli:
         web_settings = os.path.join(web_inf, settings_json)
         if os.path.exists(web_settings):
             try:
-                data: AppSettings = Anson.from_file(web_settings)
+                data: AppSettings = cast(AppSettings, Anson.from_file(web_settings))
                 self.settings = data
             except json.JSONDecodeError as e:
                 raise PortfolioException(f'Loading Anson data from {web_settings} failed.', e)
@@ -244,7 +244,7 @@ class InstallerCli:
 
             res_settings = os.path.join(res_path, settings_json)
             self.registry = self.loadRegistry(res_path)
-            self.settings = Anson.from_file(res_settings)
+            self.settings = cast(AppSettings, Anson.from_file(res_settings))
 
         return self.settings
 
@@ -308,10 +308,10 @@ class InstallerCli:
 
         # p_exif = os.path.join('bin/', exiftool_exe)
         check_exiftool()
-        if iswindows() and not os.path.isfile(exiftool_exe):
+        if Utils.iswindows() and not os.path.isfile(exiftool_exe):
             raise FileNotFoundError(f'Depending tool, exiftool is missing: {exiftool_exe}')
         else:
-            Utils.warn('TODO: check exiftool on {0}', get_os())
+            Utils.warn('TODO: check exiftool on {0}', Utils.get_os())
 
         volume = self.settings.Volume()
         if (not os.path.isfile(os.path.join(volume, jserv_main_db))
@@ -366,7 +366,7 @@ class InstallerCli:
 
         if not checkinstall_exiftool():
             return {"exiftool": "Check and install exiftool failed!"
-                    if get_os() == 'Windows'
+                    if Utils.get_os() == 'Windows'
                     else "Please install exiftool and test it's working with command 'exiftool -ver'"}
         return None
 
@@ -401,7 +401,7 @@ class InstallerCli:
         web_settings = os.path.join(web_inf, settings_json)
         if os.path.exists(web_settings):
             try:
-                data: AppSettings = Anson.from_file(web_settings)
+                data: AppSettings = cast(AppSettings, Anson.from_file(web_settings))
                 # self.settings = data
                 self.settings.rootkey, self.settings.installkey = data.rootkey, data.installkey
             except Exception as e:
@@ -496,7 +496,7 @@ class InstallerCli:
     def test_in_term(self):
         self.updateWithUi(syncins=0, envars={webroot: f'{InstallerCli.reportIp()}:{web_port}'})
 
-        system = get_os()
+        system = Utils.get_os()
         jar = os.path.join('bin', jserv_07_jar)
         command = f'java -jar -Dfile.encoding=UTF-8 {jar}'
         if system == "Windows":
@@ -688,12 +688,4 @@ class InstallerCli:
         print(cmd)
         p = subprocess.Popen(cmd)
         p.communicate()
-
-    # def install_winsrv(v):
-    #     if get_os() == 'Windows':
-    #         pass
-    #     else:
-    #         raise PortfolioException('This is only for Windows. To install service on Linux, add this to system service:\n'
-    #                                  'java -jar bin/jserv-album-0.#.#.jar\n'
-    #                                  'Modify WEB-INF/settings.json/{port} for binding to different port.')
 

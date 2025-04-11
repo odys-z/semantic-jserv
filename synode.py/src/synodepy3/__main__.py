@@ -13,7 +13,7 @@ from anson.io.odysz.common import Utils
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from src.io.oz.syn import AnRegistry, SyncUser
 from src.synodepy3.commands import install_htmlsrv, install_jserv
-from src.synodepy3.installer_api import InstallerCli, get_os, iswindows, jserv_url_path
+from src.synodepy3.installer_api import InstallerCli, jserv_url_path
 
 
 # Important:
@@ -34,7 +34,7 @@ def msg_box(info: str, details: object = None):
 
 def err_msg(err: str, details: object = None):
     msg = QMessageBox()
-    if get_os() != 'Windows':
+    if Utils.get_os() != 'Windows':
         msg.setStyleSheet("QMessageBox{min-width:6em;}")
     else:
         msg.setStyleSheet("QLabel{min-width:10em}")
@@ -161,7 +161,7 @@ class InstallerForm(QMainWindow):
 
     def updateValidation(self, err: dict):
         if 'exiftool' in err:
-            if get_os() == 'Windows':
+            if Utils.get_os() == 'Windows':
                 Utils.warn('Installing exiftool failed.')
             else:
                 err_msg('Install Exiftool from <a href="https://exiftool.org/">here</a> first.', err)
@@ -265,7 +265,7 @@ class InstallerForm(QMainWindow):
             self.ui.bSetup.clicked.connect(self.setup)
             self.ui.bValidate.clicked.connect(self.test_run)
 
-            if get_os() == 'Windows':
+            if Utils.get_os() == 'Windows':
                 self.ui.bWinserv.clicked.connect(self.installWinsrv)
             else:
                 self.ui.bWinserv.setEnabled(False)
@@ -306,7 +306,7 @@ class InstallerForm(QMainWindow):
 
     def updateUiByInstalled(self):
         installed = self.cli.isinstalled()
-        if iswindows():
+        if Utils.iswindows():
             self.ui.bWinserv.setEnabled(installed)
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):

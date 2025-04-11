@@ -36,11 +36,13 @@ class Synode(Anson):
     synid: str
     mac: str
     domain: str
-    nyquence: int
+    nyq: int
     syn_uid: str
 
     def __init__(self):
         super().__init__()
+        self.org = None
+        self.synid = None
 
 
 @dataclass
