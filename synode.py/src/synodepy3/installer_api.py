@@ -500,16 +500,23 @@ class InstallerCli:
         jar = os.path.join('bin', jserv_07_jar)
         command = f'java -jar -Dfile.encoding=UTF-8 {jar}'
         if system == "Windows":
-            return subprocess.Popen(['cmd', '/k', command], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            return subprocess.Popen(['cmd', '/k', f'chcp 65001 && {command}'],
+                                    creationflags=subprocess.CREATE_NEW_CONSOLE)
         elif system == "Linux" or system == "macOS":
-            return subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command], start_new_session=True)
+            return subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command],
+                                    start_new_session=True)
         else:
             raise PortfolioException(f"Unsupported operating system: {system}")
 
     @staticmethod
-    def closeWeb(httpd):
+    def closeWeb(httpd, thrd):
         try:
-            httpd.shutdown()
+            if httpd is not None: httpd.shutdown()
+        except Exception as e:
+            print(e)
+
+        try:
+            if thrd is not None: thrd.join(5)
         except Exception as e:
             print(e)
 
@@ -577,11 +584,14 @@ class InstallerCli:
             with socketserver.TCPServer(("", webport), WebHandler) as httpd:
                 print("Starting web at port", webport)
                 try:
-                    httpd.serve_forever()
                     httpdeamon[0] = httpd
+                    httpd.serve_forever()
+                    Utils.logi(f'Web service at port {webport} stopped.')
                 except OSError:
-                    Utils.warn("Address already in use. (Possible html-web service is running.)")
-    
+                    httpdeamon[0] = None
+                    httpd.shutdown()
+                    Utils.warn("Address already in use? (Possible html-web service is running.)")
+
         if not os.path.isdir(album_web_dist):
             raise PortfolioException(f'Cannot find web root folder: {album_web_dist}')
         if not os.path.isfile(os.path.join(album_web_dist, index_html)):
@@ -591,14 +601,14 @@ class InstallerCli:
     
         thr = threading.Thread(target=create_server)
         thr.start()
-    
+
         count = 0
         while count < 5 and httpdeamon[0] is None:
             count += 1
             time.sleep(0.2)
     
         print(httpdeamon[0])
-        return httpdeamon[0]
+        return httpdeamon[0], thr
 
     def runjserv_deprecated(self) -> subprocess.Popen:
         """
