@@ -3,6 +3,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import threading
 import time
@@ -581,16 +582,25 @@ class InstallerCli:
                 super().end_headers()
     
         def create_server():
-            with socketserver.TCPServer(("", webport), WebHandler) as httpd:
-                print("Starting web at port", webport)
-                try:
-                    httpdeamon[0] = httpd
-                    httpd.serve_forever()
-                    Utils.logi(f'Web service at port {webport} stopped.')
-                except OSError:
-                    httpdeamon[0] = None
-                    httpd.shutdown()
-                    Utils.warn("Address already in use? (Possible html-web service is running.)")
+            try:
+                with socketserver.TCPServer(("", webport), WebHandler) as httpd:
+                    print("Starting web at port", webport)
+                    try:
+                        httpdeamon[0] = httpd
+                        httpd.serve_forever()
+                        Utils.logi(f'Web service at port {webport} stopped.')
+                    except OSError:
+                        httpdeamon[0] = None
+                        httpd.shutdown()
+                        Utils.warn("Address already in use? (Possible html-web service is running.)")
+            except socket.error as e:
+                if e.errno == 98 or e.errno == 48: # errno 98 on Linux, 48 on macOS 
+                    print(f"Port {webport} is already in use.")
+                else:
+                    print(f"An unexpected socket error occurred: {e}")
+            except Exception as e:
+                print(f"An unexpected error occurred: {e}")
+
 
         if not os.path.isdir(album_web_dist):
             raise PortfolioException(f'Cannot find web root folder: {album_web_dist}')
