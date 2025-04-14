@@ -1,1 +1,0 @@
-../../../html-service/java/src/test/uninstall-html-srv.bat
