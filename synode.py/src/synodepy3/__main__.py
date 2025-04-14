@@ -1,4 +1,5 @@
 import sys
+import time
 
 import io as std_io
 from typing import Optional
@@ -203,7 +204,7 @@ class InstallerForm(QMainWindow):
                     'java -jar bin/jserv-album-#.#.#.jar\n'
                     'java -jar bin/html-web-#.#.#.jar')
             try:
-                self.httpd = InstallerCli.start_web()
+                self.httpd, self.thrd = InstallerCli.start_web()
                 self.cli.test_in_term()
                 qr_data = self.gen_qr()
                 print(qr_data)
@@ -311,9 +312,10 @@ class InstallerForm(QMainWindow):
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
         super().closeEvent(event)
-        if self.httpd is not None:
+        if self.httpd is not None or self.thrd is not None:
             try:
-                InstallerCli.closeWeb(self.httpd)
+                InstallerCli.closeWeb(self.httpd, self.thrd)
+                self.httpd, self.thrd = None, None
             finally:
                 event.accept()
         else:
