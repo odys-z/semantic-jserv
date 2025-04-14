@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypeVar
+from typing import cast
 
 from anson.io.odysz.ansons import Anson
 
@@ -32,21 +32,6 @@ class SynOrg(Anson):
         super().__init__()
 
 
-# @dataclass
-# class Synode(Anson):
-#     org: str
-#     synid: str
-#     mac: str
-#     domain: str
-#     nyq: int
-#     syn_uid: str
-#
-#     def __init__(self):
-#         super().__init__()
-#         self.org = None
-#         self.synid = None
-
-
 @dataclass
 class SynodeConfig(Anson):
     synid: str
@@ -75,21 +60,7 @@ class SynodeConfig(Anson):
         super().__init__()
 
 
-# @dataclass()
-# class SyncUser(Anson):
-#     userId: str
-#     userName: str
-#     pswd: str
-#     iv: str
-#     domain: str
-#     org: str
-#
-#     def __init__(self):
-#         super().__init__()
-
-
-TAnRegistry = TypeVar('TAnRegistry', bound='AnRegistry')
-
+# TAnRegistry = TypeVar('TAnRegistry', bound='AnRegistry')
 
 @dataclass()
 class AnRegistry(Anson):
@@ -98,11 +69,11 @@ class AnRegistry(Anson):
 
     def __init__(self):
         super().__init__()
-        self.config = None # SynodeConfig()
+        self.config = cast('SynodeConfig', None)
         self.synusers = []
 
     @staticmethod
-    def load(path) -> TAnRegistry:
+    def load(path) -> 'AnRegistry':
         if Path(path).is_file():
             with open(path, 'r') as file:
                 # registry = json.load(file)
