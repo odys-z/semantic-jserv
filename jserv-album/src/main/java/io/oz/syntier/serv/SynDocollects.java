@@ -538,21 +538,32 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 */
 	DocsResp devices(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
-		String conn = Connects.uri2conn(body.uri());
-		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
+		String synconn = Connects.uri2conn(body.synuri);
+		String sysconn = Connects.uri2conn(body.uri());
+		DeviceTableMeta devMeta = new DeviceTableMeta(synconn);
 
-		AnResultset rs = (AnResultset)synt
+		AnResultset rs_d = (AnResultset)synt
 				.select(devMeta.tbl)
-				// .whereEq(devMeta.domain,   usr.orgId())
 				.whereEq(devMeta.owner,   usr.uid())
-				.rs(synt.instancontxt(conn, usr))
+				.rs(synt.instancontxt(synconn, usr))
 				.rs(0)
 				;
 
-		return (DocsResp) new DocsResp().rs(rs)
+		DocOrgMeta orgMeta = new DocOrgMeta(sysconn);
+		AnResultset rs_a = ((AnResultset) synt
+				.select(orgMeta.tbl)
+				.col(orgMeta.orgName)
+				.whereEq(orgMeta.pk,   usr.orgId())
+				.rs(synt.instancontxt(sysconn, usr))
+				.rs(0))
+				.nxt()
+				;
+
+		return (DocsResp) new DocsResp().rs(rs_d)
 				.data(devMeta.owner, usr.uid())
 				.data("owner-name",  usr.userName())
-				// .data(devMeta.domain, usr.orgId())
+				.data("org", rs_a.getString(orgMeta.orgName))
+				.data("orgId", usr.orgId())
 				;
 	}
 

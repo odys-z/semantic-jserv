@@ -15,18 +15,18 @@ version = '0.7.1'
 synode.py3, jserv-album-0.7.1.jar
 """
 
-html_jar_v = '0.1.1'
+html_jar_v = '0.1.2'
 """
-html_jar = '0.1.1'  # html-web-0.1.1.jar
+html-web-#.#.#.jar
 """
 
 web_ver = '0.4.1'
 """
-web_ver = '0.4.1'  # album-web-0.4.1.jar
+album-web-#.#.#.jar
 """
 
 vol_files = {"volume": ["jserv-main.db", "doc-jserv.db"]}
-dist_dir = 'bin'
+dist_dir = 'deploy-x29'
 
 @task
 def create_volume(c):

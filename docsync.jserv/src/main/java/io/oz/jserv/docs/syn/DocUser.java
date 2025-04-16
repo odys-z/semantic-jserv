@@ -31,7 +31,7 @@ public class DocUser extends SyncUser implements IUser {
 	long touched;
 
 	String roleName;
-	String orgName;
+	public String orgName;
 
 	public DocUser(String userid, String passwd, String userName) throws SemanticException {
 		super(userid, passwd, userName);
