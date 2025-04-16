@@ -31,8 +31,8 @@ public class UserReq extends AnsonBody {
 	String tabl;
 	public String tabl() { return tabl; }
 
-	public UserReq(AnsonMsg<? extends AnsonBody> parent, String conn) {
-		super(parent, conn);
+	public UserReq(AnsonMsg<? extends AnsonBody> parent, String uri) {
+		super(parent, uri);
 	}
 	
 	public Object get(String prop) {
