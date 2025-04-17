@@ -120,7 +120,6 @@ public class Albums extends ServPort<AlbumReq> {
 
 	final IUser robot;
 
-	// PUserMeta userMeta;
 	JUserMeta userMeta;
 
 	final String synode;
