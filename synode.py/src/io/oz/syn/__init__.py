@@ -53,14 +53,11 @@ class SynodeConfig(Anson):
 
     peers: list[Synode]
 
-    # mode: SynodeMode
     https: bool
 
     def __init__(self):
         super().__init__()
 
-
-# TAnRegistry = TypeVar('TAnRegistry', bound='AnRegistry')
 
 @dataclass()
 class AnRegistry(Anson):
@@ -76,8 +73,6 @@ class AnRegistry(Anson):
     def load(path) -> 'AnRegistry':
         if Path(path).is_file():
             with open(path, 'r') as file:
-                # registry = json.load(file)
-                # self.config = SynodeConfig.from_obj(registry['config'])
                 obj = json.load(file)
                 obj['__type__'] = AnRegistry().__type__
                 return Anson.from_envelope(obj)

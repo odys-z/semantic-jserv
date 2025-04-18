@@ -41,14 +41,19 @@ def create_volume(c):
         
 @task
 def build(c):
-    buildcmds = {
-        '../../anclient/examples/example.js/album': 'webpack',
-        '.': 'mvn clean compile package -DskipTests',
-        '../../html-service/java': 'mvn clean compile package',
-        '../synode.py': lambda: f'set SYNODE_VERSION={version} && rm -rf dist && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && rm -rf dist && python3 -m build',
-    }
+    buildcmds = [
+        ['../../anclient/examples/example.android', 'gradlew assembleRelease'],
+        ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portflio-{version}.apk'],
+        ['.', f"echo {{\"apk\": \"portflio-{version}.apk\"}} > web-dist/res-vol/res.json"],
+        ['.', 'cat web-dist/res-vol/res.json'],
 
-    for pth, cmd in buildcmds.items():
+        ['../../anclient/examples/example.js/album', 'webpack'],
+        ['.', 'mvn clean compile package -DskipTests'],
+        ['../../html-service/java', 'mvn clean compile package'],
+        ['../synode.py', lambda: f'set SYNODE_VERSION={version} && rm -rf dist && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && rm -rf dist && python3 -m build'],
+    ]
+
+    for pth, cmd in buildcmds:
         try:
             if isinstance(cmd, LambdaType):
                 cmd = cmd()
@@ -112,20 +117,29 @@ def make(c, zip=f'jserv-portfolio-{version}.zip'):
         with zipfile.ZipFile(zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
             # resources
             for rk, rv in resources.items():
-                if "*" in rv:  # Handle wildcard (e.g., web-dist/*)
-                    # Use glob to expand wildcards in Python
+                if "*" in rv:  
                     count = 0
                     srcroot = re.sub('\\*$', '', rv.replace('\\', '/'))
                     for pth, _dir, fs in os.walk(srcroot):
                         for file in fs:
-                            # if file and os.path.exists(file) and not matches_patterns(file, excludes):
                             if not matches_patterns(file, excludes):
                                 file_path = os.path.join(pth, file)
                                 relative_path = os.path.relpath(file_path, srcroot)
+                                # print(file, file_path, pth, srcroot, relative_path)
+                                
+                                visited = set()
+                                while os.path.islink(file_path):
+                                     if file_path in visited:
+                                          raise ValueError(f"Cycle detected in symbolic links at {relative_path}")
+                                     visited.add(file_path)
+                                     print(file_path, '->', os.path.realpath(file_path))
+                                     file_path = os.path.realpath(file_path)
+
+                                relative_path = os.path.relpath(relative_path)
                                 arcname = os.path.join(rk, relative_path)
                                 zipf.write(file_path, arcname)
                                 count += 1
-                                print(f"Added to ZIP: {file_path} as {arcname}")
+                                print(f"Added to ZIP: {relative_path} as {arcname}")
                     if count == 0:
                         err = True
                         raise FileNotFoundError(f'[ERROR] No files found in {rv}.')
