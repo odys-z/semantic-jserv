@@ -171,6 +171,9 @@ host_json = f'{host_private}/host.json'
 album_web_dist = 'web-dist'
 
 jserv_url_path = 'jserv-album'
+"""
+    /jserv-album
+"""
 dictionary_json = 'dictionary.json'
 settings_json = 'settings.json'
 web_inf = 'WEB-INF'
@@ -455,6 +458,7 @@ class InstallerCli:
 
         # Update config.WEBROOT_HUB with local IP and port by ui.
         self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
+        self.settings.StartHandler(host_json)
         self.settings.toFile(os.path.join(web_inf, settings_json))
 
     def clean_install(self, vol: str = None):
@@ -537,7 +541,7 @@ class InstallerCli:
         except FileNotFoundError: pass
 
         with open(host_path, "w") as file:
-            file.write(f'{{"host": "http://{InstallerCli.reportIp()}:{jservport}/jserv-album"}}')
+            file.write(f'{{"host": "http://{InstallerCli.reportIp()}:{jservport}/{jserv_url_path}"}}')
 
     @staticmethod
     def stop_web(httpd: TCPServer):
@@ -620,92 +624,92 @@ class InstallerCli:
         print(httpdeamon[0])
         return httpdeamon[0], thr
 
-    def runjserv_deprecated(self) -> subprocess.Popen:
-        """
-        @deprecated
-        This method is used for testing running jserv without in a terminal.
-        The problem is that the service process is difficult to manage, and
-        anti user's intuition.
-        :return: the process
-        """
+    # def runjserv_deprecated(self) -> subprocess.Popen:
+    #     """
+    #     @deprecated
+    #     This method is used for testing running jserv without in a terminal.
+    #     The problem is that the service process is difficult to manage, and
+    #     anti user's intuition.
+    #     :return: the process
+    #     """
+    #
+    #     self.check_installed_jar_db()
+    #     self.isinstalled()
+    #
+    #     # The Google SearchLab AI says:
+    #     # The java -version command, by design, outputs its version information to
+    #     # the standard error stream (stderr), not to standard output (stdout).
+    #     # And ['java', '-version'] is not working.
+    #     proc = subprocess.Popen(['java', '-version'], stderr=subprocess.PIPE)
+    #     warns = decode(proc.communicate()[0])
+    #     if (warns is not None):
+    #         print(warns)
+    #
+    #     jar = os.path.join('bin', jserv_07_jar)
+    #     Utils.logi('Jar path: {}', jar)
+    #
+    #     if not os.path.isfile(jar):
+    #         raise FileNotFoundError(f'Java file is missing: {jar}',)
+    #
+    #     proc = subprocess.Popen(
+    #         # jserv_07_jar='jserv-album-0.7.0.jar'
+    #         f'java -jar bin/{jserv_07_jar}',
+    #         # debug: deadlock randomly? 'java -Dfile.encoding=UTF-8 -jar bin/jserv-album-0.7.0.jar',
+    #         # also work: f'java -Dfile.encoding=UTF-8 -jar {jar}',
+    #         # doesn't work:['java', '-Dfile.encoding=UTF-8', f'-jar {jar}'],
+    #         # doesn't work: ['java', '-Dfile.encoding=UTF-8', '-jar', jar],
+    #         shell=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    #
+    #     return proc
 
-        self.check_installed_jar_db()
-        self.isinstalled()
+    # def stop_test(self, proc: subprocess.Popen) -> [str]:
+    #     """
+    #     @deprecated
+    #     Stop jetty server.
+    #
+    #     NOTE
+    #     ====
+    #
+    #     Popen.communicat() won't work, which will read and terminate the process, leading halt as the java process is
+    #     running endlessly and no ETX char can be returned while reading stderr.
+    #
+    #     P = Popen()
+    #     p.communicate() # waiting the service to quit, which will not happen
+    #
+    #     :param proc:
+    #     :return:
+    #     """
+    #     def kill(pid):
+    #         process = psutil.Process(pid)
+    #         for p in process.children(recursive=True):
+    #             p.kill()
+    #         process.kill()
+    #
+    #     errlines = []
+    #
+    #     def reader(proc):
+    #         with proc.stderr as stdout:
+    #             for line in stdout:
+    #                 print(line.decode(), file=sys.stderr)
+    #                 errlines.append(line)
+    #
+    #     threading.Thread(target=reader, args=(proc,)).start()
+    #
+    #     time.sleep(0.1)
+    #     kill(proc.pid)
+    #
+    #     return errlines
 
-        # The Google SearchLab AI says:
-        # The java -version command, by design, outputs its version information to
-        # the standard error stream (stderr), not to standard output (stdout).
-        # And ['java', '-version'] is not working.
-        proc = subprocess.Popen(['java', '-version'], stderr=subprocess.PIPE)
-        warns = decode(proc.communicate()[0])
-        if (warns is not None):
-            print(warns)
-
-        jar = os.path.join('bin', jserv_07_jar)
-        Utils.logi('Jar path: {}', jar)
-
-        if not os.path.isfile(jar):
-            raise FileNotFoundError(f'Java file is missing: {jar}',)
-
-        proc = subprocess.Popen(
-            # jserv_07_jar='jserv-album-0.7.0.jar'
-            f'java -jar bin/{jserv_07_jar}',
-            # debug: deadlock randomly? 'java -Dfile.encoding=UTF-8 -jar bin/jserv-album-0.7.0.jar',
-            # also work: f'java -Dfile.encoding=UTF-8 -jar {jar}',
-            # doesn't work:['java', '-Dfile.encoding=UTF-8', f'-jar {jar}'],
-            # doesn't work: ['java', '-Dfile.encoding=UTF-8', '-jar', jar],
-            shell=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        return proc
-
-    def stop_test(self, proc: subprocess.Popen) -> [str]:
-        """
-        @deprecated
-        Stop jetty server.
-
-        NOTE
-        ====
-
-        Popen.communicat() won't work, which will read and terminate the process, leading halt as the java process is
-        running endlessly and no ETX char can be returned while reading stderr.
-
-        P = Popen()
-        p.communicate() # waiting the service to quit, which will not happen
-
-        :param proc:
-        :return:
-        """
-        def kill(pid):
-            process = psutil.Process(pid)
-            for p in process.children(recursive=True):
-                p.kill()
-            process.kill()
-
-        errlines = []
-
-        def reader(proc):
-            with proc.stderr as stdout:
-                for line in stdout:
-                    print(line.decode(), file=sys.stderr)
-                    errlines.append(line)
-
-        threading.Thread(target=reader, args=(proc,)).start()
-
-        time.sleep(0.1)
-        kill(proc.pid)
-
-        return errlines
-
-    def kill_bashport(self, port):
-        """
-        deprecated('Not correct')
-
-        Kill port listener, with bash command
-        :param port:
-        :return:
-        """
-        cmd = f"netstat -anp | grep :{port} | awk '{{print $7}}' | grep -Eo '[0-9]{1,10}' | xargs kill -9"
-        print(cmd)
-        p = subprocess.Popen(cmd)
-        p.communicate()
+    # def kill_bashport(self, port):
+    #     """
+    #     deprecated('Not correct')
+    #
+    #     Kill port listener, with bash command
+    #     :param port:
+    #     :return:
+    #     """
+    #     cmd = f"netstat -anp | grep :{port} | awk '{{print $7}}' | grep -Eo '[0-9]{1,10}' | xargs kill -9"
+    #     print(cmd)
+    #     p = subprocess.Popen(cmd)
+    #     p.communicate()
 

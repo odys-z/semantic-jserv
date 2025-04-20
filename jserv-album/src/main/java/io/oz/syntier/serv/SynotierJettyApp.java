@@ -100,14 +100,9 @@ public class SynotierJettyApp {
 
 	private static Winsrv winsrv;
 	public static void jvmStart(String[] args) {
-//		try {
-			SynotierJettyApp app = _main(null);
-			winsrv = new Winsrv("ok", app);
-			Utils.logi("=== Service jvmStart() finished [%s: %s] ===", winsrv.app.syngleton.synode(), winsrv.app.jserv);
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//			winsrv = new Winsrv(e.getClass().getName(), e.getMessage());
-//		}
+		SynotierJettyApp app = _main(null);
+		winsrv = new Winsrv("ok", app);
+		Utils.logi("=== Service jvmStart() finished [%s: %s] ===", winsrv.app.syngleton.synode(), winsrv.app.jserv);
 	}
 	
 	/**
@@ -235,20 +230,6 @@ public class SynotierJettyApp {
 			SynotierJettyApp app = boot(srcwebinf, config_xml, _0(args, settings_json))
 			.jserv(jserv)
 			.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
-			
-			// Ctrl+C
-//			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-//	            System.out.println("Received shutdown signal. Stopping Jetty server...");
-//	            try {
-//	                if (app.server != null && app.server.isStarted()) {
-//	                    app.server.stop();
-//	                    // app.server.join(); // Wait for server to stop
-//	                    System.out.println("Jetty server stopped gracefully.");
-//	                }
-//	            } catch (Exception e) {
-//	                System.err.println("Error during shutdown: " + e.getMessage());
-//	            }
-//	        }));
 			
 			return app;
 			

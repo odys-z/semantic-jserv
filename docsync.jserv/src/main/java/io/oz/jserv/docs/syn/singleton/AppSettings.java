@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
@@ -279,13 +280,19 @@ public class AppSettings extends Anson {
 	public int port;
 	public String port() { return String.valueOf(port); }
 
-	private HashMap<String, String> envars;
+	public HashMap<String, String> envars;
 
 	/**
 	 * Json file path.
 	 */
 	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	public String json;
+
+	/**
+	 * Configure for on-load callback event handling.
+	 * [0] handler class name implements {@link ISettingsLoaded}; [1:] args
+	 */
+	public String[] onloadHandler;
 
 	/**
 	 * Updated by {@link #setupJserv(SynodeConfig, AppSettings, String)},
@@ -311,7 +318,7 @@ public class AppSettings extends Anson {
 		settings.webinf = web_inf;
 		settings.json = abs_json;
 
-		return settings;
+		return settings.onLoad();
 	}
 	
 	/**
@@ -417,6 +424,21 @@ public class AppSettings extends Anson {
 			.nv(orgMeta.webroot, EnvPath.replaceEnv(cfg.org.webroot))
 			.whereEq(orgMeta.pk, cfg.org.orgId)
 			.u(st.instancontxt(cfg.sysconn, rob));
+	}
+
+	public AppSettings onLoad() throws IOException {
+		if (!isNull(onloadHandler)) {
+			try {
+				((ISettingsLoaded)Class
+						.forName(onloadHandler[0])
+						.getDeclaredConstructor()
+						.newInstance()).onload(this);
+			} catch (ReflectiveOperationException e) {
+				e.printStackTrace();
+				throw new IOException(e.getMessage());
+			}
+		}
+		return this;
 	}
 
 }

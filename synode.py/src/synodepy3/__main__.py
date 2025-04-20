@@ -79,6 +79,17 @@ def warn_msg(warn: str, details: object = None):
     return result
 
 
+def getJserval(synode: str, hostp: str, https: bool) -> str:
+    """
+    :param synode:
+    :param hostp: ip-or-host:port
+    :param https:
+    :return: the jserv lines (option for Android scan)
+    {synode}-{hostp}
+    http(s)://ip-or-host:port/jserv-album
+    """
+    return f'{synode}-{hostp}\n{"https" if https else "http"}://{hostp}/{jserv_url_path}'
+
 class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -92,32 +103,34 @@ class InstallerForm(QMainWindow):
         self.root_path = 'registry'
         self.cli = InstallerCli()
 
+    @staticmethod
+    def set_qr_label(label, text):
+        """
+        set qrcode image on QLabel
+
+        @param label: QLabel
+        @param text: text for the QR code
+        """
+        buf = std_io.BytesIO()
+        img = qrcode.make(text, border=1)
+        try:
+            img.save(buf, 'PNG')
+            qt_pixmap = QPixmap()
+            qt_pixmap.loadFromData(buf.getvalue(), 'PNG')
+            label.setPixmap(qt_pixmap)
+            label.setScaledContents(True)
+        except Exception as e:
+            # Weired exception raised from Image.save(), when it's importing GifImagePlugin.
+            # Similar issue: https://github.com/python-pillow/Pillow/issues/2803
+            # This error can occur and disappear without any clear conditions.
+            label.setText(text)
+            err_msg(f'Generating QR Code Error. Please generate QR Code for:\n{text}', e)
+
     def gen_qr(self) -> Optional[str]:
         """
         Generate ip, port and QR.
         :return:
         """
-        def set_qr_label(label, text):
-            """
-            set qrcode image on QLabel
-
-            @param label: QLabel
-            @param text: text for the QR code
-            """
-            buf = std_io.BytesIO()
-            img = qrcode.make(text, border=1)
-            try:
-                img.save(buf, 'PNG')
-                qt_pixmap = QPixmap()
-                qt_pixmap.loadFromData(buf.getvalue(), 'PNG')
-                label.setPixmap(qt_pixmap)
-                label.setScaledContents(True)
-            except Exception as e:
-                # Weired exception raised from Image.save(), when it's importing GifImagePlugin.
-                # Similar issue: https://github.com/python-pillow/Pillow/issues/2803
-                # This error can occur and disappear without any clear conditions.
-                label.setText(text)
-                err_msg(f'Generating QR Code Error. Please generate QR Code for:\n{text}', e)
 
         if len(self.ui.txtIP.text()) < 7:
             try:
@@ -140,9 +153,10 @@ class InstallerForm(QMainWindow):
 
         iport = f'{ip}:{port}'
         synode = self.ui.txtSynode.text()
-        data = f'{synode}-{iport}\nhttp://{iport}/{jserv_url_path}'
+        data = getJserval(synode, iport, False)
 
-        set_qr_label(self.ui.lbQr, data)
+        InstallerForm.set_qr_label(self.ui.lbQr, data)
+
         return {"ip": ip, "port": port, "synodepy3": synode}
 
     def validate(self) -> bool:
@@ -191,14 +205,14 @@ class InstallerForm(QMainWindow):
                     msg_box("Setup successfully.")
                 except FileNotFoundError or IOError as e:
                     # Changing vol path can reach here
-                    err_msg('Setting up synodepy3 has failed.', e)
+                    err_msg('Setting up synodepy3 is failed.', e)
                 except PortfolioException as e:
                     warn_msg('Configuration is updated with errors. Check the details.\nIf this is not switching volume, that is not correct' , e)
 
-                self.updateUiByInstalled()
+                self.enableServInstall()
 
         except PortfolioException as e:
-            err_msg('Setting up synodepy3 has failed.', e)
+            err_msg('Setting up synodepy3 is failed.', e)
 
     def test_run(self):
         if self.validate():
@@ -211,7 +225,7 @@ class InstallerForm(QMainWindow):
                 self.cli.test_in_term()
                 qr_data = self.gen_qr()
                 print(qr_data)
-                self.updateUiByInstalled()
+                self.enableServInstall()
             except PortfolioException as e:
                 self.ui.lbQr.clear()
                 err_msg('Start Portfolio service failed', e.msg)
@@ -224,6 +238,8 @@ class InstallerForm(QMainWindow):
 
         install_jserv()
         install_htmlsrv()
+
+        self.gen_qr()
 
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
@@ -246,7 +262,16 @@ class InstallerForm(QMainWindow):
             json = self.cli.settings
             self.bindSettings(json)
 
-            self.updateUiByInstalled()
+            self.enableServInstall()
+
+            if self.cli.isinstalled(json.volume) and self.cli.hasrun():
+                # self.gen_qr()
+                ip = InstallerCli.reportIp()
+                port = self.cli.settings.port
+
+                InstallerForm.set_qr_label(self.ui.lbQr, getJserval(self.cli.registry.config.synid, f'{ip}:{port}', self.cli.registry.config.https))
+
+            # ping jserv
 
         if event.type() == QEvent.Type.Show:
             bindInitial(self.root_path)
@@ -273,8 +298,6 @@ class InstallerForm(QMainWindow):
                 self.ui.bWinserv.clicked.connect(self.installWinsrv)
             else:
                 self.ui.bWinserv.setEnabled(False)
-
-            # self.httpd = InstallerCli.start_web()
 
     def bindIdentity(self, registry: AnRegistry):
         def findUser(usrs: [SyncUser], usrid):
@@ -308,7 +331,7 @@ class InstallerForm(QMainWindow):
             self.ui.jservLines.setText(
                 '# Error: No configuration has been loaded. Check resource root path setting.')
 
-    def updateUiByInstalled(self):
+    def enableServInstall(self):
         installed = self.cli.isinstalled()
         if Utils.iswindows():
             self.ui.bWinserv.setEnabled(installed)

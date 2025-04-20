@@ -57,6 +57,7 @@ class SynodeConfig(Anson):
 
     def __init__(self):
         super().__init__()
+        self.https = False
 
 
 @dataclass()

@@ -1,6 +1,7 @@
 {
   "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "envars": {"WEBROOT_HUB": "192.168.0.54:8900"},
+  "envars": {"WEBROOT_HUB": "192.168.0.72:8900"},
+  "startHandler": ["io.oz.srv.JservLocalHandler", "private/host.json", "http://%s:8964/jserv-album"],
   "vol_name": "VOLUME_HOME",
   "volume": "C:/Users/Alice/github/semantic-jserv/jserv-album/vol",
   "port": 8964,
