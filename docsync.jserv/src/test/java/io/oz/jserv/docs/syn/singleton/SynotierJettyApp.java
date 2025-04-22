@@ -21,6 +21,7 @@ import org.eclipse.jetty.ee8.servlet.FilterMapping;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
+
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
@@ -29,6 +30,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
@@ -89,34 +91,17 @@ public class SynotierJettyApp {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-	String jserv;
-	public String jserv() { return jserv; }
-	public SynotierJettyApp jserv(String url) {
-		jserv = url;
-		return this;
+//	String jserv;
+//	public String jserv() { return jserv; }
+//	public SynotierJettyApp jserv(String url) {
+//		jserv = url;
+//		return this;
+//	}
+	public String jserv() {
+		return this.syngleton.settings.jserv(this.syngleton.synode());
 	}
 
-	/**
-	 * @param args [0] settings.xml
-	 * @throws Exception
-	 */
-	public static void main(String[] args) {
-		try {
-			// For Eclipse's running as Java Application
-			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
-			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
-
-			String jserv = AppSettings.checkInstall(servpath, srcwebinf, config_xml, settings_json, true);
-
-			boot(srcwebinf, config_xml, _0(args, settings_json))
-			.jserv(jserv)
-			.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
-		} catch (Exception e) {
-			e.printStackTrace();
-			
-			warn("Fatal errors there. The process is stopped.");
-			System.exit(-1);
-		}
+	public static void jvmStart(String[] args) {
 	}
 	
 	/**
@@ -126,10 +111,78 @@ public class SynotierJettyApp {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void stop(String[] args) throws Exception {
-		// if (server != null) server.stop();
+	public static void jvmStop(String[] args) {
+	}
+
+	public static void main(String[] args) {
+		SynotierJettyApp app = _main(args);
+		if (app.server != null)
+			try {
+				app.server.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+	}
+
+	/**
+	 * @param args [0] settings.xml
+	 * @throws Exception
+	 */
+	public static SynotierJettyApp _main(String[] args) {
+		try {
+			// For Eclipse's running as Java Application
+			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
+			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
+
+			AppSettings settings = AppSettings.checkInstall(servpath,
+					srcwebinf, config_xml, _0(args, settings_json), true);
+
+			SynotierJettyApp app = boot(srcwebinf, config_xml, settings)
+					.afterboot(settings)
+					.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
+
+			return app;
+		} catch (Exception e) {
+			e.printStackTrace();
+			
+			warn("Fatal errors there. The process is stopped.");
+			System.exit(-1);
+			return null;
+		}
 	}
 	
+	/**
+	 * Expose locally
+	 * @return this
+	 */
+	SynotierJettyApp afterboot(AppSettings settings) {
+		if (!isNull(settings.startHandler)) {
+			logi("Exposing locally by %s, %s ...", (Object[]) settings.startHandler);
+			try {
+				((ISynodeLocalExposer)Class
+					.forName(settings.startHandler[0])
+					.getDeclaredConstructor()
+					.newInstance())
+					.onExpose(settings, settings.jserv(this.syngleton.synode()));
+			} catch (Exception e) {
+				warn("Exposing local resources failed!");
+				e.printStackTrace();
+			}
+		}
+
+		return this;
+	}
+	
+	/**
+	 * @deprecated only for tests
+	 * 
+	 * @param webinf
+	 * @param config_xml
+	 * @param settings_json
+	 * @param oe
+	 * @return synotier app
+	 * @throws Exception
+	 */
 	public static SynotierJettyApp boot(String webinf, String config_xml, String settings_json,
 			PrintstreamProvider ... oe) throws Exception {
 
@@ -180,9 +233,8 @@ public class SynotierJettyApp {
 		AppSettings.updateOrgConfig(cfg, settings);
 		
 		return createSyndoctierApp(cfg, settings,
-									((ArrayList<SyncUser>) YellowPages.robots()).get(0),
-									webinf, config_xml,
-									f("%s/%s", $vol_home, "syntity.json"))
+							((ArrayList<SyncUser>) YellowPages.robots()).get(0),
+							webinf, config_xml, f("%s/%s", $vol_home, "syntity.json"))
 
 				.start(isNull(oe) ? () -> System.out : oe[0],
 					  !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
@@ -225,6 +277,7 @@ public class SynotierJettyApp {
 
 		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(),
+				new Echo(),
 				new HeartLink())
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)
@@ -351,8 +404,8 @@ public class SynotierJettyApp {
 	}
 
 	public SynotierJettyApp print(String... msg) {
-		Utils.logi("%s\nSynode %s: %s",
-				_0(msg, ""), syngleton.synode(), jserv);
+		String qr = f("%s\n%s", syngleton.synode(), syngleton.settings.jserv(syngleton.synode()));
+		Utils.logi("%s\nSynode %s", _0(msg, ""), qr);
 		return this;
 	}
 }

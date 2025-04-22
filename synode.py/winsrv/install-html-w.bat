@@ -1,6 +1,6 @@
 @REM @echo "Run this file from upper dir, e. g. run: winsrv/install-html-w.bat"
 
-@set jar-ver=0.1.2
+@set jar-ver=0.1.3
 @set serv_name="Album Html-web %jar-ver%"
 @set classname=HtmlServer
 @set full_classname=io.oz.srv.HtmlServer

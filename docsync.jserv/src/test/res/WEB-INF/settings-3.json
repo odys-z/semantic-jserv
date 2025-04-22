@@ -2,7 +2,7 @@
  "vol_name": "VOLUME_3",
  "volume": "../v-3",
  "port": 8967,
- "jservs": {"X": "127.0.0.1:8964/jserv-alubm",
+ "jservs": {"X": "127.0.0.1:8964/jserv-album",
       "Y": "127.0.0.1:8965/jserv-album",
       "Z": "127.0.0.1:8966/jserv-album"},
  "envars": {

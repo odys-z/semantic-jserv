@@ -8,5 +8,6 @@
       "Z": "http://127.0.0.1:8966/jserv-album"},
   "envars": null,
   "installkey": null,
-  "rootkey": "0123456789ABCDEF"
+  "rootkey": "0123456789ABCDEF",
+  "startHandler": null
 }

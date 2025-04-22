@@ -138,6 +138,11 @@
 		<version>${jetty.version}</version>
     </dependency>
 
+	<dependency>
+		<groupId>io.github.odys-z</groupId>
+		<artifactId>antson</artifactId>
+		<version>0.9.118-SNAPSHOT</version>
+	</dependency>
   </dependencies>
 
   <build>

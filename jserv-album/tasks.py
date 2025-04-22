@@ -43,8 +43,8 @@ def create_volume(c):
 def build(c):
     buildcmds = [
         ['../../anclient/examples/example.android', 'gradlew assembleRelease'],
-        ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portflio-{version}.apk'],
-        ['.', f"echo {{\"apk\": \"portflio-{version}.apk\"}} > web-dist/res-vol/res.json"],
+        ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{version}.apk'],
+        ['.', f"echo {{\"apk\": \"portfolio-{version}.apk\"}} > web-dist/res-vol/res.json"],
         ['.', 'cat web-dist/res-vol/res.json'],
 
         ['../../anclient/examples/example.js/album', 'webpack'],

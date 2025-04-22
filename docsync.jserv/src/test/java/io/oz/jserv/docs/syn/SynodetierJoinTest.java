@@ -198,11 +198,10 @@ public class SynodetierJoinTest {
 			// DB is dirty when testing again
 			Syngleton.cleanDomain(config);
 
-			// main()
-			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson, true);
+			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson, true);
 
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, stjson)
-						.jserv(jserv)
+						// .jserv(jserv)
 						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
 			// checker

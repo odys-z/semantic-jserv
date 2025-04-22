@@ -4,7 +4,6 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
@@ -190,6 +189,9 @@ public class AppSettings extends Anson {
 		try { ip = getLocalIp();
 		} catch (IOException e) {
 			e.printStackTrace();
+			// TODO FIXME 
+			// Setup as an offline synode 
+			return null;
 		}
 
 		IUser robot = DATranscxt.dummyUser();
@@ -199,14 +201,16 @@ public class AppSettings extends Anson {
 					isblank(jserv_album) ? "" :
 					jserv_album.startsWith("/") ? jserv_album : "/" + jserv_album);
 
-			if (!isblank(synconn) && synm != null) {
-				DATranscxt tb = new DATranscxt(synconn);
-				tb.update(synm.tbl, robot)
-				.nv(synm.jserv, servurl)
-				.whereEq(synm.pk, mysid)
-				// .whereEq(synm.domain, domain)
-				.u(tb.instancontxt(synconn, robot));
-			}
+//			if (!isblank(synconn) && synm != null) {
+			DATranscxt tb = new DATranscxt(synconn);
+			tb.update(synm.tbl, robot)
+			  .nv(synm.jserv, servurl)
+			  .whereEq(synm.pk, mysid)
+			  .u(tb.instancontxt(synconn, robot));
+//			}
+			
+			this.jservs.put(mysid, servurl);
+
 			return servurl;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -290,16 +294,9 @@ public class AppSettings extends Anson {
 
 	/**
 	 * Configure for on-load callback event handling.
-	 * [0] handler class name implements {@link ISettingsLoaded}; [1:] args
+	 * [0] handler class name which implements {@link ISynodeLocalExposer}; [1:] path to private/host.json
 	 */
-	public String[] onloadHandler;
-
-	/**
-	 * Updated by {@link #setupJserv(SynodeConfig, AppSettings, String)},
-	 * reporting runtime local jserv.
-	 */
-	// @AnsonField(ignoreTo=true, ignoreFrom=true)
-	// public String local_serv; 
+	public String[] startHandler;
 
 	/**
 	 * Should only be used in win-serv mode.
@@ -318,7 +315,7 @@ public class AppSettings extends Anson {
 		settings.webinf = web_inf;
 		settings.json = abs_json;
 
-		return settings.onLoad();
+		return settings;
 	}
 	
 	/**
@@ -373,7 +370,7 @@ public class AppSettings extends Anson {
 	 * @return local jserv (IP is self-detected)
 	 * @throws Exception 
 	 */
-	public static String checkInstall(String url_path, String webinf, String config_xml, String settings_json, boolean forceTest) throws Exception {
+	public static AppSettings checkInstall(String url_path, String webinf, String config_xml, String settings_json, boolean forceTest) throws Exception {
 		logi("[INSTALL-CHECK] checking ...");
 		Configs.init(webinf);
 
@@ -395,20 +392,31 @@ public class AppSettings extends Anson {
 
 		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 		
+		/*
 		String jserv;
 		if (!isblank(settings.installkey)) {
 			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
 			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
 			
-			// also update db
+			// also update jserv
 			jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		}
 		else {
 			logi("[INSTALL-CHECK] Starting application without db setting ...", config_xml);
-			jserv = settings.updateLocalJserv(cfg.https, url_path, null, null, null) ;
+			// also update jserv
+			// jserv = settings.updateLocalJserv(cfg.https, url_path, null, null, null) ;
+			jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		}
+		*/
+		if (!isblank(settings.installkey)) {
+			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
+			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
+		}
+		else 
+			logi("[INSTALL-CHECK] Starting application without db setting ...", config_xml);
+		String jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		
-		return jserv; // settings.local_serv
+		return settings; // settings.local_serv
 	}
 
 	
@@ -426,19 +434,23 @@ public class AppSettings extends Anson {
 			.u(st.instancontxt(cfg.sysconn, rob));
 	}
 
-	public AppSettings onLoad() throws IOException {
-		if (!isNull(onloadHandler)) {
-			try {
-				((ISettingsLoaded)Class
-						.forName(onloadHandler[0])
-						.getDeclaredConstructor()
-						.newInstance()).onload(this);
-			} catch (ReflectiveOperationException e) {
-				e.printStackTrace();
-				throw new IOException(e.getMessage());
-			}
-		}
-		return this;
+	public String jserv(String nid) {
+		return jservs.get(nid);
 	}
+
+//	public AppSettings onLoad() throws IOException {
+//		if (!isNull(startHandler)) {
+//			try {
+//				((ISynodeLocalExposer)Class
+//						.forName(startHandler[0])
+//						.getDeclaredConstructor()
+//						.newInstance()).onload(this);
+//			} catch (ReflectiveOperationException e) {
+//				e.printStackTrace();
+//				throw new IOException(e.getMessage());
+//			}
+//		}
+//		return this;
+//	}
 
 }

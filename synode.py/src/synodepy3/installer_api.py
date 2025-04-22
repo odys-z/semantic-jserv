@@ -5,7 +5,6 @@ import re
 import shutil
 import socket
 import subprocess
-import threading
 import time
 import zipfile
 from glob import glob
@@ -13,11 +12,8 @@ from pathlib import Path
 from socketserver import TCPServer
 from typing import cast
 
-import psutil
 from anson.io.odysz.ansons import Anson
 from anson.io.odysz.common import Utils, LangExt
-
-import sys
 
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from src.io.oz.syn import AnRegistry
@@ -167,6 +163,7 @@ webroot = 'WEBROOT_HUB'
 
 host_private = 'private'
 host_json = f'{host_private}/host.json'
+implISettingsLoaded = 'io.oz.syntier.serv.WebsrvLocalHandler'
 
 album_web_dist = 'web-dist'
 
@@ -458,7 +455,11 @@ class InstallerCli:
 
         # Update config.WEBROOT_HUB with local IP and port by ui.
         self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
-        self.settings.StartHandler(host_json)
+
+        self.settings.onloadHandler = [implISettingsLoaded, host_json,
+                                       f'{'https' if self.registry.config.https else 'http'}://%s:%s/{jserv_url_path}']
+        print(self.settings.onloadHandler)
+
         self.settings.toFile(os.path.join(web_inf, settings_json))
 
     def clean_install(self, vol: str = None):

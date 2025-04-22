@@ -41,7 +41,7 @@ class PortfolioException(Exception):
 @dataclass
 class AppSettings(Anson):
     envars: dict
-    startHandler: [str]
+    onloadHandler: [str]
     rootkey: str    # | None # test 3.12
     installkey: Optional[str] # test 3.9
 
@@ -53,7 +53,7 @@ class AppSettings(Anson):
     def __init__(self):
         super().__init__()
         self.envars = {}
-        self.startHandler = ['io.oz.srv.JservLocalHandler', 'private/host.json', 'http://%s:8964/jserv-album'],
+        self.onloadHandler = ['io.oz.syntier.serv.WebsrvLocalHandler', 'private/host.json', 'http://%s:%s/jserv-album'],
 
     @overload
     def Volume(self):
@@ -100,17 +100,18 @@ class AppSettings(Anson):
     def jservLines(self):
         return [':\t'.join([k, self.jservs[k]]) for k in self.jservs]
 
-    def StartHandler(self, pth_hostjson: str = 'private/host.json'):
-        """
-        Update startHandler = ['io.oz.srv.JservLocalHandler', _host_json, f'http://%s:{self.port}/jserv-album']
-        :param pth_hostjson:
-        :return:
-        """
-        if pth_hostjson == None or len(pth_hostjson) <= 1:
-            pth_hostjson = 'private/host.json'
-
-        # if port == None: port = 8964
-
-        self.startHandler = ['io.oz.srv.JservLocalHandler', pth_hostjson, f'http://%s:{self.port}/jserv-album']
-        return self
+    # def settingsLoadedHandler(self, pth_hostjson: str = 'private/host.json', implISettingsLoaded: str ='io.oz.syntier.serv.WebsrvLocalHandler'):
+    #     """
+    #     Update startHandler = ['io.oz.srv.JservLocalHandler', _host_json, f'http://%s:{self.port}/jserv-album']
+    #     :param pth_hostjson:
+    #     :param implISettingsLoaded: ISettingsLoaded implementation class
+    #     :return:
+    #     """
+    #     if pth_hostjson == None or len(pth_hostjson) <= 1:
+    #         pth_hostjson = 'private/host.json'
+    #
+    #     # if port == None: port = 8964
+    #
+    #     self.onloadHandler = [implISettingsLoaded, pth_hostjson, f'http://%s:%s/jserv-album']
+    #     return self
 

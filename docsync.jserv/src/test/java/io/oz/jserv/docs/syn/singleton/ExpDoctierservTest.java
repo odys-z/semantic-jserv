@@ -84,7 +84,7 @@ public class ExpDoctierservTest {
 	}
 	
 	/**
-	 * Use -Dwati-clients for waiting client's pushing, by running {@link DoclientierTest#testSynclientUp()}.
+	 * Use -Dwait-clients for waiting client's pushing, by running {@link DoclientierTest#testSynclientUp()}.
 	 * @throws Exception
 	 */
 	@Test
@@ -136,7 +136,7 @@ public class ExpDoctierservTest {
 					lights[i] = true;
 				});
 		}
-		awaitAll(lights);
+		awaitAll(lights, -1);
 
 		// This won't pass if h_photos is not cleared
 		ck[Z].doc(0);
@@ -258,10 +258,10 @@ public class ExpDoctierservTest {
 			Syngleton.cleanSynssions(cfgs[i]);
 
 			// main()
-			String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
+			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
 
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, "settings.json")
-						.jserv(jserv)
+						// .jserv(jserv)
 						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
 			// checker
@@ -316,7 +316,7 @@ public class ExpDoctierservTest {
 		String[] jrvs = new String[jetties.length];
 
 		for (int i = 0; i < jetties.length; i++) 
-			jrvs[i] = jetties[i].jserv;
+			jrvs[i] = jetties[i].jserv();
 
 		return jrvs;
 	}

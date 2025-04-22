@@ -65,8 +65,7 @@ class SynotierJettyAppTest {
 		assertNull(settings.rootkey);
 		assertEquals("0123456789ABCDEF", settings.installkey);
 
-		@SuppressWarnings("unused")
-		String jserv = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, "settings.json", true);
+		settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, config_xml, "settings.json", true);
 
 		settings = AppSettings.load(webinf, "settings.json");
 		assertNull(settings.installkey);
