@@ -265,11 +265,9 @@ class InstallerCli:
         return (self.settings is not None and
                 (volpath_ui is None and self.validateVol(self.settings.Volume()) is None or
                  volpath_ui is not None and self.validateVol(volpath_ui) is None))
-                # and LangExt.len(self.settings.rootkey) > 0)
 
     def hasrun(self, volpath_ui = None):
         volpath = LangExt.ifnull(volpath_ui, self.settings.Volume())
-        # data = self.loadSettings(volpath_ui) if volpath_ui is not None else self.settings
         data = Anson.from_file(volpath_ui) if volpath_ui is not None else self.settings
 
         psys_db = os.path.join(volpath, sys_db)
@@ -456,8 +454,9 @@ class InstallerCli:
         # Update config.WEBROOT_HUB with local IP and port by ui.
         self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
 
-        self.settings.onloadHandler = [implISettingsLoaded, host_json,
-                                       f'{'https' if self.registry.config.https else 'http'}://%s:%s/{jserv_url_path}']
+        # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
+        self.settings.onloadHandler = [implISettingsLoaded, host_json, webroot, web_port]
+
         print(self.settings.onloadHandler)
 
         self.settings.toFile(os.path.join(web_inf, settings_json))
