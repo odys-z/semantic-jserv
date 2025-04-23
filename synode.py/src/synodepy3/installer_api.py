@@ -15,7 +15,7 @@ from typing import cast
 from anson.io.odysz.ansons import Anson
 from anson.io.odysz.common import Utils, LangExt
 
-from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
+from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, implISettingsLoaded, web_port, webroot
 from src.io.oz.syn import AnRegistry
 
 
@@ -41,24 +41,6 @@ def decode(warns: bytes):
             else:
                 lines.append(str(b))
     return lines
-
-
-# def get_os():
-#     """
-#     :return: Windows | Linux | macOS
-#     """
-#     if os.name == 'nt':
-#         return 'Windows'
-#     elif os.name == 'posix':
-#         if sys.platform.startswith('linux') or sys.platform.startswith('freebsd'):
-#           return 'Linux'
-#         elif sys.platform.startswith('darwin'):
-#             return 'macOS'
-#     return 'Unknown'
-
-
-# def iswindows():
-#     return get_os() == 'Windows'
 
 
 def valid_registry(reg: AnRegistry):
@@ -152,9 +134,6 @@ def checkinstall_exiftool():
         return check
 
 
-web_port = 8900
-webroot = 'WEBROOT_HUB'
-
 """
     Suppose there are both github/Anclient & github/semantic-jserv,
     then in semantic-jserv/synode.py3:
@@ -163,7 +142,6 @@ webroot = 'WEBROOT_HUB'
 
 host_private = 'private'
 host_json = f'{host_private}/host.json'
-implISettingsLoaded = 'io.oz.syntier.serv.WebsrvLocalHandler'
 
 album_web_dist = 'web-dist'
 
@@ -455,9 +433,8 @@ class InstallerCli:
         self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
 
         # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
-        self.settings.onloadHandler = [implISettingsLoaded, host_json, webroot, web_port]
-
-        print(self.settings.onloadHandler)
+        self.settings.startHandler = [implISettingsLoaded, host_json, webroot, web_port]
+        print(self.settings.startHandler)
 
         self.settings.toFile(os.path.join(web_inf, settings_json))
 

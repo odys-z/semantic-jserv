@@ -8,6 +8,10 @@ from anson.io.odysz.ansons import Anson
 jserv_sep = ' '
 synode_sep = ':'
 
+implISettingsLoaded = 'io.oz.syntier.serv.WebsrvLocalHandler'
+web_port = 8900
+webroot = 'WEBROOT_HUB'
+
 
 class PortfolioException(Exception):
     """
@@ -41,7 +45,7 @@ class PortfolioException(Exception):
 @dataclass
 class AppSettings(Anson):
     envars: dict
-    onloadHandler: [str]
+    startHandler: [str]
     rootkey: str    # | None # test 3.12
     installkey: Optional[str] # test 3.9
 
@@ -53,7 +57,7 @@ class AppSettings(Anson):
     def __init__(self):
         super().__init__()
         self.envars = {}
-        self.onloadHandler = ['io.oz.syntier.serv.WebsrvLocalHandler', 'private/host.json', 'http://%s:%s/jserv-album'],
+        self.startHandler = [implISettingsLoaded, 'private/host.json', webroot, web_port]
 
     @overload
     def Volume(self):
@@ -112,6 +116,6 @@ class AppSettings(Anson):
     #
     #     # if port == None: port = 8964
     #
-    #     self.onloadHandler = [implISettingsLoaded, pth_hostjson, f'http://%s:%s/jserv-album']
+    #     self.startHandler = [implISettingsLoaded, pth_hostjson, f'http://%s:%s/jserv-album']
     #     return self
 
