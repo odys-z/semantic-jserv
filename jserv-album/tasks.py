@@ -53,6 +53,7 @@ def build(c):
         ['../synode.py', lambda: f'set SYNODE_VERSION={version} && rm -rf dist && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && rm -rf dist && python3 -m build'],
     ]
 
+    print('--------------    buid   ------------------')
     for pth, cmd in buildcmds:
         try:
             if isinstance(cmd, LambdaType):
@@ -104,6 +105,10 @@ def make(c, zip=f'jserv-portfolio-{version}.zip'):
         return any(fnmatch.fnmatch(os.path.basename(filename), pattern) for pattern in patterns)
 
     try:
+
+        print('-------------- resources ------------------')
+        print(resources)
+
         err = False
 
         # Ensure the output directory for the ZIP exists

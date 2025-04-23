@@ -8,7 +8,8 @@ from anson.io.odysz.ansons import Anson
 jserv_sep = ' '
 synode_sep = ':'
 
-implISettingsLoaded = 'io.oz.syntier.serv.WebsrvLocalHandler'
+implISettingsLoaded = 'io.oz.syntier.serv.WebsrvLocalExposer'
+
 web_port = 8900
 webroot = 'WEBROOT_HUB'
 
