@@ -15,8 +15,11 @@ from typing import cast
 from anson.io.odysz.ansons import Anson
 from anson.io.odysz.common import Utils, LangExt
 
-from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, implISettingsLoaded, web_port, webroot
-from src.io.oz.syn import AnRegistry
+from src.io.oz.syntier.srv import ExternalHosts
+from src.io.oz.jserv.docs.syn.singleton import PortfolioException,\
+    AppSettings, implISettingsLoaded, web_port, webroot, \
+    sys_db, syn_db, syntity_json, getJservUrl
+from src.io.oz.syn import AnRegistry, SynodeConfig
 
 
 def ping(peerid: str, peerserv: str):
@@ -141,24 +144,20 @@ def checkinstall_exiftool():
 """
 
 host_private = 'private'
-host_json = f'{host_private}/host.json'
+web_host_json = f'{host_private}/host.json'
 
 album_web_dist = 'web-dist'
 
-jserv_url_path = 'jserv-album'
-"""
-    /jserv-album
-"""
 dictionary_json = 'dictionary.json'
 settings_json = 'settings.json'
 web_inf = 'WEB-INF'
 index_html = 'index.html'
-syn_db = 'doc-jserv.db'
-sys_db = 'jserv-main.db'
+# syn_db = 'doc-jserv.db'
+# sys_db = 'jserv-main.db'
 jserv_07_jar = 'jserv-album-0.7.1.jar'
-doc_jserv_db = 'doc-jserv.db'
-jserv_main_db = 'jserv-main.db'
-syntity_json = 'syntity.json'
+# doc_jserv_db = 'doc-jserv.db'
+# jserv_main_db = 'jserv-main.db'
+# syntity_json = 'syntity.json'
 exiftool_zip = 'exiftool.zip'
 exiftool_v_exe = 'exiftool*.exe'
 exiftool_exe = 'exiftool.exe'
@@ -291,11 +290,11 @@ class InstallerCli:
             Utils.warn('TODO: check exiftool on {0}', Utils.get_os())
 
         volume = self.settings.Volume()
-        if (not os.path.isfile(os.path.join(volume, jserv_main_db))
-                or not os.path.isfile(os.path.join(volume, doc_jserv_db))
+        if (not os.path.isfile(os.path.join(volume, sys_db))
+                or not os.path.isfile(os.path.join(volume, syn_db))
                 or not os.path.isfile(os.path.join(volume, syntity_json))):
             raise FileNotFoundError(
-                f'Some initial database or configure files cannot be found in {volume}: {jserv_main_db}, {doc_jserv_db}, {syntity_json}')
+                f'Some initial database or configure files cannot be found in {volume}: {sys_db}, {syn_db}, {syntity_json}')
         return True
 
     def check_src_jar_db(self):
@@ -307,10 +306,10 @@ class InstallerCli:
         p_jar = os.path.join('bin/', jserv_07_jar)
         if not os.path.isfile(p_jar):
             raise FileNotFoundError(f'Synode service package is missing: {p_jar}')
-        if (not os.path.isfile(os.path.join('volume', jserv_main_db))
-                or not os.path.isfile(os.path.join('volume', doc_jserv_db))):
+        if (not os.path.isfile(os.path.join('volume', sys_db))
+                or not os.path.isfile(os.path.join('volume', syn_db))):
             raise FileNotFoundError(
-                f'Some initial database or configure files cannot be found in volume: {jserv_main_db}, {doc_jserv_db}')
+                f'Some initial database or configure files cannot be found in volume: {sys_db}, {syn_db}')
         return True
 
     def peers_find(self, id):
@@ -370,7 +369,7 @@ class InstallerCli:
             self.registry.config.syncIns = float(syncins)
 
         if port is not None and len(port) > 1:
-            InstallerCli.update_private(int(port))
+            InstallerCli.update_private(self.registry.config, self.settings)
 
         for k in envars:
             self.settings.envars[k] = envars[k]
@@ -399,9 +398,22 @@ class InstallerCli:
         :param volpath:
         :return:
         """
+
         self.check_src_jar_db()
 
-        # volume
+        ########## settings
+        # Update config.WEBROOT_HUB with local IP and port by ui.
+        self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
+
+        # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
+        self.settings.startHandler = [implISettingsLoaded,
+                                      f'{album_web_dist}/{web_host_json}',
+                                      webroot, web_port]
+        print(self.settings.startHandler)
+
+        self.settings.toFile(os.path.join(web_inf, settings_json))
+
+        ########## volume
         path_v = Path(LangExt.ifnull(volpath, self.settings.Volume()))
 
         if not Path.exists(path_v):
@@ -414,29 +426,24 @@ class InstallerCli:
 
         self.registry.toFile(os.path.join(path_v, dictionary_json))
 
-        v_jservdb_pth = os.path.join(path_v, doc_jserv_db)
-        v_main_db_pth = os.path.join(path_v, jserv_main_db)
+        v_jservdb_pth = os.path.join(path_v, syn_db)
+        v_main_db_pth = os.path.join(path_v, sys_db)
         v_syntity_pth = os.path.join(path_v, syntity_json)
 
         if not Path.exists(Path(v_jservdb_pth)) and not Path.exists(Path(v_main_db_pth)):
             shutil.copy2(os.path.join(respth if LangExt.isblank(respth) is not None else '.', syntity_json),
                          v_syntity_pth)
-            shutil.copy2(os.path.join("volume", doc_jserv_db), v_jservdb_pth)
-            shutil.copy2(os.path.join("volume", jserv_main_db), v_main_db_pth)
+            shutil.copy2(os.path.join("volume", syn_db), v_jservdb_pth)
+            shutil.copy2(os.path.join("volume", sys_db), v_main_db_pth)
         else:
             # Prevent deleting tables by JettypApp's checking installation.
             if not LangExt.isblank(self.settings.installkey) and LangExt.isblank(self.settings.rootkey):
                 self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
             Utils.warn(f'volume is set to {path_v}.\nignoring existing database:\n{v_main_db_pth}\n{v_jservdb_pth}')
+            self.settings.toFile(os.path.join(web_inf, settings_json))
 
-        # Update config.WEBROOT_HUB with local IP and port by ui.
-        self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
-
-        # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
-        self.settings.startHandler = [implISettingsLoaded, host_json, webroot, web_port]
-        print(self.settings.startHandler)
-
-        self.settings.toFile(os.path.join(web_inf, settings_json))
+        # web/host.json
+        InstallerCli.update_private(self.registry.config, self.settings)
 
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)
@@ -503,22 +510,39 @@ class InstallerCli:
             print(e)
 
     @staticmethod
-    def update_private(jservport: int):
+    def update_private(config: SynodeConfig, settings: AppSettings):
         """
-        Update private/host.json/{host: url}
+        Update private/host.json/{host: url}.
+        Write boilerplate to host.json, not solid values
         :param jservport:
+        :param config:
         :return:
         """
         prv_path = os.path.join(album_web_dist, host_private)
         if not os.path.exists(prv_path):
             os.mkdir(prv_path)
 
-        host_path = os.path.join(album_web_dist, host_json)
-        try: os.remove(host_path)
-        except FileNotFoundError: pass
+        webhost_pth: str = os.path.join(album_web_dist, web_host_json)
 
-        with open(host_path, "w") as file:
-            file.write(f'{{"host": "http://{InstallerCli.reportIp()}:{jservport}/{jserv_url_path}"}}')
+        if webhost_pth is not None:
+            # ip = InstallerCli.reportIp()
+            jsrvhost: str = getJservUrl(config.https, f'%s:{settings.port}')
+
+            hosts: ExternalHosts
+            try: hosts = cast(ExternalHosts, Anson.from_file(webhost_pth))
+            except: hosts = ExternalHosts()
+
+            hosts.host = config.synid
+            # hosts.localip = ip
+            hosts.syndomx.update({'domain': config.domain})
+
+            for sid, jurl in settings.jservs.items():
+                if sid == config.synid:
+                    hosts.syndomx.update({sid: jsrvhost})
+                else:
+                    hosts.syndomx.update({sid: jurl})
+
+            hosts.toFile(webhost_pth)
 
     @staticmethod
     def stop_web(httpd: TCPServer):
@@ -528,8 +552,7 @@ class InstallerCli:
             except OSError as e:
                 print(e)
 
-    @staticmethod
-    def start_web(webport=8900, jservport=8964):
+    def start_web(self, webport=8900, jservport=8964):
         import http.server
         import socketserver
         import threading
@@ -582,14 +605,14 @@ class InstallerCli:
             except Exception as e:
                 print(f"An unexpected error occurred: {e}")
 
-
         if not os.path.isdir(album_web_dist):
             raise PortfolioException(f'Cannot find web root folder: {album_web_dist}')
         if not os.path.isfile(os.path.join(album_web_dist, index_html)):
             raise FileNotFoundError(f'Cannot find {index_html} in {album_web_dist}')
     
-        InstallerCli.update_private(jservport)
-    
+        # InstallerCli.update_private(jservport)
+        # InstallerCli.update_private(self.registry.config, self.settings)
+
         thr = threading.Thread(target=create_server)
         thr.start()
 
@@ -600,93 +623,3 @@ class InstallerCli:
     
         print(httpdeamon[0])
         return httpdeamon[0], thr
-
-    # def runjserv_deprecated(self) -> subprocess.Popen:
-    #     """
-    #     @deprecated
-    #     This method is used for testing running jserv without in a terminal.
-    #     The problem is that the service process is difficult to manage, and
-    #     anti user's intuition.
-    #     :return: the process
-    #     """
-    #
-    #     self.check_installed_jar_db()
-    #     self.isinstalled()
-    #
-    #     # The Google SearchLab AI says:
-    #     # The java -version command, by design, outputs its version information to
-    #     # the standard error stream (stderr), not to standard output (stdout).
-    #     # And ['java', '-version'] is not working.
-    #     proc = subprocess.Popen(['java', '-version'], stderr=subprocess.PIPE)
-    #     warns = decode(proc.communicate()[0])
-    #     if (warns is not None):
-    #         print(warns)
-    #
-    #     jar = os.path.join('bin', jserv_07_jar)
-    #     Utils.logi('Jar path: {}', jar)
-    #
-    #     if not os.path.isfile(jar):
-    #         raise FileNotFoundError(f'Java file is missing: {jar}',)
-    #
-    #     proc = subprocess.Popen(
-    #         # jserv_07_jar='jserv-album-0.7.0.jar'
-    #         f'java -jar bin/{jserv_07_jar}',
-    #         # debug: deadlock randomly? 'java -Dfile.encoding=UTF-8 -jar bin/jserv-album-0.7.0.jar',
-    #         # also work: f'java -Dfile.encoding=UTF-8 -jar {jar}',
-    #         # doesn't work:['java', '-Dfile.encoding=UTF-8', f'-jar {jar}'],
-    #         # doesn't work: ['java', '-Dfile.encoding=UTF-8', '-jar', jar],
-    #         shell=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-    #
-    #     return proc
-
-    # def stop_test(self, proc: subprocess.Popen) -> [str]:
-    #     """
-    #     @deprecated
-    #     Stop jetty server.
-    #
-    #     NOTE
-    #     ====
-    #
-    #     Popen.communicat() won't work, which will read and terminate the process, leading halt as the java process is
-    #     running endlessly and no ETX char can be returned while reading stderr.
-    #
-    #     P = Popen()
-    #     p.communicate() # waiting the service to quit, which will not happen
-    #
-    #     :param proc:
-    #     :return:
-    #     """
-    #     def kill(pid):
-    #         process = psutil.Process(pid)
-    #         for p in process.children(recursive=True):
-    #             p.kill()
-    #         process.kill()
-    #
-    #     errlines = []
-    #
-    #     def reader(proc):
-    #         with proc.stderr as stdout:
-    #             for line in stdout:
-    #                 print(line.decode(), file=sys.stderr)
-    #                 errlines.append(line)
-    #
-    #     threading.Thread(target=reader, args=(proc,)).start()
-    #
-    #     time.sleep(0.1)
-    #     kill(proc.pid)
-    #
-    #     return errlines
-
-    # def kill_bashport(self, port):
-    #     """
-    #     deprecated('Not correct')
-    #
-    #     Kill port listener, with bash command
-    #     :param port:
-    #     :return:
-    #     """
-    #     cmd = f"netstat -anp | grep :{port} | awk '{{print $7}}' | grep -Eo '[0-9]{1,10}' | xargs kill -9"
-    #     print(cmd)
-    #     p = subprocess.Popen(cmd)
-    #     p.communicate()
-

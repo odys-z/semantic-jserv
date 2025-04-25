@@ -1,10 +1,10 @@
 """
 """
-import dataclasses
+from dataclasses import dataclass
 
 from anson.io.odysz.ansons import Anson
 
-@dataclasses
+@dataclass
 class ResPath(Anson):
     path: str
     resource: str
@@ -15,7 +15,7 @@ class ResPath(Anson):
         self.allowDir = False
 
 
-@dataclasses
+@dataclass
 class WebConfig(Anson):
     port: int
     path: [ResPath]

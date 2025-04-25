@@ -71,7 +71,7 @@ public class Syngleton extends JSingleton {
 	/** */
 	final DATranscxt tb0;
 	
-	final SynodeConfig syncfg;
+	public final SynodeConfig syncfg;
 
 	public final AppSettings settings;
 

@@ -15,7 +15,7 @@ version = '0.7.1'
 synode.py3, jserv-album-0.7.1.jar
 """
 
-html_jar_v = '0.1.3'
+html_jar_v = '0.1.4'
 """
 html-web-#.#.#.jar
 """

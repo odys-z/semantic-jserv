@@ -11,10 +11,10 @@ from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel, QSpacerItem, QSizePolicy
 from anson.io.odysz.common import Utils
 
-from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
+from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJserval
 from src.io.oz.syn import AnRegistry, SyncUser
 from src.synodepy3.commands import install_htmlsrv, install_jserv
-from src.synodepy3.installer_api import InstallerCli, jserv_url_path
+from src.synodepy3.installer_api import InstallerCli
 
 
 # Important:
@@ -77,18 +77,6 @@ def warn_msg(warn: str, details: object = None):
     msg.setIcon(QMessageBox.Icon.Warning)
     result = msg.exec()
     return result
-
-
-def getJserval(synode: str, hostp: str, https: bool) -> str:
-    """
-    :param synode:
-    :param hostp: ip-or-host:port
-    :param https:
-    :return: the jserv lines (option for Android scan)
-    {synode}-{hostp}
-    http(s)://ip-or-host:port/jserv-album
-    """
-    return f'{synode}-{hostp}\n{"https" if https else "http"}://{hostp}/{jserv_url_path}'
 
 class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
@@ -221,7 +209,7 @@ class InstallerForm(QMainWindow):
                     'java -jar bin/jserv-album-#.#.#.jar\n'
                     'java -jar bin/html-web-#.#.#.jar')
             try:
-                self.httpd, self.webth = InstallerCli.start_web()
+                self.httpd, self.webth = self.cli.start_web()
                 self.cli.test_in_term()
                 qr_data = self.gen_qr()
                 print(qr_data)
@@ -269,9 +257,8 @@ class InstallerForm(QMainWindow):
                 ip = InstallerCli.reportIp()
                 port = self.cli.settings.port
 
-                InstallerForm.set_qr_label(self.ui.lbQr, getJserval(self.cli.registry.config.synid, f'{ip}:{port}', self.cli.registry.config.https))
-
-            # ping jserv
+                InstallerForm.set_qr_label(self.ui.lbQr,
+                            getJserval(self.cli.registry.config.synid, f'{ip}:{port}', self.cli.registry.config.https))
 
         if event.type() == QEvent.Type.Show:
             bindInitial(self.root_path)

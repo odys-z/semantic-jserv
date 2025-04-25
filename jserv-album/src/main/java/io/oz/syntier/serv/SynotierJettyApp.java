@@ -33,11 +33,11 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
+import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantic.syn.DBSynTransBuilder;
@@ -246,7 +246,7 @@ public class SynotierJettyApp {
 					.forName(settings.startHandler[0])
 					.getDeclaredConstructor()
 					.newInstance())
-					.onExpose(settings, settings.jserv(this.syngleton.synode()));
+					.onExpose(settings, this.syngleton.syncfg.domain, this.syngleton.synode());
 			} catch (Exception e) {
 				warn("Exposing local resources failed!");
 				e.printStackTrace();
