@@ -114,7 +114,7 @@ if __name__ == '__main__':
         sins = cli.registry.config.syncIns
 
     elif cmd == 'showip':
-        cli.reportIp()
+        InstallerCli.reportIp()
     elif cmd == 'ping':
         ping(arg, arg2)
     else:

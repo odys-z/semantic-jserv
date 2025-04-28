@@ -10,12 +10,14 @@ import zipfile
 import os
 from glob import glob
 
+from anson.io.odysz.ansons import Anson
+
 version = '0.7.1'
 """
 synode.py3, jserv-album-0.7.1.jar
 """
 
-html_jar_v = '0.1.3'
+html_jar_v = '0.1.4'
 """
 html-web-#.#.#.jar
 """
@@ -38,33 +40,95 @@ def create_volume(c):
                 print(f'Volume file created: {os.path.join(vol, fn)}')
                 vf.close()
 
-        
+def updateApkRes(host_json, res):
+    """
+    Update the APK resource in the host.json file.
+    
+    Args:
+        host_json (str): Path to the host.json file.
+        res (dict): Dictionary containing the APK resource information.
+    """
+    print('Updating host.json with APK resource...', host_json)
+
+    import src.synodepy3 # type: ignore
+    Anson.java_src('src')
+    hosts = Anson.from_file(host_json)
+    print('host.json:', hosts)
+
+    hosts.resources.update(res)
+    print('Updated host.json:', hosts.resources)
+
+    hosts.toFile(host_json)
+    print('host.json updated successfully.', hosts)
+
+    return None
+
+def updateJarVersion(file, pattern, repl):
+    """
+    Update the version in a JAR file.
+    
+    Args:
+        file (str): Path to the JAR file.
+        pattern (str): Regular expression pattern to match the version string.
+        repl (str): Replacement string for the version.
+    """
+    print('Updating JAR version...', file)
+
+    lines = []
+    with open(file, 'r') as f:
+        lines = f.readlines()
+
+    # updated_content = re.sub(pattern, repl, content)
+    for i, line in enumerate(lines):
+        if re.search(pattern, line):
+            lines[i] = re.sub(pattern, repl, line)
+            print('Updated line:', lines[i])
+            break
+
+    with open(file, 'w') as f:
+        f.writelines(lines)
+
+    print('JAR version updated successfully.', file)
+
+    return None
+
 @task
 def build(c):
     buildcmds = [
         ['../../anclient/examples/example.android', 'gradlew assembleRelease'],
         ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{version}.apk'],
-        ['.', f"echo {{\"apk\": \"portfolio-{version}.apk\"}} > web-dist/res-vol/res.json"],
-        ['.', 'cat web-dist/res-vol/res.json'],
+        # ['.', f"echo {{\"apk\": \"portfolio-{version}.apk\"}} > web-dist/res-vol/res.json"],
+        ['web-dist/private', lambda: updateApkRes('host.json', {'apk': f'res-vol/portfolio-{version}.apk'})],
+        ['.', 'cat web-dist/private/host.json'],
 
         ['../../anclient/examples/example.js/album', 'webpack'],
         ['.', 'mvn clean compile package -DskipTests'],
         ['../../html-service/java', 'mvn clean compile package'],
         ['../synode.py', lambda: f'set SYNODE_VERSION={version} && rm -rf dist && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && rm -rf dist && python3 -m build'],
+
+        ['../synode.py/winsrv', lambda: updateJarVersion('install-html-w.bat', '@set jar-ver=.*', f'@set jar-ver={html_jar_v}')],
+        ['../synode.py/winsrv', lambda: updateJarVersion('install-jserv-w.bat', '@set jar-ver=.*', f'@set jar-ver={version}')],
     ]
 
     print('--------------    buid   ------------------')
     for pth, cmd in buildcmds:
-        try:
+        # try:
             if isinstance(cmd, LambdaType):
+                print(pth, '&&', cmd)
+                cwd = os.getcwd()
+                os.chdir(pth)
                 cmd = cmd()
-                print(cmd)
-            print(pth, '&&', cmd)
-            ret = c.run(f'cd {pth} && {cmd}')
-            print('OK:', ret.ok, ret.stderr)
-        except Exception as e:
-            print('Error:', e, file=sys.stderr)
-            return True
+                if cmd is not None:
+                    print(pth, '&&', cmd)
+                    ret = c.run(f'cd {pth} && {cmd}')
+                os.chdir(cwd)
+            else:
+                print(pth, '&&', cmd)
+                ret = c.run(f'cd {pth} && {cmd}')
+                print('OK:', ret.ok, ret.stderr)
+        # except Exception as e:
+        #     print('Error:', e, file=sys.stderr)
+        #     return True
     return False
 
 

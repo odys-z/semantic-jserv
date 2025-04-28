@@ -10,8 +10,32 @@ synode_sep = ':'
 
 implISettingsLoaded = 'io.oz.syntier.serv.WebsrvLocalExposer'
 
+syn_db = 'doc-jserv.db'
+sys_db = 'jserv-main.db'
+syntity_json = 'syntity.json'
+
 web_port = 8900
 webroot = 'WEBROOT_HUB'
+
+jserv_url_path = 'jserv-album'
+"""
+    /jserv-album
+"""
+
+def getJservUrl(https: bool, hostport: str):
+    return f'{"https" if https else "http"}://{hostport}/{jserv_url_path}'
+
+def getJserval(synode: str, hostp: str, https: bool) -> str:
+    """
+    :param synode:
+    :param hostp: ip-or-host:port
+    :param https:
+    :return: the jserv lines (option for Android scan)
+    {synode}-{hostp}
+    http(s)://ip-or-host:port/jserv-album
+    """
+    # return f'{synode}-{hostp}\n{"https" if https else "http"}://{hostp}/{jserv_url_path}'
+    return f'{synode}-{hostp}\n{getJservUrl(https, hostp)}'
 
 
 class PortfolioException(Exception):
@@ -104,19 +128,4 @@ class AppSettings(Anson):
 
     def jservLines(self):
         return [':\t'.join([k, self.jservs[k]]) for k in self.jservs]
-
-    # def settingsLoadedHandler(self, pth_hostjson: str = 'private/host.json', implISettingsLoaded: str ='io.oz.syntier.serv.WebsrvLocalHandler'):
-    #     """
-    #     Update startHandler = ['io.oz.srv.JservLocalHandler', _host_json, f'http://%s:{self.port}/jserv-album']
-    #     :param pth_hostjson:
-    #     :param implISettingsLoaded: ISettingsLoaded implementation class
-    #     :return:
-    #     """
-    #     if pth_hostjson == None or len(pth_hostjson) <= 1:
-    #         pth_hostjson = 'private/host.json'
-    #
-    #     # if port == None: port = 8964
-    #
-    #     self.startHandler = [implISettingsLoaded, pth_hostjson, f'http://%s:%s/jserv-album']
-    #     return self
 

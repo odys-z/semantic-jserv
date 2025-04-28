@@ -414,7 +414,8 @@ public class AppSettings extends Anson {
 		}
 		else 
 			logi("[INSTALL-CHECK] Starting application without db setting ...", config_xml);
-		String jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
+		// String jserv =
+		settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		
 		return settings; // settings.local_serv
 	}
@@ -437,20 +438,5 @@ public class AppSettings extends Anson {
 	public String jserv(String nid) {
 		return jservs.get(nid);
 	}
-
-//	public AppSettings onLoad() throws IOException {
-//		if (!isNull(startHandler)) {
-//			try {
-//				((ISynodeLocalExposer)Class
-//						.forName(startHandler[0])
-//						.getDeclaredConstructor()
-//						.newInstance()).onload(this);
-//			} catch (ReflectiveOperationException e) {
-//				e.printStackTrace();
-//				throw new IOException(e.getMessage());
-//			}
-//		}
-//		return this;
-//	}
 
 }
