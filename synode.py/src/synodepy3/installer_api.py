@@ -15,7 +15,7 @@ from typing import cast
 from anson.io.odysz.ansons import Anson
 from anson.io.odysz.common import Utils, LangExt
 
-from src.io.oz.syntier.srv import ExternalHosts
+from src.io.oz.syntier.serv import ExternalHosts
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, web_port, webroot, \
     sys_db, syn_db, syntity_json, getJservUrl

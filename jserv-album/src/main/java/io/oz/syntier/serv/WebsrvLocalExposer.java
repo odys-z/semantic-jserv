@@ -22,8 +22,8 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 		if (settings.envars == null)
 			settings.envars = new HashMap<String, String>(1);
 
+		String ip = AppSettings.getLocalIp();
 		try {
-			String ip = AppSettings.getLocalIp();
 			settings.envars.put(settings.startHandler[2],
 					f("%s:%s", ifnull(ip,  "localhost"), settings.startHandler[3]));
 			settings.toFile(settings.json, JsonOpt.beautify());
@@ -38,8 +38,11 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 			throw new SemanticException("Exposing target domain %s != %s, the current domain.", domain);
 
 		String jserv = settings.jserv(synode);
+
 		hosts.host = synode;
+		hosts.localip = ip;
 		hosts.syndomx.put(synode, jserv);
+		// leaving resources untouched
 		hosts.toFile(settings.startHandler[1], JsonOpt.beautify());
 		
 		return settings;
