@@ -97,7 +97,6 @@ def build(c):
     buildcmds = [
         ['../../anclient/examples/example.android', 'gradlew assembleRelease'],
         ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{version}.apk'],
-        # ['.', f"echo {{\"apk\": \"portfolio-{version}.apk\"}} > web-dist/res-vol/res.json"],
         ['web-dist/private', lambda: updateApkRes('host.json', {'apk': f'res-vol/portfolio-{version}.apk'})],
         ['.', 'cat web-dist/private/host.json'],
 

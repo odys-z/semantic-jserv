@@ -466,22 +466,6 @@ class InstallerCli:
                 try: os.remove(res)
                 except FileNotFoundError or IOError or OSError: pass
 
-    # def test_run(self) -> None:
-    #     """
-    #     @deprecated
-    #     """
-    #     sins = self.registry.config.syncIns
-    #     volume = self.settings.Volume()
-    #     self.registry.toFile(os.path.join(volume, dictionary_json))
-    #     try:
-    #         self.test_in_term()
-    #     except Exception as e:
-    #         print(e)
-    #         raise PortfolioException("Starting local synodepy3 failed.", e)
-    #     finally:
-    #         self.registry.config.syncIns = sins
-    #         self.registry.toFile(os.path.join(volume, dictionary_json))
-
     def test_in_term(self):
         self.updateWithUi(syncins=0, envars={webroot: f'{InstallerCli.reportIp()}:{web_port}'})
 
@@ -610,9 +594,6 @@ class InstallerCli:
         if not os.path.isfile(os.path.join(album_web_dist, index_html)):
             raise FileNotFoundError(f'Cannot find {index_html} in {album_web_dist}')
     
-        # InstallerCli.update_private(jservport)
-        # InstallerCli.update_private(self.registry.config, self.settings)
-
         thr = threading.Thread(target=create_server)
         thr.start()
 

@@ -3,7 +3,6 @@ import sys
 # See https://stackoverflow.com/a/28154841
 from src.synodepy3.installer_api import InstallerCli, ping
 from src.synodepy3.commands import install_jserv, uninstall_jserv
-from src.synodepy3.websrv_delete import AlbumWeb
 from src.synodepy3.commands import install_htmlsrv, uninstall_htmlsrv
 
 
@@ -19,6 +18,7 @@ def uninst_srv():
     except invoke.exceptions.UnexpectedExit as e:
         print(f"Error uninstalling html-service: {e}", file=sys.stderr)
 
+
 def clean(vol: str = None):
     cli = InstallerCli()
     cli.loadInitial()
@@ -33,7 +33,7 @@ def startweb(port: int = 8900):
     httpd = None
     try:
         # httpd = InstallerCli.start_web(8900 if port is None else port)
-        httpd, worker = AlbumWeb.start_web(port)
+        httpd, worker = cli.start_web(port)
         input("Press Enter to close web server...")
     finally:
         if httpd is not None:
