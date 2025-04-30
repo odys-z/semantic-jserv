@@ -13,8 +13,14 @@ public class DocOrgMeta extends SemanticTableMeta {
 	public final String orgType;
 	public final String market;
 	public final String album0 ;
-	/** web server root */
+
+	/**
+	 * The web server's address
+	 * @since 0.2.4 (Portfolio 0.7.1), this field is a synode id pointing to where
+	 * the web server is also deployed.
+	 */
 	public final String webroot;
+
 	/** differnet to {@link #webroot} */
 	public final String homepage;
 

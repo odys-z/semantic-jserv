@@ -177,7 +177,7 @@ public class ExpDoctierservTest {
 
 		Utils.logrst("Bring up dev-x0 and delete", ++section);
 		// 00 delete
-		Clients.init(jetties[X].jserv());
+		Clients.init(jetties[X].myjserv());
 
 		Dev devx0 = devs[X_0];
 		Utils.logrst(new String[] {"Deleting", devx0.res}, section, 1);
@@ -316,7 +316,7 @@ public class ExpDoctierservTest {
 		String[] jrvs = new String[jetties.length];
 
 		for (int i = 0; i < jetties.length; i++) 
-			jrvs[i] = jetties[i].jserv();
+			jrvs[i] = jetties[i].myjserv();
 
 		return jrvs;
 	}

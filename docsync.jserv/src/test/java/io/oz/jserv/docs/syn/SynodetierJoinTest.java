@@ -201,7 +201,6 @@ public class SynodetierJoinTest {
 			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson, true);
 
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, stjson)
-						// .jserv(jserv)
 						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
 			// checker
@@ -274,6 +273,7 @@ public class SynodetierJoinTest {
 		ck[Z].synodes(X, -1, Z);
 	}
 	
+	@SuppressWarnings("deprecation")
 	void joinby(boolean[] lights, int to, int by) throws Exception {
 		SynotierJettyApp hub = jetties[to];
 		SynotierJettyApp prv = jetties[by];
@@ -292,7 +292,7 @@ public class SynodetierJoinTest {
 
 			Utils.logi("%s Joining By %s\n''''''''''''''", hubmanger.synode, prvmanger.synode);
 
-			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
+			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.myjserv(), syrskyi, slava,
 					(rep) -> { lights[by] = true; });
 			
 			break;

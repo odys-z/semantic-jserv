@@ -97,7 +97,12 @@ public class SynotierJettyApp {
 //		jserv = url;
 //		return this;
 //	}
-	public String jserv() {
+	
+	/**
+	 * @deprecated should only used for tests - not updated by peers.
+	 * @return local jserv
+	 */
+	public String myjserv() {
 		return this.syngleton.settings.jserv(this.syngleton.synode());
 	}
 

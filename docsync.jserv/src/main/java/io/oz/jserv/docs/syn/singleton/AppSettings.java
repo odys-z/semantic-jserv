@@ -409,7 +409,7 @@ public class AppSettings extends Anson {
 		}
 		*/
 		if (!isblank(settings.installkey)) {
-			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
+			logi("[INSTALL-CHECK]\n!!! FIRST TIME INITIATION !!!\nInstall: Calling setupdb() with configurations in %s ...", config_xml);
 			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
 		}
 		else 
