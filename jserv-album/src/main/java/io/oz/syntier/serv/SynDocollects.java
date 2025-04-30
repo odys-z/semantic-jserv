@@ -103,7 +103,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 	final IUser robot;
 
-	// PUserMeta userMeta;
 	JUserMeta userMeta;
 
 	final SyndomContext domx;
@@ -204,7 +203,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				else if (A.getPrefs.equals(a))
 					rsp = profile(jmsg.body(0), usr, prf);
 
-//				else if (A.album.equals(a)) // FIXME what's the equivalent of Portfolio?
+//				else if (A.album.equals(a)) // what's the equivalent of Portfolio?
 //					rsp = album(jmsg.body(0), usr, prf);
 
 				else if (A.stree.equals(a))
@@ -367,6 +366,19 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		}
 	}
 
+	/**
+	 * Get user's {@link Profiles}:<br>
+	 * 1. profile.home = [sys-main.db]/org.home <br>
+	 * 2. profile.webroot = [syn-doc.db]/syn_node.jserv(where synode = webroot), since 0.7.1<br>
+	 * @since 0.7.0
+	 * @param body request body
+	 * @param usr
+	 * @param prf
+	 * @return user's profile
+	 * @throws SemanticException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	AlbumResp profile(AlbumReq body, IUser usr, Profiles prf)
 			throws SemanticException, TransException, SQLException {
 
@@ -381,7 +393,9 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		rs.beforeFirst().next();
 		String home = rs.getString(orgMeta.homepage);
-		String webroot = rs.getString(orgMeta.webroot); //  in 0.7.0, webroot is configured via settings.json
+		String webroot = rs.getString(orgMeta.webroot);
+
+		webroot = domx.findJserv(st, webroot, usr);
 
 		return new AlbumResp().profiles(new Profiles(home).webroot(webroot));
 	}
@@ -400,7 +414,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //		BlockChain chain = new BlockChain("h_photos", tempDir, body.device().id,
 //				body.doc.clientpath, body.doc.createDate, body.doc.folder());
 //
-//		// FIXME security breach?
 //		String id = chainId(usr, chain.doc.clientpath);
 //
 //		if (blockChains.containsKey(id))

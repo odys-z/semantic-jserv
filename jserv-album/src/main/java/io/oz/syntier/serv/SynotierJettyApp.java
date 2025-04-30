@@ -137,9 +137,6 @@ public class SynotierJettyApp {
 
 	            Utils.logi("Active threads after join: " + Thread.getAllStackTraces().keySet().size());
 
-	            // Shut down custom resources
-	            // shutdownCustomResources();
-
 	            // List all lingering threads
 	            listAllThreads("After resource cleanup");
 
@@ -175,18 +172,21 @@ public class SynotierJettyApp {
 	    }
 	}
 
+	/**
+	 * Optionally log the stack trace for more detail
+	 * @param phase
+	 */
 	private static void listAllThreads(String phase) {
 	    Utils.logi("Listing all threads at phase: " + phase);
 	    Thread.getAllStackTraces().forEach((thread, stack) -> {
-	        StringBuilder threadInfo = new StringBuilder();
-	        threadInfo.append("Thread Name: ").append(thread.getName())
-	                  .append(", ID: ").append(thread.getId())
-	                  .append(", State: ").append(thread.getState())
-	                  .append(", Is Daemon: ").append(thread.isDaemon())
-	                  .append(", Priority: ").append(thread.getPriority());
+	        StringBuilder threadInfo = new StringBuilder()
+				.append("Thread Name: ").append(thread.getName())
+				.append(", ID: ").append(thread.getId())
+				.append(", State: ").append(thread.getState())
+				.append(", Is Daemon: ").append(thread.isDaemon())
+				.append(", Priority: ").append(thread.getPriority());
 	        Utils.logi(threadInfo.toString());
 
-	        // Optionally log the stack trace for more detail
 	        if (stack.length > 0) {
 	            Utils.logi("  Stack Trace:");
 	            for (StackTraceElement element : stack) {
