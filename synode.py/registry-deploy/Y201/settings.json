@@ -3,7 +3,7 @@
   "volume"    : "./vol",
   "port"      : 8964,
   "jservs"    : {"X29":"192.168.0.201:8964/jserv-album", "Y201":"192.168.0.201:8965/jserv-album"},
-  "envars"    : {"WEBROOT_Album-web": "example.com"},
+  "envars"    : {"WEBROOT_Album-web": "Y201"},
   "installkey": "0123456789ABCDEF",
   "rootkey"   : ""
 }
