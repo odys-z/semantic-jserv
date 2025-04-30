@@ -35,10 +35,10 @@ def msg_box(info: str, details: object = None):
 
 def err_msg(err: str, details: object = None):
     msg = QMessageBox()
-    if Utils.get_os() != 'Windows':
-        msg.setStyleSheet("QMessageBox{min-width:6em;}")
-    else:
-        msg.setStyleSheet("QLabel{min-width:10em}")
+    # if Utils.get_os() != 'Windows':
+    #     msg.setStyleSheet("QMessageBox{min-width:6em;}")
+    # else:
+    #     msg.setStyleSheet("QLabel{min-width:2em}")
 
     qt_msgbox_label = msg.findChild(QLabel, "qt_msgbox_label")
     msg.layout().children()

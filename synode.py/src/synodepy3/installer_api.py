@@ -152,12 +152,7 @@ dictionary_json = 'dictionary.json'
 settings_json = 'settings.json'
 web_inf = 'WEB-INF'
 index_html = 'index.html'
-# syn_db = 'doc-jserv.db'
-# sys_db = 'jserv-main.db'
 jserv_07_jar = 'jserv-album-0.7.1.jar'
-# doc_jserv_db = 'doc-jserv.db'
-# jserv_main_db = 'jserv-main.db'
-# syntity_json = 'syntity.json'
 exiftool_zip = 'exiftool.zip'
 exiftool_v_exe = 'exiftool*.exe'
 exiftool_exe = 'exiftool.exe'
@@ -186,7 +181,8 @@ class InstallerCli:
         Anson.java_src('src')
 
     def list_synodes(self):
-        return ['list', 'load', 'save', 'print', 'showip', f'vol: {self.settings.volume}']
+        # return ['list', 'load', 'save', 'print', 'showip', f'vol: {self.settings.volume}']
+        return self.settings.jservs.items()
 
     def Jservs(self, jsrvs: dict) :
         self.settings.Jservs(jsrvs)
@@ -346,8 +342,8 @@ class InstallerCli:
                     else "Please install exiftool and test it's working with command 'exiftool -ver'"}
         return None
 
-    def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None, volume: str = None,
-                     syncins: float = None, envars={}):
+    def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None,
+                     volume: str = None, syncins: float = None, envars={}):
         if jservss is not None and len(jservss) > 8:
             self.settings.Jservs(InstallerCli.fromat_jservstr(jservss) if isinstance(jservss, str) else jservss)
 
@@ -385,7 +381,7 @@ class InstallerCli:
                 print(e)
 
         if not os.path.isdir(web_inf):
-            raise PortfolioException(f'Folder {web_inf} dose not exist.')
+            raise PortfolioException(f'Folder {web_inf} dose not exist, or not a folder.')
 
         self.settings.toFile(os.path.join(web_inf, settings_json))
 
@@ -402,8 +398,9 @@ class InstallerCli:
         self.check_src_jar_db()
 
         ########## settings
+        # leave $WEBROOT_HUB untouched for config.org.webroot
         # Update config.WEBROOT_HUB with local IP and port by ui.
-        self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
+        # self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
 
         # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
         self.settings.startHandler = [implISettingsLoaded,
@@ -431,7 +428,7 @@ class InstallerCli:
         v_syntity_pth = os.path.join(path_v, syntity_json)
 
         if not Path.exists(Path(v_jservdb_pth)) and not Path.exists(Path(v_main_db_pth)):
-            shutil.copy2(os.path.join(respth if LangExt.isblank(respth) is not None else '.', syntity_json),
+            shutil.copy2(os.path.join(respth if not LangExt.isblank(respth) else '.', syntity_json),
                          v_syntity_pth)
             shutil.copy2(os.path.join("volume", syn_db), v_jservdb_pth)
             shutil.copy2(os.path.join("volume", sys_db), v_main_db_pth)
