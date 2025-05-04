@@ -13,20 +13,19 @@
     "orgName": "URA",
     "orgType": "nation",
     "market":  "test",
-    "webroot": "$WEBROOT_HUB",
+    "webroot": "$WEBROOT_201",
     "homepage": "",
     "album0":  "album-test"
   },
 
   "syncIns": 20,
 	
-  "peers": [],
-  "peers-backup": [
-    {"synid": "X", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
-    {"synid": "Y", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"} ]
+  "peers": [
+    {"synid": "X29", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
+    {"synid": "Y201", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"} ]
  },
 
  "synusers": [
    {"userId": "ody", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"},
-   {"userId": "zelenskyy", "pswd": "слава україні", "iv": null, "org": "ura", "domain": "zsu"} ]
+   {"userId": "zelenskyy", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"} ]
 }

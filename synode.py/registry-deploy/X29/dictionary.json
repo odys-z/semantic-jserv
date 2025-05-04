@@ -27,5 +27,5 @@
 
  "synusers": [
    {"userId": "ody", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"},
-   {"userId": "zelenskyy", "pswd": "слава україні", "iv": null, "org": "ura", "domain": "zsu"} ]
+   {"userId": "zelenskyy", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"} ]
 }
