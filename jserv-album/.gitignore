@@ -4,7 +4,6 @@ download
 volume-*
 vol
 vol-*
-vol2
 volume/*.db
 test/results
 test/res/ignore*.*
