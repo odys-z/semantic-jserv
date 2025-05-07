@@ -201,13 +201,11 @@ public class AppSettings extends Anson {
 					isblank(jserv_album) ? "" :
 					jserv_album.startsWith("/") ? jserv_album : "/" + jserv_album);
 
-//			if (!isblank(synconn) && synm != null) {
 			DATranscxt tb = new DATranscxt(synconn);
 			tb.update(synm.tbl, robot)
 			  .nv(synm.jserv, servurl)
 			  .whereEq(synm.pk, mysid)
 			  .u(tb.instancontxt(synconn, robot));
-//			}
 			
 			this.jservs.put(mysid, servurl);
 
@@ -221,15 +219,16 @@ public class AppSettings extends Anson {
 	
 	/**
 	 * Thanks to https://stackoverflow.com/a/38342964/7362888
-	 * @return local ip
+	 * @param retries default 11
+	 * @return local ip, 127.0.0.1 if is offline (got 0:0:0:0:0:0:0:0:0).
 	 * @throws SocketException 
 	 * @throws UnknownHostException 
 	 */
-	public static String getLocalIp() throws IOException {
+	public static String getLocalIp(int ... retries) throws IOException {
 	    try(final DatagramSocket socket = new DatagramSocket()) {
 	    	boolean succeed = false;
 	    	int tried = 0;
-	    	while (!succeed && tried++ < 12)
+	    	while (!succeed && tried++ < _0(retries, 11) + 1)
 	    		try {
 	    			socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
 	    			succeed = true;
@@ -240,7 +239,12 @@ public class AppSettings extends Anson {
 						Thread.sleep(3000);
 					} catch (InterruptedException e1) { }
 	    		}
-		  return socket.getLocalAddress().getHostAddress();
+
+	    	if (socket.getLocalAddress() == null ||
+	    		eq(socket.getLocalAddress().getHostAddress(), "0:0:0:0:0:0:0:0"))
+	    		return "127.0.0.1";
+
+	    	return socket.getLocalAddress().getHostAddress();
 		}
 	}
 

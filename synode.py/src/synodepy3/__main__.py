@@ -157,7 +157,8 @@ class InstallerForm(QMainWindow):
         err = self.cli.validate(
                 volpath=self.ui.txtVolpath.text(),
                 synid=self.ui.txtSynode.text(),
-                peerjservs=self.ui.jservLines.toPlainText())
+                peerjservs=self.ui.jservLines.toPlainText(),
+                warn=warn_msg)
 
         if err is not None:
             self.updateValidation(err)

@@ -8,14 +8,13 @@ from pathlib import Path
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
-version = os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.1'
-print(version)
+version = os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.2'
 version = version.strip()
 print(f'--{version}--'),
 
 setup(
     name='synode.py3',
-    version=version, # os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.0',
+    version=version,
     description='Portfolio Synode Stand Alone Service',
     author='Ody Z',
     zip_safe=False,
@@ -23,8 +22,6 @@ setup(
     keywords='Documents Files Relational Database Synchronization',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    # py_modules=["src"],
-    # package_dir={"": "src"},  # Tell setuptools that packages are under 'src'
 
     packages=['src'] + [f'src.{pkg}' for pkg in find_packages(where='src')],  # Include src and its subpackages
     package_dir={'src': 'src'},

@@ -10,7 +10,7 @@ import zipfile
 from glob import glob
 from pathlib import Path
 from socketserver import TCPServer
-from typing import cast
+from typing import cast, Callable
 
 from anson.io.odysz.ansons import Anson
 from anson.io.odysz.common import Utils, LangExt
@@ -311,12 +311,14 @@ class InstallerCli:
     def peers_find(self, id):
         return AnRegistry.find_synode(self.registry.config.peers, id)
 
-    def validate(self, synid: str, volpath: str, peerjservs: str):
+    def validate(self, synid: str, volpath: str, peerjservs: str, warn: Callable=None):
         """
         Check synodepy3, volume, jservs.
+        :param warn:
         :param synid:
         :param volpath:
         :param peerjservs:
+        :param warn: if None, return jserv error if ping failed, otherwise warn by calling this function
         :return: error {name: input-data} if there are errors. Error names: synodepy3 | volume | jserv
         """
 
@@ -324,17 +326,22 @@ class InstallerCli:
         if v is not None:
             return v
 
+        # check synodepy3 id is domain wide unique
         peer_jservss = InstallerCli.parsejservstr(peerjservs)
+        if synid is None or len(synid) == 0 or synid not in [ln[0] for ln in peer_jservss]:
+            return {"synodepy3", synid}
+
         for peer in peer_jservss:
             if self.peers_find(peer[0]) is None:
                 return {"peers": {peer[0]: LangExt.str(self.registry.config.peers)}}
 
-            if synid != peer[0] and not ping(peer[0], peer[1]):
-                return {"jserv": {peer[0]: peer[1]}}
-
-        # check synodepy3 id is domain wide unique
-        if synid is None or len(synid) == 0 or synid not in [ln[0] for ln in peer_jservss]:
-            return {"synodepy3", synid}
+            if synid != peer[0]:
+                if not ping(peer[0], peer[1]):
+                    if warn:
+                        warn(f'Ping to {peer[0]}({peer[1]}) failed.\n'
+                             'Which is strongly recommended not to proceed, unless this is the first synode to be setup in the domain.')
+                    else:
+                        return {"jserv": {peer[0]: peer[1]}}
 
         if not checkinstall_exiftool():
             return {"exiftool": "Check and install exiftool failed!"

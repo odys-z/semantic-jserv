@@ -22,7 +22,7 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 		if (settings.envars == null)
 			settings.envars = new HashMap<String, String>(1);
 
-		String ip = AppSettings.getLocalIp();
+		String ip = AppSettings.getLocalIp(2);
 		try {
 			settings.envars.put(settings.startHandler[2],
 					f("%s:%s", ifnull(ip,  "localhost"), settings.startHandler[3]));
