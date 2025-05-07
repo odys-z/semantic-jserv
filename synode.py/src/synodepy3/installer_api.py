@@ -21,9 +21,18 @@ from src.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     sys_db, syn_db, syntity_json, getJservUrl
 from src.io.oz.syn import AnRegistry, SynodeConfig
 
+from src.io.odysz.jclient import Clients
 
 def ping(peerid: str, peerserv: str):
-    pass # raise PortfolioException('TODO')
+    Clients.servRt = 'http://127.0.0.1:8964/jserv-album'
+
+    def err (c, m, args):
+        raise Exception(m)
+
+    resp = Clients.pingLess('Anson.py3/test', err)
+
+    print(Clients.servRt, '<echo>', resp.toBlock())
+
 
 
 def decode(warns: bytes):
