@@ -18,7 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;

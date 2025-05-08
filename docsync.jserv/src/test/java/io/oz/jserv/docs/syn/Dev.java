@@ -6,7 +6,7 @@ import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
 
 import java.io.IOException;
 
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.jclient.syn.Doclientier;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jserv.x.SsException;

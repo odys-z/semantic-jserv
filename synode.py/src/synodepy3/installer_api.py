@@ -12,7 +12,7 @@ from pathlib import Path
 from socketserver import TCPServer
 from typing import cast, Callable
 
-from anson.io.odysz.ansons import Anson
+from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt
 
 from src.io.oz.syntier.serv import ExternalHosts
@@ -21,7 +21,7 @@ from src.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     sys_db, syn_db, syntity_json, getJservUrl
 from src.io.oz.syn import AnRegistry, SynodeConfig
 
-from src.io.odysz.jclient import Clients
+from anclient.io.odysz.jclient import Clients
 
 def ping(peerid: str, peerserv: str):
     Clients.servRt = 'http://127.0.0.1:8964/jserv-album'

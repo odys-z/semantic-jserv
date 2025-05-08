@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Test;
 
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
