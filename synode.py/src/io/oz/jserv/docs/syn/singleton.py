@@ -3,7 +3,7 @@ import os
 from dataclasses import dataclass
 from typing import overload, Optional
 
-from anson.io.odysz.ansons import Anson
+from anson.io.odysz.anson import Anson
 
 jserv_sep = ' '
 synode_sep = ':'

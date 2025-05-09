@@ -5,6 +5,7 @@ import re
 import shutil
 import socket
 import subprocess
+import sys
 import time
 import zipfile
 from glob import glob
@@ -15,6 +16,7 @@ from typing import cast, Callable
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt
 
+from src.io.odysz.semantic.jprotocol import MsgCode
 from src.io.oz.syntier.serv import ExternalHosts
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, web_port, webroot, \
@@ -23,16 +25,18 @@ from src.io.oz.syn import AnRegistry, SynodeConfig
 
 from anclient.io.odysz.jclient import Clients
 
-def ping(peerid: str, peerserv: str):
-    Clients.servRt = 'http://127.0.0.1:8964/jserv-album'
+def ping(peerserv: str, clientUri: str):
+    # Clients.servRt = 'http://127.0.0.1:8964/jserv-album'
+    Clients.servRt = peerserv or 'http://127.0.0.1:8964/jserv-album'
 
-    def err (c, m, args):
-        raise Exception(m)
+    def err_ctx(c: MsgCode, e: str, *args: str) -> None:
+        print(c, e.format(args), file=sys.stderr)
+        raise Exception(e)
 
-    resp = Clients.pingLess('Anson.py3/test', err)
+    resp = Clients.pingLess(clientUri or 'Anson.py3/test', err_ctx)
 
     print(Clients.servRt, '<echo>', resp.toBlock())
-
+    print('code', resp.code)
 
 
 def decode(warns: bytes):
