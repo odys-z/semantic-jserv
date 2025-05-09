@@ -22,6 +22,6 @@ class WebConfig(Anson):
     startHandler: [str]
 
     def __init__(self):
-        self.port = 8964
+        self.port = 8900
         self.path = []
         self.startHandler = None

@@ -25,7 +25,7 @@ jserv_url_path = 'jserv-album'
 def getJservUrl(https: bool, hostport: str):
     return f'{"https" if https else "http"}://{hostport}/{jserv_url_path}'
 
-def getJserval(synode: str, hostp: str, https: bool) -> str:
+def getJservOption(synode: str, hostp: str, https: bool) -> str:
     """
     :param synode:
     :param hostp: ip-or-host:port

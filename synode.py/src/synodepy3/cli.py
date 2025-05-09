@@ -2,14 +2,15 @@ import sys
 
 # See https://stackoverflow.com/a/28154841
 from src.synodepy3.installer_api import InstallerCli, ping
-from src.synodepy3.commands import install_jserv, uninstall_jserv
+from src.synodepy3.commands import install_wsrv_byname, uninstall_wsrv_byname
 from src.synodepy3.commands import install_htmlsrv, uninstall_htmlsrv
+from synodepy3.installer_api import InstallerCli
 
 
-def uninst_srv():
+def uninst_srv(srvname: str):
     import invoke
     try:
-        uninstall_jserv()
+        uninstall_wsrv_byname(srvname)
     except invoke.exceptions.UnexpectedExit as e:
         print(f"Error uninstalling jserv-album: {e}", file=sys.stderr)
 
@@ -92,11 +93,15 @@ if __name__ == '__main__':
         cli.install(arg, arg2) # setup
 
     elif cmd == 'uninstall-winsrv' or cmd == 'ui-w':
-        uninstall_jserv()
+        srvname = cli.gen_wsrv_name()
+        print("Uninstalling ", srvname, "at port", cli.settings.port)
+        uninstall_wsrv_byname(srvname)
         uninstall_htmlsrv()
 
     elif cmd == 'install-winsrv' or cmd == 'i-w':
-        install_jserv()
+        srvname = cli.gen_wsrv_name()
+        print("Installing ", srvname, "at port", cli.settings.port)
+        install_wsrv_byname(srvname)
         install_htmlsrv()
 
     elif cmd == 'clean':

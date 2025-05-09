@@ -1,27 +1,26 @@
 import sys
-import time
+
+from anclient.io.odysz.jclient import Clients
 
 import io as std_io
 from typing import Optional
 
 import PySide6
 import qrcode
-from PySide6.QtCore import QEvent, QSize
+from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel, QSpacerItem, QSizePolicy
 from anson.io.odysz.common import Utils
 
-from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJserval
+from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJservOption
 from src.io.oz.syn import AnRegistry, SyncUser
-from src.synodepy3.commands import install_htmlsrv, install_jserv
-from src.synodepy3.installer_api import InstallerCli
-
+from src.synodepy3.commands import install_htmlsrv, install_wsrv_byname
+from src.synodepy3.installer_api import InstallerCli, install_uri
 
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py
 from src.synodepy3.ui_form import Ui_InstallForm
-
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()
@@ -114,12 +113,13 @@ class InstallerForm(QMainWindow):
             label.setText(text)
             err_msg(f'Generating QR Code Error. Please generate QR Code for:\n{text}', e)
 
-    def gen_qr(self) -> Optional[str]:
+    def gen_qr(self) -> Optional[dict]:
         """
         Generate ip, port and QR.
         :return:
         """
 
+        # settings don't have current IP
         if len(self.ui.txtIP.text()) < 7:
             try:
                 ip = self.cli.reportIp()
@@ -133,19 +133,23 @@ class InstallerForm(QMainWindow):
         else:
             ip = self.ui.txtIP.text()
 
-        try:
-            port = int(self.ui.txtPort.text(), 10)
-        except Exception as e:
-            port = 8964
-            self.ui.txtPort.setText(str(port))
+        # try:
+        #     port = int(self.ui.txtPort.text(), 10)
+        # except Exception as e:
+        #     port = serv_port0
+        #     self.ui.txtPort.setText(str(port))
+        port = self.cli.settings.port
 
         iport = f'{ip}:{port}'
         synode = self.ui.txtSynode.text()
-        data = getJserval(synode, iport, False)
+        data = getJservOption(synode, iport, False)
 
         InstallerForm.set_qr_label(self.ui.lbQr, data)
-
         return {"ip": ip, "port": port, "synodepy3": synode}
+
+    def default_ui_values(self):
+        if self.ui.txtSyncIns.text() is None or self.ui.txtSyncIns.text().strip() == '':
+            self.ui.txtSyncIns.setText('120.0')
 
     def validate(self) -> bool:
         """
@@ -180,11 +184,41 @@ class InstallerForm(QMainWindow):
         ui.txtDomain.setText('zsu')
         return False
 
+    def pings(self):
+        details = []
+        errs = False
+        def err_ctx(c, e: str, *args: str) -> None:
+            print(c, e.format(args), file=sys.stderr)
+            details.append('\n' + e)
+            errs = True
+
+        jservss = self.ui.jservLines.toPlainText()
+        if jservss is not None and len(jservss) > 8:
+            jservss = InstallerCli.parsejservstr(jservss)
+
+            for jsrv in jservss:
+                if jsrv[0] != self.cli.registry.config.synid:
+                    Clients.servRt = jsrv[1]
+                    resp = Clients.pingLess(install_uri, err_ctx)
+                    if resp is None:
+                        details.append(f'\n{jsrv[0]}: {jsrv[1]}\n' + 'Error: not responds')
+                    else:
+                        details.append(f'\n{jsrv[0]}: {jsrv[1]}\n'  + resp.toBlock(beautify = True))
+
+        if errs:
+            warn_msg('Ping synodes has errors. Check details for errors.', details)
+        else:
+            msg_box('Ping synodes completed. Check the echo messages in details.', details)
+        return details
+
     def setup(self):
+        self.default_ui_values()
+
         try:
             self.cli.updateWithUi(
                 jservss=self.ui.jservLines.toPlainText(),
                 synid=self.ui.txtSynode.text(),
+                syncins=self.ui.txtSyncIns.text(),
                 port=self.ui.txtPort.text(),
                 volume=self.ui.txtVolpath.text())
 
@@ -225,7 +259,7 @@ class InstallerForm(QMainWindow):
         msg_box('Please close any service Window if any been started\n'
                 'Click Ok to continue, and confirm all permission requests (window can be hidden).')
 
-        install_jserv()
+        install_wsrv_byname(self.cli.gen_wsrv_name())
         install_htmlsrv()
 
         self.gen_qr()
@@ -259,7 +293,9 @@ class InstallerForm(QMainWindow):
                 port = self.cli.settings.port
 
                 InstallerForm.set_qr_label(self.ui.lbQr,
-                            getJserval(self.cli.registry.config.synid, f'{ip}:{port}', self.cli.registry.config.https))
+                                           getJservOption(self.cli.registry.config.synid,
+                                                          f'{ip}:{port}',
+                                                          self.cli.registry.config.https))
 
         if event.type() == QEvent.Type.Show:
             bindInitial(self.root_path)
@@ -279,6 +315,7 @@ class InstallerForm(QMainWindow):
             self.ui.bRoot.clicked.connect(reloadRespath)
 
             self.ui.bLogin.clicked.connect(self.login)
+            self.ui.bPing.clicked.connect(self.pings)
             self.ui.bSetup.clicked.connect(self.setup)
             self.ui.bValidate.clicked.connect(self.test_run)
 
@@ -301,6 +338,7 @@ class InstallerForm(QMainWindow):
         self.ui.txtPswd.setText(pswd)
         self.ui.txtPswd2.setText(pswd)
         self.ui.txtSynode.setText(cfg.synid)
+        self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(cfg.syncIns))
 
         credits_link = 'https://odys-z.github.io/products/album/credits.html'
         help_install_link = 'https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps'

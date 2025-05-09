@@ -4,7 +4,9 @@ import re
 import signal
 import sys
 import time
-from invoke import Collection, call, task, Context
+
+from invoke import Collection, task, Context
+
 
 @task
 def run_jserv(c, bin = 'bin'):
@@ -28,18 +30,18 @@ def run_jserv(c, bin = 'bin'):
         time.sleep(.5)
 
 
-def uninstall_jserv(winsrv: str = 'winsrv'):
+def uninstall_wsrv_byname(srvname: str, winsrv: str = 'winsrv'):
     ctx = Context()
     bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, "install-jserv-w.bat")} uninstall'
+    cmd = f'{os.path.join(bin, "install-jserv-w.bat")} uninstall {srvname}'
     print(cmd)
     ctx.run(cmd)
 
 
-def install_jserv(winsrv: str = 'winsrv'):
+def install_wsrv_byname(srvname: str, winsrv: str = 'winsrv'):
     ctx = Context()
     bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, "install-jserv-w.bat")}'
+    cmd = f'{os.path.join(bin, "install-jserv-w.bat")} install {srvname}'
     print(cmd)
     ctx.run(cmd)
 

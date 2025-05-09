@@ -5,7 +5,9 @@
   "vol_name": "VOLUME_HOME",
   "volume": "C:/Users/Alice/github/semantic-jserv/jserv-album/vol2",
   "port": 8964,
-  "jservs": {"X29": "10.0.0.1:8964/jserv-album"},
-  "installkey": "0123456789ABCDEF",
-  "rootkey": ""
+  "jservs": {
+    "X29": "127.0.0.1:8964/jserv-album",
+    "Y201": "127.0.0.1:8965/jserv-album"},
+  "installkey": null,
+  "rootkey": "0123456789ABCDEF"
 }

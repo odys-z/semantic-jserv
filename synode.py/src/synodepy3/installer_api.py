@@ -25,15 +25,15 @@ from src.io.oz.syn import AnRegistry, SynodeConfig
 
 from anclient.io.odysz.jclient import Clients
 
-def ping(peerserv: str, clientUri: str):
+def ping(clientUri: str, peerserv: str):
     # Clients.servRt = 'http://127.0.0.1:8964/jserv-album'
     Clients.servRt = peerserv or 'http://127.0.0.1:8964/jserv-album'
 
     def err_ctx(c: MsgCode, e: str, *args: str) -> None:
         print(c, e.format(args), file=sys.stderr)
-        raise Exception(e)
+        raise PortfolioException(e)
 
-    resp = Clients.pingLess(clientUri or 'Anson.py3/test', err_ctx)
+    resp = Clients.pingLess(clientUri or install_uri, err_ctx)
 
     print(Clients.servRt, '<echo>', resp.toBlock())
     print('code', resp.code)
@@ -51,7 +51,8 @@ def decode(warns: bytes):
                     try:
                         s = b.decode('gbk')
                     except UnicodeDecodeError:
-                        s = ''.join(chr(int(b)))
+                        # s = ''.join(chr(int(b)))
+                        s = ''.join(str(b))
                 if s is not None:
                     lines.extend(s.split('\n'))
             else:
@@ -156,6 +157,8 @@ def checkinstall_exiftool():
     ln -s ../../Anclient/examples/example.js/album/web-0.4 web-dist
 """
 
+install_uri = 'Anson.py3/test'
+jar_ver = '0.7.1'
 host_private = 'private'
 web_host_json = f'{host_private}/host.json'
 
@@ -163,9 +166,10 @@ album_web_dist = 'web-dist'
 
 dictionary_json = 'dictionary.json'
 settings_json = 'settings.json'
+serv_port0 = 8964
 web_inf = 'WEB-INF'
 index_html = 'index.html'
-jserv_07_jar = 'jserv-album-0.7.1.jar'
+jserv_07_jar = f'jserv-album-{jar_ver}.jar'
 exiftool_zip = 'exiftool.zip'
 exiftool_v_exe = 'exiftool*.exe'
 exiftool_exe = 'exiftool.exe'
@@ -177,7 +181,7 @@ class InstallerCli:
     registry: AnRegistry
 
     @staticmethod
-    def parsejservstr(jservstr: str):
+    def parsejservstr(jservstr: str) -> [[str, str]]:
         """
         :param jservstr: "x:\\turl-1\\ny:..."
         :return: [[x, url-1], ...]
@@ -349,10 +353,13 @@ class InstallerCli:
                 return {"peers": {peer[0]: LangExt.str(self.registry.config.peers)}}
 
             if synid != peer[0]:
-                if not ping(peer[0], peer[1]):
+                try:
+                    ping('Setup/py3', peer[1])
+                except PortfolioException:
                     if warn:
                         warn(f'Ping to {peer[0]}({peer[1]}) failed.\n'
-                             'Which is strongly recommended not to proceed, unless this is the first synode to be setup in the domain.')
+                              # 'It is strongly recommended not to proceed.\n'
+                             f'If synode{peer[0]} in the domain is not connectable, double check the url.')
                     else:
                         return {"jserv": {peer[0]: peer[1]}}
 
@@ -362,8 +369,13 @@ class InstallerCli:
                     else "Please install exiftool and test it's working with command 'exiftool -ver'"}
         return None
 
+    def gen_wsrv_name(self):
+        return f'Synode-{jar_ver}-{self.registry.config.synid}'
+
     def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None,
-                     volume: str = None, syncins: float = None, envars={}):
+                     volume: str = None, syncins: str = None, envars = None):
+        if envars is None:
+            envars = {}
         if jservss is not None and len(jservss) > 8:
             self.settings.Jservs(InstallerCli.fromat_jservstr(jservss) if isinstance(jservss, str) else jservss)
 
@@ -382,7 +394,7 @@ class InstallerCli:
             self.settings.Volume(os.path.abspath(volume))
 
         if syncins is not None:
-            self.registry.config.syncIns = float(syncins)
+            self.registry.config.syncIns = 0.0 if syncins is None else float(syncins)
 
         if port is not None and len(port) > 1:
             InstallerCli.update_private(self.registry.config, self.settings)
@@ -515,8 +527,8 @@ class InstallerCli:
         """
         Update private/host.json/{host: url}.
         Write boilerplate to host.json, not solid values
-        :param jservport:
         :param config:
+        :param settings:
         :return:
         """
         prv_path = os.path.join(album_web_dist, host_private)
@@ -553,13 +565,13 @@ class InstallerCli:
             except OSError as e:
                 print(e)
 
-    def start_web(self, webport=8900, jservport=8964):
+    def start_web(self, webport=8900):
         import http.server
         import socketserver
         import threading
     
         # PORT = 8900
-        httpdeamon: [socketserver.TCPServer] = [None]
+        httpdeamon: [socketserver.TCPServer] = []
     
         # To serve gzip, see
         # https://github.com/ksmith97/GzipSimpleHTTPServer/blob/master/GzipSimpleHTTPServer.py#L244
@@ -591,7 +603,7 @@ class InstallerCli:
                 with socketserver.TCPServer(("", webport), WebHandler) as httpd:
                     print("Starting web at port", webport)
                     try:
-                        httpdeamon[0] = httpd
+                        httpdeamon.insert(0, httpd) #[0] = httpd
                         httpd.serve_forever()
                         Utils.logi(f'Web service at port {webport} stopped.')
                     except OSError:
@@ -621,3 +633,4 @@ class InstallerCli:
     
         print(httpdeamon[0])
         return httpdeamon[0], thr
+
