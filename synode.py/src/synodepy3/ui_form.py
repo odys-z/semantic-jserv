@@ -140,7 +140,7 @@ class Ui_InstallForm(object):
         self.lbHelplink.setOpenExternalLinks(True)
         self.lbQr = QLabel(self.centralwidget)
         self.lbQr.setObjectName(u"lbQr")
-        self.lbQr.setGeometry(QRect(750, 137, 191, 171))
+        self.lbQr.setGeometry(QRect(764, 141, 170, 170))
         self.lbQr.setMaximumSize(QSize(200, 200))
         self.lbQr.setAutoFillBackground(False)
         self.bValidate = QPushButton(self.centralwidget)

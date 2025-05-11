@@ -1,6 +1,6 @@
 @REM @echo "Run this file from upper dir, e. g. run: winsrv/install-html-w.bat"
 
-@set jar-ver=0.1.4
+@set jar-ver=0.1.5
 @set serv_name="Synode.web-%jar-ver%"
 @set classname=HtmlServer
 @set full_classname=io.oz.srv.HtmlServer

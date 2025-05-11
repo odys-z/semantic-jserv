@@ -1,11 +1,11 @@
 @REM @echo "Run this file from upper dir, e. g. run: winsrv/install-w.bat"
 @REM @echo "Installing jserv-album (Portfolio 0.7)"
 
-@set jar-ver=0.7.1
+@set jar-ver=0.7.2
 
 @REM @set serv_name="Synode.syn-%jar-ver%"
 @set serv_name="%~2"
-@echo %serv_name
+@echo %serv_name%
 
 @set jar=jserv-album-%jar-ver%.jar
 @set classname=SynotierJettyApp

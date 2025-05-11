@@ -10,14 +10,14 @@ import zipfile
 import os
 from glob import glob
 
-from anson.io.odysz.ansons import Anson
+from anson.io.odysz.anson import Anson
 
-version = '0.7.1'
+version = '0.7.2'
 """
-synode.py3, jserv-album-0.7.1.jar
+synode.py3, jserv-album-0.7.2.jar
 """
 
-html_jar_v = '0.1.4'
+html_jar_v = '0.1.5'
 """
 html-web-#.#.#.jar
 """

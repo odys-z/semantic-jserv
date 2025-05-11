@@ -42,21 +42,20 @@ def ping(clientUri: str, peerserv: str):
 def decode(warns: bytes):
     lines = []
     if warns is not None:
-        for b in warns.split(b'\n'):
-            # lines.append(b.decode('utf-8') if isinstance(b, bytes) else b)
-            if isinstance(b, bytes):
+        for l in warns.split(b'\n'):
+            if isinstance(l, bytes):
                 try:
-                    s = b.decode('utf-8')
+                    s = l.decode('utf-8')
                 except UnicodeDecodeError:
                     try:
-                        s = b.decode('gbk')
+                        s = l.decode('gbk')
                     except UnicodeDecodeError:
                         # s = ''.join(chr(int(b)))
-                        s = ''.join(str(b))
+                        s = ''.join(str(l))
                 if s is not None:
                     lines.extend(s.split('\n'))
             else:
-                lines.append(str(b))
+                lines.append(str(l))
     return lines
 
 
@@ -251,17 +250,37 @@ class InstallerCli:
 
         return registry
 
-    def isinstalled(self, volpath_ui: str = None):
-        return (self.settings is not None and
-                (volpath_ui is None and self.validateVol(self.settings.Volume()) is None or
-                 volpath_ui is not None and self.validateVol(volpath_ui) is None))
+    # def isinstalled(self, volpath_ui: str = None):
+    #     return (self.settings is not None and
+    #             (volpath_ui is None and self.validateVol(self.settings.Volume()) is None or
+    #              volpath_ui is not None and self.validateVol(volpath_ui) is None))
 
-    def hasrun(self, volpath_ui = None):
-        volpath = LangExt.ifnull(volpath_ui, self.settings.Volume())
-        data = Anson.from_file(volpath_ui) if volpath_ui is not None else self.settings
+    def isinstalled(self):
+        return self.settings is not None and self.validateVol(self.settings.Volume()) is None
 
-        psys_db = os.path.join(volpath, sys_db)
-        return len(data.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
+    # def hasrun(self, volpath_ui = None):
+    #     volpath = LangExt.ifnull(volpath_ui, self.settings.Volume())
+    #     data = Anson.from_file(volpath_ui) if volpath_ui is not None else self.settings
+    #
+    #     psys_db = os.path.join(volpath, sys_db)
+    #     return len(data.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
+
+    def hasrun(self):
+        psys_db, psyn_db = InstallerCli.sys_syn_db(self.settings.Volume())
+        return LangExt.len(self.settings.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
+
+
+    @staticmethod
+    def sys_syn_db(volpath: str):
+        path_v = Path(volpath)
+
+        if not Path.exists(path_v):
+            Path.mkdir(path_v)
+        elif not Path.is_dir(path_v):
+            raise IOError(f'Volume path is not a folder: {path_v}')
+
+        return Path(os.path.join(path_v, sys_db)), Path(os.path.join(path_v, syn_db))
+
 
     @staticmethod
     def reportIp() -> str:
@@ -369,6 +388,25 @@ class InstallerCli:
                     else "Please install exiftool and test it's working with command 'exiftool -ver'"}
         return None
 
+    def postFix(self):
+        """
+        Verify the installation after finished, e.g. for errors introduced when failed to start Jetty App.
+        1. check volume/*.db size. If size is 0, then set root-key = null, for forcing Jetty App re-setup dbs.
+        :return: error details, fixed
+        :exception: found errors, unable to fix
+        """
+        if LangExt.isblank(self.settings.installkey) and not LangExt.isblank(self.settings.rootkey):
+            sysdb, syndb = InstallerCli.sys_syn_db(self.settings.Volume())
+            if  os.path.isfile(sysdb) and os.stat(sysdb).st_size == 0 and \
+                os.path.isfile(sysdb) and os.stat(syndb).st_size == 0:
+
+                self.settings.installkey, self.settings.rootkey = self.settings.rootkey, None
+                self.settings.toFile(os.path.join(web_inf, settings_json))
+                return f'Fixed errors: {sysdb} size & {syndb} size = 0, reset flags for setup db.'
+            elif os.path.isfile(sysdb) and os.path.isfile(sysdb) and (os.stat(syndb).st_atime > 0 or os.stat(sysdb).st_size > 0):
+                raise PortfolioException(f'Find error sizes about {syndb} and {sysdb}, but cannot fix.')
+        return None
+
     def gen_wsrv_name(self):
         return f'Synode-{jar_ver}-{self.registry.config.synid}'
 
@@ -417,13 +455,12 @@ class InstallerCli:
 
         self.settings.toFile(os.path.join(web_inf, settings_json))
 
-    def install(self, respth: str, volpath: str = None):
+    def install(self, respth: str):
         """
-        Install / setup synodepy3, by moving /update dictionary to vol-path, settings.json
+        Install / setup synodepy3, by moving /update dictionary to vol-path (of AppSettings), settings.json
         to WEB-INF, unzip exiftool.zip, and check bin/jar first.
         Note: this is not installing Windows service.
         :param respth:
-        :param volpath:
         :return:
         """
 
@@ -443,32 +480,49 @@ class InstallerCli:
         self.settings.toFile(os.path.join(web_inf, settings_json))
 
         ########## volume
-        path_v = Path(LangExt.ifnull(volpath, self.settings.Volume()))
+        # path_v = Path(LangExt.ifnull(volpath, self.settings.Volume()))
 
-        if not Path.exists(path_v):
-            Path.mkdir(path_v)
-        elif not Path.is_dir(path_v):
-            raise IOError(f'Volume path is not a folder: {path_v}')
+        # if not Path.exists(path_v):
+        #     Path.mkdir(path_v)
+        # elif not Path.is_dir(path_v):
+        #     raise IOError(f'Volume path is not a folder: {path_v}')
+        #
+        # if self.isinstalled(volpath) and self.hasrun(volpath):
+        #     raise PortfolioException(f'Deployed synodepy3 in {path_v} is, or has, already running.')
+        #
+        # self.registry.toFile(os.path.join(path_v, dictionary_json))
+        #
+        # v_jservdb_pth = os.path.join(path_v, syn_db)
+        # v_main_db_pth = os.path.join(path_v, sys_db)
+        # v_syntity_pth = os.path.join(path_v, syntity_json)
 
-        if self.isinstalled(volpath) and self.hasrun(volpath):
-            raise PortfolioException(f'Deployed synodepy3 in {path_v} is, or has, already running.')
 
-        self.registry.toFile(os.path.join(path_v, dictionary_json))
+        # if not Path.exists(Path(v_jservdb_pth)) and not Path.exists(Path(v_main_db_pth)):
+        #     shutil.copy2(os.path.join(respth if not LangExt.isblank(respth) else '.', syntity_json),
+        #                  v_syntity_pth)
+        #     shutil.copy2(os.path.join("volume", syn_db), v_jservdb_pth)
+        #     shutil.copy2(os.path.join("volume", sys_db), v_main_db_pth)
 
-        v_jservdb_pth = os.path.join(path_v, syn_db)
-        v_main_db_pth = os.path.join(path_v, sys_db)
-        v_syntity_pth = os.path.join(path_v, syntity_json)
+        v_syntity_pth = os.path.join(Path(self.settings.Volume()), syntity_json)
+        sysdb, syndb = InstallerCli.sys_syn_db(self.settings.Volume())
 
-        if not Path.exists(Path(v_jservdb_pth)) and not Path.exists(Path(v_main_db_pth)):
+        if self.isinstalled() and self.hasrun():
+            raise PortfolioException(f'Deployed synodepy3 {os.getcwd()} is, or has, already running.')
+
+        self.registry.toFile(os.path.join(self.settings.Volume(), dictionary_json))
+
+        if not Path.exists(syndb) and not Path.exists(sysdb):
             shutil.copy2(os.path.join(respth if not LangExt.isblank(respth) else '.', syntity_json),
                          v_syntity_pth)
-            shutil.copy2(os.path.join("volume", syn_db), v_jservdb_pth)
-            shutil.copy2(os.path.join("volume", sys_db), v_main_db_pth)
+            shutil.copy2(os.path.join("volume", syn_db), syndb)
+            shutil.copy2(os.path.join("volume", sys_db), sysdb)
         else:
             # Prevent deleting tables by JettypApp's checking installation.
-            if not LangExt.isblank(self.settings.installkey) and LangExt.isblank(self.settings.rootkey):
+            # This is assuming album-jserv always successfully setup dbs - when db files exist, the tables exist.
+            if self.hasrun() and not LangExt.isblank(self.settings.installkey) and LangExt.isblank(self.settings.rootkey):
                 self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
-            Utils.warn(f'volume is set to {path_v}.\nignoring existing database:\n{v_main_db_pth}\n{v_jservdb_pth}')
+            Utils.warn(f'volume is set to {self.settings.Volume()}.\n'
+                       f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
 
         # web/host.json
@@ -496,7 +550,7 @@ class InstallerCli:
                 except FileNotFoundError or IOError or OSError: pass
 
     def test_in_term(self):
-        self.updateWithUi(syncins=0, envars={webroot: f'{InstallerCli.reportIp()}:{web_port}'})
+        self.updateWithUi(syncins='0.0', envars={webroot: f'{InstallerCli.reportIp()}:{web_port}'})
 
         system = Utils.get_os()
         jar = os.path.join('bin', jserv_07_jar)
@@ -627,10 +681,9 @@ class InstallerCli:
         thr.start()
 
         count = 0
-        while count < 5 and httpdeamon[0] is None:
+        while count < 5 and (len(httpdeamon) == 0 or httpdeamon[0] is None):
             count += 1
             time.sleep(0.2)
-    
-        print(httpdeamon[0])
-        return httpdeamon[0], thr
 
+        print(httpdeamon[0] if len(httpdeamon) > 0 else 'httpd == None')
+        return httpdeamon[0] if len(httpdeamon) > 0 else None, thr

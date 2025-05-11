@@ -36,6 +36,7 @@
     </developer>
   </developers>
 
+  <!-- 
   <distributionManagement>
   	<snapshotRepository>
   		<id>ossrh</id>
@@ -47,6 +48,7 @@
   		<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 	</repository>
   </distributionManagement>
+  -->
 
   <dependencies>
     <dependency>
@@ -119,6 +121,7 @@
     </pluginManagement>
 
     <plugins>
+	<!--
    	  <plugin>
 	  	<artifactId>maven-deploy-plugin</artifactId>
 	  	<version>2.8.2</version>
@@ -162,6 +165,17 @@
 			<nexusUrl>https://oss.sonatype.org/</nexusUrl>
 			<autoReleaseAfterClose>true</autoReleaseAfterClose>
 		</configuration>
+	  </plugin>
+	-->
+
+	  <plugin>
+		  <groupId>org.sonatype.central</groupId>
+		  <artifactId>central-publishing-maven-plugin</artifactId>
+		  <version>0.7.0</version>
+		  <extensions>true</extensions>
+		  <configuration>
+			<publishingServerId>central</publishingServerId>
+		  </configuration>
 	  </plugin>
 
 	  <!-- JavaDoc and source attachment -->

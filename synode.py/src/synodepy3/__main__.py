@@ -56,12 +56,7 @@ def err_msg(err: str, details: object = None):
 
 def warn_msg(warn: str, details: object = None):
     msg = QMessageBox()
-    # if get_os() != 'Windows':
-    #     msg.setStyleSheet("QLabel{min-width:200px;}")
-    # else:
-    #     msg.setStyleSheet("QLabel{min-width:20px;}")
 
-    # msg.setMinimumWidth(400)
     horizontal_spacer = QSpacerItem(800, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
     layout = msg.layout()
     layout.addItem(horizontal_spacer, layout.rowCount(), 0, 1, layout.columnCount())
@@ -211,7 +206,7 @@ class InstallerForm(QMainWindow):
             msg_box('Ping synodes completed. Check the echo messages in details.', details)
         return details
 
-    def setup(self):
+    def save(self):
         self.default_ui_values()
 
         try:
@@ -225,7 +220,13 @@ class InstallerForm(QMainWindow):
             if self.validate():
                 try:
                     self.cli.install(self.ui.txtResroot.text())
-                    msg_box("Setup successfully.")
+
+                    post_err = self.cli.postFix()
+                    if not post_err:
+                        msg_box("Setup successfully.")
+                    else:
+                        warn_msg("Install successfully, with errors automatically fixe. See details...", post_err)
+
                 except FileNotFoundError or IOError as e:
                     # Changing vol path can reach here
                     err_msg('Setting up synodepy3 is failed.', e)
@@ -287,7 +288,7 @@ class InstallerForm(QMainWindow):
 
             self.enableServInstall()
 
-            if self.cli.isinstalled(json.volume) and self.cli.hasrun():
+            if self.cli.isinstalled() and self.cli.hasrun():
                 # self.gen_qr()
                 ip = InstallerCli.reportIp()
                 port = self.cli.settings.port
@@ -316,7 +317,7 @@ class InstallerForm(QMainWindow):
 
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
-            self.ui.bSetup.clicked.connect(self.setup)
+            self.ui.bSetup.clicked.connect(self.save)
             self.ui.bValidate.clicked.connect(self.test_run)
 
             if Utils.get_os() == 'Windows':

@@ -4,7 +4,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>docsync.jserv</artifactId>
-  <version>0.2.4-SNAPSHOT</version>
+  <version>0.2.4</version>
   <packaging>jar</packaging>
 
   <name>docsync.jserv</name>
@@ -34,12 +34,14 @@
     </developer>
   </developers>
 
+  <!-- 
   <repositories>
   	<repository>
   		<id>sonatype-snapshots</id>
   		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
   	</repository>
   </repositories>
+  -->
 
   <dependencies>
 	<dependency>
@@ -104,6 +106,7 @@
   	<tag>HEAD</tag>
   </scm>
 
+  <!-- 
   <distributionManagement>
   	<snapshotRepository>
   		<id>ossrh</id>
@@ -115,6 +118,7 @@
   		<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 	</repository>
   </distributionManagement>
+  -->
 
   <build>
     <testResources>
@@ -149,6 +153,7 @@
         </configuration>
       </plugin>
 
+	  <!-- 
 	  <plugin>
 	  	<artifactId>maven-deploy-plugin</artifactId>
 	  	<version>3.1.2</version>
@@ -192,6 +197,17 @@
 			<nexusUrl>https://oss.sonatype.org/</nexusUrl>
 			<autoReleaseAfterClose>true</autoReleaseAfterClose>
 		</configuration>
+	  </plugin>
+	  -->
+
+	  <plugin>
+		  <groupId>org.sonatype.central</groupId>
+		  <artifactId>central-publishing-maven-plugin</artifactId>
+		  <version>0.7.0</version>
+		  <extensions>true</extensions>
+		  <configuration>
+			<publishingServerId>central</publishingServerId>
+		  </configuration>
 	  </plugin>
 
 	  <!-- JavaDoc and source attachment -->
