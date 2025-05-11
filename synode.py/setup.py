@@ -36,6 +36,6 @@ setup(
     # data_files=[('bin', ['bin/jserv-album-0.7.0.jar', '../resources/portfolio-srv.exe'])],
     include_package_data=True,
     
-    install_requires=['pyside6', 'qrcode', 'anson.py3>=0.1.5', 'anclient.py3>=0.1.0', 'psutil', 'pillow>=8.0.0', 'invoke>=2.2.0']
+    install_requires=['pyside6', 'qrcode', 'anson.py3>=0.1.6', 'anclient.py3>=0.1.0', 'psutil', 'pillow>=8.0.0', 'invoke>=2.2.0']
     # classifiers=["Programming Language :: Python :: 3"]
 )
