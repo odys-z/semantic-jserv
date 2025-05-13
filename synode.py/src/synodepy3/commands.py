@@ -5,8 +5,13 @@ import signal
 import sys
 import time
 
+from anson.io.odysz.common import Utils
 from invoke import Collection, task, Context
+from src.synodepy3.__version__ import jar_ver, html_srver
 
+winsrv = 'winsrv'
+install_html_w_bat = os.path.join(winsrv, "install-html-w.bat")
+install_jserv_w_bat = os.path.join(winsrv, "install-jserv-w.bat")
 
 @task
 def run_jserv(c, bin = 'bin'):
@@ -30,37 +35,34 @@ def run_jserv(c, bin = 'bin'):
         time.sleep(.5)
 
 
-def uninstall_wsrv_byname(srvname: str, winsrv: str = 'winsrv'):
+def uninstall_wsrv_byname(srvname: str):
     ctx = Context()
-    bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, "install-jserv-w.bat")} uninstall {srvname}'
+    cmd = f'{install_jserv_w_bat} uninstall {srvname}'
     print(cmd)
     ctx.run(cmd)
 
 
-def install_wsrv_byname(srvname: str, winsrv: str = 'winsrv'):
+def install_wsrv_byname(srvname: str):
+    Utils.update_patterns(install_jserv_w_bat, {'@set jar_ver=[0-9\\.]+': jar_ver})
+
     ctx = Context()
-    bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, "install-jserv-w.bat")} install {srvname}'
+    cmd = f'{install_jserv_w_bat} install {srvname}'
     print(cmd)
     ctx.run(cmd)
 
 
-# def run_htmlsrv(bin = 'bin'):
-#     pass
-
-def uninstall_htmlsrv(winsrv: str = 'winsrv'):
+def uninstall_htmlsrv(srvname: str):
     ctx = Context()
-    bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, "install-html-w.bat")}'
+    cmd = f'{install_html_w_bat} uninstall {srvname}'
     print(cmd)
-    ctx.run(f'{cmd} uninstall')
+    ctx.run(cmd)
 
 
-def install_htmlsrv(winsrv: str = 'winsrv'):
+def install_htmlsrv(srvname: str):
+    Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': html_srver})
+
     ctx = Context()
-    bin = winsrv or 'winsrv'
-    cmd = f'{os.path.join(bin, "install-html-w.bat")}'
+    cmd = f'{install_html_w_bat} install {srvname}'
     print(cmd)
     ctx.run(cmd)
 

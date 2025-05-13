@@ -1,20 +1,25 @@
-import os
-from setuptools import setup, find_packages
+### What to: configure version number by setup.py, override by tasks.py.
+#
+# invoke make: export envs and write to __version__.py & *.bat -> run inst_<srv>_byname(py-var: srvname)
+# py -m build: use default vers, write to __version__.py & *.bat -> ..
 
-# import py2exe
+### How to
+# invoke build
+#
+# Don't directly build with:
 # pip install wheel
-# python setup.py bdist_wheel sdist
+# python -m build
+
+from setuptools import setup, find_packages
 from pathlib import Path
+from src.synodepy3.__version__ import synode_ver
+
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
-version = os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.2'
-version = version.strip()
-print(f'--{version}--'),
-
 setup(
     name='synode.py3',
-    version=version,
+    version=synode_ver,
     description='Portfolio Synode Stand Alone Service',
     author='Ody Z',
     zip_safe=False,

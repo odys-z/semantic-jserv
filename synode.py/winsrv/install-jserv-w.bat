@@ -1,7 +1,9 @@
 @REM @echo "Run this file from upper dir, e. g. run: winsrv/install-w.bat"
 @REM @echo "Installing jserv-album (Portfolio 0.7)"
 
+@REM BEGIN Python modifying section, do not modify except debugging (Not using arg for easy debug)
 @set jar-ver=0.7.2
+@REM END Python modifying section
 
 @REM @set serv_name="Synode.syn-%jar-ver%"
 @set serv_name="%~2"

@@ -1,7 +1,12 @@
 @REM @echo "Run this file from upper dir, e. g. run: winsrv/install-html-w.bat"
 
-@set jar-ver=0.1.5
-@set serv_name="Synode.web-%jar-ver%"
+@REM BEGIN Python modifying section, do not modify except debugging (Not using arg for easy debug)
+@set jar-ver=0.1.6
+@REM END Python modifying section
+
+@REM @set serv_name="Synode.web-%jar-ver%"
+@set serv_name=%~2
+
 @set classname=HtmlServer
 @set full_classname=io.oz.srv.HtmlServer
 
@@ -10,7 +15,7 @@ if "%~1" == "uninstall" (
 @call winsrv\uninstall-html-srv.bat winsrv\portfolio-ia64.exe %serv_name%
 ) else (
 @echo linked with "cd winsrv && mklink install-html-srv.bat ..\..\..\html-service\java\src\test\install-html-srv.bat"?
-@echo copied "copy ..\..\html-service\java\target\html-web-%jarv-ver%.jar bin" ?
+@echo copied "copy ..\..\html-service\java\target\html-web-%jar-ver%.jar bin" ?
 @call winsrv\install-html-srv.bat winsrv\portfolio-ia64.exe bin\html-web-%jar-ver%.jar %serv_name% . %classname% %full_classname%  
 sc query %serv_name%
 )

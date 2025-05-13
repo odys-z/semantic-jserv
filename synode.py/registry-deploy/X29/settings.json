@@ -1,9 +1,10 @@
-{ "type"      : "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "vol_name"  : "VOLUME_HOME",
-  "volume"    : "../vol",
-  "port"      : 8964,
-  "jservs"    : {"X29":"127.0.0.1:8964/jserv-album", "Y201":"127.0.0.1:8965/jserv-album"},
-  "envars"    : {"WEBROOT_HUB": "X29"},
-  "installkey": "0123456789ABCDEF",
-  "rootkey"   : ""
+{ "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "vol_name"    : "VOLUME_HOME",
+  "volume"      : "../vol",
+  "port"        : 8964,
+  "webport"     : 8900,
+  "jservs"      : {"X29":"http://127.0.0.1:8964/jserv-album", "Y201":"http://127.0.0.1:8965/jserv-album"},
+  "envars"      : {"WEBROOT_HUB": "X29"},
+  "installkey"  : "0123456789ABCDEF",
+  "rootkey"     : ""
 }

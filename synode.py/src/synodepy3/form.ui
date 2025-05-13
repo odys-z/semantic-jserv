@@ -138,7 +138,7 @@
      <rect>
       <x>109</x>
       <y>140</y>
-      <width>134</width>
+      <width>131</width>
       <height>27</height>
      </rect>
     </property>
@@ -158,9 +158,9 @@
    <widget class="QLineEdit" name="txtIP">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>320</x>
       <y>140</y>
-      <width>134</width>
+      <width>101</width>
       <height>27</height>
      </rect>
     </property>
@@ -180,7 +180,7 @@
    <widget class="QLabel" name="lbIP">
     <property name="geometry">
      <rect>
-      <x>270</x>
+      <x>260</x>
       <y>143</y>
       <width>69</width>
       <height>19</height>
@@ -193,7 +193,7 @@
    <widget class="QLabel" name="lbPort">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>440</x>
       <y>143</y>
       <width>41</width>
       <height>20</height>
@@ -206,9 +206,9 @@
    <widget class="QLineEdit" name="txtPort">
     <property name="geometry">
      <rect>
-      <x>527</x>
+      <x>580</x>
       <y>140</y>
-      <width>134</width>
+      <width>81</width>
       <height>27</height>
      </rect>
     </property>
@@ -656,6 +656,41 @@
     </property>
     <property name="shortcut">
      <string>Ctrl+T</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="txtWebport">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>140</y>
+      <width>81</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="whatsThis">
+     <string extracomment="Global / Domain wide node ID."/>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="maxLength">
+     <number>6</number>
+    </property>
+    <property name="placeholderText">
+     <string>E. g. 8900</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lbPort_2">
+    <property name="geometry">
+     <rect>
+      <x>562</x>
+      <y>143</y>
+      <width>23</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>-&gt;</string>
     </property>
    </widget>
   </widget>

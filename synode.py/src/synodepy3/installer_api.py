@@ -15,15 +15,19 @@ from typing import cast, Callable
 
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt
+from src.io.oz.srv import WebConfig
 
 from src.io.odysz.semantic.jprotocol import MsgCode
 from src.io.oz.syntier.serv import ExternalHosts
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException,\
-    AppSettings, implISettingsLoaded, web_port, webroot, \
+    AppSettings, implISettingsLoaded, webroot, \
     sys_db, syn_db, syntity_json, getJservUrl
 from src.io.oz.syn import AnRegistry, SynodeConfig
 
 from anclient.io.odysz.jclient import Clients
+
+from .__version__ import jar_ver, web_ver, html_srver
+
 
 def ping(clientUri: str, peerserv: str):
     # Clients.servRt = 'http://127.0.0.1:8964/jserv-album'
@@ -66,7 +70,7 @@ def valid_registry(reg: AnRegistry):
     :return:
     """
     if LangExt.len(reg.config.peers) < 2:
-        raise PortfolioException("Shouldn't works at leas 2 peers? (while checking dictionary.json)")
+        raise PortfolioException("Shouldn't work on at leas 2 peers? (while checking dictionary.json)")
     if AnRegistry.find_synode(reg.config.peers, reg.config.synid) is None:
         raise PortfolioException(
             f'Cannot find peer registry of my id: {reg.config.synid}. (while checking dictionary.json.peers)')
@@ -157,17 +161,21 @@ def checkinstall_exiftool():
 """
 
 install_uri = 'Anson.py3/test'
-jar_ver = '0.7.1'
+
 host_private = 'private'
 web_host_json = f'{host_private}/host.json'
 
 album_web_dist = 'web-dist'
+index_html = 'index.html'
 
 dictionary_json = 'dictionary.json'
-settings_json = 'settings.json'
-serv_port0 = 8964
 web_inf = 'WEB-INF'
-index_html = 'index.html'
+settings_json = 'settings.json'
+
+html_service_json = 'html-service.json'
+html_web_jar = f'html_web-{html_srver}.jar'
+
+serv_port0 = 8964
 jserv_07_jar = f'jserv-album-{jar_ver}.jar'
 exiftool_zip = 'exiftool.zip'
 exiftool_v_exe = 'exiftool*.exe'
@@ -269,9 +277,13 @@ class InstallerCli:
         psys_db, psyn_db = InstallerCli.sys_syn_db(self.settings.Volume())
         return LangExt.len(self.settings.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
 
-
     @staticmethod
     def sys_syn_db(volpath: str):
+        """
+        Get db paths
+        :param volpath:
+        :return: path-sys.db, path-syn.db
+        """
         path_v = Path(volpath)
 
         if not Path.exists(path_v):
@@ -280,7 +292,6 @@ class InstallerCli:
             raise IOError(f'Volume path is not a folder: {path_v}')
 
         return Path(os.path.join(path_v, sys_db)), Path(os.path.join(path_v, syn_db))
-
 
     @staticmethod
     def reportIp() -> str:
@@ -338,6 +349,11 @@ class InstallerCli:
         p_jar = os.path.join('bin/', jserv_07_jar)
         if not os.path.isfile(p_jar):
             raise FileNotFoundError(f'Synode service package is missing: {p_jar}')
+
+        p_jar = os.path.join('bin/', html_web_jar)
+        if not os.path.isfile(p_jar):
+            raise FileNotFoundError(f'Synode html server package is missing: {p_jar}')
+
         if (not os.path.isfile(os.path.join('volume', sys_db))
                 or not os.path.isfile(os.path.join('volume', syn_db))):
             raise FileNotFoundError(
@@ -400,7 +416,7 @@ class InstallerCli:
             if  os.path.isfile(sysdb) and os.stat(sysdb).st_size == 0 and \
                 os.path.isfile(sysdb) and os.stat(syndb).st_size == 0:
 
-                self.settings.installkey, self.settings.rootkey = self.settings.rootkey, None
+                self.settings.installkey, self.settings.rootkey = self.settings.rootkey, ''
                 self.settings.toFile(os.path.join(web_inf, settings_json))
                 return f'Fixed errors: {sysdb} size & {syndb} size = 0, reset flags for setup db.'
             elif os.path.isfile(sysdb) and os.path.isfile(sysdb) and (os.stat(syndb).st_atime > 0 or os.stat(sysdb).st_size > 0):
@@ -410,7 +426,10 @@ class InstallerCli:
     def gen_wsrv_name(self):
         return f'Synode-{jar_ver}-{self.registry.config.synid}'
 
-    def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None,
+    def gen_html_srvname(self):
+        return f'Portfolio-web-{web_ver}-{self.registry.config.synid}'
+
+    def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None, webport: str = None,
                      volume: str = None, syncins: str = None, envars = None):
         if envars is None:
             envars = {}
@@ -422,6 +441,9 @@ class InstallerCli:
 
         if not LangExt.isblank(port):
             self.settings.port = int(port)
+
+        if not LangExt.isblank(webport):
+            self.settings.webport = int(webport)
 
         if not LangExt.isblank(volume):
             if not os.path.exists(volume):
@@ -474,7 +496,7 @@ class InstallerCli:
         # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
         self.settings.startHandler = [implISettingsLoaded,
                                       f'{album_web_dist}/{web_host_json}',
-                                      webroot, web_port]
+                                      webroot, self.settings.webport]
         print(self.settings.startHandler)
 
         self.settings.toFile(os.path.join(web_inf, settings_json))
@@ -506,6 +528,10 @@ class InstallerCli:
         v_syntity_pth = os.path.join(Path(self.settings.Volume()), syntity_json)
         sysdb, syndb = InstallerCli.sys_syn_db(self.settings.Volume())
 
+        # web/host.json
+        InstallerCli.update_private(self.registry.config, self.settings)
+        InstallerCli.update_htmlsrv(self.registry.config, self.settings)
+
         if self.isinstalled() and self.hasrun():
             raise PortfolioException(f'Deployed synodepy3 {os.getcwd()} is, or has, already running.')
 
@@ -524,9 +550,6 @@ class InstallerCli:
             Utils.warn(f'volume is set to {self.settings.Volume()}.\n'
                        f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
-
-        # web/host.json
-        InstallerCli.update_private(self.registry.config, self.settings)
 
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)
@@ -550,7 +573,7 @@ class InstallerCli:
                 except FileNotFoundError or IOError or OSError: pass
 
     def test_in_term(self):
-        self.updateWithUi(syncins='0.0', envars={webroot: f'{InstallerCli.reportIp()}:{web_port}'})
+        self.updateWithUi(syncins='0.0', envars={webroot: f'{InstallerCli.reportIp()}:{self.settings.webport}'})
 
         system = Utils.get_os()
         jar = os.path.join('bin', jserv_07_jar)
@@ -610,6 +633,18 @@ class InstallerCli:
                     hosts.syndomx.update({sid: jurl})
 
             hosts.toFile(webhost_pth)
+
+    @staticmethod
+    def update_htmlsrv(config: SynodeConfig, settings: AppSettings):
+        jsn_path = os.path.join(web_inf, html_service_json)
+
+        web_cfg: WebConfig
+        try: web_cfg = cast(WebConfig, Anson.from_file(jsn_path))
+        except: web_cfg = WebConfig()
+
+        web_cfg.port = settings.webport
+
+        web_cfg.toFile(jsn_path)
 
     @staticmethod
     def stop_web(httpd: TCPServer):

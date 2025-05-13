@@ -215,6 +215,7 @@ class InstallerForm(QMainWindow):
                 synid=self.ui.txtSynode.text(),
                 syncins=self.ui.txtSyncIns.text(),
                 port=self.ui.txtPort.text(),
+                webport=self.ui.txtWebport.text(),
                 volume=self.ui.txtVolpath.text())
 
             if self.validate():
@@ -245,7 +246,7 @@ class InstallerForm(QMainWindow):
                     'java -jar bin/jserv-album-#.#.#.jar\n'
                     'java -jar bin/html-web-#.#.#.jar')
             try:
-                self.httpd, self.webth = self.cli.start_web()
+                self.httpd, self.webth = self.cli.start_web(int(self.ui.txtWebport.text()))
                 self.cli.test_in_term()
                 qr_data = self.gen_qr()
                 print(qr_data)
@@ -261,7 +262,7 @@ class InstallerForm(QMainWindow):
                 'Click Ok to continue, and confirm all permission requests (window can be hidden).')
 
         install_wsrv_byname(self.cli.gen_wsrv_name())
-        install_htmlsrv()
+        install_htmlsrv(self.cli.gen_html_srvname())
 
         self.gen_qr()
 
@@ -348,6 +349,7 @@ class InstallerForm(QMainWindow):
 
     def bindSettings(self, settings: AppSettings):
         self.ui.txtPort.setText(str(settings.port))
+        self.ui.txtWebport.setText(str(settings.webport))
         self.ui.txtVolpath.setText(settings.Volume())
 
         if settings is not None:

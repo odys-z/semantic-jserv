@@ -14,7 +14,7 @@ syn_db = 'doc-jserv.db'
 sys_db = 'jserv-main.db'
 syntity_json = 'syntity.json'
 
-web_port = 8900
+# web_port = 8900
 webroot = 'WEBROOT_HUB'
 
 jserv_url_path = 'jserv-album'
@@ -77,12 +77,15 @@ class AppSettings(Anson):
     volume: str
     vol_name: str
     port: int
+    webport: int
     jservs: dict
 
     def __init__(self):
         super().__init__()
+        self.port = 8964
+        self.webport = 8900
         self.envars = {}
-        self.startHandler = [implISettingsLoaded, 'private/host.json', webroot, web_port]
+        self.startHandler = [implISettingsLoaded, 'web-dist/private/host.json', webroot, self.webport]
 
     @overload
     def Volume(self):
