@@ -7,9 +7,13 @@ import time
 
 from anson.io.odysz.common import Utils
 from invoke import Collection, task, Context
-from src.synodepy3.__version__ import jar_ver, html_srver
+from .__version__ import jar_ver, html_srver
+from .installer_api import InstallerCli
 
 winsrv = 'winsrv'
+winsrv_synode = f'{winsrv}.synode'
+winsrv_websrv = f'{winsrv}.web'
+
 install_html_w_bat = os.path.join(winsrv, "install-html-w.bat")
 install_jserv_w_bat = os.path.join(winsrv, "install-jserv-w.bat")
 
@@ -35,8 +39,10 @@ def run_jserv(c, bin = 'bin'):
         time.sleep(.5)
 
 
-def uninstall_wsrv_byname(srvname: str):
+def uninstall_wsrv_byname(srvname: str = None):
     ctx = Context()
+    if srvname is None:
+        srvname = InstallerCli().loadInitial().envars[winsrv_synode]
     cmd = f'{install_jserv_w_bat} uninstall {srvname}'
     print(cmd)
     ctx.run(cmd)
@@ -49,13 +55,20 @@ def install_wsrv_byname(srvname: str):
     cmd = f'{install_jserv_w_bat} install {srvname}'
     print(cmd)
     ctx.run(cmd)
+    return srvname
 
 
-def uninstall_htmlsrv(srvname: str):
+"""
+same executable as uninstall_wsrv_byname()
+
+def uninstall_htmlsrv(srvname: str = None):
     ctx = Context()
+    if srvname is None:
+        srvname = InstallerCli().loadInitial().envars[winsrv_websrv]
     cmd = f'{install_html_w_bat} uninstall {srvname}'
     print(cmd)
     ctx.run(cmd)
+"""
 
 
 def install_htmlsrv(srvname: str):
@@ -65,6 +78,7 @@ def install_htmlsrv(srvname: str):
     cmd = f'{install_html_w_bat} install {srvname}'
     print(cmd)
     ctx.run(cmd)
+    return srvname
 
 
 if __name__ == '__main__':

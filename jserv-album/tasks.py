@@ -30,7 +30,7 @@ album-web-#.#.#.jar
 """
 
 vol_files = {"volume": ["jserv-main.db", "doc-jserv.db"]}
-dist_dir = 'deploy-x29'
+dist_dir = f'build-{version}'
 
 @task
 def create_volume(c):
@@ -52,7 +52,17 @@ def updateApkRes(host_json, res):
     """
     print('Updating host.json with APK resource...', host_json)
 
-    Anson.java_src('src')
+    """
+    from importlib.metadata import distribution
+    try:
+        dist = distribution('src.synodepy3')  # or 'synode-py3'
+        print(f"Found {dist.name} version {dist.version}")
+    except importlib.metadata.PackageNotFoundError:
+        print("synode.py3 not found")
+    
+    """
+
+    Anson.java_src('src', ['synode_py3'])
     hosts = Anson.from_file(host_json)
     print('host.json:', hosts)
 
@@ -77,15 +87,15 @@ def build(c):
         print('Building synode.py3 {version} with web-dist {web_ver}, html-service.jar {html_jar_v}...')
 
         if os.name == 'nt':
-            return f'set SYNODE_VERSION={version} JSERV_JAR_VERSION={version} WEB_VERSION={web_ver} HTML_JAR_VERSION={html_jar_v} && invoke build'
+            return f'set SYNODE_VERSION={version} & set JSERV_JAR_VERSION={version} & set WEB_VERSION={web_ver} & set HTML_JAR_VERSION={html_jar_v} & invoke build'
         else:
-            return f'export SYNODE_VERSION={version} JSERV_JAR_VERSION={version} WEB_VERSION={web_ver} HTML_JAR_VERSION={html_jar_v} && invoke build'
+            return f'export SYNODE_VERSION="{version}" JSERV_JAR_VERSION="{version}" WEB_VERSION="{web_ver}" HTML_JAR_VERSION="{html_jar_v}" && invoke build'
 
     buildcmds = [
         # replace app_ver with apk_ver?
         ['../../anclient/examples/example.android', 'gradlew assembleRelease'],
-
         ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{version}.apk'],
+
         ['web-dist/private', lambda: updateApkRes('host.json', {'apk': f'res-vol/portfolio-{apk_ver}.apk'})],
         ['.', 'cat web-dist/private/host.json'],
 
@@ -100,7 +110,7 @@ def build(c):
         # ['../synode.py/winsrv', lambda: updateJarVersion('install-jserv-w.bat', '@set jar-ver=.*', f'@set jar-ver={version}')],
     ]
 
-    print('--------------    buid   ------------------')
+    print('--------------  package  ------------------')
     for pth, cmd in buildcmds:
         if isinstance(cmd, LambdaType):
             print(pth, '&&', cmd)
@@ -118,8 +128,8 @@ def build(c):
     return False
 
 
-@task(create_volume, build)
-def make(c, zip=f'jserv-portfolio-{version}.zip'):
+@task
+def package(c, zip=f'jserv-portfolio-{version}.zip'):
     """
     Create a ZIP file (jserv.zip).
     
@@ -229,6 +239,17 @@ def make(c, zip=f'jserv-portfolio-{version}.zip'):
     except Exception as e:
         print(f"Error creating ZIP file: {str(e)}", file=sys.stderr)
         raise
+
+@task(create_volume, build, package)
+def make(c):
+    """
+    Create a ZIP file (jserv.zip) with the specified resources.
+    
+    Args:
+        c: Invoke Context object for running commands.
+    """
+    print('Package created successfully.')
+
 
 if __name__ == '__main__':
     from invoke import Program

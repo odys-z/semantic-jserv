@@ -16,6 +16,8 @@ runtime-*
 winserv.xml
 dependency-reduced-pom.xml
 nginx
+venv*
+.venv*
 **/volume-hub
 **/settings.hub.json
 **/volume-prv
@@ -34,3 +36,4 @@ host.json
 
 web-dist
 deploy-*
+build-*

@@ -3,13 +3,14 @@
 
     What to
     -------
-    configure version number by setup.py, override by tasks.py.
+    configure version, override by caller's envrionment variables.
 
     #. invoke make:
-        export envs and write to __version__.py & *.bat -> run inst_<srv>_byname(py-var: srvname)
+        -> export env varialbles, SYNODE_VERSION, JSERV_JAR_VERSION, HTML_JAR_VERSION, WEB_VERSION,
+        -> run build.
 
     #. py -m build:
-        use default vers, write to __version__.py & *.bat -> ..
+        -> use default vers in __version__.py & *.bat, build wheel.
 
     How to
     ------
@@ -106,8 +107,8 @@ def build(c: Context):
 
     print('--------------       building     ------------------')
     for pth, cmd in buildcmds:
+        print("[Build in]", pth, '&&', cmd)
         if isinstance(cmd, LambdaType):
-            print(pth, '&&', cmd)
             cwd = os.getcwd()
             os.chdir(pth)
             cmd = cmd()
@@ -120,7 +121,6 @@ def build(c: Context):
                 print('OK: cmd <- None')
             os.chdir(cwd)
         else:
-            print(pth, '&&', cmd)
             ret = c.run(f'cd {pth} && {cmd}')
             print('OK:', ret.ok, ret.stderr)
     return False

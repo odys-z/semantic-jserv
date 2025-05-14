@@ -173,7 +173,7 @@ web_inf = 'WEB-INF'
 settings_json = 'settings.json'
 
 html_service_json = 'html-service.json'
-html_web_jar = f'html_web-{html_srver}.jar'
+html_web_jar = f'html-web-{html_srver}.jar'
 
 serv_port0 = 8964
 jserv_07_jar = f'jserv-album-{jar_ver}.jar'
@@ -199,6 +199,8 @@ class InstallerCli:
         return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
 
     def __init__(self):
+        self.httpd = None
+        self.webth = None
         self.registry = cast(AnRegistry, None)
         self.settings = cast(AppSettings, None)
 
@@ -646,15 +648,17 @@ class InstallerCli:
 
         web_cfg.toFile(jsn_path)
 
-    @staticmethod
-    def stop_web(httpd: TCPServer):
-        if httpd is not None:
+    def stop_web(self):
+        if self.httpd is not None:
             try:
-                httpd.shutdown()
+                self.httpd.shutdown()
+                if self.webth is not None:
+                    self.webth.join()
             except OSError as e:
                 print(e)
 
-    def start_web(self, webport=8900):
+    @staticmethod
+    def start_web(webport=8900):
         import http.server
         import socketserver
         import threading

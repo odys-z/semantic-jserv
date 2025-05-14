@@ -1,9 +1,10 @@
+import os
 import sys
 
 from anclient.io.odysz.jclient import Clients
 
 import io as std_io
-from typing import Optional
+from typing import Optional, cast
 
 import PySide6
 import qrcode
@@ -14,13 +15,13 @@ from anson.io.odysz.common import Utils
 
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJservOption
 from src.io.oz.syn import AnRegistry, SyncUser
-from src.synodepy3.commands import install_htmlsrv, install_wsrv_byname
-from src.synodepy3.installer_api import InstallerCli, install_uri
+from .commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
+from .installer_api import InstallerCli, install_uri, web_inf, settings_json
 
 # Important:
-# You need to run the following command to generate the ui_form.py file
+# Run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py
-from src.synodepy3.ui_form import Ui_InstallForm
+from .ui_form import Ui_InstallForm
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()
@@ -76,8 +77,8 @@ class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.httpd = None
-        self.webth = None
+        # self.httpd = None
+        # self.webth = None
 
         self.ui = Ui_InstallForm()
         self.ui.setupUi(self)
@@ -246,7 +247,8 @@ class InstallerForm(QMainWindow):
                     'java -jar bin/jserv-album-#.#.#.jar\n'
                     'java -jar bin/html-web-#.#.#.jar')
             try:
-                self.httpd, self.webth = self.cli.start_web(int(self.ui.txtWebport.text()))
+                if self.cli.httpd is None:
+                    self.cli.httpd, self.cli.webth = InstallerCli.start_web(int(self.ui.txtWebport.text()))
                 self.cli.test_in_term()
                 qr_data = self.gen_qr()
                 print(qr_data)
@@ -257,14 +259,20 @@ class InstallerForm(QMainWindow):
                 return
 
     def installWinsrv(self):
-        self.cli.stop_web(self.httpd)
+        self.cli.stop_web()
         msg_box('Please close any service Window if any been started\n'
                 'Click Ok to continue, and confirm all permission requests (window can be hidden).')
 
-        install_wsrv_byname(self.cli.gen_wsrv_name())
-        install_htmlsrv(self.cli.gen_html_srvname())
+        srvname = install_wsrv_byname(self.cli.gen_wsrv_name())
+        if srvname is not None:
+            self.cli.settings.envars.update({winsrv_synode: srvname})
+
+        srvname = install_htmlsrv(self.cli.gen_html_srvname())
+        if srvname is not None:
+            self.cli.settings.envars.update({winsrv_websrv: srvname})
 
         self.gen_qr()
+        self.cli.settings.toFile(cast(str, os.path.join(web_inf, settings_json)))
 
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
@@ -367,10 +375,10 @@ class InstallerForm(QMainWindow):
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
         super().closeEvent(event)
-        if self.httpd is not None or self.webth is not None:
+        if self.cli.httpd is not None or self.cli.webth is not None:
             try:
-                InstallerCli.closeWeb(self.httpd, self.webth)
-                self.httpd, self.webth = None, None
+                InstallerCli.closeWeb(self.cli.httpd, self.cli.webth)
+                self.cli.httpd, self.cli.webth = None, None
             finally:
                 event.accept()
         else:
