@@ -10,6 +10,9 @@ from .installer_api import InstallerCli
 
 def uninst_srv():
     import invoke
+    cli = InstallerCli()
+    cli.loadInitial()
+
     try:
         srvname = cli.settings.envars[winsrv_synode]
         uninstall_wsrv_byname(srvname)
