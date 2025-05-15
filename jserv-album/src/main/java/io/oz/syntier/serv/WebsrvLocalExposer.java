@@ -3,6 +3,7 @@ package io.oz.syntier.serv;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
+import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 
 import java.io.IOException;
@@ -47,6 +48,9 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 			hosts.syndomx.put(synode, jserv);
 			// leaving resources untouched
 			hosts.toFile(settings.startHandler[1], JsonOpt.beautify());
+			
+			logi("Exposed service to %s", settings.startHandler[1]);
+			logi(hosts.toBlock(JsonOpt.beautify()));
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
