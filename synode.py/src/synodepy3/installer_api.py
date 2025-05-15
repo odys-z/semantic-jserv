@@ -429,7 +429,7 @@ class InstallerCli:
         return f'Synode-{jar_ver}-{self.registry.config.synid}'
 
     def gen_html_srvname(self):
-        return f'Portfolio-web-{web_ver}-{self.registry.config.synid}'
+        return f'Synode.web-{web_ver}-{self.registry.config.synid}'
 
     def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None, webport: str = None,
                      volume: str = None, syncins: str = None, envars = None):
