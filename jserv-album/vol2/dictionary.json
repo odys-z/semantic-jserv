@@ -19,7 +19,7 @@
       "homepage": "",
       "album0": "album-test"
     },
-    "syncIns": 0,
+    "syncIns": 0.0,
     "peers": [{
       "type": "io.odysz.semantic.syn.Synode",
       "synid": "X29",
@@ -50,7 +50,7 @@
     "type": "io.odysz.semantic.syn.SyncUser",
     "userId": "zelenskyy",
     "userName": null,
-    "pswd": "слава україні",
+    "pswd": "8964",
     "iv": null,
     "org": "ura",
     "domain": "zsu"

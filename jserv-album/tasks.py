@@ -140,7 +140,7 @@ def package(c, zip=f'jserv-portfolio-{version}.zip'):
     resources = {
         f"bin/html-web-{html_jar_v}.jar": f"../../html-service/java/target/html-web-{html_jar_v}.jar", # clone at github/html-service
         f"bin/jserv-album-{version}.jar": f"target/jserv-album-{version}.jar",
-        "bin/exiftool.zip": "./exiftool-13.21_64.zip",
+        "bin/exiftool.zip": "./task-res-exiftool-13.21_64.zip",
         "bin/synode_py3-0.7-py3-none-any.whl": f"../synode.py/dist/synode_py3-{version}-py3-none-any.whl",
         "WEB-INF": f"src/main/webapp/WEB-INF-{version}/*",
         "winsrv": "../synode.py/winsrv/*",
