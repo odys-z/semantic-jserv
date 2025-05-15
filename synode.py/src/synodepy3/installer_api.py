@@ -260,20 +260,8 @@ class InstallerCli:
 
         return registry
 
-    # def isinstalled(self, volpath_ui: str = None):
-    #     return (self.settings is not None and
-    #             (volpath_ui is None and self.validateVol(self.settings.Volume()) is None or
-    #              volpath_ui is not None and self.validateVol(volpath_ui) is None))
-
     def isinstalled(self):
         return self.settings is not None and self.validateVol(self.settings.Volume()) is None
-
-    # def hasrun(self, volpath_ui = None):
-    #     volpath = LangExt.ifnull(volpath_ui, self.settings.Volume())
-    #     data = Anson.from_file(volpath_ui) if volpath_ui is not None else self.settings
-    #
-    #     psys_db = os.path.join(volpath, sys_db)
-    #     return len(data.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
 
     def hasrun(self):
         psys_db, psyn_db = InstallerCli.sys_syn_db(self.settings.Volume())
@@ -422,7 +410,7 @@ class InstallerCli:
                 self.settings.toFile(os.path.join(web_inf, settings_json))
                 return f'Fixed errors: {sysdb} size & {syndb} size = 0, reset flags for setup db.'
             elif os.path.isfile(sysdb) and os.path.isfile(sysdb) and (os.stat(syndb).st_atime > 0 or os.stat(sysdb).st_size > 0):
-                raise PortfolioException(f'Find error sizes about {syndb} and {sysdb}, but cannot fix.')
+                raise PortfolioException(f'Find sizes about {syndb} and {sysdb} != 0.')
         return None
 
     def gen_wsrv_name(self):
@@ -477,7 +465,9 @@ class InstallerCli:
         if not os.path.isdir(web_inf):
             raise PortfolioException(f'Folder {web_inf} dose not exist, or not a folder.')
 
-        self.settings.toFile(os.path.join(web_inf, settings_json))
+        # May 15 2025
+        # See InstallerCli.install()'s use case analysis
+        # self.settings.toFile(os.path.join(web_inf, settings_json))
 
     def install(self, respth: str):
         """
@@ -506,27 +496,6 @@ class InstallerCli:
         ########## volume
         # path_v = Path(LangExt.ifnull(volpath, self.settings.Volume()))
 
-        # if not Path.exists(path_v):
-        #     Path.mkdir(path_v)
-        # elif not Path.is_dir(path_v):
-        #     raise IOError(f'Volume path is not a folder: {path_v}')
-        #
-        # if self.isinstalled(volpath) and self.hasrun(volpath):
-        #     raise PortfolioException(f'Deployed synodepy3 in {path_v} is, or has, already running.')
-        #
-        # self.registry.toFile(os.path.join(path_v, dictionary_json))
-        #
-        # v_jservdb_pth = os.path.join(path_v, syn_db)
-        # v_main_db_pth = os.path.join(path_v, sys_db)
-        # v_syntity_pth = os.path.join(path_v, syntity_json)
-
-
-        # if not Path.exists(Path(v_jservdb_pth)) and not Path.exists(Path(v_main_db_pth)):
-        #     shutil.copy2(os.path.join(respth if not LangExt.isblank(respth) else '.', syntity_json),
-        #                  v_syntity_pth)
-        #     shutil.copy2(os.path.join("volume", syn_db), v_jservdb_pth)
-        #     shutil.copy2(os.path.join("volume", sys_db), v_main_db_pth)
-
         v_syntity_pth = os.path.join(Path(self.settings.Volume()), syntity_json)
         sysdb, syndb = InstallerCli.sys_syn_db(self.settings.Volume())
 
@@ -534,9 +503,30 @@ class InstallerCli:
         InstallerCli.update_private(self.registry.config, self.settings)
         InstallerCli.update_htmlsrv(self.registry.config, self.settings)
 
-        if self.isinstalled() and self.hasrun():
-            raise PortfolioException(f'Deployed synodepy3 {os.getcwd()} is, or has, already running.')
+        # 2025.5.15, try a new handling for events - deployed resource use case extending
+        #
+        # if self.isinstalled() and self.hasrun():
+        #     raise PortfolioException(f'Deployed synodepy3 {os.getcwd()} is, or has, already running.')
+        #
+        # self.registry.toFile(os.path.join(self.settings.Volume(), dictionary_json))
+        #
+        # if not Path.exists(syndb) and not Path.exists(sysdb):
+        #     shutil.copy2(os.path.join(respth if not LangExt.isblank(respth) else '.', syntity_json),
+        #                  v_syntity_pth)
+        #     shutil.copy2(os.path.join("volume", syn_db), syndb)
+        #     shutil.copy2(os.path.join("volume", sys_db), sysdb)
+        # else:
+        #     # Prevent deleting tables by JettypApp's checking installation.
+        #     # This is assuming album-jserv always successfully setup dbs - when db files exist, the tables exist.
+        #     if self.hasrun() and not LangExt.isblank(self.settings.installkey) and LangExt.isblank(self.settings.rootkey):
+        #         self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
+        #     Utils.warn(f'Volume is set to {self.settings.Volume()}.\n'
+        #                f'Ignore existing database:\n{sysdb}\n{syndb}')
+        #     self.settings.toFile(os.path.join(web_inf, settings_json))
 
+        # May 15 2025
+        # keep db files, save changes anyway
+        # Registry's modification is checked by UI, any cli modification is impossible, except direct editing.
         self.registry.toFile(os.path.join(self.settings.Volume(), dictionary_json))
 
         if not Path.exists(syndb) and not Path.exists(sysdb):
@@ -544,13 +534,14 @@ class InstallerCli:
                          v_syntity_pth)
             shutil.copy2(os.path.join("volume", syn_db), syndb)
             shutil.copy2(os.path.join("volume", sys_db), sysdb)
-        else:
-            # Prevent deleting tables by JettypApp's checking installation.
-            # This is assuming album-jserv always successfully setup dbs - when db files exist, the tables exist.
-            if self.hasrun() and not LangExt.isblank(self.settings.installkey) and LangExt.isblank(self.settings.rootkey):
-                self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
-            Utils.warn(f'volume is set to {self.settings.Volume()}.\n'
-                       f'Ignore existing database:\n{sysdb}\n{syndb}')
+
+        # Prevent deleting tables by JettypApp's checking installation.
+        # This is assuming album-jserv always successfully setup dbs - when db files exist, the tables exist.
+        if self.hasrun() and not LangExt.isblank(self.settings.installkey) and LangExt.isblank(
+                self.settings.rootkey):
+            self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
+            Utils.warn(f'Volume is set to {self.settings.Volume()}.\n'
+                   f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
 
     def clean_install(self, vol: str = None):

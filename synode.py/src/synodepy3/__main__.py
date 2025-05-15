@@ -15,13 +15,13 @@ from anson.io.odysz.common import Utils
 
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJservOption
 from src.io.oz.syn import AnRegistry, SyncUser
-from .commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
-from .installer_api import InstallerCli, install_uri, web_inf, settings_json
+from src.synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
+from src.synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json
 
 # Important:
 # Run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py
-from .ui_form import Ui_InstallForm
+from src.synodepy3.ui_form import Ui_InstallForm
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()
@@ -233,7 +233,8 @@ class InstallerForm(QMainWindow):
                     # Changing vol path can reach here
                     err_msg('Setting up synodepy3 is failed.', e)
                 except PortfolioException as e:
-                    warn_msg('Configuration is updated with errors. Check the details.\nIf this is not switching volume, that is not correct' , e)
+                    warn_msg('Configuration is updated with errors. Check the details.\n'
+                             'If this is not switching volume, that is not correct' , e)
 
                 self.enableServInstall()
 
