@@ -1,6 +1,6 @@
 -- h_photos definition
 
-CREATE TABLE "h_photos" (
+CREATE TABLE "h_photos" if not exists (
   pid varchar(12) NOT NULL,
 
   family varchar2(12) NOT NULL,

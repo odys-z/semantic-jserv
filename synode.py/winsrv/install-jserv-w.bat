@@ -2,14 +2,14 @@
 @echo "--- Installing Synode Windows Service ---"
 
 @REM BEGIN Python modifying section, do not modify except debugging (Not using bat file arg for easy debugging)
-@set jar-ver=0.7.2
+@set jar_ver=0.7.2
 @REM END Python modifying section
 
-@REM @set serv_name="Synode.syn-%jar-ver%"
+@REM @set serv_name="Synode.syn-%jar_ver%"
 @set serv_name="%~2"
 @echo %serv_name%
 
-@set jar=jserv-album-%jar-ver%.jar
+@set jar=jserv-album-%jar_ver%.jar
 @set classname=SynotierJettyApp
 @set full_classname=io.oz.syntier.serv.%classname%
 

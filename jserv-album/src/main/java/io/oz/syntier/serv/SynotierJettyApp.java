@@ -92,12 +92,6 @@ public class SynotierJettyApp {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-//	String jserv;
-//	public String jserv() { return jserv; }
-//	public SynotierJettyApp jserv(String url) {
-//		jserv = url;
-//		return this;
-//	}
 	public String jserv() {
 		return this.syngleton.settings.jserv(this.syngleton.synode());
 	}
@@ -157,7 +151,8 @@ public class SynotierJettyApp {
 	            listAllThreads("After thread interruption");
 
 	            if (remainingThreads > 1) {
-	                Utils.warn("Forcing JVM exit due to " + (remainingThreads - 1) + " lingering threads...");
+	                // Utils.warn("Forcing JVM exit due to " + (remainingThreads - 1) + " lingering threads...");
+	                Utils.warn("Forcing JVM exit due to % lingering threads...", remainingThreads - 1);
 	                System.exit(0);
 	            }
 

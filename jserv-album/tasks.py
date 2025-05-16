@@ -5,6 +5,7 @@ import fnmatch
 import re
 import sys
 from types import LambdaType
+from anson.io.odysz.common import Utils
 from invoke import task
 import zipfile
 import os
@@ -12,9 +13,9 @@ from glob import glob
 
 from anson.io.odysz.anson import Anson
 
-version = '0.7.2'
+version = '0.7.3'
 """
-synode.py3, jserv-album-0.7.2.jar
+synode.py3, jserv-album-0.7.3.jar
 """
 
 apk_ver = '0.7.1'
@@ -44,7 +45,7 @@ def create_volume(c):
 
 def updateApkRes(host_json, res):
     """
-    Update the APK resource in the host.json file.
+    Update the APK resource record (ref-link) in the host.json file.
     
     Args:
         host_json (str): Path to the host.json file.
@@ -74,8 +75,23 @@ def updateApkRes(host_json, res):
 
     return None
 
-
 @task
+def config(c):
+    print('--------------    configuration   ------------------')
+
+    Anson.java_src('src', ['synode_py3'])
+
+    this_directory = os.getcwd()
+
+    print(f'-- synode version: {version} --'),
+
+    version_file = os.path.join(this_directory, 'pom.xml')
+    Utils.update_patterns(version_file, {
+        '<!-- auto update token TASKS.PY/CONFIG --><version>0.7.2</version>':
+       f'<!-- auto update token TASKS.PY/CONFIG --><version>{version}</version>',
+    })
+
+@task(config)
 def build(c):
     def cmd_build_synodepy3(version:str, web_ver:str, html_jar_v:str) -> str:
         """
@@ -94,7 +110,7 @@ def build(c):
     buildcmds = [
         # replace app_ver with apk_ver?
         ['../../anclient/examples/example.android', 'gradlew assembleRelease'],
-        ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{version}.apk'],
+        ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{apk_ver}.apk'],
 
         ['web-dist/private', lambda: updateApkRes('host.json', {'apk': f'res-vol/portfolio-{apk_ver}.apk'})],
         ['.', 'cat web-dist/private/host.json'],
@@ -142,7 +158,7 @@ def package(c, zip=f'jserv-portfolio-{version}.zip'):
         f"bin/jserv-album-{version}.jar": f"target/jserv-album-{version}.jar",
         "bin/exiftool.zip": "./task-res-exiftool-13.21_64.zip",
         "bin/synode_py3-0.7-py3-none-any.whl": f"../synode.py/dist/synode_py3-{version}-py3-none-any.whl",
-        "WEB-INF": f"src/main/webapp/WEB-INF-{version}/*",
+        "WEB-INF": f"src/main/webapp/WEB-INF-0.7.3/*", # Do not replace with version.
         "winsrv": "../synode.py/winsrv/*",
         "web-dist": "web-dist/*"    # use a link for different Anclient folder name
                                     # ln -s ../Anclient/examples/example.js/album web-dist

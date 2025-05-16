@@ -49,7 +49,7 @@ def uninstall_wsrv_byname(srvname: str = None):
 
 
 def install_wsrv_byname(srvname: str):
-    Utils.update_patterns(install_jserv_w_bat, {'@set jar_ver=[0-9\\.]+': jar_ver})
+    Utils.update_patterns(install_jserv_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={jar_ver}'})
 
     ctx = Context()
     cmd = f'{install_jserv_w_bat} install {srvname}'
@@ -72,7 +72,7 @@ def uninstall_htmlsrv(srvname: str = None):
 
 
 def install_htmlsrv(srvname: str):
-    Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': html_srver})
+    Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={html_srver}'})
 
     ctx = Context()
     cmd = f'{install_html_w_bat} install {srvname}'

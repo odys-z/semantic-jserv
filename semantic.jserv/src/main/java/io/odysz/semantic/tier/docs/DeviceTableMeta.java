@@ -39,7 +39,7 @@ public class DeviceTableMeta extends SyntityMeta {
 		cdate   = "cdate";
 		org     = "org";
 		
-		ddlSqlite= "CREATE TABLE doc_devices (\r\n"
+		ddlSqlite= "CREATE TABLE doc_devices if not exists (\r\n"
 			+ "  synode0 varchar(12)  NOT NULL, -- initial node a device is registered\r\n"
 			+ "  device  varchar(25)  NOT NULL, -- prefix synode0 + ak, generated when registering, but is used together with synode-0 for file identity.\r\n"
 			+ "  devname varchar(256) NOT NULL, -- set by user, warn on duplicate, use old device id if user confirmed, otherwise generate a new one.\r\n"

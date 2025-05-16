@@ -10,7 +10,7 @@ import PySide6
 import qrcode
 from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, Qt
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
 from anson.io.odysz.common import Utils
 
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJservOption
@@ -58,9 +58,9 @@ def err_msg(err: str, details: object = None):
 def warn_msg(warn: str, details: object = None):
     msg = QMessageBox()
 
-    horizontal_spacer = QSpacerItem(800, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
-    layout = msg.layout()
-    layout.addItem(horizontal_spacer, layout.rowCount(), 0, 1, layout.columnCount())
+    # horizontal_spacer = QSpacerItem(800, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+    # layout = msg.layout()
+    # layout.addItem(horizontal_spacer, layout.rowCount(), 0, 1, layout.columnCount())
 
     qt_msgbox_label = msg.findChild(QLabel, "qt_msgbox_label")
     msg.layout().children()
@@ -262,7 +262,8 @@ class InstallerForm(QMainWindow):
     def installWinsrv(self):
         self.cli.stop_web()
         msg_box('Please close any service Window if any been started\n'
-                'Click Ok to continue, and confirm all permission requests (window can be hidden).')
+                'Click Ok to continue, and confirm all permission requests.\n'
+                '4 Times Confirmation Required (Dialog can be hidden)!')
 
         srvname = install_wsrv_byname(self.cli.gen_wsrv_name())
         if srvname is not None:
