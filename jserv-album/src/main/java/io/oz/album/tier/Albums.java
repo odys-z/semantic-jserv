@@ -333,14 +333,14 @@ public class Albums extends ServPort<AlbumReq> {
 				.je("u", orgMeta.tbl, "o", m.org, orgMeta.pk)
 				.col("u." + m.org).col(m.pk)
 				.col(orgMeta.album0, "album") 
-				.col(orgMeta.webroot)
+				.col(orgMeta.webNode)
 				.whereEq(m.pk, usr.uid())
 				.rs(st.instancontxt(conn, usr))
 				.rs(0)).nxt();
 
 		if (rs == null || isblank(rs.getString(m.org)))
 			throw new SemanticException("Verifying user's profiles needs target user belongs to an organization / family.");
-		return new Profiles(rs, m);
+		return new Profiles(null, rs, m, orgMeta.album0, orgMeta.webNode);
 	}
 
 	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf)
@@ -386,7 +386,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		rs.beforeFirst().next();
 		String home = rs.getString(orgMeta.homepage);
-		String webroot = rs.getString(orgMeta.webroot);
+		String webroot = rs.getString(orgMeta.webNode);
 
 		return new AlbumResp().profiles(new Profiles(home).webroot(webroot));
 	}

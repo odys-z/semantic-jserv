@@ -1,8 +1,6 @@
 package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.f;
-import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 
@@ -22,16 +20,16 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 		if (settings.envars == null)
 			settings.envars = new HashMap<String, String>(1);
 
-		String ip;
-		try {
-			ip = AppSettings.getLocalIp(2);
-			settings.envars.put(settings.startHandler[2],
-					f("%s:%s", ifnull(ip,  "localhost"), settings.startHandler[3]));
-			settings.toFile(settings.json, JsonOpt.beautify());
-		} catch (IOException e) {
-			e.printStackTrace();
-			ip = "127.0.0.1";
-		}
+//		try {
+//			String ip = AppSettings.getLocalIp(2);
+//			settings.envars.put(settings.startHandler[2],
+//					f("%s:%s", ifnull(ip,  "localhost"), settings.webport));
+//			settings.toFile(settings.json, JsonOpt.beautify());
+
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			ip = "127.0.0.1";
+//		}
 
 		try {
 			ExternalHosts hosts = Anson.fromPath(settings.startHandler[1]);
@@ -41,15 +39,18 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 			if (!eq(domain, hosts.syndomx.get("domain")))
 				warn("Exposing target domain %s != %s, the current domain.", domain);
 
+			// FIXME No! should get from syn_db.syn_node[jserv]
 			String jserv = settings.jserv(synode);
 
 			hosts.host = synode;
-			hosts.localip = ip;
+			hosts.localip = settings.localIp;
 			hosts.syndomx.put(synode, jserv);
-			// leaving resources untouched
-			hosts.toFile(settings.startHandler[1], JsonOpt.beautify());
 			
-			logi("Exposed service to %s", settings.startHandler[1]);
+			String host_json = settings.getLocalHostJson();
+			// save to file by leaving resources untouched
+			hosts.toFile(host_json, JsonOpt.beautify());
+			
+			logi("Exposed service to %s", host_json);
 			logi(hosts.toBlock(JsonOpt.beautify()));
 		} catch (IOException e) {
 			e.printStackTrace();

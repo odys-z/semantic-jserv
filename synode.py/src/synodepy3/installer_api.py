@@ -10,7 +10,6 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from socketserver import TCPServer
 from typing import cast, Callable
 
 from anson.io.odysz.anson import Anson
@@ -20,7 +19,7 @@ from src.io.oz.srv import WebConfig
 from src.io.odysz.semantic.jprotocol import MsgCode
 from src.io.oz.syntier.serv import ExternalHosts
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException,\
-    AppSettings, implISettingsLoaded, webroot, \
+    AppSettings, implISettingsLoaded, \
     sys_db, syn_db, syntity_json, getJservUrl
 from src.io.oz.syn import AnRegistry, SynodeConfig
 
@@ -176,6 +175,7 @@ html_service_json = 'html-service.json'
 html_web_jar = f'html-web-{html_srver}.jar'
 
 serv_port0 = 8964
+web_port0 = 8900
 jserv_07_jar = f'jserv-album-{jar_ver}.jar'
 exiftool_zip = 'exiftool.zip'
 exiftool_v_exe = 'exiftool*.exe'
@@ -486,9 +486,7 @@ class InstallerCli:
         # self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
 
         # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
-        self.settings.startHandler = [implISettingsLoaded,
-                                      f'{album_web_dist}/{web_host_json}',
-                                      webroot, self.settings.webport]
+        self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
 
         self.settings.toFile(os.path.join(web_inf, settings_json))
@@ -566,7 +564,7 @@ class InstallerCli:
                 except FileNotFoundError or IOError or OSError: pass
 
     def test_in_term(self):
-        self.updateWithUi(syncins='0.0', envars={webroot: f'{InstallerCli.reportIp()}:{self.settings.webport}'})
+        # self.updateWithUi(syncins='0.0', envars={webroot: f'{InstallerCli.reportIp()}:{self.settings.webport}'})
 
         system = Utils.get_os()
         jar = os.path.join('bin', jserv_07_jar)

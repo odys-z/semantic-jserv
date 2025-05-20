@@ -9,6 +9,7 @@ import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,6 +18,9 @@ import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import javax.servlet.annotation.WebServlet;
 
+import org.apache.commons.daemon.Daemon;
+import org.apache.commons.daemon.DaemonContext;
+import org.apache.commons.daemon.DaemonInitException;
 import org.eclipse.jetty.ee8.servlet.FilterHolder;
 import org.eclipse.jetty.ee8.servlet.FilterMapping;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
@@ -25,7 +29,9 @@ import org.eclipse.jetty.server.Server;
 
 import com.google.zxing.WriterException;
 
+import io.odysz.anson.JsonOpt;
 import io.odysz.common.Configs;
+import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
@@ -77,7 +83,7 @@ import io.oz.syn.YellowPages;
  * @author odys-z@github.com
  *
  */
-public class SynotierJettyApp {
+public class SynotierJettyApp implements Daemon {
 	public static final String servpath = "/jserv-album";
 	
 	public static final String webinf = "WEB-INF";
@@ -97,14 +103,14 @@ public class SynotierJettyApp {
 	}
 
 	private static Winsrv winsrv;
-	public static void jvmStart(String[] args) {
+	public static void jvmStart(String[] _args) {
 		SynotierJettyApp app = _main(null);
 		winsrv = new Winsrv("ok", app);
 
 		String nid = winsrv.app.syngleton.synode();
 
-		Utils.logi("=== Service jvmStart() finished [%s: %s] ===",
-				nid, winsrv.app.syngleton.settings.jserv(nid));
+		Utils.logi("=== Service jvmStart() finished [%s %s: %s] ===",
+			DateFormat.formatime(new Date()), nid, winsrv.app.syngleton.settings.jserv(nid));
 	}
 	
 	/**
@@ -114,7 +120,7 @@ public class SynotierJettyApp {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void jvmStop(String[] args) {
+	public static void jvmStop(String[] _args) {
 	    if (winsrv != null && winsrv.app != null && winsrv.app.server != null) {
 	        try {
 	            Utils.logi("Starting service shutdown at " + new Date());
@@ -174,13 +180,10 @@ public class SynotierJettyApp {
 	private static void listAllThreads(String phase) {
 	    Utils.logi("Listing all threads at phase: " + phase);
 	    Thread.getAllStackTraces().forEach((thread, stack) -> {
-	        StringBuilder threadInfo = new StringBuilder()
-				.append("Thread Name: ").append(thread.getName())
-				.append(", ID: ").append(thread.getId())
-				.append(", State: ").append(thread.getState())
-				.append(", Is Daemon: ").append(thread.isDaemon())
-				.append(", Priority: ").append(thread.getPriority());
-	        Utils.logi(threadInfo.toString());
+	    	Utils.logi("Thread Name: %s, ID: %s\n"
+	    			+ "State: %s, Is Daemon: %s, Priority: %s",
+	    			thread.getName(), thread.getId(),
+	    			thread.getStackTrace(), thread.isDaemon(), thread.getPriority());
 
 	        if (stack.length > 0) {
 	            Utils.logi("  Stack Trace:");
@@ -234,8 +237,19 @@ public class SynotierJettyApp {
 	 * @return this
 	 */
 	SynotierJettyApp afterboot(AppSettings settings) {
+		
+		// prepare loca ip, setup local web-dist's root path, etc.
+		try {
+			settings.localIp = AppSettings.getLocalIp(2);
+			settings.webrootLocal = f("%s:%s", settings.localIp, settings.webport);
+			settings.toFile(settings.json, JsonOpt.beautify());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		if (!isNull(settings.startHandler)) {
 			logi("Exposing locally by %s, %s ...", (Object[]) settings.startHandler);
+			logi("IP %s : %s", settings.localIp, DateFormat.formatime(new Date()));
 			try {
 				((ISynodeLocalExposer)Class
 					.forName(settings.startHandler[0])
@@ -355,8 +369,8 @@ public class SynotierJettyApp {
 
 		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(),
-				new Echo(), new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain)),
-				new HeartLink())
+				new Echo(), new HeartLink(),
+				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain), cfg, settings))
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)
 			.allowCors(synapp.schandler)
@@ -490,5 +504,19 @@ public class SynotierJettyApp {
 			e.printStackTrace();
 		}
 		return this;
+	}
+
+	@Override
+	public void init(DaemonContext context) throws DaemonInitException, Exception {
+	}
+
+	@Override
+	public void start() throws Exception {
+		jvmStart(null);
+	}
+
+	@Override
+	public void destroy() {
+		jvmStop(null);
 	}
 }

@@ -59,6 +59,8 @@ import io.oz.album.peer.Profiles;
 import io.oz.album.peer.SynDocollPort;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.jserv.docs.syn.DocUser;
+import io.oz.jserv.docs.syn.singleton.AppSettings;
+import io.oz.syn.SynodeConfig;
 
 /**
  * <h5>The album tier 0.7.0 (MVP)</h5>
@@ -105,10 +107,12 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 	JUserMeta userMeta;
 
+	final AppSettings settings;
+	final SynodeConfig cfg;
+
 	final SyndomContext domx;
 	final String sysconn;
 	final PhotoMeta phm;
-
 
 	static {
 		try {
@@ -118,7 +122,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		}
 	}
 
-	public SynDocollects(String sysconn, SyndomContext domx) throws Exception {
+	public SynDocollects(String sysconn, SyndomContext domx, SynodeConfig cfg, AppSettings settings) throws Exception {
 		super(SynDocollPort.docoll);
 		this.phm    = new PhotoMeta(domx.synconn);
 		this.sysconn= sysconn;
@@ -126,6 +130,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		
 		synt = new DBSynTransBuilder(domx);
 		this.domx = domx;
+		this.settings = settings;
+		this.cfg = cfg;
 		missingFile = "";
 	}
 
@@ -245,9 +251,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			write(resp, err(MsgCode.exTransct, e.getMessage()));
 		} catch (SsException e) {
 			write(resp, err(MsgCode.exSession, e.getMessage()));
-//		} catch (InterruptedException e) {
-//			if (Anson.verbose)
-//				e.printStackTrace();
 		} catch (Throwable e) {
 			e.printStackTrace();
 			write(resp, err(MsgCode.exGeneral, "%s\n%s", e.getClass().getName(), e.getMessage()));
@@ -314,7 +317,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 */
 	Profiles verifyProfiles(DocsReq body, IUser usr, String a)
 			throws SemanticException, SQLException, TransException {
-		// String conn = Connects.uri2conn(body.uri());
 		JUserMeta m = (JUserMeta) usr.meta(sysconn);
 		DocOrgMeta orgMeta = new DocOrgMeta(sysconn);
 
@@ -323,14 +325,14 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				.je("u", orgMeta.tbl, "o", m.org, orgMeta.pk)
 				.col("u." + m.org).col(m.pk)
 				.col(orgMeta.album0, "album") 
-				.col(orgMeta.webroot)
+				.col(orgMeta.webNode)
 				.whereEq(m.pk, usr.uid())
 				.rs(st.instancontxt(sysconn, usr))
 				.rs(0)).nxt();
 
 		if (rs == null || isblank(rs.getString(m.org)))
 			throw new SemanticException("Verifying user's profiles needs target user belongs to an organization / family.");
-		return new Profiles(rs, m);
+		return new Profiles(domx.synode, rs, m, "album", orgMeta.webNode);
 	}
 
 	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf)
@@ -392,12 +394,13 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				.rs(0);
 
 		rs.beforeFirst().next();
-		String home = rs.getString(orgMeta.homepage);
-		String webroot = rs.getString(orgMeta.webroot);
+		String home  = rs.getString(orgMeta.homepage);
+		String webId = rs.getString(orgMeta.webNode);
 
-		webroot = domx.findJserv(st, webroot, usr);
-
-		return new AlbumResp().profiles(new Profiles(home).webroot(webroot));
+		return new AlbumResp().profiles(
+				new Profiles(home)
+				.webroot(eq(webId, domx.synode) ? settings.getLocalWebroot(this.cfg.https) : webId)
+				.servroot(domx.findJserv(st, domx.synode, usr)));
 	}
 
 //	DocsResp startBlocks(DocsReq body, IUser usr, Profiles prf)

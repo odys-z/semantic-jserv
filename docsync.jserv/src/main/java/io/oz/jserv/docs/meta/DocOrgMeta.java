@@ -15,13 +15,14 @@ public class DocOrgMeta extends SemanticTableMeta {
 	public final String album0 ;
 
 	/**
-	 * The web server's address
-	 * @since 0.2.4 (Portfolio 0.7.1), this field is a synode id pointing to where
-	 * the web server is also deployed.
+	 * The web server's address.
+	 * This field is a synode id pointing to where the web server is also deployed.
+	 * 
+	 * @since 0.2.4 (Portfolio 0.7.1),
 	 */
-	public final String webroot;
+	public final String webNode;
 
-	/** differnet to {@link #webroot} */
+	/** Is differnet from {@link #webNode} */
 	public final String homepage;
 
 	public DocOrgMeta(String conn) {
@@ -31,7 +32,7 @@ public class DocOrgMeta extends SemanticTableMeta {
 		this.orgName = "orgName";
 		this.orgType = "orgType";
 		this.market  = "market";
-		this.webroot = "webroot";
+		this.webNode = "webroot";
 		this.homepage= "homepage";
 		this.album0  = "album0";
 	}
@@ -43,7 +44,7 @@ public class DocOrgMeta extends SemanticTableMeta {
 				.nv(pk, cfg.org.orgId)
 				.nv(orgName, cfg.org.orgName)
 				.nv(orgType, cfg.org.orgType)
-				.nv(webroot,  EnvPath.replaceEnv(cfg.org.webroot))
+				.nv(webNode,  EnvPath.replaceEnv(cfg.org.webroot))
 //				.nv(homepage, EnvPath.replaceEnv(cfg.org.homepage))
 //				.nv(album0,   EnvPath.replaceEnv(cfg.org.album0))
 //				.nv(market,   EnvPath.replaceEnv(cfg.org.market))

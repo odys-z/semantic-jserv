@@ -5,6 +5,7 @@
   "webport"     : 8901,
   "jservs"      : {"X29":"http://127.0.0.1:8964/jserv-album", "Y201":"http://127.0.0.1:8965/jserv-album"},
   "envars"      : {"WEBROOT_201": "Y201"},
+  "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "overriden by installer: web-dist/private/host.json"],
   "installkey"  : "0123456789ABCDEF",
   "rootkey"     : ""
 }

@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -63,6 +62,9 @@ public class AppSettings extends Anson {
 	@AnsonField(ignoreFrom=true, ignoreTo=true)
 	String webinf;
 	
+	/** Only for error checking, and the otherwise used value is configured by synode.py3 */
+	// private static final String private_host = "private/host.json";
+
 	/** <pre>
 	 * !root-key && !install-key: error
 	 * !root-key &&  install-key: install
@@ -185,14 +187,7 @@ public class AppSettings extends Anson {
 	 */
 	private String updateLocalJserv(boolean https, String jserv_album,
 			String synconn, SynodeMeta synm, String mysid) throws TransException, SQLException {
-		String ip = null;
-		try { ip = getLocalIp();
-		} catch (IOException e) {
-			e.printStackTrace();
-			// TODO FIXME 
-			// Setup as an offline synode 
-			return null;
-		}
+		String ip = getLocalIp();
 
 		IUser robot = DATranscxt.dummyUser();
 		try {
@@ -224,7 +219,7 @@ public class AppSettings extends Anson {
 	 * @throws SocketException 
 	 * @throws UnknownHostException 
 	 */
-	public static String getLocalIp(int ... retries) throws IOException {
+	public static String getLocalIp(int ... retries) {
 	    try(final DatagramSocket socket = new DatagramSocket()) {
 	    	boolean succeed = false;
 	    	int tried = 0;
@@ -232,7 +227,7 @@ public class AppSettings extends Anson {
 	    		try {
 	    			socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
 	    			succeed = true;
-	    		} catch (UncheckedIOException  e) {
+	    		} catch (IOException e) {
 	    			// starting service at network interface not ready yet
 	    			Utils.warn("Network interface is not ready yet? Try again ...");
 	    			try {
@@ -245,6 +240,8 @@ public class AppSettings extends Anson {
 	    		return "127.0.0.1";
 
 	    	return socket.getLocalAddress().getHostAddress();
+		} catch (SocketException e) {
+			return "127.0.0.1";
 		}
 	}
 
@@ -301,6 +298,14 @@ public class AppSettings extends Anson {
 	 * [0] handler class name which implements {@link ISynodeLocalExposer}; [1:] path to private/host.json
 	 */
 	public String[] startHandler;
+
+	@AnsonField(ignoreFrom=true)
+	public String webrootLocal;
+
+	@AnsonField(ignoreFrom=true)
+	public String localIp;
+
+	public int webport = 8900;
 
 	/**
 	 * Should only be used in win-serv mode.
@@ -434,13 +439,26 @@ public class AppSettings extends Anson {
 		IUser rob = DATranscxt.dummyUser();
 		DATranscxt st = new DATranscxt(cfg.sysconn);
 		st.update(orgMeta.tbl, rob)
-			.nv(orgMeta.webroot, EnvPath.replaceEnv(cfg.org.webroot))
+			.nv(orgMeta.webNode, EnvPath.replaceEnv(cfg.org.webroot))
 			.whereEq(orgMeta.pk, cfg.org.orgId)
 			.u(st.instancontxt(cfg.sysconn, rob));
 	}
 
+	/** Find jserv from {@link #jservs}. */
 	public String jserv(String nid) {
 		return jservs.get(nid);
+	}
+
+	public String getLocalHostJson() {
+		// backward compatible
+//		String host_json = startHandler[1].replaceAll(private_host + "$", "");
+//		return FilenameUtils.concat(host_json, private_host);
+		return startHandler[1];
+	}
+
+	public String getLocalWebroot(boolean https) {
+		// backward compatible
+		return f("%s://%s", https ? "https" : "http", this.webrootLocal);
 	}
 
 }

@@ -18,7 +18,7 @@ version = '0.7.3'
 synode.py3, jserv-album-0.7.3.jar
 """
 
-apk_ver = '0.7.1'
+apk_ver = '0.7.2'
 
 html_jar_v = '0.1.6'
 """
@@ -33,6 +33,8 @@ album-web-#.#.#.jar
 vol_files = {"volume": ["jserv-main.db", "doc-jserv.db"]}
 dist_dir = f'build-{version}'
 
+android_dir = '../../anclient/examples/example.android'
+
 @task
 def create_volume(c):
     for vol, fs in vol_files.items():
@@ -43,7 +45,7 @@ def create_volume(c):
                 print(f'Volume file created: {os.path.join(vol, fn)}')
                 vf.close()
 
-def updateApkRes(host_json, res):
+def updateApkRes(host_json, apkver):
     """
     Update the APK resource record (ref-link) in the host.json file.
     
@@ -67,6 +69,7 @@ def updateApkRes(host_json, res):
     hosts = Anson.from_file(host_json)
     print('host.json:', hosts)
 
+    res = {'apk': f'res-vol/portfolio-{apkver}.apk'}
     hosts.resources.update(res)
     print('Updated host.json:', hosts.resources)
 
@@ -91,6 +94,11 @@ def config(c):
        f'<!-- auto update token TASKS.PY/CONFIG --><version>{version}</version>',
     })
 
+    version_file = os.path.join(android_dir, 'build.gradle')
+    Utils.update_patterns(version_file, {
+        "app_ver = '[0-9\\.]+'": f"app_ver = '{apk_ver}'"
+    })
+
 @task(config)
 def build(c):
     def cmd_build_synodepy3(version:str, web_ver:str, html_jar_v:str) -> str:
@@ -109,10 +117,10 @@ def build(c):
 
     buildcmds = [
         # replace app_ver with apk_ver?
-        ['../../anclient/examples/example.android', 'gradlew assembleRelease'],
-        ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{apk_ver}.apk'],
+        [android_dir, 'gradlew assembleRelease'],
+        ['.', f'cp -f {android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{apk_ver}.apk'],
 
-        ['web-dist/private', lambda: updateApkRes('host.json', {'apk': f'res-vol/portfolio-{apk_ver}.apk'})],
+        ['web-dist/private', lambda: updateApkRes('host.json', apk_ver)],
         ['.', 'cat web-dist/private/host.json'],
 
         ['../../anclient/examples/example.js/album', 'webpack'],

@@ -11,12 +11,12 @@ import qrcode
 from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
-from anson.io.odysz.common import Utils
+from anson.io.odysz.common import Utils, LangExt
 
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJservOption
 from src.io.oz.syn import AnRegistry, SyncUser
 from src.synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
-from src.synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json
+from src.synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json, serv_port0, web_port0
 
 # Important:
 # Run the following command to generate the ui_form.py file
@@ -72,6 +72,7 @@ def warn_msg(warn: str, details: object = None):
     msg.setIcon(QMessageBox.Icon.Warning)
     result = msg.exec()
     return result
+
 
 class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
@@ -144,8 +145,14 @@ class InstallerForm(QMainWindow):
         return {"ip": ip, "port": port, "synodepy3": synode}
 
     def default_ui_values(self):
-        if self.ui.txtSyncIns.text() is None or self.ui.txtSyncIns.text().strip() == '':
+        # if self.ui.txtSyncIns.text() is None or self.ui.txtSyncIns.text().strip() == '':
+        #     self.ui.txtSyncIns.setText('120.0')
+        if LangExt.len(self.ui.txtSyncIns.text()) == 0:
             self.ui.txtSyncIns.setText('120.0')
+        if LangExt.len(self.ui.txtPort.text()) == 0:
+            self.ui.txtPort.setText(serv_port0)
+        if LangExt.len(self.ui.txtWebport.text()) == 0:
+            self.ui.txtWebport.setText(web_port0)
 
     def validate(self) -> bool:
         """

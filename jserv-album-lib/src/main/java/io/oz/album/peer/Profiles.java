@@ -18,8 +18,12 @@ public class Profiles extends Anson {
 	public String defltAlbum;
 
 	/** Personal web page url */
-	public String webroot;
+	public String webnode;
+	public String servroot;
 	public String home;
+	
+	/** E.g. Synode in jserv-album or docsync.jserv. */
+	public String servId;
 
 	public Profiles home(String h) {
 		home = h;
@@ -44,18 +48,24 @@ public class Profiles extends Anson {
 		this.home = home;
 	}
 
-	public Profiles(AnResultset rs, JUserMeta m) throws SQLException {
+	public Profiles(String synode, AnResultset rs, JUserMeta m, String orgAlbum, String orgWebroot) throws SQLException {
+		this.servId = synode;
 		this.home = rs.getString(m.org);
 		this.uid = rs.getString(m.pk);
-		this.defltAlbum = rs.getString("album");
-		this.webroot = rs.getString("webroot");
+		this.defltAlbum = rs.getString(orgAlbum);
+		this.webnode = rs.getString(orgWebroot);
 
 		if (isblank(defltAlbum))
 			this.defltAlbum = "a-001";
 	}
 
-	public Profiles webroot(String cfg) {
-		this.webroot = cfg;
+	public Profiles webroot(String webroot) {
+		this.webnode = webroot;
+		return this;
+	}
+
+	public Profiles servroot(String servroot) {
+		this.servroot = servroot;
 		return this;
 	}
 

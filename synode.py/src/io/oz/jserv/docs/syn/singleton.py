@@ -15,7 +15,8 @@ sys_db = 'jserv-main.db'
 syntity_json = 'syntity.json'
 
 # web_port = 8900
-webroot = 'WEBROOT_HUB'
+# webroot = 'WEBROOT_HUB'
+webroot_hub = 'WEBROOT_HUB'
 
 jserv_url_path = 'jserv-album'
 """
@@ -78,6 +79,7 @@ class AppSettings(Anson):
     vol_name: str
     port: int
     webport: int
+    webrootLocal: str
     jservs: dict
 
     def __init__(self):
@@ -85,7 +87,8 @@ class AppSettings(Anson):
         self.port = 8964
         self.webport = 8900
         self.envars = {}
-        self.startHandler = [implISettingsLoaded, 'web-dist/private/host.json', webroot, self.webport]
+        self.startHandler = [implISettingsLoaded, 'web-dist/private/host.json']
+        self.webrootLocal = f'http://suppress.warning:{self.webport}'
 
     @overload
     def Volume(self):
