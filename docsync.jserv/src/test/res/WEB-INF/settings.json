@@ -1,13 +1,16 @@
 { "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
   "vol_name": "VOLUME_0",
+  "webrootLocal": null,
+  "envars": null,
+  "webport": 8900,
+  "installkey": null,
+  "startHandler": null,
   "volume": "../vol-0",
   "port": 8964,
   "jservs": {"W": "http://127.0.0.1:8967/jserv-album",
       "X": "http://127.0.0.1:8964/jserv-album",
       "Y": "http://127.0.0.1:8965/jserv-album",
       "Z": "http://127.0.0.1:8966/jserv-album"},
-  "envars": null,
-  "installkey": null,
-  "rootkey": "0123456789ABCDEF",
-  "startHandler": null
+  "localIp": null,
+  "rootkey": "0123456789ABCDEF"
 }

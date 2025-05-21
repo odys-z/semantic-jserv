@@ -118,6 +118,9 @@ def build(c):
     buildcmds = [
         # replace app_ver with apk_ver?
         [android_dir, 'gradlew assembleRelease'],
+
+        # link: web-dist -> anclient/examples/example.js/album/web-dist
+        ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
         ['.', f'cp -f {android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{apk_ver}.apk'],
 
         ['web-dist/private', lambda: updateApkRes('host.json', apk_ver)],
