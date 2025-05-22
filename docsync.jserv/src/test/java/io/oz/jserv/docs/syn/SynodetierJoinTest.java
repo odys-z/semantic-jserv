@@ -112,7 +112,7 @@ public class SynodetierJoinTest {
 		}
 	}
 
-	@SuppressWarnings("serial")
+	@SuppressWarnings({ "serial", "deprecation" })
 	@BeforeAll
 	static void init() throws Exception {
 		setVolumeEnv("v-");
@@ -305,6 +305,7 @@ public class SynodetierJoinTest {
 		SynotierJettyApp t = jetties[tx];
 
 		for (String dom : t.syngleton().domains()) {
+			Utils.logi("Updating/synchronizing domain %s", dom);
 			t.syngleton().domanager(dom).asyUpdomains(
 				(domain, mynid, peer, xp) -> {
 					if (!isNull(ck) && !isblank(peer))

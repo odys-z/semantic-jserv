@@ -92,6 +92,8 @@ public class ExpDoctierservTest {
 		if (System.getProperty("wait-clients") == null) {
 
 			Utils.logrst("Starting synode-tiers", 0);
+			Utils.logrst("wait-clients = null.", 0, 0);
+
 			int[] nodex = startJetties(jetties, ck);
 			runDoctiers(nodex, null, null, null);
 
@@ -99,6 +101,8 @@ public class ExpDoctierservTest {
 		}
 		else {
 			Utils.logrst("Starting synode-tiers", 0);
+			Utils.logrst(f("wait-clients = %s.", System.getProperty("wait-client")), 0, 0);
+
 			int[] nodex = startJetties(jetties, ck);
 
 			final boolean[] noAutoQuit = new boolean[] { true };
@@ -107,8 +111,8 @@ public class ExpDoctierservTest {
 
 			runDoctiers(nodex, noAutoQuit, canPush, pushDone);
 
-			awaitAll(canPush);
 			pause("Now can run DoclienterTest. Press Enter once manully uploaded");
+			awaitAll(canPush);
 
 			turngreen(pushDone);
 			pause("This thread will be killed asap when main thread quite.");
@@ -155,6 +159,8 @@ public class ExpDoctierservTest {
 
 
 		turngreen(canPush); // Tell clients can push now
+		Utils.logrst("Told clients can push now, waiting...", ++section);
+		
 		awaitAll(pushDone, -1);
 
 		printChangeLines(ck);
@@ -215,6 +221,7 @@ public class ExpDoctierservTest {
 		ck[X].doc(2);
 	}
 
+	@SuppressWarnings("deprecation")
 	public static int[] startJetties(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
 		
@@ -309,6 +316,7 @@ public class ExpDoctierservTest {
 		assertEquals(isNull(paths) ? 0 : paths.length, pathpool.size());
 	}
 
+	@SuppressWarnings("deprecation")
 	public static String[] jservs() {
 		if (len(jetties) < 4 || jetties[0] == null)
 			throw new NullPointerException("Initialize first.");
