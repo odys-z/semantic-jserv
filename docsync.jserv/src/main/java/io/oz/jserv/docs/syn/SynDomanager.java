@@ -109,7 +109,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	public SynDomanager(SynodeConfig c) throws Exception {
-		super(c.mode, c.domain, c.synode(), c.synconn, c.debug);
+		super(c.mode, c.chsize, c.domain, c.synode(), c.synconn, c.debug);
 
 		this.org = c.org.orgId;
 		
