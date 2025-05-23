@@ -205,7 +205,7 @@ public class SynodetierJoinTest {
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i], jetties[i].syngleton().domanager(zsu).synode,
-							SynodeMode.peer, docm, null, true);
+							SynodeMode.peer, config.chsize, docm, null, true);
 		}
 	}
 
