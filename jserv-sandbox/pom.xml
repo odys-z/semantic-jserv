@@ -40,7 +40,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>1.4.40</version>
+	    <version>1.5.15</version>
    	</dependency>
 
 	<!--
@@ -66,6 +66,7 @@
   	<tag>HEAD</tag>
   </scm>
 
+  <!-- 
   <distributionManagement>
   	<snapshotRepository>
   		<id>ossrh</id>
@@ -77,6 +78,7 @@
   		<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 	</repository>
   </distributionManagement>
+  -->
 
   <build>
     <finalName>jserv-sandbox</finalName>
