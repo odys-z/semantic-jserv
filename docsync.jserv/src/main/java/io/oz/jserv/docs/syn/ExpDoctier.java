@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -398,21 +399,25 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		DBSynTransBuilder b = new DBSynTransBuilder(domx);
 		String pid = DocUtils.createFileBy64(b, conn, photo, usr, meta);
 
-		// TODO FIXME move this to DocUtils.createFileBy64()
-		// move file
-		String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
+		if (Anson.startEnvelope(photo.uri64))
+			Utils.warnT(new Object() {}, "Must be verfified: Ignoring file moving since envelope is saved into the uri field. TODO wrap this into somewhere, not here.");
+		else {
+			// TODO FIXME move this to DocUtils.createFileBy64()
+			// move file
+			String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
 
-		if (debug)
-			Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
+			if (debug)
+				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
 
-		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
-		///////////////////////////////////////////////////////
+			Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+			///////////////////////////////////////////////////////
 
-		if (onCreate != null)
-			new Thread(() ->
-				onCreate.onCreate(conn, pid, b, usr, meta, targetPath),
-				f("On doc %s.%s [%s] create", meta.tbl, pid, conn))
-			.start();
+			if (onCreate != null)
+				new Thread(() ->
+					onCreate.onCreate(conn, pid, b, usr, meta, targetPath),
+					f("On doc %s.%s [%s] create", meta.tbl, pid, conn))
+				.start();
+		}
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
