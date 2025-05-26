@@ -307,6 +307,9 @@ public class AppSettings extends Anson {
 
 	public int webport = 8900;
 
+	/** Connection Idle Seconds */
+	public float connIdleSnds;
+
 	/**
 	 * Should only be used in win-serv mode.
 	 * @param web_inf

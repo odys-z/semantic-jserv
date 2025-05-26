@@ -7,5 +7,6 @@
   "envars"      : {"WEBROOT_201": "Y201"},
   "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "overriden by installer: web-dist/private/host.json"],
   "installkey"  : "0123456789ABCDEF",
-  "rootkey"     : ""
+  "rootkey"     : "",
+  "connIdleSnds": 30.0
 }
