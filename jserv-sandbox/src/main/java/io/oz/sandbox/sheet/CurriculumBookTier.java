@@ -7,9 +7,7 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import org.xml.sax.SAXException;
-
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -59,7 +57,7 @@ public class CurriculumBookTier extends ServPort<SpreadsheetReq> {
 		try {
 			st = new DATranscxt(null);
 			robot = new SandRobot("Spread Robot");
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

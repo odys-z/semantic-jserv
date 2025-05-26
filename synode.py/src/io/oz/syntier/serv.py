@@ -12,6 +12,7 @@ class ExternalHosts(Anson):
 
     def __init__(self):
         super().__init__()
+        self.localip = None
         self.syndomx = dict()
         self.resources = dict()
 

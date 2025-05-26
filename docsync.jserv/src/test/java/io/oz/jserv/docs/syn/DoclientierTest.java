@@ -70,7 +70,7 @@ class DoclientierTest {
 	static final boolean[] serviceLight = new boolean[1];
 	
 	/** Permission to push docs by clients, this test. */
-	static final boolean[] pushingLight = new boolean[] {false};
+	static final boolean[] canpush = new boolean[] {false};
 
 	/** Tell service node pushings are done. */
 	static final boolean[] pushingDone  = new boolean[] {false};
@@ -87,7 +87,7 @@ class DoclientierTest {
 
 		ExpDoctierservTest.init();
 
-		Utils.logrst("Starting synode-tiers", 0);
+		Utils.logrst("[DoclientierTest] Starting synode-tiers", 0);
 		int[] nodex = ExpDoctierservTest.startJetties(SynodetierJoinTest.jetties, ck);
 		//must finished
 		musteq(4, len(SynodetierJoinTest.jetties));
@@ -98,7 +98,7 @@ class DoclientierTest {
 
 		thr = new Thread(() -> {
 			try {
-				ExpDoctierservTest.runDoctiers(nodex, serviceLight, pushingLight, pushingDone);
+				ExpDoctierservTest.runDoctiers(nodex, serviceLight, canpush, pushingDone);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
@@ -113,7 +113,9 @@ class DoclientierTest {
 	@Test
 	void testSynclientUp() throws Exception {
 		int no = 0;
-		awaitAll(pushingLight);
+		Utils.logrst("testSynclientUp: waiting pushing permission", ++no);
+
+		awaitAll(canpush, 5 * 60 * 10); // mvn test on 200 can be this slow?
 
 		Utils.logrst(f("X <- %s", devs[X_0].device.id), ++no);
 

@@ -67,6 +67,7 @@ def updateApkRes(host_json, apkver):
 
     Anson.java_src('src', ['synode_py3'])
     hosts = Anson.from_file(host_json)
+    print(os.getcwd(), host_json)
     print('host.json:', hosts)
 
     res = {'apk': f'res-vol/portfolio-{apkver}.apk'}
@@ -117,11 +118,12 @@ def build(c):
 
     buildcmds = [
         # replace app_ver with apk_ver?
-        [android_dir, 'gradlew assembleRelease'],
+        [android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
 
         # link: web-dist -> anclient/examples/example.js/album/web-dist
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
-        ['.', f'cp -f {android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{apk_ver}.apk'],
+        ['.', f'cp -f {android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{apk_ver}.apk' \
+                if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ],
 
         ['web-dist/private', lambda: updateApkRes('host.json', apk_ver)],
         ['.', 'cat web-dist/private/host.json'],
@@ -167,7 +169,10 @@ def package(c, zip=f'jserv-portfolio-{version}.zip'):
     resources = {
         f"bin/html-web-{html_jar_v}.jar": f"../../html-service/java/target/html-web-{html_jar_v}.jar", # clone at github/html-service
         f"bin/jserv-album-{version}.jar": f"target/jserv-album-{version}.jar",
+        
+        # https://exiftool.org/index.html
         "bin/exiftool.zip": "./task-res-exiftool-13.21_64.zip",
+
         "bin/synode_py3-0.7-py3-none-any.whl": f"../synode.py/dist/synode_py3-{version}-py3-none-any.whl",
         "WEB-INF": f"src/main/webapp/WEB-INF-0.7.3/*", # Do not replace with version.
         "winsrv": "../synode.py/winsrv/*",
