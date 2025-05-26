@@ -10,7 +10,6 @@ import static io.odysz.common.Utils.warn;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -26,6 +25,7 @@ import org.eclipse.jetty.ee8.servlet.FilterMapping;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 
 import com.google.zxing.WriterException;
 
@@ -472,7 +472,13 @@ public class SynotierJettyApp implements Daemon {
 
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 	
-    	synapp.server = new Server(new InetSocketAddress("0.0.0.0", settings.port));
+    	// synapp.server = new Server(new InetSocketAddress("0.0.0.0", settings.port));
+    	synapp.server = new Server();
+    	ServerConnector jconn = new ServerConnector(synapp.server);
+    	jconn.setHost("0.0.0.0");
+    	jconn.setPort(settings.port);
+    	jconn.setIdleTimeout((long) (settings.connIdleSnds == 0.0 ? 30000 : settings.connIdleSnds * 1000));
+    	synapp.server.addConnector(jconn);
 
 	    return synapp;
 	}

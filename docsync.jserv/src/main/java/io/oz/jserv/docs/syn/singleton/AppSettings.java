@@ -307,6 +307,9 @@ public class AppSettings extends Anson {
 
 	public int webport = 8900;
 
+	/** Connection Idle Seconds */
+	public float connIdleSnds;
+
 	/**
 	 * Should only be used in win-serv mode.
 	 * @param web_inf
@@ -422,7 +425,8 @@ public class AppSettings extends Anson {
 			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
 		}
 		else 
-			logi("[INSTALL-CHECK] Starting application without db setting ...", config_xml);
+			logi("[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\nStarting application without db setting ...");
+//					config_xml);
 		// String jserv =
 		settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		
