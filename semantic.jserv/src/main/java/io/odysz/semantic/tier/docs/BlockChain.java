@@ -39,32 +39,8 @@ public class BlockChain {
 	}
 
 	/**
-	 * Port to DB-sync
+	 * @deprecated
 	 * 
-	 * @param tempDir
-	 * @param saveFolder
-	 * @param clientpath
-	 * @throws IOException
-	 */
-//	public BlockChain(String docTabl, String tempDir, String saveFolder, String clientpath) throws IOException {
-//
-//		this.docTabl = docTabl;
-//		this.saveFolder = saveFolder;
-//		this.clientpath = clientpath;
-//		clientname = FilenameUtils.getName(clientpath);
-//		outputPath = EnvPath.decodeUri(tempDir, saveFolder, clientname);
-//
-//		String parentpath = FilenameUtils.getFullPath(outputPath);
-//		new File(parentpath).mkdirs(); 
-//
-//		File f = new File(outputPath);
-//		f.createNewFile();
-//		this.ofs = new FileOutputStream(f);
-//
-//		waitings = new DocsReq().blockSeq(-1);
-//	}
-
-	/**
 	 * Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
 	 * @param tempDir
@@ -82,10 +58,6 @@ public class BlockChain {
 			throw new TransException("Client path is neccessary to start a block chain transaction.");
 
 		this.docTabl = docTabl;
-		// this.cdate = createDate;
-		// this.clientpath = clientpathRaw;
-		// this.saveFolder = targetFolder;
-		// this.device = devid;
 
 		String clientpath = clientpathRaw.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
@@ -174,12 +146,6 @@ public class BlockChain {
 					outputPath, e.getMessage());
 			e.printStackTrace();
 		}
-
-//		if (waitings.nextBlock != null)
-//			// some packages lost
-//			throw new TransException("Aborting block chain. " + 
-//					"Blocks starting at block-seq = %s will be dropped. path: %s",
-//					waitings.nextBlock.blockSeq, doc.clientpath);
 	}
 
 	public String closeChain() throws IOException, TransException {
@@ -201,16 +167,4 @@ public class BlockChain {
 
 		return outputPath;
 	}
-
-//	public BlockChain share(String shareby, String shareDate, String shareflag) {
-//		this.shareby = shareby;
-//		this.shareDate = shareDate;
-//		this.shareflag = shareflag;
-//		return this;
-//	}
-
-//	public BlockChain device(String device) {
-//		this.device = device;
-//		return this;
-//	}
 }
