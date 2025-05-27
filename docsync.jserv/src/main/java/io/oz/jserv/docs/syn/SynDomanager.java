@@ -12,7 +12,7 @@ import static io.odysz.semantic.syn.ExessionAct.ready;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -108,7 +108,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	public SynDomanager(SynodeConfig c) throws Exception {
-		super(c.mode, c.domain, c.synode(), c.synconn, c.debug);
+		super(c.mode, c.chsize, c.domain, c.synode(), c.synconn, c.debug);
 
 		this.org = c.org.orgId;
 		

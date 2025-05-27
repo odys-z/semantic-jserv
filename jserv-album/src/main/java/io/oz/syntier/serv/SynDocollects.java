@@ -18,7 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
@@ -323,7 +323,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				.je("u", orgMeta.tbl, "o", m.org, orgMeta.pk)
 				.col("u." + m.org).col(m.pk)
 				.col(orgMeta.album0, "album") 
-				.col(orgMeta.webroot)
+				.col(orgMeta.webNode)
 				.whereEq(m.pk, usr.uid())
 				.rs(st.instancontxt(sysconn, usr))
 				.rs(0)).nxt();
@@ -393,7 +393,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		rs.beforeFirst().next();
 		String home = rs.getString(orgMeta.homepage);
-		String webroot = rs.getString(orgMeta.webroot);
+		String webroot = rs.getString(orgMeta.webNode);
 
 		webroot = domx.findJserv(st, webroot, usr);
 

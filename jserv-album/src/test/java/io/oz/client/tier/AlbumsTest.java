@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import io.odysz.anson.Anson;
 import io.odysz.anson.JSONAnsonListener;
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.FilenameUtils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.InsecureClient;

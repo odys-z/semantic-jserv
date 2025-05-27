@@ -25,7 +25,7 @@ import java.util.HashMap;
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
 import io.odysz.anson.JsonOpt;
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;

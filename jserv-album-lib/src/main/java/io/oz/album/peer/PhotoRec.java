@@ -12,7 +12,7 @@ import java.util.Date;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonField;
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;

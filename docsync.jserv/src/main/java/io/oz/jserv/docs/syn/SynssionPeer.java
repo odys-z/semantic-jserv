@@ -10,7 +10,7 @@ import static io.odysz.semantic.syn.ExessionAct.*;
 import java.io.IOException;
 import java.sql.SQLException;
 
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
 import io.odysz.semantic.jprotocol.AnsonHeader;

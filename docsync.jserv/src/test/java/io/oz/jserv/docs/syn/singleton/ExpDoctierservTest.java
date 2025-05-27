@@ -13,6 +13,7 @@ import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.chsize;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.setVolumeEnv;
@@ -266,7 +267,7 @@ public class ExpDoctierservTest {
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i], jetties[i].syngleton().domanager(zsu).synode,
-							SynodeMode.peer, docm, null, true);
+							SynodeMode.peer, chsize, docm, null, true);
 		}
 		
 		return nodex;

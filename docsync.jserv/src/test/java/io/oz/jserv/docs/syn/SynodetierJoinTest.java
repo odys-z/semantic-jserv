@@ -60,6 +60,7 @@ public class SynodetierJoinTest {
 	public static String owner  = "ody";
 	public static String passwd = "abc";
 	
+	public static final int chsize = 480;
 	public static final int X = 0;
 	public static final int Y = 1;
 	public static final int Z = 2;
@@ -205,7 +206,7 @@ public class SynodetierJoinTest {
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i], jetties[i].syngleton().domanager(zsu).synode,
-							SynodeMode.peer, docm, null, true);
+							SynodeMode.peer, chsize, docm, null, true);
 		}
 	}
 

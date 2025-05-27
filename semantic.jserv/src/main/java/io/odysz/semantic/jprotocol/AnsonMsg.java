@@ -9,7 +9,7 @@ import io.odysz.anson.Anson;
 import io.odysz.anson.IJsonable;
 import io.odysz.anson.JSONAnsonListener;
 import io.odysz.anson.JsonOpt;
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.semantics.x.SemanticException;
 
 /**
