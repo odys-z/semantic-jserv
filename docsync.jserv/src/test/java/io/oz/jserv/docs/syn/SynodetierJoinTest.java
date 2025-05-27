@@ -1,12 +1,13 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
-import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.repeat;
 import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
@@ -310,8 +311,9 @@ public class SynodetierJoinTest {
 				(domain, mynid, peer, xp) -> {
 					if (!isNull(ck) && !isblank(peer))
 						try {
-							Utils.logi("On domain updated: %s : %s <-> %s", dom, mynid, peer);
-							Utils.logi("===============================\n");
+							int len = len(Utils.logi("On domain updated: %s : %s <-> %s", dom, mynid, peer));
+							Utils.logi(repeat("=", len));
+
 							printChangeLines(ck);
 							printNyquv(ck);
 						} catch (TransException | SQLException e) {

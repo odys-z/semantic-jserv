@@ -180,6 +180,16 @@ public class ExpDoctierservTest {
 
 		ck[Y].doc(3);
 		ck[X].doc(3);
+		
+//		DocRef[] xdocy2 = ck[X].docId2ref(pid);
+//		DocRef[] ydocx1 = ck[Y].docId2ref(x1);
+//		
+//		assertEquals(1, len(xdocy2));
+//		assertEquals(2, len(ydocx1));
+//
+//		assertEquals(x1[0], ydocx1[0].synode);
+//		assertEquals(y2[0], xdocy2[0]);
+//		assertEquals(y2[1], xdocy2[1]);
 
 		Utils.logrst("Bring up dev-x0 and delete", ++section);
 		// 00 delete
