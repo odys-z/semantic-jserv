@@ -66,6 +66,17 @@ public class Dochain {
 		this.st = deflst;
 	}
 
+	/**
+	 * @deprecated not used?
+	 * @param body
+	 * @param usr
+	 * @param profiles
+	 * @return
+	 * @throws IOException
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws InterruptedException
+	 */
 	DocsResp startBlocks(DocsReq body, IUser usr, IProfileResolver profiles)
 			throws IOException, TransException, SQLException, InterruptedException {
 
@@ -135,6 +146,14 @@ public class Dochain {
 					device, clientpath);
 	}
 
+	/**
+	 * @deprecated not used?
+	 * @param body
+	 * @param usr
+	 * @return
+	 * @throws IOException
+	 * @throws TransException
+	 */
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		String id = chainId(usr, body);
 		if (!blockChains.containsKey(id))
@@ -152,6 +171,7 @@ public class Dochain {
 	}
 
 	/**
+	 * @deprecated not used?
 	 * @param body
 	 * @param usr for synode requires, it should be type SyncRobot
 	 * @param ok

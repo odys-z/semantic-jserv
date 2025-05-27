@@ -132,6 +132,13 @@ public class BlockChain {
 		this.doc = doc;
 	}
 
+	/**
+	 * REVIEWED 2025-05-27 File is written block by block to disk and memory should be released.
+	 * @param blockReq
+	 * @return this
+	 * @throws IOException
+	 * @throws TransException
+	 */
 	public BlockChain appendBlock(DocsReq blockReq) throws IOException, TransException {
 		DocsReq pre = waitings;
 		DocsReq nxt = waitings.nextBlock;
