@@ -6,6 +6,7 @@
   "installkey": null,
   "startHandler": null,
   "volume": "../vol-3",
+  "connIdleSnds": 0.0,
   "port": 8967,
   "jservs": {"W": "http://127.0.0.1:8967/jserv-album",
       "X": "http://127.0.0.1:8964/jserv-album",
