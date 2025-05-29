@@ -8,6 +8,7 @@ import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.logrst;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.turngreen;
 import static io.odysz.common.Utils.waiting;
@@ -39,7 +40,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.AnsonException;
-import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.syn.Doclientier;
 import io.odysz.jclient.syn.IFileProvider;
@@ -66,6 +66,8 @@ class DoclientierTest {
 
 	private static Thread thr;
 
+//	private static Thread thref;
+
 	/** Stop service node quit automatically. */
 	static final boolean[] serviceLight = new boolean[1];
 	
@@ -87,7 +89,7 @@ class DoclientierTest {
 
 		ExpDoctierservTest.init();
 
-		Utils.logrst("[DoclientierTest] Starting synode-tiers", 0);
+		logrst("[DoclientierTest] Starting synode-tiers", 0);
 		int[] nodex = ExpDoctierservTest.startJetties(SynodetierJoinTest.jetties, ck);
 		//must finished
 		musteq(4, len(SynodetierJoinTest.jetties));
@@ -106,6 +108,9 @@ class DoclientierTest {
 			}
 		}, "X Y Z W by DoclientierTest");
 		thr.start();
+		
+//		thref = new Thread(() -> {ck[Y].refstreamer.run();},
+//		"[Y] DocRefs Streamer");
 
 		jserv_xyzw = ExpDoctierservTest.jservs();
 	}
@@ -113,11 +118,11 @@ class DoclientierTest {
 	@Test
 	void testSynclientUp() throws Exception {
 		int no = 0;
-		Utils.logrst("testSynclientUp: waiting pushing permission", ++no);
+		logrst("testSynclientUp: waiting pushing permission", ++no);
 
 		awaitAll(canpush, 5 * 60 * 10); // mvn test on 200 can be this slow?
 
-		Utils.logrst(f("X <- %s", devs[X_0].device.id), ++no);
+		logrst(f("X <- %s", devs[X_0].device.id), ++no);
 
 		// 10 create X
 		printChangeLines(ck);
@@ -128,16 +133,26 @@ class DoclientierTest {
 		// 10 create Y
 		printChangeLines(ck);
 		printNyquv(ck);
-		Utils.logrst(f("Y <- %s", devs[Y_0].device.id), ++no);
+		logrst(f("Y <- %s", devs[Y_0].device.id), ++no);
 		clientPush(Y, Y_0);
 
 		// 11 create Y
 		printChangeLines(ck);
 		printNyquv(ck);
-		Utils.logrst(f("Y <- %s", devs[X_0].device.id), ++no);
+		logrst(f("Y <- %s", devs[X_0].device.id), ++no);
 		clientPush(Y, Y_1);
 
 		turngreen(pushingDone);
+		
+		logrst("Starting DocRef streaming thread at Y...", ++no);
+		Thread thref = ((SynDomanager)ck[Y].synb.syndomx)
+				.synssion(ck[X].synb.syndomx.synode)
+				.createResolver();
+		thref.start();
+		logrst("Waiting DocRef streaming thread at Y...", ++no);
+		thref.join();
+		
+		logrst("Waiting server ending...", ++no);
 		thr.join();
 
 		printChangeLines(ck);
@@ -192,9 +207,9 @@ class DoclientierTest {
 
 		dev.client.fileProvider(new IFileProvider() {});
 
-		Utils.logi("client pushing: uid %s, device %s",
+		logi("client pushing: uid %s, device %s",
 				dev.client.client.ssInfo().uid(), dev.client.client.ssInfo().device);
-		Utils.logi(dev.res);
+		logi(dev.res);
 
 		ExpSyncDoc xdoc = videoUpByApp(dev.client, dev.device, dev.res, docm.tbl, ShareFlag.publish);
 		assertEquals(dev.device.id, xdoc.device());
@@ -223,15 +238,15 @@ class DoclientierTest {
 									logT(new Object() {}, rep.msg());
 									fail("Double checking failed.");
 								}
-								else Utils.logi("No docs pushed, which is expected.");
+								else logi("No docs pushed, which is expected.");
 							}
 						},
 						null,
 						new ErrorCtx() {
 							@Override
 							public void err(MsgCode code, String msg, String...args) {
-								Utils.warn("There should be some error message from server.");
-								Utils.logi("Expected: Fail on pushing again test passed. doc: %s, device: %s, clientpath: %s",
+								warn("There should be some error message from server.");
+								logi("Expected: Fail on pushing again test passed. doc: %s, device: %s, clientpath: %s",
 									doc.recId, doc.device(), doc.clientpath);
 								try {
 									// avoid existing without error logs.

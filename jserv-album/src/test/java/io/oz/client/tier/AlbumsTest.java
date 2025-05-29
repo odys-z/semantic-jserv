@@ -159,15 +159,15 @@ class AlbumsTest {
 		}
 	}
 
-	String getDownloadResult(PhotoRec photo, String filepath) throws TransException {
-		try {
-			PhotoSyntier tier = new PhotoSyntier("test/album", errCtx);
-			return tier.download(filepath, photo, filepath);
-		} catch (IOException | AnsonException | SemanticException e) {
-			e.printStackTrace();
-			return e.getMessage();
-		}
-	}
+//	String getDownloadResult(PhotoRec photo, String filepath) throws TransException {
+//		try {
+//			PhotoSyntier tier = new PhotoSyntier("test/album", errCtx);
+//			return tier.download(filepath, photo, filepath);
+//		} catch (IOException | AnsonException | SemanticException e) {
+//			e.printStackTrace();
+//			return e.getMessage();
+//		}
+//	}
 	
 	/**
 	 * Test append to collection with a pic.
@@ -249,6 +249,7 @@ class AlbumsTest {
 		tier.asyVideos(null, videos,
 			(ix, total, c, pth, resp) -> {
 				fail("Duplicate checking not working on " + pth);
+				return true;
 			},
 			null,
 			new ErrorCtx() {

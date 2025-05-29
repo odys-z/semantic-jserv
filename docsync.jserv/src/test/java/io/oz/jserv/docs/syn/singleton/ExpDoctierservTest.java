@@ -19,11 +19,15 @@ import static io.oz.jserv.docs.syn.SynodetierJoinTest.setVolumeEnv;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.webinf;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,6 +40,7 @@ import io.odysz.jclient.syn.Doclientier;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
@@ -44,6 +49,7 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.IUser;
+import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.Dev;
 import io.oz.jserv.docs.syn.SynodetierJoinTest;
 import io.oz.syn.SynodeConfig;
@@ -128,7 +134,9 @@ public class ExpDoctierservTest {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("deprecation")
-	public static void runDoctiers(int[] nodex, boolean[] waitClients, boolean[] canPush, boolean[] pushDone) throws Exception {
+	public static void runDoctiers(int[] nodex,
+			boolean[] waitClients, boolean[] canPush, boolean[] pushDone) throws Exception {
+
 		int section = 0;
 		
 		Utils.logrst("Open domains", ++section);
@@ -181,15 +189,8 @@ public class ExpDoctierservTest {
 		ck[Y].doc(3);
 		ck[X].doc(3);
 		
-//		DocRef[] xdocy2 = ck[X].docId2ref(pid);
-//		DocRef[] ydocx1 = ck[Y].docId2ref(x1);
-//		
-//		assertEquals(1, len(xdocy2));
-//		assertEquals(2, len(ydocx1));
-//
-//		assertEquals(x1[0], ydocx1[0].synode);
-//		assertEquals(y2[0], xdocy2[0]);
-//		assertEquals(y2[1], xdocy2[1]);
+		assert_XatY_DocRef(X, Y, 1, 2);
+		assert_XatY_DocRef(Y, X, 2, 1);
 
 		Utils.logrst("Bring up dev-x0 and delete", ++section);
 		// 00 delete
@@ -229,6 +230,33 @@ public class ExpDoctierservTest {
 		ck[Z].doc(2);
 		ck[Y].doc(2);
 		ck[X].doc(2);
+	}
+
+	/**
+	 * Assert X-docs are synchronized to Y, as DocRefs.
+	 * @param x
+	 * @param y
+	 * @param xdocs
+	 * @param ydocs
+	 * @throws SQLException
+	 * @throws TransException
+	 */
+	static void assert_XatY_DocRef(int x, int y, int xdocs, int ydocs) throws SQLException, TransException {
+		Collection<DocRef> xdoc3_aty = ck[y].docRef();
+		assertEquals(xdocs + ydocs, len(xdoc3_aty));
+
+		int xatys = 0;
+		Iterator<DocRef> it = xdoc3_aty.iterator();
+		while (it.hasNext()) {
+			DocRef xdref = it.next();
+			if (xdref == null) continue;
+
+			assertEquals(ck[x].synb.syndomx.synode, xdref.synode);
+			assertTrue(xdref.uids.startsWith(ck[x].synb.syndomx.synode + ","));
+			assertEquals(ck[y].docm.uri, xdref.uri64);
+			xatys++;
+		}
+		assertEquals(xdocs, xatys);
 	}
 
 	@SuppressWarnings("deprecation")

@@ -17,6 +17,8 @@ public class SyncReq extends AnsonBody {
 
 		public static final String initjoin = "join/init";
 		public static final String closejoin= "join/close";
+		
+		public static final String resolveRef = "ref/reslove"; 
 	}
 
 	ExchangeBlock exblock;

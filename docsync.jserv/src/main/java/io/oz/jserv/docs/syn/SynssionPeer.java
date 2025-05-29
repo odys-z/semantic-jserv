@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.ev;
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
@@ -19,6 +20,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
@@ -56,6 +58,10 @@ public class SynssionPeer {
 	DBSyntableBuilder b0; 
 
 	ExessionPersist xp;
+	public SynssionPeer xp(ExessionPersist xp) {
+		this.xp = xp;
+		return this;
+	}
 
 	OnError errHandler;
 	public SynssionPeer onErr(OnError err) {
@@ -239,13 +245,43 @@ public class SynssionPeer {
 //		return null;
 	}
 
-	public SynssionPeer xp(ExessionPersist xp) {
-		this.xp = xp;
-		return this;
+	void resolveDocrefs() {
+		createResolver().start();
+	}
+	
+	public Thread createResolver() {
+		// TODO not thread pool?
+		return new Thread(() -> {
+			// TODO FIXME // TODO FIXME // TODO FIXME // TODO FIXME // TODO FIXME // TODO FIXME 
+			// TODO FIXME must synchronize with nv and avoid syn-worker threads concurrency?
+			// 206 downloader
+			
+			DocRef ref = nextRef(peer);
+			while (ref != null) {
+				try {
+					client.download206(uri_syn, Port.syntier, ref.tbl,
+							ref.downloadPath(client.ssInfo()), ref.breakpoint,
+
+							(rx, r, bx, b, r_null) -> {
+								// TODO save breakpoint, check record updating
+								return false;
+							});
+				} catch (IOException | TransException | SQLException | AnsonException e) {
+					e.printStackTrace();
+				}
+
+				ref = nextRef(peer, ref.docId);
+			}
+
+		}, f("Doc Resolver %s", client.ssInfo().device));
 	}
 
-	public void pingPeers() {
+	static DocRef nextRef(String peer, String... excludeId) {
+		return null;
 	}
+
+//	public void pingPeers() {
+//	}
 
 	/**
 	 * Go through the handshaking process of sing up to a domain. 
@@ -260,7 +296,8 @@ public class SynssionPeer {
 	 * @throws SQLException 
 	 * @since 0.2.0
 	 */
-	public void joindomain(String admid, String myuid, String mypswd, OnOk ok) throws AnsonException, IOException, TransException, SQLException {
+	public void joindomain(String admid, String myuid, String mypswd, OnOk ok)
+			throws AnsonException, IOException, TransException, SQLException {
 //		try {
 			SyncReq  req = signup(admid);
 			SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
