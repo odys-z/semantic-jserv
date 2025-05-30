@@ -7,6 +7,7 @@ import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.turngreen;
 import static io.odysz.common.Utils.waiting;
+import static io.odysz.common.Utils.logrst;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.X_0;
@@ -139,7 +140,7 @@ public class ExpDoctierservTest {
 
 		int section = 0;
 		
-		Utils.logrst("Open domains", ++section);
+		logrst("Open domains", ++section);
 
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
@@ -155,7 +156,7 @@ public class ExpDoctierservTest {
 		ck[Y].doc(0);
 		ck[X].doc(0);
 
-		Utils.logrst("Pause for client's pushing", ++section);
+		logrst("Pause for client's pushing", ++section);
 		printChangeLines(ck);
 		printNyquv(ck);
 		
@@ -167,7 +168,7 @@ public class ExpDoctierservTest {
 
 
 		turngreen(canPush); // Tell clients can push now
-		Utils.logrst("Told clients can push now, waiting...", ++section);
+		logrst("Told clients can push now, waiting...", ++section);
 		
 		awaitAll(pushDone, -1);
 
@@ -178,7 +179,7 @@ public class ExpDoctierservTest {
 		ck[Y].doc(2);
 		ck[Z].doc(0);
 
-		Utils.logrst("Synchronizing between synodes", ++section);
+		logrst("Synchronizing between synodes", ++section);
 		waiting(lights, Y);
 		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
@@ -192,12 +193,12 @@ public class ExpDoctierservTest {
 		assert_XatY_DocRef(X, Y, 1, 2);
 		assert_XatY_DocRef(Y, X, 2, 1);
 
-		Utils.logrst("Bring up dev-x0 and delete", ++section);
+		logrst("Bring up dev-x0 and delete", ++section);
 		// 00 delete
 		Clients.init(jetties[X].myjserv());
 
 		Dev devx0 = devs[X_0];
-		Utils.logrst(new String[] {"Deleting", devx0.res}, section, 1);
+		logrst(new String[] {"Deleting", devx0.res}, section, 1);
 
 		devx0.login(errLog);
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
@@ -209,10 +210,10 @@ public class ExpDoctierservTest {
 					.device(devx0.device.id)
 					.fullpath(devx0.res);
 
-		Utils.logrst(new String[] {"Verifying", devx0.res}, section, 2);
+		logrst(new String[] {"Verifying", devx0.res}, section, 2);
 		verifyPathsPageNegative(devx0.client, docm.tbl, dx0.clientpath);
 
-		Utils.logrst("Synchronizing synodes", ++section);
+		logrst("Synchronizing synodes", ++section);
 		printChangeLines(ck);
 		printNyquv(ck);
 
@@ -222,8 +223,26 @@ public class ExpDoctierservTest {
 		waiting(lights, Y);
 		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
+		
+		logrst("Starting DocRef streaming thread at Y...", ++section);
+		Thread yresolve = SynodetierJoinTest
+				.jetties[Y].syngleton.domanager(zsu)
+				.synssion(ck[X].synb.syndomx.synode)
+				.createResolver(ck[Y].docm);
 
-		Utils.logrst("Finish", ++section);
+		Thread xresolve = SynodetierJoinTest
+				.jetties[X].syngleton.domanager(zsu)
+				.synssion(ck[Y].synb.syndomx.synode)
+				.createResolver(ck[X].docm);
+
+		yresolve.start();
+		xresolve.start();
+
+		logrst("Waiting DocRef streaming thread at Y...", ++section);
+		yresolve.join();
+		xresolve.join();
+
+		Utils.logrst("Resolving docrefs finished.", ++section);
 		printChangeLines(ck);
 		printNyquv(ck);
 

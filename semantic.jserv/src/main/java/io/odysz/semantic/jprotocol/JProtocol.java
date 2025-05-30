@@ -32,12 +32,15 @@ public class JProtocol {
 	/**
 	 * Progress notifier called by block chain.
 	 * Parameter blockResp provide the last uploaded block's sequence number.
+	 * <p>
+	 * rows: rx of total rows <br>
+	 * file blocks: bx of total blocks</p>
 	 * @return force breakup
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
-		boolean proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
-			throws IOException, AnsonException, TransException, SQLException;
+		boolean proc(int rx, int rows, int bx, int blocks, AnsonResp resp)
+			throws IOException, AnsonException, TransException;
 	}
 
 	/**

@@ -144,14 +144,6 @@ class DoclientierTest {
 
 		turngreen(pushingDone);
 		
-		logrst("Starting DocRef streaming thread at Y...", ++no);
-		Thread thref = ((SynDomanager)ck[Y].synb.syndomx)
-				.synssion(ck[X].synb.syndomx.synode)
-				.createResolver();
-		thref.start();
-		logrst("Waiting DocRef streaming thread at Y...", ++no);
-		thref.join();
-		
 		logrst("Waiting server ending...", ++no);
 		thr.join();
 

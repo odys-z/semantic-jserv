@@ -9,25 +9,42 @@ import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 
 import io.odysz.anson.AnsonException;
+import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
+import io.odysz.jclient.syn.ExpDocRobot;
+import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
+import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.DocRef;
+import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.DocUtils;
+import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Query;
+import io.odysz.transact.sql.parts.AnDbField;
+import io.odysz.transact.sql.parts.Logic.op;
+import io.odysz.transact.sql.parts.condition.Condit;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
@@ -245,39 +262,80 @@ public class SynssionPeer {
 //		return null;
 	}
 
-	void resolveDocrefs() {
-		createResolver().start();
+	void resolveDocrefs(ExpDocTableMeta docmeta) throws Exception {
+		createResolver(docmeta).start();
 	}
 	
-	public Thread createResolver() {
+	public Thread createResolver(ExpDocTableMeta docmeta, OnProcess... proc4test) throws Exception {
+		DATranscxt tb = new DATranscxt();
+
 		// TODO not thread pool?
 		return new Thread(() -> {
 			// TODO FIXME // TODO FIXME // TODO FIXME // TODO FIXME // TODO FIXME // TODO FIXME 
 			// TODO FIXME must synchronize with nv and avoid syn-worker threads concurrency?
 			// 206 downloader
 			
-			DocRef ref = nextRef(peer);
-			while (ref != null) {
-				try {
-					client.download206(uri_syn, Port.syntier, ref.tbl,
-							ref.downloadPath(client.ssInfo()), ref.breakpoint,
+			DocRef ref0 = nextRef(b0, docmeta, peer);
+			final DocRef[] _ref = new DocRef[] {ref0};
+			// ExpDocTableMeta docmeta = ref0.meta;
+			Path localpath = ref0.downloadPath(client.ssInfo());
 
-							(rx, r, bx, b, r_null) -> {
-								// TODO save breakpoint, check record updating
-								return false;
-							});
-				} catch (IOException | TransException | SQLException | AnsonException e) {
+
+			while (_ref[0] != null) {
+				try {
+					ExpDocRobot robot = new ExpDocRobot(client.ssInfo().uid(), "-pswd-null-", client.ssInfo().userName());
+
+					client.download206(uri_syn, Port.syntier, _ref[0].tbl,
+						localpath, _ref[0].breakpoint,
+
+						isNull(proc4test) ?
+						(rx, r, bx, b, r_null) -> {
+							// TODO save breakpoint, check record updating
+							_ref[0].breakpoint(b);
+							try {
+								DAHelper.updateFieldByPk(tb, conn, docmeta, _ref[0].docId,
+										docmeta.uri, _ref[0].toBlock(AnDbField.jopt), robot);
+							} catch (SQLException e) {
+								e.printStackTrace();
+								return true;
+							}
+							return false;
+						} : proc4test[0]);
+
+					// move the temporary file to managed
+					String fn = EnvPath.decodeUri(DATranscxt.runtimeRoot(), _ref[0].uri64);
+					String targetpth = DocUtils.resolvExtroot(conn, fn, docmeta);
+					if (debug)
+						Utils.logT(new Object() {}, " %s\n-> %s",
+								localpath.toAbsolutePath().toString(), targetpth);
+					Files.move(localpath, Paths.get(targetpth), StandardCopyOption.REPLACE_EXISTING);
+
+					DAHelper.updateFieldByPk(tb, conn, docmeta, _ref[0].docId,
+											docmeta.uri, targetpth, robot);
+				} catch (IOException | TransException | SQLException e) {
 					e.printStackTrace();
 				}
 
-				ref = nextRef(peer, ref.docId);
+				_ref[0] = nextRef(b0, docmeta, peer, _ref[0].docId);
 			}
 
-		}, f("Doc Resolver %s", client.ssInfo().device));
+		}, f("Doc Resolver %s -> %s", this.mynid, peer));
 	}
 
-	static DocRef nextRef(String peer, String... excludeId) {
-		return null;
+	static DocRef nextRef(DBSyntableBuilder synb, ExpDocTableMeta m, String peer, String... excludeId) {
+		try {
+			Query q = synb.select(m.tbl)
+						.col(m.uri)
+						.whereEq(m.uids, refPages.next());
+		
+			if (!isNull(excludeId))
+				q.where(op.ne, m.pk, Funcall.constr(excludeId[0]));
+
+			return ((AnResultset) q.rs(synb.instancontxt()).rs(0)).getAnson(m.uri);
+		} catch (AnsonException | SQLException | TransException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 //	public void pingPeers() {
