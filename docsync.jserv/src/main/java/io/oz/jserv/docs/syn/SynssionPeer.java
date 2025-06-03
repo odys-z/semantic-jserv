@@ -31,6 +31,7 @@ import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionPersist;
@@ -275,11 +276,13 @@ public class SynssionPeer {
 			// TODO FIXME must synchronize with nv and avoid syn-worker threads concurrency?
 			// 206 downloader
 			
-			DocRef ref0 = nextRef(b0, docmeta, peer);
+			SynDocRefMeta refm = domanager.refm;
+
+			DocRef ref0 = nextRef(b0, docmeta, refm, peer);
 			final DocRef[] _ref = new DocRef[] {ref0};
+
 			// ExpDocTableMeta docmeta = ref0.meta;
 			Path localpath = ref0.downloadPath(client.ssInfo());
-
 
 			while (_ref[0] != null) {
 				try {
@@ -290,7 +293,7 @@ public class SynssionPeer {
 
 						isNull(proc4test) ?
 						(rx, r, bx, b, r_null) -> {
-							// TODO save breakpoint, check record updating
+							// save breakpoint
 							_ref[0].breakpoint(b);
 							try {
 								DAHelper.updateFieldByPk(tb, conn, docmeta, _ref[0].docId,
@@ -299,6 +302,7 @@ public class SynssionPeer {
 								e.printStackTrace();
 								return true;
 							}
+							// TODO check record updating
 							return false;
 						} : proc4test[0]);
 
@@ -310,28 +314,40 @@ public class SynssionPeer {
 								localpath.toAbsolutePath().toString(), targetpth);
 					Files.move(localpath, Paths.get(targetpth), StandardCopyOption.REPLACE_EXISTING);
 
-					DAHelper.updateFieldByPk(tb, conn, docmeta, _ref[0].docId,
-											docmeta.uri, targetpth, robot);
+//					DAHelper.updateFieldByPk(tb, conn, docmeta, _ref[0].docId,
+//											docmeta.uri, targetpth, robot);
+
+					// b0.romveRefbuff();
+					tb.update(docmeta.tbl)
+						.nv(docmeta.uri, EnvPath.encodeUri(targetpth, "FIXME"))
+						.post(tb.delete(refm.tbl)
+								.whereEq(refm.fromPeer, peer)
+								.whereEq(refm.io_oz_synuid, _ref[0].uids))
+						.u(tb.instancontxt(targetpth, robot));
 				} catch (IOException | TransException | SQLException e) {
 					e.printStackTrace();
 				}
 
-				_ref[0] = nextRef(b0, docmeta, peer, _ref[0].docId);
+				_ref[0] = nextRef(b0, docmeta, refm, peer, _ref[0].docId);
 			}
 
 		}, f("Doc Resolver %s -> %s", this.mynid, peer));
 	}
 
-	static DocRef nextRef(DBSyntableBuilder synb, ExpDocTableMeta m, String peer, String... excludeId) {
+	static DocRef nextRef(DBSyntableBuilder synb, ExpDocTableMeta docm, SynDocRefMeta refm, String peer, String... excludeId) {
 		try {
-			Query q = synb.select(m.tbl)
-						.col(m.uri)
-						.whereEq(m.uids, refPages.next());
+			Query q = synb.select(refm.tbl, "ref")
+						.col("ref." + refm.io_oz_synuid)
+						.je(docm.tbl, "d", refm.io_oz_synuid, docm.io_oz_synuid)
+						.whereEq(refm.syntabl, docm.tbl)
+						.whereEq(refm.fromPeer, peer)
+						.orderby(refm.tried, "desc")
+						.limit(1);
 		
 			if (!isNull(excludeId))
-				q.where(op.ne, m.pk, Funcall.constr(excludeId[0]));
+				q.where(op.ne, docm.pk, Funcall.constr(excludeId[0]));
 
-			return ((AnResultset) q.rs(synb.instancontxt()).rs(0)).getAnson(m.uri);
+			return ((AnResultset) q.rs(synb.instancontxt()).rs(0)).getAnson(docm.uri);
 		} catch (AnsonException | SQLException | TransException e) {
 			e.printStackTrace();
 			return null;
