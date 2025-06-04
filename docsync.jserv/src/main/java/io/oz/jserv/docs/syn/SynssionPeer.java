@@ -280,10 +280,11 @@ public class SynssionPeer {
 			// ExpDocTableMeta docmeta = ref0.meta;
 			Path localpath = ref0.downloadPath(client.ssInfo());
 
-
 			while (_ref[0] != null) {
 				try {
-					ExpDocRobot robot = new ExpDocRobot(client.ssInfo().uid(), "-pswd-null-", client.ssInfo().userName());
+					ExpDocRobot robot = new ExpDocRobot(
+							client.ssInfo().uid(), "-pswd-null-",
+							client.ssInfo().userName());
 
 					client.download206(uri_syn, Port.syntier, _ref[0].tbl,
 						localpath, _ref[0].breakpoint,
