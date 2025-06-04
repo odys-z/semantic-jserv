@@ -143,13 +143,28 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	protected void doHead(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
     	String range = request.getHeader("Range");
+    	String length = request.getHeader("Length");
+		String anson64 = request.getParameter("anson64");
 
-    	if (!isblank(range))
+    	if (!isblank(range) || !isblank(length))
 			try {
 				Docs206.get206Head(request, response);
 			} catch (SsException e) {
 				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
 			}
+    	else if (!isblank(anson64)) {
+    		// Since 1.5.16, not tested?
+    		try {
+				@SuppressWarnings("unchecked")
+				AnsonMsg<AnsonBody> msg = (AnsonMsg<AnsonBody>) Anson.fromJson(
+						new ByteArrayInputStream(AESHelper.decode64(anson64)));
+				Docs206.get206Head(msg.addr(request.getRemoteAddr()), response);
+			} catch (SsException e) {
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+			} catch (Exception e) {
+				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+			}
+    	}
 		else super.doHead(request, response);
 	}
 	

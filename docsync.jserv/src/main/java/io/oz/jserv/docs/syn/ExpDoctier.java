@@ -272,7 +272,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 * @param docsReq
 	 * @param usr
 	 * @param prf
-	 * @param meta
+	 * @param docm
 	 * @return album where clientpath in req's fullpath and device also matched
 	 * @throws SemanticException
 	 * @throws TransException

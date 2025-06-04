@@ -52,6 +52,7 @@ import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
@@ -108,6 +109,10 @@ public abstract class Docs206 {
 	}
 	
 	/**
+	 * Verify Anson header in "?anson64=" and call
+	 * {@link #replyHeaders(HttpServletRequest, HttpServletResponse, AnsonMsg, IUser)}
+	 * to reply with a http header which is compatible / understandable to browsers. 
+	 * 
 	 * <p>Reference:</p>
 	 * 
 	 * [1] Problem: https://stackoverflow.com/a/52520120/7362888 <br>
@@ -131,6 +136,10 @@ public abstract class Docs206 {
 			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED); // right semantics?
 			return null;
 		}
+	}
+
+	public static <T extends AnsonBody> void get206Head(AnsonMsg<T> addr, HttpServletResponse response) 
+			throws IOException, SsException {
 	}
 
 	@SuppressWarnings("unchecked")
