@@ -1,5 +1,7 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.AESHelper.encode64;
+import static io.odysz.common.AESHelper.getRandom;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.ev;
 import static io.odysz.common.LangExt.f;
@@ -19,6 +21,7 @@ import java.util.HashSet;
 import org.apache.commons.io.FileUtils;
 
 import io.odysz.anson.AnsonException;
+import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
@@ -267,9 +270,10 @@ public class SynssionPeer {
 		return new Thread(() -> {
 			// 206 downloader
 			SynDocRefMeta refm = domanager.refm;
+			String exclude = encode64(getRandom());
 
 			HashSet<Path> tobeclean = new HashSet<Path>();
-			DocRef ref0 = nextRef(xp.trb, docmeta, refm, peer);
+			DocRef ref0 = nextRef(xp.trb, docmeta, refm, peer, exclude);
 			final DocRef[] _ref = new DocRef[] {ref0};
 
 			ExpDocRobot localRobt = new ExpDocRobot(
@@ -307,7 +311,7 @@ public class SynssionPeer {
 					Files.move(localpath, Paths.get(targetpth), StandardCopyOption.REPLACE_EXISTING);
 
 					tb.update(docmeta.tbl)
-						.nv(docmeta.uri, EnvPath.encodeUri(targetpth, "FIXME"))
+						.nv(docmeta.uri, EnvPath.encodeUri(targetpth, FIXME))
 						.post(tb.delete(refm.tbl)
 								.whereEq(refm.fromPeer, peer)
 								.whereEq(refm.io_oz_synuid, _ref[0].uids))
@@ -317,7 +321,7 @@ public class SynssionPeer {
 					incTried(xp.trb, docmeta, refm, peer, _ref[0].docId);
 				}
 				finally {
-					_ref[0] = nextRef(xp.trb, docmeta, refm, peer, _ref[0].docId);
+					_ref[0] = nextRef(xp.trb, docmeta, refm, peer, exclude);
 				}
 			}
 			
@@ -341,7 +345,7 @@ public class SynssionPeer {
 	}
 
 	static DocRef nextRef(DBSyntableBuilder synb, ExpDocTableMeta docm,
-			SynDocRefMeta refm, String peer, String... excludeId) {
+			SynDocRefMeta refm, String peer, String excludeTag) {
 		try {
 			Query q = synb
 				.select(refm.tbl, "ref")
@@ -349,11 +353,9 @@ public class SynssionPeer {
 				.je("ref", docm.tbl, "d", refm.io_oz_synuid, docm.io_oz_synuid)
 				.whereEq(refm.syntabl, docm.tbl)
 				.whereEq(refm.fromPeer, peer)
+				.where(op.ne, docm.pk, Funcall.constr(excludeTag))
 				.orderby(refm.tried)
 				.limit(1);
-		
-			if (!isNull(excludeId))
-				q.where(op.ne, docm.pk, Funcall.constr(excludeId[0]));
 
 			AnResultset rs = ((AnResultset) q
 					.rs(synb.instancontxt()).rs(0))

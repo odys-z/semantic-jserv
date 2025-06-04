@@ -138,7 +138,7 @@ public abstract class Docs206 {
 		}
 	}
 
-	public static <T extends AnsonBody> void get206Head(AnsonMsg<T> addr, HttpServletResponse response) 
+	public static <T extends AnsonBody> void get206Head(AnsonMsg<T> msg, HttpServletResponse response) 
 			throws IOException, SsException {
 	}
 

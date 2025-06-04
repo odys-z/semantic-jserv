@@ -143,10 +143,10 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	protected void doHead(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
     	String range = request.getHeader("Range");
-    	String length = request.getHeader("Length");
+    	// String length = request.getHeaderNames().getHeader("Length");
 		String anson64 = request.getParameter("anson64");
 
-    	if (!isblank(range) || !isblank(length))
+    	if (!isblank(range))
 			try {
 				Docs206.get206Head(request, response);
 			} catch (SsException e) {
