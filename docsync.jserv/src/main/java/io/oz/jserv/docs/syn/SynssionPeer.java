@@ -14,6 +14,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.HashSet;
+
+import org.apache.commons.io.FileUtils;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.EnvPath;
@@ -44,7 +47,6 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.parts.AnDbField;
 import io.odysz.transact.sql.parts.Logic.op;
-import io.odysz.transact.sql.parts.condition.Condit;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
@@ -73,7 +75,7 @@ public class SynssionPeer {
 	SynodeMode mymode;
 
 	SynDomanager domanager;
-	DBSyntableBuilder b0; 
+//	DBSyntableBuilder b0; 
 
 	ExessionPersist xp;
 	public SynssionPeer xp(ExessionPersist xp) {
@@ -242,53 +244,43 @@ public class SynssionPeer {
 		return exespush(peer, req);
 	}
 
-	SyncResp exespush(String peer, SyncReq req) throws SemanticException, AnsonException, IOException {
+	SyncResp exespush(String peer, SyncReq req)
+			throws SemanticException, AnsonException, IOException {
 		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", A.exchange, "by " + mynid);
 		AnsonHeader header = client.header().act(act);
 
-//		try {
-			AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
-								.header(header);
+		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+							.header(header);
 
-			return client.commit(q, errHandler);
-//		} catch (AnsonException | SemanticException e) {
-//			errHandler.err(MsgCode.exSemantic,
-//					e.getMessage() + " " + (e.getCause() == null
-//					? "" : e.getCause().getMessage()));
-//		} catch (IOException e) {
-//			errHandler.err(MsgCode.exIo,
-//					e.getMessage() + " " + (e.getCause() == null
-//					? "" : e.getCause().getMessage()));
-//		}
-//		return null;
+		return client.commit(q, errHandler);
 	}
 
 	void resolveDocrefs(ExpDocTableMeta docmeta) throws Exception {
 		createResolver(docmeta).start();
 	}
 	
-	public Thread createResolver(ExpDocTableMeta docmeta, OnProcess... proc4test) throws Exception {
+	public Thread createResolver(ExpDocTableMeta docmeta, OnProcess... proc4test)
+			throws Exception {
 		DATranscxt tb = new DATranscxt();
 
 		// TODO not thread pool?
 		return new Thread(() -> {
-			// TODO FIXME // TODO FIXME // TODO FIXME // TODO FIXME // TODO FIXME // TODO FIXME 
-			// TODO FIXME must synchronize with nv and avoid syn-worker threads concurrency?
 			// 206 downloader
-			
 			SynDocRefMeta refm = domanager.refm;
 
-			DocRef ref0 = nextRef(b0, docmeta, refm, peer);
+			HashSet<Path> tobeclean = new HashSet<Path>();
+			DocRef ref0 = nextRef(xp.trb, docmeta, refm, peer);
 			final DocRef[] _ref = new DocRef[] {ref0};
 
-			// ExpDocTableMeta docmeta = ref0.meta;
-			Path localpath = ref0.downloadPath(client.ssInfo());
+			ExpDocRobot localRobt = new ExpDocRobot(
+							client.ssInfo().uid(), null, client.ssInfo().userName());
 
 			while (_ref[0] != null) {
 				try {
-					ExpDocRobot robot = new ExpDocRobot(client.ssInfo().uid(), "-pswd-null-", client.ssInfo().userName());
+					Path localpath = _ref[0].downloadPath(peer, conn, client.ssInfo());
+					tobeclean.add(localpath);
 
-					client.download206(uri_syn, Port.syntier, _ref[0].tbl,
+					client.download206(uri_syn, Port.syntier, _ref[0].syntabl,
 						localpath, _ref[0].breakpoint,
 
 						isNull(proc4test) ?
@@ -297,7 +289,7 @@ public class SynssionPeer {
 							_ref[0].breakpoint(b);
 							try {
 								DAHelper.updateFieldByPk(tb, conn, docmeta, _ref[0].docId,
-										docmeta.uri, _ref[0].toBlock(AnDbField.jopt), robot);
+										docmeta.uri, _ref[0].toBlock(AnDbField.jopt), localRobt);
 							} catch (SQLException e) {
 								e.printStackTrace();
 								return true;
@@ -314,40 +306,61 @@ public class SynssionPeer {
 								localpath.toAbsolutePath().toString(), targetpth);
 					Files.move(localpath, Paths.get(targetpth), StandardCopyOption.REPLACE_EXISTING);
 
-//					DAHelper.updateFieldByPk(tb, conn, docmeta, _ref[0].docId,
-//											docmeta.uri, targetpth, robot);
-
-					// b0.romveRefbuff();
 					tb.update(docmeta.tbl)
 						.nv(docmeta.uri, EnvPath.encodeUri(targetpth, "FIXME"))
 						.post(tb.delete(refm.tbl)
 								.whereEq(refm.fromPeer, peer)
 								.whereEq(refm.io_oz_synuid, _ref[0].uids))
-						.u(tb.instancontxt(targetpth, robot));
+						.u(tb.instancontxt(targetpth, localRobt));
 				} catch (IOException | TransException | SQLException e) {
 					e.printStackTrace();
+					incTried(xp.trb, docmeta, refm, peer, _ref[0].docId);
 				}
-
-				_ref[0] = nextRef(b0, docmeta, refm, peer, _ref[0].docId);
+				finally {
+					_ref[0] = nextRef(xp.trb, docmeta, refm, peer, _ref[0].docId);
+				}
+			}
+			
+			for (Path p : tobeclean) {
+				try {
+					if (p != null)
+						FileUtils.deleteDirectory(p.toFile());
+				} catch (IOException e) {
+					Utils.warn("[DocRef Resolver] Removing temporary dowloading folder failed on %s",
+							p.toAbsolutePath());
+				}
 			}
 
 		}, f("Doc Resolver %s -> %s", this.mynid, peer));
 	}
 
-	static DocRef nextRef(DBSyntableBuilder synb, ExpDocTableMeta docm, SynDocRefMeta refm, String peer, String... excludeId) {
+	static void incTried(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm, String peer,
+			String docId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	static DocRef nextRef(DBSyntableBuilder synb, ExpDocTableMeta docm,
+			SynDocRefMeta refm, String peer, String... excludeId) {
 		try {
-			Query q = synb.select(refm.tbl, "ref")
-						.col("ref." + refm.io_oz_synuid)
-						.je(docm.tbl, "d", refm.io_oz_synuid, docm.io_oz_synuid)
-						.whereEq(refm.syntabl, docm.tbl)
-						.whereEq(refm.fromPeer, peer)
-						.orderby(refm.tried, "desc")
-						.limit(1);
+			Query q = synb
+				.select(refm.tbl, "ref")
+				.cols_byAlias("ref", refm.io_oz_synuid).cols_byAlias("d", docm.uri)
+				.je("ref", docm.tbl, "d", refm.io_oz_synuid, docm.io_oz_synuid)
+				.whereEq(refm.syntabl, docm.tbl)
+				.whereEq(refm.fromPeer, peer)
+				.orderby(refm.tried)
+				.limit(1);
 		
 			if (!isNull(excludeId))
 				q.where(op.ne, docm.pk, Funcall.constr(excludeId[0]));
 
-			return ((AnResultset) q.rs(synb.instancontxt()).rs(0)).getAnson(docm.uri);
+			AnResultset rs = ((AnResultset) q
+					.rs(synb.instancontxt()).rs(0))
+					.beforeFirst();
+			if (rs.next())
+				return rs.getAnson(docm.uri);
+			else return null;
 		} catch (AnsonException | SQLException | TransException e) {
 			e.printStackTrace();
 			return null;

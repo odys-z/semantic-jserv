@@ -21,7 +21,7 @@ public class LogTranscxt extends DATranscxt {
 			throws Exception {
 		 super(conn);
 
-		initConfigs(conn, loadSemanticsXml(conn), 
+		initConfigs(conn, // loadSemanticsXml(conn), 
 					(c) -> new SemanticsMap(c));
 	}
 }

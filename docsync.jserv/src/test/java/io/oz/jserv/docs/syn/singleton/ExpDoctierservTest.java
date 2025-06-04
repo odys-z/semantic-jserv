@@ -24,11 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -246,6 +245,9 @@ public class ExpDoctierservTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
+		assert_XatY_DocRef(X, Y, 0, 0);
+		assert_XatY_DocRef(Y, X, 0, 0);
+
 		ck[Z].doc(2);
 		ck[Y].doc(2);
 		ck[X].doc(2);
@@ -257,25 +259,35 @@ public class ExpDoctierservTest {
 	 * @param y
 	 * @param xdocs
 	 * @param ydocs
+	 * @return doc-refs at y
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	static void assert_XatY_DocRef(int x, int y, int xdocs, int ydocs) throws SQLException, TransException {
-		Collection<DocRef> xdoc3_aty = ck[y].docRef();
-		assertEquals(xdocs + ydocs, len(xdoc3_aty));
+	static ArrayList<DocRef> assert_XatY_DocRef(int x, int y, int xdocs, int ydocs) throws SQLException, TransException {
+		List<DocRef> xdoc3_aty = ck[y]
+				.docRef()
+				.stream()
+				.filter(v -> v != null).toList();
+		assertEquals(xdocs, len(xdoc3_aty));
 
 		int xatys = 0;
-		Iterator<DocRef> it = xdoc3_aty.iterator();
-		while (it.hasNext()) {
-			DocRef xdref = it.next();
+		// Iterator<DocRef> it = xdoc3_aty.iterator();
+		// while (it.hasNext()) {
+			// DocRef xdref = it.next();
+		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(xdocs);
+
+		for (DocRef xdref : xdoc3_aty) {
 			if (xdref == null) continue;
 
 			assertEquals(ck[x].synb.syndomx.synode, xdref.synode);
 			assertTrue(xdref.uids.startsWith(ck[x].synb.syndomx.synode + ","));
 			assertEquals(ck[y].docm.uri, xdref.uri64);
+
 			xatys++;
+			xdlst.add(xdref);
 		}
 		assertEquals(xdocs, xatys);
+		return xdlst;
 	}
 
 	@SuppressWarnings("deprecation")
