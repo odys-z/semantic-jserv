@@ -211,6 +211,17 @@ public class DocUtils {
 		return resolvExtroot(conn, rs.getString("uri"), meta);
 	}
 
+	/**
+	 * According to smtype.extFilev2's configuration for meta.tbl,
+	 * get path by concatenating and replacing env.
+	 * 
+	 * @param conn
+	 * @param extUri
+	 * @param meta
+	 * @return (smtype.extFilev2[meta.tbl]'s arg0 / extUri).replace-env
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta)
 			throws TransException, SQLException {
 
