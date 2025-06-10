@@ -25,6 +25,7 @@ import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -42,6 +43,7 @@ import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.util.DAHelper;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
@@ -301,8 +303,7 @@ public class SynssionPeer {
 						} : proc4test[0]);
 
 					// move the temporary file to managed
-					ExtFilePaths extpths = new ExtFilePaths(ref.docId, ref.pname)
-											.setup(conn, docmeta.tbl);
+					ExtFilePaths extpths = DocRef.createExtPaths(conn, docmeta.tbl, ref);
 					String targetpth = extpths.abspath();
 
 					if (debug)
@@ -318,7 +319,11 @@ public class SynssionPeer {
 						.u(tb.instancontxt(targetpth, localRobt));
 				} catch (IOException | TransException | SQLException e) {
 					e.printStackTrace();
-					incTried(xp.trb, docmeta, refm, peer, ref.docId);
+					try {
+						incTried(xp.trb, docmeta, refm, peer, ref.uids, localRobt);
+					} catch (TransException | SQLException e1) {
+						throw new NullPointerException(e1.getMessage());
+					}
 				}
 				finally {
 					ref = nextRef(xp.trb, docmeta, refm, peer, exclude);
@@ -339,10 +344,14 @@ public class SynssionPeer {
 		}, f("Doc Resolver %s -> %s", this.mynid, peer));
 	}
 
-	static void incTried(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm, String peer,
-			String docId) {
-		// TODO Auto-generated method stub
-		
+	static void incTried(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm,
+			String peer, String uids, IUser robt) throws TransException, SQLException {
+		trb.update(refm.tbl, robt)
+			.nv(refm.tried, Funcall.add(refm.tried, 1))
+			.whereEq(refm.io_oz_synuid, uids)
+			.whereEq(refm.syntabl, docmeta.tbl)
+			.u(trb.instancontxt())
+			;
 	}
 
 	static DocRef nextRef(DBSyntableBuilder synb, ExpDocTableMeta docm,

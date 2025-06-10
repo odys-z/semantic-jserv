@@ -15,17 +15,4 @@ public class T_PhotoMeta extends ExpDocTableMeta {
 		try { ddlSqlite = loadSqlite(T_PhotoMeta.class, "h_photos.sqlite.ddl"); }
 		catch (Exception e) { e.printStackTrace(); }
 	}
-
-//	@Override
-//	public Query onselectSyntities(Query select) throws TransException {
-//		String a = tbl; 
-//		if (select.alias() != null)
-//			a = select.alias().toString();
-//
-//		return select
-//				.clos_clear()
-//				.cols_byAlias(a,
-//				replacele(entCols(), uri, extfile(a + "." + uri)));
-//	}
-
 }
