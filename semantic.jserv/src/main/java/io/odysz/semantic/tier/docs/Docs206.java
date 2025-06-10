@@ -13,11 +13,10 @@ import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.split;
 import static io.odysz.common.LangExt.prefixOneOf;
-import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.logT;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.logging.Level.FINE;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -54,6 +53,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
@@ -170,20 +170,20 @@ public abstract class Docs206 {
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			List<Range> ranges = replyHeaders(req, resp, msg, usr);
 			Resource resource = new Resource(getDoc(req, msg.body(0), st, usr), msg.body(0).doc.recId);
+			
+			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
 			writeContent(resp, resource, ranges, "");
 		}
 		catch (IllegalArgumentException e) {
-			logi("%s Got an IllegalArgumentException from user code; interpreting it as 400 Bad Request.\n%s",
-					FINE, e.getMessage());
-			resp.setHeader("Error", e.getMessage());
-//			resp.setHeader("Server", e.getMessage());
-			resp.setHeader("Server", JSingleton.appName);
+			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+				e.getMessage());
+			resp.setHeader(JProtocol.Headers.Error, e.getMessage());
+			resp.setHeader(JProtocol.Headers.Server, JSingleton.appName);
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 		} catch (TransException | SQLException e) {
 			e.printStackTrace();
-			resp.setHeader("Error", e.getMessage());
-//			resp.setHeader("Server", e.getMessage());
-			resp.setHeader("Server", JSingleton.appName);
+			resp.setHeader(JProtocol.Headers.Error, e.getMessage());
+			resp.setHeader(JProtocol.Headers.Server, JSingleton.appName);
 			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
 		}
 	}
@@ -198,8 +198,8 @@ public abstract class Docs206 {
 			resource = new Resource(getDoc(request, msg.body(0), st, usr), msg.body(0).doc.recId);
 		}
 		catch (IllegalArgumentException e) {
-			logi("%s Got an IllegalArgumentException from user code; interpreting it as 400 Bad Request.\n%s",
-					FINE, e.getMessage());
+			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+				e.getMessage());
 			response.setHeader("Error", e.getMessage());
 			response.setHeader("Server", JSingleton.appName);
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -221,7 +221,7 @@ public abstract class Docs206 {
 		List<Range> ranges = getRanges(request, resource);
 
 		if (ranges == null) {
-			response.setHeader("Content-Range", "bytes */" + resource.length);
+			response.setHeader(JProtocol.Headers.Content_range, "bytes */" + resource.length);
 			response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
 			return null;
 		}
@@ -277,7 +277,8 @@ public abstract class Docs206 {
 	 * @throws IOException When something fails at I/O level.
 	 * @since 0.1.50
 	 */
-	protected void handleFileNotFound(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected void handleFileNotFound(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
 		response.sendError(HttpServletResponse.SC_NOT_FOUND);
 	}
 
@@ -303,7 +304,9 @@ public abstract class Docs206 {
 	private static boolean preconditionFailed(HttpServletRequest request, Resource resource) {
 		String match = request.getHeader("If-Match");
 		long unmodified = request.getDateHeader("If-Unmodified-Since");
-		return (match != null) ? !matches(match, resource.eTag) : (unmodified != -1 && modified(unmodified, resource.lastModified));
+		return (match != null)
+				? !matches(match, resource.eTag)
+				: (unmodified != -1 && modified(unmodified, resource.lastModified));
 	}
 
 	/**
@@ -316,8 +319,8 @@ public abstract class Docs206 {
 	}
 
 	/**
-	 * <p>Set the cache headers. If the <code>expires</code> argument is larger than 0 seconds, then the following headers
-	 * will be set:
+	 * <p>Set the cache headers. If the <code>expires</code> argument is larger than 0 seconds,
+	 * then the following headers will be set:
 	 * <ul>
 	 * <li><code>Cache-Control: public,max-age=[expiration time in seconds],must-revalidate</code></li>
 	 * <li><code>Expires: [expiration date of now plus expiration time in seconds]</code></li>
@@ -329,25 +332,28 @@ public abstract class Docs206 {
 	 */
 	static void setCacheHeaders(HttpServletResponse response, long expires) {
 		if (expires > 0) {
-			response.setHeader("Cache-Control", "public,max-age=" + expires + ",must-revalidate");
-			response.setDateHeader("Expires", System.currentTimeMillis() + SECONDS.toMillis(expires));
-			response.setHeader("Pragma", ""); // Explicitly set pragma to prevent container from overriding it.
+			response.setHeader(JProtocol.Headers.Cache_control, "public,max-age=" + expires + ",must-revalidate");
+			response.setDateHeader(JProtocol.Headers.Expires, System.currentTimeMillis() + SECONDS.toMillis(expires));
 		}
 		else {
 			// setNoCacheHeaders(response);
-			response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-			response.setDateHeader("Expires", 0);
-			response.setHeader("Pragma", "no-cache"); // Backwards compatibility for HTTP 1.0.
+			response.setHeader(JProtocol.Headers.Cache_control, "no-cache,no-store,must-revalidate");
+			response.setDateHeader(JProtocol.Headers.Expires, 0);
 		}
+
+		// Explicitly set pragma to prevent container from overriding it.
+		response.setHeader(JProtocol.Headers.Pragma, "");
 	}
 
 	/**
 	 * Returns true if it's a conditional request which must return 304.
 	 */
 	static boolean notModified(HttpServletRequest request, Resource resource) {
-		String noMatch = request.getHeader("If-None-Match");
-		long modified = request.getDateHeader("If-Modified-Since");
-		return (noMatch != null) ? matches(noMatch, resource.eTag) : (modified != -1 && !modified(modified, resource.lastModified));
+		String noMatch = request.getHeader(JProtocol.Headers.If_none_match);
+		long modified = request.getDateHeader(JProtocol.Headers.If_modified_since);
+		return (noMatch != null)
+			? matches(noMatch, resource.eTag)
+			: (modified != -1 && !modified(modified, resource.lastModified));
 	}
 
 	/**
@@ -358,7 +364,7 @@ public abstract class Docs206 {
 	 */
 	static List<Range> getRanges(HttpServletRequest request, Resource resource) {
 		List<Range> ranges = new ArrayList<>(1);
-		String rangeHeader = request.getHeader("Range");
+		String rangeHeader = request.getHeader(JProtocol.Headers.Range);
 
 		if (rangeHeader == null) {
 			return ranges;
@@ -367,19 +373,19 @@ public abstract class Docs206 {
 			return null;
 		}
 
-		String ifRange = request.getHeader("If-Range");
+		String ifRange = request.getHeader(JProtocol.Headers.If_range);
 
 		if (ifRange != null && !ifRange.equals(resource.eTag)) {
 			try {
-				long ifRangeTime = request.getDateHeader("If-Range");
+				long ifRangeTime = request.getDateHeader(JProtocol.Headers.If_range);
 
 				if (ifRangeTime != -1 && modified(ifRangeTime, resource.lastModified)) {
 					return ranges;
 				}
 			}
 			catch (IllegalArgumentException ifRangeHeaderIsInvalid) {
-				logi("%s If-Range header is invalid. Return full file then.\n%s",
-						FINE,ifRangeHeaderIsInvalid);
+				logT(new Object() {}, "If-Range header is invalid. Return full file then.\n%s",
+					 ifRangeHeaderIsInvalid);
 				return ranges;
 			}
 		}
@@ -443,10 +449,10 @@ public abstract class Docs206 {
 		if (ranges.size() == 1) {
 			Range range = ranges.get(0);
 			response.setContentType(contentType);
-			response.setHeader("Content-Length", String.valueOf(range.length));
+			response.setHeader(JProtocol.Headers.Content_length, String.valueOf(range.length));
 
 			if (response.getStatus() == HttpServletResponse.SC_PARTIAL_CONTENT) {
-				response.setHeader("Content-Range", "bytes " + range.start + "-" + range.end + "/" + resource.length);
+				response.setHeader(JProtocol.Headers.Content_range, "bytes " + range.start + "-" + range.end + "/" + resource.length);
 			}
 		}
 		else {

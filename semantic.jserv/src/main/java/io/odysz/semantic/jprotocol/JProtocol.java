@@ -14,6 +14,27 @@ import io.odysz.transact.x.TransException;
 
 public class JProtocol {
 	/**
+	 * Http request or repsond's header property names.
+	 * @since 1.5.16
+	 */
+	public static class Headers {
+		public static final String Error  = "Error";
+		public static final String Server = "Server";
+		public static final String Length = "Length";
+		public static final String Range  = "Range";
+
+		public static final String Expires = "Expires";
+		public static final String Pragma  = "Pragma";
+		public static final String Content_range  = "Content-Range";
+		public static final String Content_length = "Content-Length";
+		public static final String Cache_control  = "Cache-Control";
+
+		public static final String If_none_match = "If-None-Match";
+		public static final String If_modified_since = "If-Modified-Since";
+		public static final String If_range = "If-Range";
+	}
+
+	/**
 	 * Typical operation's common names
 	 * @since v1.4.12 requires semantic.DA v1.4.12
 	public static class CRUD {

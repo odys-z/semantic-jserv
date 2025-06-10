@@ -8,7 +8,12 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
-import static io.odysz.semantic.syn.ExessionAct.*;
+import static io.odysz.semantic.syn.ExessionAct.close;
+import static io.odysz.semantic.syn.ExessionAct.deny;
+import static io.odysz.semantic.syn.ExessionAct.init;
+import static io.odysz.semantic.syn.ExessionAct.ready;
+import static io.odysz.semantic.syn.ExessionAct.setupDom;
+import static io.odysz.semantic.syn.ExessionAct.trylater;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +30,6 @@ import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -49,6 +53,7 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.parts.AnDbField;
 import io.odysz.transact.sql.parts.ExtFilePaths;
+import io.odysz.transact.sql.parts.Sql;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
@@ -320,7 +325,7 @@ public class SynssionPeer {
 				} catch (IOException | TransException | SQLException e) {
 					e.printStackTrace();
 					try {
-						incTried(xp.trb, docmeta, refm, peer, ref.uids, localRobt);
+						incTried(xp.trb, docmeta, refm, peer, exclude, ref.uids, localRobt);
 					} catch (TransException | SQLException e1) {
 						throw new NullPointerException(e1.getMessage());
 					}
@@ -345,9 +350,10 @@ public class SynssionPeer {
 	}
 
 	static void incTried(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm,
-			String peer, String uids, IUser robt) throws TransException, SQLException {
+			String peer, String excludeTag, String uids, IUser robt) throws TransException, SQLException {
 		trb.update(refm.tbl, robt)
 			.nv(refm.tried, Funcall.add(refm.tried, 1))
+			.nv(refm.excludeTag,  excludeTag)
 			.whereEq(refm.io_oz_synuid, uids)
 			.whereEq(refm.syntabl, docmeta.tbl)
 			.u(trb.instancontxt())
@@ -363,7 +369,7 @@ public class SynssionPeer {
 				.je("ref", docm.tbl, "d", refm.io_oz_synuid, docm.io_oz_synuid)
 				.whereEq(refm.syntabl, docm.tbl)
 				.whereEq(refm.fromPeer, peer)
-				.where(op.ne, docm.pk, Funcall.constr(excludeTag))
+				.where(Sql.condt("%s is null", refm.excludeTag).or(Sql.condt("%s <> '%s'", refm.excludeTag, excludeTag)))
 				.orderby(refm.tried)
 				.limit(1);
 

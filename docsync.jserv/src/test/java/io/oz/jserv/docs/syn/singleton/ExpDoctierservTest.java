@@ -189,8 +189,8 @@ public class ExpDoctierservTest {
 		ck[Y].doc(3);
 		ck[X].doc(3);
 		
-		assert_XatY_DocRef(X, Y, 1, 2);
-		assert_XatY_DocRef(Y, X, 2, 1);
+		assert_Arefs_atB(X, Y, 1, 2);
+		assert_Arefs_atB(Y, X, 2, 1);
 
 		logrst("Bring up dev-x0 and delete", ++section);
 		// 00 delete
@@ -234,19 +234,19 @@ public class ExpDoctierservTest {
 				.synssion(ck[Y].synb.syndomx.synode)
 				.createResolver(ck[X].docm);
 
-		yresolve.start();
+//		yresolve.start();
 		xresolve.start();
 
 		logrst("Waiting DocRef streaming thread at Y...", ++section);
 		yresolve.join();
 		xresolve.join();
 
-		Utils.logrst("Resolving docrefs finished.", ++section);
+		logrst("Resolving docrefs finished.", ++section);
 		printChangeLines(ck);
 		printNyquv(ck);
 
-		assert_XatY_DocRef(X, Y, 0, 0);
-		assert_XatY_DocRef(Y, X, 0, 0);
+		assert_Arefs_atB(X, Y, 0, 0);
+		assert_Arefs_atB(Y, X, 0, 0);
 
 		ck[Z].doc(2);
 		ck[Y].doc(2);
@@ -263,20 +263,17 @@ public class ExpDoctierservTest {
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	static ArrayList<DocRef> assert_XatY_DocRef(int x, int y, int xdocs, int ydocs) throws SQLException, TransException {
-		List<DocRef> xdoc3_aty = ck[y]
+	static ArrayList<DocRef> assert_Arefs_atB(int x, int y, int xdocs, int ydocs) throws SQLException, TransException {
+		List<DocRef> refs_atY = ck[y]
 				.docRef()
 				.stream()
 				.filter(v -> v != null).toList();
-		assertEquals(xdocs, len(xdoc3_aty));
+		assertEquals(xdocs, len(refs_atY));
 
 		int xatys = 0;
-		// Iterator<DocRef> it = xdoc3_aty.iterator();
-		// while (it.hasNext()) {
-			// DocRef xdref = it.next();
 		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(xdocs);
 
-		for (DocRef xdref : xdoc3_aty) {
+		for (DocRef xdref : refs_atY) {
 			if (xdref == null) continue;
 
 			assertEquals(ck[x].synb.syndomx.synode, xdref.synode);
