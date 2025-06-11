@@ -276,7 +276,7 @@ public class ExpDoctierservTest {
 		for (DocRef xdref : refs_atY) {
 			if (xdref == null) continue;
 
-			assertEquals(ck[x].synb.syndomx.synode, xdref.synode);
+			assertEquals(ck[x].synb.syndomx.synode, xdref.synoder);
 			assertTrue(xdref.uids.startsWith(ck[x].synb.syndomx.synode + ","));
 			assertEquals(ck[y].docm.uri, xdref.uri64);
 

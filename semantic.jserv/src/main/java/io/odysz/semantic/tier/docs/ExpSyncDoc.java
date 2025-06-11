@@ -16,6 +16,7 @@ import java.util.Date;
 import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.SynEntity;
@@ -234,6 +235,24 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		pname = file.clientname();
 		createDate = file.cdate();
 		clientpath = file.fullpath();
+	}
+
+	/**
+	 * Currently not support doc.device, doc.cdate, doc.clientpath, 
+	 * so can only used for resolving DocRef.
+	 * 
+	 * @param ref
+	 */
+	public ExpSyncDoc(DocRef ref) {
+		super(ref.docm);
+		this.org = "";
+		recId = ref.docId;
+		this.pname = ref.pname;
+		this.uids = ref.uids;
+		this.uri64 = ref.uri64;
+//		device = doc.device();
+//		createDate = doc.cdate();
+//		clientpath = doc.fullpath();
 	}
 
 	public IFileDescriptor fullpath(String clientpath) throws IOException {

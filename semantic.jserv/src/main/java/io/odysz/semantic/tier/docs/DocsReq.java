@@ -10,6 +10,7 @@ import java.util.Set;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
+import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
@@ -148,11 +149,17 @@ public class DocsReq extends UserReq {
 	}
 
 
-	public DocsReq(String entityname, ExpSyncDoc doc, String uri) {
+	public DocsReq(String docTabl, ExpSyncDoc doc, String uri) {
 		super(null, uri);
 		this.device = new Device(null, null, doc.device());
 		this.doc = doc.escapeClientpath();
-		this.docTabl = entityname;
+		this.docTabl = docTabl;
+	}
+
+	public DocsReq(DocRef doc, String uri) {
+		super(null, uri);
+		this.doc = new ExpSyncDoc(doc);
+		this.docTabl = doc.syntabl;
 	}
 
 	protected String stamp;
