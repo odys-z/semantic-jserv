@@ -91,8 +91,6 @@ public class SynotierJettyApp {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-	public static final String webinf(int synodex) { return f("./src/test/res/WEB-INF-%s", synodex); }
-
 	/**
 	 * @deprecated should only used for tests - not updated by peers.
 	 * @return local jserv
