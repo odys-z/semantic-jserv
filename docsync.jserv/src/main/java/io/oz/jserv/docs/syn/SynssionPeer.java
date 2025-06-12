@@ -30,6 +30,7 @@ import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantext;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -63,9 +64,9 @@ import io.oz.jserv.docs.syn.SyncReq.A;
  */
 public class SynssionPeer {
 
-	/** /syn/[synode-id] */
+	/** /syn/[peer-synode-id] */
 	final String uri_syn;
-	/** /sys/[synode-id] */
+	/** /sys/[peer-synode-id] */
 	final String uri_sys;
 
 	/** {@link #uri_syn}/[peer] */
@@ -106,8 +107,9 @@ public class SynssionPeer {
 	private boolean debug;
 
 	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
-		this.uri_syn   = "/syn/" + domanager.synode;
-		this.uri_sys   = "/sys/" + domanager.synode;
+		// TODO issue: it's better to change this to /syn/me, not /syn/peer once Connects is refactored. 
+		this.uri_syn   = "/syn/" + peer; // domanager.synode;
+		this.uri_sys   = "/sys/" + peer; // domanager.synode;
 		this.conn      = domanager.synconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
@@ -268,7 +270,7 @@ public class SynssionPeer {
 	
 	public Thread createResolver(ExpDocTableMeta docmeta, OnProcess... proc4test)
 			throws Exception {
-		DATranscxt tb = new DATranscxt();
+		DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
 
 		// TODO not thread pool?
 		return new Thread(() -> {
@@ -276,8 +278,12 @@ public class SynssionPeer {
 			SynDocRefMeta refm = domanager.refm;
 			String exclude = encode64(getRandom());
 
-			HashSet<Path> tobeclean = new HashSet<Path>();
 			DocRef ref = nextRef(xp.trb, docmeta, refm, peer, exclude);
+
+			HashSet<String> tobeclean = new HashSet<String>();
+			if (ref != null)
+				tobeclean.add(DocRef.resolveFolder(peer, conn, ref.syntabl, client.ssInfo()));
+
 			final DocRef[] _arref = new DocRef[] {ref};
 
 			ExpDocRobot localRobt = new ExpDocRobot(
@@ -285,8 +291,7 @@ public class SynssionPeer {
 
 			while (_arref[0] != null) {
 				try {
-					Path localpath = ref.downloadPath(peer, conn, client.ssInfo());
-					tobeclean.add(localpath);
+					String localpath = ref.downloadPath(peer, conn, client.ssInfo());
 
 					client.download206(uri_syn, peerjserv, Port.syntier, localpath, ref,
 
@@ -307,19 +312,22 @@ public class SynssionPeer {
 
 					// move the temporary file to managed
 					ExtFilePaths extpths = DocRef.createExtPaths(conn, docmeta.tbl, ref);
-					String targetpth = extpths.abspath();
+					String targetpth = extpths.decodeUriPath();
 
 					if (debug)
 						Utils.logT(new Object() {}, " %s\n-> %s",
-								localpath.toAbsolutePath().toString(), targetpth);
-					Files.move(localpath, Paths.get(targetpth), StandardCopyOption.REPLACE_EXISTING);
+								localpath, targetpth);
+					Files.move(Paths.get(localpath), Paths.get(targetpth), StandardCopyOption.REPLACE_EXISTING);
 
-					tb.update(docmeta.tbl)
+					tb.update(docmeta.tbl, localRobt)
 						.nv(docmeta.uri, extpths.dburi(true))
+						.whereEq(docmeta.pk, ref.docId)
+						.whereEq(docmeta.io_oz_synuid, ref.uids)
 						.post(tb.delete(refm.tbl)
 								.whereEq(refm.fromPeer, peer)
 								.whereEq(refm.io_oz_synuid, ref.uids))
-						.u(tb.instancontxt(targetpth, localRobt));
+						// .u(tb.instancontxt());
+						.u(new DASemantext(conn, localRobt));
 				} catch (ExchangeException e) {
 					if (e instanceof SemanticException
 							&& ((ExchangeException) e).requires() == Exchanging.ext_docref) {
@@ -345,14 +353,15 @@ public class SynssionPeer {
 				}
 			}
 			
-			for (Path p : tobeclean) {
+			for (String ps : tobeclean) {
 				try {
-					if (p != null)
+					if (ps != null) {
+						Path p = Paths.get(ps); 
+						Utils.logi("[%s:DocRef Resolver] Removing temporary dowloading folder: %s",
+							Thread.currentThread().getName(), p.toAbsolutePath());
 						FileUtils.deleteDirectory(p.toFile());
-				} catch (IOException e) {
-					Utils.warn("[DocRef Resolver] Removing temporary dowloading folder failed on %s",
-							p.toAbsolutePath());
-				}
+					}
+				} catch (IOException e) { }
 			}
 
 		}, f("Doc Resolver %s -> %s", this.mynid, peer));
