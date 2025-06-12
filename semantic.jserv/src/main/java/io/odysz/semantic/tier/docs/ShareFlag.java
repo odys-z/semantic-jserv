@@ -3,9 +3,9 @@ package io.odysz.semantic.tier.docs;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import io.odysz.anson.AnsonException;
 import io.odysz.anson.IJsonable;
 import io.odysz.anson.JsonOpt;
-import io.odysz.anson.AnsonException;
 
 /**
  * @since 0.5.5

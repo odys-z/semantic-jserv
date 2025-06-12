@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -23,9 +22,9 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonException;
 import io.odysz.anson.AnsonField;
 import io.odysz.anson.JsonOpt;
-import io.odysz.anson.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
@@ -63,6 +62,9 @@ public class AppSettings extends Anson {
 	@AnsonField(ignoreFrom=true, ignoreTo=true)
 	String webinf;
 	
+	/** Only for error checking, and the otherwise used value is configured by synode.py3 */
+	// private static final String private_host = "private/host.json";
+
 	/** <pre>
 	 * !root-key && !install-key: error
 	 * !root-key &&  install-key: install
@@ -185,14 +187,7 @@ public class AppSettings extends Anson {
 	 */
 	private String updateLocalJserv(boolean https, String jserv_album,
 			String synconn, SynodeMeta synm, String mysid) throws TransException, SQLException {
-		String ip = null;
-		try { ip = getLocalIp();
-		} catch (IOException e) {
-			e.printStackTrace();
-			// TODO FIXME 
-			// Setup as an offline synode 
-			return null;
-		}
+		String ip = getLocalIp();
 
 		IUser robot = DATranscxt.dummyUser();
 		try {
@@ -201,13 +196,11 @@ public class AppSettings extends Anson {
 					isblank(jserv_album) ? "" :
 					jserv_album.startsWith("/") ? jserv_album : "/" + jserv_album);
 
-//			if (!isblank(synconn) && synm != null) {
 			DATranscxt tb = new DATranscxt(synconn);
 			tb.update(synm.tbl, robot)
 			  .nv(synm.jserv, servurl)
 			  .whereEq(synm.pk, mysid)
 			  .u(tb.instancontxt(synconn, robot));
-//			}
 			
 			this.jservs.put(mysid, servurl);
 
@@ -221,26 +214,34 @@ public class AppSettings extends Anson {
 	
 	/**
 	 * Thanks to https://stackoverflow.com/a/38342964/7362888
-	 * @return local ip
+	 * @param retries default 11
+	 * @return local ip, 127.0.0.1 if is offline (got 0:0:0:0:0:0:0:0:0).
 	 * @throws SocketException 
 	 * @throws UnknownHostException 
 	 */
-	public static String getLocalIp() throws IOException {
+	public static String getLocalIp(int ... retries) {
 	    try(final DatagramSocket socket = new DatagramSocket()) {
 	    	boolean succeed = false;
 	    	int tried = 0;
-	    	while (!succeed && tried++ < 12)
+	    	while (!succeed && tried++ < _0(retries, 11) + 1)
 	    		try {
 	    			socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
 	    			succeed = true;
-	    		} catch (UncheckedIOException  e) {
+	    		} catch (IOException e) {
 	    			// starting service at network interface not ready yet
 	    			Utils.warn("Network interface is not ready yet? Try again ...");
 	    			try {
 						Thread.sleep(3000);
 					} catch (InterruptedException e1) { }
 	    		}
-		  return socket.getLocalAddress().getHostAddress();
+
+	    	if (socket.getLocalAddress() == null ||
+	    		eq(socket.getLocalAddress().getHostAddress(), "0:0:0:0:0:0:0:0"))
+	    		return "127.0.0.1";
+
+	    	return socket.getLocalAddress().getHostAddress();
+		} catch (SocketException e) {
+			return "127.0.0.1";
 		}
 	}
 
@@ -297,6 +298,17 @@ public class AppSettings extends Anson {
 	 * [0] handler class name which implements {@link ISynodeLocalExposer}; [1:] path to private/host.json
 	 */
 	public String[] startHandler;
+
+	@AnsonField(ignoreFrom=true)
+	public String webrootLocal;
+
+	@AnsonField(ignoreFrom=true)
+	public String localIp;
+
+	public int webport = 8900;
+
+	/** Connection Idle Seconds */
+	public float connIdleSnds;
 
 	/**
 	 * Should only be used in win-serv mode.
@@ -413,7 +425,8 @@ public class AppSettings extends Anson {
 			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
 		}
 		else 
-			logi("[INSTALL-CHECK] Starting application without db setting ...", config_xml);
+			logi("[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\nStarting application without db setting ...");
+//					config_xml);
 		// String jserv =
 		settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		
@@ -430,13 +443,26 @@ public class AppSettings extends Anson {
 		IUser rob = DATranscxt.dummyUser();
 		DATranscxt st = new DATranscxt(cfg.sysconn);
 		st.update(orgMeta.tbl, rob)
-			.nv(orgMeta.webroot, EnvPath.replaceEnv(cfg.org.webroot))
+			.nv(orgMeta.webNode, EnvPath.replaceEnv(cfg.org.webroot))
 			.whereEq(orgMeta.pk, cfg.org.orgId)
 			.u(st.instancontxt(cfg.sysconn, rob));
 	}
 
+	/** Find jserv from {@link #jservs}. */
 	public String jserv(String nid) {
 		return jservs.get(nid);
+	}
+
+	public String getLocalHostJson() {
+		// backward compatible
+//		String host_json = startHandler[1].replaceAll(private_host + "$", "");
+//		return FilenameUtils.concat(host_json, private_host);
+		return startHandler[1];
+	}
+
+	public String getLocalWebroot(boolean https) {
+		// backward compatible
+		return f("%s://%s", https ? "https" : "http", this.webrootLocal);
 	}
 
 }

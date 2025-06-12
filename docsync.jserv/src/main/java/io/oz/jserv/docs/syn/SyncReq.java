@@ -4,10 +4,11 @@ import static io.odysz.semantic.syn.ExessionAct.*;
 
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
-public class SyncReq extends AnsonBody {
+public class SyncReq extends UserReq {
 	public static class A {
 		/** on joining */
 		public static final String exchange= "ex/exchange";
@@ -17,6 +18,8 @@ public class SyncReq extends AnsonBody {
 
 		public static final String initjoin = "join/init";
 		public static final String closejoin= "join/close";
+		
+		public static final String resolveRef = "ref/reslove"; 
 	}
 
 	ExchangeBlock exblock;

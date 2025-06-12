@@ -29,6 +29,7 @@ import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.AutoSeqMeta;
 import io.odysz.semantic.meta.PeersMeta;
 import io.odysz.semantic.meta.SynChangeMeta;
+import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.meta.SynSessionMeta;
 import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
@@ -250,6 +251,7 @@ public class Syngleton extends JSingleton {
 		SynChangeMeta chm;
 		SynSubsMeta sbm;
 		SynchangeBuffMeta xbm;
+		SynDocRefMeta rfm;
 		SynSessionMeta ssm;
 		PeersMeta prm;
 		SynodeMeta synm;
@@ -258,11 +260,12 @@ public class Syngleton extends JSingleton {
 		chm  = new SynChangeMeta();
 		sbm  = new SynSubsMeta(chm);
 		xbm  = new SynchangeBuffMeta(chm);
+		rfm  = new SynDocRefMeta(cfg.synconn);
 		ssm  = new SynSessionMeta();
 		prm  = new PeersMeta();
 		synm = new SynodeMeta(cfg.synconn);
 	
-		setupSqliTables(cfg.synconn, is(forcedrop), akm, synm, chm, sbm, xbm, prm, ssm);
+		setupSqliTables(cfg.synconn, is(forcedrop), akm, synm, chm, sbm, xbm, rfm, prm, ssm);
 
 		setupSqlitables(cfg.synconn, is(forcedrop), entms);
 		
@@ -271,7 +274,7 @@ public class Syngleton extends JSingleton {
 			m.replace();
 
 		// 3 symantics and entities 
-		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+		DATranscxt.initConfigs(cfg.synconn, // DATranscxt.loadSemanticsXml(cfg.synconn),
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 
 		DatasetCfg.init(configFolder);
@@ -312,7 +315,7 @@ public class Syngleton extends JSingleton {
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 		AnSession.init(defltScxt);
 
-		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+		DATranscxt.initConfigs(cfg.synconn,// DATranscxt.loadSemanticsXml(cfg.synconn),
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 		DatasetCfg.init(configFolder);
 	}
@@ -429,7 +432,7 @@ public class Syngleton extends JSingleton {
 		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
 		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
 
-		DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
+		DATranscxt.initConfigs(cfg.synconn, // DATranscxt.loadSemanticsXml(cfg.synconn),
 				(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 		DATranscxt tb0 = new DATranscxt(cfg.synconn);
 		

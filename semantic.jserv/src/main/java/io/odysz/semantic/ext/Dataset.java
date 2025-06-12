@@ -16,7 +16,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
-import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
@@ -44,7 +43,6 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	protected static Transcxt st;
 
 	static IPort p = Port.dataset;
-	static JOpts _opts = new JOpts();
 
 	static {
 		st = JSingleton.defltScxt;

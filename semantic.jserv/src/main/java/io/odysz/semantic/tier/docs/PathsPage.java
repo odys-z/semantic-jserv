@@ -44,7 +44,7 @@ public class PathsPage extends Anson {
     }
 
 	/**
-	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date]} 
+	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date, isRef]} 
 	 */
 	@AnsonField(valType="[Ljava.lang.String;")
 	protected HashMap<String, Object[]> clientPaths;

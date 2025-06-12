@@ -10,6 +10,7 @@ import java.util.Set;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
+import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
@@ -35,15 +36,23 @@ public class DocsReq extends UserReq {
 		 */
 		public static final String records = "r/list";
 		
-//		public static final String getstamp = "r/stamp";
-//		public static final String setstamp = "u/stamp";
-
 		/** @deprecated function not used */
 		public static final String mydocs = "r/my-docs";
 
 		/** query doc / entity with entity fields, id, etc. */
 		public static final String rec = "r/rec";
+
 		public static final String download = "r/download";
+
+		/**
+		 * Download a doc using ranges property in request headers.
+		 * 
+		 * In semantic.jserv 1.5.16, docsync.jserv 0.2.4, this is actually used at server
+		 * side, as the download with http 206 response is intercepted at ServPort.doGet(),
+		 * which is actually a hack into the protocol for understandable by browsers. 
+		 */
+		public static final String download206 = "r/doc206";
+
 		public static final String upload = "c";
 
 		/** request for deleting docs */
@@ -140,11 +149,17 @@ public class DocsReq extends UserReq {
 	}
 
 
-	public DocsReq(String entityname, ExpSyncDoc doc, String uri) {
+	public DocsReq(String docTabl, ExpSyncDoc doc, String uri) {
 		super(null, uri);
 		this.device = new Device(null, null, doc.device());
 		this.doc = doc.escapeClientpath();
-		this.docTabl = entityname;
+		this.docTabl = docTabl;
+	}
+
+	public DocsReq(DocRef doc, String uri) {
+		super(null, uri);
+		this.doc = new ExpSyncDoc(doc);
+		this.docTabl = doc.syntabl;
 	}
 
 	protected String stamp;

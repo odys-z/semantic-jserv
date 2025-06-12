@@ -19,8 +19,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.anson.Anson;
-import io.odysz.anson.JsonOpt;
 import io.odysz.anson.AnsonException;
+import io.odysz.anson.JsonOpt;
 import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
@@ -32,6 +32,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantic.tier.docs.Docs206;
@@ -42,7 +43,8 @@ import io.odysz.transact.x.TransException;
 /**
  * <p>Base serv class for handling json request.</p>
  * Servlet extending this must subclass this class, and override
- * {@link #onGet(AnsonMsg, HttpServletResponse) onGet()} and {@link #onPost(AnsonMsg, HttpServletResponse) onPost()}.
+ * {@link #onGet(AnsonMsg, HttpServletResponse) onGet()} and
+ * {@link #onPost(AnsonMsg, HttpServletResponse) onPost()}.
  * 
  * @author odys-z@github.com
  *
@@ -142,9 +144,11 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	@Override
 	protected void doHead(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-    	String range = request.getHeader("Range");
+    	String range = request.getHeader(JProtocol.Headers.Range);
+    	String length = request.getHeader(JProtocol.Headers.Length);
+		// String anson64 = request.getParameter("anson64");
 
-    	if (!isblank(range))
+    	if (!isblank(range) || !isblank(length))
 			try {
 				Docs206.get206Head(request, response);
 			} catch (SsException e) {
@@ -220,7 +224,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
     	String range = req.getHeader("Range");
     	if (!isblank(range)) {
     		try {
-				Docs206.get206(req, resp);
+				Docs206.get206v2(req, resp);
 			} catch (SsException e) {
 				write(resp, err(MsgCode.exSession, e.getMessage()));
 				resp.setHeader("Error", e.getMessage());
@@ -400,14 +404,4 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	public static void errstream(PrintstreamProvider err) {
 		es = err;
 	}
-
-//	static String rolloverOut;
-//	public static void rolloverLog(String logfile) {
-//		rolloverOut = logfile;
-//	}
-//	static String rolloverErr;
-//	public static void rolloverErr(String errfile) {
-//		rolloverErr = errfile;
-//	}
-
 }

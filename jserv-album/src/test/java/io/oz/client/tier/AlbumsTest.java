@@ -12,8 +12,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import io.odysz.anson.Anson;
-import io.odysz.anson.JSONAnsonListener;
 import io.odysz.anson.AnsonException;
+import io.odysz.anson.JSONAnsonListener;
 import io.odysz.common.FilenameUtils;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.InsecureClient;
@@ -159,15 +159,15 @@ class AlbumsTest {
 		}
 	}
 
-	String getDownloadResult(PhotoRec photo, String filepath) throws TransException {
-		try {
-			PhotoSyntier tier = new PhotoSyntier("test/album", errCtx);
-			return tier.download(filepath, photo, filepath);
-		} catch (IOException | AnsonException | SemanticException e) {
-			e.printStackTrace();
-			return e.getMessage();
-		}
-	}
+//	String getDownloadResult(PhotoRec photo, String filepath) throws TransException {
+//		try {
+//			PhotoSyntier tier = new PhotoSyntier("test/album", errCtx);
+//			return tier.download(filepath, photo, filepath);
+//		} catch (IOException | AnsonException | SemanticException e) {
+//			e.printStackTrace();
+//			return e.getMessage();
+//		}
+//	}
 	
 	/**
 	 * Test append to collection with a pic.
@@ -249,6 +249,7 @@ class AlbumsTest {
 		tier.asyVideos(null, videos,
 			(ix, total, c, pth, resp) -> {
 				fail("Duplicate checking not working on " + pth);
+				return true;
 			},
 			null,
 			new ErrorCtx() {

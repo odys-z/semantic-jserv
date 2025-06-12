@@ -6,7 +6,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <version>0.7.1</version>
+  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.3</version>
   <!-- see git branch jetty-winsrv for building jetty embedded app -->
   <packaging>jar</packaging>
 
@@ -116,7 +116,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>[0.2.4-SNAPSHOT,)</version>
+	    <version>[0.2.4,)</version>
 	</dependency>
 
 	<dependency>
@@ -142,6 +142,13 @@
 		<groupId>io.github.odys-z</groupId>
 		<artifactId>antson</artifactId>
 		<version>0.9.118-SNAPSHOT</version>
+	</dependency>
+	
+	<!-- https://mvnrepository.com/artifact/commons-daemon/commons-daemon -->
+	<dependency>
+		<groupId>commons-daemon</groupId>
+		<artifactId>commons-daemon</artifactId>
+		<version>1.4.1</version>
 	</dependency>
   </dependencies>
 

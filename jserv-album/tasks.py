@@ -5,19 +5,22 @@ import fnmatch
 import re
 import sys
 from types import LambdaType
+from anson.io.odysz.common import Utils
 from invoke import task
 import zipfile
 import os
 from glob import glob
 
-from anson.io.odysz.ansons import Anson
+from anson.io.odysz.anson import Anson
 
-version = '0.7.1'
+version = '0.7.3'
 """
-synode.py3, jserv-album-0.7.1.jar
+synode.py3, jserv-album-0.7.3.jar
 """
 
-html_jar_v = '0.1.4'
+apk_ver = '0.7.2'
+
+html_jar_v = '0.1.6'
 """
 html-web-#.#.#.jar
 """
@@ -28,7 +31,9 @@ album-web-#.#.#.jar
 """
 
 vol_files = {"volume": ["jserv-main.db", "doc-jserv.db"]}
-dist_dir = 'deploy-x29'
+dist_dir = f'build-{version}'
+
+android_dir = '../../anclient/examples/example.android'
 
 @task
 def create_volume(c):
@@ -40,9 +45,9 @@ def create_volume(c):
                 print(f'Volume file created: {os.path.join(vol, fn)}')
                 vf.close()
 
-def updateApkRes(host_json, res):
+def updateApkRes(host_json, apkver):
     """
-    Update the APK resource in the host.json file.
+    Update the APK resource record (ref-link) in the host.json file.
     
     Args:
         host_json (str): Path to the host.json file.
@@ -50,11 +55,22 @@ def updateApkRes(host_json, res):
     """
     print('Updating host.json with APK resource...', host_json)
 
-    import src.synodepy3 # type: ignore
-    Anson.java_src('src')
+    """
+    from importlib.metadata import distribution
+    try:
+        dist = distribution('src.synodepy3')  # or 'synode-py3'
+        print(f"Found {dist.name} version {dist.version}")
+    except importlib.metadata.PackageNotFoundError:
+        print("synode.py3 not found")
+    
+    """
+
+    Anson.java_src('src', ['synode_py3'])
     hosts = Anson.from_file(host_json)
+    print(os.getcwd(), host_json)
     print('host.json:', hosts)
 
+    res = {'apk': f'res-vol/portfolio-{apkver}.apk'}
     hosts.resources.update(res)
     print('Updated host.json:', hosts.resources)
 
@@ -63,76 +79,86 @@ def updateApkRes(host_json, res):
 
     return None
 
-def updateJarVersion(file, pattern, repl):
-    """
-    Update the version in a JAR file.
-    
-    Args:
-        file (str): Path to the JAR file.
-        pattern (str): Regular expression pattern to match the version string.
-        repl (str): Replacement string for the version.
-    """
-    print('Updating JAR version...', file)
-
-    lines = []
-    with open(file, 'r') as f:
-        lines = f.readlines()
-
-    # updated_content = re.sub(pattern, repl, content)
-    for i, line in enumerate(lines):
-        if re.search(pattern, line):
-            lines[i] = re.sub(pattern, repl, line)
-            print('Updated line:', lines[i])
-            break
-
-    with open(file, 'w') as f:
-        f.writelines(lines)
-
-    print('JAR version updated successfully.', file)
-
-    return None
-
 @task
+def config(c):
+    print('--------------    configuration   ------------------')
+
+    Anson.java_src('src', ['synode_py3'])
+
+    this_directory = os.getcwd()
+
+    print(f'-- synode version: {version} --'),
+
+    version_file = os.path.join(this_directory, 'pom.xml')
+    Utils.update_patterns(version_file, {
+        '<!-- auto update token TASKS.PY/CONFIG --><version>0.7.2</version>':
+       f'<!-- auto update token TASKS.PY/CONFIG --><version>{version}</version>',
+    })
+
+    version_file = os.path.join(android_dir, 'build.gradle')
+    Utils.update_patterns(version_file, {
+        "app_ver = '[0-9\\.]+'": f"app_ver = '{apk_ver}'"
+    })
+
+@task(config)
 def build(c):
+    def cmd_build_synodepy3(version:str, web_ver:str, html_jar_v:str) -> str:
+        """
+        Get the command to build the synode.py3 package.
+        
+        Returns:
+            str: The command to build the package.
+        """
+        print('Building synode.py3 {version} with web-dist {web_ver}, html-service.jar {html_jar_v}...')
+
+        if os.name == 'nt':
+            return f'set SYNODE_VERSION={version} & set JSERV_JAR_VERSION={version} & set WEB_VERSION={web_ver} & set HTML_JAR_VERSION={html_jar_v} & invoke build'
+        else:
+            return f'export SYNODE_VERSION="{version}" JSERV_JAR_VERSION="{version}" WEB_VERSION="{web_ver}" HTML_JAR_VERSION="{html_jar_v}" && invoke build'
+
     buildcmds = [
-        ['../../anclient/examples/example.android', 'gradlew assembleRelease'],
-        ['.', f'cp -f ../../anclient/examples/example.android/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{version}.apk'],
-        ['web-dist/private', lambda: updateApkRes('host.json', {'apk': f'res-vol/portfolio-{version}.apk'})],
+        # replace app_ver with apk_ver?
+        [android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
+
+        # link: web-dist -> anclient/examples/example.js/album/web-dist
+        ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
+        ['.', f'cp -f {android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{apk_ver}.apk' \
+                if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ],
+
+        ['web-dist/private', lambda: updateApkRes('host.json', apk_ver)],
         ['.', 'cat web-dist/private/host.json'],
 
         ['../../anclient/examples/example.js/album', 'webpack'],
         ['.', 'mvn clean compile package -DskipTests'],
         ['../../html-service/java', 'mvn clean compile package'],
-        ['../synode.py', lambda: f'set SYNODE_VERSION={version} && rm -rf dist && py -m build' if os.name == 'nt' else f'export SYNODE_VERSION={version} && rm -rf dist && python3 -m build'],
 
-        ['../synode.py/winsrv', lambda: updateJarVersion('install-html-w.bat', '@set jar-ver=.*', f'@set jar-ver={html_jar_v}')],
-        ['../synode.py/winsrv', lambda: updateJarVersion('install-jserv-w.bat', '@set jar-ver=.*', f'@set jar-ver={version}')],
+        # use vscode bash for Windows
+        ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)]
+
+        # ['../synode.py/winsrv', lambda: update_patterns('install-html-w.bat', '@set jar-ver=.*', {'@set jar-ver=': html_jar_v, '@set web-ver=': web_ver})],
+        # ['../synode.py/winsrv', lambda: updateJarVersion('install-jserv-w.bat', '@set jar-ver=.*', f'@set jar-ver={version}')],
     ]
 
-    print('--------------    buid   ------------------')
+    print('--------------  package  ------------------')
     for pth, cmd in buildcmds:
-        # try:
-            if isinstance(cmd, LambdaType):
-                print(pth, '&&', cmd)
-                cwd = os.getcwd()
-                os.chdir(pth)
-                cmd = cmd()
-                if cmd is not None:
-                    print(pth, '&&', cmd)
-                    ret = c.run(f'cd {pth} && {cmd}')
-                os.chdir(cwd)
-            else:
+        if isinstance(cmd, LambdaType):
+            print(pth, '&&', cmd)
+            cwd = os.getcwd()
+            os.chdir(pth)
+            cmd = cmd()
+            if cmd is not None:
                 print(pth, '&&', cmd)
                 ret = c.run(f'cd {pth} && {cmd}')
-                print('OK:', ret.ok, ret.stderr)
-        # except Exception as e:
-        #     print('Error:', e, file=sys.stderr)
-        #     return True
+            os.chdir(cwd)
+        else:
+            print(pth, '&&', cmd)
+            ret = c.run(f'cd {pth} && {cmd}')
+            print('OK:', ret.ok, ret.stderr)
     return False
 
 
-@task(create_volume, build)
-def make(c, zip=f'jserv-portfolio-{version}.zip'):
+@task
+def package(c, zip=f'jserv-portfolio-{version}.zip'):
     """
     Create a ZIP file (jserv.zip).
     
@@ -143,9 +169,12 @@ def make(c, zip=f'jserv-portfolio-{version}.zip'):
     resources = {
         f"bin/html-web-{html_jar_v}.jar": f"../../html-service/java/target/html-web-{html_jar_v}.jar", # clone at github/html-service
         f"bin/jserv-album-{version}.jar": f"target/jserv-album-{version}.jar",
-        "bin/exiftool.zip": "./exiftool-13.21_64.zip",
+        
+        # https://exiftool.org/index.html
+        "bin/exiftool.zip": "./task-res-exiftool-13.21_64.zip",
+
         "bin/synode_py3-0.7-py3-none-any.whl": f"../synode.py/dist/synode_py3-{version}-py3-none-any.whl",
-        "WEB-INF": f"src/main/webapp/WEB-INF-{version}/*",
+        "WEB-INF": f"src/main/webapp/WEB-INF-0.7.3/*", # Do not replace with version.
         "winsrv": "../synode.py/winsrv/*",
         "web-dist": "web-dist/*"    # use a link for different Anclient folder name
                                     # ln -s ../Anclient/examples/example.js/album web-dist
@@ -242,6 +271,17 @@ def make(c, zip=f'jserv-portfolio-{version}.zip'):
     except Exception as e:
         print(f"Error creating ZIP file: {str(e)}", file=sys.stderr)
         raise
+
+@task(create_volume, build, package)
+def make(c):
+    """
+    Create a ZIP file (jserv.zip) with the specified resources.
+    
+    Args:
+        c: Invoke Context object for running commands.
+    """
+    print('Package created successfully.')
+
 
 if __name__ == '__main__':
     from invoke import Program

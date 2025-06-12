@@ -23,7 +23,7 @@ public class SandboxSingleton extends JSingleton implements ServletContextListen
 		try {
 			super.onInitialized(sce);
 			AnsonMsg.understandPorts(Sandport.userstier);
-		} catch (SemanticException | SAXException | IOException | SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

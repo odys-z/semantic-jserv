@@ -79,7 +79,7 @@ public class SynotierJettyApp {
 
 	public static final String syntity_json = "syntity.json";
 	public static final String clientUri = "/jetty";
-	public static final String webinf = "./src/test/res/WEB-INF";
+//	public static final String webinf = "./src/test/res/WEB-INF";
 	public static final String testDir   = "./src/test/res/";
 	public static final String volumeDir = "./src/test/res/volume";
 
@@ -91,13 +91,8 @@ public class SynotierJettyApp {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-//	String jserv;
-//	public String jserv() { return jserv; }
-//	public SynotierJettyApp jserv(String url) {
-//		jserv = url;
-//		return this;
-//	}
-	
+	public static final String webinf(int synodex) { return f("./src/test/res/WEB-INF-%s", synodex); }
+
 	/**
 	 * @deprecated should only used for tests - not updated by peers.
 	 * @return local jserv
@@ -264,8 +259,8 @@ public class SynotierJettyApp {
 	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, AppSettings settings,
 			SyncUser admin, String webinf, String config_xml, String syntity_json) throws Exception {
 
-		String synid  = cfg.synode();
-		String sync = cfg.synconn;
+		String synid = cfg.synode();
+		String sycon = cfg.synconn;
 
 		SynotierJettyApp synapp = SynotierJettyApp
 						.instanserver(webinf, cfg, settings, config_xml)
@@ -275,10 +270,12 @@ public class SynotierJettyApp {
 	
 		Syntities regists = Syntities.load(webinf, syntity_json, 
 				(synreg) -> {
-					throw new SemanticException("TODO %s (configure an entity table with meta type)", synreg.table);
+					throw new SemanticException(
+						"TODO %s (configure an entity table with meta type)",
+						synreg.table);
 				});	
 
-		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
+		DBSynTransBuilder.synSemantics(new DATranscxt(sycon), sycon, synid, regists);
 
 		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(),

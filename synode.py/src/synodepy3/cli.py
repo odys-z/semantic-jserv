@@ -1,20 +1,27 @@
 import sys
 
+from anson.io.odysz.common import Utils
+
 # See https://stackoverflow.com/a/28154841
-from src.synodepy3.installer_api import InstallerCli, ping
-from src.synodepy3.commands import install_jserv, uninstall_jserv
-from src.synodepy3.commands import install_htmlsrv, uninstall_htmlsrv
+from .installer_api import InstallerCli, ping
+from .commands import install_wsrv_byname, uninstall_wsrv_byname, install_htmlsrv, winsrv_synode, winsrv_websrv
+from .installer_api import InstallerCli
 
 
 def uninst_srv():
     import invoke
+    cli = InstallerCli()
+    cli.loadInitial()
+
     try:
-        uninstall_jserv()
+        srvname = cli.settings.envars[winsrv_synode]
+        uninstall_wsrv_byname(srvname)
     except invoke.exceptions.UnexpectedExit as e:
         print(f"Error uninstalling jserv-album: {e}", file=sys.stderr)
 
     try:
-        uninstall_htmlsrv()
+        srvname = cli.settings.envars[winsrv_websrv]
+        uninstall_wsrv_byname(srvname)
     except invoke.exceptions.UnexpectedExit as e:
         print(f"Error uninstalling html-service: {e}", file=sys.stderr)
 
@@ -33,7 +40,7 @@ def startweb(port: int = 8900):
     httpd = None
     try:
         # httpd = InstallerCli.start_web(8900 if port is None else port)
-        httpd, worker = cli.start_web(port)
+        httpd, worker = InstallerCli.start_web(port)
         input("Press Enter to close web server...")
     finally:
         if httpd is not None:
@@ -57,9 +64,8 @@ if __name__ == '__main__':
         "install-winsrv": "or i-w, arg[0] synode id (readable alais only), arg[1] bin resources path, default 'winsrv'\n\
         - install the synode service as a Windows service",
 
-        "install-web": "or i-web, arg[0] port, default 8900, install web service",
-
-        "uninstall-web": "or u-web, uninstall web service",
+        # "install-web": "or i-web, arg[0] port, default 8900, install web service",
+        "uninstall-srvname": "or i-srv, arg[0] port, default 8900, install web service",
 
         "uninstall-winsrv": "or ui-w, arg[0] bin resources path, default 'winsrv'\n\
         - uninstall the synode service installed as a Windows service",
@@ -82,32 +88,56 @@ if __name__ == '__main__':
     }
 
     cli = InstallerCli()
+    cli.loadInitial()
+
     if cmd == 'list':
         print(cli.list_synodes())
     if cmd == 'load':
         print(cli.loadInitial(arg))
 
     elif cmd == 'install' or cmd == 'i':
+        Utils.logi("Install synodes with settings:")
         cli = InstallerCli(arg)
+        Utils.logi(cli.settings.toBlock(beautify=True))
         cli.install(arg, arg2) # setup
 
     elif cmd == 'uninstall-winsrv' or cmd == 'ui-w':
-        uninstall_jserv()
-        uninstall_htmlsrv()
+        if arg is not None:
+            srvname = arg
+        else:
+            srvname = cli.settings.envars[winsrv_synode] #.gen_wsrv_name()
+
+        print("Uninstalling ", srvname, "at port", cli.settings.port)
+        try: uninstall_wsrv_byname(srvname)
+        except: Utils.warn(f'Failed to uninstall service {srvname}')
+
+        srvname = cli.settings.envars[winsrv_websrv]
+        print("Uninstalling ", srvname, "at port", cli.settings.port)
+        try: uninstall_wsrv_byname(srvname)
+        except: Utils.warn(f'Failed to uninstall service {srvname}')
 
     elif cmd == 'install-winsrv' or cmd == 'i-w':
-        install_jserv()
-        install_htmlsrv()
+        srvname = cli.gen_wsrv_name()
+        print("Installing ", srvname, "at port", cli.settings.port)
+        install_wsrv_byname(srvname)
+        install_htmlsrv(cli.gen_html_srvname())
 
     elif cmd == 'clean':
         clean(arg)
 
     elif cmd == 'start-web':
         startweb(int(arg))
-    elif cmd == 'install-web' or cmd == 'i-web':
-        install_htmlsrv()
-    elif cmd == 'uninstall-web' or cmd == 'u-web':
-        uninstall_htmlsrv()
+
+    # elif cmd == 'install-web' or cmd == 'i-web':
+    #     install_htmlsrv()
+
+    elif cmd == 'uninstall-srvname' or cmd == 'u-srv':
+        if arg is not None:
+            srvname = arg
+        else:
+            srvname = cli.gen_wsrv_name()
+        print("Uninstalling ", srvname)
+        uninstall_wsrv_byname(srvname)
 
     elif cmd == 'sync_in':
         cli.loadInitial()

@@ -3,10 +3,10 @@ package io.oz.album.peer;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import io.odysz.anson.AnsonException;
 import io.odysz.anson.IJsonable;
 import io.odysz.anson.JSONAnsonListener;
 import io.odysz.anson.JsonOpt;
-import io.odysz.anson.AnsonException;
 import io.odysz.semantic.jprotocol.IPort;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantics.x.SemanticException;

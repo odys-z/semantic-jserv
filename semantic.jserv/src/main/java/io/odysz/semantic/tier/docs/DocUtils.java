@@ -211,11 +211,25 @@ public class DocUtils {
 		return resolvExtroot(conn, rs.getString("uri"), meta);
 	}
 
-	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta) throws TransException, SQLException {
+	/**
+	 * According to smtype.extFilev2's configuration for meta.tbl,
+	 * get path by concatenating and replacing env.
+	 * 
+	 * @param conn
+	 * @param extUri
+	 * @param meta
+	 * @return (smtype.extFilev2[meta.tbl]'s arg0 / extUri).replace-env
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta)
+			throws TransException, SQLException {
+
 		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
 		if (h2 == null)
-			throw new SemanticException("To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",
-					conn, meta.tbl);
+			throw new SemanticException(
+				"To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",
+				conn, meta.tbl);
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
 	}
