@@ -109,9 +109,6 @@ class DoclientierTest {
 		}, "X Y Z W by DoclientierTest");
 		thr.start();
 		
-//		thref = new Thread(() -> {ck[Y].refstreamer.run();},
-//		"[Y] DocRefs Streamer");
-
 		jserv_xyzw = ExpDoctierservTest.jservs();
 	}
 
