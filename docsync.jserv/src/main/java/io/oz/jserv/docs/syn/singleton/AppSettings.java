@@ -62,9 +62,6 @@ public class AppSettings extends Anson {
 	@AnsonField(ignoreFrom=true, ignoreTo=true)
 	String webinf;
 	
-	/** Only for error checking, and the otherwise used value is configured by synode.py3 */
-	// private static final String private_host = "private/host.json";
-
 	/** <pre>
 	 * !root-key && !install-key: error
 	 * !root-key &&  install-key: install
@@ -415,7 +412,6 @@ public class AppSettings extends Anson {
 		return settings; // settings.local_serv
 	}
 
-	
 	/**
 	 * Must called after DA layer initiation is finished.
 	 * @throws Exception 
@@ -436,14 +432,10 @@ public class AppSettings extends Anson {
 	}
 
 	public String getLocalHostJson() {
-		// backward compatible
-//		String host_json = startHandler[1].replaceAll(private_host + "$", "");
-//		return FilenameUtils.concat(host_json, private_host);
 		return startHandler[1];
 	}
 
 	public String getLocalWebroot(boolean https) {
-		// backward compatible
 		return f("%s://%s", https ? "https" : "http", this.webrootLocal);
 	}
 
