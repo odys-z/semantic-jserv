@@ -404,30 +404,12 @@ public class AppSettings extends Anson {
 
 		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 		
-		/*
-		String jserv;
-		if (!isblank(settings.installkey)) {
-			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
-			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
-			
-			// also update jserv
-			jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
-		}
-		else {
-			logi("[INSTALL-CHECK] Starting application without db setting ...", config_xml);
-			// also update jserv
-			// jserv = settings.updateLocalJserv(cfg.https, url_path, null, null, null) ;
-			jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
-		}
-		*/
 		if (!isblank(settings.installkey)) {
 			logi("[INSTALL-CHECK]\n!!! FIRST TIME INITIATION !!!\nInstall: Calling setupdb() with configurations in %s ...", config_xml);
 			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
 		}
 		else 
 			logi("[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\nStarting application without db setting ...");
-//					config_xml);
-		// String jserv =
 		settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		
 		return settings; // settings.local_serv
