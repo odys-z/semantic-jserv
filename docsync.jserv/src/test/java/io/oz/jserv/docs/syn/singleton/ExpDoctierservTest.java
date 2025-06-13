@@ -223,21 +223,29 @@ public class ExpDoctierservTest {
 		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
 		
-		logrst("Starting DocRef streaming thread at Y...", ++section);
+		for (DocRef dr : assert_Arefs_atB(Y, X, 2, 0))
+			assertEquals(ck[Y].synode(), dr.synoder);
+
+		logrst("Create DocRef streaming thread at Y...", ++section);
 		Thread yresolve = SynodetierJoinTest
 				.jetties[Y].syngleton.domanager(zsu)
-				.synssion(ck[X].synb.syndomx.synode)
+				.synssion(ck[X].synode())
 				.createResolver(ck[Y].docm);
 
+		logrst("Create DocRef streaming thread at X...", ++section);
 		Thread xresolve = SynodetierJoinTest
 				.jetties[X].syngleton.domanager(zsu)
-				.synssion(ck[Y].synb.syndomx.synode)
+				.synssion(ck[Y].synode())
 				.createResolver(ck[X].docm);
 
-//		yresolve.start();
+		// Now y doesn't keep any docref as it is deleted. But this branch should work.
+		logrst("Start DocRef streaming thread at Y...", ++section);
+		yresolve.start();
+
+		logrst("Start DocRef streaming thread at X...", ++section);
 		xresolve.start();
 
-		logrst("Waiting DocRef streaming thread at Y...", ++section);
+		logrst("Waiting DocRef streaming thread at Y & X", ++section);
 		yresolve.join();
 		xresolve.join();
 
@@ -255,35 +263,37 @@ public class ExpDoctierservTest {
 
 	/**
 	 * Assert X-docs are synchronized to Y, as DocRefs.
-	 * @param x
-	 * @param y
-	 * @param xdocs
-	 * @param ydocs
-	 * @return doc-refs at y
+	 * @param a
+	 * @param b
+	 * @param xdoc_refs_y x docs at y as refs
+	 * @param ydoc_refs_x y docs at x as refs
+	 * @return doc-refs at b to docs at a
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	static ArrayList<DocRef> assert_Arefs_atB(int x, int y, int xdocs, int ydocs) throws SQLException, TransException {
-		List<DocRef> refs_atY = ck[y]
+	static ArrayList<DocRef> assert_Arefs_atB(int a, int b, int xdoc_refs_y, int ydoc_refs_x)
+			throws SQLException, TransException {
+		List<DocRef> refs_atY = ck[b]
 				.docRef()
 				.stream()
 				.filter(v -> v != null).toList();
-		assertEquals(xdocs, len(refs_atY));
+		assertEquals(xdoc_refs_y, len(refs_atY));
 
 		int xatys = 0;
-		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(xdocs);
+		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(xdoc_refs_y);
 
 		for (DocRef xdref : refs_atY) {
 			if (xdref == null) continue;
 
-			assertEquals(ck[x].synb.syndomx.synode, xdref.synoder);
-			assertTrue(xdref.uids.startsWith(ck[x].synb.syndomx.synode + ","));
-			assertEquals(ck[y].docm.uri, xdref.uri64);
+			assertEquals(ck[a].synb.syndomx.synode, xdref.synoder);
+			assertTrue(xdref.uids.startsWith(ck[a].synb.syndomx.synode + ","));
+			// assertEquals(ck[y].docm.uri, xdref.uri64);
+			 assertTrue(xdref.uri64.startsWith("$VOL"));
 
 			xatys++;
 			xdlst.add(xdref);
 		}
-		assertEquals(xdocs, xatys);
+		assertEquals(xdoc_refs_y, xatys);
 		return xdlst;
 	}
 

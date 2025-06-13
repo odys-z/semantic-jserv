@@ -122,7 +122,6 @@ public abstract class Docs206 {
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			return replyHeadersv2(req, resp, msg, usr);
 		} catch (IOException e) {
-//			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
 			headerr(resp, msg, HttpServletResponse.SC_PRECONDITION_FAILED, e);
 			return null;
 		}
@@ -188,7 +187,11 @@ public abstract class Docs206 {
 			msg = ansonMsg(req);
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			List<Range> ranges = replyHeadersv2(req, resp, msg, usr);
-			Resource resource = new Resource(getDocByEid(req, msg.body(0), st, usr), msg.body(0).doc.recId);
+			// Resource resource = new Resource(getDocByEid(req, msg.body(0), st, usr), msg.body(0).doc.recId);
+			Resource resource = new Resource(isblank(msg.body(0).doc.uids) ?
+					getDocByEid(req, msg.body(0), st, usr) :
+					getDocByUid(req, msg.body(0), st, usr),
+					msg.body(0).doc.recId);
 			
 			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
 			writeContent(resp, resource, ranges, "");

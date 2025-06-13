@@ -26,12 +26,11 @@ import java.util.HashSet;
 import org.apache.commons.io.FileUtils;
 
 import io.odysz.anson.AnsonException;
+import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantext;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -104,12 +103,15 @@ public class SynssionPeer {
 	 */
 	protected SessionClient client;
 
+	/** Initialized by {@link io.odysz.semantic.syn.SyndomContext#dbg}, which should be from Config.debug. */
 	private boolean debug;
 
 	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
-		// TODO issue: it's better to change this to /syn/me, not /syn/peer once Connects is refactored. 
+		// ISSUE
+		// TODO It's better to change this to /syn/me, not /syn/peer once Connects is refactored. 
 		this.uri_syn   = "/syn/" + peer; // domanager.synode;
 		this.uri_sys   = "/sys/" + peer; // domanager.synode;
+
 		this.conn      = domanager.synconn;
 		this.mynid     = domanager.synode;
 		this.domanager = domanager;
@@ -292,15 +294,20 @@ public class SynssionPeer {
 			while (_arref[0] != null) {
 				try {
 					String localpath = ref.downloadPath(peer, conn, client.ssInfo());
+					ExtFilePaths extpths = DocRef.createExtPaths(conn, docmeta.tbl, ref);
+					String targetpth = extpths.decodeUriPath();
+
+					if (debug)
+						Utils.logT(new Object() {}, " Begin downloading %s\n-> %s", localpath, targetpth);
 
 					client.download206(uri_syn, peerjserv, Port.syntier, localpath, ref,
 
 						isNull(proc4test) ?
 						(rx, r, bx, b, r_null) -> {
 							// save breakpoint
-							_arref[0].breakpoint(b);
+							_arref[0].breakpoint(bx);
 							try {
-								DAHelper.updateFieldByPk(tb, conn, docmeta, _arref[0].docId,
+								DAHelper.updateFieldByPk(tb, tb.nonsemantext(), docmeta, _arref[0].docId,
 										docmeta.uri, _arref[0].toBlock(AnDbField.jopt), localRobt);
 							} catch (SQLException e) {
 								e.printStackTrace();
@@ -310,13 +317,7 @@ public class SynssionPeer {
 							return false;
 						} : proc4test[0]);
 
-					// move the temporary file to managed
-					ExtFilePaths extpths = DocRef.createExtPaths(conn, docmeta.tbl, ref);
-					String targetpth = extpths.decodeUriPath();
-
-					if (debug)
-						Utils.logT(new Object() {}, " %s\n-> %s",
-								localpath, targetpth);
+					Utils.touchDir(FilenameUtils.getFullPath(targetpth));
 					Files.move(Paths.get(localpath), Paths.get(targetpth), StandardCopyOption.REPLACE_EXISTING);
 
 					tb.update(docmeta.tbl, localRobt)
@@ -326,8 +327,7 @@ public class SynssionPeer {
 						.post(tb.delete(refm.tbl)
 								.whereEq(refm.fromPeer, peer)
 								.whereEq(refm.io_oz_synuid, ref.uids))
-						// .u(tb.instancontxt());
-						.u(new DASemantext(conn, localRobt));
+						.u(tb.nonsemantext());
 				} catch (ExchangeException e) {
 					if (e instanceof SemanticException
 							&& ((ExchangeException) e).requires() == Exchanging.ext_docref) {
