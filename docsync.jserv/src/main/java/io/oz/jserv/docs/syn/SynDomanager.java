@@ -408,5 +408,5 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public String lockSession() {
 		return synlocker == null ? null : synlocker.sessionId();
 	}
-	
+
 }

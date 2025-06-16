@@ -6,8 +6,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <version>0.7.1</version>
-  <!-- see git branch jetty-winsrv for building jetty embedded app -->
+  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.4</version>
   <packaging>jar</packaging>
 
   <name>jserv-album Maven Webapp</name>
@@ -116,7 +115,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>[0.2.4-SNAPSHOT,)</version>
+	    <version>[0.2.4,)</version>
 	</dependency>
 
 	<dependency>
@@ -143,6 +142,13 @@
 		<artifactId>antson</artifactId>
 		<version>0.9.118-SNAPSHOT</version>
 	</dependency>
+	
+	<!-- https://mvnrepository.com/artifact/commons-daemon/commons-daemon -->
+	<dependency>
+		<groupId>commons-daemon</groupId>
+		<artifactId>commons-daemon</artifactId>
+		<version>1.4.1</version>
+	</dependency>
   </dependencies>
 
   <build>
@@ -153,7 +159,7 @@
           <artifactId>maven-clean-plugin</artifactId>
           <version>3.1.0</version>
       </plugin>
-        <!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_war_packaging -->
+      <!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_war_packaging -->
       <plugin>
           <artifactId>maven-resources-plugin</artifactId>
           <version>3.0.2</version>

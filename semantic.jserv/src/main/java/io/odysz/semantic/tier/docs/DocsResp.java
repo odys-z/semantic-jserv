@@ -47,6 +47,7 @@ public class DocsResp extends AnsonResp {
 	}
 
 	public PathsPage syncing() { return syncingPage; }
+	/** Set the synchronizing page */
 	public DocsResp syncing(PathsPage page) {
 		syncingPage = page;
 		return this;

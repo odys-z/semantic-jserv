@@ -13,11 +13,14 @@ import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.split;
 import static io.odysz.common.LangExt.prefixOneOf;
-import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.logT;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.logging.Level.FINE;
+import static io.odysz.semantic.jprotocol.JProtocol.Headers.AnsonReq;
+import static io.odysz.semantic.jprotocol.JProtocol.Headers.Reason;
+import static io.odysz.semantic.jprotocol.JProtocol.Headers.Error;
+import static io.odysz.semantic.jprotocol.JProtocol.Headers.Server;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -49,14 +52,18 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.anson.Anson;
 import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
+import io.odysz.common.Regex;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.syn.Exchanging;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -68,25 +75,6 @@ import io.odysz.transact.x.TransException;
  */
 public abstract class Docs206 {
 
-	/**
-	 * Caller of {@link Docs206#get206(HttpServletRequest, HttpServletResponse, IUser) uses this 
-	 * to provide doc table meta. 
-	 * 
-	 * @author Ody
-	@FunctionalInterface
-	public interface IDocMeta {
-		/**
-		 * example:
-		 * <pre>
-		(uri) -> new PhotoMeta(Connects.uri2conn(uri))
-		 * </pre>
-		 * @param uri
-		 * @return
-		 * /
-		ExpDocTableMeta get(String uri);
-	}
-	 */
-
 	private static final String Disposition_Header = "%s;filename=\"%2$s\"; filename*=UTF-8''%2$s";
 	private static final long Expire_1Hour = 3600L;
 	private static final long Second_ms = TimeUnit.SECONDS.toMillis(1);
@@ -95,9 +83,12 @@ public abstract class Docs206 {
 	private static final String Multipart_boundary = UUID.randomUUID().toString();
 	private static final int Range_Size = 1024 * 8;
 
-	public static DATranscxt st;
+	/**
+	 * Used for telling the client with request header:<br>
+	 * reason_doc_ref +  {@link Exchanging#ext_docref} - target file is a {@link DocRef} object. */
+	public static final String reason_doc_ref = "exchanging error: " + Exchanging.ext_docref;
 
-	// public static IDocMeta getMeta;
+	public static DATranscxt st;
 
 	static {
 		try {
@@ -108,6 +99,10 @@ public abstract class Docs206 {
 	}
 	
 	/**
+	 * Verify Anson header in "?anson64=" and call
+	 * {@link #replyHeaders(HttpServletRequest, HttpServletResponse, AnsonMsg, IUser)}
+	 * to reply with a http header which is compatible / understandable to browsers. 
+	 * 
 	 * <p>Reference:</p>
 	 * 
 	 * [1] Problem: https://stackoverflow.com/a/52520120/7362888 <br>
@@ -125,10 +120,9 @@ public abstract class Docs206 {
 		AnsonMsg<DocsReq> msg = ansonMsg(req); 
 		try {
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
-			return replyHeaders(req, resp, msg, usr);
-		} catch (IOException | TransException | SQLException e) {
-			e.printStackTrace();
-			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED); // right semantics?
+			return replyHeadersv2(req, resp, msg, usr);
+		} catch (IOException e) {
+			headerr(resp, msg, HttpServletResponse.SC_PRECONDITION_FAILED, e);
 			return null;
 		}
 	}
@@ -153,32 +147,100 @@ public abstract class Docs206 {
 				in.close();
 		}
 	}
-
-	public static void get206(HttpServletRequest req, HttpServletResponse resp)
+	
+	/**
+	 * @deprecated don't delete until verified with @anclient/anreact.
+	 * @param req
+	 * @param resp
+	 * @throws IOException
+	 * @throws SsException
+	 */
+ 	public static void get206(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException, SsException {
 		try {
 			AnsonMsg<DocsReq> msg = ansonMsg(req);
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			List<Range> ranges = replyHeaders(req, resp, msg, usr);
-			Resource resource = new Resource(getDoc(req, msg.body(0), st, usr), msg.body(0).doc.recId);
+			Resource resource = new Resource(getDocByEid(req, msg.body(0), st, usr), msg.body(0).doc.recId);
+			
+			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
 			writeContent(resp, resource, ranges, "");
 		}
 		catch (IllegalArgumentException e) {
-			logi("%s Got an IllegalArgumentException from user code; interpreting it as 400 Bad Request.\n%s",
-					FINE, e.getMessage());
-			resp.setHeader("Error", e.getMessage());
-//			resp.setHeader("Server", e.getMessage());
-			resp.setHeader("Server", JSingleton.appName);
+			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+				e.getMessage());
+			resp.setHeader(JProtocol.Headers.Error, e.getMessage());
+			resp.setHeader(JProtocol.Headers.Server, JSingleton.appName);
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 		} catch (TransException | SQLException e) {
 			e.printStackTrace();
-			resp.setHeader("Error", e.getMessage());
-//			resp.setHeader("Server", e.getMessage());
-			resp.setHeader("Server", JSingleton.appName);
+			resp.setHeader(JProtocol.Headers.Error, e.getMessage());
+			resp.setHeader(JProtocol.Headers.Server, JSingleton.appName);
 			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
 		}
 	}
 	
+	public static void get206v2(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException, SsException {
+		AnsonMsg<DocsReq> msg = null;
+		try {
+			msg = ansonMsg(req);
+			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
+			List<Range> ranges = replyHeadersv2(req, resp, msg, usr);
+			// Resource resource = new Resource(getDocByEid(req, msg.body(0), st, usr), msg.body(0).doc.recId);
+			Resource resource = new Resource(isblank(msg.body(0).doc.uids) ?
+					getDocByEid(req, msg.body(0), st, usr) :
+					getDocByUid(req, msg.body(0), st, usr),
+					msg.body(0).doc.recId);
+			
+			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
+			writeContent(resp, resource, ranges, "");
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+			headerr(resp, msg, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
+		}
+		catch (ExchangeException e) {
+			// That's a doc-ref, nothing to download
+			logT(new Object() {}, "ExchangeException, reply 409 Bad Request. Message:\n%s",
+				e.getMessage());
+			headerr(resp, msg, HttpServletResponse.SC_CONFLICT, e);
+		}
+		catch (IllegalArgumentException e) {
+			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+				e.getMessage());
+			headerr(resp, msg, HttpServletResponse.SC_BAD_REQUEST, e);
+		} catch (TransException e) {
+			e.printStackTrace();
+			headerr(resp, msg, HttpServletResponse.SC_BAD_REQUEST, e);
+		}
+	}
+	
+	private static void headerr(HttpServletResponse resp, AnsonMsg<DocsReq> msg, int respCode, Exception e) throws IOException {
+		resp.setHeader(Error, e.getMessage());
+		resp.setHeader(Server, JSingleton.appName);
+
+		if (e instanceof ExchangeException
+				&& ((ExchangeException) e).requires() == Exchanging.ext_docref)
+			resp.setHeader(Reason, reason_doc_ref);
+
+		if (msg != null && msg.body(0) != null)
+			resp.setHeader(AnsonReq, msg.body(0).toBlock());
+
+		resp.sendError(respCode);
+	}
+
+	/**
+	 * @deprecated Don't delete until the js client, @anclient/anreact, is verified.
+	 * @param request
+	 * @param response
+	 * @param msg
+	 * @param usr
+	 * @return
+	 * @throws IOException
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	public static List<Range> replyHeaders(HttpServletRequest request, HttpServletResponse response,
 			AnsonMsg<DocsReq>msg, IUser usr) throws IOException, TransException, SQLException {
 		response.reset();
@@ -186,11 +248,11 @@ public abstract class Docs206 {
 		Resource resource;
 
 		try {
-			resource = new Resource(getDoc(request, msg.body(0), st, usr), msg.body(0).doc.recId);
+			resource = new Resource(getDocByEid(request, msg.body(0), st, usr), msg.body(0).doc.recId);
 		}
 		catch (IllegalArgumentException e) {
-			logi("%s Got an IllegalArgumentException from user code; interpreting it as 400 Bad Request.\n%s",
-					FINE, e.getMessage());
+			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+				e.getMessage());
 			response.setHeader("Error", e.getMessage());
 			response.setHeader("Server", JSingleton.appName);
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -212,7 +274,7 @@ public abstract class Docs206 {
 		List<Range> ranges = getRanges(request, resource);
 
 		if (ranges == null) {
-			response.setHeader("Content-Range", "bytes */" + resource.length);
+			response.setHeader(JProtocol.Headers.Content_range, "bytes */" + resource.length);
 			response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
 			return null;
 		}
@@ -228,7 +290,72 @@ public abstract class Docs206 {
 		return ranges;
 	}
 
-	protected static File getDoc(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr)
+	public static List<Range> replyHeadersv2(HttpServletRequest request, HttpServletResponse response,
+			AnsonMsg<DocsReq>msg, IUser usr) throws IOException {
+		response.reset();
+
+		Resource resource = null;
+
+		try {
+			resource = new Resource(isblank(msg.body(0).doc.uids)
+					? getDocByEid(request, msg.body(0), st, usr)
+					: getDocByUid(request, msg.body(0), st, usr),
+					msg.body(0).doc.recId);
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+			headerr(response, msg, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
+		}
+		catch (IllegalArgumentException e) {
+			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+				e.getMessage());
+			headerr(response, msg, HttpServletResponse.SC_BAD_REQUEST, e);
+			return null;
+		}
+		catch (ExchangeException e) {
+			// That's a doc-ref, nothing to download
+			logT(new Object() {}, "ExchangeException, reply 409 Bad Request. Message:\n%s",
+				e.getMessage());
+			headerr(response, msg, HttpServletResponse.SC_CONFLICT, e);
+			return null;
+		}
+		catch (TransException e) {
+			e.printStackTrace();
+			headerr(response, msg, HttpServletResponse.SC_BAD_REQUEST, e);
+		}
+	
+		if (preconditionFailed(request, resource)) {
+			response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
+			return null;
+		}
+
+		setCacheHeaders(response, resource);
+
+		if (notModified(request, resource)) {
+			response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+			return null;
+		}
+
+		List<Range> ranges = getRanges(request, resource);
+
+		if (ranges == null) {
+			response.setHeader(JProtocol.Headers.Content_range, "bytes */" + resource.length);
+			response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+			return null;
+		}
+
+		if (!ranges.isEmpty()) {
+			response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+		}
+		else {
+			ranges.add(new Range(0, resource.length - 1));
+		}
+
+		setContentHeaders(request, response, resource, ranges);
+		return ranges;
+	}
+
+	protected static File getDocByEid(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr)
 			throws TransException, SQLException, IOException {
 
 		String conn = Connects.uri2conn(req.uri());
@@ -259,6 +386,40 @@ public abstract class Docs206 {
 		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
 	}
 
+	protected static File getDocByUid(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr)
+			throws TransException, SQLException, IOException {
+
+		String conn = Connects.uri2conn(req.uri());
+		// ExpDocTableMeta meta = getMeta.get(req.uri());
+		if (req.doc == null || isblank(req.doc.uids) || isblank(req.docTabl))
+			throw new IllegalArgumentException(f("File informoation is missing: uids: %s, table %s",
+					req.doc == null ? null : req.doc.uids, req.docTabl));
+
+		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
+
+		AnResultset rs = (AnResultset) st
+				.select(meta.tbl, "p")
+				.col(meta.pk)
+				.col(meta.resname).col(meta.createDate)
+				.col(meta.fullpath)
+				.col(meta.uri)
+				.col(meta.mime)
+				.whereEq(meta.io_oz_synuid, req.doc.uids)
+				.rs(st.instancontxt(conn, usr)).rs(0);
+		
+		if (!rs.next())
+			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
+		
+		if (Regex.startsEvelope(rs.getString(meta.uri)))
+			throw new ExchangeException(Exchanging.ext_docref, null, "DocRef: %s, %s, %s", req.doc.uids, req.doc.recId, req.doc.pname);
+
+		String p = DocUtils.resolvExtroot(st, conn, rs.getString(meta.pk), usr, meta);
+		File f = new File(p);
+		if (f.exists() && f.isFile())
+			return f;
+		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
+	}
+
 	/**
 	 * Handles the case when the file is not found.
 	 * <p>
@@ -268,7 +429,8 @@ public abstract class Docs206 {
 	 * @throws IOException When something fails at I/O level.
 	 * @since 0.1.50
 	 */
-	protected void handleFileNotFound(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected void handleFileNotFound(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
 		response.sendError(HttpServletResponse.SC_NOT_FOUND);
 	}
 
@@ -294,7 +456,9 @@ public abstract class Docs206 {
 	private static boolean preconditionFailed(HttpServletRequest request, Resource resource) {
 		String match = request.getHeader("If-Match");
 		long unmodified = request.getDateHeader("If-Unmodified-Since");
-		return (match != null) ? !matches(match, resource.eTag) : (unmodified != -1 && modified(unmodified, resource.lastModified));
+		return (match != null)
+				? !matches(match, resource.eTag)
+				: (unmodified != -1 && modified(unmodified, resource.lastModified));
 	}
 
 	/**
@@ -307,8 +471,8 @@ public abstract class Docs206 {
 	}
 
 	/**
-	 * <p>Set the cache headers. If the <code>expires</code> argument is larger than 0 seconds, then the following headers
-	 * will be set:
+	 * <p>Set the cache headers. If the <code>expires</code> argument is larger than 0 seconds,
+	 * then the following headers will be set:
 	 * <ul>
 	 * <li><code>Cache-Control: public,max-age=[expiration time in seconds],must-revalidate</code></li>
 	 * <li><code>Expires: [expiration date of now plus expiration time in seconds]</code></li>
@@ -320,25 +484,28 @@ public abstract class Docs206 {
 	 */
 	static void setCacheHeaders(HttpServletResponse response, long expires) {
 		if (expires > 0) {
-			response.setHeader("Cache-Control", "public,max-age=" + expires + ",must-revalidate");
-			response.setDateHeader("Expires", System.currentTimeMillis() + SECONDS.toMillis(expires));
-			response.setHeader("Pragma", ""); // Explicitly set pragma to prevent container from overriding it.
+			response.setHeader(JProtocol.Headers.Cache_control, "public,max-age=" + expires + ",must-revalidate");
+			response.setDateHeader(JProtocol.Headers.Expires, System.currentTimeMillis() + SECONDS.toMillis(expires));
 		}
 		else {
 			// setNoCacheHeaders(response);
-			response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-			response.setDateHeader("Expires", 0);
-			response.setHeader("Pragma", "no-cache"); // Backwards compatibility for HTTP 1.0.
+			response.setHeader(JProtocol.Headers.Cache_control, "no-cache,no-store,must-revalidate");
+			response.setDateHeader(JProtocol.Headers.Expires, 0);
 		}
+
+		// Explicitly set pragma to prevent container from overriding it.
+		response.setHeader(JProtocol.Headers.Pragma, "");
 	}
 
 	/**
 	 * Returns true if it's a conditional request which must return 304.
 	 */
 	static boolean notModified(HttpServletRequest request, Resource resource) {
-		String noMatch = request.getHeader("If-None-Match");
-		long modified = request.getDateHeader("If-Modified-Since");
-		return (noMatch != null) ? matches(noMatch, resource.eTag) : (modified != -1 && !modified(modified, resource.lastModified));
+		String noMatch = request.getHeader(JProtocol.Headers.If_none_match);
+		long modified = request.getDateHeader(JProtocol.Headers.If_modified_since);
+		return (noMatch != null)
+			? matches(noMatch, resource.eTag)
+			: (modified != -1 && !modified(modified, resource.lastModified));
 	}
 
 	/**
@@ -349,7 +516,7 @@ public abstract class Docs206 {
 	 */
 	static List<Range> getRanges(HttpServletRequest request, Resource resource) {
 		List<Range> ranges = new ArrayList<>(1);
-		String rangeHeader = request.getHeader("Range");
+		String rangeHeader = request.getHeader(JProtocol.Headers.Range);
 
 		if (rangeHeader == null) {
 			return ranges;
@@ -358,19 +525,19 @@ public abstract class Docs206 {
 			return null;
 		}
 
-		String ifRange = request.getHeader("If-Range");
+		String ifRange = request.getHeader(JProtocol.Headers.If_range);
 
 		if (ifRange != null && !ifRange.equals(resource.eTag)) {
 			try {
-				long ifRangeTime = request.getDateHeader("If-Range");
+				long ifRangeTime = request.getDateHeader(JProtocol.Headers.If_range);
 
 				if (ifRangeTime != -1 && modified(ifRangeTime, resource.lastModified)) {
 					return ranges;
 				}
 			}
 			catch (IllegalArgumentException ifRangeHeaderIsInvalid) {
-				logi("%s If-Range header is invalid. Return full file then.\n%s",
-						FINE,ifRangeHeaderIsInvalid);
+				logT(new Object() {}, "If-Range header is invalid. Return full file then.\n%s",
+					 ifRangeHeaderIsInvalid);
 				return ranges;
 			}
 		}
@@ -434,10 +601,10 @@ public abstract class Docs206 {
 		if (ranges.size() == 1) {
 			Range range = ranges.get(0);
 			response.setContentType(contentType);
-			response.setHeader("Content-Length", String.valueOf(range.length));
+			response.setHeader(JProtocol.Headers.Content_length, String.valueOf(range.length));
 
 			if (response.getStatus() == HttpServletResponse.SC_PARTIAL_CONTENT) {
-				response.setHeader("Content-Range", "bytes " + range.start + "-" + range.end + "/" + resource.length);
+				response.setHeader(JProtocol.Headers.Content_range, "bytes " + range.start + "-" + range.end + "/" + resource.length);
 			}
 		}
 		else {
@@ -568,7 +735,6 @@ public abstract class Docs206 {
 				this.file = file;
 				length = file.length();
 				lastModified = file.lastModified();
-				// eTag = format(ETAG, URLEncoder.encode(file.getName(), UTF_8.name()), lastModified);
 				eTag = format(ETAG, docId, lastModified);
 			}
 			else {

@@ -340,7 +340,7 @@ public class Albums extends ServPort<AlbumReq> {
 
 		if (rs == null || isblank(rs.getString(m.org)))
 			throw new SemanticException("Verifying user's profiles needs target user belongs to an organization / family.");
-		return new Profiles(rs, m);
+		return new Profiles(null, rs, m, orgMeta.album0, orgMeta.webNode);
 	}
 
 	AlbumResp galleryTree(AlbumReq jreq, IUser usr, Profiles prf)

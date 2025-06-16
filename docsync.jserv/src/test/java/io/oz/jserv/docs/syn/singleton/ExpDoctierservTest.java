@@ -7,24 +7,27 @@ import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.turngreen;
 import static io.odysz.common.Utils.waiting;
+import static io.odysz.common.Utils.logrst;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.chsize;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.setVolumeEnv;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.webinf;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -37,6 +40,7 @@ import io.odysz.jclient.syn.Doclientier;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
@@ -45,6 +49,7 @@ import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.IUser;
+import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.Dev;
 import io.oz.jserv.docs.syn.SynodetierJoinTest;
 import io.oz.syn.SynodeConfig;
@@ -93,6 +98,8 @@ public class ExpDoctierservTest {
 		if (System.getProperty("wait-clients") == null) {
 
 			Utils.logrst("Starting synode-tiers", 0);
+			Utils.logrst("wait-clients = null.", 0, 0);
+
 			int[] nodex = startJetties(jetties, ck);
 			runDoctiers(nodex, null, null, null);
 
@@ -100,6 +107,8 @@ public class ExpDoctierservTest {
 		}
 		else {
 			Utils.logrst("Starting synode-tiers", 0);
+			Utils.logrst(f("wait-clients = %s.", System.getProperty("wait-client")), 0, 0);
+
 			int[] nodex = startJetties(jetties, ck);
 
 			final boolean[] noAutoQuit = new boolean[] { true };
@@ -108,8 +117,8 @@ public class ExpDoctierservTest {
 
 			runDoctiers(nodex, noAutoQuit, canPush, pushDone);
 
-			awaitAll(canPush);
 			pause("Now can run DoclienterTest. Press Enter once manully uploaded");
+			awaitAll(canPush);
 
 			turngreen(pushDone);
 			pause("This thread will be killed asap when main thread quite.");
@@ -125,10 +134,12 @@ public class ExpDoctierservTest {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("deprecation")
-	public static void runDoctiers(int[] nodex, boolean[] waitClients, boolean[] canPush, boolean[] pushDone) throws Exception {
+	public static void runDoctiers(int[] nodex,
+			boolean[] waitClients, boolean[] canPush, boolean[] pushDone) throws Exception {
+
 		int section = 0;
 		
-		Utils.logrst("Open domains", ++section);
+		logrst("Open domains", ++section);
 
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
@@ -144,7 +155,7 @@ public class ExpDoctierservTest {
 		ck[Y].doc(0);
 		ck[X].doc(0);
 
-		Utils.logrst("Pause for client's pushing", ++section);
+		logrst("Pause for client's pushing", ++section);
 		printChangeLines(ck);
 		printNyquv(ck);
 		
@@ -156,6 +167,8 @@ public class ExpDoctierservTest {
 
 
 		turngreen(canPush); // Tell clients can push now
+		logrst("Told clients can push now, waiting...", ++section);
+		
 		awaitAll(pushDone, -1);
 
 		printChangeLines(ck);
@@ -165,7 +178,7 @@ public class ExpDoctierservTest {
 		ck[Y].doc(2);
 		ck[Z].doc(0);
 
-		Utils.logrst("Synchronizing between synodes", ++section);
+		logrst("Synchronizing between synodes", ++section);
 		waiting(lights, Y);
 		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
@@ -175,13 +188,16 @@ public class ExpDoctierservTest {
 
 		ck[Y].doc(3);
 		ck[X].doc(3);
+		
+		assert_Arefs_atB(X, Y, 1, 2);
+		assert_Arefs_atB(Y, X, 2, 1);
 
-		Utils.logrst("Bring up dev-x0 and delete", ++section);
+		logrst("Bring up dev-x0 and delete", ++section);
 		// 00 delete
 		Clients.init(jetties[X].myjserv());
 
 		Dev devx0 = devs[X_0];
-		Utils.logrst(new String[] {"Deleting", devx0.res}, section, 1);
+		logrst(new String[] {"Deleting", devx0.res}, section, 1);
 
 		devx0.login(errLog);
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
@@ -193,10 +209,10 @@ public class ExpDoctierservTest {
 					.device(devx0.device.id)
 					.fullpath(devx0.res);
 
-		Utils.logrst(new String[] {"Verifying", devx0.res}, section, 2);
+		logrst(new String[] {"Verifying", devx0.res}, section, 2);
 		verifyPathsPageNegative(devx0.client, docm.tbl, dx0.clientpath);
 
-		Utils.logrst("Synchronizing synodes", ++section);
+		logrst("Synchronizing synodes", ++section);
 		printChangeLines(ck);
 		printNyquv(ck);
 
@@ -206,16 +222,82 @@ public class ExpDoctierservTest {
 		waiting(lights, Y);
 		SynodetierJoinTest.syncdomain(lights, Y, ck);
 		awaitAll(lights, -1);
+		
+		for (DocRef dr : assert_Arefs_atB(Y, X, 2, 0))
+			assertEquals(ck[Y].synode(), dr.synoder);
 
-		Utils.logrst("Finish", ++section);
+		logrst("Create DocRef streaming thread at Y...", ++section);
+		Thread yresolve = SynodetierJoinTest
+				.jetties[Y].syngleton.domanager(zsu)
+				.synssion(ck[X].synode())
+				.createResolver(ck[Y].docm);
+
+		logrst("Create DocRef streaming thread at X...", ++section);
+		Thread xresolve = SynodetierJoinTest
+				.jetties[X].syngleton.domanager(zsu)
+				.synssion(ck[Y].synode())
+				.createResolver(ck[X].docm);
+
+		// Now y doesn't keep any docref as it is deleted. But this branch should work.
+		logrst("Start DocRef streaming thread at Y...", ++section);
+		yresolve.start();
+
+		logrst("Start DocRef streaming thread at X...", ++section);
+		xresolve.start();
+
+		logrst("Waiting DocRef streaming thread at Y & X", ++section);
+		yresolve.join();
+		xresolve.join();
+
+		logrst("Resolving docrefs finished.", ++section);
 		printChangeLines(ck);
 		printNyquv(ck);
+
+		assert_Arefs_atB(X, Y, 0, 0);
+		assert_Arefs_atB(Y, X, 0, 0);
 
 		ck[Z].doc(2);
 		ck[Y].doc(2);
 		ck[X].doc(2);
 	}
 
+	/**
+	 * Assert X-docs are synchronized to Y, as DocRefs.
+	 * @param a
+	 * @param b
+	 * @param xdoc_refs_y x docs at y as refs
+	 * @param ydoc_refs_x y docs at x as refs
+	 * @return doc-refs at b to docs at a
+	 * @throws SQLException
+	 * @throws TransException
+	 */
+	static ArrayList<DocRef> assert_Arefs_atB(int a, int b, int xdoc_refs_y, int ydoc_refs_x)
+			throws SQLException, TransException {
+		List<DocRef> refs_atY = ck[b]
+				.docRef()
+				.stream()
+				.filter(v -> v != null).toList();
+		assertEquals(xdoc_refs_y, len(refs_atY));
+
+		int xatys = 0;
+		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(xdoc_refs_y);
+
+		for (DocRef xdref : refs_atY) {
+			if (xdref == null) continue;
+
+			assertEquals(ck[a].synb.syndomx.synode, xdref.synoder);
+			assertTrue(xdref.uids.startsWith(ck[a].synb.syndomx.synode + ","));
+			// assertEquals(ck[y].docm.uri, xdref.uri64);
+			 assertTrue(xdref.uri64.startsWith("$VOL"));
+
+			xatys++;
+			xdlst.add(xdref);
+		}
+		assertEquals(xdoc_refs_y, xatys);
+		return xdlst;
+	}
+
+	@SuppressWarnings("deprecation")
 	public static int[] startJetties(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
 		
@@ -267,7 +349,7 @@ public class ExpDoctierservTest {
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i], jetties[i].syngleton().domanager(zsu).synode,
-							SynodeMode.peer, chsize, docm, null, true);
+							SynodeMode.peer, cfgs[i].chsize, docm, null, true);
 		}
 		
 		return nodex;
@@ -310,6 +392,7 @@ public class ExpDoctierservTest {
 		assertEquals(isNull(paths) ? 0 : paths.length, pathpool.size());
 	}
 
+	@SuppressWarnings("deprecation")
 	public static String[] jservs() {
 		if (len(jetties) < 4 || jetties[0] == null)
 			throw new NullPointerException("Initialize first.");

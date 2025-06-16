@@ -199,10 +199,14 @@ class BlockChainTest {
 					"dev-id3",
 					new ExpSyncDoc().clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
 
-		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting", chain.outputPath)
-				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.aborting", chain.outputPath));
-		assertTrue(eq("/sdcard/0/Downloads/test.aborting", chain.doc.clientpath)
-				|| eq("\\sdcard\\0\\Downloads\\test.aborting", chain.doc.clientpath));
+		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting",
+					  chain.outputPath)
+				|| eq("src\\test\\results\\tester\\uploading-temp\\64A+B=C02\\sdcard\\0\\Downloads\\test.aborting",
+					  chain.outputPath));
+		assertTrue(eq("/sdcard/0/Downloads/test.aborting",
+					  chain.doc.clientpath)
+				|| eq("\\sdcard\\0\\Downloads\\test.aborting",
+					  chain.doc.clientpath));
 
 		String b64;
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");

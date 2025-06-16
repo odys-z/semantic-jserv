@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from anson.io.odysz.ansons import Anson
+from anson.io.odysz.anson import Anson
 
 from src.io.odysz.semantic.syn import Synode, SyncUser
 

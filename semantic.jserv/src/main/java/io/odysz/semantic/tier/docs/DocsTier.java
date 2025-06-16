@@ -30,7 +30,7 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 
-@WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.tier" })
+@WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.tier-delete" })
 public class DocsTier extends ServPort<DocsReq> {
 	public DocsTier() {
 		super(Port.docstier);

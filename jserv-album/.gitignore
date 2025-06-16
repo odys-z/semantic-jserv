@@ -4,7 +4,6 @@ download
 volume-*
 vol
 vol-*
-vol2
 volume/*.db
 test/results
 test/res/ignore*.*
@@ -17,6 +16,8 @@ runtime-*
 winserv.xml
 dependency-reduced-pom.xml
 nginx
+venv*
+.venv*
 **/volume-hub
 **/settings.hub.json
 **/volume-prv
@@ -35,3 +36,4 @@ host.json
 
 web-dist
 deploy-*
+build-*

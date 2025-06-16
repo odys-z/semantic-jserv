@@ -1,21 +1,25 @@
-import os
-from setuptools import setup, find_packages
+### What to: configure version number by setup.py, override by tasks.py.
+#
+# invoke make: export envs and write to __version__.py & *.bat -> run inst_<srv>_byname(py-var: srvname)
+# py -m build: use default vers, write to __version__.py & *.bat -> ..
 
-# import py2exe
+### How to
+# invoke build
+#
+# Don't directly build with:
 # pip install wheel
-# python setup.py bdist_wheel sdist
+# python -m build
+
+from setuptools import setup, find_packages
 from pathlib import Path
+from src.synodepy3.__version__ import synode_ver
+
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
-version = os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.1'
-print(version)
-version = version.strip()
-print(f'--{version}--'),
-
 setup(
     name='synode.py3',
-    version=version, # os.getenv('SYNODE_VERSION') or os.getenv('VERSION') or '0.7.0',
+    version=synode_ver,
     description='Portfolio Synode Stand Alone Service',
     author='Ody Z',
     zip_safe=False,
@@ -23,8 +27,6 @@ setup(
     keywords='Documents Files Relational Database Synchronization',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    # py_modules=["src"],
-    # package_dir={"": "src"},  # Tell setuptools that packages are under 'src'
 
     packages=['src'] + [f'src.{pkg}' for pkg in find_packages(where='src')],  # Include src and its subpackages
     package_dir={'src': 'src'},
@@ -39,6 +41,6 @@ setup(
     # data_files=[('bin', ['bin/jserv-album-0.7.0.jar', '../resources/portfolio-srv.exe'])],
     include_package_data=True,
     
-    install_requires=['pyside6', 'qrcode', 'anson.py3>=0.1.4', 'psutil', 'pillow>=8.0.0', 'invoke>=2.2.0']
+    install_requires=['pyside6>=6.5.0,<=6.8.2.1', 'qrcode', 'anson.py3>=0.2.3', 'anclient.py3>=0.1.1', 'psutil', 'pillow>=8.0.0', 'invoke>=2.2.0']
     # classifiers=["Programming Language :: Python :: 3"]
 )

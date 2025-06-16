@@ -14,6 +14,30 @@ import io.odysz.transact.x.TransException;
 
 public class JProtocol {
 	/**
+	 * Http request or repsond's header property names.
+	 * @since 1.5.16
+	 */
+	public static class Headers {
+		public static final String Error  = "Error";
+		public static final String Server = "Server";
+		public static final String Length = "Length";
+		public static final String Range  = "Range";
+
+		public static final String Expires = "Expires";
+		public static final String Pragma  = "Pragma";
+		public static final String Content_range  = "Content-Range";
+		public static final String Content_length = "Content-Length";
+		public static final String Cache_control  = "Cache-Control";
+
+		public static final String If_none_match = "If-None-Match";
+		public static final String If_modified_since = "If-Modified-Since";
+		public static final String If_range = "If-Range";
+
+		public static final String Reason   = "Reason";
+		public static final String AnsonReq = "Anson-req";
+	}
+
+	/**
 	 * Typical operation's common names
 	 * @since v1.4.12 requires semantic.DA v1.4.12
 	public static class CRUD {
@@ -32,11 +56,15 @@ public class JProtocol {
 	/**
 	 * Progress notifier called by block chain.
 	 * Parameter blockResp provide the last uploaded block's sequence number.
+	 * <p>
+	 * rows: rx of total rows <br>
+	 * file blocks: bx of total blocks</p>
+	 * @return force breakup
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
-		void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
-			throws IOException, AnsonException, TransException, SQLException;
+		boolean proc(int rx, int rows, int bx, int blocks, AnsonResp resp)
+			throws IOException, AnsonException, TransException;
 	}
 
 	/**

@@ -3,7 +3,7 @@ import os
 from dataclasses import dataclass
 from typing import overload, Optional
 
-from anson.io.odysz.ansons import Anson
+from anson.io.odysz.anson import Anson
 
 jserv_sep = ' '
 synode_sep = ':'
@@ -14,8 +14,9 @@ syn_db = 'doc-jserv.db'
 sys_db = 'jserv-main.db'
 syntity_json = 'syntity.json'
 
-web_port = 8900
-webroot = 'WEBROOT_HUB'
+# web_port = 8900
+# webroot = 'WEBROOT_HUB'
+webroot_hub = 'WEBROOT_HUB'
 
 jserv_url_path = 'jserv-album'
 """
@@ -25,7 +26,7 @@ jserv_url_path = 'jserv-album'
 def getJservUrl(https: bool, hostport: str):
     return f'{"https" if https else "http"}://{hostport}/{jserv_url_path}'
 
-def getJserval(synode: str, hostp: str, https: bool) -> str:
+def getJservOption(synode: str, hostp: str, https: bool) -> str:
     """
     :param synode:
     :param hostp: ip-or-host:port
@@ -77,12 +78,17 @@ class AppSettings(Anson):
     volume: str
     vol_name: str
     port: int
+    webport: int
+    webrootLocal: str
     jservs: dict
 
     def __init__(self):
         super().__init__()
+        self.port = 8964
+        self.webport = 8900
         self.envars = {}
-        self.startHandler = [implISettingsLoaded, 'private/host.json', webroot, web_port]
+        self.startHandler = [implISettingsLoaded, 'web-dist/private/host.json']
+        self.webrootLocal = f'http://suppress.warning:{self.webport}'
 
     @overload
     def Volume(self):

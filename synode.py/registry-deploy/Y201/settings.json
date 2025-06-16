@@ -1,9 +1,12 @@
-{ "type"      : "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "vol_name"  : "VOLUME_HOME",
-  "volume"    : "./vol",
-  "port"      : 8964,
-  "jservs"    : {"X29":"192.168.0.201:8964/jserv-album", "Y201":"192.168.0.201:8965/jserv-album"},
-  "envars"    : {"WEBROOT_Album-web": "Y201"},
-  "installkey": "0123456789ABCDEF",
-  "rootkey"   : ""
+{ "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "vol_name"    : "VOLUME_HOME",
+  "volume"      : "../vol-Y201",
+  "port"        : 8965,
+  "webport"     : 8901,
+  "jservs"      : {"X29":"http://127.0.0.1:8964/jserv-album", "Y201":"http://127.0.0.1:8965/jserv-album"},
+  "envars"      : {"WEBROOT_201": "Y201"},
+  "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "overriden by installer: web-dist/private/host.json"],
+  "installkey"  : "0123456789ABCDEF",
+  "rootkey"     : "",
+  "connIdleSnds": 30.0
 }

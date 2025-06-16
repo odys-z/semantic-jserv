@@ -90,6 +90,7 @@ class SynotierJettyAppTest {
 				"See WEB-INF/settings.json for what's expected.");
 	}
 
+	@SuppressWarnings("deprecation")
 	@Disabled
 	@Test
 	void testSetupRunApp() throws Exception {

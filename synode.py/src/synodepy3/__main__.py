@@ -1,27 +1,27 @@
+import os
 import sys
-import time
+
+from anclient.io.odysz.jclient import Clients
 
 import io as std_io
-from typing import Optional
+from typing import Optional, cast
 
 import PySide6
 import qrcode
-from PySide6.QtCore import QEvent, QSize
+from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, Qt
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel, QSpacerItem, QSizePolicy
-from anson.io.odysz.common import Utils
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
+from anson.io.odysz.common import Utils, LangExt
 
-from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJserval
+from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJservOption
 from src.io.oz.syn import AnRegistry, SyncUser
-from src.synodepy3.commands import install_htmlsrv, install_jserv
-from src.synodepy3.installer_api import InstallerCli
-
+from src.synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
+from src.synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json, serv_port0, web_port0
 
 # Important:
-# You need to run the following command to generate the ui_form.py file
+# Run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py
 from src.synodepy3.ui_form import Ui_InstallForm
-
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()
@@ -57,15 +57,10 @@ def err_msg(err: str, details: object = None):
 
 def warn_msg(warn: str, details: object = None):
     msg = QMessageBox()
-    # if get_os() != 'Windows':
-    #     msg.setStyleSheet("QLabel{min-width:200px;}")
-    # else:
-    #     msg.setStyleSheet("QLabel{min-width:20px;}")
 
-    # msg.setMinimumWidth(400)
-    horizontal_spacer = QSpacerItem(800, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
-    layout = msg.layout()
-    layout.addItem(horizontal_spacer, layout.rowCount(), 0, 1, layout.columnCount())
+    # horizontal_spacer = QSpacerItem(800, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+    # layout = msg.layout()
+    # layout.addItem(horizontal_spacer, layout.rowCount(), 0, 1, layout.columnCount())
 
     qt_msgbox_label = msg.findChild(QLabel, "qt_msgbox_label")
     msg.layout().children()
@@ -78,12 +73,13 @@ def warn_msg(warn: str, details: object = None):
     result = msg.exec()
     return result
 
+
 class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.httpd = None
-        self.webth = None
+        # self.httpd = None
+        # self.webth = None
 
         self.ui = Ui_InstallForm()
         self.ui.setupUi(self)
@@ -114,12 +110,13 @@ class InstallerForm(QMainWindow):
             label.setText(text)
             err_msg(f'Generating QR Code Error. Please generate QR Code for:\n{text}', e)
 
-    def gen_qr(self) -> Optional[str]:
+    def gen_qr(self) -> Optional[dict]:
         """
         Generate ip, port and QR.
         :return:
         """
 
+        # settings don't have current IP
         if len(self.ui.txtIP.text()) < 7:
             try:
                 ip = self.cli.reportIp()
@@ -133,19 +130,29 @@ class InstallerForm(QMainWindow):
         else:
             ip = self.ui.txtIP.text()
 
-        try:
-            port = int(self.ui.txtPort.text(), 10)
-        except Exception as e:
-            port = 8964
-            self.ui.txtPort.setText(str(port))
+        # try:
+        #     port = int(self.ui.txtPort.text(), 10)
+        # except Exception as e:
+        #     port = serv_port0
+        #     self.ui.txtPort.setText(str(port))
+        port = self.cli.settings.port
 
         iport = f'{ip}:{port}'
         synode = self.ui.txtSynode.text()
-        data = getJserval(synode, iport, False)
+        data = getJservOption(synode, iport, False)
 
         InstallerForm.set_qr_label(self.ui.lbQr, data)
-
         return {"ip": ip, "port": port, "synodepy3": synode}
+
+    def default_ui_values(self):
+        # if self.ui.txtSyncIns.text() is None or self.ui.txtSyncIns.text().strip() == '':
+        #     self.ui.txtSyncIns.setText('120.0')
+        if LangExt.len(self.ui.txtSyncIns.text()) == 0:
+            self.ui.txtSyncIns.setText('120.0')
+        if LangExt.len(self.ui.txtPort.text()) == 0:
+            self.ui.txtPort.setText(serv_port0)
+        if LangExt.len(self.ui.txtWebport.text()) == 0:
+            self.ui.txtWebport.setText(web_port0)
 
     def validate(self) -> bool:
         """
@@ -157,7 +164,8 @@ class InstallerForm(QMainWindow):
         err = self.cli.validate(
                 volpath=self.ui.txtVolpath.text(),
                 synid=self.ui.txtSynode.text(),
-                peerjservs=self.ui.jservLines.toPlainText())
+                peerjservs=self.ui.jservLines.toPlainText(),
+                warn=warn_msg)
 
         if err is not None:
             self.updateValidation(err)
@@ -179,23 +187,61 @@ class InstallerForm(QMainWindow):
         ui.txtDomain.setText('zsu')
         return False
 
-    def setup(self):
+    def pings(self):
+        details = []
+        errs = False
+        def err_ctx(c, e: str, *args: str) -> None:
+            print(c, e.format(args), file=sys.stderr)
+            details.append('\n' + e)
+            errs = True
+
+        jservss = self.ui.jservLines.toPlainText()
+        if jservss is not None and len(jservss) > 8:
+            jservss = InstallerCli.parsejservstr(jservss)
+
+            for jsrv in jservss:
+                if jsrv[0] != self.cli.registry.config.synid:
+                    Clients.servRt = jsrv[1]
+                    resp = Clients.pingLess(install_uri, err_ctx)
+                    if resp is None:
+                        details.append(f'\n{jsrv[0]}: {jsrv[1]}\n' + 'Error: not responds')
+                    else:
+                        details.append(f'\n{jsrv[0]}: {jsrv[1]}\n'  + resp.toBlock(beautify = True))
+
+        if errs:
+            warn_msg('Ping synodes has errors. Check details for errors.', details)
+        else:
+            msg_box('Ping synodes completed. Check the echo messages in details.', details)
+        return details
+
+    def save(self):
+        self.default_ui_values()
+
         try:
             self.cli.updateWithUi(
                 jservss=self.ui.jservLines.toPlainText(),
                 synid=self.ui.txtSynode.text(),
+                syncins=self.ui.txtSyncIns.text(),
                 port=self.ui.txtPort.text(),
+                webport=self.ui.txtWebport.text(),
                 volume=self.ui.txtVolpath.text())
 
             if self.validate():
                 try:
                     self.cli.install(self.ui.txtResroot.text())
-                    msg_box("Setup successfully.")
+
+                    post_err = self.cli.postFix()
+                    if not post_err:
+                        msg_box("Setup successfully.")
+                    else:
+                        warn_msg("Install successfully, with errors automatically fixe. See details...", post_err)
+
                 except FileNotFoundError or IOError as e:
                     # Changing vol path can reach here
                     err_msg('Setting up synodepy3 is failed.', e)
                 except PortfolioException as e:
-                    warn_msg('Configuration is updated with errors. Check the details.\nIf this is not switching volume, that is not correct' , e)
+                    warn_msg('Configuration is updated with errors. Check the details.\n'
+                             'If this is not switching volume, that is not correct' , e)
 
                 self.enableServInstall()
 
@@ -209,7 +255,8 @@ class InstallerForm(QMainWindow):
                     'java -jar bin/jserv-album-#.#.#.jar\n'
                     'java -jar bin/html-web-#.#.#.jar')
             try:
-                self.httpd, self.webth = self.cli.start_web()
+                if self.cli.httpd is None:
+                    self.cli.httpd, self.cli.webth = InstallerCli.start_web(int(self.ui.txtWebport.text()))
                 self.cli.test_in_term()
                 qr_data = self.gen_qr()
                 print(qr_data)
@@ -220,14 +267,21 @@ class InstallerForm(QMainWindow):
                 return
 
     def installWinsrv(self):
-        self.cli.stop_web(self.httpd)
+        self.cli.stop_web()
         msg_box('Please close any service Window if any been started\n'
-                'Click Ok to continue, and confirm all permission requests (window can be hidden).')
+                'Click Ok to continue, and confirm all permission requests.\n'
+                '4 Times Confirmation Required (Dialog can be hidden)!')
 
-        install_jserv()
-        install_htmlsrv()
+        srvname = install_wsrv_byname(self.cli.gen_wsrv_name())
+        if srvname is not None:
+            self.cli.settings.envars.update({winsrv_synode: srvname})
+
+        srvname = install_htmlsrv(self.cli.gen_html_srvname())
+        if srvname is not None:
+            self.cli.settings.envars.update({winsrv_websrv: srvname})
 
         self.gen_qr()
+        self.cli.settings.toFile(cast(str, os.path.join(web_inf, settings_json)))
 
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
@@ -252,13 +306,15 @@ class InstallerForm(QMainWindow):
 
             self.enableServInstall()
 
-            if self.cli.isinstalled(json.volume) and self.cli.hasrun():
+            if self.cli.isinstalled() and self.cli.hasrun():
                 # self.gen_qr()
                 ip = InstallerCli.reportIp()
                 port = self.cli.settings.port
 
                 InstallerForm.set_qr_label(self.ui.lbQr,
-                            getJserval(self.cli.registry.config.synid, f'{ip}:{port}', self.cli.registry.config.https))
+                                           getJservOption(self.cli.registry.config.synid,
+                                                          f'{ip}:{port}',
+                                                          self.cli.registry.config.https))
 
         if event.type() == QEvent.Type.Show:
             bindInitial(self.root_path)
@@ -278,7 +334,8 @@ class InstallerForm(QMainWindow):
             self.ui.bRoot.clicked.connect(reloadRespath)
 
             self.ui.bLogin.clicked.connect(self.login)
-            self.ui.bSetup.clicked.connect(self.setup)
+            self.ui.bPing.clicked.connect(self.pings)
+            self.ui.bSetup.clicked.connect(self.save)
             self.ui.bValidate.clicked.connect(self.test_run)
 
             if Utils.get_os() == 'Windows':
@@ -300,6 +357,7 @@ class InstallerForm(QMainWindow):
         self.ui.txtPswd.setText(pswd)
         self.ui.txtPswd2.setText(pswd)
         self.ui.txtSynode.setText(cfg.synid)
+        self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(cfg.syncIns))
 
         credits_link = 'https://odys-z.github.io/products/album/credits.html'
         help_install_link = 'https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps'
@@ -308,6 +366,7 @@ class InstallerForm(QMainWindow):
 
     def bindSettings(self, settings: AppSettings):
         self.ui.txtPort.setText(str(settings.port))
+        self.ui.txtWebport.setText(str(settings.webport))
         self.ui.txtVolpath.setText(settings.Volume())
 
         if settings is not None:
@@ -325,10 +384,10 @@ class InstallerForm(QMainWindow):
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
         super().closeEvent(event)
-        if self.httpd is not None or self.webth is not None:
+        if self.cli.httpd is not None or self.cli.webth is not None:
             try:
-                InstallerCli.closeWeb(self.httpd, self.webth)
-                self.httpd, self.webth = None, None
+                InstallerCli.closeWeb(self.cli.httpd, self.cli.webth)
+                self.cli.httpd, self.cli.webth = None, None
             finally:
                 event.accept()
         else:

@@ -5,44 +5,60 @@ import re
 import shutil
 import socket
 import subprocess
+import sys
 import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from socketserver import TCPServer
-from typing import cast
+from typing import cast, Callable
 
-from anson.io.odysz.ansons import Anson
+from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt
+from src.io.oz.srv import WebConfig
 
+from src.io.odysz.semantic.jprotocol import MsgCode
 from src.io.oz.syntier.serv import ExternalHosts
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException,\
-    AppSettings, implISettingsLoaded, web_port, webroot, \
+    AppSettings, implISettingsLoaded, \
     sys_db, syn_db, syntity_json, getJservUrl
 from src.io.oz.syn import AnRegistry, SynodeConfig
 
+from anclient.io.odysz.jclient import Clients
 
-def ping(peerid: str, peerserv: str):
-    pass # raise PortfolioException('TODO')
+from .__version__ import jar_ver, web_ver, html_srver
+
+
+def ping(clientUri: str, peerserv: str):
+    # Clients.servRt = 'http://127.0.0.1:8964/jserv-album'
+    Clients.servRt = peerserv or 'http://127.0.0.1:8964/jserv-album'
+
+    def err_ctx(c: MsgCode, e: str, *args: str) -> None:
+        print(c, e.format(args), file=sys.stderr)
+        raise PortfolioException(e)
+
+    resp = Clients.pingLess(clientUri or install_uri, err_ctx)
+
+    print(Clients.servRt, '<echo>', resp.toBlock())
+    print('code', resp.code)
 
 
 def decode(warns: bytes):
     lines = []
     if warns is not None:
-        for b in warns.split(b'\n'):
-            # lines.append(b.decode('utf-8') if isinstance(b, bytes) else b)
-            if isinstance(b, bytes):
+        for l in warns.split(b'\n'):
+            if isinstance(l, bytes):
                 try:
-                    s = b.decode('utf-8')
+                    s = l.decode('utf-8')
                 except UnicodeDecodeError:
                     try:
-                        s = b.decode('gbk')
+                        s = l.decode('gbk')
                     except UnicodeDecodeError:
-                        s = ''.join(chr(int(b)))
+                        # s = ''.join(chr(int(b)))
+                        s = ''.join(str(l))
                 if s is not None:
                     lines.extend(s.split('\n'))
             else:
-                lines.append(str(b))
+                lines.append(str(l))
     return lines
 
 
@@ -53,7 +69,7 @@ def valid_registry(reg: AnRegistry):
     :return:
     """
     if LangExt.len(reg.config.peers) < 2:
-        raise PortfolioException("Shouldn't works at leas 2 peers? (while checking dictionary.json)")
+        raise PortfolioException("Shouldn't work on at leas 2 peers? (while checking dictionary.json)")
     if AnRegistry.find_synode(reg.config.peers, reg.config.synid) is None:
         raise PortfolioException(
             f'Cannot find peer registry of my id: {reg.config.synid}. (while checking dictionary.json.peers)')
@@ -143,16 +159,24 @@ def checkinstall_exiftool():
     ln -s ../../Anclient/examples/example.js/album/web-0.4 web-dist
 """
 
+install_uri = 'Anson.py3/test'
+
 host_private = 'private'
 web_host_json = f'{host_private}/host.json'
 
 album_web_dist = 'web-dist'
+index_html = 'index.html'
 
 dictionary_json = 'dictionary.json'
-settings_json = 'settings.json'
 web_inf = 'WEB-INF'
-index_html = 'index.html'
-jserv_07_jar = 'jserv-album-0.7.1.jar'
+settings_json = 'settings.json'
+
+html_service_json = 'html-service.json'
+html_web_jar = f'html-web-{html_srver}.jar'
+
+serv_port0 = 8964
+web_port0 = 8900
+jserv_07_jar = f'jserv-album-{jar_ver}.jar'
 exiftool_zip = 'exiftool.zip'
 exiftool_v_exe = 'exiftool*.exe'
 exiftool_exe = 'exiftool.exe'
@@ -164,7 +188,7 @@ class InstallerCli:
     registry: AnRegistry
 
     @staticmethod
-    def parsejservstr(jservstr: str):
+    def parsejservstr(jservstr: str) -> [[str, str]]:
         """
         :param jservstr: "x:\\turl-1\\ny:..."
         :return: [[x, url-1], ...]
@@ -175,6 +199,8 @@ class InstallerCli:
         return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
 
     def __init__(self):
+        self.httpd = None
+        self.webth = None
         self.registry = cast(AnRegistry, None)
         self.settings = cast(AppSettings, None)
 
@@ -234,17 +260,28 @@ class InstallerCli:
 
         return registry
 
-    def isinstalled(self, volpath_ui: str = None):
-        return (self.settings is not None and
-                (volpath_ui is None and self.validateVol(self.settings.Volume()) is None or
-                 volpath_ui is not None and self.validateVol(volpath_ui) is None))
+    def isinstalled(self):
+        return self.settings is not None and self.validateVol(self.settings.Volume()) is None
 
-    def hasrun(self, volpath_ui = None):
-        volpath = LangExt.ifnull(volpath_ui, self.settings.Volume())
-        data = Anson.from_file(volpath_ui) if volpath_ui is not None else self.settings
+    def hasrun(self):
+        psys_db, psyn_db, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
+        return LangExt.len(self.settings.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
 
-        psys_db = os.path.join(volpath, sys_db)
-        return len(data.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
+    @staticmethod
+    def sys_syn_db_syntity(volpath: str):
+        """
+        Get db paths
+        :param volpath:
+        :return: path-sys.db, path-syn.db
+        """
+        path_v = Path(volpath)
+
+        if not Path.exists(path_v):
+            Path.mkdir(path_v)
+        elif not Path.is_dir(path_v):
+            raise IOError(f'Volume path is not a folder: {path_v}')
+
+        return Path(os.path.join(path_v, sys_db)), Path(os.path.join(path_v, syn_db)), Path(os.path.join(path_v, syntity_json))
 
     @staticmethod
     def reportIp() -> str:
@@ -302,6 +339,11 @@ class InstallerCli:
         p_jar = os.path.join('bin/', jserv_07_jar)
         if not os.path.isfile(p_jar):
             raise FileNotFoundError(f'Synode service package is missing: {p_jar}')
+
+        p_jar = os.path.join('bin/', html_web_jar)
+        if not os.path.isfile(p_jar):
+            raise FileNotFoundError(f'Synode html server package is missing: {p_jar}')
+
         if (not os.path.isfile(os.path.join('volume', sys_db))
                 or not os.path.isfile(os.path.join('volume', syn_db))):
             raise FileNotFoundError(
@@ -311,12 +353,14 @@ class InstallerCli:
     def peers_find(self, id):
         return AnRegistry.find_synode(self.registry.config.peers, id)
 
-    def validate(self, synid: str, volpath: str, peerjservs: str):
+    def validate(self, synid: str, volpath: str, peerjservs: str, warn: Callable=None):
         """
         Check synodepy3, volume, jservs.
+        :param warn:
         :param synid:
         :param volpath:
         :param peerjservs:
+        :param warn: if None, return jserv error if ping failed, otherwise warn by calling this function
         :return: error {name: input-data} if there are errors. Error names: synodepy3 | volume | jserv
         """
 
@@ -324,17 +368,25 @@ class InstallerCli:
         if v is not None:
             return v
 
+        # check synodepy3 id is domain wide unique
         peer_jservss = InstallerCli.parsejservstr(peerjservs)
+        if synid is None or len(synid) == 0 or synid not in [ln[0] for ln in peer_jservss]:
+            return {"synodepy3", synid}
+
         for peer in peer_jservss:
             if self.peers_find(peer[0]) is None:
                 return {"peers": {peer[0]: LangExt.str(self.registry.config.peers)}}
 
-            if synid != peer[0] and not ping(peer[0], peer[1]):
-                return {"jserv": {peer[0]: peer[1]}}
-
-        # check synodepy3 id is domain wide unique
-        if synid is None or len(synid) == 0 or synid not in [ln[0] for ln in peer_jservss]:
-            return {"synodepy3", synid}
+            if synid != peer[0]:
+                try:
+                    ping('Setup/py3', peer[1])
+                except PortfolioException:
+                    if warn:
+                        warn(f'Ping to {peer[0]}({peer[1]}) failed.\n'
+                              # 'It is strongly recommended not to proceed.\n'
+                             f'If synode{peer[0]} in the domain is not connectable, double check the url.')
+                    else:
+                        return {"jserv": {peer[0]: peer[1]}}
 
         if not checkinstall_exiftool():
             return {"exiftool": "Check and install exiftool failed!"
@@ -342,8 +394,35 @@ class InstallerCli:
                     else "Please install exiftool and test it's working with command 'exiftool -ver'"}
         return None
 
-    def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None,
-                     volume: str = None, syncins: float = None, envars={}):
+    def postFix(self):
+        """
+        Verify the installation after finished, e.g. for errors introduced when failed to start Jetty App.
+        1. check volume/*.db size. If size is 0, then set root-key = null, for forcing Jetty App re-setup dbs.
+        :return: error details, fixed
+        :exception: found errors, unable to fix
+        """
+        if LangExt.isblank(self.settings.installkey) and not LangExt.isblank(self.settings.rootkey):
+            sysdb, syndb, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
+            if  os.path.isfile(sysdb) and os.stat(sysdb).st_size == 0 and \
+                os.path.isfile(sysdb) and os.stat(syndb).st_size == 0:
+
+                self.settings.installkey, self.settings.rootkey = self.settings.rootkey, ''
+                self.settings.toFile(os.path.join(web_inf, settings_json))
+                return f'Fixed errors: {sysdb} size & {syndb} size = 0, reset flags for setup db.'
+            elif os.path.isfile(sysdb) and os.path.isfile(sysdb) and (os.stat(syndb).st_atime > 0 or os.stat(sysdb).st_size > 0):
+                raise PortfolioException(f'Find sizes about {syndb} and {sysdb} != 0.')
+        return None
+
+    def gen_wsrv_name(self):
+        return f'Synode-{jar_ver}-{self.registry.config.synid}'
+
+    def gen_html_srvname(self):
+        return f'Synode.web-{web_ver}-{self.registry.config.synid}'
+
+    def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None, webport: str = None,
+                     volume: str = None, syncins: str = None, envars = None):
+        if envars is None:
+            envars = {}
         if jservss is not None and len(jservss) > 8:
             self.settings.Jservs(InstallerCli.fromat_jservstr(jservss) if isinstance(jservss, str) else jservss)
 
@@ -352,6 +431,9 @@ class InstallerCli:
 
         if not LangExt.isblank(port):
             self.settings.port = int(port)
+
+        if not LangExt.isblank(webport):
+            self.settings.webport = int(webport)
 
         if not LangExt.isblank(volume):
             if not os.path.exists(volume):
@@ -362,7 +444,7 @@ class InstallerCli:
             self.settings.Volume(os.path.abspath(volume))
 
         if syncins is not None:
-            self.registry.config.syncIns = float(syncins)
+            self.registry.config.syncIns = 0.0 if syncins is None else float(syncins)
 
         if port is not None and len(port) > 1:
             InstallerCli.update_private(self.registry.config, self.settings)
@@ -383,15 +465,16 @@ class InstallerCli:
         if not os.path.isdir(web_inf):
             raise PortfolioException(f'Folder {web_inf} dose not exist, or not a folder.')
 
-        self.settings.toFile(os.path.join(web_inf, settings_json))
+        # May 15 2025
+        # See InstallerCli.install()'s use case analysis
+        # self.settings.toFile(os.path.join(web_inf, settings_json))
 
-    def install(self, respth: str, volpath: str = None):
+    def install(self, respth: str):
         """
-        Install / setup synodepy3, by moving /update dictionary to vol-path, settings.json
+        Install / setup synodepy3, by moving /update dictionary to vol-path (of AppSettings), settings.json
         to WEB-INF, unzip exiftool.zip, and check bin/jar first.
         Note: this is not installing Windows service.
         :param respth:
-        :param volpath:
         :return:
         """
 
@@ -403,44 +486,45 @@ class InstallerCli:
         # self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
 
         # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
-        self.settings.startHandler = [implISettingsLoaded,
-                                      f'{album_web_dist}/{web_host_json}',
-                                      webroot, web_port]
+        self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
 
         self.settings.toFile(os.path.join(web_inf, settings_json))
 
         ########## volume
-        path_v = Path(LangExt.ifnull(volpath, self.settings.Volume()))
+        # path_v = Path(LangExt.ifnull(volpath, self.settings.Volume()))
 
-        if not Path.exists(path_v):
-            Path.mkdir(path_v)
-        elif not Path.is_dir(path_v):
-            raise IOError(f'Volume path is not a folder: {path_v}')
-
-        if self.isinstalled(volpath) and self.hasrun(volpath):
-            raise PortfolioException(f'Deployed synodepy3 in {path_v} is, or has, already running.')
-
-        self.registry.toFile(os.path.join(path_v, dictionary_json))
-
-        v_jservdb_pth = os.path.join(path_v, syn_db)
-        v_main_db_pth = os.path.join(path_v, sys_db)
-        v_syntity_pth = os.path.join(path_v, syntity_json)
-
-        if not Path.exists(Path(v_jservdb_pth)) and not Path.exists(Path(v_main_db_pth)):
-            shutil.copy2(os.path.join(respth if not LangExt.isblank(respth) else '.', syntity_json),
-                         v_syntity_pth)
-            shutil.copy2(os.path.join("volume", syn_db), v_jservdb_pth)
-            shutil.copy2(os.path.join("volume", sys_db), v_main_db_pth)
-        else:
-            # Prevent deleting tables by JettypApp's checking installation.
-            if not LangExt.isblank(self.settings.installkey) and LangExt.isblank(self.settings.rootkey):
-                self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
-            Utils.warn(f'volume is set to {path_v}.\nignoring existing database:\n{v_main_db_pth}\n{v_jservdb_pth}')
-            self.settings.toFile(os.path.join(web_inf, settings_json))
+        # v_syntity_pth = os.path.join(Path(self.settings.Volume()), syntity_json)
+        sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
 
         # web/host.json
         InstallerCli.update_private(self.registry.config, self.settings)
+        InstallerCli.update_htmlsrv(self.registry.config, self.settings)
+
+        # May 15 2025
+        # keep db files, save changes anyway
+        # Registry's modification is checked by UI, any cli modification is impossible, except direct editing.
+        self.registry.toFile(os.path.join(self.settings.Volume(), dictionary_json))
+
+        if not Path.exists(Path(self.settings.Volume())):
+            os.mkdir(self.settings.Volume())
+        if not Path.exists(syndb):
+            shutil.copy2(os.path.join("volume", syn_db), syndb)
+        if not Path.exists(sysdb):
+            shutil.copy2(os.path.join("volume", sys_db), sysdb)
+        if not Path.exists(syntityjson):
+            shutil.copy2(os.path.join(
+                respth if not LangExt.isblank(respth) else '.', syntity_json), syntityjson)
+
+
+        # Prevent deleting tables by JettypApp's checking installation.
+        # This is assuming album-jserv always successfully setup dbs - when db files exist, the tables exist.
+        if self.hasrun() and not LangExt.isblank(self.settings.installkey) and LangExt.isblank(
+                self.settings.rootkey):
+            self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
+            Utils.warn(f'Volume is set to {self.settings.Volume()}.\n'
+                   f'Ignore existing database:\n{sysdb}\n{syndb}')
+            self.settings.toFile(os.path.join(web_inf, settings_json))
 
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)
@@ -464,7 +548,7 @@ class InstallerCli:
                 except FileNotFoundError or IOError or OSError: pass
 
     def test_in_term(self):
-        self.updateWithUi(syncins=0, envars={webroot: f'{InstallerCli.reportIp()}:{web_port}'})
+        # self.updateWithUi(syncins='0.0', envars={webroot: f'{InstallerCli.reportIp()}:{self.settings.webport}'})
 
         system = Utils.get_os()
         jar = os.path.join('bin', jserv_07_jar)
@@ -495,8 +579,8 @@ class InstallerCli:
         """
         Update private/host.json/{host: url}.
         Write boilerplate to host.json, not solid values
-        :param jservport:
         :param config:
+        :param settings:
         :return:
         """
         prv_path = os.path.join(album_web_dist, host_private)
@@ -526,20 +610,34 @@ class InstallerCli:
             hosts.toFile(webhost_pth)
 
     @staticmethod
-    def stop_web(httpd: TCPServer):
-        if httpd is not None:
+    def update_htmlsrv(config: SynodeConfig, settings: AppSettings):
+        jsn_path = os.path.join(web_inf, html_service_json)
+
+        web_cfg: WebConfig
+        try: web_cfg = cast(WebConfig, Anson.from_file(jsn_path))
+        except: web_cfg = WebConfig()
+
+        web_cfg.port = settings.webport
+
+        web_cfg.toFile(jsn_path)
+
+    def stop_web(self):
+        if self.httpd is not None:
             try:
-                httpd.shutdown()
+                self.httpd.shutdown()
+                if self.webth is not None:
+                    self.webth.join()
             except OSError as e:
                 print(e)
 
-    def start_web(self, webport=8900, jservport=8964):
+    @staticmethod
+    def start_web(webport=8900):
         import http.server
         import socketserver
         import threading
     
         # PORT = 8900
-        httpdeamon: [socketserver.TCPServer] = [None]
+        httpdeamon: [socketserver.TCPServer] = []
     
         # To serve gzip, see
         # https://github.com/ksmith97/GzipSimpleHTTPServer/blob/master/GzipSimpleHTTPServer.py#L244
@@ -571,7 +669,7 @@ class InstallerCli:
                 with socketserver.TCPServer(("", webport), WebHandler) as httpd:
                     print("Starting web at port", webport)
                     try:
-                        httpdeamon[0] = httpd
+                        httpdeamon.insert(0, httpd) #[0] = httpd
                         httpd.serve_forever()
                         Utils.logi(f'Web service at port {webport} stopped.')
                     except OSError:
@@ -595,9 +693,9 @@ class InstallerCli:
         thr.start()
 
         count = 0
-        while count < 5 and httpdeamon[0] is None:
+        while count < 5 and (len(httpdeamon) == 0 or httpdeamon[0] is None):
             count += 1
             time.sleep(0.2)
-    
-        print(httpdeamon[0])
-        return httpdeamon[0], thr
+
+        print(httpdeamon[0] if len(httpdeamon) > 0 else 'httpd == None')
+        return httpdeamon[0] if len(httpdeamon) > 0 else None, thr
