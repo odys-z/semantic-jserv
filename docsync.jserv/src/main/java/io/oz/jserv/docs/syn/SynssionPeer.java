@@ -43,6 +43,7 @@ import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
+import io.odysz.semantic.syn.Exchanging;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
@@ -54,7 +55,6 @@ import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.parts.AnDbField;
 import io.odysz.transact.sql.parts.ExtFilePaths;
 import io.odysz.transact.sql.parts.Sql;
-import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
@@ -64,9 +64,9 @@ import io.oz.jserv.docs.syn.SyncReq.A;
 public class SynssionPeer {
 
 	/** /syn/[synode-id] */
-	final String uri_syn; //  = "/syn";
+	final String uri_syn;
 	/** /sys/[synode-id] */
-	final String uri_sys; //  = "/sys";
+	final String uri_sys;
 
 	/** {@link #uri_syn}/[peer] */
 	final String clienturi;
@@ -83,7 +83,6 @@ public class SynssionPeer {
 	SynodeMode mymode;
 
 	SynDomanager domanager;
-//	DBSyntableBuilder b0; 
 
 	ExessionPersist xp;
 	public SynssionPeer xp(ExessionPersist xp) {
@@ -289,8 +288,7 @@ public class SynssionPeer {
 					Path localpath = ref.downloadPath(peer, conn, client.ssInfo());
 					tobeclean.add(localpath);
 
-					client.download206(uri_syn, Port.syntier, ref.syntabl,
-						localpath, ref.breakpoint,
+					client.download206(uri_syn, peerjserv, Port.syntier, localpath, ref,
 
 						isNull(proc4test) ?
 						(rx, r, bx, b, r_null) -> {
@@ -322,10 +320,21 @@ public class SynssionPeer {
 								.whereEq(refm.fromPeer, peer)
 								.whereEq(refm.io_oz_synuid, ref.uids))
 						.u(tb.instancontxt(targetpth, localRobt));
+				} catch (ExchangeException e) {
+					if (e instanceof SemanticException
+							&& ((ExchangeException) e).requires() == Exchanging.ext_docref) {
+						Utils.logi("[%s] Rechead a DocRef while resolving a docref (%s, %s, %s)",
+								Thread.currentThread().getName(), ref.syntabl, ref.docId, ref.uids);
+						try {
+							incRefTry(xp.trb, docmeta, refm, peer, exclude, ref.uids, localRobt, 2);
+						} catch (TransException | SQLException e1) {
+							throw new NullPointerException(e1.getMessage());
+						}
+					}
 				} catch (IOException | TransException | SQLException e) {
 					e.printStackTrace();
 					try {
-						incTried(xp.trb, docmeta, refm, peer, exclude, ref.uids, localRobt);
+						incRefTry(xp.trb, docmeta, refm, peer, exclude, ref.uids, localRobt);
 					} catch (TransException | SQLException e1) {
 						throw new NullPointerException(e1.getMessage());
 					}
@@ -349,10 +358,10 @@ public class SynssionPeer {
 		}, f("Doc Resolver %s -> %s", this.mynid, peer));
 	}
 
-	static void incTried(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm,
-			String peer, String excludeTag, String uids, IUser robt) throws TransException, SQLException {
+	static void incRefTry(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm,
+			String peer, String excludeTag, String uids, IUser robt, int... inc) throws TransException, SQLException {
 		trb.update(refm.tbl, robt)
-			.nv(refm.tried, Funcall.add(refm.tried, 1))
+			.nv(refm.tried, Funcall.add(refm.tried, isNull(inc) ? 1 : inc[0]))
 			.nv(refm.excludeTag,  excludeTag)
 			.whereEq(refm.io_oz_synuid, uids)
 			.whereEq(refm.syntabl, docmeta.tbl)
@@ -378,6 +387,7 @@ public class SynssionPeer {
 					.beforeFirst();
 			if (rs.next())
 				return ((DocRef) rs.getAnson(docm.uri))
+						.uids(rs.getString(refm.io_oz_synuid))
 						.docId(rs.getString(docm.pk))
 						.resname(rs.getString(docm.resname));
 			else return null;

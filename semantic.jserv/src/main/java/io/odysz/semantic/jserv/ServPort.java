@@ -224,7 +224,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
     	String range = req.getHeader("Range");
     	if (!isblank(range)) {
     		try {
-				Docs206.get206(req, resp);
+				Docs206.get206v2(req, resp);
 			} catch (SsException e) {
 				write(resp, err(MsgCode.exSession, e.getMessage()));
 				resp.setHeader("Error", e.getMessage());

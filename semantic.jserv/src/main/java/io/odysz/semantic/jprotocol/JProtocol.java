@@ -32,6 +32,9 @@ public class JProtocol {
 		public static final String If_none_match = "If-None-Match";
 		public static final String If_modified_since = "If-Modified-Since";
 		public static final String If_range = "If-Range";
+
+		public static final String Reason   = "Reason";
+		public static final String AnsonReq = "Anson-req";
 	}
 
 	/**
