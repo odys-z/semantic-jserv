@@ -230,13 +230,13 @@ public class ExpDoctierservTest {
 		Thread yresolve = SynodetierJoinTest
 				.jetties[Y].syngleton.domanager(zsu)
 				.synssion(ck[X].synode())
-				.createResolver(ck[Y].docm);
+				.createResolver();
 
 		logrst("Create DocRef streaming thread at X...", ++section);
 		Thread xresolve = SynodetierJoinTest
 				.jetties[X].syngleton.domanager(zsu)
 				.synssion(ck[Y].synode())
-				.createResolver(ck[X].docm);
+				.createResolver();
 
 		// Now y doesn't keep any docref as it is deleted. But this branch should work.
 		logrst("Start DocRef streaming thread at Y...", ++section);
@@ -287,8 +287,7 @@ public class ExpDoctierservTest {
 
 			assertEquals(ck[a].synb.syndomx.synode, xdref.synoder);
 			assertTrue(xdref.uids.startsWith(ck[a].synb.syndomx.synode + ","));
-			// assertEquals(ck[y].docm.uri, xdref.uri64);
-			 assertTrue(xdref.uri64.startsWith("$VOL"));
+			assertTrue(xdref.uri64.startsWith("$VOL"));
 
 			xatys++;
 			xdlst.add(xdref);
@@ -344,12 +343,12 @@ public class ExpDoctierservTest {
 			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
 
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, "settings.json")
-						// .jserv(jserv)
 						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
 			// checker
-			ck[i] = new Docheck(azert, zsu, servs_conn[i], jetties[i].syngleton().domanager(zsu).synode,
-							SynodeMode.peer, cfgs[i].chsize, docm, null, true);
+			ck[i] = new Docheck(azert, zsu, servs_conn[i],
+								jetties[i].syngleton().domanager(zsu).synode,
+								SynodeMode.peer, cfgs[i].chsize, docm, null, true);
 		}
 		
 		return nodex;

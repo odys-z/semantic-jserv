@@ -110,6 +110,8 @@ class DoclientierTest {
 		thr.start();
 		
 		jserv_xyzw = ExpDoctierservTest.jservs();
+		
+		SynssionPeer.testDisableAutoDocRef = true;
 	}
 
 	@Test

@@ -140,7 +140,7 @@
 	<dependency>
 		<groupId>io.github.odys-z</groupId>
 		<artifactId>antson</artifactId>
-		<version>0.9.118-SNAPSHOT</version>
+		<version>0.9.118</version>
 	</dependency>
 	
 	<!-- https://mvnrepository.com/artifact/commons-daemon/commons-daemon -->

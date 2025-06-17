@@ -43,5 +43,10 @@
   		<uri>/album/syn</uri>
   		<conn>docsyn</conn>
   	</c>
+	<c>
+		<!-- between synodes -->
+  		<uri>/syn</uri>
+  		<conn>docsyn</conn>
+	</c>
   </t>
 </conns>

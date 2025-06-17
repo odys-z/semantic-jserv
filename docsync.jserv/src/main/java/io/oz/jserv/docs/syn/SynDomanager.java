@@ -179,20 +179,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 	
-//	public SynDomanager opendomain(OnDomainUpdate... onok) 
-//		throws AnsonException, IOException, TransException, SQLException, ReflectiveOperationException, GeneralSecurityException {
-//		// musteqs(syncfg.domain, dmgr.domain());
-//
-////		SyncUser usr = ((SyncUser)AnSession
-////				.loadUser(admin, sysconn))
-////				.deviceId(dmgr.synode);
-//
-//		loadSynclients(tb0);
-//		return openSynssions(admin, onok);
-//	}
-
 	/**
-	 * Update (synchronize) this domain, each peer in a new thread.
+	 * Update (synchronize) this domain, peer by peer.
 	 * Can be called by request handler and timer.
 	 * 
 	 * <p>Updating event is ignored if the clientier is running.</p>

@@ -172,13 +172,13 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * 
+	 * Update my jserv-url according to settings and IP.
 	 * @param https
 	 * @param jserv_album jserv's url path
 	 * @param synconn can be null, for ignoring db update
 	 * @param synm can be null, for ignoring db update
 	 * @param mysid
-	 * @return
+	 * @return jserv-url
 	 * @throws TransException
 	 * @throws SQLException
 	 */

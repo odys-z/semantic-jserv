@@ -25,6 +25,7 @@ import static io.odysz.semantic.jprotocol.JProtocol.Headers.Server;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -61,6 +62,7 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.Exchanging;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
@@ -196,18 +198,23 @@ public abstract class Docs206 {
 			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
 			writeContent(resp, resource, ranges, "");
 		}
+		catch (FileNotFoundException e) {
+			logT(new Object() {}, "File is not found, reply SC_CONFLICT 409 Bad Request. Message:\n%s",
+				e.getMessage());
+			headerr(resp, msg, HttpServletResponse.SC_CONFLICT, e);
+		}
 		catch (SQLException e) {
 			e.printStackTrace();
 			headerr(resp, msg, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
 		}
 		catch (ExchangeException e) {
 			// That's a doc-ref, nothing to download
-			logT(new Object() {}, "ExchangeException, reply 409 Bad Request. Message:\n%s",
+			logT(new Object() {}, "ExchangeException, reply SC_CONFLICT 409 Bad Request. Message:\n%s",
 				e.getMessage());
 			headerr(resp, msg, HttpServletResponse.SC_CONFLICT, e);
 		}
 		catch (IllegalArgumentException e) {
-			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+			logT(new Object() {}, "IllegalArgumentException, reply SC_BAD_REQUEST400 Bad Request. Message:\n%s",
 				e.getMessage());
 			headerr(resp, msg, HttpServletResponse.SC_BAD_REQUEST, e);
 		} catch (TransException e) {
@@ -386,16 +393,29 @@ public abstract class Docs206 {
 		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
 	}
 
+	/**
+	 * Handling syntity's doc downloading, an extend and hard syn-docref function into lower layer
+	 * than docsync.jserv, with semantics and metas from DBSyntaransBuilder.
+	 * 
+	 * @param request
+	 * @param req
+	 * @param st
+	 * @param usr
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws IOException
+	 */
 	protected static File getDocByUid(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr)
 			throws TransException, SQLException, IOException {
 
 		String conn = Connects.uri2conn(req.uri());
-		// ExpDocTableMeta meta = getMeta.get(req.uri());
 		if (req.doc == null || isblank(req.doc.uids) || isblank(req.docTabl))
 			throw new IllegalArgumentException(f("File informoation is missing: uids: %s, table %s",
 					req.doc == null ? null : req.doc.uids, req.docTabl));
 
-		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
+		// ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
+		ExpDocTableMeta meta = (ExpDocTableMeta) DBSynTransBuilder.getEntityMeta(conn, req.docTabl);
 
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
@@ -417,7 +437,7 @@ public abstract class Docs206 {
 		File f = new File(p);
 		if (f.exists() && f.isFile())
 			return f;
-		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
+		else throw new FileNotFoundException("File not found: " + rs.getString(meta.fullpath));
 	}
 
 	/**

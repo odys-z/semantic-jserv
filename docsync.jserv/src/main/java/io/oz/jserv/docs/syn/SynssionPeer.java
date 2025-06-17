@@ -48,12 +48,14 @@ import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.util.DAHelper;
+import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.parts.AnDbField;
 import io.odysz.transact.sql.parts.ExtFilePaths;
+import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.Sql;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
@@ -63,6 +65,10 @@ import io.oz.jserv.docs.syn.SyncReq.A;
  */
 public class SynssionPeer {
 
+	public static boolean testDisableAutoDocRef = false;
+
+	/** */
+	final String conn;
 	/** /syn/[peer-synode-id] */
 	final String uri_syn;
 	/** /sys/[peer-synode-id] */
@@ -72,7 +78,6 @@ public class SynssionPeer {
 	final String clienturi;
 
 	final String mynid;
-	final String conn;
 	final String peer;
 	public final String peerjserv;
 
@@ -109,6 +114,7 @@ public class SynssionPeer {
 	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
 		// ISSUE
 		// TODO It's better to change this to /syn/me, not /syn/peer once Connects is refactored. 
+		// TODO for synodes' uri_syn, the semantics is hard bound to SynodeConfig.conn.
 		this.uri_syn   = "/syn/" + peer; // domanager.synode;
 		this.uri_sys   = "/sys/" + peer; // domanager.synode;
 
@@ -138,8 +144,6 @@ public class SynssionPeer {
 
 		SyncResp rep = null;
 		try {
-			// start session
-
 			if (debug)
 				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
 						+ "\n=============================================================\n",
@@ -185,6 +189,12 @@ public class SynssionPeer {
 					reqb = synclose(rep.exblock);
 					rep = exespush(peer, A.exclose, reqb);
 				}
+				
+				if (!testDisableAutoDocRef)
+					resolveRef206Stream(new DBSyntableBuilder(domanager));
+				else
+					Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
+							domanager.synode, domanager.domain(), peer);
 			}
 		} catch (IOException e) {
 			Utils.warn(e.getMessage());
@@ -266,105 +276,112 @@ public class SynssionPeer {
 		return client.commit(q, errHandler);
 	}
 
-	void resolveDocrefs(ExpDocTableMeta docmeta) throws Exception {
-		createResolver(docmeta).start();
-	}
-	
-	public Thread createResolver(ExpDocTableMeta docmeta, OnProcess... proc4test)
+	/**
+	 * @deprecated only for test - this is a part of domain updating process.
+	 * @param docmeta
+	 * @param proc4test
+	 * @return
+	 * @throws Exception
+	 */
+	public Thread createResolver(OnProcess... proc4test)
 			throws Exception {
 		DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
 
-		// TODO not thread pool?
 		return new Thread(() -> {
-			// 206 downloader
-			SynDocRefMeta refm = domanager.refm;
-			String exclude = encode64(getRandom());
+			resolveRef206Stream(tb, proc4test);
+		}, f("Doc Resolver %s -> %s", this.mynid, peer));
+	}
 
-			DocRef ref = nextRef(xp.trb, docmeta, refm, peer, exclude);
+	private void resolveRef206Stream(DBSyntableBuilder tb, OnProcess... report2test) {
+		// 206 downloader
+		SynDocRefMeta refm = domanager.refm;
+		String exclude = encode64(getRandom());
 
-			HashSet<String> tobeclean = new HashSet<String>();
-			if (ref != null)
-				tobeclean.add(DocRef.resolveFolder(peer, conn, ref.syntabl, client.ssInfo()));
+		DocRef ref = nextRef(xp.trb, refm, peer, exclude);
 
-			final DocRef[] _arref = new DocRef[] {ref};
+		HashSet<String> tobeclean = new HashSet<String>();
+		if (ref != null)
+			tobeclean.add(DocRef.resolveFolder(peer, conn, ref.syntabl, client.ssInfo()));
 
-			ExpDocRobot localRobt = new ExpDocRobot(
-							client.ssInfo().uid(), null, client.ssInfo().userName());
+		final DocRef[] _arref = new DocRef[] {ref};
 
-			while (_arref[0] != null) {
-				try {
-					String localpath = ref.downloadPath(peer, conn, client.ssInfo());
-					ExtFilePaths extpths = DocRef.createExtPaths(conn, docmeta.tbl, ref);
-					String targetpth = extpths.decodeUriPath();
+		ExpDocRobot localRobt = new ExpDocRobot(
+						client.ssInfo().uid(), null, client.ssInfo().userName());
 
-					if (debug)
-						Utils.logT(new Object() {}, " Begin downloading %s\n-> %s", localpath, targetpth);
+		while (ref != null) {
+			ExpDocTableMeta docm = ref.docm;
+			try {
+				String localpath = ref.downloadPath(peer, conn, client.ssInfo());
+				ExtFilePaths extpths = DocRef.createExtPaths(conn, docm.tbl, ref);
+				String targetpth = extpths.decodeUriPath();
 
-					client.download206(uri_syn, peerjserv, Port.syntier, localpath, ref,
+				if (debug)
+					Utils.logT(new Object() {}, " Begin downloading %s\n-> %s", localpath, targetpth);
 
-						isNull(proc4test) ?
-						(rx, r, bx, b, r_null) -> {
-							// save breakpoint
-							_arref[0].breakpoint(bx);
-							try {
-								DAHelper.updateFieldByPk(tb, tb.nonsemantext(), docmeta, _arref[0].docId,
-										docmeta.uri, _arref[0].toBlock(AnDbField.jopt), localRobt);
-							} catch (SQLException e) {
-								e.printStackTrace();
-								return true;
-							}
-							// TODO check record updating
-							return false;
-						} : proc4test[0]);
+				client.download206(uri_syn, peerjserv, Port.syntier, localpath, ref,
 
-					Utils.touchDir(FilenameUtils.getFullPath(targetpth));
-					Files.move(Paths.get(localpath), Paths.get(targetpth), StandardCopyOption.REPLACE_EXISTING);
-
-					tb.update(docmeta.tbl, localRobt)
-						.nv(docmeta.uri, extpths.dburi(true))
-						.whereEq(docmeta.pk, ref.docId)
-						.whereEq(docmeta.io_oz_synuid, ref.uids)
-						.post(tb.delete(refm.tbl)
-								.whereEq(refm.fromPeer, peer)
-								.whereEq(refm.io_oz_synuid, ref.uids))
-						.u(tb.nonsemantext());
-				} catch (ExchangeException e) {
-					if (e instanceof SemanticException
-							&& ((ExchangeException) e).requires() == Exchanging.ext_docref) {
-						Utils.logi("[%s] Rechead a DocRef while resolving a docref (%s, %s, %s)",
-								Thread.currentThread().getName(), ref.syntabl, ref.docId, ref.uids);
+					isNull(report2test) ?
+					(rx, r, bx, b, r_null) -> {
+						// save breakpoint
+						_arref[0].breakpoint(bx);
 						try {
-							incRefTry(xp.trb, docmeta, refm, peer, exclude, ref.uids, localRobt, 2);
-						} catch (TransException | SQLException e1) {
-							throw new NullPointerException(e1.getMessage());
+							DAHelper.updateFieldByPk(tb, tb.nonsemantext(), docm, _arref[0].docId,
+									docm.uri, _arref[0].toBlock(AnDbField.jopt), localRobt);
+						} catch (SQLException e) {
+							e.printStackTrace();
+							return true;
 						}
-					}
-				} catch (IOException | TransException | SQLException e) {
-					e.printStackTrace();
+						// TODO check record updating
+						return false;
+					} : report2test[0]);
+
+				Utils.touchDir(FilenameUtils.getFullPath(targetpth));
+				
+				Files.move(Paths.get(localpath), Paths.get(targetpth), StandardCopyOption.REPLACE_EXISTING);
+
+				tb.update(docm.tbl, localRobt)
+					.nv(docm.uri, extpths.dburi(true))
+					.whereEq(docm.pk, ref.docId)
+					.whereEq(docm.io_oz_synuid, ref.uids)
+					.post(tb.delete(refm.tbl)
+							.whereEq(refm.fromPeer, peer)
+							.whereEq(refm.io_oz_synuid, ref.uids))
+					.u(tb.nonsemantext());
+			} catch (ExchangeException e) {
+				if (e instanceof SemanticException
+						&& ((ExchangeException) e).requires() == Exchanging.ext_docref) {
+					Utils.logi("[%s] Rechead a peer DocRef while resolving a docref (%s, %s, %s)",
+							Thread.currentThread().getName(), ref.syntabl, ref.docId, ref.uids);
 					try {
-						incRefTry(xp.trb, docmeta, refm, peer, exclude, ref.uids, localRobt);
+						incRefTry(xp.trb, docm, refm, peer, exclude, ref.uids, localRobt, 2);
 					} catch (TransException | SQLException e1) {
 						throw new NullPointerException(e1.getMessage());
 					}
 				}
-				finally {
-					ref = nextRef(xp.trb, docmeta, refm, peer, exclude);
-					_arref[0] = ref;
+			} catch (IOException | TransException | SQLException e) {
+				e.printStackTrace();
+				try {
+					incRefTry(xp.trb, docm, refm, peer, exclude, ref.uids, localRobt);
+				} catch (TransException | SQLException e1) {
+					throw new NullPointerException(e1.getMessage());
 				}
 			}
-			
-			for (String ps : tobeclean) {
-				try {
-					if (ps != null) {
-						Path p = Paths.get(ps); 
-						Utils.logi("[%s:DocRef Resolver] Removing temporary dowloading folder: %s",
-							Thread.currentThread().getName(), p.toAbsolutePath());
-						FileUtils.deleteDirectory(p.toFile());
-					}
-				} catch (IOException e) { }
+			finally {
+				ref = nextRef(xp.trb, refm, peer, exclude);
+				_arref[0] = ref;
 			}
-
-		}, f("Doc Resolver %s -> %s", this.mynid, peer));
+		}
+		
+		for (String ps : tobeclean) {
+			try {
+				if (ps != null) {
+					Path p = Paths.get(ps); 
+					Utils.logi("[%s:DocRef Resolver] Removing temporary dowloading folder: %s",
+						Thread.currentThread().getName(), p.toAbsolutePath());
+					FileUtils.deleteDirectory(p.toFile());
+				}
+			} catch (IOException e) { }
+		}
 	}
 
 	static void incRefTry(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm,
@@ -378,27 +395,69 @@ public class SynssionPeer {
 			;
 	}
 
-	static DocRef nextRef(DBSyntableBuilder synb, ExpDocTableMeta docm,
-			SynDocRefMeta refm, String peer, String excludeTag) {
+	/**
+	 * @param synb
+	 * @param refm
+	 * @param peer
+	 * @param excludeTag used for try only once on each updating running - tried time is increased.
+	 * @return
+	 */
+	static DocRef nextRef(DBSyntableBuilder synb, SynDocRefMeta refm,
+			String peer, String excludeTag) {
 		try {
 			Query q = synb
 				.select(refm.tbl, "ref")
-				.cols_byAlias("ref", refm.io_oz_synuid).cols_byAlias("d", docm.pk, docm.uri, docm.resname)
-				.je("ref", docm.tbl, "d", refm.io_oz_synuid, docm.io_oz_synuid)
-				.whereEq(refm.syntabl, docm.tbl)
+				.cols(refm.io_oz_synuid, refm.syntabl)
 				.whereEq(refm.fromPeer, peer)
-				.where(Sql.condt("%s is null", refm.excludeTag).or(Sql.condt("%s <> '%s'", refm.excludeTag, excludeTag)))
+				.where(Sql.condt("%s is null", refm.excludeTag)
+						  .or(Sql.condt("%s <> '%s'", refm.excludeTag, excludeTag)))
 				.orderby(refm.tried)
 				.limit(1);
 
+			ISemantext semantxt = synb.instancontxt();
 			AnResultset rs = ((AnResultset) q
-					.rs(synb.instancontxt()).rs(0))
+					.rs(semantxt).rs(0))
 					.beforeFirst();
-			if (rs.next())
+			if (rs.next()) {
+				ExpDocTableMeta docm = (ExpDocTableMeta) semantxt
+						.getTableMeta(rs.getString(refm.syntabl));
+
+				String uids = rs.getString(refm.io_oz_synuid);
+				try {
+				rs = ((AnResultset) synb.pushDebug(true)
+					.batchSelect(docm.tbl)
+					.cols(docm.pk, docm.uri, docm.resname, docm.io_oz_synuid).col(Funcall.isEnvelope(docm.uri), "isenvl")
+					.whereEq(docm.io_oz_synuid, uids)
+					.before(synb // delete records of which the uri is not an envelope now
+						.delete(refm.tbl)
+						.whereEq(refm.syntabl, docm.tbl)
+						.whereEq(refm.fromPeer, peer)
+						.whereNotIn(refm.io_oz_synuid, synb
+							.select(docm.tbl)
+							.col(docm.io_oz_synuid)
+							.where(op.eq, Funcall.isEnvelope(docm.uri), "1"))) // envelopes should be much fewer
+					.rs(synb.instancontxt())
+					.rs(0))
+					.nxt();
+				} finally {synb.popDebug();}
+
+				if (!rs.getBoolean("isenvl")) {
+					Utils.warnT(new Object() {},
+						"Suspesiously, deleting a syn_docref record of an expired task?\n%s -> %s, %s, uids: %s",
+						synb.syndomx.synode, peer, docm.tbl, uids);
+
+					synb.delete(refm.tbl)
+						.whereEq(refm.syntabl, uids)
+						.d(synb.instancontxt());
+					return null;
+				}
+					
 				return ((DocRef) rs.getAnson(docm.uri))
-						.uids(rs.getString(refm.io_oz_synuid))
+						.uids(rs.getString(docm.io_oz_synuid))
 						.docId(rs.getString(docm.pk))
-						.resname(rs.getString(docm.resname));
+						.resname(rs.getString(docm.resname))
+						.docm(docm);
+			}
 			else return null;
 		} catch (AnsonException | SQLException | TransException e) {
 			e.printStackTrace();
