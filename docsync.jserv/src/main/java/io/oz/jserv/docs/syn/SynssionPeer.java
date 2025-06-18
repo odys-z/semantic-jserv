@@ -65,7 +65,7 @@ import io.oz.jserv.docs.syn.SyncReq.A;
  */
 public class SynssionPeer {
 
-	public static boolean testDisableAutoDocRef = false;
+	public static boolean testDisableAutoDocRef = true;
 
 	/** */
 	final String conn;
