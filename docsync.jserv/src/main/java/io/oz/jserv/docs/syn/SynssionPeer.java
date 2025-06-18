@@ -359,6 +359,7 @@ public class SynssionPeer {
 					}
 				}
 			} catch (IOException | TransException | SQLException e) {
+				Utils.warn("Download Doc for ref error: %s[%s], %s ", ref.docId, ref.uids, ref.pname);
 				e.printStackTrace();
 				try {
 					incRefTry(xp.trb, docm, refm, peer, exclude, ref.uids, localRobt);

@@ -55,7 +55,7 @@ public class JProtocol {
 	
 	/**
 	 * Progress notifier called by block chain.
-	 * Parameter blockResp provide the last uploaded block's sequence number.
+	 * Parameter {@code resp} provide the last uploaded block's sequence number.
 	 * <p>
 	 * rows: rx of total rows <br>
 	 * file blocks: bx of total blocks</p>
@@ -63,6 +63,20 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
+		/**
+		 * Progress notifier called by block chain.
+		 * Parameter {@code resp} provide the last uploaded block's sequence number.
+		 * 
+		 * @param rx row index
+		 * @param rows rows
+		 * @param bx block index
+		 * @param blocks blocks
+		 * @param resp response
+		 * @return force breakup
+		 * @throws IOException
+		 * @throws AnsonException
+		 * @throws TransException
+		 */
 		boolean proc(int rx, int rows, int bx, int blocks, AnsonResp resp)
 			throws IOException, AnsonException, TransException;
 	}

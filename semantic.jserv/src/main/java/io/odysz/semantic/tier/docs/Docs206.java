@@ -189,7 +189,7 @@ public abstract class Docs206 {
 			msg = ansonMsg(req);
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			List<Range> ranges = replyHeadersv2(req, resp, msg, usr);
-			// Resource resource = new Resource(getDocByEid(req, msg.body(0), st, usr), msg.body(0).doc.recId);
+			
 			Resource resource = new Resource(isblank(msg.body(0).doc.uids) ?
 					getDocByEid(req, msg.body(0), st, usr) :
 					getDocByUid(req, msg.body(0), st, usr),

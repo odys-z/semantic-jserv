@@ -226,10 +226,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} catch (InterruptedIOException | SocketException e) {
 				// wait for network
 				// TODO we need API for immediately trying
+				Utils.logi("[ExpSynodetier.debug] Reschedule syn-worker with error: %s", e.getMessage());
 				if (debug)
 					e.printStackTrace();
-				Utils.logi("reschedule syn-worker with error: %s", e.getMessage());
-				reschedule(5);
+				schedualed = reschedule(30);
 			} catch (TransException | SQLException e) {
 				// local errors, stop for fixing
 				e.printStackTrace();
@@ -264,6 +264,12 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	}
 
 	private ScheduledFuture<?> reschedule(int waitmore) {
+		try {
+			if (schedualed != null)
+				schedualed.cancel(true);
+			Thread.sleep(50);
+		} catch (InterruptedException e) { }
+
 		syncInSnds = Math.min(maxSyncInSnds, syncInSnds + waitmore);
 		return scheduler.scheduleWithFixedDelay(
 				worker[0], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
@@ -272,7 +278,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 	public void stopScheduled(int sTimeout) {
 		Utils.logi("[%s] cancling sync-worker ... ", synid);
-		schedualed.cancel(true);
+
+		if (schedualed != null)
+			schedualed.cancel(true);
+
 		scheduler.shutdown();
 		try {
 		    if (!scheduler.awaitTermination(sTimeout, TimeUnit.SECONDS)) {
