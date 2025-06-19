@@ -159,6 +159,7 @@ public class SynssionPeer {
 				// lock remote
 				while (rep.synact() == trylater) {
 					if (debug)
+						// ISSUE if Y is interrupted, or shutdown, X can be dead locking
 						Utils.logT(new Object() {},
 								"%s: %s is locked, waiting...",
 								mynid, peer);
