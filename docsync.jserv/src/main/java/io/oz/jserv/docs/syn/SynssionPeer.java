@@ -198,7 +198,8 @@ public class SynssionPeer {
 			}
 		} catch (IOException e) {
 			Utils.warn(e.getMessage());
-		} catch (ExchangeException e) {
+//		} catch (ExchangeException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			try {
 				ExchangeBlock reqb = synclose(rep.exblock);
@@ -206,8 +207,8 @@ public class SynssionPeer {
 			} catch (TransException | SQLException | AnsonException | IOException e1) {
 				e1.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+//		} catch (Exception e) {
+//			e.printStackTrace();
 		}
 		finally { domanager.unlockme(); }
 		return this;
