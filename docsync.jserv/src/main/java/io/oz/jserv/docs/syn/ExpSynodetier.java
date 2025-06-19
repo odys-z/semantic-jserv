@@ -215,7 +215,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 				this.domanager0.asyUpdomains(
 					(dom, synode, peer, xp) -> {
-						if (debug) Utils.logi("[%s] On update: %s [%s:%s]",
+						if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
 								synid, dom, domanager0.n0(), domanager0.stamp());
 					},
 					(synlocker) -> Math.random());
