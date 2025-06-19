@@ -159,7 +159,6 @@ public class SynssionPeer {
 				// lock remote
 				while (rep.synact() == trylater) {
 					if (debug)
-						// ISSUE if Y is interrupted, or shutdown, X can be dead locking
 						Utils.logT(new Object() {},
 								"%s: %s is locked, waiting...",
 								mynid, peer);
@@ -170,6 +169,7 @@ public class SynssionPeer {
 					Thread.sleep((long) (sleep * 1000)); // wait for next try
 					domanager.lockme(onMutext);
 
+					// ISSUE if Y is interrupted, or shutdown, X can be dead locking
 					rep = exespush(peer, A.exinit, reqb);
 				}
 
