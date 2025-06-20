@@ -1,7 +1,7 @@
 @REM @echo "Run this file from upper dir, e. g. run: winsrv/install-html-w.bat"
 @echo "--- Installing Web-dist Windows Service ---"
 
-@REM BEGIN Python modifying section, do not modify except debugging (Not using bat file arg for easy debugging)
+@REM BEGIN Python modifying section, by commands.install_htmlsrv. Do not modify except debugging (Not using bat file arg for easy debugging)
 @set jar_ver=0.1.6
 @REM END Python modifying section
 
