@@ -6,7 +6,6 @@ import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.turngreen;
-import static io.odysz.common.Utils.waiting;
 import static io.odysz.common.Utils.logrst;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
@@ -179,9 +178,10 @@ public class ExpDoctierservTest {
 		ck[Z].doc(0);
 
 		logrst("Synchronizing between synodes", ++section);
-		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y, ck);
-		awaitAll(lights, -1);
+//		waiting(lights, Y);
+//		SynodetierJoinTest.syncdomain(lights, Y, ck);
+//		awaitAll(lights, -1);
+		SynodetierJoinTest.syncdomain(Y, ck);
 
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -219,9 +219,10 @@ public class ExpDoctierservTest {
 		ck[Y].doc(3);
 		ck[X].doc(2);
 
-		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y, ck);
-		awaitAll(lights, -1);
+//		waiting(lights, Y);
+//		SynodetierJoinTest.syncdomain(lights, Y, ck);
+//		awaitAll(lights, -1);
+		SynodetierJoinTest.syncdomain(Y, ck);
 		
 		for (DocRef dr : assert_Arefs_atB(Y, X, 2, 0))
 			assertEquals(ck[Y].synode(), dr.synoder);

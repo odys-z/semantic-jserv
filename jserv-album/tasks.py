@@ -13,14 +13,14 @@ from glob import glob
 
 from anson.io.odysz.anson import Anson
 
-version = '0.7.3'
+version = '0.7.4'
 """
-synode.py3, jserv-album-0.7.3.jar
+synode.py3, jserv-album-0.7.4.jar
 """
 
 apk_ver = '0.7.2'
 
-html_jar_v = '0.1.6'
+html_jar_v = '0.1.7'
 """
 html-web-#.#.#.jar
 """

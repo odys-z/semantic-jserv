@@ -213,7 +213,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				this.domanager0
 					.openSynssions(domanager0.admin);
 
-				this.domanager0.asyUpdomains(
+				this.domanager0.updomains(
 					(dom, synode, peer, xp) -> {
 						if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
 								synid, dom, domanager0.n0(), domanager0.stamp());

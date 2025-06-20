@@ -1,7 +1,6 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
@@ -187,6 +186,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @param onUpdate callback 
 	 * 
 	 * @return this
+	 * @throws ExchangeException 
 	 * @throws IOException 
 	 * @throws SsException 
 	 * @throws AnsonException 
@@ -194,12 +194,11 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws InterruptedException 
 	 * @since 0.2.0
 	 */
-	public SynDomanager asyUpdomains(OnDomainUpdate onUpdate, OnMutexLock block)
-			throws SemanticException, AnsonException, SsException, IOException {
+	public SynDomanager updomains(OnDomainUpdate onUpdate, OnMutexLock block) throws ExchangeException {
 		if (sessions == null || sessions.size() == 0)
 			throw new ExchangeException(ready, null,
 						"Session pool is null at %s", synode);
-		new Thread(() -> { 
+//		new Thread(() -> { 
 			// tasks looping until finished
 			for (String peer : sessions.keySet()) {
 				ExessionPersist xp = sessions.get(peer).xp;
@@ -221,8 +220,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 			if (onUpdate != null)
 				onUpdate.ok(domain(), synode, null);
-		}, f("%1$s update [%2$s]", synode, domain()))
-		.start();
+//		}, f("%1$s update [%2$s]", synode, domain()))
+//		.start();
 
 		return this;
 	}

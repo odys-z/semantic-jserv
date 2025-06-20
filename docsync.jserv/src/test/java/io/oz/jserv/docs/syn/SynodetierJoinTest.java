@@ -253,9 +253,10 @@ public class SynodetierJoinTest {
 		ck[Z].synodes(X, -1, Z);
 
 		Utils.logrst("Z sync domain", ++no);
-		waiting(lights, Z);
-		syncdomain(lights, Z);
-		awaitAll(lights, -1);
+//		waiting(lights, Z);
+//		syncdomain(lights, Z);
+//		awaitAll(lights, -1);
+		syncdomain(Z);
 
 		printChangeLines(ck);
 		printNyquv(ck, true);
@@ -264,9 +265,10 @@ public class SynodetierJoinTest {
 		ck[Z].synodes(X, -1, Z); // Z joined latter, no subs or Y's joining 
 
 		Utils.logrst("Y sync domain", ++no);
-		waiting(lights, Y);
-		syncdomain(lights, Y);
-		awaitAll(lights, -1);
+//		waiting(lights, Y);
+//		syncdomain(lights, Y);
+//		awaitAll(lights, -1);
+		syncdomain(Y);
 
 		printChangeLines(ck);
 		printNyquv(ck, true);
@@ -301,14 +303,15 @@ public class SynodetierJoinTest {
 		}
 	}
 
-	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
+//	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
+	public static void syncdomain(int tx, Docheck... ck)
 			throws SemanticException, SsException, IOException {
 
 		SynotierJettyApp t = jetties[tx];
 
 		for (String dom : t.syngleton().domains()) {
 			Utils.logi("Updating/synchronizing domain %s", dom);
-			t.syngleton().domanager(dom).asyUpdomains(
+			t.syngleton().domanager(dom).updomains(
 				(domain, mynid, peer, xp) -> {
 					if (!isNull(ck) && !isblank(peer))
 						try {
@@ -323,7 +326,7 @@ public class SynodetierJoinTest {
 
 					if (isblank(peer)) {
 						// finished domain, with or without errors
-						lights[tx] = true; 
+//						lights[tx] = true; 
 
 						if (eq(domain, dom)) 
 							Utils.logi("lights[%s] (%s) = true", tx, mynid);
