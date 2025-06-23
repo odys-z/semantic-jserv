@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -133,17 +134,17 @@ class BlockChainTest {
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");
 		ssinf.device = "local junit";
 		//  
-		b64 = AESHelper.encode64("1. Hello\n".getBytes());
+		b64 = AESHelper.encode64("1. Hello\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b0 = new DocsReq().blockUp(0, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("2. Bonjour\n".getBytes());
+		b64 = AESHelper.encode64("2. Bonjour\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b1 = new DocsReq().blockUp(1, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("3. こんにちは\n".getBytes());
+		b64 = AESHelper.encode64("3. こんにちは\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b2 = new DocsReq().blockUp(2, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("4. Привет\n".getBytes());
+		b64 = AESHelper.encode64("4. Привіт\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b3 = new DocsReq().blockUp(3, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("5. 안녕하세요\n".getBytes());
+		b64 = AESHelper.encode64("5. 안녕하세요\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b4 = new DocsReq().blockUp(4, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("6. नमस्ते \n".getBytes());
+		b64 = AESHelper.encode64("6. שלום\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b5 = new DocsReq().blockUp(5, resp, new String(b64), ssinf);
 
 		chain.appendBlock(b0)
@@ -169,11 +170,11 @@ class BlockChainTest {
 			l = br.readLine();
 			assertEquals(l, "3. こんにちは");
 			l = br.readLine();
-			assertEquals(l, "4. Привет");
+			assertEquals(l, "4. Привіт");
 			l = br.readLine();
 			assertEquals(l, "5. 안녕하세요");
 			l = br.readLine();
-			assertEquals(l, "6. नमस्ते ");
+			assertEquals(l, "6. שלום");
 		} finally {
 			br.close();
 			fr.close();
