@@ -1,7 +1,7 @@
 package io.oz.syntier.serv;
 
 /**
- * Report to Procrun.exe
+ * Windows service status for report to Procrun.exe
  */
 public class Winsrv {
 
