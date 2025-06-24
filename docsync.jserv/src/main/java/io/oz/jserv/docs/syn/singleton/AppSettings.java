@@ -303,6 +303,24 @@ public class AppSettings extends Anson {
 	public String localIp;
 
 	public int webport = 8900;
+	
+	/**
+	 * Is this synode behind a reverse proxy?
+	 * @since 0.2.5
+	 */
+	public boolean reversProxy;
+
+	/**
+	 * Synode IP exposed through a proxy.
+	 * @since 0.2.5
+	 */
+	public String webProxyIp;
+
+	/**
+	 * Synode port exposed through a proxy.
+	 * @since 0.2.5
+	 */
+	public int webProxyPort;
 
 	/** Connection Idle Seconds */
 	public float connIdleSnds;
@@ -436,7 +454,15 @@ public class AppSettings extends Anson {
 	}
 
 	public String getLocalWebroot(boolean https) {
-		return f("%s://%s", https ? "https" : "http", this.webrootLocal);
+		return f("%s://%s", https ? "https" : "http",
+				this.reversProxy ? this.webrootProxy(https) : this.webrootLocal);
+	}
+
+	private String webrootProxy(boolean https) {
+		if (!https && webProxyPort == 80 || https && webProxyPort == 443)
+			return webProxyIp;
+		else
+			return f("%s:%s", webProxyIp, webProxyPort);
 	}
 
 }
