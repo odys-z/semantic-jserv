@@ -10,7 +10,6 @@ from anson.io.odysz.common import Utils
 from invoke import task
 import zipfile
 import os
-# from glob import glob
 
 from anson.io.odysz.anson import Anson
 from src import zip2
