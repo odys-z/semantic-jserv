@@ -18,5 +18,5 @@ public interface ISynodeLocalExposer {
 	 * @throws IOException File IO errors
 	 * @throws SemanticException Handling configuration errors
 	 */
-	AppSettings onExpose(AppSettings settings, String domain, String synode);
+	AppSettings onExpose(AppSettings settings, String domain, String synode, boolean https);
 }

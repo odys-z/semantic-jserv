@@ -161,7 +161,7 @@ public class SynotierJettyApp {
 					.forName(settings.startHandler[0])
 					.getDeclaredConstructor()
 					.newInstance())
-					.onExpose(settings, this.syngleton.syncfg.domain, settings.jserv(this.syngleton.synode()));
+					.onExpose(settings, this.syngleton.syncfg.domain, settings.jserv(this.syngleton.synode()), this.syngleton.syncfg.https);
 			} catch (Exception e) {
 				warn("Exposing local resources failed!");
 				e.printStackTrace();
