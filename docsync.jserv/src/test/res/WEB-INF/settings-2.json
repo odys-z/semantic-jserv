@@ -1,6 +1,7 @@
 { "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
   "vol_name": "VOLUME_2",
-  "webrootLocal": null,
+  "proxyIp": null,
+  "webProxyPort": 0,
   "envars": {"Why-VOLUME_PRV": "this is not used but needed for suppressing errors in connects.xml",
       "WEBROOT_HUB": "http://119.8.29.27:8966",
       "VOLUME_PRV": "../../../../volumes-0.7/volume-prv"},
@@ -8,11 +9,13 @@
   "installkey": null,
   "startHandler": null,
   "volume": "../v-2",
+  "proxyPort": 0,
   "connIdleSnds": 0.0,
   "port": 8966,
   "jservs": {"X": "http://127.0.0.1:8964/jserv-album",
       "Y": "http://127.0.0.1:8965/jserv-album",
       "Z": "http://127.0.0.1:8966/jserv-album"},
+  "reversProxy": false,
   "localIp": null,
   "rootkey": "0123456789ABCDEF"
 }
