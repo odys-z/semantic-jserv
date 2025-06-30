@@ -326,7 +326,7 @@ public class AppSettings extends Anson {
 	 * Is this synode behind a reverse proxy?
 	 * @since 0.2.5
 	 */
-	public boolean reversProxy;
+	public boolean reverseProxy;
 
 	public HashMap<String, String> envars;
 
@@ -462,12 +462,12 @@ public class AppSettings extends Anson {
 	}
 
 	public String getJservroot(boolean https) {
-		return this.reversProxy ? this.jservProxy(https) : this.jserv(https);
+		return this.reverseProxy ? this.jservProxy(https) : this.jserv(https);
 	}
 
 	public String getLocalWebroot(boolean https) {
 		return f("%s://%s", https ? "https" : "http",
-				this.reversProxy ? this.webrootProxy(https) : this.webrootLocal(https));
+				this.reverseProxy ? this.webrootProxy(https) : this.webrootLocal(https));
 	}
 
 	/**

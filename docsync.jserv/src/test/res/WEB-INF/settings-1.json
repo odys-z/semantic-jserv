@@ -12,10 +12,10 @@
   "proxyPort": 0,
   "connIdleSnds": 0.0,
   "port": 8965,
+  "reverseProxy": false,
   "jservs": {"X": "http://127.0.0.1:8964/jserv-album",
       "Y": "http://127.0.0.1:8965/jserv-album",
       "Z": "http://127.0.0.1:8966/jserv-album"},
-  "reversProxy": false,
   "localIp": null,
   "rootkey": "0123456789ABCDEF"
 }
