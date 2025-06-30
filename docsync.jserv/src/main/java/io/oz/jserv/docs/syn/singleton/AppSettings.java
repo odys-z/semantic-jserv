@@ -157,9 +157,6 @@ public class AppSettings extends Anson {
 	 */
 	public AppSettings setupJserv(SynodeConfig cfg, String jserv_album) throws TransException, SQLException {
 
-//		if (len(this.jservs) == 0)
-//			throw new SemanticException("Design 0.2.3: AppSettings.jservs, from settings.json, cannot be empty.");
-
 		SynodeMeta synm = new SynodeMeta(cfg.synconn);
 
 		for (String peer : jservs.keySet()) {

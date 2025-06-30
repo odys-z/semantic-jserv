@@ -169,7 +169,8 @@ public class SynssionPeer {
 					Thread.sleep((long) (sleep * 1000)); // wait for next try
 					domanager.lockme(onMutext);
 
-					// ISSUE if Y is interrupted, or shutdown, X can be dead locking
+					// FIXME
+					// FIXME ISSUE if Y is interrupted, or shutdown, X can be dead locking
 					rep = exespush(peer, A.exinit, reqb);
 				}
 
@@ -199,7 +200,6 @@ public class SynssionPeer {
 			}
 		} catch (IOException e) {
 			Utils.warn(e.getMessage());
-//		} catch (ExchangeException e) {
 		} catch (Exception e) {
 			e.printStackTrace();
 			try {
@@ -208,8 +208,6 @@ public class SynssionPeer {
 			} catch (TransException | SQLException | AnsonException | IOException e1) {
 				e1.printStackTrace();
 			}
-//		} catch (Exception e) {
-//			e.printStackTrace();
 		}
 		finally { domanager.unlockme(); }
 		return this;
@@ -387,7 +385,11 @@ public class SynssionPeer {
 		}
 	}
 
-	static void incRefTry(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm,
+	private void pushDocRef2me() {
+		
+	}
+	
+ 	static void incRefTry(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm,
 			String peer, String excludeTag, String uids, IUser robt, int... inc) throws TransException, SQLException {
 		trb.update(refm.tbl, robt)
 			.nv(refm.tried, Funcall.add(refm.tried, isNull(inc) ? 1 : inc[0]))

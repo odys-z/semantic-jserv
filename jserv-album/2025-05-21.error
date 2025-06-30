@@ -1,7 +1,0 @@
-Error 2025-05-21
-================
-
-1. The respond from X29's exblock has 81 change log, and also 81 (16 devices + 65 photos) entities to be send.
-2. The external files are also loaded into exchange-blocks.
-3. When escaping one of mp4 file, throws OutOfMemoryError.
-4. Y201 report error on parsisng envelope, and X29, Y201 stop synchronize hereafter.
