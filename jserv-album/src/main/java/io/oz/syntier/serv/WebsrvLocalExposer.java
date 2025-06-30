@@ -31,7 +31,7 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 
 
 			hosts.host = synode;
-			hosts.localip = settings.reversProxy ? settings.proxyIp : settings.localIp;
+			hosts.localip = settings.reverseProxy ? settings.proxyIp : settings.localIp;
 
 			String jserv = f("%s://%s/jserv-album", https ? "https" : "http", settings.getJservroot(https));
 
