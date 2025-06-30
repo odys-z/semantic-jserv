@@ -77,13 +77,8 @@ def warn_msg(warn: str, details: object = None):
 class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        # self.httpd = None
-        # self.webth = None
-
         self.ui = Ui_InstallForm()
         self.ui.setupUi(self)
-
         self.root_path = 'registry'
         self.cli = InstallerCli()
 
@@ -110,35 +105,46 @@ class InstallerForm(QMainWindow):
             label.setText(text)
             err_msg(f'Generating QR Code Error. Please generate QR Code for:\n{text}', e)
 
+    # def gen_qr(self) -> Optional[dict]:
+    #     """
+    #     Generate ip, port and QR.
+    #     :return:
+    #     """
+    #
+    #     # settings don't have current IP
+    #     if len(self.ui.txtIP.text()) < 7:
+    #         try:
+    #             ip = self.cli.reportIp()
+    #         except OSError as e:
+    #             err_msg('Network IP can not be found. IP address must be manually set.\n{1}.', e)
+    #             return None
+    #
+    #         self.ui.txtIP.setText(ip)
+    #     elif self.ui.txtIP.text() == '0.0.0.0':
+    #         ip = InstallerCli.reportIp()
+    #     else:
+    #         ip = self.ui.txtIP.text()
+    #
+    #     port = self.cli.settings.port
+    #
+    #     iport = f'{ip}:{port}'
+    #     synode = self.ui.txtSynode.text()
+    #     data = getJservOption(synode, iport, False)
+    #
+    #     InstallerForm.set_qr_label(self.ui.lbQr, data)
+    #     return {"ip": ip, "port": port, "synodepy3": synode}
+
     def gen_qr(self) -> Optional[dict]:
         """
         Generate ip, port and QR.
         :return:
         """
 
-        # settings don't have current IP
-        if len(self.ui.txtIP.text()) < 7:
-            try:
-                ip = self.cli.reportIp()
-            except OSError as e:
-                err_msg('Network IP can not be found. IP address must be manually set.\n{1}.', e)
-                return None
-
-            self.ui.txtIP.setText(ip)
-        elif self.ui.txtIP.text() == '0.0.0.0':
-            ip = InstallerCli.reportIp()
-        else:
-            ip = self.ui.txtIP.text()
-
-        # try:
-        #     port = int(self.ui.txtPort.text(), 10)
-        # except Exception as e:
-        #     port = serv_port0
-        #     self.ui.txtPort.setText(str(port))
-        port = self.cli.settings.port
+        ip, port = self.getProxiedIp(self.cli.settings)
 
         iport = f'{ip}:{port}'
         synode = self.ui.txtSynode.text()
+
         data = getJservOption(synode, iport, False)
 
         InstallerForm.set_qr_label(self.ui.lbQr, data)
@@ -224,6 +230,10 @@ class InstallerForm(QMainWindow):
                 syncins=self.ui.txtSyncIns.text(),
                 port=self.ui.txtPort.text(),
                 webport=self.ui.txtWebport.text(),
+                webProxyPort=self.ui.txtWebport_proxy.text(),
+                reverseProxy=self.ui.chkReverseProxy.checkState() == Qt.CheckState.Checked,
+                proxyIp=self.ui.txtIP_proxy.text(),
+                proxyPort=self.ui.txtPort_proxy.text(),
                 volume=self.ui.txtVolpath.text())
 
             if self.validate():
@@ -242,6 +252,9 @@ class InstallerForm(QMainWindow):
                 except PortfolioException as e:
                     warn_msg('Configuration is updated with errors. Check the details.\n'
                              'If this is not switching volume, that is not correct' , e)
+
+                if self.ui.lbQr.pixmap is not None:
+                    self.gen_qr()
 
                 self.enableServInstall()
 
@@ -286,6 +299,16 @@ class InstallerForm(QMainWindow):
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
 
+    def updateChkReverse(self, check: bool):
+        if check == None:
+            check = self.ui.chkReverseProxy.checkState() == Qt.CheckState.Checked
+        else:
+            self.ui.chkReverseProxy.setChecked(check)
+
+        self.ui.txtIP_proxy.setEnabled(check)
+        self.ui.txtWebport_proxy.setEnabled(check)
+        self.ui.txtPort_proxy.setEnabled(check)
+
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         super().showEvent(event)
 
@@ -308,13 +331,17 @@ class InstallerForm(QMainWindow):
 
             if self.cli.isinstalled() and self.cli.hasrun():
                 # self.gen_qr()
-                ip = InstallerCli.reportIp()
-                port = self.cli.settings.port
+                # ip = InstallerCli.reportIp()
+                # port = self.cli.settings.port
+                self.gen_qr()
+                # ip, port = self.getProxiedIp(self.cli.settings)
+                #
+                # InstallerForm.set_qr_label(self.ui.lbQr,
+                #                            getJservOption(self.cli.registry.config.synid,
+                #                                           f'{ip}:{port}',
+                #                                           self.cli.registry.config.https))
 
-                InstallerForm.set_qr_label(self.ui.lbQr,
-                                           getJservOption(self.cli.registry.config.synid,
-                                                          f'{ip}:{port}',
-                                                          self.cli.registry.config.https))
+            self.updateChkReverse(self.cli.settings.reverseProxy)
 
         if event.type() == QEvent.Type.Show:
             bindInitial(self.root_path)
@@ -330,6 +357,7 @@ class InstallerForm(QMainWindow):
                 self.ui.txtResroot.setText(self.root_path)
                 bindInitial(self.root_path)
 
+            self.ui.txtSynode.setEnabled(False)
             self.ui.bVolpath.clicked.connect(setVolumePath)
             self.ui.bRoot.clicked.connect(reloadRespath)
 
@@ -337,6 +365,8 @@ class InstallerForm(QMainWindow):
             self.ui.bPing.clicked.connect(self.pings)
             self.ui.bSetup.clicked.connect(self.save)
             self.ui.bValidate.clicked.connect(self.test_run)
+
+            self.ui.chkReverseProxy.clicked.connect(self.updateChkReverse)
 
             if Utils.get_os() == 'Windows':
                 self.ui.bWinserv.clicked.connect(self.installWinsrv)
@@ -367,6 +397,12 @@ class InstallerForm(QMainWindow):
     def bindSettings(self, settings: AppSettings):
         self.ui.txtPort.setText(str(settings.port))
         self.ui.txtWebport.setText(str(settings.webport))
+
+        self.ui.chkReverseProxy.setChecked(settings.reverseProxy)
+        self.ui.txtIP_proxy.setText(settings.proxyIp)
+        self.ui.txtPort_proxy.setText(str(settings.proxyPort))
+        self.ui.txtWebport_proxy.setText(str(settings.webProxyPort))
+
         self.ui.txtVolpath.setText(settings.Volume())
 
         if settings is not None:
@@ -392,6 +428,12 @@ class InstallerForm(QMainWindow):
                 event.accept()
         else:
             event.accept()
+
+    def getProxiedIp(self, settings):
+        ip, port = self.cli.reportIp(), settings.port
+        if settings.reverseProxy:
+            ip, port = settings.proxyIp, settings.proxyPort
+        return ip, port
 
 
 if __name__ == "__main__":

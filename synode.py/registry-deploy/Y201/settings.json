@@ -2,7 +2,7 @@
   "vol_name"    : "VOLUME_HOME",
   "volume"      : "../vol-Y201",
   "localIp"     : "10.0.0.2",
-  "reversProxy" : false,
+  "reverseProxy": false,
 
   "port"        : 8965,
 

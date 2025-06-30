@@ -419,8 +419,11 @@ class InstallerCli:
     def gen_html_srvname(self):
         return f'Synode.web-{web_ver}-{self.registry.config.synid}'
 
-    def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None, webport: str = None,
-                     volume: str = None, syncins: str = None, envars = None):
+    def updateWithUi(self, jservss: str = None, synid: str = None,
+                     reverseProxy=False,
+                     port: str = None, webport: str = None,
+                     proxyPort: str = None, proxyIp: str = None,
+                     volume: str = None, syncins: str = None, envars=None, webProxyPort=None):
         if envars is None:
             envars = {}
         if jservss is not None and len(jservss) > 8:
@@ -429,11 +432,17 @@ class InstallerCli:
         if not LangExt.isblank(synid):
             self.registry.config.synid = synid
 
+        self.settings.reverseProxy = reverseProxy
+        self.settings.proxyIp = proxyIp
+        self.settings.proxyPort = int(proxyPort)
+        self.settings.webProxyPort = int(webProxyPort)
+
         if not LangExt.isblank(port):
             self.settings.port = int(port)
 
         if not LangExt.isblank(webport):
             self.settings.webport = int(webport)
+
 
         if not LangExt.isblank(volume):
             if not os.path.exists(volume):
@@ -656,7 +665,6 @@ class InstallerCli:
                 """
                 self.log_request(code)
                 self.send_response_only(code, message)
-                # self.send_header('Server', self.version_string())
                 self.send_header("server", "Portfolio Synode 0.7/web")
                 self.send_header('Date', self.date_time_string())
     

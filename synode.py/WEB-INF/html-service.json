@@ -1,4 +1,11 @@
-{"type": "io.oz.srv.WebConfig",
- "port": 8900,
- "paths": [{"path": "/", "resource": "web-dist"}]
+{
+  "type": "io.oz.srv.WebConfig",
+  "port": 8900,
+  "paths": [{
+    "type": "io.oz.srv.ResPath",
+    "path": "/",
+    "resource": "web-dist",
+    "allowDir": false
+  }],
+  "startHandler": null
 }

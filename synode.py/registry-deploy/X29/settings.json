@@ -2,7 +2,7 @@
   "vol_name"    : "VOLUME_HOME",
   "volume"      : "../vol-X29",
   "localIp"     : "10.0.0.2",
-  "reversProxy" : true,
+  "reverseProxy" : true,
   "proxyIp"     : "10.0.0.1",
   "port"        : 8964,
   "proxyPort"   : 8964,
