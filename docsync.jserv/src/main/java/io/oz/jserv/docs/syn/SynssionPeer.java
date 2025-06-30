@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
@@ -29,11 +30,14 @@ import io.odysz.anson.AnsonException;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
+import io.odysz.jclient.syn.Doclientier;
 import io.odysz.jclient.syn.ExpDocRobot;
+import io.odysz.jclient.syn.IFileProvider;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.JProtocol.OnDocsOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
@@ -47,6 +51,9 @@ import io.odysz.semantic.syn.Exchanging;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -192,11 +199,15 @@ public class SynssionPeer {
 					rep = exespush(peer, A.exclose, reqb);
 				}
 				
-				if (!testDisableAutoDocRef)
-					resolveRef206Stream(new DBSyntableBuilder(domanager));
+				if (!testDisableAutoDocRef) {
+					DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
+					resolveRef206Stream(tb);
+					pushDocRef2me(tb, peer);
+				}
 				else
 					Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
 							domanager.synode, domanager.domain(), peer);
+
 			}
 		} catch (IOException e) {
 			Utils.warn(e.getMessage());
@@ -280,8 +291,9 @@ public class SynssionPeer {
 	 * @deprecated only for test - this is a part of domain updating process.
 	 * @param docmeta
 	 * @param proc4test
-	 * @return
+	 * @return worker thread
 	 * @throws Exception
+	 * @since 0.2.4
 	 */
 	public Thread createResolver(OnProcess... proc4test)
 			throws Exception {
@@ -292,6 +304,12 @@ public class SynssionPeer {
 		}, f("Doc Resolver %s -> %s", this.mynid, peer));
 	}
 
+	/**
+	 * [not synsession managed]
+	 * @param tb
+	 * @param report2test
+	 * @since 0.2.4
+	 */
 	private void resolveRef206Stream(DBSyntableBuilder tb, OnProcess... report2test) {
 		// 206 downloader
 		SynDocRefMeta refm = domanager.refm;
@@ -385,10 +403,19 @@ public class SynssionPeer {
 		}
 	}
 
-	private void pushDocRef2me() {
-		
-	}
-	
+	/**
+	 * @param trb
+	 * @param docmeta
+	 * @param refm
+	 * @param peer
+	 * @param excludeTag
+	 * @param uids
+	 * @param robt
+	 * @param inc
+	 * @throws TransException
+	 * @throws SQLException
+	 * @since 0.2.4
+	 */
  	static void incRefTry(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm,
 			String peer, String excludeTag, String uids, IUser robt, int... inc) throws TransException, SQLException {
 		trb.update(refm.tbl, robt)
@@ -405,7 +432,8 @@ public class SynssionPeer {
 	 * @param refm
 	 * @param peer
 	 * @param excludeTag used for try only once on each updating running - tried time is increased.
-	 * @return
+	 * @return next doc-ref task
+	 * @since 0.2.4
 	 */
 	static DocRef nextRef(DBSyntableBuilder synb, SynDocRefMeta refm,
 			String peer, String excludeTag) {
@@ -428,8 +456,7 @@ public class SynssionPeer {
 						.getTableMeta(rs.getString(refm.syntabl));
 
 				String uids = rs.getString(refm.io_oz_synuid);
-				try {
-				rs = ((AnResultset) synb.pushDebug(true)
+				rs = ((AnResultset) synb
 					.batchSelect(docm.tbl)
 					.cols(docm.pk, docm.uri, docm.resname, docm.io_oz_synuid).col(Funcall.isEnvelope(docm.uri), "isenvl")
 					.whereEq(docm.io_oz_synuid, uids)
@@ -444,7 +471,6 @@ public class SynssionPeer {
 					.rs(synb.instancontxt())
 					.rs(0))
 					.nxt();
-				} finally {synb.popDebug();}
 
 				if (!rs.getBoolean("isenvl")) {
 					Utils.warnT(new Object() {},
@@ -472,6 +498,57 @@ public class SynssionPeer {
 
 //	public void pingPeers() {
 //	}
+
+	/**
+	 * [not synsession managed]
+	 * @param tb
+	 * @param peer
+	 * @since 0.2.5
+	 */
+	private void pushDocRef2me(DBSyntableBuilder tb, String peer) {
+		SyncResp resp = queryDocRefPage2me();
+		while (resp != null && resp.docrefs_uids != null && resp.docrefs_uids.length > 0) {
+			pushDocRefPage(tb, resp.docrefs_uids);
+			
+			resp = queryDocRefPage2me();
+		}
+	}
+
+
+	/**
+	 * 
+	 * @param tb
+	 * @param docrefs_uids
+	 * @return 
+	 * @throws SQLException 
+	 * @throws IOException 
+	 * @throws TransException 
+	 * @throws AnsonException 
+	 * @since 0.2.5
+	 */
+	private List<DocsResp> pushDocRefPage(DBSyntableBuilder tb, String[] docrefs_uids)
+			throws AnsonException, TransException, IOException, SQLException {
+		OnError err = null;
+		String synuri;
+		String tbl;
+		List<IFileDescriptor> videos;
+		IFileProvider fileProvider;
+		int blocksize;
+		ExpSyncDoc templage;
+		OnProcess proc;
+		OnDocsOk docOk;
+		// videos = queryMyFils(docrefs_uids);
+		return Doclientier.pushBlocks(client, synuri, tbl, videos, fileProvider, blocksize, templage,
+				proc, docOk, err);
+	}
+
+	/**
+	 * @since 0.2.5
+	 * @return query results, with {@link SyncResp#docrefs_uids}
+	 */
+	private SyncResp queryDocRefPage2me() {
+		return null;
+	}
 
 	/**
 	 * Go through the handshaking process of sing up to a domain. 

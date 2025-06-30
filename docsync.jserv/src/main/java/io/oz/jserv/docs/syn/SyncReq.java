@@ -8,7 +8,13 @@ import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
+/**
+ * @since 0.2.3
+ */
 public class SyncReq extends UserReq {
+	/**
+	 * @since 0.2.3
+	 */
 	public static class A {
 		/** on joining */
 		public static final String exchange= "ex/exchange";
@@ -19,7 +25,24 @@ public class SyncReq extends UserReq {
 		public static final String initjoin = "join/init";
 		public static final String closejoin= "join/close";
 		
+		/**
+		 * @since 0.2.4
+		 */
 		public static final String resolveRef = "ref/reslove"; 
+		
+		/**
+		 * @since 0.2.5
+		 */
+		public static final String queryRef2me = "r/docref";
+
+		/**
+		 * @since 0.2.5
+		 */
+		public static final String startDocrefPush = "u/ref-b0";
+
+		public static final String docRefBlockUp   = "u/ref-bi";
+		public static final String docRefBlockEnd  = "u/ref-b9";
+		public static final String docRefBlockAbort= "u/ref-bx";
 	}
 
 	ExchangeBlock exblock;

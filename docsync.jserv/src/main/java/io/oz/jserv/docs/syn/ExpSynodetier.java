@@ -40,6 +40,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -130,6 +131,17 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 			else if (A.exclose.equals(a))
 				rsp = usr.<SynssionServ>synssion().onclosex(req, usr);
+
+			else if (A.queryRef2me.equals(a))
+				rsp = domanager0.queryRef2Peer(req, usr);
+			else if (A.startDocrefPush.equals(a))
+				rsp = domanager0.onDocRefPushStart(req, usr);
+			else if (A.docRefBlockUp.equals(a))
+				rsp = domanager0.onDocRefUploadBlock(req, usr);
+			else if (A.docRefBlockEnd.equals(a))
+				rsp = domanager0.onDocRefEndBlock(req, usr);
+			else if (A.docRefBlockAbort.equals(a))
+				rsp = domanager0.onDocRefAbortBlock(req, usr);
 
 			else 
 				throw new SemanticException("Request.a, %s, can not be handled at port %s",
