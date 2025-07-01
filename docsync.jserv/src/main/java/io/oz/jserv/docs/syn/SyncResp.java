@@ -2,11 +2,10 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.unexpect;
 
-import java.util.ArrayList;
-
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.syn.ExchangeBlock;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
 /**
  * @since 0.2.3
@@ -51,6 +50,18 @@ public class SyncResp extends AnsonResp {
 
 	public SyncResp docrefs(String[] uids) {
 		this.docrefs_uids = uids;
+		return this;
+	}
+
+	ExpSyncDoc docByRef;
+	public SyncResp doc(ExpSyncDoc doc) {
+		this.docByRef = doc;
+		return this;
+	}
+
+	int blockSeq;
+	public SyncResp blockSeq(int seq) {
+		blockSeq = seq;
 		return this;
 	}
 

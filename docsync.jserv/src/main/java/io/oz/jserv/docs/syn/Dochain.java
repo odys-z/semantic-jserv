@@ -1,9 +1,6 @@
 package io.oz.jserv.docs.syn;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.stream.Collectors;
@@ -11,7 +8,6 @@ import java.util.stream.Stream;
 
 import io.odysz.anson.AnsonField;
 import io.odysz.common.EnvPath;
-import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;

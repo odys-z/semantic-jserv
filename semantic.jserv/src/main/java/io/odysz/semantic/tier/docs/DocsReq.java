@@ -11,11 +11,12 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.meta.DocRef;
+import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 
-public class DocsReq extends UserReq {
+public class DocsReq extends UserReq implements IBlock {
 	public static class A {
 		/**
 		 * Action: read records for synodes synchronizing.
@@ -189,8 +190,8 @@ public class DocsReq extends UserReq {
 				: syncingPage.clientPaths.keySet();
 	}
 
-	long blockSeq;
-	public long blockSeq() { return blockSeq; } 
+	int blockSeq;
+	public int blockSeq() { return blockSeq; } 
 
 	public DocsReq nextBlock;
 
@@ -273,7 +274,7 @@ public class DocsReq extends UserReq {
 		return blockUp(seq, resp.xdoc, b64, ssinf);
 	}
 
-	public DocsReq blockUp(long sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(int sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
 		String uri64 = b64.toString();
 		return blockUp(sequence, doc, uri64, usr);
 	}
@@ -291,7 +292,7 @@ public class DocsReq extends UserReq {
 	 * @return this
 	 * @throws SemanticException
 	 */
-	public DocsReq blockUp(long sequence, IFileDescriptor doc, String b64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(int sequence, IFileDescriptor doc, String b64, SessionInf usr) throws SemanticException {
 		this.device = new Device(usr.device, null);
 		if (isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
@@ -356,4 +357,16 @@ public class DocsReq extends UserReq {
 		this.doc = doc;
 		return this;
 	}
+
+	@Override
+	public ExpSyncDoc doc() { return doc; }
+
+	@Override
+	public IBlock nextBlock(IBlock block) {
+		this.nextBlock = (DocsReq) block;
+		return this;
+	}
+
+	@Override
+	public IBlock nextBlock() { return nextBlock; }
 }

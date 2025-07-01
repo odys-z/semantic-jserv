@@ -13,6 +13,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
@@ -26,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -40,12 +44,13 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.DocRef;
+import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.BlockChain;
-import io.odysz.semantic.tier.docs.DocsReq;
-import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
@@ -352,7 +357,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		String tempDir = ((DocUser)usr).touchTempDir(conn, tbl);
 
-		BlockChain chain = new BlockChain(tbl, tempDir, req.exblock.srcnode, null);
+		BlockChain chain = new BlockChain(tbl, tempDir, req.exblock.srcnode, new ExpSyncDoc(req.docref));
 
 		String id = ExpDoctier.chainId(usr, req.docref.uids);
 
@@ -360,9 +365,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			throw new SemanticException("Why started again?");
 
 		blockChains.put(id, chain);
-		DocRef dr = new DocRef(req.exblock.srcnode, null, id, null).breakpoint(0); //.blockseq(-1);
-		return new SyncResp().docref(dr);
-//				.blockSeq(-1)
+		return new SyncResp().doc(chain.doc)
+				.blockSeq(-1);
 //				.doc((ExpSyncDoc) new ExpSyncDoc()
 //					.clientname(chain.doc.clientname())
 //					.cdate(body.doc.createDate)
@@ -376,16 +380,18 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	}
 
 	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr) throws IOException, TransException {
-		// return ExpDoctier.uploadBlock(blockChains, req, usr);
 		String id = ExpDoctier.chainId(usr, req.docref.uids);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must be accessed after starting chain is confirmed.");
 
 		BlockChain chain = blockChains.get(id);
-		chain.appendBlock(req.toDocReq());
+		chain.appendBlock(req);
+		
+		updateDocRef(req);
 
-		return new SyncResp();
-//				.blockSeq(req.blockSeq())
+		return new SyncResp()
+				.blockSeq(req.blockSeq())
+				.doc(chain.doc);
 //				.doc((ExpSyncDoc) new ExpSyncDoc()
 //					.clientname(chain.doc.clientname())
 //					.cdate(chain.doc.createDate)
@@ -393,7 +399,57 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	}
 
 	public SyncResp onDocRefEndBlock(SyncReq req, DocUser usr) throws SAXException, Exception {
-//		return ExpDoctier.endBlock(this, blockChains, null, req, null, false);
+		String chaid = ExpDoctier.chainId(usr, req.docref.uids);
+		BlockChain chain = null;
+		if (blockChains.containsKey(chaid)) {
+			blockChains.get(chaid).closeChain();
+			chain = blockChains.remove(chaid);
+		} else
+			throw new SemanticException("Ending a block chain which is not exists.");
+
+		verifyDomain(req);
+		
+		String conn = Connects.uri2conn(req.uri());
+		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, chain.docTabl); // TODO :docTabl
+
+		ExpSyncDoc photo = chain.doc;
+		
+		
+		DBSynTransBuilder b = new DBSynTransBuilder(domanager0);
+		// String pid = DocUtils.createFileBy64(b, conn, photo, usr, meta);
+		String pid = resolvePhysicalDoc(b, conn, photo, usr, req.docref);
+
+		if (Anson.startEnvelope(photo.uri64))
+			Utils.warnT(new Object() {}, "Must be verfified: Ignoring file moving since envelope is saved into the uri field. TODO wrap this into somewhere, not here.");
+		else {
+			// TODO FIXME move this to DocUtils.createFileBy64()
+			// move file
+			String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
+
+			if (debug)
+				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
+
+			Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+		}
+
+		return new SyncResp()
+				.blockSeq(req.blockSeq())
+				.doc(chain.doc.recId(pid));
+	}
+
+
+	private void verifyDomain(SyncReq req) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void updateDocRef(SyncReq req) {
+		// update range into doc-ref
+	}
+
+	private String resolvePhysicalDoc(DBSynTransBuilder b, String conn, ExpSyncDoc photo, DocUser usr,
+			DocRef docref) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 

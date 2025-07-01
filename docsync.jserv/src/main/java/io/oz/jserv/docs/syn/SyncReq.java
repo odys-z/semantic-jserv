@@ -7,13 +7,13 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
 /**
  * @since 0.2.3
  */
-public class SyncReq extends UserReq {
+public class SyncReq extends UserReq implements IBlock {
 	/**
 	 * @since 0.2.3
 	 */
@@ -74,12 +74,49 @@ public class SyncReq extends UserReq {
 	 * @since 0.2.5
 	 */
 	ExpSyncDoc doc;
+
+	/** doc data [start-inclucive, end-exclucive] */
+	long[] range;
+
+	SyncReq nextblock;
+
 	/**
-	 * Convert to DocsReq when {@link #doc} is available.
-	 * @return a doc block to be managed
 	 * @since 0.2.5
 	 */
-	public DocsReq toDocReq() {
-		return new DocsReq().doc(this.doc);
+	@Override
+	public IBlock nextBlock(IBlock block) {
+		return this.nextblock = (SyncReq) block;
+	}
+
+	/**
+	 * @since 0.2.5
+	 */
+	@Override
+	public IBlock nextBlock() { return nextblock; }
+
+	/**
+	 * @since 0.2.5
+	 */
+	@Override
+	public IBlock blockSeq(int seq) {
+		this.blockSeq = seq;
+		return this;
+	}
+
+	int blockSeq;
+	/**
+	 * @since 0.2.5
+	 */
+	@Override
+	public int blockSeq() {
+		return blockSeq;
+	}
+
+	/**
+	 * @since 0.2.5
+	 */
+	@Override
+	public ExpSyncDoc doc() {
+		return doc;
 	}
 }
