@@ -30,10 +30,10 @@ import io.odysz.anson.AnsonException;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
-import io.odysz.jclient.syn.Doclientier;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.jclient.syn.IFileProvider;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.CRUD;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -48,6 +48,7 @@ import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.Exchanging;
+import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
@@ -268,7 +269,7 @@ public class SynssionPeer {
 
 	SyncResp exespush(String peer, String a, ExchangeBlock reqb)
 			throws SemanticException, AnsonException, IOException {
-
+		Utils.warnT(new Object() {}, "??????????????????????? not a bug? - %s", peer);
 		SyncReq req = (SyncReq) new SyncReq(null, peer)
 					.exblock(reqb)
 					.a(a);
@@ -548,11 +549,28 @@ public class SynssionPeer {
 	}
 
 	/**
+	 * Request {@link A#queryRef2me}.
 	 * @since 0.2.5
 	 * @return query results, with {@link SyncResp#docrefs_uids}
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
 	 */
-	private SyncResp queryDocRefPage2me() {
-		return null;
+	SyncResp queryDocRefPage2me() throws SemanticException, AnsonException, IOException {
+		String[] act = AnsonHeader.usrAct(uri_syn, CRUD.R, A.queryRef2me, mynid);
+		AnsonHeader header = client.header().act(act);
+
+		SyncReq req = (SyncReq) new SyncReq()
+				.exblock(new ExchangeBlock(domanager.domain(), mynid, peer, ExessionAct.mode_client))
+				.a(A.queryRef2me); 
+
+		AnsonMsg<SyncReq> q = client // accept any page size specified by server
+				.<SyncReq>userReq(uri_syn, Port.syntier, req)
+				.header(header);
+
+		SyncResp resp = client.commit(q, errHandler);
+
+		return resp;
 	}
 
 	///////////////////////////////////

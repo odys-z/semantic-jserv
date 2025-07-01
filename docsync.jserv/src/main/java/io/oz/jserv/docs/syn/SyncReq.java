@@ -33,6 +33,7 @@ public class SyncReq extends UserReq implements IBlock {
 		public static final String resolveRef = "ref/reslove"; 
 		
 		/**
+		 * Query my doc-refs from a peer synode.
 		 * @since 0.2.5
 		 */
 		public static final String queryRef2me = "r/docref";

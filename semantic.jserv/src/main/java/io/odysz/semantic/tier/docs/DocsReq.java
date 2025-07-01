@@ -20,7 +20,6 @@ public class DocsReq extends UserReq implements IBlock {
 	public static class A {
 		/**
 		 * Action: read records for synodes synchronizing.
-		 * For client querying matching (syncing) docs, use {@link #records} instead. 
 		 * @see DocsTier#list(DocsReq, IUser)
 		 * @deprecated
 		 * */
@@ -31,11 +30,8 @@ public class DocsReq extends UserReq implements IBlock {
 
 		/**
 		 * Action: read records for client path matching.
-		 * For synodes synchronizing, use {@link #syncdocs} instead. 
-		 * 
-		 * @deprecated now clients only match paths with local DB.
-		 */
 		public static final String records = "r/list";
+		 */
 		
 		/** @deprecated function not used */
 		public static final String mydocs = "r/my-docs";

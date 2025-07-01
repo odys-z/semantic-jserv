@@ -116,11 +116,11 @@ public class BlockChain {
 
 		waitings = new DocsReq().blockSeq(-1);
 		
-		// this.doc = doc;
+		this.doc = doc;
 	}
 
 	/**
-	 * REVIEWED 2025-05-27 File is written block by block to disk and memory should be released.
+	 * REVIEWED 2025-05-27 Files are written block by block to disk and memory must be released.
 	 * @param blockReq
 	 * @return this
 	 * @throws IOException

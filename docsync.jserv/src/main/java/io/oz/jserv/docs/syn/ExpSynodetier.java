@@ -45,6 +45,7 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
@@ -52,8 +53,10 @@ import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
@@ -323,12 +326,44 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @param usr
 	 * @return uids according to syn_docref
 	 * @throws SQLException 
+	 * @throws TransException 
 	 * @since 0.2.5
-	 * @see SynssionPeer#nextRef(DBSyntableBuilder, io.odysz.semantic.meta.SynDocRefMeta, String, String)
+	 * @see SynssionPeer#nextRef(io.odysz.semantic.syn.DBSyntableBuilder, io.odysz.semantic.meta.SynDocRefMeta, String, String)
 	 */
-	public SyncResp onQueryRef2Peer(SyncReq req, DocUser usr) throws SQLException {
-		AnResultset rs = null;
-		return new SyncResp(domain).docrefs(rs.getStrArray("uids"));
+	public SyncResp onQueryRef2Peer(SyncReq req, DocUser usr) throws SQLException, TransException {
+		// let's brutally table by table
+		SynDocRefMeta refm = domanager0.refm;
+		String conn = Connects.uri2conn(req.uri());
+		AnResultset rs = (AnResultset) st
+				.batchSelect(refm.tbl)
+				.col(refm.syntabl)
+				.distinct(true)
+				.groupby(refm.syntabl)
+				.whereEq(refm.fromPeer, req.exblock.srcnode)
+				.limit(1)
+				.rs(st.instancontxt(conn, usr))
+				.rs(0);
+		
+		SyncResp resp = new SyncResp(domain);
+		if (rs.next()) {
+			String doctbl = rs.getString(refm.syntabl);
+			ISemantext ctx = st.instancontxt(conn, usr);
+			ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, doctbl);
+			rs = (AnResultset) st
+				.batchSelect(docm.tbl, "d")
+				// .col(Funcall.refile(new DocRef(domanager0.synode, docm, "NA", ctx)))
+				.cols(docm.pk, docm.io_oz_synuid)
+				.je("d", refm.tbl, "rf", "d." + docm.io_oz_synuid, "rf." + refm.io_oz_synuid)
+				.whereEq(refm.fromPeer, req.exblock.srcnode)
+				.whereEq(refm.syntabl, doctbl)
+				.limit(16)
+				.rs(ctx)
+				.rs(0);
+
+			return resp.docrefs(rs.getStrArray(docm.io_oz_synuid));
+		}
+
+		return resp;
 	}
 
 	private HashMap<String, BlockChain> blockChains;
@@ -367,10 +402,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		blockChains.put(id, chain);
 		return new SyncResp().doc(chain.doc)
 				.blockSeq(-1);
-//				.doc((ExpSyncDoc) new ExpSyncDoc()
-//					.clientname(chain.doc.clientname())
-//					.cdate(body.doc.createDate)
-//					.fullpath(chain.doc.clientpath));
 	}
 
 	private void checkBlock0(DATranscxt st, String conn, SyncReq req, DocUser usr) {
@@ -392,10 +423,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		return new SyncResp()
 				.blockSeq(req.blockSeq())
 				.doc(chain.doc);
-//				.doc((ExpSyncDoc) new ExpSyncDoc()
-//					.clientname(chain.doc.clientname())
-//					.cdate(chain.doc.createDate)
-//					.fullpath(chain.doc.clientpath));
 	}
 
 	public SyncResp onDocRefEndBlock(SyncReq req, DocUser usr) throws SAXException, Exception {
