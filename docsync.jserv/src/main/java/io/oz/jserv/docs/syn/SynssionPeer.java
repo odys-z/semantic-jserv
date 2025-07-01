@@ -503,9 +503,14 @@ public class SynssionPeer {
 	 * [not synsession managed]
 	 * @param tb
 	 * @param peer
+	 * @throws SQLException 
+	 * @throws IOException 
+	 * @throws TransException 
+	 * @throws AnsonException 
 	 * @since 0.2.5
 	 */
-	private void pushDocRef2me(DBSyntableBuilder tb, String peer) {
+	private void pushDocRef2me(DBSyntableBuilder tb, String peer)
+			throws AnsonException, TransException, IOException, SQLException {
 		SyncResp resp = queryDocRefPage2me();
 		while (resp != null && resp.docrefs_uids != null && resp.docrefs_uids.length > 0) {
 			pushDocRefPage(tb, resp.docrefs_uids);

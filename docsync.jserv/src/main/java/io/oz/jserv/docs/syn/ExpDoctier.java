@@ -339,7 +339,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
 
-		// FIXME security breach?
 		String id = chainId(usr, chain.doc.clientpath);
 
 		if (blockChains.containsKey(id))

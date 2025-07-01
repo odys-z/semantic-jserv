@@ -401,48 +401,4 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return synlocker == null ? null : synlocker.sessionId();
 	}
 
-	/**
-	 * Response to {@link SyncReq.A#queryRef2me}
-	 * @param req
-	 * @param usr
-	 * @return uids according to syn_docref
-	 * @throws SQLException 
-	 * @since 0.2.5
-	 * @see SynssionPeer#nextRef(DBSyntableBuilder, io.odysz.semantic.meta.SynDocRefMeta, String, String)
-	 */
-	public SyncResp queryRef2Peer(SyncReq req, DocUser usr) throws SQLException {
-		AnResultset rs = null;
-		return new SyncResp(domain).docrefs(rs.getStrArray("uids"));
-	}
-
-	private HashMap<String, BlockChain> blockChains;
-
-	/**
-	 * Accept Doc pushing to doc-refs.
-	 * @param req
-	 * @param usr
-	 * @return response / reply
-	 * @throws SAXException 
-	 * @throws SQLException 
-	 * @throws TransException 
-	 * @throws IOException 
-	 * @since 0.2.5
-	 */
-	public SyncResp onDocRefPushStart(SyncReq req, DocUser usr)
-			throws IOException, TransException, SQLException, SAXException {
-		return ExpDoctier.startBlocks(tb0, blockChains, req, usr);
-	}
-
-	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr) throws IOException, TransException {
-		return ExpDoctier.uploadBlock(blockChains, req, usr);
-	}
-
-	public SyncResp onDocRefEndBlock(SyncReq req, DocUser usr) throws SAXException, Exception {
-		return ExpDoctier.endBlock(this, blockChains, null, req, null, dbg);
-	}
-
-	public SyncResp onDocRefAbortBlock(SyncReq req, DocUser usr) {
-		return ExpDoctier.abortBlock(blockChains, req, usr);
-	}
-
 }

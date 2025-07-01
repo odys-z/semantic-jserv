@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -27,6 +28,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
@@ -40,6 +42,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
@@ -133,15 +136,15 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				rsp = usr.<SynssionServ>synssion().onclosex(req, usr);
 
 			else if (A.queryRef2me.equals(a))
-				rsp = domanager0.queryRef2Peer(req, usr);
+				rsp = onQueryRef2Peer(req, usr);
 			else if (A.startDocrefPush.equals(a))
-				rsp = domanager0.onDocRefPushStart(req, usr);
+				rsp = onDocRefPushStart(req, usr);
 			else if (A.docRefBlockUp.equals(a))
-				rsp = domanager0.onDocRefUploadBlock(req, usr);
+				rsp = onDocRefUploadBlock(req, usr);
 			else if (A.docRefBlockEnd.equals(a))
-				rsp = domanager0.onDocRefEndBlock(req, usr);
+				rsp = onDocRefEndBlock(req, usr);
 			else if (A.docRefBlockAbort.equals(a))
-				rsp = domanager0.onDocRefAbortBlock(req, usr);
+				rsp = onDocRefAbortBlock(req, usr);
 
 			else 
 				throw new SemanticException("Request.a, %s, can not be handled at port %s",
@@ -304,4 +307,50 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		}
 		finally { running = false; }
 	}
+	
+	//////////////////////////////////// Doc-ref Service ///////////////////////////////
+	/**
+	 * Response to {@link SyncReq.A#queryRef2me}
+	 * @param req
+	 * @param usr
+	 * @return uids according to syn_docref
+	 * @throws SQLException 
+	 * @since 0.2.5
+	 * @see SynssionPeer#nextRef(DBSyntableBuilder, io.odysz.semantic.meta.SynDocRefMeta, String, String)
+	 */
+	public SyncResp onQueryRef2Peer(SyncReq req, DocUser usr) throws SQLException {
+		AnResultset rs = null;
+		return new SyncResp(domain).docrefs(rs.getStrArray("uids"));
+	}
+
+	private HashMap<String, BlockChain> blockChains;
+
+	/**
+	 * Accept Doc pushing to doc-refs.
+	 * @param req
+	 * @param usr
+	 * @return response / reply
+	 * @throws SAXException 
+	 * @throws SQLException 
+	 * @throws TransException 
+	 * @throws IOException 
+	 * @since 0.2.5
+	 */
+	public SyncResp onDocRefPushStart(SyncReq req, DocUser usr)
+			throws IOException, TransException, SQLException, SAXException {
+		return ExpDoctier.startBlocks(tb0, blockChains, req, usr);
+	}
+
+	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr) throws IOException, TransException {
+		return ExpDoctier.uploadBlock(blockChains, req, usr);
+	}
+
+	public SyncResp onDocRefEndBlock(SyncReq req, DocUser usr) throws SAXException, Exception {
+		return ExpDoctier.endBlock(this, blockChains, null, req, null, dbg);
+	}
+
+	public SyncResp onDocRefAbortBlock(SyncReq req, DocUser usr) {
+		return ExpDoctier.abortBlock(blockChains, req, usr);
+	}
+
 }
