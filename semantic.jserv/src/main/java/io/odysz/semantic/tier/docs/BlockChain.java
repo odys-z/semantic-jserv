@@ -33,10 +33,10 @@ public class BlockChain {
 	public final String docTabl;
 
 	public ExpSyncDoc doc;
-	public BlockChain doc(ExpSyncDoc doc) {
-		this.doc = doc;
-		return this;
-	}
+//	public BlockChain doc(ExpSyncDoc doc) {
+//		this.doc = doc;
+//		return this;
+//	}
 
 	/**
 	 * @deprecated
@@ -101,7 +101,7 @@ public class BlockChain {
 
 		waitings = new DocsReq().blockSeq(-1);
 		
-		this.doc = doc;
+		// this.doc = doc;
 	}
 
 	/**
@@ -138,6 +138,7 @@ public class BlockChain {
 			waitings.blockSeq = waitings.nextBlock.blockSeq;
 			waitings.nextBlock = waitings.nextBlock.nextBlock;
 		}
+		ofs.flush();
 		return this;
 	}
 
@@ -169,7 +170,8 @@ public class BlockChain {
 			// some packages lost
 			throw new TransException("Closing block chain. " +
 					"Blocks starting at block-seq = %s will be dropped. path: %s",
-					waitings.nextBlock.blockSeq, doc.clientpath);
+					// waitings.nextBlock.blockSeq, doc == null ? "[null doc]" : doc.clientpath);
+					waitings.nextBlock.blockSeq, waitings.nextBlock.doc == null ? "[null doc]" : waitings.nextBlock.doc.clientpath);
 		}
 
 		return outputPath;

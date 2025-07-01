@@ -352,7 +352,7 @@ public class DocsReq extends UserReq {
 		return this;
 	}
 
-	public AnsonBody doc(ExpSyncDoc doc) {
+	public DocsReq doc(ExpSyncDoc doc) {
 		this.doc = doc;
 		return this;
 	}

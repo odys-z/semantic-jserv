@@ -18,6 +18,16 @@ public class SyncResp extends AnsonResp {
 
 	/** @since 0.2.5 */
 	public String[] docrefs_uids;
+	
+	/**
+	 * Used, started by / in a doc-chain.
+	 * @since 0.2.5
+	 */
+	DocRef docref;
+	public SyncResp docref(DocRef dr) {
+		this.docref = dr;
+		return this;
+	}
 
 	public SyncResp() { }
 	

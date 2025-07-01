@@ -94,10 +94,6 @@ public class Dochain {
 			throw new SemanticException("Can not resolve saving folder for doc %s, user %s, with resolver %s",
 					body.doc.clientpath, usr.uid(), profiles.getClass().getName());
 		
-//		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id,
-//					body.doc.clientpath, body.doc.createDate, saveFolder)
-//				.device(usr.deviceId())
-//				.share(body.doc.shareby, body.doc.sharedate, body.doc.shareflag);
 		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
 
 		String id = chainId(usr, body);
@@ -110,12 +106,6 @@ public class Dochain {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
-				/*
-				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.clientname)
-					.cdate(body.doc.createDate)
-					.fullpath(chain.clientpath));
-				*/
 				.doc(chain.doc.uri64(null));
 	}
 
@@ -153,7 +143,6 @@ public class Dochain {
 	 * @return
 	 * @throws IOException
 	 * @throws TransException
-	 */
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
 		String id = chainId(usr, body);
 		if (!blockChains.containsKey(id))
@@ -169,9 +158,9 @@ public class Dochain {
 					.cdate(body.doc.createDate)
 					.fullpath(chain.doc.clientpath));
 	}
+	 */
 
 	/**
-	 * @deprecated not used?
 	 * @param body
 	 * @param usr for synode requires, it should be type SyncRobot
 	 * @param ok
@@ -180,7 +169,6 @@ public class Dochain {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 * @throws TransException
-	 */
 	DocsResp endBlock(DocsReq body, IUser usr, OnChainOk ok)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body);
@@ -209,6 +197,7 @@ public class Dochain {
 				.blockSeq(body.blockSeq())
 				.doc(photo.recId(pid));
 	}
+	 */
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
@@ -254,18 +243,6 @@ public class Dochain {
 
 		return DocUtils.createFileBy64((DBSynTransBuilder)st, conn, photo, usr, meta, post);
 	}
-
-//	public static String createFile(DATranscxt st, String conn, ExpSyncDoc photo,
-//			DocTableMeta meta, IUser usr, OnChainOk end)
-//			throws TransException, SQLException, IOException {
-//		Update post = null; // Docsyncer.onDocreate(photo, meta, usr);
-//
-//		if (end != null)
-//			post = end.onDocreate(post, photo, meta, usr);
-//
-//		return DocUtils.createFileB64(st, conn, photo, usr, meta, post);
-//	}
-
 
 	/**
 	 * Resolve file root with samantics handler of {@link smtype#extFilev2}.

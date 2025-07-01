@@ -5,7 +5,9 @@ import static io.odysz.semantic.syn.ExessionAct.*;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
+import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.syn.ExchangeBlock;
+import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 
 /**
@@ -46,7 +48,9 @@ public class SyncReq extends UserReq {
 	}
 
 	ExchangeBlock exblock;
-	public ExpSyncDoc doc;
+
+	/** Only used as a query condition, for resolving doc-refs. */
+	public DocRef docref;
 	
 	public SyncReq() {
 		super(null, null);
@@ -63,5 +67,19 @@ public class SyncReq extends UserReq {
 
 	public int synact() {
 		return exblock == null ? unexpect : exblock.synact();
+	}
+
+	/** 
+	 * data to be used for resolve doc-ref.
+	 * @since 0.2.5
+	 */
+	ExpSyncDoc doc;
+	/**
+	 * Convert to DocsReq when {@link #doc} is available.
+	 * @return a doc block to be managed
+	 * @since 0.2.5
+	 */
+	public DocsReq toDocReq() {
+		return new DocsReq().doc(this.doc);
 	}
 }

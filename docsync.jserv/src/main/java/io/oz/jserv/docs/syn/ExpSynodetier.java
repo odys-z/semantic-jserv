@@ -39,11 +39,14 @@ import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocsReq;
+import io.odysz.semantic.tier.docs.DocsResp;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -338,19 +341,65 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 */
 	public SyncResp onDocRefPushStart(SyncReq req, DocUser usr)
 			throws IOException, TransException, SQLException, SAXException {
-		return ExpDoctier.startBlocks(tb0, blockChains, req, usr);
+		String conn = Connects.uri2conn(req.uri());
+		String tbl  = req.docref.syntabl;
+
+		// source node == peer node,  uids is exists, timestamps match
+		checkBlock0(st, conn, req, (DocUser) usr);
+
+		if (blockChains == null)
+			blockChains = new HashMap<String, BlockChain>();
+
+		String tempDir = ((DocUser)usr).touchTempDir(conn, tbl);
+
+		BlockChain chain = new BlockChain(tbl, tempDir, req.exblock.srcnode, null);
+
+		String id = ExpDoctier.chainId(usr, req.docref.uids);
+
+		if (blockChains.containsKey(id))
+			throw new SemanticException("Why started again?");
+
+		blockChains.put(id, chain);
+		DocRef dr = new DocRef(req.exblock.srcnode, null, id, null).breakpoint(0); //.blockseq(-1);
+		return new SyncResp().docref(dr);
+//				.blockSeq(-1)
+//				.doc((ExpSyncDoc) new ExpSyncDoc()
+//					.clientname(chain.doc.clientname())
+//					.cdate(body.doc.createDate)
+//					.fullpath(chain.doc.clientpath));
+	}
+
+	private void checkBlock0(DATranscxt st, String conn, SyncReq req, DocUser usr) {
+//		if (isblank(req.docref.clientpath))
+//			throw new SemanticException("Doc's client-path must presenting in each pushing blocks.");
+
 	}
 
 	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr) throws IOException, TransException {
-		return ExpDoctier.uploadBlock(blockChains, req, usr);
+		// return ExpDoctier.uploadBlock(blockChains, req, usr);
+		String id = ExpDoctier.chainId(usr, req.docref.uids);
+		if (!blockChains.containsKey(id))
+			throw new SemanticException("Uploading blocks must be accessed after starting chain is confirmed.");
+
+		BlockChain chain = blockChains.get(id);
+		chain.appendBlock(req.toDocReq());
+
+		return new SyncResp();
+//				.blockSeq(req.blockSeq())
+//				.doc((ExpSyncDoc) new ExpSyncDoc()
+//					.clientname(chain.doc.clientname())
+//					.cdate(chain.doc.createDate)
+//					.fullpath(chain.doc.clientpath));
 	}
 
 	public SyncResp onDocRefEndBlock(SyncReq req, DocUser usr) throws SAXException, Exception {
-		return ExpDoctier.endBlock(this, blockChains, null, req, null, dbg);
+//		return ExpDoctier.endBlock(this, blockChains, null, req, null, false);
+		return null;
 	}
 
 	public SyncResp onDocRefAbortBlock(SyncReq req, DocUser usr) {
-		return ExpDoctier.abortBlock(blockChains, req, usr);
+//		return ExpDoctier.abortBlock(blockChains, req, usr);
+		return null;
 	}
 
 }

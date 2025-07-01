@@ -543,8 +543,8 @@ public class SynssionPeer {
 		OnProcess proc;
 		OnDocsOk docOk;
 		// videos = queryMyFils(docrefs_uids);
-		return Doclientier.pushBlocks(client, synuri, tbl, videos, fileProvider, blocksize, templage,
-				proc, docOk, err);
+		return null;
+		// return Doclientier.pushBlocks(client, synuri, tbl, videos, fileProvider, blocksize, templage, proc, docOk, err);
 	}
 
 	/**
@@ -555,6 +555,7 @@ public class SynssionPeer {
 		return null;
 	}
 
+	///////////////////////////////////
 	/**
 	 * Go through the handshaking process of sing up to a domain. 
 	 * 

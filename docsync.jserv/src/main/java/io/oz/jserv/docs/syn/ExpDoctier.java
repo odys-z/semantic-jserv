@@ -339,7 +339,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
 
-		String id = chainId(usr, chain.doc.clientpath);
+		String id = chainId(usr, body.doc.clientpath);
 
 		if (blockChains.containsKey(id))
 			throw new SemanticException("Why started again?");
@@ -348,9 +348,9 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return new DocsResp()
 				.blockSeq(-1)
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.doc.clientname())
+					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
-					.fullpath(chain.doc.clientpath));
+					.fullpath(body.doc.clientpath));
 	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
@@ -372,7 +372,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.doc.clientname())
+					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(body.doc.clientpath));
 	}
