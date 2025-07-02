@@ -117,6 +117,7 @@ public class BlockChain {
 		waitings = new DocsReq().blockSeq(-1);
 		
 		this.doc = doc;
+		this.doc.device(devid);
 	}
 
 	/**

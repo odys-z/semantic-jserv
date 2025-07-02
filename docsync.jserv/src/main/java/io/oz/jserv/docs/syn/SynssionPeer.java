@@ -8,6 +8,8 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.LangExt.str;
+import static io.odysz.common.LangExt.is;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.init;
@@ -15,28 +17,36 @@ import static io.odysz.semantic.syn.ExessionAct.ready;
 import static io.odysz.semantic.syn.ExessionAct.setupDom;
 import static io.odysz.semantic.syn.ExessionAct.trylater;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
+import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
+import io.odysz.common.AESHelper;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
+import io.odysz.jclient.syn.Doclientier;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.jclient.syn.IFileProvider;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.CRUD;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.JProtocol.OnDocsOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
@@ -52,12 +62,16 @@ import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
+import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
+import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query;
@@ -72,6 +86,8 @@ import io.oz.jserv.docs.syn.SyncReq.A;
 /**
  */
 public class SynssionPeer {
+
+	private static final int blocksize = 3 * 1024 * 1024;
 
 	public static boolean testDisableAutoDocRef = false;
 
@@ -513,8 +529,8 @@ public class SynssionPeer {
 	private void pushDocRef2me(DBSyntableBuilder tb, String peer)
 			throws AnsonException, TransException, IOException, SQLException {
 		SyncResp resp = queryDocRefPage2me();
-		while (resp != null && resp.docrefs_uids != null && resp.docrefs_uids.length > 0) {
-			pushDocRefPage(tb, resp.docrefs_uids);
+		while (resp != null && resp.docrefs != null && resp.docrefs.size() > 0) {
+			pushDocRefPage(tb, resp.docrefsTabl, resp.docrefs);
 			
 			resp = queryDocRefPage2me();
 		}
@@ -524,34 +540,211 @@ public class SynssionPeer {
 	/**
 	 * 
 	 * @param tb
-	 * @param docrefs_uids
-	 * @return 
+	 * @param docrefs
+	 * @return replies
 	 * @throws SQLException 
 	 * @throws IOException 
 	 * @throws TransException 
 	 * @throws AnsonException 
 	 * @since 0.2.5
 	 */
-	private List<DocsResp> pushDocRefPage(DBSyntableBuilder tb, String[] docrefs_uids)
+	private List<SyncResp> pushDocRefPage(DBSyntableBuilder tb, String docTabl, HashMap<String, DocRef> docrefs)
 			throws AnsonException, TransException, IOException, SQLException {
 		OnError err = null;
 		String synuri;
 		String tbl;
-		List<IFileDescriptor> videos;
-		IFileProvider fileProvider;
-		int blocksize;
-		ExpSyncDoc templage;
-		OnProcess proc;
-		OnDocsOk docOk;
-		// videos = queryMyFils(docrefs_uids);
+		ExpSyncDoc templage = null;
+		OnProcess proc = null;
+		OnDocsOk docOk = null;
+
+		return pushBlocks(client, uri_syn, docTabl, docrefs,
+				new IFileProvider() {}, templage, proc, docOk, err);
+	}
+
+	private IFileDescriptor queryMyFils(String tabl, DocRef docrefs) {
+		List<IFileDescriptor> videos = new ArrayList<IFileDescriptor>();
+		videos.add((ExpSyncDoc) new ExpSyncDoc()); 
+					// .fullpath(FilenameUtils.concat(localFolder, filename)));
 		return null;
-		// return Doclientier.pushBlocks(client, synuri, tbl, videos, fileProvider, blocksize, templage, proc, docOk, err);
+	}
+
+	private List<SyncResp> pushBlocks(SessionClient client, String uri, String tbl, HashMap<String, DocRef> docrefs,
+			IFileProvider fileProvider, ExpSyncDoc template,
+			OnProcess proc, OnDocsOk docsOk, OnError err, boolean... verbose) 
+		throws TransException, IOException, AnsonException, SQLException {
+
+		// List<IFileDescriptor> videos = queryMyFils(tbl, docrefs);
+
+		SessionInf ssinf = client.ssInfo();
+
+		SyncResp resp0 = null;
+		SyncResp respi = null;
+
+		String[] act = AnsonHeader.usrAct(uri_syn, CRUD.U, A.docRefBlockUp, mynid);
+		AnsonHeader header = client.header().act(act);
+
+		List<SyncResp> reslts = new ArrayList<SyncResp>(docrefs.size());
+
+		int px = 0;
+		for (String uids : docrefs.keySet()) {
+			try {
+				final int pxx = px++;
+				respi = push1docBlocks(client, uri, tbl, docrefs.get(uids), fileProvider, template,
+						(dx, docs, bx, blocks, msg)->{ return proc.proc(pxx, docrefs.size(), bx, blocks, msg); }, 
+						err, verbose);
+				reslts.add(respi);
+			}
+			catch (IOException | TransException | AnsonException ex) { 
+				if (is(verbose)) ex.printStackTrace();
+
+				String exmsg = ex.getMessage();
+				Utils.warn(exmsg);
+				
+				if (resp0 != null) {
+					SyncReq req = new SyncReq().blockAbort(resp0, ssinf);
+					req.a(SyncReq.A.docRefBlockAbort);
+					AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri, Port.docstier, req)
+								.header(header);
+					respi = client.commit(q, errHandler);
+				}
+
+				if (ex instanceof IOException)
+					continue;
+				else {
+					// Tag: MVP - This is not correct way of deserialize exception at client side
+					if (!isblank(exmsg)) {
+						try {
+							// Code: ext, mesage: {
+							//   \"type\": \"io.odysz.semantics.SemanticObject\",
+							//   \"props\": {\"code\": 99,
+							//   \"reasons\": [\"Found existing file for device & client path.\",
+							//                 \"0001\", \"/storage/emulated/0/Download/1732626036337.pdf\"]}}\n
+
+							exmsg = exmsg.replaceAll("^Code: .*, mess?age:\\s*", "").trim();
+							SemanticObject exp = (SemanticObject) Anson.fromJson(Anson.unescape(exmsg));
+							String reasons = exmsg;
+							try {
+								Object ress = exp.get("reasons");
+								reasons = ress == null ? null
+										: ress instanceof ArrayList<?> ? str((ArrayList<?>)ress)
+										: ress instanceof String[] ? str((String[])ress)
+										: ress.toString();
+							}
+							catch (Exception e) {
+								e.printStackTrace();
+							}
+							errHandler.err(MsgCode.ext, reasons, String.valueOf(exp.get("code")));
+						}
+						catch (Exception exx) {
+							errHandler.err(MsgCode.exGeneral, ex.getMessage(),
+								ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
+						}
+					}
+					else
+						errHandler.err(MsgCode.exGeneral, ex.getMessage(),
+							ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
+				}
+			}
+		}
+		if (docsOk != null) docsOk.ok(reslts);
+
+		return reslts;
+
+	}
+	
+	SyncResp push1docBlocks(SessionClient client, String uri, String tbl,
+			DocRef docref, IFileProvider fileProvider, ExpSyncDoc template,
+			OnProcess proc, OnError err, boolean... verbose)
+					throws AnsonException, IOException, TransException {
+
+		// FileInputStream ifs = null;
+		int seq = 0;
+		int totalBlocks = 0;
+
+		SessionInf ssinf = client.ssInfo();
+
+		IFileDescriptor fd = queryMyFils(tbl, docref);
+
+		/* 
+		 * 025-03-02 fix class casting error while pick files on Android.
+		 * 2025-03-04 fix error of reading non-latin file name.
+		 */
+
+		// IFileDescriptor f = videos.get(px);
+		if (fileProvider == null) {
+			if (isblank(fd.fullpath()) || isblank(fd.clientname()) || isblank(fd.cdate()))
+				throw new IOException(
+						f("File information is not enough: %s, %s, create time %s",
+						fd.clientname(), fd.fullpath(), fd.cdate()));
+		}
+		else if (fileProvider.meta(fd) < 0) {
+			// sometimes third part apps will report wrong doc, e. g. WPS files deleted by users.
+			return 
+			(SyncResp) new SyncResp().docref(docref);
+		}
+
+		ExpSyncDoc p = fd.syndoc(template);
+
+		if ( isblank(p.clientpath) ||
+			(!isblank(p.device()) && !eq(p.device(), ssinf.device)))
+			throw new SemanticException(
+					"Docs' pushing requires device id and clientpath.\n" +
+					"Doc Id: %s, device id: %s(%s), client-path: %s, resource name: %s",
+					p.recId, p.device(), ssinf.device, p.clientpath, p.pname);
+		
+		SyncReq req  = new SyncReq()
+				.blockStart(totalBlocks, fd, ssinf.device, ssinf);
+		
+		String[] act = AnsonHeader.usrAct(uri_syn, CRUD.U, A.docRefBlockUp, mynid);
+		AnsonHeader header = client.header().act(act);
+		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri, Port.syntier, req)
+								.header(header);
+
+		SyncResp resp0 = client.commit(q, errHandler);
+
+		// check uids & timestamp?
+//			String pth = p.fullpath();
+//			if (!pth.equals(resp0.doc.fullpath()))
+//				Utils.warn("Resp is not replied with exactly the same path: %s",
+//						resp0.doc.fullpath());
+
+		// Doesn't work for Chinese file name in Android 10:
+		// totalBlocks = (int) ((Files.size(Paths.get(pth)) + 1) / blocksize);
+		totalBlocks = (int) (Math.max(0, p.size - 1) / blocksize) + 1;
+
+		if (proc != null) proc.proc(-1, -1, 0, totalBlocks, resp0);
+
+		try (FileInputStream ifs = (FileInputStream) fileProvider.open(fd)) {
+
+			String b64 = AESHelper.encode64(ifs, blocksize);
+			SyncResp respi = null;
+			while (b64 != null) {
+				req = new SyncReq().docref(docref).blockUp(seq, p, b64, ssinf);
+				seq++;
+
+				q = client.<SyncReq>userReq(uri, Port.syntier, req)
+							.header(header);
+
+				respi = client.commit(q, errHandler);
+				if (proc != null) proc.proc(1, 1, seq, totalBlocks, respi);
+
+				b64 = AESHelper.encode64(ifs, blocksize);
+			}
+			req = new SyncReq().blockEnd(respi == null ? resp0 : respi, ssinf);
+
+			q = client.<SyncReq>userReq(uri, Port.docstier, req)
+						.header(header);
+			respi = client.commit(q, errHandler);
+			if (proc != null) proc.proc(1, 1, seq, totalBlocks, respi);
+
+			return respi;
+		} 
 	}
 
 	/**
 	 * Request {@link A#queryRef2me}.
 	 * @since 0.2.5
-	 * @return query results, with {@link SyncResp#docrefs_uids}
+	 * @return query results, with {@link SyncResp#docrefs}
 	 * @throws IOException 
 	 * @throws AnsonException 
 	 * @throws SemanticException 

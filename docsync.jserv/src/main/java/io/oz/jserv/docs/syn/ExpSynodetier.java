@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.LangExt.musteq;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.mode_server;
@@ -54,9 +55,9 @@ import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.ISemantext;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
@@ -349,7 +350,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			String doctbl = rs.getString(refm.syntabl);
 			ISemantext ctx = st.instancontxt(conn, usr);
 			ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, doctbl);
-			rs = (AnResultset) st
+			HashMap<String, DocRef> refs = ((AnResultset) st
 				.batchSelect(docm.tbl, "d")
 				// .col(Funcall.refile(new DocRef(domanager0.synode, docm, "NA", ctx)))
 				.cols(docm.pk, docm.io_oz_synuid)
@@ -358,9 +359,12 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				.whereEq(refm.syntabl, doctbl)
 				.limit(16)
 				.rs(ctx)
-				.rs(0);
+				.rs(0))
+				.map(docm.io_oz_synuid, (r) -> {
+					return ((DocRef) r.getAnson(docm.uri)).uids(r.getString(docm.io_oz_synuid));
+				});
 
-			return resp.docrefs(rs.getStrArray(docm.io_oz_synuid));
+			return resp.docrefs(refs);
 		}
 
 		return resp;
@@ -410,7 +414,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 	}
 
-	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr) throws IOException, TransException {
+	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr) throws IOException, TransException, SQLException {
 		String id = ExpDoctier.chainId(usr, req.docref.uids);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must be accessed after starting chain is confirmed.");
@@ -418,14 +422,17 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		BlockChain chain = blockChains.get(id);
 		chain.appendBlock(req);
 		
-		updateDocRef(req);
+		updateDocRef(chain.doc, req, usr);
 
 		return new SyncResp()
 				.blockSeq(req.blockSeq())
+				
 				.doc(chain.doc);
 	}
 
-	public SyncResp onDocRefEndBlock(SyncReq req, DocUser usr) throws SAXException, Exception {
+	public SyncResp onDocRefEndBlock(SyncReq req, DocUser usr)
+			throws SemanticException, SQLException, IOException, Exception {
+
 		String chaid = ExpDoctier.chainId(usr, req.docref.uids);
 		BlockChain chain = null;
 		if (blockChains.containsKey(chaid)) {
@@ -434,21 +441,21 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		} else
 			throw new SemanticException("Ending a block chain which is not exists.");
 
-		verifyDomain(req);
+		verifyBlock(chain, req);
 		
 		String conn = Connects.uri2conn(req.uri());
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, chain.docTabl); // TODO :docTabl
 
 		ExpSyncDoc photo = chain.doc;
 		
-		
-		DBSynTransBuilder b = new DBSynTransBuilder(domanager0);
-		// String pid = DocUtils.createFileBy64(b, conn, photo, usr, meta);
-		String pid = resolvePhysicalDoc(b, conn, photo, usr, req.docref);
-
-		if (Anson.startEnvelope(photo.uri64))
-			Utils.warnT(new Object() {}, "Must be verfified: Ignoring file moving since envelope is saved into the uri field. TODO wrap this into somewhere, not here.");
+		if (!Anson.startEnvelope(photo.uri64))
+			Utils.warnT(new Object() {}, "Must be verfified: Ignoring file moving since envelope is a physical base64.");
 		else {
+			DBSynTransBuilder b = new DBSynTransBuilder(domanager0);
+			// String pid = DocUtils.createFileBy64(b, conn, photo, usr, meta);
+			String pid = ref2physical(b, conn, photo, usr, req.docref);
+			chain.doc.recId(pid);
+
 			// TODO FIXME move this to DocUtils.createFileBy64()
 			// move file
 			String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
@@ -457,24 +464,57 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
 
 			Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+			
+			replaceDocRef(conn, meta, pid, targetPath, usr);
 		}
 
 		return new SyncResp()
 				.blockSeq(req.blockSeq())
-				.doc(chain.doc.recId(pid));
+				.doc(chain.doc);
 	}
 
-
-	private void verifyDomain(SyncReq req) {
-		// TODO Auto-generated method stub
-		
+	private void verifyBlock(BlockChain chain, SyncReq req) {
+		 musteq(req.docref.syntabl, chain.docTabl);
+		 musteq(req.docref.uids, chain.doc.uids);
+		 musteq(req.exblock.peer, domanager0.synode);
+		 musteq(req.exblock.srcnode, chain.doc.device());
 	}
 
-	private void updateDocRef(SyncReq req) {
+	private void updateDocRef(ExpSyncDoc doc, SyncReq req, IUser usr)
+			throws TransException, SQLException {
+
 		// update range into doc-ref
+		String conn = Connects.uri2conn(req.uri());
+		String doctbl = req.docref.syntabl;
+		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, doctbl);
+		SynDocRefMeta rfm = domanager0.refm;
+		String peer = req.exblock.srcnode;
+		DocRef docref = req.docref.breakpoint(req.range[1]);
+
+		st.update(docm.tbl)
+		  .nv(docm.uri, docref)
+		  .whereEq(docm.io_oz_synuid, docref.uids)
+		  .whereEq(docm.io_oz_synuid, st
+				.select(rfm.tbl)
+				.col(rfm.io_oz_synuid)
+				.whereEq(rfm.syntabl, doctbl)
+				.whereEq(rfm.fromPeer, peer)
+				.whereEq(rfm.io_oz_synuid, docref.uids))
+		  .u(st.instancontxt(conn, usr));
 	}
 
-	private String resolvePhysicalDoc(DBSynTransBuilder b, String conn, ExpSyncDoc photo, DocUser usr,
+	/**
+	 * TODO update uri without triggering semantics.
+	 * @param conn
+	 * @param meta
+	 * @param pid
+	 * @param targetPath
+	 * @param usr
+	 */
+	private void replaceDocRef(String conn, ExpDocTableMeta meta, String pid, String targetPath, DocUser usr) {
+	}
+
+	private String ref2physical(DBSynTransBuilder b, String conn, ExpSyncDoc photo, DocUser usr,
 			DocRef docref) {
 		// TODO Auto-generated method stub
 		return null;

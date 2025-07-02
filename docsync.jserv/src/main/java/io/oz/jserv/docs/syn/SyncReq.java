@@ -7,8 +7,12 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.syn.ExchangeBlock;
+import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.tier.docs.BlockChain.IBlock;
+import io.odysz.semantics.SessionInf;
+import io.odysz.semantics.x.SemanticException;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 
 /**
  * @since 0.2.3
@@ -52,6 +56,10 @@ public class SyncReq extends UserReq implements IBlock {
 
 	/** Only used as a query condition, for resolving doc-refs. */
 	public DocRef docref;
+	public SyncReq docref(DocRef ref) {
+		this.docref = ref;
+		return this;
+	}
 	
 	public SyncReq() {
 		super(null, null);
@@ -119,5 +127,52 @@ public class SyncReq extends UserReq implements IBlock {
 	@Override
 	public ExpSyncDoc doc() {
 		return doc;
+	}
+	
+	public SyncReq blockStart(int totalBlocks, IFileDescriptor f, String device, SessionInf ssinf) {
+		doc = doc == null ? new ExpSyncDoc(f) : doc; 
+		this.exblock = new ExchangeBlock("domain", "me", "peer", ExessionAct.mode_client);
+		this.blockSeq = 0;
+		this.a = A.startDocrefPush;
+		return this;
+	}
+
+	/**
+	 * Compose blocks for updating, with breakpoint untouched
+	 * - which will be handled at server side by {@link ExpSynodetier}.
+	 * 
+	 * <p><b>issue</b>
+	 * Is this means there should be a Dochain client peer?</p>
+	 * 
+	 * @param sequence
+	 * @param doc
+	 * @param b64 for multi-thread style, this must be copied as it is used as a reference
+	 * @param usr
+	 * @return this
+	 * @throws SemanticException
+	 */
+	public SyncReq blockUp(int sequence, IFileDescriptor doc, String b64, SessionInf usr)
+			throws SemanticException {
+		this.blockSeq = sequence;
+		this.doc = new ExpSyncDoc(doc);
+		this.doc.uri64 = b64;
+		this.exblock = new ExchangeBlock("doamin", "me", "peer", ExessionAct.mode_client);
+		this.a = A.docRefBlockUp;
+		return this;
+	}
+
+	public SyncReq blockAbort(SyncResp startAck, SessionInf usr) throws SemanticException {
+		this.blockSeq = startAck.blockSeq;
+		this.exblock = new ExchangeBlock("doamin", "me", "peer", ExessionAct.mode_client);
+		this.a = A.docRefBlockAbort;
+		return this;
+	}
+
+	public SyncReq blockEnd(SyncResp resp, SessionInf usr) throws SemanticException {
+		this.blockSeq = resp.blockSeq;
+		this.a = A.docRefBlockEnd;
+		this.docref = resp.docref_i;
+		this.exblock = new ExchangeBlock("doamin", "me", "peer", ExessionAct.mode_client);
+		return this;
 	}
 }
