@@ -42,16 +42,11 @@ public class BlockChain {
 	public final String outputPath;
 	protected final OutputStream ofs;
 	
-	// protected final DocsReq waitings;
 	protected final IBlock waitings;
 
 	public final String docTabl;
 
 	public ExpSyncDoc doc;
-//	public BlockChain doc(ExpSyncDoc doc) {
-//		this.doc = doc;
-//		return this;
-//	}
 
 	/**
 	 * @deprecated
@@ -99,8 +94,7 @@ public class BlockChain {
 	 * @throws IOException
 	 */
 	public BlockChain(String docTabl, String tempDir, String devid, ExpSyncDoc doc)
-		throws IOException {
-		// doc.clientpath, body.doc.createDate, body.doc.folder()
+			throws IOException {
 		this.docTabl = docTabl;
 		String clientpath = doc.clientpath.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
@@ -146,7 +140,6 @@ public class BlockChain {
 		while (waitings.nextBlock() != null && waitings.blockSeq() + 1 == waitings.nextBlock().blockSeq()) {
 			ofs.write(AESHelper.decode64(waitings.nextBlock().doc().uri64()));
 
-			// Let's try this: waitings = waitings.nextBlock;
 			waitings.blockSeq(waitings.nextBlock().blockSeq());
 			waitings.nextBlock(waitings.nextBlock().nextBlock());
 		}
@@ -187,5 +180,9 @@ public class BlockChain {
 		}
 
 		return outputPath;
+	}
+
+	public IBlock falshedOut() {
+		return waitings;
 	}
 }

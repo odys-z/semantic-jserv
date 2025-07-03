@@ -170,6 +170,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	 */
 	public static String[] nvCols(ExpDocTableMeta meta) {
 		return new String[] {
+				meta.org,
 				meta.pk,
 				meta.resname,
 				meta.uri,

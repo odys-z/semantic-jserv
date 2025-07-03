@@ -219,15 +219,24 @@ public class ExpDoctierservTest {
 		ck[Y].doc(3);
 		ck[X].doc(2);
 
-//		waiting(lights, Y);
-//		SynodetierJoinTest.syncdomain(lights, Y, ck);
-//		awaitAll(lights, -1);
 		SynodetierJoinTest.syncdomain(Y, ck);
 		
 		for (DocRef dr : assert_Arefs_atB(Y, X, 2, 0))
 			assertEquals(ck[Y].synode(), dr.synoder);
+		
+//		if (Math.random() * 10 % 2 == 0)
+//			case_xy_resolve(section);
+//		else
+			case_yresolve(section);
 
-		logrst("Create DocRef streaming thread at Y...", ++section);
+		ck[Z].doc(2);
+		ck[Y].doc(2);
+		ck[X].doc(2);
+	}
+
+	@SuppressWarnings("deprecation")
+	static void case_xy_resolve(int section) throws Exception {
+		logrst("[branch x-y] Create DocRef streaming thread at Y...", ++section);
 		Thread yresolve = SynodetierJoinTest
 				.jetties[Y].syngleton.domanager(zsu)
 				.synssion(ck[X].synode())
@@ -255,13 +264,49 @@ public class ExpDoctierservTest {
 		printNyquv(ck);
 
 		assert_Arefs_atB(X, Y, 0, 0);
-		assert_Arefs_atB(Y, X, 0, 0);
+		assert_Arefs_atB(Y, X, 2, 0);
 
-		ck[Z].doc(2);
-		ck[Y].doc(2);
-		ck[X].doc(2);
+
 	}
+	
+	@SuppressWarnings("deprecation")
+	static void case_yresolve(int section) throws Exception {
+		logrst("[branch X <- Y] Create DocRef streaming thread at Y...", ++section);
+		Thread yresolve = SynodetierJoinTest
+				.jetties[Y].syngleton.domanager(zsu)
+				.synssion(ck[X].synode())
+				.createResolver();
 
+		// Now y doesn't keep any docref as it is deleted. But this branch should work.
+		logrst("Start DocRef streaming thread at Y...", ++section);
+		yresolve.start();
+
+
+//		logrst("Waiting DocRef streaming thread at Y & X", ++section);
+		yresolve.join();
+
+		logrst("Resolving docrefs finished.", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		assert_Arefs_atB(X, Y, 0, 0);
+		assert_Arefs_atB(Y, X, 2, 0);
+
+		yresolve = SynodetierJoinTest
+				.jetties[Y].syngleton.domanager(zsu)
+				.synssion(ck[X].synode())
+				.pushResove();
+		logrst("Start DocRef pushing thread at Y...", ++section);
+		yresolve.start();
+		yresolve.join();
+
+		logrst("Resolving docrefs finished.", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		assert_Arefs_atB(X, Y, 0, 0);
+		assert_Arefs_atB(Y, X, 0, 0);
+	}
 	/**
 	 * Assert X-docs are synchronized to Y, as DocRefs.
 	 * @param a

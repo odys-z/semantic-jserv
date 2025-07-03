@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 
-import org.xml.sax.SAXException;
-
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -27,8 +25,6 @@ import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.Nyquence;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SyndomContext;
-import io.odysz.semantic.tier.docs.BlockChain;
-import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;

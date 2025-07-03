@@ -2,7 +2,6 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.unexpect;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import io.odysz.semantic.jprotocol.AnsonResp;
@@ -56,7 +55,8 @@ public class SyncResp extends AnsonResp {
 		return this;
 	}
 
-	public SyncResp docrefs(HashMap<String,DocRef> refs) {
+	public SyncResp docrefs(String reftabl, HashMap<String,DocRef> refs) {
+		this.docrefsTabl = reftabl;
 		this.docrefs = refs;
 		return this;
 	}
