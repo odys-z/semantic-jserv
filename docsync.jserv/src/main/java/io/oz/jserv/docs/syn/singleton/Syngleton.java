@@ -132,7 +132,6 @@ public class Syngleton extends JSingleton {
 
 		AnResultset rs = (AnResultset) defltScxt
 				.select(synm.tbl)
-				// .groupby(synm.domain)
 				.groupby(synm.synoder)
 				.whereEq(synm.pk, cfg.synode())
 				.whereEq(synm.domain, cfg.domain)

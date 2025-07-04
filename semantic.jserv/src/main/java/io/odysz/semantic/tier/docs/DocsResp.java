@@ -57,10 +57,10 @@ public class DocsResp extends AnsonResp {
 		return this;
 	}
 	
-	public long blockSeqReply;
+	public int blockSeqReply;
 
-	public long blockSeq() { return blockSeqReply; }
-	public DocsResp blockSeq(long seq) {
+	public int blockSeq() { return blockSeqReply; }
+	public DocsResp blockSeq(int seq) {
 		blockSeqReply = seq;
 		return this;
 	}

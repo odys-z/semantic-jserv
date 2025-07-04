@@ -62,9 +62,6 @@ public class AppSettings extends Anson {
 	@AnsonField(ignoreFrom=true, ignoreTo=true)
 	String webinf;
 	
-	/** Only for error checking, and the otherwise used value is configured by synode.py3 */
-	// private static final String private_host = "private/host.json";
-
 	/** <pre>
 	 * !root-key && !install-key: error
 	 * !root-key &&  install-key: install
@@ -160,9 +157,6 @@ public class AppSettings extends Anson {
 	 */
 	public AppSettings setupJserv(SynodeConfig cfg, String jserv_album) throws TransException, SQLException {
 
-		if (len(this.jservs) == 0)
-			throw new SemanticException("Design 0.2.3: AppSettings.jservs, from settings.json, cannot be empty.");
-
 		SynodeMeta synm = new SynodeMeta(cfg.synconn);
 
 		for (String peer : jservs.keySet()) {
@@ -175,13 +169,13 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * 
+	 * Update my jserv-url according to settings and IP.
 	 * @param https
 	 * @param jserv_album jserv's url path
 	 * @param synconn can be null, for ignoring db update
 	 * @param synm can be null, for ignoring db update
 	 * @param mysid
-	 * @return
+	 * @return jserv-url
 	 * @throws TransException
 	 * @throws SQLException
 	 */
@@ -282,11 +276,6 @@ public class AppSettings extends Anson {
 	public String installkey;
 	public String rootkey;
 
-	public int port;
-	public String port() { return String.valueOf(port); }
-
-	public HashMap<String, String> envars;
-
 	/**
 	 * Json file path.
 	 */
@@ -299,13 +288,44 @@ public class AppSettings extends Anson {
 	 */
 	public String[] startHandler;
 
-	@AnsonField(ignoreFrom=true)
-	public String webrootLocal;
+	// @AnsonField(ignoreFrom=true)
+	// public String webrootLocal;
 
 	@AnsonField(ignoreFrom=true)
 	public String localIp;
 
+	/**
+	 * Synode IP exposed through a proxy.
+	 * @since 0.2.5
+	 */
+	public String proxyIp;
+
+	/** jserv port */
+	public int port;
+	/** Get jserv port */
+	public String port() { return String.valueOf(port); }
+
+	/** jserv port */
+	public int proxyPort;
+	/** Get jserv port */
+	public String proxyPort() { return String.valueOf(proxyPort); }
+
+	/** web page port */
 	public int webport = 8900;
+
+	/**
+	 * Synode port exposed through a proxy.
+	 * @since 0.2.5
+	 */
+	public int webProxyPort;
+
+	/**
+	 * Is this synode behind a reverse proxy?
+	 * @since 0.2.5
+	 */
+	public boolean reverseProxy;
+
+	public HashMap<String, String> envars;
 
 	/** Connection Idle Seconds */
 	public float connIdleSnds;
@@ -404,38 +424,19 @@ public class AppSettings extends Anson {
 
 		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 		
-		/*
-		String jserv;
-		if (!isblank(settings.installkey)) {
-			logi("[INSTALL-CHECK] install: Calling setupdb() with configurations in %s ...", config_xml);
-			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
-			
-			// also update jserv
-			jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
-		}
-		else {
-			logi("[INSTALL-CHECK] Starting application without db setting ...", config_xml);
-			// also update jserv
-			// jserv = settings.updateLocalJserv(cfg.https, url_path, null, null, null) ;
-			jserv = settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
-		}
-		*/
 		if (!isblank(settings.installkey)) {
 			logi("[INSTALL-CHECK]\n!!! FIRST TIME INITIATION !!!\nInstall: Calling setupdb() with configurations in %s ...", config_xml);
 			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
 		}
 		else 
 			logi("[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\nStarting application without db setting ...");
-//					config_xml);
-		// String jserv =
 		settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
 		
 		return settings; // settings.local_serv
 	}
 
-	
 	/**
-	 * Must called after DA layer initiation is finished.
+	 * Must be called after DA layer initiation is finished.
 	 * @throws Exception 
 	 */
 	public static void updateOrgConfig(SynodeConfig cfg, AppSettings settings) throws Exception {
@@ -454,15 +455,48 @@ public class AppSettings extends Anson {
 	}
 
 	public String getLocalHostJson() {
-		// backward compatible
-//		String host_json = startHandler[1].replaceAll(private_host + "$", "");
-//		return FilenameUtils.concat(host_json, private_host);
 		return startHandler[1];
 	}
 
+	public String getJservroot(boolean https) {
+		return this.reverseProxy ? this.jservProxy(https) : this.jserv(https);
+	}
+
 	public String getLocalWebroot(boolean https) {
-		// backward compatible
-		return f("%s://%s", https ? "https" : "http", this.webrootLocal);
+		return f("%s://%s", https ? "https" : "http",
+				this.reverseProxy ? this.webrootProxy(https) : this.webrootLocal(https));
+	}
+
+	/**
+	 * @param https
+	 * @return proxy ip:port, no "http(s)://"
+	 */
+	private String webrootProxy(boolean https) {
+		if (!https && webProxyPort == 80 || https && webProxyPort == 443)
+			return proxyIp;
+		else
+			return f("%s:%s", proxyIp, webProxyPort);
+	}
+
+	private String webrootLocal(boolean https) {
+		if (!https && webport == 80 || https && webport == 443)
+			return localIp;
+		else
+			return f("%s:%s", localIp, webport);
+	}
+
+	private String jservProxy(boolean https) {
+		if (!https && proxyPort == 80 || https && proxyPort == 443)
+			return proxyIp;
+		else
+			return f("%s:%s", proxyIp, proxyPort);
+	}
+
+	private String jserv(boolean https) {
+		if (!https && port == 80 || https && port == 443)
+			return localIp;
+		else
+			return f("%s:%s", localIp, port);
 	}
 
 }

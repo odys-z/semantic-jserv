@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.LangExt.musteq;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.mode_server;
@@ -13,7 +14,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -25,8 +30,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
+import io.odysz.common.AESHelper;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
@@ -37,11 +45,20 @@ import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.DocRef;
+import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.BlockChain;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.odysz.semantics.ISemantext;
+import io.odysz.semantics.IUser;
+import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.ExtFilePaths;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
@@ -59,14 +76,18 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	
 	public boolean debug;
 
-	// private DATranscxt synt0;
-
 	ExpSynodetier(String org, String domain, String synode, String conn, SynodeMode mode)
 			throws SQLException, SAXException, IOException, TransException {
 		super(Port.syntier);
 		this.domain = domain;
 		this.synid  = synode;
 		this.mode   = mode;
+		try {
+			this.st     = new DATranscxt(conn);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new SemanticException("Fail to DATranscxt on %s.", conn);
+		}
 		this.debug  = Connects.getDebug(conn);
 	}
 
@@ -130,6 +151,17 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 			else if (A.exclose.equals(a))
 				rsp = usr.<SynssionServ>synssion().onclosex(req, usr);
+
+			else if (A.queryRef2me.equals(a))
+				rsp = onQueryRef2Peer(req, usr);
+			else if (A.startDocrefPush.equals(a))
+				rsp = onDocRefPushStart(req, usr);
+			else if (A.docRefBlockUp.equals(a))
+				rsp = onDocRefUploadBlock(req, usr);
+			else if (A.docRefBlockEnd.equals(a))
+				rsp = onDocRefEndBlock(req, usr);
+			else if (A.docRefBlockAbort.equals(a))
+				rsp = onDocRefAbortBlock(req, usr);
 
 			else 
 				throw new SemanticException("Request.a, %s, can not be handled at port %s",
@@ -213,9 +245,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				this.domanager0
 					.openSynssions(domanager0.admin);
 
-				this.domanager0.asyUpdomains(
+				this.domanager0.updomains(
 					(dom, synode, peer, xp) -> {
-						if (debug) Utils.logi("[%s] On update: %s [%s:%s]",
+						if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
 								synid, dom, domanager0.n0(), domanager0.stamp());
 					},
 					(synlocker) -> Math.random());
@@ -226,10 +258,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} catch (InterruptedIOException | SocketException e) {
 				// wait for network
 				// TODO we need API for immediately trying
+				Utils.logi("[ExpSynodetier.debug] Reschedule syn-worker with error: %s", e.getMessage());
 				if (debug)
 					e.printStackTrace();
-				Utils.logi("reschedule syn-worker with error: %s", e.getMessage());
-				reschedule(5);
+				schedualed = reschedule(30);
 			} catch (TransException | SQLException e) {
 				// local errors, stop for fixing
 				e.printStackTrace();
@@ -264,6 +296,12 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	}
 
 	private ScheduledFuture<?> reschedule(int waitmore) {
+		try {
+			if (schedualed != null)
+				schedualed.cancel(true);
+			Thread.sleep(50);
+		} catch (InterruptedException e) { }
+
 		syncInSnds = Math.min(maxSyncInSnds, syncInSnds + waitmore);
 		return scheduler.scheduleWithFixedDelay(
 				worker[0], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
@@ -272,7 +310,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 	public void stopScheduled(int sTimeout) {
 		Utils.logi("[%s] cancling sync-worker ... ", synid);
-		schedualed.cancel(true);
+
+		if (schedualed != null)
+			schedualed.cancel(true);
+
 		scheduler.shutdown();
 		try {
 		    if (!scheduler.awaitTermination(sTimeout, TimeUnit.SECONDS)) {
@@ -283,4 +324,234 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		}
 		finally { running = false; }
 	}
+	
+	//////////////////////////////////// Doc-ref Service ///////////////////////////////
+	/**
+	 * Response to {@link SyncReq.A#queryRef2me}
+	 * @param req
+	 * @param usr
+	 * @return uids according to syn_docref
+	 * @throws SQLException 
+	 * @throws TransException 
+	 * @since 0.2.5
+	 * @see SynssionPeer#nextRef(io.odysz.semantic.syn.DBSyntableBuilder, io.odysz.semantic.meta.SynDocRefMeta, String, String)
+	 */
+	public SyncResp onQueryRef2Peer(SyncReq req, DocUser usr) throws SQLException, TransException {
+		// let's brutally table by table
+		SynDocRefMeta refm = domanager0.refm;
+		String conn = Connects.uri2conn(req.uri());
+		AnResultset rs = (AnResultset) st
+				.batchSelect(refm.tbl)
+				.col(refm.syntabl)
+				.distinct(true)
+				.groupby(refm.syntabl)
+				.whereEq(refm.fromPeer, req.exblock.srcnode)
+				.limit(1)
+				.rs(st.instancontxt(conn, usr))
+				.rs(0);
+		
+		SyncResp resp = new SyncResp(domain);
+		if (rs.next()) {
+			String doctbl = rs.getString(refm.syntabl);
+			ISemantext ctx = st.instancontxt(conn, usr);
+			ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, doctbl);
+			HashMap<String, DocRef> refs = ((AnResultset) st
+				.batchSelect(docm.tbl, "d")
+				// .col(Funcall.refile(new DocRef(domanager0.synode, docm, "NA", ctx)))
+				.cols(docm.pk, docm.uri, docm.io_oz_synuid)
+				.je("d", refm.tbl, "rf", "d." + docm.io_oz_synuid, "rf." + refm.io_oz_synuid)
+				.whereEq(refm.fromPeer, req.exblock.srcnode)
+				.whereEq(refm.syntabl, doctbl)
+				.limit(16)
+				.rs(ctx)
+				.rs(0))
+				.map(docm.io_oz_synuid, (r) -> {
+					return ((DocRef) r.getAnson(docm.uri)).uids(r.getString(docm.io_oz_synuid));
+				});
+
+			return resp.docrefs(doctbl, refs);
+		}
+
+		return resp;
+	}
+
+	private HashMap<String, BlockChain> blockChains;
+
+	/**
+	 * Accept Doc pushing to doc-refs.
+	 * @param req
+	 * @param usr
+	 * @return response / reply
+	 * @throws SAXException 
+	 * @throws SQLException 
+	 * @throws TransException 
+	 * @throws IOException 
+	 * @since 0.2.5
+	 */
+	public SyncResp onDocRefPushStart(SyncReq req, DocUser usr)
+			throws IOException, TransException, SQLException, SAXException {
+		String conn = Connects.uri2conn(req.uri());
+		String tbl  = req.docref.syntabl;
+
+		// source node == peer node,  uids is exists, timestamps match
+		checkBlock0(st, conn, req, (DocUser) usr);
+
+		if (blockChains == null)
+			blockChains = new HashMap<String, BlockChain>();
+
+		String tempDir = ((DocUser)usr).touchTempDir(conn, tbl);
+
+		BlockChain chain = new BlockChain(tbl, tempDir, req.exblock.srcnode, new ExpSyncDoc(req.docref));
+
+		String id = ExpDoctier.chainId(usr, req.docref.uids);
+
+		if (blockChains.containsKey(id))
+			throw new SemanticException("Why started again?");
+
+		blockChains.put(id, chain);
+		return new SyncResp().doc(chain.doc)
+				.blockSeq(-1);
+	}
+
+	private void checkBlock0(DATranscxt st, String conn, SyncReq req, DocUser usr) {
+//		if (isblank(req.docref.clientpath))
+//			throw new SemanticException("Doc's client-path must presenting in each pushing blocks.");
+
+	}
+
+	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr) throws IOException, TransException, SQLException {
+		String id = ExpDoctier.chainId(usr, req.docref.uids);
+		if (!blockChains.containsKey(id))
+			throw new SemanticException("Uploading blocks must be accessed after starting chain is confirmed.");
+
+		BlockChain chain = blockChains.get(id);
+		chain.appendBlock(req);
+		
+		if (chain.falshedOut().blockSeq() >= req.blockSeq)
+			stepBreakpoint(chain.doc, ((SyncReq)chain.falshedOut()), usr);
+
+		return new SyncResp()
+				.blockSeq(req.blockSeq())
+				.doc(chain.doc);
+	}
+
+	public SyncResp onDocRefEndBlock(SyncReq req, DocUser usr)
+			throws SemanticException, SQLException, IOException, Exception {
+
+		String chaid = ExpDoctier.chainId(usr, req.docref.uids);
+		BlockChain chain = null;
+		if (blockChains.containsKey(chaid)) {
+			blockChains.get(chaid).closeChain();
+			chain = blockChains.remove(chaid);
+		} else
+			throw new SemanticException("Ending a block chain which is not exists.");
+
+		verifyBlock(chain, req);
+		
+		String conn = Connects.uri2conn(req.uri());
+
+		ExpSyncDoc photo = chain.doc;
+		
+		if (!Anson.startEnvelope(photo.uri64))
+			Utils.warnT(new Object() {}, "Must be verfified: Ignoring file moving since envelope is a physical base64.");
+		else {
+			String targetPath = ref2physical(conn, req.docref, usr);
+			// move file
+			Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+			chain.doc.recId(req.docref.docId);
+			
+			if (debug)
+				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
+		}
+
+		return new SyncResp()
+				.blockSeq(req.blockSeq())
+				.doc(chain.doc);
+	}
+
+	private void verifyBlock(BlockChain chain, SyncReq req) {
+		 musteq(req.docref.syntabl, chain.docTabl);
+		 musteq(req.docref.uids, chain.doc.uids);
+		 musteq(req.exblock.peer, domanager0.synode);
+		 musteq(req.exblock.srcnode, chain.doc.device());
+	}
+
+	private void stepBreakpoint(ExpSyncDoc doc, SyncReq req, IUser usr)
+			throws TransException, SQLException, AnsonException, IOException {
+
+		// update range into doc-ref
+		String conn = Connects.uri2conn(req.uri());
+		String doctbl = req.docref.syntabl;
+		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, doctbl);
+		SynDocRefMeta rfm = domanager0.refm;
+		String peer = req.exblock.srcnode;
+
+		musteq(req.range[1], req.blockSeq * AESHelper.blockSize());
+		DocRef docref = req.docref.breakpoint(req.range[1]);
+		
+		st.update(docm.tbl)
+		  .nv(docm.uri, docref.toBlock())
+		  .whereEq(docm.io_oz_synuid, docref.uids)
+		  .whereEq(docm.io_oz_synuid, st
+				.select(rfm.tbl)
+				.col(rfm.io_oz_synuid)
+				.whereEq(rfm.syntabl, doctbl)
+				.whereEq(rfm.fromPeer, peer)
+				.whereEq(rfm.io_oz_synuid, docref.uids))
+		  .u(st.instancontxt(conn, usr));
+	}
+
+	/**
+	 * Update uri without triggering semantics, because the ext-file
+	 * handler doesn't allow update a uri field.
+	 * 
+	 * The value generator is the same of the ext-file semantics handler.
+	 * 
+	 * @param conn
+	 * @param docref
+	 * @param usr
+	 * @return target path 
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	private String ref2physical(String conn, DocRef docref, DocUser usr)
+			throws TransException, SQLException {
+		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, docref.syntabl);
+
+		ExtFilePaths extpths = DocRef.createExtPaths(conn, docref.syntabl, docref);
+		String targetpth = extpths.decodeUriPath();
+		
+		ISemantext ctx = st.instancontxt(conn, usr);
+
+		SemanticObject res = st
+			.update(meta.tbl, usr)
+			.nv(meta.uri, extpths.dburi(true))
+			.whereEq(meta.pk, docref.docId)
+			.whereEq(meta.io_oz_synuid, docref.uids)
+			.u(ctx);
+		
+		if(1 != res.total()) {
+			Utils.warnT(new Object() {},
+					"Failed to remove/resovle doc-ref. pid: %s, syn-uids: %s",
+					docref.docId, docref.uids);
+			return null;
+		}
+		
+		return targetpth;
+	}
+
+	public SyncResp onDocRefAbortBlock(SyncReq req, DocUser usr) throws IOException, TransException {
+		String id = ExpDoctier.chainId(usr, req.docref.uids);
+		SyncResp ack = new SyncResp();
+
+		if (blockChains.containsKey(id)) {
+			blockChains.get(id).abortChain();
+			blockChains.remove(id);
+			ack.blockSeq(req.blockSeq());
+		} else
+			ack.blockSeq(-1);
+
+		return ack;
+	}
+
 }

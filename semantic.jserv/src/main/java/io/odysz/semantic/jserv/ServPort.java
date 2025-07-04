@@ -104,8 +104,6 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	}
 
-	// protected static DATranscxt synt0;
-
 	protected DATranscxt st;
 
 	private OnHttpCallback ongetback;

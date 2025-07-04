@@ -7,7 +7,6 @@ import java.util.List;
 import io.odysz.anson.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.x.TransException;
@@ -37,17 +36,6 @@ public class JProtocol {
 		public static final String AnsonReq = "Anson-req";
 	}
 
-	/**
-	 * Typical operation's common names
-	 * @since v1.4.12 requires semantic.DA v1.4.12
-	public static class CRUD {
-		public static final String C = io.odysz.semantic.CRUD.C;
-		public static final String R = io.odysz.semantic.CRUD.R;
-		public static final String U = io.odysz.semantic.CRUD.U;
-		public static final String D = io.odysz.semantic.CRUD.D;
-	}
-	 * */
-
 	@FunctionalInterface
 	public interface OnOk {
 		void ok(AnsonResp resp) throws IOException, AnsonException, TransException, SQLException;
@@ -55,7 +43,7 @@ public class JProtocol {
 	
 	/**
 	 * Progress notifier called by block chain.
-	 * Parameter blockResp provide the last uploaded block's sequence number.
+	 * Parameter {@code resp} provide the last uploaded block's sequence number.
 	 * <p>
 	 * rows: rx of total rows <br>
 	 * file blocks: bx of total blocks</p>
@@ -63,6 +51,20 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
+		/**
+		 * Progress notifier called by block chain.
+		 * Parameter {@code resp} provide the last uploaded block's sequence number.
+		 * 
+		 * @param rx row index
+		 * @param rows rows
+		 * @param bx block index
+		 * @param blocks blocks
+		 * @param resp response
+		 * @return force breakup
+		 * @throws IOException
+		 * @throws AnsonException
+		 * @throws TransException
+		 */
 		boolean proc(int rx, int rows, int bx, int blocks, AnsonResp resp)
 			throws IOException, AnsonException, TransException;
 	}
@@ -81,7 +83,7 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnDocsOk {
-		void ok(List<DocsResp> resps) throws IOException, AnsonException, TransException, SQLException;
+		void ok(List<? extends AnsonResp> resps) throws IOException, AnsonException, TransException, SQLException;
 	}
 	
 	@FunctionalInterface

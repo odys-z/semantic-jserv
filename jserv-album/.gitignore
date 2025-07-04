@@ -37,3 +37,4 @@ host.json
 web-dist
 deploy-*
 build-*
+venv*

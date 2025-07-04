@@ -86,5 +86,10 @@
   		<uri>/album/syn</uri>
   		<conn>docsyn-hub</conn>
   	</c>
+	<c>
+		<!-- between synodes -->
+  		<uri>/syn</uri>
+  		<conn>docsyn</conn>
+	</c>
   </t>
 </conns>

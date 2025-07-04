@@ -213,7 +213,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	DocsResp notifySyndom(DocsReq body)
 			throws SemanticException, AnsonException, SsException, IOException {
 		// FIXME instead of re-schedule the syn-worker?
-		domx.asyUpdomains((dom, synid, peer, xp) -> {
+		domx.updomains((dom, synid, peer, xp) -> {
 				if (debug)
 					Utils.logT(new Object(){}, 
 						"Notification is handled: %s, %s, %s", dom, synid, peer);
@@ -323,6 +323,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 	DocsResp startBlocks(DocsReq body, IUser usr)
 			throws IOException, TransException, SQLException, SAXException {
+//		return startBlocks(st, blockChains, body, usr);
+//	}
+//
+//	static DocsResp startBlocks(DATranscxt st, HashMap<String, BlockChain> blockChains, DocsReq body, IUser usr)
+//			throws IOException, TransException, SQLException, SAXException {
 		String conn = Connects.uri2conn(body.uri());
 
 		checkBlock0(st, conn, body, (DocUser) usr);
@@ -334,8 +339,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
 
-		// FIXME security breach?
-		String id = chainId(usr, chain.doc.clientpath);
+		String id = chainId(usr, body.doc.clientpath);
 
 		if (blockChains.containsKey(id))
 			throw new SemanticException("Why started again?");
@@ -344,12 +348,17 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return new DocsResp()
 				.blockSeq(-1)
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.doc.clientname())
+					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
-					.fullpath(chain.doc.clientpath));
+					.fullpath(body.doc.clientpath));
 	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
+//		return uploadBlock(blockChains, body, usr);
+//	}
+//
+//	static DocsResp uploadBlock(HashMap<String, BlockChain> blockChains, DocsReq body, IUser usr)
+//			throws IOException, TransException {
 		if (isblank(body.doc.clientpath))
 			throw new SemanticException("Doc's client-path must presenting in each pushing blocks.");
 
@@ -363,7 +372,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.doc.clientname())
+					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(body.doc.clientpath));
 	}
@@ -383,6 +392,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 */
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SAXException, Exception {
+//		return endBlock(domx, blockChains, body, usr, onCreate, debug);
+//	}
+//	
+//	static DocsResp endBlock(SynDomanager domx, HashMap<String, BlockChain> blockChains, DocsReq body,
+//			IUser usr, IOnDocreate onCreate, boolean debug) throws SAXException, Exception {
 		String chaid = chainId(usr, body.doc.clientpath); // shouldn't reply chain-id to the client?
 		BlockChain chain = null;
 		if (blockChains.containsKey(chaid)) {
@@ -432,6 +446,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
+			throws SQLException, IOException, InterruptedException, TransException {
+		return abortBlock(blockChains, body, usr);
+	}
+
+	static DocsResp abortBlock(HashMap<String, BlockChain> blockChains, DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.doc.clientpath);
 		DocsResp ack = new DocsResp();

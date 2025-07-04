@@ -31,19 +31,23 @@ from types import LambdaType
 from anson.io.odysz.common import Utils
 from invoke import task, Context
 
+from src import zip2
+
 SYNODE_VERSION = 'SYNODE_VERSION'
 JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
 HTML_JAR_VERSION = 'HTML_JAR_VERSION'
 WEB_VERSION = 'WEB_VERSION'
 
 vers = {
-    SYNODE_VERSION:    '0.7.2',
-    JSERV_JAR_VERSION: '0.7.2',
-    HTML_JAR_VERSION:  '0.1.6',
+    SYNODE_VERSION:    '0.7.3',
+    JSERV_JAR_VERSION: '0.7.4',
+    HTML_JAR_VERSION:  '0.1.7',
     WEB_VERSION:       '0.4.1'
 }
 
 res_toclean = ['dist', '*egg-info']
+
+registry_zip = f'registry-ura-zsu-{vers[JSERV_JAR_VERSION]}.zip'
 
 @task
 def config(c):
@@ -125,3 +129,8 @@ def build(c: Context):
             print('OK:', ret.ok, ret.stderr)
     return False
 
+
+@task
+def zipRegistry(c):
+    print('config=', vers, 'ver=', vers[SYNODE_VERSION])
+    zip2(registry_zip, {"zsu": "registry-deploy/*"}, ['*.zip'])

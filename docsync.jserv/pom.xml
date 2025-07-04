@@ -4,7 +4,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>docsync.jserv</artifactId>
-  <version>0.2.4</version>
+  <version>0.2.5-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>docsync.jserv</name>
@@ -40,8 +40,13 @@
   		<id>sonatype-snapshots</id>
   		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
   	</repository>
-  </repositories>
   -->
+  <distributionManagement>
+	<snapshotRepository>
+		<id>central</id>
+		<url>https://central.sonatype.com/repository/maven-snapshots/</url>
+	</snapshotRepository>
+  </distributionManagement>
 
   <dependencies>
 	<dependency>

@@ -11,15 +11,15 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.meta.DocRef;
+import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 
-public class DocsReq extends UserReq {
+public class DocsReq extends UserReq implements IBlock {
 	public static class A {
 		/**
 		 * Action: read records for synodes synchronizing.
-		 * For client querying matching (syncing) docs, use {@link #records} instead. 
 		 * @see DocsTier#list(DocsReq, IUser)
 		 * @deprecated
 		 * */
@@ -30,11 +30,8 @@ public class DocsReq extends UserReq {
 
 		/**
 		 * Action: read records for client path matching.
-		 * For synodes synchronizing, use {@link #syncdocs} instead. 
-		 * 
-		 * @deprecated now clients only match paths with local DB.
-		 */
 		public static final String records = "r/list";
+		 */
 		
 		/** @deprecated function not used */
 		public static final String mydocs = "r/my-docs";
@@ -189,8 +186,8 @@ public class DocsReq extends UserReq {
 				: syncingPage.clientPaths.keySet();
 	}
 
-	long blockSeq;
-	public long blockSeq() { return blockSeq; } 
+	int blockSeq;
+	public int blockSeq() { return blockSeq; } 
 
 	public DocsReq nextBlock;
 
@@ -273,7 +270,7 @@ public class DocsReq extends UserReq {
 		return blockUp(seq, resp.xdoc, b64, ssinf);
 	}
 
-	public DocsReq blockUp(long sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(int sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
 		String uri64 = b64.toString();
 		return blockUp(sequence, doc, uri64, usr);
 	}
@@ -291,7 +288,7 @@ public class DocsReq extends UserReq {
 	 * @return this
 	 * @throws SemanticException
 	 */
-	public DocsReq blockUp(long sequence, IFileDescriptor doc, String b64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(int sequence, IFileDescriptor doc, String b64, SessionInf usr) throws SemanticException {
 		this.device = new Device(usr.device, null);
 		if (isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
@@ -352,8 +349,20 @@ public class DocsReq extends UserReq {
 		return this;
 	}
 
-	public AnsonBody doc(ExpSyncDoc doc) {
+	public DocsReq doc(ExpSyncDoc doc) {
 		this.doc = doc;
 		return this;
 	}
+
+	@Override
+	public ExpSyncDoc doc() { return doc; }
+
+	@Override
+	public IBlock nextBlock(IBlock block) {
+		this.nextBlock = (DocsReq) block;
+		return this;
+	}
+
+	@Override
+	public IBlock nextBlock() { return nextBlock; }
 }

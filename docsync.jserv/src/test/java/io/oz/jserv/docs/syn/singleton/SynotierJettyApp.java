@@ -91,13 +91,6 @@ public class SynotierJettyApp {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-//	String jserv;
-//	public String jserv() { return jserv; }
-//	public SynotierJettyApp jserv(String url) {
-//		jserv = url;
-//		return this;
-//	}
-	
 	/**
 	 * @deprecated should only used for tests - not updated by peers.
 	 * @return local jserv
@@ -168,7 +161,7 @@ public class SynotierJettyApp {
 					.forName(settings.startHandler[0])
 					.getDeclaredConstructor()
 					.newInstance())
-					.onExpose(settings, this.syngleton.syncfg.domain, settings.jserv(this.syngleton.synode()));
+					.onExpose(settings, this.syngleton.syncfg.domain, settings.jserv(this.syngleton.synode()), this.syngleton.syncfg.https);
 			} catch (Exception e) {
 				warn("Exposing local resources failed!");
 				e.printStackTrace();

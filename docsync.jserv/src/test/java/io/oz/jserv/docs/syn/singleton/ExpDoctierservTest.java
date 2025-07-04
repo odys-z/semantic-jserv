@@ -6,7 +6,6 @@ import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.turngreen;
-import static io.odysz.common.Utils.waiting;
 import static io.odysz.common.Utils.logrst;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
@@ -179,9 +178,10 @@ public class ExpDoctierservTest {
 		ck[Z].doc(0);
 
 		logrst("Synchronizing between synodes", ++section);
-		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y, ck);
-		awaitAll(lights, -1);
+//		waiting(lights, Y);
+//		SynodetierJoinTest.syncdomain(lights, Y, ck);
+//		awaitAll(lights, -1);
+		SynodetierJoinTest.syncdomain(Y, ck);
 
 		printChangeLines(ck);
 		printNyquv(ck);
@@ -219,25 +219,43 @@ public class ExpDoctierservTest {
 		ck[Y].doc(3);
 		ck[X].doc(2);
 
-		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y, ck);
-		awaitAll(lights, -1);
+		SynodetierJoinTest.syncdomain(Y, ck);
 		
-		logrst("Starting DocRef streaming thread at Y...", ++section);
+		for (DocRef dr : assert_Arefs_atB(Y, X, 2, 0))
+			assertEquals(ck[Y].synode(), dr.synoder);
+		
+//		if (Math.random() * 10 % 2 == 0)
+//			case_xy_resolve(section);
+//		else
+			case_yresolve(section);
+
+		ck[Z].doc(2);
+		ck[Y].doc(2);
+		ck[X].doc(2);
+	}
+
+	@SuppressWarnings("deprecation")
+	static void case_xy_resolve(int section) throws Exception {
+		logrst("[branch x-y] Create DocRef streaming thread at Y...", ++section);
 		Thread yresolve = SynodetierJoinTest
 				.jetties[Y].syngleton.domanager(zsu)
-				.synssion(ck[X].synb.syndomx.synode)
-				.createResolver(ck[Y].docm);
+				.synssion(ck[X].synode())
+				.createResolver();
 
+		logrst("Create DocRef streaming thread at X...", ++section);
 		Thread xresolve = SynodetierJoinTest
 				.jetties[X].syngleton.domanager(zsu)
-				.synssion(ck[Y].synb.syndomx.synode)
-				.createResolver(ck[X].docm);
+				.synssion(ck[Y].synode())
+				.createResolver();
 
-//		yresolve.start();
+		// Now y doesn't keep any docref as it is deleted. But this branch should work.
+		logrst("Start DocRef streaming thread at Y...", ++section);
+		yresolve.start();
+
+		logrst("Start DocRef streaming thread at X...", ++section);
 		xresolve.start();
 
-		logrst("Waiting DocRef streaming thread at Y...", ++section);
+		logrst("Waiting DocRef streaming thread at Y & X", ++section);
 		yresolve.join();
 		xresolve.join();
 
@@ -246,44 +264,81 @@ public class ExpDoctierservTest {
 		printNyquv(ck);
 
 		assert_Arefs_atB(X, Y, 0, 0);
-		assert_Arefs_atB(Y, X, 0, 0);
+		assert_Arefs_atB(Y, X, 2, 0);
 
-		ck[Z].doc(2);
-		ck[Y].doc(2);
-		ck[X].doc(2);
+
 	}
+	
+	@SuppressWarnings("deprecation")
+	static void case_yresolve(int section) throws Exception {
+		logrst("[branch X <- Y] Create DocRef streaming thread at Y...", ++section);
+		Thread yresolve = SynodetierJoinTest
+				.jetties[Y].syngleton.domanager(zsu)
+				.synssion(ck[X].synode())
+				.createResolver();
 
+		// Now y doesn't keep any docref as it is deleted. But this branch should work.
+		logrst("Start DocRef streaming thread at Y...", ++section);
+		yresolve.start();
+
+
+//		logrst("Waiting DocRef streaming thread at Y & X", ++section);
+		yresolve.join();
+
+		logrst("Resolving docrefs finished.", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		assert_Arefs_atB(X, Y, 0, 0);
+		assert_Arefs_atB(Y, X, 2, 0);
+
+		yresolve = SynodetierJoinTest
+				.jetties[Y].syngleton.domanager(zsu)
+				.synssion(ck[X].synode())
+				.pushResove();
+		logrst("Start DocRef pushing thread at Y...", ++section);
+		yresolve.start();
+		yresolve.join();
+
+		logrst("Resolving docrefs finished.", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		assert_Arefs_atB(X, Y, 0, 0);
+		assert_Arefs_atB(Y, X, 0, 0);
+	}
 	/**
 	 * Assert X-docs are synchronized to Y, as DocRefs.
-	 * @param x
-	 * @param y
-	 * @param xdocs
-	 * @param ydocs
-	 * @return doc-refs at y
+	 * @param a
+	 * @param b
+	 * @param xdoc_refs_y x docs at y as refs
+	 * @param ydoc_refs_x y docs at x as refs
+	 * @return doc-refs at b to docs at a
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	static ArrayList<DocRef> assert_Arefs_atB(int x, int y, int xdocs, int ydocs) throws SQLException, TransException {
-		List<DocRef> refs_atY = ck[y]
+	static ArrayList<DocRef> assert_Arefs_atB(int a, int b, int xdoc_refs_y, int ydoc_refs_x)
+			throws SQLException, TransException {
+		List<DocRef> refs_atY = ck[b]
 				.docRef()
 				.stream()
 				.filter(v -> v != null).toList();
-		assertEquals(xdocs, len(refs_atY));
+		assertEquals(xdoc_refs_y, len(refs_atY));
 
 		int xatys = 0;
-		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(xdocs);
+		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(xdoc_refs_y);
 
 		for (DocRef xdref : refs_atY) {
 			if (xdref == null) continue;
 
-			assertEquals(ck[x].synb.syndomx.synode, xdref.synoder);
-			assertTrue(xdref.uids.startsWith(ck[x].synb.syndomx.synode + ","));
-			assertEquals(ck[y].docm.uri, xdref.uri64);
+			assertEquals(ck[a].synb.syndomx.synode, xdref.synoder);
+			assertTrue(xdref.uids.startsWith(ck[a].synb.syndomx.synode + ","));
+			assertTrue(xdref.uri64.startsWith("$VOL"));
 
 			xatys++;
 			xdlst.add(xdref);
 		}
-		assertEquals(xdocs, xatys);
+		assertEquals(xdoc_refs_y, xatys);
 		return xdlst;
 	}
 
@@ -334,12 +389,12 @@ public class ExpDoctierservTest {
 			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
 
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, "settings.json")
-						// .jserv(jserv)
 						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
 			// checker
-			ck[i] = new Docheck(azert, zsu, servs_conn[i], jetties[i].syngleton().domanager(zsu).synode,
-							SynodeMode.peer, cfgs[i].chsize, docm, null, true);
+			ck[i] = new Docheck(azert, zsu, servs_conn[i],
+								jetties[i].syngleton().domanager(zsu).synode,
+								SynodeMode.peer, cfgs[i].chsize, docm, null, true);
 		}
 		
 		return nodex;

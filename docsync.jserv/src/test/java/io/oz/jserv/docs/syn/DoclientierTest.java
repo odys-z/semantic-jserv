@@ -109,10 +109,9 @@ class DoclientierTest {
 		}, "X Y Z W by DoclientierTest");
 		thr.start();
 		
-//		thref = new Thread(() -> {ck[Y].refstreamer.run();},
-//		"[Y] DocRefs Streamer");
-
 		jserv_xyzw = ExpDoctierservTest.jservs();
+		
+		SynssionPeer.testDisableAutoDocRef = true;
 	}
 
 	@Test
@@ -165,9 +164,10 @@ class DoclientierTest {
 		// 11 create
 		clientPush(Y, Y_1);
 
-		boolean[] lights = new boolean[] {true, false};
-		SynodetierJoinTest.syncdomain(lights, Y);
-		awaitAll(lights, -1);
+//		boolean[] lights = new boolean[] {true, false};
+//		SynodetierJoinTest.syncdomain(lights, Y);
+//		awaitAll(lights, -1);
+		SynodetierJoinTest.syncdomain(Y);
 
 		// 00 delete
 		Dev devx0 = devs[X_0];
@@ -175,9 +175,10 @@ class DoclientierTest {
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
-		waiting(lights, Y);
-		SynodetierJoinTest.syncdomain(lights, Y);
-		awaitAll(lights);
+//		waiting(lights, Y);
+//		SynodetierJoinTest.syncdomain(lights, Y);
+//		awaitAll(lights);
+		SynodetierJoinTest.syncdomain(Y);
 
 		pause("Press enter to quite ...");
 	}

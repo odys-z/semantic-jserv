@@ -1,8 +1,8 @@
 @REM @echo "Run this file from upper dir, e. g. run: winsrv/install-w.bat"
 @echo "--- Installing Synode Windows Service ---"
 
-@REM BEGIN Python modifying section, do not modify except debugging (Not using bat file arg for easy debugging)
-@set jar_ver=0.7.2
+@REM BEGIN Python modifying section, by commands.install_wsrv_byname(). Do not modify except debugging (Not using bat file arg for easy debugging)
+@set jar_ver=0.7.4
 @REM END Python modifying section
 
 @REM @set serv_name="Synode.syn-%jar_ver%"

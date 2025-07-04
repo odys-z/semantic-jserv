@@ -25,55 +25,6 @@ import io.odysz.transact.x.TransException;
 
 public class DocUtils {
 	/**
-	 * @since 2.0.0
-	 * @param conn
-	 * @param photo with photo.uri that is the entire base-64 encoded string
-	 * @param usr
-	 * @param meta 
-	 * @param syb 
-	 * @param onFileCreateSql 
-	 * @return doc id
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-//	public static String createFileBy64(DATranscxt syb, String conn, ExpSyncDoc photo,
-//			IUser usr, ExpDocTableMeta meta, Update onFileCreateSql)
-//			throws TransException, SQLException, IOException {
-//		if (LangExt.isblank(photo.fullpath()))
-//			throw new SemanticException("The client path can't be null/empty.");
-//		
-//		if (LangExt.isblank(photo.folder(), " - - "))
-//			throw new SemanticException("Folder of managed docs cannot be empty - which is required for creating media files.");
-//
-//		Insert ins = syb
-//			.insert(meta.tbl, usr)
-//			.nv(meta.org, photo.org)
-//			.nv(meta.uri, photo.uri64)
-//			.nv(meta.device, photo.device())
-//			.nv(meta.resname, photo.pname)
-//			.nv(meta.synoder, usr.deviceId())
-//			.nv(meta.fullpath, photo.fullpath())
-//			.nv(meta.createDate, photo.createDate)
-//			.nv(meta.folder, photo.folder())
-//			.nv(meta.shareflag, photo.shareflag)
-//			.nv(meta.shareby, photo.shareby)
-//			.nv(meta.shareDate, photo.sharedate)
-//			.nv(meta.size, photo.size)
-//			.post(onFileCreateSql);
-//			;
-//		
-//		if (!LangExt.isblank(photo.mime))
-//			ins.nv(meta.mime, photo.mime);
-//		
-//		SemanticObject res = (SemanticObject) ins
-//				.ins(syb.instancontxt(conn, usr)
-//						.creator(((DBSyntableBuilder) syb)
-//						.loadNyquvect(conn)));
-//		return res.resulve(meta.tbl, meta.pk, -1);
-//	}
-
-	/**
 	 * <p>Create a doc record with a local file, e.g. h_photos - call this after duplication is checked.</p>
 	 * <p>This method will insert record, and can trigger ExtFilev2 handling.</p>
 	 * <p>Doc is created as in the folder of user/[photo.folder]/;<br>
@@ -201,14 +152,15 @@ public class DocUtils {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl)
-				.col("uri").col("folder")
-				.whereEq("pid", docId).rs(stx)
+				.col(meta.uri).col(meta.folder)
+				.whereEq(meta.pk, docId)
+				.rs(stx)
 				.rs(0);
 	
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 	
-		return resolvExtroot(conn, rs.getString("uri"), meta);
+		return resolvExtroot(conn, rs.getString(meta.uri), meta);
 	}
 
 	/**

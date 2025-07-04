@@ -241,7 +241,7 @@ public class SynotierJettyApp implements Daemon {
 		// prepare loca ip, setup local web-dist's root path, etc.
 		try {
 			settings.localIp = AppSettings.getLocalIp(2);
-			settings.webrootLocal = f("%s:%s", settings.localIp, settings.webport);
+			// settings.webrootLocal = f("%s:%s", settings.localIp, settings.webport);
 			settings.toFile(settings.json, JsonOpt.beautify());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -255,7 +255,7 @@ public class SynotierJettyApp implements Daemon {
 					.forName(settings.startHandler[0])
 					.getDeclaredConstructor()
 					.newInstance())
-					.onExpose(settings, this.syngleton.syncfg.domain, this.syngleton.synode());
+					.onExpose(settings, this.syngleton.syncfg.domain, this.syngleton.synode(), this.syngleton.syncfg.https);
 			} catch (Exception e) {
 				warn("Exposing local resources failed!");
 				e.printStackTrace();
@@ -325,8 +325,8 @@ public class SynotierJettyApp implements Daemon {
 		AppSettings.updateOrgConfig(cfg, settings);
 		
 		return createSyndoctierApp(cfg, settings,
-							((ArrayList<SyncUser>) YellowPages.robots()).get(0),
-							webinf, config_xml, f("%s/%s", $vol_home, "syntity.json"))
+					((ArrayList<SyncUser>) YellowPages.robots()).get(0),
+					webinf, config_xml, f("%s/%s", $vol_home, "syntity.json"))
 
 				.start(isNull(oe) ? () -> System.out : oe[0],
 					  !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)

@@ -8,6 +8,7 @@
  */
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.AESHelper.stream;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
@@ -24,19 +25,11 @@ import static io.odysz.semantic.jprotocol.JProtocol.Headers.Server;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,6 +54,7 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.Exchanging;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
@@ -81,7 +75,7 @@ public abstract class Docs206 {
 	private static final String ETAG = "W/\"%s-%s\"";
 	private static final Pattern Regex_Range = Pattern.compile("^bytes=[0-9]*-[0-9]*(,[0-9]*-[0-9]*)*+$");
 	private static final String Multipart_boundary = UUID.randomUUID().toString();
-	private static final int Range_Size = 1024 * 8;
+	// private static final int Range_Size = 1024 * 8;
 
 	/**
 	 * Used for telling the client with request header:<br>
@@ -122,7 +116,6 @@ public abstract class Docs206 {
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			return replyHeadersv2(req, resp, msg, usr);
 		} catch (IOException e) {
-//			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
 			headerr(resp, msg, HttpServletResponse.SC_PRECONDITION_FAILED, e);
 			return null;
 		}
@@ -188,10 +181,19 @@ public abstract class Docs206 {
 			msg = ansonMsg(req);
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			List<Range> ranges = replyHeadersv2(req, resp, msg, usr);
-			Resource resource = new Resource(getDocByEid(req, msg.body(0), st, usr), msg.body(0).doc.recId);
+			
+			Resource resource = new Resource(isblank(msg.body(0).doc.uids) ?
+										getDocByEid(req, msg.body(0), st, usr) :
+										getDocByUid(req, msg.body(0), st, usr),
+									msg.body(0).doc.recId);
 			
 			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
 			writeContent(resp, resource, ranges, "");
+		}
+		catch (FileNotFoundException e) {
+			logT(new Object() {}, "File is not found, reply SC_CONFLICT 409 Bad Request. Message:\n%s",
+				e.getMessage());
+			headerr(resp, msg, HttpServletResponse.SC_CONFLICT, e);
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
@@ -199,12 +201,12 @@ public abstract class Docs206 {
 		}
 		catch (ExchangeException e) {
 			// That's a doc-ref, nothing to download
-			logT(new Object() {}, "ExchangeException, reply 409 Bad Request. Message:\n%s",
+			logT(new Object() {}, "ExchangeException, reply SC_CONFLICT 409 Bad Request. Message:\n%s",
 				e.getMessage());
 			headerr(resp, msg, HttpServletResponse.SC_CONFLICT, e);
 		}
 		catch (IllegalArgumentException e) {
-			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+			logT(new Object() {}, "IllegalArgumentException, reply SC_BAD_REQUEST400 Bad Request. Message:\n%s",
 				e.getMessage());
 			headerr(resp, msg, HttpServletResponse.SC_BAD_REQUEST, e);
 		} catch (TransException e) {
@@ -383,16 +385,29 @@ public abstract class Docs206 {
 		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
 	}
 
+	/**
+	 * Handling syntity's doc downloading, an extend and hard syn-docref function into lower layer
+	 * than docsync.jserv, with semantics and metas from DBSyntaransBuilder.
+	 * 
+	 * @param request
+	 * @param req
+	 * @param st
+	 * @param usr
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws IOException
+	 */
 	protected static File getDocByUid(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr)
 			throws TransException, SQLException, IOException {
 
 		String conn = Connects.uri2conn(req.uri());
-		// ExpDocTableMeta meta = getMeta.get(req.uri());
 		if (req.doc == null || isblank(req.doc.uids) || isblank(req.docTabl))
 			throw new IllegalArgumentException(f("File informoation is missing: uids: %s, table %s",
 					req.doc == null ? null : req.doc.uids, req.docTabl));
 
-		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
+		// ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
+		ExpDocTableMeta meta = (ExpDocTableMeta) DBSynTransBuilder.getEntityMeta(conn, req.docTabl);
 
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
@@ -414,7 +429,7 @@ public abstract class Docs206 {
 		File f = new File(p);
 		if (f.exists() && f.isFile())
 			return f;
-		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
+		else throw new FileNotFoundException("File not found: " + rs.getString(meta.fullpath));
 	}
 
 	/**
@@ -637,46 +652,46 @@ public abstract class Docs206 {
 		}
 	}
 
-	public static long stream(File file, OutputStream output, long start, long length) throws IOException {
-		if (start == 0 && length >= file.length()) {
-			try (ReadableByteChannel inputChannel = Channels.newChannel(new FileInputStream(file));
-					WritableByteChannel outputChannel = Channels.newChannel(output)) {
-				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
-				long size = 0;
-
-				while (inputChannel.read(buffer) != -1) {
-					buffer.flip();
-					size += outputChannel.write(buffer);
-					buffer.clear();
-				}
-
-				return size;
-			}
-		}
-		else {
-			try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), StandardOpenOption.READ)) {
-				WritableByteChannel outputChannel = Channels.newChannel(output);
-				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
-				long size = 0;
-
-				while (fileChannel.read(buffer, start + size) != -1) {
-					buffer.flip();
-
-					if (size + buffer.limit() > length) {
-						buffer.limit((int) (length - size));
-					}
-
-					size += outputChannel.write(buffer);
-
-					if (size >= length) break;
-
-					buffer.clear();
-				}
-
-				return size;
-			}
-		}
-	}
+//	public static long stream(File file, OutputStream output, long start, long length) throws IOException {
+//		if (start == 0 && length >= file.length()) {
+//			try (ReadableByteChannel inputChannel = Channels.newChannel(new FileInputStream(file));
+//					WritableByteChannel outputChannel = Channels.newChannel(output)) {
+//				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
+//				long size = 0;
+//
+//				while (inputChannel.read(buffer) != -1) {
+//					buffer.flip();
+//					size += outputChannel.write(buffer);
+//					buffer.clear();
+//				}
+//
+//				return size;
+//			}
+//		}
+//		else {
+//			try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), StandardOpenOption.READ)) {
+//				WritableByteChannel outputChannel = Channels.newChannel(output);
+//				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
+//				long size = 0;
+//
+//				while (fileChannel.read(buffer, start + size) != -1) {
+//					buffer.flip();
+//
+//					if (size + buffer.limit() > length) {
+//						buffer.limit((int) (length - size));
+//					}
+//
+//					size += outputChannel.write(buffer);
+//
+//					if (size >= length) break;
+//
+//					buffer.clear();
+//				}
+//
+//				return size;
+//			}
+//		}
+//	}
 
 	public static String dispositionHeader(String filename, boolean attachment)
 			throws UnsupportedEncodingException {
@@ -743,10 +758,14 @@ public abstract class Docs206 {
 		}
 	}
 
-	static class Range {
+	static class Range extends Anson {
 		long start;
 		long end;
 		long length;
+		
+		public Range() {
+			super();
+		}
 		
 		public Range(long start, long end) {
 			this.start = start;
