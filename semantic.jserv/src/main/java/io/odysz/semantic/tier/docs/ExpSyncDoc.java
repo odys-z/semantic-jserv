@@ -16,7 +16,6 @@ import java.util.Date;
 import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.SynEntity;
@@ -145,7 +144,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	}
 
 	@AnsonField(ignoreTo=true)
-	ExpDocTableMeta docMeta;
+	// ExpDocTableMeta docMeta;
 
 	public String mime;
 	public ExpSyncDoc mime(String mime) {
@@ -206,7 +205,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
 	public ExpSyncDoc(AnResultset rs, ExpDocTableMeta meta) throws SQLException {
 		super(meta);
-		this.docMeta = meta;
+		// this.entMeta = meta;
 		this.recId = rs.getString(meta.pk);
 		this.org = rs.getString(meta.org);
 		this.pname = rs.getString(meta.resname);
@@ -238,22 +237,26 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		clientpath = file.fullpath();
 	}
 
-	/**
-	 * Currently not support doc.device, doc.cdate, doc.clientpath, 
-	 * so can only used for resolving DocRef.
-	 * 
-	 * @param ref
-	 */
-	public ExpSyncDoc(DocRef ref) {
-		super(ref.docm);
+//	/**
+//	 * Currently not support doc.device, doc.cdate, doc.clientpath, 
+//	 * so can only used for resolving DocRef.
+//	 * 
+//	 * @param ref
+//	 */
+//	public ExpSyncDoc(DocRef ref) {
+//		super(ref.docm);
+//		this.org = "";
+//		recId = ref.docId;
+//		this.pname = ref.pname;
+//		this.uids = ref.uids;
+//		this.uri64 = ref.uri64;
+////		device = doc.device();
+////		createDate = doc.cdate();
+////		clientpath = doc.fullpath();
+//	}
+	public ExpSyncDoc(ExpDocTableMeta m) {
+		super(m);
 		this.org = "";
-		recId = ref.docId;
-		this.pname = ref.pname;
-		this.uids = ref.uids;
-		this.uri64 = ref.uri64;
-//		device = doc.device();
-//		createDate = doc.cdate();
-//		clientpath = doc.fullpath();
 	}
 
 	public IFileDescriptor fullpath(String clientpath) throws IOException {

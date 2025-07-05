@@ -8,7 +8,7 @@
  */
 package io.odysz.semantic.tier.docs;
 
-import static io.odysz.common.AESHelper.stream;
+import static io.odysz.common.AESHelper.stream206;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
@@ -632,11 +632,11 @@ public abstract class Docs206 {
 	public static void writeContent(HttpServletResponse response, Resource resource, List<Range> ranges, String contentType) throws IOException {
 		ServletOutputStream output = response.getOutputStream();
 		if (ranges == null) {
-			stream(resource.file, output, 0, Math.max(resource.length - 1, 0));
+			stream206(resource.file, output, 0, Math.max(resource.length - 1, 0));
 		}
 		else if (ranges.size() == 1) {
 			Range range = ranges.get(0);
-			stream(resource.file, output, range.start, range.length);
+			stream206(resource.file, output, range.start, range.length);
 		}
 		else {
 			for (Range range : ranges) {
@@ -644,7 +644,7 @@ public abstract class Docs206 {
 				output.println("--" + Multipart_boundary);
 				output.println("Content-Type: " + contentType);
 				output.println("Content-Range: bytes " + range.start + "-" + range.end + "/" + resource.length);
-				stream(resource.file, output, range.start, range.length);
+				stream206(resource.file, output, range.start, range.length);
 			}
 
 			output.println();

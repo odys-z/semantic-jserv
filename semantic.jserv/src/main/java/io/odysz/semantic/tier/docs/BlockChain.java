@@ -42,7 +42,8 @@ public class BlockChain {
 	public final String outputPath;
 	protected final OutputStream ofs;
 	
-	protected final IBlock waitings;
+	/** Blocks waiting for flush. */
+	protected IBlock waitings;
 
 	public final String docTabl;
 
@@ -82,7 +83,7 @@ public class BlockChain {
 		f.createNewFile();
 		this.ofs = new FileOutputStream(f);
 
-		waitings = new DocsReq().blockSeq(-1);
+		waitings = createNode().blockSeq(-1);
 	}
 
 	/**
@@ -108,10 +109,44 @@ public class BlockChain {
 		f.createNewFile();
 		this.ofs = new FileOutputStream(f);
 
-		waitings = new DocsReq().blockSeq(-1);
+		waitings = createNode().blockSeq(-1);
 		
 		this.doc = doc;
 		this.doc.device(devid);
+	}
+
+	private IBlock createNode() {
+		return new IBlock() {
+			int blockSeq;
+			IBlock nxt;
+			@Override
+			public IBlock nextBlock(IBlock block) {
+				nxt = block;
+				return this;
+			}
+
+			@Override
+			public IBlock nextBlock() {
+				return nxt;
+			}
+
+			@Override
+			public IBlock blockSeq(int blockSeq) {
+				this.blockSeq = blockSeq;
+				return this;
+			}
+
+			@Override
+			public int blockSeq() {
+				return blockSeq;
+			}
+
+			@Override
+			public ExpSyncDoc doc() {
+				return null;
+			}
+			
+		};
 	}
 
 	/**
@@ -140,8 +175,12 @@ public class BlockChain {
 		while (waitings.nextBlock() != null && waitings.blockSeq() + 1 == waitings.nextBlock().blockSeq()) {
 			ofs.write(AESHelper.decode64(waitings.nextBlock().doc().uri64()));
 
-			waitings.blockSeq(waitings.nextBlock().blockSeq());
-			waitings.nextBlock(waitings.nextBlock().nextBlock());
+			// TODO to be verified: But why works well in previous versions?
+			// waitings.blockSeq(waitings.nextBlock().blockSeq());
+			// waitings.nextBlock(waitings.nextBlock().nextBlock());
+
+			// waitings.nextBlock(waitings.nextBlock());
+			waitings = waitings.nextBlock();
 		}
 		ofs.flush();
 		return this;

@@ -323,11 +323,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 	DocsResp startBlocks(DocsReq body, IUser usr)
 			throws IOException, TransException, SQLException, SAXException {
-//		return startBlocks(st, blockChains, body, usr);
-//	}
-//
-//	static DocsResp startBlocks(DATranscxt st, HashMap<String, BlockChain> blockChains, DocsReq body, IUser usr)
-//			throws IOException, TransException, SQLException, SAXException {
 		String conn = Connects.uri2conn(body.uri());
 
 		checkBlock0(st, conn, body, (DocUser) usr);
@@ -354,11 +349,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
-//		return uploadBlock(blockChains, body, usr);
-//	}
-//
-//	static DocsResp uploadBlock(HashMap<String, BlockChain> blockChains, DocsReq body, IUser usr)
-//			throws IOException, TransException {
+
 		if (isblank(body.doc.clientpath))
 			throw new SemanticException("Doc's client-path must presenting in each pushing blocks.");
 
@@ -392,11 +383,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	 */
 	DocsResp endBlock(DocsReq body, IUser usr)
 			throws SAXException, Exception {
-//		return endBlock(domx, blockChains, body, usr, onCreate, debug);
-//	}
-//	
-//	static DocsResp endBlock(SynDomanager domx, HashMap<String, BlockChain> blockChains, DocsReq body,
-//			IUser usr, IOnDocreate onCreate, boolean debug) throws SAXException, Exception {
 		String chaid = chainId(usr, body.doc.clientpath); // shouldn't reply chain-id to the client?
 		BlockChain chain = null;
 		if (blockChains.containsKey(chaid)) {

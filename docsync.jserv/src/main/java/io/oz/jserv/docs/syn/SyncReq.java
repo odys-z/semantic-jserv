@@ -2,7 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.*;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -87,6 +87,10 @@ public class SyncReq extends UserReq implements IBlock {
 
 	/** doc data [start-inclucive, end-exclucive] */
 	long[] range;
+	public SyncReq range(long start, long len) {
+		range = new long[] {start, len};
+		return this;
+	}
 
 	SyncReq nextblock;
 
@@ -178,9 +182,9 @@ public class SyncReq extends UserReq implements IBlock {
 	}
 
 	String avoidTabl;
-	HashSet<String> avoidUids;
+	ArrayList<String> avoidUids;
 	
-	public SyncReq avoid(String avoidtbl, HashSet<String> avoidUids) {
+	public SyncReq avoid(String avoidtbl, ArrayList<String> avoidUids) {
 		this.avoidTabl = avoidtbl;
 		this.avoidUids = avoidUids;
 		return this;

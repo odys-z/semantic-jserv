@@ -5,6 +5,7 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.mode_server;
@@ -52,12 +53,14 @@ import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.BlockChain;
+import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.parts.ExtFilePaths;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
@@ -355,18 +358,26 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			String doctbl = rs.getString(refm.syntabl);
 			ISemantext ctx = st.instancontxt(conn, usr);
 			ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, doctbl);
-			HashMap<String, DocRef> refs = ((AnResultset) st
-				.batchSelect(docm.tbl, "d")
+
+			Query q = st.batchSelect(docm.tbl, "d")
 				// .col(Funcall.refile(new DocRef(domanager0.synode, docm, "NA", ctx)))
 				.cols(docm.pk, docm.uri, docm.io_oz_synuid)
 				.je("d", refm.tbl, "rf", "d." + docm.io_oz_synuid, "rf." + refm.io_oz_synuid)
 				.whereEq(refm.fromPeer, req.exblock.srcnode)
 				.whereEq(refm.syntabl, doctbl)
-				.limit(16)
+				.limit(16);
+			
+			if (eq(doctbl, req.avoidTabl) && len(req.avoidUids) > 0)
+				q.whereNotIn(refm.io_oz_synuid, req.avoidUids);
+
+			HashMap<String, DocRef> refs = ((AnResultset) q
 				.rs(ctx)
 				.rs(0))
 				.map(docm.io_oz_synuid, (r) -> {
-					return ((DocRef) r.getAnson(docm.uri)).uids(r.getString(docm.io_oz_synuid));
+					return ((DocRef) r
+							.getAnson(docm.uri))
+							.syntabl(docm.tbl)
+							.uids(r.getString(docm.io_oz_synuid));
 				});
 
 			return resp.docrefs(doctbl, refs);
@@ -401,7 +412,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		String tempDir = ((DocUser)usr).touchTempDir(conn, tbl);
 
-		BlockChain chain = new BlockChain(tbl, tempDir, req.exblock.srcnode, new ExpSyncDoc(req.docref));
+		BlockChain chain = new BlockChain(tbl, tempDir, req.exblock.srcnode, req.doc);
 
 		String id = ExpDoctier.chainId(usr, req.docref.uids);
 
@@ -414,9 +425,11 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	}
 
 	private void checkBlock0(DATranscxt st, String conn, SyncReq req, DocUser usr) {
-//		if (isblank(req.docref.clientpath))
-//			throw new SemanticException("Doc's client-path must presenting in each pushing blocks.");
-
+		mustnonull(req.docref);
+		mustnonull(req.docref.syntabl);
+		mustnonull(req.docref.uids);
+		mustnonull(req.exblock);
+		mustnonull(req.exblock.srcnode);
 	}
 
 	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr) throws IOException, TransException, SQLException {
@@ -476,29 +489,33 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		 musteq(req.exblock.srcnode, chain.doc.device());
 	}
 
-	private void stepBreakpoint(ExpSyncDoc doc, SyncReq req, IUser usr)
+	private void stepBreakpoint(ExpSyncDoc doc, IBlock reqBlk, IUser usr)
 			throws TransException, SQLException, AnsonException, IOException {
 
-		// update range into doc-ref
-		String conn = Connects.uri2conn(req.uri());
-		String doctbl = req.docref.syntabl;
-		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, doctbl);
-		SynDocRefMeta rfm = domanager0.refm;
-		String peer = req.exblock.srcnode;
+		if (reqBlk instanceof SyncReq) {
+			SyncReq req = (SyncReq) reqBlk;
+			// update range into doc-ref
 
-		musteq(req.range[1], req.blockSeq * AESHelper.blockSize());
-		DocRef docref = req.docref.breakpoint(req.range[1]);
-		
-		st.update(docm.tbl)
-		  .nv(docm.uri, docref.toBlock())
-		  .whereEq(docm.io_oz_synuid, docref.uids)
-		  .whereEq(docm.io_oz_synuid, st
-				.select(rfm.tbl)
-				.col(rfm.io_oz_synuid)
-				.whereEq(rfm.syntabl, doctbl)
-				.whereEq(rfm.fromPeer, peer)
-				.whereEq(rfm.io_oz_synuid, docref.uids))
-		  .u(st.instancontxt(conn, usr));
+			String conn = Connects.uri2conn(req.uri());
+			String doctbl = req.docref.syntabl;
+			ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, doctbl);
+			SynDocRefMeta rfm = domanager0.refm;
+			String peer = req.exblock.srcnode;
+
+			musteq(req.range[1], req.blockSeq * AESHelper.blockSize());
+			DocRef docref = req.docref.breakpoint(req.range[1]);
+			
+			st.update(docm.tbl)
+			  .nv(docm.uri, docref.toBlock())
+			  .whereEq(docm.io_oz_synuid, docref.uids)
+			  .whereEq(docm.io_oz_synuid, st
+					.select(rfm.tbl)
+					.col(rfm.io_oz_synuid)
+					.whereEq(rfm.syntabl, doctbl)
+					.whereEq(rfm.fromPeer, peer)
+					.whereEq(rfm.io_oz_synuid, docref.uids))
+			  .u(st.instancontxt(conn, usr));
+		}
 	}
 
 	/**
