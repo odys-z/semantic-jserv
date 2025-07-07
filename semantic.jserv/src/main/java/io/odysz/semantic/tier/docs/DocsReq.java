@@ -1,7 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.musteqs;
 
 import java.io.File;
 import java.io.IOException;
@@ -161,7 +161,7 @@ public class DocsReq extends UserReq implements IBlock {
 				.clientname(doc.pname)
 				.uri64(doc.uri64)
 				.uids(doc.uids);
-		musteq(doc.syntabl, this.doc.tabl());
+		musteqs(doc.syntabl, this.doc.tabl());
 		this.docTabl = doc.syntabl;
 	}
 

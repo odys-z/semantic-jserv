@@ -5,6 +5,8 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.musteqs;
+import static io.odysz.common.LangExt.mustge;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.semantic.syn.ExessionAct.deny;
@@ -49,7 +51,9 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynDocRefMeta;
+import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
+import io.odysz.semantic.syn.Exchanging;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.BlockChain;
@@ -428,12 +432,13 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		mustnonull(req.docref);
 		mustnonull(req.docref.syntabl);
 		mustnonull(req.docref.uids);
+		musteqs(req.docref.uids, req.doc.uids);
 		mustnonull(req.exblock);
 		mustnonull(req.exblock.srcnode);
 	}
 
 	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr)
-			throws IOException, TransException, SQLException {
+			throws Exception {
 		String id = ExpDoctier.chainId(usr, req.docref.uids);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must be accessed after starting chain is confirmed.");
@@ -460,15 +465,17 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		} else
 			throw new SemanticException("Ending a block chain which is not exists.");
 
-		verifyBlock(chain, req);
+		verifyBlock9(chain, req);
 		
 		String conn = Connects.uri2conn(req.uri());
 
 		ExpSyncDoc photo = chain.doc;
 		
-		if (!Anson.startEnvelope(photo.uri64))
-			Utils.warnT(new Object() {}, "Must be verfified: Ignoring file moving since envelope is a physical base64.");
-		else {
+//		if (!Anson.startEnvelope(req.docref.uri64)) {
+//			Utils.warnT(new Object() {}, "Must be verfified: Ignoring file moving since envelope is a physical base64.");
+//			throw new ExchangeException(Exchanging.confirming, null, "To end a block chain pushing, requires correct uri in doc-ref.");
+//		}
+//		else {
 			String targetPath = ref2physical(conn, req.docref, usr);
 			// move file
 			Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
@@ -476,22 +483,22 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			
 			if (debug)
 				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
-		}
+//		}
 
 		return new SyncResp()
 				.blockSeq(req.blockSeq())
 				.doc(chain.doc);
 	}
 
-	private void verifyBlock(BlockChain chain, SyncReq req) {
-		 musteq(req.docref.syntabl, chain.docTabl);
-		 musteq(req.docref.uids, chain.doc.uids);
-		 musteq(req.exblock.peer, domanager0.synode);
-		 musteq(req.exblock.srcnode, chain.doc.device());
+	private void verifyBlock9(BlockChain chain, SyncReq req) {
+		 musteqs(req.docref.syntabl, chain.docTabl);
+		 musteqs(req.docref.uids, chain.doc.uids);
+		 musteqs(req.exblock.peer, domanager0.synode);
+		 musteqs(req.exblock.srcnode, chain.doc.device());
 	}
 
 	private void stepBreakpoint(ExpSyncDoc doc, IBlock reqBlk, IUser usr)
-			throws TransException, SQLException, AnsonException, IOException {
+			throws Exception {
 
 		if (reqBlk instanceof SyncReq) {
 			SyncReq req = (SyncReq) reqBlk;
@@ -504,10 +511,12 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			String peer = req.exblock.srcnode;
 
 			musteq((long)req.range[0], (long)req.blockSeq * AESHelper.blockSize());
-			musteq((long)req.range[1], (long)(req.blockSeq + 1) * AESHelper.blockSize());
+			mustge((long)(req.blockSeq + 1) * AESHelper.blockSize(), (long)req.range[1]);
 			DocRef docref = req.docref.breakpoint(req.range[1]);
 			
-			st.update(docm.tbl)
+			// DBSynTransBuilder st = new DBSynTransBuilder(domanager0);
+			DBSyntableBuilder st = new DBSyntableBuilder(domanager0);
+			st.update(docm.tbl, usr)
 			  .nv(docm.uri, docref.toBlock())
 			  .whereEq(docm.io_oz_synuid, docref.uids)
 			  .whereEq(docm.io_oz_synuid, st
@@ -516,7 +525,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					.whereEq(rfm.syntabl, doctbl)
 					.whereEq(rfm.fromPeer, peer)
 					.whereEq(rfm.io_oz_synuid, docref.uids))
-			  .u(st.instancontxt(conn, usr));
+			  .u(st.nonsemantext());
 		}
 	}
 
@@ -530,24 +539,24 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @param docref
 	 * @param usr
 	 * @return target path 
-	 * @throws TransException
-	 * @throws SQLException
+	 * @throws Exception 
 	 */
 	private String ref2physical(String conn, DocRef docref, DocUser usr)
-			throws TransException, SQLException {
+			throws Exception {
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, docref.syntabl);
 
 		ExtFilePaths extpths = DocRef.createExtPaths(conn, docref.syntabl, docref);
 		String targetpth = extpths.decodeUriPath();
 		
-		ISemantext ctx = st.instancontxt(conn, usr);
+		// ISemantext ctx = st.instancontxt(conn, usr);
+		DBSyntableBuilder st = new DBSyntableBuilder(domanager0);
 
 		SemanticObject res = st
 			.update(meta.tbl, usr)
 			.nv(meta.uri, extpths.dburi(true))
 			.whereEq(meta.pk, docref.docId)
 			.whereEq(meta.io_oz_synuid, docref.uids)
-			.u(ctx);
+			.u(st.nonsemantext());
 		
 		if(1 != res.total()) {
 			Utils.warnT(new Object() {},

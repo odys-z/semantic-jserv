@@ -83,7 +83,7 @@ import io.oz.jserv.docs.syn.SyncReq.A;
  */
 public class SynssionPeer {
 
-	private static final int blocksize = 3 * 1024 * 1024;
+	// private static final int blocksize = 3 * 1024 * 1024;
 
 	public static boolean testDisableAutoDocRef = false;
 
@@ -706,8 +706,8 @@ public class SynssionPeer {
 		Path path = Path.of(xp.trb.decodeExtfile(fd.uri64()));
 
 		SyncReq req  = new SyncReq()
-				.docref(docref)
-				.blockStart(domanager.domain(), mynid, peer, totalBlocks, fd);
+				.blockStart(domanager.domain(), mynid, peer, totalBlocks, fd)
+				.docref(docref);
 		
 		String[] act = AnsonHeader.usrAct(uri_syn, CRUD.U, A.docRefBlockUp, mynid);
 		AnsonHeader header = client.header().act(act);
@@ -716,7 +716,7 @@ public class SynssionPeer {
 
 		SyncResp resp0 = client.commit(q, errHandler);
 
-		totalBlocks = (int) (Math.max(0, p.size - 1) / blocksize) + 1;
+		totalBlocks = (int) (Math.max(0, p.size - 1) / AESHelper.blockSize()) + 1;
 
 		if (proc != null) proc.proc(-1, -1, 0, totalBlocks, resp0);
 
@@ -725,7 +725,7 @@ public class SynssionPeer {
 
 			long start = 0;
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			long len = AESHelper.encodeRange(path, ifs, size, baos, start, (long)blocksize);
+			long len = AESHelper.encodeRange(path, ifs, size, baos, start, AESHelper.blockSize());
 			SyncResp respi = null;
 			while (len > 0) {
 				req = new SyncReq()
@@ -733,6 +733,7 @@ public class SynssionPeer {
 						.range(start, start + len)
 						.blockUp(domanager.domain(), mynid, peer, seq, p, baos.toString());
 				seq++;
+				start += len;
 
 				q = client.<SyncReq>userReq(uri, Port.syntier, req)
 							.header(header);
@@ -742,11 +743,13 @@ public class SynssionPeer {
 
 				// b64 = AESHelper.encode64(ifs, blocksize);
 				baos = new ByteArrayOutputStream();
-				len = AESHelper.encodeRange(path, ifs, size, baos, start, (long)blocksize);
+				len = AESHelper.encodeRange(path, ifs, size, baos, start, AESHelper.blockSize());
 			}
+			
+			mustnonull(docref.uids);
 			req = new SyncReq()
-					.docref(docref)
-					.blockEnd(domanager.domain(), mynid, peer, respi == null ? resp0 : respi);
+					.blockEnd(domanager.domain(), mynid, peer, respi == null ? resp0 : respi)
+					.docref(docref);
 
 			q = client.<SyncReq>userReq(uri, Port.syntier, req)
 						.header(header);

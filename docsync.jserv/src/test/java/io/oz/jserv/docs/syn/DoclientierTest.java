@@ -66,8 +66,6 @@ class DoclientierTest {
 
 	private static Thread thr;
 
-//	private static Thread thref;
-
 	/** Stop service node quit automatically. */
 	static final boolean[] serviceLight = new boolean[1];
 	
