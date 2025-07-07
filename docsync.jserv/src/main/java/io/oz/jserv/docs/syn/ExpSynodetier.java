@@ -432,7 +432,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		mustnonull(req.exblock.srcnode);
 	}
 
-	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr) throws IOException, TransException, SQLException {
+	public SyncResp onDocRefUploadBlock(SyncReq req, DocUser usr)
+			throws IOException, TransException, SQLException {
 		String id = ExpDoctier.chainId(usr, req.docref.uids);
 		if (!blockChains.containsKey(id))
 			throw new SemanticException("Uploading blocks must be accessed after starting chain is confirmed.");
@@ -502,7 +503,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			SynDocRefMeta rfm = domanager0.refm;
 			String peer = req.exblock.srcnode;
 
-			musteq(req.range[1], req.blockSeq * AESHelper.blockSize());
+			musteq((long)req.range[0], (long)req.blockSeq * AESHelper.blockSize());
+			musteq((long)req.range[1], (long)(req.blockSeq + 1) * AESHelper.blockSize());
 			DocRef docref = req.docref.breakpoint(req.range[1]);
 			
 			st.update(docm.tbl)
@@ -557,7 +559,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		return targetpth;
 	}
 
-	public SyncResp onDocRefAbortBlock(SyncReq req, DocUser usr) throws IOException, TransException {
+	public SyncResp onDocRefAbortBlock(SyncReq req, DocUser usr)
+			throws IOException, TransException {
 		String id = ExpDoctier.chainId(usr, req.docref.uids);
 		SyncResp ack = new SyncResp();
 

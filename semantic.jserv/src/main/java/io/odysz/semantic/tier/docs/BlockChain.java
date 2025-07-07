@@ -178,8 +178,6 @@ public class BlockChain {
 			// TODO to be verified: But why works well in previous versions?
 			// waitings.blockSeq(waitings.nextBlock().blockSeq());
 			// waitings.nextBlock(waitings.nextBlock().nextBlock());
-
-			// waitings.nextBlock(waitings.nextBlock());
 			waitings = waitings.nextBlock();
 		}
 		ofs.flush();

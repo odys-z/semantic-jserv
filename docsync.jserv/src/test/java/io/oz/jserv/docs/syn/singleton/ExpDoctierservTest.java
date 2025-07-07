@@ -309,24 +309,24 @@ public class ExpDoctierservTest {
 	}
 	/**
 	 * Assert X-docs are synchronized to Y, as DocRefs.
-	 * @param a
-	 * @param b
-	 * @param xdoc_refs_y x docs at y as refs
-	 * @param ydoc_refs_x y docs at x as refs
+	 * @param a x
+	 * @param b y
+	 * @param yrefs2xdoc x docs at y as refs
+	 * @param xrefs2ydoc y docs at x as refs
 	 * @return doc-refs at b to docs at a
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	static ArrayList<DocRef> assert_Arefs_atB(int a, int b, int xdoc_refs_y, int ydoc_refs_x)
+	static ArrayList<DocRef> assert_Arefs_atB(int a, int b, int yrefs2xdoc, int xrefs2ydoc)
 			throws SQLException, TransException {
 		List<DocRef> refs_atY = ck[b]
 				.docRef()
 				.stream()
 				.filter(v -> v != null).toList();
-		assertEquals(xdoc_refs_y, len(refs_atY));
+		assertEquals(yrefs2xdoc, len(refs_atY));
 
 		int xatys = 0;
-		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(xdoc_refs_y);
+		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(yrefs2xdoc);
 
 		for (DocRef xdref : refs_atY) {
 			if (xdref == null) continue;
@@ -338,7 +338,7 @@ public class ExpDoctierservTest {
 			xatys++;
 			xdlst.add(xdref);
 		}
-		assertEquals(xdoc_refs_y, xatys);
+		assertEquals(yrefs2xdoc, xatys);
 		return xdlst;
 	}
 
