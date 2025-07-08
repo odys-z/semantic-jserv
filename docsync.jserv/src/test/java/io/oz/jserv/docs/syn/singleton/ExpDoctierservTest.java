@@ -71,6 +71,9 @@ public class ExpDoctierservTest {
 	public final static int Y = 1;
 	public final static int Z = 2;
 	public final static int W = 3;
+	
+	public static final int case_yresolve = 0;
+	public static final int case_xy_resolve = 1;
 
 	static final String[] servs_conn  = new String[] {
 			"no-jserv.00", "no-jserv.01", "no-jserv.02", "no-jserv.03"};
@@ -100,7 +103,7 @@ public class ExpDoctierservTest {
 			Utils.logrst("wait-clients = null.", 0, 0);
 
 			int[] nodex = startJetties(jetties, ck);
-			runDoctiers(nodex, null, null, null);
+			runDoctiers(0, nodex, null, null, null);
 
 			Utils.warnT(new Object() {}, "Test is running in automatic style, quite without waiting clients' pushing!");
 		}
@@ -114,7 +117,7 @@ public class ExpDoctierservTest {
 			final boolean[] canPush = new boolean[] { false };
 			final boolean[] pushDone = new boolean[] { false };
 
-			runDoctiers(nodex, noAutoQuit, canPush, pushDone);
+			runDoctiers(0, nodex, noAutoQuit, canPush, pushDone);
 
 			pause("Now can run DoclienterTest. Press Enter once manully uploaded");
 			awaitAll(canPush);
@@ -133,7 +136,7 @@ public class ExpDoctierservTest {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("deprecation")
-	public static void runDoctiers(int[] nodex,
+	public static void runDoctiers(int caseid, int[] nodex,
 			boolean[] waitClients, boolean[] canPush, boolean[] pushDone) throws Exception {
 
 		int section = 0;
@@ -219,15 +222,24 @@ public class ExpDoctierservTest {
 		ck[Y].doc(3);
 		ck[X].doc(2);
 
-//		waiting(lights, Y);
-//		SynodetierJoinTest.syncdomain(lights, Y, ck);
-//		awaitAll(lights, -1);
 		SynodetierJoinTest.syncdomain(Y, ck);
 		
 		for (DocRef dr : assert_Arefs_atB(Y, X, 2, 0))
 			assertEquals(ck[Y].synode(), dr.synoder);
+		
+		if (caseid == 0)
+			case_yresolve(section);
+		else if (caseid == 1)
+			case_xy_resolve(section);
 
-		logrst("Create DocRef streaming thread at Y...", ++section);
+		ck[Z].doc(2);
+		ck[Y].doc(2);
+		ck[X].doc(2);
+	}
+
+	@SuppressWarnings("deprecation")
+	static void case_xy_resolve(int section) throws Exception {
+		logrst("[branch x-y] Create DocRef streaming thread at Y...", ++section);
 		Thread yresolve = SynodetierJoinTest
 				.jetties[Y].syngleton.domanager(zsu)
 				.synssion(ck[X].synode())
@@ -257,31 +269,67 @@ public class ExpDoctierservTest {
 		assert_Arefs_atB(X, Y, 0, 0);
 		assert_Arefs_atB(Y, X, 0, 0);
 
-		ck[Z].doc(2);
-		ck[Y].doc(2);
-		ck[X].doc(2);
-	}
 
+	}
+	
+	@SuppressWarnings("deprecation")
+	static void case_yresolve(int section) throws Exception {
+		logrst("[branch X <- Y] Create DocRef streaming thread at Y...", ++section);
+		Thread yresolve = SynodetierJoinTest
+				.jetties[Y].syngleton.domanager(zsu)
+				.synssion(ck[X].synode())
+				.createResolver();
+
+		// Now y doesn't keep any docref as it is deleted. But this branch should work.
+		logrst("Start DocRef streaming thread at Y...", ++section);
+		yresolve.start();
+
+
+		yresolve.join();
+
+		logrst("Resolving docrefs finished.", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		assert_Arefs_atB(X, Y, 0, 0);
+		assert_Arefs_atB(Y, X, 2, 0);
+
+		yresolve = SynodetierJoinTest
+				.jetties[Y].syngleton.domanager(zsu)
+				.synssion(ck[X].synode())
+				.pushResove();
+		logrst("Start DocRef pushing thread at Y...", ++section);
+		yresolve.start();
+		yresolve.join();
+
+		logrst("Resolving docrefs finished.", ++section);
+		printChangeLines(ck);
+		printNyquv(ck);
+
+		assert_Arefs_atB(X, Y, 0, 0);
+		assert_Arefs_atB(Y, X, 0, 0);
+	}
+	
 	/**
 	 * Assert X-docs are synchronized to Y, as DocRefs.
-	 * @param a
-	 * @param b
-	 * @param xdoc_refs_y x docs at y as refs
-	 * @param ydoc_refs_x y docs at x as refs
+	 * @param a x
+	 * @param b y
+	 * @param yrefs2xdoc x docs at y as refs
+	 * @param xrefs2ydoc y docs at x as refs
 	 * @return doc-refs at b to docs at a
 	 * @throws SQLException
 	 * @throws TransException
 	 */
-	static ArrayList<DocRef> assert_Arefs_atB(int a, int b, int xdoc_refs_y, int ydoc_refs_x)
+	static ArrayList<DocRef> assert_Arefs_atB(int a, int b, int yrefs2xdoc, int xrefs2ydoc)
 			throws SQLException, TransException {
 		List<DocRef> refs_atY = ck[b]
 				.docRef()
 				.stream()
 				.filter(v -> v != null).toList();
-		assertEquals(xdoc_refs_y, len(refs_atY));
+		assertEquals(yrefs2xdoc, len(refs_atY));
 
 		int xatys = 0;
-		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(xdoc_refs_y);
+		ArrayList<DocRef> xdlst = new ArrayList<DocRef>(yrefs2xdoc);
 
 		for (DocRef xdref : refs_atY) {
 			if (xdref == null) continue;
@@ -293,7 +341,7 @@ public class ExpDoctierservTest {
 			xatys++;
 			xdlst.add(xdref);
 		}
-		assertEquals(xdoc_refs_y, xatys);
+		assertEquals(yrefs2xdoc, xatys);
 		return xdlst;
 	}
 

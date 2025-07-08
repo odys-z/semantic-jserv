@@ -334,8 +334,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
 
-		// FIXME security breach?
-		String id = chainId(usr, chain.doc.clientpath);
+		String id = chainId(usr, body.doc.clientpath);
 
 		if (blockChains.containsKey(id))
 			throw new SemanticException("Why started again?");
@@ -344,12 +343,13 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return new DocsResp()
 				.blockSeq(-1)
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.doc.clientname())
+					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
-					.fullpath(chain.doc.clientpath));
+					.fullpath(body.doc.clientpath));
 	}
 
 	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
+
 		if (isblank(body.doc.clientpath))
 			throw new SemanticException("Doc's client-path must presenting in each pushing blocks.");
 
@@ -363,7 +363,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
 				.doc((ExpSyncDoc) new ExpSyncDoc()
-					.clientname(chain.doc.clientname())
+					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(body.doc.clientpath));
 	}
@@ -432,6 +432,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	}
 
 	DocsResp abortBlock(DocsReq body, IUser usr)
+			throws SQLException, IOException, InterruptedException, TransException {
+		return abortBlock(blockChains, body, usr);
+	}
+
+	static DocsResp abortBlock(HashMap<String, BlockChain> blockChains, DocsReq body, IUser usr)
 			throws SQLException, IOException, InterruptedException, TransException {
 		String id = chainId(usr, body.doc.clientpath);
 		DocsResp ack = new DocsResp();

@@ -8,6 +8,9 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.LangExt.is;
+import static io.odysz.common.LangExt.indexOf;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
 import static io.odysz.semantic.syn.ExessionAct.init;
@@ -15,25 +18,37 @@ import static io.odysz.semantic.syn.ExessionAct.ready;
 import static io.odysz.semantic.syn.ExessionAct.setupDom;
 import static io.odysz.semantic.syn.ExessionAct.trylater;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
 import io.odysz.anson.AnsonException;
+import io.odysz.common.AESHelper;
 import io.odysz.common.FilenameUtils;
+import io.odysz.common.Regex;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
 import io.odysz.jclient.syn.ExpDocRobot;
+import io.odysz.jclient.syn.IFileProvider;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.CRUD;
+import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.JProtocol.OnDocsOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jprotocol.JProtocol.OnProcess;
@@ -44,9 +59,12 @@ import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.Exchanging;
+import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -64,6 +82,8 @@ import io.oz.jserv.docs.syn.SyncReq.A;
 /**
  */
 public class SynssionPeer {
+
+	// private static final int blocksize = 3 * 1024 * 1024;
 
 	public static boolean testDisableAutoDocRef = false;
 
@@ -111,6 +131,22 @@ public class SynssionPeer {
 	/** Initialized by {@link io.odysz.semantic.syn.SyndomContext#dbg}, which should be from Config.debug. */
 	private boolean debug;
 
+	private HashMap<String, ArrayList<String>> avoidRefs2me;
+	void addAvoidRefs(String peer, String synuid) {
+		if (!avoidRefs2me.containsKey(peer))
+			avoidRefs2me.put(peer, new ArrayList<String>());
+		avoidRefs2me.get(peer).add(synuid);
+	}
+
+	boolean inAvoidRefs(String peer, String synuid) {
+		return avoidRefs2me.containsKey(peer) && indexOf(avoidRefs2me.get(peer), synuid) >= 0;
+	}
+
+	void clearAvoidingRefs(String peer) {
+		if (avoidRefs2me.containsKey(peer))
+			avoidRefs2me.get(peer).clear();
+	}
+
 	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
 		// ISSUE
 		// TODO It's better to change this to /syn/me, not /syn/peer once Connects is refactored. 
@@ -126,6 +162,8 @@ public class SynssionPeer {
 		this.peerjserv = peerjserv;
 		this.clienturi = uri_sys;
 		this.debug     = debug;
+		
+		this.avoidRefs2me = new HashMap<String, ArrayList<String>>();
 	}
 
 	/**
@@ -192,11 +230,15 @@ public class SynssionPeer {
 					rep = exespush(peer, A.exclose, reqb);
 				}
 				
-				if (!testDisableAutoDocRef)
-					resolveRef206Stream(new DBSyntableBuilder(domanager));
+				if (!testDisableAutoDocRef) {
+					DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
+					resolveRef206Stream(tb);
+					pushDocRef2me(tb, peer);
+				}
 				else
 					Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
 							domanager.synode, domanager.domain(), peer);
+
 			}
 		} catch (IOException e) {
 			Utils.warn(e.getMessage());
@@ -257,8 +299,8 @@ public class SynssionPeer {
 
 	SyncResp exespush(String peer, String a, ExchangeBlock reqb)
 			throws SemanticException, AnsonException, IOException {
-
-		SyncReq req = (SyncReq) new SyncReq(null, peer)
+		// Utils.warnT(new Object() {}, "??????????????????????? not a bug? - peer: %s, domain: %s", peer, reqb.domain);
+		SyncReq req = (SyncReq) new SyncReq(null, reqb.domain)
 					.exblock(reqb)
 					.a(a);
 
@@ -280,8 +322,9 @@ public class SynssionPeer {
 	 * @deprecated only for test - this is a part of domain updating process.
 	 * @param docmeta
 	 * @param proc4test
-	 * @return
+	 * @return worker thread
 	 * @throws Exception
+	 * @since 0.2.4
 	 */
 	public Thread createResolver(OnProcess... proc4test)
 			throws Exception {
@@ -292,6 +335,32 @@ public class SynssionPeer {
 		}, f("Doc Resolver %s -> %s", this.mynid, peer));
 	}
 
+	/**
+	 * 
+	 * @deprecated only for test - this is a part of domain updating process.
+	 * @param proc4test
+	 * @return thread for resolving downward doc-refs
+	 * @throws Exception
+	 */
+	public Thread pushResove()
+			throws Exception {
+		DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
+
+		return new Thread(() -> {
+			try {
+				pushDocRef2me(tb, peer);
+			} catch (AnsonException | TransException | IOException | SQLException e) {
+				e.printStackTrace();
+			}
+		}, f("Doc Resolver %s -> %s", this.mynid, peer));
+	}
+
+	/**
+	 * [not synsession managed]
+	 * @param tb
+	 * @param report2test
+	 * @since 0.2.4
+	 */
 	private void resolveRef206Stream(DBSyntableBuilder tb, OnProcess... report2test) {
 		// 206 downloader
 		SynDocRefMeta refm = domanager.refm;
@@ -385,10 +454,19 @@ public class SynssionPeer {
 		}
 	}
 
-	private void pushDocRef2me() {
-		
-	}
-	
+	/**
+	 * @param trb
+	 * @param docmeta
+	 * @param refm
+	 * @param peer
+	 * @param excludeTag
+	 * @param uids
+	 * @param robt
+	 * @param inc
+	 * @throws TransException
+	 * @throws SQLException
+	 * @since 0.2.4
+	 */
  	static void incRefTry(DBSyntableBuilder trb, ExpDocTableMeta docmeta, SynDocRefMeta refm,
 			String peer, String excludeTag, String uids, IUser robt, int... inc) throws TransException, SQLException {
 		trb.update(refm.tbl, robt)
@@ -405,7 +483,8 @@ public class SynssionPeer {
 	 * @param refm
 	 * @param peer
 	 * @param excludeTag used for try only once on each updating running - tried time is increased.
-	 * @return
+	 * @return next doc-ref task
+	 * @since 0.2.4
 	 */
 	static DocRef nextRef(DBSyntableBuilder synb, SynDocRefMeta refm,
 			String peer, String excludeTag) {
@@ -428,8 +507,7 @@ public class SynssionPeer {
 						.getTableMeta(rs.getString(refm.syntabl));
 
 				String uids = rs.getString(refm.io_oz_synuid);
-				try {
-				rs = ((AnResultset) synb.pushDebug(true)
+				rs = ((AnResultset) synb
 					.batchSelect(docm.tbl)
 					.cols(docm.pk, docm.uri, docm.resname, docm.io_oz_synuid).col(Funcall.isEnvelope(docm.uri), "isenvl")
 					.whereEq(docm.io_oz_synuid, uids)
@@ -444,7 +522,6 @@ public class SynssionPeer {
 					.rs(synb.instancontxt())
 					.rs(0))
 					.nxt();
-				} finally {synb.popDebug();}
 
 				if (!rs.getBoolean("isenvl")) {
 					Utils.warnT(new Object() {},
@@ -473,6 +550,245 @@ public class SynssionPeer {
 //	public void pingPeers() {
 //	}
 
+	/**
+	 * [not synsession managed]
+	 * @param tb
+	 * @param peer
+	 * @throws SQLException 
+	 * @throws IOException 
+	 * @throws TransException 
+	 * @throws AnsonException 
+	 * @since 0.2.5
+	 */
+	private void pushDocRef2me(DBSyntableBuilder tb, String peer)
+			throws AnsonException, TransException, IOException, SQLException {
+		clearAvoidingRefs(peer);
+		SyncResp resp = queryDocRefPage2me(null, null);
+		while (resp != null && resp.docrefs != null && resp.docrefs.size() > 0) {
+			pushDocRefPage(tb, resp.docrefsTabl, resp.docrefs);
+			
+			resp = queryDocRefPage2me(resp.docrefsTabl, this.avoidRefs2me.get(peer));
+		}
+	}
+
+	/**
+	 * 
+	 * @param tb
+	 * @param docrefs
+	 * @return replies
+	 * @throws SQLException 
+	 * @throws IOException 
+	 * @throws TransException 
+	 * @throws AnsonException 
+	 * @since 0.2.5
+	 */
+	private List<SyncResp> pushDocRefPage(DBSyntableBuilder tb, String docTabl, HashMap<String, DocRef> docrefs)
+			throws AnsonException, TransException, IOException, SQLException {
+		OnProcess proc = null;
+		OnDocsOk docOk = null;
+
+		return pushBlocks(client, uri_syn, docTabl, docrefs,
+				new IFileProvider() {}, null, proc, docOk, errHandler);
+	}
+
+	private IFileDescriptor queryMyPhysicalFile(String tabl, DocRef docrefs) throws TransException, SQLException {
+		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, tabl);
+
+		AnResultset rs = (AnResultset) xp.trb
+				.select(tabl)
+				.cols((Object[])ExpSyncDoc.nvCols(docm))
+				.whereEq(docm.io_oz_synuid, docrefs.uids)
+				.rs(xp.trb.instancontxt())
+				.rs(0);
+		
+		if (rs.next() && !Regex.startsEvelope(rs.getString(docm.uri)))
+			return new ExpSyncDoc(rs, docm);
+		else return null;
+	}
+
+	List<SyncResp> pushBlocks(SessionClient client, String uri, String tbl,
+			HashMap<String, DocRef> docrefs, IFileProvider fileProvider, ExpSyncDoc template,
+			OnProcess proc, OnDocsOk docsOk, OnError err, boolean... verbose) 
+		throws TransException, IOException, AnsonException, SQLException {
+
+		SyncResp resp0 = null;
+		SyncResp respi = null;
+
+		String[] act = AnsonHeader.usrAct(uri_syn, CRUD.U, A.docRefBlockUp, mynid);
+		AnsonHeader header = client.header().act(act);
+
+		List<SyncResp> reslts = new ArrayList<SyncResp>(docrefs.size());
+
+		int px = 0;
+		for (String uids : docrefs.keySet()) {
+			if (inAvoidRefs(peer, uids))
+				continue;
+			
+			try {
+				final int pxx = px++;
+				respi = push1docBlocks(client, uri, tbl, docrefs.get(uids), fileProvider, template,
+						(dx, docs, bx, blocks, msg)->{ return proc == null ? false : proc.proc(pxx, docrefs.size(), bx, blocks, msg); }, 
+						err, verbose);
+				reslts.add(respi);
+			}
+			catch (IOException | TransException | AnsonException ex) { 
+				if (is(verbose)) ex.printStackTrace();
+
+				String exmsg = ex.getMessage();
+				Utils.warn(exmsg);
+				
+				if (resp0 != null) {
+					SyncReq req = new SyncReq().blockAbort(domanager.domain(), mynid, peer, resp0);
+					req.a(SyncReq.A.docRefBlockAbort);
+					AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri, Port.syntier, req)
+								.header(header);
+					respi = client.commit(q, errHandler);
+				}
+
+				if (ex instanceof IOException)
+					continue;
+				else {
+					addAvoidRefs(peer, uids);
+
+					// Tag: MVP - This is not correct way of deserialize exception at client side
+					if (!isblank(exmsg)) {
+						try {
+							// Error code: exGeneral,
+							// Docs' pushing requires device id and clientpath.
+							// Doc Id: 0101, device id: Y-0(Y), client-path: src/test/res/anclient.java/3-birds.wav, resource name: 3-birds.wav
+							errHandler.err(MsgCode.exSemantic, exmsg);
+						}
+						catch (Exception exx) {
+							errHandler.err(MsgCode.exGeneral, ex.getMessage(),
+								ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
+						}
+					}
+					else
+						errHandler.err(MsgCode.exGeneral, ex.getMessage(),
+							ex.getClass().getName(), isblank(ex.getCause()) ? null : ex.getCause().getMessage());
+				}
+			}
+		}
+		if (docsOk != null) docsOk.ok(reslts);
+
+		return reslts;
+	}
+	
+	SyncResp push1docBlocks(SessionClient client, String uri, String tbl,
+			DocRef docref, IFileProvider fileProvider, ExpSyncDoc template,
+			OnProcess proc, OnError err, boolean... verbose)
+					throws AnsonException, IOException, TransException, SQLException {
+
+		mustnonull(docref.syntabl);
+
+		int seq = 0;
+		int totalBlocks = 0;
+		IFileDescriptor fd = queryMyPhysicalFile(tbl, docref);
+		if (fd == null) {
+			addAvoidRefs(peer, docref.uids);
+			return (SyncResp) new SyncResp().docref(docref);
+		}
+
+		if (fileProvider == null) {
+			if (isblank(fd.fullpath()) || isblank(fd.clientname()) || isblank(fd.cdate()))
+				throw new IOException(
+						f("File information is not enough: %s, %s, create time %s",
+						fd.clientname(), fd.fullpath(), fd.cdate()));
+		}
+		
+		long size = fileProvider.meta(fd);
+		if (size < 0) {
+			return 
+			(SyncResp) new SyncResp().docref(docref);
+		}
+
+		ExpSyncDoc p = fd.syndoc(template);
+		Path path = Path.of(xp.trb.decodeExtfile(fd.uri64()));
+
+		SyncReq req  = new SyncReq()
+				.blockStart(domanager.domain(), mynid, peer, totalBlocks, fd)
+				.docref(docref);
+		
+		String[] act = AnsonHeader.usrAct(uri_syn, CRUD.U, A.docRefBlockUp, mynid);
+		AnsonHeader header = client.header().act(act);
+		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri, Port.syntier, req)
+								.header(header);
+
+		SyncResp resp0 = client.commit(q, errHandler);
+
+		totalBlocks = (int) (Math.max(0, p.size - 1) / AESHelper.blockSize()) + 1;
+
+		if (proc != null) proc.proc(-1, -1, 0, totalBlocks, resp0);
+
+		// Let's use ranges for concurrency, in the future.
+		try (FileInputStream ifs = (FileInputStream) fileProvider.open(fd)) {
+
+			long start = 0;
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			long len = AESHelper.encodeRange(path, ifs, size, baos, start, AESHelper.blockSize());
+			SyncResp respi = null;
+			while (len > 0) {
+				req = new SyncReq()
+						.docref(docref)
+						.range(start, start + len)
+						.blockUp(domanager.domain(), mynid, peer, seq, p, baos.toString());
+				seq++;
+				start += len;
+
+				q = client.<SyncReq>userReq(uri, Port.syntier, req)
+							.header(header);
+
+				respi = client.commit(q, errHandler);
+				if (proc != null) proc.proc(1, 1, seq, totalBlocks, respi);
+
+				// b64 = AESHelper.encode64(ifs, blocksize);
+				baos = new ByteArrayOutputStream();
+				len = AESHelper.encodeRange(path, ifs, size, baos, start, AESHelper.blockSize());
+			}
+			
+			mustnonull(docref.uids);
+			req = new SyncReq()
+					.blockEnd(domanager.domain(), mynid, peer, respi == null ? resp0 : respi)
+					.docref(docref);
+
+			q = client.<SyncReq>userReq(uri, Port.syntier, req)
+						.header(header);
+			respi = client.commit(q, errHandler);
+			if (proc != null) proc.proc(1, 1, seq, totalBlocks, respi);
+
+			return respi;
+		} 
+	}
+
+	/**
+	 * Request {@link A#queryRef2me}.
+	 * @param hashSet 
+	 * @param docrefsTabl 
+	 * @since 0.2.5
+	 * @return query results, with {@link SyncResp#docrefs}
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
+	 */
+	SyncResp queryDocRefPage2me(String docrefsTabl, ArrayList<String> avoidUids) throws SemanticException, AnsonException, IOException {
+		String[] act = AnsonHeader.usrAct(uri_syn, CRUD.R, A.queryRef2me, mynid);
+		AnsonHeader header = client.header().act(act);
+
+		SyncReq req = (SyncReq) new SyncReq()
+				.exblock(new ExchangeBlock(domanager.domain(), mynid, peer, ExessionAct.mode_client))
+				.avoid(docrefsTabl, avoidUids)
+				.a(A.queryRef2me); 
+
+		AnsonMsg<SyncReq> q = client // accept any page size specified by server
+				.<SyncReq>userReq(uri_syn, Port.syntier, req)
+				.header(header);
+
+		SyncResp resp = client.commit(q, errHandler);
+
+		return resp;
+	}
+
+	///////////////////////////////////
 	/**
 	 * Go through the handshaking process of sing up to a domain. 
 	 * 

@@ -66,8 +66,6 @@ class DoclientierTest {
 
 	private static Thread thr;
 
-//	private static Thread thref;
-
 	/** Stop service node quit automatically. */
 	static final boolean[] serviceLight = new boolean[1];
 	
@@ -79,6 +77,10 @@ class DoclientierTest {
 
 	@BeforeAll
 	static void init() throws Exception {
+		init(ExpDoctierservTest.case_yresolve);
+	}
+	
+	static void init(int caseid) throws Exception {
 		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
 
 		String p = new File("src/test/res").getAbsolutePath();
@@ -100,7 +102,7 @@ class DoclientierTest {
 
 		thr = new Thread(() -> {
 			try {
-				ExpDoctierservTest.runDoctiers(nodex, serviceLight, canpush, pushingDone);
+				ExpDoctierservTest.runDoctiers(caseid, nodex, serviceLight, canpush, pushingDone);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
@@ -116,6 +118,9 @@ class DoclientierTest {
 
 	@Test
 	void testSynclientUp() throws Exception {
+		synclientUp();
+	}
+	static void synclientUp() throws Exception {
 		int no = 0;
 		logrst("testSynclientUp: waiting pushing permission", ++no);
 
@@ -191,7 +196,7 @@ class DoclientierTest {
 		thr.join();
 	}
 
-	ExpSyncDoc clientPush(int to, int cix) throws Exception {
+	static ExpSyncDoc clientPush(int to, int cix) throws Exception {
 		Dev dev = devs[cix];
 
 		Clients.init(jserv_xyzw[to]);
