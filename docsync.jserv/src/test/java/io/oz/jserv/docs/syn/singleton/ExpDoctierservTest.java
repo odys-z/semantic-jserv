@@ -71,6 +71,9 @@ public class ExpDoctierservTest {
 	public final static int Y = 1;
 	public final static int Z = 2;
 	public final static int W = 3;
+	
+	public static final int case_yresolve = 0;
+	public static final int case_xy_resolve = 1;
 
 	static final String[] servs_conn  = new String[] {
 			"no-jserv.00", "no-jserv.01", "no-jserv.02", "no-jserv.03"};
@@ -100,7 +103,7 @@ public class ExpDoctierservTest {
 			Utils.logrst("wait-clients = null.", 0, 0);
 
 			int[] nodex = startJetties(jetties, ck);
-			runDoctiers(nodex, null, null, null);
+			runDoctiers(0, nodex, null, null, null);
 
 			Utils.warnT(new Object() {}, "Test is running in automatic style, quite without waiting clients' pushing!");
 		}
@@ -114,7 +117,7 @@ public class ExpDoctierservTest {
 			final boolean[] canPush = new boolean[] { false };
 			final boolean[] pushDone = new boolean[] { false };
 
-			runDoctiers(nodex, noAutoQuit, canPush, pushDone);
+			runDoctiers(0, nodex, noAutoQuit, canPush, pushDone);
 
 			pause("Now can run DoclienterTest. Press Enter once manully uploaded");
 			awaitAll(canPush);
@@ -133,7 +136,7 @@ public class ExpDoctierservTest {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("deprecation")
-	public static void runDoctiers(int[] nodex,
+	public static void runDoctiers(int caseid, int[] nodex,
 			boolean[] waitClients, boolean[] canPush, boolean[] pushDone) throws Exception {
 
 		int section = 0;
@@ -224,10 +227,10 @@ public class ExpDoctierservTest {
 		for (DocRef dr : assert_Arefs_atB(Y, X, 2, 0))
 			assertEquals(ck[Y].synode(), dr.synoder);
 		
-//		if (Math.random() * 10 % 2 == 0)
-//			case_xy_resolve(section);
-//		else
+		if (caseid == 0)
 			case_yresolve(section);
+		else if (caseid == 1)
+			case_xy_resolve(section);
 
 		ck[Z].doc(2);
 		ck[Y].doc(2);
@@ -264,7 +267,7 @@ public class ExpDoctierservTest {
 		printNyquv(ck);
 
 		assert_Arefs_atB(X, Y, 0, 0);
-		assert_Arefs_atB(Y, X, 2, 0);
+		assert_Arefs_atB(Y, X, 0, 0);
 
 
 	}
@@ -282,7 +285,6 @@ public class ExpDoctierservTest {
 		yresolve.start();
 
 
-//		logrst("Waiting DocRef streaming thread at Y & X", ++section);
 		yresolve.join();
 
 		logrst("Resolving docrefs finished.", ++section);
@@ -307,6 +309,7 @@ public class ExpDoctierservTest {
 		assert_Arefs_atB(X, Y, 0, 0);
 		assert_Arefs_atB(Y, X, 0, 0);
 	}
+	
 	/**
 	 * Assert X-docs are synchronized to Y, as DocRefs.
 	 * @param a x
