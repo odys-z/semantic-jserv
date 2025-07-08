@@ -14,12 +14,12 @@ import os
 from anson.io.odysz.anson import Anson
 from src import zip2
 
-version = '0.7.4'
+version = '0.7.5'
 """
 synode.py3, jserv-album-0.7.4.jar
 """
 
-apk_ver = '0.7.2'
+apk_ver = '0.7.3'
 
 html_jar_v = '0.1.7'
 """
@@ -153,7 +153,7 @@ def build(c):
         # use vscode bash for Windows
         ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
 
-        ['../synode.py', 'invoke zipRegistry'],
+        # ['../synode.py', 'invoke zipRegistry'],
         ['.', f'mv ../synode.py/registry-ura-zsu-{version}.zip {dist_dir}']
     ]
 
@@ -233,7 +233,6 @@ def package(c, zip=f'jserv-portfolio-{version}.zip'):
         raise
 
 
-@task
 def packagev72(c, zip=f'jserv-portfolio-{version}.zip'):
     """
     Create a ZIP file (jserv.zip).

@@ -3,7 +3,7 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
-import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.musteqi;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logT;
@@ -94,7 +94,7 @@ class DoclientierTest {
 		logrst("[DoclientierTest] Starting synode-tiers", 0);
 		int[] nodex = ExpDoctierservTest.startJetties(SynodetierJoinTest.jetties, ck);
 		//must finished
-		musteq(4, len(SynodetierJoinTest.jetties));
+		musteqi(4, len(SynodetierJoinTest.jetties));
 		mustnonull(SynodetierJoinTest.jetties[0]);
 
 		// Wait for ExpDoctierservTest.runDoctiers() check the initial state

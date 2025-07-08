@@ -1,7 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.semantic.syn.ExessionAct.*;
-import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.isblank;
 
 import java.util.ArrayList;
@@ -62,7 +62,7 @@ public class SyncReq extends UserReq implements IBlock {
 	public SyncReq docref(DocRef ref) {
 		this.docref = ref;
 		if (this.doc != null && this.doc.uids != null)
-			musteq(this.doc.uids, ref.uids);
+			musteqs(this.doc.uids, ref.uids);
 		else if (this.doc != null && isblank(this.doc.uids))
 			this.doc.uids = ref.uids;
 		return this;

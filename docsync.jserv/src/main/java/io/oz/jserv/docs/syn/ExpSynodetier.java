@@ -4,7 +4,7 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
-import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.musteqi;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.mustge;
 import static io.odysz.common.LangExt.mustnonull;
@@ -558,7 +558,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			SynDocRefMeta rfm = domanager0.refm;
 			String peer = req.exblock.srcnode;
 
-			musteq((long)req.range[0], (long)req.blockSeq * AESHelper.blockSize());
+			musteqi((int)req.range[0], (int)req.blockSeq * AESHelper.blockSize());
 			mustge((long)(req.blockSeq + 1) * AESHelper.blockSize(), (long)req.range[1]);
 			DocRef docref = req.docref.breakpoint(req.range[1]);
 			

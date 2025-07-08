@@ -37,17 +37,25 @@ SYNODE_VERSION = 'SYNODE_VERSION'
 JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
 HTML_JAR_VERSION = 'HTML_JAR_VERSION'
 WEB_VERSION = 'WEB_VERSION'
+REGISTRY_ZIP = 'REGISTRY_ZIP'
 
+ORG = 'ura'
+DOMAIN = 'zsu'
+
+"""
+    Versions configured locally, overriden by environment variables.
+"""
 vers = {
     SYNODE_VERSION:    '0.7.3',
     JSERV_JAR_VERSION: '0.7.4',
     HTML_JAR_VERSION:  '0.1.7',
-    WEB_VERSION:       '0.4.1'
+    WEB_VERSION:       '0.4.1',
+    REGISTRY_ZIP: f'registry-{ORG}-{DOMAIN}-0.7.3.zip'
 }
 
 res_toclean = ['dist', '*egg-info']
 
-registry_zip = f'registry-ura-zsu-{vers[JSERV_JAR_VERSION]}.zip'
+# registry_zip = f'registry-ura-zsu-{vers[JSERV_JAR_VERSION]}.zip'
 
 @task
 def config(c):
@@ -56,9 +64,12 @@ def config(c):
     this_directory = os.getcwd()
 
     version = (os.getenv(SYNODE_VERSION) or vers[SYNODE_VERSION]).strip()
+    vers[SYNODE_VERSION] = version
+    vers[REGISTRY_ZIP] = f'registry-{ORG}-{DOMAIN}-{vers[SYNODE_VERSION]}.zip'
     print(f'-- synode version: {version} --'),
 
     serv_jar_ver = (os.getenv(JSERV_JAR_VERSION) or vers[JSERV_JAR_VERSION]).strip()
+    vers[JSERV_JAR_VERSION] = serv_jar_ver
     print(f'-- jserv version: {serv_jar_ver} --'),
 
     html_srver = (os.getenv(HTML_JAR_VERSION) or vers[HTML_JAR_VERSION]).strip()
@@ -76,7 +87,13 @@ def config(c):
     })
 
 
-@task(config)
+@task
+def zipRegistry(c):
+    print('config =', vers, "zip =", vers[REGISTRY_ZIP])
+    zip2(vers[REGISTRY_ZIP], {"zsu": "registry-deploy/*"}, ['*.zip'])
+
+
+@task(config, zipRegistry)
 def build(c: Context):
     def py():
         return 'py' if os.name == 'nt' else 'python3'
@@ -129,8 +146,3 @@ def build(c: Context):
             print('OK:', ret.ok, ret.stderr)
     return False
 
-
-@task
-def zipRegistry(c):
-    print('config=', vers, 'ver=', vers[SYNODE_VERSION])
-    zip2(registry_zip, {"zsu": "registry-deploy/*"}, ['*.zip'])
