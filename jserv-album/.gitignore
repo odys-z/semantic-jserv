@@ -4,6 +4,7 @@ download
 volume-*
 vol
 vol-*
+
 volume/*.db
 test/results
 test/res/ignore*.*
@@ -37,4 +38,3 @@ host.json
 web-dist
 deploy-*
 build-*
-venv*
