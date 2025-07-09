@@ -562,7 +562,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			mustge((long)(req.blockSeq + 1) * AESHelper.blockSize(), (long)req.range[1]);
 			DocRef docref = req.docref.breakpoint(req.range[1]);
 			
-			// DBSynTransBuilder st = new DBSynTransBuilder(domanager0);
 			DBSyntableBuilder st = new DBSyntableBuilder(domanager0);
 			st.update(docm.tbl, usr)
 			  .nv(docm.uri, docref.toBlock())
