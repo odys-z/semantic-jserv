@@ -29,9 +29,10 @@ import shutil
 from types import LambdaType
 
 from anson.io.odysz.common import Utils
+from anson.io.odysz.utils import zip2
 from invoke import task, Context
 
-from src import zip2
+# from src import zip2
 
 SYNODE_VERSION = 'SYNODE_VERSION'
 JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
