@@ -171,6 +171,7 @@ class InstallerForm(QMainWindow):
                 volpath=self.ui.txtVolpath.text(),
                 synid=self.ui.txtSynode.text(),
                 peerjservs=self.ui.jservLines.toPlainText(),
+                ping_timeout=int(self.ui.txtimeout.text()),
                 warn=warn_msg)
 
         if err is not None:
@@ -196,7 +197,9 @@ class InstallerForm(QMainWindow):
     def pings(self):
         details = []
         errs = False
+
         def err_ctx(c, e: str, *args: str) -> None:
+            nonlocal errs, details
             print(c, e.format(args), file=sys.stderr)
             details.append('\n' + e)
             errs = True
@@ -207,7 +210,7 @@ class InstallerForm(QMainWindow):
 
             for jsrv in jservss:
                 if jsrv[0] != self.cli.registry.config.synid:
-                    Clients.servRt = jsrv[1]
+                    Clients.init(jserv=jsrv[1], timeout=int(self.ui.txtimeout.text()))
                     resp = Clients.pingLess(install_uri, err_ctx)
                     if resp is None:
                         details.append(f'\n{jsrv[0]}: {jsrv[1]}\n' + 'Error: not responds')
