@@ -513,8 +513,11 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		String conn = Connects.uri2conn(req.uri());
 
 		String targetPath = ref2physical(conn, req.docref, usr, req.exblock.srcnode);
+
 		// move file
+		Utils.touchDir(targetPath);
 		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+
 		chain.doc.recId(req.docref.docId);
 		
 		if (debug)
