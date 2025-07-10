@@ -714,7 +714,7 @@ public class SynssionPeer {
 		}
 
 		ExpSyncDoc p = fd.syndoc(template);
-		Path path = Path.of(trb.decodeExtfile(fd.uri64()));
+		Path path = fileProvider.pysicalPath(fd); // Path.of(trb.decodeExtfile(fd.uri64()));
 
 		SyncReq req  = new SyncReq()
 				.blockStart(domanager.domain(), mynid, peer, totalBlocks, fd)
