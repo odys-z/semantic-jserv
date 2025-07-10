@@ -409,6 +409,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			if (debug)
 				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
 
+			// Target dir always exists since the semantics handler, by calling ExtFileInsertv2.sql(), has touched it.
 			Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
 			///////////////////////////////////////////////////////
 
