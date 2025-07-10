@@ -7,12 +7,12 @@ import shutil
 import sys
 from types import LambdaType
 from anson.io.odysz.common import Utils
+from anson.io.odysz.utils import zip2
 from invoke import task
 import zipfile
 import os
 
 from anson.io.odysz.anson import Anson
-from src import zip2
 
 version = '0.7.5'
 """
@@ -70,7 +70,12 @@ def updateApkRes(host_json, apkver):
     
     """
 
+    # Must install synode.py3, because
+    # need this to deserialize "io.oz.syntier.serv.ExternalHosts".
+    # ISSUE: this is a messy as the type, ExternalHosts, used in host_json,
+    # is assuming types of synode.py3 are available.
     Anson.java_src('src', ['synode_py3'])
+
     hosts = Anson.from_file(host_json)
     print(os.getcwd(), host_json)
     print('host.json:', hosts)
@@ -88,7 +93,7 @@ def updateApkRes(host_json, apkver):
 def config(c):
     print('--------------    configuration   ------------------')
 
-    Anson.java_src('src', ['synode_py3'])
+    # Anson.java_src('src', ['synode_py3'])
 
     this_directory = os.getcwd()
 

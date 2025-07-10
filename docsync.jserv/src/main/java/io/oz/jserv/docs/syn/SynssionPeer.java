@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -630,8 +631,10 @@ public class SynssionPeer {
 						(dx, docs, bx, blocks, msg)->{ return proc == null ? false : proc.proc(pxx, docrefs.size(), bx, blocks, msg); }, 
 						err, verbose);
 				reslts.add(respi);
-			}
-			catch (IOException | TransException | AnsonException ex) { 
+			} catch (NoSuchFileException ne) {
+				Utils.warn("No such file in %s, uids = %s, peer %s, error: %s", tbl, uids, peer, ne.getMessage());
+				addAvoidRefs(peer, uids);
+			} catch (IOException | TransException | AnsonException ex) { 
 				if (is(verbose)) ex.printStackTrace();
 
 				String exmsg = ex.getMessage();
