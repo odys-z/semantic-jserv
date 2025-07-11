@@ -340,9 +340,9 @@ public class SynodetierJoinTest {
 								isNull(xp) || xp[0].trb == null ? "N/A" : xp[0].trb.syndomx.synconn));
 						}
 					}
-				}, (blockby) -> {
-					Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);
-					return 2000;
+//				}, (blockby) -> {
+//					Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);
+//					return 2000;
 				});
 		}
 	}

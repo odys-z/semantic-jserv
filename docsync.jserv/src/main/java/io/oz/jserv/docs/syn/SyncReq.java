@@ -173,7 +173,7 @@ public class SyncReq extends UserReq implements IBlock {
 	}
 
 	public SyncReq blockAbort(String domain, String me, String peer, SyncResp startAck) throws SemanticException {
-		this.blockSeq = startAck.blockSeq;
+		this.blockSeq = startAck == null ? -1 : startAck.blockSeq;
 		this.exblock = new ExchangeBlock(domain, me, peer, ExessionAct.mode_client);
 		this.a = A.docRefBlockAbort;
 		return this;

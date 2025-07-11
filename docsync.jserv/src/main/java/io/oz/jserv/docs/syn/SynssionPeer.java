@@ -20,6 +20,7 @@ import static io.odysz.semantic.syn.ExessionAct.trylater;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -295,7 +296,11 @@ public class SynssionPeer {
 
 	ExchangeBlock synclose(ExchangeBlock rep)
 			throws TransException, SQLException {
-		return xp.trb.closexchange(xp, rep);
+		try {
+			return xp == null ? null : xp.trb.closexchange(xp, rep);
+		} finally {
+			xp = null;
+		}
 	}
 
 	SyncResp exespush(String peer, String a, ExchangeBlock reqb)
@@ -350,7 +355,8 @@ public class SynssionPeer {
 		return new Thread(() -> {
 			try {
 				pushDocRef2me(tb, peer);
-			} catch (AnsonException | TransException | IOException | SQLException e) {
+			// } catch (AnsonException | TransException | IOException | SQLException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}, f("Doc Resolver %s -> %s", this.mynid, peer));
@@ -367,7 +373,7 @@ public class SynssionPeer {
 		SynDocRefMeta refm = domanager.refm;
 		String exclude = encode64(getRandom());
 
-		DocRef ref = nextRef(xp.trb, refm, peer, exclude);
+		DocRef ref = nextRef(tb, refm, peer, exclude);
 
 		HashSet<String> tobeclean = new HashSet<String>();
 		if (ref != null)
@@ -423,7 +429,7 @@ public class SynssionPeer {
 					Utils.logi("[%s] Rechead a peer DocRef while resolving a docref (%s, %s, %s)",
 							Thread.currentThread().getName(), ref.syntabl, ref.docId, ref.uids);
 					try {
-						incRefTry(xp.trb, docm, refm, peer, exclude, ref.uids, localRobt, 2);
+						incRefTry(tb, docm, refm, peer, exclude, ref.uids, localRobt, 2);
 					} catch (TransException | SQLException e1) {
 						throw new NullPointerException(e1.getMessage());
 					}
@@ -432,13 +438,13 @@ public class SynssionPeer {
 				Utils.warn("Download Doc for ref error: %s[%s], %s ", ref.docId, ref.uids, ref.pname);
 				e.printStackTrace();
 				try {
-					incRefTry(xp.trb, docm, refm, peer, exclude, ref.uids, localRobt);
+					incRefTry(tb, docm, refm, peer, exclude, ref.uids, localRobt);
 				} catch (TransException | SQLException e1) {
 					throw new NullPointerException(e1.getMessage());
 				}
 			}
 			finally {
-				ref = nextRef(xp.trb, refm, peer, exclude);
+				ref = nextRef(tb, refm, peer, exclude);
 				_arref[0] = ref;
 			}
 		}
@@ -562,7 +568,7 @@ public class SynssionPeer {
 	 * @since 0.2.5
 	 */
 	private void pushDocRef2me(DBSyntableBuilder tb, String peer)
-			throws AnsonException, TransException, IOException, SQLException {
+			throws Exception {
 		clearAvoidingRefs(peer);
 		SyncResp resp = queryDocRefPage2me(null, null);
 		while (resp != null && resp.docrefs != null && resp.docrefs.size() > 0) {
@@ -584,22 +590,22 @@ public class SynssionPeer {
 	 * @since 0.2.5
 	 */
 	private List<SyncResp> pushDocRefPage(DBSyntableBuilder tb, String docTabl, HashMap<String, DocRef> docrefs)
-			throws AnsonException, TransException, IOException, SQLException {
+			throws AnsonException, TransException, IOException, SQLException, Exception {
 		OnProcess proc = null;
 		OnDocsOk docOk = null;
 
-		return pushBlocks(client, uri_syn, docTabl, docrefs,
+		return pushBlocks(client, uri_syn, tb, docTabl, docrefs,
 				new IFileProvider() {}, null, proc, docOk, errHandler);
 	}
 
-	private IFileDescriptor queryMyPhysicalFile(String tabl, DocRef docrefs) throws TransException, SQLException {
+	private IFileDescriptor queryMyPhysicalFile(DBSyntableBuilder trb, String tabl, DocRef docrefs) throws TransException, SQLException {
 		ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, tabl);
 
-		AnResultset rs = (AnResultset) xp.trb
+		AnResultset rs = (AnResultset) trb
 				.select(tabl)
 				.cols((Object[])ExpSyncDoc.nvCols(docm))
 				.whereEq(docm.io_oz_synuid, docrefs.uids)
-				.rs(xp.trb.instancontxt())
+				.rs(trb.instancontxt())
 				.rs(0);
 		
 		if (rs.next() && !Regex.startsEvelope(rs.getString(docm.uri)))
@@ -607,12 +613,10 @@ public class SynssionPeer {
 		else return null;
 	}
 
-	List<SyncResp> pushBlocks(SessionClient client, String uri, String tbl,
+	List<SyncResp> pushBlocks(SessionClient client, String uri, DBSyntableBuilder trb, String tbl,
 			HashMap<String, DocRef> docrefs, IFileProvider fileProvider, ExpSyncDoc template,
-			OnProcess proc, OnDocsOk docsOk, OnError err, boolean... verbose) 
-		throws TransException, IOException, AnsonException, SQLException {
+			OnProcess proc, OnDocsOk docsOk, OnError err, boolean... verbose) throws Exception {
 
-		SyncResp resp0 = null;
 		SyncResp respi = null;
 
 		String[] act = AnsonHeader.usrAct(uri_syn, CRUD.U, A.docRefBlockUp, mynid);
@@ -620,6 +624,7 @@ public class SynssionPeer {
 
 		List<SyncResp> reslts = new ArrayList<SyncResp>(docrefs.size());
 
+		// DBSyntableBuilder trb0 = new DBSyntableBuilder(domanager);
 		int px = 0;
 		for (String uids : docrefs.keySet()) {
 			if (inAvoidRefs(peer, uids))
@@ -627,11 +632,11 @@ public class SynssionPeer {
 			
 			try {
 				final int pxx = px++;
-				respi = push1docBlocks(client, uri, tbl, docrefs.get(uids), fileProvider, template,
+				respi = push1docBlocks(client, uri, tbl, docrefs.get(uids), fileProvider, template, trb,
 						(dx, docs, bx, blocks, msg)->{ return proc == null ? false : proc.proc(pxx, docrefs.size(), bx, blocks, msg); }, 
 						err, verbose);
 				reslts.add(respi);
-			} catch (NoSuchFileException ne) {
+			} catch (NoSuchFileException | FileNotFoundException ne) {
 				Utils.warn("No such file in %s, uids = %s, peer %s, error: %s", tbl, uids, peer, ne.getMessage());
 				addAvoidRefs(peer, uids);
 			} catch (IOException | TransException | AnsonException ex) { 
@@ -639,14 +644,17 @@ public class SynssionPeer {
 
 				String exmsg = ex.getMessage();
 				Utils.warn(exmsg);
-				
-				if (resp0 != null) {
-					SyncReq req = new SyncReq().blockAbort(domanager.domain(), mynid, peer, resp0);
-					req.a(SyncReq.A.docRefBlockAbort);
-					AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri, Port.syntier, req)
-								.header(header);
-					respi = client.commit(q, errHandler);
-				}
+
+				SyncReq req = new SyncReq()
+						.blockAbort(domanager.domain(), mynid, peer, respi)
+						.docref(docrefs.get(uids));
+
+				req.a(SyncReq.A.docRefBlockAbort);
+
+				AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri, Port.syntier, req)
+							.header(header);
+
+				respi = client.commit(q, errHandler);
 
 				if (ex instanceof IOException)
 					continue;
@@ -678,7 +686,7 @@ public class SynssionPeer {
 	}
 	
 	SyncResp push1docBlocks(SessionClient client, String uri, String tbl,
-			DocRef docref, IFileProvider fileProvider, ExpSyncDoc template,
+			DocRef docref, IFileProvider fileProvider, ExpSyncDoc template, DBSyntableBuilder trb,
 			OnProcess proc, OnError err, boolean... verbose)
 					throws AnsonException, IOException, TransException, SQLException {
 
@@ -686,7 +694,7 @@ public class SynssionPeer {
 
 		int seq = 0;
 		int totalBlocks = 0;
-		IFileDescriptor fd = queryMyPhysicalFile(tbl, docref);
+		IFileDescriptor fd = queryMyPhysicalFile(trb, tbl, docref);
 		if (fd == null) {
 			addAvoidRefs(peer, docref.uids);
 			return (SyncResp) new SyncResp().docref(docref);
@@ -706,7 +714,7 @@ public class SynssionPeer {
 		}
 
 		ExpSyncDoc p = fd.syndoc(template);
-		Path path = Path.of(xp.trb.decodeExtfile(fd.uri64()));
+		Path path = fileProvider.pysicalPath(fd); // Path.of(trb.decodeExtfile(fd.uri64()));
 
 		SyncReq req  = new SyncReq()
 				.blockStart(domanager.domain(), mynid, peer, totalBlocks, fd)
