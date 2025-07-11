@@ -245,7 +245,10 @@ class InstallerForm(QMainWindow):
 
                     post_err = self.cli.postFix()
                     if not post_err:
-                        msg_box("Setup successfully.")
+                        msg_box("Setup successfully.\n"\
+                                "If Windows services have been already installed, new settings can only take effects after restart the services. Restarting Windows won't work."\
+                                if os.name == 'nt' else \
+                                "Reload service settings and restart it to take effects.")
                     else:
                         warn_msg("Install successfully, with errors automatically fixe. See details...", post_err)
 
