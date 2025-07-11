@@ -217,8 +217,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				if (debug)
 					Utils.logT(new Object(){}, 
 						"Notification is handled: %s, %s, %s", dom, synid, peer);
-			},
-			(usr) -> Math.random());
+			}); // , (usr) -> Math.random());
 		
 		return new DocsResp().device(body.device());
 	}

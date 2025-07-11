@@ -251,8 +251,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				Utils.logi("[%s] : Checking Syndomain ...", synid);
 
 			try {
-				if (len(this.domanager0.sessions) == 0)
-					this.domanager0.loadSynclients(syntb);
+				// if (len(this.domanager0.sessions) == 0)
+				this.domanager0.loadSynclients(syntb);
 
 				this.domanager0
 					.openSynssions(domanager0.admin);
@@ -261,9 +261,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					(dom, synode, peer, xp) -> {
 						if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
 								synid, dom, domanager0.n0(), domanager0.stamp());
-					},
-					(synlocker) -> Math.random());
+					});//, (synlocker) -> Math.random());
 
+//				reschedule(0);
 			} catch (ExchangeException e) {
 				// e. g. login failed, try again
 				if (debug) e.printStackTrace();
@@ -295,6 +295,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				e.printStackTrace();
 				stopScheduled(2);
 			} finally {
+				this.domanager0.closession();
 				running = false;
 			}
 		};
