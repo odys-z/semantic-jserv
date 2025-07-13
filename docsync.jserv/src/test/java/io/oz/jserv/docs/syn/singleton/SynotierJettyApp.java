@@ -74,8 +74,8 @@ public class SynotierJettyApp {
 	public static final String config_xml = "config.xml";
 	public static final String settings_json = "settings.json";
 
-	public static String zsu = "zsu";
-	public static String ura = "URA";
+	public static final String zsu = "zsu";
+	public static final String ura = "URA";
 
 	public static final String syntity_json = "syntity.json";
 	public static final String clientUri = "/jetty";
