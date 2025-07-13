@@ -157,9 +157,6 @@ public class AppSettings extends Anson {
 	 */
 	public AppSettings setupJserv(SynodeConfig cfg, String jserv_album) throws TransException, SQLException {
 
-		if (len(this.jservs) == 0)
-			throw new SemanticException("Design 0.2.3: AppSettings.jservs, from settings.json, cannot be empty.");
-
 		SynodeMeta synm = new SynodeMeta(cfg.synconn);
 
 		for (String peer : jservs.keySet()) {
@@ -279,11 +276,6 @@ public class AppSettings extends Anson {
 	public String installkey;
 	public String rootkey;
 
-	public int port;
-	public String port() { return String.valueOf(port); }
-
-	public HashMap<String, String> envars;
-
 	/**
 	 * Json file path.
 	 */
@@ -296,13 +288,44 @@ public class AppSettings extends Anson {
 	 */
 	public String[] startHandler;
 
-	@AnsonField(ignoreFrom=true)
-	public String webrootLocal;
+	// @AnsonField(ignoreFrom=true)
+	// public String webrootLocal;
 
 	@AnsonField(ignoreFrom=true)
 	public String localIp;
 
+	/**
+	 * Synode IP exposed through a proxy.
+	 * @since 0.2.5
+	 */
+	public String proxyIp;
+
+	/** jserv port */
+	public int port;
+	/** Get jserv port */
+	public String port() { return String.valueOf(port); }
+
+	/** jserv port */
+	public int proxyPort;
+	/** Get jserv port */
+	public String proxyPort() { return String.valueOf(proxyPort); }
+
+	/** web page port */
 	public int webport = 8900;
+
+	/**
+	 * Synode port exposed through a proxy.
+	 * @since 0.2.5
+	 */
+	public int webProxyPort;
+
+	/**
+	 * Is this synode behind a reverse proxy?
+	 * @since 0.2.5
+	 */
+	public boolean reverseProxy;
+
+	public HashMap<String, String> envars;
 
 	/** Connection Idle Seconds */
 	public float connIdleSnds;
@@ -413,7 +436,7 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * Must called after DA layer initiation is finished.
+	 * Must be called after DA layer initiation is finished.
 	 * @throws Exception 
 	 */
 	public static void updateOrgConfig(SynodeConfig cfg, AppSettings settings) throws Exception {
@@ -435,8 +458,45 @@ public class AppSettings extends Anson {
 		return startHandler[1];
 	}
 
+	public String getJservroot(boolean https) {
+		return this.reverseProxy ? this.jservProxy(https) : this.jserv(https);
+	}
+
 	public String getLocalWebroot(boolean https) {
-		return f("%s://%s", https ? "https" : "http", this.webrootLocal);
+		return f("%s://%s", https ? "https" : "http",
+				this.reverseProxy ? this.webrootProxy(https) : this.webrootLocal(https));
+	}
+
+	/**
+	 * @param https
+	 * @return proxy ip:port, no "http(s)://"
+	 */
+	private String webrootProxy(boolean https) {
+		if (!https && webProxyPort == 80 || https && webProxyPort == 443)
+			return proxyIp;
+		else
+			return f("%s:%s", proxyIp, webProxyPort);
+	}
+
+	private String webrootLocal(boolean https) {
+		if (!https && webport == 80 || https && webport == 443)
+			return localIp;
+		else
+			return f("%s:%s", localIp, webport);
+	}
+
+	private String jservProxy(boolean https) {
+		if (!https && proxyPort == 80 || https && proxyPort == 443)
+			return proxyIp;
+		else
+			return f("%s:%s", proxyIp, proxyPort);
+	}
+
+	private String jserv(boolean https) {
+		if (!https && port == 80 || https && port == 443)
+			return localIp;
+		else
+			return f("%s:%s", localIp, port);
 	}
 
 }

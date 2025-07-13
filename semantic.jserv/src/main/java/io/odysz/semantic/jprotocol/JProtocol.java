@@ -7,7 +7,6 @@ import java.util.List;
 import io.odysz.anson.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.x.TransException;
@@ -36,17 +35,6 @@ public class JProtocol {
 		public static final String Reason   = "Reason";
 		public static final String AnsonReq = "Anson-req";
 	}
-
-	/**
-	 * Typical operation's common names
-	 * @since v1.4.12 requires semantic.DA v1.4.12
-	public static class CRUD {
-		public static final String C = io.odysz.semantic.CRUD.C;
-		public static final String R = io.odysz.semantic.CRUD.R;
-		public static final String U = io.odysz.semantic.CRUD.U;
-		public static final String D = io.odysz.semantic.CRUD.D;
-	}
-	 * */
 
 	@FunctionalInterface
 	public interface OnOk {
@@ -95,7 +83,7 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnDocsOk {
-		void ok(List<DocsResp> resps) throws IOException, AnsonException, TransException, SQLException;
+		void ok(List<? extends AnsonResp> resps) throws IOException, AnsonException, TransException, SQLException;
 	}
 	
 	@FunctionalInterface

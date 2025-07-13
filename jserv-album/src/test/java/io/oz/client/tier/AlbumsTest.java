@@ -237,7 +237,7 @@ class AlbumsTest {
 
 		SessionClient ssclient = Clients.login("ody", "123456", "device-test");
 		PhotoSyntier tier = (PhotoSyntier) new PhotoSyntier("test/album", errCtx)
-								.blockSize(bsize);
+								; //.blockSize(bsize);
 
 		List<IFileDescriptor> videos = new ArrayList<IFileDescriptor>();
 		videos.add((ExpSyncDoc) new ExpSyncDoc()

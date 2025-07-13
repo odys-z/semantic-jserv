@@ -3,7 +3,7 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
-import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.musteqi;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logT;
@@ -56,6 +56,8 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.ExpDoctierservTest;
+import io.oz.jserv.docs.syn.singleton.Syngleton;
+import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.YellowPages;
 
 /**
@@ -65,8 +67,6 @@ class DoclientierTest {
 	static String[] jserv_xyzw;
 
 	private static Thread thr;
-
-//	private static Thread thref;
 
 	/** Stop service node quit automatically. */
 	static final boolean[] serviceLight = new boolean[1];
@@ -79,6 +79,11 @@ class DoclientierTest {
 
 	@BeforeAll
 	static void init() throws Exception {
+		init(ExpDoctierservTest.case_yresolve);
+	}
+	
+	@SuppressWarnings("deprecation")
+	static void init(int caseid) throws Exception {
 		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
 
 		String p = new File("src/test/res").getAbsolutePath();
@@ -92,15 +97,18 @@ class DoclientierTest {
 		logrst("[DoclientierTest] Starting synode-tiers", 0);
 		int[] nodex = ExpDoctierservTest.startJetties(SynodetierJoinTest.jetties, ck);
 		//must finished
-		musteq(4, len(SynodetierJoinTest.jetties));
+		musteqi(4, len(SynodetierJoinTest.jetties));
 		mustnonull(SynodetierJoinTest.jetties[0]);
 
 		// Wait for ExpDoctierservTest.runDoctiers() check the initial state
 		waiting(serviceLight, -1);
 
+//		for (SynotierJettyApp jetty : SynodetierJoinTest.jetties)
+//			Syngleton.cleanDomain(jetty.syngleton().syncfg);
+
 		thr = new Thread(() -> {
 			try {
-				ExpDoctierservTest.runDoctiers(nodex, serviceLight, canpush, pushingDone);
+				ExpDoctierservTest.runDoctiers(caseid, nodex, serviceLight, canpush, pushingDone);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
@@ -116,10 +124,16 @@ class DoclientierTest {
 
 	@Test
 	void testSynclientUp() throws Exception {
+		Thread.sleep(10000);
+		synclientUp();
+	}
+	
+	static void synclientUp() throws Exception {
 		int no = 0;
 		logrst("testSynclientUp: waiting pushing permission", ++no);
 
-		awaitAll(canpush, 5 * 60 * 10); // mvn test on 200 can be this slow?
+		// not for debug: awaitAll(canpush, 5 * 60 * 10); // mvn test on 200 can be this slow?
+		awaitAll(canpush, -1);
 
 		logrst(f("X <- %s", devs[X_0].device.id), ++no);
 
@@ -164,9 +178,6 @@ class DoclientierTest {
 		// 11 create
 		clientPush(Y, Y_1);
 
-//		boolean[] lights = new boolean[] {true, false};
-//		SynodetierJoinTest.syncdomain(lights, Y);
-//		awaitAll(lights, -1);
 		SynodetierJoinTest.syncdomain(Y);
 
 		// 00 delete
@@ -175,9 +186,6 @@ class DoclientierTest {
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
-//		waiting(lights, Y);
-//		SynodetierJoinTest.syncdomain(lights, Y);
-//		awaitAll(lights);
 		SynodetierJoinTest.syncdomain(Y);
 
 		pause("Press enter to quite ...");
@@ -191,7 +199,7 @@ class DoclientierTest {
 		thr.join();
 	}
 
-	ExpSyncDoc clientPush(int to, int cix) throws Exception {
+	static ExpSyncDoc clientPush(int to, int cix) throws Exception {
 		Dev dev = devs[cix];
 
 		Clients.init(jserv_xyzw[to]);

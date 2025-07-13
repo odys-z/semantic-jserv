@@ -1,8 +1,13 @@
 { "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
   "vol_name"    : "VOLUME_HOME",
   "volume"      : "../vol-Y201",
+  "localIp"     : "10.0.0.2",
+  "reverseProxy": false,
+
   "port"        : 8965,
+
   "webport"     : 8901,
+
   "jservs"      : {"X29":"http://127.0.0.1:8964/jserv-album", "Y201":"http://127.0.0.1:8965/jserv-album"},
   "envars"      : {"WEBROOT_201": "Y201"},
   "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "overriden by installer: web-dist/private/host.json"],

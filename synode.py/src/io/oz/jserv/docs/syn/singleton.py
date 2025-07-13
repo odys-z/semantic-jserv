@@ -32,11 +32,10 @@ def getJservOption(synode: str, hostp: str, https: bool) -> str:
     :param hostp: ip-or-host:port
     :param https:
     :return: the jserv lines (option for Android scan)
-    {synode}-{hostp}
+    {synode}
     http(s)://ip-or-host:port/jserv-album
     """
-    # return f'{synode}-{hostp}\n{"https" if https else "http"}://{hostp}/{jserv_url_path}'
-    return f'{synode}-{hostp}\n{getJservUrl(https, hostp)}'
+    return f'{synode}\n{getJservUrl(https, hostp)}'
 
 
 class PortfolioException(Exception):
@@ -80,12 +79,21 @@ class AppSettings(Anson):
     port: int
     webport: int
     webrootLocal: str
+    reverseProxy: bool
+    proxyIp: str
+    proxyPort: int
+    webProxyPort: int
     jservs: dict
 
     def __init__(self):
         super().__init__()
         self.port = 8964
         self.webport = 8900
+        self.reverseProxy = False
+        self.proxyPort = 0
+        self.proxyIp = None
+        self.webProxyPort = 0
+
         self.envars = {}
         self.startHandler = [implISettingsLoaded, 'web-dist/private/host.json']
         self.webrootLocal = f'http://suppress.warning:{self.webport}'
@@ -134,4 +142,3 @@ class AppSettings(Anson):
 
     def jservLines(self):
         return [':\t'.join([k, self.jservs[k]]) for k in self.jservs]
-

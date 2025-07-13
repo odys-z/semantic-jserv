@@ -6,7 +6,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.4</version>
+  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.5</version>
   <packaging>jar</packaging>
 
   <name>jserv-album Maven Webapp</name>
@@ -36,10 +36,12 @@
   </licenses>
 
   <repositories>
+  <!-- 
   	<repository>
   		<id>sonatype-snapshots</id>
   		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
   	</repository>
+   -->
   </repositories>
 
   <scm>
@@ -58,6 +60,7 @@
     </developer>
   </developers>
 
+  <!--
   <distributionManagement>
   	<snapshotRepository>
   		<id>ossrh</id>
@@ -69,6 +72,7 @@
   		<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 	</repository>
   </distributionManagement>
+  -->
 
   <dependencies>
     <dependency>
@@ -137,11 +141,13 @@
 		<version>${jetty.version}</version>
     </dependency>
 
+	<!-- 
 	<dependency>
 		<groupId>io.github.odys-z</groupId>
 		<artifactId>antson</artifactId>
 		<version>0.9.118</version>
 	</dependency>
+	-->
 	
 	<!-- https://mvnrepository.com/artifact/commons-daemon/commons-daemon -->
 	<dependency>

@@ -28,9 +28,9 @@ from anclient.io.odysz.jclient import Clients
 from .__version__ import jar_ver, web_ver, html_srver
 
 
-def ping(clientUri: str, peerserv: str):
-    # Clients.servRt = 'http://127.0.0.1:8964/jserv-album'
-    Clients.servRt = peerserv or 'http://127.0.0.1:8964/jserv-album'
+def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
+    # Clients.servRt = peerserv or 'http://127.0.0.1:8964/jserv-album'
+    Clients.init(jserv=peerserv or 'http://127.0.0.1:8964/jserv-album', timeout=timeout_snd)
 
     def err_ctx(c: MsgCode, e: str, *args: str) -> None:
         print(c, e.format(args), file=sys.stderr)
@@ -353,7 +353,7 @@ class InstallerCli:
     def peers_find(self, id):
         return AnRegistry.find_synode(self.registry.config.peers, id)
 
-    def validate(self, synid: str, volpath: str, peerjservs: str, warn: Callable=None):
+    def validate(self, synid: str, volpath: str, peerjservs: str, ping_timeout: int=10, warn: Callable=None):
         """
         Check synodepy3, volume, jservs.
         :param warn:
@@ -377,16 +377,16 @@ class InstallerCli:
             if self.peers_find(peer[0]) is None:
                 return {"peers": {peer[0]: LangExt.str(self.registry.config.peers)}}
 
-            if synid != peer[0]:
-                try:
-                    ping('Setup/py3', peer[1])
-                except PortfolioException:
-                    if warn:
-                        warn(f'Ping to {peer[0]}({peer[1]}) failed.\n'
-                              # 'It is strongly recommended not to proceed.\n'
-                             f'If synode{peer[0]} in the domain is not connectable, double check the url.')
-                    else:
-                        return {"jserv": {peer[0]: peer[1]}}
+            # if synid != peer[0]:
+            #     try:
+            #         ping('Setup/py3', peer[1], ping_timeout)
+            #     except PortfolioException:
+            #         if warn:
+            #             warn(f'Ping to {peer[0]}({peer[1]}) failed.\n'
+            #                   # 'It is strongly recommended not to proceed.\n'
+            #                  f'If synode{peer[0]} in the domain is not connectable, double check the url.')
+            #         else:
+            #             return {"jserv": {peer[0]: peer[1]}}
 
         if not checkinstall_exiftool():
             return {"exiftool": "Check and install exiftool failed!"
@@ -419,8 +419,11 @@ class InstallerCli:
     def gen_html_srvname(self):
         return f'Synode.web-{web_ver}-{self.registry.config.synid}'
 
-    def updateWithUi(self, jservss: str = None, synid: str = None, port: str = None, webport: str = None,
-                     volume: str = None, syncins: str = None, envars = None):
+    def updateWithUi(self, jservss: str = None, synid: str = None,
+                     reverseProxy=False,
+                     port: str = None, webport: str = None,
+                     proxyPort: str = None, proxyIp: str = None,
+                     volume: str = None, syncins: str = None, envars=None, webProxyPort=None):
         if envars is None:
             envars = {}
         if jservss is not None and len(jservss) > 8:
@@ -429,11 +432,17 @@ class InstallerCli:
         if not LangExt.isblank(synid):
             self.registry.config.synid = synid
 
+        self.settings.reverseProxy = reverseProxy
+        self.settings.proxyIp = proxyIp
+        self.settings.proxyPort = int(proxyPort)
+        self.settings.webProxyPort = int(webProxyPort)
+
         if not LangExt.isblank(port):
             self.settings.port = int(port)
 
         if not LangExt.isblank(webport):
             self.settings.webport = int(webport)
+
 
         if not LangExt.isblank(volume):
             if not os.path.exists(volume):
@@ -656,7 +665,6 @@ class InstallerCli:
                 """
                 self.log_request(code)
                 self.send_response_only(code, message)
-                # self.send_header('Server', self.version_string())
                 self.send_header("server", "Portfolio Synode 0.7/web")
                 self.send_header('Date', self.date_time_string())
     

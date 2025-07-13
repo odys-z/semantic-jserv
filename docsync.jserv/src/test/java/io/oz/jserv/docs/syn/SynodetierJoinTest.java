@@ -131,45 +131,6 @@ public class SynodetierJoinTest {
 			if (jetties[i] != null)
 				jetties[i].stop();
 			
-			/*
-			SyncUser me = new SyncUser(syrskyi, slava, syrskyi, "#-" + i).orgId(ura);
-			ArrayList<SyncUser> robots = new ArrayList<SyncUser>() { {add(me);} };
-
-			SynodeConfig config = new SynodeConfig(nodes[i], SynodeMode.peer);
-			config.synconn = servs_conn[i];
-			config.sysconn = f("main-sqlite-%s", i);
-			// config.port    = port++;
-			config.mode    = SynodeMode.peer;
-			config.org     = new SynOrg();
-			config.org.orgId= ura;
-			config.org.meta = "io.oz.jserv.docs.meta.DocOrgMeta";
-			config.domain  = eq(nodes[i], "X") ? zsu : null;
-			config.peers   = new Synode[] {new Synode(nodes[i], nodes[i] + "," + nodes[i], ura, config.domain)};
-			
-			AppSettings settings = new AppSettings();
-			settings.port = 8964 + i;
-
-			Syngleton.defltScxt = new DATranscxt(config.sysconn);
-			Syngleton.setupSysRecords(config, robots);
-			
-			Syngleton.setupSyntables(config,
-					new ArrayList<SyntityMeta>() {{add(docm);}},
-					webinf, "config.xml", ".", "ABCDEF0123465789", true);
-
-			Syngleton.cleanDomain(config);
-
-			Syngleton.cleanSynssions(config);
-
-			// DB is dirty when testing again
-			String top = config.domain;
-			config.domain = zsu;
-			Syngleton.cleanDomain(config);
-			config.domain = top;
-			
-			jetties[i] = testSyndoctier(config, robots.get(0),
-					f("config-%s.xml", i), f("$VOLUME_%s/syntity.json", i), settings);
-			*/
-			
 			String $vol_home = f("$VOLUME_%s", i);
 			logi("[...] load dictionary configuration %s/* ...", $vol_home); 
 			YellowPages.load(FilenameUtils.concat(
@@ -195,7 +156,7 @@ public class SynodetierJoinTest {
 					new ArrayList<SyntityMeta>() {{add(docm);}},
 					webinf, "config.xml", ".", "ABCDEF0123465789", true);
 
-			Syngleton.cleanSynssions(config);
+			// Syngleton.cleanSynssions(config);
 
 			// DB is dirty when testing again
 			Syngleton.cleanDomain(config);
@@ -214,7 +175,6 @@ public class SynodetierJoinTest {
 	@Test
 	void testSynodetierJoin() throws Exception {
 		setupDomain();
-		// Utils.pause("Press Enter...");
 	}
 	
 	/**
@@ -303,7 +263,6 @@ public class SynodetierJoinTest {
 		}
 	}
 
-//	public static void syncdomain(boolean[] lights, int tx, Docheck... ck)
 	public static void syncdomain(int tx, Docheck... ck)
 			throws SemanticException, SsException, IOException {
 
@@ -341,9 +300,9 @@ public class SynodetierJoinTest {
 								isNull(xp) || xp[0].trb == null ? "N/A" : xp[0].trb.syndomx.synconn));
 						}
 					}
-				}, (blockby) -> {
-					Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);
-					return 2000;
+//				}, (blockby) -> {
+//					Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);
+//					return 2000;
 				});
 		}
 	}

@@ -3,22 +3,23 @@ invoke make
 """
 import fnmatch
 import re
+import shutil
 import sys
 from types import LambdaType
 from anson.io.odysz.common import Utils
+from anson.io.odysz.utils import zip2
 from invoke import task
 import zipfile
 import os
-from glob import glob
 
 from anson.io.odysz.anson import Anson
 
-version = '0.7.4'
+version = '0.7.5'
 """
 synode.py3, jserv-album-0.7.4.jar
 """
 
-apk_ver = '0.7.2'
+apk_ver = '0.7.3'
 
 html_jar_v = '0.1.7'
 """
@@ -30,7 +31,11 @@ web_ver = '0.4.1'
 album-web-#.#.#.jar
 """
 
+version_pattern = '[0-9\\.]+'
+
 vol_files = {"volume": ["jserv-main.db", "doc-jserv.db"]}
+vol_resource = {"volume": "volume/*"}
+
 dist_dir = f'build-{version}'
 
 android_dir = '../../anclient/examples/example.android'
@@ -65,7 +70,12 @@ def updateApkRes(host_json, apkver):
     
     """
 
+    # Must install synode.py3, because
+    # need this to deserialize "io.oz.syntier.serv.ExternalHosts".
+    # ISSUE: this is a messy as the type, ExternalHosts, used in host_json,
+    # is assuming types of synode.py3 are available.
     Anson.java_src('src', ['synode_py3'])
+
     hosts = Anson.from_file(host_json)
     print(os.getcwd(), host_json)
     print('host.json:', hosts)
@@ -83,7 +93,7 @@ def updateApkRes(host_json, apkver):
 def config(c):
     print('--------------    configuration   ------------------')
 
-    Anson.java_src('src', ['synode_py3'])
+    # Anson.java_src('src', ['synode_py3'])
 
     this_directory = os.getcwd()
 
@@ -91,14 +101,27 @@ def config(c):
 
     version_file = os.path.join(this_directory, 'pom.xml')
     Utils.update_patterns(version_file, {
-        '<!-- auto update token TASKS.PY/CONFIG --><version>0.7.2</version>':
-       f'<!-- auto update token TASKS.PY/CONFIG --><version>{version}</version>',
+        f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
+        f'<!-- auto update token TASKS.PY/CONFIG --><version>{version}</version>',
     })
 
     version_file = os.path.join(android_dir, 'build.gradle')
     Utils.update_patterns(version_file, {
-        "app_ver = '[0-9\\.]+'": f"app_ver = '{apk_ver}'"
+        f"app_ver = '{version_pattern}'": f"app_ver = '{apk_ver}'"
     })
+
+@task
+def clean(c):
+    if not os.path.exists(dist_dir):
+        os.makedirs(dist_dir, exist_ok=True)
+
+    for item in os.listdir(dist_dir):
+        item_path = os.path.join(dist_dir, item)
+        if os.path.isfile(item_path):
+            os.unlink(item_path)
+        elif os.path.isdir(item_path):
+            shutil.rmtree(item_path)
+
 
 @task(config)
 def build(c):
@@ -109,7 +132,7 @@ def build(c):
         Returns:
             str: The command to build the package.
         """
-        print('Building synode.py3 {version} with web-dist {web_ver}, html-service.jar {html_jar_v}...')
+        print(f'Building synode.py3 {version} with web-dist {web_ver}, html-service.jar {html_jar_v}...')
 
         if os.name == 'nt':
             return f'set SYNODE_VERSION={version} & set JSERV_JAR_VERSION={version} & set WEB_VERSION={web_ver} & set HTML_JAR_VERSION={html_jar_v} & invoke build'
@@ -133,10 +156,10 @@ def build(c):
         ['../../html-service/java', 'mvn clean compile package'],
 
         # use vscode bash for Windows
-        ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)]
+        ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
 
-        # ['../synode.py/winsrv', lambda: update_patterns('install-html-w.bat', '@set jar-ver=.*', {'@set jar-ver=': html_jar_v, '@set web-ver=': web_ver})],
-        # ['../synode.py/winsrv', lambda: updateJarVersion('install-jserv-w.bat', '@set jar-ver=.*', f'@set jar-ver={version}')],
+        # ['../synode.py', 'invoke zipRegistry'],
+        ['.', f'mv ../synode.py/registry-ura-zsu-{version}.zip {dist_dir}']
     ]
 
     print('--------------  package  ------------------')
@@ -156,9 +179,66 @@ def build(c):
             print('OK:', ret.ok, ret.stderr)
     return False
 
-
 @task
 def package(c, zip=f'jserv-portfolio-{version}.zip'):
+    """
+    Create a ZIP file (jserv.zip).
+    
+    Args:
+        c: Invoke Context object for running commands.
+        zip: Name of the output ZIP file (default: "jserv-album.zip").
+    """
+    resources = {
+        f'bin/html-web-{html_jar_v}.jar': f'../../html-service/java/target/html-web-{html_jar_v}.jar', # clone at github/html-service
+        f'bin/jserv-album-{version}.jar': f'target/jserv-album-{version}.jar',
+        
+        # https://exiftool.org/index.html
+        'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
+
+        'bin/synode_py3-0.7-py3-none-any.whl': f'../synode.py/dist/synode_py3-{version}-py3-none-any.whl',
+        'WEB-INF': f'src/main/webapp/WEB-INF-0.7.3/*', # Do not replace with version.
+        'winsrv': '../synode.py/winsrv/*',
+        'web-dist': 'web-dist/*'    # use a link for different Anclient folder name
+                                    # ln -s ../Anclient/examples/example.js/album web-dist
+                                    # mklink /D web-dist ..\anclient\examples\example.js\album
+    }
+
+    excludes = ['*.log', 'report.html']
+
+    try:
+
+        print('-------------- resources ------------------')
+        print(resources)
+
+        err = False
+
+        # Ensure the output directory for the ZIP exists
+        output_dir = os.path.dirname(zip) or "."
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        
+        if os.path.isfile(zip):
+            os.remove(zip)
+
+        zip2(zip, {**resources, **vol_resource}, excludes)
+
+        if not os.path.exists(dist_dir):
+            os.makedirs(dist_dir, exist_ok=True)
+        distzip = os.path.join(dist_dir, zip)
+        if os.path.isfile(distzip):
+            os.remove(distzip)
+
+        print(zip, "->", distzip)
+        os.rename(zip, distzip)
+
+        print(f'Created ZIP file successfully: {distzip}' if not err else 'Errors while making target (creaded zip file)')
+
+    except Exception as e:
+        print(f"Error creating ZIP file: {str(e)}", file=sys.stderr)
+        raise
+
+
+def packagev72(c, zip=f'jserv-portfolio-{version}.zip'):
     """
     Create a ZIP file (jserv.zip).
     
@@ -272,7 +352,7 @@ def package(c, zip=f'jserv-portfolio-{version}.zip'):
         print(f"Error creating ZIP file: {str(e)}", file=sys.stderr)
         raise
 
-@task(create_volume, build, package)
+@task(clean, create_volume, build, package)
 def make(c):
     """
     Create a ZIP file (jserv.zip) with the specified resources.
@@ -281,6 +361,9 @@ def make(c):
         c: Invoke Context object for running commands.
     """
     print('Package created successfully.')
+
+    # ret = c.run(f'cp ../snodepy3/registry-zsu-{version}.zip {dist_dir}')
+    # print('OK:', ret.ok, ret.stderr)
 
 
 if __name__ == '__main__':

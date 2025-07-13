@@ -8,6 +8,7 @@
  */
 package io.odysz.semantic.tier.docs;
 
+import static io.odysz.common.AESHelper.stream206;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
@@ -24,20 +25,11 @@ import static io.odysz.semantic.jprotocol.JProtocol.Headers.Server;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +75,7 @@ public abstract class Docs206 {
 	private static final String ETAG = "W/\"%s-%s\"";
 	private static final Pattern Regex_Range = Pattern.compile("^bytes=[0-9]*-[0-9]*(,[0-9]*-[0-9]*)*+$");
 	private static final String Multipart_boundary = UUID.randomUUID().toString();
-	private static final int Range_Size = 1024 * 8;
+	// private static final int Range_Size = 1024 * 8;
 
 	/**
 	 * Used for telling the client with request header:<br>
@@ -191,9 +183,9 @@ public abstract class Docs206 {
 			List<Range> ranges = replyHeadersv2(req, resp, msg, usr);
 			
 			Resource resource = new Resource(isblank(msg.body(0).doc.uids) ?
-					getDocByEid(req, msg.body(0), st, usr) :
-					getDocByUid(req, msg.body(0), st, usr),
-					msg.body(0).doc.recId);
+										getDocByEid(req, msg.body(0), st, usr) :
+										getDocByUid(req, msg.body(0), st, usr),
+									msg.body(0).doc.recId);
 			
 			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
 			writeContent(resp, resource, ranges, "");
@@ -640,11 +632,11 @@ public abstract class Docs206 {
 	public static void writeContent(HttpServletResponse response, Resource resource, List<Range> ranges, String contentType) throws IOException {
 		ServletOutputStream output = response.getOutputStream();
 		if (ranges == null) {
-			stream(resource.file, output, 0, Math.max(resource.length - 1, 0));
+			stream206(resource.file, output, 0, Math.max(resource.length - 1, 0));
 		}
 		else if (ranges.size() == 1) {
 			Range range = ranges.get(0);
-			stream(resource.file, output, range.start, range.length);
+			stream206(resource.file, output, range.start, range.length);
 		}
 		else {
 			for (Range range : ranges) {
@@ -652,7 +644,7 @@ public abstract class Docs206 {
 				output.println("--" + Multipart_boundary);
 				output.println("Content-Type: " + contentType);
 				output.println("Content-Range: bytes " + range.start + "-" + range.end + "/" + resource.length);
-				stream(resource.file, output, range.start, range.length);
+				stream206(resource.file, output, range.start, range.length);
 			}
 
 			output.println();
@@ -660,46 +652,46 @@ public abstract class Docs206 {
 		}
 	}
 
-	public static long stream(File file, OutputStream output, long start, long length) throws IOException {
-		if (start == 0 && length >= file.length()) {
-			try (ReadableByteChannel inputChannel = Channels.newChannel(new FileInputStream(file));
-					WritableByteChannel outputChannel = Channels.newChannel(output)) {
-				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
-				long size = 0;
-
-				while (inputChannel.read(buffer) != -1) {
-					buffer.flip();
-					size += outputChannel.write(buffer);
-					buffer.clear();
-				}
-
-				return size;
-			}
-		}
-		else {
-			try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), StandardOpenOption.READ)) {
-				WritableByteChannel outputChannel = Channels.newChannel(output);
-				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
-				long size = 0;
-
-				while (fileChannel.read(buffer, start + size) != -1) {
-					buffer.flip();
-
-					if (size + buffer.limit() > length) {
-						buffer.limit((int) (length - size));
-					}
-
-					size += outputChannel.write(buffer);
-
-					if (size >= length) break;
-
-					buffer.clear();
-				}
-
-				return size;
-			}
-		}
-	}
+//	public static long stream(File file, OutputStream output, long start, long length) throws IOException {
+//		if (start == 0 && length >= file.length()) {
+//			try (ReadableByteChannel inputChannel = Channels.newChannel(new FileInputStream(file));
+//					WritableByteChannel outputChannel = Channels.newChannel(output)) {
+//				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
+//				long size = 0;
+//
+//				while (inputChannel.read(buffer) != -1) {
+//					buffer.flip();
+//					size += outputChannel.write(buffer);
+//					buffer.clear();
+//				}
+//
+//				return size;
+//			}
+//		}
+//		else {
+//			try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), StandardOpenOption.READ)) {
+//				WritableByteChannel outputChannel = Channels.newChannel(output);
+//				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
+//				long size = 0;
+//
+//				while (fileChannel.read(buffer, start + size) != -1) {
+//					buffer.flip();
+//
+//					if (size + buffer.limit() > length) {
+//						buffer.limit((int) (length - size));
+//					}
+//
+//					size += outputChannel.write(buffer);
+//
+//					if (size >= length) break;
+//
+//					buffer.clear();
+//				}
+//
+//				return size;
+//			}
+//		}
+//	}
 
 	public static String dispositionHeader(String filename, boolean attachment)
 			throws UnsupportedEncodingException {
@@ -766,10 +758,14 @@ public abstract class Docs206 {
 		}
 	}
 
-	static class Range {
+	static class Range extends Anson {
 		long start;
 		long end;
 		long length;
+		
+		public Range() {
+			super();
+		}
 		
 		public Range(long start, long end) {
 			this.start = start;

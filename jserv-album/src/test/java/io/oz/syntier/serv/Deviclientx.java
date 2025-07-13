@@ -70,7 +70,7 @@ class Deviclientx {
 			client = new Doclientier(docm.tbl, sysuri, synuri, errLog)
 					.tempRoot(sysuri)
 					.loginWithUri(uid, device.id, psw)
-					.blockSize(bsize);
+					; //.blockSize(bsize);
 		}
 	}
 

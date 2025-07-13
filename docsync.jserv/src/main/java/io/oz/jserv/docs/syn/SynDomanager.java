@@ -11,6 +11,7 @@ import static io.odysz.semantic.syn.ExessionAct.ready;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
+
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -194,34 +195,30 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws InterruptedException 
 	 * @since 0.2.0
 	 */
-	public SynDomanager updomains(OnDomainUpdate onUpdate, OnMutexLock block) throws ExchangeException {
+	public SynDomanager updomains(OnDomainUpdate onUpdate) throws ExchangeException {
 		if (sessions == null || sessions.size() == 0)
 			throw new ExchangeException(ready, null,
 						"Session pool is null at %s", synode);
-//		new Thread(() -> { 
-			// tasks looping until finished
-			for (String peer : sessions.keySet()) {
-				ExessionPersist xp = sessions.get(peer).xp;
-				if (xp == null || xp.exstate() == ready)
-					try {
-						sessions.get(peer).update2peer((lockby) -> 0.31f);
-					} catch (ExchangeException e) {
-						e.printStackTrace();
-					}
-				else if (xp != null && xp.exstate() != ready)
-					continue;
-				else
-					Utils.warnT(new Object() {}, "TODO updating %s <- %s",
-							peer, synode);
-
-				if (onUpdate != null)
-					onUpdate.ok(domain(), synode, peer, xp);
-			}
+		for (String peer : sessions.keySet()) {
+			ExessionPersist xp = sessions.get(peer).xp;
+			if (xp == null || xp.exstate() == ready)
+				try {
+					sessions.get(peer).update2peer((lockby) -> 0.31f);
+				} catch (ExchangeException e) {
+					e.printStackTrace();
+				}
+			else if (xp != null && xp.exstate() != ready)
+				continue;
+			else
+				Utils.warnT(new Object() {}, "TODO updating %s <- %s",
+						peer, synode);
 
 			if (onUpdate != null)
-				onUpdate.ok(domain(), synode, null);
-//		}, f("%1$s update [%2$s]", synode, domain()))
-//		.start();
+				onUpdate.ok(domain(), synode, peer, xp);
+		}
+
+		if (onUpdate != null)
+			onUpdate.ok(domain(), synode, null);
 
 		return this;
 	}
@@ -293,7 +290,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 				if ( !eq(c.domain(), target.domain())
 				  || !eq(c.conn, target.conn)
 				  || c.mymode != target.mymode
-				  || c.peer != target.peer
+				  || !eq(c.peer, target.peer)
 				  || target.xp != null)
 					throw new ExchangeException(ready, target.xp, "Forced verification failed.");
 			}
@@ -368,7 +365,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 
-	public SynDomanager updateSynssions(SyncUser docuser, OnDomainUpdate... onok) throws ExchangeException {
+	public SynDomanager updateSynssions(SyncUser docuser, OnDomainUpdate... onok)
+			throws ExchangeException {
 
 		for (SynssionPeer peer : sessions.values()) {
 			if (eq(peer.peer, synode))
@@ -382,7 +380,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 
-
 	public DBSyntableBuilder createSyntabuilder(SynodeConfig cfg) throws Exception {
 		notNull(cfg);
 		musteqs(domain(), cfg.domain);
@@ -394,6 +391,15 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	public String lockSession() {
 		return synlocker == null ? null : synlocker.sessionId();
+	}
+
+	public void closession() {
+		if (sessions != null)
+		for (SynssionPeer peer : sessions.values()) {
+			if (peer.client == null || !peer.client.isSessionValid())
+				peer.client.logout();
+			peer.client = null;
+		}
 	}
 
 }

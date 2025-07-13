@@ -3,7 +3,10 @@ bin
 download
 volume-*
 vol
-vol-*
+vol-X29
+vol-Y201/**
+!vol-Y201/README.md
+
 volume/*.db
 test/results
 test/res/ignore*.*
@@ -37,4 +40,3 @@ host.json
 web-dist
 deploy-*
 build-*
-venv*

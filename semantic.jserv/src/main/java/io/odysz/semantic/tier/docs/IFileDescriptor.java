@@ -7,7 +7,7 @@ import java.io.IOException;
  * and local file information, e. g. file object on Android.
  * 
  * <h5>Note:</h5>
- * <p>Do not confused with IFileProvider in Albumtier,
+ * <p>Do not be confused with IFileProvider in Albumtier,
  * an interface bridging local file system for unified access across rumtime
  * platfoms, e. g. Android file content provider vs. the general JDK file system. </p>
  * 
