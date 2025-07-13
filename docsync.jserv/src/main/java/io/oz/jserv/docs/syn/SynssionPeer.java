@@ -82,10 +82,9 @@ import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
 
 /**
+ * @since 0.2.0
  */
 public class SynssionPeer {
-
-	// private static final int blocksize = 3 * 1024 * 1024;
 
 	public static boolean testDisableAutoDocRef = false;
 
@@ -305,7 +304,6 @@ public class SynssionPeer {
 
 	SyncResp exespush(String peer, String a, ExchangeBlock reqb)
 			throws SemanticException, AnsonException, IOException {
-		// Utils.warnT(new Object() {}, "??????????????????????? not a bug? - peer: %s, domain: %s", peer, reqb.domain);
 		SyncReq req = (SyncReq) new SyncReq(null, reqb.domain)
 					.exblock(reqb)
 					.a(a);
@@ -770,6 +768,7 @@ public class SynssionPeer {
 			return respi;
 		} 
 	}
+	
 
 	/**
 	 * Request {@link A#queryRef2me}.
@@ -799,6 +798,7 @@ public class SynssionPeer {
 		return resp;
 	}
 
+
 	///////////////////////////////////
 	/**
 	 * Go through the handshaking process of sing up to a domain. 
@@ -824,6 +824,7 @@ public class SynssionPeer {
 		if (!isNull(ok))
 			ok.ok(rep);
 	}
+	
 
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
 			throws SemanticException, AnsonException, SsException, IOException {

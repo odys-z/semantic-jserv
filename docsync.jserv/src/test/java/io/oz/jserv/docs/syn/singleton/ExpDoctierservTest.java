@@ -67,6 +67,9 @@ import io.oz.syn.YellowPages;
  * @disabled
  */
 public class ExpDoctierservTest {
+	/** Sarting port for each Jetty service to bind, _8964 + 1, +2, ... */
+	public final static int _8964 = 8966;
+	
 	public final static int X = 0;
 	public final static int Y = 1;
 	public final static int Z = 2;
@@ -145,6 +148,11 @@ public class ExpDoctierservTest {
 
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
+
+			Syngleton.cleanDomain(jetties[i].syngleton.syncfg);
+
+			cleanPhotos(docm, jetties[i].syngleton().domanager(zsu).synconn);
+
 			jetties[i].syngleton().asyOpenDomains(
 				(domain, mynid, peer, xp) -> {
 					lights[i] = true;
@@ -153,6 +161,7 @@ public class ExpDoctierservTest {
 		awaitAll(lights, -1);
 
 		// This won't pass if h_photos is not cleared
+		// And sometimes error if starting new test case while another case's threads are still working?
 		ck[Z].doc(0);
 		ck[Y].doc(0);
 		ck[X].doc(0);
@@ -181,9 +190,6 @@ public class ExpDoctierservTest {
 		ck[Z].doc(0);
 
 		logrst("Synchronizing between synodes", ++section);
-//		waiting(lights, Y);
-//		SynodetierJoinTest.syncdomain(lights, Y, ck);
-//		awaitAll(lights, -1);
 		SynodetierJoinTest.syncdomain(Y, ck);
 
 		printChangeLines(ck);
@@ -357,7 +363,7 @@ public class ExpDoctierservTest {
 		
 		HashMap<String, String> jservs = new HashMap<String, String>(4);
 		for (int i : nodex) {
-			jservs.put(nodes[i], f("http://127.0.0.1:%s/jserv-album", 8964 + i));
+			jservs.put(nodes[i], f("http://127.0.0.1:%s/jserv-album", _8964 + i));
 		}
 
 		for (int i : nodex) {
@@ -371,7 +377,7 @@ public class ExpDoctierservTest {
 			settings.jservs = jservs;
 			settings.vol_name = f("VOLUME_%s", i);
 			settings.volume = f("../vol-%s", i);
-			settings.port = 8964 + i;
+			settings.port = _8964 + i;
 			settings.installkey = "0123456789ABCDEF";	
 			settings.rootkey = null;
 			settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
@@ -382,11 +388,11 @@ public class ExpDoctierservTest {
 			settings.setupdb(cfgs[i], "jserv-stub", webinf,
 					 cfgxml, "ABCDEF0123465789", true);
 
-			cleanPhotos(docm, cfgs[i].synconn, devs);
+			cleanPhotos(docm, cfgs[i].synconn);
 		
 			// clean and reboot
 			Syngleton.cleanDomain(cfgs[i]);
-			Syngleton.cleanSynssions(cfgs[i]);
+			// Syngleton.cleanSynssions(cfgs[i]);
 
 			// main()
 			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
@@ -411,6 +417,14 @@ public class ExpDoctierservTest {
 		Connects.commit(conn, usr, sqls);
 	}
 	
+	static void cleanPhotos(ExpDocTableMeta docm, String conn) throws Exception {
+		ArrayList<String> sqls = new ArrayList<String>();
+		IUser usr = DATranscxt.dummyUser();
+//		for (Dev d : devs)
+			sqls.add(f("delete from %s", docm.tbl));
+		Connects.commit(conn, usr, sqls);
+	}
+		
 	/**
 	 * Verify device &amp; client-paths doesn't present at server.
 	 * 

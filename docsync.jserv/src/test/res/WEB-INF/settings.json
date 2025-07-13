@@ -9,12 +9,12 @@
   "volume": "../vol-3",
   "proxyPort": 0,
   "connIdleSnds": 0.0,
-  "port": 8967,
+  "port": 8969,
   "reverseProxy": false,
-  "jservs": {"W": "http://127.0.0.1:8967/jserv-album",
-      "X": "http://127.0.0.1:8964/jserv-album",
-      "Y": "http://127.0.0.1:8965/jserv-album",
-      "Z": "http://127.0.0.1:8966/jserv-album"},
+  "jservs": {"W": "http://127.0.0.1:8969/jserv-album",
+      "X": "http://127.0.0.1:8966/jserv-album",
+      "Y": "http://127.0.0.1:8967/jserv-album",
+      "Z": "http://127.0.0.1:8968/jserv-album"},
   "localIp": null,
   "rootkey": "0123456789ABCDEF"
 }

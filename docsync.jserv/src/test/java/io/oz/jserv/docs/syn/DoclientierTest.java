@@ -56,6 +56,8 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.ExpDoctierservTest;
+import io.oz.jserv.docs.syn.singleton.Syngleton;
+import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.YellowPages;
 
 /**
@@ -80,6 +82,7 @@ class DoclientierTest {
 		init(ExpDoctierservTest.case_yresolve);
 	}
 	
+	@SuppressWarnings("deprecation")
 	static void init(int caseid) throws Exception {
 		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
 
@@ -100,6 +103,9 @@ class DoclientierTest {
 		// Wait for ExpDoctierservTest.runDoctiers() check the initial state
 		waiting(serviceLight, -1);
 
+//		for (SynotierJettyApp jetty : SynodetierJoinTest.jetties)
+//			Syngleton.cleanDomain(jetty.syngleton().syncfg);
+
 		thr = new Thread(() -> {
 			try {
 				ExpDoctierservTest.runDoctiers(caseid, nodex, serviceLight, canpush, pushingDone);
@@ -118,13 +124,16 @@ class DoclientierTest {
 
 	@Test
 	void testSynclientUp() throws Exception {
+		Thread.sleep(10000);
 		synclientUp();
 	}
+	
 	static void synclientUp() throws Exception {
 		int no = 0;
 		logrst("testSynclientUp: waiting pushing permission", ++no);
 
-		awaitAll(canpush, 5 * 60 * 10); // mvn test on 200 can be this slow?
+		// not for debug: awaitAll(canpush, 5 * 60 * 10); // mvn test on 200 can be this slow?
+		awaitAll(canpush, -1);
 
 		logrst(f("X <- %s", devs[X_0].device.id), ++no);
 
@@ -169,9 +178,6 @@ class DoclientierTest {
 		// 11 create
 		clientPush(Y, Y_1);
 
-//		boolean[] lights = new boolean[] {true, false};
-//		SynodetierJoinTest.syncdomain(lights, Y);
-//		awaitAll(lights, -1);
 		SynodetierJoinTest.syncdomain(Y);
 
 		// 00 delete
@@ -180,9 +186,6 @@ class DoclientierTest {
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
-//		waiting(lights, Y);
-//		SynodetierJoinTest.syncdomain(lights, Y);
-//		awaitAll(lights);
 		SynodetierJoinTest.syncdomain(Y);
 
 		pause("Press enter to quite ...");

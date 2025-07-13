@@ -419,6 +419,7 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
+	 * @deprecated only for tests
 	 * @param cfg
 	 * @throws Exception
 	 */
@@ -449,7 +450,6 @@ public class Syngleton extends JSingleton {
 	 * 
 	 * @param cfg
 	 * @throws Exception
-	 */
 	public static void cleanSynssions(SynodeConfig cfg) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 
@@ -467,6 +467,7 @@ public class Syngleton extends JSingleton {
 					.where(op.isNotnull, xbfm.changeId, new ExprPart()))
 			.d(tb0.instancontxt(cfg.synconn, usr));
 	}
+	 */
 
 	public Set<String> domains() {
 		return syndomanagers.keySet();
