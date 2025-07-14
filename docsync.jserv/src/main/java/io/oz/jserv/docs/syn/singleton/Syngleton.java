@@ -446,7 +446,7 @@ public class Syngleton extends JSingleton {
 	}
 
 	/**
-	 * Clean change logs and syssion buffer.
+	 * Clean change logs and synssion buffer.
 	 * 
 	 * @param cfg
 	 * @throws Exception
