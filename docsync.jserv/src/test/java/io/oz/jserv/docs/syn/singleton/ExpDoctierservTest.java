@@ -12,6 +12,7 @@ import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
+import static io.oz.jserv.docs.syn.Dev.devm;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
@@ -403,7 +404,7 @@ public class ExpDoctierservTest {
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].syngleton().domanager(zsu).synode,
-								SynodeMode.peer, cfgs[i].chsize, docm, null, true);
+								SynodeMode.peer, cfgs[i].chsize, docm, devm, true);
 		}
 		
 		return nodex;
@@ -420,8 +421,7 @@ public class ExpDoctierservTest {
 	static void cleanPhotos(ExpDocTableMeta docm, String conn) throws Exception {
 		ArrayList<String> sqls = new ArrayList<String>();
 		IUser usr = DATranscxt.dummyUser();
-//		for (Dev d : devs)
-			sqls.add(f("delete from %s", docm.tbl));
+		sqls.add(f("delete from %s", docm.tbl));
 		Connects.commit(conn, usr, sqls);
 	}
 		
@@ -433,7 +433,7 @@ public class ExpDoctierservTest {
 	 * @param paths
 	 * @throws Exception
 	 */
-	static void verifyPathsPageNegative(Doclientier clientier, String entityName,
+	private static void verifyPathsPageNegative(Doclientier clientier, String entityName,
 			String... paths) throws Exception {
 		PathsPage pths = new PathsPage(clientier.client.ssInfo().device, 0, 1);
 		HashSet<String> pathpool = new HashSet<String>();

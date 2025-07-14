@@ -60,7 +60,6 @@ import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.syn.Exchanging;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
@@ -423,7 +422,7 @@ public class SynssionPeer {
 					.u(tb.nonsemantext());
 			} catch (ExchangeException e) {
 				if (e instanceof SemanticException
-						&& ((ExchangeException) e).requires() == Exchanging.ext_docref) {
+						&& ((ExchangeException) e).requires() == ExessionAct.ext_docref) {
 					Utils.logi("[%s] Rechead a peer DocRef while resolving a docref (%s, %s, %s)",
 							Thread.currentThread().getName(), ref.syntabl, ref.docId, ref.uids);
 					try {

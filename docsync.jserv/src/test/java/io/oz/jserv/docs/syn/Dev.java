@@ -12,6 +12,7 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.tier.docs.Device;
+import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -38,6 +39,7 @@ public class Dev {
 
 	static final String clientconn = "main-sqlite";
 	public static ExpDocTableMeta docm;
+	public static DeviceTableMeta devm;
 
 	static {
 		try {
@@ -56,6 +58,7 @@ public class Dev {
 
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
+			devm = new DeviceTableMeta(clientconn);
 		} catch (TransException e) {
 			e.printStackTrace();
 		}
