@@ -56,6 +56,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.Exchanging;
+import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
@@ -80,7 +81,7 @@ public abstract class Docs206 {
 	/**
 	 * Used for telling the client with request header:<br>
 	 * reason_doc_ref +  {@link Exchanging#ext_docref} - target file is a {@link DocRef} object. */
-	public static final String reason_doc_ref = "exchanging error: " + Exchanging.ext_docref;
+	public static final String reason_doc_ref = "exchanging error: " + ExessionAct.ext_docref;
 
 	public static DATranscxt st;
 
@@ -220,7 +221,7 @@ public abstract class Docs206 {
 		resp.setHeader(Server, JSingleton.appName);
 
 		if (e instanceof ExchangeException
-				&& ((ExchangeException) e).requires() == Exchanging.ext_docref)
+				&& ((ExchangeException) e).requires() == ExessionAct.ext_docref)
 			resp.setHeader(Reason, reason_doc_ref);
 
 		if (msg != null && msg.body(0) != null)
@@ -423,7 +424,7 @@ public abstract class Docs206 {
 			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
 		
 		if (Regex.startsEvelope(rs.getString(meta.uri)))
-			throw new ExchangeException(Exchanging.ext_docref, null, "DocRef: %s, %s, %s", req.doc.uids, req.doc.recId, req.doc.pname);
+			throw new ExchangeException(ExessionAct.ext_docref, null, "DocRef: %s, %s, %s", req.doc.uids, req.doc.recId, req.doc.pname);
 
 		String p = DocUtils.resolvExtroot(st, conn, rs.getString(meta.pk), usr, meta);
 		File f = new File(p);

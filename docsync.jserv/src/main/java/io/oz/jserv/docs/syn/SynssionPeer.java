@@ -423,7 +423,7 @@ public class SynssionPeer {
 					.u(tb.nonsemantext());
 			} catch (ExchangeException e) {
 				if (e instanceof SemanticException
-						&& ((ExchangeException) e).requires() == Exchanging.ext_docref) {
+						&& ((ExchangeException) e).requires() == ExessionAct.ext_docref) {
 					Utils.logi("[%s] Rechead a peer DocRef while resolving a docref (%s, %s, %s)",
 							Thread.currentThread().getName(), ref.syntabl, ref.docId, ref.uids);
 					try {
