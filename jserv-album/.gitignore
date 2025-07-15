@@ -3,7 +3,9 @@ bin
 download
 volume-*
 vol
-vol-X29
+vol-X29/*.db
+vol-X29/temp
+vol-X29/ura
 vol-Y201/**
 !vol-Y201/README.md
 
