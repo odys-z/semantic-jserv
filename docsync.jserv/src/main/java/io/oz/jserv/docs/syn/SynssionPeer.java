@@ -5,6 +5,7 @@ import static io.odysz.common.AESHelper.getRandom;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.ev;
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
@@ -190,7 +191,7 @@ public class SynssionPeer {
 			/// lock and wait local syndomx
 			domanager.lockme(onMutext);
 
-			ExchangeBlock reqb = exesinit();
+			ExchangeBlock reqb = ifnull(exesrestore(), exesinit());
 			rep = exespush(peer, A.exinit, reqb);
 
 			if (rep != null) {
@@ -267,6 +268,17 @@ public class SynssionPeer {
 		return b0.initExchange(xp);
 	}
 
+	/**
+	 * Restoring request
+	 * @return null or restore-request
+	 * @throws Exception
+	 * @since 1.5.18
+	 */
+	ExchangeBlock exesrestore() throws Exception {
+		DBSyntableBuilder b0 = new DBSyntableBuilder(domanager);
+		xp = new ExessionPersist(b0, peer, null);
+		return b0.restorexchange(xp);
+	}
 	/**
 	 * Handle syn-init request.
 	 * 

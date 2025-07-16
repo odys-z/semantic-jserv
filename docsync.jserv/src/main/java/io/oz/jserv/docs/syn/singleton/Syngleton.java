@@ -145,8 +145,8 @@ public class Syngleton extends JSingleton {
 		
 		if (rs.next()) {
 			String domain = rs.getString(synm.domain);
-			SynDomanager domanger = ((SynDomanager) new SynDomanager(cfg)
-					.admin(admin.deviceId(cfg.synode())))
+			SynDomanager domanger = (SynDomanager) new SynDomanager(cfg)
+					.admin(admin.deviceId(cfg.synode()))
 					.loadomainx();
 
 			syndomanagers.put(domain, (SynDomanager) domanger

@@ -26,10 +26,10 @@ public class SyncReq extends UserReq implements IBlock {
 	 */
 	public static class A {
 		/** on joining */
-		public static final String exchange= "ex/exchange";
-		public static final String exclose = "ex/close";
-		public static final String exrest  = "ex/rest";
-		public static final String exinit  = "ex/init";
+		public static final String exchange = "ex/exchange";
+		public static final String exclose  = "ex/close";
+		public static final String exrestore= "ex/restore";
+		public static final String exinit   = "ex/init";
 
 		public static final String initjoin = "join/init";
 		public static final String closejoin= "join/close";

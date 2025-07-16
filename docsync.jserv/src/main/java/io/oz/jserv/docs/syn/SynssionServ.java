@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.shouldeq;
 import static io.odysz.semantic.syn.ExessionAct.init;
@@ -67,6 +68,20 @@ public class SynssionServ {
 	public SyncResp onsyncdb(ExchangeBlock reqb)
 			throws SQLException, TransException {
 		ExchangeBlock repb = srvp.nextExchange(reqb);
+		return new SyncResp(syndomxerv.domain()).exblock(repb);
+	}
+
+	/**
+	 * On restoring requests. The requesting / challenging Seq can be already answered or not yet.
+	 * @param reqb
+	 * @return reply
+	 * @throws SQLException
+	 * @throws TransException
+	 * @since 1.5.18
+	 */
+	public SyncResp onsynrestore(ExchangeBlock reqb)
+			throws SQLException, TransException {
+		ExchangeBlock repb = ifnull(srvp.onRestore(reqb), srvp.nextExchange(reqb));
 		return new SyncResp(syndomxerv.domain()).exblock(repb);
 	}
 

@@ -56,8 +56,6 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.ExpDoctierservTest;
-import io.oz.jserv.docs.syn.singleton.Syngleton;
-import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.YellowPages;
 
 /**
@@ -82,7 +80,6 @@ class DoclientierTest {
 		init(ExpDoctierservTest.case_yresolve);
 	}
 	
-	@SuppressWarnings("deprecation")
 	static void init(int caseid) throws Exception {
 		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
 
@@ -102,9 +99,6 @@ class DoclientierTest {
 
 		// Wait for ExpDoctierservTest.runDoctiers() check the initial state
 		waiting(serviceLight, -1);
-
-//		for (SynotierJettyApp jetty : SynodetierJoinTest.jetties)
-//			Syngleton.cleanDomain(jetty.syngleton().syncfg);
 
 		thr = new Thread(() -> {
 			try {
