@@ -5,8 +5,8 @@ syn_node:
 
 org|synid|nyq |nstamp|domain|jserv                                |remarks|mac  |oper|optime|io_oz_synuid|
 ---+-----+----+------+------+-------------------------------------+-------+-----+----+------+------------+
-ura|X29  |3376|     0|zsu   |http://182.150.29.34:8964/jserv-album|       |#X29 |    |      |X,X         |
-ura|Y201 |3383|  3383|zsu   |http://192.168.0.47:8965/jserv-album |       |#Y201|    |      |Y,Y         |
+ura|X29  |3376|     0|zsu   |http://             :8964/jserv-album|       |#X29 |    |      |X,X         |
+ura|Y201 |3383|  3383|zsu   |http://             8965/jserv-album |       |#Y201|    |      |Y,Y         |
 
 syn_peers:
 
@@ -136,11 +136,11 @@ It's working with syn_node (Some entities lost while syn_change has been cleared
 org|synid|nyq|nstamp|domain|jserv                                |remarks|mac  |oper|optime|io_oz_synuid|
 ---+-----+---+------+------+-------------------------------------+-------+-----+----+------+------------+
 ura|X29  |394|     0|zsu   |http://             :8964/jserv-album|       |#X29 |    |      |X,X         |
-ura|Y201 |393|   393|zsu   |http://192.168.0.47:8965/jserv-album |       |#Y201|    |      |Y,Y         |
+ura|Y201 |393|   393|zsu   |http://             8965/jserv-album |       |#Y201|    |      |Y,Y         |
 
 
 org|synid|nyq|nstamp|domain|jserv                                |remarks|mac  |oper|optime|io_oz_synuid|
 ---+-----+---+------+------+-------------------------------------+-------+-----+----+------+------------+
 ura|X29  |398|     0|zsu   |http://             :8964/jserv-album|       |#X29 |    |      |X,X         |
-ura|Y201 |398|   398|zsu   |http://192.168.0.47:8965/jserv-album |       |#Y201|    |      |Y,Y         |
+ura|Y201 |398|   398|zsu   |http://             8965/jserv-album |       |#Y201|    |      |Y,Y         |
 
