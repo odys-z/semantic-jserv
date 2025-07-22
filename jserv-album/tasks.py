@@ -14,9 +14,9 @@ import os
 
 from anson.io.odysz.anson import Anson
 
-version = '0.7.5'
+version = '0.7.6'
 """
-synode.py3, jserv-album-0.7.4.jar
+synode.py3, jserv-album-0.7.6.jar
 """
 
 apk_ver = '0.7.3'
