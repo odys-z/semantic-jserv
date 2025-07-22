@@ -13,7 +13,7 @@
 		<smtc>a-k</smtc>
 		<tabl>h_photos</tabl>
 		<pk>pid</pk>
-		<args>pid</args>
+		<args>pid,0</args>
     </s>
 
 	<s>
@@ -38,7 +38,7 @@
 		<smtc>a-k</smtc>
 		<tabl>h_collects</tabl>
 		<pk>cid</pk>
-		<args>cid</args>
+		<args>cid,8192</args>
     </s>
 
 	<s>

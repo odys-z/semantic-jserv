@@ -15,7 +15,6 @@ import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -26,66 +25,12 @@ import io.odysz.transact.x.TransException;
 
 public class DocUtils {
 	/**
-	 * @since 2.0.0
-	 * @param conn
-	 * @param photo with photo.uri that is the entire base-64 encoded string
-	 * @param usr
-	 * @param meta 
-	 * @param syb 
-	 * @param onFileCreateSql 
-	 * @return doc id
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-//	public static String createFileBy64(DATranscxt syb, String conn, ExpSyncDoc photo,
-//			IUser usr, ExpDocTableMeta meta, Update onFileCreateSql)
-//			throws TransException, SQLException, IOException {
-//		if (LangExt.isblank(photo.fullpath()))
-//			throw new SemanticException("The client path can't be null/empty.");
-//		
-//		if (LangExt.isblank(photo.folder(), " - - "))
-//			throw new SemanticException("Folder of managed docs cannot be empty - which is required for creating media files.");
-//
-//		Insert ins = syb
-//			.insert(meta.tbl, usr)
-//			.nv(meta.org, photo.org)
-//			.nv(meta.uri, photo.uri64)
-//			.nv(meta.device, photo.device())
-//			.nv(meta.resname, photo.pname)
-//			.nv(meta.synoder, usr.deviceId())
-//			.nv(meta.fullpath, photo.fullpath())
-//			.nv(meta.createDate, photo.createDate)
-//			.nv(meta.folder, photo.folder())
-//			.nv(meta.shareflag, photo.shareflag)
-//			.nv(meta.shareby, photo.shareby)
-//			.nv(meta.shareDate, photo.sharedate)
-//			.nv(meta.size, photo.size)
-//			.post(onFileCreateSql);
-//			;
-//		
-//		if (!LangExt.isblank(photo.mime))
-//			ins.nv(meta.mime, photo.mime);
-//		
-//		SemanticObject res = (SemanticObject) ins
-//				.ins(syb.instancontxt(conn, usr)
-//						.creator(((DBSyntableBuilder) syb)
-//						.loadNyquvect(conn)));
-//		return res.resulve(meta.tbl, meta.pk, -1);
-//	}
-
-	/**
 	 * <p>Create a doc record with a local file, e.g. h_photos - call this after duplication is checked.</p>
 	 * <p>This method will insert record, and can trigger ExtFilev2 handling.</p>
 	 * <p>Doc is created as in the folder of user/[photo.folder]/;<br>
 	 * Doc's device and family are replaced with session information.</p>
 	 * 
-	 * @since 1.4.19, this method needs the DB can triggering time stamp ({@link DocTableMeta#stamp}).
-	 * <pre>
-	 * sqlite example:
-	 * syncstamp DATETIME DEFAULT CURRENT_TIMESTAMP not NULL
-	 * </pre>
-	 * @deprecated replaced by {@link #createFileBy64(DATranscxt, String, SyncDoc, IUser, ExpDocTableMeta, Update)}
+	 * @deprecated replaced by {@link #createFileBy64(DATranscxt, String, ExpSyncDoc, IUser, ExpDocTableMeta, Update...)}
 	 * @param st
 	 * @param conn
 	 * @param photo
@@ -161,14 +106,14 @@ public class DocUtils {
 
 		Insert ins = st
 			.insert(meta.tbl, usr)
-			.nv(meta.org, doc.org)
-			.nv(meta.uri, doc.uri64)
+			.nv(meta.org, ifnull(doc.org, usr.orgId()))
+			.nv(meta.uri, ifnull(doc.uri64, ""))
 			.nv(meta.resname, doc.pname)
 			.nv(meta.device, doc.device)
 			.nv(meta.fullpath, doc.fullpath())
-			.nv(meta.createDate, doc.createDate)
+			.nv(meta.createDate, ifnull(doc.createDate, DateFormat.formatime(new Date())))
 			.nv(meta.folder, doc.folder())
-			.nv(meta.shareflag, ifnull(doc.shareflag, Share.priv))
+			.nv(meta.shareflag, ifnull(doc.shareflag, ShareFlag.prv.name()))
 			.nv(meta.shareby, ifnull(doc.shareby, usr.uid()))
 			.nv(meta.shareDate, ifnull(doc.sharedate, DateFormat.format(new Date())))
 			.nv(meta.size, doc.size)
@@ -207,21 +152,36 @@ public class DocUtils {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl)
-				.col("uri").col("folder")
-				.whereEq("pid", docId).rs(stx)
+				.col(meta.uri).col(meta.folder)
+				.whereEq(meta.pk, docId)
+				.rs(stx)
 				.rs(0);
 	
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 	
-		return resolvExtroot(conn, rs.getString("uri"), meta);
+		return resolvExtroot(conn, rs.getString(meta.uri), meta);
 	}
 
-	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta) throws TransException, SQLException {
+	/**
+	 * According to smtype.extFilev2's configuration for meta.tbl,
+	 * get path by concatenating and replacing env.
+	 * 
+	 * @param conn
+	 * @param extUri
+	 * @param meta
+	 * @return (smtype.extFilev2[meta.tbl]'s arg0 / extUri).replace-env
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta)
+			throws TransException, SQLException {
+
 		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
 		if (h2 == null)
-			throw new SemanticException("To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",
-					conn, meta.tbl);
+			throw new SemanticException(
+				"To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",
+				conn, meta.tbl);
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
 	}

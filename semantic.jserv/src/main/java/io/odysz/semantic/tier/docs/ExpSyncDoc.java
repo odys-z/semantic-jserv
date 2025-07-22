@@ -1,6 +1,8 @@
 package io.odysz.semantic.tier.docs;
 
-import static org.apache.commons.io_odysz.FilenameUtils.separatorsToUnix;
+import static io.odysz.common.DateFormat.formatYYmm;
+import static io.odysz.common.DateFormat.parse;
+import static io.odysz.common.FilenameUtils.separatorsToUnix;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.Date;
 
 import io.odysz.anson.AnsonField;
@@ -27,8 +30,6 @@ import static io.odysz.common.LangExt.*;
  */
 public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
-//	public String recId;
-//	public String recId() { return recId; }
 	@Override
 	public ExpSyncDoc recId(String did) {
 		super.recId(did);
@@ -43,9 +44,8 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	}
 
 	public String clientpath;
-	@Override public String fullpath() { return clientpath; }
-
-	@Override public String mime() { return mime; }
+	@Override
+	public String fullpath() { return clientpath; }
 
 	/** Non-public: doc' device id is managed by session. */
 	protected String device;
@@ -61,10 +61,28 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	
 	public String org;
 
+	/** A constant field of {@link io.oz.album.peer.ShareFlag}. */
 	public String shareflag;
 	public String shareflag() { return shareflag; }
+	public ExpSyncDoc shareflag(String f) {
+		shareflag = f;
+		return this;
+	}
 
-	/** usally reported by client file system, overriden by exif date, if exits */
+	/** Only for status report while uploading. */
+	String shareMsg;
+	/**
+	 * @param f
+	 * @param msg Only for status report while uploading.
+	 * @return
+	 */
+	public ExpSyncDoc shareflag(ShareFlag f, String... msg) {
+		shareflag(f.name());
+		shareMsg = _0(msg);
+		return this;
+	}	
+
+	/** Usually reported by client file system, and be overriden by exif date, if exits */
 	public String createDate;
 	public String cdate() { return createDate; }
 	public ExpSyncDoc cdate(String cdate) {
@@ -75,12 +93,10 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		createDate = DateFormat.formatime(fd);
 		return this;
 	}
-
 	public ExpSyncDoc cdate(Date date) {
 		createDate = DateFormat.format(date);
 		return this;
 	}
-
 	
 	@AnsonField(shortenString=true)
 	public String uri64;
@@ -93,10 +109,11 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	public String shareby;
 	public String sharedate;
 	
-	// public String syncFlag;
-
-	/** usually ignored when sending request */
 	public long size;
+	public ExpSyncDoc size(long size) {
+		this.size = size;
+		return this;
+	}
 
 	public ExpSyncDoc shareby(String share) {
 		this.shareby = share;
@@ -127,12 +144,13 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	}
 
 	@AnsonField(ignoreTo=true)
-	ExpDocTableMeta docMeta;
-
-//	@AnsonField(ignoreTo=true, ignoreFrom=true)
-//	ISemantext semantxt;
+	// ExpDocTableMeta docMeta;
 
 	public String mime;
+	public ExpSyncDoc mime(String mime) {
+		this.mime = mime;
+		return this;
+	}
 	
 	public ExpSyncDoc(SyntityMeta m, String orgId) {
 		super(m);
@@ -151,6 +169,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	 */
 	public static String[] nvCols(ExpDocTableMeta meta) {
 		return new String[] {
+				meta.org,
 				meta.pk,
 				meta.resname,
 				meta.uri,
@@ -186,7 +205,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
 	public ExpSyncDoc(AnResultset rs, ExpDocTableMeta meta) throws SQLException {
 		super(meta);
-		this.docMeta = meta;
+		// this.entMeta = meta;
 		this.recId = rs.getString(meta.pk);
 		this.org = rs.getString(meta.org);
 		this.pname = rs.getString(meta.resname);
@@ -218,30 +237,27 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		clientpath = file.fullpath();
 	}
 
-	/**
-	 * Load local file, take current time as sharing date.
-	 * @param meta 
-	 * @param fullpath
-	 * @param owner
-	 * @param shareflag
-	 * @return this
-	 * @throws IOException
-	public SyncDoc loadFile(String fullpath, IUser owner, String shareflag) throws IOException {
-		Path p = Paths.get(fullpath);
-		byte[] f = Files.readAllBytes(p);
-		String b64 = AESHelper.encode64(f);
-		this.uri = b64;
-
-		fullpath(fullpath);
-		this.pname = p.getFileName().toString();
-		
-		this.shareby = owner.uid();
-		this.shareflag = shareflag;
-		sharedate(new Date());
-
-		return this;
+//	/**
+//	 * Currently not support doc.device, doc.cdate, doc.clientpath, 
+//	 * so can only used for resolving DocRef.
+//	 * 
+//	 * @param ref
+//	 */
+//	public ExpSyncDoc(DocRef ref) {
+//		super(ref.docm);
+//		this.org = "";
+//		recId = ref.docId;
+//		this.pname = ref.pname;
+//		this.uids = ref.uids;
+//		this.uri64 = ref.uri64;
+////		device = doc.device();
+////		createDate = doc.cdate();
+////		clientpath = doc.fullpath();
+//	}
+	public ExpSyncDoc(ExpDocTableMeta m) {
+		super(m);
+		this.org = "";
 	}
-	 */
 
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = clientpath;
@@ -250,7 +266,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 
 		if (isblank(createDate)) {
 			try {
-				// p = Paths.get(clientpath);
 				FileTime fd = (FileTime) Files.getAttribute(p, "creationTime");
 				cdate(fd);
 			}
@@ -262,44 +277,28 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return this;
 	}
 
-	/**Set (private) jserv node file full path (path replaced with %VOLUME_HOME)
-	 * @param path
-	 * @return
-	 * @throws SemanticException 
-	 * @throws IOException 
-	public IFileDescriptor uri(String path) throws SemanticException, IOException {
-		fullpath(path);
-		pname = FilenameUtils.getName(path);
-		// throw new SemanticException("TODO");
-		this.uri = null;
-		return this;
-	}
-	 */
-
 	protected String folder;
 	public String folder() { return folder; }
+	
+	/**
+	 * Set saving folder name. This method will trigger default folder name generation.
+	 * 
+	 * @param v
+	 * @return this
+	 * @since 0.5.16
+	 */
 	public ExpSyncDoc folder(String v) {
 		this.folder = v;
+
+        if (isblank(this.folder))
+			try {
+				folder = formatYYmm(isblank(createDate) ? new Date() : parse(createDate));
+			} catch (ParseException e) {
+				folder = formatYYmm(new Date());
+			}
+ 
 		return this;
 	}
-
-	/**
-	 * @deprecated deleting ...
-	 * 
-	 * Parse {@link PathsPage#clientPaths}.
-	 * 
-	 * @param flags
-	 * @return this
-	 */
-//	public ExpSyncDoc parseFlags(String[] flags) {
-//		if (!isNull(flags)) {
-//			// syncFlag = flags[0];
-//			shareflag = flags[1];
-//			shareby = flags[2];
-//			sharedate(flags[3]);
-//		}
-//		return this;
-//	}
 	
 	/**
 	 * @see io.odysz.semantic.syn.SynEntity#insertEntity(io.odysz.semantic.meta.SyntityMeta, io.odysz.transact.sql.Insert)
@@ -322,19 +321,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 			.nv(md.fullpath, clientpath);
 		return ins;
 	}
-
-//	public ExpSyncDoc createByChain(BlockChain chain) throws IOException {
-//		createDate = chain.cdate;
-//		fullpath(chain.clientpath);
-//		pname = chain.clientname;
-//		folder = chain.saveFolder;
-//		device = chain.device;
-//		return this;
-//	}
-
-//	public ExpSyncDoc createByReq(DocsReq docreq) {
-//		return docreq.doc;
-//	}
 
 	public ExpSyncDoc folder(AnResultset rs, ExpDocTableMeta m) throws SQLException {
 		this.recId = rs.getString(m.pk);

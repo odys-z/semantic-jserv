@@ -14,8 +14,8 @@ import io.odysz.common.AESHelper;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.meta.ExpDocTableMeta.Share;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.sql.parts.AbsPart;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.sql.parts.condition.Funcall;
@@ -165,7 +165,6 @@ public class T_Photo extends ExpSyncDoc {
 		return this;
 	}
 
-	@SuppressWarnings("serial")
 	public T_Photo create(String fullpath) throws IOException {
 		File png = new File(fullpath);
 		FileInputStream ifs = new FileInputStream(png);
@@ -182,9 +181,10 @@ public class T_Photo extends ExpSyncDoc {
 
 		this.clientpath = fullpath;
 		exif = new ArrayList<String>() {
+			private static final long serialVersionUID = 1;
 			{add("location:вулиця Лаврська' 27' Київ");};
 			{add("camera:Bayraktar TB2");}};
-		share("ody@kyiv", Share.pub, new Date());
+		share("ody@kyiv", ShareFlag.publish.name(), new Date());
 
 		return this;
 	}

@@ -1,0 +1,19 @@
+{
+  "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "port": 8964,
+  "webport": 8900,
+  "reverseProxy": false,
+  "proxyPort": 8964,
+  "proxyIp": "",
+  "webProxyPort": 8900,
+  "envars": {"WEBROOT_HUB": "X29"},
+  "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json"],
+  "webrootLocal": "http://suppress.warning:8900",
+  "vol_name": "VOLUME_HOME",
+  "volume": "C:/Users/Alice/github/semantic-jserv/jserv-album/vol2",
+  "jservs": {
+    "X29": "http://127.0.0.1:8964/jserv-album",
+    "Y201": "http://127.0.0.1:8965/jserv-album"},
+  "installkey": "0123456789ABCDEF",
+  "rootkey": ""
+}

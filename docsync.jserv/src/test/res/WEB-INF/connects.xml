@@ -10,10 +10,9 @@
   		<id>main-sqlite</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>
-  		<src>../volume/jserv-main.db</src>
+  		<src>$VOLUME_HOME/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<!-- enable sql printing -->
   		<dbg></dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
@@ -22,44 +21,40 @@
   		<id>main-sqlite-0</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>../vol-0/jserv-main.db</src>
+  		<src>$VOLUME_0/jserv-main.db</src>
   		<usr>test</usr>
-  		<pswd>test</pswd>
-  		<!-- enable sql printing -->
-  		<dbg></dbg>
+  		<pswd></pswd>
+  		<dbg>true</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
   		<id>main-sqlite-1</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>../vol-1/jserv-main.db</src>
+  		<src>$VOLUME_1/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<!-- enable sql printing -->
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
   		<id>main-sqlite-2</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>../vol-2/jserv-main.db</src>
+  		<src>$VOLUME_2/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<!-- enable sql printing -->
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	<c>
   		<id>main-sqlite-3</id>
   		<type>sqlite</type>
   		<isdef></isdef>
-  		<src>../vol-3/jserv-main.db</src>
+  		<src>$VOLUME_3/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<!-- enable sql printing -->
-  		<dbg></dbg>
+  		<dbg>1</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
 
@@ -67,41 +62,41 @@
 		<id>no-jserv.00</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>../vol-0/no-jserv-db.00</src>
+  		<src>$VOLUME_0/no-jserv-db.00</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>true</dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<dbg>t</dbg>
+  		<smtcs>$VOLUME_0/semantics-syn.xml</smtcs>
 	</c>
 	<c>
 		<id>no-jserv.01</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>../vol-1/no-jserv-db.01</src>
+  		<src>$VOLUME_1/no-jserv-db.01</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<dbg>1</dbg>
+  		<smtcs>$VOLUME_1/semantics-syn.xml</smtcs>
 	</c>
 	<c>
 		<id>no-jserv.02</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>../vol-2/no-jserv-db.02</src>
+  		<src>$VOLUME_2/no-jserv-db.02</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<dbg>true</dbg>
+  		<smtcs>$VOLUME_2/semantics-syn.xml</smtcs>
 	</c>
 	<c>
 		<id>no-jserv.03</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>../vol-3/no-jserv-db.03</src>
+  		<src>$VOLUME_3/no-jserv-db.03</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>true</dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<dbg>1</dbg>
+  		<smtcs>$VOLUME_3/semantics-syn.xml</smtcs>
 	</c>
   </t>
 
@@ -165,55 +160,56 @@
   	</c>
  	
    	<c>
-  		<uri>sys-00</uri>
+  		<uri>sys-X</uri>
   		<conn>main-sqlite-0</conn>
   	</c>
    	<c>
-  		<uri>sys-01</uri>
+  		<uri>sys-Y</uri>
   		<conn>main-sqlite-1</conn>
   	</c>
     <c>
-  		<uri>sys-02</uri>
+  		<uri>sys-Z</uri>
   		<conn>main-sqlite-2</conn>
   	</c>
    	<c>
-  		<uri>sys-03</uri>
+  		<uri>sys-W</uri>
   		<conn>main-sqlite-3</conn>
   	</c>
 
   	<c>
+  		<uri>/sys/X</uri>
+  		<conn>main-sqlite-0</conn>
+  	</c>
+  	<c>
   		<uri>/syn/X</uri>
   		<conn>no-jserv.00</conn>
   	</c>
-  	<c>
-  		<uri>jetty-0</uri>
-  		<conn>no-jserv.00</conn>
-  	</c>
 
+
+  	<c>
+  		<uri>/sys/Y</uri>
+  		<conn>main-sqlite-1</conn>
+  	</c>
   	<c>
   		<uri>/syn/Y</uri>
   		<conn>no-jserv.01</conn>
   	</c>
-  	<c>
-  		<uri>jetty-1</uri>
-  		<conn>no-jserv.01</conn>
-  	</c>
 
+  	<c>
+  		<uri>/sys/Z</uri>
+  		<conn>main-sqlite-2</conn>
+  	</c>
   	<c>
   		<uri>/syn/Z</uri>
   		<conn>no-jserv.02</conn>
   	</c>
-  	<c>
-  		<uri>jetty-2</uri>
-  		<conn>no-jserv.02</conn>
-  	</c>
 
   	<c>
-  		<uri>/syn/W</uri>
-  		<conn>no-jserv.03</conn>
+  		<uri>/sys/W</uri>
+  		<conn>main-sqlite-3</conn>
   	</c>
   	<c>
-  		<uri>jetty-3</uri>
+  		<uri>/syn/W</uri>
   		<conn>no-jserv.03</conn>
   	</c>
 

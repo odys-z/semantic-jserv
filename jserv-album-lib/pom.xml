@@ -1,16 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
-  <artifactId>album-lib</artifactId>
-  <version>0.5.0-SNAPSHOT</version>
-  <name>Album Common Lib</name>
+  <artifactId>syndoc-lib</artifactId>
+  <version>0.5.18-SNAPSHOT</version>
+  <name>Docsync.jserv Lib</name>
   <description>Album common lib for Android client and jserv</description>
   <url>https://odys-z.github.io</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
   <licenses>
@@ -36,6 +36,7 @@
     </developer>
   </developers>
 
+  <!-- 
   <distributionManagement>
   	<snapshotRepository>
   		<id>ossrh</id>
@@ -47,6 +48,7 @@
   		<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 	</repository>
   </distributionManagement>
+  -->
 
   <dependencies>
     <dependency>
@@ -60,14 +62,25 @@
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
-	  <version>2.0.0-SNAPSHOT</version>
+	  <version>[1.5.16-SNAPSHOT,2.0.0-SNAPSHOT)</version>
    	</dependency>
-
 
   </dependencies>
 
   <build>
     <finalName>jserv-album lib</finalName>
+
+    <resources>
+      <resource>
+        <directory>${project.basedir}/src/main/java</directory>
+        <includes>
+          <include>**/*.ddl</include>
+          <include>**/*.sql</include>
+          <include>**/*.txt</include>
+        </includes>
+      </resource>
+    </resources>
+
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
       <plugin>
@@ -108,6 +121,7 @@
     </pluginManagement>
 
     <plugins>
+	<!--
    	  <plugin>
 	  	<artifactId>maven-deploy-plugin</artifactId>
 	  	<version>2.8.2</version>
@@ -144,13 +158,24 @@
 	  <plugin>
 		<groupId>org.sonatype.plugins</groupId>
 		<artifactId>nexus-staging-maven-plugin</artifactId>
-		<version>1.6.7</version>
+		<version>1.7.0</version>
 		<extensions>true</extensions>
 		<configuration>
 			<serverId>ossrh</serverId>
 			<nexusUrl>https://oss.sonatype.org/</nexusUrl>
 			<autoReleaseAfterClose>true</autoReleaseAfterClose>
 		</configuration>
+	  </plugin>
+	-->
+
+	  <plugin>
+		  <groupId>org.sonatype.central</groupId>
+		  <artifactId>central-publishing-maven-plugin</artifactId>
+		  <version>0.7.0</version>
+		  <extensions>true</extensions>
+		  <configuration>
+			<publishingServerId>central</publishingServerId>
+		  </configuration>
 	  </plugin>
 
 	  <!-- JavaDoc and source attachment -->

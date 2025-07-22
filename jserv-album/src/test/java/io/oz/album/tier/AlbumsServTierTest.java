@@ -8,13 +8,16 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.PhotoUser;
+import io.oz.album.peer.AlbumReq;
+import io.oz.album.peer.AlbumResp;
 
 /**
  * Test file / uri data access functions.
@@ -29,8 +32,9 @@ import io.oz.album.PhotoUser;
 	 ('test-00006','omni/ody/2021_12/DSG_0880.JPG','DSG_0880.JPG','2021-12-31','2021-12-31','#Toronto','ody','2022-01-13');
    </pre>
  * @author ody
- *
+ * @deprecated
  */
+@Disabled
 class AlbumsServTierTest {
 	static String jserv;
 
@@ -45,7 +49,7 @@ class AlbumsServTierTest {
 			Connects.init("src/main/webapp/WEB-INF");
 
 			local = new File("src/test/local").getAbsolutePath();
-			robot = new PhotoUser("test album", "DOMAIN-TEST");
+			robot = new ExpDocRobot("test album");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

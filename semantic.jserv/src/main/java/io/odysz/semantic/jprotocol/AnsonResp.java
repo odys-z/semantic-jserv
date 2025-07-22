@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import io.odysz.anson.Anson;
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantics.SemanticObject;
 
@@ -126,7 +126,7 @@ public class AnsonResp extends AnsonBody {
 	 * 
 	 * @param ix
 	 * @return integer
-	 * @since 2.0.0
+	 * @since 1.5.5
 	 */
 	public int total(int ix) {
 		return (int) ((ArrayList<?>)data().get("total")).get(ix);

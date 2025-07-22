@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.sql.SQLException;
 
 import org.apache.commons.io.IOUtils;
-import org.xml.sax.SAXException;
 
 import io.odysz.common.DocLocks;
 import io.odysz.common.Utils;

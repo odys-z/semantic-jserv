@@ -1,8 +1,8 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.f;
-import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.LangExt.ifnull;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.shouldeq;
 import static io.odysz.semantic.syn.ExessionAct.init;
 import static io.odysz.semantic.syn.ExessionAct.mode_server;
@@ -71,6 +71,20 @@ public class SynssionServ {
 		return new SyncResp(syndomxerv.domain()).exblock(repb);
 	}
 
+	/**
+	 * On restoring requests. The requesting / challenging Seq can be already answered or not yet.
+	 * @param reqb
+	 * @return reply
+	 * @throws SQLException
+	 * @throws TransException
+	 * @since 1.5.18
+	 */
+	public SyncResp onsynrestore(ExchangeBlock reqb)
+			throws SQLException, TransException {
+		ExchangeBlock repb = ifnull(srvp.onRestore(reqb), srvp.nextExchange(reqb));
+		return new SyncResp(syndomxerv.domain()).exblock(repb);
+	}
+
 	public SyncResp onclosex(SyncReq req, SyncUser usr) throws TransException, SQLException {
 		
 		if (!eq(syndomxerv.lockSession(), usr.sessionId()))
@@ -99,16 +113,25 @@ public class SynssionServ {
 				new ExessionAct(mode_server, ExessionAct.lockerr)));
 	}
 
+	/**
+	 * 
+	 * @param req
+	 * @return response
+	 * @throws ExchangeException synode or synssion user.org invalid
+	 */
 	public SyncResp onjoin(SyncReq req) throws Exception {
 
 		String peer = req.exblock.srcnode;
 		
 		if (eq(peer, syndomxerv.synode))
-			throw new ExchangeException(init, null, "Can't join by same synode id: %s.", syndomxerv.synode);
+			throw new ExchangeException(init, null,
+					"Can't join by same synode id: %s.",
+					syndomxerv.synode);
 
-		mustnonull(usr.orgId(),
-				f("Client user's org id must not be null to join this domain: %s, user: %s.",
-				syndomxerv.domain(), usr.uid()));
+		if (isblank(usr.orgId()))
+			throw new ExchangeException(init, null,
+				"Client syn-user's org id must not be null to join this domain: %s, user: %s.",
+				syndomxerv.domain(), usr.uid());
 		
 		try {
 			if (syndomxerv.lockx(usr))  {

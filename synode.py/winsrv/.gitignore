@@ -1,0 +1,5 @@
+# install-html-srv.bat -> ../../../html-service/java/src/test/install-html-srv.bat
+install-html-srv.bat
+
+# uninstall-html-srv.bat -> ../../../html-service/java/src/test/uninstall-html-srv.bat
+uninstall-html-srv.bat

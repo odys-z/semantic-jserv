@@ -1,4 +1,4 @@
-package io.odysz.semantic.jserv.file;
+//package io.odysz.semantic.jserv.file;
 
 /**
  * Object (file) descriptor which is used by synchronizer between jservs. 

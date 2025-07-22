@@ -9,7 +9,7 @@ public interface ISessionVerifier {
 	/**Verify session token
 	 * @since 1.4.36, requires seq number
 	 * @param AnsonHeader
-	 * @param seq
+	 * @param seq message sequence, not used
 	 * @return IUser instance
 	 * @throws SsException
 	 */

@@ -1,4 +1,4 @@
-# Version 2.0.0-SNAPSHOT
+# Version 1.5.x
 
 Experimetental for relatonal database synchronization.
 

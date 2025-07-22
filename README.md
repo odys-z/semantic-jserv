@@ -58,10 +58,14 @@ Currently a java client and a js client together with React is basically working
 
 The js client together with a vue client is also in tense developing.
 
-# Credits
+# Merging back tasks
 
-This project is inspired by:
+* Windows Service Installer (MVP with QT/Make?)
 
-- [omnifaces / omnifaces](https://github.com/omnifaces/omnifaces)
+* Nyquence & Tests
 
-...
+* Resource Entity Merge
+
+* Schema Verification of CRUD, 4 Synodes
+
+* Workbench and Health Monitor

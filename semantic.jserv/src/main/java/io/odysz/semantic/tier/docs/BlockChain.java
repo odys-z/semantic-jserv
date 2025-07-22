@@ -8,11 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.commons.io_odysz.FilenameUtils;
-
 import io.odysz.common.AESHelper;
 import io.odysz.common.EnvPath;
+import io.odysz.common.FilenameUtils;
 import io.odysz.common.LangExt;
+import io.odysz.common.Utils;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -25,56 +25,33 @@ import io.odysz.transact.x.TransException;
  */
 public class BlockChain {
 
-//	public final String saveFolder;
-//	public final String clientpath;
-//	public final String clientname;
-//	public String cdate;
+	/**
+	 * @since 1.5.16
+	 */
+	public interface IBlock {
+
+		IBlock nextBlock(IBlock blockReq);
+		IBlock nextBlock();
+
+		public IBlock blockSeq(int blockSeq) ; //{ this.blockSeq = blockSeq; return this; } 
+		public int blockSeq() ;
+		public ExpSyncDoc doc() ;
+
+	}
 
 	public final String outputPath;
 	protected final OutputStream ofs;
 	
-	protected final DocsReq waitings;
-
-//	public String shareby;
-//	public String shareDate;
-//	public String shareflag;
-//	public String device;
+	/** Blocks waiting for flush. */
+	protected IBlock waitings;
 
 	public final String docTabl;
 
 	public ExpSyncDoc doc;
-	public BlockChain doc(ExpSyncDoc doc) {
-		this.doc = doc;
-		return this;
-	}
 
 	/**
-	 * Port to DB-sync
+	 * @deprecated
 	 * 
-	 * @param tempDir
-	 * @param saveFolder
-	 * @param clientpath
-	 * @throws IOException
-	 */
-//	public BlockChain(String docTabl, String tempDir, String saveFolder, String clientpath) throws IOException {
-//
-//		this.docTabl = docTabl;
-//		this.saveFolder = saveFolder;
-//		this.clientpath = clientpath;
-//		clientname = FilenameUtils.getName(clientpath);
-//		outputPath = EnvPath.decodeUri(tempDir, saveFolder, clientname);
-//
-//		String parentpath = FilenameUtils.getFullPath(outputPath);
-//		new File(parentpath).mkdirs(); 
-//
-//		File f = new File(outputPath);
-//		f.createNewFile();
-//		this.ofs = new FileOutputStream(f);
-//
-//		waitings = new DocsReq().blockSeq(-1);
-//	}
-
-	/**
 	 * Create file output stream to $VALUME_HOME/userid/ssid/clientpath
 	 * 
 	 * @param tempDir
@@ -92,10 +69,6 @@ public class BlockChain {
 			throw new TransException("Client path is neccessary to start a block chain transaction.");
 
 		this.docTabl = docTabl;
-		// this.cdate = createDate;
-		// this.clientpath = clientpathRaw;
-		// this.saveFolder = targetFolder;
-		// this.device = devid;
 
 		String clientpath = clientpathRaw.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
@@ -110,7 +83,7 @@ public class BlockChain {
 		f.createNewFile();
 		this.ofs = new FileOutputStream(f);
 
-		waitings = new DocsReq().blockSeq(-1);
+		waitings = createNode().blockSeq(-1);
 	}
 
 	/**
@@ -122,8 +95,7 @@ public class BlockChain {
 	 * @throws IOException
 	 */
 	public BlockChain(String docTabl, String tempDir, String devid, ExpSyncDoc doc)
-		throws IOException {
-		// doc.clientpath, body.doc.createDate, body.doc.folder()
+			throws IOException {
 		this.docTabl = docTabl;
 		String clientpath = doc.clientpath.replaceFirst("^/", "");
 		clientpath = clientpath.replaceAll(":", "");
@@ -137,86 +109,117 @@ public class BlockChain {
 		f.createNewFile();
 		this.ofs = new FileOutputStream(f);
 
-		waitings = new DocsReq().blockSeq(-1);
+		waitings = createNode().blockSeq(-1);
 		
 		this.doc = doc;
+		this.doc.device(devid);
 	}
 
-	public BlockChain appendBlock(DocsReq blockReq) throws IOException, TransException {
-		DocsReq pre = waitings;
-		DocsReq nxt = waitings.nextBlock;
+	private IBlock createNode() {
+		return new IBlock() {
+			int blockSeq;
+			IBlock nxt;
+			@Override
+			public IBlock nextBlock(IBlock block) {
+				nxt = block;
+				return this;
+			}
 
-		while (nxt != null && nxt.blockSeq < blockReq.blockSeq) {
+			@Override
+			public IBlock nextBlock() {
+				return nxt;
+			}
+
+			@Override
+			public IBlock blockSeq(int blockSeq) {
+				this.blockSeq = blockSeq;
+				return this;
+			}
+
+			@Override
+			public int blockSeq() {
+				return blockSeq;
+			}
+
+			@Override
+			public ExpSyncDoc doc() {
+				return null;
+			}
+			
+		};
+	}
+
+	/**
+	 * REVIEWED 2025-05-27 Files are written block by block to disk and memory must be released.
+	 * @param blockReq
+	 * @return this
+	 * @throws IOException
+	 * @throws TransException
+	 */
+	public BlockChain appendBlock(IBlock blockReq) throws IOException, TransException {
+		IBlock pre = waitings;
+		IBlock nxt = waitings.nextBlock();
+
+		while (nxt != null && nxt.blockSeq() < blockReq.blockSeq()) {
 				pre = nxt;
-				nxt = nxt.nextBlock;
+				nxt = nxt.nextBlock();
 		}
-		pre.nextBlock = blockReq;
-		blockReq.nextBlock = nxt;
+		pre.nextBlock(blockReq);
+		blockReq.nextBlock(nxt);
 
 		// assertNotNull(ofs); makes out going stream in trouble?
 		if (ofs == null) throw new IOException("Output stream is broken!");
-		if (waitings.nextBlock != null && waitings.blockSeq >= waitings.nextBlock.blockSeq)
+		if (waitings.nextBlock() != null && waitings.blockSeq() >= waitings.nextBlock().blockSeq())
 			throw new TransException("Handling block's sequence error.");
 
-		// 1.4.45
-		// OutputStreamWriter outputStreamWriter = new OutputStreamWriter(ofs, "UTF-8");
-        // Writer writer = new BufferedWriter(outputStreamWriter);
+		while (waitings.nextBlock() != null && waitings.blockSeq() + 1 == waitings.nextBlock().blockSeq()) {
+			ofs.write(AESHelper.decode64(waitings.nextBlock().doc().uri64()));
 
-		while (waitings.nextBlock != null && waitings.blockSeq + 1 == waitings.nextBlock.blockSeq) {
-			ofs.write(AESHelper.decode64(waitings.nextBlock.doc.uri64));
-			// writer.write(AESHelper.decode64(waitings.nextBlock.doc.uri64));
-
-			waitings.blockSeq = waitings.nextBlock.blockSeq;
-			waitings.nextBlock = waitings.nextBlock.nextBlock;
+			// TODO to be verified: But why works well in previous versions?
+			// waitings.blockSeq(waitings.nextBlock().blockSeq());
+			// waitings.nextBlock(waitings.nextBlock().nextBlock());
+			waitings = waitings.nextBlock();
 		}
+		ofs.flush();
 		return this;
 	}
 
-	public void abortChain() throws IOException, InterruptedException, TransException {
-		if (waitings.nextBlock != null)
-			Thread.sleep(1000);
+	public void abortChain() throws IOException, TransException {
+		if (waitings.nextBlock() != null)
+			try { Thread.sleep(1000); } catch (InterruptedException e) {}
 
 		ofs.close();
 
 		try { Files.delete(Paths.get(outputPath)); }
-		catch (IOException e) { e.printStackTrace(); }
-
-		if (waitings.nextBlock != null)
-			// some packages lost
-			throw new TransException("Aborting block chain. " + 
-					"Blocks starting at block-seq = %s will be dropped. path: %s",
-					waitings.nextBlock.blockSeq, doc.clientpath);
+		catch (IOException e) {
+			Utils.warn("Deleting file failed while aborting block-chain. output-path: %s. Error: %s",
+					outputPath, e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	public String closeChain() throws IOException, TransException {
-		if (waitings.nextBlock != null)
+		if (waitings.nextBlock() != null)
 			try { Thread.sleep(1000);
 			} catch (InterruptedException e1) { }
 
 		ofs.close();
 
-		if (waitings.nextBlock != null) {
+		if (waitings.nextBlock() != null) {
 			Path p = Paths.get(outputPath);
 			try { Files.delete(p); }
 			catch (IOException e) { e.printStackTrace(); }
 			// some packages lost
 			throw new TransException("Closing block chain. " +
 					"Blocks starting at block-seq = %s will be dropped. path: %s",
-					waitings.nextBlock.blockSeq, doc.clientpath);
+					// waitings.nextBlock.blockSeq, doc == null ? "[null doc]" : doc.clientpath);
+					waitings.nextBlock().blockSeq(), waitings.nextBlock().doc() == null ? "[null doc]" : waitings.nextBlock().doc().clientpath);
 		}
 
 		return outputPath;
 	}
 
-//	public BlockChain share(String shareby, String shareDate, String shareflag) {
-//		this.shareby = shareby;
-//		this.shareDate = shareDate;
-//		this.shareflag = shareflag;
-//		return this;
-//	}
-
-//	public BlockChain device(String device) {
-//		this.device = device;
-//		return this;
-//	}
+	public IBlock falshedOut() {
+		return waitings;
+	}
 }

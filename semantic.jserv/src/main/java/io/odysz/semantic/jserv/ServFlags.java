@@ -13,7 +13,7 @@ public class ServFlags {
 	public static final boolean file = true;
 	
 	/** common of port handler */
-	public static final boolean port = true;
+	public static final boolean port = false;
 
 	public static final boolean jsample = false;
 

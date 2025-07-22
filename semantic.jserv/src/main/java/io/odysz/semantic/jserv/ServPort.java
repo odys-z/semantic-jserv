@@ -1,5 +1,6 @@
 package io.odysz.semantic.jserv;
 
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
 
@@ -18,8 +19,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonException;
 import io.odysz.anson.JsonOpt;
-import io.odysz.anson.x.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
@@ -31,6 +32,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.ISessionVerifier;
 import io.odysz.semantic.tier.docs.Docs206;
@@ -41,7 +43,8 @@ import io.odysz.transact.x.TransException;
 /**
  * <p>Base serv class for handling json request.</p>
  * Servlet extending this must subclass this class, and override
- * {@link #onGet(AnsonMsg, HttpServletResponse) onGet()} and {@link #onPost(AnsonMsg, HttpServletResponse) onPost()}.
+ * {@link #onGet(AnsonMsg, HttpServletResponse) onGet()} and
+ * {@link #onPost(AnsonMsg, HttpServletResponse) onPost()}.
  * 
  * @author odys-z@github.com
  *
@@ -84,10 +87,9 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	protected IPort p;
 	
 	/**
-	 * Get session verifier, e. g. instance of {@link AnSession}.
+	 * Get session verifier, e. g. instance of {@link io.odysz.semantic.jsession.AnSession}.
 	 * Use this for avoiding calling of {@link JSingleton} in tests.
 	 * This is supposed to be changed in the future after separated ISessionVerifier and AnSession.
-	 * @param anSession
 	 * @return 
 	 * @since 1.4.36
 	 */
@@ -102,8 +104,6 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 
 	}
 
-	protected static DATranscxt synt0;
-
 	protected DATranscxt st;
 
 	private OnHttpCallback ongetback;
@@ -113,6 +113,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	 * Set call back handlers when {@link #onGet(AnsonMsg, HttpServletResponse)} &amp;
 	 * {@link #onPost(AnsonMsg, HttpServletResponse)} are returned successfully, a schema
 	 * to notify subscribers out of the servlet containers, e. g. the Jetty main thread.
+	 * <pre>new Echo(true).setCallbacks(() -> { if (greenlights != null) greenlights[0] = true; }))</pre>
 	 * @since 2.0.0
 	 * @param onpost
 	 * @param onget
@@ -134,16 +135,18 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	 */
 	public ServPort<T> trb(DATranscxt trb0) {
 		st = trb0;
-		if (synt0 == null) synt0 = trb0;
+		// if (synt0 == null) synt0 = trb0;
 		return this;
 	}
 
 	@Override
 	protected void doHead(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-    	String range = request.getHeader("Range");
+    	String range = request.getHeader(JProtocol.Headers.Range);
+    	String length = request.getHeader(JProtocol.Headers.Length);
+		// String anson64 = request.getParameter("anson64");
 
-    	if (!isblank(range))
+    	if (!isblank(range) || !isblank(length))
 			try {
 				Docs206.get206Head(request, response);
 			} catch (SsException e) {
@@ -154,9 +157,9 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	
 	/**
 	 * Since 1.4.28, semantic.jserv support for Range header for all ports, which is critical for 
-	 * some steam features a client side, such as resume downloading or play back from a position.
+	 * some streaming features at client side, such as resuming downloading or back playing from a broken position.
 	 * 
-	 * Example of Chrome request header for MP4
+	 * An example of a Chrome request header for MP4
 	 * <pre>
 	Accept: * / *
 	Accept-Encoding: identity;q=1, *;q=0
@@ -174,7 +177,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	sec-ch-ua-platform: "Android"
 		</pre>
 	 *
-	 * Example of Chrome request header for MP3<pre>
+	 * The example of Chrome request header for MP3<pre>
 	 * 
 	Accept-Encoding:
 	identity;q=1, *;q=0
@@ -219,10 +222,11 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
     	String range = req.getHeader("Range");
     	if (!isblank(range)) {
     		try {
-				Docs206.get206(req, resp);
+				Docs206.get206v2(req, resp);
 			} catch (SsException e) {
 				write(resp, err(MsgCode.exSession, e.getMessage()));
-				resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+				resp.setHeader("Error", e.getMessage());
+				// resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
 			}
 			return;
     	}
@@ -301,12 +305,16 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			@SuppressWarnings("unchecked")
 			AnsonMsg<T> msg = (AnsonMsg<T>) Anson.fromJson(in);
 
-			onPost(msg.addr(req.getRemoteAddr()), resp);
+			if (ServFlags.port)
+				Utils.logi("[ServFlags.port] Dispatching %s : %s - %s",
+						req.getRemoteAddr(), msg.port(), msg.body(0).a());
 
+			onPost(msg.addr(req.getRemoteAddr()), resp);
+	
 			if (onpostback != null)
 				onpostback.onHttp();
 		} catch (SemanticException | AnsonException e) {
-			if (ServFlags.query)
+			if (ServFlags.port)
 				e.printStackTrace();
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (Exception e) {
@@ -374,8 +382,8 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(p, code);
 		AnsonResp bd = new AnsonResp(msg,
 				// sql error messages can have '%'
-				args == null ? templ :
-				String.format(templ == null ? "" : templ, args));
+				isNull(args) ? templ :
+				f(templ, args));
 		return msg.body(bd);
 	}
 	
@@ -394,14 +402,4 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	public static void errstream(PrintstreamProvider err) {
 		es = err;
 	}
-
-//	static String rolloverOut;
-//	public static void rolloverLog(String logfile) {
-//		rolloverOut = logfile;
-//	}
-//	static String rolloverErr;
-//	public static void rolloverErr(String errfile) {
-//		rolloverErr = errfile;
-//	}
-
 }
