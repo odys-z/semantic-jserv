@@ -128,3 +128,19 @@ git-network Y201
 |/            . - Odys Zhou
 *   63c0a388 - Sun, 13 Jul 2025 14:42:30 +0800 (9 days ago) (origin/refact-docsync, origin/one-step, refact-docsync, one-step)
 |\            Merge branch 'jetty-winsrv' into refact-docsync as it's pretty sure the schema can at least support portfolio 0.7.#. - Odys Zhou
+
+Verified:
+
+It's working with syn_node (Some entities lost while syn_change has been cleared)
+
+org|synid|nyq|nstamp|domain|jserv                                |remarks|mac  |oper|optime|io_oz_synuid|
+---+-----+---+------+------+-------------------------------------+-------+-----+----+------+------------+
+ura|X29  |394|     0|zsu   |http://             :8964/jserv-album|       |#X29 |    |      |X,X         |
+ura|Y201 |393|   393|zsu   |http://192.168.0.47:8965/jserv-album |       |#Y201|    |      |Y,Y         |
+
+
+org|synid|nyq|nstamp|domain|jserv                                |remarks|mac  |oper|optime|io_oz_synuid|
+---+-----+---+------+------+-------------------------------------+-------+-----+----+------+------------+
+ura|X29  |398|     0|zsu   |http://             :8964/jserv-album|       |#X29 |    |      |X,X         |
+ura|Y201 |398|   398|zsu   |http://192.168.0.47:8965/jserv-album |       |#Y201|    |      |Y,Y         |
+
