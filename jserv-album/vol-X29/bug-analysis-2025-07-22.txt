@@ -1,0 +1,107 @@
+Git-network
+-----------
+
+* d8988cef - Tue, 22 Jul 2025 10:35:30 +0800 (4 hours ago) (HEAD -> zsu-x29-y201, origin/zsu-x29-y201)
+|           why the backup is missing x29/dictionary.json & syntity.json? - Ody Z
+* ebd9c741 - Tue, 15 Jul 2025 10:50:36 +0800 (7 days ago)
+|           fix: db file copying error - Ody Z
+* 87f97580 - Tue, 15 Jul 2025 10:00:00 +0800 (7 days ago)
+|           backup a running instance/deploy (todo backup Y201) - Ody Z
+| * 688446af - Wed, 16 Jul 2025 18:31:28 +0800 (6 days ago) (origin/one-step, one-step)
+| |           test: test broken exhcanges - refactor API, tests still need to be run separately - Ody Z
+| * a23bb371 - Tue, 15 Jul 2025 14:38:27 +0800 (7 days ago) (origin/one-domain, one-domain)
+|/|           Task : test broken exchanges... - Ody Z
+| * d27b4742 - Tue, 15 Jul 2025 14:37:51 +0800 (7 days ago) (origin/refact-docsync, refact-docsync, jetty-winsrv)
+| * d27b4742 - Tue, 15 Jul 2025 14:37:51 +0800 (7 days ago) (origin/refact-docsync, refact-docsync, jetty-winsrv)
+| |           task: test broken exchanges - Ody Z
+| * 99d064a0 - Tue, 15 Jul 2025 10:48:14 +0800 (7 days ago) (origin/jetty-winsrv)
+| |           fix: db file copying error - Ody Z
+| * 847900ff - Tue, 15 Jul 2025 10:33:48 +0800 (7 days ago)
+| |           backup running X29 on Ubuntu - Ody Z
+| * 2c406f56 - Tue, 15 Jul 2025 10:29:11 +0800 (7 days ago)
+| |           backup running X29 on Ubuntu - Ody Z
+| * b0f52d7f - Tue, 15 Jul 2025 10:23:18 +0800 (7 days ago)
+| |           backup a running instance, X29 - Ody Z
+| * f864c3d9 - Tue, 15 Jul 2025 09:42:31 +0800 (7 days ago)
+| |           . - Ody Z
+| *   e74e8b51 - Sun, 13 Jul 2025 15:47:29 +0800 (9 days ago)
+| |\            Merge branch 'one-domain' into jetty-winsrv - Odys Zhou
+| * | db76217d - Sun, 13 Jul 2025 15:12:56 +0800 (9 days ago)
+| | |           . - Odys Zhou
+* | | f7a05592 - Mon, 14 Jul 2025 18:43:41 +0800 (8 days ago)
+| |/            refactor: remove Exchanging.confriming, etc.; task: turn on exchange session broken tests... - Odys Zhou
+|/|   
+* | 00548340 - Sun, 13 Jul 2025 15:27:59 +0800 (9 days ago)
+| |           task: generate registry, bring/change addr in background - Odys Zhou
+* | 5a7893cc - Sun, 13 Jul 2025 15:24:08 +0800 (9 days ago)
+|/            task: generate registry, bring/change addr in background - Odys Zhou
+*   63c0a388 - Sun, 13 Jul 2025 14:42:30 +0800 (9 days ago)
+|\            Merge branch 'jetty-winsrv' into refact-docsync as it's pretty sure the schema can at least support portfolio 0.7.#. - Odys Zhou
+
+journalctl X29.service
+----------------------
+
+Is likely Working: 
+
+Jul 13 14:33:42 [host] java[107655]: -- -- lock at X29 <- Y201
+Jul 13 14:33:42 [host] java[107655]: user: ody, ssid: 0BssGOfP
+Jul 13 14:33:42 [host] java[107655]: [docsyn]
+Jul 13 14:33:42 [host] java[107655]: delete from syn_peers where peer = 'Y201' AND domain = 'zsu'
+Jul 13 14:33:42 [host] java[107655]: insert into syn_peers (synid, peer, domain, nyq) values ('Y201', 'Y201', 'zsu', 2515), ('X29', 'Y201', 'zsu', 2513)
+Jul 13 14:33:43 [host] java[107655]: [docsyn]
+Jul 13 14:33:43 [host] java[107655]: select pagex, ch.*, sb.synodee from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND 'Y201' = bf.peer AN>
+Jul 13 14:33:43 [host] java[107655]: ====== X29 -> Y201 ====== Challenge Page: ======
+Jul 13 14:33:43 [host] java[107655]: X29
+Jul 13 14:33:43 [host] java[107655]: page-index: 0,        challenging size: 0
+Jul 13 14:33:43 [host] java[107655]: Syntities:
+Jul 13 14:33:43 [host] java[107655]: ====== X29 <- Y201 ====== Answering: ======
+Jul 13 14:33:43 [host] java[107655]: X29
+Jul 13 14:33:43 [host] java[107655]: page-index: -1,        challenging size: 0
+Jul 13 14:33:43 [host] java[107655]: Syntities:
+Jul 13 14:33:43 [host] java[107655]: ++ ++ unlocked X29 <- Y201
+Jul 13 14:33:43 [host] java[107655]: user: ody, ssid: 0BssGOfP
+Jul 13 14:34:11 [host] java[107655]: Sesssion refeshed. Session(s) idled (expired) in last 60 minutes:
+Jul 13 14:34:11 [host] java[107655]: [7hSScjUe, ura : Y201 : ody]
+Jul 13 14:34:11 [host] java[107655]: [3O5Ckkr0, ura : Y201 : ody]
+Jul 13 14:34:11 [host] java[107655]: [13pkSjQd, ura : Y201 : ody]
+
+Files synchronized:
+
+Jul 14 20:37:15 [host] java[107655]: [AlbumFlags.album/album.less GET]
+Jul 14 20:37:15 [host] java[107655]: /home/ody/.../vol-X29/ura/ody/2025-07/010I IMG_20250710_172119.jpg
+Jul 14 20:37:15 [host] java[107655]: /home/ody/.../vol-X29/ura/ody/2025-07/010M R-C.jpg
+Jul 14 20:37:15 [host] java[107655]: /home/ody/.../vol-X29/ura/ody/2025-07/010L 57ee994d61e04051969b36950a255cd8.jpg
+
+Logs nyq=2514,2515,2516,2517, when Y201 keeps loging the synching-exchanges:
+The git log shows DB file modified at this time.
+
+ul 14 21:06:31 [host] java[107655]: -- -- lock at X29 <- Y201
+Jul 14 21:06:31 [host] java[107655]: user: ody, ssid: 0WpO29QA
+Jul 14 21:06:31 [host] java[107655]: [docsyn]
+Jul 14 21:06:31 [host] java[107655]: delete from syn_peers where peer = 'Y201' AND domain = 'zsu'
+Jul 14 21:06:31 [host] java[107655]: insert into syn_peers (synid, peer, domain, nyq) values ('Y201', 'Y201', 'zsu', 2516), ('X29', 'Y201', 'zsu', 2514)
+Jul 14 21:06:32 [host] java[107655]: [docsyn]
+Jul 14 21:06:32 [host] java[107655]: select distinct e.* from doc_devices e join syn_change ch on ch.tabl = 'doc_devices' AND e.io_oz_synuid = ch.uids join syn>
+Jul 14 21:06:32 [host] java[107655]: [docsyn]
+Jul 14 21:06:32 [host] java[107655]: select distinct e.css, e.shareby, e.pdate, e.mime, e.opertime, e.filesize, '{"type": "io.odysz.semantic.meta.DocRef", "syn>
+Jul 14 21:06:32 [host] java[107655]: [docsyn]
+Jul 14 21:06:32 [host] java[107655]: select pagex, ch.*, sb.synodee from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND 'Y201' = bf.peer AN>
+Jul 14 21:06:32 [host] java[107655]: ====== X29 -> Y201 ====== Challenge Page: ======
+Jul 14 21:06:32 [host] java[107655]: X29
+Jul 14 21:06:32 [host] java[107655]: page-index: 0,        challenging size: 6
+Jul 14 21:06:32 [host] java[107655]: Syntities:
+Jul 14 21:06:32 [host] java[107655]: doc_devices,        size: 2,
+Jul 14 21:06:32 [host] java[107655]: h_photos,        size: 2,
+Jul 14 21:06:32 [host] java[107655]: ====== X29 <- Y201 ====== Answering: ======
+Jul 14 21:06:32 [host] java[107655]: X29
+Jul 14 21:06:32 [host] java[107655]: page-index: -1,        challenging size: 0
+Jul 14 21:06:32 [host] java[107655]: Syntities:
+Jul 14 21:06:32 [host] java[107655]: doc_devices        2
+Jul 14 21:06:32 [host] java[107655]: h_photos        2
+Jul 14 21:06:32 [host] java[107655]: [io.odysz.semantic.syn.ExessionPersist#commitAnswers()] Locally committing answers to Y201 ...
+Jul 14 21:06:32 [host] java[107655]: [docsyn]
+Jul 14 21:06:32 [host] java[107655]: select pagex, ch.*, sb.synodee from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND 'Y201' = bf.peer AN>
+...
+
+And there are other logs showing DB files are even missing.
+Logs ignored.
