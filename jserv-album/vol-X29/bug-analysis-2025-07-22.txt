@@ -104,4 +104,13 @@ Jul 14 21:06:32 [host] java[107655]: select pagex, ch.*, sb.synodee from syn_cha
 ...
 
 And there are other logs showing DB files are even missing.
-Logs ignored.
+Logs ignored...
+
+Verified:
+
+It will work with syn_node:
+
+org|synid|nyq|nstamp|domain|jserv                                |remarks|mac  |oper|optime|io_oz_synuid|
+---+-----+---+------+------+-------------------------------------+-------+-----+----+------+------------+
+ura|X29  |396|397   |zsu   |http://192.168.0.201:8964/jserv-album|       |#X29 |    |      |X,X         |
+ura|Y201 |394|0     |zsu   |                                     |       |#Y201|    |      |Y,Y         |
