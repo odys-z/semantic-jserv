@@ -1,0 +1,130 @@
+Y201 doc-sync.db
+----------------
+
+syn_node:
+
+org|synid|nyq |nstamp|domain|jserv                                |remarks|mac  |oper|optime|io_oz_synuid|
+---+-----+----+------+------+-------------------------------------+-------+-----+----+------+------------+
+ura|X29  |3376|     0|zsu   |http://182.150.29.34:8964/jserv-album|       |#X29 |    |      |X,X         |
+ura|Y201 |3383|  3383|zsu   |http://192.168.0.47:8965/jserv-album |       |#Y201|    |      |Y,Y         |
+
+syn_peers:
+
+peer|synid|nyq|domain|
+----+-----+---+------+
+X   |X    |  1|zsu   |
+X   |Y    |  0|zsu   |
+X   |Z    |  0|zsu   |
+X29 |Y201 |393|zsu   |
+X29 |X29  |394|zsu   |
+
+syn_sessions:
+
+peer|chpage|answerx|expansx|mode|state|
+----+------+-------+-------+----+-----+
+X   |    -1|     -1|     -1|    |     |
+X29 |     0|     -1|     -1|   0|    3|
+
+synode-0.7.5-y201-stderr.2025-07-14.log:
+----------------------------------------
+
+2025-07-14 21:06:09 Apache Commons Daemon procrun stderr initialized.
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+Field ignored: field: nyq, value: "nyq":0
+Field ignored: field: nyq, value: "nyq":0
+[io.oz.syn.YellowPages#verify()] Forcing synode Y201 working in peer mode. (defualt configuration since 0.1.6)
+Field ignored: field: nyq, value: "nyq":0
+Field ignored: field: nyq, value: "nyq":0
+[io.oz.syn.YellowPages#verify()] Forcing synode Y201 working in peer mode. (defualt configuration since 0.1.6)
+Field ignored: field: nyq, value: "nyq":0
+Field ignored: field: nyq, value: "nyq":0
+[io.oz.syn.YellowPages#verify()] Forcing synode Y201 working in peer mode. (defualt configuration since 0.1.6)
+[ServFlags.session] SSession debug mode true (ServFlage.session)
+[io.odysz.semantic.DATranscxt#static?()] Since v1.5.0, an empty connection ID won't trigger the semantics loading.
+io.odysz.semantics.x.SemanticException: Code: exTransct, mesage:
+Synchronizing Nyquence exception: my.n0 = 394 < peer.nv[me] = 3376, at X29 (me).
+	at io.odysz.jclient.HttpServClient.post(HttpServClient.java:188)
+	at io.odysz.jclient.SessionClient.commit(SessionClient.java:461)
+	at io.oz.jserv.docs.syn.SynssionPeer.exespush(SynssionPeer.java:324)
+	at io.oz.jserv.docs.syn.SynssionPeer.exespush(SynssionPeer.java:313)
+	at io.oz.jserv.docs.syn.SynssionPeer.update2peer(SynssionPeer.java:232)
+	at io.oz.jserv.docs.syn.SynDomanager.updomains(SynDomanager.java:206)
+	at io.oz.jserv.docs.syn.ExpSynodetier.lambda$syncIn$1(ExpSynodetier.java:260)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+java.lang.NullPointerException: Cannot read field "domain" because "reqb" is null
+	at io.oz.jserv.docs.syn.SynssionPeer.exespush(SynssionPeer.java:309)
+	at io.oz.jserv.docs.syn.SynssionPeer.update2peer(SynssionPeer.java:251)
+	at io.oz.jserv.docs.syn.SynDomanager.updomains(SynDomanager.java:206)
+	at io.oz.jserv.docs.syn.ExpSynodetier.lambda$syncIn$1(ExpSynodetier.java:260)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+
+synode-0.7.5-y201-stdout.2025-07-14.log:
+----------------------------------------
+
+=== Service jvmStart() finished [2025-07-14 21:06:11 Y201: http://192.168.101.3:8965/jserv-album] ===
+[AlbumFlags.album/album.less POST]
+[ ♻.✩ Y201 ] Synssion Opened (clientier created): {conn: docsyn, mode: peer, peer: X29, peer-jserv: http://182.150.29.34:8964/jserv-album}
+[io.oz.jserv.docs.syn.SynDomanager#openSynssions()] Opening domain zsu, logging into: X29, jserv: http://182.150.29.34:8964/jserv-album
+Locking and starting thread on domain updating: zsu : Y201 -> X29
+=============================================================
+
+-------- locking on self Y201  ------
+
+-- -- lock at Y201 <- Y201
+user: ody, ssid: null
+[docsyn]
+delete from syn_peers where peer = 'X29' AND domain = 'zsu'
+insert into syn_peers (synid, peer, domain, nyq) values ('Y201', 'X29', 'zsu', 2515), ('X29', 'X29', 'zsu', 2515)
+[docsyn]
+select pagex, ch.*, sb.synodee from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND 'X29' = bf.peer AND 0 = bf.pagex join syn_subscribe sb on ch.cid = sb.changeId order by synoder asc, tabl asc, seq asc
+====== Y201 -> X29 ====== Challenge Page: ======
+Y201
+page-index: 0,	challenging size: 0
+Syntities:
+
+[docsyn]
+select pagex, ch.*, sb.synodee from syn_change ch join syn_exchange_buf bf on ch.cid = bf.changeId AND 'X29' = bf.peer AND 0 = bf.pagex join syn_subscribe sb on ch.cid = sb.changeId order by synoder asc, tabl asc, seq asc
+====== Y201 -> X29 ====== Challenge Page: ======
+Y201
+page-index: 0,	challenging size: 0
+Syntities:
+
+====== Y201 <- X29 ====== Answering: ======
+Y201
+page-index: 0,	challenging size: 0
+Syntities:
+
+++ ++ unlocked Y201 <- Y201
+user: ody, ssid: null
+
+git-network Y201
+----------------
+
+* f7a05592 - Mon, 14 Jul 2025 18:43:41 +0800 (8 days ago) (HEAD -> one-domain, origin/one-domain)
+|           refactor: remove Exchanging.confriming, etc.; task: turn on exchange session broken tests... - Odys Zhou
+| * 7bf82d4b - Mon, 14 Jul 2025 09:34:42 +0800 (8 days ago) (jetty-winsrv)
+| |           . - Odys Zhou
+| *   e74e8b51 - Sun, 13 Jul 2025 15:47:29 +0800 (9 days ago) (origin/jetty-winsrv)
+| |\            Merge branch 'one-domain' into jetty-winsrv - Odys Zhou
+| |/
+|/|
+* | 00548340 - Sun, 13 Jul 2025 15:27:59 +0800 (9 days ago)
+| |           task: generate registry, bring/change addr in background - Odys Zhou
+* | 5a7893cc - Sun, 13 Jul 2025 15:24:08 +0800 (9 days ago)
+| |           task: generate registry, bring/change addr in background - Odys Zhou
+| * db76217d - Sun, 13 Jul 2025 15:12:56 +0800 (9 days ago)
+|/            . - Odys Zhou
+*   63c0a388 - Sun, 13 Jul 2025 14:42:30 +0800 (9 days ago) (origin/refact-docsync, origin/one-step, refact-docsync, one-step)
+|\            Merge branch 'jetty-winsrv' into refact-docsync as it's pretty sure the schema can at least support portfolio 0.7.#. - Odys Zhou
