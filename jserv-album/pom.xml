@@ -14,17 +14,10 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
 	<maven.compiler.source>17</maven.compiler.source>
 	<maven.compiler.target>17</maven.compiler.target>
 	<jetty.version>12.0.16</jetty.version>
 	<jetty-ee8.version>12.0.16</jetty-ee8.version>
-
-	<!--
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-	<jetty.version>9.4.55.v20240627</jetty.version>
-	-->
   </properties>
   
 
@@ -36,12 +29,6 @@
   </licenses>
 
   <repositories>
-  <!-- 
-  	<repository>
-  		<id>sonatype-snapshots</id>
-  		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-  	</repository>
-   -->
   </repositories>
 
   <scm>
