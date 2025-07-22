@@ -9,14 +9,12 @@ import java.sql.SQLException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.xml.sax.SAXException;
 
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
 /**SQL for test:
@@ -33,7 +31,7 @@ import io.odysz.transact.x.TransException;
 class QuizTest {
 
 	@BeforeAll
-	static void initSqlite() throws SemanticException, SQLException, SAXException, IOException {
+	static void initSqlite() throws Exception {
 		File file = new File("WEB-INF");
 		String path = file.getAbsolutePath();
 		Utils.logi(path);

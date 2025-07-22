@@ -1,0 +1,6 @@
+{ "type": "io.odysz.semantic.syn.registry.Syntities",
+  "conn": "docsyn",
+  "syntities": [
+     {"table": "h_photos", "meta": "io.oz.album.peer.PhotoMeta"},
+     {"table": "doc_devices", "meta": "io.odysz.semantic.tier.docs.DeviceTableMeta"}]
+}

@@ -2,14 +2,17 @@ package io.oz.jserv.docs.syn;
 
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.slava;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.syrskyi;
-import static io.oz.jserv.docs.syn.singleton.CreateSyndocTierTest.zsu;
+import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
 
 import java.io.IOException;
 
-import io.odysz.anson.x.AnsonException;
-import io.odysz.semantic.jprotocol.JProtocol.OnError;
+import io.odysz.anson.AnsonException;
+import io.odysz.jclient.syn.Doclientier;
+import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.tier.docs.Device;
+import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 
@@ -21,11 +24,11 @@ public class Dev {
 
 	public final String uid;
 	public final String psw;
-	public final String dev;
-	public final String folder;
+	public final Device device;
 
 	public String res;
 	public Doclientier client;
+
 
 	public static Dev[] devs;
 
@@ -36,24 +39,26 @@ public class Dev {
 
 	static final String clientconn = "main-sqlite";
 	public static ExpDocTableMeta docm;
+	public static DeviceTableMeta devm;
 
 	static {
 		try {
 			devs = new Dev[4];
-			devs[X_0] = new Dev("sys-00", "doclient-00", syrskyi, slava, "X-0", zsu,
+			devs[X_0] = new Dev("sys-X", "doclient-00", syrskyi, slava, "X-0", zsu,
 								"src/test/res/anclient.java/1-pdf.pdf");
 
-			devs[X_1] = new Dev("sys-01", "doclient-00", "syrskyi", "слава україні", "X-1", zsu,
+			devs[X_1] = new Dev("sys-Y", "doclient-00", "syrskyi", "слава україні", "X-1", zsu,
 								"src/test/res/anclient.java/2-ontario.gif");
 
-			devs[Y_0] = new Dev("sys-02", "doclient-01", "odyz", "8964", "Y-0", zsu,
+			devs[Y_0] = new Dev("sys-Z", "doclient-01", "ody", "8964", "Y-0", zsu,
 								"src/test/res/anclient.java/3-birds.wav");
 
-			devs[Y_1] = new Dev("sys-03", "doclient-01", "syrskyi", "слава україні", "Y-1", zsu,
+			devs[Y_1] = new Dev("sys-W", "doclient-01", "syrskyi", "слава україні", "Y-1", zsu,
 								"src/test/res/anclient.java/Amelia Anisovych.mp4");
 
 			bsize = 72 * 1024;
 			docm = new T_PhotoMeta(clientconn);
+			devm = new DeviceTableMeta(clientconn);
 		} catch (TransException e) {
 			e.printStackTrace();
 		}
@@ -64,15 +69,15 @@ public class Dev {
 		this.synuri = synuri;
 		this.uid = uid;
 		this.psw = pswd;
-		this.dev = "test-doclient/" + device;
-		this.folder = folder;
 		this.res = fres;
+		this.device = new Device(device, device, "test-doclient/" + device)
+				.folder(folder);
 	}
 
-	public void login(OnError errLog) throws SemanticException, AnsonException, SsException, IOException {
-		client = new Doclientier(sysuri, synuri, errLog)
+	public void login(ErrorCtx errLog) throws SemanticException, AnsonException, SsException, IOException {
+		client = new Doclientier(docm.tbl, sysuri, synuri, errLog)
 				.tempRoot(sysuri)
-				.loginWithUri(sysuri, uid, dev, psw)
-				.blockSize(bsize);
+				.loginWithUri(uid, device.id, psw)
+				; // .blockSize(bsize);
 	}
 }

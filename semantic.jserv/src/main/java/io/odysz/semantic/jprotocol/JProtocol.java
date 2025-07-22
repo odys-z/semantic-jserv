@@ -1,41 +1,71 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
-import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.transact.x.TransException;
 
 public class JProtocol {
 	/**
-	 * Typical operation's common names
-	 * @deprecated replaced by Semantic.DA/{@link io.odysz.semantic.CRUD}.
-	 * @since v1.4.12 requires semantic.DA v1.4.12
-	 * */
-	public static class CRUD {
-		public static final String C = io.odysz.semantic.CRUD.C;
-		public static final String R = io.odysz.semantic.CRUD.R;
-		public static final String U = io.odysz.semantic.CRUD.U;
-		public static final String D = io.odysz.semantic.CRUD.D;
+	 * Http request or repsond's header property names.
+	 * @since 1.5.16
+	 */
+	public static class Headers {
+		public static final String Error  = "Error";
+		public static final String Server = "Server";
+		public static final String Length = "Length";
+		public static final String Range  = "Range";
+
+		public static final String Expires = "Expires";
+		public static final String Pragma  = "Pragma";
+		public static final String Content_range  = "Content-Range";
+		public static final String Content_length = "Content-Length";
+		public static final String Cache_control  = "Cache-Control";
+
+		public static final String If_none_match = "If-None-Match";
+		public static final String If_modified_since = "If-Modified-Since";
+		public static final String If_range = "If-Range";
+
+		public static final String Reason   = "Reason";
+		public static final String AnsonReq = "Anson-req";
 	}
 
 	@FunctionalInterface
 	public interface OnOk {
-		void ok(AnsonResp resp) throws IOException, AnsonException, TransException;
+		void ok(AnsonResp resp) throws IOException, AnsonException, TransException, SQLException;
 	}
 	
 	/**
 	 * Progress notifier called by block chain.
-	 * Parameter blockResp provide the last uploaded block's sequence number.
+	 * Parameter {@code resp} provide the last uploaded block's sequence number.
+	 * <p>
+	 * rows: rx of total rows <br>
+	 * file blocks: bx of total blocks</p>
+	 * @return force breakup
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
-		void proc(int rows, int rx, int seqBlock, int totalBlocks, AnsonResp resp)
+		/**
+		 * Progress notifier called by block chain.
+		 * Parameter {@code resp} provide the last uploaded block's sequence number.
+		 * 
+		 * @param rx row index
+		 * @param rows rows
+		 * @param bx block index
+		 * @param blocks blocks
+		 * @param resp response
+		 * @return force breakup
+		 * @throws IOException
+		 * @throws AnsonException
+		 * @throws TransException
+		 */
+		boolean proc(int rx, int rows, int bx, int blocks, AnsonResp resp)
 			throws IOException, AnsonException, TransException;
 	}
 
@@ -53,7 +83,7 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnDocsOk {
-		void ok(List<DocsResp> resps) throws IOException, AnsonException, TransException;
+		void ok(List<? extends AnsonResp> resps) throws IOException, AnsonException, TransException, SQLException;
 	}
 	
 	@FunctionalInterface

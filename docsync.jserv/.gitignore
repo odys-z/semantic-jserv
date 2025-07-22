@@ -2,8 +2,14 @@ io.oz.sync*
 target
 .settings
 res-temp
-src/test/res/vol-*
-jetty-log
+
+src/test/res/vol-*/**
+!src/test/res/vol-*/*.xml
+!src/test/res/vol-*/dictionary.json
+
 jetty-log
 *.log
 client-at-*
+build
+_build
+/bin/

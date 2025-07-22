@@ -12,7 +12,7 @@ import io.odysz.semantics.x.SemanticException;
 import static io.odysz.common.LangExt.isblank;
 
 /**
- * Task page to update synchronizing information.
+ * Task page to be updated for synchronizing information.
  * 
  * The core data {@link #clientPaths} is a map, and the size should be limited for performance reason.
  * 
@@ -44,7 +44,7 @@ public class PathsPage extends Anson {
     }
 
 	/**
-	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date]} 
+	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date, isRef]} 
 	 */
 	@AnsonField(valType="[Ljava.lang.String;")
 	protected HashMap<String, Object[]> clientPaths;

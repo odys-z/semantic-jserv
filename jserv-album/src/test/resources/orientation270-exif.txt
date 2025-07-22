@@ -1,0 +1,52 @@
+MIME Type :	image/jpeg
+GPS Date Stamp :	2025
+Light Value :	8.3
+Flashpix Version :	0100
+Compression :	JPEG (old-style)
+Components Configuration :	Y, Cb, Cr, -
+Modify Date :	2025
+Y Cb Cr Sub Sampling :	YCbCr4
+File Creation Date/Time :	2025
+X Resolution :	72
+Brightness Value :	0
+Interoperability Version :	0100
+F Number :	1.8
+Device Setting Description :	(Binary data 4 bytes, use -b option to extract)
+GPS Position :	30 deg 40' 10.87" N, 104 deg 0' 11.45" E
+Exposure Program :	Program AE
+Digital Zoom Ratio :	1
+Y Cb Cr Positioning :	Centered
+Exif Byte Order :	Big-endian (Motorola, MM)
+GPS Version ID :	2.2.0.0
+Exposure Time :	1/100
+GPS Longitude :	104 deg 0' 11.45" E
+Image Size :	3648x2736
+GPS Longitude Ref :	East
+File Permissions :	-rw-rw-rw-
+Megapixels :	10.0
+Camera Model Name :	BMH-AN10
+Software :	BMH-AN10 3.1.1.190(C00E185R4P5)
+Color Components :	3
+Maker Note Unknown Text :	Auto
+GPS Processing Method :	CELLID
+Scene Type :	Directly photographed
+Encoding Process :	Baseline DCT, Huffman coding
+Field Of View :	67.4 deg
+Compressed Bits Per Pixel :	0.95
+GPS Altitude :	0 m Below Sea Level
+Color Space :	sRGB
+File Name :	0107 IMG_20250129_213017.jpg
+Flash :	No Flash
+GPS Time Stamp :	13
+Saturation :	Normal
+Document Name :	
+Focal Length In 35mm Format :	27 mm
+Sharpness :	Normal
+Image Width :	3648
+Resolution Unit :	inches
+Subject Distance Range :	Unknown
+Max Aperture Value :	1.8
+Exposure Mode :	Auto
+Scene Capture Type :	Standard
+Custom Rendered :	Custom
+Bits Per Sample :	8

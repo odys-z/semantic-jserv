@@ -1,6 +1,7 @@
 package io.odysz.semantic.tier.docs;
 
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.musteqs;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,19 +11,18 @@ import java.util.Set;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
-import io.odysz.semantics.IUser;
+import io.odysz.semantic.meta.DocRef;
+import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.PageInf;
 
-public class DocsReq extends UserReq {
+public class DocsReq extends UserReq implements IBlock {
 	public static class A {
 		/**
 		 * Action: read records for synodes synchronizing.
-		 * For client querying matching (syncing) docs, use {@link #records} instead. 
-		 * @see DocsTier#list(DocsReq req, IUser usr)
-		 * @see Docsyncer#query(DocsReq jreq, IUser usr) 
-		 * @deprecated replaced by SyncDoc.syncent
+		 * @see DocsTier#list(DocsReq, IUser)
+		 * @deprecated
 		 * */
 		public static final String syncdocs = "r/syncs";
 
@@ -31,19 +31,26 @@ public class DocsReq extends UserReq {
 
 		/**
 		 * Action: read records for client path matching.
-		 * For synodes synchronizing, use {@link #syncdocs} instead. 
-		 * 
-		 * @deprecated now clients only match paths with local DB.
-		 */
 		public static final String records = "r/list";
+		 */
 		
-		public static final String getstamp = "r/stamp";
-		public static final String setstamp = "u/stamp";
-
+		/** @deprecated function not used */
 		public static final String mydocs = "r/my-docs";
+
 		/** query doc / entity with entity fields, id, etc. */
 		public static final String rec = "r/rec";
+
 		public static final String download = "r/download";
+
+		/**
+		 * Download a doc using ranges property in request headers.
+		 * 
+		 * In semantic.jserv 1.5.16, docsync.jserv 0.2.4, this is actually used at server
+		 * side, as the download with http 206 response is intercepted at ServPort.doGet(),
+		 * which is actually a hack into the protocol for understandable by browsers. 
+		 */
+		public static final String download206 = "r/doc206";
+
 		public static final String upload = "c";
 
 		/** request for deleting docs */
@@ -57,12 +64,13 @@ public class DocsReq extends UserReq {
 		/**
 		 * Action: close synchronizing push task
 		 */
-		public static final String synclosePush = "u/close";
+//		public static final String synclosePush = "u/close";
 		/**
 		 * Action: close synchronizing pull task
 		 */
-		public static final String synclosePull = "r/close";
+//		public static final String synclosePull = "r/close";
 
+		/** Query client paths, the sync-page */
 		public static final String selectSyncs = "r/syncflags";
 
 		/** select devices, requires user org-id as parameter from client */
@@ -73,15 +81,14 @@ public class DocsReq extends UserReq {
 		/** check is a new device name valid */
 		public static final String checkDev = "r/check-dev";
 
+		/** Requests works start synodes' synchronization */
+		public static String requestSyn = "u/syn";
+
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */
 	}
 
-	public PageInf pageInf;
-	public DocsReq pageInf(int page, int size, String... args) {
-		pageInf = new PageInf(page, size, args);
-		return this;
-	}
+	public String synuri;
 
 	public String docTabl;
 	public DocsReq docTabl(String tbl) {
@@ -90,6 +97,17 @@ public class DocsReq extends UserReq {
 	}
 
 	public ExpSyncDoc doc;
+
+	public PageInf pageInf;
+
+	/**
+	 * @param whereqs (n0, v0), (n1, v1), ..., must be even number of elements.
+	 * @return this
+	 */
+	public DocsReq pageInf(int page, int size, String... whereqs) {
+		pageInf = new PageInf(page, size, whereqs);
+		return this;
+	}
 
 	String[] deletings;
 
@@ -100,7 +118,6 @@ public class DocsReq extends UserReq {
 	public DocsReq() {
 		super(null, null);
 		blockSeq = -1;
-		// doc.folder = "";
 	}
 
 	/**
@@ -130,11 +147,22 @@ public class DocsReq extends UserReq {
 	}
 
 
-	public DocsReq(String entityname, ExpSyncDoc doc, String uri) {
+	public DocsReq(String docTabl, ExpSyncDoc doc, String uri) {
 		super(null, uri);
 		this.device = new Device(null, null, doc.device());
 		this.doc = doc.escapeClientpath();
-		this.docTabl = entityname;
+		this.docTabl = docTabl;
+	}
+
+	public DocsReq(DocRef doc, String uri) {
+		super(null, uri);
+		this.doc = (ExpSyncDoc) new ExpSyncDoc(doc.docm)
+				.recId(doc.docId)
+				.clientname(doc.pname)
+				.uri64(doc.uri64)
+				.uids(doc.uids);
+		musteqs(doc.syntabl, this.doc.tabl());
+		this.docTabl = doc.syntabl;
 	}
 
 	protected String stamp;
@@ -149,7 +177,7 @@ public class DocsReq extends UserReq {
 	protected Device device; 
 	public Device device() { return device; }
 	public DocsReq device(String devid) {
-		device = new Device(devid, null);
+		device = new Device(devid, devid);
 		return this;
 	}
 	public DocsReq device(Device d) {
@@ -164,9 +192,8 @@ public class DocsReq extends UserReq {
 				: syncingPage.clientPaths.keySet();
 	}
 
-	/** TODO visibility = package */
-	public long blockSeq;
-	public long blockSeq() { return blockSeq; } 
+	int blockSeq;
+	public int blockSeq() { return blockSeq; } 
 
 	public DocsReq nextBlock;
 
@@ -177,6 +204,7 @@ public class DocsReq extends UserReq {
 	public String org;
 	public DocsReq org(String org) { this.org = org; return this; }
 
+	/** If the chain already exists when starting, reset it. */
 	public boolean reset;
 
 	private long limit = -1;
@@ -193,8 +221,8 @@ public class DocsReq extends UserReq {
 	 * <p>Note: if the file path is empty, the query is ignored.</p>
 	 * @param d
 	 * @return this
-	 * @throws IOException see {@link SyncDoc} constructor
-	 * @throws SemanticException fule doesn't exists. see {@link SyncDoc} constructor 
+	 * @throws IOException
+	 * @throws SemanticException file doesn't exist.
 	 */
 	public DocsReq querySync(IFileDescriptor d) throws IOException, SemanticException {
 		if (d == null || isblank(d.fullpath()))
@@ -248,7 +276,7 @@ public class DocsReq extends UserReq {
 		return blockUp(seq, resp.xdoc, b64, ssinf);
 	}
 
-	public DocsReq blockUp(long sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(int sequence, IFileDescriptor doc, StringBuilder b64, SessionInf usr) throws SemanticException {
 		String uri64 = b64.toString();
 		return blockUp(sequence, doc, uri64, usr);
 	}
@@ -266,7 +294,7 @@ public class DocsReq extends UserReq {
 	 * @return this
 	 * @throws SemanticException
 	 */
-	public DocsReq blockUp(long sequence, IFileDescriptor doc, String b64, SessionInf usr) throws SemanticException {
+	public DocsReq blockUp(int sequence, IFileDescriptor doc, String b64, SessionInf usr) throws SemanticException {
 		this.device = new Device(usr.device, null);
 		if (isblank(this.device, ".", "/"))
 			throw new SemanticException("File to be uploaded must come with user's device id - for distinguish files");
@@ -310,31 +338,6 @@ public class DocsReq extends UserReq {
 		return this;
 	}
 
-//	public DocsReq folder(String name) {
-//		doc.folder = name;
-//		return this;
-//	}
-
-//	public DocsReq share(ExpSyncDoc p) {
-//		doc.shareflag = p.shareflag;
-//		doc.shareby = p.shareby;
-//		doc.sharedate = p.sharedate;
-//		return this;
-//	}
-
-	/**
-	 * @since 1.4.25, path is converted to unix format since a windows path 
-	 * is not a valid json string.
-	 * @param path
-	 * @return
-	public DocsReq clientpath(String path) {
-		doc.clientpath = separatorsToUnix(path);
-		return this;
-	}
-
-	public String clientpath() { return doc.clientpath; }
-	 */
-
 	public DocsReq resetChain(boolean set) {
 		this.reset = set;
 		return this;
@@ -352,8 +355,20 @@ public class DocsReq extends UserReq {
 		return this;
 	}
 
-	public AnsonBody doc(ExpSyncDoc doc) {
+	public DocsReq doc(ExpSyncDoc doc) {
 		this.doc = doc;
 		return this;
 	}
+
+	@Override
+	public ExpSyncDoc doc() { return doc; }
+
+	@Override
+	public IBlock nextBlock(IBlock block) {
+		this.nextBlock = (DocsReq) block;
+		return this;
+	}
+
+	@Override
+	public IBlock nextBlock() { return nextBlock; }
 }

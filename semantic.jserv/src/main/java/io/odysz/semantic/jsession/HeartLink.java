@@ -6,7 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -26,8 +26,7 @@ import io.odysz.semantics.x.SemanticException;
 @WebServlet(description = "session manager", urlPatterns = { "/ping.serv" })
 public class HeartLink extends ServPort<HeartBeat> {
 
-	/** url pattern: /ping.serv 
-	 * @param out */
+	/** url pattern: /ping.serv */
 	public HeartLink() {
 		super(Port.heartbeat);
 	}

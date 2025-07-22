@@ -1,0 +1,17 @@
+{ "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "vol_name"    : "VOLUME_HOME",
+  "volume"      : "../vol-X29",
+  "localIp"     : "10.0.0.2",
+  "reverseProxy" : true,
+  "proxyIp"     : "10.0.0.1",
+  "port"        : 8964,
+  "proxyPort"   : 8964,
+  "webport"     : 8900,
+  "webProxyPort": 8900,
+  "jservs"      : {"X29":"http://127.0.0.1:8964/jserv-album", "Y201": "http://10.0.0.1:8964/jserv-album"},
+  "envars"      : {"WEBROOT_HUB": "X29"},
+  "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "overriden by installer: web-dist/private/host.json"],
+  "installkey"  : "0123456789ABCDEF",
+  "rootkey"     : "",
+  "connIdleSnds": 30.0
+}

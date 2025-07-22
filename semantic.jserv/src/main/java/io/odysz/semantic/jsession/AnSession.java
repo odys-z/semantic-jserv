@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
-import io.odysz.anson.x.AnsonException;
+import io.odysz.anson.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.Configs.keys;
@@ -124,6 +124,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 */
 	public static void init(DATranscxt daSctx)
 			throws SAXException, IOException, SemanticException, SQLException {
+		if (daSctx == null)
+			throw new AnsonException(0, "AnSession needs a non-null DAtrans builder.");
+
 		sctx = daSctx;
 
 		lock = new ReentrantLock();
@@ -447,16 +450,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	/**
 	 * 
 	 * @since 2.0.0
-	 * @param sessionBody
 	 * @param connId
 	 * @param jrobt
 	 * @return user object
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws SsException
-	 * @throws ReflectiveOperationException
-	 * @throws GeneralSecurityException
-	 * @throws IOException
 	 */
 	public static IUser loadUser(String uid, String connId, IUser... jrobt)
 			throws TransException, SQLException, SsException,
@@ -478,6 +474,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 							rs.getString(usrMeta.iv),
 							rs.getString(usrMeta.uname))
 						.onCreate(rs) // v1.4.11
+						.orgId(rs.getString(usrMeta.org))
+						.roleId(rs.getString(usrMeta.role))
 						// .onCreate(sessionBody)
 						.touch();
 			if (obj instanceof SemanticObject)
@@ -485,7 +483,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			throw new SemanticException("IUser implementation must extend SemanticObject.");
 		}
 		else
-			throw new SsException("User Id is not found: %s", uid);
+			throw new SsException("Cannot find user id: %s", uid);
 	}
 
 
@@ -519,6 +517,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	}
 
+	@SuppressWarnings("deprecation")
 	static IUser createUserByClassname(String clsname, String uid, String pswd, String iv, String userName) 
 			throws ReflectiveOperationException, GeneralSecurityException, IOException, IllegalArgumentException, TransException {
 		@SuppressWarnings("unchecked")

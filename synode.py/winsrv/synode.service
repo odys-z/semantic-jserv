@@ -1,0 +1,17 @@
+[Unit]
+Description=Synode $SYNODE-VERSION $SYNODE-ID
+After=network.target
+
+[Service]
+Type=simple
+User=ody
+WorkingDirectory=$DEPLOY-PATH
+ExecStart=java -jar $DEPLOY-PATH/$JSERV_JAR
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+Environment="JAVA_OPTS=-Xms1g -Xmx8g"
+
+[Install]
+WantedBy=multi-user.target

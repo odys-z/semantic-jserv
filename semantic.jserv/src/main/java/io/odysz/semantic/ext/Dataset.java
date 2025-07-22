@@ -16,7 +16,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.jprotocol.IPort;
-import io.odysz.semantic.jprotocol.JOpts;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServFlags;
 import io.odysz.semantic.jserv.ServPort;
@@ -29,7 +28,7 @@ import io.odysz.transact.x.TransException;
 
 /**CRUD read service extension: dataset.<br>
  * This port use a configure file (dataset.xml) as data definition.
- * The client request ({@link DatasetReq}) provide configure key and parameter, the port answer with queried results.
+ * The client request ({@link AnDatasetReq}) provide configure key and parameter, the port answer with queried results.
  * @author odys-z@github.com
  */
 @WebServlet(description = "load dataset configured in dataset.xml", urlPatterns = { "/ds.serv" })
@@ -44,7 +43,6 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	protected static Transcxt st;
 
 	static IPort p = Port.dataset;
-	static JOpts _opts = new JOpts();
 
 	static {
 		st = JSingleton.defltScxt;
