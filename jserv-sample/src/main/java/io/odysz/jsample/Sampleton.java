@@ -1,23 +1,26 @@
 package io.odysz.jsample;
 
 import java.io.IOException;
-import java.sql.SQLException;
-
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
-
-import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.JSingleton;
-import io.odysz.transact.x.TransException;
 
+/**
+ * @since 1.0.0
+ */
 @WebListener
 public class Sampleton extends JSingleton implements ServletContextListener {
+
+	/**
+	 * @since 1.5.3
+	 */
+	public SampleSettings settings;
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
@@ -39,7 +42,7 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 			e.printStackTrace();
 			Utils.warn("%s: %s\nCheck Config.xml:\ntable=cheap\nk=config-path\nv=%s",
 					e.getClass().getName(), e.getMessage(), relapath);
-		} catch (TransException | SAXException | SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

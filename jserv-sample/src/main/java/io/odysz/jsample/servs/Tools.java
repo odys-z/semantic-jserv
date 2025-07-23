@@ -1,13 +1,10 @@
 package io.odysz.jsample.servs;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
-
-import org.xml.sax.SAXException;
 
 import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
@@ -75,7 +72,7 @@ public class Tools extends ServPort<UserReq> {
 			// this constructor can only been called after metas has been loaded
 			// (Jsingleton got a chance to initialize)
 			st = new DATranscxt("inet");
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
