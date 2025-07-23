@@ -58,19 +58,6 @@ def install_wsrv_byname(srvname: str):
     return srvname
 
 
-"""
-same executable as uninstall_wsrv_byname()
-
-def uninstall_htmlsrv(srvname: str = None):
-    ctx = Context()
-    if srvname is None:
-        srvname = InstallerCli().loadInitial().envars[winsrv_websrv]
-    cmd = f'{install_html_w_bat} uninstall {srvname}'
-    print(cmd)
-    ctx.run(cmd)
-"""
-
-
 def install_htmlsrv(srvname: str):
     Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={html_srver}'})
 

@@ -402,7 +402,9 @@ public class AppSettings extends Anson {
 	 * @return local jserv (IP is self-detected)
 	 * @throws Exception 
 	 */
-	public static AppSettings checkInstall(String url_path, String webinf, String config_xml, String settings_json, boolean forceTest) throws Exception {
+	public static AppSettings checkInstall(String url_path, String webinf,
+			String config_xml, String settings_json, boolean forceTest) throws Exception {
+
 		logi("[INSTALL-CHECK] checking ...");
 		Configs.init(webinf);
 
