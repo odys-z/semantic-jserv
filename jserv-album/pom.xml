@@ -9,7 +9,7 @@
   <!-- auto update token TASKS.PY/CONFIG --><version>0.7.5</version>
   <packaging>jar</packaging>
 
-  <name>jserv-album Maven Webapp</name>
+  <name>jserv-album Synode</name>
   <url>https://odys-z.github.io</url>
 
   <properties>
