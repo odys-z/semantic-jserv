@@ -20,6 +20,9 @@ import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.PhotoRec;
 import io.oz.jserv.docs.syn.ExpDoctier.IOnDocreate;
 
+/**
+ * @deprecated can not be released unless the issue of ext-path is fixed
+ */
 public class DocreateHandler implements IOnDocreate {
 	
 	public DocreateHandler() throws InterruptedException, IOException, TimeoutException {
@@ -34,7 +37,6 @@ public class DocreateHandler implements IOnDocreate {
 		PhotoMeta phm = (PhotoMeta) docm;
 
 		try {
-			// DATranscxt st = new DATranscxt(conn);
 			AnResultset rs = (AnResultset) st
 				.select(docm.tbl, "p")
 				.col(docm.folder).col(docm.fullpath)
@@ -50,7 +52,7 @@ public class DocreateHandler implements IOnDocreate {
 				ISemantext stx = st.instancontxt(conn, usr);
 
 				String pth = isNull(path)
-							? EnvPath.decodeUri(stx, rs.getString(docm.uri))
+							? EnvPath.decodeUri(stx, rs.getString(docm.uri)) // FIXME use ExtFilePath instead
 							: path[0];
 
 				PhotoRec p = new PhotoRec();

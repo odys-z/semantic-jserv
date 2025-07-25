@@ -49,7 +49,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 	/**
 	 * Set default transaction builder.
 	 * 
-	 * @since 2.0.0, default {@link #st} is not always prividen by {@link JSingleton}.
+	 * @since 1.5.0, default {@link #st} is not always provided by {@link JSingleton}.
 	 * @param stb
 	 * @return 
 	 */
@@ -92,7 +92,6 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 			if (CRUD.U.equals(q.a()))
 				res = updt(q, usr);
 			else if (CRUD.C.equals(q.a()))
-				// res = inst((InsertReq) q, usr);
 				throw new SemanticException("Inserting Request is handled by i.serv. Please update client.");
 			else if (CRUD.D.equals(q.a()))
 				res = delt(q, usr);

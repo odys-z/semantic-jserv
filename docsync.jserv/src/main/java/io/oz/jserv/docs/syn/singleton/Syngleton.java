@@ -242,6 +242,7 @@ public class Syngleton extends JSingleton {
 		DATranscxt.rootkey(rootKey);
 
 		// TODO FIXME, move to the right place
+		// 2025-07-24 Here is the answer, see the JSample way.
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 		AnSession.init(defltScxt);
 		
@@ -311,6 +312,7 @@ public class Syngleton extends JSingleton {
 		DATranscxt.rootkey(rootKey);
 		
 		// TODO FIXME, move to the right place
+		// 2025-07-24 Here is the answer, see the JSample way.
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 		AnSession.init(defltScxt);
 
