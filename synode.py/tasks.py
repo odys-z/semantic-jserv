@@ -32,8 +32,6 @@ from anson.io.odysz.common import Utils
 from anson.io.odysz.utils import zip2
 from invoke import task, Context
 
-# from src import zip2
-
 SYNODE_VERSION = 'SYNODE_VERSION'
 JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
 HTML_JAR_VERSION = 'HTML_JAR_VERSION'
@@ -55,8 +53,6 @@ vers = {
 }
 
 res_toclean = ['dist', '*egg-info']
-
-# registry_zip = f'registry-ura-zsu-{vers[JSERV_JAR_VERSION]}.zip'
 
 @task
 def config(c):

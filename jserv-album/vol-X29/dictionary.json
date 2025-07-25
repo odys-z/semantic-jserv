@@ -1,0 +1,58 @@
+{
+  "type": "io.oz.syn.AnRegistry",
+  "config": {
+    "type": "io.oz.syn.SynodeConfig",
+    "https": false,
+    "synid": "X29",
+    "domain": "zsu",
+    "admin": "ody",
+    "sysconn": "sys",
+    "synconn": "docsyn",
+    "org": {
+      "type": "io.oz.syn.SynOrg",
+      "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
+      "orgId": "ura",
+      "orgName": "URA",
+      "orgType": "nation",
+      "market": "test",
+      "webroot": "$WEBROOT_HUB",
+      "homepage": "",
+      "album0": "album-test"
+    },
+    "syncIns": 0.0,
+    "peers": [{
+      "type": "io.odysz.semantic.syn.Synode",
+      "synid": "X29",
+      "org": "ura",
+      "mac": "#URA.X",
+      "nyq": 0,
+      "domain": "zsu",
+      "syn_uid": "X,X"
+    }, {
+      "type": "io.odysz.semantic.syn.Synode",
+      "synid": "Y201",
+      "org": "ura",
+      "mac": "#URA.Y",
+      "nyq": 0,
+      "domain": "zsu",
+      "syn_uid": "Y,Y"
+    }]
+  },
+  "synusers": [{
+    "type": "io.odysz.semantic.syn.SyncUser",
+    "userId": "ody",
+    "userName": null,
+    "pswd": "8964",
+    "iv": null,
+    "org": "ura",
+    "domain": "zsu"
+  }, {
+    "type": "io.odysz.semantic.syn.SyncUser",
+    "userId": "zelenskyy",
+    "userName": null,
+    "pswd": "8964",
+    "iv": null,
+    "org": "ura",
+    "domain": "zsu"
+  }]
+}

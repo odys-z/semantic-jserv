@@ -213,9 +213,6 @@ public class SynodetierJoinTest {
 		ck[Z].synodes(X, -1, Z);
 
 		Utils.logrst("Z sync domain", ++no);
-//		waiting(lights, Z);
-//		syncdomain(lights, Z);
-//		awaitAll(lights, -1);
 		syncdomain(Z);
 
 		printChangeLines(ck);
@@ -225,9 +222,6 @@ public class SynodetierJoinTest {
 		ck[Z].synodes(X, -1, Z); // Z joined latter, no subs or Y's joining 
 
 		Utils.logrst("Y sync domain", ++no);
-//		waiting(lights, Y);
-//		syncdomain(lights, Y);
-//		awaitAll(lights, -1);
 		syncdomain(Y);
 
 		printChangeLines(ck);

@@ -81,7 +81,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	OnError errHandler;
 	
-	final DATranscxt tb0;
+	// final DATranscxt tb0;
 
 	public Nyquence lastn0(String peer) {
 		return expiredClientier == null || expiredClientier.xp == null ?
@@ -116,7 +116,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			Utils.warn("Error code: %s,\n%s", e.name(), String.format(r, (Object[])a));
 		};
 		
-		tb0 = new DATranscxt(c.synconn);
+		// tb0 = new DATranscxt(c.synconn);
 
 		admin = new SyncUser();
 	}
@@ -168,16 +168,16 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return synssion(peer).xp.n0();
 	}
 
-	public SynDomanager loadomainx() throws TransException, SQLException {
-		Utils.logi("\n[ ♻.%s ] loading domain %s ...", synode, domain());
-		
-		SyncUser robot = new SyncUser(synode, "pswd: local null", synode)
-				.deviceId(synode);
-
-		loadNvstamp(tb0, robot);
-		
-		return this;
-	}
+//	public SynDomanager loadomainx() throws TransException, SQLException {
+//		Utils.logi("\n[ ♻.%s ] loading domain %s ...", synode, domain());
+//		
+//		SyncUser robot = new SyncUser(synode, "pswd: local null", synode)
+//				.deviceId(synode);
+//
+//		loadNvstamp(tb0, robot);
+//		
+//		return this;
+//	}
 	
 	/**
 	 * Update (synchronize) this domain, peer by peer.

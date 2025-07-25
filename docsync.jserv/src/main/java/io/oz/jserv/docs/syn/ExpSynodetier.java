@@ -153,6 +153,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				rsp = new SynssionServ(domanager0, req.exblock.srcnode, usr)
 					.onsyninit(req.exblock);
 
+			else if (A.exrestore.equals(a))
+				rsp = usr.<SynssionServ>synssion().onsynrestore(req.exblock);
+
 			else if (A.exchange.equals(a))
 				rsp = usr.<SynssionServ>synssion().onsyncdb(req.exblock);
 
