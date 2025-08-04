@@ -11,6 +11,7 @@ import qrcode
 from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
+
 from anson.io.odysz.common import Utils, LangExt
 
 from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJservOption
@@ -22,6 +23,9 @@ from src.synodepy3.installer_api import InstallerCli, install_uri, web_inf, sett
 # Run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py
 from src.synodepy3.ui_form import Ui_InstallForm
+
+from anson.io.odysz.anson import Anson
+synode_ui = Anson.from_envelope("synode.json")
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()
@@ -104,35 +108,6 @@ class InstallerForm(QMainWindow):
             # This error can occur and disappear without any clear conditions.
             label.setText(text)
             err_msg(f'Generating QR Code Error. Please generate QR Code for:\n{text}', e)
-
-    # def gen_qr(self) -> Optional[dict]:
-    #     """
-    #     Generate ip, port and QR.
-    #     :return:
-    #     """
-    #
-    #     # settings don't have current IP
-    #     if len(self.ui.txtIP.text()) < 7:
-    #         try:
-    #             ip = self.cli.reportIp()
-    #         except OSError as e:
-    #             err_msg('Network IP can not be found. IP address must be manually set.\n{1}.', e)
-    #             return None
-    #
-    #         self.ui.txtIP.setText(ip)
-    #     elif self.ui.txtIP.text() == '0.0.0.0':
-    #         ip = InstallerCli.reportIp()
-    #     else:
-    #         ip = self.ui.txtIP.text()
-    #
-    #     port = self.cli.settings.port
-    #
-    #     iport = f'{ip}:{port}'
-    #     synode = self.ui.txtSynode.text()
-    #     data = getJservOption(synode, iport, False)
-    #
-    #     InstallerForm.set_qr_label(self.ui.lbQr, data)
-    #     return {"ip": ip, "port": port, "synodepy3": synode}
 
     def gen_qr(self) -> Optional[dict]:
         """
@@ -318,6 +293,9 @@ class InstallerForm(QMainWindow):
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         super().showEvent(event)
 
+        def bindUi():
+            self.ui.lbHelplink = synode_ui.langs[synode_ui.lang]['blHelplink']
+
         def bindInitial(root: str):
             print(f'loading {root}')
             self.cli = InstallerCli()
@@ -350,6 +328,8 @@ class InstallerForm(QMainWindow):
             self.updateChkReverse(self.cli.settings.reverseProxy)
 
         if event.type() == QEvent.Type.Show:
+            bindUi()
+
             bindInitial(self.root_path)
 
             def setVolumePath():

@@ -27,7 +27,7 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 	}
 
 	/**
-	 * @deprecated since 1.5.4, JSample container mode is not maintained for working in Servlet containers. 
+	 * @deprecated since 1.5.4, JSample is not maintained for working in Servlet containers. 
 	 */
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {

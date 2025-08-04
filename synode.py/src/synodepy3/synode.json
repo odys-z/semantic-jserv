@@ -1,0 +1,41 @@
+{ "type": "synodepy3.Synode",
+  "version": "0.7.6",
+  "market": "TEST",
+  "iso": "http://www.lingoes.net/en/translator/langcode.htm",
+  "lang": "en",
+  "ui": "ui_form.py",
+  "langs": {
+    "en": {
+        "gboxRegistry": "  Synchronization Domain Identity - Market {market}",
+        "lbHelplink": "HELP"
+    },
+    "zh-CN": {
+        "gboxRegistry": "  同步域标识 - 区域 {market}",
+        "lbHelplink": "帮助"
+    },
+    "zh-TW": {
+        "gboxRegistry": "  同步域標識 - 區域 {market}",
+        "lbHelplink": "幫助"
+    },
+    "fr": {
+        "gboxRegistry": "  Synchronisation de l'identité du domaine - Marché {market}",
+        "lbHelplink": "Aide"
+    },
+    "ja": {
+        "gboxRegistry": "  同期ドメインID - ゾーン{market}",
+        "lbHelplink": "ヘルプ"
+    },
+    "uk": {
+        "gboxRegistry": "  Ідентифікатор домену синхронізації – Market {market}",
+        "lbHelplink": "Довідка"
+    },
+    "ms": {
+        "gboxRegistry": "  Identiti Domain Penyegerakan - Pasaran {market}",
+        "lbHelplink": "Tolong"
+    },
+    "de": {
+        "gboxRegistry": "  Synchronisierungsdomänenidentität – Markt {market}",
+        "lbHelplink": "Helfen"
+    }
+  }
+}

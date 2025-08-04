@@ -29,7 +29,6 @@ from .__version__ import jar_ver, web_ver, html_srver
 
 
 def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
-    # Clients.servRt = peerserv or 'http://127.0.0.1:8964/jserv-album'
     Clients.init(jserv=peerserv or 'http://127.0.0.1:8964/jserv-album', timeout=timeout_snd)
 
     def err_ctx(c: MsgCode, e: str, *args: str) -> None:

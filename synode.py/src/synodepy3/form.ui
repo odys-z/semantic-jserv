@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>InstallForm</class>
  <widget class="QMainWindow" name="InstallForm">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -92,10 +95,10 @@
      </font>
     </property>
     <property name="text">
-     <string>&amp;...</string>
+     <string>     &amp;...</string>
     </property>
     <property name="icon">
-     <iconset theme="computer"/>
+     <iconset theme="QIcon::ThemeIcon::FolderVisiting"/>
     </property>
     <property name="iconSize">
      <size>
@@ -110,14 +113,14 @@
    <widget class="QLabel" name="lbVolume">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>50</x>
       <y>206</y>
-      <width>69</width>
+      <width>51</width>
       <height>19</height>
      </rect>
     </property>
     <property name="text">
-     <string>Volume:</string>
+     <string>Volume</string>
     </property>
    </widget>
    <widget class="QLabel" name="lbSynode">
@@ -158,7 +161,7 @@
    <widget class="QLineEdit" name="txtIP">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>340</x>
       <y>140</y>
       <width>141</width>
       <height>27</height>
@@ -180,7 +183,7 @@
    <widget class="QLabel" name="lbIP">
     <property name="geometry">
      <rect>
-      <x>270</x>
+      <x>280</x>
       <y>143</y>
       <width>69</width>
       <height>19</height>
@@ -225,12 +228,12 @@
      <string>E. g. 8964</string>
     </property>
    </widget>
-   <widget class="QGroupBox" name="groupBox">
+   <widget class="QGroupBox" name="gboxRegistry">
     <property name="geometry">
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>951</width>
+      <width>961</width>
       <height>131</height>
      </rect>
     </property>
@@ -241,30 +244,30 @@
      </sizepolicy>
     </property>
     <property name="title">
-     <string>  Synchronization Domain Identity - Market URA</string>
+     <string>  Synchronization Domain Identity - Market TEST</string>
     </property>
-    <widget class="QLabel" name="lbDomain">
+    <widget class="QLabel" name="lbCommunity">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>100</y>
-       <width>69</width>
-       <height>19</height>
+       <x>256</x>
+       <y>71</y>
+       <width>91</width>
+       <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Domain:</string>
+      <string>Community:</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="txtDomain">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="geometry">
       <rect>
-       <x>110</x>
-       <y>100</y>
-       <width>211</width>
+       <x>590</x>
+       <y>66</y>
+       <width>171</width>
        <height>27</height>
       </rect>
      </property>
@@ -284,8 +287,8 @@
     <widget class="QLabel" name="lbRetry">
      <property name="geometry">
       <rect>
-       <x>450</x>
-       <y>100</y>
+       <x>530</x>
+       <y>30</y>
        <width>61</width>
        <height>20</height>
       </rect>
@@ -297,9 +300,9 @@
     <widget class="QLineEdit" name="txtPswd2">
      <property name="geometry">
       <rect>
-       <x>530</x>
-       <y>100</y>
-       <width>231</width>
+       <x>590</x>
+       <y>28</y>
+       <width>171</width>
        <height>27</height>
       </rect>
      </property>
@@ -319,25 +322,25 @@
       <string>Confirm Password</string>
      </property>
     </widget>
-    <widget class="QLabel" name="lbUserId">
+    <widget class="QLabel" name="lbAdminId">
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>73</y>
+       <y>30</y>
        <width>71</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;User ID:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;Admin:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="txtPswd">
      <property name="geometry">
       <rect>
-       <x>530</x>
-       <y>70</y>
-       <width>231</width>
+       <x>340</x>
+       <y>28</y>
+       <width>141</width>
        <height>27</height>
       </rect>
      </property>
@@ -357,12 +360,15 @@
       <string>Max 32 Chars</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="txtUserId">
+    <widget class="QLineEdit" name="txtAdminId">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>110</x>
-       <y>70</y>
-       <width>211</width>
+       <y>28</y>
+       <width>131</width>
        <height>27</height>
       </rect>
      </property>
@@ -376,14 +382,14 @@
       <number>12</number>
      </property>
      <property name="placeholderText">
-      <string>Registered admin ID</string>
+      <string>admin ID</string>
      </property>
     </widget>
     <widget class="QLabel" name="lbPswd">
      <property name="geometry">
       <rect>
-       <x>440</x>
-       <y>72</y>
+       <x>270</x>
+       <y>30</y>
        <width>70</width>
        <height>19</height>
       </rect>
@@ -392,31 +398,31 @@
       <string>Password:</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="bLogin">
+    <widget class="QPushButton" name="bRegister">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="geometry">
       <rect>
-       <x>775</x>
-       <y>100</y>
-       <width>161</width>
+       <x>774</x>
+       <y>98</y>
+       <width>171</width>
        <height>28</height>
       </rect>
      </property>
      <property name="text">
-      <string extracomment="Test">&amp;Login</string>
+      <string extracomment="Test">&amp;Register</string>
      </property>
      <property name="shortcut">
       <string>Ctrl+L</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="bRoot">
+    <widget class="QPushButton" name="bRegfolder">
      <property name="geometry">
       <rect>
-       <x>775</x>
-       <y>30</y>
-       <width>161</width>
+       <x>650</x>
+       <y>100</y>
+       <width>111</width>
        <height>26</height>
       </rect>
      </property>
@@ -426,10 +432,10 @@
       </font>
      </property>
      <property name="text">
-      <string>&amp;...</string>
+      <string>  &amp;To ...</string>
      </property>
      <property name="icon">
-      <iconset theme="computer"/>
+      <iconset theme="QIcon::ThemeIcon::FolderOpen"/>
      </property>
      <property name="iconSize">
       <size>
@@ -441,25 +447,25 @@
       <string>Ctrl+D</string>
      </property>
     </widget>
-    <widget class="QLabel" name="lbRoot">
+    <widget class="QLabel" name="lbRegfolder">
      <property name="geometry">
       <rect>
-       <x>38</x>
-       <y>30</y>
-       <width>71</width>
+       <x>49</x>
+       <y>103</y>
+       <width>61</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Res Root:</string>
+      <string>Save to:</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="txtResroot">
      <property name="geometry">
       <rect>
        <x>110</x>
-       <y>30</y>
-       <width>651</width>
+       <y>100</y>
+       <width>521</width>
        <height>27</height>
       </rect>
      </property>
@@ -473,20 +479,20 @@
       <string>Path to the registered resources.</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="bSingup">
+    <widget class="QPushButton" name="bAddomain">
      <property name="enabled">
       <bool>false</bool>
      </property>
      <property name="geometry">
       <rect>
-       <x>775</x>
-       <y>70</y>
-       <width>161</width>
+       <x>774</x>
+       <y>65</y>
+       <width>171</width>
        <height>28</height>
       </rect>
      </property>
      <property name="text">
-      <string extracomment="Test">&amp;Sing up</string>
+      <string extracomment="Test">&amp;Add Domain</string>
      </property>
      <property name="shortcut">
       <string>Ctrl+S</string>
@@ -495,9 +501,9 @@
     <widget class="QLabel" name="lbHelplink">
      <property name="geometry">
       <rect>
-       <x>870</x>
+       <x>890</x>
        <y>0</y>
-       <width>61</width>
+       <width>71</width>
        <height>20</height>
       </rect>
      </property>
@@ -506,6 +512,115 @@
      </property>
      <property name="openExternalLinks">
       <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lbDomain">
+     <property name="geometry">
+      <rect>
+       <x>530</x>
+       <y>71</y>
+       <width>61</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Domain:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="txtCommunity">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>340</x>
+       <y>66</y>
+       <width>141</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="whatsThis">
+      <string extracomment="Domain wide node ID."/>
+     </property>
+     <property name="text">
+      <string>ura</string>
+     </property>
+     <property name="maxLength">
+      <number>12</number>
+     </property>
+     <property name="placeholderText">
+      <string>12 Bit Market wide ID, must not null</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="bLogin">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>864</x>
+       <y>28</y>
+       <width>81</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string extracomment="Test">&amp;Login</string>
+     </property>
+     <property name="shortcut">
+      <string>Ctrl+S</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="bCommDropdown">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>485</x>
+       <y>69</y>
+       <width>20</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::GoDown"/>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>24</width>
+       <height>22</height>
+      </size>
+     </property>
+     <property name="shortcut">
+      <string>Ctrl+D</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="bSingup">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>774</x>
+       <y>28</y>
+       <width>81</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string extracomment="Test">Sing &amp;Up</string>
+     </property>
+     <property name="shortcut">
+      <string>Ctrl+S</string>
      </property>
     </widget>
    </widget>
@@ -541,7 +656,7 @@
      </rect>
     </property>
     <property name="text">
-     <string extracomment="Test">&amp;Test Run</string>
+     <string extracomment="Test">T&amp;est Run</string>
     </property>
     <property name="shortcut">
      <string>Ctrl+T</string>
@@ -696,7 +811,7 @@
    <widget class="QLabel" name="lbPublicIP">
     <property name="geometry">
      <rect>
-      <x>264</x>
+      <x>274</x>
       <y>174</y>
       <width>61</width>
       <height>20</height>
@@ -753,7 +868,7 @@
    <widget class="QLineEdit" name="txtIP_proxy">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>340</x>
       <y>170</y>
       <width>141</width>
       <height>27</height>
@@ -853,7 +968,7 @@
      <rect>
       <x>30</x>
       <y>340</y>
-      <width>361</width>
+      <width>381</width>
       <height>20</height>
      </rect>
     </property>
@@ -890,14 +1005,18 @@
   </action>
  </widget>
  <tabstops>
-  <tabstop>txtResroot</tabstop>
-  <tabstop>bRoot</tabstop>
-  <tabstop>txtUserId</tabstop>
-  <tabstop>txtDomain</tabstop>
+  <tabstop>txtAdminId</tabstop>
   <tabstop>txtPswd</tabstop>
   <tabstop>txtPswd2</tabstop>
   <tabstop>bSingup</tabstop>
   <tabstop>bLogin</tabstop>
+  <tabstop>txtCommunity</tabstop>
+  <tabstop>bCommDropdown</tabstop>
+  <tabstop>txtDomain</tabstop>
+  <tabstop>bAddomain</tabstop>
+  <tabstop>txtResroot</tabstop>
+  <tabstop>bRegfolder</tabstop>
+  <tabstop>bRegister</tabstop>
   <tabstop>txtSynode</tabstop>
   <tabstop>txtIP</tabstop>
   <tabstop>txtWebport</tabstop>
@@ -910,8 +1029,8 @@
   <tabstop>bVolpath</tabstop>
   <tabstop>txtSyncIns</tabstop>
   <tabstop>jservLines</tabstop>
-  <tabstop>bPing</tabstop>
   <tabstop>txtimeout</tabstop>
+  <tabstop>bPing</tabstop>
   <tabstop>bSetup</tabstop>
   <tabstop>bValidate</tabstop>
   <tabstop>bWinserv</tabstop>
