@@ -2,11 +2,13 @@ package io.oz.album.helpers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.IOException;
+import java.lang.Runtime.Version;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import io.odysz.common.Configs;
+import io.odysz.common.Utils;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.peer.PhotoRec;
 
@@ -24,6 +26,16 @@ class ExifTest {
 		String v = Exiftool.escape("1 enUS(sRGB\0\0\0");
 		assertEquals("1 enUS(sRGB", v);
 	}
+	
+	@Test
+	void testRuntimeSpawn() {
+		Runtime rt = Runtime.getRuntime();
+		Version ver = Runtime.version();
+		Utils.logi(rt.toString());
+		Utils.logi(ver.toString());
+		Utils.logi(System.getProperty("java.home"));
+	}
+	
 
 	@Test
 	void testParseWidthHeight() throws IOException, SemanticException {

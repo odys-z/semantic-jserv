@@ -147,7 +147,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			throws ServletException, IOException, AnsonException, SemanticException {
 
 		if (AlbumFlags.album)
-			Utils.logi("[AlbumFlags.album/album.less GET]");
+			Utils.logi("[AlbumFlags.album/album.less GET] %s", msg.addr());
 
 		DocsReq jreq = msg.body(0);
 		try {
