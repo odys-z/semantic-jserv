@@ -21,8 +21,9 @@ class MsgCode(Enum):
 
 class Port(Enum):
     echo = 'echo.less'
-    session = "login.serv"
-    r = "r.serv"
+    singup = 'signup.less'
+    session = 'login.serv'
+    r = 'r.serv'
 
 
 @dataclass

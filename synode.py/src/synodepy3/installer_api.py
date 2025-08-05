@@ -372,20 +372,9 @@ class InstallerCli:
         if synid is None or len(synid) == 0 or synid not in [ln[0] for ln in peer_jservss]:
             return {"synodepy3", synid}
 
-        for peer in peer_jservss:
-            if self.peers_find(peer[0]) is None:
-                return {"peers": {peer[0]: LangExt.str(self.registry.config.peers)}}
-
-            # if synid != peer[0]:
-            #     try:
-            #         ping('Setup/py3', peer[1], ping_timeout)
-            #     except PortfolioException:
-            #         if warn:
-            #             warn(f'Ping to {peer[0]}({peer[1]}) failed.\n'
-            #                   # 'It is strongly recommended not to proceed.\n'
-            #                  f'If synode{peer[0]} in the domain is not connectable, double check the url.')
-            #         else:
-            #             return {"jserv": {peer[0]: peer[1]}}
+        # for peer in peer_jservss:
+        #     if self.peers_find(peer[0]) is None:
+        #         return {"peers": {peer[0]: LangExt.str(self.registry.config.peers)}}
 
         if not checkinstall_exiftool():
             return {"exiftool": "Check and install exiftool failed!"

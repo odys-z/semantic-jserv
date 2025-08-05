@@ -25,7 +25,12 @@ from src.synodepy3.installer_api import InstallerCli, install_uri, web_inf, sett
 from src.synodepy3.ui_form import Ui_InstallForm
 
 from anson.io.odysz.anson import Anson
-synode_ui = Anson.from_envelope("synode.json")
+
+from synodepy3 import Synode
+
+Anson.java_src('src')
+path = os.path.dirname(__file__)
+synode_ui = cast(Synode, Anson.from_file(os.path.join(path,"synode.json")))
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()
@@ -164,9 +169,36 @@ class InstallerForm(QMainWindow):
         else:
             err_msg('Validation failed.', err)
 
+    # def signup(self):
+    #     details = []
+    #     errs = False
+    #     def err_ctx(c, e: str, *args: str) -> None:
+    #         nonlocal errs, details
+    #         print(c, e.format(args), file=sys.stderr)
+    #         details.append('\n' + e)
+    #         errs = True
+    #
+    #     jsrv = synode_ui.centralserv
+    #     Clients.init(jserv=jsrv, timeout=20)
+    #     resp = Clients.signLess(install_uri, err_ctx)
+    #     if resp is None:
+    #         details.append(f'\n{jsrv}: {jsrv}\n' + 'Error: no responds')
+    #     else:
+    #         details.append(f'\n{jsrv}: {jsrv}\n' + resp.toBlock(beautify=True))
+    #
+    #     if errs:
+    #         warn_msg('Cannot sing up. Check details for errors.', details)
+    #     else:
+    #         msg_box('Sing up successfully. Register the or create a domain.', details)
+    #     return details
+
+    def signup_demo(self):
+        msg_box(synode_ui.signup_prompt('This is a demo version. You can login with the provided admin Id and the password.'))
+
     def login(self) -> bool:
-        ui = self.ui
-        ui.txtDomain.setText('zsu')
+        # ui = self.ui
+        # ui.txtDomain.setText('zsu')
+        msg_box(synode_ui.signup_prompt('This is a demo version. You can login with the provided admin Id and the password.'))
         return False
 
     def pings(self):
@@ -188,7 +220,7 @@ class InstallerForm(QMainWindow):
                     Clients.init(jserv=jsrv[1], timeout=int(self.ui.txtimeout.text()))
                     resp = Clients.pingLess(install_uri, err_ctx)
                     if resp is None:
-                        details.append(f'\n{jsrv[0]}: {jsrv[1]}\n' + 'Error: not responds')
+                        details.append(f'\n{jsrv[0]}: {jsrv[1]}\n' + 'Error: no responds')
                     else:
                         details.append(f'\n{jsrv[0]}: {jsrv[1]}\n'  + resp.toBlock(beautify = True))
 
@@ -291,10 +323,15 @@ class InstallerForm(QMainWindow):
         self.ui.txtPort_proxy.setEnabled(check)
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
-        super().showEvent(event)
-
         def bindUi():
-            self.ui.lbHelplink = synode_ui.langs[synode_ui.lang]['blHelplink']
+            self.ui.gboxRegistry.setTitle(
+                synode_ui.langs[synode_ui.lang]['gboxRegistry'].format(market=synode_ui.market))
+
+            lb_help = synode_ui.langs[synode_ui.lang]['lbHelplink']
+            self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]['help_link']}">{lb_help}</a>.')
+
+            credits_link = 'https://odys-z.github.io/products/album/credits.html'
+            self.ui.lblink.setText(f'Portfolio is based on <a href="{credits_link}">open source projects</a>.')
 
         def bindInitial(root: str):
             print(f'loading {root}')
@@ -314,22 +351,14 @@ class InstallerForm(QMainWindow):
             self.enableServInstall()
 
             if self.cli.isinstalled() and self.cli.hasrun():
-                # self.gen_qr()
-                # ip = InstallerCli.reportIp()
-                # port = self.cli.settings.port
                 self.gen_qr()
-                # ip, port = self.getProxiedIp(self.cli.settings)
-                #
-                # InstallerForm.set_qr_label(self.ui.lbQr,
-                #                            getJservOption(self.cli.registry.config.synid,
-                #                                           f'{ip}:{port}',
-                #                                           self.cli.registry.config.https))
 
             self.updateChkReverse(self.cli.settings.reverseProxy)
 
+        super().showEvent(event)
+
         if event.type() == QEvent.Type.Show:
             bindUi()
-
             bindInitial(self.root_path)
 
             def setVolumePath():
@@ -343,9 +372,23 @@ class InstallerForm(QMainWindow):
                 self.ui.txtResroot.setText(self.root_path)
                 bindInitial(self.root_path)
 
+            def verifyDomui():
+                pass
+
+            def saveDomain():
+                err = verifyDomui()
+                if err is None:
+                    self.cli.registry.config.org.market = synode_ui.market
+                    self.cli.registry.config.org.market = synode_ui.market
+                else:
+                    err_msg("There are invalid value for domain settings.", err)
+
+            self.ui.bSignup.clicked.connect(self.signup_demo)
+
             self.ui.txtSynode.setEnabled(False)
             self.ui.bVolpath.clicked.connect(setVolumePath)
-            self.ui.bRoot.clicked.connect(reloadRespath)
+            self.ui.bRegfolder.clicked.connect(reloadRespath)
+            self.ui.bDomain.clicked.connect(saveDomain)
 
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
@@ -366,19 +409,14 @@ class InstallerForm(QMainWindow):
                     return u
         print(registry.config.toBlock())
         cfg = registry.config
-        self.ui.txtUserId.setText(cfg.admin)
-        self.ui.txtUserId.setText(cfg.admin)
+        self.ui.txtAdminId.setText(cfg.admin)
+        self.ui.txtAdminId.setText(cfg.admin)
 
         pswd = findUser(registry.synusers, cfg.admin).pswd
         self.ui.txtPswd.setText(pswd)
         self.ui.txtPswd2.setText(pswd)
         self.ui.txtSynode.setText(cfg.synid)
         self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(cfg.syncIns))
-
-        credits_link = 'https://odys-z.github.io/products/album/credits.html'
-        help_install_link = 'https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps'
-        self.ui.lblink.setText(f'Portfolio is based on <a href="{credits_link}">open source projects</a>.')
-        self.ui.lbHelplink.setText(f'<a href="{help_install_link}">Help</a>.')
 
     def bindSettings(self, settings: AppSettings):
         self.ui.txtPort.setText(str(settings.port))

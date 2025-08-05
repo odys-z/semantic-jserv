@@ -363,6 +363,7 @@ public class Syngleton extends JSingleton {
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
 			for (SyncUser admin : synusers) {
+				// TODO password in json should be cipher
 				Insert i = defltScxt.insert(um.tbl, usr)
 						.nv(usrm.org, admin.orgId())
 						.nv(usrm.pk, admin.uid())
