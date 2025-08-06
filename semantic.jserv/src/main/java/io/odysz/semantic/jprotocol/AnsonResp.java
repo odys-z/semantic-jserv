@@ -1,5 +1,7 @@
 package io.odysz.semantic.jprotocol;
 
+import static io.odysz.common.LangExt.ix;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -108,17 +110,31 @@ public class AnsonResp extends AnsonBody {
 	 * Find resulved value in data, similar to {@link SemanticObject#resulve(String, String)}. 
 	 * 
 	 * @since 1.4.25
+	 * @since 1.5.16 returns a list, see {@link #resulvedata(String, String, int)}
 	 * @param tbl
 	 * @param autok
 	 * @return resulved auto-key
 	 */
-	public String resulvedata(String tbl, String autok) {
+	@SuppressWarnings("unchecked")
+	public ArrayList<String> resulvedata(String tbl, String autok) {
 		if (!isblank(data())) {
 			SemanticObject reslv = ((SemanticObject)data().get("resulved")); 
 			if (reslv != null)
-				return (String) ((SemanticObject) reslv.get(tbl)).get(autok);
+				return (ArrayList<String>) ((SemanticObject) reslv.get(tbl)).get(autok);
 		}
 		return null;
+	}
+
+	/**
+	 * @since 1.5.16
+	 * @param tbl
+	 * @param autok
+	 * @param x
+	 * @return the auto-key
+	 */
+	public String resulvedata(String tbl, String autok, int x) {
+		ArrayList<String> lst = resulvedata(tbl, autok);
+		return ix(lst, x);
 	}
 	
 	/**

@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import org.xml.sax.SAXException;
-
 import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
@@ -155,7 +153,7 @@ public class Vec3 extends ServPort<UserReq> {
 		// TODO & FIXME you can create a context buffer here
 		try {
 			return new DATranscxt(connId);
-		} catch (SQLException | SAXException | IOException e) {
+		} catch (Exception e) {
 			throw new SemanticException("Can't create DATranscxt. Caused by: " + e.getMessage());
 		}
 	}

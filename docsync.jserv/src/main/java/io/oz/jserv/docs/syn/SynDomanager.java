@@ -122,7 +122,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 	
 	/**
-	 * Sing up, then start a synssion to the peer, {@code peeradmin}.
+	 * Sing up, then start a synssion to {@code peeradmin}, the admin peer.
 	 * 
 	 * @param adminjserv jserv root path, must be null for testing
 	 * locally without login to the service

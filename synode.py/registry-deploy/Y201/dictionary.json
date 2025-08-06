@@ -12,7 +12,7 @@
     "orgId": "ura",
     "orgName": "URA",
     "orgType": "nation",
-    "market":  "test",
+    "market":  "TEST",
     "webroot": "$WEBROOT_201",
     "homepage": "",
     "album0":  "album-test"

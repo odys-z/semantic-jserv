@@ -110,6 +110,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	IUser jrobot = new JRobot();
 
 	/**
+	 * @deprecated this is not recommended and is replacing by {@link #init()}.
 	 * Initialize semantext, schedule tasks,
 	 * load root key from tomcat context.xml.
 	 * To configure root key in tomcat, in context.xml, <pre>
@@ -158,6 +159,19 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
         		0, 1, TimeUnit.MINUTES);
 	}
 
+	/**
+	 * AnSession now can be initialized and created at the same time.
+	 * @param sysconn, e.g. by {@link Connects#defltConn()}
+	 * @return new instance that's initialized.
+	 * @throws Exception 
+	 * @since 1.5.18
+	 */
+	public static AnSession init(String session_connid) throws Exception {
+		DATranscxt defltScxt = new DATranscxt(session_connid);
+		init(defltScxt);
+		return new AnSession();
+	}
+	
 	/**Stop all threads that were scheduled by SSession.
 	 * @param msDelay delay in milliseconds.
 	 */
