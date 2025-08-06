@@ -314,7 +314,7 @@ public class Syngleton extends JSingleton {
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 		AnSession.init(defltScxt);
 
-		DATranscxt.initConfigs(cfg.synconn,// DATranscxt.loadSemanticsXml(cfg.synconn),
+		DATranscxt.initConfigs(cfg.synconn,
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 		DatasetCfg.init(configFolder);
 	}
