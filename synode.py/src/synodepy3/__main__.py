@@ -2,6 +2,7 @@ import os
 import sys
 
 from anclient.io.odysz.jclient import Clients
+from typing_extensions import deprecated
 
 import io as std_io
 from typing import Optional, cast
@@ -88,7 +89,7 @@ class InstallerForm(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_InstallForm()
         self.ui.setupUi(self)
-        self.root_path = 'registry'
+        self.registry_i = 'registry'
         self.cli = InstallerCli()
 
     @staticmethod
@@ -322,6 +323,12 @@ class InstallerForm(QMainWindow):
         self.ui.txtWebport_proxy.setEnabled(check)
         self.ui.txtPort_proxy.setEnabled(check)
 
+    def updateRegistry(self):
+        '''
+        Update cli.registry, re-load, if volume/dictionary.json is found, or load from ./registry-i/dictinary.json.
+        :return: path of loaded json file, without filename
+        '''
+
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def bindUi():
             self.ui.gboxRegistry.setTitle(
@@ -333,6 +340,7 @@ class InstallerForm(QMainWindow):
             credits_link = 'https://odys-z.github.io/products/album/credits.html'
             self.ui.lblink.setText(f'Portfolio is based on <a href="{credits_link}">open source projects</a>.')
 
+        @deprecated # since 0.7.6
         def bindInitial(root: str):
             print(f'loading {root}')
             self.cli = InstallerCli()
@@ -359,36 +367,31 @@ class InstallerForm(QMainWindow):
 
         if event.type() == QEvent.Type.Show:
             bindUi()
-            bindInitial(self.root_path)
+            # bindInitial(self.registry_i)
+            self.reloadRegistry()
 
             def setVolumePath():
                 volpath = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
-                if volpath == self.root_path:
+                if volpath == self.registry_i:
                     return err_msg("Volume path cannot be the same as registry resource's root path.")
                 self.ui.txtVolpath.setText(volpath)
 
+            @deprecated
             def reloadRespath():
-                self.root_path = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
-                self.ui.txtResroot.setText(self.root_path)
-                bindInitial(self.root_path)
-
-            def verifyDomui():
-                pass
-
-            def saveDomain():
-                err = verifyDomui()
-                if err is None:
-                    self.cli.registry.config.org.market = synode_ui.market
-                    self.cli.registry.config.org.market = synode_ui.market
-                else:
-                    err_msg("There are invalid value for domain settings.", err)
+                '''
+                deprecated since 0.7.6
+                :return:
+                '''
+                self.registry_i = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
+                self.ui.txtResroot.setText(self.registry_i)
+                bindInitial(self.registry_i)
 
             self.ui.bSignup.clicked.connect(self.signup_demo)
 
             self.ui.txtSynode.setEnabled(False)
             self.ui.bVolpath.clicked.connect(setVolumePath)
-            self.ui.bRegfolder.clicked.connect(reloadRespath)
-            self.ui.bDomain.clicked.connect(saveDomain)
+            self.ui.bRegfolder.clicked.connect(reloadRespath) # disabled 0.7.6
+            self.ui.bLoadPeers.clicked.connect(self.updatePeers)   # disabled 0.7.6
 
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
@@ -402,6 +405,28 @@ class InstallerForm(QMainWindow):
             else:
                 self.ui.bWinserv.setEnabled(False)
 
+    def reloadRegistry(self):
+        '''
+        Reload local dictionary.json.
+        Try load volume/dictionary.json first.
+        If volume/dictionary doesn't exists, then load registyr-i/dictonary.json.
+        :return: loaded path
+        '''
+        self.registry_i = './registry-i'
+        p = self.cli.loadRegistry()
+        Utils.logi("[reloadRegistry] {0}", p)
+        self.bindIdentity(self.cli.registry)
+        self.bind_peerJservs()
+
+    def bind_peerJservs(self):
+        '''
+        If volume/dictionary.json exists, update with config.peers;
+        else if WEB-INF/settings.json exists, update with settings.jservs;
+        else update with registry-i/dictionary.json/config.peers
+        :return:
+        '''
+        pass
+
     def bindIdentity(self, registry: AnRegistry):
         def findUser(usrs: [SyncUser], usrid):
             for u in usrs:
@@ -410,11 +435,19 @@ class InstallerForm(QMainWindow):
         print(registry.config.toBlock())
         cfg = registry.config
         self.ui.txtAdminId.setText(cfg.admin)
-        self.ui.txtAdminId.setText(cfg.admin)
 
+        # 0.7.5
+        # pswd = findUser(registry.synusers, cfg.admin).pswd
+        # self.ui.txtPswd.setText(pswd)
+        # self.ui.txtPswd2.setText(pswd)
+        # self.ui.txtSynode.setText(cfg.synid)
+        # self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(cfg.syncIns))
+
+        # 0.7.6
+        self.ui.txtOrgid.setText(cfg.org.orgId)
+        self.ui.txtDomain.setText(cfg.domain)
         pswd = findUser(registry.synusers, cfg.admin).pswd
-        self.ui.txtPswd.setText(pswd)
-        self.ui.txtPswd2.setText(pswd)
+        self.ui.txtDompswd.setText(pswd)
         self.ui.txtSynode.setText(cfg.synid)
         self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(cfg.syncIns))
 

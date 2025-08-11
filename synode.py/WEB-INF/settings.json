@@ -10,7 +10,7 @@
   "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json"],
   "webrootLocal": "http://suppress.warning:8900",
   "vol_name": "VOLUME_HOME",
-  "volume": "C:/Users/Alice/github/semantic-jserv/jserv-album/vol2",
+  "volume": "../vol",
   "jservs": {
     "X29": "http://127.0.0.1:8964/jserv-album",
     "Y201": "http://127.0.0.1:8965/jserv-album"},

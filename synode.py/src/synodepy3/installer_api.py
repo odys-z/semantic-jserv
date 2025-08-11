@@ -14,6 +14,8 @@ from typing import cast, Callable
 
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt
+from typing_extensions import deprecated
+
 from src.io.oz.srv import WebConfig
 
 from src.io.odysz.semantic.jprotocol import MsgCode
@@ -213,8 +215,10 @@ class InstallerCli:
         self.settings.Jservs(jsrvs)
         return self
 
+    @deprecated
     def loadInitial(self, res_path: str = None):
         """
+        deprecated since 0.7.6
         If this is called at the first time (WEB-INF/settings.json[root-key] == null),
         load from res_path/setings.json,
         else load from WEB-INF/settings.json.
@@ -246,6 +250,14 @@ class InstallerCli:
             self.settings = cast(AppSettings, Anson.from_file(res_settings))
 
         return self.settings
+
+    def loadRegistry(self):
+        '''
+        Load registry. Try settings.json/volume/dictionary.json fist,
+        otherwise load registry_i/dictionary.json.
+        :return: the actual path, without filename
+        '''
+        return 'TODO'
 
     @staticmethod
     def loadRegistry(res_path: str):

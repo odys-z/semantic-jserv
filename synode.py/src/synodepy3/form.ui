@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>960</width>
-    <height>438</height>
+    <height>447</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -61,7 +61,7 @@
      </sizepolicy>
     </property>
     <property name="title">
-     <string>  Synchronization Domain Identity - Market TEST</string>
+     <string>Synchronization Domain Identity - Market TEST</string>
     </property>
     <widget class="QLabel" name="lbCommunity">
      <property name="geometry">
@@ -216,6 +216,9 @@
      </property>
     </widget>
     <widget class="QPushButton" name="bRegfolder">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>760</x>
@@ -259,6 +262,9 @@
      </property>
     </widget>
     <widget class="QLineEdit" name="txtResroot">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>100</x>
@@ -325,7 +331,7 @@
       <string>Domain:</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="txtCommunity">
+    <widget class="QLineEdit" name="txtOrgid">
      <property name="enabled">
       <bool>true</bool>
      </property>
@@ -421,9 +427,9 @@
       <string>Ctrl+S</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="txtDomain_2">
+    <widget class="QLineEdit" name="txtDompswd">
      <property name="enabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="geometry">
       <rect>
@@ -519,7 +525,7 @@
     <property name="geometry">
      <rect>
       <x>540</x>
-      <y>360</y>
+      <y>370</y>
       <width>91</width>
       <height>30</height>
      </rect>
@@ -538,7 +544,7 @@
     <property name="geometry">
      <rect>
       <x>650</x>
-      <y>360</y>
+      <y>370</y>
       <width>301</width>
       <height>30</height>
      </rect>
@@ -642,7 +648,7 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>370</y>
+      <y>380</y>
       <width>381</width>
       <height>20</height>
      </rect>
@@ -1090,11 +1096,11 @@
   <tabstop>bLogin</tabstop>
   <tabstop>txtResroot</tabstop>
   <tabstop>bRegfolder</tabstop>
-  <tabstop>txtCommunity</tabstop>
+  <tabstop>txtOrgid</tabstop>
   <tabstop>bCommDropdown</tabstop>
   <tabstop>txtDomain</tabstop>
   <tabstop>bCommDropdown_2</tabstop>
-  <tabstop>txtDomain_2</tabstop>
+  <tabstop>txtDompswd</tabstop>
   <tabstop>bLoadPeers</tabstop>
   <tabstop>jservLines</tabstop>
   <tabstop>txtimeout</tabstop>

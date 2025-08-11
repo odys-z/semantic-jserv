@@ -1,6 +1,6 @@
 ### What to: configure version number by setup.py, override by tasks.py.
 #
-# invoke make: export envs and write to __version__.py & *.bat -> run inst_<srv>_byname(py-var: srvname)
+# invoke make: export envs and write to __version__.py & *.bat -> run inst_<srv>_byname(py-peer: srvname)
 # py -m build: use default vers, write to __version__.py & *.bat -> ..
 
 ### How to

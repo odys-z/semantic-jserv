@@ -1,0 +1,30 @@
+{"type": "io.oz.syn.AnRegistry",
+ "config": {
+   "synid": "node-x",
+   "domain": "zsu",
+   "admin": "admin",
+   "sysconn": "sys",
+   "synconn": "docsyn",
+   "debug": false,
+
+  "org": {
+    "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
+    "orgId": "test.org",
+    "orgName": "TEST 0.7.6",
+    "orgType": "market",
+    "market":  "TEST",
+    "webroot": "$WEBROOT",
+    "homepage": "",
+    "album0":  "album-test"
+  },
+
+  "syncIns": 0,
+	
+  "peers": [
+    {"synid": "node0", "org": "org-0", "mac": "#org-0.node0", "nyq": 0, "domain": "zsu", "syn_uid": "node0,node0"},
+    {"synid": "node1", "org": "org-0", "mac": "#org-0.node1", "nyq": 0, "domain": "zsu", "syn_uid": "node1,node1"},
+    {"synid": "node2", "org": "org-0", "mac": "#org-0.node2", "nyq": 0, "domain": "zsu", "syn_uid": "node2,node2"} ]
+ },
+
+ "synusers": [ {"userId": "admin", "pswd": "8964", "iv": null, "org": "org-0", "domain": "zsu"} ]
+}
