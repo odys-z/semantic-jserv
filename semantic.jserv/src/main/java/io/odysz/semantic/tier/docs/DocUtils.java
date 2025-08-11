@@ -139,13 +139,13 @@ public class DocUtils {
 	 * @param conn
 	 * @return decode then concatenated absolute path, for file accessing.
 	 * @see EnvPath#decodeUri(String, String)
-	 */
 	public static String resolvePrivRoot(String uri, ExpDocTableMeta meta, String conn) {
 		String extroot = ((ShExtFilev2) DATranscxt
 				.getHandler(conn, meta.tbl, smtype.extFilev2))
 				.getFileRoot();
 		return EnvPath.decodeUri(extroot, uri);
 	}
+	 */
 
 	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, ExpDocTableMeta meta)
 			throws TransException, SQLException {
