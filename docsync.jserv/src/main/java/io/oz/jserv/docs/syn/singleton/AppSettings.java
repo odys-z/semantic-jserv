@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.joinUrl;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
@@ -114,7 +115,9 @@ public class AppSettings extends Anson {
 			});
 		
 		if (!isblank(regists.conn()) && !eq(cfg.synconn, regists.conn()))
-			throw new SemanticException("Synode configuration's syn-conn dosen't match regists' conn id (which can be null), %s != %s.");
+			throw new SemanticException(
+				"Synode configuration's syn-conn dosen't match regists' conn id (which can be null), %s != %s.",
+				cfg.synconn, regists.conn());
 		
 		Syngleton.setupSyntables(cfg, regists.metas.values(),
 				webinf, config_xml, ".", rootkey, forceTest);
@@ -150,8 +153,8 @@ public class AppSettings extends Anson {
 
 	/**
 	 * @param cfg
-	 * @param jservss e. g. "X:https://host-ip:port/jserv-album Y:https://..."
-	 * @return 
+	 * @param jserv_alubm e.g. "jserv-album"
+	 * @return this
 	 * @throws TransException
 	 * @throws SQLException 
 	 */
@@ -185,10 +188,7 @@ public class AppSettings extends Anson {
 
 		IUser robot = DATranscxt.dummyUser();
 		try {
-			String servurl = f("http%s://%s:%s%s",
-					https ? "s" : "", ip, port == 0 ? 80 : port, 
-					isblank(jserv_album) ? "" :
-					jserv_album.startsWith("/") ? jserv_album : "/" + jserv_album);
+			String servurl = joinUrl(https, ip, port, jserv_album);
 
 			DATranscxt tb = new DATranscxt(synconn);
 			tb.update(synm.tbl, robot)
@@ -203,7 +203,6 @@ public class AppSettings extends Anson {
 			e.printStackTrace();
 			throw new TransException(e.getMessage());
 		}
-		
 	}
 	
 	/**
@@ -250,7 +249,7 @@ public class AppSettings extends Anson {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	private static void updatePeerJservs(String synconn, String domain, SynodeMeta synm,
+	public static void updatePeerJservs(String synconn, String domain, SynodeMeta synm,
 			String peer, String servurl) throws TransException, SQLException {
 		logi("[%s] Setting peer %s's jserv: %s", domain, peer, servurl);
 
@@ -287,9 +286,6 @@ public class AppSettings extends Anson {
 	 * [0] handler class name which implements {@link ISynodeLocalExposer}; [1:] path to private/host.json
 	 */
 	public String[] startHandler;
-
-	// @AnsonField(ignoreFrom=true)
-	// public String webrootLocal;
 
 	@AnsonField(ignoreFrom=true)
 	public String localIp;
@@ -343,7 +339,9 @@ public class AppSettings extends Anson {
 
 		FileInputStream inf = new FileInputStream(new File(abs_json));
 
-		AppSettings settings = (AppSettings) Anson.fromJson(inf); 
+		AppSettings settings = (AppSettings) Anson.fromJson(inf);
+		if (settings.jservs == null)
+			settings.jservs = new HashMap<String, String>();
 		settings.webinf = web_inf;
 		settings.json = abs_json;
 
@@ -365,6 +363,7 @@ public class AppSettings extends Anson {
 	
 	public AppSettings() {
 		installkey = "0123456789ABCDEF";
+		jservs = new HashMap<String, String>();
 	}
 	
 	/**
@@ -419,10 +418,12 @@ public class AppSettings extends Anson {
 
 		String $vol_home = "$" + settings.vol_name;
 		logi("[INSTALL-CHECK] load dictionary configuration %s/* ...", $vol_home);
-		YellowPages.load(FilenameUtils.concat(
+		YellowPages.load(EnvPath.concat(
 				new File(".").getAbsolutePath(),
 				webinf,
-				EnvPath.replaceEnv($vol_home)));
+				// 0.7.5 EnvPath.replaceEnv($vol_home)));
+				// 0.7.6
+				$vol_home));
 
 		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 		
@@ -460,10 +461,18 @@ public class AppSettings extends Anson {
 		return startHandler[1];
 	}
 
+	/**
+	 * @param https
+	 * @return http(s)://ip:port, while ip, port = proxy or local ip, port
+	 */
 	public String getJservroot(boolean https) {
 		return this.reverseProxy ? this.jservProxy(https) : this.jserv(https);
 	}
 
+	/**
+	 * @param https
+	 * @return http(s)://ip:web-port, while ip, port = proxy or local ip, port
+	 */
 	public String getLocalWebroot(boolean https) {
 		return f("%s://%s", https ? "https" : "http",
 				this.reverseProxy ? this.webrootProxy(https) : this.webrootLocal(https));

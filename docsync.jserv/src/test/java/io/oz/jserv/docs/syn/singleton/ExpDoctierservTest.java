@@ -33,6 +33,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.JsonOpt;
+import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
@@ -140,8 +141,8 @@ public class ExpDoctierservTest {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("deprecation")
-	public static void runDoctiers(int caseid, int[] nodex,
-			boolean[] waitClients, boolean[] canPush, boolean[] pushDone) throws Exception {
+	public static void runDoctiers(int caseid, int[] nodex, boolean[] waitClients,
+			boolean[] canPush, boolean[] pushDone) throws Exception {
 
 		int section = 0;
 		
@@ -150,7 +151,7 @@ public class ExpDoctierservTest {
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
 
-			Syngleton.cleanDomain(jetties[i].syngleton.syncfg);
+			SynodetierJoinTest.cleanDomain(jetties[i].syngleton.syncfg);
 
 			cleanPhotos(docm, jetties[i].syngleton().domanager(zsu).synconn);
 
@@ -204,7 +205,7 @@ public class ExpDoctierservTest {
 
 		logrst("Bring up dev-x0 and delete", ++section);
 		// 00 delete
-		Clients.init(jetties[X].myjserv());
+		Clients.init(jetties[X].jserv());
 
 		Dev devx0 = devs[X_0];
 		logrst(new String[] {"Deleting", devx0.res}, section, 1);
@@ -383,7 +384,7 @@ public class ExpDoctierservTest {
 			settings.rootkey = null;
 			settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
 
-			YellowPages.load("$" + settings.vol_name);
+			YellowPages.load(EnvPath.concat(webinf, "$" + settings.vol_name));
 			cfgs[i] = YellowPages.synconfig();
 
 			settings.setupdb(cfgs[i], "jserv-stub", webinf,
@@ -392,8 +393,7 @@ public class ExpDoctierservTest {
 			cleanPhotos(docm, cfgs[i].synconn);
 		
 			// clean and reboot
-			Syngleton.cleanDomain(cfgs[i]);
-			// Syngleton.cleanSynssions(cfgs[i]);
+			SynodetierJoinTest.cleanDomain(cfgs[i]);
 
 			// main()
 			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
@@ -454,7 +454,6 @@ public class ExpDoctierservTest {
 		assertEquals(isNull(paths) ? 0 : paths.length, pathpool.size());
 	}
 
-	@SuppressWarnings("deprecation")
 	public static String[] jservs() {
 		if (len(jetties) < 4 || jetties[0] == null)
 			throw new NullPointerException("Initialize first.");
@@ -462,7 +461,7 @@ public class ExpDoctierservTest {
 		String[] jrvs = new String[jetties.length];
 
 		for (int i = 0; i < jetties.length; i++) 
-			jrvs[i] = jetties[i].myjserv();
+			jrvs[i] = jetties[i].jserv();
 
 		return jrvs;
 	}

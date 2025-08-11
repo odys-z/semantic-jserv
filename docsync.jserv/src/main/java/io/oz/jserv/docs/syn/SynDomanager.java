@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
@@ -25,10 +26,13 @@ import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.Nyquence;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SyndomContext;
+import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
-import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
+import io.oz.jserv.docs.protocol.JServUrl;
+import io.oz.jserv.docs.syn.singleton.AppSettings;
+import io.oz.jserv.docs.syn.singleton.Syngleton.OnNetworkChange;
 import io.oz.syn.SynodeConfig;
 
 /**
@@ -81,8 +85,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	OnError errHandler;
 	
-	// final DATranscxt tb0;
-
 	public Nyquence lastn0(String peer) {
 		return expiredClientier == null || expiredClientier.xp == null ?
 				null : expiredClientier.xp.n0();
@@ -107,7 +109,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 
-	public SynDomanager(SynodeConfig c) throws Exception {
+	public SynDomanager(SynodeConfig c, AppSettings s) throws Exception {
 		super(c.mode, c.chsize, c.domain, c.synode(), c.synconn, c.debug);
 
 		this.org = c.org.orgId;
@@ -116,9 +118,9 @@ public class SynDomanager extends SyndomContext implements OnError {
 			Utils.warn("Error code: %s,\n%s", e.name(), String.format(r, (Object[])a));
 		};
 		
-		// tb0 = new DATranscxt(c.synconn);
-
 		admin = new SyncUser();
+		
+		this.jservComposer = new JServUrl(c.https, s.localIp, s.port);
 	}
 	
 	/**
@@ -168,17 +170,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return synssion(peer).xp.n0();
 	}
 
-//	public SynDomanager loadomainx() throws TransException, SQLException {
-//		Utils.logi("\n[ ♻.%s ] loading domain %s ...", synode, domain());
-//		
-//		SyncUser robot = new SyncUser(synode, "pswd: local null", synode)
-//				.deviceId(synode);
-//
-//		loadNvstamp(tb0, robot);
-//		
-//		return this;
-//	}
-	
 	/**
 	 * Update (synchronize) this domain, peer by peer.
 	 * Can be called by request handler and timer.
@@ -256,6 +247,82 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
+	 * Download domain jservs.
+	 * Work without concurrency lock: load jservs from hub.
+	 * <p>This method only update jservs from hub, for no need to update jserv from a reachable peer.</p>
+	 * @param syntb
+	 * @return this
+	 * @since 0.7.6
+	 */
+	public SynDomanager updateJservs(DATranscxt syntb) {
+		if (sessions != null)
+		for (SynssionPeer peer : sessions.values()) {
+			if (eq(peer.peer, synode) || peer.mymode != SynodeMode.hub)
+					continue;
+
+			try {
+				peer.checkLogin("Updating jservs", admin);
+					
+				HashMap<String, Object> jservs = peer.queryJservs();
+				for (String n : jservs.keySet()) {
+					if (!eq(synode, n)) {
+						AppSettings.updatePeerJservs(synconn, domain, synm, n, (String) jservs.get(n));
+						peer.peerjserv = (String) jservs.get(n);
+					}
+				}
+				break;
+			} catch (IOException e) {
+				Utils.logT("[%s] Updating jservs from %s failed. Details:\n%s",
+						domain, peer, e.getMessage());
+			} catch (TransException | AnsonException | SsException | SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	
+		return this;
+	}
+
+	/**
+	 * @param nextip 
+	 * @param cfg 
+	 * @return this
+	 * @since 0.7.6
+	 */
+	public String submitJservs(String currentIp, String... nextip) {
+		String ip = isNull(nextip) ? AppSettings.getLocalIp(2) : _0(nextip);
+		if (!eq(currentIp, ip)) {
+			try {
+				if (sessions == null)
+					loadSynclients(new DATranscxt(synconn));
+				for (SynssionPeer peer : sessions.values()) {
+					if (eq(peer.peer, synode) || peer.mymode != SynodeMode.hub)
+							continue;
+
+					try {
+						peer.checkLogin("Submitting jservs", admin);
+							
+						String myjserv = this.jservComposer.ip(ip).jserv();
+						AppSettings.updatePeerJservs(synconn, domain, synm, synode, myjserv);
+						peer.submitJserv(myjserv);
+						
+						if (this.ipChangeHandler != null)
+							ipChangeHandler.on(this.jservComposer);
+						break;
+					} catch (IOException e) {
+						Utils.logT("[%s:%s] Submitting jservs to %s failed. Details:\n%s",
+								domain, synode, peer, e.getMessage());
+					} catch (TransException | AnsonException | SsException | SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return ip;
+	}
+
+	/**
 	 * Load {@link SyndomContext#synm}.tbl and build all SynssionPeers to every peers.
 	 * 
 	 * SynssionPeer.xp should be null.
@@ -305,58 +372,30 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
-	 * Login to peers and synchronize.
-	 * @param docuser
-	 * @param onok 
-	 * @return this
-	 * @throws AnsonException
-	 * @throws SsException
-	 * @throws IOException
-	 * @throws TransException
-	 * @throws InterruptedException 
-	public SynDomanager openUpdateSynssions(SyncUser docuser, OnDomainUpdate... onok) {
-
-		for (SynssionPeer peer : sessions.values()) {
-			try {
-				if (eq(peer.peer, synode))
-						continue;
-				peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
-				peer.update2peer((lockby) -> Math.random());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (!isNull(onok))
-			onok[0].ok(domain(), synode, null);
-
-		return this;
-	}
-	 */
-
-	/**
 	 * 
 	 * @param docuser
 	 * @param onok
 	 * @return this
-	 * @throws SemanticException
 	 * @throws AnsonException
 	 * @throws SsException
 	 * @throws IOException
+	 * @throws TransException 
 	 */
-	public SynDomanager openSynssions(SyncUser docuser, OnDomainUpdate... onok)
-			throws SemanticException, AnsonException, SsException, IOException {
+	public SynDomanager openSynssions(OnDomainUpdate... onok)
+			throws AnsonException, SsException, IOException, TransException {
 		if (sessions != null)
 		for (SynssionPeer peer : sessions.values()) {
-			if (eq(peer.peer, synode) || peer.client != null)
+			// if (eq(peer.peer, synode) || peer.client != null)
+			if (eq(peer.peer, synode))
 					continue;
 
-			if (peer.client == null || !peer.client.isSessionValid()) {
-				Utils.logT(new Object(){},
-						"Opening domain %s, logging into: %s, jserv: %s",
-						domain, peer.peer, peer.peerjserv);
-				peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
-			}
+			peer.checkLogin("Opening domain", admin);
+//			if (peer.client == null || !peer.client.isSessionValid()) {
+//				Utils.logT(new Object(){},
+//						"Opening domain %s, logging into: %s, jserv: %s",
+//						domain, peer.peer, peer.peerjserv);
+//				peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
+//			}
 		}
 
 		if (!isNull(onok))
@@ -365,7 +404,15 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 
-	public SynDomanager updateSynssions(SyncUser docuser, OnDomainUpdate... onok)
+	/**
+	 * @deprecated only for test
+	 * Start an exchange / synchronize session.
+	 * @param docuser
+	 * @param onok
+	 * @return this
+	 * @throws ExchangeException
+	 */
+	public SynDomanager updateSynssions(OnDomainUpdate... onok)
 			throws ExchangeException {
 
 		for (SynssionPeer peer : sessions.values()) {
@@ -402,4 +449,14 @@ public class SynDomanager extends SyndomContext implements OnError {
 		}
 	}
 
+	/** @since 0.7.6 */
+	public final JServUrl jservComposer;
+
+	/** @since 0.7.6 */
+	OnNetworkChange ipChangeHandler;
+	/** @since 0.7.6 */
+	public SynDomanager ipChangeHandler(OnNetworkChange handler) {
+		this.ipChangeHandler = handler;
+		return this;
+	}
 }

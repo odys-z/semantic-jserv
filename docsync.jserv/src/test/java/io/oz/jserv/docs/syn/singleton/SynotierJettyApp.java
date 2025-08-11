@@ -9,8 +9,8 @@ import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 
 import java.io.File;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
@@ -21,8 +21,10 @@ import org.eclipse.jetty.ee8.servlet.FilterMapping;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 
 import io.odysz.common.Configs;
+import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
@@ -71,6 +73,7 @@ import io.oz.syn.YellowPages;
 public class SynotierJettyApp {
 	public static final String servpath = "/jserv-album";
 	
+	public static final String webinf = "./src/test/res/WEB-INF";
 	public static final String config_xml = "config.xml";
 	public static final String settings_json = "settings.json";
 
@@ -79,7 +82,6 @@ public class SynotierJettyApp {
 
 	public static final String syntity_json = "syntity.json";
 	public static final String clientUri = "/jetty";
-	public static final String webinf = "./src/test/res/WEB-INF";
 	public static final String testDir   = "./src/test/res/";
 	public static final String volumeDir = "./src/test/res/volume";
 
@@ -91,11 +93,7 @@ public class SynotierJettyApp {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-	/**
-	 * @deprecated should only used for tests - not updated by peers.
-	 * @return local jserv
-	 */
-	public String myjserv() {
+	public String jserv() {
 		return this.syngleton.settings.jserv(this.syngleton.synode());
 	}
 
@@ -103,8 +101,7 @@ public class SynotierJettyApp {
 	}
 	
 	/**
-	 * Response to SCM stop commands. This is a stub and won't work as
-	 * the method is called in different process than the main process.
+	 * Response to Windows SCM stop commands.
 	 * 
 	 * @param args
 	 * @throws Exception
@@ -148,25 +145,31 @@ public class SynotierJettyApp {
 			return null;
 		}
 	}
-	
+
 	/**
-	 * Expose locally
+	 * Bring up thread to check network changes and expose jserv locally.
 	 * @return this
 	 */
 	SynotierJettyApp afterboot(AppSettings settings) {
+		syngleton.asybmitJserv(settings.localIp, (jserv) -> {
+
+		logi("IP %s : %s", jserv.ip, DateFormat.formatime(new Date()));
+
 		if (!isNull(settings.startHandler)) {
 			logi("Exposing locally by %s, %s ...", (Object[]) settings.startHandler);
 			try {
+				settings.localIp = jserv.ip;
+
 				((ISynodeLocalExposer)Class
 					.forName(settings.startHandler[0])
 					.getDeclaredConstructor()
 					.newInstance())
-					.onExpose(settings, this.syngleton.syncfg.domain, settings.jserv(this.syngleton.synode()), this.syngleton.syncfg.https);
+					.onExpose(settings, this.syngleton.syncfg.domain, this.syngleton.synode(), this.syngleton.syncfg.https);
 			} catch (Exception e) {
 				warn("Exposing local resources failed!");
 				e.printStackTrace();
 			}
-		}
+		}});
 
 		return this;
 	}
@@ -212,7 +215,7 @@ public class SynotierJettyApp {
 
 		String $vol_home = "$" + settings.vol_name;
 		
-		YellowPages.load($vol_home);
+		YellowPages.load(EnvPath.concat(webinf, $vol_home));
 		SynodeConfig cfg = YellowPages.synconfig();
 		if (cfg.mode == null)
 			cfg.mode = SynodeMode.peer;
@@ -231,8 +234,8 @@ public class SynotierJettyApp {
 		AppSettings.updateOrgConfig(cfg, settings);
 		
 		return createSyndoctierApp(cfg, settings,
-							((ArrayList<SyncUser>) YellowPages.robots()).get(0),
-							webinf, config_xml, f("%s/%s", $vol_home, "syntity.json"))
+					((ArrayList<SyncUser>) YellowPages.robots()).get(0),
+					webinf, config_xml, f("%s/%s", $vol_home, "syntity.json"))
 
 				.start(isNull(oe) ? () -> System.out : oe[0],
 					  !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
@@ -257,8 +260,8 @@ public class SynotierJettyApp {
 	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, AppSettings settings,
 			SyncUser admin, String webinf, String config_xml, String syntity_json) throws Exception {
 
-		String synid = cfg.synode();
-		String sycon = cfg.synconn;
+		String synid  = cfg.synode();
+		String sync = cfg.synconn;
 
 		SynotierJettyApp synapp = SynotierJettyApp
 						.instanserver(webinf, cfg, settings, config_xml)
@@ -268,12 +271,10 @@ public class SynotierJettyApp {
 	
 		Syntities regists = Syntities.load(webinf, syntity_json, 
 				(synreg) -> {
-					throw new SemanticException(
-						"TODO %s (configure an entity table with meta type)",
-						synreg.table);
+					throw new SemanticException("TODO %s (configure an entity table with meta type)", synreg.table);
 				});	
 
-		DBSynTransBuilder.synSemantics(new DATranscxt(sycon), sycon, synid, regists);
+		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
 		return registerPorts(synapp, cfg.synconn,
 				new AnSession(), new AnQuery(), new AnUpdate(),
@@ -377,10 +378,14 @@ public class SynotierJettyApp {
 	    AnsonMsg.understandPorts(SynDocollPort.docoll);
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
-
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
-	
-    	synapp.server = new Server(new InetSocketAddress("0.0.0.0", settings.port));
+    	synapp.server = new Server();
+
+    	ServerConnector jconn = new ServerConnector(synapp.server);
+    	jconn.setHost("0.0.0.0");
+    	jconn.setPort(settings.port);
+    	jconn.setIdleTimeout((long) (settings.connIdleSnds == 0.0 ? 30000 : settings.connIdleSnds * 1000));
+    	synapp.server.addConnector(jconn);
 
 	    return synapp;
 	}

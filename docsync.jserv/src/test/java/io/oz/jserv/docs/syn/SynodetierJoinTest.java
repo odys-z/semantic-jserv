@@ -1,20 +1,20 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.repeat;
 import static io.odysz.common.Utils.waiting;
 import static io.odysz.semantic.syn.Docheck.ck;
 import static io.odysz.semantic.syn.Docheck.printChangeLines;
 import static io.odysz.semantic.syn.Docheck.printNyquv;
+import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.webinf;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
-import static io.oz.jserv.docs.syn.Dev.docm;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -37,10 +37,17 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.SynChangeMeta;
+import io.odysz.semantic.meta.SynSubsMeta;
+import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SyntityMeta;
+import io.odysz.semantic.syn.DBSynTransBuilder;
 import io.odysz.semantic.syn.Docheck;
 import io.odysz.semantic.syn.SynodeMode;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.Logic.op;
+import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
@@ -121,7 +128,7 @@ public class SynodetierJoinTest {
 
 		Configs.init(webinf);
 		Connects.init(webinf);
-		YellowPages.load("$VOLUME_HOME");
+		YellowPages.load(EnvPath.concat(webinf, "$VOLUME_HOME"));
 
 		ck = new Docheck[servs_conn.length];
 		
@@ -159,7 +166,7 @@ public class SynodetierJoinTest {
 			// Syngleton.cleanSynssions(config);
 
 			// DB is dirty when testing again
-			Syngleton.cleanDomain(config);
+			cleanDomain(config);
 
 			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson, true);
 
@@ -231,7 +238,6 @@ public class SynodetierJoinTest {
 		ck[Z].synodes(X, -1, Z);
 	}
 	
-	@SuppressWarnings("deprecation")
 	void joinby(boolean[] lights, int to, int by) throws Exception {
 		SynotierJettyApp hub = jetties[to];
 		SynotierJettyApp prv = jetties[by];
@@ -250,7 +256,7 @@ public class SynodetierJoinTest {
 
 			Utils.logi("%s Joining By %s\n''''''''''''''", hubmanger.synode, prvmanger.synode);
 
-			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.myjserv(), syrskyi, slava,
+			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 					(rep) -> { lights[by] = true; });
 			
 			break;
@@ -301,4 +307,28 @@ public class SynodetierJoinTest {
 		}
 	}
 
+	/**
+	 * @param cfg
+	 * @throws Exception
+	 */
+	public static void cleanDomain(SynodeConfig cfg)
+			throws Exception {
+		IUser usr = DATranscxt.dummyUser();
+
+		SynChangeMeta chgm = new SynChangeMeta (cfg.synconn);
+		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
+		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
+
+		DATranscxt.initConfigs(cfg.synconn, 
+				(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
+		DATranscxt tb0 = new DATranscxt(cfg.synconn);
+		
+		tb0.delete(chgm.tbl, usr)
+			.whereEq(chgm.domain, cfg.domain)
+			.post(tb0.delete(subm.tbl)
+					.where(op.isNotnull, subm.changeId, new ExprPart()))
+			.post(tb0.delete(xbfm.tbl)
+					.where(op.isNotnull, xbfm.changeId, new ExprPart()))
+			.d(tb0.instancontxt(cfg.synconn, usr));
+	}
 }

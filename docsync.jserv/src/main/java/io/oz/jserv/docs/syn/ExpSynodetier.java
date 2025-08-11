@@ -52,6 +52,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynDocRefMeta;
+import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
@@ -80,6 +81,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	final SynodeMode mode;
 
 	SynDomanager domanager0;
+	String localIp;
 	
 	public boolean debug;
 
@@ -136,7 +138,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 							"req.exblock.srcnode is identical to this synode's.");
 			}
 
-			if (A.initjoin.equals(a)) {
+			if (A.queryJservs.equals(a))
+				rsp = onQueryJservs(req, usr);
+
+			else if (A.initjoin.equals(a)) {
 				if (!eq(usr.orgId(), domanager0.org))
 					rsp = (SyncResp) deny(req.exblock).msg(f(
 							"User's org id, %s from %s, is not matched for joining %s. Domain: %s",
@@ -254,19 +259,21 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				Utils.logi("[%s] : Checking Syndomain ...", synid);
 
 			try {
-				// if (len(this.domanager0.sessions) == 0)
-				this.domanager0.loadSynclients(syntb);
+				domanager0.loadSynclients(syntb);
 
-				this.domanager0
-					.openSynssions(domanager0.admin);
+				// 0.7.6 Solution
+				// Get peer jservs from hub, save into synconn.syn_node.jserv.
+				// ISSUE: It's possible some nodes cannot access the hub but can only be told by a peer node.
+				localIp = this.domanager0.submitJservs(localIp);
+				domanager0.updateJservs(syntb);
+			
+				domanager0.openSynssions();
 
-				this.domanager0.updomains(
+				domanager0.updomains(
 					(dom, synode, peer, xp) -> {
 						if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
 								synid, dom, domanager0.n0(), domanager0.stamp());
-					});//, (synlocker) -> Math.random());
-
-//				reschedule(0);
+					});
 			} catch (ExchangeException e) {
 				// e. g. login failed, try again
 				if (debug) e.printStackTrace();
@@ -361,7 +368,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 */
 	public SyncResp onQueryRef2Peer(SyncReq req, DocUser usr)
 			throws SQLException, TransException {
-		// let's brutally table by table
+		// let's brutally resolve refs table by table
 		SynDocRefMeta refm = domanager0.refm;
 		String conn = Connects.uri2conn(req.uri());
 		AnResultset rs = (AnResultset) st
@@ -406,6 +413,31 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			return resp.docrefs(doctbl, refs);
 		}
 
+		return resp;
+	}
+
+	/**
+	 * @since 0.2.6
+	 * @param req
+	 * @param usr
+	 * @return resp
+	 * @throws SQLException 
+	 * @throws TransException 
+	 */
+	private SyncResp onQueryJservs(SyncReq req, DocUser usr) throws TransException, SQLException {
+		SynodeMeta m = domanager0.synm;
+		AnResultset rs = (AnResultset) st
+				.batchSelect(m.tbl)
+				.col(m.jserv, m.synoder)
+				.whereEq(m.domain, domanager0.domain())
+				.limit(1)
+				.rs(st.instancontxt(domanager0.synconn, usr))
+				.rs(0);
+
+		SyncResp resp = new SyncResp(domain);
+		resp.data(rs.map(m.pk,
+				(rows) -> rows.getString(m.jserv),
+				(rows) -> !eq(req.exblock.srcnode, rows.getString(m.pk))));
 		return resp;
 	}
 

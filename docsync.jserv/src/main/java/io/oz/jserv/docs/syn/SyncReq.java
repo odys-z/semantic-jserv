@@ -45,6 +45,8 @@ public class SyncReq extends UserReq implements IBlock {
 		 */
 		public static final String queryRef2me = "r/docref";
 
+		public static final String queryJservs = "r/jservs";
+
 		/**
 		 * @since 0.2.5
 		 */

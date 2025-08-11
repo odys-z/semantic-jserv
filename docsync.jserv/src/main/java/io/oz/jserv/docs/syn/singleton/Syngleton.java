@@ -12,6 +12,7 @@ import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqlitables;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -24,6 +25,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jserv.JSingleton;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.AutoSeqMeta;
@@ -47,9 +49,9 @@ import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
-import io.odysz.transact.sql.parts.Logic.op;
-import io.odysz.transact.sql.parts.condition.ExprPart;
+import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DocOrgMeta;
+import io.oz.jserv.docs.protocol.JServUrl;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -60,6 +62,19 @@ import io.oz.syn.SynodeConfig;
  * @since 0.2.0
  */
 public class Syngleton extends JSingleton {
+	/**
+	 * @since 0.2.5
+	 */
+	@FunctionalInterface
+	public interface OnNetworkChange {
+		/**
+		 * On ip change event.
+		 * @param nextIp
+		 */
+		public void on(JServUrl jserv);
+	}
+
+
 
 	/**
 	 * Call
@@ -145,7 +160,7 @@ public class Syngleton extends JSingleton {
 		
 		if (rs.next()) {
 			String domain = rs.getString(synm.domain);
-			SynDomanager domanger = (SynDomanager) new SynDomanager(cfg)
+			SynDomanager domanger = (SynDomanager) new SynDomanager(cfg, settings)
 					.admin(admin.deviceId(cfg.synode()))
 					.loadomainx();
 
@@ -170,21 +185,19 @@ public class Syngleton extends JSingleton {
 	 * @throws TransException 
 	 */
 	public Syngleton asyOpenDomains(OnDomainUpdate ... onok) {
-		// throws AnsonException, SsException, IOException, TransException, SQLException {
 		if (syndomanagers != null) {
 			new Thread(()->{
 				for (SynDomanager dmgr : syndomanagers.values()) {
 					try {
-						// opendomain(dmgr.domain(), dmgr, onok);
 						musteqs(syncfg.domain, dmgr.domain());
 
-						SyncUser usr = ((SyncUser)AnSession
+						((SyncUser)AnSession
 								.loadUser(syncfg.admin, sysconn))
 								.deviceId(dmgr.synode);
 
 						dmgr.loadSynclients(tb0)
-							.openSynssions(usr)
-							.updateSynssions(usr, onok);
+							.openSynssions()
+							.updateSynssions(onok);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -421,58 +434,34 @@ public class Syngleton extends JSingleton {
 		}
 	}
 
-	/**
-	 * @deprecated only for tests
-	 * @param cfg
-	 * @throws Exception
-	 */
-	public static void cleanDomain(SynodeConfig cfg)
-			throws Exception {
-		IUser usr = DATranscxt.dummyUser();
-
-		// SynodeMeta    synm = new SynodeMeta(cfg.synconn);
-		SynChangeMeta chgm = new SynChangeMeta (cfg.synconn);
-		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
-		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
-
-		DATranscxt.initConfigs(cfg.synconn, // DATranscxt.loadSemanticsXml(cfg.synconn),
-				(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
-		DATranscxt tb0 = new DATranscxt(cfg.synconn);
-		
-		tb0.delete(chgm.tbl, usr)
-			.whereEq(chgm.domain, cfg.domain)
-			.post(tb0.delete(subm.tbl)
-					.where(op.isNotnull, subm.changeId, new ExprPart()))
-			.post(tb0.delete(xbfm.tbl)
-					.where(op.isNotnull, xbfm.changeId, new ExprPart()))
-			.d(tb0.instancontxt(cfg.synconn, usr));
-	}
-
-	/**
-	 * Clean change logs and synssion buffer.
-	 * 
-	 * @param cfg
-	 * @throws Exception
-	public static void cleanSynssions(SynodeConfig cfg) throws Exception {
-		IUser usr = DATranscxt.dummyUser();
-
-		SynChangeMeta chgm = new SynChangeMeta (cfg.synconn);
-		SynSubsMeta   subm = new SynSubsMeta (chgm, cfg.synconn);
-		SynchangeBuffMeta xbfm = new SynchangeBuffMeta(chgm, cfg.synconn);
-
-		DATranscxt tb0 = new DATranscxt(cfg.synconn);
-
-		tb0.delete(chgm.tbl, usr)
-			.whereEq(chgm.domain, cfg.domain)
-			.post(tb0.delete(subm.tbl)
-					.where(op.isNotnull, subm.changeId, new ExprPart()))
-			.post(tb0.delete(xbfm.tbl)
-					.where(op.isNotnull, xbfm.changeId, new ExprPart()))
-			.d(tb0.instancontxt(cfg.synconn, usr));
-	}
-	 */
-
 	public Set<String> domains() {
 		return syndomanagers.keySet();
+	}
+
+	/**
+	 * Prepare loca ip, submit, asynchronously, to hub.
+	 * @param currentIp current local ip.
+	 * @return this
+	 * @since 0.7.6
+	 */
+	public void asybmitJserv(String currentIp, OnNetworkChange onIpChanged) {
+		new Thread(()-> {
+			String nextip = AppSettings.getLocalIp(2);
+			if (!eq(currentIp, nextip)) {
+				for (SynDomanager mngr : syndomanagers.values()) {
+					if (mngr.mode != SynodeMode.hub) {
+						mngr.ipChangeHandler(onIpChanged)
+							.submitJservs(currentIp, nextip);
+					}
+
+					try { onIpChanged.on(mngr.jservComposer.ip(nextip)); }
+					catch (Exception e) {
+						e.printStackTrace();
+					}
+					break; //
+				}
+			}
+		}, f("[%s] Network Watchdog", synode()))
+		.start();
 	}
 }

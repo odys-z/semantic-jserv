@@ -11,6 +11,7 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.indexOf;
+import static io.odysz.common.LangExt.musteq;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.deny;
@@ -63,6 +64,7 @@ import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.syn.ExessionPersist;
+import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
 import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
@@ -100,7 +102,7 @@ public class SynssionPeer {
 
 	final String mynid;
 	final String peer;
-	public final String peerjserv;
+	public String peerjserv;
 
 	String domain() {
 		return domanager.domain();
@@ -132,6 +134,9 @@ public class SynssionPeer {
 	/** Initialized by {@link io.odysz.semantic.syn.SyndomContext#dbg}, which should be from Config.debug. */
 	private boolean debug;
 
+	/**
+	 * In each post synssion handling loops, avoid the doc-refs already tried or failed. 
+	 */
 	private HashMap<String, ArrayList<String>> avoidRefs2me;
 	void addAvoidRefs(String peer, String synuid) {
 		if (!avoidRefs2me.containsKey(peer))
@@ -761,7 +766,6 @@ public class SynssionPeer {
 				respi = client.commit(q, errHandler);
 				if (proc != null) proc.proc(1, 1, seq, totalBlocks, respi);
 
-				// b64 = AESHelper.encode64(ifs, blocksize);
 				baos = new ByteArrayOutputStream();
 				len = AESHelper.encodeRange(path, ifs, size, baos, start, AESHelper.blockSize());
 			}
@@ -826,7 +830,7 @@ public class SynssionPeer {
 	 */
 	public void joindomain(String admid, String myuid, String mypswd, OnOk ok)
 			throws AnsonException, IOException, TransException, SQLException {
-		SyncReq  req = signup(admid);
+		SyncReq  req = signup(admid); // FIXME not domain?
 		SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
 		req = closejoin(admid, rep);
@@ -836,12 +840,39 @@ public class SynssionPeer {
 			ok.ok(rep);
 	}
 	
-
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
 			throws SemanticException, AnsonException, SsException, IOException {
 		client = new SessionClient(jservroot, null)
 				.loginWithUri(clienturi, myuid, pswd, device);
 		return client;
+	}
+
+	/**
+	 * File a request to the hub peer for updating *jservs* knowledge.
+	 * @return jservs
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
+	 */
+	public HashMap<String, Object> queryJservs()
+			throws SemanticException, AnsonException, IOException {
+
+		mustnonull(client);
+		SyncReq  req = (SyncReq) new SyncReq(null, domain())
+				.exblock(new ExchangeBlock(domanager.domain(), domanager.synode, peer, ExessionAct.mode_client))
+				.a(A.queryJservs);
+
+		String[] act = AnsonHeader.usrAct(getClass().getName(), "queryJservs", A.exchange, "by " + mynid);
+		AnsonHeader header = client.header().act(act);
+
+		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+							.header(header);
+
+		SyncResp resp = client.commit(q, errHandler);
+		
+		mustnonull(resp);
+		musteq(resp.domain, domain());
+		return resp.data();
 	}
 
 	/**
@@ -879,5 +910,20 @@ public class SynssionPeer {
 		ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 		return new SyncReq(null, domanager.domain())
 				.exblock(req);
+	}
+
+	public void checkLogin(String taskDesc, SyncUser docuser)
+			throws SemanticException, AnsonException, SsException, IOException, TransException {
+		if (client == null || !client.isSessionValid()) {
+			Utils.logT(new Object(){},
+					"%s in %s, logging into: %s, jserv: %s",
+					taskDesc, domain(), peer, peerjserv);
+			loginWithUri(peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
+		}
+	}
+
+	public String submitJserv(String jserv) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

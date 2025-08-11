@@ -40,6 +40,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.AnsonException;
+import io.odysz.common.EnvPath;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.syn.Doclientier;
 import io.odysz.jclient.syn.IFileProvider;
@@ -56,6 +57,7 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.ExpDoctierservTest;
+import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.YellowPages;
 
 /**
@@ -87,7 +89,7 @@ class DoclientierTest {
     	System.setProperty("VOLUME_HOME", p + "/volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
-		YellowPages.load("$VOLUME_HOME");
+		YellowPages.load(EnvPath.concat(SynotierJettyApp.webinf, "$VOLUME_HOME"));
 
 		ExpDoctierservTest.init();
 
