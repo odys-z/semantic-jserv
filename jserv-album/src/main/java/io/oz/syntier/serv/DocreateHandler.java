@@ -8,10 +8,10 @@ import static io.odysz.transact.sql.parts.condition.Funcall.now;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import io.odysz.common.EnvPath;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.sql.Update;
@@ -21,7 +21,7 @@ import io.oz.album.peer.PhotoRec;
 import io.oz.jserv.docs.syn.ExpDoctier.IOnDocreate;
 
 /**
- * @deprecated can not be released unless the issue of ext-path is fixed
+ * @since 0.2.0
  */
 public class DocreateHandler implements IOnDocreate {
 	
@@ -52,7 +52,9 @@ public class DocreateHandler implements IOnDocreate {
 				ISemantext stx = st.instancontxt(conn, usr);
 
 				String pth = isNull(path)
-							? EnvPath.decodeUri(stx, rs.getString(docm.uri)) // FIXME use ExtFilePath instead
+							// FIXME use ExtFilePath instead
+							// ? EnvPath.decodeUri(stx, rs.getString(docm.uri))
+							? DocUtils.resolvExtroot(conn, rs.getString(docm.uri), docm)
 							: path[0];
 
 				PhotoRec p = new PhotoRec();

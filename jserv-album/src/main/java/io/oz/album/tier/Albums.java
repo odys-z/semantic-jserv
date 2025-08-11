@@ -405,7 +405,6 @@
 //		BlockChain chain = new BlockChain("h_photos", tempDir, body.device().id,
 //				body.doc.clientpath, body.doc.createDate, body.doc.folder());
 //
-//		// FIXME security breach?
 //		String id = chainId(usr, chain.doc.clientpath);
 //
 //		if (blockChains.containsKey(id))
@@ -670,8 +669,6 @@
 //				// .whereEq(meta.domain, req.org == null ? usr.orgId() : req.org)
 //				.whereEq(meta.device, usr.deviceId())
 //				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
-//				// TODO add file type for performance
-//				// FIXME issue: what if paths length > limit ?
 //				.limit(req.limit())
 //				.rs(st.instancontxt(conn, usr))
 //				.rs(0))
@@ -774,8 +771,6 @@
 //
 //	/**
 //	 * This method parse exif, update geox/y, date etc. - should only be used when file created.
-//	 *
-//	 * TODO generate preview
 //	 *
 //	 * @param pid
 //	 * @param conn
@@ -959,7 +954,6 @@
 //
 //	/**
 //	 * <h4>Load album (aid = req.albumId)</h4>
-//	 * MEMO TODO Android client shouldn't reach here until now.
 //	 *
 //	 * <p>If albumId is empty, load according to the session's profile.
 //	 * </p>

@@ -34,15 +34,11 @@ public class Settings extends ServPort<UserReq> {
 	@Override
 	protected void onGet(AnsonMsg<UserReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	protected void onPost(AnsonMsg<UserReq> msg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {
-		// TODO Auto-generated method stub
-		
 	}
 
 	public static BufferedImage genQrcode(String jserv) throws WriterException {

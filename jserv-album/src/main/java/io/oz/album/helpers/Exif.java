@@ -76,7 +76,6 @@
 ////		Utils.logi("[Exif.init] Tika config:\n%s", config.getParser().getSupportedTypes(context ));
 ////
 ////		// deprecated
-////		// TODO test or remove Tika dependency
 ////		// Parser p = config.getParser(new MediaType("video", "mp4"));
 ////		Parser p = config.getParser();
 ////
@@ -202,7 +201,6 @@
 //				try {
 //					if (verbose) Utils.logi(metadata.names());
 //					photo.widthHeight = new int[]
-//						// FIXME too brutal
 //						{metadata.getInt(TIFF.IMAGE_WIDTH), metadata.getInt(TIFF.IMAGE_LENGTH)};
 //				} catch (Exception e) { e.printStackTrace(); }
 //

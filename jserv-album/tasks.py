@@ -14,19 +14,19 @@ import os
 
 from anson.io.odysz.anson import Anson
 
-version = '0.7.5'
+version = '0.7.6'
 """
-synode.py3, jserv-album-0.7.4.jar
+synode.py3, jserv-album-0.7.#.jar
 """
 
 apk_ver = '0.7.3'
 
-html_jar_v = '0.1.7'
+html_jar_v = '0.1.8'
 """
 html-web-#.#.#.jar
 """
 
-web_ver = '0.4.1'
+web_ver = '0.4.2'
 """
 album-web-#.#.#.jar
 """
@@ -150,8 +150,9 @@ def build(c):
 
         ['web-dist/private', lambda: updateApkRes('host.json', apk_ver)],
         ['.', 'cat web-dist/private/host.json'],
-
+        ['web-dist', 'rm -f *.min.js* report.html']
         ['../../anclient/examples/example.js/album', 'webpack'],
+
         ['.', 'mvn clean compile package -DskipTests'],
         ['../../html-service/java', 'mvn clean compile package'],
 

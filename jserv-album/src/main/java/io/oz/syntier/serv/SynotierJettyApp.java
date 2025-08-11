@@ -9,7 +9,6 @@ import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -29,7 +28,6 @@ import org.eclipse.jetty.server.ServerConnector;
 
 import com.google.zxing.WriterException;
 
-import io.odysz.anson.JsonOpt;
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
@@ -86,6 +84,10 @@ import io.oz.syn.YellowPages;
 public class SynotierJettyApp implements Daemon {
 	public static final String servpath = "/jserv-album";
 	
+	/**
+	 * Override this in a non-typical environment, e.g.
+	 * -DWEB-INF=src/main/webapp/WEB-INF for Eclipse tests.
+	 */
 	public static final String webinf = "WEB-INF";
 	public static final String config_xml = "config.xml";
 	public static final String settings_json = "settings.json";
@@ -114,8 +116,7 @@ public class SynotierJettyApp implements Daemon {
 	}
 	
 	/**
-	 * Response to SCM stop commands. This is a stub and won't work as
-	 * the method is called in different process than the main process.
+	 * Response to Windows SCM stop commands.
 	 * 
 	 * @param args
 	 * @throws Exception
@@ -219,7 +220,7 @@ public class SynotierJettyApp implements Daemon {
 					srcwebinf, config_xml, _0(args, settings_json), false);
 
 			SynotierJettyApp app = boot(srcwebinf, config_xml, settings)
-					.afterboot(settings)
+					.afterboot()
 					.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 
 			return app;
@@ -231,26 +232,44 @@ public class SynotierJettyApp implements Daemon {
 			return null;
 		}
 	}
-	
+
 	/**
-	 * Expose locally
+	 * Bring up thread to check network changes and expose jserv locally.
 	 * @return this
 	 */
-	SynotierJettyApp afterboot(AppSettings settings) {
-		
-		// prepare loca ip, setup local web-dist's root path, etc.
-		try {
-			settings.localIp = AppSettings.getLocalIp(2);
-			// settings.webrootLocal = f("%s:%s", settings.localIp, settings.webport);
-			settings.toFile(settings.json, JsonOpt.beautify());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	SynotierJettyApp afterboot() {
+// 0.7.5
+//		// setup local web-dist's root path, etc.
+//		try {
+//			settings.localIp = AppSettings.getLocalIp(2);
+//			settings.toFile(settings.json, JsonOpt.beautify());
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//
+//		if (!isNull(settings.startHandler)) {
+//			logi("Exposing locally by %s, %s ...", (Object[]) settings.startHandler);
+//			logi("IP %s : %s", settings.localIp, DateFormat.formatime(new Date()));
+//			try {
+//				((ISynodeLocalExposer)Class
+//					.forName(settings.startHandler[0])
+//					.getDeclaredConstructor()
+//					.newInstance())
+//					.onExpose(settings, this.syngleton.syncfg.domain, this.syngleton.synode(), this.syngleton.syncfg.https);
+//			} catch (Exception e) {
+//				warn("Exposing local resources failed!");
+//				e.printStackTrace();
+//			}
+//		}
 
+		AppSettings settings = syngleton.settings;
+		syngleton.asybmitJserv(settings.localIp, (jserv) -> {
 		if (!isNull(settings.startHandler)) {
 			logi("Exposing locally by %s, %s ...", (Object[]) settings.startHandler);
-			logi("IP %s : %s", settings.localIp, DateFormat.formatime(new Date()));
+			logi("IP %s : %s", jserv.ip, DateFormat.formatime(new Date()));
 			try {
+				settings.localIp = jserv.ip;
+
 				((ISynodeLocalExposer)Class
 					.forName(settings.startHandler[0])
 					.getDeclaredConstructor()
@@ -260,7 +279,7 @@ public class SynotierJettyApp implements Daemon {
 				warn("Exposing local resources failed!");
 				e.printStackTrace();
 			}
-		}
+		}});
 
 		return this;
 	}
@@ -304,20 +323,17 @@ public class SynotierJettyApp implements Daemon {
 		Connects.init(webinf);
 		Syngleton.appName = ifnull(Configs.getCfg("app-name"), "Portfolio 0.7");
 
-		String $vol_home = "$" + settings.vol_name;
-		
-		YellowPages.load($vol_home);
-		SynodeConfig cfg = YellowPages.synconfig();
-		if (cfg.mode == null)
-			cfg.mode = SynodeMode.peer;
-		
 		mustnonull(settings.rootkey, f(
 				"Rootkey cannot be null for starting App. settings:\n%s", 
 				settings.toBlock()));
 
+		String $vol_home = "$" + settings.vol_name;
 		YellowPages.load(FilenameUtils.concat(new File(".").getAbsolutePath(),
 				webinf, EnvPath.replaceEnv($vol_home)));
-
+		SynodeConfig cfg = YellowPages.synconfig();
+		if (cfg.mode == null)
+			cfg.mode = SynodeMode.peer;
+	
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
 
@@ -342,7 +358,8 @@ public class SynotierJettyApp implements Daemon {
 	}
 
 	/**
-	 * Create an application instance working as a synode tier.
+	 * Create an application instance working as a synode tier,
+	 * by loading configurations, registering ServPorts.
 	 * @param urlpath e. g. jserv-album
 	 * @param syntity_json e. g. $VOLUME_HOME/syntity.json
 	 * @param admin 
@@ -463,17 +480,15 @@ public class SynotierJettyApp implements Daemon {
 			server.stop();
 	}
 	
-	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, AppSettings settings,
-			String config_xml) throws Exception {
+	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg,
+			AppSettings settings, String config_xml) throws Exception {
 	
 	    AnsonMsg.understandPorts(SynDocollPort.docoll);
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
-
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
-	
-    	// synapp.server = new Server(new InetSocketAddress("0.0.0.0", settings.port));
     	synapp.server = new Server();
+
     	ServerConnector jconn = new ServerConnector(synapp.server);
     	jconn.setHost("0.0.0.0");
     	jconn.setPort(settings.port);

@@ -678,7 +678,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //			paths.add(s);
 //		}
 //
-//		String conn = Connects.uri2conn(req.uri()); // TODO check uri and conn are mapping correctly
+//		String conn = Connects.uri2conn(req.uri());
 //		PhotoMeta meta = new PhotoMeta(conn);
 //
 //		Object[] kpaths = req.syncingPage().paths() == null ? new Object[0]
@@ -694,8 +694,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //				// .whereEq(meta.domain, req.org == null ? usr.orgId() : req.org)
 //				.whereEq(meta.device, usr.deviceId())
 //				.whereIn(meta.fullpath, Arrays.asList(kpaths).toArray(new String[kpaths.length]))
-//				// TODO add file type for performance
-//				// FIXME issue: what if paths length > limit ?
 //				.limit(req.limit())
 //				.rs(st.instancontxt(conn, usr))
 //				.rs(0))
@@ -818,8 +816,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 //	/**
 //	 * This method parse exif, update geox/y, date etc. - should only be used when file created.
-//	 *
-//	 * TODO generate preview
 //	 *
 //	 * @param pid
 //	 * @param conn
@@ -1003,8 +999,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 //	/**
 //	 * <h4>Load album (aid = req.albumId)</h4>
-//	 * MEMO TODO Android client shouldn't reach here until now.
-//	 *
 //	 * <p>If albumId is empty, load according to the session's profile.
 //	 * </p>
 //	 *

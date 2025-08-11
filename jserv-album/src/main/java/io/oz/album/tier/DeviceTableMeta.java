@@ -43,7 +43,6 @@
 ////	@Override
 ////	public Object[] insertSelectItems(SynChangeMeta chgm, String entid, AnResultset entities, AnResultset changes)
 ////			throws TransException, SQLException {
-////		// TODO Auto-generated method stub
 ////		return null;
 ////	}
 //

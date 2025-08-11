@@ -10,6 +10,7 @@ import java.util.HashMap;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.JsonOpt;
+import io.odysz.common.FilenameUtils;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 
@@ -22,7 +23,7 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 			settings.envars = new HashMap<String, String>(1);
 
 		try {
-			ExternalHosts hosts = Anson.fromPath(settings.startHandler[1]);
+			ExternalHosts hosts = Anson.fromPath(FilenameUtils.rel2abs(settings.startHandler[1]));
 
 			if (hosts.syndomx.get("domain") == null)
 				warn("Cannot find domain %s's jserv per synode configuration.", domain);

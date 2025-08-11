@@ -119,7 +119,6 @@ class AlbumsTest {
 			f.mkdirs();
 		}
 		
-		// FIXME // FIXME // FIXME // FIXME 
 //		Supplier<String>[] resultSuppliers = null;
 //		try {
 //			resultSuppliers = AsyncSupplier.getDefault().submitSuppliers(
@@ -228,7 +227,6 @@ class AlbumsTest {
 	}
 	 */
 	
-	// TODO run test
 	@Test
 	void testVideoUp(final boolean[] lights) throws SsException, IOException, GeneralSecurityException, AnsonException, TransException {
 		String localFolder = "test/res";
