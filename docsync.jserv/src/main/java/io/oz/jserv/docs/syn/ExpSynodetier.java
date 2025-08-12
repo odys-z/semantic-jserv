@@ -92,7 +92,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		this.synid  = synode;
 		this.mode   = mode;
 		try {
-			this.st     = new DATranscxt(conn);
+			this.st = new DATranscxt(conn);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new SemanticException("Fail to DATranscxt on %s.", conn);
@@ -104,7 +104,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			throws Exception {
 		this(domanger.org, domanger.domain(), domanger.synode, domanger.synconn, domanger.mode);
 		domanager0 = domanger;
-		// synt0 = new DATranscxt(domanger.synconn);
 	}
 
 	@Override
@@ -140,6 +139,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 			if (A.queryJservs.equals(a))
 				rsp = onQueryJservs(req, usr);
+			else if (A.reportJserv.equals(a))
+				rsp = onReportJserv(req, usr);
 
 			else if (A.initjoin.equals(a)) {
 				if (!eq(usr.orgId(), domanager0.org))
@@ -424,7 +425,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @throws SQLException 
 	 * @throws TransException 
 	 */
-	private SyncResp onQueryJservs(SyncReq req, DocUser usr) throws TransException, SQLException {
+	SyncResp onQueryJservs(SyncReq req, DocUser usr) throws TransException, SQLException {
 		SynodeMeta m = domanager0.synm;
 		AnResultset rs = (AnResultset) st
 				.batchSelect(m.tbl)
@@ -439,6 +440,25 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				(rows) -> rows.getString(m.jserv),
 				(rows) -> !eq(req.exblock.srcnode, rows.getString(m.pk))));
 		return resp;
+	}
+	
+	/**
+	 * @since 0.2.6
+	 * @param req
+	 * @param usr
+	 * @return response [data = update results]
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	SyncResp onReportJserv(SyncReq req, DocUser usr) throws TransException, SQLException {
+		musteqs(req.exblock.domain, domain);
+		mustnonull(req.exblock.srcnode);
+
+		SynodeMeta m = domanager0.synm;
+		String jserv = (String)req.data(m.jserv);
+		domanager0.updateJserv(st, req.exblock.srcnode, jserv);
+
+		return (SyncResp) new SyncResp(domain).data(m.jserv, jserv);
 	}
 
 	/** @since 0.2.5 */

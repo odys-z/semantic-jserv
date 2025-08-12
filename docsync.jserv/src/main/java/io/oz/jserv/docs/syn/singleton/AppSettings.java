@@ -30,6 +30,7 @@ import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.meta.SynodeMeta;
@@ -95,6 +96,9 @@ public class AppSettings extends Anson {
 	}
 	
 	/**
+	 * 1. setup with {@link Syngleton#setupSyntables(SynodeConfig, SyntityMeta[], String, String, String, String, boolean...)}<br>
+	 * 2. load with {@link DBSynTransBuilder#synSemantics(DATranscxt, String, String, Syntities)}<br>
+	 * 3. {@link AppSettings#setupJserv(SynodeConfig, String)}<br>
 	 * 
 	 * @param cfg
 	 * @param url_path
@@ -119,7 +123,7 @@ public class AppSettings extends Anson {
 				"Synode configuration's syn-conn dosen't match regists' conn id (which can be null), %s != %s.",
 				cfg.synconn, regists.conn());
 		
-		Syngleton.setupSyntables(cfg, regists.metas.values(),
+		Syngleton.setupSyntables(cfg, regists.metas.values().toArray(new SyntityMeta[0]),
 				webinf, config_xml, ".", rootkey, forceTest);
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
@@ -172,7 +176,7 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * Update my jserv-url according to settings and IP.
+	 * Update my jserv-url according to settings and local IP.
 	 * @param https
 	 * @param jserv_album jserv's url path
 	 * @param synconn can be null, for ignoring db update
@@ -183,7 +187,7 @@ public class AppSettings extends Anson {
 	 * @throws SQLException
 	 */
 	private String updateLocalJserv(boolean https, String jserv_album,
-			String synconn, SynodeMeta synm, String mysid) throws TransException, SQLException {
+			String synconn, SynodeMeta synm, String domain, String mysid) throws TransException, SQLException {
 		String ip = getLocalIp();
 
 		IUser robot = DATranscxt.dummyUser();
@@ -194,6 +198,7 @@ public class AppSettings extends Anson {
 			tb.update(synm.tbl, robot)
 			  .nv(synm.jserv, servurl)
 			  .whereEq(synm.pk, mysid)
+			  .whereEq(synm.domain, domain)
 			  .u(tb.instancontxt(synconn, robot));
 			
 			this.jservs.put(mysid, servurl);
@@ -203,6 +208,31 @@ public class AppSettings extends Anson {
 			e.printStackTrace();
 			throw new TransException(e.getMessage());
 		}
+	}
+	
+	/**
+	 * Load db jserv.
+	 * A helper not directly used by AppSettings. 
+	 * @param synconn
+	 * @param domain
+	 * @param peer
+	 * @return the peer's jserv, from db.
+	 * @throws Exception 
+	 */
+	public static String getJserv(SynodeMeta m, String synconn, String domain, String peer) throws Exception {
+			DATranscxt tb = new DATranscxt(synconn);
+			IUser robot = DATranscxt.dummyUser();
+			AnResultset rs = (AnResultset) tb.select(m.tbl)
+			  .col(m.jserv)
+			  .whereEq(m.pk, peer)
+			  .whereEq(m.domain, domain)
+			  .rs(tb.instancontxt(synconn, robot))
+			  .rs(0);
+		
+			if (rs.next())
+				return rs.getString(m.jserv);
+
+			return null;
 	}
 	
 	/**
@@ -390,7 +420,7 @@ public class AppSettings extends Anson {
 	 * 1. load settings.json<br>
 	 * 2. update env-variables<br>
 	 * 3. initiate connects<br>
-	 * 4. setup db, create tables it's sqlite drivers. <br>
+	 * 4. setup db, create tables it's sqlite drivers for the first time, see {@link AppSettings#setupdb(String, String, SynodeConfig, boolean)}. <br>
 	 * 
 	 * <h5>Note:</h5>
 	 * Multiple App instance must avoid defining same variables.
@@ -402,7 +432,7 @@ public class AppSettings extends Anson {
 	 * @throws Exception 
 	 */
 	public static AppSettings checkInstall(String url_path, String webinf,
-			String config_xml, String settings_json, boolean forceTest) throws Exception {
+			String config_xml, String settings_json, boolean forceDrop) throws Exception {
 
 		logi("[INSTALL-CHECK] checking ...");
 		Configs.init(webinf);
@@ -429,11 +459,12 @@ public class AppSettings extends Anson {
 		
 		if (!isblank(settings.installkey)) {
 			logi("[INSTALL-CHECK]\n!!! FIRST TIME INITIATION !!!\nInstall: Calling setupdb() with configurations in %s ...", config_xml);
-			settings.setupdb(url_path, config_xml, cfg, forceTest).save();
+			settings.setupdb(url_path, config_xml, cfg, forceDrop).save();
 		}
 		else 
 			logi("[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\nStarting application without db setting ...");
-		settings.updateLocalJserv(cfg.https, url_path, cfg.synconn, new SynodeMeta(cfg.synconn), cfg.synode());
+		settings.updateLocalJserv(cfg.https, url_path, cfg.synconn,
+				new SynodeMeta(cfg.synconn), cfg.domain, cfg.synode());
 		
 		return settings; // settings.local_serv
 	}

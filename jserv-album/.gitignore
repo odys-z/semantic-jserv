@@ -1,7 +1,8 @@
 bin
 /target/
 download
-volume-*
+**/volume-*/jserv-main.db
+**/volume-*/doc-jserv.db
 vol
 vol-X29/*.db
 vol-X29/temp
@@ -23,10 +24,9 @@ dependency-reduced-pom.xml
 nginx
 venv*
 .venv*
-**/volume-hub
 **/settings.hub.json
-**/volume-prv
 **/settings.prv.json
+**/settings.mob.json
 **/volume-x29
 **/settings.x29.json
 .classpath

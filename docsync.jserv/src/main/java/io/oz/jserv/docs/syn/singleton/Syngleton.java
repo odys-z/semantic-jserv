@@ -9,7 +9,6 @@ import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.shouldeq;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
-import static io.odysz.semantic.meta.SemanticTableMeta.setupSqlitables;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -224,9 +223,15 @@ public class Syngleton extends JSingleton {
 
 	/**
 	 * <p>Setup syntables, can be called both while installation and reboot.</p>
+	 * 1. init connects<br>
+	 * 2. create sqlite syn-tables<br>
+	 * 2.1 inject synmantics after syn-tables have been set.<br>
+	 * 3. load symantics and entities<br>
+	 * 4. create synodes, by inserting peers from registry.config.peers<br>
+	 * 5. step n0 & n-stamp for clearing uncertainty<br>
 	 * 
-	 * Resolved Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:<br>
-	 * Syn-change handlers cannot be created without syntity tables have been created.
+	 * <p>Resolved Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:<br>
+	 * Syn-change handlers cannot be created without syntity tables have been created.</p>
 	 * 
 	 * @param cfg
 	 * @param configFolder
@@ -237,7 +242,7 @@ public class Syngleton extends JSingleton {
 	 * @param forcedrop optional, default false 
 	 * @throws Exception
 	 */
-	public static void setupSyntables(SynodeConfig cfg, Iterable<SyntityMeta> entms,
+	public static void setupSyntables(SynodeConfig cfg, SyntityMeta[] entms,
 			String configFolder, String cfgxml, String runtimeRoot, String rootKey, boolean ... forcedrop) throws Exception {
 
 		// 1. connection
@@ -280,7 +285,7 @@ public class Syngleton extends JSingleton {
 	
 		setupSqliTables(cfg.synconn, is(forcedrop), akm, synm, chm, sbm, xbm, rfm, prm, ssm);
 
-		setupSqlitables(cfg.synconn, is(forcedrop), entms);
+		setupSqliTables(cfg.synconn, is(forcedrop), entms);
 		
 		// 2.1 inject synmantics after syn-tables have been set.
 		for (SyntityMeta m : entms)
@@ -308,6 +313,7 @@ public class Syngleton extends JSingleton {
 	 * @param runtimeRoot
 	 * @param rootKey
 	 * @throws Exception
+	 * @since 0.2.0
 	 */
 	public static void bootSyntables(SynodeConfig cfg,
 			String configFolder, String cfgxml, String runtimeRoot, String rootKey) throws Exception {
@@ -461,7 +467,7 @@ public class Syngleton extends JSingleton {
 					break; //
 				}
 			}
-		}, f("[%s] Network Watchdog", synode()))
+		}, f("[%s] Asy-submit Jserv", synode()))
 		.start();
 	}
 }

@@ -121,7 +121,7 @@ public class SynodetierJoinTest {
 		}
 	}
 
-	@SuppressWarnings({ "serial", "deprecation" })
+	@SuppressWarnings({ "deprecation" })
 	@BeforeAll
 	static void init() throws Exception {
 		setVolumeEnv("v-");
@@ -160,7 +160,8 @@ public class SynodetierJoinTest {
 			Syngleton.setupSysRecords(config, YellowPages.robots());
 			
 			Syngleton.setupSyntables(config,
-					new ArrayList<SyntityMeta>() {{add(docm);}},
+					// new ArrayList<SyntityMeta>() {{add(docm);}}, // 0.7.6
+					new SyntityMeta[] {docm},
 					webinf, "config.xml", ".", "ABCDEF0123465789", true);
 
 			// Syngleton.cleanSynssions(config);

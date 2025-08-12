@@ -6,6 +6,7 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.Utils.warnT;
 import static io.odysz.semantic.syn.ExessionAct.close;
 import static io.odysz.semantic.syn.ExessionAct.ready;
 
@@ -26,8 +27,8 @@ import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.Nyquence;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SyndomContext;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.x.ExchangeException;
+import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.protocol.JServUrl;
@@ -249,7 +250,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 	/**
 	 * Download domain jservs.
 	 * Work without concurrency lock: load jservs from hub.
-	 * <p>This method only update jservs from hub, for no need to update jserv from a reachable peer.</p>
+	 * <p>NOTE 2025-08-12
+	 * This method is supposed to be called by sync-worker, and won't check the synode modes.</p>
+	 * <p>ISSUE for the future
+	 * It's supposed that some synodes will never have a chance to visit the hub node,
+	 * then an asynchronous try and delay is expected.</p>
+	 * </p>
+	 * @see #submitJservs(String, String...)
 	 * @param syntb
 	 * @return this
 	 * @since 0.7.6
@@ -257,8 +264,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager updateJservs(DATranscxt syntb) {
 		if (sessions != null)
 		for (SynssionPeer peer : sessions.values()) {
-			if (eq(peer.peer, synode) || peer.mymode != SynodeMode.hub)
+			if (eq(peer.peer, synode))
 					continue;
+			
+			if (isblank(peer.peerjserv)) {
+				warnT(new Object() {}, "Cannot log into %s as no jservs available.", peer.peer);
+				continue;
+			}
 
 			try {
 				peer.checkLogin("Updating jservs", admin);
@@ -283,6 +295,28 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
+	 * @since 0.2.6
+	 * @param syntb
+	 * @param peer
+	 * @param jserv
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	public SynDomanager updateJserv(DATranscxt syntb, String peer, String jserv) throws TransException, SQLException {
+		AppSettings.updatePeerJservs(synconn, domain, synm, peer, jserv);
+		synssion(peer).peerjserv = jserv;
+		return this;
+	}
+
+	/**
+	 * Work without concurrency lock: load jservs from hub.
+	 * <p>NOTE 2025-08-12
+	 * This method is supposed to be called by sync-worker, and won't check the synode modes.</p>
+	 * <p>ISSUE for the future
+	 * It's supposed that some synodes will never have a chance to visit the hub node,
+	 * then an asynchronous try and delay is expected.</p>
+	 * @see #updateJserv(DATranscxt, String, String)
 	 * @param nextip 
 	 * @param cfg 
 	 * @return this
@@ -295,8 +329,15 @@ public class SynDomanager extends SyndomContext implements OnError {
 				if (sessions == null)
 					loadSynclients(new DATranscxt(synconn));
 				for (SynssionPeer peer : sessions.values()) {
-					if (eq(peer.peer, synode) || peer.mymode != SynodeMode.hub)
+					if (eq(peer.peer, synode))
 							continue;
+
+					if (isblank(peer.peerjserv)) {
+						warnT(new Object() {},
+							"Cannot log into %s <- %s, for submitting my jserv, as no jservs available.",
+							peer.peer, synode);
+						continue;
+					}
 
 					try {
 						peer.checkLogin("Submitting jservs", admin);
@@ -309,7 +350,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 							ipChangeHandler.on(this.jservComposer);
 						break;
 					} catch (IOException e) {
-						Utils.logT("[%s:%s] Submitting jservs to %s failed. Details:\n%s",
+						Utils.logT(new Object() {}, "[%s:%s] Submitting jservs to %s failed. Details:\n%s",
 								domain, synode, peer, e.getMessage());
 					} catch (TransException | AnsonException | SsException | SQLException e) {
 						e.printStackTrace();

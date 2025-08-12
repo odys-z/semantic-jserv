@@ -3,16 +3,21 @@
   "config": {
     "type": "io.oz.syn.SynodeConfig",
     "https": false,
-    "synid": "HUB",
+    "synid": "PRV",
     "domain": "zsu",
     "admin": "ody",
-    "sysconn": "sys-hub",
-    "synconn": "docsyn-hub",
+    "sysconn": "sys-prv",
+    "synconn": "docsyn-prv",
     "org": {
       "type": "io.oz.syn.SynOrg",
       "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
-      "orgId": "ura", "orgName": "URA", "orgType": "nation", "market": "test", "webroot": "$WEBROOT_HUB",
-      "homepage": "", "album0": "album-test"
+      "orgId": "ura",
+      "orgName": "URA",
+      "orgType": "nation",
+      "market": "test",
+      "webroot": "$WEBROOT_PRV",
+      "homepage": "",
+      "album0": "album-test"
     },
     "syncIns": 0.0,
     "peers": [
@@ -25,6 +30,11 @@
   },
   "synusers": [{
     "type": "io.odysz.semantic.syn.SyncUser",
-    "userId": "ody", "userName": null, "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"
+    "userId": "ody",
+    "userName": null,
+    "pswd": "8964",
+    "iv": null,
+    "org": "ura",
+    "domain": "zsu"
   }]
 }

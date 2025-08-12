@@ -859,7 +859,8 @@ public class SynssionPeer {
 
 		mustnonull(client);
 		SyncReq  req = (SyncReq) new SyncReq(null, domain())
-				.exblock(new ExchangeBlock(domanager.domain(), domanager.synode, peer, ExessionAct.mode_client))
+				.exblock(new ExchangeBlock(domanager.domain(),
+						domanager.synode, peer, ExessionAct.mode_client))
 				.a(A.queryJservs);
 
 		String[] act = AnsonHeader.usrAct(getClass().getName(), "queryJservs", A.exchange, "by " + mynid);
@@ -873,6 +874,29 @@ public class SynssionPeer {
 		mustnonull(resp);
 		musteq(resp.domain, domain());
 		return resp.data();
+	}
+
+	public String submitJserv(String jserv)
+			throws SemanticException, AnsonException, IOException {
+		mustnonull(client);
+		SyncReq req = (SyncReq) new SyncReq(null, domain())
+				.exblock(new ExchangeBlock(domanager.domain(),
+						domanager.synode, peer, ExessionAct.mode_client))
+				.a(A.reportJserv);
+
+		req.data(domanager.synm.jserv, jserv);
+
+		String[] act = AnsonHeader.usrAct(getClass().getName(), "queryJservs", A.exchange, "by " + mynid);
+		AnsonHeader header = client.header().act(act);
+
+		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+							.header(header);
+
+		SyncResp resp = client.commit(q, errHandler);
+		
+		mustnonull(resp);
+		musteq(resp.domain, domain());
+		return jserv;
 	}
 
 	/**
@@ -920,10 +944,5 @@ public class SynssionPeer {
 					taskDesc, domain(), peer, peerjserv);
 			loginWithUri(peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
 		}
-	}
-
-	public String submitJserv(String jserv) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

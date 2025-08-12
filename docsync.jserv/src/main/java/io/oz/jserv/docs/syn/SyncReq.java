@@ -45,8 +45,6 @@ public class SyncReq extends UserReq implements IBlock {
 		 */
 		public static final String queryRef2me = "r/docref";
 
-		public static final String queryJservs = "r/jservs";
-
 		/**
 		 * @since 0.2.5
 		 */
@@ -55,6 +53,18 @@ public class SyncReq extends UserReq implements IBlock {
 		public static final String docRefBlockUp   = "u/ref-bi";
 		public static final String docRefBlockEnd  = "u/ref-b9";
 		public static final String docRefBlockAbort= "u/ref-bx";
+
+		/**
+		 * Jservs management: tell me all
+		 * @since 0.2.6
+		 */
+		public static final String queryJservs = "r/jservs";
+		
+		/**
+		 * Jservs management: accept mine, s'il vous plaît.
+		 * @since 0.2.6
+		 */
+		public static final String reportJserv = "u/jserv";
 	}
 
 	ExchangeBlock exblock;
