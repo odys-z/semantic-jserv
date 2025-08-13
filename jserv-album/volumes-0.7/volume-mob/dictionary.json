@@ -11,13 +11,8 @@
     "org": {
       "type": "io.oz.syn.SynOrg",
       "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
-      "orgId": "ura",
-      "orgName": "URA",
-      "orgType": "nation",
-      "market": "test",
-      "webroot": "$WEBROOT_MOB",
-      "homepage": "",
-      "album0": "album-test"
+      "orgId": "ura", "orgName": "URA", "orgType": "nation", "market": "test",
+      "webroot": "$WEBROOT_MOB", "homepage": "", "album0": "album-test"
     },
     "syncIns": 0.0,
     "peers": [
