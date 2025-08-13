@@ -265,7 +265,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				// 0.7.6 Solution
 				// Get peer jservs from hub, save into synconn.syn_node.jserv.
 				// ISSUE: It's possible some nodes cannot access the hub but can only be told by a peer node.
-				localIp = this.domanager0.submitJservs(localIp);
+				localIp = this.domanager0.submitJservsPersist(localIp);
 				domanager0.updateJservs(syntb);
 			
 				domanager0.openSynssions();
@@ -458,7 +458,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		String jserv = (String)req.data(m.jserv);
 		domanager0.updateJserv(st, req.exblock.srcnode, jserv);
 
-		return (SyncResp) new SyncResp(domain).data(m.jserv, jserv);
+		return (SyncResp) new SyncResp(domain)
+				.jservs(domanager0.loadJservs(st))
+				.data(m.jserv, jserv)
+				.data(m.remarks, mode.name());
 	}
 
 	/** @since 0.2.5 */

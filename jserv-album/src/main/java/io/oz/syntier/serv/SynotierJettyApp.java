@@ -36,7 +36,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
-import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
@@ -82,7 +82,7 @@ import io.oz.syn.YellowPages;
  *
  */
 public class SynotierJettyApp implements Daemon {
-	public static final String servpath = "/jserv-album";
+	static final String servpath = "jserv-album";
 	
 	/**
 	 * Override this in a non-typical environment, e.g.
@@ -101,7 +101,10 @@ public class SynotierJettyApp implements Daemon {
 	public Syngleton syngleton() { return syngleton; }	
 
 	public String jserv() {
-		return this.syngleton.settings.jserv(this.syngleton.synode());
+//		return this.syngleton.settings.jserv(this.syngleton.synode());
+		for (String m : this.syngleton.domains())
+			return this.syngleton.domanager(m).jservComposer.jserv();
+		return null;
 	}
 
 	private static Winsrv winsrv;
@@ -419,7 +422,7 @@ public class SynotierJettyApp implements Daemon {
 	static public <T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerPorts(
 			SynotierJettyApp synapp, String sysconn, T ... servports) throws Exception {
 
-        synapp.schandler = new ServletContextHandler(synapp.server, servpath);
+        synapp.schandler = new ServletContextHandler(synapp.server, "/" + servpath);
         for (T t : servports) {
         	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(sysconn)));
         }
@@ -459,7 +462,8 @@ public class SynotierJettyApp implements Daemon {
 	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg,
 			AppSettings settings, String config_xml) throws Exception {
 	
-	    AnsonMsg.understandPorts(SynDocollPort.docoll);
+	    // AnsonMsg.understandPorts(SynDocollPort.docoll);
+	    JProtocol.setup(servpath, SynDocollPort.docoll);
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);

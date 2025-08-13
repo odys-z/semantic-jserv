@@ -89,6 +89,8 @@ public class JProtocol {
 	@FunctionalInterface
 	public interface OnError { void err(MsgCode code, String msg, String ... args ); }
 
+	protected static String urlroot;
+
 	public static SemanticObject err(IPort port, String code, String err) {
 		SemanticObject obj = new SemanticObject();
 		obj.put("code", code);
@@ -115,5 +117,16 @@ public class JProtocol {
 		AnsonMsg<AnsonResp> msg = new AnsonMsg<AnsonResp>(port, code)
 									.body(obj);
 		return msg;
+	}
+
+	/**
+	 * Setup url's root path and ports.
+	 * @since 1.5.18
+	 * @param urlpath for Servlet container schema, this is typically the server's name, e.g. "jserv-sample".
+	 * @param p
+	 */
+	public static void setup(String urlpath, IPort p) {
+	    AnsonMsg.understandPorts(p);
+	    urlroot = urlpath;
 	}
 }

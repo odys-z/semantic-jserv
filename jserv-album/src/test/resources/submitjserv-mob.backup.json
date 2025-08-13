@@ -10,7 +10,7 @@
   "connIdleSnds": 0.0,
   "port"        : 8963,
   "reverseProxy": false,
-  "jservs"      : null,
+  "jservs"      : {"HUB": "http://127.0.0.1:8961/jserv-album"},
   "localIp"     : null,
   "installkey"  : "0123456789ABCDEF",
   "rootkey"     : null

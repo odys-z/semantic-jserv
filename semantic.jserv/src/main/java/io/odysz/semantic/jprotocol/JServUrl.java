@@ -1,6 +1,7 @@
-package io.oz.jserv.docs.protocol;
+package io.odysz.semantic.jprotocol;
 
-import io.odysz.common.LangExt;
+import static io.odysz.common.LangExt.joinurl;
+import static io.odysz.common.LangExt.concatArr;
 
 /**
  * <p>The jserv parser and composer. </p>
@@ -15,6 +16,10 @@ public class JServUrl {
 	public String ip;
 	public int port;
 	public String[] subpaths;
+	public JServUrl subpaths(String... subs) {
+		subpaths = concatArr(subpaths, subs);
+		return this;
+	}
 	
 	public JServUrl(boolean ishttps, String ip, int port) {
 		https = ishttps;
@@ -28,6 +33,6 @@ public class JServUrl {
 	}
 
 	public String jserv() {
-		return LangExt.joinUrl(https, ip, port, subpaths);
+		return joinurl(https, ip, port, JProtocol.urlroot, subpaths);
 	}
 }

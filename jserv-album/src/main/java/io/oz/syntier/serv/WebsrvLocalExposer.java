@@ -25,16 +25,18 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 		try {
 			ExternalHosts hosts = Anson.fromPath(FilenameUtils.rel2abs(settings.startHandler[1]));
 
-			if (hosts.syndomx.get("domain") == null)
+			String host_dom = hosts.syndomx.get("domain");
+			if (host_dom == null)
 				warn("Cannot find domain %s's jserv per synode configuration.", domain);
-			if (!eq(domain, hosts.syndomx.get("domain")))
-				warn("Exposing target domain %s != %s, the current domain.", domain);
+			if (!eq(domain, host_dom))
+				warn("Exposing target domain %s != %s, the current domain.", domain, host_dom);
 
 
 			hosts.host = synode;
 			hosts.localip = settings.reverseProxy ? settings.proxyIp : settings.localIp;
 
-			String jserv = f("%s://%s/jserv-album", https ? "https" : "http", settings.getJservroot(https));
+			// String jserv = f("%s://%s/jserv-album", https ? "https" : "http", settings.getJservroot(https));
+			String jserv = ""; //settings.getJserv(https);
 
 			hosts.syndomx.put(synode, jserv);
 			

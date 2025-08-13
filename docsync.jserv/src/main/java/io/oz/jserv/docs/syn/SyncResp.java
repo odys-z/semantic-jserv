@@ -73,5 +73,11 @@ public class SyncResp extends AnsonResp {
 		return this;
 	}
 
+	HashMap<String, String> jservs;
+	public SyncResp jservs(HashMap<String, String> jservs) {
+		this.jservs = jservs;
+		return this;
+	}
+
 	
 }

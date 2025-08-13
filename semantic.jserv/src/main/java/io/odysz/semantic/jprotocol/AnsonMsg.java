@@ -143,6 +143,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * jserv-sample/io.odysz.jsample.protocol.Samport.</p>
 	 * 
 	 * @param p extended Port
+	 * @since 1.5.18, this is recommended not to use directly. Call {@link JProtocol#setup(String, IPort)} instead.
 	 */
 	static public void understandPorts(IPort p) {
 		defaultPortImpl = p;

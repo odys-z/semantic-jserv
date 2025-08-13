@@ -23,6 +23,7 @@ import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetCfg;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.AnSession;
@@ -50,7 +51,6 @@ import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DocOrgMeta;
-import io.oz.jserv.docs.protocol.JServUrl;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -457,7 +457,7 @@ public class Syngleton extends JSingleton {
 				for (SynDomanager mngr : syndomanagers.values()) {
 					if (mngr.mode != SynodeMode.hub) {
 						mngr.ipChangeHandler(onIpChanged)
-							.submitJservs(currentIp, nextip);
+							.submitJservsPersist(currentIp, nextip);
 					}
 
 					try { onIpChanged.on(mngr.jservComposer.ip(nextip)); }

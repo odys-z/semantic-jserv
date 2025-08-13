@@ -5,6 +5,7 @@
     "https": false,
     "synid": "HUB",
     "domain": "zsu",
+    "mode": "hub",
     "admin": "ody",
     "sysconn": "sys-hub",
     "synconn": "docsyn-hub",

@@ -4,7 +4,6 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.joinUrl;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
@@ -30,9 +29,9 @@ import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
-import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.syn.DBSynTransBuilder;
@@ -50,14 +49,7 @@ import io.oz.syn.YellowPages;
 public class AppSettings extends Anson {
 
 	/** 
-	 * Install configurations.
-	 * <pre> {
-	 *   type: "io.oz.jserv.docs.syn.singleton.AppSettings",
-	 *   vol_name : e. g. "VOLUME_HOME",
-	 *   volume   : e. g. "c:/album",
-	 *   bindip   : e. g. "127.0.0.1",
-	 *   webroots : e. g. "X:web-x-ip:port/jserv-album Y:web-y-ip:port/jserv-album"
-	 * }</pre>
+	 * Configuration file name.
 	 */
 	static String serv_json = "settings.json";
 
@@ -128,7 +120,7 @@ public class AppSettings extends Anson {
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
 
-		setupJserv(cfg, url_path);
+		setupJserv(cfg);
 	}
 	
 	/**
@@ -156,13 +148,13 @@ public class AppSettings extends Anson {
 	}
 
 	/**
+	 * Update syn_node.jserv = this.jservs[cfg.peers.id].
 	 * @param cfg
-	 * @param jserv_alubm e.g. "jserv-album"
 	 * @return this
 	 * @throws TransException
 	 * @throws SQLException 
 	 */
-	public AppSettings setupJserv(SynodeConfig cfg, String jserv_album) throws TransException, SQLException {
+	public AppSettings setupJserv(SynodeConfig cfg) throws TransException, SQLException {
 
 		SynodeMeta synm = new SynodeMeta(cfg.synconn);
 
@@ -176,63 +168,13 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * Update my jserv-url according to settings and local IP.
+	 * @since 0.2.6
 	 * @param https
-	 * @param jserv_album jserv's url path
-	 * @param synconn can be null, for ignoring db update
-	 * @param synm can be null, for ignoring db update
-	 * @param mysid
 	 * @return jserv-url
-	 * @throws TransException
-	 * @throws SQLException
+	 * @throws Exception
 	 */
-	private String updateLocalJserv(boolean https, String jserv_album,
-			String synconn, SynodeMeta synm, String domain, String mysid) throws TransException, SQLException {
-		String ip = getLocalIp();
-
-		IUser robot = DATranscxt.dummyUser();
-		try {
-			String servurl = joinUrl(https, ip, port, jserv_album);
-
-			DATranscxt tb = new DATranscxt(synconn);
-			tb.update(synm.tbl, robot)
-			  .nv(synm.jserv, servurl)
-			  .whereEq(synm.pk, mysid)
-			  .whereEq(synm.domain, domain)
-			  .u(tb.instancontxt(synconn, robot));
-			
-			this.jservs.put(mysid, servurl);
-
-			return servurl;
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new TransException(e.getMessage());
-		}
-	}
-	
-	/**
-	 * Load db jserv.
-	 * A helper not directly used by AppSettings. 
-	 * @param synconn
-	 * @param domain
-	 * @param peer
-	 * @return the peer's jserv, from db.
-	 * @throws Exception 
-	 */
-	public static String getJserv(SynodeMeta m, String synconn, String domain, String peer) throws Exception {
-			DATranscxt tb = new DATranscxt(synconn);
-			IUser robot = DATranscxt.dummyUser();
-			AnResultset rs = (AnResultset) tb.select(m.tbl)
-			  .col(m.jserv)
-			  .whereEq(m.pk, peer)
-			  .whereEq(m.domain, domain)
-			  .rs(tb.instancontxt(synconn, robot))
-			  .rs(0);
-		
-			if (rs.next())
-				return rs.getString(m.jserv);
-
-			return null;
+	public JServUrl getJservUrl(boolean https) throws Exception {
+		return new JServUrl(https, localIp, port);
 	}
 	
 	/**
@@ -463,10 +405,46 @@ public class AppSettings extends Anson {
 		}
 		else 
 			logi("[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\nStarting application without db setting ...");
-		settings.updateLocalJserv(cfg.https, url_path, cfg.synconn,
+
+		settings.updateLocalJserv(cfg.https, cfg.synconn,
 				new SynodeMeta(cfg.synconn), cfg.domain, cfg.synode());
 		
 		return settings; // settings.local_serv
+	}
+
+	/**
+	 * Update my jserv-url according to settings and local IP.
+	 * @param https
+	 * @param synconn can be null, for ignoring db update
+	 * @param synm can be null, for ignoring db update
+	 * @param mysid
+	 * @return jserv-url
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	private String updateLocalJserv(boolean https,
+			String synconn, SynodeMeta synm, String domain, String mysid) throws TransException, SQLException {
+		String ip = getLocalIp();
+
+		IUser robot = DATranscxt.dummyUser();
+		try {
+			// String servurl = joinUrl(https, ip, port, jserv_album);
+			String servurl = new JServUrl(https, ip, port).jserv();
+
+			DATranscxt tb = new DATranscxt(synconn);
+			tb.update(synm.tbl, robot)
+			  .nv(synm.jserv, servurl)
+			  .whereEq(synm.pk, mysid)
+			  .whereEq(synm.domain, domain)
+			  .u(tb.instancontxt(synconn, robot));
+			
+			this.jservs.put(mysid, servurl);
+
+			return servurl;
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new TransException(e.getMessage());
+		}
 	}
 
 	/**
@@ -495,10 +473,13 @@ public class AppSettings extends Anson {
 	/**
 	 * @param https
 	 * @return http(s)://ip:port, while ip, port = proxy or local ip, port
-	 */
 	public String getJservroot(boolean https) {
 		return this.reverseProxy ? this.jservProxy(https) : this.jserv(https);
 	}
+	public String getJserv(boolean https) {
+		return new JServUrl(https, localIp, 0).jserv();
+	}
+	 */
 
 	/**
 	 * @param https
@@ -527,18 +508,18 @@ public class AppSettings extends Anson {
 			return f("%s:%s", localIp, webport);
 	}
 
-	private String jservProxy(boolean https) {
-		if (!https && proxyPort == 80 || https && proxyPort == 443)
-			return proxyIp;
-		else
-			return f("%s:%s", proxyIp, proxyPort);
-	}
-
-	private String jserv(boolean https) {
-		if (!https && port == 80 || https && port == 443)
-			return localIp;
-		else
-			return f("%s:%s", localIp, port);
-	}
+//	private String jservProxy(boolean https) {
+//		if (!https && proxyPort == 80 || https && proxyPort == 443)
+//			return proxyIp;
+//		else
+//			return f("%s:%s", proxyIp, proxyPort);
+//	}
+//
+//	private String jserv(boolean https) {
+//		if (!https && port == 80 || https && port == 443)
+//			return localIp;
+//		else
+//			return f("%s:%s", localIp, port);
+//	}
 
 }

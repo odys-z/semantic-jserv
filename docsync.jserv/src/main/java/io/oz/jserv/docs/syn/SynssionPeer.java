@@ -60,6 +60,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynDocRefMeta;
+import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.syn.DBSyntableBuilder;
 import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.syn.ExessionAct;
@@ -101,6 +102,7 @@ public class SynssionPeer {
 	final String clienturi;
 
 	final String mynid;
+	/** The remode, server side, synode */
 	final String peer;
 	public String peerjserv;
 
@@ -876,15 +878,16 @@ public class SynssionPeer {
 		return resp.data();
 	}
 
-	public String submitJserv(String jserv)
+	public HashMap<String, String> submitJserv(String jserv)
 			throws SemanticException, AnsonException, IOException {
 		mustnonull(client);
+		SynodeMeta m = domanager.synm;
 		SyncReq req = (SyncReq) new SyncReq(null, domain())
 				.exblock(new ExchangeBlock(domanager.domain(),
 						domanager.synode, peer, ExessionAct.mode_client))
 				.a(A.reportJserv);
 
-		req.data(domanager.synm.jserv, jserv);
+		req.data(m.jserv, jserv);
 
 		String[] act = AnsonHeader.usrAct(getClass().getName(), "queryJservs", A.exchange, "by " + mynid);
 		AnsonHeader header = client.header().act(act);
@@ -896,7 +899,11 @@ public class SynssionPeer {
 		
 		mustnonull(resp);
 		musteq(resp.domain, domain());
-		return jserv;
+
+		return // FIXME ISSUE check nyquence?
+			eq((String)resp.data().get(m.remarks), SynodeMode.hub.name())
+			? resp.jservs
+			: null;
 	}
 
 	/**

@@ -18,6 +18,7 @@ import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
@@ -27,11 +28,11 @@ import io.odysz.semantic.syn.ExessionPersist;
 import io.odysz.semantic.syn.Nyquence;
 import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantic.syn.SyndomContext;
+import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
-import io.oz.jserv.docs.protocol.JServUrl;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.Syngleton.OnNetworkChange;
 import io.oz.syn.SynodeConfig;
@@ -121,7 +122,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		
 		admin = new SyncUser();
 		
-		this.jservComposer = new JServUrl(c.https, s.localIp, s.port);
+		this.jservComposer = s.getJservUrl(c.https);
 	}
 	
 	/**
@@ -256,7 +257,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * It's supposed that some synodes will never have a chance to visit the hub node,
 	 * then an asynchronous try and delay is expected.</p>
 	 * </p>
-	 * @see #submitJservs(String, String...)
+	 * @see #submitJservsPersist(String, String...)
 	 * @param syntb
 	 * @return this
 	 * @since 0.7.6
@@ -310,6 +311,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
+	 * <p>Submit then persist with reply, if the peer is a hub (0.2.6).</p> 
 	 * Work without concurrency lock: load jservs from hub.
 	 * <p>NOTE 2025-08-12
 	 * This method is supposed to be called by sync-worker, and won't check the synode modes.</p>
@@ -317,12 +319,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * It's supposed that some synodes will never have a chance to visit the hub node,
 	 * then an asynchronous try and delay is expected.</p>
 	 * @see #updateJserv(DATranscxt, String, String)
+	 * @see SynssionPeer#submitJserv(String)
 	 * @param nextip 
 	 * @param cfg 
 	 * @return this
 	 * @since 0.7.6
 	 */
-	public String submitJservs(String currentIp, String... nextip) {
+	public String submitJservsPersist(String currentIp, String... nextip) {
 		String ip = isNull(nextip) ? AppSettings.getLocalIp(2) : _0(nextip);
 		if (!eq(currentIp, ip)) {
 			try {
@@ -344,14 +347,20 @@ public class SynDomanager extends SyndomContext implements OnError {
 							
 						String myjserv = this.jservComposer.ip(ip).jserv();
 						AppSettings.updatePeerJservs(synconn, domain, synm, synode, myjserv);
-						peer.submitJserv(myjserv);
+						
+						HashMap<String, String> jservs = peer.submitJserv(myjserv);
+						if (jservs != null) {
+							for (String synid : jservs.keySet())
+								if (!eq(synid, synode))
+									AppSettings.updatePeerJservs(synconn, domain, synm, synid, jservs.get(synid));
+						}
 						
 						if (this.ipChangeHandler != null)
 							ipChangeHandler.on(this.jservComposer);
 						break;
 					} catch (IOException e) {
-						Utils.logT(new Object() {}, "[%s:%s] Submitting jservs to %s failed. Details:\n%s",
-								domain, synode, peer, e.getMessage());
+						Utils.logT(new Object() {}, "[%s:%s] Submitting jservs to %s failed. Error: %s, Details:\n%s",
+								domain, synode, peer.peer, e.getClass().getName(), e.getMessage());
 					} catch (TransException | AnsonException | SsException | SQLException e) {
 						e.printStackTrace();
 					}
@@ -499,5 +508,18 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager ipChangeHandler(OnNetworkChange handler) {
 		this.ipChangeHandler = handler;
 		return this;
+	}
+
+	public HashMap<String, String> loadJservs(DATranscxt tb) throws SQLException, TransException {
+		IUser robot = DATranscxt.dummyUser();
+
+		return ((AnResultset) tb.select(synm.tbl)
+		  .cols(synm.jserv, synm.synoder)
+		  .whereEq(synm.domain, domain())
+		  .rs(tb.instancontxt(synconn, robot))
+		  .rs(0))
+		  .map(synm.synoder,
+			  (rs) -> rs.getString(synm.jserv),
+			  (rs) -> rs.getString(synm.jserv) != null);
 	}
 }
