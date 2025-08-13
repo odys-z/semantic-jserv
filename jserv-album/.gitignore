@@ -24,9 +24,10 @@ dependency-reduced-pom.xml
 nginx
 venv*
 .venv*
-**/settings.hub.json
-**/settings.prv.json
-**/settings.mob.json
+**/WEB-INF/settings.hub.json
+**/WEB-INF/settings.prv.json
+**/WEB-INF/settings.mob.json
+**/WEB-INF/semantics-syn-???.xml
 **/volume-x29
 **/settings.x29.json
 .classpath
