@@ -50,6 +50,29 @@
   		<smtcs>semantics-syn-prv.xml</smtcs>
 	</c>
 
+  	<c>
+  		<id>sys-mob</id>
+  		<type>sqlite</type>
+  		<isdef>true</isdef>
+  		<src>$VOLUME_MOB/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg></dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+  	
+  	<c>
+		<id>docsyn-mob</id>
+  		<type>sqlit-queue</type>
+  		<isdef></isdef>
+  		<src>$VOLUME_MOB/doc-jserv.db</src>
+  		<usr></usr>
+  		<pswd></pswd>
+  		<dbg>1</dbg>
+  		<smtcs>semantics-syn-prv.xml</smtcs>
+	</c>
+
+
   </t>
 
   <!-- NOTE: dbcp configuration shouldn't work because you don't have container providing the connections.
