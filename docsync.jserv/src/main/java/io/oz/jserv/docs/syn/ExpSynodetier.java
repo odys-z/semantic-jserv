@@ -265,7 +265,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				// 0.7.6 Solution
 				// Get peer jservs from hub, save into synconn.syn_node.jserv.
 				// ISSUE: It's possible some nodes cannot access the hub but can only be told by a peer node.
-				localIp = this.domanager0.submitJservsPersist(localIp);
+				localIp = domanager0.submitJservsPersist(localIp);
 				domanager0.updateJservs(syntb);
 			
 				domanager0.openSynssions();
@@ -389,7 +389,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			ExpDocTableMeta docm = (ExpDocTableMeta) Connects.getMeta(conn, doctbl);
 
 			Query q = st.batchSelect(docm.tbl, "d")
-				// .col(Funcall.refile(new DocRef(domanager0.synode, docm, "NA", ctx)))
 				.cols(docm.pk, docm.uri, docm.io_oz_synuid)
 				.je("d", refm.tbl, "rf", "d." + docm.io_oz_synuid, "rf." + refm.io_oz_synuid)
 				.whereEq(refm.fromPeer, req.exblock.srcnode)
@@ -428,10 +427,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	SyncResp onQueryJservs(SyncReq req, DocUser usr) throws TransException, SQLException {
 		SynodeMeta m = domanager0.synm;
 		AnResultset rs = (AnResultset) st
-				.batchSelect(m.tbl)
-				.col(m.jserv, m.synoder)
+				.select(m.tbl)
+				.cols(m.jserv, m.synoder)
 				.whereEq(m.domain, domanager0.domain())
-				.limit(1)
 				.rs(st.instancontxt(domanager0.synconn, usr))
 				.rs(0);
 

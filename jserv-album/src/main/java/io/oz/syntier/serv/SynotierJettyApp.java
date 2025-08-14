@@ -218,6 +218,7 @@ public class SynotierJettyApp implements Daemon {
 			// For Eclipse's running as Java Application
 			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
 			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
+			JProtocol.setup(servpath, SynDocollPort.docoll);
 
 			AppSettings settings = AppSettings.checkInstall(servpath,
 					srcwebinf, config_xml, _0(args, settings_json), false);
@@ -253,7 +254,10 @@ public class SynotierJettyApp implements Daemon {
 					.forName(settings.startHandler[0])
 					.getDeclaredConstructor()
 					.newInstance())
-					.onExpose(settings, this.syngleton.syncfg.domain, this.syngleton.synode(), this.syngleton.syncfg.https);
+					.onExpose(settings,
+							this.syngleton.syncfg.domain,
+							this.syngleton.synode(),
+							this.syngleton.syncfg.https);
 			} catch (Exception e) {
 				warn("Exposing local resources failed!");
 				e.printStackTrace();
@@ -296,7 +300,7 @@ public class SynotierJettyApp implements Daemon {
 	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings,
 			PrintstreamProvider ... oe) throws Exception {
 
-		Utils.logi("%s : %s", settings.vol_name, System.getProperty(settings.vol_name));
+		Utils.logi("%s : %s", settings.vol_name, EnvPath.getEnv(settings.vol_name));
 
 		Configs.init(webinf);
 		Connects.init(webinf);
@@ -463,7 +467,7 @@ public class SynotierJettyApp implements Daemon {
 			AppSettings settings, String config_xml) throws Exception {
 	
 	    // AnsonMsg.understandPorts(SynDocollPort.docoll);
-	    JProtocol.setup(servpath, SynDocollPort.docoll);
+	    // JProtocol.setup(servpath, SynDocollPort.docoll);
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);

@@ -306,7 +306,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 */
 	public SynDomanager updateJserv(DATranscxt syntb, String peer, String jserv) throws TransException, SQLException {
 		AppSettings.updatePeerJservs(synconn, domain, synm, peer, jserv);
-		synssion(peer).peerjserv = jserv;
+		if (synssion(peer) != null) // in case of on a passive server
+			synssion(peer).peerjserv = jserv;
 		return this;
 	}
 
@@ -351,7 +352,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 						HashMap<String, String> jservs = peer.submitJserv(myjserv);
 						if (jservs != null) {
 							for (String synid : jservs.keySet())
-								if (!eq(synid, synode))
+								if (!eq(synid, synode) && !eq(synid, peer.peer))
 									AppSettings.updatePeerJservs(synconn, domain, synm, synid, jservs.get(synid));
 						}
 						
@@ -435,17 +436,10 @@ public class SynDomanager extends SyndomContext implements OnError {
 			throws AnsonException, SsException, IOException, TransException {
 		if (sessions != null)
 		for (SynssionPeer peer : sessions.values()) {
-			// if (eq(peer.peer, synode) || peer.client != null)
 			if (eq(peer.peer, synode))
 					continue;
 
 			peer.checkLogin("Opening domain", admin);
-//			if (peer.client == null || !peer.client.isSessionValid()) {
-//				Utils.logT(new Object(){},
-//						"Opening domain %s, logging into: %s, jserv: %s",
-//						domain, peer.peer, peer.peerjserv);
-//				peer.loginWithUri(peer.peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
-//			}
 		}
 
 		if (!isNull(onok))

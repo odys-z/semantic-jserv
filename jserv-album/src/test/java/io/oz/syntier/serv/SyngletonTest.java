@@ -78,6 +78,8 @@ class SyngletonTest {
 		
 		SynotierJettyApp jhub = SynotierJettyApp._main(new String[] {hubs});
 		musteq(hub, jhub.syngleton.synode());
+		assertNull(queryJserv(jhub, prv));
+		assertNull(queryJserv(jhub, mob));
 		
 		String hubconn = jhub.syngleton.domanager(zsu).synconn;
 		SynodeMeta synm = jhub.syngleton.domanager(zsu).synm;
@@ -105,7 +107,8 @@ class SyngletonTest {
 		
 		assertEquals(queryJserv(jhub, prv), jprv.jserv());
 		// TODO FIXME 127.0.0.1 != localip
-		// assertEquals(queryJserv(jprv, hub), jhub.jserv());
+		assertNotNull(queryJserv(jhub, prv));
+		assertNull(queryJserv(jhub, mob));
 	
 		// mob
 		turnred(T_WebservExposer.lights.get(mob));
@@ -120,19 +123,25 @@ class SyngletonTest {
 		awaitAll(T_WebservExposer.lights.get(mob), -1);
 		
 		assertNotNull(jmob.syngleton.settings.localIp);
+		assertNotNull(queryJserv(jhub, prv));
+		assertNotNull(queryJserv(jhub, mob));
 
 		assertEquals(queryJserv(jhub, mob), jmob.jserv());
-
 		assertEquals(queryJserv(jmob, prv), jprv.jserv());
-		assertEquals(queryJserv(jmob, hub), jhub.jserv());
 
-		// TODO Test driving for jprv updating jservs.
-		// assertEquals(queryJserv(jprv, mob), jmob.jserv());
+		// TODO FIXME 127.0.0.1 != localip
+		// assertEquals(queryJserv(jmob, hub), jhub.jserv());
+
+		assertNull(queryJserv(jprv, mob));
+		// prv
+		SynDomanager domprv = jprv.syngleton.domanager(zsu);
+		DATranscxt syntb = new DATranscxt(domprv.synconn);
+		domprv.updateJservs(syntb);
+		assertEquals(queryJserv(jprv, mob), jmob.jserv());
 	}
 
 	/**
 	 * Load db jserv.
-	 * A helper not directly used by AppSettings. 
 	 * @param synconn
 	 * @param domain
 	 * @param peer

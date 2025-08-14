@@ -1,4 +1,5 @@
 { "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "registry"    : "./registry-i",
   "vol_name"    : "VOLUME_HOME",
   "volume"      : "../vol",
   "localIp"     : "10.0.0.2",

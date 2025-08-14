@@ -1,5 +1,6 @@
 {
   "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "registpath": "./registry-i",
   "port": 8964,
   "webport": 8900,
   "reverseProxy": false,

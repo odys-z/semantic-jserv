@@ -13,6 +13,10 @@ class Synode(Anson):
     langs: dict
     ui: str
 
+    ### consts
+    registry_i: str
+    credits: str
+
     def __init__(self):
         super().__init__()
         self.ui = 'ui_form.py'
@@ -22,3 +26,17 @@ class Synode(Anson):
 
     def signup_prompt(self, defl = None):
         return LangExt.ifblank(self.langs[self.lang].signup_prompt, defl)
+
+    def langstr(self, res):
+        """
+        Get a string resource for the language, self.langs[self.lang][res].
+        Return the en version if not found
+        :param res:
+        :return: self.langs[self.lang][res].
+        """
+        return self.langs[self.lang][res] \
+            if self.lang in self.langs and res in self.langs[self.lang] \
+            else self.langs['en'][res]
+
+    def langstrf(self, res, **args):
+        return self.langstr(res).format(**args)

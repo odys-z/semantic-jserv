@@ -1,6 +1,7 @@
 {"type": "io.oz.syn.AnRegistry",
  "config": {
-   "synid": "node-x",
+   "synid": "node0",
+   "mode": "hub",
    "domain": "zsu",
    "admin": "admin",
    "sysconn": "sys",

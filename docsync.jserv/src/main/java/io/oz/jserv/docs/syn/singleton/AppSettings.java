@@ -428,7 +428,6 @@ public class AppSettings extends Anson {
 
 		IUser robot = DATranscxt.dummyUser();
 		try {
-			// String servurl = joinUrl(https, ip, port, jserv_album);
 			String servurl = new JServUrl(https, ip, port).jserv();
 
 			DATranscxt tb = new DATranscxt(synconn);
@@ -472,17 +471,6 @@ public class AppSettings extends Anson {
 
 	/**
 	 * @param https
-	 * @return http(s)://ip:port, while ip, port = proxy or local ip, port
-	public String getJservroot(boolean https) {
-		return this.reverseProxy ? this.jservProxy(https) : this.jserv(https);
-	}
-	public String getJserv(boolean https) {
-		return new JServUrl(https, localIp, 0).jserv();
-	}
-	 */
-
-	/**
-	 * @param https
 	 * @return http(s)://ip:web-port, while ip, port = proxy or local ip, port
 	 */
 	public String getLocalWebroot(boolean https) {
@@ -507,19 +495,4 @@ public class AppSettings extends Anson {
 		else
 			return f("%s:%s", localIp, webport);
 	}
-
-//	private String jservProxy(boolean https) {
-//		if (!https && proxyPort == 80 || https && proxyPort == 443)
-//			return proxyIp;
-//		else
-//			return f("%s:%s", proxyIp, proxyPort);
-//	}
-//
-//	private String jserv(boolean https) {
-//		if (!https && port == 80 || https && port == 443)
-//			return localIp;
-//		else
-//			return f("%s:%s", localIp, port);
-//	}
-
 }

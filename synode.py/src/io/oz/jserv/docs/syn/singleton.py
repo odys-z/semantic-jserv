@@ -69,6 +69,7 @@ class PortfolioException(Exception):
 
 @dataclass
 class AppSettings(Anson):
+    registpath: str
     envars: dict
     startHandler: [str]
     rootkey: str    # | None # test 3.12
@@ -87,6 +88,7 @@ class AppSettings(Anson):
 
     def __init__(self):
         super().__init__()
+        self.registpath = "registry-i"
         self.port = 8964
         self.webport = 8900
         self.reverseProxy = False
@@ -117,6 +119,9 @@ class AppSettings(Anson):
         else:
             self.volume = os.path.normpath(v).replace("\\", "/")
             return self
+
+    def Registpath(self):
+        return os.path.normpath(self.registpath).replace("\\", "/")
 
     @overload
     def Jservs(self, jservs: dict):

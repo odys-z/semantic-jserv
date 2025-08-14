@@ -14,7 +14,6 @@ from typing import cast, Callable
 
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt
-from typing_extensions import deprecated
 
 from src.io.oz.srv import WebConfig
 
@@ -162,6 +161,9 @@ def checkinstall_exiftool():
 
 install_uri = 'Anson.py3/test'
 
+#### section will be moved to synode.json ####
+# registry_i = "./registry-i"
+
 host_private = 'private'
 web_host_json = f'{host_private}/host.json'
 
@@ -215,15 +217,14 @@ class InstallerCli:
         self.settings.Jservs(jsrvs)
         return self
 
-    @deprecated
     def loadInitial(self, res_path: str = None):
         """
         deprecated since 0.7.6
         If this is called at the first time (WEB-INF/settings.json[root-key] == null),
         load from res_path/setings.json,
-        else load from WEB-INF/settings.json.
+        else load from WEB-INF/settings.json.non-ici.
 
-        :param res_path: if WEB-INF/settings.json is missing, must provide initial resource's path
+        :param res_path: if WEB-INF/settings.json.non-ici is missing, must provide initial resource's path
         :return: loaded json object
         """
 
@@ -236,28 +237,20 @@ class InstallerCli:
                 raise PortfolioException(f'Loading Anson data from {web_settings} failed.', e)
 
             try:
-                self.registry = self.loadRegistry(data.Volume())
+                self.registry = self.loadRegistry(data.Registpath())
             except FileNotFoundError or PortfolioException as e:
-                Utils.warn(f"Can't find registry configure in {data.Volume()}, replacing with {res_path}")
+                Utils.warn(f"Can't find registry configure in {data.Registpath()}, replacing with {res_path}")
                 self.registry = self.loadRegistry(res_path)
 
         else:
             if res_path is None:
-                raise PortfolioException("WEB-INF/settings.json doesn't exist and the resource path is not specified.")
+                raise PortfolioException("WEB-INF/settings.json.non-ici doesn't exist and the resource path is not specified.")
 
             res_settings = os.path.join(res_path, settings_json)
             self.registry = self.loadRegistry(res_path)
             self.settings = cast(AppSettings, Anson.from_file(res_settings))
 
         return self.settings
-
-    def loadRegistry(self):
-        '''
-        Load registry. Try settings.json/volume/dictionary.json fist,
-        otherwise load registry_i/dictionary.json.
-        :return: the actual path, without filename
-        '''
-        return 'TODO'
 
     @staticmethod
     def loadRegistry(res_path: str):
@@ -468,7 +461,7 @@ class InstallerCli:
                 # self.settings = data
                 self.settings.rootkey, self.settings.installkey = data.rootkey, data.installkey
             except Exception as e:
-                Utils.warn("Checking existing runtime settings, settings.json, failed.")
+                Utils.warn("Checking existing runtime settings, settings.json.non-ici, failed.")
                 print(e)
 
         if not os.path.isdir(web_inf):
@@ -480,7 +473,7 @@ class InstallerCli:
 
     def install(self, respth: str):
         """
-        Install / setup synodepy3, by moving /update dictionary to vol-path (of AppSettings), settings.json
+        Install / setup synodepy3, by moving /update dictionary to vol-path (of AppSettings), settings.json.non-ici
         to WEB-INF, unzip exiftool.zip, and check bin/jar first.
         Note: this is not installing Windows service.
         :param respth:
@@ -599,7 +592,6 @@ class InstallerCli:
         webhost_pth: str = os.path.join(album_web_dist, web_host_json)
 
         if webhost_pth is not None:
-            # ip = InstallerCli.reportIp()
             jsrvhost: str = getJservUrl(config.https, f'%s:{settings.port}')
 
             hosts: ExternalHosts
@@ -607,7 +599,6 @@ class InstallerCli:
             except: hosts = ExternalHosts()
 
             hosts.host = config.synid
-            # hosts.localip = ip
             hosts.syndomx.update({'domain': config.domain})
 
             for sid, jurl in settings.jservs.items():

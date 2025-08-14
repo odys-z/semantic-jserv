@@ -89,7 +89,6 @@ class InstallerForm(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_InstallForm()
         self.ui.setupUi(self)
-        self.registry_i = 'registry'
         self.cli = InstallerCli()
 
     @staticmethod
@@ -332,16 +331,16 @@ class InstallerForm(QMainWindow):
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def bindUi():
             self.ui.gboxRegistry.setTitle(
-                synode_ui.langs[synode_ui.lang]['gboxRegistry'].format(market=synode_ui.market))
+                # synode_ui.langs[synode_ui.lang]['gboxRegistry'].format(market=synode_ui.market))
+                # synode_ui.langstr('gboxRegistry').format(market=synode_ui.market))
+                synode_ui.langstrf('gboxRegistry', market=synode_ui.market))
 
-            lb_help = synode_ui.langs[synode_ui.lang]['lbHelplink']
+            # lb_help = synode_ui.langs[synode_ui.lang]['lbHelplink']
+            lb_help = synode_ui.langstr('lbHelplink')
             self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]['help_link']}">{lb_help}</a>.')
+            self.ui.lblink.setText(f'Portfolio is based on <a href="{synode_ui.credits}">open source projects</a>.')
 
-            credits_link = 'https://odys-z.github.io/products/album/credits.html'
-            self.ui.lblink.setText(f'Portfolio is based on <a href="{credits_link}">open source projects</a>.')
-
-        @deprecated # since 0.7.6
-        def bindInitial(root: str):
+        def bindRegistry(root: str):
             print(f'loading {root}')
             self.cli = InstallerCli()
 
@@ -367,7 +366,6 @@ class InstallerForm(QMainWindow):
 
         if event.type() == QEvent.Type.Show:
             bindUi()
-            # bindInitial(self.registry_i)
             self.reloadRegistry()
 
             def setVolumePath():
@@ -376,22 +374,18 @@ class InstallerForm(QMainWindow):
                     return err_msg("Volume path cannot be the same as registry resource's root path.")
                 self.ui.txtVolpath.setText(volpath)
 
-            @deprecated
             def reloadRespath():
-                '''
-                deprecated since 0.7.6
-                :return:
-                '''
                 self.registry_i = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
                 self.ui.txtResroot.setText(self.registry_i)
-                bindInitial(self.registry_i)
+                bindRegistry(self.registry_i)
+                self.cli.settings.registpath = self.registry_i
 
             self.ui.bSignup.clicked.connect(self.signup_demo)
 
             self.ui.txtSynode.setEnabled(False)
             self.ui.bVolpath.clicked.connect(setVolumePath)
             self.ui.bRegfolder.clicked.connect(reloadRespath) # disabled 0.7.6
-            self.ui.bLoadPeers.clicked.connect(self.updatePeers)   # disabled 0.7.6
+            # self.ui.bCreateDomain.clicked.connect(self.updatePeers)   # disabled 0.7.6
 
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
@@ -413,15 +407,15 @@ class InstallerForm(QMainWindow):
         :return: loaded path
         '''
         self.registry_i = './registry-i'
-        p = self.cli.loadRegistry()
-        Utils.logi("[reloadRegistry] {0}", p)
+        self.cli.registry = InstallerCli.loadRegistry(synode_ui.registry_i)
+        Utils.logi("[reloadRegistry] {}", self.cli.registry)
         self.bindIdentity(self.cli.registry)
         self.bind_peerJservs()
 
     def bind_peerJservs(self):
         '''
         If volume/dictionary.json exists, update with config.peers;
-        else if WEB-INF/settings.json exists, update with settings.jservs;
+        else if WEB-INF/settings.json.non-ici exists, update with settings.jservs;
         else update with registry-i/dictionary.json/config.peers
         :return:
         '''
@@ -460,6 +454,7 @@ class InstallerForm(QMainWindow):
         self.ui.txtPort_proxy.setText(str(settings.proxyPort))
         self.ui.txtWebport_proxy.setText(str(settings.webProxyPort))
 
+        self.ui.txtResroot.setText(settings.Registpath())
         self.ui.txtVolpath.setText(settings.Volume())
 
         if settings is not None:

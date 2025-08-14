@@ -850,7 +850,7 @@ public class SynssionPeer {
 	}
 
 	/**
-	 * File a request to the hub peer for updating *jservs* knowledge.
+	 * File a request to the this.client's peer for updating *jservs* knowledge.
 	 * @return jservs
 	 * @throws IOException 
 	 * @throws AnsonException 

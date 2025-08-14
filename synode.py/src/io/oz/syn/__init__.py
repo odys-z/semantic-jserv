@@ -18,7 +18,6 @@ class SynOrg(Anson):
     orgType: str
     ''' This is a tree table. '''
     parent: str
-    sort: str
     fullpath: str
     market: str
     # web server url, configured in dictionary like: $WEB-ROOT:8888
@@ -30,12 +29,19 @@ class SynOrg(Anson):
 
     def __init__(self):
         super().__init__()
+        self.parent = None
+        self.fullpath = ""
+        self.orgType = ""
+        self.webroot = ""
+        self.homepage = ""
+        self.album0 = ""
 
 
 @dataclass
 class SynodeConfig(Anson):
     synid: str
     domain: str
+    mode: str
 
     admin: str
 

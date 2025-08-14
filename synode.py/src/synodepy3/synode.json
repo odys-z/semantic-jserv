@@ -2,8 +2,10 @@
   "version": "0.7.6",
   "market": "TEST",
   "iso": "http://www.lingoes.net/en/translator/langcode.htm",
-  "lang": "ms",
   "ui": "ui_form.py",
+  "registry_i": "registry-i",
+  "credits": "https://odys-z.github.io/products/album/credits.html",
+  "lang": "ms",
   "langs": {
     "en": {
       "gboxRegistry": "Synchronization Domain Identity - Market {market}",
@@ -30,7 +32,7 @@
       "signup_prompt": "Ceci est une version de démonstration. Vous pouvez vous connecter en tant qu'admin et créer un domaine protégé par le serveur TEST, dans lequel les données vous appartiennent et ne peuvent pas interférer les unes avec les autres."
     },
     "ja": {
-      "gboxRegistry": "同期ドメインID - ゾーン{market}",
+      "gboxRegistry": "同期ドメインID - ゾーン {market}",
       "lbHelplink": "ヘルプ",
       "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps"
     },
