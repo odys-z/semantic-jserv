@@ -6,6 +6,7 @@
   <artifactId>jserv-sample</artifactId>
   <version>1.5.4</version>
   <name>jserv template project</name>
+  <description>Sample project for starting up a Semantic-* project</description>
   <url>http://odys-z.github.io</url>
   <packaging>jar</packaging>
 
@@ -15,6 +16,22 @@
 	<maven.compiler.target>1.8</maven.compiler.target>
 	<failOnMissingWebXml>false</failOnMissingWebXml>
   </properties>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Ody Zhou</name>
+      <email>odys.zhou@gmail.com</email>
+      <organization>odys-z.github.io</organization>
+      <organizationUrl>https://odys-z.github.io</organizationUrl>
+    </developer>
+  </developers>
 
   <dependencies>
   	<dependency>
@@ -112,6 +129,17 @@
 		</plugin>
 
 		<plugin>
+			<groupId>org.sonatype.central</groupId>
+			<artifactId>central-publishing-maven-plugin</artifactId>
+			<version>0.8.0</version>
+			<extensions>true</extensions>
+			<configuration>
+				<publishingServerId>central</publishingServerId>
+				<autoPublish>true</autoPublish>
+			</configuration>
+		</plugin>
+
+		<plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-source-plugin</artifactId>
 	      <version>2.2.1</version>
@@ -142,6 +170,28 @@
 	      	<additionalJOption>-Xdoclint:none</additionalJOption>
 	      </configuration>
 	  </plugin>
+
+	  <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-gpg-plugin</artifactId>
+		<version>3.2.8</version>
+		<executions>
+			<execution>
+			  <id>semantics.transact</id>
+			  <phase>verify</phase>
+			  <goals>
+				<goal>sign</goal>
+			  </goals>
+			  <configuration>
+			  <gpgArguments>
+				  <arg>--pinentry-mode=loopback</arg>
+				  <arg>--passphrase=${gpg.passphrase}</arg>
+			  </gpgArguments>
+		  	  </configuration>
+			</execution>
+		</executions>
+	  </plugin>
+
     </plugins>
   </build>
 </project>

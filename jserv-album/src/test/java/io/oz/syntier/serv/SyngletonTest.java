@@ -46,6 +46,9 @@ class SyngletonTest {
 
 	@BeforeAll
 	static void initEnv() throws IOException {
+		// -DWEB-INF=src/main/webapp/WEB-INF
+		System.setProperty("WEB-INF", "src/main/webapp/WEB-INF");
+
 		System.setProperty("VOLUME_HUB", "../../../../volumes-0.7/volume-hub");
 		System.setProperty("VOLUME_PRV", "../../../../volumes-0.7/volume-prv");
 		System.setProperty("VOLUME_MOB", "../../../../volumes-0.7/volume-mob");
@@ -81,16 +84,18 @@ class SyngletonTest {
 		assertNull(queryJserv(jhub, prv));
 		assertNull(queryJserv(jhub, mob));
 		
-		String hubconn = jhub.syngleton.domanager(zsu).synconn;
+		String  hubconn = jhub.syngleton.domanager(zsu).synconn;
 		SynodeMeta synm = jhub.syngleton.domanager(zsu).synm;
+		
+		Thread.sleep(1000);
 		assertEquals(SynodeMode.hub.name(),
 			DAHelper.getValstr(new DATranscxt(hubconn), hubconn, synm, synm.remarks, synm.pk, hub));
-		
+	
 		// jhub.afterboot();
 		awaitAll(T_WebservExposer.lights.get(hub), -1);
-		
+	
 		assertNotNull(jhub.syngleton.settings.localIp);
-		
+	
 		// prv
 		turnred(T_WebservExposer.lights.get(prv));
 
