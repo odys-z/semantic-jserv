@@ -41,7 +41,7 @@ class SynOrg(Anson):
 class SynodeConfig(Anson):
     synid: str
     domain: str
-    mode: str
+    mode: str | None
 
     admin: str
 
@@ -53,7 +53,7 @@ class SynodeConfig(Anson):
 
     syncIns: float
     '''
-     * Synchronization interval, initially, in secends.
+     * Synchronization interval, initially, in seconds.
      * No worker thread started if less or equals 0.
     '''
 
@@ -92,6 +92,14 @@ class AnRegistry(Anson):
             for peer in synodes:
                 if peer.synid == id:
                     return peer
+        return None
+
+    @classmethod
+    def find_synuser(cls, users: list[SyncUser], id):
+        if users is not None:
+            for u in users:
+                if u.userId == id:
+                    return u
         return None
 
 

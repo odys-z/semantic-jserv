@@ -1,20 +1,21 @@
 {
   "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "registpath": "./registry-i",
   "port": 8964,
   "webport": 8900,
-  "reverseProxy": false,
+  "reverseProxy": true,
   "proxyPort": 8964,
   "proxyIp": "",
   "webProxyPort": 8900,
   "envars": {"WEBROOT_HUB": "X29"},
   "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json"],
   "webrootLocal": "http://suppress.warning:8900",
+  "registpath": "./registry-i",
   "vol_name": "VOLUME_HOME",
-  "volume": "../vol",
+  "volume": "/home/ody/github/semantic-jserv/vol",
   "jservs": {
-    "X29": "http://127.0.0.1:8964/jserv-album",
-    "Y201": "http://127.0.0.1:8965/jserv-album"},
+    "node0": "http://?:?/jserv-album",
+    "node1": "http://?:?/jserv-album",
+    "node2": "http://?:?/jserv-album"},
   "installkey": "0123456789ABCDEF",
   "rootkey": ""
 }

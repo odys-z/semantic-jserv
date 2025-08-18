@@ -5,6 +5,8 @@ from typing import overload, Optional
 
 from anson.io.odysz.anson import Anson
 
+from src.io.odysz.semantic.syn import Synode
+
 jserv_sep = ' '
 synode_sep = ':'
 
@@ -88,7 +90,7 @@ class AppSettings(Anson):
 
     def __init__(self):
         super().__init__()
-        self.registpath = "registry-i"
+        # self.registpath = "registry-i"
         self.port = 8964
         self.webport = 8900
         self.reverseProxy = False
@@ -120,8 +122,8 @@ class AppSettings(Anson):
             self.volume = os.path.normpath(v).replace("\\", "/")
             return self
 
-    def Registpath(self):
-        return os.path.normpath(self.registpath).replace("\\", "/")
+    # def Registpath(self):
+    #     return os.path.normpath(self.registpath).replace("\\", "/")
 
     @overload
     def Jservs(self, jservs: dict):
@@ -145,5 +147,8 @@ class AppSettings(Anson):
             self.jservs = urldict
             return self
 
-    def jservLines(self):
-        return [':\t'.join([k, self.jservs[k]]) for k in self.jservs]
+    def jservLines(self, peers_define: list[Synode]):
+        return [':\t'.join([p.synid,
+                            self.jservs[p.synid] if p.synid in self.jservs \
+                            else "http://?:?/{}".format(jserv_url_path)]
+                           ) for p in peers_define]

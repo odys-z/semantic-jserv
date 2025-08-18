@@ -2,7 +2,6 @@ import os
 import sys
 
 from anclient.io.odysz.jclient import Clients
-from typing_extensions import deprecated
 
 import io as std_io
 from typing import Optional, cast
@@ -28,6 +27,7 @@ from src.synodepy3.ui_form import Ui_InstallForm
 from anson.io.odysz.anson import Anson
 
 from synodepy3 import Synode
+from synodepy3.installer_api import mode_hub
 
 Anson.java_src('src')
 path = os.path.dirname(__file__)
@@ -41,7 +41,6 @@ def msg_box(info: str, details: object = None):
     msg.setIcon(QMessageBox.Icon.Information)
     result = msg.exec()
     return result
-
 
 def err_msg(err: str, details: object = None):
     msg = QMessageBox()
@@ -64,7 +63,6 @@ def err_msg(err: str, details: object = None):
     result = msg.exec()
     return result
 
-
 def warn_msg(warn: str, details: object = None):
     msg = QMessageBox()
 
@@ -82,7 +80,6 @@ def warn_msg(warn: str, details: object = None):
     msg.setIcon(QMessageBox.Icon.Warning)
     result = msg.exec()
     return result
-
 
 class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
@@ -112,7 +109,7 @@ class InstallerForm(QMainWindow):
             # Similar issue: https://github.com/python-pillow/Pillow/issues/2803
             # This error can occur and disappear without any clear conditions.
             label.setText(text)
-            err_msg(f'Generating QR Code Error. Please generate QR Code for:\n{text}', e)
+            err_msg(f'Sorry! There are errors while generating QR Code. Try again or copy the text:\n{text}', e)
 
     def gen_qr(self) -> Optional[dict]:
         """
@@ -142,22 +139,28 @@ class InstallerForm(QMainWindow):
 
     def validate(self) -> bool:
         """
-        Validate user's input
+        Validate data models (updated with ui).
         :return: succeed or not
         """
-        self.ui.bWinserv.setEnabled(False)
 
-        err = self.cli.validate(
-                volpath=self.ui.txtVolpath.text(),
-                synid=self.ui.txtSynode.text(),
-                peerjservs=self.ui.jservLines.toPlainText(),
-                ping_timeout=int(self.ui.txtimeout.text()),
-                warn=warn_msg)
+        # LangExt.musteqs(self.ui.txtPswd.text(), self.ui.txtPswd2.text())
+        # LangExt.only_passwdlen(self.ui.txtPswd.text(), 32)
+        # LangExt.only_passwdlen(self.ui.txtDompswd.text(), 32)
+
+        err = self.cli.validate()
+                # 0.7.5
+                # volpath=self.ui.txtVolpath.text(),
+                # synid=self.ui.txtSynode.text(),
+                # peerjservs=self.ui.jservLines.toPlainText(),
+                # ping_timeout=int(self.ui.txtimeout.text()),
+                # warn=warn_msg)
 
         if err is not None:
             self.updateValidation(err)
             self.ui.lbQr.clear()
             return False
+
+        self.ui.bWinserv.setEnabled(False)
         return True
 
     def updateValidation(self, err: dict):
@@ -193,12 +196,10 @@ class InstallerForm(QMainWindow):
     #     return details
 
     def signup_demo(self):
-        msg_box(synode_ui.signup_prompt('This is a demo version. You can login with the provided admin Id and the password.'))
+        msg_box(synode_ui.signup_prompt('This is a demo version. TODO'))
 
     def login(self) -> bool:
-        # ui = self.ui
-        # ui.txtDomain.setText('zsu')
-        msg_box(synode_ui.signup_prompt('This is a demo version. You can login with the provided admin Id and the password.'))
+        msg_box(synode_ui.signup_prompt('This is a demo version. TODO'))
         return False
 
     def pings(self):
@@ -235,6 +236,12 @@ class InstallerForm(QMainWindow):
 
         try:
             self.cli.updateWithUi(
+                admin=self.ui.txtAdminId.text(),
+                pswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
+                org=self.ui.txtOrgid.text(),
+                domain=self.ui.txtDomain.text(),
+                domphrase=self.ui.txtDompswd.text(),
+                hubmode=self.ui.chkHub.checkState() == Qt.CheckState.Checked,
                 jservss=self.ui.jservLines.toPlainText(),
                 synid=self.ui.txtSynode.text(),
                 syncins=self.ui.txtSyncIns.text(),
@@ -312,6 +319,16 @@ class InstallerForm(QMainWindow):
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
 
+    def update_chkhub(self, check: bool):
+        self.ui.txtSyncIns.setEnabled(not check)
+        if not check and LangExt.isblank(self.ui.txtSyncIns.text()):
+            self.ui.txtSyncIns.setText("20")
+
+        if check:
+            self.cli.registry.config.mode = mode_hub
+        else:
+            self.cli.registry.config.mode = None
+
     def updateChkReverse(self, check: bool):
         if check == None:
             check = self.ui.chkReverseProxy.checkState() == Qt.CheckState.Checked
@@ -322,70 +339,62 @@ class InstallerForm(QMainWindow):
         self.ui.txtWebport_proxy.setEnabled(check)
         self.ui.txtPort_proxy.setEnabled(check)
 
-    def updateRegistry(self):
-        '''
-        Update cli.registry, re-load, if volume/dictionary.json is found, or load from ./registry-i/dictinary.json.
-        :return: path of loaded json file, without filename
-        '''
-
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
-        def bindUi():
+        def translateUI():
             self.ui.gboxRegistry.setTitle(
                 # synode_ui.langs[synode_ui.lang]['gboxRegistry'].format(market=synode_ui.market))
                 # synode_ui.langstr('gboxRegistry').format(market=synode_ui.market))
                 synode_ui.langstrf('gboxRegistry', market=synode_ui.market))
 
-            # lb_help = synode_ui.langs[synode_ui.lang]['lbHelplink']
             lb_help = synode_ui.langstr('lbHelplink')
             self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]['help_link']}">{lb_help}</a>.')
             self.ui.lblink.setText(f'Portfolio is based on <a href="{synode_ui.credits}">open source projects</a>.')
 
-        def bindRegistry(root: str):
-            print(f'loading {root}')
-            self.cli = InstallerCli()
-
-            try: self.cli.loadInitial(root)
-            except FileNotFoundError as e:
-                return err_msg('Cannot find registry.', e)
-            except PortfolioException as e:
-                return err_msg(e.msg, e.cause)
-
-            self.bindIdentity(self.cli.registry)
-
-            json = self.cli.settings
-            self.bindSettings(json)
-
-            self.enableServInstall()
-
-            if self.cli.isinstalled() and self.cli.hasrun():
-                self.gen_qr()
-
-            self.updateChkReverse(self.cli.settings.reverseProxy)
+        # def bindRegistry(root: str):
+        #     self.cli = InstallerCli()
+        #
+        #     # try:
+        #     #     # self.cli.loadInitial(root)
+        #     #     self.cli.load_settings(root)
+        #     # except FileNotFoundError as e:
+        #     #     return err_msg('Cannot find registry.', e)
+        #     # except PortfolioException as e:
+        #     #     return err_msg(e.msg, e.cause)
+        #
+        #     self.bindIdentity(self.cli.registry)
+        #
+        #     json = self.cli.settings
+        #     self.bindSettings(self.cli.registry.config.peers, json)
+        #
+        #     self.enableServInstall()
+        #
+        #     if self.cli.isinstalled() and self.cli.hasrun():
+        #         self.gen_qr()
+        #
+        #     self.updateChkReverse(self.cli.settings.reverseProxy)
 
         super().showEvent(event)
 
         if event.type() == QEvent.Type.Show:
-            bindUi()
-            self.reloadRegistry()
+            translateUI()
 
             def setVolumePath():
                 volpath = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
-                if volpath == self.registry_i:
+                if volpath == self.cli.settings.registpath:
                     return err_msg("Volume path cannot be the same as registry resource's root path.")
                 self.ui.txtVolpath.setText(volpath)
 
-            def reloadRespath():
-                self.registry_i = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
-                self.ui.txtResroot.setText(self.registry_i)
-                bindRegistry(self.registry_i)
-                self.cli.settings.registpath = self.registry_i
+            # def reloadRespath():
+            #     self.cli.settings.registpath = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
+            #     self.ui.txtResroot.setText(self.cli.settings.registpath)
+            #     bindRegistry(self.cli.settings.registpath)
 
             self.ui.bSignup.clicked.connect(self.signup_demo)
 
-            self.ui.txtSynode.setEnabled(False)
+            self.ui.chkHub.clicked.connect(self.update_chkhub)
+            # self.ui.txtSynode.setEnabled(False)
             self.ui.bVolpath.clicked.connect(setVolumePath)
-            self.ui.bRegfolder.clicked.connect(reloadRespath) # disabled 0.7.6
-            # self.ui.bCreateDomain.clicked.connect(self.updatePeers)   # disabled 0.7.6
+            # self.ui.bRegfolder.clicked.connect(reloadRespath)
 
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
@@ -399,53 +408,47 @@ class InstallerForm(QMainWindow):
             else:
                 self.ui.bWinserv.setEnabled(False)
 
-    def reloadRegistry(self):
-        '''
-        Reload local dictionary.json.
-        Try load volume/dictionary.json first.
-        If volume/dictionary doesn't exists, then load registyr-i/dictonary.json.
-        :return: loaded path
-        '''
-        self.registry_i = './registry-i'
-        self.cli.registry = InstallerCli.loadRegistry(synode_ui.registry_i)
-        Utils.logi("[reloadRegistry] {}", self.cli.registry)
-        self.bindIdentity(self.cli.registry)
-        self.bind_peerJservs()
+            self.cli.registry = self.cli.load_settings()
+            self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.volume, self.cli.settings.registpath)
+            self.bindIdentity(self.cli.registry)
+            self.bindSettings()
 
-    def bind_peerJservs(self):
-        '''
-        If volume/dictionary.json exists, update with config.peers;
-        else if WEB-INF/settings.json.non-ici exists, update with settings.jservs;
-        else update with registry-i/dictionary.json/config.peers
-        :return:
-        '''
-        pass
+    # def reloadRegistry(self):
+    #     '''
+    #     Reload local dictionary.json.
+    #     Try load volume/dictionary.json first.
+    #     If volume/dictionary doesn't exists, then load registyr-i/dictonary.json.
+    #     :return: loaded path
+    #     '''
+    #     self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.registpath)
+    #     Utils.logi("[reloadRegistry] {}", self.cli.registry)
 
     def bindIdentity(self, registry: AnRegistry):
-        def findUser(usrs: [SyncUser], usrid):
-            for u in usrs:
-                if u.userId == usrid:
-                    return u
+        # def findUser(usrs: [SyncUser], usrid):
+        #     for u in usrs:
+        #         if u.userId == usrid:
+        #             return u
         print(registry.config.toBlock())
         cfg = registry.config
         self.ui.txtAdminId.setText(cfg.admin)
 
-        # 0.7.5
-        # pswd = findUser(registry.synusers, cfg.admin).pswd
-        # self.ui.txtPswd.setText(pswd)
-        # self.ui.txtPswd2.setText(pswd)
-        # self.ui.txtSynode.setText(cfg.synid)
-        # self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(cfg.syncIns))
+        # users[0]
+        self.ui.txtPswd.setText(registry.synusers[0].pswd)
+        self.ui.txtPswd2.setText(registry.synusers[0].pswd)
+        self.ui.txtDompswd.setText(registry.synusers[0].pswd)
 
-        # 0.7.6
         self.ui.txtOrgid.setText(cfg.org.orgId)
         self.ui.txtDomain.setText(cfg.domain)
-        pswd = findUser(registry.synusers, cfg.admin).pswd
-        self.ui.txtDompswd.setText(pswd)
+
+        u = self.cli.find_synuser(cfg.admin)
+        if u is not None:
+            self.ui.txtDompswd.setText(u.pswd)
+
         self.ui.txtSynode.setText(cfg.synid)
         self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(cfg.syncIns))
 
-    def bindSettings(self, settings: AppSettings):
+    def bindSettings(self):
+        peers, settings = self.cli.registry.config.peers, self.cli.settings
         self.ui.txtPort.setText(str(settings.port))
         self.ui.txtWebport.setText(str(settings.webport))
 
@@ -454,11 +457,11 @@ class InstallerForm(QMainWindow):
         self.ui.txtPort_proxy.setText(str(settings.proxyPort))
         self.ui.txtWebport_proxy.setText(str(settings.webProxyPort))
 
-        self.ui.txtResroot.setText(settings.Registpath())
+        # self.ui.txtResroot.setText(settings.Registpath())
         self.ui.txtVolpath.setText(settings.Volume())
 
         if settings is not None:
-            lines = "\n".join(settings.jservLines())
+            lines = "\n".join(settings.jservLines(peers))
             print(lines)
             self.ui.jservLines.setText(lines)
         else:

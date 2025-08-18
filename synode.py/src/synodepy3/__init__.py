@@ -14,7 +14,6 @@ class Synode(Anson):
     ui: str
 
     ### consts
-    registry_i: str
     credits: str
 
     def __init__(self):
