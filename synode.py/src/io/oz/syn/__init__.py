@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import cast, Union
 
 from anson.io.odysz.anson import Anson
 
@@ -41,7 +41,7 @@ class SynOrg(Anson):
 class SynodeConfig(Anson):
     synid: str
     domain: str
-    mode: str | None
+    mode: Union[str, None]
 
     admin: str
 

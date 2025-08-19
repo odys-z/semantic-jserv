@@ -136,7 +136,7 @@
       <number>32</number>
      </property>
      <property name="echoMode">
-      <enum>QLineEdit::EchoMode::Password</enum>
+      <enum>QLineEdit::Normal</enum>
      </property>
      <property name="placeholderText">
       <string>Confirm Password</string>
@@ -177,7 +177,7 @@
       <number>32</number>
      </property>
      <property name="echoMode">
-      <enum>QLineEdit::EchoMode::Password</enum>
+      <enum>QLineEdit::Normal</enum>
      </property>
      <property name="placeholderText">
       <string>Max 32 Chars</string>
@@ -350,7 +350,7 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset theme="QIcon::ThemeIcon::GoDown"/>
+      <iconset theme="go-bottom"/>
      </property>
      <property name="iconSize">
       <size>
@@ -459,7 +459,7 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset theme="QIcon::ThemeIcon::GoDown"/>
+      <iconset theme="go-bottom"/>
      </property>
      <property name="iconSize">
       <size>
@@ -593,9 +593,6 @@
     </property>
     <property name="maxLength">
      <number>4</number>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
     </property>
     <property name="readOnly">
      <bool>false</bool>
@@ -836,7 +833,7 @@
       <string>&amp;Volume</string>
      </property>
      <property name="icon">
-      <iconset theme="QIcon::ThemeIcon::FolderNew"/>
+      <iconset theme="folder-new"/>
      </property>
      <property name="iconSize">
       <size>
@@ -973,9 +970,6 @@
      <property name="maxLength">
       <number>6</number>
      </property>
-     <property name="alignment">
-      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-     </property>
      <property name="placeholderText">
       <string>120.0</string>
      </property>
@@ -1036,7 +1030,7 @@
      <x>0</x>
      <y>0</y>
      <width>960</width>
-     <height>23</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuPortfolio_0_7">

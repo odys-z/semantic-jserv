@@ -90,7 +90,7 @@ class AppSettings(Anson):
 
     def __init__(self):
         super().__init__()
-        # self.registpath = "registry-i"
+        self.registpath = "registry-i"
         self.port = 8964
         self.webport = 8900
         self.reverseProxy = False

@@ -26,8 +26,8 @@ from src.synodepy3.ui_form import Ui_InstallForm
 
 from anson.io.odysz.anson import Anson
 
-from synodepy3 import Synode
-from synodepy3.installer_api import mode_hub
+from src.synodepy3 import Synode
+from src.synodepy3.installer_api import mode_hub
 
 Anson.java_src('src')
 path = os.path.dirname(__file__)
@@ -347,7 +347,7 @@ class InstallerForm(QMainWindow):
                 synode_ui.langstrf('gboxRegistry', market=synode_ui.market))
 
             lb_help = synode_ui.langstr('lbHelplink')
-            self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]['help_link']}">{lb_help}</a>.')
+            self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]["help_link"]}">{lb_help}</a>.')
             self.ui.lblink.setText(f'Portfolio is based on <a href="{synode_ui.credits}">open source projects</a>.')
 
         # def bindRegistry(root: str):
