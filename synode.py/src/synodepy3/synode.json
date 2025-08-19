@@ -1,11 +1,11 @@
-{ "type": "synodepy3.Synode",
+{ "type": "synodepy3.SynodeUi",
   "version": "0.7.6",
   "market": "TEST",
   "iso": "http://www.lingoes.net/en/translator/langcode.htm",
   "ui": "ui_form.py",
   "registry_i": "registry-i",
   "credits": "https://odys-z.github.io/products/album/credits.html",
-  "lang": "ms",
+  "lang": "zh-CN",
   "langs": {
     "en": {
       "gboxRegistry": "Synchronization Domain Identity - Market {market}",

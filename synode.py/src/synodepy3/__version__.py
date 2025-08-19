@@ -1,5 +1,5 @@
 # Don't modify version number here, change in tasks.py instead.
-synode_ver = "0.7.5"  # portfolio version
+synode_ver = "0.7.0"  # portfolio version
 jar_ver = "0.7.5"     # jserv-albm-#.#.#.jar
-web_ver = "0.4.1"     # web-dist/album-#.#.#.jar
+web_ver = "0.4.2"     # web-dist/album-#.#.#.jar
 html_srver = "0.1.8"  # html-service-#.#.#.jar

@@ -122,9 +122,6 @@ class AppSettings(Anson):
             self.volume = os.path.normpath(v).replace("\\", "/")
             return self
 
-    # def Registpath(self):
-    #     return os.path.normpath(self.registpath).replace("\\", "/")
-
     @overload
     def Jservs(self, jservs: dict):
         ...

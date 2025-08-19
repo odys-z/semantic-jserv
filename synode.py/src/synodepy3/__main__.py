@@ -26,12 +26,12 @@ from src.synodepy3.ui_form import Ui_InstallForm
 
 from anson.io.odysz.anson import Anson
 
-from src.synodepy3 import Synode
+from src.synodepy3 import SynodeUi
 from src.synodepy3.installer_api import mode_hub
 
 Anson.java_src('src')
 path = os.path.dirname(__file__)
-synode_ui = cast(Synode, Anson.from_file(os.path.join(path,"synode.json")))
+synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()

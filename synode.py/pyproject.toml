@@ -1,18 +1,18 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.2.4"]
+requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.2.5"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "synode.py3"
-version = "0.7.5" # updated by invoke
+version = "0.7.0" # updated by invoke
 description = "Portfolio Synode Stand Alone Service"
 authors = [{ name = "Ody Z", email = "odys.zhou@gmail.com" }]
 keywords = ["Documents", "Files", "Relational Database", "Synchronization"]
 dependencies = [
     "pyside6>=6.5.0,<=6.8.2.1",
     "qrcode",
-    "anson.py3>=0.2.4",
-    "anclient.py3>=0.1.2",
+    "anson.py3>=0.2.5",
+    "anclient.py3>=0.1.4",
     "psutil",
     "pillow>=8.0.0",
     "invoke>=2.2.0"

@@ -5,7 +5,7 @@ from anson.io.odysz.common import LangExt
 
 
 @dataclass
-class Synode(Anson):
+class SynodeUi(Anson):
     version: str
     iso: str
     market: str
