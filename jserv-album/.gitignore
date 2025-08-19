@@ -32,6 +32,8 @@ venv*
 **/settings.x29.json
 .classpath
 **/uploading-temp
+volume-*-backup
+volumes-*-backup
 
 # temporary install program
 install-settings-delete/*
