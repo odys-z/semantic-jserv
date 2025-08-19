@@ -350,7 +350,8 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset theme="go-bottom"/>
+      <iconset>
+       <normaloff>res/input_combobox.svg</normaloff>res/input_combobox.svg</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -459,7 +460,8 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset theme="go-bottom"/>
+      <iconset>
+       <normaloff>res/input_combobox.svg</normaloff>res/input_combobox.svg</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -498,7 +500,7 @@
     <property name="geometry">
      <rect>
       <x>540</x>
-      <y>370</y>
+      <y>362</y>
       <width>91</width>
       <height>30</height>
      </rect>
@@ -516,9 +518,9 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>650</x>
-      <y>370</y>
-      <width>301</width>
+      <x>640</x>
+      <y>362</y>
+      <width>311</width>
       <height>30</height>
      </rect>
     </property>
@@ -833,7 +835,8 @@
       <string>&amp;Volume</string>
      </property>
      <property name="icon">
-      <iconset theme="folder-new"/>
+      <iconset>
+       <normaloff>res/volume.svg</normaloff>res/volume.svg</iconset>
      </property>
      <property name="iconSize">
       <size>
