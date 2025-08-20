@@ -12,22 +12,19 @@ from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
 
-from anson.io.odysz.common import Utils, LangExt
+from anson.io.odysz.anson import Anson, Utils, LangExt
 
-from src.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings, getJservOption
-from src.io.oz.syn import AnRegistry, SyncUser
-from src.synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
-from src.synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json, serv_port0, web_port0
+from src.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption
+from src.io.oz.syn import AnRegistry
+from synodepy3 import SynodeUi
+from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
+from synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json, serv_port0, web_port0
 
 # Important:
 # Run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py
-from src.synodepy3.ui_form import Ui_InstallForm
-
-from anson.io.odysz.anson import Anson
-
-from src.synodepy3 import SynodeUi
-from src.synodepy3.installer_api import mode_hub
+from synodepy3.ui_form import Ui_InstallForm
+from synodepy3.installer_api import mode_hub
 
 Anson.java_src('src')
 path = os.path.dirname(__file__)
@@ -350,29 +347,6 @@ class InstallerForm(QMainWindow):
             self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]["help_link"]}">{lb_help}</a>.')
             self.ui.lblink.setText(f'Portfolio is based on <a href="{synode_ui.credits}">open source projects</a>.')
 
-        # def bindRegistry(root: str):
-        #     self.cli = InstallerCli()
-        #
-        #     # try:
-        #     #     # self.cli.loadInitial(root)
-        #     #     self.cli.load_settings(root)
-        #     # except FileNotFoundError as e:
-        #     #     return err_msg('Cannot find registry.', e)
-        #     # except PortfolioException as e:
-        #     #     return err_msg(e.msg, e.cause)
-        #
-        #     self.bindIdentity(self.cli.registry)
-        #
-        #     json = self.cli.settings
-        #     self.bindSettings(self.cli.registry.config.peers, json)
-        #
-        #     self.enableServInstall()
-        #
-        #     if self.cli.isinstalled() and self.cli.hasrun():
-        #         self.gen_qr()
-        #
-        #     self.updateChkReverse(self.cli.settings.reverseProxy)
-
         super().showEvent(event)
 
         if event.type() == QEvent.Type.Show:
@@ -384,17 +358,10 @@ class InstallerForm(QMainWindow):
                     return err_msg("Volume path cannot be the same as registry resource's root path.")
                 self.ui.txtVolpath.setText(volpath)
 
-            # def reloadRespath():
-            #     self.cli.settings.registpath = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
-            #     self.ui.txtResroot.setText(self.cli.settings.registpath)
-            #     bindRegistry(self.cli.settings.registpath)
-
             self.ui.bSignup.clicked.connect(self.signup_demo)
 
             self.ui.chkHub.clicked.connect(self.update_chkhub)
-            # self.ui.txtSynode.setEnabled(False)
             self.ui.bVolpath.clicked.connect(setVolumePath)
-            # self.ui.bRegfolder.clicked.connect(reloadRespath)
 
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
@@ -413,21 +380,7 @@ class InstallerForm(QMainWindow):
             self.bindIdentity(self.cli.registry)
             self.bindSettings()
 
-    # def reloadRegistry(self):
-    #     '''
-    #     Reload local dictionary.json.
-    #     Try load volume/dictionary.json first.
-    #     If volume/dictionary doesn't exists, then load registyr-i/dictonary.json.
-    #     :return: loaded path
-    #     '''
-    #     self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.registpath)
-    #     Utils.logi("[reloadRegistry] {}", self.cli.registry)
-
     def bindIdentity(self, registry: AnRegistry):
-        # def findUser(usrs: [SyncUser], usrid):
-        #     for u in usrs:
-        #         if u.userId == usrid:
-        #             return u
         print(registry.config.toBlock())
         cfg = registry.config
         self.ui.txtAdminId.setText(cfg.admin)
@@ -457,7 +410,6 @@ class InstallerForm(QMainWindow):
         self.ui.txtPort_proxy.setText(str(settings.proxyPort))
         self.ui.txtWebport_proxy.setText(str(settings.webProxyPort))
 
-        # self.ui.txtResroot.setText(settings.Registpath())
         self.ui.txtVolpath.setText(settings.Volume())
 
         if settings is not None:

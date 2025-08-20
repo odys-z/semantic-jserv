@@ -45,7 +45,7 @@ DOMAIN = 'zsu'
     Versions configured locally, overriden by environment variables.
 """
 vers = {
-    SYNODE_VERSION:    '0.7.0',
+    SYNODE_VERSION:    '0.7.1',
     JSERV_JAR_VERSION: '0.7.5',
     HTML_JAR_VERSION:  '0.1.8',
     WEB_VERSION:       '0.4.2',
@@ -83,6 +83,7 @@ def config(c):
         'html_srver = "[0-9\\.]+"': f'html_srver = "{html_srver}"'
     })
 
+    Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{version}" # '})
 
 @task
 def zipRegistry(c):
@@ -121,7 +122,6 @@ def build(c: Context):
     from src.synodepy3.__version__ import synode_ver
     buildcmds = [
         ['.', lambda: rm_dist()],
-        ['.', lambda: Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{synode_ver}" # '})], 
         ['.', f'{py()} -m build']
     ]
 

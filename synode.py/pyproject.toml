@@ -4,10 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "synode.py3"
-version = "0.7.0" # updated by invoke
+version = "0.7.1" # updated by invoke
 description = "Portfolio Synode Stand Alone Service"
+readme = "README.md"
+license = { text = "Apache-2.0" }
 authors = [{ name = "Ody Z", email = "odys.zhou@gmail.com" }]
 keywords = ["Documents", "Files", "Relational Database", "Synchronization"]
+requires-python = ">=3.9"
 dependencies = [
     "pyside6>=6.5.0,<=6.8.2.1",
     "qrcode",
@@ -17,9 +20,6 @@ dependencies = [
     "pillow>=8.0.0",
     "invoke>=2.2.0"
 ]
-requires-python = ">=3.9"
-readme = "README.md"
-license = { text = "Apache-2.0" }
 
 [project.scripts]
 synode-uninstall-srv = "synodepy3.cli:uninst_srv"
@@ -27,7 +27,9 @@ synode-clean = "synodepy3.cli:clean"
 synode-start-web = "synodepy3.cli:startweb"
 
 [tool.setuptools]
-packages = ["src", "src.synodepy3"]
-package-dir = { "src" = "src" }
-package-data = { "synodepy3" = ["form.ui", "res/*"] }
+
+packages = ["synodepy3", "src.io"]
+package-dir = { "synodepy3" = "src/synodepy3", "src.io" = "src/io" }
+package-data = { "synodepy3" = ["form.ui", "synode.json", "res/*"], "src.io" = ["*"] }
+
 zip-safe = false
