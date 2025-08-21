@@ -27,7 +27,6 @@ venv*
 **/WEB-INF/settings.hub.json
 **/WEB-INF/settings.prv.json
 **/WEB-INF/settings.mob.json
-**/WEB-INF/semantics-syn-*.xml
 **/volume-x29
 **/settings.x29.json
 .classpath
