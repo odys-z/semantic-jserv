@@ -36,9 +36,6 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.SyncUser;
-import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
@@ -50,7 +47,10 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.syn.SynodeConfig;
+import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.SyncUser;
+import io.oz.syn.registry.SynodeConfig;
+import io.oz.syn.registry.SyntityReg;
 
 /**
  * The access point of document client tiers, accepting doc's pushing.

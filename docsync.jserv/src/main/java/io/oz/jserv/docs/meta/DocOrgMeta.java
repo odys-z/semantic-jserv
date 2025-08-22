@@ -5,7 +5,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.SemanticTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
-import io.oz.syn.SynodeConfig;
+import io.oz.syn.registry.SynodeConfig;
 
 public class DocOrgMeta extends SemanticTableMeta {
 

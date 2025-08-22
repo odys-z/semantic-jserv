@@ -9,16 +9,16 @@ import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
+import static io.oz.syn.ExessionAct.close;
+import static io.oz.syn.ExessionAct.deny;
+import static io.oz.syn.ExessionAct.init;
+import static io.oz.syn.ExessionAct.ready;
+import static io.oz.syn.ExessionAct.setupDom;
+import static io.oz.syn.ExessionAct.trylater;
 import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.indexOf;
 import static io.odysz.common.LangExt.musteq;
 import static io.odysz.common.LangExt.mustnonull;
-import static io.odysz.semantic.syn.ExessionAct.close;
-import static io.odysz.semantic.syn.ExessionAct.deny;
-import static io.odysz.semantic.syn.ExessionAct.init;
-import static io.odysz.semantic.syn.ExessionAct.ready;
-import static io.odysz.semantic.syn.ExessionAct.setupDom;
-import static io.odysz.semantic.syn.ExessionAct.trylater;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -61,13 +61,6 @@ import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.syn.ExessionAct;
-import io.odysz.semantic.syn.ExessionPersist;
-import io.odysz.semantic.syn.SyncUser;
-import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.util.DAHelper;
@@ -83,6 +76,13 @@ import io.odysz.transact.sql.parts.Sql;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
+import io.oz.syn.DBSyntableBuilder;
+import io.oz.syn.ExchangeBlock;
+import io.oz.syn.ExessionAct;
+import io.oz.syn.ExessionPersist;
+import io.oz.syn.SyncUser;
+import io.oz.syn.SynodeMode;
+import io.oz.syn.SyndomContext.OnMutexLock;
 
 /**
  * @since 0.2.0
@@ -133,7 +133,7 @@ public class SynssionPeer {
 	 */
 	protected SessionClient client;
 
-	/** Initialized by {@link io.odysz.semantic.syn.SyndomContext#dbg}, which should be from Config.debug. */
+	/** Initialized by {@link io.oz.syn.SyndomContext#dbg}, which should be from Config.debug. */
 	private boolean debug;
 
 	/**
@@ -832,7 +832,7 @@ public class SynssionPeer {
 	 */
 	public void joindomain(String admid, String myuid, String mypswd, OnOk ok)
 			throws AnsonException, IOException, TransException, SQLException {
-		SyncReq  req = signup(admid); // FIXME not domain?
+		SyncReq  req = signup(admid);
 		SyncResp rep = exespush(admid, (SyncReq)req.a(A.initjoin));
 
 		req = closejoin(admid, rep);

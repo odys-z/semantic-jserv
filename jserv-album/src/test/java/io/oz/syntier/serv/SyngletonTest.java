@@ -1,6 +1,7 @@
 package io.oz.syntier.serv;
 
 import static io.odysz.common.Utils.awaitAll;
+import static io.odysz.common.Utils.touchFile;
 import static io.odysz.common.Utils.turnred;
 import static io.odysz.common.LangExt.musteq;
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,10 +23,10 @@ import org.junit.jupiter.api.Test;
 import io.odysz.common.FilenameUtils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.util.DAHelper;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
+import io.oz.syn.SynodeMode;
 
 class SyngletonTest {
 	static final String zsu = "zsu";
@@ -44,14 +45,17 @@ class SyngletonTest {
 	static String prvpath = "settings.prv.json"; 
 	static String mobpath = "settings.mob.json"; 
 
+	static String vol_hub =  "../../../../volumes-0.7/volume-hub";
+	static String vol_prv = "../../../../volumes-0.7/volume-prv";
+	static String vol_mob =  "../../../../volumes-0.7/volume-mob";
 	@BeforeAll
 	static void initEnv() throws IOException {
 		// -DWEB-INF=src/main/webapp/WEB-INF
 		System.setProperty("WEB-INF", "src/main/webapp/WEB-INF");
 
-		System.setProperty("VOLUME_HUB", "../../../../volumes-0.7/volume-hub");
-		System.setProperty("VOLUME_PRV", "../../../../volumes-0.7/volume-prv");
-		System.setProperty("VOLUME_MOB", "../../../../volumes-0.7/volume-mob");
+		System.setProperty("VOLUME_HUB", vol_hub);
+		System.setProperty("VOLUME_PRV", vol_prv);
+		System.setProperty("VOLUME_MOB", vol_mob);
 		
 		// settings.json
 		hubpath = FilenameUtils.rel2abs(SynotierSettingsTest.webinf, hubs);
@@ -61,6 +65,16 @@ class SyngletonTest {
 		Files.copy(Paths.get(backup_hub), Paths.get(hubpath), StandardCopyOption.REPLACE_EXISTING);
 		Files.copy(Paths.get(backup_prv), Paths.get(prvpath), StandardCopyOption.REPLACE_EXISTING);
 		Files.copy(Paths.get(backup_mob), Paths.get(mobpath), StandardCopyOption.REPLACE_EXISTING);
+		
+		for (String p : new String[] {vol_hub, vol_prv, vol_mob}) {
+			String doc_db = FilenameUtils.rel2abs(SynotierSettingsTest.webinf, p, "doc-jserv.db"); 
+			Files.delete(Paths.get(doc_db));
+			touchFile(doc_db);
+
+			String main_db = FilenameUtils.rel2abs(SynotierSettingsTest.webinf, p, "jserv-main.db");
+			Files.delete(Paths.get(main_db));
+			touchFile(main_db);
+		}
 	}
 	
 	@AfterAll
@@ -146,10 +160,7 @@ class SyngletonTest {
 	}
 
 	/**
-	 * Load db jserv.
-	 * @param synconn
-	 * @param domain
-	 * @param peer
+	 * Load db/syn_synode.jserv.
 	 * @return the peer's jserv, from db.
 	 * @throws Exception 
 	 */

@@ -15,14 +15,14 @@ from typing import cast
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
 
-from src.io.oz.srv import WebConfig
+from semanticshare.io.oz.srv import WebConfig
 
-from src.io.odysz.semantic.jprotocol import MsgCode
-from src.io.oz.syntier.serv import ExternalHosts
-from src.io.oz.jserv.docs.syn.singleton import PortfolioException,\
+from semanticshare.io.odysz.semantic.jserv import MsgCode
+from semanticshare.io import ExternalHosts
+from semanticshare.io.oz.jserv import PortfolioException,\
     AppSettings, implISettingsLoaded, \
     sys_db, syn_db, syntity_json, getJservUrl
-from src.io.oz.syn import AnRegistry, SynodeConfig
+from semanticshare.io import AnRegistry, SynodeConfig
 
 from anclient.io.odysz.jclient import Clients
 

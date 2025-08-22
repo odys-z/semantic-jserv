@@ -3,7 +3,7 @@ import sys
 
 from anclient.io.odysz.jclient import Clients
 
-import io as std_io
+from semanticshare import io as std_io
 from typing import Optional, cast
 
 import PySide6
@@ -14,8 +14,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBo
 
 from anson.io.odysz.anson import Anson, Utils, LangExt
 
-from src.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption
-from src.io.oz.syn import AnRegistry
+from semanticshare.io.oz.jserv import PortfolioException, getJservOption
+from semanticshare.io import AnRegistry
 from synodepy3 import SynodeUi
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
 from synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json, serv_port0, web_port0
@@ -26,7 +26,7 @@ from synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings
 from synodepy3.ui_form import Ui_InstallForm
 from synodepy3.installer_api import mode_hub
 
-Anson.java_src('src')
+# Anson.java_src('src')
 path = os.path.dirname(__file__)
 synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 

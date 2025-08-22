@@ -4,18 +4,18 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.shouldeq;
-import static io.odysz.semantic.syn.ExessionAct.init;
-import static io.odysz.semantic.syn.ExessionAct.mode_server;
+import static io.oz.syn.ExessionAct.init;
+import static io.oz.syn.ExessionAct.mode_server;
 
 import java.sql.SQLException;
 
-import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.syn.ExessionAct;
-import io.odysz.semantic.syn.ExessionPersist;
-import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.transact.x.TransException;
+import io.oz.syn.DBSyntableBuilder;
+import io.oz.syn.ExchangeBlock;
+import io.oz.syn.ExessionAct;
+import io.oz.syn.ExessionPersist;
+import io.oz.syn.SyncUser;
 
 public class SynssionServ {
 	final String peer;

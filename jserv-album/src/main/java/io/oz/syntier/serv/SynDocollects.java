@@ -31,8 +31,6 @@ import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DeviceTableMeta;
 import io.odysz.semantic.tier.docs.DocUtils;
@@ -60,7 +58,9 @@ import io.oz.album.peer.SynDocollPort;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
-import io.oz.syn.SynodeConfig;
+import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.SyndomContext;
+import io.oz.syn.registry.SynodeConfig;
 
 /**
  * <h5>The album tier 0.7.0 (MVP)</h5>

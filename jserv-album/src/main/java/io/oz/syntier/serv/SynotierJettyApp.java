@@ -44,11 +44,6 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.SyncUser;
-import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantic.syn.registry.Syntities;
-import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.helpers.QrProps;
 import io.oz.album.helpers.QrTerminal;
@@ -61,8 +56,13 @@ import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
-import io.oz.syn.SynodeConfig;
-import io.oz.syn.YellowPages;
+import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.SyncUser;
+import io.oz.syn.SynodeMode;
+import io.oz.syn.registry.SynodeConfig;
+import io.oz.syn.registry.Syntities;
+import io.oz.syn.registry.SyntityReg;
+import io.oz.syn.registry.YellowPages;
 
 /**
  * Start an embedded Jetty server for ee8.

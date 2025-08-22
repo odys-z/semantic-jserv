@@ -21,8 +21,8 @@ import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.X;
 import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.Y;
 import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.ck;
-import static io.odysz.semantic.syn.Docheck.printChangeLines;
-import static io.odysz.semantic.syn.Docheck.printNyquv;
+import static io.oz.syn.Docheck.printChangeLines;
+import static io.oz.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -58,7 +58,7 @@ import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.ExpDoctierservTest;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
-import io.oz.syn.YellowPages;
+import io.oz.syn.registry.YellowPages;
 
 /**
  */

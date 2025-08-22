@@ -7,8 +7,8 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.Utils.warnT;
-import static io.odysz.semantic.syn.ExessionAct.close;
-import static io.odysz.semantic.syn.ExessionAct.ready;
+import static io.oz.syn.ExessionAct.close;
+import static io.oz.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -23,11 +23,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.ExessionPersist;
-import io.odysz.semantic.syn.Nyquence;
-import io.odysz.semantic.syn.SyncUser;
-import io.odysz.semantic.syn.SyndomContext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
@@ -35,7 +30,12 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.Syngleton.OnNetworkChange;
-import io.oz.syn.SynodeConfig;
+import io.oz.syn.DBSyntableBuilder;
+import io.oz.syn.ExessionPersist;
+import io.oz.syn.Nyquence;
+import io.oz.syn.SyncUser;
+import io.oz.syn.SyndomContext;
+import io.oz.syn.registry.SynodeConfig;
 
 /**
  * Syn-domain's sessions manager.
@@ -127,7 +127,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	
 	/**
 	 * Sing up, then start a synssion to {@code peeradmin}, the admin peer.
-	 * 
+	 * TODO rename as sing2peer
 	 * @param adminjserv jserv root path, must be null for testing
 	 * locally without login to the service
 	 * @param peeradmin

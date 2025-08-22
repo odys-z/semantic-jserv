@@ -1,4 +1,4 @@
-from src.io.odysz.semantic.jprotocol import AnsonBody, AnsonMsg
+from semanticshare.io import AnsonBody, AnsonMsg
 
 
 class A:

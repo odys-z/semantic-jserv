@@ -37,13 +37,6 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.DBSynTransBuilder.SynmanticsMap;
-import io.odysz.semantic.syn.ExessionAct;
-import io.odysz.semantic.syn.SyncUser;
-import io.odysz.semantic.syn.SyndomContext;
-import io.odysz.semantic.syn.Synode;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
@@ -55,7 +48,14 @@ import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate;
-import io.oz.syn.SynodeConfig;
+import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.ExessionAct;
+import io.oz.syn.SyncUser;
+import io.oz.syn.SyndomContext;
+import io.oz.syn.Synode;
+import io.oz.syn.SynodeMode;
+import io.oz.syn.DBSynTransBuilder.SynmanticsMap;
+import io.oz.syn.registry.SynodeConfig;
 
 /**
  * @since 0.2.0

@@ -29,7 +29,7 @@ synode-start-web = "synodepy3.cli:startweb"
 [tool.setuptools]
 
 packages = ["synodepy3", "src.io"]
-package-dir = { "synodepy3" = "src/synodepy3", "src.io" = "src/io" }
-package-data = { "synodepy3" = ["form.ui", "synode.json", "res/*"], "src.io" = ["*"] }
+package-dir = { "synodepy3" = "src/synodepy3", "semanticshare.io" = "src/io" }
+package-data = { "synodepy3" = ["form.ui", "synode.json", "res/*"], "semanticshare.io" = ["*"] }
 
 zip-safe = false

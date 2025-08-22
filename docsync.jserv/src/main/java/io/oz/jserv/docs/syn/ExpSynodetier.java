@@ -9,10 +9,9 @@ import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.mustge;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.notNull;
-
-import static io.odysz.semantic.syn.ExessionAct.deny;
-import static io.odysz.semantic.syn.ExessionAct.mode_server;
-import static io.odysz.semantic.syn.ExessionAct.ready;
+import static io.oz.syn.ExessionAct.deny;
+import static io.oz.syn.ExessionAct.mode_server;
+import static io.oz.syn.ExessionAct.ready;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -53,10 +52,6 @@ import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynDocRefMeta;
 import io.odysz.semantic.meta.SynodeMeta;
-import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.syn.ExessionAct;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
@@ -69,6 +64,10 @@ import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.parts.ExtFilePaths;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
+import io.oz.syn.DBSyntableBuilder;
+import io.oz.syn.ExchangeBlock;
+import io.oz.syn.ExessionAct;
+import io.oz.syn.SynodeMode;
 
 @WebServlet(description = "Synode Tier Workder", urlPatterns = { "/sync.tier" })
 public class ExpSynodetier extends ServPort<SyncReq> {
@@ -365,7 +364,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @throws SQLException 
 	 * @throws TransException 
 	 * @since 0.2.5
-	 * @see SynssionPeer#nextRef(io.odysz.semantic.syn.DBSyntableBuilder, io.odysz.semantic.meta.SynDocRefMeta, String, String)
+	 * @see SynssionPeer#nextRef(io.oz.syn.DBSyntableBuilder, io.odysz.semantic.meta.SynDocRefMeta, String, String)
 	 */
 	public SyncResp onQueryRef2Peer(SyncReq req, DocUser usr)
 			throws SQLException, TransException {

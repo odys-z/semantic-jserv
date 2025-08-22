@@ -13,7 +13,7 @@
   		<src>$VOLUME_HUB/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	
@@ -23,7 +23,7 @@
   		<isdef></isdef>
   		<src>$VOLUME_HUB/doc-jserv.db</src>
   		<usr></usr>
-  		<pswd></pswd>
+  		<pswd>true</pswd>
   		<dbg>1</dbg>
   		<smtcs>semantics-syn-hub.xml</smtcs>
 	</c>
@@ -35,7 +35,7 @@
   		<src>$VOLUME_PRV/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	
@@ -46,7 +46,7 @@
   		<src>$VOLUME_PRV/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>1</dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn-prv.xml</smtcs>
 	</c>
 
@@ -57,7 +57,7 @@
   		<src>$VOLUME_MOB/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	
@@ -68,7 +68,7 @@
   		<src>$VOLUME_MOB/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>1</dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn-prv.xml</smtcs>
 	</c>
 
@@ -114,5 +114,34 @@
   		<uri>/syn</uri>
   		<conn>docsyn</conn>
 	</c>
+
+	<!-- section for test of ExposeIP()
+		settings: src/test/resources/settings-*.json
+		volumes: volumes-0.7/volume-*
+	 -->
+  	<c>
+  		<uri>/sys/HUB</uri>
+  		<conn>sys-hub</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/HUB</uri>
+  		<conn>docsyn-hub</conn>
+  	</c>
+  	<c>
+  		<uri>/sys/PRV</uri>
+  		<conn>sys-prv</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/PRV</uri>
+  		<conn>docsyn-prv</conn>
+  	</c>
+  	<c>
+  		<uri>/sys/MOB</uri>
+  		<conn>sys-mob</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/MOB</uri>
+  		<conn>docsyn-mob</conn>
+  	</c>
   </t>
 </conns>

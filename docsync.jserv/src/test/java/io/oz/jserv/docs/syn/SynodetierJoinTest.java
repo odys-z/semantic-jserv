@@ -9,12 +9,12 @@ import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.repeat;
 import static io.odysz.common.Utils.waiting;
-import static io.odysz.semantic.syn.Docheck.ck;
-import static io.odysz.semantic.syn.Docheck.printChangeLines;
-import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.webinf;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
+import static io.oz.syn.Docheck.ck;
+import static io.oz.syn.Docheck.printChangeLines;
+import static io.oz.syn.Docheck.printNyquv;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -41,9 +41,6 @@ import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.Docheck;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
@@ -53,8 +50,11 @@ import io.oz.jserv.docs.AssertImpl;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
-import io.oz.syn.SynodeConfig;
-import io.oz.syn.YellowPages;
+import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.Docheck;
+import io.oz.syn.SynodeMode;
+import io.oz.syn.registry.SynodeConfig;
+import io.oz.syn.registry.YellowPages;
 
 /**
  * 
