@@ -17,12 +17,12 @@ from anson.io.odysz.common import Utils, LangExt
 
 from semanticshare.io.oz.srv import WebConfig
 
-from semanticshare.io.odysz.semantic.jserv import MsgCode
-from semanticshare.io import ExternalHosts
-from semanticshare.io.oz.jserv import PortfolioException,\
+from semanticshare.io.odysz.semantic.jprotocol import MsgCode
+from semanticshare.io.oz.syntier.serv import ExternalHosts
+from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, \
     sys_db, syn_db, syntity_json, getJservUrl
-from semanticshare.io import AnRegistry, SynodeConfig
+from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig
 
 from anclient.io.odysz.jclient import Clients
 
@@ -209,7 +209,7 @@ class InstallerCli:
         self.registry = cast(AnRegistry, None)
         self.settings = cast(AppSettings, None)
 
-        Anson.java_src('src')
+        # Anson.java_src('src')
 
     def list_synodes(self):
         # return ['list', 'load', 'save', 'print', 'showip', f'vol: {self.settings.volume}']

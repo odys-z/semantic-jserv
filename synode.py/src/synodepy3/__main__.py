@@ -12,10 +12,11 @@ from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
 
-from anson.io.odysz.anson import Anson, Utils, LangExt
+from anson.io.odysz.anson import Anson
+from anson.io.odysz.common import Utils, LangExt
+from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption
+from semanticshare.io.oz.syn.registry import AnRegistry
 
-from semanticshare.io.oz.jserv import PortfolioException, getJservOption
-from semanticshare.io import AnRegistry
 from synodepy3 import SynodeUi
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
 from synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json, serv_port0, web_port0
