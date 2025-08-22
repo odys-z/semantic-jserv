@@ -5,7 +5,7 @@
   "webport": 8900,
   "reverseProxy": true,
   "proxyPort": 8964,
-  "proxyIp": "",
+  "proxyIp": "192.168.0.201",
   "webProxyPort": 8900,
   "envars": {"WEBROOT_HUB": "X29"},
   "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json"],

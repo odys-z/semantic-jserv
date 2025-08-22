@@ -1,4 +1,5 @@
 # This Python file uses the following encoding: utf-8
+import ipaddress
 import json
 import os
 import re
@@ -302,7 +303,7 @@ class InstallerCli:
         return registry
 
     def isinstalled(self):
-        return self.settings is not None and self.validateVol(self.settings.Volume()) is None
+        return self.settings is not None and self.validateVol() is None
 
     def hasrun(self):
         psys_db, psyn_db, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
@@ -333,18 +334,26 @@ class InstallerCli:
             print(ip)
             return ip
 
-    def validateVol(self, volpath: str):
-        if volpath is None or len(volpath) == 0:
+    def validateVol(self):
+        volp = self.settings.Volume()
+        if volp is None or len(volp) == 0:
             return {"volume", "Volume path is empty."}
 
-        if not Path.is_dir(Path(volpath)):
+        if not Path.is_dir(Path(volp)):
             try:
-                os.mkdir(volpath)
+                os.mkdir(volp)
                 return None
             except FileExistsError:
-                return {"volume", f'Directory already exists: {volpath}'}
+                return {"volume", f'Directory already exists: {volp}'}
             except FileNotFoundError:
-                return {"volume", f'Parent directory does not exist: {volpath}'}
+                return {"volume", f'Parent directory does not exist: {volp}'}
+
+    def validate_iport(self):
+        try:
+            if not ipaddress.ip_address(self.settings.proxyIp):
+                return {f'IP address is not valid: {self.settings.proxyIp}' }
+        except ValueError as e:
+            return e
 
     def check_installed_jar_db(self):
         """
@@ -374,7 +383,7 @@ class InstallerCli:
 
     def check_src_jar_db(self):
         """
-         check jar & volume/*.db resources
+        check jar & volume/*.db resources
         :return: None
         :raise: FileNotfoundError
         """
@@ -418,15 +427,17 @@ class InstallerCli:
         p = self.validatePswdOf(self.registry.config.admin)
         if p is not None: return p
 
-        v = self.validateVol(self.settings.Volume())
+        v = self.validateVol()
         if v is not None:
             return v
+
+        self.validate_iport()
 
         # peer_jservss = InstallerCli.parsejservstr(peerjservs)
         # if synid is None or len(synid) == 0 or synid not in [ln[0] for ln in peer_jservss]:
         #     return {"synodepy3", synid}
 
-        # TODO Checking synodepy3 id is domain wide unique, in Central.
+        # TODO 0.7.8 Checking synodepy3 id is domain wide unique, in Central.
         if self.find_peer(self.registry.config.synid) is None:
             return f'synode id is not a peer id: {self.registry.config.synid}'
 
@@ -561,13 +572,12 @@ class InstallerCli:
         # See InstallerCli.install()'s use case analysis
         # self.settings.toFile(os.path.join(web_inf, settings_json))
 
-    def install(self, respth: str):
+    def install(self):
         """
-        Install / setup synodepy3, by moving /update dictionary to vol-path (of AppSettings), settings.json.non-ici
+        Install / setup synodepy3, by moving /update dictionary to vol-path (of AppSettings), settings.json
         to WEB-INF, unzip exiftool.zip, and check bin/jar first.
         Note: this is not installing Windows service.
-        :param respth:
-        :return:
+        :return: None
         """
 
         self.check_src_jar_db()
@@ -605,8 +615,8 @@ class InstallerCli:
         if not Path.exists(sysdb):
             shutil.copy2(os.path.join("volume", sys_db), sysdb)
         if not Path.exists(syntityjson):
-            shutil.copy2(os.path.join(
-                respth if not LangExt.isblank(respth) else '.', syntity_json), syntityjson)
+            # shutil.copy2(os.path.join(respth if not LangExt.isblank(respth) else '.', syntity_json), syntityjson)
+            shutil.copy2(os.path.join(self.settings.registpath, syntity_json), syntityjson)
 
         # Prevent deleting tables by JettypApp's checking installation.
         # This is assuming album-jserv always successfully setup dbs - when db files exist, the tables exist.

@@ -45,7 +45,7 @@ DOMAIN = 'zsu'
     Versions configured locally, overriden by environment variables.
 """
 vers = {
-    SYNODE_VERSION:    '0.7.1',
+    SYNODE_VERSION:    '0.7.6',
     JSERV_JAR_VERSION: '0.7.5',
     HTML_JAR_VERSION:  '0.1.8',
     WEB_VERSION:       '0.4.2',

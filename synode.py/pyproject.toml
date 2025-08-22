@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.2.5"]
+requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.2.7"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "synode.py3"
-version = "0.7.1" # updated by invoke
+version = "0.7.6" # updated by invoke
 description = "Portfolio Synode Stand Alone Service"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -14,8 +14,8 @@ requires-python = ">=3.9"
 dependencies = [
     "pyside6>=6.5.0,<=6.8.2.1",
     "qrcode",
-    "anson.py3>=0.2.5",
-    "anclient.py3>=0.1.4",
+    "anson.py3>=0.2.7",
+    "anclient.py3>=0.1.5",
     "psutil",
     "pillow>=8.0.0",
     "invoke>=2.2.0"
@@ -28,8 +28,8 @@ synode-start-web = "synodepy3.cli:startweb"
 
 [tool.setuptools]
 
-packages = ["synodepy3", "src.io"]
-package-dir = { "synodepy3" = "src/synodepy3", "semanticshare.io" = "src/io" }
-package-data = { "synodepy3" = ["form.ui", "synode.json", "res/*"], "semanticshare.io" = ["*"] }
+packages = ["synodepy3"]
+package-dir = { "synodepy3" = "src/synodepy3" }
+package-data = { "synodepy3" = ["form.ui", "synode.json", "res/*"] }
 
 zip-safe = false
