@@ -18,8 +18,9 @@ import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantic.syn.SynEntity;
 import io.odysz.transact.sql.Insert;
+import io.oz.syn.SynEntity;
+
 import static io.odysz.common.LangExt.*;
 
 /**
@@ -301,7 +302,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	}
 	
 	/**
-	 * @see io.odysz.semantic.syn.SynEntity#insertEntity(io.odysz.semantic.meta.SyntityMeta, io.odysz.transact.sql.Insert)
+	 * @see io.oz.syn.SynEntity#insertEntity(io.odysz.semantic.meta.SyntityMeta, io.odysz.transact.sql.Insert)
 	 */
 	@Override
 	public Insert insertEntity(SyntityMeta m, Insert ins) {

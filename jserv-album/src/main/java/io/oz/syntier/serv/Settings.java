@@ -19,7 +19,7 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.peer.AlbumPort;
-import io.oz.syn.YellowPages;
+import io.oz.syn.registry.YellowPages;
 
 @WebServlet(description = "Portfolio Synode Settings", urlPatterns = { "/settings.less" })
 public class Settings extends ServPort<UserReq> {

@@ -1,13 +1,13 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.semantic.syn.ExessionAct.unexpect;
+import static io.oz.syn.ExessionAct.unexpect;
 
 import java.util.HashMap;
 
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.meta.DocRef;
-import io.odysz.semantic.syn.ExchangeBlock;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
+import io.oz.syn.ExchangeBlock;
 
 /**
  * @since 0.2.3

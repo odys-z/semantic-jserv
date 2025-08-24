@@ -3,7 +3,7 @@ import sys
 
 from anclient.io.odysz.jclient import Clients
 
-import io as std_io
+import io
 from typing import Optional, cast
 
 import PySide6
@@ -12,10 +12,12 @@ from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
 
-from anson.io.odysz.anson import Anson, Utils, LangExt
+from anson.io.odysz.anson import Anson
+from anson.io.odysz.common import Utils, LangExt
+from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption
+from semanticshare.io.oz.syn.registry import AnRegistry
+from semanticshare.io.oz.syn import SynodeMode
 
-from src.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption
-from src.io.oz.syn import AnRegistry
 from synodepy3 import SynodeUi
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
 from synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json, serv_port0, web_port0
@@ -26,7 +28,7 @@ from synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings
 from synodepy3.ui_form import Ui_InstallForm
 from synodepy3.installer_api import mode_hub
 
-Anson.java_src('src')
+# Anson.java_src('src')
 path = os.path.dirname(__file__)
 synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
@@ -93,7 +95,7 @@ class InstallerForm(QMainWindow):
         @param label: QLabel
         @param text: text for the QR code
         """
-        buf = std_io.BytesIO()
+        buf = io.BytesIO()
         img = qrcode.make(text, border=1)
         try:
             img.save(buf, 'PNG')
@@ -252,7 +254,7 @@ class InstallerForm(QMainWindow):
 
             if self.validate():
                 try:
-                    self.cli.install(self.ui.txtResroot.text())
+                    self.cli.install()
 
                     post_err = self.cli.postFix()
                     if not post_err:
@@ -318,8 +320,8 @@ class InstallerForm(QMainWindow):
 
     def update_chkhub(self, check: bool):
         self.ui.txtSyncIns.setEnabled(not check)
-        if not check and LangExt.isblank(self.ui.txtSyncIns.text()):
-            self.ui.txtSyncIns.setText("20")
+        if not check and LangExt.isblank(self.ui.txtSyncIns.text(), r'0+'):
+            self.ui.txtSyncIns.setText("40")
 
         if check:
             self.cli.registry.config.mode = mode_hub
@@ -397,6 +399,9 @@ class InstallerForm(QMainWindow):
         if u is not None:
             self.ui.txtDompswd.setText(u.pswd)
 
+        self.ui.chkHub.setChecked(SynodeMode.hub.name == cfg.mode)
+        self.update_chkhub(SynodeMode.hub.name == cfg.mode)
+
         self.ui.txtSynode.setText(cfg.synid)
         self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(cfg.syncIns))
 
@@ -409,6 +414,8 @@ class InstallerForm(QMainWindow):
         self.ui.txtIP_proxy.setText(settings.proxyIp)
         self.ui.txtPort_proxy.setText(str(settings.proxyPort))
         self.ui.txtWebport_proxy.setText(str(settings.webProxyPort))
+
+        self.updateChkReverse(self.cli.settings.reverseProxy)
 
         self.ui.txtVolpath.setText(settings.Volume())
 

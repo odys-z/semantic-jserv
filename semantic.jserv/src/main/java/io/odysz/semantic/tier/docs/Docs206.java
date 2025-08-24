@@ -54,13 +54,13 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.Exchanging;
-import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.Exchanging;
+import io.oz.syn.ExessionAct;
 
 /**
  * <p>Helper class for handling http 206 request,

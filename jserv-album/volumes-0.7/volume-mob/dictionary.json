@@ -1,7 +1,7 @@
 {
-  "type": "io.oz.syn.AnRegistry",
+  "type": "io.oz.syn.registry.AnRegistry",
   "config": {
-    "type": "io.oz.syn.SynodeConfig",
+    "type": "io.oz.syn.registry.SynodeConfig",
     "https": false,
     "synid": "MOB",
     "domain": "zsu",
@@ -9,22 +9,22 @@
     "sysconn": "sys-mob",
     "synconn": "docsyn-mob",
     "org": {
-      "type": "io.oz.syn.SynOrg",
+      "type": "io.oz.syn.registry.SynOrg",
       "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
       "orgId": "ura", "orgName": "URA", "orgType": "nation", "market": "test",
       "webroot": "$WEBROOT_MOB", "homepage": "", "album0": "album-test"
     },
     "syncIns": 0.0,
     "peers": [
-      {"type": "io.odysz.semantic.syn.Synode",
+      {"type": "io.oz.syn.Synode",
        "synid": "HUB", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "HUB.HUB" },
-      {"type": "io.odysz.semantic.syn.Synode",
+      {"type": "io.oz.syn.Synode",
        "synid": "PRV", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "PRV,PRV" },
-      {"type": "io.odysz.semantic.syn.Synode",
+      {"type": "io.oz.syn.Synode",
        "synid": "MOB", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "MOB,MOB" } ]
   },
   "synusers": [{
-    "type": "io.odysz.semantic.syn.SyncUser",
+    "type": "io.oz.syn.SyncUser",
     "userId": "ody",
     "userName": null,
     "pswd": "8964",

@@ -5,8 +5,8 @@ import java.io.File;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import io.oz.syn.SynodeConfig;
-import io.oz.syn.YellowPages;
+import io.oz.syn.registry.SynodeConfig;
+import io.oz.syn.registry.YellowPages;
 
 public class SynotierServlet extends Syngleton implements ServletContextListener {
 

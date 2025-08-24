@@ -1,7 +1,7 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.semantic.syn.ExessionAct.*;
 import static io.odysz.common.LangExt.musteqs;
+import static io.oz.syn.ExessionAct.*;
 import static io.odysz.common.LangExt.isblank;
 
 import java.util.ArrayList;
@@ -10,10 +10,10 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.meta.DocRef;
-import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.syn.ExchangeBlock;
+import io.oz.syn.ExessionAct;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 

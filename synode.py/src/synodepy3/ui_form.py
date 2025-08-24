@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'form.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.2
+## Created by: Qt User Interface Compiler version 6.5.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -17,18 +17,19 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QGroupBox, QLabel,
-    QLineEdit, QMainWindow, QMenu, QMenuBar,
-    QPushButton, QSizePolicy, QStatusBar, QTextEdit,
-    QWidget)
+    QLineEdit, QMainWindow, QMenuBar, QPushButton,
+    QSizePolicy, QStatusBar, QTextEdit, QWidget)
 
 class Ui_InstallForm(object):
     def setupUi(self, InstallForm):
         if not InstallForm.objectName():
             InstallForm.setObjectName(u"InstallForm")
+        InstallForm.setWindowModality(Qt.NonModal)
         InstallForm.setEnabled(True)
         InstallForm.resize(960, 447)
         InstallForm.setMinimumSize(QSize(960, 400))
         InstallForm.setMaximumSize(QSize(960, 1280))
+        InstallForm.setWindowTitle(u"Portfolio Synode 0.7")
         self.actionAbout = QAction(InstallForm)
         self.actionAbout.setObjectName(u"actionAbout")
         self.centralwidget = QWidget(InstallForm)
@@ -40,7 +41,7 @@ class Ui_InstallForm(object):
         self.gboxRegistry = QGroupBox(self.centralwidget)
         self.gboxRegistry.setObjectName(u"gboxRegistry")
         self.gboxRegistry.setGeometry(QRect(10, 0, 941, 131))
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.gboxRegistry.sizePolicy().hasHeightForWidth())
@@ -110,7 +111,7 @@ class Ui_InstallForm(object):
         font.setPointSize(12)
         self.bCommDropdown.setFont(font)
         icon = QIcon()
-        icon.addFile(u"res/input_combobox.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u"res/input_combobox.svg", QSize(), QIcon.Normal, QIcon.Off)
         self.bCommDropdown.setIcon(icon)
         self.bCommDropdown.setIconSize(QSize(24, 22))
         self.bLogin = QPushButton(self.gboxRegistry)
@@ -184,7 +185,7 @@ class Ui_InstallForm(object):
         self.lbJservs = QLabel(self.gboxLocal)
         self.lbJservs.setObjectName(u"lbJservs")
         self.lbJservs.setGeometry(QRect(411, 30, 311, 21))
-        self.lbJservs.setCursor(QCursor(Qt.CursorShape.IBeamCursor))
+        self.lbJservs.setCursor(QCursor(Qt.IBeamCursor))
         self.txtPort_proxy = QLineEdit(self.gboxLocal)
         self.txtPort_proxy.setObjectName(u"txtPort_proxy")
         self.txtPort_proxy.setGeometry(QRect(631, 86, 121, 27))
@@ -217,7 +218,7 @@ class Ui_InstallForm(object):
         self.bVolpath.setGeometry(QRect(630, 122, 121, 28))
         self.bVolpath.setFont(font)
         icon1 = QIcon()
-        icon1.addFile(u"res/volume.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u"res/volume.svg", QSize(), QIcon.Normal, QIcon.Off)
         self.bVolpath.setIcon(icon1)
         self.bVolpath.setIconSize(QSize(24, 24))
         self.txtIP = QLineEdit(self.gboxLocal)
@@ -253,13 +254,11 @@ class Ui_InstallForm(object):
         self.lbJservs_2 = QLabel(self.gboxLocal)
         self.lbJservs_2.setObjectName(u"lbJservs_2")
         self.lbJservs_2.setGeometry(QRect(260, 30, 61, 21))
-        self.lbJservs_2.setCursor(QCursor(Qt.CursorShape.IBeamCursor))
+        self.lbJservs_2.setCursor(QCursor(Qt.IBeamCursor))
         InstallForm.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(InstallForm)
         self.menubar.setObjectName(u"menubar")
         self.menubar.setGeometry(QRect(0, 0, 960, 24))
-        self.menuPortfolio_0_7 = QMenu(self.menubar)
-        self.menuPortfolio_0_7.setObjectName(u"menuPortfolio_0_7")
         InstallForm.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(InstallForm)
         self.statusbar.setObjectName(u"statusbar")
@@ -294,16 +293,12 @@ class Ui_InstallForm(object):
         QWidget.setTabOrder(self.bSetup, self.bValidate)
         QWidget.setTabOrder(self.bValidate, self.bWinserv)
 
-        self.menubar.addAction(self.menuPortfolio_0_7.menuAction())
-        self.menuPortfolio_0_7.addAction(self.actionAbout)
-
         self.retranslateUi(InstallForm)
 
         QMetaObject.connectSlotsByName(InstallForm)
     # setupUi
 
     def retranslateUi(self, InstallForm):
-        InstallForm.setWindowTitle(QCoreApplication.translate("InstallForm", u"Portfolio Synode 0.7", None))
         self.actionAbout.setText(QCoreApplication.translate("InstallForm", u"About", None))
         self.gboxRegistry.setTitle(QCoreApplication.translate("InstallForm", u"Synchronization Domain Identity - Market TEST", None))
         self.lbCommunity.setText(QCoreApplication.translate("InstallForm", u"Community:", None))
@@ -456,6 +451,6 @@ class Ui_InstallForm(object):
         self.txtVolpath.setPlaceholderText(QCoreApplication.translate("InstallForm", u"Volume is where the data saved at local node.", None))
         self.chkHub.setText(QCoreApplication.translate("InstallForm", u"hub", None))
         self.lbJservs_2.setText(QCoreApplication.translate("InstallForm", u"In every", None))
-        self.menuPortfolio_0_7.setTitle(QCoreApplication.translate("InstallForm", u"Portfolio Synode 0.7", None))
+        pass
     # retranslateUi
 

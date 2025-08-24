@@ -1,4 +1,4 @@
-{"type": "io.oz.syn.AnRegistry",
+{"type": "io.oz.syn.registry.AnRegistry",
  "config": {
    "synid": "node0",
    "mode": "hub",
@@ -22,8 +22,8 @@
   "syncIns": 0,
 	
   "peers": [
-    {"type": "io.odysz.semantic.syn.Synode",
-     "synid": "node0", "org": "org-0", "mac": "#org-0.node0", "nyq": 0, "domain": "zsu", "syn_uid": "node0.node0" },
+    {"type": "io.oz.syn.Synode",
+     "synid": "node0", "org": "org-0", "mac": "#org-0.node0", "nyq": 0, "domain": "zsu", "syn_uid": "node0.node0"},
     {"synid": "node1", "org": "org-0", "mac": "#org-0.node1", "nyq": 0, "domain": "zsu", "syn_uid": "node1,node1"},
     {"synid": "node2", "org": "org-0", "mac": "#org-0.node2", "nyq": 0, "domain": "zsu", "syn_uid": "node2,node2"} ]
  },
