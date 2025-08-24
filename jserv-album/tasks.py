@@ -160,7 +160,7 @@ def build(c):
         ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
 
         # ['../synode.py', 'invoke zipRegistry'],
-        ['.', f'mv ../synode.py/registry-ura-zsu-{version}.zip {dist_dir}']
+        # ['.', f'mv ../synode.py/registry-ura-zsu-{version}.zip {dist_dir}']
     ]
 
     print('--------------  package  ------------------')
