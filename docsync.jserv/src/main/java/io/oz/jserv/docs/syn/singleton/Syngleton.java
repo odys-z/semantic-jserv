@@ -15,6 +15,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Configs;
@@ -247,10 +249,12 @@ public class Syngleton extends JSingleton {
 
 		// 1. connection
 		Utils.logi("Initializing synode singleton with configuration file %s\n"
-				+ "runtime root: %s\n"
-				+ "configure folder: %s\n"
-				+ "root-key length: %s",
-				cfgxml, runtimeRoot, configFolder, len(rootKey));
+				+ "\truntime root: %s\n"
+				+ "\tconfigure folder: %s\n"
+				+ "\troot-key length: %s\n"
+				+ "\tentities: [%s]",
+				cfgxml, runtimeRoot, configFolder, len(rootKey),
+				Stream.of(entms).map(e -> f(e.tbl)).collect(Collectors.joining(", ")));
 
 		Configs.init(configFolder, cfgxml);
 		Connects.init(configFolder);
