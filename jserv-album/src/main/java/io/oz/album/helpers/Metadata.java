@@ -7,7 +7,6 @@ import static io.odysz.common.Utils.logi;
 import java.util.ArrayList;
 
 import io.odysz.semantics.SemanticObject;
-import io.oz.album.peer.PhotoRec;
 
 public class Metadata extends SemanticObject {
 
