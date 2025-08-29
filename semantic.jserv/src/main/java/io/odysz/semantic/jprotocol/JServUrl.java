@@ -1,6 +1,14 @@
 package io.odysz.semantic.jprotocol;
 
+import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.joinurl;
+import static io.odysz.common.Regex.asJserv;
+import static io.odysz.common.Regex.getJservParts;
+import static io.odysz.common.Regex.validUrlPort;
+
+import io.odysz.common.UrlValidator;
+import io.odysz.common.Utils;
+
 import static io.odysz.common.LangExt.concatArr;
 
 /**
@@ -11,6 +19,7 @@ import static io.odysz.common.LangExt.concatArr;
  * @since 0.2.5
  */
 public class JServUrl {
+	static UrlValidator urlValidator;
 
 	public final boolean https;
 	public String ip;
@@ -34,5 +43,25 @@ public class JServUrl {
 
 	public String jserv() {
 		return joinurl(https, ip, port, JProtocol.urlroot, subpaths);
+	}
+	
+	public static boolean valid(String jserv) {
+		if (urlValidator == null)
+			urlValidator = new UrlValidator();
+
+		try {
+			if (!urlValidator.isValid(jserv))
+				return false;
+
+			Object[] jservparts = getJservParts(jserv);
+			return urlValidator.isValid(asJserv(jserv)) &&
+				validUrlPort((int)jservparts[3], new int[] {1024, -1}) &&
+				eq(JProtocol.urlroot, ((String[]) jservparts[4])[0]);
+		}
+		catch (Exception e) {
+			Utils.warnT(new Object[] {}, "Found invalid jserv: %s,\nerror: %s",
+					jserv, e.getMessage());
+			return false;
+		}
 	}
 }
