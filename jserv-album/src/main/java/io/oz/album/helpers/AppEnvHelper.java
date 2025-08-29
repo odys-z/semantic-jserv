@@ -17,8 +17,9 @@ import static io.odysz.common.LangExt.len;
 public class AppEnvHelper {
 
 	public static void main(String [] args) throws IOException, InterruptedException, TimeoutException {
-		logi(System.getProperty("java.version"));
-		logi(System.getProperty("java.home"));
+		logi("[AppEnvHelper] Change POM for switch to App main().");
+		logi("[AppEnvHelper]", System.getProperty("java.version"));
+		logi("[AppEnvHelper]", System.getProperty("java.home"));
 		if (len(args) > 0) {
 			Exiftool.cmd = "exiftool";
 			Exiftool.check();

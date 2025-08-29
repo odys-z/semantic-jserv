@@ -1,4 +1,5 @@
 bin
+bin-delete
 /target/
 download
 **/volume-*/jserv-main.db

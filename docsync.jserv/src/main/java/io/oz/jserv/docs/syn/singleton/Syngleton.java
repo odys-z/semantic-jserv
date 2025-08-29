@@ -75,8 +75,6 @@ public class Syngleton extends JSingleton {
 		public void on(JServUrl jserv);
 	}
 
-
-
 	/**
 	 * Call
 	 * <pre>DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),

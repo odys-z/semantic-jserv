@@ -400,6 +400,10 @@ public class SynDomanager extends SyndomContext implements OnError {
 		
 		while (rs.next()) {
 			String peer = rs.getString("peer");
+			
+			if (!JServUrl.valid(rs.getString(synm.jserv)))
+				continue;
+
 			SynssionPeer c = new SynssionPeer(this, peer, rs.getString(synm.jserv), dbg)
 								.onErr(errHandler);
 
@@ -488,7 +492,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		if (sessions != null)
 		for (SynssionPeer peer : sessions.values()) {
 			if (peer.client == null || !peer.client.isSessionValid())
-				peer.client.logout();
+				try { peer.client.logout(); } catch (Throwable e) {}
 			peer.client = null;
 		}
 	}

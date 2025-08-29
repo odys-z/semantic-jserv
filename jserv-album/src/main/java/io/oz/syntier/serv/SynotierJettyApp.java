@@ -101,7 +101,6 @@ public class SynotierJettyApp implements Daemon {
 	public Syngleton syngleton() { return syngleton; }	
 
 	public String jserv() {
-//		return this.syngleton.settings.jserv(this.syngleton.synode());
 		for (String m : this.syngleton.domains())
 			return this.syngleton.domanager(m).jservComposer.jserv();
 		return null;

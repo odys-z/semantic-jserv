@@ -277,23 +277,23 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} catch (ExchangeException e) {
 				// e. g. login failed, try again
 				if (debug) e.printStackTrace();
-			} catch (InterruptedIOException | SocketException e) {
-				// wait for network
-				// TODO we need API for immediately trying
-				Utils.logi("[ExpSynodetier.debug] Reschedule syn-worker with error: %s", e.getMessage());
-				if (debug)
-					e.printStackTrace();
-				schedualed = reschedule(30);
-			} catch (TransException | SQLException e) {
-				// local errors, stop for fixing
-				e.printStackTrace();
-				stopScheduled(2);
 			} catch (FileNotFoundException e) {
 				// configuration errors
 				if (debug) e.printStackTrace();
 				Utils.warn("Configure Error: synode %s, user %s. Syn-worker is shutting down.\n"
 						+ " (Tip: jserv url must inclue root path, e. g. /jserv-album)",
 						domanager0.synode, domanager0.admin.uid());
+				stopScheduled(2);
+			} // catch (InterruptedIOException | SocketException e) {
+			catch (IOException e) {
+				// wait for network
+				Utils.logi("[♻.⛔ %s ] Reschedule syn-worker with error: %s", synid, e.getMessage());
+//				if (debug)
+//					e.printStackTrace();
+				reschedule(30);
+			} catch (TransException | SQLException e) {
+				// local errors, stop for fixing
+				e.printStackTrace();
 				stopScheduled(2);
 			} catch (AnsonException | SsException e) {
 				if (debug) e.printStackTrace();
@@ -312,7 +312,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		scheduler = Executors.newSingleThreadScheduledExecutor(
 				(r) -> new Thread(r, f("synworker-%s", synid)));
-		schedualed = reschedule(0);
+		reschedule(0);
 
         running = false;
 		return this;
@@ -321,15 +321,16 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	/**
 	 * @since 0.2.5
 	 */
-	private ScheduledFuture<?> reschedule(int waitmore) {
-		try {
-			if (schedualed != null)
+	private void reschedule(int waitmore) {
+		if (schedualed != null) {
+			try {
 				schedualed.cancel(true);
-			Thread.sleep(50);
-		} catch (InterruptedException e) { }
+				Thread.sleep(500);
+			} catch (InterruptedException e) { }
+		}
 
 		syncInSnds = Math.min(maxSyncInSnds, syncInSnds + waitmore);
-		return scheduler.scheduleWithFixedDelay(
+		schedualed = scheduler.scheduleWithFixedDelay(
 				worker[0], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
 				TimeUnit.MILLISECONDS);
 	}
@@ -339,7 +340,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @since 0.2.5
 	 */
 	public void stopScheduled(int sTimeout) {
-		Utils.logi("[%s] cancling sync-worker ... ", synid);
+		Utils.logi("[ ♻.⛔ %s ] cancling sync-worker ... ", synid);
 
 		if (schedualed != null)
 			schedualed.cancel(true);

@@ -1,8 +1,8 @@
 package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.f;
 import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.warn;
 
 import java.io.IOException;
@@ -36,7 +36,8 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 			hosts.localip = settings.reverseProxy ? settings.proxyIp : settings.localIp;
 
 			// String jserv = f("%s://%s/jserv-album", https ? "https" : "http", settings.getJservroot(https));
-			String jserv = ""; //settings.getJserv(https);
+			String jserv = settings.jserv(synode);
+			logT(new Object(){}, "Exposing jserv, %s: %s", synode, jserv);
 
 			hosts.syndomx.put(synode, jserv);
 			

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.5</version>
+  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.6</version>
   <packaging>jar</packaging>
 
   <name>jserv-album Synode</name>
@@ -19,7 +20,6 @@
 	<jetty.version>12.0.16</jetty.version>
 	<jetty-ee8.version>12.0.16</jetty-ee8.version>
   </properties>
-  
 
   <licenses>
     <license>
@@ -286,10 +286,10 @@
 
 			<transformers>
 				<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-				<!--
 					<mainClass>io.oz.syntier.serv.SynotierJettyApp</mainClass>
-				-->
+				<!--
 					<mainClass>io.oz.album.helpers.AppEnvHelper</mainClass>
+				-->
 				</transformer>
 				<!--
 				<transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
