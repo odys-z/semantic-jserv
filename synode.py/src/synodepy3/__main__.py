@@ -1,6 +1,9 @@
-import os
 import sys
+import time
 
+sys.stdout.reconfigure(encoding="utf-8")
+
+import os
 from anclient.io.odysz.jclient import Clients
 
 import io
@@ -116,19 +119,20 @@ class InstallerForm(QMainWindow):
         :return:
         """
 
-        ip, port = self.getProxiedIp(self.cli.settings)
+        ip, port = self.cli.getProxiedIp()
+        # iport = f'{ip}:{port}'
+        iport = self.cli.get_iport()
 
-        iport = f'{ip}:{port}'
         synode = self.ui.txtSynode.text()
 
         data = getJservOption(synode, iport, False)
-
         InstallerForm.set_qr_label(self.ui.lbQr, data)
+
+        self.ui.txtIP.setText(InstallerCli.reportIp())
+
         return {"ip": ip, "port": port, "synodepy3": synode}
 
     def default_ui_values(self):
-        # if self.ui.txtSyncIns.text() is None or self.ui.txtSyncIns.text().strip() == '':
-        #     self.ui.txtSyncIns.setText('120.0')
         if LangExt.len(self.ui.txtSyncIns.text()) == 0:
             self.ui.txtSyncIns.setText('120.0')
         if LangExt.len(self.ui.txtPort.text()) == 0:
@@ -141,19 +145,7 @@ class InstallerForm(QMainWindow):
         Validate data models (updated with ui).
         :return: succeed or not
         """
-
-        # LangExt.musteqs(self.ui.txtPswd.text(), self.ui.txtPswd2.text())
-        # LangExt.only_passwdlen(self.ui.txtPswd.text(), 32)
-        # LangExt.only_passwdlen(self.ui.txtDompswd.text(), 32)
-
         err = self.cli.validate()
-                # 0.7.5
-                # volpath=self.ui.txtVolpath.text(),
-                # synid=self.ui.txtSynode.text(),
-                # peerjservs=self.ui.jservLines.toPlainText(),
-                # ping_timeout=int(self.ui.txtimeout.text()),
-                # warn=warn_msg)
-
         if err is not None:
             self.updateValidation(err)
             self.ui.lbQr.clear()
@@ -170,29 +162,6 @@ class InstallerForm(QMainWindow):
                 err_msg('Install Exiftool from <a href="https://exiftool.org/">here</a> first.', err)
         else:
             err_msg('Validation failed.', err)
-
-    # def signup(self):
-    #     details = []
-    #     errs = False
-    #     def err_ctx(c, e: str, *args: str) -> None:
-    #         nonlocal errs, details
-    #         print(c, e.format(args), file=sys.stderr)
-    #         details.append('\n' + e)
-    #         errs = True
-    #
-    #     jsrv = synode_ui.centralserv
-    #     Clients.init(jserv=jsrv, timeout=20)
-    #     resp = Clients.signLess(install_uri, err_ctx)
-    #     if resp is None:
-    #         details.append(f'\n{jsrv}: {jsrv}\n' + 'Error: no responds')
-    #     else:
-    #         details.append(f'\n{jsrv}: {jsrv}\n' + resp.toBlock(beautify=True))
-    #
-    #     if errs:
-    #         warn_msg('Cannot sing up. Check details for errors.', details)
-    #     else:
-    #         msg_box('Sing up successfully. Register the or create a domain.', details)
-    #     return details
 
     def signup_demo(self):
         msg_box(synode_ui.signup_prompt('This is a demo version. TODO'))
@@ -230,29 +199,32 @@ class InstallerForm(QMainWindow):
             msg_box('Ping synodes completed. Check the echo messages in details.', details)
         return details
 
+    def update_valid(self):
+        self.cli.updateWithUi(
+            admin=self.ui.txtAdminId.text(),
+            pswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
+            org=self.ui.txtOrgid.text().strip(),
+            domain=self.ui.txtDomain.text().strip(),
+            domphrase=self.ui.txtDompswd.text(),
+            hubmode=self.ui.chkHub.checkState() == Qt.CheckState.Checked,
+            jservss=self.ui.jservLines.toPlainText(),
+            synid=self.ui.txtSynode.text().strip(),
+            syncins=self.ui.txtSyncIns.text(),
+            port=self.ui.txtPort.text(),
+            webport=self.ui.txtWebport.text(),
+            webProxyPort=self.ui.txtWebport_proxy.text(),
+            reverseProxy=self.ui.chkReverseProxy.checkState() == Qt.CheckState.Checked,
+            proxyIp=self.ui.txtIP_proxy.text(),
+            proxyPort=self.ui.txtPort_proxy.text(),
+            volume=self.ui.txtVolpath.text())
+
+        return self.validate()
+
     def save(self):
         self.default_ui_values()
-
+        self.update()
         try:
-            self.cli.updateWithUi(
-                admin=self.ui.txtAdminId.text(),
-                pswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
-                org=self.ui.txtOrgid.text(),
-                domain=self.ui.txtDomain.text(),
-                domphrase=self.ui.txtDompswd.text(),
-                hubmode=self.ui.chkHub.checkState() == Qt.CheckState.Checked,
-                jservss=self.ui.jservLines.toPlainText(),
-                synid=self.ui.txtSynode.text(),
-                syncins=self.ui.txtSyncIns.text(),
-                port=self.ui.txtPort.text(),
-                webport=self.ui.txtWebport.text(),
-                webProxyPort=self.ui.txtWebport_proxy.text(),
-                reverseProxy=self.ui.chkReverseProxy.checkState() == Qt.CheckState.Checked,
-                proxyIp=self.ui.txtIP_proxy.text(),
-                proxyPort=self.ui.txtPort_proxy.text(),
-                volume=self.ui.txtVolpath.text())
-
-            if self.validate():
+            if self.update_valid():
                 try:
                     self.cli.install()
 
@@ -276,27 +248,32 @@ class InstallerForm(QMainWindow):
                     self.gen_qr()
 
                 self.enableServInstall()
+                
+                # self.seal_has_run()
+                self.load_config()
 
         except PortfolioException as e:
             err_msg('Setting up synodepy3 is failed.', e)
 
     def test_run(self):
-        if self.validate():
-            msg_box('The settings is valid. You can close the opening terminal once you need to stop it.\n'
-                    'A stand alone running is recommended. Install the service on Windows or start:\n'
-                    'java -jar bin/jserv-album-#.#.#.jar\n'
-                    'java -jar bin/html-web-#.#.#.jar')
-            try:
-                if self.cli.httpd is None:
-                    self.cli.httpd, self.cli.webth = InstallerCli.start_web(int(self.ui.txtWebport.text()))
-                self.cli.test_in_term()
-                qr_data = self.gen_qr()
-                print(qr_data)
-                self.enableServInstall()
-            except PortfolioException as e:
-                self.ui.lbQr.clear()
-                err_msg('Start Portfolio service failed', e.msg)
-                return
+        self.save()
+        msg_box('The settings is valid. You can close the opening terminal once you need to stop it.\n'
+                'A stand alone running is recommended. Install the service on Windows or start:\n'
+                'java -jar bin/jserv-album-#.#.#.jar\n'
+                'java -jar bin/html-web-#.#.#.jar')
+        try:
+            if self.cli.httpd is None:
+                self.cli.httpd, self.cli.webth = InstallerCli.start_web(int(self.ui.txtWebport.text()))
+            self.cli.test_in_term()
+            qr_data = self.gen_qr()
+            print(qr_data)
+            self.enableServInstall()
+        except PortfolioException as e:
+            self.ui.lbQr.clear()
+            err_msg('Start Portfolio service failed', e.msg)
+
+        time.sleep(25)
+        self.load_config()
 
     def installWinsrv(self):
         self.cli.stop_web()
@@ -318,15 +295,14 @@ class InstallerForm(QMainWindow):
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
 
+        self.seal_has_run()
+
     def update_chkhub(self, check: bool):
-        self.ui.txtSyncIns.setEnabled(not check)
+        self.ui.txtSyncIns.setDisabled(check)
+        self.cli.registry.config.mode = mode_hub if check else None
+
         if not check and LangExt.isblank(self.ui.txtSyncIns.text(), r'0+'):
             self.ui.txtSyncIns.setText("40")
-
-        if check:
-            self.cli.registry.config.mode = mode_hub
-        else:
-            self.cli.registry.config.mode = None
 
     def updateChkReverse(self, check: bool):
         if check == None:
@@ -341,8 +317,6 @@ class InstallerForm(QMainWindow):
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def translateUI():
             self.ui.gboxRegistry.setTitle(
-                # synode_ui.langs[synode_ui.lang]['gboxRegistry'].format(market=synode_ui.market))
-                # synode_ui.langstr('gboxRegistry').format(market=synode_ui.market))
                 synode_ui.langstrf('gboxRegistry', market=synode_ui.market))
 
             lb_help = synode_ui.langstr('lbHelplink')
@@ -356,8 +330,8 @@ class InstallerForm(QMainWindow):
 
             def setVolumePath():
                 volpath = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
-                if volpath == self.cli.settings.registpath:
-                    return err_msg("Volume path cannot be the same as registry resource's root path.")
+                # if volpath == self.cli.settings.registpath:
+                #     return err_msg("Volume path cannot be the same as registry resource's root path.")
                 self.ui.txtVolpath.setText(volpath)
 
             self.ui.bSignup.clicked.connect(self.signup_demo)
@@ -377,10 +351,14 @@ class InstallerForm(QMainWindow):
             else:
                 self.ui.bWinserv.setEnabled(False)
 
-            self.cli.registry = self.cli.load_settings()
-            self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.volume, self.cli.settings.registpath)
-            self.bindIdentity(self.cli.registry)
-            self.bindSettings()
+            self.load_config()
+
+    def load_config(self):
+        self.cli.registry = self.cli.load_settings()
+        self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.volume, 'registry')
+        self.bindIdentity(self.cli.registry)
+        self.bindSettings()
+        self.seal_has_run()
 
     def bindIdentity(self, registry: AnRegistry):
         print(registry.config.toBlock())
@@ -400,10 +378,9 @@ class InstallerForm(QMainWindow):
             self.ui.txtDompswd.setText(u.pswd)
 
         self.ui.chkHub.setChecked(SynodeMode.hub.name == cfg.mode)
-        self.update_chkhub(SynodeMode.hub.name == cfg.mode)
-
         self.ui.txtSynode.setText(cfg.synid)
-        self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(cfg.syncIns))
+        self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(int(cfg.syncIns)))
+        self.update_chkhub(SynodeMode.hub.name == cfg.mode)
 
     def bindSettings(self):
         peers, settings = self.cli.registry.config.peers, self.cli.settings
@@ -432,6 +409,20 @@ class InstallerForm(QMainWindow):
         if Utils.iswindows():
             self.ui.bWinserv.setEnabled(installed)
 
+    def seal_has_run(self):
+        enable = not self.cli.hasrun()
+        self.ui.chkHub.setEnabled(enable)
+        # self.ui.txtSyncIns.setEnabled(enable)
+        self.ui.txtOrgid.setEnabled(enable)
+        self.ui.txtDomain.setEnabled(enable)
+        self.ui.txtSynode.setEnabled(enable)
+
+        # TODO FIXME should still can change password
+        # Or possibly write back to setting.json by jar?
+        self.ui.txtPswd.setEnabled(enable)
+        self.ui.txtPswd2.setEnabled(enable)
+        self.ui.txtDompswd.setEnabled(enable)
+
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
         super().closeEvent(event)
         if self.cli.httpd is not None or self.cli.webth is not None:
@@ -443,12 +434,12 @@ class InstallerForm(QMainWindow):
         else:
             event.accept()
 
-    def getProxiedIp(self, settings):
-        ip, port = self.cli.reportIp(), settings.port
-        if settings.reverseProxy:
-            ip, port = settings.proxyIp, settings.proxyPort
-        return ip, port
-
+    # 0.7.6 moved to cli
+    # def getProxiedIp(self, settings):
+    #     ip, port = self.cli.reportIp(), settings.port
+    #     if settings.reverseProxy:
+    #         ip, port = settings.proxyIp, settings.proxyPort
+    #     return ip, port
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

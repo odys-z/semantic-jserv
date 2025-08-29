@@ -31,6 +31,11 @@
   <property name="windowTitle">
    <string notr="true">Portfolio Synode 0.7</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>res/ic108x64.png</normaloff>
+    <disabledoff>res/ic108x64.png</disabledoff>res/ic108x64.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QTextEdit" name="jservLines">
     <property name="geometry">
@@ -46,6 +51,9 @@
       <width>8000</width>
       <height>400</height>
      </size>
+    </property>
+    <property name="whatsThis">
+     <string>&lt;a href='#'&gt;Configure Synodes' service port.&lt;/a&gt;</string>
     </property>
    </widget>
    <widget class="QGroupBox" name="gboxRegistry">
@@ -139,7 +147,7 @@
       <number>32</number>
      </property>
      <property name="echoMode">
-      <enum>QLineEdit::Normal</enum>
+      <enum>QLineEdit::Password</enum>
      </property>
      <property name="placeholderText">
       <string>Confirm Password</string>
@@ -180,7 +188,7 @@
       <number>32</number>
      </property>
      <property name="echoMode">
-      <enum>QLineEdit::Normal</enum>
+      <enum>QLineEdit::Password</enum>
      </property>
      <property name="placeholderText">
       <string>Max 32 Chars</string>
@@ -442,7 +450,7 @@
       <string>Domain Token:</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="bCommDropdown_2">
+    <widget class="QPushButton" name="bDomainDropdown">
      <property name="enabled">
       <bool>false</bool>
      </property>
@@ -974,7 +982,7 @@
       <string/>
      </property>
      <property name="maxLength">
-      <number>6</number>
+      <number>4</number>
      </property>
      <property name="placeholderText">
       <string>120.0</string>
@@ -1057,7 +1065,7 @@
   <tabstop>txtOrgid</tabstop>
   <tabstop>bCommDropdown</tabstop>
   <tabstop>txtDomain</tabstop>
-  <tabstop>bCommDropdown_2</tabstop>
+  <tabstop>bDomainDropdown</tabstop>
   <tabstop>txtDompswd</tabstop>
   <tabstop>bCreateDomain</tabstop>
   <tabstop>jservLines</tabstop>

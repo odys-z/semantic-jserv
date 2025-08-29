@@ -1,4 +1,7 @@
 # This Python file uses the following encoding: utf-8
+import sys
+sys.stdout.reconfigure(encoding="utf-8")
+
 import ipaddress
 import json
 import os
@@ -6,7 +9,6 @@ import re
 import shutil
 import socket
 import subprocess
-import sys
 import time
 import zipfile
 from glob import glob
@@ -163,8 +165,6 @@ def checkinstall_exiftool():
 install_uri = 'Anson.py3/test'
 
 #### section will be moved to synode.json ####
-# registry_i = "./registry-i"
-
 host_private = 'private'
 mode_hub = 'hub'
 web_host_json = f'{host_private}/host.json'
@@ -213,47 +213,12 @@ class InstallerCli:
         # Anson.java_src('src')
 
     def list_synodes(self):
-        # return ['list', 'load', 'save', 'print', 'showip', f'vol: {self.settings.volume}']
         return self.settings.jservs.items()
 
     def Jservs(self, jsrvs: dict) :
         self.settings.Jservs(jsrvs)
         return self
 
-    # def loadInitial(self, res_path: str = None):
-    #     """
-    #     deprecated since 0.7.6
-    #     If this is called at the first time (WEB-INF/settings.json[root-key] == null),
-    #     load from res_path/setings.json,
-    #     else load from WEB-INF/settings.json.non-ici.
-    #
-    #     :param res_path: if WEB-INF/settings.json.non-ici is missing, must provide initial resource's path
-    #     :return: loaded json object
-    #     """
-    #
-    #     web_settings = os.path.join(web_inf, settings_json)
-    #     if os.path.exists(web_settings):
-    #         try:
-    #             data: AppSettings = cast(AppSettings, Anson.from_file(web_settings))
-    #             self.settings = data
-    #         except json.JSONDecodeError as e:
-    #             raise PortfolioException(f'Loading Anson data from {web_settings} failed.', e)
-    #
-    #         try:
-    #             self.registry = self.loadRegistry(data.Registpath())
-    #         except FileNotFoundError or PortfolioException as e:
-    #             Utils.warn(f"Can't find registry configure in {data.Registpath()}, replacing with {res_path}")
-    #             self.registry = self.loadRegistry(res_path)
-    #
-    #     else:
-    #         if res_path is None:
-    #             raise PortfolioException("WEB-INF/settings.json.non-ici doesn't exist and the resource path is not specified.")
-    #
-    #         res_settings = os.path.join(res_path, settings_json)
-    #         self.registry = self.loadRegistry(res_path)
-    #         self.settings = cast(AppSettings, Anson.from_file(res_settings))
-    #
-    #     return self.settings
     def load_settings(self):
         """
         Load from res_path/setings.json,
@@ -262,6 +227,7 @@ class InstallerCli:
         """
 
         web_settings = os.path.join(web_inf, settings_json)
+        print("Loading", web_settings)
         if os.path.exists(web_settings):
             try:
                 data: AppSettings = cast(AppSettings, Anson.from_file(web_settings))
@@ -269,13 +235,8 @@ class InstallerCli:
             except json.JSONDecodeError as e:
                 raise PortfolioException(f'Loading Anson data from {web_settings} failed.', e)
 
-            # try:
-            #     self.registry = self.loadRegistry(data.Registpath())
-            # except FileNotFoundError or PortfolioException as e:
-            #     Utils.warn(f"Can't find registry configure in {data.Registpath()}, replacing with {res_path}")
-            #     self.registry = self.loadRegistry(res_path)
-
-            self.registry = self.loadRegistry(data.volume, data.registpath)
+            print("Loading registry in", '[registry]')
+            self.registry = self.loadRegistry(data.volume, 'registry')
 
         else:
             raise PortfolioException("Cannot find settings.json!")
@@ -303,11 +264,17 @@ class InstallerCli:
         return registry
 
     def isinstalled(self):
-        return self.settings is not None and self.validateVol() is None
+        # 0.7.5
+        # return self.settings is not None and self.validateVol() is None
+        # 0.7.6
+        return self.validateVol() is None
 
     def hasrun(self):
-        psys_db, psyn_db, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
-        return LangExt.len(self.settings.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
+        try:
+            psys_db, psyn_db, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
+            return LangExt.len(self.settings.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
+        except FileNotFoundError:
+            return False
 
     @staticmethod
     def sys_syn_db_syntity(volpath: str):
@@ -334,7 +301,20 @@ class InstallerCli:
             print(ip)
             return ip
 
+    def getProxiedIp(self):
+        ip, port = InstallerCli.reportIp(), self.settings.port
+        if self.settings.reverseProxy:
+            ip, port = self.settings.proxyIp, self.settings.proxyPort
+        return ip, port
+
+    def get_iport(self):
+        ip, port = self.getProxiedIp()
+        return f'{ip}:{port}'
+
     def validateVol(self):
+        """
+        :return: error (invalid)
+        """
         volp = self.settings.Volume()
         if volp is None or len(volp) == 0:
             return {"volume", "Volume path is empty."}
@@ -415,6 +395,7 @@ class InstallerCli:
     def validate(self):
         """
         Validate my congig and settings. Must be called after the data models has been updated.
+        NOTE 0.7.6 org.webroot will be forced to be '$WEBROOT' and settings.envars['WEBROOT'] = this.synode
         # :param warn:
         # :param synid:
         # :param volpath:
@@ -437,7 +418,7 @@ class InstallerCli:
         # if synid is None or len(synid) == 0 or synid not in [ln[0] for ln in peer_jservss]:
         #     return {"synodepy3", synid}
 
-        # TODO 0.7.8 Checking synodepy3 id is domain wide unique, in Central.
+        # TODO 0.7.8 Checking synode-id is domain wide unique, in Central.
         if self.find_peer(self.registry.config.synid) is None:
             return f'synode id is not a peer id: {self.registry.config.synid}'
 
@@ -445,9 +426,13 @@ class InstallerCli:
             return f'synode id is not a service node: {self.registry.config.synid}'
 
         if not checkinstall_exiftool():
-            return {"exiftool": "Check and install exiftool failed!"
-                    if Utils.get_os() == 'Windows'
+            return {"exiftool": "Check and install exiftool failed!" \
+                    if Utils.get_os() == 'Windows' \
                     else "Please install exiftool and test it's working with command 'exiftool -ver'"}
+
+        # 0.7.6
+        self.settings.envars['WEBROOT'] = self.registry.config.synid
+        self.registry.config.org.webroot = '$WEBROOT'
 
         return None
 
@@ -507,47 +492,44 @@ class InstallerCli:
             if u.userId == admin:
                 u.pswd = domphrase
             u.domain = domain
+            u.org = org
         self.registry.config.domain = domain
 
         for p in self.registry.config.peers:
             p.domain = domain
+            p.org = org
 
         if hubmode:
             self.registry.config.mode = mode_hub
         else:
             self.registry.config.mode = None
 
-        if envars is None:
-            envars = {}
-        if jservss is not None and len(jservss) > 8:
-            self.settings.Jservs(InstallerCli.fromat_jservstr(jservss) \
-                                if isinstance(jservss, str) else jservss)
-
-        # if not LangExt.isblank(synid):
         self.registry.config.synid = synid
-
         self.settings.reverseProxy = reverseProxy
         self.settings.proxyIp = proxyIp
         self.settings.proxyPort = int(proxyPort)
         self.settings.webProxyPort = int(webProxyPort)
 
-        if not LangExt.isblank(port):
-            self.settings.port = int(port)
-
         if not LangExt.isblank(webport):
             self.settings.webport = int(webport)
 
-        # if not LangExt.isblank(volume):
-        #     if not os.path.exists(volume):
-        #         os.mkdir(volume)
-        #     elif not os.path.samefile(volume, self.settings.volume):
-        #         try: self.registry = self.loadRegistry(volume)
-        #         except Exception: pass
-        #     self.settings.Volume(os.path.abspath(volume))
+        if not LangExt.isblank(port):
+            self.settings.port = int(port)
+
+        if jservss is not None and len(jservss) > 8:
+            jsvkvs = InstallerCli.fromat_jservstr(jservss)
+            jsvkvs[self.registry.config.synid] = getJservUrl(self.registry.config.https, self.get_iport())
+            self.settings.Jservs(jsvkvs)
+        else:
+            self.settings.Jservs({self.registry.config.synid: getJservUrl(self.registry.config.https, self.get_iport())})
+
+        if envars is None:
+            envars = {}
+
         self.settings.Volume(os.path.abspath(volume))
 
         if syncins is not None:
-            self.registry.config.syncIns = 0.0 if syncins is None else float(syncins)
+            self.registry.config.syncIns = 0.0 if syncins is None or hubmode else float(syncins)
 
         # 0.7.6
         # if port is not None and len(port) > 1:
@@ -568,10 +550,6 @@ class InstallerCli:
         if not os.path.isdir(web_inf):
             raise PortfolioException(f'Folder {web_inf} dose not exist, or not a folder.')
 
-        # May 15 2025
-        # See InstallerCli.install()'s use case analysis
-        # self.settings.toFile(os.path.join(web_inf, settings_json))
-
     def install(self):
         """
         Install / setup synodepy3, by moving /update dictionary to vol-path (of AppSettings), settings.json
@@ -583,10 +561,6 @@ class InstallerCli:
         self.check_src_jar_db()
 
         ########## settings
-        # leave $WEBROOT_HUB untouched for config.org.webroot
-        # Update config.WEBROOT_HUB with local IP and port by ui.
-        # self.settings.envars[webroot] = f'{InstallerCli.reportIp()}:{web_port}'
-
         # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
         self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
@@ -615,8 +589,7 @@ class InstallerCli:
         if not Path.exists(sysdb):
             shutil.copy2(os.path.join("volume", sys_db), sysdb)
         if not Path.exists(syntityjson):
-            # shutil.copy2(os.path.join(respth if not LangExt.isblank(respth) else '.', syntity_json), syntityjson)
-            shutil.copy2(os.path.join(self.settings.registpath, syntity_json), syntityjson)
+            shutil.copy2(os.path.join('registry', syntity_json), syntityjson)
 
         # Prevent deleting tables by JettypApp's checking installation.
         # This is assuming album-jserv always successfully setup dbs - when db files exist, the tables exist.
@@ -649,14 +622,13 @@ class InstallerCli:
                 except FileNotFoundError or IOError or OSError: pass
 
     def test_in_term(self):
-        # self.updateWithUi(syncins='0.0', envars={webroot: f'{InstallerCli.reportIp()}:{self.settings.webport}'})
-
         system = Utils.get_os()
         jar = os.path.join('bin', jserv_07_jar)
         command = f'java -jar -Dfile.encoding=UTF-8 {jar}'
         if system == "Windows":
-            return subprocess.Popen(['cmd', '/k', f'chcp 65001 && {command}'],
-                                    creationflags=subprocess.CREATE_NEW_CONSOLE)
+            wincmd = ['cmd', '/k', f'chcp 65001 && {command}']
+            print(wincmd)
+            return subprocess.Popen(wincmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
         elif system == "Linux" or system == "macOS":
             return subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command],
                                     start_new_session=True)
@@ -680,6 +652,9 @@ class InstallerCli:
         """
         Update private/host.json/{host: url}.
         Write boilerplate to host.json, not solid values
+
+        Deprected since 0.7.6, this task is moved to jar, and can be causing problem if users
+        tried different synode-ids.
         :param config:
         :param settings:
         :return:
@@ -699,12 +674,12 @@ class InstallerCli:
 
             hosts.host = config.synid
             hosts.syndomx.update({'domain': config.domain})
-
-            for sid, jurl in settings.jservs.items():
-                if sid == config.synid:
-                    hosts.syndomx.update({sid: jsrvhost})
-                else:
-                    hosts.syndomx.update({sid: jurl})
+            hosts.syndomx.update({config.synid: jsrvhost})
+            # for sid, jurl in settings.jservs.items():
+            #     if sid == config.synid:
+            #         hosts.syndomx.update({sid: jsrvhost})
+            #     else:
+            #         hosts.syndomx.update({sid: jurl})
 
             hosts.toFile(webhost_pth)
 
@@ -717,7 +692,6 @@ class InstallerCli:
         except: web_cfg = WebConfig()
 
         web_cfg.port = settings.webport
-
         web_cfg.toFile(jsn_path)
 
     def stop_web(self):

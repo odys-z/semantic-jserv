@@ -3,7 +3,6 @@
   "market": "TEST",
   "iso": "http://www.lingoes.net/en/translator/langcode.htm",
   "ui": "ui_form.py",
-  "registry_i": "registry-i",
   "credits": "https://odys-z.github.io/products/album/credits.html",
   "lang": "zh-CN",
   "langs": {
