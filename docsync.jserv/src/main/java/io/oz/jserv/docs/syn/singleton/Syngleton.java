@@ -137,7 +137,10 @@ public class Syngleton extends JSingleton {
 	 * @since 0.2.0
 	 */
 	public HashMap<String,SynDomanager> loadomains(SynodeConfig cfg, DocUser admin) throws Exception {
-		shouldeq(new Object() {}, cfg.mode, SynodeMode.peer);
+		if (cfg.syncIns > 0)
+			shouldeq(new Object() {}, cfg.mode, SynodeMode.peer);
+		else
+			shouldeq(new Object() {}, cfg.mode, SynodeMode.hub);
 		
 		if (syndomanagers == null)
 			syndomanagers = new HashMap<String, SynDomanager>();

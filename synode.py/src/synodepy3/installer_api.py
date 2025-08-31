@@ -24,7 +24,7 @@ from semanticshare.io.odysz.semantic.jprotocol import MsgCode
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, \
-    sys_db, syn_db, syntity_json, getJservUrl
+    sys_db, syn_db, syntity_json, getJservUrl, valid_url_port
 from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig
 
 from anclient.io.odysz.jclient import Clients
@@ -332,6 +332,10 @@ class InstallerCli:
         try:
             if not ipaddress.ip_address(self.settings.proxyIp):
                 return {f'IP address is not valid: {self.settings.proxyIp}' }
+
+            if not valid_url_port(self.settings.port) or not valid_url_port(self.settings.webport):
+                return {f'Port must greater than 1024: {self.settings.port}' }
+
         except ValueError as e:
             return e
 

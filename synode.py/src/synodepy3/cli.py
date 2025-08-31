@@ -11,8 +11,13 @@ from .installer_api import ping
 def uninst_srv():
     import invoke
     cli = InstallerCli()
-    # cli.loadInitial()
     cli.load_settings()
+
+    if winsrv_websrv not in cli.settings.envars:
+        print(f'Error: cannot find target service name. The configuration are damaged.')
+        print(f'Please follow the tips for uninstalling services manually:')
+        print(f'https://odys-z.github.io/products/portfolio/synode/setup.html#uninstall-windows-service-manually')
+        return
 
     try:
         srvname = cli.settings.envars[winsrv_synode]

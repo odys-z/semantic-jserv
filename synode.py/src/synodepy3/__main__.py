@@ -272,7 +272,7 @@ class InstallerForm(QMainWindow):
             self.ui.lbQr.clear()
             err_msg('Start Portfolio service failed', e.msg)
 
-        time.sleep(25)
+        time.sleep(2)
         self.load_config()
 
     def installWinsrv(self):

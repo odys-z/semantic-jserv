@@ -45,6 +45,14 @@ public class JServUrl {
 		return joinurl(https, ip, port, JProtocol.urlroot, subpaths);
 	}
 	
+	/**
+	 * Validate jserv's format:
+	 * - a valid url<br>
+	 * - requirs a path root, e.g. jserv-alubm<br>
+	 * - port greater then 1024<br>
+	 * @param jserv
+	 * @return
+	 */
 	public static boolean valid(String jserv) {
 		if (urlValidator == null)
 			urlValidator = new UrlValidator();
@@ -55,7 +63,7 @@ public class JServUrl {
 
 			Object[] jservparts = getJservParts(jserv);
 			return urlValidator.isValid(asJserv(jserv)) &&
-				validUrlPort((int)jservparts[3], new int[] {1024, -1}) &&
+				validUrlPort((int)jservparts[3], new int[] {1025, -1}) &&
 				eq(JProtocol.urlroot, ((String[]) jservparts[4])[0]);
 		}
 		catch (Exception e) {

@@ -502,6 +502,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	/** @since 0.7.6 */
 	OnNetworkChange ipChangeHandler;
+
 	/** @since 0.7.6 */
 	public SynDomanager ipChangeHandler(OnNetworkChange handler) {
 		this.ipChangeHandler = handler;
@@ -518,6 +519,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 		  .rs(0))
 		  .map(synm.synoder,
 			  (rs) -> rs.getString(synm.jserv),
-			  (rs) -> rs.getString(synm.jserv) != null);
+			  (rs) -> JServUrl.valid(rs.getString(synm.jserv)));
 	}
 }

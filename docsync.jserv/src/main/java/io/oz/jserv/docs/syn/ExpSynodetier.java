@@ -267,6 +267,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				localIp = domanager0.submitJservsPersist(localIp);
 				domanager0.updateJservs(syntb);
 			
+				// BUG TO BE FIXED: open then update, in one loop, and continue on error unless all failed.
 				domanager0.openSynssions();
 
 				domanager0.updomains(
@@ -683,7 +684,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * 
 	 * @param req
 	 * @param usr
-	 * @return
+	 * @return acknowledge
 	 * @throws IOException
 	 * @throws TransException
 	 * @since 0.2.5

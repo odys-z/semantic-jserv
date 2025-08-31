@@ -22,8 +22,6 @@ class SynotierSettingsTest {
 	
 	Syngleton syngleton;
 
-	// boolean[] light = new boolean[] {false};
-
 	static {
 		errCtx = new ErrorCtx() {
 			@Override
@@ -33,15 +31,6 @@ class SynotierSettingsTest {
 		};
 	}
 	
-//	@BeforeAll
-//	static void initEnv() throws IOException {
-//		System.setProperty("VOLUME_HUB", "../../../../volumes-0.7/volume-hub");
-//		System.setProperty("VOLUME_PRV", "../../../../volumes-0.7/volume-prv");
-//		String backup = FilenameUtils.rel2abs(web_inf, "settings-test-app.json");
-//		String tsting = FilenameUtils.rel2abs(web_inf, "settings.json");
-//		Files.copy(Paths.get(backup), Paths.get(tsting), StandardCopyOption.REPLACE_EXISTING);
-//	}
-	
 	@Test
 	void testAppSettings() throws Exception {
 		AppSettings hset = AppSettings.load(webinf, "settings.json");
@@ -50,5 +39,4 @@ class SynotierSettingsTest {
 
 		Utils.logi(AppSettings.getLocalIp());
 	}
-
 }
