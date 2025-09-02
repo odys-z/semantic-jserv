@@ -7,8 +7,11 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
+import static io.odysz.common.Utils.warnT;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -25,6 +28,7 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.xml.sax.SAXException;
 
 import com.google.zxing.WriterException;
 
@@ -45,6 +49,7 @@ import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 import io.oz.album.helpers.QrProps;
 import io.oz.album.helpers.QrTerminal;
 import io.oz.album.peer.SynDocollPort;
@@ -100,9 +105,9 @@ public class SynotierJettyApp implements Daemon {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-	public String jserv() {
+	public String jserv() throws SQLException, TransException, SAXException, IOException {
 		for (String m : this.syngleton.domains())
-			return this.syngleton.domanager(m).jservComposer.jserv();
+			return this.syngleton.domanager(m).loadJservUrl().jserv();
 		return null;
 	}
 
@@ -242,7 +247,8 @@ public class SynotierJettyApp implements Daemon {
 	 */
 	SynotierJettyApp afterboot() {
 		AppSettings settings = syngleton.settings;
-		syngleton.asybmitJserv(settings.localIp, (jserv) -> {
+		/*
+		syngleton.asybmitJserv((jserv) -> {
 		if (!isNull(settings.startHandler)) {
 			logi("Exposing locally by %s, %s ...", (Object[]) settings.startHandler);
 			logi("IP %s : %s", jserv.ip, DateFormat.formatime(new Date()));
@@ -262,6 +268,18 @@ public class SynotierJettyApp implements Daemon {
 				e.printStackTrace();
 			}
 		}});
+		*/
+		try {
+			syngleton.asybmitJserv(settings,
+					((ISynodeLocalExposer)Class
+						.forName(settings.startHandler[0])
+						.getDeclaredConstructor()
+						.newInstance()))
+						;
+		} catch (Exception e) {
+			warnT(new Object(){}, "Exposing local resources failed!");
+			e.printStackTrace();
+		}
 
 		return this;
 	}
@@ -367,7 +385,7 @@ public class SynotierJettyApp implements Daemon {
 		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
 		return registerPorts(synapp, cfg.synconn,
-				new AnSession(), new AnQuery(), new AnUpdate(),
+				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
 				new Echo(), new HeartLink(),
 				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain), cfg, settings))
 			.addDocServPort(cfg, regists.syntities)
@@ -464,9 +482,6 @@ public class SynotierJettyApp implements Daemon {
 	
 	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg,
 			AppSettings settings, String config_xml) throws Exception {
-	
-	    // AnsonMsg.understandPorts(SynDocollPort.docoll);
-	    // JProtocol.setup(servpath, SynDocollPort.docoll);
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);

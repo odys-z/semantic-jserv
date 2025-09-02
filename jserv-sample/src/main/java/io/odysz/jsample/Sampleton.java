@@ -35,10 +35,6 @@ public class Sampleton extends JSingleton implements ServletContextListener {
 		try {
 			super.onInitialized(sce);
 
-			// Because of the java enum limitation, or maybe the author's knowledge limitation, 
-			// JMessage needing a IPort instance to handle ports that implemented a new version of valof() method handling all ports.<br>
-			// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
-			// AnsonMsg.understandPorts(Samport.menu);
 			JProtocol.setup("jserv-sample", Samport.menu);
 
 			relapath = Configs.getCfg("cheap", "config-path");

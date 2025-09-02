@@ -1,7 +1,6 @@
 package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.logT;
 import static io.odysz.common.Utils.warn;
 
@@ -17,7 +16,7 @@ import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 public class WebsrvLocalExposer implements ISynodeLocalExposer {
 
 	@Override
-	public AppSettings onExpose(AppSettings settings, String domain, String synode, boolean https) {
+	public AppSettings onExpose(AppSettings settings, String domain, String synode) {
 
 		if (settings.envars == null)
 			settings.envars = new HashMap<String, String>(1);
@@ -30,7 +29,6 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 				warn("Cannot find domain %s's jserv per synode configuration.", domain);
 			if (!eq(domain, host_dom))
 				warn("Exposing target domain %s != %s, the current domain.", domain, host_dom);
-
 
 			hosts.host = synode;
 			hosts.localip = settings.reverseProxy ? settings.proxyIp : settings.localIp;
@@ -45,8 +43,8 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 			// save to file by leaving resources untouched
 			hosts.toFile(host_json, JsonOpt.beautify());
 			
-			logi("Exposed service to %s", host_json);
-			logi(hosts.toBlock(JsonOpt.beautify()));
+			logT(new Object(){}, "Exposed service to %s", host_json);
+			logT(new Object(){}, hosts.toBlock(JsonOpt.beautify()));
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 

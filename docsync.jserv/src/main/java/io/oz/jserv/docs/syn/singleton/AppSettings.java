@@ -7,6 +7,7 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.logT;
 
@@ -19,13 +20,18 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.HashMap;
+
+import org.xml.sax.SAXException;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
 import io.odysz.anson.AnsonField;
 import io.odysz.anson.JsonOpt;
 import io.odysz.common.Configs;
+import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
@@ -34,6 +40,7 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
+import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -162,7 +169,7 @@ public class AppSettings extends Anson {
 			if (eq(cfg.synode(), peer)) 
 				logT(new Object() {}, "Ignoring updating jserv to local node: %s", peer);
 			else
-				updatePeerJservs(cfg.synconn, cfg.domain, synm, peer, jservs.get(peer));
+				updatePeerJservs(cfg.synconn, cfg.domain, synm, peer, jservs.get(peer), null, cfg.synode());
 		}
 		return this;
 	}
@@ -172,10 +179,10 @@ public class AppSettings extends Anson {
 	 * @param https
 	 * @return jserv-url
 	 * @throws Exception
-	 */
 	public JServUrl getJservUrl(boolean https) throws Exception {
 		return new JServUrl(https, localIp, port);
 	}
+	 */
 	
 	/**
 	 * Thanks to https://stackoverflow.com/a/38342964/7362888
@@ -212,32 +219,50 @@ public class AppSettings extends Anson {
 
 	/**
 	 * Persist jsev url into table syn_synode.
+	 * FIXME TODO
+	 * FIXME TODO
+	 * FIXME TODO move to JServUrl.persist()
 	 * 
 	 * @param synconn
 	 * @param domain
 	 * @param synm
 	 * @param peer
 	 * @param servurl
+	 * @param timestamp their timestamp, must newer than mine to update db
+	 * @param src_node where does this version come from
+	 * @return true if the newer version is accepted
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	public static void updatePeerJservs(String synconn, String domain, SynodeMeta synm,
-			String peer, String servurl) throws TransException, SQLException {
-		logi("[%s] Setting peer %s's jserv: %s", domain, peer, servurl);
+	public static boolean updatePeerJservs(String synconn, String domain, SynodeMeta synm,
+			String peer, String servurl, String timestamp_utc, String src_node)
+			throws TransException, SQLException {
 
-		IUser robot = DATranscxt.dummyUser();
-		DATranscxt tb;
-		try {
+		DATranscxt tb = null;
+
+		try { 
 			tb = new DATranscxt(synconn);
-		} catch (Exception e) {
+			Date src_date = DateFormat.parse(ifnull(timestamp_utc, "1911-10-10"));
+			String optime = DAHelper.getValstr(tb, synconn, synm, synm.optime, synm.pk, peer, synm.domain, domain);
+			Date optimedt = DateFormat.parse(ifnull(optime, "1911-10-10"));
+			if (optimedt.after(src_date))
+				return false;
+		} catch (ParseException | SAXException | IOException e) {
 			e.printStackTrace();
-			throw new TransException(e.getMessage());
+			// return false;
 		}
+			
+		IUser robot = DATranscxt.dummyUser();
+
+		logi("[%s] Setting peer %s's jserv: %s", domain, peer, servurl);
 		tb.update(synm.tbl, robot)
 			.nv(synm.jserv, servurl)
+			.nv(synm.optime, ifnull(timestamp_utc, "1911-10-10"))
+			.nv(synm.oper,  src_node)
 			.whereEq(synm.pk, peer)
 			.whereEq(synm.domain, domain)
 			.u(tb.instancontxt(synconn, robot));
+		return true;
 	}
 
 	public String vol_name;
@@ -259,6 +284,9 @@ public class AppSettings extends Anson {
 	 */
 	public String[] startHandler;
 
+	/**
+	 * @since 0.2.6, only works for a readable configuration.
+	 */
 	@AnsonField(ignoreFrom=true)
 	public String localIp;
 

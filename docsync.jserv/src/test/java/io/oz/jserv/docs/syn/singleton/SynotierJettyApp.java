@@ -7,10 +7,10 @@ import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
+import static io.odysz.common.Utils.warnT;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
@@ -24,7 +24,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 
 import io.odysz.common.Configs;
-import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
@@ -151,6 +150,7 @@ public class SynotierJettyApp {
 	 * @return this
 	 */
 	SynotierJettyApp afterboot(AppSettings settings) {
+		/*
 		syngleton.asybmitJserv(settings.localIp, (jserv) -> {
 
 		logi("IP %s : %s", jserv.ip, DateFormat.formatime(new Date()));
@@ -170,6 +170,20 @@ public class SynotierJettyApp {
 				e.printStackTrace();
 			}
 		}});
+		*/
+		try {
+			syngleton.asybmitJserv(settings,
+					((ISynodeLocalExposer)Class
+						.forName(settings.startHandler[0])
+						.getDeclaredConstructor()
+						.newInstance()))
+						;
+		} catch (Exception e) {
+			warnT(new Object(){}, "Exposing local resources failed!");
+			e.printStackTrace();
+		}
+
+
 
 		return this;
 	}
@@ -277,7 +291,7 @@ public class SynotierJettyApp {
 		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
 		return registerPorts(synapp, cfg.synconn,
-				new AnSession(), new AnQuery(), new AnUpdate(),
+				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
 				new Echo(),
 				new HeartLink())
 			.addDocServPort(cfg, regists.syntities)

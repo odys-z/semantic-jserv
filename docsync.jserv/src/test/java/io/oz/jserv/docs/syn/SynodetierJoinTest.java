@@ -25,7 +25,9 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.xml.sax.SAXException;
 
+import io.odysz.anson.AnsonException;
 import io.odysz.anson.JsonOpt;
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
@@ -42,7 +44,6 @@ import io.odysz.semantic.meta.SynSubsMeta;
 import io.odysz.semantic.meta.SynchangeBuffMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantics.IUser;
-import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
@@ -78,6 +79,7 @@ public class SynodetierJoinTest {
 
 	public static ErrorCtx errLog;
 	
+	public static final String servpath = "jserv-album";
 	public static final String clientconn = "main-sqlite";
 	public static final String syrskyi = "syrskyi";
 	public static final String slava = "слава україні";
@@ -264,14 +266,17 @@ public class SynodetierJoinTest {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	public static void syncdomain(int tx, Docheck... ck)
-			throws SemanticException, SsException, IOException {
+			throws SsException, IOException, AnsonException, TransException, SQLException, SAXException {
 
 		SynotierJettyApp t = jetties[tx];
 
 		for (String dom : t.syngleton().domains()) {
 			Utils.logi("Updating/synchronizing domain %s", dom);
-			t.syngleton().domanager(dom).updomains(
+			SynDomanager mgr = t.syngleton().domanager(dom);
+			mgr.loadSynclients(new DATranscxt(mgr.synconn));
+			mgr.updomain(
 				(domain, mynid, peer, xp) -> {
 					if (!isNull(ck) && !isblank(peer))
 						try {
@@ -286,8 +291,6 @@ public class SynodetierJoinTest {
 
 					if (isblank(peer)) {
 						// finished domain, with or without errors
-//						lights[tx] = true; 
-
 						if (eq(domain, dom)) 
 							Utils.logi("lights[%s] (%s) = true", tx, mynid);
 						else if (isblank(dom)) 
@@ -301,9 +304,6 @@ public class SynodetierJoinTest {
 								isNull(xp) || xp[0].trb == null ? "N/A" : xp[0].trb.syndomx.synconn));
 						}
 					}
-//				}, (blockby) -> {
-//					Utils.logi("Synode thread is blocked by %s, expiring in %s", blockby, -1);
-//					return 2000;
 				});
 		}
 	}

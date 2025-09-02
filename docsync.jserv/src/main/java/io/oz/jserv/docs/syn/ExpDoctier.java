@@ -213,11 +213,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	DocsResp notifySyndom(DocsReq body)
 			throws SemanticException, AnsonException, SsException, IOException {
 		// FIXME instead of re-schedule the syn-worker?
-		domx.updomains((dom, synid, peer, xp) -> {
-				if (debug)
-					Utils.logT(new Object(){}, 
-						"Notification is handled: %s, %s, %s", dom, synid, peer);
-			}); // , (usr) -> Math.random());
+//		domx.updomains((dom, synid, peer, xp) -> {
+//				if (debug)
+//					Utils.logT(new Object(){}, 
+//						"Notification is handled: %s, %s, %s", dom, synid, peer);
+//			}); // , (usr) -> Math.random());
 		
 		return new DocsResp().device(body.device());
 	}

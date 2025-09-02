@@ -19,8 +19,8 @@ public class T_WebservExposer extends WebsrvLocalExposer {
 	};
 
 	@Override
-	public AppSettings onExpose(AppSettings settings, String domain, String synode, boolean https) {
-		super.onExpose(settings, domain, synode, https);
+	public AppSettings onExpose(AppSettings settings, String domain, String synode) {
+		super.onExpose(settings, domain, synode);
 		turngreen(lights.get(synode));
 		return settings;
 	}

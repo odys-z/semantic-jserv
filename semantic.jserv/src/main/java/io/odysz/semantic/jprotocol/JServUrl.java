@@ -2,10 +2,13 @@ package io.odysz.semantic.jprotocol;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.joinurl;
+import static io.odysz.common.LangExt.shouldeqs;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Regex.asJserv;
 import static io.odysz.common.Regex.getJservParts;
 import static io.odysz.common.Regex.validUrlPort;
 
+import io.odysz.common.LangExt;
 import io.odysz.common.UrlValidator;
 import io.odysz.common.Utils;
 
@@ -21,13 +24,23 @@ import static io.odysz.common.LangExt.concatArr;
 public class JServUrl {
 	static UrlValidator urlValidator;
 
-	public final boolean https;
-	public String ip;
-	public int port;
-	public String[] subpaths;
+	boolean https;
+	String ip;
+	int port;
+	String[] subpaths;
 	public JServUrl subpaths(String... subs) {
 		subpaths = concatArr(subpaths, subs);
 		return this;
+	}
+	
+	String jservtime;
+	public String jservtime() { return jservtime; }
+	public JServUrl jservtime(String utc) {
+		jservtime = utc;
+		return this;
+	}
+	
+	public JServUrl() {
 	}
 	
 	public JServUrl(boolean ishttps, String ip, int port) {
@@ -45,6 +58,27 @@ public class JServUrl {
 		return joinurl(https, ip, port, JProtocol.urlroot, subpaths);
 	}
 	
+	public JServUrl jserv(String jurl, String timestamp) {
+		Object[] jservparts = getJservParts(jurl);
+
+		https = (boolean) jservparts[1];
+		ip = (String) jservparts[2];
+
+		try { port = (int) jservparts[3]; }
+		catch (Exception e) {
+			port = Integer.valueOf((String) jservparts[3]); 
+		}
+
+		subpaths = (String[]) jservparts[4];
+		mustnonull(subpaths);
+		shouldeqs(new Object(){}, JProtocol.urlroot, subpaths[0]);
+		if (eq(JProtocol.urlroot, subpaths[0]))
+			subpaths = LangExt.<String>removele(subpaths, 0);  
+		
+		jservtime = timestamp;
+		return this;
+	}
+
 	/**
 	 * Validate jserv's format:
 	 * - a valid url<br>

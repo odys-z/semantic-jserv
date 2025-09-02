@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.AESHelper;
@@ -104,7 +105,8 @@ public class SynssionPeer {
 	final String mynid;
 	/** The remode, server side, synode */
 	final String peer;
-	public String peerjserv;
+
+	String peerjserv;
 
 	String domain() {
 		return domanager.domain();
@@ -248,16 +250,25 @@ public class SynssionPeer {
 							domanager.synode, domanager.domain(), peer);
 
 			}
-		} catch (IOException e) {
-			Utils.warn(e.getMessage());
-		} catch (Exception e) {
+//		} catch (IOException e) {
+//			Utils.warn(e.getMessage());
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			try {
+//				ExchangeBlock reqb = synclose(rep.exblock);
+//				rep = exespush(peer, A.exclose, reqb);
+//			} catch (TransException | SQLException | AnsonException | IOException e1) {
+//				e1.printStackTrace();
+//			}
+		} catch (TransException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			try {
-				ExchangeBlock reqb = synclose(rep.exblock);
-				rep = exespush(peer, A.exclose, reqb);
-			} catch (TransException | SQLException | AnsonException | IOException e1) {
-				e1.printStackTrace();
-			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		finally { domanager.unlockme(); }
 		return this;
@@ -292,10 +303,13 @@ public class SynssionPeer {
 	 * @param ini request's exchange block
 	 * @param domain
 	 * @return respond
-	 * @throws ExchangeException peer id from {@code ini} doesn't match with mine.
+	 * @throws IOException 
+	 * @throws SAXException 
+	 * @throws SQLException 
+	 * @throws TransException 
 	 * @throws Exception
 	 */
-	SyncResp onsyninitRep(ExchangeBlock ini, String domain) throws ExchangeException, Exception {
+	SyncResp onsyninitRep(ExchangeBlock ini, String domain) throws TransException, SQLException, SAXException, IOException {
 		if (!eq(ini.srcnode, peer))
 			throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
@@ -878,7 +892,7 @@ public class SynssionPeer {
 		return resp.data();
 	}
 
-	public HashMap<String, String> submitJserv(String jserv)
+	public HashMap<String, String[]> submitJserv(String jserv)
 			throws SemanticException, AnsonException, IOException {
 		mustnonull(client);
 		SynodeMeta m = domanager.synm;
@@ -943,13 +957,9 @@ public class SynssionPeer {
 				.exblock(req);
 	}
 
-	public void checkLogin(String taskDesc, SyncUser docuser)
+	public void checkLogin(SyncUser docuser)
 			throws SemanticException, AnsonException, SsException, IOException, TransException {
-		if (client == null || !client.isSessionValid()) {
-			Utils.logT(new Object(){},
-					"%s in %s, logging into: %s, jserv: %s",
-					taskDesc, domain(), peer, peerjserv);
+		if (client == null || !client.isSessionValid())
 			loginWithUri(peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
-		}
 	}
 }

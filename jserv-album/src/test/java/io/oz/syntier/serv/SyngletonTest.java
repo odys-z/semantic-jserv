@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import io.odysz.common.FilenameUtils;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.util.DAHelper;
 import io.oz.jserv.docs.syn.SynDomanager;
@@ -115,6 +116,7 @@ class SyngletonTest {
 
 		AppSettings settings_prv0 = AppSettings.load(SynotierSettingsTest.webinf, prvs);
 		assertNull(settings_prv0.localIp);
+		assertTrue(JServUrl.valid(settings_prv0.jservs.get(hub)));
 		
 		SynotierJettyApp jprv = SynotierJettyApp._main(new String[] {prvs});
 		musteq(prv, jprv.syngleton.synode());
@@ -122,18 +124,21 @@ class SyngletonTest {
 		// jprv.afterboot();
 		awaitAll(T_WebservExposer.lights.get(prv), -1);
 		
+		assertTrue(JServUrl.valid(queryJserv(jprv, hub)));
 		assertNotNull(jprv.syngleton.settings.localIp);
 		
 		assertEquals(queryJserv(jhub, prv), jprv.jserv());
-		// TODO FIXME 127.0.0.1 != localip
-		assertNotNull(queryJserv(jhub, prv));
+		// assertNotNull(queryJserv(jhub, prv));
+		assertTrue(JServUrl.valid(queryJserv(jhub, prv)));
+
 		assertNull(queryJserv(jhub, mob));
 	
-		// mob
+		// mobile
 		turnred(T_WebservExposer.lights.get(mob));
 
 		AppSettings settings_mob0 = AppSettings.load(SynotierSettingsTest.webinf, mobs);
 		assertNull(settings_mob0.localIp);
+		assertTrue(JServUrl.valid(settings_mob0.jservs.get(hub)));
 		
 		SynotierJettyApp jmob = SynotierJettyApp._main(new String[] {mobs});
 		musteq(mob, jmob.syngleton.synode());
@@ -141,21 +146,26 @@ class SyngletonTest {
 		// jmob.afterboot();
 		awaitAll(T_WebservExposer.lights.get(mob), -1);
 		
+		// FIXME
+		// This is a test implementation error, where light[mob] is turned to green by hub, before response to the submit request.
+		Thread.sleep(2000);
+		
 		assertNotNull(jmob.syngleton.settings.localIp);
 		assertNotNull(queryJserv(jhub, prv));
 		assertNotNull(queryJserv(jhub, mob));
 
 		assertEquals(queryJserv(jhub, mob), jmob.jserv());
 		assertEquals(queryJserv(jmob, prv), jprv.jserv());
-
-		// TODO FIXME 127.0.0.1 != localip
-		// assertEquals(queryJserv(jmob, hub), jhub.jserv());
-
+		assertTrue(JServUrl.valid(queryJserv(jmob, prv)));
 		assertNull(queryJserv(jprv, mob));
+		
 		// prv
 		SynDomanager domprv = jprv.syngleton.domanager(zsu);
+
+		domprv.submitJservsPersistExpose(null);
 		DATranscxt syntb = new DATranscxt(domprv.synconn);
 		domprv.updateJservs(syntb);
+
 		assertEquals(queryJserv(jprv, mob), jmob.jserv());
 	}
 
@@ -167,7 +177,7 @@ class SyngletonTest {
 	private String queryJserv(SynotierJettyApp synapp, String peer) throws Exception {
 		SynDomanager dom = synapp.syngleton.domanager(zsu);
 		DATranscxt tb = new DATranscxt(dom.synconn);
-		HashMap<String, String> jservs = dom.loadJservs(tb);
-		return jservs == null ? null : jservs.get(peer);
+		HashMap<String, String[]> jservs = dom.loadJservs(tb);
+		return jservs == null || jservs.get(peer) == null ? null : jservs.get(peer)[0];
 	}
 }

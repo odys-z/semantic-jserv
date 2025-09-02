@@ -18,6 +18,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.xml.sax.SAXException;
+
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
@@ -65,15 +67,15 @@ import io.oz.syn.registry.SynodeConfig;
 public class Syngleton extends JSingleton {
 	/**
 	 * @since 0.2.5
-	 */
 	@FunctionalInterface
 	public interface OnNetworkChange {
 		/**
 		 * On ip change event.
 		 * @param nextIp
-		 */
+		 * /
 		public void on(JServUrl jserv);
 	}
+	 */
 
 	/**
 	 * Call
@@ -162,7 +164,7 @@ public class Syngleton extends JSingleton {
 		
 		if (rs.next()) {
 			String domain = rs.getString(synm.domain);
-			SynDomanager domanger = (SynDomanager) new SynDomanager(cfg, settings)
+			SynDomanager domanger = (SynDomanager) new SynDomanager(this, cfg, settings)
 					.admin(admin.deviceId(cfg.synode()))
 					.loadomainx();
 
@@ -198,7 +200,7 @@ public class Syngleton extends JSingleton {
 								.deviceId(dmgr.synode);
 
 						dmgr.loadSynclients(tb0)
-							.openSynssions()
+							// .openSynssions()
 							.updateSynssions(onok);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -266,8 +268,8 @@ public class Syngleton extends JSingleton {
 
 		// TODO FIXME, move to the right place
 		// 2025-07-24 Here is the answer, see the JSample way.
-		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
-		AnSession.init(defltScxt);
+//		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
+//		AnSession.init(defltScxt);
 		
 		// 2 syn-tables
 		AutoSeqMeta akm;
@@ -306,7 +308,7 @@ public class Syngleton extends JSingleton {
 		initSynodeRecs(cfg, cfg.peers);
 
 		// 5. step n0 & n-stamp for clearing uncertainty
-		SyndomContext.incN0Stamp(cfg.synconn, synm, cfg.synode());
+		SyndomContext.incN0Stamp(cfg.synconn, synm, cfg.synode(), cfg.domain);
 	}
 
 	/**
@@ -337,8 +339,8 @@ public class Syngleton extends JSingleton {
 		
 		// TODO FIXME, move to the right place
 		// 2025-07-24 Here is the answer, see the JSample way.
-		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
-		AnSession.init(defltScxt);
+//		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
+//		AnSession.init(defltScxt);
 
 		DATranscxt.initConfigs(cfg.synconn,
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
@@ -455,20 +457,36 @@ public class Syngleton extends JSingleton {
 	 * @return this
 	 * @since 0.7.6
 	 */
-	public void asybmitJserv(String currentIp, OnNetworkChange onIpChanged) {
+	public void asybmitJserv(AppSettings settings, ISynodeLocalExposer ipExposer) {
 		new Thread(()-> {
+			String currentIp = settings.localIp; 
 			String nextip = AppSettings.getLocalIp(2);
 			if (!eq(currentIp, nextip)) {
+				settings.localIp = nextip;
 				for (SynDomanager mngr : syndomanagers.values()) {
 					if (mngr.mode != SynodeMode.hub) {
-						mngr.ipChangeHandler(onIpChanged)
-							.submitJservsPersist(currentIp, nextip);
+						mngr.ipChangeHandler(ipExposer)
+							.submitJservsPersistExpose(currentIp, nextip);
+					}
+					else {
+						// suppose hub nodes can still changing IP often.
+						try {
+							JServUrl jsv = mngr.loadJservUrl().ip(nextip);
+							
+							AppSettings.updatePeerJservs(mngr.synconn, mngr.domain(), synm,
+									mngr.synode, jsv.jserv(), jsv.jservtime(), mngr.synode);
+
+							mngr.ipChangeHandler(ipExposer);
+							ipExposer.onExpose(settings, mngr.domain(), mngr.synode);
+						} catch (SQLException | TransException | SAXException | IOException e) {
+							e.printStackTrace();
+						}
 					}
 
-					try { onIpChanged.on(mngr.jservComposer.ip(nextip)); }
-					catch (Exception e) {
-						e.printStackTrace();
-					}
+//					try { ipExposer.onExpose(settings, mngr.domain(), mngr.synode, mngr.jservComposer.ip(nextip)); }
+//					catch (Exception e) {
+//						e.printStackTrace();
+//					}
 					break; //
 				}
 			}

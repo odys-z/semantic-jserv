@@ -146,6 +146,10 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * @since 1.5.18, this is recommended not to use directly. Call {@link JProtocol#setup(String, IPort)} instead.
 	 */
 	static public void understandPorts(IPort p) {
+		// Because of the java enum limitation, or maybe the author's knowledge limitation, 
+		// JMessage needing a IPort instance to handle ports that implemented a new version
+		// of valof() method for handling all ports.<br>
+		// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 		defaultPortImpl = p;
 	}
 	

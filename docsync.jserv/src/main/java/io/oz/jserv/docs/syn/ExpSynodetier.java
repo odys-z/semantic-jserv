@@ -13,10 +13,7 @@ import static io.oz.syn.ExessionAct.deny;
 import static io.oz.syn.ExessionAct.mode_server;
 import static io.oz.syn.ExessionAct.ready;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -33,7 +30,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
-import io.odysz.anson.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Regex;
 import io.odysz.common.Utils;
@@ -80,7 +76,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	final SynodeMode mode;
 
 	SynDomanager domanager0;
-	String localIp;
+//	String localIp;
 	
 	public boolean debug;
 
@@ -94,7 +90,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			this.st = new DATranscxt(conn);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new SemanticException("Fail to DATranscxt on %s.", conn);
+			throw new SemanticException("Fail to create DATranscxt on %s.", conn);
 		}
 		this.debug  = Connects.getDebug(conn);
 	}
@@ -250,6 +246,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		DATranscxt syntb = new DATranscxt(domanager0.synconn);
 
+		/*
 		worker[0] = () -> {
 			if (running)
 				return;
@@ -268,15 +265,18 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				domanager0.updateJservs(syntb);
 			
 				// BUG TO BE FIXED: open then update, in one loop, and continue on error unless all failed.
-				domanager0.openSynssions();
+				if (false)
+					// Throws FileNotFoundException because of wrong jserv.
+					domanager0.openSynssions();
 
-				domanager0.updomains(
+				domanager0.updomain(
 					(dom, synode, peer, xp) -> {
 						if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
 								synid, dom, domanager0.n0(), domanager0.stamp());
 					});
 			} catch (ExchangeException e) {
 				// e. g. login failed, try again
+				// And something not done yet, e.g. breakpoints resuming
 				if (debug) e.printStackTrace();
 			} catch (FileNotFoundException e) {
 				// configuration errors
@@ -285,12 +285,11 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 						+ " (Tip: jserv url must inclue root path, e. g. /jserv-album)",
 						domanager0.synode, domanager0.admin.uid());
 				stopScheduled(2);
-			} // catch (InterruptedIOException | SocketException e) {
+			}
+			// catch (InterruptedIOException | SocketException e) { }
 			catch (IOException e) {
 				// wait for network
 				Utils.logi("[♻.⛔ %s ] Reschedule syn-worker with error: %s", synid, e.getMessage());
-//				if (debug)
-//					e.printStackTrace();
 				reschedule(30);
 			} catch (TransException | SQLException e) {
 				// local errors, stop for fixing
@@ -310,6 +309,57 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				running = false;
 			}
 		};
+		*/
+
+		lights = new HashMap<String, Boolean>();
+		worker[0] = () -> {
+			if (running)
+				return;
+			running = true;
+
+			if (debug)
+				Utils.logi("[%s] : Checking Syndomain ...", synid);
+
+			try {
+				domanager0.loadSynclients(syntb);
+
+				// 0.7.6 Solution:
+				// Get peer jservs from hub, save into synconn.syn_node.jserv.
+				// ISSUE: It's possible some nodes cannot access the hub but can only be told by a peer node.
+				if (!domanager0.submitJservsPersistExpose(domanager0.syngleton.settings.localIp))
+					domanager0.updateJservs(syntb);
+			
+				waitAll(domanager0.sessions);
+				for (SynssionPeer p : domanager0.sessions.values())
+					try {
+						domanager0.synUpdateDomain(p,
+							(dom, synode, peer, xp) -> {
+								if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
+										synid, dom, domanager0.n0(), domanager0.stamp());
+								turngreen(peer);
+							});
+					} catch (ExchangeException e) {
+						// Something not done yet, e.g. breakpoints resuming
+						if (debug) e.printStackTrace();
+					// catch (InterruptedIOException | SocketException e) {
+					} catch (IOException e) {
+						// wait for network
+						Utils.logi("[♻.⛔ %s ] syn-worker has an IO(network) error: %s", synid, e.getMessage());
+					}
+				
+				if (!anygreen())
+					reschedule(30);
+
+			// thread level catches, local errors
+			} catch (Exception e1) {
+				e1.printStackTrace();
+				stopScheduled(2);
+			} finally {
+				this.domanager0.closession();
+				running = false;
+			}
+		};
+	
 
 		scheduler = Executors.newSingleThreadScheduledExecutor(
 				(r) -> new Thread(r, f("synworker-%s", synid)));
@@ -356,7 +406,27 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		}
 		finally { running = false; }
 	}
+
+	HashMap<String, Boolean> lights;
+	private void turngreen(String peer) {
+		lights.put(peer, true);
+	}
+
+	private void waitAll(HashMap<String, SynssionPeer> sessions) {
+		lights.clear();
+		for (String p : sessions.keySet()) {
+			SynssionPeer peer = sessions.get(p);
+			musteqs(p, peer.peer);
+			lights.put(p, false);
+		}
+	}
 	
+	private boolean anygreen() {
+		for (boolean lit : lights.values())
+			if (lit) return true;
+		return false;
+	}
+
 	//////////////////////////////////// Doc-ref Service ///////////////////////////////
 	/**
 	 * Response to {@link SyncReq.A#queryRef2me}
@@ -451,11 +521,13 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 */
 	SyncResp onReportJserv(SyncReq req, DocUser usr) throws TransException, SQLException {
 		musteqs(req.exblock.domain, domain);
+		musteqs(req.exblock.peer, synid);
 		mustnonull(req.exblock.srcnode);
 
 		SynodeMeta m = domanager0.synm;
 		String jserv = (String)req.data(m.jserv);
-		domanager0.updateJserv(st, req.exblock.srcnode, jserv);
+		String optim = (String)req.data(m.optime);
+		domanager0.updateJserv(st, req.exblock.srcnode, jserv, optim);
 
 		return (SyncResp) new SyncResp(domain)
 				.jservs(domanager0.loadJservs(st))

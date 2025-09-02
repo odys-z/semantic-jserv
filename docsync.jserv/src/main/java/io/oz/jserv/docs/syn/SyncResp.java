@@ -4,6 +4,7 @@ import static io.oz.syn.ExessionAct.unexpect;
 
 import java.util.HashMap;
 
+import io.odysz.anson.AnsonField;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
@@ -73,11 +74,10 @@ public class SyncResp extends AnsonResp {
 		return this;
 	}
 
-	HashMap<String, String> jservs;
-	public SyncResp jservs(HashMap<String, String> jservs) {
+	@AnsonField(valType = "[Ljava.lang.String;")
+	HashMap<String, String[]> jservs;
+	public SyncResp jservs(HashMap<String, String[]> jservs) {
 		this.jservs = jservs;
 		return this;
 	}
-
-	
 }

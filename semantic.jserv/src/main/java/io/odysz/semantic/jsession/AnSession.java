@@ -110,7 +110,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	IUser jrobot = new JRobot();
 
 	/**
-	 * @deprecated this is not recommended and is replacing by {@link #init()}.
+	 * @deprecated this is not recommended and is replacing by {@link #init(String)}.
 	 * Initialize semantext, schedule tasks,
 	 * load root key from tomcat context.xml.
 	 * To configure root key in tomcat, in context.xml, <pre>
@@ -167,6 +167,9 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	/**
 	 * AnSession now can be initialized and created at the same time.
+	 * Use this for initializing AnSession in jetty application, in the app:<pre>
+	 * 	registerPorts(app, settings.conn, AnSession.init(Connects.defltConn()));<pre>
+	 * 
 	 * @param sysconn, e.g. by {@link Connects#defltConn()}
 	 * @return new instance that's initialized.
 	 * @throws Exception 

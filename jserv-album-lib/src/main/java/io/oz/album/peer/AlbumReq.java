@@ -123,7 +123,6 @@ public class AlbumReq extends DocsReq {
 	/**
 	 * Create a request for inserting a new photo.
 	 * <p>FIXME: introducing stream field (uri) of Anson?</p>
-	 * TODO: use SyncDoc#loadFile.
 	 * 
 	 * @param collId
 	 * @param fullpath

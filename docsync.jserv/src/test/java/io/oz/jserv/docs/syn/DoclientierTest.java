@@ -24,6 +24,7 @@ import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.ck;
 import static io.oz.syn.Docheck.printChangeLines;
 import static io.oz.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
+import static io.oz.jserv.docs.syn.SynodetierJoinTest.servpath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -49,6 +50,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -83,7 +85,8 @@ class DoclientierTest {
 	}
 	
 	static void init(int caseid) throws Exception {
-		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
+		JProtocol.setup(servpath, AnsonMsg.Port.echo);
+		// AnsonMsg.understandPorts(AnsonMsg.Port.echo);
 
 		String p = new File("src/test/res").getAbsolutePath();
     	System.setProperty("VOLUME_HOME", p + "/volume");
