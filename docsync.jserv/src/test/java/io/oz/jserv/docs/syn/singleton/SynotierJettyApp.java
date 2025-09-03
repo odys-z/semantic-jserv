@@ -172,7 +172,9 @@ public class SynotierJettyApp {
 		}});
 		*/
 		try {
-			syngleton.asybmitJserv(settings,
+			// syngleton.feedbackJserv(syngleton.synode());
+			
+			syngleton.asybmitJserv(
 					((ISynodeLocalExposer)Class
 						.forName(settings.startHandler[0])
 						.getDeclaredConstructor()

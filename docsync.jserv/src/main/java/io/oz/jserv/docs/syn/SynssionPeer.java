@@ -106,7 +106,12 @@ public class SynssionPeer {
 	/** The remode, server side, synode */
 	final String peer;
 
-	String peerjserv;
+	String peerjserv() {
+		return domanager == null
+				? null
+				// : domanager.syngleton.settings.jserv(domanager.synode);
+				: domanager.syngleton.settings.jserv(peer);
+	}
 
 	String domain() {
 		return domanager.domain();
@@ -157,7 +162,7 @@ public class SynssionPeer {
 			avoidRefs2me.get(peer).clear();
 	}
 
-	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
+	public SynssionPeer(SynDomanager domanager, String peer, boolean debug) {
 		// ISSUE
 		// TODO It's better to change this to /syn/me, not /syn/peer once Connects is refactored. 
 		// TODO for synodes' uri_syn, the semantics is hard bound to SynodeConfig.conn.
@@ -169,7 +174,7 @@ public class SynssionPeer {
 		this.domanager = domanager;
 		this.peer      = peer;
 		this.mymode    = domanager.mode;
-		this.peerjserv = peerjserv;
+		// this.peerjserv = peerjserv;
 		this.clienturi = uri_sys;
 		this.debug     = debug;
 		
@@ -424,7 +429,7 @@ public class SynssionPeer {
 				if (debug)
 					Utils.logT(new Object() {}, " Begin downloading %s\n-> %s", localpath, targetpth);
 
-				client.download206(uri_syn, peerjserv, Port.syntier, localpath, ref,
+				client.download206(uri_syn, peerjserv(), Port.syntier, localpath, ref,
 
 					isNull(report2test) ?
 					(rx, r, bx, b, r_null) -> {
@@ -870,7 +875,7 @@ public class SynssionPeer {
 	 * @throws AnsonException 
 	 * @throws SemanticException 
 	 */
-	public HashMap<String, Object> queryJservs()
+	public HashMap<String, String[]> queryJservs()
 			throws SemanticException, AnsonException, IOException {
 
 		mustnonull(client);
@@ -889,7 +894,7 @@ public class SynssionPeer {
 		
 		mustnonull(resp);
 		musteq(resp.domain, domain());
-		return resp.data();
+		return resp.jservs;
 	}
 
 	public HashMap<String, String[]> submitJserv(String jserv)
@@ -950,7 +955,7 @@ public class SynssionPeer {
 					"Joining domain information indicates an action of code (setupDom)%s, rather than %s.\n%s",
 					setupDom, rep.exblock.synact(), rep.msg());
 
-		xp.trb.domainitMe(xp, admin, peerjserv, rep.domain, rep.exblock);
+		xp.trb.domainitMe(xp, admin, peerjserv(), rep.domain, rep.exblock);
 
 		ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 		return new SyncReq(null, domanager.domain())
@@ -960,6 +965,6 @@ public class SynssionPeer {
 	public void checkLogin(SyncUser docuser)
 			throws SemanticException, AnsonException, SsException, IOException, TransException {
 		if (client == null || !client.isSessionValid())
-			loginWithUri(peerjserv, docuser.uid(), docuser.pswd(), docuser.deviceId());
+			loginWithUri(peerjserv(), docuser.uid(), docuser.pswd(), docuser.deviceId());
 	}
 }

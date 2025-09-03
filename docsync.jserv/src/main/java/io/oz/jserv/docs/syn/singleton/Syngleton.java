@@ -457,37 +457,32 @@ public class Syngleton extends JSingleton {
 	 * @return this
 	 * @since 0.7.6
 	 */
-	public void asybmitJserv(AppSettings settings, ISynodeLocalExposer ipExposer) {
+	public void asybmitJserv(ISynodeLocalExposer ipExposer) {
 		new Thread(()-> {
 			String currentIp = settings.localIp; 
 			String nextip = AppSettings.getLocalIp(2);
 			if (!eq(currentIp, nextip)) {
 				settings.localIp = nextip;
 				for (SynDomanager mngr : syndomanagers.values()) {
-					if (mngr.mode != SynodeMode.hub) {
-						mngr.ipChangeHandler(ipExposer)
-							.submitJservsPersistExpose(currentIp, nextip);
-					}
-					else {
-						// suppose hub nodes can still changing IP often.
-						try {
+					try {
+						if (mngr.mode != SynodeMode.hub) {
+							mngr.submitJservsPersist(currentIp, nextip);
+						}
+						else {
+							// suppose hub nodes can still changing IP often.
 							JServUrl jsv = mngr.loadJservUrl().ip(nextip);
 							
-							AppSettings.updatePeerJservs(mngr.synconn, mngr.domain(), synm,
-									mngr.synode, jsv.jserv(), jsv.jservtime(), mngr.synode);
-
-							mngr.ipChangeHandler(ipExposer);
-							ipExposer.onExpose(settings, mngr.domain(), mngr.synode);
-						} catch (SQLException | TransException | SAXException | IOException e) {
-							e.printStackTrace();
+//							AppSettings.updatePeerJservs(mngr.synconn, mngr.domain(), synm,
+//									mngr.synode, jsv.jserv(), jsv.jservtime(), mngr.synode);
+							settings.persistDB(syncfg, synm, mngr.synode, jsv);
 						}
-					}
 
-//					try { ipExposer.onExpose(settings, mngr.domain(), mngr.synode, mngr.jservComposer.ip(nextip)); }
-//					catch (Exception e) {
-//						e.printStackTrace();
-//					}
-					break; //
+						// settings.jservs(mngr.loadJservs(tb0)).save();
+						mngr.ipChangeHandler(ipExposer);
+						ipExposer.onExpose(settings, mngr);
+					} catch (SQLException | TransException | SAXException | IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}, f("[%s] Asy-submit Jserv", synode()))

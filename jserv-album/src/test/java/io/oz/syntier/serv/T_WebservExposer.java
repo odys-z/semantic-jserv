@@ -4,6 +4,7 @@ import static io.odysz.common.Utils.turngreen;
 
 import java.util.HashMap;
 
+import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 
 public class T_WebservExposer extends WebsrvLocalExposer {
@@ -19,9 +20,9 @@ public class T_WebservExposer extends WebsrvLocalExposer {
 	};
 
 	@Override
-	public AppSettings onExpose(AppSettings settings, String domain, String synode) {
-		super.onExpose(settings, domain, synode);
-		turngreen(lights.get(synode));
+	public AppSettings onExpose(AppSettings settings, SynDomanager mgr) {
+		super.onExpose(settings, mgr);
+		turngreen(lights.get(mgr.synode));
 		return settings;
 	}
 }

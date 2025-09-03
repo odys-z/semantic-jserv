@@ -5,7 +5,7 @@ import static io.odysz.common.LangExt.joinurl;
 import static io.odysz.common.LangExt.shouldeqs;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Regex.asJserv;
-import static io.odysz.common.Regex.getJservParts;
+import static io.odysz.common.Regex.getHttpParts;
 import static io.odysz.common.Regex.validUrlPort;
 
 import io.odysz.common.LangExt;
@@ -17,8 +17,7 @@ import static io.odysz.common.LangExt.concatArr;
 /**
  * <p>The jserv parser and composer. </p>
  * 
- * TODO It is reasonable to move this to the protocol layer,
- * when time is allowed for refactoring Typescript and py3 client.
+ * TODO Refactor Typescript and py3 clients.
  * @since 0.2.5
  */
 public class JServUrl {
@@ -58,8 +57,9 @@ public class JServUrl {
 		return joinurl(https, ip, port, JProtocol.urlroot, subpaths);
 	}
 	
+	/** @since 0.7.6 */
 	public JServUrl jserv(String jurl, String timestamp) {
-		Object[] jservparts = getJservParts(jurl);
+		Object[] jservparts = getHttpParts(jurl);
 
 		https = (boolean) jservparts[1];
 		ip = (String) jservparts[2];
@@ -85,7 +85,8 @@ public class JServUrl {
 	 * - requirs a path root, e.g. jserv-alubm<br>
 	 * - port greater then 1024<br>
 	 * @param jserv
-	 * @return
+	 * @return valid or not
+	 * @since 0.7.6
 	 */
 	public static boolean valid(String jserv) {
 		if (urlValidator == null)
@@ -95,7 +96,7 @@ public class JServUrl {
 			if (!urlValidator.isValid(jserv))
 				return false;
 
-			Object[] jservparts = getJservParts(jserv);
+			Object[] jservparts = getHttpParts(jserv);
 			return urlValidator.isValid(asJserv(jserv)) &&
 				validUrlPort((int)jservparts[3], new int[] {1025, -1}) &&
 				eq(JProtocol.urlroot, ((String[]) jservparts[4])[0]);

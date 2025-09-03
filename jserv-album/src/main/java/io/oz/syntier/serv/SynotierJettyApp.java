@@ -119,7 +119,7 @@ public class SynotierJettyApp implements Daemon {
 		String nid = winsrv.app.syngleton.synode();
 
 		Utils.logi("=== Service jvmStart() finished [%s %s: %s] ===",
-			DateFormat.formatime(new Date()), nid, winsrv.app.syngleton.settings.jserv(nid));
+			DateFormat.formatime_default(new Date()), nid, winsrv.app.syngleton.settings.jserv(nid));
 	}
 	
 	/**
@@ -270,7 +270,7 @@ public class SynotierJettyApp implements Daemon {
 		}});
 		*/
 		try {
-			syngleton.asybmitJserv(settings,
+			syngleton.asybmitJserv(
 					((ISynodeLocalExposer)Class
 						.forName(settings.startHandler[0])
 						.getDeclaredConstructor()

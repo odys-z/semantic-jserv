@@ -18,13 +18,10 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
-
-import org.xml.sax.SAXException;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
@@ -35,6 +32,7 @@ import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
+import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.JServUrl;
@@ -43,6 +41,8 @@ import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.parts.Logic.op;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.syn.DBSynTransBuilder;
@@ -54,6 +54,7 @@ import io.oz.syn.registry.YellowPages;
  * @since 0.7.0
  */
 public class AppSettings extends Anson {
+	static final String day0 = "1911-10-10";
 
 	/** 
 	 * Configuration file name.
@@ -169,27 +170,15 @@ public class AppSettings extends Anson {
 			if (eq(cfg.synode(), peer)) 
 				logT(new Object() {}, "Ignoring updating jserv to local node: %s", peer);
 			else
-				updatePeerJservs(cfg.synconn, cfg.domain, synm, peer, jservs.get(peer), null, cfg.synode());
+				updateNewJserv(cfg.synconn, cfg.domain, synm, peer, jservs.get(peer), null, cfg.synode());
 		}
 		return this;
 	}
 
 	/**
-	 * @since 0.2.6
-	 * @param https
-	 * @return jserv-url
-	 * @throws Exception
-	public JServUrl getJservUrl(boolean https) throws Exception {
-		return new JServUrl(https, localIp, port);
-	}
-	 */
-	
-	/**
 	 * Thanks to https://stackoverflow.com/a/38342964/7362888
 	 * @param retries default 11
 	 * @return local ip, 127.0.0.1 if is offline (got 0:0:0:0:0:0:0:0:0).
-	 * @throws SocketException 
-	 * @throws UnknownHostException 
 	 */
 	public static String getLocalIp(int ... retries) {
 	    try(final DatagramSocket socket = new DatagramSocket()) {
@@ -218,7 +207,7 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * Persist jsev url into table syn_synode.
+	 * Persist jsev url into table syn_synode, if the time stamp is new.
 	 * FIXME TODO
 	 * FIXME TODO
 	 * FIXME TODO move to JServUrl.persist()
@@ -234,7 +223,7 @@ public class AppSettings extends Anson {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	public static boolean updatePeerJservs(String synconn, String domain, SynodeMeta synm,
+	public static void updateNewJserv(String synconn, String domain, SynodeMeta synm,
 			String peer, String servurl, String timestamp_utc, String src_node)
 			throws TransException, SQLException {
 
@@ -242,27 +231,29 @@ public class AppSettings extends Anson {
 
 		try { 
 			tb = new DATranscxt(synconn);
-			Date src_date = DateFormat.parse(ifnull(timestamp_utc, "1911-10-10"));
+			Date src_date = DateFormat.parse(ifnull(timestamp_utc, day0));
 			String optime = DAHelper.getValstr(tb, synconn, synm, synm.optime, synm.pk, peer, synm.domain, domain);
-			Date optimedt = DateFormat.parse(ifnull(optime, "1911-10-10"));
+			Date optimedt = DateFormat.parse(ifnull(optime, day0));
 			if (optimedt.after(src_date))
-				return false;
-		} catch (ParseException | SAXException | IOException e) {
+				return;// false;
+		} catch (ParseException e) {
 			e.printStackTrace();
-			// return false;
 		}
 			
 		IUser robot = DATranscxt.dummyUser();
 
-		logi("[%s] Setting peer %s's jserv: %s", domain, peer, servurl);
+		String timestamp = ifnull(timestamp_utc, day0);
+		logi("[%s] Setting peer %s's jserv: %s [%s]", domain, peer, servurl, timestamp);
+
 		tb.update(synm.tbl, robot)
 			.nv(synm.jserv, servurl)
-			.nv(synm.optime, ifnull(timestamp_utc, "1911-10-10"))
+			.nv(synm.optime, timestamp)
 			.nv(synm.oper,  src_node)
 			.whereEq(synm.pk, peer)
 			.whereEq(synm.domain, domain)
+			.where(op.le, Funcall.isnull(synm.optime, Funcall.toDate(day0)), Funcall.toDate(timestamp))
 			.u(tb.instancontxt(synconn, robot));
-		return true;
+		// return true;
 	}
 
 	public String vol_name;
@@ -354,9 +345,12 @@ public class AppSettings extends Anson {
 	 * @throws AnsonException
 	 * @throws IOException
 	 */
-	public AppSettings save() throws AnsonException, IOException {
+	public AppSettings save() throws AnsonException {
 		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
 			toBlock(inf, JsonOpt.beautify());
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new AnsonException(e);
 		} 
 		return this;
 	}
@@ -434,14 +428,59 @@ public class AppSettings extends Anson {
 		else 
 			logi("[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\nStarting application without db setting ...");
 
-		settings.updateLocalJserv(cfg.https, cfg.synconn,
+		settings.updateDBJserv(cfg.https, cfg.synconn,
 				new SynodeMeta(cfg.synconn), cfg.domain, cfg.synode());
 		
 		return settings; // settings.local_serv
 	}
 
+	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm, String node, JServUrl jserv)
+			throws TransException, SQLException {
+		return persistDB(cfg, synm, node, jserv.jserv());
+	}
+
+	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm, String node, String jserv)
+			throws TransException, SQLException {
+		String now = DateFormat.formatime_utc(new Date());
+		updateNewJserv(cfg.synconn, cfg.domain, synm, node, jserv, now, cfg.synode());
+		jservs = loadJservs(cfg, synm);
+		return this;
+	}
+	
+	public static HashMap<String, String[]> loadJservss(DATranscxt st, SynodeConfig cfg, SynodeMeta synm)
+			throws SQLException, TransException {
+		return synm.loadJservs(st,
+				cfg.domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
+	}
+
+	public static HashMap<String, String> loadJservs(SynodeConfig cfg, SynodeMeta synm)
+			throws SQLException, TransException {
+		DATranscxt tb = new DATranscxt(cfg.synconn);
+
+		return ((AnResultset) tb.select(synm.tbl)
+		  .cols(synm.jserv, synm.synoder, synm.optime)
+		  .whereEq(synm.domain, cfg.domain)
+		  .rs(tb.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
+		  .rs(0))
+		  .map(synm.synoder,
+			  (rs) -> rs.getString(synm.jserv),
+			  (rs) -> JServUrl.valid(rs.getString(synm.jserv)));
+	}
+	
+	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm,
+			HashMap<String, String[]> jservs_time) throws TransException, SQLException {
+		if (jservs_time != null) {
+			for (String n : jservs_time.keySet()) 
+				updateNewJserv(cfg.synconn, cfg.domain, synm, n,
+								jservs_time.get(n)[0], jservs_time.get(n)[1], cfg.synode());
+			
+			jservs = loadJservs(cfg, synm);
+		}
+		return this;
+	}
+
 	/**
-	 * Update my jserv-url according to settings and local IP.
+	 * Update my syn_node.jserv url according to settings and local IP.
 	 * @param https
 	 * @param synconn can be null, for ignoring db update
 	 * @param synm can be null, for ignoring db update
@@ -450,7 +489,7 @@ public class AppSettings extends Anson {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	private String updateLocalJserv(boolean https,
+	private String updateDBJserv(boolean https,
 			String synconn, SynodeMeta synm, String domain, String mysid) throws TransException, SQLException {
 		String ip = getLocalIp();
 
@@ -474,6 +513,26 @@ public class AppSettings extends Anson {
 		}
 	}
 
+	/** Find jserv from {@link #jservs}. */
+	public String jserv(String nid) {
+		return jservs.get(nid);
+	}
+
+	public String jserv(String peer, String jserv) {
+		if (jservs == null)
+			jservs = new HashMap<String, String>();
+		jservs.put(peer, jserv);
+		return jserv;
+	}
+
+	public AppSettings jservs(HashMap<String, String[]> jservs) {
+		this.jservs.clear();
+		if (jservs != null)
+		for (String n : jservs.keySet())
+			this.jservs.put(n, jservs.get(n)[0]);
+		return this;
+	}
+
 	/**
 	 * Must be called after DA layer initiation is finished.
 	 * @throws Exception 
@@ -486,11 +545,6 @@ public class AppSettings extends Anson {
 			.nv(orgMeta.webNode, EnvPath.replaceEnv(cfg.org.webroot))
 			.whereEq(orgMeta.pk, cfg.org.orgId)
 			.u(st.instancontxt(cfg.sysconn, rob));
-	}
-
-	/** Find jserv from {@link #jservs}. */
-	public String jserv(String nid) {
-		return jservs.get(nid);
 	}
 
 	public String getLocalHostJson() {

@@ -41,6 +41,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
@@ -60,6 +61,7 @@ import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.parts.ExtFilePaths;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
+import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.syn.DBSyntableBuilder;
 import io.oz.syn.ExchangeBlock;
 import io.oz.syn.ExessionAct;
@@ -76,7 +78,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	final SynodeMode mode;
 
 	SynDomanager domanager0;
-//	String localIp;
 	
 	public boolean debug;
 
@@ -326,7 +327,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				// 0.7.6 Solution:
 				// Get peer jservs from hub, save into synconn.syn_node.jserv.
 				// ISSUE: It's possible some nodes cannot access the hub but can only be told by a peer node.
-				if (!domanager0.submitJservsPersistExpose(domanager0.syngleton.settings.localIp))
+				if (!domanager0.submitJservsPersist(domanager0.syngleton.settings.localIp))
 					domanager0.updateJservs(syntb);
 			
 				waitAll(domanager0.sessions);
@@ -344,7 +345,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					// catch (InterruptedIOException | SocketException e) {
 					} catch (IOException e) {
 						// wait for network
-						Utils.logi("[♻.⛔ %s ] syn-worker has an IO(network) error: %s", synid, e.getMessage());
+						Utils.logi("[♻.◬ %s ] syn-worker has an IO(network) error: %s", synid, e.getMessage());
 					}
 				
 				if (!anygreen())
@@ -496,19 +497,25 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @throws TransException 
 	 */
 	SyncResp onQueryJservs(SyncReq req, DocUser usr) throws TransException, SQLException {
-		SynodeMeta m = domanager0.synm;
-		AnResultset rs = (AnResultset) st
-				.select(m.tbl)
-				.cols(m.jserv, m.synoder)
-				.whereEq(m.domain, domanager0.domain())
-				.rs(st.instancontxt(domanager0.synconn, usr))
-				.rs(0);
+//		AnResultset rs = (AnResultset) st
+//				.select(m.tbl)
+//				.cols(m.jserv, m.synoder)
+//				.whereEq(m.domain, domanager0.domain())
+//				.rs(st.instancontxt(domanager0.synconn, usr))
+//				.rs(0);
+//
+//		SyncResp resp = new SyncResp(domain);
+//		resp.data(rs.map(m.pk,
+//				(rows) -> rows.getString(m.jserv),
+//				(rows) -> !eq(req.exblock.srcnode, rows.getString(m.pk))));
+//		return resp;
 
-		SyncResp resp = new SyncResp(domain);
-		resp.data(rs.map(m.pk,
-				(rows) -> rows.getString(m.jserv),
-				(rows) -> !eq(req.exblock.srcnode, rows.getString(m.pk))));
-		return resp;
+		SynodeMeta m = domanager0.synm;
+		String jserv = (String)req.data(m.jserv);
+		return (SyncResp) new SyncResp(domain)
+				.jservs(AppSettings.loadJservss(st, domanager0.syngleton.syncfg, domanager0.synm))
+				.data(m.jserv, jserv)
+				.data(m.remarks, mode.name());
 	}
 	
 	/**
@@ -523,16 +530,16 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		musteqs(req.exblock.domain, domain);
 		musteqs(req.exblock.peer, synid);
 		mustnonull(req.exblock.srcnode);
-
+		
 		SynodeMeta m = domanager0.synm;
 		String jserv = (String)req.data(m.jserv);
+		if (!JServUrl.valid(jserv))
+			throw new ExchangeException(ExessionAct.ready, null, "Invalid Jserv: %s", jserv);
+
 		String optim = (String)req.data(m.optime);
 		domanager0.updateJserv(st, req.exblock.srcnode, jserv, optim);
 
-		return (SyncResp) new SyncResp(domain)
-				.jservs(domanager0.loadJservs(st))
-				.data(m.jserv, jserv)
-				.data(m.remarks, mode.name());
+		return onQueryJservs(req, usr);
 	}
 
 	/** @since 0.2.5 */

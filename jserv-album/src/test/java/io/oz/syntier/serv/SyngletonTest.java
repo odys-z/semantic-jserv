@@ -124,7 +124,7 @@ class SyngletonTest {
 		// jprv.afterboot();
 		awaitAll(T_WebservExposer.lights.get(prv), -1);
 		
-		assertTrue(JServUrl.valid(queryJserv(jprv, hub)));
+		assertTrue(JServUrl.valid(queryJserv(jprv, hub)), queryJserv(jprv, hub));
 		assertNotNull(jprv.syngleton.settings.localIp);
 		
 		assertEquals(queryJserv(jhub, prv), jprv.jserv());
@@ -162,7 +162,7 @@ class SyngletonTest {
 		// prv
 		SynDomanager domprv = jprv.syngleton.domanager(zsu);
 
-		domprv.submitJservsPersistExpose(null);
+		domprv.submitJservsPersist(null);
 		DATranscxt syntb = new DATranscxt(domprv.synconn);
 		domprv.updateJservs(syntb);
 
