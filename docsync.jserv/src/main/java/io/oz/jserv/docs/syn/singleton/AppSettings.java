@@ -208,9 +208,6 @@ public class AppSettings extends Anson {
 
 	/**
 	 * Persist jsev url into table syn_synode, if the time stamp is new.
-	 * FIXME TODO
-	 * FIXME TODO
-	 * FIXME TODO move to JServUrl.persist()
 	 * 
 	 * @param synconn
 	 * @param domain
@@ -235,7 +232,7 @@ public class AppSettings extends Anson {
 			String optime = DAHelper.getValstr(tb, synconn, synm, synm.optime, synm.pk, peer, synm.domain, domain);
 			Date optimedt = DateFormat.parse(ifnull(optime, day0));
 			if (optimedt.after(src_date))
-				return;// false;
+				return;
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -253,7 +250,6 @@ public class AppSettings extends Anson {
 			.whereEq(synm.domain, domain)
 			.where(op.le, Funcall.isnull(synm.optime, Funcall.toDate(day0)), Funcall.toDate(timestamp))
 			.u(tb.instancontxt(synconn, robot));
-		// return true;
 	}
 
 	public String vol_name;
@@ -409,7 +405,6 @@ public class AppSettings extends Anson {
 		logi("[INSTALL-CHECK] load connects with %s/* ...", webinf);
 		Connects.init(webinf);
 
-
 		String $vol_home = "$" + settings.vol_name;
 		logi("[INSTALL-CHECK] load dictionary configuration %s/* ...", $vol_home);
 		YellowPages.load(EnvPath.concat(
@@ -431,7 +426,7 @@ public class AppSettings extends Anson {
 		settings.updateDBJserv(cfg.https, cfg.synconn,
 				new SynodeMeta(cfg.synconn), cfg.domain, cfg.synode());
 		
-		return settings; // settings.local_serv
+		return settings;
 	}
 
 	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm, String node, JServUrl jserv)
@@ -553,7 +548,7 @@ public class AppSettings extends Anson {
 
 	/**
 	 * @param https
-	 * @return http(s)://ip:web-port, while ip, port = proxy or local ip, port
+	 * @return "http(s)://ip:web-port", while ip, port = proxy or local ip, port
 	 */
 	public String getLocalWebroot(boolean https) {
 		return f("%s://%s", https ? "https" : "http",

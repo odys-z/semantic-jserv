@@ -247,71 +247,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		DATranscxt syntb = new DATranscxt(domanager0.synconn);
 
-		/*
-		worker[0] = () -> {
-			if (running)
-				return;
-			running = true;
-
-			if (debug)
-				Utils.logi("[%s] : Checking Syndomain ...", synid);
-
-			try {
-				domanager0.loadSynclients(syntb);
-
-				// 0.7.6 Solution
-				// Get peer jservs from hub, save into synconn.syn_node.jserv.
-				// ISSUE: It's possible some nodes cannot access the hub but can only be told by a peer node.
-				localIp = domanager0.submitJservsPersist(localIp);
-				domanager0.updateJservs(syntb);
-			
-				// BUG TO BE FIXED: open then update, in one loop, and continue on error unless all failed.
-				if (false)
-					// Throws FileNotFoundException because of wrong jserv.
-					domanager0.openSynssions();
-
-				domanager0.updomain(
-					(dom, synode, peer, xp) -> {
-						if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
-								synid, dom, domanager0.n0(), domanager0.stamp());
-					});
-			} catch (ExchangeException e) {
-				// e. g. login failed, try again
-				// And something not done yet, e.g. breakpoints resuming
-				if (debug) e.printStackTrace();
-			} catch (FileNotFoundException e) {
-				// configuration errors
-				if (debug) e.printStackTrace();
-				Utils.warn("Configure Error: synode %s, user %s. Syn-worker is shutting down.\n"
-						+ " (Tip: jserv url must inclue root path, e. g. /jserv-album)",
-						domanager0.synode, domanager0.admin.uid());
-				stopScheduled(2);
-			}
-			// catch (InterruptedIOException | SocketException e) { }
-			catch (IOException e) {
-				// wait for network
-				Utils.logi("[♻.⛔ %s ] Reschedule syn-worker with error: %s", synid, e.getMessage());
-				reschedule(30);
-			} catch (TransException | SQLException e) {
-				// local errors, stop for fixing
-				e.printStackTrace();
-				stopScheduled(2);
-			} catch (AnsonException | SsException e) {
-				if (debug) e.printStackTrace();
-				Utils.warn("(Login | Configure) Error: synode %s, user %s. Syn-worker is shutting down.",
-						domanager0.synode, domanager0.admin.uid());
-				stopScheduled(2);
-			} catch (Exception e) {
-				// error 1: male format url
-				e.printStackTrace();
-				stopScheduled(2);
-			} finally {
-				this.domanager0.closession();
-				running = false;
-			}
-		};
-		*/
-
 		lights = new HashMap<String, Boolean>();
 		worker[0] = () -> {
 			if (running)
@@ -342,7 +277,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					} catch (ExchangeException e) {
 						// Something not done yet, e.g. breakpoints resuming
 						if (debug) e.printStackTrace();
-					// catch (InterruptedIOException | SocketException e) {
 					} catch (IOException e) {
 						// wait for network
 						Utils.logi("[♻.◬ %s ] syn-worker has an IO(network) error: %s", synid, e.getMessage());
@@ -408,11 +342,15 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		finally { running = false; }
 	}
 
+	/** @since 0.2.7 */
 	HashMap<String, Boolean> lights;
+
+	/** @since 0.2.7 */
 	private void turngreen(String peer) {
 		lights.put(peer, true);
 	}
 
+	/** @since 0.2.7 */
 	private void waitAll(HashMap<String, SynssionPeer> sessions) {
 		lights.clear();
 		for (String p : sessions.keySet()) {
@@ -422,6 +360,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		}
 	}
 	
+	/** @since 0.2.7 */
 	private boolean anygreen() {
 		for (boolean lit : lights.values())
 			if (lit) return true;
@@ -497,19 +436,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @throws TransException 
 	 */
 	SyncResp onQueryJservs(SyncReq req, DocUser usr) throws TransException, SQLException {
-//		AnResultset rs = (AnResultset) st
-//				.select(m.tbl)
-//				.cols(m.jserv, m.synoder)
-//				.whereEq(m.domain, domanager0.domain())
-//				.rs(st.instancontxt(domanager0.synconn, usr))
-//				.rs(0);
-//
-//		SyncResp resp = new SyncResp(domain);
-//		resp.data(rs.map(m.pk,
-//				(rows) -> rows.getString(m.jserv),
-//				(rows) -> !eq(req.exblock.srcnode, rows.getString(m.pk))));
-//		return resp;
-
 		SynodeMeta m = domanager0.synm;
 		String jserv = (String)req.data(m.jserv);
 		return (SyncResp) new SyncResp(domain)
@@ -735,7 +661,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		ExtFilePaths extpths = DocRef.createExtPaths(conn, docref.syntabl, docref);
 		String targetpth = extpths.decodeUriPath();
 		
-		// ISemantext ctx = st.instancontxt(conn, usr);
 		DBSyntableBuilder st = new DBSyntableBuilder(domanager0);
 		SynDocRefMeta refm = domanager0.refm;
 

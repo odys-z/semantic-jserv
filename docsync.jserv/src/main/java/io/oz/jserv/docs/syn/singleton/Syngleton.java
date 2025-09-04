@@ -170,7 +170,7 @@ public class Syngleton extends JSingleton {
 
 			syndomanagers.put(domain, (SynDomanager) domanger
 						.loadNvstamp(defltScxt, domanger.admin)
-						); // .admin(domanger.admin));
+						); 
 		}
 
 		return syndomanagers;
@@ -200,7 +200,6 @@ public class Syngleton extends JSingleton {
 								.deviceId(dmgr.synode);
 
 						dmgr.loadSynclients(tb0)
-							// .openSynssions()
 							.updateSynssions(onok);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -266,11 +265,6 @@ public class Syngleton extends JSingleton {
 		DATranscxt.configRoot(configFolder, runtimeRoot);
 		DATranscxt.rootkey(rootKey);
 
-		// TODO FIXME, move to the right place
-		// 2025-07-24 Here is the answer, see the JSample way.
-//		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
-//		AnSession.init(defltScxt);
-		
 		// 2 syn-tables
 		AutoSeqMeta akm;
 		SynChangeMeta chm;
@@ -299,7 +293,7 @@ public class Syngleton extends JSingleton {
 			m.replace();
 
 		// 3 symantics and entities 
-		DATranscxt.initConfigs(cfg.synconn, // DATranscxt.loadSemanticsXml(cfg.synconn),
+		DATranscxt.initConfigs(cfg.synconn,
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 
 		DatasetCfg.init(configFolder);
@@ -337,11 +331,6 @@ public class Syngleton extends JSingleton {
 		DATranscxt.configRoot(configFolder, runtimeRoot);
 		DATranscxt.rootkey(rootKey);
 		
-		// TODO FIXME, move to the right place
-		// 2025-07-24 Here is the answer, see the JSample way.
-//		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
-//		AnSession.init(defltScxt);
-
 		DATranscxt.initConfigs(cfg.synconn,
 			(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
 		DatasetCfg.init(configFolder);
@@ -469,15 +458,11 @@ public class Syngleton extends JSingleton {
 							mngr.submitJservsPersist(currentIp, nextip);
 						}
 						else {
-							// suppose hub nodes can still changing IP often.
+							// Hub nodes can still changing IP often.
 							JServUrl jsv = mngr.loadJservUrl().ip(nextip);
-							
-//							AppSettings.updatePeerJservs(mngr.synconn, mngr.domain(), synm,
-//									mngr.synode, jsv.jserv(), jsv.jservtime(), mngr.synode);
 							settings.persistDB(syncfg, synm, mngr.synode, jsv);
 						}
 
-						// settings.jservs(mngr.loadJservs(tb0)).save();
 						mngr.ipChangeHandler(ipExposer);
 						ipExposer.onExpose(settings, mngr);
 					} catch (SQLException | TransException | SAXException | IOException e) {

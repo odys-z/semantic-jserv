@@ -403,34 +403,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				.servroot(domx.findJserv(st, domx.synode, usr)));
 	}
 
-//	DocsResp startBlocks(DocsReq body, IUser usr, Profiles prf)
-//			throws IOException, TransException, SQLException {
-//
-//		String conn = Connects.uri2conn(body.uri());
-//		checkDuplicate(conn, ((DocUser)usr).deviceId(), body.doc.clientpath, usr, new PhotoMeta(conn));
-//
-//		if (blockChains == null)
-//			blockChains = new HashMap<String, BlockChain>(2);
-//
-//		String tempDir = ((DocUser)usr).touchTempDir(conn, phm.tbl);
-//
-//		BlockChain chain = new BlockChain("h_photos", tempDir, body.device().id,
-//				body.doc.clientpath, body.doc.createDate, body.doc.folder());
-//
-//		String id = chainId(usr, chain.doc.clientpath);
-//
-//		if (blockChains.containsKey(id))
-//			throw new SemanticException("Why started again?");
-//
-//		blockChains.put(id, chain);
-//		return new DocsResp()
-//				.blockSeq(-1)
-//				.doc((ExpSyncDoc) new ExpSyncDoc()
-//					.clientname(chain.doc.clientname())
-//					.cdate(body.doc.createDate)
-//					.fullpath(chain.doc.clientpath));
-//	}
-
 	void checkDuplication(AlbumReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
 		String conn = Connects.uri2conn(body.synuri);
@@ -453,92 +425,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 					"Found existing file for device & client path.",
 					device, clientpath);
 	}
-
-//	DocsResp uploadBlock(DocsReq body, IUser usr) throws IOException, TransException {
-//		String id = chainId(usr, body.doc.clientpath);
-//		if (!blockChains.containsKey(id))
-//			throw new SemanticException("Uploading blocks must accessed after starting chain is confirmed.");
-//
-//		BlockChain chain = blockChains.get(id);
-//		chain.appendBlock(body);
-//
-//		return new DocsResp()
-//				.blockSeq(body.blockSeq())
-//				.doc((ExpSyncDoc) new ExpSyncDoc()
-//					.clientname(chain.doc.clientname())
-//					.cdate(body.doc.createDate)
-//					.fullpath(body.doc.clientpath));
-//	}
-
-//	/**
-//	 * Finishing doc (block chain) uploading.
-//	 * 
-//	 * <p>This method will trigger ext-file handling by which the uri is set to file path starting at
-//	 * volume environment variable.</p>
-//	 * 
-//	 * @param body
-//	 * @param usr
-//	 * @return response
-//	 * @throws SQLException
-//	 * @throws IOException
-//	 * @throws InterruptedException
-//	 * @throws TransException
-//	 */
-//	DocsResp endBlock(DocsReq body, IUser usr)
-//			throws SQLException, IOException, InterruptedException, TransException {
-//		String id = chainId(usr, body.doc.clientpath);
-//		BlockChain chain;
-//		if (blockChains.containsKey(id)) {
-//			blockChains.get(id).closeChain();
-//			chain = blockChains.remove(id);
-//		} else
-//			throw new SemanticException("Ending block chain which is not existing.");
-//
-//		String conn = Connects.uri2conn(body.uri());
-//		PhotoMeta meta = new PhotoMeta(conn);
-//		PhotoRec photo = new PhotoRec();
-//
-//		photo.createDate = chain.doc.createDate;
-//		photo.fullpath(chain.doc.clientpath);
-//		photo.pname = chain.doc.clientname();
-//		photo.uri64 = null; // accepting new value
-//		String pid = createFile(conn, photo, usr);
-//
-//		// move file
-//		String targetPath = DocUtils.resolvExtroot(st, conn, pid, usr, meta);
-//		if (AlbumFlags.album)
-//			Utils.logi("   [AlbumFlags.album: end block]\n   %s\n-> %s", chain.outputPath, targetPath);
-//		Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
-//
-//		onPhotoCreated(pid, conn, meta, usr);
-//
-//		return new DocsResp()
-//				.blockSeq(body.blockSeq())
-//				/*
-//				.doc((ExpSyncDoc) new ExpSyncDoc()
-//					.recId(pid)
-//					.device(body.device())
-//					.folder(photo.folder())
-//					.clientname(chain.doc.clientname())
-//					.cdate(body.doc.createDate)
-//					.fullpath(chain.doc.clientpath));
-//				*/
-//				.doc(photo.uri64(null));
-//	}
-
-//	DocsResp abortBlock(DocsReq body, IUser usr)
-//			throws SQLException, IOException, InterruptedException, TransException {
-//		String id = chainId(usr, body.doc.clientpath);
-//		DocsResp ack = new DocsResp();
-//		if (blockChains.containsKey(id)) {
-//			blockChains.get(id).abortChain();
-//			blockChains.remove(id);
-//			ack.blockSeqReply = body.blockSeq();
-//		} else
-//			ack.blockSeqReply = -1;
-//
-//		return ack;
-//	}
 
 	/**
 	 * Query devices.
@@ -642,9 +528,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 					new Device(resulved, domx.synode, body.device().devname));
 		}
 		else {
-//			if (isblank(body.device().id))
-//				throw new SemanticException("Error for pdating device name without a device id.");
-
 			synt.update(devMeta.tbl, usr)
 				.nv(devMeta.cdate, now())
 				.whereEq(devMeta.org, usr.orgId())
@@ -763,17 +646,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		}
 	}
 
-//	AlbumResp createPhoto(AlbumReq req, IUser usr, Profiles prf)
-//			throws TransException, SQLException, IOException {
-//		String conn = Connects.uri2conn(req.uri());
-//		checkDuplication(req, (DocUser) usr);
-//
-//		String pid = createFile(conn, req.photo, usr);
-//		
-//		onPhotoCreated(pid, conn, new PhotoMeta(conn), usr);
-//		return new AlbumResp().photo(req.photo, pid);
-//	}
-
 //	static DocsResp delPhoto(AlbumReq req, IUser usr, Profiles prf)
 //			throws TransException, SQLException {
 //		String conn = Connects.uri2conn(req.uri());
@@ -812,67 +684,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //		String pid = DocUtils.createFileBy64((DBSynTransBuilder)st, conn, photo, usr, meta);
 //
 //		return pid;
-//	}
-
-//	/**
-//	 * This method parse exif, update geox/y, date etc. - should only be used when file created.
-//	 *
-//	 * @param pid
-//	 * @param conn
-//	 * @param usr
-//	 * @return 
-//	 */
-//	static protected void onPhotoCreated(String pid, String conn, PhotoMeta m, IUser usr) {
-//		new Thread(() -> {
-//		try {
-//			AnResultset rs = (AnResultset) st
-//				.select(m.tbl, "p")
-//				.col(m.folder).col(m.fullpath)
-//				.col(m.uri)
-//				.col(m.resname)
-//				.col(m.createDate)
-//				.col(m.mime)
-//				.whereEq(m.pk, pid)
-//				.rs(st.instancontxt(conn, usr))
-//				.rs(0);
-//
-//			if (rs.next() && isVedioAudio(rs.getString(m.mime))) {
-//				ISemantext stx = st.instancontxt(conn, usr);
-//				String pth = EnvPath.decodeUri(stx, rs.getString("uri"));
-//				PhotoRec p = new PhotoRec();
-//				// Exif.parseExif(p, pth);
-//				Exiftool.parseExif(p, pth);
-//
-//				Update u = st
-//					.update(m.tbl, usr)
-//					.nv(m.css, p.css)
-//					.nv(m.size, String.valueOf(p.size))
-//					.whereEq(m.pk, pid);
-//
-//				if (isblank(rs.getDate(m.createDate)))
-//					u.nv(m.createDate, now());
-//
-//
-//					if (!isblank(p.geox) || !isblank(p.geoy))
-//						u.nv(m.geox, p.geox)
-//						 .nv(m.geoy, p.geoy);
-//					if (!isblank(p.exif))
-//						u.nv(m.exif, p.exif);
-//					else // figure out mime with file extension
-//						;
-//
-//					if (!isblank(p.mime))
-//						u.nv(m.mime, p.mime);
-//				u.u(stx);
-//			}
-//		} catch (TransException | SQLException | IOException e) {
-//			e.printStackTrace();
-//		}})
-//		.start();
-//	}
-
-//	static boolean isVedioAudio(String mime) {
-//		return isblank(mime) || prefixOneOf(mime, "audio/", "image/");
 //	}
 
 	/**
@@ -996,63 +807,4 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		return album;
 	}
-
-//	/**
-//	 * <h4>Load album (aid = req.albumId)</h4>
-//	 * <p>If albumId is empty, load according to the session's profile.
-//	 * </p>
-//	 *
-//	 * @param req
-//	 * @param usr
-//	 * @param prf
-//	 * @return album
-//	 * @throws SemanticException
-//	 * @throws TransException
-//	 * @throws SQLException
-//	 * @throws IOException
-//	 */
-//	protected AlbumResp album(DocsReq req, // should be AlbumReq (MVP 0.2.1)
-//			IUser usr, Profiles prf)
-//			throws SemanticException, TransException, SQLException, IOException {
-//		String conn = Connects.uri2conn(req.synuri);
-//		PhotoMeta m = new PhotoMeta(conn);
-//		JUserMeta musr = new JUserMeta(conn);
-//
-//		String aid = prf.defltAlbum;
-//
-//		AnResultset rs = (AnResultset) synt
-//				.select(tablAlbums, "a")
-//				.j(musr.tbl, "u", "u.userId = a.shareby")
-//				.cols("a.*", "a.shareby ownerId", "u.userName owner")
-//				.whereEq("a.aid", aid)
-//				.rs(synt.instancontxt())
-//				.rs(0);
-//
-//		if (!rs.next())
-//			throw new SemanticException("Can't find album of id = %s (permission of %s)", aid, usr.uid());
-//
-//		AlbumResp album = new AlbumResp(domx.synode, synt.perdomain, synt.basictx().connId())
-//						.album(rs);
-//
-//		rs = (AnResultset) st
-//				.select(m.tbl, "p").page(req.pageInf)
-//				.j(tablCollectPhoto , "ch", "ch.pid = p.pid")
-//				.j(tablAlbumCollect, "ac", "ac.cid = ch.cid")
-//				.j(tablCollects, "c", "c.cid = ch.cid")
-//				.j(tablAlbums, "a", "a.aid = ac.aid")
-//				.j(musr.tbl, "u", "u.userId = p.shareby")
-//				.cols("ac.aid", "ch.cid",
-//					  "p.pid", m.resname, m.createDate, "p." + m.tags,
-//					  m.mime, "p.css", m.folder, m.geox, m.geoy, m.shareDate,
-//					  "c.shareby collector", "c.cdate",
-//					  m.fullpath, m.device, "p." + m.shareby, "u.userName owner",
-//					  "storage", "aname", "cname")
-//				.whereEq("a.aid", aid)
-//				.rs(st.instancontxt(conn, usr))
-//				.rs(0);
-//
-//		album.collectPhotos(rs, conn);
-//
-//		return album;
-//	}
 }

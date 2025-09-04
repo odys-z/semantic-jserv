@@ -305,7 +305,7 @@ public class ExpDoctierservTest {
 		yresolve = SynodetierJoinTest
 				.jetties[Y].syngleton.domanager(zsu)
 				.synssion(ck[X].synode())
-				.pushResove();
+				.pushResolve();
 		logrst("Start DocRef pushing thread at Y...", ++section);
 		yresolve.start();
 		yresolve.join();

@@ -247,35 +247,12 @@ public class SynotierJettyApp implements Daemon {
 	 */
 	SynotierJettyApp afterboot() {
 		AppSettings settings = syngleton.settings;
-		/*
-		syngleton.asybmitJserv((jserv) -> {
-		if (!isNull(settings.startHandler)) {
-			logi("Exposing locally by %s, %s ...", (Object[]) settings.startHandler);
-			logi("IP %s : %s", jserv.ip, DateFormat.formatime(new Date()));
-			try {
-				settings.localIp = jserv.ip;
-
-				((ISynodeLocalExposer)Class
-					.forName(settings.startHandler[0])
-					.getDeclaredConstructor()
-					.newInstance())
-					.onExpose(settings,
-							this.syngleton.syncfg.domain,
-							this.syngleton.synode(),
-							this.syngleton.syncfg.https);
-			} catch (Exception e) {
-				warn("Exposing local resources failed!");
-				e.printStackTrace();
-			}
-		}});
-		*/
 		try {
-			syngleton.asybmitJserv(
-					((ISynodeLocalExposer)Class
-						.forName(settings.startHandler[0])
-						.getDeclaredConstructor()
-						.newInstance()))
-						;
+			syngleton.asybmitJserv(((ISynodeLocalExposer)Class
+				.forName(settings.startHandler[0])
+				.getDeclaredConstructor()
+				.newInstance()))
+				;
 		} catch (Exception e) {
 			warnT(new Object(){}, "Exposing local resources failed!");
 			e.printStackTrace();

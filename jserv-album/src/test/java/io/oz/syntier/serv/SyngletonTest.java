@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.util.HashMap;
 
 import org.junit.jupiter.api.AfterAll;
@@ -25,6 +26,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.util.DAHelper;
+import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.syn.SynodeMode;
@@ -46,9 +48,9 @@ class SyngletonTest {
 	static String prvpath = "settings.prv.json"; 
 	static String mobpath = "settings.mob.json"; 
 
-	static String vol_hub =  "../../../../volumes-0.7/volume-hub";
+	static String vol_hub = "../../../../volumes-0.7/volume-hub";
 	static String vol_prv = "../../../../volumes-0.7/volume-prv";
-	static String vol_mob =  "../../../../volumes-0.7/volume-mob";
+	static String vol_mob = "../../../../volumes-0.7/volume-mob";
 	@BeforeAll
 	static void initEnv() throws IOException {
 		// -DWEB-INF=src/main/webapp/WEB-INF
@@ -128,7 +130,6 @@ class SyngletonTest {
 		assertNotNull(jprv.syngleton.settings.localIp);
 		
 		assertEquals(queryJserv(jhub, prv), jprv.jserv());
-		// assertNotNull(queryJserv(jhub, prv));
 		assertTrue(JServUrl.valid(queryJserv(jhub, prv)));
 
 		assertNull(queryJserv(jhub, mob));
@@ -145,10 +146,6 @@ class SyngletonTest {
 		
 		// jmob.afterboot();
 		awaitAll(T_WebservExposer.lights.get(mob), -1);
-		
-		// FIXME
-		// This is a test implementation error, where light[mob] is turned to green by hub, before response to the submit request.
-		Thread.sleep(2000);
 		
 		assertNotNull(jmob.syngleton.settings.localIp);
 		assertNotNull(queryJserv(jhub, prv));
@@ -176,8 +173,13 @@ class SyngletonTest {
 	 */
 	private String queryJserv(SynotierJettyApp synapp, String peer) throws Exception {
 		SynDomanager dom = synapp.syngleton.domanager(zsu);
-		DATranscxt tb = new DATranscxt(dom.synconn);
-		HashMap<String, String[]> jservs = dom.loadJservs(tb);
+		HashMap<String, String[]> jservs = loadJservs(dom);
 		return jservs == null || jservs.get(peer) == null ? null : jservs.get(peer)[0];
+	}
+
+	public HashMap<String, String[]> loadJservs(SynDomanager dom)
+			throws SQLException, TransException {
+		DATranscxt tb = new DATranscxt(dom.synconn);
+		return dom.synm.loadJservs(tb, dom.domain(), rs -> JServUrl.valid(rs.getString(dom.synm.jserv)));
 	}
 }

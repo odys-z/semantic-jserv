@@ -90,7 +90,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	OnError errHandler;
 
-	final Syngleton syngleton;
+	public final Syngleton syngleton;
 	
 	public Nyquence lastn0(String peer) {
 		return expiredClientier == null || expiredClientier.xp == null ?
@@ -260,7 +260,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
-	 * Download domain jservs.
+	 * Download domain jservs, persist and expose.
 	 * Work without concurrency lock: load jservs from hub.
 	 * <p>Note: this method will trigger reloading of synssions.</p>
 	 * <p>NOTE 2025-08-12
@@ -278,7 +278,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 */
 	public SynDomanager updateJservs(DATranscxt syntb) throws TransException, SQLException {
 		HashMap<String, String[]> jservs = null;
-		if (sessions != null)
+		if (sessions != null) {
 		for (SynssionPeer peer : sessions.values()) {
 			if (eq(peer.peer, synode))
 					continue;
@@ -290,19 +290,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 			try {
 				peer.checkLogin(admin);
-					
 				jservs = peer.queryJservs();
-//				for (String n : jservs.keySet()) {
-//					if (!eq(synode, n)) {
-//						String n_jserv = ((String[]) jservs.get(n))[0];
-//						if (JServUrl.valid(n_jserv)) {
-//							Utils.logi("[%s] Updating jserv -> %s [%s]", synode, n, n_jserv);
-//
-//							AppSettings.updateNewJserv(synconn, domain, synm,
-//										n, n_jserv, jservs.get(n)[1], peer.peer);
-//						}
-//					}
-//				}
+				
 				syngleton.settings
 						.persistDB(syngleton.syncfg, synm, jservs)
 						.save();
@@ -315,6 +304,9 @@ public class SynDomanager extends SyndomContext implements OnError {
 			
 			if (jservs != null)
 				loadSynclients(syntb);
+		}
+		if (this.ipChangeHandler != null)
+			ipChangeHandler.onExpose(syngleton.settings, this);
 		}
 	
 		return this;
@@ -333,9 +325,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 */
 	public SynDomanager updateJserv(DATranscxt syntb, String peer, String jserv, String timestamp_utc)
 			throws TransException, SQLException, AnsonException {
-		
-//		if (synssion(peer) != null) // can be a passive node
-//			synssion(peer).peerjserv = jserv;
 		
 		syngleton.settings
 				.persistDB(syngleton.syncfg, synm, peer, jserv)
@@ -366,54 +355,49 @@ public class SynDomanager extends SyndomContext implements OnError {
 		String ip = isNull(nextip) ? AppSettings.getLocalIp(2) : _0(nextip);
 		if (eq(currentIp, ip)) 
 			return false;
-		else {
-			try {
-				if (sessions == null)
-					loadSynclients(new DATranscxt(synconn));
-				for (SynssionPeer peer : sessions.values()) {
-					if (eq(peer.peer, synode))
-						continue;
 
-					if (isblank(peer.peerjserv())) {
-						warnT(new Object() {},
-							"Cannot log into %s <- %s, for submitting my jserv, as no jservs available.",
-							peer.peer, synode);
-						continue;
-					}
+		try {
+			if (sessions == null)
+				loadSynclients(new DATranscxt(synconn));
+			for (SynssionPeer peer : sessions.values()) {
+				if (eq(peer.peer, synode))
+					continue;
 
-					try {
-						Utils.logT(new Object(){},
-								"Submitting jservs in %s, check login state to: %s, jserv: %s",
-								domain(), peer, peer.peerjserv());
-						peer.checkLogin(admin);
-							
-						JServUrl myjsv = loadJservUrl()
-										.ip(ip)
-										.jservtime(DateFormat.formatime("UTC", new Date()));
-						String myjserv = myjsv.jserv();
-						// AppSettings.updateNewJserv(synconn, domain, synm, synode, myjserv, myjsv.jservtime(), synode);
-						
-						HashMap<String, String[]> jservs = peer.submitJserv(myjserv);
-						if (jservs != null) {
-//							for (String synid : jservs.keySet())
-//								if (!eq(synid, synode) && !eq(synid, peer.peer)) {
-//									String[] jserv_utc = jservs.get(synid);
-//									AppSettings.updateNewJserv(synconn, domain, synm, synid, jserv_utc[0], jserv_utc[1], synid);
-//								}
-							syngleton.settings.persistDB(syngleton.syncfg, synm, jservs);
-						}
-					} catch (IOException e) {
-						Utils.logT(new Object() {}, "[%s:%s] Submitting jservs to %s failed. Error: %s, Details:\n%s",
-								domain, synode, peer.peer, e.getClass().getName(), e.getMessage());
-					} catch (TransException | AnsonException | SsException | SQLException e) {
-						e.printStackTrace();
-					}
+				if (isblank(peer.peerjserv())) {
+					warnT(new Object() {},
+						"Cannot log into %s <- %s, for submitting my jserv, as no jservs available.",
+						peer.peer, synode);
+					continue;
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
+
+				try {
+					Utils.logT(new Object(){},
+							"Submitting jservs in %s, check login state to: %s, jserv: %s",
+							domain(), peer, peer.peerjserv());
+					peer.checkLogin(admin);
+						
+					JServUrl myjsv = loadJservUrl()
+									.ip(ip)
+									.jservtime(DateFormat.formatime_utc(new Date()));
+					String myjserv = myjsv.jserv();
+					
+					HashMap<String, String[]> jservs = peer.submitJserv(myjserv);
+					if (jservs != null) {
+						syngleton.settings
+							.persistDB(syngleton.syncfg, synm, jservs)
+							.save();
+					}
+				} catch (IOException e) {
+					Utils.logT(new Object() {}, "[%s:%s] Submitting jservs to %s failed. Error: %s, Details:\n%s",
+							domain, synode, peer.peer, e.getClass().getName(), e.getMessage());
+				} catch (TransException | AnsonException | SsException | SQLException e) {
+					e.printStackTrace();
+				}
 			}
-			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+		return true;
 	}
 
 	/**
@@ -540,22 +524,5 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager ipChangeHandler(ISynodeLocalExposer handler) {
 		this.ipChangeHandler = handler;
 		return this;
-	}
-
-	/**
-	 * Load valid jservs, by ignoring invalid urls and path roots.
-	 * @return {node-id: [jserv, timestamp]}
-	 * @since 0.7.6
-	 */
-	public HashMap<String, String[]> loadJservs(DATranscxt tb) throws SQLException, TransException {
-		return synm.loadJservs(tb, domain(), rs -> JServUrl.valid(rs.getString(synm.jserv)));
-//		return ((AnResultset) tb.select(synm.tbl)
-//		  .cols(synm.jserv, synm.synoder, synm.optime)
-//		  .whereEq(synm.domain, domain())
-//		  .rs(tb.instancontxt(synm.conn(), DATranscxt.dummyUser()))
-//		  .rs(0))
-//		  .map(synm.synoder,
-//			  (rs) -> new String[] {rs.getString(synm.jserv), rs.getString(synm.optime)},
-//			  (rs) -> JServUrl.valid(rs.getString(synm.jserv)));
 	}
 }

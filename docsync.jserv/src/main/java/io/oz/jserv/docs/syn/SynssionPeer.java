@@ -255,24 +255,11 @@ public class SynssionPeer {
 							domanager.synode, domanager.domain(), peer);
 
 			}
-//		} catch (IOException e) {
-//			Utils.warn(e.getMessage());
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			try {
-//				ExchangeBlock reqb = synclose(rep.exblock);
-//				rep = exespush(peer, A.exclose, reqb);
-//			} catch (TransException | SQLException | AnsonException | IOException e1) {
-//				e1.printStackTrace();
-//			}
 		} catch (TransException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		finally { domanager.unlockme(); }
@@ -383,14 +370,13 @@ public class SynssionPeer {
 	 * @return thread for resolving downward doc-refs
 	 * @throws Exception
 	 */
-	public Thread pushResove()
+	public Thread pushResolve()
 			throws Exception {
 		DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
 
 		return new Thread(() -> {
 			try {
 				pushDocRef2me(tb, peer);
-			// } catch (AnsonException | TransException | IOException | SQLException e) {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -589,9 +575,6 @@ public class SynssionPeer {
 		}
 	}
 
-//	public void pingPeers() {
-//	}
-
 	/**
 	 * [not synsession managed]
 	 * @param tb
@@ -659,7 +642,6 @@ public class SynssionPeer {
 
 		List<SyncResp> reslts = new ArrayList<SyncResp>(docrefs.size());
 
-		// DBSyntableBuilder trb0 = new DBSyntableBuilder(domanager);
 		int px = 0;
 		for (String uids : docrefs.keySet()) {
 			if (inAvoidRefs(peer, uids))
@@ -749,7 +731,7 @@ public class SynssionPeer {
 		}
 
 		ExpSyncDoc p = fd.syndoc(template);
-		Path path = fileProvider.pysicalPath(fd); // Path.of(trb.decodeExtfile(fd.uri64()));
+		Path path = fileProvider.pysicalPath(fd);
 
 		SyncReq req  = new SyncReq()
 				.blockStart(domanager.domain(), mynid, peer, totalBlocks, fd)

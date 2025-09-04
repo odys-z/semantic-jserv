@@ -37,13 +37,14 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 
 			hosts.host = domanager.synode;
 
-			HashMap<String, String[]> jservs = domanager.loadJservs(new DATranscxt(domanager.synconn)); 
+			HashMap<String, String[]> jservs = AppSettings
+					.loadJservss(new DATranscxt(domanager.synconn), domanager.syngleton.syncfg, domanager.synm);
 			
 			for (String n : jservs.keySet()) {
 				// all newest version locally for locally exposing
 				String jserv = jservs.get(n)[0];
 
-				logT(new Object(){}, "Exposing jservs"); //, %s: %s", targetNode, jserv);
+				logT(new Object(){}, "Exposing jservs");
 				logT("%s: %s", n, jserv);
 				hosts.syndomx.put(n, jserv);
 			}
