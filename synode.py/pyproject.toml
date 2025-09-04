@@ -16,7 +16,7 @@ dependencies = [
     "qrcode",
     "semantics.py3",
     "anson.py3>=0.2.8",
-    "anclient.py3>=0.1.5",
+    "anclient.py3>=0.1.6",
     "psutil",
     "pillow>=8.0.0",
     "invoke>=2.2.0"

@@ -257,13 +257,15 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				Utils.logi("[%s] : Checking Syndomain ...", synid);
 
 			try {
+				if (domanager0.updJservs_byJson(domanager0.syngleton.syncfg, domanager0.syngleton.settings))
+					domanager0.ipChangeHandler.onExpose(domanager0.syngleton.settings, domanager0);
 				domanager0.loadSynclients(syntb);
 
 				// 0.7.6 Solution:
 				// Get peer jservs from hub, save into synconn.syn_node.jserv.
 				// ISSUE: It's possible some nodes cannot access the hub but can only be told by a peer node.
 				if (!domanager0.submitJservsPersist(domanager0.syngleton.settings.localIp))
-					domanager0.updateJservs(syntb);
+					domanager0.updJservs_byHub(syntb);
 			
 				waitAll(domanager0.sessions);
 				for (SynssionPeer p : domanager0.sessions.values())

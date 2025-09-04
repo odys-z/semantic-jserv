@@ -161,7 +161,7 @@ class SyngletonTest {
 
 		domprv.submitJservsPersist(null);
 		DATranscxt syntb = new DATranscxt(domprv.synconn);
-		domprv.updateJservs(syntb);
+		domprv.updJservs_byHub(syntb);
 
 		assertEquals(queryJserv(jprv, mob), jmob.jserv());
 	}

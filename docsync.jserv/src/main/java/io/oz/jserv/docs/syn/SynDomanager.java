@@ -7,6 +7,7 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.Utils.warnT;
+import static io.oz.jserv.docs.syn.singleton.AppSettings.updateNewJserv;
 import static io.oz.syn.ExessionAct.close;
 import static io.oz.syn.ExessionAct.ready;
 
@@ -276,7 +277,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws TransException 
 	 * @since 0.7.6
 	 */
-	public SynDomanager updateJservs(DATranscxt syntb) throws TransException, SQLException {
+	public SynDomanager updJservs_byHub(DATranscxt syntb) throws TransException, SQLException {
 		HashMap<String, String[]> jservs = null;
 		if (sessions != null) {
 		for (SynssionPeer peer : sessions.values()) {
@@ -428,8 +429,11 @@ public class SynDomanager extends SyndomContext implements OnError {
 		while (rs.next()) {
 			String peer = rs.getString("peer");
 			
-			if (!JServUrl.valid(rs.getString(synm.jserv)))
+			if (!JServUrl.valid(rs.getString(synm.jserv))) {
+				warnT(new Object() {}, "[%s] : [-> %s] Invalide jserv: %s",
+						synode, rs.getString("peer"), rs.getString(synm.jserv));
 				continue;
+			}
 
 			SynssionPeer c = new SynssionPeer(this, peer, dbg)
 								.onErr(errHandler);
@@ -524,5 +528,30 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager ipChangeHandler(ISynodeLocalExposer handler) {
 		this.ipChangeHandler = handler;
 		return this;
+	}
+
+	/** 
+	 * If the settings.jserv's updating date is later than the syn_node.optime, update it into db.
+	 * This will handle user's manual modification.
+	 * @param settings
+	 * @return true if updated some data
+	 * @throws SQLException 
+	 * @throws TransException 
+	 * @since 0.7.6
+	 */
+	public boolean updJservs_byJson(SynodeConfig cfg, AppSettings settings)
+			throws TransException, SQLException {
+
+		boolean dirty = false;
+		for (String peer : settings.jservs.keySet()) {
+			String jsrv = settings.jservs.get(peer);
+			if (JServUrl.valid(jsrv))
+				dirty |= updateNewJserv(cfg.synconn, cfg.domain, synm,
+						peer, jsrv, settings.jserv_utc, cfg.synode());
+		}
+		
+		if (dirty)
+			settings.jservs = AppSettings.loadJservs(cfg, synm);
+		return dirty;
 	}
 }

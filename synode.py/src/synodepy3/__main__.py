@@ -17,7 +17,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBo
 
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt
-from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption
+from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption, jserv_url_path
 from semanticshare.io.oz.syn.registry import AnRegistry
 from semanticshare.io.oz.syn import SynodeMode
 
@@ -298,8 +298,12 @@ class InstallerForm(QMainWindow):
         self.seal_has_run()
 
     def update_chkhub(self, check: bool):
-        self.ui.txtSyncIns.setDisabled(check)
         self.cli.registry.config.mode = mode_hub if check else None
+
+        self.ui.txtSyncIns.setDisabled(check)
+        self.ui.jservLines.setDisabled(check)
+        self.ui.bPing.setDisabled(check)
+        self.ui.txtimeout.setDisabled(check)
 
         if not check and LangExt.isblank(self.ui.txtSyncIns.text(), r'0+'):
             self.ui.txtSyncIns.setText("40")
@@ -330,8 +334,6 @@ class InstallerForm(QMainWindow):
 
             def setVolumePath():
                 volpath = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
-                # if volpath == self.cli.settings.registpath:
-                #     return err_msg("Volume path cannot be the same as registry resource's root path.")
                 self.ui.txtVolpath.setText(volpath)
 
             self.ui.bSignup.clicked.connect(self.signup_demo)
@@ -399,7 +401,14 @@ class InstallerForm(QMainWindow):
         if settings is not None:
             lines = "\n".join(settings.jservLines(peers))
             print(lines)
-            self.ui.jservLines.setText(lines)
+            # 0.7.6
+            # self.ui.jservLines.setText(lines)
+            hub_id = self.cli.registry.config.peers[0].synid
+            if hub_id in settings.jservs:
+                self.ui.jservLines.setText(f'{hub_id}:\t{settings.jservs[hub_id]}')
+            else:
+                self.ui.jservLines.setText(f'{hub_id}:\thttp://127.0.0.1:{serv_port0}/{jserv_url_path}')
+
         else:
             self.ui.jservLines.setText(
                 '# Error: No configuration has been loaded. Check resource root path setting.')
@@ -412,7 +421,6 @@ class InstallerForm(QMainWindow):
     def seal_has_run(self):
         enable = not self.cli.hasrun()
         self.ui.chkHub.setEnabled(enable)
-        # self.ui.txtSyncIns.setEnabled(enable)
         self.ui.txtOrgid.setEnabled(enable)
         self.ui.txtDomain.setEnabled(enable)
         self.ui.txtSynode.setEnabled(enable)
@@ -434,12 +442,6 @@ class InstallerForm(QMainWindow):
         else:
             event.accept()
 
-    # 0.7.6 moved to cli
-    # def getProxiedIp(self, settings):
-    #     ip, port = self.cli.reportIp(), settings.port
-    #     if settings.reverseProxy:
-    #         ip, port = settings.proxyIp, settings.proxyPort
-    #     return ip, port
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

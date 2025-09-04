@@ -165,7 +165,6 @@ public class SynotierJettyApp implements Daemon {
 	            listAllThreads("After thread interruption");
 
 	            if (remainingThreads > 1) {
-	                // Utils.warn("Forcing JVM exit due to " + (remainingThreads - 1) + " lingering threads...");
 	                Utils.warn("Forcing JVM exit due to % lingering threads...", remainingThreads - 1);
 	                System.exit(0);
 	            }
@@ -463,6 +462,11 @@ public class SynotierJettyApp implements Daemon {
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
     	synapp.server = new Server();
+
+        // SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+        // sslContextFactory.setKeyStorePath("path/to/your/keystore.jks"); // Replace with your keystore path
+        // sslContextFactory.setKeyStorePassword("keystore_password");   // Replace with your keystore password
+    	// ServerConnector jconn = new ServerConnector(synapp.server, sslContextFactory);
 
     	ServerConnector jconn = new ServerConnector(synapp.server);
     	jconn.setHost("0.0.0.0");

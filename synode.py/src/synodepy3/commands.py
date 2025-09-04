@@ -32,7 +32,7 @@ def run_jserv(c, bin = 'bin'):
         cd = re.sub('/', '\\\\', cd)
 
     try:
-        ret = c.run(f'cd {cd} && java -jar bin/jserv-album-0.7.1.jar')
+        ret = c.run(f'cd {cd} && java -jar bin/jserv-album-{jar_ver}.jar')
         print(ret.ok)
     except KeyboardInterrupt as e:
         print('KeyboardInterrupt', e)

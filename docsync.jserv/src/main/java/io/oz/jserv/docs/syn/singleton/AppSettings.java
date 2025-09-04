@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.syn.singleton;
 
+import static io.odysz.common.DateFormat.early;
 import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
@@ -54,7 +55,7 @@ import io.oz.syn.registry.YellowPages;
  * @since 0.7.0
  */
 public class AppSettings extends Anson {
-	static final String day0 = "1911-10-10";
+//	static final String day0 = "1911-10-10";
 
 	/** 
 	 * Configuration file name.
@@ -216,30 +217,28 @@ public class AppSettings extends Anson {
 	 * @param servurl
 	 * @param timestamp their timestamp, must newer than mine to update db
 	 * @param src_node where does this version come from
+	 * @return true if the one in database is older and have been replaced, a.k.a. dirty 
 	 * @return true if the newer version is accepted
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	public static void updateNewJserv(String synconn, String domain, SynodeMeta synm,
+	public static boolean updateNewJserv(String synconn, String domain, SynodeMeta synm,
 			String peer, String servurl, String timestamp_utc, String src_node)
 			throws TransException, SQLException {
 
 		DATranscxt tb = null;
-
 		try { 
 			tb = new DATranscxt(synconn);
-			Date src_date = DateFormat.parse(ifnull(timestamp_utc, day0));
 			String optime = DAHelper.getValstr(tb, synconn, synm, synm.optime, synm.pk, peer, synm.domain, domain);
-			Date optimedt = DateFormat.parse(ifnull(optime, day0));
-			if (optimedt.after(src_date))
-				return;
+			if (early(timestamp_utc, optime));
+				return false;
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
 			
 		IUser robot = DATranscxt.dummyUser();
 
-		String timestamp = ifnull(timestamp_utc, day0);
+		String timestamp = ifnull(timestamp_utc, DateFormat.jour0);
 		logi("[%s] Setting peer %s's jserv: %s [%s]", domain, peer, servurl, timestamp);
 
 		tb.update(synm.tbl, robot)
@@ -248,14 +247,19 @@ public class AppSettings extends Anson {
 			.nv(synm.oper,  src_node)
 			.whereEq(synm.pk, peer)
 			.whereEq(synm.domain, domain)
-			.where(op.le, Funcall.isnull(synm.optime, Funcall.toDate(day0)), Funcall.toDate(timestamp))
+			.where(op.le, Funcall.isnull(synm.optime, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(timestamp))
 			.u(tb.instancontxt(synconn, robot));
+		
+		return true;
 	}
 
 	public String vol_name;
 	public String volume;
-	/** Fault: this should, must, be moved to dictionary.json */
+
+	/** UTC time of dirty */
+	public String jserv_utc;
 	public HashMap<String, String> jservs;
+
 	public String installkey;
 	public String rootkey;
 
