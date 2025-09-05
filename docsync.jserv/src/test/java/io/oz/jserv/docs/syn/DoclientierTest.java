@@ -86,7 +86,6 @@ class DoclientierTest {
 	
 	static void init(int caseid) throws Exception {
 		JProtocol.setup(servpath, AnsonMsg.Port.echo);
-		// AnsonMsg.understandPorts(AnsonMsg.Port.echo);
 
 		String p = new File("src/test/res").getAbsolutePath();
     	System.setProperty("VOLUME_HOME", p + "/volume");

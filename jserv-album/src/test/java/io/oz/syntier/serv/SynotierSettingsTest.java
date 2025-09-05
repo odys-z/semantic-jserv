@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import io.odysz.common.Utils;
 import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 
@@ -37,6 +38,6 @@ class SynotierSettingsTest {
 
 		assertEquals("../../../../volumes-0.7/volume-hub", hset.volume);
 
-		Utils.logi(AppSettings.getLocalIp());
+		Utils.logi(JServUrl.getLocalIp());
 	}
 }

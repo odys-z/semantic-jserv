@@ -8,10 +8,16 @@ import static io.odysz.common.Regex.asJserv;
 import static io.odysz.common.Regex.getHttpParts;
 import static io.odysz.common.Regex.validUrlPort;
 
+import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+
 import io.odysz.common.LangExt;
 import io.odysz.common.UrlValidator;
 import io.odysz.common.Utils;
 
+import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.concatArr;
 
 /**
@@ -105,6 +111,37 @@ public class JServUrl {
 			Utils.warnT(new Object[] {}, "Found invalid jserv: %s,\nerror: %s",
 					jserv, e.getMessage());
 			return false;
+		}
+	}
+	
+	/**
+	 * Thanks to https://stackoverflow.com/a/38342964/7362888
+	 * @param retries default 11
+	 * @return local ip, 127.0.0.1 if is offline (got 0:0:0:0:0:0:0:0:0).
+	 */
+	public static String getLocalIp(int ... retries) {
+	    try(final DatagramSocket socket = new DatagramSocket()) {
+	    	boolean succeed = false;
+	    	int tried = 0;
+	    	while (!succeed && tried++ < _0(retries, 11) + 1)
+	    		try {
+	    			socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+	    			succeed = true;
+	    		} catch (IOException e) {
+	    			// starting service at network interface not ready yet
+	    			Utils.warn("Network interface is not ready yet? Try again ...");
+	    			try {
+						Thread.sleep(3000);
+					} catch (InterruptedException e1) { }
+	    		}
+
+	    	if (socket.getLocalAddress() == null ||
+	    		eq(socket.getLocalAddress().getHostAddress(), "0:0:0:0:0:0:0:0"))
+	    		return "127.0.0.1";
+
+	    	return socket.getLocalAddress().getHostAddress();
+		} catch (SocketException e) {
+			return "127.0.0.1";
 		}
 	}
 }

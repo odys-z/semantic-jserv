@@ -339,6 +339,7 @@ public class SynotierJettyApp {
 	<T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerServlets(
     		ServletContextHandler context, T t) {
 		WebServlet info = t.getClass().getAnnotation(WebServlet.class);
+		mustnonull(info, f("ServPort %s must define @WebServlet", t.getClass().getName()));
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
 		}

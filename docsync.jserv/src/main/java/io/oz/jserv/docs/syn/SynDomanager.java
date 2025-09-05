@@ -353,7 +353,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @since 0.7.6
 	 */
 	public boolean submitJservsPersist(String currentIp, String... nextip) {
-		String ip = isNull(nextip) ? AppSettings.getLocalIp(2) : _0(nextip);
+		String ip = isNull(nextip) ? JServUrl.getLocalIp(2) : _0(nextip);
 		if (eq(currentIp, ip)) 
 			return false;
 

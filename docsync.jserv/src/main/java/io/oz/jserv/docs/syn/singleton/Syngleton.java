@@ -437,7 +437,7 @@ public class Syngleton extends JSingleton {
 	public void asybmitJserv(ISynodeLocalExposer ipExposer) {
 		new Thread(()-> {
 			String currentIp = settings.localIp; 
-			String nextip = AppSettings.getLocalIp(2);
+			String nextip = JServUrl.getLocalIp(2);
 			if (!eq(currentIp, nextip)) {
 				settings.localIp = nextip;
 				for (SynDomanager mngr : syndomanagers.values()) {

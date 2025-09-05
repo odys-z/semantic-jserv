@@ -433,6 +433,7 @@ public class SynotierJettyApp implements Daemon {
 	<T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerServlets(
     		ServletContextHandler context, T t) {
 		WebServlet info = t.getClass().getAnnotation(WebServlet.class);
+		mustnonull(info, f("ServPort %s must define @WebServlet", t.getClass().getName()));
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
 		}
@@ -462,11 +463,6 @@ public class SynotierJettyApp implements Daemon {
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
     	synapp.server = new Server();
-
-        // SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
-        // sslContextFactory.setKeyStorePath("path/to/your/keystore.jks"); // Replace with your keystore path
-        // sslContextFactory.setKeyStorePassword("keystore_password");   // Replace with your keystore password
-    	// ServerConnector jconn = new ServerConnector(synapp.server, sslContextFactory);
 
     	ServerConnector jconn = new ServerConnector(synapp.server);
     	jconn.setHost("0.0.0.0");
