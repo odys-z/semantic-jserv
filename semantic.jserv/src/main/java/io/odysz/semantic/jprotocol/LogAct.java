@@ -1,6 +1,6 @@
 package io.odysz.semantic.jprotocol;
 
-/**TODO move to protocol
+/**
  * @author ody
  *
  */

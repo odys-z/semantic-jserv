@@ -109,7 +109,6 @@ public class Dataset extends ServPort<AnDatasetReq> {
 	protected AnsonResp dataset(String conn, AnsonMsg<AnDatasetReq> msgBody)
 			throws SQLException, TransException {
 		AnDatasetReq msg = msgBody.body().get(0);
-		// List<SemanticObject> ds = DatasetCfg.loadStree(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
 		AnResultset ds = DatasetCfg.dataset(conn, msg.sk, msg.page(), msg.size(), msg.sqlArgs);		
 
 		// Shall be moved to Protocol?

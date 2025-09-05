@@ -487,7 +487,9 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 	
-	public SynDomanager synUpdateDomain(SynssionPeer peer, OnDomainUpdate... onok) throws SemanticException, AnsonException, SsException, IOException, TransException  {
+	public SynDomanager synUpdateDomain(SynssionPeer peer, OnDomainUpdate... onok)
+			throws AnsonException, SsException, IOException, TransException  {
+
 		if (!eq(peer.peer, synode)) {
 			peer.checkLogin(admin);
 			peer.update2peer((lockby) -> Math.random());

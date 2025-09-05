@@ -83,7 +83,6 @@ public class JSingleton {
 			
 		Utils.logi("Initializing session with default jdbc connection %s ...", Connects.defltConn());
 
-		// AnSession.init(defltScxt);
 		AnSession.init(Connects.defltConn());
 	}
 
@@ -107,12 +106,8 @@ public class JSingleton {
 		ssVerier = verifier;
 	}
 
-	/**Get server root/WEB-INF path (filesystem local)
-	 * @return WEB-INF root path
-	public static String rootINF() { return webINF; }
-	 */
-
-	/**Get WEB-INF file path
+	/**
+	 * Get WEB-INF file path
 	 * @param filename
 	 * @return rootINF() + filename
 	 */

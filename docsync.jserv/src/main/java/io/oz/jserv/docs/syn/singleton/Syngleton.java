@@ -66,18 +66,6 @@ import io.oz.syn.registry.SynodeConfig;
  */
 public class Syngleton extends JSingleton {
 	/**
-	 * @since 0.2.5
-	@FunctionalInterface
-	public interface OnNetworkChange {
-		/**
-		 * On ip change event.
-		 * @param nextIp
-		 * /
-		public void on(JServUrl jserv);
-	}
-	 */
-
-	/**
 	 * Call
 	 * <pre>DATranscxt.initConfigs(cfg.synconn, DATranscxt.loadSemanticsXml(cfg.synconn),
 	 * 	(c) -> new DBSynTransBuilder.SynmanticsMap(cfg.synode(), c));
