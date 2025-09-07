@@ -31,7 +31,6 @@ from synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings
 from synodepy3.ui_form import Ui_InstallForm
 from synodepy3.installer_api import mode_hub
 
-# Anson.java_src('src')
 path = os.path.dirname(__file__)
 synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
@@ -82,6 +81,17 @@ def warn_msg(warn: str, details: object = None):
     msg.setIcon(QMessageBox.Icon.Warning)
     result = msg.exec()
     return result
+
+
+details = []
+errs = False
+
+def err_ctx(c, e: str, *args: str) -> None:
+    global errs, details
+    print(c, e.format(args), file=sys.stderr)
+    details.append('\n' + e)
+    errs = True
+
 
 class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
@@ -170,15 +180,24 @@ class InstallerForm(QMainWindow):
         msg_box(synode_ui.signup_prompt('This is a demo version. TODO'))
         return False
 
-    def pings(self):
-        details = []
-        errs = False
+    def create_regist_domx(self):
+        Clients.init(jserv=self.cli.settings.regiserv)  #'http://127.0.0.1:1989/regist-central'
+        resp = Clients.pingLess(install_uri, err_ctx)
+        print(Clients.servRt, resp.toBlock())
 
-        def err_ctx(c, e: str, *args: str) -> None:
-            nonlocal errs, details
-            print(c, e.format(args), file=sys.stderr)
-            details.append('\n' + e)
-            errs = True
+        if resp is None:
+            details.append(self.cli.settings.regiserv + '\n' + 'Error: no responds')
+
+
+        if errs:
+            warn_msg('Central service cannot be reached.', details)
+        else:
+            # bind node-0, node-1, node-2
+            peers = resp.peers()
+            self.bind_peers(peers, self.cli.settings)
+
+
+    def pings(self):
 
         jservss = self.ui.jservLines.toPlainText()
         if jservss is not None and len(jservss) > 8:
@@ -249,7 +268,6 @@ class InstallerForm(QMainWindow):
 
                 self.enableServInstall()
                 
-                # self.seal_has_run()
                 self.load_config()
 
         except PortfolioException as e:
@@ -304,6 +322,8 @@ class InstallerForm(QMainWindow):
         self.ui.jservLines.setDisabled(check)
         self.ui.bPing.setDisabled(check)
         self.ui.txtimeout.setDisabled(check)
+        self.ui.bCreateDomain.setText(synode_ui.langs[synode_ui.lang]["txt_create_dom"]
+                              if check else synode_ui.langs[synode_ui.lang]["txt_join_dom"])
 
         if not check and LangExt.isblank(self.ui.txtSyncIns.text(), r'0+'):
             self.ui.txtSyncIns.setText("40")
@@ -337,6 +357,7 @@ class InstallerForm(QMainWindow):
                 self.ui.txtVolpath.setText(volpath)
 
             self.ui.bSignup.clicked.connect(self.signup_demo)
+            self.ui.bCreateDomain.clicked.connect(self.create_regist_domx)
 
             self.ui.chkHub.clicked.connect(self.update_chkhub)
             self.ui.bVolpath.clicked.connect(setVolumePath)
@@ -365,6 +386,7 @@ class InstallerForm(QMainWindow):
     def bindIdentity(self, registry: AnRegistry):
         print(registry.config.toBlock())
         cfg = registry.config
+
         self.ui.txtAdminId.setText(cfg.admin)
 
         # users[0]
@@ -386,6 +408,9 @@ class InstallerForm(QMainWindow):
 
     def bindSettings(self):
         peers, settings = self.cli.registry.config.peers, self.cli.settings
+
+        self.ui.txtCentral.setText(settings.regiserv)
+
         self.ui.txtPort.setText(str(settings.port))
         self.ui.txtWebport.setText(str(settings.webport))
 
@@ -400,6 +425,8 @@ class InstallerForm(QMainWindow):
 
         if settings is not None:
             lines = "\n".join(settings.jservLines(peers))
+
+            self.bind_peers(peers, settings)
             print(lines)
             # 0.7.6
             # self.ui.jservLines.setText(lines)

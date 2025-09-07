@@ -3,6 +3,7 @@ package io.odysz.semantic.jserv;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.join;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -75,7 +77,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			es = null;
 		}
 		
-		Utils.logT(new Object() {}, config.getServletName());
+		// Utils.logT(new Object() {}, config.getServletName());
 	}
 
 	/**
@@ -85,6 +87,10 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	protected ISessionVerifier verifier;
 
 	protected IPort p;
+	public String port() {
+		WebServlet info = getClass().getAnnotation(WebServlet.class);
+		return f("%s : %s", p.name(), join(", ", (Object[])info.urlPatterns()));
+	}
 	
 	/**
 	 * Get session verifier, e. g. instance of {@link io.odysz.semantic.jsession.AnSession}.
@@ -193,31 +199,6 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-//
-//		if (os != null) {
-//			Utils.logOut(os.get());
-//			os = null;
-//		}
-
-//		if (os == null && rolloverOut != null) {
-//			try {
-//				os = new PrintStream(new RolloverFileOutputStream(rolloverOut, true));
-//				Utils.logOut(os);
-//				rolloverOut = null;
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
-//		}
-//		os.print("--------------------------------");
-//		
-//		if (es == null && rolloverErr != null)
-//			try {
-//				es = new PrintStream(new RolloverFileOutputStream(rolloverErr, true));
-//				Utils.logErr(es);
-//				rolloverErr = null;
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
 
     	String range = req.getHeader("Range");
     	if (!isblank(range)) {
@@ -226,7 +207,6 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			} catch (SsException e) {
 				write(resp, err(MsgCode.exSession, e.getMessage()));
 				resp.setHeader("Error", e.getMessage());
-				// resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
 			}
 			return;
     	}
