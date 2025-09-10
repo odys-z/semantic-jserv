@@ -340,7 +340,8 @@ public class SynssionPeer {
 		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", A.exchange, "by " + mynid);
 		AnsonHeader header = client.header().act(act);
 
-		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+		AnsonMsg<SyncReq> q = client
+							.<SyncReq>userReq(uri_syn, Port.syntier, req)
 							.header(header);
 
 		return client.commit(q, errHandler);
@@ -845,8 +846,9 @@ public class SynssionPeer {
 	
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
 			throws SemanticException, AnsonException, SsException, IOException {
-		client = new SessionClient(jservroot, null)
-				.loginWithUri(clienturi, myuid, pswd, device);
+		// client = new SessionClient(jservroot, null)
+		client = SessionClient
+				.loginWithUri(jservroot, clienturi, myuid, pswd, device);
 		return client;
 	}
 

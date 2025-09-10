@@ -1,6 +1,6 @@
 package io.odysz.jsample.servs;
 
-import io.odysz.semantic.jserv.user.UserReq;
+import io.odysz.semantic.jprotocol.UserReq;
 
 public class SampleReq extends UserReq {
 

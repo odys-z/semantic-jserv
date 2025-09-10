@@ -15,8 +15,8 @@ import com.google.zxing.qrcode.QRCodeWriter;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.UserReq;
 import io.odysz.semantic.jserv.ServPort;
-import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantics.x.SemanticException;
 import io.oz.album.peer.AlbumPort;
 import io.oz.syn.registry.YellowPages;

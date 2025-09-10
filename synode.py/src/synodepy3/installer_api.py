@@ -1,5 +1,12 @@
 # This Python file uses the following encoding: utf-8
 import sys
+from dataclasses import dataclass
+
+from semanticshare.io.odysz.semantics import SessionInf
+from semanticshare.io.oz.syn import SynodeMode, SyncUser
+
+from . import SynodeUi
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 import ipaddress
@@ -13,37 +20,56 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from typing import cast
+from typing import cast, Optional
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
 
 from semanticshare.io.oz.srv import WebConfig
 
-from semanticshare.io.odysz.semantic.jprotocol import MsgCode
+from semanticshare.io.odysz.semantic.jprotocol import MsgCode, AnsonMsg
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, \
     sys_db, syn_db, syntity_json, getJservUrl, valid_url_port
-from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig
+from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp
 
-from anclient.io.odysz.jclient import Clients
+from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 
 from .__version__ import jar_ver, web_ver, html_srver
 
+path = os.path.dirname(__file__)
+synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
+err_uihandlers: list[Optional[OnError]] = [None]
 
 def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
     Clients.init(jserv=peerserv or 'http://127.0.0.1:8964/jserv-album', timeout=timeout_snd)
 
     def err_ctx(c: MsgCode, e: str, *args: str) -> None:
         print(c, e.format(args), file=sys.stderr)
-        raise PortfolioException(e)
+
+        if len(err_uihandlers) > 0 and err_uihandlers[0] is not None:
+            for h in err_uihandlers:
+                h.err(c, e, *args)
 
     resp = Clients.pingLess(clientUri or install_uri, err_ctx)
 
     print(Clients.servRt, '<echo>', resp.toBlock())
     print('code', resp.code)
+    return resp
 
+def register(client: SessionClient, func_uri: str, domx: SynodeConfig):
+    req = RegistReq(RegistReq.A.registDom)
+    req.Uri(func_uri).dictionary(domx)
+    msg = AnsonMsg(Centralport.register).Body(req)
+
+    resp = client.commit(msg, err_uihandlers[0])
+
+    if resp is not None:
+        print(client.myservRt, resp.code)
+        print('<createDom>', resp.toBlock())
+
+    return cast(RegistResp, resp)
 
 def decode(warns: bytes):
     lines = []
@@ -56,14 +82,12 @@ def decode(warns: bytes):
                     try:
                         s = l.decode('gbk')
                     except UnicodeDecodeError:
-                        # s = ''.join(chr(int(b)))
                         s = ''.join(str(l))
                 if s is not None:
                     lines.extend(s.split('\n'))
             else:
                 lines.append(str(l))
     return lines
-
 
 def valid_registry(reg: AnRegistry):
     """
@@ -76,7 +100,6 @@ def valid_registry(reg: AnRegistry):
     if AnRegistry.find_synode(reg.config.peers, reg.config.synid) is None:
         raise PortfolioException(
             f'Cannot find peer registry of my id: {reg.config.synid}. (while checking dictionary.json.peers)')
-
 
 def unzip_file(zip_filepath, extract_to_path):
     """
@@ -174,6 +197,7 @@ index_html = 'index.html'
 
 dictionary_json = 'dictionary.json'
 web_inf = 'WEB-INF'
+registry_dir = 'registry'
 settings_json = 'settings.json'
 
 html_service_json = 'html-service.json'
@@ -189,12 +213,25 @@ exiftool_testver = 'exiftool -ver'
 
 pswd_min, pswd_max = 8, 32
 
+@dataclass
+class DomainOpts:
+    domx: list[str]  
+    
+    def __init__(self):
+        super().__init__()
+        self.domx = []
+
+    def add(self, dom: str):
+        if dom not in self.domx:
+            self.domx.append(dom)
+
 class InstallerCli:
+    regclient: Optional[SessionClient]
     settings: AppSettings
     registry: AnRegistry
 
     @staticmethod
-    def parsejservstr(jservstr: str) -> [[str, str]]:
+    def parsejservstr(jservstr: str) -> list[list[str]]:
         """
         :param jservstr: "x:\\turl-1\\ny:..."
         :return: [[x, url-1], ...]
@@ -205,12 +242,13 @@ class InstallerCli:
         return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
 
     def __init__(self):
+        # Anson.java_src('src')
+        self.regclient = None
+        self.domoptions = DomainOpts()
         self.httpd = None
         self.webth = None
         self.registry = cast(AnRegistry, None)
         self.settings = cast(AppSettings, None)
-
-        # Anson.java_src('src')
 
     def list_synodes(self):
         return self.settings.jservs.items()
@@ -222,7 +260,6 @@ class InstallerCli:
     def load_settings(self):
         """
         Load from res_path/setings.json,
-        :param res_path: if WEB-INF/settings.json.non-ici is missing, must provide initial resource's path
         :return: loaded json object
         """
 
@@ -236,7 +273,7 @@ class InstallerCli:
                 raise PortfolioException(f'Loading Anson data from {web_settings} failed.', e)
 
             print("Loading registry in", '[registry]')
-            self.registry = self.loadRegistry(data.volume, 'registry')
+            self.registry = self.loadRegistry(data.volume, registry_dir)
 
         else:
             raise PortfolioException("Cannot find settings.json!")
@@ -311,6 +348,16 @@ class InstallerCli:
         ip, port = self.getProxiedIp()
         return f'{ip}:{port}'
 
+    def validate_domain(self):
+        cfg = self.registry.config
+        err = None
+        try: err = LangExt.only_wordtlen(cfg.domain, minlen=2, maxlen=12)
+        except AnsonException as e: return {"domain length", f"2 <= Len('{cfg.domain}') <= 12"}
+
+        try: err = LangExt.only_wordtlen(cfg.org.orgId, minlen=2, maxlen=12)
+        except AnsonException as e: return {"community length", f"2 <= Len('{cfg.org.orgId}') <= 12"}
+        return err
+
     def validateVol(self):
         """
         :return: error (invalid)
@@ -335,6 +382,10 @@ class InstallerCli:
 
             if not valid_url_port(self.settings.port) or not valid_url_port(self.settings.webport):
                 return {f'Port must greater than 1024: {self.settings.port}' }
+
+            if (self.settings.reverseProxy and
+               (not valid_url_port(self.settings.proxyPort) or not valid_url_port(self.settings.webProxyPort))):
+                return {f'Proxy port must greater than 1024: {self.settings.port}' }
 
         except ValueError as e:
             return e
@@ -385,17 +436,12 @@ class InstallerCli:
                 f'Some initial database or configure files cannot be found in volume: {sys_db}, {syn_db}')
         return True
 
-    # def peers_find(self, id):
-    #     return AnRegistry.find_synode(self.registry.config.peers, id)
-
     def find_peer(self, pid: str):
         return AnRegistry.find_synode(self.registry.config.peers, pid)
 
     def find_synuser(self, uid: str):
         return AnRegistry.find_synuser(self.registry.synusers, uid)
 
-    # 0.7.5 def validate(self, synid: str, volpath: str, peerjservs: str, ping_timeout: int=10, warn: Callable=None):
-    # 0.7.6
     def validate(self):
         """
         Validate my congig and settings. Must be called after the data models has been updated.
@@ -405,29 +451,27 @@ class InstallerCli:
         # :param volpath:
         # :param peerjservs:
         # :param warn: if None, return jserv error if ping failed, otherwise warn by calling this function
-        :return: error {name: input-data} if there are errors. Error names: synodepy3 | volume | jserv
+        :return: error {name: input-data} if there are errors.
         """
+        cfg = self.registry.config
 
-        # LangExt.only_passwdlen(self.registry.synusers[self.registry.config.admin], 32)
-        p = self.validatePswdOf(self.registry.config.admin)
+        v = self.validate_domain()
+        if v is not None: return v
+
+        p = self.validatePswdOf(cfg.admin)
         if p is not None: return p
 
         v = self.validateVol()
-        if v is not None:
-            return v
+        if v is not None: return v
 
         self.validate_iport()
 
-        # peer_jservss = InstallerCli.parsejservstr(peerjservs)
-        # if synid is None or len(synid) == 0 or synid not in [ln[0] for ln in peer_jservss]:
-        #     return {"synodepy3", synid}
-
         # TODO 0.7.8 Checking synode-id is domain wide unique, in Central.
         if self.find_peer(self.registry.config.synid) is None:
-            return f'synode id is not a peer id: {self.registry.config.synid}'
+            return {'peer-id': f'synode id is not a peer id: {self.registry.config.synid}'}
 
-        if self.registry.config.synid not in self.settings.jservs:
-            return f'synode id is not a service node: {self.registry.config.synid}'
+        if cfg.synid not in self.settings.jservs:
+            return {'synode-id': f'synode id is not a service node: {self.registry.config.synid}'}
 
         if not checkinstall_exiftool():
             return {"exiftool": "Check and install exiftool failed!" \
@@ -436,7 +480,10 @@ class InstallerCli:
 
         # 0.7.6
         self.settings.envars['WEBROOT'] = self.registry.config.synid
-        self.registry.config.org.webroot = '$WEBROOT'
+        cfg.org.webroot = '$WEBROOT'
+
+        if cfg.mode != SynodeMode.hub:
+            self.ping(self.settings.jservs[cfg.peers[0].synid])
 
         return None
 
@@ -480,7 +527,14 @@ class InstallerCli:
     def gen_html_srvname(self):
         return f'Synode.web-{web_ver}-{self.registry.config.synid}'
 
+    def update_domain(self, reg_jserv: str, orgid: str, domain: str):
+        self.settings.regiserv = reg_jserv
+        self.registry.config.org.orgId = orgid
+        self.registry.config.domain = domain
+        return True
+
     def updateWithUi(self,
+                reg_jserv: str,
                 admin: str, pswd: str,
                 domphrase: str, org: str, domain: str,
                 hubmode: bool = True,
@@ -491,13 +545,15 @@ class InstallerCli:
                 volume: str = None,
                 syncins: str = None, envars=None, webProxyPort=None):
 
-        self.registry.config.org.orgId = org
+        self.update_domain(reg_jserv=reg_jserv, orgId=org, domain=domain)
+        # self.registry.config.org.orgId = org
+        # self.registry.config.domain = domain
+
         for u in self.registry.synusers:
             if u.userId == admin:
                 u.pswd = domphrase
             u.domain = domain
             u.org = org
-        self.registry.config.domain = domain
 
         for p in self.registry.config.peers:
             p.domain = domain
@@ -554,6 +610,19 @@ class InstallerCli:
         if not os.path.isdir(web_inf):
             raise PortfolioException(f'Folder {web_inf} dose not exist, or not a folder.')
 
+    def ping(self, jsrv, timeout=20):
+        ping(install_uri, jsrv, timeout_snd=timeout)
+
+    def register(self):
+        if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
+            self.regclient = SessionClient.loginWithUri(
+                uri=install_uri,
+                servroot=self.settings.regiserv,
+                uid=self.registry.synusers[0].userId,
+                pswdPlain=self.registry.synusers[0].pswd)
+
+        return register(client=self.regclient, func_uri=install_uri, domx=self.registry.config)
+
     def install(self):
         """
         Install / setup synodepy3, by moving /update dictionary to vol-path (of AppSettings), settings.json
@@ -571,10 +640,6 @@ class InstallerCli:
 
         self.settings.toFile(os.path.join(web_inf, settings_json))
 
-        ########## volume
-        # path_v = Path(LangExt.ifnull(volpath, self.settings.Volume()))
-
-        # v_syntity_pth = os.path.join(Path(self.settings.Volume()), syntity_json)
         sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
 
         # web/host.json
@@ -775,3 +840,4 @@ class InstallerCli:
 
         print(httpdeamon[0] if len(httpdeamon) > 0 else 'httpd == None')
         return httpdeamon[0] if len(httpdeamon) > 0 else None, thr
+

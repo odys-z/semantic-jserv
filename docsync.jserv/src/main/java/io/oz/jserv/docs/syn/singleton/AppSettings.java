@@ -218,6 +218,7 @@ public class AppSettings extends Anson {
 		return true;
 	}
 
+	public String regiserv;
 	public String vol_name;
 	public String volume;
 

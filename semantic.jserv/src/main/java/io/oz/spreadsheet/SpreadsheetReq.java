@@ -2,7 +2,7 @@ package io.oz.spreadsheet;
 
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jserv.user.UserReq;
+import io.odysz.semantic.jprotocol.UserReq;
 import io.odysz.transact.sql.PageInf;
 import io.odysz.transact.x.TransException;
 

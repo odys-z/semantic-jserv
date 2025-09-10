@@ -1,7 +1,5 @@
-package io.odysz.semantic.jserv.user;
+package io.odysz.semantic.jprotocol;
 
-import io.odysz.semantic.jprotocol.AnsonBody;
-import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantics.SemanticObject;
 
 /**A stub for user's message body extension - subclassing {@link AnsonBody}.

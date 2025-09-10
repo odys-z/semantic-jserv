@@ -10,7 +10,7 @@ import java.util.Set;
 
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jserv.user.UserReq;
+import io.odysz.semantic.jprotocol.UserReq;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantics.SessionInf;
@@ -60,15 +60,6 @@ public class DocsReq extends UserReq implements IBlock {
 		public static final String blockUp = "c/b/block";
 		public static final String blockEnd = "c/b/end";
 		public static final String blockAbort = "c/b/abort";
-
-		/**
-		 * Action: close synchronizing push task
-		 */
-//		public static final String synclosePush = "u/close";
-		/**
-		 * Action: close synchronizing pull task
-		 */
-//		public static final String synclosePull = "r/close";
 
 		/** Query client paths, the sync-page */
 		public static final String selectSyncs = "r/syncflags";

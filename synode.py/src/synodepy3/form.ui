@@ -42,7 +42,7 @@
      <rect>
       <x>110</x>
       <y>135</y>
-      <width>651</width>
+      <width>652</width>
       <height>31</height>
      </rect>
     </property>
@@ -87,35 +87,10 @@
       <string>Community:</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="txtDomain">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>319</x>
-       <y>96</y>
-       <width>122</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="whatsThis">
-      <string extracomment="Domain wide node ID."/>
-     </property>
-     <property name="text">
-      <string>zsu</string>
-     </property>
-     <property name="maxLength">
-      <number>12</number>
-     </property>
-     <property name="placeholderText">
-      <string>12 Bit Market wide ID, must not null</string>
-     </property>
-    </widget>
     <widget class="QLabel" name="lbRetry">
      <property name="geometry">
       <rect>
-       <x>520</x>
+       <x>522</x>
        <y>64</y>
        <width>61</width>
        <height>20</height>
@@ -131,9 +106,9 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>580</x>
+       <x>590</x>
        <y>61</y>
-       <width>171</width>
+       <width>162</width>
        <height>27</height>
       </rect>
      </property>
@@ -202,7 +177,7 @@
       <rect>
        <x>100</x>
        <y>61</y>
-       <width>131</width>
+       <width>130</width>
        <height>27</height>
       </rect>
      </property>
@@ -222,9 +197,9 @@
     <widget class="QLabel" name="lbPswd">
      <property name="geometry">
       <rect>
-       <x>250</x>
+       <x>238</x>
        <y>64</y>
-       <width>70</width>
+       <width>77</width>
        <height>19</height>
       </rect>
      </property>
@@ -253,7 +228,7 @@
       <rect>
        <x>100</x>
        <y>29</y>
-       <width>651</width>
+       <width>652</width>
        <height>27</height>
       </rect>
      </property>
@@ -305,73 +280,14 @@
     <widget class="QLabel" name="lbDomain">
      <property name="geometry">
       <rect>
-       <x>260</x>
+       <x>252</x>
        <y>100</y>
-       <width>61</width>
+       <width>67</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
       <string>Domain:</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="txtOrgid">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>96</y>
-       <width>111</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="whatsThis">
-      <string extracomment="Domain wide node ID."/>
-     </property>
-     <property name="text">
-      <string>ura</string>
-     </property>
-     <property name="maxLength">
-      <number>12</number>
-     </property>
-     <property name="placeholderText">
-      <string>12 Bit Market wide ID, must not null</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="bCommDropdown">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>96</y>
-       <width>22</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset>
-       <normaloff>res/input_combobox.svg</normaloff>res/input_combobox.svg</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>24</width>
-       <height>22</height>
-      </size>
-     </property>
-     <property name="shortcut">
-      <string>Ctrl+D</string>
      </property>
     </widget>
     <widget class="QPushButton" name="bLogin">
@@ -418,9 +334,9 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>580</x>
+       <x>590</x>
        <y>96</y>
-       <width>171</width>
+       <width>162</width>
        <height>27</height>
       </rect>
      </property>
@@ -437,12 +353,12 @@
       <string>Used in Domain</string>
      </property>
     </widget>
-    <widget class="QLabel" name="lbDomain_2">
+    <widget class="QLabel" name="lbDomtoken">
      <property name="geometry">
       <rect>
        <x>477</x>
        <y>100</y>
-       <width>101</width>
+       <width>111</width>
        <height>20</height>
       </rect>
      </property>
@@ -450,38 +366,27 @@
       <string>Domain Token:</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="bDomainDropdown">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
+    <widget class="QComboBox" name="cbbOrgs">
      <property name="geometry">
       <rect>
-       <x>440</x>
+       <x>100</x>
        <y>96</y>
-       <width>22</width>
+       <width>130</width>
        <height>27</height>
       </rect>
      </property>
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-      </font>
+    </widget>
+    <widget class="QComboBox" name="cbbDomains">
+     <property name="geometry">
+      <rect>
+       <x>320</x>
+       <y>96</y>
+       <width>140</width>
+       <height>27</height>
+      </rect>
      </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset>
-       <normaloff>res/input_combobox.svg</normaloff>res/input_combobox.svg</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>24</width>
-       <height>22</height>
-      </size>
-     </property>
-     <property name="shortcut">
-      <string>Ctrl+D</string>
+     <property name="editable">
+      <bool>true</bool>
      </property>
     </widget>
    </widget>
@@ -507,7 +412,7 @@
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="bValidate">
+   <widget class="QPushButton" name="bTestRun">
     <property name="geometry">
      <rect>
       <x>540</x>
@@ -643,7 +548,7 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="lbVolume_2">
+   <widget class="QLabel" name="lbHubjserv">
     <property name="geometry">
      <rect>
       <x>15</x>
@@ -686,7 +591,7 @@
       <rect>
        <x>411</x>
        <y>30</y>
-       <width>311</width>
+       <width>341</width>
        <height>21</height>
       </rect>
      </property>
@@ -717,28 +622,6 @@
      </property>
      <property name="placeholderText">
       <string>E. g. 8964</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="txtSynode">
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>56</y>
-       <width>131</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="whatsThis">
-      <string extracomment="Domain wide node ID."/>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="maxLength">
-      <number>12</number>
-     </property>
-     <property name="placeholderText">
-      <string>12 Bit GUID, must not null</string>
      </property>
     </widget>
     <widget class="QLabel" name="lbVolume">
@@ -785,7 +668,7 @@
       <rect>
        <x>100</x>
        <y>90</y>
-       <width>62</width>
+       <width>76</width>
        <height>21</height>
       </rect>
      </property>
@@ -966,7 +849,7 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>320</x>
+       <x>322</x>
        <y>30</y>
        <width>81</width>
        <height>21</height>
@@ -1036,6 +919,16 @@
       <string>In every</string>
      </property>
     </widget>
+    <widget class="QComboBox" name="cbbPeers">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>56</y>
+       <width>149</width>
+       <height>27</height>
+      </rect>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -1062,10 +955,8 @@
   <tabstop>txtPswd2</tabstop>
   <tabstop>bSignup</tabstop>
   <tabstop>bLogin</tabstop>
-  <tabstop>txtOrgid</tabstop>
-  <tabstop>bCommDropdown</tabstop>
-  <tabstop>txtDomain</tabstop>
-  <tabstop>bDomainDropdown</tabstop>
+  <tabstop>cbbOrgs</tabstop>
+  <tabstop>cbbDomains</tabstop>
   <tabstop>txtDompswd</tabstop>
   <tabstop>bCreateDomain</tabstop>
   <tabstop>jservLines</tabstop>
@@ -1073,7 +964,7 @@
   <tabstop>bPing</tabstop>
   <tabstop>chkHub</tabstop>
   <tabstop>txtSyncIns</tabstop>
-  <tabstop>txtSynode</tabstop>
+  <tabstop>cbbPeers</tabstop>
   <tabstop>txtIP</tabstop>
   <tabstop>txtWebport</tabstop>
   <tabstop>txtPort</tabstop>
@@ -1084,7 +975,7 @@
   <tabstop>txtVolpath</tabstop>
   <tabstop>bVolpath</tabstop>
   <tabstop>bSetup</tabstop>
-  <tabstop>bValidate</tabstop>
+  <tabstop>bTestRun</tabstop>
   <tabstop>bWinserv</tabstop>
  </tabstops>
  <resources/>

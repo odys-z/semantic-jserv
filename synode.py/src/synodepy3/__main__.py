@@ -4,7 +4,6 @@ import time
 sys.stdout.reconfigure(encoding="utf-8")
 
 import os
-from anclient.io.odysz.jclient import Clients
 
 import io
 from typing import Optional, cast
@@ -15,24 +14,19 @@ from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
 
-from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption, jserv_url_path
 from semanticshare.io.oz.syn.registry import AnRegistry
-from semanticshare.io.oz.syn import SynodeMode
+from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from synodepy3 import SynodeUi
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
-from synodepy3.installer_api import InstallerCli, install_uri, web_inf, settings_json, serv_port0, web_port0
+from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, synode_ui
 
 # Important:
 # Run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py
 from synodepy3.ui_form import Ui_InstallForm
 from synodepy3.installer_api import mode_hub
-
-path = os.path.dirname(__file__)
-synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()
@@ -82,15 +76,24 @@ def warn_msg(warn: str, details: object = None):
     result = msg.exec()
     return result
 
-
 details = []
 errs = False
-
 def err_ctx(c, e: str, *args: str) -> None:
     global errs, details
-    print(c, e.format(args), file=sys.stderr)
-    details.append('\n' + e)
+    # details.append('\n' + e)
+    details[0] = e
     errs = True
+
+def err_ready():
+    global errs, details
+    errs = False
+    details.clear()
+    details.append(None)
+
+
+def has_err():
+    global errs
+    return errs
 
 
 class InstallerForm(QMainWindow):
@@ -133,7 +136,8 @@ class InstallerForm(QMainWindow):
         # iport = f'{ip}:{port}'
         iport = self.cli.get_iport()
 
-        synode = self.ui.txtSynode.text()
+        # synode = self.ui.txtSynode.text()
+        synode = self.cli.registry.config.synid
 
         data = getJservOption(synode, iport, False)
         InstallerForm.set_qr_label(self.ui.lbQr, data)
@@ -181,38 +185,43 @@ class InstallerForm(QMainWindow):
         return False
 
     def create_regist_domx(self):
-        Clients.init(jserv=self.cli.settings.regiserv)  #'http://127.0.0.1:1989/regist-central'
-        resp = Clients.pingLess(install_uri, err_ctx)
-        print(Clients.servRt, resp.toBlock())
+        print("request create/join domain to", self.ui.txtCentral.text())
 
-        if resp is None:
-            details.append(self.cli.settings.regiserv + '\n' + 'Error: no responds')
+        err_ready()
 
+        if self.cli.update_domain(
+                reg_jserv=self.ui.txtCentral.text().strip(),
+                orgid=self.ui.cbbOrgs.currentText().strip(),
+                domain=self.ui.cbbDomains.currentText().strip()
+            ) and self.cli.validate_domain():
+            resp = self.cli.register()
 
-        if errs:
+            if resp is None:
+                details.append(self.cli.settings.regiserv + '\n' + 'Error while rigstering.')
+                global errs
+                errs = True
+            else:
+                # bind node-0, node-1, node-2
+                self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
+
+        if has_err():
             warn_msg('Central service cannot be reached.', details)
-        else:
-            # bind node-0, node-1, node-2
-            peers = resp.peers()
-            self.bind_peers(peers, self.cli.settings)
-
 
     def pings(self):
-
+        err_ready()
         jservss = self.ui.jservLines.toPlainText()
         if jservss is not None and len(jservss) > 8:
             jservss = InstallerCli.parsejservstr(jservss)
 
             for jsrv in jservss:
                 if jsrv[0] != self.cli.registry.config.synid:
-                    Clients.init(jserv=jsrv[1], timeout=int(self.ui.txtimeout.text()))
-                    resp = Clients.pingLess(install_uri, err_ctx)
+                    resp = self.cli.ping(jsrv[1])
                     if resp is None:
                         details.append(f'\n{jsrv[0]}: {jsrv[1]}\n' + 'Error: no responds')
                     else:
                         details.append(f'\n{jsrv[0]}: {jsrv[1]}\n'  + resp.toBlock(beautify = True))
 
-        if errs:
+        if has_err():
             warn_msg('Ping synodes has errors. Check details for errors.', details)
         else:
             msg_box('Ping synodes completed. Check the echo messages in details.', details)
@@ -220,14 +229,17 @@ class InstallerForm(QMainWindow):
 
     def update_valid(self):
         self.cli.updateWithUi(
+            reg_jserv=self.ui.txtCentral.text().strip(),
             admin=self.ui.txtAdminId.text(),
             pswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
-            org=self.ui.txtOrgid.text().strip(),
-            domain=self.ui.txtDomain.text().strip(),
+            # org=self.ui.txtOrgid.text().strip(),
+            org=self.ui.cbbOrgs.currentText(),
+            domain=self.ui.cbbDomains.currentText().strip(),
             domphrase=self.ui.txtDompswd.text(),
             hubmode=self.ui.chkHub.checkState() == Qt.CheckState.Checked,
             jservss=self.ui.jservLines.toPlainText(),
-            synid=self.ui.txtSynode.text().strip(),
+            # synid=self.ui.txtSynode.text().strip(),
+            synid=self.ui.cbbPeers.currentText().strip(),
             syncins=self.ui.txtSyncIns.text(),
             port=self.ui.txtPort.text(),
             webport=self.ui.txtWebport.text(),
@@ -268,7 +280,7 @@ class InstallerForm(QMainWindow):
 
                 self.enableServInstall()
                 
-                self.load_config()
+                self.bind_config()
 
         except PortfolioException as e:
             err_msg('Setting up synodepy3 is failed.', e)
@@ -291,7 +303,7 @@ class InstallerForm(QMainWindow):
             err_msg('Start Portfolio service failed', e.msg)
 
         time.sleep(2)
-        self.load_config()
+        self.bind_config()
 
     def installWinsrv(self):
         self.cli.stop_web()
@@ -338,50 +350,36 @@ class InstallerForm(QMainWindow):
         self.ui.txtWebport_proxy.setEnabled(check)
         self.ui.txtPort_proxy.setEnabled(check)
 
-    def showEvent(self, event: PySide6.QtGui.QShowEvent):
-        def translateUI():
-            self.ui.gboxRegistry.setTitle(
-                synode_ui.langstrf('gboxRegistry', market=synode_ui.market))
-
-            lb_help = synode_ui.langstr('lbHelplink')
-            self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]["help_link"]}">{lb_help}</a>.')
-            self.ui.lblink.setText(f'Portfolio is based on <a href="{synode_ui.credits}">open source projects</a>.')
-
-        super().showEvent(event)
-
-        if event.type() == QEvent.Type.Show:
-            translateUI()
-
-            def setVolumePath():
-                volpath = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
-                self.ui.txtVolpath.setText(volpath)
-
-            self.ui.bSignup.clicked.connect(self.signup_demo)
-            self.ui.bCreateDomain.clicked.connect(self.create_regist_domx)
-
-            self.ui.chkHub.clicked.connect(self.update_chkhub)
-            self.ui.bVolpath.clicked.connect(setVolumePath)
-
-            self.ui.bLogin.clicked.connect(self.login)
-            self.ui.bPing.clicked.connect(self.pings)
-            self.ui.bSetup.clicked.connect(self.save)
-            self.ui.bValidate.clicked.connect(self.test_run)
-
-            self.ui.chkReverseProxy.clicked.connect(self.updateChkReverse)
-
-            if Utils.get_os() == 'Windows':
-                self.ui.bWinserv.clicked.connect(self.installWinsrv)
-            else:
-                self.ui.bWinserv.setEnabled(False)
-
-            self.load_config()
-
-    def load_config(self):
+    def bind_config(self):
         self.cli.registry = self.cli.load_settings()
         self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.volume, 'registry')
         self.bindIdentity(self.cli.registry)
         self.bindSettings()
         self.seal_has_run()
+
+    def bind_cbborg(self, orgs: list[str], elect: str):
+        self.ui.cbbOrgs.clear()
+        self.ui.cbbOrgs.addItems(orgs)
+        self.ui.cbbOrgs.setCurrentText(elect)
+
+    def bind_cbbpeers(self, peers: list[Synode], synid):
+        self.ui.cbbPeers.clear()
+        if peers is not None:
+            self.ui.cbbPeers.addItems([s.synid for s in peers])
+        self.ui.cbbPeers.setCurrentText(synid)
+
+    def bind_cbbdomx(self, domx: list[Synode], domid):
+        self.ui.cbbPeers.clear()
+        self.ui.cbbPeers.addItems(domx)
+        self.ui.cbbPeers.setCurrentText(domid)
+
+    def on_cbbdomx_edit(self):
+        txtdomid = self.ui.cbbDomains.currentText().strip()
+        if txtdomid and txtdomid not in self.cli.domoptions.domx():
+            self.cli.domoptions.add(txtdomid)
+            self.ui.cbbDomains.addItem(txtdomid)  # Add to combo box
+            self.ui.cbbDomains.setCurrentText(txtdomid)  # Keep the typed text selected
+            self.cli.registry.config.domain = txtdomid
 
     def bindIdentity(self, registry: AnRegistry):
         print(registry.config.toBlock())
@@ -394,15 +392,21 @@ class InstallerForm(QMainWindow):
         self.ui.txtPswd2.setText(registry.synusers[0].pswd)
         self.ui.txtDompswd.setText(registry.synusers[0].pswd)
 
-        self.ui.txtOrgid.setText(cfg.org.orgId)
-        self.ui.txtDomain.setText(cfg.domain)
+        # self.ui.txtOrgid.setText(cfg.org.orgId)
+        self.bind_cbborg([cfg.org.orgId], cfg.org.orgId)
+
+        self.cli.domoptions.add(cfg.domain)
+        self.ui.cbbDomains.setCurrentText(cfg.domain)
 
         u = self.cli.find_synuser(cfg.admin)
         if u is not None:
             self.ui.txtDompswd.setText(u.pswd)
 
         self.ui.chkHub.setChecked(SynodeMode.hub.name == cfg.mode)
-        self.ui.txtSynode.setText(cfg.synid)
+
+        # self.ui.txtSynode.setText(cfg.synid)
+        self.bind_cbbpeers(cfg.peers, cfg.synid)
+
         self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(int(cfg.syncIns)))
         self.update_chkhub(SynodeMode.hub.name == cfg.mode)
 
@@ -426,7 +430,7 @@ class InstallerForm(QMainWindow):
         if settings is not None:
             lines = "\n".join(settings.jservLines(peers))
 
-            self.bind_peers(peers, settings)
+            self.bind_cbbpeers(peers, self.cli.registry.config.synid)
             print(lines)
             # 0.7.6
             # self.ui.jservLines.setText(lines)
@@ -448,15 +452,58 @@ class InstallerForm(QMainWindow):
     def seal_has_run(self):
         enable = not self.cli.hasrun()
         self.ui.chkHub.setEnabled(enable)
-        self.ui.txtOrgid.setEnabled(enable)
-        self.ui.txtDomain.setEnabled(enable)
-        self.ui.txtSynode.setEnabled(enable)
+        # self.ui.txtOrgid.setEnabled(enable)
+        self.ui.cbbOrgs.setEnabled(enable)
+        self.ui.cbbDomains.setEnabled(enable)
+        # self.ui.txtSynode.setEnabled(enable)
+        self.ui.cbbPeers.setEnabled(enable)
 
         # TODO FIXME should still can change password
         # Or possibly write back to setting.json by jar?
         self.ui.txtPswd.setEnabled(enable)
         self.ui.txtPswd2.setEnabled(enable)
         self.ui.txtDompswd.setEnabled(enable)
+
+    def showEvent(self, event: PySide6.QtGui.QShowEvent):
+        def translateUI():
+            self.ui.gboxRegistry.setTitle(
+                synode_ui.langstrf('gboxRegistry', market=synode_ui.market))
+
+            lb_help = synode_ui.langstr('lbHelplink')
+            self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]["help_link"]}">{lb_help}</a>.')
+            self.ui.lblink.setText(f'Portfolio is based on <a href="{synode_ui.credits}">open source projects</a>.')
+
+        super().showEvent(event)
+
+        if event.type() == QEvent.Type.Show:
+            translateUI()
+
+            def setVolumePath():
+                volpath = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
+                self.ui.txtVolpath.setText(volpath)
+
+            if err_uihandlers[0] is None:
+                err_uihandlers[0] = err_ctx
+
+            self.ui.bSignup.clicked.connect(self.signup_demo)
+            self.ui.bCreateDomain.clicked.connect(self.create_regist_domx)
+
+            self.ui.chkHub.clicked.connect(self.update_chkhub)
+            self.ui.bVolpath.clicked.connect(setVolumePath)
+
+            self.ui.bLogin.clicked.connect(self.login)
+            self.ui.bPing.clicked.connect(self.pings)
+            self.ui.bSetup.clicked.connect(self.save)
+            self.ui.bTestRun.clicked.connect(self.test_run)
+
+            self.ui.chkReverseProxy.clicked.connect(self.updateChkReverse)
+
+            if Utils.get_os() == 'Windows':
+                self.ui.bWinserv.clicked.connect(self.installWinsrv)
+            else:
+                self.ui.bWinserv.setEnabled(False)
+
+            self.bind_config()
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
         super().closeEvent(event)

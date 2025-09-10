@@ -76,8 +76,6 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			Utils.logErr(es.get());
 			es = null;
 		}
-		
-		// Utils.logT(new Object() {}, config.getServletName());
 	}
 
 	/**
@@ -141,7 +139,6 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	 */
 	public ServPort<T> trb(DATranscxt trb0) {
 		st = trb0;
-		// if (synt0 == null) synt0 = trb0;
 		return this;
 	}
 
@@ -150,7 +147,6 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			throws ServletException, IOException {
     	String range = request.getHeader(JProtocol.Headers.Range);
     	String length = request.getHeader(JProtocol.Headers.Length);
-		// String anson64 = request.getParameter("anson64");
 
     	if (!isblank(range) || !isblank(length))
 			try {

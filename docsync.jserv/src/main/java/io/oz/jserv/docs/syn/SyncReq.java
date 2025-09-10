@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jserv.user.UserReq;
+import io.odysz.semantic.jprotocol.UserReq;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantics.x.SemanticException;
