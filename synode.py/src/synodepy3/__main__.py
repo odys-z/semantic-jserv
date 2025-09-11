@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBo
 
 from anson.io.odysz.common import Utils, LangExt
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption, jserv_url_path
-from semanticshare.io.oz.syn.registry import AnRegistry
+from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
@@ -189,20 +189,29 @@ class InstallerForm(QMainWindow):
 
         err_ready()
 
+        domainid = self.ui.cbbDomains.currentText().strip()
         if self.cli.update_domain(
                 reg_jserv=self.ui.txtCentral.text().strip(),
                 orgid=self.ui.cbbOrgs.currentText().strip(),
-                domain=self.ui.cbbDomains.currentText().strip()
+                domain=domainid
             ) and self.cli.validate_domain():
             resp = self.cli.register()
 
+            global errs
             if resp is None:
                 details.append(self.cli.settings.regiserv + '\n' + 'Error while rigstering.')
-                global errs
                 errs = True
             else:
-                # bind node-0, node-1, node-2
-                self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
+                if resp.r == RegistResp.R.domexists:
+                    warn_msg("Domain alread exists") # and still bind to the list
+                    self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
+                    errs = False
+                elif resp.r == RegistResp.R.ok:
+                    msg_box("Domain created: " + domainid)
+                    self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
+                    errs = False
+                else:
+                    warn_msg("Creating domain failed.")
 
         if has_err():
             warn_msg('Central service cannot be reached.', details)

@@ -348,7 +348,7 @@ public class Syngleton extends JSingleton {
 		}
 	
 		for (String tbl : new String[] {
-					"oz_autoseq.ddl", // FIXME inconsists with setupSyntables()
+					"oz_autoseq.ddl", // FIXME inconsistent with setupSyntables()
 					"a_users.sqlite.ddl",
 					"a_roles.sqlite.ddl",
 					"a_orgs.sqlite.ddl",}) {

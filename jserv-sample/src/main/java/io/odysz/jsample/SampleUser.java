@@ -18,9 +18,9 @@ public class SampleUser extends JUser {
 
 			this.tbl = "a_users";
 			pk = "userId";
-			uname = "userName";
-			pswd = "pswd";
-			iv = "iv";
+//			uname = "userName";
+//			pswd = "pswd";
+//			iv = "iv";
 		}
 	}
 

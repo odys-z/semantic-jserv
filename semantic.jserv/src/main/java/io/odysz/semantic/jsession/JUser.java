@@ -1,5 +1,6 @@
 package io.odysz.semantic.jsession;
 
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.split;
@@ -22,6 +23,7 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SemanticTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
+import io.odysz.semantics.meta.Semantation;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
@@ -52,44 +54,63 @@ public class JUser extends SemanticObject implements IUser {
 
 			this.pk      = "userId";
 			this.uname   = "userName";
-			this.pswd    = "pswd";
-			this.iv      = "iv"; // since 2.0.0
 			this.org     = "orgId";
 			this.orgName = "orgName";
 			this.role    = "roleId";
 			this.roleName= "roleName";
+			this.counter = "counter";
+			this.birthday= "birthday";
+			this.pswd    = "pswd";
+			this.iv      = "iv";
+			
+			this.ddlSqlite = f("CREATE TABLE %1$s (\n"
+					+ "  userId   TEXT(20) not null,\n"
+					+ "  userName TEXT(50) not null,\n"
+					+ "  roleId   TEXT(20),\n"
+					+ "  orgId    TEXT(20),\n"
+					+ "  counter  NUMBER,\n"
+					+ "  birthday DATE,\n"
+					+ "  pswd     TEXT DEFAULT '' NOT NULL,\n"
+					+ "  iv       TEXT(200),\n"
+					+ "  CONSTRAINT a_users_pk PRIMARY KEY (userId)\n"
+					+ ");", tbl);
 		}
 		
 		public final JRoleMeta rm;
 		public final JOrgMeta  om;
 		
+		public final String counter;
+		public final String birthday;
+		
 		/**key in config.xml for class name, this class implementing IUser is used as user object's type. */
-		public String uname; // = "userName";
-		public String pswd; // = "pswd";
-		public String iv; // = "encAuxiliary";
+		public final String uname; // = "userName";
+		public final String pswd; // = "pswd";
+		public final String iv; // = "encAuxiliary";
 		/** v1.4.11, column of org id */
-		public String org;
+		public final String org;
 		/** v1.4.11, column of org name */
-		public String orgName;
+		@Semantation (noDBExists = true)
+		public final String orgName;
 		/** v1.4.11, column of role id */
-		public String role;
+		public final String role;
 		/** v1.4.11, column of role name */
-		public String roleName;
+		@Semantation (noDBExists = true)
+		public final String roleName;
 
-		public JUserMeta userName(String unamefield) {
-			uname = unamefield;
-			return this;
-		}
-
-		public JUserMeta iv(String ivfield) {
-			iv = ivfield;
-			return this;
-		}
-
-		public JUserMeta pswd(String pswdfield) {
-			pswd = pswdfield;
-			return this;
-		}
+//		public JUserMeta userName(String unamefield) {
+//			uname = unamefield;
+//			return this;
+//		}
+//
+//		public JUserMeta iv(String ivfield) {
+//			iv = ivfield;
+//			return this;
+//		}
+//
+//		public JUserMeta pswd(String pswdfield) {
+//			pswd = pswdfield;
+//			return this;
+//		}
 	}
 
 	public static class JRoleMeta extends SemanticTableMeta {
@@ -103,13 +124,13 @@ public class JUser extends SemanticObject implements IUser {
 			pk = "roleId";
 			roleName = "roleName";
 			remarks  = "remarks";
-			org      = "org";
+			org      = "orgId";
 			
-			ddlSqlite = "CREATE TABLE a_roles(\r\n"
-						+ "roleId TEXT(20) not null, \r\n"
-						+ "roleName TEXT(50), \r\n"
-						+ "remarks TEXT(200),\r\n"
-						+ "orgId TEXT(20),\r\n"
+			ddlSqlite = "CREATE TABLE a_roles(\n"
+						+ "roleId TEXT(20) not null, \n"
+						+ "roleName TEXT(50), \n"
+						+ "remarks TEXT(200),\n"
+						+ "orgId TEXT(20),\n"
 						+ "CONSTRAINT a_roles_pk PRIMARY KEY (roleId)"
 						+ ");";
 		}
@@ -133,15 +154,15 @@ public class JUser extends SemanticObject implements IUser {
 			fullpath= "fullpath";
 
 			ddlSqlite =
-					"CREATE TABLE a_orgs (\r\n"
-					+ "	orgId   varchar2(12) NOT NULL,\r\n"
-					+ "	orgName varchar2(50),\r\n"
-					+ "	orgType varchar2(40) , -- a reference to a_domain.domainId (parent = 'a_orgs')\r\n"
-					+ "	parent  varchar2(12),\r\n"
-					+ "	sort    int DEFAULT 0,\r\n"
-					+ "	fullpath varchar2(200), webroot TEXT, album0 varchar2(16),\r\n"
-					+ "\r\n"
-					+ "	PRIMARY KEY (orgId)\r\n"
+					"CREATE TABLE a_orgs (\n"
+					+ "	orgId   varchar2(12) NOT NULL,\n"
+					+ "	orgName varchar2(50),\n"
+					+ "	orgType varchar2(40) , -- a reference to a_domain.domainId (parent = 'a_orgs')\n"
+					+ "	parent  varchar2(12),\n"
+					+ "	sort    int DEFAULT 0,\n"
+					+ "	fullpath varchar2(200), webroot TEXT, album0 varchar2(16),\n"
+					+ "\n"
+					+ "	PRIMARY KEY (orgId)\n"
 					+ ");";
 		}
 	}

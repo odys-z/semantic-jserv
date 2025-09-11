@@ -70,17 +70,11 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		/** document manage's semantic tier */
 		docstier("docs.tier"),
 
-		/**
-		 * <h5>[experimental]</h5>
-		 * This port is implemented by extension docsync.jserv.
-		 * */
-		// docsync("docs.sync"),
-
-		/** @deprecated ? */
-		dbsyncer("clean.db"),
+//		/** @deprecated ? */
+//		dbsyncer("clean.db"),
 		
-		/** @deprecated for MVP album v0.2.1 only */
-		album21("docs.album21"),
+//		/** @deprecated for MVP album v0.2.1 only */
+//		album21("docs.album21"),
 		
 		/**
 		 * Synode tier service: sync.tier

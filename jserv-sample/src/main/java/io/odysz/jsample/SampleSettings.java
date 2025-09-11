@@ -25,7 +25,7 @@ public class SampleSettings extends Anson {
 	public String port;
 	public String rootkey;
 
-	public static SampleSettings check(String webinf, String settings_json, boolean verbose)
+	public static SampleSettings check(String webinf, String settings_json)
 			throws FileNotFoundException, IOException {
 
 		logi("Loading settings: %s", settings_json);
