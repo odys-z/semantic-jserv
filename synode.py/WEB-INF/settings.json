@@ -1,6 +1,6 @@
 {
   "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "regiserv": "http://127.0.0.1:1989/regist-serv",
+  "regiserv": "http://127.0.0.1:1989/regist-central",
   "port": 8964,
   "webport": 8900,
   "reverseProxy": true,
@@ -12,10 +12,7 @@
   "webrootLocal": "http://suppress.warning:8900",
   "vol_name": "VOLUME_HOME",
   "volume": "C:/Users/Alice/github/semantic-jserv/synode.py/vol",
-  "jservs": {
-    "node0": "http://?:?/jserv-album",
-    "node1": "http://?:?/jserv-album",
-    "node2": "http://?:?/jserv-album"},
+  "jservs": { },
   "installkey": "0123456789ABCDEF",
   "rootkey": ""
 }

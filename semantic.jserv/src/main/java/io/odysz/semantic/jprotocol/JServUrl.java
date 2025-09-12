@@ -63,6 +63,15 @@ public class JServUrl {
 		return joinurl(https, ip, port, JProtocol.urlroot, subpaths);
 	}
 	
+	/**
+	 * For getting a jserv string at Central, forcing the submitted path-root equals {@code clientpath}.
+	 * @param clientpath
+	 * @return jserv string
+	 */
+	public String clientJserv(String clientpath) {
+		return joinurl(https, ip, port, clientpath, subpaths);
+	}
+
 	/** @since 0.7.6 */
 	public JServUrl jserv(String jurl, String timestamp) {
 		Object[] jservparts = getHttpParts(jurl);

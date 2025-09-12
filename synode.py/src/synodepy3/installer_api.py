@@ -89,17 +89,18 @@ def decode(warns: bytes):
                 lines.append(str(l))
     return lines
 
-def valid_registry(reg: AnRegistry):
+def valid_local_reg(reg: AnRegistry):
     """
     config.synid must presents in peers, which should be more or equals 2 nodes.
     :param reg:
     :return:
     """
-    if LangExt.len(reg.config.peers) < 2:
-        raise PortfolioException("Shouldn't work on at leas 2 peers? (while checking dictionary.json)")
-    if AnRegistry.find_synode(reg.config.peers, reg.config.synid) is None:
-        raise PortfolioException(
-            f'Cannot find peer registry of my id: {reg.config.synid}. (while checking dictionary.json.peers)')
+    # if LangExt.len(reg.config.peers) < 2:
+    #     raise PortfolioException("Shouldn't work on at leas 2 peers? (while checking dictionary.json)")
+    # if AnRegistry.find_synode(reg.config.peers, reg.config.synid) is None:
+    #     raise PortfolioException(
+    #         f'Cannot find peer registry of my id: {reg.config.synid}. (while checking dictionary.json.peers)')
+    pass
 
 def unzip_file(zip_filepath, extract_to_path):
     """
@@ -297,7 +298,7 @@ class InstallerCli:
             diction_json = os.path.join(deflt_path, dictionary_json)
             registry = AnRegistry.load(diction_json)
 
-        valid_registry(registry)
+        valid_local_reg(registry)
         return registry
 
     def isinstalled(self):
@@ -545,7 +546,7 @@ class InstallerCli:
                 volume: str = None,
                 syncins: str = None, envars=None, webProxyPort=None):
 
-        self.update_domain(reg_jserv=reg_jserv, orgId=org, domain=domain)
+        self.update_domain(reg_jserv=reg_jserv, orgid=org, domain=domain)
         # self.registry.config.org.orgId = org
         # self.registry.config.domain = domain
 

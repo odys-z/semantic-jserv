@@ -374,8 +374,9 @@ class InstallerForm(QMainWindow):
     def bind_cbbpeers(self, peers: list[Synode], synid):
         self.ui.cbbPeers.clear()
         if peers is not None:
-            self.ui.cbbPeers.addItems([s.synid for s in peers])
-        self.ui.cbbPeers.setCurrentText(synid)
+            self.ui.cbbPeers.addItems([s.synid for s in peers if s is not None])
+        if synid is not None:
+            self.ui.cbbPeers.setCurrentText(synid)
 
     def bind_cbbdomx(self, domx: list[Synode], domid):
         self.ui.cbbPeers.clear()
@@ -439,15 +440,15 @@ class InstallerForm(QMainWindow):
         if settings is not None:
             lines = "\n".join(settings.jservLines(peers))
 
-            self.bind_cbbpeers(peers, self.cli.registry.config.synid)
+            cfg = self.cli.registry.config
+            self.bind_cbbpeers(peers, cfg.synid)
             print(lines)
-            # 0.7.6
-            # self.ui.jservLines.setText(lines)
-            hub_id = self.cli.registry.config.peers[0].synid
-            if hub_id in settings.jservs:
-                self.ui.jservLines.setText(f'{hub_id}:\t{settings.jservs[hub_id]}')
-            else:
-                self.ui.jservLines.setText(f'{hub_id}:\thttp://127.0.0.1:{serv_port0}/{jserv_url_path}')
+            if cfg is not None and len(cfg.peers) > 0:
+                hub_id = cfg.peers[0].synid
+                if hub_id in settings.jservs:
+                    self.ui.jservLines.setText(f'{hub_id}:\t{settings.jservs[hub_id]}')
+                else:
+                    self.ui.jservLines.setText(f'{hub_id}:\thttp://127.0.0.1:{serv_port0}/{jserv_url_path}')
 
         else:
             self.ui.jservLines.setText(

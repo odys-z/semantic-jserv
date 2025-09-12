@@ -3,7 +3,7 @@
  <class>InstallForm</class>
  <widget class="QMainWindow" name="InstallForm">
   <property name="windowModality">
-   <enum>Qt::NonModal</enum>
+   <enum>Qt::WindowModality::NonModal</enum>
   </property>
   <property name="enabled">
    <bool>true</bool>
@@ -122,7 +122,7 @@
       <number>32</number>
      </property>
      <property name="echoMode">
-      <enum>QLineEdit::Password</enum>
+      <enum>QLineEdit::EchoMode::Password</enum>
      </property>
      <property name="placeholderText">
       <string>Confirm Password</string>
@@ -131,9 +131,9 @@
     <widget class="QLabel" name="lbAdminId">
      <property name="geometry">
       <rect>
-       <x>23</x>
+       <x>13</x>
        <y>64</y>
-       <width>71</width>
+       <width>74</width>
        <height>20</height>
       </rect>
      </property>
@@ -163,7 +163,7 @@
       <number>32</number>
      </property>
      <property name="echoMode">
-      <enum>QLineEdit::Password</enum>
+      <enum>QLineEdit::EchoMode::Password</enum>
      </property>
      <property name="placeholderText">
       <string>Max 32 Chars</string>
@@ -937,7 +937,7 @@
      <x>0</x>
      <y>0</y>
      <width>960</width>
-     <height>24</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
