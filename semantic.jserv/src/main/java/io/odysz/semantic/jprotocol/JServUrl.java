@@ -13,6 +13,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
+import io.odysz.anson.Anson;
 import io.odysz.common.LangExt;
 import io.odysz.common.UrlValidator;
 import io.odysz.common.Utils;
@@ -26,12 +27,13 @@ import static io.odysz.common.LangExt.concatArr;
  * TODO Refactor Typescript and py3 clients.
  * @since 0.2.5
  */
-public class JServUrl {
+public class JServUrl extends Anson {
 	static UrlValidator urlValidator;
 
-	boolean https;
-	String ip;
-	int port;
+	public boolean https;
+	public String ip;
+	public int port;
+
 	String[] subpaths;
 	public JServUrl subpaths(String... subs) {
 		subpaths = concatArr(subpaths, subs);

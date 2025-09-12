@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBo
 
 from anson.io.odysz.common import Utils, LangExt
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption, jserv_url_path
-from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp
+from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp, CynodeStats
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
@@ -184,7 +184,7 @@ class InstallerForm(QMainWindow):
         msg_box(synode_ui.signup_prompt('This is a demo version. TODO'))
         return False
 
-    def create_regist_domx(self):
+    def create_find_dom(self):
         print("request create/join domain to", self.ui.txtCentral.text())
 
         err_ready()
@@ -203,18 +203,32 @@ class InstallerForm(QMainWindow):
                 errs = True
             else:
                 if resp.r == RegistResp.R.domexists:
-                    warn_msg("Domain alread exists") # and still bind to the list
+                    self.cli.registry.config = resp.diction
+                    warn_msg("Domain already exists") # and still bind to the list
                     self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
+                    self.bind_hubnode(resp)
                     errs = False
                 elif resp.r == RegistResp.R.ok:
+                    self.cli.registry.config = resp.diction
                     msg_box("Domain created: " + domainid)
                     self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
+                    self.bind_hubnode(resp)
                     errs = False
                 else:
                     warn_msg("Creating domain failed.")
 
         if has_err():
             warn_msg('Central service cannot be reached.', details)
+
+    def submit_jserv(self):
+        """
+        Call this after saving and validations are completed
+        :return:
+        """
+        resp = self.cli.submit_mysettings()
+        global errs, details
+        if resp == None or errs:
+            warn_msg("Failed to submit registration.", details)
 
     def pings(self):
         err_ready()
@@ -291,6 +305,8 @@ class InstallerForm(QMainWindow):
                 
                 self.bind_config()
 
+                self.submit_jserv()
+
         except PortfolioException as e:
             err_msg('Setting up synodepy3 is failed.', e)
 
@@ -349,6 +365,24 @@ class InstallerForm(QMainWindow):
         if not check and LangExt.isblank(self.ui.txtSyncIns.text(), r'0+'):
             self.ui.txtSyncIns.setText("40")
 
+    def select_peer_byid(self, synid):
+        try:
+            pr = self.cli.registry.find_peer(synid)
+            self.bind_synode(pr)
+        except: pass
+
+    def select_peer(self, idx):
+        '''
+        Actually doing nothing as there is nothing from config.peers[x] to be bound to ui.
+        :param idx:
+        :return: None
+        '''
+        try: self.bind_synode(self.cli.registry.config.peers[idx])
+        except: pass
+
+    def bind_synode(self, n: Synode):
+        pass
+
     def updateChkReverse(self, check: bool):
         if check == None:
             check = self.ui.chkReverseProxy.checkState() == Qt.CheckState.Checked
@@ -377,19 +411,29 @@ class InstallerForm(QMainWindow):
             self.ui.cbbPeers.addItems([s.synid for s in peers if s is not None])
         if synid is not None:
             self.ui.cbbPeers.setCurrentText(synid)
+            self.select_peer_byid(synid)
 
-    def bind_cbbdomx(self, domx: list[Synode], domid):
-        self.ui.cbbPeers.clear()
-        self.ui.cbbPeers.addItems(domx)
-        self.ui.cbbPeers.setCurrentText(domid)
+    def bind_hubnode(self, resp: RegistResp):
+        if resp.diction.peers is not None:
+            hub = resp.diction.peers[0] if len(resp.diction.peers) > 0 else None
+            if hub.stat == CynodeStats.create:
+                # bind this as hub
+                self.ui.jservLines.setText(
+                    hub.jserv if hub is not None else f'http://127.0.0.1:8964/{jserv_url_path}')
+                self.update_chkhub(True)
 
-    def on_cbbdomx_edit(self):
-        txtdomid = self.ui.cbbDomains.currentText().strip()
-        if txtdomid and txtdomid not in self.cli.domoptions.domx():
-            self.cli.domoptions.add(txtdomid)
-            self.ui.cbbDomains.addItem(txtdomid)  # Add to combo box
-            self.ui.cbbDomains.setCurrentText(txtdomid)  # Keep the typed text selected
-            self.cli.registry.config.domain = txtdomid
+    # def bind_cbbdomx(self, domx: list[Synode], domid):
+    #     self.ui.cbbPeers.clear()
+    #     self.ui.cbbPeers.addItems(domx)
+    #     self.ui.cbbPeers.setCurrentText(domid)
+    #
+    # def on_cbbdomx_edit(self):
+    #     txtdomid = self.ui.cbbDomains.currentText().strip()
+    #     if txtdomid and txtdomid not in self.cli.domoptions.domx():
+    #         self.cli.domoptions.add(txtdomid)
+    #         self.ui.cbbDomains.addItem(txtdomid)  # Add to combo box
+    #         self.ui.cbbDomains.setCurrentText(txtdomid)  # Keep the typed text selected
+    #         self.cli.registry.config.domain = txtdomid
 
     def bindIdentity(self, registry: AnRegistry):
         print(registry.config.toBlock())
@@ -496,9 +540,10 @@ class InstallerForm(QMainWindow):
                 err_uihandlers[0] = err_ctx
 
             self.ui.bSignup.clicked.connect(self.signup_demo)
-            self.ui.bCreateDomain.clicked.connect(self.create_regist_domx)
+            self.ui.bCreateDomain.clicked.connect(self.create_find_dom)
 
             self.ui.chkHub.clicked.connect(self.update_chkhub)
+            self.ui.cbbPeers.currentIndexChanged.connect(self.select_peer)
             self.ui.bVolpath.clicked.connect(setVolumePath)
 
             self.ui.bLogin.clicked.connect(self.login)

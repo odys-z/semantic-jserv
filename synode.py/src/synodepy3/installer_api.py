@@ -2,8 +2,7 @@
 import sys
 from dataclasses import dataclass
 
-from semanticshare.io.odysz.semantics import SessionInf
-from semanticshare.io.oz.syn import SynodeMode, SyncUser
+from semanticshare.io.oz.syn import SynodeMode
 
 from . import SynodeUi
 
@@ -58,18 +57,32 @@ def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
     print('code', resp.code)
     return resp
 
-def register(client: SessionClient, func_uri: str, domx: SynodeConfig):
+def register(client: SessionClient, func_uri: str, domx: SynodeConfig, settings: AppSettings):
     req = RegistReq(RegistReq.A.registDom)
-    req.Uri(func_uri).dictionary(domx)
+    req.Uri(func_uri).dictionary(domx).jserurl(settings)
     msg = AnsonMsg(Centralport.register).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
 
     if resp is not None:
         print(client.myservRt, resp.code)
-        print('<createDom>', resp.toBlock())
+        print(f'<{RegistReq.A.registDom}>', resp.toBlock())
 
     return cast(RegistResp, resp)
+
+
+def submit_settings(client: SessionClient, func_uri: str, cfg: SynodeConfig, sets: AppSettings):
+    req = RegistReq(RegistReq.A.submitSettings)
+    req.Uri(func_uri).jserurl(cfg.https, sets)
+    msg = AnsonMsg(Centralport.register).Body(req)
+
+    resp = client.commit(msg, err_uihandlers[0])
+    if resp is not None:
+        print(client.myservRt, resp.code)
+        print(f'<{RegistReq.A.submitSettings}>', resp.toBlock())
+
+    return cast(RegistResp, resp)
+
 
 def decode(warns: bytes):
     lines = []
@@ -243,7 +256,6 @@ class InstallerCli:
         return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
 
     def __init__(self):
-        # Anson.java_src('src')
         self.regclient = None
         self.domoptions = DomainOpts()
         self.httpd = None
@@ -302,9 +314,6 @@ class InstallerCli:
         return registry
 
     def isinstalled(self):
-        # 0.7.5
-        # return self.settings is not None and self.validateVol() is None
-        # 0.7.6
         return self.validateVol() is None
 
     def hasrun(self):
@@ -622,7 +631,23 @@ class InstallerCli:
                 uid=self.registry.synusers[0].userId,
                 pswdPlain=self.registry.synusers[0].pswd)
 
-        return register(client=self.regclient, func_uri=install_uri, domx=self.registry.config)
+        return register(client=self.regclient,
+                        func_uri=install_uri,
+                        domx=self.registry.config,
+                        settings=self.settings)
+
+    def submit_mysettings(self):
+        if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
+            self.regclient = SessionClient.loginWithUri(
+                uri=install_uri,
+                servroot=self.settings.regiserv,
+                uid=self.registry.synusers[0].userId,
+                pswdPlain=self.registry.synusers[0].pswd)
+
+        return submit_settings(client=self.regclient,
+                            func_uri=install_uri,
+                            cfg=self.registry.config,
+                            sets=self.settings)
 
     def install(self):
         """
