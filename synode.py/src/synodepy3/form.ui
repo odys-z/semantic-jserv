@@ -77,27 +77,27 @@
     <widget class="QLabel" name="lbCommunity">
      <property name="geometry">
       <rect>
-       <x>6</x>
+       <x>2</x>
        <y>100</y>
-       <width>91</width>
+       <width>90</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Community:</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;Community:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QLabel" name="lbRetry">
      <property name="geometry">
       <rect>
-       <x>522</x>
+       <x>480</x>
        <y>64</y>
-       <width>61</width>
+       <width>104</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Confirm:</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;Confirm:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="txtPswd2">
@@ -131,9 +131,9 @@
     <widget class="QLabel" name="lbAdminId">
      <property name="geometry">
       <rect>
-       <x>13</x>
+       <x>2</x>
        <y>64</y>
-       <width>74</width>
+       <width>90</width>
        <height>20</height>
       </rect>
      </property>
@@ -197,27 +197,27 @@
     <widget class="QLabel" name="lbPswd">
      <property name="geometry">
       <rect>
-       <x>238</x>
+       <x>240</x>
        <y>64</y>
-       <width>77</width>
+       <width>74</width>
        <height>19</height>
       </rect>
      </property>
      <property name="text">
-      <string>Password:</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;Password:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QLabel" name="lbRegfolder">
      <property name="geometry">
       <rect>
-       <x>29</x>
+       <x>2</x>
        <y>32</y>
-       <width>68</width>
+       <width>90</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Registry:</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;Registry:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="txtCentral">
@@ -280,14 +280,14 @@
     <widget class="QLabel" name="lbDomain">
      <property name="geometry">
       <rect>
-       <x>252</x>
+       <x>240</x>
        <y>100</y>
-       <width>67</width>
+       <width>74</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Domain:</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;Domain:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QPushButton" name="bLogin">
@@ -356,14 +356,14 @@
     <widget class="QLabel" name="lbDomtoken">
      <property name="geometry">
       <rect>
-       <x>477</x>
+       <x>480</x>
        <y>100</y>
-       <width>111</width>
+       <width>104</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Domain Token:</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;Domain Token:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QComboBox" name="cbbOrgs">
@@ -460,7 +460,7 @@
      </rect>
     </property>
     <property name="text">
-     <string extracomment="Test">&amp;Save</string>
+     <string extracomment="Test">&amp;Save &amp;&amp; Install</string>
     </property>
     <property name="shortcut">
      <string>Ctrl+T</string>
@@ -551,14 +551,14 @@
    <widget class="QLabel" name="lbHubjserv">
     <property name="geometry">
      <rect>
-      <x>15</x>
+      <x>11</x>
       <y>140</y>
-      <width>91</width>
+      <width>93</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>Hub Service</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;Hub Service&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QGroupBox" name="gboxLocal">
@@ -906,9 +906,9 @@
     <widget class="QLabel" name="lbJservs_2">
      <property name="geometry">
       <rect>
-       <x>260</x>
+       <x>245</x>
        <y>30</y>
-       <width>61</width>
+       <width>72</width>
        <height>21</height>
       </rect>
      </property>
@@ -916,7 +916,7 @@
       <cursorShape>IBeamCursor</cursorShape>
      </property>
      <property name="text">
-      <string>In every</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;In every&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QComboBox" name="cbbPeers">

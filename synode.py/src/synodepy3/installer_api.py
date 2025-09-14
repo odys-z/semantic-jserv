@@ -26,7 +26,7 @@ from anson.io.odysz.common import Utils, LangExt
 
 from semanticshare.io.oz.srv import WebConfig
 
-from semanticshare.io.odysz.semantic.jprotocol import MsgCode, AnsonMsg
+from semanticshare.io.odysz.semantic.jprotocol import MsgCode, AnsonMsg, JProtocol
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, \
@@ -42,24 +42,25 @@ synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 err_uihandlers: list[Optional[OnError]] = [None]
 
 def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
-    Clients.init(jserv=peerserv or 'http://127.0.0.1:8964/jserv-album', timeout=timeout_snd)
+    Clients.init(jserv=peerserv or f'http://127.0.0.1:8964/{JProtocol.urlroot}', timeout=timeout_snd)
 
     def err_ctx(c: MsgCode, e: str, *args: str) -> None:
         print(c, e.format(args), file=sys.stderr)
 
         if len(err_uihandlers) > 0 and err_uihandlers[0] is not None:
             for h in err_uihandlers:
-                h.err(c, e, *args)
+                h(c, e, *args)
 
     resp = Clients.pingLess(clientUri or install_uri, err_ctx)
 
-    print(Clients.servRt, '<echo>', resp.toBlock())
-    print('code', resp.code)
+    if resp is not None:
+        print(Clients.servRt, '<echo>', resp.toBlock())
+        print('code', resp.code)
     return resp
 
-def register(client: SessionClient, func_uri: str, domx: SynodeConfig, settings: AppSettings):
+def register(client: SessionClient, func_uri: str, domx: SynodeConfig, cfg: SynodeConfig, settings: AppSettings, iport: tuple[str, int]):
     req = RegistReq(RegistReq.A.registDom)
-    req.Uri(func_uri).dictionary(domx).jserurl(settings)
+    req.Uri(func_uri).dictionary(domx).jserurl(cfg.https, settings=settings, iport=iport)
     msg = AnsonMsg(Centralport.register).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
@@ -71,9 +72,11 @@ def register(client: SessionClient, func_uri: str, domx: SynodeConfig, settings:
     return cast(RegistResp, resp)
 
 
-def submit_settings(client: SessionClient, func_uri: str, cfg: SynodeConfig, sets: AppSettings):
+def submit_settings(client: SessionClient, func_uri: str, cfg: SynodeConfig, sets: AppSettings, iport: tuple[str, int]):
     req = RegistReq(RegistReq.A.submitSettings)
-    req.Uri(func_uri).jserurl(cfg.https, sets)
+    req.Uri(func_uri)
+    req.jserurl(cfg.https, sets, iport)
+
     msg = AnsonMsg(Centralport.register).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
@@ -198,6 +201,8 @@ def checkinstall_exiftool():
     then in semantic-jserv/synode.py3:
     ln -s ../../Anclient/examples/example.js/album/web-0.4 web-dist
 """
+
+JProtocol.urlroot = 'jserv-album'
 
 install_uri = 'Anson.py3/test'
 
@@ -556,8 +561,6 @@ class InstallerCli:
                 syncins: str = None, envars=None, webProxyPort=None):
 
         self.update_domain(reg_jserv=reg_jserv, orgid=org, domain=domain)
-        # self.registry.config.org.orgId = org
-        # self.registry.config.domain = domain
 
         for u in self.registry.synusers:
             if u.userId == admin:
@@ -634,7 +637,9 @@ class InstallerCli:
         return register(client=self.regclient,
                         func_uri=install_uri,
                         domx=self.registry.config,
-                        settings=self.settings)
+                        cfg=self.registry.config,
+                        settings=self.settings,
+                        iport=self.getProxiedIp())
 
     def submit_mysettings(self):
         if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
@@ -647,7 +652,8 @@ class InstallerCli:
         return submit_settings(client=self.regclient,
                             func_uri=install_uri,
                             cfg=self.registry.config,
-                            sets=self.settings)
+                            sets=self.settings,
+                            iport=self.getProxiedIp())
 
     def install(self):
         """

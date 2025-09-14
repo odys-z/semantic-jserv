@@ -185,6 +185,7 @@ class InstallerForm(QMainWindow):
         return False
 
     def create_find_dom(self):
+        global errs, details
         print("request create/join domain to", self.ui.txtCentral.text())
 
         err_ready()
@@ -197,7 +198,6 @@ class InstallerForm(QMainWindow):
             ) and self.cli.validate_domain():
             resp = self.cli.register()
 
-            global errs
             if resp is None:
                 details.append(self.cli.settings.regiserv + '\n' + 'Error while rigstering.')
                 errs = True
@@ -229,6 +229,9 @@ class InstallerForm(QMainWindow):
         global errs, details
         if resp == None or errs:
             warn_msg("Failed to submit registration.", details)
+        else:
+            # update jservs
+            self.cli.registry.config.peers = resp.diction.peers
 
     def pings(self):
         err_ready()
@@ -237,12 +240,13 @@ class InstallerForm(QMainWindow):
             jservss = InstallerCli.parsejservstr(jservss)
 
             for jsrv in jservss:
-                if jsrv[0] != self.cli.registry.config.synid:
-                    resp = self.cli.ping(jsrv[1])
+                sid = self.ui.cbbPeers.currentText()
+                if sid != self.cli.registry.config.synid:
+                    resp = self.cli.ping(jsrv[0])
                     if resp is None:
-                        details.append(f'\n{jsrv[0]}: {jsrv[1]}\n' + 'Error: no responds')
+                        details.append(f'\n{sid}: {jsrv[0]}\n' + 'Error while pinging.')
                     else:
-                        details.append(f'\n{jsrv[0]}: {jsrv[1]}\n'  + resp.toBlock(beautify = True))
+                        details.append(f'\n{sid}: {jsrv[0]}\n'  + resp.msg())
 
         if has_err():
             warn_msg('Ping synodes has errors. Check details for errors.', details)
@@ -378,10 +382,18 @@ class InstallerForm(QMainWindow):
         :return: None
         '''
         try: self.bind_synode(self.cli.registry.config.peers[idx])
-        except: pass
+        except Exception as _:
+            pass
 
     def bind_synode(self, n: Synode):
-        pass
+        peer = self.cli.find_peer(n.synid)
+        chk = peer.remarks == SynodeMode.hub.name
+        self.ui.chkHub.setChecked(chk)
+        self.update_chkhub(chk)
+
+        can_install = LangExt.isblank(peer.stat)
+        self.ui.bSetup.setEnabled(can_install)
+        self.ui.bSetup.setEnabled(can_install)
 
     def updateChkReverse(self, check: bool):
         if check == None:
@@ -414,8 +426,8 @@ class InstallerForm(QMainWindow):
             self.select_peer_byid(synid)
 
     def bind_hubnode(self, resp: RegistResp):
-        if resp.diction.peers is not None:
-            hub = resp.diction.peers[0] if len(resp.diction.peers) > 0 else None
+        if resp.diction.peers is not None and len(resp.diction.peers) > 0:
+            hub = resp.diction.peers[0]
             if hub.stat == CynodeStats.create:
                 # bind this as hub
                 self.ui.jservLines.setText(
