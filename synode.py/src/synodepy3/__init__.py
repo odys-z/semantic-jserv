@@ -9,6 +9,7 @@ class SynodeUi(Anson):
     version: str
     iso: str
     market: str
+    market_id: str
     lang: str
     langs: dict
     ui: str
@@ -21,6 +22,7 @@ class SynodeUi(Anson):
         self.ui = 'ui_form.py'
         self.version = "0.7.6"
         self.market = "TEST"
+        self.market = "test.org"
         self.langs = dict()
 
     def signup_prompt(self, defl = None):

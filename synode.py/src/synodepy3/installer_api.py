@@ -31,7 +31,7 @@ from semanticshare.io.oz.syntier.serv import ExternalHosts
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, \
     sys_db, syn_db, syntity_json, getJservUrl, valid_url_port
-from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp
+from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp, SynOrg
 
 from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 
@@ -58,9 +58,47 @@ def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
         print('code', resp.code)
     return resp
 
-def register(client: SessionClient, func_uri: str, domx: SynodeConfig, cfg: SynodeConfig, settings: AppSettings, iport: tuple[str, int]):
-    req = RegistReq(RegistReq.A.registDom)
-    req.Uri(func_uri).dictionary(domx).jserurl(cfg.https, settings=settings, iport=iport)
+
+def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
+    req = RegistReq(RegistReq.A.queryDomx)
+    req.Uri(func_uri)
+    req.market = market
+
+    org = SynOrg()
+    org.orgId = commuid
+    req.dictionary(SynodeConfig(org=org))
+
+    msg = AnsonMsg(Centralport.register).Body(req)
+
+    resp = client.commit(msg, err_uihandlers[0])
+
+    if resp is not None:
+        print(client.myservRt, resp.code)
+        print(f'<{RegistReq.A.queryDomx}>', resp.toBlock())
+
+    return cast(RegistResp, resp)
+
+
+def query_domconfig(client: SessionClient, func_uri: str, market: str, domid: str):
+    req = RegistReq(RegistReq.A.queryDomConfig, market)
+    req.Uri(func_uri)
+    req.domain = domid
+    req.diction = SynodeConfig()
+    req.diction.org = SynOrg(orgid=domid, orgname=domid, orgtype=market)
+    msg = AnsonMsg(Centralport.register).Body(req)
+
+    resp = client.commit(msg, err_uihandlers[0])
+
+    if resp is not None:
+        print(client.myservRt, resp.code)
+        print(f'<{RegistReq.A.queryDomConfig}>', resp.toBlock())
+
+    return cast(RegistResp, resp)
+
+
+def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig, settings: AppSettings, iport: tuple[str, int]):
+    req = RegistReq(RegistReq.A.registDom, market)
+    req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, settings=settings, iport=iport)
     msg = AnsonMsg(Centralport.register).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
@@ -72,8 +110,8 @@ def register(client: SessionClient, func_uri: str, domx: SynodeConfig, cfg: Syno
     return cast(RegistResp, resp)
 
 
-def submit_settings(client: SessionClient, func_uri: str, cfg: SynodeConfig, sets: AppSettings, iport: tuple[str, int]):
-    req = RegistReq(RegistReq.A.submitSettings)
+def submit_settings(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig, sets: AppSettings, iport: tuple[str, int]):
+    req = RegistReq(RegistReq.A.submitSettings, market)
     req.Uri(func_uri)
     req.jserurl(cfg.https, sets, iport)
 
@@ -232,17 +270,17 @@ exiftool_testver = 'exiftool -ver'
 
 pswd_min, pswd_max = 8, 32
 
-@dataclass
-class DomainOpts:
-    domx: list[str]  
-    
-    def __init__(self):
-        super().__init__()
-        self.domx = []
-
-    def add(self, dom: str):
-        if dom not in self.domx:
-            self.domx.append(dom)
+# @dataclass
+# class DomainOpts:
+#     domx: list[str]
+#
+#     def __init__(self):
+#         super().__init__()
+#         self.domx = []
+#
+#     def add(self, dom: str):
+#         if dom not in self.domx:
+#             self.domx.append(dom)
 
 class InstallerCli:
     regclient: Optional[SessionClient]
@@ -262,7 +300,7 @@ class InstallerCli:
 
     def __init__(self):
         self.regclient = None
-        self.domoptions = DomainOpts()
+        # self.domoptions = DomainOpts()
         self.httpd = None
         self.webth = None
         self.registry = cast(AnRegistry, None)
@@ -365,13 +403,12 @@ class InstallerCli:
 
     def validate_domain(self):
         cfg = self.registry.config
-        err = None
-        try: err = LangExt.only_wordtlen(cfg.domain, minlen=2, maxlen=12)
+        try: LangExt.only_id_len(cfg.domain, minlen=2, maxlen=12)
         except AnsonException as e: return {"domain length", f"2 <= Len('{cfg.domain}') <= 12"}
 
-        try: err = LangExt.only_wordtlen(cfg.org.orgId, minlen=2, maxlen=12)
+        try: LangExt.only_id_len(cfg.org.orgId, minlen=2, maxlen=12)
         except AnsonException as e: return {"community length", f"2 <= Len('{cfg.org.orgId}') <= 12"}
-        return err
+        return None
 
     def validateVol(self):
         """
@@ -624,36 +661,55 @@ class InstallerCli:
             raise PortfolioException(f'Folder {web_inf} dose not exist, or not a folder.')
 
     def ping(self, jsrv, timeout=20):
-        ping(install_uri, jsrv, timeout_snd=timeout)
+        return ping(install_uri, jsrv, timeout_snd=timeout)
+
+    def check_cent_login(self):
+        if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
+            self.regclient = SessionClient.loginWithUri(
+                uri=install_uri,
+                servroot=self.settings.regiserv,
+                uid=self.registry.synusers[0].userId,
+                pswdPlain=self.registry.synusers[0].pswd)
+        return self.regclient
+
+    def query_domx(self, market, commu):
+        self.check_cent_login()
+        return query_domx(client=self.regclient,
+                          func_uri=install_uri,
+                          market=market,
+                          commuid=commu)
+
+    def query_domconf(self, domid):
+        self.check_cent_login()
+        return query_domconfig(client = self.regclient, func_uri=install_uri,
+                               market=synode_ui.market_id, domid=domid)
 
     def register(self):
-        if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
-            self.regclient = SessionClient.loginWithUri(
-                uri=install_uri,
-                servroot=self.settings.regiserv,
-                uid=self.registry.synusers[0].userId,
-                pswdPlain=self.registry.synusers[0].pswd)
+        # if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
+        #     self.regclient = SessionClient.loginWithUri(
+        #         uri=install_uri,
+        #         servroot=self.settings.regiserv,
+        #         uid=self.registry.synusers[0].userId,
+        #         pswdPlain=self.registry.synusers[0].pswd)
+        self.check_cent_login()
 
-        return register(client=self.regclient,
-                        func_uri=install_uri,
-                        domx=self.registry.config,
-                        cfg=self.registry.config,
-                        settings=self.settings,
-                        iport=self.getProxiedIp())
+        return register(client=self.regclient, func_uri=install_uri,
+                        market=synode_ui.market_id, cfg=self.registry.config,
+                        settings=self.settings, iport=self.getProxiedIp())
 
     def submit_mysettings(self):
-        if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
-            self.regclient = SessionClient.loginWithUri(
-                uri=install_uri,
-                servroot=self.settings.regiserv,
-                uid=self.registry.synusers[0].userId,
-                pswdPlain=self.registry.synusers[0].pswd)
+        # if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
+        #     self.regclient = SessionClient.loginWithUri(
+        #         uri=install_uri,
+        #         servroot=self.settings.regiserv,
+        #         uid=self.registry.synusers[0].userId,
+        #         pswdPlain=self.registry.synusers[0].pswd)
+        self.check_cent_login()
 
         return submit_settings(client=self.regclient,
-                            func_uri=install_uri,
-                            cfg=self.registry.config,
-                            sets=self.settings,
-                            iport=self.getProxiedIp())
+                               func_uri=install_uri, market=synode_ui.market_id,
+                               cfg=self.registry.config, sets=self.settings,
+                               iport=self.getProxiedIp())
 
     def install(self):
         """

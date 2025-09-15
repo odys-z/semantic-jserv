@@ -76,11 +76,10 @@ def warn_msg(warn: str, details: object = None):
     result = msg.exec()
     return result
 
-details = []
+details = ['']
 errs = False
 def err_ctx(c, e: str, *args: str) -> None:
     global errs, details
-    # details.append('\n' + e)
     details[0] = e
     errs = True
 
@@ -88,8 +87,7 @@ def err_ready():
     global errs, details
     errs = False
     details.clear()
-    details.append(None)
-
+    details.append('')
 
 def has_err():
     global errs
@@ -166,6 +164,7 @@ class InstallerForm(QMainWindow):
             return False
 
         self.ui.bWinserv.setEnabled(False)
+        self.ui.bTestRun.setEnabled(False)
         return True
 
     def updateValidation(self, err: dict):
@@ -184,6 +183,20 @@ class InstallerForm(QMainWindow):
         msg_box(synode_ui.signup_prompt('This is a demo version. TODO'))
         return False
 
+    def query_domx(self, commuid) -> Optional[RegistResp]:
+        global errs
+        # commu = self.ui.cbbOrgs.currentText()
+        resp = self.cli.query_domx(synode_ui.market_id, commuid)
+        if resp is None:
+            details.append(self.cli.settings.regiserv + '\n' + 'Error while loading domains.')
+            errs = True
+        else:
+            return cast(RegistResp, resp)
+
+        if has_err():
+            warn_msg('Central service cannot be reached.', details)
+        return None
+
     def create_find_dom(self):
         global errs, details
         print("request create/join domain to", self.ui.txtCentral.text())
@@ -195,7 +208,7 @@ class InstallerForm(QMainWindow):
                 reg_jserv=self.ui.txtCentral.text().strip(),
                 orgid=self.ui.cbbOrgs.currentText().strip(),
                 domain=domainid
-            ) and self.cli.validate_domain():
+            ) and self.cli.validate_domain() is None:
             resp = self.cli.register()
 
             if resp is None:
@@ -203,22 +216,23 @@ class InstallerForm(QMainWindow):
                 errs = True
             else:
                 if resp.r == RegistResp.R.domexists:
-                    self.cli.registry.config = resp.diction
+                    self.update_bind_domconf(resp)
+                    errs = False
                     warn_msg("Domain already exists") # and still bind to the list
-                    self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
-                    self.bind_hubnode(resp)
-                    errs = False
                 elif resp.r == RegistResp.R.ok:
-                    self.cli.registry.config = resp.diction
-                    msg_box("Domain created: " + domainid)
-                    self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
-                    self.bind_hubnode(resp)
+                    self.update_bind_domconf(resp)
+                    # self.cli.registry.config = resp.diction
+                    # self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
+                    # self.bind_hubnode(resp)
                     errs = False
+                    msg_box("Domain created: " + domainid)
                 else:
                     warn_msg("Creating domain failed.")
 
         if has_err():
             warn_msg('Central service cannot be reached.', details)
+
+        self.seal_has_run()
 
     def submit_jserv(self):
         """
@@ -305,7 +319,7 @@ class InstallerForm(QMainWindow):
                 if self.ui.lbQr.pixmap is not None:
                     self.gen_qr()
 
-                self.enableServInstall()
+                self.enableWinsrvInstall()
                 
                 self.bind_config()
 
@@ -326,7 +340,7 @@ class InstallerForm(QMainWindow):
             self.cli.test_in_term()
             qr_data = self.gen_qr()
             print(qr_data)
-            self.enableServInstall()
+            self.enableWinsrvInstall()
         except PortfolioException as e:
             self.ui.lbQr.clear()
             err_msg('Start Portfolio service failed', e.msg)
@@ -356,6 +370,11 @@ class InstallerForm(QMainWindow):
 
         self.seal_has_run()
 
+    def update_bind_domconf(self, resp: RegistResp):
+        self.cli.registry.config = resp.diction
+        self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
+        self.bind_hubnode(resp)
+
     def update_chkhub(self, check: bool):
         self.cli.registry.config.mode = mode_hub if check else None
 
@@ -368,6 +387,17 @@ class InstallerForm(QMainWindow):
 
         if not check and LangExt.isblank(self.ui.txtSyncIns.text(), r'0+'):
             self.ui.txtSyncIns.setText("40")
+
+    def select_community(self, commuix):
+        domx = self.query_domx(self.ui.cbbOrgs.currentText())
+        self.ui.cbbDomains.clear()
+        if domx is not None:
+            self.ui.cbbDomains.addItems(domx.domains())
+
+    def select_domx(self, dix):
+        domid = self.ui.cbbDomains.currentText()
+        resp  = self.cli.query_domconf(domid)
+        self.update_bind_domconf(resp)
 
     def select_peer_byid(self, synid):
         try:
@@ -393,7 +423,7 @@ class InstallerForm(QMainWindow):
 
         can_install = LangExt.isblank(peer.stat)
         self.ui.bSetup.setEnabled(can_install)
-        self.ui.bSetup.setEnabled(can_install)
+        # self.ui.bSetup.setEnabled(can_install)
 
     def updateChkReverse(self, check: bool):
         if check == None:
@@ -434,19 +464,6 @@ class InstallerForm(QMainWindow):
                     hub.jserv if hub is not None else f'http://127.0.0.1:8964/{jserv_url_path}')
                 self.update_chkhub(True)
 
-    # def bind_cbbdomx(self, domx: list[Synode], domid):
-    #     self.ui.cbbPeers.clear()
-    #     self.ui.cbbPeers.addItems(domx)
-    #     self.ui.cbbPeers.setCurrentText(domid)
-    #
-    # def on_cbbdomx_edit(self):
-    #     txtdomid = self.ui.cbbDomains.currentText().strip()
-    #     if txtdomid and txtdomid not in self.cli.domoptions.domx():
-    #         self.cli.domoptions.add(txtdomid)
-    #         self.ui.cbbDomains.addItem(txtdomid)  # Add to combo box
-    #         self.ui.cbbDomains.setCurrentText(txtdomid)  # Keep the typed text selected
-    #         self.cli.registry.config.domain = txtdomid
-
     def bindIdentity(self, registry: AnRegistry):
         print(registry.config.toBlock())
         cfg = registry.config
@@ -461,7 +478,7 @@ class InstallerForm(QMainWindow):
         # self.ui.txtOrgid.setText(cfg.org.orgId)
         self.bind_cbborg([cfg.org.orgId], cfg.org.orgId)
 
-        self.cli.domoptions.add(cfg.domain)
+        # self.cli.domoptions.add(cfg.domain)
         self.ui.cbbDomains.setCurrentText(cfg.domain)
 
         u = self.cli.find_synuser(cfg.admin)
@@ -499,7 +516,7 @@ class InstallerForm(QMainWindow):
             cfg = self.cli.registry.config
             self.bind_cbbpeers(peers, cfg.synid)
             print(lines)
-            if cfg is not None and len(cfg.peers) > 0:
+            if cfg is not None and LangExt.len(cfg.peers) > 0:
                 hub_id = cfg.peers[0].synid
                 if hub_id in settings.jservs:
                     self.ui.jservLines.setText(f'{hub_id}:\t{settings.jservs[hub_id]}')
@@ -510,25 +527,26 @@ class InstallerForm(QMainWindow):
             self.ui.jservLines.setText(
                 '# Error: No configuration has been loaded. Check resource root path setting.')
 
-    def enableServInstall(self):
+    def enableWinsrvInstall(self):
         installed = self.cli.isinstalled()
         if Utils.iswindows():
             self.ui.bWinserv.setEnabled(installed)
 
     def seal_has_run(self):
-        enable = not self.cli.hasrun()
-        self.ui.chkHub.setEnabled(enable)
-        # self.ui.txtOrgid.setEnabled(enable)
-        self.ui.cbbOrgs.setEnabled(enable)
-        self.ui.cbbDomains.setEnabled(enable)
-        # self.ui.txtSynode.setEnabled(enable)
-        self.ui.cbbPeers.setEnabled(enable)
+        neverun = not self.cli.hasrun()
+
+        self.ui.bTestRun.setEnabled(neverun and self.cli.isinstalled())
+
+        self.ui.chkHub.setEnabled(neverun)
+        self.ui.cbbOrgs.setEnabled(neverun)
+        self.ui.cbbDomains.setEnabled(neverun)
+        self.ui.cbbPeers.setEnabled(neverun)
 
         # TODO FIXME should still can change password
         # Or possibly write back to setting.json by jar?
-        self.ui.txtPswd.setEnabled(enable)
-        self.ui.txtPswd2.setEnabled(enable)
-        self.ui.txtDompswd.setEnabled(enable)
+        self.ui.txtPswd.setEnabled(neverun)
+        self.ui.txtPswd2.setEnabled(neverun)
+        self.ui.txtDompswd.setEnabled(neverun)
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def translateUI():
@@ -552,6 +570,10 @@ class InstallerForm(QMainWindow):
                 err_uihandlers[0] = err_ctx
 
             self.ui.bSignup.clicked.connect(self.signup_demo)
+
+            self.ui.cbbOrgs.currentIndexChanged.connect(self.select_community)
+            self.ui.cbbDomains.currentIndexChanged.connect(self.select_domx)
+
             self.ui.bCreateDomain.clicked.connect(self.create_find_dom)
 
             self.ui.chkHub.clicked.connect(self.update_chkhub)
@@ -561,6 +583,8 @@ class InstallerForm(QMainWindow):
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
             self.ui.bSetup.clicked.connect(self.save)
+
+            self.ui.bTestRun.setEnabled(False)
             self.ui.bTestRun.clicked.connect(self.test_run)
 
             self.ui.chkReverseProxy.clicked.connect(self.updateChkReverse)

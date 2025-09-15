@@ -1,6 +1,7 @@
 { "type": "synodepy3.SynodeUi",
   "version": "0.7.6",
   "market": "TEST",
+  "market_id": "test.org",
   "iso": "http://www.lingoes.net/en/translator/langcode.htm",
   "ui": "ui_form.py",
   "credits": "https://odys-z.github.io/products/album/credits.html",
