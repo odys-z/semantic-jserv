@@ -1,6 +1,8 @@
 import sys
 import time
 
+from synodepy3 import SynodeUi
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 import os
@@ -24,7 +26,7 @@ from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_p
 
 # Important:
 # Run the following command to generate the ui_form.py file
-#     pyside6-uic form.ui -o ui_form.py
+#
 from synodepy3.ui_form import Ui_InstallForm
 from synodepy3.installer_api import mode_hub
 
@@ -185,7 +187,6 @@ class InstallerForm(QMainWindow):
 
     def query_domx(self, commuid) -> Optional[RegistResp]:
         global errs
-        # commu = self.ui.cbbOrgs.currentText()
         resp = self.cli.query_domx(synode_ui.market_id, commuid)
         if resp is None:
             details.append(self.cli.settings.regiserv + '\n' + 'Error while loading domains.')
@@ -273,13 +274,11 @@ class InstallerForm(QMainWindow):
             reg_jserv=self.ui.txtCentral.text().strip(),
             admin=self.ui.txtAdminId.text(),
             pswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
-            # org=self.ui.txtOrgid.text().strip(),
             org=self.ui.cbbOrgs.currentText(),
             domain=self.ui.cbbDomains.currentText().strip(),
             domphrase=self.ui.txtDompswd.text(),
             hubmode=self.ui.chkHub.checkState() == Qt.CheckState.Checked,
             jservss=self.ui.jservLines.toPlainText(),
-            # synid=self.ui.txtSynode.text().strip(),
             synid=self.ui.cbbPeers.currentText().strip(),
             syncins=self.ui.txtSyncIns.text(),
             port=self.ui.txtPort.text(),
@@ -309,6 +308,12 @@ class InstallerForm(QMainWindow):
                     else:
                         warn_msg("Install successfully, with errors automatically fixe. See details...", post_err)
 
+                    if self.ui.lbQr.pixmap is not None:
+                        self.gen_qr()
+
+                    self.bind_config()
+                    self.submit_jserv()
+
                 except FileNotFoundError or IOError as e:
                     # Changing vol path can reach here
                     err_msg('Setting up synodepy3 is failed.', e)
@@ -316,22 +321,18 @@ class InstallerForm(QMainWindow):
                     warn_msg('Configuration is updated with errors. Check the details.\n'
                              'If this is not switching volume, that is not correct' , e)
 
-                if self.ui.lbQr.pixmap is not None:
-                    self.gen_qr()
-
                 self.enableWinsrvInstall()
-                
-                self.bind_config()
-
-                self.submit_jserv()
 
         except PortfolioException as e:
             err_msg('Setting up synodepy3 is failed.', e)
 
     def test_run(self):
+        syncins = self.cli.registry.config.syncIns
+        self.cli.registry.config.syncIns = 0
         self.save()
+
         msg_box('The settings is valid. You can close the opening terminal once you need to stop it.\n'
-                'A stand alone running is recommended. Install the service on Windows or start:\n'
+                'To stat the services, a stand alone running is recommended. Install the service on Windows or start:\n'
                 'java -jar bin/jserv-album-#.#.#.jar\n'
                 'java -jar bin/html-web-#.#.#.jar')
         try:
@@ -345,7 +346,9 @@ class InstallerForm(QMainWindow):
             self.ui.lbQr.clear()
             err_msg('Start Portfolio service failed', e.msg)
 
-        time.sleep(2)
+        time.sleep(0.2)
+        self.cli.registry.config.syncIns = syncins
+        self.save()
         self.bind_config()
 
     def installWinsrv(self):
@@ -373,20 +376,20 @@ class InstallerForm(QMainWindow):
     def update_bind_domconf(self, resp: RegistResp):
         self.cli.registry.config = resp.diction
         self.bind_cbbpeers(peers=resp.peer_ids(), synid=resp.next_installing())
-        self.bind_hubnode(resp)
+        self.bind_peer(resp)
 
-    def update_chkhub(self, check: bool):
-        self.cli.registry.config.mode = mode_hub if check else None
-
-        self.ui.txtSyncIns.setDisabled(check)
-        self.ui.jservLines.setDisabled(check)
-        self.ui.bPing.setDisabled(check)
-        self.ui.txtimeout.setDisabled(check)
-        self.ui.bCreateDomain.setText(synode_ui.langs[synode_ui.lang]["txt_create_dom"]
-                              if check else synode_ui.langs[synode_ui.lang]["txt_join_dom"])
-
-        if not check and LangExt.isblank(self.ui.txtSyncIns.text(), r'0+'):
-            self.ui.txtSyncIns.setText("40")
+    # def update_chkhub(self, check: bool):
+    #     self.cli.registry.config.mode = mode_hub if check else None
+    #
+    #     self.ui.txtSyncIns.setDisabled(check)
+    #     self.ui.jservLines.setDisabled(check)
+    #     self.ui.bPing.setDisabled(check)
+    #     self.ui.txtimeout.setDisabled(check)
+    #     self.ui.bCreateDomain.setText(synode_ui.langs[synode_ui.lang]["txt_create_dom"]
+    #                           if check else synode_ui.langs[synode_ui.lang]["txt_join_dom"])
+    #
+    #     if not check and LangExt.isblank(self.ui.txtSyncIns.text(), r'0+'):
+    #         self.ui.txtSyncIns.setText("40")
 
     def select_community(self, commuix):
         domx = self.query_domx(self.ui.cbbOrgs.currentText())
@@ -419,26 +422,37 @@ class InstallerForm(QMainWindow):
         peer = self.cli.find_peer(n.synid)
         chk = peer.remarks == SynodeMode.hub.name
         self.ui.chkHub.setChecked(chk)
-        self.update_chkhub(chk)
 
-        can_install = LangExt.isblank(peer.stat)
-        self.ui.bSetup.setEnabled(can_install)
+        self.enable_widgets()
+        # self.update_chkhub(chk)
+        #
+        # can_install = LangExt.isblank(peer.stat)
+        # self.ui.bSetup.setEnabled(can_install)
         # self.ui.bSetup.setEnabled(can_install)
 
-    def updateChkReverse(self, check: bool):
+    def update_chkreverse(self, check: bool):
         if check == None:
             check = self.ui.chkReverseProxy.checkState() == Qt.CheckState.Checked
         else:
             self.ui.chkReverseProxy.setChecked(check)
 
         self.ui.txtIP_proxy.setEnabled(check)
+        # if check and LangExt.isblank(self.ui.txtIP_proxy.text(), '(^0*$)|(^0\.0\.0\.0$)'):
+        #     self.ui.txtIP_proxy.setText(self.cli.settings.proxyIp)
+        self.ui.txtIP_proxy.setEnabled(check)
+
         self.ui.txtWebport_proxy.setEnabled(check)
+        if check and LangExt.isblank(self.ui.txtWebport_proxy.text(), '0'):
+            self.ui.txtWebport_proxy.setText(str(self.cli.settings.webProxyPort))
+
         self.ui.txtPort_proxy.setEnabled(check)
+        if check and LangExt.isblank(self.ui.txtPort_proxy.text(), '0'):
+            self.ui.txtPort_proxy.setText(str(self.cli.settings.proxyPort))
 
     def bind_config(self):
         self.cli.registry = self.cli.load_settings()
         self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.volume, 'registry')
-        self.bindIdentity(self.cli.registry)
+        self.bindIdentity(self.cli.registry, synodeui=synode_ui)
         self.bindSettings()
         self.seal_has_run()
 
@@ -455,18 +469,20 @@ class InstallerForm(QMainWindow):
             self.ui.cbbPeers.setCurrentText(synid)
             self.select_peer_byid(synid)
 
-    def bind_hubnode(self, resp: RegistResp):
+    def bind_peer(self, resp: RegistResp):
         if resp.diction.peers is not None and len(resp.diction.peers) > 0:
-            hub = resp.diction.peers[0]
-            if hub.stat == CynodeStats.create:
+            peerno = self.cli.registry.find_peer(self.cli.registry.config.synid) or resp.diction.peers[0]
+
+            if peerno.stat == CynodeStats.create:
                 # bind this as hub
                 self.ui.jservLines.setText(
-                    hub.jserv if hub is not None else f'http://127.0.0.1:8964/{jserv_url_path}')
-                self.update_chkhub(True)
+                    peerno.jserv if peerno is not None else f'http://127.0.0.1:8964/{jserv_url_path}')
+                # self.update_chkhub(True)
 
-    def bindIdentity(self, registry: AnRegistry):
-        print(registry.config.toBlock())
+    def bindIdentity(self, registry: AnRegistry, synodeui: SynodeUi):
         cfg = registry.config
+        cfg.org.orgType = synodeui.market_id
+        print(cfg.toBlock())
 
         self.ui.txtAdminId.setText(cfg.admin)
 
@@ -491,7 +507,8 @@ class InstallerForm(QMainWindow):
         self.bind_cbbpeers(cfg.peers, cfg.synid)
 
         self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(int(cfg.syncIns)))
-        self.update_chkhub(SynodeMode.hub.name == cfg.mode)
+
+        # self.update_chkhub(SynodeMode.hub.name == cfg.mode)
 
     def bindSettings(self):
         peers, settings = self.cli.registry.config.peers, self.cli.settings
@@ -506,7 +523,7 @@ class InstallerForm(QMainWindow):
         self.ui.txtPort_proxy.setText(str(settings.proxyPort))
         self.ui.txtWebport_proxy.setText(str(settings.webProxyPort))
 
-        self.updateChkReverse(self.cli.settings.reverseProxy)
+        self.update_chkreverse(self.cli.settings.reverseProxy)
 
         self.ui.txtVolpath.setText(settings.Volume())
 
@@ -528,15 +545,35 @@ class InstallerForm(QMainWindow):
                 '# Error: No configuration has been loaded. Check resource root path setting.')
 
     def enableWinsrvInstall(self):
+        '''
+        replaced by enable_widgets()
+        :return:
+        '''
         installed = self.cli.isinstalled()
         if Utils.iswindows():
             self.ui.bWinserv.setEnabled(installed)
 
     def seal_has_run(self):
+        '''
+        replaced by enable_widgets()
+        :return:
+        '''
+
+        def can_save():
+            '''
+            The synode id is correct and is not installed
+            :return:
+            '''
+            next_id = self.ui.cbbPeers.currentText()
+            le_node = self.cli.registry.find_peer(next_id)
+            if le_node is not None and (le_node.stat is None or le_node.stat == CynodeStats.create):
+                return self.cli.validateVol() is None
+            else:
+                return False
+
         neverun = not self.cli.hasrun()
 
-        self.ui.bTestRun.setEnabled(neverun and self.cli.isinstalled())
-
+        self.ui.bTestRun.setEnabled(neverun and can_save())
         self.ui.chkHub.setEnabled(neverun)
         self.ui.cbbOrgs.setEnabled(neverun)
         self.ui.cbbDomains.setEnabled(neverun)
@@ -544,9 +581,57 @@ class InstallerForm(QMainWindow):
 
         # TODO FIXME should still can change password
         # Or possibly write back to setting.json by jar?
-        self.ui.txtPswd.setEnabled(neverun)
-        self.ui.txtPswd2.setEnabled(neverun)
+        # self.ui.txtPswd.setEnabled(neverun)
+        # self.ui.txtPswd2.setEnabled(neverun)
         self.ui.txtDompswd.setEnabled(neverun)
+
+    def enable_widgets(self):
+        def iscreating():
+            '''
+            The synode id is correct and is not installed
+            :return:
+            '''
+            next_id = self.ui.cbbPeers.currentText()
+            le_node = self.cli.registry.find_peer(next_id)
+            if le_node is not None and (le_node.stat is None or le_node.stat == CynodeStats.create):
+                return self.cli.validateVol() is None
+            else:
+                return False
+
+        def update_chkhub(check: bool):
+            self.cli.registry.config.mode = mode_hub if check else None
+
+            self.ui.txtSyncIns.setDisabled(check)
+            self.ui.jservLines.setDisabled(check)
+            self.ui.bPing.setDisabled(check)
+            self.ui.txtimeout.setDisabled(check)
+            self.ui.bCreateDomain.setText(synode_ui.langs[synode_ui.lang]["txt_create_dom"]
+                                          if check else synode_ui.langs[synode_ui.lang]["txt_join_dom"])
+
+            if not check and LangExt.isblank(self.ui.txtSyncIns.text(), r'0+'):
+                self.ui.txtSyncIns.setText("40")
+
+        neverun = not self.cli.hasrun()
+
+        self.ui.chkHub.setEnabled(neverun)
+        self.ui.cbbOrgs.setEnabled(neverun)
+        self.ui.cbbDomains.setEnabled(neverun)
+        self.ui.txtDompswd.setEnabled(neverun) # can change in the future
+
+        valid_peers = self.cli.is_peers_valid()
+        self.ui.cbbPeers.setEnabled(valid_peers)
+
+        update_chkhub(self.ui.chkHub.checkState() == Qt.CheckState.Checked)
+
+        cansave = valid_peers and (not neverun or self.cli.registry.config.synid == self.ui.cbbPeers.currentText())
+        self.ui.bSetup.setEnabled(cansave)
+
+        # test_run() is now actually saved syncIns == 0, but will not reinitialize dbs.
+        cantest = neverun and iscreating() and self.cli.isinstalled() and cansave
+        self.ui.bTestRun.setEnabled(cantest)
+
+        can_winsrv = cantest and Utils.iswindows()
+        self.ui.bWinserv.setEnabled(can_winsrv)
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def translateUI():
@@ -576,7 +661,9 @@ class InstallerForm(QMainWindow):
 
             self.ui.bCreateDomain.clicked.connect(self.create_find_dom)
 
-            self.ui.chkHub.clicked.connect(self.update_chkhub)
+            # self.ui.chkHub.clicked.connect(self.update_chkhub)
+            self.ui.chkHub.clicked.connect(self.enable_widgets)
+
             self.ui.cbbPeers.currentIndexChanged.connect(self.select_peer)
             self.ui.bVolpath.clicked.connect(setVolumePath)
 
@@ -587,7 +674,7 @@ class InstallerForm(QMainWindow):
             self.ui.bTestRun.setEnabled(False)
             self.ui.bTestRun.clicked.connect(self.test_run)
 
-            self.ui.chkReverseProxy.clicked.connect(self.updateChkReverse)
+            self.ui.chkReverseProxy.clicked.connect(self.update_chkreverse)
 
             if Utils.get_os() == 'Windows':
                 self.ui.bWinserv.clicked.connect(self.installWinsrv)
@@ -595,6 +682,7 @@ class InstallerForm(QMainWindow):
                 self.ui.bWinserv.setEnabled(False)
 
             self.bind_config()
+            self.enable_widgets()
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
         super().closeEvent(event)

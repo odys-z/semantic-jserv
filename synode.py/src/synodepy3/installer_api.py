@@ -1,8 +1,9 @@
 # This Python file uses the following encoding: utf-8
+import datetime
 import sys
 from dataclasses import dataclass
 
-from semanticshare.io.oz.syn import SynodeMode
+from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from . import SynodeUi
 
@@ -31,7 +32,8 @@ from semanticshare.io.oz.syntier.serv import ExternalHosts
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, \
     sys_db, syn_db, syntity_json, getJservUrl, valid_url_port
-from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp, SynOrg
+from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, \
+    Centralport, RegistResp, SynOrg, CynodeStats
 
 from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 
@@ -60,7 +62,7 @@ def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
 
 
 def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
-    req = RegistReq(RegistReq.A.queryDomx)
+    req = RegistReq(RegistReq.A.queryDomx, market=market)
     req.Uri(func_uri)
     req.market = market
 
@@ -82,7 +84,7 @@ def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
 def query_domconfig(client: SessionClient, func_uri: str, market: str, domid: str):
     req = RegistReq(RegistReq.A.queryDomConfig, market)
     req.Uri(func_uri)
-    req.domain = domid
+    # req.domain = domid
     req.diction = SynodeConfig()
     req.diction.org = SynOrg(orgid=domid, orgname=domid, orgtype=market)
     msg = AnsonMsg(Centralport.register).Body(req)
@@ -110,10 +112,16 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
     return cast(RegistResp, resp)
 
 
-def submit_settings(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig, sets: AppSettings, iport: tuple[str, int]):
+def submit_settings(client: SessionClient, func_uri: str, market: str,
+                    cfg: SynodeConfig, sets: AppSettings, iport: tuple[str, int],
+                    utc: str='now',
+                    stat: str = CynodeStats.create):
     req = RegistReq(RegistReq.A.submitSettings, market)
     req.Uri(func_uri)
     req.jserurl(cfg.https, sets, iport)
+    req.jserv_utc = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if utc == 'now' else utc
+    req.mystate = stat
+    req.dictionary(cfg)
 
     msg = AnsonMsg(Centralport.register).Body(req)
 
@@ -295,8 +303,11 @@ class InstallerCli:
         """
         return [[kv.strip().removesuffix(':') for kv in line.split('\t')] for line in jservstr.split('\n')]
 
-    def fromat_jservstr(jservstr: str):
+    def fromat_jservstr_deprecated(jservstr: str):
         return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
+
+    def fromat_jservurl(hub: Synode, jservstr: str):
+        return {None if hub is None else hub.synid: kv[-1] for kv in InstallerCli.parsejservstr(jservstr)}
 
     def __init__(self):
         self.regclient = None
@@ -355,6 +366,19 @@ class InstallerCli:
 
         valid_local_reg(registry)
         return registry
+
+    def is_peers_valid(self):
+        '''
+        There are peers in config.peers[], and domain ids are none or match config.domain
+        :return:
+        '''
+        peers = self.registry.config.peers
+        if LangExt.len(peers) > 0:
+            for p in peers:
+                if p.domain is not None and p.domain != self.registry.config.domain:
+                    return False
+            return True
+        else: return False
 
     def isinstalled(self):
         return self.validateVol() is None
@@ -487,6 +511,9 @@ class InstallerCli:
             raise FileNotFoundError(
                 f'Some initial database or configure files cannot be found in volume: {sys_db}, {syn_db}')
         return True
+
+    def find_hubpeer(self):
+        return self.registry.find_hubpeer()
 
     def find_peer(self, pid: str):
         return AnRegistry.find_synode(self.registry.config.peers, pid)
@@ -627,7 +654,8 @@ class InstallerCli:
             self.settings.port = int(port)
 
         if jservss is not None and len(jservss) > 8:
-            jsvkvs = InstallerCli.fromat_jservstr(jservss)
+            # jsvkvs = InstallerCli.fromat_jservstr(jservss)
+            jsvkvs = InstallerCli.fromat_jservurl(self.find_hubpeer(), jservss)
             jsvkvs[self.registry.config.synid] = getJservUrl(self.registry.config.https, self.get_iport())
             self.settings.Jservs(jsvkvs)
         else:
@@ -685,31 +713,23 @@ class InstallerCli:
                                market=synode_ui.market_id, domid=domid)
 
     def register(self):
-        # if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
-        #     self.regclient = SessionClient.loginWithUri(
-        #         uri=install_uri,
-        #         servroot=self.settings.regiserv,
-        #         uid=self.registry.synusers[0].userId,
-        #         pswdPlain=self.registry.synusers[0].pswd)
         self.check_cent_login()
 
         return register(client=self.regclient, func_uri=install_uri,
                         market=synode_ui.market_id, cfg=self.registry.config,
                         settings=self.settings, iport=self.getProxiedIp())
 
+    def jesuis_hub(self):
+        return self.registry.config.mode == SynodeMode.hub.name
+
     def submit_mysettings(self):
-        # if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
-        #     self.regclient = SessionClient.loginWithUri(
-        #         uri=install_uri,
-        #         servroot=self.settings.regiserv,
-        #         uid=self.registry.synusers[0].userId,
-        #         pswdPlain=self.registry.synusers[0].pswd)
         self.check_cent_login()
 
         return submit_settings(client=self.regclient,
                                func_uri=install_uri, market=synode_ui.market_id,
                                cfg=self.registry.config, sets=self.settings,
-                               iport=self.getProxiedIp())
+                               iport=self.getProxiedIp()
+                ) # if not self.jesuis_hub() else RegistResp().Code(MsgCode.ok)
 
     def install(self):
         """

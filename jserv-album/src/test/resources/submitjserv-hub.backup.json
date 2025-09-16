@@ -11,6 +11,7 @@
   "port"        : 8961,
   "reverseProxy": false,
   "jservs"      : null,
+  "jserv_utc"   : null,
   "localIp"     : null,
   "installkey"  : "0123456789ABCDEF",
   "rootkey"     : null

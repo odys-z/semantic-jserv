@@ -134,7 +134,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		AnResultset rs = DAHelper
 				.getEntityById(new DATranscxt(synconn), synm, synode)
 				.nxt();
-		return new JServUrl().jserv(rs.getString(synm.jserv), rs.getString(synm.optime));
+		return new JServUrl().jserv(rs.getString(synm.jserv), rs.getString(synm.jserv_utc));
 	}
 
 	/**
@@ -328,7 +328,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			throws TransException, SQLException, AnsonException {
 		
 		syngleton.settings
-				.persistDB(syngleton.syncfg, synm, peer, jserv)
+				.persistDB(syngleton.syncfg, synm, peer, jserv, timestamp_utc)
 				.save();
 		
 		if (ipChangeHandler != null)

@@ -4,7 +4,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-sample</artifactId>
-  <version>1.5.4</version>
+  <version>1.5.5</version>
   <name>jserv template project</name>
   <description>Sample project for starting up a Semantic-* project</description>
   <url>http://odys-z.github.io</url>

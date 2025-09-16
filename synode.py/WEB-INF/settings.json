@@ -11,7 +11,7 @@
   "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json"],
   "webrootLocal": "http://suppress.warning:8900",
   "vol_name": "VOLUME_HOME",
-  "volume": "C:/Users/Alice/github/semantic-jserv/synode.py/vol",
+  "volume": "vol",
   "jservs": { },
   "installkey": "0123456789ABCDEF",
   "rootkey": ""

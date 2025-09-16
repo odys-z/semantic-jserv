@@ -1,5 +1,5 @@
 { "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "regiserv"    : "http://127.0.0.1:1989/regist-serv",
+  "regiserv"    : "http://127.0.0.1:1989/regist-central",
   "vol_name"    : "VOLUME_HOME",
   "localIp"     : null,
   "proxyIp"     : null,

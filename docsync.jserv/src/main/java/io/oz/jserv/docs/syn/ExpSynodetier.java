@@ -464,7 +464,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		if (!JServUrl.valid(jserv))
 			throw new ExchangeException(ExessionAct.ready, null, "Invalid Jserv: %s", jserv);
 
-		String optim = (String)req.data(m.optime);
+		String optim = (String)req.data(m.jserv_utc);
 		domanager0.updateJserv(st, req.exblock.srcnode, jserv, optim);
 
 		return onQueryJservs(req, usr);

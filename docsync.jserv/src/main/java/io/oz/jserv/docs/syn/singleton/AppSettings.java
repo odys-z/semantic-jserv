@@ -167,7 +167,7 @@ public class AppSettings extends Anson {
 			if (eq(cfg.synode(), peer)) 
 				logT(new Object() {}, "Ignoring updating jserv to local node: %s", peer);
 			else
-				updateNewJserv(cfg.synconn, cfg.domain, synm, peer, jservs.get(peer), null, cfg.synode());
+				updateNewJserv(cfg.synconn, cfg.domain, synm, peer, jservs.get(peer), jserv_utc, cfg.synode());
 		}
 		return this;
 	}
@@ -194,8 +194,9 @@ public class AppSettings extends Anson {
 		DATranscxt tb = null;
 		try { 
 			tb = new DATranscxt(synconn);
-			String optime = DAHelper.getValstr(tb, synconn, synm, synm.optime, synm.pk, peer, synm.domain, domain);
-			if (early(timestamp_utc, optime));
+			String optime = DAHelper.getValstr(tb, synconn, synm, synm.jserv_utc, synm.pk, peer, synm.domain, domain);
+			if (!(isblank(timestamp_utc) && isblank(optime))
+				&& early(timestamp_utc, optime))
 				return false;
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -208,11 +209,11 @@ public class AppSettings extends Anson {
 
 		tb.update(synm.tbl, robot)
 			.nv(synm.jserv, servurl)
-			.nv(synm.optime, timestamp)
+			.nv(synm.jserv_utc, timestamp)
 			.nv(synm.oper,  src_node)
 			.whereEq(synm.pk, peer)
 			.whereEq(synm.domain, domain)
-			.where(op.le, Funcall.isnull(synm.optime, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(timestamp))
+			.where(op.le, Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(timestamp))
 			.u(tb.instancontxt(synconn, robot));
 		
 		return true;
@@ -402,15 +403,15 @@ public class AppSettings extends Anson {
 		return settings;
 	}
 
-	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm, String node, JServUrl jserv)
+	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm, String node, JServUrl jserv, String jserv_utc)
 			throws TransException, SQLException {
-		return persistDB(cfg, synm, node, jserv.jserv());
+		return persistDB(cfg, synm, node, jserv.jserv(), jserv_utc);
 	}
 
-	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm, String node, String jserv)
+	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm, String node, String jserv, String jserv_utc)
 			throws TransException, SQLException {
-		String now = DateFormat.formatime_utc(new Date());
-		updateNewJserv(cfg.synconn, cfg.domain, synm, node, jserv, now, cfg.synode());
+		// String now = DateFormat.formatime_utc(new Date());
+		updateNewJserv(cfg.synconn, cfg.domain, synm, node, jserv, jserv_utc, cfg.synode());
 		jservs = loadJservs(cfg, synm);
 		return this;
 	}
@@ -426,7 +427,7 @@ public class AppSettings extends Anson {
 		DATranscxt tb = new DATranscxt(cfg.synconn);
 
 		return ((AnResultset) tb.select(synm.tbl)
-		  .cols(synm.jserv, synm.synoder, synm.optime)
+		  .cols(synm.jserv, synm.synoder, synm.jserv_utc)
 		  .whereEq(synm.domain, cfg.domain)
 		  .rs(tb.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
 		  .rs(0))

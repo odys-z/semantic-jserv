@@ -10,23 +10,16 @@
 
   "org": {
     "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
-    "orgId": "test.org",
-    "orgName": "TEST 0.7.6",
-    "orgType": "market",
-    "market":  "TEST",
+    "orgId": "org.my",
+    "orgName": "ORG-MY 0.7.6",
+    "orgType": "my override by synode.json/{market_id}",
     "webroot": "$WEBROOT",
     "homepage": "",
     "album0":  "album-test"
   },
 
-  "syncIns": 0,
-	
-  "peers-deleting": [
-    {"type": "io.oz.syn.Synode",
-     "synid": "node0", "org": "org-0", "mac": "#org-0.node0", "nyq": 0, "domain": "zsu", "syn_uid": "node0.node0"},
-    {"synid": "node1", "org": "org-0", "mac": "#org-0.node1", "nyq": 0, "domain": "zsu", "syn_uid": "node1,node1"},
-    {"synid": "node2", "org": "org-0", "mac": "#org-0.node2", "nyq": 0, "domain": "zsu", "syn_uid": "node2,node2"} ]
+  "syncIns": 0
  },
 
- "synusers": [ {"userId": "admin", "pswd": "89648964", "iv": null, "org": "org-0", "domain": "zsu"} ]
+ "synusers": [ {"userId": "admin", "pswd": "89648964", "iv": null, "org": "org.my", "domain": "zsu"} ]
 }

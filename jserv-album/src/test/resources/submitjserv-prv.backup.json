@@ -11,6 +11,7 @@
   "port"        : 8962,
   "reverseProxy": false,
   "jservs"      : {"HUB": "http://127.0.0.1:8961/jserv-album"},
+  "jserv_utc"   : "1989-06-04",
   "localIp"     : null,
   "installkey"  : "0123456789ABCDEF",
   "rootkey"     : null
