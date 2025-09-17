@@ -10,7 +10,7 @@
   "reverseProxy": false,
   "envars"      : {"WEBROOT_HUB": "n0"},
   "startHandler": ["io.oz.syntier.serv.T_WebservExposer", "web-dist/private/host.json"],
-  "volume"      : "../vol",
+  "volume"      : "vol",
   "connIdleSnds": 0.0,
   "jservs"      : {},
   "installkey"  : "0123456789ABCDEF",

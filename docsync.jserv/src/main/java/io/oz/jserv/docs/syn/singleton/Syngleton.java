@@ -3,6 +3,7 @@ package io.oz.jserv.docs.syn.singleton;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.is;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
@@ -391,7 +392,7 @@ public class Syngleton extends JSingleton {
 	}
 	
 	static DocOrgMeta buildOrgMeta(SynodeConfig cfg) throws SemanticException {
-		if (!eq(cfg.org.meta, DocOrgMeta.class.getName()))
+		if (!isblank(cfg.org.meta) && !eq(cfg.org.meta, DocOrgMeta.class.getName()))
 			throw new SemanticException("todo");
 		return new DocOrgMeta(cfg.sysconn);
 	}

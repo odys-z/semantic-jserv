@@ -7,9 +7,10 @@ from anson.io.odysz.common import LangExt
 @dataclass
 class SynodeUi(Anson):
     version: str
-    iso: str
+    central_path: str
     market: str
     market_id: str
+    iso: str
     lang: str
     langs: dict
     ui: str
@@ -21,6 +22,7 @@ class SynodeUi(Anson):
         super().__init__()
         self.ui = 'ui_form.py'
         self.version = "0.7.6"
+        self.central_path = 'regist_central'
         self.market = "TEST"
         self.market = "test.org"
         self.langs = dict()

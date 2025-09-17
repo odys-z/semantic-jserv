@@ -81,12 +81,11 @@ def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
     return cast(RegistResp, resp)
 
 
-def query_domconfig(client: SessionClient, func_uri: str, market: str, domid: str):
+def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: str, domid: str, myid:str):
     req = RegistReq(RegistReq.A.queryDomConfig, market)
     req.Uri(func_uri)
-    # req.domain = domid
-    req.diction = SynodeConfig()
-    req.diction.org = SynOrg(orgid=domid, orgname=domid, orgtype=market)
+    req.diction = SynodeConfig(synode=myid, domain=domid)
+    req.diction.org = SynOrg(orgid=orgid, orgname=domid, orgtype=market)
     msg = AnsonMsg(Centralport.register).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
@@ -118,9 +117,9 @@ def submit_settings(client: SessionClient, func_uri: str, market: str,
                     stat: str = CynodeStats.create):
     req = RegistReq(RegistReq.A.submitSettings, market)
     req.Uri(func_uri)
-    req.jserurl(cfg.https, sets, iport)
-    req.jserv_utc = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if utc == 'now' else utc
-    req.mystate = stat
+    req.jserurl(cfg.https, sets, iport).\
+        Jservtime(datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if utc == 'now' else utc)
+    # req.mystate = stat
     req.dictionary(cfg)
 
     msg = AnsonMsg(Centralport.register).Body(req)
@@ -278,18 +277,6 @@ exiftool_testver = 'exiftool -ver'
 
 pswd_min, pswd_max = 8, 32
 
-# @dataclass
-# class DomainOpts:
-#     domx: list[str]
-#
-#     def __init__(self):
-#         super().__init__()
-#         self.domx = []
-#
-#     def add(self, dom: str):
-#         if dom not in self.domx:
-#             self.domx.append(dom)
-
 class InstallerCli:
     regclient: Optional[SessionClient]
     settings: AppSettings
@@ -311,7 +298,6 @@ class InstallerCli:
 
     def __init__(self):
         self.regclient = None
-        # self.domoptions = DomainOpts()
         self.httpd = None
         self.webth = None
         self.registry = cast(AnRegistry, None)
@@ -335,6 +321,7 @@ class InstallerCli:
         if os.path.exists(web_settings):
             try:
                 data: AppSettings = cast(AppSettings, Anson.from_file(web_settings))
+                data.json = web_settings
                 self.settings = data
             except json.JSONDecodeError as e:
                 raise PortfolioException(f'Loading Anson data from {web_settings} failed.', e)
@@ -428,10 +415,12 @@ class InstallerCli:
     def validate_domain(self):
         cfg = self.registry.config
         try: LangExt.only_id_len(cfg.domain, minlen=2, maxlen=12)
-        except AnsonException as e: return {"domain length", f"2 <= Len('{cfg.domain}') <= 12"}
+        except AnsonException as e:
+            return {"domain length", f"2 <= Len('{cfg.domain}') <= 12"}
 
         try: LangExt.only_id_len(cfg.org.orgId, minlen=2, maxlen=12)
-        except AnsonException as e: return {"community length", f"2 <= Len('{cfg.org.orgId}') <= 12"}
+        except AnsonException as e:
+            return {"community length", f"2 <= Len('{cfg.org.orgId}') <= 12"}
         return None
 
     def validateVol(self):
@@ -464,7 +453,7 @@ class InstallerCli:
                 return {f'Proxy port must greater than 1024: {self.settings.port}' }
 
         except ValueError as e:
-            return e
+            return str(e)
 
     def check_installed_jar_db(self):
         """
@@ -543,7 +532,8 @@ class InstallerCli:
         v = self.validateVol()
         if v is not None: return v
 
-        self.validate_iport()
+        v = self.validate_iport()
+        if v is not None: return v
 
         # TODO 0.7.8 Checking synode-id is domain wide unique, in Central.
         if self.find_peer(self.registry.config.synid) is None:
@@ -610,7 +600,6 @@ class InstallerCli:
         self.settings.regiserv = reg_jserv
         self.registry.config.org.orgId = orgid
         self.registry.config.domain = domain
-        return True
 
     def updateWithUi(self,
                 reg_jserv: str,
@@ -707,10 +696,11 @@ class InstallerCli:
                           market=market,
                           commuid=commu)
 
-    def query_domconf(self, domid):
+    def query_domconf(self, commuid: str, domid: str):
         self.check_cent_login()
-        return query_domconfig(client = self.regclient, func_uri=install_uri,
-                               market=synode_ui.market_id, domid=domid)
+        return query_domconfig(client=self.regclient, func_uri=install_uri,
+                               myid=self.registry.config.synid,
+                               market=synode_ui.market_id, orgid=commuid, domid=domid)
 
     def register(self):
         self.check_cent_login()
@@ -742,11 +732,11 @@ class InstallerCli:
         self.check_src_jar_db()
 
         ########## settings
-        # ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json", "WEBROOT_HUB", "8900"]
         self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
 
-        self.settings.toFile(os.path.join(web_inf, settings_json))
+        # self.settings.toFile(os.path.join(web_inf, settings_json))
+        self.settings.save()
 
         sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
 
