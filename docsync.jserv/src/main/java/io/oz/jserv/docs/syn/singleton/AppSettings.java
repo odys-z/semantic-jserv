@@ -124,7 +124,7 @@ public class AppSettings extends Anson {
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
 
-		setupJserv(cfg);
+		// setupJserv(cfg);
 	}
 	
 	/**
