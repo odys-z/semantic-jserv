@@ -115,12 +115,12 @@ def submit_settings(client: SessionClient, func_uri: str, market: str,
                     cfg: SynodeConfig, sets: AppSettings, iport: tuple[str, int],
                     utc: str='now',
                     stat: str = CynodeStats.create):
-    req = RegistReq(RegistReq.A.submitSettings, market)
-    req.Uri(func_uri)
-    req.jserurl(cfg.https, sets, iport).\
-        Jservtime(datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if utc == 'now' else utc)
-    # req.mystate = stat
-    req.dictionary(cfg)
+    req = RegistReq(RegistReq.A.submitSettings, market)\
+        .Uri(func_uri)\
+        .protocol_path(JProtocol.urlroot)\
+        .jserurl(cfg.https, sets, iport)\
+        .Jservtime(datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if utc == 'now' else utc)\
+        .dictionary(cfg)
 
     msg = AnsonMsg(Centralport.register).Body(req)
 
@@ -442,15 +442,14 @@ class InstallerCli:
 
     def validate_iport(self):
         try:
-            if not ipaddress.ip_address(self.settings.proxyIp):
-                return {f'IP address is not valid: {self.settings.proxyIp}' }
+            if self.settings.reverseProxy:
+                if not ipaddress.ip_address(self.settings.proxyIp):
+                    return {f'IP address is not valid: {self.settings.proxyIp}' }
+                if not valid_url_port(self.settings.proxyPort) or not valid_url_port(self.settings.webProxyPort):
+                    return {f'Proxy port must greater than 1024: {self.settings.port}' }
 
             if not valid_url_port(self.settings.port) or not valid_url_port(self.settings.webport):
                 return {f'Port must greater than 1024: {self.settings.port}' }
-
-            if (self.settings.reverseProxy and
-               (not valid_url_port(self.settings.proxyPort) or not valid_url_port(self.settings.webProxyPort))):
-                return {f'Proxy port must greater than 1024: {self.settings.port}' }
 
         except ValueError as e:
             return str(e)
@@ -551,7 +550,7 @@ class InstallerCli:
         self.settings.envars['WEBROOT'] = self.registry.config.synid
         cfg.org.webroot = '$WEBROOT'
 
-        if cfg.mode != SynodeMode.hub:
+        if cfg.mode != SynodeMode.hub.name:
             self.ping(self.settings.jservs[cfg.peers[0].synid])
 
         return None

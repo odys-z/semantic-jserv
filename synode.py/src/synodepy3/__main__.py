@@ -304,7 +304,6 @@ class InstallerForm(QMainWindow):
             proxyPort=self.ui.txtPort_proxy.text(),
             volume=self.ui.txtVolpath.text())
 
-        # return self.validate()
         v = self.cli.validate()
         if v is not None:
             global errs, details
@@ -314,40 +313,41 @@ class InstallerForm(QMainWindow):
         return v
 
     def save(self):
-        # self.default_ui_values()
-        # self.update()
         err_ready()
-        try:
-            if self.update_valid():
-                try:
-                    self.cli.install()
+        # try:
+        v = self.update_valid()
+        if v is None:
+            try:
+                self.cli.install()
 
-                    post_err = self.cli.postFix()
-                    if not post_err:
-                        msg_box("Setup successfully.\n"\
-                                "If Windows services have been already installed, new settings can only take effects after restart the services. Restarting Windows won't work."\
-                                if os.name == 'nt' else \
-                                "Reload service settings and restart it to take effects.")
-                    else:
-                        warn_msg("Install successfully, with errors automatically fixe. See details...", post_err)
+                post_err = self.cli.postFix()
+                if not post_err:
+                    msg_box("Setup successfully.\n"\
+                            "If Windows services have been already installed, new settings can only take effects after restart the services. Restarting Windows won't work."\
+                            if os.name == 'nt' else \
+                            "Reload service settings and restart it to take effects.")
+                else:
+                    warn_msg("Install successfully, with errors automatically fixe. See details...", post_err)
 
-                    if self.ui.lbQr.pixmap is not None:
-                        self.gen_qr()
+                if self.ui.lbQr.pixmap is not None:
+                    self.gen_qr()
 
-                    self.bind_config()
-                    self.submit_jserv()
+                self.bind_config()
+                self.submit_jserv()
 
-                except FileNotFoundError or IOError as e:
-                    # Changing vol path can reach here
-                    err_msg('Setting up synodepy3 is failed.', e)
-                except PortfolioException as e:
-                    warn_msg('Configuration is updated with errors. Check the details.\n'
-                             'If this is not switching volume, that is not correct' , e)
+            except FileNotFoundError or IOError as e:
+                # Changing vol path can reach here
+                err_msg('Setting up synodepy3 is failed.', e)
+            except PortfolioException as e:
+                warn_msg('Configuration is updated with errors. Check the details.\n'
+                         'If this is not switching volume, that is not correct' , e)
 
-                self.enableWinsrvInstall()
+            self.enableWinsrvInstall()
 
-        except PortfolioException as e:
-            err_msg('Setting up synodepy3 is failed.', e)
+        # err_msg('There are invalid settings.', v)
+
+        # except PortfolioException as e:
+        #     err_msg('Setting up synodepy3 is failed.', e)
 
     def test_run(self):
         syncins = self.cli.registry.config.syncIns
@@ -459,8 +459,6 @@ class InstallerForm(QMainWindow):
             self.ui.chkReverseProxy.setChecked(check)
 
         self.ui.txtIP_proxy.setEnabled(check)
-        # if check and LangExt.isblank(self.ui.txtIP_proxy.text(), '(^0*$)|(^0\.0\.0\.0$)'):
-        #     self.ui.txtIP_proxy.setText(self.cli.settings.proxyIp)
         self.ui.txtIP_proxy.setEnabled(check)
 
         self.ui.txtWebport_proxy.setEnabled(check)
@@ -476,7 +474,6 @@ class InstallerForm(QMainWindow):
         self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.volume, 'registry')
         self.bindIdentity(self.cli.registry, synodeui=synode_ui)
         self.bindSettings()
-        # self.seal_has_run()
         self.enable_widgets()
 
     def bind_cbborg(self, orgs: list[str], elect: str):
@@ -492,14 +489,6 @@ class InstallerForm(QMainWindow):
             self.ui.cbbPeers.setCurrentText(select_id)
             self.select_peer_byid(select_id)
 
-    # def bind_peer(self, resp: RegistResp):
-    #     if resp.diction.peers is not None and len(resp.diction.peers) > 0:
-    #         peernd = self.cli.registry.find_peer(self.cli.registry.config.synid)
-    #
-    #         if peernd is not None:
-    #             self.ui.cbbPeers.setCurrentText(peernd.synid)
-    #             self.ui.chkHub.setChecked(peernd.stat == CynodeStats.create)
-
     def bindIdentity(self, registry: AnRegistry, synodeui: SynodeUi):
         cfg = registry.config
         cfg.org.orgType = synodeui.market_id
@@ -507,15 +496,11 @@ class InstallerForm(QMainWindow):
 
         self.ui.txtAdminId.setText(cfg.admin)
 
-        # users[0]
         self.ui.txtPswd.setText(registry.synusers[0].pswd)
         self.ui.txtPswd2.setText(registry.synusers[0].pswd)
         self.ui.txtDompswd.setText(registry.synusers[0].pswd)
 
-        # self.ui.txtOrgid.setText(cfg.org.orgId)
         self.bind_cbborg([cfg.org.orgId], cfg.org.orgId)
-
-        # self.cli.domoptions.add(cfg.domain)
         self.ui.cbbDomains.setCurrentText(cfg.domain)
 
         u = self.cli.find_synuser(cfg.admin)
@@ -523,13 +508,8 @@ class InstallerForm(QMainWindow):
             self.ui.txtDompswd.setText(u.pswd)
 
         self.ui.chkHub.setChecked(SynodeMode.hub.name == cfg.mode)
-
-        # self.ui.txtSynode.setText(cfg.synid)
         self.bind_cbbpeers(cfg.peers, cfg.synid)
-
         self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(int(cfg.syncIns)))
-
-        # self.update_chkhub(SynodeMode.hub.name == cfg.mode)
 
     def bind_hubjserv(self, cfg: SynodeConfig, settings: AppSettings):
         if cfg is not None and LangExt.len(cfg.peers) > 0:
@@ -564,14 +544,6 @@ class InstallerForm(QMainWindow):
             print(lines)
 
             self.bind_hubjserv(cfg, settings)
-            # if cfg is not None and LangExt.len(cfg.peers) > 0:
-            #     hub_id = cfg.peers[0].synid
-            #     if hub_id in settings.jservs:
-            #         self.ui.jservLines.setText(f'{hub_id}:\t{settings.jservs[hub_id]}')
-            #         # self.ui.jservLines.setText(settings.jservs[hub_id])
-            #     else:
-            #         self.ui.jservLines.setText(f'{hub_id}:\thttp://127.0.0.1:{serv_port0}/{jserv_url_path}')
-            #         # self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{jserv_url_path}')
 
         else:
             self.ui.jservLines.setText(
@@ -732,8 +704,9 @@ class InstallerForm(QMainWindow):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Type.KeyPress and obj is self.ui.txtCentral:
-            if cast(QKeyEvent, event).key() == Qt.Key.Key_Return and self.ui.txtCentral.hasFocus():
-                # print('Enter pressed')
+            key = cast(QKeyEvent, event).key()
+            if self.ui.txtCentral.hasFocus() and \
+               (key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter):
                 txt = self.ui.txtCentral.text()
                 if JServUrl.valid(jserv=txt, rootpath=synode_ui.central_path):
                     self.cli.settings.regiserv = txt
