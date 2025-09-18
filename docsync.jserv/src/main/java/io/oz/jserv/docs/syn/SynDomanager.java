@@ -2,6 +2,8 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
@@ -13,7 +15,6 @@ import static io.oz.syn.ExessionAct.ready;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.HashMap;
 
 import org.xml.sax.SAXException;
@@ -28,10 +29,10 @@ import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jserv.x.SsException;
-import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
@@ -118,7 +119,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	public SynDomanager(Syngleton syngleton, SynodeConfig c, AppSettings s) throws Exception {
-		super(c.mode, c.chsize, c.domain, c.synode(), c.synconn, c.debug);
+		super(c.mode, c.chsize, c.org.orgId, c.domain, c.synode(), c.synconn, c.debug);
 
 		this.syngleton = syngleton;
 		this.org = c.org.orgId;
@@ -129,17 +130,10 @@ public class SynDomanager extends SyndomContext implements OnError {
 		
 		admin = new SyncUser();
 	}
-	
-	public JServUrl loadJservUrl() throws SQLException, TransException, SAXException, IOException {
-		AnResultset rs = DAHelper
-				.getEntityById(new DATranscxt(synconn), synm, synode)
-				.nxt();
-		return new JServUrl().jserv(rs.getString(synm.jserv), rs.getString(synm.jserv_utc));
-	}
 
 	/**
-	 * Sing up, then start a synssion to {@code peeradmin}, the admin peer.
-	 * TODO rename as sing2peer
+	 * Sign up, then start a synssion to {@code peeradmin}, the admin peer.
+	 * TODO rename as sign2peer
 	 * @param adminjserv jserv root path, must be null for testing
 	 * locally without login to the service
 	 * @param peeradmin
@@ -294,7 +288,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 				jservs = peer.queryJservs();
 				
 				syngleton.settings
-						.persistDB(syngleton.syncfg, synm, jservs)
+						.persistNewJserv(syngleton.syncfg, synm, jservs)
 						.save();
 			} catch (IOException e) {
 				Utils.logT("[%s] Updating jservs from %s failed. Details:\n%s",
@@ -328,7 +322,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			throws TransException, SQLException, AnsonException {
 		
 		syngleton.settings
-				.persistDB(syngleton.syncfg, synm, peer, jserv, timestamp_utc)
+				.persistNewJserv(syngleton.syncfg, synm, peer, jserv, timestamp_utc)
 				.save();
 		
 		if (ipChangeHandler != null)
@@ -377,17 +371,23 @@ public class SynDomanager extends SyndomContext implements OnError {
 							domain(), peer, peer.peerjserv());
 					peer.checkLogin(admin);
 						
-					JServUrl myjsv = loadJservUrl()
-									.ip(ip)
-									.jservtime(DateFormat.formatime_utc(new Date()));
-					String myjserv = myjsv.jserv();
-					
-					HashMap<String, String[]> jservs = peer.submitJserv(myjserv);
-					if (jservs != null) {
-						syngleton.settings
-							.persistDB(syngleton.syncfg, synm, jservs)
-							.save();
-					}
+//					JServUrl myjsv = loadMyJserv()
+//									.ip(ip)
+//									.jservtime(DateFormat.formatime_utc(new Date()));
+
+					merge_submit_persistReply(syngleton.settings, peer);
+//					AppSettings s = syngleton.settings;
+//					JServUrl myjsv = loadMyJserv(s.jserv_utc);
+//					if (myjsv == null)
+//						s.persistNewJserv(syngleton.syncfg, synm, synode, s.jserv(synode), s.jserv_utc);
+//
+//					String myjserv = myjsv != null ? myjsv.jserv() : s.jservs.get(synode);
+//					
+//					HashMap<String, String[]> jservs = peer.submitJserv(myjserv);
+//					if (jservs != null) {
+//						s.persistNewJserv(syngleton.syncfg, synm, jservs)
+//						 .save();
+//					}
 				} catch (IOException e) {
 					Utils.logT(new Object() {}, "[%s:%s] Submitting jservs to %s failed. Error: %s, Details:\n%s",
 							domain, synode, peer.peer, e.getClass().getName(), e.getMessage());
@@ -399,6 +399,17 @@ public class SynDomanager extends SyndomContext implements OnError {
 			e.printStackTrace();
 		}
 		return true;
+	}
+	
+	void merge_submit_persistReply(AppSettings s, SynssionPeer peer)
+			throws SQLException, TransException, SAXException, IOException {
+		String myjserv = mergeMyJserv(s);
+		
+		HashMap<String, String[]> jservs = peer.submitJserv(myjserv);
+		if (jservs != null) {
+			s.persistNewJserv(syngleton.syncfg, synm, jservs)
+			 .save();
+		}
 	}
 
 	/**
@@ -430,8 +441,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 			String peer = rs.getString("peer");
 			
 			if (!JServUrl.valid(rs.getString(synm.jserv))) {
-				warnT(new Object() {}, "[%s] : [-> %s] Invalide jserv: %s",
+				String err = f("[%s] -> %s: Invalid jserv: %s",
 						synode, rs.getString("peer"), rs.getString(synm.jserv));
+				warnT(new Object() {}, err);
+				
+				try { throw new TransException(err);}
+				catch (TransException e) { e.printStackTrace();}
+
 				continue;
 			}
 
@@ -530,6 +546,54 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager ipChangeHandler(ISynodeLocalExposer handler) {
 		this.ipChangeHandler = handler;
 		return this;
+	}
+	
+	/**
+	 * Load {@link JServUrl} of id {@link #synode} from {@link #synconn},
+	 * compare the time stamp, and return the database one if databse's time stamp is later,
+	 * otherwise null.
+	 * 
+	 * @return JServUrl
+	 * @throws SQLException
+	 * @throws TransException
+	 * @throws SAXException
+	 * @throws IOException
+	 */
+	public JServUrl loadMyJserv(String utc) throws SQLException, TransException, SAXException, IOException {
+		AnResultset rs = (AnResultset) synb
+				.select(synm.tbl, "t")
+				.whereEq(synm.org, org)
+				.whereEq(synm.domain, domain)
+				.whereEq(synm.synoder, synode)
+				.where(op.ge, Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(ifnull(utc, DateFormat.jour0)))
+				.rs(synb.instancontxt(synconn, admin))
+				.rs(0);
+
+		return rs.next() 
+			? new JServUrl().jserv(rs.getString(synm.jserv), rs.getString(synm.jserv_utc))
+			: null;
+	}
+
+	/**
+	 * Merge settings.jserv with [synconn] syn_node.jserv. Still needs to save settings.json.
+	 * @param s
+	 * @return my jserv
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws SAXException
+	 * @throws IOException
+	 */
+	public String mergeMyJserv(AppSettings s) throws TransException, SQLException, SAXException, IOException {
+		JServUrl myjsv = loadMyJserv(s.jserv_utc);
+		if (myjsv == null) {
+			s.persistNewJserv(syngleton.syncfg, synm, synode, s.jserv(synode), s.jserv_utc);
+			return s.jserv(synode);
+		}
+		else {
+			String myjsrv = myjsv.jserv();
+			s.jserv(synode, myjsrv).jserv_utc(myjsv.jservtime());
+			return myjsrv;
+		}
 	}
 
 	/** 

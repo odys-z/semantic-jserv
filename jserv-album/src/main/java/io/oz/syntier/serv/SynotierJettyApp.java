@@ -107,7 +107,7 @@ public class SynotierJettyApp implements Daemon {
 
 	public String jserv() throws SQLException, TransException, SAXException, IOException {
 		for (String m : this.syngleton.domains())
-			return this.syngleton.domanager(m).loadJservUrl().jserv();
+			return this.syngleton.domanager(m).loadMyJserv(DateFormat.jour0).jserv();
 		return null;
 	}
 

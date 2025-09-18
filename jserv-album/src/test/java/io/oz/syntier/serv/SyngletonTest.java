@@ -82,9 +82,9 @@ class SyngletonTest {
 	
 	@AfterAll
 	static void clean() throws IOException {
-		Files.delete(Paths.get(hubpath));
-		Files.delete(Paths.get(prvpath));
-		Files.delete(Paths.get(mobpath));
+//		Files.delete(Paths.get(hubpath));
+//		Files.delete(Paths.get(prvpath));
+//		Files.delete(Paths.get(mobpath));
 	}
 	
 	@Test

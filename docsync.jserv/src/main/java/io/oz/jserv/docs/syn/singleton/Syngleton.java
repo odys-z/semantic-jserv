@@ -23,7 +23,6 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Configs;
-import io.odysz.common.DateFormat;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -449,8 +448,11 @@ public class Syngleton extends JSingleton {
 						}
 						else {
 							// Hub nodes can still changing IP often.
-							JServUrl jsv = mngr.loadJservUrl().ip(nextip);
-							settings.persistDB(syncfg, synm, mngr.synode, jsv, DateFormat.now());
+							// JServUrl jsv = mngr.loadJservUrl().ip(nextip);
+							// settings.persistNewJserv(syncfg, synm, mngr.synode, jsv, DateFormat.now());
+
+							mngr.mergeMyJserv(settings); // ISSUE no push here?
+							settings.save();
 						}
 
 						mngr.ipChangeHandler(ipExposer);

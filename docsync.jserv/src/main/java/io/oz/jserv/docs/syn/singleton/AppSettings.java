@@ -18,7 +18,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.HashMap;
 
 import io.odysz.anson.Anson;
@@ -223,9 +222,15 @@ public class AppSettings extends Anson {
 	public String vol_name;
 	public String volume;
 
+	public HashMap<String, String> jservs;
+
 	/** UTC time of dirty */
 	public String jserv_utc;
-	public HashMap<String, String> jservs;
+	public AppSettings jserv_utc(String utc) {
+		jserv_utc = utc;
+		return this;
+	}
+
 
 	public String installkey;
 	public String rootkey;
@@ -398,19 +403,18 @@ public class AppSettings extends Anson {
 				+ "Starting application without db setting ...");
 
 		settings.updateDBJserv(cfg.https, cfg.synconn,
-				new SynodeMeta(cfg.synconn), cfg.domain, cfg.synode());
+				new SynodeMeta(cfg.synconn), cfg.org.orgId, cfg.domain, cfg.synode());
 		
 		return settings;
 	}
 
-	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm, String node, JServUrl jserv, String jserv_utc)
-			throws TransException, SQLException {
-		return persistDB(cfg, synm, node, jserv.jserv(), jserv_utc);
+	public AppSettings persistNewJserv(SynodeConfig cfg, SynodeMeta synm, String node,
+			JServUrl jserv, String jserv_utc) throws TransException, SQLException {
+		return persistNewJserv(cfg, synm, node, jserv.jserv(), jserv_utc);
 	}
 
-	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm, String node, String jserv, String jserv_utc)
-			throws TransException, SQLException {
-		// String now = DateFormat.formatime_utc(new Date());
+	public AppSettings persistNewJserv(SynodeConfig cfg, SynodeMeta synm, String node,
+			String jserv, String jserv_utc) throws TransException, SQLException {
 		updateNewJserv(cfg.synconn, cfg.domain, synm, node, jserv, jserv_utc, cfg.synode());
 		jservs = loadJservs(cfg, synm);
 		return this;
@@ -436,7 +440,7 @@ public class AppSettings extends Anson {
 			  (rs) -> JServUrl.valid(rs.getString(synm.jserv)));
 	}
 	
-	public AppSettings persistDB(SynodeConfig cfg, SynodeMeta synm,
+	public AppSettings persistNewJserv(SynodeConfig cfg, SynodeMeta synm,
 			HashMap<String, String[]> jservs_time) throws TransException, SQLException {
 		if (jservs_time != null) {
 			for (String n : jservs_time.keySet()) 
@@ -459,7 +463,7 @@ public class AppSettings extends Anson {
 	 * @throws SQLException
 	 */
 	private String updateDBJserv(boolean https,
-			String synconn, SynodeMeta synm, String domain, String mysid) throws TransException, SQLException {
+			String synconn, SynodeMeta synm, String org, String domain, String mysid) throws TransException, SQLException {
 		String ip = JServUrl.getLocalIp();
 
 		IUser robot = DATranscxt.dummyUser();
@@ -469,8 +473,9 @@ public class AppSettings extends Anson {
 			DATranscxt tb = new DATranscxt(synconn);
 			tb.update(synm.tbl, robot)
 			  .nv(synm.jserv, servurl)
-			  .whereEq(synm.pk, mysid)
+			  .whereEq(synm.org, org)
 			  .whereEq(synm.domain, domain)
+			  .whereEq(synm.pk, mysid)
 			  .u(tb.instancontxt(synconn, robot));
 			
 			this.jservs.put(mysid, servurl);
@@ -487,11 +492,11 @@ public class AppSettings extends Anson {
 		return jservs.get(nid);
 	}
 
-	public String jserv(String peer, String jserv) {
+	public AppSettings jserv(String peer, String jserv) {
 		if (jservs == null)
 			jservs = new HashMap<String, String>();
 		jservs.put(peer, jserv);
-		return jserv;
+		return this;
 	}
 
 	public AppSettings jservs(HashMap<String, String[]> jservs) {
