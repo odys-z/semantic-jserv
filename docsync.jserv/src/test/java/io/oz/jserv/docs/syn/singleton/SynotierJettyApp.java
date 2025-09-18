@@ -4,12 +4,15 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 import static io.odysz.common.Utils.warnT;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 
@@ -22,6 +25,7 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.xml.sax.SAXException;
 
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
@@ -31,6 +35,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
@@ -39,6 +44,7 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 import io.oz.album.peer.SynDocollPort;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpDoctier;
@@ -92,8 +98,9 @@ public class SynotierJettyApp {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-	public String jserv() {
-		return this.syngleton.settings.jserv(this.syngleton.synode());
+	public String jserv() throws SQLException, TransException, SAXException, IOException {
+		JServUrl jurl = this.syngleton.myjserv();
+		return jurl == null ? null : jurl.jserv();
 	}
 
 	public static void jvmStart(String[] args) {
@@ -151,7 +158,9 @@ public class SynotierJettyApp {
 	 */
 	SynotierJettyApp afterboot(AppSettings settings) {
 		try {
-			syngleton.asybmitJserv(
+			settings.setupNewJserv(syngleton.syncfg, syngleton.synm);
+
+			syngleton.asybmitJserv(len(settings.startHandler) == 0 ? null :
 					((ISynodeLocalExposer)Class
 						.forName(settings.startHandler[0])
 						.getDeclaredConstructor()

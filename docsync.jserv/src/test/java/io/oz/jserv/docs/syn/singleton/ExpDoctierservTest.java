@@ -22,6 +22,7 @@ import static io.oz.syn.Docheck.printNyquv;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,6 +32,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.xml.sax.SAXException;
 
 import io.odysz.anson.JsonOpt;
 import io.odysz.common.EnvPath;
@@ -210,7 +212,7 @@ public class ExpDoctierservTest {
 		Dev devx0 = devs[X_0];
 		logrst(new String[] {"Deleting", devx0.res}, section, 1);
 
-		devx0.login(errLog);
+		devx0.login(jetties[X].jserv(), errLog);
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
@@ -399,6 +401,7 @@ public class ExpDoctierservTest {
 			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
 
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, "settings.json")
+						.afterboot(settings)
 						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
 			// checker
@@ -454,7 +457,7 @@ public class ExpDoctierservTest {
 		assertEquals(isNull(paths) ? 0 : paths.length, pathpool.size());
 	}
 
-	public static String[] jservs() {
+	public static String[] jservs() throws SQLException, TransException, SAXException, IOException {
 		if (len(jetties) < 4 || jetties[0] == null)
 			throw new NullPointerException("Initialize first.");
 

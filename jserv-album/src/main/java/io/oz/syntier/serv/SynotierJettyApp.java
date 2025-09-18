@@ -41,6 +41,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
@@ -106,9 +107,8 @@ public class SynotierJettyApp implements Daemon {
 	public Syngleton syngleton() { return syngleton; }	
 
 	public String jserv() throws SQLException, TransException, SAXException, IOException {
-		for (String m : this.syngleton.domains())
-			return this.syngleton.domanager(m).loadMyJserv(DateFormat.jour0).jserv();
-		return null;
+		JServUrl jurl = this.syngleton.myjserv();
+		return jurl == null ? null : jurl.jserv();
 	}
 
 	private static Winsrv winsrv;
@@ -247,6 +247,8 @@ public class SynotierJettyApp implements Daemon {
 	SynotierJettyApp afterboot() {
 		AppSettings settings = syngleton.settings;
 		try {
+			settings.setupNewJserv(syngleton.syncfg, syngleton.synm);
+
 			syngleton.asybmitJserv(((ISynodeLocalExposer)Class
 				.forName(settings.startHandler[0])
 				.getDeclaredConstructor()

@@ -23,6 +23,7 @@ import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Configs;
+import io.odysz.common.DateFormat;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -105,7 +106,7 @@ public class Syngleton extends JSingleton {
 		return this;
 	}
 
-	SynodeMeta synm;
+	public SynodeMeta synm;
 
 	public Syngleton(SynodeConfig cfg, AppSettings settings) throws Exception {
 		sysconn = cfg.sysconn;
@@ -451,12 +452,13 @@ public class Syngleton extends JSingleton {
 							// JServUrl jsv = mngr.loadJservUrl().ip(nextip);
 							// settings.persistNewJserv(syncfg, synm, mngr.synode, jsv, DateFormat.now());
 
-							mngr.mergeMyJserv(settings); // ISSUE no push here?
+							settings.mergeJserv(syncfg, synm);
 							settings.save();
 						}
 
 						mngr.ipChangeHandler(ipExposer);
-						ipExposer.onExpose(settings, mngr);
+						if (ipExposer != null)
+							ipExposer.onExpose(settings, mngr);
 					} catch (SQLException | TransException | SAXException | IOException e) {
 						e.printStackTrace();
 					}
@@ -464,5 +466,9 @@ public class Syngleton extends JSingleton {
 			}
 		}, f("[%s] Asy-submit Jserv", synode()))
 		.start();
+	}
+
+	public JServUrl myjserv() throws SQLException, TransException, SAXException, IOException {
+		return settings.loadJserv(syncfg, synm, syncfg.synode(), DateFormat.jour0);
 	}
 }

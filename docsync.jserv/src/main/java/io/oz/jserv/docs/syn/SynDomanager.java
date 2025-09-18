@@ -3,13 +3,11 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
-import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.Utils.warnT;
-import static io.oz.jserv.docs.syn.singleton.AppSettings.updateNewJserv;
 import static io.oz.syn.ExessionAct.close;
 import static io.oz.syn.ExessionAct.ready;
 
@@ -20,7 +18,6 @@ import java.util.HashMap;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
-import io.odysz.common.DateFormat;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -32,7 +29,6 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
-import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
@@ -403,7 +399,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	
 	void merge_submit_persistReply(AppSettings s, SynssionPeer peer)
 			throws SQLException, TransException, SAXException, IOException {
-		String myjserv = mergeMyJserv(s);
+		String myjserv = s.mergeJserv(syngleton.syncfg, synm);
 		
 		HashMap<String, String[]> jservs = peer.submitJserv(myjserv);
 		if (jservs != null) {
@@ -548,54 +544,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 	
-	/**
-	 * Load {@link JServUrl} of id {@link #synode} from {@link #synconn},
-	 * compare the time stamp, and return the database one if databse's time stamp is later,
-	 * otherwise null.
-	 * 
-	 * @return JServUrl
-	 * @throws SQLException
-	 * @throws TransException
-	 * @throws SAXException
-	 * @throws IOException
-	 */
-	public JServUrl loadMyJserv(String utc) throws SQLException, TransException, SAXException, IOException {
-		AnResultset rs = (AnResultset) synb
-				.select(synm.tbl, "t")
-				.whereEq(synm.org, org)
-				.whereEq(synm.domain, domain)
-				.whereEq(synm.synoder, synode)
-				.where(op.ge, Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(ifnull(utc, DateFormat.jour0)))
-				.rs(synb.instancontxt(synconn, admin))
-				.rs(0);
-
-		return rs.next() 
-			? new JServUrl().jserv(rs.getString(synm.jserv), rs.getString(synm.jserv_utc))
-			: null;
-	}
-
-	/**
-	 * Merge settings.jserv with [synconn] syn_node.jserv. Still needs to save settings.json.
-	 * @param s
-	 * @return my jserv
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws SAXException
-	 * @throws IOException
-	 */
-	public String mergeMyJserv(AppSettings s) throws TransException, SQLException, SAXException, IOException {
-		JServUrl myjsv = loadMyJserv(s.jserv_utc);
-		if (myjsv == null) {
-			s.persistNewJserv(syngleton.syncfg, synm, synode, s.jserv(synode), s.jserv_utc);
-			return s.jserv(synode);
-		}
-		else {
-			String myjsrv = myjsv.jserv();
-			s.jserv(synode, myjsrv).jserv_utc(myjsv.jservtime());
-			return myjsrv;
-		}
-	}
-
 	/** 
 	 * If the settings.jserv's updating date is later than the syn_node.optime, update it into db.
 	 * This will handle user's manual modification.
@@ -607,15 +555,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 */
 	public boolean updJservs_byJson(SynodeConfig cfg, AppSettings settings)
 			throws TransException, SQLException {
-
-		boolean dirty = false;
-		for (String peer : settings.jservs.keySet()) {
-			String jsrv = settings.jservs.get(peer);
-			if (JServUrl.valid(jsrv))
-				dirty |= updateNewJserv(cfg.synconn, cfg.domain, synm,
-						peer, jsrv, settings.jserv_utc, cfg.synode());
-		}
-		
+		boolean dirty = settings.setupNewJserv(cfg, synm);
 		if (dirty)
 			settings.jservs = AppSettings.loadJservs(cfg, synm);
 		return dirty;
