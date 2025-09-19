@@ -257,8 +257,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				Utils.logi("[%s] : Checking Syndomain ...", synid);
 
 			try {
-				if (domanager0.updJservs_byJson(domanager0.syngleton.syncfg, domanager0.syngleton.settings))
+				// if (domanager0.updJservs_byJson(domanager0.syngleton.syncfg, domanager0.syngleton.settings))
+				if (domanager0.syngleton.settings.mergeLoadJservs(domanager0.syngleton.syncfg, domanager0.synm))
 					domanager0.ipChangeHandler.onExpose(domanager0.syngleton.settings, domanager0);
+
 				domanager0.loadSynclients(syntb);
 
 				// 0.7.6 Solution:

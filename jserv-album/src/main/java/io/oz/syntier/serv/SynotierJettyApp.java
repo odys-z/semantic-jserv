@@ -4,13 +4,12 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.mustnonull;
-import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 import static io.odysz.common.Utils.warnT;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,8 +27,6 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.xml.sax.SAXException;
-
 import com.google.zxing.WriterException;
 
 import io.odysz.common.Configs;
@@ -41,7 +38,6 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.JProtocol;
-import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
@@ -106,9 +102,10 @@ public class SynotierJettyApp implements Daemon {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-	public String jserv() throws SQLException, TransException, SAXException, IOException {
-		JServUrl jurl = this.syngleton.myjserv();
-		return jurl == null ? null : jurl.jserv();
+	public String jserv() throws SQLException, TransException {
+//		JServUrl jurl = this.syngleton.myjserv();
+//		return jurl == null ? null : jurl.jserv();
+		return this.syngleton.myjserv();
 	}
 
 	private static Winsrv winsrv;
@@ -247,23 +244,24 @@ public class SynotierJettyApp implements Daemon {
 	SynotierJettyApp afterboot() {
 		AppSettings settings = syngleton.settings;
 		try {
-			settings.setupNewJserv(syngleton.syncfg, syngleton.synm);
+			// settings.setupNewJserv(syngleton.syncfg, syngleton.synm);
+			settings.mergeLoadJservs(syngleton.syncfg, syngleton.synm);
+			settings.save();
 
-			syngleton.asybmitJserv(((ISynodeLocalExposer)Class
-				.forName(settings.startHandler[0])
-				.getDeclaredConstructor()
-				.newInstance()))
-				;
+			syngleton.asybmitJserv(len(settings.startHandler) == 0 ? null :
+					((ISynodeLocalExposer)Class
+						.forName(settings.startHandler[0])
+						.getDeclaredConstructor()
+						.newInstance()))
+						;
 		} catch (Exception e) {
 			warnT(new Object(){}, "Exposing local resources failed!");
 			e.printStackTrace();
 		}
-
 		return this;
 	}
 	
 	/**
-	 * @deprecated only for tests
 	 * 
 	 * @param webinf
 	 * @param config_xml
@@ -271,7 +269,6 @@ public class SynotierJettyApp implements Daemon {
 	 * @param oe
 	 * @return synotier app
 	 * @throws Exception
-	 */
 	public static SynotierJettyApp boot(String webinf, String config_xml, String settings_json,
 			PrintstreamProvider ... oe) throws Exception {
 
@@ -291,6 +288,7 @@ public class SynotierJettyApp implements Daemon {
 		
 		return boot(webinf, config_xml, pset, oe);
 	}
+	 */
 
 	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings,
 			PrintstreamProvider ... oe) throws Exception {

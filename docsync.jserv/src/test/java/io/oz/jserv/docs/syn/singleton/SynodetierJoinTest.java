@@ -1,4 +1,4 @@
-package io.oz.jserv.docs.syn;
+package io.oz.jserv.docs.syn.singleton;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
@@ -37,6 +37,8 @@ import io.odysz.jclient.tier.ErrorCtx;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
+import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynSubsMeta;
@@ -47,9 +49,8 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.AssertImpl;
-import io.oz.jserv.docs.syn.singleton.AppSettings;
-import io.oz.jserv.docs.syn.singleton.Syngleton;
-import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
+import io.oz.jserv.docs.syn.SynDomanager;
+import io.oz.jserv.docs.syn.T_PhotoMeta;
 import io.oz.syn.DBSynTransBuilder;
 import io.oz.syn.Docheck;
 import io.oz.syn.SynodeMode;
@@ -122,10 +123,10 @@ public class SynodetierJoinTest {
 		}
 	}
 
-	@SuppressWarnings({ "deprecation" })
 	@BeforeAll
 	static void init() throws Exception {
 		setVolumeEnv("v-");
+		JProtocol.setup(servpath, Port.echo);
 
 		Configs.init(webinf);
 		Connects.init(webinf);
@@ -172,7 +173,8 @@ public class SynodetierJoinTest {
 
 			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson, true);
 
-			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, stjson)
+			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings)
+						.afterboot()
 						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
 			// checker
@@ -222,6 +224,8 @@ public class SynodetierJoinTest {
 		ck[Z].synodes(X, -1, Z);
 
 		Utils.logrst("Z sync domain", ++no);
+		// exists sessions for joioning X <-Z
+		cleanSessions(Z);
 		syncdomain(Z);
 
 		printChangeLines(ck);
@@ -231,6 +235,7 @@ public class SynodetierJoinTest {
 		ck[Z].synodes(X, -1, Z); // Z joined latter, no subs or Y's joining 
 
 		Utils.logrst("Y sync domain", ++no);
+		cleanSessions(Y);
 		syncdomain(Y);
 
 		printChangeLines(ck);
@@ -262,6 +267,14 @@ public class SynodetierJoinTest {
 					(rep) -> { lights[by] = true; });
 			
 			break;
+		}
+	}
+	
+	void cleanSessions(int nx) throws TransException, SQLException {
+		SynotierJettyApp t = jetties[nx];
+		for (String dom : t.syngleton().domains()) {
+			SynDomanager mgr = t.syngleton().domanager(dom);
+			mgr.closession();// .loadSynclients(new DATranscxt(mgr.synconn));
 		}
 	}
 

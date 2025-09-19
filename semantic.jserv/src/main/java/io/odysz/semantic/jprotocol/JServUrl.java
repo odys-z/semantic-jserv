@@ -1,6 +1,7 @@
 package io.odysz.semantic.jprotocol;
 
 import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.joinurl;
 import static io.odysz.common.LangExt.shouldeqs;
 import static io.odysz.common.LangExt.mustnonull;
@@ -106,6 +107,8 @@ public class JServUrl extends Anson {
 	 * @since 0.7.6
 	 */
 	public static boolean valid(String jserv) {
+		mustnonull(JProtocol.urlroot, "This is forced in semantic.jserv 1.5.18 (Portfolio 0.7.6)");
+
 		if (urlValidator == null)
 			urlValidator = new UrlValidator();
 
@@ -116,7 +119,7 @@ public class JServUrl extends Anson {
 			Object[] jservparts = getHttpParts(jserv);
 			return urlValidator.isValid(asJserv(jserv)) &&
 				validUrlPort((int)jservparts[3], new int[] {1025, -1}) &&
-				eq(JProtocol.urlroot, ((String[]) jservparts[4])[0]);
+				eq(JProtocol.urlroot, isNull(jservparts[4]) ? null : ((String[]) jservparts[4])[0]);
 		}
 		catch (Exception e) {
 			Utils.warnT(new Object[] {}, "Found invalid jserv: %s,\nerror: %s",

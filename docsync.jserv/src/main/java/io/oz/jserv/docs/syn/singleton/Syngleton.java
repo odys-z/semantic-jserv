@@ -19,8 +19,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.xml.sax.SAXException;
-
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
@@ -452,14 +450,14 @@ public class Syngleton extends JSingleton {
 							// JServUrl jsv = mngr.loadJservUrl().ip(nextip);
 							// settings.persistNewJserv(syncfg, synm, mngr.synode, jsv, DateFormat.now());
 
-							settings.mergeJserv(syncfg, synm);
+							settings.mergeLoadJservs(syncfg, synm);
 							settings.save();
 						}
 
 						mngr.ipChangeHandler(ipExposer);
 						if (ipExposer != null)
 							ipExposer.onExpose(settings, mngr);
-					} catch (SQLException | TransException | SAXException | IOException e) {
+					} catch (SQLException | TransException e) {
 						e.printStackTrace();
 					}
 				}
@@ -468,7 +466,8 @@ public class Syngleton extends JSingleton {
 		.start();
 	}
 
-	public JServUrl myjserv() throws SQLException, TransException, SAXException, IOException {
-		return settings.loadJserv(syncfg, synm, syncfg.synode(), DateFormat.jour0);
+	public String myjserv() throws SQLException, TransException {
+		settings.loadJservs(syncfg, synm, DateFormat.jour0);
+		return settings.jserv(syncfg.synid);
 	}
 }

@@ -71,7 +71,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		public void ok(String domain, String mynid, String peer, ExessionPersist... xp);
 	}
 
-	final String org;
+	public final String org;
 	
 	/**
 	 * {peer: session-persist}
@@ -151,7 +151,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 							.onErr(this);
 
 		if (isblank(adminjserv))
-			Utils.warnT(new Object() {},
+			throw new AnsonException(0,
 				"The root jserv path is empty. This should only happens when testing.\npeer: %s, user id: %s",
 				peeradmin, userId);
 		else {
@@ -284,7 +284,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 				jservs = peer.queryJservs();
 				
 				syngleton.settings
-						.persistNewJserv(syngleton.syncfg, synm, jservs)
+						.persistLaterJservs(syngleton.syncfg, synm, jservs)
 						.save();
 			} catch (IOException e) {
 				Utils.logT("[%s] Updating jservs from %s failed. Details:\n%s",
@@ -317,9 +317,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager updateJserv(DATranscxt syntb, String peer, String jserv, String timestamp_utc)
 			throws TransException, SQLException, AnsonException {
 		
-		syngleton.settings
-				.persistNewJserv(syngleton.syncfg, synm, peer, jserv, timestamp_utc)
-				.save();
+		syngleton.settings.persistLaterLoadJserv(syngleton.syncfg, synm, peer, jserv, timestamp_utc);
+		syngleton.settings.save();
 		
 		if (ipChangeHandler != null)
 			ipChangeHandler.onExpose(syngleton.settings, this);
@@ -335,7 +334,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * It's supposed that some synodes will never have a chance to visit the hub node,
 	 * then an asynchronous try and delay is expected.</p>
 	 * @see #updateJserv(DATranscxt, String, String)
-	 * @see SynssionPeer#submitJserv(String)
+	 * @see SynssionPeer#submitMyJserv(String)
 	 * @param nextip 
 	 * @param cfg 
 	 * @return is the local ip changed
@@ -349,7 +348,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 		try {
 			if (sessions == null)
-				loadSynclients(new DATranscxt(synconn));
+				loadSynclients(synb);
 			for (SynssionPeer peer : sessions.values()) {
 				if (eq(peer.peer, synode))
 					continue;
@@ -399,11 +398,14 @@ public class SynDomanager extends SyndomContext implements OnError {
 	
 	void merge_submit_persistReply(AppSettings s, SynssionPeer peer)
 			throws SQLException, TransException, SAXException, IOException {
-		String myjserv = s.mergeJserv(syngleton.syncfg, synm);
+		boolean dirty = s.mergeLoadJservs(syngleton.syncfg, synm);
 		
-		HashMap<String, String[]> jservs = peer.submitJserv(myjserv);
+		if (!dirty)
+			warnT(new Object() {}, "Better double check");
+		
+		HashMap<String, String[]> jservs = peer.submitMyJserv(s.jserv(synode));
 		if (jservs != null) {
-			s.persistNewJserv(syngleton.syncfg, synm, jservs)
+			s.persistLaterJservs(syngleton.syncfg, synm, jservs)
 			 .save();
 		}
 	}
@@ -426,6 +428,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 				.col(synm.synoder, "peer").col(synm.domain).col(synm.jserv)
 				.groupby(synm.synoder)
 				.where_(op.ne, synm.synoder, synode)
+				.whereEq(synm.org, org)
 				.whereEq(synm.domain, domain())
 				.rs(t0.instancontxt(synconn, admin))
 				.rs(0);
@@ -437,12 +440,12 @@ public class SynDomanager extends SyndomContext implements OnError {
 			String peer = rs.getString("peer");
 			
 			if (!JServUrl.valid(rs.getString(synm.jserv))) {
-				String err = f("[%s] -> %s: Invalid jserv: %s",
-						synode, rs.getString("peer"), rs.getString(synm.jserv));
+				String err = f("WARN [%s : %s] -> %s: Invalid jserv: %s",
+						domain, synode, rs.getString("peer"), rs.getString(synm.jserv));
 				warnT(new Object() {}, err);
 				
-				try { throw new TransException(err);}
-				catch (TransException e) { e.printStackTrace();}
+//				try { throw new TransException(err);}
+//				catch (TransException e) { e.printStackTrace();}
 
 				continue;
 			}
@@ -458,8 +461,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 				  || !eq(c.peer, target.peer)
 				  || target.xp != null)
 					throw new ExchangeException(ready, target.xp,
-							"Replacing existing syssion peer is not allowed. [me->%s] := [me->%s]",
-							target.peer, c.peer);
+							"Replacing existing syssion peer is not allowed. [%1$s->%2$s] := [%1$s->%3$s]",
+							synode, target.peer, c.peer);
 			}
 
 			sessions.put(peer, c);
@@ -527,11 +530,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	public void closession() {
-		if (sessions != null)
+		if (sessions != null) {
 		for (SynssionPeer peer : sessions.values()) {
 			if (peer.client == null || !peer.client.isSessionValid())
 				try { peer.client.logout(); } catch (Throwable e) {}
 			peer.client = null;
+		}
+		sessions.clear();
 		}
 	}
 
@@ -552,7 +557,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws SQLException 
 	 * @throws TransException 
 	 * @since 0.7.6
-	 */
 	public boolean updJservs_byJson(SynodeConfig cfg, AppSettings settings)
 			throws TransException, SQLException {
 		boolean dirty = settings.setupNewJserv(cfg, synm);
@@ -560,4 +564,5 @@ public class SynDomanager extends SyndomContext implements OnError {
 			settings.jservs = AppSettings.loadJservs(cfg, synm);
 		return dirty;
 	}
+	 */
 }

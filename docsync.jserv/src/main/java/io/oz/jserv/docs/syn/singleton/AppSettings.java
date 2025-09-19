@@ -1,6 +1,5 @@
 package io.oz.jserv.docs.syn.singleton;
 
-import static io.odysz.common.DateFormat.early;
 import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
@@ -8,16 +7,18 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.LangExt.mustnoBlankAny;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.Utils.logi;
-import static io.odysz.common.Utils.warnT;
+import static io.odysz.transact.sql.parts.condition.ExprPart.constr;
+import static io.odysz.transact.sql.parts.condition.Funcall.isnull;
+import static io.odysz.common.DateFormat.jour0;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.HashMap;
 
 import org.xml.sax.SAXException;
@@ -27,9 +28,9 @@ import io.odysz.anson.AnsonException;
 import io.odysz.anson.AnsonField;
 import io.odysz.anson.JsonOpt;
 import io.odysz.common.Configs;
-import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
+import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -42,7 +43,6 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.parts.Logic.op;
-import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.syn.DBSynTransBuilder;
@@ -353,71 +353,48 @@ public class AppSettings extends Anson {
 	 * @param peer
 	 * @param servurl
 	 * @param timestamp their timestamp, must newer than mine to update db
-	 * @param src_node where does this version come from
+	 * @param createrid where does this version come from
 	 * @return true if the one in database is older and have been replaced, a.k.a. dirty 
 	 * @return true if the newer version is accepted
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	public static boolean updateNewJserv(String synconn, String domain, SynodeMeta synm,
-			String peer, String servurl, String timestamp_utc, String src_node)
+	public static boolean updateLaterJserv(String synconn, String org, String domain, SynodeMeta synm,
+			String peer, String servurl, String timestamp_utc, String createrid)
 			throws TransException, SQLException {
+		mustnoBlankAny(synconn, org, domain, peer, servurl, createrid);
 
 		DATranscxt tb = null;
-		try { 
 			tb = new DATranscxt(synconn);
-			String optime = DAHelper.getValstr(tb, synconn, synm, synm.jserv_utc, synm.pk, peer, synm.domain, domain);
-			if (!(isblank(timestamp_utc) && isblank(optime))
-				&& early(timestamp_utc, optime))
-				return false;
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
+
 			
 		IUser robot = DATranscxt.dummyUser();
 
-		String timestamp = ifnull(timestamp_utc, DateFormat.jour0);
-		logi("[%s] Setting peer %s's jserv: %s [%s]", domain, peer, servurl, timestamp);
+		String timestamp = ifnull(timestamp_utc, jour0);
+		logi("[%s : %s] Setting peer %s's jserv: %s [%s]", synconn, domain, peer, servurl, timestamp);
 
 		SemanticObject res = tb.update(synm.tbl, robot)
 			.nv(synm.jserv, servurl)
 			.nv(synm.jserv_utc, timestamp)
-			.nv(synm.oper,  src_node)
+			.nv(synm.oper,  createrid)
 			.whereEq(synm.pk, peer)
 			.whereEq(synm.domain, domain)
-			.where(op.le, Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(timestamp))
+			.whereEq(synm.org, org)
+			// see comments in loadJserv()
+			// .where(op.le, Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(timestamp))
+			.where(op.le, isnull(synm.jserv_utc, constr(jour0)), constr(timestamp))
 			.u(tb.instancontxt(synconn, robot));
 		
-		if (res.total() <= 0)
-			warnT(new Object(){}, "Shouldn't be here");
-
-		return true;
+		return res.total() < 0;
+//		if (res.total() <= 0) {
+//			warnT(new Object(){}, "The node %s is missing in the initial configuration at [%s] %s?",
+//					peer, synconn, domain);
+//			return false; 
+//		}
+//
+//		return true;
 	}
 
-	/**
-	 * Update syn_node.jserv -> syn_synode.jserv, by normalize missing local jserv first.
-	 * @param cfg
-	 * @param synm
-	 * @return this
-	 * @throws TransException
-	 * @throws SQLException 
-	 */
-	public boolean setupNewJserv(SynodeConfig cfg, SynodeMeta synm) throws TransException, SQLException {
-		if (jservs == null)
-			jservs = new HashMap<String, String>();
-		if (!jservs.containsKey(cfg.synid) || !JServUrl.valid(jservs.get(cfg.synid)))
-			jservs.put(cfg.synid, new JServUrl(cfg.https, reversedIp(), reversedPort(cfg.https)).jserv());
-
-		boolean dirty = false;
-		for (String peer : jservs.keySet()) {
-//			if (eq(cfg.synode(), peer)) 
-//				logT(new Object() {}, "Ignoring updating jserv to local node: %s", peer);
-//			else
-				dirty |= updateNewJserv(cfg.synconn, cfg.domain, synm, peer, jservs.get(peer), jserv_utc, cfg.synode());
-		}
-		return dirty;
-	}
-	
 	/**
 	 * Load {@link JServUrl} of id {@link #synode} from {@link #synconn},
 	 * compare the time stamp, and return the database one if databse's time stamp is later,
@@ -427,10 +404,9 @@ public class AppSettings extends Anson {
 	 * @throws SQLException
 	 * @throws TransException
 	 * @throws SAXException
-	 * @throws IOException
 	 */
-	public JServUrl loadJserv(SynodeConfig syncfg, SynodeMeta synm,
-			String synode, String utc) throws SQLException, TransException, SAXException, IOException {
+	public boolean loadJservs(SynodeConfig syncfg, SynodeMeta synm,
+			String utc) throws SQLException, TransException {
 
 		DATranscxt synb = new DATranscxt(syncfg.synconn);
 		IUser robot = DATranscxt.dummyUser();
@@ -439,44 +415,89 @@ public class AppSettings extends Anson {
 				.select(synm.tbl, "t")
 				.whereEq(synm.org, syncfg.org.orgId)
 				.whereEq(synm.domain, syncfg.domain)
-				.whereEq(synm.synoder, synode)
-				.where(op.ge, Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(ifnull(utc, DateFormat.jour0)))
+				// .whereEq(synm.synoder, synode)
+
+				// Funcall.sql has bug for this:
+				// .where(op.ge, Funcall.toDate(Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0))), Funcall.toDate(ifnull(utc, DateFormat.jour0)))
+				// -> datetime('ifnull(optime, datetime('1911-10-10'))') >= datetime('1911-10-10')
+				// 
+				// And "datetime(optime) = datetime('1911-10-10')" will not work.
+				//
+				// This line only works for sqlite (Google AI: sqlite doesn't has built-in datetime type):
+				.where(op.ge, isnull(synm.jserv_utc, constr(jour0)), constr(LangExt.ifnull(utc, jour0)))
+				// -> synid = 'X' AND ifnull(optime, 1911-10-10) >= 1911-10-10
 				.rs(synb.instancontxt(syncfg.synconn, robot))
 				.rs(0);
 
-		return rs.next() && JServUrl.valid(rs.getString(synm.jserv))
-			? new JServUrl().jserv(rs.getString(synm.jserv), rs.getString(synm.jserv_utc))
-			: null;
+		boolean loaded = false;
+		while (rs.next()) {
+			String jsrv = rs.getString(synm.jserv);
+			if (JServUrl.valid(jsrv)) {
+				jserv(rs.getString(synm.synoder), jsrv);
+				loaded = true;
+			}
+		}
+		return loaded;
+		
+	}
+	
+	public boolean mergeLoadJservs(SynodeConfig myc, SynodeMeta nm) throws TransException, SQLException {
+		boolean dirty = false;
+		mergeMyJserv(myc, nm);
+		for (String synid : jservs.keySet()) {
+			if (eq(synid, myc.synid))
+				dirty |= mergeMyJserv(myc, nm);
+			else dirty |= updateLaterJserv(myc.synconn, myc.org.orgId, myc.domain, nm,
+											synid, jserv(synid), jserv_utc,
+											// synoder is me, usually reaches here when user changed HUB at a peer.
+											myc.synid);
+		}
+		dirty |= loadJservs(myc, nm, jserv_utc);
+		return dirty;
 	}
 
 	/**
-	 * Merge settings.jserv with [synconn] syn_node.jserv. Still needs to save settings.json.
-	 * @param s
-	 * @return my jserv
+	 * Merge settings.jserv with [synconn] syn_node.jserv, resolving conflicts
+	 * by comparing this.jserv_utc and syn_node.optime.
+	 * 
+	 * Still needs to save settings.json.
+	 * 
+	 * @return dirty 
 	 * @throws TransException
 	 * @throws SQLException
-	 * @throws SAXException
-	 * @throws IOException
 	 */
-	public String mergeJserv(SynodeConfig syncfg, SynodeMeta synm) throws TransException, SQLException, SAXException, IOException {
-		String synode = syncfg.synode();
-		JServUrl myjsv = loadJserv(syncfg, synm, synode, jserv_utc);
-		if (myjsv == null) {
-			persistNewJserv(syncfg, synm, synode, jserv(synode), jserv_utc);
-			return jserv(synode);
-		}
-		else {
-			String myjsrv = myjsv.jserv();
-			jserv(synode, myjsrv).jserv_utc(myjsv.jservtime());
-			return myjsrv;
-		}
+	private boolean mergeMyJserv(SynodeConfig mycfg, SynodeMeta synm) throws TransException, SQLException {
+		String myid = mycfg.synode();
+
+		if (DAHelper.count(Syngleton.defltScxt, mycfg.synconn, synm.tbl, synm.domain,
+				mycfg.domain, synm.org, mycfg.org.orgId, synm.synoder, mycfg.synid) <= 0)
+			throw new TransException("It's supposed to create synode [%s : %s] by configuration module.",
+					mycfg.domain, mycfg.synid);
+		
+		if (isblank(jserv(myid)))
+			jserv(myid, new JServUrl(mycfg.https, reversedIp(), reversedPort(mycfg.https)).jserv());
+
+//		boolean createdme = updateLaterJserv(mycfg.synconn, mycfg.org.orgId, mycfg.domain, synm,
+//											myid, jserv(myid), jserv_utc, myid);
+//		boolean dirty = loadJserv(mycfg, synm, myid, jserv_utc);
+
+//		return createdme | dirty;
+
+		return updateLaterJserv(mycfg.synconn, mycfg.org.orgId, mycfg.domain, synm,
+								myid, jserv(myid), jserv_utc, myid);
 	}
 
-	public AppSettings persistNewJserv(SynodeConfig cfg, SynodeMeta synm, String node,
+	/**
+	 * Persist then load to from db.
+	 * @return this
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	public boolean persistLaterLoadJserv(SynodeConfig cfg, SynodeMeta synm, String node,
 			String jserv, String jserv_utc) throws TransException, SQLException {
-		updateNewJserv(cfg.synconn, cfg.domain, synm, node, jserv, jserv_utc, cfg.synode());
-		jservs = loadJservs(cfg, synm);
-		return this;
+		boolean dirty = updateLaterJserv(cfg.synconn, cfg.org.orgId, cfg.domain, synm, node, jserv, jserv_utc, cfg.synode());
+		loadJservs(cfg, synm, jour0);
+		return dirty;
 	}
 	
 	public static HashMap<String, String[]> loadJservss(DATranscxt st, SynodeConfig cfg, SynodeMeta synm)
@@ -485,66 +506,32 @@ public class AppSettings extends Anson {
 				cfg.domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
 	}
 
-	public static HashMap<String, String> loadJservs(SynodeConfig cfg, SynodeMeta synm)
-			throws SQLException, TransException {
-		DATranscxt tb = new DATranscxt(cfg.synconn);
-
-		return ((AnResultset) tb.select(synm.tbl)
-		  .cols(synm.jserv, synm.synoder, synm.jserv_utc)
-		  .whereEq(synm.domain, cfg.domain)
-		  .rs(tb.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
-		  .rs(0))
-		  .map(synm.synoder,
-			  (rs) -> rs.getString(synm.jserv),
-			  (rs) -> JServUrl.valid(rs.getString(synm.jserv)));
-	}
+//	public static HashMap<String, String> loadJservs(SynodeConfig cfg, SynodeMeta synm)
+//			throws SQLException, TransException {
+//		DATranscxt tb = new DATranscxt(cfg.synconn);
+//
+//		return ((AnResultset) tb.select(synm.tbl)
+//		  .cols(synm.jserv, synm.synoder, synm.jserv_utc)
+//		  .whereEq(synm.domain, cfg.domain)
+//		  .rs(tb.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
+//		  .rs(0))
+//		  .map(synm.synoder,
+//			  (rs) -> rs.getString(synm.jserv),
+//			  (rs) -> JServUrl.valid(rs.getString(synm.jserv)));
+//	}
 	
-	public AppSettings persistNewJserv(SynodeConfig cfg, SynodeMeta synm,
+	public AppSettings persistLaterJservs(SynodeConfig cfg, SynodeMeta synm,
 			HashMap<String, String[]> jservs_time) throws TransException, SQLException {
 		if (jservs_time != null) {
 			for (String n : jservs_time.keySet()) 
-				updateNewJserv(cfg.synconn, cfg.domain, synm, n,
+				updateLaterJserv(cfg.synconn, cfg.org.orgId, cfg.domain, synm, n,
 								jservs_time.get(n)[0], jservs_time.get(n)[1], cfg.synode());
 			
-			jservs = loadJservs(cfg, synm);
+			// jservs = loadJservs(cfg, synm);
+			loadJservs(cfg, synm, jour0);
 		}
 		return this;
 	}
-
-	/**
-	 * Update my syn_node.jserv url according to settings and local IP.
-	 * @param https
-	 * @param synconn can be null, for ignoring db update
-	 * @param synm can be null, for ignoring db update
-	 * @param mysid
-	 * @return jserv-url
-	 * @throws TransException
-	 * @throws SQLException
-	private String updateDBJserv(boolean https,
-			String synconn, SynodeMeta synm, String org, String domain, String mysid) throws TransException, SQLException {
-		String ip = JServUrl.getLocalIp();
-
-		IUser robot = DATranscxt.dummyUser();
-		try {
-			String servurl = new JServUrl(https, ip, port).jserv();
-
-			DATranscxt tb = new DATranscxt(synconn);
-			tb.update(synm.tbl, robot)
-			  .nv(synm.jserv, servurl)
-			  .whereEq(synm.org, org)
-			  .whereEq(synm.domain, domain)
-			  .whereEq(synm.pk, mysid)
-			  .u(tb.instancontxt(synconn, robot));
-			
-			this.jservs.put(mysid, servurl);
-
-			return servurl;
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new TransException(e.getMessage());
-		}
-	}
-	 */
 
 	/** Find jserv from {@link #jservs}. */
 	public String jserv(String nid) {

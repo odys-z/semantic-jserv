@@ -1,7 +1,7 @@
 package io.oz.jserv.docs.syn;
 
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.slava;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.syrskyi;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.slava;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.syrskyi;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
 import static io.odysz.common.LangExt.mustnonull;
 

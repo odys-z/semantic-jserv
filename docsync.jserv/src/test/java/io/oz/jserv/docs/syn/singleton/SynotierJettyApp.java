@@ -6,12 +6,10 @@ import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.mustnonull;
-import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 import static io.odysz.common.Utils.warnT;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -25,8 +23,6 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.xml.sax.SAXException;
-
 import io.odysz.common.Configs;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
@@ -34,8 +30,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
-import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.JServUrl;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
@@ -76,7 +71,7 @@ import io.oz.syn.registry.YellowPages;
  *
  */
 public class SynotierJettyApp {
-	public static final String servpath = "/jserv-album";
+	static final String servpath = "jserv-album";
 	
 	public static final String webinf = "./src/test/res/WEB-INF";
 	public static final String config_xml = "config.xml";
@@ -98,9 +93,10 @@ public class SynotierJettyApp {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-	public String jserv() throws SQLException, TransException, SAXException, IOException {
-		JServUrl jurl = this.syngleton.myjserv();
-		return jurl == null ? null : jurl.jserv();
+	public String jserv() throws SQLException, TransException {
+//		JServUrl jurl = this.syngleton.myjserv();
+//		return jurl == null ? null : jurl.jserv();
+		return this.syngleton.myjserv();
 	}
 
 	public static void jvmStart(String[] args) {
@@ -134,12 +130,13 @@ public class SynotierJettyApp {
 			// For Eclipse's running as Java Application
 			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
 			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
+			JProtocol.setup(servpath, SynDocollPort.docoll);
 
 			AppSettings settings = AppSettings.checkInstall(servpath,
 					srcwebinf, config_xml, _0(args, settings_json), true);
 
 			SynotierJettyApp app = boot(srcwebinf, config_xml, settings)
-					.afterboot(settings)
+					.afterboot()
 					.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 
 			return app;
@@ -156,9 +153,12 @@ public class SynotierJettyApp {
 	 * Bring up thread to check network changes and expose jserv locally.
 	 * @return this
 	 */
-	SynotierJettyApp afterboot(AppSettings settings) {
+	SynotierJettyApp afterboot() {
+		AppSettings settings = syngleton.settings;
 		try {
-			settings.setupNewJserv(syngleton.syncfg, syngleton.synm);
+			// settings.setupNewJserv(syngleton.syncfg, syngleton.synm);
+			settings.mergeLoadJservs(syngleton.syncfg, syngleton.synm);
+			settings.save();
 
 			syngleton.asybmitJserv(len(settings.startHandler) == 0 ? null :
 					((ISynodeLocalExposer)Class
@@ -174,7 +174,6 @@ public class SynotierJettyApp {
 	}
 	
 	/**
-	 * @deprecated only for tests
 	 * 
 	 * @param webinf
 	 * @param config_xml
@@ -182,7 +181,6 @@ public class SynotierJettyApp {
 	 * @param oe
 	 * @return synotier app
 	 * @throws Exception
-	 */
 	public static SynotierJettyApp boot(String webinf, String config_xml, String settings_json,
 			PrintstreamProvider ... oe) throws Exception {
 
@@ -202,30 +200,28 @@ public class SynotierJettyApp {
 		
 		return boot(webinf, config_xml, pset, oe);
 	}
+	 */
 
 	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings,
 			PrintstreamProvider ... oe) throws Exception {
 
-		Utils.logi("%s : %s", settings.vol_name, System.getProperty(settings.vol_name));
+		Utils.logi("%s : %s", settings.vol_name, EnvPath.getEnv(settings.vol_name));
 
 		Configs.init(webinf);
 		Connects.init(webinf);
 		Syngleton.appName = ifnull(Configs.getCfg("app-name"), "Portfolio 0.7");
 
-		String $vol_home = "$" + settings.vol_name;
-		
-		YellowPages.load(EnvPath.concat(webinf, $vol_home));
-		SynodeConfig cfg = YellowPages.synconfig();
-		if (cfg.mode == null)
-			cfg.mode = SynodeMode.peer;
-		
 		mustnonull(settings.rootkey, f(
 				"Rootkey cannot be null for starting App. settings:\n%s", 
 				settings.toBlock()));
 
+		String $vol_home = "$" + settings.vol_name;
 		YellowPages.load(FilenameUtils.concat(new File(".").getAbsolutePath(),
 				webinf, EnvPath.replaceEnv($vol_home)));
-
+		SynodeConfig cfg = YellowPages.synconfig();
+		if (cfg.mode == null)
+			cfg.mode = SynodeMode.peer;
+	
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
 
@@ -250,7 +246,8 @@ public class SynotierJettyApp {
 	}
 
 	/**
-	 * Create an application instance working as a synode tier.
+	 * Create an application instance working as a synode tier,
+	 * by loading configurations, registering ServPorts.
 	 * @param urlpath e. g. jserv-album
 	 * @param syntity_json e. g. $VOLUME_HOME/syntity.json
 	 * @param admin 
@@ -334,7 +331,7 @@ public class SynotierJettyApp {
 	static public <T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerPorts(
 			SynotierJettyApp synapp, String sysconn, T ... servports) throws Exception {
 
-        synapp.schandler = new ServletContextHandler(synapp.server, servpath);
+        synapp.schandler = new ServletContextHandler(synapp.server, "/" + servpath);
         for (T t : servports) {
         	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(sysconn)));
         }
@@ -372,10 +369,8 @@ public class SynotierJettyApp {
 			server.stop();
 	}
 	
-	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, AppSettings settings,
-			String config_xml) throws Exception {
-	
-	    AnsonMsg.understandPorts(SynDocollPort.docoll);
+	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg,
+			AppSettings settings, String config_xml) throws Exception {
 	
 	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);

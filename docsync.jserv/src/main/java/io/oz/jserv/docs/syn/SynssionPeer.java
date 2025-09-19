@@ -881,7 +881,7 @@ public class SynssionPeer {
 		return resp.jservs;
 	}
 
-	public HashMap<String, String[]> submitJserv(String jserv)
+	public HashMap<String, String[]> submitMyJserv(String jserv)
 			throws SemanticException, AnsonException, IOException {
 		mustnonull(client);
 		SynodeMeta m = domanager.synm;
