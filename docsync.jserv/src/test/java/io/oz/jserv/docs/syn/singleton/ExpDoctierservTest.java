@@ -11,10 +11,10 @@ import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.Dev.devm;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.setVolumeEnv;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.azert;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.errLog;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.jetties;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.setVolumeEnv;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.webinf;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
 import static io.oz.syn.Docheck.printChangeLines;
@@ -43,6 +43,7 @@ import io.odysz.jclient.syn.Doclientier;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -52,7 +53,6 @@ import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.Dev;
-import io.oz.jserv.docs.syn.SynodetierJoinTest;
 import io.oz.syn.Docheck;
 import io.oz.syn.SynodeMode;
 import io.oz.syn.registry.SynodeConfig;
@@ -94,6 +94,7 @@ public class ExpDoctierservTest {
 	@BeforeAll
 	public static void init() throws Exception {
 		setVolumeEnv("vol-");
+		JProtocol.setup(SynodetierJoinTest.servpath, Port.echo);
 
 		ck = new Docheck[servs_conn.length];
 	}
@@ -355,7 +356,6 @@ public class ExpDoctierservTest {
 		return xdlst;
 	}
 
-	@SuppressWarnings("deprecation")
 	public static int[] startJetties(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
 		
@@ -370,6 +370,11 @@ public class ExpDoctierservTest {
 			jservs.put(nodes[i], f("http://127.0.0.1:%s/jserv-album", _8964 + i));
 		}
 
+		AppSettings[] settings = new AppSettings[nodex.length];
+		// Debug Notes:
+		// A slow machine will pollute the settings variable if not buffered
+		// This test cannot work on slow machine?
+
 		for (int i : nodex) {
 			if (jetties[i] != null)
 				jetties[i].stop();
@@ -377,19 +382,19 @@ public class ExpDoctierservTest {
 			String cfgxml = f("config-%s.xml", i);
 			
 			// install
-			AppSettings settings = new AppSettings();
-			settings.jservs = jservs;
-			settings.vol_name = f("VOLUME_%s", i);
-			settings.volume = f("../vol-%s", i);
-			settings.port = _8964 + i;
-			settings.installkey = "0123456789ABCDEF";	
-			settings.rootkey = null;
-			settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
+			AppSettings _settings = new AppSettings();
+			_settings.jservs = jservs;
+			_settings.vol_name = f("VOLUME_%s", i);
+			_settings.volume = f("../vol-%s", i);
+			_settings.port = _8964 + i;
+			_settings.installkey = "0123456789ABCDEF";	
+			_settings.rootkey = null;
+			_settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
 
-			YellowPages.load(EnvPath.concat(webinf, "$" + settings.vol_name));
+			YellowPages.load(EnvPath.concat(webinf, "$" + _settings.vol_name));
 			cfgs[i] = YellowPages.synconfig();
 
-			settings.setupdb(cfgs[i], "jserv-stub", webinf,
+			_settings.setupdb(cfgs[i], "jserv-stub", webinf,
 					 cfgxml, "ABCDEF0123465789", true);
 
 			cleanPhotos(docm, cfgs[i].synconn);
@@ -398,16 +403,19 @@ public class ExpDoctierservTest {
 			SynodetierJoinTest.cleanDomain(cfgs[i]);
 
 			// main()
-			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
+			settings[i] = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
 
-			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, "settings.json")
-						.afterboot(settings)
-						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
+			Utils.logi("+======================================= %s, %s", settings[i].reversedPort(false), i);
+			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings[i])
+						.afterboot()
+						.print("\n. . . . . . . . Synodtier Jetty Application (Test) is running . . . . . . . ");
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].syngleton().domanager(zsu).synode,
 								SynodeMode.peer, cfgs[i].chsize, docm, devm, true);
+			
+			Utils.pause(String.valueOf(i));
 		}
 		
 		return nodex;
