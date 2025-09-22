@@ -320,11 +320,7 @@ public class AppSettings extends Anson {
 		String $vol_home = "$" + settings.vol_name;
 		logi("[INSTALL-CHECK] load dictionary configuration %s/* ...", $vol_home);
 		YellowPages.load(EnvPath.concat(
-				new File(".").getAbsolutePath(),
-				webinf,
-				// 0.7.5 EnvPath.replaceEnv($vol_home)));
-				// 0.7.6
-				$vol_home));
+				new File(".").getAbsolutePath(), webinf, $vol_home));
 
 		SynodeConfig cfg = YellowPages.synconfig().replaceEnvs();
 		

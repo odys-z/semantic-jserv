@@ -103,6 +103,8 @@ public class SynodetierJoinTest {
 			errLog = new ErrorCtx() {
 				@Override
 				public void err(MsgCode code, String msg, String...args) {
+					try { throw new NullPointerException(f(msg, (Object[])args)); }
+					catch (NullPointerException e) { e.printStackTrace(); }
 					fail(msg);
 				}
 			};

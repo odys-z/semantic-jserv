@@ -195,6 +195,7 @@ class DoclientierTest {
 		logi("Pushes are closed.");
 		logi("Closing service...");
 		serviceLight[0] = true;
+		thr.stop();
 		thr.join();
 	}
 

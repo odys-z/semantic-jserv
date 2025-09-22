@@ -390,6 +390,7 @@ public class ExpDoctierservTest {
 			_settings.installkey = "0123456789ABCDEF";	
 			_settings.rootkey = null;
 			_settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
+			// Thread.sleep(25000);
 
 			YellowPages.load(EnvPath.concat(webinf, "$" + _settings.vol_name));
 			cfgs[i] = YellowPages.synconfig();
@@ -410,12 +411,18 @@ public class ExpDoctierservTest {
 						.afterboot()
 						.print("\n. . . . . . . . Synodtier Jetty Application (Test) is running . . . . . . . ");
 			
+			// ISSUE afterboot() will write the same settings.json again, in another thread. 
+			// Using different json files for the test?
+			Thread.sleep(5000);
+			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].syngleton().domanager(zsu).synode,
 								SynodeMode.peer, cfgs[i].chsize, docm, devm, true);
 			
-			Utils.pause(String.valueOf(i));
+			Utils.logi("%s: %s - %s", i, settings[i].port, _settings.port);
+			
+			//Utils.pause(String.valueOf(i));
 		}
 		
 		return nodex;

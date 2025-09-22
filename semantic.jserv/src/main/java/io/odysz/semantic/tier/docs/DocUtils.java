@@ -111,7 +111,7 @@ public class DocUtils {
 			.nv(meta.resname, doc.pname)
 			.nv(meta.device, doc.device)
 			.nv(meta.fullpath, doc.fullpath())
-			.nv(meta.createDate, ifnull(doc.createDate, DateFormat.formatime(new Date())))
+			.nv(meta.createDate, ifnull(doc.createDate, DateFormat.formatime_utc(new Date())))
 			.nv(meta.folder, doc.folder())
 			.nv(meta.shareflag, ifnull(doc.shareflag, ShareFlag.prv.name()))
 			.nv(meta.shareby, ifnull(doc.shareby, usr.uid()))

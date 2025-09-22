@@ -9,6 +9,7 @@ import static io.odysz.transact.sql.parts.condition.Funcall.sum;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
@@ -395,9 +396,15 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			// TODO FIXME move this to DocUtils.createFileBy64()
 			// move file
 			String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
+			TO BE FIXED: not the same with ExtfileInsert.sql()
 
-			if (debug)
+			if (debug) {
 				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
+				Utils.logT(new Object() {}, " %s\n-> %s", Path.of(chain.outputPath).toAbsolutePath(), Path.of(targetPath).toAbsolutePath());
+				boolean sourcexists = Files.exists(Path.of(chain.outputPath));
+				boolean targexists  = Files.exists(Path.of(targetPath).getParent());
+				Utils.logi("%s -> %s", sourcexists, targexists);
+			}
 
 			// Target dir always exists since the semantics handler, by calling ExtFileInsertv2.sql(), has touched it.
 			Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
