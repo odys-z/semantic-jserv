@@ -47,6 +47,7 @@ import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
 import io.odysz.common.Regex;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -379,7 +380,9 @@ public abstract class Docs206 {
 		if (!rs.next())
 			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
 
-		String p = DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta);
+		// String p = DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta);
+		String p = ShExtFilev2.resolvUri(conn, req.doc.recId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
+
 		File f = new File(p);
 		if (f.exists() && f.isFile())
 			return f;
@@ -425,7 +428,8 @@ public abstract class Docs206 {
 		if (Regex.startsEvelope(rs.getString(meta.uri)))
 			throw new ExchangeException(ExessionAct.ext_docref, null, "DocRef: %s, %s, %s", req.doc.uids, req.doc.recId, req.doc.pname);
 
-		String p = DocUtils.resolvExtroot(st, conn, rs.getString(meta.pk), usr, meta);
+		// String p = DocUtils.resolvExtroot(st, conn, rs.getString(meta.pk), usr, meta);
+		String p = ShExtFilev2.resolvUri(conn, rs.getString(meta.pk), rs.getString(meta.uri), rs.getString(meta.resname), meta);
 		File f = new File(p);
 		if (f.exists() && f.isFile())
 			return f;

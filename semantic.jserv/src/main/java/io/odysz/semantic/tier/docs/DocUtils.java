@@ -8,14 +8,10 @@ import java.sql.SQLException;
 import java.util.Date;
 
 import io.odysz.common.DateFormat;
-import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
-import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
-import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
-import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -55,7 +51,6 @@ public class DocUtils {
 
 		Insert ins = st
 			.insert(meta.tbl, usr)
-			// .nv(meta.domain, usr.orgId())
 			.nv(meta.org, photo.org)
 			.nv(meta.uri, photo.uri64)
 			.nv(meta.resname, photo.pname)
@@ -67,7 +62,6 @@ public class DocUtils {
 			.nv(meta.shareby, photo.shareby)
 			.nv(meta.shareDate, photo.sharedate)
 			.nv(meta.size, photo.size)
-			// .nv(meta.syncflag, SyncFlag.publish) // temp for MVP 0.2.1
 			;
 		
 		if (!LangExt.isblank(photo.mime))
@@ -133,27 +127,11 @@ public class DocUtils {
 		SemanticObject res = (SemanticObject) ins.ins(insCtx);
 		return res.resulve(meta.tbl, meta.pk, -1);
 	}
-
-	/**
-	 * Resolve file uri with configured Semantics handler, {@link smtype#extFile}.
-	 * @param uri
-	 * @param meta
-	 * @param conn
-	 * @return decode then concatenated absolute path, for file accessing.
-	 * @see EnvPath#decodeUri(String, String)
-	public static String resolvePrivRoot(String uri, ExpDocTableMeta meta, String conn) {
-		String extroot = ((ShExtFilev2) DATranscxt
-				.getHandler(conn, meta.tbl, smtype.extFilev2))
-				.getFileRoot();
-		return EnvPath.decodeUri(extroot, uri);
-	}
-	 */
-	
 	
 	/**
 	 * Resolved root path for file saving.
-	 * @deprecated This shouldn't be called directly as any file paths managed with {@link smtype#extFilev2}
-	 * are wrapped into {@link ExtFilevPath}.
+	 * This method will visit database, and should be called only by the caller of
+	 * {@link DocUtils#createFileB64(DATranscxt, String, ExpSyncDoc, IUser, ExpDocTableMeta, Update)}.
 	 * 
 	 * @param st
 	 * @param conn
@@ -177,50 +155,6 @@ public class DocUtils {
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 	
-
-//		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
-//		String absolutefn = h2.getExtPaths(docId, rs.getString(meta.resname)).prefix(rs.getString(meta.uri)).decodeUriPath();
-//		Utils.logi(absolutefn);
-
-		// return resolvExtroot(conn, rs.getString(meta.uri), meta);
-
-//		return h2.getExtPaths(docId, rs.getString(meta.resname))
-//				// .prefix(ref.relativeFolder(sh.getFileRoot()))
-//				.prefix(DocRef.relativeFolder(rs.getString(meta.uri), h2.getFileRoot()))
-//				.decodeUriPath()
-//				;	
-		return resolvUri(conn, docId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
+		return ShExtFilev2.resolvUri(conn, docId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
 	}
-
-	public static String resolvUri(String conn, String docId, String dburi, String pname, ExpDocTableMeta meta) {
-		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
-
-		return h2.getExtPaths(docId, pname)
-				.prefix(DocRef.relativeFolder(dburi, h2.getFileRoot()))
-				.decodeUriPath()
-				;	
-	}
-
-	/**
-	 * According to smtype.extFilev2's configuration for meta.tbl,
-	 * get path by concatenating and replacing env.
-	 * 
-	 * @param conn
-	 * @param extUri
-	 * @param meta
-	 * @return (smtype.extFilev2[meta.tbl]'s arg0 / extUri).replace-env
-	 * @throws TransException
-	 * @throws SQLException
-	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta)
-			throws TransException, SQLException {
-
-		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
-		if (h2 == null)
-			throw new SemanticException(
-				"To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",
-				conn, meta.tbl);
-		String extroot = h2.getFileRoot();
-		return EnvPath.decodeUri(extroot, extUri);
-	}
-	 */
 }

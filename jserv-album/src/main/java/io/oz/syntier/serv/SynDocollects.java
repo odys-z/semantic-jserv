@@ -22,6 +22,7 @@ import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.jclient.syn.ExpDocRobot;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.DA.DatasetHelper;
@@ -33,7 +34,6 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DeviceTableMeta;
-import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -610,12 +610,10 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl, "p")
-				// .j("a_users", "u", "u.userId = p.shareby")
 				.col(meta.pk)
 				.col(meta.resname).col(meta.createDate)
 				.col(meta.folder).col(meta.fullpath)
 				.col(meta.uri)
-				// .col("userName", "shareby")
 				.col(meta.shareDate).col(meta.tags)
 				.col(meta.geox).col(meta.geoy)
 				.col(meta.mime)
@@ -637,7 +635,9 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			}
 			
 			try ( OutputStream os = resp.getOutputStream() ) {
-				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta));
+				FileStream.sendFile(os, ShExtFilev2
+						// .resolvExtroot(st, conn, req.doc.recId, usr, meta));
+						.resolvUri(conn, req.doc.recId, rs.getString(meta.uri), rs.getString(meta.resname), meta));
 				os.close();
 			} catch (IOException e) {
 				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.

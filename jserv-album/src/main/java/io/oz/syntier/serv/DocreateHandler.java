@@ -9,9 +9,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.sql.Update;
@@ -53,7 +53,7 @@ public class DocreateHandler implements IOnDocreate {
 
 				String pth = isNull(path)
 							// ? DocUtils.resolvExtroot(conn, rs.getString(docm.uri), docm)
-							? DocUtils.resolvUri(conn, docId, rs.getString(docm.uri), rs.getString(docm.resname), docm)
+							? ShExtFilev2.resolvUri(conn, docId, rs.getString(docm.uri), rs.getString(docm.resname), docm)
 							: path[0];
 
 				PhotoRec p = new PhotoRec();
