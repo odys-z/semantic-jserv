@@ -52,9 +52,8 @@ public class DocreateHandler implements IOnDocreate {
 				ISemantext stx = st.instancontxt(conn, usr);
 
 				String pth = isNull(path)
-							// FIXME use ExtFilePath instead
-							// ? EnvPath.decodeUri(stx, rs.getString(docm.uri))
-							? DocUtils.resolvExtroot(conn, rs.getString(docm.uri), docm)
+							// ? DocUtils.resolvExtroot(conn, rs.getString(docm.uri), docm)
+							? DocUtils.resolvUri(conn, docId, rs.getString(docm.uri), rs.getString(docm.resname), docm)
 							: path[0];
 
 				PhotoRec p = new PhotoRec();

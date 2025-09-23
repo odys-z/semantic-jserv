@@ -591,6 +591,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 * [0.7.0] This method uses req's sys-uri for loading media files, as
 	 * the client is unable to understand synodes' domain.
 	 * 
+	 * @deprecated
 	 * @param resp
 	 * @param req
 	 * @param usr

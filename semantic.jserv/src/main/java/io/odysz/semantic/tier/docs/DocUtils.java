@@ -10,10 +10,12 @@ import java.util.Date;
 import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
+import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
+import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
@@ -146,13 +148,28 @@ public class DocUtils {
 		return EnvPath.decodeUri(extroot, uri);
 	}
 	 */
-
+	
+	
+	/**
+	 * Resolved root path for file saving.
+	 * @deprecated This shouldn't be called directly as any file paths managed with {@link smtype#extFilev2}
+	 * are wrapped into {@link ExtFilevPath}.
+	 * 
+	 * @param st
+	 * @param conn
+	 * @param docId
+	 * @param usr
+	 * @param meta
+	 * @return resolved root path 
+	 * @throws TransException
+	 * @throws SQLException
+	 */
 	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, ExpDocTableMeta meta)
 			throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl)
-				.col(meta.uri).col(meta.folder)
+				.col(meta.uri).col(meta.folder).col(meta.resname)
 				.whereEq(meta.pk, docId)
 				.rs(stx)
 				.rs(0);
@@ -160,7 +177,28 @@ public class DocUtils {
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 	
-		return resolvExtroot(conn, rs.getString(meta.uri), meta);
+
+//		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
+//		String absolutefn = h2.getExtPaths(docId, rs.getString(meta.resname)).prefix(rs.getString(meta.uri)).decodeUriPath();
+//		Utils.logi(absolutefn);
+
+		// return resolvExtroot(conn, rs.getString(meta.uri), meta);
+
+//		return h2.getExtPaths(docId, rs.getString(meta.resname))
+//				// .prefix(ref.relativeFolder(sh.getFileRoot()))
+//				.prefix(DocRef.relativeFolder(rs.getString(meta.uri), h2.getFileRoot()))
+//				.decodeUriPath()
+//				;	
+		return resolvUri(conn, docId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
+	}
+
+	public static String resolvUri(String conn, String docId, String dburi, String pname, ExpDocTableMeta meta) {
+		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
+
+		return h2.getExtPaths(docId, pname)
+				.prefix(DocRef.relativeFolder(dburi, h2.getFileRoot()))
+				.decodeUriPath()
+				;	
 	}
 
 	/**
@@ -173,7 +211,6 @@ public class DocUtils {
 	 * @return (smtype.extFilev2[meta.tbl]'s arg0 / extUri).replace-env
 	 * @throws TransException
 	 * @throws SQLException
-	 */
 	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta)
 			throws TransException, SQLException {
 
@@ -185,4 +222,5 @@ public class DocUtils {
 		String extroot = h2.getFileRoot();
 		return EnvPath.decodeUri(extroot, extUri);
 	}
+	 */
 }

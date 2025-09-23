@@ -27,6 +27,8 @@ import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
+import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -63,13 +65,15 @@ import io.oz.syn.registry.SyntityReg;
  */
 @WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.tier" })
 public class ExpDoctier extends ServPort<DocsReq> {
-	/**
-	 * The callback each time triggered by {@link ExpDoctier#endBlock()}. 
-	 *
-	 * The function is always called in a background thread.
-	 */
 	@FunctionalInterface
 	public interface IOnDocreate {
+		/**
+		 * <p>Update any information can be figured out according the created file,
+		 * then persist into the file's record.</p>
+		 * 
+		 * The callback is triggered by {@link ExpDoctier#endBlock()}, and must be
+		 * always be called in a background thread.
+		 */
 		void onCreate(String conn, String docId, DATranscxt st, IUser usr, ExpDocTableMeta docm, String... path);
 	}
 
@@ -396,14 +400,23 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			// TODO FIXME move this to DocUtils.createFileBy64()
 			// move file
 			String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
-			TO BE FIXED: not the same with ExtfileInsert.sql()
+			// TO BE FIXED: not the same with ExtfileInsert.sql()
 
 			if (debug) {
 				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
-				Utils.logT(new Object() {}, " %s\n-> %s", Path.of(chain.outputPath).toAbsolutePath(), Path.of(targetPath).toAbsolutePath());
+				Utils.logT(new Object() {}, " %s\n-> %s", Path.of(chain.outputPath).toAbsolutePath(),
+														  Path.of(targetPath).toAbsolutePath());
 				boolean sourcexists = Files.exists(Path.of(chain.outputPath));
 				boolean targexists  = Files.exists(Path.of(targetPath).getParent());
 				Utils.logi("%s -> %s", sourcexists, targexists);
+
+				ShExtFilev2 h = ((ShExtFilev2) DATranscxt
+						.getHandler(conn, meta.tbl, smtype.extFilev2));
+
+				Utils.logi(h.getExtPaths(pid, body.doc.pname)
+						// .prefix(concat("resolve-" + peer, ssinf.ssid(), relativeFolder(h.getFileRoot())))
+						// .prefix(body.doc)
+						.decodeUriPath());
 			}
 
 			// Target dir always exists since the semantics handler, by calling ExtFileInsertv2.sql(), has touched it.
