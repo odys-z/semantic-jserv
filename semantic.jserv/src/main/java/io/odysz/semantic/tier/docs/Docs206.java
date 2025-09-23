@@ -428,7 +428,6 @@ public abstract class Docs206 {
 		if (Regex.startsEvelope(rs.getString(meta.uri)))
 			throw new ExchangeException(ExessionAct.ext_docref, null, "DocRef: %s, %s, %s", req.doc.uids, req.doc.recId, req.doc.pname);
 
-		// String p = DocUtils.resolvExtroot(st, conn, rs.getString(meta.pk), usr, meta);
 		String p = ShExtFilev2.resolvUri(conn, rs.getString(meta.pk), rs.getString(meta.uri), rs.getString(meta.resname), meta);
 		File f = new File(p);
 		if (f.exists() && f.isFile())

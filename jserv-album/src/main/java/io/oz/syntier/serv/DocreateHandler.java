@@ -52,7 +52,6 @@ public class DocreateHandler implements IOnDocreate {
 				ISemantext stx = st.instancontxt(conn, usr);
 
 				String pth = isNull(path)
-							// ? DocUtils.resolvExtroot(conn, rs.getString(docm.uri), docm)
 							? ShExtFilev2.resolvUri(conn, docId, rs.getString(docm.uri), rs.getString(docm.resname), docm)
 							: path[0];
 

@@ -290,8 +290,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	@Override
 	public Insert insertEntity(SyntityMeta m, Insert ins) {
 		ExpDocTableMeta md = (ExpDocTableMeta) m;
-		ins // .nv(md.domain, domain)
-			.nv(md.folder, folder)
+		ins .nv(md.folder, folder)
 			.nv(md.org, org)
 			.nv(md.mime, mime)
 			.nv(md.uri, uri64)

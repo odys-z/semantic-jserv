@@ -27,8 +27,6 @@ import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFilev2;
-import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -404,17 +402,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
 				Utils.logT(new Object() {}, " %s\n-> %s", Path.of(chain.outputPath).toAbsolutePath(),
 														  Path.of(targetPath).toAbsolutePath());
-//				boolean sourcexists = Files.exists(Path.of(chain.outputPath));
-//				boolean targexists  = Files.exists(Path.of(targetPath).getParent());
-//				Utils.logi("%s -> %s", sourcexists, targexists);
-//
-//				ShExtFilev2 h = ((ShExtFilev2) DATranscxt
-//						.getHandler(conn, meta.tbl, smtype.extFilev2));
-//
-//				Utils.logi(h.getExtPaths(pid, body.doc.pname)
-//						// .prefix(concat("resolve-" + peer, ssinf.ssid(), relativeFolder(h.getFileRoot())))
-//						// .prefix(body.doc)
-//						.decodeUriPath());
 			}
 
 			// Target dir always exists since the semantics handler, by calling ExtFileInsertv2.sql(), has touched it.

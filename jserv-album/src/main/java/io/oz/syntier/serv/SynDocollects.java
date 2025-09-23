@@ -662,31 +662,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //		return (DocsResp) new DocsResp().data(res.props());
 //	}
 
-//	/**
-//	 * <p>Create photo - call this after duplication is checked.</p>
-//	 * <p>Photo is created as in the folder of user/month/.</p>
-//	 *
-//	 * @param conn
-//	 * @param photo
-//	 * @param usr
-//	 * @return pid
-//	 * @throws TransException
-//	 * @throws SQLException
-//	 * @throws IOException
-//	 */
-//	public static String createFile(String conn, PhotoRec photo, IUser usr)
-//			throws TransException, SQLException, IOException {
-//
-//		PhotoMeta meta = new PhotoMeta(conn);
-//
-//		if (isblank(photo.shareby))
-//			photo.share(usr.uid(), photo.shareflag, new Date());
-//
-//		String pid = DocUtils.createFileBy64((DBSynTransBuilder)st, conn, photo, usr, meta);
-//
-//		return pid;
-//	}
-
 	/**
 	 * Read a media file record (id, uri)
 	 *
