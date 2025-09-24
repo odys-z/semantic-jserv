@@ -131,7 +131,9 @@ public class DocUtils {
 	/**
 	 * Resolved root path for file saving.
 	 * This method will visit database, and should be called only by the caller of
-	 * {@link DocUtils#createFileB64(DATranscxt, String, ExpSyncDoc, IUser, ExpDocTableMeta, Update)}.
+	 * {@link DocUtils#createFileB64(DATranscxt, String, ExpSyncDoc, IUser, ExpDocTableMeta, Update)},
+	 * after the ext-file semantics handler, {@link ShExtFilev2}, generated external
+	 * file system uri according to configurations.
 	 * 
 	 * @param st
 	 * @param conn
@@ -142,8 +144,8 @@ public class DocUtils {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, ExpDocTableMeta meta)
-			throws TransException, SQLException {
+	public static String resolvExtroot(DATranscxt st, String conn, String docId,
+			IUser usr, ExpDocTableMeta meta) throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl)
