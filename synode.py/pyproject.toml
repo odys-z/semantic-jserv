@@ -23,6 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
+synode-cli = "synodepy3.prompt"
 synode-uninstall-srv = "synodepy3.cli:uninst_srv"
 synode-clean = "synodepy3.cli:clean"
 synode-start-web = "synodepy3.cli:startweb"

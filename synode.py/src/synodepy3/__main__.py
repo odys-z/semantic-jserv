@@ -314,7 +314,6 @@ class InstallerForm(QMainWindow):
 
     def save(self):
         err_ready()
-        # try:
         v = self.update_valid()
         if v is None:
             try:
@@ -343,11 +342,6 @@ class InstallerForm(QMainWindow):
                          'If this is not switching volume, that is not correct' , e)
 
             self.enableWinsrvInstall()
-
-        # err_msg('There are invalid settings.', v)
-
-        # except PortfolioException as e:
-        #     err_msg('Setting up synodepy3 is failed.', e)
 
     def test_run(self):
         syncins = self.cli.registry.config.syncIns
@@ -660,17 +654,13 @@ class InstallerForm(QMainWindow):
                 err_uihandlers[0] = err_ctx
 
             self.ui.txtCentral.installEventFilter(self)
-
             self.ui.bSignup.clicked.connect(self.signup_demo)
 
             self.ui.cbbOrgs.currentIndexChanged.connect(self.select_community)
             self.ui.cbbDomains.currentIndexChanged.connect(self.select_domx)
-
             self.ui.bCreateDomain.clicked.connect(self.create_find_dom)
 
-            # self.ui.chkHub.clicked.connect(self.update_chkhub)
             self.ui.chkHub.clicked.connect(self.enable_widgets)
-
             self.ui.cbbPeers.currentIndexChanged.connect(self.select_peer)
             self.ui.bVolpath.clicked.connect(setVolumePath)
 

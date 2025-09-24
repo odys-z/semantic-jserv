@@ -99,7 +99,7 @@ def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: st
 
 def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig, settings: AppSettings, iport: tuple[str, int]):
     req = RegistReq(RegistReq.A.registDom, market)
-    req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, settings=settings, iport=iport)
+    req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, iport=iport)
     msg = AnsonMsg(Centralport.register).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
@@ -118,7 +118,7 @@ def submit_settings(client: SessionClient, func_uri: str, market: str,
     req = RegistReq(RegistReq.A.submitSettings, market)\
         .Uri(func_uri)\
         .protocol_path(JProtocol.urlroot)\
-        .jserurl(cfg.https, sets, iport)\
+        .jserurl(cfg.https, iport)\
         .Jservtime(datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if utc == 'now' else utc)\
         .dictionary(cfg)
 
@@ -337,6 +337,7 @@ class InstallerCli:
     @staticmethod
     def loadRegistry(vol_path, deflt_path):
         """
+        Load local dictionary.json.
         :param vol_path: if none, load from default path
         :param deflt_path
         :return: AnRegistry
@@ -734,7 +735,6 @@ class InstallerCli:
         self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
 
-        # self.settings.toFile(os.path.join(web_inf, settings_json))
         self.settings.save()
 
         sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
