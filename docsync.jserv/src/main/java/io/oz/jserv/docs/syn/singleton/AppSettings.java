@@ -72,7 +72,7 @@ public class AppSettings extends Anson {
 	 * </pre>
 	 * @param config_xml
 	 * @param cfg 
-	 * @return
+	 * @return this
 	 * @throws Exception
 	 */
 	public AppSettings setupdb(String url_path, String config_xml, SynodeConfig cfg, boolean forceTest) throws Exception {
@@ -126,8 +126,6 @@ public class AppSettings extends Anson {
 				webinf, config_xml, ".", rootkey, forceTest);
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, cfg.synode(), regists);
-
-		// setupJserv(cfg);
 	}
 	
 	/**
@@ -334,9 +332,6 @@ public class AppSettings extends Anson {
 			logi( "[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\n"
 				+ "Starting application without db setting ...");
 
-//		settings.updateDBJserv(cfg.https, cfg.synconn,
-//				new SynodeMeta(cfg.synconn), cfg.org.orgId, cfg.domain, cfg.synode());
-		
 		return settings;
 	}
 
@@ -473,12 +468,6 @@ public class AppSettings extends Anson {
 		if (isblank(jserv(myid)))
 			jserv(myid, new JServUrl(mycfg.https, reversedIp(), reversedPort(mycfg.https)).jserv());
 
-//		boolean createdme = updateLaterJserv(mycfg.synconn, mycfg.org.orgId, mycfg.domain, synm,
-//											myid, jserv(myid), jserv_utc, myid);
-//		boolean dirty = loadJserv(mycfg, synm, myid, jserv_utc);
-
-//		return createdme | dirty;
-
 		return updateLaterJserv(mycfg.synconn, mycfg.org.orgId, mycfg.domain, synm,
 								myid, jserv(myid), jserv_utc, myid);
 	}
@@ -502,20 +491,6 @@ public class AppSettings extends Anson {
 				cfg.domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
 	}
 
-//	public static HashMap<String, String> loadJservs(SynodeConfig cfg, SynodeMeta synm)
-//			throws SQLException, TransException {
-//		DATranscxt tb = new DATranscxt(cfg.synconn);
-//
-//		return ((AnResultset) tb.select(synm.tbl)
-//		  .cols(synm.jserv, synm.synoder, synm.jserv_utc)
-//		  .whereEq(synm.domain, cfg.domain)
-//		  .rs(tb.instancontxt(cfg.synconn, DATranscxt.dummyUser()))
-//		  .rs(0))
-//		  .map(synm.synoder,
-//			  (rs) -> rs.getString(synm.jserv),
-//			  (rs) -> JServUrl.valid(rs.getString(synm.jserv)));
-//	}
-	
 	public AppSettings persistLaterJservs(SynodeConfig cfg, SynodeMeta synm,
 			HashMap<String, String[]> jservs_time) throws TransException, SQLException {
 		if (jservs_time != null) {
@@ -523,7 +498,6 @@ public class AppSettings extends Anson {
 				updateLaterJserv(cfg.synconn, cfg.org.orgId, cfg.domain, synm, n,
 								jservs_time.get(n)[0], jservs_time.get(n)[1], cfg.synode());
 			
-			// jservs = loadJservs(cfg, synm);
 			loadJservs(cfg, synm, jour0);
 		}
 		return this;
