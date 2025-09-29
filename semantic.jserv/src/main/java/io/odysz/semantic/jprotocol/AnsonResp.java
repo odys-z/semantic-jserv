@@ -18,12 +18,6 @@ import static io.odysz.common.LangExt.isblank;
  * @author odys-z@github.com
  */
 public class AnsonResp extends AnsonBody {
-	public static class R {
-		public static final String ok = "ok";
-		public static final String domexists = "domexists";
-		public static final String invalid = "invalid";
-		public static final String error = "error";
-	}
 
 	protected String m;
 	protected ArrayList<AnResultset> rs;

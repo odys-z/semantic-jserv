@@ -156,21 +156,6 @@ class InstallerForm(QMainWindow):
         if LangExt.len(self.ui.txtWebport.text()) == 0:
             self.ui.txtWebport.setText(web_port0)
 
-    # def validate(self) -> bool:
-    #     """
-    #     Validate data models (updated with ui).
-    #     :return: succeed or not
-    #     """
-    #     err = self.cli.validate()
-    #     if err is not None:
-    #         self.show_validation(err)
-    #         self.ui.lbQr.clear()
-    #         return False
-    #
-    #     self.ui.bWinserv.setEnabled(False)
-    #     self.ui.bTestRun.setEnabled(False)
-    #     return True
-
     def show_validation(self, err: dict):
         if err is None or err == True:
             return True
@@ -256,7 +241,7 @@ class InstallerForm(QMainWindow):
             warn_msg("Failed to submit registration.", details)
         else:
             # update jservs
-            self.cli.registry.config.peers = resp.diction.peers
+            self.cli.after_submit(resp)
             self.bind_hubjserv(self.cli.registry.config, self.cli.settings)
 
     def pings(self):
@@ -407,8 +392,10 @@ class InstallerForm(QMainWindow):
         self.cli.registry.config.overlay(resp.diction)
 
         bind_synode = resp.next_installing() if LangExt.isblank(myid) else myid
-        self.bind_cbbpeers(peers=resp.peer_ids(), select_id=bind_synode)
+        # self.bind_cbbpeers(peers=resp.peer_ids(), select_id=bind_synode)
+        self.bind_cbbpeers(peers=self.cli.registry.config.peers, select_id=bind_synode)
 
+        self.cli.settings.acceptj_butme(bind_synode, self.cli.registry.config.peers)
         self.bind_hubjserv(self.cli.registry.config, self.cli.settings)
 
     def select_community(self, commuix):
@@ -445,6 +432,10 @@ class InstallerForm(QMainWindow):
         chk = peer.remarks == SynodeMode.hub.name
         self.ui.chkHub.setChecked(chk)
         self.enable_widgets()
+
+        hub_srv = self.cli.registry.find_hubpeer().jserv
+        if JServUrl.valid(hub_srv):
+            self.ui.jservLines.setText(hub_srv)
 
     def update_chkreverse(self, check: bool):
         if check is None:
@@ -506,12 +497,24 @@ class InstallerForm(QMainWindow):
         self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(int(cfg.syncIns)))
 
     def bind_hubjserv(self, cfg: SynodeConfig, settings: AppSettings):
+        '''
+        This noly bind settings.jservs[hub] to ui.jservLines. Call settings.accept(cfg.peers) first.
+        :param cfg:
+        :param settings:
+        :return:
+        '''
         if cfg is not None and LangExt.len(cfg.peers) > 0:
-            hub_id = cfg.peers[0].synid
-            if hub_id in settings.jservs:
-                self.ui.jservLines.setText(settings.jservs[hub_id])
-            else:
-                self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{jserv_url_path}')
+            for p in cfg.peers:
+                if p.remarks == SynodeMode.hub.name:
+                    jsrv = settings.jservs[p.synid] if p.synid in settings.jservs else None
+                    self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{jserv_url_path}' \
+                        if LangExt.isblank(jsrv) else jsrv)
+        # if cfg is not None and LangExt.len(cfg.peers) > 0:
+        #     hub_id = cfg.peers[0].synid
+        #     if hub_id in settings.jservs:
+        #         self.ui.jservLines.setText(settings.jservs[hub_id])
+        #     else:
+        #         self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{jserv_url_path}')
 
     def bindSettings(self):
         peers, settings = self.cli.registry.config.peers, self.cli.settings
@@ -537,6 +540,7 @@ class InstallerForm(QMainWindow):
             self.bind_cbbpeers(peers, cfg.synid)
             print(lines)
 
+            settings.acceptj_butme(cfg.synid, cfg.peers)
             self.bind_hubjserv(cfg, settings)
 
         else:
@@ -647,7 +651,7 @@ class InstallerForm(QMainWindow):
             translateUI()
 
             def setVolumePath():
-                volpath = QFileDialog.getExistingDirectory(self, 'ResourcesPath')
+                volpath = QFileDialog.getExistingDirectory(self, caption='Volume Path')
                 self.ui.txtVolpath.setText(volpath)
 
             if err_uihandlers[0] is None:
@@ -700,8 +704,10 @@ class InstallerForm(QMainWindow):
                 txt = self.ui.txtCentral.text()
                 if JServUrl.valid(jserv=txt, rootpath=synode_ui.central_path):
                     self.cli.settings.regiserv = txt
-                    commuid = self.cli.registry.config.org.orgId
-                    self.bind_cbborg([commuid], commuid)
+                    # commuid = self.cli.registry.config.org.orgId
+                    # self.bind_cbborg([commuid], commuid)
+                    communs, communid = self.cli.query_orgs()
+                    self.bind_cbborg(communs, communid)
         return super().eventFilter(obj, event)
 
 

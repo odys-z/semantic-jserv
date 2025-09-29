@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.3.2"]
+requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.3.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,15 +15,15 @@ dependencies = [
     "pyside6>=6.5.0,<=6.8.2.1",
     "qrcode",
     "semantics.py3",
-    "anson.py3>=0.3.2",
-    "anclient.py3>=0.2.2",
+    "anson.py3>=0.3.3",
+    "anclient.py3>=0.2.3",
     "psutil",
     "pillow>=8.0.0",
     "invoke>=2.2.0"
 ]
 
 [project.scripts]
-synode-cli = "synodepy3.prompt"
+synode-cli = "synodepy3.prompt:main"
 synode-uninstall-srv = "synodepy3.cli:uninst_srv"
 synode-clean = "synodepy3.cli:clean"
 synode-start-web = "synodepy3.cli:startweb"

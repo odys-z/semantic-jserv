@@ -98,6 +98,16 @@ def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: st
 
 
 def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig, settings: AppSettings, iport: tuple[str, int]):
+    '''
+    Ask central for registering a domain, expecting a reply with planned synodes (peers).
+    :param client:
+    :param func_uri:
+    :param market:
+    :param cfg:
+    :param settings:
+    :param iport:
+    :return:
+    '''
     req = RegistReq(RegistReq.A.registDom, market)
     req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, iport=iport)
     msg = AnsonMsg(Centralport.register).Body(req)
@@ -247,7 +257,8 @@ def checkinstall_exiftool():
     ln -s ../../Anclient/examples/example.js/album/web-0.4 web-dist
 """
 
-JProtocol.urlroot = 'jserv-album'
+# JProtocol.urlroot = 'jserv-album'
+JProtocol.setup('jserv-album')
 
 install_uri = 'Anson.py3/test'
 
@@ -330,7 +341,7 @@ class InstallerCli:
             self.registry = self.loadRegistry(data.volume, registry_dir)
 
         else:
-            raise PortfolioException("Cannot find settings.json!")
+            raise PortfolioException(f"Cannot find settings.json: {web_settings}")
 
         return self.settings
 
@@ -400,7 +411,7 @@ class InstallerCli:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))
             ip = s.getsockname()[0]
-            print(ip)
+            # print(ip)
             return ip
 
     def getProxiedIp(self):
@@ -413,49 +424,49 @@ class InstallerCli:
         ip, port = self.getProxiedIp()
         return f'{ip}:{port}'
 
-    def validate_domain(self):
+    def validate_domain(self) -> Optional[dict]:
         cfg = self.registry.config
         try: LangExt.only_id_len(cfg.domain, minlen=2, maxlen=12)
         except AnsonException as e:
-            return {"domain length", f"2 <= Len('{cfg.domain}') <= 12"}
+            return {"domain length": f"2 <= Len('{cfg.domain}') <= 12"}
 
         try: LangExt.only_id_len(cfg.org.orgId, minlen=2, maxlen=12)
         except AnsonException as e:
-            return {"community length", f"2 <= Len('{cfg.org.orgId}') <= 12"}
+            return {"community length": f"2 <= Len('{cfg.org.orgId}') <= 12"}
         return None
 
-    def validateVol(self):
+    def validateVol(self) -> Optional[dict]:
         """
         :return: error (invalid)
         """
         volp = self.settings.Volume()
         if volp is None or len(volp) == 0:
-            return {"volume", "Volume path is empty."}
+            return {"volume": "Volume path is empty."}
 
         if not Path.is_dir(Path(volp)):
             try:
                 os.mkdir(volp)
                 return None
             except FileExistsError:
-                return {"volume", f'Directory already exists: {volp}'}
+                return {"volume": f'Directory already exists: {volp}'}
             except FileNotFoundError:
-                return {"volume", f'Parent directory does not exist: {volp}'}
+                return {"volume": f'Parent directory does not exist: {volp}'}
 
-    def validate_iport(self):
+    def validate_iport(self) -> Optional[dict]:
         try:
             if self.settings.reverseProxy:
                 if not ipaddress.ip_address(self.settings.proxyIp):
-                    return {f'IP address is not valid: {self.settings.proxyIp}' }
+                    return {'proxy-ip': f'IP address is not valid: {self.settings.proxyIp}' }
                 if not valid_url_port(self.settings.proxyPort) or not valid_url_port(self.settings.webProxyPort):
-                    return {f'Proxy port must greater than 1024: {self.settings.port}' }
+                    return {'proxy-ip': f'Proxy port must greater than 1024: {self.settings.port}' }
 
             if not valid_url_port(self.settings.port) or not valid_url_port(self.settings.webport):
-                return {f'Port must greater than 1024: {self.settings.port}' }
+                return {'proxy-ip': f'Port must greater than 1024: {self.settings.port}' }
 
         except ValueError as e:
-            return str(e)
+            return {'value error': str(e)}
 
-    def check_installed_jar_db(self):
+    def check_installed_jar_db(self) -> bool:
         """
         Check jar & vol/*.db resources in folder of settings.valume.
         :return: None
@@ -596,10 +607,20 @@ class InstallerCli:
     def gen_html_srvname(self):
         return f'Synode.web-{web_ver}-{self.registry.config.synid}'
 
-    def update_domain(self, reg_jserv: str, orgid: str, domain: str):
-        self.settings.regiserv = reg_jserv
-        self.registry.config.org.orgId = orgid
-        self.registry.config.domain = domain
+    def update_domain(self, reg_jserv: str=None, orgid: str=None, domain: str=None):
+        '''
+        update data model
+        :param reg_jserv:
+        :param orgid:
+        :param domain:
+        :return:
+        '''
+        if reg_jserv is not None:
+            self.settings.regiserv = reg_jserv
+        if orgid is not None:
+            self.registry.config.org.orgId = orgid
+        if domain is not None:
+            self.registry.config.set_domain(domain)
 
     def updateWithUi(self,
                 reg_jserv: str,
@@ -689,7 +710,12 @@ class InstallerCli:
                 pswdPlain=self.registry.synusers[0].pswd)
         return self.regclient
 
-    def query_domx(self, market, commu):
+    def query_orgs(self) -> (list[str], str):
+        # 0.7.6
+        oid = self.registry.config.org.orgId
+        return [oid], oid
+
+    def query_domx(self, market: str, commu: str):
         self.check_cent_login()
         return query_domx(client=self.regclient,
                           func_uri=install_uri,
@@ -703,6 +729,10 @@ class InstallerCli:
                                market=synode_ui.market_id, orgid=commuid, domid=domid)
 
     def register(self):
+        '''
+        Ask central for registering a domain, expecting a reply with planned synodes (peers).
+        :return: RegistResp
+        '''
         self.check_cent_login()
 
         return register(client=self.regclient, func_uri=install_uri,
@@ -937,4 +967,16 @@ class InstallerCli:
 
         print(httpdeamon[0] if len(httpdeamon) > 0 else 'httpd == None')
         return httpdeamon[0] if len(httpdeamon) > 0 else None, thr
+
+    def after_submit(self, resp):
+        '''
+        After submit, update jservs to hub, peers and save.
+        :param resp:
+        :return:
+        '''
+        # self.registry.config.peers = resp.diction.peers
+        self.registry.config.overlay(resp.diction)
+        self.settings.acceptj_butme(self.registry.config.synid, self.registry.config.peers)
+        self.settings.save()
+        self.registry.save()
 

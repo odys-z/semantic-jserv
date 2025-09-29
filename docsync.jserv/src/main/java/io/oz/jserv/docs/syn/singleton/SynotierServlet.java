@@ -5,13 +5,14 @@ import java.io.File;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import io.oz.syn.SyncUser;
 import io.oz.syn.registry.SynodeConfig;
 import io.oz.syn.registry.YellowPages;
 
 public class SynotierServlet extends Syngleton implements ServletContextListener {
 
-	public SynotierServlet(SynodeConfig cfg, AppSettings settings) throws Exception {
-		super(cfg, settings);
+	public SynotierServlet(SynodeConfig cfg, SyncUser admin, AppSettings settings) throws Exception {
+		super(cfg, admin, settings);
 	}
 
 	@Override

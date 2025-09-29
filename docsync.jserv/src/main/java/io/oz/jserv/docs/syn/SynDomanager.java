@@ -326,13 +326,19 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
-	 * <p>Submit then persist with reply, if the time stamp is newer.</p> 
-	 * Is working without concurrency lock.
-	 * <p>NOTE 2025-08-12
-	 * This method is supposed to be called by sync-worker, and won't check the synode modes.</p>
-	 * <p>ISSUE for the future
-	 * It's supposed that some synodes will never have a chance to visit the hub node,
+	 * <p>Submit then persist with reply, if the time stamp is newer.
+	 * Working without concurrency lock.</p> 
+	 * 
+	 * <h5>Note</h5>
+	 * <p>This is for submitting to hub, not central. SynDomanager doesn't care about
+	 * Registry, or Synode Networking.</p>
+	 * 
+	 * <h5>NOTE 2025-08-12</h5>
+	 * <p>This method is supposed to be called by sync-worker, and won't check the synode modes.</p>
+	 * <h5>ISSUE for the future</h5>
+	 * <p>It's supposed that some synodes will never have a chance to visit the hub node,
 	 * then an asynchronous try and delay is expected.</p>
+	 * 
 	 * @see #updateJserv(DATranscxt, String, String)
 	 * @see SynssionPeer#submitMyJserv(String)
 	 * @param nextip 
@@ -366,23 +372,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 							domain(), peer, peer.peerjserv());
 					peer.checkLogin(admin);
 						
-//					JServUrl myjsv = loadMyJserv()
-//									.ip(ip)
-//									.jservtime(DateFormat.formatime_utc(new Date()));
-
 					merge_submit_persistReply(syngleton.settings, peer);
-//					AppSettings s = syngleton.settings;
-//					JServUrl myjsv = loadMyJserv(s.jserv_utc);
-//					if (myjsv == null)
-//						s.persistNewJserv(syngleton.syncfg, synm, synode, s.jserv(synode), s.jserv_utc);
-//
-//					String myjserv = myjsv != null ? myjsv.jserv() : s.jservs.get(synode);
-//					
-//					HashMap<String, String[]> jservs = peer.submitJserv(myjserv);
-//					if (jservs != null) {
-//						s.persistNewJserv(syngleton.syncfg, synm, jservs)
-//						 .save();
-//					}
 				} catch (IOException e) {
 					Utils.logT(new Object() {}, "[%s:%s] Submitting jservs to %s failed. Error: %s, Details:\n%s",
 							domain, synode, peer.peer, e.getClass().getName(), e.getMessage());

@@ -239,10 +239,11 @@ public class SynotierJettyApp {
 
 	/**
 	 * @param cfg
+	 * @param admin 
 	 * @throws Exception
 	 */
-	public SynotierJettyApp(SynodeConfig cfg, AppSettings settings) throws Exception {
-		syngleton = new Syngleton(cfg, settings);
+	public SynotierJettyApp(SynodeConfig cfg, SyncUser admin, AppSettings settings) throws Exception {
+		syngleton = new Syngleton(cfg, admin, settings);
 	}
 
 	/**
@@ -260,7 +261,7 @@ public class SynotierJettyApp {
 		String sync = cfg.synconn;
 
 		SynotierJettyApp synapp = SynotierJettyApp
-						.instanserver(webinf, cfg, settings, config_xml)
+						.instanserver(webinf, cfg, admin, settings, config_xml)
 						.loadomains(cfg, new DocUser(admin));
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
@@ -369,10 +370,10 @@ public class SynotierJettyApp {
 			server.stop();
 	}
 	
-	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg,
+	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, SyncUser admin,
 			AppSettings settings, String config_xml) throws Exception {
 	
-	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
+	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, admin, settings);
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
     	synapp.server = new Server();
 

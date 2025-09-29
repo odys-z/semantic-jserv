@@ -106,9 +106,12 @@ public class Syngleton extends JSingleton {
 
 	public SynodeMeta synm;
 
-	public Syngleton(SynodeConfig cfg, AppSettings settings) throws Exception {
+	public SyncUser synuser;
+
+	public Syngleton(SynodeConfig cfg, SyncUser admin, AppSettings settings) throws Exception {
 		sysconn = cfg.sysconn;
 		syncfg = cfg;
+		this.synuser  = admin;
 		this.settings = settings;
 		syndomanagers = new HashMap<String, SynDomanager>();
 		

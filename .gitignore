@@ -28,3 +28,5 @@ exiftool-*
 logs
 *.log
 .idea/encodings.xml
+*.service
+*.web.service

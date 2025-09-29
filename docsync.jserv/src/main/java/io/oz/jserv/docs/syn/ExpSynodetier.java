@@ -9,6 +9,8 @@ import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.mustge;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.Utils.warn;
+import static io.odysz.common.Utils.logi;
 import static io.oz.syn.ExessionAct.deny;
 import static io.oz.syn.ExessionAct.mode_server;
 import static io.oz.syn.ExessionAct.ready;
@@ -30,9 +32,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.xml.sax.SAXException;
 
+import io.odysz.anson.AnsonException;
 import io.odysz.common.AESHelper;
 import io.odysz.common.Regex;
 import io.odysz.common.Utils;
+import io.odysz.jclient.SessionClient;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -65,7 +69,10 @@ import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.syn.DBSyntableBuilder;
 import io.oz.syn.ExchangeBlock;
 import io.oz.syn.ExessionAct;
+import io.oz.syn.SyncUser;
 import io.oz.syn.SynodeMode;
+import io.oz.syn.registry.RegistResp;
+import io.oz.syn.registry.SynodeConfig;
 
 @WebServlet(description = "Synode Tier Workder", urlPatterns = { "/sync.tier" })
 public class ExpSynodetier extends ServPort<SyncReq> {
@@ -79,6 +86,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 	SynDomanager domanager0;
 	
+	SessionClient registryClient;
+
 	public boolean debug;
 
 	ExpSynodetier(String org, String domain, String synode, String conn, SynodeMode mode)
@@ -213,7 +222,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	//////////////////////////////  worker    ///////////////////////////////////
 	public static int maxSyncInSnds = (int) (60.0 * (5 + Math.random())); // 5-6 minutes
 
-	final Runnable[] worker = new Runnable[] {null};
+	final Runnable[] worker = new Runnable[] {null, null};
 
 	float syncInSnds;
 
@@ -249,6 +258,45 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		lights = new HashMap<String, Boolean>();
 		worker[0] = () -> {
+			try {
+				if (debug)
+					logi("Worker 0 start to submit jservs.");
+				SynodeConfig c = domanager0.syngleton.syncfg;
+				AppSettings  s = domanager0.syngleton.settings;
+				SyncUser     u = domanager0.syngleton.synuser;
+
+				String reg_uri = f("/synode/%s", c.synid);
+
+				if (s.mergeLoadJservs(c, domanager0.synm) // conditions order is essential
+					&& mode != SynodeMode.hub) {
+
+					domanager0.ipChangeHandler.onExpose(s, domanager0);
+					if (registryClient == null) {
+						mustnonull(u.pswd());
+						registryClient = SessionClient.loginWithUri(
+								s.regiserv, reg_uri, c.admin, u.uid(), u.pswd());
+					}
+					RegistResp resp = s.synotifyCentral(reg_uri, c, registryClient, err);
+					
+					if (resp == null || !eq(resp.r, RegistResp.R.ok))
+						warn("[Error] Failed to submit jservs: %s", resp.msg());
+				}
+			} catch (IOException e) {
+				if (debug)
+					e.printStackTrace();
+			} catch (TransException | SQLException e) {
+				e.printStackTrace();
+			} catch (AnsonException e) {
+				e.printStackTrace();
+			} catch (SsException e) {
+				warn("There are configuration error to login central service?");
+				e.printStackTrace();
+			}
+		};
+		// 
+		scheduler.scheduleWithFixedDelay(worker[0], 15000, 1000, TimeUnit.MILLISECONDS);
+
+		worker[1] = () -> {
 			if (running)
 				return;
 			running = true;
@@ -257,9 +305,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				Utils.logi("[%s] : Checking Syndomain ...", synid);
 
 			try {
-				// if (domanager0.updJservs_byJson(domanager0.syngleton.syncfg, domanager0.syngleton.settings))
-				if (domanager0.syngleton.settings.mergeLoadJservs(domanager0.syngleton.syncfg, domanager0.synm))
-					domanager0.ipChangeHandler.onExpose(domanager0.syngleton.settings, domanager0);
+//				if (domanager0.syngleton.settings.mergeLoadJservs(domanager0.syngleton.syncfg, domanager0.synm))
+//					domanager0.ipChangeHandler.onExpose(domanager0.syngleton.settings, domanager0);
 
 				domanager0.loadSynclients(syntb);
 
@@ -299,7 +346,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			}
 		};
 	
-
 		scheduler = Executors.newSingleThreadScheduledExecutor(
 				(r) -> new Thread(r, f("synworker-%s", synid)));
 		reschedule(0);
@@ -321,7 +367,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		syncInSnds = Math.min(maxSyncInSnds, syncInSnds + waitmore);
 		schedualed = scheduler.scheduleWithFixedDelay(
-				worker[0], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
+				worker[1], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
 				TimeUnit.MILLISECONDS);
 	}
 

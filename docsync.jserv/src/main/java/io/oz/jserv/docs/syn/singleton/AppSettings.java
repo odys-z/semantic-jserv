@@ -32,9 +32,14 @@ import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
+import io.odysz.jclient.SessionClient;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.jprotocol.AnsonHeader;
+import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
@@ -46,12 +51,17 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.registry.Centralport;
+import io.oz.syn.registry.RegistReq;
+import io.oz.syn.registry.RegistResp;
 import io.oz.syn.registry.SynodeConfig;
 import io.oz.syn.registry.Syntities;
 import io.oz.syn.registry.YellowPages;
 
 /**
  * @since 0.7.0
+ * 
+ * ISSUE/DECISION Since Sep 26, 2025, AppSettings is also responsible for Synodes Networking?
  */
 public class AppSettings extends Anson {
 
@@ -267,25 +277,6 @@ public class AppSettings extends Anson {
 	}
 	
 	/**
-	 * Update env-vars to system properties.
-	 * @return this
-	 */
-	public AppSettings setEnvs(boolean print) {
-		System.setProperty(vol_name, volume);
-		if (print)
-			logi("%s\t: %s", vol_name, volume);
-		
-		if (envars != null)
-		for (String v : envars.keySet()) {
-			System.setProperty(v, envars.get(v));
-			if (print)
-				logi("%s\t: %s", v, envars.get(v));
-		}
-		
-		return this;
-	}
-
-	/**
 	 * Install process: <br>
 	 * 1. load settings.json<br>
 	 * 2. update env-variables<br>
@@ -310,7 +301,7 @@ public class AppSettings extends Anson {
 		logi("[INSTALL-CHECK] load %s ...", settings_json);
 		AppSettings settings = AppSettings
 							.load(webinf, settings_json)
-							.setEnvs(true);
+							.updateEnvs(true);
 
 		logi("[INSTALL-CHECK] load connects with %s/* ...", webinf);
 		Connects.init(webinf);
@@ -350,7 +341,7 @@ public class AppSettings extends Anson {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	public static boolean updateLaterJserv(String synconn, String org, String domain, SynodeMeta synm,
+	static boolean updateLaterJserv(String synconn, String org, String domain, SynodeMeta synm,
 			String peer, String servurl, String timestamp_utc, String createrid)
 			throws TransException, SQLException {
 		mustnoBlankAny(synconn, org, domain, peer, servurl, createrid);
@@ -377,13 +368,6 @@ public class AppSettings extends Anson {
 			.u(tb.instancontxt(synconn, robot));
 		
 		return res.total() < 0;
-//		if (res.total() <= 0) {
-//			warnT(new Object(){}, "The node %s is missing in the initial configuration at [%s] %s?",
-//					peer, synconn, domain);
-//			return false; 
-//		}
-//
-//		return true;
 	}
 
 	/**
@@ -396,7 +380,7 @@ public class AppSettings extends Anson {
 	 * @throws TransException
 	 * @throws SAXException
 	 */
-	public boolean loadJservs(SynodeConfig syncfg, SynodeMeta synm,
+	boolean loadJservs(SynodeConfig syncfg, SynodeMeta synm,
 			String utc) throws SQLException, TransException {
 
 		DATranscxt synb = new DATranscxt(syncfg.synconn);
@@ -433,18 +417,51 @@ public class AppSettings extends Anson {
 	}
 	
 	public boolean mergeLoadJservs(SynodeConfig myc, SynodeMeta nm) throws TransException, SQLException {
-		boolean dirty = false;
-		mergeMyJserv(myc, nm);
+		boolean dirty = mergeMyJserv(myc, nm);
+
 		for (String synid : jservs.keySet()) {
 			if (eq(synid, myc.synid))
-				dirty |= mergeMyJserv(myc, nm);
-			else dirty |= updateLaterJserv(myc.synconn, myc.org.orgId, myc.domain, nm,
-											synid, jserv(synid), jserv_utc,
-											// synoder is me, usually reaches here when user changed HUB at a peer.
-											myc.synid);
+				;// dirty |= mergeMyJserv(myc, nm);
+			else dirty |= updateLaterJserv(
+							myc.synconn, myc.org.orgId, myc.domain, nm,
+							synid, jserv(synid), jserv_utc,
+							// the Synoder is me, usually reaches here when the user changed HUB at a peer.
+							myc.synid);
 		}
 		dirty |= loadJservs(myc, nm, jserv_utc);
 		return dirty;
+	}
+
+	/**
+	 * Persist then load to from db.
+	 * @return this
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	public boolean persistLaterLoadJserv(SynodeConfig cfg, SynodeMeta synm, String node,
+			String jserv, String jserv_utc) throws TransException, SQLException {
+		boolean dirty = updateLaterJserv(cfg.synconn, cfg.org.orgId, cfg.domain,
+										 synm, node, jserv, jserv_utc, cfg.synode());
+		loadJservs(cfg, synm, jour0);
+		return dirty;
+	}
+	
+	public static HashMap<String, String[]> loadJservss(DATranscxt st, SynodeConfig cfg, SynodeMeta synm)
+			throws SQLException, TransException {
+		return synm.loadJservs(st,
+				cfg.domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
+	}
+
+	public AppSettings persistLaterJservs(SynodeConfig cfg, SynodeMeta synm,
+			HashMap<String, String[]> jservs_time) throws TransException, SQLException {
+		if (jservs_time != null) {
+			for (String n : jservs_time.keySet()) 
+				updateLaterJserv(cfg.synconn, cfg.org.orgId, cfg.domain, synm, n,
+								jservs_time.get(n)[0], jservs_time.get(n)[1], cfg.synode());
+			
+			loadJservs(cfg, synm, jour0);
+		}
+		return this;
 	}
 
 	/**
@@ -472,36 +489,7 @@ public class AppSettings extends Anson {
 								myid, jserv(myid), jserv_utc, myid);
 	}
 
-	/**
-	 * Persist then load to from db.
-	 * @return this
-	 * @throws TransException
-	 * @throws SQLException
-	 */
-	public boolean persistLaterLoadJserv(SynodeConfig cfg, SynodeMeta synm, String node,
-			String jserv, String jserv_utc) throws TransException, SQLException {
-		boolean dirty = updateLaterJserv(cfg.synconn, cfg.org.orgId, cfg.domain, synm, node, jserv, jserv_utc, cfg.synode());
-		loadJservs(cfg, synm, jour0);
-		return dirty;
-	}
-	
-	public static HashMap<String, String[]> loadJservss(DATranscxt st, SynodeConfig cfg, SynodeMeta synm)
-			throws SQLException, TransException {
-		return synm.loadJservs(st,
-				cfg.domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
-	}
 
-	public AppSettings persistLaterJservs(SynodeConfig cfg, SynodeMeta synm,
-			HashMap<String, String[]> jservs_time) throws TransException, SQLException {
-		if (jservs_time != null) {
-			for (String n : jservs_time.keySet()) 
-				updateLaterJserv(cfg.synconn, cfg.org.orgId, cfg.domain, synm, n,
-								jservs_time.get(n)[0], jservs_time.get(n)[1], cfg.synode());
-			
-			loadJservs(cfg, synm, jour0);
-		}
-		return this;
-	}
 
 	/** Find jserv from {@link #jservs}. */
 	public String jserv(String nid) {
@@ -576,5 +564,42 @@ public class AppSettings extends Anson {
 	public int reversedPort(boolean https) {
 		if (port == 0) port = https ? 443 : 80;
 		return this.reverseProxy ? proxyPort : port;
+	}
+	
+	/**
+	 * Update env-vars to system properties.
+	 * @return this
+	 */
+	private AppSettings updateEnvs(boolean print) {
+		System.setProperty(vol_name, volume);
+		if (print)
+			logi("%s\t: %s", vol_name, volume);
+		
+		if (envars != null)
+		for (String v : envars.keySet()) {
+			System.setProperty(v, envars.get(v));
+			if (print)
+				logi("%s\t: %s", v, envars.get(v));
+		}
+		
+		return this;
+	}
+
+	public RegistResp synotifyCentral(String funcuri, SynodeConfig cfg, SessionClient client,
+			OnError errCtx) throws IOException, SemanticException, AnsonException {
+
+		AnsonHeader header = client.header()
+				.act(funcuri, "syntifyCentral", RegistReq.A.submitSettings, jserv(cfg.synid));
+
+		RegistReq req = new RegistReq()
+				.dictionary(cfg).myjserv(jserv(cfg.synid), jserv_utc);
+
+		req.a(RegistReq.A.submitSettings);
+
+		AnsonMsg<RegistReq> q = client.userReq(funcuri, Centralport.register, req)
+				.header(header);
+		AnsonResp resp = client.commit(q, errCtx);
+		
+		return (RegistResp) resp;
 	}
 }
