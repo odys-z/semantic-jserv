@@ -291,7 +291,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} catch (SsException e) {
 				warn("There are configuration error to login central service?");
 				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
+			
 		};
 		// 
 		scheduler.scheduleWithFixedDelay(worker[0], 15000, 1000, TimeUnit.MILLISECONDS);

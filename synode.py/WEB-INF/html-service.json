@@ -1,6 +1,6 @@
 {
   "type": "io.oz.srv.WebConfig",
-  "port": 8911,
+  "port": 1989,
   "paths": [{
     "type": "io.oz.srv.ResPath",
     "path": "/",
