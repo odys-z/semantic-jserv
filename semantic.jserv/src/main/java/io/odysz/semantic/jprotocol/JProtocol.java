@@ -89,7 +89,7 @@ public class JProtocol {
 	@FunctionalInterface
 	public interface OnError { void err(MsgCode code, String msg, String ... args ); }
 
-	protected static String urlroot;
+	public static String urlroot;
 
 	public static SemanticObject err(IPort port, String code, String err) {
 		SemanticObject obj = new SemanticObject();

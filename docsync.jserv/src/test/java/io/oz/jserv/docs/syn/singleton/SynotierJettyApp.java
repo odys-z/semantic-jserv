@@ -99,7 +99,7 @@ public class SynotierJettyApp {
 		return this.syngleton.myjserv();
 	}
 
-	public static void jvmStart(String[] args) {
+	public static void jvmStart(String[] _args) {
 	}
 	
 	/**
@@ -108,7 +108,7 @@ public class SynotierJettyApp {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void jvmStop(String[] args) {
+	public static void jvmStop(String[] _args) {
 	}
 
 	public static void main(String[] args) {

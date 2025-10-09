@@ -248,15 +248,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 */
 	public ExpSynodetier syncIn(float syncIns, OnError err) throws Exception {
 		this.syncInSnds = syncIns;
-		if ((int)(this.syncInSnds) <= 0) {
-			Utils.warn("Syn-worker is disabled (synching in = %s seconds). %s : %s [%s]",
-					syncIns, domanager0.domain(), domanager0.synode, domanager0.synconn);
-			return this;
-		}
 
-		DATranscxt syntb = new DATranscxt(domanager0.synconn);
+		scheduler = Executors.newSingleThreadScheduledExecutor(
+				(r) -> new Thread(r, f("synworker-%s", synid)));
 
-		lights = new HashMap<String, Boolean>();
 		worker[0] = () -> {
 			try {
 				if (debug)
@@ -267,14 +262,15 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 				String reg_uri = f("/synode/%s", c.synid);
 
-				if (s.mergeLoadJservs(c, domanager0.synm) // conditions order is essential
-					&& mode != SynodeMode.hub) {
+				if (s.mergeLoadJservs(c, domanager0.synm)
+					// && mode != SynodeMode.hub // conditions order is essential
+					) {
 
 					domanager0.ipChangeHandler.onExpose(s, domanager0);
 					if (registryClient == null) {
 						mustnonull(u.pswd());
 						registryClient = SessionClient.loginWithUri(
-								s.regiserv, reg_uri, c.admin, u.uid(), u.pswd());
+								s.regiserv, reg_uri, u.uid(), s.centralPswd, synid);
 					}
 					RegistResp resp = s.synotifyCentral(reg_uri, c, registryClient, err);
 					
@@ -296,8 +292,19 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			}
 			
 		};
-		// 
-		scheduler.scheduleWithFixedDelay(worker[0], 15000, 1000, TimeUnit.MILLISECONDS);
+		
+		scheduler.scheduleWithFixedDelay(worker[0], 500, 15000, TimeUnit.MILLISECONDS);
+
+		// sync-worker 
+		if ((int)(this.syncInSnds) <= 0) {
+			Utils.warn("Syn-worker is disabled (synching in = %s seconds). %s : %s [%s]",
+					syncIns, domanager0.domain(), domanager0.synode, domanager0.synconn);
+			return this;
+		}
+
+		lights = new HashMap<String, Boolean>();
+
+		DATranscxt syntb = new DATranscxt(domanager0.synconn);
 
 		worker[1] = () -> {
 			if (running)
@@ -337,7 +344,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					}
 				
 				if (!anygreen())
-					reschedule(30);
+					reschedule_1(30);
 
 			// thread level catches, local errors
 			} catch (Exception e1) {
@@ -349,9 +356,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			}
 		};
 	
-		scheduler = Executors.newSingleThreadScheduledExecutor(
-				(r) -> new Thread(r, f("synworker-%s", synid)));
-		reschedule(0);
+		reschedule_1(0);
 
         running = false;
 		return this;
@@ -360,7 +365,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	/**
 	 * @since 0.2.5
 	 */
-	private void reschedule(int waitmore) {
+	private void reschedule_1(int waitmore) {
 		if (schedualed != null) {
 			try {
 				schedualed.cancel(true);

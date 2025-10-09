@@ -28,7 +28,16 @@ public enum SynDocollPort implements IPort {
 	/** docs.tier : {@link io.oz.jserv.docs.syn.ExpDoctier} */
 	docstier("docs.tier"),
 	
-	menu("menu.serv"), settings("settings.less");
+	menu("menu.serv"), settings("settings.less"),
+
+	/**
+	 * By forcing understanding Centralport.register, can accept response from central.
+	 * But this is not correct, and is not possible to fix if anson.java cannot parse multiple
+	 * enum classes for the same field.
+	 * FIXME How to understand multiple port classes from different jserv? 
+	 * @since 0.5.18, portfolio 0.7.6
+	 */
+	register("regist.serv");
 
 	static {
 		JSONAnsonListener.registFactory(SynDocollPort.class, 

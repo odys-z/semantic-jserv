@@ -1,7 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import datetime
 import sys
-from dataclasses import dataclass
 
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
@@ -97,14 +96,14 @@ def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: st
     return cast(RegistResp, resp)
 
 
-def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig, settings: AppSettings, iport: tuple[str, int]):
+def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int]):
     '''
     Ask central for registering a domain, expecting a reply with planned synodes (peers).
     :param client:
     :param func_uri:
     :param market:
     :param cfg:
-    :param settings:
+    :param s:
     :param iport:
     :return:
     '''
@@ -122,15 +121,17 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
 
 
 def submit_settings(client: SessionClient, func_uri: str, market: str,
-                    cfg: SynodeConfig, sets: AppSettings, iport: tuple[str, int],
+                    cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int],
                     utc: str='now',
                     stat: str = CynodeStats.create):
     req = RegistReq(RegistReq.A.submitSettings, market)\
         .Uri(func_uri)\
         .protocol_path(JProtocol.urlroot)\
         .jserurl(cfg.https, iport)\
-        .Jservtime(datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if utc == 'now' else utc)\
-        .dictionary(cfg)
+        .dictionary(cfg)\
+        .mystate(stat)\
+        .Jservtime(s.jserv_utc)\
+        #.Jservtime(datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if utc == 'now' else utc) \
 
     msg = AnsonMsg(Centralport.register).Body(req)
 
@@ -324,6 +325,7 @@ class InstallerCli:
     def load_settings(self):
         """
         Load from res_path/setings.json,
+        NOTE TODO 0.7.6 force passward to central: ******
         :return: loaded json object
         """
 
@@ -342,6 +344,12 @@ class InstallerCli:
 
         else:
             raise PortfolioException(f"Cannot find settings.json: {web_settings}")
+
+        # TODO 0.7.6
+        if LangExt.isblank(self.settings.centralPswd):
+            self.settings.centralPswd = ''
+            for i in range(1, 7):
+                self.settings.centralPswd = self.settings.centralPswd + str(i)
 
         return self.settings
 
@@ -737,19 +745,21 @@ class InstallerCli:
 
         return register(client=self.regclient, func_uri=install_uri,
                         market=synode_ui.market_id, cfg=self.registry.config,
-                        settings=self.settings, iport=self.getProxiedIp())
+                        s=self.settings, iport=self.getProxiedIp())
 
     def jesuis_hub(self):
         return self.registry.config.mode == SynodeMode.hub.name
 
     def submit_mysettings(self):
         self.check_cent_login()
-
         return submit_settings(client=self.regclient,
                                func_uri=install_uri, market=synode_ui.market_id,
-                               cfg=self.registry.config, sets=self.settings,
-                               iport=self.getProxiedIp()
-                ) # if not self.jesuis_hub() else RegistResp().Code(MsgCode.ok)
+                               cfg=self.registry.config, s=self.settings,
+                               iport=self.getProxiedIp(),
+                               # leave the state unchanged when using setup API.
+                               # see also java/AppSettings.synotifyCentral()
+                               stat=cast(str, None)
+                               ) # if not self.jesuis_hub() else RegistResp().Code(MsgCode.ok)
 
     def install(self):
         """
@@ -765,6 +775,7 @@ class InstallerCli:
         self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
 
+        self.settings.jserv_utc = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         self.settings.save()
 
         sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())

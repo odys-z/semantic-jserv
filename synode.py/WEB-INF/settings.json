@@ -5,7 +5,7 @@
   "webport": 1989,
   "reverseProxy": true,
   "proxyPort": 1911,
-  "proxyIp": "182.168.29.34",
+  "proxyIp": "182.150.29.34",
   "webProxyPort": 1989,
   "envars": {
     "WEBROOT_HUB": "X29",

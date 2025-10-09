@@ -221,7 +221,7 @@ class InstallerForm(QMainWindow):
                     warn_msg("Creating domain failed.")
         else:
             errs = True
-            details.append(v)
+            details.append(str(v))
 
         if has_err():
             warn_msg('Central service cannot be reached.', details)

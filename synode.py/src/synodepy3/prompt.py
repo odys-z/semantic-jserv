@@ -218,7 +218,7 @@ def create_find_update_dom():
             validator=MultiValidator(QuiteValidator(), DomainValidator()),
             validate_while_typing=False)
         resp = cli.register()
-        Utils.logi("Doamin created: {}\n{}", domid, resp.peer_ids())
+        Utils.logi('Doamin created: {}\n{}', domid, 'None' if resp is None else resp.diction)
         # ui.update_bind_domconf() -> ui.bind_cbbpeers()
 
     if resp is None:
@@ -304,7 +304,7 @@ else:
 if cli.settings.reverseProxy:
     cli.settings.proxyIp = session.prompt(
         message='Please set the public ip. Return to quite: ',
-        default=cli.reportIp(),
+        default=cli.reportIp() if LangExt.isblank(cli.settings.proxyIp) else cli.settings.proxyIp,
         validator=MultiValidator(QuiteValidator(), PortValidator()))
     check_quit(quite)
 
@@ -325,6 +325,10 @@ caninstall = choice(
         message=f'All settings are collected, install Synode {synid}?',
         options=[(1, 'Yes'), (2, 'No, and quite')])
 
+def post_install():
+    resp = cli.submit_mysettings()
+    cli.after_submit(resp)
+
 # 6 save & install
 if caninstall == 1:
     # ui.cli.settings.save()
@@ -334,10 +338,9 @@ if caninstall == 1:
         post_err = cli.postFix()
 
         # ui: submit_jserv()
-        resp = cli.submit_mysettings()
         # cli.registry.config.peers = resp.diction.peers
         # ui: bind_hubjserv()
-        cli.after_submit(resp)
+        post_install()
     except FileNotFoundError or IOError as e:
         # Changing vol path can reach here ?
         Utils.warn(e)
@@ -348,6 +351,7 @@ if caninstall == 1:
         Utils.warn(e)
         session.prompt('Configuration is updated with errors. Check the details.\n'
                         'If this is not switching volume, that is not correct')
+        post_install() # let's still take effects for changes
         quite = True
         check_quit(quite)
 

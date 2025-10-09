@@ -39,6 +39,7 @@ import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.meta.SynodeMeta;
@@ -51,7 +52,9 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.SynodeMode;
 import io.oz.syn.registry.Centralport;
+import io.oz.syn.registry.CynodeStats;
 import io.oz.syn.registry.RegistReq;
 import io.oz.syn.registry.RegistResp;
 import io.oz.syn.registry.SynodeConfig;
@@ -234,6 +237,12 @@ public class AppSettings extends Anson {
 	public float connIdleSnds;
 
 	/**
+	 * Central password for submit jserv
+	 * @since 0.2.6
+	 */
+	public String centralPswd;
+
+	/**
 	 * Should only be used in win-serv mode.
 	 * @param web_inf
 	 * @return Settings
@@ -364,24 +373,24 @@ public class AppSettings extends Anson {
 			.whereEq(synm.org, org)
 			// see comments in loadJserv()
 			// .where(op.le, Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(timestamp))
-			.where(op.le, isnull(synm.jserv_utc, constr(jour0)), constr(timestamp))
+			.where(op.lt, isnull(synm.jserv_utc, constr(jour0)), constr(timestamp))
 			.u(tb.instancontxt(synconn, robot));
 		
-		return res.total() < 0;
+		return res.total() > 0;
 	}
 
 	/**
 	 * Load {@link JServUrl} of id {@link #synode} from {@link #synconn},
 	 * compare the time stamp, and return the database one if databse's time stamp is later,
-	 * otherwise null.
+	 * otherwise takes no action.
 	 * @param syncfg 
 	 * @return JServUrl
 	 * @throws SQLException
 	 * @throws TransException
 	 * @throws SAXException
 	 */
-	boolean loadJservs(SynodeConfig syncfg, SynodeMeta synm,
-			String utc) throws SQLException, TransException {
+	boolean loadJservs(SynodeConfig syncfg, SynodeMeta synm, String utc)
+			throws SQLException, TransException {
 
 		DATranscxt synb = new DATranscxt(syncfg.synconn);
 		IUser robot = DATranscxt.dummyUser();
@@ -399,7 +408,7 @@ public class AppSettings extends Anson {
 				// And "datetime(optime) = datetime('1911-10-10')" will not work.
 				//
 				// This line only works for sqlite (Google AI: sqlite doesn't has built-in datetime type):
-				.where(op.ge, isnull(synm.jserv_utc, constr(jour0)), constr(LangExt.ifnull(utc, jour0)))
+				.where(op.gt, isnull(synm.jserv_utc, constr(jour0)), constr(LangExt.ifnull(utc, jour0)))
 				// -> synid = 'X' AND ifnull(optime, 1911-10-10) >= 1911-10-10
 				.rs(synb.instancontxt(syncfg.synconn, robot))
 				.rs(0);
@@ -488,8 +497,6 @@ public class AppSettings extends Anson {
 		return updateLaterJserv(mycfg.synconn, mycfg.org.orgId, mycfg.domain, synm,
 								myid, jserv(myid), jserv_utc, myid);
 	}
-
-
 
 	/** Find jserv from {@link #jservs}. */
 	public String jserv(String nid) {
@@ -585,16 +592,31 @@ public class AppSettings extends Anson {
 		return this;
 	}
 
+	/**
+	 * Tells central this node is running, both as hub or as peer.
+	 * @param funcuri
+	 * @param cfg
+	 * @param client
+	 * @param errCtx
+	 * @return reply
+	 * @throws IOException
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 */
 	public RegistResp synotifyCentral(String funcuri, SynodeConfig cfg, SessionClient client,
 			OnError errCtx) throws IOException, SemanticException, AnsonException {
 
 		AnsonHeader header = client.header()
 				.act(funcuri, "syntifyCentral", RegistReq.A.submitSettings, jserv(cfg.synid));
 
-		RegistReq req = new RegistReq()
-				.dictionary(cfg).myjserv(jserv(cfg.synid), jserv_utc);
+		RegistReq req = new RegistReq(cfg.org.orgType)
+				.dictionary(cfg)
+				.myjserv(jserv(cfg.synid), jserv_utc)
+				// see also synodepy3.InstallerCli.submit_mysettings()
+				.mystate(cfg.mode == SynodeMode.hub ? CynodeStats.asHub : CynodeStats.asPeer);
 
 		req.a(RegistReq.A.submitSettings);
+		req.protocolPath = JProtocol.urlroot;
 
 		AnsonMsg<RegistReq> q = client.userReq(funcuri, Centralport.register, req)
 				.header(header);
