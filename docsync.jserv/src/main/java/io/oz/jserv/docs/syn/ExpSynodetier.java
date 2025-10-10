@@ -225,6 +225,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	final Runnable[] worker = new Runnable[] {null, null};
 
 	float syncInSnds;
+	
+	private boolean needExpose;
 
 	private ScheduledExecutorService scheduler;
 	private static ScheduledFuture<?> schedualed;
@@ -248,6 +250,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 */
 	public ExpSynodetier syncIn(float syncIns, OnError err) throws Exception {
 		this.syncInSnds = syncIns;
+		this.needExpose = false;
 
 		scheduler = Executors.newSingleThreadScheduledExecutor(
 				(r) -> new Thread(r, f("synworker-%s", synid)));
@@ -265,8 +268,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (s.mergeLoadJservs(c, domanager0.synm)
 					// && mode != SynodeMode.hub // conditions order is essential
 					) {
+					needExpose = true;
 
-					domanager0.ipChangeHandler.onExpose(s, domanager0);
 					if (registryClient == null) {
 						mustnonull(u.pswd());
 						registryClient = SessionClient.loginWithUri(
@@ -276,6 +279,12 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					
 					if (resp == null || !eq(resp.r, RegistResp.R.ok))
 						warn("[Error] Failed to submit jservs: %s", resp.msg());
+				}
+
+				if (needExpose && domanager0.ipChangeHandler != null) {
+					// can competing with afterboot()
+					domanager0.ipChangeHandler.onExpose(s, domanager0);
+					needExpose = false;
 				}
 			} catch (IOException e) {
 				if (debug)

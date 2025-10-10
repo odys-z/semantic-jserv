@@ -436,6 +436,7 @@ public class Syngleton extends JSingleton {
 	 * @param currentIp current local ip.
 	 * @return this
 	 * @since 0.7.6
+	 * @deprecated shouldn't call this in afterboot(), which makes competing conditions with worker-0.
 	 */
 	public void asybmitJserv(ISynodeLocalExposer ipExposer) {
 		new Thread(()-> {

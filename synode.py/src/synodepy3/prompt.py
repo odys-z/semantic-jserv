@@ -24,8 +24,8 @@ def reach_central():
 def readable_state(s: str = None):
     return '' if LangExt.len(s) == 0 \
             else '✅ Available planned node' if s == CynodeStats.create \
-            else '⛔ Already installed as a Hub node' if s == CynodeStats.asHub \
-            else '⛔ Already installed as a Peer node' if s == CynodeStats.asPeer \
+            else '⛔ Already running as a Hub node' if s == CynodeStats.asHub \
+            else '⛔ Already running as a Peer node' if s == CynodeStats.asPeer \
             else '[❗] Unknown state (dangerous)'
 
 def generate_service_templ(settings, config, xms:str='1g', xmx='8g'):
@@ -127,6 +127,12 @@ class DomainValidator(Validator):
         e = cli.validate_domain()
         if e is not None:
             raise ValidationError(message=str(e))
+
+# class NodestatValidator(Validator):
+#     def validate(self, v: Document) -> None:
+#         sid, stat = v
+#         if not LangExt.isblank(sid) and stat is not None and stat != CynodeStats.create:
+#             raise ValidationError(message=f'{sid} cannot be installed again.')
 
 class PortValidator(Validator):
     def validate(self, v: Document) -> None:
@@ -255,8 +261,11 @@ while not quite and synstat is not None and synstat != CynodeStats.create:
 
     if synid is None:
         quite = True
-    elif synid == '':
+    elif synid == '': # another domain
         create_find_update_dom()
+    elif synstat is not None and synstat != CynodeStats.create:
+        print(f'Cannot re-install {synid}.\n'
+              '[Note 0.7.6] Some settings can be modified in settings.json, e.g. port or ip, by which way is not recommended.')
     else: # ui.select_peer()
         cli.registry.config.synid = synid
 

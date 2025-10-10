@@ -157,15 +157,23 @@ public class SynotierJettyApp {
 		AppSettings settings = syngleton.settings;
 		try {
 			// settings.setupNewJserv(syngleton.syncfg, syngleton.synm);
-			settings.mergeLoadJservs(syngleton.syncfg, syngleton.synm);
-			settings.save();
+			// settings.mergeLoadJservs(syngleton.syncfg, syngleton.synm);
+			// settings.save();
 
-			syngleton.asybmitJserv(len(settings.startHandler) == 0 ? null :
-					((ISynodeLocalExposer)Class
-						.forName(settings.startHandler[0])
-						.getDeclaredConstructor()
-						.newInstance()))
-						;
+//			syngleton.asybmitJserv(len(settings.startHandler) == 0 ? null :
+//					((ISynodeLocalExposer)Class
+//						.forName(settings.startHandler[0])
+//						.getDeclaredConstructor()
+//						.newInstance()))
+//						;
+
+			SynDomanager mngr = syngleton.domanager(syngleton.syncfg.domain);
+			mngr.ipChangeHandler(len(settings.startHandler) == 0
+								? null
+								: ((ISynodeLocalExposer)Class
+									.forName(settings.startHandler[0])
+									.getDeclaredConstructor()
+									.newInstance()));
 		} catch (Exception e) {
 			warnT(new Object(){}, "Exposing local resources failed!");
 			e.printStackTrace();

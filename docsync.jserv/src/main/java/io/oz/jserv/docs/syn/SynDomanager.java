@@ -334,7 +334,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * Registry, or Synode Networking.</p>
 	 * 
 	 * <h5>NOTE 2025-08-12</h5>
-	 * <p>This method is supposed to be called by sync-worker, and won't check the synode modes.</p>
+	 * <p>This method is supposed to be called by sync-worker 1, only for peer mode,
+	 * and won't check the synode modes.</p>
 	 * <h5>ISSUE for the future</h5>
 	 * <p>It's supposed that some synodes will never have a chance to visit the hub node,
 	 * then an asynchronous try and delay is expected.</p>
@@ -344,7 +345,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @param nextip 
 	 * @param cfg 
 	 * @return is the local ip changed
-	 * (false means no newer jservs from any peers, and needs updating)
+	 * (false means no newer jservs from any peers, and no need of updating)
 	 * @since 0.7.6
 	 */
 	public boolean submitJservsPersist(String currentIp, String... nextip) {

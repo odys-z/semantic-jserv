@@ -7,7 +7,7 @@
       "WEBROOT_HUB": "http://119.8.29.27:8966",
       "VOLUME_PRV": "../../../../volumes-0.7/volume-prv"},
   "webport": 8900,
-  "installkey": null,
+  "installkey": "0123456789ABCDEF",
   "startHandler": null,
   "regiserv": null,
   "volume": "../v-0",
@@ -19,5 +19,6 @@
       "Y": "http://127.0.0.1:8967/jserv-album",
       "Z": "http://127.0.0.1:8968/jserv-album"},
   "localIp": null,
-  "rootkey": "0123456789ABCDEF"
+  "centralPswd": null,
+  "rootkey": null
 }
