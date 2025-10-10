@@ -390,9 +390,9 @@ class InstallerCli:
     def isinstalled(self):
         return self.validateVol() is None
 
-    def hasrun(self):
+    def hasrun(self, override_vol: str = None):
         try:
-            psys_db, psyn_db, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
+            psys_db, psyn_db, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume() if override_vol is None else override_vol)
             return LangExt.len(self.settings.rootkey) > 0 and os.path.exists(psys_db) and os.path.getsize(psys_db) > 0
         except FileNotFoundError:
             return False
@@ -567,8 +567,8 @@ class InstallerCli:
                     else "Please install exiftool and test it's working with command 'exiftool -ver'"}
 
         # 0.7.6
-        self.settings.envars['WEBROOT'] = self.registry.config.synid
-        cfg.org.webroot = '$WEBROOT'
+        # self.settings.envars['WEBROOT'] = self.registry.config.synid
+        # cfg.org.webroot = '$WEBROOT'
 
         if cfg.mode != SynodeMode.hub.name:
             self.ping(self.settings.jservs[cfg.peers[0].synid])
@@ -634,12 +634,12 @@ class InstallerCli:
                 reg_jserv: str,
                 admin: str, pswd: str,
                 domphrase: str, org: str, domain: str,
+                volume: str,
                 hubmode: bool = True,
                 jservss: str = None, synid: str = None,
                 reverseProxy=False,
                 port: str = None, webport: str = None,
                 proxyPort: str = None, proxyIp: str = None,
-                volume: str = None,
                 syncins: str = None, envars=None, webProxyPort=None):
 
         self.update_domain(reg_jserv=reg_jserv, orgid=org, domain=domain)
@@ -768,6 +768,14 @@ class InstallerCli:
         Note: this is not installing Windows service.
         :return: None
         """
+
+        cfg = self.registry.config
+        self.settings.envars['WEBROOT'] = cfg.synid
+        cfg.org.webroot = '$WEBROOT'
+
+        for p in cfg.peers:
+            # This is wrong design of data structure, and is bug prone
+            p.org = cfg.org.orgId
 
         self.check_src_jar_db()
 

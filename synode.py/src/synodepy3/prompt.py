@@ -85,7 +85,7 @@ Environment="JAVA_OPTS=-Xms512m -Xmx2g"
 
     return syn_templ, web_templ
 
-quite = False
+_quit = False
 details = [cast(str, None)]
 
 def check_quit(q: bool):
@@ -109,13 +109,38 @@ class JservValidator(Validator):
         if not JServUrl.valid(v, rootpath=synode_ui.central_path):
             raise ValidationError(message="Jserv URL is invalid.")
 
-class QuiteValidator(Validator):
+class QuitValidator(Validator):
     def validate(self, v):
-        global quite
+        global _quit
         if not v.text.strip():
             # raise ValidationError(message="Input cannot be empty")
-            quite = True
+            _quit = True
             return
+
+class VolumeValidator(Validator):
+    def validate(self, v):
+        parent_dir = os.path.dirname(path)
+        if not parent_dir:
+            parent_dir = os.getcwd()
+        if not os.path.isdir(parent_dir):
+            raise ValidationError(message=f"Parent directory '{parent_dir}' does not exist.")
+        if not os.access(parent_dir, os.W_OK):
+            raise ValidationError(message=f"Permission denied to write in '{parent_dir}'.")
+
+        try:
+            os.makedirs(path, exist_ok=True)
+            if not os.listdir(path):
+                os.rmdir(path)  # Only remove if empty
+            elif cli.hasrun(path):
+                raise ValidationError(message=f"The volume is already used by a running synode: {v}")
+
+            return True
+        except PermissionError:
+            raise ValidationError(message=f"Permission denied: Unable to create '{path}'.")
+        except FileExistsError:
+            raise ValidationError(message=f"A file or directory already exists at '{path}'.")
+        except OSError as e:
+            raise ValidationError(message=f"An OS error occurred while testing creation: {e}")
 
 class NodeStateValidator(Validator):
     def validate(self, v):
@@ -127,12 +152,6 @@ class DomainValidator(Validator):
         e = cli.validate_domain()
         if e is not None:
             raise ValidationError(message=str(e))
-
-# class NodestatValidator(Validator):
-#     def validate(self, v: Document) -> None:
-#         sid, stat = v
-#         if not LangExt.isblank(sid) and stat is not None and stat != CynodeStats.create:
-#             raise ValidationError(message=f'{sid} cannot be installed again.')
 
 class PortValidator(Validator):
     def validate(self, v: Document) -> None:
@@ -150,13 +169,13 @@ class MultiValidator(Validator):
 
 # InstallerForm.bind_config
 def err_ctx(c, e: str, *args: str) -> None:
-    global quite, details
+    global _quit, details
     try: details[0] = e.format(args) if e is not None else e
     except Exception as ex:
         print(ex)
         print(type(e), e.format)
         details[0] = e
-    quite = True
+    _quit = True
 
 err_uihandlers[0] = err_ctx
 
@@ -167,109 +186,123 @@ cli.registry = InstallerCli.loadRegistry(cli.settings.volume, 'registry')
 ssclient = cast(SessionClient, None)
 session = PromptSession(style=style)
 
+cfg = cli.registry.config # for shot
+
 print(f"Starting configure Synode {synode_ui.version}. Return with empty input to abort.")
 
-# 0. central jserv
-orgs: list[str] = cast(list, None)
-orgid: str = cast(str, None)
-while not quite and not reach_central():
-    cli.settings.regiserv = session.prompt(
-          message="Please input central service url (empty to quite): ",
-          validator=QuiteValidator(),
-          default=cli.settings.regiserv,
-          validate_while_typing=False)
+if not cli.hasrun():
+    # 0. central jserv
+    orgs: list[str] = cast(list, None)
+    orgid: str = cast(str, None)
+    while not _quit and not reach_central():
+        cli.settings.regiserv = session.prompt(
+              message="Please input central service url (empty to quit): ",
+              validator=QuitValidator(),
+              default=cli.settings.regiserv,
+              validate_while_typing=False)
 
-    ssclient = cli.check_cent_login()
-    orgs, orgid = cli.query_orgs()
+        ssclient = cli.check_cent_login()
+        orgs, orgid = cli.query_orgs()
 
-    if LangExt.len(orgs) > 0:
-        break
+        if LangExt.len(orgs) > 0:
+            break
 
-check_quit(quite)
+    check_quit(_quit)
 
-# 1. orgs / community
-session.prompt(
-    message=f"Portfolio {synode_ui.version} market ID: {synode_ui.market_id}. ",
-    default="Return to continue ...")
+    # 1. orgs / community
+    session.prompt(
+        message=f"Portfolio {synode_ui.version} market ID: {synode_ui.market_id}. ",
+        default="Return to continue ...")
 
-# 2. bind domains
-# e.g. ['zsu', 'edu-0']
-domains = cli.query_domx(market=synode_ui.market_id, commu=orgid)
+    # 2. bind domains
+    # e.g. ['zsu', 'edu-0']
+    domains = cli.query_domx(market=synode_ui.market_id, commu=orgid)
 
-if domains is None:
-    quite = True
-check_quit(quite)
+    if domains is None:
+        _quit = True
+    check_quit(_quit)
 
-# 3. create or select a domain
-def create_find_update_dom():
+    # 3. create or select a domain
+    def create_find_update_dom():
 
-    if LangExt.len(domains.orgDomains) == 0:
-        options = []
-    else:
-        options = [(d, d) for d in domains.orgDomains]
+        if LangExt.len(domains.orgDomains) == 0:
+            options = []
+        else:
+            options = [(d, d) for d in domains.orgDomains]
 
-    options.append((None, 'Create a new domain...'))
-    domid = choice(message="Please select a domain:",
-                   options=options)
+        options.append((None, 'Create a new domain...'))
+        domid = choice(message="Please select a domain:",
+                       options=options)
 
-    if domid is not None:
-        # 3.1. select domain
-        domid = cast(str, domid)
-        cli.update_domain(domain=domid)
-        resp = cli.query_domconf(commuid=orgid, domid=domid)
-    else:
-        # 3.2 create domain
-        cli.registry.config.domain = session.prompt(
-            message='Please input new domain name:',
-            validator=MultiValidator(QuiteValidator(), DomainValidator()),
-            validate_while_typing=False)
-        resp = cli.register()
-        Utils.logi('Doamin created: {}\n{}', domid, 'None' if resp is None else resp.diction)
-        # ui.update_bind_domconf() -> ui.bind_cbbpeers()
+        if domid is not None:
+            # 3.1. select domain
+            domid = cast(str, domid)
+            cli.update_domain(domain=domid)
+            resp = cli.query_domconf(commuid=orgid, domid=domid)
+        else:
+            # 3.2 create domain
+            cfg.domain = session.prompt(
+                message='Please input new domain name:',
+                validator=MultiValidator(QuitValidator(), DomainValidator()),
+                validate_while_typing=False)
+            resp = cli.register()
+            Utils.logi('Doamin created: {}\n{}', domid, 'None' if resp is None else resp.diction)
+            # ui.update_bind_domconf() -> ui.bind_cbbpeers()
 
-    if resp is None:
-        print("Error: the domain id is not found, or cannot be created.")
-        quite = True
-        check_quit(quite)
-    else:
-        # ui.update_bind_domconf()
-        cli.registry.config.overlay(resp.diction)
-    return resp
+        if resp is None:
+            print("Error: the domain id is not found, or cannot be created.")
+            _quit = True
+            check_quit(_quit)
+        else:
+            # ui.update_bind_domconf()
+            cfg.overlay(resp.diction)
+        return resp
 
-create_find_update_dom()
+    create_find_update_dom()
 
-# 4 local synode
-# 4.1 resp -> nodes
-def respeers_options(diction: SynodeConfig):
-    peer_ids = diction.peers if diction is not None else None
-    return None if LangExt.len(peer_ids) == 0 else \
-        [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
+    # 4 local synode
+    # 4.1 resp -> nodes
+    def respeers_options(diction: SynodeConfig):
+        peer_ids = diction.peers if diction is not None else None
+        return None if LangExt.len(peer_ids) == 0 else \
+            [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
 
-# 4.2 select a peer
+    # 4.2 select a peer
 
-synid, synstat = None, CynodeStats.die
-while not quite and synstat is not None and synstat != CynodeStats.create:
-    # [(('node-1', CynodeStats.create), readable_state(CynodeStats.create)), ...]
-    nodes = respeers_options(cli.registry.config)
-    nodes.append((('', CynodeStats.die), '[Select another domain]'))
-    nodes.append(((cast(str, None), CynodeStats.die), '[Quite]'))
+    synid, synstat = None, CynodeStats.die
+    while not _quit and synstat is not None and synstat != CynodeStats.create:
+        # [(('node-1', CynodeStats.create), readable_state(CynodeStats.create)), ...]
+        nodes = respeers_options(cli.registry.config)
+        nodes.append((('', CynodeStats.die), '[Select another domain]'))
+        nodes.append(((cast(str, None), CynodeStats.die), '[Quit]'))
 
-    synid, synstat = choice(
-        message="Please select a Synode not running / installed:",
-        options=nodes,
-        style=style)
+        synid, synstat = choice(
+            message="Please select a Synode not running / installed:",
+            options=nodes,
+            style=style)
 
-    if synid is None:
-        quite = True
-    elif synid == '': # another domain
-        create_find_update_dom()
-    elif synstat is not None and synstat != CynodeStats.create:
-        print(f'Cannot re-install {synid}.\n'
-              '[Note 0.7.6] Some settings can be modified in settings.json, e.g. port or ip, by which way is not recommended.')
-    else: # ui.select_peer()
-        cli.registry.config.synid = synid
+        if synid is None:
+            _quit = True
+        elif synid == '': # another domain
+            create_find_update_dom()
+        elif synstat is not None and synstat != CynodeStats.create:
+            print(f'Cannot re-install {synid}.\n'
+                  '[Note 0.7.6] Some settings can be modified in settings.json, e.g. port or ip, by which way is not recommended.')
+        else: # ui.select_peer()
+            cfg.synid = synid
 
-check_quit(quite)
+    check_quit(_quit)
+
+    # 4.3 volume
+    cli.settings.volume = session.prompt(
+        message=f"Set volume path, emtpy to quit (volume is where the files and data saved).",
+        validator = MultiValidator(QuitValidator(), VolumeValidator()),
+        default=f"{os.getcwd()}/vol")
+
+    check_quit(_quit)
+
+else:
+    print(f'This folder / volume has alread run as [{cfg.domain}]{cfg.synid}')
 
 # 5 ports
 def parse_web_jserv_ports(ports: str) -> [int, int]:
@@ -290,7 +323,7 @@ ports = session.prompt(
     message=f'Please set the ports. Format: "synode-port : www-port"',
     # default=f'{web_port0}:{serv_port0}',
     default=default_ports(cli.settings),
-    validator=MultiValidator(QuiteValidator(), PortValidator()))
+    validator=MultiValidator(QuitValidator(), PortValidator()))
 
 [cli.settings.webport, cli.settings.port] = parse_web_jserv_ports(ports)
 
@@ -303,8 +336,8 @@ def default_proxy_ports(s: AppSettings) -> str:
               s.port    if s.proxyPort == 0    else s.proxyPort}'
 
 if reverse == 3:
-    quite = True
-    check_quit(quite)
+    _quit = True
+    check_quit(_quit)
 elif reverse == 1:
     cli.settings.reverseProxy = True
 else:
@@ -312,27 +345,27 @@ else:
 
 if cli.settings.reverseProxy:
     cli.settings.proxyIp = session.prompt(
-        message='Please set the public ip. Return to quite: ',
+        message='Please set the public ip. Return to quit: ',
         default=cli.reportIp() if LangExt.isblank(cli.settings.proxyIp) else cli.settings.proxyIp,
-        validator=MultiValidator(QuiteValidator(), PortValidator()))
-    check_quit(quite)
+        validator=MultiValidator(QuitValidator(), PortValidator()))
+    check_quit(_quit)
 
     reverseports = session.prompt(
         message='Please set the public ports. Format: "date-service-prot : www-port": ',
         default=default_proxy_ports(cli.settings),
-        validator=MultiValidator(QuiteValidator(), PortValidator()))
+        validator=MultiValidator(QuitValidator(), PortValidator()))
 
     if LangExt.len(ports) == 0:
         # reverseports = f'{web_port0}:{serv_port0}'
-        quite = True
+        _quit = True
     else:
         [cli.settings.webProxyPort, cli.settings.proxyPort] = parse_web_jserv_ports(reverseports)
 
-check_quit(quite)
+check_quit(_quit)
 
 caninstall = choice(
-        message=f'All settings are collected, install Synode {synid}?',
-        options=[(1, 'Yes'), (2, 'No, and quite')])
+        message=f'All settings are collected, install Synode {cfg.synid}?',
+        options=[(1, 'Yes'), (2, 'No, and quit')])
 
 def post_install():
     resp = cli.submit_mysettings()
@@ -354,15 +387,15 @@ if caninstall == 1:
         # Changing vol path can reach here ?
         Utils.warn(e)
         session.prompt('Setting up synodepy3 failed.')
-        quite = True
-        check_quit(quite)
+        _quit = True
+        check_quit(_quit)
     except PortfolioException as e:
         Utils.warn(e)
         session.prompt('Configuration is updated with errors. Check the details.\n'
                         'If this is not switching volume, that is not correct')
         post_install() # let's still take effects for changes
-        quite = True
-        check_quit(quite)
+        _quit = True
+        check_quit(_quit)
 
     if Utils.iswindows():
         session.prompt('Synode-cli 0.7.6 cannot install the required Windows services.\n'
@@ -370,7 +403,7 @@ if caninstall == 1:
                        'py -m synodepy3\n'
                        'And click "install Windows service" with default settings.')
     else:
-        syn_templ, web_templ = generate_service_templ(cli.settings, cli.registry.config)
+        syn_templ, web_templ = generate_service_templ(cli.settings, cfg)
         # TODO merge with the cli function
         login_url = f'{
                     'https' if cli.registry.config.https else 'http'
@@ -387,5 +420,5 @@ if caninstall == 1:
                f'Then try login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n'
                f'{login_url}\n\n'
                 'A simple tutorial of install a Ubuntu Service is to be build. You have to Google it, sorry!\n'
-               f'Return to quite Portfolio {synode_ui.version} Setup ...'
+               f'Return to quit Portfolio {synode_ui.version} Setup ...'
                )

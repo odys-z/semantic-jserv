@@ -155,6 +155,8 @@ class InstallerForm(QMainWindow):
             self.ui.txtPort.setText(serv_port0)
         if LangExt.len(self.ui.txtWebport.text()) == 0:
             self.ui.txtWebport.setText(web_port0)
+        if LangExt.len(self.ui.txtVolpath.text()) == 0:
+            self.ui.txtVolpath.setText('vol')
 
     def show_validation(self, err: dict):
         if err is None or err == True:

@@ -198,7 +198,8 @@ public class AppSettings extends Anson {
 	 * @since 0.2.6, only for showing a readable text line.
 	 */
 	@AnsonField(ignoreFrom=true)
-	public String localIp;
+	String localIp;
+	public String localIp() { return this.localIp; }
 
 	/**
 	 * Synode IP exposed through a proxy.
@@ -488,11 +489,11 @@ public class AppSettings extends Anson {
 
 		if (DAHelper.count(Syngleton.defltScxt, mycfg.synconn, synm.tbl, synm.domain,
 				mycfg.domain, synm.org, mycfg.org.orgId, synm.synoder, mycfg.synid) <= 0)
-			throw new TransException("It's supposed to create synode [%s : %s] by configuration module.",
+			throw new TransException("Cannot find synode. It's supposed to create synode [%s : %s] by configuration modules.",
 					mycfg.domain, mycfg.synid);
 		
-		if (isblank(jserv(myid)))
-			jserv(myid, new JServUrl(mycfg.https, reversedIp(), reversedPort(mycfg.https)).jserv());
+		// if (isblank(jserv(myid)))
+		jserv(myid, new JServUrl(mycfg.https, reversedIp(), reversedPort(mycfg.https)).jserv());
 
 		return updateLaterJserv(mycfg.synconn, mycfg.org.orgId, mycfg.domain, synm,
 								myid, jserv(myid), jserv_utc, myid);

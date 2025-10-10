@@ -82,9 +82,9 @@ class SyngletonTest {
 	
 	@AfterAll
 	static void clean() throws IOException {
-//		Files.delete(Paths.get(hubpath));
-//		Files.delete(Paths.get(prvpath));
-//		Files.delete(Paths.get(mobpath));
+		Files.delete(Paths.get(hubpath));
+		Files.delete(Paths.get(prvpath));
+		Files.delete(Paths.get(mobpath));
 	}
 	
 	@Test
@@ -94,7 +94,7 @@ class SyngletonTest {
 		turnred(T_WebservExposer.lights.get(hub));
 
 		AppSettings settings_hub0 = AppSettings.load(SynotierSettingsTest.webinf, hubs);
-		assertNull(settings_hub0.localIp);
+		assertNull(settings_hub0.localIp());
 		
 		SynotierJettyApp jhub = SynotierJettyApp._main(new String[] {hubs});
 		musteq(hub, jhub.syngleton.synode());
@@ -111,13 +111,13 @@ class SyngletonTest {
 		// jhub.afterboot();
 		awaitAll(T_WebservExposer.lights.get(hub), -1);
 	
-		assertNotNull(jhub.syngleton.settings.localIp);
+		assertNotNull(jhub.syngleton.settings.localIp());
 	
 		// prv
 		turnred(T_WebservExposer.lights.get(prv));
 
 		AppSettings settings_prv0 = AppSettings.load(SynotierSettingsTest.webinf, prvs);
-		assertNull(settings_prv0.localIp);
+		assertNull(settings_prv0.localIp());
 		assertTrue(JServUrl.valid(settings_prv0.jservs.get(hub)));
 		
 		SynotierJettyApp jprv = SynotierJettyApp._main(new String[] {prvs});
@@ -127,7 +127,7 @@ class SyngletonTest {
 		awaitAll(T_WebservExposer.lights.get(prv), -1);
 		
 		assertTrue(JServUrl.valid(queryJserv(jprv, hub)), queryJserv(jprv, hub));
-		assertNotNull(jprv.syngleton.settings.localIp);
+		assertNotNull(jprv.syngleton.settings.localIp());
 		
 		assertEquals(queryJserv(jhub, prv), jprv.jserv());
 		assertTrue(JServUrl.valid(queryJserv(jhub, prv)));
@@ -138,7 +138,7 @@ class SyngletonTest {
 		turnred(T_WebservExposer.lights.get(mob));
 
 		AppSettings settings_mob0 = AppSettings.load(SynotierSettingsTest.webinf, mobs);
-		assertNull(settings_mob0.localIp);
+		assertNull(settings_mob0.localIp());
 		assertTrue(JServUrl.valid(settings_mob0.jservs.get(hub)));
 		
 		SynotierJettyApp jmob = SynotierJettyApp._main(new String[] {mobs});
@@ -147,7 +147,7 @@ class SyngletonTest {
 		// jmob.afterboot();
 		awaitAll(T_WebservExposer.lights.get(mob), -1);
 		
-		assertNotNull(jmob.syngleton.settings.localIp);
+		assertNotNull(jmob.syngleton.settings.localIp());
 		assertNotNull(queryJserv(jhub, prv));
 		assertNotNull(queryJserv(jhub, mob));
 
