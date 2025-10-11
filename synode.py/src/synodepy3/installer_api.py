@@ -747,7 +747,11 @@ class InstallerCli:
                         market=synode_ui.market_id, cfg=self.registry.config,
                         s=self.settings, iport=self.getProxiedIp())
 
-    def jesuis_hub(self):
+    def jesuis_hub(self) -> bool:
+        """
+        I am hub or not
+        :return: true or false
+        """
         return self.registry.config.mode == SynodeMode.hub.name
 
     def submit_mysettings(self):
@@ -783,7 +787,9 @@ class InstallerCli:
         self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
 
-        self.settings.jserv_utc = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        self.settings.jserv_utc = datetime.datetime\
+                                .now(datetime.timezone.utc)\
+                                .strftime('%Y-%m-%d %H:%M:%S')
         self.settings.save()
 
         sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
