@@ -293,9 +293,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					domanager0.ipChangeHandler.onExpose(s, domanager0);
 					needExpose = false;
 				}
-//			} catch (IOException e) {
-//				if (debug)
-//					e.printStackTrace();
 			} catch (TransException | SQLException e) {
 				e.printStackTrace();
 			} catch (AnsonException e) {
@@ -303,8 +300,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} catch (SsException e) {
 				warn("There are configuration error to login central service?");
 				e.printStackTrace();
-//			} catch (Exception e) {
-//				e.printStackTrace();
 			}
 		};
 		
