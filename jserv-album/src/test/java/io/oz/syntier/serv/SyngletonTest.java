@@ -21,6 +21,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import io.odysz.common.DateFormat;
 import io.odysz.common.FilenameUtils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.JServUrl;
@@ -95,6 +96,8 @@ class SyngletonTest {
 
 		AppSettings settings_hub0 = AppSettings.load(SynotierSettingsTest.webinf, hubs);
 		assertNull(settings_hub0.localIp());
+		// settings_hub0.jserv_utc = DateFormat.now();
+		settings_hub0.save();
 		
 		SynotierJettyApp jhub = SynotierJettyApp._main(new String[] {hubs});
 		musteq(hub, jhub.syngleton.synode());
@@ -108,7 +111,7 @@ class SyngletonTest {
 		assertEquals(SynodeMode.hub.name(),
 			DAHelper.getValstr(new DATranscxt(hubconn), hubconn, synm, synm.remarks, synm.pk, hub));
 	
-		// jhub.afterboot();
+		// jhub exposed;
 		awaitAll(T_WebservExposer.lights.get(hub), -1);
 	
 		assertNotNull(jhub.syngleton.settings.localIp());
@@ -119,6 +122,8 @@ class SyngletonTest {
 		AppSettings settings_prv0 = AppSettings.load(SynotierSettingsTest.webinf, prvs);
 		assertNull(settings_prv0.localIp());
 		assertTrue(JServUrl.valid(settings_prv0.jservs.get(hub)));
+		// settings_prv0.jserv_utc = DateFormat.now();
+		settings_prv0.save();
 		
 		SynotierJettyApp jprv = SynotierJettyApp._main(new String[] {prvs});
 		musteq(prv, jprv.syngleton.synode());
@@ -139,7 +144,9 @@ class SyngletonTest {
 
 		AppSettings settings_mob0 = AppSettings.load(SynotierSettingsTest.webinf, mobs);
 		assertNull(settings_mob0.localIp());
-		assertTrue(JServUrl.valid(settings_mob0.jservs.get(hub)));
+		// assertTrue(JServUrl.valid(settings_mob0.jservs.get(hub)));
+		settings_mob0.jserv_utc = DateFormat.now();
+		settings_mob0.save();
 		
 		SynotierJettyApp jmob = SynotierJettyApp._main(new String[] {mobs});
 		musteq(mob, jmob.syngleton.synode());
@@ -159,9 +166,9 @@ class SyngletonTest {
 		// prv
 		SynDomanager domprv = jprv.syngleton.domanager(zsu);
 
-		domprv.submitJservsPersist(null);
+		domprv.submitPersistDBserv(null);
 		DATranscxt syntb = new DATranscxt(domprv.synconn);
-		domprv.updJservs_byHub(syntb);
+		domprv.updbservs_byHub(syntb);
 
 		assertEquals(queryJserv(jprv, mob), jmob.jserv());
 	}

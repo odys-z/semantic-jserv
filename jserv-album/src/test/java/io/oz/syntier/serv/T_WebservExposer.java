@@ -12,7 +12,6 @@ public class T_WebservExposer extends WebsrvLocalExposer {
 	public static final String prv = "PRV"; 
 	public static final String mob = "MOB"; 
 
-	@SuppressWarnings("serial")
 	public static final HashMap<String, boolean[]> lights = new HashMap<String, boolean[]>() {
 		{put(hub, new boolean[] {false});}
 		{put(prv, new boolean[] {false});}

@@ -431,47 +431,47 @@ public class Syngleton extends JSingleton {
 		return syndomanagers.keySet();
 	}
 
-	/**
-	 * Prepare loca ip, submit, asynchronously, to hub.
-	 * @param currentIp current local ip.
-	 * @return this
-	 * @since 0.7.6
-	 * @deprecated shouldn't call this in afterboot(), which makes competing conditions with worker-0.
-	 */
-	public void asybmitJserv(ISynodeLocalExposer ipExposer) {
-		new Thread(()-> {
-			String currentIp = settings.localIp; 
-			String nextip = JServUrl.getLocalIp(2);
-			if (!eq(currentIp, nextip)) {
-				settings.localIp = nextip;
-				for (SynDomanager mngr : syndomanagers.values()) {
-					try {
-						if (mngr.mode != SynodeMode.hub) {
-							mngr.submitJservsPersist(currentIp, nextip);
-						}
-						else {
-							// Hub nodes can still changing IP often.
-							// JServUrl jsv = mngr.loadJservUrl().ip(nextip);
-							// settings.persistNewJserv(syncfg, synm, mngr.synode, jsv, DateFormat.now());
-
-							settings.mergeLoadJservs(syncfg, synm);
-							settings.save();
-						}
-
-						mngr.ipChangeHandler(ipExposer);
-						if (ipExposer != null)
-							ipExposer.onExpose(settings, mngr);
-					} catch (SQLException | TransException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		}, f("[%s] Asy-submit Jserv", synode()))
-		.start();
-	}
+//	/**
+//	 * Prepare loca ip, submit, asynchronously, to hub.
+//	 * @param currentIp current local ip.
+//	 * @return this
+//	 * @since 0.7.6
+//	 * @deprecated shouldn't call this in afterboot(), which makes competing conditions with worker-0.
+//	 */
+//	public void asybmitJserv(ISynodeLocalExposer ipExposer) {
+//		new Thread(()-> {
+//			String currentIp = settings.localIp; 
+//			String nextip = JServUrl.getLocalIp(2);
+//			if (!eq(currentIp, nextip)) {
+//				settings.localIp = nextip;
+//				for (SynDomanager mngr : syndomanagers.values()) {
+//					try {
+//						if (mngr.mode != SynodeMode.hub) {
+//							mngr.submitJservsPersist(currentIp, nextip);
+//						}
+//						else {
+//							// Hub nodes can still changing IP often.
+//							// JServUrl jsv = mngr.loadJservUrl().ip(nextip);
+//							// settings.persistNewJserv(syncfg, synm, mngr.synode, jsv, DateFormat.now());
+//
+//							settings.mergeLoadJservs(syncfg, synm);
+//							settings.save();
+//						}
+//
+//						mngr.ipChangeHandler(ipExposer);
+//						if (ipExposer != null)
+//							ipExposer.onExpose(settings, mngr);
+//					} catch (SQLException | TransException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//			}
+//		}, f("[%s] Asy-submit Jserv", synode()))
+//		.start();
+//	}
 
 	public String myjserv() throws SQLException, TransException {
-		settings.loadJservs(syncfg, synm, DateFormat.jour0);
+		settings.loadDBservs(syncfg, synm, DateFormat.jour0);
 		return settings.jserv(syncfg.synid);
 	}
 }

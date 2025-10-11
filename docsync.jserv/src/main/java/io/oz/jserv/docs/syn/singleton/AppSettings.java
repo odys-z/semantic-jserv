@@ -339,26 +339,18 @@ public class AppSettings extends Anson {
 	/**
 	 * Persist jsev url into table syn_synode, if the time stamp is new.
 	 * 
-	 * @param synconn
-	 * @param domain
-	 * @param synm
-	 * @param peer
-	 * @param servurl
-	 * @param timestamp their timestamp, must newer than mine to update db
-	 * @param createrid where does this version come from
+	 * @param timestamp_utc their timestamp, must newer than mine to update db
+	 * @param createrid where does this version come from, null for same as peer
 	 * @return true if the one in database is older and have been replaced, a.k.a. dirty 
-	 * @return true if the newer version is accepted
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	static boolean updateLaterJserv(String synconn, String org, String domain, SynodeMeta synm,
-			String peer, String servurl, String timestamp_utc, String createrid)
+	static boolean updateLaterDBserv(String synconn, String org, String domain, SynodeMeta synm,
+			String peer, String servurl, String timestamp_utc, String... createrid)
 			throws TransException, SQLException {
 		mustnoBlankAny(synconn, org, domain, peer, servurl, createrid);
 
-		DATranscxt tb = null;
-			tb = new DATranscxt(synconn);
-
+		DATranscxt tb = new DATranscxt(synconn);
 			
 		IUser robot = DATranscxt.dummyUser();
 
@@ -368,7 +360,7 @@ public class AppSettings extends Anson {
 		SemanticObject res = tb.update(synm.tbl, robot)
 			.nv(synm.jserv, servurl)
 			.nv(synm.jserv_utc, timestamp)
-			.nv(synm.oper,  createrid)
+			.nv(synm.oper,  _0(createrid, peer))
 			.whereEq(synm.pk, peer)
 			.whereEq(synm.domain, domain)
 			.whereEq(synm.org, org)
@@ -390,7 +382,7 @@ public class AppSettings extends Anson {
 	 * @throws TransException
 	 * @throws SAXException
 	 */
-	boolean loadJservs(SynodeConfig syncfg, SynodeMeta synm, String utc)
+	boolean loadDBservs(SynodeConfig syncfg, SynodeMeta synm, String utc)
 			throws SQLException, TransException {
 
 		DATranscxt synb = new DATranscxt(syncfg.synconn);
@@ -402,7 +394,7 @@ public class AppSettings extends Anson {
 				.whereEq(synm.domain, syncfg.domain)
 				// .whereEq(synm.synoder, synode)
 
-				// Funcall.sql has bug for this:
+				// Funcall.sql has a bug for this:
 				// .where(op.ge, Funcall.toDate(Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0))), Funcall.toDate(ifnull(utc, DateFormat.jour0)))
 				// -> datetime('ifnull(optime, datetime('1911-10-10'))') >= datetime('1911-10-10')
 				// 
@@ -426,20 +418,46 @@ public class AppSettings extends Anson {
 		
 	}
 	
-	public boolean mergeLoadJservs(SynodeConfig myc, SynodeMeta nm) throws TransException, SQLException {
+	public boolean mergeJsonDB(SynodeConfig myc, SynodeMeta nm) throws TransException, SQLException {
 		boolean dirty = mergeMyJserv(myc, nm);
 
 		for (String synid : jservs.keySet()) {
-			if (eq(synid, myc.synid))
-				;// dirty |= mergeMyJserv(myc, nm);
-			else dirty |= updateLaterJserv(
-							myc.synconn, myc.org.orgId, myc.domain, nm,
-							synid, jserv(synid), jserv_utc,
-							// the Synoder is me, usually reaches here when the user changed HUB at a peer.
-							myc.synid);
+			if (!eq(synid, myc.synid))
+				dirty |= updateLaterDBserv(
+						myc.synconn, myc.org.orgId, myc.domain, nm,
+						synid, jserv(synid), jserv_utc,
+						// the Synoder is me, usually reaches here when the user changed HUB at a peer.
+						myc.synid);
 		}
-		dirty |= loadJservs(myc, nm, jserv_utc);
+		dirty |= loadDBservs(myc, nm, jserv_utc);
 		return dirty;
+	}
+
+	/**
+	 * Merge settings.jserv with [synconn] syn_node.jserv(synid=myid),
+	 * by resolving conflicts between this.jserv_utc and syn_node.optime.
+	 * 
+	 * Still needs to save settings.json.
+	 * 
+	 * @return dirty 
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	private boolean mergeMyJserv(SynodeConfig mycfg, SynodeMeta synm)
+			throws TransException, SQLException {
+
+		String myid = mycfg.synode();
+
+		if (DAHelper.count(Syngleton.defltScxt, mycfg.synconn, synm.tbl, synm.domain,
+				mycfg.domain, synm.org, mycfg.org.orgId, synm.synoder, mycfg.synid) <= 0)
+			throw new TransException("Cannot find synode [%s : %s]. Configuration modules works?",
+									mycfg.domain, mycfg.synid);
+		
+		// if (isblank(jserv(myid)))
+		jserv(myid, new JServUrl(mycfg.https, reversedIp(), reversedPort(mycfg.https)).jserv());
+
+		return updateLaterDBserv(mycfg.synconn, mycfg.org.orgId, mycfg.domain, synm,
+								myid, jserv(myid), jserv_utc);
 	}
 
 	/**
@@ -448,55 +466,30 @@ public class AppSettings extends Anson {
 	 * @throws TransException
 	 * @throws SQLException
 	 */
-	public boolean persistLaterLoadJserv(SynodeConfig cfg, SynodeMeta synm, String node,
+	public boolean persistLoadDBserv(SynodeConfig cfg, SynodeMeta synm, String node,
 			String jserv, String jserv_utc) throws TransException, SQLException {
-		boolean dirty = updateLaterJserv(cfg.synconn, cfg.org.orgId, cfg.domain,
+		boolean dirty = updateLaterDBserv(cfg.synconn, cfg.org.orgId, cfg.domain,
 										 synm, node, jserv, jserv_utc, cfg.synode());
-		loadJservs(cfg, synm, jour0);
+		loadDBservs(cfg, synm, jour0);
 		return dirty;
 	}
 	
-	public static HashMap<String, String[]> loadJservss(DATranscxt st, SynodeConfig cfg, SynodeMeta synm)
+	public static HashMap<String, String[]> loadDBservss(DATranscxt st, SynodeConfig cfg, SynodeMeta synm)
 			throws SQLException, TransException {
 		return synm.loadJservs(st,
 				cfg.domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
 	}
 
-	public AppSettings persistLaterJservs(SynodeConfig cfg, SynodeMeta synm,
+	public AppSettings persistDBservs(SynodeConfig cfg, SynodeMeta synm,
 			HashMap<String, String[]> jservs_time) throws TransException, SQLException {
 		if (jservs_time != null) {
 			for (String n : jservs_time.keySet()) 
-				updateLaterJserv(cfg.synconn, cfg.org.orgId, cfg.domain, synm, n,
+				updateLaterDBserv(cfg.synconn, cfg.org.orgId, cfg.domain, synm, n,
 								jservs_time.get(n)[0], jservs_time.get(n)[1], cfg.synode());
 			
-			loadJservs(cfg, synm, jour0);
+			loadDBservs(cfg, synm, jour0);
 		}
 		return this;
-	}
-
-	/**
-	 * Merge settings.jserv with [synconn] syn_node.jserv, resolving conflicts
-	 * by comparing this.jserv_utc and syn_node.optime.
-	 * 
-	 * Still needs to save settings.json.
-	 * 
-	 * @return dirty 
-	 * @throws TransException
-	 * @throws SQLException
-	 */
-	private boolean mergeMyJserv(SynodeConfig mycfg, SynodeMeta synm) throws TransException, SQLException {
-		String myid = mycfg.synode();
-
-		if (DAHelper.count(Syngleton.defltScxt, mycfg.synconn, synm.tbl, synm.domain,
-				mycfg.domain, synm.org, mycfg.org.orgId, synm.synoder, mycfg.synid) <= 0)
-			throw new TransException("Cannot find synode. It's supposed to create synode [%s : %s] by configuration modules.",
-					mycfg.domain, mycfg.synid);
-		
-		// if (isblank(jserv(myid)))
-		jserv(myid, new JServUrl(mycfg.https, reversedIp(), reversedPort(mycfg.https)).jserv());
-
-		return updateLaterJserv(mycfg.synconn, mycfg.org.orgId, mycfg.domain, synm,
-								myid, jserv(myid), jserv_utc, myid);
 	}
 
 	/** Find jserv from {@link #jservs}. */

@@ -9,8 +9,8 @@ import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.mustge;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.notNull;
-import static io.odysz.common.Utils.warn;
 import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.warn;
 import static io.oz.syn.ExessionAct.deny;
 import static io.oz.syn.ExessionAct.mode_server;
 import static io.oz.syn.ExessionAct.ready;
@@ -240,8 +240,13 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	boolean running;
 
 	/**
+	 * worker[0]:
+	 * <p>A jserv monitor, handling settiong.json/{jservs} modification and
+	 * local IP changes, then update into DB.</p>
+	 * worker[1]:
+	 * <p>the synode worker</p>
 	 * <h4>Debug Notes</h4>
-	 * Multiple threads cannot be scheduled ad a single test running.
+	 * Multiple threads cannot be scheduled at a single test running.
 	 * 
 	 * @param syncIns
 	 * @return this
@@ -263,22 +268,24 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				AppSettings  s = domanager0.syngleton.settings;
 				SyncUser     u = domanager0.syngleton.synuser;
 
-				String reg_uri = f("/synode/%s", c.synid);
+				String reg_uri = f("/syn/%s", c.synid);
 
-				if (s.mergeLoadJservs(c, domanager0.synm)
-					// && mode != SynodeMode.hub // conditions order is essential
-					) {
+				if (s.mergeJsonDB(c, domanager0.synm)) {
 					needExpose = true;
 
-					if (registryClient == null) {
-						mustnonull(u.pswd());
-						registryClient = SessionClient.loginWithUri(
-								s.regiserv, reg_uri, u.uid(), s.centralPswd, synid);
+					try {
+						if (registryClient == null) {
+							mustnonull(u.pswd());
+							registryClient = SessionClient.loginWithUri(
+									s.regiserv, reg_uri, u.uid(), s.centralPswd, synid);
+						}
+						RegistResp resp = s.synotifyCentral(reg_uri, c, registryClient, err);
+						
+						if (resp == null || !eq(resp.r, RegistResp.R.ok))
+							warn("[Error] Failed to submit jserv: %s", resp.msg());
+					} catch (IOException e) {
+						warn("[Syn-worker 0] Cannot submit jserv to central: %s", s.regiserv);
 					}
-					RegistResp resp = s.synotifyCentral(reg_uri, c, registryClient, err);
-					
-					if (resp == null || !eq(resp.r, RegistResp.R.ok))
-						warn("[Error] Failed to submit jservs: %s", resp.msg());
 				}
 
 				if (needExpose && domanager0.ipChangeHandler != null) {
@@ -286,9 +293,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					domanager0.ipChangeHandler.onExpose(s, domanager0);
 					needExpose = false;
 				}
-			} catch (IOException e) {
-				if (debug)
-					e.printStackTrace();
+//			} catch (IOException e) {
+//				if (debug)
+//					e.printStackTrace();
 			} catch (TransException | SQLException e) {
 				e.printStackTrace();
 			} catch (AnsonException e) {
@@ -296,10 +303,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			} catch (SsException e) {
 				warn("There are configuration error to login central service?");
 				e.printStackTrace();
-			} catch (Exception e) {
-				e.printStackTrace();
+//			} catch (Exception e) {
+//				e.printStackTrace();
 			}
-			
 		};
 		
 		scheduler.scheduleWithFixedDelay(worker[0], 500, 15000, TimeUnit.MILLISECONDS);
@@ -331,8 +337,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				// ISSUE: It's possible some nodes cannot access the hub but can only be told by a peer node.
 				// This is a good reason that worker 0 vs. 1 must do the same task.
 				// TASK TODO monitoring on local IP changes...
-				if (!domanager0.submitJservsPersist(domanager0.syngleton.settings.localIp()))
-					domanager0.updJservs_byHub(syntb);
+				if (!domanager0.submitPersistDBserv(domanager0.syngleton.settings.localIp()))
+					domanager0.updbservs_byHub(syntb);
 			
 				waitAll(domanager0.sessions);
 				for (SynssionPeer p : domanager0.sessions.values())
@@ -505,7 +511,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		SynodeMeta m = domanager0.synm;
 		String jserv = (String)req.data(m.jserv);
 		return (SyncResp) new SyncResp(domain)
-				.jservs(AppSettings.loadJservss(st, domanager0.syngleton.syncfg, domanager0.synm))
+				.jservs(AppSettings.loadDBservss(st, domanager0.syngleton.syncfg, domanager0.synm))
 				.data(m.jserv, jserv)
 				.data(m.remarks, mode.name());
 	}
@@ -529,7 +535,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			throw new ExchangeException(ExessionAct.ready, null, "Invalid Jserv: %s", jserv);
 
 		String optim = (String)req.data(m.jserv_utc);
-		domanager0.updateJserv(st, req.exblock.srcnode, jserv, optim);
+		domanager0.updateDBserv(st, req.exblock.srcnode, jserv, optim);
 
 		return onQueryJservs(req, usr);
 	}
