@@ -44,7 +44,7 @@
   		<conn>docsyn</conn>
   	</c>
 	<c>
-		<!-- between synodes -->
+		<!-- between synodes (workers) -->
   		<uri>/syn</uri>
   		<conn>docsyn</conn>
 	</c>
