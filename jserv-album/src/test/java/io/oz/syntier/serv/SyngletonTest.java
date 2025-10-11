@@ -89,51 +89,58 @@ class SyngletonTest {
 	}
 	
 	/**
-	 * [Reaching Milestone] 0.7.6 Fix Jserv Synchronizing: There are 2 timestamps,
+	 * Reaching Milestone] 0.7.6 Fix Jserv Synchronizing: There are 2 timestamps,
 
-1. the one when local IP changed, which is propagated to other synode's dbs;
+	1. the one when local IP changed, which is propagated to other synode's dbs;
 
-2. the one saved in json, AppSettings.jserv_utc, when users force to change a peer's jserv.
+	2. the one saved in json, AppSettings.jserv_utc, when users force to change a peer's jserv.
 
-Also be aware that AppSettings.jservs won't load jserv of the current node.
-Instead, it is always generated automatically, and is overriden by proxyIp.
+	Also be aware that AppSettings.jservs won't load jserv of the current node.
+	Instead, it is always generated automatically, and is overriden by proxyIp.
 
-AppSettings.localIp is ignored when loading the json file, making a chance to report at boot,
-then persist the timestamp 1 into db whenever localIp is changed.
-A synode only report its own jserv to central.
+	AppSettings.localIp is ignored when loading the json file, making a chance to report at boot,
+	then persist the timestamp 1 into db whenever localIp is changed.
+	A synode only report its own jserv to central.
 
-If the jserv_utc is early than some other synode's optime,
-update AppSettings.jservs[synode] = db syn_node.jserv;
+	If the jserv_utc is early than some other synode's optime,
+	update AppSettings.jservs[synode] = db syn_node.jserv;
 
-if the jserv_utc is later than a synode's optime,
-verify AppSettings.jservs[synode] is working, then update db,
-    syn_node[synode].jserv  = AppSettings.jservs[synode]
-    syn_node[synode].optime = AppSettings.jserv_utc,
-and ignore if not working (print some warnings), which may be work later when try again.
+	if the jserv_utc is later than a synode's optime,
+	verify AppSettings.jservs[synode] is working, then update db,
+		syn_node[synode].jserv  = AppSettings.jservs[synode]
+		syn_node[synode].optime = AppSettings.jserv_utc,
+	and ignore if not working (print some warnings), which may be work later when try again.
 
-The jservs of other synodes is merged from both any peers and central.
-- Worker 0 manage AppSettings.jservs, reaches only central, caring noth about peers;
-- worker 1 queries all possible peers and merge into db, caring nothing about central and AppSettings.jservs;
-- both workers are monitoring ip changes; 
-The final working version is db syn_node.jserv, with json file a means of user intervention.
+	The final working version is db syn_node.jserv, with json file a means of user intervention.
 
-                          X whorker 0                          X whorker 1
+	One Worker Schema
+	=================
 
-         settings.json                        db@X                              peers
-AppSettings[jservs, jserv_utc]  -> [   X   ] syn_node[Y].jserv
-                                   [   X   ] syn_node[Y].jserv         <-  [ Y ] synode.jserv
+	Synode X
 
-                                              db@X                              
-                                   [   X   ] syn_node[X].jserv         <-  reportIpChange()
-        reportIpChange()        -> [   X   ] syn_node[X].jserv
+		settings.json           db@X                  peers !X               central
 
-             db@X                            central                              
-[   X   ] syn_node[X].jserv     -> [Central] cynodes[X].jserv, optime
+	[*] report Ip Change
+	jserv[X], now        -> syn_node[X].jserv
 
-            central                           db@X
-[Central] cynodes[Z].jserv      -> [   X   ] syn_node[Z].jserv, optime
-[Central] cynodes[Y].jserv      -> [   X   ] syn_node[Y].jserv, optime
-* [requires verifying since jservs at central may or may not be working]
+	[*] newer user intervention about Y
+	jservs, jserv_utc    -> syn_node[Y].jserv
+
+	[p] newer Y by some reachable peers (mode != hub)
+							syn_node[Y].jserv   <-  synode[Y].jserv
+
+	[*] optional: report Ip Change
+	jserv[X], now        -> syn_node[X].jserv
+
+	[*] central is reachable
+							syn_node[X].jserv            ->             cynodes[X].jserv, optime
+
+	[*] requires verifying since jservs at central may or may not be working
+							syn_node[Z].jserv, optime   <-             cynodes[Z].jserv
+							syn_node[Y].jserv, optime   <-             cynodes[Y].jserv
+
+	[p] continue on Synchronizing ...
+
 	 * @throws Exception
 	 */
 	@Test
