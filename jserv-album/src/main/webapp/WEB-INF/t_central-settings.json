@@ -1,0 +1,9 @@
+{ "type"        : "io.oz.registier.central.CentralSettings",
+  "vol_name"    : "VOLUME_HOME",
+  "volume"      : "../central-vol",
+  "port"        : 8954,
+  "conn"		: "t-central-sqlite",
+  "logconn"		: "t-central-log-sqlite",
+  "startHandler": [],
+  "rootkey"     : "0123456789ABCDEF"
+}
