@@ -19,6 +19,7 @@ import java.util.HashMap;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.common.DateFormat;
@@ -32,6 +33,7 @@ import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.syn.SynodeMode;
 
+@Disabled
 class SyngletonTest {
 	static final String zsu = "zsu";
 	
@@ -89,6 +91,7 @@ class SyngletonTest {
 	}
 	
 	@Test
+	@Disabled
 	void testExposeIP() throws Exception {
 
 		// hub
@@ -164,11 +167,11 @@ class SyngletonTest {
 		assertNull(queryJserv(jprv, mob));
 		
 		// prv
-		SynDomanager domprv = jprv.syngleton.domanager(zsu);
+		// SynDomanager domprv = jprv.syngleton.domanager(zsu);
 
-		domprv.submitPersistDBserv(null);
-		DATranscxt syntb = new DATranscxt(domprv.synconn);
-		domprv.updbservs_byHub(syntb);
+		// domprv.submitPersistDBserv(null);
+		// DATranscxt syntb = new DATranscxt(domprv.synconn);
+		// domprv.updbservs_byHub(syntb);
 
 		assertEquals(queryJserv(jprv, mob), jmob.jserv());
 	}

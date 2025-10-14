@@ -62,9 +62,15 @@ public class SyncReq extends UserReq implements IBlock {
 		
 		/**
 		 * Jservs management: accept mine, s'il vous plaît.
+		 * @deprecated 0.2.6
+		public static final String reportJserv = "u/jserv";
+		 */
+		
+		/**
+		 * Push jservs, ask server side update with the later version.
 		 * @since 0.2.6
 		 */
-		public static final String reportJserv = "u/jserv";
+		public static final String exchangeJservs = "x/jserv";
 	}
 
 	ExchangeBlock exblock;

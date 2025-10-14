@@ -1,11 +1,11 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.Utils.warnT;
 import static io.oz.syn.ExessionAct.close;
@@ -14,8 +14,6 @@ import static io.oz.syn.ExessionAct.ready;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
-
-import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
@@ -266,7 +264,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws SQLException 
 	 * @throws TransException 
 	 * @since 0.7.6
-	 */
 	public SynDomanager updbservs_byHub(DATranscxt syntb) throws TransException, SQLException {
 		HashMap<String, String[]> jservs = null;
 		if (sessions != null) {
@@ -302,9 +299,9 @@ public class SynDomanager extends SyndomContext implements OnError {
 	
 		return this;
 	}
+	 */
 
 	/**
-	 * @since 0.2.6
 	 * @param syntb
 	 * @param peer
 	 * @param jserv must be a valid jserv
@@ -313,8 +310,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws SQLException
 	 * @throws IOException 
 	 * @throws AnsonException 
-	 */
-	public SynDomanager updateDBserv(DATranscxt syntb, String peer, String jserv, String timestamp_utc)
+	SynDomanager updateDBserv(DATranscxt syntb, String peer, String jserv, String timestamp_utc)
 			throws TransException, SQLException, AnsonException {
 		
 		syngleton.settings.persistLoadDBserv(syngleton.syncfg, synm, peer, jserv, timestamp_utc);
@@ -324,6 +320,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 			ipChangeHandler.onExpose(syngleton.settings, this);
 		return this;
 	}
+	 */
+
+	boolean updateDBserv(String peer, String[] jserv_utc_oper) throws TransException, SQLException {
+		return AppSettings.updateLaterDBserv(synconn, org, domain,
+				 synm, peer, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
+	}
+
 
 	/**
 	 * <p>Submit then persist with reply, if the time stamp is newer.
@@ -346,8 +349,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @param cfg 
 	 * @return Is the local ip changed
 	 * - false means no newer jservs from any peers, and no need of updating.
-	 * @since 0.7.6
-	 */
+	 * @deprecated 0.7.6 replaced by {@link #synodeNetworking(AppSettings)}
 	public boolean submitPersistDBserv(String currentIp, String... nextip) {
 		String ip = isNull(nextip) ? JServUrl.getLocalIp(2) : _0(nextip);
 		if (eq(currentIp, ip)) 
@@ -374,7 +376,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 					peer.checkLogin(admin);
 						
 					// merge_submit_persistReply(syngleton.settings, peer);
-					HashMap<String, String[]> jservs = peer.submitMyJserv(syngleton.settings.jserv(synode));
+					HashMap<String, String[]> jservs = peer.synpushMyJserv(syngleton.settings.jserv(synode));
 					if (jservs != null) {
 						syngleton.settings
 							.persistDBservs(syngleton.syncfg, synm, jservs)
@@ -394,20 +396,67 @@ public class SynDomanager extends SyndomContext implements OnError {
 		}
 		return true;
 	}
+	 */
 	
-//	private void merge_submit_persistReply(AppSettings s, SynssionPeer peer)
-//			throws SQLException, TransException, SAXException, IOException {
-//		boolean dirty = s.mergeLoadJservs(syngleton.syncfg, synm);
-//		
-//		if (!dirty)
-//			warnT(new Object() {}, "Better double check");
-//		
-//		HashMap<String, String[]> jservs = peer.submitMyJserv(s.jserv(synode));
-//		if (jservs != null) {
-//			s.persistDBservs(syngleton.syncfg, synm, jservs)
-//			 .save();
-//		}
-//	}
+	/**
+	 * Push all my jservs, accept reply's newer versions.
+	 * @param s
+	 * @return accepted or not
+	 * @see AppSettings#merge_ip_json2db(SynodeConfig, io.odysz.semantic.meta.SynodeMeta, SyncUser, OnError)
+	 */
+	public boolean synodeNetworking(AppSettings s) {
+		// TODO let's ignore the optional step currently
+
+		boolean dirty = false;
+		try {
+			if (sessions == null)
+				loadSynclients(synb);
+			for (SynssionPeer peer : sessions.values()) {
+				if (eq(peer.peer, synode))
+					continue;
+
+				if (isblank(peer.peerjserv())) {
+					warnT(new Object() {},
+						"Cannot log into %s <- %s, for submitting my jserv, as no jservs available.",
+						peer.peer, synode);
+					continue;
+				}
+
+				try {
+					Utils.logT(new Object(){},
+							"Submitting jservs in %s, check login state to: %s, jserv: %s",
+							domain(), peer, peer.peerjserv());
+					peer.checkLogin(admin);
+						
+					// merge_submit_persistReply(syngleton.settings, peer);
+					HashMap<String, String[]> jservs = peer.exchangeDBservs(
+							loadDBservss());
+
+					if (jservs != null) {
+						this.onexchangeDBservs(jservs);
+						// ISSUE should update settings.json?
+						// s.loadDBservs(c, synm, jour0);
+						// s.save();
+					}
+
+				} catch (IOException e) {
+					Utils.logT(new Object() {},
+							"[%s:%s] Submitting jservs to %s failed. Error: %s, Details:\n%s",
+							domain, synode, peer.peer, e.getClass().getName(), e.getMessage());
+				} catch (TransException | AnsonException | SsException | SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return dirty;
+	}
+			
+	public HashMap<String, String[]> loadDBservss()
+			throws SQLException, TransException {
+		return synm.loadJservs(synb, domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
+	}
 
 	/**
 	 * Load {@link SyndomContext#synm}.tbl and build all SynssionPeers to every peers.
@@ -546,6 +595,17 @@ public class SynDomanager extends SyndomContext implements OnError {
 	public SynDomanager ipChangeHandler(ISynodeLocalExposer handler) {
 		this.ipChangeHandler = handler;
 		return this;
+	}
+
+	public void onexchangeDBservs(HashMap<String, String[]> jservs)
+			throws TransException, SQLException {
+		mustnonull(jservs);
+		for (String sid : jservs.keySet()) {
+			if (eq(sid, this.synode) || !JServUrl.valid(jservs.get(sid)[0]))
+				continue;
+			
+			updateDBserv(sid, jservs.get(sid));
+		}
 	}
 	
 	/** 

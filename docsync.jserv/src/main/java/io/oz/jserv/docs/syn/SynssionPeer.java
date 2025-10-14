@@ -881,7 +881,14 @@ public class SynssionPeer {
 		return resp.jservs;
 	}
 
-	public HashMap<String, String[]> submitMyJserv(String jserv)
+	/**
+	 * @deprecated replaced by {@link #exchangeJservs(String)}
+	 * @param jserv
+	 * @return
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws IOException
+	public HashMap<String, String[]> synpushMyJserv(String jserv)
 			throws SemanticException, AnsonException, IOException {
 		mustnonull(client);
 		SynodeMeta m = domanager.synm;
@@ -892,7 +899,7 @@ public class SynssionPeer {
 
 		req.data(m.jserv, jserv);
 
-		String[] act = AnsonHeader.usrAct(getClass().getName(), "queryJservs", A.exchange, "by " + mynid);
+		String[] act = AnsonHeader.usrAct(getClass().getName(), "queryJservs", A.reportJserv, "by " + mynid);
 		AnsonHeader header = client.header().act(act);
 
 		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
@@ -907,6 +914,40 @@ public class SynssionPeer {
 			eq((String)resp.data().get(m.remarks), SynodeMode.hub.name())
 			? resp.jservs
 			: null;
+	}
+	 */
+
+	/**
+	 * 
+	 * @param jservs
+	 * @return {synode-id: [jserv, utc, stamper-creator]}
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws IOException
+	 */
+	public HashMap<String, String[]> exchangeDBservs(HashMap<String, String[]> jservs)
+			throws SemanticException, AnsonException, IOException {
+		mustnonull(client);
+		SynodeMeta m = domanager.synm;
+		SyncReq req = (SyncReq) new SyncReq(null, domain())
+				.exblock(new ExchangeBlock(domanager.domain(),
+						domanager.synode, peer, ExessionAct.mode_client))
+				.a(A.exchangeJservs);
+
+		req.data(m.jserv, jservs);
+
+		String[] act = AnsonHeader.usrAct(getClass().getName(), A.exchangeJservs, "sync", "by " + mynid);
+		AnsonHeader header = client.header().act(act);
+
+		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+							.header(header);
+
+		SyncResp resp = client.commit(q, errHandler);
+		
+		mustnonull(resp);
+		musteq(resp.domain, domain());
+
+		return resp.jservs;
 	}
 
 	/**

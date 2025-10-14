@@ -11,7 +11,6 @@ import java.util.HashMap;
 import io.odysz.anson.Anson;
 import io.odysz.anson.JsonOpt;
 import io.odysz.common.FilenameUtils;
-import io.odysz.semantic.DATranscxt;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SynDomanager;
 import io.oz.jserv.docs.syn.singleton.AppSettings;
@@ -37,8 +36,7 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 
 			hosts.host = domanager.synode;
 
-			HashMap<String, String[]> jservs = AppSettings
-					.loadDBservss(new DATranscxt(domanager.synconn), domanager.syngleton.syncfg, domanager.synm);
+			HashMap<String, String[]> jservs = domanager.loadDBservss();
 			
 			for (String n : jservs.keySet()) {
 				// all newest version locally for locally exposing

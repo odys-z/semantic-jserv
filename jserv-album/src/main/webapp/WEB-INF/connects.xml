@@ -7,6 +7,30 @@
   	<!-- smtcs: semantics configuration used only for the connection.
   		(And a global semantics configuration?) -->
   	<c>
+  		<id>t-central-sqlite</id>
+  		<type>sqlite</type>
+  		<isdef>true</isdef>
+  		<src>$VOLUME_HOME/system.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg>true</dbg>
+  		<log>false</log>
+  		<smtcs>semantics-t-central.xml</smtcs>
+  	</c>
+
+   	<c>
+  		<id>t-central-log-sqlite</id>
+  		<type>sqlite</type>
+  		<isdef>false</isdef>
+  		<src>$VOLUME_HOME/syslog.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg>false</dbg>
+  		<log></log>
+  		<smtcs>semantic-t-central-log.xml</smtcs>
+  	</c>
+  	
+  	<c>
   		<id>sys-hub</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>

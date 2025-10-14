@@ -10,6 +10,8 @@ import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.mustnoBlankAny;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.Utils.logi;
+import static io.odysz.common.Utils.warn;
+import static io.odysz.common.Utils.warnT;
 import static io.odysz.transact.sql.parts.condition.ExprPart.constr;
 import static io.odysz.transact.sql.parts.condition.Funcall.isnull;
 import static io.odysz.common.DateFormat.jour0;
@@ -28,6 +30,7 @@ import io.odysz.anson.AnsonException;
 import io.odysz.anson.AnsonField;
 import io.odysz.anson.JsonOpt;
 import io.odysz.common.Configs;
+import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.LangExt;
@@ -38,13 +41,13 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JServUrl;
+import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -52,6 +55,8 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.meta.DocOrgMeta;
 import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.SyncUser;
+import io.oz.syn.Synode;
 import io.oz.syn.SynodeMode;
 import io.oz.syn.registry.Centralport;
 import io.oz.syn.registry.CynodeStats;
@@ -337,42 +342,6 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * Persist jsev url into table syn_synode, if the time stamp is new.
-	 * 
-	 * @param timestamp_utc their timestamp, must newer than mine to update db
-	 * @param createrid where does this version come from, null for same as peer
-	 * @return true if the one in database is older and have been replaced, a.k.a. dirty 
-	 * @throws TransException
-	 * @throws SQLException
-	 */
-	static boolean updateLaterDBserv(String synconn, String org, String domain, SynodeMeta synm,
-			String peer, String servurl, String timestamp_utc, String... createrid)
-			throws TransException, SQLException {
-		mustnoBlankAny(synconn, org, domain, peer, servurl, createrid);
-
-		DATranscxt tb = new DATranscxt(synconn);
-			
-		IUser robot = DATranscxt.dummyUser();
-
-		String timestamp = ifnull(timestamp_utc, jour0);
-		logi("[%s : %s] Setting peer %s's jserv: %s [%s]", synconn, domain, peer, servurl, timestamp);
-
-		SemanticObject res = tb.update(synm.tbl, robot)
-			.nv(synm.jserv, servurl)
-			.nv(synm.jserv_utc, timestamp)
-			.nv(synm.oper,  _0(createrid, peer))
-			.whereEq(synm.pk, peer)
-			.whereEq(synm.domain, domain)
-			.whereEq(synm.org, org)
-			// see comments in loadJserv()
-			// .where(op.le, Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(timestamp))
-			.where(op.lt, isnull(synm.jserv_utc, constr(jour0)), constr(timestamp))
-			.u(tb.instancontxt(synconn, robot));
-		
-		return res.total() > 0;
-	}
-
-	/**
 	 * Load {@link JServUrl} of id {@link #synode} from {@link #synconn},
 	 * compare the time stamp, and return the database one if databse's time stamp is later,
 	 * otherwise takes no action.
@@ -392,7 +361,6 @@ public class AppSettings extends Anson {
 				.select(synm.tbl, "t")
 				.whereEq(synm.org, syncfg.org.orgId)
 				.whereEq(synm.domain, syncfg.domain)
-				// .whereEq(synm.synoder, synode)
 
 				// Funcall.sql has a bug for this:
 				// .where(op.ge, Funcall.toDate(Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0))), Funcall.toDate(ifnull(utc, DateFormat.jour0)))
@@ -418,6 +386,13 @@ public class AppSettings extends Anson {
 		
 	}
 	
+	/**
+	 * @deprecated one-step
+	 * @param myc
+	 * @param nm
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
 	public boolean mergeJsonDB(SynodeConfig myc, SynodeMeta nm) throws TransException, SQLException {
 		boolean dirty = mergeMyJserv(myc, nm);
 
@@ -432,6 +407,7 @@ public class AppSettings extends Anson {
 		dirty |= loadDBservs(myc, nm, jserv_utc);
 		return dirty;
 	}
+	 */
 
 	/**
 	 * Merge settings.jserv with [synconn] syn_node.jserv(synid=myid),
@@ -442,7 +418,7 @@ public class AppSettings extends Anson {
 	 * @return dirty 
 	 * @throws TransException
 	 * @throws SQLException
-	 */
+	 * @deprecated one-step
 	private boolean mergeMyJserv(SynodeConfig mycfg, SynodeMeta synm)
 			throws TransException, SQLException {
 
@@ -459,13 +435,14 @@ public class AppSettings extends Anson {
 		return updateLaterDBserv(mycfg.synconn, mycfg.org.orgId, mycfg.domain, synm,
 								myid, jserv(myid), jserv_utc);
 	}
+	 */
 
 	/**
 	 * Persist then load to from db.
 	 * @return this
 	 * @throws TransException
 	 * @throws SQLException
-	 */
+	 * @deprecated
 	public boolean persistLoadDBserv(SynodeConfig cfg, SynodeMeta synm, String node,
 			String jserv, String jserv_utc) throws TransException, SQLException {
 		boolean dirty = updateLaterDBserv(cfg.synconn, cfg.org.orgId, cfg.domain,
@@ -473,13 +450,16 @@ public class AppSettings extends Anson {
 		loadDBservs(cfg, synm, jour0);
 		return dirty;
 	}
-	
-	public static HashMap<String, String[]> loadDBservss(DATranscxt st, SynodeConfig cfg, SynodeMeta synm)
-			throws SQLException, TransException {
-		return synm.loadJservs(st,
-				cfg.domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
-	}
+	 */
 
+	/**
+	 * @deprecated
+	 * @param cfg
+	 * @param synm
+	 * @param jservs_time
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
 	public AppSettings persistDBservs(SynodeConfig cfg, SynodeMeta synm,
 			HashMap<String, String[]> jservs_time) throws TransException, SQLException {
 		if (jservs_time != null) {
@@ -491,6 +471,7 @@ public class AppSettings extends Anson {
 		}
 		return this;
 	}
+	 */
 
 	/** Find jserv from {@link #jservs}. */
 	public String jserv(String nid) {
@@ -557,11 +538,23 @@ public class AppSettings extends Anson {
 			return f("%s:%s", localIp, webport);
 	}
 	
+	/**
+	 * #deprected replaced by {@link #reversedIp()} and {@link #changedIp()} 
+	 * @return IP in effects
+	 */
 	public String reversedIp() {
 		return this.reverseProxy ? proxyIp :
 			isblank(localIp) ? JServUrl.getLocalIp(2) : localIp;
 	}
 	
+	public String reverseIp() {
+		return this.reverseProxy ? proxyIp : localIp;
+	}
+	
+	public String changedIp() {
+		return JServUrl.getLocalIp(2);
+	}
+
 	public int reversedPort(boolean https) {
 		if (port == 0) port = https ? 443 : 80;
 		return this.reverseProxy ? proxyPort : port;
@@ -586,8 +579,126 @@ public class AppSettings extends Anson {
 		return this;
 	}
 
+	//////////////////////////////// registry worker 0 helpers ////////////////////////////////
+	SessionClient registryClient;
+	
 	/**
-	 * Tells central this node is running, both as hub or as peer.
+	 * <pre>
+     * --------------------------------+----------------------+-----------------------------------------
+     *                           X whorker 0              X whorker 1
+     * --------------------------------+----------------------+-----------------------------------------
+     * (1)      settings.json          |     X:docsync        |      peers
+     * AppSettings[jservs, jserv_utc]  -> syn_node.jserv, utc |
+     *   [jservs.key != X]             |                      |
+     * --------------------------------+----------------------+-----------------------------------------
+     * (2)                             |     X:docsync         
+     *                                 |  syn_node[X].jserv  <-  changeIp() (optional?)
+     * --------------------------------+----------------------+-----------------------------------------
+     * (3)                             |     X:docsync        |      peer Y
+     *                                 |  syn_node[X].jserv   -> synode[X].jserv [syn_submit()]
+     *                                 |  syn_node[Y].jserv  <-> synode[Y].jserv [onSubmitReply()]
+     *                                 | * only persist working version
+     *                                 | * in case X cannot visite Hub
+     * --------------------------------+----------------------+-----------------------------------------
+     * (4)                                   X:docsync        |
+     *                     changeIp() -> syn_node[X].jserv    |
+     * --------------------------------+----------------------+-----------------------------------------
+     * (5)        central              |     X:docsync        |
+     *     cynodes[X].jserv, utc      <-  syn_node[X].jserv   |
+     * --------------------------------+----------------------+-----------------------------------------
+     * (6)        central              |     X:docsync        |
+     *      cynodes[Z].jserv,utc       -> syn_node[Z].jserv   |
+     *      cynodes[Y].jserv,utc       x> syn_node[Y].jserv   |
+     * * requires verifying since jservs at central may or may not be working (not true as its utc is staled?)
+     * </pre>
+     * @param c
+	 * @param s
+	 * @param synm
+	 * @param synusr 
+	 * @param err 
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SsException 
+	 */
+	public boolean merge_ip_json2db(SynodeConfig c, SynodeMeta synm, SyncUser synusr, OnError err)
+			throws TransException, SQLException, AnsonException, SsException {
+
+		String nextIp = JServUrl.getLocalIp(2);
+		boolean toSubmit = false;
+
+		if (isblank(localIp) ||
+			!reverseProxy && !eq(localIp, nextIp)) {
+			// (1.1) local == null, start service
+			// (4) on inet ip changed
+
+			localIp = nextIp;
+			jserv_utc = DateFormat.now();
+
+			if (!refresh_myserv(c, synm))
+				warnT(new Object(){}, "Why someone thinks he is knowing myself better than me?"); 
+
+			toSubmit = true;
+		}
+		else
+			// (1.2) local != null, jservs_utc > syn_node[my].utc
+			// (1.3) local != null, jservs_utc > syn_node[others].utc,
+			toSubmit = refresh_myserv(c, synm);
+		
+		localIp = nextIp;
+
+		// accept user intervenstion, especially, the hub jserv update.
+		updateDB_exceptMe(c.synconn, c.org.orgId, c.domain, synm);
+		
+		String reg_uri = f("/syn/%s", c.synid);
+
+		try {
+			if (registryClient == null) {
+				mustnonull(synusr.pswd());
+
+				registryClient = SessionClient.loginWithUri(
+						regiserv, reg_uri, synusr.uid(), centralPswd, c.synid);
+			}
+
+			RegistResp resp;
+			if (toSubmit)
+				resp = synotifyCentral(c, registryClient, err);
+			else
+				// Refersh / merge local jservs with central.
+				resp = queryCentral(c, registryClient, err);
+
+			mergeReply(c, resp, synm);
+		} catch (IOException e) {
+			warn("Cannot query/submit to central: %s", e.getMessage());
+		}
+
+		return toSubmit;
+	}
+
+	/**
+	 * Merge json jservs[my] and db syn_node.jserv[my].
+	 * @param c
+	 * @param synm
+	 * @return changed into db
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	private boolean refresh_myserv(SynodeConfig c, SynodeMeta synm)
+			throws TransException, SQLException {
+		String myjserv = new JServUrl(c.https, reverseIp(), reversedPort(c.https)).jserv();
+		if (updateLaterDBserv(c.synconn, c.org.orgId, c.domain, synm,
+				c.synid, myjserv, jserv_utc, c.synid)) {
+			jserv(c.synid, myjserv);
+			return true;
+		}
+		else return false;
+	}
+
+	/**
+	 * Tells central about my jserv updating. If this is the case of
+	 * localIp == null, that's this node is start to run, both as hub or as peer.
 	 * @param funcuri
 	 * @param cfg
 	 * @param client
@@ -597,8 +708,10 @@ public class AppSettings extends Anson {
 	 * @throws SemanticException
 	 * @throws AnsonException
 	 */
-	public RegistResp synotifyCentral(String funcuri, SynodeConfig cfg, SessionClient client,
+	private RegistResp synotifyCentral(SynodeConfig cfg, SessionClient client,
 			OnError errCtx) throws IOException, SemanticException, AnsonException {
+
+		String funcuri = f("/syn/%s", cfg.synid);
 
 		AnsonHeader header = client.header()
 				.act(funcuri, "syntifyCentral", RegistReq.A.submitSettings, jserv(cfg.synid));
@@ -614,8 +727,83 @@ public class AppSettings extends Anson {
 
 		AnsonMsg<RegistReq> q = client.userReq(funcuri, Centralport.register, req)
 				.header(header);
-		AnsonResp resp = client.commit(q, errCtx);
+		RegistResp resp = client.commit(q, errCtx);
 		
+
+		if (resp == null || !eq(resp.r, RegistResp.R.ok))
+			errCtx.err(MsgCode.ext, "Submit my jserv to central failed: %s", this.regiserv);
+
 		return (RegistResp) resp;
 	}
+
+	private RegistResp queryCentral(SynodeConfig cfg, SessionClient client, OnError errCtx) {
+		return null;
+	}
+
+	/**
+	 * There is an equivalent in SynDomanage, onexchangeDBservs(...). 
+	 * @param c
+	 * @param rep
+	 * @param synm
+	 * @return
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	private boolean mergeReply(SynodeConfig c, RegistResp rep, SynodeMeta synm)
+			throws TransException, SQLException {
+
+		if (rep != null && rep.diction != null && rep.diction.peers != null) {
+			boolean dirty = false;
+			for (Synode peer : rep.diction.peers) {
+				dirty |= updateLaterDBserv(c.synconn, c.org.orgId, c.domain, synm,
+						peer.synid, peer.jserv, peer.optime, peer.oper);
+			}
+			return dirty;
+		}
+		else warnT(new Object() {}, "Merge with empty reply data?");
+		return false;
+	}
+
+	//////////////////////////////// static helpers ////////////////////////////////
+	static boolean updateDB_exceptMe(String synconn, String org, String domain, SynodeMeta synm) {
+		return false;
+	}
+
+	/**
+	 * Persist jsev url into table syn_synode, if the time stamp is new.
+	 * 
+	 * @param timestamp_utc their timestamp, must newer than mine to update db
+	 * @param createrid where does this version come from, null for same as peer
+	 * @return true if the one in database is older and have been replaced, a.k.a. dirty 
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	public static boolean updateLaterDBserv(String synconn, String org, String domain, SynodeMeta synm,
+			String peer, String servurl, String timestamp_utc, String... createrid)
+			throws TransException, SQLException {
+		mustnoBlankAny(synconn, org, domain, peer, servurl, createrid);
+
+		DATranscxt tb = new DATranscxt(synconn);
+			
+		IUser robot = DATranscxt.dummyUser();
+
+		String timestamp = ifnull(timestamp_utc, jour0);
+		logi("[%s : %s] Setting peer %s's jserv: %s [%s]", synconn, domain, peer, servurl, timestamp);
+
+		SemanticObject res = tb.update(synm.tbl, robot)
+			.nv(synm.jserv, servurl)
+			.nv(synm.jserv_utc, timestamp)
+			.nv(synm.oper, _0(createrid, peer))
+			.whereEq(synm.pk, peer)
+			.whereEq(synm.domain, domain)
+			.whereEq(synm.org, org)
+			// see comments in loadJserv()
+			// .where(op.le, Funcall.isnull(synm.jserv_utc, Funcall.toDate(DateFormat.jour0)), Funcall.toDate(timestamp))
+			.where(op.lt, isnull(synm.jserv_utc, constr(jour0)), constr(timestamp))
+			.u(tb.instancontxt(synconn, robot));
+		
+		return res.total() > 0;
+	}
+
+
 }
