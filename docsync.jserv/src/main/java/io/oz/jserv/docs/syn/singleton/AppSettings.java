@@ -343,15 +343,13 @@ public class AppSettings extends Anson {
 
 	/**
 	 * Load {@link JServUrl} of id {@link #synode} from {@link #synconn},
-	 * compare the time stamp, and return the database one if databse's time stamp is later,
-	 * otherwise takes no action.
-	 * @param syncfg 
-	 * @return JServUrl
+	 * keeps later version modified by users.
+	 * @return true if there are records in db is later than this.jserv_utc.
 	 * @throws SQLException
 	 * @throws TransException
 	 * @throws SAXException
 	 */
-	boolean loadDBservs(SynodeConfig syncfg, SynodeMeta synm, String utc)
+	public boolean loadDBLaterservs(SynodeConfig syncfg, SynodeMeta synm)
 			throws SQLException, TransException {
 
 		DATranscxt synb = new DATranscxt(syncfg.synconn);
@@ -369,8 +367,9 @@ public class AppSettings extends Anson {
 				// And "datetime(optime) = datetime('1911-10-10')" will not work.
 				//
 				// This line only works for sqlite (Google AI: sqlite doesn't has built-in datetime type):
-				.where(op.gt, isnull(synm.jserv_utc, constr(jour0)), constr(LangExt.ifnull(utc, jour0)))
-				// -> synid = 'X' AND ifnull(optime, 1911-10-10) >= 1911-10-10
+				.where(op.gt, isnull(synm.jserv_utc, constr(jour0)), constr(LangExt.ifnull(jserv_utc, jour0)))
+				// -> synid = 'X' AND ifnull(optime, '1911-10-10') > '1911-10-10'
+				
 				.rs(synb.instancontxt(syncfg.synconn, robot))
 				.rs(0);
 
@@ -616,7 +615,7 @@ public class AppSettings extends Anson {
 	 * @param synm
 	 * @param synusr 
 	 * @param err 
-	 * @return
+	 * @return jservs have been changed, need exposing
 	 * @throws TransException
 	 * @throws SQLException
 	 * @throws IOException 
@@ -634,7 +633,7 @@ public class AppSettings extends Anson {
 			// (1.1) local == null, start service
 			// (4) on inet ip changed
 
-			localIp = nextIp;
+			// localIp = nextIp;
 			jserv_utc = DateFormat.now();
 
 			if (!refresh_myserv(c, synm))
@@ -647,16 +646,17 @@ public class AppSettings extends Anson {
 			// (1.3) local != null, jservs_utc > syn_node[others].utc,
 			toSubmit = refresh_myserv(c, synm);
 		
-		localIp = nextIp;
 
-		// accept user intervenstion, especially, the hub jserv update.
-		updateDB_exceptMe(c.synconn, c.org.orgId, c.domain, synm);
-		
-		String reg_uri = f("/syn/%s", c.synid);
+		if (isblank(localIp))
+			// brutally accept user intervenstion, especially, the hub jserv update.
+			updateDB_exceptMe(c.synconn, c.org.orgId, c.domain, synm);
+
+		localIp = nextIp;
 
 		try {
 			if (registryClient == null) {
 				mustnonull(synusr.pswd());
+				String reg_uri = f("/syn/%s", c.synid);
 
 				registryClient = SessionClient.loginWithUri(
 						regiserv, reg_uri, synusr.uid(), centralPswd, c.synid);
@@ -669,7 +669,10 @@ public class AppSettings extends Anson {
 				// Refersh / merge local jservs with central.
 				resp = queryCentral(c, registryClient, err);
 
-			mergeReply(c, resp, synm);
+			if (mergeReply(c, resp, synm)) {
+				loadDBLaterservs(c, synm);
+				save();
+			}
 		} catch (IOException e) {
 			warn("Cannot query/submit to central: %s", e.getMessage());
 		}
@@ -678,10 +681,10 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * Merge json jservs[my] and db syn_node.jserv[my].
+	 * Merge this settings.jservs[my] and db syn_node.jserv[my].
 	 * @param c
 	 * @param synm
-	 * @return changed into db
+	 * @return changed into db (this.jserv_utc is later than syn_node[myid].utc
 	 * @throws TransException
 	 * @throws SQLException
 	 */
@@ -741,7 +744,7 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * There is an equivalent in SynDomanage, onexchangeDBservs(...). 
+	 * There is an equivalent, {@link io.oz.jserv.docs.syn.SynDomanager#onexchangeDBservs()}
 	 * @param c
 	 * @param rep
 	 * @param synm

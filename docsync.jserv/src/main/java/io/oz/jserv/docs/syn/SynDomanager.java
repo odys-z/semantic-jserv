@@ -320,12 +320,12 @@ public class SynDomanager extends SyndomContext implements OnError {
 			ipChangeHandler.onExpose(syngleton.settings, this);
 		return this;
 	}
-	 */
 
-	boolean updateDBserv(String peer, String[] jserv_utc_oper) throws TransException, SQLException {
+	private boolean updateDBserv(String peer, String[] jserv_utc_oper) throws TransException, SQLException {
 		return AppSettings.updateLaterDBserv(synconn, org, domain,
 				 synm, peer, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
 	}
+	 */
 
 
 	/**
@@ -405,7 +405,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @see AppSettings#merge_ip_json2db(SynodeConfig, io.odysz.semantic.meta.SynodeMeta, SyncUser, OnError)
 	 */
 	public boolean synodeNetworking(AppSettings s) {
-		// TODO let's ignore the optional step currently
+		// TODO ignored the optional step, on IP changed.
 
 		boolean dirty = false;
 		try {
@@ -428,12 +428,10 @@ public class SynDomanager extends SyndomContext implements OnError {
 							domain(), peer, peer.peerjserv());
 					peer.checkLogin(admin);
 						
-					// merge_submit_persistReply(syngleton.settings, peer);
-					HashMap<String, String[]> jservs = peer.exchangeDBservs(
-							loadDBservss());
+					HashMap<String, String[]> jservs = peer.exchangeDBservs(loadDBservss());
 
 					if (jservs != null) {
-						this.onexchangeDBservs(jservs);
+						dirty = this.onexchangeDBservs(jservs);
 						// ISSUE should update settings.json?
 						// s.loadDBservs(c, synm, jour0);
 						// s.save();
@@ -455,7 +453,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			
 	public HashMap<String, String[]> loadDBservss()
 			throws SQLException, TransException {
-		return synm.loadJservs(synb, domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
+		return synm.loadJservs(synb, org, domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
 	}
 
 	/**
@@ -492,9 +490,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 						domain, synode, rs.getString("peer"), rs.getString(synm.jserv));
 				warnT(new Object() {}, err);
 				
-//				try { throw new TransException(err);}
-//				catch (TransException e) { e.printStackTrace();}
-
 				continue;
 			}
 
@@ -597,31 +592,20 @@ public class SynDomanager extends SyndomContext implements OnError {
 		return this;
 	}
 
-	public void onexchangeDBservs(HashMap<String, String[]> jservs)
+	boolean onexchangeDBservs(HashMap<String, String[]> jservs)
 			throws TransException, SQLException {
 		mustnonull(jservs);
+		boolean merged = false;
 		for (String sid : jservs.keySet()) {
 			if (eq(sid, this.synode) || !JServUrl.valid(jservs.get(sid)[0]))
 				continue;
 			
-			updateDBserv(sid, jservs.get(sid));
+			// updateDBserv(sid, jservs.get(sid));
+			String[] jserv_utc_oper = jservs.get(sid);
+			merged |= AppSettings.updateLaterDBserv(
+					synconn, org, domain, synm,
+					sid, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
 		}
+		return merged;
 	}
-	
-	/** 
-	 * If the settings.jserv's updating date is later than the syn_node.optime, update it into db.
-	 * This will handle user's manual modification.
-	 * @param settings
-	 * @return true if updated some data
-	 * @throws SQLException 
-	 * @throws TransException 
-	 * @since 0.7.6
-	public boolean updJservs_byJson(SynodeConfig cfg, AppSettings settings)
-			throws TransException, SQLException {
-		boolean dirty = settings.setupNewJserv(cfg, synm);
-		if (dirty)
-			settings.jservs = AppSettings.loadJservs(cfg, synm);
-		return dirty;
-	}
-	 */
 }

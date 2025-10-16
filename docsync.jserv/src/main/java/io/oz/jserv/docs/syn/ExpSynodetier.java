@@ -399,17 +399,21 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				domanager0.loadSynclients(syntb);
 
 				// It's possible some nodes cannot access the hub but can only be told by a peer node.
-				if (!domanager0.synodeNetworking(domanager0.syngleton.settings))
-					; //??? domanager0.updbservs_byHub(syntb);
+				AppSettings s = domanager0.syngleton.settings;
+				if (domanager0.synodeNetworking(s)) {
+					if (s.loadDBLaterservs(domanager0.syngleton.syncfg, domanager0.synm)) {
+						needExpose = true;
+						domanager0.syngleton.settings.save();
+					}
+				}
+				
 			
-				// final boolean anyok[] = new boolean[] {false};
 				for (SynssionPeer p : domanager0.sessions.values())
 					try {
 						domanager0.synUpdateDomain(p,
 							(dom, synode, peer, xp) -> {
 								if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
 										synid, dom, domanager0.n0(), domanager0.stamp());
-								// anyok[0] |= true;
 							});
 					} catch (ExchangeException e) {
 						// Something not done yet, e.g. breakpoints resuming
@@ -419,11 +423,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 						Utils.logi("[♻.◬ %s ] syn-worker has an IO(network) error: %s", synid, e.getMessage());
 					}
 				
-//				if (!anyok[0])
-//					reschedule_1(30);
-//				else 
-//					reschedule_1(0);
-
 			// thread level catches, local errors
 			} catch (Exception e1) {
 				e1.printStackTrace();

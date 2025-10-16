@@ -21,7 +21,6 @@ import java.util.stream.Stream;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Configs;
-import io.odysz.common.DateFormat;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DATranscxt;
@@ -470,7 +469,7 @@ public class Syngleton extends JSingleton {
 //	}
 
 	public String myjserv() throws SQLException, TransException {
-		settings.loadDBservs(syncfg, synm, DateFormat.jour0);
+		// settings.loadDBservs(syncfg, synm, DateFormat.jour0);
 		return settings.jserv(syncfg.synid);
 	}
 }
