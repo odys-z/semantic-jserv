@@ -11,10 +11,10 @@
     "org": {
       "type": "io.oz.syn.registry.SynOrg",
       "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
-      "orgId": "ura", "orgName": "URA", "orgType": "nation", "market": "test",
+      "orgId": "ura", "orgName": "URA", "orgType": "test",
       "webroot": "$WEBROOT_MOB", "homepage": "", "album0": "album-test"
     },
-    "syncIns": 0.0,
+    "syncIns": 15.0,
     "peers": [
       {"type": "io.oz.syn.Synode",
        "synid": "HUB", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "HUB.HUB" },
@@ -25,7 +25,7 @@
   },
   "synusers": [{
     "type": "io.oz.syn.SyncUser",
-    "userId": "ody",
+    "userId": "admin",
     "userName": null,
     "pswd": "8964",
     "iv": null,

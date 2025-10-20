@@ -1,4 +1,5 @@
 { "type"        : "io.oz.registier.central.CentralSettings",
+  "market"      : "test",
   "vol_name"    : "VOLUME_HOME",
   "volume"      : "../central-vol",
   "port"        : 8954,

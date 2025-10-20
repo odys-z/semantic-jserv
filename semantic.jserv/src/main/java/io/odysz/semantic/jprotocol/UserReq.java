@@ -13,6 +13,12 @@ public class UserReq extends AnsonBody {
 	}
 
 	SemanticObject data;
+	/**
+	 * Tip: v cannot be complicate types, e.g. array, map, user types, etc.
+	 * @param k
+	 * @param v
+	 * @return this
+	 */
 	public UserReq data(String k, Object v) {
 		if (k == null) return this;
 

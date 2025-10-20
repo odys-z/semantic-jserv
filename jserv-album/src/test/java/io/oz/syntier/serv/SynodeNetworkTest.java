@@ -3,9 +3,13 @@ package io.oz.syntier.serv;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.touchFile;
 import static io.odysz.common.Utils.turnred;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.Utils.logi;
+
 import static org.junit.jupiter.api.Assertions.*;
 
+import static io.oz.syntier.serv.T_CentralApp.zsu;
 import static io.oz.syntier.serv.T_WebservExposer.hub;
 import static io.oz.syntier.serv.T_WebservExposer.prv;
 import static io.oz.syntier.serv.T_WebservExposer.mob;
@@ -35,7 +39,6 @@ import io.oz.registier.central.meta.CentSynodemeta;
 import io.oz.syn.SynodeMode;
 
 class SynodeNetworkTest {
-	static final String zsu = "zsu";
 	
 	static final String backup_hub = "src/test/resources/submitjserv-hub.backup.json";
 	static final String backup_prv = "src/test/resources/submitjserv-prv.backup.json";
@@ -57,11 +60,12 @@ class SynodeNetworkTest {
 
 	static boolean[] central_quit = new boolean[] {false};
 
+	@SuppressWarnings("unused")
 	private static Thread centralThread;
 	private static final String central_conn = "t-central-sqlite";
 
 	@BeforeAll
-	static void initEnv() throws IOException, InterruptedException {
+	static void initEnv() throws IOException, InterruptedException, SQLException, TransException {
 		// -DWEB-INF=src/main/webapp/WEB-INF
 		System.setProperty("WEB-INF", "src/main/webapp/WEB-INF");
 
@@ -101,51 +105,28 @@ class SynodeNetworkTest {
 	}
 	
 	/**
-	 * <pre>
-	--------------------------------+----------------------+-----------------------------------------
-							  X whorker 0              X whorker 1
-	--------------------------------+----------------------+-----------------------------------------
-			 settings.json          |     X:docsync        |      peers
-	AppSettings[jservs, jserv_utc]  -> syn_node.jserv, utc |
-	  [jservs.key != X]             |                      |
-	--------------------------------+----------------------+-----------------------------------------
-									|     X:docsync        |      peer Y
-									|  syn_node[Y].jserv  <-> synode[Y].jserv
-									| * only persist working version
-									| * in case X cannot visite Hub
-	--------------------------------+----------------------+-----------------------------------------
-										  X:docsync         
-									   syn_node[X].jserv  <-  onIpChange() * (optional?)
-			  onIpChange()          -> syn_node[X].jserv    
-	--------------------------------+----------------------+-----------------------------------------
-									|     X:docsync        |      peer Y & Z
-									|  syn_node[X].jserv   -> synode[X].jserv
-	--------------------------------+----------------------+-----------------------------------------
-			   central              |     X:docsync        |
-		cynodes[X].jserv, utc      <-  syn_node[X].jserv   |
-	--------------------------------+----------------------+-----------------------------------------
-			   central              |     X:docsync        |
-	[Central] cynodes[Z].jserv      -> syn_node[Z].jserv, utc
-	[Central] cynodes[Y].jserv      x> syn_node[Y].jserv, utc
-    * requires verifying since jservs at central may or may not be working (not true as its utc is staled?)
-	 * </pre>
-	 * @throws Exception
+	 * @see AppSettings#merge_ip_json2db(io.oz.syn.registry.SynodeConfig, SynodeMeta, io.oz.syn.SyncUser, io.odysz.semantic.jprotocol.JProtocol.OnError)
+	 * merge_ip_json2db()
 	 */
 	@Test
 	void testSynodes() throws Exception {
+
+		String maintenant = DateFormat.now();
 
 		// hub
 		turnred(T_WebservExposer.lights.get(hub));
 
 		AppSettings settings_hub0 = AppSettings.load(SynotierSettingsTest.webinf, hubs);
 		assertNull(settings_hub0.localIp());
-		// settings_hub0.jserv_utc = DateFormat.now();
 		settings_hub0.regiserv = T_CentralApp.central_jserv;
+		settings_hub0.centralPswd = T_CentralApp.admin_pswd;
+		settings_hub0.jserv_utc = maintenant;
 		settings_hub0.save();
 		
 		SynotierJettyApp jhub = SynotierJettyApp._main(new String[] {hubs});
 		musteq(hub, jhub.syngleton.synode());
 		
+		// DateFormat.early(maintenant, "?");
 		
 		assertNull(queryJserv(jhub, prv));
 		assertNull(queryJserv(jhub, mob));
@@ -165,10 +146,11 @@ class SynodeNetworkTest {
 		String cj_hub = queryCentral(
 				jhub.syngleton.syncfg.org.orgId, jhub.syngleton.syncfg.domain, hub);
 		assertTrue(JServUrl.valid(cj_hub));
-		assertEquals(JServUrl.valid(queryJserv(jhub, hub)), cj_hub);
+		assertTrue(JServUrl.valid(queryJserv(jhub, hub)), cj_hub);
 	
 		// stop central
-		centralThread.join();
+		T_CentralApp.app.stop();
+		logi("This url shouldn't work: %s", T_CentralApp.central_jserv);
 
 		// prv
 		turnred(T_WebservExposer.lights.get(prv));
@@ -178,6 +160,8 @@ class SynodeNetworkTest {
 		assertTrue(JServUrl.valid(settings_prv0.jservs.get(hub)));
 		// settings_prv0.jserv_utc = DateFormat.now();
 		settings_prv0.regiserv = T_CentralApp.central_jserv;
+		settings_prv0.centralPswd = T_CentralApp.admin_pswd;
+		settings_prv0.jserv_utc = maintenant;
 		settings_prv0.save();
 		
 		SynotierJettyApp jprv = SynotierJettyApp._main(new String[] {prvs});
@@ -189,6 +173,9 @@ class SynodeNetworkTest {
 		assertTrue(JServUrl.valid(queryJserv(jprv, hub)), queryJserv(jprv, hub));
 		assertNotNull(jprv.syngleton.settings.localIp());
 		
+		// wait for prv worker 1
+		while(isblank(queryJserv(jhub, prv)))
+			Thread.sleep(1000);
 		assertEquals(queryJserv(jhub, prv), jprv.jserv());
 		assertTrue(JServUrl.valid(queryJserv(jhub, prv)));
 
@@ -202,6 +189,8 @@ class SynodeNetworkTest {
 		// assertTrue(JServUrl.valid(settings_mob0.jservs.get(hub)));
 		settings_mob0.jserv_utc = DateFormat.now();
 		settings_mob0.regiserv = T_CentralApp.central_jserv;
+		settings_mob0.centralPswd = T_CentralApp.admin_pswd;
+		// settings_prv0.jserv_utc = maintenant;
 		settings_mob0.save();
 		
 		SynotierJettyApp jmob = SynotierJettyApp._main(new String[] {mobs});
@@ -212,20 +201,20 @@ class SynodeNetworkTest {
 		
 		assertNotNull(jmob.syngleton.settings.localIp());
 		assertNotNull(queryJserv(jhub, prv));
-		assertNotNull(queryJserv(jhub, mob));
+
+		// assertNotNull(queryJserv(jhub, mob));
+		// wait for mob worker 1
+		while(isblank(queryJserv(jhub, mob)))
+			Thread.sleep(1000);
 
 		assertEquals(queryJserv(jhub, mob), jmob.jserv());
 		assertEquals(queryJserv(jmob, prv), jprv.jserv());
 		assertTrue(JServUrl.valid(queryJserv(jmob, prv)));
 		assertNull(queryJserv(jprv, mob));
 		
-		// prv
-		// SynDomanager domprv = jprv.syngleton.domanager(zsu);
-
-		// domprv.submitPersistDBserv(null);
-		// DATranscxt syntb = new DATranscxt(domprv.synconn);
-		// ?? domprv.updbservs_byHub(syntb);
-
+		// wait for mob worker 1
+		while(isblank(queryJserv(jprv, mob)))
+			Thread.sleep(1000);
 		assertEquals(queryJserv(jprv, mob), jmob.jserv());
 	}
 
@@ -258,6 +247,7 @@ class SynodeNetworkTest {
 	public HashMap<String, String[]> loadJservs(SynDomanager dom)
 			throws SQLException, TransException {
 		DATranscxt tb = new DATranscxt(dom.synconn);
-		return dom.synm.loadJservs(tb, dom.domain(), rs -> JServUrl.valid(rs.getString(dom.synm.jserv)));
+		return dom.synm.loadJservs(tb, dom.syngleton.syncfg.org.orgId, dom.domain(),
+				rs -> JServUrl.valid(rs.getString(dom.synm.jserv)));
 	}
 }

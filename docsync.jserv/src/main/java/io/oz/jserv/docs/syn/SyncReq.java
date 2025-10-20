@@ -5,7 +5,9 @@ import static io.oz.syn.ExessionAct.*;
 import static io.odysz.common.LangExt.isblank;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import io.odysz.anson.AnsonField;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.UserReq;
@@ -103,6 +105,23 @@ public class SyncReq extends UserReq implements IBlock {
 		return exblock == null ? unexpect : exblock.synact();
 	}
 
+	/**
+	 * Jservs for exchange between synodes, esp. by worker 1. 
+	 * 
+	 * <pre>{synode: [jserv-str, jserv-utc, creater-id]}</pre>
+	 * @since 0.2.6
+	 */
+	@AnsonField(valType="[Ljava.lang.String;")
+	HashMap<String, String[]> ex_jservs;
+
+	/**
+	 * Set {@link #ex_jservs} (for synodes exchange jservs).
+	 */
+	public SyncReq jservs (HashMap<String, String[]> jservs) {
+		ex_jservs = jservs;
+		return this;
+	}
+	
 	/** 
 	 * data to be used for resolve doc-ref.
 	 * @since 0.2.5

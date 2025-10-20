@@ -229,7 +229,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	private boolean needExpose;
 
 	private ScheduledExecutorService scheduler;
-	private static ScheduledFuture<?> schedualed;
+	private ScheduledFuture<?> schedualed;
 
 	@Override
 	public void destroy() {
@@ -380,10 +380,12 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
 		
-		DATranscxt syntb = new DATranscxt(domanager0.synconn);
-		workers[1] = syn_worker(syntb, err);
-	
-		reschedule_1(0);
+		if (syncIns > 1) {
+			DATranscxt syntb = new DATranscxt(domanager0.synconn);
+			workers[1] = syn_worker(syntb, err);
+			reschedule_1(0);
+		}
+		
         running = false;
 		return this;
 	}
@@ -406,7 +408,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 						domanager0.syngleton.settings.save();
 					}
 				}
-				
 			
 				for (SynssionPeer p : domanager0.sessions.values())
 					try {
@@ -441,9 +442,12 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @return worker
 	 */
 	private Runnable jserv_worker(OnError err) {
-		return () -> { try {
-			if (debug)
-				logi("Worker 0 start to submit jservs.");
+		return () -> {
+		boolean stop0 = false;
+		try {
+			if (stop0) return;
+			if (debug) logi("Worker 0 start to submit jservs.");
+
 			SynodeConfig c = domanager0.syngleton.syncfg;
 			AppSettings  s = domanager0.syngleton.settings;
 			SyncUser     u = domanager0.syngleton.synuser;
@@ -462,7 +466,11 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		} catch (SsException e) {
 			warn("There are configuration error to login central service?");
 			e.printStackTrace();
-		} };
+		} catch (Exception e) {
+			e.printStackTrace();
+			stop0 = true;
+		}
+		};
 	}
 
 	/**
@@ -607,30 +615,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				.data(m.jserv, jserv)
 				.data(m.remarks, mode.name());
 	}
-	
-	/**
-	 * @param req
-	 * @param usr
-	 * @return response [data = update results]
-	 * @throws TransException
-	 * @throws SQLException
-	SyncResp onReportJserv(SyncReq req, DocUser usr)
-			throws TransException, SQLException {
-		musteqs(req.exblock.domain, domain);
-		musteqs(req.exblock.peer, synid);
-		mustnonull(req.exblock.srcnode);
-		
-		SynodeMeta m = domanager0.synm;
-		String jserv = (String)req.data(m.jserv);
-		if (!JServUrl.valid(jserv))
-			throw new ExchangeException(ExessionAct.ready, null, "Invalid Jserv: %s", jserv);
-
-		String optim = (String)req.data(m.jserv_utc);
-		domanager0.updateDBserv(st, req.exblock.srcnode, jserv, optim);
-
-		return onQueryJservs(req, usr);
-	}
-	 */
 
 	SyncResp onExchangeJservs(SyncReq req, DocUser usr)
 			throws TransException, SQLException {
@@ -639,12 +623,11 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		musteqs(req.exblock.peer, synid);
 		mustnonull(req.exblock.srcnode);
 		
-		SynodeMeta m = domanager0.synm;
+		// SynodeMeta m = domanager0.synm;
+		// @SuppressWarnings("unchecked")
+		// HashMap<String, String[]> jservs = (HashMap<String, String[]>) req.data(m.jserv);
 
-		@SuppressWarnings("unchecked")
-		HashMap<String, String[]> jservs = (HashMap<String, String[]>) req.data(m.jserv);
-
-		domanager0.onexchangeDBservs(jservs);
+		domanager0.onexchangeDBservs(req.ex_jservs);
 
 		return onQueryJservs(req, usr);
 	}

@@ -127,7 +127,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	/**
 	 * Sign up, then start a synssion to {@code peeradmin}, the admin peer.
-	 * TODO rename as sign2peer
 	 * @param adminjserv jserv root path, must be null for testing
 	 * locally without login to the service
 	 * @param peeradmin
@@ -187,7 +186,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @since 0.2.0
 	 * @deprecated since 0.2.6, this loop is done in a worker's
 	 * try-catch block, to avoid stop the worker.
-	 * TODO refactor tests
 	 */
 	public SynDomanager updomain(OnDomainUpdate onUpdate)
 			throws AnsonException, SsException, IOException, TransException {
@@ -249,156 +247,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
-	 * Download domain jservs, persist and expose.
-	 * Work without concurrency lock: load jservs from hub.
-	 * <p>Note: this method will trigger reloading of synssions.</p>
-	 * <p>NOTE 2025-08-12
-	 * This method is supposed to be called by sync-worker, and won't check the synode modes.</p>
-	 * <p>ISSUE for the future
-	 * It's supposed that some synodes will never have a chance to visit the hub node,
-	 * then an asynchronous try and delay is expected.</p>
-	 * </p>
-	 * @see #submitJservsPersistExpose(String, String...)
-	 * @param syntb
-	 * @return this
-	 * @throws SQLException 
-	 * @throws TransException 
-	 * @since 0.7.6
-	public SynDomanager updbservs_byHub(DATranscxt syntb) throws TransException, SQLException {
-		HashMap<String, String[]> jservs = null;
-		if (sessions != null) {
-		for (SynssionPeer peer : sessions.values()) {
-			if (eq(peer.peer, synode))
-					continue;
-			
-			if (isblank(peer.peerjserv())) {
-				warnT(new Object() {}, "Cannot log into %s as no jservs available.", peer.peer);
-				continue;
-			}
-
-			try {
-				peer.checkLogin(admin);
-				jservs = peer.queryJservs();
-				
-				syngleton.settings
-						.persistDBservs(syngleton.syncfg, synm, jservs)
-						.save();
-			} catch (IOException e) {
-				Utils.logT("[%s] Updating jservs from %s failed. Details:\n%s",
-						domain, peer, e.getMessage());
-			} catch (TransException | AnsonException | SsException e) {
-				e.printStackTrace();
-			}
-			
-			if (jservs != null)
-				loadSynclients(syntb);
-		}
-		if (this.ipChangeHandler != null)
-			ipChangeHandler.onExpose(syngleton.settings, this);
-		}
-	
-		return this;
-	}
-	 */
-
-	/**
-	 * @param syntb
-	 * @param peer
-	 * @param jserv must be a valid jserv
-	 * @return
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws IOException 
-	 * @throws AnsonException 
-	SynDomanager updateDBserv(DATranscxt syntb, String peer, String jserv, String timestamp_utc)
-			throws TransException, SQLException, AnsonException {
-		
-		syngleton.settings.persistLoadDBserv(syngleton.syncfg, synm, peer, jserv, timestamp_utc);
-		syngleton.settings.save();
-		
-		if (ipChangeHandler != null)
-			ipChangeHandler.onExpose(syngleton.settings, this);
-		return this;
-	}
-
-	private boolean updateDBserv(String peer, String[] jserv_utc_oper) throws TransException, SQLException {
-		return AppSettings.updateLaterDBserv(synconn, org, domain,
-				 synm, peer, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
-	}
-	 */
-
-
-	/**
-	 * <p>Submit then persist with reply, if the time stamp is newer.
-	 * Working without concurrency lock.</p> 
-	 * 
-	 * <h5>Note</h5>
-	 * <p>This is for submitting to hub, not central. SynDomanager doesn't care about
-	 * Registry, or Synode Networking.</p>
-	 * 
-	 * <h5>NOTE 2025-08-12</h5>
-	 * <p>This method is supposed to be called by sync-worker 1, only for peer mode,
-	 * and won't check the synode mode.</p>
-	 * <h5>ISSUE for the future</h5>
-	 * <p>It's supposed that some synodes will never have a chance to visit the hub node,
-	 * then an asynchronous try and delay is expected.</p>
-	 * 
-	 * @see #updateJserv(DATranscxt, String, String)
-	 * @see SynssionPeer#submitMyJserv(String)
-	 * @param nextip 
-	 * @param cfg 
-	 * @return Is the local ip changed
-	 * - false means no newer jservs from any peers, and no need of updating.
-	 * @deprecated 0.7.6 replaced by {@link #synodeNetworking(AppSettings)}
-	public boolean submitPersistDBserv(String currentIp, String... nextip) {
-		String ip = isNull(nextip) ? JServUrl.getLocalIp(2) : _0(nextip);
-		if (eq(currentIp, ip)) 
-			return false;
-
-		try {
-			if (sessions == null)
-				loadSynclients(synb);
-			for (SynssionPeer peer : sessions.values()) {
-				if (eq(peer.peer, synode))
-					continue;
-
-				if (isblank(peer.peerjserv())) {
-					warnT(new Object() {},
-						"Cannot log into %s <- %s, for submitting my jserv, as no jservs available.",
-						peer.peer, synode);
-					continue;
-				}
-
-				try {
-					Utils.logT(new Object(){},
-							"Submitting jservs in %s, check login state to: %s, jserv: %s",
-							domain(), peer, peer.peerjserv());
-					peer.checkLogin(admin);
-						
-					// merge_submit_persistReply(syngleton.settings, peer);
-					HashMap<String, String[]> jservs = peer.synpushMyJserv(syngleton.settings.jserv(synode));
-					if (jservs != null) {
-						syngleton.settings
-							.persistDBservs(syngleton.syncfg, synm, jservs)
-							.save();
-					}
-
-				} catch (IOException e) {
-					Utils.logT(new Object() {},
-							"[%s:%s] Submitting jservs to %s failed. Error: %s, Details:\n%s",
-							domain, synode, peer.peer, e.getClass().getName(), e.getMessage());
-				} catch (TransException | AnsonException | SsException | SQLException e) {
-					e.printStackTrace();
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return true;
-	}
-	 */
-	
-	/**
 	 * Push all my jservs, accept reply's newer versions.
 	 * @param s
 	 * @return accepted or not
@@ -424,8 +272,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 				try {
 					Utils.logT(new Object(){},
-							"Submitting jservs in %s, check login state to: %s, jserv: %s",
-							domain(), peer, peer.peerjserv());
+							"Submitting jservs in %s, check login state to: %s -> %s, jserv: %s",
+							domain(), peer.mynid, peer.peer, peer.peerjserv());
 					peer.checkLogin(admin);
 						
 					HashMap<String, String[]> jservs = peer.exchangeDBservs(loadDBservss());
@@ -600,9 +448,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 			if (eq(sid, this.synode) || !JServUrl.valid(jservs.get(sid)[0]))
 				continue;
 			
-			// updateDBserv(sid, jservs.get(sid));
 			String[] jserv_utc_oper = jservs.get(sid);
-			merged |= AppSettings.updateLaterDBserv(
+			merged |= AppSettings.inst_updateLaterDBserv(
 					synconn, org, domain, synm,
 					sid, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
 		}

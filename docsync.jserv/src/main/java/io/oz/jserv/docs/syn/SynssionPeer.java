@@ -61,7 +61,6 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynDocRefMeta;
-import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.util.DAHelper;
@@ -289,6 +288,7 @@ public class SynssionPeer {
 		xp = new ExessionPersist(b0, peer, null);
 		return b0.restorexchange(xp);
 	}
+	
 	/**
 	 * Handle syn-init request.
 	 * 
@@ -301,7 +301,8 @@ public class SynssionPeer {
 	 * @throws TransException 
 	 * @throws Exception
 	 */
-	SyncResp onsyninitRep(ExchangeBlock ini, String domain) throws TransException, SQLException, SAXException, IOException {
+	SyncResp onsyninitRep(ExchangeBlock ini, String domain)
+			throws TransException, SQLException, SAXException, IOException {
 		if (!eq(ini.srcnode, peer))
 			throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
@@ -928,13 +929,14 @@ public class SynssionPeer {
 	public HashMap<String, String[]> exchangeDBservs(HashMap<String, String[]> jservs)
 			throws SemanticException, AnsonException, IOException {
 		mustnonull(client);
-		SynodeMeta m = domanager.synm;
+		// SynodeMeta m = domanager.synm;
 		SyncReq req = (SyncReq) new SyncReq(null, domain())
 				.exblock(new ExchangeBlock(domanager.domain(),
 						domanager.synode, peer, ExessionAct.mode_client))
 				.a(A.exchangeJservs);
 
-		req.data(m.jserv, jservs);
+		// req.data(m.jserv, jservs);
+		req.jservs(jservs);
 
 		String[] act = AnsonHeader.usrAct(getClass().getName(), A.exchangeJservs, "sync", "by " + mynid);
 		AnsonHeader header = client.header().act(act);
