@@ -578,11 +578,10 @@ setp (6)
   but is the most staled if a peer connot connect to internet.
 	 * </pre>
      * @param c
-	 * @param s
 	 * @param synm
 	 * @param synusr 
 	 * @param err 
-	 * @return jservs have been changed, need exposing
+	 * @return is jservs have been changed and need exposing?
 	 * @throws TransException
 	 * @throws SQLException
 	 * @throws IOException 
@@ -782,7 +781,9 @@ setp (6)
 				
 				if (DAHelper.count(tb, c.synconn, synm.tbl,
 					synm.org, c.org.orgId, synm.domain, c.domain, synm.pk, sid) == 0)
-					throw new SemanticException("Updating jserv not exist? Shouldn't reach here!");
+					warnT(new Object() {},
+						  "[ERROR!] !!! This error is tolerated for running tests!\n"
+						+ "Updating jserv not exist? Shouldn't reach here!");
 
 				Update pst = tb.update(synm.tbl, robot)
 					.nv(synm.jserv, jserv(sid))

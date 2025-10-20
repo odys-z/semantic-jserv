@@ -226,15 +226,6 @@ public class SynotierJettyApp {
 		YellowPages.load(FilenameUtils.concat(new File(".").getAbsolutePath(),
 				webinf, EnvPath.replaceEnv($vol_home)));
 		SynodeConfig cfg = YellowPages.synconfig();
-//		if (cfg.mode == null)
-//			cfg.mode = SynodeMode.peer;
-//		else if (cfg.mode == SynodeMode.hub)
-//			cfg.syncIns = 0;
-//
-//		if (cfg.mode == SynodeMode.peer && cfg.syncIns == 0) {
-//			warn("[%s] mode == 'peer', force syncIns = 40 ...", cfg.synid);
-//			cfg.syncIns = 40;
-//		}
 	
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);

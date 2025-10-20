@@ -72,7 +72,7 @@ import io.oz.syn.registry.YellowPages;
  */
 public class ExpDoctierservTest {
 	/** Sarting port for each Jetty service to bind, _8964 + 1, +2, ... */
-	public final static int _8964 = 8966;
+	public final static int _8964 = 9966;
 	
 	public final static int X = 0;
 	public final static int Y = 1;
@@ -100,7 +100,8 @@ public class ExpDoctierservTest {
 	}
 	
 	/**
-	 * Use -Dwait-clients for waiting client's pushing, by running {@link DoclientierTest#testSynclientUp()}.
+	 * Use -Dwait-clients for waiting client's pushing,
+	 * by running {@link DoclientierTest#testSynclientUp()}.
 	 * @throws Exception
 	 */
 	@Test
@@ -180,7 +181,6 @@ public class ExpDoctierservTest {
 
 		if (waitClients == null) return;
 		// else wait on lights (turn on by clients or users)
-
 
 		turngreen(canPush); // Tell clients can push now
 		logrst("Told clients can push now, waiting...", ++section);
@@ -279,8 +279,6 @@ public class ExpDoctierservTest {
 
 		assert_Arefs_atB(X, Y, 0, 0);
 		assert_Arefs_atB(Y, X, 0, 0);
-
-
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -384,6 +382,7 @@ public class ExpDoctierservTest {
 			// install
 			AppSettings _settings = new AppSettings();
 			_settings.jservs = jservs;
+			_settings.centralPswd = "8964";
 			_settings.vol_name = f("VOLUME_%s", i);
 			_settings.volume = f("../vol-%s", i);
 			_settings.port = _8964 + i;
@@ -404,16 +403,20 @@ public class ExpDoctierservTest {
 			SynodetierJoinTest.cleanDomain(cfgs[i]);
 
 			// main()
-			settings[i] = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
+			settings[i] = AppSettings.checkInstall(SynotierJettyApp.servpath,
+					webinf, cfgxml, "settings.json", true);
 
-			Utils.logi("+======================================= %s, %s", settings[i].reversedPort(false), i);
+			Utils.logi("+======================================= %s, %s",
+					settings[i].reversedPort(false), i);
+
+			// Notes for debug tests: sleep longer if binding failed
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings[i])
 						.afterboot()
 						.print("\n. . . . . . . . Synodtier Jetty Application (Test) is running . . . . . . . ");
 			
 			// ISSUE afterboot() will write the same settings.json again, in another thread. 
 			// Using different json files for the test?
-			Thread.sleep(5000);
+			Thread.sleep(10000);
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],

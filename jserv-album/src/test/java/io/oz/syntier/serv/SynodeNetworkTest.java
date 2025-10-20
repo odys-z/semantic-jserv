@@ -158,7 +158,6 @@ class SynodeNetworkTest {
 		AppSettings settings_prv0 = AppSettings.load(SynotierSettingsTest.webinf, prvs);
 		assertNull(settings_prv0.localIp());
 		assertTrue(JServUrl.valid(settings_prv0.jservs.get(hub)));
-		// settings_prv0.jserv_utc = DateFormat.now();
 		settings_prv0.regiserv = T_CentralApp.central_jserv;
 		settings_prv0.centralPswd = T_CentralApp.admin_pswd;
 		settings_prv0.jserv_utc = maintenant;
@@ -186,11 +185,9 @@ class SynodeNetworkTest {
 
 		AppSettings settings_mob0 = AppSettings.load(SynotierSettingsTest.webinf, mobs);
 		assertNull(settings_mob0.localIp());
-		// assertTrue(JServUrl.valid(settings_mob0.jservs.get(hub)));
 		settings_mob0.jserv_utc = DateFormat.now();
 		settings_mob0.regiserv = T_CentralApp.central_jserv;
 		settings_mob0.centralPswd = T_CentralApp.admin_pswd;
-		// settings_prv0.jserv_utc = maintenant;
 		settings_mob0.save();
 		
 		SynotierJettyApp jmob = SynotierJettyApp._main(new String[] {mobs});
