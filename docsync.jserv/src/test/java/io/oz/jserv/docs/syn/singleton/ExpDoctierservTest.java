@@ -190,6 +190,9 @@ public class ExpDoctierservTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
+		// NOte
+		// 1. There can be syn-workers, don't break clients
+		// 2. Only works without synworks
 		ck[X].doc(1);
 		ck[Y].doc(2);
 		ck[Z].doc(0);
@@ -354,6 +357,11 @@ public class ExpDoctierservTest {
 		return xdlst;
 	}
 
+	/**
+	 * Debug Notes:
+	 * A slow machine will pollute the settings variable if not buffered
+	 * This test cannot work on slow machine?
+	 */
 	public static int[] startJetties(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
 		
@@ -369,9 +377,6 @@ public class ExpDoctierservTest {
 		}
 
 		AppSettings[] settings = new AppSettings[nodex.length];
-		// Debug Notes:
-		// A slow machine will pollute the settings variable if not buffered
-		// This test cannot work on slow machine?
 
 		for (int i : nodex) {
 			if (jetties[i] != null)
@@ -389,7 +394,6 @@ public class ExpDoctierservTest {
 			_settings.installkey = "0123456789ABCDEF";	
 			_settings.rootkey = null;
 			_settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
-			// Thread.sleep(25000);
 
 			YellowPages.load(EnvPath.concat(webinf, "$" + _settings.vol_name));
 			cfgs[i] = YellowPages.synconfig();
@@ -424,8 +428,6 @@ public class ExpDoctierservTest {
 								SynodeMode.peer, cfgs[i].chsize, docm, devm, true);
 			
 			Utils.logi("%s: %s - %s", i, settings[i].port, _settings.port);
-			
-			//Utils.pause(String.valueOf(i));
 		}
 		
 		return nodex;

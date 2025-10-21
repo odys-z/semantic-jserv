@@ -5,8 +5,7 @@
    "admin": "ody",
    "sysconn": "main-sqlite",
    "synconn": "no-jserv.00",
-   "host": "",
-   "port": 8964 
+   "syncIns" : -1
  },
  "synusers": [
    {"userId": "ody", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"},

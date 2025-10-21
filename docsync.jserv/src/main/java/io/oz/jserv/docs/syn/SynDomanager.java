@@ -184,7 +184,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws SsException 
 	 * @throws AnsonException 
 	 * @since 0.2.0
-	 * @deprecated since 0.2.6, this loop is done in a worker's
+	 * @deprecated only for tests. Since 0.2.6, this loop is done in a worker's
 	 * try-catch block, to avoid stop the worker.
 	 */
 	public SynDomanager updomain(OnDomainUpdate onUpdate)

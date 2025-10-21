@@ -93,8 +93,6 @@ public class SynotierJettyApp {
 	public Syngleton syngleton() { return syngleton; }	
 
 	public String jserv() throws SQLException, TransException {
-//		JServUrl jurl = this.syngleton.myjserv();
-//		return jurl == null ? null : jurl.jserv();
 		return this.syngleton.myjserv();
 	}
 
@@ -155,17 +153,6 @@ public class SynotierJettyApp {
 	SynotierJettyApp afterboot() {
 		AppSettings settings = syngleton.settings;
 		try {
-			// settings.setupNewJserv(syngleton.syncfg, syngleton.synm);
-			// settings.mergeLoadJservs(syngleton.syncfg, syngleton.synm);
-			// settings.save();
-
-//			syngleton.asybmitJserv(len(settings.startHandler) == 0 ? null :
-//					((ISynodeLocalExposer)Class
-//						.forName(settings.startHandler[0])
-//						.getDeclaredConstructor()
-//						.newInstance()))
-//						;
-
 			SynDomanager mngr = syngleton.domanager(syngleton.syncfg.domain);
 			mngr.ipChangeHandler(len(settings.startHandler) == 0
 								? null
@@ -180,35 +167,6 @@ public class SynotierJettyApp {
 		return this;
 	}
 	
-	/**
-	 * 
-	 * @param webinf
-	 * @param config_xml
-	 * @param settings_json
-	 * @param oe
-	 * @return synotier app
-	 * @throws Exception
-	public static SynotierJettyApp boot(String webinf, String config_xml, String settings_json,
-			PrintstreamProvider ... oe) throws Exception {
-
-		logi("Loading settings: %s", settings_json);
-		AppSettings pset = AppSettings.load(webinf, settings_json);
-		
-		String p = pset.volume;
-		if (!new File(p).exists()) // absolute
-			p = new File(FilenameUtils.concat(webinf, pset.volume)).getAbsolutePath();
-		if (!new File(p).exists()) { // relative
-			warn("Can't find volume: settings.json: %s\nvolume: %s\nconfig-root: %s", pset.json, pset.volume, webinf);
-			throw new SemanticException("Can't find volume with settings.json/[volume] in absolute and relative to WEB-INF.", pset.volume);
-		}
-
-		System.setProperty(pset.vol_name, p);
-		Utils.logi("%s:\n%s\n%s", settings_json, p, pset.toString());
-		
-		return boot(webinf, config_xml, pset, oe);
-	}
-	 */
-
 	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings,
 			PrintstreamProvider ... oe) throws Exception {
 

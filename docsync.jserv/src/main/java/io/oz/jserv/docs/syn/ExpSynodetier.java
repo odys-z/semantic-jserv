@@ -326,6 +326,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @return worker
 	 */
 	private Runnable jserv_worker(OnError err) {
+		mustnonull(domanager0.syngleton.settings.centralPswd);
+		
 		return () -> {
 		boolean stop0 = false;
 		try {
@@ -394,34 +396,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		}
 		finally { running = false; }
 	}
-
-//	/**
-//	 * @deprecated
-//	 * @since 0.2.7
-//	 * */
-//	HashMap<String, Boolean> lights;
-//
-//	/** @since 0.2.7 */
-//	private void turngreen(String peer) {
-//		lights.put(peer, true);
-//	}
-//
-//	/** @since 0.2.7 */
-//	private void waitAll(HashMap<String, SynssionPeer> sessions) {
-//		lights.clear();
-//		for (String p : sessions.keySet()) {
-//			SynssionPeer peer = sessions.get(p);
-//			musteqs(p, peer.peer);
-//			lights.put(p, false);
-//		}
-//	}
-//	
-//	/** @since 0.2.7 */
-//	private boolean anygreen() {
-//		for (boolean lit : lights.values())
-//			if (lit) return true;
-//		return false;
-//	}
 
 	//////////////////////////////////// Doc-ref Service ///////////////////////////////
 	/**
@@ -507,10 +481,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		musteqs(req.exblock.peer, synid);
 		mustnonull(req.exblock.srcnode);
 		
-		// SynodeMeta m = domanager0.synm;
-		// @SuppressWarnings("unchecked")
-		// HashMap<String, String[]> jservs = (HashMap<String, String[]>) req.data(m.jserv);
-
 		domanager0.onexchangeDBservs(req.ex_jservs);
 
 		return onQueryJservs(req, usr);

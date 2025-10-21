@@ -20,6 +20,6 @@
       "Y": "http://127.0.0.1:8967/jserv-album",
       "Z": "http://127.0.0.1:8968/jserv-album"},
   "localIp": null,
-  "centralPswd": null,
+  "centralPswd": "8964",
   "rootkey": "0123456789ABCDEF"
 }
