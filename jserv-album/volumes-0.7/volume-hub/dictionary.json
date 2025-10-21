@@ -12,7 +12,7 @@
     "org": {
       "type": "io.oz.syn.registry.SynOrg",
       "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
-      "orgId": "ura", "orgName": "URA", "orgType": "nation", "market": "test",
+      "orgId": "ura", "orgName": "URA", "orgType": "test",
       "webroot": "$WEBROOT_HUB", "homepage": "", "album0": "album-test"
     },
     "syncIns": 0.0,
@@ -26,6 +26,6 @@
   },
   "synusers": [{
     "type": "io.oz.syn.SyncUser",
-    "userId": "ody", "userName": null, "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"
+    "userId": "admin", "userName": null, "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"
   }]
 }

@@ -29,6 +29,7 @@ venv*
 **/WEB-INF/settings.prv.json
 **/WEB-INF/settings.mob.json
 **/volume-x29
+**/central-vol
 **/settings.x29.json
 .classpath
 **/uploading-temp
@@ -39,9 +40,10 @@ volumes-*-backup
 install-settings-delete/*
 !install-settings-delete/sample/
 !install-settings-delete/*.sh
-deploy
 host.json
 
 web-dist
+deploy
 deploy-*
+*-deploy
 build-*

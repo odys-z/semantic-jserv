@@ -1,11 +1,11 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.Utils.warnT;
 import static io.oz.syn.ExessionAct.close;
@@ -14,8 +14,6 @@ import static io.oz.syn.ExessionAct.ready;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
-
-import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.Utils;
@@ -129,7 +127,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 	/**
 	 * Sign up, then start a synssion to {@code peeradmin}, the admin peer.
-	 * TODO rename as sign2peer
 	 * @param adminjserv jserv root path, must be null for testing
 	 * locally without login to the service
 	 * @param peeradmin
@@ -187,9 +184,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 	 * @throws SsException 
 	 * @throws AnsonException 
 	 * @since 0.2.0
-	 * @deprecated since 0.2.6, this loop is done in a worker's
+	 * @deprecated only for tests. Since 0.2.6, this loop is done in a worker's
 	 * try-catch block, to avoid stop the worker.
-	 * TODO refactor tests
 	 */
 	public SynDomanager updomain(OnDomainUpdate onUpdate)
 			throws AnsonException, SsException, IOException, TransException {
@@ -251,108 +247,15 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
-	 * Download domain jservs, persist and expose.
-	 * Work without concurrency lock: load jservs from hub.
-	 * <p>Note: this method will trigger reloading of synssions.</p>
-	 * <p>NOTE 2025-08-12
-	 * This method is supposed to be called by sync-worker, and won't check the synode modes.</p>
-	 * <p>ISSUE for the future
-	 * It's supposed that some synodes will never have a chance to visit the hub node,
-	 * then an asynchronous try and delay is expected.</p>
-	 * </p>
-	 * @see #submitJservsPersistExpose(String, String...)
-	 * @param syntb
-	 * @return this
-	 * @throws SQLException 
-	 * @throws TransException 
-	 * @since 0.7.6
+	 * Push all my jservs, accept reply's newer versions.
+	 * @param s
+	 * @return accepted or not
+	 * @see AppSettings#merge_ip_json2db(SynodeConfig, io.odysz.semantic.meta.SynodeMeta, SyncUser, OnError)
 	 */
-	public SynDomanager updbservs_byHub(DATranscxt syntb) throws TransException, SQLException {
-		HashMap<String, String[]> jservs = null;
-		if (sessions != null) {
-		for (SynssionPeer peer : sessions.values()) {
-			if (eq(peer.peer, synode))
-					continue;
-			
-			if (isblank(peer.peerjserv())) {
-				warnT(new Object() {}, "Cannot log into %s as no jservs available.", peer.peer);
-				continue;
-			}
+	public boolean synodeNetworking(AppSettings s) {
+		// TODO ignored the optional step, on IP changed.
 
-			try {
-				peer.checkLogin(admin);
-				jservs = peer.queryJservs();
-				
-				syngleton.settings
-						.persistDBservs(syngleton.syncfg, synm, jservs)
-						.save();
-			} catch (IOException e) {
-				Utils.logT("[%s] Updating jservs from %s failed. Details:\n%s",
-						domain, peer, e.getMessage());
-			} catch (TransException | AnsonException | SsException e) {
-				e.printStackTrace();
-			}
-			
-			if (jservs != null)
-				loadSynclients(syntb);
-		}
-		if (this.ipChangeHandler != null)
-			ipChangeHandler.onExpose(syngleton.settings, this);
-		}
-	
-		return this;
-	}
-
-	/**
-	 * @since 0.2.6
-	 * @param syntb
-	 * @param peer
-	 * @param jserv must be a valid jserv
-	 * @return
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws IOException 
-	 * @throws AnsonException 
-	 */
-	public SynDomanager updateDBserv(DATranscxt syntb, String peer, String jserv, String timestamp_utc)
-			throws TransException, SQLException, AnsonException {
-		
-		syngleton.settings.persistLoadDBserv(syngleton.syncfg, synm, peer, jserv, timestamp_utc);
-		syngleton.settings.save();
-		
-		if (ipChangeHandler != null)
-			ipChangeHandler.onExpose(syngleton.settings, this);
-		return this;
-	}
-
-	/**
-	 * <p>Submit then persist with reply, if the time stamp is newer.
-	 * Working without concurrency lock.</p> 
-	 * 
-	 * <h5>Note</h5>
-	 * <p>This is for submitting to hub, not central. SynDomanager doesn't care about
-	 * Registry, or Synode Networking.</p>
-	 * 
-	 * <h5>NOTE 2025-08-12</h5>
-	 * <p>This method is supposed to be called by sync-worker 1, only for peer mode,
-	 * and won't check the synode mode.</p>
-	 * <h5>ISSUE for the future</h5>
-	 * <p>It's supposed that some synodes will never have a chance to visit the hub node,
-	 * then an asynchronous try and delay is expected.</p>
-	 * 
-	 * @see #updateJserv(DATranscxt, String, String)
-	 * @see SynssionPeer#submitMyJserv(String)
-	 * @param nextip 
-	 * @param cfg 
-	 * @return Is the local ip changed
-	 * - false means no newer jservs from any peers, and no need of updating.
-	 * @since 0.7.6
-	 */
-	public boolean submitPersistDBserv(String currentIp, String... nextip) {
-		String ip = isNull(nextip) ? JServUrl.getLocalIp(2) : _0(nextip);
-		if (eq(currentIp, ip)) 
-			return false;
-
+		boolean dirty = false;
 		try {
 			if (sessions == null)
 				loadSynclients(synb);
@@ -369,16 +272,17 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 				try {
 					Utils.logT(new Object(){},
-							"Submitting jservs in %s, check login state to: %s, jserv: %s",
-							domain(), peer, peer.peerjserv());
+							"Submitting jservs in %s, check login state to: %s -> %s, jserv: %s",
+							domain(), peer.mynid, peer.peer, peer.peerjserv());
 					peer.checkLogin(admin);
 						
-					// merge_submit_persistReply(syngleton.settings, peer);
-					HashMap<String, String[]> jservs = peer.submitMyJserv(syngleton.settings.jserv(synode));
+					HashMap<String, String[]> jservs = peer.exchangeDBservs(loadDBservss());
+
 					if (jservs != null) {
-						syngleton.settings
-							.persistDBservs(syngleton.syncfg, synm, jservs)
-							.save();
+						dirty = this.onexchangeDBservs(jservs);
+						// ISSUE should update settings.json?
+						// s.loadDBservs(c, synm, jour0);
+						// s.save();
 					}
 
 				} catch (IOException e) {
@@ -392,22 +296,13 @@ public class SynDomanager extends SyndomContext implements OnError {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return true;
+		return dirty;
 	}
-	
-//	private void merge_submit_persistReply(AppSettings s, SynssionPeer peer)
-//			throws SQLException, TransException, SAXException, IOException {
-//		boolean dirty = s.mergeLoadJservs(syngleton.syncfg, synm);
-//		
-//		if (!dirty)
-//			warnT(new Object() {}, "Better double check");
-//		
-//		HashMap<String, String[]> jservs = peer.submitMyJserv(s.jserv(synode));
-//		if (jservs != null) {
-//			s.persistDBservs(syngleton.syncfg, synm, jservs)
-//			 .save();
-//		}
-//	}
+			
+	public HashMap<String, String[]> loadDBservss()
+			throws SQLException, TransException {
+		return synm.loadJservs(synb, org, domain, rs -> JServUrl.valid(rs.getString(synm.jserv)));
+	}
 
 	/**
 	 * Load {@link SyndomContext#synm}.tbl and build all SynssionPeers to every peers.
@@ -443,9 +338,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 						domain, synode, rs.getString("peer"), rs.getString(synm.jserv));
 				warnT(new Object() {}, err);
 				
-//				try { throw new TransException(err);}
-//				catch (TransException e) { e.printStackTrace();}
-
 				continue;
 			}
 
@@ -547,21 +439,20 @@ public class SynDomanager extends SyndomContext implements OnError {
 		this.ipChangeHandler = handler;
 		return this;
 	}
-	
-	/** 
-	 * If the settings.jserv's updating date is later than the syn_node.optime, update it into db.
-	 * This will handle user's manual modification.
-	 * @param settings
-	 * @return true if updated some data
-	 * @throws SQLException 
-	 * @throws TransException 
-	 * @since 0.7.6
-	public boolean updJservs_byJson(SynodeConfig cfg, AppSettings settings)
+
+	boolean onexchangeDBservs(HashMap<String, String[]> jservs)
 			throws TransException, SQLException {
-		boolean dirty = settings.setupNewJserv(cfg, synm);
-		if (dirty)
-			settings.jservs = AppSettings.loadJservs(cfg, synm);
-		return dirty;
+		mustnonull(jservs);
+		boolean merged = false;
+		for (String sid : jservs.keySet()) {
+			if (eq(sid, this.synode) || !JServUrl.valid(jservs.get(sid)[0]))
+				continue;
+			
+			String[] jserv_utc_oper = jservs.get(sid);
+			merged |= AppSettings.inst_updateLaterDBserv(
+					synconn, org, domain, synm,
+					sid, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
+		}
+		return merged;
 	}
-	 */
 }

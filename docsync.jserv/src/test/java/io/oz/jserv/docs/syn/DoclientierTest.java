@@ -202,10 +202,7 @@ class DoclientierTest {
 	static ExpSyncDoc clientPush(int to, int cix) throws Exception {
 		Dev dev = devs[cix];
 
-		// Clients.init(jserv_xyzw[to]);
-
 		dev.login(jserv_xyzw[to], errLog);
-
 		dev.client.fileProvider(new IFileProvider() {});
 
 		logi("client pushing: uid %s, device %s",

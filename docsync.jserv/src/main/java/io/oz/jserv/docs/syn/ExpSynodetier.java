@@ -45,7 +45,6 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
-import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
@@ -71,7 +70,6 @@ import io.oz.syn.ExchangeBlock;
 import io.oz.syn.ExessionAct;
 import io.oz.syn.SyncUser;
 import io.oz.syn.SynodeMode;
-import io.oz.syn.registry.RegistResp;
 import io.oz.syn.registry.SynodeConfig;
 
 @WebServlet(description = "Synode Tier Workder", urlPatterns = { "/sync.tier" })
@@ -144,8 +142,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 			if (A.queryJservs.equals(a))
 				rsp = onQueryJservs(req, usr);
-			else if (A.reportJserv.equals(a))
-				rsp = onReportJserv(req, usr);
+//			else if (A.reportJserv.equals(a))
+//				rsp = onReportJserv(req, usr);
+			else if (A.exchangeJservs.equals(a))
+				rsp = onExchangeJservs(req, usr);
 
 			else if (A.initjoin.equals(a)) {
 				if (!eq(usr.orgId(), domanager0.org))
@@ -222,14 +222,14 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	//////////////////////////////  worker    ///////////////////////////////////
 	public static int maxSyncInSnds = (int) (60.0 * (5 + Math.random())); // 5-6 minutes
 
-	final Runnable[] worker = new Runnable[] {null, null};
+	final Runnable[] workers = new Runnable[] {null, null};
 
 	float syncInSnds;
 	
 	private boolean needExpose;
 
 	private ScheduledExecutorService scheduler;
-	private static ScheduledFuture<?> schedualed;
+	private ScheduledFuture<?> schedualed;
 
 	@Override
 	public void destroy() {
@@ -251,7 +251,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @param syncIns
 	 * @return this
 	 * @throws Exception 
-	 * @since 0.7.0
+	 * @see {@link AppSettings#merge_ip_json2db(SynodeConfig, SynodeMeta, SyncUser, OnError)}
 	 */
 	public ExpSynodetier syncIn(float syncIns, OnError err) throws Exception {
 		this.syncInSnds = syncIns;
@@ -260,94 +260,45 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		scheduler = Executors.newSingleThreadScheduledExecutor(
 				(r) -> new Thread(r, f("synworker-%s", synid)));
 
-		worker[0] = () -> {
-			try {
-				if (debug)
-					logi("Worker 0 start to submit jservs.");
-				SynodeConfig c = domanager0.syngleton.syncfg;
-				AppSettings  s = domanager0.syngleton.settings;
-				SyncUser     u = domanager0.syngleton.synuser;
+		workers[0] = jserv_worker(err); 
 
-				String reg_uri = f("/syn/%s", c.synid);
-
-				if (s.mergeJsonDB(c, domanager0.synm)) {
-					needExpose = true;
-
-					try {
-						if (registryClient == null) {
-							mustnonull(u.pswd());
-							registryClient = SessionClient.loginWithUri(
-									s.regiserv, reg_uri, u.uid(), s.centralPswd, synid);
-						}
-						RegistResp resp = s.synotifyCentral(reg_uri, c, registryClient, err);
-						
-						if (resp == null || !eq(resp.r, RegistResp.R.ok))
-							warn("[Error] Failed to submit jserv: %s", resp.msg());
-					} catch (IOException e) {
-						warn("[Syn-worker 0] Cannot submit jserv to central: %s", s.regiserv);
-					}
-				}
-
-				if (needExpose && domanager0.ipChangeHandler != null) {
-					// can competing with afterboot()
-					domanager0.ipChangeHandler.onExpose(s, domanager0);
-					needExpose = false;
-				}
-//			} catch (IOException e) {
-//				if (debug)
-//					e.printStackTrace();
-			} catch (TransException | SQLException e) {
-				e.printStackTrace();
-			} catch (AnsonException e) {
-				e.printStackTrace();
-			} catch (SsException e) {
-				warn("There are configuration error to login central service?");
-				e.printStackTrace();
-//			} catch (Exception e) {
-//				e.printStackTrace();
-			}
-		};
+		scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
 		
-		scheduler.scheduleWithFixedDelay(worker[0], 500, 15000, TimeUnit.MILLISECONDS);
-
-		// sync-worker 
-		if ((int)(this.syncInSnds) <= 0) {
-			Utils.warn("Syn-worker is disabled (synching in = %s seconds). %s : %s [%s]",
-					syncIns, domanager0.domain(), domanager0.synode, domanager0.synconn);
-			return this;
+		if (syncIns > 1) {
+			DATranscxt syntb = new DATranscxt(domanager0.synconn);
+			workers[1] = syn_worker(syntb, err);
+			reschedule_1(0);
 		}
+		
+        running = false;
+		return this;
+	}
 
-		lights = new HashMap<String, Boolean>();
-
-		DATranscxt syntb = new DATranscxt(domanager0.synconn);
-
-		worker[1] = () -> {
-			if (running)
-				return;
+	private Runnable syn_worker(DATranscxt syntb, OnError err) {
+		return () -> {
+			if (running) return;
 			running = true;
-
 			if (debug)
 				Utils.logi("[%s] : Checking Syndomain ...", synid);
 
 			try {
 				domanager0.loadSynclients(syntb);
 
-				// 0.7.6 Solution:
-				// Get peer jservs from hub, save into synconn.syn_node.jserv.
-				// ISSUE: It's possible some nodes cannot access the hub but can only be told by a peer node.
-				// This is a good reason that worker 0 vs. 1 must do the same task.
-				// TASK TODO monitoring on local IP changes...
-				if (!domanager0.submitPersistDBserv(domanager0.syngleton.settings.localIp()))
-					domanager0.updbservs_byHub(syntb);
+				// It's possible some nodes cannot access the hub but can only be told by a peer node.
+				AppSettings s = domanager0.syngleton.settings;
+				if (domanager0.synodeNetworking(s)) {
+					if (s.loadDBLaterservs(domanager0.syngleton.syncfg, domanager0.synm)) {
+						needExpose = true;
+						domanager0.syngleton.settings.save();
+					}
+				}
 			
-				waitAll(domanager0.sessions);
 				for (SynssionPeer p : domanager0.sessions.values())
 					try {
 						domanager0.synUpdateDomain(p,
 							(dom, synode, peer, xp) -> {
 								if (debug) Utils.logi("[%s] On update: %s [n0 %s : stamp %s]",
 										synid, dom, domanager0.n0(), domanager0.stamp());
-								turngreen(peer);
 							});
 					} catch (ExchangeException e) {
 						// Something not done yet, e.g. breakpoints resuming
@@ -357,9 +308,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 						Utils.logi("[♻.◬ %s ] syn-worker has an IO(network) error: %s", synid, e.getMessage());
 					}
 				
-				if (!anygreen())
-					reschedule_1(30);
-
 			// thread level catches, local errors
 			} catch (Exception e1) {
 				e1.printStackTrace();
@@ -369,11 +317,46 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				running = false;
 			}
 		};
+	}
 	
-		reschedule_1(0);
+	/**
+	 * Get ip, jserv change monitoer.
+	 * @see AppSettings#merge_ip_json2db(SynodeConfig, AppSettings, SynodeMeta)
+	 * @param err
+	 * @return worker
+	 */
+	private Runnable jserv_worker(OnError err) {
+		mustnonull(domanager0.syngleton.settings.centralPswd);
+		
+		return () -> {
+		boolean stop0 = false;
+		try {
+			if (stop0) return;
+			if (debug) logi("Worker 0 start to submit jservs.");
 
-        running = false;
-		return this;
+			SynodeConfig c = domanager0.syngleton.syncfg;
+			AppSettings  s = domanager0.syngleton.settings;
+			SyncUser     u = domanager0.syngleton.synuser;
+
+			needExpose |= s.merge_ip_json2db(c, domanager0.synm, u, err);
+			
+			if (needExpose && domanager0.ipChangeHandler != null) {
+				// can competing with afterboot()
+				domanager0.ipChangeHandler.onExpose(s, domanager0);
+				needExpose = false;
+			}
+		} catch (TransException | SQLException e) {
+			e.printStackTrace();
+		} catch (AnsonException e) {
+			e.printStackTrace();
+		} catch (SsException e) {
+			warn("There are configuration error to login central service?");
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+			stop0 = true;
+		}
+		};
 	}
 
 	/**
@@ -389,7 +372,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		syncInSnds = Math.min(maxSyncInSnds, syncInSnds + waitmore);
 		schedualed = scheduler.scheduleWithFixedDelay(
-				worker[1], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
+				workers[1], (int) (syncInSnds * 1000), (int) (syncInSnds * 1000),
 				TimeUnit.MILLISECONDS);
 	}
 
@@ -412,31 +395,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		    scheduler.shutdownNow();
 		}
 		finally { running = false; }
-	}
-
-	/** @since 0.2.7 */
-	HashMap<String, Boolean> lights;
-
-	/** @since 0.2.7 */
-	private void turngreen(String peer) {
-		lights.put(peer, true);
-	}
-
-	/** @since 0.2.7 */
-	private void waitAll(HashMap<String, SynssionPeer> sessions) {
-		lights.clear();
-		for (String p : sessions.keySet()) {
-			SynssionPeer peer = sessions.get(p);
-			musteqs(p, peer.peer);
-			lights.put(p, false);
-		}
-	}
-	
-	/** @since 0.2.7 */
-	private boolean anygreen() {
-		for (boolean lit : lights.values())
-			if (lit) return true;
-		return false;
 	}
 
 	//////////////////////////////////// Doc-ref Service ///////////////////////////////
@@ -511,31 +469,19 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		SynodeMeta m = domanager0.synm;
 		String jserv = (String)req.data(m.jserv);
 		return (SyncResp) new SyncResp(domain)
-				.jservs(AppSettings.loadDBservss(st, domanager0.syngleton.syncfg, domanager0.synm))
+				.jservs(domanager0.loadDBservss())
 				.data(m.jserv, jserv)
 				.data(m.remarks, mode.name());
 	}
-	
-	/**
-	 * @since 0.2.6
-	 * @param req
-	 * @param usr
-	 * @return response [data = update results]
-	 * @throws TransException
-	 * @throws SQLException
-	 */
-	SyncResp onReportJserv(SyncReq req, DocUser usr) throws TransException, SQLException {
+
+	SyncResp onExchangeJservs(SyncReq req, DocUser usr)
+			throws TransException, SQLException {
+
 		musteqs(req.exblock.domain, domain);
 		musteqs(req.exblock.peer, synid);
 		mustnonull(req.exblock.srcnode);
 		
-		SynodeMeta m = domanager0.synm;
-		String jserv = (String)req.data(m.jserv);
-		if (!JServUrl.valid(jserv))
-			throw new ExchangeException(ExessionAct.ready, null, "Invalid Jserv: %s", jserv);
-
-		String optim = (String)req.data(m.jserv_utc);
-		domanager0.updateDBserv(st, req.exblock.srcnode, jserv, optim);
+		domanager0.onexchangeDBservs(req.ex_jservs);
 
 		return onQueryJservs(req, usr);
 	}

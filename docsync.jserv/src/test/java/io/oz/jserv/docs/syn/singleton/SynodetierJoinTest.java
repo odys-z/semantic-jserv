@@ -164,11 +164,8 @@ public class SynodetierJoinTest {
 			Syngleton.setupSysRecords(config, YellowPages.robots());
 			
 			Syngleton.setupSyntables(config,
-					// new ArrayList<SyntityMeta>() {{add(docm);}}, // 0.7.6
 					new SyntityMeta[] {docm},
 					webinf, "config.xml", ".", "ABCDEF0123465789", true);
-
-			// Syngleton.cleanSynssions(config);
 
 			// DB is dirty when testing again
 			cleanDomain(config);
@@ -260,8 +257,7 @@ public class SynodetierJoinTest {
 			
 			// 2025-03-09 decision:
 			// To join a domain, it means notifying other nodes in the domain, with prerequisite registration.
-			// SynDomanager prvmanger = prv.syngleton().domanager(null);
-			   SynDomanager prvmanger = prv.syngleton().domanager(dom);
+			SynDomanager prvmanger = prv.syngleton().domanager(dom);
 
 			Utils.logi("%s Joining By %s\n''''''''''''''", hubmanger.synode, prvmanger.synode);
 

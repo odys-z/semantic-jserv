@@ -2,6 +2,7 @@
   "vol_name": "VOLUME_2",
   "jserv_utc": null,
   "proxyIp": null,
+  "registryClient": null,
   "webProxyPort": 0,
   "envars": {"Why-VOLUME_PRV": "this is not used but needed for suppressing errors in connects.xml",
       "WEBROOT_HUB": "http://119.8.29.27:8968",
@@ -19,6 +20,6 @@
       "Y": "http://127.0.0.1:8967/jserv-album",
       "Z": "http://127.0.0.1:8968/jserv-album"},
   "localIp": null,
-  "centralPswd": null,
+  "centralPswd": "8964",
   "rootkey": "0123456789ABCDEF"
 }
