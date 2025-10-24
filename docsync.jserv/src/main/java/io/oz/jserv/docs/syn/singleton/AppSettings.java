@@ -506,6 +506,7 @@ public class AppSettings extends Anson {
 	}
 
 	//////////////////////////////// registry worker 0 helpers ////////////////////////////////
+	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	SessionClient registryClient;
 	
 	/**

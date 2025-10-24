@@ -615,7 +615,9 @@ class InstallerCli:
     def gen_html_srvname(self):
         return f'Synode.web-{web_ver}-{self.registry.config.synid}'
 
-    def update_domain(self, reg_jserv: str=None, orgid: str=None, domain: str=None):
+    def update_domain(self, reg_jserv: str=None,
+                      orgtype: str=None, orgid: str=None,
+                      domain: str=None, centralPswd: str=None):
         '''
         update data model
         :param reg_jserv:
@@ -625,45 +627,59 @@ class InstallerCli:
         '''
         if reg_jserv is not None:
             self.settings.regiserv = reg_jserv
+        if orgtype is not None:
+            self.registry.config.org.orgType = orgtype
         if orgid is not None:
             self.registry.config.org.orgId = orgid
         if domain is not None:
             self.registry.config.set_domain(domain)
+        if centralPswd is not None:
+            self.settings.centralPswd = centralPswd
 
     def updateWithUi(self,
-                reg_jserv: str,
-                admin: str, pswd: str,
-                domphrase: str, org: str, domain: str,
-                volume: str,
-                hubmode: bool = True,
-                jservss: str = None, synid: str = None,
-                reverseProxy=False,
-                port: str = None, webport: str = None,
-                proxyPort: str = None, proxyIp: str = None,
-                syncins: str = None, envars=None, webProxyPort=None):
+                reg_jserv: str = None,
+                admin: str=None, domphrase: str=None,
+                pswd: str=None,
+                org: str=None, market: str=None, domain: str=None,
+                volume: str=None,
+                hubmode: bool=True,
+                jservss: str=None, synid: str=None,
+                reverseProxy=None,
+                port: str=None, webport: str=None,
+                proxyPort: str=None, proxyIp: str=None,
+                syncins: str=None, envars=None, webProxyPort=None):
 
-        self.update_domain(reg_jserv=reg_jserv, orgid=org, domain=domain)
+        self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain, centralPswd=pswd)
 
         for u in self.registry.synusers:
-            if u.userId == admin:
+            if u.userId == admin and admin is not None:
                 u.pswd = domphrase
-            u.domain = domain
-            u.org = org
+            if domain is not None:
+                u.domain = domain
+            if org is not None:
+                u.org = org
 
         for p in self.registry.config.peers:
-            p.domain = domain
-            p.org = org
+            if domain is not None:
+                p.domain = domain
+            if org is not None:
+                p.org = org
 
         if hubmode:
             self.registry.config.mode = mode_hub
         else:
             self.registry.config.mode = None
 
-        self.registry.config.synid = synid
-        self.settings.reverseProxy = reverseProxy
-        self.settings.proxyIp = proxyIp
-        self.settings.proxyPort = int(proxyPort)
-        self.settings.webProxyPort = int(webProxyPort)
+        if synid is not None:
+            self.registry.config.synid = synid
+        if reverseProxy is not None:
+            self.settings.reverseProxy = reverseProxy
+        if proxyIp is not None:
+            self.settings.proxyIp = proxyIp
+        if proxyPort is not None:
+            self.settings.proxyPort = int(proxyPort)
+        if webProxyPort is not None:
+            self.settings.webProxyPort = int(webProxyPort)
 
         if not LangExt.isblank(webport):
             self.settings.webport = int(webport)
@@ -672,7 +688,6 @@ class InstallerCli:
             self.settings.port = int(port)
 
         if jservss is not None and len(jservss) > 8:
-            # jsvkvs = InstallerCli.fromat_jservstr(jservss)
             jsvkvs = InstallerCli.fromat_jservurl(self.find_hubpeer(), jservss)
             jsvkvs[self.registry.config.synid] = getJservUrl(self.registry.config.https, self.get_iport())
             self.settings.Jservs(jsvkvs)
@@ -682,7 +697,8 @@ class InstallerCli:
         if envars is None:
             envars = {}
 
-        self.settings.Volume(os.path.abspath(volume))
+        if volume is not None:
+            self.settings.Volume(os.path.abspath(volume))
 
         if syncins is not None:
             self.registry.config.syncIns = 0.0 if syncins is None or hubmode else float(syncins)
@@ -778,7 +794,7 @@ class InstallerCli:
         cfg.org.webroot = '$WEBROOT'
 
         for p in cfg.peers:
-            # This is wrong design of data structure, and is bug prone
+            # This is a wrong design of redundant data copies, and is bug prone.
             p.org = cfg.org.orgId
 
         self.check_src_jar_db()

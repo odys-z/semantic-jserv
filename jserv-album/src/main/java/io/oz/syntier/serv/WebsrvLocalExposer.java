@@ -36,7 +36,6 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 
 			hosts.host = domanager.synode;
 
-			// HashMap<String, String[]> jservs = domanager.loadDBservss();
 			settings.loadDBLaterservs(domanager.syngleton.syncfg, domanager.synm);
 			
 			for (String n : settings.jservs.keySet()) {

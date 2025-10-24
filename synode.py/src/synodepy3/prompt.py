@@ -10,9 +10,9 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import choice
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import Validator, ValidationError
-from rich.ansi import stdout
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
+from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
 from synodepy3 import SynodeUi
@@ -114,7 +114,6 @@ class QuitValidator(Validator):
     def validate(self, v):
         global _quit
         if not v.text.strip():
-            # raise ValidationError(message="Input cannot be empty")
             _quit = True
             return
 
@@ -157,6 +156,14 @@ class DomainValidator(Validator):
 class PortValidator(Validator):
     def validate(self, v: Document) -> None:
         pass
+
+class SyncInsValidator(Validator):
+    def validate(self, v: Document) -> None:
+        mns, mxs = 10, 3600
+        try: snds = int(v)
+        except: raise ValidationError(message=f'Please set a integer between {mns} and {mxs}')
+        if snds < mns or snds > mxs:
+            raise ValidationError(message=f'Please set a integer between {mns} and {mxs}')
 
 class MultiValidator(Validator):
     valids = list[Validator]
@@ -233,7 +240,8 @@ if not cli.hasrun():
 
         options.append((None, 'Create a new domain...'))
         domid = choice(message="Please select a domain:",
-                       options=options)
+                       options=cast(list[(str, str)], options),
+                       default=cli.registry.config.domain)
 
         if domid is not None:
             # 3.1. select domain
@@ -248,7 +256,6 @@ if not cli.hasrun():
                 validate_while_typing=False)
             resp = cli.register()
             Utils.logi('Doamin created: {}\n{}', domid, 'None' if resp is None else resp.diction)
-            # ui.update_bind_domconf() -> ui.bind_cbbpeers()
 
         if resp is None:
             print("Error: the domain id is not found, or cannot be created.")
@@ -269,7 +276,6 @@ if not cli.hasrun():
             [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
 
     # 4.2 select a peer
-
     synid, synstat = None, CynodeStats.die
     while not _quit and synstat is not None and synstat != CynodeStats.create:
         # [(('node-1', CynodeStats.create), readable_state(CynodeStats.create)), ...]
@@ -277,9 +283,15 @@ if not cli.hasrun():
         nodes.append((('', CynodeStats.die), '[Select another domain]'))
         nodes.append(((cast(str, None), CynodeStats.die), '[Quit]'))
 
+        selected_id = cli.registry.config.synid, ''
+        for s in nodes:
+            if s[0][0] == cli.registry.config.synid:
+                selected_id = s[0]
+                break
+
         synid, synstat = choice(
-            message="Please select a Synode not running / installed:",
-            options=nodes,
+            message="Please select a Synode not running (can re-install if not run):",
+            options=nodes, default=selected_id,
             style=style)
 
         if synid is None:
@@ -303,7 +315,25 @@ if not cli.hasrun():
     check_quit(_quit)
 
 else:
-    print(f'This folder / volume has alread run as [{cfg.domain}]{cfg.synid}')
+    print(f'This folder and the volume has already run as [{cfg.domain}]{cfg.synid}')
+
+# 5A mode & syncIns
+synmode = choice(message='Please select the work mode of this node',
+                 default=SynodeMode.hub if SynodeMode.hub.name == cli.registry.config.mode else SynodeMode.peer,
+                 options=[(SynodeMode.hub, 'Domain Hub / Centre'),
+                          (SynodeMode.peer, 'Primary Storage Node'),
+                          (SynodeMode.nonsyn, 'Abort Installation')])
+
+if synmode == SynodeMode.nonsyn:
+    _quit = True
+else:
+    cli.registry.config.mode = synmode.name
+
+    if synmode == SynodeMode.peer:
+        sync_insnds = session.prompt(
+                message='Please set the synchronization interval, in seconds. (Empty to quit)',
+                default='40', validator=MultiValidator(QuitValidator(), SyncInsValidator()))
+check_quit(_quit)
 
 # 5 ports
 def parse_web_jserv_ports(ports: str) -> [int, int]:
@@ -322,14 +352,14 @@ def default_ports(s: AppSettings) -> str:
 
 ports = session.prompt(
     message=f'Please set the ports. Format: "synode-port : www-port"',
-    # default=f'{web_port0}:{serv_port0}',
     default=default_ports(cli.settings),
     validator=MultiValidator(QuitValidator(), PortValidator()))
 
 [cli.settings.webport, cli.settings.port] = parse_web_jserv_ports(ports)
 
 reverse = choice(message='Is this node mapped to a public address?',
-                 options=[(1, 'Yes'), (2, 'No'), (3, "Don't know, stop here.")])
+                 options=[(1, 'Yes'), (2, 'No'), (3, "Don't know, stop here.")],
+                 default=1 if cli.settings.reverseProxy else 2)
 
 # 5.1 revers proxy
 def default_proxy_ports(s: AppSettings) -> str:
@@ -357,7 +387,6 @@ if cli.settings.reverseProxy:
         validator=MultiValidator(QuitValidator(), PortValidator()))
 
     if LangExt.len(ports) == 0:
-        # reverseports = f'{web_port0}:{serv_port0}'
         _quit = True
     else:
         [cli.settings.webProxyPort, cli.settings.proxyPort] = parse_web_jserv_ports(reverseports)
@@ -380,6 +409,9 @@ if caninstall == 1:
     # ui.cli.settings.save()
     # ui.cli.registry.config.save()
     try:
+        # in case central replied empty value
+        cli.updateWithUi(market=synode_ui.market_id)
+
         cli.install()
         post_err = cli.postFix()
 
@@ -423,6 +455,6 @@ if caninstall == 1:
                f'java -jar bin/{html_web_jar}\n\n'
                f'Then try login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n'
                f'{login_url}\n\n'
-                'A simple tutorial of install a Ubuntu Service is to be build. You have to Google it, sorry!\n'
+                'A simple tutorial of install a Unix service is to be build. You have to Google it. Sorry!\n'
                f'Return to quit Portfolio {synode_ui.version} Setup ...'
                )

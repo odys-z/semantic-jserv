@@ -277,6 +277,7 @@ class InstallerForm(QMainWindow):
             admin=self.ui.txtAdminId.text(),
             pswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
             org=self.ui.cbbOrgs.currentText(),
+            market=synode_ui.market_id,
             domain=self.ui.cbbDomains.currentText().strip(),
             domphrase=self.ui.txtDompswd.text(),
             hubmode=self.ui.chkHub.checkState() == Qt.CheckState.Checked,

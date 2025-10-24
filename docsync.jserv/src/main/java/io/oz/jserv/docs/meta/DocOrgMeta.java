@@ -47,7 +47,7 @@ public class DocOrgMeta extends SemanticTableMeta {
 				.nv(webNode,  EnvPath.replaceEnv(cfg.org.webroot))
 				.nv(homepage, cfg.org.homepage)
 				.nv(album0,   cfg.org.album0)
-				.nv(market,   cfg.org.market)
+				.nv(market,   cfg.org.orgType)
 				.ins(t.instancontxt(cfg.sysconn, rob));
 		return res.total();
 	}
