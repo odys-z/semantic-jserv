@@ -45,6 +45,7 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jserv.x.SsException;
+import io.odysz.semantic.meta.SynChangeMeta;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.meta.SyntityMeta;
 import io.odysz.semantic.util.DAHelper;
@@ -657,6 +658,8 @@ setp (6)
 		String myjserv = new JServUrl(c.https, reportRversedIp(), reversedPort(c.https)).jserv();
 		if (inst_updateLaterDBserv(c.synconn, c.org.orgId, c.domain, synm,
 				c.synid, myjserv, jserv_utc, c.synid)) {
+
+			logi("[%s : %s] update peer %s's jserv: %s [%s]", c.synconn, c.domain, c.synid, myjserv, jserv_utc);
 			jserv(c.synid, myjserv);
 			return true;
 		}
@@ -743,7 +746,7 @@ setp (6)
 		if (rep != null && rep.diction != null && rep.diction.peers != null) {
 			boolean dirty = false;
 			for (Synode peer : rep.diction.peers) {
-				if (!eq(peer.synid, c.synid))
+				if (!eq(peer.synid, c.synid) && JServUrl.valid(peer.jserv))
 					dirty |= inst_updateLaterDBserv(c.synconn, c.org.orgId, c.domain, synm,
 						peer.synid, peer.jserv, peer.optime, peer.oper);
 			}
@@ -826,7 +829,7 @@ setp (6)
 		IUser robot = DATranscxt.dummyUser();
 
 		String timestamp = ifnull(timestamp_utc, jour0);
-		logi("[%s : %s] Setting peer %s's jserv: %s [%s]", synconn, domain, peer, servurl, timestamp);
+		// logi("[%s : %s] Setting peer %s's jserv: %s [%s]", synconn, domain, peer, servurl, timestamp);
 
 		if (DAHelper.count(tb, synconn, synm.tbl,
 				synm.org, org, synm.domain, domain, synm.pk, peer) == 0) {
@@ -836,6 +839,7 @@ setp (6)
 				.nv(synm.domain, domain)
 				.nv(synm.pk, peer)
 				.nv(synm.jserv, servurl)
+				.nv(synm.io_oz_synuid, SynChangeMeta.uids(createrid, peer))
 				.nv(synm.jserv_utc, timestamp)
 				.nv(synm.oper, createrid)
 				.ins(tb.instancontxt(synconn, robot));

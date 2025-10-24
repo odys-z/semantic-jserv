@@ -106,7 +106,7 @@ public class JServUrl extends Anson {
 	 * @return valid or not
 	 * @since 0.7.6
 	 */
-	public static boolean valid(String jserv) {
+	public static boolean valid(String jserv, String... force_protocolroot) {
 		mustnonull(JProtocol.urlroot, "This is forced in semantic.jserv 1.5.18 (Portfolio 0.7.6)");
 
 		if (urlValidator == null)
@@ -119,7 +119,8 @@ public class JServUrl extends Anson {
 			Object[] jservparts = getHttpParts(jserv);
 			return urlValidator.isValid(asJserv(jserv)) &&
 				validUrlPort((int)jservparts[3], new int[] {1025, -1}) &&
-				eq(JProtocol.urlroot, isNull(jservparts[4]) ? null : ((String[]) jservparts[4])[0]);
+				eq(_0(force_protocolroot, JProtocol.urlroot),
+					isNull(jservparts[4]) ? null : ((String[]) jservparts[4])[0]);
 		}
 		catch (Exception e) {
 			Utils.warnT(new Object[] {}, "Found invalid jserv: %s,\nerror: %s",

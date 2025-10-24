@@ -10,6 +10,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import choice
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import Validator, ValidationError
+from rich.ansi import stdout
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
@@ -369,7 +370,10 @@ caninstall = choice(
 
 def post_install():
     resp = cli.submit_mysettings()
-    cli.after_submit(resp)
+    if resp is not None:
+        cli.after_submit(resp)
+    else:
+        Utils.warn('TODO 0.7.6, RESP == NULL, handle errors...')
 
 # 6 save & install
 if caninstall == 1:
