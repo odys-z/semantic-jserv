@@ -33,7 +33,6 @@ packages = ["synodepy3"]
 include-package-data = false
 # packages = { find = { where = ["src"], include = ["synodepy3"], exclude = ["synodepy3.res"] } }
 package-dir = { "synodepy3" = "src/synodepy3" }
-# package-data = { "synodepy3" = ["form.ui", "synode.json", "res/*"] }
-package-data = { "synodepy3" = ["form.ui", "res/*"] }
+package-data = { "synodepy3" = ["form.ui", "synode.json", "res/*"] }
 
 zip-safe = false
