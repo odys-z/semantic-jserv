@@ -3,7 +3,7 @@ import sys
 from typing import cast
 
 from anclient.io.odysz.jclient import SessionClient
-from anson.io.odysz.anson import Anson
+from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import LangExt, Utils
 from prompt_toolkit import PromptSession
 from prompt_toolkit.document import Document
@@ -107,7 +107,7 @@ class IPValidator(Validator):
 
 class JservValidator(Validator):
     def validate(self, v):
-        if not JServUrl.valid(v, rootpath=synode_ui.central_path):
+        if not JServUrl.valid(v.text, rootpath=synode_ui.central_path):
             raise ValidationError(message="Jserv URL is invalid.")
 
 class QuitValidator(Validator):
@@ -149,9 +149,12 @@ class NodeStateValidator(Validator):
 
 class DomainValidator(Validator):
     def validate(self, v: Document) -> None:
-        e = cli.validate_domain()
-        if e is not None:
-            raise ValidationError(message=str(e))
+        # e = cli.validate_domain()
+        # if e is not None:
+        #     raise ValidationError(message=str(e))
+        try: LangExt.only_id_len(v.text, minlen=2, maxlen=12)
+        except AnsonException:
+            raise ValidationError(message=f"domain length: 2 <= Len('{cfg.domain}') <= 12")
 
 class PortValidator(Validator):
     def validate(self, v: Document) -> None:
@@ -159,11 +162,18 @@ class PortValidator(Validator):
 
 class SyncInsValidator(Validator):
     def validate(self, v: Document) -> None:
-        mns, mxs = 10, 3600
-        try: snds = int(v)
-        except: raise ValidationError(message=f'Please set a integer between {mns} and {mxs}')
-        if snds < mns or snds > mxs:
-            raise ValidationError(message=f'Please set a integer between {mns} and {mxs}')
+        if not LangExt.isblank(v.text):
+            # mns, mxs = 10, 3600
+            # try: snds = float(v.text)
+            # except:
+            #     raise ValidationError(
+            #         message=f'Please set an integer between {mns} and {mxs}')
+            # if snds < mns or snds > mxs:
+            #     raise ValidationError(
+            #         message=f'Please set an integer between {mns} and {mxs}')
+            err = cli.validate_synins(v.text)
+            if err is not None:
+                raise ValidationError(message=err['config.syncIns'])
 
 class MultiValidator(Validator):
     valids = list[Validator]
@@ -276,8 +286,8 @@ if not cli.hasrun():
             [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
 
     # 4.2 select a peer
-    synid, synstat = None, CynodeStats.die
-    while not _quit and synstat is not None and synstat != CynodeStats.create:
+    synid, cynstat = None, CynodeStats.die
+    while not _quit and cynstat is not None and cynstat != CynodeStats.create:
         # [(('node-1', CynodeStats.create), readable_state(CynodeStats.create)), ...]
         nodes = respeers_options(cli.registry.config)
         nodes.append((('', CynodeStats.die), '[Select another domain]'))
@@ -289,8 +299,8 @@ if not cli.hasrun():
                 selected_id = s[0]
                 break
 
-        synid, synstat = choice(
-            message="Please select a Synode not running (can re-install if not run):",
+        synid, cynstat = choice(
+            message="Please select a Synode which is not running (can re-install if has not run):",
             options=nodes, default=selected_id,
             style=style)
 
@@ -298,7 +308,7 @@ if not cli.hasrun():
             _quit = True
         elif synid == '': # another domain
             create_find_update_dom()
-        elif synstat is not None and synstat != CynodeStats.create:
+        elif cynstat is not None and cynstat != CynodeStats.create:
             print(f'Cannot re-install {synid}.\n'
                   '[Note 0.7.6] Some settings can be modified in settings.json, e.g. port or ip, by which way is not recommended.')
         else: # ui.select_peer()
@@ -318,21 +328,23 @@ else:
     print(f'This folder and the volume has already run as [{cfg.domain}]{cfg.synid}')
 
 # 5A mode & syncIns
-synmode = choice(message='Please select the work mode of this node',
-                 default=SynodeMode.hub if SynodeMode.hub.name == cli.registry.config.mode else SynodeMode.peer,
-                 options=[(SynodeMode.hub, 'Domain Hub / Centre'),
-                          (SynodeMode.peer, 'Primary Storage Node'),
-                          (SynodeMode.nonsyn, 'Abort Installation')])
+synmode_v = choice(
+        message='Please select the Synode mode:',
+        default=SynodeMode.hub.value if SynodeMode.hub.name == cfg.mode else SynodeMode.peer.value,
+        options=[(SynodeMode.hub.value,    'Domain Hub / Centre'),
+                 (SynodeMode.peer.value,   'Primary Storage Node'),
+                 (SynodeMode.nonsyn.value, 'Abort Installation')])
 
-if synmode == SynodeMode.nonsyn:
+if synmode_v == SynodeMode.nonsyn.value:
     _quit = True
 else:
-    cli.registry.config.mode = synmode.name
-
-    if synmode == SynodeMode.peer:
+    cfg.mode = SynodeMode(synmode_v).name
+    if synmode_v == SynodeMode.peer.value:
         sync_insnds = session.prompt(
                 message='Please set the synchronization interval, in seconds. (Empty to quit)',
-                default='40', validator=MultiValidator(QuitValidator(), SyncInsValidator()))
+                default=str(cfg.syncIns) if cfg.syncIns is not None else '0',
+                validator=MultiValidator(QuitValidator(), SyncInsValidator()))
+        cfg.syncIns = float(sync_insnds)
 check_quit(_quit)
 
 # 5 ports
@@ -357,7 +369,7 @@ ports = session.prompt(
 
 [cli.settings.webport, cli.settings.port] = parse_web_jserv_ports(ports)
 
-reverse = choice(message='Is this node mapped to a public address?',
+reverse = choice(message='Is this node mapped to a public address (or behind a reverse proxy)?',
                  options=[(1, 'Yes'), (2, 'No'), (3, "Don't know, stop here.")],
                  default=1 if cli.settings.reverseProxy else 2)
 
@@ -376,7 +388,7 @@ else:
 
 if cli.settings.reverseProxy:
     cli.settings.proxyIp = session.prompt(
-        message='Please set the public ip. Return to quit: ',
+        message='Please set the public (reverse proxy) ip. Return to quit: ',
         default=cli.reportIp() if LangExt.isblank(cli.settings.proxyIp) else cli.settings.proxyIp,
         validator=MultiValidator(QuitValidator(), PortValidator()))
     check_quit(_quit)

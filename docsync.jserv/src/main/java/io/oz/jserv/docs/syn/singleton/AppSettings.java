@@ -786,7 +786,7 @@ setp (6)
 				if (DAHelper.count(tb, c.synconn, synm.tbl,
 					synm.org, c.org.orgId, synm.domain, c.domain, synm.pk, sid) == 0)
 					warnT(new Object() {},
-						  "[ERROR!] !!! This error is tolerated for running tests!\n"
+						  "[ERROR, if not the first boot] !!! This error is tolerated for running tests!\n"
 						+ "Updating jserv not exist? Shouldn't reach here!");
 
 				Update pst = tb.update(synm.tbl, robot)

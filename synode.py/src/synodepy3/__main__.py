@@ -28,9 +28,8 @@ from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_p
 
 # Important:
 # Run the following command to generate the ui_form.py file
-#
+#     pyside6-uic form.ui -o ui_form.py
 from synodepy3.ui_form import Ui_InstallForm
-from synodepy3.installer_api import mode_hub
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()
@@ -253,13 +252,14 @@ class InstallerForm(QMainWindow):
             jservss = InstallerCli.parsejservstr(jservss)
 
             for jsrv in jservss:
-                sid = self.ui.cbbPeers.currentText()
-                if sid != self.cli.registry.config.synid:
+                mon_id = self.ui.cbbPeers.currentText()
+                # if mon_id != self.cli.registry.config.synid:
+                if not self.cli.is_hub(mon_id):
                     resp = self.cli.ping(jsrv[0])
                     if resp is None:
-                        details.append(f'\n{sid}: {jsrv[0]}\n' + 'Error while pinging.')
+                        details.append(f'\n{mon_id}: {jsrv[0]}\n' + 'Error while pinging.')
                     else:
-                        details.append(f'\n{sid}: {jsrv[0]}\n'  + resp.msg())
+                        details.append(f'\n{mon_id}: {jsrv[0]}\n'  + resp.msg())
 
         if has_err():
             warn_msg('Ping synodes has errors. Check details for errors.', details)
@@ -275,7 +275,7 @@ class InstallerForm(QMainWindow):
         self.cli.updateWithUi(
             reg_jserv=self.ui.txtCentral.text().strip(),
             admin=self.ui.txtAdminId.text(),
-            pswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
+            centralPswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
             org=self.ui.cbbOrgs.currentText(),
             market=synode_ui.market_id,
             domain=self.ui.cbbDomains.currentText().strip(),
@@ -484,8 +484,8 @@ class InstallerForm(QMainWindow):
 
         self.ui.txtAdminId.setText(cfg.admin)
 
-        self.ui.txtPswd.setText(registry.synusers[0].pswd)
-        self.ui.txtPswd2.setText(registry.synusers[0].pswd)
+        # self.ui.txtPswd.setText(registry.synusers[0].pswd)
+        # self.ui.txtPswd2.setText(registry.synusers[0].pswd)
         self.ui.txtDompswd.setText(registry.synusers[0].pswd)
 
         self.bind_cbborg([cfg.org.orgId], cfg.org.orgId)
@@ -497,7 +497,11 @@ class InstallerForm(QMainWindow):
 
         self.ui.chkHub.setChecked(SynodeMode.hub.name == cfg.mode)
         self.bind_cbbpeers(cfg.peers, cfg.synid)
-        self.ui.txtSyncIns.setText('0' if cfg.syncIns is None else str(int(cfg.syncIns)))
+
+        sync_insnds = cfg.syncIns
+        try: sync_insnds = str(int(float(sync_insnds)))
+        except: sync_insnds = '0'
+        self.ui.txtSyncIns.setText('0' if sync_insnds is None else sync_insnds)
 
     def bind_hubjserv(self, cfg: SynodeConfig, settings: AppSettings):
         '''
@@ -512,17 +516,13 @@ class InstallerForm(QMainWindow):
                     jsrv = settings.jservs[p.synid] if p.synid in settings.jservs else None
                     self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{jserv_url_path}' \
                         if LangExt.isblank(jsrv) else jsrv)
-        # if cfg is not None and LangExt.len(cfg.peers) > 0:
-        #     hub_id = cfg.peers[0].synid
-        #     if hub_id in settings.jservs:
-        #         self.ui.jservLines.setText(settings.jservs[hub_id])
-        #     else:
-        #         self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{jserv_url_path}')
 
     def bindSettings(self):
         peers, settings = self.cli.registry.config.peers, self.cli.settings
 
         self.ui.txtCentral.setText(settings.regiserv)
+        self.ui.txtPswd.setText(settings.centralPswd)
+        self.ui.txtPswd2.setText(settings.centralPswd)
 
         self.ui.txtPort.setText(str(settings.port))
         self.ui.txtWebport.setText(str(settings.webport))
@@ -605,7 +605,7 @@ class InstallerForm(QMainWindow):
                 return False
 
         def update_chkhub(check: bool):
-            self.cli.registry.config.mode = mode_hub if check else None
+            self.cli.registry.config.mode = SynodeMode.hub.name if check else SynodeMode.peer.name
 
             self.ui.txtSyncIns.setDisabled(check)
             self.ui.jservLines.setDisabled(check)

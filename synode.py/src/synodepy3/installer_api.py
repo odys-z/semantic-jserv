@@ -265,7 +265,6 @@ install_uri = 'Anson.py3/test'
 
 #### section will be moved to synode.json ####
 host_private = 'private'
-mode_hub = 'hub'
 web_host_json = f'{host_private}/host.json'
 
 album_web_dist = 'web-dist'
@@ -474,6 +473,22 @@ class InstallerCli:
         except ValueError as e:
             return {'value error': str(e)}
 
+    def validate_synins(self, syncins_override: str=None):
+        '''
+        Notes 0.7.6.1: this is a new pattern of validation for both CLI & GUI?
+        :param syncins_override: target to be validated, None for validating config.syncIns.
+        :return: error, {'config.syncIns': '{syncins_override} is out of range {mns}:{mxs}'}, or None
+        '''
+        if syncins_override is None:
+            syncins_override = self.registry.config.syncIns
+
+        mns, mxs = 10, 3600
+        try: syncins_override = float(syncins_override)
+        except: return {'config.syncIns': f'{syncins_override} is out of range [{mns} - {mxs}]'}
+        if syncins_override < mns or syncins_override > mxs:
+            return {'config.syncIns': f'{syncins_override} is out of range [{mns} - {mxs}]'}
+        return None
+
     def check_installed_jar_db(self) -> bool:
         """
         Check jar & vol/*.db resources in folder of settings.valume.
@@ -519,6 +534,9 @@ class InstallerCli:
             raise FileNotFoundError(
                 f'Some initial database or configure files cannot be found in volume: {sys_db}, {syn_db}')
         return True
+
+    def is_hub(self, sid):
+        return self.find_hubpeer().synid == sid if LangExt.len(self.registry.config.peers) > 0 else False
 
     def find_hubpeer(self):
         return self.registry.find_hubpeer()
@@ -571,6 +589,8 @@ class InstallerCli:
         # cfg.org.webroot = '$WEBROOT'
 
         if cfg.mode != SynodeMode.hub.name:
+            v = self.validate_synins()
+            if v is not None: return v
             self.ping(self.settings.jservs[cfg.peers[0].synid])
 
         return None
@@ -639,17 +659,17 @@ class InstallerCli:
     def updateWithUi(self,
                 reg_jserv: str = None,
                 admin: str=None, domphrase: str=None,
-                pswd: str=None,
+                centralPswd: str=None,
                 org: str=None, market: str=None, domain: str=None,
                 volume: str=None,
-                hubmode: bool=True,
+                hubmode: bool=None,
                 jservss: str=None, synid: str=None,
                 reverseProxy=None,
                 port: str=None, webport: str=None,
                 proxyPort: str=None, proxyIp: str=None,
                 syncins: str=None, envars=None, webProxyPort=None):
 
-        self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain, centralPswd=pswd)
+        self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain, centralPswd=centralPswd)
 
         for u in self.registry.synusers:
             if u.userId == admin and admin is not None:
@@ -665,10 +685,10 @@ class InstallerCli:
             if org is not None:
                 p.org = org
 
-        if hubmode:
-            self.registry.config.mode = mode_hub
-        else:
-            self.registry.config.mode = None
+        if hubmode is not None:
+            self.registry.config.mode = SynodeMode.hub.name if hubmode else SynodeMode.peer.name
+        # else:
+        #     self.registry.config.mode = None
 
         if synid is not None:
             self.registry.config.synid = synid
