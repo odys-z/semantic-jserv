@@ -161,7 +161,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 	}
 
 	/**
-	 * Get n0 of the session with the {@link peer} synode.
+	 * Get n0 of the session with the {@param peer} synode.
 	 * 
 	 * @param peer to which peer the session's n0 to be retrieved
 	 * @return n0 N0 in all sessions should be the same.
@@ -368,7 +368,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 	/**
 	 * @deprecated For tests only. 
 	 * Start an exchange / synchronize session.
-	 * @param docuser
 	 * @param onok
 	 * @return this
 	 * @throws TransException 

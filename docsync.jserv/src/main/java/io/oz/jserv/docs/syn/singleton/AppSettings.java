@@ -90,11 +90,11 @@ public class AppSettings extends Anson {
 	String webinf;
 	
 	/** <pre>
-	 * !root-key && !install-key: error
-	 * !root-key &&  install-key: install
+	 * !root-key &amp;&amp; !install-key: error
+	 * !root-key &amp;&amp;  install-key: install
 	 * 
-	 *  root-key && !install-key: boot
-	 *  root-key &&  install-key: warn and clean install-key, boot
+	 *  root-key &amp;&amp; !install-key: boot
+	 *  root-key &amp;&amp;  install-key: warn and clean install-key, boot
 	 * </pre>
 	 * @param config_xml
 	 * @param cfg 
@@ -121,14 +121,13 @@ public class AppSettings extends Anson {
 	}
 	
 	/**
+	 * 0. setup sys-conn records with {@link Syngleton#setupSysRecords}<br>
 	 * 1. setup with {@link Syngleton#setupSyntables(SynodeConfig, SyntityMeta[], String, String, String, String, boolean...)}<br>
 	 * 2. load with {@link DBSynTransBuilder#synSemantics(DATranscxt, String, String, Syntities)}<br>
-	 * 3. {@link AppSettings#setupJserv(SynodeConfig, String)}<br>
 	 * 
 	 * @param cfg
 	 * @param url_path
 	 * @param webinf config root, path of cocnfig.xml, e. g. WEB-INF
-	 * @param envolume volume home variable, e. g. $VOLUME_HOME
 	 * @param config_xml config file name, e. g. config.xml
 	 * @param rootkey
 	 * @throws Exception
@@ -350,7 +349,7 @@ public class AppSettings extends Anson {
 	}
 
 	/**
-	 * Load {@link JServUrl} of id {@link #synode} from {@link #synconn},
+	 * Load {@link JServUrl} of id syncfg.synid from syncfg.synconn,
 	 * keeps later version modified by users.
 	 * @return true if there are records in db is later than this.jserv_utc.
 	 * @throws SQLException
@@ -461,7 +460,6 @@ public class AppSettings extends Anson {
 	}
 	
 	/**
-	 * FIXME eplace by {@link #reversedIp()} and {@link #changedIp()} ?
 	 * @return IP in effects
 	 */
 	public String reportRversedIp() {

@@ -350,7 +350,6 @@ public class SynssionPeer {
 
 	/**
 	 * @deprecated only for test - this is a part of domain updating process.
-	 * @param docmeta
 	 * @param proc4test
 	 * @return worker thread
 	 * @throws Exception
@@ -368,7 +367,6 @@ public class SynssionPeer {
 	/**
 	 * 
 	 * @deprecated only for test - this is a part of domain updating process.
-	 * @param proc4test
 	 * @return thread for resolving downward doc-refs
 	 * @throws Exception
 	 */
@@ -883,7 +881,6 @@ public class SynssionPeer {
 	}
 
 	/**
-	 * @deprecated replaced by {@link #exchangeJservs(String)}
 	 * @param jserv
 	 * @return
 	 * @throws SemanticException

@@ -69,7 +69,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		 * <p>Update any information can be figured out according the created file,
 		 * then persist into the file's record.</p>
 		 * 
-		 * The callback is triggered by {@link ExpDoctier#endBlock()}, and must be
+		 * The callback is triggered by {@link ExpDoctier#endBlock(DocsReq, IUser)}, and must be
 		 * always be called in a background thread.
 		 */
 		void onCreate(String conn, String docId, DATranscxt st, IUser usr, ExpDocTableMeta docm, String... path);
