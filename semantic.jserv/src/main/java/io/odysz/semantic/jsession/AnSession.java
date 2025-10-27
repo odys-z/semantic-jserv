@@ -170,7 +170,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	 * Use this for initializing AnSession in jetty application, in the app:<pre>
 	 * 	registerPorts(app, settings.conn, AnSession.init(Connects.defltConn()));<pre>
 	 * 
-	 * @param sysconn, e.g. by {@link Connects#defltConn()}
+	 * @param session_connid, e.g. by {@link Connects#defltConn()}
 	 * @return new instance that's initialized.
 	 * @throws Exception 
 	 * @since 1.5.18

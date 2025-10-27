@@ -395,7 +395,6 @@ class InstallerForm(QMainWindow):
         self.cli.registry.config.overlay(resp.diction)
 
         bind_synode = resp.next_installing() if LangExt.isblank(myid) else myid
-        # self.bind_cbbpeers(peers=resp.peer_ids(), select_id=bind_synode)
         self.bind_cbbpeers(peers=self.cli.registry.config.peers, select_id=bind_synode)
 
         self.cli.settings.acceptj_butme(bind_synode, self.cli.registry.config.peers)

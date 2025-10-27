@@ -20,7 +20,7 @@ import io.odysz.transact.sql.Query.Ix;
 /**
  * <p>Insert Request Message</p>
  * <b>Note:</b>
- * <p>InsertReq is a subclass of UpdateReq, and have no {@link #toBlock(JsonOpt)}
+ * <p>InsertReq is a subclass of UpdateReq, and have no {@link #toBlock(JsonOpt...)}
  * and {@link #fromJson(java.io.InputStream)} implementation.
  * Otherwise any post updating list in request won't work.</p>
  * Because all request element is deserialized a UpdateReq, so this can only work for Update/Insert request.</p>
