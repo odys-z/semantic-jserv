@@ -6,7 +6,7 @@
   "iso": "http://www.lingoes.net/en/translator/langcode.htm",
   "ui": "ui_form.py",
   "credits": "https://odys-z.github.io/products/album/credits.html",
-  "lang": "zh-CN",
+  "lang": "en",
   "langs": {
     "en": {
       "gboxRegistry": "Synchronization Domain Identity - Market {market}",

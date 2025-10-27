@@ -68,12 +68,8 @@ def updateApkRes(host_json, apkver):
     
     """
 
-    # Must install synode.py3, because
-    # need this to deserialize "io.oz.syntier.serv.ExternalHosts".
-    # ISSUE: this is a messy as the type, ExternalHosts, used in host_json,
-    # is assuming types of synode.py3 are available.
-    # Anson.java_src('src', ['synode_py3'])
-
+    # Must install semantics.py3, because of
+    # needing this to deserialize "io.oz.syntier.serv.ExternalHosts".
     hosts = Anson.from_file(host_json)
     print(os.getcwd(), host_json)
     print('host.json:', hosts)
