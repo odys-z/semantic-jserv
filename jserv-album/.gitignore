@@ -46,4 +46,5 @@ web-dist
 deploy
 deploy-*
 *-deploy
+my-*.*
 build-*
