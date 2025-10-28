@@ -420,6 +420,12 @@ if caninstall == 1:
     try:
         # in case central replied empty value
         cli.updateWithUi(market=synode_ui.market_id)
+        v = cli.validate()
+        if v is not None:
+            session.prompt(message='There are error in settings / configurations ...')
+            Utils.warn(v)
+            _quit = True
+            check_quit(_quit)
 
         cli.install()
         post_err = cli.postFix()

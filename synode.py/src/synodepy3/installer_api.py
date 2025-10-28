@@ -353,7 +353,6 @@ class InstallerCli:
         if os.path.exists(pths.web_settings):
             try:
                 data: AppSettings = cast(AppSettings, Anson.from_file(pths.web_settings))
-                # data.json_path = pths.web_settings
                 self.settings = data
             except json.JSONDecodeError as e:
                 raise PortfolioException(f'Loading Anson data from {pths.web_settings} failed.', e)
@@ -596,7 +595,7 @@ class InstallerCli:
         v = self.validate_iport()
         if v is not None: return v
 
-        # TODO 0.7.8 Checking synode-id is domain wide unique, in Central.
+        # TODO 0.7.8 Check the synode id is domain wide unique, in Central.
         if self.find_peer(self.registry.config.synid) is None:
             return {'peer-id': f'synode id is not a peer id: {self.registry.config.synid}'}
 
@@ -607,10 +606,6 @@ class InstallerCli:
             return {"exiftool": "Check and install exiftool failed!" \
                     if Utils.get_os() == 'Windows' \
                     else "Please install exiftool and test it's working with command 'exiftool -ver'"}
-
-        # 0.7.6
-        # self.settings.envars['WEBROOT'] = self.registry.config.synid
-        # cfg.org.webroot = '$WEBROOT'
 
         if cfg.mode != SynodeMode.hub.name:
             v = self.validate_synins()
