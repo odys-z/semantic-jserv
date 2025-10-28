@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.3.3"]
+requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.3.5"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,7 +15,7 @@ dependencies = [
     "pyside6>=6.5.0,<=6.8.2.1",
     "qrcode",
     "semantics.py3",
-    "anson.py3>=0.3.3",
+    "anson.py3>=0.3.5",
     "anclient.py3>=0.2.3",
     "psutil",
     "pillow>=8.0.0",

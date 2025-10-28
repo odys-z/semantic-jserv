@@ -706,8 +706,6 @@ class InstallerForm(QMainWindow):
                 txt = self.ui.txtCentral.text()
                 if JServUrl.valid(jserv=txt, rootpath=synode_ui.central_path):
                     self.cli.settings.regiserv = txt
-                    # commuid = self.cli.registry.config.org.orgId
-                    # self.bind_cbborg([commuid], commuid)
                     communs, communid = self.cli.query_orgs()
                     self.bind_cbborg(communs, communid)
         return super().eventFilter(obj, event)

@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import datetime
 import sys
+from dataclasses import dataclass
 
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
@@ -39,6 +40,27 @@ from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 from .__version__ import jar_ver, web_ver, html_srver
 
 path = os.path.dirname(__file__)
+'''
+this script file path
+'''
+
+@dataclass
+class CfgPaths:
+    '''
+    Configuration file paths' memory
+    '''
+    vol_dict_json: str
+    web_settings: str
+    def __init__(self):
+        self.vol_dict_json = cast(str, None)
+        self.web_settings = cast(str, None)
+
+pths = CfgPaths()
+'''
+vol_dict_json: file path to dictionary.json,
+web_settings: file path to settings.json
+'''
+
 synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 err_uihandlers: list[Optional[OnError]] = [None]
 
@@ -122,7 +144,6 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
 
 def submit_settings(client: SessionClient, func_uri: str, market: str,
                     cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int],
-                    utc: str='now',
                     stat: str = CynodeStats.create):
     req = RegistReq(RegistReq.A.submitSettings, market)\
         .Uri(func_uri)\
@@ -131,7 +152,6 @@ def submit_settings(client: SessionClient, func_uri: str, market: str,
         .dictionary(cfg)\
         .mystate(stat)\
         .Jservtime(s.jserv_utc)\
-        #.Jservtime(datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if utc == 'now' else utc) \
 
     msg = AnsonMsg(Centralport.register).Body(req)
 
@@ -328,21 +348,21 @@ class InstallerCli:
         :return: loaded json object
         """
 
-        web_settings = os.path.join(web_inf, settings_json)
-        print("Loading", web_settings)
-        if os.path.exists(web_settings):
+        pths.web_settings = os.path.join(web_inf, settings_json)
+        print("Loading", pths.web_settings)
+        if os.path.exists(pths.web_settings):
             try:
-                data: AppSettings = cast(AppSettings, Anson.from_file(web_settings))
-                data.json = web_settings
+                data: AppSettings = cast(AppSettings, Anson.from_file(pths.web_settings))
+                # data.json_path = pths.web_settings
                 self.settings = data
             except json.JSONDecodeError as e:
-                raise PortfolioException(f'Loading Anson data from {web_settings} failed.', e)
+                raise PortfolioException(f'Loading Anson data from {pths.web_settings} failed.', e)
 
             print("Loading registry in", '[registry]')
             self.registry = self.loadRegistry(data.volume, registry_dir)
 
         else:
-            raise PortfolioException(f"Cannot find settings.json: {web_settings}")
+            raise PortfolioException(f"Cannot find settings.json: {pths.web_settings}")
 
         # TODO 0.7.6
         if LangExt.isblank(self.settings.centralPswd):
@@ -360,12 +380,12 @@ class InstallerCli:
         :param deflt_path
         :return: AnRegistry
         """
-        dir_dict_json = None
+        pths.vol_dict_json = cast(str, None)
         if vol_path is not None:
-            dir_dict_json = os.path.join(vol_path, dictionary_json)
+            pths.vol_dict_json = os.path.join(vol_path, dictionary_json)
 
-        if vol_path is not None and os.path.isdir(vol_path) and Path(dir_dict_json).is_file():
-            registry = AnRegistry.load(dir_dict_json)
+        if vol_path is not None and os.path.isdir(vol_path) and Path(pths.vol_dict_json).is_file():
+            registry = AnRegistry.load(pths.vol_dict_json)
         else:
             diction_json = os.path.join(deflt_path, dictionary_json)
             registry = AnRegistry.load(diction_json)
@@ -418,7 +438,6 @@ class InstallerCli:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))
             ip = s.getsockname()[0]
-            # print(ip)
             return ip
 
     def getProxiedIp(self):
@@ -826,7 +845,7 @@ class InstallerCli:
         self.settings.jserv_utc = datetime.datetime\
                                 .now(datetime.timezone.utc)\
                                 .strftime('%Y-%m-%d %H:%M:%S')
-        self.settings.save()
+        self.settings.save(pths.web_settings)
 
         sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
 
@@ -1035,9 +1054,8 @@ class InstallerCli:
         :param resp:
         :return:
         '''
-        # self.registry.config.peers = resp.diction.peers
         self.registry.config.overlay(resp.diction)
         self.settings.acceptj_butme(self.registry.config.synid, self.registry.config.peers)
-        self.settings.save()
-        self.registry.save()
+        self.settings.save(pths.web_settings)
+        self.registry.save(pths.vol_dict_json)
 
