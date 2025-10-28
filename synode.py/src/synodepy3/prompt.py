@@ -11,7 +11,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import choice
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import Validator, ValidationError
-from semanticshare.io.odysz.semantic.jprotocol import JServUrl
+from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
@@ -107,9 +107,14 @@ class IPValidator(Validator):
     pass
 
 class JservValidator(Validator):
+    '''
+    Synodes protocol validator ('jserv-album')
+    '''
     def validate(self, v):
-        if not JServUrl.valid(v.text, rootpath=synode_ui.central_path):
-            raise ValidationError(message="Jserv URL is invalid.")
+        if not LangExt.isblank(v.text) and \
+           not JServUrl.valid(v.text, rootpath=JProtocol.urlroot):
+            raise ValidationError(
+                message=f'Jserv URL is invalid. Reqired format: http(s)://ip:port/{JProtocol.urlroot}')
 
 class QuitValidator(Validator):
     def validate(self, v):
@@ -240,6 +245,10 @@ if not cli.hasrun():
 
     # 3. create or select a domain
     def create_find_update_dom():
+        '''
+        The process / interaction of create / find a domain
+        :return: response to A.queryDomConfig or A.registDom
+        '''
 
         if LangExt.len(domains.orgDomains) == 0:
             options = []
@@ -271,7 +280,9 @@ if not cli.hasrun():
             check_quit(_quit)
         else:
             # ui.update_bind_domconf()
+            # -> ui.bind_hubjserv(registry.config, settings)
             cfg.overlay(resp.diction)
+            cli.settings.acceptj_butme(cfg.synid, cfg.peers)
         return resp
 
     create_find_update_dom()
@@ -413,14 +424,41 @@ def post_install():
     else:
         Utils.warn('TODO 0.7.6, RESP == NULL, handle errors...')
 
-# 6 save & install
+# 6 ping hub
+if cli.registry.config.mode != SynodeMode.hub.name:
+    hub_node = cli.registry.find_hubpeer()
+    if hub_node is None:
+        session.prompt(message='Cannot find the hub node, which is possibly can be found automatically. Press Enter to continue.')
+    else:
+        s_j = cli.settings.jservs[hub_node.synid]
+        hub_jserv = hub_node.jserv if LangExt.isblank(s_j) else s_j
+        cli.settings.jservs[hub_node.synid] = session.prompt(
+                message=f'Pinging the hub node, {hub_node.synid} ? (Empty to quit)',
+                default=hub_jserv,
+                validator=MultiValidator(QuitValidator(), JservValidator()))
+        try:
+            rsp = cli.ping(hub_node.jserv)
+            print('Response', rsp)
+        except Exception as e:
+            print(e)
+            print("There are errors while finding the hub node. But it can still work. Let's continue.")
+
+        go_on = choice( message=f'Continue installation? (Can re-configure or auto-connect if both nodes can visit Central)',
+                        options=[(1, 'Yes, go on.'),
+                                 (2, 'No, stop here.')],
+                        default=1)
+        _quit = go_on == 2
+
+check_quit(_quit)
+
+# 7 save & install
 if caninstall == 1:
     # ui.cli.settings.save()
     # ui.cli.registry.config.save()
     try:
         # in case central replied empty value
         cli.updateWithUi(market=synode_ui.market_id)
-        v = cli.validate()
+        v = cli.validate(ping_hub=False)
         if v is not None:
             session.prompt(message='There are error in settings / configurations ...')
             Utils.warn(v)

@@ -65,7 +65,8 @@ synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 err_uihandlers: list[Optional[OnError]] = [None]
 
 def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
-    Clients.init(jserv=peerserv or f'http://127.0.0.1:8964/{JProtocol.urlroot}', timeout=timeout_snd)
+    # Clients.init(jserv=peerserv or f'http://127.0.0.1:8964/{JProtocol.urlroot}', timeout=timeout_snd)
+    Clients.init(jserv=peerserv, timeout=timeout_snd)
 
     def err_ctx(c: MsgCode, e: str, *args: str) -> None:
         print(c, e.format(args), file=sys.stderr)
@@ -570,7 +571,7 @@ class InstallerCli:
     def find_synuser(self, uid: str):
         return AnRegistry.find_synuser(self.registry.synusers, uid)
 
-    def validate(self):
+    def validate(self, ping_hub: bool=True):
         """
         Validate my congig and settings. Must be called after the data models has been updated.
         NOTE 0.7.6 org.webroot will be forced to be '$WEBROOT' and settings.envars['WEBROOT'] = this.synode
@@ -610,7 +611,15 @@ class InstallerCli:
         if cfg.mode != SynodeMode.hub.name:
             v = self.validate_synins()
             if v is not None: return v
-            self.ping(self.settings.jservs[cfg.peers[0].synid])
+            # self.ping(self.settings.jservs[cfg.peers[0].synid])
+            if ping_hub:
+                hub_node = self.registry.find_hubpeer()
+                if hub_node is None:
+                    return {'hub-node': 'Hub information is missing.'}
+                elif hub_node.synid in self.settings.jservs:
+                    self.ping(self.settings.jservs[hub_node.synid])
+                else:
+                    return {'hub-node': 'Hub information is missing.'}
 
         return None
 

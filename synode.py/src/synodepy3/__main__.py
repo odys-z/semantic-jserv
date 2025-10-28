@@ -394,10 +394,10 @@ class InstallerForm(QMainWindow):
 
         self.cli.registry.config.overlay(resp.diction)
 
-        bind_synode = resp.next_installing() if LangExt.isblank(myid) else myid
-        self.bind_cbbpeers(peers=self.cli.registry.config.peers, select_id=bind_synode)
+        binding_synode = resp.next_installing() if LangExt.isblank(myid) else myid
+        self.bind_cbbpeers(peers=self.cli.registry.config.peers, select_id=binding_synode)
 
-        self.cli.settings.acceptj_butme(bind_synode, self.cli.registry.config.peers)
+        self.cli.settings.acceptj_butme(binding_synode, self.cli.registry.config.peers)
         self.bind_hubjserv(self.cli.registry.config, self.cli.settings)
 
     def select_community(self, commuix):
