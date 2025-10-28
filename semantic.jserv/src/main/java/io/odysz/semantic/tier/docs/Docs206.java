@@ -60,7 +60,6 @@ import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.syn.DBSynTransBuilder;
-import io.oz.syn.Exchanging;
 import io.oz.syn.ExessionAct;
 
 /**
@@ -77,11 +76,12 @@ public abstract class Docs206 {
 	private static final String ETAG = "W/\"%s-%s\"";
 	private static final Pattern Regex_Range = Pattern.compile("^bytes=[0-9]*-[0-9]*(,[0-9]*-[0-9]*)*+$");
 	private static final String Multipart_boundary = UUID.randomUUID().toString();
-	// private static final int Range_Size = 1024 * 8;
 
 	/**
 	 * Used for telling the client with request header:<br>
-	 * reason_doc_ref +  {@link Exchanging#ext_docref} - target file is a {@link DocRef} object. */
+	 * "exchanging error:" + {@link ExessionAct#ext_docref} - 
+	 * target file is a {@link io.odysz.semantic.meta.DocRef} object.
+	 */
 	public static final String reason_doc_ref = "exchanging error: " + ExessionAct.ext_docref;
 
 	public static DATranscxt st;

@@ -120,7 +120,6 @@ public class Syngleton extends JSingleton {
 	/**
 	 * Load domains from syn_synode, create {@link SynDomanager} for each domain.
 	 * 
-	 * @param synmod synode mode, peer, hub, etc.
 	 * @param cfg 
 	 * @param admin 
 	 * @return singleton
@@ -221,7 +220,7 @@ public class Syngleton extends JSingleton {
 	 * 2.1 inject synmantics after syn-tables have been set.<br>
 	 * 3. load symantics and entities<br>
 	 * 4. create synodes, by inserting peers from registry.config.peers<br>
-	 * 5. step n0 & n-stamp for clearing uncertainty<br>
+	 * 5. step n0 &amp; n-stamp for clearing uncertainty<br>
 	 * 
 	 * <p>Resolved Issue 2d58a13eadc2ed2ee865e0609fe1dff33bf26da7:<br>
 	 * Syn-change handlers cannot be created without syntity tables have been created.</p>
@@ -231,7 +230,6 @@ public class Syngleton extends JSingleton {
 	 * @param cfgxml e. g. config.xml
 	 * @param runtimeRoot
 	 * @param rootKey
-	 * @param peers 
 	 * @param forcedrop optional, default false 
 	 * @throws Exception
 	 */

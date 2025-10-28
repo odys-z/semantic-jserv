@@ -189,7 +189,6 @@ public class SyncReq extends UserReq implements IBlock {
 	 * @param sequence
 	 * @param doc
 	 * @param b64 for multi-thread style, this must be copied as it is used as a reference
-	 * @param usr
 	 * @return this
 	 * @throws SemanticException
 	 */

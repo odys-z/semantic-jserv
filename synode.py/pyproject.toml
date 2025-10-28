@@ -7,7 +7,7 @@ name = "synode.py3"
 version = "0.7.6" # updated by invoke
 description = "Portfolio Synode Stand Alone Service"
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [{ name = "Ody Z", email = "odys.zhou@gmail.com" }]
 keywords = ["Documents", "Files", "Relational Database", "Synchronization"]
 requires-python = ">=3.9"
@@ -29,8 +29,9 @@ synode-clean = "synodepy3.cli:clean"
 synode-start-web = "synodepy3.cli:startweb"
 
 [tool.setuptools]
-
 packages = ["synodepy3"]
+include-package-data = false
+# packages = { find = { where = ["src"], include = ["synodepy3"], exclude = ["synodepy3.res"] } }
 package-dir = { "synodepy3" = "src/synodepy3" }
 package-data = { "synodepy3" = ["form.ui", "synode.json", "res/*"] }
 

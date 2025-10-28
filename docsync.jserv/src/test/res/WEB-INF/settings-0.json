@@ -2,7 +2,6 @@
   "vol_name": "VOLUME_0",
   "jserv_utc": null,
   "proxyIp": null,
-  "registryClient": null,
   "webProxyPort": 0,
   "envars": {"Why-VOLUME_PRV": "this is not used but needed for suppressing errors in connects.xml",
       "WEBROOT_HUB": "http://119.8.29.27:8966",

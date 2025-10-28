@@ -47,7 +47,6 @@ public class JProtocol {
 	 * <p>
 	 * rows: rx of total rows <br>
 	 * file blocks: bx of total blocks</p>
-	 * @return force breakup
 	 */
 	@FunctionalInterface
 	public interface OnProcess {
@@ -64,6 +63,7 @@ public class JProtocol {
 		 * @throws IOException
 		 * @throws AnsonException
 		 * @throws TransException
+		 * @return signal of forcing breakup
 		 */
 		boolean proc(int rx, int rows, int bx, int blocks, AnsonResp resp)
 			throws IOException, AnsonException, TransException;

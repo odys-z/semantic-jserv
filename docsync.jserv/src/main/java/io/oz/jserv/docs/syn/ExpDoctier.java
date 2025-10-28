@@ -69,7 +69,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		 * <p>Update any information can be figured out according the created file,
 		 * then persist into the file's record.</p>
 		 * 
-		 * The callback is triggered by {@link ExpDoctier#endBlock()}, and must be
+		 * The callback is triggered by {@link ExpDoctier#endBlock(DocsReq, IUser)}, and must be
 		 * always be called in a background thread.
 		 */
 		void onCreate(String conn, String docId, DATranscxt st, IUser usr, ExpDocTableMeta docm, String... path);
@@ -421,7 +421,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 					.recId(pid)
 					.device(body.device())
 					.folder(photo.folder())
-					.share(photo.shareby, photo.shareflag, photo.sharedate)
+					.share(photo.shareby, photo.shareflag(), photo.sharedate)
 					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(chain.doc.clientpath));
@@ -479,8 +479,9 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		if (body.device() == null || isblank(body.device().id))
 			throw new DocsException(DocsException.SemanticsError, "Starting a block chain without device specified?");
 
-		if (isblank(body.doc.shareflag))
-			throw new DocsException(DocsException.SemanticsError, "Document's sharing flag is not specified. Doc: [%s] %s",
+		if (isblank(body.doc.shareflag()))
+			Utils.warn("[Error 0.7.6 (%s)] Document's sharing flag is not specified. Doc: [%s] %s",
+					DocsException.SemanticsError, 
 					body.doc.recId, body.doc.pname);
 
 		if (isblank(body.doc.device()))

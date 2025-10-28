@@ -190,6 +190,7 @@ class DoclientierTest {
 		pause("Press enter to quite ...");
 	}
 
+	@SuppressWarnings("deprecation")
 	@AfterAll
 	static void close() throws Exception {
 		logi("Pushes are closed.");

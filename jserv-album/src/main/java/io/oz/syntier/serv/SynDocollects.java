@@ -269,6 +269,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 * @return resp
 	 * @throws TransException
 	 * @throws SQLException
+	 * @deprecated not reached in 0.7.6
 	 */
 	DocsResp updateFolderel(AlbumReq req, DocUser usr)
 			throws TransException, SQLException {
