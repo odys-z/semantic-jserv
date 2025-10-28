@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from typing import cast
 
 from anclient.io.odysz.jclient import SessionClient
@@ -119,13 +120,18 @@ class QuitValidator(Validator):
 
 class VolumeValidator(Validator):
     def validate(self, v):
-        parent_dir = os.path.dirname(path)
+        parent_dir = os.path.dirname(v.text)
         if not parent_dir:
             parent_dir = os.getcwd()
         if not os.path.isdir(parent_dir):
             raise ValidationError(message=f"Parent directory '{parent_dir}' does not exist.")
         if not os.access(parent_dir, os.W_OK):
             raise ValidationError(message=f"Permission denied to write in '{parent_dir}'.")
+
+        if Utils.iswindows():
+            for c in v.text:
+                if c == '\\':
+                    raise ValidationError(message=f'Please replace all "\\" with "/"')
 
         try:
             os.makedirs(path, exist_ok=True)
@@ -163,14 +169,6 @@ class PortValidator(Validator):
 class SyncInsValidator(Validator):
     def validate(self, v: Document) -> None:
         if not LangExt.isblank(v.text):
-            # mns, mxs = 10, 3600
-            # try: snds = float(v.text)
-            # except:
-            #     raise ValidationError(
-            #         message=f'Please set an integer between {mns} and {mxs}')
-            # if snds < mns or snds > mxs:
-            #     raise ValidationError(
-            #         message=f'Please set an integer between {mns} and {mxs}')
             err = cli.validate_synins(v.text)
             if err is not None:
                 raise ValidationError(message=err['config.syncIns'])
@@ -320,7 +318,7 @@ if not cli.hasrun():
     cli.settings.volume = session.prompt(
         message=f"Set volume path, emtpy to quit (volume is where the files and data saved).",
         validator = MultiValidator(QuitValidator(), VolumeValidator()),
-        default=f"{os.getcwd()}/vol")
+        default=f"{Path(os.getcwd()).as_posix()}/vol")
 
     check_quit(_quit)
 
@@ -375,8 +373,7 @@ reverse = choice(message='Is this node mapped to a public address (or behind a r
 
 # 5.1 revers proxy
 def default_proxy_ports(s: AppSettings) -> str:
-    return f'{s.webport if s.webProxyPort == 0 else s.webProxyPort}:{
-              s.port    if s.proxyPort == 0    else s.proxyPort}'
+    return f'{s.webport if s.webProxyPort == 0 else s.webProxyPort}:{s.port if s.proxyPort == 0 else s.proxyPort}'
 
 if reverse == 3:
     _quit = True
@@ -453,13 +450,10 @@ if caninstall == 1:
     else:
         syn_templ, web_templ = generate_service_templ(cli.settings, cfg)
         # TODO merge with the cli function
-        login_url = f'{
-                    'https' if cli.registry.config.https else 'http'
-                    }://{
-                    cli.settings.proxyIp if cli.settings.reverseProxy else '127.0.0.1' 
-                    }:{
-                    cli.settings.webProxyPort if cli.settings.reverseProxy else cli.settings.webport
-                    }/login.html'
+        login_url = f'{"https" if cli.registry.config.https else "http"}://' + \
+                    f'{ cli.settings.proxyIp if cli.settings.reverseProxy else "127.0.0.1"}:' + \
+                    f'{cli.settings.webProxyPort if cli.settings.reverseProxy else cli.settings.webport}/login.html'
+
         session.prompt(message=
                f'The service configuration template is saved in ./{syn_templ} & ./{web_templ}.\n\n'
                 'Before setup the services, it is recommend to try the service with this two commands:\n'

@@ -47,4 +47,5 @@ deploy
 deploy-*
 *-deploy
 my.1.*
+my-*.*
 build-*
