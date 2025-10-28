@@ -26,7 +26,7 @@ from anson.io.odysz.common import Utils, LangExt
 
 from semanticshare.io.oz.srv import WebConfig
 
-from semanticshare.io.odysz.semantic.jprotocol import MsgCode, AnsonMsg, JProtocol
+from semanticshare.io.odysz.semantic.jprotocol import MsgCode, AnsonMsg, JProtocol, JServUrl
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, \
@@ -349,6 +349,11 @@ class InstallerCli:
             self.settings.centralPswd = ''
             for i in range(1, 7):
                 self.settings.centralPswd = self.settings.centralPswd + str(i)
+
+        if LangExt.isblank(self.settings.regiserv):
+            regiserv = f'{'https' if self.registry.config.https else 'http'
+                         }://{synode_ui.central_iport}/{synode_ui.central_path}'
+            self.settings.regiserv = regiserv if JServUrl.valid(regiserv, synode_ui.central_path) else "http://"
 
         return self.settings
 

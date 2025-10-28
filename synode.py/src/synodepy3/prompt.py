@@ -29,10 +29,10 @@ def readable_state(s: str = None):
             else '⛔ Already running as a Peer node' if s == CynodeStats.asPeer \
             else '[❗] Unknown state (dangerous)'
 
-def generate_service_templ(settings, config, xms:str='1g', xmx='8g'):
+def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8g'):
     """
-    :param settings: 
-    :param config:
+    :param s: settings
+    :param c: synode registry config
     :param xms: JRE option Xms
     :param xmx: JRE option Xmx
     :return:
@@ -78,7 +78,7 @@ Environment="JAVA_OPTS=-Xms512m -Xmx2g"
 
 [Install] 
     """
-    syn_templ, web_templ = f'{config.synid}.service', f'{config.synid}.web.service'
+    syn_templ, web_templ = f'{c.synid}.service', f'{c.synid}.web.service'
     with open(syn_templ, "w") as fo:
         fo.write(etc_syn)
     with open(web_templ, "w") as fo:
@@ -342,9 +342,9 @@ else:
     if synmode_v == SynodeMode.peer.value:
         sync_insnds = session.prompt(
                 message='Please set the synchronization interval, in seconds. (Empty to quit)',
-                default=str(cfg.syncIns) if cfg.syncIns is not None else '0',
+                default=str(cfg.syncIns) if not LangExt.isblank(cfg.syncIns) else '0' if cfg.mode == SynodeMode.peer else '45',
                 validator=MultiValidator(QuitValidator(), SyncInsValidator()))
-        cfg.syncIns = float(sync_insnds)
+        cfg.syncIns = float(sync_insnds) if not LangExt.isblank(sync_insnds) else 0
 check_quit(_quit)
 
 # 5 ports
@@ -470,3 +470,10 @@ if caninstall == 1:
                 'A simple tutorial of install a Unix service is to be build. You have to Google it. Sorry!\n'
                f'Return to quit Portfolio {synode_ui.version} Setup ...'
                )
+
+def main():
+    '''
+    The stub for pyproject.toml's main entry
+    :return: 0
+    '''
+    return 0

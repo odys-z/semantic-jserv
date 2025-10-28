@@ -2,6 +2,7 @@
   "version": "0.7.6",
   "market": "MY [Test]",
   "market_id": "my",
+  "central_iport": "182.150.29.34:1989",
   "central_path": "regist-central",
   "iso": "http://www.lingoes.net/en/translator/langcode.htm",
   "ui": "ui_form.py",

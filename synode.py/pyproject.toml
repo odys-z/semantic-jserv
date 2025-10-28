@@ -19,7 +19,7 @@ dependencies = [
     "anclient.py3>=0.2.3",
     "psutil",
     "pillow>=8.0.0",
-    "prompt-toolkit>=3.0.52",
+    "prompt_toolkit>=3.0.52",
     "invoke>=2.2.0"
 ]
 
