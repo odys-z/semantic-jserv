@@ -524,7 +524,7 @@ public class SynssionPeer {
 				.where(Sql.condt("%s is null", refm.excludeTag)
 						  .or(Sql.condt("%s <> '%s'", refm.excludeTag, excludeTag)))
 				.orderby(refm.tried)
-				.limit(1);
+				.limit(1); // bug: syn_docref needs a field of domain
 
 			ISemantext semantxt = synb.instancontxt();
 			AnResultset rs = ((AnResultset) q
@@ -537,7 +537,7 @@ public class SynssionPeer {
 				String uids = rs.getString(refm.io_oz_synuid);
 				rs = ((AnResultset) synb
 					.batchSelect(docm.tbl)
-					.cols(docm.pk, docm.uri, docm.resname, docm.io_oz_synuid).col(Funcall.isEnvelope(docm.uri), "isenvl")
+					.cols(docm.pk, docm.uri, docm.resname, docm.io_oz_synuid).col(Funcall.isEnvelope(docm.uri), "isenvlop")
 					.whereEq(docm.io_oz_synuid, uids)
 					.before(synb // delete records of which the uri is not an envelope now
 						.delete(refm.tbl)
@@ -551,12 +551,12 @@ public class SynssionPeer {
 					.rs(0))
 					.nxt();
 
-				if (!rs.getBoolean("isenvl")) {
+				if (!rs.getBoolean("isenvlop")) {
 					Utils.warnT(new Object() {},
 						"Suspesiously, deleting a syn_docref record of an expired task?\n%s -> %s, %s, uids: %s",
 						synb.syndomx.synode, peer, docm.tbl, uids);
 
-					synb.delete(refm.tbl)
+					synb.delete(refm.tbl, synb.synrobot())
 						.whereEq(refm.syntabl, uids)
 						.d(synb.instancontxt());
 					return null;

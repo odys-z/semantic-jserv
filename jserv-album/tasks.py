@@ -179,13 +179,13 @@ def build(c):
     return False
 
 @task
-def package(c, zip=f'jserv-portfolio-{version}.zip'):
+def package(c, zip=f'portfolio-synode-{version}.zip'):
     """
-    Create a ZIP file (jserv.zip).
+    Create a ZIP file.
     
     Args:
         c: Invoke Context object for running commands.
-        zip: Name of the output ZIP file (default: "jserv-album.zip").
+        zip: Name of the output ZIP file.
     """
     resources = {
         f'bin/html-web-{html_jar_v}.jar': f'../../html-service/java/target/html-web-{html_jar_v}.jar', # clone at github/html-service
@@ -244,7 +244,7 @@ def package(c, zip=f'jserv-portfolio-{version}.zip'):
 @task(clean, create_volume, build, package)
 def make(c):
     """
-    Create a ZIP file (jserv.zip) with the specified resources.
+    Create a ZIP file with the specified resources.
     
     Args:
         c: Invoke Context object for running commands.

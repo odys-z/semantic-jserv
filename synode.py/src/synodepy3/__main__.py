@@ -24,7 +24,8 @@ from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp, CynodeStats
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
-from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, synode_ui
+from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
+    synode_ui, pths
 
 # Important:
 # Run the following command to generate the ui_form.py file
@@ -199,6 +200,7 @@ class InstallerForm(QMainWindow):
 
         domainid = self.ui.cbbDomains.currentText().strip()
         self.cli.update_domain(
+                orgtype=synode_ui.market_id,
                 reg_jserv=self.ui.txtCentral.text().strip(),
                 orgid=self.ui.cbbOrgs.currentText().strip(),
                 domain=domainid)
@@ -273,12 +275,12 @@ class InstallerForm(QMainWindow):
         self.update()
 
         self.cli.updateWithUi(
+            market=synode_ui.market_id,
+            org=self.ui.cbbOrgs.currentText(),
+            domain=self.ui.cbbDomains.currentText().strip(),
             reg_jserv=self.ui.txtCentral.text().strip(),
             admin=self.ui.txtAdminId.text(),
             centralPswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
-            org=self.ui.cbbOrgs.currentText(),
-            market=synode_ui.market_id,
-            domain=self.ui.cbbDomains.currentText().strip(),
             domphrase=self.ui.txtDompswd.text(),
             hubmode=self.ui.chkHub.checkState() == Qt.CheckState.Checked,
             jservss=self.ui.jservLines.toPlainText(),
@@ -336,7 +338,7 @@ class InstallerForm(QMainWindow):
         self.cli.registry.config.syncIns = 0
         try:
             self.update_valid()
-            self.cli.settings.save()
+            self.cli.settings.save(pths.web_settings)
 
             msg_box('The settings is valid. You can close the opening terminal once you need to stop it.\n'
                 'To stat the services, a stand alone running is recommended. Install the service on Windows or start:\n'
@@ -358,7 +360,7 @@ class InstallerForm(QMainWindow):
             err_msg('Start Portfolio service failed', e.msg)
         finally:
             self.cli.registry.config.syncIns = syncins
-            self.cli.settings.save()
+            self.cli.settings.save(pths.web_settings)
 
         time.sleep(0.2)
         self.bind_config()

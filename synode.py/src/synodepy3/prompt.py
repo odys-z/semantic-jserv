@@ -263,12 +263,12 @@ if not cli.hasrun():
         if domid is not None:
             # 3.1. select domain
             domid = cast(str, domid)
-            cli.update_domain(domain=domid)
+            cli.update_domain(orgtype=synode_ui.market_id, domain=domid, orgid=orgid)
             resp = cli.query_domconf(commuid=orgid, domid=domid)
         else:
             # 3.2 create domain
             cfg.domain = session.prompt(
-                message='Please input new domain name:',
+                message='Please input new domain name: ',
                 validator=MultiValidator(QuitValidator(), DomainValidator()),
                 validate_while_typing=False)
             resp = cli.register()
@@ -327,7 +327,7 @@ if not cli.hasrun():
 
     # 4.3 volume
     cli.settings.volume = session.prompt(
-        message=f"Set volume path, emtpy to quit (volume is where the files and data saved).",
+        message=f"Set volume path, emtpy to quit (volume is where the files and data saved). ",
         validator = MultiValidator(QuitValidator(), VolumeValidator()),
         default=f"{Path(os.getcwd()).as_posix()}/vol")
 
@@ -350,7 +350,7 @@ else:
     cfg.mode = SynodeMode(synmode_v).name
     if synmode_v == SynodeMode.peer.value:
         sync_insnds = session.prompt(
-                message='Please set the synchronization interval, in seconds. (Empty to quit)',
+                message='Please set the synchronization interval, in seconds. (Empty to quit) ',
                 default=str(cfg.syncIns) if not LangExt.isblank(cfg.syncIns) else '0' if cfg.mode == SynodeMode.peer else '45',
                 validator=MultiValidator(QuitValidator(), SyncInsValidator()))
         cfg.syncIns = float(sync_insnds) if not LangExt.isblank(sync_insnds) else 0
@@ -372,7 +372,7 @@ def default_ports(s: AppSettings) -> str:
     return f'{web_port0 if s.webport == 0 else s.webport}:{serv_port0 if s.port == 0 else s.port}'
 
 ports = session.prompt(
-    message=f'Please set the ports. Format: "synode-port : www-port"',
+    message=f'Please set the ports. Format: "synode-port : www-port" ',
     default=default_ports(cli.settings),
     validator=MultiValidator(QuitValidator(), PortValidator()))
 
@@ -433,17 +433,17 @@ if cli.registry.config.mode != SynodeMode.hub.name:
         s_j = cli.settings.jservs[hub_node.synid]
         hub_jserv = hub_node.jserv if LangExt.isblank(s_j) else s_j
         cli.settings.jservs[hub_node.synid] = session.prompt(
-                message=f'Pinging the hub node, {hub_node.synid} ? (Empty to quit)',
+                message=f'Pinging the hub node, {hub_node.synid} ? (Empty to quit) ',
                 default=hub_jserv,
                 validator=MultiValidator(QuitValidator(), JservValidator()))
         try:
             rsp = cli.ping(hub_node.jserv)
-            print('Response', rsp)
+            # print('Response', rsp)
         except Exception as e:
             print(e)
-            print("There are errors while finding the hub node. But it can still work. Let's continue.")
+            print("There are errors while finding the hub node. But it can still work. Let's continue ...")
 
-        go_on = choice( message=f'Continue installation? (Can re-configure or auto-connect if both nodes can visit Central)',
+        go_on = choice( message=f'Continue installation? (Can re-configure, or can auto-connect if both nodes can visit Central)',
                         options=[(1, 'Yes, go on.'),
                                  (2, 'No, stop here.')],
                         default=1)
@@ -461,7 +461,7 @@ if caninstall == 1:
         v = cli.validate(ping_hub=False)
         if v is not None:
             session.prompt(message='There are error in settings / configurations ...')
-            Utils.warn(v)
+            print(v, file=sys.stderr)
             _quit = True
             check_quit(_quit)
 
@@ -505,7 +505,7 @@ if caninstall == 1:
                f'java -jar bin/{html_web_jar}\n\n'
                f'Then try login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n'
                f'{login_url}\n\n'
-                'A simple tutorial of install a Unix service is to be build. You have to Google it. Sorry!\n'
+                'A simple tutorial for installing Unix services is to be build. You have to Google it. Sorry!\n'
                f'Return to quit Portfolio {synode_ui.version} Setup ...'
                )
 

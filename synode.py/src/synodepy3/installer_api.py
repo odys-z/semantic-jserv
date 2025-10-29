@@ -254,13 +254,21 @@ def check_exiftool():
     if Utils.iswindows():
         return os.path.isfile(exiftool_exe)
     else:
-        p = subprocess.Popen(['exiftool', '-ver'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.communicate()
-        if len(err) > 0:
-            Utils.warn(decode(err))
+        print('exiftool -ver')
+        try:
+            p = subprocess.Popen(['exiftool', '-ver'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if p is None:
+                return False
+            out, err = p.communicate()
+            if len(err) > 0:
+                print(err, file=sys.stderr)
+                return False
+
+            print(decode(out), 'exiftool is working...')
+            return True
+        except Exception as e:
+            print(e)
             return False
-        print(decode(out))
-        return True
 
 
 def checkinstall_exiftool():
@@ -663,8 +671,10 @@ class InstallerCli:
     def gen_html_srvname(self):
         return f'Synode.web-{web_ver}-{self.registry.config.synid}'
 
-    def update_domain(self, reg_jserv: str=None,
-                      orgtype: str=None, orgid: str=None,
+    def update_domain(self,
+                      orgtype,
+                      orgid: str=None,
+                      reg_jserv: str=None,
                       domain: str=None, centralPswd: str=None):
         '''
         update data model
@@ -675,27 +685,30 @@ class InstallerCli:
         '''
         if reg_jserv is not None:
             self.settings.regiserv = reg_jserv
-        if orgtype is not None:
-            self.registry.config.org.orgType = orgtype
+        # if orgtype is not None:
+        #     self.registry.config.org.orgType = orgtype
         if orgid is not None:
-            self.registry.config.org.orgId = orgid
+            # self.registry.config.org.orgId = orgid
+            self.registry.config.set_org(orgid=orgid, orgtype=orgtype)
         if domain is not None:
             self.registry.config.set_domain(domain)
+            for u in self.registry.synusers:
+                u.domain = domain
         if centralPswd is not None:
             self.settings.centralPswd = centralPswd
 
     def updateWithUi(self,
-                reg_jserv: str = None,
-                admin: str=None, domphrase: str=None,
-                centralPswd: str=None,
-                org: str=None, market: str=None, domain: str=None,
-                volume: str=None,
-                hubmode: bool=None,
-                jservss: str=None, synid: str=None,
-                reverseProxy=None,
-                port: str=None, webport: str=None,
-                proxyPort: str=None, proxyIp: str=None,
-                syncins: str=None, envars=None, webProxyPort=None):
+            market: str, org: str = None, domain: str=None,
+            reg_jserv: str = None,
+            admin: str=None, domphrase: str=None,
+            centralPswd: str=None,
+            volume: str=None,
+            hubmode: bool=None,
+            jservss: str=None, synid: str=None,
+            reverseProxy=None,
+            port: str=None, webport: str=None,
+            proxyPort: str=None, proxyIp: str=None,
+            syncins: str=None, envars=None, webProxyPort=None):
 
         self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain, centralPswd=centralPswd)
 

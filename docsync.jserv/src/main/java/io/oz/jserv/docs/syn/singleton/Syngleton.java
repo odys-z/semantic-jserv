@@ -9,6 +9,7 @@ import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.loadTxt;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.shouldeq;
+import static io.odysz.common.LangExt.shouldeqs;
 import static io.odysz.semantic.meta.SemanticTableMeta.setupSqliTables;
 
 import java.io.IOException;
@@ -400,6 +401,7 @@ public class Syngleton extends JSingleton {
 	 * @param conn
 	 * @throws Exception 
 	 */
+	@SuppressWarnings("deprecation")
 	static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 
@@ -409,11 +411,17 @@ public class Syngleton extends JSingleton {
 			SynodeMeta synm = new SynodeMeta(cfg.synconn);
 			Delete del = tb0
 						.delete(synm.tbl, usr)
-						.whereEq(synm.domain, cfg.domain);
+						.whereEq(synm.domain, cfg.domain)
+						.whereEq(synm.org, cfg.org.orgId);
 
 			for (Synode sn : peers) {
 				musteqs(cfg.domain, sn.domain(),
 						"cfg.domain, %s != peer.domain, %s", cfg.domain, sn.domain());
+
+				shouldeqs(new Object() {}, cfg.org.orgId, sn.org,
+						"cfg.org.orgId, %s != peers['%s'].org, %s",
+						cfg.org.orgId, sn.synid, sn.org);
+				sn.org = cfg.org.orgId;
 
 				del.post(sn.insertRow(cfg.domain,
 						synm, tb0.insert(synm.tbl, usr)));
@@ -427,47 +435,8 @@ public class Syngleton extends JSingleton {
 		return syndomanagers.keySet();
 	}
 
-//	/**
-//	 * Prepare loca ip, submit, asynchronously, to hub.
-//	 * @param currentIp current local ip.
-//	 * @return this
-//	 * @since 0.7.6
-//	 * @deprecated shouldn't call this in afterboot(), which makes competing conditions with worker-0.
-//	 */
-//	public void asybmitJserv(ISynodeLocalExposer ipExposer) {
-//		new Thread(()-> {
-//			String currentIp = settings.localIp; 
-//			String nextip = JServUrl.getLocalIp(2);
-//			if (!eq(currentIp, nextip)) {
-//				settings.localIp = nextip;
-//				for (SynDomanager mngr : syndomanagers.values()) {
-//					try {
-//						if (mngr.mode != SynodeMode.hub) {
-//							mngr.submitJservsPersist(currentIp, nextip);
-//						}
-//						else {
-//							// Hub nodes can still changing IP often.
-//							// JServUrl jsv = mngr.loadJservUrl().ip(nextip);
-//							// settings.persistNewJserv(syncfg, synm, mngr.synode, jsv, DateFormat.now());
-//
-//							settings.mergeLoadJservs(syncfg, synm);
-//							settings.save();
-//						}
-//
-//						mngr.ipChangeHandler(ipExposer);
-//						if (ipExposer != null)
-//							ipExposer.onExpose(settings, mngr);
-//					} catch (SQLException | TransException e) {
-//						e.printStackTrace();
-//					}
-//				}
-//			}
-//		}, f("[%s] Asy-submit Jserv", synode()))
-//		.start();
-//	}
-
 	public String myjserv() throws SQLException, TransException {
-		// settings.loadDBservs(syncfg, synm, DateFormat.jour0);
 		return settings.jserv(syncfg.synid);
+		//  or settings.loadDBservs(syncfg, synm, DateFormat.jour0) ?
 	}
 }

@@ -142,8 +142,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 			if (A.queryJservs.equals(a))
 				rsp = onQueryJservs(req, usr);
-//			else if (A.reportJserv.equals(a))
-//				rsp = onReportJserv(req, usr);
 			else if (A.exchangeJservs.equals(a))
 				rsp = onExchangeJservs(req, usr);
 
