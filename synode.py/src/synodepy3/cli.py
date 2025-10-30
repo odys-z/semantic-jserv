@@ -32,10 +32,10 @@ def uninst_srv():
         print(f"Error uninstalling html-service: {e}", file=sys.stderr)
 
 
-def clean(vol: str = None):
-    cli = InstallerCli()
-    cli.load_settings()
-    cli.clean_install(vol)
+# def clean(vol: str = None):
+#     cli = InstallerCli()
+#     cli.load_settings()
+#     cli.clean_install(vol)
 
 
 def startweb(port: int = 8900):
@@ -129,7 +129,8 @@ if __name__ == '__main__':
         install_htmlsrv(cli.gen_html_srvname())
 
     elif cmd == 'clean':
-        clean(arg)
+        # clean(arg)
+        pass
 
     elif cmd == 'start-web':
         startweb(int(arg))

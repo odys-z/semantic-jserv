@@ -121,7 +121,8 @@ class QuitValidator(Validator):
         global _quit
         if not v.text.strip():
             _quit = True
-            return
+        else:
+            _quit = False
 
 class VolumeValidator(Validator):
     def validate(self, v):
@@ -211,7 +212,9 @@ cfg = cli.registry.config # for shot
 
 print(f"Starting configure Synode {synode_ui.version}. Return with empty input to abort.")
 
-if not cli.hasrun():
+has_run = cli.hasrun()
+
+if not has_run:
     # 0. central jserv
     orgs: list[str] = cast(list, None)
     orgid: str = cast(str, None)
@@ -443,7 +446,8 @@ if cli.registry.config.mode != SynodeMode.hub.name:
             print(e)
             print("There are errors while finding the hub node. But it can still work. Let's continue ...")
 
-        go_on = choice( message=f'Continue installation? (Can re-configure, or can auto-connect if both nodes can visit Central)',
+        go_on = choice( message=f'Continue installation? (Can re-configure, or can auto-connect if both nodes can visit Central)' if not has_run \
+                        else f'Continue to save changes?',
                         options=[(1, 'Yes, go on.'),
                                  (2, 'No, stop here.')],
                         default=1)
@@ -479,9 +483,8 @@ if caninstall == 1:
         _quit = True
         check_quit(_quit)
     except PortfolioException as e:
-        Utils.warn(e)
-        session.prompt('Configuration is updated with errors. Check the details.\n'
-                        'If this is not switching volume, that is not correct')
+        Utils.warn(e.msg)
+        session.prompt('Configuration is updated with cautions. Check the details.')
         post_install() # let's still take effects for changes
         _quit = True
         check_quit(_quit)

@@ -853,7 +853,7 @@ class InstallerCli:
         cfg = self.registry.config
         self.settings.envars['WEBROOT'] = cfg.synid
         cfg.org.webroot = '$WEBROOT'
-
+        # TODO remove this after verified in GUI version
         for p in cfg.peers:
             # This is a wrong design of redundant data copies, and is bug prone.
             p.org = cfg.org.orgId

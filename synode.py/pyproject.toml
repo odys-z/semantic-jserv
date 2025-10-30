@@ -24,9 +24,10 @@ dependencies = [
 ]
 
 [project.scripts]
+# Test shows these commands cannot be quarantined by venv.
 synode-cli = "synodepy3.prompt:main"
 synode-uninstall-srv = "synodepy3.cli:uninst_srv"
-synode-clean = "synodepy3.cli:clean"
+# synode-clean = "synodepy3.cli:clean"
 synode-start-web = "synodepy3.cli:startweb"
 
 [tool.setuptools]
