@@ -163,7 +163,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 					.onsyninit(req.exblock);
 
 			else if (A.exrestore.equals(a))
-				rsp = usr.<SynssionServ>synssion().onsynrestore(req.exblock);
+				// rsp = usr.<SynssionServ>synssion().onsynrestore(req.exblock);
+				rsp = new SynssionServ(domanager0, req.exblock.srcnode, usr)
+					.onsynrestore(req.exblock);
 
 			else if (A.exchange.equals(a))
 				rsp = usr.<SynssionServ>synssion().onsyncdb(req.exblock);
@@ -503,7 +505,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		String conn = Connects.uri2conn(req.uri());
 		String tbl  = req.docref.syntabl;
 
-		// source node == peer node,  uids is exists, timestamps match
+		// source node == peer node,  uids exists, timestamps match
 		checkBlock0(st, conn, req, (DocUser) usr);
 
 		if (blockChains == null)

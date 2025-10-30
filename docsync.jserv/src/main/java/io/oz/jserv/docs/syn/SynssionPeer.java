@@ -204,8 +204,10 @@ public class SynssionPeer {
 			/// lock and wait local syndomx
 			domanager.lockme(onMutext);
 
-			ExchangeBlock reqb = ifnull(exesrestore(), exesinit());
-			rep = exespush(peer, A.exinit, reqb);
+			ExchangeBlock restore_req = exesrestore();
+			String a0 = restore_req == null ? A.exinit : A.exrestore; 
+			ExchangeBlock reqb = ifnull(restore_req, exesinit());
+			rep = exespush(peer, a0, reqb);
 
 			if (rep != null) {
 				// lock remote
@@ -223,7 +225,8 @@ public class SynssionPeer {
 
 					// FIXME
 					// FIXME ISSUE if Y is interrupted, or shutdown, X can be dead locking
-					rep = exespush(peer, A.exinit, reqb);
+					// NOTES 2025/10/30, cannot be re-produced
+					rep = exespush(peer, a0, reqb);
 				}
 
 				if (rep.exblock != null && rep.exblock.synact() != deny) {

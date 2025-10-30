@@ -55,7 +55,7 @@ public class SynssionServ {
 			return new SyncResp(syndomxerv.domain()).exblock(b);
 		} catch (Exception e) {
 			syndomxerv.unlockx(usr);
-			throw new ExchangeException(init, null, peer);
+			throw new ExchangeException(init, null, e.getMessage());
 		}
 	}
 
