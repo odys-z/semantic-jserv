@@ -84,16 +84,11 @@ public class T_Photo extends ExpSyncDoc {
 		this.device =  rs.getString(m.device);
 		
 		try {
-			this.sharedate = DateFormat.formatime(rs.getDate("sharedate"));
+			this.sharedate = DateFormat.formatime_utc(rs.getDate("sharedate"));
 		} catch (SQLException ex) {
 			this.sharedate = rs.getString("pdate");
 		}
 	}
-
-//	public T_Photo(String collectId, AnResultset rs, T_PhotoMeta m) throws SQLException {
-//		this(rs, m);
-//		this.collectId = collectId;
-//	}
 
 	/**
 	 * Set client path and syncFlag
@@ -104,7 +99,6 @@ public class T_Photo extends ExpSyncDoc {
 	 */
 	public T_Photo asSyncRec(AnResultset rs) throws SQLException {
 		this.clientpath = rs.getString("clientpath"); 
-		// this.syncFlag = rs.getString("syncFlag"); 
 		return this;
 	}
 
@@ -160,6 +154,9 @@ public class T_Photo extends ExpSyncDoc {
 		return this;
 	}
 
+	/**
+	 * @deprecated {@link #shareflag} is not used in 0.7.6 
+	 */
 	public ExpSyncDoc shareflag(String f) {
 		shareflag = f;
 		return this;
