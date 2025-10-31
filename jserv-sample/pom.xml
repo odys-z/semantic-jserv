@@ -4,9 +4,11 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-sample</artifactId>
-  <version>1.5.3</version>
+  <version>1.5.5</version>
   <name>jserv template project</name>
-  <url>http://maven.apache.org</url>
+  <description>Sample project for starting up a Semantic-* project</description>
+  <url>http://odys-z.github.io</url>
+  <packaging>jar</packaging>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -15,27 +17,35 @@
 	<failOnMissingWebXml>false</failOnMissingWebXml>
   </properties>
 
-  <!-- 
-  <repositories>
-  	<repository>
-  		<id>sonatype-snapshots</id>
-  		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-  	</repository>
-  </repositories>
-  -->
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Ody Zhou</name>
+      <email>odys.zhou@gmail.com</email>
+      <organization>odys-z.github.io</organization>
+      <organizationUrl>https://odys-z.github.io</organizationUrl>
+    </developer>
+  </developers>
 
   <dependencies>
   	<dependency>
 		<groupId>org.junit.jupiter</groupId>
 		<artifactId>junit-jupiter-engine</artifactId>
-		<version>5.9.1</version>
+		<version>5.9.3</version>
 		<scope>test</scope>
     </dependency>
 
     <dependency>
-    	<groupId>javax.servlet</groupId>
-    	<artifactId>javax.servlet-api</artifactId>
-    	<version>3.0.1</version>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+      <scope>provided</scope>
     </dependency>
 
    	<dependency>
@@ -44,7 +54,7 @@
 			to update immediately. -->
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>1.4.43</version>
+	    <version>[1.5.16-SNAPSHOT,)</version>
    	</dependency>
 
 	<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
@@ -80,18 +90,6 @@
   	<url>https://github.com/odys-z/semantic-jserv</url>
   	<tag>HEAD</tag>
   </scm>
-
-  <distributionManagement>
-  	<snapshotRepository>
-  		<id>ossrh</id>
-  		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-  		<uniqueVersion>false</uniqueVersion>
-  	</snapshotRepository>
-  	<repository>
-  		<id>ossrh</id>
-  		<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-	</repository>
-  </distributionManagement>
 
   <build>
     <finalName>jserv-sample</finalName>
@@ -130,8 +128,17 @@
 			</configuration>
 		</plugin>
 
-		<!-- JavaDoc and source attachment
-		 -->
+		<plugin>
+			<groupId>org.sonatype.central</groupId>
+			<artifactId>central-publishing-maven-plugin</artifactId>
+			<version>0.8.0</version>
+			<extensions>true</extensions>
+			<configuration>
+				<publishingServerId>central</publishingServerId>
+				<autoPublish>true</autoPublish>
+			</configuration>
+		</plugin>
+
 		<plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-source-plugin</artifactId>
@@ -146,12 +153,9 @@
 	      </executions>
 	    </plugin>
 
-		<plugin>
+	  <plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-javadoc-plugin</artifactId>
-		  <configuration>
-			  <additionalparam>-Xdoclint:none</additionalparam>
-		  </configuration>
 	      <version>3.5.0</version>
 	      <executions>
 	        <execution>
@@ -161,8 +165,33 @@
 	          </goals>
 	        </execution>
 	      </executions>
-	 	</plugin>
+	      <configuration>
+	      	<failOnError>false</failOnError>
+	      	<additionalJOption>-Xdoclint:none</additionalJOption>
+	      </configuration>
+	  </plugin>
+
+	  <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-gpg-plugin</artifactId>
+		<version>3.2.8</version>
+		<executions>
+			<execution>
+			  <id>semantics.transact</id>
+			  <phase>verify</phase>
+			  <goals>
+				<goal>sign</goal>
+			  </goals>
+			  <configuration>
+			  <gpgArguments>
+				  <arg>--pinentry-mode=loopback</arg>
+				  <arg>--passphrase=${gpg.passphrase}</arg>
+			  </gpgArguments>
+		  	  </configuration>
+			</execution>
+		</executions>
+	  </plugin>
+
     </plugins>
   </build>
-  <packaging>war</packaging>
 </project>

@@ -47,6 +47,7 @@ import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
 import io.odysz.common.Regex;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -54,13 +55,12 @@ import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.Exchanging;
-import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.ExessionAct;
 
 /**
  * <p>Helper class for handling http 206 request,
@@ -76,11 +76,12 @@ public abstract class Docs206 {
 	private static final String ETAG = "W/\"%s-%s\"";
 	private static final Pattern Regex_Range = Pattern.compile("^bytes=[0-9]*-[0-9]*(,[0-9]*-[0-9]*)*+$");
 	private static final String Multipart_boundary = UUID.randomUUID().toString();
-	// private static final int Range_Size = 1024 * 8;
 
 	/**
 	 * Used for telling the client with request header:<br>
-	 * reason_doc_ref +  {@link Exchanging#ext_docref} - target file is a {@link DocRef} object. */
+	 * "exchanging error:" + {@link ExessionAct#ext_docref} - 
+	 * target file is a {@link io.odysz.semantic.meta.DocRef} object.
+	 */
 	public static final String reason_doc_ref = "exchanging error: " + ExessionAct.ext_docref;
 
 	public static DATranscxt st;
@@ -379,7 +380,9 @@ public abstract class Docs206 {
 		if (!rs.next())
 			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
 
-		String p = DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta);
+		// String p = DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta);
+		String p = ShExtFilev2.resolvUri(conn, req.doc.recId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
+
 		File f = new File(p);
 		if (f.exists() && f.isFile())
 			return f;
@@ -425,7 +428,7 @@ public abstract class Docs206 {
 		if (Regex.startsEvelope(rs.getString(meta.uri)))
 			throw new ExchangeException(ExessionAct.ext_docref, null, "DocRef: %s, %s, %s", req.doc.uids, req.doc.recId, req.doc.pname);
 
-		String p = DocUtils.resolvExtroot(st, conn, rs.getString(meta.pk), usr, meta);
+		String p = ShExtFilev2.resolvUri(conn, rs.getString(meta.pk), rs.getString(meta.uri), rs.getString(meta.resname), meta);
 		File f = new File(p);
 		if (f.exists() && f.isFile())
 			return f;

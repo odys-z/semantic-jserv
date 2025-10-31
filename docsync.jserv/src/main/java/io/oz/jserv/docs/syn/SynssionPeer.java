@@ -11,13 +11,15 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.indexOf;
+import static io.odysz.common.LangExt.musteq;
 import static io.odysz.common.LangExt.mustnonull;
-import static io.odysz.semantic.syn.ExessionAct.close;
-import static io.odysz.semantic.syn.ExessionAct.deny;
-import static io.odysz.semantic.syn.ExessionAct.init;
-import static io.odysz.semantic.syn.ExessionAct.ready;
-import static io.odysz.semantic.syn.ExessionAct.setupDom;
-import static io.odysz.semantic.syn.ExessionAct.trylater;
+import static io.odysz.common.LangExt.mustnoBlankAny;
+import static io.oz.syn.ExessionAct.close;
+import static io.oz.syn.ExessionAct.deny;
+import static io.oz.syn.ExessionAct.init;
+import static io.oz.syn.ExessionAct.ready;
+import static io.oz.syn.ExessionAct.setupDom;
+import static io.oz.syn.ExessionAct.trylater;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -35,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
 import io.odysz.common.AESHelper;
@@ -59,12 +62,6 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SynDocRefMeta;
-import io.odysz.semantic.syn.DBSyntableBuilder;
-import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.syn.ExessionAct;
-import io.odysz.semantic.syn.ExessionPersist;
-import io.odysz.semantic.syn.SyndomContext.OnMutexLock;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 import io.odysz.semantic.util.DAHelper;
@@ -80,6 +77,13 @@ import io.odysz.transact.sql.parts.Sql;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.SyncReq.A;
+import io.oz.syn.DBSyntableBuilder;
+import io.oz.syn.ExchangeBlock;
+import io.oz.syn.ExessionAct;
+import io.oz.syn.ExessionPersist;
+import io.oz.syn.SyncUser;
+import io.oz.syn.SynodeMode;
+import io.oz.syn.SyndomContext.OnMutexLock;
 
 /**
  * @since 0.2.0
@@ -99,8 +103,15 @@ public class SynssionPeer {
 	final String clienturi;
 
 	final String mynid;
+	/** The remode, server side, synode */
 	final String peer;
-	public final String peerjserv;
+
+	String peerjserv() {
+		return domanager == null
+				? null
+				// : domanager.syngleton.settings.jserv(domanager.synode);
+				: domanager.syngleton.settings.jserv(peer);
+	}
 
 	String domain() {
 		return domanager.domain();
@@ -129,9 +140,12 @@ public class SynssionPeer {
 	 */
 	protected SessionClient client;
 
-	/** Initialized by {@link io.odysz.semantic.syn.SyndomContext#dbg}, which should be from Config.debug. */
+	/** Initialized by {@link io.oz.syn.SyndomContext#dbg}, which should be from Config.debug. */
 	private boolean debug;
 
+	/**
+	 * In each post synssion handling loops, avoid the doc-refs already tried or failed. 
+	 */
 	private HashMap<String, ArrayList<String>> avoidRefs2me;
 	void addAvoidRefs(String peer, String synuid) {
 		if (!avoidRefs2me.containsKey(peer))
@@ -148,7 +162,7 @@ public class SynssionPeer {
 			avoidRefs2me.get(peer).clear();
 	}
 
-	public SynssionPeer(SynDomanager domanager, String peer, String peerjserv, boolean debug) {
+	public SynssionPeer(SynDomanager domanager, String peer, boolean debug) {
 		// ISSUE
 		// TODO It's better to change this to /syn/me, not /syn/peer once Connects is refactored. 
 		// TODO for synodes' uri_syn, the semantics is hard bound to SynodeConfig.conn.
@@ -160,7 +174,7 @@ public class SynssionPeer {
 		this.domanager = domanager;
 		this.peer      = peer;
 		this.mymode    = domanager.mode;
-		this.peerjserv = peerjserv;
+		// this.peerjserv = peerjserv;
 		this.clienturi = uri_sys;
 		this.debug     = debug;
 		
@@ -173,7 +187,8 @@ public class SynssionPeer {
 	 * @param onMutext 
 	 * @return this
 	 * @throws ExchangeException not ready yet.
-	 * @since 0.2.0
+	 * @since 0.2.6 deprecated 
+	 * @deprecated only for test, cannot restore break points
 	 */
 	public SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
@@ -181,7 +196,6 @@ public class SynssionPeer {
 					"Synchronizing information is not ready, or not logged in. From synode %s to peer %s, domain %s%s.",
 					domanager.synode, peer, domain(), client == null ? ", client is null" : "");
 
-		SyncResp rep = null;
 		try {
 			if (debug)
 				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
@@ -191,8 +205,10 @@ public class SynssionPeer {
 			/// lock and wait local syndomx
 			domanager.lockme(onMutext);
 
-			ExchangeBlock reqb = ifnull(exesrestore(), exesinit());
-			rep = exespush(peer, A.exinit, reqb);
+			ExchangeBlock restore_req = exesrestore();
+			String a0 = restore_req == null ? A.exinit : A.exrestore; 
+			ExchangeBlock reqb = ifnull(restore_req, exesinit());
+			SyncResp rep = exespush(peer, a0, reqb);
 
 			if (rep != null) {
 				// lock remote
@@ -210,20 +226,23 @@ public class SynssionPeer {
 
 					// FIXME
 					// FIXME ISSUE if Y is interrupted, or shutdown, X can be dead locking
-					rep = exespush(peer, A.exinit, reqb);
+					// NOTES 2025/10/30, cannot be re-produced
+					rep = exespush(peer, a0, reqb);
 				}
 
 				if (rep.exblock != null && rep.exblock.synact() != deny) {
-					// on start reply
-					onsyninitRep(rep.exblock, rep.domain);
-						
-					while (rep.synact() != close) {
-						ExchangeBlock exb = syncdb(rep.exblock);
-						rep = exespush(peer, A.exchange, exb);
-						if (rep == null)
-							throw new ExchangeException(exb.synact(), xp,
-									"Got null reply for exchange session. %s : %s -> %s",
-									domain(), domanager.synode, peer);
+					if (rep.exblock.synact() != close) {
+						// on start reply
+						onsyninitRep(rep.exblock, rep.domain);
+							
+						while (rep.synact() != close) {
+							ExchangeBlock exb = syncdb(rep.exblock);
+							rep = exespush(peer, A.exchange, exb);
+							if (rep == null)
+								throw new ExchangeException(exb.synact(), xp,
+										"Got null reply for exchange session. %s : %s -> %s",
+										domain(), domanager.synode, peer);
+						}
 					}
 					
 					// close
@@ -239,21 +258,82 @@ public class SynssionPeer {
 				else
 					Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
 							domanager.synode, domanager.domain(), peer);
-
 			}
-		} catch (IOException e) {
-			Utils.warn(e.getMessage());
+		} catch (TransException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
-			try {
-				ExchangeBlock reqb = synclose(rep.exblock);
-				rep = exespush(peer, A.exclose, reqb);
-			} catch (TransException | SQLException | AnsonException | IOException e1) {
-				e1.printStackTrace();
-			}
 		}
 		finally { domanager.unlockme(); }
 		return this;
+	}
+	
+	private SynssionPeer synwith_peer(OnMutexLock onMutext) {
+		mustnoBlankAny(client, peer, domain()); // no need to tell the peer, and stop the syn-worker.
+		try {
+			if (debug)
+				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
+						+ "\n=============================================================\n",
+						domain(), mynid, peer);
+
+			domanager.lockme(onMutext);
+
+			ExchangeBlock reqb = exesrestore();
+			SyncResp rep;
+			if (reqb != null) {
+				rep = ex_lockpeer(peer, A.exrestore, reqb);
+
+				if (rep.exblock != null && rep.exblock.synact() != deny)
+					// onsynrestorRep(rep.exblock, rep.domain);
+					onsyninitRep(rep.exblock, rep.domain);
+			}
+			else {
+				reqb = exesinit();
+				rep = ex_lockpeer(peer, A.exinit, reqb);
+
+				if (rep.exblock != null && rep.exblock.synact() != deny) 
+					// on start reply
+					onsyninitRep(rep.exblock, rep.domain);
+			}
+					
+			while (rep.synact() != close) {
+				ExchangeBlock exb = syncdb(rep.exblock);
+				rep = exespush(peer, A.exchange, exb);
+				if (rep == null)
+					throw new ExchangeException(exb.synact(), xp,
+							"Got null reply for exchange session. %s : %s -> %s",
+							domain(), domanager.synode, peer);
+			}
+			
+			// close
+			reqb = synclose(rep.exblock);
+			rep = exespush(peer, A.exclose, reqb);
+			
+			if (!testDisableAutoDocRef) {
+				DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
+				resolveRef206Stream(tb);
+				pushDocRef2me(tb, peer);
+			}
+			else
+				Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
+						domanager.synode, domanager.domain(), peer);
+
+		} catch (TransException | SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally { domanager.unlockme(); }
+
+
+		return this;
+	}
+
+	private SyncResp ex_lockpeer(String peer, String a, ExchangeBlock reqb) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**
@@ -279,16 +359,21 @@ public class SynssionPeer {
 		xp = new ExessionPersist(b0, peer, null);
 		return b0.restorexchange(xp);
 	}
+	
 	/**
-	 * Handle syn-init request.
+	 * Handle syn-init reply.
 	 * 
 	 * @param ini request's exchange block
 	 * @param domain
 	 * @return respond
-	 * @throws ExchangeException peer id from {@code ini} doesn't match with mine.
+	 * @throws IOException 
+	 * @throws SAXException 
+	 * @throws SQLException 
+	 * @throws TransException 
 	 * @throws Exception
 	 */
-	SyncResp onsyninitRep(ExchangeBlock ini, String domain) throws ExchangeException, Exception {
+	SyncResp onsyninitRep(ExchangeBlock ini, String domain)
+			throws TransException, SQLException, SAXException, IOException {
 		if (!eq(ini.srcnode, peer))
 			throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
@@ -327,7 +412,8 @@ public class SynssionPeer {
 		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", A.exchange, "by " + mynid);
 		AnsonHeader header = client.header().act(act);
 
-		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+		AnsonMsg<SyncReq> q = client
+							.<SyncReq>userReq(uri_syn, Port.syntier, req)
 							.header(header);
 
 		return client.commit(q, errHandler);
@@ -335,7 +421,6 @@ public class SynssionPeer {
 
 	/**
 	 * @deprecated only for test - this is a part of domain updating process.
-	 * @param docmeta
 	 * @param proc4test
 	 * @return worker thread
 	 * @throws Exception
@@ -353,18 +438,16 @@ public class SynssionPeer {
 	/**
 	 * 
 	 * @deprecated only for test - this is a part of domain updating process.
-	 * @param proc4test
 	 * @return thread for resolving downward doc-refs
 	 * @throws Exception
 	 */
-	public Thread pushResove()
+	public Thread pushResolve()
 			throws Exception {
 		DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
 
 		return new Thread(() -> {
 			try {
 				pushDocRef2me(tb, peer);
-			// } catch (AnsonException | TransException | IOException | SQLException e) {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -403,7 +486,7 @@ public class SynssionPeer {
 				if (debug)
 					Utils.logT(new Object() {}, " Begin downloading %s\n-> %s", localpath, targetpth);
 
-				client.download206(uri_syn, peerjserv, Port.syntier, localpath, ref,
+				client.download206(uri_syn, peerjserv(), Port.syntier, localpath, ref,
 
 					isNull(report2test) ?
 					(rx, r, bx, b, r_null) -> {
@@ -512,7 +595,7 @@ public class SynssionPeer {
 				.where(Sql.condt("%s is null", refm.excludeTag)
 						  .or(Sql.condt("%s <> '%s'", refm.excludeTag, excludeTag)))
 				.orderby(refm.tried)
-				.limit(1);
+				.limit(1); // bug: syn_docref needs a field of domain
 
 			ISemantext semantxt = synb.instancontxt();
 			AnResultset rs = ((AnResultset) q
@@ -525,7 +608,7 @@ public class SynssionPeer {
 				String uids = rs.getString(refm.io_oz_synuid);
 				rs = ((AnResultset) synb
 					.batchSelect(docm.tbl)
-					.cols(docm.pk, docm.uri, docm.resname, docm.io_oz_synuid).col(Funcall.isEnvelope(docm.uri), "isenvl")
+					.cols(docm.pk, docm.uri, docm.resname, docm.io_oz_synuid).col(Funcall.isEnvelope(docm.uri), "isenvlop")
 					.whereEq(docm.io_oz_synuid, uids)
 					.before(synb // delete records of which the uri is not an envelope now
 						.delete(refm.tbl)
@@ -539,12 +622,12 @@ public class SynssionPeer {
 					.rs(0))
 					.nxt();
 
-				if (!rs.getBoolean("isenvl")) {
+				if (!rs.getBoolean("isenvlop")) {
 					Utils.warnT(new Object() {},
 						"Suspesiously, deleting a syn_docref record of an expired task?\n%s -> %s, %s, uids: %s",
 						synb.syndomx.synode, peer, docm.tbl, uids);
 
-					synb.delete(refm.tbl)
+					synb.delete(refm.tbl, synb.synrobot())
 						.whereEq(refm.syntabl, uids)
 						.d(synb.instancontxt());
 					return null;
@@ -562,9 +645,6 @@ public class SynssionPeer {
 			return null;
 		}
 	}
-
-//	public void pingPeers() {
-//	}
 
 	/**
 	 * [not synsession managed]
@@ -633,7 +713,6 @@ public class SynssionPeer {
 
 		List<SyncResp> reslts = new ArrayList<SyncResp>(docrefs.size());
 
-		// DBSyntableBuilder trb0 = new DBSyntableBuilder(domanager);
 		int px = 0;
 		for (String uids : docrefs.keySet()) {
 			if (inAvoidRefs(peer, uids))
@@ -723,7 +802,7 @@ public class SynssionPeer {
 		}
 
 		ExpSyncDoc p = fd.syndoc(template);
-		Path path = fileProvider.pysicalPath(fd); // Path.of(trb.decodeExtfile(fd.uri64()));
+		Path path = fileProvider.pysicalPath(fd);
 
 		SyncReq req  = new SyncReq()
 				.blockStart(domanager.domain(), mynid, peer, totalBlocks, fd)
@@ -761,7 +840,6 @@ public class SynssionPeer {
 				respi = client.commit(q, errHandler);
 				if (proc != null) proc.proc(1, 1, seq, totalBlocks, respi);
 
-				// b64 = AESHelper.encode64(ifs, blocksize);
 				baos = new ByteArrayOutputStream();
 				len = AESHelper.encodeRange(path, ifs, size, baos, start, AESHelper.blockSize());
 			}
@@ -836,12 +914,110 @@ public class SynssionPeer {
 			ok.ok(rep);
 	}
 	
-
 	SessionClient loginWithUri(String jservroot, String myuid, String pswd, String device)
 			throws SemanticException, AnsonException, SsException, IOException {
-		client = new SessionClient(jservroot, null)
-				.loginWithUri(clienturi, myuid, pswd, device);
+		// client = new SessionClient(jservroot, null)
+		client = SessionClient
+				.loginWithUri(jservroot, clienturi, myuid, pswd, device);
 		return client;
+	}
+
+	/**
+	 * File a request to the this.client's peer for updating *jservs* knowledge.
+	 * @return jservs
+	 * @throws IOException 
+	 * @throws AnsonException 
+	 * @throws SemanticException 
+	 */
+	public HashMap<String, String[]> queryJservs()
+			throws SemanticException, AnsonException, IOException {
+
+		mustnonull(client);
+		SyncReq  req = (SyncReq) new SyncReq(null, domain())
+				.exblock(new ExchangeBlock(domanager.domain(),
+						domanager.synode, peer, ExessionAct.mode_client))
+				.a(A.queryJservs);
+
+		String[] act = AnsonHeader.usrAct(getClass().getName(), "queryJservs", A.exchange, "by " + mynid);
+		AnsonHeader header = client.header().act(act);
+
+		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+							.header(header);
+
+		SyncResp resp = client.commit(q, errHandler);
+		
+		mustnonull(resp);
+		musteq(resp.domain, domain());
+		return resp.jservs;
+	}
+
+	/**
+	 * @param jserv
+	 * @return
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws IOException
+	public HashMap<String, String[]> synpushMyJserv(String jserv)
+			throws SemanticException, AnsonException, IOException {
+		mustnonull(client);
+		SynodeMeta m = domanager.synm;
+		SyncReq req = (SyncReq) new SyncReq(null, domain())
+				.exblock(new ExchangeBlock(domanager.domain(),
+						domanager.synode, peer, ExessionAct.mode_client))
+				.a(A.reportJserv);
+
+		req.data(m.jserv, jserv);
+
+		String[] act = AnsonHeader.usrAct(getClass().getName(), "queryJservs", A.reportJserv, "by " + mynid);
+		AnsonHeader header = client.header().act(act);
+
+		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+							.header(header);
+
+		SyncResp resp = client.commit(q, errHandler);
+		
+		mustnonull(resp);
+		musteq(resp.domain, domain());
+
+		return // FIXME ISSUE check nyquence?
+			eq((String)resp.data().get(m.remarks), SynodeMode.hub.name())
+			? resp.jservs
+			: null;
+	}
+	 */
+
+	/**
+	 * 
+	 * @param jservs
+	 * @return {synode-id: [jserv, utc, stamper-creator]}
+	 * @throws SemanticException
+	 * @throws AnsonException
+	 * @throws IOException
+	 */
+	public HashMap<String, String[]> exchangeDBservs(HashMap<String, String[]> jservs)
+			throws SemanticException, AnsonException, IOException {
+		mustnonull(client);
+		// SynodeMeta m = domanager.synm;
+		SyncReq req = (SyncReq) new SyncReq(null, domain())
+				.exblock(new ExchangeBlock(domanager.domain(),
+						domanager.synode, peer, ExessionAct.mode_client))
+				.a(A.exchangeJservs);
+
+		// req.data(m.jserv, jservs);
+		req.jservs(jservs);
+
+		String[] act = AnsonHeader.usrAct(getClass().getName(), A.exchangeJservs, "sync", "by " + mynid);
+		AnsonHeader header = client.header().act(act);
+
+		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+							.header(header);
+
+		SyncResp resp = client.commit(q, errHandler);
+		
+		mustnonull(resp);
+		musteq(resp.domain, domain());
+
+		return resp.jservs;
 	}
 
 	/**
@@ -874,10 +1050,16 @@ public class SynssionPeer {
 					"Joining domain information indicates an action of code (setupDom)%s, rather than %s.\n%s",
 					setupDom, rep.exblock.synact(), rep.msg());
 
-		xp.trb.domainitMe(xp, admin, peerjserv, rep.domain, rep.exblock);
+		xp.trb.domainitMe(xp, admin, peerjserv(), rep.domain, rep.exblock);
 
 		ExchangeBlock req = xp.trb.domainCloseJoin(xp, rep.exblock);
 		return new SyncReq(null, domanager.domain())
 				.exblock(req);
+	}
+
+	public void checkLogin(SyncUser docuser)
+			throws SemanticException, AnsonException, SsException, IOException, TransException {
+		if (client == null || !client.isSessionValid())
+			loginWithUri(peerjserv(), docuser.uid(), docuser.pswd(), docuser.deviceId());
 	}
 }

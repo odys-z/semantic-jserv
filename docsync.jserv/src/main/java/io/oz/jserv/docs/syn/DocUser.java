@@ -7,11 +7,11 @@ import java.util.Set;
 import io.odysz.common.AESHelper;
 import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
-import io.odysz.semantic.syn.SyncUser;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.syn.SyncUser;
 
 /**
  * Doc User, can only be created at server side.

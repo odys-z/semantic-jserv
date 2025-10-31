@@ -18,8 +18,9 @@ import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantic.meta.SyntityMeta;
-import io.odysz.semantic.syn.SynEntity;
 import io.odysz.transact.sql.Insert;
+import io.oz.syn.SynEntity;
+
 import static io.odysz.common.LangExt.*;
 
 /**
@@ -61,8 +62,12 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	
 	public String org;
 
-	/** A constant field of {@link io.oz.album.peer.ShareFlag}. */
-	public String shareflag;
+	/**
+	 * A constant field of {@link io.odysz.semantic.tier.docs.ShareFlag}
+	 * 
+	 * @deprecated not used in 0.7.6
+	 */
+	protected String shareflag;
 	public String shareflag() { return shareflag; }
 	public ExpSyncDoc shareflag(String f) {
 		shareflag = f;
@@ -218,7 +223,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		this.folder = rs.getString(meta.folder);
 		
 		try {
-			this.sharedate = DateFormat.formatime(rs.getDate(meta.shareDate));
+			this.sharedate = DateFormat.formatime_utc(rs.getDate(meta.shareDate));
 		} catch (Exception ex) {
 			this.sharedate = rs.getString(meta.createDate);
 		}
@@ -237,23 +242,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		clientpath = file.fullpath();
 	}
 
-//	/**
-//	 * Currently not support doc.device, doc.cdate, doc.clientpath, 
-//	 * so can only used for resolving DocRef.
-//	 * 
-//	 * @param ref
-//	 */
-//	public ExpSyncDoc(DocRef ref) {
-//		super(ref.docm);
-//		this.org = "";
-//		recId = ref.docId;
-//		this.pname = ref.pname;
-//		this.uids = ref.uids;
-//		this.uri64 = ref.uri64;
-////		device = doc.device();
-////		createDate = doc.cdate();
-////		clientpath = doc.fullpath();
-//	}
 	public ExpSyncDoc(ExpDocTableMeta m) {
 		super(m);
 		this.org = "";
@@ -301,13 +289,12 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	}
 	
 	/**
-	 * @see io.odysz.semantic.syn.SynEntity#insertEntity(io.odysz.semantic.meta.SyntityMeta, io.odysz.transact.sql.Insert)
+	 * @see io.oz.syn.SynEntity#insertEntity(io.odysz.semantic.meta.SyntityMeta, io.odysz.transact.sql.Insert)
 	 */
 	@Override
 	public Insert insertEntity(SyntityMeta m, Insert ins) {
 		ExpDocTableMeta md = (ExpDocTableMeta) m;
-		ins // .nv(md.domain, domain)
-			.nv(md.folder, folder)
+		ins .nv(md.folder, folder)
 			.nv(md.org, org)
 			.nv(md.mime, mime)
 			.nv(md.uri, uri64)

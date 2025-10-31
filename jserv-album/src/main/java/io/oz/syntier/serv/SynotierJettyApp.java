@@ -4,12 +4,13 @@ import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.mustnonull;
-import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
+import static io.odysz.common.Utils.warnT;
 
 import java.io.File;
-import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -26,10 +27,8 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-
 import com.google.zxing.WriterException;
 
-import io.odysz.anson.JsonOpt;
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
@@ -38,7 +37,7 @@ import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonBody;
-import io.odysz.semantic.jprotocol.AnsonMsg;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
@@ -46,12 +45,8 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
-import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.SyncUser;
-import io.odysz.semantic.syn.SynodeMode;
-import io.odysz.semantic.syn.registry.Syntities;
-import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.x.TransException;
 import io.oz.album.helpers.QrProps;
 import io.oz.album.helpers.QrTerminal;
 import io.oz.album.peer.SynDocollPort;
@@ -63,8 +58,13 @@ import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
-import io.oz.syn.SynodeConfig;
-import io.oz.syn.YellowPages;
+import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.SyncUser;
+import io.oz.syn.SynodeMode;
+import io.oz.syn.registry.SynodeConfig;
+import io.oz.syn.registry.Syntities;
+import io.oz.syn.registry.SyntityReg;
+import io.oz.syn.registry.YellowPages;
 
 /**
  * Start an embedded Jetty server for ee8.
@@ -84,8 +84,12 @@ import io.oz.syn.YellowPages;
  *
  */
 public class SynotierJettyApp implements Daemon {
-	public static final String servpath = "/jserv-album";
+	static final String servpath = "jserv-album";
 	
+	/**
+	 * Override this in a non-typical environment, e.g.
+	 * -DWEB-INF=src/main/webapp/WEB-INF for Eclipse tests.
+	 */
 	public static final String webinf = "WEB-INF";
 	public static final String config_xml = "config.xml";
 	public static final String settings_json = "settings.json";
@@ -98,8 +102,10 @@ public class SynotierJettyApp implements Daemon {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-	public String jserv() {
-		return this.syngleton.settings.jserv(this.syngleton.synode());
+	public String jserv() throws SQLException, TransException {
+//		JServUrl jurl = this.syngleton.myjserv();
+//		return jurl == null ? null : jurl.jserv();
+		return this.syngleton.myjserv();
 	}
 
 	private static Winsrv winsrv;
@@ -110,12 +116,11 @@ public class SynotierJettyApp implements Daemon {
 		String nid = winsrv.app.syngleton.synode();
 
 		Utils.logi("=== Service jvmStart() finished [%s %s: %s] ===",
-			DateFormat.formatime(new Date()), nid, winsrv.app.syngleton.settings.jserv(nid));
+			DateFormat.formatime_default(new Date()), nid, winsrv.app.syngleton.settings.jserv(nid));
 	}
 	
 	/**
-	 * Response to SCM stop commands. This is a stub and won't work as
-	 * the method is called in different process than the main process.
+	 * Response to Windows SCM stop commands.
 	 * 
 	 * @param args
 	 * @throws Exception
@@ -157,7 +162,6 @@ public class SynotierJettyApp implements Daemon {
 	            listAllThreads("After thread interruption");
 
 	            if (remainingThreads > 1) {
-	                // Utils.warn("Forcing JVM exit due to " + (remainingThreads - 1) + " lingering threads...");
 	                Utils.warn("Forcing JVM exit due to % lingering threads...", remainingThreads - 1);
 	                System.exit(0);
 	            }
@@ -214,12 +218,13 @@ public class SynotierJettyApp implements Daemon {
 			// For Eclipse's running as Java Application
 			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
 			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
+			JProtocol.setup(servpath, SynDocollPort.docoll);
 
 			AppSettings settings = AppSettings.checkInstall(servpath,
 					srcwebinf, config_xml, _0(args, settings_json), false);
 
 			SynotierJettyApp app = boot(srcwebinf, config_xml, settings)
-					.afterboot(settings)
+					.afterboot()
 					.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 
 			return app;
@@ -231,42 +236,40 @@ public class SynotierJettyApp implements Daemon {
 			return null;
 		}
 	}
-	
+
 	/**
-	 * Expose locally
+	 * Bring up thread to check network changes and expose jserv locally.
 	 * @return this
 	 */
-	SynotierJettyApp afterboot(AppSettings settings) {
-		
-		// prepare loca ip, setup local web-dist's root path, etc.
+	SynotierJettyApp afterboot() {
+		AppSettings settings = syngleton.settings;
 		try {
-			settings.localIp = AppSettings.getLocalIp(2);
-			// settings.webrootLocal = f("%s:%s", settings.localIp, settings.webport);
-			settings.toFile(settings.json, JsonOpt.beautify());
-		} catch (IOException e) {
+			// settings.setupNewJserv(syngleton.syncfg, syngleton.synm);
+			// settings.mergeLoadJservs(syngleton.syncfg, syngleton.synm);
+			// settings.save();
+
+//			syngleton.asybmitJserv(len(settings.startHandler) == 0 ? null :
+//					((ISynodeLocalExposer)Class
+//						.forName(settings.startHandler[0])
+//						.getDeclaredConstructor()
+//						.newInstance()))
+//						;
+
+			SynDomanager mngr = syngleton.domanager(syngleton.syncfg.domain);
+			mngr.ipChangeHandler(len(settings.startHandler) == 0
+								? null
+								: ((ISynodeLocalExposer)Class
+									.forName(settings.startHandler[0])
+									.getDeclaredConstructor()
+									.newInstance()));
+		} catch (Exception e) {
+			warnT(new Object(){}, "Exposing local resources failed!");
 			e.printStackTrace();
 		}
-
-		if (!isNull(settings.startHandler)) {
-			logi("Exposing locally by %s, %s ...", (Object[]) settings.startHandler);
-			logi("IP %s : %s", settings.localIp, DateFormat.formatime(new Date()));
-			try {
-				((ISynodeLocalExposer)Class
-					.forName(settings.startHandler[0])
-					.getDeclaredConstructor()
-					.newInstance())
-					.onExpose(settings, this.syngleton.syncfg.domain, this.syngleton.synode(), this.syngleton.syncfg.https);
-			} catch (Exception e) {
-				warn("Exposing local resources failed!");
-				e.printStackTrace();
-			}
-		}
-
 		return this;
 	}
 	
 	/**
-	 * @deprecated only for tests
 	 * 
 	 * @param webinf
 	 * @param config_xml
@@ -274,7 +277,6 @@ public class SynotierJettyApp implements Daemon {
 	 * @param oe
 	 * @return synotier app
 	 * @throws Exception
-	 */
 	public static SynotierJettyApp boot(String webinf, String config_xml, String settings_json,
 			PrintstreamProvider ... oe) throws Exception {
 
@@ -294,30 +296,28 @@ public class SynotierJettyApp implements Daemon {
 		
 		return boot(webinf, config_xml, pset, oe);
 	}
+	 */
 
 	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings,
 			PrintstreamProvider ... oe) throws Exception {
 
-		Utils.logi("%s : %s", settings.vol_name, System.getProperty(settings.vol_name));
+		Utils.logi("%s : %s", settings.vol_name, EnvPath.getEnv(settings.vol_name));
 
 		Configs.init(webinf);
 		Connects.init(webinf);
 		Syngleton.appName = ifnull(Configs.getCfg("app-name"), "Portfolio 0.7");
 
-		String $vol_home = "$" + settings.vol_name;
-		
-		YellowPages.load($vol_home);
-		SynodeConfig cfg = YellowPages.synconfig();
-		if (cfg.mode == null)
-			cfg.mode = SynodeMode.peer;
-		
 		mustnonull(settings.rootkey, f(
 				"Rootkey cannot be null for starting App. settings:\n%s", 
 				settings.toBlock()));
 
+		String $vol_home = "$" + settings.vol_name;
 		YellowPages.load(FilenameUtils.concat(new File(".").getAbsolutePath(),
 				webinf, EnvPath.replaceEnv($vol_home)));
-
+		SynodeConfig cfg = YellowPages.synconfig();
+		if (cfg.mode == null)
+			cfg.mode = SynodeMode.peer;
+	
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
 
@@ -335,14 +335,16 @@ public class SynotierJettyApp implements Daemon {
 
 	/**
 	 * @param cfg
+	 * @param admin 
 	 * @throws Exception
 	 */
-	public SynotierJettyApp(SynodeConfig cfg, AppSettings settings) throws Exception {
-		syngleton = new Syngleton(cfg, settings);
+	public SynotierJettyApp(SynodeConfig cfg, SyncUser admin, AppSettings settings) throws Exception {
+		syngleton = new Syngleton(cfg, admin, settings);
 	}
 
 	/**
-	 * Create an application instance working as a synode tier.
+	 * Create an application instance working as a synode tier,
+	 * by loading configurations, registering ServPorts.
 	 * @param urlpath e. g. jserv-album
 	 * @param syntity_json e. g. $VOLUME_HOME/syntity.json
 	 * @param admin 
@@ -355,7 +357,7 @@ public class SynotierJettyApp implements Daemon {
 		String sync = cfg.synconn;
 
 		SynotierJettyApp synapp = SynotierJettyApp
-						.instanserver(webinf, cfg, settings, config_xml)
+						.instanserver(webinf, cfg, admin, settings, config_xml)
 						.loadomains(cfg, new DocUser(admin));
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
@@ -368,7 +370,7 @@ public class SynotierJettyApp implements Daemon {
 		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
 
 		return registerPorts(synapp, cfg.synconn,
-				new AnSession(), new AnQuery(), new AnUpdate(),
+				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
 				new Echo(), new HeartLink(),
 				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain), cfg, settings))
 			.addDocServPort(cfg, regists.syntities)
@@ -426,7 +428,7 @@ public class SynotierJettyApp implements Daemon {
 	static public <T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerPorts(
 			SynotierJettyApp synapp, String sysconn, T ... servports) throws Exception {
 
-        synapp.schandler = new ServletContextHandler(synapp.server, servpath);
+        synapp.schandler = new ServletContextHandler(synapp.server, "/" + servpath);
         for (T t : servports) {
         	synapp.registerServlets(synapp.schandler, t.trb(new DATranscxt(sysconn)));
         }
@@ -440,6 +442,7 @@ public class SynotierJettyApp implements Daemon {
 	<T extends ServPort<? extends AnsonBody>> SynotierJettyApp registerServlets(
     		ServletContextHandler context, T t) {
 		WebServlet info = t.getClass().getAnnotation(WebServlet.class);
+		mustnonull(info, f("ServPort %s must define @WebServlet", t.getClass().getName()));
 		for (String pattern : info.urlPatterns()) {
 			context.addServlet(new ServletHolder(t), pattern);
 		}
@@ -463,17 +466,13 @@ public class SynotierJettyApp implements Daemon {
 			server.stop();
 	}
 	
-	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, AppSettings settings,
-			String config_xml) throws Exception {
+	static SynotierJettyApp instanserver(String configPath, SynodeConfig cfg, SyncUser admin,
+			AppSettings settings, String config_xml) throws Exception {
 	
-	    AnsonMsg.understandPorts(SynDocollPort.docoll);
-	
-	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, settings);
-
+	    SynotierJettyApp synapp = new SynotierJettyApp(cfg, admin, settings);
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
-	
-    	// synapp.server = new Server(new InetSocketAddress("0.0.0.0", settings.port));
     	synapp.server = new Server();
+
     	ServerConnector jconn = new ServerConnector(synapp.server);
     	jconn.setHost("0.0.0.0");
     	jconn.setPort(settings.port);

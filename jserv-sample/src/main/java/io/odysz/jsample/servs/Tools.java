@@ -1,13 +1,10 @@
 package io.odysz.jsample.servs;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
-
-import org.xml.sax.SAXException;
 
 import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
@@ -16,10 +13,10 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.UserReq;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.helper.Html;
-import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
@@ -75,7 +72,7 @@ public class Tools extends ServPort<UserReq> {
 			// this constructor can only been called after metas has been loaded
 			// (Jsingleton got a chance to initialize)
 			st = new DATranscxt("inet");
-		} catch (SemanticException | SQLException | SAXException | IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

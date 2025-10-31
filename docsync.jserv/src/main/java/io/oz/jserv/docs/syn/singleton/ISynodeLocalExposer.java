@@ -1,8 +1,6 @@
 package io.oz.jserv.docs.syn.singleton;
 
-import java.io.IOException;
-
-import io.odysz.semantics.x.SemanticException;
+import io.oz.jserv.docs.syn.SynDomanager;
 
 public interface ISynodeLocalExposer {
 
@@ -12,11 +10,9 @@ public interface ISynodeLocalExposer {
 	 * the synode is already running without errors.</p>
 	 * 
 	 * @param settings
-	 * @param configArgs settings.json/onload: args
-	 * e.g. "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist", "WEBROOT_HUB", "8901"]
+	 *  settings.startHandler: ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json"]
 	 * @return  settings
-	 * @throws IOException File IO errors
-	 * @throws SemanticException Handling configuration errors
+	 * @since 0.7.6 All newest versions locally will be exposed to local host.json
 	 */
-	AppSettings onExpose(AppSettings settings, String domain, String synode, boolean https);
+	AppSettings onExpose(AppSettings settings, SynDomanager domx);
 }

@@ -32,13 +32,11 @@ from anson.io.odysz.common import Utils
 from anson.io.odysz.utils import zip2
 from invoke import task, Context
 
-# from src import zip2
-
 SYNODE_VERSION = 'SYNODE_VERSION'
 JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
 HTML_JAR_VERSION = 'HTML_JAR_VERSION'
 WEB_VERSION = 'WEB_VERSION'
-REGISTRY_ZIP = 'REGISTRY_ZIP'
+# REGISTRY_ZIP = 'REGISTRY_ZIP'
 
 ORG = 'ura'
 DOMAIN = 'zsu'
@@ -47,16 +45,14 @@ DOMAIN = 'zsu'
     Versions configured locally, overriden by environment variables.
 """
 vers = {
-    SYNODE_VERSION:    '0.7.3',
-    JSERV_JAR_VERSION: '0.7.4',
-    HTML_JAR_VERSION:  '0.1.7',
-    WEB_VERSION:       '0.4.1',
-    REGISTRY_ZIP: f'registry-{ORG}-{DOMAIN}-0.7.3.zip'
+    SYNODE_VERSION:    '0.7.6',
+    JSERV_JAR_VERSION: '0.7.5',
+    HTML_JAR_VERSION:  '0.1.8',
+    WEB_VERSION:       '0.4.2',
+    # REGISTRY_ZIP: f'registry-{ORG}-{DOMAIN}-0.7.3.zip'
 }
 
 res_toclean = ['dist', '*egg-info']
-
-# registry_zip = f'registry-ura-zsu-{vers[JSERV_JAR_VERSION]}.zip'
 
 @task
 def config(c):
@@ -66,7 +62,7 @@ def config(c):
 
     version = (os.getenv(SYNODE_VERSION) or vers[SYNODE_VERSION]).strip()
     vers[SYNODE_VERSION] = version
-    vers[REGISTRY_ZIP] = f'registry-{ORG}-{DOMAIN}-{vers[SYNODE_VERSION]}.zip'
+    # vers[REGISTRY_ZIP] = f'registry-{ORG}-{DOMAIN}-{vers[SYNODE_VERSION]}.zip'
     print(f'-- synode version: {version} --'),
 
     serv_jar_ver = (os.getenv(JSERV_JAR_VERSION) or vers[JSERV_JAR_VERSION]).strip()
@@ -87,6 +83,7 @@ def config(c):
         'html_srver = "[0-9\\.]+"': f'html_srver = "{html_srver}"'
     })
 
+    Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{version}" # '})
 
 @task
 def zipRegistry(c):
@@ -94,7 +91,7 @@ def zipRegistry(c):
     zip2(vers[REGISTRY_ZIP], {"zsu": "registry-deploy/*"}, ['*.zip'])
 
 
-@task(config, zipRegistry)
+@task(config)
 def build(c: Context):
     def py():
         return 'py' if os.name == 'nt' else 'python3'
@@ -122,6 +119,7 @@ def build(c: Context):
             rm_any(res)
         return None
 
+    from src.synodepy3.__version__ import synode_ver
     buildcmds = [
         ['.', lambda: rm_dist()],
         ['.', f'{py()} -m build']

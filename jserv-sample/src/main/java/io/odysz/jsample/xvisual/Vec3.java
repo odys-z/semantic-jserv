@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-import org.xml.sax.SAXException;
-
 import io.odysz.common.Utils;
 import io.odysz.jsample.protocol.Samport;
 import io.odysz.jsample.utils.SampleFlags;
@@ -19,10 +17,10 @@ import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.UserReq;
 import io.odysz.semantic.jserv.JSingleton;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.helper.Html;
-import io.odysz.semantic.jserv.user.UserReq;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
@@ -155,7 +153,7 @@ public class Vec3 extends ServPort<UserReq> {
 		// TODO & FIXME you can create a context buffer here
 		try {
 			return new DATranscxt(connId);
-		} catch (SQLException | SAXException | IOException e) {
+		} catch (Exception e) {
 			throw new SemanticException("Can't create DATranscxt. Caused by: " + e.getMessage());
 		}
 	}

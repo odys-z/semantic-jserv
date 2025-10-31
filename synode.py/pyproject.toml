@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.3.5"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synode.py3"
+version = "0.7.6" # updated by invoke
+description = "Portfolio Synode Stand Alone Service"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{ name = "Ody Z", email = "odys.zhou@gmail.com" }]
+keywords = ["Documents", "Files", "Relational Database", "Synchronization"]
+requires-python = ">=3.9"
+dependencies = [
+    "pyside6>=6.5.0,<=6.8.2.1",
+    "qrcode",
+    "semantics.py3",
+    "anson.py3>=0.3.5",
+    "anclient.py3>=0.2.3",
+    "psutil",
+    "pillow>=8.0.0",
+    "prompt_toolkit>=3.0.52",
+    "invoke>=2.2.0"
+]
+
+[project.scripts]
+# Test shows these commands cannot be quarantined by venv.
+synode-cli = "synodepy3.prompt:main"
+synode-uninstall-srv = "synodepy3.cli:uninst_srv"
+# synode-clean = "synodepy3.cli:clean"
+synode-start-web = "synodepy3.cli:startweb"
+
+[tool.setuptools]
+packages = ["synodepy3"]
+include-package-data = false
+# packages = { find = { where = ["src"], include = ["synodepy3"], exclude = ["synodepy3.res"] } }
+package-dir = { "synodepy3" = "src/synodepy3" }
+package-data = { "synodepy3" = ["form.ui", "synode.json", "res/*"] }
+
+zip-safe = false

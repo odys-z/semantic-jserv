@@ -7,21 +7,22 @@ import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.pause;
 import static io.odysz.common.Utils.turngreen;
 import static io.odysz.common.Utils.logrst;
-import static io.odysz.semantic.syn.Docheck.printChangeLines;
-import static io.odysz.semantic.syn.Docheck.printNyquv;
 import static io.oz.jserv.docs.syn.Dev.X_0;
 import static io.oz.jserv.docs.syn.Dev.devs;
 import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.Dev.devm;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.azert;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.jetties;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.setVolumeEnv;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.azert;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.errLog;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.jetties;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.setVolumeEnv;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.webinf;
 import static io.oz.jserv.docs.syn.singleton.SynotierJettyApp.zsu;
+import static io.oz.syn.Docheck.printChangeLines;
+import static io.oz.syn.Docheck.printNyquv;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,8 +32,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.xml.sax.SAXException;
 
 import io.odysz.anson.JsonOpt;
+import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Utils;
 import io.odysz.jclient.Clients;
@@ -40,10 +43,9 @@ import io.odysz.jclient.syn.Doclientier;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.syn.Docheck;
-import io.odysz.semantic.syn.SynodeMode;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
@@ -51,9 +53,10 @@ import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.Dev;
-import io.oz.jserv.docs.syn.SynodetierJoinTest;
-import io.oz.syn.SynodeConfig;
-import io.oz.syn.YellowPages;
+import io.oz.syn.Docheck;
+import io.oz.syn.SynodeMode;
+import io.oz.syn.registry.SynodeConfig;
+import io.oz.syn.registry.YellowPages;
 
 /**
  * 
@@ -69,7 +72,7 @@ import io.oz.syn.YellowPages;
  */
 public class ExpDoctierservTest {
 	/** Sarting port for each Jetty service to bind, _8964 + 1, +2, ... */
-	public final static int _8964 = 8966;
+	public final static int _8964 = 9966;
 	
 	public final static int X = 0;
 	public final static int Y = 1;
@@ -91,12 +94,14 @@ public class ExpDoctierservTest {
 	@BeforeAll
 	public static void init() throws Exception {
 		setVolumeEnv("vol-");
+		JProtocol.setup(SynodetierJoinTest.servpath, Port.echo);
 
 		ck = new Docheck[servs_conn.length];
 	}
 	
 	/**
-	 * Use -Dwait-clients for waiting client's pushing, by running {@link DoclientierTest#testSynclientUp()}.
+	 * Use -Dwait-clients for waiting client's pushing,
+	 * by running {@link DoclientierTest#testSynclientUp()}.
 	 * @throws Exception
 	 */
 	@Test
@@ -140,8 +145,8 @@ public class ExpDoctierservTest {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("deprecation")
-	public static void runDoctiers(int caseid, int[] nodex,
-			boolean[] waitClients, boolean[] canPush, boolean[] pushDone) throws Exception {
+	public static void runDoctiers(int caseid, int[] nodex, boolean[] waitClients,
+			boolean[] canPush, boolean[] pushDone) throws Exception {
 
 		int section = 0;
 		
@@ -150,7 +155,7 @@ public class ExpDoctierservTest {
 		final boolean[] lights = new boolean[nodex.length];
 		for (int i : nodex) {
 
-			Syngleton.cleanDomain(jetties[i].syngleton.syncfg);
+			SynodetierJoinTest.cleanDomain(jetties[i].syngleton.syncfg);
 
 			cleanPhotos(docm, jetties[i].syngleton().domanager(zsu).synconn);
 
@@ -177,7 +182,6 @@ public class ExpDoctierservTest {
 		if (waitClients == null) return;
 		// else wait on lights (turn on by clients or users)
 
-
 		turngreen(canPush); // Tell clients can push now
 		logrst("Told clients can push now, waiting...", ++section);
 		
@@ -186,6 +190,9 @@ public class ExpDoctierservTest {
 		printChangeLines(ck);
 		printNyquv(ck);
 
+		// NOte
+		// 1. There can be syn-workers, don't break clients
+		// 2. Only works without synworks
 		ck[X].doc(1);
 		ck[Y].doc(2);
 		ck[Z].doc(0);
@@ -204,12 +211,12 @@ public class ExpDoctierservTest {
 
 		logrst("Bring up dev-x0 and delete", ++section);
 		// 00 delete
-		Clients.init(jetties[X].myjserv());
+		Clients.init(jetties[X].jserv());
 
 		Dev devx0 = devs[X_0];
 		logrst(new String[] {"Deleting", devx0.res}, section, 1);
 
-		devx0.login(errLog);
+		devx0.login(jetties[X].jserv(), errLog);
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
@@ -275,8 +282,6 @@ public class ExpDoctierservTest {
 
 		assert_Arefs_atB(X, Y, 0, 0);
 		assert_Arefs_atB(Y, X, 0, 0);
-
-
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -304,7 +309,7 @@ public class ExpDoctierservTest {
 		yresolve = SynodetierJoinTest
 				.jetties[Y].syngleton.domanager(zsu)
 				.synssion(ck[X].synode())
-				.pushResove();
+				.pushResolve();
 		logrst("Start DocRef pushing thread at Y...", ++section);
 		yresolve.start();
 		yresolve.join();
@@ -352,7 +357,11 @@ public class ExpDoctierservTest {
 		return xdlst;
 	}
 
-	@SuppressWarnings("deprecation")
+	/**
+	 * Debug Notes:
+	 * A slow machine will pollute the settings variable if not buffered
+	 * This test cannot work on slow machine?
+	 */
 	public static int[] startJetties(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
 		int[] nodex = new int[] { X, Y, Z, W };
 		
@@ -367,6 +376,8 @@ public class ExpDoctierservTest {
 			jservs.put(nodes[i], f("http://127.0.0.1:%s/jserv-album", _8964 + i));
 		}
 
+		AppSettings[] settings = new AppSettings[nodex.length];
+
 		for (int i : nodex) {
 			if (jetties[i] != null)
 				jetties[i].stop();
@@ -374,37 +385,49 @@ public class ExpDoctierservTest {
 			String cfgxml = f("config-%s.xml", i);
 			
 			// install
-			AppSettings settings = new AppSettings();
-			settings.jservs = jservs;
-			settings.vol_name = f("VOLUME_%s", i);
-			settings.volume = f("../vol-%s", i);
-			settings.port = _8964 + i;
-			settings.installkey = "0123456789ABCDEF";	
-			settings.rootkey = null;
-			settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
+			AppSettings _settings = new AppSettings();
+			_settings.jservs = jservs;
+			_settings.centralPswd = "8964";
+			_settings.vol_name = f("VOLUME_%s", i);
+			_settings.volume = f("../vol-%s", i);
+			_settings.port = _8964 + i;
+			_settings.installkey = "0123456789ABCDEF";	
+			_settings.rootkey = null;
+			_settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
 
-			YellowPages.load("$" + settings.vol_name);
+			YellowPages.load(EnvPath.concat(webinf, "$" + _settings.vol_name));
 			cfgs[i] = YellowPages.synconfig();
 
-			settings.setupdb(cfgs[i], "jserv-stub", webinf,
+			_settings.setupdb(cfgs[i], "jserv-stub", webinf,
 					 cfgxml, "ABCDEF0123465789", true);
 
 			cleanPhotos(docm, cfgs[i].synconn);
 		
 			// clean and reboot
-			Syngleton.cleanDomain(cfgs[i]);
-			// Syngleton.cleanSynssions(cfgs[i]);
+			SynodetierJoinTest.cleanDomain(cfgs[i]);
 
 			// main()
-			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, "settings.json", true);
+			settings[i] = AppSettings.checkInstall(SynotierJettyApp.servpath,
+					webinf, cfgxml, "settings.json", true);
 
-			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, "settings.json")
-						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
+			Utils.logi("+======================================= %s, %s",
+					settings[i].reversedPort(false), i);
+
+			// Notes for debug tests: sleep longer if binding failed
+			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings[i])
+						.afterboot()
+						.print("\n. . . . . . . . Synodtier Jetty Application (Test) is running . . . . . . . ");
+			
+			// ISSUE afterboot() will write the same settings.json again, in another thread. 
+			// Using different json files for the test?
+			Thread.sleep(10000);
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].syngleton().domanager(zsu).synode,
 								SynodeMode.peer, cfgs[i].chsize, docm, devm, true);
+			
+			Utils.logi("%s: %s - %s", i, settings[i].port, _settings.port);
 		}
 		
 		return nodex;
@@ -454,15 +477,14 @@ public class ExpDoctierservTest {
 		assertEquals(isNull(paths) ? 0 : paths.length, pathpool.size());
 	}
 
-	@SuppressWarnings("deprecation")
-	public static String[] jservs() {
+	public static String[] jservs() throws SQLException, TransException, SAXException, IOException {
 		if (len(jetties) < 4 || jetties[0] == null)
 			throw new NullPointerException("Initialize first.");
 
 		String[] jrvs = new String[jetties.length];
 
 		for (int i = 0; i < jetties.length; i++) 
-			jrvs[i] = jetties[i].myjserv();
+			jrvs[i] = jetties[i].jserv();
 
 		return jrvs;
 	}

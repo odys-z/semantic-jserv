@@ -1,0 +1,17 @@
+{ "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "vol_name"    : "VOLUME_HOME",
+  "localIp"     : null,
+  "proxyIp"     : null,
+  "webport"     : 8900,
+  "port"        : 8964,
+  "proxyPort"   : 0,
+  "webProxyPort": 0,
+  "reverseProxy": false,
+  "envars"      : {"WEBROOT_HUB": "hub"},
+  "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json"],
+  "volume"      : "vol",
+  "connIdleSnds": 0.0,
+  "jservs"      : {},
+  "installkey"  : "0123456789ABCDEF",
+  "rootkey"     : null
+}

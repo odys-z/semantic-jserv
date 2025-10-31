@@ -1,5 +1,5 @@
 {
-  "type": "io.oz.syn.AnRegistry",
+  "type": "io.oz.syn.registry.AnRegistry",
   "config": {
     "type": "io.oz.syn.SynodeConfig",
     "https": false,
@@ -21,7 +21,7 @@
     },
     "syncIns": 0.0,
     "peers": [{
-      "type": "io.odysz.semantic.syn.Synode",
+      "type": "io.oz.syn.Synode",
       "synid": "X29",
       "org": "ura",
       "mac": "#URA.X",
@@ -29,7 +29,7 @@
       "domain": "zsu",
       "syn_uid": "X,X"
     }, {
-      "type": "io.odysz.semantic.syn.Synode",
+      "type": "io.oz.syn.Synode",
       "synid": "Y201",
       "org": "ura",
       "mac": "#URA.Y",
@@ -39,7 +39,7 @@
     }]
   },
   "synusers": [{
-    "type": "io.odysz.semantic.syn.SyncUser",
+    "type": "io.oz.syn.SyncUser",
     "userId": "ody",
     "userName": null,
     "pswd": "8964",
@@ -47,7 +47,7 @@
     "org": "ura",
     "domain": "zsu"
   }, {
-    "type": "io.odysz.semantic.syn.SyncUser",
+    "type": "io.oz.syn.SyncUser",
     "userId": "zelenskyy",
     "userName": null,
     "pswd": "8964",

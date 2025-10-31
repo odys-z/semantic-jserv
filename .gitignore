@@ -18,6 +18,7 @@ exiftool.exe
 *.egg-info
 dist
 vol
+vol-0
 *.exe
 *.jar
 web-dist
@@ -27,3 +28,5 @@ exiftool-*
 logs
 *.log
 .idea/encodings.xml
+*.service
+*.web.service

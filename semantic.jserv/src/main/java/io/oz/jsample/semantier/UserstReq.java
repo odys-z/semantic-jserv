@@ -3,7 +3,7 @@ package io.oz.jsample.semantier;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import io.odysz.semantic.jserv.user.UserReq;
+import io.odysz.semantic.jprotocol.UserReq;
 import io.odysz.semantic.tier.Relations;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.PageInf;

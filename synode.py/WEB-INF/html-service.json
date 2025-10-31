@@ -1,11 +1,12 @@
 {
   "type": "io.oz.srv.WebConfig",
-  "port": 8900,
+  "port": 1989,
   "paths": [{
     "type": "io.oz.srv.ResPath",
     "path": "/",
     "resource": "web-dist",
     "allowDir": false
   }],
-  "startHandler": null
+  "startHandler": null,
+  "json_path": "WEB-INF/html-service.json"
 }

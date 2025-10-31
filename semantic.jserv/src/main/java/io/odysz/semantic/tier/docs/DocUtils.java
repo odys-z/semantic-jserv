@@ -8,11 +8,9 @@ import java.sql.SQLException;
 import java.util.Date;
 
 import io.odysz.common.DateFormat;
-import io.odysz.common.EnvPath;
 import io.odysz.common.LangExt;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DASemantics.ShExtFilev2;
-import io.odysz.semantic.DASemantics.smtype;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.ISemantext;
@@ -53,7 +51,6 @@ public class DocUtils {
 
 		Insert ins = st
 			.insert(meta.tbl, usr)
-			// .nv(meta.domain, usr.orgId())
 			.nv(meta.org, photo.org)
 			.nv(meta.uri, photo.uri64)
 			.nv(meta.resname, photo.pname)
@@ -65,7 +62,6 @@ public class DocUtils {
 			.nv(meta.shareby, photo.shareby)
 			.nv(meta.shareDate, photo.sharedate)
 			.nv(meta.size, photo.size)
-			// .nv(meta.syncflag, SyncFlag.publish) // temp for MVP 0.2.1
 			;
 		
 		if (!LangExt.isblank(photo.mime))
@@ -111,9 +107,9 @@ public class DocUtils {
 			.nv(meta.resname, doc.pname)
 			.nv(meta.device, doc.device)
 			.nv(meta.fullpath, doc.fullpath())
-			.nv(meta.createDate, ifnull(doc.createDate, DateFormat.formatime(new Date())))
+			.nv(meta.createDate, ifnull(doc.createDate, DateFormat.formatime_utc(new Date())))
 			.nv(meta.folder, doc.folder())
-			.nv(meta.shareflag, ifnull(doc.shareflag, ShareFlag.prv.name()))
+			.nv(meta.shareflag, ifnull(doc.shareflag(), ShareFlag.prv.name()))
 			.nv(meta.shareby, ifnull(doc.shareby, usr.uid()))
 			.nv(meta.shareDate, ifnull(doc.sharedate, DateFormat.format(new Date())))
 			.nv(meta.size, doc.size)
@@ -131,28 +127,29 @@ public class DocUtils {
 		SemanticObject res = (SemanticObject) ins.ins(insCtx);
 		return res.resulve(meta.tbl, meta.pk, -1);
 	}
-
+	
 	/**
-	 * Resolve file uri with configured Semantics handler, {@link smtype#extFile}.
-	 * @param uri
-	 * @param meta
+	 * Resolved root path for file saving.
+	 * This method will visit database, and should be called only by the caller of
+	 * {@link DocUtils#createFileB64(DATranscxt, String, ExpSyncDoc, IUser, ExpDocTableMeta, Update)},
+	 * after the ext-file semantics handler, {@link ShExtFilev2}, generated external
+	 * file system uri according to configurations.
+	 * 
+	 * @param st
 	 * @param conn
-	 * @return decode then concatenated absolute path, for file accessing.
-	 * @see EnvPath#decodeUri(String, String)
+	 * @param docId
+	 * @param usr
+	 * @param meta
+	 * @return resolved root path 
+	 * @throws TransException
+	 * @throws SQLException
 	 */
-	public static String resolvePrivRoot(String uri, ExpDocTableMeta meta, String conn) {
-		String extroot = ((ShExtFilev2) DATranscxt
-				.getHandler(conn, meta.tbl, smtype.extFilev2))
-				.getFileRoot();
-		return EnvPath.decodeUri(extroot, uri);
-	}
-
-	public static String resolvExtroot(DATranscxt st, String conn, String docId, IUser usr, ExpDocTableMeta meta)
-			throws TransException, SQLException {
+	public static String resolvExtroot(DATranscxt st, String conn, String docId,
+			IUser usr, ExpDocTableMeta meta) throws TransException, SQLException {
 		ISemantext stx = st.instancontxt(conn, usr);
 		AnResultset rs = (AnResultset) st
 				.select(meta.tbl)
-				.col(meta.uri).col(meta.folder)
+				.col(meta.uri).col(meta.folder).col(meta.resname)
 				.whereEq(meta.pk, docId)
 				.rs(stx)
 				.rs(0);
@@ -160,29 +157,6 @@ public class DocUtils {
 		if (!rs.next())
 			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
 	
-		return resolvExtroot(conn, rs.getString(meta.uri), meta);
-	}
-
-	/**
-	 * According to smtype.extFilev2's configuration for meta.tbl,
-	 * get path by concatenating and replacing env.
-	 * 
-	 * @param conn
-	 * @param extUri
-	 * @param meta
-	 * @return (smtype.extFilev2[meta.tbl]'s arg0 / extUri).replace-env
-	 * @throws TransException
-	 * @throws SQLException
-	 */
-	public static String resolvExtroot(String conn, String extUri, ExpDocTableMeta meta)
-			throws TransException, SQLException {
-
-		ShExtFilev2 h2 = ((ShExtFilev2) DATranscxt.getHandler(conn, meta.tbl, smtype.extFilev2));
-		if (h2 == null)
-			throw new SemanticException(
-				"To resolv ext-root on db conn %s, table %s, this method need semantics extFilev2, to keep file path consists.",
-				conn, meta.tbl);
-		String extroot = h2.getFileRoot();
-		return EnvPath.decodeUri(extroot, extUri);
+		return ShExtFilev2.resolvUri(conn, docId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
 	}
 }

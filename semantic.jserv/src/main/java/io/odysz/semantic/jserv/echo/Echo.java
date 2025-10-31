@@ -98,8 +98,6 @@ public class Echo extends ServPort<EchoReq> {
 		interfaces = new ArrayList<String>();
         Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
         for (NetworkInterface netint : Collections.list(nets)) {
-			// System.out.printf("Display name: %s\n", netint.getDisplayName());
-			// System.out.printf("Name: %s\n", netint.getName());
 			Enumeration<InetAddress> inetAddresses = netint.getInetAddresses();
 			for (InetAddress inetAddress : Collections.list(inetAddresses)) {
 				interfaces.add(inetAddress.toString());

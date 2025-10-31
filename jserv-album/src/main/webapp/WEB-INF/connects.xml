@@ -7,9 +7,31 @@
   	<!-- smtcs: semantics configuration used only for the connection.
   		(And a global semantics configuration?) -->
   	<c>
-  		<id>sys-hub</id>
+  		<id>t-central-sqlite</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>
+  		<src>$VOLUME_HOME/system.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg></dbg>
+  		<log>false</log>
+  		<smtcs>semantics-t-central.xml</smtcs>
+  	</c>
+
+   	<c>
+  		<id>t-central-log-sqlite</id>
+  		<type>sqlite</type>
+  		<src>$VOLUME_HOME/syslog.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg>false</dbg>
+  		<log></log>
+  		<smtcs>semantic-t-central-log.xml</smtcs>
+  	</c>
+  	
+  	<c>
+  		<id>sys-hub</id>
+  		<type>sqlite</type>
   		<src>$VOLUME_HUB/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
@@ -24,18 +46,17 @@
   		<src>$VOLUME_HUB/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>1</dbg>
+  		<dbg></dbg>
   		<smtcs>semantics-syn-hub.xml</smtcs>
 	</c>
 
   	<c>
   		<id>sys-prv</id>
   		<type>sqlite</type>
-  		<isdef>true</isdef>
   		<src>$VOLUME_PRV/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-sys.xml</smtcs>
   	</c>
   	
@@ -46,9 +67,31 @@
   		<src>$VOLUME_PRV/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>1</dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn-prv.xml</smtcs>
 	</c>
+
+  	<c>
+  		<id>sys-mob</id>
+  		<type>sqlite</type>
+  		<src>$VOLUME_MOB/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg></dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+  	
+  	<c>
+		<id>docsyn-mob</id>
+  		<type>sqlit-queue</type>
+  		<isdef></isdef>
+  		<src>$VOLUME_MOB/doc-jserv.db</src>
+  		<usr></usr>
+  		<pswd></pswd>
+  		<dbg></dbg>
+  		<smtcs>semantics-syn-prv.xml</smtcs>
+	</c>
+
 
   </t>
 
@@ -86,10 +129,42 @@
   		<uri>/album/syn</uri>
   		<conn>docsyn-hub</conn>
   	</c>
+	<!-- section for test of ExposeIP()
+		settings: src/test/resources/settings-*.json
+		volumes: volumes-0.7/volume-*
+	 -->
+  	<c>
+  		<uri>/sys/HUB</uri>
+  		<conn>sys-hub</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/HUB</uri>
+  		<conn>docsyn-hub</conn>
+  	</c>
+  	<c>
+  		<uri>/sys/PRV</uri>
+  		<conn>sys-prv</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/PRV</uri>
+  		<conn>docsyn-prv</conn>
+  	</c>
+  	<c>
+  		<uri>/sys/MOB</uri>
+  		<conn>sys-mob</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/MOB</uri>
+  		<conn>docsyn-mob</conn>
+  	</c>
 	<c>
 		<!-- between synodes -->
   		<uri>/syn</uri>
   		<conn>docsyn</conn>
+	</c>
+	<c>
+		<uri>/central-client</uri>
+  		<conn>t-central-sqlite</conn>
 	</c>
   </t>
 </conns>

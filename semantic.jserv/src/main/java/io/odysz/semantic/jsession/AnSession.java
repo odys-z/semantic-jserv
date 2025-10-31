@@ -110,6 +110,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	IUser jrobot = new JRobot();
 
 	/**
+	 * @deprecated this is not recommended and is replacing by {@link #init(String)}.
 	 * Initialize semantext, schedule tasks,
 	 * load root key from tomcat context.xml.
 	 * To configure root key in tomcat, in context.xml, <pre>
@@ -131,7 +132,13 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 		lock = new ReentrantLock();
 
-		users = new HashMap<String, IUser>();
+		// ISSUE Aug 14, 2025
+		// The static field is cleared each time a jetty app is starting.
+		// This prevents tests running with multiple jetty server instances.
+		// TODO to be refactored as a singleton wide instance.
+		if (users == null)
+			users = new HashMap<String, IUser>();
+
 		// see https://stackoverflow.com/questions/34202701/how-to-stop-a-scheduledexecutorservice
 		scheduler = Executors.newScheduledThreadPool(1);
 
@@ -158,6 +165,22 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
         		0, 1, TimeUnit.MINUTES);
 	}
 
+	/**
+	 * AnSession now can be initialized and created at the same time.
+	 * Use this for initializing AnSession in jetty application, in the app:<pre>
+	 * 	registerPorts(app, settings.conn, AnSession.init(Connects.defltConn()));<pre>
+	 * 
+	 * @param session_connid, e.g. by {@link Connects#defltConn()}
+	 * @return new instance that's initialized.
+	 * @throws Exception 
+	 * @since 1.5.18
+	 */
+	public static AnSession init(String session_connid) throws Exception {
+		DATranscxt defltScxt = new DATranscxt(session_connid);
+		init(defltScxt);
+		return new AnSession();
+	}
+	
 	/**Stop all threads that were scheduled by SSession.
 	 * @param msDelay delay in milliseconds.
 	 */
@@ -286,8 +309,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						write(response, rspMsg, msg.opts());
 					}
 					else throw new SsException(
-							"Password doesn't match!\\n"
-							+ "Additional Details: %s",
+							"Password doesn't match!\\nAdditional Details: %s",
 							login.notifies() != null && login.notifies().size() > 0 ? login.notifies().get(0) : "");
 				}
 				else if (logout.equals(a)) {

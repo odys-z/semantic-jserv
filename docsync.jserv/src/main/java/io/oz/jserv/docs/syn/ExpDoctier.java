@@ -9,6 +9,7 @@ import static io.odysz.transact.sql.parts.condition.Funcall.sum;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
@@ -36,9 +37,6 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantic.meta.ExpDocTableMeta;
-import io.odysz.semantic.syn.DBSynTransBuilder;
-import io.odysz.semantic.syn.SyncUser;
-import io.odysz.semantic.syn.registry.SyntityReg;
 import io.odysz.semantic.tier.docs.BlockChain;
 import io.odysz.semantic.tier.docs.DocUtils;
 import io.odysz.semantic.tier.docs.DocsException;
@@ -50,7 +48,10 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.syn.SynodeConfig;
+import io.oz.syn.DBSynTransBuilder;
+import io.oz.syn.SyncUser;
+import io.oz.syn.registry.SynodeConfig;
+import io.oz.syn.registry.SyntityReg;
 
 /**
  * The access point of document client tiers, accepting doc's pushing.
@@ -62,13 +63,15 @@ import io.oz.syn.SynodeConfig;
  */
 @WebServlet(description = "Synode Tier: docs-sync", urlPatterns = { "/docs.tier" })
 public class ExpDoctier extends ServPort<DocsReq> {
-	/**
-	 * The callback each time triggered by {@link ExpDoctier#endBlock()}. 
-	 *
-	 * The function is always called in a background thread.
-	 */
 	@FunctionalInterface
 	public interface IOnDocreate {
+		/**
+		 * <p>Update any information can be figured out according the created file,
+		 * then persist into the file's record.</p>
+		 * 
+		 * The callback is triggered by {@link ExpDoctier#endBlock(DocsReq, IUser)}, and must be
+		 * always be called in a background thread.
+		 */
 		void onCreate(String conn, String docId, DATranscxt st, IUser usr, ExpDocTableMeta docm, String... path);
 	}
 
@@ -79,7 +82,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	public DATranscxt syntransBuilder() throws SQLException, TransException {
 		if (st == null)
 			throw new SemanticException("This synode haven't been started.");
-		return st; // .loadNstamp();
+		return st;
 	}
 
 	public ExpDoctier() throws Exception {
@@ -146,13 +149,10 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				// Session less
 				if (A.rec.equals(a))
 					rsp = doc(jmsg.body(0));
-//				else if (A.download.equals(a))
-//					download(resp, jmsg.body(0), locrobot);
 			} else {
 				DocUser usr = (DocUser) JSingleton
 						.getSessionVerifier()
 						.verify(jmsg.header());
-				// notNull(usr.deviceId(), "Device id of session user is null: %s", usr.uid());
 
 				if (A.upload.equals(a))
 					rsp = createDoc(docreq, usr);
@@ -213,12 +213,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 	DocsResp notifySyndom(DocsReq body)
 			throws SemanticException, AnsonException, SsException, IOException {
 		// FIXME instead of re-schedule the syn-worker?
-		domx.updomains((dom, synid, peer, xp) -> {
-				if (debug)
-					Utils.logT(new Object(){}, 
-						"Notification is handled: %s, %s, %s", dom, synid, peer);
-			}); // , (usr) -> Math.random());
-		
 		return new DocsResp().device(body.device());
 	}
 
@@ -401,12 +395,14 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		if (Anson.startEnvelope(photo.uri64))
 			Utils.warnT(new Object() {}, "Must be verfified: Ignoring file moving since envelope is saved into the uri field. TODO wrap this into somewhere, not here.");
 		else {
-			// TODO FIXME move this to DocUtils.createFileBy64()
 			// move file
 			String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
 
-			if (debug)
+			if (debug) {
 				Utils.logT(new Object() {}, " %s\n-> %s", chain.outputPath, targetPath);
+				Utils.logT(new Object() {}, " %s\n-> %s", Path.of(chain.outputPath).toAbsolutePath(),
+														  Path.of(targetPath).toAbsolutePath());
+			}
 
 			// Target dir always exists since the semantics handler, by calling ExtFileInsertv2.sql(), has touched it.
 			Files.move(Paths.get(chain.outputPath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
@@ -425,7 +421,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 					.recId(pid)
 					.device(body.device())
 					.folder(photo.folder())
-					.share(photo.shareby, photo.shareflag, photo.sharedate)
+					.share(photo.shareby, photo.shareflag(), photo.sharedate)
 					.clientname(chain.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(chain.doc.clientpath));
@@ -468,7 +464,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		ExpSyncDoc photo = docreq.doc;
 		String pid = DocUtils.createFileBy64(b, conn, photo, usr, docm);
 	
-		// onDocreated(pid, conn, docm, usr);
 		onCreate.onCreate(conn, pid, b, usr, docm);
 		return new DocsResp().doc(photo);
 	}
@@ -484,8 +479,9 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		if (body.device() == null || isblank(body.device().id))
 			throw new DocsException(DocsException.SemanticsError, "Starting a block chain without device specified?");
 
-		if (isblank(body.doc.shareflag))
-			throw new DocsException(DocsException.SemanticsError, "Document's sharing flag is not specified. Doc: [%s] %s",
+		if (isblank(body.doc.shareflag()))
+			Utils.warn("[Error 0.7.6 (%s)] Document's sharing flag is not specified. Doc: [%s] %s",
+					DocsException.SemanticsError, 
 					body.doc.recId, body.doc.pname);
 
 		if (isblank(body.doc.device()))
@@ -533,7 +529,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 	DocsResp delDoc(DocsReq docsReq, IUser usr) throws Exception {
 		String conn = Connects.uri2conn(docsReq.uri());
-		// DATranscxt b = syntransBuilder();
 		DBSynTransBuilder b = new DBSynTransBuilder(domx);
 		ExpDocTableMeta docm = (ExpDocTableMeta) DBSynTransBuilder.getEntityMeta(conn, docsReq.docTabl);
 
@@ -640,45 +635,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return this;
 	}
 	
-//	void download(HttpServletResponse resp, DocsReq req, IUser usr)
-//			throws IOException, SemanticException, TransException, SQLException {
-//
-////		String conn = Connects.uri2conn(req.uri());
-////		ExpDocTableMeta meta = new ExpDocTableMeta(conn);
-////
-////		AnResultset rs = (AnResultset) st
-////				.select(meta.tbl, "p")
-////				.j("a_users", "u", "u.userId = p.shareby")
-////				.col(meta.pk)
-////				.col(meta.resname).col(meta.createDate)
-////				.col(meta.folder).col(meta.fullpath)
-////				.col(meta.uri)
-////				.col("userName", "shareby")
-////				.col(meta.shareDate)
-////				// .col(meta.geox).col(meta.geoy).col(meta.tags)
-////				.col(meta.mime)
-////				.whereEq(meta.pk, req.doc.recId)
-////				.rs(st.instancontxt(conn, usr)).rs(0);
-////
-////		if (!rs.next()) {
-////			resp.setContentType("image/png");
-////			FileStream.sendFile(resp.getOutputStream(), missingFile);
-////		}
-////		else {
-////			String mime = rs.getString("mime");
-////			resp.setContentType(mime);
-////			
-////			try ( OutputStream os = resp.getOutputStream() ) {
-////				FileStream.sendFile(os, DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta));
-////				os.close();
-////			} catch (IOException e) {
-////				// If the user dosen't play a video, Chrome will close the connection before finishing downloading.
-////				// This is harmless: https://stackoverflow.com/a/70020526/7362888
-////				// Utils.warn(e.getMessage());
-////			}
-////		}
-//	}
-
 	static String chainId(IUser usr, String clientpathRaw) {
 		return usr.sessionId() + " " + clientpathRaw;
 	}

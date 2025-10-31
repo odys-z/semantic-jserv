@@ -8,8 +8,8 @@ import static io.odysz.transact.sql.parts.condition.Funcall.now;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import io.odysz.common.EnvPath;
 import io.odysz.module.rs.AnResultset;
+import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.ISemantext;
@@ -20,6 +20,9 @@ import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.PhotoRec;
 import io.oz.jserv.docs.syn.ExpDoctier.IOnDocreate;
 
+/**
+ * @since 0.2.0
+ */
 public class DocreateHandler implements IOnDocreate {
 	
 	public DocreateHandler() throws InterruptedException, IOException, TimeoutException {
@@ -34,7 +37,6 @@ public class DocreateHandler implements IOnDocreate {
 		PhotoMeta phm = (PhotoMeta) docm;
 
 		try {
-			// DATranscxt st = new DATranscxt(conn);
 			AnResultset rs = (AnResultset) st
 				.select(docm.tbl, "p")
 				.col(docm.folder).col(docm.fullpath)
@@ -50,7 +52,7 @@ public class DocreateHandler implements IOnDocreate {
 				ISemantext stx = st.instancontxt(conn, usr);
 
 				String pth = isNull(path)
-							? EnvPath.decodeUri(stx, rs.getString(docm.uri))
+							? ShExtFilev2.resolvUri(conn, docId, rs.getString(docm.uri), rs.getString(docm.resname), docm)
 							: path[0];
 
 				PhotoRec p = new PhotoRec();

@@ -1,32 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.5</version>
+  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.6</version>
   <packaging>jar</packaging>
 
-  <name>jserv-album Maven Webapp</name>
+  <name>jserv-album Synode</name>
   <url>https://odys-z.github.io</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
 	<maven.compiler.source>17</maven.compiler.source>
 	<maven.compiler.target>17</maven.compiler.target>
 	<jetty.version>12.0.16</jetty.version>
 	<jetty-ee8.version>12.0.16</jetty-ee8.version>
-
-	<!--
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-	<jetty.version>9.4.55.v20240627</jetty.version>
-	-->
   </properties>
-  
 
   <licenses>
     <license>
@@ -34,15 +27,6 @@
       <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
-
-  <repositories>
-  <!-- 
-  	<repository>
-  		<id>sonatype-snapshots</id>
-  		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-  	</repository>
-   -->
-  </repositories>
 
   <scm>
   	<connection>scm:git:git://github.com/odys-z/semantic-jserv.git</connection>
@@ -60,36 +44,14 @@
     </developer>
   </developers>
 
-  <!--
-  <distributionManagement>
-  	<snapshotRepository>
-  		<id>ossrh</id>
-  		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-  		<uniqueVersion>false</uniqueVersion>
-  	</snapshotRepository>
-  	<repository>
-  		<id>ossrh</id>
-  		<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-	</repository>
-  </distributionManagement>
-  -->
-
   <dependencies>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.9.3</version>
+      <version>5.9.1</version>
       <scope>test</scope>
     </dependency>
 
-	<!-- 
-	<dependency>
-	  <groupId>args4j</groupId>
-	  <artifactId>args4j</artifactId>
-	  <version>2.37</version>
-	</dependency>
-	-->
-	
 	<dependency>
 		<groupId>com.google.zxing</groupId>
 		<artifactId>core</artifactId>
@@ -119,7 +81,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>[0.2.4,)</version>
+	    <version>[0.2.6-SNAPSHOT,)</version>
 	</dependency>
 
 	<dependency>
@@ -131,7 +93,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>albumtier</artifactId>
-	    <version>0.5.0-SNAPSHOT</version>
+	    <version>[0.5.0,)</version>
 	    <scope>test</scope>
 	</dependency>
 
@@ -141,19 +103,23 @@
 		<version>${jetty.version}</version>
     </dependency>
 
-	<!-- 
-	<dependency>
-		<groupId>io.github.odys-z</groupId>
-		<artifactId>antson</artifactId>
-		<version>0.9.118</version>
-	</dependency>
-	-->
-	
 	<!-- https://mvnrepository.com/artifact/commons-daemon/commons-daemon -->
 	<dependency>
 		<groupId>commons-daemon</groupId>
 		<artifactId>commons-daemon</artifactId>
 		<version>1.4.1</version>
+	</dependency>
+	<dependency>
+		<groupId>io.github.odys-z</groupId>
+		<artifactId>anclient.java</artifactId>
+		<version>0.5.18-SNAPSHOT</version>
+	</dependency>
+	
+	<dependency>
+		<groupId>io.github.odys-z</groupId>
+ 		<artifactId>synodict.central</artifactId>
+		<version>0.1.1</version>
+		<scope>test</scope>
 	</dependency>
   </dependencies>
 
@@ -328,6 +294,9 @@
 			<transformers>
 				<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 					<mainClass>io.oz.syntier.serv.SynotierJettyApp</mainClass>
+				<!--
+					<mainClass>io.oz.album.helpers.AppEnvHelper</mainClass>
+				-->
 				</transformer>
 				<!--
 				<transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
@@ -341,11 +310,13 @@
     </plugins>
 
     <resources>
-      <!-- Packed via Makefile. Uncomment for war.
       <resource>
-    	<directory>src/main/webapp</directory>
+        <directory>${project.basedir}/src/main/java</directory>
+        <includes>
+          <include>**/*.sqlite.ddl</include>
+          <include>**/*.txt</include>
+        </includes>
       </resource>
-      -->
     </resources>
   </build>
 </project>

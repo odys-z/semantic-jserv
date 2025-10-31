@@ -1,0 +1,25 @@
+{"type": "io.oz.syn.registry.AnRegistry",
+ "config": {
+   "synid": "",
+   "mode": "hub",
+   "domain": "zsu",
+   "admin": "admin",
+   "sysconn": "sys",
+   "synconn": "docsyn",
+   "debug": false,
+
+  "org": {
+    "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
+    "orgId": "org.my",
+    "orgName": "ORG-MY 0.7.6",
+    "orgType": "my override by synode.json/{market_id}",
+    "webroot": "$WEBROOT",
+    "homepage": "",
+    "album0":  "album-test"
+  },
+
+  "syncIns": 0
+ },
+
+ "synusers": [ {"userId": "admin", "pswd": "89648964", "iv": null, "org": "org.my", "domain": "zsu"} ]
+}

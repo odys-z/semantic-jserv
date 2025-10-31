@@ -1,0 +1,62 @@
+{ "type": "synodepy3.SynodeUi",
+  "version": "0.7.6",
+  "market": "MY [Test]",
+  "market_id": "my",
+  "central_iport": "182.150.29.34:1989",
+  "central_path": "regist-central",
+  "iso": "http://www.lingoes.net/en/translator/langcode.htm",
+  "ui": "ui_form.py",
+  "credits": "https://odys-z.github.io/products/album/credits.html",
+  "lang": "en",
+  "langs": {
+    "en": {
+      "gboxRegistry": "Synchronization Domain Identity - Market {market}",
+      "lbHelplink": "HELP",
+      "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps",
+      "signup_prompt": "This a demo version. You can login with admin and create a domain guarded by the TEST server, in which the data is your owns and cannot interfere with each others.",
+      "txt_create_dom": "Create Domain",
+      "txt_join_dom": "Join Domain"
+    },
+    "zh-CN": {
+      "gboxRegistry": "同步域标识 - 区域 {market}",
+      "lbHelplink": "帮助",
+      "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps",
+      "signup_prompt": "这是一个演示版本。您可以用admin身份登录并创建一个测试域，其中的数据属于您自己，并且彼此之间不会相互干扰。",
+      "txt_create_dom": "创建域",
+      "txt_join_dom": "注册域"
+    },
+    "zh-TW": {
+      "gboxRegistry": "同步域標識 - 區域 {market}",
+      "lbHelplink": "幫助",
+      "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps",
+      "signup_prompt": "這是一個示範版本。您可以用admin身份登入並建立一個測試域，其中的資料屬於您自己，並且彼此之間不會相互幹擾。"
+    },
+    "fr": {
+      "gboxRegistry": "Synchronisation de l'identité du domaine - Marché {market}",
+      "lbHelplink": "Aide",
+      "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps",
+      "signup_prompt": "Ceci est une version de démonstration. Vous pouvez vous connecter en tant qu'admin et créer un domaine protégé par le serveur TEST, dans lequel les données vous appartiennent et ne peuvent pas interférer les unes avec les autres."
+    },
+    "ja": {
+      "gboxRegistry": "同期ドメインID - ゾーン {market}",
+      "lbHelplink": "ヘルプ",
+      "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps"
+    },
+    "uk": {
+      "gboxRegistry": "Ідентифікатор домену синхронізації – Market {market}",
+      "lbHelplink": "Довідка",
+      "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps"
+    },
+    "ms": {
+      "gboxRegistry": "Identiti Domain Penyegerakan - Pasaran {market}",
+      "lbHelplink": "Tolong",
+      "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps",
+      "signup_prompt": "Ini versi tunjuk cara. Anda boleh log masuk dengan pentadbir dan mencipta domain yang dikawal oleh pelayan TEST, di mana data adalah milik anda dan tidak boleh mengganggu satu sama lain."
+    },
+    "de": {
+      "gboxRegistry": "Synchronisierungsdomänenidentität – Markt {market}",
+      "lbHelplink": "Helfen",
+      "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps"
+    }
+  }
+}

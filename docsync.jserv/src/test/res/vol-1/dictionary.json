@@ -1,4 +1,4 @@
-{"type": "io.oz.syn.AnRegistry",
+{"type": "io.oz.syn.registry.AnRegistry",
  "config": {
    "synid": "Y",
    "domain": "zsu",
@@ -14,6 +14,7 @@
      "orgType": "nation"
 	},
 
+   "syncIns" : -1,
    "peers": [
      {"synid": "X", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "X,X"},
      {"synid": "Y", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "Y,Y"},

@@ -1,12 +1,18 @@
-{"type": "io.oz.syn.AnRegistry",
+{"type": "io.oz.syn.registry.AnRegistry",
  "config": {
    "domain": "zsu",
    "synid": "X",
    "admin": "ody",
    "sysconn": "main-sqlite",
    "synconn": "no-jserv.00",
-   "host": "",
-   "port": 8964 
+   "syncIns" : -1,
+
+   "org": {
+    "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
+    "orgId": "ura",
+     "orgName": "URA",
+     "orgType": "nation"
+   }
  },
  "synusers": [
    {"userId": "ody", "pswd": "8964", "iv": null, "org": "ura", "domain": "zsu"},

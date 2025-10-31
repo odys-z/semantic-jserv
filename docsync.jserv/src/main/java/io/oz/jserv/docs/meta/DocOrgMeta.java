@@ -5,7 +5,7 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.meta.SemanticTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
-import io.oz.syn.SynodeConfig;
+import io.oz.syn.registry.SynodeConfig;
 
 public class DocOrgMeta extends SemanticTableMeta {
 
@@ -45,13 +45,9 @@ public class DocOrgMeta extends SemanticTableMeta {
 				.nv(orgName, cfg.org.orgName)
 				.nv(orgType, cfg.org.orgType)
 				.nv(webNode,  EnvPath.replaceEnv(cfg.org.webroot))
-//				.nv(homepage, EnvPath.replaceEnv(cfg.org.homepage))
-//				.nv(album0,   EnvPath.replaceEnv(cfg.org.album0))
-//				.nv(market,   EnvPath.replaceEnv(cfg.org.market))
-//				.nv(webroot,  cfg.org.webroot)
 				.nv(homepage, cfg.org.homepage)
 				.nv(album0,   cfg.org.album0)
-				.nv(market,   cfg.org.market)
+				.nv(market,   cfg.org.orgType)
 				.ins(t.instancontxt(cfg.sysconn, rob));
 		return res.total();
 	}

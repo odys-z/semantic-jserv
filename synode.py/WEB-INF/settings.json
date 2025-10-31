@@ -1,19 +1,27 @@
 {
   "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "port": 8964,
-  "webport": 8900,
-  "reverseProxy": false,
-  "proxyPort": 8964,
-  "proxyIp": "",
-  "webProxyPort": 8900,
-  "envars": {"WEBROOT_HUB": "X29"},
+  "regiserv": "http://127.0.0.1:1990/regist-central",
+  "port": 1911,
+  "webport": 1989,
+  "reverseProxy": true,
+  "proxyPort": 1911,
+  "proxyIp": "182.150.29.34",
+  "webProxyPort": 1989,
+  "envars": {
+    "WEBROOT_HUB": "X29",
+    "WEBROOT": "node-0"},
   "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json"],
   "webrootLocal": "http://suppress.warning:8900",
+  "jserv_utc": "2025-09-30 02:01:48",
   "vol_name": "VOLUME_HOME",
-  "volume": "C:/Users/Alice/github/semantic-jserv/jserv-album/vol2",
+  "volume": "/home/ody/github/semantic-jserv/synode.py/vol",
   "jservs": {
-    "X29": "http://127.0.0.1:8964/jserv-album",
-    "Y201": "http://127.0.0.1:8965/jserv-album"},
+    "qq-hub": "http://192.168.0.204:1234/jserv-album",
+    "qq-1": "http://192.168.0.201:1231/jserv-album",
+    "zsu1vvv-hub": "http://192.168.0.204:1234/jserv-album",
+    "edu-1-hub": "http://182.150.29.34:8801/jserv-album/jserv-album",
+    "node-0": "http://182.168.29.34:1911/jserv-album"},
   "installkey": "0123456789ABCDEF",
-  "rootkey": ""
+  "rootkey": "",
+  "json_path": "WEB-INF/settings.json"
 }

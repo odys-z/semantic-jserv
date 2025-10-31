@@ -435,7 +435,6 @@ end </pre>
 				i = Connects.commit(dblog, updatei);
 			}
 
-			// return ok("re-forest", "Updated %s records from root %s", total, rootId);
 			return total;
 		}
 	

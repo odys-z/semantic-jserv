@@ -70,17 +70,11 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		/** document manage's semantic tier */
 		docstier("docs.tier"),
 
-		/**
-		 * <h5>[experimental]</h5>
-		 * This port is implemented by extension docsync.jserv.
-		 * */
-		// docsync("docs.sync"),
-
-		/** @deprecated ? */
-		dbsyncer("clean.db"),
+//		/** @deprecated ? */
+//		dbsyncer("clean.db"),
 		
-		/** @deprecated for MVP album v0.2.1 only */
-		album21("docs.album21"),
+//		/** @deprecated for MVP album v0.2.1 only */
+//		album21("docs.album21"),
 		
 		/**
 		 * Synode tier service: sync.tier
@@ -143,8 +137,13 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * jserv-sample/io.odysz.jsample.protocol.Samport.</p>
 	 * 
 	 * @param p extended Port
+	 * @since 1.5.18, this is recommended not to use directly. Call {@link JProtocol#setup(String, IPort)} instead.
 	 */
 	static public void understandPorts(IPort p) {
+		// Because of the java enum limitation, or maybe the author's knowledge limitation, 
+		// JMessage needing a IPort instance to handle ports that implemented a new version
+		// of valof() method for handling all ports.<br>
+		// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 		defaultPortImpl = p;
 	}
 	

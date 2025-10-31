@@ -1,19 +1,21 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.semantic.syn.ExessionAct.*;
 import static io.odysz.common.LangExt.musteqs;
+import static io.oz.syn.ExessionAct.*;
 import static io.odysz.common.LangExt.isblank;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import io.odysz.anson.AnsonField;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
-import io.odysz.semantic.jserv.user.UserReq;
+import io.odysz.semantic.jprotocol.UserReq;
 import io.odysz.semantic.meta.DocRef;
-import io.odysz.semantic.syn.ExchangeBlock;
-import io.odysz.semantic.syn.ExessionAct;
 import io.odysz.semantic.tier.docs.BlockChain.IBlock;
 import io.odysz.semantics.x.SemanticException;
+import io.oz.syn.ExchangeBlock;
+import io.oz.syn.ExessionAct;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.IFileDescriptor;
 
@@ -53,6 +55,18 @@ public class SyncReq extends UserReq implements IBlock {
 		public static final String docRefBlockUp   = "u/ref-bi";
 		public static final String docRefBlockEnd  = "u/ref-b9";
 		public static final String docRefBlockAbort= "u/ref-bx";
+
+		/**
+		 * Jservs management: tell me all
+		 * @since 0.2.6
+		 */
+		public static final String queryJservs = "r/jservs";
+		
+		/**
+		 * Push jservs, ask server side update with the later version.
+		 * @since 0.2.6
+		 */
+		public static final String exchangeJservs = "x/jserv";
 	}
 
 	ExchangeBlock exblock;
@@ -85,6 +99,23 @@ public class SyncReq extends UserReq implements IBlock {
 		return exblock == null ? unexpect : exblock.synact();
 	}
 
+	/**
+	 * Jservs for exchange between synodes, esp. by worker 1. 
+	 * 
+	 * <pre>{synode: [jserv-str, jserv-utc, creater-id]}</pre>
+	 * @since 0.2.6
+	 */
+	@AnsonField(valType="[Ljava.lang.String;")
+	HashMap<String, String[]> ex_jservs;
+
+	/**
+	 * Set {@link #ex_jservs} (for synodes exchange jservs).
+	 */
+	public SyncReq jservs (HashMap<String, String[]> jservs) {
+		ex_jservs = jservs;
+		return this;
+	}
+	
 	/** 
 	 * data to be used for resolve doc-ref.
 	 * @since 0.2.5
@@ -158,7 +189,6 @@ public class SyncReq extends UserReq implements IBlock {
 	 * @param sequence
 	 * @param doc
 	 * @param b64 for multi-thread style, this must be copied as it is used as a reference
-	 * @param usr
 	 * @return this
 	 * @throws SemanticException
 	 */

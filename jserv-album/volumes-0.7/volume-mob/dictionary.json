@@ -1,0 +1,35 @@
+{
+  "type": "io.oz.syn.registry.AnRegistry",
+  "config": {
+    "type": "io.oz.syn.registry.SynodeConfig",
+    "https": false,
+    "synid": "MOB",
+    "domain": "zsu",
+    "admin": "ody",
+    "sysconn": "sys-mob",
+    "synconn": "docsyn-mob",
+    "org": {
+      "type": "io.oz.syn.registry.SynOrg",
+      "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
+      "orgId": "ura", "orgName": "URA", "orgType": "test",
+      "webroot": "$WEBROOT_MOB", "homepage": "", "album0": "album-test"
+    },
+    "syncIns": 15.0,
+    "peers": [
+      {"type": "io.oz.syn.Synode",
+       "synid": "HUB", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "HUB.HUB" },
+      {"type": "io.oz.syn.Synode",
+       "synid": "PRV", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "PRV,PRV" },
+      {"type": "io.oz.syn.Synode",
+       "synid": "MOB", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "MOB,MOB" } ]
+  },
+  "synusers": [{
+    "type": "io.oz.syn.SyncUser",
+    "userId": "admin",
+    "userName": null,
+    "pswd": "8964",
+    "iv": null,
+    "org": "ura",
+    "domain": "zsu"
+  }]
+}

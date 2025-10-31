@@ -32,7 +32,7 @@ def run_jserv(c, bin = 'bin'):
         cd = re.sub('/', '\\\\', cd)
 
     try:
-        ret = c.run(f'cd {cd} && java -jar bin/jserv-album-0.7.1.jar')
+        ret = c.run(f'cd {cd} && java -jar bin/jserv-album-{jar_ver}.jar')
         print(ret.ok)
     except KeyboardInterrupt as e:
         print('KeyboardInterrupt', e)
@@ -56,19 +56,6 @@ def install_wsrv_byname(srvname: str):
     print(cmd)
     ctx.run(cmd)
     return srvname
-
-
-"""
-same executable as uninstall_wsrv_byname()
-
-def uninstall_htmlsrv(srvname: str = None):
-    ctx = Context()
-    if srvname is None:
-        srvname = InstallerCli().loadInitial().envars[winsrv_websrv]
-    cmd = f'{install_html_w_bat} uninstall {srvname}'
-    print(cmd)
-    ctx.run(cmd)
-"""
 
 
 def install_htmlsrv(srvname: str):

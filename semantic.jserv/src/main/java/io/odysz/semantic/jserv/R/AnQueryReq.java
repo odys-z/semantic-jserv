@@ -19,11 +19,13 @@ public class AnQueryReq extends AnsonBody {
 	/**Main table alias*/
 	String mAlias;
 	
-	/**<pre>joins: [join-obj],
-     - join-obj: [{t: "j/R/l", tabl: "table-1", as: "t_alais", on: conds}]
-           - conds: [cond-obj]
-            	cond-obj: {(main-table | alais.)left-col-val op (table-1 | alias2 .)right-col-val}
-           				- op: '=' | '&lt;=' | '&gt;=' ...</pre>
+	/**
+	 * <pre>
+	 * joins: [join-obj],
+	 * join-obj: [{t: "j/R/l", tabl: "table-1", as: "t_alais", on: conds}]
+	 * conds: [cond-obj]
+	 * cond-obj: {(main-table | alais.)left-col-val op (table-1 | alias2 .)right-col-val}
+	 * op: '=' | '&lt;=' | '&gt;=' ...</pre>
 	 */
 	ArrayList<String[]> joins;
 

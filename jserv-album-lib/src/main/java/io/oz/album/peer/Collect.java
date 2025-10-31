@@ -8,7 +8,7 @@ import io.odysz.anson.Anson;
 import io.odysz.module.rs.AnResultset;
 
 /**
- * TODO  to be renamed to PhotoCollect,
+ * PhotoCollect,
  * 
  * see Anclient/js/anreact/src/photo-gallery/src/tier/photo-rec.ts
  * 

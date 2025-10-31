@@ -1,6 +1,8 @@
 package io.oz.album.helpers;
 
 import static io.odysz.common.LangExt._0;
+import static io.odysz.common.LangExt.len;
+import static io.odysz.common.Utils.logi;
 
 import java.util.ArrayList;
 
@@ -12,17 +14,23 @@ public class Metadata extends SemanticObject {
 		return new ArrayList<String>(props.keySet());
 	}
 
-	public String getLatitude() {
-		return String.valueOf(props.get(TIFF.LATITUDE));
-	}
-
-	public String getLongitude() {
-		return String.valueOf(props.get(TIFF.LONGITUDE));
-	}
+//	public String getLatitude() {
+//		return String.valueOf(props.get(TIFF.LATITUDE));
+//	}
+//
+//	public String getLongitude() {
+//		return String.valueOf(props.get(TIFF.LONGITUDE));
+//	}
 
 	public <T> T meta(String name) {
 		@SuppressWarnings("unchecked")
 		ArrayList<T> vals = (ArrayList<T>) get(name); 
 		return _0(vals);
+	}
+	
+	public void print() {
+		if (len(props) > 0)
+			for (String n : names())
+				logi("%s\t: %s", n, meta(n));
 	}
 }

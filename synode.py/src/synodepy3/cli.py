@@ -2,16 +2,22 @@ import sys
 
 from anson.io.odysz.common import Utils
 
-# See https://stackoverflow.com/a/28154841
-from .installer_api import InstallerCli, ping
 from .commands import install_wsrv_byname, uninstall_wsrv_byname, install_htmlsrv, winsrv_synode, winsrv_websrv
 from .installer_api import InstallerCli
+# See https://stackoverflow.com/a/28154841
+from .installer_api import ping
 
 
 def uninst_srv():
     import invoke
     cli = InstallerCli()
-    cli.loadInitial()
+    cli.load_settings()
+
+    if winsrv_websrv not in cli.settings.envars:
+        print(f'Error: cannot find target service name. The configuration are damaged.')
+        print(f'Please follow the tips for uninstalling services manually:')
+        print(f'https://odys-z.github.io/products/portfolio/synode/setup.html#uninstall-windows-service-manually')
+        return
 
     try:
         srvname = cli.settings.envars[winsrv_synode]
@@ -26,10 +32,10 @@ def uninst_srv():
         print(f"Error uninstalling html-service: {e}", file=sys.stderr)
 
 
-def clean(vol: str = None):
-    cli = InstallerCli()
-    cli.loadInitial()
-    cli.clean_install(vol)
+# def clean(vol: str = None):
+#     cli = InstallerCli()
+#     cli.load_settings()
+#     cli.clean_install(vol)
 
 
 def startweb(port: int = 8900):
@@ -88,24 +94,24 @@ if __name__ == '__main__':
     }
 
     cli = InstallerCli()
-    cli.loadInitial()
+    cli.load_settings()
 
     if cmd == 'list':
         print(cli.list_synodes())
     if cmd == 'load':
-        print(cli.loadInitial(arg))
+        print(cli.load_settings())
 
     elif cmd == 'install' or cmd == 'i':
         Utils.logi("Install synodes with settings:")
-        cli = InstallerCli(arg)
+        cli = InstallerCli()
         Utils.logi(cli.settings.toBlock(beautify=True))
-        cli.install(arg, arg2) # setup
+        cli.install() # setup
 
     elif cmd == 'uninstall-winsrv' or cmd == 'ui-w':
         if arg is not None:
             srvname = arg
         else:
-            srvname = cli.settings.envars[winsrv_synode] #.gen_wsrv_name()
+            srvname = cli.settings.envars[winsrv_synode]
 
         print("Uninstalling ", srvname, "at port", cli.settings.port)
         try: uninstall_wsrv_byname(srvname)
@@ -123,7 +129,8 @@ if __name__ == '__main__':
         install_htmlsrv(cli.gen_html_srvname())
 
     elif cmd == 'clean':
-        clean(arg)
+        # clean(arg)
+        pass
 
     elif cmd == 'start-web':
         startweb(int(arg))
@@ -140,7 +147,7 @@ if __name__ == '__main__':
         uninstall_wsrv_byname(srvname)
 
     elif cmd == 'sync_in':
-        cli.loadInitial()
+        cli.load_settings()
         sins = cli.registry.config.syncIns
 
     elif cmd == 'showip':

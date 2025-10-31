@@ -21,9 +21,10 @@ import static io.oz.jserv.docs.syn.Dev.docm;
 import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.X;
 import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.Y;
 import static io.oz.jserv.docs.syn.singleton.ExpDoctierservTest.ck;
-import static io.odysz.semantic.syn.Docheck.printChangeLines;
-import static io.odysz.semantic.syn.Docheck.printNyquv;
-import static io.oz.jserv.docs.syn.SynodetierJoinTest.errLog;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.errLog;
+import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.servpath;
+import static io.oz.syn.Docheck.printChangeLines;
+import static io.oz.syn.Docheck.printNyquv;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.AnsonException;
+import io.odysz.common.EnvPath;
 import io.odysz.jclient.Clients;
 import io.odysz.jclient.syn.Doclientier;
 import io.odysz.jclient.syn.IFileProvider;
@@ -48,6 +50,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JProtocol.OnOk;
 import io.odysz.semantic.tier.docs.Device;
 import io.odysz.semantic.tier.docs.DocsResp;
@@ -56,7 +59,9 @@ import io.odysz.semantic.tier.docs.PathsPage;
 import io.odysz.semantic.tier.docs.ShareFlag;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.singleton.ExpDoctierservTest;
-import io.oz.syn.YellowPages;
+import io.oz.jserv.docs.syn.singleton.SynodetierJoinTest;
+import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
+import io.oz.syn.registry.YellowPages;
 
 /**
  */
@@ -81,13 +86,13 @@ class DoclientierTest {
 	}
 	
 	static void init(int caseid) throws Exception {
-		AnsonMsg.understandPorts(AnsonMsg.Port.echo);
+		JProtocol.setup(servpath, AnsonMsg.Port.echo);
 
 		String p = new File("src/test/res").getAbsolutePath();
     	System.setProperty("VOLUME_HOME", p + "/volume");
     	logi("VOLUME_HOME : %s", System.getProperty("VOLUME_HOME"));
 
-		YellowPages.load("$VOLUME_HOME");
+		YellowPages.load(EnvPath.concat(SynotierJettyApp.webinf, "$VOLUME_HOME"));
 
 		ExpDoctierservTest.init();
 
@@ -185,21 +190,20 @@ class DoclientierTest {
 		pause("Press enter to quite ...");
 	}
 
+	@SuppressWarnings("deprecation")
 	@AfterAll
 	static void close() throws Exception {
 		logi("Pushes are closed.");
 		logi("Closing service...");
 		serviceLight[0] = true;
+		thr.stop();
 		thr.join();
 	}
 
 	static ExpSyncDoc clientPush(int to, int cix) throws Exception {
 		Dev dev = devs[cix];
 
-		Clients.init(jserv_xyzw[to]);
-
-		dev.login(errLog);
-
+		dev.login(jserv_xyzw[to], errLog);
 		dev.client.fileProvider(new IFileProvider() {});
 
 		logi("client pushing: uid %s, device %s",
