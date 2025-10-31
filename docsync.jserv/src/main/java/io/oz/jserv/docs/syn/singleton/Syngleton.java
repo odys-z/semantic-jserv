@@ -95,7 +95,10 @@ public class Syngleton extends JSingleton {
 	public SynDomanager domanager(String domain) {
 		return (syndomanagers != null && syndomanagers.containsKey(domain)) ?
 				syndomanagers.get(domain) : null;
-
+	}
+	
+	public SynDomanager domnger0() {
+		return domanager(syncfg.domain);
 	}
 
 	public Syngleton domanagers(HashMap<String, SynDomanager> domains) {
@@ -113,7 +116,6 @@ public class Syngleton extends JSingleton {
 		this.synuser  = admin;
 		this.settings = settings;
 		syndomanagers = new HashMap<String, SynDomanager>();
-		
 
 		tb0 = new DATranscxt(cfg.synconn);
 	}

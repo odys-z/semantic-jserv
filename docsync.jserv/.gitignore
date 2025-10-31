@@ -7,6 +7,8 @@ src/test/res/vol-*/**
 !src/test/res/vol-*/*.xml
 !src/test/res/vol-*/dictionary.json
 
+src/test/resources/exbreak-vols/volume-*/*.db
+
 jetty-log
 *.log
 client-at-*

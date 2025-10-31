@@ -359,7 +359,7 @@ public class ExpDoctierservTest {
 
 	/**
 	 * Debug Notes:
-	 * A slow machine will pollute the settings variable if not buffered
+	 * A slow machine will pollute the settings variables if not buffered
 	 * This test cannot work on slow machine?
 	 */
 	public static int[] startJetties(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
@@ -414,7 +414,7 @@ public class ExpDoctierservTest {
 					settings[i].reversedPort(false), i);
 
 			// Notes for debug tests: sleep longer if binding failed
-			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings[i])
+			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings[i], false)
 						.afterboot()
 						.print("\n. . . . . . . . Synodtier Jetty Application (Test) is running . . . . . . . ");
 			

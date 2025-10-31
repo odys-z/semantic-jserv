@@ -104,7 +104,7 @@ public class SynssionPeer {
 
 	final String mynid;
 	/** The remode, server side, synode */
-	final String peer;
+	public final String peer;
 
 	String peerjserv() {
 		return domanager == null
@@ -190,7 +190,7 @@ public class SynssionPeer {
 	 * @since 0.2.6 deprecated 
 	 * @deprecated only for test, cannot restore break points
 	 */
-	public SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
+	private SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
 					"Synchronizing information is not ready, or not logged in. From synode %s to peer %s, domain %s%s.",
@@ -270,7 +270,12 @@ public class SynssionPeer {
 		return this;
 	}
 	
-	private SynssionPeer synwith_peer(OnMutexLock onMutext) {
+	/**
+	 * IMPORTANT carefully match this with T_SynDomanager.synUpdateDomx_break()
+	 * @param onMutext
+	 * @return this
+	 */
+	SynssionPeer synwith_peer(OnMutexLock onMutext) {
 		mustnoBlankAny(client, peer, domain()); // no need to tell the peer, and stop the syn-worker.
 		try {
 			if (debug)
@@ -331,7 +336,7 @@ public class SynssionPeer {
 		return this;
 	}
 
-	private SyncResp ex_lockpeer(String peer, String a, ExchangeBlock reqb) {
+	SyncResp ex_lockpeer(String peer, String act, ExchangeBlock reqb) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -460,7 +465,7 @@ public class SynssionPeer {
 	 * @param report2test
 	 * @since 0.2.4
 	 */
-	private void resolveRef206Stream(DBSyntableBuilder tb, OnProcess... report2test) {
+	void resolveRef206Stream(DBSyntableBuilder tb, OnProcess... report2test) {
 		// 206 downloader
 		SynDocRefMeta refm = domanager.refm;
 		String exclude = encode64(getRandom());
@@ -656,7 +661,7 @@ public class SynssionPeer {
 	 * @throws AnsonException 
 	 * @since 0.2.5
 	 */
-	private void pushDocRef2me(DBSyntableBuilder tb, String peer)
+	void pushDocRef2me(DBSyntableBuilder tb, String peer)
 			throws Exception {
 		clearAvoidingRefs(peer);
 		SyncResp resp = queryDocRefPage2me(null, null);
