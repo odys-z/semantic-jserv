@@ -231,16 +231,18 @@ public class SynssionPeer {
 				}
 
 				if (rep.exblock != null && rep.exblock.synact() != deny) {
-					// on start reply
-					onsyninitRep(rep.exblock, rep.domain);
-						
-					while (rep.synact() != close) {
-						ExchangeBlock exb = syncdb(rep.exblock);
-						rep = exespush(peer, A.exchange, exb);
-						if (rep == null)
-							throw new ExchangeException(exb.synact(), xp,
-									"Got null reply for exchange session. %s : %s -> %s",
-									domain(), domanager.synode, peer);
+					if (rep.exblock.synact() != close) {
+						// on start reply
+						onsyninitRep(rep.exblock, rep.domain);
+							
+						while (rep.synact() != close) {
+							ExchangeBlock exb = syncdb(rep.exblock);
+							rep = exespush(peer, A.exchange, exb);
+							if (rep == null)
+								throw new ExchangeException(exb.synact(), xp,
+										"Got null reply for exchange session. %s : %s -> %s",
+										domain(), domanager.synode, peer);
+						}
 					}
 					
 					// close
