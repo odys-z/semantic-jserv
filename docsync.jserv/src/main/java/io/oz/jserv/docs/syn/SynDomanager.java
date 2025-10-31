@@ -398,6 +398,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 		if (!eq(peer.peer, synode)) {
 			peer.checkLogin(admin);
 			peer.update2peer((lockby) -> Math.random());
+			// peer.synwith_peer((lockby) -> Math.random());
 
 			if (!isNull(onok))
 				onok[0].ok(domain(), synode, peer.peer);

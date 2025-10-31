@@ -9,16 +9,17 @@ import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.LangExt.is;
+import static io.odysz.common.LangExt.indexOf;
+import static io.odysz.common.LangExt.musteq;
+import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.LangExt.mustnoBlankAny;
 import static io.oz.syn.ExessionAct.close;
 import static io.oz.syn.ExessionAct.deny;
 import static io.oz.syn.ExessionAct.init;
 import static io.oz.syn.ExessionAct.ready;
 import static io.oz.syn.ExessionAct.setupDom;
 import static io.oz.syn.ExessionAct.trylater;
-import static io.odysz.common.LangExt.is;
-import static io.odysz.common.LangExt.indexOf;
-import static io.odysz.common.LangExt.musteq;
-import static io.odysz.common.LangExt.mustnonull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -186,7 +187,8 @@ public class SynssionPeer {
 	 * @param onMutext 
 	 * @return this
 	 * @throws ExchangeException not ready yet.
-	 * @since 0.2.0
+	 * @since 0.2.6 deprecated 
+	 * @deprecated only for test, cannot restore break points
 	 */
 	public SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
@@ -194,7 +196,6 @@ public class SynssionPeer {
 					"Synchronizing information is not ready, or not logged in. From synode %s to peer %s, domain %s%s.",
 					domanager.synode, peer, domain(), client == null ? ", client is null" : "");
 
-		SyncResp rep = null;
 		try {
 			if (debug)
 				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
@@ -207,7 +208,7 @@ public class SynssionPeer {
 			ExchangeBlock restore_req = exesrestore();
 			String a0 = restore_req == null ? A.exinit : A.exrestore; 
 			ExchangeBlock reqb = ifnull(restore_req, exesinit());
-			rep = exespush(peer, a0, reqb);
+			SyncResp rep = exespush(peer, a0, reqb);
 
 			if (rep != null) {
 				// lock remote
@@ -255,7 +256,6 @@ public class SynssionPeer {
 				else
 					Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
 							domanager.synode, domanager.domain(), peer);
-
 			}
 		} catch (TransException e) {
 			e.printStackTrace();
@@ -266,6 +266,72 @@ public class SynssionPeer {
 		}
 		finally { domanager.unlockme(); }
 		return this;
+	}
+	
+	private SynssionPeer synwith_peer(OnMutexLock onMutext) {
+		mustnoBlankAny(client, peer, domain()); // no need to tell the peer, and stop the syn-worker.
+		try {
+			if (debug)
+				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
+						+ "\n=============================================================\n",
+						domain(), mynid, peer);
+
+			domanager.lockme(onMutext);
+
+			ExchangeBlock reqb = exesrestore();
+			SyncResp rep;
+			if (reqb != null) {
+				rep = ex_lockpeer(peer, A.exrestore, reqb);
+
+				if (rep.exblock != null && rep.exblock.synact() != deny)
+					// onsynrestorRep(rep.exblock, rep.domain);
+					onsyninitRep(rep.exblock, rep.domain);
+			}
+			else {
+				reqb = exesinit();
+				rep = ex_lockpeer(peer, A.exinit, reqb);
+
+				if (rep.exblock != null && rep.exblock.synact() != deny) 
+					// on start reply
+					onsyninitRep(rep.exblock, rep.domain);
+			}
+					
+			while (rep.synact() != close) {
+				ExchangeBlock exb = syncdb(rep.exblock);
+				rep = exespush(peer, A.exchange, exb);
+				if (rep == null)
+					throw new ExchangeException(exb.synact(), xp,
+							"Got null reply for exchange session. %s : %s -> %s",
+							domain(), domanager.synode, peer);
+			}
+			
+			// close
+			reqb = synclose(rep.exblock);
+			rep = exespush(peer, A.exclose, reqb);
+			
+			if (!testDisableAutoDocRef) {
+				DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
+				resolveRef206Stream(tb);
+				pushDocRef2me(tb, peer);
+			}
+			else
+				Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
+						domanager.synode, domanager.domain(), peer);
+
+		} catch (TransException | SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally { domanager.unlockme(); }
+
+
+		return this;
+	}
+
+	private SyncResp ex_lockpeer(String peer, String a, ExchangeBlock reqb) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**
@@ -293,7 +359,7 @@ public class SynssionPeer {
 	}
 	
 	/**
-	 * Handle syn-init request.
+	 * Handle syn-init reply.
 	 * 
 	 * @param ini request's exchange block
 	 * @param domain
