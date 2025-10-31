@@ -1,0 +1,18 @@
+{ "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
+  "vol_name"    : "VOLUME_PRV",
+  "proxyIp"     : null,
+  "webProxyPort": 0,
+  "envars"      : {"WEBROOT_HUB": "PRV"},
+  "webport"     : 8902,
+  "startHandler": ["io.oz.syntier.serv.T_WebservExposer", "web-dist/private/host.json"],
+  "volume"      : "vol-breaks/volume-prv",
+  "proxyPort"   : 0,
+  "connIdleSnds": 0.0,
+  "port"        : 8962,
+  "reverseProxy": false,
+  "jservs"      : {"HUB": "http://127.0.0.1:8961/jserv-album"},
+  "jserv_utc"   : "1989-06-04",
+  "localIp"     : null,
+  "installkey"  : "0123456789ABCDEF",
+  "rootkey"     : null
+}
