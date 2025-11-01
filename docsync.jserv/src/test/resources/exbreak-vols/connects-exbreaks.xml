@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE xml>
+<conns>
+  <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,smtcs">
+  	<!-- drvmnger table is used to configure basic db connection, for pooled datasource, see bdcp -->
+  	<!-- smtcs: semantics configuration used only for the connection.
+  		(And a global semantics configuration?) -->
+  	<c>
+  		<id>sys-hub</id>
+  		<type>sqlite</type>
+  		<isdef>true</isdef>
+  		<src>$VOLUME_HUB/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg>true</dbg>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+	<c>
+		<id>docsyn-hub</id>
+  		<type>sqlit-queue</type>
+  		<isdef></isdef>
+  		<src>$VOLUME_HUB/doc-jserv.db</src>
+  		<usr></usr>
+  		<pswd></pswd>
+  		<dbg>1</dbg>
+  		<smtcs>semantics-syn.xml</smtcs>
+	</c>
+  </t>
+
+  <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,smtcs">
+  </t>
+
+  <t id="conn-uri" pk='uri' columns="uri, conn">
+  	<!-- for uri, see AnClient/js/example/example.js/north-star/north-app.jsx
+  	     for conn, see above
+  	     It's planned to try configure connections via user requests, in the future.
+  	-->
+  	<c>
+  		<uri>/sys/HUB</uri>
+  		<conn>sys-hub</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/HUB</uri>
+  		<conn>docsyn-hub</conn>
+  	</c>
+
+  	<c>
+  		<uri>/sys/PRV</uri>
+  		<conn>sys-prv</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/PRV</uri>
+  		<conn>docsyn-prv</conn>
+  	</c>
+  </t>
+</conns>

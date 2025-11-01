@@ -9,8 +9,10 @@ import static io.odysz.common.Utils.turnred;
 import static io.oz.jserv.docs.syn.singleton.SynodetierJoinTest.errLog;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
@@ -36,7 +38,7 @@ class ExchangreRestorTest {
 	private static final String _8964 = "8964";
 
 	static final String web_inf = "WEB-INF";
-	static final String webinf = "./src/main/webapp/" + web_inf;
+	static final String webinf = "./src/test/res/" + web_inf;
 	static final String config_xml = "config.xml";
 
 	static final String backup_hub = "src/test/resources/exbreak-hub.backup.json";
@@ -54,6 +56,9 @@ class ExchangreRestorTest {
 	static String hubpath = "settings.hub.json"; 
 	static String prvpath = "settings.prv.json"; 
 	// static String mobpath = "settings.mob.json"; 
+	static String connect_xml = "connects.xml";
+	static String connect_bak = "connects.xml-backup";
+	static String connect_breaks = "../../../test/resources/exbreak-vols/connects-breaks.xml";
 
 	static String vol_hub = "../../../test/resources/exbreak-vols/volume-hub";
 	static String vol_prv = "../../../test/resources/exbreak-vols/volume-prv";
@@ -75,12 +80,18 @@ class ExchangreRestorTest {
 
 	@BeforeAll
 	static void installSynodes() throws Exception {
-		System.setProperty("WEB-INF", "src/main/webapp/WEB-INF");
+		System.setProperty("WEB-INF", webinf);
 
 		System.setProperty("VOLUME_HUB", vol_hub);
 		System.setProperty("VOLUME_PRV", vol_prv);
 		// System.setProperty("VOLUME_MOB", vol_mob);
 		
+
+		connect_xml = FilenameUtils.rel2abs(webinf, connect_xml);
+		connect_bak = FilenameUtils.rel2abs(webinf, connect_bak);
+		Files.move(Paths.get(connect_xml), Paths.get(connect_bak), StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(Paths.get(connect_breaks), Paths.get(connect_xml), StandardCopyOption.REPLACE_EXISTING);
+
 		// settings.json
 		hubpath = FilenameUtils.rel2abs(webinf, hubs);
 		prvpath = FilenameUtils.rel2abs(webinf, prvs);
@@ -93,11 +104,11 @@ class ExchangreRestorTest {
 		String[] vols = new String[] { vol_hub, vol_prv }; // , vol_mob
 		for (String p : vols) {
 			String doc_db = FilenameUtils.rel2abs(webinf, p, "doc-jserv.db"); 
-			Files.delete(Paths.get(doc_db));
+			try {Files.delete(Paths.get(doc_db)); } catch (NoSuchFileException | FileNotFoundException e) {}
 			touchFile(doc_db);
 
 			String main_db = FilenameUtils.rel2abs(webinf, p, "jserv-main.db");
-			Files.delete(Paths.get(main_db));
+			try {Files.delete(Paths.get(main_db)); } catch (NoSuchFileException | FileNotFoundException e) {}
 			touchFile(main_db);
 		}
 		
@@ -116,13 +127,6 @@ class ExchangreRestorTest {
 		docm = new T_PhotoMeta("clientconn-x");
 		devm = new DeviceTableMeta("clientconn-x");
 		
-		ck_hub = new Docheck(azert, zsu, jhub.syngleton().syncfg.synconn,
-							jhub.syngleton().domanager(zsu).synode,
-							SynodeMode.hub, 3, docm, devm, true);
-
-		ck_prv = new Docheck(azert, zsu, jprv.syngleton().syncfg.synconn,
-							jhub.syngleton().domanager(zsu).synode,
-							SynodeMode.peer, 3, docm, devm, true);
 	}
 	
 	@AfterAll
@@ -132,6 +136,7 @@ class ExchangreRestorTest {
 //				Thread.sleep(1000);
 //		} catch (Exception e) { fail(e.getMessage()); }
 
+		Files.move(Paths.get(connect_bak), Paths.get(connect_xml), StandardCopyOption.REPLACE_EXISTING);
 		Files.delete(Paths.get(hubpath));
 		Files.delete(Paths.get(prvpath));
 		// Files.delete(Paths.get(mobpath));
@@ -157,6 +162,14 @@ class ExchangreRestorTest {
 					turngreen(lights, 0);
 					turngreen(lights, 1);
 				});
+
+				ck_hub = new Docheck(azert, zsu, jhub.syngleton().syncfg.synconn,
+							jhub.syngleton().domanager(zsu).synode,
+							SynodeMode.hub, 3, docm, devm, true);
+
+				ck_prv = new Docheck(azert, zsu, jprv.syngleton().syncfg.synconn,
+							jhub.syngleton().domanager(zsu).synode,
+							SynodeMode.peer, 3, docm, devm, true);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

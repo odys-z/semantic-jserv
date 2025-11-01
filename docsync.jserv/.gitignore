@@ -8,6 +8,9 @@ src/test/res/vol-*/**
 !src/test/res/vol-*/dictionary.json
 
 src/test/resources/exbreak-vols/volume-*/*.db
+src/test/res/WEB-INF/settings.hub.json
+src/test/res/WEB-INF/settings.prv.json
+src/test/res/WEB-INF/settings.mob.json
 
 jetty-log
 *.log
