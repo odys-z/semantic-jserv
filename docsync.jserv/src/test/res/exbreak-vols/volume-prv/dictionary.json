@@ -14,7 +14,7 @@
       "orgId": "ura", "orgName": "URA", "orgType": "test",
       "webroot": "$WEBROOT_PRV", "homepage": "", "album0": "album-test"
     },
-    "syncIns": 12.0,
+    "syncIns": 24.0,
     "peers": [
       {"type": "io.oz.syn.Synode",
        "synid": "HUB", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "HUB.HUB" },

@@ -288,7 +288,7 @@ public class SynssionPeer {
 			ExchangeBlock reqb = exesrestore();
 			SyncResp rep;
 			if (reqb != null) {
-				rep = ex_lockpeer(peer, A.exrestore, reqb);
+				rep = ex_lockpeer(peer, A.exrestore, reqb, onMutext);
 
 				if (rep.exblock != null && rep.exblock.synact() != deny)
 					// onsynrestorRep(rep.exblock, rep.domain);
@@ -296,7 +296,7 @@ public class SynssionPeer {
 			}
 			else {
 				reqb = exesinit();
-				rep = ex_lockpeer(peer, A.exinit, reqb);
+				rep = ex_lockpeer(peer, A.exinit, reqb, onMutext);
 
 				if (rep.exblock != null && rep.exblock.synact() != deny) 
 					// on start reply
@@ -336,9 +336,27 @@ public class SynssionPeer {
 		return this;
 	}
 
-	SyncResp ex_lockpeer(String peer, String act, ExchangeBlock reqb) {
-		// TODO Auto-generated method stub
-		return null;
+	SyncResp ex_lockpeer(String peer, String act, ExchangeBlock reqb, OnMutexLock onMutext)
+			throws SemanticException, AnsonException, IOException, InterruptedException {
+		SyncResp rep = exespush(peer, act, reqb);
+		if (rep != null) {
+			// lock remote
+			while (rep.synact() == trylater) {
+				if (debug)
+					Utils.logT(new Object() {},
+							"%s: %s is locked, waiting...",
+							mynid, peer);
+					
+				domanager.unlockme();
+
+				double sleep = rep.exblock.sleeps;
+				Thread.sleep((long) (sleep * 1000)); // wait for next try
+				domanager.lockme(onMutext);
+
+				rep = exespush(peer, act, reqb);
+			}
+		}
+		return rep;
 	}
 
 	/**

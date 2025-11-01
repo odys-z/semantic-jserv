@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logi;
@@ -58,10 +59,10 @@ class ExchangreRestorTest {
 	// static String mobpath = "settings.mob.json"; 
 	static String connect_xml = "connects.xml";
 	static String connect_bak = "connects.xml-backup";
-	static String connect_breaks = "../../../test/resources/exbreak-vols/connects-breaks.xml";
+	static String connect_breaks = "src/test/res/exbreak-vols/connects-exbreaks.xml";
 
-	static String vol_hub = "../../../test/resources/exbreak-vols/volume-hub";
-	static String vol_prv = "../../../test/resources/exbreak-vols/volume-prv";
+	static String vol_hub = "../../../test/res/exbreak-vols/volume-hub";
+	static String vol_prv = "../../../test/res/exbreak-vols/volume-prv";
 	// static String vol_mob = "vol-breaks/volume-mob";
 
 	static boolean[] boot_lights = new boolean[] { false, false };
@@ -131,11 +132,6 @@ class ExchangreRestorTest {
 	
 	@AfterAll
 	static void clean() throws IOException, InterruptedException {
-//		try {
-//			while(ck_prv.docs() < 4 && ck_hub.docs() < 4)
-//				Thread.sleep(1000);
-//		} catch (Exception e) { fail(e.getMessage()); }
-
 		Files.move(Paths.get(connect_bak), Paths.get(connect_xml), StandardCopyOption.REPLACE_EXISTING);
 		Files.delete(Paths.get(hubpath));
 		Files.delete(Paths.get(prvpath));
@@ -152,10 +148,10 @@ class ExchangreRestorTest {
 		thr_synodes = new Thread(() -> {
 			try {
 				jhub = SynotierJettyApp._main(new String[] {hubs}, false);
-				((T_SynDomanager)jhub.syngleton().domnger0()).domUpdater((d, s, p, xp)->{
-					logi("%s->%s", s, p);
-					turngreen(lights, 0);
-				});
+//				((T_SynDomanager)jhub.syngleton().domnger0()).domUpdater((d, s, p, xp)->{
+//					logi("%s->%s", s, p);
+//					turngreen(lights, 0);
+//				});
 				jprv = SynotierJettyApp._main(new String[] {prvs}, true);
 				((T_SynDomanager)jprv.syngleton().domnger0()).domUpdater((d, s, p, xp)->{
 					logi("%s->%s", s, p);
@@ -176,12 +172,21 @@ class ExchangreRestorTest {
 		}, "Hub & Prv by ExchangeBreakResumeTest");
 		thr_synodes.start();
 
-		Thread.sleep(2000);
+		while (jhub == null || jprv == null)
+			Thread.sleep(500);
+
 		musteqs(jhub.syngleton().syncfg.domain, zsu);
 		musteqs(jprv.syngleton().syncfg.domain, zsu);
 		
-		ExpSyncDoc dx = clientPush(dev_x, jprv, dev_reses);
-		ExpSyncDoc dy = clientPush(dev_y, jhub, dev_reses);
+		String hub_jserv = null;
+		String prv_jserv = null;
+		while (isblank(hub_jserv) || isblank(prv_jserv)) {
+			hub_jserv = jhub.jserv();
+			prv_jserv = jprv.jserv();
+		}
+
+		ExpSyncDoc dx = clientPush(dev_x, hub_jserv, dev_reses);
+		ExpSyncDoc dy = clientPush(dev_y, prv_jserv, dev_reses);
 		
 		awaitAll(lights, -1);
 
@@ -197,9 +202,9 @@ class ExchangreRestorTest {
 
 	/////////////////// helpers
 	///
-	static ExpSyncDoc clientPush(Dev dev, SynotierJettyApp jet, String... reses) throws Exception {
+	static ExpSyncDoc clientPush(Dev dev, String to_jserv, String... reses) throws Exception {
 
-		dev.login(jet.jserv(), errLog);
+		dev.login(to_jserv, errLog);
 		dev.client.fileProvider(new IFileProvider() {});
 		
 		ExpSyncDoc xdoc = null; 
@@ -210,7 +215,7 @@ class ExchangreRestorTest {
 
 			xdoc = DoclientierTest.videoUpByApp(dev.client, dev.device, res, docm.tbl, ShareFlag.publish);
 			assertEquals(dev.device.id, xdoc.device());
-			assertEquals(dev.res, xdoc.fullpath());
+			assertEquals(res, xdoc.fullpath());
 
 			DoclientierTest.verifyPathsPage(dev.client, docm.tbl, res);
 		}

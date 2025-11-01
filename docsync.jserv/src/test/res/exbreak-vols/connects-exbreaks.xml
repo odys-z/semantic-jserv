@@ -14,7 +14,7 @@
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<dbg>true</dbg>
-  		<smtcs>semantics-sys.xml</smtcs>
+  		<smtcs>$VOLUME_HUB/semantics-sys.xml</smtcs>
   	</c>
 	<c>
 		<id>docsyn-hub</id>
@@ -24,7 +24,28 @@
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>1</dbg>
-  		<smtcs>semantics-syn.xml</smtcs>
+  		<smtcs>$VOLUME_HUB/semantics-syn.xml</smtcs>
+	</c>
+
+  	<c>
+  		<id>sys-prv</id>
+  		<type>sqlite</type>
+  		<isdef>true</isdef>
+  		<src>$VOLUME_PRV/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg>true</dbg>
+  		<smtcs>$VOLUME_PRV/semantics-sys.xml</smtcs>
+  	</c>
+	<c>
+		<id>docsyn-prv</id>
+  		<type>sqlit-queue</type>
+  		<isdef></isdef>
+  		<src>$VOLUME_PRV/doc-jserv.db</src>
+  		<usr></usr>
+  		<pswd></pswd>
+  		<dbg>1</dbg>
+  		<smtcs>$VOLUME_PRV/semantics-syn.xml</smtcs>
 	</c>
   </t>
 
@@ -44,6 +65,10 @@
   		<uri>/syn/HUB</uri>
   		<conn>docsyn-hub</conn>
   	</c>
+  	<c>
+  		<uri>dev-x</uri>
+  		<conn>docsyn-hub</conn>
+  	</c>
 
   	<c>
   		<uri>/sys/PRV</uri>
@@ -51,6 +76,10 @@
   	</c>
   	<c>
   		<uri>/syn/PRV</uri>
+  		<conn>docsyn-prv</conn>
+  	</c>
+  	<c>
+  		<uri>dev-y</uri>
   		<conn>docsyn-prv</conn>
   	</c>
   </t>

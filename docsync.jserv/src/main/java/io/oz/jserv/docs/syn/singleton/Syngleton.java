@@ -438,7 +438,7 @@ public class Syngleton extends JSingleton {
 	}
 
 	public String myjserv() throws SQLException, TransException {
-		return settings.jserv(syncfg.synid);
-		//  or settings.loadDBservs(syncfg, synm, DateFormat.jour0) ?
+		// settings.loadDBLaterservs(syncfg, synm);
+		return settings.jserv(synode());
 	}
 }

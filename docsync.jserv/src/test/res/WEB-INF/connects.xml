@@ -7,134 +7,49 @@
   	<!-- smtcs: semantics configuration used only for the connection.
   		(And a global semantics configuration?) -->
   	<c>
-  		<id>main-sqlite</id>
+  		<id>sys-hub</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>
-  		<src>$VOLUME_HOME/jserv-main.db</src>
+  		<src>$VOLUME_HUB/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
-  		<smtcs>semantics-sys.xml</smtcs>
-  	</c>
-  	
-  	<c>
-  		<id>main-sqlite-0</id>
-  		<type>sqlite</type>
-  		<isdef></isdef>
-  		<src>$VOLUME_0/jserv-main.db</src>
-  		<usr>test</usr>
-  		<pswd></pswd>
   		<dbg>true</dbg>
-  		<smtcs>semantics-sys.xml</smtcs>
+  		<smtcs>$VOLUME_HUB/semantics-sys.xml</smtcs>
   	</c>
-  	<c>
-  		<id>main-sqlite-1</id>
-  		<type>sqlite</type>
+	<c>
+		<id>docsyn-hub</id>
+  		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>$VOLUME_1/jserv-main.db</src>
-  		<usr>test</usr>
-  		<pswd>test</pswd>
+  		<src>$VOLUME_HUB/doc-jserv.db</src>
+  		<usr></usr>
+  		<pswd></pswd>
   		<dbg>1</dbg>
-  		<smtcs>semantics-sys.xml</smtcs>
-  	</c>
-  	<c>
-  		<id>main-sqlite-2</id>
-  		<type>sqlite</type>
-  		<isdef></isdef>
-  		<src>$VOLUME_2/jserv-main.db</src>
-  		<usr>test</usr>
-  		<pswd>test</pswd>
-  		<dbg>1</dbg>
-  		<smtcs>semantics-sys.xml</smtcs>
-  	</c>
-  	<c>
-  		<id>main-sqlite-3</id>
-  		<type>sqlite</type>
-  		<isdef></isdef>
-  		<src>$VOLUME_3/jserv-main.db</src>
-  		<usr>test</usr>
-  		<pswd>test</pswd>
-  		<dbg>1</dbg>
-  		<smtcs>semantics-sys.xml</smtcs>
-  	</c>
+  		<smtcs>$VOLUME_HUB/semantics-syn.xml</smtcs>
+	</c>
 
   	<c>
-		<id>no-jserv.00</id>
-  		<type>sqlit-queue</type>
-  		<isdef></isdef>
-  		<src>$VOLUME_0/no-jserv-db.00</src>
-  		<usr></usr>
-  		<pswd></pswd>
-  		<dbg>t</dbg>
-  		<smtcs>$VOLUME_0/semantics-syn.xml</smtcs>
-	</c>
-	<c>
-		<id>no-jserv.01</id>
-  		<type>sqlit-queue</type>
-  		<isdef></isdef>
-  		<src>$VOLUME_1/no-jserv-db.01</src>
-  		<usr></usr>
-  		<pswd></pswd>
-  		<dbg>1</dbg>
-  		<smtcs>$VOLUME_1/semantics-syn.xml</smtcs>
-	</c>
-	<c>
-		<id>no-jserv.02</id>
-  		<type>sqlit-queue</type>
-  		<isdef></isdef>
-  		<src>$VOLUME_2/no-jserv-db.02</src>
-  		<usr></usr>
-  		<pswd></pswd>
+  		<id>sys-prv</id>
+  		<type>sqlite</type>
+  		<isdef>true</isdef>
+  		<src>$VOLUME_PRV/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
   		<dbg>true</dbg>
-  		<smtcs>$VOLUME_2/semantics-syn.xml</smtcs>
-	</c>
+  		<smtcs>$VOLUME_PRV/semantics-sys.xml</smtcs>
+  	</c>
 	<c>
-		<id>no-jserv.03</id>
+		<id>docsyn-prv</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>$VOLUME_3/no-jserv-db.03</src>
+  		<src>$VOLUME_PRV/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>1</dbg>
-  		<smtcs>$VOLUME_3/semantics-syn.xml</smtcs>
+  		<smtcs>$VOLUME_PRV/semantics-syn.xml</smtcs>
 	</c>
   </t>
 
-  <!-- NOTE: dbcp configuration shouldn't work because you don't have container providing the connections.
-  	User semantic-DA.test to test connection pool mode. -->
   <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,smtcs">
-  	<!-- dbcp table is used to pooled db datasource, for basic connection, see dao -->
-  	<!-- type: mysql | oracle | mssql -->
-  	<!-- id: client specify id for the desired target data source -->
-  	<!-- src: connection name, e.g. context.xml/Context/Resource [name] -->
-  	<!-- dbg: true for printing sql -->
-  	<!-- smtcs: semantics configuration used only for the connection.
-  		(And a global semantics configuration?) -->
-
-	<!-- A pooled connection configuration example for Tomcat 6, 7, 8
-  		in %CATALINA_HOME/conf/server.xml/GlobalNamingResoure/Resource:
-  	<Resource name="jdbc/semantic-DA" global="jdbc/semantic-DA" 
-  			auth="Container" type="javax.sql.DataSource"
-  			maxActive="10" maxIdle="3" maxWait="10000"
-  			username="odysz" password="..." driverClassName="com.mysql.cj.jdbc.Driver"
-  			url="jdbc:mysql://...:3306/prj" connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true" />
-  	
-  	in context.xml:
-	<ResourceLink name="jdbc/album-cloud"
-				global="jdbc/album-cloud"
-				type="javax.sql.DataSource" />
-	see https://stackoverflow.com/a/22545669/7362888
-   	<c>
-  		<id>inet</id>
-  		<type>mysql</type>
-  		<src>jdbc/ifire_twin</src>
-  		<isdef></isdef>
-  		<usr></usr>
-  		<pswd></pswd>
-  		<dbg></dbg>
-  		<smtcs>src/test/res/semantics.xml</smtcs>
-  	</c>
-  	 -->
   </t>
 
   <t id="conn-uri" pk='uri' columns="uri, conn">
@@ -142,76 +57,30 @@
   	     for conn, see above
   	     It's planned to try configure connections via user requests, in the future.
   	-->
-   	<c>
-  		<uri>doclient-00</uri>
-  		<conn>no-jserv.00</conn>
+  	<c>
+  		<uri>/sys/HUB</uri>
+  		<conn>sys-hub</conn>
   	</c>
-   	<c>
-  		<uri>doclient-01</uri>
-  		<conn>no-jserv.01</conn>
+  	<c>
+  		<uri>/syn/HUB</uri>
+  		<conn>docsyn-hub</conn>
   	</c>
-    <c>
-  		<uri>doclient-02</uri>
-  		<conn>no-jserv.02</conn>
-  	</c>
-   	<c>
-  		<uri>doclient-03</uri>
-  		<conn>no-jserv.03</conn>
-  	</c>
- 	
-   	<c>
-  		<uri>sys-X</uri>
-  		<conn>main-sqlite-0</conn>
-  	</c>
-   	<c>
-  		<uri>sys-Y</uri>
-  		<conn>main-sqlite-1</conn>
-  	</c>
-    <c>
-  		<uri>sys-Z</uri>
-  		<conn>main-sqlite-2</conn>
-  	</c>
-   	<c>
-  		<uri>sys-W</uri>
-  		<conn>main-sqlite-3</conn>
+  	<c>
+  		<uri>dev-x</uri>
+  		<conn>docsyn-hub</conn>
   	</c>
 
   	<c>
-  		<uri>/sys/X</uri>
-  		<conn>main-sqlite-0</conn>
+  		<uri>/sys/PRV</uri>
+  		<conn>sys-prv</conn>
   	</c>
   	<c>
-  		<uri>/syn/X</uri>
-  		<conn>no-jserv.00</conn>
-  	</c>
-
-
-  	<c>
-  		<uri>/sys/Y</uri>
-  		<conn>main-sqlite-1</conn>
+  		<uri>/syn/PRV</uri>
+  		<conn>docsyn-prv</conn>
   	</c>
   	<c>
-  		<uri>/syn/Y</uri>
-  		<conn>no-jserv.01</conn>
+  		<uri>dev-y</uri>
+  		<conn>docsyn-prv</conn>
   	</c>
-
-  	<c>
-  		<uri>/sys/Z</uri>
-  		<conn>main-sqlite-2</conn>
-  	</c>
-  	<c>
-  		<uri>/syn/Z</uri>
-  		<conn>no-jserv.02</conn>
-  	</c>
-
-  	<c>
-  		<uri>/sys/W</uri>
-  		<conn>main-sqlite-3</conn>
-  	</c>
-  	<c>
-  		<uri>/syn/W</uri>
-  		<conn>no-jserv.03</conn>
-  	</c>
-
   </t>
 </conns>

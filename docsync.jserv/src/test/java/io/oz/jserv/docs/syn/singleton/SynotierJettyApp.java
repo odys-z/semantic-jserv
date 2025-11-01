@@ -258,6 +258,7 @@ public class SynotierJettyApp {
 		ExpSynodetier syncer = new ExpSynodetier(domanger)
 								.syncIn(cfg.syncIns,
 									(c, r, args) -> Utils.warn("[Syn-worker ERROR] code: %s, msg: %s", r));
+		synapp.syngleton.syndomanagers.put(cfg.domain, domanger);
 		addServPort(syncer);
 		return this;
 	}

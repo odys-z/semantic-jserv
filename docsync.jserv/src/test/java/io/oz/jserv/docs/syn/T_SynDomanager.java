@@ -100,7 +100,7 @@ public class T_SynDomanager extends SynDomanager {
 				ExchangeBlock reqb = c.exesrestore();
 				SyncResp rep = null;
 				if (reqb != null) {
-					rep = c.ex_lockpeer(c.peer, A.exrestore, reqb);
+					rep = c.ex_lockpeer(c.peer, A.exrestore, reqb, (lockby) -> Math.random());
 
 					if (rep.exblock != null && rep.exblock.synact() != deny)
 						// onsynrestorRep(rep.exblock, rep.domain);
@@ -108,7 +108,7 @@ public class T_SynDomanager extends SynDomanager {
 				}
 				else {
 					reqb = c.exesinit();
-					rep = c.ex_lockpeer(c.peer, A.exinit, reqb);
+					rep = c.ex_lockpeer(c.peer, A.exinit, reqb, (lockby) -> Math.random());
 
 					if (rep.exblock != null && rep.exblock.synact() != deny) 
 						// on start reply
