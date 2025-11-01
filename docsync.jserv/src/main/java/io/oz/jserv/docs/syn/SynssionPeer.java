@@ -188,8 +188,7 @@ public class SynssionPeer {
 	 * @return this
 	 * @throws ExchangeException not ready yet.
 	 * @since 0.2.6 deprecated 
-	 * @deprecated only for test, cannot restore break points
-	 */
+	 * @ deprecated only for test, cannot restore break points
 	private SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
@@ -269,6 +268,7 @@ public class SynssionPeer {
 		finally { domanager.unlockme(); }
 		return this;
 	}
+	 */
 	
 	/**
 	 * IMPORTANT carefully match this with T_SynDomanager.synUpdateDomx_break()
@@ -304,7 +304,7 @@ public class SynssionPeer {
 			}
 					
 			while (rep.synact() != close) {
-				ExchangeBlock exb = syncdb(rep.exblock);
+				ExchangeBlock exb = nextExchange(rep.exblock);
 				rep = exespush(peer, A.exchange, exb);
 				if (rep == null)
 					throw new ExchangeException(exb.synact(), xp,
@@ -407,7 +407,7 @@ public class SynssionPeer {
 		return new SyncResp(domain()).exblock(b);
 	}
 
-	ExchangeBlock syncdb(ExchangeBlock rep)
+	ExchangeBlock nextExchange(ExchangeBlock rep)
 			throws SQLException, TransException {
 		return xp.nextExchange(rep);
 	}
