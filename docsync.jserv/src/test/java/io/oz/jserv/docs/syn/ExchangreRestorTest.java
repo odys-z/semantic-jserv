@@ -113,9 +113,9 @@ class ExchangreRestorTest {
 			touchFile(main_db);
 		}
 		
-		dev_x = new Dev("sys-X", "dev-y", admin, _8964, "X-0", zsu,
+		dev_x = new Dev("sys-X", "dev-x", admin, _8964, "X-0", zsu,
 								"src/test/res/anclient.java/Amelia Anisovych.mp4");
-		dev_y = new Dev("sys-X", "dev-x", admin, _8964, "X-0", zsu,
+		dev_y = new Dev("sys-X", "dev-y", admin, _8964, "Y-0", zsu,
 								"src/test/res/anclient.java/Amelia Anisovych.mp4");
 		
 		dev_reses = new String[] {
