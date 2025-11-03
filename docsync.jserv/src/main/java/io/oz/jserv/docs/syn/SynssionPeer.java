@@ -189,6 +189,7 @@ public class SynssionPeer {
 	 * @throws ExchangeException not ready yet.
 	 * @since 0.2.6 deprecated 
 	 * @ deprecated only for test, cannot restore break points
+	 */
 	private SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
@@ -268,7 +269,11 @@ public class SynssionPeer {
 		finally { domanager.unlockme(); }
 		return this;
 	}
-	 */
+
+	private ExchangeBlock syncdb(ExchangeBlock rep)
+			throws SQLException, TransException {
+		return xp.nextExchange(rep);
+	}
 	
 	/**
 	 * IMPORTANT carefully match this with T_SynDomanager.synUpdateDomx_break()
@@ -432,7 +437,7 @@ public class SynssionPeer {
 
 	SyncResp exespush(String peer, SyncReq req)
 			throws SemanticException, AnsonException, IOException {
-		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", A.exchange, "by " + mynid);
+		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", req.a(), "by " + mynid);
 		AnsonHeader header = client.header().act(act);
 
 		AnsonMsg<SyncReq> q = client

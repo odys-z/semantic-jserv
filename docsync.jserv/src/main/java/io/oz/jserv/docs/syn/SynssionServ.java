@@ -40,13 +40,13 @@ public class SynssionServ {
 
 	public SyncResp onsyninit(ExchangeBlock ini) throws Exception {
 		try {
-			if (!syndomxerv.lockx(usr))
+			if (!syndomxerv.relockx(usr))
 				return trylater(peer);
 
 			if (!eq(ini.srcnode, peer))
 				throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
-			shouldeq(new Object() {}, usr, this.usr);
+			// shouldeq(new Object() {}, usr, this.usr);
 
 			DBSyntableBuilder b0 = new DBSyntableBuilder(syndomxerv);
 			srvp = new ExessionPersist(b0, peer, ini);
@@ -81,6 +81,10 @@ public class SynssionServ {
 	 */
 	public SyncResp onsynrestore(ExchangeBlock reqb)
 			throws SQLException, TransException {
+
+		if (!syndomxerv.relockx(usr))
+			return trylater(peer);
+
 		ExchangeBlock repb = ifnull(srvp.onRestore(reqb), srvp.nextExchange(reqb));
 		return new SyncResp(syndomxerv.domain()).exblock(repb);
 	}
