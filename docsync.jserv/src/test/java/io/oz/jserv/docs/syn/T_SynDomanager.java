@@ -2,6 +2,7 @@ package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
+import static io.odysz.common.LangExt.mustlt;
 import static io.odysz.common.LangExt.mustnoBlankAny;
 import static io.odysz.common.Utils.logT;
 import static io.oz.syn.ExessionAct.close;
@@ -57,7 +58,7 @@ public class T_SynDomanager extends SynDomanager {
 			logT(new Object(){}, "-X-X- [%s <- %s] break -X-X-", peer.peer, synode);
 			emulate_break0_4 = synUpdateDomx_break(peer, emulate_break0_4);
 			
-			if (onDomUpdate != null) onDomUpdate.ok(domain(), synode, peer.peer);
+			// if (onDomUpdate != null) onDomUpdate.ok(domain(), synode, peer.peer);
 			return this;
 		}
 		else return super.synUpdateDomain(peer, (d, s, per, persist) -> {
@@ -81,8 +82,6 @@ public class T_SynDomanager extends SynDomanager {
 	 */
 	private int synUpdateDomx_break(SynssionPeer c, int breakpoint)
 			throws SemanticException, AnsonException, SsException, IOException, TransException {
-
-		int returnpoint = breakpoint < 4 ? breakpoint + 1 : -1;
 
 		if (!eq(c.peer, synode)) {
 			c.checkLogin(admin);
@@ -115,8 +114,10 @@ public class T_SynDomanager extends SynDomanager {
 						c.onsyninitRep(rep.exblock, rep.domain);
 				}
 
-				breakpoints[1] = true;
-				if (breakpoint == 1) return returnpoint;
+//				if (breakpoint == 0) {
+//					breakpoints[1] = true;
+//					return breakpoint + 1; // 1
+//				}
 				
 				int exchanges = 0;
 				while (rep.synact() != close) {
@@ -127,19 +128,24 @@ public class T_SynDomanager extends SynDomanager {
 								"Got null reply for exchange session. %s : %s -> %s",
 								domain(), synode, c);
 					
-					++exchanges;
 					if (breakpoint == exchanges) {
-						breakpoints[(exchanges % (breakpoints.length - 2)) + 2] = true;
-						return returnpoint;
+						mustlt(exchanges + 1, breakpoints.length);
+						breakpoints[exchanges + 1] = true;
+						return breakpoint + 1; // 2, 3, 4
 					}
+					++exchanges;
 				}
 				
 				// close
 				reqb = c.synclose(rep.exblock);
 
-				if (breakpoint == 0) {
+//				if (breakpoint == 4) {
+//					breakpoints[0] = true;
+//					return -1; // 
+//				}
+				if (!breakpoints[0]) {
 					breakpoints[0] = true;
-					return returnpoint;
+					return -1; // 
 				}
 
 				rep = c.exespush(c.peer, A.exclose, reqb);
@@ -160,7 +166,7 @@ public class T_SynDomanager extends SynDomanager {
 			}
 			finally { unlockme(); }
 		}
-		return returnpoint;
+		return breakpoint;
 	}
 
 }

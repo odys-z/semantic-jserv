@@ -8,6 +8,7 @@
     "admin": "ody",
     "sysconn": "sys-prv",
     "synconn": "docsyn-prv",
+    "chsize": 3,
     "org": {
       "type": "io.oz.syn.registry.SynOrg",
       "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
