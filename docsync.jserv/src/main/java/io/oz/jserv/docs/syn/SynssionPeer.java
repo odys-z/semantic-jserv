@@ -5,7 +5,6 @@ import static io.odysz.common.AESHelper.getRandom;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.ev;
 import static io.odysz.common.LangExt.f;
-import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
@@ -17,7 +16,6 @@ import static io.odysz.common.LangExt.mustnoBlankAny;
 import static io.oz.syn.ExessionAct.close;
 import static io.oz.syn.ExessionAct.deny;
 import static io.oz.syn.ExessionAct.init;
-import static io.oz.syn.ExessionAct.ready;
 import static io.oz.syn.ExessionAct.setupDom;
 import static io.oz.syn.ExessionAct.trylater;
 
@@ -188,8 +186,6 @@ public class SynssionPeer {
 	 * @return this
 	 * @throws ExchangeException not ready yet.
 	 * @since 0.2.6 deprecated 
-	 * @ deprecated only for test, cannot restore break points
-	 */
 	private SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
@@ -269,8 +265,17 @@ public class SynssionPeer {
 		finally { domanager.unlockme(); }
 		return this;
 	}
+	 * @deprecated only for test, cannot restore break points
+	 */
 
-	private ExchangeBlock syncdb(ExchangeBlock rep)
+	/**
+	 * 
+	 * @param rep
+	 * @return the next syn-exchange block
+	 * @throws SQLException
+	 * @throws TransException
+	 */
+	ExchangeBlock syncdb(ExchangeBlock rep)
 			throws SQLException, TransException {
 		return xp.nextExchange(rep);
 	}
@@ -294,34 +299,47 @@ public class SynssionPeer {
 			SyncResp rep;
 			if (reqb != null) {
 				rep = ex_lockpeer(peer, A.exrestore, reqb, onMutext);
-
-				if (rep.exblock != null && rep.exblock.synact() != deny)
-					// onsynrestorRep(rep.exblock, rep.domain);
-					onsyninitRep(rep.exblock, rep.domain);
 			}
 			else {
 				reqb = exesinit();
 				rep = ex_lockpeer(peer, A.exinit, reqb, onMutext);
 
+
 				if (rep.exblock != null && rep.exblock.synact() != deny) 
-					// on start reply
 					onsyninitRep(rep.exblock, rep.domain);
 			}
-					
+//			if (breakpoint == 0) {
+//				breakpoints[1] = true;
+//				return breakpoint + 1; // 1
+//			}
+			
+//			int exchanges = 0;
 			while (rep.synact() != close) {
-				ExchangeBlock exb = nextExchange(rep.exblock);
+				ExchangeBlock exb = syncdb(rep.exblock);
 				rep = exespush(peer, A.exchange, exb);
 				if (rep == null)
 					throw new ExchangeException(exb.synact(), xp,
 							"Got null reply for exchange session. %s : %s -> %s",
 							domain(), domanager.synode, peer);
+
+//				if (breakpoint == exchanges) {
+//					mustlt(exchanges + 1, breakpoints.length);
+//					breakpoints[exchanges + 1] = true;
+//					return breakpoint + 1; // 2, 3, 4
+//				}
+//				else ++exchanges;
 			}
 			
+			while (xp.hasNextChpages(xp.trb)) {
+				ExchangeBlock exb = syncdb(rep.exblock);
+				rep = exespush(peer, A.exchange, exb);
+			}
+				
 			// close
 			reqb = synclose(rep.exblock);
 			rep = exespush(peer, A.exclose, reqb);
 			
-			if (!testDisableAutoDocRef) {
+			if (!SynssionPeer.testDisableAutoDocRef) {
 				DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
 				resolveRef206Stream(tb);
 				pushDocRef2me(tb, peer);
@@ -508,7 +526,7 @@ public class SynssionPeer {
 			ExpDocTableMeta docm = ref.docm;
 			try {
 				String localpath = ref.downloadPath(peer, conn, client.ssInfo());
-				ExtFilePaths extpths = DocRef.createExtPaths(conn, docm.tbl, ref);
+				ExtFilePaths extpths = DocRef.createExtPaths(conn, docm, ref);
 				String targetpth = extpths.decodeUriPath();
 
 				if (debug)

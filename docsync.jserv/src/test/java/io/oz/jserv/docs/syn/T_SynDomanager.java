@@ -100,20 +100,14 @@ public class T_SynDomanager extends SynDomanager {
 				SyncResp rep = null;
 				if (reqb != null) {
 					rep = c.ex_lockpeer(c.peer, A.exrestore, reqb, (lockby) -> Math.random());
-
-//					if (rep.exblock != null && rep.exblock.synact() != deny)
-//						// onsynrestorRep(rep.exblock, rep.domain);
-//						c.onsyninitRep(rep.exblock, rep.domain);
 				}
 				else {
 					reqb = c.exesinit();
 					rep = c.ex_lockpeer(c.peer, A.exinit, reqb, (lockby) -> Math.random());
 
 					if (rep.exblock != null && rep.exblock.synact() != deny) 
-						// on start reply
 						c.onsyninitRep(rep.exblock, rep.domain);
 				}
-
 //				if (breakpoint == 0) {
 //					breakpoints[1] = true;
 //					return breakpoint + 1; // 1
@@ -121,7 +115,7 @@ public class T_SynDomanager extends SynDomanager {
 				
 				int exchanges = 0;
 				while (rep.synact() != close) {
-					ExchangeBlock exb = c.nextExchange(rep.exblock);
+					ExchangeBlock exb = c.syncdb(rep.exblock);
 					rep = c.exespush(c.peer, A.exchange, exb);
 					if (rep == null)
 						throw new ExchangeException(exb.synact(), c.xp,
@@ -133,19 +127,20 @@ public class T_SynDomanager extends SynDomanager {
 						breakpoints[exchanges + 1] = true;
 						return breakpoint + 1; // 2, 3, 4
 					}
-					++exchanges;
+					else ++exchanges;
+				}
+				
+				while (c.xp.hasNextChpages(c.xp.trb)) {
+					ExchangeBlock exb = c.syncdb(rep.exblock);
+					rep = c.exespush(c.peer, A.exchange, exb);
 				}
 				
 				// close
 				reqb = c.synclose(rep.exblock);
 
-//				if (breakpoint == 4) {
-//					breakpoints[0] = true;
-//					return -1; // 
-//				}
 				if (!breakpoints[0]) {
 					breakpoints[0] = true;
-					return -1; // 
+					return -1; 
 				}
 
 				rep = c.exespush(c.peer, A.exclose, reqb);
@@ -169,4 +164,8 @@ public class T_SynDomanager extends SynDomanager {
 		return breakpoint;
 	}
 
+	@Override
+	public boolean enableRegistryClient() {
+		return false;
+	}
 }

@@ -30,7 +30,7 @@
   	<c>
   		<id>sys-prv</id>
   		<type>sqlite</type>
-  		<isdef>true</isdef>
+  		<isdef></isdef>
   		<src>$VOLUME_PRV/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
@@ -44,7 +44,7 @@
   		<src>$VOLUME_PRV/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>$VOLUME_PRV/semantics-syn.xml</smtcs>
 	</c>
   </t>

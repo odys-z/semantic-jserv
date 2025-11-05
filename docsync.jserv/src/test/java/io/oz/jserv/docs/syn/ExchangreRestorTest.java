@@ -188,10 +188,13 @@ class ExchangreRestorTest {
 		ExpSyncDoc dx = clientPush(dev_x, hub_jserv, dev_reses);
 		ExpSyncDoc dy = clientPush(dev_y, prv_jserv, dev_reses);
 		
+		assertEquals(4, ck_hub.docs());
+		assertEquals(4, ck_prv.docs());
+
 		awaitAll(lights, -1);
 
-		assertEquals(ck_hub.docs(), 4);
-		assertEquals(ck_prv.docs(), 4);
+		assertEquals(8, ck_hub.docs());
+		assertEquals(8, ck_prv.docs());
 
 		// must reach broken cases
 		T_SynDomanager m = (T_SynDomanager) jprv.syngleton().domnger0();
@@ -213,7 +216,7 @@ class ExchangreRestorTest {
 					dev.client.client.ssInfo().uid(), dev.client.client.ssInfo().device);
 			logi(reses);
 
-			xdoc = DoclientierTest.videoUpByApp(dev.client, dev.device, res, docm.tbl, ShareFlag.publish);
+			xdoc = DoclientierTest.videoUpByApp(dev.client, dev.device, res, docm.tbl, ShareFlag.publish, true);
 			assertEquals(dev.device.id, xdoc.device());
 			assertEquals(res, xdoc.fullpath());
 

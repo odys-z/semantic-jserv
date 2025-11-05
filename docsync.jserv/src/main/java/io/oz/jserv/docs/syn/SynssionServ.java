@@ -1,9 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.shouldeq;
 import static io.oz.syn.ExessionAct.init;
 import static io.oz.syn.ExessionAct.mode_server;
 
@@ -85,7 +83,11 @@ public class SynssionServ {
 		if (!syndomxerv.relockx(usr))
 			return trylater(peer);
 
-		ExchangeBlock repb = ifnull(srvp.onRestore(reqb), srvp.nextExchange(reqb));
+		srvp.loadsession(reqb.srcnode);
+
+		// to be continued, calling nextExchange instead of onRestore()
+		ExchangeBlock repb = srvp.onRestore(reqb);
+		if (repb == null) repb = srvp.nextExchange(reqb);
 		return new SyncResp(syndomxerv.domain()).exblock(repb);
 	}
 

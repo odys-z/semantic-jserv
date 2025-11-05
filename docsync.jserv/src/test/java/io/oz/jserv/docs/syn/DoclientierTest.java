@@ -1,6 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.musteqi;
@@ -219,9 +220,10 @@ class DoclientierTest {
 	}
 
 	static ExpSyncDoc videoUpByApp(Doclientier doclient, Device atdev, String respath,
- 			String entityName, ShareFlag share) throws Exception {
+ 			String entityName, ShareFlag share, boolean... disable_reupload) throws Exception {
 
 		ExpSyncDoc xdoc = Doclientier.videoUpByApp(doclient, atdev, respath, entityName, share,
+			is(disable_reupload, true) ? (re) -> {} :
 			(AnsonResp rep) -> {
 				ExpSyncDoc doc = ((DocsResp) rep).xdoc; 
 

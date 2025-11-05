@@ -262,7 +262,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		workers[0] = jserv_worker(err); 
 
-		scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
+//		if (domanager0.enableRegistryClient())
+			scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
 		
 		if (syncIns > 1) {
 			DATranscxt syntb = new DATranscxt(domanager0.synconn);
@@ -593,6 +594,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		String conn = Connects.uri2conn(req.uri());
 
 		String targetPath = ref2physical(conn, req.docref, usr, req.exblock.srcnode);
+		mustnonull(targetPath,
+				"Empty doc-ref target path:[%s <- %s] %s %s",
+				this.synid, req.exblock.srcnode, req.docref.uids, req.docref.uri64);
 
 		// move file
 		Utils.touchDir(targetPath);
@@ -661,10 +665,13 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	}
 
 	/**
-	 * Update uri without triggering semantics, because the ext-file
-	 * handler doesn't allow update a uri field.
+	 * Convert the doc-ref to a physical file path.
 	 * 
-	 * The value generator is the same of the ext-file semantics handler.
+	 * <p>This method will update uri without triggering semantics, because the ext-file
+	 * handler doesn't allow update a uri field.</p>
+	 * 
+	 * The value generator is the same of the ext-file semantics handler, {@link ExtFilePaths}, 
+	 * created from docref, by replacing ref.docId with new pid resolved from uids.
 	 * 
 	 * @param conn
 	 * @param docref
@@ -675,8 +682,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	private String ref2physical(String conn, DocRef docref, DocUser usr, String ref2peer)
 			throws Exception {
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, docref.syntabl);
-
-		ExtFilePaths extpths = DocRef.createExtPaths(conn, docref.syntabl, docref);
+		ExtFilePaths extpths = DocRef.createExtPaths(conn, meta, docref);
 		String targetpth = extpths.decodeUriPath();
 		
 		DBSyntableBuilder st = new DBSyntableBuilder(domanager0);
@@ -696,7 +702,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			Utils.warnT(new Object() {},
 					"Failed to remove/resovle doc-ref. pid: %s, syn-uids: %s",
 					docref.docId, docref.uids);
-			return null;
+			return res.total() > 0
+				? targetpth // Errors like re-exchange syntities can reach here. Tolerate it for now.
+				: null;
 		}
 		
 		return targetpth;
