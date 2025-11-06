@@ -83,89 +83,96 @@ public class T_SynDomanager extends SynDomanager {
 	private int synUpdateDomx_break(SynssionPeer c, int breakpoint)
 			throws SemanticException, AnsonException, SsException, IOException, TransException {
 
-		if (!eq(c.peer, synode)) {
-			c.checkLogin(admin);
-			// peer.synwith_peer((lockby) -> Math.random());
+		if (eq(c.peer, synode))
+			return breakpoint;
 
-			mustnoBlankAny(c, domain());
+		c.checkLogin(admin);
+		// peer.synwith_peer((lockby) -> Math.random());
 
-			try {
-				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
-						+ "\n=============================================================\n",
-						domain(), synode, c.peer);
+		mustnoBlankAny(c, domain());
 
-				lockme((u)-> Math.random());
+		try {
+			Utils.logi(
+				"Locking and starting thread on domain updating: %s : %s -> %s"
+				+ "\n=============================================================\n",
+				domain(), synode, c.peer);
 
-				ExchangeBlock reqb = c.exesrestore();
-				SyncResp rep = null;
-				if (reqb != null) {
-					rep = c.ex_lockpeer(c.peer, A.exrestore, reqb, (lockby) -> Math.random());
-				}
-				else {
-					reqb = c.exesinit();
-					rep = c.ex_lockpeer(c.peer, A.exinit, reqb, (lockby) -> Math.random());
+			lockme((u)-> Math.random());
 
-					if (rep.exblock != null && rep.exblock.synact() != deny) 
-						c.onsyninitRep(rep.exblock, rep.domain);
-				}
-//				if (breakpoint == 0) {
-//					breakpoints[1] = true;
-//					return breakpoint + 1; // 1
-//				}
-				
-				int exchanges = 0;
-				while (rep.synact() != close) {
-					ExchangeBlock exb = c.syncdb(rep.exblock);
-					rep = c.exespush(c.peer, A.exchange, exb);
-					if (rep == null)
-						throw new ExchangeException(exb.synact(), c.xp,
-								"Got null reply for exchange session. %s : %s -> %s",
-								domain(), synode, c);
-					
-					if (breakpoint == exchanges) {
-						mustlt(exchanges + 1, breakpoints.length);
-						breakpoints[exchanges + 1] = true;
-						return breakpoint + 1; // 2, 3, 4
-					}
-					else ++exchanges;
-				}
-				
-				while (c.xp.hasNextChpages(c.xp.trb)) {
-					ExchangeBlock exb = c.syncdb(rep.exblock);
-					rep = c.exespush(c.peer, A.exchange, exb);
-				}
-				
-				// close
-				reqb = c.synclose(rep.exblock);
-
-				if (!breakpoints[0]) {
-					breakpoints[0] = true;
-					return -1; 
-				}
-
-				rep = c.exespush(c.peer, A.exclose, reqb);
-				
-				if (!SynssionPeer.testDisableAutoDocRef) {
-					DBSyntableBuilder tb = new DBSyntableBuilder(this);
-					c.resolveRef206Stream(tb);
-					c.pushDocRef2me(tb, c.peer);
-				}
-				else
-					Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
-							synode, domain(), c.peer);
-
-			} catch (TransException | SQLException e) {
-				e.printStackTrace();
-			} catch (Exception e) {
-				e.printStackTrace();
+			ExchangeBlock reqb = c.exesrestore();
+			SyncResp rep = null;
+			if (reqb != null) {
+				rep = c.ex_lockpeer(c.peer, A.exrestore, reqb, (lockby) -> Math.random());
 			}
-			finally { unlockme(); }
+			else {
+				reqb = c.exesinit();
+				rep = c.ex_lockpeer(c.peer, A.exinit, reqb, (lockby) -> Math.random());
+
+				if (rep.exblock != null && rep.exblock.synact() != deny) 
+					c.onsyninitRep(rep.exblock, rep.domain);
+			}
+			
+			int exchanges = 0;
+			while (rep.synact() != close) {
+				ExchangeBlock exb = c.syncdb(rep.exblock);
+				rep = c.exespush(c.peer, A.exchange, exb);
+				if (rep == null)
+					throw new ExchangeException(exb.synact(), c.xp,
+							"Got null reply for exchange session. %s : %s -> %s",
+							domain(), synode, c);
+				
+				if (!breakpoints[exchanges + 1]) {
+					mustlt(exchanges + 1, breakpoints.length);
+					breakpoints[exchanges + 1] = true;
+					return breakpoint + 1;
+				}
+				else ++exchanges;
+			}
+			
+			while (c.xp.hasNextChpages(c.xp.trb)) {
+				ExchangeBlock exb = c.syncdb(rep.exblock);
+
+				if (!breakpoints[exchanges + 1]) {
+					mustlt(exchanges + 1, breakpoints.length);
+					breakpoints[exchanges + 1] = true;
+					return breakpoint + 1;
+				}
+				else ++exchanges;
+
+				rep = c.exespush(c.peer, A.exchange, exb);
+			}
+			
+			// close
+			reqb = c.synclose(rep.exblock);
+
+			if (!breakpoints[0]) {
+				breakpoints[0] = true;
+				return -1; 
+			}
+
+			rep = c.exespush(c.peer, A.exclose, reqb);
+			
+			if (!SynssionPeer.testDisableAutoDocRef) {
+				DBSyntableBuilder tb = new DBSyntableBuilder(this);
+				c.resolveRef206Stream(tb);
+				c.pushDocRef2me(tb, c.peer);
+			}
+			else
+				Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
+						synode, domain(), c.peer);
+
+		} catch (TransException | SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+		finally { unlockme(); }
+
 		return breakpoint;
 	}
 
-	@Override
-	public boolean enableRegistryClient() {
-		return false;
-	}
+//	@Override
+//	public boolean enableRegistryClient() {
+//		return false;
+//	}
 }
