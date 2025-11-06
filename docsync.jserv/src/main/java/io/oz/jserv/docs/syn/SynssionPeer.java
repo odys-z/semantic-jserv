@@ -288,10 +288,10 @@ public class SynssionPeer {
 	SynssionPeer synwith_peer(OnMutexLock onMutext) {
 		mustnoBlankAny(client, peer, domain()); // no need to tell the peer, and stop the syn-worker.
 		try {
-			if (debug)
-				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
-						+ "\n=============================================================\n",
-						domain(), mynid, peer);
+			if (debug) Utils.logi(
+				"Locking and starting thread on domain updating: %s : %s -> %s"
+				+ "\n=============================================================\n",
+				domain(), mynid, peer);
 
 			domanager.lockme(onMutext);
 
