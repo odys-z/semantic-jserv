@@ -288,15 +288,15 @@ public class SynssionPeer {
 	SynssionPeer synwith_peer(OnMutexLock onMutext) {
 		mustnoBlankAny(client, peer, domain()); // no need to tell the peer, and stop the syn-worker.
 		try {
-			if (debug)
-				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
-						+ "\n=============================================================\n",
-						domain(), mynid, peer);
+			if (debug) Utils.logi(
+				"Locking and starting thread on domain updating: %s : %s -> %s"
+				+ "\n=============================================================\n",
+				domain(), mynid, peer);
 
 			domanager.lockme(onMutext);
 
 			ExchangeBlock reqb = exesrestore();
-			SyncResp rep;
+			SyncResp rep = null;
 			if (reqb != null) {
 				rep = ex_lockpeer(peer, A.exrestore, reqb, onMutext);
 			}
@@ -308,12 +308,7 @@ public class SynssionPeer {
 				if (rep.exblock != null && rep.exblock.synact() != deny) 
 					onsyninitRep(rep.exblock, rep.domain);
 			}
-//			if (breakpoint == 0) {
-//				breakpoints[1] = true;
-//				return breakpoint + 1; // 1
-//			}
 			
-//			int exchanges = 0;
 			while (rep.synact() != close) {
 				ExchangeBlock exb = syncdb(rep.exblock);
 				rep = exespush(peer, A.exchange, exb);
@@ -321,20 +316,13 @@ public class SynssionPeer {
 					throw new ExchangeException(exb.synact(), xp,
 							"Got null reply for exchange session. %s : %s -> %s",
 							domain(), domanager.synode, peer);
-
-//				if (breakpoint == exchanges) {
-//					mustlt(exchanges + 1, breakpoints.length);
-//					breakpoints[exchanges + 1] = true;
-//					return breakpoint + 1; // 2, 3, 4
-//				}
-//				else ++exchanges;
 			}
 			
 			while (xp.hasNextChpages(xp.trb)) {
 				ExchangeBlock exb = syncdb(rep.exblock);
 				rep = exespush(peer, A.exchange, exb);
 			}
-				
+			
 			// close
 			reqb = synclose(rep.exblock);
 			rep = exespush(peer, A.exclose, reqb);
@@ -354,7 +342,6 @@ public class SynssionPeer {
 			e.printStackTrace();
 		}
 		finally { domanager.unlockme(); }
-
 
 		return this;
 	}

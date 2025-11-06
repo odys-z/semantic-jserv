@@ -1,5 +1,6 @@
 package io.oz.jserv.docs.syn;
 
+import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.Utils.awaitAll;
@@ -16,11 +17,13 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Date;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import io.odysz.common.DateFormat;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.IAssert;
 import io.odysz.jclient.syn.IFileProvider;
@@ -74,7 +77,8 @@ class ExchangreRestorTest {
 	static Docheck ck_prv;
 	static IAssert azert = new AssertImpl();
 
-	private static String[] dev_reses;
+	private static String[] x_reses;
+	private static String[] y_reses;
 
 	static T_PhotoMeta docm; // = new T_PhotoMeta("clientconn-x");
 	static DeviceTableMeta devm; // = new DeviceTableMeta("clientconn-x");
@@ -89,6 +93,7 @@ class ExchangreRestorTest {
 		
 
 		connect_xml = FilenameUtils.rel2abs(webinf, connect_xml);
+		connect_bak = f("%s-%s", connect_bak, DateFormat.formatime_utc(new Date()));
 		connect_bak = FilenameUtils.rel2abs(webinf, connect_bak);
 		Files.move(Paths.get(connect_xml), Paths.get(connect_bak), StandardCopyOption.REPLACE_EXISTING);
 		Files.copy(Paths.get(connect_breaks), Paths.get(connect_xml), StandardCopyOption.REPLACE_EXISTING);
@@ -118,11 +123,22 @@ class ExchangreRestorTest {
 		dev_y = new Dev("sys-X", "dev-y", admin, _8964, "Y-0", zsu,
 								"src/test/res/anclient.java/Amelia Anisovych.mp4");
 		
-		dev_reses = new String[] {
+		x_reses = new String[] {
 				"src/test/res/anclient.java/Amelia Anisovych.mp4",
 				"src/test/res/anclient.java/3-birds.wav",
 				"src/test/res/anclient.java/2-ontario.gif",
 				"src/test/res/anclient.java/1-pdf.pdf",
+		};
+
+		y_reses = new String[] {
+				"src/test/res/anclient.java/Amelia Anisovych.mp4",
+				"src/test/res/anclient.java/3-birds.wav",
+				"src/test/res/anclient.java/2-ontario.gif",
+				"src/test/res/anclient.java/1-pdf.pdf",
+				"src/test/res/anclient.java/4-T.png",
+				"src/test/res/anclient.java/5-A.png",
+				"src/test/res/anclient.java/6-N.jpg",
+				"src/test/res/anclient.java/7-K.jpg",
 		};
 
 		docm = new T_PhotoMeta("clientconn-x");
@@ -185,16 +201,16 @@ class ExchangreRestorTest {
 			prv_jserv = jprv.jserv();
 		}
 
-		ExpSyncDoc dx = clientPush(dev_x, hub_jserv, dev_reses);
-		ExpSyncDoc dy = clientPush(dev_y, prv_jserv, dev_reses);
+		ExpSyncDoc dx = clientPush(dev_x, hub_jserv, x_reses);
+		ExpSyncDoc dy = clientPush(dev_y, prv_jserv, y_reses);
 		
 		assertEquals(4, ck_hub.docs());
-		assertEquals(4, ck_prv.docs());
+		assertEquals(8, ck_prv.docs());
 
 		awaitAll(lights, -1);
 
-		assertEquals(8, ck_hub.docs());
-		assertEquals(8, ck_prv.docs());
+		assertEquals(12, ck_hub.docs());
+		assertEquals(12, ck_prv.docs());
 
 		// must reach broken cases
 		T_SynDomanager m = (T_SynDomanager) jprv.syngleton().domnger0();

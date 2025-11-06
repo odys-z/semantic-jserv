@@ -11,6 +11,7 @@ src/test/res/exbreak-vols/volume-*/*.db
 src/test/res/WEB-INF/settings.hub.json
 src/test/res/WEB-INF/settings.prv.json
 src/test/res/WEB-INF/settings.mob.json
+src/test/res/WEB-INF/connects.xml-backup-20*
 
 jetty-log
 *.log
