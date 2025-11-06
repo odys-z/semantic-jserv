@@ -296,7 +296,7 @@ public class SynssionPeer {
 			domanager.lockme(onMutext);
 
 			ExchangeBlock reqb = exesrestore();
-			SyncResp rep;
+			SyncResp rep = null;
 			if (reqb != null) {
 				rep = ex_lockpeer(peer, A.exrestore, reqb, onMutext);
 			}
@@ -322,7 +322,7 @@ public class SynssionPeer {
 				ExchangeBlock exb = syncdb(rep.exblock);
 				rep = exespush(peer, A.exchange, exb);
 			}
-				
+			
 			// close
 			reqb = synclose(rep.exblock);
 			rep = exespush(peer, A.exclose, reqb);
