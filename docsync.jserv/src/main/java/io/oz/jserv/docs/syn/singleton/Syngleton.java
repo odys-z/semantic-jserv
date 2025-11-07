@@ -403,7 +403,6 @@ public class Syngleton extends JSingleton {
 	 * @param conn
 	 * @throws Exception 
 	 */
-	@SuppressWarnings("deprecation")
 	static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 
@@ -425,8 +424,11 @@ public class Syngleton extends JSingleton {
 						cfg.org.orgId, sn.synid, sn.org);
 				sn.org = cfg.org.orgId;
 
-				del.post(sn.insertRow(cfg.domain,
-						synm, tb0.insert(synm.tbl, usr)));
+				// del.post(sn.insertRow(cfg.domain, synm, tb0.insert(synm.tbl, usr)));
+				del.post(AppSettings.insert_synode(tb0, synm, usr,
+							cfg.synconn, cfg.org.orgId, cfg.domain, sn.synid,
+							isblank(sn.remarks) ? null : SynodeMode.valueOf(sn.remarks),
+							sn.jserv, sn.optime, cfg.synid));
 			}
 
 			del.d(tb0.instancontxt(cfg.synconn, usr));

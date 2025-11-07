@@ -5,6 +5,7 @@ import static io.odysz.common.AESHelper.getRandom;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.ev;
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
@@ -13,6 +14,7 @@ import static io.odysz.common.LangExt.indexOf;
 import static io.odysz.common.LangExt.musteq;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.mustnoBlankAny;
+import static io.oz.syn.ExessionAct.ready;
 import static io.oz.syn.ExessionAct.close;
 import static io.oz.syn.ExessionAct.deny;
 import static io.oz.syn.ExessionAct.init;
@@ -186,7 +188,9 @@ public class SynssionPeer {
 	 * @return this
 	 * @throws ExchangeException not ready yet.
 	 * @since 0.2.6 deprecated 
-	private SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
+	 * @deprecated only for test, cannot restore break points
+	 */
+	SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
 					"Synchronizing information is not ready, or not logged in. From synode %s to peer %s, domain %s%s.",
@@ -265,8 +269,6 @@ public class SynssionPeer {
 		finally { domanager.unlockme(); }
 		return this;
 	}
-	 * @deprecated only for test, cannot restore break points
-	 */
 
 	/**
 	 * 

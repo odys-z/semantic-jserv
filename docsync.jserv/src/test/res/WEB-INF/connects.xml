@@ -65,7 +65,7 @@
   		<src>$VOLUME_0/no-jserv-db.00</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg>t</dbg>
+  		<dbg>1</dbg>
   		<smtcs>$VOLUME_0/semantics-syn.xml</smtcs>
 	</c>
 	<c>

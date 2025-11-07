@@ -54,6 +54,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.Dev;
 import io.oz.syn.Docheck;
+import io.oz.syn.Synode;
 import io.oz.syn.SynodeMode;
 import io.oz.syn.registry.SynodeConfig;
 import io.oz.syn.registry.YellowPages;
@@ -391,12 +392,19 @@ public class ExpDoctierservTest {
 			_settings.vol_name = f("VOLUME_%s", i);
 			_settings.volume = f("../vol-%s", i);
 			_settings.port = _8964 + i;
-			_settings.installkey = "0123456789ABCDEF";	
-			_settings.rootkey = null;
+//			_settings.installkey = "0123456789ABCDEF";	
+//			_settings.rootkey = null;
+			_settings.installkey = null;
+			_settings.rootkey = "0123456789ABCDEF";	
 			_settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
 
 			YellowPages.load(EnvPath.concat(webinf, "$" + _settings.vol_name));
 			cfgs[i] = YellowPages.synconfig();
+			
+			// won't work otherwise if the jserv-worker is disabled
+			for (Synode p : cfgs[i].peers) {
+				p.jserv = jservs.get(p.synid);
+			}
 
 			_settings.setupdb(cfgs[i], "jserv-stub", webinf,
 					 cfgxml, "ABCDEF0123465789", true);

@@ -52,6 +52,7 @@ import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.x.TransException;
@@ -656,7 +657,7 @@ setp (6)
 			throws TransException, SQLException {
 		String myjserv = new JServUrl(c.https, reportRversedIp(), reversedPort(c.https)).jserv();
 		if (inst_updateLaterDBserv(c.synconn, c.org.orgId, c.domain, synm,
-				c.synid, myjserv, jserv_utc, c.synid)) {
+				c.synid, c.mode, myjserv, jserv_utc, c.synid)) {
 
 			logi("[%s : %s] update peer %s's jserv: %s [%s]", c.synconn, c.domain, c.synid, myjserv, jserv_utc);
 			jserv(c.synid, myjserv);
@@ -747,7 +748,8 @@ setp (6)
 			for (Synode peer : rep.diction.peers) {
 				if (!eq(peer.synid, c.synid) && JServUrl.valid(peer.jserv))
 					dirty |= inst_updateLaterDBserv(c.synconn, c.org.orgId, c.domain, synm,
-						peer.synid, peer.jserv, peer.optime, peer.oper);
+							peer.synid, isblank(peer.remarks) ? null : SynodeMode.valueOf(peer.remarks),
+							peer.jserv, peer.optime, peer.oper);
 			}
 			return dirty;
 		}
@@ -819,7 +821,7 @@ setp (6)
 	 * @throws SQLException
 	 */
 	public static boolean inst_updateLaterDBserv(String synconn, String org, String domain, SynodeMeta synm,
-			String peer, String servurl, String timestamp_utc, String createrid)
+			String peer, SynodeMode synmode, String servurl, String timestamp_utc, String createrid)
 			throws TransException, SQLException {
 		mustnoBlankAny(synconn, org, domain, peer, servurl, createrid);
 
@@ -833,14 +835,17 @@ setp (6)
 		if (DAHelper.count(tb, synconn, synm.tbl,
 				synm.org, org, synm.domain, domain, synm.pk, peer) == 0) {
 			
-			tb.insert(synm.tbl, robot)
-				.nv(synm.org, org)
-				.nv(synm.domain, domain)
-				.nv(synm.pk, peer)
-				.nv(synm.jserv, servurl)
-				.nv(synm.io_oz_synuid, SynChangeMeta.uids(createrid, peer))
-				.nv(synm.jserv_utc, timestamp)
-				.nv(synm.oper, createrid)
+//			tb.insert(synm.tbl, robot)
+//				.nv(synm.org, org)
+//				.nv(synm.domain, domain)
+//				.nv(synm.pk, peer)
+//				.nv(synm.jserv, servurl)
+//				.nv(synm.io_oz_synuid, SynChangeMeta.uids(createrid, peer))
+//				.nv(synm.jserv_utc, timestamp)
+//				.nv(synm.oper, createrid)
+
+			mustnonull(synmode);
+			insert_synode(tb, synm, robot, synconn, org, domain, peer, synmode, servurl, timestamp, createrid)
 				.ins(tb.instancontxt(synconn, robot));
 			
 			return true; //res.total() > 0;
@@ -860,5 +865,22 @@ setp (6)
 		
 			return res.total() > 0;
 		}
+	}
+
+	public static Insert insert_synode(DATranscxt tb, SynodeMeta synm, IUser robot,
+			String synconn, String org, String domain, String peer,
+			SynodeMode synodeMode, String servurl, String timestamp, String createrid) {
+		timestamp = ifnull(timestamp, jour0);
+		return tb
+			.insert(synm.tbl, robot)
+			.nv(synm.org, org)
+			.nv(synm.domain, domain)
+			.nv(synm.pk, peer)
+			.nv(synm.jserv, servurl)
+			.nv(synm.remarks, synodeMode == null ? null : synodeMode.name())
+			.nv(synm.io_oz_synuid, SynChangeMeta.uids(createrid, peer))
+			.nv(synm.jserv_utc, timestamp)
+			.nv(synm.oper, createrid)
+			;
 	}
 }

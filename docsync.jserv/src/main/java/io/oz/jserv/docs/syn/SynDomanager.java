@@ -453,7 +453,7 @@ public class SynDomanager extends SyndomContext implements OnError {
 			String[] jserv_utc_oper = jservs.get(sid);
 			merged |= AppSettings.inst_updateLaterDBserv(
 					synconn, org, domain, synm,
-					sid, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
+					sid, null, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
 		}
 		return merged;
 	}

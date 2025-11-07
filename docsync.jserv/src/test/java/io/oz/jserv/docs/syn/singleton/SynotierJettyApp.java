@@ -243,8 +243,8 @@ public class SynotierJettyApp {
 				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
 				new Echo(),
 				new HeartLink())
-			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg, settings, docusr, must_break)
+			.addDocServPort(cfg, regists.syntities)
 			.allowCors(synapp.schandler)
 			;
 	}
@@ -269,7 +269,7 @@ public class SynotierJettyApp {
 	}
 
 	public SynotierJettyApp addDocServPort(SynodeConfig cfg, ArrayList<SyntityReg> syntities) throws Exception {
-		SynDomanager domanger = syngleton.domanager(cfg.domain);
+		T_SynDomanager domanger = (T_SynDomanager) syngleton.domanager(cfg.domain);
 
 		addServPort(new ExpDoctier(domanger, null)
 				.registSynEvent(cfg, syntities));
