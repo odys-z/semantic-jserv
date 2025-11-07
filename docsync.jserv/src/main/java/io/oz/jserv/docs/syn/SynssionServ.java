@@ -46,7 +46,8 @@ public class SynssionServ {
 
 			DBSyntableBuilder b0 = new DBSyntableBuilder(syndomxerv);
 			srvp = new ExessionPersist(b0, peer, ini);
-			// b0.fix_closexchange(srvp, ini);
+
+			b0.fix_closexchange(srvp, ini);
 			ExchangeBlock b = b0.onInit(srvp, ini);
 
 			return new SyncResp(syndomxerv.domain()).exblock(b);
