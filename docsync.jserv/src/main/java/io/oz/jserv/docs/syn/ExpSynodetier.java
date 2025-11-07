@@ -263,11 +263,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		workers[0] = jserv_worker(err); 
 
 //		if (domanager0.enableRegistryClient())
-		// FIXME
-		// FIXME
-		// FIXME
-		// FIXME
-			// scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
+		scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
 		
 		if (syncIns > 1) {
 			DATranscxt syntb = new DATranscxt(domanager0.synconn);

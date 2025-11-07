@@ -392,11 +392,16 @@ public class ExpDoctierservTest {
 			_settings.vol_name = f("VOLUME_%s", i);
 			_settings.volume = f("../vol-%s", i);
 			_settings.port = _8964 + i;
-//			_settings.installkey = "0123456789ABCDEF";	
-//			_settings.rootkey = null;
-			_settings.installkey = null;
-			_settings.rootkey = "0123456789ABCDEF";	
-			_settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
+			
+			// If there is no registry central service, these two lines should work
+			// _settings.installkey = null;
+			// _settings.rootkey = "0123456789ABCDEF";	
+
+			_settings.installkey = "0123456789ABCDEF";	
+			_settings.rootkey = null;
+
+			String settings_json = f("settings.gitignore.%s", i);
+			_settings.toFile(FilenameUtils.concat(webinf, settings_json), JsonOpt.beautify());
 
 			YellowPages.load(EnvPath.concat(webinf, "$" + _settings.vol_name));
 			cfgs[i] = YellowPages.synconfig();
@@ -416,7 +421,7 @@ public class ExpDoctierservTest {
 
 			// main()
 			settings[i] = AppSettings.checkInstall(SynotierJettyApp.servpath,
-					webinf, cfgxml, "settings.json", true);
+					webinf, cfgxml, settings_json, true);
 
 			Utils.logi("+======================================= %s, %s",
 					settings[i].reversedPort(false), i);
@@ -428,7 +433,7 @@ public class ExpDoctierservTest {
 			
 			// ISSUE afterboot() will write the same settings.json again, in another thread. 
 			// Using different json files for the test?
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
