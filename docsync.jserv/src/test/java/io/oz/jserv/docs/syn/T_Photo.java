@@ -154,6 +154,9 @@ public class T_Photo extends ExpSyncDoc {
 		return this;
 	}
 
+	/**
+	 * @deprecated {@link #shareflag} is not used in 0.7.6 
+	 */
 	public ExpSyncDoc shareflag(String f) {
 		shareflag = f;
 		return this;

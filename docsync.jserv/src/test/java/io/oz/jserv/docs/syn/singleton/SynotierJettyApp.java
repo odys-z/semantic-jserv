@@ -45,6 +45,7 @@ import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpDoctier;
 import io.oz.jserv.docs.syn.ExpSynodetier;
 import io.oz.jserv.docs.syn.SynDomanager;
+import io.oz.jserv.docs.syn.T_SynDomanager;
 import io.oz.syn.DBSynTransBuilder;
 import io.oz.syn.SyncUser;
 import io.oz.syn.registry.SynodeConfig;
@@ -122,7 +123,7 @@ public class SynotierJettyApp {
 	 * @param args [0] settings.xml
 	 * @throws Exception
 	 */
-	public static SynotierJettyApp _main(String[] args) {
+	public static SynotierJettyApp _main(String[] args, boolean ...break_exchagne) {
 		try {
 			// For Eclipse's running as Java Application
 			// E. g. -DWEB-INF=src/main/webapp/WEB-INF
@@ -132,7 +133,7 @@ public class SynotierJettyApp {
 			AppSettings settings = AppSettings.checkInstall(servpath,
 					srcwebinf, config_xml, _0(args, settings_json), true);
 
-			SynotierJettyApp app = boot(srcwebinf, config_xml, settings)
+			SynotierJettyApp app = boot(srcwebinf, config_xml, settings, _0(break_exchagne, false))
 					.afterboot()
 					.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 
@@ -167,7 +168,7 @@ public class SynotierJettyApp {
 		return this;
 	}
 	
-	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings,
+	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings, boolean must_break,
 			PrintstreamProvider ... oe) throws Exception {
 
 		Utils.logi("%s : %s", settings.vol_name, EnvPath.getEnv(settings.vol_name));
@@ -193,7 +194,7 @@ public class SynotierJettyApp {
 		
 		return createSyndoctierApp(cfg, settings,
 					((ArrayList<SyncUser>) YellowPages.robots()).get(0),
-					webinf, config_xml, f("%s/%s", $vol_home, "syntity.json"))
+					webinf, config_xml, f("%s/%s", $vol_home, "syntity.json"), must_break)
 
 				.start(isNull(oe) ? () -> System.out : oe[0],
 					  !isNull(oe) && oe.length > 1 ? oe[1] : () -> System.err)
@@ -215,17 +216,19 @@ public class SynotierJettyApp {
 	 * @param urlpath e. g. jserv-album
 	 * @param syntity_json e. g. $VOLUME_HOME/syntity.json
 	 * @param admin 
+	 * @param requires {@link T_SynDomanager} must break break exchange, and resume at break points.
 	 * @throws Exception
 	 */
 	public static SynotierJettyApp createSyndoctierApp(SynodeConfig cfg, AppSettings settings,
-			SyncUser admin, String webinf, String config_xml, String syntity_json) throws Exception {
+			SyncUser admin, String webinf, String config_xml, String syntity_json, boolean must_break) throws Exception {
 
 		String synid  = cfg.synode();
 		String sync = cfg.synconn;
+		DocUser docusr = new DocUser(admin);
 
 		SynotierJettyApp synapp = SynotierJettyApp
 						.instanserver(webinf, cfg, admin, settings, config_xml)
-						.loadomains(cfg, new DocUser(admin));
+						.loadomains(cfg, docusr);
 
 		Utils.logi("------------ Starting %s ... --------------", synid);
 	
@@ -240,18 +243,22 @@ public class SynotierJettyApp {
 				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
 				new Echo(),
 				new HeartLink())
+			.addSynodetier(synapp, cfg, settings, docusr, must_break)
 			.addDocServPort(cfg, regists.syntities)
-			.addSynodetier(synapp, cfg)
 			.allowCors(synapp.schandler)
 			;
 	}
 
-	private SynotierJettyApp addSynodetier(SynotierJettyApp synapp, SynodeConfig cfg)
-			throws Exception {
+	private SynotierJettyApp addSynodetier(SynotierJettyApp synapp, SynodeConfig cfg,
+			AppSettings settings, DocUser admin, boolean must_break) throws Exception {
 		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
+		domanger = (SynDomanager) new T_SynDomanager(synapp.syngleton, cfg, settings, must_break)
+					.admin(admin.deviceId(cfg.synode()))
+					.loadomainx();
 		ExpSynodetier syncer = new ExpSynodetier(domanger)
 								.syncIn(cfg.syncIns,
 									(c, r, args) -> Utils.warn("[Syn-worker ERROR] code: %s, msg: %s", r));
+		synapp.syngleton.syndomanagers.put(cfg.domain, domanger);
 		addServPort(syncer);
 		return this;
 	}
@@ -262,7 +269,7 @@ public class SynotierJettyApp {
 	}
 
 	public SynotierJettyApp addDocServPort(SynodeConfig cfg, ArrayList<SyntityReg> syntities) throws Exception {
-		SynDomanager domanger = syngleton.domanager(cfg.domain);
+		T_SynDomanager domanger = (T_SynDomanager) syngleton.domanager(cfg.domain);
 
 		addServPort(new ExpDoctier(domanger, null)
 				.registSynEvent(cfg, syntities));

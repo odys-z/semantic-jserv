@@ -95,7 +95,10 @@ public class Syngleton extends JSingleton {
 	public SynDomanager domanager(String domain) {
 		return (syndomanagers != null && syndomanagers.containsKey(domain)) ?
 				syndomanagers.get(domain) : null;
-
+	}
+	
+	public SynDomanager domnger0() {
+		return domanager(syncfg.domain);
 	}
 
 	public Syngleton domanagers(HashMap<String, SynDomanager> domains) {
@@ -113,7 +116,6 @@ public class Syngleton extends JSingleton {
 		this.synuser  = admin;
 		this.settings = settings;
 		syndomanagers = new HashMap<String, SynDomanager>();
-		
 
 		tb0 = new DATranscxt(cfg.synconn);
 	}
@@ -401,7 +403,6 @@ public class Syngleton extends JSingleton {
 	 * @param conn
 	 * @throws Exception 
 	 */
-	@SuppressWarnings("deprecation")
 	static void initSynodeRecs(SynodeConfig cfg, Synode[] peers) throws Exception {
 		IUser usr = DATranscxt.dummyUser();
 
@@ -423,8 +424,11 @@ public class Syngleton extends JSingleton {
 						cfg.org.orgId, sn.synid, sn.org);
 				sn.org = cfg.org.orgId;
 
-				del.post(sn.insertRow(cfg.domain,
-						synm, tb0.insert(synm.tbl, usr)));
+				// del.post(sn.insertRow(cfg.domain, synm, tb0.insert(synm.tbl, usr)));
+				del.post(AppSettings.insert_synode(tb0, synm, usr,
+							cfg.synconn, cfg.org.orgId, cfg.domain, sn.synid,
+							isblank(sn.remarks) ? null : SynodeMode.valueOf(sn.remarks),
+							sn.jserv, sn.optime, cfg.synid));
 			}
 
 			del.d(tb0.instancontxt(cfg.synconn, usr));
@@ -436,7 +440,7 @@ public class Syngleton extends JSingleton {
 	}
 
 	public String myjserv() throws SQLException, TransException {
-		return settings.jserv(syncfg.synid);
-		//  or settings.loadDBservs(syncfg, synm, DateFormat.jour0) ?
+		// settings.loadDBLaterservs(syncfg, synm);
+		return settings.jserv(synode());
 	}
 }

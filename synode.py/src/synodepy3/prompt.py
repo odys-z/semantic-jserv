@@ -78,6 +78,7 @@ StandardError=journal
 Environment="JAVA_OPTS=-Xms512m -Xmx2g"
 
 [Install] 
+WantedBy=multi-user.target
     """
     syn_templ, web_templ = f'{c.synid}.service', f'{c.synid}.web.service'
     with open(syn_templ, "w") as fo:

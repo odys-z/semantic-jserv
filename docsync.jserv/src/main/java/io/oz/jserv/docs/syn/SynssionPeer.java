@@ -14,10 +14,10 @@ import static io.odysz.common.LangExt.indexOf;
 import static io.odysz.common.LangExt.musteq;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.mustnoBlankAny;
+import static io.oz.syn.ExessionAct.ready;
 import static io.oz.syn.ExessionAct.close;
 import static io.oz.syn.ExessionAct.deny;
 import static io.oz.syn.ExessionAct.init;
-import static io.oz.syn.ExessionAct.ready;
 import static io.oz.syn.ExessionAct.setupDom;
 import static io.oz.syn.ExessionAct.trylater;
 
@@ -104,7 +104,7 @@ public class SynssionPeer {
 
 	final String mynid;
 	/** The remode, server side, synode */
-	final String peer;
+	public final String peer;
 
 	String peerjserv() {
 		return domanager == null
@@ -190,7 +190,7 @@ public class SynssionPeer {
 	 * @since 0.2.6 deprecated 
 	 * @deprecated only for test, cannot restore break points
 	 */
-	public SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
+	SynssionPeer update2peer(OnMutexLock onMutext) throws ExchangeException {
 		if (client == null || isblank(peer) || isblank(domain()))
 			throw new ExchangeException(ready, null,
 					"Synchronizing information is not ready, or not logged in. From synode %s to peer %s, domain %s%s.",
@@ -269,35 +269,48 @@ public class SynssionPeer {
 		finally { domanager.unlockme(); }
 		return this;
 	}
+
+	/**
+	 * 
+	 * @param rep
+	 * @return the next syn-exchange block
+	 * @throws SQLException
+	 * @throws TransException
+	 */
+	ExchangeBlock syncdb(ExchangeBlock rep)
+			throws SQLException, TransException {
+		return xp.nextExchange(rep);
+	}
 	
-	private SynssionPeer synwith_peer(OnMutexLock onMutext) {
+	/**
+	 * IMPORTANT carefully match this with T_SynDomanager.synUpdateDomx_break()
+	 * @param onMutext
+	 * @return this
+	 */
+	SynssionPeer synwith_peer(OnMutexLock onMutext) {
 		mustnoBlankAny(client, peer, domain()); // no need to tell the peer, and stop the syn-worker.
 		try {
-			if (debug)
-				Utils.logi("Locking and starting thread on domain updating: %s : %s -> %s"
-						+ "\n=============================================================\n",
-						domain(), mynid, peer);
+			if (debug) Utils.logi(
+				"Locking and starting thread on domain updating: %s : %s -> %s"
+				+ "\n=============================================================\n",
+				domain(), mynid, peer);
 
 			domanager.lockme(onMutext);
 
 			ExchangeBlock reqb = exesrestore();
-			SyncResp rep;
+			SyncResp rep = null;
 			if (reqb != null) {
-				rep = ex_lockpeer(peer, A.exrestore, reqb);
-
-				if (rep.exblock != null && rep.exblock.synact() != deny)
-					// onsynrestorRep(rep.exblock, rep.domain);
-					onsyninitRep(rep.exblock, rep.domain);
+				rep = ex_lockpeer(peer, A.exrestore, reqb, onMutext);
 			}
 			else {
 				reqb = exesinit();
-				rep = ex_lockpeer(peer, A.exinit, reqb);
+				rep = ex_lockpeer(peer, A.exinit, reqb, onMutext);
+
 
 				if (rep.exblock != null && rep.exblock.synact() != deny) 
-					// on start reply
 					onsyninitRep(rep.exblock, rep.domain);
 			}
-					
+			
 			while (rep.synact() != close) {
 				ExchangeBlock exb = syncdb(rep.exblock);
 				rep = exespush(peer, A.exchange, exb);
@@ -307,11 +320,16 @@ public class SynssionPeer {
 							domain(), domanager.synode, peer);
 			}
 			
+			while (xp.hasNextChpages(xp.trb)) {
+				ExchangeBlock exb = syncdb(rep.exblock);
+				rep = exespush(peer, A.exchange, exb);
+			}
+			
 			// close
 			reqb = synclose(rep.exblock);
 			rep = exespush(peer, A.exclose, reqb);
 			
-			if (!testDisableAutoDocRef) {
+			if (!SynssionPeer.testDisableAutoDocRef) {
 				DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
 				resolveRef206Stream(tb);
 				pushDocRef2me(tb, peer);
@@ -327,13 +345,30 @@ public class SynssionPeer {
 		}
 		finally { domanager.unlockme(); }
 
-
 		return this;
 	}
 
-	private SyncResp ex_lockpeer(String peer, String a, ExchangeBlock reqb) {
-		// TODO Auto-generated method stub
-		return null;
+	SyncResp ex_lockpeer(String peer, String act, ExchangeBlock reqb, OnMutexLock onMutext)
+			throws SemanticException, AnsonException, IOException, InterruptedException {
+		SyncResp rep = exespush(peer, act, reqb);
+		if (rep != null) {
+			// lock remote
+			while (rep.synact() == trylater) {
+				if (debug)
+					Utils.logT(new Object() {},
+							"%s: %s is locked, waiting...",
+							mynid, peer);
+					
+				domanager.unlockme();
+
+				double sleep = rep.exblock.sleeps;
+				Thread.sleep((long) (sleep * 1000)); // wait for next try
+				domanager.lockme(onMutext);
+
+				rep = exespush(peer, act, reqb);
+			}
+		}
+		return rep;
 	}
 
 	/**
@@ -384,7 +419,7 @@ public class SynssionPeer {
 		return new SyncResp(domain()).exblock(b);
 	}
 
-	ExchangeBlock syncdb(ExchangeBlock rep)
+	ExchangeBlock nextExchange(ExchangeBlock rep)
 			throws SQLException, TransException {
 		return xp.nextExchange(rep);
 	}
@@ -409,7 +444,7 @@ public class SynssionPeer {
 
 	SyncResp exespush(String peer, SyncReq req)
 			throws SemanticException, AnsonException, IOException {
-		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", A.exchange, "by " + mynid);
+		String[] act = AnsonHeader.usrAct(getClass().getName(), "push", req.a(), "by " + mynid);
 		AnsonHeader header = client.header().act(act);
 
 		AnsonMsg<SyncReq> q = client
@@ -460,7 +495,7 @@ public class SynssionPeer {
 	 * @param report2test
 	 * @since 0.2.4
 	 */
-	private void resolveRef206Stream(DBSyntableBuilder tb, OnProcess... report2test) {
+	void resolveRef206Stream(DBSyntableBuilder tb, OnProcess... report2test) {
 		// 206 downloader
 		SynDocRefMeta refm = domanager.refm;
 		String exclude = encode64(getRandom());
@@ -480,7 +515,7 @@ public class SynssionPeer {
 			ExpDocTableMeta docm = ref.docm;
 			try {
 				String localpath = ref.downloadPath(peer, conn, client.ssInfo());
-				ExtFilePaths extpths = DocRef.createExtPaths(conn, docm.tbl, ref);
+				ExtFilePaths extpths = DocRef.createExtPaths(conn, docm, ref);
 				String targetpth = extpths.decodeUriPath();
 
 				if (debug)
@@ -656,7 +691,7 @@ public class SynssionPeer {
 	 * @throws AnsonException 
 	 * @since 0.2.5
 	 */
-	private void pushDocRef2me(DBSyntableBuilder tb, String peer)
+	void pushDocRef2me(DBSyntableBuilder tb, String peer)
 			throws Exception {
 		clearAvoidingRefs(peer);
 		SyncResp resp = queryDocRefPage2me(null, null);

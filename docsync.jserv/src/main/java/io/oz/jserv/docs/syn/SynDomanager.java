@@ -196,7 +196,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 			ExessionPersist xp = sessions.get(peer).xp;
 			if (xp == null || xp.exstate() == ready) {
 				sessions.get(peer).checkLogin(admin);
-				sessions.get(peer).update2peer((lockby) -> Math.random() + 0.1);
+				// sessions.get(peer).update2peer((lockby) -> Math.random() + 0.1);
+				sessions.get(peer).synwith_peer((lockby) -> Math.random() + 0.1);
 			}
 			else if (xp != null && xp.exstate() != ready)
 				continue;
@@ -383,7 +384,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 			if (eq(peer.peer, synode))
 					continue;
 			peer.checkLogin(admin);
-			peer.update2peer((lockby) -> Math.random());
+			// peer.update2peer((lockby) -> Math.random());
+			peer.synwith_peer((lockby) -> Math.random());
 		}
 
 		if (!isNull(onok))
@@ -397,8 +399,8 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 		if (!eq(peer.peer, synode)) {
 			peer.checkLogin(admin);
-			peer.update2peer((lockby) -> Math.random());
-			// peer.synwith_peer((lockby) -> Math.random());
+			// peer.update2peer((lockby) -> Math.random());
+			peer.synwith_peer((lockby) -> Math.random());
 
 			if (!isNull(onok))
 				onok[0].ok(domain(), synode, peer.peer);
@@ -451,8 +453,12 @@ public class SynDomanager extends SyndomContext implements OnError {
 			String[] jserv_utc_oper = jservs.get(sid);
 			merged |= AppSettings.inst_updateLaterDBserv(
 					synconn, org, domain, synm,
-					sid, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
+					sid, null, jserv_utc_oper[0], jserv_utc_oper[1], jserv_utc_oper[2]);
 		}
 		return merged;
 	}
+
+//	public boolean enableRegistryClient() {
+//		return true;
+//	}
 }

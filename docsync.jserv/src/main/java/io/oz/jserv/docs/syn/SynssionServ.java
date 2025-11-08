@@ -1,9 +1,7 @@
 package io.oz.jserv.docs.syn;
 
 import static io.odysz.common.LangExt.eq;
-import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
-import static io.odysz.common.LangExt.shouldeq;
 import static io.oz.syn.ExessionAct.init;
 import static io.oz.syn.ExessionAct.mode_server;
 
@@ -40,16 +38,17 @@ public class SynssionServ {
 
 	public SyncResp onsyninit(ExchangeBlock ini) throws Exception {
 		try {
-			if (!syndomxerv.lockx(usr))
+			if (!syndomxerv.relockx(usr))
 				return trylater(peer);
 
 			if (!eq(ini.srcnode, peer))
-				throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
-
-			shouldeq(new Object() {}, usr, this.usr);
+				throw new ExchangeException(init, null,
+					"Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
 			DBSyntableBuilder b0 = new DBSyntableBuilder(syndomxerv);
 			srvp = new ExessionPersist(b0, peer, ini);
+
+			b0.fix_closexchange(srvp, ini);
 			ExchangeBlock b = b0.onInit(srvp, ini);
 
 			return new SyncResp(syndomxerv.domain()).exblock(b);
@@ -81,7 +80,15 @@ public class SynssionServ {
 	 */
 	public SyncResp onsynrestore(ExchangeBlock reqb)
 			throws SQLException, TransException {
-		ExchangeBlock repb = ifnull(srvp.onRestore(reqb), srvp.nextExchange(reqb));
+
+		if (!syndomxerv.relockx(usr))
+			return trylater(peer);
+
+		srvp.loadsession(reqb.srcnode);
+
+		// to be continued, calling nextExchange instead of onRestore()
+		ExchangeBlock repb = srvp.onRestore(reqb);
+		if (repb == null) repb = srvp.nextExchange(reqb);
 		return new SyncResp(syndomxerv.domain()).exblock(repb);
 	}
 

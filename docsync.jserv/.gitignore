@@ -7,6 +7,13 @@ src/test/res/vol-*/**
 !src/test/res/vol-*/*.xml
 !src/test/res/vol-*/dictionary.json
 
+src/test/res/exbreak-vols/volume-*/*.db
+src/test/res/WEB-INF/settings.hub.json
+src/test/res/WEB-INF/settings.prv.json
+src/test/res/WEB-INF/settings.mob.json
+src/test/res/WEB-INF/connects.xml-backup-20*
+src/test/res/WEB-INF/settings.gitignore.*
+
 jetty-log
 *.log
 client-at-*

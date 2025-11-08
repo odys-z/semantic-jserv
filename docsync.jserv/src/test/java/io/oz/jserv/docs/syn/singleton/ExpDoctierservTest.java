@@ -54,6 +54,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.transact.x.TransException;
 import io.oz.jserv.docs.syn.Dev;
 import io.oz.syn.Docheck;
+import io.oz.syn.Synode;
 import io.oz.syn.SynodeMode;
 import io.oz.syn.registry.SynodeConfig;
 import io.oz.syn.registry.YellowPages;
@@ -359,7 +360,7 @@ public class ExpDoctierservTest {
 
 	/**
 	 * Debug Notes:
-	 * A slow machine will pollute the settings variable if not buffered
+	 * A slow machine will pollute the settings variables if not buffered
 	 * This test cannot work on slow machine?
 	 */
 	public static int[] startJetties(SynotierJettyApp[] jetties, Docheck[] ck) throws Exception {
@@ -391,12 +392,24 @@ public class ExpDoctierservTest {
 			_settings.vol_name = f("VOLUME_%s", i);
 			_settings.volume = f("../vol-%s", i);
 			_settings.port = _8964 + i;
+			
+			// If there is no registry central service, these two lines should work
+			// _settings.installkey = null;
+			// _settings.rootkey = "0123456789ABCDEF";	
+
 			_settings.installkey = "0123456789ABCDEF";	
 			_settings.rootkey = null;
-			_settings.toFile(FilenameUtils.concat(webinf, "settings.json"), JsonOpt.beautify());
+
+			String settings_json = f("settings.gitignore.%s", i);
+			_settings.toFile(FilenameUtils.concat(webinf, settings_json), JsonOpt.beautify());
 
 			YellowPages.load(EnvPath.concat(webinf, "$" + _settings.vol_name));
 			cfgs[i] = YellowPages.synconfig();
+			
+			// won't work otherwise if the jserv-worker is disabled
+			for (Synode p : cfgs[i].peers) {
+				p.jserv = jservs.get(p.synid);
+			}
 
 			_settings.setupdb(cfgs[i], "jserv-stub", webinf,
 					 cfgxml, "ABCDEF0123465789", true);
@@ -408,19 +421,19 @@ public class ExpDoctierservTest {
 
 			// main()
 			settings[i] = AppSettings.checkInstall(SynotierJettyApp.servpath,
-					webinf, cfgxml, "settings.json", true);
+					webinf, cfgxml, settings_json, true);
 
 			Utils.logi("+======================================= %s, %s",
 					settings[i].reversedPort(false), i);
 
 			// Notes for debug tests: sleep longer if binding failed
-			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings[i])
+			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings[i], false)
 						.afterboot()
 						.print("\n. . . . . . . . Synodtier Jetty Application (Test) is running . . . . . . . ");
 			
 			// ISSUE afterboot() will write the same settings.json again, in another thread. 
 			// Using different json files for the test?
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],

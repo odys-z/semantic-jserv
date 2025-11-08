@@ -556,7 +556,7 @@ class InstallerForm(QMainWindow):
         replaced by enable_widgets()
         :return:
         """
-        installed = self.cli.isinstalled()
+        installed = self.cli.vol_valid()
         if Utils.iswindows():
             self.ui.bWinserv.setEnabled(installed)
 
@@ -593,7 +593,7 @@ class InstallerForm(QMainWindow):
         self.ui.txtDompswd.setEnabled(neverun)
 
     def enable_widgets(self):
-        def iscreating():
+        def iscreating_state():
             """
             The synode id is correct and is not installed
             :return:
@@ -625,16 +625,21 @@ class InstallerForm(QMainWindow):
         self.ui.cbbDomains.setEnabled(neverun)
         self.ui.txtDompswd.setEnabled(neverun) # can change in the future
 
-        valid_peers = self.cli.is_peers_valid()
-        self.ui.cbbPeers.setEnabled(valid_peers)
+        self.cli.update_domain(orgtype=synode_ui.market_id,
+                               domain=self.ui.cbbDomains.currentText(),
+                               orgid=self.ui.cbbOrgs.currentText())
+        # valid_peers = self.cli.is_peers_valid()
+        # self.ui.cbbPeers.setEnabled(valid_peers)
+        self.ui.cbbPeers.setEnabled(neverun)
 
         update_chkhub(self.ui.chkHub.checkState() == Qt.CheckState.Checked)
 
-        cansave = valid_peers and (neverun or self.cli.registry.config.synid == self.ui.cbbPeers.currentText())
+        # cansave = valid_peers and (neverun or self.cli.registry.config.synid == self.ui.cbbPeers.currentText())
+        cansave = iscreating_state()
         self.ui.bSetup.setEnabled(cansave)
 
         # test_run() is now actually saved syncIns == 0, but will not reinitialize dbs.
-        cantest = neverun and iscreating() and self.cli.isinstalled() and cansave
+        cantest = neverun and iscreating_state() and self.cli.vol_valid() and cansave
         self.ui.bTestRun.setEnabled(cantest)
 
         can_winsrv = cantest and Utils.iswindows()

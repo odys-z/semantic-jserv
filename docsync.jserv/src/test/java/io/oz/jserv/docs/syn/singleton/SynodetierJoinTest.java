@@ -172,7 +172,7 @@ public class SynodetierJoinTest {
 
 			settings = AppSettings.checkInstall(SynotierJettyApp.servpath, webinf, cfgxml, stjson, true);
 
-			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings)
+			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings, false)
 						.afterboot()
 						.print("\n. . . . . . . . Synodtier Jetty Application is running . . . . . . . ");
 			
