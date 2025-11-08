@@ -42,7 +42,8 @@ public class SynssionServ {
 				return trylater(peer);
 
 			if (!eq(ini.srcnode, peer))
-				throw new ExchangeException(init, null, "Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
+				throw new ExchangeException(init, null,
+					"Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
 			DBSyntableBuilder b0 = new DBSyntableBuilder(syndomxerv);
 			srvp = new ExessionPersist(b0, peer, ini);

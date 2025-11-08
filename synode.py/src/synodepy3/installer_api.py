@@ -406,20 +406,20 @@ class InstallerCli:
         valid_local_reg(registry)
         return registry
 
-    def is_peers_valid(self):
-        '''
-        There are peers in config.peers[], and domain ids are none or match config.domain
-        :return:
-        '''
-        peers = self.registry.config.peers
-        if LangExt.len(peers) > 0:
-            for p in peers:
-                if p.domain is not None and p.domain != self.registry.config.domain:
-                    return False
-            return True
-        else: return False
+    # def is_peers_valid(self):
+    #     '''
+    #     There are peers in config.peers[], and domain ids are none or match config.domain
+    #     :return:
+    #     '''
+    #     peers = self.registry.config.peers
+    #     if LangExt.len(peers) > 0:
+    #         for p in peers:
+    #             if p.domain is not None and p.domain != self.registry.config.domain:
+    #                 return False
+    #         return True
+    #     else: return False
 
-    def isinstalled(self):
+    def vol_valid(self):
         return self.validateVol() is None
 
     def hasrun(self, override_vol: str = None):
