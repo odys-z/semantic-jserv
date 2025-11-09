@@ -354,7 +354,7 @@ class InstallerCli:
         """
         Load from res_path/setings.json,
         NOTE TODO 0.7.6 force passward to central: ******
-        :return: loaded json object
+        :return: loaded settings
         """
 
         pths.web_settings = os.path.join(web_inf, settings_json)
@@ -379,8 +379,7 @@ class InstallerCli:
                 self.settings.centralPswd = self.settings.centralPswd + str(i)
 
         if LangExt.isblank(self.settings.regiserv):
-            regiserv = f'{'https' if self.registry.config.https else 'http'
-                         }://{synode_ui.central_iport}/{synode_ui.central_path}'
+            regiserv = f'{"https" if self.registry.config.https else "http"}://{synode_ui.central_iport}/{synode_ui.central_path}'
             self.settings.regiserv = regiserv if JServUrl.valid(regiserv, synode_ui.central_path) else "http://"
 
         return self.settings

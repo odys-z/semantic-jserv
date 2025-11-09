@@ -321,7 +321,7 @@ class InstallerForm(QMainWindow):
                 if self.ui.lbQr.pixmap is not None:
                     self.gen_qr()
 
-                self.bind_config()
+                # self.bind_config()
                 self.submit_jserv()
 
             except FileNotFoundError or IOError as e:
@@ -385,7 +385,7 @@ class InstallerForm(QMainWindow):
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
 
-        # self.seal_has_run()
+        self.seal_has_run()
         self.enable_widgets()
 
     def update_bind_domconf(self, resp: RegistResp):
@@ -396,7 +396,8 @@ class InstallerForm(QMainWindow):
 
         self.cli.registry.config.overlay(resp.diction)
 
-        binding_synode = resp.next_installing() if LangExt.isblank(myid) else myid
+        # binding_synode = resp.next_installing() if LangExt.isblank(myid) else myid
+        binding_synode = resp.next_installing() if self.cli.registry.find_peer(myid) is None else myid
         self.bind_cbbpeers(peers=self.cli.registry.config.peers, select_id=binding_synode)
 
         self.cli.settings.acceptj_butme(binding_synode, self.cli.registry.config.peers)
@@ -406,7 +407,12 @@ class InstallerForm(QMainWindow):
         domx = self.query_domx(self.ui.cbbOrgs.currentText())
         self.ui.cbbDomains.clear()
         if domx is not None:
+            my_domid = self.cli.registry.config.domain
             self.ui.cbbDomains.addItems(domx.domains())
+            # avoid change my domain id by select_domx()
+            if not LangExt.isblank(my_domid):
+                self.ui.cbbDomains.setCurrentText(my_domid)
+            self.cli.registry.config.domain = my_domid
 
     def select_domx(self, dix):
         domid = self.ui.cbbDomains.currentText()
