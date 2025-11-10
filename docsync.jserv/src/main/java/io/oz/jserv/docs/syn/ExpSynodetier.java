@@ -329,7 +329,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	private Runnable jserv_worker(OnError err) {
 		mustnonull(domanager0.syngleton.settings.centralPswd);
 		
-		return () -> {
+	  return () -> {
 		boolean stop0 = false;
 		try {
 			if (stop0) return;
@@ -357,7 +357,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			e.printStackTrace();
 			stop0 = true;
 		}
-		};
+	  };
 	}
 
 	/**
