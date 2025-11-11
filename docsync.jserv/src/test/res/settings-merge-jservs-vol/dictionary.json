@@ -3,8 +3,8 @@
   "config": {
     "type": "io.oz.syn.registry.SynodeConfig",
     "https": false,
-    "synid": "merge-jserv-tst",
-    "domain": "zsu",
+    "synid": "merge-tst-1",
+    "domain": "merge-tst",
     "admin": "ody",
     "sysconn": "sys-prv",
     "synconn": "docsyn-prv",
@@ -12,17 +12,17 @@
     "org": {
       "type": "io.oz.syn.registry.SynOrg",
       "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
-      "orgId": "ura", "orgName": "URA", "orgType": "test",
+      "orgId": "ura", "orgName": "URA", "orgType": "my",
       "webroot": "$WEBROOT_PRV", "homepage": "", "album0": "album-test"
     },
     "syncIns": 24.0,
     "peers": [
       {"type": "io.oz.syn.Synode",
-       "synid": "HUB", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "zsu", "syn_uid": "HUB.HUB" },
+       "synid": "merge-tst-hub", "org": "ura", "mac": "#URA.X", "nyq": 0, "domain": "merge-tst", "syn_uid": "HUB.HUB", "remarks": "hub" },
       {"type": "io.oz.syn.Synode",
-       "synid": "PRV", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "PRV,PRV" },
+       "synid": "merge-tst-1", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "merge-tst", "syn_uid": "PRV,PRV" },
       {"type": "io.oz.syn.Synode",
-       "synid": "MOB", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "zsu", "syn_uid": "MOB,MOB" } ]
+       "synid": "merge-tst-2", "org": "ura", "mac": "#URA.Y", "nyq": 0, "domain": "merge-tst", "syn_uid": "MOB,MOB" } ]
   },
   "synusers": [{
     "type": "io.oz.syn.SyncUser",

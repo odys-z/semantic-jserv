@@ -687,6 +687,8 @@ setp (6)
 	 */
 	private RegistResp synotifyCentral(SynodeConfig cfg, SessionClient client,
 			OnError errCtx) throws IOException, SemanticException, AnsonException {
+		
+		mustnoBlankAny(cfg.synid, cfg.org.orgId, cfg.org.orgType, jserv(cfg.synid));
 
 		String funcuri = f("%s/%s", reg_uri, cfg.synid);
 

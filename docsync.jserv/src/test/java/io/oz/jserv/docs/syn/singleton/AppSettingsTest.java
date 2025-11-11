@@ -10,6 +10,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.Date;
 
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.mustnull;
 
@@ -20,15 +22,19 @@ import org.junit.jupiter.api.Test;
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
 import io.odysz.common.FilenameUtils;
+import io.odysz.common.Utils;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
-import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
 import io.odysz.semantic.jprotocol.JProtocol.OnError;
 import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.util.DAHelper;
+import io.odysz.transact.sql.Delete;
+import io.oz.album.peer.SynDocollPort;
 import io.oz.syn.SyncUser;
+import io.oz.syn.Synode;
+import io.oz.syn.SynodeMode;
 import io.oz.syn.registry.SynodeConfig;
 import io.oz.syn.registry.YellowPages;
 
@@ -46,32 +52,39 @@ class AppSettingsTest {
 
 	AppSettings settings; 
 	SynodeConfig cfg;
+	static String hub_ip = "19.89.06.04";
 
 	private SyncUser synadmin;
 	private SynodeMeta synmeta;
+
 	static private OnError err;
+
+	DATranscxt tb; 
 	
+	static String get_ip(int n) {
+		return f("%1$s.%1$s.%1$s.%1$s", n);
+	}
+
 	static int changes = 10;
 	@BeforeAll
 	static void init() throws Exception {
-		JProtocol.setup("jserv-album", Port.dataset);
-
+		JProtocol.setup("jserv-album", SynDocollPort.docoll);
 		JServUrl.localIpFinder = 
 			(int... retries) -> {
-				return f("%1$s.%1$s.%1$s.%1$s", changes);
+				// return f("%1$s.%1$s.%1$s.%1$s", changes);
+				return get_ip(changes);
 			};
-			
 		err = (c, m, a) -> { fail(m); };
-		
 	}
 
 	@AfterAll
 	static void clean() throws IOException, InterruptedException {
-		try {
-			Files.move(Paths.get(connect_bak), Paths.get(connect_xml), StandardCopyOption.REPLACE_EXISTING);
-		} catch (IOException e) {}
 	}
 	
+	/**
+	 * Requires the Portofolio setup program use current time to save settings.json.
+	 * @throws Exception
+	 */
 	@Test
 	void testMerge_ip_json2db() throws Exception {
 		String p = new File(vol_diction_json).getAbsolutePath();
@@ -92,39 +105,103 @@ class AppSettingsTest {
 		settings = new AppSettings();
 		settings.centralPswd = System.getProperty("central_pswd");
 		mustnonull(settings.centralPswd);
+		settings.regiserv = "http://182.150.29.34:1989/regist-central";
 
 		settings.reverseProxy = false;
 		settings.port = 8964;
+		settings.json = vol_diction_json + "/ignore-by-merge-settings.json";
+		
+		tb = new DATranscxt(cfg.synconn);
+
+		install_peers();
 		
 		test_userConfig();
-		test_noproxy();
+//		settings.localIp = get_ip(changes);
+//		settings.jserv_utc = "1989-06-04";
+
+		mustnonull(settings.localIp);
+		mustnonull(settings.jserv_utc); 
+
+		test_ipchange_after_config();
+
+		try {
+			Files.move(Paths.get(connect_bak), Paths.get(connect_xml), StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {}
 	}
 
+	void install_peers() throws Exception {
+		synmeta  = new SynodeMeta(cfg.synconn);
+		synadmin = new SyncUser("admin", settings.centralPswd);
+		Delete d = tb
+		  .delete(synmeta.tbl, synadmin)
+		  .whereEq(synmeta.domain, cfg.domain)
+		  .whereEq(synmeta.org,  cfg.org.orgId);
+		
+		for (Synode p : cfg.peers) 
+			d.post(AppSettings.insert_synode(
+				  tb, synmeta, synadmin, cfg.synconn,
+				  cfg.org.orgId, cfg.domain, p.synid,
+				  isblank(p.remarks) ? null : SynodeMode.valueOf(p.remarks),
+				  settings.jserv(p.synid), settings.jserv_utc,
+				  cfg.synid))
+		  .d(tb.instancontxt(cfg.synconn, synadmin));
+	}	
+	
+	/**
+	 * Requires the Portofolio setup program use current time to save settings.json.
+	 * @throws Exception
+	 */
 	void test_userConfig() throws Exception {
 		mustnull(settings.localIp);
-		String jserv_hub = f("http://%1$s.%1$s.%1$s.%1$s:8964/jserv-album", changes);
+		String jserv_hub = f("http://%1$s:8964/jserv-album", hub_ip);
 		// test-jserv-hub
-
+		
+		musteqs(cfg.peers[0].remarks, SynodeMode.hub.name());
+		String hub = cfg.peers[0].synid;
 		settings
-			.jserv(cfg.synid, jserv_hub)
+			.jserv(hub, jserv_hub) // user configure
+			.jserv_utc("1989-06-04")
 			.reverseProxy = false;
 		
-		DATranscxt tb = new DATranscxt(cfg.synconn);
-		synadmin = new SyncUser();
-		synmeta  = new SynodeMeta(cfg.synconn);
-
 		assertTrue(settings.merge_ip_json2db(cfg, synmeta, synadmin, err));
 
 		assertEquals(jserv_hub,
 					DAHelper.getValstr(tb, cfg.synconn, synmeta, synmeta.jserv,
 						synmeta.domain, cfg.domain, synmeta.org, cfg.org.orgId,
-						synmeta.synoder, cfg.synid));
+						synmeta.synoder, hub));
 
-		assertEquals(jserv_hub, settings.jserv(cfg.synid));
+		assertEquals(jserv_hub, settings.jserv(hub));
 	}
 	
-	void test_noproxy() {
+	void test_ipchange_after_config() throws Exception {
 		settings.reverseProxy = false;
+
+		String my_ip = get_ip(changes);
+		String jserv_me = f("http://%1$s:8964/jserv-album", my_ip);
+		Utils.logrst(jserv_me, changes);
+
+		assertFalse(settings.merge_ip_json2db(cfg, synmeta, synadmin, err));
+		assertEquals(jserv_me, settings.jserv(cfg.synid));
+		assertEquals(my_ip, settings.localIp);
+		assertEquals(jserv_me, 
+					DAHelper.getValstr(tb, cfg.synconn, synmeta, synmeta.jserv,
+						synmeta.domain, cfg.domain, synmeta.org, cfg.org.orgId,
+						synmeta.synoder, cfg.synid));
+
+		Thread.sleep(4000); // minimal jserv-worker interval
+
+		my_ip = get_ip(++changes);
+		jserv_me = f("http://%1$s:8964/jserv-album", my_ip);
+		Utils.logrst(jserv_me, changes);
+
+		assertTrue(settings.merge_ip_json2db(cfg, synmeta, synadmin, err));
+		assertEquals(jserv_me, settings.jserv(cfg.synid));
+		assertEquals(my_ip, settings.localIp);
+
+		assertEquals(jserv_me, 
+					DAHelper.getValstr(tb, cfg.synconn, synmeta, synmeta.jserv,
+						synmeta.domain, cfg.domain, synmeta.org, cfg.org.orgId,
+						synmeta.synoder, cfg.synid));
 	}
 
 }

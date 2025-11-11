@@ -3,3 +3,4 @@ volume/**
 !volume/*.json
 vol-*/*.db
 v-*/*.db
+ignore-*.json
