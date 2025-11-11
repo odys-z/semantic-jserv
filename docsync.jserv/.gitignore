@@ -12,6 +12,7 @@ src/test/res/WEB-INF/settings.hub.json
 src/test/res/WEB-INF/settings.prv.json
 src/test/res/WEB-INF/settings.mob.json
 src/test/res/WEB-INF/connects.xml-backup-20*
+src/test/res/WEB-INF/connects.xml-settings-merge-backup-20*
 src/test/res/WEB-INF/settings.gitignore.*
 
 jetty-log

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
+<!--
+referencing tests:
+	ExchangeRestoreTest
+	AppSettingsTest
+-->
 <!DOCTYPE xml>
 <conns>
   <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,smtcs">

@@ -403,7 +403,7 @@ public class AppSettings extends Anson {
 			jservs = new HashMap<String, String>();
 		jservs.put(peer, jserv);
 		if (!JServUrl.valid(jserv))
-			warnT(new Object() {}, "Jserv is illegal: %s", jserv);
+			warnT(new Object() {}, "Jserv is invalid: %s", jserv);
 		return this;
 	}
 
@@ -461,7 +461,7 @@ public class AppSettings extends Anson {
 	}
 	
 	/**
-	 * @return IP in effects
+	 * @return IP in effect (no updating it there is one in effect).
 	 */
 	public String reportRversedIp() {
 		return this.reverseProxy ? proxyIp :
@@ -592,6 +592,10 @@ setp (6)
 	public boolean merge_ip_json2db(SynodeConfig c, SynodeMeta synm, SyncUser synusr, OnError err)
 			throws TransException, SQLException, AnsonException, SsException {
 
+
+		if (isblank(localIp))
+			updateDB_exceptMe(c, synm);
+
 		String nextIp = JServUrl.getLocalIp(2);
 		boolean toSubmit = false;
 
@@ -600,7 +604,7 @@ setp (6)
 			// (1.1) local == null, start service
 			// (4) on inet ip changed
 
-			// localIp = nextIp;
+			localIp = nextIp;
 			jserv_utc = DateFormat.now();
 
 			if (!refresh_myserv(c, synm))
@@ -613,11 +617,7 @@ setp (6)
 			// (1.3) local != null, jservs_utc > syn_node[others].utc,
 			toSubmit = refresh_myserv(c, synm);
 		
-
-		if (isblank(localIp))
-			updateDB_exceptMe(c, synm);
-
-		localIp = nextIp;
+		// localIp = nextIp;
 
 		try {
 			if (registryClient == null) {
@@ -634,7 +634,7 @@ setp (6)
 				// Refersh / merge local jservs with central.
 				resp = queryDomConfig(c, registryClient, err);
 
-			if (mergeReply_butme(c, resp, synm)) {
+			if (mergeReply_butme(c, resp, synm) || toSubmit) {
 				loadDBLaterservs(c, synm);
 				save();
 			}
@@ -655,11 +655,16 @@ setp (6)
 	 */
 	private boolean refresh_myserv(SynodeConfig c, SynodeMeta synm)
 			throws TransException, SQLException {
-		String myjserv = new JServUrl(c.https, reportRversedIp(), reversedPort(c.https)).jserv();
+		String myjserv = new JServUrl(c.https,
+							reportRversedIp(),
+							reversedPort(c.https)).jserv();
+
 		if (inst_updateLaterDBserv(c.synconn, c.org.orgId, c.domain, synm,
 				c.synid, c.mode, myjserv, jserv_utc, c.synid)) {
 
-			logi("[%s : %s] update peer %s's jserv: %s [%s]", c.synconn, c.domain, c.synid, myjserv, jserv_utc);
+			logi("[%s : %s] update peer %s's jserv: %s [%s]",
+				 c.synconn, c.domain, c.synid, myjserv, jserv_utc);
+
 			jserv(c.synid, myjserv);
 			return true;
 		}

@@ -35,7 +35,7 @@ import io.oz.jserv.docs.syn.singleton.SynotierJettyApp;
 import io.oz.syn.Docheck;
 import io.oz.syn.SynodeMode;
 
-class ExchangreRestorTest {
+public class ExchangreRestorTest {
 
 	private static final String zsu = "zsu";
 	private static final String admin = "admin";
@@ -59,10 +59,10 @@ class ExchangreRestorTest {
 
 	static String hubpath = "settings.hub.json"; 
 	static String prvpath = "settings.prv.json"; 
-	// static String mobpath = "settings.mob.json"; 
+	// public static String mobpath = "settings.mob.json"; 
 	static String connect_xml = "connects.xml";
-	static String connect_bak = "connects.xml-backup";
 	static String connect_breaks = "src/test/res/exbreak-vols/connects-exbreaks.xml";
+	static String connect_bak = "connects.xml-backup";
 
 	static String vol_hub = "../../../test/res/exbreak-vols/volume-hub";
 	static String vol_prv = "../../../test/res/exbreak-vols/volume-prv";
@@ -93,7 +93,7 @@ class ExchangreRestorTest {
 		
 
 		connect_xml = FilenameUtils.rel2abs(webinf, connect_xml);
-		connect_bak = f("%s-%s", connect_bak, DateFormat.formatime_utc(new Date()));
+		connect_bak = f("%s-%s", connect_bak, DateFormat.formatime_utc(new Date()).replaceAll(":", "-"));
 		connect_bak = FilenameUtils.rel2abs(webinf, connect_bak);
 		Files.move(Paths.get(connect_xml), Paths.get(connect_bak), StandardCopyOption.REPLACE_EXISTING);
 		Files.copy(Paths.get(connect_breaks), Paths.get(connect_xml), StandardCopyOption.REPLACE_EXISTING);
