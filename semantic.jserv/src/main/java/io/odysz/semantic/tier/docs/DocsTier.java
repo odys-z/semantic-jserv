@@ -30,6 +30,7 @@ import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 
+/** @deprecated */
 @WebServlet(description = "Document uploading tier", urlPatterns = { "/docs.tier-delete" })
 public class DocsTier extends ServPort<DocsReq> {
 	public DocsTier() {
@@ -41,7 +42,6 @@ public class DocsTier extends ServPort<DocsReq> {
 			throws ServletException, IOException, AnsonException, SemanticException {
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void onPost(AnsonMsg<DocsReq> jmsg, HttpServletResponse resp)
 			throws ServletException, IOException, AnsonException, SemanticException {

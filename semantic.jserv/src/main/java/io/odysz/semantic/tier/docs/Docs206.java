@@ -381,6 +381,7 @@ public abstract class Docs206 {
 			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
 
 		// String p = DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta);
+		// FIXME to be refactored in branch docsync-refactor 
 		String p = ShExtFilev2.resolvUri(conn, req.doc.recId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
 
 		File f = new File(p);
