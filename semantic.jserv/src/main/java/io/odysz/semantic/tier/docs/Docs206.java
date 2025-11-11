@@ -355,7 +355,8 @@ public abstract class Docs206 {
 		setContentHeaders(request, response, resource, ranges);
 		return ranges;
 	}
-
+	
+	// Task in refact-docysnc: share common module with DocRef.
 	protected static File getDocByEid(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr)
 			throws TransException, SQLException, IOException {
 
@@ -390,6 +391,7 @@ public abstract class Docs206 {
 		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
 	}
 
+	// Task in refact-docysnc: share common module with DocRef.
 	/**
 	 * Handling syntity's doc downloading, an extend and hard syn-docref function into lower layer
 	 * than docsync.jserv, with semantics and metas from DBSyntaransBuilder.
@@ -655,47 +657,6 @@ public abstract class Docs206 {
 			output.println("--" + Multipart_boundary + "--");
 		}
 	}
-
-//	public static long stream(File file, OutputStream output, long start, long length) throws IOException {
-//		if (start == 0 && length >= file.length()) {
-//			try (ReadableByteChannel inputChannel = Channels.newChannel(new FileInputStream(file));
-//					WritableByteChannel outputChannel = Channels.newChannel(output)) {
-//				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
-//				long size = 0;
-//
-//				while (inputChannel.read(buffer) != -1) {
-//					buffer.flip();
-//					size += outputChannel.write(buffer);
-//					buffer.clear();
-//				}
-//
-//				return size;
-//			}
-//		}
-//		else {
-//			try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), StandardOpenOption.READ)) {
-//				WritableByteChannel outputChannel = Channels.newChannel(output);
-//				ByteBuffer buffer = ByteBuffer.allocateDirect(Range_Size);
-//				long size = 0;
-//
-//				while (fileChannel.read(buffer, start + size) != -1) {
-//					buffer.flip();
-//
-//					if (size + buffer.limit() > length) {
-//						buffer.limit((int) (length - size));
-//					}
-//
-//					size += outputChannel.write(buffer);
-//
-//					if (size >= length) break;
-//
-//					buffer.clear();
-//				}
-//
-//				return size;
-//			}
-//		}
-//	}
 
 	public static String dispositionHeader(String filename, boolean attachment)
 			throws UnsupportedEncodingException {
