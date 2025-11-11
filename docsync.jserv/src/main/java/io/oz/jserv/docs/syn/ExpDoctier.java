@@ -446,7 +446,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		return ack;
 	}
 
-	/**
+	/**@deprecated
 	 * Upload a doc, with an Anson block.
 	 * @param docreq
 	 * @param usr

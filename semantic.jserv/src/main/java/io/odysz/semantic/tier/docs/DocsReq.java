@@ -50,7 +50,7 @@ public class DocsReq extends UserReq implements IBlock {
 		 * which is actually a hack into the protocol for understandable by browsers. 
 		 */
 		public static final String download206 = "r/doc206";
-
+		/** @deprecated */
 		public static final String upload = "c";
 
 		/** request for deleting docs */
