@@ -3,7 +3,6 @@ package io.odysz.semantic.tier.docs;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
 
@@ -39,7 +38,6 @@ public class DocUtils {
 	 * @throws TransException
 	 * @throws SQLException
 	 * @throws IOException
-	 */
 	public static String createFileB64(DATranscxt st, String conn, ExpSyncDoc photo,
 			IUser usr, ExpDocTableMeta meta, Update onFileCreateSql)
 			throws TransException, SQLException, IOException {
@@ -77,6 +75,7 @@ public class DocUtils {
 		String pid = res.resulve(meta.tbl, meta.pk, -1);
 		return pid;
 	}
+	 */
 	
 	/**
 	 * Create doc record in table meta.tbl, and trigger syn-change semantics,
@@ -143,6 +142,8 @@ public class DocUtils {
 	 * @return resolved root path 
 	 * @throws TransException
 	 * @throws SQLException
+	 * @since 1.5.16 replaced by {@link #resolvExtpath_byeid(DATranscxt, String, String, IUser, ExpDocTableMeta)}
+	 * which will not re-compose the ext-path with resname and pk, only depends on uri64.
 	 */
 	public static String resolvExtroot(DATranscxt st, String conn, String docId,
 			IUser usr, ExpDocTableMeta meta) throws TransException, SQLException {
@@ -159,4 +160,47 @@ public class DocUtils {
 	
 		return ShExtFilev2.resolvUri(conn, docId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
 	}
+
+	/**
+	 * @param st
+	 * @param conn
+	 * @param docId
+	 * @param usr
+	 * @param meta
+	 * @return physical ext-file path
+	 * @throws TransException
+	 * @throws SQLException
+	 */
+	public static String resolvExtpath_byeid(DATranscxt st, String conn, String docId,
+			IUser usr, ExpDocTableMeta meta) throws TransException, SQLException {
+		ISemantext stx = st.instancontxt(conn, usr);
+		AnResultset rs = (AnResultset) st
+				.select(meta.tbl)
+				.col(meta.uri).col(meta.folder).col(meta.resname)
+				.whereEq(meta.pk, docId)
+				.rs(stx)
+				.rs(0);
+	
+		if (!rs.next())
+			throw new SemanticException("Can't find file for id: %s (permission of %s)", docId, usr.uid());
+	
+		return ShExtFilev2.resolvUri(rs.getString(meta.uri));
+	}
+
+	public static String resolvExtpath_byuid(DATranscxt st, String conn, String synuid,
+			IUser usr, ExpDocTableMeta meta) throws TransException, SQLException {
+		ISemantext stx = st.instancontxt(conn, usr);
+		AnResultset rs = (AnResultset) st
+				.select(meta.tbl)
+				.col(meta.uri).col(meta.folder).col(meta.resname)
+				.whereEq(meta.io_oz_synuid, synuid)
+				.rs(stx)
+				.rs(0);
+	
+		if (!rs.next())
+			throw new SemanticException("Can't find file for synuid: %s (permission of %s)", synuid, usr.uid());
+	
+		return ShExtFilev2.resolvUri(rs.getString(meta.uri));
+	}
+	
 }

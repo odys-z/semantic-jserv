@@ -9,7 +9,6 @@
 package io.odysz.semantic.tier.docs;
 
 import static io.odysz.common.AESHelper.stream206;
-import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.split;
@@ -45,9 +44,6 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.anson.Anson;
 import io.odysz.common.AESHelper;
 import io.odysz.common.LangExt;
-import io.odysz.common.Regex;
-import io.odysz.module.rs.AnResultset;
-import io.odysz.semantic.DASemantics.ShExtFilev2;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -57,7 +53,6 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantic.meta.ExpDocTableMeta;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.ExchangeException;
-import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.syn.DBSynTransBuilder;
 import io.oz.syn.ExessionAct;
@@ -144,38 +139,45 @@ public abstract class Docs206 {
 		}
 	}
 	
+//	/**
+//	 * @deprecated don't delete until verified with @anclient/anreact.
+//	 * @param req
+//	 * @param resp
+//	 * @throws IOException
+//	 * @throws SsException
+//	 */
+// 	private static void get206(HttpServletRequest req, HttpServletResponse resp)
+//			throws IOException, SsException {
+//		try {
+//			AnsonMsg<DocsReq> msg = ansonMsg(req);
+//			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
+//			List<Range> ranges = replyHeaders(req, resp, msg, usr);
+//			Resource resource = new Resource(getDocByEid_delete(msg.body(0), st, usr), msg.body(0).doc.recId);
+//			
+//			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
+//			writeContent(resp, resource, ranges, "");
+//		}
+//		catch (IllegalArgumentException e) {
+//			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+//				e.getMessage());
+//			resp.setHeader(JProtocol.Headers.Error, e.getMessage());
+//			resp.setHeader(JProtocol.Headers.Server, JSingleton.appName);
+//			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+//		} catch (TransException | SQLException e) {
+//			e.printStackTrace();
+//			resp.setHeader(JProtocol.Headers.Error, e.getMessage());
+//			resp.setHeader(JProtocol.Headers.Server, JSingleton.appName);
+//			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
+//		}
+//	}
+	
 	/**
-	 * @deprecated don't delete until verified with @anclient/anreact.
+	 * 
 	 * @param req
 	 * @param resp
 	 * @throws IOException
 	 * @throws SsException
 	 */
- 	public static void get206(HttpServletRequest req, HttpServletResponse resp)
-			throws IOException, SsException {
-		try {
-			AnsonMsg<DocsReq> msg = ansonMsg(req);
-			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
-			List<Range> ranges = replyHeaders(req, resp, msg, usr);
-			Resource resource = new Resource(getDocByEid(req, msg.body(0), st, usr), msg.body(0).doc.recId);
-			
-			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
-			writeContent(resp, resource, ranges, "");
-		}
-		catch (IllegalArgumentException e) {
-			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
-				e.getMessage());
-			resp.setHeader(JProtocol.Headers.Error, e.getMessage());
-			resp.setHeader(JProtocol.Headers.Server, JSingleton.appName);
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-		} catch (TransException | SQLException e) {
-			e.printStackTrace();
-			resp.setHeader(JProtocol.Headers.Error, e.getMessage());
-			resp.setHeader(JProtocol.Headers.Server, JSingleton.appName);
-			resp.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
-		}
-	}
-	
 	public static void get206v2(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException, SsException {
 		AnsonMsg<DocsReq> msg = null;
@@ -184,9 +186,12 @@ public abstract class Docs206 {
 			IUser usr = JSingleton.getSessionVerifier().verify(msg.header());
 			List<Range> ranges = replyHeadersv2(req, resp, msg, usr);
 			
-			Resource resource = new Resource(isblank(msg.body(0).doc.uids) ?
-										getDocByEid(req, msg.body(0), st, usr) :
-										getDocByUid(req, msg.body(0), st, usr),
+			String conn = Connects.uri2conn(msg.body(0).uri());
+
+			ExpDocTableMeta meta = (ExpDocTableMeta) DBSynTransBuilder.getEntityMeta(conn, msg.body(0).docTabl);
+			Resource resource = new Resource(isblank(msg.body(0).doc.uids) 
+									? DocUtils.resolvExtpath_byeid(st, conn, msg.body(0).doc.recId, usr, meta)
+									: DocUtils.resolvExtpath_byuid(st, conn, msg.body(0).doc.uids, usr, meta),
 									msg.body(0).doc.recId);
 			
 			resp.setHeader(JProtocol.Headers.Length, String.valueOf(resource.length));
@@ -231,65 +236,65 @@ public abstract class Docs206 {
 		resp.sendError(respCode);
 	}
 
-	/**
-	 * @deprecated Don't delete until the js client, @anclient/anreact, is verified.
-	 * @param request
-	 * @param response
-	 * @param msg
-	 * @param usr
-	 * @return
-	 * @throws IOException
-	 * @throws TransException
-	 * @throws SQLException
-	 */
-	public static List<Range> replyHeaders(HttpServletRequest request, HttpServletResponse response,
-			AnsonMsg<DocsReq>msg, IUser usr) throws IOException, TransException, SQLException {
-		response.reset();
-
-		Resource resource;
-
-		try {
-			resource = new Resource(getDocByEid(request, msg.body(0), st, usr), msg.body(0).doc.recId);
-		}
-		catch (IllegalArgumentException e) {
-			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
-				e.getMessage());
-			response.setHeader("Error", e.getMessage());
-			response.setHeader("Server", JSingleton.appName);
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-			return null;
-		}
-		
-		if (preconditionFailed(request, resource)) {
-			response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
-			return null;
-		}
-
-		setCacheHeaders(response, resource);
-
-		if (notModified(request, resource)) {
-			response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-			return null;
-		}
-
-		List<Range> ranges = getRanges(request, resource);
-
-		if (ranges == null) {
-			response.setHeader(JProtocol.Headers.Content_range, "bytes */" + resource.length);
-			response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
-			return null;
-		}
-
-		if (!ranges.isEmpty()) {
-			response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
-		}
-		else {
-			ranges.add(new Range(0, resource.length - 1));
-		}
-
-		setContentHeaders(request, response, resource, ranges);
-		return ranges;
-	}
+//	/**
+//	 * @deprecated Don't delete until the js client, @anclient/anreact, is verified.
+//	 * @param request
+//	 * @param response
+//	 * @param msg
+//	 * @param usr
+//	 * @return
+//	 * @throws IOException
+//	 * @throws TransException
+//	 * @throws SQLException
+//	 */
+//	private static List<Range> replyHeaders(HttpServletRequest request, HttpServletResponse response,
+//			AnsonMsg<DocsReq>msg, IUser usr) throws IOException, TransException, SQLException {
+//		response.reset();
+//
+//		Resource resource;
+//
+//		try {
+//			resource = new Resource(getDocByEid_delete(msg.body(0), st, usr), msg.body(0).doc.recId);
+//		}
+//		catch (IllegalArgumentException e) {
+//			logT(new Object() {}, "IllegalArgumentException, reply 400 Bad Request. Message:\n%s",
+//				e.getMessage());
+//			response.setHeader("Error", e.getMessage());
+//			response.setHeader("Server", JSingleton.appName);
+//			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+//			return null;
+//		}
+//		
+//		if (preconditionFailed(request, resource)) {
+//			response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
+//			return null;
+//		}
+//
+//		setCacheHeaders(response, resource);
+//
+//		if (notModified(request, resource)) {
+//			response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+//			return null;
+//		}
+//
+//		List<Range> ranges = getRanges(request, resource);
+//
+//		if (ranges == null) {
+//			response.setHeader(JProtocol.Headers.Content_range, "bytes */" + resource.length);
+//			response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+//			return null;
+//		}
+//
+//		if (!ranges.isEmpty()) {
+//			response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+//		}
+//		else {
+//			ranges.add(new Range(0, resource.length - 1));
+//		}
+//
+//		setContentHeaders(request, response, resource, ranges);
+//		return ranges;
+//	}
 
 	public static List<Range> replyHeadersv2(HttpServletRequest request, HttpServletResponse response,
 			AnsonMsg<DocsReq>msg, IUser usr) throws IOException {
@@ -298,9 +303,14 @@ public abstract class Docs206 {
 		Resource resource = null;
 
 		try {
+			String conn = Connects.uri2conn(msg.body(0).uri());
+			ExpDocTableMeta meta = (ExpDocTableMeta) DBSynTransBuilder.getEntityMeta(conn, msg.body(0).docTabl);
+
 			resource = new Resource(isblank(msg.body(0).doc.uids)
-					? getDocByEid(request, msg.body(0), st, usr)
-					: getDocByUid(request, msg.body(0), st, usr),
+					// ? DocUtils.resolvExtpath_byeid(st, conn, "", usr, meta)
+					? DocUtils.resolvExtpath_byeid(st, conn, msg.body(0).doc.recId, usr, meta)
+					// : DocUtils.resolvExtpath_byuid(st, conn, "", usr, meta),
+					: DocUtils.resolvExtpath_byuid(st, conn, msg.body(0).doc.uids, usr, meta),
 					msg.body(0).doc.recId);
 		}
 		catch (SQLException e) {
@@ -356,87 +366,87 @@ public abstract class Docs206 {
 		return ranges;
 	}
 	
-	// Task in refact-docysnc: share common module with DocRef.
-	protected static File getDocByEid(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr)
-			throws TransException, SQLException, IOException {
+//	// Task in refact-docysnc: share common module with DocRef.
+//	private static File getDocByEid_delete(DocsReq req, DATranscxt st, IUser usr)
+//			throws TransException, SQLException, IOException {
+//
+//		String conn = Connects.uri2conn(req.uri());
+//		// ExpDocTableMeta meta = getMeta.get(req.uri());
+//		if (req.doc == null || isblank(req.doc.recId) || isblank(req.docTabl))
+//			throw new IllegalArgumentException(f("File informoation is missing: doc: %s, table %s",
+//					req.doc == null ? null : req.doc.recId, req.docTabl));
+//
+//		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
+//
+//		AnResultset rs = (AnResultset) st
+//				.select(meta.tbl, "p")
+//				.col(meta.pk)
+//				.col(meta.resname).col(meta.createDate)
+//				.col(meta.fullpath)
+//				.col(meta.uri)
+//				.col("mime")
+//				.whereEq(meta.pk, req.doc.recId)
+//				.rs(st.instancontxt(conn, usr)).rs(0);
+//		
+//		if (!rs.next())
+//			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
+//
+//		// String p = DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta);
+//		// FIXME to be refactored in branch docsync-refactor 
+//		String p = ShExtFilev2.resolvUri(conn, req.doc.recId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
+//
+//		File f = new File(p);
+//		if (f.exists() && f.isFile())
+//			return f;
+//		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
+//	}
 
-		String conn = Connects.uri2conn(req.uri());
-		// ExpDocTableMeta meta = getMeta.get(req.uri());
-		if (req.doc == null || isblank(req.doc.recId) || isblank(req.docTabl))
-			throw new IllegalArgumentException(f("File informoation is missing: doc: %s, table %s",
-					req.doc == null ? null : req.doc.recId, req.docTabl));
-
-		ExpDocTableMeta meta = (ExpDocTableMeta) Connects.getMeta(conn, req.docTabl);
-
-		AnResultset rs = (AnResultset) st
-				.select(meta.tbl, "p")
-				.col(meta.pk)
-				.col(meta.resname).col(meta.createDate)
-				.col(meta.fullpath)
-				.col(meta.uri)
-				.col("mime")
-				.whereEq(meta.pk, req.doc.recId)
-				.rs(st.instancontxt(conn, usr)).rs(0);
-		
-		if (!rs.next())
-			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
-
-		// String p = DocUtils.resolvExtroot(st, conn, req.doc.recId, usr, meta);
-		// FIXME to be refactored in branch docsync-refactor 
-		String p = ShExtFilev2.resolvUri(conn, req.doc.recId, rs.getString(meta.uri), rs.getString(meta.resname), meta);
-
-		File f = new File(p);
-		if (f.exists() && f.isFile())
-			return f;
-		else throw new IOException("File not found: " + rs.getString(meta.fullpath));
-	}
-
-	// Task in refact-docysnc: share common module with DocRef.
-	/**
-	 * Handling syntity's doc downloading, an extend and hard syn-docref function into lower layer
-	 * than docsync.jserv, with semantics and metas from DBSyntaransBuilder.
-	 * 
-	 * @param request
-	 * @param req
-	 * @param st
-	 * @param usr
-	 * @return
-	 * @throws TransException
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	protected static File getDocByUid(HttpServletRequest request, DocsReq req, DATranscxt st, IUser usr)
-			throws TransException, SQLException, IOException {
-
-		String conn = Connects.uri2conn(req.uri());
-		if (req.doc == null || isblank(req.doc.uids) || isblank(req.docTabl))
-			throw new IllegalArgumentException(f("File informoation is missing: uids: %s, table %s",
-					req.doc == null ? null : req.doc.uids, req.docTabl));
-
-		ExpDocTableMeta meta = (ExpDocTableMeta) DBSynTransBuilder.getEntityMeta(conn, req.docTabl);
-
-		AnResultset rs = (AnResultset) st
-				.select(meta.tbl, "p")
-				.col(meta.pk)
-				.col(meta.resname).col(meta.createDate)
-				.col(meta.fullpath)
-				.col(meta.uri)
-				.col(meta.mime)
-				.whereEq(meta.io_oz_synuid, req.doc.uids)
-				.rs(st.instancontxt(conn, usr)).rs(0);
-		
-		if (!rs.next())
-			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
-		
-		if (Regex.startsEvelope(rs.getString(meta.uri)))
-			throw new ExchangeException(ExessionAct.ext_docref, null, "DocRef: %s, %s, %s", req.doc.uids, req.doc.recId, req.doc.pname);
-
-		String p = ShExtFilev2.resolvUri(conn, rs.getString(meta.pk), rs.getString(meta.uri), rs.getString(meta.resname), meta);
-		File f = new File(p);
-		if (f.exists() && f.isFile())
-			return f;
-		else throw new FileNotFoundException("File not found: " + rs.getString(meta.fullpath));
-	}
+//	// Task in refact-docysnc: share common module with DocRef.
+//	/**
+//	 * Handling syntity's doc downloading, an extend and hard syn-docref function into lower layer
+//	 * than docsync.jserv, with semantics and metas from DBSyntaransBuilder.
+//	 * 
+//	 * @param request
+//	 * @param req
+//	 * @param st
+//	 * @param usr
+//	 * @return
+//	 * @throws TransException
+//	 * @throws SQLException
+//	 * @throws IOException
+//	 */
+//	private static File getDocByUid_delete(DocsReq req, DATranscxt st, IUser usr)
+//			throws TransException, SQLException, IOException {
+//
+//		String conn = Connects.uri2conn(req.uri());
+//		if (req.doc == null || isblank(req.doc.uids) || isblank(req.docTabl))
+//			throw new IllegalArgumentException(f("File informoation is missing: uids: %s, table %s",
+//					req.doc == null ? null : req.doc.uids, req.docTabl));
+//
+//		ExpDocTableMeta meta = (ExpDocTableMeta) DBSynTransBuilder.getEntityMeta(conn, req.docTabl);
+//
+//		AnResultset rs = (AnResultset) st
+//				.select(meta.tbl, "p")
+//				.col(meta.pk)
+//				.col(meta.resname).col(meta.createDate)
+//				.col(meta.fullpath)
+//				.col(meta.uri)
+//				.col(meta.mime)
+//				.whereEq(meta.io_oz_synuid, req.doc.uids)
+//				.rs(st.instancontxt(conn, usr)).rs(0);
+//		
+//		if (!rs.next())
+//			throw new SemanticException("File not found: %s, %s", req.doc.recId, req.doc.pname);
+//		
+//		if (Regex.startsEvelope(rs.getString(meta.uri)))
+//			throw new ExchangeException(ExessionAct.ext_docref, null, "DocRef: %s, %s, %s", req.doc.uids, req.doc.recId, req.doc.pname);
+//
+//		String p = ShExtFilev2.resolvUri(conn, rs.getString(meta.pk), rs.getString(meta.uri), rs.getString(meta.resname), meta);
+//		File f = new File(p);
+//		if (f.exists() && f.isFile())
+//			return f;
+//		else throw new FileNotFoundException("File not found: " + rs.getString(meta.fullpath));
+//	}
 
 	/**
 	 * Handles the case when the file is not found.
@@ -720,6 +730,10 @@ public abstract class Docs206 {
 				lastModified = 0;
 				eTag = null;
 			}
+		}
+
+		public Resource(String abspath, String recId) throws UnsupportedEncodingException {
+			this(new File(abspath), recId);
 		}
 	}
 
