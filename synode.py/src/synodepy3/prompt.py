@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import sys
 from pathlib import Path
@@ -5,7 +6,7 @@ from typing import cast
 
 from anclient.io.odysz.jclient import SessionClient
 from anson.io.odysz.anson import Anson, AnsonException
-from anson.io.odysz.common import LangExt, Utils
+from anson.io.odysz.common import LangExt, Utils, passwd_allow_ext
 from prompt_toolkit import PromptSession
 from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import choice
@@ -100,12 +101,18 @@ style = Style.from_dict({
     'prompt': 'bg:#ansiblue #ffffff',  # Blue background, white text
 })
 
-
 path = os.path.dirname(__file__)
 synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
 class IPValidator(Validator):
-    pass
+    def validate(self, v: Document) -> None:
+        if LangExt.isblank(v.text):
+            return
+        try:
+            ipaddress.ip_address(v.text)
+            return
+        except:
+            raise ValidationError(message=f'In valid IP address.')
 
 class JservValidator(Validator):
     '''
@@ -118,7 +125,7 @@ class JservValidator(Validator):
                 message=f'Jserv URL is invalid. Reqired format: http(s)://ip:port/{JProtocol.urlroot}')
 
 class QuitValidator(Validator):
-    def validate(self, v):
+    def validate(self, v: Document) -> None:
         global _quit
         if not v.text.strip():
             _quit = True
@@ -162,16 +169,30 @@ class NodeStateValidator(Validator):
 
 class DomainValidator(Validator):
     def validate(self, v: Document) -> None:
-        # e = cli.validate_domain()
-        # if e is not None:
-        #     raise ValidationError(message=str(e))
         try: LangExt.only_id_len(v.text, minlen=2, maxlen=12)
         except AnsonException:
             raise ValidationError(message=f"domain length: 2 <= Len('{cfg.domain}') <= 12")
 
-class PortValidator(Validator):
+class PortsValidator(Validator):
     def validate(self, v: Document) -> None:
-        pass
+        if v is None or LangExt.isblank(v.text):
+            return
+        try:
+            poss = v.text.split(':')
+            prts = [int(poss[0]), int(poss[1])]
+            if 1024 <= prts[0] <= 655535 and 1024 <= prts[1] <= 65535 and prts[0] != prts[1]:
+                return
+        except:
+            pass
+        raise ValidationError(message=f"Valid format web-port:jserv-port, are different and in [1024-65535]")
+
+class DomainTokenValidator(Validator):
+    def validate(self, v: Document) -> None:
+        if v is None or LangExt.isblank(v.text):
+            return
+        try: LangExt.only_passwdlen(v.text, minlen=8, maxlen=16)
+        except AnsonException:
+            raise ValidationError(message=f"token length: 8 <= Len('{cfg.domain}') <= 16, allowed special chars: [{passwd_allow_ext}]")
 
 class SyncInsValidator(Validator):
     def validate(self, v: Document) -> None:
@@ -376,9 +397,11 @@ def default_ports(s: AppSettings) -> str:
     return f'{web_port0 if s.webport == 0 else s.webport}:{serv_port0 if s.port == 0 else s.port}'
 
 ports = session.prompt(
-    message=f'Please set the ports. Format: "synode-port : www-port" ',
+    message=f'Please set the ports. Format: "synode-port : www-port"\n',
     default=default_ports(cli.settings),
-    validator=MultiValidator(QuitValidator(), PortValidator()))
+    validator=MultiValidator(QuitValidator(), PortsValidator()))
+
+check_quit(_quit)
 
 [cli.settings.webport, cli.settings.port] = parse_web_jserv_ports(ports)
 
@@ -400,15 +423,15 @@ else:
 
 if cli.settings.reverseProxy:
     cli.settings.proxyIp = session.prompt(
-        message='Please set the public (reverse proxy) ip. Return to quit: ',
+        message='Please set the public (reverse proxy) ip. Clear to quit:\n',
         default=cli.reportIp() if LangExt.isblank(cli.settings.proxyIp) else cli.settings.proxyIp,
-        validator=MultiValidator(QuitValidator(), PortValidator()))
+        validator=MultiValidator(QuitValidator(), IPValidator()))
     check_quit(_quit)
 
     reverseports = session.prompt(
-        message='Please set the public ports. Format: "date-service-prot : www-port": ',
+        message='Please set the public ports. Format: "date-service-prot : www-port":\n',
         default=default_proxy_ports(cli.settings),
-        validator=MultiValidator(QuitValidator(), PortValidator()))
+        validator=MultiValidator(QuitValidator(), PortsValidator()))
 
     if LangExt.len(ports) == 0:
         _quit = True
@@ -421,18 +444,22 @@ caninstall = choice(
         message=f'All settings are collected, install Synode {cfg.synid}?',
         options=[(1, 'Yes'), (2, 'No, and quit')])
 
-def post_install():
-    resp = cli.submit_mysettings()
-    if resp is not None:
-        cli.after_submit(resp)
-    else:
-        Utils.warn('TODO 0.7.6, RESP == NULL, handle errors...')
+# 6A domain token
+admin = cli.registry.find_synuser(users=cli.registry.synusers, id='admin')
+admin_token = session.prompt(
+    message=f'Please set domain token of user Admin, which must be set tha same across all synodes in the domain:\n',
+    default=admin.pswd,
+    validator=MultiValidator(QuitValidator(), DomainTokenValidator()))
+
+check_quit(_quit)
+
+admin.pswd = admin_token
 
 # 6 ping hub
 if cli.registry.config.mode != SynodeMode.hub.name:
     hub_node = cli.registry.find_hubpeer()
     if hub_node is None:
-        session.prompt(message='Cannot find the hub node, which is possibly can be found automatically. Press Enter to continue.')
+        session.prompt(message='Cannot find the hub node, which is possibly can be found automatically. Press Enter to continue.\n')
     else:
         s_j = cli.settings.jservs[hub_node.synid]
         hub_jserv = hub_node.jserv if LangExt.isblank(s_j) else s_j
@@ -455,6 +482,13 @@ if cli.registry.config.mode != SynodeMode.hub.name:
         _quit = go_on == 2
 
 check_quit(_quit)
+
+def post_install():
+    resp = cli.submit_mysettings()
+    if resp is not None:
+        cli.after_submit(resp)
+    else:
+        Utils.warn('TODO 0.7.6, RESP == NULL, handle errors...')
 
 # 7 save & install
 if caninstall == 1:

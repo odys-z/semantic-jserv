@@ -184,15 +184,13 @@ def decode(warns: bytes):
 
 def valid_local_reg(reg: AnRegistry):
     """
-    config.synid must presents in peers, which should be more or equals 2 nodes.
+    config.admin must presents in syn-users, which should be more than or equal 1 record.
     :param reg:
     :return:
     """
-    # if LangExt.len(reg.config.peers) < 2:
-    #     raise PortfolioException("Shouldn't work on at leas 2 peers? (while checking dictionary.json)")
-    # if AnRegistry.find_synode(reg.config.peers, reg.config.synid) is None:
-    #     raise PortfolioException(
-    #         f'Cannot find peer registry of my id: {reg.config.synid}. (while checking dictionary.json.peers)')
+    # 0.7.6
+    if LangExt.len(reg.synusers) < 1 or AnRegistry.find_synuser(reg.synusers, id=reg.config.admin) is None:
+        raise PortfolioException('Dictionary Synuser configuration is invalid.')
     pass
 
 def unzip_file(zip_filepath, extract_to_path):

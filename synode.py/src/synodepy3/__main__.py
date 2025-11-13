@@ -1,7 +1,7 @@
 import sys
 import time
 
-from semanticshare.io.odysz.semantic.jprotocol import JServUrl
+from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
 
 from synodepy3 import SynodeUi
 
@@ -19,7 +19,7 @@ from PySide6.QtGui import QPixmap, Qt, QKeyEvent
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
 
 from anson.io.odysz.common import Utils, LangExt
-from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption, jserv_url_path, AppSettings
+from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, getJservOption, AppSettings
 from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp, CynodeStats, SynodeConfig
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
@@ -412,6 +412,7 @@ class InstallerForm(QMainWindow):
             # avoid change my domain id by select_domx()
             if not LangExt.isblank(my_domid):
                 self.ui.cbbDomains.setCurrentText(my_domid)
+                self.select_domx(my_domid)
             self.cli.registry.config.domain = my_domid
 
     def select_domx(self, dix):
@@ -521,7 +522,7 @@ class InstallerForm(QMainWindow):
             for p in cfg.peers:
                 if p.remarks == SynodeMode.hub.name:
                     jsrv = settings.jservs[p.synid] if p.synid in settings.jservs else None
-                    self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{jserv_url_path}' \
+                    self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{JProtocol.urlroot}' \
                         if LangExt.isblank(jsrv) else jsrv)
 
     def bindSettings(self):
