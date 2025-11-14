@@ -29,7 +29,7 @@ def readable_state(s: str = None):
             else '✅ Available planned node' if s == CynodeStats.create \
             else '⛔ Already running as a Hub node' if s == CynodeStats.asHub \
             else '⛔ Already running as a Peer node' if s == CynodeStats.asPeer \
-            else '[❗] Unknown state (dangerous)'
+            else '[❗] Unknown state (Dangerous! Create a new domain if possible)'
 
 def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8g'):
     """
@@ -315,9 +315,11 @@ if not has_run:
     # 4 local synode
     # 4.1 resp -> nodes
     def respeers_options(diction: SynodeConfig):
-        peer_ids = diction.peers if diction is not None else None
-        return None if LangExt.len(peer_ids) == 0 else \
-            [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
+        # peer_ids = diction.peers if diction is not None else None
+        # return None if LangExt.len(peer_ids) == 0 else \
+        #   [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
+        return None if LangExt.len(diction.peers) == 0 else \
+            [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in diction.peers]
 
     # 4.2 select a peer
     synid, cynstat = None, CynodeStats.die

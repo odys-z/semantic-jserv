@@ -321,7 +321,6 @@ class InstallerForm(QMainWindow):
                 if self.ui.lbQr.pixmap is not None:
                     self.gen_qr()
 
-                # self.bind_config()
                 self.submit_jserv()
 
             except FileNotFoundError or IOError as e:
@@ -330,6 +329,7 @@ class InstallerForm(QMainWindow):
             except PortfolioException as e:
                 warn_msg('Configuration is updated with errors. Check the details.\n'
                          'If this is not switching volume, that is not correct' , e)
+                self.gen_qr()
 
             self.enableWinsrvInstall()
 
@@ -558,14 +558,28 @@ class InstallerForm(QMainWindow):
             self.ui.jservLines.setText(
                 '# Error: No configuration has been loaded. Check resource root path setting.')
 
+    def iscreating_state(self):
+        """
+        The synode id is correct and is not installed
+        :return:
+        """
+        next_id = self.ui.cbbPeers.currentText()
+        le_node = self.cli.registry.find_peer(next_id)
+        if le_node is not None and (le_node.stat is None or le_node.stat == CynodeStats.create):
+            return self.cli.validateVol() is None
+        else:
+            return False
+
     def enableWinsrvInstall(self):
         """
         replaced by enable_widgets()
         :return:
         """
         installed = self.cli.vol_valid()
+        neverun = not self.cli.hasrun()
+        iscreate = self.iscreating_state()
         if Utils.iswindows():
-            self.ui.bWinserv.setEnabled(installed)
+            self.ui.bWinserv.setEnabled(installed and neverun and iscreate)
 
     def seal_has_run(self):
         """
@@ -600,17 +614,6 @@ class InstallerForm(QMainWindow):
         self.ui.txtDompswd.setEnabled(neverun)
 
     def enable_widgets(self):
-        def iscreating_state():
-            """
-            The synode id is correct and is not installed
-            :return:
-            """
-            next_id = self.ui.cbbPeers.currentText()
-            le_node = self.cli.registry.find_peer(next_id)
-            if le_node is not None and (le_node.stat is None or le_node.stat == CynodeStats.create):
-                return self.cli.validateVol() is None
-            else:
-                return False
 
         def update_chkhub(check: bool):
             self.cli.registry.config.mode = SynodeMode.hub.name if check else SynodeMode.peer.name
@@ -630,7 +633,8 @@ class InstallerForm(QMainWindow):
         self.ui.chkHub.setEnabled(neverun)
         self.ui.cbbOrgs.setEnabled(neverun)
         self.ui.cbbDomains.setEnabled(neverun)
-        self.ui.txtDompswd.setEnabled(neverun) # can change in the future
+        # self.ui.txtDompswd.setEnabled(neverun) # can change in the future
+        self.ui.bCreateDomain.setEnabled(neverun)
 
         self.cli.update_domain(orgtype=synode_ui.market_id,
                                domain=self.ui.cbbDomains.currentText(),
@@ -638,15 +642,18 @@ class InstallerForm(QMainWindow):
         # valid_peers = self.cli.is_peers_valid()
         # self.ui.cbbPeers.setEnabled(valid_peers)
         self.ui.cbbPeers.setEnabled(neverun)
+        self.ui.bVolpath.setEnabled(neverun)
+        self.ui.txtVolpath.setEnabled(neverun)
 
         update_chkhub(self.ui.chkHub.checkState() == Qt.CheckState.Checked)
 
         # cansave = valid_peers and (neverun or self.cli.registry.config.synid == self.ui.cbbPeers.currentText())
-        cansave = iscreating_state()
-        self.ui.bSetup.setEnabled(cansave)
+        # cansave = iscreating_state()
+        # self.ui.bSetup.setEnabled(cansave)
 
         # test_run() is now actually saved syncIns == 0, but will not reinitialize dbs.
-        cantest = neverun and iscreating_state() and self.cli.vol_valid() and cansave
+        # cantest = neverun and iscreating_state() and self.cli.vol_valid() and cansave
+        cantest = neverun and self.iscreating_state() and self.cli.vol_valid()
         self.ui.bTestRun.setEnabled(cantest)
 
         can_winsrv = cantest and Utils.iswindows()

@@ -4,6 +4,8 @@ invoke make
 import shutil
 import sys
 from types import LambdaType
+from dataclasses import dataclass
+from typing import cast
 from anson.io.odysz.common import Utils
 from anson.io.odysz.utils import zip2
 from invoke import task
@@ -11,35 +13,72 @@ import os
 
 from anson.io.odysz.anson import Anson
 
-version = '0.7.6'
+# version = '0.7.6'
 """
 synode.py3, jserv-album-0.7.#.jar
 """
 
-apk_ver = '0.7.3'
+# apk_ver = '0.7.3'
 
-html_jar_v = '0.1.8'
+# html_jar_v = '0.1.8'
 """
 html-web-#.#.#.jar
 """
 
-web_ver = '0.4.2'
+# web_ver = '0.4.2'
 """
 album-web-#.#.#.jar
 """
 
+# vol_files = {"volume": ["jserv-main.db", "doc-jserv.db"]}
+# vol_resource = {"volume": "volume/*"}
+# dist_dir = f'build-{version}'
+# android_dir = '../../anclient/examples/example.android'
+
+
 version_pattern = '[0-9\\.]+'
+synuser_pswd_pattern = '\"pswd\": \"[^"]*\"'
 
-vol_files = {"volume": ["jserv-main.db", "doc-jserv.db"]}
-vol_resource = {"volume": "volume/*"}
+# @dataclass
+# class TaskConfig(Anson):
+#     version: str
+#     apk_ver: str
+#     html_jar_v: str
+#     web_ver: str
+#     host_json: str
+#     vol_files: dict
+#     vol_resource: dict
+#     registry_dir: str
+#     android_dir: str
+#     default_pswd: str
+#     dist_dir: str
+#     '''
+#     Replacing dictionary.json/registry/synusers[0].pswd, pattern of tasks.synuser_pswd_pattern
 
-dist_dir = f'build-{version}'
+#     '''
 
-android_dir = '../../anclient/examples/example.android'
+#     # def __init__(self, version: str, apk_ver: str, html_jar_v: str, web_ver: str, host_json: str):
+#     #     self.version = version
+#     #     self.apk_ver = apk_ver
+#     #     self.html_jar_v = html_jar_v
+#     #     self.web_ver = web_ver
+#     #     self.host_json = host_json
+
+#     def __init__(self):
+#         super().__init__()
+
+try: import semanticshare
+except ImportError:
+    print('Please install the semantics sharing layer: pip install semantics.py3')
+    sys.exit(1)
+
+from semanticshare.io.oz.invoke import SynodeTask
+
+taskcfg = cast(SynodeTask, Anson.from_file('tasks.config'))
 
 @task
 def create_volume(c):
-    for vol, fs in vol_files.items():
+    for vol, fs in taskcfg.vol_files.items():
         if not os.path.isdir(vol):
             os.mkdir(vol)
         for fn in fs: 
@@ -48,7 +87,8 @@ def create_volume(c):
                 vf.close()
 
 
-def updateApkRes(host_json, apkver):
+# def updateApkRes(host_json, apkver):
+def updateApkRes():
     """
     Update the APK resource record (ref-link) in the host.json file.
     
@@ -56,7 +96,7 @@ def updateApkRes(host_json, apkver):
         host_json (str): Path to the host.json file.
         res (dict): Dictionary containing the APK resource information.
     """
-    print('Updating host.json with APK resource...', host_json)
+    print('Updating host.json with APK resource...', taskcfg.host_json)
 
     """
     from importlib.metadata import distribution
@@ -70,15 +110,15 @@ def updateApkRes(host_json, apkver):
 
     # Must install semantics.py3, because of
     # needing this to deserialize "io.oz.syntier.serv.ExternalHosts".
-    hosts = Anson.from_file(host_json)
-    print(os.getcwd(), host_json)
+    hosts = Anson.from_file(taskcfg.host_json)
+    print(os.getcwd(), taskcfg.host_json)
     print('host.json:', hosts)
 
-    res = {'apk': f'res-vol/portfolio-{apkver}.apk'}
+    res = {'apk': f'res-vol/portfolio-{taskcfg.apk_ver}.apk'}
     hosts.resources.update(res)
     print('Updated host.json:', hosts.resources)
 
-    hosts.toFile(host_json)
+    hosts.toFile(taskcfg.host_json)
     print('host.json updated successfully.', hosts)
 
     return None
@@ -87,34 +127,34 @@ def updateApkRes(host_json, apkver):
 def config(c):
     print('--------------    configuration   ------------------')
 
-    # Anson.java_src('src', ['synode_py3'])
-    try: import semanticshare
-    except ImportError:
-        print('Please install the semantics sharing layer: pip install semantics.py3')
-        sys.exit(1)
-
     this_directory = os.getcwd()
 
-    print(f'-- synode version: {version} --'),
+    print(f'-- synode version: {taskcfg.version} --'),
 
     version_file = os.path.join(this_directory, 'pom.xml')
     Utils.update_patterns(version_file, {
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
-        f'<!-- auto update token TASKS.PY/CONFIG --><version>{version}</version>',
+        f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
-    version_file = os.path.join(android_dir, 'build.gradle')
+    version_file = os.path.join(taskcfg.android_dir, 'build.gradle')
     Utils.update_patterns(version_file, {
-        f"app_ver = '{version_pattern}'": f"app_ver = '{apk_ver}'"
+        f"app_ver = '{version_pattern}'": f"app_ver = '{taskcfg.apk_ver}'"
     })
+
+    diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
+    Utils.update_patterns(diction_file, {
+        synuser_pswd_pattern: f'"pswd": "{taskcfg.default_pswd}"'
+    })
+
 
 @task
 def clean(c):
-    if not os.path.exists(dist_dir):
-        os.makedirs(dist_dir, exist_ok=True)
+    if not os.path.exists(taskcfg.dist_dir):
+        os.makedirs(taskcfg.dist_dir, exist_ok=True)
 
-    for item in os.listdir(dist_dir):
-        item_path = os.path.join(dist_dir, item)
+    for item in os.listdir(taskcfg.dist_dir):
+        item_path = os.path.join(taskcfg.dist_dir, item)
         if os.path.isfile(item_path):
             os.unlink(item_path)
         elif os.path.isdir(item_path):
@@ -123,30 +163,31 @@ def clean(c):
 
 @task(config)
 def build(c):
-    def cmd_build_synodepy3(version:str, web_ver:str, html_jar_v:str) -> str:
+    # def cmd_build_synodepy3(version:str, web_ver:str, html_jar_v:str) -> str:
+    def cmd_build_synodepy3() -> str:
         """
         Get the command to build the synode.py3 package.
         
         Returns:
             str: The command to build the package.
         """
-        print(f'Building synode.py3 {version} with web-dist {web_ver}, html-service.jar {html_jar_v}...')
+        print(f'Building synode.py3 {taskcfg.version} with web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
 
         if os.name == 'nt':
-            return f'set SYNODE_VERSION={version} & set JSERV_JAR_VERSION={version} & set WEB_VERSION={web_ver} & set HTML_JAR_VERSION={html_jar_v} & invoke build'
+            return f'set SYNODE_VERSION={taskcfg.version} & set JSERV_JAR_VERSION={taskcfg.version} & set WEB_VERSION={taskcfg.web_ver} & set HTML_JAR_VERSION={taskcfg.html_jar_v} & invoke build'
         else:
-            return f'export SYNODE_VERSION="{version}" JSERV_JAR_VERSION="{version}" WEB_VERSION="{web_ver}" HTML_JAR_VERSION="{html_jar_v}" && invoke build'
+            return f'export SYNODE_VERSION="{taskcfg.version}" JSERV_JAR_VERSION="{taskcfg.version}" WEB_VERSION="{taskcfg.web_ver}" HTML_JAR_VERSION="{taskcfg.html_jar_v}" && invoke build'
 
     buildcmds = [
         # replace app_ver with apk_ver?
-        [android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
+        [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
 
         # link: web-dist -> anclient/examples/example.js/album/web-dist
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
-        ['.', f'cp -f {android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{apk_ver}.apk' \
+        ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
                 if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ],
 
-        ['web-dist/private', lambda: updateApkRes('host.json', apk_ver)],
+        ['web-dist/private', lambda: updateApkRes()],
         ['.', 'cat web-dist/private/host.json'],
         ['web-dist', 'rm -f login-*.min.js* portfolio-*.min.js* report.html'],
         ['../../anclient/examples/example.js/album', 'webpack'],
@@ -155,13 +196,14 @@ def build(c):
         ['../../html-service/java', 'mvn clean compile package'],
 
         # use vscode bash for Windows
-        ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
+        # ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
+        ['../synode.py', cmd_build_synodepy3()],
 
         # ['../synode.py', 'invoke zipRegistry'],
         # ['.', f'mv ../synode.py/registry-ura-zsu-{version}.zip {dist_dir}']
     ]
 
-    print('--------------  package  ------------------')
+    print('--------------  build  ------------------')
     for pth, cmd in buildcmds:
         if isinstance(cmd, LambdaType):
             print(pth, '&&', cmd)
@@ -179,7 +221,7 @@ def build(c):
     return False
 
 @task
-def package(c, zip=f'portfolio-synode-{version}.zip'):
+def package(c, zip=f'portfolio-synode-{taskcfg.version}.zip'):
     """
     Create a ZIP file.
     
@@ -188,15 +230,15 @@ def package(c, zip=f'portfolio-synode-{version}.zip'):
         zip: Name of the output ZIP file.
     """
     resources = {
-        f'bin/html-web-{html_jar_v}.jar': f'../../html-service/java/target/html-web-{html_jar_v}.jar', # clone at github/html-service
-        f'bin/jserv-album-{version}.jar': f'target/jserv-album-{version}.jar',
+        f'bin/html-web-{taskcfg.html_jar_v}.jar': f'../../html-service/java/target/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
+        f'bin/jserv-album-{taskcfg.version}.jar': f'target/jserv-album-{taskcfg.version}.jar',
         
         # https://exiftool.org/index.html
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
 
         'WEB-INF': 'src/main/webapp/WEB-INF-0.7/*', # Do not replace with version.
 
-        'bin/synode_py3-0.7-py3-none-any.whl': f'../synode.py/dist/synode_py3-{version}-py3-none-any.whl',
+        'bin/synode_py3-0.7-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
         "registry": "../synode.py/registry/*",
         'winsrv': '../synode.py/winsrv/*',
         "res": "../synode.py/src/synodepy3/res/*",
@@ -210,7 +252,7 @@ def package(c, zip=f'portfolio-synode-{version}.zip'):
 
     try:
 
-        print('-------------- resources ------------------')
+        print('------------ package resources --------------')
         print(resources)
 
         err = False
@@ -223,11 +265,11 @@ def package(c, zip=f'portfolio-synode-{version}.zip'):
         if os.path.isfile(zip):
             os.remove(zip)
 
-        zip2(zip, {**resources, **vol_resource}, excludes)
+        zip2(zip, {**resources, **taskcfg.vol_resource}, excludes)
 
-        if not os.path.exists(dist_dir):
-            os.makedirs(dist_dir, exist_ok=True)
-        distzip = os.path.join(dist_dir, zip)
+        if not os.path.exists(taskcfg.dist_dir):
+            os.makedirs(taskcfg.dist_dir, exist_ok=True)
+        distzip = os.path.join(taskcfg.dist_dir, zip)
         if os.path.isfile(distzip):
             os.remove(distzip)
 

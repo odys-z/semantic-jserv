@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.3.5"]
+requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.3.5", "semantics.py3>=0.3.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "synode.py3"
-version = "0.7.6" # updated by invoke
+version = "0.7.7" # updated by invoke
 description = "Portfolio Synode Stand Alone Service"
 readme = "README.md"
 license = "Apache-2.0"
@@ -14,7 +14,7 @@ requires-python = ">=3.9"
 dependencies = [
     "pyside6>=6.5.0,<=6.8.2.1",
     "qrcode",
-    "semantics.py3>=0.2.8",
+    "semantics.py3>=0.3.0",
     "anson.py3>=0.3.5",
     "anclient.py3>=0.2.3",
     "psutil",
