@@ -10,11 +10,11 @@
   "android_dir": "../../anclient/examples/example.android",
   "dist_dir": "build-0.7.7",
   "deploy": {
-    "market": "[CNPC]",
-    "market_id" "CNPC",
-    "orgid": "riped-cd",
+    "market": "[TEST]",
+    "market_id": "alpha",
+    "orgid": "inforise",
     "dom_nodes": 3,
-    "default_pswd": "CNPC-riped-cd",
+    "default_pswd": "",
     "lang": "en",
-    "langs": {"en": {"[CNPC]": "[Petrol China]"}, "cn": {"[CNPC]", "中石油"}}}
+    "langs": {"en": {"[CNPC]": "[Petrol China]"}, "cn": {"[CNPC]": "中石油"}}}
 }
