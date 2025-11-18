@@ -371,10 +371,10 @@ class InstallerCli:
             raise PortfolioException(f"Cannot find settings.json: {pths.web_settings}")
 
         # TODO 0.7.6
-        if LangExt.isblank(self.settings.centralPswd):
-            self.settings.centralPswd = ''
-            for i in range(1, 7):
-                self.settings.centralPswd = self.settings.centralPswd + str(i)
+        # if LangExt.isblank(self.settings.centralPswd):
+        #     self.settings.centralPswd = ''
+        #     for i in range(1, 7):
+        #         self.settings.centralPswd = self.settings.centralPswd + str(i)
 
         if LangExt.isblank(self.settings.regiserv):
             regiserv = f'{"https" if self.registry.config.https else "http"}://{synode_ui.central_iport}/{synode_ui.central_path}'
@@ -461,6 +461,13 @@ class InstallerCli:
         return f'{ip}:{port}'
 
     def validate_domain(self) -> Optional[dict]:
+        # 0.7.7 central-pswd must be re-configured when building
+        if LangExt.isblank(self.settings.centralPswd):
+            return {"Central Password is invalid (0.7.7 not a valid distribution): ": self.settings.centralPswd}
+        try: LangExt.only_passwdlen(self.settings.centralPswd, minlen=6, maxlen=32)
+        except AnsonException as e:
+            return {"Central Password is invalid, len (6-32)": self.settings.centralPswd}
+
         cfg = self.registry.config
         try: LangExt.only_id_len(cfg.domain, minlen=2, maxlen=12)
         except AnsonException as e:
@@ -672,7 +679,10 @@ class InstallerCli:
                       orgtype,
                       orgid: str=None,
                       reg_jserv: str=None,
-                      domain: str=None, centralPswd: str=None):
+                      domain: str=None,
+                      # 0.7.7 central pswd is build by tasks.py
+                      # centralPswd: str=None
+                      ):
         '''
         update data model
         :param reg_jserv:
@@ -691,14 +701,16 @@ class InstallerCli:
             self.registry.config.set_domain(domain)
             for u in self.registry.synusers:
                 u.domain = domain
-        if centralPswd is not None:
-            self.settings.centralPswd = centralPswd
+
+        # 0.7.7 central pswd is build by tasks.py
+        # if centralPswd is not None:
+        #     self.settings.centralPswd = centralPswd
 
     def updateWithUi(self,
             market: str, org: str = None, domain: str=None,
             reg_jserv: str = None,
             admin: str=None, domphrase: str=None,
-            centralPswd: str=None,
+            # 0.7.7 central pswd is build by tasks.py
             volume: str=None,
             hubmode: bool=None,
             jservss: str=None, synid: str=None,
@@ -707,7 +719,10 @@ class InstallerCli:
             proxyPort: str=None, proxyIp: str=None,
             syncins: str=None, envars=None, webProxyPort=None):
 
-        self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain, centralPswd=centralPswd)
+        self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain
+                           # 0.7.7 central pswd is build by tasks.py
+                           # centralPswd=None
+                           )
 
         for u in self.registry.synusers:
             if u.userId == admin and admin is not None:

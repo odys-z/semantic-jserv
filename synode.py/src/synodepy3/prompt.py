@@ -1,4 +1,3 @@
-import ipaddress
 import os
 import sys
 from pathlib import Path
@@ -12,13 +11,13 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import choice
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import Validator, ValidationError
-from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
 from synodepy3 import SynodeUi
 from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers
+from synodepy3.validators import PJservValidator, PIPValidator
 
 
 def reach_central():
@@ -29,7 +28,7 @@ def readable_state(s: str = None):
             else '✅ Available planned node' if s == CynodeStats.create \
             else '⛔ Already running as a Hub node' if s == CynodeStats.asHub \
             else '⛔ Already running as a Peer node' if s == CynodeStats.asPeer \
-            else '[❗] Unknown state (dangerous)'
+            else '[❗] Unknown state (Dangerous! Create a new domain if possible)'
 
 def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8g'):
     """
@@ -104,25 +103,29 @@ style = Style.from_dict({
 path = os.path.dirname(__file__)
 synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
-class IPValidator(Validator):
-    def validate(self, v: Document) -> None:
-        if LangExt.isblank(v.text):
-            return
-        try:
-            ipaddress.ip_address(v.text)
-            return
-        except:
-            raise ValidationError(message=f'In valid IP address.')
-
-class JservValidator(Validator):
-    '''
-    Synodes protocol validator ('jserv-album')
-    '''
-    def validate(self, v):
-        if not LangExt.isblank(v.text) and \
-           not JServUrl.valid(v.text, rootpath=JProtocol.urlroot):
-            raise ValidationError(
-                message=f'Jserv URL is invalid. Reqired format: http(s)://ip:port/{JProtocol.urlroot}')
+# class IPValidator(Validator):
+#     def validate(self, v: Document) -> None:
+#         if LangExt.isblank(v.text):
+#             return
+#         try:
+#             ipaddress.ip_address(v.text)
+#             return
+#         except:
+#             raise ValidationError(message=f'In valid IP address.')
+#
+# class JservValidator(Validator):
+#     def __init__(self, protocol_root: str = None):
+#         super().__init__()
+#         self.protocol_root = JProtocol.urlroot if LangExt.isblank(protocol_root) else protocol_root
+#
+#     '''
+#     Synodes protocol validator ('jserv-album')
+#     '''
+#     def validate(self, v):
+#         if not LangExt.isblank(v.text) and \
+#            not JServUrl.valid(v.text, rootpath=self.protocol_root):
+#             raise ValidationError(
+#                 message=f'Jserv URL is invalid. Reqired format: http(s)://ip:port/{self.protocol_root}')
 
 class QuitValidator(Validator):
     def validate(self, v: Document) -> None:
@@ -243,7 +246,7 @@ if not has_run:
     while not _quit and not reach_central():
         cli.settings.regiserv = session.prompt(
               message="Please input central service url (empty to quit): ",
-              validator=QuitValidator(),
+              validator=MultiValidator(QuitValidator(), PJservValidator(synode_ui.central_path)),
               default=cli.settings.regiserv,
               validate_while_typing=False)
 
@@ -258,6 +261,7 @@ if not has_run:
     # 1. orgs / community
     session.prompt(
         message=f"Portfolio {synode_ui.version} market ID: {synode_ui.market_id}. ",
+        validator=QuitValidator(),
         default="Return to continue ...")
 
     # 2. bind domains
@@ -265,6 +269,8 @@ if not has_run:
     domains = cli.query_domx(market=synode_ui.market_id, commu=orgid)
 
     if domains is None:
+        Utils.warn('Cannot find domains in market {}, community / org: {}',
+                   synode_ui.market_id, orgid)
         _quit = True
     check_quit(_quit)
 
@@ -315,9 +321,11 @@ if not has_run:
     # 4 local synode
     # 4.1 resp -> nodes
     def respeers_options(diction: SynodeConfig):
-        peer_ids = diction.peers if diction is not None else None
-        return None if LangExt.len(peer_ids) == 0 else \
-            [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
+        # peer_ids = diction.peers if diction is not None else None
+        # return None if LangExt.len(peer_ids) == 0 else \
+        #   [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
+        return None if LangExt.len(diction.peers) == 0 else \
+            [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in diction.peers]
 
     # 4.2 select a peer
     synid, cynstat = None, CynodeStats.die
@@ -425,7 +433,7 @@ if cli.settings.reverseProxy:
     cli.settings.proxyIp = session.prompt(
         message='Please set the public (reverse proxy) ip. Clear to quit:\n',
         default=cli.reportIp() if LangExt.isblank(cli.settings.proxyIp) else cli.settings.proxyIp,
-        validator=MultiValidator(QuitValidator(), IPValidator()))
+        validator=MultiValidator(QuitValidator(), PIPValidator()))
     check_quit(_quit)
 
     reverseports = session.prompt(
@@ -466,7 +474,7 @@ if cli.registry.config.mode != SynodeMode.hub.name:
         cli.settings.jservs[hub_node.synid] = session.prompt(
                 message=f'Pinging the hub node, {hub_node.synid} ? (Empty to quit) ',
                 default=hub_jserv,
-                validator=MultiValidator(QuitValidator(), JservValidator()))
+                validator=MultiValidator(QuitValidator(), PJservValidator()))
         try:
             rsp = cli.ping(hub_node.jserv)
             # print('Response', rsp)
