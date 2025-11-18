@@ -3,6 +3,7 @@
   "apk_ver": "0.7.4",
   "html_jar_v": "0.1.8",
   "web_ver": "0.4.2",
+  "web_inf_dir": "src/main/webapp/WEB-INF-0.7",
   "host_json": "host.json",
   "vol_files": {"volume": ["jserv-main.db", "doc-jserv.db"]},
   "vol_resource": {"volume": "volume/*"},
@@ -10,11 +11,15 @@
   "android_dir": "../../anclient/examples/example.android",
   "dist_dir": "build-0.7.7",
   "deploy": {
-    "market": "[TEST]",
+    "central_iport": "10.10.10.10:9999",
+    "central_path": "regist-alpha",
+    "central_pswd": "",
+    "market": "[Alpha Test]",
     "market_id": "alpha",
-    "orgid": "inforise",
+    "orgid": "ura",
     "dom_nodes": 3,
-    "default_pswd": "",
+    "syn_admin_pswd": "",
     "lang": "en",
-    "langs": {"en": {"[CNPC]": "[Petrol China]"}, "cn": {"[CNPC]": "中石油"}}}
+    "langs": {"en": {"[CNPC]": "[Petrol China]"}, "cn": {"[CNPC]": "全石油"}},
+    "root_key": "0123456789ABCDEF"}
 }

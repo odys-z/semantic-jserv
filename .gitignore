@@ -30,5 +30,5 @@ logs
 .idea/encodings.xml
 *.service
 *.web.service
-
+tasks.json
 exbreak-vols

@@ -280,7 +280,8 @@ class InstallerForm(QMainWindow):
             domain=self.ui.cbbDomains.currentText().strip(),
             reg_jserv=self.ui.txtCentral.text().strip(),
             admin=self.ui.txtAdminId.text(),
-            centralPswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
+            # 0.7.7 central pswd is build by tasks.py
+            # centralPswd=self.cli.matchPswds(self.ui.txtPswd.text(), self.ui.txtPswd2.text()),
             domphrase=self.ui.txtDompswd.text(),
             hubmode=self.ui.chkHub.checkState() == Qt.CheckState.Checked,
             jservss=self.ui.jservLines.toPlainText(),

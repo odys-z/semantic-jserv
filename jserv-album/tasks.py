@@ -4,7 +4,6 @@ invoke make
 import shutil
 import sys
 from types import LambdaType
-from dataclasses import dataclass
 from typing import cast
 from anson.io.odysz.common import Utils
 from anson.io.odysz.utils import zip2
@@ -37,35 +36,20 @@ album-web-#.#.#.jar
 
 
 version_pattern = '[0-9\\.]+'
-synuser_pswd_pattern = '\"pswd\": \"[^"]*\"'
 
-# @dataclass
-# class TaskConfig(Anson):
-#     version: str
-#     apk_ver: str
-#     html_jar_v: str
-#     web_ver: str
-#     host_json: str
-#     vol_files: dict
-#     vol_resource: dict
-#     registry_dir: str
-#     android_dir: str
-#     default_pswd: str
-#     dist_dir: str
-#     '''
-#     Replacing dictionary.json/registry/synusers[0].pswd, pattern of tasks.synuser_pswd_pattern
+# dictionary.json
+synuser_pswd_pattern = '\"pswd\"\\s*:\\s*\"[^"]*\"'
+org_orgid_pattern    = '\"orgId\"\\s*:\\s*\"[^"]*\"'
 
-#     '''
+# synode.json
+market_id     = '\"market_id\"\\s*:\\s*\"[^"]*\"'
+central_iport = '\"central_iport\"\\s*:\\s*\"[^"]*\"'
+central_path  = '\"central_path\"\\s*:\\s*\"[^\"]*\"'
 
-#     # def __init__(self, version: str, apk_ver: str, html_jar_v: str, web_ver: str, host_json: str):
-#     #     self.version = version
-#     #     self.apk_ver = apk_ver
-#     #     self.html_jar_v = html_jar_v
-#     #     self.web_ver = web_ver
-#     #     self.host_json = host_json
+# settings.json
+central_pswd  = '\"centralPswd\"\\s*:\\s*\"[^\"]*\"'
+install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
 
-#     def __init__(self):
-#         super().__init__()
 
 try: import semanticshare
 except ImportError:
@@ -74,7 +58,7 @@ except ImportError:
 
 from semanticshare.io.oz.invoke import SynodeTask
 
-taskcfg = cast(SynodeTask, Anson.from_file('tasks.config'))
+taskcfg = cast(SynodeTask, Anson.from_file('tasks.json'))
 
 @task
 def create_volume(c):
@@ -82,7 +66,7 @@ def create_volume(c):
         if not os.path.isdir(vol):
             os.mkdir(vol)
         for fn in fs: 
-            with open(os.path.join(vol, fn), 'a') as vf:
+            with open(os.path.join(vol, fn), 'a', encoding='utf-8') as vf:
                 print(f'Volume file created: {os.path.join(vol, fn)}')
                 vf.close()
 
@@ -142,11 +126,24 @@ def config(c):
         f"app_ver = '{version_pattern}'": f"app_ver = '{taskcfg.apk_ver}'"
     })
 
-    diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
-    Utils.update_patterns(diction_file, {
-        synuser_pswd_pattern: f'"pswd": "{taskcfg.default_pswd}"'
+    synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
+    Utils.update_patterns(synode_json, {
+        market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
+        central_iport: f'"central_iport": "{taskcfg.deploy.central_iport}"',
+        central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
     })
 
+    diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
+    Utils.update_patterns(diction_file, {
+        org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
+        synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
+    })
+
+    settings_json = os.path.join(taskcfg.web_inf_dir, 'settings.json')
+    Utils.update_patterns(settings_json, {
+        central_pswd:  f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
+        install_key :  f'"installkey"  : "{taskcfg.deploy.root_key}"'
+    })
 
 @task
 def clean(c):
@@ -236,7 +233,8 @@ def package(c, zip=f'portfolio-synode-{taskcfg.version}.zip'):
         # https://exiftool.org/index.html
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
 
-        'WEB-INF': 'src/main/webapp/WEB-INF-0.7/*', # Do not replace with version.
+        # 'WEB-INF': 'src/main/webapp/WEB-INF-0.7/*', # Do not replace with version.
+        'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
         'bin/synode_py3-0.7-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
         "registry": "../synode.py/registry/*",
