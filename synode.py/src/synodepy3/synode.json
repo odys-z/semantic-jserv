@@ -1,5 +1,5 @@
 { "type": "synodepy3.SynodeUi",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "market": "MY [Test]",
   "market_id": "alpha",
   "central_iport": "182.150.29.34:1990",

@@ -325,7 +325,7 @@ public class SynotierJettyApp implements Daemon {
 		AppSettings.updateOrgConfig(cfg, settings);
 		
 		return createSyndoctierApp(cfg, settings,
-					((ArrayList<SyncUser>) YellowPages.robots()).get(0),
+					((ArrayList<SyncUser>) YellowPages.robots()).get(0), // or get 'admin'?
 					webinf, config_xml, f("%s/%s", $vol_home, "syntity.json"))
 
 				.start(isNull(oe) ? () -> System.out : oe[0],

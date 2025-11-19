@@ -101,6 +101,7 @@ def has_err():
 class InstallerForm(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.domains_arr = [] # query results for the org / community
         self.ui = Ui_InstallForm()
         self.ui.setupUi(self)
         self.cli = InstallerCli()
@@ -408,16 +409,20 @@ class InstallerForm(QMainWindow):
         domx = self.query_domx(self.ui.cbbOrgs.currentText())
         self.ui.cbbDomains.clear()
         if domx is not None:
+            self.domains_arr = domx.domains()
             my_domid = self.cli.registry.config.domain
-            self.ui.cbbDomains.addItems(domx.domains())
+            self.ui.cbbDomains.addItems(self.domains_arr)
+
             # avoid change my domain id by select_domx()
             if not LangExt.isblank(my_domid):
                 self.ui.cbbDomains.setCurrentText(my_domid)
                 self.select_domx(my_domid)
-            self.cli.registry.config.domain = my_domid
+            # self.cli.registry.config.domain = my_domid
 
     def select_domx(self, dix):
         domid = self.ui.cbbDomains.currentText()
+        if domid not in self.domains_arr: return
+
         orgid = self.ui.cbbOrgs.currentText()
         resp  = self.cli.query_domconf(commuid=orgid, domid=domid)
         if resp is not None:
@@ -482,7 +487,9 @@ class InstallerForm(QMainWindow):
         self.ui.cbbPeers.clear()
         if peers is not None:
             self.ui.cbbPeers.addItems([s.synid for s in peers if s is not None])
-        if select_id is not None:
+
+        # if select_id is not None:
+        if not LangExt.isblank(select_id):
             self.ui.cbbPeers.setCurrentText(select_id)
             self.select_peer_byid(select_id)
 
@@ -566,7 +573,8 @@ class InstallerForm(QMainWindow):
         """
         next_id = self.ui.cbbPeers.currentText()
         le_node = self.cli.registry.find_peer(next_id)
-        if le_node is not None and (le_node.stat is None or le_node.stat == CynodeStats.create):
+        # if le_node is not None and (le_node.stat is None or le_node.stat == CynodeStats.create):
+        if le_node is None or le_node.stat is None or le_node.stat == CynodeStats.create:
             return self.cli.validateVol() is None
         else:
             return False
@@ -649,8 +657,8 @@ class InstallerForm(QMainWindow):
         update_chkhub(self.ui.chkHub.checkState() == Qt.CheckState.Checked)
 
         # cansave = valid_peers and (neverun or self.cli.registry.config.synid == self.ui.cbbPeers.currentText())
-        # cansave = iscreating_state()
-        # self.ui.bSetup.setEnabled(cansave)
+        cansave = self.iscreating_state()
+        self.ui.bSetup.setEnabled(cansave)
 
         # test_run() is now actually saved syncIns == 0, but will not reinitialize dbs.
         # cantest = neverun and iscreating_state() and self.cli.vol_valid() and cansave

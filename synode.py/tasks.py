@@ -36,7 +36,7 @@ SYNODE_VERSION = 'SYNODE_VERSION'
 JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
 HTML_JAR_VERSION = 'HTML_JAR_VERSION'
 WEB_VERSION = 'WEB_VERSION'
-# REGISTRY_ZIP = 'REGISTRY_ZIP'
+REGISTRY_ZIP = 'REGISTRY_ZIP'
 
 ORG = 'ura'
 DOMAIN = 'zsu'
@@ -83,6 +83,8 @@ def config(c):
         'html_srver = "[0-9\\.]+"': f'html_srver = "{html_srver}"'
     })
 
+    Utils.update_patterns('src/synodepy3/synode.json', {'"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{version}",'})
+
     Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{version}" # '})
 
 @task
@@ -119,7 +121,7 @@ def build(c: Context):
             rm_any(res)
         return None
 
-    from src.synodepy3.__version__ import synode_ver
+    # from src.synodepy3.__version__ import synode_ver
     buildcmds = [
         ['.', lambda: rm_dist()],
         ['.', f'{py()} -m build']

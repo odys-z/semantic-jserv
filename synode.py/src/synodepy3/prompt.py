@@ -103,30 +103,6 @@ style = Style.from_dict({
 path = os.path.dirname(__file__)
 synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
-# class IPValidator(Validator):
-#     def validate(self, v: Document) -> None:
-#         if LangExt.isblank(v.text):
-#             return
-#         try:
-#             ipaddress.ip_address(v.text)
-#             return
-#         except:
-#             raise ValidationError(message=f'In valid IP address.')
-#
-# class JservValidator(Validator):
-#     def __init__(self, protocol_root: str = None):
-#         super().__init__()
-#         self.protocol_root = JProtocol.urlroot if LangExt.isblank(protocol_root) else protocol_root
-#
-#     '''
-#     Synodes protocol validator ('jserv-album')
-#     '''
-#     def validate(self, v):
-#         if not LangExt.isblank(v.text) and \
-#            not JServUrl.valid(v.text, rootpath=self.protocol_root):
-#             raise ValidationError(
-#                 message=f'Jserv URL is invalid. Reqired format: http(s)://ip:port/{self.protocol_root}')
-
 class QuitValidator(Validator):
     def validate(self, v: Document) -> None:
         global _quit
@@ -455,7 +431,7 @@ caninstall = choice(
 # 6A domain token
 admin = cli.registry.find_synuser(users=cli.registry.synusers, id='admin')
 admin_token = session.prompt(
-    message=f'Please set domain token of user Admin, which must be set tha same across all synodes in the domain:\n',
+    message=f'Please set domain token of user Admin, which must be set as the same across all synodes in the domain:\n',
     default=admin.pswd,
     validator=MultiValidator(QuitValidator(), DomainTokenValidator()))
 
@@ -533,7 +509,7 @@ if caninstall == 1:
         check_quit(_quit)
 
     if Utils.iswindows():
-        session.prompt('Synode-cli 0.7.6 cannot install the required Windows services.\n'
+        session.prompt(f'Synode-cli {synode_ui.version} cannot install the required Windows services.\n'
                        'Please install it with the GUI version:\n'
                        'py -m synodepy3\n'
                        'And click "install Windows service" with default settings.')

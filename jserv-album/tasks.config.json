@@ -14,12 +14,14 @@
     "central_iport": "10.10.10.10:9999",
     "central_path": "regist-alpha",
     "central_pswd": "",
+    "web_port": 8900,
+    "jserv_port": 8964,
     "market": "[Alpha Test]",
     "market_id": "alpha",
     "orgid": "ura",
     "dom_nodes": 3,
     "syn_admin_pswd": "",
     "lang": "en",
-    "langs": {"en": {"[CNPC]": "[Petrol China]"}, "cn": {"[CNPC]": "全石油"}},
+    "langs": {"en": {"[CNPC]": "[Petrol China]"}},
     "root_key": "0123456789ABCDEF"}
 }

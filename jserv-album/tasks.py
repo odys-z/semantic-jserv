@@ -12,29 +12,6 @@ import os
 
 from anson.io.odysz.anson import Anson
 
-# version = '0.7.6'
-"""
-synode.py3, jserv-album-0.7.#.jar
-"""
-
-# apk_ver = '0.7.3'
-
-# html_jar_v = '0.1.8'
-"""
-html-web-#.#.#.jar
-"""
-
-# web_ver = '0.4.2'
-"""
-album-web-#.#.#.jar
-"""
-
-# vol_files = {"volume": ["jserv-main.db", "doc-jserv.db"]}
-# vol_resource = {"volume": "volume/*"}
-# dist_dir = f'build-{version}'
-# android_dir = '../../anclient/examples/example.android'
-
-
 version_pattern = '[0-9\\.]+'
 
 # dictionary.json
@@ -42,14 +19,15 @@ synuser_pswd_pattern = '\"pswd\"\\s*:\\s*\"[^"]*\"'
 org_orgid_pattern    = '\"orgId\"\\s*:\\s*\"[^"]*\"'
 
 # synode.json
-market_id     = '\"market_id\"\\s*:\\s*\"[^"]*\"'
-central_iport = '\"central_iport\"\\s*:\\s*\"[^"]*\"'
-central_path  = '\"central_path\"\\s*:\\s*\"[^\"]*\"'
+re_market_id     = '\"market_id\"\\s*:\\s*\"[^"]*\"'
+re_central_iport = '\"central_iport\"\\s*:\\s*\"[^"]*\"'
+re_central_path  = '\"central_path\"\\s*:\\s*\"[^\"]*\"'
 
 # settings.json
-central_pswd  = '\"centralPswd\"\\s*:\\s*\"[^\"]*\"'
-install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
-
+re_central_pswd  = '\"centralPswd\"\\s*:\\s*\"[^\"]*\"'
+re_install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
+re_webport       = '\"webport\"\\s*:\\s*[0-9]+'
+re_jserv_port    = '\"port\"\\s*:\\s*\\d+'
 
 try: import semanticshare
 except ImportError:
@@ -126,11 +104,12 @@ def config(c):
         f"app_ver = '{version_pattern}'": f"app_ver = '{taskcfg.apk_ver}'"
     })
 
+    # FIXME This is not correct. To be moved to synode.py tasks.py
     synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
     Utils.update_patterns(synode_json, {
-        market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
-        central_iport: f'"central_iport": "{taskcfg.deploy.central_iport}"',
-        central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
+        re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
+        re_central_iport: f'"central_iport": "{taskcfg.deploy.central_iport}"',
+        re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
     })
 
     diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
@@ -141,9 +120,17 @@ def config(c):
 
     settings_json = os.path.join(taskcfg.web_inf_dir, 'settings.json')
     Utils.update_patterns(settings_json, {
-        central_pswd:  f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
-        install_key :  f'"installkey"  : "{taskcfg.deploy.root_key}"'
+        re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
+        re_webport     : f'"webport"     : {taskcfg.deploy.web_port}',
+        re_jserv_port  : f'"port"        : {taskcfg.deploy.jserv_port}',
+        re_install_key : f'"installkey"  : "{taskcfg.deploy.root_key}"'
     })
+
+    ''' And save tasks-central.json
+    central_settings = cast(SynodeTask, Anson.from_file('central/settings.json'))
+    taskcfg.config_central(central_settings)
+    central_settings.toFile('central/settings.json')
+    '''
 
 @task
 def clean(c):
