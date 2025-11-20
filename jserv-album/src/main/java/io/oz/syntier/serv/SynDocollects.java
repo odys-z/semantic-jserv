@@ -332,7 +332,9 @@ public class SynDocollects extends ServPort<AlbumReq> {
 				.rs(0)).nxt();
 
 		if (rs == null || isblank(rs.getString(m.org)))
-			throw new SemanticException("Verifying user's profiles needs target user belongs to an organization / family.");
+			throw new SemanticException(
+				"%s.org = null? To verify a user's profile requires the target user belongs to an organization / family.",
+				usr.uid());
 		return new Profiles(domx.synode, rs, m, "album", orgMeta.webNode);
 	}
 

@@ -368,9 +368,13 @@ public class Syngleton extends JSingleton {
 			JUserMeta um = new JUserMeta();
 			Insert ins = null;
 			for (SyncUser admin : synusers) {
+				shouldeqs(new Object() {}, cfg.org.orgId, admin.orgId(), "synuser.%s != org.orgId", admin.orgId());
+
 				// TODO password in json should be cipher
 				Insert i = defltScxt.insert(um.tbl, usr)
-						.nv(usrm.org, admin.orgId())
+						.nv(usrm.org,
+							// ISSUE 0.7.7 or directly override with org's?
+							isblank(admin.orgId()) ? cfg.org.orgId : admin.orgId())
 						.nv(usrm.pk, admin.uid())
 						.nv(usrm.pswd, admin.pswd())
 						.nv(usrm.uname, admin.userName())

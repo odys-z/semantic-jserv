@@ -633,6 +633,12 @@ class InstallerCli:
                 else:
                     return {'hub-node': 'Hub information is missing.'}
 
+        if LangExt.len(self.registry.synusers) == 0:
+            return {'synusers': 'Admin must present'}
+        else:
+            for u in self.registry.synusers:
+                u.org, u.domain = cfg.org.orgId, cfg.domain
+
         return None
 
     def matchPswds(self, p1: str, p2: str):
