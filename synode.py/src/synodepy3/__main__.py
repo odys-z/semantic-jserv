@@ -26,6 +26,7 @@ from semanticshare.io.oz.syn import SynodeMode, Synode
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
 from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
     synode_ui, pths
+from synode_ui.install_jre import validate_jre
 
 # Important:
 # Run the following command to generate the ui_form.py file
@@ -584,11 +585,12 @@ class InstallerForm(QMainWindow):
         replaced by enable_widgets()
         :return:
         """
+        jre_ready = validate_jre()
         installed = self.cli.vol_valid()
         neverun = not self.cli.hasrun()
         iscreate = self.iscreating_state()
         if Utils.iswindows():
-            self.ui.bWinserv.setEnabled(installed and neverun and iscreate)
+            self.ui.bWinserv.setEnabled(jre_ready and installed and neverun and iscreate)
 
     def seal_has_run(self):
         """

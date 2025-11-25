@@ -1,0 +1,9 @@
+{ "type": "io.oz.invoke.Temurin17Release",
+  "lazy_flag": "wait:",
+  "src": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.17%2B10",
+  "date": "2025-11-24",
+  "proxy": "proxy.json",
+  "path": "http://127.0.0.1:1984/jre-17",
+  "resources": [],
+  "mirroring": []
+}

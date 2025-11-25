@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import LangExt
 
+jre_mirror_key = 'jre_mirror'
 
 @dataclass
 class SynodeUi(Anson):

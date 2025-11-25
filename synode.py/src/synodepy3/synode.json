@@ -9,7 +9,7 @@
   "credits": "https://odys-z.github.io/products/album/credits.html",
   "lang": "en",
   "langs": {
-    "en": {
+    "en": { "jre_mirror": "http://127.0.0.1:1984/jre-17/jdk-17.0.17+10/bins",
       "gboxRegistry": "Synchronization Domain Identity - Market {market}",
       "lbHelplink": "HELP",
       "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps",
