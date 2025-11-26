@@ -8,5 +8,5 @@
     "allowDir": false
   }],
   "startHandler": null,
-  "json_path": "WEB-INF/html-service.json"
+  "json_pat-delete": "WEB-INF/html-service.json"
 }

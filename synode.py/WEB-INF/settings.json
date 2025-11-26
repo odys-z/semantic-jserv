@@ -23,5 +23,5 @@
     "node-0": "http://182.168.29.34:1911/jserv-album"},
   "installkey": "0123456789ABCDEF",
   "rootkey": "",
-  "json_path": "WEB-INF/settings.json"
+  "json_path-delete": "WEB-INF/settings.json"
 }

@@ -24,8 +24,8 @@ from semanticshare.io.oz.syn import SynodeMode, Synode
 from .commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
 from .installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
     synode_ui, pths
-from .install_jre import validate_jre
-from . import SynodeUi
+from .install_jre import validate_jre, dowload_jre_gui
+from . import SynodeUi, jre_mirror_key
 
 # Important:
 # Run the following command to generate the ui_form.py file
@@ -136,10 +136,8 @@ class InstallerForm(QMainWindow):
         """
 
         ip, port = self.cli.getProxiedIp()
-        # iport = f'{ip}:{port}'
         iport = self.cli.get_iport()
 
-        # synode = self.ui.txtSynode.text()
         synode = self.cli.registry.config.synid
 
         data = getJservOption(synode, iport, False)
@@ -230,7 +228,6 @@ class InstallerForm(QMainWindow):
         if has_err():
             warn_msg('Central service cannot be reached.', details)
 
-        # self.seal_has_run()
         self.enable_widgets()
 
     def submit_jserv(self):
@@ -304,13 +301,25 @@ class InstallerForm(QMainWindow):
             self.show_validation(v)
         return v
 
+    def check_install_jre(self):
+        from semanticshare.io.oz.edge import Temurin17Release
+        temurin = Temurin17Release()
+        temurin.path = synode_ui.langstr(jre_mirror_key)
+        if os.path.exists('proxy.json'):
+            temurin.proxy = 'proxy.json'
+        jreimg = temurin.set_jre()
+        print('JRE:', jreimg)
+        dowload_jre_gui(self, temurin)
+
     def save(self):
         err_ready()
         if self.update_valid() is not None:
             return
 
+        if self.check_install_jre() is not None:
+            return
+
         try:
-            self.cli.install_jre_gui(self.ui)
             self.cli.install()
 
             post_err = self.cli.postFix()
@@ -400,7 +409,6 @@ class InstallerForm(QMainWindow):
 
         self.cli.registry.config.overlay(resp.diction)
 
-        # binding_synode = resp.next_installing() if LangExt.isblank(myid) else myid
         binding_synode = resp.next_installing() if self.cli.registry.find_peer(myid) is None else myid
         self.bind_cbbpeers(peers=self.cli.registry.config.peers, select_id=binding_synode)
 
@@ -705,7 +713,9 @@ class InstallerForm(QMainWindow):
 
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
-            self.ui.bSetup.clicked.connect(self.save)
+
+            # self.ui.bSetup.clicked.connect(self.save)
+            self.ui.bSetup.clicked.connect(self.check_install_jre)
 
             self.ui.bTestRun.setEnabled(False)
             self.ui.bTestRun.clicked.connect(self.test_run)

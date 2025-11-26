@@ -15,9 +15,9 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, App
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
-from synodepy3 import SynodeUi
-from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers
-from synodepy3.validators import PJservValidator, PIPValidator
+from .import SynodeUi
+from .installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers
+from .validators import PJservValidator, PIPValidator
 
 
 def reach_central():
@@ -40,7 +40,7 @@ def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8
     """
 
     cwd = os.getcwd()
-    from synodepy3.__version__ import jar_ver, web_ver
+    from .__version__ import jar_ver, web_ver
     synode_desc = f'Synode {jar_ver} {synid}'
     etc_syn = f"""[Unit]
 Description={synode_desc}
