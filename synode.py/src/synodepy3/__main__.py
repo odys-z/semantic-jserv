@@ -3,6 +3,8 @@ import time
 
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
 
+from jre_downloader import JreWorker
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 import os
@@ -302,6 +304,10 @@ class InstallerForm(QMainWindow):
         return v
 
     def check_install_jre(self):
+        '''
+        @deprecated
+        :return:
+        '''
         from semanticshare.io.oz.edge import Temurin17Release
         temurin = Temurin17Release()
         temurin.path = synode_ui.langstr(jre_mirror_key)
@@ -309,7 +315,8 @@ class InstallerForm(QMainWindow):
             temurin.proxy = 'proxy.json'
         jreimg = temurin.set_jre()
         print('JRE:', jreimg)
-        dowload_jre_gui(self, temurin)
+        # download_jre_gui(self, temurin)
+        JreWorker(temurin).start_download(self)
 
     def save(self):
         err_ready()
