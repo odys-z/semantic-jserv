@@ -1,5 +1,5 @@
 '''
-Thanks to Grok!
+JRE Installer (GUI)
 '''
 from typing import cast
 import platform
@@ -9,75 +9,11 @@ import os
 from pathlib import Path
 
 from anson.io.odysz.anson import Anson, AnsonException
-from jre_mirror.temurin17 import TemurinMirror, Temurin17Release
+from semanticshare.io.oz.edge import Temurin17Release
+from jre_mirror.temurin17 import TemurinMirror
 
 _jre_ = 'jre17'
 _jre_path_ = Path('jre17')
-
-# def get_adoptium_jre17_url(download_url: str = None):
-#     system = platform.system()
-#     machine = platform.machine()
-# 
-#     if system == "Windows":
-#         os_name = "windows"
-#         ext = "zip"
-#     elif system == "Darwin":
-#         os_name = "mac"
-#         ext = "tar.gz"
-#     elif system == "Linux":
-#         os_name = "linux"
-#         ext = "tar.gz"
-#     else:
-#         raise RuntimeError("Unsupported OS")
-# 
-#     if machine in ("AMD64", "x86_64"):
-#         arch = "x64"
-#     elif machine in ("aarch64", "arm64"):
-#         arch = "aarch64"
-#     else:
-#         raise RuntimeError(f"Unsupported arch: {machine}")
-# 
-#     # Latest Temurin 17 as of Nov 2025
-#     # version = "17.0.13+11"   # ← change this when updating
-#     if download_url is None:
-#         #               https://github.com/adoptium/temurin17-binaries/releases/download/
-#         #                       jdk-17.0.9%2B9.1/OpenJDK17U-jdk_x64_windows_hotspot_17.0.9_9.zip
-#         #
-#         #               https://github.com/adoptium/temurin17-binaries/releases/download
-#         #                      /jdk-17.0.9%2B9/OpenJDK17U-jre_x86-32_windows_hotspot_17.0.9_9.zip
-#         #               https://github.com/adoptium/temurin17-binaries/releases/download
-#         #                      /jdk-17.0.9%2B9/OpenJDK17U-jre_arm_linux_hotspot_17.0.9_9.tar.gz
-#         download_url = 'https://github.com/adoptium/temurin17-binaries/releases/download'
-# 
-#     build, plus = "17.0.9", "9"
-#     zip_gz = f"OpenJDK17U-jre_{arch}_{os_name}_hotspot_{build}_{plus}.{ext}"
-#     return f"{download_url}/jdk-{build}%2B{plus}/{zip_gz}"
-
-# def download_and_extract(url, target_dir="jre-download"):
-#     target_dir = Path(target_dir)
-#     target_dir.mkdir(exist_ok=True)
-# 
-#     filename = url.split("/")[-1]
-#     zip_path = target_dir / filename
-# 
-#     if not zip_path.exists():
-#         print(f"Downloading JRE for {platform.system()} {platform.machine()}...")
-#         urllib.request.urlretrieve(url, zip_path, reporthook=progress_hook)
-# 
-#     print("Extracting...")
-#     if filename.endswith(".zip"):
-#         with zipfile.ZipFile(zip_path, 'r') as z:
-#             z.extractall(target_dir)
-#     else:
-#         import tarfile
-#         with tarfile.open(zip_path, 'r:gz') as t:
-#             t.extractall(target_dir)
-# 
-#     # Find the actual jre folder (Adoptium extracts to jdk-xxx-jre)
-#     for root, dirs, _ in os.walk(target_dir):
-#         if "bin/java" in [os.path.join(root, d, "bin/java") for d in dirs]:
-#             return Path(root)
-#     raise RuntimeError("JRE extraction failed")
 
 def progress_hook_cli(blocknum, blocksize, totalsize):
     read = blocknum * blocksize
@@ -120,8 +56,8 @@ from PySide6.QtGui import Qt
 
 
 def dowload_jre(parentui: QWidget, temurin17: Temurin17Release):
-    def cancel_download(a, b, c):
-        print(a, b, c)
+    def cancel_download():
+        print('Cancelling download.')
     
     progress_dialog = QProgressDialog(
         "Downloading ...", "Cancel", 0, 100, parentui
@@ -143,23 +79,7 @@ def dowload_jre(parentui: QWidget, temurin17: Temurin17Release):
     # mirror.release.save(list_json)
 
 
-# 1. Create a QObject to run the long task
-# This is a good practice as it separates the task logic from the thread itself.
-# class Worker(QObject):
-#     finished = pyqtSignal()
-#     progress = pyqtSignal(int)
-# 
-#     def run_long_task(self):
-#         """A dummy function for a long-running process."""
-#         num_steps = 100
-#         for i in range(num_steps):
-#             time.sleep(0.05)  # Simulate a time-consuming operation
-#             self.progress.emit(i + 1)
-#             # You can add a check for cancellation here if the dialog has a cancel button
-#         self.finished.emit()
-
-
-# 2. Create the main application window
+# Create the main application window for showing a progress bar.
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -221,6 +141,8 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+
+    # FIXME Not working without in a background thread.
     if len(sys.argv) > 1 and sys.argv[1] == 'test-download':
         from src.synodepy3.installer_api import synode_ui
         from src.synodepy3 import jre_mirror_key
@@ -228,6 +150,7 @@ if __name__ == "__main__":
         temurin = Temurin17Release()
         temurin.path = synode_ui.langstr(jre_mirror_key)
         # temurin.mirroring.append('OpenJDK17U-jre_x64_linux_hotspot_17.0.17_10.tar.gz')
+        temurin.proxy = 'proxy.json'
         jreimg = temurin.set_jre()
         print('JRE:', jreimg)
         dowload_jre(window, temurin)

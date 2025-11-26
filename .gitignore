@@ -32,3 +32,4 @@ logs
 *.web.service
 tasks.json
 exbreak-vols
+proxy.json

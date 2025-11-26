@@ -307,34 +307,36 @@ class InstallerForm(QMainWindow):
 
     def save(self):
         err_ready()
-        v = self.update_valid()
-        if v is None:
-            try:
-                self.cli.install()
+        if self.update_valid() is not None:
+            return
 
-                post_err = self.cli.postFix()
-                if not post_err:
-                    msg_box("Setup successfully.\n"\
-                            "If Windows services have been already installed, new settings can only take effects after restart the services. Restarting Windows won't work."\
-                            if os.name == 'nt' else \
-                            "Reload service settings and restart it to take effects.")
-                else:
-                    warn_msg("Install successfully, with errors automatically fixe. See details...", post_err)
+        try:
+            self.cli.install_jre_gui(self.ui)
+            self.cli.install()
 
-                if self.ui.lbQr.pixmap is not None:
-                    self.gen_qr()
+            post_err = self.cli.postFix()
+            if not post_err:
+                msg_box("Setup successfully.\n"\
+                        "If Windows services have been already installed, new settings can only take effects after restart the services. Restarting Windows won't work."\
+                        if os.name == 'nt' else \
+                        "Reload service settings and restart it to take effects.")
+            else:
+                warn_msg("Install successfully, with errors automatically fixe. See details...", post_err)
 
-                self.submit_jserv()
-
-            except FileNotFoundError or IOError as e:
-                # Changing vol path can reach here
-                err_msg('Setting up synodepy3 is failed.', e)
-            except PortfolioException as e:
-                warn_msg('Configuration is updated with errors. Check the details.\n'
-                         'If this is not switching volume, that is not correct' , e)
+            if self.ui.lbQr.pixmap is not None:
                 self.gen_qr()
 
-            self.enableWinsrvInstall()
+            self.submit_jserv()
+
+        except FileNotFoundError or IOError as e:
+            # Changing vol path can reach here
+            err_msg('Setting up synodepy3 is failed.', e)
+        except PortfolioException as e:
+            warn_msg('Configuration is updated with errors. Check the details.\n'
+                     'If this is not switching volume, that is not correct' , e)
+            self.gen_qr()
+
+        self.enableWinsrvInstall()
 
     def test_run(self):
         syncins = self.cli.registry.config.syncIns
