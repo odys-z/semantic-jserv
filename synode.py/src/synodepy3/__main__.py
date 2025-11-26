@@ -3,8 +3,6 @@ import time
 
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
 
-from synodepy3 import SynodeUi
-
 sys.stdout.reconfigure(encoding="utf-8")
 
 import os
@@ -23,15 +21,16 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, get
 from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp, CynodeStats, SynodeConfig
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
-from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
+from .commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
+from .installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
     synode_ui, pths
-from synode_ui.install_jre import validate_jre
+from .install_jre import validate_jre
+from . import SynodeUi
 
 # Important:
 # Run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py
-from synodepy3.ui_form import Ui_InstallForm
+from .ui_form import Ui_InstallForm
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()

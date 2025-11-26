@@ -5,8 +5,6 @@ from dataclasses import dataclass
 
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from . import SynodeUi
-
 sys.stdout.reconfigure(encoding="utf-8")
 
 import ipaddress
@@ -38,6 +36,8 @@ from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq
 from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 
 from .__version__ import jar_ver, web_ver, html_srver
+
+from . import SynodeUi
 
 path = os.path.dirname(__file__)
 '''
