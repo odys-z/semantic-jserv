@@ -1,16 +1,15 @@
 """
 Thanks to Grok
 """
-
-import sys
+import time
 from pathlib import Path
 
+from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QPushButton, QProgressDialog
+    QWidget, QProgressDialog
 )
-from PySide6.QtCore import QObject, QThread, Signal, Slot
 from jre_mirror.temurin17 import TemurinMirror
-from semanticshare.io.oz.edge import Temurin17Release, JRERelease
+from semanticshare.io.oz.edge import JRERelease
 
 # ------------------------------------------------------------------
 # Worker that runs in a QThread
@@ -45,6 +44,7 @@ class DownloadWorker(QObject):
 
         try:
             mirror.resolve_to(_jre_, extract_check=True, prog_hook=prog_hook)
+            time.sleep(5)
             if not self._cancelled:
                 self.progress.emit(100)
                 self.finished.emit()
@@ -53,9 +53,6 @@ class DownloadWorker(QObject):
             self.failed.emit(str(e))
 
 
-# ------------------------------------------------------------------
-# Main GUI
-# ------------------------------------------------------------------
 class JreWorker:
     jrelease: JRERelease
     def __init__(self, jre_release: JRERelease):
@@ -77,7 +74,7 @@ class JreWorker:
             label_text += f" (proxy: {proxy_text})"
 
         self.progress_dialog = QProgressDialog(
-            label_text, "Cancel", 0, 100, parentui
+            label_text, "Cancel", 0, 100, None
         )
         self.progress_dialog.setWindowTitle("Installing JRE 17")
         self.progress_dialog.setModal(True)
@@ -87,22 +84,23 @@ class JreWorker:
         # ------------------------------------------------------------------
         # 2. Set up QThread + Worker
         # ------------------------------------------------------------------
-        self.thread = QThread(parent=parentui)
+        self.thread = QThread(parentui)
         self.worker = DownloadWorker(self.jrelease)
         self.worker.moveToThread(self.thread)
 
         # Connections
-        self.worker.progress.connect(self.progress_dialog.setValue)
-        self.worker.finished.connect(self.download_finished)
+        self.worker.progress.connect(self.progress_dialog.setValue, Qt.ConnectionType.QueuedConnection)
+        self.worker.finished.connect(self.download_finished, Qt.ConnectionType.QueuedConnection)
         # self.worker.failed.connect(self.download_failed)
 
         self.thread.started.connect(self.worker.run)
         self.thread.finished.connect(self.thread.deleteLater)
 
         # Start everything
-        self.thread.start()
         self.progress_dialog.show()
-        QApplication.processEvents()
+        self.thread.start()
+        # QApplication.processEvents()
+        return self
 
     def cancel_download(self):
         if self.worker:
@@ -118,7 +116,10 @@ class JreWorker:
     def cleanup(self, message: str):
         print(message)
         if self.progress_dialog:
-            self.progress_dialog.close()
+            # self.progress_dialog.close()
+            self.progress_dialog.setValue(100)
+            self.progress_dialog = None
         if self.thread and self.thread.isRunning():
             self.thread.quit()
             self.thread.wait(3000)
+            self.thread = None

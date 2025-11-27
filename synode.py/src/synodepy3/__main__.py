@@ -316,7 +316,7 @@ class InstallerForm(QMainWindow):
         jreimg = temurin.set_jre()
         print('JRE:', jreimg)
         # download_jre_gui(self, temurin)
-        JreWorker(temurin).start_download(self)
+        self.jredownloader = JreWorker(temurin).start_download(self)
 
     def save(self):
         err_ready()
@@ -739,6 +739,9 @@ class InstallerForm(QMainWindow):
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
         super().closeEvent(event)
+        if self.jredownloader is not None:
+            self.jredownloader.cleanup('Quit Window')
+
         if self.cli.httpd is not None or self.cli.webth is not None:
             try:
                 InstallerCli.closeWeb(self.cli.httpd, self.cli.webth)
