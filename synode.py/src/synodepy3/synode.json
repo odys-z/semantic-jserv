@@ -7,9 +7,9 @@
   "iso": "http://www.lingoes.net/en/translator/langcode.htm",
   "ui": "ui_form.py",
   "credits": "https://odys-z.github.io/products/album/credits.html",
-  "lang": "en",
+  "lang": "zh-CN",
   "langs": {
-    "en": { "jre_mirror": "http://127.0.0.1:1984/jre-17/jdk-17.0.17+10/bins",
+    "en": { "jre_mirror": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.17%2B10",
       "gboxRegistry": "Synchronization Domain Identity - Market {market}",
       "lbHelplink": "HELP",
       "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps",
@@ -17,7 +17,7 @@
       "txt_create_dom": "Create Domain",
       "txt_join_dom": "Join Domain"
     },
-    "zh-CN": {
+    "zh-CN": { "jre_mirror": "http://127.0.0.1:1984/jre-17/jdk-17.0.17+10/bins",
       "gboxRegistry": "同步域标识 - 区域 {market}",
       "lbHelplink": "帮助",
       "help_link": "https://odys-z.github.io/products/portfolio/synode/setup.html#install-steps",

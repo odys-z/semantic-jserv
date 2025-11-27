@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
+from jre_downloader import JreDownloader
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 import ipaddress
@@ -18,7 +20,7 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from typing import cast, Optional
+from typing import cast, Optional, Callable
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
@@ -37,7 +39,7 @@ from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 
 from .__version__ import jar_ver, web_ver, html_srver
 
-from . import SynodeUi
+from . import SynodeUi, jre_mirror_key
 
 path = os.path.dirname(__file__)
 '''
@@ -1099,3 +1101,26 @@ class InstallerCli:
         self.settings.save(pths.web_settings)
         self.registry.save(pths.vol_dict_json)
 
+    def check_install_jre(self, jredownloader: JreDownloader, prog_label=None,
+                          cli_progress: Callable[[int, int, int], None]=None):
+
+        if jredownloader and jredownloader.isrunning():
+            return
+
+        from semanticshare.io.oz.edge import Temurin17Release
+
+        temurin = Temurin17Release()
+        temurin.path = synode_ui.langstr(jre_mirror_key)
+        if os.path.exists('proxy.json'):
+            temurin.proxy = 'proxy.json'
+
+        jreimg = temurin.set_jre()
+        print('JRE:', jreimg)
+
+        jredownloader = JreDownloader(prog_label)
+        if prog_label:
+            jredownloader.start_download_gui(temurin)
+        else:
+            jredownloader.start_download_cli(temurin, cli_progress)
+
+        return jredownloader

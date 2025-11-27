@@ -15,7 +15,8 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, App
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
-from .import SynodeUi
+from jre_downloader import JreDownloader, _jre_
+from . import SynodeUi
 from .installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers
 from .validators import PJservValidator, PIPValidator
 
@@ -40,6 +41,7 @@ def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8
     """
 
     cwd = os.getcwd()
+    java_home = f'{cwd}/{_jre_}'
     from .__version__ import jar_ver, web_ver
     synode_desc = f'Synode {jar_ver} {synid}'
     etc_syn = f"""[Unit]
@@ -50,7 +52,7 @@ After=network.target
 Type=simple
 User={os.getlogin()}
 WorkingDirectory={cwd}
-ExecStart=java -jar {cwd}/bin/{jserv_07_jar}
+ExecStart=export JAVA_HOME={java_home} && {java_home}/java -jar {cwd}/bin/{jserv_07_jar}
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -70,7 +72,7 @@ After=network.target
 Type=simple
 User={os.getlogin()}
 WorkingDirectory={cwd}
-ExecStart=java -jar {cwd}/bin/{html_web_jar}
+ExecStart=export JAVA_HOME={java_home} && {java_home}/java -jar {cwd}/bin/{html_web_jar}
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -475,6 +477,15 @@ def post_install():
         Utils.warn('TODO 0.7.6, RESP == NULL, handle errors...')
 
 # 7 save & install
+jredownloader = cast(JreDownloader, None)
+
+def jreprog_hook(blocknum, blocksize, totalsize):
+    read = blocknum * blocksize
+    if totalsize > 0:
+        percent = min(100, read * 100 // totalsize)
+        print(f"\rDownloading JRE... {percent}%", end="")
+
+
 if caninstall == 1:
     # ui.cli.settings.save()
     # ui.cli.registry.config.save()
@@ -487,6 +498,8 @@ if caninstall == 1:
             print(v, file=sys.stderr)
             _quit = True
             check_quit(_quit)
+
+        jredownloader = cli.check_install_jre(jredownloader, cli_progress=jreprog_hook)
 
         cli.install()
         post_err = cli.postFix()

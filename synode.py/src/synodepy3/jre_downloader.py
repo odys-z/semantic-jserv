@@ -1,125 +1,131 @@
 """
 Thanks to Grok
 """
+import shutil
+import threading
 import time
 from pathlib import Path
+from typing import Callable
 
-from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
 from PySide6.QtWidgets import (
-    QWidget, QProgressDialog
+    QApplication, QLabel
 )
+from anson.io.odysz.common import LangExt
 from jre_mirror.temurin17 import TemurinMirror
 from semanticshare.io.oz.edge import JRERelease
+
 
 # ------------------------------------------------------------------
 # Worker that runs in a QThread
 # ------------------------------------------------------------------
 _jre_ = 'jre17'
-_jre_path_ = Path('jre17')
+_jre_path_ = Path(_jre_)
+_event_loop_interval_ = 0.1
 
-class DownloadWorker(QObject):
-    progress = Signal(int)      # emits 0-100
-    finished = Signal()
-    failed = Signal(str)
+
+class DownloadWorker():
 
     def __init__(self, temurin_release):
         super().__init__()
         self.temurin_release = temurin_release
         self._cancelled = False
+        self._finished  = False
 
     def cancel(self):
         self._cancelled = True
 
-    @Slot()
-    def run(self):
+    def run(self, on_progress: Callable[[int, int, int], None]):
         mirror = TemurinMirror(self.temurin_release)
 
-        def prog_hook(blocknum: int, blocksize: int, totalsize: int):
-            if self._cancelled:
-                return True  # tell the downloader to abort
-            read = blocknum * blocksize
-            if totalsize > 0:
-                percent = min(100, read * 100 // totalsize)
-                self.progress.emit(percent)
-
         try:
-            mirror.resolve_to(_jre_, extract_check=True, prog_hook=prog_hook)
-            time.sleep(5)
-            if not self._cancelled:
-                self.progress.emit(100)
-                self.finished.emit()
+            jre_temp = f'{_jre_}-temp'
+            on_progress(0, 100, 100)
+            extract, ext_path = mirror.resolve_to(
+                                jre_temp, extract_check=True, prog_hook=on_progress)
+
+            if extract and ext_path:
+                print(f'f{ext_path}/* -> {_jre_}')
+                shutil.rmtree(_jre_)
+                shutil.move(ext_path, _jre_)
+                shutil.rmtree(jre_temp)
+
+            self._finished = True
             print("JRE-WORKER finished")
         except Exception as e:
-            self.failed.emit(str(e))
+            print(e)
 
 
-class JreWorker:
+class JreDownloader:
     jrelease: JRERelease
-    def __init__(self, jre_release: JRERelease):
+    ui_lable: QLabel
+
+    def __init__(self, progress_label: QLabel=None):
         super().__init__()
+        self._cancelled = False
+        self.ui_lable = progress_label
+
+    def progress_text(self, percent: int):
+        return f'Downloading JRE: {percent}%{"" if LangExt.isblank(self.jrelease.proxy) else "\nproxy: " + self.jrelease.proxy}'
+
+    def label_progress(self, blocknum, blocksize, totalsize):
+        if self._cancelled:
+            return True  # tell the downloader to abort
+
+        if self.ui_lable and totalsize > 0:
+            read = blocknum * blocksize
+            percent = min(100, read * 100 // totalsize)
+            self.ui_lable.setText(self.progress_text(percent))
+
+    def start_download_cli(self, jre_release: JRERelease, on_prgess):
+        def download():
+            self.worker.run(on_prgess)
+
         self.jrelease = jre_release
-
-        # Will be created later
-        self.progress_dialog: QProgressDialog | None = None
-        self.worker: DownloadWorker | None = None
-        self.thread: QThread | None = None
-
-    def start_download(self, parentui: QWidget):
-        # ------------------------------------------------------------------
-        # 1. Create the progress dialog in the MAIN thread (very important!)
-        # ------------------------------------------------------------------
-        proxy_text = self.jrelease.proxy or ""
-        label_text = "Downloading ..."
-        if proxy_text:
-            label_text += f" (proxy: {proxy_text})"
-
-        self.progress_dialog = QProgressDialog(
-            label_text, "Cancel", 0, 100, None
-        )
-        self.progress_dialog.setWindowTitle("Installing JRE 17")
-        self.progress_dialog.setModal(True)
-        self.progress_dialog.setMinimumDuration(0)   # show immediately
-        self.progress_dialog.canceled.connect(self.cancel_download)
-
-        # ------------------------------------------------------------------
-        # 2. Set up QThread + Worker
-        # ------------------------------------------------------------------
-        self.thread = QThread(parentui)
         self.worker = DownloadWorker(self.jrelease)
-        self.worker.moveToThread(self.thread)
+        self.thread = threading.Thread(target=download)
 
-        # Connections
-        self.worker.progress.connect(self.progress_dialog.setValue, Qt.ConnectionType.QueuedConnection)
-        self.worker.finished.connect(self.download_finished, Qt.ConnectionType.QueuedConnection)
-        # self.worker.failed.connect(self.download_failed)
-
-        self.thread.started.connect(self.worker.run)
-        self.thread.finished.connect(self.thread.deleteLater)
-
-        # Start everything
-        self.progress_dialog.show()
+        on_prgess(0, 10, 100)
         self.thread.start()
-        # QApplication.processEvents()
-        return self
+
+        while not self.worker._finished and not self.worker._cancelled:
+            time.sleep(_event_loop_interval_)
+
+        return self.worker._finished, self.worker._cancelled
+
+
+    def start_download_gui(self, jre_release: JRERelease):
+        def download():
+            self.worker.run(self.label_progress)
+
+        self.jrelease = jre_release
+        self.worker = DownloadWorker(self.jrelease)
+        self.thread = threading.Thread(target=download)
+
+        if self.ui_lable:
+            self.ui_lable.setText(f'Start to download JRE...')
+
+        self.thread.start()
+
+        while not self.worker._finished and not self.worker._cancelled:
+            time.sleep(_event_loop_interval_)
+            QApplication.processEvents()
+
+        if self.ui_lable:
+            if self.worker._finished:
+                self.ui_lable.setText('Download completed.')
+            elif self.worker._cancelled:
+                self.ui_lable.setText('Download cancelled.')
+            else:
+                self.ui_lable.setText('Download aborted.')
 
     def cancel_download(self):
         if self.worker:
             self.worker.cancel()
 
-    def download_finished(self):
-        self.progress_dialog.setValue(100)
-        self.cleanup("Download completed successfully!")
-
-    # def download_failed(self, msg: str):
-    #     self.cleanup(f"Download failed: {msg}")
-
     def cleanup(self, message: str):
         print(message)
-        if self.progress_dialog:
-            # self.progress_dialog.close()
-            self.progress_dialog.setValue(100)
-            self.progress_dialog = None
-        if self.thread and self.thread.isRunning():
-            self.thread.quit()
-            self.thread.wait(3000)
-            self.thread = None
+        if self.thread:
+            self.thread.join()
+
+    def isrunning(self):
+        return self.thread and self.thread.is_alive()

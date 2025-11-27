@@ -3,7 +3,7 @@ import time
 
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
 
-from jre_downloader import JreWorker
+from jre_downloader import JreDownloader
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -28,6 +28,7 @@ from .installer_api import InstallerCli, web_inf, settings_json, serv_port0, web
     synode_ui, pths
 from .install_jre import validate_jre, dowload_jre_gui
 from . import SynodeUi, jre_mirror_key
+from .jre_downloader import _event_loop_interval_
 
 # Important:
 # Run the following command to generate the ui_form.py file
@@ -107,6 +108,7 @@ class InstallerForm(QMainWindow):
         self.ui = Ui_InstallForm()
         self.ui.setupUi(self)
         self.cli = InstallerCli()
+        self.jredownloader = cast(JreDownloader, None)
 
     @staticmethod
     def set_qr_label(label, text):
@@ -305,18 +307,24 @@ class InstallerForm(QMainWindow):
 
     def check_install_jre(self):
         '''
-        @deprecated
         :return:
         '''
-        from semanticshare.io.oz.edge import Temurin17Release
-        temurin = Temurin17Release()
-        temurin.path = synode_ui.langstr(jre_mirror_key)
-        if os.path.exists('proxy.json'):
-            temurin.proxy = 'proxy.json'
-        jreimg = temurin.set_jre()
-        print('JRE:', jreimg)
-        # download_jre_gui(self, temurin)
-        self.jredownloader = JreWorker(temurin).start_download(self)
+        # if self.jredownloader and self.jredownloader.isrunning():
+        #     return
+        #
+        # from semanticshare.io.oz.edge import Temurin17Release
+        # temurin = Temurin17Release()
+        # temurin.path = synode_ui.langstr(jre_mirror_key)
+        # if os.path.exists('proxy.json'):
+        #     temurin.proxy = 'proxy.json'
+        # jreimg = temurin.set_jre()
+        # print('JRE:', jreimg)
+        # # download_jre_gui(self, temurin)
+        # # self.jredownloader = JreWorker(temurin).start_download(self)
+        # self.jredownloader = JreDownloader(self.ui.lbQr)
+        # self.jredownloader.start_download_gui(temurin)
+
+        self.jredownloader = self.cli.check_install_jre(self.jredownloader, self.ui.lbQr)
 
     def save(self):
         err_ready()
@@ -678,12 +686,13 @@ class InstallerForm(QMainWindow):
         cansave = self.iscreating_state()
         self.ui.bSetup.setEnabled(cansave)
 
+        jre_ready = self.isjre_ready()
         # test_run() is now actually saved syncIns == 0, but will not reinitialize dbs.
         # cantest = neverun and iscreating_state() and self.cli.vol_valid() and cansave
-        cantest = neverun and self.iscreating_state() and self.cli.vol_valid()
+        cantest = neverun and self.iscreating_state() and self.cli.vol_valid() and jre_ready
         self.ui.bTestRun.setEnabled(cantest)
 
-        can_winsrv = cantest and Utils.iswindows()
+        can_winsrv = cantest and Utils.iswindows() and jre_ready
         self.ui.bWinserv.setEnabled(can_winsrv)
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
@@ -739,8 +748,12 @@ class InstallerForm(QMainWindow):
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
         super().closeEvent(event)
-        if self.jredownloader is not None:
-            self.jredownloader.cleanup('Quit Window')
+
+        if self.jredownloader:
+            self.jredownloader.cancel_download()
+            # QApplication.processEvents()
+            time.sleep(_event_loop_interval_)
+            self.jredownloader.cleanup('Close event: stop jre downloader...')
 
         if self.cli.httpd is not None or self.cli.webth is not None:
             try:
