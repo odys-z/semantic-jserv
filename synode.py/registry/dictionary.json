@@ -10,7 +10,7 @@
 
   "org": {
     "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
-    "orgId": "inforise",
+    "orgId": "io",
     "orgName": "ORG-MY 0.7.6 by Central",
     "orgType": "my override by synode.json/{market_id}",
     "webroot": "$WEBROOT",
