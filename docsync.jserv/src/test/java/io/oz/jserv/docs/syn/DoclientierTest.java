@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashSet;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -87,6 +88,9 @@ class DoclientierTest {
 	}
 	
 	static void init(int caseid) throws Exception {
+		FileUtils.copyDirectory(new File("src/test/res/WEB-INF-synodier-join-test"),
+								new File("src/test/res/WEB-INF"));
+
 		JProtocol.setup(servpath, AnsonMsg.Port.echo);
 
 		String p = new File("src/test/res").getAbsolutePath();

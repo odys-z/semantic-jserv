@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
@@ -127,6 +128,9 @@ public class SynodetierJoinTest {
 
 	@BeforeAll
 	static void init() throws Exception {
+		FileUtils.copyDirectory(new File("src/test/res/WEB-INF-synodier-join-test"),
+								new File("src/test/res/WEB-INF"));
+
 		setVolumeEnv("v-");
 		JProtocol.setup(servpath, Port.echo);
 
