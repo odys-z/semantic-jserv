@@ -13,6 +13,8 @@
 @set classname=SynotierJettyApp
 @set full_classname=io.oz.syntier.serv.%classname%
 
+@set jre=jre17/java/jvm.dll
+
 if "%~1" == "uninstall" (
 @echo linked with "cd winsrv && mklink uninstall-html-srv.bat ..\..\..\html-service\java\src\test\uninstall-html-srv.bat"?
 
@@ -22,7 +24,7 @@ if "%~1" == "uninstall" (
 @REM linked with "cd winsrv && mklink install-html-srv.bat ..\..\..\html-service\java\src\test\install-html-srv.bat"?
 @echo copied "copy ..\jserv-album\target\%jar% bin" ?
 
-@call winsrv\install-html-srv.bat winsrv\portfolio-ia64.exe bin\%jar% %serv_name% . %classname% %full_classname%  
+@call winsrv\install-html-srv.bat winsrv\portfolio-ia64.exe bin\%jar% %serv_name% . %classname% %full_classname%  %jre%
 sc query %serv_name%
 )
 
