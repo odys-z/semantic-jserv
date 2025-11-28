@@ -443,7 +443,7 @@ public class Syngleton extends JSingleton {
 		return syndomanagers.keySet();
 	}
 
-	public String myjserv() throws SQLException, TransException {
+	public String myjserv() {
 		// settings.loadDBLaterservs(syncfg, synm);
 		return settings.jserv(synode());
 	}

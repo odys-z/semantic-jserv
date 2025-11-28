@@ -44,8 +44,10 @@ import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.JProtocol;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.meta.DocRef;
 import io.odysz.semantic.meta.ExpDocTableMeta;
+import io.odysz.semantic.meta.SynodeMeta;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
 import io.odysz.semantic.tier.docs.PathsPage;
@@ -160,11 +162,15 @@ public class ExpDoctierservTest {
 
 			cleanPhotos(docm, jetties[i].syngleton().domanager(zsu).synconn);
 
+			assertTrue(JServUrl.valid(jetties[i].jserv()));
+			fixJservs(ck, jetties[i]);
 			jetties[i].syngleton().asyOpenDomains(
 				(domain, mynid, peer, xp) -> {
 					lights[i] = true;
 				});
+			
 		}
+
 		awaitAll(lights, -1);
 
 		// This won't pass if h_photos is not cleared
@@ -239,9 +245,17 @@ public class ExpDoctierservTest {
 
 		SynodetierJoinTest.syncdomain(Y, ck);
 		
+
 		for (DocRef dr : assert_Arefs_atB(Y, X, 2, 0))
 			assertEquals(ck[Y].synode(), dr.synoder);
 		
+		if (caseid == 1)
+			SynodetierJoinTest.syncdomain(X, ck);
+
+		logrst("Session can lost if break too long for debug. There must be something like:\n"
+				+ "Sesssion refeshed. Session(s) idled (expired) in last 3 minutes:\n"
+				+ "[+rZNei2j, ura : Y : ody]\n"
+				+ "[+3jTpGK6, ura : Z : ody]", section, 1);
 		if (caseid == 0)
 			case_yresolve(section);
 		else if (caseid == 1)
@@ -251,6 +265,17 @@ public class ExpDoctierservTest {
 		ck[Y].doc(2);
 		ck[X].doc(2);
 	}
+
+	static void fixJservs(Docheck[] cks, SynotierJettyApp synotierApp) throws TransException, SQLException {
+		for (Docheck ck : cks) {
+			SynodeMeta synm = ck.synb.syndomx.synm;
+			ck.synb.update(synm.tbl, ck.synb.synrobot())
+				.nv(synm.jserv, synotierApp.jserv())
+				.whereEq(synm.pk, synotierApp.syngleton.synode())
+				.u(ck.synb.instancontxt());
+		}
+	}
+
 
 	@SuppressWarnings("deprecation")
 	static void case_xy_resolve(int section) throws Exception {

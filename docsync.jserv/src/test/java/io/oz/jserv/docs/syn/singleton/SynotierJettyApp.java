@@ -93,7 +93,7 @@ public class SynotierJettyApp {
 	ServletContextHandler schandler;
 	public Syngleton syngleton() { return syngleton; }	
 
-	public String jserv() throws SQLException, TransException {
+	public String jserv() {
 		return this.syngleton.myjserv();
 	}
 
