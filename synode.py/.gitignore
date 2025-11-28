@@ -4,3 +4,5 @@ jre-17-download
 jre-17
 jre17
 jre
+.venv
+bin
