@@ -15,7 +15,7 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, App
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
-from jre_downloader import JreDownloader, _jre_
+from .jre_downloader import JreDownloader, _jre_
 from . import SynodeUi
 from .installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers
 from .validators import PJservValidator, PIPValidator

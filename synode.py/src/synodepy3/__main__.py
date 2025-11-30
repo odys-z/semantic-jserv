@@ -3,7 +3,7 @@ import time
 
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
 
-from jre_downloader import JreDownloader
+from .jre_downloader import JreDownloader
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -609,7 +609,7 @@ class InstallerForm(QMainWindow):
         replaced by enable_widgets()
         :return:
         """
-        jre_ready = validate_jre()
+        jre_ready = validate_jre() == None
         installed = self.cli.vol_valid()
         neverun = not self.cli.hasrun()
         iscreate = self.iscreating_state()
@@ -686,7 +686,7 @@ class InstallerForm(QMainWindow):
         cansave = self.iscreating_state()
         self.ui.bSetup.setEnabled(cansave)
 
-        jre_ready = self.isjre_ready()
+        jre_ready = self.cli.isjre_ready()
         # test_run() is now actually saved syncIns == 0, but will not reinitialize dbs.
         # cantest = neverun and iscreating_state() and self.cli.vol_valid() and cansave
         cantest = neverun and self.iscreating_state() and self.cli.vol_valid() and jre_ready
@@ -730,8 +730,8 @@ class InstallerForm(QMainWindow):
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
 
-            # self.ui.bSetup.clicked.connect(self.save)
-            self.ui.bSetup.clicked.connect(self.check_install_jre)
+            self.ui.bSetup.clicked.connect(self.save)
+            # self.ui.bSetup.clicked.connect(self.check_install_jre)
 
             self.ui.bTestRun.setEnabled(False)
             self.ui.bTestRun.clicked.connect(self.test_run)

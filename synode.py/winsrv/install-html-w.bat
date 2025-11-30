@@ -11,7 +11,7 @@
 @set classname=HtmlServer
 @set full_classname=io.oz.srv.HtmlServer
 
-@set jre=jre17/java/jvm.dll
+@set jre=jre17/java/java.dll
 
 if "%~1" == "uninstall" (
 @echo linked with "cd winsrv && mklink uninstall-html-srv.bat ..\..\..\html-service\java\src\test\uninstall-html-srv.bat"?

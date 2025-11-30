@@ -40,6 +40,7 @@ class SynodeUi(Anson):
         :param res:
         :return: self.langs[self.lang][res].
         """
+        print(res, self.langs['en'])
         return self.langs[self.lang][res] \
             if self.lang in self.langs and res in self.langs[self.lang] \
             else self.langs['en'][res]

@@ -1,6 +1,7 @@
 """
 Thanks to Grok
 """
+import os
 import shutil
 import threading
 import time
@@ -10,7 +11,7 @@ from typing import Callable
 from PySide6.QtWidgets import (
     QApplication, QLabel
 )
-from anson.io.odysz.common import LangExt
+from anson.io.odysz.common import LangExt, Utils
 from jre_mirror.temurin17 import TemurinMirror
 from semanticshare.io.oz.edge import JRERelease
 
@@ -44,10 +45,13 @@ class DownloadWorker():
                                 jre_temp, extract_check=True, prog_hook=on_progress)
 
             if extract and ext_path:
-                print(f'f{ext_path}/* -> {_jre_}')
-                shutil.rmtree(_jre_)
+                print(f'{ext_path}/* -> {_jre_}')
+                if os.path.exists(_jre_):
+                    shutil.rmtree(_jre_, ignore_errors=True)
                 shutil.move(ext_path, _jre_)
                 shutil.rmtree(jre_temp)
+            else:
+                Utils.warn("Download & install JRE failed: " + self.temurin_release)
 
             self._finished = True
             print("JRE-WORKER finished")
@@ -65,7 +69,7 @@ class JreDownloader:
         self.ui_lable = progress_label
 
     def progress_text(self, percent: int):
-        return f'Downloading JRE: {percent}%{"" if LangExt.isblank(self.jrelease.proxy) else "\nproxy: " + self.jrelease.proxy}'
+        return f'Downloading JRE: {percent}%{"" if LangExt.isblank(self.jrelease.proxy) else " proxy: " + self.jrelease.proxy}'
 
     def label_progress(self, blocknum, blocksize, totalsize):
         if self._cancelled:
@@ -91,7 +95,6 @@ class JreDownloader:
             time.sleep(_event_loop_interval_)
 
         return self.worker._finished, self.worker._cancelled
-
 
     def start_download_gui(self, jre_release: JRERelease):
         def download():

@@ -3,9 +3,10 @@ import datetime
 import sys
 from dataclasses import dataclass
 
+from jre_mirror.temurin17 import guess_jretree
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from jre_downloader import JreDownloader
+from .jre_downloader import JreDownloader, _jre_
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -1103,6 +1104,12 @@ class InstallerCli:
 
     def check_install_jre(self, jredownloader: JreDownloader, prog_label=None,
                           cli_progress: Callable[[int, int, int], None]=None):
+        '''
+        :param jredownloader:
+        :param prog_label:
+        :param cli_progress:
+        :return: return downlaoder (with background thread) or None if already done
+        '''
 
         if jredownloader and jredownloader.isrunning():
             return
@@ -1117,10 +1124,25 @@ class InstallerCli:
         jreimg = temurin.set_jre()
         print('JRE:', jreimg)
 
-        jredownloader = JreDownloader(prog_label)
-        if prog_label:
-            jredownloader.start_download_gui(temurin)
-        else:
-            jredownloader.start_download_cli(temurin, cli_progress)
+        if guess_jretree(_jre_) != Path(_jre_):
+            jredownloader = JreDownloader(prog_label)
+            if prog_label:
+                jredownloader.start_download_gui(temurin)
+            else:
+                jredownloader.start_download_cli(temurin, cli_progress)
 
-        return jredownloader
+            return jredownloader
+
+        else: return None
+
+    def isjre_ready(self):
+        '''
+        Find out is the jre for running available.
+        This is different from Jre-Mirror's zip/gz package checking while working as the downloader.
+        :return: True if the required jre is ready.
+        '''
+        try:
+            if guess_jretree(_jre_) == Path(_jre_):
+                return True
+            else: return False
+        except: return False

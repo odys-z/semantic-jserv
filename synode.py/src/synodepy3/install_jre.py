@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import cast
 
 from anson.io.odysz.common import LangExt
-from jre_mirror.temurin17 import TemurinMirror
+from jre_mirror.temurin17 import TemurinMirror, guess_jretree
 from semanticshare.io.oz.edge import Temurin17Release
 
 _jre_ = 'jre17'
@@ -22,6 +22,7 @@ def progress_hook_cli(blocknum, blocksize, totalsize):
 
 def validate_jre():
     if not Path.is_dir(Path(_jre_)) or \
+        guess_jretree(_jre_) != Path(_jre_) or \
         os.name == 'posix' and not Path.exists(_jre_path_ / 'bin' / 'java') or \
         os.name == 'nt' and not Path.exists(_jre_path_ / 'bin' / 'java.dll'):
         return {'jre': 'JRE 17 is not available.'}

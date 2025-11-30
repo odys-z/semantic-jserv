@@ -1,5 +1,5 @@
 { "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "centralPswd" : "io.github.odys-z",
+  "centralPswd" : "123456",
   "vol_name"    : "VOLUME_HOME",
   "localIp"     : null,
   "proxyIp"     : null,

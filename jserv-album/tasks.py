@@ -23,6 +23,13 @@ re_market_id     = '\"market_id\"\\s*:\\s*\"[^"]*\"'
 re_central_iport = '\"central_iport\"\\s*:\\s*\"[^"]*\"'
 re_central_path  = '\"central_path\"\\s*:\\s*\"[^\"]*\"'
 
+re_mirror_path_deprecated = lambda lang_id: '\"{lang}\"\\s*:\\s*{{\\s*\"jre_mirror\"\\s*:\\s*\"[^\"]*\"'.format(lang=lang_id) 
+'''
+"en": { "jre_mirror": "value to be replaced"}
+ISSUE: regex is to be replaced with Anson's deserialize and serialize.
+'''
+re_mirror_path = lambda lang_id: '\"jre_mirror.{lang}.re\"\\s*:\\s*\"[^\"]*\"'.format(lang=lang_id) 
+
 # settings.json
 re_central_pswd  = '\"centralPswd\"\\s*:\\s*\"[^\"]*\"'
 re_install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
@@ -85,6 +92,9 @@ def updateApkRes():
 
     return None
 
+synode_json_bak = os.path.join(os.getcwd(), 'synode.json.bak')
+synode_json = ''
+
 @task
 def config(c):
     print('--------------    configuration   ------------------')
@@ -95,7 +105,7 @@ def config(c):
 
     version_file = os.path.join(this_directory, 'pom.xml')
     Utils.update_patterns(version_file, {
-        f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
+        f'<!-- auto update token tasks.py/config --><version>{version_pattern}</version>':
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
@@ -105,9 +115,14 @@ def config(c):
     })
 
     # FIXME This is not correct. To be moved to synode.py tasks.py
+    global synode_json_bak, synode_json
     synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
+
+    shutil.copy2(synode_json, synode_json_bak)
+
     Utils.update_patterns(synode_json, {
         re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
+        re_mirror_path('en'): f'"jre_mirror": "{taskcfg.deploy.mirror_path}"',
         re_central_iport: f'"central_iport": "{taskcfg.deploy.central_iport}"',
         re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
     })
@@ -213,12 +228,16 @@ def package(c, zip=f'portfolio-synode-{taskcfg.version}.zip'):
         c: Invoke Context object for running commands.
         zip: Name of the output ZIP file.
     """
+    jre_img = taskcfg.jre_release.split(os.sep)[-1]
+
     resources = {
         f'bin/html-web-{taskcfg.html_jar_v}.jar': f'../../html-service/java/target/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
         f'bin/jserv-album-{taskcfg.version}.jar': f'target/jserv-album-{taskcfg.version}.jar',
         
         # https://exiftool.org/index.html
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
+        
+        'jre17-temp/{jre_img}': taskcfg.jre_release,
 
         # 'WEB-INF': 'src/main/webapp/WEB-INF-0.7/*', # Do not replace with version.
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
@@ -267,8 +286,23 @@ def package(c, zip=f'portfolio-synode-{taskcfg.version}.zip'):
         print(f"Error creating ZIP file: {str(e)}", file=sys.stderr)
         raise
 
+@task
+def post_build(c):
+    print('--------------    post build   ------------------')
 
-@task(clean, create_volume, build, package)
+    global synode_json_bak, synode_json
+    # this_directory = os.getcwd()
+    # synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
+
+    if os.path.exists(synode_json_bak):
+        shutil.copy2(synode_json_bak, synode_json)
+        os.remove(synode_json_bak)
+        print(f'Restored {synode_json} from backup {synode_json_bak}')
+    else:
+        print(f'No backup found for {synode_json}, skipped restoring.')
+
+
+@task(clean, create_volume, build, package, post_build)
 def make(c):
     """
     Create a ZIP file with the specified resources.
