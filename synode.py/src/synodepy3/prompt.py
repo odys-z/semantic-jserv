@@ -52,7 +52,8 @@ After=network.target
 Type=simple
 User={os.getlogin()}
 WorkingDirectory={cwd}
-ExecStart=export JAVA_HOME={java_home} && {java_home}/java -jar {cwd}/bin/{jserv_07_jar}
+Environment="JAVA_HOME={java_home}"
+ExecStart={java_home}/bin/java -jar {cwd}/bin/{jserv_07_jar}
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -72,7 +73,8 @@ After=network.target
 Type=simple
 User={os.getlogin()}
 WorkingDirectory={cwd}
-ExecStart=export JAVA_HOME={java_home} && {java_home}/java -jar {cwd}/bin/{html_web_jar}
+Environment="JAVA_HOME={java_home}"
+ExecStart={java_home}/bin/java -jar {cwd}/bin/{html_web_jar}
 Restart=always
 RestartSec=10
 StandardOutput=journal

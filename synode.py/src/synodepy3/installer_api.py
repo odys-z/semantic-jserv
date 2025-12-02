@@ -68,7 +68,6 @@ synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 err_uihandlers: list[Optional[OnError]] = [None]
 
 def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
-    # Clients.init(jserv=peerserv or f'http://127.0.0.1:8964/{JProtocol.urlroot}', timeout=timeout_snd)
     Clients.init(jserv=peerserv, timeout=timeout_snd)
 
     def err_ctx(c: MsgCode, e: str, *args: str) -> None:
@@ -405,19 +404,6 @@ class InstallerCli:
 
         valid_local_reg(registry)
         return registry
-
-    # def is_peers_valid(self):
-    #     '''
-    #     There are peers in config.peers[], and domain ids are none or match config.domain
-    #     :return:
-    #     '''
-    #     peers = self.registry.config.peers
-    #     if LangExt.len(peers) > 0:
-    #         for p in peers:
-    #             if p.domain is not None and p.domain != self.registry.config.domain:
-    #                 return False
-    #         return True
-    #     else: return False
 
     def vol_valid(self):
         return self.validateVol() is None

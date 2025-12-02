@@ -2,7 +2,7 @@
 @echo "--- Installing Web-dist Windows Service ---"
 
 @REM BEGIN Python modifying section, by commands.install_htmlsrv. Do not modify except debugging (Not using bat file arg for easy debugging)
-@set jar_ver=0.1.6
+@set jar_ver=0.1.8
 @REM END Python modifying section
 
 @REM @set serv_name="Synode.web-%jar_ver%"
@@ -11,7 +11,7 @@
 @set classname=HtmlServer
 @set full_classname=io.oz.srv.HtmlServer
 
-@set jre=jre17/java/java.dll
+@set jre_home=jre17
 
 if "%~1" == "uninstall" (
 @echo linked with "cd winsrv && mklink uninstall-html-srv.bat ..\..\..\html-service\java\src\test\uninstall-html-srv.bat"?
@@ -22,7 +22,7 @@ if "%~1" == "uninstall" (
 @echo linked with "cd winsrv && mklink install-html-srv.bat ..\..\..\html-service\java\src\test\install-html-srv.bat"?
 @echo copied "copy ..\..\html-service\java\target\html-web-%jar_ver%.jar bin" ?
 
-@call winsrv\install-html-srv.bat winsrv\portfolio-ia64.exe bin\html-web-%jar_ver%.jar %serv_name% . %classname% %full_classname% %jre%
+@call winsrv\install-html-srv.bat winsrv\portfolio-ia64.exe bin\html-web-%jar_ver%.jar %serv_name% . %classname% %full_classname% %jre_home%
 sc query %serv_name%
 )
 

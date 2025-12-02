@@ -5,11 +5,13 @@
   "web_ver"     : "0.4.2",
   "web_inf_dir" : "src/main/webapp/WEB-INF-0.7",
   "jre_release" : "../../JRE-Mirror/temurin17-binaries/jdk-17.0.17+10/bins/OpenJDK17U-jre_x64_windows_hotspot_17.0.17_10.zip",
+  "jre_name"    : "x64_windows",
   "host_json"   : "host.json",
   "vol_files"   : {"volume": ["jserv-main.db", "doc-jserv.db"]},
   "vol_resource": {"volume": "volume/*"},
   "registry_dir": "../synode.py/registry",
   "android_dir" : "../../anclient/examples/example.android",
+  "central_dir" : "../../Semantic-Network/registration/jserv",
   "dist_dir"    : "build-0.7.7",
   "deploy": {
     "mirror_path"   : null,

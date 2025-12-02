@@ -5,7 +5,7 @@ import shutil
 import sys
 from types import LambdaType
 from typing import cast
-from anson.io.odysz.common import Utils
+from anson.io.odysz.common import Utils, LangExt
 from anson.io.odysz.utils import zip2
 from invoke import task
 import os
@@ -41,9 +41,21 @@ except ImportError:
     print('Please install the semantics sharing layer: pip install semantics.py3')
     sys.exit(1)
 
-from semanticshare.io.oz.invoke import SynodeTask
+from semanticshare.io.oz.invoke import SynodeTask, CentralTask
 
 taskcfg = cast(SynodeTask, Anson.from_file('tasks.json'))
+
+@task
+def validate(c):
+    print('--------------    validate   ------------------')
+    print('taskcfg:', taskcfg)
+
+    task_cent = cast(CentralTask, Anson.from_file(os.path.join(taskcfg.central_dir, 'tasks.json')))
+
+    if taskcfg.deploy.central_pswd != task_cent.users['admin']['pswd']: # Issue: should be ['admin'].pswd:
+        Utils.warn('Warning: central_pswd is not set to default value.', file=sys.stderr)
+        sys.exit(1)
+
 
 @task
 def create_volume(c):
@@ -95,7 +107,7 @@ def updateApkRes():
 synode_json_bak = os.path.join(os.getcwd(), 'synode.json.bak')
 synode_json = ''
 
-@task
+@task(validate)
 def config(c):
     print('--------------    configuration   ------------------')
 
@@ -220,7 +232,7 @@ def build(c):
     return False
 
 @task
-def package(c, zip=f'portfolio-synode-{taskcfg.version}.zip'):
+def package(c, zip=None):
     """
     Create a ZIP file.
     
@@ -228,7 +240,13 @@ def package(c, zip=f'portfolio-synode-{taskcfg.version}.zip'):
         c: Invoke Context object for running commands.
         zip: Name of the output ZIP file.
     """
-    jre_img = taskcfg.jre_release.split(os.sep)[-1]
+
+    jre_img = taskcfg.jre_release.split('/')[-1]
+    temp_jre_path = f'jre17-temp/{jre_img}'
+
+    dist_name = f'{taskcfg.jre_name if not LangExt.isblank(taskcfg.jre_release) else "online"}-{taskcfg.deploy.market_id}'
+    if zip is None:
+        zip = f'portfolio-synode-{taskcfg.version}-{dist_name}.zip'
 
     resources = {
         f'bin/html-web-{taskcfg.html_jar_v}.jar': f'../../html-service/java/target/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
@@ -237,7 +255,7 @@ def package(c, zip=f'portfolio-synode-{taskcfg.version}.zip'):
         # https://exiftool.org/index.html
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
         
-        'jre17-temp/{jre_img}': taskcfg.jre_release,
+        temp_jre_path: taskcfg.jre_release,
 
         # 'WEB-INF': 'src/main/webapp/WEB-INF-0.7/*', # Do not replace with version.
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
@@ -280,7 +298,7 @@ def package(c, zip=f'portfolio-synode-{taskcfg.version}.zip'):
         print(zip, "->", distzip)
         os.rename(zip, distzip)
 
-        print(f'Created ZIP file successfully: {distzip}' if not err else 'Errors while making target (creaded zip file)')
+        print(f'Distribution {dist_name}: Created ZIP file successfully: {distzip}' if not err else 'Errors while making target (creaded zip file)')
 
     except Exception as e:
         print(f"Error creating ZIP file: {str(e)}", file=sys.stderr)

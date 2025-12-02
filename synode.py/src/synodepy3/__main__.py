@@ -689,10 +689,13 @@ class InstallerForm(QMainWindow):
         jre_ready = self.cli.isjre_ready()
         # test_run() is now actually saved syncIns == 0, but will not reinitialize dbs.
         # cantest = neverun and iscreating_state() and self.cli.vol_valid() and cansave
-        cantest = neverun and self.iscreating_state() and self.cli.vol_valid() and jre_ready
-        self.ui.bTestRun.setEnabled(cantest)
 
-        can_winsrv = cantest and Utils.iswindows() and jre_ready
+        # cantest = neverun and self.iscreating_state() and self.cli.vol_valid() and jre_ready
+        # self.ui.bTestRun.setEnabled(cantest)
+        self.ui.bTestRun.setEnabled(False)
+
+        can_start = neverun and self.iscreating_state() and self.cli.vol_valid() and jre_ready
+        can_winsrv = can_start and Utils.iswindows() and jre_ready
         self.ui.bWinserv.setEnabled(can_winsrv)
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):

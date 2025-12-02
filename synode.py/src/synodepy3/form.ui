@@ -3,7 +3,7 @@
  <class>InstallForm</class>
  <widget class="QMainWindow" name="InstallForm">
   <property name="windowModality">
-   <enum>Qt::WindowModality::NonModal</enum>
+   <enum>Qt::NonModal</enum>
   </property>
   <property name="enabled">
    <bool>true</bool>
@@ -122,7 +122,7 @@
       <number>32</number>
      </property>
      <property name="echoMode">
-      <enum>QLineEdit::EchoMode::Password</enum>
+      <enum>QLineEdit::Password</enum>
      </property>
      <property name="placeholderText">
       <string>Confirm Password</string>
@@ -163,7 +163,7 @@
       <number>32</number>
      </property>
      <property name="echoMode">
-      <enum>QLineEdit::EchoMode::Password</enum>
+      <enum>QLineEdit::Password</enum>
      </property>
      <property name="placeholderText">
       <string>Max 32 Chars</string>
@@ -425,6 +425,9 @@
       <width>91</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="toolTip">
+     <string>Debug Only</string>
     </property>
     <property name="text">
      <string extracomment="Test">&amp;Test Run</string>
@@ -948,7 +951,7 @@
      <x>0</x>
      <y>0</y>
      <width>960</width>
-     <height>23</height>
+     <height>24</height>
     </rect>
    </property>
   </widget>
