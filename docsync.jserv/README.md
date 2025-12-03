@@ -24,6 +24,61 @@ experment an architecture based upon a centrialized users management platform, f
 downloading user information to synodes, supposing happend before synchronizations
 begin.
 
+# A comparison to Postgres Extension, Spock
+
+[1] About Spock and pgEdge
+
+See [What is Multi-Master Distributed Postgres, and Do You Need It?](https://www.pgedge.com/solutions/benefit/multi-master)
+
+and [a conference presentation by Jan Weick, April 20, 2023, Postgres Conference Silicon Valley](https://www.pgedge.com/presentations/postgres-conference-preso-video-multi-master-replication).
+
+### Summary:
+
+At its core, multi-master distributed PostgreSQL allows you to have multiple master databases spread across different locations (multiple nodes), each capable of handling read and write traffic simultaneously, allowing for better performance and high-availability of your applications. It also ensures data consistency (i.e. eventual data consistency) and improved data access times for your applications by using bi-directional replication and conflict resolution.
+
+[2] How it works
+
+Google AI [12, 13]:
+
+```
+    - Foundational mechanism: Logical decoding
+    Spock's core functionality is built on PostgreSQL's native logical decoding feature. Here's a breakdown of the process: 
+    -- WAL capture:
+    When data changes occur (INSERT, UPDATE, DELETE), PostgreSQL writes low-level, binary records to its Write-Ahead Log (WAL). The WAL acts as a permanent, sequential record of all changes to the database.
+    -- Decoding:
+    Spock uses logical replication slots to consume these WAL records. It decodes the binary data from the WAL into a logical, readable format, including table and column names.
+    -- Transaction assembly:
+    Changes are read and assembled into complete transactions in the order they were committed. Only after a transaction is fully committed is it passed on for replication.
+    -- Output plugin:
+    The structured change data is delivered to Spock's output plugin, which then transmits it to other nodes in the cluster. 
+
+    - The multi-master replication flow
+    Spock uses a publish/subscribe model to manage the replication process between nodes. 
+    1. Nodes and connections:
+       1. Nodes: Each PostgreSQL database instance in the cluster is considered a node.
+       2. Providers: The node from which changes are replicated.
+       3. Subscribers: The node to which changes are applied. In a multi-master setup, every node is both a provider and a subscriber to other nodes.
+    2. Replication sets:
+    ...
+    3. Bidirectional data flow:
+    ...
+
+    - Advanced conflict resolution
+    -- Last Update Wins (LUA):
+    ...
+    -- Conflict-Free Delta-Apply Columns: *
+    This innovative mechanism is particularly useful for numerical data, like account balances, where concurrent increments or decrements would otherwise be lost with a "last update wins" policy.
+       - Instead of replicating the final value, Spock captures and applies the change (the "delta").
+       - For example, if node A adds 5 to a balance and node B adds 10 to the same balance, Spock ensures the final value on all nodes is the original value plus 15, preventing data loss.
+    -- Conflict tracking:
+    ...
+    -- Apply-Replay for exception handling:
+    ...
+
+```
+
+  ** This section explains the webinar's declaration why the *bal = 315*.
+
 # References
 
 [1] Mopati Bernerdict Kekgathetse, Keletso Letsholo,
@@ -126,6 +181,12 @@ Appendix A is a useful table for mapping data types across RDBMS.
 <br>Image Copyright © JumpMind, Inc
 
 - Eric Long, [*How SymmetricDS Works*](https://www.symmetricds.org/docs/how-to/how-symmetricds-works), 15 September 2012, is a brief explaiation of Change Capture, Route and Push / Pull.
+
+[12] pgEdge/spock, [Spock Multi-Master Replication for PostgreSQL](https://github.com/pgEdge/spock), Github
+
+[13] pgsql-io/spock, [spock](https://github.com/pgsql-io/spock), Github
+
+  The spock-pglogical extension provides logical streaming replication for PostgreSQL, using a publish/subscribe model. 
 
 [x.1] [*Introducing eShopOnContainers reference app*](https://learn.microsoft.com/en-us/dotnet/architecture/cloud-native/introduce-eshoponcontainers-reference-app), Architecting Cloud Native .NET Applications for Azure, MS Documentation, 04/07/2022
 
