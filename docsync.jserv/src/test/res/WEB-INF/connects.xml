@@ -7,25 +7,49 @@ referencing tests:
 <!DOCTYPE xml>
 <conns>
   <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,smtcs">
-    <c>
-  		<id>sys-prv</id>
+  	<!-- drvmnger table is used to configure basic db connection, for pooled datasource, see bdcp -->
+  	<!-- smtcs: semantics configuration used only for the connection.
+  		(And a global semantics configuration?) -->
+  	<c>
+  		<id>sys-hub</id>
   		<type>sqlite</type>
   		<isdef>true</isdef>
-  		<src>$VOLUME_HOME/jserv-main.db</src>
+  		<src>$VOLUME_HUB/jserv-main.db</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<dbg></dbg>
-  		<smtcs>$VOLUME_HOME/semantics-sys.xml</smtcs>
+  		<smtcs>$VOLUME_HUB/semantics-sys.xml</smtcs>
+  	</c>
+	<c>
+		<id>docsyn-hub</id>
+  		<type>sqlit-queue</type>
+  		<isdef></isdef>
+  		<src>$VOLUME_HUB/doc-jserv.db</src>
+  		<usr></usr>
+  		<pswd></pswd>
+  		<dbg>true</dbg>
+  		<smtcs>$VOLUME_HUB/semantics-syn.xml</smtcs>
+	</c>
+
+  	<c>
+  		<id>sys-prv</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>$VOLUME_PRV/jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg></dbg>
+  		<smtcs>$VOLUME_PRV/semantics-sys.xml</smtcs>
   	</c>
 	<c>
 		<id>docsyn-prv</id>
   		<type>sqlit-queue</type>
   		<isdef></isdef>
-  		<src>$VOLUME_HOME/doc-jserv.db</src>
+  		<src>$VOLUME_PRV/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
   		<dbg>true</dbg>
-  		<smtcs>$VOLUME_HOME/semantics-syn.xml</smtcs>
+  		<smtcs>$VOLUME_PRV/semantics-syn.xml</smtcs>
 	</c>
   </t>
 
@@ -33,12 +57,33 @@ referencing tests:
   </t>
 
   <t id="conn-uri" pk='uri' columns="uri, conn">
+  	<!-- for uri, see AnClient/js/example/example.js/north-star/north-app.jsx
+  	     for conn, see above
+  	     It's planned to try configure connections via user requests, in the future.
+  	-->
+  	<c>
+  		<uri>/sys/HUB</uri>
+  		<conn>sys-hub</conn>
+  	</c>
+  	<c>
+  		<uri>/syn/HUB</uri>
+  		<conn>docsyn-hub</conn>
+  	</c>
+  	<c>
+  		<uri>dev-x</uri>
+  		<conn>docsyn-hub</conn>
+  	</c>
+
   	<c>
   		<uri>/sys/PRV</uri>
   		<conn>sys-prv</conn>
   	</c>
   	<c>
   		<uri>/syn/PRV</uri>
+  		<conn>docsyn-prv</conn>
+  	</c>
+  	<c>
+  		<uri>dev-y</uri>
   		<conn>docsyn-prv</conn>
   	</c>
   </t>

@@ -396,8 +396,6 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			Utils.warnT(new Object() {}, "Must be verfified: Ignoring file moving since envelope is saved into the uri field. TODO wrap this into somewhere, not here.");
 		else {
 			// move file
-			// TODO to be tested: use reslveExtpath_byeid() instead
-			// String targetPath = DocUtils.resolvExtroot(b, conn, pid, usr, meta);
 			String targetPath = DocUtils.resolvExtpath_byeid(b, conn, pid, usr, meta);
 
 			if (debug) {

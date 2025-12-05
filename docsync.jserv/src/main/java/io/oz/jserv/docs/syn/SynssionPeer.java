@@ -224,8 +224,7 @@ public class SynssionPeer {
 					Thread.sleep((long) (sleep * 1000)); // wait for next try
 					domanager.lockme(onMutext);
 
-					// FIXME
-					// FIXME ISSUE if Y is interrupted, or shutdown, X can be dead locking
+					// ISSUE: If Y is interrupted, or shutdown, X can be dead locking
 					// NOTES 2025/10/30, cannot be re-produced
 					rep = exespush(peer, a0, reqb);
 				}
