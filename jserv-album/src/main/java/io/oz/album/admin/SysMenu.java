@@ -20,8 +20,8 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
-import io.oz.album.AlbumFlags;
 import io.oz.album.peer.AlbumPort;
+import io.oz.album_delete.AlbumFlags;
 
 @WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
 public class SysMenu extends SemanticTree {

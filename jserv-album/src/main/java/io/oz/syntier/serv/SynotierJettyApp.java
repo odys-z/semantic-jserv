@@ -103,8 +103,6 @@ public class SynotierJettyApp implements Daemon {
 	public Syngleton syngleton() { return syngleton; }	
 
 	public String jserv() throws SQLException, TransException {
-//		JServUrl jurl = this.syngleton.myjserv();
-//		return jurl == null ? null : jurl.jserv();
 		return this.syngleton.myjserv();
 	}
 
