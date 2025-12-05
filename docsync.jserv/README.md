@@ -1,3 +1,6 @@
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.odys-z/docsync.jserv)](https://central.sonatype.com/artifact/io.github.odys-z/docsync.jserv)
+[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+
 # About
 
 Currently experimenting database synchronization (replication) for synchronizing files
@@ -36,9 +39,9 @@ and [a conference presentation by Jan Weick, April 20, 2023, Postgres Conference
 
 At its core, multi-master distributed PostgreSQL allows you to have multiple master databases spread across different locations (multiple nodes), each capable of handling read and write traffic simultaneously, allowing for better performance and high-availability of your applications. It also ensures data consistency (i.e. eventual data consistency) and improved data access times for your applications by using bi-directional replication and conflict resolution.
 
-[2] How it works
+[2] How it works <sup>[12, 13]</sup>
 
-Google AI [12, 13]:
+Google AI:
 
 ```
     - Foundational mechanism: Logical decoding
