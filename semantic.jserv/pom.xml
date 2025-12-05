@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.odys-z</groupId>
   <artifactId>semantic.jserv</artifactId>
-  <version>1.5.16-SNAPSHOT</version>
+  <version>1.5.16</version>
   <packaging>jar</packaging>
 
   <name>semantic.jserv lib</name>
@@ -72,7 +72,7 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantics.transact</artifactId>
-	    <version>[1.5.75,)</version>
+	    <version>[1.5.76,)</version>
 	</dependency>
 
 	<!-- As sonatype SNAPSHOT is updating on a daily base, you may update this with:
@@ -81,15 +81,8 @@
    	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.DA</artifactId>
-	    <version>[1.5.18-SNAPSHOT,2.0.0-SNAPSHOT)</version>
+	    <version>[1.5.18,2.0.0-SNAPSHOT)</version>
 	</dependency>
-
-	<!--
-   	<dependency>
-	    <groupId>io.github.odys-z</groupId>
-	    <artifactId>semantic.workflow</artifactId>
-	    <version>0.7.1-SNAPSHOT</version>
-	</dependency> -->
 
 	<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
 	<dependency>

@@ -174,10 +174,6 @@ public class BlockChain {
 
 		while (waitings.nextBlock() != null && waitings.blockSeq() + 1 == waitings.nextBlock().blockSeq()) {
 			ofs.write(AESHelper.decode64(waitings.nextBlock().doc().uri64()));
-
-			// TODO to be verified: But why works well in previous versions?
-			// waitings.blockSeq(waitings.nextBlock().blockSeq());
-			// waitings.nextBlock(waitings.nextBlock().nextBlock());
 			waitings = waitings.nextBlock();
 		}
 		ofs.flush();
