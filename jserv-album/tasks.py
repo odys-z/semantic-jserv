@@ -12,6 +12,26 @@ import os
 
 from anson.io.odysz.anson import Anson
 
+from importlib.metadata import version, PackageNotFoundError
+from packaging.version import Version
+requireAnsonVersion = '0.4.3'
+
+# if Version(Anson.__version__) < Version(requireAnsonVersion):
+#     print(f'Please upgrade anson.py3 to version {requireAnsonVersion} or above. Current version: {Anson.__version__}')
+#     sys.exit(1) 
+
+
+try:
+    anson_version = version("anson_py3")
+except PackageNotFoundError:
+    # Fallback for when the package is not installed (e.g., running tests in source dir)
+    anson_version = "uninstalled" 
+print ("anson_py3: ", anson_version)
+
+if Version(anson_version) < Version(requireAnsonVersion):
+    print(f'Please upgrade anson.py3 to version {requireAnsonVersion} or above. Current version: {anson_version}')
+    sys.exit(1) 
+
 version_pattern = '[0-9\\.]+'
 
 # dictionary.json
@@ -35,6 +55,8 @@ re_central_pswd  = '\"centralPswd\"\\s*:\\s*\"[^\"]*\"'
 re_install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
 re_webport       = '\"webport\"\\s*:\\s*[0-9]+'
 re_jserv_port    = '\"port\"\\s*:\\s*\\d+'
+
+post_vals = {}
 
 try: import semanticshare
 except ImportError:
@@ -117,7 +139,7 @@ def config(c):
 
     version_file = os.path.join(this_directory, 'pom.xml')
     Utils.update_patterns(version_file, {
-        f'<!-- auto update token tasks.py/config --><version>{version_pattern}</version>':
+        f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
@@ -139,11 +161,13 @@ def config(c):
         re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
     })
 
+    global post_vals
+    post_vals['dictionary.json'] = {synuser_pswd_pattern: 0}
     diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
     Utils.update_patterns(diction_file, {
         org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
         synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
-    })
+    }, post_vals['dictionary.json'])
 
     settings_json = os.path.join(taskcfg.web_inf_dir, 'settings.json')
     Utils.update_patterns(settings_json, {
@@ -265,9 +289,12 @@ def package(c, zip=None):
         'winsrv': '../synode.py/winsrv/*',
         "res": "../synode.py/src/synodepy3/res/*",
 
-        'web-dist': 'web-dist/*'    # use a link for different Anclient folder name
+        'web-dist': 'web-dist/*',   # use a link for different Anclient folder name
                                     # ln -s ../Anclient/examples/example.js/album web-dist
                                     # mklink /D web-dist ..\anclient\examples\example.js\album
+
+        'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
+        'setup-cli.exe': '../synode.py/dist/setup-cli.exe'
     }
 
     excludes = ['*.log', 'report.html']
@@ -319,6 +346,11 @@ def post_build(c):
     else:
         print(f'No backup found for {synode_json}, skipped restoring.')
 
+    global taskcfg, post_vals
+    diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
+    Utils.update_patterns(diction_file,
+         {synuser_pswd_pattern: post_vals['dictionary.json'][synuser_pswd_pattern]})
+
 
 @task(clean, create_volume, build, package, post_build)
 def make(c):
@@ -333,6 +365,13 @@ def make(c):
     # ret = c.run(f'cp ../snodepy3/registry-zsu-{version}.zip {dist_dir}')
     # print('OK:', ret.ok, ret.stderr)
 
+@task
+def pause(c):
+    input('Press Enter to continue...')
+
+@task(config, pause, post_build)
+def test_config_post(c):
+    print('Test finished.')
 
 if __name__ == '__main__':
     from invoke import Program

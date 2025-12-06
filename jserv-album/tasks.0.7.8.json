@@ -1,5 +1,5 @@
 { "type": "io.oz.invoke.SynodeTask",
-  "version"     : "0.7.7",
+  "version"     : "0.7.8",
   "apk_ver"     : "0.7.4",
   "html_jar_v"  : "0.1.8",
   "web_ver"     : "0.4.2",
