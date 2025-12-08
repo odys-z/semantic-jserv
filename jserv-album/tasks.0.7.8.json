@@ -7,6 +7,7 @@
   "jre_release" : "../../JRE-Mirror/temurin17-binaries/jdk-17.0.17+10/bins/OpenJDK17U-jre_x64_windows_hotspot_17.0.17_10.zip",
   "jre_name"    : "x64_windows",
   "host_json"   : "host.json",
+  "download_root": "http://10.10.1.1:1984/portfolio-0.7",
   "vol_files"   : {"volume": ["jserv-main.db", "doc-jserv.db"]},
   "vol_resource": {"volume": "volume/*"},
   "registry_dir": "../synode.py/registry",
@@ -27,5 +28,6 @@
     "syn_admin_pswd": "",
     "lang"          : "en",
     "langs"         : {"en": {"[CNPC]": "[Petrol China]"}},
-    "root_key"      : "0123456789ABCDEF"}
+    "root_key"      : "0123456789ABCDEF"},
+  "post_cmds"   : ["scp build-0.7.7/{zip_name} ody@10.10.10.10:~/.../jserv-album/build-0.7.7"]
 }
