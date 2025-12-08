@@ -10,40 +10,11 @@ from anson.io.odysz.utils import zip2
 from invoke import task, call
 import os
 
-from anson.io.odysz.anson import Anson
-
-# from importlib.metadata import version, PackageNotFoundError
-from packaging.version import Version
-from semanticshare.io.oz.invoke import requir_pkg
-
 requir_pkg("anson.py3", "0.4.3")
 requir_pkg("semantics.py3", "0.4.5")
 
-# requireAnsonVersion = '0.4.3'
-# try:
-#     anson_version = version("anson_py3")
-# except PackageNotFoundError:
-#     # Fallback for when the package is not installed (e.g., running tests in source dir)
-#     anson_version = "uninstalled" 
-# print ("anson.py3: ", anson_version)
-
-# if Version(anson_version) < Version(requireAnsonVersion):
-#     print(f'Please upgrade anson.py3 to version {requireAnsonVersion} or above. Current version: {anson_version}')
-#     sys.exit(1) 
-
-# requireSemanticsVer = '0.4.5'
-# try:
-#     semantics_version = version("semantics_py3")
-# except PackageNotFoundError:
-#     # Fallback for when the package is not installed (e.g., running tests in source dir)
-#     semantics_version = "uninstalled" 
-# print ("semantics.py3: ", semantics_version)
-
-# if Version(semantics_version) < Version(requireSemanticsVer):
-#     print(f'Please upgrade semantics.py3 to version {requireSemanticsVer} or above. Current version: {semantics_version}')
-#     sys.exit(1) 
-
-from semanticshare.io.oz.invoke import SynodeTask, CentralTask
+from anson.io.odysz.anson import Anson
+from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 
 version_pattern = '[0-9\\.]+'
