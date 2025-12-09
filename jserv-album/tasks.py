@@ -10,11 +10,12 @@ from anson.io.odysz.utils import zip2
 from invoke import task, call
 import os
 
+from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
+
 requir_pkg("anson.py3", "0.4.3")
 requir_pkg("semantics.py3", "0.4.5")
 
 from anson.io.odysz.anson import Anson
-from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 
 version_pattern = '[0-9\\.]+'
