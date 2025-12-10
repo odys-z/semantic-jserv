@@ -13,7 +13,7 @@ import os
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
 requir_pkg("anson.py3", "0.4.3")
-requir_pkg("semantics.py3", "0.4.5")
+requir_pkg("semantics.py3", "0.4.7")
 
 from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts
@@ -42,15 +42,8 @@ re_install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
 re_webport       = '\"webport\"\\s*:\\s*[0-9]+'
 re_jserv_port    = '\"port\"\\s*:\\s*\\d+'
 
-post_vals = {}
+# post_vals = {}
 
-# try: import semanticshare
-# except ImportError:
-#     print('Please install the semantics sharing layer: pip install semantics.py3')
-#     sys.exit(1)
-# from semanticshare.io.oz.invoke import SynodeTask, CentralTask
-
-# taskcfg = cast(SynodeTask, Anson.from_file('tasks.json'))
 taskcfg = cast(SynodeTask, None)
 
 @task
@@ -91,18 +84,6 @@ def updateApkRes():
     """
     print('Updating host.json with APK resource...', taskcfg.host_json)
 
-    """
-    from importlib.metadata import distribution
-    try:
-        dist = distribution('src.synodepy3')  # or 'synode-py3'
-        print(f"Found {dist.name} version {dist.version}")
-    except importlib.metadata.PackageNotFoundError:
-        print("synode.py3 not found")
-    
-    """
-
-    # Must install semantics.py3, because of
-    # needing this to deserialize "io.oz.syntier.serv.ExternalHosts".
     hosts = cast(ExternalHosts, Anson.from_file(taskcfg.host_json))
     hosts.marketid = taskcfg.deploy.market_id
     print(os.getcwd(), taskcfg.host_json)
@@ -124,18 +105,19 @@ def updateApkRes():
 
     return None
 
-synode_json_bak = os.path.join(os.getcwd(), 'synode.json.bak')
-synode_json = ''
+# synode_json_bak = os.path.join(os.getcwd(), 'synode.json.bak')
+# synode_json = ''
 
 @task(pre=[call(validate)])
 def config(c):
     print(f'--------------    configuration   ------------------')
 
-    this_directory = os.getcwd()
+    # this_directory = os.getcwd()
 
     print(f'-- synode version: {taskcfg.version} --'),
 
-    version_file = os.path.join(this_directory, 'pom.xml')
+    # version_file = os.path.join(this_directory, 'pom.xml')
+    version_file = 'pom.xml'
     Utils.update_patterns(version_file, {
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
@@ -147,11 +129,10 @@ def config(c):
     })
 
     # FIXME This is not correct. To be moved to synode.py tasks.py
-    global synode_json_bak, synode_json
-    synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
-
-    shutil.copy2(synode_json, synode_json_bak)
-
+    # global synode_json_bak, synode_json
+    # synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
+    # shutil.copy2(synode_json, synode_json_bak)
+    synode_json = taskcfg.backup('../synode.py/src/synodepy3/synode.json')
     Utils.update_patterns(synode_json, {
         re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
         re_mirror_path('en'): f'"jre_mirror": "{taskcfg.deploy.mirror_path}"',
@@ -159,15 +140,18 @@ def config(c):
         re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
     })
 
-    global post_vals
-    post_vals['dictionary.json'] = {synuser_pswd_pattern: 0}
-    diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
+    # global post_vals
+    # post_vals['dictionary.json'] = {synuser_pswd_pattern: 0}
+    # diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
+    diction_file = taskcfg.backup(os.path.join(taskcfg.registry_dir, 'dictionary.json'))
     Utils.update_patterns(diction_file, {
         org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
         synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
-    }, post_vals['dictionary.json'])
+    # }, post_vals['dictionary.json'])
+    })
 
-    settings_json = os.path.join(taskcfg.web_inf_dir, 'settings.json')
+    # settings_json = os.path.join(taskcfg.web_inf_dir, 'settings.json')
+    settings_json = taskcfg.backup(os.path.join(taskcfg.web_inf_dir, 'settings.json'))
     Utils.update_patterns(settings_json, {
         re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
         re_webport     : f'"webport"     : {taskcfg.deploy.web_port}',
@@ -319,7 +303,9 @@ def package(c):
 
         if not os.path.exists(taskcfg.dist_dir):
             os.makedirs(taskcfg.dist_dir, exist_ok=True)
-        distzip = os.path.join(taskcfg.dist_dir, zip)
+        # distzip = os.path.join(taskcfg.dist_dir, zip)
+        distzip = taskcfg.get_distzip()
+
         if os.path.isfile(distzip):
             os.remove(distzip)
 
@@ -340,6 +326,7 @@ def package(c):
 def post_package(c):
     print('--------------    post build   ------------------')
 
+    '''
     global synode_json_bak, synode_json
 
     if os.path.exists(synode_json_bak):
@@ -353,15 +340,21 @@ def post_package(c):
     diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
     Utils.update_patterns(diction_file,
          {synuser_pswd_pattern: post_vals['dictionary.json'][synuser_pswd_pattern]})
+    '''
+    taskcfg.restore_backups()
     
-    if LangExt.len(taskcfg.post_cmds) > 0:
-        print('Executing post build commands...')
-        for cmd in taskcfg.post_cmds:
-            print('cmd-config:', cmd)
-            cmd_formatted = cmd.format(zip_name=taskcfg.zip_name())
-            print(f'Executing: {cmd_formatted}')
-            ret = c.run(cmd_formatted)
-            print('OK:', ret.ok, ret.stderr)
+    # if hasattr(taskcfg, 'post_cmds') and LangExt.len(taskcfg.post_cmds) > 0:
+    #     print('Executing post build commands...')
+    #     for cmd in taskcfg.post_cmds:
+    #         print('cmd-config:', cmd)
+    #         cmd_formatted = cmd.format(built_zip=taskcfg.get_distzip(), build_dir=taskcfg.dist_dir, zip_name=taskcfg.zip_name())
+    #         print(f'Executing: {cmd_formatted}')
+    #         ret = c.run(cmd_formatted)
+    #         print('OK:', ret.ok, ret.stderr)
+    # else: 
+    #     print('No post commands [post_cmds] configured.')
+    taskcfg.run_postcmds(c)
+    taskcfg.run_postscps()
 
 
 @task(clean, create_volume, build, package, post_package)

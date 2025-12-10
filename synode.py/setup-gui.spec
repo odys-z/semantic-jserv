@@ -5,7 +5,10 @@ a = Analysis(
     ['src\\synodepy3\\__main__.py'],
     pathex=[],
     binaries=[],
-    datas=[('src\\synodepy3\\synode.json', 'synodepy3'), ('src\\synodepy3\\res', 'res')],
+    datas=[ ('src\\synodepy3\\synode.json', 'synodepy3'),
+            ('src\\synodepy3\\res', 'res')
+            # ('../jserv-album/venv39/Lib/site-packages/jre_mirror', 'jre_mirror')
+            ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

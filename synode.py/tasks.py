@@ -67,6 +67,13 @@ def validate(c):
                     Utils.warn(f'# This can be an error as the exe is running in a temp environment.\n#')
                     Utils.warn(f'# {lx}:    {line}')
                     input('  Press Enter to continue...')
+    
+    from semanticshare.io.oz.invoke import requir_pkg
+
+    requir_pkg("semantics.py3", "0.4.7")
+    requir_pkg("anson.py3", "0.4.3")
+    requir_pkg("anclient.py3", "0.2.6")
+    requir_pkg("jre-mirror", "0.0.8")
 
 @task(validate)
 def config(c):
