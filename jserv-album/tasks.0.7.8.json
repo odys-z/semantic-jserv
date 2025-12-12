@@ -36,5 +36,17 @@
     "port": 22,
     "user": "zelenskyy",
     "pswd": null,
-    "remote_dir": "~/github/semantic-jserv/jserv-album/build-0.7.7"}]
+    "remote_dir": "~/github/semantic-jserv/jserv-album/build-0.7.7"}],
+  "landings" : [{
+    "redirector": "redirection.json",
+    "re_links"  : "links-{market}-{org}.json, not configurable",
+    "remot_path": "$HOME/github/odys-z.github.io/landings/portfolio-0.7/res",
+    "dist_path" : "res/dist",
+    "post_scp"  : {
+      "host": "10.10.10.10",
+      "port": 22,
+      "user": "zelenskyy",
+      "pswd": null,
+      "remote_dir": "e.g. {target_path}/{dist}, not configurable"
+    }}]
 }

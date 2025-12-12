@@ -377,6 +377,18 @@ def deploy(c, deploy: str = 'tasks.json'):
     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
 
 @task
+def landing(c, deploy: str = None):
+    global taskcfg
+    if taskcfg is None:
+        if deploy is not None:
+            deploy = 'task.json'
+
+        taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+        print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
+    
+    taskcfg.publish_landings()
+
+@task
 def pause(c):
     input('Press Enter to continue...')
 
