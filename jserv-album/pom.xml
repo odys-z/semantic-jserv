@@ -7,7 +7,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.7</version>
+  <!-- auto update token TASKS.PY/CONFIG --><version>0.7.8</version>
   <packaging>jar</packaging>
 
   <name>jserv-album Synode</name>
@@ -81,13 +81,13 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>[0.2.6-SNAPSHOT,)</version>
+	    <version>[0.2.6,)</version>
 	</dependency>
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>syndoc-lib</artifactId>
-	    <version>[0.5.18-SNAPSHOT,)</version>
+	    <version>[0.5.18,)</version>
 	</dependency>
 
 	<dependency>
@@ -112,13 +112,13 @@
 	<dependency>
 		<groupId>io.github.odys-z</groupId>
 		<artifactId>anclient.java</artifactId>
-		<version>0.5.18-SNAPSHOT</version>
+		<version>0.5.18</version>
 	</dependency>
 	
 	<dependency>
 		<groupId>io.github.odys-z</groupId>
  		<artifactId>synodict.central</artifactId>
-		<version>0.1.1</version>
+		<version>0.1.6</version>
 		<scope>test</scope>
 	</dependency>
   </dependencies>

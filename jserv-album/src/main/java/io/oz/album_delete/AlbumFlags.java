@@ -1,4 +1,4 @@
-package io.oz.album;
+package io.oz.album_delete;
 
 public class AlbumFlags {
 

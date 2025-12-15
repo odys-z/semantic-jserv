@@ -25,7 +25,6 @@ import static io.odysz.common.LangExt.concatArr;
 /**
  * <p>The jserv parser and composer. </p>
  * 
- * TODO Refactor Typescript and py3 clients.
  * @since 0.2.5
  */
 public class JServUrl extends Anson {

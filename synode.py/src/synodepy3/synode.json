@@ -1,5 +1,5 @@
 { "type": "synodepy3.SynodeUi",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "market": "MY [Test]",
   "market_id": "alpha",
   "central_iport": "182.150.29.34:1990",
@@ -9,7 +9,7 @@
   "credits": "https://odys-z.github.io/products/album/credits.html",
   "lang": "zh-CN",
   "langs": {
-    "en": { "jre_mirror.en.re": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.17%2B10",
+    "en": { "jre_mirror": "http://182.150.29.34:1984/jre-17/jdk-17.0.17+10/bins",
       "jre_mirror_for_debug": "http://127.0.0.1:1984/jre-17/jdk-17.0.17+10/bins",
       "gboxRegistry": "Synchronization Domain Identity - Market {market}",
       "lbHelplink": "HELP",

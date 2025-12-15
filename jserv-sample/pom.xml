@@ -4,9 +4,9 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-sample</artifactId>
-  <version>1.5.5</version>
+  <version>1.5.7-SNAPSHOT</version>
   <name>jserv template project</name>
-  <description>Sample project for starting up a Semantic-* project</description>
+  <description>Sample project for starting up a Semantic-* service</description>
   <url>http://odys-z.github.io</url>
   <packaging>jar</packaging>
 
@@ -54,7 +54,7 @@
 			to update immediately. -->
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>semantic.jserv</artifactId>
-	    <version>[1.5.16-SNAPSHOT,)</version>
+	    <version>[1.5.16,)</version>
    	</dependency>
 
 	<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->

@@ -7,10 +7,16 @@ from types import LambdaType
 from typing import cast
 from anson.io.odysz.common import Utils, LangExt
 from anson.io.odysz.utils import zip2
-from invoke import task
+from invoke import task, call
 import os
 
+from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
+
+requir_pkg("anson.py3", "0.4.3")
+requir_pkg("semantics.py3", "0.4.5")
+
 from anson.io.odysz.anson import Anson
+from semanticshare.io.oz.syntier.serv import ExternalHosts
 
 version_pattern = '[0-9\\.]+'
 
@@ -36,19 +42,26 @@ re_install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
 re_webport       = '\"webport\"\\s*:\\s*[0-9]+'
 re_jserv_port    = '\"port\"\\s*:\\s*\\d+'
 
-try: import semanticshare
-except ImportError:
-    print('Please install the semantics sharing layer: pip install semantics.py3')
-    sys.exit(1)
+post_vals = {}
 
-from semanticshare.io.oz.invoke import SynodeTask, CentralTask
+# try: import semanticshare
+# except ImportError:
+#     print('Please install the semantics sharing layer: pip install semantics.py3')
+#     sys.exit(1)
+# from semanticshare.io.oz.invoke import SynodeTask, CentralTask
 
-taskcfg = cast(SynodeTask, Anson.from_file('tasks.json'))
+# taskcfg = cast(SynodeTask, Anson.from_file('tasks.json'))
+taskcfg = cast(SynodeTask, None)
 
 @task
 def validate(c):
-    print('--------------    validate   ------------------')
-    print('taskcfg:', taskcfg)
+    print(f'--------------    validate   ------------------')
+    # print(c)
+    global taskcfg
+    if taskcfg is None:
+        taskcfg = cast(SynodeTask, Anson.from_file('tasks.json'))
+
+    print('taskcfg:', taskcfg.deploy.orgid, taskcfg.version)
 
     task_cent = cast(CentralTask, Anson.from_file(os.path.join(taskcfg.central_dir, 'tasks.json')))
 
@@ -68,7 +81,6 @@ def create_volume(c):
                 vf.close()
 
 
-# def updateApkRes(host_json, apkver):
 def updateApkRes():
     """
     Update the APK resource record (ref-link) in the host.json file.
@@ -91,13 +103,21 @@ def updateApkRes():
 
     # Must install semantics.py3, because of
     # needing this to deserialize "io.oz.syntier.serv.ExternalHosts".
-    hosts = Anson.from_file(taskcfg.host_json)
+    hosts = cast(ExternalHosts, Anson.from_file(taskcfg.host_json))
+    hosts.marketid = taskcfg.deploy.market_id
     print(os.getcwd(), taskcfg.host_json)
+
+    print('host.json market:', hosts.marketid)
     print('host.json:', hosts)
 
     res = {'apk': f'res-vol/portfolio-{taskcfg.apk_ver}.apk'}
     hosts.resources.update(res)
-    print('Updated host.json:', hosts.resources)
+    print('Updated host.json/reources:', hosts.resources)
+
+    downloads = {f'{taskcfg.deploy.orgid}': [f'{taskcfg.download_root}/{taskcfg.zip_name()}']}
+    hosts.synodesetups.update(downloads)
+    print('Updated host.json/synodesetups:', hosts.synodesetups)
+
 
     hosts.toFile(taskcfg.host_json)
     print('host.json updated successfully.', hosts)
@@ -107,9 +127,9 @@ def updateApkRes():
 synode_json_bak = os.path.join(os.getcwd(), 'synode.json.bak')
 synode_json = ''
 
-@task(validate)
+@task(pre=[call(validate)])
 def config(c):
-    print('--------------    configuration   ------------------')
+    print(f'--------------    configuration   ------------------')
 
     this_directory = os.getcwd()
 
@@ -117,7 +137,7 @@ def config(c):
 
     version_file = os.path.join(this_directory, 'pom.xml')
     Utils.update_patterns(version_file, {
-        f'<!-- auto update token tasks.py/config --><version>{version_pattern}</version>':
+        f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
@@ -139,11 +159,13 @@ def config(c):
         re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
     })
 
+    global post_vals
+    post_vals['dictionary.json'] = {synuser_pswd_pattern: 0}
     diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
     Utils.update_patterns(diction_file, {
         org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
         synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
-    })
+    }, post_vals['dictionary.json'])
 
     settings_json = os.path.join(taskcfg.web_inf_dir, 'settings.json')
     Utils.update_patterns(settings_json, {
@@ -166,10 +188,12 @@ def clean(c):
 
     for item in os.listdir(taskcfg.dist_dir):
         item_path = os.path.join(taskcfg.dist_dir, item)
-        if os.path.isfile(item_path):
-            os.unlink(item_path)
-        elif os.path.isdir(item_path):
-            shutil.rmtree(item_path)
+        print('cleaning', item_path, taskcfg.zip_name())
+        if item_path == taskcfg.zip_name():
+            if os.path.isfile(item_path):
+                os.unlink(item_path)
+            elif os.path.isdir(item_path):
+                shutil.rmtree(item_path)
 
 
 @task(config)
@@ -232,7 +256,7 @@ def build(c):
     return False
 
 @task
-def package(c, zip=None):
+def package(c):
     """
     Create a ZIP file.
     
@@ -244,9 +268,10 @@ def package(c, zip=None):
     jre_img = taskcfg.jre_release.split('/')[-1]
     temp_jre_path = f'jre17-temp/{jre_img}'
 
-    dist_name = f'{taskcfg.jre_name if not LangExt.isblank(taskcfg.jre_release) else "online"}-{taskcfg.deploy.market_id}'
-    if zip is None:
-        zip = f'portfolio-synode-{taskcfg.version}-{dist_name}.zip'
+    # dist_name = f'{taskcfg.jre_name if not LangExt.isblank(taskcfg.jre_release) else "online"}-{taskcfg.deploy.market_id}-{taskcfg.deploy.orgid}'
+    # if zip is None:
+    #     zip = f'portfolio-synode-{taskcfg.version}-{dist_name}.zip'
+    zip = taskcfg.zip_name()
 
     resources = {
         f'bin/html-web-{taskcfg.html_jar_v}.jar': f'../../html-service/java/target/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
@@ -265,9 +290,12 @@ def package(c, zip=None):
         'winsrv': '../synode.py/winsrv/*',
         "res": "../synode.py/src/synodepy3/res/*",
 
-        'web-dist': 'web-dist/*'    # use a link for different Anclient folder name
+        'web-dist': 'web-dist/*',   # use a link for different Anclient folder name
                                     # ln -s ../Anclient/examples/example.js/album web-dist
                                     # mklink /D web-dist ..\anclient\examples\example.js\album
+
+        'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
+        'setup-cli.exe': '../synode.py/dist/setup-cli.exe'
     }
 
     excludes = ['*.log', 'report.html']
@@ -297,20 +325,22 @@ def package(c, zip=None):
 
         print(zip, "->", distzip)
         os.rename(zip, distzip)
+        taskcfg.distzip = distzip
 
-        print(f'Distribution {dist_name}: Created ZIP file successfully: {distzip}' if not err else 'Errors while making target (creaded zip file)')
+        print('****************************************************************************************************',
+             f'* Distribution ZIP file is created successfully: {distzip}' if not err else 'Errors while making target (creaded zip file)',
+              '****************************************************************************************************',
+              sep='\n')
 
     except Exception as e:
         print(f"Error creating ZIP file: {str(e)}", file=sys.stderr)
         raise
 
 @task
-def post_build(c):
+def post_package(c):
     print('--------------    post build   ------------------')
 
     global synode_json_bak, synode_json
-    # this_directory = os.getcwd()
-    # synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
 
     if os.path.exists(synode_json_bak):
         shutil.copy2(synode_json_bak, synode_json)
@@ -319,8 +349,22 @@ def post_build(c):
     else:
         print(f'No backup found for {synode_json}, skipped restoring.')
 
+    global taskcfg, post_vals
+    diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
+    Utils.update_patterns(diction_file,
+         {synuser_pswd_pattern: post_vals['dictionary.json'][synuser_pswd_pattern]})
+    
+    if LangExt.len(taskcfg.post_cmds) > 0:
+        print('Executing post build commands...')
+        for cmd in taskcfg.post_cmds:
+            print('cmd-config:', cmd)
+            cmd_formatted = cmd.format(zip_name=taskcfg.zip_name())
+            print(f'Executing: {cmd_formatted}')
+            ret = c.run(cmd_formatted)
+            print('OK:', ret.ok, ret.stderr)
 
-@task(clean, create_volume, build, package, post_build)
+
+@task(clean, create_volume, build, package, post_package)
 def make(c):
     """
     Create a ZIP file with the specified resources.
@@ -329,9 +373,31 @@ def make(c):
         c: Invoke Context object for running commands.
     """
     print('Package be created successfully.')
+    print('********************************************************************************\n'
+          '* But Task make is deprecated, please use: invoke deploy --deploy tasks.json . *\n'
+          '********************************************************************************')
 
-    # ret = c.run(f'cp ../snodepy3/registry-zsu-{version}.zip {dist_dir}')
-    # print('OK:', ret.ok, ret.stderr)
+@task(post=[clean, create_volume, build, package, post_package])
+def deploy(c, deploy: str = 'tasks.json'):
+    global taskcfg
+    taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+    print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
+
+@task
+def pause(c):
+    input('Press Enter to continue...')
+
+@task(post=[config, pause, post_package])
+def test_config_post(c, deploy: str = 'tasks.json'):
+    print(f'Testing : {deploy}')
+    global taskcfg
+    taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+
+@task(post=[clean])
+def test_clean(c, deploy: str = 'tasks.json'):
+    print(f'Testing : {deploy}')
+    global taskcfg
+    taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
 
 if __name__ == '__main__':

@@ -46,13 +46,13 @@ public class FileStream {
 		}
 	}
 	
-	/**TODO LRU buffer manager mapping uri to file path - A way of performance optimizing.
+	/**
 	 * @param uri
 	 * @return path
-	 */
 	public static String touch(String uri) {
 		return null;
 	}
+	 */
 
 	public static MsgCode upload(String funcUri, String extUri, InputStream in, IUser usr)
 			throws TransException, IOException, SQLException {

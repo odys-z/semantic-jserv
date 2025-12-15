@@ -36,7 +36,7 @@ SYNODE_VERSION = 'SYNODE_VERSION'
 JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
 HTML_JAR_VERSION = 'HTML_JAR_VERSION'
 WEB_VERSION = 'WEB_VERSION'
-REGISTRY_ZIP = 'REGISTRY_ZIP'
+# REGISTRY_ZIP = 'REGISTRY_ZIP'
 
 ORG = 'ura'
 DOMAIN = 'zsu'
@@ -45,8 +45,8 @@ DOMAIN = 'zsu'
     Versions configured locally, overriden by environment variables.
 """
 vers = {
-    SYNODE_VERSION:    '0.7.6',
-    JSERV_JAR_VERSION: '0.7.5',
+    SYNODE_VERSION:    '0.7.8',
+    JSERV_JAR_VERSION: '0.7.7',
     HTML_JAR_VERSION:  '0.1.8',
     WEB_VERSION:       '0.4.2',
     # REGISTRY_ZIP: f'registry-{ORG}-{DOMAIN}-0.7.3.zip'
@@ -55,6 +55,20 @@ vers = {
 res_toclean = ['dist', '*egg-info']
 
 @task
+def validate(c):
+    print('---------     Synode.py3 Validating    --------------')
+    srcpy = os.path.join('src', 'synodepy3', '__main__.py')
+    for srcpy in ['src/synodepy3/__main__.py', 'src/synodepy3/prompt.py']:
+        with open(srcpy, 'r', encoding='utf-8') as f:
+            for lx, line in enumerate(f, start=1):
+                if '(__file__)' in line and not line.strip().startswith('#'):
+                    Utils.warn('################################################################################\n#')
+                    Utils.warn(f'# {srcpy} is supposed to be packaaged as an exe entry, but found it is using itself\'s __file__ property.')
+                    Utils.warn(f'# This can be an error as the exe is running in a temp environment.\n#')
+                    Utils.warn(f'# {lx}:    {line}')
+                    input('  Press Enter to continue...')
+
+@task(validate)
 def config(c):
     print('--------------    configuration   ------------------')
 
@@ -87,10 +101,11 @@ def config(c):
 
     Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{version}" # '})
 
-@task
-def zipRegistry(c):
-    print('config =', vers, "zip =", vers[REGISTRY_ZIP])
-    zip2(vers[REGISTRY_ZIP], {"zsu": "registry-deploy/*"}, ['*.zip'])
+# @deprecated since 0.7.7, as Registry Central is running
+# @task
+# def zipRegistry(c):
+#     print('config =', vers, "zip =", vers[REGISTRY_ZIP])
+#     zip2(vers[REGISTRY_ZIP], {"zsu": "registry-deploy/*"}, ['*.zip'])
 
 
 @task(config)
@@ -124,7 +139,10 @@ def build(c: Context):
     # from src.synodepy3.__version__ import synode_ver
     buildcmds = [
         ['.', lambda: rm_dist()],
-        ['.', f'{py()} -m build']
+        ['.', f'{py()} -m build'],
+        # ['.', f'{py()} pyinstaller setup-gui.spec'],
+        # ['.', f'{py()} pyinstaller setup-cli.spec'],
+        ['.', f'{py()} pyinstallerw.py'],
     ]
 
     print('--------------       building     ------------------')

@@ -15,10 +15,9 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, App
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
-from .jre_downloader import JreDownloader, _jre_
-from . import SynodeUi
-from .installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers
-from .validators import PJservValidator, PIPValidator
+from synodepy3.jre_downloader import JreDownloader, _jre_
+from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, path, synode_ui
+from synodepy3.validators import PJservValidator, PIPValidator
 
 
 def reach_central():
@@ -104,8 +103,8 @@ style = Style.from_dict({
     'prompt': 'bg:#ansiblue #ffffff',  # Blue background, white text
 })
 
-path = os.path.dirname(__file__)
-synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
+# path = os.path.dirname(__file__)
+# synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
 class QuitValidator(Validator):
     def validate(self, v: Document) -> None:

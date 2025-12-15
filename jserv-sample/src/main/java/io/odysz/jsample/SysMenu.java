@@ -22,8 +22,12 @@ import io.odysz.semantic.jserv.x.SsException;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
+import io.oz.jservapp.JservMenu;
 
-@WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
+/**
+ * @deprecated 1.5.7 replaced by {@link JservMenu}
+ */
+@WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.deprecate" })
 public class SysMenu extends SemanticTree {
 	private static final long serialVersionUID = 1L;
 

@@ -83,12 +83,6 @@ public class Html {
 		return tr;
 	}
 
-//	private static ContainerTag trEx(Anson cell) {
-//		ContainerTag tr = tr("'");
-//		tr.with(td(cell.toString()));
-//		return tr;
-//	}
-
 	/**TODO can html writing outputStream?
 	 * @param res
 	 * @return html doc

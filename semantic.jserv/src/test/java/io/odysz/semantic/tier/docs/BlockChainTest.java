@@ -89,14 +89,6 @@ class BlockChainTest {
 		}
 	}
 
-	/**
-	 * FIXME this test won't work in Windows Maven CLI, via VS Code.
-	 * 
-	 * @throws IOException
-	 * @throws TransException
-	 * @throws InterruptedException
-	 * @throws AnsonException
-	 */
 	@Test
 	void tesBlockOrder() throws IOException, TransException, InterruptedException, AnsonException {
 		System.setProperty("VOLUME_HOME", "src/test/results");

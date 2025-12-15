@@ -135,7 +135,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		// ISSUE Aug 14, 2025
 		// The static field is cleared each time a jetty app is starting.
 		// This prevents tests running with multiple jetty server instances.
-		// TODO to be refactored as a singleton wide instance.
 		if (users == null)
 			users = new HashMap<String, IUser>();
 
