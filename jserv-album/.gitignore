@@ -54,8 +54,8 @@ infoirse-*
 build-*
 pm-king*
 ody-*
-tasks.pm-king.json
-tasks.inforise.json
-tasks.ody.json
+tasks.*.json
+!tasks.0.7.8.json
 backup
 *.bak
+temp

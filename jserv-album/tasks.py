@@ -5,7 +5,7 @@ import shutil
 import sys
 from types import LambdaType
 from typing import cast
-from anson.io.odysz.common import Utils, LangExt
+from anson.io.odysz.common import Utils
 from anson.io.odysz.utils import zip2
 from invoke import task, call
 import os
@@ -13,7 +13,7 @@ import os
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
 requir_pkg("anson.py3", "0.4.3")
-requir_pkg("semantics.py3", "0.4.7")
+requir_pkg("semantics.py3", "0.4.8")
 
 from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts
@@ -379,9 +379,10 @@ def deploy(c, deploy: str = 'tasks.json'):
 @task
 def landing(c, deploy: str = None):
     global taskcfg
+    print(deploy)
     if taskcfg is None:
-        if deploy is not None:
-            deploy = 'task.json'
+        if deploy is None:
+            deploy = 'tasks.json'
 
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
         print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
@@ -393,7 +394,7 @@ def pause(c):
     input('Press Enter to continue...')
 
 @task(post=[config, pause, post_package])
-def test_config_post(c, deploy: str = 'tasks.json'):
+def config_post(c, deploy: str = 'tasks.json'):
     print(f'Testing : {deploy}')
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))

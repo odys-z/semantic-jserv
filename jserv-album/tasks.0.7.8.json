@@ -2,7 +2,7 @@
   "version"     : "0.7.8",
   "apk_ver"     : "0.7.4",
   "html_jar_v"  : "0.1.8",
-  "web_ver"     : "0.4.3",
+  "web_ver"     : "0.4.4",
   "web_inf_dir" : "src/main/webapp/WEB-INF-0.7",
   "jre_release" : "../../JRE-Mirror/temurin17-binaries/jdk-17.0.17+10/bins/OpenJDK17U-jre_x64_windows_hotspot_17.0.17_10.zip",
   "jre_name"    : "x64_windows",
@@ -27,16 +27,8 @@
     "dom_nodes"     : 3,
     "syn_admin_pswd": "",
     "lang"          : "en",
-    "langs"         : {"en": {"[CNPC]": "[Petrol China]"}},
+    "langs"         : {"en": {}},
     "root_key"      : "0123456789ABCDEF"},
-  "post_cmds"   : ["scp {built_zip} zelenskyy@10.10.10.10:~/.../jserv-album/build-0.7.7"],
-  "post_scps"   : [{
-    "issue": "Google AI: Python SCP won't work in Python 3.9. post_cmds for legacy.",
-    "host": "10.10.10.10",
-    "port": 22,
-    "user": "zelenskyy",
-    "pswd": null,
-    "remote_dir": "~/github/semantic-jserv/jserv-album/build-0.7.7"}],
   "landings" : [{
     "redirector": "redirection.json",
     "re_links"  : "links-{market}-{org}.json, not configurable",
@@ -47,6 +39,14 @@
       "port": 22,
       "user": "zelenskyy",
       "pswd": null,
-      "remote_dir": "e.g. {target_path}/{dist}, not configurable"
-    }}]
+      "remote_dir": "e.g. {remot_path}/{dist_path}, not configurable"
+    }}],
+  "post_cmds"   : ["scp {built_zip} zelenskyy@10.10.10.10:~/.../jserv-album/build-0.7.7"],
+  "post_scps"   : [{
+    "issue": "Google AI: Python SCP won't work in Python 3.9. post_cmds for legacy.",
+    "host": "10.10.10.10",
+    "port": 22,
+    "user": "zelenskyy",
+    "pswd": null,
+    "remote_dir": "~/github/semantic-jserv/jserv-album/build-0.7.7"}]
 }
