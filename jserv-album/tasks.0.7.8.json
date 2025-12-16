@@ -1,7 +1,7 @@
 { "type": "io.oz.invoke.SynodeTask",
   "version"     : "0.7.8",
   "apk_ver"     : "0.7.4",
-  "html_jar_v"  : "0.1.8",
+  "html_jar_v"  : "0.1.9",
   "web_ver"     : "0.4.4",
   "web_inf_dir" : "src/main/webapp/WEB-INF-0.7",
   "jre_release" : "../../JRE-Mirror/temurin17-binaries/jdk-17.0.17+10/bins/OpenJDK17U-jre_x64_windows_hotspot_17.0.17_10.zip",
@@ -41,8 +41,8 @@
       "pswd": null,
       "remote_dir": "e.g. {remot_path}/{dist_path}, not configurable"
     }}],
-  "post_cmds"   : ["scp {built_zip} zelenskyy@10.10.10.10:~/.../jserv-album/build-0.7.7"],
-  "post_scps"   : [{
+  "deploy_cmds"   : ["scp {built_zip} zelenskyy@10.10.10.10:~/.../jserv-album/build-0.7.7"],
+  "deploy_scps"   : [{
     "issue": "Google AI: Python SCP won't work in Python 3.9. post_cmds for legacy.",
     "host": "10.10.10.10",
     "port": 22,
