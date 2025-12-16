@@ -26,7 +26,15 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 			settings.envars = new HashMap<String, String>(1);
 
 		try {
-			ExternalHosts hosts = Anson.fromPath(FilenameUtils.rel2abs(settings.startHandler[1]));
+			// ExternalHosts hosts = Anson.fromPath(FilenameUtils.rel2abs(settings.startHandler[1]));
+			String host_json = settings.getLocalHostJson();
+			try {
+				// FIXME 0.7.9 should accept back-door configuration
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			ExternalHosts hosts = Anson.fromPath(FilenameUtils.rel2abs(host_json));
 
 			String host_dom = hosts.syndomx.get("domain");
 			if (host_dom == null)
@@ -46,7 +54,6 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 				hosts.syndomx.put(n, jserv);
 			}
 			
-			String host_json = settings.getLocalHostJson();
 			// save to file by leaving resources untouched
 			hosts.toFile(host_json, JsonOpt.beautify());
 			
