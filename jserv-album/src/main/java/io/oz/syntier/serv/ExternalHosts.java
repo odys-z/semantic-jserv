@@ -3,6 +3,7 @@ package io.oz.syntier.serv;
 import java.util.HashMap;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonField;
 
 /**
  * If the web pages are not static and needs some data layer configurations,
@@ -17,6 +18,12 @@ public class ExternalHosts extends Anson {
 
 	public HashMap<String, String> syndomx;
 	public HashMap<String, String> resources;
+
+	/**
+	 * @deprecated Not used yet, by redundant design?
+	 */
+	@AnsonField(valType="[Ljava.lang.Object;")
+	public HashMap<String, String[]>synodesetups;
 
 	public ExternalHosts() {
 		syndomx = new HashMap<String, String>();
