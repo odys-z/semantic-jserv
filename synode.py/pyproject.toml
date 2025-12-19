@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.4.3", "semantics.py3>=0.4.9", "jre-mirror>=0.0.8"]
+requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.4.3", "semantics.py3>=0.5.1", "jre-mirror>=0.0.8"]
 build-backend = "setuptools.build_meta"
 
 [project]

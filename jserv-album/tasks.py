@@ -13,7 +13,7 @@ import os
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
 requir_pkg("anson.py3", "0.4.3")
-requir_pkg("semantics.py3", "0.5.0")
+requir_pkg("semantics.py3", "0.5.1")
 
 from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts
@@ -203,7 +203,7 @@ def build(c):
 
         ['web-dist/private', lambda: updateApkRes()],
         ['.', 'cat web-dist/private/host.json'],
-        ['web-dist', 'rm -f login-*.min.js* portfolio-*.min.js* report.html'],
+        ['web-dist', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
         ['../../anclient/examples/example.js/album', 'webpack'],
 
         ['.', 'mvn clean compile package -DskipTests'],
@@ -261,7 +261,6 @@ def package(c):
         
         temp_jre_path: taskcfg.jre_release,
 
-        # 'WEB-INF': 'src/main/webapp/WEB-INF-0.7/*', # Do not replace with version.
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
         'bin/synode_py3-0.7-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',

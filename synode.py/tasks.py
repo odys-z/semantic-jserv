@@ -57,7 +57,7 @@ res_toclean = ['dist', '*egg-info']
 @task
 def validate(c):
     print('---------     Synode.py3 Validating    --------------')
-    srcpy = os.path.join('src', 'synodepy3', '__main__.py')
+    # srcpy = os.path.join('src', 'synodepy3', '__main__.py')
     for srcpy in ['src/synodepy3/__main__.py', 'src/synodepy3/prompt.py']:
         with open(srcpy, 'r', encoding='utf-8') as f:
             for lx, line in enumerate(f, start=1):
