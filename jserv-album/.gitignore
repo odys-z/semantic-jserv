@@ -56,6 +56,7 @@ ody-*
 build-*
 pm-king*
 ody-*
+reddish-*
 tasks.*.json
 !tasks.0.7.8.json
 backup

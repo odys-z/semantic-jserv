@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import cast
 
 from anclient.io.odysz.jclient import SessionClient
-from anson.io.odysz.anson import Anson, AnsonException
+from anson.io.odysz.anson import AnsonException
 from anson.io.odysz.common import LangExt, Utils, passwd_allow_ext
 from prompt_toolkit import PromptSession
 from prompt_toolkit.document import Document
@@ -15,8 +15,9 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, App
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
+from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, \
+    path, synode_ui
 from synodepy3.jre_downloader import JreDownloader, _jre_
-from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, path, synode_ui
 from synodepy3.validators import PJservValidator, PIPValidator
 
 
@@ -193,7 +194,6 @@ class MultiValidator(Validator):
         for vld in self.valids:
             vld.validate(v)
 
-# InstallerForm.bind_config
 def err_ctx(c, e: str, *args: str) -> None:
     global _quit, details
     try: details[0] = e.format(args) if e is not None else e
@@ -525,7 +525,7 @@ if caninstall == 1:
     if Utils.iswindows():
         session.prompt(f'Synode-cli {synode_ui.version} cannot install the required Windows services.\n'
                        'Please install it with the GUI version:\n'
-                       'py -m synodepy3\n'
+                       './setup-gui.exe\n'
                        'And click "install Windows service" with default settings.')
     else:
         syn_templ, web_templ = generate_service_templ(cli.settings, cfg)

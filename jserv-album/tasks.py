@@ -13,7 +13,7 @@ import os
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
 requir_pkg("anson.py3", "0.4.3")
-requir_pkg("semantics.py3", "0.4.8")
+requir_pkg("semantics.py3", "0.5.1")
 
 from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts
@@ -140,17 +140,12 @@ def config(c):
         re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
     })
 
-    # global post_vals
-    # post_vals['dictionary.json'] = {synuser_pswd_pattern: 0}
-    # diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
     diction_file = taskcfg.backup(os.path.join(taskcfg.registry_dir, 'dictionary.json'))
     Utils.update_patterns(diction_file, {
         org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
         synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
-    # }, post_vals['dictionary.json'])
     })
 
-    # settings_json = os.path.join(taskcfg.web_inf_dir, 'settings.json')
     settings_json = taskcfg.backup(os.path.join(taskcfg.web_inf_dir, 'settings.json'))
     Utils.update_patterns(settings_json, {
         re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
@@ -208,7 +203,7 @@ def build(c):
 
         ['web-dist/private', lambda: updateApkRes()],
         ['.', 'cat web-dist/private/host.json'],
-        ['web-dist', 'rm -f login-*.min.js* portfolio-*.min.js* report.html'],
+        ['web-dist', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
         ['../../anclient/examples/example.js/album', 'webpack'],
 
         ['.', 'mvn clean compile package -DskipTests'],
@@ -266,7 +261,6 @@ def package(c):
         
         temp_jre_path: taskcfg.jre_release,
 
-        # 'WEB-INF': 'src/main/webapp/WEB-INF-0.7/*', # Do not replace with version.
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
         'bin/synode_py3-0.7-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
@@ -325,36 +319,9 @@ def package(c):
 @task
 def post_package(c):
     print('--------------    post build   ------------------')
-
-    '''
-    global synode_json_bak, synode_json
-
-    if os.path.exists(synode_json_bak):
-        shutil.copy2(synode_json_bak, synode_json)
-        os.remove(synode_json_bak)
-        print(f'Restored {synode_json} from backup {synode_json_bak}')
-    else:
-        print(f'No backup found for {synode_json}, skipped restoring.')
-
-    global taskcfg, post_vals
-    diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
-    Utils.update_patterns(diction_file,
-         {synuser_pswd_pattern: post_vals['dictionary.json'][synuser_pswd_pattern]})
-    '''
     taskcfg.restore_backups()
-    
-    # if hasattr(taskcfg, 'post_cmds') and LangExt.len(taskcfg.post_cmds) > 0:
-    #     print('Executing post build commands...')
-    #     for cmd in taskcfg.post_cmds:
-    #         print('cmd-config:', cmd)
-    #         cmd_formatted = cmd.format(built_zip=taskcfg.get_distzip(), build_dir=taskcfg.dist_dir, zip_name=taskcfg.zip_name())
-    #         print(f'Executing: {cmd_formatted}')
-    #         ret = c.run(cmd_formatted)
-    #         print('OK:', ret.ok, ret.stderr)
-    # else: 
-    #     print('No post commands [post_cmds] configured.')
-    taskcfg.run_postcmds(c)
-    taskcfg.run_postscps()
+    taskcfg.run_deploycmds(c)
+    taskcfg.run_deployscps()
 
 
 @task(clean, create_volume, build, package, post_package)

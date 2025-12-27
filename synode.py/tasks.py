@@ -48,7 +48,7 @@ vers = {
     SYNODE_VERSION:    '0.7.8',
     JSERV_JAR_VERSION: '0.7.7',
     HTML_JAR_VERSION:  '0.1.8',
-    WEB_VERSION:       '0.4.2',
+    WEB_VERSION:       '0.4.3',
     # REGISTRY_ZIP: f'registry-{ORG}-{DOMAIN}-0.7.3.zip'
 }
 
@@ -57,7 +57,7 @@ res_toclean = ['dist', '*egg-info']
 @task
 def validate(c):
     print('---------     Synode.py3 Validating    --------------')
-    srcpy = os.path.join('src', 'synodepy3', '__main__.py')
+    # srcpy = os.path.join('src', 'synodepy3', '__main__.py')
     for srcpy in ['src/synodepy3/__main__.py', 'src/synodepy3/prompt.py']:
         with open(srcpy, 'r', encoding='utf-8') as f:
             for lx, line in enumerate(f, start=1):
@@ -70,7 +70,7 @@ def validate(c):
     
     from semanticshare.io.oz.invoke import requir_pkg
 
-    requir_pkg("semantics.py3", "0.4.7")
+    requir_pkg("semantics.py3", "0.4.9")
     requir_pkg("anson.py3", "0.4.3")
     requir_pkg("anclient.py3", "0.2.6")
     requir_pkg("jre-mirror", "0.0.8")

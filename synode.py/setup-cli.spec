@@ -2,11 +2,12 @@
 
 
 a = Analysis(
-    ['src\\synodepy3\\prompt.py'],
+    ['src/synodepy3/prompt.py'],
     pathex=[],
     binaries=[],
-    datas=[('src\\synodepy3\\synode.json', 'synodepy3')],
-    hiddenimports=[],
+    datas=[ ('src\\synodepy3\\synode.json', 'synodepy3'),
+            ('src\\synodepy3\\res', 'res') ],
+    hiddenimports=['prompt-toolkit'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
