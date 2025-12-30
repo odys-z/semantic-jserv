@@ -77,6 +77,12 @@
       <artifactId>jetty-ee8-webapp</artifactId>
       <version>${jetty-ee8.version}</version>
     </dependency>
+
+	<dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+		<version>${jetty.version}</version>
+    </dependency>
     
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
@@ -96,12 +102,6 @@
 	    <version>[0.5.0,)</version>
 	    <scope>test</scope>
 	</dependency>
-
-	<dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-server</artifactId>
-		<version>${jetty.version}</version>
-    </dependency>
 
 	<!-- https://mvnrepository.com/artifact/commons-daemon/commons-daemon -->
 	<dependency>
