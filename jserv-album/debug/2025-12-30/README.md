@@ -119,3 +119,46 @@ infor-11-hub
 page-index: 1,	challenging size: 1
 Syntities:
 ```
+
+* at infor-11-2
+
+```
+====== infor-11-2 -> infor-11-hub ====== Challenge Page: ======
+infor-11-2
+page-index: 1,	challenging size (all subscribers): 0
+Syntities:
+
+[docsyn]
+update syn_sessions set chpage=1, answerx=0, expansx=1, mode=0, state=3 where peer = 'infor-11-hub'
+====== infor-11-2 <- infor-11-hub ====== Answering: ======
+infor-11-2
+page-index: 0,	challenging size: 1
+Syntities:
+
+[io.oz.syn.ExessionPersist#saveChanges()] 
+[infor-11-2 <- infor-11-hub] : infor-11-2 saving changes to local entities...
+[docsyn]
+update oz_autoseq set seq = seq + 1 where sid = 'h_photos.pid'
+[docsyn]
+select seq from oz_autoseq  where sid = 'h_photos.pid'
+[docsyn]
+update oz_autoseq set seq = seq + 1 where sid = 'syn_change.cid'
+[docsyn]
+select seq from oz_autoseq  where sid = 'syn_change.cid'
+
+################# Mark infor-11-2,0105 #####################
+[docsyn]
+insert into h_photos (css, shareby, pdate, mime, opertime, filesize,
+uri,
+io_oz_synuid, tags, clientpath, folder, sharedate, geox, shareflag, geoy, oper, family, docname, syncstamp, device, exif,
+pid)
+values ('{"type": "io.oz.album.peer.PhotoRec$MediaCss", "wh": [248, 249], "rotation": 0, "widthHeight": [992, 996]}
+', 'admin', '2025-11-19 10:19:54', 'image/png', datetime('now'), 53642,
+'{"type": "io.odysz.semantic.meta.DocRef", "synoder": "infor-11-hub", "docId": "0105", "syntabl": "h_photos", "uri64": "$VOLUME_HOME/inforise/admin/2025-11/0105 1763518794.png", "breakpoint": 0, "uids": "infor-11-2,0105", "pname": "1763518794.png"}',
+'infor-11-2,0105', null, '/storage/emulated/0/DCIM/Duolingo/1763518794.png', '2025-11', '2025-12-30', 'null', 'publish', 'null', 'infor-11-2', 'inforise', '1763518794.png', '2025-12-30 03:27:57', '0001', '{"type": "io.oz.album.peer.Exifield", "exif": {"Compression": "Deflate/Inflate", "ExifTool Version Number": "13.21", "SRGB Rendering": "Perceptual", "File Type": "PNG", "File Type Extension": "png", "Image Size": "992x996", "File Creation Date/Time": "2025", "Bit Depth": "8", "Significant Bits": "8 8 8 8", "File Access Date/Time": "2025", "Image Height": "996", "Image Width": "992", "File Modification Date/Time": "2025", "MIME Type": "image/png", "File Size": "54 kB", "File Permissions": "-rw-rw-rw-", "Filter": "Adaptive", "Megapixels": "0.988", "Interlace": "Noninterlaced", "File Name": "0105 1763518794.png", "Color Type": "RGB with Alpha", "Directory": "E"}}',
+'0106')
+insert into syn_docref (syntabl, fromPeer, uids) values ('h_photos', 'infor-11-hub', 'infor-11-2,0105')
+insert into syn_change (domain, crud, updcols, tabl, synoder, nyquence, seq, uids, cid) values ('infor-11', 'I', 'css,geox,mime,geoy,opertime,oper,filesize,exif', 'h_photos', 'infor-11-2', 2, 1, 'infor-11-2,0105', '0003')
+insert into syn_subscribe (changeId, synodee) values ('0003', 'infor-11-1')
+insert into syn_subscribe (changeId, synodee) values ('0003', 'infor-11-1')
+```
