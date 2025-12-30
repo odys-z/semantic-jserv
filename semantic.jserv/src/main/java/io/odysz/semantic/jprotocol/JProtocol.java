@@ -38,7 +38,7 @@ public class JProtocol {
 
 	@FunctionalInterface
 	public interface OnOk {
-		void ok(AnsonResp resp) throws IOException, AnsonException, TransException, SQLException;
+		void ok(AnsonResp resp) throws IOException, AnsonException, TransException;
 	}
 	
 	/**
@@ -83,7 +83,7 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnDocsOk {
-		void ok(List<? extends AnsonResp> resps) throws IOException, AnsonException, TransException, SQLException;
+		void ok(List<? extends AnsonResp> resps) throws IOException, AnsonException, TransException;
 	}
 	
 	@FunctionalInterface

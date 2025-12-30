@@ -221,7 +221,7 @@ public class SynssionPeer {
 					domanager.unlockme();
 
 					double sleep = rep.exblock.sleeps;
-					Thread.sleep((long) (sleep * 1000)); // wait for next try
+					Thread.sleep((long) (sleep * 10000)); // wait for next try
 					domanager.lockme(onMutext);
 
 					// ISSUE: If Y is interrupted, or shutdown, X can be dead locking
@@ -353,7 +353,7 @@ public class SynssionPeer {
 		if (rep != null) {
 			// lock remote
 			while (rep.synact() == trylater) {
-				if (debug)
+//				if (debug)
 					Utils.logT(new Object() {},
 							"%s: %s is locked, waiting...",
 							mynid, peer);
@@ -1030,28 +1030,29 @@ public class SynssionPeer {
 	 */
 	public HashMap<String, String[]> exchangeDBservs(HashMap<String, String[]> jservs)
 			throws SemanticException, AnsonException, IOException {
-		mustnonull(client);
-		// SynodeMeta m = domanager.synm;
-		SyncReq req = (SyncReq) new SyncReq(null, domain())
-				.exblock(new ExchangeBlock(domanager.domain(),
-						domanager.synode, peer, ExessionAct.mode_client))
-				.a(A.exchangeJservs);
+		// e.g. infor-10.1 jserv == infor-10.2 jserv
+		if (!eq(jservs.get(peer)[0], jservs.get(domanager.synode)[0])) {
+			mustnonull(client);
+			SyncReq req = (SyncReq) new SyncReq(null, domain())
+					.exblock(new ExchangeBlock(domanager.domain(),
+							domanager.synode, peer, ExessionAct.mode_client))
+					.a(A.exchangeJservs);
 
-		// req.data(m.jserv, jservs);
-		req.jservs(jservs);
+			req.jservs(jservs);
 
-		String[] act = AnsonHeader.usrAct(getClass().getName(), A.exchangeJservs, "sync", "by " + mynid);
-		AnsonHeader header = client.header().act(act);
+			String[] act = AnsonHeader.usrAct(getClass().getName(), A.exchangeJservs, "sync", "by " + mynid);
+			AnsonHeader header = client.header().act(act);
 
-		AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
-							.header(header);
+			AnsonMsg<SyncReq> q = client.<SyncReq>userReq(uri_syn, Port.syntier, req)
+								.header(header);
 
-		SyncResp resp = client.commit(q, errHandler);
-		
-		mustnonull(resp);
-		musteq(resp.domain, domain());
-
-		return resp.jservs;
+			SyncResp resp = client.commit(q, errHandler);
+			
+			mustnonull(resp);
+			musteq(resp.domain, domain());
+			return resp.jservs;
+		}
+		else return jservs; // of course the target is myselve's
 	}
 
 	/**

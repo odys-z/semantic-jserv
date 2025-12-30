@@ -794,7 +794,7 @@ setp (6)
 					synm.org, c.org.orgId, synm.domain, c.domain, synm.pk, sid) == 0)
 					warnT(new Object() {},
 						  "[ERROR, if not the first boot] !!! This error is tolerated for running tests!\n"
-						+ "Updating jserv not exist? Shouldn't reach here!");
+						+ "Updating non-existing jserv of %s? Shouldn't reach here!", sid);
 
 				Update pst = tb.update(synm.tbl, robot)
 					.nv(synm.jserv, jserv(sid))
