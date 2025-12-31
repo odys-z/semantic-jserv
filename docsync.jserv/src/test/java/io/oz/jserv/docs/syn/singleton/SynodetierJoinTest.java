@@ -198,6 +198,7 @@ public class SynodetierJoinTest {
 	 * </pre>
 	 * @throws Exception
 	 */
+	@SuppressWarnings("deprecation")
 	void setupDomain() throws Exception {
 		boolean[] lights = new boolean[] {true, false, false};
 		
@@ -265,6 +266,8 @@ public class SynodetierJoinTest {
 
 			Utils.logi("%s Joining By %s\n''''''''''''''", hubmanger.synode, prvmanger.synode);
 
+			// TODO FIXME This test is a wrong implementation.
+			// The correct way: SynssionPeer.joinDomain() -> Syndomanager.joinDomain().
 			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
 					(rep) -> { lights[by] = true; });
 			

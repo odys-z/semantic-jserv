@@ -20,7 +20,7 @@ public class SynssionServ {
 	final SynDomanager syndomxerv;
 	final SyncUser usr;
 
-	public boolean debug;
+	// public boolean debug;
 
 	ExessionPersist srvp;
 
@@ -45,6 +45,7 @@ public class SynssionServ {
 				throw new ExchangeException(init, null,
 					"Request.srcnode(%s) != peer (%s)", ini.srcnode, peer);
 
+			log_0_5_19(ini);
 			DBSyntableBuilder b0 = new DBSyntableBuilder(syndomxerv);
 			srvp = new ExessionPersist(b0, peer, ini);
 
@@ -60,18 +61,21 @@ public class SynssionServ {
 
 	SyncResp onsynclose(ExchangeBlock reqb)
 			throws TransException, SQLException {
+		log_0_5_19(reqb);
 		ExchangeBlock b = srvp.trb.onclosexchange(srvp, reqb);
 		return new SyncResp(syndomxerv.domain()).exblock(b);
 	}
 
 	public SyncResp onsyncdb(ExchangeBlock reqb)
 			throws SQLException, TransException {
+		log_0_5_19(reqb);
 		ExchangeBlock repb = srvp.nextExchange(reqb);
 		return new SyncResp(syndomxerv.domain()).exblock(repb);
 	}
 
 	/**
-	 * On restoring requests. The requesting / challenging Seq can be already answered or not yet.
+	 * handling on a restoring request.
+	 * The requesting / challenging Seq can be already answered or not yet.
 	 * @param reqb
 	 * @return reply
 	 * @throws SQLException
@@ -86,17 +90,20 @@ public class SynssionServ {
 
 		srvp.loadsession(reqb.srcnode);
 
+		log_0_5_19(reqb);
 		// to be continued, calling nextExchange instead of onRestore()
 		ExchangeBlock repb = srvp.onRestore(reqb);
 		if (repb == null) repb = srvp.nextExchange(reqb);
 		return new SyncResp(syndomxerv.domain()).exblock(repb);
 	}
 
-	public SyncResp onclosex(SyncReq req, SyncUser usr) throws TransException, SQLException {
+	public SyncResp onclosex(SyncReq req, SyncUser usr)
+			throws TransException, SQLException {
 		
 		if (!eq(syndomxerv.lockSession(), usr.sessionId()))
 			return lockerr(peer);
 		else {
+			log_0_5_19(req.exblock);
 			try { return onsynclose(req.exblock); }
 			finally { syndomxerv.unlockx(usr); usr.synssion = null; }
 		}
@@ -106,6 +113,7 @@ public class SynssionServ {
 			throws TransException, SQLException {
 
 		try {
+			log_0_5_19(req.exblock);
 			ExchangeBlock ack  = srvp.trb.domainCloseJoin(srvp, req.exblock);
 			return new SyncResp(syndomxerv.domain()).exblock(ack);
 		} finally {
@@ -146,6 +154,7 @@ public class SynssionServ {
 				ExessionPersist admp = new ExessionPersist(admb, peer);
 				ExchangeBlock resp = admb.domainOnAdd(admp, req.exblock, usr.orgId());
 
+				log_0_5_19(req.exblock);
 				return new SyncResp(syndomxerv.domain()).exblock(resp);
 			}
 			else return trylater(peer);
@@ -162,4 +171,10 @@ public class SynssionServ {
 				.sleep(Math.random() + 0.1));
 
 	}
+
+	//////////////////////// debug helpers ///////////////////////////////////////
+	protected void log_0_5_19(ExchangeBlock peereq, String... entities) {
+		if (SynssionPeer.dbg_0_5_19) SynssionPeer.logNv_Ents(peereq, syndomxerv, entities);
+	}
+
 }

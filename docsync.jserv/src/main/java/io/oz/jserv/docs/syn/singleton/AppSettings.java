@@ -304,8 +304,8 @@ public class AppSettings extends Anson {
 	 * 1. load settings.json<br>
 	 * 2. update env-variables<br>
 	 * 3. initiate connects<br>
-	 * 4. setup db, create tables it's sqlite drivers for the first time, see {@link AppSettings#setupdb(String, String, SynodeConfig, boolean)}. <br>
-	 * 
+	 * 4. setup db, create tables it's sqlite drivers for the first time,
+	 * see {@link AppSettings#setupdb(String, String, SynodeConfig, boolean)}. <br>
 	 * <h5>Note:</h5>
 	 * Multiple App instance must avoid defining same variables.
 	 * 
