@@ -9,6 +9,7 @@ import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.indexOf;
@@ -119,7 +120,6 @@ public class SynssionPeer {
 	String peerjserv() {
 		return domanager == null
 				? null
-				// : domanager.syngleton.settings.jserv(domanager.synode);
 				: domanager.syngleton.settings.jserv(peer);
 	}
 
@@ -1126,7 +1126,8 @@ public class SynssionPeer {
 	public static void logNv_Ents(ExchangeBlock peereq, SynDomanager x, String... entities) {
 		try {
 		logi("[%s : %s] on %s by %s", x.synode, x.domain(), ExessionAct.nameOf(peereq.synact()), peereq.srcnode);
-		SyndomContext.print(peereq.srcnode, peereq.nv);
+		if (len(peereq.nv) > 0)
+			SyndomContext.print(peereq.srcnode, peereq.nv);
 	
 		x.printNv();
 		if (!isNull(entities))

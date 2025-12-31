@@ -157,7 +157,8 @@ class SynodeNetworkTest {
 
 		AppSettings settings_prv0 = AppSettings.load(SynotierSettingsTest.webinf, prvs);
 		assertNull(settings_prv0.localIp());
-		assertTrue(JServUrl.valid(settings_prv0.jservs.get(hub)));
+		// assertTrue(JServUrl.valid(settings_prv0.jservs.get(hub)));
+		assertTrue(JServUrl.valid(settings_prv0.jserv(hub)));
 		settings_prv0.regiserv = T_CentralApp.central_jserv;
 		settings_prv0.centralPswd = T_CentralApp.admin_pswd;
 		settings_prv0.jserv_utc = maintenant;

@@ -5,6 +5,7 @@ import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Utils.awaitAll;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.repeat;
@@ -162,6 +163,7 @@ public class SynodetierJoinTest {
 
 			AppSettings settings = AppSettings.load(webinf, stjson);
 			settings.installkey = "0123456789ABCDEF";	
+			settings.regiserv = null; // disable jserv_worker to "http://182.150.29.34:1989/regist-central";
 			settings.rootkey = null;
 			settings.toFile(FilenameUtils.concat(webinf, stjson), JsonOpt.beautify());
 
@@ -266,9 +268,11 @@ public class SynodetierJoinTest {
 
 			Utils.logi("%s Joining By %s\n''''''''''''''", hubmanger.synode, prvmanger.synode);
 
+			String hubjserv = hub.jserv();
+			mustnonull(hubjserv);
 			// TODO FIXME This test is a wrong implementation.
 			// The correct way: SynssionPeer.joinDomain() -> Syndomanager.joinDomain().
-			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hub.jserv(), syrskyi, slava,
+			prvmanger.joinDomain(prvmanger.org, dom, hubmanger.synode, hubjserv, syrskyi, slava,
 					(rep) -> { lights[by] = true; });
 			
 			break;

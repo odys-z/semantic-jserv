@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Set;
 
 import org.xml.sax.SAXException;
 
@@ -182,7 +183,7 @@ public class AppSettings extends Anson {
 	public String vol_name;
 	public String volume;
 
-	public HashMap<String, String> jservs;
+	private HashMap<String, String> jservs;
 
 	/** UTC time of dirty */
 	public String jserv_utc;
@@ -393,6 +394,10 @@ public class AppSettings extends Anson {
 		
 	}
 	
+	public Set<String> jservNodes() {
+		return jservs == null ? null : jservs.keySet();
+	}
+	
 	/** Find jserv from {@link #jservs}. */
 	public String jserv(String nid) {
 		return jservs.get(nid);
@@ -407,11 +412,16 @@ public class AppSettings extends Anson {
 		return this;
 	}
 
-	public AppSettings jservs(HashMap<String, String[]> jservs) {
+	public AppSettings jservs(HashMap<String, ?> jservs) {
 		this.jservs.clear();
 		if (jservs != null)
-		for (String n : jservs.keySet())
-			this.jservs.put(n, jservs.get(n)[0]);
+		for (String n : jservs.keySet()) {
+			if (jservs.get(n) instanceof String)
+				this.jservs.put(n, (String)jservs.get(n));
+			else if (jservs.get(n).getClass().isArray())
+				this.jservs.put(n, ((String[])jservs.get(n))[0]);
+			else throw new NullPointerException("Jservs type is not supported.");
+		}
 		return this;
 	}
 

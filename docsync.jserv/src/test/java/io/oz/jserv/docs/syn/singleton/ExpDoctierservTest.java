@@ -107,6 +107,7 @@ public class ExpDoctierservTest {
 	 * by running {@link DoclientierTest#testSynclientUp()}.
 	 * @throws Exception
 	 */
+	@SuppressWarnings("deprecation")
 	@Test
 	void runDoctiers() throws Exception {
 		if (System.getProperty("wait-clients") == null) {
@@ -412,7 +413,7 @@ public class ExpDoctierservTest {
 			
 			// install
 			AppSettings _settings = new AppSettings();
-			_settings.jservs = jservs;
+			_settings.jservs(jservs);
 			_settings.centralPswd = "8964";
 			_settings.vol_name = f("VOLUME_%s", i);
 			_settings.volume = f("../vol-%s", i);

@@ -10,7 +10,7 @@
    "WEBROOT_HUB": "http://119.8.29.27:8969",
    "VOLUME_PRV": "../../../../volumes-0.7/volume-prv"
  },
- "centralPswd": "8964",
+ "centralPswd": "123456",
  "installkey": "0123456789ABCDEF",
  "rootkey": null
 }
