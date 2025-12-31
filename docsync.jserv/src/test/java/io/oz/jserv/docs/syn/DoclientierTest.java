@@ -259,7 +259,7 @@ class DoclientierTest {
 								} catch (InterruptedException e) { }
 							}
 						});
-				} catch (TransException | IOException | SQLException e) {
+				} catch (TransException | IOException e) {
 					e.printStackTrace();
 					fail(e.getMessage());
 				}

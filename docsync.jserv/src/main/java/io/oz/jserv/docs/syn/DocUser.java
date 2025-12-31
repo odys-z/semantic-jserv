@@ -18,7 +18,7 @@ import io.oz.syn.SyncUser;
  * 
  * @author odys-z@github.com
  */
-public class DocUser extends SyncUser implements IUser {
+public class DocUser extends SyncUser {
 
 	public static JUserMeta userMeta;
 	
