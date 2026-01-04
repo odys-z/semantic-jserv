@@ -20,7 +20,6 @@ import io.oz.registier.central.CentralSettings;
 public class T_CentralApp extends CentralApp {
 	static final String zsu = "zsu";
 
-
 	public static String central_jserv;
 	public static String admin_pswd;
 
@@ -28,6 +27,7 @@ public class T_CentralApp extends CentralApp {
 
 	static final String cent_conn = "t-central-sqlite";
 
+	@SuppressWarnings("deprecation")
 	public static Thread startCentral(boolean[] quit)
 			throws InterruptedException, SQLException, TransException {
 		boolean[] ready = new boolean[] {false};
