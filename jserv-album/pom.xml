@@ -87,7 +87,7 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>[0.2.6,)</version>
+	    <version>[0.2.7,)</version>
 	</dependency>
 
 	<dependency>
@@ -112,13 +112,13 @@
 	<dependency>
 		<groupId>io.github.odys-z</groupId>
 		<artifactId>anclient.java</artifactId>
-		<version>0.5.18</version>
+		<version>0.5.19</version>
 	</dependency>
 	
 	<dependency>
 		<groupId>io.github.odys-z</groupId>
  		<artifactId>synodict.central</artifactId>
-		<version>0.1.6</version>
+		<version>0.1.7</version>
 		<scope>test</scope>
 	</dependency>
   </dependencies>

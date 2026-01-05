@@ -1,5 +1,5 @@
 { "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "centralPswd" : "123456",
+  "centralPswd" : "yunzhikeji-906",
   "vol_name"    : "VOLUME_HOME",
   "localIp"     : null,
   "proxyIp"     : null,
@@ -13,6 +13,6 @@
   "volume"      : "vol",
   "connIdleSnds": 0.0,
   "jservs"      : {},
-  "installkey"  : "0123456789ABCDEF",
+  "installkey"  : "io.github.odys-z",
   "rootkey"     : null
 }

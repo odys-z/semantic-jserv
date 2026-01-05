@@ -34,3 +34,6 @@ pi.run(['setup-gui.spec'])
 
 print('Building setup-cli.spec ...')
 pi.run(['setup-cli.spec'])
+
+print('Building uninstall-srv.spec ...')
+pi.run(['uninstall-srv.spec'])

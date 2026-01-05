@@ -273,7 +273,8 @@ def package(c):
                                     # mklink /D web-dist ..\anclient\examples\example.js\album
 
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
-        'setup-cli.exe': '../synode.py/dist/setup-cli.exe'
+        'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
+        'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
     }
 
     excludes = ['*.log', 'report.html']
@@ -356,15 +357,18 @@ def landing(c, deploy: str = None):
     
     taskcfg.publish_landings()
 
+
 @task
 def pause(c):
     input('Press Enter to continue...')
+
 
 @task(post=[config, pause, post_package])
 def config_post(c, deploy: str = 'tasks.json'):
     print(f'Testing : {deploy}')
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+
 
 @task(post=[clean])
 def test_clean(c, deploy: str = 'tasks.json'):
