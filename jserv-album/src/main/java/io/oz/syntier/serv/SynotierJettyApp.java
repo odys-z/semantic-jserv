@@ -275,7 +275,7 @@ public class SynotierJettyApp implements Daemon {
 		Connects.init(webinf);
 		Syngleton.appName = ifnull(Configs.getCfg("app-name"), "Portfolio 0.7");
 
-		mustnonull(settings.rootkey, f(
+		mustnonull(settings.rootkey(), f(
 				"Rootkey cannot be null for starting App. settings:\n%s", 
 				settings.toBlock()));
 
@@ -287,7 +287,7 @@ public class SynotierJettyApp implements Daemon {
 			cfg.mode = SynodeMode.peer;
 	
 		Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
-		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey);
+		AppSettings.rebootdb(cfg, webinf, $vol_home, config_xml, settings.rootkey());
 
 		// updating configuration that's allowed to be re-configured at each time of booting
 		AppSettings.updateOrgConfig(cfg, settings);
@@ -322,7 +322,6 @@ public class SynotierJettyApp implements Daemon {
 			SyncUser admin, String webinf, String config_xml, String syntity_json) throws Exception {
 
 		String synid  = cfg.synode();
-		String sync = cfg.synconn;
 
 		SynotierJettyApp synapp = SynotierJettyApp
 						.instanserver(webinf, cfg, admin, settings, config_xml)
@@ -335,7 +334,7 @@ public class SynotierJettyApp implements Daemon {
 					throw new SemanticException("TODO %s (configure an entity table with meta type)", synreg.table);
 				});	
 
-		DBSynTransBuilder.synSemantics(new DATranscxt(sync), sync, synid, regists);
+		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, synid, regists);
 
 		return registerPorts(synapp, cfg.synconn,
 				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),

@@ -357,7 +357,7 @@ public class SynssionPeer {
 				Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
 						domanager.synode, domanager.domain(), peer);
 
-		} catch (TransException | SQLException e) {
+		} catch (TransException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -263,7 +263,7 @@ def package(c):
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
-        'bin/synode_py3-0.7-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
+        'bin/synode_py3-0.8-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
         "registry": "../synode.py/registry/*",
         'winsrv': '../synode.py/winsrv/*',
         "res": "../synode.py/src/synodepy3/res/*",

@@ -7,6 +7,7 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.LangExt.mustnull;
 import static io.odysz.common.LangExt.mustnoBlankAny;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.Utils.logi;
@@ -16,10 +17,16 @@ import static io.odysz.transact.sql.parts.condition.ExprPart.constr;
 import static io.odysz.transact.sql.parts.condition.Funcall.isnull;
 import static io.odysz.common.DateFormat.jour0;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Set;
@@ -107,7 +114,8 @@ public class AppSettings extends Anson {
 		if (isblank(rootkey)) {
 			mustnonull(installkey, "[AppSettings] Install-key cannot be null if root-key is empty.");
 			if (len(jservs) == 0)
-				Utils.warn("Jservs Shouldn't be empty, unless this node is setup for joining a domain. synode: %s", cfg.synode());
+				Utils.warn("Jservs Shouldn't be empty, unless this node is setup for joining a domain. synode: %s",
+							cfg.synode());
 
 			Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 			setupdb(cfg, url_path, webinf, config_xml, installkey, forceTest);
@@ -134,7 +142,7 @@ public class AppSettings extends Anson {
 	 * @param rootkey
 	 * @throws Exception
 	 */
-	public void setupdb(SynodeConfig cfg, String url_path, String webinf, String config_xml,
+	void setupdb(SynodeConfig cfg, String url_path, String webinf, String config_xml,
 			String rootkey, boolean forceTest) throws Exception {
 		
 		Syngleton.setupSysRecords(cfg, YellowPages.robots());
@@ -193,8 +201,11 @@ public class AppSettings extends Anson {
 	}
 
 
-	public String installkey;
-	public String rootkey;
+	String installkey;
+	public String installkey() { return installkey; }
+
+	String rootkey;
+	public String rootkey() { return rootkey; }
 
 	/**
 	 * Json file path.
@@ -268,15 +279,16 @@ public class AppSettings extends Anson {
 		String abs_json = FilenameUtils.concat(EnvPath.replaceEnv(web_inf), _0(json, setup_json));
 		logi("[AppSettings] Loading settings from %s", abs_json);
 
-		FileInputStream inf = new FileInputStream(new File(abs_json));
+		try (FileInputStream inf = new FileInputStream(new File(abs_json))) {
 
-		AppSettings settings = (AppSettings) Anson.fromJson(inf);
-		if (settings.jservs == null)
-			settings.jservs = new HashMap<String, String>();
-		settings.webinf = web_inf;
-		settings.json = abs_json;
+			AppSettings settings = (AppSettings) Anson.fromJson(inf);
+			if (settings.jservs == null)
+				settings.jservs = new HashMap<String, String>();
+			settings.webinf = web_inf;
+			settings.json = abs_json;
 
-		return settings;
+			return settings;
+		}
 	}
 	
 	/**
@@ -286,17 +298,45 @@ public class AppSettings extends Anson {
 	 * @throws IOException
 	 */
 	public AppSettings save() throws AnsonException {
-		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
-			toBlock(inf, JsonOpt.beautify());
+		// according to Grok
+//		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
+//			toBlock(inf, JsonOpt.beautify());
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			throw new AnsonException(e);
+//		} 
+//		return this;
+		String tempname = f("%s.%d", json, (int)(Math.random() * 1000));
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), tempname);
+
+		File file = new File(json);
+		File temp = new File(tempname);
+		try (Writer writer = new BufferedWriter(
+				 new OutputStreamWriter(
+					 new FileOutputStream(temp), StandardCharsets.UTF_8))) {
+			writer.write(toBlock(JsonOpt.beautify()));
+			writer.flush();
+			Utils.logi("=== settings.json written to temp successfully ===");
 		} catch (IOException e) {
+			Utils.warn("CRITICAL: Failed to write settings.json.temp! %s", e.getMessage());
 			e.printStackTrace();
 			throw new AnsonException(e);
-		} 
+		}
+
+		try {
+	        Files.copy(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+	        Utils.logi("=== settings.json replaced successfully (copy) ===");
+	    } catch (IOException e) {
+	        Utils.warn("CRITICAL: Failed to copy %s → %s ! %s", tempname, json, e.getMessage());
+	        e.printStackTrace();
+	        throw new AnsonException(e);
+	    }
+		Utils.logi("=== settings.json saved successfully ===");
 		return this;
 	}
 	
 	public AppSettings() {
-		installkey = "0123456789ABCDEF";
+		// installkey = "0123456789ABCDEF";
 		jservs = new HashMap<String, String>();
 	}
 	
@@ -341,7 +381,11 @@ public class AppSettings extends Anson {
 			logi( "[INSTALL-CHECK]\n!!! FIRST TIME INITIATION !!!\n"
 				+ "Install: Calling setupdb() with configurations in %s ...",
 				config_xml);
-			settings.setupdb(url_path, config_xml, cfg, forceDrop).save();
+			settings.setupdb(url_path, config_xml, cfg, forceDrop);
+			
+			mustnonull(settings.rootkey);
+			mustnull(settings.installkey);
+			settings.save();
 		}
 		else 
 			logi( "[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\n"
@@ -646,6 +690,9 @@ setp (6)
 
 			if (mergeReply_butme(c, resp, synm) || toSubmit) {
 				loadDBLaterservs(c, synm);
+
+				mustnonull(rootkey);
+				mustnull(installkey);
 				save();
 			}
 		} catch (IOException e) {

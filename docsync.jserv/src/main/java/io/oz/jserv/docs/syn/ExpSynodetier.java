@@ -8,6 +8,7 @@ import static io.odysz.common.LangExt.musteqi;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.mustge;
 import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.LangExt.mustnull;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
@@ -290,7 +291,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (domanager0.synodeNetworking(s)) {
 					if (s.loadDBLaterservs(domanager0.syngleton.syncfg, domanager0.synm)) {
 						needExpose = true;
-						domanager0.syngleton.settings.save();
+						mustnonull(s.rootkey());
+						mustnull(s.installkey());
+						s.save();
 					}
 				}
 			

@@ -147,8 +147,6 @@ def build(c: Context):
     buildcmds = [
         ['.', lambda: rm_dist()],
         ['.', f'{py()} -m build'],
-        # ['.', f'{py()} pyinstaller setup-gui.spec'],
-        # ['.', f'{py()} pyinstaller setup-cli.spec'],
         ['.', f'{py()} pyinstallerw.py'],
     ]
 
