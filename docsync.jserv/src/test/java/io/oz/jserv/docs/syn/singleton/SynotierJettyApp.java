@@ -10,7 +10,6 @@ import static io.odysz.common.Utils.warn;
 import static io.odysz.common.Utils.warnT;
 
 import java.io.File;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 
@@ -39,7 +38,6 @@ import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.x.TransException;
 import io.oz.album.peer.SynDocollPort;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpDoctier;

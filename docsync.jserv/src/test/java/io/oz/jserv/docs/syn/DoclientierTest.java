@@ -33,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashSet;
 
 import org.apache.commons.io.FileUtils;
@@ -87,6 +86,7 @@ class DoclientierTest {
 		init(ExpDoctierservTest.case_yresolve);
 	}
 	
+	@SuppressWarnings("deprecation")
 	static void init(int caseid) throws Exception {
 		FileUtils.copyDirectory(new File("src/test/res/WEB-INF-synodier-join-test"),
 								new File("src/test/res/WEB-INF"));
@@ -132,6 +132,7 @@ class DoclientierTest {
 		synclientUp();
 	}
 	
+	@SuppressWarnings("deprecation")
 	static void synclientUp() throws Exception {
 		int no = 0;
 		logrst("testSynclientUp: waiting pushing permission", ++no);
