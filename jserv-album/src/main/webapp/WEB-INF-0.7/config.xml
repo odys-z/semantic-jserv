@@ -10,23 +10,18 @@
     	<k>id-len</k>
     	<v>4</v>
     </c>
-
-	<!-- <c> <k>io.oz.syn.synode</k> <v>X</v> </c> -->
-
 	<c>
 		<!-- Class name of SUser Implementation -->
 		<k>class-IUser</k>
 		<v>io.oz.jserv.docs.syn.DocUser</v>
 	</c>
-
-
 	<c>
 		<k>sync.log.on-verbose</k>
 		<v>false</v>
 	</c>
 	<c>
 		<k>ss-timeout-min</k>
-		<v>60</v>
+		<v>2</v>
 	</c>
 	<c>
 		<k>ss-timeout-min.debugMode</k>

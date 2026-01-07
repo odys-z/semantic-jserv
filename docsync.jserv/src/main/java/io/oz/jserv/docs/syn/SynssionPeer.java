@@ -9,6 +9,7 @@ import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.notNull;
+import static io.odysz.common.LangExt.len;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.LangExt.is;
 import static io.odysz.common.LangExt.indexOf;
@@ -98,9 +99,9 @@ public class SynssionPeer {
 
 	/**
 	 * 2025-12-31 1.5.19 true, hunting shadow h_photos records at infor-11.2.
-	 * @since 1.5.19
+	 * @since 0.2.7
 	 */
-	public static final boolean dbg_0_5_19 = true;
+	public static final boolean dbg_0_2_7 = true;
 
 	/** */
 	final String conn;
@@ -119,7 +120,6 @@ public class SynssionPeer {
 	String peerjserv() {
 		return domanager == null
 				? null
-				// : domanager.syngleton.settings.jserv(domanager.synode);
 				: domanager.syngleton.settings.jserv(peer);
 	}
 
@@ -288,7 +288,7 @@ public class SynssionPeer {
 	ExchangeBlock syncdb(ExchangeBlock rep)
 			throws SQLException, TransException {
 
-		log_0_5_19(rep);
+		log_0_2_8(rep);
 		return xp.nextExchange(rep);
 	}
 	
@@ -308,7 +308,7 @@ public class SynssionPeer {
 			domanager.lockme(onMutext);
 
 			ExchangeBlock reqb = exesrestore();
-			log_0_5_19(reqb);
+			log_0_2_8(reqb);
 
 			SyncResp rep = null;
 			if (reqb != null) {
@@ -321,7 +321,7 @@ public class SynssionPeer {
 
 				if (rep.exblock != null && rep.exblock.synact() != deny) { 
 
-					log_0_5_19(rep.exblock);
+					log_0_2_8(rep.exblock);
 					onsyninitRep(rep.exblock, rep.domain);
 				}
 			}
@@ -334,19 +334,19 @@ public class SynssionPeer {
 							"Got null reply for exchange session. %s : %s -> %s",
 							domain(), domanager.synode, peer);
 				else
-					log_0_5_19(rep.exblock);
+					log_0_2_8(rep.exblock);
 			}
 			
 			while (xp.hasNextChpages(xp.trb)) {
 				ExchangeBlock exb = syncdb(rep.exblock);
 				rep = exespush(peer, A.exchange, exb);
-				log_0_5_19(rep.exblock);
+				log_0_2_8(rep.exblock);
 			}
 			
 			// close
 			reqb = synclose(rep.exblock);
 			rep = exespush(peer, A.exclose, reqb);
-			log_0_5_19(rep.exblock);
+			log_0_2_8(rep.exblock);
 			
 			if (!SynssionPeer.testDisableAutoDocRef) {
 				DBSyntableBuilder tb = new DBSyntableBuilder(domanager);
@@ -357,7 +357,7 @@ public class SynssionPeer {
 				Utils.warn("[%s : %s - SynssionPeer] Update to peer %s, auto-resolving doc-refs is disabled.",
 						domanager.synode, domanager.domain(), peer);
 
-		} catch (TransException | SQLException e) {
+		} catch (TransException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1119,21 +1119,27 @@ public class SynssionPeer {
 	}
 
 	//////////////////////// debug helpers ///////////////////////////////////////
-	protected void log_0_5_19(ExchangeBlock peereq, String... entities) {
-		if (SynssionPeer.dbg_0_5_19) SynssionPeer.logNv_Ents(peereq, domanager, entities);
+	protected void log_0_2_8(ExchangeBlock peereq) {
+		if (SynssionPeer.dbg_0_2_7) SynssionPeer.logNv_Ents(peereq, domanager, "h_photos");
 	}
 
-	public static void logNv_Ents(ExchangeBlock peereq, SynDomanager x, String... entities) {
+	public static void logNv_Ents(ExchangeBlock peereq, SynDomanager x, String... entitynames) {
 		try {
-		logi("[%s : %s] on %s by %s", x.synode, x.domain(), ExessionAct.nameOf(peereq.synact()), peereq.srcnode);
-		SyndomContext.print(peereq.srcnode, peereq.nv);
+		logi("[NV]\n====\n    %s : %s == == %s by %s", x.domain(), x.synode,
+				ExessionAct.nameOf(peereq.synact()), peereq.srcnode);
+
+		if (len(peereq.nv) > 0)
+			SyndomContext.print(peereq.srcnode, peereq.nv, true);
 	
-		x.printNv();
-		if (!isNull(entities))
-		for (String ename : entities) {
+		x.printNv(false);
+		if (!isNull(entitynames))
+		for (String ename : entitynames) {
 			try {
-				SyntityMeta docm = DBSynTransBuilder.getEntityMeta(x.synconn, ename);
-				((DBSyntableBuilder)x.synb).doclist(docm);
+				if (DBSynTransBuilder.hasEntity(x.synconn, ename)) {
+					SyntityMeta docm = DBSynTransBuilder.getEntityMeta(x.synconn, ename);
+					DBSyntableBuilder synb = new DBSyntableBuilder(x);
+					logi("[ENTITIES]\n==========\n{%s[%s]: %s}", x.synode, ename, synb.doclist(docm));
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

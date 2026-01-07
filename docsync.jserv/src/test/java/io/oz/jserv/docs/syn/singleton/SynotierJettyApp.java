@@ -166,8 +166,8 @@ public class SynotierJettyApp {
 		return this;
 	}
 	
-	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings, boolean must_break,
-			PrintstreamProvider ... oe) throws Exception {
+	static SynotierJettyApp boot(String webinf, String config_xml, AppSettings settings,
+			boolean must_break, PrintstreamProvider ... oe) throws Exception {
 
 		Utils.logi("%s : %s", settings.vol_name, EnvPath.getEnv(settings.vol_name));
 

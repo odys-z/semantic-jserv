@@ -46,8 +46,9 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 
 			settings.loadDBLaterservs(domanager.syngleton.syncfg, domanager.synm);
 			
-			for (String n : settings.jservs.keySet()) {
-				String jserv = settings.jservs.get(n);
+			for (String n : settings.jservNodes()) {
+				// String jserv = settings.jservs.get(n);
+				String jserv = settings.jserv(n);
 
 				logT(new Object(){}, "Exposing jservs");
 				logT("%s: %s", n, jserv);

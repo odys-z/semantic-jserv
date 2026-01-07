@@ -263,7 +263,7 @@ def package(c):
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
-        'bin/synode_py3-0.7-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
+        'bin/synode_py3-0.8-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
         "registry": "../synode.py/registry/*",
         'winsrv': '../synode.py/winsrv/*',
         "res": "../synode.py/src/synodepy3/res/*",
@@ -273,7 +273,8 @@ def package(c):
                                     # mklink /D web-dist ..\anclient\examples\example.js\album
 
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
-        'setup-cli.exe': '../synode.py/dist/setup-cli.exe'
+        'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
+        'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
     }
 
     excludes = ['*.log', 'report.html']
@@ -356,15 +357,18 @@ def landing(c, deploy: str = None):
     
     taskcfg.publish_landings()
 
+
 @task
 def pause(c):
     input('Press Enter to continue...')
+
 
 @task(post=[config, pause, post_package])
 def config_post(c, deploy: str = 'tasks.json'):
     print(f'Testing : {deploy}')
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+
 
 @task(post=[clean])
 def test_clean(c, deploy: str = 'tasks.json'):

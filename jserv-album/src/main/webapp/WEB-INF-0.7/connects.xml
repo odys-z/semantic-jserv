@@ -24,7 +24,7 @@
   		<src>$VOLUME_HOME/doc-jserv.db</src>
   		<usr></usr>
   		<pswd></pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
   </t>
