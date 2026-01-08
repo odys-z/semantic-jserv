@@ -399,16 +399,20 @@ class InstallerForm(QMainWindow):
                 'Click Ok to continue, and confirm all permission requests.\n'
                 '4 Times Confirmation Required (Dialog can be hidden)!')
 
-        srvname = install_wsrv_byname(self.cli.gen_wsrv_name())
+        srvname = self.cli.gen_wsrv_name()
         if srvname is not None:
             self.cli.settings.envars.update({winsrv_synode: srvname})
 
-        srvname = install_htmlsrv(self.cli.gen_html_srvname())
-        if srvname is not None:
-            self.cli.settings.envars.update({winsrv_websrv: srvname})
+        websrvname = self.cli.gen_html_srvname()
+        if websrvname is not None:
+            self.cli.settings.envars.update({winsrv_websrv: websrvname})
 
-        self.gen_qr()
+        # 2026-01-06 Must save before start service to avoid competition.
         self.cli.settings.toFile(cast(str, os.path.join(web_inf, settings_json)))
+
+        install_wsrv_byname(srvname)
+        install_htmlsrv(websrvname)
+        self.gen_qr()
 
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
@@ -683,8 +687,10 @@ class InstallerForm(QMainWindow):
         update_chkhub(self.ui.chkHub.checkState() == Qt.CheckState.Checked)
 
         # cansave = valid_peers and (neverun or self.cli.registry.config.synid == self.ui.cbbPeers.currentText())
-        cansave = self.iscreating_state()
-        self.ui.bSetup.setEnabled(cansave)
+
+        # cansave = self.iscreating_state()
+        # self.ui.bSetup.setEnabled(cansave)
+        # self.ui.bSetup.setEnabled(True)
 
         jre_ready = self.cli.isjre_ready()
         # test_run() is now actually saved syncIns == 0, but will not reinitialize dbs.
@@ -737,7 +743,7 @@ class InstallerForm(QMainWindow):
             # self.ui.bSetup.clicked.connect(self.check_install_jre)
 
             self.ui.bTestRun.setEnabled(False)
-            self.ui.bTestRun.clicked.connect(self.test_run)
+            # self.ui.bTestRun.clicked.connect(self.test_run)
 
             self.ui.chkReverseProxy.clicked.connect(self.update_chkreverse)
 

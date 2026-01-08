@@ -260,7 +260,7 @@ public class SynotierJettyApp implements Daemon {
 	 * 
 	 * @param webinf
 	 * @param config_xml
-	 * @param settings_json
+	 * @param settings
 	 * @param oe
 	 * @return synotier app
 	 * @throws Exception

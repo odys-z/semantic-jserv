@@ -13,7 +13,7 @@ import os
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
 requir_pkg("anson.py3", "0.4.3")
-requir_pkg("semantics.py3", "0.5.1")
+requir_pkg("semantics.py3", "0.5.2")
 
 from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts

@@ -25,6 +25,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import io.odysz.anson.JsonOpt;
 import io.odysz.common.DateFormat;
 import io.odysz.common.FilenameUtils;
 import io.odysz.module.rs.AnResultset;
@@ -38,6 +39,7 @@ import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.registier.central.meta.CentSynodemeta;
 import io.oz.syn.SynodeMode;
 
+@SuppressWarnings("deprecation")
 class SynodeNetworkTest {
 	
 	static final String backup_hub = "src/test/resources/submitjserv-hub.backup.json";
@@ -121,12 +123,13 @@ class SynodeNetworkTest {
 		settings_hub0.regiserv = T_CentralApp.central_jserv;
 		settings_hub0.centralPswd = T_CentralApp.admin_pswd;
 		settings_hub0.jserv_utc = maintenant;
-		settings_hub0.save();
+
+		// debug notes:
+		// don't user save_rt() as this is before the first check.
+		settings_hub0.toFile(settings_hub0.json, JsonOpt.beautify());
 		
 		SynotierJettyApp jhub = SynotierJettyApp._main(new String[] {hubs});
 		musteq(hub, jhub.syngleton.synode());
-		
-		// DateFormat.early(maintenant, "?");
 		
 		assertNull(queryJserv(jhub, prv));
 		assertNull(queryJserv(jhub, mob));
@@ -162,7 +165,10 @@ class SynodeNetworkTest {
 		settings_prv0.regiserv = T_CentralApp.central_jserv;
 		settings_prv0.centralPswd = T_CentralApp.admin_pswd;
 		settings_prv0.jserv_utc = maintenant;
-		settings_prv0.save();
+
+		// debug notes:
+		// don't user save_rt() as this is before the first check.
+		settings_prv0.toFile(settings_prv0.json, JsonOpt.beautify());
 		
 		SynotierJettyApp jprv = SynotierJettyApp._main(new String[] {prvs});
 		musteq(prv, jprv.syngleton.synode());
@@ -189,7 +195,10 @@ class SynodeNetworkTest {
 		settings_mob0.jserv_utc = DateFormat.now();
 		settings_mob0.regiserv = T_CentralApp.central_jserv;
 		settings_mob0.centralPswd = T_CentralApp.admin_pswd;
-		settings_mob0.save();
+
+		// debug notes:
+		// don't user save_rt() as this is before the first check.
+		settings_mob0.toFile(settings_mob0.json, JsonOpt.beautify());
 		
 		SynotierJettyApp jmob = SynotierJettyApp._main(new String[] {mobs});
 		musteq(mob, jmob.syngleton.synode());

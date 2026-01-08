@@ -291,9 +291,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (domanager0.synodeNetworking(s)) {
 					if (s.loadDBLaterservs(domanager0.syngleton.syncfg, domanager0.synm)) {
 						needExpose = true;
-						mustnonull(s.rootkey());
-						mustnull(s.installkey());
-						s.save();
+//						mustnonull(s.rootkey());
+//						mustnull(s.installkey());
+						s.save_rt();
 					}
 				}
 			

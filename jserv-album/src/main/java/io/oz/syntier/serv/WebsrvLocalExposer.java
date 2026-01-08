@@ -7,6 +7,7 @@ import static io.odysz.common.Utils.warn;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Set;
 
 import io.odysz.anson.Anson;
 import io.odysz.anson.JsonOpt;
@@ -46,13 +47,18 @@ public class WebsrvLocalExposer implements ISynodeLocalExposer {
 
 			settings.loadDBLaterservs(domanager.syngleton.syncfg, domanager.synm);
 			
-			for (String n : settings.jservNodes()) {
-				// String jserv = settings.jservs.get(n);
-				String jserv = settings.jserv(n);
+			Set<String> synodes = settings.jservNodes();
+			if (synodes != null && synodes.size() > 0) {
+				hosts.syndomx.clear();
+				hosts.syndomx.put("domain", host_dom);
 
-				logT(new Object(){}, "Exposing jservs");
-				logT("%s: %s", n, jserv);
-				hosts.syndomx.put(n, jserv);
+				for (String n : synodes) {
+					String jserv = settings.jserv(n);
+
+					logT(new Object(){}, "Exposing jservs");
+					logT("%s: %s", n, jserv);
+					hosts.syndomx.put(n, jserv);
+				}
 			}
 			
 			// save to file by leaving resources untouched

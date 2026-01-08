@@ -17,16 +17,9 @@ import static io.odysz.transact.sql.parts.condition.ExprPart.constr;
 import static io.odysz.transact.sql.parts.condition.Funcall.isnull;
 import static io.odysz.common.DateFormat.jour0;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Set;
@@ -297,7 +290,7 @@ public class AppSettings extends Anson {
 	 * @throws AnsonException
 	 * @throws IOException
 	 */
-	public AppSettings save() throws AnsonException {
+	public AppSettings save_rt() throws IOException {
 		// according to Grok
 //		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
 //			toBlock(inf, JsonOpt.beautify());
@@ -306,6 +299,11 @@ public class AppSettings extends Anson {
 //			throw new AnsonException(e);
 //		} 
 //		return this;
+
+		mustnonull(rootkey);
+		mustnull(installkey);
+
+		/*
 		String tempname = f("%s.%d", json, (int)(Math.random() * 1000));
 		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), tempname);
 
@@ -332,6 +330,15 @@ public class AppSettings extends Anson {
 	        throw new AnsonException(e);
 	    }
 		Utils.logi("=== settings.json saved successfully ===");
+		*/
+
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), json);
+		toFile(json, JsonOpt.beautify());
+
+		// TODO Let's flag this section with debug, my field that is configurable.
+		String backup = f("%s-fingerprint", json);
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), backup);
+		toFile(backup, JsonOpt.beautify());
 		return this;
 	}
 	
@@ -383,9 +390,7 @@ public class AppSettings extends Anson {
 				config_xml);
 			settings.setupdb(url_path, config_xml, cfg, forceDrop);
 			
-			mustnonull(settings.rootkey);
-			mustnull(settings.installkey);
-			settings.save();
+			settings.save_rt();
 		}
 		else 
 			logi( "[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\n"
@@ -691,9 +696,9 @@ setp (6)
 			if (mergeReply_butme(c, resp, synm) || toSubmit) {
 				loadDBLaterservs(c, synm);
 
-				mustnonull(rootkey);
-				mustnull(installkey);
-				save();
+//				mustnonull(rootkey);
+//				mustnull(installkey);
+				save_rt();
 			}
 		} catch (IOException e) {
 			warn("Cannot query/submit to central: %s,\n%s", regiserv, e.getMessage());
