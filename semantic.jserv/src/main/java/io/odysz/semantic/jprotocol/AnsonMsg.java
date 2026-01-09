@@ -70,12 +70,6 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		/** document manage's semantic tier */
 		docstier("docs.tier"),
 
-//		/** @deprecated ? */
-//		dbsyncer("clean.db"),
-		
-//		/** @deprecated for MVP album v0.2.1 only */
-//		album21("docs.album21"),
-		
 		/**
 		 * Synode tier service: sync.tier
 		 * @since 2.0.0
@@ -137,7 +131,8 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * jserv-sample/io.odysz.jsample.protocol.Samport.</p>
 	 * 
 	 * @param p extended Port
-	 * @since 1.5.18, this is recommended not to use directly. Call {@link JProtocol#setup(String, IPort)} instead.
+	 * @since 1.5.16, this is recommended not to use directly. Call {@link JProtocol#setup(String, IPort)} instead.
+	 * @since 1.5.17, also register the factory. This should relieve the burden of IPort implementation's static registration. 
 	 */
 	static public void understandPorts(IPort p) {
 		// Because of the java enum limitation, or maybe the author's knowledge limitation, 
@@ -145,6 +140,16 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		// of valof() method for handling all ports.<br>
 		// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 		defaultPortImpl = p;
+		
+		JSONAnsonListener.registFactory(IPort.class, 
+				(s) -> {
+					try {
+						return defaultPortImpl.valof(s);
+					} catch (SemanticException e) {
+						e.printStackTrace();
+						return null;
+					}
+				});
 	}
 	
 	String version = "1.1";
