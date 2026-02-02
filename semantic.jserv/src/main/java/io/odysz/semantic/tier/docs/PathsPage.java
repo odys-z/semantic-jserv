@@ -44,7 +44,7 @@ public class PathsPage extends Anson {
     }
 
 	/**
-	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date, isRef]} 
+	 * {key: client-path, value: [sync-flag, share-flag, share-by, share-date, isRef]} 
 	 */
 	@AnsonField(valType="[Ljava.lang.String;")
 	protected HashMap<String, Object[]> clientPaths;
@@ -55,7 +55,7 @@ public class PathsPage extends Anson {
 	public HashMap<String, Object[]> paths() { return clientPaths; }
 	
 	/**
-	 * Set paths's flags: [rs.device, rs.share-flag, rs.share-by, rs.share-date].
+	 * Set paths's flags: [rs.device, rs.share-flag, rs.share-by, rs.share-date, rs.is-docref].
 	 * 
 	 * @param rs must have columns of meta.syncflg, meta.shareflag, meta.shareDate.
 	 * @param meta
