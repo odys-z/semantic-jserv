@@ -704,6 +704,14 @@ class InstallerForm(QMainWindow):
         can_winsrv = can_start and Utils.iswindows() and jre_ready
         self.ui.bWinserv.setEnabled(can_winsrv)
 
+        # ISSUE 2026-03-02
+        # The service is registered by Procrun.exe as \SOFTWARE\WOW6432Node\Apache Software Foundation\Procrun 2.0\...,
+        # rather than HKLM\SYSTEM\CurrentControlSet\Services\Synode-7.10-service-id.
+        # That makes the services lost after Windows updated.
+        # Brutally re-install and start the service solved problem, and files are synchronized.
+        # TODO source review for re-installation is allowed.
+        self.ui.bWinserv.setEnabled(True)
+
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def translateUI():
             self.ui.gboxRegistry.setTitle(
