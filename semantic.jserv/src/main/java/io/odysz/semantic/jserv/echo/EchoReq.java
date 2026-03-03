@@ -8,7 +8,10 @@ public class EchoReq extends AnsonBody {
 
 	public static class A {
 		public static final String echo = "echo";
-		/** query interfaces, only response to localhost */
+
+		/**
+		 * Query interfaces, only response to localhost
+		 */
 		public static final String inet = "inet";
 	}
 
