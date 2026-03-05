@@ -12,6 +12,9 @@ import io.odysz.anson.JSONAnsonListener;
 import io.odysz.anson.JsonOpt;
 import io.odysz.semantics.x.SemanticException;
 
+/** Experiment: for generating the cpp end. */
+enum MsgCode2 {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext };
+
 /**
  * <p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort }.</p>
  * 1. A incoming json message is parsed by *.serv into JMessage,
@@ -35,7 +38,9 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	public static enum Port implements IPort {  
 		heartbeat("ping.serv"), session("login.serv"),
 		query("r.serv"), update("u.serv"),
-		insert("c.serv"), delete("d.serv"),
+		insert("c.serv"),
+		/** @deprecated delete is a keyword in cpp, and is replaced by {@link #del} */
+		delete("d.serv"), del("d.serv"),
 		echo("echo.less"),
 
 		/** serv port for downloading json/xml file or uploading a file.<br>
