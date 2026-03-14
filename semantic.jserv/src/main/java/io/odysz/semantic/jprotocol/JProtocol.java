@@ -88,7 +88,16 @@ public class JProtocol {
 	@FunctionalInterface
 	public interface OnError { void err(MsgCode code, String msg, String ... args ); }
 
+	/**
+	 * @deprecated ISSUE since 1.5.16, to adapt to Edge, this must b instance field as
+	 * the clients can be of different jservs.
+	 */
 	public static String urlroot;
+	
+	final String prtocolpath;
+	JProtocol(String rootpath) {
+		prtocolpath = rootpath;
+	}
 
 	public static SemanticObject err(IPort port, String code, String err) {
 		SemanticObject obj = new SemanticObject();
