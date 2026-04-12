@@ -118,6 +118,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		}	
 	};
 
+	/** TODO 2.0: Move ext as 1, ok = 0, and more follow the last one. */
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext };
 
 	/**
