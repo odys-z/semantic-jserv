@@ -118,7 +118,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	 * {@link #onPost(AnsonMsg, HttpServletResponse)} are returned successfully, a schema
 	 * to notify subscribers out of the servlet containers, e. g. the Jetty main thread.
 	 * <pre>new Echo(true).setCallbacks(() -> { if (greenlights != null) greenlights[0] = true; }))</pre>
-	 * @since 2.0.0
+	 * @since 1.5.0
 	 * @param onpost
 	 * @param onget
 	 * @return this
@@ -130,7 +130,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	}
 
 	/**
-	 * @since 2.0.0, this setter gives the singleton a chance to set 
+	 * @since 1.5.0, this setter gives the singleton a chance to set 
 	 * default transaction builder after the extended semantics have been 
 	 * loaded.
 	 * 

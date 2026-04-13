@@ -449,7 +449,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	/**
 	 * Load user instance form DB table (name = {@link UserMeta#tbl}).
-	 * <p>Since 2.0.0, uses left join to a_orgs and a_roles from a_users.</p>
+	 * <p>Since 1.5.0, uses left join to a_orgs and a_roles from a_users.</p>
 	 * 
 	 * @param sessionBody
 	 * @param connId
@@ -470,7 +470,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	
 	/**
 	 * 
-	 * @since 2.0.0
+	 * @since 1.5.0
 	 * @param connId
 	 * @param jrobt
 	 * @return user object

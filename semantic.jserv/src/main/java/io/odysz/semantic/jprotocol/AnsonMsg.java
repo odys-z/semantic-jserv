@@ -77,7 +77,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 
 		/**
 		 * Synode tier service: sync.tier
-		 * @since 2.0.0
+		 * @since 1.5.0
 		 */
 		syntier("sync.tier");
 		
@@ -166,6 +166,9 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	IPort port;
 	public IPort port() { return port; }
 
+	/**
+	 * TODO 2.0: move this to AnsonResp, the equivalent of AnsonBody.a.
+	 */
 	private MsgCode code;
 	public MsgCode code() { return code; }
 
