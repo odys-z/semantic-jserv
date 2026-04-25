@@ -26,8 +26,11 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.x.TransException;
 
-/**CRUD insertion service.
+/**
+ * CRUD insertion service.
  * @author odys-z@github.com
+ * 
+ * @since 1.5.17 moving to {@link io.odysz.semantic.jserv.crud.AnInsert}, waiting auto-generation
  */
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/c.serv" })
 public class AnInsert extends ServPort<AnInsertReq> {

@@ -27,6 +27,8 @@ import io.odysz.transact.sql.Query.Ix;
  * <p>Design Memo<br>
  * This is a strong evidence showing that we need anson.</p>
  * @author odys-z@github.com
+ * 
+ * @since 1.5.17 moving to {@link io.odysz.semantic.jserv.crud.AnUpdateReq} - requires automatic generation.
  */
 public class AnUpdateReq extends AnsonBody {
 	@Override
@@ -100,7 +102,7 @@ public class AnUpdateReq extends AnsonBody {
 
 	ArrayList<AnUpdateReq> postUpds;
 	
-	public AnsonHeader header;
+//	public AnsonHeader header;
 
 	ArrayList<Object[]> attacheds;
 
