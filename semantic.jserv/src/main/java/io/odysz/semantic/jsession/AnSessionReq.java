@@ -2,6 +2,7 @@ package io.odysz.semantic.jsession;
 
 import java.util.HashMap;
 
+import io.odysz.anson.AnsonCtor;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -24,6 +25,7 @@ public class AnSessionReq extends AnsonBody {
 		public static final String ping = "ping";
 	}
 	
+	@AnsonCtor(base= {""} )
 	public AnSessionReq() {
 		super(null, null);
 	}
@@ -44,6 +46,9 @@ public class AnSessionReq extends AnsonBody {
 	String iv;
 	public String iv() { return iv; }
 
+	/**
+	 * @deprecated No equivalent of AST & C++.
+	 */
 	HashMap<String, Object> mds;
 	public String md(String k) { return mds == null ? null : (String) mds.get(k); }
 	public AnSessionReq md(String k, String md) {
