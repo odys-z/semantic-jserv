@@ -1,0 +1,12 @@
+{ "type"      : "io.odysz.reflect.PeerSettings",
+  "ansonMsg"  : "io.odysz.semantic.jprotocol.AnsonMsg",
+  "ansons"    : [],
+  "scopeEnums": ["io.odysz.semantic.jprotocol.MsgCode"],
+  "javaEnums" : ["io.odysz.semantic.jprotocol.Port"],
+  "ansonBody" : "io.odysz.semantic.jprotocol.AnsonBody",
+  "anRequests": ["ast/docsreq.ast.json",
+                "ast/docsresp.ast.json",
+                "ast/session-resp.ast.json",
+                "ast/session-req.ast.json"],
+  "cpp_gen"   : "test/gen/t_03_synode.hpp"
+}
