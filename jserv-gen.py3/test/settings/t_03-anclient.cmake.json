@@ -1,0 +1,6 @@
+{ "type"      : "io.odysz.reflect.PeerSettings",
+  "ansons"    : [],
+  "anRequests": ["ast/session-resp.ast.json",
+                 "ast/session-req.ast.json"],
+  "cpp_gen"   : "test/gen/t_03_anclient.cmake.hpp"
+}

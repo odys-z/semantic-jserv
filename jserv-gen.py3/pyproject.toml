@@ -1,29 +1,27 @@
-#https://grok.com/chat/8c910b33-2987-4a2d-925a-4d5e3446d68c
-
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.3.6"]
+requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.5.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "anclient.py3"
-version = "0.2.6"
-description = "Semantic-jserv Python Client"
+name = "semantier_generator"
+version = "0.0.1"
+description = "Semantic Tier Generator"
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = { text = "MIT" }
 authors = [{name = "Ody Z", email = "odys.zhou@gmail.com"}]
-keywords = ["Semantics", "AnClient", "Semantier"]
+keywords = ["Semantic API", "AnClient", "Semantier"]
 requires-python = ">=3.9"
 dependencies = [
-    "anson.py3>=0.3.6",
+    "anson.py3>=0.5.0",
     "semantics.py3",
     "requests",
     "typing_extensions"
 ]
 
 [project.scripts]
-anclient-init = "anclient.unpack_data:main"
+#anclient-init = "anclient.unpack_data:main"
 
 [tool.setuptools]
-packages = ["anclient"]
-package-dir = { "anclient" = "src/anclient" }
-package-data = { "anclient" = ["**/*.py"] }
+packages = ["semantier_gen"]
+package-dir = { "semantier_gen" = "src/semantier_gen" }
+package-data = { "semantier_gen" = ["**/*.py"] }

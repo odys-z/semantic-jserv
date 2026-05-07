@@ -8,14 +8,14 @@ from src.semantier_gen.io.oz.semanticpeer.generator import gen_peers
 from semanticshare.io.odysz.reflect import PeerSettings
 
 
-class GenJservTest(TestCase):
+class GenEchomsgTest(TestCase):
 
     def test_(self):
         testpath = Path('test')
-        settings = cast(PeerSettings, Anson.from_file(str(testpath / 'settings/t_02-jserv.json')))
+        settings = cast(PeerSettings, Anson.from_file(str(testpath / 'settings/t_01-settings.json')))
 
         gen_peers(settings, testpath)
 
-        with (open('../../anson.cmake/tests/expect/t_02_jserv.hpp', 'r') as e,
+        with (open('../../anson.cmake/tests/expect/t_01_echomsg.hpp', 'r') as e,
               open(settings.cpp_gen, 'r') as f):
             self.assertEqual(e.readlines(), f.readlines())
