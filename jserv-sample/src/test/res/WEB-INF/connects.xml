@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<conns>
+  <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,log,smtcs">
+  	<!-- drvmnger table is used to configure basic db connection, for pooled datasource, see bdcp -->
+  	<!-- smtcs: semantics configuration used only for the connection.
+  		(And a global semantics configuration?) -->
+  	<c>
+  		<id>sys-sqlite</id>
+  		<type>sqlite</type>
+  		<isdef>true</isdef>
+  		<!-- For sqlite, since 1.5.0, the version introduced supporting of volume,
+  			the path is relative to runtime root.
+  			-->
+  		<src>$VOLUME_HOME/system.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<log>true</log>
+  		<smtcs>semantics-sys.xml</smtcs>
+  	</c>
+
+  	<c>
+  		<id>log-sqlite</id>
+  		<type>sqlite</type>
+  		<isdef>false</isdef>
+  		<src>$VOLUME_HOME/syslog.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>false</dbg>
+  		<log>true</log>
+  		<smtcs>semantic-log.xml</smtcs>
+  	</c>
+  	
+  	<c>
+  		<!-- for date scripts, see docs -->
+  		<id>raw-vec</id>
+  		<type>sqlite</type>
+  		<isdef></isdef>
+  		<src>$VOLUME_HOME/vectors.sqlite</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<!-- enable sql printing -->
+  		<dbg>true</dbg>
+  		<log>true</log>
+  		<smtcs>semantics-vec.xml</smtcs>
+  	</c>
+  </t>
+
+  <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,log,smtcs">
+  	<!-- dbcp table is used to pooled db datasource, for basic connection, see dao -->
+  	<!-- type: mysql | oracle | mssql -->
+  	<!-- id: client specify id for the desired target data source -->
+  	<!-- src: connection name, e.g. context.xml/Context/Resource [name] -->
+  	<!-- dbg: true for printing sql -->
+  	<!-- smtcs: semantics configuration used only for the connection.
+  		(And a global semantics configuration?) -->
+
+	<!-- A pooled connection configuration example for Tomcat 6, 7, 8
+  		in %CATALINA_HOME/conf/server.xml/GlobalNamingResoure/Resource:
+  	<Resource name="jdbc/semantic-DA" global="jdbc/semantic-DA" 
+  			auth="Container" type="javax.sql.DataSource"
+  			maxActive="10" maxIdle="3" maxWait="10000"
+  			username="odysz" password="..." driverClassName="com.mysql.jdbc.Driver"
+  			url="jdbc:mysql://...:3306/prj" connectionProperties="useUnicode=yes;characterEncoding=utf8;autoReconnect=true;autoReconnectForPools=true" />
+   	<c>
+  		<id>io.odys-z</id>
+  		<type>mysql</type>
+  		<src>jdbc/inet-sample</src>
+  		<isdef></isdef>
+  		<usr>Not used</usr>
+  		<pswd>Not used (will be protected in cipher in the future)</pswd>
+  		<dbg>true</dbg>
+  		<log>true</log>
+  	</c>
+	-->
+
+	<!-- See https://odys-z.github.io/notes/jclient/quick-start.html#java
+   	<c>
+  		<id>orcl.alarm-report</id>
+  		<type>orcl</type>
+  		<src>jdbc/orcl-temp</src>
+  		<isdef></isdef>
+  		<usr>Not used</usr>
+  		<pswd>Not used</pswd>
+  		<dbg>true</dbg>
+  		<log>true</log>
+  		<smtcs>semantics-orcl.xml</smtcs>
+  	</c>
+	-->
+
+  </t>
+
+  <t id="conn-uri" pk='uri' columns="uri, conn">
+  	<!-- for uri, see AnClient/js/example/example.js/north-star/north-app.jsx
+  	     for conn, see above
+  	     It's planned to try configure connections via user requests, in the future.
+  	-->
+   	<c>
+  		<uri>session</uri>
+  		<conn>sys-sqlite</conn>
+  	</c>
+   	<c>
+  		<uri>/sys/*</uri>
+  		<conn>sys-sqlite</conn>
+  	</c>
+   	<c>
+  		<uri>/views/sys/*</uri>
+  		<conn>sys-sqlite</conn>
+  	</c>
+
+   	<c>
+  		<uri>/xv.*/.*</uri>
+  		<conn>raw-vec</conn>
+  	</c>
+  	
+  	<c>
+  		<uri>/cheapflow</uri>
+  		<conn>cheap-sqlite</conn>
+  	</c>
+  	
+  </t>
+ 
+</conns>

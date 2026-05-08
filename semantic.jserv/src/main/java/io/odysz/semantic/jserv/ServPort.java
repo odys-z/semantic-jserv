@@ -295,7 +295,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			write(resp, err(MsgCode.exGeneral, e.getClass().getName(), e.getMessage()));
+			write(resp, err(MsgCode.exGeneral, "%s: %s", e.getClass().getName(), e.getMessage()));
 		}
 	}
 
