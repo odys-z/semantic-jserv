@@ -75,7 +75,7 @@ public class Echo extends ServPort<EchoReq> {
 			resp.flushBuffer();
 			
 			if (fingerprint)
-				logi("Echo: %s : %s", remote, echoReq.uri());
+				logi("Echo: %s %s : %s", remote, echoReq.uri(), echoReq.echo);
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (IOException e) {
