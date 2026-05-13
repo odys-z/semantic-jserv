@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.odysz.anson.Anson;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -351,9 +351,9 @@ public class JUser extends SemanticObject implements IUser {
 	public boolean login(Object reqObj) throws TransException {
 		AnSessionReq req = (AnSessionReq)reqObj;
 		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
-		byte[] ssiv = AESHelper.decode64(req.iv);
+		byte[] ssiv = AESHelper2.decode64(req.iv);
 		String c = null;
-		try { c = AESHelper.encrypt(uid, pswd, ssiv); }
+		try { c = AESHelper2.encrypt(uid, pswd, ssiv); }
 		catch (Exception e) { throw new TransException (e.getMessage()); }
 
 		// 2. compare pswd-cipher with j.pswd
@@ -368,7 +368,7 @@ public class JUser extends SemanticObject implements IUser {
 	@Override
 	public boolean guessPswd(String pswd64, String iv64)
 			throws TransException, GeneralSecurityException, IOException {
-		return pswd != null && pswd.equals(AESHelper.decrypt(pswd64, this.ssid, AESHelper.decode64(iv64)));
+		return pswd != null && pswd.equals(AESHelper2.decrypt(pswd64, this.ssid, AESHelper2.decode64(iv64)));
 	}
 
 	@Override

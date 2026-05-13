@@ -125,9 +125,9 @@ public:
 
     inline_static = True
 
-    # 0: echoreq, 1: EchoReq
+    # 0: echoreq, 1: AnSessionResp, 2: AnsonResp
     load_ast = '''void load_{0}Ast(AstMap &asts, const string &ast_path) {{
-    specialize_msg_astpth<{1}>(asts, ast_path,
+    specialize_msg_astpth<{1}, {2}>(asts, ast_path,
       [](meta_factory<{1}> &entf, AnsonBodyAst *ast) {{'''
 
     entt_ctor = '''
@@ -213,7 +213,7 @@ public:
 
                 # load_ast()
                 '\n' + ('inline static ' if self.inline_static else '') + self.load_ast.format(
-                    ast.c_class().lower(), ast.c_class()),
+                    ast.c_class().lower(), ast.c_class(), ast.c_base()),
                 *[self.entt_data.format(ast.c_class(), fn) for fn, _ in ast.fields.items()],
                 '\n',
                 *entt_ctors(ast),
