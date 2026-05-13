@@ -4,7 +4,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Set;
 
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.semantic.jsession.AnSessionReq;
 import io.odysz.semantic.jsession.JUser.JUserMeta;
 import io.odysz.semantics.IUser;
@@ -78,9 +78,9 @@ public class DocUser extends SyncUser {
 	public boolean login(Object reqObj) throws TransException {
 		AnSessionReq req = (AnSessionReq)reqObj;
 		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
-		byte[] ssiv = AESHelper.decode64(req.iv());
+		byte[] ssiv = AESHelper2.decode64(req.iv());
 		String c = null;
-		try { c = AESHelper.encrypt(userId, pswd, ssiv); }
+		try { c = AESHelper2.encrypt(userId, pswd, ssiv); }
 		catch (Exception e) { throw new TransException (e.getMessage()); }
 
 		// 2. compare pswd-cipher with j.pswd
