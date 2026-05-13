@@ -253,7 +253,7 @@ public class DocsReq extends UserReq implements IBlock {
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
 		doc = doc == null
-			? new ExpSyncDoc(file)
+			? new ExpSyncDoc(file) // entMeta is null, and shouldn't use it.
 				.clientpath(file.fullpath())
 				.folder(usr.device + "-" + usr.uid())
 			: doc; 
@@ -345,7 +345,7 @@ public class DocsReq extends UserReq implements IBlock {
 
 	public DocsReq doc(String device, String fullpath) {
 		this.device = new Device(device, null);
-		this.doc = new ExpSyncDoc().device(device).clientpath(fullpath);
+		this.doc = new ExpSyncDoc(null, "").device(device).clientpath(fullpath);
 		return this;
 	}
 

@@ -228,7 +228,7 @@ public class ExpDoctierservTest {
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
-		ExpSyncDoc dx0 = (ExpSyncDoc) new ExpSyncDoc()
+		ExpSyncDoc dx0 = (ExpSyncDoc) new ExpSyncDoc(null, "")
 					.share(devx0.uid, ShareFlag.publish.name(), new Date())
 					.folder(devx0.device.tofolder)
 					.device(devx0.device.id)

@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
 
+import io.odysz.anson.AnsonCtor;
 import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
@@ -162,10 +163,10 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		org = orgId;
 	}
 	
-	public ExpSyncDoc() {
-		super(null);
-		this.org = "";
-	}
+//	public ExpSyncDoc() {
+//		super(null);
+//		this.org = "";
+//	}
 
 	/**
 	 * A helper used to make sure query fields are correct.
@@ -208,6 +209,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return synpageCols;
 	}
 
+	@AnsonCtor(base={"meta"}, initialist={"AnResultset rs =", "ExpDocTableMeta meta = "})
 	public ExpSyncDoc(AnResultset rs, ExpDocTableMeta meta) throws SQLException {
 		super(meta);
 		// this.entMeta = meta;
