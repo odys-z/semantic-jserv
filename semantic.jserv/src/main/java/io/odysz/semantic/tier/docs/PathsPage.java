@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonCtor;
 import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
@@ -26,11 +27,13 @@ public class PathsPage extends Anson {
     
     public PathsPage() {}
 
+	@AnsonCtor(base={}, initialist={"int begin: start", "int afterLast : end"})
     public PathsPage(int begin, int afterLast) {
         start = begin;
         end = afterLast;
     }
 
+	@AnsonCtor(base={}, initialist={"string device: device", "int begin: start", "int afterLast : end"})
     public PathsPage(String device, long start, long end) {
     	this.device = device;
     	this.start = start;

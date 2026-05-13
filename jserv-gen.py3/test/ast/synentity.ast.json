@@ -1,0 +1,16 @@
+{ "type": "io.odysz.reflect.AnsonAst",
+  "dataAnclass": "io.oz.syn.SynEntity",
+  "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",
+  "fields" : {
+    "entm": {"dataAnclass": "SynEntityMeta"},
+    "synpageCols": {"dataAnclass": "list<string"},
+    "recId": {"dataAnclass": "string"},
+    "uids": {"dataAnclass": "string"},
+    "synode": {"dataAnclass": "string"},
+    "synoder": {"dataAnclass": "string"},
+    "nyquence": {"dataAnclass": "long"}
+  },
+  "ctors": [[[], ["SynEntityMeta", "entm", "entMeta"]],
+            [["type"], ["SynEntityMeta", "entm", "entMeta"], ["string", "", "type"]]]
+}
+

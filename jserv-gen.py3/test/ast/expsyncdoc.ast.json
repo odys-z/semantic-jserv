@@ -1,0 +1,23 @@
+{ "type": "io.odysz.reflect.AnsonAst",
+  "dataAnclass": "io.odysz.semantic.tier.docs.ExpSyncDoc",
+  "baseAnclass": "io.oz.syn.SynEntity",
+  "fields" : {
+    "pname": {"dataAnclass": "string"},
+    "clientpath": {"dataAnclass": "string"},
+    "device": {"dataAnclass": "string"},
+    "org": {"dataAnclass": "string"},
+    "shareflag": {"dataAnclass": "string"},
+    "shareMsg": {"dataAnclass": "string"},
+    "createDate": {"dataAnclass": "string"},
+    "uri64": {"dataAnclass": "string"},
+    "shareby": {"dataAnclass": "string"},
+    "sharedate": {"dataAnclass": "string"},
+    "size": {"dataAnclass": "long"},
+    "mime": {"dataAnclass": "string"},
+    "folder": {"dataAnclass": "string"}
+  },
+  "ctors": [[[], []],
+            [["m"], ["SynEntityMeta", "", "m"], ["string", "org", "orgId"]],
+            [["meta"], ["SynEntityMeta", "", "meta"], ["AnResultset", "format", "()", "rs"]]]
+}
+

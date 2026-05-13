@@ -1,0 +1,14 @@
+{ "type": "io.odysz.reflect.AnsonAst",
+  "dataAnclass": "io.odysz.semantic.tier.docs.PathsPage",
+  "baseAnclass": "io.odysz.anson.Anson",
+  "fields" : {
+    "device": {"dataAnclass": "string"},
+    "start": {"dataAnclass": "int"},
+    "end": {"dataAnclass": "int"},
+    "clientPaths": {"dataAnclass": "map<string, list<VarType"}
+  },
+  "ctors": [[[], []],
+            [[], ["int", "start", "begin"], ["int", "end", "afterLast"]],
+            [[], ["string", "device", "device"], ["int", "start", "begin"], ["int", "end", "afterLast"]]]
+}
+

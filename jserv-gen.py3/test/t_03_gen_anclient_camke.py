@@ -16,6 +16,6 @@ class GenJservTest(TestCase):
 
         gen_peers(settings, testpath)
 
-        with (open('../../Anclient.cmake/tests/expect/jserv.hpp', 'r') as e,
+        with (open('../../Anclient.cmake/tests/expect/doctier.hpp', 'r') as e,
               open(settings.cpp_gen, 'r') as f):
             self.assertEqual(e.readlines(), f.readlines())

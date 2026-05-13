@@ -149,7 +149,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return this;
 	}
 
-	@AnsonField(ignoreTo=true)
+	// @AnsonField(ignoreTo=true)
 	// ExpDocTableMeta docMeta;
 
 	public String mime;
@@ -158,6 +158,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return this;
 	}
 	
+	@AnsonCtor(base={"m"}, initialist={"SyntityeMeta m", "string orgId : org"})
 	public ExpSyncDoc(SyntityMeta m, String orgId) {
 		super(m);
 		org = orgId;
@@ -209,7 +210,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return synpageCols;
 	}
 
-	@AnsonCtor(base={"meta"}, initialist={"AnResultset rs =", "ExpDocTableMeta meta = "})
+	@AnsonCtor(base={"meta"}, initialist={"AnResultset rs :", "ExpDocTableMeta meta : "})
 	public ExpSyncDoc(AnResultset rs, ExpDocTableMeta meta) throws SQLException {
 		super(meta);
 		// this.entMeta = meta;
@@ -325,7 +326,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	/**
 	 * @see #escapeClientpath()
 	 * @param fullpath
-	 * @return
+	 * @return this
 	 */
 	public ExpSyncDoc clientpath(String fullpath) {
 		clientpath = separatorsToUnix(fullpath);

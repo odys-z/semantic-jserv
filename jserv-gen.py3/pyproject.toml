@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "semantier_generator"
-version = "0.0.1"
+version = "0.0.2"
 description = "Semantic Tier Generator"
 readme = "README.md"
 license = { text = "MIT" }
@@ -19,7 +19,6 @@ dependencies = [
 ]
 
 [project.scripts]
-#anclient-init = "anclient.unpack_data:main"
 
 [tool.setuptools]
 packages = ["semantier_gen"]
