@@ -308,6 +308,4 @@ class DoclientierTest {
 
 		assertEquals(0, pathpool.size());
 	}
-
-
 }

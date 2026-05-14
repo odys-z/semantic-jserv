@@ -7,25 +7,37 @@ from anson.io.odysz.common import Utils, LangExt, Primtypes
 from semanticshare.io.odysz.reflect import AnsonBodyAst, PeerSettings, AnsonAst, init_asts
 
 
-def entt_ctors(ast: AnsonAst) -> List[str]:
+def entf_ctors(ast: AnsonAst) -> List[str]:
+    '''
+    :param ctorstrs: e.g.
+        [[["echo", "string", "m"], ["r/query"]],
+        [[], ["r/query"]]]
+    :return: entf.ctor<>(); entf.ctor<string>();
+    '''
+    ctorss = []
+    for ctor in ast.ctors:
+        lst = []
+        for c in ctor[1:]:
+            if len(c) > 1:
+                lst.append(c[0])
+        ctorss.append(f'        entf.ctor<{", ".join(lst)}>();\n')
+    return ctorss
+
+
+def ent_ctors(ast: AnsonAst) -> List[str]:
     '''
     :param ctorstrs: e.g.
         [[["echo", "string", "m"], ["r/query"]],
         [[], ["r/query"]]]
     :return: .ctor<>().ctor<string>()
     '''
-    # return [f'        entf.ctor<{c}>();\n' for ctor in ast.ctors for c in ctor[0]]
     ctorss = []
     for ctor in ast.ctors:
         lst = []
         for c in ctor[1:]:
             if len(c) > 1:
-                # string echo m
-                # string ssInf.ssid = sid
                 lst.append(c[0])
-        # ctorss.append(f'        entf.ctor<{", ".join(lst)}>();\n')
         ctorss.append(f'        .ctor<{", ".join(lst)}>()\n')
-
     return ctorss
 
 def c_type(dataAnclass: str) -> str:
@@ -62,6 +74,7 @@ def class_ctors(ast: AnsonAst) -> List[str]:
         EchoReq(string m) : AnsonBody(m, _type_);
     '''
     ctors = []
+    body_funcs = []
     for ctorss in ast.ctors:
         # e.g. [['r/peer-test'], ['string', 'echo', 'm']]
         parlist, fieldini = [], []
@@ -73,7 +86,8 @@ def class_ctors(ast: AnsonAst) -> List[str]:
         if LangExt.len(ctorss[0]) == 0:
             base_ini_list = '_type_'
         else:
-            base_ini_list = ', '.join([*ctorss[0], '_type_'])
+            # base_ini_list = ', '.join([*ctorss[0], '_type_'])
+            base_ini_list = ', '.join([*[varg if varg != 'null' else '{}' for varg in ctorss[0]], '_type_'])
 
         for parass in ctorss[1:]:
             if LangExt.len(parass) == 0:
@@ -91,6 +105,10 @@ def class_ctors(ast: AnsonAst) -> List[str]:
             elif LangExt.len(parass) == 4 and parass[2] == '()':
                 parlist.append(parass[0] + " " + parass[3])
                 ctor_body.append(f'\n        {parass[1]}({parass[3]});')
+                fn = f'{parass[1]}({parass[0]})'
+                if fn not in body_funcs:
+                    ctors.append(f'\n    void {parass[1]}({parass[0]} {parass[3]});\n')
+                    body_funcs.append(fn)
 
             else: Utils.warn("Error: Cannot parse ctor's initializer list: " + "\,".join(parass))
 
@@ -294,7 +312,7 @@ class MsgLines:
                     ast.c_class().lower(), ast.c_class(), ast.c_base()),
                 *[self.entt_data.format(ast.c_class(), fn) for fn, _ in ast.fields.items()],
                 '\n',
-                *entt_ctors(ast),
+                *entf_ctors(ast),
                 self.field_getter0.format(ast.c_class()),
                 *[self.field_getif.format(fn) for fn, _ in ast.fields.items()],
                 self.field_getter9.format(ast.c_class())
@@ -347,7 +365,7 @@ class AnsonLines:
                 *[self.anson_field.format(fn, f['dataAnclass']) for fn, f in ast.fields.items()],
                 '       });\n',
                 self.entt_facotry.format(ast.c_class(), ast.c_base()),
-                *entt_ctors(ast),
+                *ent_ctors(ast),
                 # self.entt_facotry.format(ast.c_class(), ast.c_base()),
                 *[self.entt_data.format(ast.c_class(), fn) for fn, _ in ast.fields.items()],
                 '\n        ;\n}\n'

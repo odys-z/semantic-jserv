@@ -28,7 +28,7 @@
     "deletings": {"dataAnclass": "list<string"},
     "stamp": {"dataAnclass": "string"},
     "syncingPage": {"dataAnclass": "io.odysz.semantic.tier.docs.PathsPage"},
-    "device": {"dataAnclass": "string"},
+    "device": {"dataAnclass": "io.odysz.semantic.tiers.docs.Device"},
     "syncQueries": {"dataAnclass": "list<ExpSyncDoc"},
     "blockSeq": {"dataAnclass": "int"},
     "org": {"dataAnclass": "string"},

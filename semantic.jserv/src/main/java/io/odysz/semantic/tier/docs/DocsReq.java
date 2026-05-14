@@ -277,10 +277,7 @@ public class DocsReq extends UserReq implements IBlock {
 				.folder(usr.device + "-" + usr.uid())
 			: doc; 
 
-		// this.docName = file.clientname();
-		// this.createDate = file.cdate();
 		this.blockSeq = 0;
-		
 		this.a = A.blockStart;
 		return this;
 	}

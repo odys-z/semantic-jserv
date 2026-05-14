@@ -10,7 +10,8 @@
     "synoder": {"dataAnclass": "string"},
     "nyquence": {"dataAnclass": "long"}
   },
-  "ctors": [[[], ["SynEntityMeta", "entm", "entMeta"]],
+  "ctors": [[[], []],
+            [[], ["SynEntityMeta", "entm", "entMeta"]],
             [["type"], ["SynEntityMeta", "entm", "entMeta"], ["string", "", "type"]]]
 }
 

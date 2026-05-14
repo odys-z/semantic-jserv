@@ -4,8 +4,8 @@
   "fields" : {
     "xdoc": {"dataAnclass": "io.odysz.semantic.tier.docs.ExpSyncDoc"},
     "docTabl": {"dataAnclass": "string"},
-    "pathsPage": {"dataAnclass": "io.odysz.transact.sql.PathsPage"},
-    "string": {"dataAnclass": "string"},
+    "syncingPage": {"dataAnclass": "io.odysz.transact.sql.PathsPage"},
+    "collectId": {"dataAnclass": "string"},
     "blockSeqReply": {"dataAnclass": "int"},
     "org": {"dataAnclass": "string"},
     "device": {"dataAnclass": "string"},

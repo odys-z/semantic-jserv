@@ -27,13 +27,13 @@ public class PathsPage extends Anson {
     
     public PathsPage() {}
 
-	@AnsonCtor(base={}, initialist={"int begin: start", "int afterLast : end"})
+	@AnsonCtor(base={}, initialist={"int begin: start", "int afterLast = end"})
     public PathsPage(int begin, int afterLast) {
         start = begin;
         end = afterLast;
     }
 
-	@AnsonCtor(base={}, initialist={"string device: device", "int begin: start", "int afterLast : end"})
+	@AnsonCtor(base={}, initialist={"string device: device", "int begin = start", "int afterLast = end"})
     public PathsPage(String device, long start, long end) {
     	this.device = device;
     	this.start = start;

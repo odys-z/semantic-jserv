@@ -1,0 +1,12 @@
+{ "type": "io.odysz.reflect.AnsonAst",
+  "dataAnclass": "io.odysz.semantic.tiers.docs.Device",
+  "baseAnclass": "io.odysz.anson.Anson",
+  "fields" : {
+    "id": {"dataAnclass": "string"},
+    "synode0": {"dataAnclass": "string"},
+    "devname": {"dataAnclass": "string"},
+    "toFolder": {"dataAnclass": "string"}
+  },
+  "ctors": [[[], []],
+    [[], ["string", "id", "=", "id"], ["string", "synode0", "=", "synode0"], ["string", "devname", "=", "devname"] ]]
+}

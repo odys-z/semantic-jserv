@@ -5,6 +5,7 @@
   "javaEnums"  : ["io.odysz.semantic.jprotocol.Port"],
   "ansonBody"  : "io.odysz.semantic.jprotocol.AnsonBody",
   "anRequests" : ["ast/pageinf.ast.json",
+                  "ast/device.ast.json",
                   "ast/synentity.ast.json",
                   "ast/pathspage.ast.json",
                   "ast/expsyncdoc.ast.json",
