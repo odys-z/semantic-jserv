@@ -164,11 +164,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		org = orgId;
 	}
 	
-//	public ExpSyncDoc() {
-//		super(null);
-//		this.org = "";
-//	}
-
 	/**
 	 * A helper used to make sure query fields are correct.
 	 * @param meta
@@ -213,7 +208,7 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	@AnsonCtor(base={"meta"}, initialist={"AnResultset rs :", "ExpDocTableMeta meta : "})
 	public ExpSyncDoc(AnResultset rs, ExpDocTableMeta meta) throws SQLException {
 		super(meta);
-		// this.entMeta = meta;
+
 		this.recId = rs.getString(meta.pk);
 		this.org = rs.getString(meta.org);
 		this.pname = rs.getString(meta.resname);
