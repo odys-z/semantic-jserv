@@ -1,8 +1,8 @@
 { "type": "io.oz.invoke.SynodeTask",
   "version"     : "0.7.8",
   "apk_ver"     : "0.7.4",
-  "html_jar_v"  : "0.1.8",
-  "web_ver"     : "0.4.2",
+  "html_jar_v"  : "0.1.9",
+  "web_ver"     : "0.4.4",
   "web_inf_dir" : "src/main/webapp/WEB-INF-0.7",
   "jre_release" : "../../JRE-Mirror/temurin17-binaries/jdk-17.0.17+10/bins/OpenJDK17U-jre_x64_windows_hotspot_17.0.17_10.zip",
   "jre_name"    : "x64_windows",
@@ -13,7 +13,7 @@
   "registry_dir": "../synode.py/registry",
   "android_dir" : "../../anclient/examples/example.android",
   "central_dir" : "../../Semantic-Network/registration/jserv",
-  "dist_dir"    : "build-0.7.7",
+  "dist_dir"    : "build-0.7.8",
   "deploy": {
     "mirror_path"   : null,
     "central_iport" : "10.10.10.10:9999",
@@ -27,7 +27,26 @@
     "dom_nodes"     : 3,
     "syn_admin_pswd": "",
     "lang"          : "en",
-    "langs"         : {"en": {"[CNPC]": "[Petrol China]"}},
+    "langs"         : {"en": {}},
     "root_key"      : "0123456789ABCDEF"},
-  "post_cmds"   : ["scp build-0.7.7/{zip_name} ody@10.10.10.10:~/.../jserv-album/build-0.7.7"]
+  "landings" : [{
+    "redirector": "redirection.json",
+    "re_links"  : "links-{market}-{org}.json, not configurable",
+    "remot_path": "$HOME/github/odys-z.github.io/landings/portfolio-0.7/res",
+    "dist_path" : "res/dist",
+    "post_scp"  : {
+      "host": "10.10.10.10",
+      "port": 22,
+      "user": "zelenskyy",
+      "pswd": null,
+      "remote_dir": "e.g. {remot_path}/{dist_path}, not configurable"
+    }}],
+  "deploy_cmds"   : ["scp {built_zip} zelenskyy@10.10.10.10:~/.../jserv-album/build-0.7.7"],
+  "deploy_scps"   : [{
+    "issue": "Google AI: Python SCP won't work in Python 3.9. post_cmds for legacy.",
+    "host": "10.10.10.10",
+    "port": 22,
+    "user": "zelenskyy",
+    "pswd": null,
+    "remote_dir": "~/github/semantic-jserv/jserv-album/build-0.7.7"}]
 }

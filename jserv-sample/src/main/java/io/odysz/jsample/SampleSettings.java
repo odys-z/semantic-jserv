@@ -22,7 +22,7 @@ public class SampleSettings extends Anson {
 	public String vol_name;
 	public String volume;
 	public String conn;
-	public String port;
+	public int    port;
 	public String rootkey;
 
 	public static SampleSettings check(String webinf, String settings_json)

@@ -1,7 +1,6 @@
 package io.odysz.semantic.jprotocol;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
 import io.odysz.anson.AnsonException;
@@ -38,7 +37,7 @@ public class JProtocol {
 
 	@FunctionalInterface
 	public interface OnOk {
-		void ok(AnsonResp resp) throws IOException, AnsonException, TransException, SQLException;
+		void ok(AnsonResp resp) throws IOException, AnsonException, TransException;
 	}
 	
 	/**
@@ -83,13 +82,22 @@ public class JProtocol {
 	 */
 	@FunctionalInterface
 	public interface OnDocsOk {
-		void ok(List<? extends AnsonResp> resps) throws IOException, AnsonException, TransException, SQLException;
+		void ok(List<? extends AnsonResp> resps) throws IOException, AnsonException, TransException;
 	}
 	
 	@FunctionalInterface
 	public interface OnError { void err(MsgCode code, String msg, String ... args ); }
 
+	/**
+	 * @deprecated ISSUE since 1.5.16, to adapt to Edge, this must b instance field as
+	 * the clients can be of different jservs.
+	 */
 	public static String urlroot;
+	
+	final String prtocolpath;
+	JProtocol(String rootpath) {
+		prtocolpath = rootpath;
+	}
 
 	public static SemanticObject err(IPort port, String code, String err) {
 		SemanticObject obj = new SemanticObject();

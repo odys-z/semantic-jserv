@@ -7,10 +7,14 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.transact.sql.Query.Ix;
 
-/**Query Request Body Item.<br>
+/**
+ * Query Request Body Item.<br>
  * Included are information of RDBMS query information,
  * table, joins, conditions, groups, orders, etc.
+ * 
  * @author odys-z@github.com
+ * 
+ * @since 1.5.17 moved to {@link io.odysz.semantic.jserv.crud.AnQueryReq} - requires automatic generation
  */
 public class AnQueryReq extends AnsonBody {
 

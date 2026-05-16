@@ -1,7 +1,11 @@
 package io.odysz.semantic.jsession;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.HashMap;
 
+import io.odysz.anson.AnsonCtor;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -24,6 +28,7 @@ public class AnSessionReq extends AnsonBody {
 		public static final String ping = "ping";
 	}
 	
+	@AnsonCtor(base= {""} )
 	public AnSessionReq() {
 		super(null, null);
 	}
@@ -44,6 +49,9 @@ public class AnSessionReq extends AnsonBody {
 	String iv;
 	public String iv() { return iv; }
 
+	/**
+	 * @deprecated No equivalent of AST & C++.
+	 */
 	HashMap<String, Object> mds;
 	public String md(String k) { return mds == null ? null : (String) mds.get(k); }
 	public AnSessionReq md(String k, String md) {
@@ -80,6 +88,28 @@ public class AnSessionReq extends AnsonBody {
 			itm.deviceId = deviceId[0];
 
 		jmsg.body((AnsonBody)itm);
+		return jmsg;
+	}
+
+	public static AnsonMsg<AnSessionReq> formatLogin2(String uid, String pswdPlain,
+			String ... deviceId) throws GeneralSecurityException, IOException {
+
+		AnsonMsg<AnSessionReq> jmsg = new AnsonMsg<AnSessionReq>(Port.session);
+
+		AnSessionReq itm = new AnSessionReq(jmsg);
+		itm.uid = uid;
+		itm.a("login");
+
+		byte[] iv =   AESHelper2.getRandom();
+		String iv64 = AESHelper2.encode64(iv);
+		String tk64 = AESHelper2.encrypt(uid, pswdPlain, iv);
+		itm.setup(uid, tk64, iv64);
+
+		if (deviceId != null && deviceId.length > 0)
+			itm.deviceId = deviceId[0];
+
+		jmsg.body((AnsonBody)itm);
+		
 		return jmsg;
 	}
 

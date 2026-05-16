@@ -1,0 +1,16 @@
+{ "type"       : "io.odysz.reflect.PeerSettings",
+  "ansonMsg"   : "io.odysz.semantic.jprotocol.AnsonMsg",
+  "ansons"     : [],
+  "scopeEnums" : ["io.odysz.semantic.jprotocol.MsgCode"],
+  "javaEnums"  : ["io.odysz.semantic.jprotocol.Port"],
+  "ansonBody"  : "io.odysz.semantic.jprotocol.AnsonBody",
+  "anRequests" : ["ast/pageinf.ast.json",
+                  "ast/device.ast.json",
+                  "ast/synentity.ast.json",
+                  "ast/pathspage.ast.json",
+                  "ast/expsyncdoc.ast.json",
+                  "ast/docsreq.ast.json",
+                  "ast/docsresp.ast.json"],
+  "cpp_include": ["gen/stubtypes.h"],
+  "cpp_gen"    : "test/gen/t_03_synode.hpp"
+}

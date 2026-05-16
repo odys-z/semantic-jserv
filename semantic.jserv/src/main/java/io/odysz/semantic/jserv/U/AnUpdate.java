@@ -30,6 +30,10 @@ import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.Update;
 import io.odysz.transact.x.TransException;
 
+/**
+ * 
+ * @since 1.5.17 moving to {@link io.odysz.semantic.jserv.crud.AnUpdate} - requires automatic generation
+ */
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/u.serv" })
 public class AnUpdate extends ServPort<AnUpdateReq> {
 	public AnUpdate() {

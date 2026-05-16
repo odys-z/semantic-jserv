@@ -7,11 +7,15 @@ import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantics.x.SemanticException;
 
-/**<p>Insert Request helper</p>
+/**
+ * <p>Insert Request helper</p>
  * <b>Note:</b>
  * <p>AnInsertReq is a subclass of {@link AnUpdateReq}.</p>
  * <p>Because all request element is deserialized as an AnUpdateReq, so this can only work for Update/Insert request.</p>
+ * 
  * @author odys-z@github.com
+ * 
+ * @since 1.5.17 moving to {@link io.odysz.semantic.jserv.crud.AnInsertReq}, waiting auto-generation
  */
 public class AnInsertReq extends AnUpdateReq {
 

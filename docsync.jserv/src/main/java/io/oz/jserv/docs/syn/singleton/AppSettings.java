@@ -7,6 +7,7 @@ import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.shouldnull;
 import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.LangExt.mustnull;
 import static io.odysz.common.LangExt.mustnoBlankAny;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.Utils.logi;
@@ -18,10 +19,10 @@ import static io.odysz.common.DateFormat.jour0;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Set;
 
 import org.xml.sax.SAXException;
 
@@ -106,7 +107,8 @@ public class AppSettings extends Anson {
 		if (isblank(rootkey)) {
 			mustnonull(installkey, "[AppSettings] Install-key cannot be null if root-key is empty.");
 			if (len(jservs) == 0)
-				Utils.warn("Jservs Shouldn't be empty, unless this node is setup for joining a domain. synode: %s", cfg.synode());
+				Utils.warn("Jservs Shouldn't be empty, unless this node is setup for joining a domain. synode: %s",
+							cfg.synode());
 
 			Syngleton.defltScxt = new DATranscxt(cfg.sysconn);
 			setupdb(cfg, url_path, webinf, config_xml, installkey, forceTest);
@@ -133,7 +135,7 @@ public class AppSettings extends Anson {
 	 * @param rootkey
 	 * @throws Exception
 	 */
-	public void setupdb(SynodeConfig cfg, String url_path, String webinf, String config_xml,
+	void setupdb(SynodeConfig cfg, String url_path, String webinf, String config_xml,
 			String rootkey, boolean forceTest) throws Exception {
 		
 		Syngleton.setupSysRecords(cfg, YellowPages.robots());
@@ -182,7 +184,7 @@ public class AppSettings extends Anson {
 	public String vol_name;
 	public String volume;
 
-	public HashMap<String, String> jservs;
+	private HashMap<String, String> jservs;
 
 	/** UTC time of dirty */
 	public String jserv_utc;
@@ -192,8 +194,11 @@ public class AppSettings extends Anson {
 	}
 
 
-	public String installkey;
-	public String rootkey;
+	String installkey;
+	public String installkey() { return installkey; }
+
+	String rootkey;
+	public String rootkey() { return rootkey; }
 
 	/**
 	 * Json file path.
@@ -267,15 +272,16 @@ public class AppSettings extends Anson {
 		String abs_json = FilenameUtils.concat(EnvPath.replaceEnv(web_inf), _0(json, setup_json));
 		logi("[AppSettings] Loading settings from %s", abs_json);
 
-		FileInputStream inf = new FileInputStream(new File(abs_json));
+		try (FileInputStream inf = new FileInputStream(new File(abs_json))) {
 
-		AppSettings settings = (AppSettings) Anson.fromJson(inf);
-		if (settings.jservs == null)
-			settings.jservs = new HashMap<String, String>();
-		settings.webinf = web_inf;
-		settings.json = abs_json;
+			AppSettings settings = (AppSettings) Anson.fromJson(inf);
+			if (settings.jservs == null)
+				settings.jservs = new HashMap<String, String>();
+			settings.webinf = web_inf;
+			settings.json = abs_json;
 
-		return settings;
+			return settings;
+		}
 	}
 	
 	/**
@@ -284,18 +290,60 @@ public class AppSettings extends Anson {
 	 * @throws AnsonException
 	 * @throws IOException
 	 */
-	public AppSettings save() throws AnsonException {
-		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
-			toBlock(inf, JsonOpt.beautify());
+	public AppSettings save_rt() throws IOException {
+		// according to Grok
+//		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
+//			toBlock(inf, JsonOpt.beautify());
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			throw new AnsonException(e);
+//		} 
+//		return this;
+
+		mustnonull(rootkey);
+		mustnull(installkey);
+
+		/*
+		String tempname = f("%s.%d", json, (int)(Math.random() * 1000));
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), tempname);
+
+		File file = new File(json);
+		File temp = new File(tempname);
+		try (Writer writer = new BufferedWriter(
+				 new OutputStreamWriter(
+					 new FileOutputStream(temp), StandardCharsets.UTF_8))) {
+			writer.write(toBlock(JsonOpt.beautify()));
+			writer.flush();
+			Utils.logi("=== settings.json written to temp successfully ===");
 		} catch (IOException e) {
+			Utils.warn("CRITICAL: Failed to write settings.json.temp! %s", e.getMessage());
 			e.printStackTrace();
 			throw new AnsonException(e);
-		} 
+		}
+
+		try {
+	        Files.copy(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+	        Utils.logi("=== settings.json replaced successfully (copy) ===");
+	    } catch (IOException e) {
+	        Utils.warn("CRITICAL: Failed to copy %s → %s ! %s", tempname, json, e.getMessage());
+	        e.printStackTrace();
+	        throw new AnsonException(e);
+	    }
+		Utils.logi("=== settings.json saved successfully ===");
+		*/
+
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), json);
+		toFile(json, JsonOpt.beautify());
+
+		// TODO Let's flag this section with debug, my field that is configurable.
+		String backup = f("%s-fingerprint", json);
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), backup);
+		toFile(backup, JsonOpt.beautify());
 		return this;
 	}
 	
 	public AppSettings() {
-		installkey = "0123456789ABCDEF";
+		// installkey = "0123456789ABCDEF";
 		jservs = new HashMap<String, String>();
 	}
 	
@@ -304,8 +352,8 @@ public class AppSettings extends Anson {
 	 * 1. load settings.json<br>
 	 * 2. update env-variables<br>
 	 * 3. initiate connects<br>
-	 * 4. setup db, create tables it's sqlite drivers for the first time, see {@link AppSettings#setupdb(String, String, SynodeConfig, boolean)}. <br>
-	 * 
+	 * 4. setup db, create tables it's sqlite drivers for the first time,
+	 * see {@link AppSettings#setupdb(String, String, SynodeConfig, boolean)}. <br>
 	 * <h5>Note:</h5>
 	 * Multiple App instance must avoid defining same variables.
 	 * 
@@ -340,7 +388,9 @@ public class AppSettings extends Anson {
 			logi( "[INSTALL-CHECK]\n!!! FIRST TIME INITIATION !!!\n"
 				+ "Install: Calling setupdb() with configurations in %s ...",
 				config_xml);
-			settings.setupdb(url_path, config_xml, cfg, forceDrop).save();
+			settings.setupdb(url_path, config_xml, cfg, forceDrop);
+			
+			settings.save_rt();
 		}
 		else 
 			logi( "[INSTALL-CHECK]\n!!! SKIP DB SETUP !!!\n"
@@ -393,6 +443,10 @@ public class AppSettings extends Anson {
 		
 	}
 	
+	public Set<String> jservNodes() {
+		return jservs == null ? null : jservs.keySet();
+	}
+	
 	/** Find jserv from {@link #jservs}. */
 	public String jserv(String nid) {
 		return jservs.get(nid);
@@ -407,11 +461,16 @@ public class AppSettings extends Anson {
 		return this;
 	}
 
-	public AppSettings jservs(HashMap<String, String[]> jservs) {
+	public AppSettings jservs(HashMap<String, ?> jservs) {
 		this.jservs.clear();
 		if (jservs != null)
-		for (String n : jservs.keySet())
-			this.jservs.put(n, jservs.get(n)[0]);
+		for (String n : jservs.keySet()) {
+			if (jservs.get(n) instanceof String)
+				this.jservs.put(n, (String)jservs.get(n));
+			else if (jservs.get(n).getClass().isArray())
+				this.jservs.put(n, ((String[])jservs.get(n))[0]);
+			else throw new NullPointerException("Jservs type is not supported.");
+		}
 		return this;
 	}
 
@@ -636,7 +695,10 @@ setp (6)
 
 			if (mergeReply_butme(c, resp, synm) || toSubmit) {
 				loadDBLaterservs(c, synm);
-				save();
+
+//				mustnonull(rootkey);
+//				mustnull(installkey);
+				save_rt();
 			}
 		} catch (IOException e) {
 			warn("Cannot query/submit to central: %s,\n%s", regiserv, e.getMessage());
@@ -794,7 +856,7 @@ setp (6)
 					synm.org, c.org.orgId, synm.domain, c.domain, synm.pk, sid) == 0)
 					warnT(new Object() {},
 						  "[ERROR, if not the first boot] !!! This error is tolerated for running tests!\n"
-						+ "Updating jserv not exist? Shouldn't reach here!");
+						+ "Updating non-existing jserv of %s? Shouldn't reach here!", sid);
 
 				Update pst = tb.update(synm.tbl, robot)
 					.nv(synm.jserv, jserv(sid))

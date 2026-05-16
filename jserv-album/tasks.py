@@ -5,16 +5,17 @@ import shutil
 import sys
 from types import LambdaType
 from typing import cast
-from anson.io.odysz.common import Utils, LangExt
+from anson.io.odysz.common import Utils
 from anson.io.odysz.utils import zip2
 from invoke import task, call
 import os
 
+from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
+
 requir_pkg("anson.py3", "0.4.3")
-requir_pkg("semantics.py3", "0.4.5")
+requir_pkg("semantics.py3", "0.5.2")
 
 from anson.io.odysz.anson import Anson
-from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 
 version_pattern = '[0-9\\.]+'
@@ -41,15 +42,8 @@ re_install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
 re_webport       = '\"webport\"\\s*:\\s*[0-9]+'
 re_jserv_port    = '\"port\"\\s*:\\s*\\d+'
 
-post_vals = {}
+# post_vals = {}
 
-# try: import semanticshare
-# except ImportError:
-#     print('Please install the semantics sharing layer: pip install semantics.py3')
-#     sys.exit(1)
-# from semanticshare.io.oz.invoke import SynodeTask, CentralTask
-
-# taskcfg = cast(SynodeTask, Anson.from_file('tasks.json'))
 taskcfg = cast(SynodeTask, None)
 
 @task
@@ -90,18 +84,6 @@ def updateApkRes():
     """
     print('Updating host.json with APK resource...', taskcfg.host_json)
 
-    """
-    from importlib.metadata import distribution
-    try:
-        dist = distribution('src.synodepy3')  # or 'synode-py3'
-        print(f"Found {dist.name} version {dist.version}")
-    except importlib.metadata.PackageNotFoundError:
-        print("synode.py3 not found")
-    
-    """
-
-    # Must install semantics.py3, because of
-    # needing this to deserialize "io.oz.syntier.serv.ExternalHosts".
     hosts = cast(ExternalHosts, Anson.from_file(taskcfg.host_json))
     hosts.marketid = taskcfg.deploy.market_id
     print(os.getcwd(), taskcfg.host_json)
@@ -123,18 +105,19 @@ def updateApkRes():
 
     return None
 
-synode_json_bak = os.path.join(os.getcwd(), 'synode.json.bak')
-synode_json = ''
+# synode_json_bak = os.path.join(os.getcwd(), 'synode.json.bak')
+# synode_json = ''
 
 @task(pre=[call(validate)])
 def config(c):
     print(f'--------------    configuration   ------------------')
 
-    this_directory = os.getcwd()
+    # this_directory = os.getcwd()
 
     print(f'-- synode version: {taskcfg.version} --'),
 
-    version_file = os.path.join(this_directory, 'pom.xml')
+    # version_file = os.path.join(this_directory, 'pom.xml')
+    version_file = 'pom.xml'
     Utils.update_patterns(version_file, {
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
@@ -146,11 +129,10 @@ def config(c):
     })
 
     # FIXME This is not correct. To be moved to synode.py tasks.py
-    global synode_json_bak, synode_json
-    synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
-
-    shutil.copy2(synode_json, synode_json_bak)
-
+    # global synode_json_bak, synode_json
+    # synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
+    # shutil.copy2(synode_json, synode_json_bak)
+    synode_json = taskcfg.backup('../synode.py/src/synodepy3/synode.json')
     Utils.update_patterns(synode_json, {
         re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
         re_mirror_path('en'): f'"jre_mirror": "{taskcfg.deploy.mirror_path}"',
@@ -158,15 +140,13 @@ def config(c):
         re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
     })
 
-    global post_vals
-    post_vals['dictionary.json'] = {synuser_pswd_pattern: 0}
-    diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
+    diction_file = taskcfg.backup(os.path.join(taskcfg.registry_dir, 'dictionary.json'))
     Utils.update_patterns(diction_file, {
         org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
         synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
-    }, post_vals['dictionary.json'])
+    })
 
-    settings_json = os.path.join(taskcfg.web_inf_dir, 'settings.json')
+    settings_json = taskcfg.backup(os.path.join(taskcfg.web_inf_dir, 'settings.json'))
     Utils.update_patterns(settings_json, {
         re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
         re_webport     : f'"webport"     : {taskcfg.deploy.web_port}',
@@ -223,7 +203,7 @@ def build(c):
 
         ['web-dist/private', lambda: updateApkRes()],
         ['.', 'cat web-dist/private/host.json'],
-        ['web-dist', 'rm -f login-*.min.js* portfolio-*.min.js* report.html'],
+        ['web-dist', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
         ['../../anclient/examples/example.js/album', 'webpack'],
 
         ['.', 'mvn clean compile package -DskipTests'],
@@ -281,10 +261,9 @@ def package(c):
         
         temp_jre_path: taskcfg.jre_release,
 
-        # 'WEB-INF': 'src/main/webapp/WEB-INF-0.7/*', # Do not replace with version.
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
-        'bin/synode_py3-0.7-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
+        'bin/synode_py3-0.8-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
         "registry": "../synode.py/registry/*",
         'winsrv': '../synode.py/winsrv/*',
         "res": "../synode.py/src/synodepy3/res/*",
@@ -294,7 +273,8 @@ def package(c):
                                     # mklink /D web-dist ..\anclient\examples\example.js\album
 
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
-        'setup-cli.exe': '../synode.py/dist/setup-cli.exe'
+        'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
+        'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
     }
 
     excludes = ['*.log', 'report.html']
@@ -318,7 +298,9 @@ def package(c):
 
         if not os.path.exists(taskcfg.dist_dir):
             os.makedirs(taskcfg.dist_dir, exist_ok=True)
-        distzip = os.path.join(taskcfg.dist_dir, zip)
+        # distzip = os.path.join(taskcfg.dist_dir, zip)
+        distzip = taskcfg.get_distzip()
+
         if os.path.isfile(distzip):
             os.remove(distzip)
 
@@ -338,29 +320,9 @@ def package(c):
 @task
 def post_package(c):
     print('--------------    post build   ------------------')
-
-    global synode_json_bak, synode_json
-
-    if os.path.exists(synode_json_bak):
-        shutil.copy2(synode_json_bak, synode_json)
-        os.remove(synode_json_bak)
-        print(f'Restored {synode_json} from backup {synode_json_bak}')
-    else:
-        print(f'No backup found for {synode_json}, skipped restoring.')
-
-    global taskcfg, post_vals
-    diction_file = os.path.join(taskcfg.registry_dir, 'dictionary.json')
-    Utils.update_patterns(diction_file,
-         {synuser_pswd_pattern: post_vals['dictionary.json'][synuser_pswd_pattern]})
-    
-    if LangExt.len(taskcfg.post_cmds) > 0:
-        print('Executing post build commands...')
-        for cmd in taskcfg.post_cmds:
-            print('cmd-config:', cmd)
-            cmd_formatted = cmd.format(zip_name=taskcfg.zip_name())
-            print(f'Executing: {cmd_formatted}')
-            ret = c.run(cmd_formatted)
-            print('OK:', ret.ok, ret.stderr)
+    taskcfg.restore_backups()
+    taskcfg.run_deploycmds(c)
+    taskcfg.run_deployscps()
 
 
 @task(clean, create_volume, build, package, post_package)
@@ -383,14 +345,30 @@ def deploy(c, deploy: str = 'tasks.json'):
     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
 
 @task
+def landing(c, deploy: str = None):
+    global taskcfg
+    print(deploy)
+    if taskcfg is None:
+        if deploy is None:
+            deploy = 'tasks.json'
+
+        taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+        print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
+    
+    taskcfg.publish_landings()
+
+
+@task
 def pause(c):
     input('Press Enter to continue...')
 
+
 @task(post=[config, pause, post_package])
-def test_config_post(c, deploy: str = 'tasks.json'):
+def config_post(c, deploy: str = 'tasks.json'):
     print(f'Testing : {deploy}')
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+
 
 @task(post=[clean])
 def test_clean(c, deploy: str = 'tasks.json'):

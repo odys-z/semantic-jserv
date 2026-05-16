@@ -20,7 +20,7 @@ pom.xml
     <dependency>
         <groupId>io.github.odys-z</groupId>
         <artifactId>semantic.jserv</artifactId>
-        <version>[1.4.8,)</version>
+        <version>1.5.16</version>
     </dependency>
 ~~~
 

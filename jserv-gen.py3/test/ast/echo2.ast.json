@@ -1,0 +1,10 @@
+{ "type": "io.odysz.reflect.AnsonBodyAst",
+  "A": {"echo":  "echo", "inet":  "inet"},
+  "dataAnclass": "io.odysz.semantic.jserv.echo.EchoReq2",
+  "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",
+  "fields" : {
+    "echo": {"dataAnclass": "java.lang.String"}
+  },
+  "ctors": [[["\"r/peertest\""], ["string", "echo", "m"]],
+            [["\"r/peertest\""], []]]
+}

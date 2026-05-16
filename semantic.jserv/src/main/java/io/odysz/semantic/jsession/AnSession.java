@@ -1,6 +1,6 @@
 package io.odysz.semantic.jsession;
 
-import static io.odysz.common.AESHelper.*;
+import static io.odysz.common.AESHelper2.*;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.notBlank;
@@ -31,7 +31,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
-import io.odysz.common.AESHelper;
 import io.odysz.common.Configs;
 import io.odysz.common.Configs.keys;
 import io.odysz.common.LangExt;
@@ -249,7 +248,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	static void touchSessionToken(IUser usr, String clientoken, String knowledge) throws SsException {
 		notBlank(knowledge);
 		try {
-			if (!AESHelper.verifyToken(clientoken, knowledge, usr.uid(), usr.pswd()))
+			if (!verifyToken(clientoken, knowledge, usr.uid(), usr.pswd()))
 				throw new SsException("Tokens are not matching");
 			usr.touch();
 		} catch (GeneralSecurityException | IOException e) {
@@ -280,13 +279,13 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		try {
 			if (msg != null) {
 				if (isblank(msg.body(0).uri()))
-					throw new SsException("Since 2.0.0, client uri cannot be empty for session checking, logging in, etc.");
+					throw new SsException("Since jserv 1.4.0, client uri cannot be empty for session checking, logging in, etc.");
 
 				if (msg != null)
 					connId = Connects.uri2conn(msg.body(0).uri());
 
 				if (isblank(connId))
-					throw new SsException("Since 2.0.0, connection id for logging is mandatory. See uri(%s) - connId mappings in connects.xml.",
+					throw new SsException("Since jserv 1.4.0, connection id for logging is mandatory. See uri(%s) - connId mappings in connects.xml.",
 							msg.body(0).uri());
 
 				// find user and check login info
@@ -449,7 +448,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 
 	/**
 	 * Load user instance form DB table (name = {@link UserMeta#tbl}).
-	 * <p>Since 2.0.0, uses left join to a_orgs and a_roles from a_users.</p>
+	 * <p>Since 1.5.0, uses left join to a_orgs and a_roles from a_users.</p>
 	 * 
 	 * @param sessionBody
 	 * @param connId
@@ -470,7 +469,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 	
 	/**
 	 * 
-	 * @since 2.0.0
+	 * @since 1.5.0
 	 * @param connId
 	 * @param jrobt
 	 * @return user object
@@ -535,7 +534,6 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 			return createUserByClassname(clsNamekey, uid, pswd, iv, userName);
 		else 
 			return createUserByClassname(clsname, uid, pswd, iv, userName);
-
 	}
 
 	@SuppressWarnings("deprecation")

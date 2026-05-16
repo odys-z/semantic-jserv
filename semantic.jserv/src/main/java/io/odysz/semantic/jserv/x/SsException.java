@@ -8,6 +8,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 /**Semantic session exception
  * @author ody
  *
+ * @since 1.5.17 moving to {@link io.odysz.semantic.jserv.crud.SsException}, requires auto-generation
  */
 public class SsException extends GeneralSecurityException {
 	private static final long serialVersionUID = 1L;

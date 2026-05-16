@@ -6,5 +6,6 @@
   "conn"		: "t-central-sqlite",
   "logconn"		: "t-central-log-sqlite",
   "startHandler": [],
+  "jmenu"       : {"menusk": "-test-empty-"},
   "rootkey"     : "0123456789ABCDEF"
 }

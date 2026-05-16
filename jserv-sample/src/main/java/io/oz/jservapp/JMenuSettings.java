@@ -1,8 +1,9 @@
 package io.oz.jservapp;
 
+import io.odysz.anson.Anson;
 import io.odysz.semantic.jprotocol.IPort;
 
-class JMenuSettings {
+public class JMenuSettings extends Anson {
 
 	public static final String menusk0 = "jserv.sys.menu";
 
@@ -15,4 +16,7 @@ class JMenuSettings {
 	boolean verbose;
 
 	IPort port;
+	
+	public JMenuSettings() {
+	}
 }

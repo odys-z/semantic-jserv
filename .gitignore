@@ -26,6 +26,7 @@ web-dist-backup
 exiftool_files
 exiftool-*
 logs
+!**/debug/logs
 *.log
 .idea/encodings.xml
 *.service

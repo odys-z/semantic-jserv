@@ -457,8 +457,4 @@ public class SynDomanager extends SyndomContext implements OnError {
 		}
 		return merged;
 	}
-
-//	public boolean enableRegistryClient() {
-//		return true;
-//	}
 }

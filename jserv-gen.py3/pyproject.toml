@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=40.8.0", "wheel", "anson.py3>=0.5.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semantier_generator"
+version = "0.0.3"
+description = "Semantic Tier Generator"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{name = "Ody Z", email = "odys.zhou@gmail.com"}]
+keywords = ["Semantic API", "AnClient", "Semantier"]
+requires-python = ">=3.9"
+dependencies = [
+    "anson.py3>=0.5.0",
+    "semantics.py3",
+    "requests",
+    "typing_extensions"
+]
+
+[project.scripts]
+
+[tool.setuptools]
+packages = ["semantier_gen"]
+package-dir = { "semantier_gen" = "src/semantier_gen" }
+package-data = { "semantier_gen" = ["**/*.py"] }

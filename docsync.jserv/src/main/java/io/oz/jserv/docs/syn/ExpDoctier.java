@@ -335,7 +335,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
-				.doc((ExpSyncDoc) new ExpSyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc(null, "")
 					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(body.doc.clientpath));
@@ -355,7 +355,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((ExpSyncDoc) new ExpSyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc(null, "")
 					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(body.doc.clientpath));
@@ -417,7 +417,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((ExpSyncDoc) new ExpSyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc(null, "")
 					.recId(pid)
 					.device(body.device())
 					.folder(photo.folder())
@@ -625,7 +625,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				.whereEq("p." + mph.folder, req.pageInf.mergeArgs().getArg("pid"))
 				.rs(b.instancontxt(conn, usr)).rs(0);
 
-		return new DocsResp().doc(new ExpSyncDoc().folder(rs.nxt(), mph));
+		return new DocsResp().doc(new ExpSyncDoc(null, "").folder(rs.nxt(), mph));
 	}
 	
 	String missingFile = "";

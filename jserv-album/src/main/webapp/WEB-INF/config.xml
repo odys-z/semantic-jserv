@@ -26,7 +26,7 @@
 	</c>
 	<c>
 		<k>ss-timeout-min</k>
-		<v>60</v>
+		<v>4</v>
 	</c>
 	<c>
 		<k>ss-timeout-min.debugMode</k>

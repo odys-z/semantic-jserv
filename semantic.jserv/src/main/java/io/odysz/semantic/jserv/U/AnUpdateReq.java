@@ -12,7 +12,6 @@ import io.odysz.anson.JsonOpt;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonBody;
-import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;
@@ -27,6 +26,8 @@ import io.odysz.transact.sql.Query.Ix;
  * <p>Design Memo<br>
  * This is a strong evidence showing that we need anson.</p>
  * @author odys-z@github.com
+ * 
+ * @since 1.5.17 moving to {@link io.odysz.semantic.jserv.crud.AnUpdateReq} - requires automatic generation.
  */
 public class AnUpdateReq extends AnsonBody {
 	@Override
@@ -100,7 +101,7 @@ public class AnUpdateReq extends AnsonBody {
 
 	ArrayList<AnUpdateReq> postUpds;
 	
-	public AnsonHeader header;
+//	public AnsonHeader header;
 
 	ArrayList<Object[]> attacheds;
 

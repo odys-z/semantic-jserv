@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
 import io.odysz.anson.AnsonException;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
@@ -42,7 +42,7 @@ class BlockChainTest {
 
 		chain = new BlockChain("h_photos", tempDir,
 					"dev-id",
-					new ExpSyncDoc()
+					new ExpSyncDoc(null, "")
 						.clientpath(clientpath)
 						.sharedate("1911-10-10 10:10:10"));
 
@@ -52,7 +52,7 @@ class BlockChainTest {
 				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.doc.clientpath));
 
 		DocsResp resp = (DocsResp) new DocsResp()
-				.doc( (ExpSyncDoc) new ExpSyncDoc()
+				.doc( (ExpSyncDoc) new ExpSyncDoc(null, "")
 						.fullpath(clientpath));
 
 		// client side 
@@ -60,18 +60,18 @@ class BlockChainTest {
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");
 		ssinf.device = "local junit";
 		
-		b64 = AESHelper.encode64("1. Hello\n".getBytes());
+		b64 = AESHelper2.encode64("1. Hello\n".getBytes());
 		DocsReq b0 = new DocsReq().blockUp(0, resp, b64, ssinf);
-		b64 = AESHelper.encode64("2. Bonjour\n".getBytes());
+		b64 = AESHelper2.encode64("2. Bonjour\n".getBytes());
 		@SuppressWarnings("unused")
 		DocsReq b1 = new DocsReq().blockUp(1, resp, b64, ssinf);
-		b64 = AESHelper.encode64("3. こんにちは\n".getBytes());
+		b64 = AESHelper2.encode64("3. こんにちは\n".getBytes());
 		DocsReq b2 = new DocsReq().blockUp(2, resp, b64, ssinf);
-		b64 = AESHelper.encode64("4. Привет\n".getBytes());
+		b64 = AESHelper2.encode64("4. Привет\n".getBytes());
 		DocsReq b3 = new DocsReq().blockUp(3, resp, b64, ssinf);
-		b64 = AESHelper.encode64("5. 안녕하세요\n".getBytes());
+		b64 = AESHelper2.encode64("5. 안녕하세요\n".getBytes());
 		DocsReq b4 = new DocsReq().blockUp(4, resp, b64, ssinf);
-		b64 = AESHelper.encode64("6. नमस्ते \n".getBytes());
+		b64 = AESHelper2.encode64("6. नमस्ते \n".getBytes());
 		DocsReq b5 = new DocsReq().blockUp(5, resp, b64, ssinf);
 
 		chain.appendBlock(b0)
@@ -101,7 +101,7 @@ class BlockChainTest {
 					"h_photos",
 					IUser.tempDir("$VOLUME_HOME", uid, "temp", ssid),
 					"dev-id2",
-					new ExpSyncDoc()
+					new ExpSyncDoc(null, "")
 						.clientpath(clientpath)
 						.sharedate("1911-10-10 10:10:10"));
 
@@ -111,24 +111,24 @@ class BlockChainTest {
 				|| eq("\\sdcard\\0\\Downloads\\test.3gp", chain.doc.clientpath));
 
 		DocsResp resp = (DocsResp) new DocsResp()
-					.doc((ExpSyncDoc) new ExpSyncDoc().fullpath(clientpath));
+					.doc((ExpSyncDoc) new ExpSyncDoc(null, "").fullpath(clientpath));
 
 		// client side 
 		String b64;
 		SessionInf ssinf = new SessionInf(uid, ssid, "local device");
 		ssinf.device = "local junit";
 		//  
-		b64 = AESHelper.encode64("1. Hello\n".getBytes(StandardCharsets.UTF_8));
+		b64 = AESHelper2.encode64("1. Hello\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b0 = new DocsReq().blockUp(0, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("2. Bonjour\n".getBytes(StandardCharsets.UTF_8));
+		b64 = AESHelper2.encode64("2. Bonjour\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b1 = new DocsReq().blockUp(1, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("3. こんにちは\n".getBytes(StandardCharsets.UTF_8));
+		b64 = AESHelper2.encode64("3. こんにちは\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b2 = new DocsReq().blockUp(2, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("4. Привіт\n".getBytes(StandardCharsets.UTF_8));
+		b64 = AESHelper2.encode64("4. Привіт\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b3 = new DocsReq().blockUp(3, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("5. 안녕하세요\n".getBytes(StandardCharsets.UTF_8));
+		b64 = AESHelper2.encode64("5. 안녕하세요\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b4 = new DocsReq().blockUp(4, resp, new String(b64), ssinf);
-		b64 = AESHelper.encode64("6. שלום\n".getBytes(StandardCharsets.UTF_8));
+		b64 = AESHelper2.encode64("6. שלום\n".getBytes(StandardCharsets.UTF_8));
 		DocsReq b5 = new DocsReq().blockUp(5, resp, new String(b64), ssinf);
 
 		chain.appendBlock(b0)
@@ -178,7 +178,7 @@ class BlockChainTest {
 		chain = new BlockChain("h_photos",
 					IUser.tempDir("$VOLUME_HOME", uid, "uploading-temp", ssid),
 					"dev-id3",
-					new ExpSyncDoc().clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
+					new ExpSyncDoc(null, "").clientpath(clientpath).sharedate("1911-10-10 10:10:10"));
 
 		assertTrue(eq("src/test/results/tester/uploading-temp/64A+B=C02/sdcard/0/Downloads/test.aborting",
 					  chain.outputPath)
@@ -194,9 +194,9 @@ class BlockChainTest {
 		ssinf.device = "local junit";
 		
 		DocsResp resp = (DocsResp) new DocsResp()
-				.doc((ExpSyncDoc) new ExpSyncDoc().fullpath(clientpath));
+				.doc((ExpSyncDoc) new ExpSyncDoc(null, "").fullpath(clientpath));
 
-		b64 = AESHelper.encode64("1. Hello\n".getBytes());
+		b64 = AESHelper2.encode64("1. Hello\n".getBytes());
 		DocsReq b0 = new DocsReq().blockUp(0, resp, b64, ssinf);
 		chain.appendBlock(b0);
 		DocsReq b2 = new DocsReq().blockUp(2, resp, b64, ssinf);

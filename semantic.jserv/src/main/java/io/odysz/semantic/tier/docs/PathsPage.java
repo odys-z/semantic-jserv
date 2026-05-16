@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonCtor;
 import io.odysz.anson.AnsonField;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
@@ -26,11 +27,13 @@ public class PathsPage extends Anson {
     
     public PathsPage() {}
 
+	@AnsonCtor(base={}, initialist={"int begin: start", "int afterLast = end"})
     public PathsPage(int begin, int afterLast) {
         start = begin;
         end = afterLast;
     }
 
+	@AnsonCtor(base={}, initialist={"string device: device", "int begin = start", "int afterLast = end"})
     public PathsPage(String device, long start, long end) {
     	this.device = device;
     	this.start = start;
@@ -44,7 +47,7 @@ public class PathsPage extends Anson {
     }
 
 	/**
-	 * {key: client-path, value: [sync-flag, share-falg, share-by, share-date, isRef]} 
+	 * {key: client-path, value: [sync-flag, share-flag, share-by, share-date, isRef]} 
 	 */
 	@AnsonField(valType="[Ljava.lang.String;")
 	protected HashMap<String, Object[]> clientPaths;
@@ -55,7 +58,7 @@ public class PathsPage extends Anson {
 	public HashMap<String, Object[]> paths() { return clientPaths; }
 	
 	/**
-	 * Set paths's flags: [rs.device, rs.share-flag, rs.share-by, rs.share-date].
+	 * Set paths's flags: [rs.device, rs.share-flag, rs.share-by, rs.share-date, rs.is-docref].
 	 * 
 	 * @param rs must have columns of meta.syncflg, meta.shareflag, meta.shareDate.
 	 * @param meta

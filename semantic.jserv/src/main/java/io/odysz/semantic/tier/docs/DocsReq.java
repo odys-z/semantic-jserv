@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
 
+import io.odysz.anson.AnsonCtor;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.UserReq;
@@ -72,8 +73,11 @@ public class DocsReq extends UserReq implements IBlock {
 		/** check is a new device name valid */
 		public static final String checkDev = "r/check-dev";
 
-		/** Requests works start synodes' synchronization */
-		public static String requestSyn = "u/syn";
+		/** Requests works start synodes' synchronization
+		 * @since 1.5.17, anclient.cmake 0.1.0,
+		 * this is used for IPC to get ready to push ({@link #blockStart}).
+		 */
+		public static final String requestSyn = "u/syn";
 
 		/** Query synchronizing tasks - for pure device client
 		public static final String selectDocs = "sync/tasks"; */
@@ -130,14 +134,21 @@ public class DocsReq extends UserReq implements IBlock {
 		blockSeq = -1;
 	}
 
-	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
-		super(parent, uri);
+	private void format(IFileDescriptor p) {
 		device = new Device(null, null, p.device());
 		doc = new ExpSyncDoc(p)
 				.clientpath(p.fullpath());
 	}
 
+	@AnsonCtor(base={"null", "uri"}, initialist={"AnsonMsg<AnsonBody> parent : ", "string uri :", "IFileDescriptor p : format(p)"})
+	public DocsReq(AnsonMsg<? extends AnsonBody> parent, String uri, IFileDescriptor p) {
+		super(parent, uri);
+		// device = new Device(null, null, p.device());
+		// doc = new ExpSyncDoc(p).clientpath(p.fullpath());
+		format(p);
+	}
 
+	@AnsonCtor(base={"null", "uri"}, initialist={"string docTabl : docTabl", "ExpSyncDoc doc : doc", "string uri :"})
 	public DocsReq(String docTabl, ExpSyncDoc doc, String uri) {
 		super(null, uri);
 		this.device = new Device(null, null, doc.device());
@@ -145,13 +156,23 @@ public class DocsReq extends UserReq implements IBlock {
 		this.docTabl = docTabl;
 	}
 
-	public DocsReq(DocRef doc, String uri) {
-		super(null, uri);
+	private void format(DocRef doc) {
 		this.doc = (ExpSyncDoc) new ExpSyncDoc(doc.docm)
 				.recId(doc.docId)
 				.clientname(doc.pname)
 				.uri64(doc.uri64)
 				.uids(doc.uids);
+	}
+	
+//	@AnsonCtor(base={"null", "uri"}, initialist={"DocRef doc : format(doc)", "string uri :"})
+	public DocsReq(DocRef doc, String uri) {
+		super(null, uri);
+//		this.doc = (ExpSyncDoc) new ExpSyncDoc(doc.docm)
+//				.recId(doc.docId)
+//				.clientname(doc.pname)
+//				.uri64(doc.uri64)
+//				.uids(doc.uids);
+		format(doc);
 		musteqs(doc.syntabl, this.doc.tabl());
 		this.docTabl = doc.syntabl;
 	}
@@ -186,6 +207,7 @@ public class DocsReq extends UserReq implements IBlock {
 	int blockSeq;
 	public int blockSeq() { return blockSeq; } 
 
+	/** @deprecated shouldn't ignore for (de)serialization? */
 	public DocsReq nextBlock;
 
 	/**
@@ -250,15 +272,12 @@ public class DocsReq extends UserReq implements IBlock {
 			throw new SemanticException("User object used for uploading file must have a device id - for distinguish files. %s", file.fullpath());
 
 		doc = doc == null
-			? new ExpSyncDoc(file)
+			? new ExpSyncDoc(file) // entMeta is null, and shouldn't use it.
 				.clientpath(file.fullpath())
 				.folder(usr.device + "-" + usr.uid())
 			: doc; 
 
-		// this.docName = file.clientname();
-		// this.createDate = file.cdate();
 		this.blockSeq = 0;
-		
 		this.a = A.blockStart;
 		return this;
 	}
@@ -342,7 +361,7 @@ public class DocsReq extends UserReq implements IBlock {
 
 	public DocsReq doc(String device, String fullpath) {
 		this.device = new Device(device, null);
-		this.doc = new ExpSyncDoc().device(device).clientpath(fullpath);
+		this.doc = new ExpSyncDoc(null, "").device(device).clientpath(fullpath);
 		return this;
 	}
 

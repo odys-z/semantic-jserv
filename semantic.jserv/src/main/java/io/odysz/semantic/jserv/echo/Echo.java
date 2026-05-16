@@ -15,6 +15,7 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
+import io.odysz.common.LangExt;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
@@ -49,7 +50,6 @@ public class Echo extends ServPort<EchoReq> {
 	/** * */
 	private static final long serialVersionUID = 1L;
 
-
 	@Override
 	protected void onGet(AnsonMsg<EchoReq> req, HttpServletResponse resp)
 			throws ServletException, IOException {
@@ -71,11 +71,11 @@ public class Echo extends ServPort<EchoReq> {
 				write(resp, ok(rep));
 			}
 			else
-				write(resp, ok(echoReq.a()));
+				write(resp, ok("Echo with unhandled act: " + echoReq.a()));
 			resp.flushBuffer();
 			
 			if (fingerprint)
-				logi("Echo: %s : %s", remote, echoReq.uri());
+				logi("Echo: %s %s : %s", remote, echoReq.uri(), echoReq.echo);
 		} catch (SemanticException e) {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (IOException e) {
@@ -86,12 +86,16 @@ public class Echo extends ServPort<EchoReq> {
 
     protected AnsonResp inet(HttpServletResponse resp, EchoReq req, String remote)
     		throws SocketException, SemanticException {
-    	if ("localhost".equals(remote)) {
+    	if (LangExt.indexOf(new String[]{"localhost", "127.0.0.1"}, remote) >= 0) {
     		if (interfaces == null)
     			listInet();
-    		return new AnsonResp().data("interfaces", interfaces);
+    		return new AnsonResp()
+    				.msg(req.echo)
+					// ISSUE: anson.cmake cannot handler map<string, list<string>
+					// .data("interfaces", interfaces)
+					;
     	}
-    	throw new SemanticException("Remote resource querying is not allowed.");
+    	throw new SemanticException("Remote resource echoing, from %s, is not allowed.", remote);
 	}
 
 	public static void listInet() throws SocketException {

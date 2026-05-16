@@ -13,7 +13,7 @@
   		<src>$VOLUME_HOME/system.sqlite</src>
   		<usr>test</usr>
   		<pswd>test</pswd>
-  		<dbg></dbg>
+  		<dbg>true</dbg>
   		<log>false</log>
   		<smtcs>semantics-t-central.xml</smtcs>
   	</c>

@@ -1,9 +1,11 @@
 package io.oz.jservapp;
 
+import io.odysz.anson.Anson;
+
 /**
  * @since 1.5.7
  */
-public class JservSettings {
+public class JservSettings extends Anson {
 	
 	public static final String json0 = "jserv.json";
 
@@ -25,4 +27,6 @@ public class JservSettings {
 	public String app_name;
 	public String conn;
 	public String logconn;
+	
+	public JservSettings() { super(); }
 }

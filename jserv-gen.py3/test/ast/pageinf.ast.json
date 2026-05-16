@@ -1,0 +1,12 @@
+{ "type": "io.odysz.reflect.AnsonAst",
+  "dataAnclass": "io.odysz.transact.sql.PageInf",
+  "baseAnclass": "io.odysz.anson.Anson",
+  "fields" : {
+    "page": {"dataAnclass": "long"},
+    "size": {"dataAnclass": "long"},
+    "total": {"dataAnclass": "long"},
+    "arrCondts": {"dataAnclass": "list<list<string"},
+	  "mapCondts": {"dataAnclass": "map<string, list<VarType"}
+  },
+  "ctors": []
+}

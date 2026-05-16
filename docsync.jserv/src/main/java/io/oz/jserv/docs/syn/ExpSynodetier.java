@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.Regex;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
@@ -290,7 +290,9 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (domanager0.synodeNetworking(s)) {
 					if (s.loadDBLaterservs(domanager0.syngleton.syncfg, domanager0.synm)) {
 						needExpose = true;
-						domanager0.syngleton.settings.save();
+//						mustnonull(s.rootkey());
+//						mustnull(s.installkey());
+						s.save_rt();
 					}
 				}
 			
@@ -646,8 +648,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			SynDocRefMeta rfm = domanager0.refm;
 			String peer = req.exblock.srcnode;
 
-			musteqi((int)req.range[0], (int)req.blockSeq * AESHelper.blockSize());
-			mustge((long)(req.blockSeq + 1) * AESHelper.blockSize(), (long)req.range[1]);
+			musteqi((int)req.range[0], (int)req.blockSeq * AESHelper2.blockSize());
+			mustge((long)(req.blockSeq + 1) * AESHelper2.blockSize(), (long)req.range[1]);
 			DocRef docref = req.docref.breakpoint(req.range[1]);
 			
 			DBSyntableBuilder st = new DBSyntableBuilder(domanager0);

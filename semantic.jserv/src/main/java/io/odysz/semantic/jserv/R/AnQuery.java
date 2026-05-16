@@ -32,7 +32,10 @@ import static io.odysz.common.LangExt.len;
 
 /**
  * CRUD read service.
+ * 
  * @author odys-z@github.com
+ * 
+ * @since 1.5.17 moving to {@link io.odysz.semantic.jserv.crud.AnQuery} - requires automatic generation
  */
 @WebServlet(description = "querying db via Semantic.DA", urlPatterns = { "/r.serv" })
 public class AnQuery extends ServPort<AnQueryReq> {

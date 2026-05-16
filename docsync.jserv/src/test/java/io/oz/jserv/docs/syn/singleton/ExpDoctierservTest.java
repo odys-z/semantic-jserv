@@ -107,6 +107,7 @@ public class ExpDoctierservTest {
 	 * by running {@link DoclientierTest#testSynclientUp()}.
 	 * @throws Exception
 	 */
+	@SuppressWarnings("deprecation")
 	@Test
 	void runDoctiers() throws Exception {
 		if (System.getProperty("wait-clients") == null) {
@@ -227,7 +228,7 @@ public class ExpDoctierservTest {
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
-		ExpSyncDoc dx0 = (ExpSyncDoc) new ExpSyncDoc()
+		ExpSyncDoc dx0 = (ExpSyncDoc) new ExpSyncDoc(null, "")
 					.share(devx0.uid, ShareFlag.publish.name(), new Date())
 					.folder(devx0.device.tofolder)
 					.device(devx0.device.id)
@@ -412,7 +413,7 @@ public class ExpDoctierservTest {
 			
 			// install
 			AppSettings _settings = new AppSettings();
-			_settings.jservs = jservs;
+			_settings.jservs(jservs);
 			_settings.centralPswd = "8964";
 			_settings.vol_name = f("VOLUME_%s", i);
 			_settings.volume = f("../vol-%s", i);

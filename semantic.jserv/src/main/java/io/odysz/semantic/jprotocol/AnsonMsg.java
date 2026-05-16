@@ -12,6 +12,9 @@ import io.odysz.anson.JSONAnsonListener;
 import io.odysz.anson.JsonOpt;
 import io.odysz.semantics.x.SemanticException;
 
+/** Experiment: for generating the cpp end. */
+enum MsgCode2 {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext };
+
 /**
  * <p>Base class of message used by {@link io.odysz.semantic.jserv.ServPort }.</p>
  * 1. A incoming json message is parsed by *.serv into JMessage,
@@ -35,7 +38,9 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	public static enum Port implements IPort {  
 		heartbeat("ping.serv"), session("login.serv"),
 		query("r.serv"), update("u.serv"),
-		insert("c.serv"), delete("d.serv"),
+		insert("c.serv"),
+		/** @deprecated delete is a keyword in cpp, and is replaced by {@link #del} */
+		delete("d.serv"), del("d.serv"),
 		echo("echo.less"),
 
 		/** serv port for downloading json/xml file or uploading a file.<br>
@@ -70,15 +75,9 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		/** document manage's semantic tier */
 		docstier("docs.tier"),
 
-//		/** @deprecated ? */
-//		dbsyncer("clean.db"),
-		
-//		/** @deprecated for MVP album v0.2.1 only */
-//		album21("docs.album21"),
-		
 		/**
 		 * Synode tier service: sync.tier
-		 * @since 2.0.0
+		 * @since 1.5.0
 		 */
 		syntier("sync.tier");
 		
@@ -119,6 +118,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		}	
 	};
 
+	/** TODO 2.0: Move ext as 1, ok = 0, and more follow the last one. */
 	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext };
 
 	/**
@@ -137,7 +137,8 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * jserv-sample/io.odysz.jsample.protocol.Samport.</p>
 	 * 
 	 * @param p extended Port
-	 * @since 1.5.18, this is recommended not to use directly. Call {@link JProtocol#setup(String, IPort)} instead.
+	 * @since 1.5.16, this is recommended not to use directly. Call {@link JProtocol#setup(String, IPort)} instead.
+	 * @since 1.5.17, also register the factory. This should relieve the burden of IPort implementation's static registration. 
 	 */
 	static public void understandPorts(IPort p) {
 		// Because of the java enum limitation, or maybe the author's knowledge limitation, 
@@ -145,6 +146,16 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		// of valof() method for handling all ports.<br>
 		// E.g. {@link Samport#menu#valof(name)} can handling both {@link Port} and Samport's enums.
 		defaultPortImpl = p;
+		
+		JSONAnsonListener.registFactory(IPort.class, 
+				(s) -> {
+					try {
+						return defaultPortImpl.valof(s);
+					} catch (SemanticException e) {
+						e.printStackTrace();
+						return null;
+					}
+				});
 	}
 	
 	String version = "1.1";
@@ -155,6 +166,9 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	IPort port;
 	public IPort port() { return port; }
 
+	/**
+	 * TODO 2.0: move this to AnsonResp, the equivalent of AnsonBody.a.
+	 */
 	private MsgCode code;
 	public MsgCode code() { return code; }
 
