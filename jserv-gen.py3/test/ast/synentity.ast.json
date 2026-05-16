@@ -11,6 +11,7 @@
     "nyquence": {"dataAnclass": "long"}
   },
   "ctors": [[[], []],
+            [["type"], ["string", "", "type"], ["", "", "\"\", \"\""]],
             [[], ["SynEntityMeta", "entm", "entMeta"]],
             [["type"], ["SynEntityMeta", "entm", "entMeta"], ["string", "", "type"]]]
 }

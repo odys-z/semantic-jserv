@@ -16,7 +16,7 @@
     "mime": {"dataAnclass": "string"},
     "folder": {"dataAnclass": "string"}
   },
-  "ctors": [[["null"], []],
+  "ctors": [[[], []],
             [["m"], ["SynEntityMeta", "", "m"], ["string", "org", "orgId"]],
             [["meta"], ["SynEntityMeta", "", "meta"], ["AnResultset", "format", "()", "rs"]]]
 }
