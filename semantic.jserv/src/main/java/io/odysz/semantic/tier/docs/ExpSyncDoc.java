@@ -149,9 +149,6 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return this;
 	}
 
-	// @AnsonField(ignoreTo=true)
-	// ExpDocTableMeta docMeta;
-
 	public String mime;
 	public ExpSyncDoc mime(String mime) {
 		this.mime = mime;
