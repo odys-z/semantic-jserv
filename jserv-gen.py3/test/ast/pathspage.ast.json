@@ -9,6 +9,18 @@
   },
   "ctors": [[[], []],
             [[], ["int", "start", "begin"], ["int", "end", "afterLast"]],
-            [[], ["string", "device", "device"], ["int", "start", "begin"], ["int", "end", "afterLast"]]]
+            [[], ["string", "device", "device"], ["int", "start", "begin"], ["int", "end", "afterLast"]]],
+  "ctorsemantics": [
+    { "base": {"stype": "()"}},
+    { "base": {"stype": "()"},
+      "args": [{"stype": "ini", "args": ["int", "start", "start"]},
+               {"stype": "ini", "args": ["int", "end", "end"]}],
+      "body": []},
+    { "base": {"stype": "()"},
+      "args": [{"stype": "ini", "args": ["const string &", "dev", "device"]},
+               {"stype": "ini", "args": ["int", "start", "start"]},
+               {"stype": "ini", "args": ["int", "end", "end"]}],
+      "body": []}
+  ]
 }
 

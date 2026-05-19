@@ -6,5 +6,13 @@
     "echo": {"dataAnclass": "java.lang.String"}
   },
   "ctors": [[["\"r/peertest\""], ["string", "echo", "m"]],
-            [["\"r/peertest\""], []]]
+            [["\"r/peertest\""], []]],
+  "ctorsemantics": [
+    { "base": {"stype": "()", "args": ["AnsonBody", "\"r/peertest\""]},
+      "args": [{"stype": "ini",
+                "args": ["string", "m", "echo"],
+                "expect_result": "c++ code: (..., string m, ...) : echo(m)"}],
+      "body": [{"stype": "=", "args": ["echo", "m"], "expect_result":  "{ echo = m; ...}"}] },
+    { "base": {"stype": "()", "args": ["EchoReq2", "\"r/peertest\""]}}
+  ]
 }

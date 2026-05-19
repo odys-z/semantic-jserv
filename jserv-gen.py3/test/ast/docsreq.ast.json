@@ -36,5 +36,22 @@
     "limit": {"dataAnclass": "int"}
   },
   "ctors": [[["uri"], ["AnsonMsg<AnsonBody>", "", "parent"], ["string", "", "uri"], ["IFileDescriptor", "format", "()", "p"]],
-            [["uri"], ["string", "docTabl", "docTabl"], ["ExpSyncDoc", "doc", "doc"], ["string", "", "uri"]]]
+            [["uri"], ["string", "docTabl", "docTabl"], ["ExpSyncDoc", "doc", "doc"], ["string", "", "uri"]]],
+  "ctorsemantics": [
+ 	  { "base": { "stype": "()", "args": ["baseAnclass"] },
+	    "args": [{"stype": "", "args": ["const", "string", "&", "doctbl"]},
+	  			 {"stype": "", "args": ["const IFileDescriptor&", "p"]} ],
+		"body": {"stype": "()", "args": ["format", "p"]} },
+
+	  { "base": {"stype": "()", "args": ["UserReq", "uri"]},
+	    "args": [{"stype": "", "args": ["AnsonMsg<AnsonBody>", "parent"]},
+				 {"stype": "ini", "args": ["const", "string", "uri", "synuri"]},
+	  			 {"stype": "", "args": ["const", "IFileDescriptor", "&", "p"]} ],
+		"body": {"stype": "()", "args": ["format", "p", "uri"],
+				 "expect_result":  "void format(IFileDescriptor p, string uri)"} } ,
+	  { "base": {"stype": "()", "args": ["UserReq", "uri"]},
+		"args": [{"stype": "ini", "args": ["const string &", "docTabl", "docTabl"]},
+			  {"stype": "ini", "args": ["const ExpSyncDoc &", "doc", "doc"]},
+			  {"stype": "ini", "args": ["const string &", "uri", "synuri"]} ]}
+  ]
 }

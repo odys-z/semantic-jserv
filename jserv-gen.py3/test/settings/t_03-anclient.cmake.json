@@ -11,6 +11,6 @@
                   "ast/expsyncdoc.ast.json",
                   "ast/docsreq.ast.json",
                   "ast/docsresp.ast.json"],
-  "cpp_include": ["gen/stubtypes.h"],
+  "cpp_include": ["io/odysz/dbmeta.h"],
   "cpp_gen"    : "test/gen/t_03_synode.hpp"
 }

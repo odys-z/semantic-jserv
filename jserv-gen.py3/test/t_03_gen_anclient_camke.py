@@ -16,10 +16,11 @@ class GenJservTest(TestCase):
 
         gen_peers(settings, testpath)
 
-        with (open('../../Anclient.cmake/src/gen/doctier.hpp', 'r') as e,
+        # with (open('../../Anclient.cmake/src/gen/doctier.hpp', 'r') as e,
+        with (open('../../anson.cmake/tests/expect/t_10_doctier.hpp', 'r') as e,
               open(settings.cpp_gen, 'r') as f):
             self.assertEqual(e.readlines(), f.readlines())
 
         with (open('../../Anclient.cmake/src/gen/doctier.hpp', 'r') as e,
-              open('../../anson.cmake/test/expect/t_10_doctier.hpp', 'r') as f):
+              open('../../anson.cmake/tests/expect/t_10_doctier.hpp', 'r') as f):
             self.assertEqual(e.readlines(), f.readlines())

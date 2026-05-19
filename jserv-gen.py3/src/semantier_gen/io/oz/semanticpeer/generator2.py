@@ -4,9 +4,7 @@ from typing import cast, List
 
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt, Primtypes
-from semanticshare.io.odysz.reflect import AnsonBodyAst, PeerSettings, AnsonAst, init_asts
-
-from .generator2 import gen_cpp_peer2
+from semanticshare.io.odysz.reflect import AnsonBodyAst, PeerSettings, AnsonAst, init_asts, SemanExpr, AnCtor
 
 
 def entf_ctors(ast: AnsonAst) -> List[str]:
@@ -25,20 +23,18 @@ def entf_ctors(ast: AnsonAst) -> List[str]:
         ctorss.append(f'        entf.ctor<{", ".join(lst)}>();\n')
     return ctorss
 
-
 def ent_ctors(ast: AnsonAst) -> List[str]:
     '''
-    :param ctorstrs: e.g.
-        [[["echo", "string", "m"], ["r/query"]],
-        [[], ["r/query"]]]
     :return: .ctor<>().ctor<string>()
     '''
     ctorss = []
-    for ctor in ast.ctors:
+    for ctor in ast.ctorsemantics:
         lst = []
-        for c in ctor[1:]:
-            if len(c) > 1:
-                lst.append(c[0])
+        for ar in ctor.args:
+            if ar.stype == 'ini':
+                lst.append(' '.join(ar.args[:-2]))
+            elif ar.stype == '':
+                lst.append(' '.join(ar.args[:-1]))
         ctorss.append(f'        .ctor<{", ".join(lst)}>()\n')
     return ctorss
 
@@ -56,67 +52,51 @@ def class_fields(asts: dict[str, AnsonAst], ast: AnsonAst) -> List[str]:
 
     for fn, fd in ast.fields.items():
         data_anclass = fd['dataAnclass']
-        # if ftype in Primtypes.C20:
-        #     fields.append(f'    {c_type(ftype)} {fn};\n')
-        # elif ftype in asts:
-        #     fields.append(f'    {asts[ftype].c_class()} {fn};\n')
-        # else:
-        #     fields.append(f'    {ftype.split(".")[-1]} {fn};\n')
         fields.append(f'    {c_type(data_anclass)} {fn};\n')
 
     return fields
 
 def class_ctors(ast: AnsonAst) -> List[str]:
-    '''
-    :param ctorstrs: e.g.
-        [[["echo", "string", "m"], ["r/query"]],
-        [[], ["r/query"]]]
-    :return:
-        EchoReq() : AnsonBody(_type_);
-        EchoReq(string m) : AnsonBody(m, _type_);
-    '''
     ctors = []
-    body_funcs = []
-    for ctr in ast.ctors:
-        # e.g. [['r/peer-test'], ['string', 'echo', 'm']]
-        parlist, fieldini = [], []
+    body_formatters = []
+    ctorsemantics = ast.ctorsemantics if LangExt.len(ast.ctorsemantics) > 0 else [AnCtor().as_default(ast)]
+    for ctorss in ctorsemantics:
+        body_lines = ctorss.cpp_body_exprs(ast, ' ' * 8)
+        body_lines = [('\n'.join(body_lines) + '\n') if body_lines and len(body_lines) > 0 else '']
 
-        # e.g. semntics = {"ssInf.ssid=ssid", "ssInf.uid=uid", "ssInf.roleId=roleId"}
-        #      [[[], ["string", "ssInf.ssid", "=", "ssid"], ["string", "ssInf.uid", "=", "uid"], ["string", "ssInf.roleId", "=", "roleId"]], ...
-        ctor_body = []
+        # {'p': 'IFileProvider'} => format(p);
+        map_arg_nt = ctorss.map_args_decls()
 
-        if LangExt.len(ctr[0]) == 0:
-            base_ini_list = '_type_'
+        if isinstance(ctorss.body, SemanExpr):
+            bodys = [ctorss.body] # tolerate
         else:
-            # base_ini_list = ', '.join([*ctorss[0], '_type_'])
-            base_ini_list = ', '.join([*[varg if varg != 'null' else '{}' for varg in ctr[0]], '_type_'])
+            bodys = ctorss.body
 
-        for parass in ctr[1:]:
-            if LangExt.len(parass) == 0:
+        for body_expr in bodys:
+            if body_expr.stype != '()': continue
+
+            if LangExt.len(body_expr.args) <= 1:
+                Utils.warn('Cannot understand body func configuration: {}', body_expr.args)
                 continue
-            # if LangExt.len(parass) != 3 and LangExt.len(parass) != 2:
-                # Utils.warn("Error: ", parass)
-                # continue
-            if LangExt.len(parass) == 3:
-                parlist.append(parass[0] + " " + parass[2])
-                if LangExt.len(parass[1]) > 0:
-                    fieldini.append(f'{parass[1]}({parass[2]})')
-            elif LangExt.len(parass) == 4 and parass[2] == '=':
-                parlist.append(parass[0] + " " + parass[3])
-                ctor_body.append(f'\n        {parass[1]} = {parass[3]};')
-            elif LangExt.len(parass) == 4 and parass[2] == '()':
-                parlist.append(parass[0] + " " + parass[3])
-                ctor_body.append(f'\n        {parass[1]}({parass[3]});')
-                fn = f'{parass[1]}({parass[0]})'
-                if fn not in body_funcs:
-                    ctors.append(f'\n    void {parass[1]}({parass[0]} {parass[3]});\n')
-                    body_funcs.append(fn)
 
-            else: Utils.warn("Error: Cannot parse ctor's initializer list: " + "\,".join(parass))
+            # fn = body_expr.args[0]
+            # if fn not in body_formatters:
+            #     arg_lst = map(lambda argname: f"{map_arg_nt[argname]} {argname}", body_expr.args[1:])
+            #     ctors.append(f'\n    void {body_expr.args[0]}({", ".join(arg_lst)});\n')
+            #     body_formatters.append(fn)
 
-        base_ini = f'{ast.c_base()}({base_ini_list}){", " if len(fieldini) > 0 else " "}'
-        ctor_body = ''.join(ctor_body) + ('' if len(ctor_body) == 0 else '\n    ')
-        ctors.append(f'\n    {ast.c_class()}({", ".join(parlist)}) : {base_ini}{", ".join(fieldini)} {{{ctor_body}}};\n')
+            arg_lst = map(lambda argname: f"{map_arg_nt[argname]} {argname}", body_expr.args[1:])
+            voidfunc = f'\n    void {body_expr.args[0]}({", ".join(arg_lst)});\n'
+            if voidfunc not in body_formatters:
+                ctors.append(voidfunc)
+
+        initlst = filter(lambda x: not LangExt.isblank(x), [ctorss.cpp_base_ini(ast), ctorss.cpp_arg_inis()])
+
+        ctors.append(' : '.join([f'\n    {ast.c_class()}({ctorss.cpp_arg_decl()})',
+                     ', '.join(initlst)]) + ' {\n' +
+                     '\n'.join(body_lines) +
+                     ('    }\n' if len(body_lines) > 0 else '}\n'))
+
     return ctors
 
 start_header = '''#pragma once
@@ -316,7 +296,7 @@ class AnsonLines:
                 ]
 
 
-def gen_cpp_peer(settings: PeerSettings, ast_folder: Path):
+def gen_cpp_peer2(settings: PeerSettings, ast_folder: Path):
     '''
     :param settings:
     :param ast_folder:
@@ -352,10 +332,3 @@ def gen_cpp_peer(settings: PeerSettings, ast_folder: Path):
                 Utils.warn('Cannot find file ' + astjson)
 
         gen.writelines(msglines.end_ns)
-
-
-def gen_peers(settings: PeerSettings, config_path: Path) -> None:
-    # gen_ts_peer(settings)
-    # gen_py_peer(settings)
-    # gen_cpp_peer(settings, config_path)
-    gen_cpp_peer2(settings, config_path)

@@ -1,6 +1,6 @@
 { "type": "io.odysz.reflect.AnsonAst",
   "dataAnclass": "io.oz.syn.SynEntity",
-  "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",
+  "baseAnclass": "io.odysz.semantic.jprotocol.Anson",
   "fields" : {
     "entm": {"dataAnclass": "SynEntityMeta"},
     "synpageCols": {"dataAnclass": "list<string"},
@@ -13,6 +13,12 @@
   "ctors": [[[], []],
             [["type"], ["string", "", "type"], ["", "", "\"\", \"\""]],
             [[], ["SynEntityMeta", "entm", "entMeta"]],
-            [["type"], ["SynEntityMeta", "entm", "entMeta"], ["string", "", "type"]]]
+            [["type"], ["SynEntityMeta", "entm", "entMeta"], ["string", "", "type"]]],
+  "ctorsemantics": [
+    {"base": {"stype": "()"}},
+    {"base": {"stype": "()", "args": ["SynEntity"]},
+     "args": [{"stype": "", "args": ["const", "SynEntityMeta", "&", "m"]}],
+     "body": [{"stype": "=", "args": ["entm", "m"]}]}
+  ]
 }
 

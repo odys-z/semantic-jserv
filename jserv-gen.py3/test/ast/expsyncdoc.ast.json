@@ -18,6 +18,16 @@
   },
   "ctors": [[[], []],
             [["m"], ["SynEntityMeta", "", "m"], ["string", "org", "orgId"]],
-            [["meta"], ["SynEntityMeta", "", "meta"], ["AnResultset", "format", "()", "rs"]]]
+            [["meta"], ["SynEntityMeta", "", "meta"], ["AnResultset", "format", "()", "rs"]]],
+  "ctorsemantics": [
+    { "base": {"stype": "()"}},
+    { "base": {"stype": "()", "args": ["baseAnclass", "m"]},
+      "args": [{"stype": "", "args": ["const SynEntityMeta&", "m"]},
+               {"stype": "ini", "args": ["const string&", "orgid", "org"]}],
+      "body": []},
+    { "base": {"stype": "()", "args": ["baseAnclass", "m"]},
+      "args": [{"stype": "", "args": ["const SynEntityMeta&", "m"]},
+               {"stype": "", "args": ["const", "AnResultset&", "rs"]}],
+      "body": [{"stype": "()", "args": ["format", "rs"]}]}]
 }
 

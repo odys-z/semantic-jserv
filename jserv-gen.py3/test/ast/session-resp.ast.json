@@ -9,5 +9,20 @@
                  ["string", "ssInf.uid", "=", "uid"],
                  ["string", "ssInf.roleId", "=", "roleId"]],
             [[], ["SessionInf", "ssInf", "ss_inf"]],
-            [["\"\""], []]]
+            [["\"\""], []]],
+  "ctorsemantics": [
+    { "base": {"stype": "()", "args": ["baseAnclass"]},
+      "args": [{"stype": "", "args": ["string", "ssid"]},
+               {"stype": "", "args": ["string", "uid"]},
+               {"stype": "", "args": ["string", "roleId"]}],
+      "body": [{"stype": "=", "args": ["ssInf.ssid", "ssid"]},
+               {"stype": "=", "args": ["ssInf.uid", "uid"]},
+               {"stype": "=", "args": ["ssInf.roleId", "roleId"]}]},
+    { "base": {},
+      "args": [{"stype": "ini", "args": ["SessionInf", "ss_inf", "ssInf"]}],
+      "body": [] },
+    { "base": {"stype": "ini", "args": ["AnSessionResp", "\"\"", "\"\"", "\"\""]},
+      "args": [],
+      "body": [] }
+  ]
 }
