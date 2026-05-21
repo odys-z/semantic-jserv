@@ -41,11 +41,11 @@ inline static void register_pageinfAst(AstMap & asts) {
         .type(ast->enttypeid)
         .base<Anson>()
 
-        .data<&anson::PageInf::page>("PageInf")
-        .data<&anson::PageInf::size>("PageInf")
-        .data<&anson::PageInf::total>("PageInf")
-        .data<&anson::PageInf::arrCondts>("PageInf")
-        .data<&anson::PageInf::mapCondts>("PageInf")
+        .data<&anson::PageInf::page>("page")
+        .data<&anson::PageInf::size>("size")
+        .data<&anson::PageInf::total>("total")
+        .data<&anson::PageInf::arrCondts>("arrCondts")
+        .data<&anson::PageInf::mapCondts>("mapCondts")
         ;
 }
 
@@ -85,10 +85,10 @@ inline static void register_deviceAst(AstMap & asts) {
         .ctor<>()
         .ctor<const string&, const string&, const string&>()
 
-        .data<&anson::Device::id>("Device")
-        .data<&anson::Device::synode0>("Device")
-        .data<&anson::Device::devname>("Device")
-        .data<&anson::Device::toFolder>("Device")
+        .data<&anson::Device::id>("id")
+        .data<&anson::Device::synode0>("synode0")
+        .data<&anson::Device::devname>("devname")
+        .data<&anson::Device::toFolder>("toFolder")
         ;
 }
 
@@ -131,13 +131,13 @@ inline static void register_synentityAst(AstMap & asts) {
         .ctor<>()
         .ctor<const SynEntityMeta &>()
 
-        .data<&anson::SynEntity::entm>("SynEntity")
-        .data<&anson::SynEntity::synpageCols>("SynEntity")
-        .data<&anson::SynEntity::recId>("SynEntity")
-        .data<&anson::SynEntity::uids>("SynEntity")
-        .data<&anson::SynEntity::synode>("SynEntity")
-        .data<&anson::SynEntity::synoder>("SynEntity")
-        .data<&anson::SynEntity::nyquence>("SynEntity")
+        .data<&anson::SynEntity::entm>("entm")
+        .data<&anson::SynEntity::synpageCols>("synpageCols")
+        .data<&anson::SynEntity::recId>("recId")
+        .data<&anson::SynEntity::uids>("uids")
+        .data<&anson::SynEntity::synode>("synode")
+        .data<&anson::SynEntity::synoder>("synoder")
+        .data<&anson::SynEntity::nyquence>("nyquence")
         ;
 }
 
@@ -179,10 +179,10 @@ inline static void register_pathspageAst(AstMap & asts) {
         .ctor<int, int>()
         .ctor<const string &, int, int>()
 
-        .data<&anson::PathsPage::device>("PathsPage")
-        .data<&anson::PathsPage::start>("PathsPage")
-        .data<&anson::PathsPage::end>("PathsPage")
-        .data<&anson::PathsPage::clientPaths>("PathsPage")
+        .data<&anson::PathsPage::device>("device")
+        .data<&anson::PathsPage::start>("start")
+        .data<&anson::PathsPage::end>("end")
+        .data<&anson::PathsPage::clientPaths>("clientPaths")
         ;
 }
 
@@ -245,19 +245,19 @@ inline static void register_expsyncdocAst(AstMap & asts) {
         .ctor<const SynEntityMeta&, const string&>()
         .ctor<const SynEntityMeta&, const AnResultset&>()
 
-        .data<&anson::ExpSyncDoc::pname>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::clientpath>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::device>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::org>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::shareflag>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::shareMsg>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::createDate>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::uri64>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::shareby>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::sharedate>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::size>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::mime>("ExpSyncDoc")
-        .data<&anson::ExpSyncDoc::folder>("ExpSyncDoc")
+        .data<&anson::ExpSyncDoc::pname>("pname")
+        .data<&anson::ExpSyncDoc::clientpath>("clientpath")
+        .data<&anson::ExpSyncDoc::device>("device")
+        .data<&anson::ExpSyncDoc::org>("org")
+        .data<&anson::ExpSyncDoc::shareflag>("shareflag")
+        .data<&anson::ExpSyncDoc::shareMsg>("shareMsg")
+        .data<&anson::ExpSyncDoc::createDate>("createDate")
+        .data<&anson::ExpSyncDoc::uri64>("uri64")
+        .data<&anson::ExpSyncDoc::shareby>("shareby")
+        .data<&anson::ExpSyncDoc::sharedate>("sharedate")
+        .data<&anson::ExpSyncDoc::size>("size")
+        .data<&anson::ExpSyncDoc::mime>("mime")
+        .data<&anson::ExpSyncDoc::folder>("folder")
         ;
 }
 

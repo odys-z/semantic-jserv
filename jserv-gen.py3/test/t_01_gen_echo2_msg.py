@@ -4,15 +4,15 @@ from unittest import TestCase
 
 from anson.io.odysz.anson import Anson
 
-from src.semantier_gen.io.oz.semanticpeer.generator import gen_peers
+from src.semantier_gen.io.oz.semanticpeer.generator2 import gen_peers
 from semanticshare.io.odysz.reflect import PeerSettings
 
 
 class GenEchomsgTest(TestCase):
 
     def test_(self):
-        testpath = Path('test')
-        settings = cast(PeerSettings, Anson.from_file(str(testpath / 'settings/t_01-settings.json')))
+        testpath = 'test'
+        settings = cast(PeerSettings, Anson.from_file(testpath + '/settings/t_01-settings.json'))
 
         gen_peers(settings, testpath)
 

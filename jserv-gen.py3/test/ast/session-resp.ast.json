@@ -21,7 +21,7 @@
     { "base": {},
       "args": [{"stype": "ini", "args": ["SessionInf", "ss_inf", "ssInf"]}],
       "body": [] },
-    { "base": {"stype": "ini", "args": ["AnSessionResp", "\"\"", "\"\"", "\"\""]},
+    { "base": {"stype": "()", "args": ["AnSessionResp", "\"\"", "\"\"", "\"\""]},
       "args": [],
       "body": [] }
   ]

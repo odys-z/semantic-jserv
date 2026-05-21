@@ -88,7 +88,7 @@ public:
         Type(_type_);
     }
 
-    AnSessionResp() :  {
+    AnSessionResp() : AnSessionResp("", "", "") {
     }
 };
 

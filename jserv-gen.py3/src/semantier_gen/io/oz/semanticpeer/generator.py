@@ -354,8 +354,11 @@ def gen_cpp_peer(settings: PeerSettings, ast_folder: Path):
         gen.writelines(msglines.end_ns)
 
 
-def gen_peers(settings: PeerSettings, config_path: Path) -> None:
-    # gen_ts_peer(settings)
-    # gen_py_peer(settings)
-    # gen_cpp_peer(settings, config_path)
-    gen_cpp_peer2(settings, config_path)
+# def gen_peers(settings: PeerSettings, ast_folder: str = None) -> None:
+#     if Path is not None:
+#         settings.ast_folder = ast_folder
+#
+#     # gen_ts_peer(settings)
+#     # gen_py_peer(settings)
+#     # gen_cpp_peer(settings, config_path)
+#     gen_cpp_peer2(settings)

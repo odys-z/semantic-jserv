@@ -92,8 +92,8 @@ def class_ctors(ast: AnsonAst) -> List[str]:
 
         initlst = filter(lambda x: not LangExt.isblank(x), [ctorss.cpp_base_ini(ast), ctorss.cpp_arg_inis()])
 
-        ctors.append(' : '.join([f'\n    {ast.c_class()}({ctorss.cpp_arg_decl()})',
-                     ', '.join(initlst)]) + ' {\n' +
+        ctors.append(' : '.join(filter(lambda x: not LangExt.isblank(x), [f'\n    {ast.c_class()}({ctorss.cpp_arg_decl()})', ', '.join(initlst)])) +
+                     ' {\n' +
                      '\n'.join(body_lines) +
                      ('    }\n' if len(body_lines) > 0 else '}\n'))
 
@@ -277,7 +277,7 @@ class AnsonLines:
     }
     '''
     entt_data = '''
-        .data<&anson::{0}::{1}>("{0}")'''
+        .data<&anson::{0}::{1}>("{1}")'''
 
     def cppcode(self, asts: dict[str, AnsonAst], ast: AnsonAst) -> List[str]:
         return [class_decl.format(ast.c_class(), ast.c_base(), ast.dataAnclass),
@@ -296,7 +296,7 @@ class AnsonLines:
                 ]
 
 
-def gen_cpp_peer2(settings: PeerSettings, ast_folder: Path):
+def gen_cpp_peer2(settings: PeerSettings):
     '''
     :param settings:
     :param ast_folder:
@@ -318,9 +318,11 @@ def gen_cpp_peer2(settings: PeerSettings, ast_folder: Path):
         gen.writelines('\n')
         gen.writelines(start_namespace)
 
-        for astjson in settings.anRequests:
-            if Path(ast_folder / astjson).exists():
-                ast: AnsonAst = cast(AnsonAst, Anson.from_file(str(ast_folder / astjson)))
+        settings.ansons.extend(settings.anRequests)
+
+        for astjson in settings.ansons:
+            if (Path(settings.ast_folder) / astjson).exists():
+                ast: AnsonAst = cast(AnsonAst, Anson.from_file(str(Path(settings.ast_folder) / astjson)))
                 asts[ast.dataAnclass] = ast
 
                 if (isinstance(ast, AnsonBodyAst)):
@@ -332,3 +334,13 @@ def gen_cpp_peer2(settings: PeerSettings, ast_folder: Path):
                 Utils.warn('Cannot find file ' + astjson)
 
         gen.writelines(msglines.end_ns)
+
+
+def gen_peers(settings: PeerSettings, ast_folder: str = None) -> None:
+    if Path is not None:
+        settings.ast_folder = ast_folder
+
+    # gen_ts_peer(settings)
+    # gen_py_peer(settings)
+    # gen_cpp_peer(settings, config_path)
+    gen_cpp_peer2(settings)

@@ -61,7 +61,7 @@ ctor3 = cast(AnCtor, Anson.from_json(r'''{
   "base": {"stype": "()", "args": ["UserReq", "uri"]},
   "args": [{"stype": "", "args": ["AnsonMsg<AnsonBody>", "parent"],
             "expect_result":  "arg declared and ignored"},
-           {"stype": "ini", "args": ["UserReq", "uri"]},
+           {"stype": "", "args": ["UserReq", "uri"]},
            {"stype": "", "args": ["IFileDescriptor", "p"]} ],
   "body": [{"stype": "()", "args": ["format", "p"]}]
 }'''))
@@ -77,7 +77,7 @@ ctor4 = cast(AnCtor, Anson.from_json(r'''{
   "base": {"stype": "()", "args": ["UserReq", "uri"]},
   "args": [{"stype": "ini", "args": ["string", "docTabl", "docTabl"]},
           {"stype": "ini", "args": ["ExpSyncDoc", "doc", "doc"]},
-          {"stype": "ini", "args": ["string", "uri"]}]
+          {"stype": "", "args": ["string", "uri"]}]
   }'''))
 
 class GenCtorsTest(TestCase):

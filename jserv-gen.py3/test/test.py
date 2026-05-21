@@ -13,7 +13,7 @@ def run_script(script_path):
     os.system(f'{python} {script_path}')
 
 test_loader = unittest.TestLoader()
-test_suite = test_loader.discover(start_dir='test', pattern='t_03_*.py')
+test_suite = test_loader.discover(start_dir='test', pattern='t_*.py')
 
 
 if __name__ == '__main__':
