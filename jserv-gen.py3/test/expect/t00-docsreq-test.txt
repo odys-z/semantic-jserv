@@ -1,0 +1,11 @@
+
+    void format(IFileDescriptor p);
+
+    DocsReq(AnsonMsg<AnsonBody> parent, UserReq uri, IFileDescriptor p) : UserReq(uri) {
+        Type(_type_);
+        format(p);
+    }
+
+    DocsReq(string docTabl, ExpSyncDoc doc, string uri) : UserReq(uri), docTabl(docTabl), doc(doc) {
+        Type(_type_);
+    }
