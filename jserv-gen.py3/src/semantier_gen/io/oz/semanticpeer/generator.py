@@ -94,9 +94,6 @@ def class_ctors(ast: AnsonAst) -> List[str]:
         for parass in ctr[1:]:
             if LangExt.len(parass) == 0:
                 continue
-            # if LangExt.len(parass) != 3 and LangExt.len(parass) != 2:
-                # Utils.warn("Error: ", parass)
-                # continue
             if LangExt.len(parass) == 3:
                 parlist.append(parass[0] + " " + parass[2])
                 if LangExt.len(parass[1]) > 0:

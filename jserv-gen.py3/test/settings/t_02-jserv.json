@@ -1,4 +1,5 @@
 { "type"      : "io.odysz.reflect.PeerSettings",
+  "tier_name" : "t02",
   "ansonMsg"  : "io.odysz.semantic.jprotocol.AnsonMsg",
   "ansons"    : [],
   "anRequests": ["ast/session-req.ast.json", "ast/session-resp.ast.json"],

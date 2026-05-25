@@ -6,7 +6,7 @@
     "size": {"dataAnclass": "long"},
     "total": {"dataAnclass": "long"},
     "arrCondts": {"dataAnclass": "list<list<string"},
-	  "mapCondts": {"dataAnclass": "map<string, list<VarType"}
+	"mapCondts": {"dataAnclass": "map<string, list<VarType"}
   },
   "ctors": []
 }

@@ -122,4 +122,9 @@ inline static void load_ansessionrespAst(AstMap &asts, const string &ast_path) {
   });
 }
 
+inline static void register_t02(AstMap &asts, const string &ast_folder) {
+    load_ansessionreqAst(asts, ast_folder + "ast/session-req.ast.json");
+    load_ansessionrespAst(asts, ast_folder + "ast/session-resp.ast.json");
+}
+
 }

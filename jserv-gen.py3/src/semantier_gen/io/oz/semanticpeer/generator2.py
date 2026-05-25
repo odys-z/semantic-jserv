@@ -79,12 +79,6 @@ def class_ctors(ast: AnsonAst) -> List[str]:
                 Utils.warn('Cannot understand body func configuration: {}', body_expr.args)
                 continue
 
-            # fn = body_expr.args[0]
-            # if fn not in body_formatters:
-            #     arg_lst = map(lambda argname: f"{map_arg_nt[argname]} {argname}", body_expr.args[1:])
-            #     ctors.append(f'\n    void {body_expr.args[0]}({", ".join(arg_lst)});\n')
-            #     body_formatters.append(fn)
-
             arg_lst = map(lambda argname: f"{map_arg_nt[argname]} {argname}", body_expr.args[1:])
             voidfunc = f'\n    void {body_expr.args[0]}({", ".join(arg_lst)});\n'
             if voidfunc not in body_formatters:
@@ -127,6 +121,9 @@ public:
     [1] public class {Req} : public anson::{AnsonBody} { _type_={} ...
 '''
 
+caller_func = '''
+inline static void register_{tier_name}(AstMap &asts, const string &ast_folder) {{
+'''
 class MsgLines:
 
     struct_A = '''
@@ -142,10 +139,10 @@ class MsgLines:
     [3] inline static const string...
     '''
 
-    inline_static = True
+    inline_static = 'inline static '
 
     # 0: echoreq, 1: AnSessionResp, 2: AnsonResp
-    load_ast = '''void load_{0}Ast(AstMap &asts, const string &ast_path) {{
+    load_ast = '''void {0}(AstMap &asts, const string &ast_path) {{
     specialize_msg_astpth<{1}, {2}>(asts, ast_path,
       [](meta_factory<{1}> &entf, AnsonBodyAst *ast) {{'''
 
@@ -180,7 +177,7 @@ class MsgLines:
 
     end_ns = '\n}\n'
 
-    def specialize_req(self, asts: dict[str, AnsonAst], ast: AnsonBodyAst) -> List[str]:
+    def specialize_req(self, asts: dict[str, AnsonAst], ast: AnsonBodyAst, caller: List[tuple], astpath: str) -> List[str]:
         '''
         Example
         =======
@@ -223,6 +220,11 @@ class MsgLines:
         :param ast:
         :return: formatted source header lines
         '''
+
+        fn = f'load_{ast.c_class().lower()}Ast'
+        caller.append(('load-msg', fn, astpath))
+        load_func = self.inline_static + self.load_ast.format(fn, ast.c_class(), ast.c_base())
+
         return [class_decl.format(ast.c_class(), ast.c_base(), ast.dataAnclass),
                 self.struct_A,
                 *[f'\n        inline static const string {k} = "{v}";' for k, v in ast.A.items()],
@@ -231,9 +233,7 @@ class MsgLines:
                 *class_ctors(ast),
                 '};\n',
 
-                # load_ast()
-                '\n' + ('inline static ' if self.inline_static else '') + self.load_ast.format(
-                    ast.c_class().lower(), ast.c_class(), ast.c_base()),
+                '\n' + load_func,
                 *[self.entt_data.format(ast.c_class(), fn) for fn, _ in ast.fields.items()],
                 '\n',
                 *entf_ctors(ast),
@@ -244,7 +244,9 @@ class MsgLines:
 
 @dataclass
 class AnsonLines:
-    regist_anson: str = '''inline static void register_{}Ast(AstMap & asts) {{
+    inline_static: str = 'inline static '
+
+    regist_anson: str = '''void {}(AstMap & asts) {{
 
     AnsonAst * ast = createAST <{}, AnsonAst> (
         asts, {}::_type_, map <string, AnsonField> {{
@@ -279,18 +281,21 @@ class AnsonLines:
     entt_data = '''
         .data<&anson::{0}::{1}>("{1}")'''
 
-    def cppcode(self, asts: dict[str, AnsonAst], ast: AnsonAst) -> List[str]:
+    def cppcode(self, asts: dict[str, AnsonAst], ast: AnsonAst, caller: List[tuple]) -> List[str]:
+        load_func = f'register_{ast.c_class().lower()}Ast'
+        caller.append(('register_', load_func))
+
         return [class_decl.format(ast.c_class(), ast.c_base(), ast.dataAnclass),
                 *class_fields(asts, ast),
                 *class_ctors(ast),
                 '};\n\n',
 
-                self.regist_anson.format(ast.c_class().lower(), ast.c_class(), ast.c_base()),
+                self.inline_static + self.regist_anson.format(load_func, ast.c_class(), ast.c_base()),
                 *[self.anson_field.format(fn, f['dataAnclass']) for fn, f in ast.fields.items()],
                 '       });\n',
                 self.entt_facotry.format(ast.c_class(), ast.c_base()),
                 *ent_ctors(ast),
-                # self.entt_facotry.format(ast.c_class(), ast.c_base()),
+
                 *[self.entt_data.format(ast.c_class(), fn) for fn, _ in ast.fields.items()],
                 '\n        ;\n}\n'
                 ]
@@ -319,6 +324,7 @@ def gen_cpp_peer2(settings: PeerSettings):
         gen.writelines(start_namespace)
 
         settings.ansons.extend(settings.anRequests)
+        caller_body: List[tuple] = []
 
         for astjson in settings.ansons:
             if (Path(settings.ast_folder) / astjson).exists():
@@ -327,11 +333,22 @@ def gen_cpp_peer2(settings: PeerSettings):
 
                 if (isinstance(ast, AnsonBodyAst)):
                     bdast = cast(AnsonBodyAst, ast)
-                    gen.writelines(msglines.specialize_req(asts, bdast))
+                    gen.writelines(msglines.specialize_req(asts, bdast, caller_body, astjson))
                 else:
-                    gen.writelines(ansonlines.cppcode(asts, ast))
+                    gen.writelines(ansonlines.cppcode(asts, ast, caller_body))
+
             else:
                 Utils.warn('Cannot find file ' + astjson)
+
+        if len(caller_body) > 1:
+            gen.writelines(caller_func.format(tier_name = settings.tier_name))
+            for ln in caller_body:
+                if 'register_' == ln[0]:
+                    gen.writelines(f'    {ln[1]}(asts);\n')
+                else:
+                    gen.writelines(f'    {ln[1]}(asts, ast_folder + "{ln[2]}");\n')
+            else:
+                gen.writelines('}\n')
 
         gen.writelines(msglines.end_ns)
 

@@ -448,4 +448,14 @@ inline static void load_docsrespAst(AstMap &asts, const string &ast_path) {
   });
 }
 
+inline static void register_doctier(AstMap &asts, const string &ast_folder) {
+    register_pageinfAst(asts);
+    register_deviceAst(asts);
+    register_synentityAst(asts);
+    register_pathspageAst(asts);
+    register_expsyncdocAst(asts);
+    load_docsreqAst(asts, ast_folder + "ast/docsreq.ast.json");
+    load_docsrespAst(asts, ast_folder + "ast/docsresp.ast.json");
+}
+
 }

@@ -1,4 +1,5 @@
 { "type"       : "io.odysz.reflect.PeerSettings",
+  "tier_name"  : "doctier",
   "ansonMsg"   : "io.odysz.semantic.jprotocol.AnsonMsg",
   "ansons"     : [],
   "scopeEnums" : ["io.odysz.semantic.jprotocol.MsgCode"],
