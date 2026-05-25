@@ -54,7 +54,7 @@ inline static void load_echoreq2Ast(AstMap &asts, const string &ast_path) {
             anerror("get_field_instance<EchoReq2>(): Failed to get entt instance (meta_any)");
             return { };
         };
-  });
+    });
 }
 
 }

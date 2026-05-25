@@ -121,6 +121,27 @@ public:
     [1] public class {Req} : public anson::{AnsonBody} { _type_={} ...
 '''
 
+field_getter0 = '''
+        //
+        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {{
+            if (ast->fields.contains(fieldname)) {{
+                auto& concrete = static_cast<const {0}&>(ans);'''
+field_getif ='''
+                if ("{0}" == fieldname)
+                    return entt::forward_as_meta(concrete.{0});'''
+field_getter9 = '''
+            }}
+
+            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {{
+                {ast_type} *bast = IJsonable::contxt_ptr->ast<{ast_type}>(ast->baseAnclass);
+                return bast->get_field_instance(ans, fieldname);
+            }}
+
+            anerror("get_field_instance<{0}>(): Failed to get entt instance (meta_any)");
+            return {{ }};
+        }};
+'''
+
 caller_func = '''
 inline static void register_{tier_name}(AstMap &asts, const string &ast_folder) {{
 '''
@@ -152,30 +173,8 @@ class MsgLines:
     entt_data = '''
         entf.data<&{0}::{1}>("{1}");'''
 
-    field_getter0 = '''
-        //
-        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {{
-            if (ast->fields.contains(fieldname)) {{
-                auto& concrete = static_cast<const {0}&>(ans);'''
-    field_getif ='''
-                if ("{0}" == fieldname)
-                    return entt::forward_as_meta(concrete.{0});'''
-    field_getter9 = '''
-            }}
-
-            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {{
-                AnsonBodyAst *bast = IJsonable::contxt_ptr->ast<AnsonBodyAst>(ast->baseAnclass);
-                return bast->get_field_instance(ans, fieldname);
-            }}
-
-            anerror("get_field_instance<{0}>(): Failed to get entt instance (meta_any)");
-            return {{ }};
-        }};
-  }});
-}}
-'''
-
     end_ns = '\n}\n'
+
 
     def specialize_req(self, asts: dict[str, AnsonAst], ast: AnsonBodyAst, caller: List[tuple], astpath: str) -> List[str]:
         '''
@@ -237,9 +236,10 @@ class MsgLines:
                 *[self.entt_data.format(ast.c_class(), fn) for fn, _ in ast.fields.items()],
                 '\n',
                 *entf_ctors(ast),
-                self.field_getter0.format(ast.c_class()),
-                *[self.field_getif.format(fn) for fn, _ in ast.fields.items()],
-                self.field_getter9.format(ast.c_class())
+                field_getter0.format(ast.c_class()),
+                *[field_getif.format(fn) for fn, _ in ast.fields.items()],
+                field_getter9.format(ast.c_class(), ast_type='AnsonBodyAst'),
+                '    });\n}\n'
                 ]
 
 @dataclass
@@ -297,7 +297,12 @@ class AnsonLines:
                 *ent_ctors(ast),
 
                 *[self.entt_data.format(ast.c_class(), fn) for fn, _ in ast.fields.items()],
-                '\n        ;\n}\n'
+                '\n        ;\n',
+
+                field_getter0.format(ast.c_class()),
+                *[field_getif.format(fn) for fn, _ in ast.fields.items()],
+                field_getter9.format(ast.c_class(), ast_type='AnsonAst'),
+                '}\n'
                 ]
 
 

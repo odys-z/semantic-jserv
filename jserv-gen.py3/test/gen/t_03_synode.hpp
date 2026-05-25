@@ -47,6 +47,31 @@ inline static void register_pageinfAst(AstMap & asts) {
         .data<&anson::PageInf::arrCondts>("arrCondts")
         .data<&anson::PageInf::mapCondts>("mapCondts")
         ;
+
+        //
+        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+            if (ast->fields.contains(fieldname)) {
+                auto& concrete = static_cast<const PageInf&>(ans);
+                if ("page" == fieldname)
+                    return entt::forward_as_meta(concrete.page);
+                if ("size" == fieldname)
+                    return entt::forward_as_meta(concrete.size);
+                if ("total" == fieldname)
+                    return entt::forward_as_meta(concrete.total);
+                if ("arrCondts" == fieldname)
+                    return entt::forward_as_meta(concrete.arrCondts);
+                if ("mapCondts" == fieldname)
+                    return entt::forward_as_meta(concrete.mapCondts);
+            }
+
+            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+                return bast->get_field_instance(ans, fieldname);
+            }
+
+            anerror("get_field_instance<PageInf>(): Failed to get entt instance (meta_any)");
+            return { };
+        };
 }
 
 class Device : public anson::Anson {
@@ -90,6 +115,29 @@ inline static void register_deviceAst(AstMap & asts) {
         .data<&anson::Device::devname>("devname")
         .data<&anson::Device::toFolder>("toFolder")
         ;
+
+        //
+        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+            if (ast->fields.contains(fieldname)) {
+                auto& concrete = static_cast<const Device&>(ans);
+                if ("id" == fieldname)
+                    return entt::forward_as_meta(concrete.id);
+                if ("synode0" == fieldname)
+                    return entt::forward_as_meta(concrete.synode0);
+                if ("devname" == fieldname)
+                    return entt::forward_as_meta(concrete.devname);
+                if ("toFolder" == fieldname)
+                    return entt::forward_as_meta(concrete.toFolder);
+            }
+
+            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+                return bast->get_field_instance(ans, fieldname);
+            }
+
+            anerror("get_field_instance<Device>(): Failed to get entt instance (meta_any)");
+            return { };
+        };
 }
 
 class SynEntity : public anson::Anson {
@@ -139,6 +187,35 @@ inline static void register_synentityAst(AstMap & asts) {
         .data<&anson::SynEntity::synoder>("synoder")
         .data<&anson::SynEntity::nyquence>("nyquence")
         ;
+
+        //
+        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+            if (ast->fields.contains(fieldname)) {
+                auto& concrete = static_cast<const SynEntity&>(ans);
+                if ("entm" == fieldname)
+                    return entt::forward_as_meta(concrete.entm);
+                if ("synpageCols" == fieldname)
+                    return entt::forward_as_meta(concrete.synpageCols);
+                if ("recId" == fieldname)
+                    return entt::forward_as_meta(concrete.recId);
+                if ("uids" == fieldname)
+                    return entt::forward_as_meta(concrete.uids);
+                if ("synode" == fieldname)
+                    return entt::forward_as_meta(concrete.synode);
+                if ("synoder" == fieldname)
+                    return entt::forward_as_meta(concrete.synoder);
+                if ("nyquence" == fieldname)
+                    return entt::forward_as_meta(concrete.nyquence);
+            }
+
+            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+                return bast->get_field_instance(ans, fieldname);
+            }
+
+            anerror("get_field_instance<SynEntity>(): Failed to get entt instance (meta_any)");
+            return { };
+        };
 }
 
 class PathsPage : public anson::Anson {
@@ -184,6 +261,29 @@ inline static void register_pathspageAst(AstMap & asts) {
         .data<&anson::PathsPage::end>("end")
         .data<&anson::PathsPage::clientPaths>("clientPaths")
         ;
+
+        //
+        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+            if (ast->fields.contains(fieldname)) {
+                auto& concrete = static_cast<const PathsPage&>(ans);
+                if ("device" == fieldname)
+                    return entt::forward_as_meta(concrete.device);
+                if ("start" == fieldname)
+                    return entt::forward_as_meta(concrete.start);
+                if ("end" == fieldname)
+                    return entt::forward_as_meta(concrete.end);
+                if ("clientPaths" == fieldname)
+                    return entt::forward_as_meta(concrete.clientPaths);
+            }
+
+            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+                return bast->get_field_instance(ans, fieldname);
+            }
+
+            anerror("get_field_instance<PathsPage>(): Failed to get entt instance (meta_any)");
+            return { };
+        };
 }
 
 class ExpSyncDoc : public anson::SynEntity {
@@ -259,6 +359,47 @@ inline static void register_expsyncdocAst(AstMap & asts) {
         .data<&anson::ExpSyncDoc::mime>("mime")
         .data<&anson::ExpSyncDoc::folder>("folder")
         ;
+
+        //
+        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+            if (ast->fields.contains(fieldname)) {
+                auto& concrete = static_cast<const ExpSyncDoc&>(ans);
+                if ("pname" == fieldname)
+                    return entt::forward_as_meta(concrete.pname);
+                if ("clientpath" == fieldname)
+                    return entt::forward_as_meta(concrete.clientpath);
+                if ("device" == fieldname)
+                    return entt::forward_as_meta(concrete.device);
+                if ("org" == fieldname)
+                    return entt::forward_as_meta(concrete.org);
+                if ("shareflag" == fieldname)
+                    return entt::forward_as_meta(concrete.shareflag);
+                if ("shareMsg" == fieldname)
+                    return entt::forward_as_meta(concrete.shareMsg);
+                if ("createDate" == fieldname)
+                    return entt::forward_as_meta(concrete.createDate);
+                if ("uri64" == fieldname)
+                    return entt::forward_as_meta(concrete.uri64);
+                if ("shareby" == fieldname)
+                    return entt::forward_as_meta(concrete.shareby);
+                if ("sharedate" == fieldname)
+                    return entt::forward_as_meta(concrete.sharedate);
+                if ("size" == fieldname)
+                    return entt::forward_as_meta(concrete.size);
+                if ("mime" == fieldname)
+                    return entt::forward_as_meta(concrete.mime);
+                if ("folder" == fieldname)
+                    return entt::forward_as_meta(concrete.folder);
+            }
+
+            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+                return bast->get_field_instance(ans, fieldname);
+            }
+
+            anerror("get_field_instance<ExpSyncDoc>(): Failed to get entt instance (meta_any)");
+            return { };
+        };
 }
 
 class DocsReq : public anson::UserReq {
@@ -376,7 +517,7 @@ inline static void load_docsreqAst(AstMap &asts, const string &ast_path) {
             anerror("get_field_instance<DocsReq>(): Failed to get entt instance (meta_any)");
             return { };
         };
-  });
+    });
 }
 
 class DocsResp : public anson::AnsonResp {
@@ -445,7 +586,7 @@ inline static void load_docsrespAst(AstMap &asts, const string &ast_path) {
             anerror("get_field_instance<DocsResp>(): Failed to get entt instance (meta_any)");
             return { };
         };
-  });
+    });
 }
 
 inline static void register_doctier(AstMap &asts, const string &ast_folder) {

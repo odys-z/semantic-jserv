@@ -65,7 +65,7 @@ inline static void load_ansessionreqAst(AstMap &asts, const string &ast_path) {
             anerror("get_field_instance<AnSessionReq>(): Failed to get entt instance (meta_any)");
             return { };
         };
-  });
+    });
 }
 
 class AnSessionResp : public anson::AnsonResp {
@@ -119,7 +119,7 @@ inline static void load_ansessionrespAst(AstMap &asts, const string &ast_path) {
             anerror("get_field_instance<AnSessionResp>(): Failed to get entt instance (meta_any)");
             return { };
         };
-  });
+    });
 }
 
 inline static void register_t02(AstMap &asts, const string &ast_folder) {
