@@ -1,5 +1,5 @@
 { "type": "io.odysz.reflect.AnsonAst",
-  "dataAnclass": "io.odysz.semantic.tiers.docs.Device",
+  "dataAnclass": "io.odysz.semantic.tier.docs.Device",
   "baseAnclass": "io.odysz.anson.Anson",
   "fields" : {
     "id": {"dataAnclass": "string"},

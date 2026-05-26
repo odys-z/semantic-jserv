@@ -3,12 +3,10 @@
   "baseAnclass": "io.odysz.semantic.jprotocol.Anson",
   "fields" : {
     "entm": {"dataAnclass": "SynEntityMeta"},
-    "synpageCols": {"dataAnclass": "list<string"},
     "recId": {"dataAnclass": "string"},
     "uids": {"dataAnclass": "string"},
     "synode": {"dataAnclass": "string"},
-    "synoder": {"dataAnclass": "string"},
-    "nyquence": {"dataAnclass": "long"}
+    "synoder": {"dataAnclass": "string"}
   },
   "ctors": [[[], []],
             [["type"], ["string", "", "type"], ["", "", "\"\", \"\""]],

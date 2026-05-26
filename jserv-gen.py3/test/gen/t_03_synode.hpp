@@ -76,7 +76,7 @@ inline static void register_pageinfAst(AstMap & asts) {
 
 class Device : public anson::Anson {
 public:
-    inline static const std::string _type_ = "io.odysz.semantic.tiers.docs.Device";
+    inline static const std::string _type_ = "io.odysz.semantic.tier.docs.Device";
     string id;
     string synode0;
     string devname;
@@ -144,12 +144,10 @@ class SynEntity : public anson::Anson {
 public:
     inline static const std::string _type_ = "io.oz.syn.SynEntity";
     SynEntityMeta entm;
-    vector<string> synpageCols;
     string recId;
     string uids;
     string synode;
     string synoder;
-    long nyquence;
 
     SynEntity() : Anson() {
         Type(_type_);
@@ -165,12 +163,10 @@ inline static void register_synentityAst(AstMap & asts) {
     AnsonAst * ast = createAST <SynEntity, AnsonAst> (
         asts, Anson::_type_, map <string, AnsonField> {
         {"entm", {.dataAnclass="SynEntityMeta"} },
-        {"synpageCols", {.dataAnclass="list<string"} },
         {"recId", {.dataAnclass="string"} },
         {"uids", {.dataAnclass="string"} },
         {"synode", {.dataAnclass="string"} },
         {"synoder", {.dataAnclass="string"} },
-        {"nyquence", {.dataAnclass="long"} },
        });
 
     entt::meta_factory <anson::SynEntity> ()
@@ -180,12 +176,10 @@ inline static void register_synentityAst(AstMap & asts) {
         .ctor<const SynEntityMeta &>()
 
         .data<&anson::SynEntity::entm>("entm")
-        .data<&anson::SynEntity::synpageCols>("synpageCols")
         .data<&anson::SynEntity::recId>("recId")
         .data<&anson::SynEntity::uids>("uids")
         .data<&anson::SynEntity::synode>("synode")
         .data<&anson::SynEntity::synoder>("synoder")
-        .data<&anson::SynEntity::nyquence>("nyquence")
         ;
 
         //
@@ -194,8 +188,6 @@ inline static void register_synentityAst(AstMap & asts) {
                 auto& concrete = static_cast<const SynEntity&>(ans);
                 if ("entm" == fieldname)
                     return entt::forward_as_meta(concrete.entm);
-                if ("synpageCols" == fieldname)
-                    return entt::forward_as_meta(concrete.synpageCols);
                 if ("recId" == fieldname)
                     return entt::forward_as_meta(concrete.recId);
                 if ("uids" == fieldname)
@@ -204,8 +196,6 @@ inline static void register_synentityAst(AstMap & asts) {
                     return entt::forward_as_meta(concrete.synode);
                 if ("synoder" == fieldname)
                     return entt::forward_as_meta(concrete.synoder);
-                if ("nyquence" == fieldname)
-                    return entt::forward_as_meta(concrete.nyquence);
             }
 
             if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
