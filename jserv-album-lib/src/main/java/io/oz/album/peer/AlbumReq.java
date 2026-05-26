@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.NV;
 import io.odysz.semantic.jprotocol.AnsonBody;
 import io.odysz.semantic.jprotocol.AnsonMsg;
@@ -132,7 +132,7 @@ public class AlbumReq extends DocsReq {
 	public AlbumReq createPhoto(String collId, String fullpath) throws IOException {
 		Path p = Paths.get(fullpath);
 		byte[] f = Files.readAllBytes(p);
-		String b64 = AESHelper.encode64(f);
+		String b64 = AESHelper2.encode64(f);
 
 		this.photo = new PhotoRec();
 //		this.photo.collectId = collId;
