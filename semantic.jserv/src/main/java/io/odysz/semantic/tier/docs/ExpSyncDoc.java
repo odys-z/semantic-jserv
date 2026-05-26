@@ -242,6 +242,10 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		this.org = "";
 	}
 
+	public ExpSyncDoc() {
+		super(null);
+	}
+	
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = clientpath;
 		Path p = Paths.get(clientpath);

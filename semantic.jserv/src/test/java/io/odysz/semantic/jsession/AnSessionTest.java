@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.Configs;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.jprotocol.AnsonHeader;
@@ -39,7 +39,7 @@ class AnSessionTest {
 		AnSessionResp bd = new AnSessionResp(null, ssinf).profile(login.profile());
 		
 		// client
-		bd.ssInf.ssToken = AESHelper.repackSessionToken(bd.ssInf.ssToken, pswd, uid);
+		bd.ssInf.ssToken = AESHelper2.repackSessionToken(bd.ssInf.ssToken, pswd, uid);
 		T_SessionClient client = new T_SessionClient(bd);
 
 		// a session talk
