@@ -1,7 +1,7 @@
 package io.oz.jserv.docs.syn;
 
-import static io.odysz.common.AESHelper.encode64;
-import static io.odysz.common.AESHelper.getRandom;
+import static io.odysz.common.AESHelper2.encode64;
+import static io.odysz.common.AESHelper2.getRandom;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.ev;
 import static io.odysz.common.LangExt.f;
@@ -42,7 +42,7 @@ import org.apache.commons.io.FileUtils;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.Regex;
 import io.odysz.common.Utils;
@@ -869,7 +869,7 @@ public class SynssionPeer {
 
 		SyncResp resp0 = client.commit(q, errHandler);
 
-		totalBlocks = (int) (Math.max(0, p.size - 1) / AESHelper.blockSize()) + 1;
+		totalBlocks = (int) (Math.max(0, p.size - 1) / AESHelper2.blockSize()) + 1;
 
 		if (proc != null) proc.proc(-1, -1, 0, totalBlocks, resp0);
 
@@ -878,7 +878,7 @@ public class SynssionPeer {
 
 			long start = 0;
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			long len = AESHelper.encodeRange(path, ifs, size, baos, start, AESHelper.blockSize());
+			long len = AESHelper2.encodeRange(path, ifs, size, baos, start, AESHelper2.blockSize());
 			SyncResp respi = null;
 			while (len > 0) {
 				req = new SyncReq()
@@ -895,7 +895,7 @@ public class SynssionPeer {
 				if (proc != null) proc.proc(1, 1, seq, totalBlocks, respi);
 
 				baos = new ByteArrayOutputStream();
-				len = AESHelper.encodeRange(path, ifs, size, baos, start, AESHelper.blockSize());
+				len = AESHelper2.encodeRange(path, ifs, size, baos, start, AESHelper2.blockSize());
 			}
 			
 			mustnonull(docref.uids);
