@@ -11,14 +11,14 @@ class GenJservTest(TestCase):
 
     def test_(self):
         testpath = 'test'
-        settings = cast(PeerSettings, Anson.from_file(testpath + '/settings/t_03-anclient.cmake.json'))
+        settings = cast(PeerSettings, Anson.from_file(testpath + '/settings/t_02-semantier.json'))
 
         gen_peers(settings, testpath)
 
-        with (open('../../anson.cmake/tests/expect/t_10_doctier.hpp', 'r') as e,
+        with (open('../../anson.cmake/tests/expect/t_02_semantier.hpp', 'r') as e,
               open(settings.cpp_gen, 'r') as f):
             self.assertEqual(e.readlines(), f.readlines())
 
-        with (open('../../Anclient.cmake/src/gen/doctier.hpp', 'r') as e,
-              open('../../anson.cmake/tests/expect/t_10_doctier.hpp', 'r') as f):
+        with (open('../../anson.cmake/src/io/odysz/gen/semantier.hpp', 'r') as f,
+              open(settings.cpp_gen, 'r') as e):
             self.assertEqual(e.readlines(), f.readlines())

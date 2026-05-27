@@ -24,3 +24,5 @@ if __name__ == '__main__':
         print('Generating peers with ASTs in ', ast_folder)
 
         gen_peers(settings, ast_folder)
+
+        print(f'Done. Genterated ASTs:\n', settings.ansons)
