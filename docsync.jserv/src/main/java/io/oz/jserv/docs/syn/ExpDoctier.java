@@ -3,6 +3,7 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.sum;
@@ -282,9 +283,11 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			paths.add(s);
 		}
 
-		String conn = Connects.uri2conn(syncReq.uri());
+		String conn = Connects.uri2conn(syncReq.uri()); // FIXME ISSUE Not syncReq.synuri?
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects
 							.getMeta(conn, syncReq.docTabl);
+		mustnonull( meta, "Cannot get meta with conn = %s <- %s, doctabl = %s",
+					conn, syncReq.uri(), syncReq.docTabl);
 
 		String[] kpaths = syncReq.syncingPage().paths() == null ? new String[0]
 				: syncReq.syncingPage().paths().keySet().toArray(new String[0]);

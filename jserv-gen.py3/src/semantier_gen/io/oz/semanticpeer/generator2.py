@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast, List
@@ -39,10 +40,21 @@ def ent_ctors(ast: AnsonAst) -> List[str]:
     return ctorss
 
 def c_type(dataAnclass: str) -> str:
+    def replace_cpp_type(typstr: str) -> str:
+        tss = re.split(r',\s*', typstr)
+        if len(tss) > 0:
+            for ix in range(len(tss)):
+                t = tss[ix]
+                tss[ix] = Primtypes.C20[t] if t in Primtypes.C20 else t
+        return ', '.join(tss)
+
     typss = dataAnclass.split('<')
     end = ''
     for x in range(len(typss)):
         t = typss[x].split('.')[-1]
+        # t = re.sub(r",\s*list", ", vector", t)
+        t = replace_cpp_type(t)
+
         typss[x] = Primtypes.C20[t] if t in Primtypes.C20 else t
         end = end + '>'
     return '<'.join(typss) + (end[:-1] if len(end) > 0 else '')

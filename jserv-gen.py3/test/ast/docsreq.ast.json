@@ -35,9 +35,8 @@
     "reset": {"dataAnclass": "boolean"},
     "limit": {"dataAnclass": "int"}
   },
-  "ctors": [[["uri"], ["AnsonMsg<AnsonBody>", "", "parent"], ["string", "", "uri"], ["IFileDescriptor", "format", "()", "p"]],
-            [["uri"], ["string", "docTabl", "docTabl"], ["ExpSyncDoc", "doc", "doc"], ["string", "", "uri"]]],
   "ctorsemantics": [
+ 	  { "base": { "stype": "()", "args": ["baseAnclass"] }},
  	  { "base": { "stype": "()", "args": ["baseAnclass"] },
 	    "args": [{"stype": "", "args": ["const", "string", "&", "doctbl"]},
 	  			 {"stype": "", "args": ["const IFileDescriptor&", "p"]} ],

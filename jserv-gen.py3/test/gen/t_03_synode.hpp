@@ -19,7 +19,7 @@ public:
     long size;
     long total;
     vector<vector<string>> arrCondts;
-    map<string, list<LangExt::VarType>> mapCondts;
+    map<string, vector<LangExt::VarType>> mapCondts;
 
     PageInf() : Anson() {
         Type(_type_);
@@ -214,7 +214,7 @@ public:
     string device;
     int start;
     int end;
-    map<string, list<LangExt::VarType>> clientPaths;
+    map<string, vector<LangExt::VarType>> clientPaths;
 
     PathsPage() : Anson() {
         Type(_type_);
@@ -429,6 +429,10 @@ public:
     bool reset;
     int limit;
 
+    DocsReq() : UserReq() {
+        Type(_type_);
+    }
+
     void format(const IFileDescriptor& p);
 
     DocsReq(const string & doctbl, const IFileDescriptor& p) : UserReq() {
@@ -464,8 +468,6 @@ inline static void load_docsreqAst(AstMap &asts, const string &ast_path) {
         entf.data<&DocsReq::org>("org");
         entf.data<&DocsReq::reset>("reset");
         entf.data<&DocsReq::limit>("limit");
-        entf.ctor<AnsonMsg<AnsonBody>, string, IFileDescriptor>();
-        entf.ctor<string, ExpSyncDoc, string>();
 
         //
         ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
@@ -522,7 +524,7 @@ public:
     string collectId;
     int blockSeqReply;
     string org;
-    string device;
+    Device device;
     string stamp;
     string syndomain;
 

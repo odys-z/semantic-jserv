@@ -4,11 +4,11 @@
   "fields" : {
     "xdoc": {"dataAnclass": "io.odysz.semantic.tier.docs.ExpSyncDoc"},
     "docTabl": {"dataAnclass": "string"},
-    "syncingPage": {"dataAnclass": "io.odysz.transact.sql.PathsPage"},
+    "syncingPage": {"dataAnclass": "io.odysz.semantic.tier.docs.PathsPage"},
     "collectId": {"dataAnclass": "string"},
     "blockSeqReply": {"dataAnclass": "int"},
     "org": {"dataAnclass": "string"},
-    "device": {"dataAnclass": "string"},
+    "device": {"dataAnclass": "io.odysz.semantic.tier.docs.Device"},
     "stamp": {"dataAnclass": "string"},
     "syndomain": {"dataAnclass": "string"}
   },
