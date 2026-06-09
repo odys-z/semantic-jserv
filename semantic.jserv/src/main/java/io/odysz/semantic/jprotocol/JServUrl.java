@@ -3,6 +3,7 @@ package io.odysz.semantic.jprotocol;
 import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.joinurl;
+import static io.odysz.common.LangExt.joinurl_ws;
 import static io.odysz.common.LangExt.shouldeqs;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.Regex.asJserv;
@@ -13,6 +14,8 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import io.odysz.anson.Anson;
 import io.odysz.common.LangExt;
@@ -51,9 +54,10 @@ public class JServUrl extends Anson {
 	}
 	
 	public JServUrl(boolean ishttps, String ip, int port) {
-		https = ishttps;
-		this.ip = ip;
-		this.port = port;
+//		https = ishttps;
+//		this.ip = ip;
+//		this.port = port;
+		this(null, ishttps, ip, port);
 	}
 
 	public JServUrl ip(String ip) {
@@ -61,10 +65,61 @@ public class JServUrl extends Anson {
 		return this;
 	}
 
+	/**
+	 * @since 1.5.17
+	 */
+	JProtocol protocol;
+	/**
+	 * @since 1.5.17
+	 */
+	public JServUrl(JProtocol jprotocol) {
+		protocol = jprotocol;
+	}
+
+	/**
+	 * @since 1.5.17
+	 */
+	public JServUrl(JProtocol jprotocol, boolean ishttps, String ip, int port) {
+		this(jprotocol);
+		https = ishttps;
+		this.ip = ip;
+		this.port = port;
+	}
+
+	/**
+	 * @return jserv url
+	 * @since 1.5.17, try first using jprotocol's instance field {@link JProtocol#protocolpath} as protocol root.
+	 */
+	@SuppressWarnings("deprecation")
 	public String jserv() {
-		return joinurl(https, ip, port, JProtocol.urlroot, subpaths);
+		return joinurl(https, ip, port,
+					protocol != null && protocol.protocolpath != null? protocol.protocolpath : JProtocol.urlroot,
+					subpaths);
 	}
 	
+	/**
+	 * @since 1.0.6
+	 * @return ws url
+	 * @throws URISyntaxException
+	 */
+	public String wsjserv() throws URISyntaxException {
+		mustnonull(protocol);
+		return joinurl_ws(https, ip, port, protocol.protocolpath, subpaths);
+	}
+	
+	/**
+	 * 
+	 * @return jserv url
+	 */
+	public URI wsuri() {
+		try {
+			return new URI(wsjserv());
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	/**
 	 * For getting a jserv string at Central, forcing the submitted path-root equals {@code clientpath}.
 	 * @param clientpath
@@ -88,8 +143,11 @@ public class JServUrl extends Anson {
 
 		subpaths = (String[]) jservparts[4];
 		mustnonull(subpaths);
-		shouldeqs(new Object(){}, JProtocol.urlroot, subpaths[0]);
-		if (eq(JProtocol.urlroot, subpaths[0]))
+		@SuppressWarnings("deprecation")
+		String protocolroot = protocol != null && protocol.protocolpath != null? protocol.protocolpath : JProtocol.urlroot;
+		shouldeqs(new Object(){}, protocolroot, subpaths[0]);
+
+		if (eq(protocolroot, subpaths[0]))
 			subpaths = LangExt.<String>removele(subpaths, 0);  
 		
 		jservtime = timestamp;
@@ -103,10 +161,11 @@ public class JServUrl extends Anson {
 	 * - port greater then 1024<br>
 	 * @param jserv
 	 * @return valid or not
-	 * @since 0.7.6
+	 * @since 1.5.16, (portfolio 0.7.6)
+	 * @deprecated since 1.5.17 must be fixed as {@link JProtocol#urlroot} is deprecated.
 	 */
 	public static boolean valid(String jserv, String... force_protocolroot) {
-		mustnonull(JProtocol.urlroot, "This is forced in semantic.jserv 1.5.18 (Portfolio 0.7.6)");
+		mustnonull(JProtocol.urlroot, "This is forced in semantic.jserv 1.5.16 (Portfolio 0.7.6)");
 
 		if (urlValidator == null)
 			urlValidator = new UrlValidator();
