@@ -220,9 +220,17 @@ public class DocsReq extends UserReq implements IBlock {
 	/** If the chain already exists when starting, reset it. */
 	public boolean reset;
 
+	/**
+	 * @deprecated 1.5.17 should be calculated from pageInf? (currently controlled by clients)
+	 */
 	private long limit = -1;
 
-	public long limit() { return limit; }
+	/**
+	 * @return record limits,
+	 * @since 1.5.17 the page size if possible, otherwise {@link #limit},
+	 * which is directly controlled by clients
+	 */
+	public long limit() { return pageInf == null ? limit : pageInf.size; }
 	public DocsReq limit(long l) {
 		limit = l;
 		return this;
