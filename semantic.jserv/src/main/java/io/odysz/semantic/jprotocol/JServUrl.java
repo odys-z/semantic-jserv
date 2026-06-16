@@ -111,7 +111,7 @@ public class JServUrl extends Anson {
 	 * 
 	 * @return jserv url
 	 */
-	public URI wsuri() {
+	public URI wservUri() {
 		try {
 			return new URI(wsjserv());
 		} catch (URISyntaxException e) {
