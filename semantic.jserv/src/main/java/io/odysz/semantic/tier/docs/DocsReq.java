@@ -73,9 +73,10 @@ public class DocsReq extends UserReq implements IBlock {
 		/** check is a new device name valid */
 		public static final String checkDev = "r/check-dev";
 
-		/** Requests works start synodes' synchronization
-		 * @since 1.5.17, anclient.cmake 0.1.0,
-		 * this is used for IPC to get ready to push ({@link #blockStart}).
+		/** 
+		 * @since 1.5.17, anclient.cmake 0.1.0,</br>
+		 * ws-point   : this is also used for IPC to get ready to push ({@link #blockStart}).</br>
+		 * synodetier : request to start synode synchronization
 		 */
 		public static final String requestSyn = "u/syn";
 

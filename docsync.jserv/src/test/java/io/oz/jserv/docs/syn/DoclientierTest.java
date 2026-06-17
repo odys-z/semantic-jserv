@@ -224,6 +224,7 @@ class DoclientierTest {
 		return xdoc;
 	}
 
+	@SuppressWarnings("deprecation")
 	static ExpSyncDoc videoUpByApp(Doclientier doclient, Device atdev, String respath,
  			String entityName, ShareFlag share, boolean... disable_reupload) throws Exception {
 
