@@ -254,6 +254,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @see {@link AppSettings#merge_ip_json2db(SynodeConfig, SynodeMeta, SyncUser, OnError)}
 	 */
 	public ExpSynodetier syncIn(float syncIns, OnError err) throws Exception {
+		/* TODO 2026.7.17
+		 * To be verified: any side effects?
 		this.syncInSnds = syncIns;
 		this.needExpose = false;
 
@@ -262,7 +264,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		workers[0] = jserv_worker(err); 
 
-//		if (domanager0.enableRegistryClient())
 		scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
 		
 		if (syncIns > 1) {
@@ -273,6 +274,31 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		
         running = false;
 		return this;
+		*/
+
+		this.syncInSnds = syncIns;
+		this.needExpose = false;
+
+		if (syncIns > 1) {
+			scheduler = Executors.newSingleThreadScheduledExecutor(
+					(r) -> new Thread(r, f("synworker-%s", synid)));
+
+			workers[0] = jserv_worker(err); 
+
+			scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
+		
+			DATranscxt syntb = new DATranscxt(domanager0.synconn);
+			workers[1] = syn_worker(syntb, err);
+			reschedule_1(0);
+		}
+		else {
+			logi("[ ♻.⛔ %s ] Turned off the sync-worker.", synid);
+			logi("[ ♻.⛔ %s ] To turn on sync-worker, set ${volume}/dictionary.json/syncIns > 1.0.", synid);
+		}
+		
+        running = false;
+		return this;
+	
 	}
 
 	private Runnable syn_worker(DATranscxt syntb, OnError err) {
@@ -385,6 +411,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 */
 	public void stopScheduled(int sTimeout) {
 		Utils.logi("[ ♻.⛔ %s ] cancling sync-worker ... ", synid);
+		Utils.logi("[ ♻.⛔ %s ] To turn off sync-worker, set ${volume}/dictionary.json/syncIns = -1.0.", synid);
 
 		if (schedualed != null)
 			schedualed.cancel(true);
