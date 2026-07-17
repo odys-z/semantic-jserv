@@ -328,6 +328,15 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		clientpath = separatorsToUnix(fullpath);
 		return this;
 	}
+	
+	/**
+	 * Figure out possible information if the client path is pointing to a local file.
+	 * @return this
+	 * @throws IOException 
+	 */
+	public IFileDescriptor figure_locally() throws IOException {
+		return fullpath(clientpath);
+	}
 
 	/**
 	 * Converts all separators to the Unix separator of forward slash,

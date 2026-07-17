@@ -158,16 +158,11 @@ public class ExchangreRestorTest {
 	@Test
 	void testBreakResume() throws Exception {
 		final boolean[] lights = new boolean[2];
-//		logrst("[DoclientierTest] Starting synode-tiers", 0);
 
 		turnred(lights);
 		thr_synodes = new Thread(() -> {
 			try {
 				jhub = SynotierJettyApp._main(new String[] {hubs}, false);
-//				((T_SynDomanager)jhub.syngleton().domnger0()).domUpdater((d, s, p, xp)->{
-//					logi("%s->%s", s, p);
-//					turngreen(lights, 0);
-//				});
 				jprv = SynotierJettyApp._main(new String[] {prvs}, true);
 				((T_SynDomanager)jprv.syngleton().domnger0()).domUpdater((d, s, p, xp)->{
 					logi("%s->%s", s, p);
