@@ -3,6 +3,7 @@ package io.odysz.semantic.jprotocol;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import io.odysz.anson.Anson;
@@ -36,6 +37,12 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * @author odys-z@github.com
 	 */
 	public static enum Port implements IPort {  
+		/**
+		 * @since 1.5.17 extension for WSPort compitbablity,
+		 * should only be used over websocket currently (2026-07-16).
+		 */ 
+		ping("ping.ws"),
+
 		heartbeat("ping.serv"), session("login.serv"),
 		query("r.serv"), update("u.serv"),
 		insert("c.serv"),
@@ -158,7 +165,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 				});
 	}
 	
-	String version = "1.1";
+	public String version = "1.1";
 
 	int seq;
 	public int seq() { return seq; }
@@ -240,7 +247,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	AnsonHeader header;
 	public AnsonHeader header() { return header; }
 	public AnsonMsg<T> header(AnsonHeader header) {
-		this.header = header; // .seq(seq);
+		this.header = header;
 		return this;
 	}
 	
@@ -277,6 +284,17 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	public AnsonMsg<T> uri(String uri) {
 		this.body.get(0).uri = uri;
 		return this;
+	}
+
+	/**
+	 * @since 1.5.17
+	 * @param synrep
+	 */
+	@SuppressWarnings("unchecked")
+	public void bodys(List<? extends AnsonResp> synrep) {
+		if (this.body == null)
+			this.body = new ArrayList<T>();
+		this.body.addAll((Collection<? extends T>) synrep);
 	}
 
 }
