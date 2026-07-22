@@ -29,13 +29,13 @@ import shutil
 from types import LambdaType
 
 from anson.io.odysz.common import Utils
-from anson.io.odysz.utils import zip2
 from invoke import task, Context
 
-SYNODE_VERSION = 'SYNODE_VERSION'
+SYNODE_VERSION    = 'SYNODE_VERSION'
 JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
-HTML_JAR_VERSION = 'HTML_JAR_VERSION'
-WEB_VERSION = 'WEB_VERSION'
+DESKTOP_WIN_VER   = 'DESKTOP_WIN_VERSION'
+HTML_JAR_VERSION  = 'HTML_JAR_VERSION'
+WEB_VERSION       = 'WEB_VERSION'
 # REGISTRY_ZIP = 'REGISTRY_ZIP'
 
 ORG = 'ura'
@@ -45,8 +45,9 @@ DOMAIN = 'zsu'
     Versions configured locally, overriden by environment variables.
 """
 vers = {
-    SYNODE_VERSION:    '0.7.8',
-    JSERV_JAR_VERSION: '0.7.7',
+    SYNODE_VERSION:    '0.7.9',
+    JSERV_JAR_VERSION: '0.7.8',
+    DESKTOP_WIN_VER  : '0.1.0',
     HTML_JAR_VERSION:  '0.1.8',
     WEB_VERSION:       '0.4.3',
     # REGISTRY_ZIP: f'registry-{ORG}-{DOMAIN}-0.7.3.zip'
@@ -107,13 +108,6 @@ def config(c):
     Utils.update_patterns('src/synodepy3/synode.json', {'"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{version}",'})
 
     Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{version}" # '})
-
-# @deprecated since 0.7.7, as Registry Central is running
-# @task
-# def zipRegistry(c):
-#     print('config =', vers, "zip =", vers[REGISTRY_ZIP])
-#     zip2(vers[REGISTRY_ZIP], {"zsu": "registry-deploy/*"}, ['*.zip'])
-
 
 @task(config)
 def build(c: Context):

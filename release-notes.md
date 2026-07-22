@@ -1,6 +1,6 @@
 # Version 1.5.x
 
-Experimetental for relatonal database synchronization.
+Experimetental for relational database synchronization.
 
 # Version 1.4.x
 
