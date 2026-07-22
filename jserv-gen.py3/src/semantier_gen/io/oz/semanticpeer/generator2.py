@@ -359,11 +359,12 @@ def gen_cpp_peer2(settings: PeerSettings):
 
         if len(caller_body) > 1:
             gen.writelines(caller_func.format(tier_name = settings.tier_name))
+            gen.writelines('    filesystem::path folder_path{ast_folder};\n')
             for ln in caller_body:
                 if 'register_' == ln[0]:
                     gen.writelines(f'    {ln[1]}(asts);\n')
                 else:
-                    gen.writelines(f'    {ln[1]}(asts, ast_folder + "{ln[2]}");\n')
+                    gen.writelines(f'    {ln[1]}(asts, (folder_path / "{ln[2]}").string());\n')
             else:
                 gen.writelines('}\n')
 

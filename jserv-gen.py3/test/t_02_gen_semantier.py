@@ -15,10 +15,6 @@ class GenJservTest(TestCase):
 
         gen_peers(settings, testpath)
 
-        with (open('../../anson.cmake/tests/expect/t_02_semantier.hpp', 'r') as e,
-              open(settings.cpp_gen, 'r') as f):
-            self.assertEqual(e.readlines(), f.readlines())
-
         with (open('../../anson.cmake/src/io/odysz/gen/semantier.hpp', 'r') as f,
               open(settings.cpp_gen, 'r') as e):
             self.assertEqual(e.readlines(), f.readlines())

@@ -18,8 +18,3 @@ class GenJservTest(TestCase):
         with (open('../../anson.cmake/tests/expect/t_10_doctier.hpp', 'r') as e,
               open(settings.cpp_gen, 'r') as f):
             self.assertEqual(e.readlines(), f.readlines())
-
-        # ast path configurations are different
-        # with (open('../../Anclient.cmake/src/gen/doctier.hpp', 'r') as e,
-        #       open('../../anson.cmake/tests/expect/t_10_doctier.hpp', 'r') as f):
-        #     self.assertEqual(e.readlines(), f.readlines())

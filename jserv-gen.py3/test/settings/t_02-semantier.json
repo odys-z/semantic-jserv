@@ -2,6 +2,6 @@
   "tier_name" : "semantier",
   "ansonMsg"  : "io.odysz.semantic.jprotocol.AnsonMsg",
   "ansons"    : [],
-  "anRequests": ["ast/session-req.ast.json", "ast/session-resp.ast.json"],
+  "anRequests": ["ast/heartbeat.ast.json", "ast/session-req.ast.json", "ast/session-resp.ast.json"],
   "cpp_gen"   : "test/gen/t_02_semantier.hpp"
 }
