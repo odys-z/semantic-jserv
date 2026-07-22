@@ -4,6 +4,6 @@
   "scopeEnums": ["io.odysz.semantic.jprotocol.MsgCode"],
   "javaEnums" : ["io.odysz.semantic.jprotocol.Port"],
   "ansonBody" : "io.odysz.semantic.jprotocol.AnsonBody",
-  "anRequests": ["ast/echo2.ast.json"],
+  "anRequests": ["./echo2.ast.json"],
   "cpp_gen"   : "test/gen/t_01_echomsg.hpp"
 }

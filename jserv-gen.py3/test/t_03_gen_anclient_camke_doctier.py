@@ -13,7 +13,7 @@ class GenJservTest(TestCase):
         testpath = 'test'
         settings = cast(PeerSettings, Anson.from_file(testpath + '/settings/t_03-anclient.cmake-doctier.json'))
 
-        gen_peers(settings, testpath)
+        gen_peers(settings, ast_folder=testpath + '/ast')
 
         with (open('../../anson.cmake/tests/expect/t_10_doctier.hpp', 'r') as e,
               open(settings.cpp_gen, 'r') as f):

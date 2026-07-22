@@ -588,8 +588,8 @@ inline static void register_doctier(AstMap &asts, const string &ast_folder) {
     register_synentityAst(asts);
     register_pathspageAst(asts);
     register_expsyncdocAst(asts);
-    load_docsreqAst(asts, (folder_path / "ast/docsreq.ast.json").string());
-    load_docsrespAst(asts, (folder_path / "ast/docsresp.ast.json").string());
+    load_docsreqAst(asts, (folder_path / "docsreq.ast.json").string());
+    load_docsrespAst(asts, (folder_path / "docsresp.ast.json").string());
 }
 
 }
