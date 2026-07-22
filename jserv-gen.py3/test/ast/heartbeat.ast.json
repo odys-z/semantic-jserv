@@ -1,0 +1,18 @@
+{ "type": "io.odysz.reflect.AnsonBodyAst",
+  "dataAnclass": "io.odysz.semantic.jsession.HeartBeat",
+  "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",
+  "fields" : {
+    "ssid": {"dataAnclass": "java.lang.String"},
+    "uid" : {"dataAnclass": "java.lang.String"}
+  },
+  "ctorsemantics": [
+    { "base": {"stype": "()", "args": ["AnsonBody", "uri"]},
+      "args": [{"stype": "",
+                "args": ["string", "uri"],
+                "expect_result": "c++ code: (..., string m, ...) : uri(uri)"},
+               {"stype": "ini",
+                "args": ["string", "ssid", "ssid"]},
+               {"stype": "ini",
+                "args": ["string", "uid", "uid"]}]
+    }]
+}
