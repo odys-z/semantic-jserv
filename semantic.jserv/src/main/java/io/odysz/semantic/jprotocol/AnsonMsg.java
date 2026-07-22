@@ -11,6 +11,7 @@ import io.odysz.anson.AnsonException;
 import io.odysz.anson.IJsonable;
 import io.odysz.anson.JSONAnsonListener;
 import io.odysz.anson.JsonOpt;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 
 /** Experiment: for generating the cpp end. */
@@ -246,6 +247,21 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	
 	AnsonHeader header;
 	public AnsonHeader header() { return header; }
+
+	/**
+	 * @since 1.5.17 set header by forcing session token.
+	 * @param ssInf Session information with repacked token after login.
+	 * @return this
+	 */
+	public AnsonMsg<T> header(SessionInf ssInf) {
+		this.header = new AnsonHeader(ssInf.ssid(), ssInf.uid(), ssInf.ssToken);
+		return this;
+	}
+	
+	/**
+	 * @deprecated 1.5.17, replaced by {@link #header(SessionInf)}
+	 * @return this
+	 */
 	public AnsonMsg<T> header(AnsonHeader header) {
 		this.header = header;
 		return this;
@@ -296,5 +312,4 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 			this.body = new ArrayList<T>();
 		this.body.addAll((Collection<? extends T>) synrep);
 	}
-
 }
