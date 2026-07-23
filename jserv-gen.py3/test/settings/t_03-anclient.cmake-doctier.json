@@ -10,7 +10,7 @@
                   "synentity.ast.json",
                   "pathspage.ast.json",
                   "expsyncdoc.ast.json",
-                  "docsreq.ast.json",
+                  "docsreq-test-case-body-invalid.ast.json",
                   "docsresp.ast.json"],
   "cpp_include": ["io/odysz/dbmeta.h"],
   "cpp_gen"    : "test/gen/t_03_synode.hpp"
