@@ -51,7 +51,12 @@ public class HeartLink extends ServPort<HeartBeat> {
 			AnsonMsg<AnsonResp> rep = new AnsonMsg<AnsonResp>(p, MsgCode.ok).body(new AnsonResp());
 			write(resp, rep);
 		} catch (SsException e) {
-			AnsonMsg<AnsonResp> rep = new AnsonMsg<AnsonResp>(p, MsgCode.exSession).body(new AnsonResp());
+			String details = "";
+			try { details = msg.header().toBlock(); }
+			catch (AnsonException | IOException e1) { }
+
+			AnsonMsg<AnsonResp> rep = new AnsonMsg<AnsonResp>(p, MsgCode.exSession)
+					.body(new AnsonResp().msg(e.getMessage() + " " + details));
 			write(resp, rep);
 		}
 	}
