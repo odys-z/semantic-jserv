@@ -1,0 +1,16 @@
+#!/bin/bash
+
+echo "copy ASTs from Anclient.cmake/tests/ast"
+
+SRCDIR="../../../../Anclient.cmake/tests/ast"
+cp "${SRCDIR}/device.ast.json" .
+cp "${SRCDIR}/docsreq.ast.json" .
+cp "${SRCDIR}/docsresp.ast.json" .
+cp "${SRCDIR}/echo2.ast.json" .
+cp "${SRCDIR}/expsyncdoc.ast.json" .
+cp "${SRCDIR}/heartbeat.ast.json" .
+cp "${SRCDIR}/pageinf.ast.json" .
+cp "${SRCDIR}/pathspage.ast.json" .
+cp "${SRCDIR}/session-req.ast.json" .
+cp "${SRCDIR}/session-resp.ast.json" .
+cp "${SRCDIR}/synentity.ast.json" .
