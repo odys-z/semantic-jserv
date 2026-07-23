@@ -34,6 +34,7 @@ class GenJservTest(TestCase):
 
         gen_peers(settings, ast_folder=testpath + '/ast')
 
+        # Generator can tolerate the error, but the c++ peer generated cannot handle the error.
         replace_in_file(settings.cpp_gen,
                         "docsreq-test-case-body-invalid.ast.json",
                         "docsreq.ast.json")
