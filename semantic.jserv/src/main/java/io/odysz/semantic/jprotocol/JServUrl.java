@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonField;
 import io.odysz.common.LangExt;
 import io.odysz.common.UrlValidator;
 import io.odysz.common.Utils;
@@ -54,9 +55,6 @@ public class JServUrl extends Anson {
 	}
 	
 	public JServUrl(boolean ishttps, String ip, int port) {
-//		https = ishttps;
-//		this.ip = ip;
-//		this.port = port;
 		this(null, ishttps, ip, port);
 	}
 
@@ -68,7 +66,9 @@ public class JServUrl extends Anson {
 	/**
 	 * @since 1.5.17
 	 */
+	@AnsonField(ignoreTo=true, ignoreFrom=true)
 	JProtocol protocol;
+
 	/**
 	 * @since 1.5.17
 	 */

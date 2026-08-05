@@ -444,7 +444,6 @@ public class Syngleton extends JSingleton {
 	}
 
 	public String myjserv() {
-		// settings.loadDBLaterservs(syncfg, synm);
 		return settings.jserv(synode());
 	}
 }

@@ -86,7 +86,7 @@ public class Echo extends ServPort<EchoReq> {
 
     protected AnsonResp inet(HttpServletResponse resp, EchoReq req, String remote)
     		throws SocketException, SemanticException {
-    	if (LangExt.indexOf(new String[]{"localhost", "127.0.0.1"}, remote) >= 0) {
+    	if (LangExt.indexOf(new String[]{"localhost", "127.0.0.1", "[0:0:0:0:0:0:0:1]"}, remote) >= 0) {
     		if (interfaces == null)
     			listInet();
     		return new AnsonResp()
