@@ -897,7 +897,7 @@ class InstallerCli:
             shutil.copy2(os.path.join('registry', syntity_json), syntityjson)
 
         # Prevent deleting tables by JettypApp's checking installation.
-        # This is assuming album-jserv always successfully setup dbs - when db files exist, the tables exist.
+        # This is to assume album-jserv always can successfully setup dbs - when db files exist, the tables exist.
         if self.hasrun() and not LangExt.isblank(self.settings.installkey) and LangExt.isblank(
                 self.settings.rootkey):
             self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
