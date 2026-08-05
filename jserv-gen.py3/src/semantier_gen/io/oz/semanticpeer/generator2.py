@@ -5,7 +5,8 @@ from typing import cast, List
 
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt, Primtypes
-from semanticshare.io.odysz.reflect import AnsonBodyAst, PeerSettings, AnsonAst, init_asts, SemanExpr, AnCtor
+from semanticshare.io.odysz.reflect import AnsonBodyAst, PeerSettings, AnsonAst, init_asts, SemanExpr, AnCtor, \
+    AnsonJavaEnumAst, AnsonMsgAst
 
 
 def entf_ctors(ast: AnsonAst) -> List[str]:
@@ -71,8 +72,11 @@ def class_fields(asts: dict[str, AnsonAst], ast: AnsonAst) -> List[str]:
 def class_ctors(ast: AnsonAst) -> List[str]:
     ctors = []
     body_formatters = []
+    found_0arg_ctor = False
     ctorsemantics = ast.ctorsemantics if LangExt.len(ast.ctorsemantics) > 0 else [AnCtor().as_default(ast)]
     for ctorss in ctorsemantics:
+        if len(ctorss.args) == 0: found_0arg_ctor = True
+
         body_lines = ctorss.cpp_body_exprs(ast, ' ' * 8)
         body_lines = [('\n'.join(body_lines) + '\n') if body_lines and len(body_lines) > 0 else '']
 
@@ -103,6 +107,11 @@ def class_ctors(ast: AnsonAst) -> List[str]:
                      '\n'.join(body_lines) +
                      ('    }\n' if len(body_lines) > 0 else '}\n'))
 
+    if not found_0arg_ctor:
+        Utils.warn("No default ctor is not found. Force a compile error here: {} {}()", ast.dataAnclass, ast.c_class())
+        ctors.append(f"\n    // No default ctor is not found. Force a compile error here: {ast.dataAnclass} {ast.c_class()} ()")
+        ctors.append(f'\n    {ast.c_class()}() : {ast.c_base()}() {{ Type(_type_); }}\n')
+
     return ctors
 
 start_header = '''#pragma once
@@ -130,7 +139,11 @@ public:
     inline static const std::string _type_ = "{}";
 '''
 '''
-    [1] public class {Req} : public anson::{AnsonBody} { _type_={} ...
+    E.g.
+    class {Req} : public anson::{AnsonBody} {
+    
+    public:
+        inline static const std::string _type_ = "{io.ody.syn.x}";
 '''
 
 field_getter0 = '''
@@ -317,6 +330,42 @@ class AnsonLines:
                 '}\n'
                 ]
 
+@dataclass
+class IPortLines:
+    entt_facotry = '''
+    entt::meta_factory <anson::{}> ()
+        .type(ast->enttypeid)
+        .base<{}>()
+'''
+    '''
+    entt::meta_factory < anson::PeerSettings > ()
+        .type(ast->enttypeid)
+        .base < Anson > ()
+        .ctor <> ()
+        .data < & anson::PeerSettings::ansons > ("ansons")
+        .data < & anson::PeerSettings::scopeEnums > ("scopeEnums")
+        .data < & anson::PeerSettings::javaEnums > ("javaEnums")
+        .data < & anson::PeerSettings::ansonMsg > ("ansonMsg")
+        .data < & anson::PeerSettings::ansonBody > ("ansonBody")
+        .data < & anson::PeerSettings::anRequests > ("anRequests")
+        .data < & anson::PeerSettings::cpp_gen > ("cpp_gen") \
+        ;
+    }
+    '''
+    entt_data = '''
+        .data<&anson::{0}::{1}>("{1}")'''
+
+    def cppcode(self, asts: dict[str, AnsonAst], ast: AnsonJavaEnumAst, caller: List[tuple], astpath: str) -> List[str]:
+        # register_iport <WSPort> (asts, "ast/wsport.ast.json");
+        caller.append(('load-port', f'register_iport<{ast.c_class()}>', astpath))
+
+        return [class_decl.format(ast.c_class(), ast.c_base(), ast.dataAnclass),
+                *[f'\n    inline static const string {k} = "{v}";' for k, v in ast.encode.items()],
+                '\n',
+                *class_ctors(ast),
+                '};\n\n',
+                ]
+
 
 def gen_cpp_peer2(settings: PeerSettings):
     '''
@@ -327,6 +376,7 @@ def gen_cpp_peer2(settings: PeerSettings):
 
     msglines = MsgLines()
     ansonlines = AnsonLines()
+    enumlines = IPortLines()
 
     gen_pth = Path(settings.cpp_gen)
     gen_pth.parent.mkdir(parents=True, exist_ok=True)
@@ -340,6 +390,7 @@ def gen_cpp_peer2(settings: PeerSettings):
         gen.writelines('\n')
         gen.writelines(start_namespace)
 
+        settings.ansons.extend(settings.javaEnums)
         settings.ansons.extend(settings.anRequests)
         caller_body: List[tuple] = []
 
@@ -348,9 +399,12 @@ def gen_cpp_peer2(settings: PeerSettings):
                 ast: AnsonAst = cast(AnsonAst, Anson.from_file(str(Path(settings.ast_folder) / astjson)))
                 asts[ast.dataAnclass] = ast
 
-                if (isinstance(ast, AnsonBodyAst)):
+                if isinstance(ast, AnsonBodyAst):
                     bdast = cast(AnsonBodyAst, ast)
                     gen.writelines(msglines.specialize_req(asts, bdast, caller_body, astjson))
+                elif isinstance(ast, AnsonJavaEnumAst) :
+                    enumast = cast(AnsonJavaEnumAst, ast)
+                    gen.writelines(enumlines.cppcode(asts, enumast, caller_body, astjson))
                 else:
                     gen.writelines(ansonlines.cppcode(asts, ast, caller_body))
 
