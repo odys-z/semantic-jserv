@@ -279,7 +279,7 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 		try {
 			if (msg != null) {
 				if (isblank(msg.body(0).uri()))
-					throw new SsException("Since jserv 1.4.0, client uri cannot be empty for session checking, logging in, etc.");
+					throw new SsException("Since jserv 1.4.0, client uri (body[0].uri) cannot be empty for session checking, logging in, etc.");
 
 				if (msg != null)
 					connId = Connects.uri2conn(msg.body(0).uri());
