@@ -1,3 +1,5 @@
+[![PyPI version](https://img.shields.io/pypi/v/semantier-generator.svg)](https://pypi.org/project/semantier-generator/)
+
 # About Semantier Generator.py3
 
 Generate c++ peer of semantic-*.
