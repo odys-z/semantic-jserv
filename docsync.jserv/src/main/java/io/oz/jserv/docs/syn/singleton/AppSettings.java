@@ -766,7 +766,7 @@ setp (6)
 		req.protocolPath = JProtocol.urlroot;
 
 		RegistResp resp = client.commit(client
-					.userReq(funcuri, Centralport.register, req)
+					.userReq(funcuri, Centralport.regist, req)
 					.header(header),
 					errCtx);
 
@@ -790,7 +790,7 @@ setp (6)
 		req.a(RegistReq.A.queryDomConfig);
 
 		RegistResp resp = client.commit(client
-					.userReq(funcuri, Centralport.register, req)
+					.userReq(funcuri, Centralport.regist, req)
 					.header(header),
 					errCtx);
 		
