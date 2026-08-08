@@ -184,7 +184,6 @@ def clean(c):
 
 @task(config)
 def build(c):
-    # def cmd_build_synodepy3(version:str, web_ver:str, html_jar_v:str) -> str:
     def cmd_build_synodepy3() -> str:
         """
         Get the command to build the synode.py3 package.
@@ -202,11 +201,12 @@ def build(c):
     buildcmds = [
         # replace app_ver with apk_ver?
         [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
+        [taskcfg.desktop_dir, 'invoke task --' if os.name == 'nt' else 'echo Desktop App building skipped.'],
 
         # link: web-dist -> anclient/examples/example.js/album/web-dist
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
         ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
-                if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ],
+                if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ], # TODO build apk in Linux...
 
         ['web-dist/private', lambda: updateApkRes()],
         ['.', 'cat web-dist/private/host.json'],
@@ -240,6 +240,7 @@ def build(c):
             ret = c.run(f'cd {pth} && {cmd}')
             print('OK:', ret.ok, ret.stderr)
     return False
+
 
 @task
 def package(c):
@@ -324,6 +325,7 @@ def package(c):
         print(f"Error creating ZIP file: {str(e)}", file=sys.stderr)
         raise
 
+
 @task
 def post_package(c):
     print('--------------    post build   ------------------')
@@ -345,11 +347,13 @@ def make(c):
           '* But Task make is deprecated, please use: invoke deploy --deploy tasks.json . *\n'
           '********************************************************************************')
 
+
 @task(post=[clean, create_volume, build, package, post_package])
 def deploy(c, deploy: str = 'tasks.json'):
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
+
 
 @task
 def landing(c, deploy: str = None):
