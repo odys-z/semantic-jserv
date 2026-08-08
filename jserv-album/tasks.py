@@ -49,7 +49,6 @@ taskcfg = cast(SynodeTask, None)
 @task
 def validate(c):
     print(f'--------------    validate   ------------------')
-    # print(c)
     global taskcfg
     if taskcfg is None:
         taskcfg = cast(SynodeTask, Anson.from_file('tasks.json'))
@@ -159,6 +158,14 @@ def config(c):
     taskcfg.config_central(central_settings)
     central_settings.toFile('central/settings.json')
     '''
+
+    # Desktop 0.1.0
+    desk_sets_json = taskcfg.backup(os.path.join(taskcfg.desk_sets_dir, 'app-settings.json'))
+    Utils.update_patterns(desk_sets_json, {
+        re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
+        re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
+    })
+
 
 @task
 def clean(c):

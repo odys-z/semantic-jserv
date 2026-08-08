@@ -62,6 +62,7 @@ reddish-*
 tasks.*.json
 *-fingerprint
 !tasks.0.7.8.json
+!tasks.0.8.0.json
 backup
 *.bak
 temp

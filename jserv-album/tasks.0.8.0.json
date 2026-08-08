@@ -1,8 +1,10 @@
 { "type": "io.oz.invoke.SynodeTask",
-  "version"     : "0.7.8",
+  "version"     : "0.8.0",
   "apk_ver"     : "0.7.4",
   "html_jar_v"  : "0.1.9",
   "web_ver"     : "0.4.4",
+  "desk_ver"    : "0.1.0",
+  "ipcagent_ver": "for app-settings/res/ws-agent-[0.2.0].jar, is actually used in deploy section for build jar and desktop app",
   "web_inf_dir" : "src/main/webapp/WEB-INF-0.7",
   "jre_release" : "../../JRE-Mirror/temurin17-binaries/jdk-17.0.17+10/bins/OpenJDK17U-jre_x64_windows_hotspot_17.0.17_10.zip",
   "jre_name"    : "x64_windows",
@@ -12,23 +14,26 @@
   "vol_resource": {"volume": "volume/*"},
   "registry_dir": "../synode.py/registry",
   "android_dir" : "../../anclient/examples/example.android",
+  "deskApp_dir" : "../../anclient/examples/example.slint",
   "central_dir" : "../../Semantic-Network/registration/jserv",
-  "dist_dir"    : "build-0.7.8",
+  "dist_dir"    : "build-0.8.0",
   "deploy": {
     "mirror_path"   : null,
     "central_iport" : "10.10.10.10:9999",
     "central_path"  : "regist-alpha",
     "central_pswd"  : "",
-    "web_port"      : 8900,
-    "jserv_port"    : 8964,
+    "web_port"      : 8964,
+    "jserv_port"    : 8965,
+    "ws_port"       : 8700,
     "market"        : "[Alpha Test]",
     "market_id"     : "alpha",
     "orgid"         : "ura",
     "dom_nodes"     : 3,
     "syn_admin_pswd": "",
     "lang"          : "en",
-    "langs"         : {"en": {}},
-    "root_key"      : "0123456789ABCDEF"},
+    "langs"         : {"en": {"TODO": "shoulde be another file?"}},
+    "root_key"      : "only 16 bytes tested"
+  },
   "landings" : [{
     "redirector": "redirection.json",
     "re_links"  : "links-{market}-{org}.json, not configurable",
@@ -43,7 +48,7 @@
     }}],
 
   "deploy_cmds"   : [
-    "example: scp {built_zip} zelenskyy@10.10.10.10:~/.../jserv-album/build-0.7.7",
+    "example: scp {built_zip} zelenskyy@10.10.10.10:~/.../jserv-album/build-0.8.0",
     ["deploy_cmds: [{cmd: cmd template, vars{k: v}}, ...],",
       "auto args:",
               "built_zip: self.get_distzip()",
@@ -59,5 +64,5 @@
     "port": 22,
     "user": "zelenskyy",
     "pswd": null,
-    "remote_dir": "~/github/semantic-jserv/jserv-album/build-0.7.7"}]
+    "remote_dir": "~/github/semantic-jserv/jserv-album/build-0.8.0"}]
 }
