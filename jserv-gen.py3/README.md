@@ -22,15 +22,18 @@ Example: Heartbeat.ast.json
 ```
   "dataAnclass": "io.odysz.semantic.jsession.HeartBeat",        class HeartBeat : public anson::AnsonBody {  
   "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",
-                                                                    HeartBeat(
-  base": {"stype": "()",                                   =>       AnsonBody(Port::heartbeat),
+                                                                    HeartBeat()
+  ----------------------------------------------------------------------------------------------------------
+  base": {"stype": "()",                                   =>           AnsonBody(Port::heartbeat),
           "args": ["AnsonBody", "Port::heartbeat"]},
-  "args": [{"stype": "", "args": ["string", "clienturi"]}, =>       string clienturi, ... 
+  "args": [{"stype": "", "args": ["string", "clienturi"]}, =>           string clienturi, ... 
  
-           {"stype": "ini",                                =>       string ssid, ... ssid(ssid)
+           {"stype": "ini",                                =>           string ssid, ... ssid(ssid)
             "args": ["string", "ssid", "ssid"]},
  
-  "body": [{"stype": "=", "args": ["uri", "clienturi"]}]   =>       uri = clienturi;
+  "body": [{"stype": "=", "args": ["uri", "clienturi"]}]   =>           uri = clienturi;
+  ----------------------------------------------------------------------------------------------------------
+                                                                     ) {}
 ```
 
 Example: docsreq.ast.json
@@ -45,3 +48,5 @@ For "()" semantics, user must implement function body of generated decleration, 
                                                                   format(p);   # <---
                                                               # }
 ```
+
+Since 0.0.9, will force a C++ - Json bridging context point if the type is a JavaEnum or an AnsonMsg.
