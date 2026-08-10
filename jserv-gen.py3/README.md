@@ -22,7 +22,7 @@ Example: Heartbeat.ast.json
 ```
   "dataAnclass": "io.odysz.semantic.jsession.HeartBeat",        class HeartBeat : public anson::AnsonBody {  
   "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",
-                                                                    HeartBeat()
+                                                                    HeartBeat() :
   ----------------------------------------------------------------------------------------------------------
   base": {"stype": "()",                                   =>           AnsonBody(Port::heartbeat),
           "args": ["AnsonBody", "Port::heartbeat"]},
