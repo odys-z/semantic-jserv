@@ -20,8 +20,9 @@ To run tests/ast/cp bash script, change $SRCDIR to [Anclient.cmake](https://gith
 Example: Heartbeat.ast.json
 
 ```
-  "dataAnclass": "io.odysz.semantic.jsession.HeartBeat",        class HeartBeat : public anson::AnsonBody {  
-  "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",
+  "dataAnclass": "io.odysz.semantic.jsession.HeartBeat",   =>   class HeartBeat  
+  "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",  =>     : public anson::AnsonBody {
+                                                                public:
                                                                     HeartBeat() :
   ----------------------------------------------------------------------------------------------------------
   base": {"stype": "()",                                   =>           AnsonBody(Port::heartbeat),
@@ -30,10 +31,13 @@ Example: Heartbeat.ast.json
  
            {"stype": "ini",                                =>           string ssid, ... ssid(ssid)
             "args": ["string", "ssid", "ssid"]},
- 
+  ----------------------------------------------------------------------------------------------------------
+                                                                    {
+  ----------------------------------------------------------------------------------------------------------
   "body": [{"stype": "=", "args": ["uri", "clienturi"]}]   =>           uri = clienturi;
   ----------------------------------------------------------------------------------------------------------
-                                                                     {};
+                                                                    }
+                                                                };
 ```
 
 Example: docsreq.ast.json
