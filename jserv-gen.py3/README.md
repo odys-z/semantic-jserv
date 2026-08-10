@@ -33,7 +33,7 @@ Example: Heartbeat.ast.json
  
   "body": [{"stype": "=", "args": ["uri", "clienturi"]}]   =>           uri = clienturi;
   ----------------------------------------------------------------------------------------------------------
-                                                                     ) {}
+                                                                     {};
 ```
 
 Example: docsreq.ast.json
