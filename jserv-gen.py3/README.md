@@ -49,4 +49,4 @@ For "()" semantics, user must implement function body of generated decleration, 
                                                               # }
 ```
 
-Since 0.0.9, will force a C++ - Json bridging context point if the type is a JavaEnum or an AnsonMsg.
+Since 0.0.9, will force a C++ - Json bridging context pointer argument if the type is a JavaEnum or an AnsonMsg.
