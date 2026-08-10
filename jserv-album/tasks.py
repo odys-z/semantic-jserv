@@ -10,6 +10,7 @@ from anson.io.odysz.utils import zip2
 from invoke import task, call
 import os
 
+from semanticshare.io.oz.anclient.app import DesktopSettings
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
 requir_pkg("anson.py3", "0.4.3")
@@ -42,8 +43,6 @@ re_install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
 re_webport       = '\"webport\"\\s*:\\s*[0-9]+'
 re_jserv_port    = '\"port\"\\s*:\\s*\\d+'
 
-# post_vals = {}
-
 taskcfg = cast(SynodeTask, None)
 
 @task
@@ -58,7 +57,7 @@ def validate(c):
     task_cent = cast(CentralTask, Anson.from_file(os.path.join(taskcfg.central_dir, 'tasks.json')))
 
     if taskcfg.deploy.central_pswd != task_cent.users['admin']['pswd']: # Issue: should be ['admin'].pswd:
-        Utils.warn('Warning: central_pswd is not set to default value.', file=sys.stderr)
+        Utils.warn('Warning: central_pswd is not set to default value.')
         sys.exit(1)
 
 
@@ -98,30 +97,28 @@ def updateApkRes():
     hosts.synodesetups.update(downloads)
     print('Updated host.json/synodesetups:', hosts.synodesetups)
 
-
     hosts.toFile(taskcfg.host_json)
     print('host.json updated successfully.', hosts)
 
     return None
 
-# synode_json_bak = os.path.join(os.getcwd(), 'synode.json.bak')
-# synode_json = ''
 
-@task(pre=[call(validate)])
+@task(pre=[call(validate(c))])
 def config(c):
     print(f'--------------    configuration   ------------------')
 
     # this_directory = os.getcwd()
-
+    # version_file = os.path.join(this_directory, 'pom.xml')
     print(f'-- synode version: {taskcfg.version} --'),
 
-    # version_file = os.path.join(this_directory, 'pom.xml')
+    # synode-srv-{ver}.jar
     version_file = 'pom.xml'
     Utils.update_patterns(version_file, {
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
+    # apk
     version_file = os.path.join(taskcfg.android_dir, 'build.gradle')
     Utils.update_patterns(version_file, {
         f"app_ver = '{version_pattern}'": f"app_ver = '{taskcfg.apk_ver}'"
@@ -131,6 +128,7 @@ def config(c):
     # global synode_json_bak, synode_json
     # synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
     # shutil.copy2(synode_json, synode_json_bak)
+    # installer
     synode_json = taskcfg.backup('../synode.py/src/synodepy3/synode.json')
     Utils.update_patterns(synode_json, {
         re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
@@ -139,12 +137,14 @@ def config(c):
         re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
     })
 
+    # vol/dictionary.json
     diction_file = taskcfg.backup(os.path.join(taskcfg.registry_dir, 'dictionary.json'))
     Utils.update_patterns(diction_file, {
         org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
         synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
     })
 
+    # album-web
     settings_json = taskcfg.backup(os.path.join(taskcfg.web_inf_dir, 'settings.json'))
     Utils.update_patterns(settings_json, {
         re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
@@ -158,6 +158,13 @@ def config(c):
     taskcfg.config_central(central_settings)
     central_settings.toFile('central/settings.json')
     '''
+
+    # ipc-agent.jar
+    version_file = 'pom.xml'
+    Utils.update_patterns(version_file, {
+        f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
+            f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
+    })
 
     # Desktop 0.1.0
     desk_sets_json = taskcfg.backup(os.path.join(taskcfg.desk_sets_dir, 'app-settings.json'))
@@ -184,10 +191,19 @@ def clean(c):
 
 @task(config)
 def build(c):
+    '''
+    Build with build commands.
+
+    - desktop app
+
+    invoke shallo-pack, replace att-setings.json with invoke pack-settings, wsport = ...
+
+    :param c: context
+    '''
     def cmd_build_synodepy3() -> str:
         """
         Get the command to build the synode.py3 package.
-        
+
         Returns:
             str: The command to build the package.
         """
@@ -198,10 +214,43 @@ def build(c):
         else:
             return f'export SYNODE_VERSION="{taskcfg.version}" JSERV_JAR_VERSION="{taskcfg.version}" WEB_VERSION="{taskcfg.web_ver}" HTML_JAR_VERSION="{taskcfg.html_jar_v}" && invoke build'
 
+    def desktop_settings_pth(taskcfg: SynodeTask) -> str:
+        """
+        Create an app-settings.json for desktop, return the file path, for copy to desktop/dist/settings.
+
+        Initial package only setup market, market-id, java_path, regiserv, centralPswd, wshost, wsport, wsagent_jar.
+
+        Installer needs to setup synode-id and vol, jserv, etc.
+        :return:
+        """
+        desk_sets_j = "target/desk-settings.json"
+        desksets = cast(DesktopSettings, Anson.from_file(taskcfg.desktop_dir / 'settings/app-settings.json'))
+        desksets.market = taskcfg.deploy.market_id
+        desksets.market_name = taskcfg.deploy.market
+        desksets.java_path = 'jre17/bin/java'
+        desksets.regiserv = taskcfg.central_jserv # ????
+        desksets.wshost = '127.0.0.1'
+        desksets.wsport = taskcfg.deploy.ws_port
+        desksets.wsagent_jar = f'ipc-agent-{taskcfg.ipcagent_ver}.jar'
+
+        desksets.toFile(Path(taskcfg.desktop_dist_dir) / 'appsettings.json')
+
+        Utils.logi("================================ Desktop Settings ================================")
+        Utils.logi(desksets.toBlock())
+        return desk_sets_j
+
+    # temp_desktop_sets_pth = f'target/temp_desktop-settings.json'
     buildcmds = [
         # replace app_ver with apk_ver?
         [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
-        [taskcfg.desktop_dir, 'invoke task --' if os.name == 'nt' else 'echo Desktop App building skipped.'],
+
+        # desktop
+        # - desktop.ipc-agent
+        [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
+        ['.', f'cp {taskcfg.ipcagent_dir}/target/ipc-agent-{taskcfg.ipcagent_ver}.jar {taskcfg.desktop_dir}/{desktop_dist_dir}/res/'],
+        # - build exe itself, and copy app-settings.json -> dist
+        [taskcfg.desktop_dir, 'invoke shallow-pack'],
+        ['.', f'cp {desktop_settings_pth(taskcfg)} {taskcfg.desktop_dist_dir}/app-settings.json'],
 
         # link: web-dist -> anclient/examples/example.js/album/web-dist
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
@@ -219,9 +268,6 @@ def build(c):
         # use vscode bash for Windows
         # ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
         ['../synode.py', cmd_build_synodepy3()],
-
-        # ['../synode.py', 'invoke zipRegistry'],
-        # ['.', f'mv ../synode.py/registry-ura-zsu-{version}.zip {dist_dir}']
     ]
 
     print('--------------  build  ------------------')

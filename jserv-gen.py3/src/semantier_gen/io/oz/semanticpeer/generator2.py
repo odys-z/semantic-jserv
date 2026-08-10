@@ -6,7 +6,7 @@ from typing import cast, List
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt, Primtypes
 from semanticshare.io.odysz.reflect import AnsonBodyAst, PeerSettings, AnsonAst, init_asts, SemanExpr, AnCtor, \
-    AnsonJavaEnumAst, AnsonMsgAst
+    AnsonJavaEnumAst
 
 
 def entf_ctors(ast: AnsonAst) -> List[str]:
@@ -70,12 +70,23 @@ def class_fields(asts: dict[str, AnsonAst], ast: AnsonAst) -> List[str]:
     return fields
 
 def class_ctors(ast: AnsonAst) -> List[str]:
+    """
+    C++ 20 Constructors Generator
+    =============================
+
+    For c++, a reflect bridge for serialization is necessary. So the constructor will enforcing adding
+    a pointer arg to JsonOpt, the context named in Anson.cmake 0.1, for deserialization.
+    :param ast:
+    :return:
+
+    """
+
     ctors = []
     body_formatters = []
     found_0arg_ctor = False
     ctorsemantics = ast.ctorsemantics if LangExt.len(ast.ctorsemantics) > 0 else [AnCtor().as_default(ast)]
     for ctorss in ctorsemantics:
-        if len(ctorss.args) == 0: found_0arg_ctor = True
+        if len(ctorss.args) == 0: found_0arg_ctor = True ## also will set false if JavaEnum and AnsomMsg
 
         body_lines = ctorss.cpp_body_exprs(ast, ' ' * 8)
         body_lines = [('\n'.join(body_lines) + '\n') if body_lines and len(body_lines) > 0 else '']
@@ -102,7 +113,7 @@ def class_ctors(ast: AnsonAst) -> List[str]:
 
         initlst = filter(lambda x: not LangExt.isblank(x), [ctorss.cpp_base_ini(ast), ctorss.cpp_arg_inis()])
 
-        ctors.append(' : '.join(filter(lambda x: not LangExt.isblank(x), [f'\n    {ast.c_class()}({ctorss.cpp_arg_decl()})', ', '.join(initlst)])) +
+        ctors.append(' : '.join(filter(lambda x: not LangExt.isblank(x), [f'\n    {ast.c_class()}({ctorss.cpp_arg_decl(ast)})', ', '.join(initlst)])) +
                      ' {\n' +
                      '\n'.join(body_lines) +
                      ('    }\n' if len(body_lines) > 0 else '}\n'))
@@ -148,7 +159,7 @@ public:
 
 field_getter0 = '''
         //
-        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {{
+        ast->get_field_instance = [ast, ctx](const IJsonable& ans, const string& fieldname) -> meta_any {{
             if (ast->fields.contains(fieldname)) {{
                 auto& concrete = static_cast<const {0}&>(ans);'''
 field_getif ='''
@@ -157,8 +168,8 @@ field_getif ='''
 field_getter9 = '''
             }}
 
-            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {{
-                {ast_type} *bast = IJsonable::contxt_ptr->ast<{ast_type}>(ast->baseAnclass);
+            if (ctx->has_ast(ast->baseAnclass)) {{
+                {ast_type} *bast = ctx->ast<{ast_type}>(ast->baseAnclass);
                 return bast->get_field_instance(ans, fieldname);
             }}
 
@@ -168,7 +179,7 @@ field_getter9 = '''
 '''
 
 caller_func = '''
-inline static void register_{tier_name}(AstMap &asts, const string &ast_folder) {{
+inline static void register_{tier_name}(JsonOpt* ctx, const string &ast_folder) {{
 '''
 class MsgLines:
 
@@ -188,9 +199,9 @@ class MsgLines:
     inline_static = 'inline static '
 
     # 0: echoreq, 1: AnSessionResp, 2: AnsonResp
-    load_ast = '''void {0}(AstMap &asts, const string &ast_path) {{
-    specialize_msg_astpth<{1}, {2}>(asts, ast_path,
-      [](meta_factory<{1}> &entf, AnsonBodyAst *ast) {{'''
+    load_ast = '''void {0}(JsonOpt* ctx, const string &ast_path) {{
+    specialize_msg_astpth<{1}, {2}>(ctx, ast_path,
+      [ctx](meta_factory<{1}> &entf, AnsonBodyAst *ast) {{'''
 
     entt_ctor = '''
     entf.ctor<&{0}{1}>();'''
@@ -271,10 +282,10 @@ class MsgLines:
 class AnsonLines:
     inline_static: str = 'inline static '
 
-    regist_anson: str = '''void {}(AstMap & asts) {{
+    regist_anson: str = '''void {}(JsonOpt* ctx) {{
 
     AnsonAst * ast = createAST <{}, AnsonAst> (
-        asts, {}::_type_, map <string, AnsonField> {{
+        *ctx->asts, {}::_type_, map <string, AnsonField> {{
 '''
     anson_field: str = '        {{"{}", {{.dataAnclass="{}"}} }},\n'
     '''
@@ -367,7 +378,7 @@ class IPortLines:
                 ]
 
 
-def gen_cpp_peer2(settings: PeerSettings):
+def gen_cpp_peer2(settings: PeerSettings) -> Path:
     '''
     :param settings:
     :param ast_folder:
@@ -416,20 +427,22 @@ def gen_cpp_peer2(settings: PeerSettings):
             gen.writelines('    filesystem::path folder_path{ast_folder};\n')
             for ln in caller_body:
                 if 'register_' == ln[0]:
-                    gen.writelines(f'    {ln[1]}(asts);\n')
+                    gen.writelines(f'    {ln[1]}(ctx);\n')
                 else:
-                    gen.writelines(f'    {ln[1]}(asts, (folder_path / "{ln[2]}").string());\n')
+                    gen.writelines(f'    {ln[1]}(ctx, (folder_path / "{ln[2]}").string());\n')
             else:
                 gen.writelines('}\n')
 
         gen.writelines(msglines.end_ns)
 
+    return gen_pth
 
-def gen_peers(settings: PeerSettings, ast_folder: str = None) -> None:
+
+def gen_peers(settings: PeerSettings, ast_folder: str = None) -> Path:
     if Path is not None:
         settings.ast_folder = ast_folder
 
     # gen_ts_peer(settings)
     # gen_py_peer(settings)
     # gen_cpp_peer(settings, config_path)
-    gen_cpp_peer2(settings)
+    return gen_cpp_peer2(settings)

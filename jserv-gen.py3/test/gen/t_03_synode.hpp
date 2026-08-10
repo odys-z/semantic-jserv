@@ -26,10 +26,10 @@ public:
     }
 };
 
-inline static void register_pageinfAst(AstMap & asts) {
+inline static void register_pageinfAst(JsonOpt* ctx) {
 
     AnsonAst * ast = createAST <PageInf, AnsonAst> (
-        asts, Anson::_type_, map <string, AnsonField> {
+        *ctx->asts, Anson::_type_, map <string, AnsonField> {
         {"page", {.dataAnclass="long"} },
         {"size", {.dataAnclass="long"} },
         {"total", {.dataAnclass="long"} },
@@ -49,7 +49,7 @@ inline static void register_pageinfAst(AstMap & asts) {
         ;
 
         //
-        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+        ast->get_field_instance = [ast, ctx](const IJsonable& ans, const string& fieldname) -> meta_any {
             if (ast->fields.contains(fieldname)) {
                 auto& concrete = static_cast<const PageInf&>(ans);
                 if ("page" == fieldname)
@@ -64,8 +64,8 @@ inline static void register_pageinfAst(AstMap & asts) {
                     return entt::forward_as_meta(concrete.mapCondts);
             }
 
-            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
-                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+            if (ctx->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = ctx->ast<AnsonAst>(ast->baseAnclass);
                 return bast->get_field_instance(ans, fieldname);
             }
 
@@ -94,10 +94,10 @@ public:
     }
 };
 
-inline static void register_deviceAst(AstMap & asts) {
+inline static void register_deviceAst(JsonOpt* ctx) {
 
     AnsonAst * ast = createAST <Device, AnsonAst> (
-        asts, Anson::_type_, map <string, AnsonField> {
+        *ctx->asts, Anson::_type_, map <string, AnsonField> {
         {"id", {.dataAnclass="string"} },
         {"synode0", {.dataAnclass="string"} },
         {"devname", {.dataAnclass="string"} },
@@ -117,7 +117,7 @@ inline static void register_deviceAst(AstMap & asts) {
         ;
 
         //
-        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+        ast->get_field_instance = [ast, ctx](const IJsonable& ans, const string& fieldname) -> meta_any {
             if (ast->fields.contains(fieldname)) {
                 auto& concrete = static_cast<const Device&>(ans);
                 if ("id" == fieldname)
@@ -130,8 +130,8 @@ inline static void register_deviceAst(AstMap & asts) {
                     return entt::forward_as_meta(concrete.toFolder);
             }
 
-            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
-                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+            if (ctx->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = ctx->ast<AnsonAst>(ast->baseAnclass);
                 return bast->get_field_instance(ans, fieldname);
             }
 
@@ -158,10 +158,10 @@ public:
     }
 };
 
-inline static void register_synentityAst(AstMap & asts) {
+inline static void register_synentityAst(JsonOpt* ctx) {
 
     AnsonAst * ast = createAST <SynEntity, AnsonAst> (
-        asts, Anson::_type_, map <string, AnsonField> {
+        *ctx->asts, Anson::_type_, map <string, AnsonField> {
         {"entm", {.dataAnclass="SynEntityMeta"} },
         {"recId", {.dataAnclass="string"} },
         {"uids", {.dataAnclass="string"} },
@@ -183,7 +183,7 @@ inline static void register_synentityAst(AstMap & asts) {
         ;
 
         //
-        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+        ast->get_field_instance = [ast, ctx](const IJsonable& ans, const string& fieldname) -> meta_any {
             if (ast->fields.contains(fieldname)) {
                 auto& concrete = static_cast<const SynEntity&>(ans);
                 if ("entm" == fieldname)
@@ -198,8 +198,8 @@ inline static void register_synentityAst(AstMap & asts) {
                     return entt::forward_as_meta(concrete.synoder);
             }
 
-            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
-                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+            if (ctx->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = ctx->ast<AnsonAst>(ast->baseAnclass);
                 return bast->get_field_instance(ans, fieldname);
             }
 
@@ -229,10 +229,10 @@ public:
     }
 };
 
-inline static void register_pathspageAst(AstMap & asts) {
+inline static void register_pathspageAst(JsonOpt* ctx) {
 
     AnsonAst * ast = createAST <PathsPage, AnsonAst> (
-        asts, Anson::_type_, map <string, AnsonField> {
+        *ctx->asts, Anson::_type_, map <string, AnsonField> {
         {"device", {.dataAnclass="string"} },
         {"start", {.dataAnclass="int"} },
         {"end", {.dataAnclass="int"} },
@@ -253,7 +253,7 @@ inline static void register_pathspageAst(AstMap & asts) {
         ;
 
         //
-        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+        ast->get_field_instance = [ast, ctx](const IJsonable& ans, const string& fieldname) -> meta_any {
             if (ast->fields.contains(fieldname)) {
                 auto& concrete = static_cast<const PathsPage&>(ans);
                 if ("device" == fieldname)
@@ -266,8 +266,8 @@ inline static void register_pathspageAst(AstMap & asts) {
                     return entt::forward_as_meta(concrete.clientPaths);
             }
 
-            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
-                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+            if (ctx->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = ctx->ast<AnsonAst>(ast->baseAnclass);
                 return bast->get_field_instance(ans, fieldname);
             }
 
@@ -309,10 +309,10 @@ public:
     }
 };
 
-inline static void register_expsyncdocAst(AstMap & asts) {
+inline static void register_expsyncdocAst(JsonOpt* ctx) {
 
     AnsonAst * ast = createAST <ExpSyncDoc, AnsonAst> (
-        asts, SynEntity::_type_, map <string, AnsonField> {
+        *ctx->asts, SynEntity::_type_, map <string, AnsonField> {
         {"pname", {.dataAnclass="string"} },
         {"clientpath", {.dataAnclass="string"} },
         {"device", {.dataAnclass="string"} },
@@ -351,7 +351,7 @@ inline static void register_expsyncdocAst(AstMap & asts) {
         ;
 
         //
-        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+        ast->get_field_instance = [ast, ctx](const IJsonable& ans, const string& fieldname) -> meta_any {
             if (ast->fields.contains(fieldname)) {
                 auto& concrete = static_cast<const ExpSyncDoc&>(ans);
                 if ("pname" == fieldname)
@@ -382,8 +382,8 @@ inline static void register_expsyncdocAst(AstMap & asts) {
                     return entt::forward_as_meta(concrete.folder);
             }
 
-            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
-                AnsonAst *bast = IJsonable::contxt_ptr->ast<AnsonAst>(ast->baseAnclass);
+            if (ctx->has_ast(ast->baseAnclass)) {
+                AnsonAst *bast = ctx->ast<AnsonAst>(ast->baseAnclass);
                 return bast->get_field_instance(ans, fieldname);
             }
 
@@ -452,9 +452,9 @@ public:
     }
 };
 
-inline static void load_docsreqAst(AstMap &asts, const string &ast_path) {
-    specialize_msg_astpth<DocsReq, UserReq>(asts, ast_path,
-      [](meta_factory<DocsReq> &entf, AnsonBodyAst *ast) {
+inline static void load_docsreqAst(JsonOpt* ctx, const string &ast_path) {
+    specialize_msg_astpth<DocsReq, UserReq>(ctx, ast_path,
+      [ctx](meta_factory<DocsReq> &entf, AnsonBodyAst *ast) {
         entf.data<&DocsReq::synuri>("synuri");
         entf.data<&DocsReq::docTabl>("docTabl");
         entf.data<&DocsReq::doc>("doc");
@@ -470,7 +470,7 @@ inline static void load_docsreqAst(AstMap &asts, const string &ast_path) {
         entf.data<&DocsReq::limit>("limit");
 
         //
-        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+        ast->get_field_instance = [ast, ctx](const IJsonable& ans, const string& fieldname) -> meta_any {
             if (ast->fields.contains(fieldname)) {
                 auto& concrete = static_cast<const DocsReq&>(ans);
                 if ("synuri" == fieldname)
@@ -501,8 +501,8 @@ inline static void load_docsreqAst(AstMap &asts, const string &ast_path) {
                     return entt::forward_as_meta(concrete.limit);
             }
 
-            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
-                AnsonBodyAst *bast = IJsonable::contxt_ptr->ast<AnsonBodyAst>(ast->baseAnclass);
+            if (ctx->has_ast(ast->baseAnclass)) {
+                AnsonBodyAst *bast = ctx->ast<AnsonBodyAst>(ast->baseAnclass);
                 return bast->get_field_instance(ans, fieldname);
             }
 
@@ -533,9 +533,9 @@ public:
     }
 };
 
-inline static void load_docsrespAst(AstMap &asts, const string &ast_path) {
-    specialize_msg_astpth<DocsResp, AnsonResp>(asts, ast_path,
-      [](meta_factory<DocsResp> &entf, AnsonBodyAst *ast) {
+inline static void load_docsrespAst(JsonOpt* ctx, const string &ast_path) {
+    specialize_msg_astpth<DocsResp, AnsonResp>(ctx, ast_path,
+      [ctx](meta_factory<DocsResp> &entf, AnsonBodyAst *ast) {
         entf.data<&DocsResp::xdoc>("xdoc");
         entf.data<&DocsResp::docTabl>("docTabl");
         entf.data<&DocsResp::syncingPage>("syncingPage");
@@ -547,7 +547,7 @@ inline static void load_docsrespAst(AstMap &asts, const string &ast_path) {
         entf.data<&DocsResp::syndomain>("syndomain");
 
         //
-        ast->get_field_instance = [ast](const IJsonable& ans, const string& fieldname) -> meta_any {
+        ast->get_field_instance = [ast, ctx](const IJsonable& ans, const string& fieldname) -> meta_any {
             if (ast->fields.contains(fieldname)) {
                 auto& concrete = static_cast<const DocsResp&>(ans);
                 if ("xdoc" == fieldname)
@@ -570,8 +570,8 @@ inline static void load_docsrespAst(AstMap &asts, const string &ast_path) {
                     return entt::forward_as_meta(concrete.syndomain);
             }
 
-            if (IJsonable::contxt_ptr->has_ast(ast->baseAnclass)) {
-                AnsonBodyAst *bast = IJsonable::contxt_ptr->ast<AnsonBodyAst>(ast->baseAnclass);
+            if (ctx->has_ast(ast->baseAnclass)) {
+                AnsonBodyAst *bast = ctx->ast<AnsonBodyAst>(ast->baseAnclass);
                 return bast->get_field_instance(ans, fieldname);
             }
 
@@ -581,15 +581,15 @@ inline static void load_docsrespAst(AstMap &asts, const string &ast_path) {
     });
 }
 
-inline static void register_doctier(AstMap &asts, const string &ast_folder) {
+inline static void register_doctier(JsonOpt* ctx, const string &ast_folder) {
     filesystem::path folder_path{ast_folder};
-    register_pageinfAst(asts);
-    register_deviceAst(asts);
-    register_synentityAst(asts);
-    register_pathspageAst(asts);
-    register_expsyncdocAst(asts);
-    load_docsreqAst(asts, (folder_path / "docsreq.ast.json").string());
-    load_docsrespAst(asts, (folder_path / "docsresp.ast.json").string());
+    register_pageinfAst(ctx);
+    register_deviceAst(ctx);
+    register_synentityAst(ctx);
+    register_pathspageAst(ctx);
+    register_expsyncdocAst(ctx);
+    load_docsreqAst(ctx, (folder_path / "docsreq.ast.json").string());
+    load_docsrespAst(ctx, (folder_path / "docsresp.ast.json").string());
 }
 
 }

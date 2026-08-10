@@ -3,7 +3,7 @@
   "ansonMsg"   : "io.odysz.semantic.jprotocol.AnsonMsg",
   "ansons"     : [],
   "scopeEnums" : ["io.odysz.semantic.jprotocol.MsgCode"],
-  "javaEnums"  : ["io.odysz.semantic.jprotocol.Port"],
+  "javaEnums"  : [],
   "ansonBody"  : "io.odysz.semantic.jprotocol.AnsonBody",
   "anRequests" : ["pageinf.ast.json",
                   "device.ast.json",

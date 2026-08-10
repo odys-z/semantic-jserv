@@ -9,3 +9,6 @@
     DocsReq(string docTabl, ExpSyncDoc doc, string uri) : UserReq(uri), docTabl(docTabl), doc(doc) {
         Type(_type_);
     }
+
+    // No default ctor is not found. Force a compile error here: io.odysz.semantic.tier.docs.DocsReq DocsReq ()
+    DocsReq() : UserReq() { Type(_type_); }

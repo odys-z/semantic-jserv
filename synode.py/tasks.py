@@ -84,7 +84,6 @@ def config(c):
 
     version = (os.getenv(SYNODE_VERSION) or vers[SYNODE_VERSION]).strip()
     vers[SYNODE_VERSION] = version
-    # vers[REGISTRY_ZIP] = f'registry-{ORG}-{DOMAIN}-{vers[SYNODE_VERSION]}.zip'
     print(f'-- synode version: {version} --'),
 
     serv_jar_ver = (os.getenv(JSERV_JAR_VERSION) or vers[JSERV_JAR_VERSION]).strip()

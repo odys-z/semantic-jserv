@@ -66,11 +66,18 @@ ctor3 = cast(AnCtor, Anson.from_json(r'''{
   "body": [{"stype": "()", "args": ["format", "p"]}]
 }'''))
 
-expt4 = '''
+expt4 = [
+    '''
     DocsReq(string docTabl, ExpSyncDoc doc, string uri) : UserReq(uri), docTabl(docTabl), doc(doc) {
         Type(_type_);
     }
+''',
+    '''
+    // No default ctor is not found. Force a compile error here: io.odysz.semantic.tier.docs.DocsReq DocsReq ()''',
 '''
+    DocsReq() : UserReq() { Type(_type_); }
+'''
+]
 
 ctor4 = cast(AnCtor, Anson.from_json(r'''{
   "type": "io.odysz.reflect.AnCtor",
@@ -116,11 +123,11 @@ class GenCtorsTest(TestCase):
         ctor_lines = class_ctors(ast)
 
         with(open('test/expect/t00-docsreq-test.txt', 'w+') as ef):
-            for c in [expt3, expt4]:
+            for c in [*expt3, *expt4]:
                 ef.writelines(c)
 
         with(open('test/gen/t00-docsreq-test.txt', 'w+') as f):
             for l in ctor_lines:
                 f.writelines(l)
 
-        self.assertEqual([*expt3, expt4], ctor_lines)
+        self.assertEqual([*expt3, *expt4], [*ctor_lines])
