@@ -20,17 +20,24 @@ To run tests/ast/cp bash script, change $SRCDIR to [Anclient.cmake](https://gith
 Example: Heartbeat.ast.json
 
 ```
-  "dataAnclass": "io.odysz.semantic.jsession.HeartBeat",        class HeartBeat : public anson::AnsonBody {  
-  "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",
-                                                                    HeartBeat(
-  base": {"stype": "()",                                   =>       AnsonBody(Port::heartbeat),
+  "dataAnclass": "io.odysz.semantic.jsession.HeartBeat",   =>   class HeartBeat  
+  "baseAnclass": "io.odysz.semantic.jprotocol.AnsonBody",  =>     : public anson::AnsonBody {
+                                                                public:
+                                                                    HeartBeat() :
+  ----------------------------------------------------------------------------------------------------------
+  base": {"stype": "()",                                   =>           AnsonBody(Port::heartbeat),
           "args": ["AnsonBody", "Port::heartbeat"]},
-  "args": [{"stype": "", "args": ["string", "clienturi"]}, =>       string clienturi, ... 
+  "args": [{"stype": "", "args": ["string", "clienturi"]}, =>           string clienturi, ... 
  
-           {"stype": "ini",                                =>       string ssid, ... ssid(ssid)
+           {"stype": "ini",                                =>           string ssid, ... ssid(ssid)
             "args": ["string", "ssid", "ssid"]},
- 
-  "body": [{"stype": "=", "args": ["uri", "clienturi"]}]   =>       uri = clienturi;
+  ----------------------------------------------------------------------------------------------------------
+                                                                    {
+  ----------------------------------------------------------------------------------------------------------
+  "body": [{"stype": "=", "args": ["uri", "clienturi"]}]   =>           uri = clienturi;
+  ----------------------------------------------------------------------------------------------------------
+                                                                    }
+                                                                };
 ```
 
 Example: docsreq.ast.json
@@ -69,3 +76,4 @@ Since 0.1.0, an indirect subclass of JavaEnum will be forced a class name initia
       ...
   }
 ```
+Since 0.0.9, will force a C++ - Json bridging context pointer argument if the type is a JavaEnum or an AnsonMsg.
