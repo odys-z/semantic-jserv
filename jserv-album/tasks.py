@@ -273,16 +273,26 @@ def build(c, deploy: str = 'tasks.json'):
 
         # desktop
         # - desktop.ipc-agent
-        [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
-        ['.', f'cp {taskcfg.ipcagent_dir}/target/ipc-agent-{taskcfg.ipcagent_ver}.jar {taskcfg.desktop_dir}/{taskcfg.desktop_dist_dir}/res/'],
+        # [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
+        # ['.', f'cp {taskcfg.ipcagent_dir}/target/ipc-agent-{taskcfg.ipcagent_ver}.jar {taskcfg.desktop_dir}/{taskcfg.desktop_dist_dir}/res/'],
+        ['.', lambda: (shutil.copy2(
+            os.path.join(taskcfg.ipcagent_dir, 'target', f'ipc-agent-{taskcfg.ipcagent_ver}.jar'),
+            os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, 'res') + os.sep), None)[1]],
+
         # - build exe itself, and copy app-settings.json -> dist
         [taskcfg.desktop_dir, f'invoke shallow-pack --appsettings={desktop_settings_pth(taskcfg)}'],
 
         # # link: web-dist -> anclient/examples/example.js/album/web-dist
         # ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
+
         # ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
         #         if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ], # TODO build apk in Linux...
-        #
+        # How bout instead this one?
+        # ['.', lambda: (shutil.copy2(
+        #     os.path.join(taskcfg.android_dir, 'app/build/outputs/apk/release/app-release.apk'),
+        #     f'web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk')
+        #     if os.name == 'nt' else Path(f'web-dist/res-vol/portfolio-{apk_ver}.apk').touch(), None)[1]], # TODO build apk in Linux...
+
         # ['web-dist/private', lambda: updateApkRes()],
         # ['.', 'cat web-dist/private/host.json'],
         # ['web-dist', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
