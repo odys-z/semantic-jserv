@@ -2,7 +2,7 @@
   "version": "0.7.8",
   "market": "MY [Test]",
   "market_id": "alpha",
-  "central_iport": "182.150.29.34:1990",
+  "central_iport": "182.150.29.34:1991",
   "central_path" : "regist-alpha",
   "iso": "http://www.lingoes.net/en/translator/langcode.htm",
   "ui": "ui_form.py",
