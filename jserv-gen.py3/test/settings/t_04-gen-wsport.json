@@ -1,0 +1,10 @@
+{ "type"       : "io.odysz.reflect.PeerSettings",
+  "tier_name"  : "qmltest",
+  "ansons"     : [],
+  "scopeEnums" : [],
+  "javaEnums"  : ["wsport.ast.json"],
+  "ansonBody"  : "io.odysz.semantic.jprotocol.AnsonBody",
+  "anRequests" : [],
+  "cpp_include": [],
+  "cpp_gen"    : "test/gen/wsport.hpp"
+}
