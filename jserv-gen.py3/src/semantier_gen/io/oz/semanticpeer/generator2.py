@@ -113,7 +113,8 @@ def class_ctors(ast: AnsonAst) -> List[str]:
 
         initlst = filter(lambda x: not LangExt.isblank(x), [ctorss.cpp_base_ini(ast), ctorss.cpp_arg_inis()])
 
-        ctors.append(' : '.join(filter(lambda x: not LangExt.isblank(x), [f'\n    {ast.c_class()}({ctorss.cpp_arg_decl(ast)})', ', '.join(initlst)])) +
+        ctors.append(' : '.join(filter(lambda x: not LangExt.isblank(x),
+                                [f'\n    {ast.c_class()}({ctorss.cpp_arg_decl(ast)})', ', '.join(initlst)])) +
                      ' {\n' +
                      '\n'.join(body_lines) +
                      ('    }\n' if len(body_lines) > 0 else '}\n'))

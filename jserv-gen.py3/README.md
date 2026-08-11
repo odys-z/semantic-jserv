@@ -45,3 +45,27 @@ For "()" semantics, user must implement function body of generated decleration, 
                                                                   format(p);   # <---
                                                               # }
 ```
+
+Since 0.1.0, an indirect subclass of JavaEnum will be forced a class name initialization.
+
+```
+  { "type": "io.odysz.reflect.AnsonJavaEnumAst",
+    "baseAnclass": "io.odysz.semantic.jprotocol.AnsonMsg.Port",
+    "dataAnclass": "io.oz.anclient.ipcagent.WSPort",
+    "ctorsemantics": [
+      { "base": {"stype": "()", "args": ["base", "\"_sentinel_\""]}},
+      ...
+    ]
+  }
+
+  =>
+  class WSPort : public anson::Port {
+  public:
+      inline static const std::string _type_ = "io.oz.anclient.ipcagent.WSPort";
+
+      WSPort(const JsonOpt* ctx) : Port(ctx, "_sentinel_") {
+          Anclass(_type_);
+      }
+      ...
+  }
+```
