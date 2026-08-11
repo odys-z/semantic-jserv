@@ -6,7 +6,7 @@ import sys
 from types import LambdaType
 from typing import cast
 from pathlib import Path
-from anson.io.odysz.common import Utils
+from anson.io.odysz.common import Utils, LangExt
 from anson.io.odysz.utils import zip2
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 from docutils.utils import relative_path
@@ -60,6 +60,9 @@ def check_env(c):
     print(f"Prefix / Venv Path: {sys.prefix}")
 
     print(f"SynodeTask Since Tag: {SynodeTask.since}")
+
+    print("To have invoke run in the curent venv, use")
+    print("python -m invoke build --deploy=tasks.pm-king.json")
 
 @task
 def validate(c, deploy: str = 'tasks.json'):
@@ -256,10 +259,10 @@ def build(c, deploy: str = 'tasks.json'):
         desksets.wsport = taskcfg.deploy.ws_port
         desksets.wsagent_jar = f'ipc-agent-{taskcfg.ipcagent_ver}.jar'
 
-        desk_abspath = Path(taskcfg.desktop_dist_dir) / relative_pth
+        desk_abspath = Path(taskcfg.desktop_dir).absolute() / taskcfg.desktop_dist_dir / relative_pth
         desksets.toFile(desk_abspath)
 
-        Utils.logi("============= Desktop Settings:", desk_abspath.as_absolute())
+        Utils.logi("============= Desktop Settings:", desk_abspath.absolute())
         Utils.logi(desksets.toBlock())
         return relative_pth
 

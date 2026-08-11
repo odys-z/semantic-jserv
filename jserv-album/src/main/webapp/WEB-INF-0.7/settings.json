@@ -1,10 +1,10 @@
 { "type"        : "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "centralPswd" : "123456",
+  "centralPswd" : "yunzhikeji-906",
   "vol_name"    : "VOLUME_HOME",
   "localIp"     : null,
   "proxyIp"     : null,
-  "webport"     : 8990,
-  "port"        : 8991,
+  "webport"     : 8190,
+  "port"        : 8191,
   "proxyPort"   : 0,
   "webProxyPort": 0,
   "reverseProxy": false,
@@ -13,6 +13,6 @@
   "volume"      : "vol",
   "connIdleSnds": 0.0,
   "jservs"      : {},
-  "installkey"  : "io.github.odys-z",
+  "installkey"  : "1984.ody.king.pm",
   "rootkey"     : null
 }
