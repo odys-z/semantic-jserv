@@ -285,24 +285,25 @@ public class AppSettings extends Anson {
 	}
 	
 	/**
-	 * Move to Antson?
+	 * Save to file: {@link #json}-"fingerprint".
+	 * 
 	 * @return
 	 * @throws AnsonException
 	 * @throws IOException
 	 */
 	public AppSettings save_rt() throws IOException {
-		// according to Grok
-//		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
-//			toBlock(inf, JsonOpt.beautify());
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//			throw new AnsonException(e);
-//		} 
-//		return this;
-
 		mustnonull(rootkey);
 		mustnull(installkey);
 
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), json);
+		toFile(json, JsonOpt.beautify());
+
+		// TODO Let's flag this section with debug, my field that is configurable.
+		String backup = f("%s-fingerprint", json);
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), backup);
+		toFile(backup, JsonOpt.beautify());
+		return this;
+		
 		/*
 		String tempname = f("%s.%d", json, (int)(Math.random() * 1000));
 		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), tempname);
@@ -332,14 +333,6 @@ public class AppSettings extends Anson {
 		Utils.logi("=== settings.json saved successfully ===");
 		*/
 
-		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), json);
-		toFile(json, JsonOpt.beautify());
-
-		// TODO Let's flag this section with debug, my field that is configurable.
-		String backup = f("%s-fingerprint", json);
-		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), backup);
-		toFile(backup, JsonOpt.beautify());
-		return this;
 	}
 	
 	public AppSettings() {
@@ -676,7 +669,6 @@ setp (6)
 			// (1.3) local != null, jservs_utc > syn_node[others].utc,
 			toSubmit = refresh_myserv(c, synm);
 		
-		// localIp = nextIp;
 
 		try {
 			if (registryClient == null) {
@@ -695,9 +687,6 @@ setp (6)
 
 			if (mergeReply_butme(c, resp, synm) || toSubmit) {
 				loadDBLaterservs(c, synm);
-
-//				mustnonull(rootkey);
-//				mustnull(installkey);
 				save_rt();
 			}
 		} catch (IOException e) {
@@ -737,6 +726,11 @@ setp (6)
 	 * Tells central about my jserv updating. The returned response's jservs need to be merged.
 	 * 
 	 * See also synodepy3.InstallerCli.submit_mysettings()
+	 * 
+	 * Note 2026-8-12
+	 * 
+	 * The registry serivce well save an IP field in table c_synodes, which is not this
+	 * node's IP. It's the source IP the service figured out.
 	 * 
 	 * @param funcuri
 	 * @param cfg
@@ -904,15 +898,6 @@ setp (6)
 		if (DAHelper.count(tb, synconn, synm.tbl,
 				synm.org, org, synm.domain, domain, synm.pk, peer) == 0) {
 			
-//			tb.insert(synm.tbl, robot)
-//				.nv(synm.org, org)
-//				.nv(synm.domain, domain)
-//				.nv(synm.pk, peer)
-//				.nv(synm.jserv, servurl)
-//				.nv(synm.io_oz_synuid, SynChangeMeta.uids(createrid, peer))
-//				.nv(synm.jserv_utc, timestamp)
-//				.nv(synm.oper, createrid)
-
 			mustnonull(synmode);
 			insert_synode(tb, synm, robot, synconn, org, domain, peer, synmode, servurl, timestamp, createrid)
 				.ins(tb.instancontxt(synconn, robot));

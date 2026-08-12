@@ -223,7 +223,7 @@ def build(c, deploy: str = 'tasks.json'):
 
     :param c: context
     '''
-
+    global taskcfg
     config(c, deploy)
 
     def cmd_build_synodepy3() -> str:
@@ -240,19 +240,23 @@ def build(c, deploy: str = 'tasks.json'):
         else:
             return f'export SYNODE_VERSION="{taskcfg.version}" JSERV_JAR_VERSION="{taskcfg.version}" WEB_VERSION="{taskcfg.web_ver}" HTML_JAR_VERSION="{taskcfg.html_jar_v}" && invoke build'
 
-    def desktop_settings_pth(taskcfg: SynodeTask) -> str:
+    def create_desktop_settings(taskcfg: SynodeTask) -> str:
         """
         Create an app-settings.json for desktop, return the relative file path, for slint/tasks.py --appsettings arg.
 
         Initial package only setup market, market-id, java_path, regiserv, centralPswd, wshost, wsport, wsagent_jar.
 
         Installer needs to setup synode-id and vol, jserv, etc.
-        :return:
+        :return: the generated json's relative path to desktop dir
         """
         relative_pth = "dist-settings-temp.json"
         desksets = cast(DesktopSettings, Anson.from_file(Path(taskcfg.desktop_dir) / 'app/settings/app-settings.json'))
         desksets.market = taskcfg.deploy.market_id
         desksets.market_name = taskcfg.deploy.market
+        desksets.admin = taskcfg.deploy.admin
+        desksets.domain_token = taskcfg.deploy.domain_token
+        desksets.org = taskcfg.deploy.orgid
+
         desksets.java_path = 'jre17/bin/java'
         desksets.regiserv = JServUrl(https= False, iport =taskcfg.deploy.central_iport, protocolroot = taskcfg.deploy.central_path).jserv()
         desksets.wshost = '127.0.0.1'
@@ -266,6 +270,27 @@ def build(c, deploy: str = 'tasks.json'):
         Utils.logi(desksets.toBlock())
         return relative_pth
 
+    def cmd_cp_wsagent_jar() -> None:
+        def src_wsagent_jar() -> str:
+            '''
+            Get ws-agent/target/ws-agent-#.#.#.jar fullpath.
+            '''
+            global taskcfg
+            return os.path.join(taskcfg.ipcagent_dir, 'target', f'ws-agent-{taskcfg.ipcagent_ver}.jar')
+
+        def desk_dist_res_dir() -> str:
+            global taskcfg
+            return os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, 'res')
+
+        def desk_res_dir() -> str:
+            global taskcfg
+            return os.path.join(taskcfg.desktop_dir, 'tests', 'res')
+
+        print(src_wsagent_jar(), "=>", desk_res_dir())
+        shutil.copy(src_wsagent_jar(), desk_res_dir())
+        print(src_wsagent_jar(), "=>", desk_dist_res_dir())
+        shutil.copy(src_wsagent_jar(), desk_dist_res_dir())
+
     # temp_desktop_sets_pth = f'target/temp_desktop-settings.json'
     buildcmds = [
         # # replace app_ver with apk_ver?
@@ -274,13 +299,11 @@ def build(c, deploy: str = 'tasks.json'):
         # desktop
         # - desktop.ipc-agent
         # [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
-        # ['.', f'cp {taskcfg.ipcagent_dir}/target/ipc-agent-{taskcfg.ipcagent_ver}.jar {taskcfg.desktop_dir}/{taskcfg.desktop_dist_dir}/res/'],
-        ['.', lambda: (shutil.copy2(
-            os.path.join(taskcfg.ipcagent_dir, 'target', f'ipc-agent-{taskcfg.ipcagent_ver}.jar'),
-            os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, 'res') + os.sep), None)[1]],
 
         # - build exe itself, and copy app-settings.json -> dist
-        [taskcfg.desktop_dir, f'invoke shallow-pack --appsettings={desktop_settings_pth(taskcfg)}'],
+        # ['.', lambda: (shutil.copy(src_wsagent_jar(), desk_res_dir()), None)[1]], # for test
+        [taskcfg.desktop_dir, f'invoke shallow-pack --appsettings={create_desktop_settings(taskcfg)}'],
+        ['.', cmd_cp_wsagent_jar],
 
         # # link: web-dist -> anclient/examples/example.js/album/web-dist
         # ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
