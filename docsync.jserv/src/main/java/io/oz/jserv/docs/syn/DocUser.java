@@ -63,7 +63,7 @@ public class DocUser extends SyncUser {
 	}
 
 	@Override
-	public IUser sessionKey(String k) {
+	public IUser privateKnowledge(String k) {
 		knowledge = k;
 		return this;
 	}

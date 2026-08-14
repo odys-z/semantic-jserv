@@ -42,7 +42,7 @@ public class JRobot implements IUser {
 
 	@Override public TableMeta meta(String ... c) { return null; }
 
-	@Override public IUser sessionKey(String string) { return this; }
+	@Override public IUser privateKnowledge(String string) { return this; }
 
 	@Override public String sessionKey() { return null; }
 }

@@ -16,8 +16,8 @@ import os
 from semanticshare.io.oz.anclient.app import DesktopSettings
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
-requir_pkg("anson.py3", "0.4.3")
-requir_pkg("semantics.py3", "0.5.2")
+requir_pkg("anson.py3", "0.5.5")
+requir_pkg("semantics.py3", "0.5.8")
 
 from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts
@@ -122,7 +122,7 @@ def updateApkRes():
     return None
 
 
-# @task(pre=[call(validate, deploy='tasks.json')])
+@task
 def config(c, deploy: str = 'tasks.json'):
     validate(c, deploy)
 
@@ -165,7 +165,7 @@ def config(c, deploy: str = 'tasks.json'):
         synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
     })
 
-    # album-web
+    # album-web - web-ver for web srv id not goes here
     settings_json = taskcfg.backup(os.path.join(taskcfg.web_inf_dir, 'settings.json'))
     Utils.update_patterns(settings_json, {
         re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
@@ -230,6 +230,8 @@ def build(c, deploy: str = 'tasks.json'):
         """
         Get the command to build the synode.py3 package.
 
+        input:
+            web_ver: for web srv id
         Returns:
             str: The command to build the package.
         """
@@ -254,7 +256,7 @@ def build(c, deploy: str = 'tasks.json'):
         desksets.market = taskcfg.deploy.market_id
         desksets.market_name = taskcfg.deploy.market
         desksets.admin = taskcfg.deploy.admin
-        desksets.domain_token = taskcfg.deploy.domain_token
+        desksets.domain_token = taskcfg.deploy.domain_token # default, overwrite by installer
         desksets.org = taskcfg.deploy.orgid
 
         desksets.java_path = 'jre17/bin/java'
@@ -305,8 +307,8 @@ def build(c, deploy: str = 'tasks.json'):
         [taskcfg.desktop_dir, f'invoke shallow-pack --appsettings={create_desktop_settings(taskcfg)}'],
         ['.', cmd_cp_wsagent_jar],
 
-        # # link: web-dist -> anclient/examples/example.js/album/web-dist
-        # ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
+        # link: web-dist -> anclient/examples/example.js/album/web-dist
+        ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
 
         # ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
         #         if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ], # TODO build apk in Linux...

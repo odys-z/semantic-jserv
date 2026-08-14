@@ -96,21 +96,6 @@ public class JUser extends SemanticObject implements IUser {
 		/** v1.4.11, column of role name */
 		@Semantation (noDBExists = true)
 		public final String roleName;
-
-//		public JUserMeta userName(String unamefield) {
-//			uname = unamefield;
-//			return this;
-//		}
-//
-//		public JUserMeta iv(String ivfield) {
-//			iv = ivfield;
-//			return this;
-//		}
-//
-//		public JUserMeta pswd(String pswdfield) {
-//			pswd = pswdfield;
-//			return this;
-//		}
 	}
 
 	public static class JRoleMeta extends SemanticTableMeta {
@@ -318,12 +303,16 @@ public class JUser extends SemanticObject implements IUser {
 		return this;
 	}
 
-	/** Session Token Knowledge */
+	/**
+	 * Session Token Knowledge at server side.
+	 * An user Object is actually hasn't been send to clients.
+	 * It's only ssinf does.
+	 */
 	String knowledge;
 	@Override public String sessionKey() { return knowledge; }
 
 	@Override
-	public IUser sessionKey(String k) {
+	public IUser privateKnowledge(String k) {
 		this.knowledge = k;
 		return this;
 	}
