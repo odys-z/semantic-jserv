@@ -27,6 +27,9 @@ public class PhotoMeta extends ExpDocTableMeta {
 		geoy = "geoy";
 		css = "css";
 
-		ddlSqlite = loadSqlite(PhotoMeta.class, "h_photos.sqlite.ddl");
+		// [2026-08-15] v0.5.20
+		// This old way is deprecated. ddlSqlite is hard coded
+		// Disable this initialization as this field shouldn't be used, except tests.
+		// ddlSqlite = loadSqlite(PhotoMeta.class, "h_photos.sqlite.ddl");
 	}
 }

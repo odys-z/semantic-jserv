@@ -20,6 +20,7 @@ import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.odysz.semantic.jprotocol.AnsonMsg.Port;
 import io.odysz.semantic.jprotocol.AnsonResp;
+import io.odysz.semantic.jprotocol.JServUrl;
 import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.echo.EchoReq.A;
 import io.odysz.semantics.x.SemanticException;
@@ -86,7 +87,7 @@ public class Echo extends ServPort<EchoReq> {
 
     protected AnsonResp inet(HttpServletResponse resp, EchoReq req, String remote)
     		throws SocketException, SemanticException {
-    	if (LangExt.indexOf(new String[]{"localhost", "127.0.0.1", "[0:0:0:0:0:0:0:1]"}, remote) >= 0) {
+    	if (LangExt.indexOf(new String[]{"localhost", "127.0.0.1", "[0:0:0:0:0:0:0:1]", JServUrl.getLocalIp(1)}, remote) >= 0) {
     		if (interfaces == null)
     			listInet();
     		return new AnsonResp()

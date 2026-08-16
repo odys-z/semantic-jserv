@@ -27,9 +27,21 @@ import errno
 import os
 import shutil
 from types import LambdaType
+from typing import cast
 
+from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils
 from invoke import task, Context
+from semanticshare.io.oz.invoke import SynodeTask
+
+ORG = 'ura'
+DOMAIN = 'zsu'
+'''
+Not used?
+'''
+
+"""
+@deprecated since 0.8.0 for this is error-prone. - this upgrade is an example of structured data strength over hash table
 
 SYNODE_VERSION    = 'SYNODE_VERSION'
 JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
@@ -38,12 +50,8 @@ HTML_JAR_VERSION  = 'HTML_JAR_VERSION'
 WEB_VERSION       = 'WEB_VERSION'
 # REGISTRY_ZIP = 'REGISTRY_ZIP'
 
-ORG = 'ura'
-DOMAIN = 'zsu'
 
-"""
-    Versions configured locally, overriden by environment variables.
-"""
+Versions configured locally, overriden by environment variables.
 vers = {
     SYNODE_VERSION:    '0.7.9',
     JSERV_JAR_VERSION: '0.7.8',
@@ -52,6 +60,7 @@ vers = {
     WEB_VERSION:       '0.4.3',
     # REGISTRY_ZIP: f'registry-{ORG}-{DOMAIN}-0.7.3.zip'
 }
+"""
 
 res_toclean = ['dist', '*egg-info']
 
@@ -71,17 +80,20 @@ def validate(c):
     
     from semanticshare.io.oz.invoke import requir_pkg
 
-    requir_pkg("semantics.py3", "0.4.9")
-    requir_pkg("anson.py3", "0.4.3")
+    requir_pkg("semantics.py3", "0.5.8")
+    requir_pkg("anson.py3", "0.5.5")
     requir_pkg("anclient.py3", "0.2.6")
     requir_pkg("jre-mirror", "0.0.8")
 
+
 @task(validate)
-def config(c):
+def config(c, abstask_json: str):
     print('--------------    configuration   ------------------')
 
     this_directory = os.getcwd()
 
+    '''
+    @deprecated since 0.8.0 for this is error-prone.
     version = (os.getenv(SYNODE_VERSION) or vers[SYNODE_VERSION]).strip()
     vers[SYNODE_VERSION] = version
     print(f'-- synode version: {version} --'),
@@ -95,21 +107,40 @@ def config(c):
 
     web_ver = (os.getenv(WEB_VERSION) or vers[WEB_VERSION]).strip()
     print(f'-- web version: {web_ver} --'),
-
+    
     version_file = os.path.join(this_directory, 'src', 'synodepy3', '__version__.py')
     Utils.update_patterns(version_file, {
-        'synode_ver = "[0-9\\.]+"': f'synode_ver = "{version}"',
-        'jar_ver = "[0-9\\.]+"': f'jar_ver = "{serv_jar_ver}"',
-        'web_ver = "[0-9\\.]+"': f'web_ver = "{web_ver}"',
-        'html_srver = "[0-9\\.]+"': f'html_srver = "{html_srver}"'
+        'synode_ver = "[0-9\\.]+"': f'synode_ver = "{taskcfg.version}"',
+        'jar_ver = "[0-9\\.]+"': f'jar_ver = "{taskcfg.serv_jar_ver}"',
+        'web_ver = "[0-9\\.]+"': f'web_ver = "{taskcfg.web_ver}"',
+        'html_srver = "[0-9\\.]+"': f'html_srver = "{taskcfg.html_srver}"'
+    })
+    
+    Utils.update_patterns('src/synodepy3/synode.json', {'"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{version}",'})
+    Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{version}" # '})
+    '''
+    taskcfg = cast(SynodeTask, Anson.from_file(abstask_json))
+    version_file = os.path.join(this_directory, 'src', 'synodepy3', '__version__.py')
+    Utils.update_patterns(version_file, {
+        'synode_ver = "[0-9\\.]+"': f'synode_ver = "{taskcfg.version}"',
+        'jar_ver = "[0-9\\.]+"': f'jar_ver = "{taskcfg.version}"',
+        'web_ver = "[0-9\\.]+"': f'web_ver = "{taskcfg.web_ver}"',
+        'html_srver = "[0-9\\.]+"': f'html_srver = "{taskcfg.html_jar_v}"',
+        'desktop_ver = "[0-9\\.]+"': f'desktop_ver = "{taskcfg.desktop_ver}"',
+        'ipcagent_ver = "[0-9\\.]+"': f'wsagent_ver = "{taskcfg.ipcagent_ver}"'
     })
 
-    Utils.update_patterns('src/synodepy3/synode.json', {'"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{version}",'})
+    Utils.update_patterns('src/synodepy3/synode.json',
+                          {'"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{taskcfg.version}",'})
+    Utils.update_patterns('pyproject.toml',
+                          {'version = "[0-9\\.]+" # ': f'version = "{taskcfg.version}" # '})
 
-    Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{version}" # '})
 
-@task(config)
-def build(c: Context):
+@task
+def build(c: Context, abstask_json: str):
+
+    config(c, abstask_json = abstask_json)
+
     def py():
         return 'py' if os.name == 'nt' else 'python3'
 
@@ -136,14 +167,13 @@ def build(c: Context):
             rm_any(res)
         return None
 
-    # from src.synodepy3.__version__ import synode_ver
     buildcmds = [
         ['.', lambda: rm_dist()],
         ['.', f'{py()} -m build'],
         ['.', f'{py()} pyinstallerw.py'],
     ]
 
-    print('--------------       building     ------------------')
+    print('--------------       building synode.py     ------------------')
     for pth, cmd in buildcmds:
         print("[Build in]", pth, '&&', cmd)
         if isinstance(cmd, LambdaType):

@@ -4,9 +4,12 @@ import sys
 from dataclasses import dataclass
 
 from jre_mirror.temurin17 import guess_jretree
+from semanticshare.io.odysz.jclient import AnclientSettings
+from semanticshare.io.oz.anclient.app import DesktopSettings
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from .jre_downloader import JreDownloader, _jre_
+from .install_jre import java_cmd
+from .jre_downloader import JreDownloader, _jre_, _jre_path_
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -38,7 +41,7 @@ from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq
 
 from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 
-from .__version__ import jar_ver, web_ver, html_srver
+from .__version__ import jar_ver, web_ver, html_srver, ipcagent_ver
 
 from . import SynodeUi, jre_mirror_key
 
@@ -904,6 +907,28 @@ class InstallerCli:
             Utils.warn(f'Volume is set to {self.settings.Volume()}.\n'
                    f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
+
+        self.update_clients(['desktop_dist/settings/app-settings.json'])
+
+    def update_clients(self, clients_sets: [str]) -> None:
+        for setpath in clients_sets:
+            csets = cast(AnclientSettings, Anson.from_file(setpath))
+            csets.org = self.registry.config.org.orgId
+            csets.domain = self.registry.config.domain
+            csets.centralPswd = self.settings.centralPswd
+            csets.regiserv = self.settings.regiserv
+            csets.admin = self.registry.config.admin
+            csets.domain_token = self.find_synuser(csets.admin).pswd
+            if isinstance(csets, DesktopSettings):
+                csets.market = synode_ui.market_id
+                csets.market_name = synode_ui.market
+                csets.synode_id = self.registry.config.synid
+                csets.synode_jserv = self.find_peer(csets.synode_id).jserv
+                csets.synode_vol = self.settings.volume
+                csets.album_web = str(self.settings.webport)
+                csets.java_path = str(java_cmd().absolute())
+                csets.wsagent_jar = f'ws-agent-{ipcagent_ver}.jar'
+
 
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)

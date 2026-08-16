@@ -10,8 +10,9 @@ from anson.io.odysz.common import LangExt
 from jre_mirror.temurin17 import TemurinMirror, guess_jretree
 from semanticshare.io.oz.edge import Temurin17Release
 
-_jre_ = 'jre17'
-_jre_path_ = Path('jre17')
+from jre_downloader import _jre_, _jre_path_
+# _jre_ = 'jre17'
+# _jre_path_ = Path('jre17')
 
 def progress_hook_cli(blocknum, blocksize, totalsize):
     read = blocknum * blocksize
@@ -19,6 +20,8 @@ def progress_hook_cli(blocknum, blocksize, totalsize):
         percent = min(100, read * 100 // totalsize)
         print(f"\rDownloading... {percent}%", end="")
 
+def java_cmd() -> Path:
+    return _jre_path_ / 'bin' / 'java.dll' if os.name == 'nt' else _jre_path_ / 'bin' / 'java'
 
 def validate_jre():
     if not Path.is_dir(Path(_jre_)) or \

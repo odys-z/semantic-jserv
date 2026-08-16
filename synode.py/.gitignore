@@ -6,3 +6,5 @@ jre17
 jre
 .venv
 bin
+tasks.debug*.json
+desktop-dist

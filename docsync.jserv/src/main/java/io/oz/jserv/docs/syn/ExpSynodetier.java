@@ -274,6 +274,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		
         running = false;
 		return this;
+		
+		2026.8.15 Verification: seams fine between reddish-2.2 & hub
 		*/
 
 		this.syncInSnds = syncIns;
@@ -285,7 +287,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 			workers[0] = jserv_worker(err); 
 
-			scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
+			// ISSUE this value, 5000 ms, must updated dynamically
+			int intvms = (int)Math.max(5000, syncIns * 1000);
+			logi("Schedualing worker 0 (jserv_worker) in every %d ms", intvms);
+			scheduler.scheduleWithFixedDelay(workers[0], 500, intvms, TimeUnit.MILLISECONDS);
 		
 			DATranscxt syntb = new DATranscxt(domanager0.synconn);
 			workers[1] = syn_worker(syntb, err);

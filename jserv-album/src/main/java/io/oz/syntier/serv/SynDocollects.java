@@ -591,10 +591,12 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //	}
 
 	/**
+	 * [0.8.0] This method requires req.synuri for accessing synode resources.
+	 * And requests filed by Web-veiw engines require this function.
+	 * 
 	 * [0.7.0] This method uses req's sys-uri for loading media files, as
 	 * the client is unable to understand synodes' domain.
 	 * 
-	 * @deprecated
 	 * @param resp
 	 * @param req
 	 * @param usr
@@ -608,7 +610,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		if (req.doc == null || isblank(req.doc.recId()))
 			throw new SemanticException("Requiring file's informantion is empty (Req.doc).");
 		
-		String conn = Connects.uri2conn(req.uri());
+		String conn = Connects.uri2conn(req.synuri);
 		PhotoMeta meta = new PhotoMeta(conn);
 
 		AnResultset rs = (AnResultset) st

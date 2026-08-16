@@ -76,8 +76,8 @@ def validate(c, deploy: str = 'tasks.json'):
     task_cent = cast(CentralTask, Anson.from_file(os.path.join(taskcfg.central_dir, 'tasks.json')))
 
     if taskcfg.deploy.central_pswd != task_cent.users['admin']['pswd']: # Issue: should be ['admin'].pswd:
-        Utils.warn('Warning: central_pswd is not set to default value.')
-        sys.exit(1)
+        Utils.warn(f'Warning: central_pswd is not set to default value. Override with {taskcfg.deploy.central_pswd}')
+        # sys.exit(1)
 
 
 @task
@@ -224,6 +224,11 @@ def build(c, deploy: str = 'tasks.json'):
     :param c: context
     '''
     global taskcfg
+
+    if not os.path.exists(deploy):
+        Utils.warn(f"[ERROR] Configure file for deploying doesn't exist: {deploy}")
+        return
+
     config(c, deploy)
 
     def cmd_build_synodepy3() -> str:
@@ -235,12 +240,14 @@ def build(c, deploy: str = 'tasks.json'):
         Returns:
             str: The command to build the package.
         """
-        print(f'Building synode.py3 {taskcfg.version} with web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
-
-        if os.name == 'nt':
-            return f'set SYNODE_VERSION={taskcfg.version} & set JSERV_JAR_VERSION={taskcfg.version} & set WEB_VERSION={taskcfg.web_ver} & set HTML_JAR_VERSION={taskcfg.html_jar_v} & invoke build'
-        else:
-            return f'export SYNODE_VERSION="{taskcfg.version}" JSERV_JAR_VERSION="{taskcfg.version}" WEB_VERSION="{taskcfg.web_ver}" HTML_JAR_VERSION="{taskcfg.html_jar_v}" && invoke build'
+        # print(f'Building synode.py3 {taskcfg.version} with web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
+        # if os.name == 'nt':
+        #     return f'set SYNODE_VERSION={taskcfg.version} & set JSERV_JAR_VERSION={taskcfg.version} & set WEB_VERSION={taskcfg.web_ver} & set HTML_JAR_VERSION={taskcfg.html_jar_v} & invoke build'
+        # else:
+        #     return f'export SYNODE_VERSION="{taskcfg.version}" JSERV_JAR_VERSION="{taskcfg.version}" WEB_VERSION="{taskcfg.web_ver}" HTML_JAR_VERSION="{taskcfg.html_jar_v}" && invoke build'
+        print(f'Building synode.py3 {taskcfg.version}, web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
+        cmd = f"invoke build --abstask-json={Path(deploy).absolute()}"
+        return cmd
 
     def create_desktop_settings(taskcfg: SynodeTask) -> str:
         """
@@ -295,46 +302,48 @@ def build(c, deploy: str = 'tasks.json'):
 
     # temp_desktop_sets_pth = f'target/temp_desktop-settings.json'
     buildcmds = [
-        # # replace app_ver with apk_ver?
-        # [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
-
         # desktop
         # - desktop.ipc-agent
-        # [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
+        [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
 
         # - build exe itself, and copy app-settings.json -> dist
-        # ['.', lambda: (shutil.copy(src_wsagent_jar(), desk_res_dir()), None)[1]], # for test
+        # - create the desktop setting here is necessary for standalone clients
         [taskcfg.desktop_dir, f'invoke shallow-pack --appsettings={create_desktop_settings(taskcfg)}'],
         ['.', cmd_cp_wsagent_jar],
 
-        # link: web-dist -> anclient/examples/example.js/album/web-dist
+        # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
+        # replace app_ver with apk_ver?
+        [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
 
-        # ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
-        #         if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ], # TODO build apk in Linux...
+        ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
+                if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ], # TODO build apk in Linux...
         # How bout instead this one?
         # ['.', lambda: (shutil.copy2(
         #     os.path.join(taskcfg.android_dir, 'app/build/outputs/apk/release/app-release.apk'),
         #     f'web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk')
         #     if os.name == 'nt' else Path(f'web-dist/res-vol/portfolio-{apk_ver}.apk').touch(), None)[1]], # TODO build apk in Linux...
+        ['web-dist/private', lambda: updateApkRes()],
 
-        # ['web-dist/private', lambda: updateApkRes()],
-        # ['.', 'cat web-dist/private/host.json'],
-        # ['web-dist', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
-        # ['../../anclient/examples/example.js/album', 'webpack'],
+        ['.', 'cat web-dist/private/host.json'],
+        ['web-dist', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
+        ['../../anclient/examples/example.js/album', 'webpack'],
         #
-        # ['.', 'mvn clean compile package -DskipTests'],
-        # ['../../html-service/java', 'mvn clean compile package'],
-        #
-        # # use vscode bash for Windows
-        # # ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
-        # ['../synode.py', cmd_build_synodepy3()],
+        ['.', 'mvn clean compile package -DskipTests'],
+        ['../../html-service/java', 'mvn clean compile package'],
+
+        # use vscode bash for Windows
+        # ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
+
+        ['../synode.py', cmd_build_synodepy3()],
     ]
 
     print('--------------  build  ------------------')
     for pth, cmd in buildcmds:
         if isinstance(cmd, LambdaType):
-            print(pth, '&&', cmd)
+            print('****************************************************************************')
+            print('*', pth, '&&', cmd)
+            print('****************************************************************************')
             cwd = os.getcwd()
             os.chdir(pth)
             cmd = cmd()
