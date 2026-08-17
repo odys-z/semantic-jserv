@@ -10,7 +10,7 @@ from anson.io.odysz.common import LangExt
 from jre_mirror.temurin17 import TemurinMirror, guess_jretree
 from semanticshare.io.oz.edge import Temurin17Release
 
-from jre_downloader import _jre_, _jre_path_
+from .jre_downloader import _jre_, _jre_path_
 # _jre_ = 'jre17'
 # _jre_path_ = Path('jre17')
 

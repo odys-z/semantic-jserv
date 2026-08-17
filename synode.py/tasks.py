@@ -26,6 +26,7 @@
 import errno
 import os
 import shutil
+from pathlib import Path
 from types import LambdaType
 from typing import cast
 
@@ -33,6 +34,7 @@ from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils
 from invoke import task, Context
 from semanticshare.io.oz.invoke import SynodeTask
+from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
 
 ORG = 'ura'
 DOMAIN = 'zsu'
@@ -127,19 +129,31 @@ def config(c, abstask_json: str):
         'web_ver = "[0-9\\.]+"': f'web_ver = "{taskcfg.web_ver}"',
         'html_srver = "[0-9\\.]+"': f'html_srver = "{taskcfg.html_jar_v}"',
         'desktop_ver = "[0-9\\.]+"': f'desktop_ver = "{taskcfg.desktop_ver}"',
-        'ipcagent_ver = "[0-9\\.]+"': f'wsagent_ver = "{taskcfg.ipcagent_ver}"'
+        'ipcagent_ver = "[0-9\\.]+"': f'ipcagent_ver = "{taskcfg.ipcagent_ver}"'
     })
 
-    Utils.update_patterns('src/synodepy3/synode.json',
-                          {'"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{taskcfg.version}",'})
+    # Utils.update_patterns('src/synodepy3/synode.json', {
+    #                       # '"central_iport"\\s*:\\s*".+",': f'"central_iport": "{taskcfg.deploy.central_iport}",',
+    #                       # '"central_path"\\s*:\\s*".+",' : f'"central_path" : "{taskcfg.deploy.central_path}",',
+    #     '"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{taskcfg.version}",' })
+
+    synode_settings: AppSettings = cast(AppSettings, Anson.from_file(Path('WEB-INF') / 'settings.json'))
+    synode_settings.regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
+    synode_settings.jservs = {}
+    synode_settings.market_id = taskcfg.deploy.market_id
+    synode_settings.market_name = taskcfg.deploy.market
+    synode_settings.jserv_utc = '1911-10-10'
+    synode_settings.centralPswd = taskcfg.deploy.central_pswd
+    synode_settings.toFile(Path('WEB-INF') / 'settings.json')
+
     Utils.update_patterns('pyproject.toml',
                           {'version = "[0-9\\.]+" # ': f'version = "{taskcfg.version}" # '})
 
 
 @task
-def build(c: Context, abstask_json: str):
+def build(c: Context, deploy: str):
 
-    config(c, abstask_json = abstask_json)
+    config(c, abstask_json = deploy)
 
     def py():
         return 'py' if os.name == 'nt' else 'python3'

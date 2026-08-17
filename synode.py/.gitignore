@@ -8,3 +8,4 @@ jre
 bin
 tasks.debug*.json
 desktop-dist
+WEB-INF/settings.json

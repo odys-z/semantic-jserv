@@ -9,7 +9,7 @@ from semanticshare.io.oz.anclient.app import DesktopSettings
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from .install_jre import java_cmd
-from .jre_downloader import JreDownloader, _jre_, _jre_path_
+from .jre_downloader import JreDownloader, _jre_
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -198,6 +198,7 @@ def valid_local_reg(reg: AnRegistry):
         raise PortfolioException('Dictionary Synuser configuration is invalid.')
     pass
 
+
 def unzip_file(zip_filepath, extract_to_path):
     """
     Unzips a file to a specified directory.
@@ -243,7 +244,6 @@ def install_exiftool_win():
             for res in glob(os.path.join(subfolder, '*')):
                 print(res)
                 if re.match(f'{subfolder.removesuffix("/")}.exiftool.*', res):
-                    # print(res)
                     shutil.move(res, '.')
 
             try: os.remove(exiftool_exe)
@@ -284,18 +284,10 @@ def checkinstall_exiftool():
         return check
 
 
-"""
-    Suppose there are both github/Anclient & github/semantic-jserv,
-    then in semantic-jserv/synode.py3:
-    ln -s ../../Anclient/examples/example.js/album/web-0.4 web-dist
-"""
-
-# JProtocol.urlroot = 'jserv-album'
-JProtocol.setup('jserv-album')
+# JProtocol.setup('jserv-album')
 
 install_uri = 'Anson.py3/test'
 
-#### section will be moved to synode.json ####
 host_private = 'private'
 web_host_json = f'{host_private}/host.json'
 
@@ -324,6 +316,8 @@ class InstallerCli:
     regclient: Optional[SessionClient]
     settings: AppSettings
     registry: AnRegistry
+    reg_jserv: JServUrl
+    syn_jserv: JServUrl
 
     @staticmethod
     def parsejservstr(jservstr: str) -> list[list[str]]:
@@ -375,16 +369,10 @@ class InstallerCli:
         else:
             raise PortfolioException(f"Cannot find settings.json: {pths.web_settings}")
 
-        # TODO 0.7.6
-        # if LangExt.isblank(self.settings.centralPswd):
-        #     self.settings.centralPswd = ''
-        #     for i in range(1, 7):
-        #         self.settings.centralPswd = self.settings.centralPswd + str(i)
-
-        if LangExt.isblank(self.settings.regiserv):
-            regiserv = f'{"https" if self.registry.config.https else "http"}://{synode_ui.central_iport}/{synode_ui.central_path}'
-            self.settings.regiserv = regiserv if JServUrl.valid(regiserv, synode_ui.central_path) else "http://"
-
+        # if LangExt.isblank(self.settings.regiserv):
+        #     regiserv = f'{"https" if self.registry.config.https else "http"}://{synode_ui.central_iport}/{synode_ui.central_path}'
+        #     self.settings.regiserv = regiserv if JServUrl.valid(regiserv, synode_ui.central_path) else "htt       #
+        self.reg_jserv = JServUrl(self.settings.regiserv)
         return self.settings
 
     @staticmethod
@@ -821,7 +809,7 @@ class InstallerCli:
         self.check_cent_login()
         return query_domconfig(client=self.regclient, func_uri=install_uri,
                                myid=self.registry.config.synid,
-                               market=synode_ui.market_id, orgid=commuid, domid=domid)
+                               market=self.settings.market_id, orgid=commuid, domid=domid)
 
     def register(self):
         '''
@@ -831,7 +819,7 @@ class InstallerCli:
         self.check_cent_login()
 
         return register(client=self.regclient, func_uri=install_uri,
-                        market=synode_ui.market_id, cfg=self.registry.config,
+                        market=self.settings.market_id, cfg=self.registry.config,
                         s=self.settings, iport=self.getProxiedIp())
 
     def jesuis_hub(self) -> bool:
@@ -844,7 +832,7 @@ class InstallerCli:
     def submit_mysettings(self):
         self.check_cent_login()
         return submit_settings(client=self.regclient,
-                               func_uri=install_uri, market=synode_ui.market_id,
+                               func_uri=install_uri, market=self.settings.market_id,
                                cfg=self.registry.config, s=self.settings,
                                iport=self.getProxiedIp(),
                                # leave the state unchanged when using setup API.
@@ -920,15 +908,14 @@ class InstallerCli:
             csets.admin = self.registry.config.admin
             csets.domain_token = self.find_synuser(csets.admin).pswd
             if isinstance(csets, DesktopSettings):
-                csets.market = synode_ui.market_id
-                csets.market_name = synode_ui.market
+                csets.market = self.settings.market_id
+                csets.market_name = self.settings.market_name
                 csets.synode_id = self.registry.config.synid
                 csets.synode_jserv = self.find_peer(csets.synode_id).jserv
                 csets.synode_vol = self.settings.volume
                 csets.album_web = str(self.settings.webport)
                 csets.java_path = str(java_cmd().absolute())
                 csets.wsagent_jar = f'ws-agent-{ipcagent_ver}.jar'
-
 
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)

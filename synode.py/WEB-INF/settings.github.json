@@ -1,27 +1,25 @@
 {
   "type": "io.oz.jserv.docs.syn.singleton.AppSettings",
-  "regiserv": "http://127.0.0.1:1990/regist-central",
-  "port": 1911,
+  "regiserv": "http://127.0.0.1:dddd/regist-central",
+  "port": 1999,
   "webport": 1989,
   "reverseProxy": true,
-  "proxyPort": 1911,
-  "proxyIp": "182.150.29.34",
-  "webProxyPort": 1989,
+  "proxyPort": 1999,
+  "proxyIp": "10.0.0.1",
+  "webProxyPort": 9999,
   "envars": {
     "WEBROOT_HUB": "X29",
     "WEBROOT": "node-0"},
   "startHandler": ["io.oz.syntier.serv.WebsrvLocalExposer", "web-dist/private/host.json"],
-  "webrootLocal": "http://suppress.warning:8900",
+  "webrootLocal": "http://suppress.warning:1984",
   "jserv_utc": "2025-09-30 02:01:48",
   "vol_name": "VOLUME_HOME",
-  "volume": "/home/ody/github/semantic-jserv/synode.py/vol",
+  "volume": "vol",
   "jservs": {
-    "qq-hub": "http://192.168.0.204:1234/jserv-album",
-    "qq-1": "http://192.168.0.201:1231/jserv-album",
-    "zsu1vvv-hub": "http://192.168.0.204:1234/jserv-album",
-    "edu-1-hub": "http://182.150.29.34:8801/jserv-album/jserv-album",
-    "node-0": "http://182.168.29.34:1911/jserv-album"},
-  "installkey": "0123456789ABCDEF",
+    "hub": "http://foo.io/jserv-album"
+  },
+  "installkey": "16-bits",
   "rootkey": "",
-  "json_path-delete": "WEB-INF/settings.json"
+  "market_id": "alpha",
+  "market_name": "[Alpha Test]"
 }

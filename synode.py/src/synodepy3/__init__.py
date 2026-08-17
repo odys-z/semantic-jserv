@@ -7,11 +7,11 @@ jre_mirror_key = 'jre_mirror'
 
 @dataclass
 class SynodeUi(Anson):
-    version: str
-    central_iport: str
-    central_path: str
-    market: str
-    market_id: str
+    # version: str
+    # central_iport: str
+    # central_path: str
+    # market: str
+    # market_id: str
     iso: str
     lang: str
     langs: dict
@@ -23,11 +23,11 @@ class SynodeUi(Anson):
     def __init__(self):
         super().__init__()
         self.ui = 'ui_form.py'
-        self.version = "0.7.6"
-        self.central_iport = '<invalid>'
-        self.central_path  = 'regist_central'
-        self.market = "TEST"
-        self.market = "test.org"
+        # self.version = "0.7.6"
+        # self.central_iport = '<invalid>'
+        # self.central_path  = 'regist_central'
+        # self.market = "TEST"
+        # self.market = "test.org"
         self.langs = dict()
 
     def signup_prompt(self, defl = None):

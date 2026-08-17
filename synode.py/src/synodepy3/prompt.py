@@ -225,9 +225,9 @@ if not has_run:
     while not _quit and not reach_central():
         cli.settings.regiserv = session.prompt(
               message="Please input central service url (empty to quit): ",
-              validator=MultiValidator(QuitValidator(), PJservValidator(synode_ui.central_path)),
+              validator=MultiValidator(QuitValidator(), PJservValidator()),
               default=cli.settings.regiserv,
-              validate_while_typing=False)
+              validate_while_typing=True)
 
         ssclient = cli.check_cent_login()
         orgs, orgid = cli.query_orgs()
@@ -300,9 +300,6 @@ if not has_run:
     # 4 local synode
     # 4.1 resp -> nodes
     def respeers_options(diction: SynodeConfig):
-        # peer_ids = diction.peers if diction is not None else None
-        # return None if LangExt.len(peer_ids) == 0 else \
-        #   [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
         return None if LangExt.len(diction.peers) == 0 else \
             [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in diction.peers]
 

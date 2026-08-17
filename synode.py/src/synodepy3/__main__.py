@@ -27,7 +27,6 @@ from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_syno
 from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
     synode_ui, pths
 from synodepy3.install_jre import validate_jre
-from synodepy3 import SynodeUi
 from synodepy3.jre_downloader import _event_loop_interval_
 
 # Important:
@@ -102,6 +101,10 @@ def has_err():
 
 
 class InstallerForm(QMainWindow):
+    ui: Ui_InstallForm
+    cli: InstallerCli
+    jredownloader: JreDownloader
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.domains_arr = [] # query results for the org / community
@@ -184,7 +187,7 @@ class InstallerForm(QMainWindow):
 
     def query_domx(self, commuid) -> Optional[RegistResp]:
         global errs
-        resp = self.cli.query_domx(synode_ui.market_id, commuid)
+        resp = self.cli.query_domx(market=self.cli.settings.market_id, commu=commuid)
         if resp is None:
             details.append(self.cli.settings.regiserv + '\n' + 'Error while loading domains.')
             errs = True
@@ -480,7 +483,7 @@ class InstallerForm(QMainWindow):
         self.enable_widgets()
 
         hub_srv = self.cli.registry.find_hubpeer().jserv
-        if JServUrl.valid(hub_srv):
+        if self.cli.reg_jserv.valid(hub_srv):
             self.ui.jservLines.setText(hub_srv)
 
     def update_chkreverse(self, check: bool):
@@ -503,7 +506,8 @@ class InstallerForm(QMainWindow):
     def bind_config(self):
         self.cli.registry = self.cli.load_settings()
         self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.volume, 'registry')
-        self.bindIdentity(self.cli.registry, synodeui=synode_ui)
+        # self.bindIdentity(self.cli.registry, synodeui=synode_ui)
+        self.bindIdentity(self.cli.registry, settings=self.cli.settings)
         self.bindSettings()
         self.enable_widgets()
 
@@ -522,9 +526,11 @@ class InstallerForm(QMainWindow):
             self.ui.cbbPeers.setCurrentText(select_id)
             self.select_peer_byid(select_id)
 
-    def bindIdentity(self, registry: AnRegistry, synodeui: SynodeUi):
+    # def bindIdentity(self, registry: AnRegistry, synodeui: SynodeUi):
+    def bindIdentity(self, registry: AnRegistry, settings: AppSettings):
         cfg = registry.config
-        cfg.org.orgType = synodeui.market_id
+        # cfg.org.orgType = synodeui.market_id
+        cfg.org.orgType = settings.market_id
         print(cfg.toBlock())
 
         self.ui.txtAdminId.setText(cfg.admin)
@@ -675,7 +681,7 @@ class InstallerForm(QMainWindow):
         # self.ui.txtDompswd.setEnabled(neverun) # can change in the future
         self.ui.bCreateDomain.setEnabled(neverun)
 
-        self.cli.update_domain(orgtype=synode_ui.market_id,
+        self.cli.update_domain(orgtype=self.cli.settings.market_id,
                                domain=self.ui.cbbDomains.currentText(),
                                orgid=self.ui.cbbOrgs.currentText())
         # valid_peers = self.cli.is_peers_valid()
@@ -714,8 +720,8 @@ class InstallerForm(QMainWindow):
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def translateUI():
-            self.ui.gboxRegistry.setTitle(
-                synode_ui.langstrf('gboxRegistry', market=synode_ui.market))
+            self.ui.gboxRegistry.setTitle(synode_ui.langstrf(
+                    'gboxRegistry', market=self.cli.settings.market_id))
 
             lb_help = synode_ui.langstr('lbHelplink')
             self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]["help_link"]}">{lb_help}</a>.')
@@ -724,7 +730,6 @@ class InstallerForm(QMainWindow):
         super().showEvent(event)
 
         if event.type() == QEvent.Type.Show and self.cli.registry is None:
-            translateUI()
 
             def setVolumePath():
                 volpath = QFileDialog.getExistingDirectory(self, caption='Volume Path')
@@ -761,6 +766,7 @@ class InstallerForm(QMainWindow):
                 self.ui.bWinserv.setEnabled(False)
 
             self.bind_config()
+            translateUI()
             self.enable_widgets()
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
@@ -787,10 +793,13 @@ class InstallerForm(QMainWindow):
             if self.ui.txtCentral.hasFocus() and \
                (key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter):
                 txt = self.ui.txtCentral.text()
-                if JServUrl.valid(jserv=txt, rootpath=synode_ui.central_path):
+                if self.cli.reg_jserv.is_valid(txt): # check protocol path
                     self.cli.settings.regiserv = txt
+                    self.cli.reg_jserv = JServUrl(txt)
                     communs, communid = self.cli.query_orgs()
                     self.bind_cbborg(communs, communid)
+                else:
+                    synode_ui.status.text = "Invalid Registry url"
         return super().eventFilter(obj, event)
 
 

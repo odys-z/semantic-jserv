@@ -352,7 +352,9 @@ def build(c, deploy: str = 'tasks.json'):
                 ret = c.run(f'cd {pth} && {cmd}')
             os.chdir(cwd)
         else:
-            print(pth, '&&', cmd)
+            print('****************************************************************************')
+            print('*', pth, '&&', cmd)
+            print('****************************************************************************')
             ret = c.run(f'cd {pth} && {cmd}')
             print('OK:', ret.ok, ret.stderr)
     return False
@@ -379,7 +381,7 @@ def package(c):
     resources = {
         f'bin/html-web-{taskcfg.html_jar_v}.jar': f'../../html-service/java/target/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
         f'bin/jserv-album-{taskcfg.version}.jar': f'target/jserv-album-{taskcfg.version}.jar',
-        
+
         # https://exiftool.org/index.html
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
         
@@ -395,6 +397,8 @@ def package(c):
         'web-dist': 'web-dist/*',   # use a link for different Anclient folder name
                                     # ln -s ../Anclient/examples/example.js/album web-dist
                                     # mklink /D web-dist ..\anclient\examples\example.js\album
+
+        'desktop': f'../../anclient/examples/example.slit/{taskcfg.desktop_dist_dir}/*',
 
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
         'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
@@ -458,7 +462,8 @@ def make(c):
     Args:
         c: Invoke Context object for running commands.
     """
-    print('Package be created successfully.')
+
+    print('Package is created successfully.')
     print('********************************************************************************\n'
           '* But Task make is deprecated, please use: invoke deploy --deploy tasks.json . *\n'
           '********************************************************************************')
