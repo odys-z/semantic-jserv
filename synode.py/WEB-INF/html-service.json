@@ -7,6 +7,5 @@
     "resource": "web-dist",
     "allowDir": false
   }],
-  "startHandler": null,
-  "json_pat-delete": "WEB-INF/html-service.json"
+  "startHandler": null
 }

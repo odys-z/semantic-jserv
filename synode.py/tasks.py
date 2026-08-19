@@ -26,15 +26,20 @@
 import errno
 import os
 import shutil
+import sys
 from pathlib import Path
 from types import LambdaType
 from typing import cast
 
+from anclient.io.odysz.jclient import SessionClient, OnError
 from anson.io.odysz.anson import Anson
-from anson.io.odysz.common import Utils
+from anson.io.odysz.common import Utils, LangExt
 from invoke import task, Context
+from semanticshare.io.odysz.semantic.jprotocol import AnsonMsg, MsgCode
 from semanticshare.io.oz.invoke import SynodeTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
+from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp, SynOrg
+from synodepy3 import SynodeUi
 
 ORG = 'ura'
 DOMAIN = 'zsu'
@@ -42,29 +47,8 @@ DOMAIN = 'zsu'
 Not used?
 '''
 
-"""
-@deprecated since 0.8.0 for this is error-prone. - this upgrade is an example of structured data strength over hash table
-
-SYNODE_VERSION    = 'SYNODE_VERSION'
-JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
-DESKTOP_WIN_VER   = 'DESKTOP_WIN_VERSION'
-HTML_JAR_VERSION  = 'HTML_JAR_VERSION'
-WEB_VERSION       = 'WEB_VERSION'
-# REGISTRY_ZIP = 'REGISTRY_ZIP'
-
-
-Versions configured locally, overriden by environment variables.
-vers = {
-    SYNODE_VERSION:    '0.7.9',
-    JSERV_JAR_VERSION: '0.7.8',
-    DESKTOP_WIN_VER  : '0.1.0',
-    HTML_JAR_VERSION:  '0.1.8',
-    WEB_VERSION:       '0.4.3',
-    # REGISTRY_ZIP: f'registry-{ORG}-{DOMAIN}-0.7.3.zip'
-}
-"""
-
 res_toclean = ['dist', '*egg-info']
+
 
 @task
 def validate(c):
@@ -88,39 +72,46 @@ def validate(c):
     requir_pkg("jre-mirror", "0.0.8")
 
 
+@task
+def register_org(c: Context, taskcfg: SynodeTask):
+    regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
+
+    def registerOrg(client: SessionClient, func_uri: str, market: str, orgid: str):
+        org = SynOrg(orgtype=market, orgid=orgid, orgname=orgid)
+        req = RegistReq(RegistReq.A.createOrg, market)
+        req.Uri(func_uri).dictionary(SynodeConfig(org=org)).as_jserv(regiserv)
+        msg = AnsonMsg(Centralport.regist).Body(req).Header(ssinf=client.ssInf)
+
+        onerr = OnError(on_err= lambda c, e, args: sys.exit(e))
+        resp = client.commit(msg, onerr)
+
+        if resp is not None:
+            print(client.myservRt, resp.code)
+            print(f'<{RegistReq.A.registDom}>', resp.toBlock())
+
+        return cast(RegistResp, resp)
+
+    print("* login   :", regiserv)
+    ssclient = SessionClient.loginWithUri(servroot=regiserv,
+            uri='/sys/tasks', uid=taskcfg.deploy.admin, pswdPlain=taskcfg.deploy.central_pswd)
+
+    print("* register:", regiserv)
+    resp = registerOrg(client=ssclient, func_uri='/sys/tasks',
+                       market=taskcfg.deploy.market_id, orgid=taskcfg.deploy.orgid)
+    if resp.code != MsgCode.ok:
+        print('*', resp.msg())
+        sys.exit(f'Cannot create / update org {taskcfg.deploy.orgid} in market {taskcfg.deploy.market_id}')
+    else:
+        print('* OK!')
+        print('*', resp.msg())
+
+
 @task(validate)
 def config(c, abstask_json: str):
     print('--------------    configuration   ------------------')
 
     this_directory = os.getcwd()
 
-    '''
-    @deprecated since 0.8.0 for this is error-prone.
-    version = (os.getenv(SYNODE_VERSION) or vers[SYNODE_VERSION]).strip()
-    vers[SYNODE_VERSION] = version
-    print(f'-- synode version: {version} --'),
-
-    serv_jar_ver = (os.getenv(JSERV_JAR_VERSION) or vers[JSERV_JAR_VERSION]).strip()
-    vers[JSERV_JAR_VERSION] = serv_jar_ver
-    print(f'-- jserv version: {serv_jar_ver} --'),
-
-    html_srver = (os.getenv(HTML_JAR_VERSION) or vers[HTML_JAR_VERSION]).strip()
-    print(f'-- html web service version: {html_srver} --'),
-
-    web_ver = (os.getenv(WEB_VERSION) or vers[WEB_VERSION]).strip()
-    print(f'-- web version: {web_ver} --'),
-    
-    version_file = os.path.join(this_directory, 'src', 'synodepy3', '__version__.py')
-    Utils.update_patterns(version_file, {
-        'synode_ver = "[0-9\\.]+"': f'synode_ver = "{taskcfg.version}"',
-        'jar_ver = "[0-9\\.]+"': f'jar_ver = "{taskcfg.serv_jar_ver}"',
-        'web_ver = "[0-9\\.]+"': f'web_ver = "{taskcfg.web_ver}"',
-        'html_srver = "[0-9\\.]+"': f'html_srver = "{taskcfg.html_srver}"'
-    })
-    
-    Utils.update_patterns('src/synodepy3/synode.json', {'"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{version}",'})
-    Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{version}" # '})
-    '''
     taskcfg = cast(SynodeTask, Anson.from_file(abstask_json))
     version_file = os.path.join(this_directory, 'src', 'synodepy3', '__version__.py')
     Utils.update_patterns(version_file, {
@@ -132,11 +123,6 @@ def config(c, abstask_json: str):
         'ipcagent_ver = "[0-9\\.]+"': f'ipcagent_ver = "{taskcfg.ipcagent_ver}"'
     })
 
-    # Utils.update_patterns('src/synodepy3/synode.json', {
-    #                       # '"central_iport"\\s*:\\s*".+",': f'"central_iport": "{taskcfg.deploy.central_iport}",',
-    #                       # '"central_path"\\s*:\\s*".+",' : f'"central_path" : "{taskcfg.deploy.central_path}",',
-    #     '"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{taskcfg.version}",' })
-
     synode_settings: AppSettings = cast(AppSettings, Anson.from_file(Path('WEB-INF') / 'settings.json'))
     synode_settings.regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
     synode_settings.jservs = {}
@@ -146,8 +132,32 @@ def config(c, abstask_json: str):
     synode_settings.centralPswd = taskcfg.deploy.central_pswd
     synode_settings.toFile(Path('WEB-INF') / 'settings.json')
 
+    synode_ui = cast(SynodeUi, Anson.from_file(Path('src') / 'synodepy3' / 'synode.github.json'))
+    if LangExt.len(taskcfg.deploy.mirror_path) > 0:
+        # according to synode_ui, not tasks.json
+        for lang, ss in synode_ui.langs.items():
+            if lang in taskcfg.deploy.mirror_path:
+                inject = taskcfg.deploy.mirror_path[lang]
+                ss.update({'jre_mirror': inject})
+                print(f'jre_mirror updated: [{lang}: {inject}]')
+            else:
+                print(f'**** WARING **** : {lang}.jre_mirror is not configured in tasks.json. value: {ss.get("jre_mirror")}')
+
+    synode_ui.toFile(Path('src') / 'synodepy3' / 'synode.json')
+
+    dom_registry: AnRegistry = cast(AnRegistry, Anson.from_file(Path('registry') / 'dictionary.github.json'))
+    dom_registry.config.org.orgId = taskcfg.deploy.orgid
+    dom_registry.config.org.orgType = taskcfg.deploy.market_id
+    dom_registry.toFile(Path('registry') / 'dictionary.json')
+
     Utils.update_patterns('pyproject.toml',
                           {'version = "[0-9\\.]+" # ': f'version = "{taskcfg.version}" # '})
+
+    print("***********************************************")
+    print(f"* Registering Markt Org {taskcfg.deploy.market_id} : {taskcfg.deploy.orgid}")
+    register_org(c, taskcfg=taskcfg)
+    print("* TODO - to further simplify configuration, let's setup the default domain.")
+    print("***********************************************")
 
 
 @task
@@ -158,27 +168,9 @@ def build(c: Context, deploy: str):
     def py():
         return 'py' if os.name == 'nt' else 'python3'
 
-    def rm_any(res):
-        try:
-            if os.path.isfile(res):
-                os.remove(res)
-            else:
-                shutil.rmtree(res, ignore_errors=False)
-            print(f"Successfully removed {res}")
-        except FileNotFoundError:
-            pass
-        except PermissionError:
-            print(f"Permission denied: Unable to remove {res}")
-        except OSError as e:
-            if e.errno != errno.ENOENT:  # Ignore "No such file or directory" errors
-                pass
-            else:
-                print(f"Path {res} does not exist")
-        pass
-
     def rm_dist():
         for res in res_toclean:
-            rm_any(res)
+            Utils.rm_any(res)
         return None
 
     buildcmds = [

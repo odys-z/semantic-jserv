@@ -127,9 +127,6 @@ def config(c, deploy: str = 'tasks.json'):
     validate(c, deploy)
 
     print(f'--------------    configuration   ------------------')
-
-    # this_directory = os.getcwd()
-    # version_file = os.path.join(this_directory, 'pom.xml')
     print(f'-- synode version: {taskcfg.version} --'),
 
     # synode-srv-{ver}.jar
@@ -145,10 +142,6 @@ def config(c, deploy: str = 'tasks.json'):
         f"app_ver = '{version_pattern}'": f"app_ver = '{taskcfg.apk_ver}'"
     })
 
-    # FIXME This is not correct. To be moved to synode.py tasks.py
-    # global synode_json_bak, synode_json
-    # synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
-    # shutil.copy2(synode_json, synode_json_bak)
     # installer
     synode_json = taskcfg.backup('../synode.py/src/synodepy3/synode.json')
     Utils.update_patterns(synode_json, {
@@ -174,12 +167,6 @@ def config(c, deploy: str = 'tasks.json'):
         re_install_key : f'"installkey"  : "{taskcfg.deploy.root_key}"'
     })
 
-    ''' And save tasks-central.json
-    central_settings = cast(SynodeTask, Anson.from_file('central/settings.json'))
-    taskcfg.config_central(central_settings)
-    central_settings.toFile('central/settings.json')
-    '''
-
     # ipc-agent.jar
     version_file = 'pom.xml'
     Utils.update_patterns(version_file, {
@@ -187,13 +174,11 @@ def config(c, deploy: str = 'tasks.json'):
             f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
-    # Desktop 0.1.0
-    desk_sets_json = taskcfg.backup(os.path.join(taskcfg.desktop_dir, 'app/settings/app-settings.json'))
-
-    Utils.update_patterns(desk_sets_json, {
-        re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
-        re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
-    })
+    # Desktop 0.1.2
+    # desk_sets = cast(DesktopSettings, Anson.from_file(Path(taskcfg.desktop_dir) / 'app/settings/app-settings.github.json'))
+    # desk_sets.market = taskcfg.deploy.market_id
+    # desk_sets.centralPswd = taskcfg.deploy.central_pswd
+    # desk_sets.toFile(Path(taskcfg.desktop_dir) / 'app/settings/app-settings.json')
 
 
 @task
@@ -231,6 +216,8 @@ def build(c, deploy: str = 'tasks.json'):
 
     config(c, deploy)
 
+    absdeploy = Path(deploy).absolute()
+
     def cmd_build_synodepy3() -> str:
         """
         Get the command to build the synode.py3 package.
@@ -240,44 +227,39 @@ def build(c, deploy: str = 'tasks.json'):
         Returns:
             str: The command to build the package.
         """
-        # print(f'Building synode.py3 {taskcfg.version} with web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
-        # if os.name == 'nt':
-        #     return f'set SYNODE_VERSION={taskcfg.version} & set JSERV_JAR_VERSION={taskcfg.version} & set WEB_VERSION={taskcfg.web_ver} & set HTML_JAR_VERSION={taskcfg.html_jar_v} & invoke build'
-        # else:
-        #     return f'export SYNODE_VERSION="{taskcfg.version}" JSERV_JAR_VERSION="{taskcfg.version}" WEB_VERSION="{taskcfg.web_ver}" HTML_JAR_VERSION="{taskcfg.html_jar_v}" && invoke build'
         print(f'Building synode.py3 {taskcfg.version}, web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
-        cmd = f"invoke build --abstask-json={Path(deploy).absolute()}"
+        cmd = f"invoke build --deploy={absdeploy}"
         return cmd
 
-    def create_desktop_settings(taskcfg: SynodeTask) -> str:
-        """
-        Create an app-settings.json for desktop, return the relative file path, for slint/tasks.py --appsettings arg.
-
-        Initial package only setup market, market-id, java_path, regiserv, centralPswd, wshost, wsport, wsagent_jar.
-
-        Installer needs to setup synode-id and vol, jserv, etc.
-        :return: the generated json's relative path to desktop dir
-        """
-        relative_pth = "dist-settings-temp.json"
-        desksets = cast(DesktopSettings, Anson.from_file(Path(taskcfg.desktop_dir) / 'app/settings/app-settings.json'))
-        desksets.market = taskcfg.deploy.market_id
-        desksets.market_name = taskcfg.deploy.market
-        desksets.admin = taskcfg.deploy.admin
-        desksets.domain_token = taskcfg.deploy.domain_token # default, overwrite by installer
-        desksets.org = taskcfg.deploy.orgid
-
-        desksets.java_path = 'jre17/bin/java'
-        desksets.regiserv = JServUrl(https= False, iport =taskcfg.deploy.central_iport, protocolroot = taskcfg.deploy.central_path).jserv()
-        desksets.wshost = '127.0.0.1'
-        desksets.wsport = taskcfg.deploy.ws_port
-        desksets.wsagent_jar = f'ipc-agent-{taskcfg.ipcagent_ver}.jar'
-
-        desk_abspath = Path(taskcfg.desktop_dir).absolute() / taskcfg.desktop_dist_dir / relative_pth
-        desksets.toFile(desk_abspath)
-
-        Utils.logi("============= Desktop Settings:", desk_abspath.absolute())
-        Utils.logi(desksets.toBlock())
-        return relative_pth
+    # def create_desktop_settings(taskcfg: SynodeTask) -> str:
+    #     """
+    #     Create an app-settings.json for desktop, return the relative file path, for slint/tasks.py --appsettings arg.
+    #
+    #     Initial package only setup market, market-id, java_path, regiserv, centralPswd, wshost, wsport, wsagent_jar.
+    #
+    #     Installer needs to setup synode-id and vol, jserv, etc.
+    #     :return: the generated json's relative path to desktop dir
+    #     """
+    #     relative_pth = "dist-settings-temp.json"
+    #     desksets = cast(DesktopSettings, Anson.from_file(Path(taskcfg.desktop_dir) / 'app/settings/app-settings.github.json'))
+    #     desksets.market = taskcfg.deploy.market_id
+    #     desksets.market_name = taskcfg.deploy.market
+    #     desksets.admin = taskcfg.deploy.admin
+    #     desksets.domain_token = taskcfg.deploy.domain_token # default, overwrite by installer
+    #     desksets.org = taskcfg.deploy.orgid
+    #
+    #     desksets.java_path = 'jre17/bin/java'
+    #     desksets.regiserv = JServUrl(https= False, iport =taskcfg.deploy.central_iport, protocolroot = taskcfg.deploy.central_path).jserv()
+    #     desksets.wshost = '127.0.0.1'
+    #     desksets.wsport = taskcfg.deploy.ws_port
+    #     desksets.wsagent_jar = f'ipc-agent-{taskcfg.ipcagent_ver}.jar'
+    #
+    #     desk_abspath = Path(taskcfg.desktop_dir).absolute() / taskcfg.desktop_dist_dir / relative_pth
+    #     desksets.toFile(desk_abspath)
+    #
+    #     Utils.logi("============= Desktop Settings:", desk_abspath.absolute())
+    #     Utils.logi(desksets.toBlock())
+    #     return relative_pth
 
     def cmd_cp_wsagent_jar() -> None:
         def src_wsagent_jar() -> str:
@@ -300,42 +282,32 @@ def build(c, deploy: str = 'tasks.json'):
         print(src_wsagent_jar(), "=>", desk_dist_res_dir())
         shutil.copy(src_wsagent_jar(), desk_dist_res_dir())
 
-    # temp_desktop_sets_pth = f'target/temp_desktop-settings.json'
     buildcmds = [
         # desktop
         # - desktop.ipc-agent
         [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
-
-        # - build exe itself, and copy app-settings.json -> dist
-        # - create the desktop setting here is necessary for standalone clients
-        [taskcfg.desktop_dir, f'invoke shallow-pack --appsettings={create_desktop_settings(taskcfg)}'],
+        # - desktop.ext, app-settings.json -> dist; create the desktop setting here is necessary for standalone clients
+        # [taskcfg.desktop_dir, f'invoke shallow-pack --appsettings={create_desktop_settings(taskcfg)}'],
+        [taskcfg.desktop_dir, f'invoke shallow-pack --deploy={absdeploy}'],
         ['.', cmd_cp_wsagent_jar],
 
         # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
-        # replace app_ver with apk_ver?
         [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
 
         ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
                 if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ], # TODO build apk in Linux...
-        # How bout instead this one?
-        # ['.', lambda: (shutil.copy2(
-        #     os.path.join(taskcfg.android_dir, 'app/build/outputs/apk/release/app-release.apk'),
-        #     f'web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk')
-        #     if os.name == 'nt' else Path(f'web-dist/res-vol/portfolio-{apk_ver}.apk').touch(), None)[1]], # TODO build apk in Linux...
         ['web-dist/private', lambda: updateApkRes()],
 
         ['.', 'cat web-dist/private/host.json'],
         ['web-dist', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
         ['../../anclient/examples/example.js/album', 'webpack'],
+
         #
         ['.', 'mvn clean compile package -DskipTests'],
         ['../../html-service/java', 'mvn clean compile package'],
 
-        # use vscode bash for Windows
-        # ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
-
-        ['../synode.py', cmd_build_synodepy3()],
+        ['../synode.py', cmd_build_synodepy3],
     ]
 
     print('--------------  build  ------------------')
@@ -361,7 +333,7 @@ def build(c, deploy: str = 'tasks.json'):
 
 
 @task
-def package(c):
+def package(c, deploy: str = 'tasks.json'):
     """
     Create a ZIP file.
     
@@ -369,13 +341,13 @@ def package(c):
         c: Invoke Context object for running commands.
         zip: Name of the output ZIP file.
     """
+    global  taskcfg
+    if taskcfg is None:
+        taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
     jre_img = taskcfg.jre_release.split('/')[-1]
     temp_jre_path = f'jre17-temp/{jre_img}'
 
-    # dist_name = f'{taskcfg.jre_name if not LangExt.isblank(taskcfg.jre_release) else "online"}-{taskcfg.deploy.market_id}-{taskcfg.deploy.orgid}'
-    # if zip is None:
-    #     zip = f'portfolio-synode-{taskcfg.version}-{dist_name}.zip'
     zip = taskcfg.zip_name()
 
     resources = {
@@ -398,7 +370,7 @@ def package(c):
                                     # ln -s ../Anclient/examples/example.js/album web-dist
                                     # mklink /D web-dist ..\anclient\examples\example.js\album
 
-        'desktop': f'../../anclient/examples/example.slit/{taskcfg.desktop_dist_dir}/*',
+        'desktop': f'../../anclient/examples/example.slint/{taskcfg.desktop_dist_dir}/*',
 
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
         'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
@@ -426,7 +398,6 @@ def package(c):
 
         if not os.path.exists(taskcfg.dist_dir):
             os.makedirs(taskcfg.dist_dir, exist_ok=True)
-        # distzip = os.path.join(taskcfg.dist_dir, zip)
         distzip = taskcfg.get_distzip()
 
         if os.path.isfile(distzip):
@@ -449,7 +420,7 @@ def package(c):
 @task
 def post_package(c):
     print('--------------    post build   ------------------')
-    taskcfg.restore_backups()
+    # 0.8.0 This is not a good idea: taskcfg.restore_backups()
     taskcfg.run_deploycmds(c)
     taskcfg.run_deployscps()
 

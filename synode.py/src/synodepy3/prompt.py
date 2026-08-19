@@ -11,6 +11,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import choice
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import Validator, ValidationError
+from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
@@ -175,7 +176,7 @@ class DomainTokenValidator(Validator):
             return
         try: LangExt.only_passwdlen(v.text, minlen=8, maxlen=16)
         except AnsonException:
-            raise ValidationError(message=f"token length: 8 <= Len('{cfg.domain}') <= 16, allowed special chars: [{passwd_allow_ext}]")
+            raise ValidationError(message=f"token length must be in [8 ~ 16], allowed special chars: [{passwd_allow_ext}]")
 
 class SyncInsValidator(Validator):
     def validate(self, v: Document) -> None:
@@ -214,7 +215,8 @@ session = PromptSession(style=style)
 
 cfg = cli.registry.config # for shot
 
-print(f"Starting configure Synode {synode_ui.version}. Return with empty input to abort.")
+from .__version__ import synode_ver
+print(f"Starting configure Synode {synode_ver}. Return with empty input to abort.")
 
 has_run = cli.hasrun()
 
@@ -225,7 +227,7 @@ if not has_run:
     while not _quit and not reach_central():
         cli.settings.regiserv = session.prompt(
               message="Please input central service url (empty to quit): ",
-              validator=MultiValidator(QuitValidator(), PJservValidator()),
+              validator=MultiValidator(QuitValidator(), PJservValidator(JServUrl(cli.settings.regiserv).jprotocol.protocolpath)),
               default=cli.settings.regiserv,
               validate_while_typing=True)
 
@@ -239,17 +241,17 @@ if not has_run:
 
     # 1. orgs / community
     session.prompt(
-        message=f"Portfolio {synode_ui.version} market ID: {synode_ui.market_id}. ",
+        message=f"Portfolio {synode_ver} market ID: {cli.settings.market_id}. ",
         validator=QuitValidator(),
         default="Return to continue ...")
 
     # 2. bind domains
     # e.g. ['zsu', 'edu-0']
-    domains = cli.query_domx(market=synode_ui.market_id, commu=orgid)
+    domains = cli.query_domx(market=cli.settings.market_id, commu=orgid)
 
     if domains is None:
         Utils.warn('Cannot find domains in market {}, community / org: {}',
-                   synode_ui.market_id, orgid)
+                   cli.settings.market_id, orgid)
         _quit = True
     check_quit(_quit)
 
@@ -273,7 +275,7 @@ if not has_run:
         if domid is not None:
             # 3.1. select domain
             domid = cast(str, domid)
-            cli.update_domain(orgtype=synode_ui.market_id, domain=domid, orgid=orgid)
+            cli.update_domain(orgtype=cli.settings.market_id, domain=domid, orgid=orgid)
             resp = cli.query_domconf(commuid=orgid, domid=domid)
         else:
             # 3.2 create domain
@@ -450,7 +452,7 @@ if cli.registry.config.mode != SynodeMode.hub.name:
         cli.settings.jservs[hub_node.synid] = session.prompt(
                 message=f'Pinging the hub node, {hub_node.synid} ? (Empty to quit) ',
                 default=hub_jserv,
-                validator=MultiValidator(QuitValidator(), PJservValidator()))
+                validator=MultiValidator(QuitValidator(), PJservValidator('jserv-album')))
         try:
             rsp = cli.ping(hub_node.jserv)
             # print('Response', rsp)
@@ -481,7 +483,7 @@ def jreprog_hook(blocknum, blocksize, totalsize):
     read = blocknum * blocksize
     if totalsize > 0:
         percent = min(100, read * 100 // totalsize)
-        print(f"\rDownloading JRE... {percent}%", end="")
+        print(f"\rDownloading JRE... {percent}% ", end="")
 
 
 if caninstall == 1:
@@ -489,7 +491,7 @@ if caninstall == 1:
     # ui.cli.registry.config.save()
     try:
         # in case central replied empty value
-        cli.updateWithUi(market=synode_ui.market_id)
+        cli.updateWithUi(market=cli.settings.market_id)
         v = cli.validate(ping_hub=False)
         if v is not None:
             session.prompt(message='There are error in settings / configurations ...')
@@ -501,10 +503,6 @@ if caninstall == 1:
 
         cli.install()
         post_err = cli.postFix()
-
-        # ui: submit_jserv()
-        # cli.registry.config.peers = resp.diction.peers
-        # ui: bind_hubjserv()
         post_install()
     except FileNotFoundError or IOError as e:
         # Changing vol path can reach here ?

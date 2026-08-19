@@ -38,6 +38,8 @@ class DownloadWorker():
     def run(self, on_progress: Callable[[int, int, int], None]):
         mirror = TemurinMirror(self.temurin_release)
 
+        self._finished = False
+        self._cancelled = False
         try:
             jre_temp = f'{_jre_}-temp'
             on_progress(0, 100, 100)
@@ -57,6 +59,7 @@ class DownloadWorker():
             print("JRE-WORKER finished")
         except Exception as e:
             print(e)
+            self._cancelled = True
 
 
 class JreDownloader:

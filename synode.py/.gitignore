@@ -9,3 +9,6 @@ bin
 tasks.debug*.json
 desktop-dist
 WEB-INF/settings.json
+src/synodepy3/synode.json
+registry/dictionary.json
+vol-delete

@@ -14,7 +14,7 @@ from typing import Optional, cast
 
 import PySide6
 import qrcode
-from PySide6.QtCore import QEvent
+from PySide6.QtCore import QEvent, QSignalBlocker
 from PySide6.QtGui import QPixmap, Qt, QKeyEvent
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
 
@@ -206,7 +206,7 @@ class InstallerForm(QMainWindow):
 
         domainid = self.ui.cbbDomains.currentText().strip()
         self.cli.update_domain(
-                orgtype=synode_ui.market_id,
+                orgtype=self.cli.settings.market_id,
                 reg_jserv=self.ui.txtCentral.text().strip(),
                 orgid=self.ui.cbbOrgs.currentText().strip(),
                 domain=domainid)
@@ -437,21 +437,32 @@ class InstallerForm(QMainWindow):
         self.cli.settings.acceptj_butme(binding_synode, self.cli.registry.config.peers)
         self.bind_hubjserv(self.cli.registry.config, self.cli.settings)
 
-    def select_community(self, commuix):
-        domx = self.query_domx(self.ui.cbbOrgs.currentText())
-        self.ui.cbbDomains.clear()
-        if domx is not None:
-            self.domains_arr = domx.domains()
-            my_domid = self.cli.registry.config.domain
-            self.ui.cbbDomains.addItems(self.domains_arr)
+    def select_community(self, commuix: str = None):
+        # domx = self.query_domx(self.ui.cbbOrgs.currentText())
+        if commuix is None:
+            commuix = self.ui.cbbOrgs.currentText()
 
-            # avoid change my domain id by select_domx()
-            if not LangExt.isblank(my_domid):
-                self.ui.cbbDomains.setCurrentText(my_domid)
-                self.select_domx(my_domid)
-            # self.cli.registry.config.domain = my_domid
+        domx = self.query_domx(commuix)
 
-    def select_domx(self, dix):
+        self.domains_arr = []
+        prev_domid = self.cli.registry.config.domain
+        with QSignalBlocker(self.ui.cbbDomains):
+            self.ui.cbbDomains.clear()
+            if domx is not None and LangExt.len(domx.domains()) > 0:
+                self.domains_arr = domx.domains()
+                self.ui.cbbDomains.addItems(self.domains_arr)
+
+                # avoid change my domain id by select_domx()
+                if not LangExt.isblank(prev_domid) and prev_domid in self.domains_arr:
+                    self.ui.cbbDomains.setCurrentText(prev_domid)
+            else:
+                self.ui.cbbDomains.setCurrentText('')
+
+        if LangExt.isblank(prev_domid) and LangExt.len(self.domains_arr) > 0:
+            prev_domid = self.domains_arr[0]
+            self.ui.cbbDomains.setCurrentText(prev_domid) # -> if different: self.select_domid(prev_domid)
+
+    def select_domid(self, dix):
         domid = self.ui.cbbDomains.currentText()
         if domid not in self.domains_arr: return
 
@@ -506,15 +517,16 @@ class InstallerForm(QMainWindow):
     def bind_config(self):
         self.cli.registry = self.cli.load_settings()
         self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.volume, 'registry')
-        # self.bindIdentity(self.cli.registry, synodeui=synode_ui)
         self.bindIdentity(self.cli.registry, settings=self.cli.settings)
         self.bindSettings()
         self.enable_widgets()
 
     def bind_cbborg(self, orgs: list[str], elect: str):
-        self.ui.cbbOrgs.clear()
-        self.ui.cbbOrgs.addItems(orgs)
-        self.ui.cbbOrgs.setCurrentText(elect)
+        with QSignalBlocker(self.ui.cbbOrgs):
+            self.ui.cbbOrgs.clear()
+            self.ui.cbbOrgs.addItems(orgs)
+            self.ui.cbbOrgs.setCurrentText(elect)
+        self.select_community(self.ui.cbbOrgs.currentText())
 
     def bind_cbbpeers(self, peers: list[Synode], select_id):
         self.ui.cbbPeers.clear()
@@ -526,17 +538,12 @@ class InstallerForm(QMainWindow):
             self.ui.cbbPeers.setCurrentText(select_id)
             self.select_peer_byid(select_id)
 
-    # def bindIdentity(self, registry: AnRegistry, synodeui: SynodeUi):
     def bindIdentity(self, registry: AnRegistry, settings: AppSettings):
         cfg = registry.config
-        # cfg.org.orgType = synodeui.market_id
         cfg.org.orgType = settings.market_id
         print(cfg.toBlock())
 
         self.ui.txtAdminId.setText(cfg.admin)
-
-        # self.ui.txtPswd.setText(registry.synusers[0].pswd)
-        # self.ui.txtPswd2.setText(registry.synusers[0].pswd)
         self.ui.txtDompswd.setText(registry.synusers[0].pswd)
 
         self.bind_cbborg([cfg.org.orgId], cfg.org.orgId)
@@ -714,7 +721,7 @@ class InstallerForm(QMainWindow):
         # The service is registered by Procrun.exe as \SOFTWARE\WOW6432Node\Apache Software Foundation\Procrun 2.0\...,
         # rather than HKLM\SYSTEM\CurrentControlSet\Services\Synode-7.10-service-id.
         # That makes the services lost after Windows updated.
-        # Brutally re-install and start the service solved problem, and files are synchronized.
+        # Brutally re-install and start the service can solve the problem, and files are synchronized.
         # TODO source review for re-installation is allowed.
         self.ui.bWinserv.setEnabled(True)
 
@@ -742,7 +749,7 @@ class InstallerForm(QMainWindow):
             self.ui.bSignup.clicked.connect(self.signup_demo)
 
             self.ui.cbbOrgs.currentIndexChanged.connect(self.select_community)
-            self.ui.cbbDomains.currentIndexChanged.connect(self.select_domx)
+            self.ui.cbbDomains.currentIndexChanged.connect(self.select_domid)
             self.ui.bCreateDomain.clicked.connect(self.create_find_dom)
 
             self.ui.chkHub.clicked.connect(self.enable_widgets)
@@ -753,11 +760,7 @@ class InstallerForm(QMainWindow):
             self.ui.bPing.clicked.connect(self.pings)
 
             self.ui.bSetup.clicked.connect(self.save)
-            # self.ui.bSetup.clicked.connect(self.check_install_jre)
-
             self.ui.bTestRun.setEnabled(False)
-            # self.ui.bTestRun.clicked.connect(self.test_run)
-
             self.ui.chkReverseProxy.clicked.connect(self.update_chkreverse)
 
             if Utils.get_os() == 'Windows':

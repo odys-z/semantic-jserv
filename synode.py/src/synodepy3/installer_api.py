@@ -97,7 +97,7 @@ def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
     org.orgId = commuid
     req.dictionary(SynodeConfig(org=org))
 
-    msg = AnsonMsg(Centralport.register).Body(req)
+    msg = AnsonMsg(Centralport.regist).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
 
@@ -113,7 +113,7 @@ def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: st
     req.Uri(func_uri)
     req.diction = SynodeConfig(synode=myid, domain=domid)
     req.diction.org = SynOrg(orgid=orgid, orgname=domid, orgtype=market)
-    msg = AnsonMsg(Centralport.register).Body(req)
+    msg = AnsonMsg(Centralport.regist).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
 
@@ -137,7 +137,7 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
     '''
     req = RegistReq(RegistReq.A.registDom, market)
     req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, iport=iport)
-    msg = AnsonMsg(Centralport.register).Body(req)
+    msg = AnsonMsg(Centralport.regist).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
 
@@ -159,7 +159,7 @@ def submit_settings(client: SessionClient, func_uri: str, market: str,
         .mystate(stat)\
         .Jservtime(s.jserv_utc)\
 
-    msg = AnsonMsg(Centralport.register).Body(req)
+    msg = AnsonMsg(Centralport.regist).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
     if resp is not None:
@@ -418,6 +418,7 @@ class InstallerCli:
         if not Path.exists(path_v):
             Path.mkdir(path_v)
         elif not Path.is_dir(path_v):
+            Utils.warn(f'**** ERROR **** Volume path is not a folder: {path_v}')
             raise IOError(f'Volume path is not a folder: {path_v}')
 
         return Path(os.path.join(path_v, sys_db)), Path(os.path.join(path_v, syn_db)), Path(os.path.join(path_v, syntity_json))
@@ -539,14 +540,17 @@ class InstallerCli:
         """
         p_jar = os.path.join('bin/', jserv_07_jar)
         if not os.path.isfile(p_jar):
+            Utils.warn(f'**** ERROR **** Synode service package is missing: {p_jar}')
             raise FileNotFoundError(f'Synode service package is missing: {p_jar}')
 
         p_jar = os.path.join('bin/', html_web_jar)
         if not os.path.isfile(p_jar):
+            Utils.warn(f'**** ERROR **** Synode html server package is missing: {p_jar}')
             raise FileNotFoundError(f'Synode html server package is missing: {p_jar}')
 
-        if (not os.path.isfile(os.path.join('volume', sys_db))
-                or not os.path.isfile(os.path.join('volume', syn_db))):
+        if not os.path.isfile(os.path.join('volume', sys_db)) or \
+            not os.path.isfile(os.path.join('volume', syn_db)):
+            Utils.warn(f'**** ERROR **** Some initial database or configure files cannot be found in volume: {sys_db}, {syn_db}')
             raise FileNotFoundError(
                 f'Some initial database or configure files cannot be found in volume: {sys_db}, {syn_db}')
         return True
@@ -992,11 +996,7 @@ class InstallerCli:
             hosts.host = config.synid
             hosts.syndomx.update({'domain': config.domain})
             hosts.syndomx.update({config.synid: jsrvhost})
-            # for sid, jurl in settings.jservs.items():
-            #     if sid == config.synid:
-            #         hosts.syndomx.update({sid: jsrvhost})
-            #     else:
-            #         hosts.syndomx.update({sid: jurl})
+
 
             hosts.toFile(webhost_pth)
 
