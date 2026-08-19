@@ -1,0 +1,37 @@
+{
+  "type": "io.oz.syn.registry.AnRegistry",
+  "config": {
+    "type": "io.oz.syn.registry.SynodeConfig",
+    "synconn": "docsyn",
+    "sysconn": "sys",
+    "domain": "zsu",
+    "org": {
+      "type": "io.oz.syn.registry.SynOrg",
+      "parent": null,
+      "fullpath": "",
+      "orgId": "pmking",
+      "orgName": "ORG-MY 0.8.0 by Central",
+      "orgType": "alpha",
+      "webroot": "$WEBROOT",
+      "homepage": "",
+      "album0": "album-test",
+      "meta": "io.oz.jserv.docs.meta.DocOrgMeta"
+    },
+    "https": false,
+    "synid": "",
+    "admin": "admin",
+    "peers": null,
+    "mode": "hub",
+    "debug": false,
+    "syncIns": 0
+  },
+  "synusers": [{
+    "type": "io.oz.syn.SyncUser",
+    "userId": "admin",
+    "userName": null,
+    "pswd": "****************",
+    "iv": null,
+    "org": "org.my",
+    "domain": "zsu"
+  }]
+}
