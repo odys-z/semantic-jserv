@@ -12,7 +12,6 @@ from docutils.utils import relative_path
 from invoke import task, call
 import os
 
-# from semanticshare.io.oz.anclient.app import DesktopSettings
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
@@ -434,7 +433,7 @@ def package(c, deploy: str = 'tasks.json'):
         'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
     }
 
-    excludes = ['*.log', 'report.html']
+    excludes = ['*.log', 'report.html', '*.github.json']
 
     try:
 
