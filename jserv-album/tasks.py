@@ -6,14 +6,14 @@ import sys
 from types import LambdaType
 from typing import cast
 from pathlib import Path
-from anson.io.odysz.common import Utils, LangExt
+from anson.io.odysz.common import Utils
 from anson.io.odysz.utils import zip2
-from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 from docutils.utils import relative_path
 from invoke import task, call
 import os
 
-from semanticshare.io.oz.anclient.app import DesktopSettings
+# from semanticshare.io.oz.anclient.app import DesktopSettings
+from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
 requir_pkg("anson.py3", "0.5.5")
@@ -25,8 +25,8 @@ from semanticshare.io.oz.syntier.serv import ExternalHosts
 version_pattern = '[0-9\\.]+'
 
 # dictionary.json
-synuser_pswd_pattern = '\"pswd\"\\s*:\\s*\"[^"]*\"'
-org_orgid_pattern    = '\"orgId\"\\s*:\\s*\"[^"]*\"'
+# synuser_pswd_pattern = '\"pswd\"\\s*:\\s*\"[^"]*\"'
+# org_orgid_pattern    = '\"orgId\"\\s*:\\s*\"[^"]*\"'
 
 # synode.json
 re_market_id     = '\"market_id\"\\s*:\\s*\"[^"]*\"'
@@ -143,29 +143,47 @@ def config(c, deploy: str = 'tasks.json'):
     })
 
     # installer
-    synode_json = taskcfg.backup('../synode.py/src/synodepy3/synode.json')
-    Utils.update_patterns(synode_json, {
-        re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
-        re_mirror_path('en'): f'"jre_mirror": "{taskcfg.deploy.mirror_path}"',
-        re_central_iport: f'"central_iport": "{taskcfg.deploy.central_iport}"',
-        re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
-    })
+    # synode_json = taskcfg.backup('../synode.py/src/synodepy3/synode.json')
+    # Utils.update_patterns(synode_json, {
+    #     re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
+    #     re_mirror_path('en'): f'"jre_mirror": "{taskcfg.deploy.mirror_path}"',
+    #     re_central_iport: f'"central_iport": "{taskcfg.deploy.central_iport}"',
+    #     re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
+    # })
 
+    '''
+        This shared settings is now managed by root tasks - debugging setup needs to be refactored 
+        
     # vol/dictionary.json
     diction_file = taskcfg.backup(os.path.join(taskcfg.registry_dir, 'dictionary.json'))
     Utils.update_patterns(diction_file, {
         org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
         synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
     })
+    '''
 
     # album-web - web-ver for web srv id not goes here
-    settings_json = taskcfg.backup(os.path.join(taskcfg.web_inf_dir, 'settings.json'))
-    Utils.update_patterns(settings_json, {
-        re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
-        re_webport     : f'"webport"     : {taskcfg.deploy.web_port}',
-        re_jserv_port  : f'"port"        : {taskcfg.deploy.jserv_port}',
-        re_install_key : f'"installkey"  : "{taskcfg.deploy.root_key}"'
-    })
+    # settings_json = taskcfg.backup(os.path.join(taskcfg.web_inf_dir, 'settings.json'))
+    # Utils.update_patterns(settings_json, {
+    #     re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
+    #     re_webport     : f'"webport"     : {taskcfg.deploy.web_port}',
+    #     re_jserv_port  : f'"port"        : {taskcfg.deploy.jserv_port}',
+    #     re_install_key : f'"installkey"  : "{taskcfg.deploy.root_key}"'
+    # })
+
+    synode_settings: AppSettings = cast(AppSettings, Anson.from_file(
+        Path(taskcfg.web_inf_dir) / 'settings.github.json'))
+    synode_settings.regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
+    synode_settings.jservs = {}
+    synode_settings.market_id = taskcfg.deploy.market_id
+    synode_settings.market_name = taskcfg.deploy.market
+    synode_settings.jserv_utc = '1911-10-10'
+    synode_settings.centralPswd = taskcfg.deploy.central_pswd
+    synode_settings.webport = taskcfg.deploy.web_port
+    synode_settings.port = taskcfg.deploy.jserv_port
+    synode_settings.rootkey = ''
+    synode_settings.installkey = taskcfg.deploy.root_key
+    synode_settings.toFile(Path(taskcfg.web_inf_dir) / 'settings.json')
 
     # ipc-agent.jar
     version_file = 'pom.xml'
@@ -196,7 +214,46 @@ def clean(c):
                 shutil.rmtree(item_path)
 
 
-# @task(config)
+@task
+def install_maven_local(c, gpg: str = None):
+    '''
+    [INFO] --------------------< io.github.odys-z:jserv-album >--------------------
+    [INFO] io.github.odys-z:jserv-album:jar:0.8.0
+    [INFO] +- io.github.odys-z:docsync.jserv:jar:0.3.3:compile
+    [INFO] |  +- io.github.odys-z:semantic.DA:jar:1.5.24:compile
+    [INFO] |  |  +- io.github.odys-z:semantics.transact:jar:1.5.77:compile
+    [INFO] |  |  |  \- io.github.odys-z:antson:jar:1.0.8:compile
+    [INFO] |  \- io.github.odys-z:synodict.jclient:jar:0.1.8:compile
+    [INFO] +- io.github.odys-z:syndoc-lib:jar:0.5.20:compile
+    [INFO] |  \- io.github.odys-z:semantic.jserv:jar:1.5.17:compile
+    [INFO] +- io.github.odys-z:albumtier:jar:0.5.4:test              - For Android
+    [INFO] +- io.github.odys-z:anclient.java:jar:0.5.20:compile
+    [INFO] \- io.github.odys-z:synodict.central:jar:0.1.8:test       X
+    :param c:
+    :return:
+    '''
+    pom_locations = [
+        '../../antson/antson.java',
+        '../../semantic-transact/semantic.transact',
+        '../../semantic-DA/semantic.DA',
+        '../../semantic-jserv/jserv-album-lib',
+        '../../anclient/java/eclipse-workspace/anclient.jserv',
+        '../../semantic-jserv/docsync.jserv',
+        '../../anclient/examples/example.android/albumtier'
+    ]
+
+    print('----------  Install Local Maven ---------')
+    for pth in pom_locations:
+        mvn = f'mvn clean compile package install -Dgpg.passphrase={gpg} -DskipTests'
+        print('****************************************************************************')
+        print('*', pth, ":", mvn)
+        print('****************************************************************************')
+        ret = c.run(f'cd {pth} && {mvn}')
+        print('OK:', ret.ok, ret.stderr)
+
+    c.run('mvn clean dependency:tree | grep io.github.odys-z')
+
+
 @task
 def build(c, deploy: str = 'tasks.json'):
     '''
@@ -418,34 +475,51 @@ def package(c, deploy: str = 'tasks.json'):
 
 
 @task
-def post_package(c):
+def post_package(c, deploy:str = 'task.json'):
     print('--------------    post build   ------------------')
     # 0.8.0 This is not a good idea: taskcfg.restore_backups()
+    global taskcfg
+    if taskcfg is None:
+        taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+
     taskcfg.run_deploycmds(c)
     taskcfg.run_deployscps()
 
 
-@task(clean, create_volume, build, package, post_package)
-def make(c):
-    """
-    Create a ZIP file with the specified resources.
-    
-    Args:
-        c: Invoke Context object for running commands.
-    """
+# @task(clean, create_volume, build, package, post_package)
+# def make(c):
+#     """
+#     Create a ZIP file with the specified resources.
+#
+#     Args:
+#         c: Invoke Context object for running commands.
+#     """
+#
+#     print('Package is created successfully.')
+#     print('********************************************************************************\n'
+#           '* But Task make is deprecated, please use: invoke deploy --deploy tasks.json . *\n'
+#           '********************************************************************************')
 
-    print('Package is created successfully.')
-    print('********************************************************************************\n'
-          '* But Task make is deprecated, please use: invoke deploy --deploy tasks.json . *\n'
-          '********************************************************************************')
 
+# @task(post=[clean, create_volume, build, package, post_package])
+# def deploy(c, deploy: str = 'tasks.json'):
+#     global taskcfg
+#     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+#     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
 
-@task(post=[clean, create_volume, build, package, post_package])
-def deploy(c, deploy: str = 'tasks.json'):
+@task
+def deploy(c, deploy: str = 'tasks.json', gpg: str = None):
+    if gpg is not None:
+        install_maven_local(c, gpg)
+
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+    clean(c)
+    create_volume(c)
+    build(c, deploy=deploy)
+    package(c, deploy=deploy)
+    post_package(c, deploy=deploy)
     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
-
 
 @task
 def landing(c, deploy: str = None):

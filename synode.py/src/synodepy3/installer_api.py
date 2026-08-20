@@ -996,8 +996,6 @@ class InstallerCli:
             hosts.host = config.synid
             hosts.syndomx.update({'domain': config.domain})
             hosts.syndomx.update({config.synid: jsrvhost})
-
-
             hosts.toFile(webhost_pth)
 
     @staticmethod

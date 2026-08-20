@@ -28,6 +28,7 @@ venv*
 **/WEB-INF/settings.hub.json
 **/WEB-INF/settings.prv.json
 **/WEB-INF/settings.mob.json
+**/WEB-INF-*.*/settings.json
 **/volume-x29
 **/central-vol
 **/settings.x29.json
