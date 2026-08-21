@@ -280,7 +280,7 @@ class InstallerForm(QMainWindow):
         self.update()
 
         self.cli.updateWithUi(
-            market=synode_ui.market_id,
+            market=self.cli.registry.config.org.orgType,
             org=self.ui.cbbOrgs.currentText(),
             domain=self.ui.cbbDomains.currentText().strip(),
             reg_jserv=self.ui.txtCentral.text().strip(),
@@ -801,8 +801,10 @@ class InstallerForm(QMainWindow):
                     self.cli.reg_jserv = JServUrl(txt)
                     communs, communid = self.cli.query_orgs()
                     self.bind_cbborg(communs, communid)
+                    self.ui.statusbar.showMessage("Ready")
                 else:
-                    synode_ui.status.text = "Invalid Registry url"
+                    # synode_ui.status.text = "Invalid Registry url"
+                    self.ui.statusbar.showMessage("Invalid Registry url")
         return super().eventFilter(obj, event)
 
 

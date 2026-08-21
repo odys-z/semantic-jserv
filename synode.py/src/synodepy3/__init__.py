@@ -7,17 +7,14 @@ jre_mirror_key = 'jre_mirror'
 
 @dataclass
 class SynodeUi(Anson):
-    # version: str
-    # central_iport: str
-    # central_path: str
-    # market: str
-    # market_id: str
+    '''
+    @deprecated replaced by io.oz.anclient.app.UIResources
+    '''
     iso: str
     lang: str
     langs: dict
     ui: str
 
-    ### consts
     credits: str
 
     def __init__(self):

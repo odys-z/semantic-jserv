@@ -118,7 +118,7 @@ def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: st
     resp = client.commit(msg, err_uihandlers[0])
 
     if resp is not None:
-        print(client.myservRt, resp.code)
+        print("query_domconfig() respons:", client.myservRt, resp.code)
         print(f'<{RegistReq.A.queryDomConfig}>', resp.toBlock())
 
     return cast(RegistResp, resp)
@@ -900,7 +900,7 @@ class InstallerCli:
                    f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
 
-        self.update_clients(['desktop_dist/settings/app-settings.json'])
+        self.update_clients(['desktop/settings/app-settings.json'])
 
     def update_clients(self, clients_sets: [str]) -> None:
         for setpath in clients_sets:

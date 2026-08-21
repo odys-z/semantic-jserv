@@ -34,10 +34,10 @@ from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt
 from invoke import task, Context
 from semanticshare.io.odysz.semantic.jprotocol import AnsonMsg, MsgCode
+from semanticshare.io.oz.anclient.app import UIResources
 from semanticshare.io.oz.invoke import SynodeTask
 from semanticshare.io.oz.syn import SyncUser
 from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp, SynOrg
-from synodepy3 import SynodeUi
 
 ORG = 'ura'
 DOMAIN = 'zsu'
@@ -139,7 +139,7 @@ def config(c, abstask_json: str):
     synode_settings.toFile(Path(taskcfg.web_inf_dir) / 'settings.json')
     '''
 
-    synode_ui = cast(SynodeUi, Anson.from_file(Path('src') / 'synodepy3' / 'synode.github.json'))
+    synode_ui = cast(UIResources, Anson.from_file(Path('src') / 'synodepy3' / 'synode.github.json'))
     if LangExt.len(taskcfg.deploy.mirror_path) > 0:
         # according to synode_ui, not tasks.json
         for lang, ss in synode_ui.langs.items():
@@ -155,7 +155,7 @@ def config(c, abstask_json: str):
     dom_registry: AnRegistry = cast(AnRegistry, Anson.from_file(Path('registry') / 'dictionary.github.json'))
     dom_registry.config.org.orgId = taskcfg.deploy.orgid
     dom_registry.config.org.orgType = taskcfg.deploy.market_id
-    dom_registry.synusers = [SyncUser(org=taskcfg.deploy.orgid, userId=taskcfg.deploy.admin, pswd=taskcfg.deploy.domain_token)]
+    dom_registry.synusers = [SyncUser(orgid=taskcfg.deploy.orgid, userId=taskcfg.deploy.admin, pswd=taskcfg.deploy.domain_token)]
     dom_registry.toFile(Path('registry') / 'dictionary.json')
 
     Utils.update_patterns('pyproject.toml',

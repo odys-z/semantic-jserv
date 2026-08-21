@@ -1,4 +1,4 @@
-{ "type": "synodepy3.SynodeUi",
+{ "type": "io.oz.anclient.app.UIResources",
   "version_deprecate": "0.8.0",
   "market_deprecate": "MY [Test]",
   "market_id_deprecate": "alpha",
