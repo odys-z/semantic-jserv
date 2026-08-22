@@ -312,21 +312,6 @@ class InstallerForm(QMainWindow):
         '''
         :return:
         '''
-        # if self.jredownloader and self.jredownloader.isrunning():
-        #     return
-        #
-        # from semanticshare.io.oz.edge import Temurin17Release
-        # temurin = Temurin17Release()
-        # temurin.path = synode_ui.langstr(jre_mirror_key)
-        # if os.path.exists('proxy.json'):
-        #     temurin.proxy = 'proxy.json'
-        # jreimg = temurin.set_jre()
-        # print('JRE:', jreimg)
-        # # download_jre_gui(self, temurin)
-        # # self.jredownloader = JreWorker(temurin).start_download(self)
-        # self.jredownloader = JreDownloader(self.ui.lbQr)
-        # self.jredownloader.start_download_gui(temurin)
-
         self.jredownloader = self.cli.check_install_jre(self.jredownloader, self.ui.lbQr)
 
     def save(self):
@@ -572,8 +557,9 @@ class InstallerForm(QMainWindow):
             for p in cfg.peers:
                 if p.remarks == SynodeMode.hub.name:
                     jsrv = settings.jservs[p.synid] if p.synid in settings.jservs else None
-                    self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{JProtocol.urlroot}' \
-                        if LangExt.isblank(jsrv) else jsrv)
+                    # self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{JProtocol.urlroot}' \
+                    #                    if LangExt.isblank(jsrv) else jsrv)
+                    self.ui.jservLines.setText(self.cli.syn_jserv if LangExt.isblank(jsrv) else jsrv)
 
     def bindSettings(self):
         peers, settings = self.cli.registry.config.peers, self.cli.settings

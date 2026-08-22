@@ -757,7 +757,10 @@ setp (6)
 				.mystate(cfg.mode == SynodeMode.hub ? CynodeStats.asHub : CynodeStats.asPeer);
 
 		req.a(RegistReq.A.submitSettings);
-		req.protocolPath = JProtocol.urlroot;
+
+		// ISSUE FIXME 
+		// This is a design error. If a client is able to connect, no need to tell the server.
+		req.myProtocolPath = JProtocol.urlroot;
 
 		RegistResp resp = client.commit(client
 					.userReq(funcuri, Centralport.regist, req)

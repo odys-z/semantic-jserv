@@ -121,7 +121,9 @@ public class JServUrl extends Anson {
 	}
 
 	/**
-	 * For getting a jserv string at Central, forcing the submitted path-root equals {@code clientpath}.
+	 * For getting a jserv string at Central, forcing the submitted
+	 * path-root equals {@code clientpath}.
+	 * 
 	 * @param clientpath
 	 * @return jserv string
 	 */

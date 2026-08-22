@@ -469,11 +469,18 @@ def post_package(c, deploy:str = 'task.json'):
     if taskcfg is None:
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
-    taskcfg.run_deploycmds(c)
-    taskcfg.run_deployscps(str(taskcfg.get_distzip()))
-    taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.get_apk_name()))
-    taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.deskzip_name()))
+    ok, err = taskcfg.run_deploycmds(c)
+    print(f"Run deploy_cmds, ok: {ok}, error: {err}")
 
+    ok, err = 0, 0
+    taskcfg.run_deployscps(str(taskcfg.get_distzip()))
+    ok = ok + 1
+    taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.get_apk_name()))
+    ok = ok + 1
+    taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.deskzip_name()))
+    ok = ok + 1
+    print('', sep='\n')
+    print(f"Run deploy_cmds, {ok} returned normally.")
 
 @task
 def deploy(c, deploy: str = 'tasks.json', gpg: str = None):

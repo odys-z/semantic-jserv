@@ -452,7 +452,7 @@ if cli.registry.config.mode != SynodeMode.hub.name:
         cli.settings.jservs[hub_node.synid] = session.prompt(
                 message=f'Pinging the hub node, {hub_node.synid} ? (Empty to quit) ',
                 default=hub_jserv,
-                validator=MultiValidator(QuitValidator(), PJservValidator('jserv-album')))
+                validator=MultiValidator(QuitValidator(), PJservValidator(cli.syn_protocol.protocolpath)))
         try:
             rsp = cli.ping(hub_node.jserv)
             # print('Response', rsp)
@@ -518,7 +518,7 @@ if caninstall == 1:
         check_quit(_quit)
 
     if Utils.iswindows():
-        session.prompt(f'Synode-cli {synode_ui.version} cannot install the required Windows services.\n'
+        session.prompt(f'Synode-cli is for the remote servers, and cannot install the required Windows services.\n'
                        'Please install it with the GUI version:\n'
                        './setup-gui.exe\n'
                        'And click "install Windows service" with default settings.')
@@ -537,7 +537,7 @@ if caninstall == 1:
                f'Then try login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n'
                f'{login_url}\n\n'
                 'A simple tutorial for installing Unix services is to be build. You have to Google it. Sorry!\n'
-               f'Return to quit Portfolio {synode_ui.version} Setup ...'
+               f'Return to quit Portfolio Setup ...'
                )
 
 def main():

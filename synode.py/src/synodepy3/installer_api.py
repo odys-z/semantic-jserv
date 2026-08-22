@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from jre_mirror.temurin17 import guess_jretree
 from semanticshare.io.odysz.jclient import AnclientSettings
-from semanticshare.io.oz.anclient.app import DesktopSettings
+from semanticshare.io.oz.anclient.app import DesktopSettings, UIResources
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from .install_jre import java_cmd
@@ -24,7 +24,7 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from typing import cast, Optional, Callable
+from typing import cast, Optional, Callable, Final
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
@@ -43,7 +43,7 @@ from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 
 from .__version__ import jar_ver, web_ver, html_srver, ipcagent_ver
 
-from . import SynodeUi, jre_mirror_key
+from . import jre_mirror_key
 
 path = os.path.dirname(__file__)
 '''
@@ -67,8 +67,8 @@ vol_dict_json: file path to dictionary.json,
 web_settings: file path to settings.json
 '''
 
-synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
-err_uihandlers: list[Optional[OnError]] = [None]
+synode_ui = cast(UIResources, Anson.from_file(os.path.join(path, "synode.json")))
+err_uihandlers: list[OnError] = [cast(OnError, None)]
 
 def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
     Clients.init(jserv=peerserv, timeout=timeout_snd)
@@ -124,7 +124,8 @@ def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: st
     return cast(RegistResp, resp)
 
 
-def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int]):
+def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig,
+             s: AppSettings, iport: tuple[str, int], jprotocl: JProtocol):
     '''
     Ask central for registering a domain, expecting a reply with planned synodes (peers).
     :param client:
@@ -136,7 +137,7 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
     :return:
     '''
     req = RegistReq(RegistReq.A.registDom, market)
-    req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, iport=iport)
+    req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, iport=iport, jprotcl=jprotocl)
     msg = AnsonMsg(Centralport.regist).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
@@ -149,15 +150,14 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
 
 
 def submit_settings(client: SessionClient, func_uri: str, market: str,
-                    cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int],
+                    cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int], syn_protocol: JProtocol,
                     stat: str = CynodeStats.create):
     req = RegistReq(RegistReq.A.submitSettings, market)\
         .Uri(func_uri)\
-        .protocol_path(JProtocol.urlroot)\
-        .jserurl(cfg.https, iport)\
+        .jserurl(https=cfg.https, iport=iport, jprotcl=syn_protocol)\
         .dictionary(cfg)\
         .mystate(stat)\
-        .Jservtime(s.jserv_utc)\
+        .Jservtime(s.jserv_utc) # .protocol_path(syn_jprotocol.protocolpath)
 
     msg = AnsonMsg(Centralport.regist).Body(req)
 
@@ -285,6 +285,7 @@ def checkinstall_exiftool():
 
 
 # JProtocol.setup('jserv-album')
+jserv_album: Final[str] = 'jserv-album'
 
 install_uri = 'Anson.py3/test'
 
@@ -317,7 +318,15 @@ class InstallerCli:
     settings: AppSettings
     registry: AnRegistry
     reg_jserv: JServUrl
+
+    syn_protocol: JProtocol
+    '''
+    Jserv to synodes can be load, modified later, but the protocol is for sure must setup at the first place
+    '''
     syn_jserv: JServUrl
+    '''
+    Can be load, modified later.
+    '''
 
     @staticmethod
     def parsejservstr(jservstr: str) -> list[list[str]]:
@@ -339,6 +348,8 @@ class InstallerCli:
         self.webth = None
         self.registry = cast(AnRegistry, None)
         self.settings = cast(AppSettings, None)
+        self.syn_protocol = JProtocol(jserv_album)
+        self.syn_jserv = JServUrl(jservurl='http://localhost', jprotocol=self.syn_protocol)
 
     def list_synodes(self):
         return self.settings.jservs.items()
@@ -350,7 +361,6 @@ class InstallerCli:
     def load_settings(self):
         """
         Load from res_path/setings.json,
-        NOTE TODO 0.7.6 force passward to central: ******
         :return: loaded settings
         """
 
@@ -824,7 +834,7 @@ class InstallerCli:
 
         return register(client=self.regclient, func_uri=install_uri,
                         market=self.settings.market_id, cfg=self.registry.config,
-                        s=self.settings, iport=self.getProxiedIp())
+                        s=self.settings, iport=self.getProxiedIp(), jprotocl=self.reg_jserv.jprotocol)
 
     def jesuis_hub(self) -> bool:
         """
@@ -839,6 +849,7 @@ class InstallerCli:
                                func_uri=install_uri, market=self.settings.market_id,
                                cfg=self.registry.config, s=self.settings,
                                iport=self.getProxiedIp(),
+                               syn_protocol=self.syn_protocol,
                                # leave the state unchanged when using setup API.
                                # see also java/AppSettings.synotifyCentral()
                                stat=cast(str, None)
@@ -897,29 +908,31 @@ class InstallerCli:
                 self.settings.rootkey):
             self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
             Utils.warn(f'Volume is set to {self.settings.Volume()}.\n'
-                   f'Ignore existing database:\n{sysdb}\n{syndb}')
+                       f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
 
-        self.update_clients(['desktop/settings/app-settings.json'])
+        self.update_clients([(Path('desktop'), 'settings/app-settings.json')])
 
-    def update_clients(self, clients_sets: [str]) -> None:
-        for setpath in clients_sets:
-            csets = cast(AnclientSettings, Anson.from_file(setpath))
+    def update_clients(self, clients_sets: [tuple[Path, str]]) -> None:
+        for apppath, setpath in clients_sets:
+            csets = cast(AnclientSettings, Anson.from_file(apppath / setpath))
             csets.org = self.registry.config.org.orgId
             csets.domain = self.registry.config.domain
             csets.centralPswd = self.settings.centralPswd
             csets.regiserv = self.settings.regiserv
             csets.admin = self.registry.config.admin
             csets.domain_token = self.find_synuser(csets.admin).pswd
-            if isinstance(csets, DesktopSettings):
+            csets.device = f'{self.registry.config.synid}-{LangExt.trunc_right(apppath.parts[-1], 12) if len(apppath.parts) > 0 else "0"}'
+            if csets.__type__ == DesktopSettings().__type__:
                 csets.market = self.settings.market_id
                 csets.market_name = self.settings.market_name
                 csets.synode_id = self.registry.config.synid
                 csets.synode_jserv = self.find_peer(csets.synode_id).jserv
-                csets.synode_vol = self.settings.volume
+                csets.synode_vol = str(Path(self.settings.volume).absolute().as_posix())
                 csets.album_web = str(self.settings.webport)
-                csets.java_path = str(java_cmd().absolute())
+                csets.java_path = str(java_cmd().absolute().as_posix())
                 csets.wsagent_jar = f'ws-agent-{ipcagent_ver}.jar'
+            csets.toFile((apppath / setpath).absolute())
 
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)
