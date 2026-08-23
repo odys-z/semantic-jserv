@@ -487,11 +487,9 @@ def jreprog_hook(blocknum, blocksize, totalsize):
 
 
 if caninstall == 1:
-    # ui.cli.settings.save()
-    # ui.cli.registry.config.save()
     try:
         # in case central replied empty value
-        cli.updateWithUi(market=cli.settings.market_id)
+        cli.updateWithUi(market=cli.registry.config.org.orgType)
         v = cli.validate(ping_hub=False)
         if v is not None:
             session.prompt(message='There are error in settings / configurations ...')

@@ -4,6 +4,7 @@ import sys
 from dataclasses import dataclass
 
 from jre_mirror.temurin17 import guess_jretree
+from prompt_toolkit.key_binding.bindings.named_commands import self_insert
 from semanticshare.io.odysz.jclient import AnclientSettings
 from semanticshare.io.oz.anclient.app import DesktopSettings, UIResources
 from semanticshare.io.oz.syn import SynodeMode, Synode
@@ -692,19 +693,12 @@ class InstallerCli:
         '''
         if reg_jserv is not None:
             self.settings.regiserv = reg_jserv
-        # if orgtype is not None:
-        #     self.registry.config.org.orgType = orgtype
         if orgid is not None:
-            # self.registry.config.org.orgId = orgid
             self.registry.config.set_org(orgid=orgid, orgtype=orgtype)
         if domain is not None:
             self.registry.config.set_domain(domain)
             for u in self.registry.synusers:
                 u.domain = domain
-
-        # 0.7.7 central pswd is build by tasks.py
-        # if centralPswd is not None:
-        #     self.settings.centralPswd = centralPswd
 
     def updateWithUi(self,
             market: str, org: str = None, domain: str=None,
@@ -923,15 +917,20 @@ class InstallerCli:
             csets.admin = self.registry.config.admin
             csets.domain_token = self.find_synuser(csets.admin).pswd
             csets.device = f'{self.registry.config.synid}-{LangExt.trunc_right(apppath.parts[-1], 12) if len(apppath.parts) > 0 else "0"}'
+
             if csets.__type__ == DesktopSettings().__type__:
-                csets.market = self.settings.market_id
-                csets.market_name = self.settings.market_name
+                # ISSUE: package should care only one settings, and installer translates, setups.
+                csets.market = self.registry.config.org.orgType # self.settings.market_id
+                if hasattr(self.settings, 'market_name'):
+                    csets.market_name = self.settings.market_name
+
                 csets.synode_id = self.registry.config.synid
                 csets.synode_jserv = self.find_peer(csets.synode_id).jserv
                 csets.synode_vol = str(Path(self.settings.volume).absolute().as_posix())
                 csets.album_web = str(self.settings.webport)
                 csets.java_path = str(java_cmd().absolute().as_posix())
                 csets.wsagent_jar = f'ws-agent-{ipcagent_ver}.jar'
+
             csets.toFile((apppath / setpath).absolute())
 
     def clean_install(self, vol: str = None):

@@ -525,7 +525,8 @@ class InstallerForm(QMainWindow):
 
     def bindIdentity(self, registry: AnRegistry, settings: AppSettings):
         cfg = registry.config
-        cfg.org.orgType = settings.market_id
+        # in 0.8.0, orgType is configured by tasks.py
+        # cfg.org.orgType = settings.market_id
         print(cfg.toBlock())
 
         self.ui.txtAdminId.setText(cfg.admin)
@@ -557,9 +558,8 @@ class InstallerForm(QMainWindow):
             for p in cfg.peers:
                 if p.remarks == SynodeMode.hub.name:
                     jsrv = settings.jservs[p.synid] if p.synid in settings.jservs else None
-                    # self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{JProtocol.urlroot}' \
-                    #                    if LangExt.isblank(jsrv) else jsrv)
-                    self.ui.jservLines.setText(self.cli.syn_jserv if LangExt.isblank(jsrv) else jsrv)
+                    # self.ui.jservLines.setText(self.cli.syn_jserv if LangExt.isblank(jsrv) else jsrv)
+                    self.ui.jservLines.setText(jsrv)
 
     def bindSettings(self):
         peers, settings = self.cli.registry.config.peers, self.cli.settings

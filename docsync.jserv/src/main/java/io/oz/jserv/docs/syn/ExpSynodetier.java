@@ -276,6 +276,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		return this;
 		
 		2026.8.15 Verification: seams fine between reddish-2.2 & hub
+		2026.8.23 Verification: It's not correct if a synode, specially, a hub, can not submit it's jserv.
 		*/
 
 		this.syncInSnds = syncIns;
@@ -321,8 +322,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (domanager0.synodeNetworking(s)) {
 					if (s.loadDBLaterservs(domanager0.syngleton.syncfg, domanager0.synm)) {
 						needExpose = true;
-//						mustnonull(s.rootkey());
-//						mustnull(s.installkey());
 						s.save_rt();
 					}
 				}

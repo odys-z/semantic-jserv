@@ -583,7 +583,7 @@ Two Workers Schema
 ==================
 
 The jservs of other synodes is merged from both other peers and central.
-- Worker 0 manage AppSettings.jservs, reaches only central, caring noth about peers;
+- Worker 0 manage AppSettings.jservs, reaches only central, caring nothing about peers;
 - worker 1 queries all possible peers and merge into db, caring nothing about central and AppSettings.jservs;
 - both workers are monitoring ip changes;
 - [0.7.6] settings.json[jservs] takes effect if and only if the synode has rebooted.
@@ -620,9 +620,9 @@ Notes on steps
 step (1)
 --------
 
-Brutally accept user intervention at stat up, if jserv_utc the saving time is later, this reqires:
+Brutally accept user intervention at start up, if jserv_utc the saving time is later, this requires:
 - any newly update by both workers must be saved to file.
-- Amdin is responsible for failed connections (failed connection can be correct)
+- Admin is responsible for failed connections (failed connection can be correct)
 
 setp (6)
 --------

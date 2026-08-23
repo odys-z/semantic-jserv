@@ -6,7 +6,7 @@ import sys
 from types import LambdaType
 from typing import cast
 from pathlib import Path
-from anson.io.odysz.common import Utils
+from anson.io.odysz.common import LangExt, Utils
 from anson.io.odysz.utils import zip2, move_anyway
 from invoke import task
 import os
@@ -23,10 +23,6 @@ from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 
 version_pattern = '[0-9\\.]+'
-
-# dictionary.json
-# synuser_pswd_pattern = '\"pswd\"\\s*:\\s*\"[^"]*\"'
-# org_orgid_pattern    = '\"orgId\"\\s*:\\s*\"[^"]*\"'
 
 # synode.json
 re_market_id     = '\"market_id\"\\s*:\\s*\"[^"]*\"'
@@ -175,6 +171,7 @@ def config(c, deploy: str = 'tasks.json'):
         Path(taskcfg.web_inf_dir) / 'settings.github.json'))
     synode_settings.regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
     synode_settings.jservs = {}
+    # In 0.8.0, market_id is also configured in settings.json for client Apps.
     synode_settings.market_id = taskcfg.deploy.market_id
     synode_settings.market_name = taskcfg.deploy.market
     synode_settings.jserv_utc = '1911-10-10'
@@ -232,8 +229,14 @@ def install_maven_local(c, gpg: str = None):
     [INFO] +- io.github.odys-z:anclient.java:jar:0.5.20:compile
     [INFO] |- io.github.odys-z:synodict.central:jar:0.1.8:test       X
     :param c:
+    :param gpg: gpg-passphrase
     :return:
     '''
+
+    if LangExt.isblank(gpg):
+        Utils.warn("gpg-passphrase is blank!")
+        sys.exit(-1)
+
     pom_locations = [
         '../../antson/antson.java',
         '../../semantic-transact/semantic.transact',
