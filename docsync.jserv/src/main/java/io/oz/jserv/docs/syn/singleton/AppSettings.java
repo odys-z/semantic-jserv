@@ -88,6 +88,18 @@ public class AppSettings extends Anson {
 	 */
 	static String reg_uri = "/regiest-sys";
 
+	/**
+	 * @since 0.3.4 (Portofolio 0.8.0),
+	 * not used directly, but cannot lost for the installer and clients needing this.
+	 */
+	public String market_id;
+
+	/**
+	 * @since 0.3.4 (Portofolio 0.8.0),
+	 * not used directly, but cannot lost for the installer and clients needing this.
+	 */
+	public String market_name;
+	
 	@AnsonField(ignoreFrom=true, ignoreTo=true)
 	String webinf;
 	
@@ -192,7 +204,6 @@ public class AppSettings extends Anson {
 		jserv_utc = utc;
 		return this;
 	}
-
 
 	String installkey;
 	public String installkey() { return installkey; }

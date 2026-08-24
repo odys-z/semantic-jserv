@@ -252,10 +252,32 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @return this
 	 * @throws Exception 
 	 * @see {@link AppSettings#merge_ip_json2db(SynodeConfig, SynodeMeta, SyncUser, OnError)}
+	 * 
+	 * NOTES / ISSUE This is a reinventing the wheels. Check the README's A Survey on Edge Networking.
 	 */
 	public ExpSynodetier syncIn(float syncIns, OnError err) throws Exception {
-		/* TODO 2026.7.17
-		 * To be verified: any side effects?
+		this.syncInSnds = syncIns;
+		this.needExpose = false;
+
+		scheduler = Executors.newSingleThreadScheduledExecutor(
+				(r) -> new Thread(r, f("synworker-%s", synid)));
+
+		workers[0] = jserv_worker(err); 
+
+		scheduler.scheduleWithFixedDelay(workers[0], 2, 5 * 60, TimeUnit.SECONDS);
+		
+		if (syncIns > 1) {
+			DATranscxt syntb = new DATranscxt(domanager0.synconn);
+			workers[1] = syn_worker(syntb, err);
+			reschedule_1(0);
+		}
+		
+        running = false;
+		return this;
+	
+		/*
+		 * 2026.7.17 To be verified: any side effects?
+		 * 
 		this.syncInSnds = syncIns;
 		this.needExpose = false;
 
@@ -276,8 +298,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		return this;
 		
 		2026.8.15 Verification: seams fine between reddish-2.2 & hub
+		--------------------------------------------------------------------------
 		2026.8.23 Verification: It's not correct if a synode, specially, a hub, can not submit it's jserv.
-		*/
 
 		this.syncInSnds = syncIns;
 		this.needExpose = false;
@@ -304,7 +326,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		
         running = false;
 		return this;
-	
+		*/
 	}
 
 	private Runnable syn_worker(DATranscxt syntb, OnError err) {
