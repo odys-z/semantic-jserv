@@ -383,7 +383,7 @@ def default_ports(s: AppSettings) -> str:
     return f'{web_port0 if s.webport == 0 else s.webport}:{serv_port0 if s.port == 0 else s.port}'
 
 ports = session.prompt(
-    message=f'Please set the ports. Format: "synode-port : www-port"\n',
+    message=f'Please set the ports. Format: "www-port : synode-port", [1024-65535]\n',
     default=default_ports(cli.settings),
     validator=MultiValidator(QuitValidator(), PortsValidator()))
 
@@ -415,7 +415,7 @@ if cli.settings.reverseProxy:
     check_quit(_quit)
 
     reverseports = session.prompt(
-        message='Please set the public ports. Format: "date-service-prot : www-port":\n',
+        message='Please set the public ports. Format: "www-port:data-service-port":\n',
         default=default_proxy_ports(cli.settings),
         validator=MultiValidator(QuitValidator(), PortsValidator()))
 

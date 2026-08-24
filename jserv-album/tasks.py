@@ -16,7 +16,8 @@ from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
 from anson.io.odysz.utils import copy_anyway
 
-requir_pkg("anson.py3", "0.5.5")
+requir_pkg("anson.py3", "0.5.9")
+requir_pkg("anson.py3", "0.2.7")
 requir_pkg("semantics.py3", "0.5.8")
 
 from anson.io.odysz.anson import Anson
@@ -125,7 +126,6 @@ def config(c, deploy: str = 'tasks.json'):
     print(f'--------------    configuration   ------------------')
     print(f'-- synode version: {taskcfg.version} --'),
 
-    # synode-srv-{ver}.jar
     version_file = 'pom.xml'
     Utils.update_patterns(version_file, {
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
@@ -137,35 +137,6 @@ def config(c, deploy: str = 'tasks.json'):
     Utils.update_patterns(version_file, {
         f"app_ver = '{version_pattern}'": f"app_ver = '{taskcfg.apk_ver}'"
     })
-
-    # installer
-    # synode_json = taskcfg.backup('../synode.py/src/synodepy3/synode.json')
-    # Utils.update_patterns(synode_json, {
-    #     re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
-    #     re_mirror_path('en'): f'"jre_mirror": "{taskcfg.deploy.mirror_path}"',
-    #     re_central_iport: f'"central_iport": "{taskcfg.deploy.central_iport}"',
-    #     re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
-    # })
-
-    '''
-        This shared settings is now managed by root tasks - debugging setup needs to be refactored 
-        
-    # vol/dictionary.json
-    diction_file = taskcfg.backup(os.path.join(taskcfg.registry_dir, 'dictionary.json'))
-    Utils.update_patterns(diction_file, {
-        org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
-        synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
-    })
-    '''
-
-    # album-web - web-ver for web srv id not goes here
-    # settings_json = taskcfg.backup(os.path.join(taskcfg.web_inf_dir, 'settings.json'))
-    # Utils.update_patterns(settings_json, {
-    #     re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
-    #     re_webport     : f'"webport"     : {taskcfg.deploy.web_port}',
-    #     re_jserv_port  : f'"port"        : {taskcfg.deploy.jserv_port}',
-    #     re_install_key : f'"installkey"  : "{taskcfg.deploy.root_key}"'
-    # })
 
     synode_settings: AppSettings = cast(AppSettings, Anson.from_file(
         Path(taskcfg.web_inf_dir) / 'settings.github.json'))
@@ -319,9 +290,8 @@ def build(c, deploy: str = 'tasks.json'):
         # - desktop.ipc-agent
         [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
         # - desktop.ext, app-settings.json -> dist; create the desktop setting here is necessary for standalone clients
-        # [taskcfg.desktop_dir, f'invoke shallow-pack --appsettings={create_desktop_settings(taskcfg)}'],
         [taskcfg.desktop_dir, f'invoke shallow-pack --deploy={absdeploy}'],
-        ['.', cmd_cp_wsagent_jar],
+        ['.', cmd_cp_wsagent_jar], # issue: taskcfg.ipcagent_dir cannot be undstand by slint/tasks.py
 
         # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
@@ -485,8 +455,13 @@ def post_package(c, deploy:str = 'task.json'):
     print('', sep='\n')
     print(f"Run deploy_cmds, {ok} returned normally.")
 
+
 @task
-def deploy(c, deploy: str = 'tasks.json', gpg: str = None):
+def make(c, deploy: str = 'tasks.json', gpg: str = None):
+    '''
+    This task is for separating python 3.9 for build & packaging,
+    from python 3.10 and above for scp command in post_package.
+    '''
     if gpg is not None:
         install_maven_local(c, gpg)
 
@@ -496,6 +471,11 @@ def deploy(c, deploy: str = 'tasks.json', gpg: str = None):
     create_volume(c)
     build(c, deploy=deploy)
     package(c, deploy=deploy)
+
+
+@task
+def deploy(c, deploy: str = 'tasks.json', gpg: str = None):
+    make(c, deploy=deploy, gpg=gpg)
     post_package(c, deploy=deploy)
     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
 

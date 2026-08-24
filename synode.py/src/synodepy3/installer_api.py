@@ -910,27 +910,29 @@ class InstallerCli:
     def update_clients(self, clients_sets: [tuple[Path, str]]) -> None:
         for apppath, setpath in clients_sets:
             csets = cast(AnclientSettings, Anson.from_file(apppath / setpath))
+
+            # ISSUE: package should care only one settings, and installer translates, setups.
+            csets.market_id = self.registry.config.org.orgType  # self.settings.market_id
+            if hasattr(self.settings, 'market_name'):
+                csets.market_name = self.settings.market_name
+
             csets.org = self.registry.config.org.orgId
             csets.domain = self.registry.config.domain
             csets.centralPswd = self.settings.centralPswd
             csets.regiserv = self.settings.regiserv
             csets.admin = self.registry.config.admin
             csets.domain_token = self.find_synuser(csets.admin).pswd
-            csets.device = f'{self.registry.config.synid}-{LangExt.trunc_right(apppath.parts[-1], 12) if len(apppath.parts) > 0 else "0"}'
+            # csets.device = f'{self.registry.config.synid}-{LangExt.trunc_right(apppath.parts[-1], 12) if len(apppath.parts) > 0 else "0"}'
 
             if csets.__type__ == DesktopSettings().__type__:
-                # ISSUE: package should care only one settings, and installer translates, setups.
-                csets.market = self.registry.config.org.orgType # self.settings.market_id
-                if hasattr(self.settings, 'market_name'):
-                    csets.market_name = self.settings.market_name
-
                 csets.synode_id = self.registry.config.synid
                 csets.synode_jserv = self.find_peer(csets.synode_id).jserv
                 csets.synode_vol = str(Path(self.settings.volume).absolute().as_posix())
                 csets.album_web = str(self.settings.webport)
                 csets.java_path = str(java_cmd().absolute().as_posix())
-                csets.wsagent_jar = f'ws-agent-{ipcagent_ver}.jar'
+                csets.wsagent_jar = f'res/ws-agent-{ipcagent_ver}.jar'
 
+            print("Saving", Path(apppath) / setpath, ":", csets.synode_id, csets.synode_jserv)
             csets.toFile((apppath / setpath).absolute())
 
     def clean_install(self, vol: str = None):
