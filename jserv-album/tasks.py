@@ -7,16 +7,14 @@ from types import LambdaType
 from typing import cast
 from pathlib import Path
 from anson.io.odysz.common import LangExt, Utils
-from anson.io.odysz.utils import zip2, move_anyway
+from anson.io.odysz.utils import zip2
 from invoke import task
 import os
 
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
 from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
-from anson.io.odysz.utils import copy_anyway
-
-requir_pkg("anson.py3", "0.5.9")
+requir_pkg("anson.py3", "0.6.1")
 requir_pkg("anson.py3", "0.2.7")
 requir_pkg("semantics.py3", "0.5.8")
 
@@ -409,7 +407,7 @@ def package(c, deploy: str = 'tasks.json'):
 
         zip2(zip, {**resources, **taskcfg.vol_resource}, excludes)
 
-        zip = move_anyway(zip, pth_packagedir(taskcfg), log=True)
+        zip = Utils.move_anyway(zip, pth_packagedir(taskcfg), log=True)
 
         print('****************************************************************************************************',
              f'* Distribution ZIP file is created successfully: {zip}' if not err else 'Errors while making target (creaded zip file)',
@@ -420,8 +418,8 @@ def package(c, deploy: str = 'tasks.json'):
         print('****************************************************************************************************')
         c.run(f"cd {taskcfg.desktop_dir} && invoke zip-standalone --deploy={Path(deploy).absolute()}")
 
-        copy_anyway(taskcfg.get_deskapp_zip(), taskcfg.package_dir, log=True)
-        copy_anyway(taskcfg.get_gradleprj_apk(), Path(taskcfg.package_dir) / taskcfg.get_apk_name(), log=True)
+        Utils.copy_anyway(taskcfg.get_deskapp_zip(), taskcfg.package_dir, log=True)
+        Utils.copy_anyway(taskcfg.get_gradleprj_apk(), Path(taskcfg.package_dir) / taskcfg.get_apk_name(), log=True)
         print('****************************************************************************************************')
 
     except Exception as e:
