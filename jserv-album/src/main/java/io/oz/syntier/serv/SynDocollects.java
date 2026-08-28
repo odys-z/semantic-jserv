@@ -511,8 +511,12 @@ public class SynDocollects extends ServPort<AlbumReq> {
 					new Device(null, domx.synode, usr.deviceId()));
 	}
 	
+	// TODO move to Docsync/ExpDoctier as this is part of data synchronization
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
+		// enable this for Android 0.7.6
+		// musteq(body.device().org, usr.orgId());
+
 		String conn = Connects.uri2conn(body.synuri);
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
 

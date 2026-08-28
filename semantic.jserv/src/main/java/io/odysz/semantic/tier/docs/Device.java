@@ -10,6 +10,8 @@ public class Device extends Anson {
 	public String synode0;
 	public String devname;
 	public String tofolder;
+	/** Not used until APK 0.7.6 */
+	public String org;
 
 	public Device() {
 		this(null, null);

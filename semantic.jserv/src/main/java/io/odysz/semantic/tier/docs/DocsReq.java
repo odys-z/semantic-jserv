@@ -68,6 +68,9 @@ public class DocsReq extends UserReq implements IBlock {
 		/** select devices, requires user org-id as parameter from client */
 		public static final String devices = "r/devices";
 
+		/**
+		 * Create a org-wide device (no domain-id) record in a synode, with the org-id of the user's.
+		 */
 		public static final String registDev = "c/device";
 
 		/** check is a new device name valid */
