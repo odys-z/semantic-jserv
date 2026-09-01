@@ -16,3 +16,13 @@
     # To build the distribution package
     invoke make --deploy="a tasks configure file modified from tasks.github.json"
   ```
+
+### Sensitive files ignored for git
+
+  ```
+    example.android/local.properties           # see local.github.properties
+    example.android/.../values/products.xml    # TODO products.github.json
+    example.android/.../values-zh/products.xml # TODO products.github.json
+    example.js/album/.../host.json             # TODO products.github.json
+    html-service/java/test-dist/host.json      # see host.github.json
+  ```

@@ -109,7 +109,8 @@ def updateApkRes():
         host_json (str): Path to the host.json file.
         res (dict): Dictionary containing the APK resource information.
     """
-    print('Updating host.json with APK resource...', taskcfg.host_json)
+    print(os.getcwd())
+    print('Updating host.json with APK resource => taskcfg.host_json:', taskcfg.host_json)
 
     hosts = cast(ExternalHosts, Anson.from_file(taskcfg.host_json))
     hosts.marketid = taskcfg.deploy.market_id
@@ -212,9 +213,11 @@ def install_maven_local(c, deploy: str='tasks.0.8.0.json', gpg: str = None):
     [INFO] +- io.github.odys-z:albumtier:jar:0.5.4:test              - For Android
     [INFO] +- io.github.odys-z:anclient.java:jar:0.5.20:compile
     [INFO] |- io.github.odys-z:synodict.central:jar:0.1.8:test       X
+
+    Also install html-service
     :param c:
     :param gpg: gpg-passphrase
-    :return:
+    :return: None
     '''
 
     if LangExt.isblank(gpg):
@@ -232,7 +235,9 @@ def install_maven_local(c, deploy: str='tasks.0.8.0.json', gpg: str = None):
         '../../Semantic-Network/registration/jclient',
         '../../Semantic-Network/registration/jserv',
         '../../semantic-jserv/docsync.jserv',
-        '../../anclient/examples/example.android/albumtier'
+        '../../anclient/examples/example.android/albumtier',
+
+        '../../html-service/java'
     ]
 
     print('----------  Install Local Maven ---------')
@@ -314,7 +319,7 @@ def build(c, deploy: str = 'tasks.json'):
         # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
         # [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
-        [taskcfg.android_dir, f'{"" if LangExt.isblank(taskcfg.java_home) else "export JAVA_HOME=" + taskcfg.java_home} && gradlew assembleRelease'],
+        [taskcfg.android_dir, f'{"" if LangExt.isblank(taskcfg.java_home) else "export JAVA_HOME=" + taskcfg.java_home} && ./gradlew assembleRelease'],
 
         # ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
         ['.', f'cp -f {taskcfg.get_gradleprj_apk()} {web_dist}/res-vol/{taskcfg.get_apk_name()}' \
@@ -365,6 +370,7 @@ def pth_packagedir(taskconfig: SynodeTask = None) -> Path:
         sys.exit(-1)
 
     return Path(taskconfig.package_dir) / taskconfig.zip_name()
+
 
 @task
 def package(c, deploy: str = 'tasks.json'):
