@@ -6,18 +6,18 @@ import sys
 from types import LambdaType
 from typing import cast
 from pathlib import Path
-from anson.io.odysz.common import LangExt, Utils
-from anson.io.odysz.utils import zip2
 from invoke import task
 import os
 
+from anson.io.odysz.common import requir_pkg
+requir_pkg("anson.py3", "0.6.3")
+requir_pkg("semantics.py3", "0.6.1")
+
+from semanticshare.io.oz.invoke import SynodeTask, CentralTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
-from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
 
-requir_pkg("anson.py3", "0.6.1")
-requir_pkg("anson.py3", "0.2.7")
-requir_pkg("semantics.py3", "0.5.8")
-
+from anson.io.odysz.common import LangExt, Utils
+from anson.io.odysz.utils import zip2
 from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 
@@ -59,8 +59,9 @@ def check_env(c):
     print("To have invoke run in the curent venv, use")
     print("python -m invoke build --deploy=tasks.pm-king.json")
 
+
 @task
-def validate(c, deploy: str = 'tasks.json'):
+def validate(c, deploy: str = 'tasks.0.8.0.json'):
     print(f'--------------    validate   ------------------')
     global taskcfg
     if taskcfg is None:
@@ -73,6 +74,20 @@ def validate(c, deploy: str = 'tasks.json'):
     if taskcfg.deploy.central_pswd != task_cent.users['admin']['pswd']: # Issue: should be ['admin'].pswd:
         Utils.warn(f'Warning: central_pswd is not set to default value. Override with {taskcfg.deploy.central_pswd}')
         # sys.exit(1)
+    else:
+        Utils.logi('Central pswd looks fine.')
+
+    java_home = os.path.expanduser(taskcfg.java_home)
+    Utils.logi('configure JAVA_HOME: {}', java_home)
+
+    if not LangExt.isblank(taskcfg.java_home):
+        c.config['run']['env']['JAVA_HOME'] = java_home
+        c.run('echo $JAVA_HOME')
+    else:
+        if os.name == 'nt':
+            c.run('echo %JAVA_HOME% && echo $JAVA_HOME')
+        else:
+            c.run('echo $JAVA_HOME')
 
 
 @task
@@ -181,7 +196,7 @@ def clean(c):
 
 
 @task
-def install_maven_local(c, gpg: str = None):
+def install_maven_local(c, deploy: str='tasks.0.8.0.json', gpg: str = None):
     '''
     Install jserv-album's depending jars locally.
 
@@ -205,6 +220,8 @@ def install_maven_local(c, gpg: str = None):
     if LangExt.isblank(gpg):
         Utils.warn("gpg-passphrase is blank!")
         sys.exit(-1)
+    
+    validate(c, deploy=deploy)
 
     pom_locations = [
         '../../antson/antson.java',
@@ -212,6 +229,8 @@ def install_maven_local(c, gpg: str = None):
         '../../semantic-DA/semantic.DA',
         '../../semantic-jserv/jserv-album-lib',
         '../../anclient/java/eclipse-workspace/anclient.jserv',
+        '../../Semantic-Network/registration/jclient',
+        '../../Semantic-Network/registration/jserv',
         '../../semantic-jserv/docsync.jserv',
         '../../anclient/examples/example.android/albumtier'
     ]
@@ -248,6 +267,7 @@ def build(c, deploy: str = 'tasks.json'):
     config(c, deploy)
 
     absdeploy = Path(deploy).absolute()
+    web_dist = Path(taskcfg.web_root_dir) / 'web-dist'
 
     def cmd_build_synodepy3() -> str:
         """
@@ -293,16 +313,20 @@ def build(c, deploy: str = 'tasks.json'):
 
         # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
-        [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
+        # [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
+        [taskcfg.android_dir, f'{"" if LangExt.isblank(taskcfg.java_home) else "export JAVA_HOME=" + taskcfg.java_home} && gradlew assembleRelease'],
 
         # ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
-        ['.', f'cp -f {taskcfg.get_gradleprj_apk()} web-dist/res-vol/{taskcfg.get_apk_name()}' \
-                if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ], # TODO build apk in Linux...
-        ['web-dist/private', lambda: updateApkRes()],
+        ['.', f'cp -f {taskcfg.get_gradleprj_apk()} {web_dist}/res-vol/{taskcfg.get_apk_name()}' \
+                if os.name == 'nt' else f'touch {web_dist}/res-vol/portfolio-{taskcfg.apk_ver}.apk' ], # TODO build apk in Linux...
 
-        ['.', 'cat web-dist/private/host.json'],
-        ['web-dist', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
-        ['../../anclient/examples/example.js/album', 'webpack'],
+        [f'{web_dist}', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
+        # ['../../anclient/examples/example.js/album', 'webpack'],
+        [taskcfg.web_root_dir, 'webpack'],
+
+        # ['web-dist/res-vol', lambda: updateApkRes()],
+        [web_dist, updateApkRes],
+        ['.', f'cat {web_dist}/private/host.json'],
 
         #
         ['.', 'mvn clean compile package -DskipTests'],
@@ -313,23 +337,21 @@ def build(c, deploy: str = 'tasks.json'):
 
     print('--------------  build  ------------------')
     for pth, cmd in buildcmds:
+        print('****************************************************************************')
         if isinstance(cmd, LambdaType):
-            print('****************************************************************************')
-            print('*', pth, '&&', cmd)
-            print('****************************************************************************')
             cwd = os.getcwd()
             os.chdir(pth)
             cmd = cmd()
+            print('*', pth, '&&', cmd)
             if cmd is not None:
                 print(pth, '&&', cmd)
                 ret = c.run(f'cd {pth} && {cmd}')
             os.chdir(cwd)
         else:
-            print('****************************************************************************')
             print('*', pth, '&&', cmd)
-            print('****************************************************************************')
             ret = c.run(f'cd {pth} && {cmd}')
             print('OK:', ret.ok, ret.stderr)
+    print('****************************************************************************')
     return False
 
 
