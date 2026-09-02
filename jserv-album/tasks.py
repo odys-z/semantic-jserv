@@ -287,7 +287,7 @@ def build(c, deploy: str = 'tasks.json'):
         # desktop
         # - desktop.ipc-agent
         [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
-        # - desktop.ext, app-settings.json -> dist; create the desktop setting here is necessary for standalone clients
+        # - desktop.ext, app-settings.json -> dist
         [taskcfg.desktop_dir, f'invoke shallow-pack --deploy={absdeploy}'],
         ['.', cmd_cp_wsagent_jar], # issue: taskcfg.ipcagent_dir cannot be undstand by slint/tasks.py
 
