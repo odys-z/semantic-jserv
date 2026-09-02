@@ -121,24 +121,6 @@ def config(c, abstask_json: str):
         'ipcagent_ver = "[0-9\\.]+"': f'ipcagent_ver = "{taskcfg.ipcagent_ver}"'
     })
 
-    '''
-        This shared settings is now managed by root tasks - debugging setup needs to be refactored 
-    
-    synode_settings: AppSettings = cast(AppSettings, Anson.from_file(
-                                    Path(taskcfg.web_inf_dir) / 'settings.github.json'))
-    synode_settings.regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
-    synode_settings.jservs = {}
-    synode_settings.market_id = taskcfg.deploy.market_id
-    synode_settings.market_name = taskcfg.deploy.market
-    synode_settings.jserv_utc = '1911-10-10'
-    synode_settings.centralPswd = taskcfg.deploy.central_pswd
-    synode_settings.webport = taskcfg.deploy.web_port
-    synode_settings.port = taskcfg.deploy.jserv_port
-    synode_settings.rootkey = ''
-    synode_settings.installkey = taskcfg.deploy.root_key
-    synode_settings.toFile(Path(taskcfg.web_inf_dir) / 'settings.json')
-    '''
-
     synode_ui = cast(UIResources, Anson.from_file(Path('src') / 'synodepy3' / 'synode.github.json'))
     if LangExt.len(taskcfg.deploy.mirror_path) > 0:
         # according to synode_ui, not tasks.json
@@ -167,6 +149,20 @@ def config(c, abstask_json: str):
     print("* TODO - to further simplify configuration, let's setup the default domain.")
     print("***********************************************")
 
+def forced_copy():
+    if os.name == 'nt':
+        return None
+    else:
+        # for linux, copy the exe to dist folder
+        src = Path('dist') / 'setup-cli'
+        dst = Path('dist') / 'setup-cli.exe'
+        if src.exists():
+            Utils.copy(src, dst)
+            print(f'Copied {src} to {dst}')
+            return None
+        else:
+            print(f'*** ERROR: {src} not found, cannot copy to {dst}')
+            system.exit(1)
 
 @task
 def build(c: Context, deploy: str):
@@ -184,7 +180,7 @@ def build(c: Context, deploy: str):
     buildcmds = [
         ['.', lambda: rm_dist()],
         ['.', f'{py()} -m build'],
-        ['.', f'{py()} pyinstallerw.py'],
+        ['.', f'{py()} pyinstallerw.py' if os.name == 'nt' else forced_copy],
     ]
 
     print('--------------       building synode.py     ------------------')

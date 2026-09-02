@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
@@ -516,6 +517,8 @@ public class SynDocollects extends ServPort<AlbumReq> {
 			throws SemanticException, TransException, SQLException {
 		// enable this for Android 0.7.6
 		// musteq(body.device().org, usr.orgId());
+		mustnonull(body.device(), "Device object is null.");
+		mustnonull(body.device().devname, "Device name is empty!");
 
 		String conn = Connects.uri2conn(body.synuri);
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
