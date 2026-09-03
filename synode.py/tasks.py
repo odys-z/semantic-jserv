@@ -162,7 +162,7 @@ def forced_copy():
             return None
         else:
             print(f'*** ERROR: {src} not found, cannot copy to {dst}')
-            system.exit(1)
+            sys.exit(1)
 
 @task
 def build(c: Context, deploy: str):
