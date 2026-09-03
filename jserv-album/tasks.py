@@ -256,11 +256,8 @@ def install_maven_local(c, deploy: str='tasks.0.8.0.json', gpg: str = None):
 def build(c, deploy: str = 'tasks.json'):
     '''
     Build with build commands.
-
     - desktop app
-
     invoke shallo-pack, replace att-setings.json with invoke pack-settings, wsport = ...
-
     :param c: context
     '''
     global taskcfg
@@ -277,7 +274,6 @@ def build(c, deploy: str = 'tasks.json'):
     def cmd_build_synodepy3() -> str:
         """
         Get the command to build the synode.py3 package.
-
         input:
             web_ver: for web srv id
         Returns:
@@ -471,15 +467,11 @@ def post_package(c, deploy:str = 'task.json'):
     ok, err = taskcfg.run_deploycmds(c)
     print(f"Run deploy_cmds, ok: {ok}, error: {err}")
 
-    ok, err = 0, 0
     taskcfg.run_deployscps(str(taskcfg.get_distzip()))
-    ok = ok + 1
     taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.get_apk_name()))
-    ok = ok + 1
     taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.deskzip_name()))
-    ok = ok + 1
     print('', sep='\n')
-    print(f"Run deploy_cmds, {ok} returned normally.")
+    print(f"Run deploy_cmds, 3 package copyied.")
 
 
 @task
@@ -507,16 +499,13 @@ def deploy(c, deploy: str = 'tasks.json', gpg: str = None):
 
 
 @task
-def landing(c, deploy: str = None):
+def landing(c, deploy: str = 'tasks.json'):
     global taskcfg
     print(deploy)
     if taskcfg is None:
-        if deploy is None:
-            deploy = 'tasks.json'
-
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
-        print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
-    
+
+    print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
     taskcfg.publish_landings()
 
 

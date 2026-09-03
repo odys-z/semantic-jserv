@@ -31,13 +31,15 @@ from typing import cast
 
 from anclient.io.odysz.jclient import SessionClient, OnError
 from anson.io.odysz.anson import Anson
-from anson.io.odysz.common import Utils, LangExt
+from anson.io.odysz.common import Utils, LangExt, requir_pkg
 from invoke import task, Context
 from semanticshare.io.odysz.semantic.jprotocol import AnsonMsg, MsgCode
 from semanticshare.io.oz.anclient.app import UIResources
-from semanticshare.io.oz.invoke import SynodeTask
+from semanticshare.io.oz.invoke import SynodeTask, BashCmd
 from semanticshare.io.oz.syn import SyncUser
 from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp, SynOrg
+
+from pyinstallerw import dist_setup_cli_exe, dist_setup_gui_exe
 
 ORG = 'ura'
 DOMAIN = 'zsu'
@@ -62,11 +64,9 @@ def validate(c):
                     Utils.warn(f'# {lx}:    {line}')
                     input('  Press Enter to continue...')
     
-    from semanticshare.io.oz.invoke import requir_pkg
-
-    requir_pkg("semantics.py3", "0.5.8")
-    requir_pkg("anson.py3", "0.5.5")
-    requir_pkg("anclient.py3", "0.2.6")
+    requir_pkg("semantics.py3", "0.6.2")
+    requir_pkg("anson.py3", "0.6.3")
+    requir_pkg("anclient.py3", "0.2.7")
     requir_pkg("jre-mirror", "0.0.8")
 
 
@@ -154,11 +154,13 @@ def forced_copy():
         return None
     else:
         # for linux, copy the exe to dist folder
-        src = Path('dist') / 'setup-cli'
-        dst = Path('dist') / 'setup-cli.exe'
+        src = Path('dist') / 'setup-cli.exe'
+        dst = Path('dist') / 'setup-gui.exe'
+        for src in [Path('dist') / 'setup-cli.exe', Path('dist') / 'setup-gui.exe', Path('dist') / 'uninstall-srv.exe']:
+            if src.exists():
+                break
         if src.exists():
-            Utils.copy(src, dst)
-            print(f'Copied {src} to {dst}')
+            Utils.copy_anyway(src, dst, log=True)
             return None
         else:
             print(f'*** ERROR: {src} not found, cannot copy to {dst}')
@@ -179,7 +181,14 @@ def build(c: Context, deploy: str):
 
     buildcmds = [
         ['.', lambda: rm_dist()],
-        ['.', f'{py()} -m build'],
+
+        ['.', f'{py()} -m build --no-isolation'], # FIXME remove on-isolation once semantics.py3 uploaded
+        # Debug Note:
+        # About using venv local packages with
+        # ['.', f'{py()} -m build --no-isolation']
+        # --no-isolation can ignore independent environment downloading, avoiding the version
+        # discrepancy of local packages, but requires PEP 621 support, in setuptools 62 above.
+
         ['.', f'{py()} pyinstallerw.py' if os.name == 'nt' else forced_copy],
     ]
 
@@ -203,3 +212,25 @@ def build(c: Context, deploy: str):
             print('OK:', ret.ok, ret.stderr)
     return False
 
+@task
+def scp_upload_exe(c: Context, deploy: str='tasks.upload.json'):
+    '''
+    Upload exe files to host, via scp. (compatible to 3.9)
+    :param c:
+    :param user:
+    :param host:
+    :param dest_path:
+    :param port:
+    :return:
+    '''
+    taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+    # srcs = [dist_setup_cli_exe, dist_setup_gui_exe]
+    # taskcfg.deploy_cmds = [
+    #     BashCmd(cmd=f"scp{' -P ' + str(port) if port >= 0 else ''} {src} {user}@{host}:{{dest_path}}")
+    #     for src in srcs
+    # ]
+    ok, err = taskcfg.run_deploycmds(c, verbose=True)
+
+    print(f"Run deploy_cmds, ok: {ok}")
+    if not ok:
+        print(err)

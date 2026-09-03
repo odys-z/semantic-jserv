@@ -1,7 +1,7 @@
 import sys
 import time
 
-from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
+from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 
 from synodepy3.jre_downloader import JreDownloader
 
