@@ -39,6 +39,8 @@ from semanticshare.io.oz.invoke import SynodeTask, BashCmd
 from semanticshare.io.oz.syn import SyncUser
 from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp, SynOrg
 
+from pyinstallerw import dist_setup_cli_exe, dist_setup_gui_exe
+
 ORG = 'ura'
 DOMAIN = 'zsu'
 '''
@@ -179,7 +181,14 @@ def build(c: Context, deploy: str):
 
     buildcmds = [
         ['.', lambda: rm_dist()],
+
         ['.', f'{py()} -m build --no-isolation'], # FIXME remove on-isolation once semantics.py3 uploaded
+        # Debug Note:
+        # About using venv local packages with
+        # ['.', f'{py()} -m build --no-isolation']
+        # --no-isolation can ignore independent environment downloading, avoiding the version
+        # discrepancy of local packages, but requires PEP 621 support, in setuptools 62 above.
+
         ['.', f'{py()} pyinstallerw.py' if os.name == 'nt' else forced_copy],
     ]
 
@@ -204,7 +213,7 @@ def build(c: Context, deploy: str):
     return False
 
 @task
-def scp_upload_exe(c: Context, user: str, host: str, dest_path:str, port:int=22):
+def scp_upload_exe(c: Context, deploy: str='tasks.upload.json'):
     '''
     Upload exe files to host, via scp. (compatible to 3.9)
     :param c:
@@ -214,12 +223,12 @@ def scp_upload_exe(c: Context, user: str, host: str, dest_path:str, port:int=22)
     :param port:
     :return:
     '''
-    taskcfg = SynodeTask()
-    srcs = []
-    taskcfg.deploy_cmds = [
-        BashCmd(cmd=f"scp{' -p ' + str(port) if port >= 0 else ''} {src} {user}@{host}:{dest_path}")
-        for src in srcs
-    ]
+    taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+    # srcs = [dist_setup_cli_exe, dist_setup_gui_exe]
+    # taskcfg.deploy_cmds = [
+    #     BashCmd(cmd=f"scp{' -P ' + str(port) if port >= 0 else ''} {src} {user}@{host}:{{dest_path}}")
+    #     for src in srcs
+    # ]
     ok, err = taskcfg.run_deploycmds(c, verbose=True)
 
     print(f"Run deploy_cmds, ok: {ok}")
