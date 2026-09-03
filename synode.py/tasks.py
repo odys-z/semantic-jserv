@@ -149,7 +149,7 @@ def config(c, abstask_json: str):
     print("* TODO - to further simplify configuration, let's setup the default domain.")
     print("***********************************************")
 
-def forced_copy():
+def must_copy():
     if os.name == 'nt':
         return None
     else:
@@ -180,16 +180,16 @@ def build(c: Context, deploy: str):
         return None
 
     buildcmds = [
-        ['.', lambda: rm_dist()],
+        ['.', rm_dist if os.name == 'nt' else None],
 
-        ['.', f'{py()} -m build --no-isolation'], # FIXME remove on-isolation once semantics.py3 uploaded
+        ['.', f'{py()} -m build'],
         # Debug Note:
         # About using venv local packages with
         # ['.', f'{py()} -m build --no-isolation']
         # --no-isolation can ignore independent environment downloading, avoiding the version
         # discrepancy of local packages, but requires PEP 621 support, in setuptools 62 above.
 
-        ['.', f'{py()} pyinstallerw.py' if os.name == 'nt' else forced_copy],
+        ['.', f'{py()} pyinstallerw.py' if os.name == 'nt' else must_copy],
     ]
 
     print('--------------       building synode.py     ------------------')
