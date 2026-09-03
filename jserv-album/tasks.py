@@ -406,7 +406,7 @@ def package(c, deploy: str = 'tasks.json'):
         # https://exiftool.org/index.html
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
         
-        temp_jre_path: check_resource(taskcfg.jre_release),
+        temp_jre_path: check_local_resource(taskcfg.jre_release),
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
