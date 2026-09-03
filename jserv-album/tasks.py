@@ -377,6 +377,19 @@ def package(c, deploy: str = 'tasks.json'):
         c: Invoke Context object for running commands.
         zip: Name of the output ZIP file.
     """
+    def check_local_resource(local_path: str) -> str:
+        """
+        Check if the resource exists locally, if not, download it.
+        
+        Args:
+            url (str): URL of the resource to check.
+        """
+        if not os.path.exists(local_path):
+            Utils.warn(f"Resource not found locally: {local_path}. Downloading from {url}...")
+            sys.exit(-1)
+        return local_path
+
+
     global  taskcfg
     if taskcfg is None:
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
@@ -393,7 +406,7 @@ def package(c, deploy: str = 'tasks.json'):
         # https://exiftool.org/index.html
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
         
-        temp_jre_path: taskcfg.jre_release,
+        temp_jre_path: check_resource(taskcfg.jre_release),
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 

@@ -180,7 +180,7 @@ def build(c: Context, deploy: str):
         return None
 
     buildcmds = [
-        ['.', rm_dist if os.name == 'nt' else None],
+        ['.', rm_dist if os.name == 'nt' else lambda: print('rm dist/* is ignored in linux - cannot build exe in linux')],
 
         ['.', f'{py()} -m build'],
         # Debug Note:
