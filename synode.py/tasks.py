@@ -217,18 +217,11 @@ def scp_upload_exe(c: Context, deploy: str='tasks.upload.json'):
     '''
     Upload exe files to host, via scp. (compatible to 3.9)
     :param c:
-    :param user:
-    :param host:
-    :param dest_path:
-    :param port:
+    :param deploy:
     :return:
     '''
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
-    # srcs = [dist_setup_cli_exe, dist_setup_gui_exe]
-    # taskcfg.deploy_cmds = [
-    #     BashCmd(cmd=f"scp{' -P ' + str(port) if port >= 0 else ''} {src} {user}@{host}:{{dest_path}}")
-    #     for src in srcs
-    # ]
+
     ok, err = taskcfg.run_deploycmds(c, verbose=True)
 
     print(f"Run deploy_cmds, ok: {ok}")
