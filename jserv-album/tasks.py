@@ -380,15 +380,13 @@ def package(c, deploy: str = 'tasks.json'):
     def check_local_resource(local_path: str) -> str:
         """
         Check if the resource exists locally, if not, download it.
-        
         Args:
-            url (str): URL of the resource to check.
+            local_path (str): Local path of the resource to check.
         """
         if not os.path.exists(local_path):
-            Utils.warn(f"Resource not found locally: {local_path}. Downloading from {url}...")
+            Utils.warn(f"Resource not found locally: {local_path}. Downloading from {local_path}...")
             sys.exit(-1)
         return local_path
-
 
     global  taskcfg
     if taskcfg is None:
