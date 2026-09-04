@@ -415,7 +415,8 @@ def package(c, deploy: str = 'tasks.json'):
         'winsrv': '../synode.py/winsrv/*',
         "res": "../synode.py/src/synodepy3/res/*",
 
-        'web-dist': 'web-dist/*',   # use a link for different Anclient folder name
+        'web-dist': f'{taskcfg.web_root_dir}/web-dist/*',
+        # 'web-dist': 'web-dist/*',   # use a link for different Anclient folder name
                                     # ln -s ../Anclient/examples/example.js/album web-dist
                                     # mklink /D web-dist ..\anclient\examples\example.js\album
 
