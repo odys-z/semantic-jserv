@@ -422,7 +422,7 @@ class InstallerForm(QMainWindow):
         self.cli.settings.acceptj_butme(binding_synode, self.cli.registry.config.peers)
         self.bind_hubjserv(self.cli.registry.config, self.cli.settings)
 
-    def select_community(self, commuix: str = None):
+    def select_community(self, commuix: Optional[str] = None):
         # domx = self.query_domx(self.ui.cbbOrgs.currentText())
         if commuix is None:
             commuix = self.ui.cbbOrgs.currentText()
@@ -462,7 +462,7 @@ class InstallerForm(QMainWindow):
             self.bind_synode(pr)
         except: pass
 
-    def select_peer(self, idx):
+    def select_peer(self, idx: int):
         """
         Actually doing nothing as there is nothing from config.peers[x] to be bound to ui.
         :param idx:

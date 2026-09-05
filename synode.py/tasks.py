@@ -35,11 +35,9 @@ from anson.io.odysz.common import Utils, LangExt, requir_pkg
 from invoke import task, Context
 from semanticshare.io.odysz.semantic.jprotocol import AnsonMsg, MsgCode
 from semanticshare.io.oz.anclient.app import UIResources
-from semanticshare.io.oz.invoke import SynodeTask, BashCmd
+from semanticshare.io.oz.invoke import SynodeTask
 from semanticshare.io.oz.syn import SyncUser
 from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp, SynOrg
-
-from pyinstallerw import dist_setup_cli_exe, dist_setup_gui_exe
 
 ORG = 'ura'
 DOMAIN = 'zsu'
@@ -51,7 +49,7 @@ res_toclean = ['dist', '*egg-info']
 
 
 @task
-def validate(c):
+def validate(c: Context):
     print('---------     Synode.py3 Validating    --------------')
     # srcpy = os.path.join('src', 'synodepy3', '__main__.py')
     for srcpy in ['src/synodepy3/__main__.py', 'src/synodepy3/prompt.py']:
@@ -189,23 +187,23 @@ def build(c: Context, deploy: str):
         # --no-isolation can ignore independent environment downloading, avoiding the version
         # discrepancy of local packages, but requires PEP 621 support, in setuptools 62 above.
 
-        ['.', f'{py()} pyinstallerw.py' if os.name == 'nt' else must_copy],
+        ['.', f'{py()} pyinstallerw.py' if os.name == 'nt' else lambda: print(
+            'pyinstallerw.py is ignored in linux - 0.8.0 building is only for Synodes on Posix.')],
     ]
 
     print('--------------       building synode.py     ------------------')
     for pth, cmd in buildcmds:
-        print("[Build in]", pth, '&&', cmd)
+        print('\n', pth, '&&', cmd.__name__ if isinstance(cmd, LambdaType) else cmd)
         if isinstance(cmd, LambdaType):
             cwd = os.getcwd()
             os.chdir(pth)
             cmd = cmd()
-            print(pth, f'cmd finished, cmd request: {cmd}')
             if cmd is not None:
                 print(pth, '&&', cmd)
                 ret = c.run(f'cd {pth} && {cmd}')
                 print('OK:', ret.ok, ret.stderr)
             else:
-                print('OK: cmd <- None')
+                print('OK: the cmd requires no further action.')
             os.chdir(cwd)
         else:
             ret = c.run(f'cd {pth} && {cmd}')
@@ -216,6 +214,8 @@ def build(c: Context, deploy: str):
 def scp_upload_exe(c: Context, deploy: str='tasks.upload.json'):
     '''
     Upload exe files to host, via scp. (compatible to 3.9)
+
+    @deprecated: The main building is in Windows. No need to upload exe files to Posix building.
     :param c:
     :param deploy:
     :return:

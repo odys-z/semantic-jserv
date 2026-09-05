@@ -4,7 +4,6 @@ import sys
 from dataclasses import dataclass
 
 from jre_mirror.temurin17 import guess_jretree
-from prompt_toolkit.key_binding.bindings.named_commands import self_insert
 from semanticshare.io.odysz.jclient import AnclientSettings
 from semanticshare.io.oz.anclient.app import DesktopSettings, UIResources
 from semanticshare.io.oz.syn import SynodeMode, Synode
@@ -25,7 +24,7 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from typing import cast, Optional, Callable, Final
+from typing import cast, Optional, Callable, Final, Iterable
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
@@ -56,11 +55,11 @@ class CfgPaths:
     '''
     Configuration file paths' memory
     '''
-    vol_dict_json: str
-    web_settings: str
+    vol_dict_json: Optional[str]
+    web_settings: Optional[str]
     def __init__(self):
-        self.vol_dict_json = cast(str, None)
-        self.web_settings = cast(str, None)
+        self.vol_dict_json = cast(Optional[str], None)
+        self.web_settings = cast(Optional[str], None)
 
 pths = CfgPaths()
 '''
@@ -670,20 +669,16 @@ class InstallerCli:
                 raise PortfolioException(f'Find sizes about {syndb} and {sysdb} != 0.')
         return None
 
-    def gen_wsrv_name(self):
+    def gen_wsrv_name(self) -> str:
         return f'Synode-{jar_ver}-{self.registry.config.synid}'
 
-    def gen_html_srvname(self):
+    def gen_html_srvname(self) -> str:
         return f'Synode.web-{web_ver}-{self.registry.config.synid}'
 
-    def update_domain(self,
-                      orgtype,
-                      orgid: str=None,
-                      reg_jserv: str=None,
-                      domain: str=None,
-                      # 0.7.7 central pswd is build by tasks.py
-                      # centralPswd: str=None
-                      ):
+    def update_domain(self, orgtype,
+                      orgid: Optional[str]=None,
+                      reg_jserv: Optional[str]=None,
+                      domain: Optional[str]=None ):
         '''
         update data model
         :param reg_jserv:
@@ -701,17 +696,17 @@ class InstallerCli:
                 u.domain = domain
 
     def updateWithUi(self,
-            market: str, org: str = None, domain: str=None,
-            reg_jserv: str = None,
-            admin: str=None, domphrase: str=None,
+            market: str, org: Optional[str] = None, domain: Optional[str]=None,
+            reg_jserv: Optional[str] = None,
+            admin: Optional[str]=None, domphrase: Optional[str]=None,
             # 0.7.7 central pswd is build by tasks.py
-            volume: str=None,
-            hubmode: bool=None,
-            jservss: str=None, synid: str=None,
+            volume: Optional[str]=None,
+            hubmode: Optional[bool]=None,
+            jservss: Optional[str]=None, synid: Optional[str]=None,
             reverseProxy=None,
-            port: str=None, webport: str=None,
-            proxyPort: str=None, proxyIp: str=None,
-            syncins: str=None, envars=None, webProxyPort=None):
+            port: Optional[str]=None, webport: Optional[str]=None,
+            proxyPort: Optional[str]=None, proxyIp: Optional[str]=None,
+            syncins: Optional[str]=None, envars=None, webProxyPort=None):
 
         self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain
                            # 0.7.7 central pswd is build by tasks.py
@@ -907,7 +902,7 @@ class InstallerCli:
 
         self.update_clients([(Path('desktop'), 'settings/app-settings.json')])
 
-    def update_clients(self, clients_sets: [tuple[Path, str]]) -> None:
+    def update_clients(self, clients_sets: Iterable[tuple[Path, str]]) -> None:
         for apppath, setpath in clients_sets:
             csets = cast(AnclientSettings, Anson.from_file(apppath / setpath))
 
@@ -925,6 +920,7 @@ class InstallerCli:
             # csets.device = f'{self.registry.config.synid}-{LangExt.trunc_right(apppath.parts[-1], 12) if len(apppath.parts) > 0 else "0"}'
 
             if csets.__type__ == DesktopSettings().__type__:
+                csets = cast(DesktopSettings, csets)
                 csets.synode_id = self.registry.config.synid
                 csets.synode_jserv = self.find_peer(csets.synode_id).jserv
                 csets.synode_vol = str(Path(self.settings.volume).absolute().as_posix())
