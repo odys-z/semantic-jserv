@@ -10,8 +10,8 @@ from invoke import task
 import os
 
 from anson.io.odysz.common import requir_pkg
-requir_pkg("anson.py3", "0.6.3")
-requir_pkg("semantics.py3", "0.6.1")
+requir_pkg("anson.py3", "0.6.4")
+requir_pkg("semantics.py3", "0.6.4")
 
 from semanticshare.io.oz.invoke import SynodeTask, CentralTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
@@ -384,7 +384,7 @@ def package(c, deploy: str = 'tasks.json'):
             local_path (str): Local path of the resource to check.
         """
         if not os.path.exists(local_path):
-            Utils.warn(f"Resource not found locally: {local_path}. Downloading from {local_path}...")
+            Utils.warn(f"Resource not found locally: {local_path}. Needing download jre to{local_path}...")
             sys.exit(-1)
         return local_path
 
