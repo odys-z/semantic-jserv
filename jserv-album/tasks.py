@@ -6,7 +6,7 @@ import sys
 from types import LambdaType
 from typing import cast
 from pathlib import Path
-from invoke import task
+from invoke import task, Context
 import os
 
 from anson.io.odysz.common import requir_pkg
@@ -17,7 +17,7 @@ from semanticshare.io.oz.invoke import SynodeTask, CentralTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
 
 from anson.io.odysz.common import LangExt, Utils
-from anson.io.odysz.utils import zip2
+from anson.io.odysz.utils import gzip2
 from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 
@@ -61,7 +61,7 @@ def check_env(c):
 
 
 @task
-def validate(c, deploy: str = 'tasks.0.8.0.json'):
+def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
     print(f'--------------    validate   ------------------')
     global taskcfg
     if taskcfg is None:
@@ -91,7 +91,7 @@ def validate(c, deploy: str = 'tasks.0.8.0.json'):
 
 
 @task
-def create_volume(c):
+def create_volume(c: Context):
     for vol, fs in taskcfg.vol_files.items():
         if not os.path.isdir(vol):
             os.mkdir(vol)
@@ -134,7 +134,7 @@ def updateApkRes():
 
 
 @task
-def config(c, deploy: str = 'tasks.json'):
+def config(c: Context, deploy: str = 'tasks.json'):
     validate(c, deploy)
 
     print(f'--------------    configuration   ------------------')
@@ -182,7 +182,7 @@ def config(c, deploy: str = 'tasks.json'):
 
 
 @task
-def clean(c):
+def clean(c: Context):
     if not os.path.exists(taskcfg.package_dir):
         os.makedirs(taskcfg.package_dir, exist_ok=True)
 
@@ -197,7 +197,7 @@ def clean(c):
 
 
 @task
-def install_maven_local(c, deploy: str='tasks.0.8.0.json', gpg: str = None):
+def install_maven_local(c: Context, deploy: str='tasks.0.8.0.json', gpg: str = None):
     '''
     Install jserv-album's depending jars locally.
 
@@ -253,7 +253,7 @@ def install_maven_local(c, deploy: str='tasks.0.8.0.json', gpg: str = None):
 
 
 @task
-def build(c, deploy: str = 'tasks.json'):
+def build(c: Context, deploy: str = 'tasks.json'):
     '''
     Build with build commands.
     - desktop app
@@ -369,7 +369,7 @@ def pth_packagedir(taskconfig: SynodeTask = None) -> Path:
 
 
 @task
-def package(c, deploy: str = 'tasks.json'):
+def package(c: Context, deploy: str = 'tasks.json'):
     """
     Create a ZIP file.
     
@@ -414,16 +414,16 @@ def package(c, deploy: str = 'tasks.json'):
         "res": "../synode.py/src/synodepy3/res/*",
 
         'web-dist': f'{taskcfg.web_root_dir}/web-dist/*',
-        # 'web-dist': 'web-dist/*',   # use a link for different Anclient folder name
-                                    # ln -s ../Anclient/examples/example.js/album web-dist
-                                    # mklink /D web-dist ..\anclient\examples\example.js\album
+    }
 
+    if os.name == 'nt': resources.update({
         'desktop': f'{os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, "*")}',
-
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
         'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
         'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
-    }
+    })
+    else:
+        print("[*** TODO *** 0.8.0]  desktop [album-gui, ws-agent.jar, settings]")
 
     excludes = ['*.log', 'report.html', '*.github.json']
 
@@ -441,7 +441,7 @@ def package(c, deploy: str = 'tasks.json'):
         if os.path.isfile(zip):
             os.remove(zip)
 
-        zip2(zip, {**resources, **taskcfg.vol_resource}, excludes)
+        gzip2(zip, {**resources, **taskcfg.vol_resource}, excludes)
 
         zip = Utils.move_anyway(zip, pth_packagedir(taskcfg), log=True)
 
@@ -454,7 +454,9 @@ def package(c, deploy: str = 'tasks.json'):
         print('****************************************************************************************************')
         c.run(f"cd {taskcfg.desktop_dir} && invoke zip-standalone --deploy={Path(deploy).absolute()}")
 
-        Utils.copy_anyway(taskcfg.get_deskapp_zip(), taskcfg.package_dir, log=True)
+        if os.name == 'nt':
+            Utils.copy_anyway(taskcfg.get_deskapp_zip(), taskcfg.package_dir, log=True)
+
         Utils.copy_anyway(taskcfg.get_gradleprj_apk(), Path(taskcfg.package_dir) / taskcfg.get_apk_name(), log=True)
         print('****************************************************************************************************')
 
@@ -464,14 +466,13 @@ def package(c, deploy: str = 'tasks.json'):
 
 
 @task
-def post_package(c, deploy:str = 'task.json'):
+def run_scps(c: Context, deploy:str = 'task.json'):
     '''
-    Run scp etc.
+    Run taskcfg.deploy_cmds and taskcfg.deploy_scps.
     :param c:
-    :param deploy:
-    :return:
+    :param deploy: default is 'task.json', where the scp commands are configured.
     '''
-    print('--------------    post package   ------------------')
+    print('--------------   post scp-cmds  ------------------')
     global taskcfg
     if taskcfg is None:
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
@@ -487,10 +488,10 @@ def post_package(c, deploy:str = 'task.json'):
 
 
 @task
-def make(c, deploy: str = 'tasks.json', gpg: str = None):
+def make(c: Context, deploy: str = 'tasks.json', gpg: str = None):
     '''
-    This task is for separating python 3.9 for build & packaging,
-    from python 3.10 and above for scp command in post_package.
+    This task is for separating python 3.9 for build & packaging;
+    and from python 3.10 (3.9.1?) and above for scp command in cfg.deploy_scps.
     '''
     if gpg is not None:
         install_maven_local(c, gpg)
@@ -504,14 +505,14 @@ def make(c, deploy: str = 'tasks.json', gpg: str = None):
 
 
 @task
-def deploy(c, deploy: str = 'tasks.json', gpg: str = None):
+def deploy(c: Context, deploy: str = 'tasks.json', gpg: str = None):
     make(c, deploy=deploy, gpg=gpg)
-    post_package(c, deploy=deploy)
+    run_scps(c, deploy=deploy)
     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
 
 
 @task
-def landing(c, deploy: str = 'tasks.json'):
+def landing(c: Context, deploy: str = 'tasks.json'):
     global taskcfg
     print(deploy)
     if taskcfg is None:
@@ -522,19 +523,19 @@ def landing(c, deploy: str = 'tasks.json'):
 
 
 @task
-def pause(c):
+def pause(c: Context):
     input('Press Enter to continue...')
 
 
-@task(post=[config, pause, post_package])
-def config_post(c, deploy: str = 'tasks.json'):
+@task(post=[config, pause, run_scps])
+def config_post(c: Context, deploy: str = 'tasks.json'):
     print(f'Testing : {deploy}')
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
 
 @task(post=[clean])
-def test_clean(c, deploy: str = 'tasks.json'):
+def test_clean(c: Context, deploy: str = 'tasks.json'):
     print(f'Testing : {deploy}')
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
