@@ -452,10 +452,15 @@ def package(c: Context, deploy: str = 'tasks.json'):
 
         # Also build desktop standalone
         print('****************************************************************************************************')
-        c.run(f"cd {taskcfg.desktop_dir} && invoke zip-standalone --deploy={Path(deploy).absolute()}")
+        if os.name == 'nt': # not POSIX 0.8.0
+            c.run(f"cd {taskcfg.desktop_dir} && invoke zip-standalone --deploy={Path(deploy).absolute()}")
+        else:
+            print("[*** TODO *** 0.8.0]  skip packaging desktop-posix")
 
         if os.name == 'nt':
             Utils.copy_anyway(taskcfg.get_deskapp_zip(), taskcfg.package_dir, log=True)
+        else:
+            print("[*** TODO *** 0.8.0]  skip copying desktop-posix")
 
         Utils.copy_anyway(taskcfg.get_gradleprj_apk(), Path(taskcfg.package_dir) / taskcfg.get_apk_name(), log=True)
         print('****************************************************************************************************')
