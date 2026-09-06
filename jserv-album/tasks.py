@@ -252,7 +252,6 @@ def install_maven_local(c: Context, deploy: str='tasks.0.8.0.json', gpg: str = N
     c.run('mvn clean dependency:tree | grep io.github.odys-z')
 
 
-
 @task
 def install_py_local(c: Context, venv_build: str = None):
     '''
