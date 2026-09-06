@@ -29,15 +29,20 @@ from pathlib import Path
 from types import LambdaType
 from typing import cast
 
+from anson.io.odysz.common import Utils, LangExt, requir_pkg
+requir_pkg("semantics.py3", "0.6.4")
+requir_pkg("anson.py3", "0.6.4")
+requir_pkg("anclient.py3", "0.2.7")
+
 from anclient.io.odysz.jclient import SessionClient, OnError
 from anson.io.odysz.anson import Anson
-from anson.io.odysz.common import Utils, LangExt, requir_pkg
 from invoke import task, Context
 from semanticshare.io.odysz.semantic.jprotocol import AnsonMsg, MsgCode
 from semanticshare.io.oz.anclient.app import UIResources
 from semanticshare.io.oz.invoke import SynodeTask
 from semanticshare.io.oz.syn import SyncUser
 from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp, SynOrg
+
 
 ORG = 'ura'
 DOMAIN = 'zsu'
@@ -50,8 +55,14 @@ res_toclean = ['dist', '*egg-info']
 
 @task
 def validate(c: Context):
+    '''
+    When a script is frozen by PyInstaller as the entry point, __file__ no longer points at the script's real
+    location on disk — it resolves to a path inside the temp extraction dir (_MEIxxxxxx in onefile mode, or
+    the app's install-relative bundle dir in onedir mode). Any __file__ will break.
+    :param c: Invoke Context
+    :return:
+    '''
     print('---------     Synode.py3 Validating    --------------')
-    # srcpy = os.path.join('src', 'synodepy3', '__main__.py')
     for srcpy in ['src/synodepy3/__main__.py', 'src/synodepy3/prompt.py']:
         with open(srcpy, 'r', encoding='utf-8') as f:
             for lx, line in enumerate(f, start=1):
@@ -62,11 +73,6 @@ def validate(c: Context):
                     Utils.warn(f'# {lx}:    {line}')
                     input('  Press Enter to continue...')
     
-    requir_pkg("semantics.py3", "0.6.2")
-    requir_pkg("anson.py3", "0.6.3")
-    requir_pkg("anclient.py3", "0.2.7")
-    requir_pkg("jre-mirror", "0.0.8")
-
 
 @task
 def register_org(c: Context, taskcfg: SynodeTask):
@@ -147,6 +153,7 @@ def config(c, abstask_json: str):
     print("* TODO - to further simplify configuration, let's setup the default domain.")
     print("***********************************************")
 
+'''
 def must_copy():
     if os.name == 'nt':
         return None
@@ -163,6 +170,7 @@ def must_copy():
         else:
             print(f'*** ERROR: {src} not found, cannot copy to {dst}')
             sys.exit(1)
+'''
 
 @task
 def build(c: Context, deploy: str):
@@ -179,17 +187,16 @@ def build(c: Context, deploy: str):
 
     buildcmds = [
         ['.', rm_dist if os.name == 'nt' else lambda: print('rm dist/* is ignored in linux - cannot build exe in linux')],
-
         ['.', f'{py()} -m build'],
-        # Debug Note:
-        # About using venv local packages with
-        # ['.', f'{py()} -m build --no-isolation']
-        # --no-isolation can ignore independent environment downloading, avoiding the version
-        # discrepancy of local packages, but requires PEP 621 support, in setuptools 62 above.
-
         ['.', f'{py()} pyinstallerw.py' if os.name == 'nt' else lambda: print(
             'pyinstallerw.py is ignored in linux - 0.8.0 building is only for Synodes on Posix.')],
     ]
+    ''' Debug Note:
+        About using venv local packages with
+        ['.', f'{py()} -m build --no-isolation']
+        --no-isolation can ignore independent environment downloading, avoiding the version
+        discrepancy of local packages, but requires PEP 621 support, in setuptools 62 above.
+    '''
 
     print('--------------       building synode.py     ------------------')
     for pth, cmd in buildcmds:
