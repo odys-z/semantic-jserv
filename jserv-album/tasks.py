@@ -475,17 +475,6 @@ def package(c: Context, deploy: str = 'tasks.json'):
         c: Invoke Context object for running commands.
         zip: Name of the output ZIP file.
     """
-    def check_local_resource(local_path: str) -> str:
-        """
-        Check if the resource exists locally, if not, download it.
-        Args:
-            local_path (str): Local path of the resource to check.
-        """
-        if not os.path.exists(local_path):
-            Utils.warn(f"Resource not found locally: {local_path}. Needing download jre to{local_path}...")
-            sys.exit(-1)
-        return local_path
-
     global  taskcfg
     if taskcfg is None:
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
@@ -512,7 +501,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
     if os.name == 'nt': resources.update({
         # https://exiftool.org/index.html
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
-        temp_jre_path: check_local_resource(taskcfg.jre_release),
+        temp_jre_path: taskcfg.check_local_resource(taskcfg.jre_release),
         'desktop': f'{os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, "*")}',
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
         'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
