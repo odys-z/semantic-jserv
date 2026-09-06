@@ -30,6 +30,14 @@ from types import LambdaType
 from typing import cast
 
 from anson.io.odysz.common import Utils, LangExt, requir_pkg
+requir_pkg("build")
+requir_pkg("pyinstaller")
+requir_pkg("jre-mirror", "0.1.0")
+requir_pkg("pillow", "10.0.0")
+requir_pkg("qrcode")
+requir_pkg("psutil")
+requir_pkg("prompt-toolkit", "3.0.52")
+requir_pkg("pyside6", ["6.6.0", "6.8.2.1"])
 requir_pkg("semantics.py3", "0.6.4")
 requir_pkg("anson.py3", "0.6.4")
 requir_pkg("anclient.py3", "0.2.7")

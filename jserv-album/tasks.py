@@ -10,6 +10,15 @@ from invoke import task, Context
 import os
 
 from anson.io.odysz.common import requir_pkg
+requir_pkg("build")               # by synode.py
+requir_pkg("pyinstaller")         # by synode.py
+requir_pkg("jre-mirror", "0.1.0") # by synode.py
+requir_pkg("pillow", "10.0.0")    # by synode.py
+requir_pkg("qrcode")              # by synode.py
+requir_pkg("psutil")              # by synode.py
+requir_pkg("prompt-toolkit", "3.0.52")      # by synode.py
+requir_pkg("pyside6", ["6.6.0", "6.8.2.1"]) # by synode.py
+
 requir_pkg("anson.py3", "0.6.4")
 requir_pkg("semantics.py3", "0.6.4")
 
@@ -402,8 +411,9 @@ def build(c: Context, deploy: str = 'tasks.json'):
 
         # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
-        # [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
-        [taskcfg.android_dir, f'{"" if LangExt.isblank(taskcfg.java_home) else "export JAVA_HOME=" + taskcfg.java_home} && ./gradlew assembleRelease'],
+        # JAVA_HOME is set in validate()
+        # [taskcfg.android_dir, f'{"" if LangExt.isblank(taskcfg.java_home) else "export JAVA_HOME=" + taskcfg.java_home} && ./gradlew assembleRelease'],
+        [taskcfg.android_dir, 'gradlew.bat assembleRelease' if os.name == 'nt' else './gradlew assembleRelease'],
 
         # ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
         ['.', f'cp -f {taskcfg.get_gradleprj_apk()} {web_dist}/res-vol/{taskcfg.get_apk_name()}' \
