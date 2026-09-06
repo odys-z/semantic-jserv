@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import cast
+from typing import cast, Optional
 
 from anclient.io.odysz.jclient import SessionClient
 from anson.io.odysz.anson import AnsonException
@@ -17,7 +17,7 @@ from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
 from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, \
-    path, synode_ui
+    mypath, synode_ui
 from synodepy3.jre_downloader import JreDownloader, _jre_
 from synodepy3.validators import PJservValidator, PIPValidator
 
@@ -132,17 +132,17 @@ class VolumeValidator(Validator):
                     raise ValidationError(message=f'Please replace all "\\" with "/"')
 
         try:
-            os.makedirs(path, exist_ok=True)
-            if not os.listdir(path):
-                os.rmdir(path)  # Only remove if empty
-            elif cli.hasrun(path):
+            os.makedirs(mypath, exist_ok=True)
+            if not os.listdir(mypath):
+                os.rmdir(mypath)  # Only remove if empty
+            elif cli.hasrun(mypath):
                 raise ValidationError(message=f"The volume is already used by a running synode: {v}")
 
             return True
         except PermissionError:
-            raise ValidationError(message=f"Permission denied: Unable to create '{path}'.")
+            raise ValidationError(message=f"Permission denied: Unable to create '{mypath}'.")
         except FileExistsError:
-            raise ValidationError(message=f"A file or directory already exists at '{path}'.")
+            raise ValidationError(message=f"A file or directory already exists at '{mypath}'.")
         except OSError as e:
             raise ValidationError(message=f"An OS error occurred while testing creation: {e}")
 
@@ -343,6 +343,7 @@ if not has_run:
         default=f"{Path(os.getcwd()).as_posix()}/vol")
 
     check_quit(_quit)
+    print(cli.settings.volume)
 
 else:
     print(f'This folder and the volume has already run as [{cfg.domain}]{cfg.synid}')
@@ -383,7 +384,7 @@ def default_ports(s: AppSettings) -> str:
     return f'{web_port0 if s.webport == 0 else s.webport}:{serv_port0 if s.port == 0 else s.port}'
 
 ports = session.prompt(
-    message=f'Please set the ports. Format: "www-port : synode-port", [1024-65535]\n',
+    message=f'Please set the ports. Format: "www-port : synode-service", [1024-65535]\n',
     default=default_ports(cli.settings),
     validator=MultiValidator(QuitValidator(), PortsValidator()))
 
@@ -454,8 +455,8 @@ if cli.registry.config.mode != SynodeMode.hub.name:
                 default=hub_jserv,
                 validator=MultiValidator(QuitValidator(), PJservValidator(cli.syn_protocol.protocolpath)))
         try:
-            rsp = cli.ping(hub_node.jserv)
-            # print('Response', rsp)
+            # rsp = cli.ping(hub_node.jserv)
+            rep = cli.ping(cli.settings.jservs[hub_node.synid], timeout=6) 
         except Exception as e:
             print(e)
             print("There are errors while finding the hub node. But it can still work. Let's continue ...")
@@ -477,14 +478,13 @@ def post_install():
         Utils.warn('TODO 0.7.6, RESP == NULL, handle errors...')
 
 # 7 save & install
-jredownloader = cast(JreDownloader, None)
+jredownloader = None
 
 def jreprog_hook(blocknum, blocksize, totalsize):
     read = blocknum * blocksize
     if totalsize > 0:
         percent = min(100, read * 100 // totalsize)
         print(f"\rDownloading JRE... {percent}% ", end="")
-
 
 if caninstall == 1:
     try:

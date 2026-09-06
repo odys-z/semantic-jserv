@@ -25,7 +25,7 @@ from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
 from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
-    synode_ui, pths
+    synode_ui, cfgpaths
 from synodepy3.install_jre import validate_jre
 from synodepy3.jre_downloader import _event_loop_interval_
 
@@ -262,7 +262,7 @@ class InstallerForm(QMainWindow):
                 mon_id = self.ui.cbbPeers.currentText()
                 # if mon_id != self.cli.registry.config.synid:
                 if not self.cli.is_hub(mon_id):
-                    resp = self.cli.ping(jsrv[0])
+                    resp = self.cli.ping(jsrv[0], timeout=int(self.ui.txtimeout.text()))
                     if resp is None:
                         details.append(f'\n{mon_id}: {jsrv[0]}\n' + 'Error while pinging.')
                     else:
@@ -354,7 +354,7 @@ class InstallerForm(QMainWindow):
         self.cli.registry.config.syncIns = 0
         try:
             self.update_valid()
-            self.cli.settings.save(pths.web_settings)
+            self.cli.settings.save(cfgpaths.web_settings)
 
             msg_box('The settings is valid. You can close the opening terminal once you need to stop it.\n'
                 'To stat the services, a stand alone running is recommended. Install the service on Windows or start:\n'
@@ -376,7 +376,7 @@ class InstallerForm(QMainWindow):
             err_msg('Start Portfolio service failed', e.msg)
         finally:
             self.cli.registry.config.syncIns = syncins
-            self.cli.settings.save(pths.web_settings)
+            self.cli.settings.save(cfgpaths.web_settings)
 
         time.sleep(0.2)
         self.bind_config()
@@ -722,7 +722,7 @@ class InstallerForm(QMainWindow):
 
         super().showEvent(event)
 
-        if event.type() == QEvent.Type.Show and self.cli.registry is None:
+        if event.type() == QEvent.Type.Show: # FIXME suspicious check: and self.cli.registry is None:
 
             def setVolumePath():
                 volpath = QFileDialog.getExistingDirectory(self, caption='Volume Path')
@@ -794,8 +794,15 @@ class InstallerForm(QMainWindow):
         return super().eventFilter(obj, event)
 
 
-if __name__ == "__main__":
+def main():
+    """
+    Entry-point: synode-gui (pyproject.toml [project.scripts])
+    """
     app = QApplication(sys.argv)
     widget = InstallerForm()
     widget.show()
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

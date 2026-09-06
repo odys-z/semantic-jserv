@@ -24,7 +24,7 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from typing import cast, Optional, Callable, Final, Iterable
+from typing import cast, Optional, Callable, Final, Iterable, Tuple
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
@@ -45,7 +45,7 @@ from .__version__ import jar_ver, web_ver, html_srver, ipcagent_ver
 
 from . import jre_mirror_key
 
-path = os.path.dirname(__file__)
+mypath : str = os.path.dirname(__file__)
 '''
 this script file path
 '''
@@ -61,13 +61,13 @@ class CfgPaths:
         self.vol_dict_json = cast(Optional[str], None)
         self.web_settings = cast(Optional[str], None)
 
-pths = CfgPaths()
+cfgpaths = CfgPaths()
 '''
 vol_dict_json: file path to dictionary.json,
 web_settings: file path to settings.json
 '''
 
-synode_ui = cast(UIResources, Anson.from_file(os.path.join(path, "synode.json")))
+synode_ui = cast(UIResources, Anson.from_file(os.path.join(mypath, "synode.json")))
 err_uihandlers: list[OnError] = [cast(OnError, None)]
 
 def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
@@ -346,8 +346,8 @@ class InstallerCli:
         self.regclient = None
         self.httpd = None
         self.webth = None
-        self.registry = cast(AnRegistry, None)
-        self.settings = cast(AppSettings, None)
+        # self.registry = cast(AnRegistry, None)
+        # self.settings = cast(AppSettings, None)
         self.syn_protocol = JProtocol(jserv_album)
         self.syn_jserv = JServUrl(jservurl='http://localhost', jprotocol=self.syn_protocol)
 
@@ -364,20 +364,20 @@ class InstallerCli:
         :return: loaded settings
         """
 
-        pths.web_settings = os.path.join(web_inf, settings_json)
-        print("Loading", pths.web_settings)
-        if os.path.exists(pths.web_settings):
+        cfgpaths.web_settings = os.path.join(web_inf, settings_json)
+        print("Loading", cfgpaths.web_settings)
+        if cfgpaths.web_settings and os.path.exists(cfgpaths.web_settings):
             try:
-                data: AppSettings = cast(AppSettings, Anson.from_file(pths.web_settings))
+                data: AppSettings = cast(AppSettings, Anson.from_file(cfgpaths.web_settings))
                 self.settings = data
             except json.JSONDecodeError as e:
-                raise PortfolioException(f'Loading Anson data from {pths.web_settings} failed.', e)
+                raise PortfolioException(f'Loading Anson data from {cfgpaths.web_settings} failed.', e)
 
             print("Loading registry in", '[registry]')
             self.registry = self.loadRegistry(data.volume, registry_dir)
 
         else:
-            raise PortfolioException(f"Cannot find settings.json: {pths.web_settings}")
+            raise PortfolioException(f"Cannot find settings.json: {cfgpaths.web_settings}")
 
         # if LangExt.isblank(self.settings.regiserv):
         #     regiserv = f'{"https" if self.registry.config.https else "http"}://{synode_ui.central_iport}/{synode_ui.central_path}'
@@ -393,12 +393,12 @@ class InstallerCli:
         :param deflt_path
         :return: AnRegistry
         """
-        pths.vol_dict_json = cast(str, None)
+        cfgpaths.vol_dict_json = cast(str, None)
         if vol_path is not None:
-            pths.vol_dict_json = os.path.join(vol_path, dictionary_json)
+            cfgpaths.vol_dict_json = os.path.join(vol_path, dictionary_json)
 
-        if vol_path is not None and os.path.isdir(vol_path) and Path(pths.vol_dict_json).is_file():
-            registry = AnRegistry.load(pths.vol_dict_json)
+        if vol_path is not None and os.path.isdir(vol_path) and Path(cfgpaths.vol_dict_json).is_file():
+            registry = AnRegistry.load(cfgpaths.vol_dict_json)
         else:
             diction_json = os.path.join(deflt_path, dictionary_json)
             registry = AnRegistry.load(diction_json)
@@ -441,7 +441,7 @@ class InstallerCli:
             ip = s.getsockname()[0]
             return ip
 
-    def getProxiedIp(self):
+    def getProxiedIp(self) -> Tuple[str, int]:
         ip, port = InstallerCli.reportIp(), self.settings.port
         if self.settings.reverseProxy:
             ip, port = self.settings.proxyIp, self.settings.proxyPort
@@ -866,10 +866,16 @@ class InstallerCli:
         self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
 
-        self.settings.jserv_utc = datetime.datetime\
-                                .now(datetime.timezone.utc)\
-                                .strftime('%Y-%m-%d %H:%M:%S')
-        self.settings.save(pths.web_settings)
+        # self.settings.jserv_utc = datetime.datetime\
+        #                         .now(datetime.timezone.utc)\
+        #                         .strftime('%Y-%m-%d %H:%M:%S')
+
+        # Let's wrap into self.settings.Jservs()
+        iport_str = f'{self.getProxiedIp()[0]}:{self.getProxiedIp()[1]}'
+        myjserv = JServUrl(iport=iport_str, jprotocol=JProtocol(jserv_album))
+        self.settings.Jservs({self.registry.config.synid: myjserv.jserv()})
+
+        self.settings.save(cfgpaths.web_settings)
 
         sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
 
@@ -877,13 +883,13 @@ class InstallerCli:
         InstallerCli.update_private(self.registry.config, self.settings)
         InstallerCli.update_htmlsrv(self.registry.config, self.settings)
 
+        if not Path.exists(Path(self.settings.Volume())):
+            os.mkdir(self.settings.Volume())
         # May 15 2025
         # keep db files, save changes anyway
         # Registry's modification is checked by UI, any cli modification is impossible, except direct editing.
         self.registry.toFile(os.path.join(self.settings.Volume(), dictionary_json))
 
-        if not Path.exists(Path(self.settings.Volume())):
-            os.mkdir(self.settings.Volume())
         if not Path.exists(syndb):
             shutil.copy2(os.path.join("volume", syn_db), syndb)
         if not Path.exists(sysdb):
@@ -900,7 +906,10 @@ class InstallerCli:
                        f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
 
-        self.update_clients([(Path('desktop'), 'settings/app-settings.json')])
+        if Path(mypath).exists('desktop'):
+            self.update_clients([(Path('desktop'), 'settings/app-settings.json')])
+        else:
+            print(f'*** Updating destop ignored in os type {os.name}')
 
     def update_clients(self, clients_sets: Iterable[tuple[Path, str]]) -> None:
         for apppath, setpath in clients_sets:
@@ -1105,10 +1114,10 @@ class InstallerCli:
         '''
         self.registry.config.overlay(resp.diction)
         self.settings.acceptj_butme(self.registry.config.synid, self.registry.config.peers)
-        self.settings.save(pths.web_settings)
-        self.registry.save(pths.vol_dict_json)
+        self.settings.save(cfgpaths.web_settings)
+        self.registry.save(cfgpaths.vol_dict_json)
 
-    def check_install_jre(self, jredownloader: JreDownloader, prog_label=None,
+    def check_install_jre(self, jredownloader: Optional[JreDownloader], prog_label=None,
                           cli_progress: Callable[[int, int, int], None]=None):
         '''
         :param jredownloader:

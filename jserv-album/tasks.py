@@ -252,6 +252,94 @@ def install_maven_local(c: Context, deploy: str='tasks.0.8.0.json', gpg: str = N
     c.run('mvn clean dependency:tree | grep io.github.odys-z')
 
 
+
+@task
+def install_py_local(c: Context, venv_build: str = None):
+    '''
+    Install python packages locally in the target venv.
+
+    To make sure everything is re-built locally,
+
+    ```bash
+        inv install-py-local --venv-build=.venv391
+    ```
+    To install the latest wheel in dist/ without re-building, ignore the venv_build parameter:
+    
+    ```bash
+        inv install-py-local
+    ```
+
+    :param c: Context object
+    :param venv_build: optional venv path for building wheel packages (e.g., ".venv391").
+                        If None (default), skipping build and directly installing the latest wheel in dist/
+    '''
+
+    import subprocess
+
+    def get_venv_python(venv_name: str) -> str:
+        """Returns absolute path to python executable inside target venv (cross-platform)."""
+        venv_path = Path(venv_name).resolve()
+        python_bin = venv_path / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        return str(python_bin) if python_bin.exists() else sys.executable
+
+    py_exec = get_venv_python(venv_build) if venv_build else sys.executable
+    orig_cwd = Path.cwd()
+
+    def run_cmd(cmd: list[str], check: bool = True) -> None:
+        print(f"==> Running: {' '.join(cmd)}")
+        subprocess.run(cmd, check=check)
+
+    printings = []
+
+    def install_pkg(dst_pth: Path, pkg_name: str) -> None:
+        abs_dst = dst_pth.resolve()
+        try:
+            os.chdir(abs_dst)
+            print(f"\nWorking directory: {abs_dst}")
+
+            if venv_build is not None:
+                # 1. Clean old build artifacts
+                run_cmd([py_exec, "-c",
+                        "import shutil, glob; [shutil.rmtree(p, ignore_errors=True) for p in ['dist', 'build'] + glob.glob('*.egg-info')]"
+                ])
+
+                # 2. Build the wheel
+                run_cmd([py_exec, "-m", "build"])
+
+            # 3. Uninstall previous version
+            run_cmd([py_exec, "-m", "pip", "uninstall", "-y", pkg_name], check=False)
+
+            # 4. Locate newest wheel file
+            wheels = sorted(Path("dist").glob("*.whl"), key=os.path.getmtime, reverse=True)
+            if not wheels:
+                print(f"Error: No wheel file found in {abs_dst / 'dist'}", file=sys.stderr)
+                sys.exit(1)
+
+            latest_wheel = wheels[0]
+
+            # 5. Install newest wheel
+            run_cmd([py_exec, "-m", "pip", "install", str(latest_wheel)])
+            # print(f"==> Installed: {latest_wheel}")
+            printings.append(f"==> Installed: {latest_wheel}")
+
+        finally:
+            os.chdir(orig_cwd)
+
+    packages = [
+        (Path("../../antson/py3"), "anson.py3"),
+        (Path("../../antson/semantics.py3"), "semantics.py3"),
+        (Path("../../JRE-Mirror"), "jre-mirror"),
+        (Path("../../anclient/py3"), "anclient.py3"),
+    ]
+
+    print('----------  Install Local Python Packages  ---------')
+    for p, n in packages:
+        install_pkg(p, n)
+
+    for p in printings:
+        print(p)
+
+
 @task
 def build(c: Context, deploy: str = 'tasks.json'):
     '''
@@ -401,11 +489,6 @@ def package(c: Context, deploy: str = 'tasks.json'):
         f'bin/html-web-{taskcfg.html_jar_v}.jar': f'../../html-service/java/target/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
         f'bin/jserv-album-{taskcfg.version}.jar': f'target/jserv-album-{taskcfg.version}.jar',
 
-        # https://exiftool.org/index.html
-        'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
-        
-        temp_jre_path: check_local_resource(taskcfg.jre_release),
-
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
         'bin/synode_py3-0.8-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
@@ -417,13 +500,16 @@ def package(c: Context, deploy: str = 'tasks.json'):
     }
 
     if os.name == 'nt': resources.update({
+        # https://exiftool.org/index.html
+        'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
+        temp_jre_path: check_local_resource(taskcfg.jre_release),
         'desktop': f'{os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, "*")}',
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
         'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
         'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
     })
     else:
-        print("[*** TODO *** 0.8.0]  desktop [album-gui, ws-agent.jar, settings]")
+        print("[*** TODO *** 0.8.0 POSIX]  desktop [album-gui, ws-agent.jar, settings], requires exiftool, jre-posix")
 
     excludes = ['*.log', 'report.html', '*.github.json']
 
