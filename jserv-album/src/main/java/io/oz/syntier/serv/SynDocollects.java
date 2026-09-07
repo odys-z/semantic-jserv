@@ -39,6 +39,7 @@ import io.odysz.semantic.tier.docs.DocsException;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
+import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -512,7 +513,6 @@ public class SynDocollects extends ServPort<AlbumReq> {
 					new Device(null, domx.synode, usr.deviceId()));
 	}
 	
-	// TODO move to Docsync/ExpDoctier as this is part of data synchronization
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
 		// enable this for Android 0.7.6
@@ -522,6 +522,11 @@ public class SynDocollects extends ServPort<AlbumReq> {
 
 		String conn = Connects.uri2conn(body.synuri);
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
+		String devname =  body.device().devname;
+		String org = usr.orgId();
+
+		if (DAHelper.count(st, conn, devMeta.tbl, devMeta.devname, devname, devMeta.org, org) > 0) 
+			throw new SemanticException("Device,  %s, already exists in %s.", devname, org);
 
 		if (isblank(body.device().id)) {
 			SemanticObject result = (SemanticObject) synt
