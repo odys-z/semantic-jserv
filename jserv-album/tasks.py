@@ -10,6 +10,15 @@ from invoke import task, Context
 import os
 
 from anson.io.odysz.common import requir_pkg
+requir_pkg("build")               # by synode.py
+requir_pkg("pyinstaller")         # by synode.py
+requir_pkg("jre-mirror", "0.1.0") # by synode.py
+requir_pkg("pillow", "10.0.0")    # by synode.py
+requir_pkg("qrcode")              # by synode.py
+requir_pkg("psutil")              # by synode.py
+requir_pkg("prompt-toolkit", "3.0.52")      # by synode.py
+requir_pkg("pyside6", ["6.6.0", "6.8.2.1"]) # by synode.py
+
 requir_pkg("anson.py3", "0.6.4")
 requir_pkg("semantics.py3", "0.6.4")
 
@@ -401,8 +410,9 @@ def build(c: Context, deploy: str = 'tasks.json'):
 
         # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
-        # [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
-        [taskcfg.android_dir, f'{"" if LangExt.isblank(taskcfg.java_home) else "export JAVA_HOME=" + taskcfg.java_home} && ./gradlew assembleRelease'],
+        # JAVA_HOME is set in validate()
+        # [taskcfg.android_dir, f'{"" if LangExt.isblank(taskcfg.java_home) else "export JAVA_HOME=" + taskcfg.java_home} && ./gradlew assembleRelease'],
+        [taskcfg.android_dir, 'gradlew.bat assembleRelease' if os.name == 'nt' else './gradlew assembleRelease'],
 
         # ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
         ['.', f'cp -f {taskcfg.get_gradleprj_apk()} {web_dist}/res-vol/{taskcfg.get_apk_name()}' \
@@ -464,17 +474,6 @@ def package(c: Context, deploy: str = 'tasks.json'):
         c: Invoke Context object for running commands.
         zip: Name of the output ZIP file.
     """
-    def check_local_resource(local_path: str) -> str:
-        """
-        Check if the resource exists locally, if not, download it.
-        Args:
-            local_path (str): Local path of the resource to check.
-        """
-        if not os.path.exists(local_path):
-            Utils.warn(f"Resource not found locally: {local_path}. Needing download jre to{local_path}...")
-            sys.exit(-1)
-        return local_path
-
     global  taskcfg
     if taskcfg is None:
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
@@ -501,7 +500,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
     if os.name == 'nt': resources.update({
         # https://exiftool.org/index.html
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
-        temp_jre_path: check_local_resource(taskcfg.jre_release),
+        temp_jre_path: taskcfg.check_local_resource(taskcfg.jre_release),
         'desktop': f'{os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, "*")}',
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
         'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
