@@ -183,12 +183,6 @@ def config(c: Context, deploy: str = 'tasks.json'):
             f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
-    # Desktop 0.1.2
-    # desk_sets = cast(DesktopSettings, Anson.from_file(Path(taskcfg.desktop_dir) / 'app/settings/app-settings.github.json'))
-    # desk_sets.market = taskcfg.deploy.market_id
-    # desk_sets.centralPswd = taskcfg.deploy.central_pswd
-    # desk_sets.toFile(Path(taskcfg.desktop_dir) / 'app/settings/app-settings.json')
-
 
 @task
 def clean(c: Context):

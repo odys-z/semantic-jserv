@@ -404,7 +404,6 @@ public class SynDomanager extends SyndomContext implements OnError {
 
 			if (!isNull(onok))
 				onok[0].ok(domain(), synode, peer.peer);
-
 		}
 		return this;
 	}
