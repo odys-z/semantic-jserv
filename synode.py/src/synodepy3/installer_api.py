@@ -3,7 +3,7 @@ import datetime
 import sys
 from dataclasses import dataclass
 
-from jre_mirror.temurin17 import guess_jretree
+from jre_mirror.temurin17 import Temurin17Release
 from semanticshare.io.odysz.jclient import AnclientSettings
 from semanticshare.io.oz.anclient.app import DesktopSettings, UIResources
 from semanticshare.io.oz.syn import SynodeMode, Synode
@@ -24,7 +24,7 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from typing import cast, Optional, Callable, Final, Iterable, Tuple
+from typing import List, cast, Optional, Callable, Final, Iterable, Tuple
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
@@ -68,9 +68,10 @@ web_settings: file path to settings.json
 '''
 
 synode_ui = cast(UIResources, Anson.from_file(os.path.join(mypath, "synode.json")))
-err_uihandlers: list[OnError] = [cast(OnError, None)]
+err_uihandlers: list[OnError] = cast(list, [None])
 
 def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
+    print(f'pinging {peerserv} with timeout {timeout_snd} seconds...')
     Clients.init(jserv=peerserv, timeout=timeout_snd)
 
     def err_ctx(c: MsgCode, e: str, *args: str) -> None:
@@ -577,7 +578,7 @@ class InstallerCli:
     def find_synuser(self, uid: str):
         return AnRegistry.find_synuser(self.registry.synusers, uid)
 
-    def validate(self, ping_hub: bool=True):
+    def validate(self, ping_hub: bool=True, ping_timeout: int=12) -> Optional[dict]:
         """
         Validate my congig and settings. Must be called after the data models has been updated.
         NOTE 0.7.6 org.webroot will be forced to be '$WEBROOT' and settings.envars['WEBROOT'] = this.synode
@@ -623,7 +624,7 @@ class InstallerCli:
                 if hub_node is None:
                     return {'hub-node': 'Hub information is missing.'}
                 elif hub_node.synid in self.settings.jservs:
-                    self.ping(self.settings.jservs[hub_node.synid])
+                    self.ping(self.settings.jservs[hub_node.synid], timeout=ping_timeout)
                 else:
                     return {'hub-node': 'Hub information is missing.'}
 
@@ -784,7 +785,7 @@ class InstallerCli:
         if not os.path.isdir(web_inf):
             raise PortfolioException(f'Folder {web_inf} dose not exist, or not a folder.')
 
-    def ping(self, jsrv, timeout=20):
+    def ping(self, jsrv, timeout=10):
         return ping(install_uri, jsrv, timeout_snd=timeout)
 
     def check_cent_login(self):
@@ -796,7 +797,7 @@ class InstallerCli:
                 pswdPlain=self.registry.synusers[0].pswd)
         return self.regclient
 
-    def query_orgs(self) -> (list[str], str):
+    def query_orgs(self) -> Tuple[list[str], str]:
         # 0.7.6
         oid = self.registry.config.org.orgId
         return [oid], oid
@@ -906,7 +907,7 @@ class InstallerCli:
                        f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
 
-        if Path(mypath).exists('desktop'):
+        if (Path(mypath) / 'desktop').exists():
             self.update_clients([(Path('desktop'), 'settings/app-settings.json')])
         else:
             print(f'*** Updating destop ignored in os type {os.name}')
@@ -1044,7 +1045,7 @@ class InstallerCli:
         import threading
     
         # PORT = 8900
-        httpdeamon: [socketserver.TCPServer] = []
+        httpdeamon: List[socketserver.TCPServer] = []
     
         # To serve gzip, see
         # https://github.com/ksmith97/GzipSimpleHTTPServer/blob/master/GzipSimpleHTTPServer.py#L244
@@ -1139,7 +1140,7 @@ class InstallerCli:
         jreimg = temurin.set_jre()
         print('JRE:', jreimg)
 
-        if guess_jretree(_jre_) != Path(_jre_):
+        if Temurin17Release.guess_jretree(_jre_) != Path(_jre_):
             jredownloader = JreDownloader(prog_label)
             if prog_label:
                 jredownloader.start_download_gui(temurin)
@@ -1157,7 +1158,7 @@ class InstallerCli:
         :return: True if the required jre is ready.
         '''
         try:
-            if guess_jretree(_jre_) == Path(_jre_):
+            if Temurin17Release.guess_jretree(_jre_) == Path(_jre_):
                 return True
             else: return False
         except: return False

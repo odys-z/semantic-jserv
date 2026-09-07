@@ -260,8 +260,8 @@ class InstallerForm(QMainWindow):
 
             for jsrv in jservss:
                 mon_id = self.ui.cbbPeers.currentText()
-                # if mon_id != self.cli.registry.config.synid:
                 if not self.cli.is_hub(mon_id):
+                    print(f'Ping with ui timeout:', int(self.ui.txtimeout.text()))
                     resp = self.cli.ping(jsrv[0], timeout=int(self.ui.txtimeout.text()))
                     if resp is None:
                         details.append(f'\n{mon_id}: {jsrv[0]}\n' + 'Error while pinging.')
@@ -300,7 +300,7 @@ class InstallerForm(QMainWindow):
             proxyPort=self.ui.txtPort_proxy.text(),
             volume=self.ui.txtVolpath.text())
 
-        v = self.cli.validate()
+        v = self.cli.validate(ping_timeout=int(self.ui.txtimeout.text()))
         if v is not None:
             global errs, details
             details.append(v)

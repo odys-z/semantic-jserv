@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import cast, Optional
+from typing import cast, Optional, List
 
 from anclient.io.odysz.jclient import SessionClient
 from anson.io.odysz.anson import AnsonException
@@ -16,8 +16,7 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, App
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
-from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, \
-    mypath, synode_ui
+from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
 from synodepy3.jre_downloader import JreDownloader, _jre_
 from synodepy3.validators import PJservValidator, PIPValidator
 
@@ -369,7 +368,7 @@ else:
 check_quit(_quit)
 
 # 5 ports
-def parse_web_jserv_ports(ports: str) -> [int, int]:
+def parse_web_jserv_ports(ports: str) -> List[int]:
     try:
         if LangExt.len(ports) == 0:
             ports = f'{web_port0}:{serv_port0}'
