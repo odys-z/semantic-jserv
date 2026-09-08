@@ -506,7 +506,6 @@ if caninstall == 1:
         post_err = cli.postFix()
         post_install()
     except FileNotFoundError or IOError as e:
-        # Changing vol path can reach here ?
         Utils.warn(e)
         session.prompt('Setting up synodepy3 failed.')
         _quit = True

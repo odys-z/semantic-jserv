@@ -61,6 +61,7 @@ pm-king*
 king
 ody-*
 reddish-*
+domains-0.8
 tasks.*.json
 *-fingerprint
 !tasks.0.7.8.json
