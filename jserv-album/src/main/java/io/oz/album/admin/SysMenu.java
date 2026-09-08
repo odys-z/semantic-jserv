@@ -21,7 +21,7 @@ import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.peer.AlbumPort;
-import io.oz.album_delete.AlbumFlags;
+import io.oz.album.AlbumFlags;
 
 @WebServlet(description = "Load Sample App's Functions", urlPatterns = { "/menu.serv" })
 public class SysMenu extends SemanticTree {

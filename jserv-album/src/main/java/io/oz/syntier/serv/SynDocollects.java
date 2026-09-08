@@ -52,7 +52,7 @@ import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.album.peer.AlbumReq;
 import io.oz.album.peer.AlbumReq.A;
-import io.oz.album_delete.AlbumFlags;
+import io.oz.album.AlbumFlags;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.Profiles;

@@ -86,10 +86,23 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
     else:
         Utils.logi('Central pswd looks fine.')
 
-    java_home = os.path.expanduser(taskcfg.java_home)
-    Utils.logi('configure JAVA_HOME: {}', java_home)
+    # java_home = os.path.expanduser(taskcfg.java_home)
+    # Utils.logi('configure JAVA_HOME: {}', java_home)
 
-    if not LangExt.isblank(taskcfg.java_home):
+    # if not LangExt.isblank(taskcfg.java_home):
+    #     c.config['run']['env']['JAVA_HOME'] = java_home
+    #     c.run('echo $JAVA_HOME')
+    # else:
+    #     if os.name == 'nt':
+    #         c.run('echo %JAVA_HOME% && echo $JAVA_HOME')
+    #     else:
+    #         c.run('echo $JAVA_HOME')
+
+    if hasattr(taskcfg, 'java_home') and not LangExt.isblank(taskcfg.java_home):
+        java_home = taskcfg.java_home
+        if java_home == 'JAVA_HOME' or java_home == '$JAVA_HOME' or java_home == '%JAVA_HOME%':
+            java_home = os.environ.get('JAVA_HOME', '')
+
         c.config['run']['env']['JAVA_HOME'] = java_home
         c.run('echo $JAVA_HOME')
     else:
@@ -405,18 +418,14 @@ def build(c: Context, deploy: str = 'tasks.json'):
         # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
         # JAVA_HOME is set in validate()
-        # [taskcfg.android_dir, f'{"" if LangExt.isblank(taskcfg.java_home) else "export JAVA_HOME=" + taskcfg.java_home} && ./gradlew assembleRelease'],
         [taskcfg.android_dir, 'gradlew.bat assembleRelease' if os.name == 'nt' else './gradlew assembleRelease'],
 
-        # ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
         ['.', f'cp -f {taskcfg.get_gradleprj_apk()} {web_dist}/res-vol/{taskcfg.get_apk_name()}' \
                 if os.name == 'nt' else f'touch {web_dist}/res-vol/portfolio-{taskcfg.apk_ver}.apk' ], # TODO build apk in Linux...
 
         [f'{web_dist}', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
-        # ['../../anclient/examples/example.js/album', 'webpack'],
         [taskcfg.web_root_dir, 'webpack'],
 
-        # ['web-dist/res-vol', lambda: updateApkRes()],
         [web_dist, updateApkRes],
         ['.', f'cat {web_dist}/private/host.json'],
 
@@ -492,8 +501,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
     }
 
     if os.name == 'nt': resources.update({
-        # https://exiftool.org/index.html
-        'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
+        'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip', # https://exiftool.org/index.html
         temp_jre_path: taskcfg.check_local_resource(taskcfg.jre_release),
         'desktop': f'{os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, "*")}',
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
@@ -525,20 +533,16 @@ def package(c: Context, deploy: str = 'tasks.json'):
 
         print('****************************************************************************************************',
              f'* Distribution ZIP file is created successfully: {zip}' if not err else 'Errors while making target (creaded zip file)',
-              '****************************************************************************************************',
+            #   '****************************************************************************************************',
               sep='\n')
 
         # Also build desktop standalone
         print('****************************************************************************************************')
         if os.name == 'nt': # not POSIX 0.8.0
             c.run(f"cd {taskcfg.desktop_dir} && invoke zip-standalone --deploy={Path(deploy).absolute()}")
-        else:
-            print("[*** TODO *** 0.8.0]  skip packaging desktop-posix")
-
-        if os.name == 'nt':
             Utils.copy_anyway(taskcfg.get_deskapp_zip(), taskcfg.package_dir, log=True)
         else:
-            print("[*** TODO *** 0.8.0]  skip copying desktop-posix")
+            print("[*** TODO *** 0.8.0]  skip building & packaging desktop-posix")
 
         Utils.copy_anyway(taskcfg.get_gradleprj_apk(), Path(taskcfg.package_dir) / taskcfg.get_apk_name(), log=True)
         print('****************************************************************************************************')
@@ -560,6 +564,10 @@ def run_scps(c: Context, deploy:str = 'task.json'):
     if taskcfg is None:
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
+    if taskcfg.deploy_scps:
+        requir_pkg('paramiko')
+        requir_pkg('scp')
+
     ok, err = taskcfg.run_deploycmds(c)
     print(f"Run deploy_cmds, ok: {ok}, error: {err}")
 
@@ -573,6 +581,7 @@ def run_scps(c: Context, deploy:str = 'task.json'):
 @task
 def make(c: Context, deploy: str = 'tasks.json', gpg: str = None):
     '''
+    call build & package (no post-scp of deploy).
     This task is for separating python 3.9 for build & packaging;
     and from python 3.10 (3.9.1?) and above for scp command in cfg.deploy_scps.
     '''
@@ -622,6 +631,37 @@ def test_clean(c: Context, deploy: str = 'tasks.json'):
     print(f'Testing : {deploy}')
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+
+
+@task
+def help(c: Context):
+    """
+    Print a succinct RST-style usage memo for every task in this file.
+    
+    :param c: Invoke context.
+    :return: None
+    """
+    import inspect
+    from invoke import Collection
+
+    ns = Collection.from_module(sys.modules[__name__])
+
+    for name in sorted(ns.tasks):
+        fn = ns.tasks[name].body
+        sig = inspect.signature(fn)
+        params = [
+            pname if p.default is inspect.Parameter.empty else f'{pname}={p.default!r}'
+            for pname, p in sig.parameters.items() if pname != 'c'
+        ]
+        argstr = ', '.join(params)
+
+        title = f'{name}({argstr})'
+        print(title)
+        print('=' * len(title))
+
+        doc = inspect.getdoc(fn)
+        print(doc if doc else '    (undocumented)')
+        print()
 
 
 if __name__ == '__main__':
