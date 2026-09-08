@@ -24,7 +24,7 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from typing import List, cast, Optional, Callable, Final, Iterable, Tuple
+from typing import List, cast, Optional, Callable, Final, Iterable, Tuple, Dict
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
@@ -55,11 +55,12 @@ class CfgPaths:
     '''
     Configuration file paths' memory
     '''
-    vol_dict_json: Optional[str]
-    web_settings: Optional[str]
+    vol_dict_json: str #Optional[str]
+    web_settings: str # Optional[str]
     def __init__(self):
-        self.vol_dict_json = cast(Optional[str], None)
-        self.web_settings = cast(Optional[str], None)
+        pass
+        # self.vol_dict_json = cast(Optional[str], None)
+        # self.web_settings = cast(Optional[str], None)
 
 cfgpaths = CfgPaths()
 '''
@@ -114,7 +115,7 @@ def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: st
     req.Uri(func_uri)
     req.diction = SynodeConfig(synode=myid, domain=domid)
     req.diction.org = SynOrg(orgid=orgid, orgname=domid, orgtype=market)
-    msg = AnsonMsg(Centralport.regist).Body(req)
+    msg = cast(AnsonMsg, AnsonMsg(Centralport.regist).Body(req))
 
     resp = client.commit(msg, err_uihandlers[0])
 
@@ -242,7 +243,7 @@ def install_exiftool_win():
         if len(xtract_files) == 0:
             subfolder = get_zipath(zips[-1])
             unzip_file(zips[-1], '.')
-            for res in glob(os.path.join(subfolder, '*')):
+            for res in glob(os.path.join(subfolder or '', '*')):
                 print(res)
                 if re.match(f'{subfolder.removesuffix("/")}.exiftool.*', res):
                     shutil.move(res, '.')
@@ -330,6 +331,14 @@ class InstallerCli:
     '''
 
     @staticmethod
+    def check_prerequisites() -> Optional[Dict[str, str]]:
+        print("Checking prerequisites")
+        if not check_exiftool():
+            return {"exiftool": "Check and install exiftool failed!" \
+                if Utils.get_os() == 'Windows' \
+                else "Please install exiftool and test it's working with command 'exiftool -ver'"}
+
+    @staticmethod
     def parsejservstr(jservstr: str) -> list[list[str]]:
         """
         :param jservstr: "x:\\turl-1\\ny:..."
@@ -337,11 +346,12 @@ class InstallerCli:
         """
         return [[kv.strip().removesuffix(':') for kv in line.split('\t')] for line in jservstr.split('\n')]
 
-    def fromat_jservstr_deprecated(jservstr: str):
-        return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
+    # def fromat_jservstr_deprecated(jservstr: str):
+    #     return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
 
-    def fromat_jservurl(hub: Synode, jservstr: str):
-        return {None if hub is None else hub.synid: kv[-1] for kv in InstallerCli.parsejservstr(jservstr)}
+    @classmethod
+    def fromat_jservurl(cls, hub: Synode, jservstr: str):
+        return {None if hub is None else hub.synid: kv[-1] for kv in cls.parsejservstr(jservstr)}
 
     def __init__(self):
         self.regclient = None
@@ -394,7 +404,7 @@ class InstallerCli:
         :param deflt_path
         :return: AnRegistry
         """
-        cfgpaths.vol_dict_json = cast(str, None)
+        # cfgpaths.vol_dict_json = None
         if vol_path is not None:
             cfgpaths.vol_dict_json = os.path.join(vol_path, dictionary_json)
 
@@ -745,10 +755,10 @@ class InstallerCli:
             self.settings.webProxyPort = int(webProxyPort)
 
         if not LangExt.isblank(webport):
-            self.settings.webport = int(webport)
+            self.settings.webport = int(webport) # type: ignore
 
         if not LangExt.isblank(port):
-            self.settings.port = int(port)
+            self.settings.port = int(port) # type: ignore
 
         if jservss is not None and len(jservss) > 8:
             jsvkvs = InstallerCli.fromat_jservurl(self.find_hubpeer(), jservss)
@@ -788,14 +798,14 @@ class InstallerCli:
     def ping(self, jsrv, timeout=10):
         return ping(install_uri, jsrv, timeout_snd=timeout)
 
-    def check_cent_login(self):
+    def check_cent_login(self) -> SessionClient:
         if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
             self.regclient = SessionClient.loginWithUri(
                 uri=install_uri,
                 servroot=self.settings.regiserv,
                 uid=self.registry.synusers[0].userId,
                 pswdPlain=self.registry.synusers[0].pswd)
-        return self.regclient
+        return self.regclient # type: ignore
 
     def query_orgs(self) -> Tuple[list[str], str]:
         # 0.7.6
@@ -803,15 +813,17 @@ class InstallerCli:
         return [oid], oid
 
     def query_domx(self, market: str, commu: str):
-        self.check_cent_login()
-        return query_domx(client=self.regclient,
+        # self.check_cent_login()
+        # return query_domx(client=self.regclient,
+        return query_domx(client= self.check_cent_login(),
                           func_uri=install_uri,
                           market=market,
                           commuid=commu)
 
     def query_domconf(self, commuid: str, domid: str):
-        self.check_cent_login()
-        return query_domconfig(client=self.regclient, func_uri=install_uri,
+        # self.check_cent_login()
+        return query_domconfig(client=self.check_cent_login(),
+                               func_uri=install_uri,
                                myid=self.registry.config.synid,
                                market=self.settings.market_id, orgid=commuid, domid=domid)
 
@@ -820,9 +832,10 @@ class InstallerCli:
         Ask central for registering a domain, expecting a reply with planned synodes (peers).
         :return: RegistResp
         '''
-        self.check_cent_login()
+        # self.check_cent_login()
 
-        return register(client=self.regclient, func_uri=install_uri,
+        return register(client=self.check_cent_login(),
+                        func_uri=install_uri,
                         market=self.settings.market_id, cfg=self.registry.config,
                         s=self.settings, iport=self.getProxiedIp(), jprotocl=self.reg_jserv.jprotocol)
 
@@ -834,15 +847,15 @@ class InstallerCli:
         return self.registry.config.mode == SynodeMode.hub.name
 
     def submit_mysettings(self):
-        self.check_cent_login()
-        return submit_settings(client=self.regclient,
+        # self.check_cent_login()
+        return submit_settings(client=self.check_cent_login(),
                                func_uri=install_uri, market=self.settings.market_id,
                                cfg=self.registry.config, s=self.settings,
                                iport=self.getProxiedIp(),
                                syn_protocol=self.syn_protocol,
                                # leave the state unchanged when using setup API.
                                # see also java/AppSettings.synotifyCentral()
-                               stat=cast(str, None)
+                               stat=None # type: ignore
                                ) # if not self.jesuis_hub() else RegistResp().Code(MsgCode.ok)
 
     def install(self):

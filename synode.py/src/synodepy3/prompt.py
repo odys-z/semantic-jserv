@@ -93,7 +93,7 @@ WantedBy=multi-user.target
     return syn_templ, web_templ
 
 _quit = False
-details = [cast(str, None)]
+details = [cast(Optional[str], None)]
 
 def check_quit(q: bool):
     if q:
@@ -108,16 +108,16 @@ style = Style.from_dict({
 # synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
 class QuitValidator(Validator):
-    def validate(self, v: Document) -> None:
+    def validate(self, document: Document) -> None:
         global _quit
-        if not v.text.strip():
+        if not document.text.strip():
             _quit = True
         else:
             _quit = False
 
 class VolumeValidator(Validator):
-    def validate(self, v):
-        parent_dir = os.path.dirname(v.text)
+    def validate(self, document: Document) -> None:
+        parent_dir = os.path.dirname(document.text)
         if not parent_dir:
             parent_dir = os.getcwd()
         if not os.path.isdir(parent_dir):
@@ -126,7 +126,7 @@ class VolumeValidator(Validator):
             raise ValidationError(message=f"Permission denied to write in '{parent_dir}'.")
 
         if Utils.iswindows():
-            for c in v.text:
+            for c in document.text:
                 if c == '\\':
                     raise ValidationError(message=f'Please replace all "\\" with "/"')
 
@@ -135,7 +135,7 @@ class VolumeValidator(Validator):
             if not os.listdir(mypath):
                 os.rmdir(mypath)  # Only remove if empty
             elif cli.hasrun(mypath):
-                raise ValidationError(message=f"The volume is already used by a running synode: {v}")
+                raise ValidationError(message=f"The volume is already used by a running synode: {document}")
 
             return True
         except PermissionError:
@@ -145,23 +145,23 @@ class VolumeValidator(Validator):
         except OSError as e:
             raise ValidationError(message=f"An OS error occurred while testing creation: {e}")
 
-class NodeStateValidator(Validator):
-    def validate(self, v):
-        if v[1] == 'installed':
-            raise ValidationError(message=f'Node {v[0]} is installed.')
+# class NodeStateValidator(Validator):
+#     def validate(self, document: Document) -> None:
+#         if document[1] == 'installed':
+#             raise ValidationError(message=f'Node {document[0]} is installed.')
 
 class DomainValidator(Validator):
-    def validate(self, v: Document) -> None:
-        try: LangExt.only_id_len(v.text, minlen=2, maxlen=12)
+    def validate(self, document: Document) -> None:
+        try: LangExt.only_id_len(document.text, minlen=2, maxlen=12)
         except AnsonException:
             raise ValidationError(message=f"domain length: 2 <= Len('{cfg.domain}') <= 12")
 
 class PortsValidator(Validator):
-    def validate(self, v: Document) -> None:
-        if v is None or LangExt.isblank(v.text):
+    def validate(self, document: Document) -> None:
+        if document is None or LangExt.isblank(document.text):
             return
         try:
-            poss = v.text.split(':')
+            poss = document.text.split(':')
             prts = [int(poss[0]), int(poss[1])]
             if 1024 <= prts[0] <= 655535 and 1024 <= prts[1] <= 65535 and prts[0] != prts[1]:
                 return
@@ -170,17 +170,17 @@ class PortsValidator(Validator):
         raise ValidationError(message=f"Valid format web-port:jserv-port, are different and in [1024-65535]")
 
 class DomainTokenValidator(Validator):
-    def validate(self, v: Document) -> None:
-        if v is None or LangExt.isblank(v.text):
+    def validate(self, document: Document) -> None:
+        if document is None or LangExt.isblank(document.text):
             return
-        try: LangExt.only_passwdlen(v.text, minlen=8, maxlen=16)
+        try: LangExt.only_passwdlen(document.text, minlen=8, maxlen=16)
         except AnsonException:
             raise ValidationError(message=f"token length must be in [8 ~ 16], allowed special chars: [{passwd_allow_ext}]")
 
 class SyncInsValidator(Validator):
-    def validate(self, v: Document) -> None:
-        if not LangExt.isblank(v.text):
-            err = cli.validate_synins(v.text)
+    def validate(self, document: Document) -> None:
+        if not LangExt.isblank(document.text):
+            err = cli.validate_synins(document.text)
             if err is not None:
                 raise ValidationError(message=err['config.syncIns'])
 
@@ -190,9 +190,9 @@ class MultiValidator(Validator):
     def __init__(self, *validators: Validator):
         self.valids = validators
 
-    def validate(self, v):
+    def validate(self, document):
         for vld in self.valids:
-            vld.validate(v)
+            vld.validate(document)
 
 def err_ctx(c, e: str, *args: str) -> None:
     global _quit, details
@@ -209,7 +209,7 @@ cli = InstallerCli()
 cli.registry = cli.load_settings()
 cli.registry = InstallerCli.loadRegistry(cli.settings.volume, 'registry')
 
-ssclient = cast(SessionClient, None)
+ssclient = None
 session = PromptSession(style=style)
 
 cfg = cli.registry.config # for shot
@@ -221,8 +221,8 @@ has_run = cli.hasrun()
 
 if not has_run:
     # 0. central jserv
-    orgs: list[str] = cast(list, None)
-    orgid: str = cast(str, None)
+    orgs: list[str] # = cast(list, None)
+    orgid: str # = cast(str, None)
     while not _quit and not reach_central():
         cli.settings.regiserv = session.prompt(
               message="Please input central service url (empty to quit): ",
