@@ -71,6 +71,9 @@ def check_env(c):
 
 @task
 def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
+    '''
+    Validate central connection & set JAVA_HOME.
+    '''
     print(f'--------------    validate   ------------------')
     global taskcfg
     if taskcfg is None:
@@ -86,26 +89,17 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
     else:
         Utils.logi('Central pswd looks fine.')
 
-    # java_home = os.path.expanduser(taskcfg.java_home)
-    # Utils.logi('configure JAVA_HOME: {}', java_home)
-
-    # if not LangExt.isblank(taskcfg.java_home):
-    #     c.config['run']['env']['JAVA_HOME'] = java_home
-    #     c.run('echo $JAVA_HOME')
-    # else:
-    #     if os.name == 'nt':
-    #         c.run('echo %JAVA_HOME% && echo $JAVA_HOME')
-    #     else:
-    #         c.run('echo $JAVA_HOME')
-
     if hasattr(taskcfg, 'java_home') and not LangExt.isblank(taskcfg.java_home):
         java_home = taskcfg.java_home
         if java_home == 'JAVA_HOME' or java_home == '$JAVA_HOME' or java_home == '%JAVA_HOME%':
             java_home = os.environ.get('JAVA_HOME', '')
+        else:
+            java_home = os.path.expanduser(java_home)
 
         c.config['run']['env']['JAVA_HOME'] = java_home
         c.run('echo $JAVA_HOME')
     else:
+        print("Using system environment varialbe JAVA_HOME ...")
         if os.name == 'nt':
             c.run('echo %JAVA_HOME% && echo $JAVA_HOME')
         else:
@@ -275,14 +269,15 @@ def install_py_local(c: Context, venv_build: str = None):
 
     To make sure everything is re-built locally,
 
-    ```bash
+    :: bash
         inv install-py-local --venv-build=.venv391
-    ```
+    ..
+
     To install the latest wheel in dist/ without re-building, ignore the venv_build parameter:
     
-    ```bash
+    :: bash
         inv install-py-local
-    ```
+    ..
 
     :param c: Context object
     :param venv_build: optional venv path for building wheel packages (e.g., ".venv391").
@@ -559,7 +554,7 @@ def run_scps(c: Context, deploy:str = 'task.json'):
     :param c:
     :param deploy: default is 'task.json', where the scp commands are configured.
     '''
-    print('--------------   post scp-cmds  ------------------')
+    print('--------------   run-scps  ------------------')
     global taskcfg
     if taskcfg is None:
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
@@ -573,7 +568,10 @@ def run_scps(c: Context, deploy:str = 'task.json'):
 
     taskcfg.run_deployscps(str(taskcfg.get_distzip()))
     taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.get_apk_name()))
-    taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.deskzip_name()))
+
+    if os.name == 'nt': # not posix 0.8.0
+        taskcfg.run_deployscps(str(Path(taskcfg.desktop_dir) / taskcfg.package_dir / taskcfg.deskzip_name()))
+
     print('', sep='\n')
     print(f"Run deploy_cmds, 3 package copyied.")
 
@@ -600,7 +598,7 @@ def make(c: Context, deploy: str = 'tasks.json', gpg: str = None):
 def deploy(c: Context, deploy: str = 'tasks.json', gpg: str = None):
     make(c, deploy=deploy, gpg=gpg)
     run_scps(c, deploy=deploy)
-    print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
+    print(f'Deployed: {deploy}, central task: {taskcfg.central_dir} ...')
 
 
 @task

@@ -1,9 +1,8 @@
 import os
 import sys
 from pathlib import Path
-from typing import cast, Optional, List
+from typing import cast, Optional, List, Tuple
 
-from anclient.io.odysz.jclient import SessionClient
 from anson.io.odysz.anson import AnsonException
 from anson.io.odysz.common import LangExt, Utils, passwd_allow_ext
 from prompt_toolkit import PromptSession
@@ -17,14 +16,14 @@ from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
 from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
-from synodepy3.jre_downloader import JreDownloader, _jre_
+from synodepy3.jre_downloader import _jre_
 from synodepy3.validators import PJservValidator, PIPValidator
 
 
 def reach_central():
     pass
 
-def readable_state(s: str = None):
+def readable_state(s: str = ''):
     return '' if LangExt.len(s) == 0 \
             else '✅ Available planned node' if s == CynodeStats.create \
             else '⛔ Already running as a Hub node' if s == CynodeStats.asHub \
@@ -97,8 +96,9 @@ details = [cast(Optional[str], None)]
 
 def check_quit(q: bool):
     if q:
-        print(details)
-        sys.exit()
+        for itm in details:
+            print(itm)
+        sys.exit(-1)
 
 style = Style.from_dict({
     'prompt': 'bg:#ansiblue #ffffff',  # Blue background, white text
@@ -219,10 +219,16 @@ print(f"Starting configure Synode {synode_ver}. Return with empty input to abort
 
 has_run = cli.hasrun()
 
+missing_requires = cli.check_prerequisites()
+
+if missing_requires:
+    details.extend(missing_requires)
+    check_quit(True)
+
 if not has_run:
     # 0. central jserv
-    orgs: list[str] # = cast(list, None)
-    orgid: str # = cast(str, None)
+    orgs: list[str] = None # type: ignore
+    orgid: str = None # type: ignore
     while not _quit and not reach_central():
         cli.settings.regiserv = session.prompt(
               message="Please input central service url (empty to quit): ",
@@ -260,20 +266,18 @@ if not has_run:
         The process / interaction of create / find a domain
         :return: response to A.queryDomConfig or A.registDom
         '''
-
         if LangExt.len(domains.orgDomains) == 0:
             options = []
         else:
             options = [(d, d) for d in domains.orgDomains]
 
         options.append((None, 'Create a new domain...'))
-        domid = choice(message="Please select a domain:",
-                       options=cast(list[(str, str)], options),
+        domid : Optional[str] = choice(message="Please select a domain:",
+                       options=options,
                        default=cli.registry.config.domain)
 
         if domid is not None:
             # 3.1. select domain
-            domid = cast(str, domid)
             cli.update_domain(orgtype=cli.settings.market_id, domain=domid, orgid=orgid)
             resp = cli.query_domconf(commuid=orgid, domid=domid)
         else:
