@@ -286,7 +286,6 @@ def checkinstall_exiftool():
         return check
 
 
-# JProtocol.setup('jserv-album')
 jserv_album: Final[str] = 'jserv-album'
 
 install_uri = 'Anson.py3/test'

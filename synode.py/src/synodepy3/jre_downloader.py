@@ -74,7 +74,7 @@ class JreDownloader:
     def progress_text(self, percent: int):
         return f'Downloading JRE: {percent}%{"" if LangExt.isblank(self.jrelease.proxy) else " proxy: " + self.jrelease.proxy}'
 
-    def label_progress(self, blocknum, blocksize, totalsize):
+    def label_progress(self, blocknum: int, blocksize: int, totalsize: int) -> None:
         if self._cancelled:
             return True  # tell the downloader to abort
 
