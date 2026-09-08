@@ -86,10 +86,23 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
     else:
         Utils.logi('Central pswd looks fine.')
 
-    java_home = os.path.expanduser(taskcfg.java_home)
-    Utils.logi('configure JAVA_HOME: {}', java_home)
+    # java_home = os.path.expanduser(taskcfg.java_home)
+    # Utils.logi('configure JAVA_HOME: {}', java_home)
 
-    if not LangExt.isblank(taskcfg.java_home):
+    # if not LangExt.isblank(taskcfg.java_home):
+    #     c.config['run']['env']['JAVA_HOME'] = java_home
+    #     c.run('echo $JAVA_HOME')
+    # else:
+    #     if os.name == 'nt':
+    #         c.run('echo %JAVA_HOME% && echo $JAVA_HOME')
+    #     else:
+    #         c.run('echo $JAVA_HOME')
+
+    if hasattr(taskcfg, 'java_home') and not LangExt.isblank(taskcfg.java_home):
+        java_home = taskcfg.java_home
+        if java_home == 'JAVA_HOME':
+            java_home = os.environ.get('JAVA_HOME', '')
+
         c.config['run']['env']['JAVA_HOME'] = java_home
         c.run('echo $JAVA_HOME')
     else:

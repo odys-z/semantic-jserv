@@ -8,7 +8,7 @@
   "web_inf_dir"  : "src/main/webapp/WEB-INF-0.7",
   "jre_release"  : "../../JRE-Mirror/temurin17-binaries/jdk-17.0.17+10/bins/OpenJDK17U-jre_x64_windows_hotspot_17.0.17_10.zip",
   "jre_name"     : "x64_windows",
-  "java_home"    : "~/jdk/jdk-17.0.20.1",
+  "java_home"    : "$JAVA_HOME",
   "host_json"    : "host.json",
   "download_root": "http://10.10.1.1:1984/portfolio-0.7",
   "vol_files"    : {"volume": ["jserv-main.db", "doc-jserv.db"]},
