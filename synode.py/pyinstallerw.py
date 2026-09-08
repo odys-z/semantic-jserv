@@ -33,7 +33,7 @@ def build_exes():
     requir_pkg("prompt_toolkit")
     requir_pkg("semantics.py3")
     requir_pkg("anson.py3")
-    requir_pkg("jre-mirror")
+    requir_pkg("jre-mirror", "0.1.2")
     requir_pkg("pyside6")
     requir_pkg("pillow")
     requir_pkg("qrcode")
