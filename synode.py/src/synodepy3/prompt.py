@@ -305,16 +305,16 @@ if not has_run:
     # 4 local synode
     # 4.1 resp -> nodes
     def respeers_options(diction: SynodeConfig):
-        return None if LangExt.len(diction.peers) == 0 else \
+        opts = [] if LangExt.len(diction.peers) == 0 else \
             [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in diction.peers]
+        opts.append((('', CynodeStats.die), '[Select another domain]'))
+        opts.append(((None, CynodeStats.die), '[Quit]'))
+        return opts
 
     # 4.2 select a peer
     synid, cynstat = None, CynodeStats.die
     while not _quit and cynstat is not None and cynstat != CynodeStats.create:
-        # [(('node-1', CynodeStats.create), readable_state(CynodeStats.create)), ...]
         nodes = respeers_options(cli.registry.config)
-        nodes.append((('', CynodeStats.die), '[Select another domain]'))
-        nodes.append(((cast(str, None), CynodeStats.die), '[Quit]'))
 
         selected_id = cli.registry.config.synid, ''
         for s in nodes:
