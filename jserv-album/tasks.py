@@ -9,18 +9,19 @@ from pathlib import Path
 from invoke import task, Context
 import os
 
+# Debug Note: PyInsertall uses what ever packages in the user's venv, not isolated one like the build module.
 from anson.io.odysz.common import requir_pkg
 requir_pkg("build")               # by synode.py
 requir_pkg("pyinstaller")         # by synode.py
-requir_pkg("jre-mirror", "0.1.0") # by synode.py
+requir_pkg("jre-mirror", "0.1.2") # by synode.py
 requir_pkg("pillow", "10.0.0")    # by synode.py
 requir_pkg("qrcode")              # by synode.py
 requir_pkg("psutil")              # by synode.py
 requir_pkg("prompt-toolkit", "3.0.52")      # by synode.py
 requir_pkg("pyside6", ["6.6.0", "6.8.2.1"]) # by synode.py
 
-requir_pkg("anson.py3", "0.6.4")
-requir_pkg("semantics.py3", "0.6.4")
+requir_pkg("anson.py3", "0.6.6")
+requir_pkg("semantics.py3", "0.6.9")
 
 from semanticshare.io.oz.invoke import SynodeTask, CentralTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
