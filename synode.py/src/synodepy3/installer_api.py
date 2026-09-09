@@ -879,10 +879,6 @@ class InstallerCli:
         self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
 
-        # self.settings.jserv_utc = datetime.datetime\
-        #                         .now(datetime.timezone.utc)\
-        #                         .strftime('%Y-%m-%d %H:%M:%S')
-
         # Let's wrap into self.settings.Jservs()
         iport_str = f'{self.getProxiedIp()[0]}:{self.getProxiedIp()[1]}'
         myjserv = JServUrl(iport=iport_str, jprotocol=JProtocol(jserv_album))
@@ -927,6 +923,8 @@ class InstallerCli:
     def update_clients(self, clients_sets: Iterable[tuple[Path, str]]) -> None:
         for apppath, setpath in clients_sets:
             csets = cast(AnclientSettings, Anson.from_file(apppath / setpath))
+            try: print("Update client settings", (apppath / setpath).absolute())
+            except: pass
 
             # ISSUE: package should care only one settings, and installer translates, setups.
             csets.market_id = self.registry.config.org.orgType  # self.settings.market_id
@@ -939,8 +937,10 @@ class InstallerCli:
             csets.regiserv = self.settings.regiserv
             csets.admin = self.registry.config.admin
             csets.domain_token = self.find_synuser(csets.admin).pswd
-            # csets.device = f'{self.registry.config.synid}-{LangExt.trunc_right(apppath.parts[-1], 12) if len(apppath.parts) > 0 else "0"}'
+            print("leave csets.device untouched")
 
+            print("csets/AnclientSettings.__type__", csets.__type__,
+                  "DesktopSettings().__type__     ", DesktopSettings().__type__ )
             if csets.__type__ == DesktopSettings().__type__:
                 csets = cast(DesktopSettings, csets)
                 csets.synode_id = self.registry.config.synid
@@ -949,9 +949,13 @@ class InstallerCli:
                 csets.album_web = str(self.settings.webport)
                 csets.java_path = str(java_cmd().absolute().as_posix())
                 csets.wsagent_jar = f'res/ws-agent-{ipcagent_ver}.jar'
+            else:
+                Utils.warn("**** ERROR ****: Any chances to reach here?")
+                Utils.warn("**** ERROR ****: Missed value for saving: {}, {}, {}, ...",
+                           self.registry.config.synid, self.settings.volume, java_cmd())
 
-            print("Saving", Path(apppath) / setpath, ":", csets.synode_id, csets.synode_jserv)
             csets.toFile((apppath / setpath).absolute())
+            print("Saved", Path(apppath) / setpath, ":", csets.synode_id, csets.synode_jserv)
 
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)
