@@ -61,9 +61,6 @@ import io.oz.syn.registry.YellowPages;
 
 /**
  * 
- * Run JettyHelperTest to initialize table a_roles.
- * 
- * -Dsyndocs.ip="host-ip"
  * 
  * @author ody
  */
@@ -287,6 +284,18 @@ public class SynodetierJoinTest {
 		}
 	}
 
+	/**
+	 * Run tx's {@link SynDomanager#updomain(io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate)}, the test version of 
+	 * domain syching. 
+	 * @param tx jetty app index
+	 * @param ck only used as a nyq-vec printer.
+	 * @throws SsException
+	 * @throws IOException
+	 * @throws AnsonException
+	 * @throws TransException
+	 * @throws SQLException
+	 * @throws SAXException
+	 */
 	@SuppressWarnings("deprecation")
 	public static void syncdomain(int tx, Docheck... ck)
 			throws SsException, IOException, AnsonException, TransException, SQLException, SAXException {
