@@ -1137,10 +1137,11 @@ class InstallerCli:
     def check_install_jre(self, jredownloader: Optional[JreDownloader], prog_label=None,
                           cli_progress: Callable[[int, int, int], None]=None):
         '''
+        Check and isntall jre. The JreDownloader will use the proxy if configured in cwd().
         :param jredownloader:
         :param prog_label:
         :param cli_progress:
-        :return: return downlaoder (with background thread) or None if already done
+        :return: return downloader (with background thread) or None if already done
         '''
 
         if jredownloader and jredownloader.isrunning():

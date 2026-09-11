@@ -3,7 +3,7 @@
 Synode.py is the synchronization node for Portfolio, a file / resources synchronization framework.
 
 
-# Version Selection
+# Python Version Selection
 
     2026-09-05
 
@@ -66,3 +66,26 @@ Synode.py is the synchronization node for Portfolio, a file / resources synchron
     # For the porject, cd here
     /opt/python3.12.9/bin/python3.12.9 -m venv .ven3.12.9
   ```
+
+# Service Scripts for Linux Versions
+
+The systemctl command and these scripts will work exclusively on Linux distributions that use systemd as their default init system.
+Here is a breakdown of where it works and where it won't:
+## 🐧 Fully Supported Linux Distributions
+Systemd is standard on almost all major modern Linux distributions:
+
+* Ubuntu (version 15.04 and newer)
+* Debian (version 8 / Jessie and newer)
+* Red Hat Enterprise Linux (RHEL) / CentOS / Rocky Linux / AlmaLinux (version 7 and newer)
+* Fedora (all recent versions)
+* Arch Linux and Manjaro
+* openSUSE and SUSE Linux Enterprise
+
+## ❌ Where it will NOT work
+These scripts will fail on operating systems or environments that do not use systemd:
+
+* macOS: Uses launchd (managed via launchctl), not systemd.
+* Windows: Uses the Windows Services Manager (managed via sc or PowerShell commands like Start-Service), not systemd.
+* Lightweight / Specialized Linux: Distros like Alpine Linux (which uses OpenRC) or Void Linux (which uses runit) do not have systemctl.
+* Standard Docker Containers: Standard, minimal Docker containers typically do not run systemd inside them. If you run these scripts inside a stock Ubuntu or Debian container, systemctl will fail with an error like “System has not been booted with systemd as init system”.
+* WSL 1 / Older WSL 2: Windows Subsystem for Linux disables systemd by default, though newer versions of WSL 2 allow you to enable it explicitly in /etc/wsl.conf.
