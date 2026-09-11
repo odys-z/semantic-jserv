@@ -285,8 +285,9 @@ public class SynodetierJoinTest {
 	}
 
 	/**
-	 * Run tx's {@link SynDomanager#updomain(io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate)}, the test version of 
-	 * domain syching. 
+	 * Run jetties[tx]'s {@link SynDomanager#updomain(io.oz.jserv.docs.syn.SynDomanager.OnDomainUpdate)},
+	 * the test version of domain syching. 
+	 * 
 	 * @param tx jetty app index
 	 * @param ck only used as a nyq-vec printer.
 	 * @throws SsException
