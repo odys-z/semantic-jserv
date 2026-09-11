@@ -63,7 +63,7 @@ ody-*
 reddish-*
 domains-0.8
 tasks.*.json
-!tasks.closed-test.json
+# !tasks.closed-test.json
 *-fingerprint
 !tasks.0.7.8.json
 !tasks.0.8.0.json
