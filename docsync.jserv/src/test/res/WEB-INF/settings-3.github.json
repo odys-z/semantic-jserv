@@ -7,10 +7,10 @@
       "Z": "127.0.0.1:8968/jserv-album"},
  "envars": {
    "Why-VOLUME_PRV": "this is not used but needed for suppressing errors in connects.xml",
-   "WEBROOT_HUB": "http://119.8.29.27:8969",
+   "WEBROOT_HUB": "http://0.0.0.0:8969",
    "VOLUME_PRV": "../../../../volumes-0.7/volume-prv"
  },
- "centralPswd": "123456",
- "installkey": "0123456789ABCDEF",
+ "centralPswd": "89648964",
+ "installkey": "0000000000000000",
  "rootkey": null
 }

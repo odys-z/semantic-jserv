@@ -48,7 +48,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.9.1</version>
+      <version>6.1.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -87,13 +87,13 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>[0.3.4,)</version>
+	    <version>[0.3.5,)</version>
 	</dependency>
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>syndoc-lib</artifactId>
-	    <version>[0.5.20,)</version>
+	    <version>[0.5.21,)</version>
 	</dependency>
 
 	<dependency>
@@ -112,7 +112,7 @@
 	<dependency>
 		<groupId>io.github.odys-z</groupId>
 		<artifactId>anclient.java</artifactId>
-		<version>0.5.20</version>
+		<version>0.5.22</version>
 	</dependency>
 	
 	<dependency>
