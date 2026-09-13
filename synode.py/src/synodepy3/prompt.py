@@ -1,9 +1,8 @@
 import os
 import sys
 from pathlib import Path
-from typing import cast
+from typing import cast, Optional, List, Tuple
 
-from anclient.io.odysz.jclient import SessionClient
 from anson.io.odysz.anson import AnsonException
 from anson.io.odysz.common import LangExt, Utils, passwd_allow_ext
 from prompt_toolkit import PromptSession
@@ -11,20 +10,20 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import choice
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import Validator, ValidationError
+from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
-from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, \
-    path, synode_ui
-from synodepy3.jre_downloader import JreDownloader, _jre_
+from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
+from synodepy3.jre_downloader import _jre_
 from synodepy3.validators import PJservValidator, PIPValidator
 
 
 def reach_central():
     pass
 
-def readable_state(s: str = None):
+def readable_state(s: str = ''):
     return '' if LangExt.len(s) == 0 \
             else '✅ Available planned node' if s == CynodeStats.create \
             else '⛔ Already running as a Hub node' if s == CynodeStats.asHub \
@@ -93,12 +92,13 @@ WantedBy=multi-user.target
     return syn_templ, web_templ
 
 _quit = False
-details = [cast(str, None)]
+details = [cast(Optional[str], None)]
 
 def check_quit(q: bool):
     if q:
-        print(details)
-        sys.exit()
+        for itm in details:
+            print(itm)
+        sys.exit(-1)
 
 style = Style.from_dict({
     'prompt': 'bg:#ansiblue #ffffff',  # Blue background, white text
@@ -108,16 +108,16 @@ style = Style.from_dict({
 # synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
 class QuitValidator(Validator):
-    def validate(self, v: Document) -> None:
+    def validate(self, document: Document) -> None:
         global _quit
-        if not v.text.strip():
+        if not document.text.strip():
             _quit = True
         else:
             _quit = False
 
 class VolumeValidator(Validator):
-    def validate(self, v):
-        parent_dir = os.path.dirname(v.text)
+    def validate(self, document: Document) -> None:
+        parent_dir = os.path.dirname(document.text)
         if not parent_dir:
             parent_dir = os.getcwd()
         if not os.path.isdir(parent_dir):
@@ -126,42 +126,42 @@ class VolumeValidator(Validator):
             raise ValidationError(message=f"Permission denied to write in '{parent_dir}'.")
 
         if Utils.iswindows():
-            for c in v.text:
+            for c in document.text:
                 if c == '\\':
                     raise ValidationError(message=f'Please replace all "\\" with "/"')
 
         try:
-            os.makedirs(path, exist_ok=True)
-            if not os.listdir(path):
-                os.rmdir(path)  # Only remove if empty
-            elif cli.hasrun(path):
-                raise ValidationError(message=f"The volume is already used by a running synode: {v}")
+            os.makedirs(mypath, exist_ok=True)
+            if not os.listdir(mypath):
+                os.rmdir(mypath)  # Only remove if empty
+            elif cli.hasrun(mypath):
+                raise ValidationError(message=f"The volume is already used by a running synode: {document}")
 
             return True
         except PermissionError:
-            raise ValidationError(message=f"Permission denied: Unable to create '{path}'.")
+            raise ValidationError(message=f"Permission denied: Unable to create '{mypath}'.")
         except FileExistsError:
-            raise ValidationError(message=f"A file or directory already exists at '{path}'.")
+            raise ValidationError(message=f"A file or directory already exists at '{mypath}'.")
         except OSError as e:
             raise ValidationError(message=f"An OS error occurred while testing creation: {e}")
 
-class NodeStateValidator(Validator):
-    def validate(self, v):
-        if v[1] == 'installed':
-            raise ValidationError(message=f'Node {v[0]} is installed.')
+# class NodeStateValidator(Validator):
+#     def validate(self, document: Document) -> None:
+#         if document[1] == 'installed':
+#             raise ValidationError(message=f'Node {document[0]} is installed.')
 
 class DomainValidator(Validator):
-    def validate(self, v: Document) -> None:
-        try: LangExt.only_id_len(v.text, minlen=2, maxlen=12)
+    def validate(self, document: Document) -> None:
+        try: LangExt.only_id_len(document.text, minlen=2, maxlen=12)
         except AnsonException:
             raise ValidationError(message=f"domain length: 2 <= Len('{cfg.domain}') <= 12")
 
 class PortsValidator(Validator):
-    def validate(self, v: Document) -> None:
-        if v is None or LangExt.isblank(v.text):
+    def validate(self, document: Document) -> None:
+        if document is None or LangExt.isblank(document.text):
             return
         try:
-            poss = v.text.split(':')
+            poss = document.text.split(':')
             prts = [int(poss[0]), int(poss[1])]
             if 1024 <= prts[0] <= 655535 and 1024 <= prts[1] <= 65535 and prts[0] != prts[1]:
                 return
@@ -170,17 +170,17 @@ class PortsValidator(Validator):
         raise ValidationError(message=f"Valid format web-port:jserv-port, are different and in [1024-65535]")
 
 class DomainTokenValidator(Validator):
-    def validate(self, v: Document) -> None:
-        if v is None or LangExt.isblank(v.text):
+    def validate(self, document: Document) -> None:
+        if document is None or LangExt.isblank(document.text):
             return
-        try: LangExt.only_passwdlen(v.text, minlen=8, maxlen=16)
+        try: LangExt.only_passwdlen(document.text, minlen=8, maxlen=16)
         except AnsonException:
-            raise ValidationError(message=f"token length: 8 <= Len('{cfg.domain}') <= 16, allowed special chars: [{passwd_allow_ext}]")
+            raise ValidationError(message=f"token length must be in [8 ~ 16], allowed special chars: [{passwd_allow_ext}]")
 
 class SyncInsValidator(Validator):
-    def validate(self, v: Document) -> None:
-        if not LangExt.isblank(v.text):
-            err = cli.validate_synins(v.text)
+    def validate(self, document: Document) -> None:
+        if not LangExt.isblank(document.text):
+            err = cli.validate_synins(document.text)
             if err is not None:
                 raise ValidationError(message=err['config.syncIns'])
 
@@ -190,9 +190,9 @@ class MultiValidator(Validator):
     def __init__(self, *validators: Validator):
         self.valids = validators
 
-    def validate(self, v):
+    def validate(self, document):
         for vld in self.valids:
-            vld.validate(v)
+            vld.validate(document)
 
 def err_ctx(c, e: str, *args: str) -> None:
     global _quit, details
@@ -209,25 +209,32 @@ cli = InstallerCli()
 cli.registry = cli.load_settings()
 cli.registry = InstallerCli.loadRegistry(cli.settings.volume, 'registry')
 
-ssclient = cast(SessionClient, None)
+ssclient = None
 session = PromptSession(style=style)
 
 cfg = cli.registry.config # for shot
 
-print(f"Starting configure Synode {synode_ui.version}. Return with empty input to abort.")
+from .__version__ import synode_ver
+print(f"Starting configure Synode {synode_ver}. Return with empty input to abort.")
 
 has_run = cli.hasrun()
 
+missing_requires = cli.check_prerequisites()
+
+if missing_requires:
+    details.extend(missing_requires)
+    check_quit(True)
+
 if not has_run:
     # 0. central jserv
-    orgs: list[str] = cast(list, None)
-    orgid: str = cast(str, None)
+    orgs: list[str] = None # type: ignore
+    orgid: str = None # type: ignore
     while not _quit and not reach_central():
         cli.settings.regiserv = session.prompt(
               message="Please input central service url (empty to quit): ",
-              validator=MultiValidator(QuitValidator(), PJservValidator(synode_ui.central_path)),
+              validator=MultiValidator(QuitValidator(), PJservValidator(JServUrl(cli.settings.regiserv).jprotocol.protocolpath)),
               default=cli.settings.regiserv,
-              validate_while_typing=False)
+              validate_while_typing=True)
 
         ssclient = cli.check_cent_login()
         orgs, orgid = cli.query_orgs()
@@ -239,17 +246,17 @@ if not has_run:
 
     # 1. orgs / community
     session.prompt(
-        message=f"Portfolio {synode_ui.version} market ID: {synode_ui.market_id}. ",
+        message=f"Portfolio {synode_ver} market ID: {cli.settings.market_id}. ",
         validator=QuitValidator(),
         default="Return to continue ...")
 
     # 2. bind domains
     # e.g. ['zsu', 'edu-0']
-    domains = cli.query_domx(market=synode_ui.market_id, commu=orgid)
+    domains = cli.query_domx(market=cli.settings.market_id, commu=orgid)
 
     if domains is None:
         Utils.warn('Cannot find domains in market {}, community / org: {}',
-                   synode_ui.market_id, orgid)
+                   cli.settings.market_id, orgid)
         _quit = True
     check_quit(_quit)
 
@@ -259,21 +266,19 @@ if not has_run:
         The process / interaction of create / find a domain
         :return: response to A.queryDomConfig or A.registDom
         '''
-
         if LangExt.len(domains.orgDomains) == 0:
             options = []
         else:
             options = [(d, d) for d in domains.orgDomains]
 
         options.append((None, 'Create a new domain...'))
-        domid = choice(message="Please select a domain:",
-                       options=cast(list[(str, str)], options),
+        domid : Optional[str] = choice(message="Please select a domain:",
+                       options=options,
                        default=cli.registry.config.domain)
 
         if domid is not None:
             # 3.1. select domain
-            domid = cast(str, domid)
-            cli.update_domain(orgtype=synode_ui.market_id, domain=domid, orgid=orgid)
+            cli.update_domain(orgtype=cli.settings.market_id, domain=domid, orgid=orgid)
             resp = cli.query_domconf(commuid=orgid, domid=domid)
         else:
             # 3.2 create domain
@@ -300,19 +305,16 @@ if not has_run:
     # 4 local synode
     # 4.1 resp -> nodes
     def respeers_options(diction: SynodeConfig):
-        # peer_ids = diction.peers if diction is not None else None
-        # return None if LangExt.len(peer_ids) == 0 else \
-        #   [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in peer_ids]
-        return None if LangExt.len(diction.peers) == 0 else \
+        opts = [] if LangExt.len(diction.peers) == 0 else \
             [((p.synid, p.stat), f'{p.synid} - {readable_state(p.stat)}') for p in diction.peers]
+        opts.append((('', CynodeStats.die), '[Select another domain]'))
+        opts.append(((None, CynodeStats.die), '[Quit]'))
+        return opts
 
     # 4.2 select a peer
     synid, cynstat = None, CynodeStats.die
     while not _quit and cynstat is not None and cynstat != CynodeStats.create:
-        # [(('node-1', CynodeStats.create), readable_state(CynodeStats.create)), ...]
         nodes = respeers_options(cli.registry.config)
-        nodes.append((('', CynodeStats.die), '[Select another domain]'))
-        nodes.append(((cast(str, None), CynodeStats.die), '[Quit]'))
 
         selected_id = cli.registry.config.synid, ''
         for s in nodes:
@@ -344,6 +346,7 @@ if not has_run:
         default=f"{Path(os.getcwd()).as_posix()}/vol")
 
     check_quit(_quit)
+    print(cli.settings.volume)
 
 else:
     print(f'This folder and the volume has already run as [{cfg.domain}]{cfg.synid}')
@@ -369,7 +372,7 @@ else:
 check_quit(_quit)
 
 # 5 ports
-def parse_web_jserv_ports(ports: str) -> [int, int]:
+def parse_web_jserv_ports(ports: str) -> List[int]:
     try:
         if LangExt.len(ports) == 0:
             ports = f'{web_port0}:{serv_port0}'
@@ -384,7 +387,7 @@ def default_ports(s: AppSettings) -> str:
     return f'{web_port0 if s.webport == 0 else s.webport}:{serv_port0 if s.port == 0 else s.port}'
 
 ports = session.prompt(
-    message=f'Please set the ports. Format: "synode-port : www-port"\n',
+    message=f'Please set the ports. Format: "www-port : synode-service", [1024-65535]\n',
     default=default_ports(cli.settings),
     validator=MultiValidator(QuitValidator(), PortsValidator()))
 
@@ -416,7 +419,7 @@ if cli.settings.reverseProxy:
     check_quit(_quit)
 
     reverseports = session.prompt(
-        message='Please set the public ports. Format: "date-service-prot : www-port":\n',
+        message='Please set the public ports. Format: "www-port:data-service-port":\n',
         default=default_proxy_ports(cli.settings),
         validator=MultiValidator(QuitValidator(), PortsValidator()))
 
@@ -453,10 +456,10 @@ if cli.registry.config.mode != SynodeMode.hub.name:
         cli.settings.jservs[hub_node.synid] = session.prompt(
                 message=f'Pinging the hub node, {hub_node.synid} ? (Empty to quit) ',
                 default=hub_jserv,
-                validator=MultiValidator(QuitValidator(), PJservValidator()))
+                validator=MultiValidator(QuitValidator(), PJservValidator(cli.syn_protocol.protocolpath)))
         try:
-            rsp = cli.ping(hub_node.jserv)
-            # print('Response', rsp)
+            # rsp = cli.ping(hub_node.jserv)
+            rep = cli.ping(cli.settings.jservs[hub_node.synid], timeout=6) 
         except Exception as e:
             print(e)
             print("There are errors while finding the hub node. But it can still work. Let's continue ...")
@@ -478,21 +481,18 @@ def post_install():
         Utils.warn('TODO 0.7.6, RESP == NULL, handle errors...')
 
 # 7 save & install
-jredownloader = cast(JreDownloader, None)
+jredownloader = None
 
 def jreprog_hook(blocknum, blocksize, totalsize):
     read = blocknum * blocksize
     if totalsize > 0:
         percent = min(100, read * 100 // totalsize)
-        print(f"\rDownloading JRE... {percent}%", end="")
-
+        print(f"\rDownloading JRE... {percent}% ", end="")
 
 if caninstall == 1:
-    # ui.cli.settings.save()
-    # ui.cli.registry.config.save()
     try:
         # in case central replied empty value
-        cli.updateWithUi(market=synode_ui.market_id)
+        cli.updateWithUi(market=cli.registry.config.org.orgType)
         v = cli.validate(ping_hub=False)
         if v is not None:
             session.prompt(message='There are error in settings / configurations ...')
@@ -504,13 +504,8 @@ if caninstall == 1:
 
         cli.install()
         post_err = cli.postFix()
-
-        # ui: submit_jserv()
-        # cli.registry.config.peers = resp.diction.peers
-        # ui: bind_hubjserv()
         post_install()
     except FileNotFoundError or IOError as e:
-        # Changing vol path can reach here ?
         Utils.warn(e)
         session.prompt('Setting up synodepy3 failed.')
         _quit = True
@@ -523,7 +518,7 @@ if caninstall == 1:
         check_quit(_quit)
 
     if Utils.iswindows():
-        session.prompt(f'Synode-cli {synode_ui.version} cannot install the required Windows services.\n'
+        session.prompt(f'Synode-cli is for the remote servers, and cannot install the required Windows services.\n'
                        'Please install it with the GUI version:\n'
                        './setup-gui.exe\n'
                        'And click "install Windows service" with default settings.')
@@ -542,7 +537,7 @@ if caninstall == 1:
                f'Then try login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n'
                f'{login_url}\n\n'
                 'A simple tutorial for installing Unix services is to be build. You have to Google it. Sorry!\n'
-               f'Return to quit Portfolio {synode_ui.version} Setup ...'
+               f'Return to quit Portfolio Setup ...'
                )
 
 def main():

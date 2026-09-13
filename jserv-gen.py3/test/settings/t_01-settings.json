@@ -1,0 +1,9 @@
+{ "type"      : "io.odysz.reflect.PeerSettings",
+  "ansonMsg"  : "io.odysz.semantic.jprotocol.AnsonMsg",
+  "ansons"    : [],
+  "scopeEnums": ["io.odysz.semantic.jprotocol.MsgCode"],
+  "javaEnums" : [],
+  "ansonBody" : "io.odysz.semantic.jprotocol.AnsonBody",
+  "anRequests": ["./echo2.ast.json"],
+  "cpp_gen"   : "test/gen/t_01_echomsg.hpp"
+}

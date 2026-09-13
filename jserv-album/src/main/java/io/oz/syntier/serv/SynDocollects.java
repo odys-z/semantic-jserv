@@ -4,6 +4,7 @@ import static io.odysz.common.LangExt.eq;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.now;
@@ -38,6 +39,7 @@ import io.odysz.semantic.tier.docs.DocsException;
 import io.odysz.semantic.tier.docs.DocsReq;
 import io.odysz.semantic.tier.docs.DocsResp;
 import io.odysz.semantic.tier.docs.FileStream;
+import io.odysz.semantic.util.DAHelper;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.SemanticObject;
 import io.odysz.semantics.x.SemanticException;
@@ -50,7 +52,7 @@ import io.odysz.transact.sql.parts.condition.ExprPart;
 import io.odysz.transact.x.TransException;
 import io.oz.album.peer.AlbumReq;
 import io.oz.album.peer.AlbumReq.A;
-import io.oz.album_delete.AlbumFlags;
+import io.oz.album.AlbumFlags;
 import io.oz.album.peer.AlbumResp;
 import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.Profiles;
@@ -513,8 +515,18 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	
 	DocsResp registDevice(DocsReq body, DocUser usr)
 			throws SemanticException, TransException, SQLException {
+		// enable this for Android 0.7.6
+		// musteq(body.device().org, usr.orgId());
+		mustnonull(body.device(), "Device object is null.");
+		mustnonull(body.device().devname, "Device name is empty!");
+
 		String conn = Connects.uri2conn(body.synuri);
 		DeviceTableMeta devMeta = new DeviceTableMeta(conn);
+		String devname =  body.device().devname;
+		String org = usr.orgId();
+
+		if (DAHelper.count(st, conn, devMeta.tbl, devMeta.devname, devname, devMeta.org, org) > 0) 
+			throw new SemanticException("Device,  %s, already exists in %s.", devname, org);
 
 		if (isblank(body.device().id)) {
 			SemanticObject result = (SemanticObject) synt
@@ -591,10 +603,12 @@ public class SynDocollects extends ServPort<AlbumReq> {
 //	}
 
 	/**
+	 * [0.8.0] This method requires req.synuri for accessing synode resources.
+	 * And requests filed by Web-veiw engines require this function.
+	 * 
 	 * [0.7.0] This method uses req's sys-uri for loading media files, as
 	 * the client is unable to understand synodes' domain.
 	 * 
-	 * @deprecated
 	 * @param resp
 	 * @param req
 	 * @param usr
@@ -608,7 +622,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 		if (req.doc == null || isblank(req.doc.recId()))
 			throw new SemanticException("Requiring file's informantion is empty (Req.doc).");
 		
-		String conn = Connects.uri2conn(req.uri());
+		String conn = Connects.uri2conn(req.synuri);
 		PhotoMeta meta = new PhotoMeta(conn);
 
 		AnResultset rs = (AnResultset) st

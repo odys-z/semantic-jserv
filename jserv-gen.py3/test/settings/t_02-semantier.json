@@ -1,0 +1,9 @@
+{ "type"      : "io.odysz.reflect.PeerSettings",
+  "tier_name" : "semantier",
+  "ansonMsg"  : "io.odysz.semantic.jprotocol.AnsonMsg",
+  "ansons"    : [],
+  "anRequests": ["heartbeat.ast.json",
+                 "session-req.ast.json",
+                 "session-resp.ast.json"],
+  "cpp_gen"   : "test/gen/t_02_semantier.hpp"
+}

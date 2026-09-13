@@ -5,24 +5,33 @@ import shutil
 import sys
 from types import LambdaType
 from typing import cast
-from anson.io.odysz.common import Utils
-from anson.io.odysz.utils import zip2
-from invoke import task, call
+from pathlib import Path
+from invoke import task, Context
 import os
 
-from semanticshare.io.oz.invoke import requir_pkg, SynodeTask, CentralTask
+# Debug Note: PyInsertall uses what ever packages in the user's venv, not isolated one like the build module.
+from anson.io.odysz.common import requir_pkg
+requir_pkg("build")               # by synode.py
+requir_pkg("pyinstaller")         # by synode.py
+requir_pkg("jre-mirror", "0.1.2") # by synode.py
+requir_pkg("pillow", "10.0.0")    # by synode.py
+requir_pkg("qrcode")              # by synode.py
+requir_pkg("psutil")              # by synode.py
+requir_pkg("prompt-toolkit", "3.0.52")      # by synode.py
+requir_pkg("pyside6", ["6.6.0", "6.8.2.1"]) # by synode.py
 
-requir_pkg("anson.py3", "0.4.3")
-requir_pkg("semantics.py3", "0.5.2")
+requir_pkg("anson.py3", "0.6.6")
+requir_pkg("semantics.py3", "0.6.9")
 
+from semanticshare.io.oz.invoke import SynodeTask, CentralTask
+from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
+
+from anson.io.odysz.common import LangExt, Utils
+from anson.io.odysz.utils import gzip2
 from anson.io.odysz.anson import Anson
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 
 version_pattern = '[0-9\\.]+'
-
-# dictionary.json
-synuser_pswd_pattern = '\"pswd\"\\s*:\\s*\"[^"]*\"'
-org_orgid_pattern    = '\"orgId\"\\s*:\\s*\"[^"]*\"'
 
 # synode.json
 re_market_id     = '\"market_id\"\\s*:\\s*\"[^"]*\"'
@@ -42,29 +51,64 @@ re_install_key   = '\"installkey\"\\s*:\\s*\"[^\"]*\"'
 re_webport       = '\"webport\"\\s*:\\s*[0-9]+'
 re_jserv_port    = '\"port\"\\s*:\\s*\\d+'
 
-# post_vals = {}
-
 taskcfg = cast(SynodeTask, None)
 
 @task
-def validate(c):
+def check_env(c):
+    # The active Python binary executing Invoke
+    print(f"Python Executable : {sys.executable}")
+    
+    # Python version details
+    print(f"Python Version    : {sys.version.split()[0]}")
+    
+    # Virtualenv / Environment base path
+    print(f"Prefix / Venv Path: {sys.prefix}")
+
+    print(f"SynodeTask Since Tag: {SynodeTask.since}")
+
+    print("To have invoke run in the curent venv, use")
+    print("python -m invoke build --deploy=tasks.pm-king.json")
+
+
+@task
+def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
+    '''
+    Validate central connection & set JAVA_HOME.
+    '''
     print(f'--------------    validate   ------------------')
-    # print(c)
     global taskcfg
     if taskcfg is None:
-        taskcfg = cast(SynodeTask, Anson.from_file('tasks.json'))
+        taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
     print('taskcfg:', taskcfg.deploy.orgid, taskcfg.version)
 
     task_cent = cast(CentralTask, Anson.from_file(os.path.join(taskcfg.central_dir, 'tasks.json')))
 
     if taskcfg.deploy.central_pswd != task_cent.users['admin']['pswd']: # Issue: should be ['admin'].pswd:
-        Utils.warn('Warning: central_pswd is not set to default value.', file=sys.stderr)
-        sys.exit(1)
+        Utils.warn(f'Warning: central_pswd is not set to default value. Override with {taskcfg.deploy.central_pswd}')
+        # sys.exit(1)
+    else:
+        Utils.logi('Central pswd looks fine.')
+
+    if hasattr(taskcfg, 'java_home') and not LangExt.isblank(taskcfg.java_home):
+        java_home = taskcfg.java_home
+        if java_home == 'JAVA_HOME' or java_home == '$JAVA_HOME' or java_home == '%JAVA_HOME%':
+            java_home = os.environ.get('JAVA_HOME', '')
+        else:
+            java_home = os.path.expanduser(java_home)
+
+        c.config['run']['env']['JAVA_HOME'] = java_home
+        c.run('echo $JAVA_HOME')
+    else:
+        print("Using system environment varialbe JAVA_HOME ...")
+        if os.name == 'nt':
+            c.run('echo %JAVA_HOME% && echo $JAVA_HOME')
+        else:
+            c.run('echo $JAVA_HOME')
 
 
 @task
-def create_volume(c):
+def create_volume(c: Context):
     for vol, fs in taskcfg.vol_files.items():
         if not os.path.isdir(vol):
             os.mkdir(vol)
@@ -82,7 +126,8 @@ def updateApkRes():
         host_json (str): Path to the host.json file.
         res (dict): Dictionary containing the APK resource information.
     """
-    print('Updating host.json with APK resource...', taskcfg.host_json)
+    print(os.getcwd())
+    print('Updating host.json with APK resource => taskcfg.host_json:', taskcfg.host_json)
 
     hosts = cast(ExternalHosts, Anson.from_file(taskcfg.host_json))
     hosts.marketid = taskcfg.deploy.market_id
@@ -95,78 +140,70 @@ def updateApkRes():
     hosts.resources.update(res)
     print('Updated host.json/reources:', hosts.resources)
 
-    downloads = {f'{taskcfg.deploy.orgid}': [f'{taskcfg.download_root}/{taskcfg.zip_name()}']}
-    hosts.synodesetups.update(downloads)
-    print('Updated host.json/synodesetups:', hosts.synodesetups)
-
+    if hasattr(taskcfg, 'download_root') and len(taskcfg.download_root) > 0:
+        downloads = {f'{taskcfg.deploy.orgid}': [f'{taskcfg.download_root}/{taskcfg.zip_name()}']}
+        hosts.synodesetups.update(downloads)
+        print('Updated host.json/synodesetups:', hosts.synodesetups)
+    else:
+        print('*** WARN ***\n*')
+        print('*** WARN ***: Setting resource downlaoding root path is skipped. taskcfg.download_root is empty.')
+        print('*\n*** WARN ***')
 
     hosts.toFile(taskcfg.host_json)
     print('host.json updated successfully.', hosts)
 
     return None
 
-# synode_json_bak = os.path.join(os.getcwd(), 'synode.json.bak')
-# synode_json = ''
 
-@task(pre=[call(validate)])
-def config(c):
+@task
+def config(c: Context, deploy: str = 'tasks.json'):
+    validate(c, deploy)
+
     print(f'--------------    configuration   ------------------')
-
-    # this_directory = os.getcwd()
-
     print(f'-- synode version: {taskcfg.version} --'),
 
-    # version_file = os.path.join(this_directory, 'pom.xml')
     version_file = 'pom.xml'
     Utils.update_patterns(version_file, {
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
+    # apk
     version_file = os.path.join(taskcfg.android_dir, 'build.gradle')
     Utils.update_patterns(version_file, {
         f"app_ver = '{version_pattern}'": f"app_ver = '{taskcfg.apk_ver}'"
     })
 
-    # FIXME This is not correct. To be moved to synode.py tasks.py
-    # global synode_json_bak, synode_json
-    # synode_json = os.path.join(this_directory, '../synode.py/src/synodepy3/synode.json')
-    # shutil.copy2(synode_json, synode_json_bak)
-    synode_json = taskcfg.backup('../synode.py/src/synodepy3/synode.json')
-    Utils.update_patterns(synode_json, {
-        re_market_id: f'"market_id": "{taskcfg.deploy.market_id}"',
-        re_mirror_path('en'): f'"jre_mirror": "{taskcfg.deploy.mirror_path}"',
-        re_central_iport: f'"central_iport": "{taskcfg.deploy.central_iport}"',
-        re_central_path:  f'"central_path" : "{taskcfg.deploy.central_path}"'
+    synode_settings: AppSettings = cast(AppSettings, Anson.from_file(
+        Path(taskcfg.web_inf_dir) / 'settings.github.json'))
+    synode_settings.regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
+    synode_settings.jservs = {}
+    # In 0.8.0, market_id is also configured in settings.json for client Apps.
+    synode_settings.market_id = taskcfg.deploy.market_id
+    synode_settings.market_name = taskcfg.deploy.market
+    synode_settings.jserv_utc = '1911-10-10'
+    synode_settings.centralPswd = taskcfg.deploy.central_pswd
+    synode_settings.webport = taskcfg.deploy.web_port
+    synode_settings.port = taskcfg.deploy.jserv_port
+    synode_settings.rootkey = ''
+    synode_settings.installkey = taskcfg.deploy.root_key
+    synode_settings.toFile(Path(taskcfg.web_inf_dir) / 'settings.json')
+
+    # ipc-agent.jar
+    version_file = 'pom.xml'
+    Utils.update_patterns(version_file, {
+        f'<!-- auto update token TASKS.PY/CONFIG --><version>{version_pattern}</version>':
+            f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
-    diction_file = taskcfg.backup(os.path.join(taskcfg.registry_dir, 'dictionary.json'))
-    Utils.update_patterns(diction_file, {
-        org_orgid_pattern   : f'"orgId": "{taskcfg.deploy.orgid}"',
-        synuser_pswd_pattern: f'"pswd": "{taskcfg.deploy.syn_admin_pswd}"'
-    })
-
-    settings_json = taskcfg.backup(os.path.join(taskcfg.web_inf_dir, 'settings.json'))
-    Utils.update_patterns(settings_json, {
-        re_central_pswd: f'"centralPswd" : "{taskcfg.deploy.central_pswd}"',
-        re_webport     : f'"webport"     : {taskcfg.deploy.web_port}',
-        re_jserv_port  : f'"port"        : {taskcfg.deploy.jserv_port}',
-        re_install_key : f'"installkey"  : "{taskcfg.deploy.root_key}"'
-    })
-
-    ''' And save tasks-central.json
-    central_settings = cast(SynodeTask, Anson.from_file('central/settings.json'))
-    taskcfg.config_central(central_settings)
-    central_settings.toFile('central/settings.json')
-    '''
 
 @task
-def clean(c):
-    if not os.path.exists(taskcfg.dist_dir):
-        os.makedirs(taskcfg.dist_dir, exist_ok=True)
+def clean(c: Context):
+    if not os.path.exists(taskcfg.package_dir):
+        os.makedirs(taskcfg.package_dir, exist_ok=True)
 
-    for item in os.listdir(taskcfg.dist_dir):
-        item_path = os.path.join(taskcfg.dist_dir, item)
+    for item in os.listdir(taskcfg.package_dir):
+        item_path = os.path.join(taskcfg.package_dir, item)
         print('cleaning', item_path, taskcfg.zip_name())
         if item_path == taskcfg.zip_name():
             if os.path.isfile(item_path):
@@ -175,67 +212,266 @@ def clean(c):
                 shutil.rmtree(item_path)
 
 
-@task(config)
-def build(c):
-    # def cmd_build_synodepy3(version:str, web_ver:str, html_jar_v:str) -> str:
+@task
+def install_maven_local(c: Context, deploy: str='tasks.0.8.0.json', gpg: str = None):
+    '''
+    Install jserv-album's depending jars locally.
+
+    [INFO] --------------------< io.github.odys-z:jserv-album >--------------------
+    [INFO] io.github.odys-z:jserv-album:jar:0.8.0
+    [INFO] +- io.github.odys-z:docsync.jserv:jar:0.3.3:compile
+    [INFO] |  +- io.github.odys-z:semantic.DA:jar:1.5.24:compile
+    [INFO] |  |  +- io.github.odys-z:semantics.transact:jar:1.5.77:compile
+    [INFO] |  |  |  |- io.github.odys-z:antson:jar:1.0.8:compile
+    [INFO] |  |- io.github.odys-z:synodict.jclient:jar:0.1.8:compile
+    [INFO] +- io.github.odys-z:syndoc-lib:jar:0.5.20:compile
+    [INFO] |  |- io.github.odys-z:semantic.jserv:jar:1.5.17:compile
+    [INFO] +- io.github.odys-z:albumtier:jar:0.5.4:test              - For Android
+    [INFO] +- io.github.odys-z:anclient.java:jar:0.5.20:compile
+    [INFO] |- io.github.odys-z:synodict.central:jar:0.1.8:test       X
+
+    Also install html-service
+    :param c:
+    :param gpg: gpg-passphrase
+    :return: None
+    '''
+
+    if LangExt.isblank(gpg):
+        Utils.warn("gpg-passphrase is blank!")
+        sys.exit(-1)
+    
+    validate(c, deploy=deploy)
+
+    pom_locations = [
+        '../../antson/antson.java',
+        '../../semantic-transact/semantic.transact',
+        '../../semantic-DA/semantic.DA',
+        '../../semantic-jserv/semantic.jserv',
+        '../../semantic-jserv/jserv-album-lib',
+        '../../anclient/java/eclipse-workspace/anclient.jserv',
+        '../../Semantic-Network/registration/jclient',
+        '../../Semantic-Network/registration/jserv',
+        '../../semantic-jserv/docsync.jserv',
+        '../../anclient/examples/example.android/albumtier',
+
+        '../../html-service/java'
+    ]
+
+    print('----------  Install Local Maven ---------')
+    for pth in pom_locations:
+        mvn = f'mvn clean compile package install -Dgpg.passphrase={gpg} -DskipTests'
+        print('****************************************************************************')
+        print('*', pth, ":", mvn)
+        print('****************************************************************************')
+        ret = c.run(f'cd {pth} && {mvn}')
+        print('OK:', ret.ok, ret.stderr)
+
+    c.run('mvn clean dependency:tree | grep io.github.odys-z')
+
+
+@task
+def install_py_local(c: Context, venv_build: str = None):
+    '''
+    Install python packages locally in the target venv.
+
+    To make sure everything is re-built locally,
+
+    :: bash
+        inv install-py-local --venv-build=.venv391
+    ..
+
+    To install the latest wheel in dist/ without re-building, ignore the venv_build parameter:
+    
+    :: bash
+        inv install-py-local
+    ..
+
+    :param c: Context object
+    :param venv_build: optional venv path for building wheel packages (e.g., ".venv391").
+                        If None (default), skipping build and directly installing the latest wheel in dist/
+    '''
+
+    import subprocess
+
+    def get_venv_python(venv_name: str) -> str:
+        """Returns absolute path to python executable inside target venv (cross-platform)."""
+        venv_path = Path(venv_name).resolve()
+        python_bin = venv_path / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        return str(python_bin) if python_bin.exists() else sys.executable
+
+    py_exec = get_venv_python(venv_build) if venv_build else sys.executable
+    orig_cwd = Path.cwd()
+
+    def run_cmd(cmd: list[str], check: bool = True) -> None:
+        print(f"==> Running: {' '.join(cmd)}")
+        subprocess.run(cmd, check=check)
+
+    printings = []
+
+    def install_pkg(dst_pth: Path, pkg_name: str) -> None:
+        abs_dst = dst_pth.resolve()
+        try:
+            os.chdir(abs_dst)
+            print(f"\nWorking directory: {abs_dst}")
+
+            if venv_build is not None:
+                # 1. Clean old build artifacts
+                run_cmd([py_exec, "-c",
+                        "import shutil, glob; [shutil.rmtree(p, ignore_errors=True) for p in ['dist', 'build'] + glob.glob('*.egg-info')]"
+                ])
+
+                # 2. Build the wheel
+                run_cmd([py_exec, "-m", "build"])
+
+            # 3. Uninstall previous version
+            run_cmd([py_exec, "-m", "pip", "uninstall", "-y", pkg_name], check=False)
+
+            # 4. Locate newest wheel file
+            wheels = sorted(Path("dist").glob("*.whl"), key=os.path.getmtime, reverse=True)
+            if not wheels:
+                print(f"Error: No wheel file found in {abs_dst / 'dist'}", file=sys.stderr)
+                sys.exit(1)
+
+            latest_wheel = wheels[0]
+
+            # 5. Install newest wheel
+            run_cmd([py_exec, "-m", "pip", "install", str(latest_wheel)])
+            # print(f"==> Installed: {latest_wheel}")
+            printings.append(f"==> Installed: {latest_wheel}")
+
+        finally:
+            os.chdir(orig_cwd)
+
+    packages = [
+        (Path("../../antson/py3"), "anson.py3"),
+        (Path("../../antson/semantics.py3"), "semantics.py3"),
+        (Path("../../JRE-Mirror"), "jre-mirror"),
+        (Path("../../anclient/py3"), "anclient.py3"),
+    ]
+
+    print('----------  Install Local Python Packages  ---------')
+    for p, n in packages:
+        install_pkg(p, n)
+
+    for p in printings:
+        print(p)
+
+
+@task
+def build(c: Context, deploy: str = 'tasks.json'):
+    '''
+    Build with build commands.
+    - desktop app
+    invoke shallo-pack, replace att-setings.json with invoke pack-settings, wsport = ...
+    :param c: context
+    '''
+    global taskcfg
+
+    if not os.path.exists(deploy):
+        Utils.warn(f"[ERROR] Configure file for deploying doesn't exist: {deploy}")
+        return
+
+    config(c, deploy)
+
+    absdeploy = Path(deploy).absolute()
+    web_dist = Path(taskcfg.web_root_dir) / 'web-dist'
+
     def cmd_build_synodepy3() -> str:
         """
         Get the command to build the synode.py3 package.
-        
+        input:
+            web_ver: for web srv id
         Returns:
             str: The command to build the package.
         """
-        print(f'Building synode.py3 {taskcfg.version} with web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
+        print(f'Building synode.py3 {taskcfg.version}, web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
+        cmd = f"invoke build --deploy={absdeploy}"
+        return cmd
 
-        if os.name == 'nt':
-            return f'set SYNODE_VERSION={taskcfg.version} & set JSERV_JAR_VERSION={taskcfg.version} & set WEB_VERSION={taskcfg.web_ver} & set HTML_JAR_VERSION={taskcfg.html_jar_v} & invoke build'
-        else:
-            return f'export SYNODE_VERSION="{taskcfg.version}" JSERV_JAR_VERSION="{taskcfg.version}" WEB_VERSION="{taskcfg.web_ver}" HTML_JAR_VERSION="{taskcfg.html_jar_v}" && invoke build'
+    def cmd_cp_wsagent_jar() -> None:
+        def src_wsagent_jar() -> str:
+            '''
+            Get ws-agent/target/ws-agent-#.#.#.jar fullpath.
+            '''
+            global taskcfg
+            return os.path.join(taskcfg.ipcagent_dir, 'target', f'ws-agent-{taskcfg.ipcagent_ver}.jar')
+
+        def desk_dist_res_dir() -> str:
+            global taskcfg
+            return os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, 'res')
+
+        def desk_res_dir() -> str:
+            global taskcfg
+            return os.path.join(taskcfg.desktop_dir, 'tests', 'res')
+
+        print(src_wsagent_jar(), "=>", desk_res_dir())
+        shutil.copy(src_wsagent_jar(), desk_res_dir())
+        print(src_wsagent_jar(), "=>", desk_dist_res_dir())
+        shutil.copy(src_wsagent_jar(), desk_dist_res_dir())
 
     buildcmds = [
-        # replace app_ver with apk_ver?
-        [taskcfg.android_dir, 'gradlew assembleRelease' if os.name == 'nt' else 'echo Android APK building skipped.'],
+        # desktop
+        # - desktop.ipc-agent
+        [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
+        # - desktop.ext, app-settings.json -> dist; create the desktop setting here is necessary for standalone clients
+        [taskcfg.desktop_dir, f'invoke shallow-pack --deploy={absdeploy}'],
+        ['.', cmd_cp_wsagent_jar], # issue: taskcfg.ipcagent_dir cannot be undstand by slint/tasks.py
 
-        # link: web-dist -> anclient/examples/example.js/album/web-dist
+        # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
-        ['.', f'cp -f {taskcfg.android_dir}/app/build/outputs/apk/release/app-release.apk web-dist/res-vol/portfolio-{taskcfg.apk_ver}.apk' \
-                if os.name == 'nt' else f'touch web-dist/res-vol/portfolio-{apk_ver}.apk' ],
+        # JAVA_HOME is set in validate()
+        [taskcfg.android_dir, 'gradlew.bat assembleRelease' if os.name == 'nt' else './gradlew assembleRelease'],
 
-        ['web-dist/private', lambda: updateApkRes()],
-        ['.', 'cat web-dist/private/host.json'],
-        ['web-dist', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
-        ['../../anclient/examples/example.js/album', 'webpack'],
+        ['.', f'cp -f {taskcfg.get_gradleprj_apk()} {web_dist}/res-vol/{taskcfg.get_apk_name()}' \
+                if os.name == 'nt' else f'touch {web_dist}/res-vol/portfolio-{taskcfg.apk_ver}.apk' ], # TODO build apk in Linux...
 
+        [f'{web_dist}', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
+        [taskcfg.web_root_dir, 'webpack'],
+
+        [web_dist, updateApkRes],
+        ['.', f'cat {web_dist}/private/host.json'],
+
+        #
         ['.', 'mvn clean compile package -DskipTests'],
         ['../../html-service/java', 'mvn clean compile package'],
 
-        # use vscode bash for Windows
-        # ['../synode.py', cmd_build_synodepy3(version, web_ver, html_jar_v)],
-        ['../synode.py', cmd_build_synodepy3()],
-
-        # ['../synode.py', 'invoke zipRegistry'],
-        # ['.', f'mv ../synode.py/registry-ura-zsu-{version}.zip {dist_dir}']
+        ['../synode.py', cmd_build_synodepy3],
     ]
 
     print('--------------  build  ------------------')
     for pth, cmd in buildcmds:
+        print('****************************************************************************')
         if isinstance(cmd, LambdaType):
-            print(pth, '&&', cmd)
             cwd = os.getcwd()
             os.chdir(pth)
             cmd = cmd()
+            print('*', pth, '&&', cmd)
             if cmd is not None:
                 print(pth, '&&', cmd)
                 ret = c.run(f'cd {pth} && {cmd}')
             os.chdir(cwd)
         else:
-            print(pth, '&&', cmd)
+            print('*', pth, '&&', cmd)
             ret = c.run(f'cd {pth} && {cmd}')
             print('OK:', ret.ok, ret.stderr)
+    print('****************************************************************************')
     return False
 
+
+def pth_packagedir(taskconfig: SynodeTask = None) -> Path:
+    global taskcfg
+    if taskconfig is None:
+        taskconfig = taskcfg
+
+    if taskconfig is None:
+        warn("No task configure can be found")
+        sys.exit(-1)
+
+    return Path(taskconfig.package_dir) / taskconfig.zip_name()
+
+
 @task
-def package(c):
+def package(c: Context, deploy: str = 'tasks.json'):
     """
     Create a ZIP file.
     
@@ -243,23 +479,18 @@ def package(c):
         c: Invoke Context object for running commands.
         zip: Name of the output ZIP file.
     """
+    global  taskcfg
+    if taskcfg is None:
+        taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
     jre_img = taskcfg.jre_release.split('/')[-1]
     temp_jre_path = f'jre17-temp/{jre_img}'
 
-    # dist_name = f'{taskcfg.jre_name if not LangExt.isblank(taskcfg.jre_release) else "online"}-{taskcfg.deploy.market_id}-{taskcfg.deploy.orgid}'
-    # if zip is None:
-    #     zip = f'portfolio-synode-{taskcfg.version}-{dist_name}.zip'
     zip = taskcfg.zip_name()
 
     resources = {
         f'bin/html-web-{taskcfg.html_jar_v}.jar': f'../../html-service/java/target/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
         f'bin/jserv-album-{taskcfg.version}.jar': f'target/jserv-album-{taskcfg.version}.jar',
-        
-        # https://exiftool.org/index.html
-        'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip',
-        
-        temp_jre_path: taskcfg.jre_release,
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
@@ -268,19 +499,23 @@ def package(c):
         'winsrv': '../synode.py/winsrv/*',
         "res": "../synode.py/src/synodepy3/res/*",
 
-        'web-dist': 'web-dist/*',   # use a link for different Anclient folder name
-                                    # ln -s ../Anclient/examples/example.js/album web-dist
-                                    # mklink /D web-dist ..\anclient\examples\example.js\album
+        'web-dist': f'{taskcfg.web_root_dir}/web-dist/*',
+    }
 
+    if os.name == 'nt': resources.update({
+        'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip', # https://exiftool.org/index.html
+        temp_jre_path: taskcfg.check_local_resource(taskcfg.jre_release),
+        'desktop': f'{os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, "*")}',
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
         'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
         'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
-    }
+    })
+    else:
+        print("[*** TODO *** 0.8.0 POSIX]  desktop [album-gui, ws-agent.jar, settings], requires exiftool, jre-posix")
 
-    excludes = ['*.log', 'report.html']
+    excludes = ['*.log', 'report.html', '*.github.json', '.gitignore']
 
     try:
-
         print('------------ package resources --------------')
         print(resources)
 
@@ -294,87 +529,144 @@ def package(c):
         if os.path.isfile(zip):
             os.remove(zip)
 
-        zip2(zip, {**resources, **taskcfg.vol_resource}, excludes)
+        gzip2(zip, {**resources, **taskcfg.vol_resource}, excludes)
 
-        if not os.path.exists(taskcfg.dist_dir):
-            os.makedirs(taskcfg.dist_dir, exist_ok=True)
-        # distzip = os.path.join(taskcfg.dist_dir, zip)
-        distzip = taskcfg.get_distzip()
-
-        if os.path.isfile(distzip):
-            os.remove(distzip)
-
-        print(zip, "->", distzip)
-        os.rename(zip, distzip)
-        taskcfg.distzip = distzip
+        zip = Utils.move_anyway(zip, pth_packagedir(taskcfg), log=True)
 
         print('****************************************************************************************************',
-             f'* Distribution ZIP file is created successfully: {distzip}' if not err else 'Errors while making target (creaded zip file)',
-              '****************************************************************************************************',
+             f'* Distribution ZIP file is created successfully: {zip}' if not err else 'Errors while making target (creaded zip file)',
+            #   '****************************************************************************************************',
               sep='\n')
+
+        # Also build desktop standalone
+        print('****************************************************************************************************')
+        if os.name == 'nt': # not POSIX 0.8.0
+            c.run(f"cd {taskcfg.desktop_dir} && invoke zip-standalone --deploy={Path(deploy).absolute()}")
+            Utils.copy_anyway(taskcfg.get_deskapp_zip(), taskcfg.package_dir, log=True)
+        else:
+            print("[*** TODO *** 0.8.0]  skip building & packaging desktop-posix")
+
+        Utils.copy_anyway(taskcfg.get_gradleprj_apk(), Path(taskcfg.package_dir) / taskcfg.get_apk_name(), log=True)
+        print('****************************************************************************************************')
 
     except Exception as e:
         print(f"Error creating ZIP file: {str(e)}", file=sys.stderr)
         raise
 
+
 @task
-def post_package(c):
-    print('--------------    post build   ------------------')
-    taskcfg.restore_backups()
-    taskcfg.run_deploycmds(c)
-    taskcfg.run_deployscps()
+def run_scps(c: Context, deploy:str = 'task.json'):
+    '''
+    Run taskcfg.deploy_cmds and taskcfg.deploy_scps.
+    :param c:
+    :param deploy: default is 'task.json', where the scp commands are configured.
+    '''
+    print('--------------   run-scps  ------------------')
+    global taskcfg
+    if taskcfg is None:
+        taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+
+    if taskcfg.deploy_scps:
+        requir_pkg('paramiko')
+        requir_pkg('scp')
+
+    ok, err = taskcfg.run_deploycmds(c)
+    print(f"Run deploy_cmds, ok: {ok}, error: {err}")
+
+    taskcfg.run_deployscps(str(taskcfg.get_distzip()))
+    taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.get_apk_name()))
+
+    if os.name == 'nt': # not posix 0.8.0
+        taskcfg.run_deployscps(str(Path(taskcfg.desktop_dir) / taskcfg.package_dir / taskcfg.deskzip_name()))
+
+    print('', sep='\n')
+    print(f"Run deploy_cmds, 3 package copyied.")
 
 
-@task(clean, create_volume, build, package, post_package)
-def make(c):
-    """
-    Create a ZIP file with the specified resources.
-    
-    Args:
-        c: Invoke Context object for running commands.
-    """
-    print('Package be created successfully.')
-    print('********************************************************************************\n'
-          '* But Task make is deprecated, please use: invoke deploy --deploy tasks.json . *\n'
-          '********************************************************************************')
+@task
+def make(c: Context, deploy: str = 'tasks.json', gpg: str = None):
+    '''
+    call build & package (no post-scp of deploy).
+    This task is for separating python 3.9 for build & packaging;
+    and from python 3.10 (3.9.1?) and above for scp command in cfg.deploy_scps.
+    '''
+    if gpg is not None:
+        install_maven_local(c, gpg)
 
-@task(post=[clean, create_volume, build, package, post_package])
-def deploy(c, deploy: str = 'tasks.json'):
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
-    print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
+    clean(c)
+    create_volume(c)
+    build(c, deploy=deploy)
+    package(c, deploy=deploy)
+
 
 @task
-def landing(c, deploy: str = None):
+def deploy(c: Context, deploy: str = 'tasks.json', gpg: str = None):
+    make(c, deploy=deploy, gpg=gpg)
+    run_scps(c, deploy=deploy)
+    print(f'Deployed: {deploy}, central task: {taskcfg.central_dir} ...')
+
+
+@task
+def landing(c: Context, deploy: str = 'tasks.json'):
     global taskcfg
     print(deploy)
     if taskcfg is None:
-        if deploy is None:
-            deploy = 'tasks.json'
-
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
-        print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
-    
+
+    print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
     taskcfg.publish_landings()
 
 
 @task
-def pause(c):
+def pause(c: Context):
     input('Press Enter to continue...')
 
 
-@task(post=[config, pause, post_package])
-def config_post(c, deploy: str = 'tasks.json'):
+@task(post=[config, pause, run_scps])
+def config_post(c: Context, deploy: str = 'tasks.json'):
     print(f'Testing : {deploy}')
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
 
 @task(post=[clean])
-def test_clean(c, deploy: str = 'tasks.json'):
+def test_clean(c: Context, deploy: str = 'tasks.json'):
     print(f'Testing : {deploy}')
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+
+
+@task
+def help(c: Context):
+    """
+    Print a succinct RST-style usage memo for every task in this file.
+    
+    :param c: Invoke context.
+    :return: None
+    """
+    import inspect
+    from invoke import Collection
+
+    ns = Collection.from_module(sys.modules[__name__])
+
+    for name in sorted(ns.tasks):
+        fn = ns.tasks[name].body
+        sig = inspect.signature(fn)
+        params = [
+            pname if p.default is inspect.Parameter.empty else f'{pname}={p.default!r}'
+            for pname, p in sig.parameters.items() if pname != 'c'
+        ]
+        argstr = ', '.join(params)
+
+        title = f'{name}({argstr})'
+        print(title)
+        print('=' * len(title))
+
+        doc = inspect.getdoc(fn)
+        print(doc if doc else '    (undocumented)')
+        print()
 
 
 if __name__ == '__main__':

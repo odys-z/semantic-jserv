@@ -3,9 +3,12 @@ import datetime
 import sys
 from dataclasses import dataclass
 
-from jre_mirror.temurin17 import guess_jretree
+from jre_mirror.temurin17 import Temurin17Release
+from semanticshare.io.odysz.jclient import AnclientSettings
+from semanticshare.io.oz.anclient.app import DesktopSettings, UIResources
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
+from .install_jre import java_cmd
 from .jre_downloader import JreDownloader, _jre_
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -21,7 +24,7 @@ import time
 import zipfile
 from glob import glob
 from pathlib import Path
-from typing import cast, Optional, Callable
+from typing import List, cast, Optional, Callable, Final, Iterable, Tuple, Dict
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
@@ -38,11 +41,11 @@ from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq
 
 from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 
-from .__version__ import jar_ver, web_ver, html_srver
+from .__version__ import jar_ver, web_ver, html_srver, ipcagent_ver
 
-from . import SynodeUi, jre_mirror_key
+from . import jre_mirror_key
 
-path = os.path.dirname(__file__)
+mypath : str = os.path.dirname(__file__)
 '''
 this script file path
 '''
@@ -52,22 +55,24 @@ class CfgPaths:
     '''
     Configuration file paths' memory
     '''
-    vol_dict_json: str
-    web_settings: str
+    vol_dict_json: str #Optional[str]
+    web_settings: str # Optional[str]
     def __init__(self):
-        self.vol_dict_json = cast(str, None)
-        self.web_settings = cast(str, None)
+        pass
+        # self.vol_dict_json = cast(Optional[str], None)
+        # self.web_settings = cast(Optional[str], None)
 
-pths = CfgPaths()
+cfgpaths = CfgPaths()
 '''
 vol_dict_json: file path to dictionary.json,
 web_settings: file path to settings.json
 '''
 
-synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
-err_uihandlers: list[Optional[OnError]] = [None]
+synode_ui = cast(UIResources, Anson.from_file(os.path.join(mypath, "synode.json")))
+err_uihandlers: list[OnError] = cast(list, [None])
 
 def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
+    print(f'pinging {peerserv} with timeout {timeout_snd} seconds...')
     Clients.init(jserv=peerserv, timeout=timeout_snd)
 
     def err_ctx(c: MsgCode, e: str, *args: str) -> None:
@@ -94,7 +99,7 @@ def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
     org.orgId = commuid
     req.dictionary(SynodeConfig(org=org))
 
-    msg = AnsonMsg(Centralport.register).Body(req)
+    msg = AnsonMsg(Centralport.regist).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
 
@@ -110,18 +115,19 @@ def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: st
     req.Uri(func_uri)
     req.diction = SynodeConfig(synode=myid, domain=domid)
     req.diction.org = SynOrg(orgid=orgid, orgname=domid, orgtype=market)
-    msg = AnsonMsg(Centralport.register).Body(req)
+    msg = cast(AnsonMsg, AnsonMsg(Centralport.regist).Body(req))
 
     resp = client.commit(msg, err_uihandlers[0])
 
     if resp is not None:
-        print(client.myservRt, resp.code)
+        print("query_domconfig() respons:", client.myservRt, resp.code)
         print(f'<{RegistReq.A.queryDomConfig}>', resp.toBlock())
 
     return cast(RegistResp, resp)
 
 
-def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int]):
+def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig,
+             s: AppSettings, iport: tuple[str, int], jprotocl: JProtocol):
     '''
     Ask central for registering a domain, expecting a reply with planned synodes (peers).
     :param client:
@@ -133,8 +139,8 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
     :return:
     '''
     req = RegistReq(RegistReq.A.registDom, market)
-    req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, iport=iport)
-    msg = AnsonMsg(Centralport.register).Body(req)
+    req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, iport=iport, jprotcl=jprotocl)
+    msg = AnsonMsg(Centralport.regist).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
 
@@ -146,17 +152,16 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
 
 
 def submit_settings(client: SessionClient, func_uri: str, market: str,
-                    cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int],
+                    cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int], syn_protocol: JProtocol,
                     stat: str = CynodeStats.create):
     req = RegistReq(RegistReq.A.submitSettings, market)\
         .Uri(func_uri)\
-        .protocol_path(JProtocol.urlroot)\
-        .jserurl(cfg.https, iport)\
+        .jserurl(https=cfg.https, iport=iport, jprotcl=syn_protocol)\
         .dictionary(cfg)\
         .mystate(stat)\
-        .Jservtime(s.jserv_utc)\
+        .Jservtime(s.jserv_utc) # .protocol_path(syn_jprotocol.protocolpath)
 
-    msg = AnsonMsg(Centralport.register).Body(req)
+    msg = AnsonMsg(Centralport.regist).Body(req)
 
     resp = client.commit(msg, err_uihandlers[0])
     if resp is not None:
@@ -194,6 +199,7 @@ def valid_local_reg(reg: AnRegistry):
     if LangExt.len(reg.synusers) < 1 or AnRegistry.find_synuser(reg.synusers, id=reg.config.admin) is None:
         raise PortfolioException('Dictionary Synuser configuration is invalid.')
     pass
+
 
 def unzip_file(zip_filepath, extract_to_path):
     """
@@ -237,10 +243,9 @@ def install_exiftool_win():
         if len(xtract_files) == 0:
             subfolder = get_zipath(zips[-1])
             unzip_file(zips[-1], '.')
-            for res in glob(os.path.join(subfolder, '*')):
+            for res in glob(os.path.join(subfolder or '', '*')):
                 print(res)
                 if re.match(f'{subfolder.removesuffix("/")}.exiftool.*', res):
-                    # print(res)
                     shutil.move(res, '.')
 
             try: os.remove(exiftool_exe)
@@ -281,18 +286,10 @@ def checkinstall_exiftool():
         return check
 
 
-"""
-    Suppose there are both github/Anclient & github/semantic-jserv,
-    then in semantic-jserv/synode.py3:
-    ln -s ../../Anclient/examples/example.js/album/web-0.4 web-dist
-"""
-
-# JProtocol.urlroot = 'jserv-album'
-JProtocol.setup('jserv-album')
+jserv_album: Final[str] = 'jserv-album'
 
 install_uri = 'Anson.py3/test'
 
-#### section will be moved to synode.json ####
 host_private = 'private'
 web_host_json = f'{host_private}/host.json'
 
@@ -321,6 +318,24 @@ class InstallerCli:
     regclient: Optional[SessionClient]
     settings: AppSettings
     registry: AnRegistry
+    reg_jserv: JServUrl
+
+    syn_protocol: JProtocol
+    '''
+    Jserv to synodes can be load, modified later, but the protocol is for sure must setup at the first place
+    '''
+    syn_jserv: JServUrl
+    '''
+    Can be load, modified later.
+    '''
+
+    @staticmethod
+    def check_prerequisites() -> Optional[Dict[str, str]]:
+        print("Checking prerequisites")
+        if not check_exiftool():
+            return {"exiftool": "Check and install exiftool failed!" \
+                if Utils.get_os() == 'Windows' \
+                else "Please install exiftool and test it's working with command 'exiftool -ver'"}
 
     @staticmethod
     def parsejservstr(jservstr: str) -> list[list[str]]:
@@ -330,18 +345,21 @@ class InstallerCli:
         """
         return [[kv.strip().removesuffix(':') for kv in line.split('\t')] for line in jservstr.split('\n')]
 
-    def fromat_jservstr_deprecated(jservstr: str):
-        return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
+    # def fromat_jservstr_deprecated(jservstr: str):
+    #     return {kv[0]: kv[1] for kv in InstallerCli.parsejservstr(jservstr)}
 
-    def fromat_jservurl(hub: Synode, jservstr: str):
-        return {None if hub is None else hub.synid: kv[-1] for kv in InstallerCli.parsejservstr(jservstr)}
+    @classmethod
+    def fromat_jservurl(cls, hub: Synode, jservstr: str):
+        return {None if hub is None else hub.synid: kv[-1] for kv in cls.parsejservstr(jservstr)}
 
     def __init__(self):
         self.regclient = None
         self.httpd = None
         self.webth = None
-        self.registry = cast(AnRegistry, None)
-        self.settings = cast(AppSettings, None)
+        # self.registry = cast(AnRegistry, None)
+        # self.settings = cast(AppSettings, None)
+        self.syn_protocol = JProtocol(jserv_album)
+        self.syn_jserv = JServUrl(jservurl='http://localhost', jprotocol=self.syn_protocol)
 
     def list_synodes(self):
         return self.settings.jservs.items()
@@ -353,35 +371,28 @@ class InstallerCli:
     def load_settings(self):
         """
         Load from res_path/setings.json,
-        NOTE TODO 0.7.6 force passward to central: ******
         :return: loaded settings
         """
 
-        pths.web_settings = os.path.join(web_inf, settings_json)
-        print("Loading", pths.web_settings)
-        if os.path.exists(pths.web_settings):
+        cfgpaths.web_settings = os.path.join(web_inf, settings_json)
+        print("Loading", cfgpaths.web_settings)
+        if cfgpaths.web_settings and os.path.exists(cfgpaths.web_settings):
             try:
-                data: AppSettings = cast(AppSettings, Anson.from_file(pths.web_settings))
+                data: AppSettings = cast(AppSettings, Anson.from_file(cfgpaths.web_settings))
                 self.settings = data
             except json.JSONDecodeError as e:
-                raise PortfolioException(f'Loading Anson data from {pths.web_settings} failed.', e)
+                raise PortfolioException(f'Loading Anson data from {cfgpaths.web_settings} failed.', e)
 
             print("Loading registry in", '[registry]')
             self.registry = self.loadRegistry(data.volume, registry_dir)
 
         else:
-            raise PortfolioException(f"Cannot find settings.json: {pths.web_settings}")
+            raise PortfolioException(f"Cannot find settings.json: {cfgpaths.web_settings}")
 
-        # TODO 0.7.6
-        # if LangExt.isblank(self.settings.centralPswd):
-        #     self.settings.centralPswd = ''
-        #     for i in range(1, 7):
-        #         self.settings.centralPswd = self.settings.centralPswd + str(i)
-
-        if LangExt.isblank(self.settings.regiserv):
-            regiserv = f'{"https" if self.registry.config.https else "http"}://{synode_ui.central_iport}/{synode_ui.central_path}'
-            self.settings.regiserv = regiserv if JServUrl.valid(regiserv, synode_ui.central_path) else "http://"
-
+        # if LangExt.isblank(self.settings.regiserv):
+        #     regiserv = f'{"https" if self.registry.config.https else "http"}://{synode_ui.central_iport}/{synode_ui.central_path}'
+        #     self.settings.regiserv = regiserv if JServUrl.valid(regiserv, synode_ui.central_path) else "htt       #
+        self.reg_jserv = JServUrl(self.settings.regiserv)
         return self.settings
 
     @staticmethod
@@ -392,12 +403,12 @@ class InstallerCli:
         :param deflt_path
         :return: AnRegistry
         """
-        pths.vol_dict_json = cast(str, None)
+        # cfgpaths.vol_dict_json = None
         if vol_path is not None:
-            pths.vol_dict_json = os.path.join(vol_path, dictionary_json)
+            cfgpaths.vol_dict_json = os.path.join(vol_path, dictionary_json)
 
-        if vol_path is not None and os.path.isdir(vol_path) and Path(pths.vol_dict_json).is_file():
-            registry = AnRegistry.load(pths.vol_dict_json)
+        if vol_path is not None and os.path.isdir(vol_path) and Path(cfgpaths.vol_dict_json).is_file():
+            registry = AnRegistry.load(cfgpaths.vol_dict_json)
         else:
             diction_json = os.path.join(deflt_path, dictionary_json)
             registry = AnRegistry.load(diction_json)
@@ -427,6 +438,7 @@ class InstallerCli:
         if not Path.exists(path_v):
             Path.mkdir(path_v)
         elif not Path.is_dir(path_v):
+            Utils.warn(f'**** ERROR **** Volume path is not a folder: {path_v}')
             raise IOError(f'Volume path is not a folder: {path_v}')
 
         return Path(os.path.join(path_v, sys_db)), Path(os.path.join(path_v, syn_db)), Path(os.path.join(path_v, syntity_json))
@@ -439,7 +451,7 @@ class InstallerCli:
             ip = s.getsockname()[0]
             return ip
 
-    def getProxiedIp(self):
+    def getProxiedIp(self) -> Tuple[str, int]:
         ip, port = InstallerCli.reportIp(), self.settings.port
         if self.settings.reverseProxy:
             ip, port = self.settings.proxyIp, self.settings.proxyPort
@@ -548,14 +560,17 @@ class InstallerCli:
         """
         p_jar = os.path.join('bin/', jserv_07_jar)
         if not os.path.isfile(p_jar):
+            Utils.warn(f'**** ERROR **** Synode service package is missing: {p_jar}')
             raise FileNotFoundError(f'Synode service package is missing: {p_jar}')
 
         p_jar = os.path.join('bin/', html_web_jar)
         if not os.path.isfile(p_jar):
+            Utils.warn(f'**** ERROR **** Synode html server package is missing: {p_jar}')
             raise FileNotFoundError(f'Synode html server package is missing: {p_jar}')
 
-        if (not os.path.isfile(os.path.join('volume', sys_db))
-                or not os.path.isfile(os.path.join('volume', syn_db))):
+        if not os.path.isfile(os.path.join('volume', sys_db)) or \
+            not os.path.isfile(os.path.join('volume', syn_db)):
+            Utils.warn(f'**** ERROR **** Some initial database or configure files cannot be found in volume: {sys_db}, {syn_db}')
             raise FileNotFoundError(
                 f'Some initial database or configure files cannot be found in volume: {sys_db}, {syn_db}')
         return True
@@ -572,7 +587,7 @@ class InstallerCli:
     def find_synuser(self, uid: str):
         return AnRegistry.find_synuser(self.registry.synusers, uid)
 
-    def validate(self, ping_hub: bool=True):
+    def validate(self, ping_hub: bool=True, ping_timeout: int=12) -> Optional[dict]:
         """
         Validate my congig and settings. Must be called after the data models has been updated.
         NOTE 0.7.6 org.webroot will be forced to be '$WEBROOT' and settings.envars['WEBROOT'] = this.synode
@@ -618,7 +633,7 @@ class InstallerCli:
                 if hub_node is None:
                     return {'hub-node': 'Hub information is missing.'}
                 elif hub_node.synid in self.settings.jservs:
-                    self.ping(self.settings.jservs[hub_node.synid])
+                    self.ping(self.settings.jservs[hub_node.synid], timeout=ping_timeout)
                 else:
                     return {'hub-node': 'Hub information is missing.'}
 
@@ -664,20 +679,16 @@ class InstallerCli:
                 raise PortfolioException(f'Find sizes about {syndb} and {sysdb} != 0.')
         return None
 
-    def gen_wsrv_name(self):
+    def gen_wsrv_name(self) -> str:
         return f'Synode-{jar_ver}-{self.registry.config.synid}'
 
-    def gen_html_srvname(self):
+    def gen_html_srvname(self) -> str:
         return f'Synode.web-{web_ver}-{self.registry.config.synid}'
 
-    def update_domain(self,
-                      orgtype,
-                      orgid: str=None,
-                      reg_jserv: str=None,
-                      domain: str=None,
-                      # 0.7.7 central pswd is build by tasks.py
-                      # centralPswd: str=None
-                      ):
+    def update_domain(self, orgtype,
+                      orgid: Optional[str]=None,
+                      reg_jserv: Optional[str]=None,
+                      domain: Optional[str]=None ):
         '''
         update data model
         :param reg_jserv:
@@ -687,32 +698,25 @@ class InstallerCli:
         '''
         if reg_jserv is not None:
             self.settings.regiserv = reg_jserv
-        # if orgtype is not None:
-        #     self.registry.config.org.orgType = orgtype
         if orgid is not None:
-            # self.registry.config.org.orgId = orgid
             self.registry.config.set_org(orgid=orgid, orgtype=orgtype)
         if domain is not None:
             self.registry.config.set_domain(domain)
             for u in self.registry.synusers:
                 u.domain = domain
 
-        # 0.7.7 central pswd is build by tasks.py
-        # if centralPswd is not None:
-        #     self.settings.centralPswd = centralPswd
-
     def updateWithUi(self,
-            market: str, org: str = None, domain: str=None,
-            reg_jserv: str = None,
-            admin: str=None, domphrase: str=None,
+            market: str, org: Optional[str] = None, domain: Optional[str]=None,
+            reg_jserv: Optional[str] = None,
+            admin: Optional[str]=None, domphrase: Optional[str]=None,
             # 0.7.7 central pswd is build by tasks.py
-            volume: str=None,
-            hubmode: bool=None,
-            jservss: str=None, synid: str=None,
+            volume: Optional[str]=None,
+            hubmode: Optional[bool]=None,
+            jservss: Optional[str]=None, synid: Optional[str]=None,
             reverseProxy=None,
-            port: str=None, webport: str=None,
-            proxyPort: str=None, proxyIp: str=None,
-            syncins: str=None, envars=None, webProxyPort=None):
+            port: Optional[str]=None, webport: Optional[str]=None,
+            proxyPort: Optional[str]=None, proxyIp: Optional[str]=None,
+            syncins: Optional[str]=None, envars=None, webProxyPort=None):
 
         self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain
                            # 0.7.7 central pswd is build by tasks.py
@@ -750,10 +754,10 @@ class InstallerCli:
             self.settings.webProxyPort = int(webProxyPort)
 
         if not LangExt.isblank(webport):
-            self.settings.webport = int(webport)
+            self.settings.webport = int(webport) # type: ignore
 
         if not LangExt.isblank(port):
-            self.settings.port = int(port)
+            self.settings.port = int(port) # type: ignore
 
         if jservss is not None and len(jservss) > 8:
             jsvkvs = InstallerCli.fromat_jservurl(self.find_hubpeer(), jservss)
@@ -790,46 +794,49 @@ class InstallerCli:
         if not os.path.isdir(web_inf):
             raise PortfolioException(f'Folder {web_inf} dose not exist, or not a folder.')
 
-    def ping(self, jsrv, timeout=20):
+    def ping(self, jsrv, timeout=10):
         return ping(install_uri, jsrv, timeout_snd=timeout)
 
-    def check_cent_login(self):
+    def check_cent_login(self) -> SessionClient:
         if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
             self.regclient = SessionClient.loginWithUri(
                 uri=install_uri,
                 servroot=self.settings.regiserv,
                 uid=self.registry.synusers[0].userId,
                 pswdPlain=self.registry.synusers[0].pswd)
-        return self.regclient
+        return self.regclient # type: ignore
 
-    def query_orgs(self) -> (list[str], str):
+    def query_orgs(self) -> Tuple[list[str], str]:
         # 0.7.6
         oid = self.registry.config.org.orgId
         return [oid], oid
 
     def query_domx(self, market: str, commu: str):
-        self.check_cent_login()
-        return query_domx(client=self.regclient,
+        # self.check_cent_login()
+        # return query_domx(client=self.regclient,
+        return query_domx(client= self.check_cent_login(),
                           func_uri=install_uri,
                           market=market,
                           commuid=commu)
 
     def query_domconf(self, commuid: str, domid: str):
-        self.check_cent_login()
-        return query_domconfig(client=self.regclient, func_uri=install_uri,
+        # self.check_cent_login()
+        return query_domconfig(client=self.check_cent_login(),
+                               func_uri=install_uri,
                                myid=self.registry.config.synid,
-                               market=synode_ui.market_id, orgid=commuid, domid=domid)
+                               market=self.settings.market_id, orgid=commuid, domid=domid)
 
     def register(self):
         '''
         Ask central for registering a domain, expecting a reply with planned synodes (peers).
         :return: RegistResp
         '''
-        self.check_cent_login()
+        # self.check_cent_login()
 
-        return register(client=self.regclient, func_uri=install_uri,
-                        market=synode_ui.market_id, cfg=self.registry.config,
-                        s=self.settings, iport=self.getProxiedIp())
+        return register(client=self.check_cent_login(),
+                        func_uri=install_uri,
+                        market=self.settings.market_id, cfg=self.registry.config,
+                        s=self.settings, iport=self.getProxiedIp(), jprotocl=self.reg_jserv.jprotocol)
 
     def jesuis_hub(self) -> bool:
         """
@@ -839,14 +846,15 @@ class InstallerCli:
         return self.registry.config.mode == SynodeMode.hub.name
 
     def submit_mysettings(self):
-        self.check_cent_login()
-        return submit_settings(client=self.regclient,
-                               func_uri=install_uri, market=synode_ui.market_id,
+        # self.check_cent_login()
+        return submit_settings(client=self.check_cent_login(),
+                               func_uri=install_uri, market=self.settings.market_id,
                                cfg=self.registry.config, s=self.settings,
                                iport=self.getProxiedIp(),
+                               syn_protocol=self.syn_protocol,
                                # leave the state unchanged when using setup API.
                                # see also java/AppSettings.synotifyCentral()
-                               stat=cast(str, None)
+                               stat=None # type: ignore
                                ) # if not self.jesuis_hub() else RegistResp().Code(MsgCode.ok)
 
     def install(self):
@@ -871,10 +879,12 @@ class InstallerCli:
         self.settings.startHandler = [implISettingsLoaded, f'{album_web_dist}/{web_host_json}']
         print(self.settings.startHandler)
 
-        self.settings.jserv_utc = datetime.datetime\
-                                .now(datetime.timezone.utc)\
-                                .strftime('%Y-%m-%d %H:%M:%S')
-        self.settings.save(pths.web_settings)
+        # Let's wrap into self.settings.Jservs()
+        iport_str = f'{self.getProxiedIp()[0]}:{self.getProxiedIp()[1]}'
+        myjserv = JServUrl(iport=iport_str, jprotocol=JProtocol(jserv_album))
+        self.settings.Jservs({self.registry.config.synid: myjserv.jserv()})
+
+        self.settings.save(cfgpaths.web_settings)
 
         sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
 
@@ -882,13 +892,13 @@ class InstallerCli:
         InstallerCli.update_private(self.registry.config, self.settings)
         InstallerCli.update_htmlsrv(self.registry.config, self.settings)
 
+        if not Path.exists(Path(self.settings.Volume())):
+            os.mkdir(self.settings.Volume())
         # May 15 2025
         # keep db files, save changes anyway
         # Registry's modification is checked by UI, any cli modification is impossible, except direct editing.
         self.registry.toFile(os.path.join(self.settings.Volume(), dictionary_json))
 
-        if not Path.exists(Path(self.settings.Volume())):
-            os.mkdir(self.settings.Volume())
         if not Path.exists(syndb):
             shutil.copy2(os.path.join("volume", syn_db), syndb)
         if not Path.exists(sysdb):
@@ -897,13 +907,55 @@ class InstallerCli:
             shutil.copy2(os.path.join('registry', syntity_json), syntityjson)
 
         # Prevent deleting tables by JettypApp's checking installation.
-        # This is assuming album-jserv always successfully setup dbs - when db files exist, the tables exist.
+        # This is to assume album-jserv always can successfully setup dbs - when db files exist, the tables exist.
         if self.hasrun() and not LangExt.isblank(self.settings.installkey) and LangExt.isblank(
                 self.settings.rootkey):
             self.settings.rootkey, self.settings.installkey = self.settings.installkey, None
             Utils.warn(f'Volume is set to {self.settings.Volume()}.\n'
-                   f'Ignore existing database:\n{sysdb}\n{syndb}')
+                       f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
+
+        if (Path(mypath) / 'desktop').exists():
+            self.update_clients([(Path('desktop'), 'settings/app-settings.json')])
+        else:
+            print(f'*** Updating destop ignored in os type {os.name}')
+
+    def update_clients(self, clients_sets: Iterable[tuple[Path, str]]) -> None:
+        for apppath, setpath in clients_sets:
+            csets = cast(AnclientSettings, Anson.from_file(apppath / setpath))
+            try: print("Update client settings", (apppath / setpath).absolute())
+            except: pass
+
+            # ISSUE: package should care only one settings, and installer translates, setups.
+            csets.market_id = self.registry.config.org.orgType  # self.settings.market_id
+            if hasattr(self.settings, 'market_name'):
+                csets.market_name = self.settings.market_name
+
+            csets.org = self.registry.config.org.orgId
+            csets.domain = self.registry.config.domain
+            csets.centralPswd = self.settings.centralPswd
+            csets.regiserv = self.settings.regiserv
+            csets.admin = self.registry.config.admin
+            csets.domain_token = self.find_synuser(csets.admin).pswd
+            print("leave csets.device untouched")
+
+            print("csets/AnclientSettings.__type__", csets.__type__,
+                  "DesktopSettings().__type__     ", DesktopSettings().__type__ )
+            if csets.__type__ == DesktopSettings().__type__:
+                csets = cast(DesktopSettings, csets)
+                csets.synode_id = self.registry.config.synid
+                csets.synode_jserv = self.find_peer(csets.synode_id).jserv
+                csets.synode_vol = str(Path(self.settings.volume).absolute().as_posix())
+                csets.album_web = str(self.settings.webport)
+                csets.java_path = str(java_cmd().absolute().as_posix())
+                csets.wsagent_jar = f'res/ws-agent-{ipcagent_ver}.jar'
+            else:
+                Utils.warn("**** ERROR ****: Any chances to reach here?")
+                Utils.warn("**** ERROR ****: Missed value for saving: {}, {}, {}, ...",
+                           self.registry.config.synid, self.settings.volume, java_cmd())
+
+            csets.toFile((apppath / setpath).absolute())
+            print("Saved", Path(apppath) / setpath, ":", csets.synode_id, csets.synode_jserv)
 
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)
@@ -980,12 +1032,6 @@ class InstallerCli:
             hosts.host = config.synid
             hosts.syndomx.update({'domain': config.domain})
             hosts.syndomx.update({config.synid: jsrvhost})
-            # for sid, jurl in settings.jservs.items():
-            #     if sid == config.synid:
-            #         hosts.syndomx.update({sid: jsrvhost})
-            #     else:
-            #         hosts.syndomx.update({sid: jurl})
-
             hosts.toFile(webhost_pth)
 
     @staticmethod
@@ -1015,7 +1061,7 @@ class InstallerCli:
         import threading
     
         # PORT = 8900
-        httpdeamon: [socketserver.TCPServer] = []
+        httpdeamon: List[socketserver.TCPServer] = []
     
         # To serve gzip, see
         # https://github.com/ksmith97/GzipSimpleHTTPServer/blob/master/GzipSimpleHTTPServer.py#L244
@@ -1085,16 +1131,17 @@ class InstallerCli:
         '''
         self.registry.config.overlay(resp.diction)
         self.settings.acceptj_butme(self.registry.config.synid, self.registry.config.peers)
-        self.settings.save(pths.web_settings)
-        self.registry.save(pths.vol_dict_json)
+        self.settings.save(cfgpaths.web_settings)
+        self.registry.save(cfgpaths.vol_dict_json)
 
-    def check_install_jre(self, jredownloader: JreDownloader, prog_label=None,
+    def check_install_jre(self, jredownloader: Optional[JreDownloader], prog_label=None,
                           cli_progress: Callable[[int, int, int], None]=None):
         '''
+        Check and isntall jre. The JreDownloader will use the proxy if configured in cwd().
         :param jredownloader:
         :param prog_label:
         :param cli_progress:
-        :return: return downlaoder (with background thread) or None if already done
+        :return: return downloader (with background thread) or None if already done
         '''
 
         if jredownloader and jredownloader.isrunning():
@@ -1110,7 +1157,7 @@ class InstallerCli:
         jreimg = temurin.set_jre()
         print('JRE:', jreimg)
 
-        if guess_jretree(_jre_) != Path(_jre_):
+        if Temurin17Release.guess_jretree(_jre_) != Path(_jre_):
             jredownloader = JreDownloader(prog_label)
             if prog_label:
                 jredownloader.start_download_gui(temurin)
@@ -1128,7 +1175,7 @@ class InstallerCli:
         :return: True if the required jre is ready.
         '''
         try:
-            if guess_jretree(_jre_) == Path(_jre_):
+            if Temurin17Release.guess_jretree(_jre_) == Path(_jre_):
                 return True
             else: return False
         except: return False

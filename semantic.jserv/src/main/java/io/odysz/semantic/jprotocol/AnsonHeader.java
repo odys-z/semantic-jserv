@@ -44,14 +44,6 @@ public class AnsonHeader extends Anson {
 	 */
 	public AnsonHeader seq(int sq) { return this; }
 
-	/**
-	 * @return js equivalent {md: ssinf.md, ssid: ssinf.ssid, uid: ssinf.uid, iv: ssinf.iv};
-	public static AnsonHeader format(String uid, String ssid, String token) {
-		// formatLogin: {a: "login", logid: logId, pswd: tokenB64, iv: ivB64};
-		return new AnsonHeader(ssid, uid, token);
-	}
-	 */
-
 	public AnsonHeader act(String[] act) {
 		usrAct = act;
 		return this;

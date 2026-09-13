@@ -8,7 +8,6 @@ import static io.odysz.common.LangExt.musteqi;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.mustge;
 import static io.odysz.common.LangExt.mustnonull;
-import static io.odysz.common.LangExt.mustnull;
 import static io.odysz.common.LangExt.notNull;
 import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
@@ -34,7 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.xml.sax.SAXException;
 
 import io.odysz.anson.AnsonException;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.Regex;
 import io.odysz.common.Utils;
 import io.odysz.jclient.SessionClient;
@@ -253,6 +252,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @return this
 	 * @throws Exception 
 	 * @see {@link AppSettings#merge_ip_json2db(SynodeConfig, SynodeMeta, SyncUser, OnError)}
+	 * 
+	 * NOTES / ISSUE This is a reinventing the wheels. Check the README's A Survey on Edge Networking.
 	 */
 	public ExpSynodetier syncIn(float syncIns, OnError err) throws Exception {
 		this.syncInSnds = syncIns;
@@ -263,7 +264,28 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		workers[0] = jserv_worker(err); 
 
-//		if (domanager0.enableRegistryClient())
+		scheduler.scheduleWithFixedDelay(workers[0], 2, 5 * 60, TimeUnit.SECONDS);
+		
+		if (syncIns > 1) {
+			DATranscxt syntb = new DATranscxt(domanager0.synconn);
+			workers[1] = syn_worker(syntb, err);
+			reschedule_1(0);
+		}
+		
+        running = false;
+		return this;
+	
+		/*
+		 * 2026.7.17 To be verified: any side effects?
+		 * 
+		this.syncInSnds = syncIns;
+		this.needExpose = false;
+
+		scheduler = Executors.newSingleThreadScheduledExecutor(
+				(r) -> new Thread(r, f("synworker-%s", synid)));
+
+		workers[0] = jserv_worker(err); 
+
 		scheduler.scheduleWithFixedDelay(workers[0], 500, 15000, TimeUnit.MILLISECONDS);
 		
 		if (syncIns > 1) {
@@ -274,6 +296,37 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		
         running = false;
 		return this;
+		
+		2026.8.15 Verification: seams fine between reddish-2.2 & hub
+		--------------------------------------------------------------------------
+		2026.8.23 Verification: It's not correct if a synode, specially, a hub, can not submit it's jserv.
+
+		this.syncInSnds = syncIns;
+		this.needExpose = false;
+
+		if (syncIns > 1) {
+			scheduler = Executors.newSingleThreadScheduledExecutor(
+					(r) -> new Thread(r, f("synworker-%s", synid)));
+
+			workers[0] = jserv_worker(err); 
+
+			// ISSUE this value, 5000 ms, must updated dynamically
+			int intvms = (int)Math.max(5000, syncIns * 1000);
+			logi("Schedualing worker 0 (jserv_worker) in every %d ms", intvms);
+			scheduler.scheduleWithFixedDelay(workers[0], 500, intvms, TimeUnit.MILLISECONDS);
+		
+			DATranscxt syntb = new DATranscxt(domanager0.synconn);
+			workers[1] = syn_worker(syntb, err);
+			reschedule_1(0);
+		}
+		else {
+			logi("[ ♻.⛔ %s ] Turned off the sync-worker.", synid);
+			logi("[ ♻.⛔ %s ] To turn on sync-worker, set ${volume}/dictionary.json/syncIns > 1.0.", synid);
+		}
+		
+        running = false;
+		return this;
+		*/
 	}
 
 	private Runnable syn_worker(DATranscxt syntb, OnError err) {
@@ -291,8 +344,6 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 				if (domanager0.synodeNetworking(s)) {
 					if (s.loadDBLaterservs(domanager0.syngleton.syncfg, domanager0.synm)) {
 						needExpose = true;
-//						mustnonull(s.rootkey());
-//						mustnull(s.installkey());
 						s.save_rt();
 					}
 				}
@@ -386,6 +437,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 */
 	public void stopScheduled(int sTimeout) {
 		Utils.logi("[ ♻.⛔ %s ] cancling sync-worker ... ", synid);
+		Utils.logi("[ ♻.⛔ %s ] To turn off sync-worker, set ${volume}/dictionary.json/syncIns = -1.0.", synid);
 
 		if (schedualed != null)
 			schedualed.cancel(true);
@@ -649,8 +701,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 			SynDocRefMeta rfm = domanager0.refm;
 			String peer = req.exblock.srcnode;
 
-			musteqi((int)req.range[0], (int)req.blockSeq * AESHelper.blockSize());
-			mustge((long)(req.blockSeq + 1) * AESHelper.blockSize(), (long)req.range[1]);
+			musteqi((int)req.range[0], (int)req.blockSeq * AESHelper2.blockSize());
+			mustge((long)(req.blockSeq + 1) * AESHelper2.blockSize(), (long)req.range[1]);
 			DocRef docref = req.docref.breakpoint(req.range[1]);
 			
 			DBSyntableBuilder st = new DBSyntableBuilder(domanager0);

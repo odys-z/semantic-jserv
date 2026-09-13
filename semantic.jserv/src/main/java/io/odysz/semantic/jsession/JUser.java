@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.odysz.anson.Anson;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.Configs;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -96,21 +96,6 @@ public class JUser extends SemanticObject implements IUser {
 		/** v1.4.11, column of role name */
 		@Semantation (noDBExists = true)
 		public final String roleName;
-
-//		public JUserMeta userName(String unamefield) {
-//			uname = unamefield;
-//			return this;
-//		}
-//
-//		public JUserMeta iv(String ivfield) {
-//			iv = ivfield;
-//			return this;
-//		}
-//
-//		public JUserMeta pswd(String pswdfield) {
-//			pswd = pswdfield;
-//			return this;
-//		}
 	}
 
 	public static class JRoleMeta extends SemanticTableMeta {
@@ -318,12 +303,16 @@ public class JUser extends SemanticObject implements IUser {
 		return this;
 	}
 
-	/** Session Token Knowledge */
+	/**
+	 * Session Token Knowledge at server side.
+	 * An user Object is actually hasn't been send to clients.
+	 * It's only ssinf does.
+	 */
 	String knowledge;
 	@Override public String sessionKey() { return knowledge; }
 
 	@Override
-	public IUser sessionKey(String k) {
+	public IUser privateKnowledge(String k) {
 		this.knowledge = k;
 		return this;
 	}
@@ -351,9 +340,9 @@ public class JUser extends SemanticObject implements IUser {
 	public boolean login(Object reqObj) throws TransException {
 		AnSessionReq req = (AnSessionReq)reqObj;
 		// 1. encrypt db-uid with (db.pswd, j.iv) => pswd-cipher
-		byte[] ssiv = AESHelper.decode64(req.iv);
+		byte[] ssiv = AESHelper2.decode64(req.iv);
 		String c = null;
-		try { c = AESHelper.encrypt(uid, pswd, ssiv); }
+		try { c = AESHelper2.encrypt(uid, pswd, ssiv); }
 		catch (Exception e) { throw new TransException (e.getMessage()); }
 
 		// 2. compare pswd-cipher with j.pswd
@@ -368,7 +357,7 @@ public class JUser extends SemanticObject implements IUser {
 	@Override
 	public boolean guessPswd(String pswd64, String iv64)
 			throws TransException, GeneralSecurityException, IOException {
-		return pswd != null && pswd.equals(AESHelper.decrypt(pswd64, this.ssid, AESHelper.decode64(iv64)));
+		return pswd != null && pswd.equals(AESHelper2.decrypt(pswd64, this.ssid, AESHelper2.decode64(iv64)));
 	}
 
 	@Override

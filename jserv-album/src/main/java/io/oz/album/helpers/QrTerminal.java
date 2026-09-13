@@ -16,6 +16,9 @@ import java.util.Objects;
 
 /**
  * Utility class to print qr codes to the terminal
+ * 
+ * For Ubuntu 26.04 LTS & Eclipse 2026-06,  working font can be in Preference - General - Debug Font:
+ * DejaVu San Mono Book
  */
 public class QrTerminal {
     private static final String WHITE_WHITE = "█";

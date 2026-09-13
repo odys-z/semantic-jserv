@@ -8,7 +8,8 @@ import io.odysz.anson.IJsonable;
 import io.odysz.anson.JsonOpt;
 
 /**
- * @since 0.5.5
+ * @since 1.5.16
+ * File synchronizing task states are nothing about these flags.
  */
 public enum ShareFlag implements IJsonable  {
 	/** Kept as private file ('🔒') at private node. */
@@ -16,7 +17,7 @@ public enum ShareFlag implements IJsonable  {
 	
 	/** 
 	 * To be pushed (shared) to hub ('⇈')
-	 * @deprecated confusing with synchronizing state.
+	 * Temporary state. File synchronizing state is nothing about this.
 	 */
 	pushing("⇈"),
 

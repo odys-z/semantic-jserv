@@ -31,9 +31,11 @@ logs
 .idea/encodings.xml
 *.service
 *.web.service
-tasks.json
+# tasks.json
 exbreak-vols
 proxy.json
 proxy.backup
 proxy.bak
 proxy.back
+XDOWNLOAD.md
+tasks.upload.json

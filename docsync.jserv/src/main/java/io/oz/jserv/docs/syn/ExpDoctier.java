@@ -3,6 +3,7 @@ package io.oz.jserv.docs.syn;
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.transact.sql.parts.condition.Funcall.count;
 import static io.odysz.transact.sql.parts.condition.Funcall.ifElse;
 import static io.odysz.transact.sql.parts.condition.Funcall.sum;
@@ -282,9 +283,26 @@ public class ExpDoctier extends ServPort<DocsReq> {
 			paths.add(s);
 		}
 
-		String conn = Connects.uri2conn(syncReq.uri());
+		/* 2026-8-11 
+		 * This changes won't affect synchronization, but is need to be verified on all clients, esp. Android.
+		String conn = Connects.uri2conn(syncReq.uri()); // FIXME ISSUE Not syncReq.synuri?
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects
 							.getMeta(conn, syncReq.docTabl);
+		mustnonull( meta, "Cannot get meta with conn = %s <- %s, doctabl = %s",
+					conn, syncReq.uri(), syncReq.docTabl);
+		
+		   2026-9-13
+		Clients controlling connection is a wrong design. Now 0.8.0, cpp client uses synuri, android uses uri().
+		String conn = Connects.uri2conn(syncReq.synuri);
+		-> accept both, synuri the priority.
+		 */
+		String conn = Connects.uri2conn(!isblank(syncReq.synuri) ? syncReq.synuri : syncReq.uri());
+
+		ExpDocTableMeta meta = (ExpDocTableMeta) Connects
+							.getMeta(conn, syncReq.docTabl);
+		mustnonull( meta, "Cannot get meta with conn = %s <- %s, doctabl = %s",
+					conn, syncReq.synuri, syncReq.docTabl);
+		/* 2026-8-11 */
 
 		String[] kpaths = syncReq.syncingPage().paths() == null ? new String[0]
 				: syncReq.syncingPage().paths().keySet().toArray(new String[0]);
@@ -335,7 +353,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
-				.doc((ExpSyncDoc) new ExpSyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc(null, "")
 					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(body.doc.clientpath));
@@ -355,7 +373,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((ExpSyncDoc) new ExpSyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc(null, "")
 					.clientname(body.doc.clientname())
 					.cdate(body.doc.createDate)
 					.fullpath(body.doc.clientpath));
@@ -417,7 +435,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		return new DocsResp()
 				.blockSeq(body.blockSeq())
-				.doc((ExpSyncDoc) new ExpSyncDoc()
+				.doc((ExpSyncDoc) new ExpSyncDoc(null, "")
 					.recId(pid)
 					.device(body.device())
 					.folder(photo.folder())
@@ -625,7 +643,7 @@ public class ExpDoctier extends ServPort<DocsReq> {
 				.whereEq("p." + mph.folder, req.pageInf.mergeArgs().getArg("pid"))
 				.rs(b.instancontxt(conn, usr)).rs(0);
 
-		return new DocsResp().doc(new ExpSyncDoc().folder(rs.nxt(), mph));
+		return new DocsResp().doc(new ExpSyncDoc(null, "").folder(rs.nxt(), mph));
 	}
 	
 	String missingFile = "";

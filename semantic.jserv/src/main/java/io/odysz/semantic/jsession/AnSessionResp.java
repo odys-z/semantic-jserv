@@ -1,6 +1,7 @@
 package io.odysz.semantic.jsession;
 
 import io.odysz.anson.Anson;
+import io.odysz.anson.AnsonCtor;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonResp;
 import io.odysz.semantics.SessionInf;
@@ -9,6 +10,7 @@ public class AnSessionResp extends AnsonResp {
 
 	SessionInf ssInf;
 
+	@AnsonCtor(base = {""}, semntics = {"ssInf.ssid=ssid", "ssInf.uid=uid", "ssInf.roleId=roleId"})
 	public AnSessionResp(AnsonMsg<AnsonResp> parent, String ssid, String uid, String ... roleId) {
 		super(parent);
 		ssInf = new SessionInf(ssid, uid, roleId == null || roleId.length == 0 ? null : roleId[0]);
@@ -16,11 +18,13 @@ public class AnSessionResp extends AnsonResp {
 		ssInf.uid(uid);
 	}
 
+	@AnsonCtor(base = {}, initialist = "SessionInf ssInf ssInf")
 	public AnSessionResp(AnsonMsg<? extends AnsonResp> parent, SessionInf ssInf) {
 		super(parent);
 		this.ssInf = ssInf;
 	}
 
+	@AnsonCtor(base = {""})
 	public AnSessionResp() {
 		super("");
 	}

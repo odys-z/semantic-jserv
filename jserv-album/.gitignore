@@ -28,6 +28,7 @@ venv*
 **/WEB-INF/settings.hub.json
 **/WEB-INF/settings.prv.json
 **/WEB-INF/settings.mob.json
+**/WEB-INF-*.*/settings.json
 **/volume-x29
 **/central-vol
 **/settings.x29.json
@@ -55,13 +56,17 @@ qq-*-*
 qqhome
 ody-*
 build-*
+debug-*
 pm-king*
 king
 ody-*
 reddish-*
+domains-0.8
 tasks.*.json
+# !tasks.closed-test.json
 *-fingerprint
 !tasks.0.7.8.json
+!tasks.0.8.0.json
 backup
 *.bak
 temp

@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
 import io.odysz.anson.JsonOpt;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -118,7 +118,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	 * {@link #onPost(AnsonMsg, HttpServletResponse)} are returned successfully, a schema
 	 * to notify subscribers out of the servlet containers, e. g. the Jetty main thread.
 	 * <pre>new Echo(true).setCallbacks(() -> { if (greenlights != null) greenlights[0] = true; }))</pre>
-	 * @since 2.0.0
+	 * @since 1.5.0
 	 * @param onpost
 	 * @param onget
 	 * @return this
@@ -130,7 +130,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 	}
 
 	/**
-	 * @since 2.0.0, this setter gives the singleton a chance to set 
+	 * @since 1.5.0, this setter gives the singleton a chance to set 
 	 * default transaction builder after the extended semantics have been 
 	 * loaded.
 	 * 
@@ -216,7 +216,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			in = new ByteArrayInputStream(b);
 		}
 		else if (!LangExt.isEmpty(anson64)) {
-			byte[] b = AESHelper.decode64(anson64);
+			byte[] b = AESHelper2.decode64(anson64);
 			in = new ByteArrayInputStream(b);
 		}
 		else {
@@ -295,7 +295,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			write(resp, err(MsgCode.exSemantic, e.getMessage()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			write(resp, err(MsgCode.exGeneral, e.getClass().getName(), e.getMessage()));
+			write(resp, err(MsgCode.exGeneral, "%s: %s", e.getClass().getName(), e.getMessage()));
 		}
 	}
 

@@ -228,7 +228,7 @@ public class ExpDoctierservTest {
 		DocsResp rep = devx0.client.synDel(docm.tbl, devx0.device.id, devx0.res);
 		assertEquals(1, rep.total(0));
 
-		ExpSyncDoc dx0 = (ExpSyncDoc) new ExpSyncDoc()
+		ExpSyncDoc dx0 = (ExpSyncDoc) new ExpSyncDoc(null, "")
 					.share(devx0.uid, ShareFlag.publish.name(), new Date())
 					.folder(devx0.device.tofolder)
 					.device(devx0.device.id)
@@ -456,10 +456,6 @@ public class ExpDoctierservTest {
 			jetties[i] = SynotierJettyApp.boot(webinf, cfgxml, settings[i], false)
 						.afterboot()
 						.print("\n. . . . . . . . Synodtier Jetty Application (Test) is running . . . . . . . ");
-			
-			// ISSUE afterboot() will write the same settings.json again, in another thread. 
-			// Using different json files for the test?
-			// Thread.sleep(10000);
 			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
