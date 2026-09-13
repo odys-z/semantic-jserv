@@ -457,10 +457,6 @@ public class ExpDoctierservTest {
 						.afterboot()
 						.print("\n. . . . . . . . Synodtier Jetty Application (Test) is running . . . . . . . ");
 			
-			// ISSUE afterboot() will write the same settings.json again, in another thread. 
-			// Using different json files for the test?
-			// Thread.sleep(10000);
-			
 			// checker
 			ck[i] = new Docheck(azert, zsu, servs_conn[i],
 								jetties[i].syngleton().domanager(zsu).synode,
