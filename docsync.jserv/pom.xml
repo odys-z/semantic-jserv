@@ -4,11 +4,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>docsync.jserv</artifactId>
-<<<<<<< HEAD
-  <version>0.3.4</version>
-=======
   <version>0.3.5</version>
->>>>>>> portfolio-0.8
   <packaging>jar</packaging>
 
   <name>docsync.jserv</name>
@@ -49,11 +45,7 @@
 	<dependency>
     	<groupId>org.junit.jupiter</groupId>
     	<artifactId>junit-jupiter-engine</artifactId>
-<<<<<<< HEAD
-    	<version>5.7.1</version>
-=======
     	<version>6.1.0</version>
->>>>>>> portfolio-0.8
     	<scope>test</scope>
     </dependency>
 
