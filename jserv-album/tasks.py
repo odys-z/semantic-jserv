@@ -140,9 +140,14 @@ def updateApkRes():
     hosts.resources.update(res)
     print('Updated host.json/reources:', hosts.resources)
 
-    downloads = {f'{taskcfg.deploy.orgid}': [f'{taskcfg.download_root}/{taskcfg.zip_name()}']}
-    hosts.synodesetups.update(downloads)
-    print('Updated host.json/synodesetups:', hosts.synodesetups)
+    if hasattr(taskcfg, 'download_root') and len(taskcfg.download_root) > 0:
+        downloads = {f'{taskcfg.deploy.orgid}': [f'{taskcfg.download_root}/{taskcfg.zip_name()}']}
+        hosts.synodesetups.update(downloads)
+        print('Updated host.json/synodesetups:', hosts.synodesetups)
+    else:
+        print('*** WARN ***\n*')
+        print('*** WARN ***: Setting resource downlaoding root path is skipped. taskcfg.download_root is empty.')
+        print('*\n*** WARN ***')
 
     hosts.toFile(taskcfg.host_json)
     print('host.json updated successfully.', hosts)
@@ -507,7 +512,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
     else:
         print("[*** TODO *** 0.8.0 POSIX]  desktop [album-gui, ws-agent.jar, settings], requires exiftool, jre-posix")
 
-    excludes = ['*.log', 'report.html', '*.github.json']
+    excludes = ['*.log', 'report.html', '*.github.json', '.gitignore']
 
     try:
         print('------------ package resources --------------')

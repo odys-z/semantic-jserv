@@ -12,7 +12,7 @@
     "org": {
       "type": "io.oz.syn.registry.SynOrg",
       "meta": "io.oz.jserv.docs.meta.DocOrgMeta",
-      "orgId": "ura", "orgName": "URA", "orgType": "my",
+      "orgId": "ura", "orgName": "URA", "orgType": "alpha",
       "webroot": "$WEBROOT_PRV", "homepage": "", "album0": "album-test"
     },
     "syncIns": 24.0,

@@ -767,6 +767,7 @@ setp (6)
 				.myjserv(jserv(cfg.synid), jserv_utc)
 				.mystate(cfg.mode == SynodeMode.hub ? CynodeStats.asHub : CynodeStats.asPeer);
 
+		req.market = cfg.org.orgType;
 		req.a(RegistReq.A.submitSettings);
 
 		// ISSUE FIXME 

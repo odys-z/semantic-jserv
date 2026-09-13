@@ -196,13 +196,13 @@ class DoclientierTest {
 		pause("Press enter to quite ...");
 	}
 
-	@SuppressWarnings("deprecation")
+//	@SuppressWarnings("deprecation")
 	@AfterAll
 	static void close() throws Exception {
 		logi("Pushes are closed.");
 		logi("Closing service...");
 		serviceLight[0] = true;
-		thr.stop();
+//		thr.stop();
 		thr.join();
 	}
 

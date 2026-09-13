@@ -284,15 +284,20 @@ public class ExpDoctier extends ServPort<DocsReq> {
 		}
 
 		/* 2026-8-11 
-		 * This changes won't affect synchronization, by need to be verified on all clients, esp. Android.
+		 * This changes won't affect synchronization, but is need to be verified on all clients, esp. Android.
 		String conn = Connects.uri2conn(syncReq.uri()); // FIXME ISSUE Not syncReq.synuri?
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects
 							.getMeta(conn, syncReq.docTabl);
 		mustnonull( meta, "Cannot get meta with conn = %s <- %s, doctabl = %s",
 					conn, syncReq.uri(), syncReq.docTabl);
-		 */
-
+		
+		   2026-9-13
+		Clients controlling connection is a wrong design. Now 0.8.0, cpp client uses synuri, android uses uri().
 		String conn = Connects.uri2conn(syncReq.synuri);
+		-> accept both, synuri the priority.
+		 */
+		String conn = Connects.uri2conn(!isblank(syncReq.synuri) ? syncReq.synuri : syncReq.uri());
+
 		ExpDocTableMeta meta = (ExpDocTableMeta) Connects
 							.getMeta(conn, syncReq.docTabl);
 		mustnonull( meta, "Cannot get meta with conn = %s <- %s, doctabl = %s",
