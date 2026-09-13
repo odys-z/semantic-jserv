@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
 import io.odysz.common.LangExt;
@@ -173,7 +173,7 @@ public class BlockChain {
 			throw new TransException("Handling block's sequence error.");
 
 		while (waitings.nextBlock() != null && waitings.blockSeq() + 1 == waitings.nextBlock().blockSeq()) {
-			ofs.write(AESHelper.decode64(waitings.nextBlock().doc().uri64()));
+			ofs.write(AESHelper2.decode64(waitings.nextBlock().doc().uri64()));
 			waitings = waitings.nextBlock();
 		}
 		ofs.flush();

@@ -38,6 +38,8 @@ class DownloadWorker():
     def run(self, on_progress: Callable[[int, int, int], None]):
         mirror = TemurinMirror(self.temurin_release)
 
+        self._finished = False
+        self._cancelled = False
         try:
             jre_temp = f'{_jre_}-temp'
             on_progress(0, 100, 100)
@@ -57,6 +59,7 @@ class DownloadWorker():
             print("JRE-WORKER finished")
         except Exception as e:
             print(e)
+            self._cancelled = True
 
 
 class JreDownloader:
@@ -71,7 +74,7 @@ class JreDownloader:
     def progress_text(self, percent: int):
         return f'Downloading JRE: {percent}%{"" if LangExt.isblank(self.jrelease.proxy) else " proxy: " + self.jrelease.proxy}'
 
-    def label_progress(self, blocknum, blocksize, totalsize):
+    def label_progress(self, blocknum: int, blocksize: int, totalsize: int) -> None:
         if self._cancelled:
             return True  # tell the downloader to abort
 

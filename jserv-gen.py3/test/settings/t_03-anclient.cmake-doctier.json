@@ -1,0 +1,17 @@
+{ "type"       : "io.odysz.reflect.PeerSettings",
+  "tier_name"  : "doctier",
+  "ansonMsg"   : "io.odysz.semantic.jprotocol.AnsonMsg",
+  "ansons"     : [],
+  "scopeEnums" : ["io.odysz.semantic.jprotocol.MsgCode"],
+  "javaEnums"  : [],
+  "ansonBody"  : "io.odysz.semantic.jprotocol.AnsonBody",
+  "anRequests" : ["pageinf.ast.json",
+                  "device.ast.json",
+                  "synentity.ast.json",
+                  "pathspage.ast.json",
+                  "expsyncdoc.ast.json",
+                  "docsreq-test-case-body-invalid.ast.json",
+                  "docsresp.ast.json"],
+  "cpp_include": ["io/odysz/dbmeta.h"],
+  "cpp_gen"    : "test/gen/t_03_synode.hpp"
+}

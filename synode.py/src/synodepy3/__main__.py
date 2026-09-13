@@ -1,7 +1,7 @@
 import sys
 import time
 
-from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
+from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 
 from synodepy3.jre_downloader import JreDownloader
 
@@ -14,7 +14,7 @@ from typing import Optional, cast
 
 import PySide6
 import qrcode
-from PySide6.QtCore import QEvent
+from PySide6.QtCore import QEvent, QSignalBlocker
 from PySide6.QtGui import QPixmap, Qt, QKeyEvent
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QLabel  #, QSpacerItem, QSizePolicy
 
@@ -25,9 +25,8 @@ from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
 from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
-    synode_ui, pths
+    synode_ui, cfgpaths
 from synodepy3.install_jre import validate_jre
-from synodepy3 import SynodeUi
 from synodepy3.jre_downloader import _event_loop_interval_
 
 # Important:
@@ -102,6 +101,10 @@ def has_err():
 
 
 class InstallerForm(QMainWindow):
+    ui: Ui_InstallForm
+    cli: InstallerCli
+    jredownloader: JreDownloader
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.domains_arr = [] # query results for the org / community
@@ -184,7 +187,7 @@ class InstallerForm(QMainWindow):
 
     def query_domx(self, commuid) -> Optional[RegistResp]:
         global errs
-        resp = self.cli.query_domx(synode_ui.market_id, commuid)
+        resp = self.cli.query_domx(market=self.cli.settings.market_id, commu=commuid)
         if resp is None:
             details.append(self.cli.settings.regiserv + '\n' + 'Error while loading domains.')
             errs = True
@@ -203,7 +206,7 @@ class InstallerForm(QMainWindow):
 
         domainid = self.ui.cbbDomains.currentText().strip()
         self.cli.update_domain(
-                orgtype=synode_ui.market_id,
+                orgtype=self.cli.settings.market_id,
                 reg_jserv=self.ui.txtCentral.text().strip(),
                 orgid=self.ui.cbbOrgs.currentText().strip(),
                 domain=domainid)
@@ -257,9 +260,9 @@ class InstallerForm(QMainWindow):
 
             for jsrv in jservss:
                 mon_id = self.ui.cbbPeers.currentText()
-                # if mon_id != self.cli.registry.config.synid:
                 if not self.cli.is_hub(mon_id):
-                    resp = self.cli.ping(jsrv[0])
+                    print(f'Ping with ui timeout:', int(self.ui.txtimeout.text()))
+                    resp = self.cli.ping(jsrv[0], timeout=int(self.ui.txtimeout.text()))
                     if resp is None:
                         details.append(f'\n{mon_id}: {jsrv[0]}\n' + 'Error while pinging.')
                     else:
@@ -277,7 +280,7 @@ class InstallerForm(QMainWindow):
         self.update()
 
         self.cli.updateWithUi(
-            market=synode_ui.market_id,
+            market=self.cli.registry.config.org.orgType,
             org=self.ui.cbbOrgs.currentText(),
             domain=self.ui.cbbDomains.currentText().strip(),
             reg_jserv=self.ui.txtCentral.text().strip(),
@@ -297,7 +300,7 @@ class InstallerForm(QMainWindow):
             proxyPort=self.ui.txtPort_proxy.text(),
             volume=self.ui.txtVolpath.text())
 
-        v = self.cli.validate()
+        v = self.cli.validate(ping_timeout=int(self.ui.txtimeout.text()))
         if v is not None:
             global errs, details
             details.append(v)
@@ -309,21 +312,6 @@ class InstallerForm(QMainWindow):
         '''
         :return:
         '''
-        # if self.jredownloader and self.jredownloader.isrunning():
-        #     return
-        #
-        # from semanticshare.io.oz.edge import Temurin17Release
-        # temurin = Temurin17Release()
-        # temurin.path = synode_ui.langstr(jre_mirror_key)
-        # if os.path.exists('proxy.json'):
-        #     temurin.proxy = 'proxy.json'
-        # jreimg = temurin.set_jre()
-        # print('JRE:', jreimg)
-        # # download_jre_gui(self, temurin)
-        # # self.jredownloader = JreWorker(temurin).start_download(self)
-        # self.jredownloader = JreDownloader(self.ui.lbQr)
-        # self.jredownloader.start_download_gui(temurin)
-
         self.jredownloader = self.cli.check_install_jre(self.jredownloader, self.ui.lbQr)
 
     def save(self):
@@ -366,7 +354,7 @@ class InstallerForm(QMainWindow):
         self.cli.registry.config.syncIns = 0
         try:
             self.update_valid()
-            self.cli.settings.save(pths.web_settings)
+            self.cli.settings.save(cfgpaths.web_settings)
 
             msg_box('The settings is valid. You can close the opening terminal once you need to stop it.\n'
                 'To stat the services, a stand alone running is recommended. Install the service on Windows or start:\n'
@@ -388,7 +376,7 @@ class InstallerForm(QMainWindow):
             err_msg('Start Portfolio service failed', e.msg)
         finally:
             self.cli.registry.config.syncIns = syncins
-            self.cli.settings.save(pths.web_settings)
+            self.cli.settings.save(cfgpaths.web_settings)
 
         time.sleep(0.2)
         self.bind_config()
@@ -434,21 +422,32 @@ class InstallerForm(QMainWindow):
         self.cli.settings.acceptj_butme(binding_synode, self.cli.registry.config.peers)
         self.bind_hubjserv(self.cli.registry.config, self.cli.settings)
 
-    def select_community(self, commuix):
-        domx = self.query_domx(self.ui.cbbOrgs.currentText())
-        self.ui.cbbDomains.clear()
-        if domx is not None:
-            self.domains_arr = domx.domains()
-            my_domid = self.cli.registry.config.domain
-            self.ui.cbbDomains.addItems(self.domains_arr)
+    def select_community(self, commuix: Optional[str] = None):
+        # domx = self.query_domx(self.ui.cbbOrgs.currentText())
+        if commuix is None:
+            commuix = self.ui.cbbOrgs.currentText()
 
-            # avoid change my domain id by select_domx()
-            if not LangExt.isblank(my_domid):
-                self.ui.cbbDomains.setCurrentText(my_domid)
-                self.select_domx(my_domid)
-            # self.cli.registry.config.domain = my_domid
+        domx = self.query_domx(commuix)
 
-    def select_domx(self, dix):
+        self.domains_arr = []
+        prev_domid = self.cli.registry.config.domain
+        with QSignalBlocker(self.ui.cbbDomains):
+            self.ui.cbbDomains.clear()
+            if domx is not None and LangExt.len(domx.domains()) > 0:
+                self.domains_arr = domx.domains()
+                self.ui.cbbDomains.addItems(self.domains_arr)
+
+                # avoid change my domain id by select_domx()
+                if not LangExt.isblank(prev_domid) and prev_domid in self.domains_arr:
+                    self.ui.cbbDomains.setCurrentText(prev_domid)
+            else:
+                self.ui.cbbDomains.setCurrentText('')
+
+        if LangExt.isblank(prev_domid) and LangExt.len(self.domains_arr) > 0:
+            prev_domid = self.domains_arr[0]
+            self.ui.cbbDomains.setCurrentText(prev_domid) # -> if different: self.select_domid(prev_domid)
+
+    def select_domid(self, dix):
         domid = self.ui.cbbDomains.currentText()
         if domid not in self.domains_arr: return
 
@@ -463,7 +462,7 @@ class InstallerForm(QMainWindow):
             self.bind_synode(pr)
         except: pass
 
-    def select_peer(self, idx):
+    def select_peer(self, idx: int):
         """
         Actually doing nothing as there is nothing from config.peers[x] to be bound to ui.
         :param idx:
@@ -480,7 +479,7 @@ class InstallerForm(QMainWindow):
         self.enable_widgets()
 
         hub_srv = self.cli.registry.find_hubpeer().jserv
-        if JServUrl.valid(hub_srv):
+        if self.cli.reg_jserv.valid(hub_srv):
             self.ui.jservLines.setText(hub_srv)
 
     def update_chkreverse(self, check: bool):
@@ -503,14 +502,16 @@ class InstallerForm(QMainWindow):
     def bind_config(self):
         self.cli.registry = self.cli.load_settings()
         self.cli.registry = InstallerCli.loadRegistry(self.cli.settings.volume, 'registry')
-        self.bindIdentity(self.cli.registry, synodeui=synode_ui)
+        self.bindIdentity(self.cli.registry, settings=self.cli.settings)
         self.bindSettings()
         self.enable_widgets()
 
     def bind_cbborg(self, orgs: list[str], elect: str):
-        self.ui.cbbOrgs.clear()
-        self.ui.cbbOrgs.addItems(orgs)
-        self.ui.cbbOrgs.setCurrentText(elect)
+        with QSignalBlocker(self.ui.cbbOrgs):
+            self.ui.cbbOrgs.clear()
+            self.ui.cbbOrgs.addItems(orgs)
+            self.ui.cbbOrgs.setCurrentText(elect)
+        self.select_community(self.ui.cbbOrgs.currentText())
 
     def bind_cbbpeers(self, peers: list[Synode], select_id):
         self.ui.cbbPeers.clear()
@@ -522,15 +523,13 @@ class InstallerForm(QMainWindow):
             self.ui.cbbPeers.setCurrentText(select_id)
             self.select_peer_byid(select_id)
 
-    def bindIdentity(self, registry: AnRegistry, synodeui: SynodeUi):
+    def bindIdentity(self, registry: AnRegistry, settings: AppSettings):
         cfg = registry.config
-        cfg.org.orgType = synodeui.market_id
+        # in 0.8.0, orgType is configured by tasks.py
+        # cfg.org.orgType = settings.market_id
         print(cfg.toBlock())
 
         self.ui.txtAdminId.setText(cfg.admin)
-
-        # self.ui.txtPswd.setText(registry.synusers[0].pswd)
-        # self.ui.txtPswd2.setText(registry.synusers[0].pswd)
         self.ui.txtDompswd.setText(registry.synusers[0].pswd)
 
         self.bind_cbborg([cfg.org.orgId], cfg.org.orgId)
@@ -559,8 +558,8 @@ class InstallerForm(QMainWindow):
             for p in cfg.peers:
                 if p.remarks == SynodeMode.hub.name:
                     jsrv = settings.jservs[p.synid] if p.synid in settings.jservs else None
-                    self.ui.jservLines.setText(f'http://127.0.0.1:{serv_port0}/{JProtocol.urlroot}' \
-                        if LangExt.isblank(jsrv) else jsrv)
+                    # self.ui.jservLines.setText(self.cli.syn_jserv if LangExt.isblank(jsrv) else jsrv)
+                    self.ui.jservLines.setText(jsrv)
 
     def bindSettings(self):
         peers, settings = self.cli.registry.config.peers, self.cli.settings
@@ -675,7 +674,7 @@ class InstallerForm(QMainWindow):
         # self.ui.txtDompswd.setEnabled(neverun) # can change in the future
         self.ui.bCreateDomain.setEnabled(neverun)
 
-        self.cli.update_domain(orgtype=synode_ui.market_id,
+        self.cli.update_domain(orgtype=self.cli.settings.market_id,
                                domain=self.ui.cbbDomains.currentText(),
                                orgid=self.ui.cbbOrgs.currentText())
         # valid_peers = self.cli.is_peers_valid()
@@ -708,14 +707,14 @@ class InstallerForm(QMainWindow):
         # The service is registered by Procrun.exe as \SOFTWARE\WOW6432Node\Apache Software Foundation\Procrun 2.0\...,
         # rather than HKLM\SYSTEM\CurrentControlSet\Services\Synode-7.10-service-id.
         # That makes the services lost after Windows updated.
-        # Brutally re-install and start the service solved problem, and files are synchronized.
+        # Brutally re-install and start the service can solve the problem, and files are synchronized.
         # TODO source review for re-installation is allowed.
         self.ui.bWinserv.setEnabled(True)
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def translateUI():
-            self.ui.gboxRegistry.setTitle(
-                synode_ui.langstrf('gboxRegistry', market=synode_ui.market))
+            self.ui.gboxRegistry.setTitle(synode_ui.langstrf(
+                    'gboxRegistry', market=self.cli.settings.market_id))
 
             lb_help = synode_ui.langstr('lbHelplink')
             self.ui.lbHelplink.setText(f'<a href="{synode_ui.langs[synode_ui.lang]["help_link"]}">{lb_help}</a>.')
@@ -723,8 +722,7 @@ class InstallerForm(QMainWindow):
 
         super().showEvent(event)
 
-        if event.type() == QEvent.Type.Show and self.cli.registry is None:
-            translateUI()
+        if event.type() == QEvent.Type.Show: # FIXME suspicious check: and self.cli.registry is None:
 
             def setVolumePath():
                 volpath = QFileDialog.getExistingDirectory(self, caption='Volume Path')
@@ -737,7 +735,7 @@ class InstallerForm(QMainWindow):
             self.ui.bSignup.clicked.connect(self.signup_demo)
 
             self.ui.cbbOrgs.currentIndexChanged.connect(self.select_community)
-            self.ui.cbbDomains.currentIndexChanged.connect(self.select_domx)
+            self.ui.cbbDomains.currentIndexChanged.connect(self.select_domid)
             self.ui.bCreateDomain.clicked.connect(self.create_find_dom)
 
             self.ui.chkHub.clicked.connect(self.enable_widgets)
@@ -748,11 +746,7 @@ class InstallerForm(QMainWindow):
             self.ui.bPing.clicked.connect(self.pings)
 
             self.ui.bSetup.clicked.connect(self.save)
-            # self.ui.bSetup.clicked.connect(self.check_install_jre)
-
             self.ui.bTestRun.setEnabled(False)
-            # self.ui.bTestRun.clicked.connect(self.test_run)
-
             self.ui.chkReverseProxy.clicked.connect(self.update_chkreverse)
 
             if Utils.get_os() == 'Windows':
@@ -761,6 +755,7 @@ class InstallerForm(QMainWindow):
                 self.ui.bWinserv.setEnabled(False)
 
             self.bind_config()
+            translateUI()
             self.enable_widgets()
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent):
@@ -787,15 +782,27 @@ class InstallerForm(QMainWindow):
             if self.ui.txtCentral.hasFocus() and \
                (key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter):
                 txt = self.ui.txtCentral.text()
-                if JServUrl.valid(jserv=txt, rootpath=synode_ui.central_path):
+                if self.cli.reg_jserv.is_valid(txt): # check protocol path
                     self.cli.settings.regiserv = txt
+                    self.cli.reg_jserv = JServUrl(txt)
                     communs, communid = self.cli.query_orgs()
                     self.bind_cbborg(communs, communid)
+                    self.ui.statusbar.showMessage("Ready")
+                else:
+                    # synode_ui.status.text = "Invalid Registry url"
+                    self.ui.statusbar.showMessage("Invalid Registry url")
         return super().eventFilter(obj, event)
 
 
-if __name__ == "__main__":
+def main():
+    """
+    Entry-point: synode-gui (pyproject.toml [project.scripts])
+    """
     app = QApplication(sys.argv)
     widget = InstallerForm()
     widget.show()
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

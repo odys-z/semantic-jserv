@@ -1,1 +1,6 @@
 test/gen
+.idea
+**/*test.txt.idea
+
+ast
+!ast/docsreq-test-case-body-invalid.ast.json

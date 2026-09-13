@@ -88,6 +88,18 @@ public class AppSettings extends Anson {
 	 */
 	static String reg_uri = "/regiest-sys";
 
+	/**
+	 * @since 0.3.4 (Portofolio 0.8.0),
+	 * not used directly, but cannot lost for the installer and clients needing this.
+	 */
+	public String market_id;
+
+	/**
+	 * @since 0.3.4 (Portofolio 0.8.0),
+	 * not used directly, but cannot lost for the installer and clients needing this.
+	 */
+	public String market_name;
+	
 	@AnsonField(ignoreFrom=true, ignoreTo=true)
 	String webinf;
 	
@@ -193,7 +205,6 @@ public class AppSettings extends Anson {
 		return this;
 	}
 
-
 	String installkey;
 	public String installkey() { return installkey; }
 
@@ -285,24 +296,25 @@ public class AppSettings extends Anson {
 	}
 	
 	/**
-	 * Move to Antson?
+	 * Save to file: {@link #json}-"fingerprint".
+	 * 
 	 * @return
 	 * @throws AnsonException
 	 * @throws IOException
 	 */
 	public AppSettings save_rt() throws IOException {
-		// according to Grok
-//		try (FileOutputStream inf = new FileOutputStream(new File(json))) {
-//			toBlock(inf, JsonOpt.beautify());
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//			throw new AnsonException(e);
-//		} 
-//		return this;
-
 		mustnonull(rootkey);
 		mustnull(installkey);
 
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), json);
+		toFile(json, JsonOpt.beautify());
+
+		// TODO Let's flag this section with debug, my field that is configurable.
+		String backup = f("%s-fingerprint", json);
+		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), backup);
+		toFile(backup, JsonOpt.beautify());
+		return this;
+		
 		/*
 		String tempname = f("%s.%d", json, (int)(Math.random() * 1000));
 		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), tempname);
@@ -332,14 +344,6 @@ public class AppSettings extends Anson {
 		Utils.logi("=== settings.json saved successfully ===");
 		*/
 
-		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), json);
-		toFile(json, JsonOpt.beautify());
-
-		// TODO Let's flag this section with debug, my field that is configurable.
-		String backup = f("%s-fingerprint", json);
-		Utils.logi("=== [%s] writing %s ===", DateFormat.now(), backup);
-		toFile(backup, JsonOpt.beautify());
-		return this;
 	}
 	
 	public AppSettings() {
@@ -590,7 +594,7 @@ Two Workers Schema
 ==================
 
 The jservs of other synodes is merged from both other peers and central.
-- Worker 0 manage AppSettings.jservs, reaches only central, caring noth about peers;
+- Worker 0 manage AppSettings.jservs, reaches only central, caring nothing about peers;
 - worker 1 queries all possible peers and merge into db, caring nothing about central and AppSettings.jservs;
 - both workers are monitoring ip changes;
 - [0.7.6] settings.json[jservs] takes effect if and only if the synode has rebooted.
@@ -627,9 +631,9 @@ Notes on steps
 step (1)
 --------
 
-Brutally accept user intervention at stat up, if jserv_utc the saving time is later, this reqires:
+Brutally accept user intervention at start up, if jserv_utc the saving time is later, this requires:
 - any newly update by both workers must be saved to file.
-- Amdin is responsible for failed connections (failed connection can be correct)
+- Admin is responsible for failed connections (failed connection can be correct)
 
 setp (6)
 --------
@@ -676,7 +680,6 @@ setp (6)
 			// (1.3) local != null, jservs_utc > syn_node[others].utc,
 			toSubmit = refresh_myserv(c, synm);
 		
-		// localIp = nextIp;
 
 		try {
 			if (registryClient == null) {
@@ -695,9 +698,6 @@ setp (6)
 
 			if (mergeReply_butme(c, resp, synm) || toSubmit) {
 				loadDBLaterservs(c, synm);
-
-//				mustnonull(rootkey);
-//				mustnull(installkey);
 				save_rt();
 			}
 		} catch (IOException e) {
@@ -738,6 +738,11 @@ setp (6)
 	 * 
 	 * See also synodepy3.InstallerCli.submit_mysettings()
 	 * 
+	 * Note 2026-8-12
+	 * 
+	 * The registry serivce well save an IP field in table c_synodes, which is not this
+	 * node's IP. It's the source IP the service figured out.
+	 * 
 	 * @param funcuri
 	 * @param cfg
 	 * @param client
@@ -762,11 +767,15 @@ setp (6)
 				.myjserv(jserv(cfg.synid), jserv_utc)
 				.mystate(cfg.mode == SynodeMode.hub ? CynodeStats.asHub : CynodeStats.asPeer);
 
+		req.market = cfg.org.orgType;
 		req.a(RegistReq.A.submitSettings);
-		req.protocolPath = JProtocol.urlroot;
+
+		// ISSUE FIXME 
+		// This is a design error. If a client is able to connect, no need to tell the server.
+		req.myProtocolPath = JProtocol.urlroot;
 
 		RegistResp resp = client.commit(client
-					.userReq(funcuri, Centralport.register, req)
+					.userReq(funcuri, Centralport.regist, req)
 					.header(header),
 					errCtx);
 
@@ -790,7 +799,7 @@ setp (6)
 		req.a(RegistReq.A.queryDomConfig);
 
 		RegistResp resp = client.commit(client
-					.userReq(funcuri, Centralport.register, req)
+					.userReq(funcuri, Centralport.regist, req)
 					.header(header),
 					errCtx);
 		
@@ -904,15 +913,6 @@ setp (6)
 		if (DAHelper.count(tb, synconn, synm.tbl,
 				synm.org, org, synm.domain, domain, synm.pk, peer) == 0) {
 			
-//			tb.insert(synm.tbl, robot)
-//				.nv(synm.org, org)
-//				.nv(synm.domain, domain)
-//				.nv(synm.pk, peer)
-//				.nv(synm.jserv, servurl)
-//				.nv(synm.io_oz_synuid, SynChangeMeta.uids(createrid, peer))
-//				.nv(synm.jserv_utc, timestamp)
-//				.nv(synm.oper, createrid)
-
 			mustnonull(synmode);
 			insert_synode(tb, synm, robot, synconn, org, domain, peer, synmode, servurl, timestamp, createrid)
 				.ins(tb.instancontxt(synconn, robot));

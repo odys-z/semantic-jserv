@@ -1,0 +1,11 @@
+
+    EchoReq2(string m) : AnsonBody("r/peertest"), echo(m) {
+        Type(_type_);
+        echo = m;
+    }
+
+    EchoReq2(string m) : EchoReq2("r/peertest"), echo(m) {
+    }
+
+    EchoReq2() : EchoReq2("r/peertest") {
+    }

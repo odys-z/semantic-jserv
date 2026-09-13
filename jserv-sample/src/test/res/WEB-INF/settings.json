@@ -1,0 +1,6 @@
+{"type": "io.odysz.jsample.SampleSettings",
+ "conn": "sys-sqlite",
+ "vol_name": "VOLUME_HOME",
+ "volume": "../volume",
+ "port": 8080
+}

@@ -19,7 +19,7 @@ public class EchoReq extends AnsonBody {
 	/**
 	 * Not used in Java
 	 */
-	String echo;
+	public String echo;
 
 	@AnsonCtor(base={"na"}, initialist="string echo = m")
 	public EchoReq(String m) {

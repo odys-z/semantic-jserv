@@ -23,41 +23,55 @@
         python -m build
 """
 
-import errno
 import os
-import shutil
+import sys
+from pathlib import Path
 from types import LambdaType
+from typing import cast
 
-from anson.io.odysz.common import Utils
-from anson.io.odysz.utils import zip2
+# Debug Note: PyInsertall uses what ever packages in the user's venv, not isolated one like the build module.
+from anson.io.odysz.common import Utils, LangExt, requir_pkg
+requir_pkg("build")
+requir_pkg("pyinstaller")
+requir_pkg("jre-mirror", "0.1.2")
+requir_pkg("pillow", "10.0.0")
+requir_pkg("qrcode")
+requir_pkg("psutil")
+requir_pkg("prompt-toolkit", "3.0.52")
+requir_pkg("pyside6", ["6.6.0", "6.8.2.1"])
+requir_pkg("semantics.py3", "0.6.9")
+requir_pkg("anson.py3", "0.6.6")
+requir_pkg("anclient.py3", "0.2.7")
+
+from anclient.io.odysz.jclient import SessionClient, OnError
+from anson.io.odysz.anson import Anson
 from invoke import task, Context
+from semanticshare.io.odysz.semantic.jprotocol import AnsonMsg, MsgCode
+from semanticshare.io.oz.anclient.app import UIResources
+from semanticshare.io.oz.invoke import SynodeTask
+from semanticshare.io.oz.syn import SyncUser
+from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, Centralport, RegistResp, SynOrg
 
-SYNODE_VERSION = 'SYNODE_VERSION'
-JSERV_JAR_VERSION = 'JSERV_JAR_VERSION'
-HTML_JAR_VERSION = 'HTML_JAR_VERSION'
-WEB_VERSION = 'WEB_VERSION'
-# REGISTRY_ZIP = 'REGISTRY_ZIP'
 
 ORG = 'ura'
 DOMAIN = 'zsu'
-
-"""
-    Versions configured locally, overriden by environment variables.
-"""
-vers = {
-    SYNODE_VERSION:    '0.7.8',
-    JSERV_JAR_VERSION: '0.7.7',
-    HTML_JAR_VERSION:  '0.1.8',
-    WEB_VERSION:       '0.4.3',
-    # REGISTRY_ZIP: f'registry-{ORG}-{DOMAIN}-0.7.3.zip'
-}
+'''
+Not used?
+'''
 
 res_toclean = ['dist', '*egg-info']
 
+
 @task
-def validate(c):
+def validate(c: Context):
+    '''
+    When a script is frozen by PyInstaller as the entry point, __file__ no longer points at the script's real
+    location on disk — it resolves to a path inside the temp extraction dir (_MEIxxxxxx in onefile mode, or
+    the app's install-relative bundle dir in onedir mode). Any __file__ will break.
+    :param c: Invoke Context
+    :return:
+    '''
     print('---------     Synode.py3 Validating    --------------')
-    # srcpy = os.path.join('src', 'synodepy3', '__main__.py')
     for srcpy in ['src/synodepy3/__main__.py', 'src/synodepy3/prompt.py']:
         with open(srcpy, 'r', encoding='utf-8') as f:
             for lx, line in enumerate(f, start=1):
@@ -68,105 +82,164 @@ def validate(c):
                     Utils.warn(f'# {lx}:    {line}')
                     input('  Press Enter to continue...')
     
-    from semanticshare.io.oz.invoke import requir_pkg
 
-    requir_pkg("semantics.py3", "0.4.9")
-    requir_pkg("anson.py3", "0.4.3")
-    requir_pkg("anclient.py3", "0.2.6")
-    requir_pkg("jre-mirror", "0.0.8")
+@task
+def register_org(c: Context, taskcfg: SynodeTask):
+    regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
+
+    def registerOrg(client: SessionClient, func_uri: str, market: str, orgid: str):
+        org = SynOrg(orgtype=market, orgid=orgid, orgname=orgid)
+        req = RegistReq(RegistReq.A.createOrg, market)
+        req.Uri(func_uri).dictionary(SynodeConfig(org=org)).as_jserv(regiserv)
+        msg = AnsonMsg(Centralport.regist).Body(req).Header(ssinf=client.ssInf)
+
+        onerr = OnError(on_err= lambda c, e, args: sys.exit(e))
+        resp = client.commit(msg, onerr)
+
+        if resp is not None:
+            print(client.myservRt, resp.code)
+            print(f'<{RegistReq.A.registDom}>', resp.toBlock())
+
+        return cast(RegistResp, resp)
+
+    print("* login   :", regiserv)
+    ssclient = SessionClient.loginWithUri(servroot=regiserv,
+            uri='/sys/tasks', uid=taskcfg.deploy.admin, pswdPlain=taskcfg.deploy.central_pswd)
+
+    print("* register:", regiserv)
+    resp = registerOrg(client=ssclient, func_uri='/sys/tasks',
+                       market=taskcfg.deploy.market_id, orgid=taskcfg.deploy.orgid)
+    if resp.code != MsgCode.ok:
+        print('*', resp.msg())
+        sys.exit(f'Cannot create / update org {taskcfg.deploy.orgid} in market {taskcfg.deploy.market_id}')
+    else:
+        print('* OK!')
+        print('*', resp.msg())
+
 
 @task(validate)
-def config(c):
+def config(c, abstask_json: str):
     print('--------------    configuration   ------------------')
 
     this_directory = os.getcwd()
 
-    version = (os.getenv(SYNODE_VERSION) or vers[SYNODE_VERSION]).strip()
-    vers[SYNODE_VERSION] = version
-    # vers[REGISTRY_ZIP] = f'registry-{ORG}-{DOMAIN}-{vers[SYNODE_VERSION]}.zip'
-    print(f'-- synode version: {version} --'),
-
-    serv_jar_ver = (os.getenv(JSERV_JAR_VERSION) or vers[JSERV_JAR_VERSION]).strip()
-    vers[JSERV_JAR_VERSION] = serv_jar_ver
-    print(f'-- jserv version: {serv_jar_ver} --'),
-
-    html_srver = (os.getenv(HTML_JAR_VERSION) or vers[HTML_JAR_VERSION]).strip()
-    print(f'-- html web service version: {html_srver} --'),
-
-    web_ver = (os.getenv(WEB_VERSION) or vers[WEB_VERSION]).strip()
-    print(f'-- web version: {web_ver} --'),
-
+    taskcfg = cast(SynodeTask, Anson.from_file(abstask_json))
     version_file = os.path.join(this_directory, 'src', 'synodepy3', '__version__.py')
     Utils.update_patterns(version_file, {
-        'synode_ver = "[0-9\\.]+"': f'synode_ver = "{version}"',
-        'jar_ver = "[0-9\\.]+"': f'jar_ver = "{serv_jar_ver}"',
-        'web_ver = "[0-9\\.]+"': f'web_ver = "{web_ver}"',
-        'html_srver = "[0-9\\.]+"': f'html_srver = "{html_srver}"'
+        'synode_ver = "[0-9\\.]+"': f'synode_ver = "{taskcfg.version}"',
+        'jar_ver = "[0-9\\.]+"': f'jar_ver = "{taskcfg.version}"',
+        'web_ver = "[0-9\\.]+"': f'web_ver = "{taskcfg.web_ver}"',
+        'html_srver = "[0-9\\.]+"': f'html_srver = "{taskcfg.html_jar_v}"',
+        'desktop_ver = "[0-9\\.]+"': f'desktop_ver = "{taskcfg.desktop_ver}"',
+        'ipcagent_ver = "[0-9\\.]+"': f'ipcagent_ver = "{taskcfg.ipcagent_ver}"'
     })
 
-    Utils.update_patterns('src/synodepy3/synode.json', {'"version"\\s*:\\s*"[0-9\\.]+",': f'"version": "{version}",'})
+    synode_ui = cast(UIResources, Anson.from_file(Path('src') / 'synodepy3' / 'synode.github.json'))
+    if LangExt.len(taskcfg.deploy.mirror_path) > 0:
+        # according to synode_ui, not tasks.json
+        for lang, ss in synode_ui.langs.items():
+            if lang in taskcfg.deploy.mirror_path:
+                inject = taskcfg.deploy.mirror_path[lang]
+                ss.update({'jre_mirror': inject})
+                print(f'jre_mirror updated: [{lang}: {inject}]')
+            else:
+                print(f'**** WARING **** : {lang}.jre_mirror is not configured in tasks.json. value: {ss.get("jre_mirror")}')
 
-    Utils.update_patterns('pyproject.toml', {'version = "[0-9\\.]+" # ': f'version = "{version}" # '})
+    synode_ui.toFile(Path('src') / 'synodepy3' / 'synode.json')
 
-# @deprecated since 0.7.7, as Registry Central is running
-# @task
-# def zipRegistry(c):
-#     print('config =', vers, "zip =", vers[REGISTRY_ZIP])
-#     zip2(vers[REGISTRY_ZIP], {"zsu": "registry-deploy/*"}, ['*.zip'])
+    dom_registry: AnRegistry = cast(AnRegistry, Anson.from_file(Path('registry') / 'dictionary.github.json'))
+    dom_registry.config.org.orgId = taskcfg.deploy.orgid
+    dom_registry.config.org.orgType = taskcfg.deploy.market_id
+    dom_registry.synusers = [SyncUser(orgid=taskcfg.deploy.orgid, userId=taskcfg.deploy.admin, pswd=taskcfg.deploy.domain_token)]
+    dom_registry.toFile(Path('registry') / 'dictionary.json')
 
+    Utils.update_patterns('pyproject.toml',
+                          {'version = "[0-9\\.]+" # ': f'version = "{taskcfg.version}" # '})
 
-@task(config)
-def build(c: Context):
+    print("***********************************************")
+    print(f"* Registering Markt Org {taskcfg.deploy.market_id} : {taskcfg.deploy.orgid}")
+    register_org(c, taskcfg=taskcfg)
+    print("* TODO - to further simplify configuration, let's setup the default domain.")
+    print("***********************************************")
+
+'''
+def must_copy():
+    if os.name == 'nt':
+        return None
+    else:
+        # for linux, copy the exe to dist folder
+        src = Path('dist') / 'setup-cli.exe'
+        dst = Path('dist') / 'setup-gui.exe'
+        for src in [Path('dist') / 'setup-cli.exe', Path('dist') / 'setup-gui.exe', Path('dist') / 'uninstall-srv.exe']:
+            if src.exists():
+                break
+        if src.exists():
+            Utils.copy_anyway(src, dst, log=True)
+            return None
+        else:
+            print(f'*** ERROR: {src} not found, cannot copy to {dst}')
+            sys.exit(1)
+'''
+
+@task
+def build(c: Context, deploy: str):
+
+    config(c, abstask_json = deploy)
+
     def py():
         return 'py' if os.name == 'nt' else 'python3'
 
-    def rm_any(res):
-        try:
-            if os.path.isfile(res):
-                os.remove(res)
-            else:
-                shutil.rmtree(res, ignore_errors=False)
-            print(f"Successfully removed {res}")
-        except FileNotFoundError:
-            pass
-        except PermissionError:
-            print(f"Permission denied: Unable to remove {res}")
-        except OSError as e:
-            if e.errno != errno.ENOENT:  # Ignore "No such file or directory" errors
-                pass
-            else:
-                print(f"Path {res} does not exist")
-        pass
-
     def rm_dist():
         for res in res_toclean:
-            rm_any(res)
+            Utils.rm_any(res)
         return None
 
-    # from src.synodepy3.__version__ import synode_ver
     buildcmds = [
-        ['.', lambda: rm_dist()],
+        ['.', rm_dist if os.name == 'nt' else lambda: print('rm dist/* is ignored in linux - cannot build exe in linux')],
         ['.', f'{py()} -m build'],
-        ['.', f'{py()} pyinstallerw.py'],
+        ['.', f'{py()} pyinstallerw.py' if os.name == 'nt' else lambda: print(
+            'pyinstallerw.py is ignored in linux - 0.8.0 building is only for Synodes on Posix.')],
     ]
+    ''' Debug Note:
+        About using venv local packages with
+        ['.', f'{py()} -m build --no-isolation']
+        --no-isolation can ignore independent environment downloading, avoiding the version
+        discrepancy of local packages, but requires PEP 621 support, in setuptools 62 above.
+    '''
 
-    print('--------------       building     ------------------')
+    print('--------------       building synode.py     ------------------')
     for pth, cmd in buildcmds:
-        print("[Build in]", pth, '&&', cmd)
+        print('\n', pth, '&&', cmd.__name__ if isinstance(cmd, LambdaType) else cmd)
         if isinstance(cmd, LambdaType):
             cwd = os.getcwd()
             os.chdir(pth)
             cmd = cmd()
-            print(pth, f'cmd finished, cmd request: {cmd}')
             if cmd is not None:
                 print(pth, '&&', cmd)
                 ret = c.run(f'cd {pth} && {cmd}')
                 print('OK:', ret.ok, ret.stderr)
             else:
-                print('OK: cmd <- None')
+                print('OK: the cmd requires no further action.')
             os.chdir(cwd)
         else:
             ret = c.run(f'cd {pth} && {cmd}')
             print('OK:', ret.ok, ret.stderr)
     return False
 
+@task
+def scp_upload_exe(c: Context, deploy: str='tasks.upload.json'):
+    '''
+    Upload exe files to host, via scp. (compatible to 3.9)
+
+    @deprecated: The main building is in Windows. No need to upload exe files to Posix building.
+    :param c:
+    :param deploy:
+    :return:
+    '''
+    taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+
+    ok, err = taskcfg.run_deploycmds(c, verbose=True)
+
+    print(f"Run deploy_cmds, ok: {ok}")
+    if not ok:
+        print(err)

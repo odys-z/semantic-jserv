@@ -196,13 +196,13 @@ class DoclientierTest {
 		pause("Press enter to quite ...");
 	}
 
-	@SuppressWarnings("deprecation")
+//	@SuppressWarnings("deprecation")
 	@AfterAll
 	static void close() throws Exception {
 		logi("Pushes are closed.");
 		logi("Closing service...");
 		serviceLight[0] = true;
-		thr.stop();
+//		thr.stop();
 		thr.join();
 	}
 
@@ -224,6 +224,7 @@ class DoclientierTest {
 		return xdoc;
 	}
 
+	@SuppressWarnings("deprecation")
 	static ExpSyncDoc videoUpByApp(Doclientier doclient, Device atdev, String respath,
  			String entityName, ShareFlag share, boolean... disable_reupload) throws Exception {
 
@@ -308,6 +309,4 @@ class DoclientierTest {
 
 		assertEquals(0, pathpool.size());
 	}
-
-
 }

@@ -13,7 +13,7 @@ import java.util.Date;
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
 import io.odysz.anson.AnsonField;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.tier.docs.ExpSyncDoc;
@@ -46,16 +46,11 @@ public class PhotoRec extends ExpSyncDoc {
 		super(rs, meta);
 	}
 
-	public PhotoRec() { }
+	public PhotoRec() { super(null, ""); }
 
 	public Exifield exif;
-//	public String mime;
 	public String geox;
 	public String geoy;
-//	public String css;
-//	private String img;
-//	private String mov;
-//	private String wav;
 	public int rotation;
 	/** image size */
 	public int[] widthHeight;
@@ -67,10 +62,10 @@ public class PhotoRec extends ExpSyncDoc {
 		FileInputStream ifs = new FileInputStream(png);
 		pname = png.getName();
 
-		String b64 = AESHelper.encode64(ifs, 216); // 12 | 216, length = 219
+		String b64 = AESHelper2.encode64(ifs, 216); // 12 | 216, length = 219
 		uri64 = b64;
 		while (b64 != null) {
-			b64 = AESHelper.encode64(ifs, 216); // FIXME this will padding useless bytes, what is happening when the file is saved at server side?
+			b64 = AESHelper2.encode64(ifs, 216); // FIXME this will padding useless bytes, what is happening when the file is saved at server side?
 			if (b64 != null)
 				uri64 += b64;
 		}

@@ -94,9 +94,9 @@ public class JProtocol {
 	 */
 	public static String urlroot;
 	
-	final String prtocolpath;
-	JProtocol(String rootpath) {
-		prtocolpath = rootpath;
+	final String protocolpath;
+	public JProtocol(String rootpath) {
+		protocolpath = rootpath;
 	}
 
 	public static SemanticObject err(IPort port, String code, String err) {

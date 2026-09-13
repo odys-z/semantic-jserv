@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<dataset>
+<t id="ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
+	<!-- This table is used for define sqls that can be parameterized when serving data.
+		Client using 'sk' in request message to use sqls.
+		conn: Optional, the conn-id overriding client's URI's conn-id. use case: cbb is binding source different from URI.
+		Records returned by sql can be mapped into bump cases (for oracle) if 'cols' is not empty.
+		Different version of sql, mysql, oracle, etc. is used according to connId and driver type,
+		see connects.xml. 
+		s-tree: if this field is defined, the retrieved records is translated in to an STree. For field index, see class TreeSemantics.Ix.
+
+		NOTE: Because semantic-jserv and jclient are case sensitive,
+			  it's strongly recommended that all oracle selected columns should being double quoted.
+	 -->
+	<c>
+  		<sk>test.tree</sk>
+  		<mysql>SELECT domainId id, parentId, domainName, domainValue, sort, "others", fullpath
+  			FROM a_domain order by fullpath limit 5;
+  		</mysql>
+  		<orcl>SELECT "domId" "id", "parentId", "domName" "domainName", "domVal" "domainValue", "sort", "remarks", "fullpath"
+  			FROM "a_domain" order by "fullpath"
+  		</orcl>
+  		<sqlit>SELECT domainId id, parentId, domainName, domainValue, sort, "others", fullpath, stamp, upstamp
+  			FROM a_domain order by fullpath;
+  		</sqlit>
+  		<s-tree>checked,a_domain,id,parentId,text,,,false</s-tree>
+	</c>
+	
+	<c>
+	  	<sk>lvl1.domain.jsample</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId is null order by d.fullpath</sqlit>
+	</c>
+	<c>
+	  	<sk>lvl2.domain.jsample</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId = '%s' order by d.fullpath</sqlit>
+	</c>
+
+	<c>
+	  	<sk>nations.domain.jsample</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT domainId, domainName, fullpath FROM a_domain d where parentId = 'nation' order by d.fullpath</sqlit>
+  	</c>
+	
+	<c>
+	  	<sk>sys.menu.jsample</sk>
+  		<mysql>SELECT funcId, parentId, funcName, funcUrl url, sibling sort, fullpath, css, flags
+  			FROM a_sys_functions f order by f.fullpath
+  		</mysql>
+  		<sqlit>SELECT funcId, parentId, funcName, url, sibling sort, fullpath, css, flags
+  			FROM a_functions f order by f.fullpath
+  		</sqlit>
+  		<s-tree>,a_sys_functions,funcId id,parentId,funcName text,,,false</s-tree>
+  	</c>
+  	
+	<c> <sk>roles</sk>
+		<mysql>select roleId as value,roleName as text from a_roles</mysql>
+		<sqlit>select roleId as value,roleName as text from a_roles</sqlit>
+  	</c>
+	<c> <sk>orgs</sk>
+		<mysql>select c.orgId, c.orgName as text, c.parent, p.orgName pname, fullpath from a_orgs c join (select orgName, orgId from a_orgs) p on p.orgId = c.parent order by fullpath</mysql>
+  		<s-tree>,a_orgs,orgId,parent parentId,orgName text,,,false</s-tree>
+  	</c>
+
+  	<!-- orgnization combobox -->
+  	<c> <sk>org.all</sk>
+  		<mysql>select orgId value, orgName text from a_orgs</mysql>
+  		<sqlit>select orgId value, orgName text from a_orgs</sqlit>
+	</c>
+
+	<!-- role-func tree
+		Note for @anclient/anreact 0.3.52
+		Anclient/anreact/jsample/RoleDetails (TSX) now use this to load relation tree.
+	 -->
+  	<c> <sk>trees.role_funcs</sk>
+  		<mysql>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.sibling sort, fullpath
+  		from a_sys_functions f left outer join a_role_funcs r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath</mysql>
+  		<sqlit>select r.roleId is not null checked, funcName text, f.funcId, parentId,f.sibling sort, fullpath
+  		from a_functions f left outer join a_role_func r on r.funcId = f.funcId and r.roleId = '%s' order by fullpath
+  		</sqlit>
+  		<s-tree>checked,a_functions,funcId nodeId,parentId,fullpath,sort,funcName text,children,false</s-tree>
+  	</c>
+  	
+  	<!-- Indicator Tree -->
+	<c> <sk>xv.indicators</sk>
+  		<mysql></mysql>
+  		<sqlit>SELECT 0 checked, indId, indName, parent parentId, sort, fullpath, css, weight, qtype, remarks, extra FROM indicators order by fullpath</sqlit>
+  		<s-tree>checked,indicators,indId nodeId,parentId,fullpath,sort,indName text,children,false</s-tree>
+	</c>
+
+	<c> <sk>legend.cube.vec3</sk>
+  		<mysql></mysql>
+  		<sqlit>select p.label || ': 		' || sum(val) legend, max(v.val) max, min(v.val) min
+		from vector v 
+		join s_domain d on v.dim3 = d.did
+		join s_domain p on d.parent = p.did
+		group by p.did
+		order by p.label</sqlit>
+	</c>
+	<c> <sk>max.cube.vec3</sk>
+  		<mysql></mysql>
+  		<sqlit>select max(v.val) max, min(v.val) min from vector v join s_domain d on v.dim3 = d.did
+  		</sqlit>
+	</c>
+	<!-- 
+	cnt |did         |indust                      |cate      |
+
+	2   |GICS-101010 |Energy Equipment & Services |Energy    |
+	4   |GICS-151010 |Chemicals                   |Materials |
+	2   |GICS-151020 |Construction Materials      |Materials |
+	 -->
+  	<c> <sk>x.cube.vec3</sk>
+  		<mysql></mysql>
+  		<sqlit>select count(vid) cnt, d.did, d.label indust, p.label cate 
+		from vector v 
+		join s_domain d on v.dim3 = d.did
+		join s_domain p on d.parent = p.did
+		group by d.did
+		order by p.did, d.did;</sqlit>
+	</c>
+	
+	<!-- 
+	cnt |did   |indust  |cate               |
+
+	2   |own-1 |public  |business ownership |
+	2   |own-2 |listed  |business ownership |
+	2   |own-3 |state   |business ownership |
+	2   |own-4 |private |business ownership |
+	 -->
+  	<c> <sk>z.cube.vec3</sk>
+  		<mysql></mysql>
+  		<sqlit>select count(vid) cnt, d.did, d.label indust, p.label cate 
+		from vector v 
+		join s_domain d on v.dim7 = d.did
+		join s_domain p on d.parent = p.did
+		group by d.did
+		order by p.did, d.did;</sqlit>
+	</c>
+
+  	<c>
+  	<!-- for debug: select count(vid) cnt, dim7, dim1 age, z.label ownership, x.label indust, sum(val)
+		select
+		case dim3 when 'GICS-10101010' then 0 when 'GICS-10101050' then 1 else 2 end as x, 
+		case dim7 when 'own-1' then 0 when 'own-2' then 1 when 'own-3' then 2 when 'own-4' then 3 else 4 end as z, 
+		sum(ifnull(val, 0)) amount
+		from s_domain x 
+		left join vector v on v.dim3 = x.did 
+		join s_domain z on v.dim7 = z.did
+		where x.tag = 'GICS'
+		group by dim1, dim3, dim7
+		order by x.did asc, z.did asc
+  	-->
+  		<sk>xzy.cube.vec3</sk>
+  		<mysql></mysql>
+  		<sqlit>select
+		%1$s as x, %2$s as z, 
+  		val amount
+		from vector v 
+		join s_domain x on v.dim3 = x.did 
+		join s_domain z on v.dim7 = z.did 
+		group by dim1, dim3, dim7
+		order by x.did asc, z.did asc</sqlit>
+  	</c>
+</t>
+</dataset>

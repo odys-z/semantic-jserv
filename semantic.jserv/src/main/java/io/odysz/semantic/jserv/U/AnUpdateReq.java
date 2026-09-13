@@ -12,7 +12,6 @@ import io.odysz.anson.JsonOpt;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.semantic.jprotocol.AnsonBody;
-import io.odysz.semantic.jprotocol.AnsonHeader;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.sql.Query.Ix;

@@ -60,9 +60,9 @@ class JreWorker:
         self.jrelease = jre_release
 
         # Will be created later
-        self.progress_dialog: QProgressDialog | None = None
-        self.worker: DownloadWorker | None = None
-        self.thread: QThread | None = None
+        self.progress_dialog: QProgressDialog = None
+        self.worker: DownloadWorker = None
+        self.thread: QThread = None
 
     def start_download(self, parentui: QWidget):
         # ------------------------------------------------------------------
