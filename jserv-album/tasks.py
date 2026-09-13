@@ -246,6 +246,7 @@ def install_maven_local(c: Context, deploy: str='tasks.0.8.0.json', gpg: str = N
         '../../antson/antson.java',
         '../../semantic-transact/semantic.transact',
         '../../semantic-DA/semantic.DA',
+        '../../semantic-jserv/semantic.jserv',
         '../../semantic-jserv/jserv-album-lib',
         '../../anclient/java/eclipse-workspace/anclient.jserv',
         '../../Semantic-Network/registration/jclient',
