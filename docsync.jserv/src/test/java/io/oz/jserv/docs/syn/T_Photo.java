@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.stream.Collectors;
 
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.meta.ExpDocTableMeta;
@@ -167,10 +167,10 @@ public class T_Photo extends ExpSyncDoc {
 		FileInputStream ifs = new FileInputStream(png);
 		pname = png.getName();
 
-		String b64 = AESHelper.encode64(ifs, 216); // 12 | 216, length = 219
+		String b64 = AESHelper2.encode64(ifs, 216); // 12 | 216, length = 219
 		uri64 = b64;
 		while (b64 != null) {
-			b64 = AESHelper.encode64(ifs, 216);
+			b64 = AESHelper2.encode64(ifs, 216);
 			if (b64 != null)
 				uri64 += b64;
 		}

@@ -58,14 +58,3 @@ Currently a java client and a js client together with React is basically working
 
 The js client together with a vue client is also in tense developing.
 
-# Merging back tasks
-
-* Windows Service Installer (MVP with QT/Make?)
-
-* Nyquence & Tests
-
-* Resource Entity Merge
-
-* Schema Verification of CRUD, 4 Synodes
-
-* Workbench and Health Monitor

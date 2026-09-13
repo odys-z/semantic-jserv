@@ -89,7 +89,8 @@ select family || '.' || folder fullpath, 'gallery' nodetype, family || '.' || fo
 sum(case when substring(ifnull(mime, 'image'), 0, 6) = 'image' then 1 else 0 end) img, sum(case when substring(mime, 0, 6) = 'video' then 1 else 0 end) mov, 
 sum (case when substring(mime, 0, 6) = 'audio' then 1 else 0 end) wav, sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo, 
 '' fav, count(ifnull(mime, 1)) mime
-from h_photos f where f.family = '%1$s' group by f.folder
+from h_photos f where f.family = '%1$s' and (substr(mime, 0, 6) = 'image' or substr(mime, 0, 6) = 'video' or substr(mime, 0, 6) ='audio')
+group by f.folder
 ) where mime > 0 order by fullpath;</sqlit>
    <s-tree>,h_photos,pid,folder parent,fullpath,sort,docname text,nodetype,false,tags</s-tree>
  </c>

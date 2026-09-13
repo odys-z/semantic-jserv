@@ -44,20 +44,21 @@ class PJservValidator(Validator):
     Synodes protocol validator ('jserv-album')
     '''
 
-    def __init__(self, protocol_root: str = None):
+    def __init__(self, protocol_root):
         super().__init__()
-        self.protocol_root = JProtocol.urlroot if LangExt.isblank(protocol_root) else protocol_root
+        self.protocol_root = protocol_root
 
     def validate(self, v):
         if not LangExt.isblank(v.text) and \
            not JServUrl.valid(v.text, rootpath=self.protocol_root):
             raise ValidationError(
-                message=f'Jserv URL is invalid. Reqired format: http(s)://ip:port/{self.protocol_root}')
+                message=f'Jserv URL is invalid. Required format: http(s)://ip:port/{self.protocol_root}')
 
 class QJservValidator(QValidator):
     '''
     Not Used
     ========
+    @deprecated
     Synodes protocol validator ('jserv-album')
     '''
 

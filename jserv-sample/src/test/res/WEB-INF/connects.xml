@@ -103,6 +103,10 @@
   		<conn>sys-sqlite</conn>
   	</c>
    	<c>
+  		<uri>anson.cmake</uri>
+  		<conn>sys-sqlite</conn>
+  	</c>
+   	<c>
   		<uri>/sys/*</uri>
   		<conn>sys-sqlite</conn>
   	</c>

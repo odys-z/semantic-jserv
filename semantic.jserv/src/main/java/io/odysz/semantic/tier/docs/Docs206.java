@@ -8,7 +8,7 @@
  */
 package io.odysz.semantic.tier.docs;
 
-import static io.odysz.common.AESHelper.stream206;
+import static io.odysz.common.AESHelper2.stream206;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.split;
@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.anson.Anson;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.LangExt;
 import io.odysz.semantic.DATranscxt;
 import io.odysz.semantic.DA.Connects;
@@ -124,7 +124,7 @@ public abstract class Docs206 {
 		try {
 			String anson64 = req.getParameter("anson64");
 			if (!LangExt.isEmpty(anson64)) {
-				byte[] b = AESHelper.decode64(anson64);
+				byte[] b = AESHelper2.decode64(anson64);
 				in = new ByteArrayInputStream(b);
 			}
 			else {

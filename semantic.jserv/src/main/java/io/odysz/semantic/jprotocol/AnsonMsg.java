@@ -3,6 +3,7 @@ package io.odysz.semantic.jprotocol;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import io.odysz.anson.Anson;
@@ -10,6 +11,7 @@ import io.odysz.anson.AnsonException;
 import io.odysz.anson.IJsonable;
 import io.odysz.anson.JSONAnsonListener;
 import io.odysz.anson.JsonOpt;
+import io.odysz.semantics.SessionInf;
 import io.odysz.semantics.x.SemanticException;
 
 /** Experiment: for generating the cpp end. */
@@ -36,6 +38,12 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	 * @author odys-z@github.com
 	 */
 	public static enum Port implements IPort {  
+		/**
+		 * @since 1.5.17 extension for WSPort compitbablity,
+		 * should only be used over websocket currently (2026-07-16).
+		 */ 
+		ping("ping.ws"),
+
 		heartbeat("ping.serv"), session("login.serv"),
 		query("r.serv"), update("u.serv"),
 		insert("c.serv"),
@@ -119,7 +127,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	};
 
 	/** TODO 2.0: Move ext as 1, ok = 0, and more follow the last one. */
-	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext };
+	public enum MsgCode {ok, exSession, exSemantic, exIo, exTransct, exDA, exGeneral, ext, _sentinel_ };
 
 	/**
 	 * The default IPort implelemtation.
@@ -158,7 +166,7 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 				});
 	}
 	
-	String version = "1.1";
+	public String version = "1.1";
 
 	int seq;
 	public int seq() { return seq; }
@@ -239,8 +247,23 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 	
 	AnsonHeader header;
 	public AnsonHeader header() { return header; }
+
+	/**
+	 * @since 1.5.17 set header by forcing session token.
+	 * @param ssInf Session information with repacked token after login.
+	 * @return this
+	 */
+	public AnsonMsg<T> header(SessionInf ssInf) {
+		this.header = new AnsonHeader(ssInf.ssid(), ssInf.uid(), ssInf.ssToken);
+		return this;
+	}
+	
+	/**
+	 * @deprecated 1.5.17, replaced by {@link #header(SessionInf)}
+	 * @return this
+	 */
 	public AnsonMsg<T> header(AnsonHeader header) {
-		this.header = header; // .seq(seq);
+		this.header = header;
 		return this;
 	}
 	
@@ -279,4 +302,14 @@ public class AnsonMsg <T extends AnsonBody> extends Anson {
 		return this;
 	}
 
+	/**
+	 * @since 1.5.17
+	 * @param synrep
+	 */
+	@SuppressWarnings("unchecked")
+	public void bodys(List<? extends AnsonResp> synrep) {
+		if (this.body == null)
+			this.body = new ArrayList<T>();
+		this.body.addAll((Collection<? extends T>) synrep);
+	}
 }

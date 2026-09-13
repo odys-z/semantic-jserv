@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonException;
 import io.odysz.anson.JsonOpt;
-import io.odysz.common.AESHelper;
+import io.odysz.common.AESHelper2;
 import io.odysz.common.LangExt;
 import io.odysz.common.Utils;
 import io.odysz.module.rs.AnResultset;
@@ -216,7 +216,7 @@ public abstract class ServPort<T extends AnsonBody> extends HttpServlet {
 			in = new ByteArrayInputStream(b);
 		}
 		else if (!LangExt.isEmpty(anson64)) {
-			byte[] b = AESHelper.decode64(anson64);
+			byte[] b = AESHelper2.decode64(anson64);
 			in = new ByteArrayInputStream(b);
 		}
 		else {

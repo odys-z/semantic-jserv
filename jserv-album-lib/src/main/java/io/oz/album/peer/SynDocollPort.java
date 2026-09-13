@@ -15,6 +15,8 @@ import io.odysz.semantics.x.SemanticException;
  * <p>Sample project's prots extension.</p>
  * 
  * This enum replaces jserv {@link io.odysz.semantic.jprotocol.AnsonMsg.Port}.
+ * 
+ * ISSUE The enums must cover both Central Port hand synodes' protocol (No multiple protocol sets in server side).
  */
 public enum SynDocollPort implements IPort {
 	heartbeat("ping.serv"),
@@ -36,8 +38,9 @@ public enum SynDocollPort implements IPort {
 	 * enum classes for the same field.
 	 * FIXME How to understand multiple port classes from different jserv? 
 	 * @since 0.5.18, portfolio 0.7.6
+	 * @since 0.5.20 renamed as regist instead of register
 	 */
-	register("regist.serv");
+	regist("regist.serv");
 
 	static {
 		JSONAnsonListener.registFactory(SynDocollPort.class, 

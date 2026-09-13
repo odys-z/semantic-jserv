@@ -82,6 +82,43 @@ Google AI:
 
   ** This section explains the webinar's declaration why the *bal = 315*.
 
+# A Cheap Survey on Edge Networking
+
+[2026-8-24]
+
+## P2P Networking
+
+
+The next v0.3.4 and above major issue is the networking.
+
+The basic idea according Claude is build upon a long living connection, such as WebSocket, gRPCstream or MQTT.
+
+Here is the gaints.
+
+```
+        Library    |       Discovery model     |          Fit for "no hub"
+  -----------------+---------------------------+-------------------------------------------------------------------
+  jvm-libp2p       |  DHT / mDNS / rendezvous  |  ✅ best — decentralization is a first-class design goal
+                   |  (swappable)              | 
+  -----------------+---------------------------+-------------------------------------------------------------------
+  TomP2P           |  Kademlia DHT             |  ✅ good, but less actively maintained (a real activity years ago)
+  -----------------+---------------------------+-------------------------------------------------------------------
+  JGroups          |  Cluster view via         |  ⚠️ okay on LAN (multicast MPING), weak over WAN without a
+                   |                           |  TCPPING seed list — still somewhat hub-shaped discovery protocol    
+  -----------------+---------------------------+-------------------------------------------------------------------
+  Curator/ZooKeeper|  Central coordination     |  ❌ this is the hub — opposite direction from what you want
+                   |  service                  |
+  -----------------+---------------------------+-------------------------------------------------------------------
+  Peer2Poker       |  NAT traversal only,      |  ⚠️ good for connection legs, but you'd need to pair it with
+                   |  no discovery             |  something else for discovery
+```
+
+## Mesh
+
+- libp2p supports both — direct P2P connections and a mesh-style relay/routing layer (circuit relay protocol).
+
+- Mesh is built on P2P concepts — it's P2P plus multi-hop routing when direct connections aren't available.
+
 # References
 
 [1] Mopati Bernerdict Kekgathetse, Keletso Letsholo,

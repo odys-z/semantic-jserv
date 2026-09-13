@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
 
+import io.odysz.anson.AnsonCtor;
 import io.odysz.anson.AnsonField;
 import io.odysz.common.DateFormat;
 import io.odysz.module.rs.AnResultset;
@@ -148,25 +149,18 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return this;
 	}
 
-	@AnsonField(ignoreTo=true)
-	// ExpDocTableMeta docMeta;
-
 	public String mime;
 	public ExpSyncDoc mime(String mime) {
 		this.mime = mime;
 		return this;
 	}
 	
+	@AnsonCtor(base={"m"}, initialist={"SyntityeMeta m", "string orgId : org"})
 	public ExpSyncDoc(SyntityMeta m, String orgId) {
 		super(m);
 		org = orgId;
 	}
 	
-	public ExpSyncDoc() {
-		super(null);
-		this.org = "";
-	}
-
 	/**
 	 * A helper used to make sure query fields are correct.
 	 * @param meta
@@ -208,9 +202,10 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		return synpageCols;
 	}
 
+	@AnsonCtor(base={"meta"}, initialist={"AnResultset rs :", "ExpDocTableMeta meta : "})
 	public ExpSyncDoc(AnResultset rs, ExpDocTableMeta meta) throws SQLException {
 		super(meta);
-		// this.entMeta = meta;
+
 		this.recId = rs.getString(meta.pk);
 		this.org = rs.getString(meta.org);
 		this.pname = rs.getString(meta.resname);
@@ -247,6 +242,10 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 		this.org = "";
 	}
 
+	public ExpSyncDoc() {
+		super(null);
+	}
+	
 	public IFileDescriptor fullpath(String clientpath) throws IOException {
 		this.clientpath = clientpath;
 		Path p = Paths.get(clientpath);
@@ -323,11 +322,20 @@ public class ExpSyncDoc extends SynEntity implements IFileDescriptor {
 	/**
 	 * @see #escapeClientpath()
 	 * @param fullpath
-	 * @return
+	 * @return this
 	 */
 	public ExpSyncDoc clientpath(String fullpath) {
 		clientpath = separatorsToUnix(fullpath);
 		return this;
+	}
+	
+	/**
+	 * Figure out possible information if the client path is pointing to a local file.
+	 * @return this
+	 * @throws IOException 
+	 */
+	public IFileDescriptor figure_locally() throws IOException {
+		return fullpath(clientpath);
 	}
 
 	/**
