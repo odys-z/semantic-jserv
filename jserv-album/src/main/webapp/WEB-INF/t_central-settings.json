@@ -1,4 +1,5 @@
 { "type"        : "io.oz.registier.central.CentralSettings",
+  "protocolRoot": "regist-central",
   "market"      : "test",
   "vol_name"    : "VOLUME_HOME",
   "volume"      : "../central-vol",
@@ -6,6 +7,5 @@
   "conn"		: "t-central-sqlite",
   "logconn"		: "t-central-log-sqlite",
   "startHandler": [],
-  "jmenu"       : {"menusk": "-test-empty-"},
   "rootkey"     : "0123456789ABCDEF"
 }

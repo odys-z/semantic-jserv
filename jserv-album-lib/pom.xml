@@ -44,7 +44,6 @@
       <scope>test</scope>
     </dependency>
 
-
    	<dependency>
 	  <groupId>io.github.odys-z</groupId>
 	  <artifactId>semantic.jserv</artifactId>
