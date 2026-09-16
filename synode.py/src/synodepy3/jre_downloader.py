@@ -6,7 +6,7 @@ import shutil
 import threading
 import time
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Union
 
 from PySide6.QtWidgets import (
     QApplication, QLabel
@@ -35,7 +35,7 @@ class DownloadWorker():
     def cancel(self):
         self._cancelled = True
 
-    def run(self, on_progress: Callable[[int, int, int], None]):
+    def run(self, on_progress: Callable[[int, int, Union[int, float]], None]):
         mirror = TemurinMirror(self.temurin_release)
 
         self._finished = False
