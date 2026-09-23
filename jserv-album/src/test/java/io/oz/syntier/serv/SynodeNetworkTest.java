@@ -56,9 +56,9 @@ class SynodeNetworkTest {
 	static String prvpath = "settings.prv.json"; 
 	static String mobpath = "settings.mob.json"; 
 
-	static String vol_hub = "../../../../volumes-0.7/volume-hub";
-	static String vol_prv = "../../../../volumes-0.7/volume-prv";
-	static String vol_mob = "../../../../volumes-0.7/volume-mob";
+	static String vol_hub = "../../../../vol-synode-netest/volume-hub";
+	static String vol_prv = "../../../../vol-synode-netest/volume-prv";
+	static String vol_mob = "../../../../vol-synode-netest/volume-mob";
 
 	static boolean[] central_quit = new boolean[] {false};
 
@@ -109,6 +109,7 @@ class SynodeNetworkTest {
 	/**
 	 * @see AppSettings#merge_ip_json2db(io.oz.syn.registry.SynodeConfig, SynodeMeta, io.oz.syn.SyncUser, io.odysz.semantic.jprotocol.JProtocol.OnError)
 	 * merge_ip_json2db()
+	 * @deprecated should test via installer
 	 */
 	@Test
 	void testSynodes() throws Exception {

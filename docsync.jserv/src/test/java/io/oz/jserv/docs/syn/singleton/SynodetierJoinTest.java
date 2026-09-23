@@ -133,8 +133,8 @@ public class SynodetierJoinTest {
 	@BeforeAll
 	static void init() throws Exception {
 		FileUtils.copyDirectory(new File("src/test/res/WEB-INF-synodier-join-test"),
-								 new File("src/test/res/WEB-INF"));
-//								new File(webinf));
+//								 new File("src/test/res/WEB-INF"));
+								new File(webinf));
 
 		setVolumeEnv("v-");
 		JProtocol.setup(servpath, Port.echo);
@@ -167,7 +167,7 @@ public class SynodetierJoinTest {
 
 			AppSettings settings = AppSettings.load(webinf, stjson);
 			settings.installkey = "0123456789ABCDEF";	
-			settings.regiserv = null; // disable jserv_worker to "http://182.150.29.34:1989/regist-central";
+			settings.regiserv = null; // disable jserv_worker to regist-central;
 			settings.rootkey = null;
 			settings.toFile(FilenameUtils.concat(webinf, stjson), JsonOpt.beautify());
 
@@ -204,7 +204,6 @@ public class SynodetierJoinTest {
 	 * </pre>
 	 * @throws Exception
 	 */
-	@SuppressWarnings("deprecation")
 	void setupDomain() throws Exception {
 		boolean[] lights = new boolean[] {true, false, false};
 		
