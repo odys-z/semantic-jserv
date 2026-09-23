@@ -5,7 +5,7 @@
 @set jar_ver=0.7.7
 @REM END Python modifying section
 
-@REM @set serv_name="Synode.syn-%jar_ver%"
+@REM @set serv_name="Synode.syn-%jar_ver%-%synode_id%" # e.g. "Synode-0.7.10-infor-17-2"
 @set serv_name="%~2"
 @echo %serv_name%
 
@@ -30,4 +30,3 @@ sc query %serv_name%
 
 @REM @echo "Tip for coverting log files' encoding (use VS Code Bash):"
 @REM @echo "iconv -f GB2312 -t UTF-8 logs/commons-daemon.yyyy-mm-dd.log > commons-daemon-utf8.log"
-

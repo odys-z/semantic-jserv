@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import cast, Optional, List, Tuple
+from typing import cast, Optional, List
 
 from anson.io.odysz.anson import AnsonException
 from anson.io.odysz.common import LangExt, Utils, passwd_allow_ext
@@ -30,6 +30,8 @@ def readable_state(s: str = ''):
             else '⛔ Already running as a Peer node' if s == CynodeStats.asPeer \
             else '[❗] Unknown state (Dangerous! Create a new domain if possible)'
 
+
+from synodepy3.__version__ import synode_ver, jar_ver, web_ver
 def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8g'):
     """
     :param s: settings
@@ -41,9 +43,10 @@ def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8
 
     cwd = os.getcwd()
     java_home = f'{cwd}/{_jre_}'
-    from .__version__ import jar_ver, web_ver
     synode_desc = f'Synode {jar_ver} {synid}'
     etc_syn = f"""[Unit]
+
+
 Description={synode_desc}
 After=network.target
 
@@ -214,7 +217,6 @@ session = PromptSession(style=style)
 
 cfg = cli.registry.config # for shot
 
-from .__version__ import synode_ver
 print(f"Starting configure Synode {synode_ver}. Return with empty input to abort.")
 
 has_run = cli.hasrun()
