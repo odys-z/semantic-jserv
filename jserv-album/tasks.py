@@ -511,7 +511,8 @@ def package(c: Context, deploy: str = 'tasks.json'):
         'desktop': f'{os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, "*")}',
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
         'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
-        'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
+        'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe',
+        'upgrade.exe': '../synode.py/dist/upgrade-srv.exe'
     })
     else:
         print("[*** TODO *** 0.8.0 POSIX]  desktop [album-gui, ws-agent.jar, settings], requires exiftool, jre-posix")
