@@ -10,7 +10,10 @@ from invoke import task, Context
 import os
 
 # Debug Note: PyInsertall uses what ever packages in the user's venv, not isolated one like the build module.
-from anson.io.odysz.common import requir_pkg
+from anson.io.odysz.common import requir_pkg, requir_npm_package_lock
+requir_pkg("anson.py3", "0.6.8")
+requir_pkg("semantics.py3", "0.6.9")
+
 requir_pkg("build")               # by synode.py
 requir_pkg("pyinstaller")         # by synode.py
 requir_pkg("jre-mirror", "0.1.2") # by synode.py
@@ -20,8 +23,8 @@ requir_pkg("psutil")              # by synode.py
 requir_pkg("prompt-toolkit", "3.0.52")      # by synode.py
 requir_pkg("pyside6", ["6.6.0", "6.8.2.1"]) # by synode.py
 
-requir_pkg("anson.py3", "0.6.6")
-requir_pkg("semantics.py3", "0.6.9")
+requir_npm_package_lock('../../anclient/examples/example.js/album', '@anclient/anreact', '0.7.1')
+requir_npm_package_lock('../../anclient/examples/example.js/album', '@anclient/semantier', '1.0.5')
 
 from semanticshare.io.oz.invoke import SynodeTask, CentralTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
