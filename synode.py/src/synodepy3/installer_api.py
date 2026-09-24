@@ -368,7 +368,7 @@ class InstallerCli:
         self.settings.Jservs(jsrvs)
         return self
 
-    def load_settings(self):
+    def load_settings(self) -> AppSettings:
         """
         Load from res_path/setings.json,
         :return: loaded settings
