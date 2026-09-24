@@ -156,10 +156,10 @@ def update_srv(zip_path: str):
         print(f'Restored: {orig}')
 
     # 5. restart services
-    for srvname, label in [(syn_srvname, 'jserv-album'), (web_srvname, 'html-service')]:
+    for srvname in [syn_srvname, web_srvname]:
         try:
             restart_wsrv_byname(srvname)
         except UnexpectedExit as e:
-            print(f"Error restarting {label}: {e}", file=sys.stderr)
+            print(f"Error restarting {srvname}: {e}", file=sys.stderr)
 
     print(f'Update complete. Backup kept at: {os.path.abspath(backup_dir)}')
