@@ -16,8 +16,7 @@
 @set jre_home=jre17
 
 if "%~1" == "uninstall" (
-@echo linked with "cd winsrv && mklink uninstall-html-srv.bat ..\..\..\html-service\java\src\test\uninstall-html-srv.bat"?
-
+@REM linked with "cd winsrv && mklink uninstall-html-srv.bat ..\..\..\html-service\java\src\test\uninstall-html-srv.bat"?
 @call winsrv\uninstall-html-srv.bat winsrv\portfolio-ia64.exe %serv_name%
 
 ) else (
