@@ -4,6 +4,9 @@ from pathlib import Path
 # pi.run default pi.run(['--distpath', 'dist', '*.spec'])
 dist_setup_cli_exe = 'dist/setup-cli.exe'
 dist_setup_gui_exe = 'dist/setup-gui.exe'
+dist_uninstall_srv_exe = 'dist/uninstall-srv.exe'
+dist_upgrade_srv_exe = 'dist/upgrade-srv.exe'
+
 '''
 These two constants are kept at module level (cheap, no side effects) so that
 other modules, e.g. tasks.py, can `from pyinstallerw import dist_setup_cli_exe,
@@ -13,7 +16,6 @@ Everything that has a side effect (requir_pkg checks, deleting old exes,
 running PyInstaller) lives inside build_exes(), which only runs when this
 file is executed directly (`python pyinstallerw.py`), not on import.
 '''
-
 
 def build_exes():
     import PyInstaller.__main__ as pi
@@ -41,6 +43,8 @@ def build_exes():
 
     Path.unlink(Path(dist_setup_cli_exe), missing_ok=True)
     Path.unlink(Path(dist_setup_gui_exe), missing_ok=True)
+    Path.unlink(Path(dist_uninstall_srv_exe), missing_ok=True)
+    Path.unlink(Path(dist_upgrade_srv_exe), missing_ok=True)
 
     print('Building with setup-gui.spec ...')
     pi.run(['setup-gui.spec'])
@@ -50,6 +54,9 @@ def build_exes():
 
     print('Building uninstall-srv.spec ...')
     pi.run(['uninstall-srv.spec'])
+
+    print('Building upgrade-srv.spec ...')
+    pi.run(['upgrade-srv.spec'])
 
 
 if __name__ == '__main__':

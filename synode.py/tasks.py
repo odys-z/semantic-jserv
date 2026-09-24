@@ -77,7 +77,7 @@ def validate(c: Context):
             for lx, line in enumerate(f, start=1):
                 if '(__file__)' in line and not line.strip().startswith('#'):
                     Utils.warn('################################################################################\n#')
-                    Utils.warn(f'# {srcpy} is supposed to be packaaged as an exe entry, but found it is using itself\'s __file__ property.')
+                    Utils.warn(f'# {srcpy} is supposed to be packaged as an exe entry, but found it is using itself\'s __file__ property.')
                     Utils.warn(f'# This can be an error as the exe is running in a temp environment.\n#')
                     Utils.warn(f'# {lx}:    {line}')
                     input('  Press Enter to continue...')
