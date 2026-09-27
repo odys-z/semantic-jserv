@@ -611,15 +611,15 @@ def deploy(c: Context, deploy: str = 'tasks.json', gpg: str = None):
     print(f'Deployed: {deploy}, central task: {taskcfg.central_dir} ...')
 
 
-@task
-def landing(c: Context, deploy: str = 'tasks.json'):
-    global taskcfg
-    print(deploy)
-    if taskcfg is None:
-        taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+# @task
+# def landing(c: Context, deploy: str = 'tasks.json'):
+#     global taskcfg
+#     print(deploy)
+#     if taskcfg is None:
+#         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
-    print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
-    taskcfg.publish_landings()
+#     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
+#     taskcfg.publish_landings()
 
 
 @task
