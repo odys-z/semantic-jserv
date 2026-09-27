@@ -29,7 +29,7 @@ dependencies = [
 synode-gui = "synodepy3.__main__:main"
 synode-cli = "synodepy3.prompt:main"
 synode-uninstall-srv = "synodepy3.cli:uninst_srv"
-# synode-clean = "synodepy3.cli:clean"
+synode-upgrade-srv = "synodepy3.cli:upgrade_srv"
 synode-start-web = "synodepy3.cli:startweb"
 
 [tool.setuptools]

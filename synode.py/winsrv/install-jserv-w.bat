@@ -2,10 +2,10 @@
 @echo "--- Installing Synode Windows Service ---"
 
 @REM BEGIN Python modifying section, by commands.install_wsrv_byname(). Do not modify except debugging (Not using bat file arg for easy debugging)
-@set jar_ver=0.7.7
+@set jar_ver=0.8.0
 @REM END Python modifying section
 
-@REM @set serv_name="Synode.syn-%jar_ver%"
+@REM @set serv_name="Synode.syn-%jar_ver%-%synode_id%" # e.g. "Synode-0.7.10-infor-17-2"
 @set serv_name="%~2"
 @echo %serv_name%
 
@@ -16,8 +16,7 @@
 @set jre_home=jre17
 
 if "%~1" == "uninstall" (
-@echo linked with "cd winsrv && mklink uninstall-html-srv.bat ..\..\..\html-service\java\src\test\uninstall-html-srv.bat"?
-
+@REM linked with "cd winsrv && mklink uninstall-html-srv.bat ..\..\..\html-service\java\src\test\uninstall-html-srv.bat"?
 @call winsrv\uninstall-html-srv.bat winsrv\portfolio-ia64.exe %serv_name%
 
 ) else (
@@ -30,4 +29,3 @@ sc query %serv_name%
 
 @REM @echo "Tip for coverting log files' encoding (use VS Code Bash):"
 @REM @echo "iconv -f GB2312 -t UTF-8 logs/commons-daemon.yyyy-mm-dd.log > commons-daemon-utf8.log"
-
