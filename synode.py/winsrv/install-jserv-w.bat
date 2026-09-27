@@ -2,7 +2,7 @@
 @echo "--- Installing Synode Windows Service ---"
 
 @REM BEGIN Python modifying section, by commands.install_wsrv_byname(). Do not modify except debugging (Not using bat file arg for easy debugging)
-@set jar_ver=0.7.7
+@set jar_ver=0.8.0
 @REM END Python modifying section
 
 @REM @set serv_name="Synode.syn-%jar_ver%-%synode_id%" # e.g. "Synode-0.7.10-infor-17-2"

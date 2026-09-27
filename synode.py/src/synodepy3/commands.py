@@ -22,6 +22,7 @@ install_html_w_bat  = os.path.join(winsrv, "install-html-w.bat")
 install_jserv_w_bat = os.path.join(winsrv, "install-jserv-w.bat")
 stop_w_bat    = os.path.join(winsrv, "stop-winsrv.bat")
 restart_w_bat = os.path.join(winsrv, "restart-winsrv.bat")
+winsrv_proc_exe = 'winsrv\portfolio-ia64.exe'
 
 @task
 def run_jserv(c, bin = 'bin'):
@@ -66,7 +67,9 @@ def install_wsrv_byname(srvname: str):
 
 def install_htmlsrv(srvname: str):
     Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={html_srver}'})
-
+    '''
+    FIXME: This replace is not correct. See comments of upgrade_cli.
+    '''
     ctx = Context()
     cmd = f'{install_html_w_bat} install {srvname}'
     print(cmd)
@@ -76,14 +79,14 @@ def install_htmlsrv(srvname: str):
 
 def stop_wsrv_byname(srvname: str):
     ctx = Context()
-    cmd = f'{stop_w_bat} {srvname}'
+    cmd = f'{stop_w_bat} {winsrv_proc_exe} {srvname}'
     print(cmd)
     ctx.run(cmd)
 
 
 def restart_wsrv_byname(srvname: str):
     ctx = Context()
-    cmd = f'{restart_w_bat} {srvname}'
+    cmd = f'{restart_w_bat} {winsrv_proc_exe} {srvname}'
     print(cmd)
     ctx.run(cmd)
 
@@ -124,26 +127,32 @@ def update_srv(zip_path: str):
         except UnexpectedExit as e:
             print(f"Error stopping {srvname}: {e}", file=sys.stderr)
 
-    # 2. backup, preserving each file's exact relative sub-path under backup_dir
+    # 2. backup, preserving each file's relative sub-path (basename(basedir)/fname)
+    #    under backup_dir
     vol = cli.settings.Volume()
     backup_dir = f'backup-{datetime.now().strftime("%Y%m%d")}'
     print(f'Backing up to: {os.path.abspath(backup_dir)}')
 
-    backups = []  # [(orig-path), ...] -- restore just re-copies orig <- backup_dir/orig
+    backups = []  # [(orig-path, backup-path), ...]
 
-    def stash(src):
+    def stash(basedir: str, fname: str):
+        """
+        src = basedir + fname (basedir may be absolute, e.g. vol).
+        dst = backup_dir/basename(basedir)/fname, e.g. backup-20260923/vol/dictionary.json
+        """
+        src = os.path.join(basedir, fname)
         if os.path.isfile(src):
-            dst = os.path.join(backup_dir, src)
+            dst = os.path.join(backup_dir, os.path.basename(os.path.normpath(basedir)), fname)
             Utils.copy_anyway(src, dst, log=True)
-            backups.append(src)
+            backups.append((src, dst))
         else:
             print(f'Skipped (not found): {src}')
 
-    stash(os.path.join(vol, dictionary_json))
-    stash(os.path.join(vol, sys_db))
-    stash(os.path.join(vol, syn_db))
-    stash(os.path.join(web_inf, settings_json))
-    stash(os.path.join(album_web_dist, web_host_json))
+    stash(vol, dictionary_json)
+    stash(vol, sys_db)
+    stash(vol, syn_db)
+    stash(web_inf, settings_json)
+    stash(album_web_dist, web_host_json)
 
     # 3. unpack the update package over cwd
     print(f'Unpacking {zip_path} to {os.getcwd()} ...')
@@ -151,8 +160,8 @@ def update_srv(zip_path: str):
         zf.extractall('.')
 
     # 4. restore the backed-up files, from their mirrored sub-path back to the original
-    for orig in backups:
-        Utils.copy_anyway(os.path.join(backup_dir, orig), orig, log=True)
+    for orig, backed in backups:
+        Utils.copy_anyway(backed, orig, log=True)
         print(f'Restored: {orig}')
 
     # 5. restart services

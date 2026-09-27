@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 a = Analysis(
-    ['src\\synodepy3\\uninstall_cli.py'],
+    ['src\\synodepy3\\upgrade_cli.py'],
     pathex=[],
     binaries=[],
     datas=[ ('src\\synodepy3\\synode.json', 'synodepy3'),
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='uninstall-srv',
+    name='upgrade',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['uninstall.ico'],
+    icon=['setup.ico'],
 )

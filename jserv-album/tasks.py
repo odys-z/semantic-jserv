@@ -10,7 +10,7 @@ from invoke import task, Context
 import os
 
 # Debug Note: PyInsertall uses what ever packages in the user's venv, not isolated one like the build module.
-from anson.io.odysz.common import requir_pkg, requir_npm_package_lock
+from anson.io.odysz.common import requir_pkg, requir_npm_package_resolve
 requir_pkg("anson.py3", "0.6.8")
 requir_pkg("semantics.py3", "0.6.9")
 
@@ -23,8 +23,8 @@ requir_pkg("psutil")              # by synode.py
 requir_pkg("prompt-toolkit", "3.0.52")      # by synode.py
 requir_pkg("pyside6", ["6.6.0", "6.8.2.1"]) # by synode.py
 
-requir_npm_package_lock('../../anclient/examples/example.js/album', '@anclient/anreact', '0.7.1')
-requir_npm_package_lock('../../anclient/examples/example.js/album', '@anclient/semantier', '1.0.5')
+requir_npm_package_resolve('../../anclient/examples/example.js/album', '@anclient/anreact', '0.7.1')
+requir_npm_package_resolve('../../anclient/examples/example.js/album', '@anclient/semantier', '1.0.5')
 
 from semanticshare.io.oz.invoke import SynodeTask, CentralTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
@@ -512,6 +512,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
         'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
         'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
         'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
+        # 'upgrade.exe': '../synode.py/dist/upgrade.exe'
     })
     else:
         print("[*** TODO *** 0.8.0 POSIX]  desktop [album-gui, ws-agent.jar, settings], requires exiftool, jre-posix")
@@ -594,7 +595,7 @@ def make(c: Context, deploy: str = 'tasks.json', gpg: str = None):
     and from python 3.10 (3.9.1?) and above for scp command in cfg.deploy_scps.
     '''
     if gpg is not None:
-        install_maven_local(c, gpg)
+        install_maven_local(c, gpg=gpg)
 
     global taskcfg
     taskcfg = cast(SynodeTask, Anson.from_file(deploy))
@@ -611,15 +612,15 @@ def deploy(c: Context, deploy: str = 'tasks.json', gpg: str = None):
     print(f'Deployed: {deploy}, central task: {taskcfg.central_dir} ...')
 
 
-@task
-def landing(c: Context, deploy: str = 'tasks.json'):
-    global taskcfg
-    print(deploy)
-    if taskcfg is None:
-        taskcfg = cast(SynodeTask, Anson.from_file(deploy))
+# @task
+# def landing(c: Context, deploy: str = 'tasks.json'):
+#     global taskcfg
+#     print(deploy)
+#     if taskcfg is None:
+#         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
-    print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
-    taskcfg.publish_landings()
+#     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
+#     taskcfg.publish_landings()
 
 
 @task
