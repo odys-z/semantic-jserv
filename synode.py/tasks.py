@@ -135,6 +135,8 @@ def config(c, abstask_json: str):
     })
 
     synode_ui = cast(UIResources, Anson.from_file(Path('src') / 'synodepy3' / 'synode.github.json'))
+    synode_ui.lang = taskcfg.deploy.lang
+
     if LangExt.len(taskcfg.deploy.mirror_path) > 0:
         # according to synode_ui, not tasks.json
         for lang, ss in synode_ui.langs.items():
@@ -162,24 +164,6 @@ def config(c, abstask_json: str):
     print("* TODO - to further simplify configuration, let's setup the default domain.")
     print("***********************************************")
 
-'''
-def must_copy():
-    if os.name == 'nt':
-        return None
-    else:
-        # for linux, copy the exe to dist folder
-        src = Path('dist') / 'setup-cli.exe'
-        dst = Path('dist') / 'setup-gui.exe'
-        for src in [Path('dist') / 'setup-cli.exe', Path('dist') / 'setup-gui.exe', Path('dist') / 'uninstall-srv.exe']:
-            if src.exists():
-                break
-        if src.exists():
-            Utils.copy_anyway(src, dst, log=True)
-            return None
-        else:
-            print(f'*** ERROR: {src} not found, cannot copy to {dst}')
-            sys.exit(1)
-'''
 
 @task
 def build(c: Context, deploy: str):
@@ -225,6 +209,7 @@ def build(c: Context, deploy: str):
             ret = c.run(f'cd {pth} && {cmd}')
             print('OK:', ret.ok, ret.stderr)
     return False
+
 
 @task
 def scp_upload_exe(c: Context, deploy: str='tasks.upload.json'):
