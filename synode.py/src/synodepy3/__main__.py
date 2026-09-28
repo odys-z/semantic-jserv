@@ -713,6 +713,9 @@ class InstallerForm(QMainWindow):
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def translateUI():
+            from synodepy3.__version__ import synode_ver
+            self.setWindowTitle(f'Portfolio Synode {synode_ver}')
+
             self.ui.gboxRegistry.setTitle(synode_ui.langstrf(
                     'gboxRegistry', market=self.cli.settings.market_id))
 
