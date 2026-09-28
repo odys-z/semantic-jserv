@@ -1,6 +1,3 @@
-"""
-invoke make
-"""
 import shutil
 import sys
 from types import LambdaType
@@ -11,8 +8,8 @@ import os
 
 # Debug Note: PyInsertall uses what ever packages in the user's venv, not isolated one like the build module.
 from anson.io.odysz.common import requir_pkg
-requir_pkg("anson.py3", "0.6.8")
-requir_pkg("semantics.py3", "0.6.9")
+requir_pkg("anson.py3", "0.6.9")
+requir_pkg("semantics.py3", "0.6.10")
 
 requir_pkg("build")               # by synode.py
 requir_pkg("pyinstaller")         # by synode.py
@@ -23,9 +20,10 @@ requir_pkg("psutil")              # by synode.py
 requir_pkg("prompt-toolkit", "3.0.52")      # by synode.py
 requir_pkg("pyside6", ["6.6.0", "6.8.2.1"]) # by synode.py
 
-from anson.io.odysz.common import requir_npm_package_resolve
+from anson.io.odysz.common import requir_npm_package_resolve, mvn
 requir_npm_package_resolve('../../anclient/examples/example.js/album', '@anclient/anreact', '0.7.1')
 requir_npm_package_resolve('../../anclient/examples/example.js/album', '@anclient/semantier', '1.0.5')
+mvn.requir_installed("io.github.odys-z:anclient.java", "[0.5.23,)")
 
 from semanticshare.io.oz.invoke import SynodeTask, CentralTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
@@ -540,7 +538,6 @@ def package(c: Context, deploy: str = 'tasks.json'):
 
         print('****************************************************************************************************',
              f'* Distribution ZIP file is created successfully: {zip}' if not err else 'Errors while making target (creaded zip file)',
-            #   '****************************************************************************************************',
               sep='\n')
 
         # Also build desktop standalone
