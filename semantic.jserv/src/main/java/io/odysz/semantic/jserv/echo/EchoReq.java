@@ -14,6 +14,15 @@ public class EchoReq extends AnsonBody {
 		 * Query interfaces, only response to localhost
 		 */
 		public static final String inet = "inet";
+		
+		/**
+		 * Public published configuration of this service.
+		 * @since 1.5.18
+		 * 
+		 * FIXME merge with AlbumResp.profiles.
+		 * ISSUE MERGE-WEBROOT, see Anclient/examples/example.slint/issues/i-2026-10-03.md
+		 */
+		public static final String pubConfig = "pub-cfg";
 	}
 	
 	/**

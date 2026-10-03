@@ -532,7 +532,6 @@ public class AppSettings extends Anson {
 	}
 	
 	/**
-	 * @deprecated not used?
 	 * @return
 	 */
 	public String reverseIp() {
@@ -547,6 +546,17 @@ public class AppSettings extends Anson {
 		if (port == 0) port = https ? 443 : 80;
 		return this.reverseProxy ? proxyPort : port;
 	}
+
+	/**
+	 * @since 0.3.6
+	 * @param https
+	 * @return web port (reversed proxy if any)
+	 */
+	public int reversedWebPort(boolean https) {
+		if (port == 0) port = https ? 443 : 80;
+		return this.reverseProxy ? webProxyPort : webport;
+	}
+
 	
 	/**
 	 * Update env-vars to system properties.

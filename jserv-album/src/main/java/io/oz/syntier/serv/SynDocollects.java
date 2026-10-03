@@ -377,6 +377,7 @@ public class SynDocollects extends ServPort<AlbumReq> {
 	 * Get user's {@link Profiles}:<br>
 	 * 1. profile.home = [sys-main.db]/org.home <br>
 	 * 2. profile.webroot = [syn-doc.db]/syn_node.jserv(where synode = webroot), since 0.7.1<br>
+	 * ISSUE MERGE-WEBROOT, see Anclient/examples/example.slint/issues/i-2026-10-03.md<br>
 	 * @since 0.7.0
 	 * @param body request body
 	 * @param usr
