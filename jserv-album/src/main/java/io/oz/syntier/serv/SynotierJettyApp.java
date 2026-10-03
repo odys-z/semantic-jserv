@@ -42,7 +42,6 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
-import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantics.x.SemanticException;
@@ -184,7 +183,7 @@ public class SynotierJettyApp implements Daemon {
 	    Thread.getAllStackTraces().forEach((thread, stack) -> {
 	    	Utils.logi("Thread Name: %s, ID: %s\n"
 	    			+ "State: %s, Is Daemon: %s, Priority: %s",
-	    			thread.getName(), thread.getId(),
+	    			thread.getName(), thread.threadId(),
 	    			thread.getStackTrace(), thread.isDaemon(), thread.getPriority());
 
 	        if (stack.length > 0) {
@@ -338,7 +337,7 @@ public class SynotierJettyApp implements Daemon {
 
 		return registerPorts(synapp, cfg.synconn,
 				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
-				new Echo(), new HeartLink(),
+				new AlbumEcho(settings, cfg), new HeartLink(),
 				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain), cfg, settings))
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)

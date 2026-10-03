@@ -55,7 +55,7 @@ import io.oz.syn.registry.SynodeConfig;
 import io.oz.syn.registry.SyntityReg;
 
 /**
- * The access point of document client tiers, accepting doc's pushing.
+ * The access point of document for client tiers, accepting doc's pushing.
  * 
  * This ServPort requires a Syndomanager to work, but is actually can support only one domain.
  *

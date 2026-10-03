@@ -14,6 +14,12 @@ public class EchoReq extends AnsonBody {
 		 * Query interfaces, only response to localhost
 		 */
 		public static final String inet = "inet";
+		
+		/**
+		 * Public published configuration of this service.
+		 * @since 1.5.18
+		 */
+		public static final String pubConfig = "pub-cfg";
 	}
 	
 	/**
