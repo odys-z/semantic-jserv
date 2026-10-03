@@ -46,6 +46,7 @@ public class AlbumEcho extends Echo {
 		}
 	}
 
+	// ISSUE MERGE-WEBROOT, see Anclient/examples/example.slint/issues/i-2026-10-03.md
 	protected AnsonResp pubConfg(HttpServletResponse resp, EchoReq echoReq, String remote) throws SemanticException {
 		return new AnsonResp()
 				// TODO to be fixed: the cpp's AnsonResp.m has a wrong correct type of Anson. Sure be VarType (Java Object).
