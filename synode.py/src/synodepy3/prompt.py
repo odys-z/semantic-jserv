@@ -15,8 +15,10 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, App
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
-from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
-from synodepy3.jre_downloader import _jre_
+from synodepy3.commands import install_linusrvs, linusrv_synode, linusrv_websrv
+from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, \
+    mypath, \
+    generate_service_templ
 from synodepy3.validators import PJservValidator, PIPValidator
 
 
@@ -31,68 +33,7 @@ def readable_state(s: str = ''):
             else '[❗] Unknown state (Dangerous! Create a new domain if possible)'
 
 
-from synodepy3.__version__ import synode_ver, jar_ver, web_ver
-def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8g'):
-    """
-    :param s: settings
-    :param c: synode registry config
-    :param xms: JRE option Xms
-    :param xmx: JRE option Xmx
-    :return:
-    """
-
-    cwd = os.getcwd()
-    java_home = f'{cwd}/{_jre_}'
-    synode_desc = f'Synode {jar_ver} {synid}'
-    etc_syn = f"""[Unit]
-
-
-Description={synode_desc}
-After=network.target
-
-[Service]
-Type=simple
-User={os.getlogin()}
-WorkingDirectory={cwd}
-Environment="JAVA_HOME={java_home}"
-ExecStart={java_home}/bin/java -jar {cwd}/bin/{jserv_07_jar}
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-Environment="JAVA_OPTS=-Xms{xms} -Xmx{xmx}"
-
-[Install]
-WantedBy=multi-user.target
-    """
-
-    web_desc = f'Synode {web_ver} {synid}'
-    etc_web = f"""[Unit]
-Description={web_desc}
-After=network.target
-
-[Service]
-Type=simple
-User={os.getlogin()}
-WorkingDirectory={cwd}
-Environment="JAVA_HOME={java_home}"
-ExecStart={java_home}/bin/java -jar {cwd}/bin/{html_web_jar}
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-Environment="JAVA_OPTS=-Xms512m -Xmx2g"
-
-[Install] 
-WantedBy=multi-user.target
-    """
-    syn_templ, web_templ = f'{c.synid}.service', f'{c.synid}.web.service'
-    with open(syn_templ, "w") as fo:
-        fo.write(etc_syn)
-    with open(web_templ, "w") as fo:
-        fo.write(etc_web)
-
-    return syn_templ, web_templ
+from synodepy3.__version__ import synode_ver
 
 _quit = False
 details = [cast(Optional[str], None)]
@@ -103,12 +44,11 @@ def check_quit(q: bool):
             print(itm)
         sys.exit(-1)
 
+
 style = Style.from_dict({
     'prompt': 'bg:#ansiblue #ffffff',  # Blue background, white text
 })
 
-# path = os.path.dirname(__file__)
-# synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
 class QuitValidator(Validator):
     def validate(self, document: Document) -> None:
@@ -117,6 +57,7 @@ class QuitValidator(Validator):
             _quit = True
         else:
             _quit = False
+
 
 class VolumeValidator(Validator):
     def validate(self, document: Document) -> None:
@@ -147,11 +88,6 @@ class VolumeValidator(Validator):
             raise ValidationError(message=f"A file or directory already exists at '{mypath}'.")
         except OSError as e:
             raise ValidationError(message=f"An OS error occurred while testing creation: {e}")
-
-# class NodeStateValidator(Validator):
-#     def validate(self, document: Document) -> None:
-#         if document[1] == 'installed':
-#             raise ValidationError(message=f'Node {document[0]} is installed.')
 
 class DomainValidator(Validator):
     def validate(self, document: Document) -> None:
@@ -206,10 +142,12 @@ def err_ctx(c, e: str, *args: str) -> None:
         details[0] = e
     _quit = True
 
+
 err_uihandlers[0] = err_ctx
 
 cli = InstallerCli()
-cli.registry = cli.load_settings()
+# cli.registry = cli.load_settings()
+cli.load_settings()
 cli.registry = InstallerCli.loadRegistry(cli.settings.volume, 'registry')
 
 ssclient = None
@@ -530,17 +468,44 @@ if caninstall == 1:
         login_url = f'{"https" if cli.registry.config.https else "http"}://' + \
                     f'{ cli.settings.proxyIp if cli.settings.reverseProxy else "127.0.0.1"}:' + \
                     f'{cli.settings.webProxyPort if cli.settings.reverseProxy else cli.settings.webport}/login.html'
+        login_tip = f'Login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n{login_url}\n\n'
 
-        session.prompt(message=
-               f'The service configuration template is saved in ./{syn_templ} & ./{web_templ}.\n\n'
-                'Before setup the services, it is recommend to try the service with this two commands:\n'
+        print(f'The service configuration files are generated: ./{syn_templ} & ./{web_templ}.')
+        install_units = choice(
+            message='Install and start them as systemd services now? (sudo required)',
+            options=[(1, 'Yes, install and start the services.'),
+                     (2, 'No, I will install them myself.')],
+            default=1)
+
+        states = {}
+        if install_units == 1:
+            srv_name = session.prompt(
+                message='Service name (installed as <name>.service & <name>.web.service): ',
+                default=cfg.synid).strip().removesuffix('.service') or cfg.synid
+            try:
+                states = install_linusrvs(cli, {linusrv_synode: (f'{srv_name}.service', syn_templ),
+                                                linusrv_websrv: (f'{srv_name}.web.service', web_templ)})
+            except PermissionError as e:
+                Utils.warn(e)
+
+        if states:
+            session.prompt(message=
+                '\n'.join(f'{u}: {st}' for u, st in states.items()) + '\n\n' +
+                'Check logs with:\n' +
+                ''.join(f'journalctl -u {u} -f\n' for u in states) + '\n' +
+                login_tip +
+                'Return to quit Portfolio Setup ...')
+        else:
+            session.prompt(message=
+                'Services are not installed.\n\n'
+                'You can try the service with these two commands:\n'
                f'java -jar bin/{jserv_07_jar}\n'
                f'java -jar bin/{html_web_jar}\n\n'
-               f'Then try login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n'
-               f'{login_url}\n\n'
-                'A simple tutorial for installing Unix services is to be build. You have to Google it. Sorry!\n'
-               f'Return to quit Portfolio Setup ...'
-               )
+                'Then ' + login_tip +
+                'To install the services, copy the files to /etc/systemd/system/, then:\n'
+                'sudo systemctl daemon-reload\n'
+               f'sudo systemctl enable --now {Path(syn_templ).name} {Path(web_templ).name}\n\n'
+                'Return to quit Portfolio Setup ...')
 
 def main():
     '''

@@ -72,7 +72,7 @@ def upgrade_srv(zip_path: str = None):
     """
     zpath = zip_path if zip_path is not None else (sys.argv[1] if len(sys.argv) > 1 else None)
     if zpath is None:
-        print('Usage: synode-upgrade-srv <path-to-update.zip>')
+        print('Usage: synode-upgrade-srv <path-to-update.zip or .tar.gz>')
         return
     update_srv(zpath)
 
