@@ -121,6 +121,18 @@ class SyncInsValidator(Validator):
             if err is not None:
                 raise ValidationError(message=err['config.syncIns'])
 
+class SrvNameValidator(Validator):
+    """
+    systemd unit name, without suffix .service. Blank is allowed (use the default).
+    """
+    def validate(self, document: Document) -> None:
+        name = document.text.strip().removesuffix('.service')
+        if not name:
+            return
+        try: LangExt.only_wordextlen(name, ext='_-.', maxlen=240)
+        except AnsonException:
+            raise ValidationError(message='Service name can only have letters, digits and "_-."')
+
 class MultiValidator(Validator):
     valids = list[Validator]
 
@@ -479,7 +491,7 @@ if caninstall == 1:
         if install_units == 1:
             srv_name = session.prompt(
                 message='Service name (installed as <name>.service & <name>.web.service): ',
-                default=cfg.synid).strip().removesuffix('.service') or cfg.synid
+                default=cfg.synid, validator=SrvNameValidator()).strip().removesuffix('.service') or cfg.synid
             try:
                 states = install_linusrvs(cli, {linusrv_synode: (f'{srv_name}.service', syn_templ),
                                                 linusrv_websrv: (f'{srv_name}.web.service', web_templ)})
