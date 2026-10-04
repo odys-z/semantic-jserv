@@ -482,8 +482,8 @@ if caninstall == 1:
 
         print(f'The service configuration files are generated: ./{syn_templ} & ./{web_templ}.')
         install_units = choice(
-            message='Install and start them as systemd services now? (sudo required)',
-            options=[(1, 'Yes, install and start the services.'),
+            message='Install them as systemd services now? (sudo required)',
+            options=[(1, 'Yes, install the services.'),
                      (2, 'No, I will install them myself.')],
             default=1)
 
