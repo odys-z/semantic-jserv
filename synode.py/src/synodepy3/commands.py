@@ -15,7 +15,7 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db
 
 from .__version__ import jar_ver, html_srver
 from .installer_api import InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json
-from .systemd_units import Sudo, linusrv, stop_linusrvs, restart_sysunits
+from .systemd_units import Sudo, linusrv, stop_linusrvs, reinstall_linusrvs
 
 winsrv = 'winsrv'
 winsrv_synode = f'{winsrv}.synode'
@@ -139,8 +139,8 @@ def update_srv(pkg_path: str):
       4. restore the backed-up files (so the new package doesn't clobber
          local data/config)
       5. Windows: restart both services;
-         Linux: on user's confirmation, install & start the units regenerated for the new version
-         (or the previous units, if unpacking failed)
+         Linux: install the units regenerated for the new version (or the previous units,
+         if unpacking failed), and start them on user's confirmation
 
     :param pkg_path: path to the update package, zip on Windows, tar.gz on Linux.
     """
@@ -163,7 +163,7 @@ def update_srv(pkg_path: str):
         try:
             srvs = stop_linusrvs(cli, sudo, backup_dir)
         except (RuntimeError, PermissionError) as e:
-            print(f'{e}\nUpgrade aborted. Removed unit files (if any) are kept in '
+            print(f'{e}\nUpgrade aborted. Unit files of the uninstalled services (if any) are kept in '
                   f'{os.path.abspath(os.path.join(backup_dir, linusrv))}', file=sys.stderr)
             return
 
@@ -215,6 +215,6 @@ def update_srv(pkg_path: str):
     if Utils.iswindows():
         restart_wsrvs()
     elif srvs:
-        restart_sysunits(cli, cast(Sudo, sudo), srvs, unpacked)
+        reinstall_linusrvs(cli, cast(Sudo, sudo), srvs, unpacked)
 
     print(f'Update {"complete" if unpacked else "FAILED"}. Backup kept at: {os.path.abspath(backup_dir)}')

@@ -2,6 +2,21 @@
 
 Synode.py is the synchronization node for Portfolio, a file / resources synchronization framework.
 
+# 0.8 Experimental
+
+- Auto-upgrade module
+
+  For Linux:
+
+  ```
+    python -m upgrade_cli path-to-new-version.tar.gz
+  ```
+
+  For Windows
+
+  ```
+    ./upgrade.exe path-to-new-version.zip
+  ```
 
 # Python Version Selection
 
