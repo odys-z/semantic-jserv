@@ -183,7 +183,7 @@ public class SynotierJettyApp implements Daemon {
 	    Thread.getAllStackTraces().forEach((thread, stack) -> {
 	    	Utils.logi("Thread Name: %s, ID: %s\n"
 	    			+ "State: %s, Is Daemon: %s, Priority: %s",
-	    			thread.getName(), thread.threadId(),
+	    			thread.getName(), thread.getId(),
 	    			thread.getStackTrace(), thread.isDaemon(), thread.getPriority());
 
 	        if (stack.length > 0) {
