@@ -308,69 +308,6 @@ serv_port0 = 8964
 web_port0 = 8900
 jserv_07_jar = f'jserv-album-{jar_ver}.jar'
 
-
-def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8g'):
-    """
-    :param s: settings
-    :param c: synode registry config
-    :param xms: JRE option Xms
-    :param xmx: JRE option Xmx
-    :return: (synode service file, web service file), generated in cwd: <synid>.service, <synid>.web.service
-    """
-
-    cwd = os.getcwd()
-    java_home = f'{cwd}/{_jre_}'
-    synode_desc = f'Synode {jar_ver} {c.synid}'
-    etc_syn = f"""[Unit]
-
-
-Description={synode_desc}
-After=network.target
-
-[Service]
-Type=simple
-User={os.getlogin()}
-WorkingDirectory={cwd}
-Environment="JAVA_HOME={java_home}"
-ExecStart={java_home}/bin/java -jar {cwd}/bin/{jserv_07_jar}
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-Environment="JAVA_OPTS=-Xms{xms} -Xmx{xmx}"
-
-[Install]
-WantedBy=multi-user.target
-    """
-
-    web_desc = f'Synode {web_ver} {c.synid}'
-    etc_web = f"""[Unit]
-Description={web_desc}
-After=network.target
-
-[Service]
-Type=simple
-User={os.getlogin()}
-WorkingDirectory={cwd}
-Environment="JAVA_HOME={java_home}"
-ExecStart={java_home}/bin/java -jar {cwd}/bin/{html_web_jar}
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-Environment="JAVA_OPTS=-Xms512m -Xmx2g"
-
-[Install] 
-WantedBy=multi-user.target
-    """
-    syn_templ, web_templ = f'{c.synid}.service', f'{c.synid}.web.service'
-    with open(syn_templ, "w") as fo:
-        fo.write(etc_syn)
-    with open(web_templ, "w") as fo:
-        fo.write(etc_web)
-
-    return syn_templ, web_templ
-
 exiftool_zip = 'exiftool.zip'
 exiftool_v_exe = 'exiftool*.exe'
 exiftool_exe = 'exiftool.exe'
