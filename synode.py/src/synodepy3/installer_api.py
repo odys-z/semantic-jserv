@@ -307,6 +307,7 @@ html_web_jar = f'html-web-{html_srver}.jar'
 serv_port0 = 8964
 web_port0 = 8900
 jserv_07_jar = f'jserv-album-{jar_ver}.jar'
+
 exiftool_zip = 'exiftool.zip'
 exiftool_v_exe = 'exiftool*.exe'
 exiftool_exe = 'exiftool.exe'
@@ -709,7 +710,6 @@ class InstallerCli:
             market: str, org: Optional[str] = None, domain: Optional[str]=None,
             reg_jserv: Optional[str] = None,
             admin: Optional[str]=None, domphrase: Optional[str]=None,
-            # 0.7.7 central pswd is build by tasks.py
             volume: Optional[str]=None,
             hubmode: Optional[bool]=None,
             jservss: Optional[str]=None, synid: Optional[str]=None,
@@ -718,10 +718,7 @@ class InstallerCli:
             proxyPort: Optional[str]=None, proxyIp: Optional[str]=None,
             syncins: Optional[str]=None, envars=None, webProxyPort=None):
 
-        self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain
-                           # 0.7.7 central pswd is build by tasks.py
-                           # centralPswd=None
-                           )
+        self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain)
 
         for u in self.registry.synusers:
             if u.userId == admin and admin is not None:
@@ -957,6 +954,7 @@ class InstallerCli:
             csets.toFile((apppath / setpath).absolute())
             print("Saved", Path(apppath) / setpath, ":", csets.synode_id, csets.synode_jserv)
 
+    '''
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)
         if clean:
@@ -977,6 +975,7 @@ class InstallerCli:
             else:
                 try: os.remove(res)
                 except FileNotFoundError or IOError or OSError: pass
+    '''
 
     def test_in_term(self):
         system = Utils.get_os()

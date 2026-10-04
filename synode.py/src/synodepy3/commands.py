@@ -2,10 +2,12 @@
 import os
 import re
 import signal
+import subprocess
 import sys
 import time
 import zipfile
 from datetime import datetime
+from typing import cast
 
 from anson.io.odysz.common import Utils
 from invoke import task, Context, UnexpectedExit
@@ -13,6 +15,7 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db
 
 from .__version__ import jar_ver, html_srver
 from .installer_api import InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json
+from .systemd_units import Sudo, linusrv, stop_linusrvs, restart_sysunits
 
 winsrv = 'winsrv'
 winsrv_synode = f'{winsrv}.synode'
@@ -91,46 +94,82 @@ def restart_wsrv_byname(srvname: str):
     ctx.run(cmd)
 
 
-def update_srv(zip_path: str):
+def stop_winsrvs() -> bool:
     """
-    Update a running Synode install in-place:
-      1. stop the jserv-album and html-service Windows services
+    Stop the 2 Windows services saved in settings.envars[winsrv_synode / winsrv_websrv].
+    :return: False if the service names are not found in settings.json.
+    """
+    envars = InstallerCli().load_settings().envars
+    if winsrv_synode not in envars or winsrv_websrv not in envars:
+        print('Error: cannot find target service name(s). The configuration are damaged.')
+        return False
+
+    for srvname in (envars[winsrv_synode], envars[winsrv_websrv]):
+        try:
+            stop_wsrv_byname(srvname)
+        except UnexpectedExit as e:
+            print(f"Error stopping {srvname}: {e}", file=sys.stderr)
+    return True
+
+
+def restart_wsrvs():
+    """
+    Restart the 2 Windows services saved in settings.envars[winsrv_synode / winsrv_websrv].
+    """
+    envars = InstallerCli().load_settings().envars
+    for srvname in (envars[winsrv_synode], envars[winsrv_websrv]):
+        try:
+            restart_wsrv_byname(srvname)
+        except UnexpectedExit as e:
+            print(f"Error restarting {srvname}: {e}", file=sys.stderr)
+
+
+def update_srv(pkg_path: str):
+    """
+    Update a running Synode install in-place, in the installation folder (cwd):
+      1. Windows: stop the jserv-album and html-service services;
+         Linux: uninstall (stop, disable, remove) the 2 systemd units saved in settings.json,
+         keeping the unit files in backup_dir/linusrv/
       2. back up vol/dictionary.json, vol/*.db, WEB-INF/settings.json and
          web-dist/private/host.json into a dated backup-YYYYMMDD/ folder,
          preserving each file's exact relative sub-path
          (vol = WEB-INF/settings.json's "volume")
-      3. unpack zip_path over the current working directory
+      3. unpack pkg_path over the current working directory
+         (Windows: *.zip; Linux: *.tar.gz, by tar -xf)
       4. restore the backed-up files (so the new package doesn't clobber
          local data/config)
-      5. restart both services
+      5. Windows: restart both services;
+         Linux: on user's confirmation, install & start the units regenerated for the new version
+         (or the previous units, if unpacking failed)
 
-    :param zip_path: path to the update package (zip).
+    :param pkg_path: path to the update package, zip on Windows, tar.gz on Linux.
     """
-    if not os.path.isfile(zip_path):
-        print(f'Error: update package not found: {zip_path}')
+    if not os.path.isfile(pkg_path):
+        print(f'Error: update package not found: {pkg_path}')
         return
 
     cli = InstallerCli()
     cli.load_settings()
 
-    if winsrv_synode not in cli.settings.envars or winsrv_websrv not in cli.settings.envars:
-        print('Error: cannot find target service name(s). The configuration are damaged.')
-        return
-
-    syn_srvname = cli.settings.envars[winsrv_synode]
-    web_srvname = cli.settings.envars[winsrv_websrv]
+    backup_dir = f'backup-{datetime.now().strftime("%Y%m%d")}'
 
     # 1. stop services
-    for srvname in [syn_srvname, web_srvname]:
+    sudo, srvs = None, None
+    if Utils.iswindows():
+        if not stop_winsrvs():
+            return
+    else:
+        sudo = Sudo()
         try:
-            stop_wsrv_byname(srvname)
-        except UnexpectedExit as e:
-            print(f"Error stopping {srvname}: {e}", file=sys.stderr)
+            srvs = stop_linusrvs(cli, sudo, backup_dir)
+        except (RuntimeError, PermissionError) as e:
+            print(f'{e}\nUpgrade aborted. Removed unit files (if any) are kept in '
+                  f'{os.path.abspath(os.path.join(backup_dir, linusrv))}', file=sys.stderr)
+            return
 
     # 2. backup, preserving each file's relative sub-path (basename(basedir)/fname)
     #    under backup_dir
     vol = cli.settings.Volume()
-    backup_dir = f'backup-{datetime.now().strftime("%Y%m%d")}'
     print(f'Backing up to: {os.path.abspath(backup_dir)}')
 
     backups = []  # [(orig-path, backup-path), ...]
@@ -155,20 +194,27 @@ def update_srv(zip_path: str):
     stash(album_web_dist, web_host_json)
 
     # 3. unpack the update package over cwd
-    print(f'Unpacking {zip_path} to {os.getcwd()} ...')
-    with zipfile.ZipFile(zip_path, 'r') as zf:
-        zf.extractall('.')
+    print(f'Unpacking {pkg_path} to {os.getcwd()} ...')
+    unpacked = True
+    if Utils.iswindows():
+        with zipfile.ZipFile(pkg_path, 'r') as zf:
+            zf.extractall('.')
+    else:
+        r = subprocess.run(['tar', '-xf', pkg_path, '-C', '.'], capture_output=True, text=True)
+        if r.returncode != 0:
+            unpacked = False
+            print(f'Error unpacking {pkg_path}:\n{r.stderr}', file=sys.stderr)
 
     # 4. restore the backed-up files, from their mirrored sub-path back to the original
+    #    (also when tar failed, as rollback of a partial extraction)
     for orig, backed in backups:
         Utils.copy_anyway(backed, orig, log=True)
         print(f'Restored: {orig}')
 
     # 5. restart services
-    for srvname in [syn_srvname, web_srvname]:
-        try:
-            restart_wsrv_byname(srvname)
-        except UnexpectedExit as e:
-            print(f"Error restarting {srvname}: {e}", file=sys.stderr)
+    if Utils.iswindows():
+        restart_wsrvs()
+    elif srvs:
+        restart_sysunits(cli, cast(Sudo, sudo), srvs, unpacked)
 
-    print(f'Update complete. Backup kept at: {os.path.abspath(backup_dir)}')
+    print(f'Update {"complete" if unpacked else "FAILED"}. Backup kept at: {os.path.abspath(backup_dir)}')
