@@ -12,7 +12,7 @@ _tasks = {a.replace('_', '-') for a in sys.argv[1:] if not a.startswith('-')}
 
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
-    requir_pkg("anson.py3", "0.6.9")
+    requir_pkg("anson.py3", "0.6.10")
     requir_pkg("semantics.py3", "0.6.10")
 
     requir_pkg("build")               # by synode.py
