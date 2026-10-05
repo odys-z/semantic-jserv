@@ -23,7 +23,7 @@
     "central_iport" : "10.10.10.10:9999",
     "central_path"  : "regist-alpha",
     "centralUid"    : "central user id, see issues",
-    "central_pswd"  : "",
+    "central_pswd"  : "see issues/central user id",
     "web_port"      : 8964,
     "jserv_port"    : 8965,
     "ws_port"       : 8700,
