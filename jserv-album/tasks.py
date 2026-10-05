@@ -95,7 +95,7 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
 
     # ISSUE central-uid: Synodes log in central as deploy.admin (synusr.uid()), not centralUid.
     # 0.8.0: both must be 'admin'. See ../issues/central-uid-synode-login.md
-    if not (taskcfg.deploy.admin == taskcfg.deploy.centralUid == 'admin'):
+    if not deploy in ['tasks.0.8.0.json', 'tasks.0.7.8.json', 'tasks.github.json'] and not (taskcfg.deploy.admin == taskcfg.deploy.centralUid == 'admin'):
         bar = '!' * 72
         Utils.warn(f'\n{bar}\n!!  deploy.admin ({taskcfg.deploy.admin}) and deploy.centralUid ({taskcfg.deploy.centralUid})'
                    f" must both be 'admin'.\n"
