@@ -12,8 +12,8 @@ _tasks = {a.replace('_', '-') for a in sys.argv[1:] if not a.startswith('-')}
 
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
-    requir_pkg("anson.py3", "0.6.9")
-    requir_pkg("semantics.py3", "0.6.10")
+    requir_pkg("anson.py3", "0.6.10")
+    requir_pkg("semantics.py3", "0.6.11")
 
     requir_pkg("build")               # by synode.py
     requir_pkg("pyinstaller")         # by synode.py
@@ -34,7 +34,7 @@ if 'install-maven-local' not in _tasks:
     mvn.requir_installed("io.github.odys-z:semantic.jserv", "[1.5.18,)")
     mvn.requir_installed("io.github.odys-z:docsync.jserv", "[0.3.5,)")
 
-from semanticshare.io.oz.invoke import SynodeTask, CentralTask
+from semanticshare.io.oz.invoke import SynodeTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
 
 from anson.io.odysz.common import LangExt, Utils
@@ -84,7 +84,7 @@ def check_env(c):
 @task
 def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
     '''
-    Validate central connection & set JAVA_HOME.
+    Validate central settings & set JAVA_HOME.
     '''
     print(f'--------------    validate   ------------------')
     global taskcfg
@@ -93,13 +93,15 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
 
     print('taskcfg:', taskcfg.deploy.orgid, taskcfg.version)
 
-    task_cent = cast(CentralTask, Anson.from_file(os.path.join(taskcfg.central_dir, 'tasks.json')))
-
-    if taskcfg.deploy.central_pswd != task_cent.users['admin']['pswd']: # Issue: should be ['admin'].pswd:
-        Utils.warn(f'Warning: central_pswd is not set to default value. Override with {taskcfg.deploy.central_pswd}')
-        # sys.exit(1)
-    else:
-        Utils.logi('Central pswd looks fine.')
+    # ISSUE central-uid: Synodes log in central as deploy.admin (synusr.uid()), not centralUid.
+    # 0.8.0: both must be 'admin'. See ../issues/central-uid-synode-login.md
+    if not (taskcfg.deploy.admin == taskcfg.deploy.centralUid == 'admin'):
+        bar = '!' * 72
+        Utils.warn(f'\n{bar}\n!!  deploy.admin ({taskcfg.deploy.admin}) and deploy.centralUid ({taskcfg.deploy.centralUid})'
+                   f" must both be 'admin'.\n"
+                   f'!!  Synodes log in central as deploy.admin with central_pswd.\n'
+                   f'!!  See ../issues/central-uid-synode-login.md\n{bar}')
+        sys.exit(-1)
 
     if hasattr(taskcfg, 'java_home') and not LangExt.isblank(taskcfg.java_home):
         java_home = taskcfg.java_home

@@ -186,6 +186,7 @@ if not has_run:
               default=cli.settings.regiserv,
               validate_while_typing=True)
 
+        # ISSUE central-login: not a verified login, see issues/central-client-login.md
         ssclient = cli.check_cent_login()
         orgs, orgid = cli.query_orgs()
 
