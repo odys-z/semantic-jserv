@@ -90,6 +90,7 @@ def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
     return resp
 
 
+# ISSUE central-login: requests to central below carry no AnsonHeader, see issues/central-client-login.md
 def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
     req = RegistReq(RegistReq.A.queryDomx, market=market)
     req.Uri(func_uri)
@@ -794,13 +795,30 @@ class InstallerCli:
     def ping(self, jsrv, timeout=10):
         return ping(install_uri, jsrv, timeout_snd=timeout)
 
+    def central_uid(self) -> str:
+        """
+        The central (registry) user id, configured at build time as tasks.json deploy.centralUid,
+        and packaged in desktop/settings/app-settings.json (AnclientSettings.centralUid).
+        Falls back to the domain admin, registry.synusers[0], if the desktop is not packaged.
+        """
+        desk_sets = Path('desktop') / 'settings' / 'app-settings.json'
+        if desk_sets.exists():
+            try:
+                csets = cast(AnclientSettings, Anson.from_file(desk_sets))
+                if hasattr(csets, 'centralUid') and not LangExt.isblank(csets.centralUid):
+                    return csets.centralUid
+            except Exception as e:
+                Utils.warn(f'Cannot load centralUid from {desk_sets}: {e}')
+        return self.registry.synusers[0].userId
+
     def check_cent_login(self) -> SessionClient:
+        # ISSUE central-login: loginWithUri() makes no login request, see issues/central-client-login.md
         if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
             self.regclient = SessionClient.loginWithUri(
                 uri=install_uri,
                 servroot=self.settings.regiserv,
-                uid=self.registry.synusers[0].userId,
-                pswdPlain=self.registry.synusers[0].pswd)
+                uid=self.central_uid(),
+                pswdPlain=self.settings.centralPswd)
         return self.regclient # type: ignore
 
     def query_orgs(self) -> Tuple[list[str], str]:

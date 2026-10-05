@@ -695,6 +695,8 @@ setp (6)
 			if (registryClient == null) {
 				mustnonull(centralPswd);
 
+				// ISSUE central-uid: logs in central as the domain admin, synusr.uid(), not centralUid
+				// (tasks.json deploy.centralUid), see semantic-jserv/issues/central-uid-synode-login.md
 				registryClient = SessionClient.loginWithUri(
 						regiserv, reg_uri + "/" + c.synid, synusr.uid(), centralPswd, c.synid);
 			}

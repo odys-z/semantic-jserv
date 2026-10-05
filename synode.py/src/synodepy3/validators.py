@@ -7,7 +7,7 @@ import ipaddress
 
 from PySide6.QtGui import QValidator
 from prompt_toolkit.validation import Validator, ValidationError
-from semanticshare.io.odysz.semantic.jprotocol import JServUrl, JProtocol
+from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 from prompt_toolkit.document import Document
 
 from anson.io.odysz.common import LangExt

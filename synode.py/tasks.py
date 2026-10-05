@@ -103,6 +103,7 @@ def register_org(c: Context, taskcfg: SynodeTask):
         return cast(RegistResp, resp)
 
     print("* login   :", regiserv)
+    # ISSUE central-login: loginWithUri() makes no login request, see ../issues/central-client-login.md
     ssclient = SessionClient.loginWithUri(servroot=regiserv,
             uri='/sys/tasks', uid=taskcfg.deploy.admin, pswdPlain=taskcfg.deploy.central_pswd)
 
@@ -124,6 +125,13 @@ def config(c, abstask_json: str):
     this_directory = os.getcwd()
 
     taskcfg = cast(SynodeTask, Anson.from_file(abstask_json))
+
+    # ISSUE central-uid: deploy.admin is written as registry synusers[0], with which Synodes log in central
+    # (AppSettings.merge_ip_json2db()). 0.8.0: both must be 'admin'. See ../issues/central-uid-synode-login.md
+    if not (taskcfg.deploy.admin == taskcfg.deploy.centralUid == 'admin'):
+        Utils.warn(f"**** ERROR **** deploy.admin ({taskcfg.deploy.admin}) and deploy.centralUid "
+                   f"({taskcfg.deploy.centralUid}) must both be 'admin'. See ../issues/central-uid-synode-login.md")
+        sys.exit(-1)
     version_file = os.path.join(this_directory, 'src', 'synodepy3', '__version__.py')
     Utils.update_patterns(version_file, {
         'synode_ver = "[0-9\\.]+"': f'synode_ver = "{taskcfg.version}"',
