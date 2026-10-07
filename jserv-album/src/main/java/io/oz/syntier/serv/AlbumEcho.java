@@ -2,6 +2,7 @@ package io.oz.syntier.serv;
 
 import java.io.IOException;
 
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
@@ -16,7 +17,9 @@ import io.oz.syn.registry.SynodeConfig;
 
 /**
  * This is only a temporary solution for branch portfolio 0.8?
+ * @since 0.8.0
  */
+@WebServlet(description = "Album echo since 0.8", urlPatterns = { "/echo.less" })
 public class AlbumEcho extends Echo {
 
 	private static final long serialVersionUID = 1L;
