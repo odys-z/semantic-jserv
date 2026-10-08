@@ -1,5 +1,5 @@
 """
-Report available / occupied TCP port ranges on this host (Linux and Windows).
+Report available / occupied TCP port ranges on this host (Linux, Windows and macOS).
 
 Usage:
     python3 get-avail-ports.py          # ranges only
@@ -7,10 +7,12 @@ Usage:
     python3 get-avail-ports.py -vv      # ... and the program's full command line (e.g. which jar java is running)
 
 A port held by a synode or syn-web service shows its service name (from WEB-INF/settings.json envars);
-with -v, also its install folder. Without -v, psutil is optional: without it only the ranges are shown.
+with -v, also its install folder. This needs psutil, anson.py3 and semantics.py3 (all synode.py3 dependencies);
+without -v they are optional: without them only the ranges are shown.
 
-Owners of other users' / system sockets are only visible with root (sudo) on Linux,
-or from an Administrator prompt on Windows.
+Owners of other users' / system sockets are only visible with root (sudo) on Linux and macOS,
+or from an Administrator prompt on Windows. On macOS without sudo, only your own programs' ports
+are shown with owners.
 """
 import argparse
 import os
@@ -18,6 +20,7 @@ import socket
 import sys
 
 IS_WIN = os.name == 'nt'
+IS_MAC = sys.platform == 'darwin'
 ELEVATE = "run as Administrator" if IS_WIN else "try sudo"
 
 WSAEACCES = 10013
@@ -44,21 +47,49 @@ def check_port(port, host="127.0.0.1"):
             return False, getattr(e, 'winerror', None) or e.errno
 
 
+owners_partial = False
+'''
+True if the system-wide socket table was denied and only this user's processes' sockets were read (macOS without root).
+'''
+
+
+def _per_process_sockets():
+    """(laddr, status, pid) of the TCP sockets of every process this user may inspect."""
+    import psutil
+
+    for p in psutil.process_iter():
+        try:
+            # Process.connections() was renamed net_connections() in psutil 6.0
+            conns = p.net_connections(kind='tcp') if hasattr(p, 'net_connections') else p.connections(kind='tcp')
+        except (psutil.AccessDenied, psutil.NoSuchProcess, psutil.ZombieProcess):
+            continue
+        for c in conns:
+            yield c.laddr, c.status, p.pid
+
+
 def tcp_port_owners():
     """
     Map port -> {pid: TCP status} for every TCP socket bound on this host.
     TIME_WAIT sockets are skipped: they have no owner (pid 0 on Windows), and don't block a new listener.
     """
+    global owners_partial
     import psutil
 
+    try:
+        sockets = [(c.laddr, c.status, c.pid) for c in psutil.net_connections(kind='tcp')]
+    except psutil.AccessDenied:
+        # macOS: the system-wide table needs root.
+        owners_partial = True
+        sockets = _per_process_sockets()
+
     owners = {}
-    for c in psutil.net_connections(kind='tcp'):
-        if not c.laddr or c.status == psutil.CONN_TIME_WAIT:
+    for laddr, status, pid in sockets:
+        if not laddr or status == psutil.CONN_TIME_WAIT:
             continue
-        pids = owners.setdefault(c.laddr.port, {})
+        pids = owners.setdefault(laddr.port, {})
         # Keep LISTEN over any other status of the same process.
-        if pids.get(c.pid) != psutil.CONN_LISTEN:
-            pids[c.pid] = c.status
+        if pids.get(pid) != psutil.CONN_LISTEN:
+            pids[pid] = status
     return owners
 
 
@@ -107,7 +138,7 @@ _synode_cache = {}
 
 
 def os_service_of(pid):
-    """Name of the OS service running as pid: the Windows service, or the systemd unit on Linux."""
+    """Name of the OS service running as pid: the Windows service, the launchd job on macOS, or the systemd unit on Linux."""
     global _os_services
     if pid is None:
         return None
@@ -126,6 +157,16 @@ def os_service_of(pid):
             except Exception:
                 pass
         return _os_services.get(pid)
+    if IS_MAC:
+        if _os_services is None:
+            import subprocess
+            try:
+                # Without root, only this user's jobs (LaunchAgents); with sudo, the system's (LaunchDaemons).
+                out = subprocess.run(["launchctl", "list"], capture_output=True, text=True, timeout=10).stdout
+            except (OSError, subprocess.SubprocessError):
+                out = ""
+            _os_services = parse_launchctl_list(out)
+        return _os_services.get(pid)
     try:
         with open(f"/proc/{pid}/cgroup") as f:
             for line in f:
@@ -135,6 +176,18 @@ def os_service_of(pid):
     except OSError:
         pass
     return None
+
+
+def parse_launchctl_list(out):
+    """
+    'launchctl list' output -> {pid: label}. Lines are "PID<tab>Status<tab>Label"; PID is '-' for jobs not running.
+    """
+    services = {}
+    for line in out.splitlines()[1:]:
+        cols = line.split(None, 2)
+        if len(cols) == 3 and cols[0].isdigit():
+            services[int(cols[0])] = cols[2].strip()
+    return services
 
 
 def find_install_root(p):
@@ -169,13 +222,28 @@ def find_install_root(p):
     return None
 
 
-def _read_json(path):
-    import json
-    try:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, ValueError):
+_anson_missing = False
+
+
+def _load_anson(path, cls):
+    """
+    Load a synode config file as its Anson type, resolved by the file's "type" field, e.g.
+    settings.json -> AppSettings, html-service.json -> WebConfig.
+    :return: the object, or None if the file is missing, unreadable, or not of type cls.
+    """
+    import contextlib
+    import io
+    from anson.io.odysz.anson import Anson
+
+    if not os.path.isfile(path):
         return None
+    try:
+        # Anson warns on stderr about fields the class doesn't declare, e.g. html-service.json "comments".
+        with contextlib.redirect_stderr(io.StringIO()):
+            obj = Anson.from_file(path)
+    except Exception:
+        return None
+    return obj if isinstance(obj, cls) else None
 
 
 def synode_lookup(pid, port, status="LISTEN"):
@@ -189,38 +257,49 @@ def synode_lookup(pid, port, status="LISTEN"):
         status: the socket's TCP status. Only a listening socket's port is compared with the configured ports:
         any other is a connection (usually outgoing, from a temporary port), not where the service listens.
     """
+    global _anson_missing
     import psutil
 
     listening = status == "LISTEN"
     key = (pid, port, status)
     if key in _synode_cache:
         return _synode_cache[key]
+    if _anson_missing:
+        return None
+
+    try:
+        from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
+        from semanticshare.io.oz.srv import WebConfig
+    except ImportError:
+        _anson_missing = True
+        print("(anson.py3 / semantics.py3 not installed: synode services are not identified.)", file=sys.stderr)
+        return None
 
     found = None
     try:
         p = psutil.Process(pid)
         root = find_install_root(p)
-        settings = _read_json(os.path.join(root, SETTINGS_REL)) if root is not None else None
+        settings = _load_anson(os.path.join(root, SETTINGS_REL), AppSettings) if root is not None else None
         if settings is not None:
-            envars = settings.get("envars") or {}
+            envars = settings.envars or {}
             configured = {role: next((envars[k] for k in keys if envars.get(k)), None)
                           for role, keys in ROLE_KEYS.items()}
             # The web jar listens on WEB-INF/html-service.json's port, written from settings.json webport at install.
-            htmlsrv = _read_json(os.path.join(root, "WEB-INF", "html-service.json")) or {}
-            web_ports = {"settings.json webport": settings.get("webport"),
-                         "html-service.json port": htmlsrv.get("port")}
+            htmlsrv = _load_anson(os.path.join(root, "WEB-INF", "html-service.json"), WebConfig)
+            web_ports = {"settings.json webport": settings.webport,
+                         "html-service.json port": htmlsrv.port if htmlsrv is not None else None}
 
             running = os_service_of(pid)
             role = next((r for r, n in configured.items() if running and n == running), None)
             if role is None and listening:
-                role = "synode" if settings.get("port") == port \
+                role = "synode" if settings.port == port \
                        else "web" if port in web_ports.values() else None
 
             notes = []
             if not listening:
                 pass
-            elif role == "synode" and settings.get("port") not in (None, port):
-                notes.append(f"settings.json port is {settings.get('port')}")
+            elif role == "synode" and settings.port not in (None, port):
+                notes.append(f"settings.json port is {settings.port}")
             elif role == "web":
                 notes += [f"{src} is {v}" for src, v in web_ports.items() if v is not None and v != port]
             if role and running and configured[role] and running != configured[role]:
@@ -232,7 +311,7 @@ def synode_lookup(pid, port, status="LISTEN"):
                 cwd = None
             found = dict(root=root, cwd=cwd, role=role, running=running, notes=notes, status=status,
                          name=running or (configured[role] if role else None))
-    except (psutil.Error, OSError, ValueError):
+    except (psutil.Error, OSError):
         pass
 
     _synode_cache[key] = found
@@ -348,7 +427,7 @@ def print_used_range_short(start, end, owners):
 
 def report_port_ranges(start_port, end_port, host="127.0.0.1", verbose=0):
     """Scans ports and prints blocks of available/used ranges."""
-    # Owners are needed for -v, for naming synode services without -v, and on Windows for the listening
+    # Owners are needed for -v, for naming synode services without -v, and on Windows / macOS for the listening
     # cross-check. Without -v, psutil is optional: the ranges are still reported without it.
     owners = None
     if verbose:
@@ -369,6 +448,8 @@ def report_port_ranges(start_port, end_port, host="127.0.0.1", verbose=0):
         else:
             print_formatted_range(status, start, end)
 
+    if owners_partial:
+        print(f"(Not root: only your own programs' sockets are listed, {ELEVATE} to see all.)")
     print("Available ports:")
 
     current_status = None
@@ -376,8 +457,9 @@ def report_port_ranges(start_port, end_port, host="127.0.0.1", verbose=0):
 
     for port in range(start_port, end_port + 1):
         free, err = check_port(port, host)
-        # Windows can let a bind on 127.0.0.1 succeed while another program listens on 0.0.0.0 of the same port.
-        if free and IS_WIN and owners is not None and is_listening(owners, port):
+        # Windows and macOS (BSD) can let a bind on 127.0.0.1 succeed while another program listens on
+        # 0.0.0.0 or [::] of the same port - Java listens on [::] by default.
+        if free and (IS_WIN or IS_MAC) and owners is not None and is_listening(owners, port):
             free = False
         if not free:
             errors[port] = err
