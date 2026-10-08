@@ -33,6 +33,7 @@ def readable_state(s: str = ''):
 
 
 from synodepy3.__version__ import synode_ver
+from synodepy3.commands_help import commands_table, doc_link
 
 cli_help = f'''Synode {synode_ver} command line setup.
 
@@ -43,15 +44,11 @@ Usage:
 Run it in the synode's folder (with WEB-INF/settings.json). Return with empty input to abort.
 At the ports prompt, enter '?' to list the available ports, or '??' to also show what holds the used ones.
 
-Related commands (Windows exe / installed command / python module):
-    setup-gui.exe       synode-gui             python -m synodepy3
-    setup-cli.exe       synode-cli             python -m synodepy3.prompt
-    upgrade.exe         synode-upgrade-srv     python -m synodepy3.upgrade_cli <package.zip | .tar.gz>
-    uninstall-srv.exe   synode-uninstall-srv   python -m synodepy3.uninstall_cli
-                        synode-avail-ports     python -m synodepy3.get_avail_ports [-v | -vv]
-                        synode-start-web
+{commands_table}
 
 On Windows, list the available ports with the "find ports?" button next to the ports in setup-gui.exe.
+
+Documentation: {doc_link}
 '''
 
 if any(a in ('-h', '--help', 'help') for a in sys.argv[1:]):

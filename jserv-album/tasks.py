@@ -501,6 +501,22 @@ def package(c: Context, deploy: str = 'tasks.json'):
 
     zip = taskcfg.zip_name()
 
+    def gen_readme() -> str:
+        """
+        Generate the package's README.md from synodepy3/commands_help.py, the same source of synode-cli --help.
+        :return: path of the generated README.md, in a temporary folder
+        """
+        import importlib.util, tempfile
+        spec = importlib.util.spec_from_file_location('commands_help', '../synode.py/src/synodepy3/commands_help.py')
+        commands_help = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(commands_help)
+        md = os.path.join(tempfile.mkdtemp(prefix='synode-readme-'), 'README.md')
+        with open(md, 'w', encoding='utf-8') as fo:
+            fo.write(commands_help.release_readme())
+        return md
+
+    readme_md = gen_readme()
+
     resources = {
         f'bin/html-web-{taskcfg.html_jar_v}.jar': f'../../html-service/java/target/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
         f'bin/jserv-album-{taskcfg.version}.jar': f'target/jserv-album-{taskcfg.version}.jar',
@@ -513,6 +529,8 @@ def package(c: Context, deploy: str = 'tasks.json'):
         "res": "../synode.py/src/synodepy3/res/*",
 
         'web-dist': f'{taskcfg.web_root_dir}/web-dist/*',
+
+        'README.md': readme_md,
     }
 
     if os.name == 'nt': resources.update({
@@ -544,6 +562,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
             os.remove(zip)
 
         gzip2(zip, {**resources, **taskcfg.vol_resource}, excludes)
+        shutil.rmtree(os.path.dirname(readme_md), ignore_errors=True)
 
         zip = Utils.move_anyway(zip, pth_packagedir(taskcfg), log=True)
 
