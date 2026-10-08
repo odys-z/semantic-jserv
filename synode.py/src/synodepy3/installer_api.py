@@ -602,6 +602,12 @@ class InstallerCli:
         """
         cfg = self.registry.config
 
+        # The package's resources, checked again by install(); here before the time-consuming
+        # JRE download, check_install_jre(), which both setup-cli and setup-gui do after validating.
+        try: self.check_src_jar_db()
+        except FileNotFoundError as e:
+            return {'package': str(e)}
+
         v = self.validate_domain()
         if v is not None: return v
 
