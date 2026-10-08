@@ -4,6 +4,7 @@ import time
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 
 from synodepy3.jre_downloader import JreDownloader
+from synodepy3.ports_dialog import find_ports
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -103,7 +104,7 @@ def has_err():
 class InstallerForm(QMainWindow):
     ui: Ui_InstallForm
     cli: InstallerCli
-    jredownloader: JreDownloader
+    jredownloader: Optional[JreDownloader]
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -111,7 +112,7 @@ class InstallerForm(QMainWindow):
         self.ui = Ui_InstallForm()
         self.ui.setupUi(self)
         self.cli = InstallerCli()
-        self.jredownloader = cast(JreDownloader, None)
+        self.jredownloader = None
 
     @staticmethod
     def set_qr_label(label, text):
@@ -153,6 +154,26 @@ class InstallerForm(QMainWindow):
         self.ui.txtIP.setText(InstallerCli.reportIp())
 
         return {"ip": ip, "port": port, "synodepy3": synode}
+
+    def on_find_ports(self):
+        """
+        The "find ports?" button. The dialog only returns the picked ports; on OK they are
+        updated into cli.settings, then the settings are bound to the UI.
+        settings.json is still only written by save().
+        """
+        settings = self.cli.settings
+        ok, webport, port = find_ports(self, settings.webport, settings.port)
+        if not ok:
+            return
+
+        settings.webport, settings.port = webport, port
+
+        self.bind_ports(settings)
+        # self.gen_qr()  # the QR / jserv option uses get_iport() -> settings.port
+
+    def bind_ports(self, settings: AppSettings):
+        self.ui.txtPort.setText(str(settings.port))
+        self.ui.txtWebport.setText(str(settings.webport))
 
     def default_ui_values(self):
         if LangExt.len(self.ui.txtSyncIns.text()) == 0:
@@ -568,8 +589,7 @@ class InstallerForm(QMainWindow):
         self.ui.txtPswd.setText(settings.centralPswd)
         self.ui.txtPswd2.setText(settings.centralPswd)
 
-        self.ui.txtPort.setText(str(settings.port))
-        self.ui.txtWebport.setText(str(settings.webport))
+        self.bind_ports(settings)
 
         self.ui.chkReverseProxy.setChecked(settings.reverseProxy)
         self.ui.txtIP_proxy.setText(settings.proxyIp)
@@ -744,6 +764,7 @@ class InstallerForm(QMainWindow):
             self.ui.chkHub.clicked.connect(self.enable_widgets)
             self.ui.cbbPeers.currentIndexChanged.connect(self.select_peer)
             self.ui.bVolpath.clicked.connect(setVolumePath)
+            self.ui.bFindPorts.clicked.connect(self.on_find_ports)
 
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)

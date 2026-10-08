@@ -18,6 +18,7 @@ from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 from synodepy3.systemd_units import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ
 from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
 from synodepy3.validators import PJservValidator, PIPValidator
+from synodepy3.get_avail_ports import report_port_ranges
 
 
 def reach_central():
@@ -32,6 +33,30 @@ def readable_state(s: str = ''):
 
 
 from synodepy3.__version__ import synode_ver
+
+cli_help = f'''Synode {synode_ver} command line setup.
+
+Usage:
+    synode-cli               configure and install this synode, interactively
+    synode-cli -h | --help   show this help and quit
+
+Run it in the synode's folder (with WEB-INF/settings.json). Return with empty input to abort.
+At the ports prompt, enter '?' to list the available ports, or '??' to also show what holds the used ones.
+
+Related commands (Windows exe / installed command / python module):
+    setup-gui.exe       synode-gui             python -m synodepy3
+    setup-cli.exe       synode-cli             python -m synodepy3.prompt
+    upgrade.exe         synode-upgrade-srv     python -m synodepy3.upgrade_cli <package.zip | .tar.gz>
+    uninstall-srv.exe   synode-uninstall-srv   python -m synodepy3.uninstall_cli
+                        synode-avail-ports     python -m synodepy3.get_avail_ports [-v | -vv]
+                        synode-start-web
+
+On Windows, list the available ports with the "find ports?" button next to the ports in setup-gui.exe.
+'''
+
+if any(a in ('-h', '--help', 'help') for a in sys.argv[1:]):
+    print(cli_help)
+    sys.exit(0)
 
 _quit = False
 details = [cast(Optional[str], None)]
@@ -94,8 +119,16 @@ class DomainValidator(Validator):
             raise ValidationError(message=f"domain length: 2 <= Len('{cfg.domain}') <= 12")
 
 class PortsValidator(Validator):
+    def __init__(self, allow_query: bool = False):
+        '''
+        :param allow_query: accept '?' and '??', asking for the list of local available ports
+        '''
+        self.allow_query = allow_query
+
     def validate(self, document: Document) -> None:
         if document is None or LangExt.isblank(document.text):
+            return
+        if self.allow_query and document.text.strip() in ('?', '??'):
             return
         try:
             poss = document.text.split(':')
@@ -337,10 +370,23 @@ def parse_web_jserv_ports(ports: str) -> List[int]:
 def default_ports(s: AppSettings) -> str:
     return f'{web_port0 if s.webport == 0 else s.webport}:{serv_port0 if s.port == 0 else s.port}'
 
-ports = session.prompt(
-    message=f'Please set the ports. Format: "www-port : synode-service", [1024-65535]\n',
-    default=default_ports(cli.settings),
-    validator=MultiValidator(QuitValidator(), PortsValidator()))
+def print_avail_ports(verbose: int = 0):
+    print('Scanning local TCP ports, this may take a few seconds ...')
+    try:
+        report_port_ranges(1024, 65535, verbose=verbose)
+    except Exception as e:
+        print(f'Cannot list the ports: {e}')
+
+while True:
+    ports = session.prompt(
+        message=f'Please set the ports. Format: "www-port : synode-service", [1024-65535]. '
+                f"'?' to list available ports, '??' with owners.\n",
+        default=default_ports(cli.settings),
+        validator=MultiValidator(QuitValidator(), PortsValidator(allow_query=True)))
+    if ports.strip() in ('?', '??'):
+        print_avail_ports(verbose=len(ports.strip()) - 1)
+        continue
+    break
 
 check_quit(_quit)
 

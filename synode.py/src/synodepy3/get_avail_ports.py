@@ -2,9 +2,12 @@
 Report available / occupied TCP port ranges on this host (Linux, Windows and macOS).
 
 Usage:
-    python3 get-avail-ports.py          # ranges only
-    python3 get-avail-ports.py -v       # also list each occupied port with the owning program's path
-    python3 get-avail-ports.py -vv      # ... and the program's full command line (e.g. which jar java is running)
+    synode-avail-ports                     # ranges only (installed command, also avail-ports.exe on Windows)
+    python -m synodepy3.get_avail_ports    # the same, without the command installed
+    synode-avail-ports -v                  # also list each occupied port with the owning program's path
+    synode-avail-ports -vv                 # ... and the program's full command line (e.g. which jar java is running)
+
+In synode-cli, enter '?' (or '??' for owners) at the ports prompt to print the same report.
 
 A port held by a synode or syn-web service shows its service name (from WEB-INF/settings.json envars);
 with -v, also its install folder. This needs psutil, anson.py3 and semantics.py3 (all synode.py3 dependencies);
@@ -45,6 +48,16 @@ def check_port(port, host="127.0.0.1"):
             return True, None
         except OSError as e:
             return False, getattr(e, 'winerror', None) or e.errno
+
+
+_out = None
+'''
+Where the report is written, None for sys.stdout. Set by report_port_ranges(out=...), e.g. to a StringIO for a GUI.
+'''
+
+
+def _emit(line):
+    print(line, file=_out if _out is not None else sys.stdout)
 
 
 owners_partial = False
@@ -360,13 +373,19 @@ def unowned_note(err):
     return "(owner not found)"
 
 
+MARK_ICON = "🟢"
+'''
+The icon of the ports in report_port_ranges(marks=...), e.g. the new ports being configured.
+'''
+
+
 def print_formatted_range(status, start, end, note=""):
-    icon = "✅" if status == "available" else "❌"
+    icon = MARK_ICON if status == "marked" else "✅" if status == "available" else "❌"
     note = f"  {note}" if note else ""
     if start == end:
-        print(f"{icon}  [{start}]{note}")
+        _emit(f"{icon}  [{start}]{note}")
     else:
-        print(f"{icon}  [{start} - {end}]{note}")
+        _emit(f"{icon}  [{start} - {end}]{note}")
 
 
 def print_used_ports(start, end, owners, errors, cmdline=False):
@@ -391,10 +410,10 @@ def print_used_ports(start, end, owners, errors, cmdline=False):
             for pid, status in pids.items():
                 state = "" if status == psutil.CONN_LISTEN else f" [{status}]"
                 pid_s = f"pid {pid}" if pid is not None else "pid ?"
-                print(f"❌  [{port}]  {pid_s}{state}  {describe_process(pid, cmdline)}")
+                _emit(f"❌  [{port}]  {pid_s}{state}  {describe_process(pid, cmdline)}")
                 if pid is not None:
                     for line in synode_info(pid, port, status):
-                        print(f"        {line}")
+                        _emit(f"        {line}")
         else:
             note = unowned_note(errors.get(port))
             if run is not None and run[2] == note and run[1] == port - 1:
@@ -422,11 +441,24 @@ def print_used_range_short(start, end, owners):
         return
     print_formatted_range("used", start, end)
     for port, label in labels:
-        print(f"        [{port}]  {label}")
+        _emit(f"        [{port}]  {label}")
 
 
-def report_port_ranges(start_port, end_port, host="127.0.0.1", verbose=0):
-    """Scans ports and prints blocks of available/used ranges."""
+def report_port_ranges(start_port, end_port, host="127.0.0.1", verbose=0, out=None, marks=None):
+    """
+    Scans ports and prints blocks of available/used ranges.
+    :param out: a text stream to write the report to, default sys.stdout
+    :param marks: {port: note}, ports listed on their own line with the note, e.g. {8914: "new web port"}
+    """
+    global _out
+    _out = out
+    try:
+        _report_port_ranges(start_port, end_port, host, verbose, marks or {})
+    finally:
+        _out = None
+
+
+def _report_port_ranges(start_port, end_port, host, verbose, marks):
     # Owners are needed for -v, for naming synode services without -v, and on Windows / macOS for the listening
     # cross-check. Without -v, psutil is optional: the ranges are still reported without it.
     owners = None
@@ -448,9 +480,16 @@ def report_port_ranges(start_port, end_port, host="127.0.0.1", verbose=0):
         else:
             print_formatted_range(status, start, end)
 
+    def flush_marked(status, port, note):
+        if status == "available":
+            print_formatted_range("marked", port, port, note)
+        else:
+            flush(status, port, port)
+            print_formatted_range("marked", port, port, f"{note}, but in use")
+
     if owners_partial:
-        print(f"(Not root: only your own programs' sockets are listed, {ELEVATE} to see all.)")
-    print("Available ports:")
+        _emit(f"(Not root: only your own programs' sockets are listed, {ELEVATE} to see all.)")
+    _emit("Available ports:")
 
     current_status = None
     range_start = start_port
@@ -465,18 +504,31 @@ def report_port_ranges(start_port, end_port, host="127.0.0.1", verbose=0):
             errors[port] = err
         status = "available" if free else "used"
 
+        if port in marks:
+            # A marked port breaks the range it's in, and is listed alone.
+            if current_status is not None:
+                flush(current_status, range_start, port - 1)
+            flush_marked(status, port, marks[port])
+            current_status = None
+            continue
+
         if current_status is None:
             current_status = status
-
-        if status != current_status:
+            range_start = port
+        elif status != current_status:
             flush(current_status, range_start, port - 1)
             range_start = port
             current_status = status
 
-    flush(current_status, range_start, end_port)
+    if current_status is not None:
+        flush(current_status, range_start, end_port)
 
 
-if __name__ == "__main__":
+def main(argv=None):
+    """
+    Entry-point: synode-avail-ports / avail-ports.exe / python -m synodepy3.get_avail_ports
+    :param argv: command line arguments without the program name, default sys.argv[1:]
+    """
     if IS_WIN:
         # Git Bash / redirected output uses the ANSI code page (e.g. cp936), which can't encode ✅ ❌.
         try:
@@ -484,10 +536,11 @@ if __name__ == "__main__":
         except Exception:
             pass
 
-    ap = argparse.ArgumentParser(description="Show available and occupied TCP ports (1024 - 65535).")
+    ap = argparse.ArgumentParser(prog="synode-avail-ports",
+                                 description="Show available and occupied TCP ports (1024 - 65535).")
     ap.add_argument("-v", "--verbose", action="count", default=0,
                     help="-v: print the program path holding each occupied port; -vv: also its arguments")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if args.verbose:
         try:
@@ -496,3 +549,11 @@ if __name__ == "__main__":
             sys.exit("-v needs psutil: pip install psutil")
 
     report_port_ranges(1024, 65535, verbose=args.verbose)
+    return 0
+
+
+if __name__ == "__main__":
+    main()
+    if getattr(sys, "frozen", False):
+        # avail-ports.exe started by double-click: keep the console open.
+        input("Press Enter to quit ...")
