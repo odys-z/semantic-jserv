@@ -10,7 +10,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import choice
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import Validator, ValidationError
-from semanticshare.io.odysz.semantic.jprotocol import JServUrl
+from semanticshare.io.odysz.semantic.jprotocol import JServUrl, MsgCode
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
@@ -64,7 +64,8 @@ details = [cast(Optional[str], None)]
 def check_quit(q: bool):
     if q:
         for itm in details:
-            print(itm)
+            if itm is not None:
+                print(itm)
         sys.exit(-1)
 
 
@@ -147,6 +148,34 @@ class DomainTokenValidator(Validator):
         except AnsonException:
             raise ValidationError(message=f"token length must be in [8 ~ 16], allowed special chars: [{passwd_allow_ext}]")
 
+class CentralPswdValidator(Validator):
+    """
+    The password of Central, settings.centralPswd, with the same rule as InstallerCli.validate_domain().
+    Blank is passed to QuitValidator.
+    """
+    minlen, maxlen = 6, 32
+
+    @staticmethod
+    def check(pswd: Optional[str]) -> Optional[str]:
+        """
+        :return: the error message, or None if pswd is valid
+        """
+        if LangExt.isblank(pswd):
+            return 'The password of Central is not set.'
+        try:
+            LangExt.only_passwdlen(pswd, minlen=CentralPswdValidator.minlen, maxlen=CentralPswdValidator.maxlen)
+            return None
+        except AnsonException:
+            return f'Password length must be in [{CentralPswdValidator.minlen} ~ {CentralPswdValidator.maxlen}], ' \
+                   f'allowed special chars: [{passwd_allow_ext}]'
+
+    def validate(self, document: Document) -> None:
+        if document is None or LangExt.isblank(document.text):
+            return
+        err = CentralPswdValidator.check(document.text)
+        if err is not None:
+            raise ValidationError(message=err)
+
 class SyncInsValidator(Validator):
     def validate(self, document: Document) -> None:
         if not LangExt.isblank(document.text):
@@ -176,8 +205,12 @@ class MultiValidator(Validator):
         for vld in self.valids:
             vld.validate(document)
 
+err_code = [cast(Optional[MsgCode], None)]
+'''The code of the last error reported by Central, MsgCode or its name.'''
+
 def err_ctx(c, e: str, *args: str) -> None:
     global _quit, details
+    err_code[0] = c
     try: details[0] = e.format(args) if e is not None else e
     except Exception as ex:
         print(ex)
@@ -208,40 +241,101 @@ if missing_requires:
     details.extend(missing_requires)
     check_quit(True)
 
+def ask_central_pswd(reason: str):
+    """
+    Ask for the password of the central user at settings.regiserv, empty to quit.
+    The central client is dropped, so the next request logs in with the new password.
+    """
+    global _quit
+    print(reason)
+    print(f'Central: {cli.settings.regiserv}')
+    # A separate session: is_password=True sticks to a PromptSession, masking all its later prompts.
+    pswd = PromptSession(style=style).prompt(
+        message=f'Password of "{cli.central_uid()}" (empty to quit): ',
+        is_password=True,
+        validator=MultiValidator(QuitValidator(), CentralPswdValidator()))
+    check_quit(_quit)
+
+    cli.update_central_pswd(pswd)
+    details[0] = None
+
+def ensure_central_pswd():
+    """
+    Ask for the central password if it's not set or invalid.
+    It is set in WEB-INF/settings.json by the distribution build (jserv-album/tasks.py).
+    """
+    pswd_err = CentralPswdValidator.check(cli.settings.centralPswd)
+    if pswd_err is not None:
+        ask_central_pswd(pswd_err)
+
+def query_domains(orgid: str):
+    """
+    Query the domains from Central, the first request to it.
+    A wrong password is answered with exSession, by AnSession / JUser: ask for it and retry.
+    :return: (domains, error code); domains is None if failed, with the error in details[0]
+    """
+    global _quit
+    while True:
+        err_code[0] = None
+        domains = cli.query_domx(market=cli.settings.market_id, commu=orgid)
+        if domains is not None:
+            return domains, None
+
+        if err_code[0] in (MsgCode.exSession, MsgCode.exSession.name):
+            # ISSUE central-uid: the synode logs in central as the domain admin, so in 0.8.0 the central
+            # user id must be 'admin'; it is not asked for, nor saved. See issues/central-uid-synode-login.md
+            central_uid = cli.central_uid()
+            if central_uid != 'admin':
+                details.append(f'Central refused the login of user "{central_uid}", which must be "admin" in '
+                               f'Portfolio {synode_ver} (ISSUE central-uid, the synode logs in central as the '
+                               f'domain admin). Check centralUid in desktop/settings/app-settings.json.')
+                check_quit(True)
+
+            _quit = False  # set by err_ctx(); ask_central_pswd() quits on empty input
+            ask_central_pswd(f'Central refused the login of user "{central_uid}": {details[0]}')
+            continue
+
+        return None, err_code[0]
+
 if not has_run:
-    # 0. central jserv
+    # 0. central jserv, 2. bind domains, e.g. ['zsu', 'edu-0']
     orgs: list[str] = None # type: ignore
     orgid: str = None # type: ignore
-    while not _quit and not reach_central():
+    domains = None
+    while True:
         cli.settings.regiserv = session.prompt(
               message="Please input central service url (empty to quit): ",
               validator=MultiValidator(QuitValidator(), PJservValidator(JServUrl(cli.settings.regiserv).jprotocol.protocolpath)),
               default=cli.settings.regiserv,
               validate_while_typing=True)
+        check_quit(_quit)
 
-        # ISSUE central-login: not a verified login, see issues/central-client-login.md
+        ensure_central_pswd()
+
         ssclient = cli.check_cent_login()
         orgs, orgid = cli.query_orgs()
 
-        if LangExt.len(orgs) > 0:
+        domains, code = query_domains(orgid)
+        if domains is not None:
             break
 
-    check_quit(_quit)
+        if code in (MsgCode.exIo, MsgCode.exIo.name):
+            # e.g. a correct url of an unreachable site: let the user fix it and try again
+            print(f'Cannot reach Central at {cli.settings.regiserv}:\n{details[0]}\n'
+                  'Please check the url and try again.')
+            details[0] = None
+            _quit = False  # set by err_ctx()
+            continue
+
+        Utils.warn('Cannot find domains in market {}, community / org: {}',
+                   cli.settings.market_id, orgid)
+        check_quit(True)
 
     # 1. orgs / community
     session.prompt(
         message=f"Portfolio {synode_ver} market ID: {cli.settings.market_id}. ",
         validator=QuitValidator(),
         default="Return to continue ...")
-
-    # 2. bind domains
-    # e.g. ['zsu', 'edu-0']
-    domains = cli.query_domx(market=cli.settings.market_id, commu=orgid)
-
-    if domains is None:
-        Utils.warn('Cannot find domains in market {}, community / org: {}',
-                   cli.settings.market_id, orgid)
-        _quit = True
     check_quit(_quit)
 
     # 3. create or select a domain
@@ -334,6 +428,7 @@ if not has_run:
 
 else:
     print(f'This folder and the volume has already run as [{cfg.domain}]{cfg.synid}')
+    ensure_central_pswd()
 
 # 5A mode & syncIns
 synmode_v = choice(

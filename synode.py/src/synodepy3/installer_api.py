@@ -811,6 +811,15 @@ class InstallerCli:
                 Utils.warn(f'Cannot load centralUid from {desk_sets}: {e}')
         return self.registry.synusers[0].userId
 
+    def update_central_pswd(self, pswd: str):
+        """
+        Set the password of Central, save it to WEB-INF/settings.json, and drop the central client,
+        so the next request logs in with it.
+        """
+        self.settings.centralPswd = pswd
+        self.regclient = None
+        self.settings.toFile(cfgpaths.web_settings)
+
     def check_cent_login(self) -> SessionClient:
         # ISSUE central-login: loginWithUri() makes no login request, see issues/central-client-login.md
         if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:

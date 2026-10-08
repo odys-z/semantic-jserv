@@ -6,6 +6,7 @@
   - `docsync.jserv/src/main/java/io/oz/jserv/docs/syn/singleton/AppSettings.java`, `merge_ip_json2db()`
   - `jserv-album/tasks.py`, `validate()`
   - `synode.py/tasks.py`, `config()`
+  - `synode.py/src/synodepy3/prompt.py`, the `exSession` retry when querying domains
 
 ## Problem
 
@@ -47,6 +48,12 @@ Both stop the build (`sys.exit(-1)`) unless `deploy.admin == deploy.centralUid =
 
 - `jserv-album/tasks.py validate()`
 - `synode.py/tasks.py config()`, before `registry/dictionary.json` is written
+
+## Installer (synode-cli)
+
+When central answers `exSession`, synode-cli asks for the central password and saves it to
+`settings.json` (`centralPswd`). The central user id (`InstallerCli.central_uid()`) is not asked for,
+nor saved: if it isn't `admin`, synode-cli reports this issue and quits, since a password can't fix it.
 
 ## Possible fix (not implemented)
 

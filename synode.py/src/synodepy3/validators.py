@@ -49,8 +49,14 @@ class PJservValidator(Validator):
         self.protocol_root = protocol_root
 
     def validate(self, v):
-        if not LangExt.isblank(v.text) and \
-           not JServUrl.valid(v.text, rootpath=self.protocol_root):
+        if LangExt.isblank(v.text):
+            return
+        try:
+            valid = JServUrl.valid(v.text, rootpath=self.protocol_root)
+        except ValueError:
+            # urlparse().port raises on a non-numeric or out-of-range port, e.g. http://127.0.0.1:dddd/...
+            valid = False
+        if not valid:
             raise ValidationError(
                 message=f'Jserv URL is invalid. Required format: http(s)://ip:port/{self.protocol_root}')
 
