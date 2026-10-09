@@ -603,7 +603,13 @@ if caninstall == 1:
         Utils.warn(e.msg)
         session.prompt('Configuration is updated with cautions. Check the details.')
         post_install() # let's still take effects for changes
-        _quit = True
+        # e.g. reinstalling over an existing volume (dbs not empty) - the services,
+        # possibly uninstalled at upgrade or removed manually, still need to be installed.
+        _quit = choice(
+            message='Continue to install the services?',
+            options=[(1, 'Yes, continue.'),
+                     (2, 'No, quit.')],
+            default=1) == 2
         check_quit(_quit)
 
     if Utils.iswindows():

@@ -678,12 +678,12 @@ class InstallerCli:
         if LangExt.isblank(self.settings.installkey) and not LangExt.isblank(self.settings.rootkey):
             sysdb, syndb, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
             if  os.path.isfile(sysdb) and os.stat(sysdb).st_size == 0 and \
-                os.path.isfile(sysdb) and os.stat(syndb).st_size == 0:
+                os.path.isfile(syndb) and os.stat(syndb).st_size == 0:
 
                 self.settings.installkey, self.settings.rootkey = self.settings.rootkey, ''
                 self.settings.toFile(os.path.join(web_inf, settings_json))
                 return f'Fixed errors: {sysdb} size & {syndb} size = 0, reset flags for setup db.'
-            elif os.path.isfile(sysdb) and os.path.isfile(sysdb) and (os.stat(syndb).st_atime > 0 or os.stat(sysdb).st_size > 0):
+            elif os.path.isfile(sysdb) and os.path.isfile(syndb) and (os.stat(syndb).st_size > 0 or os.stat(sysdb).st_size > 0):
                 raise PortfolioException(f'Find sizes about {syndb} and {sysdb} != 0.')
         return None
 
