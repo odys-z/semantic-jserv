@@ -10,11 +10,15 @@ import os
 from anson.io.odysz.common import requir_pkg, requir_npm_package_resolve, mvn  # mvn: anson.py3 0.6.9+
 _tasks = {a.replace('_', '-') for a in sys.argv[1:] if not a.startswith('-')}
 
+# Tasks that don't need the build environment, e.g. github-head.
+_independent = 'github-head' in _tasks
+
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.10")
-    requir_pkg("semantics.py3", "0.6.11")
+    requir_pkg("semantics.py3", "0.6.14") # SynodeTask.github, gitprjs {github}
 
+if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("build")               # by synode.py
     requir_pkg("pyinstaller")         # by synode.py
     requir_pkg("jre-mirror", "0.1.2") # by synode.py
@@ -24,12 +28,8 @@ if 'install-py-local' not in _tasks:
     requir_pkg("prompt-toolkit", "3.0.52")      # by synode.py
     requir_pkg("pyside6", ["6.6.0", "6.8.2.1"]) # by synode.py
 
-# checked for every task
-requir_npm_package_resolve('../../anclient/examples/example.js/album', '@anclient/anreact', '0.7.1')
-requir_npm_package_resolve('../../anclient/examples/example.js/album', '@anclient/semantier', '1.0.5')
-
 # install-maven-local is the task that installs these jars, so don't require them before it runs.
-if 'install-maven-local' not in _tasks:
+if 'install-maven-local' not in _tasks and not _independent:
     mvn.requir_installed("io.github.odys-z:anclient.java", "[0.5.23,)")
     mvn.requir_installed("io.github.odys-z:semantic.jserv", "[1.5.18,)")
     mvn.requir_installed("io.github.odys-z:docsync.jserv", "[0.3.5,)")
@@ -92,6 +92,10 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
 
     print('taskcfg:', taskcfg.deploy.orgid, taskcfg.version)
+
+    # was checked at module level, now paths are from taskcfg
+    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/anreact', '0.7.1')
+    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/semantier', '1.0.5')
 
     # ISSUE central-uid: Synodes log in central as deploy.admin (synusr.uid()), not centralUid.
     # 0.8.0: both must be 'admin'. See ../issues/central-uid-synode-login.md
@@ -182,7 +186,7 @@ def config(c: Context, deploy: str = 'tasks.json'):
     })
 
     # apk
-    version_file = os.path.join(taskcfg.android_dir, 'build.gradle')
+    version_file = taskcfg.git_prj('album-android', 'build.gradle')
     Utils.update_patterns(version_file, {
         f"app_ver = '{version_pattern}'": f"app_ver = '{taskcfg.apk_ver}'"
     })
@@ -255,19 +259,20 @@ def install_maven_local(c: Context, deploy: str='tasks.0.8.0.json', gpg: str = N
     
     validate(c, deploy=deploy)
 
+    git = taskcfg.git_prj
     pom_locations = [
-        '../../antson/antson.java',
-        '../../semantic-transact/semantic.transact',
-        '../../semantic-DA/semantic.DA',
-        '../../semantic-jserv/semantic.jserv',
-        '../../semantic-jserv/jserv-album-lib',
-        '../../anclient/java/eclipse-workspace/anclient.jserv',
-        '../../Semantic-Network/registration/jclient',
-        '../../Semantic-Network/registration/jserv',
-        '../../semantic-jserv/docsync.jserv',
-        '../../anclient/examples/example.android/albumtier',
+        git('antson', 'antson.java'),
+        git('semantic-transact'),
+        git('semantic-DA'),
+        git('semantic-jserv'),
+        git('jserv-album-lib'),
+        git('anclient.jserv'),
+        git('registry-jclient'),
+        git('registry-central'),
+        git('docsync.jserv'),
+        git('album-android', 'albumtier'),
 
-        '../../html-service/java'
+        git('html-service')
     ]
 
     print('----------  Install Local Maven ---------')
@@ -283,7 +288,7 @@ def install_maven_local(c: Context, deploy: str='tasks.0.8.0.json', gpg: str = N
 
 
 @task
-def install_py_local(c: Context, venv_build: str = None):
+def install_py_local(c: Context, venv_build: str = None, deploy: str = 'tasks.0.8.0.json'):
     '''
     Install python packages locally in the target venv.
 
@@ -302,7 +307,20 @@ def install_py_local(c: Context, venv_build: str = None):
     :param c: Context object
     :param venv_build: optional venv path for building wheel packages (e.g., ".venv391").
                         If None (default), skipping build and directly installing the latest wheel in dist/
+    :param deploy: task json, for the source projects' paths (github, gitprjs)
     '''
+    # Debug Note: semantics.py3 (SynodeTask) is one of the packages upgraded here, and the installed
+    # one may have no SynodeTask.github / gitprjs yet. Read the 2 fields with json, not Anson.
+    import json
+    with open(deploy, 'r', encoding='utf-8') as jf:
+        js = json.load(jf)
+    github, gitprjs = js.get('github', '../..'), js.get('gitprjs', {})
+
+    def git(prj: str, *subpaths: str) -> str:
+        if prj not in gitprjs:
+            Utils.warn(f'Source project "{prj}" is not configured in {deploy}/gitprjs: {gitprjs}')
+            sys.exit(-1)
+        return os.path.join(gitprjs[prj].replace('{github}', github), *subpaths)
 
     import subprocess
 
@@ -356,10 +374,10 @@ def install_py_local(c: Context, venv_build: str = None):
             os.chdir(orig_cwd)
 
     packages = [
-        (Path("../../antson/py3"), "anson.py3"),
-        (Path("../../antson/semantics.py3"), "semantics.py3"),
-        (Path("../../JRE-Mirror"), "jre-mirror"),
-        (Path("../../anclient/py3"), "anclient.py3"),
+        (Path(git('antson', 'py3')), "anson.py3"),
+        (Path(git('antson', 'semantics.py3')), "semantics.py3"),
+        (Path(git('JRE-Mirror')), "jre-mirror"),
+        (Path(git('anclient.py3')), "anclient.py3"),
     ]
 
     print('----------  Install Local Python Packages  ---------')
@@ -387,7 +405,11 @@ def build(c: Context, deploy: str = 'tasks.json'):
     config(c, deploy)
 
     absdeploy = Path(deploy).absolute()
-    web_dist = Path(taskcfg.web_root_dir) / 'web-dist'
+    web_root = taskcfg.git_prj('album-web')
+    web_dist = Path(web_root) / 'web-dist'
+    desktop = taskcfg.git_prj('album-desktop')
+    wsagent = taskcfg.git_prj('album-wsagent')
+    synode_py = taskcfg.git_prj('synode.py')
 
     def cmd_build_synodepy3() -> str:
         """
@@ -407,15 +429,15 @@ def build(c: Context, deploy: str = 'tasks.json'):
             Get ws-agent/target/ws-agent-#.#.#.jar fullpath.
             '''
             global taskcfg
-            return os.path.join(taskcfg.ipcagent_dir, 'target', f'ws-agent-{taskcfg.ipcagent_ver}.jar')
+            return os.path.join(wsagent, 'target', f'ws-agent-{taskcfg.ipcagent_ver}.jar')
 
         def desk_dist_res_dir() -> str:
             global taskcfg
-            return os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, 'res')
+            return os.path.join(desktop, taskcfg.desktop_dist_dir, 'res')
 
         def desk_res_dir() -> str:
             global taskcfg
-            return os.path.join(taskcfg.desktop_dir, 'tests', 'res')
+            return os.path.join(desktop, 'tests', 'res')
 
         print(src_wsagent_jar(), "=>", desk_res_dir())
         shutil.copy(src_wsagent_jar(), desk_res_dir())
@@ -425,30 +447,30 @@ def build(c: Context, deploy: str = 'tasks.json'):
     buildcmds = [
         # desktop
         # - desktop.ipc-agent
-        [taskcfg.ipcagent_dir, 'mvn clean compile package -DskipTests'],
+        [wsagent, 'mvn clean compile package -DskipTests'],
         # - desktop.ext, app-settings.json -> dist; create the desktop setting here is necessary for standalone clients
-        [taskcfg.desktop_dir, f'invoke shallow-pack --deploy={absdeploy}'],
-        ['.', cmd_cp_wsagent_jar], # issue: taskcfg.ipcagent_dir cannot be undstand by slint/tasks.py
+        [desktop, f'invoke shallow-pack --deploy={absdeploy}'],
+        ['.', cmd_cp_wsagent_jar], # issue: gitprjs['album-wsagent'] cannot be undstand by slint/tasks.py
 
         # apk
         ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
         # JAVA_HOME is set in validate()
-        [taskcfg.android_dir, 'gradlew.bat assembleRelease' if os.name == 'nt' else './gradlew assembleRelease'],
+        [taskcfg.git_prj('album-android'), 'gradlew.bat assembleRelease' if os.name == 'nt' else './gradlew assembleRelease'],
 
         ['.', f'cp -f {taskcfg.get_gradleprj_apk()} {web_dist}/res-vol/{taskcfg.get_apk_name()}' \
                 if os.name == 'nt' else f'touch {web_dist}/res-vol/portfolio-{taskcfg.apk_ver}.apk' ], # TODO build apk in Linux...
 
         [f'{web_dist}', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
-        [taskcfg.web_root_dir, 'webpack'],
+        [web_root, 'webpack'],
 
         [web_dist, updateApkRes],
         ['.', f'cat {web_dist}/private/host.json'],
 
         #
         ['.', 'mvn clean compile package -DskipTests'],
-        ['../../html-service/java', 'mvn clean compile package'],
+        [taskcfg.git_prj('html-service'), 'mvn clean compile package'],
 
-        ['../synode.py', cmd_build_synodepy3],
+        [synode_py, cmd_build_synodepy3],
     ]
 
     print('--------------  build  ------------------')
@@ -501,13 +523,17 @@ def package(c: Context, deploy: str = 'tasks.json'):
 
     zip = taskcfg.zip_name()
 
+    html_target = taskcfg.git_prj('html-service', 'target')
+    synode_py = taskcfg.git_prj('synode.py')
+    desktop = taskcfg.git_prj('album-desktop')
+
     def gen_readme() -> str:
         """
         Generate the package's README.md from synodepy3/commands_help.py, the same source of synode-cli --help.
         :return: path of the generated README.md, in a temporary folder
         """
         import importlib.util, tempfile
-        spec = importlib.util.spec_from_file_location('commands_help', '../synode.py/src/synodepy3/commands_help.py')
+        spec = importlib.util.spec_from_file_location('commands_help', os.path.join(synode_py, 'src', 'synodepy3', 'commands_help.py'))
         commands_help = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(commands_help)
         md = os.path.join(tempfile.mkdtemp(prefix='synode-readme-'), 'README.md')
@@ -518,17 +544,17 @@ def package(c: Context, deploy: str = 'tasks.json'):
     readme_md = gen_readme()
 
     resources = {
-        f'bin/html-web-{taskcfg.html_jar_v}.jar': f'../../html-service/java/target/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
+        f'bin/html-web-{taskcfg.html_jar_v}.jar': f'{html_target}/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
         f'bin/jserv-album-{taskcfg.version}.jar': f'target/jserv-album-{taskcfg.version}.jar',
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
-        'bin/synode_py3-0.8-py3-none-any.whl': f'../synode.py/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
-        "registry": "../synode.py/registry/*",
-        'winsrv': '../synode.py/winsrv/*',
-        "res": "../synode.py/src/synodepy3/res/*",
+        'bin/synode_py3-0.8-py3-none-any.whl': f'{synode_py}/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
+        "registry": f"{synode_py}/registry/*",
+        'winsrv': f'{synode_py}/winsrv/*',
+        "res": f"{synode_py}/src/synodepy3/res/*",
 
-        'web-dist': f'{taskcfg.web_root_dir}/web-dist/*',
+        'web-dist': f'{taskcfg.git_prj("album-web")}/web-dist/*',
 
         'README.md': readme_md,
     }
@@ -536,11 +562,11 @@ def package(c: Context, deploy: str = 'tasks.json'):
     if os.name == 'nt': resources.update({
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip', # https://exiftool.org/index.html
         temp_jre_path: taskcfg.check_local_resource(taskcfg.jre_release),
-        'desktop': f'{os.path.join(taskcfg.desktop_dir, taskcfg.desktop_dist_dir, "*")}',
-        'setup-gui.exe': '../synode.py/dist/setup-gui.exe',
-        'setup-cli.exe': '../synode.py/dist/setup-cli.exe',
-        'uninstall-srv.exe': '../synode.py/dist/uninstall-srv.exe'
-        # 'upgrade.exe': '../synode.py/dist/upgrade.exe'
+        'desktop': f'{os.path.join(desktop, taskcfg.desktop_dist_dir, "*")}',
+        'setup-gui.exe': f'{synode_py}/dist/setup-gui.exe',
+        'setup-cli.exe': f'{synode_py}/dist/setup-cli.exe',
+        'uninstall-srv.exe': f'{synode_py}/dist/uninstall-srv.exe'
+        # 'upgrade.exe': f'{synode_py}/dist/upgrade.exe'
     })
     else:
         print("[*** TODO *** 0.8.0 POSIX]  desktop [album-gui, ws-agent.jar, settings], requires exiftool, jre-posix")
@@ -573,7 +599,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
         # Also build desktop standalone
         print('****************************************************************************************************')
         if os.name == 'nt': # not POSIX 0.8.0
-            c.run(f"cd {taskcfg.desktop_dir} && invoke zip-standalone --deploy={Path(deploy).absolute()}")
+            c.run(f"cd {desktop} && invoke zip-standalone --deploy={Path(deploy).absolute()}")
             Utils.copy_anyway(taskcfg.get_deskapp_zip(), taskcfg.package_dir, log=True)
         else:
             print("[*** TODO *** 0.8.0]  skip building & packaging desktop-posix")
@@ -609,7 +635,7 @@ def run_scps(c: Context, deploy:str = 'task.json'):
     taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.get_apk_name()))
 
     if os.name == 'nt': # not posix 0.8.0
-        taskcfg.run_deployscps(str(Path(taskcfg.desktop_dir) / taskcfg.package_dir / taskcfg.deskzip_name()))
+        taskcfg.run_deployscps(str(Path(taskcfg.git_prj('album-desktop')) / taskcfg.package_dir / taskcfg.deskzip_name()))
 
     print('', sep='\n')
     print(f"Run deploy_cmds, 3 package copyied.")
@@ -637,7 +663,7 @@ def make(c: Context, deploy: str = 'tasks.json', gpg: str = None):
 def deploy(c: Context, deploy: str = 'tasks.json', gpg: str = None):
     make(c, deploy=deploy, gpg=gpg)
     run_scps(c, deploy=deploy)
-    print(f'Deployed: {deploy}, central task: {taskcfg.central_dir} ...')
+    print(f'Deployed: {deploy}, central task: {taskcfg.git_prj("registry-central")} ...')
 
 
 # @task
@@ -649,6 +675,106 @@ def deploy(c: Context, deploy: str = 'tasks.json', gpg: str = None):
 
 #     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
 #     taskcfg.publish_landings()
+
+
+@task
+def github_head(c: Context, deploy: str = 'tasks.0.8.0.json'):
+    '''
+    Report all source projects' (gitprjs) git head commit id and branch name,
+    and update {github}/source.tree, the git-tracked files of all repositories in github.
+    Independent of the build environment (no validate, JAVA_HOME, maven or npm checks).
+
+    :: bash
+        inv github-head --deploy=tasks.pm-king.json
+    ..
+
+    :param c: Context
+    :param deploy: task json, where github & gitprjs are configured
+    '''
+    import subprocess
+
+    # folders in github not listed in source.tree
+    ignores = ['vcpkg']
+
+    cfg = cast(SynodeTask, Anson.from_file(deploy))
+    print(f'--------------   github heads: {Path(cfg.github).resolve()}   ------------------')
+
+    def git(pth: str, *args: str) -> str:
+        r = subprocess.run(['git', '-C', pth, *args], capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else None
+
+    # projects in the same repository are reported once, e.g. synode.py & semantic-jserv
+    repos, errs = {}, []
+    for prj in cfg.gitprjs:
+        pth = cfg.git_prj(prj)
+        if not os.path.isdir(pth):
+            errs.append((prj, '[not found]', pth))
+            continue
+        top = git(pth, 'rev-parse', '--show-toplevel')
+        if top is None:
+            errs.append((prj, '[not a git repo]', pth))
+            continue
+        if top not in repos:
+            branch = git(top, 'rev-parse', '--abbrev-ref', 'HEAD')
+            repos[top] = {'branch': '(detached)' if branch == 'HEAD' else branch,
+                          'commit': git(top, 'rev-parse', 'HEAD'), 'prjs': []}
+        repos[top]['prjs'].append(prj)
+
+    rows = [(os.path.basename(top), r['branch'], r['commit'], ', '.join(r['prjs'])) for top, r in repos.items()]
+    w0 = max([len('repository')] + [len(r[0]) for r in rows])
+    w1 = max([len('branch')] + [len(r[1]) for r in rows])
+    print(f'{"repository":<{w0}}  {"branch":<{w1}}  {"commit":<40}  projects')
+    for repo, branch, commit, prjs in rows:
+        print(f'{repo:<{w0}}  {branch:<{w1}}  {commit:<40}  {prjs}')
+
+    for prj, err, pth in errs:
+        print(f'{err} {prj}: {pth}')
+
+    write_source_tree(cfg.github, ignores)
+
+
+def write_source_tree(github: str, ignores: list) -> Path:
+    '''
+    Write {github}/source.tree, git-tracked files of every repository in github, except ignores.
+    Format (also in the file's header):
+        # <repo>  <branch>  <commit>     starts a repository
+        <dir>/                           a folder relative to the repository, './' for the root
+          <file>                         files in the folder above
+    :return: path of source.tree
+    '''
+    import subprocess
+    from datetime import date
+
+    def git(pth: Path, *args: str) -> str:
+        r = subprocess.run(['git', '-C', str(pth), *args], capture_output=True)
+        return r.stdout.decode('utf-8', errors='replace') if r.returncode == 0 else None
+
+    root = Path(github)
+    lines = [f'# github sources, {date.today().isoformat()}. Git-tracked files only.',
+             "# Format: '# <repo> <branch> <commit>' starts a repo; '<dir>/' is a folder (relative to the repo,",
+             "#         './' = repo root); the indented names below it are that folder's files."]
+
+    for d in sorted(p for p in root.iterdir() if p.is_dir() and p.name not in ignores):
+        files = git(d, 'ls-files', '-z')
+        if files is None:
+            continue    # not a git repository
+        branch = git(d, 'rev-parse', '--abbrev-ref', 'HEAD').strip()
+        commit = git(d, 'rev-parse', '--short', 'HEAD').strip()
+        lines += ['', f'# {d.name}  {branch}  {commit}']
+
+        last = None
+        for folder, name in sorted((f.rpartition('/')[0] + '/' if '/' in f else './', f.rpartition('/')[2])
+                                   for f in files.split('\0') if f):
+            if folder != last:
+                lines.append(folder)
+                last = folder
+            lines.append(f'  {name}')
+
+    tree = root / 'source.tree'
+    with open(tree, 'w', encoding='utf-8', newline='\n') as fo:
+        fo.write('\n'.join(lines) + '\n')
+    print(f'Source tree updated: {tree.resolve()}, ignored: {ignores}')
+    return tree
 
 
 @task
