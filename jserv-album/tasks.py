@@ -16,7 +16,7 @@ _independent = 'github-head' in _tasks
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.10")
-    requir_pkg("semantics.py3", "0.6.14") # SynodeTask.github, gitprjs {github}
+    requir_pkg("semantics.py3", "0.6.15") # SynodeTask.github, gitprjs {github}, link-json
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("build")               # by synode.py
@@ -310,15 +310,30 @@ def install_py_local(c: Context, venv_build: str = None, deploy: str = 'tasks.0.
     :param deploy: task json, for the source projects' paths (github, gitprjs)
     '''
     # Debug Note: semantics.py3 (SynodeTask) is one of the packages upgraded here, and the installed
-    # one may have no SynodeTask.github / gitprjs yet. Read the 2 fields with json, not Anson.
+    # one may have no SynodeTask.github / gitprjs / resolve_gitprjs() yet. Read the 2 fields with json,
+    # not Anson, and resolve "link-json" here, the same as semanticshare.io.oz.invoke.resolve_gitprjs().
     import json
-    with open(deploy, 'r', encoding='utf-8') as jf:
-        js = json.load(jf)
-    github, gitprjs = js.get('github', '../..'), js.get('gitprjs', {})
+
+    def load_gitprjs(jsonpath: str, linking: tuple = ()) -> tuple:
+        jsonpath = os.path.abspath(jsonpath)
+        if jsonpath in linking:
+            Utils.warn('Circular gitprjs[link-json]: {}', ' -> '.join(linking + (jsonpath,)))
+            sys.exit(-1)
+        with open(jsonpath, 'r', encoding='utf-8') as jf:
+            js = json.load(jf)
+        prjs = js.get('gitprjs', {})
+        resolved = {}
+        if 'link-json' in prjs:
+            resolved.update(load_gitprjs(os.path.join(os.path.dirname(jsonpath), prjs['link-json']),
+                                         linking + (jsonpath,))[1])
+        resolved.update({k: v for k, v in prjs.items() if k != 'link-json' and not k.lstrip().startswith('//')})
+        return js.get('github', '../..'), resolved
+
+    github, gitprjs = load_gitprjs(deploy)
 
     def git(prj: str, *subpaths: str) -> str:
         if prj not in gitprjs:
-            Utils.warn(f'Source project "{prj}" is not configured in {deploy}/gitprjs: {gitprjs}')
+            Utils.warn('Source project "{}" is not configured in {}/gitprjs: {}', prj, deploy, gitprjs)
             sys.exit(-1)
         return os.path.join(gitprjs[prj].replace('{github}', github), *subpaths)
 
@@ -694,7 +709,7 @@ def github_head(c: Context, deploy: str = 'tasks.0.8.0.json'):
 
     # projects in the same repository are reported once, e.g. synode.py & semantic-jserv
     repos, errs = {}, []
-    for prj in cfg.gitprjs:
+    for prj in cfg.prjs():
         pth = cfg.git_prj(prj)
         if not os.path.isdir(pth):
             errs.append((prj, '[not found]', pth))

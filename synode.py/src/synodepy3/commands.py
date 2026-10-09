@@ -14,7 +14,8 @@ from invoke import task, Context, UnexpectedExit
 from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db
 
 from .__version__ import jar_ver, html_srver
-from .installer_api import InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json
+from .installer_api import InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
+    html_service_json
 from .systemd_units import Sudo, linusrv, stop_linusrvs, reinstall_linusrvs
 
 winsrv = 'winsrv'
@@ -25,7 +26,7 @@ install_html_w_bat  = os.path.join(winsrv, "install-html-w.bat")
 install_jserv_w_bat = os.path.join(winsrv, "install-jserv-w.bat")
 stop_w_bat    = os.path.join(winsrv, "stop-winsrv.bat")
 restart_w_bat = os.path.join(winsrv, "restart-winsrv.bat")
-winsrv_proc_exe = 'winsrv\portfolio-ia64.exe'
+winsrv_proc_exe = os.path.join(winsrv, "portfolio-ia64.exe")
 
 @task
 def run_jserv(c, bin = 'bin'):
@@ -130,8 +131,8 @@ def update_srv(pkg_path: str):
       1. Windows: stop the jserv-album and html-service services;
          Linux: uninstall (stop, disable, remove) the 2 systemd units saved in settings.json,
          keeping the unit files in backup_dir/linusrv/
-      2. back up vol/dictionary.json, vol/*.db, WEB-INF/settings.json and
-         web-dist/private/host.json into a dated backup-YYYYMMDD/ folder,
+      2. back up vol/dictionary.json, vol/*.db, WEB-INF/settings.json, WEB-INF/html-service.json
+         and web-dist/private/host.json into a dated backup-YYYYMMDD/ folder,
          preserving each file's exact relative sub-path
          (vol = WEB-INF/settings.json's "volume")
       3. unpack pkg_path over the current working directory
@@ -191,6 +192,7 @@ def update_srv(pkg_path: str):
     stash(vol, sys_db)
     stash(vol, syn_db)
     stash(web_inf, settings_json)
+    stash(web_inf, html_service_json)
     stash(album_web_dist, web_host_json)
 
     # 3. unpack the update package over cwd
