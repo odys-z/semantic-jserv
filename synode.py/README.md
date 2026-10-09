@@ -2,7 +2,9 @@
 
 Synode.py is the synchronization node for Portfolio, a file / resources synchronization framework.
 
-# 0.8 Experimental
+### 0.8.2
+
+  Support install *synode.py3* saparately as the upgrade tool.
 
 - Auto-upgrade module
 
