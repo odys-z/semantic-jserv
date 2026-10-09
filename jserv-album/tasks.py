@@ -666,17 +666,6 @@ def deploy(c: Context, deploy: str = 'tasks.json', gpg: str = None):
     print(f'Deployed: {deploy}, central task: {taskcfg.git_prj("registry-central")} ...')
 
 
-# @task
-# def landing(c: Context, deploy: str = 'tasks.json'):
-#     global taskcfg
-#     print(deploy)
-#     if taskcfg is None:
-#         taskcfg = cast(SynodeTask, Anson.from_file(deploy))
-
-#     print(f'deploying {deploy}, central task: {taskcfg.central_dir} ...')
-#     taskcfg.publish_landings()
-
-
 @task
 def github_head(c: Context, deploy: str = 'tasks.0.8.0.json'):
     '''
@@ -694,7 +683,7 @@ def github_head(c: Context, deploy: str = 'tasks.0.8.0.json'):
     import subprocess
 
     # folders in github not listed in source.tree
-    ignores = ['vcpkg']
+    ignores = ['vcpkg', 'odys-z.github.io']
 
     cfg = cast(SynodeTask, Anson.from_file(deploy))
     print(f'--------------   github heads: {Path(cfg.github).resolve()}   ------------------')
