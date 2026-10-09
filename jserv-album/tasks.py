@@ -682,8 +682,8 @@ def github_head(c: Context, deploy: str = 'tasks.0.8.0.json'):
     '''
     import subprocess
 
-    # folders in github not listed in source.tree
-    ignores = ['vcpkg', 'odys-z.github.io']
+    # not listed in source.tree: a repository folder, or a path relative to github
+    ignores = ['vcpkg', 'odys-z.github.io', 'Ever-connecting/connects/docs', 'semantics-jserv/docs']
 
     cfg = cast(SynodeTask, Anson.from_file(deploy))
     print(f'--------------   github heads: {Path(cfg.github).resolve()}   ------------------')
@@ -725,6 +725,8 @@ def github_head(c: Context, deploy: str = 'tasks.0.8.0.json'):
 def write_source_tree(github: str, ignores: list) -> Path:
     '''
     Write {github}/source.tree, git-tracked files of every repository in github, except ignores.
+    An ignore without '/' is a repository folder, e.g. 'vcpkg'; with '/', a folder or file path
+    relative to github, e.g. 'Ever-connecting/connects/docs'.
     Format (also in the file's header):
         # <repo>  <branch>  <commit>     starts a repository
         <dir>/                           a folder relative to the repository, './' for the root
@@ -743,6 +745,12 @@ def write_source_tree(github: str, ignores: list) -> Path:
              "# Format: '# <repo> <branch> <commit>' starts a repo; '<dir>/' is a folder (relative to the repo,",
              "#         './' = repo root); the indented names below it are that folder's files."]
 
+    prefixes = tuple(ig.strip('/') + '/' for ig in ignores if '/' in ig.strip('/'))
+
+    def ignored(repo: str, f: str) -> bool:
+        rel = f'{repo}/{f}'
+        return rel.startswith(prefixes) or (rel + '/').startswith(prefixes)
+
     for d in sorted(p for p in root.iterdir() if p.is_dir() and p.name not in ignores):
         files = git(d, 'ls-files', '-z')
         if files is None:
@@ -753,7 +761,7 @@ def write_source_tree(github: str, ignores: list) -> Path:
 
         last = None
         for folder, name in sorted((f.rpartition('/')[0] + '/' if '/' in f else './', f.rpartition('/')[2])
-                                   for f in files.split('\0') if f):
+                                   for f in files.split('\0') if f and not ignored(d.name, f)):
             if folder != last:
                 lines.append(folder)
                 last = folder

@@ -70,13 +70,13 @@
     }}],
 
   "deploy_cmds"   : [
-    "example: scp {built_zip} zelenskyy@10.10.10.10:~/.../jserv-album/build-0.8.0",
-    "deploy_cmds: [{cmd: cmd template, vars{k: v}}, ...],",
-      "auto args:",
-              "built_zip: self.get_distzip()",
-              "built_dir: self.dist_dir",
-              "zip_name : self.zip_name()",
-      "c.run(formated cmd)"
+    "// example: scp {built_zip} zelenskyy@10.10.10.10:~/.../jserv-album/build-0.8.0",
+    "// deploy_cmds: [{cmd: cmd template, vars{k: v}}, ...],",
+      "// auto args:",
+              "// built_zip: self.get_distzip()",
+              "// built_dir: self.dist_dir",
+              "// zip_name : self.zip_name()",
+      "// c.run(formated cmd)"
   ],
 
   "deploy_scps"   : [{
