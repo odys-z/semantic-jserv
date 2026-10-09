@@ -230,7 +230,7 @@ def clean(c: Context):
 
 
 @task
-def install_maven_local(c: Context, deploy: str='tasks.0.8.0.json', gpg: str = None):
+def install_maven_local(c: Context, deploy: str='tasks.closed-test.json', gpg: str = None):
     '''
     Install jserv-album's depending jars locally.
 
@@ -288,7 +288,7 @@ def install_maven_local(c: Context, deploy: str='tasks.0.8.0.json', gpg: str = N
 
 
 @task
-def install_py_local(c: Context, venv_build: str = None, deploy: str = 'tasks.0.8.0.json'):
+def install_py_local(c: Context, venv_build: str = None, deploy: str = 'tasks.closed-test.json'):
     '''
     Install python packages locally in the target venv.
 
