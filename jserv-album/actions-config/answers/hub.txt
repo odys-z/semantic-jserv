@@ -2,19 +2,18 @@
 # Format: see feed_answers.py. <enter> = accept default, <clear>x = replace the default with x,
 # ${VAR} from the workflow env, menus take the option number (1-based).
 #
-# Assumes the central's volume has no domain yet in market alpha / org closed-test,
-# so the hub creates the domain and the two private nodes then join it.
+# The central snapshot (alpha-central-0.1.8) already has the domains closed-1 and closed-2 of
+# org closed-test, each with 3 synodes in state create (c): hub, -1, -2. The hub takes closed-1-hub.
 
-<clear>${CENTRAL_URL}     # Please input central service url
+<clear>${CENTRAL_URL}     # Please input central service url. Value from yml file
 <enter>                   # Portfolio 0.8.0 market ID: alpha. Return to continue ...
-1                         # Please select a domain: no domain yet, 1 = Create a new domain...
-${DOMAIN}                 # Please input new domain name (2-12 chars)
-1                         # Please select a Synode: 1st planned synode = the hub
+1                         # Please select a domain: 1 = closed-1, 2 = closed-2, 3 = Create a new domain...
+1                         # Please select a Synode: 1 = closed-1-hub
 <enter>                   # Set volume path: default ./vol
 1                         # Synode mode: 1 = Domain Hub / Centre, 2 = Primary Storage Node
 <clear>8951:8961          # Ports "www-port:synode-service"
 2                         # Mapped to a public address / reverse proxy? 2 = No
 1                         # All settings are collected, install? 1 = Yes
-<clear>${DOMAIN_TOKEN}    # Domain token of user Admin (8-16 chars, same on all synodes)
+<enter>                   # Domain token of user Admin: the packaged default (tasks.*.json deploy.domain_token)
 2                         # Install them as systemd services now? 2 = No, the workflow starts the jserv
 <enter>                   # Return to quit Portfolio Setup
