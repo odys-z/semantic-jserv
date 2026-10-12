@@ -1,0 +1,2 @@
+# the root .gitignore ignores *.jar; the central's jar is a test resource
+!central/*.jar

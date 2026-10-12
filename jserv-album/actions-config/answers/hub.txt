@@ -1,0 +1,20 @@
+# synode-cli answers for the hub node, one per line, in the order of the prompts.
+# Format: see feed_answers.py. <enter> = accept default, <clear>x = replace the default with x,
+# ${VAR} from the workflow env, menus take the option number (1-based).
+#
+# Assumes the central's volume has no domain yet in market alpha / org closed-test,
+# so the hub creates the domain and the two private nodes then join it.
+
+<clear>${CENTRAL_URL}     # Please input central service url
+<enter>                   # Portfolio 0.8.0 market ID: alpha. Return to continue ...
+1                         # Please select a domain: no domain yet, 1 = Create a new domain...
+${DOMAIN}                 # Please input new domain name (2-12 chars)
+1                         # Please select a Synode: 1st planned synode = the hub
+<enter>                   # Set volume path: default ./vol
+1                         # Synode mode: 1 = Domain Hub / Centre, 2 = Primary Storage Node
+<clear>8951:8961          # Ports "www-port:synode-service"
+2                         # Mapped to a public address / reverse proxy? 2 = No
+1                         # All settings are collected, install? 1 = Yes
+<clear>${DOMAIN_TOKEN}    # Domain token of user Admin (8-16 chars, same on all synodes)
+2                         # Install them as systemd services now? 2 = No, the workflow starts the jserv
+<enter>                   # Return to quit Portfolio Setup
