@@ -8,8 +8,7 @@ from semanticshare.io.odysz.jclient import AnclientSettings
 from semanticshare.io.oz.anclient.app import DesktopSettings, UIResources
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from .install_jre import java_cmd
-from .jre_downloader import JreDownloader, _jre_
+from .jre_downloader import JreDownloader, _jre_, java_cmd
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -287,6 +286,72 @@ def checkinstall_exiftool():
         return check
 
 
+qt_runtime_debs: Final[list[str]] = ['libegl1', 'libgl1', 'libxkbcommon0', 'libfontconfig1', 'libdbus-1-3']
+'''
+Debian / Ubuntu packages of the system libraries Qt (PySide6) loads, e.g. libEGL.so.1.
+pip can't install them: a PySide6 wheel bundles Qt, but links the platform's EGL, GL, xkb, fontconfig and dbus.
+'''
+
+def check_qt_runtime() -> Optional[str]:
+    """
+    Load PySide6.QtWidgets in a child process, so that a failure leaves this process clean.
+    :return: None if Qt can be loaded, else the error, e.g.
+             "ImportError: libEGL.so.1: cannot open shared object file: No such file or directory"
+    """
+    if Utils.iswindows() or getattr(sys, 'frozen', False):
+        return None  # the PySide6 wheel / the PyInstaller bundle carries what Qt needs
+
+    r = subprocess.run([sys.executable, '-c', 'import PySide6.QtWidgets'], capture_output=True, text=True)
+    if r.returncode == 0:
+        return None
+    lines = [l for l in r.stderr.splitlines() if l.strip()]
+    return lines[-1] if lines else f'importing PySide6.QtWidgets failed, exit code {r.returncode}'
+
+def confirm_tty(question: str) -> bool:
+    """
+    Ask a yes / no question in the terminal, before Qt is available.
+    :return: True for yes (the default); False for no, or if there is no terminal to ask in
+    """
+    if not sys.stdin or not sys.stdin.isatty():
+        return False
+    return input(f'{question} [Y/n] ').strip().lower() in ('', 'y', 'yes')
+
+def checkinstall_qt_runtime(confirm: Callable[[str], bool] = confirm_tty) -> Optional[str]:
+    """
+    Check Qt (PySide6) can be loaded; if not, on Debian / Ubuntu, install its system libraries
+    with apt-get when confirmed, as root (Sudo asks for the password if needed).
+    :param confirm: asked before installing; return False to only report
+    :return: None if Qt can be loaded (now), else the error with the command to run by hand
+    """
+    err = check_qt_runtime()
+    if err is None:
+        return None
+
+    manual = f'sudo apt-get install -y {" ".join(qt_runtime_debs)}'
+    if shutil.which('apt-get') is None:
+        return f'{err}\nInstall the system libraries Qt needs with the package manager, e.g. on Debian / Ubuntu:\n{manual}'
+
+    if not confirm(f'Qt (PySide6) cannot be loaded: {err}\nInstall the system libraries now?\n  {manual}\n'):
+        return f'{err}\nPlease install the system libraries Qt needs:\n{manual}'
+
+    from .systemd_units import Sudo  # imported here: systemd_units imports this module
+    sudo = Sudo()
+    try:
+        sudo.ensure()
+    except Exception as e:  # PermissionError, or no terminal to ask for the password
+        return f'{err}\n{e}\nPlease install the system libraries Qt needs:\n{manual}'
+
+    print(f'Installing {" ".join(qt_runtime_debs)} ...')
+    r = sudo.run('apt-get', 'install', '-y', *qt_runtime_debs)
+    if r.returncode != 0:  # e.g. no package lists yet on a fresh system
+        sudo.run('apt-get', 'update')
+        r = sudo.run('apt-get', 'install', '-y', *qt_runtime_debs)
+    if r.returncode != 0:
+        return f'{err}\napt-get failed: {r.stderr.strip()[-500:]}\nPlease install the system libraries Qt needs:\n{manual}'
+
+    return check_qt_runtime()
+
+
 jserv_album: Final[str] = 'jserv-album'
 
 install_uri = 'Anson.py3/test'
@@ -332,8 +397,20 @@ class InstallerCli:
     '''
 
     @staticmethod
-    def check_prerequisites() -> Optional[Dict[str, str]]:
+    def check_prerequisites(gui: bool = False,
+                            confirm: Callable[[str], bool] = confirm_tty) -> Optional[Dict[str, str]]:
+        """
+        :param gui: also check Qt (PySide6) can be loaded, and install its system libraries if confirmed.
+                    Call it before anything imports PySide6. synode-cli doesn't need Qt.
+        :param confirm: asked before installing Qt's system libraries
+        :return: None if all is ready, else {prerequisite: problem}
+        """
         print("Checking prerequisites")
+        if gui:
+            qt_err = checkinstall_qt_runtime(confirm)
+            if qt_err is not None:
+                return {"Qt runtime": qt_err}
+
         if not check_exiftool():
             return {"exiftool": "Check and install exiftool failed!" \
                 if Utils.get_os() == 'Windows' \

@@ -1,6 +1,14 @@
 import sys
 import time
 
+# Before anything imports PySide6: on Linux, Qt needs system libraries pip can't install (libEGL.so.1, ...).
+from synodepy3.installer_api import InstallerCli
+_missing = InstallerCli.check_prerequisites(gui=True)
+if _missing and 'Qt runtime' in _missing:
+    print(_missing['Qt runtime'], file=sys.stderr)
+    sys.exit(1)
+# The other items, e.g. exiftool, are checked again by InstallerCli.validate() before installing.
+
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 
 from synodepy3.jre_downloader import JreDownloader

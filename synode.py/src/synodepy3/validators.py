@@ -5,7 +5,6 @@ Validators for both PyQt and Prompt
 
 import ipaddress
 
-from PySide6.QtGui import QValidator
 from prompt_toolkit.validation import Validator, ValidationError
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 from prompt_toolkit.document import Document
@@ -22,22 +21,6 @@ class PIPValidator(Validator):
         except:
             raise ValidationError(message=f'In valid IP address.')
 
-class QIPValidator(QValidator):
-    '''
-    Not Used
-    ========
-    '''
-    pv: PIPValidator
-
-    def __init__(self):
-        super().__init__()
-        self.pv = PIPValidator()
-
-    def validate(self, arg__1, arg__2, /):
-        try:
-            self.pv.validate(Document(arg__1))
-            return QValidator.State.Acceptable
-        except: return QValidator.State.Invalid
 
 class PJservValidator(Validator):
     '''
@@ -59,22 +42,3 @@ class PJservValidator(Validator):
         if not valid:
             raise ValidationError(
                 message=f'Jserv URL is invalid. Required format: http(s)://ip:port/{self.protocol_root}')
-
-class QJservValidator(QValidator):
-    '''
-    Not Used
-    ========
-    @deprecated
-    Synodes protocol validator ('jserv-album')
-    '''
-
-    def __init__(self, protcol_rrot: str = None):
-        super().__init__()
-        self.pv = PJservValidator(protcol_rrot)
-
-    def validate(self, arg__1, arg__2, /):
-        try:
-            self.pv.validate(Document(arg__1))
-            return QValidator.State.Acceptable
-        except: return QValidator.State.Invalid
-
