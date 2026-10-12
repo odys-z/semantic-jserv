@@ -1,5 +1,5 @@
 '''
-Validators for both PyQt and Prompt
+Validators for Prompt (synode-cli). The Qt widget validators, wrapping these, are in qt_validators.py.
 @since 0.7.7
 '''
 
