@@ -1,0 +1,149 @@
+# Linux end-to-end setup test of the synode package, started by hand from the Actions tab.
+#
+# 1. Downloads the newest synode-*-x64_linux*.tar.gz from this repo's releases (or the tag given).
+# 2. Extracts it for 3 nodes: hub, prv1, prv2.
+# 3. Starts the registry central (jserv-album/actions-config/central: jar, WEB-INF, regist-vol) as a systemd unit.
+# 4. Configures each node with synode-cli, fed by jserv-album/actions-config/answers/<node>.txt, and starts its jserv.
+# 5. Reports the central's domain tables in the run's Summary.
+#
+# See jserv-album/actions-config/README.md for the resources to upload.
+
+name: synode-e2e-linux
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to test (empty: the newest synode linux tar.gz in any release)'
+        required: false
+        default: ''
+      domain:
+        description: 'Domain the hub creates (2-12 chars)'
+        required: false
+        default: 'zsu'
+
+permissions:
+  contents: read
+
+jobs:
+  domain-setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      CONFIG: ${{ github.workspace }}/jserv-album/actions-config
+      WORK: ${{ github.workspace }}/e2e
+      CENTRAL_URL: http://127.0.0.1:1991/regist-central
+      DOMAIN: ${{ inputs.domain }}
+      DOMAIN_TOKEN: ${{ secrets.E2E_DOMAIN_TOKEN }}
+      SYNC_INS: '20'
+
+    steps:
+      - uses: actions/checkout@v4          # only the test resources; the package needs no sources
+        with:
+          sparse-checkout: jserv-album/actions-config
+
+      - uses: actions/setup-java@v4          # for the central; the synodes download their own jre17
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: OS packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libimage-exiftool-perl sqlite3
+          mkdir -p $WORK/dl $WORK/logs
+
+      - name: Check test resources and secret
+        run: |
+          ls $CONFIG/central/*.jar $CONFIG/central/WEB-INF/settings.json
+          [ -n "$DOMAIN_TOKEN" ] || { echo "::error::secret E2E_DOMAIN_TOKEN is not set"; exit 1; }
+          for f in $CONFIG/answers/{hub,prv1,prv2}.txt; do
+            python $CONFIG/feed_answers.py $f --dry-run
+          done
+
+      # ---- 1. newest package ----
+      - name: Download the synode package
+        run: |
+          # every release, newest asset first; filtered by RELEASE_TAG when given
+          pick=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" | jq -rs --arg t "$RELEASE_TAG" '
+                   add | map(select($t == "" or .tag_name == $t) | .tag_name as $tag
+                   | .assets[] | select(.name | test("^synode-.*x64_linux.*\\.tar\\.gz$"))
+                   | [.updated_at, $tag, .name]) | sort | reverse | .[0] // empty | @tsv')
+          [ -n "$pick" ] || { echo "::error::no synode linux tar.gz found in releases ${RELEASE_TAG:+(tag $RELEASE_TAG)}"; exit 1; }
+          IFS=$'\t' read -r updated tag name <<< "$pick"
+          gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$name" -D $WORK/dl
+          echo "PACKAGE=$WORK/dl/$name" >> $GITHUB_ENV
+          echo "### Package: \`$name\` (release \`$tag\`, uploaded $updated)" >> $GITHUB_STEP_SUMMARY
+
+      # ---- 2. three nodes ----
+      - name: Extract hub, prv1, prv2
+        run: |
+          for n in hub prv1 prv2; do
+            mkdir -p $WORK/$n && tar -xf "$PACKAGE" -C $WORK/$n    # the tar.gz has no top folder
+          done
+          pip install -q $WORK/hub/bin/synode_py3-*.whl
+          synode-cli --help | head -1
+
+      # ---- 3. central ----
+      - name: Start registry central (systemd, port 1991)
+        run: |
+          cp -r $CONFIG/central $WORK/central
+          jar=$(ls $WORK/central/*.jar | head -1)
+          sudo systemd-run --unit=regist-central --working-directory=$WORK/central \
+               --uid=$(id -u) --gid=$(id -g) $JAVA_HOME/bin/java -jar "$jar"
+          timeout 90 bash -c 'until nc -z 127.0.0.1 1991; do sleep 2; done' || {
+            sudo journalctl -u regist-central --no-pager | tail -80; exit 1; }
+
+      # ---- 4. nodes, one by one: configure, then start the jserv ----
+      - name: Configure and start the synodes
+        shell: bash
+        run: |
+          setup_node() {   # <node> <jserv-port>
+            python $CONFIG/feed_answers.py $CONFIG/answers/$1.txt --cwd $WORK/$1 --log $WORK/logs/$1-cli.log
+            [ -x $WORK/$1/jre17/bin/java ] || { echo "::error::$1: setup did not finish, see $1-cli.log"; return 1; }
+
+            (cd $WORK/$1 && nohup ./jre17/bin/java -jar bin/jserv-album-*.jar > $WORK/logs/$1-jserv.log 2>&1 &)
+            timeout 120 bash -c "until nc -z 127.0.0.1 $2; do sleep 2; done" || {
+              tail -80 $WORK/logs/$1-jserv.log; echo "::error::$1: jserv not listening on $2"; return 1; }
+            echo "$1 is up on $2"
+          }
+          setup_node hub  8961
+          setup_node prv1 8962
+          setup_node prv2 8963
+
+      # ---- 5. report ----
+      - name: Report the central's domain tables
+        if: always()
+        run: |
+          db=$WORK/central/regist-vol/system.sqlite
+          [ -f $db ] || db=$(find $WORK/central -name system.sqlite | head -1)
+          [ -n "$db" ] || { echo "no central system.sqlite found"; exit 0; }
+          {
+            echo "### Central c_syndomx (domains)"
+            sqlite3 -readonly -markdown "$db" "select * from c_syndomx;"
+            echo
+            echo "### Central c_synodes"
+            sqlite3 -readonly -markdown "$db" "select market, orgid, domx, sid, mode, stat, jserv, optime from c_synodes;"
+          } | tee -a $GITHUB_STEP_SUMMARY
+
+      - name: Collect logs
+        if: always()
+        run: |
+          sudo journalctl -u regist-central --no-pager > $WORK/logs/central.log 2>&1 || true
+          for n in hub prv1 prv2; do
+            cp $WORK/$n/WEB-INF/settings.json $WORK/logs/$n-settings.json 2>/dev/null || true
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synode-e2e-linux
+          path: |
+            e2e/logs/
+            e2e/central/regist-vol/*.sqlite
