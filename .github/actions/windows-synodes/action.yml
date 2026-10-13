@@ -75,6 +75,7 @@ runs:
         done
         ls $WORK/hub
         [ -f $WORK/hub/setup-cli.exe ] || { echo "::error::no setup-cli.exe in the package"; exit 1; }
+        [ -d $WORK/hub/_internal ] || { echo "::error::no _internal/ in the package (setup-cli.exe's onedir bundle)"; exit 1; }
 
     # ---- 3. central ----
     - name: Start the registry central
