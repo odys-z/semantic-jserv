@@ -18,6 +18,7 @@ from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 from synodepy3.systemd_units import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ
 from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
 from synodepy3.validators import PJservValidator, PIPValidator
+from synodepy3.prerequisites import check_prerequisites
 from synodepy3.get_avail_ports import report_port_ranges
 
 
@@ -232,7 +233,7 @@ print(f"Starting configure Synode {synode_ver}. Return with empty input to abort
 
 has_run = cli.hasrun()
 
-missing_requires = cli.check_prerequisites()
+missing_requires = check_prerequisites()
 
 if missing_requires:
     details.extend(missing_requires)

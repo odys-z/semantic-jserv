@@ -2,8 +2,8 @@ import sys
 import time
 
 # Before anything imports PySide6: on Linux, Qt needs system libraries pip can't install (libEGL.so.1, ...).
-from synodepy3.installer_api import InstallerCli
-_missing = InstallerCli.check_prerequisites(gui=True)
+from synodepy3.prerequisites import check_prerequisites
+_missing = check_prerequisites(gui=True)
 if _missing and 'Qt runtime' in _missing:
     print(_missing['Qt runtime'], file=sys.stderr)
     sys.exit(1)
