@@ -2,7 +2,8 @@ name: Start the registry central
 description: >
   Downloads the registry central (jar, WEB-INF, regist-vol) from a release of a private repository,
   and starts it (port 1991 in the released WEB-INF/settings.json): on Linux as the systemd unit
-  regist-central, on Windows as a background java process (its output in <home>/central.log).
+  regist-central, on Windows as a java process created through WMI, outside the step's job object
+  so that it outlives the step (its output in <home>/central.log). Sets CENTRAL_HOME in the job env.
   Needs Java 17 (actions/setup-java) before it.
 
 inputs:
@@ -83,6 +84,7 @@ runs:
         fi
         echo "central: $jar, working directory $home"
         { echo "jar=$jar"; echo "home=$home"; echo "db=$db"; } >> $GITHUB_OUTPUT
+        echo "CENTRAL_HOME=$home" >> $GITHUB_ENV
 
     - name: Start the central (systemd)
       if: runner.os == 'Linux'
@@ -106,12 +108,15 @@ runs:
         HOME_DIR: ${{ steps.find.outputs.home }}
         PORT: ${{ inputs.port }}
       run: |
-        # kept running until the job ends; output in <home>\central.log, central.err.log
+        # The runner ends a step's processes with the step (a Windows job object), so Start-Process
+        # would lose the central before the synodes are set up. A process created through WMI is not
+        # in the step's job: it runs until the job ends. Output in <home>\central.log, central.err.log.
         $java = Join-Path $env:JAVA_HOME 'bin\java.exe'
-        Start-Process -FilePath $java -ArgumentList '-jar', "`"$env:JAR`"", 'settings.json' `
-          -WorkingDirectory $env:HOME_DIR -WindowStyle Hidden `
-          -RedirectStandardOutput (Join-Path $env:HOME_DIR 'central.log') `
-          -RedirectStandardError  (Join-Path $env:HOME_DIR 'central.err.log')
+        $cmd  = "cmd.exe /c `"`"$java`" -jar `"$env:JAR`" settings.json > central.log 2> central.err.log`""
+        $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create `
+               -Arguments @{ CommandLine = $cmd; CurrentDirectory = $env:HOME_DIR }
+        if ($r.ReturnValue -ne 0) { Write-Output "::error::cannot start the central (Win32_Process.Create: $($r.ReturnValue))"; exit 1 }
+        Write-Output "central: pid $($r.ProcessId), $cmd"
         $deadline = (Get-Date).AddSeconds(90)
         while ((Get-Date) -lt $deadline) {
           $c = [Net.Sockets.TcpClient]::new()
