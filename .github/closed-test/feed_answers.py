@@ -245,7 +245,8 @@ def main():
         out.close()
 
     print(f'\n[feed_answers] {" ".join(a.command)} exited with {code}')
-    return code
+    # Windows reports e.g. 4294967295 (-1); an exit status must be 0..255, and 0 only for success
+    return code if 0 <= code <= 255 else 1
 
 
 if __name__ == '__main__':

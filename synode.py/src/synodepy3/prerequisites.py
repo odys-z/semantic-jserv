@@ -211,7 +211,8 @@ def check_prerequisites(gui: bool = False) -> Optional[Dict[str, str]]:
         if qt_err is not None:
             return {"Qt runtime": qt_err}
 
-    if not check_exiftool():
+    # Windows: a fresh package has bin/exiftool.zip, unpacked into ./exiftool.exe here (as validate() does)
+    if not checkinstall_exiftool():
         return {"exiftool": exiftool_missing_msg()}
 
     return None
