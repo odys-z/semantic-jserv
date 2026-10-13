@@ -43,11 +43,14 @@ runs:
       run: |
         [ -n "$GH_TOKEN" ] || { echo "::error::no token for the central release (secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN?)"; exit 1; }
         dl=$RUNNER_TEMP/central-dl
+        if command -v cygpath > /dev/null; then   # Windows: D:\a\... -> D:/a/..., else "\" escapes in globs
+          dl=$(cygpath -m "$RUNNER_TEMP")/central-dl; DIR=$(cygpath -m "$DIR")
+        fi
         # all assets of the release: archives are unpacked, a loose jar is copied
-        gh release download "$RELEASE" -R "$REPO" -D $dl || {
+        gh release download "$RELEASE" -R "$REPO" -D "$dl" || {
           echo "::error::cannot download release '$RELEASE' of $REPO (token scope?)"; exit 1; }
         mkdir -p "$DIR"
-        for a in $dl/*; do
+        for a in "$dl"/*; do
           case "$a" in
             *.zip)           if command -v unzip > /dev/null; then unzip -q "$a" -d "$DIR"
                              else 7z x -y -bd "$a" -o"$DIR" > /dev/null; fi ;;    # Windows: 7-Zip
@@ -56,7 +59,9 @@ runs:
           esac
         done
         echo "### Central: release \`$RELEASE\` of \`$REPO\`" >> $GITHUB_STEP_SUMMARY
-        (cd $dl && ls -1) | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+        (cd "$dl" && ls -1) | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+        [ -n "$(find "$DIR" -maxdepth 3 -name '*.jar' -print -quit)" ] || {
+          ls -lR "$DIR" | head -40; echo "::error::no .jar after unpacking the release into $DIR"; exit 1; }
 
     - name: Find the central
       id: find
@@ -65,6 +70,7 @@ runs:
         DIR: ${{ inputs.path }}
       run: |
         # runs in the folder holding WEB-INF/ (the jar may be elsewhere in the release)
+        ! command -v cygpath > /dev/null || DIR=$(cygpath -m "$DIR")
         jar=$(find "$DIR" -maxdepth 3 -name '*.jar' | head -1)
         [ -n "$jar" ] || { echo "::error::no .jar in the central release"; exit 1; }
         cfg=$(find "$DIR" -maxdepth 3 -path '*/WEB-INF/settings.json' | head -1)

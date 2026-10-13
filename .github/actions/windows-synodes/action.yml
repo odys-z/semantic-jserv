@@ -84,7 +84,7 @@ runs:
         token: ${{ inputs.token }}
         repo: ${{ inputs.central-repo }}
         release: ${{ inputs.central-release }}
-        path: ${{ github.workspace }}/e2e/central
+        path: ${{ env.WORK }}/central          # D:/a/..., set by the first step
 
     - name: Check the central before the run
       shell: bash
