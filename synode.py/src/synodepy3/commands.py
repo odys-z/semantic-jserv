@@ -59,8 +59,123 @@ def uninstall_wsrv_byname(srvname: str = None):
     ctx.run(cmd)
 
 
-def install_wsrv_byname(srvname: str):
+def stamp_winsrv_bats():
+    """
+    Update the jar versions in the install bats. Done without elevation, before installing.
+    FIXME: This replace is not correct. See comments of upgrade_cli.
+    """
     Utils.update_patterns(install_jserv_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={jar_ver}'})
+    Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={html_srver}'})
+
+
+def is_winadmin() -> bool:
+    try:
+        import ctypes
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
+    except (AttributeError, OSError):
+        return False
+
+
+def run_elevated(params: str, exe: str = 'cmd.exe') -> int:
+    """
+    Run exe with params as Administrator, asking the UAC permission once, and wait for it.
+    Child processes (e.g. Procrun, portfolio-ia64.exe) inherit the elevated token, so no more confirmations.
+
+    :return: exit code of the elevated process
+    :raise PermissionError: user declined the UAC request
+    """
+    import ctypes
+    from ctypes import wintypes
+
+    class SHELLEXECUTEINFOW(ctypes.Structure):
+        _fields_ = [('cbSize', wintypes.DWORD), ('fMask', ctypes.c_ulong), ('hwnd', wintypes.HWND),
+                    ('lpVerb', wintypes.LPCWSTR), ('lpFile', wintypes.LPCWSTR),
+                    ('lpParameters', wintypes.LPCWSTR), ('lpDirectory', wintypes.LPCWSTR),
+                    ('nShow', ctypes.c_int), ('hInstApp', wintypes.HINSTANCE), ('lpIDList', ctypes.c_void_p),
+                    ('lpClass', wintypes.LPCWSTR), ('hkeyClass', wintypes.HKEY), ('dwHotKey', wintypes.DWORD),
+                    ('hIconOrMonitor', wintypes.HANDLE), ('hProcess', wintypes.HANDLE)]
+
+    SEE_MASK_NOCLOSEPROCESS = 0x00000040
+    SW_SHOWMINNOACTIVE = 7
+    INFINITE = 0xFFFFFFFF
+    ERROR_CANCELLED = 1223
+
+    sei = SHELLEXECUTEINFOW()
+    sei.cbSize = ctypes.sizeof(sei)
+    sei.fMask = SEE_MASK_NOCLOSEPROCESS
+    sei.lpVerb = 'runas'
+    sei.lpFile = exe
+    sei.lpParameters = params
+    sei.lpDirectory = os.getcwd()
+    sei.nShow = SW_SHOWMINNOACTIVE
+
+    shell32, kernel32 = ctypes.windll.shell32, ctypes.windll.kernel32
+    shell32.ShellExecuteExW.argtypes = [ctypes.POINTER(SHELLEXECUTEINFOW)]
+    kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    kernel32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+
+    if not shell32.ShellExecuteExW(ctypes.byref(sei)):
+        err = ctypes.GetLastError()
+        if err == ERROR_CANCELLED:
+            raise PermissionError('Administrator permission was declined. Services are not installed.')
+        raise ctypes.WinError(err)
+
+    code = wintypes.DWORD(0)
+    try:
+        kernel32.WaitForSingleObject(sei.hProcess, INFINITE)
+        kernel32.GetExitCodeProcess(sei.hProcess, ctypes.byref(code))
+    finally:
+        kernel32.CloseHandle(sei.hProcess)
+    return code.value
+
+
+def winsrv_exists(srvname: str) -> bool:
+    return subprocess.run(['sc', 'query', srvname], capture_output=True).returncode == 0
+
+
+def install_winsrvs(cli: InstallerCli, log: str = 'winsrv-install.log') -> dict[str, bool]:
+    """
+    Install the synode & web services, asking the administrator permission only once.
+    Service names are saved in settings.envars[winsrv_synode / winsrv_websrv] before installing.
+
+    :return: {service-name: installed}
+    :raise PermissionError: user declined the UAC request
+    """
+    srvname = cli.gen_wsrv_name()
+    websrvname = cli.gen_html_srvname()
+    cli.settings.envars.update({winsrv_synode: srvname, winsrv_websrv: websrvname})
+
+    # 2026-01-06 Must save before start service to avoid competition.
+    cli.settings.toFile(cast(str, os.path.join(web_inf, settings_json)))
+
+    stamp_winsrv_bats()
+
+    if is_winadmin():
+        for inst, name in ((install_wsrv_byname, srvname), (install_htmlsrv, websrvname)):
+            try:
+                inst(name, stamp=False)
+            except UnexpectedExit as e:
+                print(f'Error installing {name}: {e}', file=sys.stderr)
+    else:
+        # The elevated cmd.exe starts in System32, so cd /d first.
+        # cmd /c strips the first and the last quotes only, keeping the inner ones.
+        cmds = (f'cd /d "{os.getcwd()}" && '
+                f'(call {install_jserv_w_bat} install {srvname} & '
+                f'call {install_html_w_bat} install {websrvname}) > "{log}" 2>&1')
+        print(f'[elevated] {cmds}')
+        code = run_elevated(f'/c "{cmds}"')
+        if os.path.isfile(log):
+            with open(log, encoding='utf-8', errors='replace') as f:
+                print(f.read())
+        print(f'Elevated installation exited with code {code}. Log: {os.path.abspath(log)}')
+
+    return {s: winsrv_exists(s) for s in (srvname, websrvname)}
+
+
+def install_wsrv_byname(srvname: str, stamp: bool = True):
+    if stamp:
+        Utils.update_patterns(install_jserv_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={jar_ver}'})
 
     ctx = Context()
     cmd = f'{install_jserv_w_bat} install {srvname}'
@@ -69,8 +184,9 @@ def install_wsrv_byname(srvname: str):
     return srvname
 
 
-def install_htmlsrv(srvname: str):
-    Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={html_srver}'})
+def install_htmlsrv(srvname: str, stamp: bool = True):
+    if stamp:
+        Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={html_srver}'})
     '''
     FIXME: This replace is not correct. See comments of upgrade_cli.
     '''

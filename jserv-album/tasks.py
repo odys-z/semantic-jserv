@@ -682,7 +682,7 @@ def deploy(c: Context, deploy: str = 'tasks.json', gpg: str = None):
 
 
 @task
-def github_head(c: Context, deploy: str = 'tasks.0.8.0.json'):
+def github_head(c: Context, deploy: str = 'tasks.closed-test.json'):
     '''
     Report all source projects' (gitprjs) git head commit id and branch name,
     and update {github}/source.tree, the git-tracked files of all repositories in github.

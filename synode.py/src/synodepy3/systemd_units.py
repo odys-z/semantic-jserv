@@ -6,6 +6,7 @@ like the Windows services' names are in envars[winsrv_synode / winsrv_websrv].
 
 Used by prompt.py (generate & install at the last step) and commands.update_srv() (uninstall & reinstall).
 """
+import getpass
 import os
 import subprocess
 from typing import Dict, List, Optional, Tuple
@@ -22,6 +23,13 @@ linusrv = 'linusrv'
 linusrv_synode = f'{linusrv}.synode'
 linusrv_websrv = f'{linusrv}.web'
 
+
+def _login_user() -> str:
+    """
+    The user the services run as: the one who logged in, also under sudo.
+    os.getlogin() needs a controlling terminal, and fails (ENOTTY) under a pipe, systemd or CI.
+    """
+    return os.environ.get('SUDO_USER') or getpass.getuser()
 
 def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8g'):
     """
@@ -43,7 +51,7 @@ After=network.target
 
 [Service]
 Type=simple
-User={os.getlogin()}
+User={_login_user()}
 WorkingDirectory={cwd}
 Environment="JAVA_HOME={java_home}"
 ExecStart={java_home}/bin/java -jar {cwd}/bin/{jserv_07_jar}
@@ -64,7 +72,7 @@ After=network.target
 
 [Service]
 Type=simple
-User={os.getlogin()}
+User={_login_user()}
 WorkingDirectory={cwd}
 Environment="JAVA_HOME={java_home}"
 ExecStart={java_home}/bin/java -jar {cwd}/bin/{html_web_jar}

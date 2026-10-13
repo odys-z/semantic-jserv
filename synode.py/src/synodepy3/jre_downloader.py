@@ -6,14 +6,15 @@ import shutil
 import threading
 import time
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable, Union, TYPE_CHECKING
 
-from PySide6.QtWidgets import (
-    QApplication, QLabel
-)
 from anson.io.odysz.common import LangExt, Utils
 from jre_mirror.temurin17 import TemurinMirror
-from semanticshare.io.oz.edge import JRERelease
+from semanticshare.io.oz.edge import JRERelease, Temurin17Release
+
+if TYPE_CHECKING:
+    # Qt only for the GUI: synode-cli must load without Qt's system libraries (libEGL.so.1, ...)
+    from PySide6.QtWidgets import QLabel
 
 
 # ------------------------------------------------------------------
@@ -22,6 +23,19 @@ from semanticshare.io.oz.edge import JRERelease
 _jre_ = 'jre17'
 _jre_path_ = Path(_jre_)
 _event_loop_interval_ = 0.1
+
+
+def java_cmd() -> Path:
+    return _jre_path_ / 'bin' / 'java.dll' if os.name == 'nt' else _jre_path_ / 'bin' / 'java'
+
+def validate_jre():
+    if not Path.is_dir(Path(_jre_)) or \
+        Temurin17Release.guess_jretree(_jre_) != Path(_jre_) or \
+        os.name == 'posix' and not Path.exists(_jre_path_ / 'bin' / 'java') or \
+        os.name == 'nt' and not Path.exists(_jre_path_ / 'bin' / 'java.dll'):
+        return {'jre': 'JRE 17 is not available.'}
+    else:
+        return None
 
 
 class DownloadWorker():
@@ -64,9 +78,9 @@ class DownloadWorker():
 
 class JreDownloader:
     jrelease: JRERelease
-    ui_lable: QLabel
+    ui_lable: 'QLabel'
 
-    def __init__(self, progress_label: QLabel=None):
+    def __init__(self, progress_label: 'QLabel'=None):
         super().__init__()
         self._cancelled = False
         self.ui_lable = progress_label
@@ -100,6 +114,8 @@ class JreDownloader:
         return self.worker._finished, self.worker._cancelled
 
     def start_download_gui(self, jre_release: JRERelease):
+        from PySide6.QtWidgets import QApplication
+
         def download():
             self.worker.run(self.label_progress)
 

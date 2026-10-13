@@ -8,23 +8,19 @@ from semanticshare.io.odysz.jclient import AnclientSettings
 from semanticshare.io.oz.anclient.app import DesktopSettings, UIResources
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from .install_jre import java_cmd
-from .jre_downloader import JreDownloader, _jre_
+from .jre_downloader import JreDownloader, _jre_, java_cmd
 
 sys.stdout.reconfigure(encoding="utf-8")
 
 import ipaddress
 import json
 import os
-import re
 import shutil
 import socket
 import subprocess
 import time
-import zipfile
-from glob import glob
 from pathlib import Path
-from typing import List, cast, Optional, Callable, Final, Iterable, Tuple, Dict
+from typing import List, cast, Optional, Callable, Final, Iterable, Tuple
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
@@ -44,6 +40,8 @@ from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 from .__version__ import jar_ver, web_ver, html_srver, ipcagent_ver
 
 from . import jre_mirror_key
+from .prerequisites import check_exiftool, checkinstall_exiftool, exiftool_exe, exiftool_missing_msg
+from .validators import check_domain_id
 
 mypath : str = os.path.dirname(__file__)
 '''
@@ -172,24 +170,6 @@ def submit_settings(client: SessionClient, func_uri: str, market: str,
     return cast(RegistResp, resp)
 
 
-def decode(warns: bytes):
-    lines = []
-    if warns is not None:
-        for l in warns.split(b'\n'):
-            if isinstance(l, bytes):
-                try:
-                    s = l.decode('utf-8')
-                except UnicodeDecodeError:
-                    try:
-                        s = l.decode('gbk')
-                    except UnicodeDecodeError:
-                        s = ''.join(str(l))
-                if s is not None:
-                    lines.extend(s.split('\n'))
-            else:
-                lines.append(str(l))
-    return lines
-
 def valid_local_reg(reg: AnRegistry):
     """
     config.admin must presents in syn-users, which should be more than or equal 1 record.
@@ -200,91 +180,6 @@ def valid_local_reg(reg: AnRegistry):
     if LangExt.len(reg.synusers) < 1 or AnRegistry.find_synuser(reg.synusers, id=reg.config.admin) is None:
         raise PortfolioException('Dictionary Synuser configuration is invalid.')
     pass
-
-
-def unzip_file(zip_filepath, extract_to_path):
-    """
-    Unzips a file to a specified directory.
-
-    Args:
-        zip_filepath (str): The path to the zip file.
-        extract_to_path (str): The directory to extract the contents to.
-    """
-    try:
-        with zipfile.ZipFile(zip_filepath, 'r') as zip_ref:
-            zip_ref.extractall(extract_to_path)
-        print(f"Successfully extracted '{zip_filepath}' to '{extract_to_path}'")
-    except FileNotFoundError:
-        print(f"Error: Zip file '{zip_filepath}' not found.")
-    except zipfile.BadZipFile:
-        print(f"Error: '{zip_filepath}' is not a valid zip file.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-
-def get_zipath(zipath):
-    if os.path.isfile(zipath):
-        with zipfile.ZipFile(zipath, 'r') as zip_ref:
-            for subf in zip_ref.infolist():
-                if not subf.is_dir():
-                    raise PortfolioException('Not a recognized zip file structure in: {zippath}')
-                return subf.filename
-    return None
-
-
-def install_exiftool_win():
-    """
-    If in Windows, unzip exiftool-13.21_64 and move to root path
-    :return: None
-    """
-
-    zips = glob(os.path.join('bin', exiftool_zip))
-    if len(zips) > 0:
-        xtract_files = glob(exiftool_v_exe)
-        if len(xtract_files) == 0:
-            subfolder = get_zipath(zips[-1])
-            unzip_file(zips[-1], '.')
-            for res in glob(os.path.join(subfolder or '', '*')):
-                print(res)
-                if re.match(f'{subfolder.removesuffix("/")}.exiftool.*', res):
-                    shutil.move(res, '.')
-
-            try: os.remove(exiftool_exe)
-            except FileNotFoundError: pass
-
-            xtract_files = glob(exiftool_v_exe)
-            os.rename(xtract_files[0], exiftool_exe)
-
-
-def check_exiftool():
-    if Utils.iswindows():
-        return os.path.isfile(exiftool_exe)
-    else:
-        print('exiftool -ver')
-        try:
-            p = subprocess.Popen(['exiftool', '-ver'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if p is None:
-                return False
-            out, err = p.communicate()
-            if len(err) > 0:
-                print(err, file=sys.stderr)
-                return False
-
-            print(decode(out), 'exiftool is working...')
-            return True
-        except Exception as e:
-            print(e)
-            return False
-
-
-def checkinstall_exiftool():
-    check = check_exiftool()
-
-    if Utils.iswindows() and not check:
-        install_exiftool_win()
-        return True
-    else:
-        return check
 
 
 jserv_album: Final[str] = 'jserv-album'
@@ -309,11 +204,6 @@ serv_port0 = 8964
 web_port0 = 8900
 jserv_07_jar = f'jserv-album-{jar_ver}.jar'
 
-exiftool_zip = 'exiftool.zip'
-exiftool_v_exe = 'exiftool*.exe'
-exiftool_exe = 'exiftool.exe'
-exiftool_testver = 'exiftool -ver'
-
 pswd_min, pswd_max = 8, 32
 
 class InstallerCli:
@@ -330,14 +220,6 @@ class InstallerCli:
     '''
     Can be load, modified later.
     '''
-
-    @staticmethod
-    def check_prerequisites() -> Optional[Dict[str, str]]:
-        print("Checking prerequisites")
-        if not check_exiftool():
-            return {"exiftool": "Check and install exiftool failed!" \
-                if Utils.get_os() == 'Windows' \
-                else "Please install exiftool and test it's working with command 'exiftool -ver'"}
 
     @staticmethod
     def parsejservstr(jservstr: str) -> list[list[str]]:
@@ -463,7 +345,11 @@ class InstallerCli:
         ip, port = self.getProxiedIp()
         return f'{ip}:{port}'
 
-    def validate_domain(self) -> Optional[dict]:
+    def validate_domain(self, creating: bool = False) -> Optional[dict]:
+        '''
+        :param creating: True if the domain is new (to be created in central): its id is at most
+        validators.domain_maxlen chars, see validators.check_domain_id().
+        '''
         # 0.7.7 central-pswd must be re-configured when building
         if LangExt.isblank(self.settings.centralPswd):
             return {"Central Password is invalid (0.7.7 not a valid distribution): ": self.settings.centralPswd}
@@ -472,9 +358,9 @@ class InstallerCli:
             return {"Central Password is invalid, len (6-32)": self.settings.centralPswd}
 
         cfg = self.registry.config
-        try: LangExt.only_id_len(cfg.domain, minlen=2, maxlen=12)
-        except AnsonException as e:
-            return {"domain length": f"2 <= Len('{cfg.domain}') <= 12"}
+        err = check_domain_id(cfg.domain, creating)
+        if err is not None:
+            return {"domain id": err}
 
         try: LangExt.only_id_len(cfg.org.orgId, minlen=2, maxlen=12)
         except AnsonException as e:
@@ -628,9 +514,7 @@ class InstallerCli:
             return {'synode-id': f'synode id is not a service node: {self.registry.config.synid}'}
 
         if not checkinstall_exiftool():
-            return {"exiftool": "Check and install exiftool failed!" \
-                    if Utils.get_os() == 'Windows' \
-                    else "Please install exiftool and test it's working with command 'exiftool -ver'"}
+            return {"exiftool": exiftool_missing_msg()}
 
         if cfg.mode != SynodeMode.hub.name:
             v = self.validate_synins()

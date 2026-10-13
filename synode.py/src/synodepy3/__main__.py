@@ -1,6 +1,14 @@
 import sys
 import time
 
+# Before anything imports PySide6: on Linux, Qt needs system libraries pip can't install (libEGL.so.1, ...).
+from synodepy3.prerequisites import check_prerequisites
+_missing = check_prerequisites(gui=True)
+if _missing and 'Qt runtime' in _missing:
+    print(_missing['Qt runtime'], file=sys.stderr)
+    sys.exit(1)
+# The other items, e.g. exiftool, are checked again by InstallerCli.validate() before installing.
+
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 
 from synodepy3.jre_downloader import JreDownloader
@@ -24,7 +32,7 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, get
 from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp, CynodeStats, SynodeConfig
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
+from synodepy3.commands import install_winsrvs
 from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
     synode_ui, cfgpaths
 from synodepy3.install_jre import validate_jre
@@ -231,7 +239,8 @@ class InstallerForm(QMainWindow):
                 reg_jserv=self.ui.txtCentral.text().strip(),
                 orgid=self.ui.cbbOrgs.currentText().strip(),
                 domain=domainid)
-        v = self.cli.validate_domain()
+        # a new domain's id is shorter: the central names its synodes <domain>-hub, ...
+        v = self.cli.validate_domain(creating=domainid not in self.domains_arr)
         if v is None:
             resp = self.cli.register()
 
@@ -404,23 +413,22 @@ class InstallerForm(QMainWindow):
 
     def installWinsrv(self):
         self.cli.stop_web()
-        msg_box('Please close any service Window if any been started\n'
-                'Click Ok to continue, and confirm all permission requests.\n'
-                '4 Times Confirmation Required (Dialog can be hidden)!')
+        msg_box('Installing Windows Services...\n'
+                'Click Ok to continue, and confirm the administrator permission request\n'
+                '(asked only once, the dialog can be hidden).')
 
-        srvname = self.cli.gen_wsrv_name()
-        if srvname is not None:
-            self.cli.settings.envars.update({winsrv_synode: srvname})
+        try:
+            states = install_winsrvs(self.cli)
+        except (PermissionError, OSError) as e:
+            err_msg('Installing Windows services failed.', e)
+            return
 
-        websrvname = self.cli.gen_html_srvname()
-        if websrvname is not None:
-            self.cli.settings.envars.update({winsrv_websrv: websrvname})
+        failed = [s for s, ok in states.items() if not ok]
+        if failed:
+            err_msg(f'Service(s) not installed: {", ".join(failed)}\n'
+                    'Check winsrv-install.log in current folder.')
+            return
 
-        # 2026-01-06 Must save before start service to avoid competition.
-        self.cli.settings.toFile(cast(str, os.path.join(web_inf, settings_json)))
-
-        install_wsrv_byname(srvname)
-        install_htmlsrv(websrvname)
         self.gen_qr()
 
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
