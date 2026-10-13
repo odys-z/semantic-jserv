@@ -15,6 +15,7 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, App
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
+from synodepy3.commands import install_winsrvs
 from synodepy3.systemd_units import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ
 from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
 from synodepy3.validators import PJservValidator, PIPValidator, PDomainValidator, domain_maxlen
@@ -607,18 +608,44 @@ if caninstall == 1:
             default=1) == 2
         check_quit(_quit)
 
+    # TODO merge with the cli function
+    login_url = f'{"https" if cli.registry.config.https else "http"}://' + \
+                f'{ cli.settings.proxyIp if cli.settings.reverseProxy else "127.0.0.1"}:' + \
+                f'{cli.settings.webProxyPort if cli.settings.reverseProxy else cli.settings.webport}/login.html'
+    login_tip = f'Login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n{login_url}\n\n'
+
     if Utils.iswindows():
-        session.prompt(f'Synode-cli is for the remote servers, and cannot install the required Windows services.\n'
-                       'Please install it with the GUI version:\n'
-                       './setup-gui.exe\n'
-                       'And click "install Windows service" with default settings.')
+        install_srvs = choice(
+            message='Install the Windows services now? (administrator permission required, asked once)',
+            options=[(1, 'Yes, install the services.'),
+                     (2, 'No, I will install them with setup-gui.exe later.')],
+            default=1)
+
+        states = {}
+        if install_srvs == 1:
+            print('Please confirm the administrator permission request (the dialog can be hidden) ...')
+            try:
+                states = install_winsrvs(cli)
+            except (PermissionError, OSError) as e:
+                Utils.warn(e)
+
+        report = '\n'.join(f'{s}: {"installed" if ok else "NOT installed"}' for s, ok in states.items())
+        if states and all(states.values()):
+            session.prompt(message=
+                report + '\n\n' +
+                'Check the services in Windows Service Control (services.msc), or logs in current folder.\n\n' +
+                login_tip +
+                'Return to quit Portfolio Setup ...')
+        else:
+            session.prompt(message=
+                (report + '\nCheck winsrv-install.log in current folder.\n\n' if states else
+                 'Services are not installed.\n\n') +
+                'To install the services later, run this setup again, or use the GUI version:\n'
+                './setup-gui.exe\n'
+                'And click "install Windows service" with default settings.\n\n'
+                'Return to quit Portfolio Setup ...')
     else:
         syn_templ, web_templ = generate_service_templ(cli.settings, cfg)
-        # TODO merge with the cli function
-        login_url = f'{"https" if cli.registry.config.https else "http"}://' + \
-                    f'{ cli.settings.proxyIp if cli.settings.reverseProxy else "127.0.0.1"}:' + \
-                    f'{cli.settings.webProxyPort if cli.settings.reverseProxy else cli.settings.webport}/login.html'
-        login_tip = f'Login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n{login_url}\n\n'
 
         print(f'The service configuration files are generated: ./{syn_templ} & ./{web_templ}.')
         install_units = choice(
