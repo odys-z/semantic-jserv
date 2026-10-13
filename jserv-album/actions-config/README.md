@@ -1,6 +1,15 @@
 # Synode end-to-end tests (Linux)
 
-Run by `.github/workflows/synode-e2e-linux.yml`: GitHub > Actions > **synode-e2e-linux** > **Run workflow**.
+Two workflows use these resources:
+
+- `.github/workflows/synodes-linux-closed-test.yml`: GitHub > Actions > **synodes-linux-closed-test**
+  > **Run workflow**. Sets up a central and 3 synodes, pushes a file from a test client, checks the
+  synchronization.
+- `.github/workflows/version-revival-7days.yml`: every 6 days, or by hand. Builds the test clients
+  and echoes to the central; keeps the vcpkg cache alive (see below).
+
+Shared steps are composite actions in `.github/actions/`: `start-central` (download and start the
+central) and `build-github-tests` (build the test clients).
 
 Each run downloads two things from this repo's releases, so nothing heavy is committed here:
 
@@ -31,7 +40,7 @@ regist-vol/              the volume, settings.json "volume": "../regist-vol"
   syslog.sqlite
 ```
 
-The central runs in the folder holding `WEB-INF/`, as `java -jar <central>.jar settings.json`. Without `regist-vol/system.sqlite` it
+`.github/actions/start-central` runs the central in the folder holding `WEB-INF/`, as `java -jar <central>.jar settings.json`. Without `regist-vol/system.sqlite` it
 initializes a new volume from `WEB-INF/*.sql` (the run shows a warning).
 
 The repository is private, so the workflow reads it with the secret
@@ -55,6 +64,34 @@ synode-cli, which would otherwise stop to ask for it and shift the answers.
 
 The snapshot also holds other orgs. This repository is public, so the run only reports the rows
 of `closed-test` and doesn't upload the database.
+
+## The desktop push
+
+The test client is `odys-z/Anclient` `examples/example.slint/github-tests` (branch from the run
+form, default `portfolio-0.8`): the desktop's ws client and IPC agent tests without Slint, webview
+or SurrealismUI. Its targets:
+
+- `revial_tests`: echo to the central (`CENTRAL_URL`), used by version-revival-7days;
+- `doclient_tests`: `../tests/test_01_wsclient_ipcagent.cpp`, used by the closed test.
+
+`.github/actions/build-github-tests` builds it with CMake 3.30+, Ninja and g++-14 (C++20
+`std::chrono::parse` needs GCC 14 or newer), vcpkg at commit `7e43e0768a`, triplet `x64-linux`.
+
+The IPC agent jar and the settings come from the `desktop-*.zip` of the same release as the synode
+package; the settings are pointed at the hub (`synode_jserv`, `synode_id` `closed-1-hub`, device
+`ci-desktop`). `Ipclient.E2E_PushSync` pushes `res/182x121.png` with a unique name, waits for it in
+the hub's and prv1's volumes, then the workflow checks `h_photos` of hub, prv1 and prv2.
+
+## The vcpkg cache
+
+vcpkg's compiled packages are cached under a fixed key: runner image, vcpkg commit and a hash of
+the package list (`vcpkg-ubuntu24-x64-linux-7e43e0768a-<hash>`). GitHub evicts a cache entry that
+no run has restored for 7 days (not configurable; the 90 days in Settings > Actions are for
+artifacts and logs). version-revival-7days restores it every 6 days, so the closed test finds it.
+Changing the commit or the packages makes a new entry, and the next run builds the packages again.
+
+Schedules run only from the default branch, and GitHub disables a schedule after 60 days without
+activity in the repository: re-enable it on the workflow's page.
 
 ## Answer files
 

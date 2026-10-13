@@ -1,0 +1,82 @@
+name: Start the registry central
+description: >
+  Downloads the registry central (jar, WEB-INF, regist-vol) from a release of a private repository,
+  and starts it as the systemd unit regist-central (port 1991 in the released WEB-INF/settings.json).
+  Needs Java 17 (actions/setup-java) before it.
+
+inputs:
+  token:
+    description: Token that can read the releases of `repo` (secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN)
+    required: true
+  repo:
+    description: Repository of the central release
+    default: Acadynamo/Resources-release
+  release:
+    description: Release tag of the central
+    default: alpha-central-0.1.8
+  path:
+    description: Folder to unpack the central into
+    default: ${{ github.workspace }}/central
+  port:
+    description: Port to wait for
+    default: '1991'
+
+outputs:
+  home:
+    description: The central's working directory (the folder holding WEB-INF/)
+    value: ${{ steps.start.outputs.home }}
+  db:
+    description: The central's system.sqlite, empty if the release has none
+    value: ${{ steps.start.outputs.db }}
+
+runs:
+  using: composite
+  steps:
+    - name: Download the central
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}       # the default github.token reads only this repository
+        REPO: ${{ inputs.repo }}
+        RELEASE: ${{ inputs.release }}
+        DIR: ${{ inputs.path }}
+      run: |
+        [ -n "$GH_TOKEN" ] || { echo "::error::no token for the central release (secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN?)"; exit 1; }
+        dl=$RUNNER_TEMP/central-dl
+        # all assets of the release: archives are unpacked, a loose jar is copied
+        gh release download "$RELEASE" -R "$REPO" -D $dl || {
+          echo "::error::cannot download release '$RELEASE' of $REPO (token scope?)"; exit 1; }
+        mkdir -p "$DIR"
+        for a in $dl/*; do
+          case "$a" in
+            *.zip)           unzip -q "$a" -d "$DIR" ;;
+            *.tar.gz|*.tgz)  tar -xf "$a" -C "$DIR" ;;
+            *.jar)           cp "$a" "$DIR/" ;;
+          esac
+        done
+        echo "### Central: release \`$RELEASE\` of \`$REPO\`" >> $GITHUB_STEP_SUMMARY
+        (cd $dl && ls -1) | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+
+    - name: Start the central (systemd)
+      id: start
+      shell: bash
+      env:
+        DIR: ${{ inputs.path }}
+        PORT: ${{ inputs.port }}
+      run: |
+        # runs in the folder holding WEB-INF/ (the jar may be elsewhere in the release)
+        jar=$(find "$DIR" -maxdepth 3 -name '*.jar' | head -1)
+        [ -n "$jar" ] || { echo "::error::no .jar in the central release"; exit 1; }
+        cfg=$(find "$DIR" -maxdepth 3 -path '*/WEB-INF/settings.json' | head -1)
+        [ -n "$cfg" ] || { echo "::error::no WEB-INF/settings.json in the central release"; exit 1; }
+        home=$(dirname "$(dirname "$cfg")")
+        db=$(find "$DIR" -name system.sqlite | head -1)
+        [ -n "$db" ] || echo "::warning::no system.sqlite in the release: the central initializes a new volume from WEB-INF/*.sql"
+        echo "central: $jar, working directory $home"
+
+        sudo systemd-run --unit=regist-central --working-directory="$home" \
+             --uid=$(id -u) --gid=$(id -g) $JAVA_HOME/bin/java -jar "$jar" settings.json   # WEB-INF/settings.json
+        timeout 90 bash -c "until nc -z 127.0.0.1 $PORT; do sleep 2; done" || {
+          sudo journalctl -u regist-central --no-pager | tail -80
+          echo "::error::the central is not listening on $PORT"; exit 1; }
+        echo "home=$home" >> $GITHUB_OUTPUT
+        echo "db=$db" >> $GITHUB_OUTPUT

@@ -1,16 +1,20 @@
-# Linux end-to-end setup test of the synode package, started by hand from the Actions tab.
+# Linux end-to-end test of the closed-test packages, started by hand from the Actions tab.
 #
-# 1. Downloads the newest synode-*-x64_linux*.tar.gz from this repo's releases (or the tag given).
-# 2. Extracts it for 3 nodes: hub, prv1, prv2.
-# 3. Downloads the registry central (jar, WEB-INF, regist-vol) from the release CENTRAL_RELEASE
-#    of CENTRAL_REPO (private: read with the secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN),
-#    and starts it as a systemd unit.
+# 1. Downloads the newest synode-*-x64_linux*.tar.gz from this repo's releases (or the tag given),
+#    and the desktop-*.zip of the same release (its IPC agent jar and settings).
+# 2. Extracts the synode package for 3 nodes: hub, prv1, prv2.
+# 3. Starts the registry central of CENTRAL_RELEASE (.github/actions/start-central; private
+#    release, read with the secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN).
 # 4. Configures each node with synode-cli, fed by jserv-album/actions-config/answers/<node>.txt, and starts its jserv.
 # 5. Reports the central's domain tables in the run's Summary.
+# 6. Builds the desktop's test client without Slint (odys-z/Anclient
+#    examples/example.slint/github-tests, doclient_tests; .github/actions/build-github-tests),
+#    pushes a file to the hub through the IPC agent (Ipclient.E2E_PushSync), and checks it in
+#    h_photos of hub, prv1 and prv2.
 #
 # See jserv-album/actions-config/README.md for the central release to upload.
 
-name: synode-e2e-linux
+name: synodes-linux-closed-test
 
 on:
   workflow_dispatch:
@@ -27,19 +31,21 @@ on:
         description: 'Release tag of the central (jar, WEB-INF, regist-vol)'
         required: false
         default: 'alpha-central-0.1.8'
+      anclient_ref:
+        description: 'Branch / tag of odys-z/Anclient for the test client'
+        required: false
+        default: 'portfolio-0.8'
 
 permissions:
   contents: read
 
 jobs:
-  domain-setup:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+  closed-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ inputs.release_tag }}
-      CENTRAL_REPO: ${{ inputs.central_repo }}
-      CENTRAL_RELEASE: ${{ inputs.central_release }}
       CONFIG: ${{ github.workspace }}/jserv-album/actions-config
       WORK: ${{ github.workspace }}/e2e
       CENTRAL_URL: http://127.0.0.1:1991/regist-central
@@ -47,13 +53,22 @@ jobs:
       CENTRAL_DOMAIN: closed-1          # the domain the answer files select
       CENTRAL_PSWD: '123456'            # admin of the test central (alpha-central-0.1.8), test only
       SYNC_INS: '20'
+      HUB_JSERV: http://127.0.0.1:8961/jserv-album
 
     steps:
-      - uses: actions/checkout@v4          # only the test resources; the package needs no sources
+      - uses: actions/checkout@v4          # the test resources and the composite actions; no sources
         with:
-          sparse-checkout: jserv-album/actions-config
+          sparse-checkout: |
+            jserv-album/actions-config
+            .github/actions
 
-      - uses: actions/setup-java@v4          # for the central; the synodes download their own jre17
+      - uses: actions/checkout@v4          # the test client
+        with:
+          repository: odys-z/Anclient
+          ref: ${{ inputs.anclient_ref }}
+          path: Anclient
+
+      - uses: actions/setup-java@v4          # for the central and the IPC agent; the synodes download their own jre17
         with:
           distribution: temurin
           java-version: '17'
@@ -78,7 +93,7 @@ jobs:
           done
 
       # ---- 1. newest package ----
-      - name: Download the synode package
+      - name: Download the synode package and the desktop
         run: |
           # every release, newest asset first; filtered by RELEASE_TAG when given
           pick=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" | jq -rs --arg t "$RELEASE_TAG" '
@@ -91,6 +106,13 @@ jobs:
           echo "PACKAGE=$WORK/dl/$name" >> $GITHUB_ENV
           echo "### Package: \`$name\` (release \`$tag\`, uploaded $updated)" >> $GITHUB_STEP_SUMMARY
 
+          # the desktop of the same release: its IPC agent jar and settings
+          gh release download "$tag" -R "$GITHUB_REPOSITORY" -p 'desktop-*.zip' -D $WORK/dl/desktop || {
+            echo "::error::no desktop-*.zip in release $tag"; exit 1; }
+          mkdir -p $WORK/desktop && unzip -q -o $WORK/dl/desktop/desktop-*.zip 'res/ws-agent-*.jar' 'settings/app-settings.json' -d $WORK/desktop
+          ls -l $WORK/desktop/res $WORK/desktop/settings
+          echo "### Desktop: \`$(cd $WORK/dl/desktop && ls)\` ($(cd $WORK/desktop/res && ls))" >> $GITHUB_STEP_SUMMARY
+
       # ---- 2. three nodes ----
       - name: Extract hub, prv1, prv2
         run: |
@@ -101,43 +123,14 @@ jobs:
           synode-cli --help | head -1
 
       # ---- 3. central ----
-      - name: Download the central
-        env:
-          # the default GH_TOKEN can read only this repository's releases
-          GH_TOKEN: ${{ secrets.REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN }}
-        run: |
-          [ -n "$GH_TOKEN" ] || { echo "::error::secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN is not set"; exit 1; }
-          # all assets of the release: archives are unpacked, a loose jar is copied
-          gh release download "$CENTRAL_RELEASE" -R "$CENTRAL_REPO" -D $WORK/dl/central || {
-            echo "::error::cannot download release '$CENTRAL_RELEASE' of $CENTRAL_REPO (token scope?)"; exit 1; }
-          ls -l $WORK/dl/central
-          mkdir -p $WORK/central
-          for a in $WORK/dl/central/*; do
-            case "$a" in
-              *.zip)           unzip -q "$a" -d $WORK/central ;;
-              *.tar.gz|*.tgz)  tar -xf "$a" -C $WORK/central ;;
-              *.jar)           cp "$a" $WORK/central/ ;;
-            esac
-          done
-          echo "### Central: release \`$CENTRAL_RELEASE\` of \`$CENTRAL_REPO\`" >> $GITHUB_STEP_SUMMARY
-          (cd $WORK/dl/central && ls -1) | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
-
-      - name: Start registry central (systemd, port 1991)
-        run: |
-          # runs in the folder holding WEB-INF/ (the jar may be elsewhere in the release)
-          jar=$(find $WORK/central -maxdepth 3 -name '*.jar' | head -1)
-          [ -n "$jar" ] || { echo "::error::no .jar in the central release"; exit 1; }
-          cfg=$(find $WORK/central -maxdepth 3 -path '*/WEB-INF/settings.json' | head -1)
-          [ -n "$cfg" ] || { echo "::error::no WEB-INF/settings.json in the central release"; exit 1; }
-          home=$(dirname "$(dirname "$cfg")")
-          echo "central: $jar, working directory $home"
-          find $WORK/central -name system.sqlite | grep -q . || \
-            echo "::warning::no system.sqlite in the release: the central initializes a new volume from WEB-INF/*.sql"
-
-          sudo systemd-run --unit=regist-central --working-directory=$home \
-               --uid=$(id -u) --gid=$(id -g) $JAVA_HOME/bin/java -jar "$jar" settings.json   # WEB-INF/settings.json
-          timeout 90 bash -c 'until nc -z 127.0.0.1 1991; do sleep 2; done' || {
-            sudo journalctl -u regist-central --no-pager | tail -80; exit 1; }
+      - name: Start the registry central
+        id: central
+        uses: ./.github/actions/start-central
+        with:
+          token: ${{ secrets.REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN }}
+          repo: ${{ inputs.central_repo }}
+          release: ${{ inputs.central_release }}
+          path: ${{ github.workspace }}/e2e/central
 
       # ---- 4. nodes, one by one: configure, then start the jserv ----
       - name: Configure and start the synodes
@@ -164,35 +157,78 @@ jobs:
       # ---- 5. report ----
       - name: Report the central's domain tables
         if: always()
+        env:
+          DB: ${{ steps.central.outputs.db }}
         run: |
-          db=$(find $WORK/central -name system.sqlite | head -1)
-          [ -n "$db" ] || { echo "no central system.sqlite found"; exit 0; }
+          [ -n "$DB" ] || { echo "no central system.sqlite found"; exit 0; }
           # a node reports its state shortly after its jserv starts: wait for none left in 'c' (create)
           for i in $(seq 30); do
-            left=$(sqlite3 -readonly "$db" "select count(*) from c_synodes where domx = '$CENTRAL_DOMAIN' and stat = 'c';")
+            left=$(sqlite3 -readonly "$DB" "select count(*) from c_synodes where domx = '$CENTRAL_DOMAIN' and stat = 'c';")
             [ "$left" = 0 ] && break; sleep 2
           done
           [ "$left" = 0 ] || echo "::warning::$left synode(s) of $CENTRAL_DOMAIN still in state c (create)"
           {
             # only the test org: the snapshot also holds other orgs, and this repository is public
             echo "### Central c_syndomx (domains of $CENTRAL_ORG)"
-            sqlite3 -readonly -markdown "$db" "select * from c_syndomx where orgid = '$CENTRAL_ORG';"
+            sqlite3 -readonly -markdown "$DB" "select * from c_syndomx where orgid = '$CENTRAL_ORG';"
             echo
             echo "### Central c_synodes ($CENTRAL_ORG)"
-            sqlite3 -readonly -markdown "$db" "select market, orgid, domx, sid, mode, stat, jserv, optime from c_synodes where orgid = '$CENTRAL_ORG';"
+            sqlite3 -readonly -markdown "$DB" "select market, orgid, domx, sid, mode, stat, jserv, optime from c_synodes where orgid = '$CENTRAL_ORG';"
           } | tee -a $GITHUB_STEP_SUMMARY $WORK/logs/central-tables.md
+
+      # ---- 6. the test client pushes a file to the hub ----
+      - name: Build the test client (doclient_tests)
+        id: client
+        uses: ./.github/actions/build-github-tests
+        with:
+          targets: doclient_tests
+
+      - name: Push a file to the hub (doclient_tests)
+        working-directory: ${{ steps.client.outputs.build-dir }}
+        shell: bash        # -o pipefail: a failing test fails the step through tee
+        run: |
+          jar=$(ls $WORK/desktop/res/ws-agent-*.jar)
+          # the released desktop settings, pointed at the hub of this test
+          jq --arg java "$JAVA_HOME/bin/java" --arg jar "$jar" --arg jserv "$HUB_JSERV" \
+             --arg vol "$WORK/hub/vol" \
+             '.java_path = $java | .wsagent_jar = $jar | .synode_jserv = $jserv
+              | .synode_id = "closed-1-hub" | .synode_vol = $vol | .device = "ci-desktop"' \
+             $WORK/desktop/settings/app-settings.json > settings/ci-settings.json
+          ALBUM_TEST_SETTINGS=settings/ci-settings.json \
+          SYNODE_E2E_HOME_VOL=$WORK/hub/vol SYNODE_E2E_PEER_VOL=$WORK/prv1/vol SYNODE_E2E_TIMEOUT=240 \
+            ./doclient_tests --gtest_filter='Ipclient.Echo:Ipclient.E2E_PushSync' 2>&1 | tee $WORK/logs/doclient_tests.log
+
+      - name: Check the pushed file in h_photos
+        run: |
+          # the test pushes res/182x121.png as 182x121_e2e_<time>_<nonce>.png
+          q="select pid, docname, device, filesize, shareflag from h_photos where docname like '182x121_e2e_%';"
+          echo "### h_photos (the pushed file)" >> $GITHUB_STEP_SUMMARY
+          for n in hub prv1 prv2; do
+            db=$WORK/$n/vol/doc-jserv.db
+            for i in $(seq 60); do          # peers synchronize every SYNC_INS seconds
+              rows=$(sqlite3 -readonly "$db" "$q" 2>/dev/null | wc -l)
+              [ "$rows" -gt 0 ] && break; sleep 5
+            done
+            { echo; echo "#### $n"; sqlite3 -readonly -markdown "$db" "$q"; } >> $GITHUB_STEP_SUMMARY
+            [ "$rows" -gt 0 ] || { echo "::error::$n: the pushed file is not in h_photos"; failed=1; }
+            echo "$n: $rows row(s)"
+          done
+          [ -z "$failed" ]
 
       - name: Collect logs
         if: always()
+        env:
+          CLIENT: ${{ steps.client.outputs.build-dir }}
         run: |
           sudo journalctl -u regist-central --no-pager > $WORK/logs/central.log 2>&1 || true
           for n in hub prv1 prv2; do
             cp $WORK/$n/WEB-INF/settings.json $WORK/logs/$n-settings.json 2>/dev/null || true
           done
+          [ -z "$CLIENT" ] || cp $CLIENT/log/*.log $WORK/logs/ 2>/dev/null || true   # IPC agent
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: synode-e2e-linux
+          name: synodes-linux-closed-test
           path: |
             e2e/logs/

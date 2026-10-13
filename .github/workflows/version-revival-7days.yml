@@ -1,0 +1,95 @@
+# Lightweight revival test, every 6 days and by hand from the Actions tab.
+#
+# 1. Builds the desktop's test clients without Slint (odys-z/Anclient
+#    examples/example.slint/github-tests: revial_tests, doclient_tests), i.e. checks that
+#    anson.cmake and Anclient.cmake still build into example.slint.
+#    Restoring vcpkg's cached packages keeps them alive: GitHub evicts a cache entry that hasn't
+#    been accessed for 7 days, and synodes-linux-closed-test.yml uses the same entry.
+# 2. Starts the registry central of the release CENTRAL_RELEASE (.github/actions/start-central).
+# 3. revial_tests echoes to http://127.0.0.1:1991/regist-central.
+#
+# Schedules run only from the default branch, and GitHub disables them after 60 days without
+# activity in the repository (re-enable on the workflow's page).
+
+name: version-revival-7days
+
+on:
+  schedule:
+    # days 1, 7, 13, 19, 25, 31 of each month: at most 6 days apart, 1 day of margin for delayed runs
+    - cron: '23 3 */6 * *'
+  workflow_dispatch:
+    inputs:
+      anclient_ref:
+        description: 'Branch / tag of odys-z/Anclient'
+        required: false
+        default: 'portfolio-0.8'
+      central_release:
+        description: 'Release tag of the central in Acadynamo/Resources-release'
+        required: false
+        default: 'alpha-central-0.1.8'
+
+permissions:
+  contents: read
+
+jobs:
+  revival:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CENTRAL_URL: http://127.0.0.1:1991/regist-central
+
+    steps:
+      - uses: actions/checkout@v4          # the composite actions only
+        with:
+          sparse-checkout: .github/actions
+
+      - uses: actions/checkout@v4
+        with:
+          repository: odys-z/Anclient
+          ref: ${{ inputs.anclient_ref || 'portfolio-0.8' }}    # inputs are empty on schedule
+          path: Anclient
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build revial_tests, doclient_tests
+        id: build
+        uses: ./.github/actions/build-github-tests
+        with:
+          targets: revial_tests doclient_tests
+
+      - name: Start the registry central
+        uses: ./.github/actions/start-central
+        with:
+          token: ${{ secrets.REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN }}
+          release: ${{ inputs.central_release || 'alpha-central-0.1.8' }}
+
+      - name: Echo to the central (revial_tests)
+        working-directory: ${{ steps.build.outputs.build-dir }}
+        shell: bash        # -o pipefail: a failing test fails the step through tee
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/logs
+          CENTRAL_ECHO="revival ${GITHUB_RUN_ID}" ./revial_tests 2>&1 | tee $GITHUB_WORKSPACE/logs/revial_tests.log
+
+      - name: Summary
+        if: always()
+        env:
+          HIT: ${{ steps.build.outputs.cache-hit }}
+        run: |
+          mkdir -p logs
+          {
+            echo "### Revival"
+            echo "- vcpkg packages from the cache: ${HIT:-no}"
+            echo "- Anclient: \`$(git -C Anclient log -1 --format='%h %s')\`"
+            echo "- revial_tests: $(grep -E '^\[  (PASSED|FAILED)' logs/revial_tests.log 2>/dev/null | head -1 || echo 'not run')"
+          } >> $GITHUB_STEP_SUMMARY
+          sudo journalctl -u regist-central --no-pager > logs/central.log 2>&1 || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: version-revival-7days
+          path: logs/
+          retention-days: 14
