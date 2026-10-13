@@ -1,7 +1,8 @@
 name: Start the registry central
 description: >
   Downloads the registry central (jar, WEB-INF, regist-vol) from a release of a private repository,
-  and starts it as the systemd unit regist-central (port 1991 in the released WEB-INF/settings.json).
+  and starts it (port 1991 in the released WEB-INF/settings.json): on Linux as the systemd unit
+  regist-central, on Windows as a background java process (its output in <home>/central.log).
   Needs Java 17 (actions/setup-java) before it.
 
 inputs:
@@ -24,10 +25,10 @@ inputs:
 outputs:
   home:
     description: The central's working directory (the folder holding WEB-INF/)
-    value: ${{ steps.start.outputs.home }}
+    value: ${{ steps.find.outputs.home }}
   db:
     description: The central's system.sqlite, empty if the release has none
-    value: ${{ steps.start.outputs.db }}
+    value: ${{ steps.find.outputs.db }}
 
 runs:
   using: composite
@@ -48,7 +49,8 @@ runs:
         mkdir -p "$DIR"
         for a in $dl/*; do
           case "$a" in
-            *.zip)           unzip -q "$a" -d "$DIR" ;;
+            *.zip)           if command -v unzip > /dev/null; then unzip -q "$a" -d "$DIR"
+                             else 7z x -y -bd "$a" -o"$DIR" > /dev/null; fi ;;    # Windows: 7-Zip
             *.tar.gz|*.tgz)  tar -xf "$a" -C "$DIR" ;;
             *.jar)           cp "$a" "$DIR/" ;;
           esac
@@ -56,12 +58,11 @@ runs:
         echo "### Central: release \`$RELEASE\` of \`$REPO\`" >> $GITHUB_STEP_SUMMARY
         (cd $dl && ls -1) | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
 
-    - name: Start the central (systemd)
-      id: start
+    - name: Find the central
+      id: find
       shell: bash
       env:
         DIR: ${{ inputs.path }}
-        PORT: ${{ inputs.port }}
       run: |
         # runs in the folder holding WEB-INF/ (the jar may be elsewhere in the release)
         jar=$(find "$DIR" -maxdepth 3 -name '*.jar' | head -1)
@@ -71,12 +72,46 @@ runs:
         home=$(dirname "$(dirname "$cfg")")
         db=$(find "$DIR" -name system.sqlite | head -1)
         [ -n "$db" ] || echo "::warning::no system.sqlite in the release: the central initializes a new volume from WEB-INF/*.sql"
+        if [ "$RUNNER_OS" = Windows ]; then     # Git Bash paths -> Windows paths, for PowerShell and Python
+          jar=$(cygpath -w "$jar"); home=$(cygpath -w "$home"); [ -z "$db" ] || db=$(cygpath -w "$db")
+        fi
         echo "central: $jar, working directory $home"
+        { echo "jar=$jar"; echo "home=$home"; echo "db=$db"; } >> $GITHUB_OUTPUT
 
-        sudo systemd-run --unit=regist-central --working-directory="$home" \
-             --uid=$(id -u) --gid=$(id -g) $JAVA_HOME/bin/java -jar "$jar" settings.json   # WEB-INF/settings.json
+    - name: Start the central (systemd)
+      if: runner.os == 'Linux'
+      shell: bash
+      env:
+        JAR: ${{ steps.find.outputs.jar }}
+        HOME_DIR: ${{ steps.find.outputs.home }}
+        PORT: ${{ inputs.port }}
+      run: |
+        sudo systemd-run --unit=regist-central --working-directory="$HOME_DIR" \
+             --uid=$(id -u) --gid=$(id -g) $JAVA_HOME/bin/java -jar "$JAR" settings.json   # WEB-INF/settings.json
         timeout 90 bash -c "until nc -z 127.0.0.1 $PORT; do sleep 2; done" || {
           sudo journalctl -u regist-central --no-pager | tail -80
           echo "::error::the central is not listening on $PORT"; exit 1; }
-        echo "home=$home" >> $GITHUB_OUTPUT
-        echo "db=$db" >> $GITHUB_OUTPUT
+
+    - name: Start the central (background process)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        JAR: ${{ steps.find.outputs.jar }}
+        HOME_DIR: ${{ steps.find.outputs.home }}
+        PORT: ${{ inputs.port }}
+      run: |
+        # kept running until the job ends; output in <home>\central.log, central.err.log
+        $java = Join-Path $env:JAVA_HOME 'bin\java.exe'
+        Start-Process -FilePath $java -ArgumentList '-jar', "`"$env:JAR`"", 'settings.json' `
+          -WorkingDirectory $env:HOME_DIR -WindowStyle Hidden `
+          -RedirectStandardOutput (Join-Path $env:HOME_DIR 'central.log') `
+          -RedirectStandardError  (Join-Path $env:HOME_DIR 'central.err.log')
+        $deadline = (Get-Date).AddSeconds(90)
+        while ((Get-Date) -lt $deadline) {
+          $c = [Net.Sockets.TcpClient]::new()
+          try { if ($c.ConnectAsync('127.0.0.1', [int]$env:PORT).Wait(1000)) { $c.Dispose(); exit 0 } } catch { }
+          $c.Dispose(); Start-Sleep -Seconds 2
+        }
+        Get-Content (Join-Path $env:HOME_DIR 'central.log'), (Join-Path $env:HOME_DIR 'central.err.log') -Tail 80 -ErrorAction SilentlyContinue
+        Write-Output "::error::the central is not listening on $env:PORT"
+        exit 1

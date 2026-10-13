@@ -1,0 +1,28 @@
+name: Collect the Windows closed test's logs
+description: >
+  Copies the central's, the synodes' (settings, Procrun / jserv logs, winsrv-install.log, upgrade
+  backups' listing) and the Java client's logs into e2e/logs, for actions/upload-artifact.
+
+inputs:
+  central-home:
+    description: The central's working directory (start-central output home)
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Collect logs
+      shell: bash
+      env:
+        CENTRAL_HOME: ${{ inputs.central-home }}
+      run: |
+        [ -n "$WORK" ] || exit 0
+        [ -z "$CENTRAL_HOME" ] || cp "$CENTRAL_HOME"/central*.log $WORK/logs/ 2>/dev/null || true
+        for n in hub prv1 prv2; do
+          cp $WORK/$n/WEB-INF/settings.json $WORK/logs/$n-settings.json 2>/dev/null || true
+          cp $WORK/$n/winsrv-install.log $WORK/logs/$n-winsrv-install.log 2>/dev/null || true
+          mkdir -p $WORK/logs/$n && cp $WORK/$n/*.log $WORK/$n/logs/*.log $WORK/logs/$n/ 2>/dev/null || true   # Procrun / jserv logs
+          ls -R $WORK/$n/backup-* > $WORK/logs/$n/backups.txt 2>/dev/null || true
+        done
+        cp -r Anclient/examples/example.android/albumtier/target/surefire-reports $WORK/logs/ 2>/dev/null || true
+        sc.exe query state= all | grep -iE 'SERVICE_NAME: (synode|portfolio|ci-0)' || true

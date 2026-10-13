@@ -5,14 +5,16 @@
 # 2. Extracts the synode package for 3 nodes: hub, prv1, prv2.
 # 3. Starts the registry central of CENTRAL_RELEASE (.github/actions/start-central; private
 #    release, read with the secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN).
-# 4. Configures each node with synode-cli, fed by jserv-album/actions-config/answers/<node>.txt, and starts its jserv.
-# 5. Reports the central's domain tables in the run's Summary.
+# 4. Configures each node with synode-cli, fed by .github/closed-test/answers/linux/<node>.txt, and starts its jserv.
+#    The hub creates the domain CENTRAL_DOMAIN (ci-0.8); the peers join it.
+# 5. Reports the central's domain tables in the run's Summary, and checks the new domain's synodes
+#    (hub h, peers p) and that the other domains are unchanged.
 # 6. Builds the desktop's test client without Slint (odys-z/Anclient
 #    examples/example.slint/github-tests, doclient_tests; .github/actions/build-github-tests),
 #    pushes a file to the hub through the IPC agent (Ipclient.E2E_PushSync), and checks it in
 #    h_photos of hub, prv1 and prv2.
 #
-# See jserv-album/actions-config/README.md for the central release to upload.
+# See .github/closed-test/README.md for the central release to upload.
 
 name: synodes-linux-closed-test
 
@@ -46,11 +48,12 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ inputs.release_tag }}
-      CONFIG: ${{ github.workspace }}/jserv-album/actions-config
+      CONFIG: ${{ github.workspace }}/.github/closed-test
       WORK: ${{ github.workspace }}/e2e
       CENTRAL_URL: http://127.0.0.1:1991/regist-central
       CENTRAL_ORG: closed-test          # the org of the package; only its rows are reported
-      CENTRAL_DOMAIN: closed-1          # the domain the answer files select
+      CENTRAL_DOMAIN: ci-0.8            # created by the hub (answers/linux/hub.txt), at most 8 chars
+      HUB_ID: ci-0.8-hub                # the central names the new domain's synodes <domain>-hub, -1, -2
       CENTRAL_PSWD: '123456'            # admin of the test central (alpha-central-0.1.8), test only
       SYNC_INS: '20'
       HUB_JSERV: http://127.0.0.1:8961/jserv-album
@@ -59,8 +62,7 @@ jobs:
       - uses: actions/checkout@v7          # the test resources and the composite actions; no sources
         with:
           sparse-checkout: |
-            jserv-album/actions-config
-            .github/actions
+            .github
 
       - uses: actions/checkout@v7          # the test client
         with:
@@ -88,7 +90,7 @@ jobs:
 
       - name: Check the answer files
         run: |
-          for f in $CONFIG/answers/{hub,prv1,prv2}.txt; do
+          for f in $CONFIG/answers/linux/{hub,prv1,prv2}.txt; do
             python $CONFIG/feed_answers.py $f --dry-run
           done
 
@@ -132,27 +134,44 @@ jobs:
           release: ${{ inputs.central_release }}
           path: ${{ github.workspace }}/e2e/central
 
+      - name: Check the central before the run
+        env:
+          DB: ${{ steps.central.outputs.db }}
+        run: |
+          [ -n "$DB" ] || { echo "::error::no central system.sqlite in the release"; exit 1; }
+          n=$(sqlite3 -readonly "$DB" "select count(*) from c_syndomx where orgid = '$CENTRAL_ORG' and domid = '$CENTRAL_DOMAIN';")
+          [ "$n" = 0 ] || { echo "::error::the central release already has domain $CENTRAL_DOMAIN: its creation can't be tested"; exit 1; }
+          # the other domains of the org, which the run must not change
+          sqlite3 -readonly "$DB" "select domx, sid, mode, stat, jserv from c_synodes
+                                   where orgid = '$CENTRAL_ORG' and domx <> '$CENTRAL_DOMAIN' order by domx, sid;" > $WORK/others-before.txt
+
       # ---- 4. nodes, one by one: configure, then start the jserv ----
       - name: Configure and start the synodes
         shell: bash
         run: |
-          setup_node() {   # <node> <jserv-port>
+          setup_node() {   # <node> <jserv-port> <expected synode id>
             # the test central's admin password, not the package's default (else synode-cli asks for it)
             if [ -n "$CENTRAL_PSWD" ]; then
               jq --arg p "$CENTRAL_PSWD" '.centralPswd = $p' $WORK/$1/WEB-INF/settings.json > $WORK/s.json \
                 && mv $WORK/s.json $WORK/$1/WEB-INF/settings.json
             fi
-            python $CONFIG/feed_answers.py $CONFIG/answers/$1.txt --cwd $WORK/$1 --log $WORK/logs/$1-cli.log
+            python $CONFIG/feed_answers.py $CONFIG/answers/linux/$1.txt --cwd $WORK/$1 --log $WORK/logs/$1-cli.log
             [ -x $WORK/$1/jre17/bin/java ] || { echo "::error::$1: setup did not finish, see $1-cli.log"; return 1; }
+
+            # the answers select menu options by number: a central listing in another order selects others
+            got=$(jq -r '.config | "\(.domain) \(.synid)"' $WORK/$1/vol/dictionary.json)
+            [ "$got" = "$CENTRAL_DOMAIN $3" ] || {
+              echo "::error::$1: installed as '$got', expected '$CENTRAL_DOMAIN $3'. Did the central's menus change order? See $1-cli.log, answers/linux/$1.txt"
+              return 1; }
 
             (cd $WORK/$1 && nohup ./jre17/bin/java -jar bin/jserv-album-*.jar > $WORK/logs/$1-jserv.log 2>&1 &)
             timeout 120 bash -c "until nc -z 127.0.0.1 $2; do sleep 2; done" || {
               tail -80 $WORK/logs/$1-jserv.log; echo "::error::$1: jserv not listening on $2"; return 1; }
             echo "$1 is up on $2"
           }
-          setup_node hub  8961
-          setup_node prv1 8962
-          setup_node prv2 8963
+          setup_node hub  8961 $HUB_ID
+          setup_node prv1 8962 $CENTRAL_DOMAIN-1
+          setup_node prv2 8963 $CENTRAL_DOMAIN-2
 
       # ---- 5. report ----
       - name: Report the central's domain tables
@@ -167,6 +186,18 @@ jobs:
             [ "$left" = 0 ] && break; sleep 2
           done
           [ "$left" = 0 ] || echo "::warning::$left synode(s) of $CENTRAL_DOMAIN still in state c (create)"
+
+          failed=
+          # the domain created by the hub, with the synodes the central planned for it
+          stats=$(sqlite3 -readonly "$DB" "select group_concat(sid || '=' || stat, ' ') from
+                    (select sid, stat from c_synodes where orgid = '$CENTRAL_ORG' and domx = '$CENTRAL_DOMAIN' order by sid);")
+          expect="$CENTRAL_DOMAIN-1=p $CENTRAL_DOMAIN-2=p $HUB_ID=h"
+          [ "$stats" = "$expect" ] || { echo "::error::synodes of $CENTRAL_DOMAIN: '$stats', expected '$expect'"; failed=1; }
+          # the other domains are untouched
+          sqlite3 -readonly "$DB" "select domx, sid, mode, stat, jserv from c_synodes
+                                   where orgid = '$CENTRAL_ORG' and domx <> '$CENTRAL_DOMAIN' order by domx, sid;" > $WORK/others-after.txt
+          diff $WORK/others-before.txt $WORK/others-after.txt > $WORK/logs/others.diff || {
+            echo "::error::the run changed synodes of other domains, see logs/others.diff"; failed=1; }
           {
             # only the test org: the snapshot also holds other orgs, and this repository is public
             echo "### Central c_syndomx (domains of $CENTRAL_ORG)"
@@ -175,6 +206,7 @@ jobs:
             echo "### Central c_synodes ($CENTRAL_ORG)"
             sqlite3 -readonly -markdown "$DB" "select market, orgid, domx, sid, mode, stat, jserv, optime from c_synodes where orgid = '$CENTRAL_ORG';"
           } | tee -a $GITHUB_STEP_SUMMARY $WORK/logs/central-tables.md
+          [ -z "$failed" ]
 
       # ---- 6. the test client pushes a file to the hub ----
       - name: Build the test client (doclient_tests)
@@ -190,9 +222,9 @@ jobs:
           jar=$(ls $WORK/desktop/res/ws-agent-*.jar)
           # the released desktop settings, pointed at the hub of this test
           jq --arg java "$JAVA_HOME/bin/java" --arg jar "$jar" --arg jserv "$HUB_JSERV" \
-             --arg vol "$WORK/hub/vol" \
+             --arg vol "$WORK/hub/vol" --arg hub "$HUB_ID" \
              '.java_path = $java | .wsagent_jar = $jar | .synode_jserv = $jserv
-              | .synode_id = "closed-1-hub" | .synode_vol = $vol | .device = "ci-desktop"' \
+              | .synode_id = $hub | .synode_vol = $vol | .device = "ci-desktop"' \
              $WORK/desktop/settings/app-settings.json > settings/ci-settings.json
           ALBUM_TEST_SETTINGS=settings/ci-settings.json \
           SYNODE_E2E_HOME_VOL=$WORK/hub/vol SYNODE_E2E_PEER_VOL=$WORK/prv1/vol SYNODE_E2E_TIMEOUT=240 \

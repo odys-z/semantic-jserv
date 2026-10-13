@@ -1,0 +1,118 @@
+# Windows end-to-end test of the closed-test packages, started by hand from the Actions tab.
+# The Windows twin of synodes-linux-closed-test.yml, with the Java (Android) client pushing.
+#
+# 1. Downloads the newest synode-*-x64_windows*.zip from this repo's releases (or the tag given).
+# 2. Extracts it for 3 nodes: hub, prv1, prv2.
+# 3. Starts the registry central of CENTRAL_RELEASE (.github/actions/start-central; private
+#    release, read with the secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN).
+# 4. Configures each node with setup-cli.exe, fed by .github/closed-test/answers/windows/<node>.txt
+#    through a pseudo console (feed_answers.py --console). setup-cli.exe installs the Windows
+#    services itself; the runner is elevated, so there is no UAC request. The hub creates the domain
+#    CENTRAL_DOMAIN (ci-0.8); the peers join it.
+# 5. Reports the central's domain tables, and checks the new domain's synodes (hub h, peers p) and
+#    that the other domains are unchanged.
+# 6. Builds the Java client from source (semantic.jserv and jserv-album-lib of this branch,
+#    anclient.java of Anclient ANCLIENT_REF), pushes a photo to the hub with the albumtier test
+#    E2EPushTest (the Android app's AlbumContext), and checks it in h_photos of hub, prv1 and prv2.
+#
+# Steps 1-5 are .github/actions/windows-synodes, step 6 is .github/actions/java-push, shared with
+# synodes-windows-upgrade-test.yml. The checks are in .github/closed-test/closed_test.py
+# (no sqlite3 / jq tools on Windows). See .github/closed-test/README.md.
+
+name: synodes-windows-closed-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to test (empty: the newest synode windows zip in any release)'
+        required: false
+        default: ''
+      central_repo:
+        description: 'Repository of the central release'
+        required: false
+        default: 'Acadynamo/Resources-release'
+      central_release:
+        description: 'Release tag of the central (jar, WEB-INF, regist-vol)'
+        required: false
+        default: 'alpha-central-0.1.8'
+      anclient_ref:
+        description: 'Branch / tag of odys-z/Anclient for the Java client (anclient.java, albumtier)'
+        required: false
+        default: 'portfolio-0.8'
+
+permissions:
+  contents: read
+
+jobs:
+  closed-test:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash          # Git Bash; paths are written D:/a/... (cygpath -m), which bash, Python and Java all take
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CENTRAL_URL: http://127.0.0.1:1991/regist-central
+      CENTRAL_ORG: closed-test          # the org of the package; only its rows are reported
+      CENTRAL_DOMAIN: ci-0.8            # created by the hub (answers/windows/hub.txt), at most 8 chars
+      HUB_ID: ci-0.8-hub                # the central names the new domain's synodes <domain>-hub, -1, -2
+      CENTRAL_PSWD: '123456'            # admin of the test central (alpha-central-0.1.8), test only
+      SYNC_INS: '20'
+      HUB_JSERV: http://127.0.0.1:8961/jserv-album
+      DEVICE: ci-android
+      SUREFIRE: org.apache.maven.plugins:maven-surefire-plugin:3.5.4:test   # JUnit 6 needs a recent Surefire
+
+    steps:
+      - uses: actions/checkout@v7          # test resources, composite actions, and the Java sources of this branch
+        with:
+          sparse-checkout: |
+            .github
+            semantic.jserv
+            jserv-album-lib
+
+      - uses: actions/checkout@v7          # the Java client
+        with:
+          repository: odys-z/Anclient
+          ref: ${{ inputs.anclient_ref }}
+          path: Anclient
+          sparse-checkout: |
+            java/eclipse-workspace/anclient.jserv
+            examples/example.android/albumtier
+
+      - uses: actions/setup-java@v6          # for the central, the Java client and Maven; the synodes use their own jre17
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # ---- 1-5. package, nodes, services, central report ----
+      - name: Set up the synodes
+        id: synodes
+        uses: ./.github/actions/windows-synodes
+        with:
+          token: ${{ secrets.REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN }}
+          central-repo: ${{ inputs.central_repo }}
+          central-release: ${{ inputs.central_release }}
+          release-tag: ${{ inputs.release_tag }}
+
+      # ---- 6. the Java client pushes a photo to the hub ----
+      - name: Push a photo with the Java client
+        uses: ./.github/actions/java-push
+
+      - name: Collect logs
+        if: always()
+        uses: ./.github/actions/windows-logs
+        with:
+          central-home: ${{ steps.synodes.outputs.central-home }}
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: synodes-windows-closed-test
+          path: |
+            e2e/logs/

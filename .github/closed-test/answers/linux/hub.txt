@@ -1,14 +1,17 @@
-# synode-cli answers for the hub node, one per line, in the order of the prompts.
+# Linux: synode-cli answers for the hub node, one per line, in the order of the prompts.
 # Format: see feed_answers.py. <enter> = accept default, <clear>x = replace the default with x,
 # ${VAR} from the workflow env, menus take the option number (1-based).
 #
-# The central snapshot (alpha-central-0.1.8) already has the domains closed-1 and closed-2 of
-# org closed-test, each with 3 synodes in state create (c): hub, -1, -2. The hub takes closed-1-hub.
+# The central snapshot (alpha-central-0.1.8) has the domains closed-1 and closed-2 of org
+# closed-test. The hub creates the domain ${CENTRAL_DOMAIN} (ci-0.8), for which the central plans
+# 3 synodes in state create (c): ci-0.8-hub, ci-0.8-1, ci-0.8-2. The hub takes ci-0.8-hub.
+# If the central's menus change order, the workflow reports the mismatched domain / synode id.
 
 <clear>${CENTRAL_URL}     # Please input central service url. Value from yml file
 <enter>                   # Portfolio 0.8.0 market ID: alpha. Return to continue ...
-1                         # Please select a domain: 1 = closed-1, 2 = closed-2, 3 = Create a new domain...
-1                         # Please select a Synode: 1 = closed-1-hub
+3                         # Please select a domain: 1 = closed-1, 2 = closed-2, 3 = Create a new domain...
+${CENTRAL_DOMAIN}         # Please input new domain name: ci-0.8
+1                         # Please select a Synode: 1 = ci-0.8-hub (the central lists the hub first)
 <enter>                   # Set volume path: default ./vol
 1                         # Synode mode: 1 = Domain Hub / Centre, 2 = Primary Storage Node
 <clear>8951:8961          # Ports "www-port:synode-service"

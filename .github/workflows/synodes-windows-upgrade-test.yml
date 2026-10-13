@@ -1,0 +1,174 @@
+# Windows upgrade test, started by hand from the Actions tab: the Windows closed test, then an
+# upgrade of every synode with the package's upgrade.exe, then the closed test's checks again.
+#
+# 1-6. As synodes-windows-closed-test.yml (.github/actions/windows-synodes, java-push): installs
+#      the package of RELEASE_TAG on hub, prv1, prv2 as Windows services, pushes photo 1.
+# 7.   Downloads the upgrade package (UPGRADE_TAG, empty: the newest synode windows zip, which may
+#      be the same package: a re-deployment), and takes upgrade.exe out of it.
+# 8.   Upgrades hub, prv1, prv2 one by one, in each installation folder:
+#          upgrade.exe <upgrade package zip>
+#      (synodepy3 commands.update_srv(): stop the 2 services, back up the volume's dbs and
+#      dictionary.json and the settings, unpack the zip over the folder, restore the backup,
+#      restart the services), and checks: "Update complete", backup-* holds the restored files,
+#      the node is still the same domain / synode with the same services, the jserv is up again.
+# 9.   The central's domain tables again (ci-0.8 hub h, peers p; other domains unchanged), photo 1
+#      still on every node, and photo 2 pushed and synchronized after the upgrade.
+#
+# upgrade.exe is run as a copy outside the installation folder: it unpacks the zip over that folder,
+# where Windows can't overwrite a running exe.
+
+name: synodes-windows-upgrade-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to install first (empty: the newest synode windows zip in any release)'
+        required: false
+        default: ''
+      upgrade_tag:
+        description: 'Release tag to upgrade to (empty: the newest synode windows zip in any release)'
+        required: false
+        default: ''
+      central_repo:
+        description: 'Repository of the central release'
+        required: false
+        default: 'Acadynamo/Resources-release'
+      central_release:
+        description: 'Release tag of the central (jar, WEB-INF, regist-vol)'
+        required: false
+        default: 'alpha-central-0.1.8'
+      anclient_ref:
+        description: 'Branch / tag of odys-z/Anclient for the Java client (anclient.java, albumtier)'
+        required: false
+        default: 'portfolio-0.8'
+
+permissions:
+  contents: read
+
+jobs:
+  upgrade-test:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash          # Git Bash; paths are written D:/a/... (cygpath -m), which bash, Python and Java all take
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CENTRAL_URL: http://127.0.0.1:1991/regist-central
+      CENTRAL_ORG: closed-test          # the org of the package; only its rows are reported
+      CENTRAL_DOMAIN: ci-0.8            # created by the hub (answers/windows/hub.txt), at most 8 chars
+      HUB_ID: ci-0.8-hub                # the central names the new domain's synodes <domain>-hub, -1, -2
+      CENTRAL_PSWD: '123456'            # admin of the test central (alpha-central-0.1.8), test only
+      SYNC_INS: '20'
+      HUB_JSERV: http://127.0.0.1:8961/jserv-album
+      DEVICE: ci-android
+      SUREFIRE: org.apache.maven.plugins:maven-surefire-plugin:3.5.4:test   # JUnit 6 needs a recent Surefire
+
+    steps:
+      - uses: actions/checkout@v7          # test resources, composite actions, and the Java sources of this branch
+        with:
+          sparse-checkout: |
+            .github
+            semantic.jserv
+            jserv-album-lib
+
+      - uses: actions/checkout@v7          # the Java client
+        with:
+          repository: odys-z/Anclient
+          ref: ${{ inputs.anclient_ref }}
+          path: Anclient
+          sparse-checkout: |
+            java/eclipse-workspace/anclient.jserv
+            examples/example.android/albumtier
+
+      - uses: actions/setup-java@v6          # for the central, the Java client and Maven; the synodes use their own jre17
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # ---- 1-6. the closed test ----
+      - name: Set up the synodes
+        id: synodes
+        uses: ./.github/actions/windows-synodes
+        with:
+          token: ${{ secrets.REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN }}
+          central-repo: ${{ inputs.central_repo }}
+          central-release: ${{ inputs.central_release }}
+          release-tag: ${{ inputs.release_tag }}
+
+      - name: Push photo 1 (before the upgrade)
+        id: push1
+        uses: ./.github/actions/java-push
+        with:
+          label: before-upgrade
+
+      # ---- 7. the upgrade package ----
+      - name: Download the upgrade package
+        env:
+          UPGRADE_TAG: ${{ inputs.upgrade_tag }}
+        run: |
+          pick=$(python $CONFIG/closed_test.py pick-release $WORK/dl/releases.json '^synode-.*x64_windows.*\.zip$' "$UPGRADE_TAG" | tr -d '\r')
+          [ -n "$pick" ] || { echo "::error::no synode windows zip found in releases ${UPGRADE_TAG:+(tag $UPGRADE_TAG)}"; exit 1; }
+          IFS=$'\t' read -r updated tag name <<< "$pick"
+          mkdir -p $WORK/dl/upgrade $WORK/upgrade-tool
+          gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$name" -D $WORK/dl/upgrade
+          pkg=$WORK/dl/upgrade/$name
+          # a copy of upgrade.exe outside the installation folders, which it overwrites
+          7z e -y -bd "$pkg" upgrade.exe -o"$WORK/upgrade-tool" > /dev/null
+          [ -f $WORK/upgrade-tool/upgrade.exe ] || {
+            echo "::error::no upgrade.exe in $name (jserv-album/tasks.py packs it with the Windows resources?)"; exit 1; }
+          { echo "UPGRADE_PKG=$pkg"; echo "UPGRADE_EXE=$WORK/upgrade-tool/upgrade.exe"; } >> $GITHUB_ENV
+          same=; cmp -s "$pkg" "$PACKAGE" && same=', the installed package: a re-deployment'
+          echo "### Upgrade to: \`$name\` (release \`$tag\`, uploaded $updated$same)" >> $GITHUB_STEP_SUMMARY
+
+      # ---- 8. upgrade: stop, upgrade, restart ----
+      - name: Upgrade the synodes (upgrade.exe)
+        run: |
+          . $CONFIG/windows_nodes.sh
+          upgrade_node hub  8961 $HUB_ID           "$UPGRADE_EXE" "$UPGRADE_PKG"
+          upgrade_node prv1 8962 $CENTRAL_DOMAIN-1 "$UPGRADE_EXE" "$UPGRADE_PKG"
+          upgrade_node prv2 8963 $CENTRAL_DOMAIN-2 "$UPGRADE_EXE" "$UPGRADE_PKG"
+          echo "### Upgraded hub, prv1, prv2 (logs/<node>-upgrade.log)" >> $GITHUB_STEP_SUMMARY
+
+      # ---- 9. the checks again ----
+      - name: Report the central's domain tables (after the upgrade)
+        if: always()
+        env:
+          DB: ${{ steps.synodes.outputs.central-db }}
+        run: |
+          [ -n "$DB" ] && [ -f $WORK/others-before.txt ] || { echo "no central db or no before-state"; exit 0; }
+          echo "## After the upgrade" >> $GITHUB_STEP_SUMMARY
+          python $CONFIG/closed_test.py report "$DB" $CENTRAL_ORG $CENTRAL_DOMAIN $HUB_ID $WORK/others-before.txt \
+                 --summary $WORK/logs/central-tables-after-upgrade.md
+
+      - name: Photo 1 is still on every node
+        env:
+          DOCNAME: ${{ steps.push1.outputs.docname }}
+        run: |
+          python $CONFIG/closed_test.py h-photos "$DOCNAME" 30 $WORK/hub/vol $WORK/prv1/vol $WORK/prv2/vol \
+                 --summary $WORK/logs/h_photos-kept.md
+
+      - name: Push photo 2 (after the upgrade)
+        uses: ./.github/actions/java-push
+        with:
+          build: 'false'
+          label: after-upgrade
+
+      - name: Collect logs
+        if: always()
+        uses: ./.github/actions/windows-logs
+        with:
+          central-home: ${{ steps.synodes.outputs.central-home }}
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: synodes-windows-upgrade-test
+          path: |
+            e2e/logs/
