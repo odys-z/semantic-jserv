@@ -56,24 +56,24 @@ jobs:
       HUB_JSERV: http://127.0.0.1:8961/jserv-album
 
     steps:
-      - uses: actions/checkout@v4          # the test resources and the composite actions; no sources
+      - uses: actions/checkout@v7          # the test resources and the composite actions; no sources
         with:
           sparse-checkout: |
             jserv-album/actions-config
             .github/actions
 
-      - uses: actions/checkout@v4          # the test client
+      - uses: actions/checkout@v7          # the test client
         with:
           repository: odys-z/Anclient
           ref: ${{ inputs.anclient_ref }}
           path: Anclient
 
-      - uses: actions/setup-java@v4          # for the central and the IPC agent; the synodes download their own jre17
+      - uses: actions/setup-java@v6          # for the central and the IPC agent; the synodes download their own jre17
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -226,7 +226,7 @@ jobs:
           done
           [ -z "$CLIENT" ] || cp $CLIENT/log/*.log $WORK/logs/ 2>/dev/null || true   # IPC agent
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: synodes-linux-closed-test

@@ -61,7 +61,7 @@ runs:
 
     - name: Restore vcpkg's packages
       id: restore
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/vcpkg-archives
         key: ${{ steps.vcpkg.outputs.key }}
@@ -77,7 +77,7 @@ runs:
     # saved right after the install, so that a failing test later doesn't lose it
     - name: Save vcpkg's packages
       if: steps.restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: ${{ runner.temp }}/vcpkg-archives
         key: ${{ steps.vcpkg.outputs.key }}
