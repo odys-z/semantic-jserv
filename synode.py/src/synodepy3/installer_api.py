@@ -41,6 +41,7 @@ from .__version__ import jar_ver, web_ver, html_srver, ipcagent_ver
 
 from . import jre_mirror_key
 from .prerequisites import check_exiftool, checkinstall_exiftool, exiftool_exe, exiftool_missing_msg
+from .validators import check_domain_id
 
 mypath : str = os.path.dirname(__file__)
 '''
@@ -344,7 +345,11 @@ class InstallerCli:
         ip, port = self.getProxiedIp()
         return f'{ip}:{port}'
 
-    def validate_domain(self) -> Optional[dict]:
+    def validate_domain(self, creating: bool = False) -> Optional[dict]:
+        '''
+        :param creating: True if the domain is new (to be created in central): its id is at most
+        validators.domain_maxlen chars, see validators.check_domain_id().
+        '''
         # 0.7.7 central-pswd must be re-configured when building
         if LangExt.isblank(self.settings.centralPswd):
             return {"Central Password is invalid (0.7.7 not a valid distribution): ": self.settings.centralPswd}
@@ -353,9 +358,9 @@ class InstallerCli:
             return {"Central Password is invalid, len (6-32)": self.settings.centralPswd}
 
         cfg = self.registry.config
-        try: LangExt.only_id_len(cfg.domain, minlen=2, maxlen=12)
-        except AnsonException as e:
-            return {"domain length": f"2 <= Len('{cfg.domain}') <= 12"}
+        err = check_domain_id(cfg.domain, creating)
+        if err is not None:
+            return {"domain id": err}
 
         try: LangExt.only_id_len(cfg.org.orgId, minlen=2, maxlen=12)
         except AnsonException as e:

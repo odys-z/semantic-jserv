@@ -8,7 +8,7 @@ GUI only: synode-cli must not import this module, as Qt needs system libraries (
 from PySide6.QtGui import QValidator
 from prompt_toolkit.document import Document
 
-from synodepy3.validators import PIPValidator, PJservValidator
+from synodepy3.validators import PIPValidator, PJservValidator, PDomainValidator
 
 class QIPValidator(QValidator):
     '''
@@ -44,3 +44,22 @@ class QJservValidator(QValidator):
             self.pv.validate(Document(arg__1))
             return QValidator.State.Acceptable
         except: return QValidator.State.Invalid
+
+class QDomainValidator(QValidator):
+    '''
+    Not Used
+    ========
+    For the domain id widget (a new domain only: the combo box also shows the existing ones,
+    which may be longer). See validators.check_domain_id().
+    @since 0.8.0
+    '''
+
+    def __init__(self, creating: bool = True):
+        super().__init__()
+        self.pv = PDomainValidator(creating)
+
+    def validate(self, arg__1, arg__2, /):
+        try:
+            self.pv.validate(Document(arg__1))
+            return QValidator.State.Acceptable
+        except: return QValidator.State.Intermediate

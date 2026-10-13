@@ -17,7 +17,7 @@ from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
 from synodepy3.systemd_units import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ
 from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
-from synodepy3.validators import PJservValidator, PIPValidator
+from synodepy3.validators import PJservValidator, PIPValidator, PDomainValidator, domain_maxlen
 from synodepy3.prerequisites import check_prerequisites
 from synodepy3.get_avail_ports import report_port_ranges
 
@@ -110,12 +110,6 @@ class VolumeValidator(Validator):
             raise ValidationError(message=f"A file or directory already exists at '{mypath}'.")
         except OSError as e:
             raise ValidationError(message=f"An OS error occurred while testing creation: {e}")
-
-class DomainValidator(Validator):
-    def validate(self, document: Document) -> None:
-        try: LangExt.only_id_len(document.text, minlen=2, maxlen=12)
-        except AnsonException:
-            raise ValidationError(message=f"domain length: 2 <= Len('{cfg.domain}') <= 12")
 
 class PortsValidator(Validator):
     def __init__(self, allow_query: bool = False):
@@ -359,8 +353,8 @@ if not has_run:
         else:
             # 3.2 create domain
             cfg.domain = session.prompt(
-                message='Please input new domain name: ',
-                validator=MultiValidator(QuitValidator(), DomainValidator()),
+                message=f'Please input new domain name (2 - {domain_maxlen} chars): ',
+                validator=MultiValidator(QuitValidator(), PDomainValidator(creating=True)),
                 validate_while_typing=False)
             resp = cli.register()
             Utils.logi('Doamin created: {}\n{}', domid, 'None' if resp is None else resp.diction)

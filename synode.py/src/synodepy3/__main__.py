@@ -239,7 +239,8 @@ class InstallerForm(QMainWindow):
                 reg_jserv=self.ui.txtCentral.text().strip(),
                 orgid=self.ui.cbbOrgs.currentText().strip(),
                 domain=domainid)
-        v = self.cli.validate_domain()
+        # a new domain's id is shorter: the central names its synodes <domain>-hub, ...
+        v = self.cli.validate_domain(creating=domainid not in self.domains_arr)
         if v is None:
             resp = self.cli.register()
 
