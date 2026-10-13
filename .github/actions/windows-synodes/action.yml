@@ -64,7 +64,7 @@ runs:
         IFS=$'\t' read -r updated tag name <<< "$pick"
         gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$name" -D $WORK/dl
         echo "PACKAGE=$WORK/dl/$name" >> $GITHUB_ENV
-        echo "### Package: \`$name\` (release \`$tag\`, uploaded $updated)" >> $GITHUB_STEP_SUMMARY
+        echo "### Package: \`$name\` (release \`$tag\`, uploaded $updated)" | tee -a $GITHUB_STEP_SUMMARY
 
     # ---- 2. three nodes ----
     - name: Extract hub, prv1, prv2
