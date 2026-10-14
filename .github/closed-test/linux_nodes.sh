@@ -62,6 +62,11 @@ upgrade_node() {
   local before after
   check_central || return 1
   before=$(services $1)
+  # the installed tool upgrades unattended since the packages with bin/resource.json; an older one
+  # reinstalls the units and asks to start them, which can't be answered here
+  [ -f $WORK/$1/bin/resource.json ] || {
+    echo "::error::$1: the installed package has no bin/resource.json: its synode-upgrade-srv predates the unattended upgrade (it asks to start the services). Install a package built since (release_tag)."
+    return 1; }
   ( cd $WORK/$1 && synode-upgrade-srv "$4" < /dev/null ) 2>&1 | tee $WORK/logs/$1-upgrade.log
   grep -q 'Update complete' $WORK/logs/$1-upgrade.log || {
     echo "::error::$1: synode-upgrade-srv did not complete, see $1-upgrade.log"; return 1; }

@@ -92,6 +92,10 @@ upgrade_node() {
   before=$(services $1)
   [ -f $WORK/$1/upgrade.exe ] || {
     echo "::error::$1: no upgrade.exe installed (the installed package has no upgrade.pkg?)"; return 1; }
+  # the installed upgrade.exe applies a new package's bin/resource.json since the packages that have one
+  [ -f $WORK/$1/bin/resource.json ] || {
+    echo "::error::$1: the installed package has no bin/resource.json: its upgrade.exe predates the manifest. Install a package built since (release_tag)."
+    return 1; }
   ( cd $WORK/$1 && echo | ./upgrade.exe "$4" ) 2>&1 | tee $WORK/logs/$1-upgrade.log
   grep -q 'Update complete' $WORK/logs/$1-upgrade.log || {
     echo "::error::$1: upgrade.exe did not complete, see $1-upgrade.log"; return 1; }
