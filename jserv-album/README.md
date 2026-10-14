@@ -1,3 +1,5 @@
+[![synodes-linux-closed-test](https://github.com/odys-z/semantic-jserv/actions/workflows/synodes-linux-closed-test.yml/badge.svg)](https://github.com/odys-z/semantic-jserv/actions/workflows/synodes-linux-closed-test.yml)
+
 # About
 
   The Portfolio 0.8.0 and above synode source. 
