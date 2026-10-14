@@ -1,0 +1,127 @@
+name: Set up the Linux synodes
+description: >
+  Steps 1-5 of the Linux closed test, the counterpart of windows-synodes: downloads the synode Linux
+  tar.gz and the desktop-*.zip of the same release, extracts the package for hub, prv1, prv2,
+  installs its synode_py3 wheel (synode-cli, synode-upgrade-srv), starts the central
+  (.github/actions/start-central), configures each node with synode-cli (answers/linux/<node>.txt),
+  which installs and starts the 2 systemd services, waits for the jservs, then reports and checks
+  the central's domain tables.
+
+  Expects the job env of synodes-linux-closed-test.yml: CONFIG, WORK, CENTRAL_URL, CENTRAL_ORG,
+  CENTRAL_DOMAIN, HUB_ID, CENTRAL_PSWD, SYNC_INS, GH_TOKEN; and Python, Java 17 set up before it.
+  Sets PACKAGE in the job env, and puts the desktop's res/ws-agent-*.jar and
+  settings/app-settings.json into $WORK/desktop.
+
+inputs:
+  token:
+    description: Token that can read the central release (secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN)
+    required: true
+  central-repo:
+    description: Repository of the central release
+    default: Acadynamo/Resources-release
+  central-release:
+    description: Release tag of the central
+    default: alpha-central-0.1.8
+  release-tag:
+    description: Release of the synode package, empty for the newest synode linux tar.gz in any release
+    default: ''
+
+outputs:
+  central-db:
+    description: The central's system.sqlite
+    value: ${{ steps.central.outputs.db }}
+  central-home:
+    description: The central's working directory
+    value: ${{ steps.central.outputs.home }}
+
+runs:
+  using: composite
+  steps:
+    - name: OS packages
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq libimage-exiftool-perl sqlite3
+        # synode-cli imports PySide6 (jre_downloader.py), which loads Qt's graphics libraries
+        # even without a display; the runner lacks some of them (libEGL.so.1, ...)
+        sudo apt-get install -y -qq libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+        mkdir -p $WORK/dl $WORK/logs
+        # synode-cli installs the services with sudo: the runner's needs no password
+        sudo -n true || { echo "::error::sudo asks for a password: synode-cli can't install the services"; exit 1; }
+
+    - name: Check the answer files
+      shell: bash
+      run: |
+        for f in $CONFIG/answers/linux/{hub,prv1,prv2,upgrade}.txt; do
+          python $CONFIG/feed_answers.py $f --dry-run
+        done
+
+    # ---- 1. the package and the desktop ----
+    - name: Download the synode package and the desktop
+      shell: bash
+      env:
+        RELEASE_TAG: ${{ inputs.release-tag }}
+      run: |
+        gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases" > $WORK/dl/releases.json
+        pick=$(python $CONFIG/closed_test.py pick-release $WORK/dl/releases.json '^synode-.*x64_linux.*\.tar\.gz$' "$RELEASE_TAG")
+        [ -n "$pick" ] || { echo "::error::no synode linux tar.gz found in releases ${RELEASE_TAG:+(tag $RELEASE_TAG)}"; exit 1; }
+        IFS=$'\t' read -r updated tag name <<< "$pick"
+        gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$name" -D $WORK/dl
+        echo "PACKAGE=$WORK/dl/$name" >> $GITHUB_ENV
+        echo "### Package: \`$name\` (release \`$tag\`, uploaded $updated)" >> $GITHUB_STEP_SUMMARY
+
+        # the desktop of the same release: its IPC agent jar and settings
+        gh release download "$tag" -R "$GITHUB_REPOSITORY" -p 'desktop-*.zip' -D $WORK/dl/desktop || {
+          echo "::error::no desktop-*.zip in release $tag"; exit 1; }
+        mkdir -p $WORK/desktop && unzip -q -o $WORK/dl/desktop/desktop-*.zip 'res/ws-agent-*.jar' 'settings/app-settings.json' -d $WORK/desktop
+        ls -l $WORK/desktop/res $WORK/desktop/settings
+        echo "### Desktop: \`$(cd $WORK/dl/desktop && ls)\` ($(cd $WORK/desktop/res && ls))" >> $GITHUB_STEP_SUMMARY
+
+    # ---- 2. three nodes ----
+    - name: Extract hub, prv1, prv2
+      shell: bash
+      run: |
+        for n in hub prv1 prv2; do
+          mkdir -p $WORK/$n && tar -xf "$PACKAGE" -C $WORK/$n    # the tar.gz has no top folder
+        done
+        pip install -q $WORK/hub/bin/synode_py3-*.whl
+        synode-cli --help | head -1
+        echo "synode_py3 $(pip show synode_py3 | sed -n 's/^Version: //p') installed from $(cd $WORK/hub/bin && ls synode_py3-*.whl)"
+
+    # ---- 3. central ----
+    - name: Start the registry central
+      id: central
+      uses: ./.github/actions/start-central
+      with:
+        token: ${{ inputs.token }}
+        repo: ${{ inputs.central-repo }}
+        release: ${{ inputs.central-release }}
+        path: ${{ github.workspace }}/e2e/central
+
+    - name: Check the central before the run
+      shell: bash
+      env:
+        DB: ${{ steps.central.outputs.db }}
+      run: |
+        [ -n "$DB" ] || { echo "::error::no central system.sqlite in the release"; exit 1; }
+        python $CONFIG/closed_test.py before "$DB" $CENTRAL_ORG $CENTRAL_DOMAIN $WORK/others-before.txt
+
+    # ---- 4. nodes, one by one: configure, install and start the services, wait for the jserv ----
+    - name: Configure the synodes, install their services
+      shell: bash
+      run: |
+        . $CONFIG/linux_nodes.sh
+        setup_node hub  8961 $HUB_ID
+        setup_node prv1 8962 $CENTRAL_DOMAIN-1
+        setup_node prv2 8963 $CENTRAL_DOMAIN-2
+
+    # ---- 5. report ----
+    - name: Report the central's domain tables
+      if: always()
+      shell: bash
+      env:
+        DB: ${{ steps.central.outputs.db }}
+      run: |
+        [ -n "$DB" ] && [ -f $WORK/others-before.txt ] || { echo "no central db or no before-state"; exit 0; }
+        python $CONFIG/closed_test.py report "$DB" $CENTRAL_ORG $CENTRAL_DOMAIN $HUB_ID $WORK/others-before.txt \
+               --summary $WORK/logs/central-tables.md

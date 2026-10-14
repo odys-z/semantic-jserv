@@ -2,7 +2,8 @@
 
 | Workflow | Started | What it does |
 |---|---|---|
-| `synodes-linux-closed-test.yml` | by hand | Central + 3 Linux synodes, a push from the C++ test client, `h_photos` checked |
+| `synodes-linux-closed-test.yml` | by hand | Central + 3 Linux synodes as systemd services, a push from the C++ test client, `h_photos` checked |
+| `synodes-linux-upgrade-test.yml` | by hand | The Linux closed test, then `synode-upgrade-srv` on every synode, then the checks again |
 | `synodes-windows-closed-test.yml` | by hand | The same on Windows: synodes as Windows services, a push from the Java (Android) client |
 | `synodes-windows-upgrade-test.yml` | by hand | The Windows closed test, then `upgrade.exe` on every synode, then the checks again |
 | `version-revival-7days.yml` | every 6 days, or by hand | Builds the test clients, echoes to the central, keeps the vcpkg cache alive |
@@ -12,7 +13,7 @@ Start one from the Actions tab: pick the workflow, **Run workflow**, choose the 
 
 ## Starting a workflow from the command line
 
-All four workflows have a `workflow_dispatch` trigger, so the GitHub CLI can start them like the
+All five workflows have a `workflow_dispatch` trigger, so the GitHub CLI can start them like the
 **Run workflow** button. `--ref` is the branch whose workflow file and sources are used; each `-f`
 sets one input of the run form, and an input left out takes its default.
 
@@ -30,7 +31,9 @@ gh workflow run synodes-windows-closed-test.yml -R $R --ref portfolio-0.8 \
     -f central_release=alpha-central-0.1.8 \
     -f anclient_ref=portfolio-0.8
 
-# Windows upgrade test: install release_tag, then upgrade to upgrade_tag (empty: the newest package)
+# Linux / Windows upgrade test: install release_tag, then upgrade to upgrade_tag (empty: the newest package)
+gh workflow run synodes-linux-upgrade-test.yml   -R $R --ref portfolio-0.8 \
+    -f release_tag=portfolip-0.8 -f upgrade_tag=
 gh workflow run synodes-windows-upgrade-test.yml -R $R --ref portfolio-0.8 \
     -f release_tag=portfolip-0.8 -f upgrade_tag=
 
@@ -51,6 +54,7 @@ Inputs and their defaults (the run form shows the same):
 |---|---|
 | `synodes-linux-closed-test.yml` | `release_tag` (newest), `central_repo` (`Acadynamo/Resources-release`), `central_release` (`alpha-central-0.1.8`), `anclient_ref` (`portfolio-0.8`) |
 | `synodes-windows-closed-test.yml` | the same as Linux |
+| `synodes-linux-upgrade-test.yml` | the same, and `upgrade_tag` (newest) |
 | `synodes-windows-upgrade-test.yml` | the same, and `upgrade_tag` (newest) |
 | `version-revival-7days.yml` | `anclient_ref` (`portfolio-0.8`), `central_release` (`alpha-central-0.1.8`) |
 

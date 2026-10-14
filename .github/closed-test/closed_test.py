@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Checks of the closed tests, without the sqlite3 / jq command line tools (not on Windows runners).
-Used by .github/workflows/synodes-windows-closed-test.yml.
+Used by the synodes-{windows,linux}-{closed,upgrade}-test.yml workflows.
 
     python closed_test.py central-pswd <node>/WEB-INF/settings.json <pswd>
     python closed_test.py installed    <node> <domain> <synid>
@@ -9,9 +9,15 @@ Used by .github/workflows/synodes-windows-closed-test.yml.
     python closed_test.py admin-pswd   <node>
     python closed_test.py before       <central-db> <org> <domain> <others-file>
     python closed_test.py report       <central-db> <org> <domain> <hub-id> <others-file> [--summary <md>]
-    python closed_test.py h-photos     <docname> <timeout-s> <node-vol> [<node-vol> ...] [--summary <md>]
+    python closed_test.py h-photos     <docname> <timeout-s> <node-vol> [<node-vol> ...] [--summary <md>] [--min <n>]
     python closed_test.py pick-release <releases.json> <asset-regex> [<tag>]
     python closed_test.py upgraded     <node>
+    python closed_test.py upgrade-tool <package.tar.gz | .zip>
+
+service-names prints the Windows (winsrv.*) or Linux (linusrv.*) service names saved in settings.json.
+h-photos: a docname with '%' is a LIKE pattern; each node needs at least --min rows (default 1).
+upgrade-tool: the installed synode_py3 is the version of the package's bin/synode_py3-*.whl
+(Linux: synode-upgrade-srv installs it, synodepy3 installer_api.promote_upgrade_whl()).
 
 pick-release reads `gh api --paginate --slurp repos/<repo>/releases` and prints the newest matching
 asset as "<updated>\t<tag>\t<name>" (nothing if none).
@@ -94,7 +100,8 @@ def installed(node, domain, synid):
 def service_names(node):
     with open(os.path.join(node, 'WEB-INF', 'settings.json'), encoding='utf-8') as f:
         env = json.load(f).get('envars') or {}
-    print(env.get('winsrv.synode', ''), env.get('winsrv.web', ''))
+    print(env.get('winsrv.synode') or env.get('linusrv.synode') or '',
+          env.get('winsrv.web') or env.get('linusrv.web') or '')
 
 
 def admin_pswd(node):
@@ -147,9 +154,14 @@ def report(db, org, domain, hub, others_file, md=None):
     sys.exit(1 if failed else 0)
 
 
-def h_photos(docname, timeout, vols, md=None):
-    """Wait for the pushed document in h_photos of every node (peers synchronize every few seconds)."""
-    q = 'select pid, docname, device, filesize, shareflag from h_photos where docname = ?'
+def h_photos(docname, timeout, vols, md=None, least=1):
+    """
+    Wait for the pushed document in h_photos of every node (peers synchronize every few seconds).
+    :param docname: the name, or a LIKE pattern if it has '%'
+    :param least: rows each node must have
+    """
+    op = 'like' if '%' in docname else '='
+    q = f'select pid, docname, device, filesize, shareflag from h_photos where docname {op} ?'
     missing = []
     deadline = time.monotonic() + timeout
     text = f'### h_photos ({docname})\n'
@@ -159,20 +171,20 @@ def h_photos(docname, timeout, vols, md=None):
         while True:
             try:
                 with ro(db) as con:
-                    n = con.execute('select count(*) from h_photos where docname = ?', (docname,)).fetchone()[0]
+                    n = con.execute(f'select count(*) from h_photos where docname {op} ?', (docname,)).fetchone()[0]
             except sqlite3.Error as e:
                 print(f'{db}: {e}')
-            if n or time.monotonic() > deadline:
+            if n >= least or time.monotonic() > deadline:
                 break
             time.sleep(5)
         print(f'{vol}: {n} row(s)')
-        if not n:
+        if n < least:
             missing.append(vol)
         with ro(db) as con:
             text += f'\n#### {vol}\n' + markdown(con, q, (docname,))
     summary(text, md)
     for v in missing:
-        print(f'::error::{v}: the pushed document is not in h_photos')
+        print(f'::error::{v}: the pushed document is not in h_photos' + (f' ({least} rows expected)' if least > 1 else ''))
     sys.exit(1 if missing else 0)
 
 
@@ -204,15 +216,42 @@ def upgraded(node):
     for cur, bak in pairs:
         if not os.path.isfile(bak):
             fail(f'{os.path.basename(node)}: {bak} is not backed up')
-        with open(cur, 'rb') as c, open(bak, 'rb') as k:
-            if c.read() != k.read():
+        # as json: on Linux, reinstalling the services saves their names into settings.json again
+        with open(cur, encoding='utf-8') as c, open(bak, encoding='utf-8') as k:
+            if json.load(c) != json.load(k):
                 fail(f'{os.path.basename(node)}: {cur} is not restored from {bak}')
     print(f'{os.path.basename(node)}: upgraded, backup {b}')
+
+
+def upgrade_tool(package):
+    """The installed synode_py3 is the version of the package's wheel (its file name, as pip reads it)."""
+    import tarfile
+    import zipfile
+    from importlib.metadata import version, PackageNotFoundError
+    if package.endswith('.zip'):
+        with zipfile.ZipFile(package) as z:
+            names = z.namelist()
+    else:
+        with tarfile.open(package) as t:
+            names = t.getnames()
+    whls = [os.path.basename(n) for n in names
+            if re.match(r'^(\./)?bin/synode_py3-[^/]+\.whl$', n)]
+    if len(whls) != 1:
+        fail(f'{os.path.basename(package)}: expected one bin/synode_py3-*.whl, found {whls}')
+    expect = whls[0].split('-')[1]
+    try:
+        got = version('synode_py3')
+    except PackageNotFoundError:
+        fail('synode_py3 is not installed')
+    if got != expect:
+        fail(f'the installed synode_py3 is {got}, the package has {whls[0]} (the upgrade did not install it?)')
+    print(f'synode_py3 {got}, the same as {whls[0]}')
 
 
 def main():
     args = sys.argv[1:]
     md = opt(args, '--summary')
+    least = int(opt(args, '--min') or 1)
     if not args:
         sys.exit(__doc__)
     cmd, a = args[0], args[1:]
@@ -229,11 +268,13 @@ def main():
     elif cmd == 'report':
         report(*a, md=md)
     elif cmd == 'h-photos':
-        h_photos(a[0], float(a[1]), a[2:], md=md)
+        h_photos(a[0], float(a[1]), a[2:], md=md, least=least)
     elif cmd == 'pick-release':
         pick_release(*a)
     elif cmd == 'upgraded':
         upgraded(a[0])
+    elif cmd == 'upgrade-tool':
+        upgrade_tool(a[0])
     else:
         sys.exit(__doc__)
 

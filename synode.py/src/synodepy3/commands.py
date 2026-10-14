@@ -14,7 +14,7 @@ from invoke import task, Context, UnexpectedExit
 from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db
 
 from .__version__ import jar_ver, html_srver
-from .installer_api import InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
+from .installer_api import promote_upgrade_whl, InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
     html_service_json
 from .systemd_units import Sudo, linusrv, stop_linusrvs, reinstall_linusrvs
 
@@ -258,6 +258,9 @@ def update_srv(pkg_path: str):
       5. Windows: restart both services;
          Linux: install the units regenerated for the new version (or the previous units,
          if unpacking failed), and start them on user's confirmation
+      6. Linux: install the new package's bin/synode_py3-*.whl, the upgrade tool itself, so that the
+         next upgrade runs the new version (installer_api.promote_upgrade_whl()). Windows: the new
+         upgrade.exe is unpacked as upgrade.pkg, beside the running upgrade.exe, and moved by setup-*.
 
     :param pkg_path: path to the update package, zip on Windows, tar.gz on Linux.
     """
@@ -334,5 +337,9 @@ def update_srv(pkg_path: str):
         restart_wsrvs()
     elif srvs:
         reinstall_linusrvs(cli, cast(Sudo, sudo), srvs, unpacked)
+
+    # 6. the upgrade tool itself (Linux), last: the running process keeps the modules it has loaded
+    if unpacked and not Utils.iswindows():
+        promote_upgrade_whl()
 
     print(f'Update {"complete" if unpacked else "FAILED"}. Backup kept at: {os.path.abspath(backup_dir)}')

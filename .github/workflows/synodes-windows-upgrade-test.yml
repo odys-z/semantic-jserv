@@ -4,8 +4,9 @@
 # 1-6. As synodes-windows-closed-test.yml (.github/actions/windows-synodes, java-push): installs
 #      the package of RELEASE_TAG on hub, prv1, prv2 as Windows services, pushes photo 1.
 # 7.   Downloads the upgrade package (UPGRADE_TAG, empty: the newest synode windows zip, which may
-#      be the same package: a re-deployment), and takes upgrade.exe out of it.
-# 8.   Upgrades hub, prv1, prv2 one by one, in each installation folder:
+#      be the same package: a re-deployment).
+# 8.   Upgrades hub, prv1, prv2 one by one, in each installation folder, with the installed upgrade.exe
+#      (packed as upgrade.pkg, moved to upgrade.exe by setup-cli.exe in step 1-6):
 #          upgrade.exe <upgrade package zip>
 #      (synodepy3 commands.update_srv(): stop the 2 services, back up the volume's dbs and
 #      dictionary.json and the settings, unpack the zip over the folder, restore the backup,
@@ -14,8 +15,9 @@
 # 9.   The central's domain tables again (ci-0.8 hub h, peers p; other domains unchanged), photo 1
 #      still on every node, and photo 2 pushed and synchronized after the upgrade.
 #
-# upgrade.exe is run as a copy outside the installation folder: it unpacks the zip over that folder,
-# where Windows can't overwrite a running exe.
+# The package carries upgrade.exe as upgrade.pkg, so unpacking it over an installation never overwrites
+# the running upgrade.exe; setup-* moves it to upgrade.exe (synodepy3 installer_api.promote_upgrade_pkg()).
+# So upgrade.exe runs in place, as a user runs it: the installed version upgrading to the new package.
 
 name: synodes-windows-upgrade-test
 
@@ -116,14 +118,10 @@ jobs:
           pick=$(python $CONFIG/closed_test.py pick-release $WORK/dl/releases.json '^synode-.*x64_windows.*\.zip$' "$UPGRADE_TAG" | tr -d '\r')
           [ -n "$pick" ] || { echo "::error::no synode windows zip found in releases ${UPGRADE_TAG:+(tag $UPGRADE_TAG)}"; exit 1; }
           IFS=$'\t' read -r updated tag name <<< "$pick"
-          mkdir -p $WORK/dl/upgrade $WORK/upgrade-tool
+          mkdir -p $WORK/dl/upgrade
           gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$name" -D $WORK/dl/upgrade
           pkg=$WORK/dl/upgrade/$name
-          # a copy of upgrade.exe outside the installation folders, which it overwrites
-          7z e -y -bd "$pkg" upgrade.exe -o"$WORK/upgrade-tool" > /dev/null
-          [ -f $WORK/upgrade-tool/upgrade.exe ] || {
-            echo "::error::no upgrade.exe in $name (jserv-album/tasks.py packs it with the Windows resources?)"; exit 1; }
-          { echo "UPGRADE_PKG=$pkg"; echo "UPGRADE_EXE=$WORK/upgrade-tool/upgrade.exe"; } >> $GITHUB_ENV
+          echo "UPGRADE_PKG=$pkg" >> $GITHUB_ENV
           same=; cmp -s "$pkg" "$PACKAGE" && same=', the installed package: a re-deployment'
           echo "### Upgrade to: \`$name\` (release \`$tag\`, uploaded $updated$same)" >> $GITHUB_STEP_SUMMARY
 
@@ -131,9 +129,9 @@ jobs:
       - name: Upgrade the synodes (upgrade.exe)
         run: |
           . $CONFIG/windows_nodes.sh
-          upgrade_node hub  8961 $HUB_ID           "$UPGRADE_EXE" "$UPGRADE_PKG"
-          upgrade_node prv1 8962 $CENTRAL_DOMAIN-1 "$UPGRADE_EXE" "$UPGRADE_PKG"
-          upgrade_node prv2 8963 $CENTRAL_DOMAIN-2 "$UPGRADE_EXE" "$UPGRADE_PKG"
+          upgrade_node hub  8961 $HUB_ID           "$UPGRADE_PKG"
+          upgrade_node prv1 8962 $CENTRAL_DOMAIN-1 "$UPGRADE_PKG"
+          upgrade_node prv2 8963 $CENTRAL_DOMAIN-2 "$UPGRADE_PKG"
           echo "### Upgraded hub, prv1, prv2 (logs/<node>-upgrade.log)" >> $GITHUB_STEP_SUMMARY
 
       # ---- 9. the checks again ----

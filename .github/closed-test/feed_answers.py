@@ -10,6 +10,8 @@ Answer file, one answer per line, in the order the prompts appear:
     1                       # menus take the option number, 1-based
     <enter>                 # an empty answer: accept the prompt's default
     <clear>${CENTRAL_URL}   # replace the pre-filled default (sends Ctrl-U first)
+    <key>y                  # a key without Enter, e.g. a prompt_toolkit confirm() (y/n), which
+                            # takes the key itself: an Enter after it would answer the next prompt
     zsu                     # plain text; a ' #' starts a trailing comment
 
     ${NAME} is taken from the environment; a missing variable is an error.
@@ -43,6 +45,7 @@ import time
 
 CTRL_U = '\x15'
 ENTER = '\r'
+KEY = '\x00'          # marks an answer typed without Enter (<key>)
 _var = re.compile(r'\$\{([A-Za-z_][A-Za-z0-9_]*)\}')
 _secret_name = re.compile(r'(TOKEN|PSWD|PASSWORD|SECRET)', re.I)
 _ansi = re.compile(r'\x1b(\[[0-9;?]*[ -/]*[@-~]|\][^\x07\x1b]*(\x07|\x1b\\)|[@-Z\\-_])')
@@ -71,18 +74,23 @@ def parse(path: str):
                     secrets.add(v)
                 return v
 
+            key = value.startswith('<key>')
+            if key:
+                value = value[len('<key>'):]
+                if len(value) != 1:
+                    sys.exit(f'{path}:{no}: <key> takes one key, e.g. <key>y')
             clear = value.startswith('<clear>')
             if clear:
                 value = value[len('<clear>'):]
             if value == '<enter>':
                 value = ''
             value = _var.sub(expand, value)
-            answers.append((CTRL_U if clear else '') + value)
+            answers.append((KEY if key else CTRL_U if clear else '') + value)
     return answers, secrets
 
 
 def show(answer: str, secrets: set) -> str:
-    s = answer.replace(CTRL_U, '<clear>') or '<enter>'
+    s = answer.replace(CTRL_U, '<clear>').replace(KEY, '<key>') or '<enter>'
     for v in secrets:
         s = s.replace(v, '***')
     return s
@@ -134,7 +142,8 @@ def run_pipe(command, cwd, answers, out: Output, timeout: int) -> int:
 
     try:
         # all at once: prompt_toolkit keeps type-ahead for the later prompts
-        p.stdin.write(''.join(ans + ENTER for ans in answers).encode('utf-8'))
+        p.stdin.write(''.join(ans[1:] if ans.startswith(KEY) else ans + ENTER
+                              for ans in answers).encode('utf-8'))
         p.stdin.close()
     except BrokenPipeError:
         pass  # the command quit before reading everything; its exit status tells why
@@ -198,6 +207,9 @@ def run_console(command, cwd, answers, out: Output, timeout: int, settle: float,
             break
         print(f'\n[feed_answers] typing {i}: {show(ans, secrets)}', flush=True)
         since = out.count
+        if ans.startswith(KEY):
+            p.write(ans[1:])
+            continue
         if ans.startswith(CTRL_U):
             p.write(CTRL_U)
             ans = ans[1:]

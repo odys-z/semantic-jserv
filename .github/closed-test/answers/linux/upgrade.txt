@@ -1,0 +1,8 @@
+# Linux: synode-upgrade-srv answers, one per line, in the order of the prompts (see feed_answers.py).
+# The node's services are saved in WEB-INF/settings.json (envars linusrv.synode / linusrv.web, by
+# synode-cli's last step), so no names are asked; the runner's sudo needs no password.
+#
+# synodepy3 commands.update_srv(): uninstalls the 2 units, backs up, unpacks, restores, then installs
+# the units regenerated for the new package (systemd_units.reinstall_linusrvs()), and asks:
+
+<key>y                    # Start <synid>.service, <synid>.web.service now? (y/n): a confirm(), no Enter

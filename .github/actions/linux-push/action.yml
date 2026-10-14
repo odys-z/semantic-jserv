@@ -1,0 +1,64 @@
+name: Push a file with the desktop's test client
+description: >
+  Step 6 of the Linux closed test, the counterpart of java-push: builds the desktop's test client
+  without Slint (odys-z/Anclient examples/example.slint/github-tests, doclient_tests;
+  .github/actions/build-github-tests), pushes res/182x121.png to the hub through the IPC agent of the
+  released desktop (Ipclient.E2E_PushSync, as 182x121_e2e_<time>_<nonce>.png), and waits for it in
+  h_photos of hub, prv1 and prv2.
+
+  Expects the Anclient checkout and the job env of synodes-linux-closed-test.yml (CONFIG, WORK,
+  HUB_JSERV, HUB_ID), and the synodes and $WORK/desktop set up by .github/actions/linux-synodes.
+
+inputs:
+  build:
+    description: "'true' to build the test client first (once per job)"
+    default: 'true'
+  label:
+    description: Name of this push in the logs and the Summary
+    default: push
+  pushed:
+    description: Files pushed by the test client in this job, this one included (rows each node must have)
+    default: '1'
+
+outputs:
+  build-dir:
+    description: Folder of the test client
+    value: ${{ steps.client.outputs.build-dir }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build the test client (doclient_tests)
+      id: client
+      if: inputs.build == 'true'
+      uses: ./.github/actions/build-github-tests
+      with:
+        targets: doclient_tests
+
+    - name: Push a file to the hub (doclient_tests, ${{ inputs.label }})
+      shell: bash        # -o pipefail: a failing test fails the step through tee
+      env:
+        LABEL: ${{ inputs.label }}
+      run: |
+        cd ${{ github.workspace }}/github-tests-build      # build-github-tests' default build-dir
+        jar=$(ls $WORK/desktop/res/ws-agent-*.jar)
+        # the released desktop settings, pointed at the hub of this test
+        jq --arg java "$JAVA_HOME/bin/java" --arg jar "$jar" --arg jserv "$HUB_JSERV" \
+           --arg vol "$WORK/hub/vol" --arg hub "$HUB_ID" \
+           '.java_path = $java | .wsagent_jar = $jar | .synode_jserv = $jserv
+            | .synode_id = $hub | .synode_vol = $vol | .device = "ci-desktop"' \
+           $WORK/desktop/settings/app-settings.json > settings/ci-settings.json
+        ALBUM_TEST_SETTINGS=settings/ci-settings.json \
+        SYNODE_E2E_HOME_VOL=$WORK/hub/vol SYNODE_E2E_PEER_VOL=$WORK/prv1/vol SYNODE_E2E_TIMEOUT=240 \
+          ./doclient_tests --gtest_filter='Ipclient.Echo:Ipclient.E2E_PushSync' 2>&1 | tee $WORK/logs/doclient_tests-$LABEL.log
+        cp log/*.log $WORK/logs/ 2>/dev/null || true      # IPC agent
+
+    - name: Check the pushed file in h_photos (${{ inputs.label }})
+      shell: bash
+      env:
+        LABEL: ${{ inputs.label }}
+        PUSHED: ${{ inputs.pushed }}
+      run: |
+        # the test client names each push 182x121_e2e_<time>_<nonce>.png: count them
+        python $CONFIG/closed_test.py h-photos '182x121_e2e_%' 300 $WORK/hub/vol $WORK/prv1/vol $WORK/prv2/vol \
+               --min $PUSHED --summary $WORK/logs/h_photos-$LABEL.md

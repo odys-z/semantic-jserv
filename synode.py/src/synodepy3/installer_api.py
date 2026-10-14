@@ -66,6 +66,55 @@ vol_dict_json: file path to dictionary.json,
 web_settings: file path to settings.json
 '''
 
+upgrade_pkg: Final = 'upgrade.pkg'
+upgrade_exe: Final = 'upgrade.exe'
+
+
+def promote_upgrade_pkg(folder: str = '.') -> bool:
+    """
+    Move <folder>/upgrade.pkg, the upgrade.exe packed in the package (jserv-album/tasks.py), over
+    <folder>/upgrade.exe. The package carries it as upgrade.pkg so that unpacking it over an
+    installation (commands.update_srv(), run by upgrade.exe) can't hit the running upgrade.exe.
+    :param folder: the installation folder, default the working folder (where setup-* runs).
+    :return: True if upgrade.exe has been replaced; False if there is no upgrade.pkg, or upgrade.exe
+             is locked (running), in which case upgrade.pkg is kept for the next try.
+    """
+    pkg, exe = os.path.join(folder, upgrade_pkg), os.path.join(folder, upgrade_exe)
+    if not os.path.isfile(pkg):
+        return False
+    try:
+        os.replace(pkg, exe)
+        print(f'{upgrade_pkg} -> {os.path.abspath(exe)}')
+        return True
+    except OSError as e:
+        Utils.warn(f'Cannot replace {exe} with {upgrade_pkg} (is it running?), {upgrade_pkg} is kept: {e}')
+        return False
+
+
+def promote_upgrade_whl(folder: str = '.') -> bool:
+    """
+    The Linux counterpart of promote_upgrade_pkg(). On Linux unpacking a new package only brings the new
+    wheel, <folder>/bin/synode_py3-*.whl. This installs it, with the Python running this, so the
+    next upgrade runs the new version. pip --upgrade keeps a re-deployment of the same version as is.
+
+    Linux can replace the files of the running package (the process keeps the modules it has loaded),
+    so this can be the last step of the running upgrade (commands.update_srv()).
+    :param folder: the installation folder, default the working folder.
+    :return: True if pip succeeded.
+    """
+    whls = sorted(Path(folder, 'bin').glob('synode_py3-*.whl'), key=os.path.getmtime, reverse=True)
+    if not whls:
+        print(f'No bin/synode_py3-*.whl in {os.path.abspath(folder)}, the upgrade tool is kept as is.')
+        return False
+    cmd = [sys.executable, '-m', 'pip', 'install', '--upgrade', str(whls[0])]
+    print(' '.join(cmd))
+    r = subprocess.run(cmd)
+    if r.returncode != 0:
+        Utils.warn(f'Cannot install {whls[0]} (pip exit code {r.returncode}); install it by hand for the next '
+                   f'upgrade:\n    {" ".join(cmd)}')
+    return r.returncode == 0
+
+
 synode_ui = cast(UIResources, Anson.from_file(os.path.join(mypath, "synode.json")))
 err_uihandlers: list[OnError] = cast(list, [None])
 
@@ -828,6 +877,9 @@ class InstallerCli:
             Utils.warn(f'Volume is set to {self.settings.Volume()}.\n'
                        f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
+
+        # upgrade.exe, packed as upgrade.pkg (Windows packages only)
+        promote_upgrade_pkg()
 
         if (Path(mypath) / 'desktop').exists():
             self.update_clients([(Path('desktop'), 'settings/app-settings.json')])

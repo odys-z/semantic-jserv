@@ -14,5 +14,7 @@
 <enter>                   # Domain token of user Admin: the packaged default, the same as the hub's
 <enter>                   # Pinging the hub node? accept the hub's jserv url
 1                         # Continue installation? 1 = Yes (asked only when the hub is found)
-2                         # Install them as systemd services now? 2 = No, the workflow starts the jserv
+1                         # Install them as systemd services now? 1 = Yes (the runner has passwordless sudo)
+<enter>                   # Service name: the default, the synode id (<synid>.service & <synid>.web.service)
+<key>y                    # Start ... now? (y/n): a confirm() takes the key itself, no Enter
 <enter>                   # Return to quit Portfolio Setup

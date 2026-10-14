@@ -39,7 +39,7 @@ requir_pkg("qrcode")
 requir_pkg("psutil")
 requir_pkg("prompt-toolkit", "3.0.52")
 requir_pkg("pyside6", ["6.6.0", "6.8.2.1"])
-requir_pkg("semantics.py3", "0.6.9")
+requir_pkg("semantics.py3", "0.6.16")  # SynodeTask.synodepy3_ver()
 requir_pkg("anson.py3", "0.6.6")
 requir_pkg("anclient.py3", "0.2.7")
 
@@ -164,7 +164,7 @@ def config(c, abstask_json: str):
     dom_registry.toFile(Path('registry') / 'dictionary.json')
 
     Utils.update_patterns('pyproject.toml',
-                          {'version = "[0-9\\.]+" # ': f'version = "{taskcfg.version}" # '})
+                          {'version = "[0-9\\.]+" # ': f'version = "{taskcfg.synodepy3_ver()}" # '})
 
     print("***********************************************")
     print(f"* Registering Markt Org {taskcfg.deploy.market_id} : {taskcfg.deploy.orgid}")

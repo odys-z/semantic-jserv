@@ -16,7 +16,7 @@ _independent = 'github-head' in _tasks
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.10")
-    requir_pkg("semantics.py3", "0.6.15") # SynodeTask.github, gitprjs {github}, link-json
+    requir_pkg("semantics.py3", "0.6.16") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("build")               # by synode.py
@@ -434,7 +434,7 @@ def build(c: Context, deploy: str = 'tasks.json'):
         Returns:
             str: The command to build the package.
         """
-        print(f'Building synode.py3 {taskcfg.version}, web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
+        print(f'Building synode.py3 {taskcfg.synodepy3_ver()} (Portfolio {taskcfg.version}), web-dist {taskcfg.web_ver}, html-service.jar {taskcfg.html_jar_v}...')
         cmd = f"invoke build --deploy={absdeploy}"
         return cmd
 
@@ -564,7 +564,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
-        'bin/synode_py3-0.8-py3-none-any.whl': f'{synode_py}/dist/synode_py3-{taskcfg.version}-py3-none-any.whl',
+        f'bin/{taskcfg.synodepy3_whl()}': f'{synode_py}/dist/{taskcfg.synodepy3_whl()}',
         "registry": f"{synode_py}/registry/*",
         'winsrv': f'{synode_py}/winsrv/*',
         "res": f"{synode_py}/src/synodepy3/res/*",
@@ -583,7 +583,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
         'setup-cli.exe': f'{synode_py}/dist/synode-setup/setup-cli.exe',
         'uninstall-srv.exe': f'{synode_py}/dist/synode-setup/uninstall-srv.exe',
         '_internal': f'{synode_py}/dist/synode-setup/_internal/*',
-        # 'upgrade.exe': f'{synode_py}/dist/upgrade.exe'
+        'upgrade.pkg': f'{synode_py}/dist/upgrade.exe',
     })
     else:
         print("[*** TODO *** 0.8.0 POSIX]  desktop [album-gui, ws-agent.jar, settings], requires exiftool, jre-posix")

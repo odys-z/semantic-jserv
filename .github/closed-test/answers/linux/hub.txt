@@ -18,5 +18,7 @@ ${CENTRAL_DOMAIN}         # Please input new domain name: ci-0.8
 2                         # Mapped to a public address / reverse proxy? 2 = No
 1                         # All settings are collected, install? 1 = Yes
 <enter>                   # Domain token of user Admin: the packaged default (tasks.*.json deploy.domain_token)
-2                         # Install them as systemd services now? 2 = No, the workflow starts the jserv
+1                         # Install them as systemd services now? 1 = Yes (the runner has passwordless sudo)
+<enter>                   # Service name: the default, the synode id (<synid>.service & <synid>.web.service)
+<key>y                    # Start ... now? (y/n): a confirm() takes the key itself, no Enter
 <enter>                   # Return to quit Portfolio Setup

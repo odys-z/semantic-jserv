@@ -1,10 +1,13 @@
 # Synode end-to-end tests (Linux, Windows)
 
-Four workflows use these resources:
+Five workflows use these resources:
 
 - `.github/workflows/synodes-linux-closed-test.yml`: GitHub > Actions > **synodes-linux-closed-test**
-  > **Run workflow**. Sets up a central and 3 synodes, pushes a file from a test client, checks the
-  synchronization.
+  > **Run workflow**. Sets up a central and 3 synodes, installed as systemd services by synode-cli,
+  pushes a file from a test client, checks the synchronization.
+- `.github/workflows/synodes-linux-upgrade-test.yml`: the Linux closed test, then upgrades every
+  synode with the installed `synode-upgrade-srv` (uninstall the units, upgrade, reinstall and start
+  them, install the new synode_py3 wheel), and checks again.
 - `.github/workflows/synodes-windows-closed-test.yml`: the same on Windows, with the synodes
   installed as Windows services by setup-cli.exe, and the Java (Android) client pushing.
 - `.github/workflows/synodes-windows-upgrade-test.yml`: the Windows closed test, then upgrades every
@@ -13,9 +16,10 @@ Four workflows use these resources:
   and echoes to the central; keeps the vcpkg cache alive (see below).
 
 Shared steps are composite actions in `.github/actions/`: `start-central` (download and start the
-central), `build-github-tests` (build the test clients), and for the Windows tests
-`windows-synodes` (package, nodes, services, central report), `java-push` (build the Java client,
-push a photo, check `h_photos`) and `windows-logs`.
+central), `build-github-tests` (build the test clients); for the Linux tests `linux-synodes`
+(package, nodes, systemd services, central report) and `linux-push` (build the C++ test client, push
+a file, check `h_photos`); for the Windows tests `windows-synodes` (package, nodes, services, central
+report), `java-push` (build the Java client, push a photo, check `h_photos`) and `windows-logs`.
 
 Each run downloads two things from this repo's releases, so nothing heavy is committed here:
 
@@ -29,12 +33,14 @@ Each run downloads two things from this repo's releases, so nothing heavy is com
 ```
 .github/closed-test/
   feed_answers.py          feeds answers/<os>/<node>.txt into synode-cli / setup-cli.exe
-  closed_test.py           the Windows workflows' checks (no sqlite3 / jq tools on Windows runners)
+  closed_test.py           the workflows' checks (no sqlite3 / jq tools on Windows runners)
   windows_nodes.sh         bash functions of the Windows workflows: setup_node, upgrade_node, ...
-  answers/linux/           synode-cli answers, synodes-linux-closed-test.yml
+  linux_nodes.sh           bash functions of the Linux workflows: setup_node, upgrade_node, ...
+  answers/linux/           synode-cli answers, synodes-linux-{closed,upgrade}-test.yml
     hub.txt                  the hub   (jserv 8961, web 8951), creates the domain ci-0.8
     prv1.txt                 prv1      (jserv 8962, web 8952)
     prv2.txt                 prv2      (jserv 8963, web 8953)
+    upgrade.txt              synode-upgrade-srv, every node
   answers/windows/         setup-cli.exe answers, synodes-windows-closed-test.yml
     hub.txt, prv1.txt, prv2.txt
 ```
@@ -81,12 +87,7 @@ appends `-hub` (synodepy3 `validators.domain_maxlen`).
 Every run starts from the released snapshot, so runs don't affect each other.
 
 The package logs in to Central as `admin` with `centralPswd` from its `WEB-INF/settings.json`
-(0.8.0: `temp-0.8.0`). The test central's admin password is `123456` (`CENTRAL_PSWD` in the
-workflow, test only): the workflow writes it into each node's settings.json before running
-synode-cli, which would otherwise stop to ask for it and shift the answers.
-
-The snapshot also holds other orgs. This repository is public, so the run only reports the rows
-of `closed-test` and doesn't upload the database.
+(0.8.0: `temp-0.8.0`). 
 
 ## The desktop push
 
@@ -109,12 +110,7 @@ the hub's and prv1's volumes, then the workflow checks `h_photos` of hub, prv1 a
 
 vcpkg's compiled packages are cached under a fixed key: runner image, vcpkg commit and a hash of
 the package list (`vcpkg-ubuntu24-x64-linux-7e43e0768a-<hash>`). GitHub evicts a cache entry that
-no run has restored for 7 days (not configurable; the 90 days in Settings > Actions are for
-artifacts and logs). version-revival-7days restores it every 6 days, so the closed test finds it.
-Changing the commit or the packages makes a new entry, and the next run builds the packages again.
-
-Schedules run only from the default branch, and GitHub disables a schedule after 60 days without
-activity in the repository: re-enable it on the workflow's page.
+no run has restored for 7 days. version-revival-7days restores it every 6 days.
 
 ## Windows
 
@@ -144,33 +140,22 @@ a re-deployment) and, node by node, runs in the installation folder
 upgrade.exe <upgrade package zip>
 ```
 
-(synodepy3 `commands.update_srv()`: stop the 2 services, back up the volume's dbs and
-`dictionary.json` and the settings into `backup-YYYYMMDD/`, unpack the zip over the folder, restore
-the backup, restart the services). `upgrade.exe` comes from the upgrade package and runs as a copy
-outside the installation folder, which it overwrites (Windows can't overwrite a running exe). Its
-final `input('Press Enter to quit ...')` is answered by a piped Enter.
+## Linux upgrade
 
-Each node must then say "Update complete" in `logs/<node>-upgrade.log`, have its settings and
-`dictionary.json` restored (the same as in `backup-*`), be the same domain / synode with the same
-services, and listen again. The central's tables are checked again, photo 1 must still be on every
-node, and photo 2, pushed after the upgrade, must reach every node.
+`synodes-linux-upgrade-test` is the same on Linux. The closed test's synode-cli installs each node's
+2 systemd services (`<synid>.service`, `<synid>.web.service`, names saved in `settings.json`,
+envars `linusrv.synode` / `linusrv.web`), so the upgrade has units to stop and reinstall. In each
+installation folder, the installed tool (the synode_py3 wheel of the installed package) runs:
 
-The package must contain `upgrade.exe`: in `jserv-album/tasks.py` it's still commented out of the
-Windows resources (`# 'upgrade.exe': f'{synode_py}/dist/upgrade.exe'`). `synode.py/upgrade-srv.spec`
-builds it as a onefile `dist/upgrade.exe` (`name='upgrade'`), so that the single exe can be taken out
-of the zip and run outside the installation folder. The run stops with an error if the zip has no
-`upgrade.exe`.
-
-setup-gui.exe, setup-cli.exe and uninstall-srv.exe share one PyInstaller onedir bundle
-(`synode.py/synode-setup.spec`, `dist/synode-setup/`): the package has them at its root, next to
-their `_internal/` folder, and they don't work without it.
+```
+synode-upgrade-srv <upgrade package tar.gz>
+```
 
 ## Answer files
 
 Linux and Windows have their own answer files: the prompts are the same up to the install, then
-synode-cli on Linux asks about systemd services, while setup-cli.exe on Windows only says to install
-the Windows service with setup-gui.exe (the Windows workflow installs it with
-`winsrv/install-jserv-w.bat`, as setup-gui.exe does). Keep the two in step when prompts change.
+synode-cli on Linux installs the systemd services (name, start now?), while setup-cli.exe on
+Windows installs the Windows services. Keep the two in step when prompts change.
 
 One answer per line, in the order of the prompts (see `feed_answers.py`):
 
@@ -179,6 +164,7 @@ One answer per line, in the order of the prompts (see `feed_answers.py`):
 | `1` | menu option number, 1-based |
 | `<enter>` | accept the prompt's default |
 | `<clear>8951:8961` | replace the pre-filled default |
+| `<key>y` | one key, no Enter: a prompt_toolkit `confirm()` (y/n) takes the key itself, and an Enter after it would answer the next prompt |
 | `${CENTRAL_URL}` | from the workflow `env` |
 | `# ...` | comment, whole line or trailing |
 
@@ -188,17 +174,8 @@ Check a file without running anything:
 python feed_answers.py answers/linux/prv1.txt --dry-run
 ```
 
-If a run fails, compare `logs/<node>-cli.log` in the run's artifact with the answer file:
-an unexpected prompt shifts every later answer by one.
-
 ## Secrets
 
 Settings > Secrets and variables > Actions:
 
 - `REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN`: read access to `Acadynamo/Resources-release`, see above.
-
-## Domain token
-
-The answer files accept the packaged default: `synode.py/tasks.py` writes `deploy.domain_token` of
-`tasks.*.json` into the package's `registry/dictionary.json` (user `admin`). It must be 8-16 chars,
-or synode-cli rejects the default and the run stops.

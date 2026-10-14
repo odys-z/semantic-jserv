@@ -44,8 +44,11 @@ check_central() {
 }
 
 # setup_node <node> <jserv-port> <expected synode id>
+#   setup-cli.exe also moves the package's upgrade.pkg to upgrade.exe (installer_api.promote_upgrade_pkg()).
 setup_node() {
+  local pkg=
   check_central || return 1
+  [ -f $WORK/$1/upgrade.pkg ] && pkg=1
   # the test central's admin password, not the package's default (else setup-cli.exe asks for it)
   python $CONFIG/closed_test.py central-pswd $WORK/$1/WEB-INF/settings.json "$CENTRAL_PSWD"
 
@@ -54,17 +57,25 @@ setup_node() {
   [ -f $WORK/$1/jre17/bin/java.exe ] || { echo "::error::$1: setup did not finish, see $1-cli.log"; return 1; }
   python $CONFIG/closed_test.py installed $WORK/$1 $CENTRAL_DOMAIN $3 || return 1
   check_services $1 $2 || { echo "::error::$1: see $1-cli.log, winsrv-install.log"; return 1; }
+  if [ -n "$pkg" ]; then
+    [ -f $WORK/$1/upgrade.exe ] && [ ! -e $WORK/$1/upgrade.pkg ] || {
+      echo "::error::$1: setup-cli.exe didn't move upgrade.pkg to upgrade.exe, see $1-cli.log"; return 1; }
+  else
+    echo "::notice::$1: the package has no upgrade.pkg (built before upgrade.exe was packed as upgrade.pkg)"
+  fi
 }
 
-# upgrade_node <node> <jserv-port> <expected synode id> <upgrade.exe> <package.zip>
-#   upgrade.exe <zip> in the installation folder (synodepy3 commands.update_srv()): stops the 2
+# upgrade_node <node> <jserv-port> <expected synode id> <package.zip>
+#   the installed upgrade.exe <zip>, in the installation folder (synodepy3 commands.update_srv()): stops the 2
 #   services, backs up the data and settings, unpacks the zip over the folder, restores the backup,
 #   restarts the services. It ends with input('Press Enter to quit ...'), answered by the echo.
 upgrade_node() {
   local before after
   check_central || return 1
   before=$(services $1)
-  ( cd $WORK/$1 && echo | "$4" "$5" ) 2>&1 | tee $WORK/logs/$1-upgrade.log
+  [ -f $WORK/$1/upgrade.exe ] || {
+    echo "::error::$1: no upgrade.exe installed (the installed package has no upgrade.pkg?)"; return 1; }
+  ( cd $WORK/$1 && echo | ./upgrade.exe "$4" ) 2>&1 | tee $WORK/logs/$1-upgrade.log
   grep -q 'Update complete' $WORK/logs/$1-upgrade.log || {
     echo "::error::$1: upgrade.exe did not complete, see $1-upgrade.log"; return 1; }
 
