@@ -69,13 +69,23 @@ setup_node() {
 #   the installed upgrade.exe with a package whose bin/resource.json doesn't accept the installed
 #   version (closed_test.py repack): it must refuse before changing anything, i.e. no backup-*,
 #   services up.
+# count_backups <node>: the number of backup-* folders, 0 if none. A glob, not `ls | wc -l`: with
+#   none, ls exits 2, which fails the step under `bash -eo pipefail` (the Windows jobs' `shell: bash`).
+count_backups() {
+  local b
+  shopt -s nullglob
+  b=($WORK/$1/backup-*/)
+  shopt -u nullglob
+  echo ${#b[@]}
+}
+
 refuse_node() {
   local n0 n1
-  n0=$(ls -d $WORK/$1/backup-* 2>/dev/null | wc -l)
+  n0=$(count_backups $1)
   ( cd $WORK/$1 && echo | ./upgrade.exe "$3" ) 2>&1 | tee $WORK/logs/$1-refused.log
   grep -q 'Upgrade refused' $WORK/logs/$1-refused.log || {
     echo "::error::$1: upgrade.exe did not refuse the package, see $1-refused.log"; return 1; }
-  n1=$(ls -d $WORK/$1/backup-* 2>/dev/null | wc -l)
+  n1=$(count_backups $1)
   [ "$n1" = "$n0" ] || { echo "::error::$1: a refused upgrade made a backup"; return 1; }
   check_services $1 $2
 }
