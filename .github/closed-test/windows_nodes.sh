@@ -35,8 +35,17 @@ check_services() {
   echo "$1 is up on $2 ($srv, $websrv)"
 }
 
+# check_central: the central still listens (it must outlive the step that started it)
+check_central() {
+  wait_port 1991 10 && return 0
+  echo "::error::the central is not listening on 1991 any more"
+  [ -z "$CENTRAL_HOME" ] || tail -40 "$CENTRAL_HOME/central.log" "$CENTRAL_HOME/central.err.log" 2>/dev/null
+  return 1
+}
+
 # setup_node <node> <jserv-port> <expected synode id>
 setup_node() {
+  check_central || return 1
   # the test central's admin password, not the package's default (else setup-cli.exe asks for it)
   python $CONFIG/closed_test.py central-pswd $WORK/$1/WEB-INF/settings.json "$CENTRAL_PSWD"
 
@@ -53,6 +62,7 @@ setup_node() {
 #   restarts the services. It ends with input('Press Enter to quit ...'), answered by the echo.
 upgrade_node() {
   local before after
+  check_central || return 1
   before=$(services $1)
   ( cd $WORK/$1 && echo | "$4" "$5" ) 2>&1 | tee $WORK/logs/$1-upgrade.log
   grep -q 'Update complete' $WORK/logs/$1-upgrade.log || {

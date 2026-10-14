@@ -100,17 +100,21 @@ class Output:
         self.count = 0                 # number of outputs so far
 
     def write(self, text: str):
+        # counted first: the output arrived, whatever happens to its echo
+        self.last = time.monotonic()
+        self.count += 1
         if self.strip_ansi:
             text = _ansi.sub('', text)
         for v in self.secrets:
             text = text.replace(v, '***')
-        sys.stdout.write(text)
-        sys.stdout.flush()
+        try:
+            sys.stdout.write(text)
+            sys.stdout.flush()
+        except (UnicodeError, OSError) as e:   # never let the echo stop the reader
+            sys.stdout.write(f'\n[feed_answers] (output not shown: {e})\n')
         if self.log:
             self.log.write(text)
             self.log.flush()
-        self.last = time.monotonic()
-        self.count += 1
 
     def close(self):
         if self.log:
@@ -167,7 +171,10 @@ def run_console(command, cwd, answers, out: Output, timeout: int, settle: float,
             except EOFError:
                 break
             if text:
-                out.write(text)
+                try:
+                    out.write(text)
+                except Exception as e:   # keep reading: a dead reader stalls the command and the answers
+                    print(f'\n[feed_answers] output error: {e}', file=sys.stderr)
     reader = threading.Thread(target=pump, daemon=True)
     reader.start()
 
@@ -214,6 +221,13 @@ def run_console(command, cwd, answers, out: Output, timeout: int, settle: float,
 
 
 def main():
+    # Windows runners' stdout is cp1252: synode-cli prints e.g. '✅' (U+2705) in the synode menu
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding='utf-8', errors='replace')
+        except (AttributeError, ValueError):
+            pass
+
     ap = argparse.ArgumentParser(description='Feed an answer file into an interactive command.')
     ap.add_argument('answers', help='answer file')
     ap.add_argument('--cwd', default='.', help='working directory of the command')

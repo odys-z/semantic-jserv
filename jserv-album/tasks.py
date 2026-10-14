@@ -578,9 +578,11 @@ def package(c: Context, deploy: str = 'tasks.json'):
         'bin/exiftool.zip': './task-res-exiftool-13.21_64.zip', # https://exiftool.org/index.html
         temp_jre_path: taskcfg.check_local_resource(taskcfg.jre_release),
         'desktop': f'{os.path.join(desktop, taskcfg.desktop_dist_dir, "*")}',
-        'setup-gui.exe': f'{synode_py}/dist/setup-gui.exe',
-        'setup-cli.exe': f'{synode_py}/dist/setup-cli.exe',
-        'uninstall-srv.exe': f'{synode_py}/dist/uninstall-srv.exe'
+        # one-dir bundle, synode.py/synode-setup.spec; the exes must stay next to _internal/
+        'setup-gui.exe': f'{synode_py}/dist/synode-setup/setup-gui.exe',
+        'setup-cli.exe': f'{synode_py}/dist/synode-setup/setup-cli.exe',
+        'uninstall-srv.exe': f'{synode_py}/dist/synode-setup/uninstall-srv.exe',
+        '_internal': f'{synode_py}/dist/synode-setup/_internal/*',
         # 'upgrade.exe': f'{synode_py}/dist/upgrade.exe'
     })
     else:

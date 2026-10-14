@@ -2,10 +2,19 @@ import sys
 from pathlib import Path
 
 # pi.run default pi.run(['--distpath', 'dist', '*.spec'])
-dist_setup_cli_exe = 'dist/setup-cli.exe'
-dist_setup_gui_exe = 'dist/setup-gui.exe'
-dist_uninstall_srv_exe = 'dist/uninstall-srv.exe'
-dist_upgrade_srv_exe = 'dist/upgrade-srv.exe'
+dist_setup_dir = 'dist/synode-setup'
+'''
+One-dir bundle of setup-gui.exe, setup-cli.exe and uninstall-srv.exe, see synode-setup.spec.
+'''
+dist_setup_cli_exe = f'{dist_setup_dir}/setup-cli.exe'
+dist_setup_gui_exe = f'{dist_setup_dir}/setup-gui.exe'
+dist_uninstall_srv_exe = f'{dist_setup_dir}/uninstall-srv.exe'
+dist_setup_internal = f'{dist_setup_dir}/_internal'
+
+dist_upgrade_srv_exe = 'dist/upgrade.exe'
+'''
+Onefile, upgrade-srv.spec, name='upgrade'.
+'''
 
 '''
 These two constants are kept at module level (cheap, no side effects) so that
@@ -18,6 +27,7 @@ file is executed directly (`python pyinstallerw.py`), not on import.
 '''
 
 def build_exes():
+    import shutil
     import PyInstaller.__main__ as pi
     from anson.io.odysz.common import requir_pkg
 
@@ -41,22 +51,14 @@ def build_exes():
     requir_pkg("qrcode")
     requir_pkg("psutil")
 
-    Path.unlink(Path(dist_setup_cli_exe), missing_ok=True)
-    Path.unlink(Path(dist_setup_gui_exe), missing_ok=True)
-    Path.unlink(Path(dist_uninstall_srv_exe), missing_ok=True)
+    shutil.rmtree(dist_setup_dir, ignore_errors=True)
     Path.unlink(Path(dist_upgrade_srv_exe), missing_ok=True)
 
-    print('Building with setup-gui.spec ...')
-    pi.run(['setup-gui.spec'])
-
-    print('Building setup-cli.spec ...')
-    pi.run(['setup-cli.spec'])
-
-    print('Building uninstall-srv.spec ...')
-    pi.run(['uninstall-srv.spec'])
+    print('Building synode-setup.spec (setup-gui, setup-cli, uninstall-srv) ...')
+    pi.run(['--noconfirm', 'synode-setup.spec'])
 
     print('Building upgrade-srv.spec ...')
-    pi.run(['upgrade-srv.spec'])
+    pi.run(['--noconfirm', 'upgrade-srv.spec'])
 
 
 if __name__ == '__main__':

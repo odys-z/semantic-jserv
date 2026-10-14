@@ -157,8 +157,13 @@ node, and photo 2, pushed after the upgrade, must reach every node.
 
 The package must contain `upgrade.exe`: in `jserv-album/tasks.py` it's still commented out of the
 Windows resources (`# 'upgrade.exe': f'{synode_py}/dist/upgrade.exe'`). `synode.py/upgrade-srv.spec`
-builds it as `dist/upgrade.exe` (`name='upgrade'`; `pyinstallerw.py` cleans `dist/upgrade-srv.exe`,
-a different name). The run stops with an error if the zip has no `upgrade.exe`.
+builds it as a onefile `dist/upgrade.exe` (`name='upgrade'`), so that the single exe can be taken out
+of the zip and run outside the installation folder. The run stops with an error if the zip has no
+`upgrade.exe`.
+
+setup-gui.exe, setup-cli.exe and uninstall-srv.exe share one PyInstaller onedir bundle
+(`synode.py/synode-setup.spec`, `dist/synode-setup/`): the package has them at its root, next to
+their `_internal/` folder, and they don't work without it.
 
 ## Answer files
 
