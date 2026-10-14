@@ -11,7 +11,12 @@ Used by the synodes-{windows,linux}-{closed,upgrade}-test.yml workflows.
     python closed_test.py report       <central-db> <org> <domain> <hub-id> <others-file> [--summary <md>]
     python closed_test.py h-photos     <docname> <timeout-s> <node-vol> [<node-vol> ...] [--summary <md>] [--min <n>]
     python closed_test.py pick-release <releases.json> <asset-regex> [<tag>]
-    python closed_test.py upgraded     <node>
+    python closed_test.py upgraded     <node> <upgrade-log>
+    python closed_test.py resources-applied <node>
+    python closed_test.py repack       <package> <out-package> <json>
+
+repack: a copy of a package whose bin/resource.json is updated with <json> (top-level keys replaced),
+e.g. '{"upgrade_from": {"min": "99.0.0"}}', for testing that the upgrade refuses it.
     python closed_test.py upgrade-tool <package.tar.gz | .zip>
 
 service-names prints the Windows (winsrv.*) or Linux (linusrv.*) service names saved in settings.json.
@@ -198,29 +203,73 @@ def pick_release(releases, regex, tag=''):
         print('\t'.join(max(assets)))
 
 
-def upgraded(node):
+def upgraded(node, log):
     """
-    After upgrade.exe (synodepy3 commands.update_srv()): a backup-YYYYMMDD folder with the node's data
-    and settings, which are restored (the same as their backups).
+    After upgrade.exe / synode-upgrade-srv (synodepy3 commands.update_srv()): a backup-YYYYMMDD folder
+    holds the node's data and settings, and the upgrade's log says each of them was copied back and
+    verified ("Restored: <file>", no "is not the same as its backup"). The files themselves are not
+    compared here: the restarted jserv rewrites settings.json (AppSettings.save_rt()), and an upgrade
+    to new versions saves the new Windows service names into it.
+    bin/resource.json in the backup is the installed package's manifest, kept as a reference only.
     """
+    name = os.path.basename(node)
     backups = sorted(glob.glob(os.path.join(node, 'backup-*')))
     if not backups:
-        fail(f'{os.path.basename(node)}: no backup-* folder, the upgrade did not run')
+        fail(f'{name}: no backup-* folder, the upgrade did not run')
     b = backups[-1]
+    backed = sorted(os.path.relpath(p, b) for p in glob.glob(os.path.join(b, '**', '*'), recursive=True)
+                    if os.path.isfile(p))
+    backed = [p.replace(os.sep, '/') for p in backed if p.replace(os.sep, '/') != 'bin/resource.json']
+    for must in ('WEB-INF/settings.json', 'dictionary.json'):
+        if not any(p.endswith(must) for p in backed):
+            fail(f'{name}: {must} is not backed up in {b}')
+    with open(log, encoding='utf-8', errors='replace') as f:
+        lines = f.read().splitlines()
+    if any('is not the same as its backup' in l for l in lines):
+        fail(f'{name}: a file is not restored, see {os.path.basename(log)}')
+    restored = [l.split('Restored:', 1)[1].strip().replace('\\', '/') for l in lines if 'Restored:' in l]
+    for p in backed:
+        if not any(r.endswith('/' + os.path.basename(p)) or r == os.path.basename(p) for r in restored):
+            fail(f'{name}: {p} is backed up but not restored, see {os.path.basename(log)}')
+    print(f'{name}: upgraded, backup {b}: {", ".join(backed)} restored')
+
+
+def resources_applied(node):
+    """
+    After an upgrade: the services run the files of the new package, named in its bin/resource.json.
+    Linux: the units (settings.json envars linusrv.*) start its jars. Windows: the services are named
+    after its versions (Synode-<jar_ver>-<synid>, Synode.web-<web_ver>-<synid>) and the install bats
+    have its jar versions.
+    """
+    import subprocess
+    name = os.path.basename(node)
+    js = os.path.join(node, 'bin', 'resource.json')
+    if not os.path.isfile(js):
+        fail(f'{name}: no bin/resource.json, the upgrade package was built before it')
+    with open(js, encoding='utf-8') as f:
+        res = json.load(f)
     with open(os.path.join(node, 'WEB-INF', 'settings.json'), encoding='utf-8') as f:
-        vol = json.load(f).get('volume') or 'vol'
-    if not os.path.isabs(vol):
-        vol = os.path.join(node, vol)   # relative to the installation folder, upgrade.exe's working folder
-    pairs = [(os.path.join(node, 'WEB-INF', 'settings.json'), os.path.join(b, 'WEB-INF', 'settings.json')),
-             (os.path.join(vol, 'dictionary.json'), os.path.join(b, os.path.basename(os.path.normpath(vol)), 'dictionary.json'))]
-    for cur, bak in pairs:
-        if not os.path.isfile(bak):
-            fail(f'{os.path.basename(node)}: {bak} is not backed up')
-        # as json: on Linux, reinstalling the services saves their names into settings.json again
-        with open(cur, encoding='utf-8') as c, open(bak, encoding='utf-8') as k:
-            if json.load(c) != json.load(k):
-                fail(f'{os.path.basename(node)}: {cur} is not restored from {bak}')
-    print(f'{os.path.basename(node)}: upgraded, backup {b}')
+        env = json.load(f).get('envars') or {}
+    with open(os.path.join(node, 'vol', 'dictionary.json'), encoding='utf-8') as f:
+        synid = json.load(f)['config']['synid']
+    v = res.get('versions') or {}
+    if env.get('linusrv.synode'):
+        for key, item in (('linusrv.synode', 'synode'), ('linusrv.web', 'html-web')):
+            unit = subprocess.run(['systemctl', 'cat', env[key]], capture_output=True, text=True).stdout
+            if res[item] not in unit:
+                fail(f'{name}: {env[key]} does not start {res[item]}')
+            print(f'{name}: {env[key]} starts {res[item]}')
+    else:
+        expect = {'winsrv.synode': f"Synode-{v.get('jar_ver')}-{synid}",
+                  'winsrv.web': f"Synode.web-{v.get('web_ver')}-{synid}"}
+        for k, n in expect.items():
+            if env.get(k) != n:
+                fail(f'{name}: envars {k} is {env.get(k)!r}, expected {n!r} (bin/resource.json versions)')
+        for bat, ver in (('install-jserv-w.bat', v.get('jar_ver')), ('install-html-w.bat', v.get('html_srver'))):
+            with open(os.path.join(node, 'winsrv', bat), encoding='utf-8', errors='replace') as f:
+                if f'@set jar_ver={ver}' not in f.read():
+                    fail(f'{name}: winsrv/{bat} is not stamped with jar_ver={ver}')
+        print(f"{name}: services {expect['winsrv.synode']}, {expect['winsrv.web']}")
 
 
 def upgrade_tool(package):
@@ -248,6 +297,40 @@ def upgrade_tool(package):
     print(f'synode_py3 {got}, the same as {whls[0]}')
 
 
+def repack(package, out, patch):
+    """A copy of a package (zip or tar.gz) with its bin/resource.json updated by the json patch."""
+    import io
+    import tarfile
+    import zipfile
+    upd = json.loads(patch)
+
+    def patched(data: bytes) -> bytes:
+        m = json.loads(data)
+        m.update(upd)
+        return (json.dumps(m, indent=2) + '\n').encode('utf-8')
+
+    found = False
+    if zipfile.is_zipfile(package):
+        with zipfile.ZipFile(package) as zi, zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as zo:
+            for i in zi.infolist():
+                data = zi.read(i)
+                if i.filename.removeprefix('./') == 'bin/resource.json':
+                    data, found = patched(data), True
+                zo.writestr(i, data)
+    else:
+        with tarfile.open(package) as ti, tarfile.open(out, 'w:gz') as to:
+            for m in ti.getmembers():
+                f = ti.extractfile(m) if m.isfile() else None
+                if f and m.name.removeprefix('./') == 'bin/resource.json':
+                    data = patched(f.read())
+                    m.size, f, found = len(data), io.BytesIO(data), True
+                to.addfile(m, f)
+    if not found:
+        os.remove(out)
+        fail(f'{os.path.basename(package)} has no bin/resource.json')
+    print(f'{out}: bin/resource.json updated with {patch}')
+
+
 def main():
     args = sys.argv[1:]
     md = opt(args, '--summary')
@@ -272,7 +355,11 @@ def main():
     elif cmd == 'pick-release':
         pick_release(*a)
     elif cmd == 'upgraded':
-        upgraded(a[0])
+        upgraded(a[0], a[1])
+    elif cmd == 'resources-applied':
+        resources_applied(a[0])
+    elif cmd == 'repack':
+        repack(*a)
     elif cmd == 'upgrade-tool':
         upgrade_tool(a[0])
     else:

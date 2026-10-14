@@ -5,13 +5,18 @@
 #      the package of RELEASE_TAG on hub, prv1, prv2 as Windows services, pushes photo 1.
 # 7.   Downloads the upgrade package (UPGRADE_TAG, empty: the newest synode windows zip, which may
 #      be the same package: a re-deployment).
+# 7b.  The installed upgrade.exe refuses a copy of the upgrade package whose bin/resource.json
+#      doesn't accept the installed version (upgrade_from min 99.0.0): nothing changed, no backup,
+#      services up. Skipped if the installed package has no bin/resource.json (its tool predates it).
 # 8.   Upgrades hub, prv1, prv2 one by one, in each installation folder, with the installed upgrade.exe
 #      (packed as upgrade.pkg, moved to upgrade.exe by setup-cli.exe in step 1-6):
 #          upgrade.exe <upgrade package zip>
 #      (synodepy3 commands.update_srv(): stop the 2 services, back up the volume's dbs and
-#      dictionary.json and the settings, unpack the zip over the folder, restore the backup,
-#      restart the services), and checks: "Update complete", backup-* holds the restored files,
-#      the node is still the same domain / synode with the same services, the jserv is up again.
+#      dictionary.json and the settings, unpack the zip over the folder, copy the backup back, and
+#      restart the services, reinstalled first with new names and jars if the new bin/resource.json
+#      has other versions), and checks: "Update complete", every backed-up file restored, the node is
+#      still the same domain / synode, its services are named after the new versions and the bats
+#      have the new jars, the old services are gone if renamed, the jserv is up again.
 # 9.   The central's domain tables again (ci-0.8 hub h, peers p; other domains unchanged), photo 1
 #      still on every node, and photo 2 pushed and synchronized after the upgrade.
 #
@@ -124,6 +129,18 @@ jobs:
           echo "UPGRADE_PKG=$pkg" >> $GITHUB_ENV
           same=; cmp -s "$pkg" "$PACKAGE" && same=', the installed package: a re-deployment'
           echo "### Upgrade to: \`$name\` (release \`$tag\`, uploaded $updated$same)" >> $GITHUB_STEP_SUMMARY
+
+      # ---- 7b. a package that doesn't accept the installed version is refused, nothing changed ----
+      - name: Refuse an upgrade out of range (upgrade.exe)
+        run: |
+          # the installed upgrade.exe checks bin/resource.json upgrade_from since the packages that have one
+          [ -f $WORK/hub/bin/resource.json ] || {
+            echo "::notice::the installed package has no bin/resource.json: its upgrade.exe doesn't check versions, skipped"; exit 0; }
+          mkdir -p $WORK/dl/refused
+          python $CONFIG/closed_test.py repack "$UPGRADE_PKG" $WORK/dl/refused/out-of-range.zip '{"upgrade_from": {"min": "99.0.0"}}'
+          . $CONFIG/windows_nodes.sh
+          refuse_node hub 8961 $WORK/dl/refused/out-of-range.zip
+          echo "### Refused: a package with upgrade_from min 99.0.0 (logs/hub-refused.log)" >> $GITHUB_STEP_SUMMARY
 
       # ---- 8. upgrade: stop, upgrade, restart ----
       - name: Upgrade the synodes (upgrade.exe)

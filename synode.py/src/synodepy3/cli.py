@@ -29,7 +29,7 @@ def uninst_srv():
         print(f"Error uninstalling html-service: {e}", file=sys.stderr)
 
 
-def upgrade_srv(zip_path: str = None):
+def upgrade_srv(zip_path: str = None, force: bool = False):
     """
     Entry-point: synode-upgrade-srv / upgrade.exe
 
@@ -70,11 +70,14 @@ def upgrade_srv(zip_path: str = None):
 
         Note: The offline RDBMS synchronization is still essential, as a PC can be shutting down while uploading a doc.
     """
-    zpath = zip_path if zip_path is not None else (sys.argv[1] if len(sys.argv) > 1 else None)
+    args = [a for a in sys.argv[1:] if a != '--force']
+    force = force or '--force' in sys.argv[1:]
+    zpath = zip_path if zip_path is not None else (args[0] if args else None)
     if zpath is None:
-        print('Usage: synode-upgrade-srv <path-to-update.zip or .tar.gz>')
+        print('Usage: synode-upgrade-srv [--force] <path-to-update.zip or .tar.gz>\n'
+              '  --force: upgrade even if the package does not accept the installed version (support cases)')
         return
-    update_srv(zpath)
+    update_srv(zpath, force)
 
 
 def startweb(port: int = 8900):
@@ -93,107 +96,3 @@ def startweb(port: int = 8900):
         if worker is not None:
             worker.join()
 
-
-# if __name__ == '__main__':
-#
-#     cmd = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else 'list'
-#     arg = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] else None
-#     arg2= sys.argv[3] if len(sys.argv) > 3 and sys.argv[3] else None
-#
-#     cmds = {
-#         "list": "list known synodes.",
-#         "load": "load deploy-path, load configurations",
-#         "install": "arg[0]: res-path, arg[1] volume-path\n\
-#         - setup the synode service resources by registering settings path and volume",
-#
-#         "install-winsrv": "or i-w, arg[0] synode id (readable alais only), arg[1] bin resources path, default 'winsrv'\n\
-#         - install the synode service as a Windows service",
-#
-#         # "install-web": "or i-web, arg[0] port, default 8900, install web service",
-#         "uninstall-srvname": "or i-srv, arg[0] port, default 8900, install web service",
-#
-#         "uninstall-winsrv": "or ui-w, arg[0] bin resources path, default 'winsrv'\n\
-#         - uninstall the synode service installed as a Windows service",
-#
-#         "start": "arg[0]: volume\n\
-#         - Start the node. Configurations must be setup correctly.\n\
-#           Wrong configuration may results in fail forever for this node.\n\
-#           Use test command for test starting.",
-#
-#         "test": "try bring up the synode without triggering synchronization.",
-#
-#         "start-web": "start-web <web-port, e.g. 8900> <jserv-port, e.g. 8964>\
-#         - start the python3 web server, album-web 0.4, at localhost.",
-#
-#         "sync_in": "arg[0]: volume, arg[1]: number of seconds\n\
-#         - Update synchronization interval's setting.",
-#
-#         "showip": "show local ip to be bound",
-#         "ping": "ping peer-id, peer-jserv, ping configured jserv"
-#     }
-#
-#     cli = InstallerCli()
-#     cli.load_settings()
-#
-#     if cmd == 'list':
-#         print(cli.list_synodes())
-#     if cmd == 'load':
-#         print(cli.load_settings())
-#
-#     elif cmd == 'install' or cmd == 'i':
-#         Utils.logi("Install synodes with settings:")
-#         cli = InstallerCli()
-#         Utils.logi(cli.settings.toBlock(beautify=True))
-#         cli.install() # setup
-#
-#     elif cmd == 'uninstall-winsrv' or cmd == 'ui-w':
-#         if arg is not None:
-#             srvname = arg
-#         else:
-#             srvname = cli.settings.envars[winsrv_synode]
-#
-#         print("Uninstalling ", srvname, "at port", cli.settings.port)
-#         try: uninstall_wsrv_byname(srvname)
-#         except: Utils.warn(f'Failed to uninstall service {srvname}')
-#
-#         srvname = cli.settings.envars[winsrv_websrv]
-#         print("Uninstalling ", srvname, "at port", cli.settings.port)
-#         try: uninstall_wsrv_byname(srvname)
-#         except: Utils.warn(f'Failed to uninstall service {srvname}')
-#
-#     elif cmd == 'install-winsrv' or cmd == 'i-w':
-#         srvname = cli.gen_wsrv_name()
-#         print("Installing ", srvname, "at port", cli.settings.port)
-#         install_wsrv_byname(srvname)
-#         install_htmlsrv(cli.gen_html_srvname())
-#
-#     elif cmd == 'clean':
-#         # clean(arg)
-#         pass
-#
-#     elif cmd == 'start-web':
-#         startweb(int(arg))
-#
-#     # elif cmd == 'install-web' or cmd == 'i-web':
-#     #     install_htmlsrv()
-#
-#     elif cmd == 'uninstall-srvname' or cmd == 'u-srv':
-#         if arg is not None:
-#             srvname = arg
-#         else:
-#             srvname = cli.gen_wsrv_name()
-#         print("Uninstalling ", srvname)
-#         uninstall_wsrv_byname(srvname)
-#
-#     elif cmd == 'sync_in':
-#         cli.load_settings()
-#         sins = cli.registry.config.syncIns
-#
-#     elif cmd == 'showip':
-#         InstallerCli.reportIp()
-#     elif cmd == 'ping':
-#         ping(arg, arg2)
-#     else:
-#         print('Usage: python3 installer-cli.py cmd.\nCommands:')
-#         for c in cmds:
-#             print(f'{c}\t: {cmds[c]}')

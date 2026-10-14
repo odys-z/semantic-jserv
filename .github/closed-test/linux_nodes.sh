@@ -53,26 +53,41 @@ setup_node() {
 }
 
 # upgrade_node <node> <jserv-port> <expected synode id> <package.tar.gz>
-#   synode-upgrade-srv <tar.gz> in the installation folder (synodepy3 commands.update_srv()): uninstalls
-#   the 2 units, backs up the data and settings, unpacks the package over the folder, restores the
-#   backup, installs the units again (answers/linux/upgrade.txt starts them), and installs the
-#   package's bin/synode_py3-*.whl, the upgrade tool itself.
+#   synode-upgrade-srv <tar.gz> in the installation folder (synodepy3 commands.update_srv()): stops the
+#   2 units, backs up the data and settings, unpacks the package over the folder, copies the backup
+#   back, points the units to the jars in the new bin/resource.json, restarts them, and installs the
+#   package's bin/synode_py3-*.whl, the upgrade tool itself. It must not ask anything: stdin is
+#   /dev/null, so a prompt would fail the upgrade.
 upgrade_node() {
   local before after
   check_central || return 1
   before=$(services $1)
-  python $CONFIG/feed_answers.py $CONFIG/answers/linux/upgrade.txt --cwd $WORK/$1 \
-         --log $WORK/logs/$1-upgrade.log synode-upgrade-srv "$4"
+  ( cd $WORK/$1 && synode-upgrade-srv "$4" < /dev/null ) 2>&1 | tee $WORK/logs/$1-upgrade.log
   grep -q 'Update complete' $WORK/logs/$1-upgrade.log || {
     echo "::error::$1: synode-upgrade-srv did not complete, see $1-upgrade.log"; return 1; }
 
-  python $CONFIG/closed_test.py upgraded $WORK/$1 || return 1                  # backed up and restored
+  python $CONFIG/closed_test.py upgraded $WORK/$1 $WORK/logs/$1-upgrade.log || return 1   # backed up, copied back
   python $CONFIG/closed_test.py installed $WORK/$1 $CENTRAL_DOMAIN $3 || return 1
   after=$(services $1)
   [ "$after" = "$before" ] || { echo "::error::$1: services changed: '$before' -> '$after'"; return 1; }
+  python $CONFIG/closed_test.py resources-applied $WORK/$1 || return 1        # the new jars
   check_services $1 $2 || return 1
   python $CONFIG/closed_test.py upgrade-tool "$4" || return 1                  # the new synode_py3
   systemctl cat "${after%% *}" > $WORK/logs/$1-service-after-upgrade.txt || true
+}
+
+# refuse_node <node> <jserv-port> <package.tar.gz>
+#   synode-upgrade-srv with a package whose bin/resource.json doesn't accept the installed version
+#   (closed_test.py repack): it must refuse before changing anything, i.e. no backup-*, services up.
+refuse_node() {
+  local n0 n1
+  n0=$(ls -d $WORK/$1/backup-* 2>/dev/null | wc -l)
+  ( cd $WORK/$1 && synode-upgrade-srv "$3" < /dev/null ) 2>&1 | tee $WORK/logs/$1-refused.log
+  grep -q 'Upgrade refused' $WORK/logs/$1-refused.log || {
+    echo "::error::$1: synode-upgrade-srv did not refuse the package, see $1-refused.log"; return 1; }
+  n1=$(ls -d $WORK/$1/backup-* 2>/dev/null | wc -l)
+  [ "$n1" = "$n0" ] || { echo "::error::$1: a refused upgrade made a backup"; return 1; }
+  check_services $1 $2
 }
 
 # node_logs: the services' journals and settings of hub, prv1, prv2 into $WORK/logs

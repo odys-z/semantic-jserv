@@ -52,7 +52,7 @@ runs:
     - name: Check the answer files
       shell: bash
       run: |
-        for f in $CONFIG/answers/linux/{hub,prv1,prv2,upgrade}.txt; do
+        for f in $CONFIG/answers/linux/{hub,prv1,prv2}.txt; do
           python $CONFIG/feed_answers.py $f --dry-run
         done
 

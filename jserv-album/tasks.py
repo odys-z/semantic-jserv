@@ -16,7 +16,7 @@ _independent = 'github-head' in _tasks
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.10")
-    requir_pkg("semantics.py3", "0.6.16") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3
+    requir_pkg("semantics.py3", "0.6.17") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res()
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("build")               # by synode.py
@@ -558,13 +558,30 @@ def package(c: Context, deploy: str = 'tasks.json'):
 
     readme_md = gen_readme()
 
+    # The package's manifest, bin/resource.json (semanticshare PkgResources, from SynodeTask.pkg_res()):
+    # its files are the keys of resources, so they are packed by the same names.
+    manifest = taskcfg.pkg_res()
+
+    def gen_resource_json() -> str:
+        """
+        Write bin/resource.json, the package's manifest: the files, the versions (the Windows service names
+        are made of), and upgrade_from (tasks.*.json, the installed versions it can upgrade). On upgrade,
+        synodepy3 commands.update_srv() checks upgrade_from, compares the installed manifest with the new
+        one, and points the services to the changed files.
+        :return: path of the generated resource.json, in the README's temporary folder
+        """
+        js = os.path.join(os.path.dirname(readme_md), 'resource.json')
+        manifest.toFile(js)
+        return js
+
     resources = {
-        f'bin/html-web-{taskcfg.html_jar_v}.jar': f'{html_target}/html-web-{taskcfg.html_jar_v}.jar', # clone at github/html-service
-        f'bin/jserv-album-{taskcfg.version}.jar': f'target/jserv-album-{taskcfg.version}.jar',
+        manifest.file('html-web'): f'{html_target}/{taskcfg.htmlweb_jar()}', # clone at github/html-service
+        manifest.file('synode'): f'target/{taskcfg.synode_jar()}',
+        'bin/resource.json': gen_resource_json(),
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
-        f'bin/{taskcfg.synodepy3_whl()}': f'{synode_py}/dist/{taskcfg.synodepy3_whl()}',
+        manifest.file('synode.py'): f'{synode_py}/dist/{taskcfg.synodepy3_whl()}',
         "registry": f"{synode_py}/registry/*",
         'winsrv': f'{synode_py}/winsrv/*',
         "res": f"{synode_py}/src/synodepy3/res/*",

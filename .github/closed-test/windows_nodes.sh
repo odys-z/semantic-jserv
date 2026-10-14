@@ -65,10 +65,27 @@ setup_node() {
   fi
 }
 
+# refuse_node <node> <jserv-port> <package.zip>
+#   the installed upgrade.exe with a package whose bin/resource.json doesn't accept the installed
+#   version (closed_test.py repack): it must refuse before changing anything, i.e. no backup-*,
+#   services up.
+refuse_node() {
+  local n0 n1
+  n0=$(ls -d $WORK/$1/backup-* 2>/dev/null | wc -l)
+  ( cd $WORK/$1 && echo | ./upgrade.exe "$3" ) 2>&1 | tee $WORK/logs/$1-refused.log
+  grep -q 'Upgrade refused' $WORK/logs/$1-refused.log || {
+    echo "::error::$1: upgrade.exe did not refuse the package, see $1-refused.log"; return 1; }
+  n1=$(ls -d $WORK/$1/backup-* 2>/dev/null | wc -l)
+  [ "$n1" = "$n0" ] || { echo "::error::$1: a refused upgrade made a backup"; return 1; }
+  check_services $1 $2
+}
+
 # upgrade_node <node> <jserv-port> <expected synode id> <package.zip>
 #   the installed upgrade.exe <zip>, in the installation folder (synodepy3 commands.update_srv()): stops the 2
-#   services, backs up the data and settings, unpacks the zip over the folder, restores the backup,
-#   restarts the services. It ends with input('Press Enter to quit ...'), answered by the echo.
+#   services, backs up the data and settings, unpacks the zip over the folder, copies the backup back,
+#   and restarts the services; if the new bin/resource.json has other versions, it reinstalls them first,
+#   with the new names (settings.json envars) and jars (winsrv/*.bat). upgrade_cli.py ends with
+#   input('Press Enter to quit ...'), which keeps a double-clicked console open: answered by the echo.
 upgrade_node() {
   local before after
   check_central || return 1
@@ -79,10 +96,16 @@ upgrade_node() {
   grep -q 'Update complete' $WORK/logs/$1-upgrade.log || {
     echo "::error::$1: upgrade.exe did not complete, see $1-upgrade.log"; return 1; }
 
-  python $CONFIG/closed_test.py upgraded $WORK/$1 || return 1                  # backed up and restored
+  python $CONFIG/closed_test.py upgraded $WORK/$1 $WORK/logs/$1-upgrade.log || return 1   # backed up, copied back
   python $CONFIG/closed_test.py installed $WORK/$1 $CENTRAL_DOMAIN $3 || return 1
   after=$(services $1)
-  [ "$after" = "$before" ] || { echo "::error::$1: services changed: '$before' -> '$after'"; return 1; }
+  [ "$after" = "$before" ] || echo "$1: services $before -> $after (new versions)"
+  python $CONFIG/closed_test.py resources-applied $WORK/$1 || return 1        # names and jars of the new versions
+  for s in $before; do                                                        # the old services, if renamed, are gone
+    case " $after " in *" $s "*) ;; *)
+      ! sc.exe query "$s" > /dev/null || { echo "::error::$1: the old service $s is still installed"; return 1; } ;;
+    esac
+  done
   check_services $1 $2 || return 1
   sc.exe qc "${after%% *}" > $WORK/logs/$1-service-after-upgrade.txt || true
 }

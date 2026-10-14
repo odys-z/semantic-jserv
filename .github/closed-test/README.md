@@ -6,8 +6,8 @@ Five workflows use these resources:
   > **Run workflow**. Sets up a central and 3 synodes, installed as systemd services by synode-cli,
   pushes a file from a test client, checks the synchronization.
 - `.github/workflows/synodes-linux-upgrade-test.yml`: the Linux closed test, then upgrades every
-  synode with the installed `synode-upgrade-srv` (uninstall the units, upgrade, reinstall and start
-  them, install the new synode_py3 wheel), and checks again.
+  synode with the installed `synode-upgrade-srv` (stop the units, upgrade, point them to the new
+  jars, restart them, install the new synode_py3 wheel; nothing asked), and checks again.
 - `.github/workflows/synodes-windows-closed-test.yml`: the same on Windows, with the synodes
   installed as Windows services by setup-cli.exe, and the Java (Android) client pushing.
 - `.github/workflows/synodes-windows-upgrade-test.yml`: the Windows closed test, then upgrades every
@@ -40,7 +40,6 @@ Each run downloads two things from this repo's releases, so nothing heavy is com
     hub.txt                  the hub   (jserv 8961, web 8951), creates the domain ci-0.8
     prv1.txt                 prv1      (jserv 8962, web 8952)
     prv2.txt                 prv2      (jserv 8963, web 8953)
-    upgrade.txt              synode-upgrade-srv, every node
   answers/windows/         setup-cli.exe answers, synodes-windows-closed-test.yml
     hub.txt, prv1.txt, prv2.txt
 ```
@@ -144,12 +143,43 @@ upgrade.exe <upgrade package zip>
 
 `synodes-linux-upgrade-test` is the same on Linux. The closed test's synode-cli installs each node's
 2 systemd services (`<synid>.service`, `<synid>.web.service`, names saved in `settings.json`,
-envars `linusrv.synode` / `linusrv.web`), so the upgrade has units to stop and reinstall. In each
-installation folder, the installed tool (the synode_py3 wheel of the installed package) runs:
+envars `linusrv.synode` / `linusrv.web`), so the upgrade has units to stop and restart. In each
+installation folder, the installed tool (the synode_py3 wheel of the installed package) runs, with
+stdin from `/dev/null`, so any prompt fails the upgrade:
 
 ```
 synode-upgrade-srv <upgrade package tar.gz>
 ```
+
+## Upgrade: what is checked
+
+`commands.update_srv()` first reads the new package's `bin/resource.json` out of the package and
+checks it accepts the installed version (`upgrade_from` {min, max}, no downgrade); if not, it stops
+there with "Upgrade refused", having changed nothing (`--force` upgrades anyway, for support cases).
+Then it stops the 2 services, backs up the node's data and settings
+(`<volume>/dictionary.json`, `jserv-main.db`, `doc-jserv.db`, `WEB-INF/settings.json`,
+`WEB-INF/html-service.json`, `web-dist/private/host.json`) into `backup-YYYYMMDD/`, unpacks the
+package, copies the backups back over the package's files and verifies each copy ("Restored: ..."),
+then points the services to the new package's files and restarts them. Nothing is asked.
+
+The package's manifest `bin/resource.json` (semanticshare `PkgResources`, written by
+`jserv-album/tasks.py` `package()` from `SynodeTask.pkg_res()`) names its files, versions and the
+installed versions it accepts (`{"files": {"synode": "bin/jserv-album-<v>.jar", ...}, "versions":
+{...}, "upgrade_from": {"min": "0.8.0"}}`, `upgrade_from` from `tasks.*.json`). It holds nothing of
+the build configuration (no passwords, hosts or local paths).
+The installed one is kept in the backup as a reference (not copied back); comparing it with the new
+one, the upgrade replaces the changed jar paths in the Linux unit files, or, on Windows, if the
+versions changed, reinstalls the services with the new names (`Synode-<jar_ver>-<synid>`, saved in
+`settings.json` envars) and jars (`winsrv/*.bat`).
+
+The checks: first, a copy of the upgrade package with `upgrade_from` min 99.0.0
+(`closed_test.py repack`) is refused on the hub, with no backup made and the services still up
+(skipped when the installed package has no `bin/resource.json`, as its tool doesn't check). Then,
+after the upgrade, "Update complete" and every backed-up file "Restored" in the upgrade's log
+(`closed_test.py upgraded`; the files are not compared afterwards, as the restarted jserv rewrites
+`settings.json`), the node is the same domain / synode, the services run the jars of the new
+`bin/resource.json` (`closed_test.py resources-applied`), they are up, and on Linux the installed
+synode_py3 is the package's.
 
 ## Answer files
 
