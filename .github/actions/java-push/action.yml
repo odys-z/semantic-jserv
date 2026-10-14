@@ -28,7 +28,9 @@ runs:
       if: inputs.build == 'true'
       shell: bash
       run: |
-        mvn_install() { mvn -B -q -f "$1" install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true; }
+        # -U: ask Maven Central again for the versions in ranges ([x,)), not only the cached metadata
+        #     (setup-java cache: maven), e.g. for a version published since the cache was saved
+        mvn_install() { mvn -B -q -U -f "$1" install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true; }
         mvn_install semantic.jserv/pom.xml
         mvn_install jserv-album-lib/pom.xml
         mvn_install Anclient/java/eclipse-workspace/anclient.jserv/pom.xml
@@ -36,7 +38,7 @@ runs:
         # albumtier takes version ranges ([x,)): Maven picks the newest, here or in Maven Central
         ver() { mvn -B -q -f "$1" help:evaluate -Dexpression=project.version -DforceStdout; }
         built="semantic.jserv:$(ver semantic.jserv/pom.xml) syndoc-lib:$(ver jserv-album-lib/pom.xml) anclient.java:$(ver Anclient/java/eclipse-workspace/anclient.jserv/pom.xml)"
-        mvn -B -q -f Anclient/examples/example.android/albumtier/pom.xml dependency:list \
+        mvn -B -q -U -f Anclient/examples/example.android/albumtier/pom.xml dependency:list \
             -DincludeArtifactIds=semantic.jserv,syndoc-lib,anclient.java -DoutputFile=$WORK/logs/albumtier-deps.txt
         echo "### Java client: built $built" >> $GITHUB_STEP_SUMMARY
         sed -n 's/^ *//p' $WORK/logs/albumtier-deps.txt | grep -E 'semantic.jserv|syndoc-lib|anclient.java' | sed 's/^/- resolved /' >> $GITHUB_STEP_SUMMARY
