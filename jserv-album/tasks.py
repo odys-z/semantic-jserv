@@ -16,7 +16,7 @@ _independent = 'github-head' in _tasks
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.10")
-    requir_pkg("semantics.py3", "0.6.17") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res()
+    requir_pkg("semantics.py3", "0.6.16") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res()
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("build")               # by synode.py
