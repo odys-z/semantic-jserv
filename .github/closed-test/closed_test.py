@@ -252,13 +252,17 @@ def resources_applied(node):
         env = json.load(f).get('envars') or {}
     with open(os.path.join(node, 'vol', 'dictionary.json'), encoding='utf-8') as f:
         synid = json.load(f)['config']['synid']
+    # semanticshare PkgResources: {"type", "files": {item: path}, "versions": {...}, "upgrade_from": {...}}
+    files = res.get('files') or {}
     v = res.get('versions') or {}
     if env.get('linusrv.synode'):
         for key, item in (('linusrv.synode', 'synode'), ('linusrv.web', 'html-web')):
             unit = subprocess.run(['systemctl', 'cat', env[key]], capture_output=True, text=True).stdout
-            if res[item] not in unit:
-                fail(f'{name}: {env[key]} does not start {res[item]}')
-            print(f'{name}: {env[key]} starts {res[item]}')
+            if not files.get(item):
+                fail(f'{name}: bin/resource.json has no files.{item}')
+            if files[item] not in unit:
+                fail(f'{name}: {env[key]} does not start {files[item]}')
+            print(f'{name}: {env[key]} starts {files[item]}')
     else:
         expect = {'winsrv.synode': f"Synode-{v.get('jar_ver')}-{synid}",
                   'winsrv.web': f"Synode.web-{v.get('web_ver')}-{synid}"}

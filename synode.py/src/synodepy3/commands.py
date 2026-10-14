@@ -17,7 +17,7 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db
 from .__version__ import jar_ver, html_srver
 from semanticshare.io.oz.syn.pkgresource import PkgResources
 
-from .installer_api import promote_upgrade_whl, load_resources, running_resources, read_package_manifest, \
+from .installer_api import promote_upgrade_whl, load_resources, running_resources, read_package_res, \
     resource_json, InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
     html_service_json
 from .systemd_units import Sudo, stop_sysunits, restart_sysunits, apply_unit_resources
@@ -325,7 +325,7 @@ def update_srv(pkg_path: str, force: bool = False):
     # 0. does the new package accept the installed version?
     installed = load_resources() or running_resources()
     try:
-        pkg_res = read_package_manifest(pkg_path)
+        pkg_res = read_package_res(pkg_path)
     except Exception as e:
         print(f'Error: cannot read {pkg_path}: {e}\nUpgrade aborted, nothing is changed.', file=sys.stderr)
         return
