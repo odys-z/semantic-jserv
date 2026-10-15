@@ -1,7 +1,7 @@
 # Windows: setup-cli.exe answers for private node 2, one per line, in the order of the prompts.
 # Format: see feed_answers.py. Runs after private node 1 is installed and started.
 # The same prompts as the Linux answers (../linux), but the end: on Windows setup-cli.exe asks to
-# install the Windows services (synodepy3 commands.install_winsrvs(), since 9e3843b). The runner is
+# install the Windows services (synodepy3 winsrv.install_winsrvs(), since 9e3843b). The runner is
 # already elevated, so no UAC request.
 # Volume paths must use '/', not '\' (setup-cli.exe rejects '\').
 

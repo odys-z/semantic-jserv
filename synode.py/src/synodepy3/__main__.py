@@ -32,7 +32,7 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, get
 from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp, CynodeStats, SynodeConfig
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from synodepy3.commands import install_winsrvs
+from synodepy3.winsrv import install_winsrvs
 from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
     synode_ui, cfgpaths, posix_path, desktop_exe, start_desktop
 from synodepy3.install_jre import validate_jre

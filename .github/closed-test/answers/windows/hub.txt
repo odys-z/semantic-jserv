@@ -2,7 +2,7 @@
 # Format: see feed_answers.py. <enter> = accept default, <clear>x = replace the default with x,
 # ${VAR} from the workflow env, menus take the option number (1-based).
 # The same prompts as the Linux answers (../linux), but the end: on Windows setup-cli.exe asks to
-# install the Windows services (synodepy3 commands.install_winsrvs(), since 9e3843b). The runner is
+# install the Windows services (synodepy3 winsrv.install_winsrvs(), since 9e3843b). The runner is
 # already elevated, so no UAC request.
 # Volume paths must use '/', not '\' (setup-cli.exe rejects '\').
 #

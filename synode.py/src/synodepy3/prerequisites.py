@@ -181,7 +181,7 @@ def check_confirm_install_qtruntime() -> Optional[str]:
     if not confirm_tty(f'Qt (PySide6) cannot be loaded: {err}\nInstall the system libraries now?\n  {manual}\n'):
         return f'{err}\nPlease install the system libraries Qt needs:\n{manual}'
 
-    from .systemd_units import Sudo  # imported here: systemd_units imports installer_api, which is heavy
+    from .linunits import Sudo  # imported here: linunits imports installer_api, which is heavy
     sudo = Sudo()
     try:
         sudo.ensure()

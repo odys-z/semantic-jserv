@@ -1,14 +1,35 @@
 import sys
 
-from .commands import uninstall_wsrv_byname, winsrv_synode, winsrv_websrv, update_srv
+from anson.io.odysz.common import Utils
+
+from .commands import update_srv
+from .winsrv import uninstall_wsrv_byname, winsrv_synode, winsrv_websrv
 # See https://stackoverflow.com/a/28154841
 from .installer_api import InstallerCli, posix_path
 
 
 def uninst_srv():
+    """
+    Entry-point: synode-uninstall-srv / uninstall-srv.exe
+    """
     import invoke
     cli = InstallerCli()
     cli.load_settings()
+
+    if not Utils.iswindows():
+        from .linunits import uninstall_linusrvs
+        try:
+            states = uninstall_linusrvs(cli)
+        except PermissionError as e:
+            print(e, file=sys.stderr)
+            return
+        if not states:
+            print('Error: cannot find the systemd service names in settings.json. The configuration are damaged.\n'
+                  'Uninstall them manually: sudo systemctl disable --now <name>.service <name>.web.service, then\n'
+                  'remove them from /etc/systemd/system/ and run sudo systemctl daemon-reload.')
+        for u, st in states.items():
+            print(f'{u}: {st}')
+        return
 
     if winsrv_websrv not in cli.settings.envars:
         print(f'Error: cannot find target service name. The configuration are damaged.')

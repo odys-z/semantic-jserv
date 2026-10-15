@@ -3,7 +3,7 @@
 #
 # Expects CONFIG, WORK, CENTRAL_DOMAIN, CENTRAL_PSWD, and the answer files answers/linux/<node>.txt.
 # The synodes run as systemd services, installed by synode-cli's last step (synodepy3
-# systemd_units.install_linusrvs(): passwordless sudo on the runner), named after the synode id.
+# linunits.install_linusrvs(): passwordless sudo on the runner), named after the synode id.
 
 # wait_port <port> <seconds>
 wait_port() {

@@ -117,7 +117,7 @@ no run has restored for 7 days. version-revival-7days restores it every 6 days.
   `feed_answers.py --console` runs it in a pseudo console (package pywinpty) and types the answers
   one at a time, each after the output has been quiet for `--settle` seconds (default 3). Text and
   its Enter are sent apart: read together, prompt_toolkit on Windows takes them as a paste.
-- setup-cli.exe installs the synode and web services (synodepy3 `commands.install_winsrvs()`). The
+- setup-cli.exe installs the synode and web services (synodepy3 `winsrv.install_winsrvs()`). The
   runner runs elevated, so there is no UAC request; the workflow stops first if it isn't. The
   workflow then checks the services named in `settings.json` (`envars` `winsrv.synode`,
   `winsrv.web`) and waits for the jserv ports.
