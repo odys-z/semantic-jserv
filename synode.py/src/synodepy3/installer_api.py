@@ -102,6 +102,53 @@ def promote_upgrade_pkg(folder: str = '.') -> bool:
         return False
 
 
+desktop_dir: Final = 'desktop'
+desktop_app: Final = 'album_gui'
+"""
+The desktop app packaged in <installation>/desktop (Anclient/examples/example.slint, dist/), which
+reads settings/app-settings.json relative to the working folder, so it must start in desktop/.
+"""
+
+
+def desktop_exe(folder: str = '.') -> Optional[Path]:
+    """
+    :param folder: the installation folder, default the working folder (where setup-* runs).
+    :return: <folder>/desktop/album_gui(.exe), or None if the desktop is not packaged.
+    """
+    exe = Path(folder) / desktop_dir / (desktop_app + '.exe' if Utils.iswindows() else desktop_app)
+    return exe if exe.is_file() else None
+
+
+def start_desktop(folder: str = '.') -> Optional[subprocess.Popen]:
+    """
+    Start the desktop app, detached from setup-*, in its own folder, <folder>/desktop.
+    :return: the process, or None if the desktop is not packaged.
+    :raise OSError: if it can't be started.
+    """
+    exe = desktop_exe(folder)
+    if exe is None:
+        return None
+    exe = exe.absolute()
+
+    if not Utils.iswindows():
+        return subprocess.Popen([str(exe)], cwd=exe.parent, start_new_session=True,
+                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # A frozen setup-* (PyInstaller) may have set the DLL directory to its _internal/, which the child
+    # inherits - the desktop must load its own Qt / runtime DLLs, not setup-gui's PySide6 ones.
+    import ctypes
+    k32 = ctypes.windll.kernel32
+    buf = ctypes.create_unicode_buffer(32768)
+    dlldir = k32.GetDllDirectoryW(len(buf), buf)
+    k32.SetDllDirectoryW(None)
+    try:
+        return subprocess.Popen([str(exe)], cwd=exe.parent, close_fds=True,
+                                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+    finally:
+        if dlldir:
+            k32.SetDllDirectoryW(buf.value)
+
+
 def promote_upgrade_whl(folder: str = '.') -> bool:
     """
     The Linux counterpart of promote_upgrade_pkg(). On Linux unpacking a new package only brings the new

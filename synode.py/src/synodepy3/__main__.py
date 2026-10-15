@@ -34,7 +34,7 @@ from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from synodepy3.commands import install_winsrvs
 from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
-    synode_ui, cfgpaths, posix_path
+    synode_ui, cfgpaths, posix_path, desktop_exe, start_desktop
 from synodepy3.install_jre import validate_jre
 from synodepy3.jre_downloader import _event_loop_interval_
 
@@ -438,6 +438,21 @@ class InstallerForm(QMainWindow):
 
         self.seal_has_run()
         self.enable_widgets()
+        self.ask_start_desktop()
+
+    def ask_start_desktop(self):
+        '''
+        Services are installed: ask for starting the desktop app (desktop/, if packaged), which runs on its own.
+        '''
+        if desktop_exe() is None:
+            return
+        yes = QMessageBox.StandardButton.Yes
+        if QMessageBox.question(self, 'Portfolio Desktop', 'Start Portfolio Desktop now?',
+                                yes | QMessageBox.StandardButton.No, yes) == yes:
+            try:
+                start_desktop()
+            except OSError as e:
+                err_msg('Starting Portfolio Desktop failed. Start it later with desktop/album_gui.exe.', e)
 
     def update_bind_domconf(self, resp: RegistResp):
         myid = self.cli.registry.config.synid

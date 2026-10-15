@@ -23,4 +23,5 @@ ${CENTRAL_DOMAIN}         # Please input new domain name: ci-0.8
 1                         # All settings are collected, install? 1 = Yes
 <enter>                   # Domain token of user Admin: the packaged default (tasks.*.json deploy.domain_token)
 1                         # Install the Windows services now? 1 = Yes (synode & web services)
-<enter>                   # <services>: installed ... Return to quit Portfolio Setup
+2                         # <services>: installed ... Start Portfolio Desktop now? 2 = No, quit
+                          # (older packages, or no desktop/: Return to quit Portfolio Setup, '2' ignored)

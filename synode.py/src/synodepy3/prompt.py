@@ -17,7 +17,8 @@ from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
 from synodepy3.commands import install_winsrvs
 from synodepy3.systemd_units import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ
-from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath, posix_path
+from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath, posix_path, \
+    desktop_exe, start_desktop
 from synodepy3.validators import PJservValidator, PIPValidator, PDomainValidator, domain_maxlen
 from synodepy3.prerequisites import check_prerequisites
 from synodepy3.get_avail_ports import report_port_ranges
@@ -59,6 +60,29 @@ if any(a in ('-h', '--help', 'help') for a in sys.argv[1:]):
 
 _quit = False
 details = [cast(Optional[str], None)]
+
+def quit_or_start_desktop(session: PromptSession, tip: str):
+    """
+    The end of a successful installation: ask for starting the desktop app (desktop/, if packaged),
+    which then runs on its own, and quit.
+    """
+    if desktop_exe() is None:
+        session.prompt(message=tip + 'Return to quit Portfolio Setup ...')
+        return
+
+    print(tip)
+    if choice(message='Start Portfolio Desktop now? (setup quits either way)',
+              options=[(1, 'Yes, start Portfolio Desktop.'),
+                       (2, 'No, quit.')],
+              default=1) == 1:
+        try:
+            start_desktop()
+            print('Portfolio Desktop is started.')
+        except OSError as e:
+            Utils.warn(f'Starting Portfolio Desktop failed: {e}')
+            session.prompt(message='Start it later with desktop/album_gui.exe.\n'
+                                   'Return to quit Portfolio Setup ...')
+
 
 def check_quit(q: bool):
     if q:
@@ -634,11 +658,10 @@ if caninstall == 1:
 
         report = '\n'.join(f'{s}: {"installed" if ok else "NOT installed"}' for s, ok in states.items())
         if states and all(states.values()):
-            session.prompt(message=
+            quit_or_start_desktop(session,
                 report + '\n\n' +
                 'Check the services in Windows Service Control (services.msc), or logs in current folder.\n\n' +
-                login_tip +
-                'Return to quit Portfolio Setup ...')
+                login_tip)
         else:
             session.prompt(message=
                 (report + '\nCheck winsrv-install.log in current folder.\n\n' if states else

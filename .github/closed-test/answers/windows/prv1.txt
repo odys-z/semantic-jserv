@@ -19,4 +19,5 @@
 <enter>                   # Pinging the hub node? accept the hub's jserv url
 1                         # Continue installation? 1 = Yes (asked only when the hub is found)
 1                         # Install the Windows services now? 1 = Yes (synode & web services)
-<enter>                   # <services>: installed ... Return to quit Portfolio Setup
+2                         # <services>: installed ... Start Portfolio Desktop now? 2 = No, quit
+                          # (older packages, or no desktop/: Return to quit Portfolio Setup, '2' ignored)
