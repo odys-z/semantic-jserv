@@ -21,7 +21,7 @@ from .__version__ import jar_ver
 
 from .installer_api import promote_upgrade_whl, load_resources, running_resources, read_package_res, \
     resource_json, InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
-    html_service_json
+    html_service_json, desktop_exe, desktop_running
 from .linunits import Sudo, stop_sysunits, restart_sysunits, apply_unit_resources
 from .winsrv import stop_winsrvs, restart_wsrvs, apply_winsrv_resources
 
@@ -69,7 +69,9 @@ def update_srv(pkg_path: str):
          rootkey set (installed_settings_error()), not e.g. a package template unpacked over it;
          check the new package accepts the installed version: its bin/resource.json upgrade_from
          {min, max}, and no downgrade (PkgResources.refuses()); read out of the package, before
-         anything is stopped or changed, so a refused upgrade changes nothing
+         anything is stopped or changed, so a refused upgrade changes nothing;
+         Windows: wait until the desktop app (desktop/album_gui.exe) is closed, asking the user
+         (installer_api.desktop_running())
       1. stop the 2 services saved in settings.json (Windows services, or Linux systemd units,
          which stay installed); nothing is upgraded if they can't be stopped
       2. back up vol/dictionary.json, vol/*.db, WEB-INF/settings.json, WEB-INF/html-service.json
@@ -129,6 +131,18 @@ def update_srv(pkg_path: str):
             print(f'Upgrade refused: {why}.\nNothing is changed.', file=sys.stderr)
             return
         print(f'Upgrading {installed.jar_ver()} -> {pkg_res.jar_ver()}')
+
+    # 0. the desktop app must be closed: Windows can't replace a running desktop/album_gui.exe, and the
+    #    unpack would stop half way, leaving a mix of the old and new packages
+    while desktop_running():
+        print(f'The desktop app is running: {desktop_exe()}\n'
+              f'Please close it, then press Enter to check again (q to quit) ...')
+        try:
+            if input().strip().lower() == 'q':
+                raise EOFError
+        except EOFError:
+            print('Upgrade aborted, nothing is changed.', file=sys.stderr)
+            return
 
     backup_dir = f'backup-{datetime.now().strftime("%Y%m%d")}'
 

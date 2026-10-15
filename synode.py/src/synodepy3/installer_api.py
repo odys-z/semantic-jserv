@@ -119,6 +119,22 @@ def desktop_exe(folder: str = '.') -> Optional[Path]:
     return exe if exe.is_file() else None
 
 
+def desktop_running(folder: str = '.') -> bool:
+    """
+    Windows: whether <folder>/desktop/album_gui.exe is running (a running exe can't be opened for
+    writing), which would stop an upgrade's unpack half way. Elsewhere a running binary can be
+    replaced, so False.
+    """
+    exe = desktop_exe(folder)
+    if exe is None or not Utils.iswindows():
+        return False
+    try:
+        with open(exe, 'r+b'):
+            return False
+    except OSError:
+        return True
+
+
 def start_desktop(folder: str = '.') -> Optional[subprocess.Popen]:
     """
     Start the desktop app, detached from setup-*, in its own folder, <folder>/desktop.
