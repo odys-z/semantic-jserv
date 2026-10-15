@@ -11,7 +11,7 @@ commands = [
     # (Windows exe, installed command, python module); '-': not available
     ('setup-gui.exe',     'synode-gui',           'python -m synodepy3'),
     ('setup-cli.exe',     'synode-cli',           'python -m synodepy3.prompt'),
-    ('upgrade.exe',       'synode-upgrade-srv',   'python -m synodepy3.upgrade_cli [--force] <package.zip | .tar.gz>'),
+    ('upgrade.exe',       'synode-upgrade-srv',   'python -m synodepy3.upgrade_cli <package.zip | .tar.gz>'),
     ('uninstall-srv.exe', 'synode-uninstall-srv', 'python -m synodepy3.uninstall_cli'),
     ('-',                 'synode-avail-ports',   'python -m synodepy3.get_avail_ports [-v | -vv]'),
     ('-',                 'synode-start-web',     '-'),

@@ -155,7 +155,8 @@ synode-upgrade-srv <upgrade package tar.gz>
 
 `commands.update_srv()` first reads the new package's `bin/resource.json` out of the package and
 checks it accepts the installed version (`upgrade_from` {min, max}, no downgrade); if not, it stops
-there with "Upgrade refused", having changed nothing (`--force` upgrades anyway, for support cases).
+there with "Upgrade refused", having changed nothing. It also refuses, before anything is changed,
+a `WEB-INF/settings.json` that is not an installed one (a relative `volume`, or `installkey` still set).
 Then it stops the 2 services, backs up the node's data and settings
 (`<volume>/dictionary.json`, `jserv-main.db`, `doc-jserv.db`, `WEB-INF/settings.json`,
 `WEB-INF/html-service.json`, `web-dist/private/host.json`) into `backup-YYYYMMDD/`, unpacks the

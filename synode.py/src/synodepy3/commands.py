@@ -10,7 +10,7 @@ import zipfile
 from datetime import datetime
 from typing import cast, Optional
 
-from anson.io.odysz.common import Utils
+from anson.io.odysz.common import Utils, LangExt
 from invoke import task, Context, UnexpectedExit
 from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db
 
@@ -241,30 +241,71 @@ def winsrv_state(srvname: str) -> Optional[str]:
     return m.group(1) if m else None
 
 
-def wait_winsrv_stopped(srvname: str, wait: float = 30) -> Optional[str]:
+def wait_winsrv_state(srvname: str, done: tuple, wait: float = 30) -> Optional[str]:
     """
-    Poll the service's state (no elevation needed) until it is stopped (or not installed),
-    for at most wait seconds, as Procrun //SS may give up (exit code 6) while the service
-    is still STOP_PENDING.
-    :return: the last state, 'STOPPED' or None (not installed) for stopped
+    Poll the service's state (sc query, no elevation needed) until it is one of done,
+    for at most wait seconds.
+    :return: the last state
     """
     deadline = time.monotonic() + wait
     state = winsrv_state(srvname)
-    while state not in ('STOPPED', None) and time.monotonic() < deadline:
+    while state not in done and time.monotonic() < deadline:
         time.sleep(1)
         state = winsrv_state(srvname)
     return state
+
+
+def wait_winsrv_stopped(srvname: str, wait: float = 30) -> Optional[str]:
+    """
+    Wait until the service is stopped (or not installed), as Procrun //SS may give up
+    (exit code 6) while the service is still STOP_PENDING.
+    :return: the last state, 'STOPPED' or None (not installed) for stopped
+    """
+    return wait_winsrv_state(srvname, ('STOPPED', None), wait)
+
+
+def run_winsrv_bat(bat: str, names: list, log: str) -> bool:
+    """
+    Run bat (stop-winsrv.bat / restart-winsrv.bat: [1] prunsrv [2] service name) for each service,
+    as Administrator: in-process if this process is one, otherwise in one elevated cmd, asking the
+    UAC permission once for all of them (like install_winsrvs()), instead of Procrun asking once per
+    call. The elevated output goes to log, printed afterwards.
+    Exit codes are only reported; callers verify the services' states (sc query).
+    :return: False if the user declined the UAC request
+    """
+    if is_winadmin():
+        for s in names:
+            cmd = f'{bat} {winsrv_proc_exe} {s}'
+            print(cmd)
+            try:
+                Context().run(cmd)
+            except UnexpectedExit as e:
+                print(f'Error: {cmd}: exit code {e.result.exited}', file=sys.stderr)
+        return True
+
+    calls = ' & '.join(f'call {bat} {winsrv_proc_exe} {s}' for s in names)
+    cmds = f'cd /d "{os.getcwd()}" && ({calls}) > "{log}" 2>&1'
+    print(f'[elevated] {cmds}')
+    try:
+        code = run_elevated(f'/c "{cmds}"')
+    except PermissionError as e:
+        print(e, file=sys.stderr)
+        return False
+    print(f'Elevated {os.path.basename(bat)} exited with code {code}. Log: {os.path.abspath(log)}')
+    if os.path.isfile(log):
+        with open(log, encoding='utf-8', errors='replace') as f:
+            print(f.read())
+    return True
 
 
 def stop_winsrvs(wait: float = 30, log: str = 'winsrv-stop.log') -> bool:
     """
     Stop the 2 Windows services saved in settings.envars[winsrv_synode / winsrv_websrv], by
     stop-winsrv.bat (Procrun //SS, which calls the service's StopMethod, e.g. SynotierJettyApp.jvmStop()),
-    as Administrator: in-process if upgrade.exe runs as one, otherwise in one elevated cmd (one UAC
-    request for both, like install_winsrvs()). Then verify each is stopped (sc query).
+    as Administrator (run_winsrv_bat(), one UAC request), then verify each is stopped (sc query).
     If one doesn't stop, the ones that did are restarted, so a failed stop leaves the synode as it was.
 
-    :param wait: seconds to wait for a service to leave STOP_PENDING, after Procrun's own --StopTimeout
+    :param wait: seconds to wait for a service to leave STOP_PENDING, after Procrun's own wait
     :return: False if the service names are not found in settings.json, or a service can't be stopped;
              the upgrade must not unpack over the running services' files (jars, portfolio-ia64.exe).
     """
@@ -281,25 +322,9 @@ def stop_winsrvs(wait: float = 30, log: str = 'winsrv-stop.log') -> bool:
     if not running:
         return True
 
-    if is_winadmin():
-        for srvname in running:
-            try:
-                stop_wsrv_byname(srvname)
-            except UnexpectedExit as e:
-                print(f'Error stopping {srvname}: exit code {e.result.exited}', file=sys.stderr)
-    else:
-        stops = ' & '.join(f'call {stop_w_bat} {winsrv_proc_exe} {s}' for s in running)
-        cmds = f'cd /d "{os.getcwd()}" && ({stops}) > "{log}" 2>&1'
-        print(f'[elevated] {cmds}')
-        try:
-            code = run_elevated(f'/c "{cmds}"')
-            print(f'Elevated stop exited with code {code}. Log: {os.path.abspath(log)}')
-        except PermissionError as e:
-            print(f'{e} Upgrade aborted, nothing is changed.', file=sys.stderr)
-            return False
-        if os.path.isfile(log):
-            with open(log, encoding='utf-8', errors='replace') as f:
-                print(f.read())
+    if not run_winsrv_bat(stop_w_bat, running, log):
+        print('Upgrade aborted, nothing is changed.', file=sys.stderr)
+        return False
 
     states = {s: wait_winsrv_stopped(s, wait) for s in running}
     stuck = {s: st for s, st in states.items() if st not in ('STOPPED', None)}
@@ -312,25 +337,34 @@ def stop_winsrvs(wait: float = 30, log: str = 'winsrv-stop.log') -> bool:
           f'  Upgrade aborted, nothing is changed. See logs\\commons-daemon.*.log and the services\' stdout logs\n'
           f'  (StopMethod, e.g. jvmStop) for why; "sc queryex <service>" shows the PID, which an administrator\n'
           f'  can end with "taskkill /F /PID <pid>".', file=sys.stderr)
-    for s in running:
-        if s not in stuck:
-            try:
-                restart_wsrv_byname(s)
-            except UnexpectedExit as e:
-                print(f'Error restarting {s}: {e}', file=sys.stderr)
+    stopped = [s for s in running if s not in stuck]
+    if stopped:
+        restart_wsrvs(stopped)
     return False
 
 
-def restart_wsrvs():
+def restart_wsrvs(names: list = None, wait: float = 30, log: str = 'winsrv-start.log') -> bool:
     """
-    Restart the 2 Windows services saved in settings.envars[winsrv_synode / winsrv_websrv].
+    Start the Windows services, default the 2 saved in settings.envars[winsrv_synode / winsrv_websrv],
+    by restart-winsrv.bat (Procrun //ES) as Administrator (run_winsrv_bat(), one UAC request),
+    then verify each is RUNNING (sc query).
+    :return: True if all of them are running
     """
-    envars = InstallerCli().load_settings().envars
-    for srvname in (envars[winsrv_synode], envars[winsrv_websrv]):
-        try:
-            restart_wsrv_byname(srvname)
-        except UnexpectedExit as e:
-            print(f"Error restarting {srvname}: {e}", file=sys.stderr)
+    if names is None:
+        envars = InstallerCli().load_settings().envars
+        names = [envars[winsrv_synode], envars[winsrv_websrv]]
+
+    if not run_winsrv_bat(restart_w_bat, names, log):
+        return False
+
+    states = {s: wait_winsrv_state(s, ('RUNNING', 'STOPPED', None), wait) for s in names}
+    for s, st in states.items():
+        print(f'{s}: {st or "not installed"}')
+    failed = [s for s, st in states.items() if st != 'RUNNING']
+    if failed:
+        print(f'Error: not running: {", ".join(failed)}. See logs\\commons-daemon.*.log and the services\'\n'
+              f'  stderr / stdout logs (StartMethod, e.g. jvmStart) for why.', file=sys.stderr)
+    return not failed
 
 
 def apply_winsrv_resources(cli: InstallerCli, old: PkgResources, new: PkgResources) -> bool:
@@ -340,27 +374,41 @@ def apply_winsrv_resources(cli: InstallerCli, old: PkgResources, new: PkgResourc
     them, then install them with the new names (settings.envars) and jars (the bats) and start them.
     :param old: the installed package's manifest
     :param new: the new package's manifest
-    :return: False if a service is not installed
+    :return: False if a service is not installed or not running
     """
     ov, nv = old.versions, new.versions
     keys = ('jar_ver', 'web_ver', 'html_srver')
     if all(ov.get(k) == nv.get(k) for k in keys):
-        restart_wsrvs()
-        return True
+        return restart_wsrvs()
 
     envars = cli.settings.envars
     print('Reinstalling the services: ' + ', '.join(f'{k} {ov.get(k)} -> {nv.get(k)}' for k in keys))
     states = install_winsrvs(cli, versions=nv, replace=(envars.get(winsrv_synode), envars.get(winsrv_websrv)))
     for s, ok in states.items():
         print(f'{s}: {"installed" if ok else "NOT installed"}')
-    restart_wsrvs()
-    return all(states.values())
+    started = restart_wsrvs()
+    return all(states.values()) and started
 
 
-def update_srv(pkg_path: str, force: bool = False):
+def installed_settings_error(cli: InstallerCli) -> Optional[str]:
+    """
+    :return: why WEB-INF/settings.json is not an installed synode's (see update_srv() step 0), or None
+    """
+    st = cli.settings
+    errs = []
+    if not st.volume or not os.path.isabs(st.volume):
+        errs.append(f'volume is not an absolute path: {st.volume}')
+    if not LangExt.isblank(st.installkey) or LangExt.isblank(st.rootkey):
+        errs.append('installkey is set or rootkey is empty, the synode has never been set up with it')
+    return f'{web_inf}/{settings_json} is not an installed synode\'s: {"; ".join(errs)}.' if errs else None
+
+
+def update_srv(pkg_path: str):
     """
     Update a running Synode install in-place, in the installation folder (cwd):
-      0. check the new package accepts the installed version: its bin/resource.json upgrade_from
+      0. check WEB-INF/settings.json is an installed synode's: absolute volume, installkey cleared and
+         rootkey set (installed_settings_error()), not e.g. a package template unpacked over it;
+         check the new package accepts the installed version: its bin/resource.json upgrade_from
          {min, max}, and no downgrade (PkgResources.refuses()); read out of the package, before
          anything is stopped or changed, so a refused upgrade changes nothing
       1. stop the 2 services saved in settings.json (Windows services, or Linux systemd units,
@@ -387,7 +435,6 @@ def update_srv(pkg_path: str, force: bool = False):
       services needs the administrator, asked once (UAC) unless upgrade.exe runs as one.
 
     :param pkg_path: path to the update package, zip on Windows, tar.gz on Linux.
-    :param force: upgrade even if step 0 refuses (support cases)
     """
     if not os.path.isfile(pkg_path):
         print(f'Error: update package not found: {pkg_path}')
@@ -395,6 +442,18 @@ def update_srv(pkg_path: str, force: bool = False):
 
     cli = InstallerCli()
     cli.load_settings()
+
+    # 0. is WEB-INF/settings.json an installed synode's? The installer saves the volume as an absolute
+    #    path, and the synode's first start clears installkey and sets rootkey (AppSettings.save_rt()).
+    #    A relative volume is resolved by the synode against WEB-INF but by Volume() against cwd, so the
+    #    backup would miss the synode's files; and an installkey would make the synode set up the dbs
+    #    again. Such a settings.json is likely a package's template unpacked over the installed one.
+    why = installed_settings_error(cli)
+    if why:
+        print(f'Error: {why}\n  The installed one may be found in {web_inf}/{settings_json}-fingerprint, '
+              f'written by the synode at its first start, or in a backup-*/ folder.\n'
+              f'Upgrade aborted, nothing is changed.', file=sys.stderr)
+        return
 
     # 0. does the new package accept the installed version?
     installed = load_resources() or running_resources()
@@ -406,11 +465,11 @@ def update_srv(pkg_path: str, force: bool = False):
     if pkg_res is None:
         print(f'Warning: the package has no {resource_json}, its versions are not checked.', file=sys.stderr)
     else:
-        why = pkg_res.refuses(installed.jar_ver(), force)
+        why = pkg_res.refuses(installed.jar_ver())
         if why:
-            print(f'Upgrade refused: {why}.\nNothing is changed. To upgrade anyway: --force', file=sys.stderr)
+            print(f'Upgrade refused: {why}.\nNothing is changed.', file=sys.stderr)
             return
-        print(f'Upgrading {installed.jar_ver()} -> {pkg_res.jar_ver()}' + (' (forced)' if force else ''))
+        print(f'Upgrading {installed.jar_ver()} -> {pkg_res.jar_ver()}')
 
     backup_dir = f'backup-{datetime.now().strftime("%Y%m%d")}'
 
@@ -498,7 +557,7 @@ def update_srv(pkg_path: str, force: bool = False):
         if new_res:
             applied = apply_winsrv_resources(cli, old_res, new_res)
         else:
-            restart_wsrvs()
+            applied = restart_wsrvs()
     else:
         if new_res:
             applied = apply_unit_resources(cast(Sudo, sudo), units, old_res, new_res)

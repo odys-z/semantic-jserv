@@ -191,6 +191,8 @@ class InstallerForm(QMainWindow):
         if LangExt.len(self.ui.txtWebport.text()) == 0:
             self.ui.txtWebport.setText(web_port0)
         if LangExt.len(self.ui.txtVolpath.text()) == 0:
+            # MEMO: a relative path is only a UI default; it is saved as an absolute path by
+            #   InstallerCli.updateWithUi(volume=...), which the synode and the upgrade require.
             self.ui.txtVolpath.setText('vol')
 
     def show_validation(self, err: dict):

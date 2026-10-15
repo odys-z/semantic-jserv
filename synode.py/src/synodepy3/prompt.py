@@ -411,10 +411,13 @@ if not has_run:
     check_quit(_quit)
 
     # 4.3 volume
-    cli.settings.volume = session.prompt(
+    # MEMO: settings.json's volume MUST be an absolute path. The synode (Java) resolves a relative one
+    #   against WEB-INF, Python against cwd, and the upgrade refuses it (commands.installed_settings_error()).
+    #   See InstallerCli.updateWithUi(volume=...).
+    cli.settings.volume = os.path.abspath(session.prompt(
         message=f"Set volume path, emtpy to quit (volume is where the files and data saved). ",
         validator = MultiValidator(QuitValidator(), VolumeValidator()),
-        default=f"{Path(os.getcwd()).as_posix()}/vol")
+        default=f"{Path(os.getcwd()).as_posix()}/vol"))
 
     check_quit(_quit)
     print(cli.settings.volume)

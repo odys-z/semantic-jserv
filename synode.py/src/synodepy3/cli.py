@@ -29,7 +29,7 @@ def uninst_srv():
         print(f"Error uninstalling html-service: {e}", file=sys.stderr)
 
 
-def upgrade_srv(zip_path: str = None, force: bool = False):
+def upgrade_srv(zip_path: str = None):
     """
     Entry-point: synode-upgrade-srv / upgrade.exe
 
@@ -70,14 +70,12 @@ def upgrade_srv(zip_path: str = None, force: bool = False):
 
         Note: The offline RDBMS synchronization is still essential, as a PC can be shutting down while uploading a doc.
     """
-    args = [a for a in sys.argv[1:] if a != '--force']
-    force = force or '--force' in sys.argv[1:]
+    args = sys.argv[1:]
     zpath = zip_path if zip_path is not None else (args[0] if args else None)
     if zpath is None:
-        print('Usage: synode-upgrade-srv [--force] <path-to-update.zip or .tar.gz>\n'
-              '  --force: upgrade even if the package does not accept the installed version (support cases)')
+        print('Usage: synode-upgrade-srv <path-to-update.zip or .tar.gz>')
         return
-    update_srv(zpath, force)
+    update_srv(zpath)
 
 
 def startweb(port: int = 8900):

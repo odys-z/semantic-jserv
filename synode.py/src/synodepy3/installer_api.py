@@ -776,14 +776,15 @@ class InstallerCli:
             envars = {}
 
         if volume is not None:
+            # MEMO: settings.json's volume MUST be saved as an absolute path.
+            #   The synode (Java, AppSettings.checkInstall()) resolves a relative volume against WEB-INF,
+            #   while Python (settings.Volume(), the installers and commands.update_srv()) resolves it
+            #   against cwd, so they would use different folders. The upgrade (upgrade.exe /
+            #   synode-upgrade-srv) refuses a relative volume, see commands.installed_settings_error().
             self.settings.Volume(os.path.abspath(volume))
 
         if syncins is not None:
             self.registry.config.syncIns = 0.0 if syncins is None or hubmode else float(syncins)
-
-        # 0.7.6
-        # if port is not None and len(port) > 1:
-        #     InstallerCli.update_private(self.registry.config, self.settings)
 
         for k in envars:
             self.settings.envars[k] = envars[k]
