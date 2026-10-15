@@ -4,6 +4,6 @@
 @echo:
 @echo ACTION NEEDED!
 @echo:
-@echo Please confirm permission (in the hidden dialog) to uninstall the service %srv_name%...
+@echo Please confirm permission (in the hidden dialog) to stop the service %srv_name%...
 
 @%prunsrv% //SS//%srv_name% --StopTimeout=20

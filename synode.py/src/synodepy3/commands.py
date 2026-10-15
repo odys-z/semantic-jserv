@@ -8,7 +8,7 @@ import sys
 import time
 import zipfile
 from datetime import datetime
-from typing import cast
+from typing import cast, Optional
 
 from anson.io.odysz.common import Utils
 from invoke import task, Context, UnexpectedExit
@@ -229,22 +229,96 @@ def restart_wsrv_byname(srvname: str):
     ctx.run(cmd)
 
 
-def stop_winsrvs() -> bool:
+def winsrv_state(srvname: str) -> Optional[str]:
     """
-    Stop the 2 Windows services saved in settings.envars[winsrv_synode / winsrv_websrv].
-    :return: False if the service names are not found in settings.json.
+    :return: the service's state from 'sc query', e.g. 'RUNNING', 'STOP_PENDING', 'STOPPED';
+             None if the service is not installed (or sc failed)
+    """
+    r = subprocess.run(['sc', 'query', srvname], capture_output=True, text=True)
+    if r.returncode != 0:
+        return None
+    m = re.search(r'STATE\s*:\s*\d+\s+(\w+)', r.stdout)
+    return m.group(1) if m else None
+
+
+def wait_winsrv_stopped(srvname: str, wait: float = 30) -> Optional[str]:
+    """
+    Poll the service's state (no elevation needed) until it is stopped (or not installed),
+    for at most wait seconds, as Procrun //SS may give up (exit code 6) while the service
+    is still STOP_PENDING.
+    :return: the last state, 'STOPPED' or None (not installed) for stopped
+    """
+    deadline = time.monotonic() + wait
+    state = winsrv_state(srvname)
+    while state not in ('STOPPED', None) and time.monotonic() < deadline:
+        time.sleep(1)
+        state = winsrv_state(srvname)
+    return state
+
+
+def stop_winsrvs(wait: float = 30, log: str = 'winsrv-stop.log') -> bool:
+    """
+    Stop the 2 Windows services saved in settings.envars[winsrv_synode / winsrv_websrv], by
+    stop-winsrv.bat (Procrun //SS, which calls the service's StopMethod, e.g. SynotierJettyApp.jvmStop()),
+    as Administrator: in-process if upgrade.exe runs as one, otherwise in one elevated cmd (one UAC
+    request for both, like install_winsrvs()). Then verify each is stopped (sc query).
+    If one doesn't stop, the ones that did are restarted, so a failed stop leaves the synode as it was.
+
+    :param wait: seconds to wait for a service to leave STOP_PENDING, after Procrun's own --StopTimeout
+    :return: False if the service names are not found in settings.json, or a service can't be stopped;
+             the upgrade must not unpack over the running services' files (jars, portfolio-ia64.exe).
     """
     envars = InstallerCli().load_settings().envars
     if winsrv_synode not in envars or winsrv_websrv not in envars:
         print('Error: cannot find target service name(s). The configuration are damaged.')
         return False
 
-    for srvname in (envars[winsrv_synode], envars[winsrv_websrv]):
+    names = [envars[winsrv_synode], envars[winsrv_websrv]]
+    running = [s for s in names if winsrv_state(s) not in ('STOPPED', None)]
+    for s in names:
+        if s not in running:
+            print(f'{s}: {winsrv_state(s) or "not installed"}')
+    if not running:
+        return True
+
+    if is_winadmin():
+        for srvname in running:
+            try:
+                stop_wsrv_byname(srvname)
+            except UnexpectedExit as e:
+                print(f'Error stopping {srvname}: exit code {e.result.exited}', file=sys.stderr)
+    else:
+        stops = ' & '.join(f'call {stop_w_bat} {winsrv_proc_exe} {s}' for s in running)
+        cmds = f'cd /d "{os.getcwd()}" && ({stops}) > "{log}" 2>&1'
+        print(f'[elevated] {cmds}')
         try:
-            stop_wsrv_byname(srvname)
-        except UnexpectedExit as e:
-            print(f"Error stopping {srvname}: {e}", file=sys.stderr)
-    return True
+            code = run_elevated(f'/c "{cmds}"')
+            print(f'Elevated stop exited with code {code}. Log: {os.path.abspath(log)}')
+        except PermissionError as e:
+            print(f'{e} Upgrade aborted, nothing is changed.', file=sys.stderr)
+            return False
+        if os.path.isfile(log):
+            with open(log, encoding='utf-8', errors='replace') as f:
+                print(f.read())
+
+    states = {s: wait_winsrv_stopped(s, wait) for s in running}
+    stuck = {s: st for s, st in states.items() if st not in ('STOPPED', None)}
+    for s, st in states.items():
+        print(f'{s}: {st or "not installed"}')
+    if not stuck:
+        return True
+
+    print(f'Error: {", ".join(f"{s} is still {st}" for s, st in stuck.items())}.\n'
+          f'  Upgrade aborted, nothing is changed. See logs\\commons-daemon.*.log and the services\' stdout logs\n'
+          f'  (StopMethod, e.g. jvmStop) for why; "sc queryex <service>" shows the PID, which an administrator\n'
+          f'  can end with "taskkill /F /PID <pid>".', file=sys.stderr)
+    for s in running:
+        if s not in stuck:
+            try:
+                restart_wsrv_byname(s)
+            except UnexpectedExit as e:
+                print(f'Error restarting {s}: {e}', file=sys.stderr)
+    return False
 
 
 def restart_wsrvs():
@@ -391,8 +465,13 @@ def update_srv(pkg_path: str, force: bool = False):
     print(f'Unpacking {pkg_path} to {os.getcwd()} ...')
     unpacked = True
     if Utils.iswindows():
-        with zipfile.ZipFile(pkg_path, 'r') as zf:
-            zf.extractall('.')
+        try:
+            with zipfile.ZipFile(pkg_path, 'r') as zf:
+                zf.extractall('.')
+        except OSError as e:
+            # e.g. a file locked by a still running service; restore the backups below as rollback
+            unpacked = False
+            print(f'Error unpacking {pkg_path}:\n{e}', file=sys.stderr)
     else:
         r = subprocess.run(['tar', '-xf', pkg_path, '-C', '.'], capture_output=True, text=True)
         if r.returncode != 0:
