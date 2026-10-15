@@ -2,7 +2,7 @@ import sys
 
 from .commands import uninstall_wsrv_byname, winsrv_synode, winsrv_websrv, update_srv
 # See https://stackoverflow.com/a/28154841
-from .installer_api import InstallerCli
+from .installer_api import InstallerCli, posix_path
 
 
 def uninst_srv():
@@ -75,7 +75,7 @@ def upgrade_srv(zip_path: str = None):
     if zpath is None:
         print('Usage: synode-upgrade-srv <path-to-update.zip or .tar.gz>')
         return
-    update_srv(zpath)
+    update_srv(posix_path(zpath))
 
 
 def startweb(port: int = 8900):

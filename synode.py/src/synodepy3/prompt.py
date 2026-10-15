@@ -17,7 +17,7 @@ from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
 from synodepy3.commands import install_winsrvs
 from synodepy3.systemd_units import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ
-from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
+from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath, posix_path
 from synodepy3.validators import PJservValidator, PIPValidator, PDomainValidator, domain_maxlen
 from synodepy3.prerequisites import check_prerequisites
 from synodepy3.get_avail_ports import report_port_ranges
@@ -413,11 +413,11 @@ if not has_run:
     # 4.3 volume
     # MEMO: settings.json's volume MUST be an absolute path. The synode (Java) resolves a relative one
     #   against WEB-INF, Python against cwd, and the upgrade refuses it (commands.installed_settings_error()).
-    #   See InstallerCli.updateWithUi(volume=...).
-    cli.settings.volume = os.path.abspath(session.prompt(
+    #   See InstallerCli.updateWithUi(volume=...). It's also converted to posix, see posix_path().
+    cli.settings.volume = posix_path(os.path.abspath(session.prompt(
         message=f"Set volume path, emtpy to quit (volume is where the files and data saved). ",
         validator = MultiValidator(QuitValidator(), VolumeValidator()),
-        default=f"{Path(os.getcwd()).as_posix()}/vol"))
+        default=f"{Path(os.getcwd()).as_posix()}/vol")))
 
     check_quit(_quit)
     print(cli.settings.volume)

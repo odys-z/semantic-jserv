@@ -34,7 +34,7 @@ from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from synodepy3.commands import install_winsrvs
 from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
-    synode_ui, cfgpaths
+    synode_ui, cfgpaths, posix_path
 from synodepy3.install_jre import validate_jre
 from synodepy3.jre_downloader import _event_loop_interval_
 
@@ -330,7 +330,7 @@ class InstallerForm(QMainWindow):
             reverseProxy=self.ui.chkReverseProxy.checkState() == Qt.CheckState.Checked,
             proxyIp=self.ui.txtIP_proxy.text(),
             proxyPort=self.ui.txtPort_proxy.text(),
-            volume=self.ui.txtVolpath.text())
+            volume=posix_path(self.ui.txtVolpath.text()))
 
         v = self.cli.validate(ping_timeout=int(self.ui.txtimeout.text()))
         if v is not None:
@@ -759,7 +759,8 @@ class InstallerForm(QMainWindow):
 
             def setVolumePath():
                 volpath = QFileDialog.getExistingDirectory(self, caption='Volume Path')
-                self.ui.txtVolpath.setText(volpath)
+                if not LangExt.isblank(volpath):
+                    self.ui.txtVolpath.setText(posix_path(volpath))
 
             if err_uihandlers[0] is None:
                 err_uihandlers[0] = err_ctx

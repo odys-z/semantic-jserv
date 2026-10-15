@@ -68,6 +68,15 @@ vol_dict_json: file path to dictionary.json,
 web_settings: file path to settings.json
 '''
 
+def posix_path(path: Optional[str]) -> Optional[str]:
+    """
+    Convert a user input path to a posix path, e.g. 'C:\\Users\\vol' -> 'C:/Users/vol'.
+    MEMO: Anson writes strings unescaped, so a Windows path saved in settings.json
+    breaks the json (Invalid \\escape), and setup-gui can't load it after setup-cli.
+    """
+    return path if LangExt.isblank(path) else os.path.normpath(path.strip()).replace('\\', '/')
+
+
 upgrade_pkg: Final = 'upgrade.pkg'
 upgrade_exe: Final = 'upgrade.exe'
 
@@ -781,7 +790,7 @@ class InstallerCli:
             #   while Python (settings.Volume(), the installers and commands.update_srv()) resolves it
             #   against cwd, so they would use different folders. The upgrade (upgrade.exe /
             #   synode-upgrade-srv) refuses a relative volume, see commands.installed_settings_error().
-            self.settings.Volume(os.path.abspath(volume))
+            self.settings.Volume(posix_path(os.path.abspath(volume)))
 
         if syncins is not None:
             self.registry.config.syncIns = 0.0 if syncins is None or hubmode else float(syncins)
