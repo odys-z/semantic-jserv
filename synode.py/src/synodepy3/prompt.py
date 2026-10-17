@@ -565,7 +565,7 @@ if cli.registry.config.mode != SynodeMode.hub.name:
         hub_jserv = hub_node.jserv if LangExt.isblank(s_j) else s_j
         hub_input = session.prompt(
                 message=f'Pinging the hub node, {hub_node.synid} ? '
-                        '(Empty to skip, while the services can only be installed after the hub is set) ',
+                        '(Empty to skip, and set it later by running this setup again) ',
                 default=hub_jserv or '',
                 validator=PJservValidator(cli.syn_protocol.protocolpath)).strip()
 
@@ -659,10 +659,17 @@ if caninstall == 1:
             'Return to quit Portfolio Setup ...')
         sys.exit(0)
 
+    def warn_hub():
+        h = cli.chk_hub()
+        if h is not None:
+            Utils.warn('Hub synode is incorrect, need to reset again when the hub node is running.\n'
+                       f'{h["hub-node"]}')
+
     if Utils.iswindows():
         srv_err = cli.chk_srv_install(cfg.synid, lambda: winsrvs_installed(cli))
         if srv_err is not None:
             refuse_srvs(srv_err)
+        warn_hub()
 
         install_srvs = choice(
             message='Install the Windows services now? (administrator permission required, asked once)',
@@ -697,6 +704,7 @@ if caninstall == 1:
         srv_err = cli.chk_srv_install(cfg.synid, lambda: [])
         if srv_err is not None:
             refuse_srvs(srv_err)
+        warn_hub()
 
         syn_templ, web_templ = generate_service_templ(cli.settings, cfg)
 
