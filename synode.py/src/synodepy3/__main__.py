@@ -429,6 +429,10 @@ class InstallerForm(QMainWindow):
             self.submit_jserv()
             _trace_winsrv(self, 'save: after submit_jserv()') # DEBUG-WINSRV
 
+            h = self.cli.chk_hub()
+            if h is not None:
+                warn_msg('Hub synode is missing.', h)
+
         except FileNotFoundError or IOError as e:
             # Changing vol path can reach here
             err_msg('Setting up synodepy3 is failed.', e)

@@ -526,6 +526,22 @@ class InstallerCli:
             return {'synid': f'{synid}: {readable_state(n.stat)}. Select another synode id.'}
         return None
 
+    def chk_hub(self) -> Optional[dict]:
+        """
+        Check the hub synode's jserv of a peer. A peer is allowed to be saved without it (warned),
+        but its services can't be installed (chk_srv_install()) until the hub's jserv is saved,
+        e.g. saving again once the hub is running.
+        :return: {'hub-node': reason} if this peer has no hub's jserv, or None (also for a hub).
+        """
+        if self.registry.config.mode == SynodeMode.hub.name:
+            return None
+        hub_node = self.registry.find_hubpeer()
+        if hub_node is None:
+            return {'hub-node': 'The hub synode is missing in the domain. Save again when the hub node is running.'}
+        if LangExt.isblank(self.settings.jservs.get(hub_node.synid) if self.settings.jservs else None):
+            return {'hub-node': f'The hub synode, {hub_node.synid}, has no jserv (service address). Save again when the hub node is running.'}
+        return None
+
     def chk_service_resources(self) -> Optional[dict]:
         """
         Check the resources for running the services, by file existence only (no subprocess),
@@ -575,7 +591,7 @@ class InstallerCli:
         if LangExt.isblank(synid) or synid != self.registry.config.synid:
             return {'saved': f'Save the settings of {synid} first.'}
 
-        err = self.chk_synid(synid) or self.chk_service_resources()
+        err = self.chk_synid(synid) or self.chk_hub() or self.chk_service_resources()
         if err is not None:
             return err
 
@@ -806,14 +822,10 @@ class InstallerCli:
             v = self.validate_synins()
             if v is not None: return v
             # self.ping(self.settings.jservs[cfg.peers[0].synid])
-            if ping_hub:
+            # A peer can be saved and started without the hub's jserv, see chk_hub().
+            if ping_hub and self.chk_hub() is None:
                 hub_node = self.registry.find_hubpeer()
-                if hub_node is None:
-                    return {'hub-node': 'Hub information is missing.'}
-                elif hub_node.synid in self.settings.jservs:
-                    self.ping(self.settings.jservs[hub_node.synid], timeout=ping_timeout)
-                else:
-                    return {'hub-node': 'Hub information is missing.'}
+                self.ping(self.settings.jservs[hub_node.synid], timeout=ping_timeout)
 
         if LangExt.len(self.registry.synusers) == 0:
             return {'synusers': 'Admin must present'}

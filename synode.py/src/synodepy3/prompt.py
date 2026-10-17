@@ -557,18 +557,28 @@ if cli.registry.config.mode != SynodeMode.hub.name:
     if hub_node is None:
         session.prompt(message='Cannot find the hub node, which is possibly can be found automatically. Press Enter to continue.\n')
     else:
-        s_j = cli.settings.jservs[hub_node.synid]
+        # A peer can be saved without the hub's jserv (warned after saving), but its services can't be
+        # installed until the hub's jserv is set, see InstallerCli.chk_hub() & chk_srv_install().
+        if cli.settings.jservs is None:
+            cli.settings.jservs = {}
+        s_j = cli.settings.jservs.get(hub_node.synid)
         hub_jserv = hub_node.jserv if LangExt.isblank(s_j) else s_j
-        cli.settings.jservs[hub_node.synid] = session.prompt(
-                message=f'Pinging the hub node, {hub_node.synid} ? (Empty to quit) ',
-                default=hub_jserv,
-                validator=MultiValidator(QuitValidator(), PJservValidator(cli.syn_protocol.protocolpath)))
-        try:
-            # rsp = cli.ping(hub_node.jserv)
-            rep = cli.ping(cli.settings.jservs[hub_node.synid], timeout=6) 
-        except Exception as e:
-            print(e)
-            print("There are errors while finding the hub node. But it can still work. Let's continue ...")
+        hub_input = session.prompt(
+                message=f'Pinging the hub node, {hub_node.synid} ? '
+                        '(Empty to skip, while the services can only be installed after the hub is set) ',
+                default=hub_jserv or '',
+                validator=PJservValidator(cli.syn_protocol.protocolpath)).strip()
+
+        if LangExt.isblank(hub_input):
+            print(f'Hub synode {hub_node.synid} is missing. Run this setup again when the hub node is running.')
+        else:
+            cli.settings.jservs[hub_node.synid] = hub_input
+            try:
+                # rsp = cli.ping(hub_node.jserv)
+                rep = cli.ping(cli.settings.jservs[hub_node.synid], timeout=6)
+            except Exception as e:
+                print(e)
+                print("There are errors while finding the hub node. But it can still work. Let's continue ...")
 
         go_on = choice( message=f'Continue installation? (Can re-configure, or can auto-connect if both nodes can visit Central)' if not has_run \
                         else f'Continue to save changes?',
@@ -611,6 +621,10 @@ if caninstall == 1:
         cli.install()
         post_err = cli.postFix()
         post_install()
+
+        h = cli.chk_hub()
+        if h is not None:
+            Utils.warn(f'Hub synode is missing. {h["hub-node"]}')
     except FileNotFoundError or IOError as e:
         Utils.warn(e)
         session.prompt('Setting up synodepy3 failed.')
