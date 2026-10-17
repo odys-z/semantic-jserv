@@ -688,6 +688,10 @@ class InstallerCli:
         v = self.validate_iport()
         if v is not None: return v
 
+        if LangExt.len(cfg.peers) == 0:
+            return {'domain': f'No synodes of domain "{cfg.domain}" are loaded from the central. '
+                              'Select a domain, or create one.'}
+
         # TODO 0.7.8 Check the synode id is domain wide unique, in Central.
         if self.find_peer(self.registry.config.synid) is None:
             return {'peer-id': f'synode id is not a peer id: {self.registry.config.synid}'}
@@ -809,7 +813,7 @@ class InstallerCli:
             if org is not None:
                 u.org = org
 
-        for p in self.registry.config.peers:
+        for p in self.registry.config.peers or []:
             if domain is not None:
                 p.domain = domain
             if org is not None:

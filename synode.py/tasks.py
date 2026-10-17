@@ -160,7 +160,11 @@ def config(c, abstask_json: str):
     dom_registry: AnRegistry = cast(AnRegistry, Anson.from_file(Path('registry') / 'dictionary.github.json'))
     dom_registry.config.org.orgId = taskcfg.deploy.orgid
     dom_registry.config.org.orgType = taskcfg.deploy.market_id
+    # The default domain, deploy.domain; blank: the installers select the community's first domain in the central.
+    # getattr(): task jsons and semantics.py3 wheels before deploy.domain.
+    dom_registry.config.domain = getattr(taskcfg.deploy, 'domain', None) or ''
     dom_registry.synusers = [SyncUser(orgid=taskcfg.deploy.orgid, userId=taskcfg.deploy.admin, pswd=taskcfg.deploy.domain_token)]
+    dom_registry.synusers[0].domain = dom_registry.config.domain
     dom_registry.toFile(Path('registry') / 'dictionary.json')
 
     Utils.update_patterns('pyproject.toml',

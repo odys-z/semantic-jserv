@@ -946,14 +946,18 @@
     <widget class="QPushButton" name="bFindPorts">
      <property name="geometry">
       <rect>
-       <x>714</x>
+       <x>717</x>
        <y>56</y>
        <width>34</width>
        <height>25</height>
       </rect>
      </property>
      <property name="text">
-      <string>...</string>
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>res/slot.svg</normaloff>res/slot.svg</iconset>
      </property>
     </widget>
    </widget>
@@ -964,7 +968,7 @@
      <x>0</x>
      <y>0</y>
      <width>960</width>
-     <height>27</height>
+     <height>24</height>
     </rect>
    </property>
   </widget>

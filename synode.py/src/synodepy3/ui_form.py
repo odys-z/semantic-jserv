@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'form.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.10.2
+## Created by: Qt User Interface Compiler version 6.8.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -246,11 +246,14 @@ class Ui_InstallForm(object):
         self.cbbPeers.setGeometry(QRect(100, 56, 149, 27))
         self.bFindPorts = QPushButton(self.gboxLocal)
         self.bFindPorts.setObjectName(u"bFindPorts")
-        self.bFindPorts.setGeometry(QRect(714, 56, 34, 25))
+        self.bFindPorts.setGeometry(QRect(717, 56, 34, 25))
+        icon2 = QIcon()
+        icon2.addFile(u"res/slot.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.bFindPorts.setIcon(icon2)
         InstallForm.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(InstallForm)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 960, 27))
+        self.menubar.setGeometry(QRect(0, 0, 960, 24))
         InstallForm.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(InstallForm)
         self.statusbar.setObjectName(u"statusbar")
@@ -425,7 +428,7 @@ class Ui_InstallForm(object):
         self.txtVolpath.setPlaceholderText(QCoreApplication.translate("InstallForm", u"Volume is where the data saved at local node.", None))
         self.chkHub.setText(QCoreApplication.translate("InstallForm", u"hub", None))
         self.lbJservs_2.setText(QCoreApplication.translate("InstallForm", u"<html><head/><body><p align=\"right\">In every</p></body></html>", None))
-        self.bFindPorts.setText(QCoreApplication.translate("InstallForm", u"...", None))
+        self.bFindPorts.setText("")
         pass
     # retranslateUi
 

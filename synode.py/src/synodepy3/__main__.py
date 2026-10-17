@@ -348,7 +348,12 @@ class InstallerForm(QMainWindow):
 
     def save(self):
         err_ready()
-        if self.update_valid() is not None:
+        try:
+            if self.update_valid() is not None:
+                return
+        except Exception as e:
+            # A slot's exception is silent in the windowed setup-gui.exe.
+            err_msg('Checking the settings failed.', e)
             return
 
         if self.check_install_jre() is not None:
@@ -489,9 +494,13 @@ class InstallerForm(QMainWindow):
             else:
                 self.ui.cbbDomains.setCurrentText('')
 
-        if LangExt.isblank(prev_domid) and LangExt.len(self.domains_arr) > 0:
-            prev_domid = self.domains_arr[0]
-            self.ui.cbbDomains.setCurrentText(prev_domid) # -> if different: self.select_domid(prev_domid)
+        if LangExt.len(self.domains_arr) > 0 and \
+                (LangExt.isblank(prev_domid) or prev_domid not in self.domains_arr):
+            # A blank or stale domain id, e.g. the package's registry template's, is not one of the community's:
+            # take the first one and load its synodes from the central, so that peers are never left empty.
+            with QSignalBlocker(self.ui.cbbDomains):
+                self.ui.cbbDomains.setCurrentText(self.domains_arr[0])
+            self.select_domid(0)
 
     def select_domid(self, dix):
         domid = self.ui.cbbDomains.currentText()
@@ -579,7 +588,10 @@ class InstallerForm(QMainWindow):
         self.ui.txtDompswd.setText(registry.synusers[0].pswd)
 
         self.bind_cbborg([cfg.org.orgId], cfg.org.orgId)
-        self.ui.cbbDomains.setCurrentText(cfg.domain)
+        # select_community() has selected the configured domain, or the community's first one if the
+        # configured is not in the central. Only show the configured one if the central can't be reached.
+        if LangExt.len(self.domains_arr) == 0:
+            self.ui.cbbDomains.setCurrentText(cfg.domain)
 
         u = self.cli.find_synuser(cfg.admin)
         if u is not None:

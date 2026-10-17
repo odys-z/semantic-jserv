@@ -4,7 +4,7 @@
     "type": "io.oz.syn.registry.SynodeConfig",
     "synconn": "docsyn",
     "sysconn": "sys",
-    "domain": "zsu",
+    "domain": "",
     "org": {
       "type": "io.oz.syn.registry.SynOrg",
       "parent": null,
@@ -32,6 +32,6 @@
     "pswd": "****************",
     "iv": null,
     "org": "org.my",
-    "domain": "zsu"
+    "domain": ""
   }]
 }
