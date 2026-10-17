@@ -528,9 +528,9 @@ class InstallerCli:
 
     def chk_hub(self) -> Optional[dict]:
         """
-        Check the hub synode's jserv of a peer. A peer is allowed to be saved without it (warned),
-        but its services can't be installed (chk_srv_install()) until the hub's jserv is saved,
-        e.g. saving again once the hub is running.
+        Check the hub synode's jserv of a peer, only for warnings: a peer can be saved, installed and started
+        before the hub. The hub's jserv can be updated later, e.g. saving again with the hub's jserv, as the
+        newer settings.jserv_utc (stamped by settings.Jservs() while saving) takes effect over the db's.
         :return: {'hub-node': reason} if this peer has no hub's jserv, or None (also for a hub).
         """
         if self.registry.config.mode == SynodeMode.hub.name:
@@ -538,8 +538,17 @@ class InstallerCli:
         hub_node = self.registry.find_hubpeer()
         if hub_node is None:
             return {'hub-node': 'The hub synode is missing in the domain. Save again when the hub node is running.'}
-        if LangExt.isblank(self.settings.jservs.get(hub_node.synid) if self.settings.jservs else None):
-            return {'hub-node': f'The hub synode, {hub_node.synid}, has no jserv (service address). Save again when the hub node is running.'}
+
+        # The central's hub jserv can be a suggestion from the domain creator (Registry.registDom()),
+        # e.g. http://ip:port/regist-central, created by register() before it took the synode's protocol.
+        jsrv = self.settings.jservs.get(hub_node.synid) if self.settings.jservs else None
+        try:
+            valid = not LangExt.isblank(jsrv) and JServUrl.valid(jsrv, rootpath=self.syn_protocol.protocolpath)
+        except ValueError:
+            valid = False
+        if not valid:
+            return {'hub-node': f'The hub synode, {hub_node.synid}, has no valid jserv (service address): {jsrv}. '
+                                'Save again with the hub\'s jserv when the hub node is running.'}
         return None
 
     def chk_service_resources(self) -> Optional[dict]:
@@ -591,7 +600,7 @@ class InstallerCli:
         if LangExt.isblank(synid) or synid != self.registry.config.synid:
             return {'saved': f'Save the settings of {synid} first.'}
 
-        err = self.chk_synid(synid) or self.chk_hub() or self.chk_service_resources()
+        err = self.chk_synid(synid) or self.chk_service_resources()
         if err is not None:
             return err
 
@@ -1057,7 +1066,9 @@ class InstallerCli:
         return register(client=self.check_cent_login(),
                         func_uri=install_uri,
                         market=self.settings.market_id, cfg=self.registry.config,
-                        s=self.settings, iport=self.getProxiedIp(), jprotocl=self.reg_jserv.jprotocol)
+                        # the synode's protocol: the central takes this jserv as the suggested hub's
+                        # (Registry.registDom()), not the central's protocol (regist-central).
+                        s=self.settings, iport=self.getProxiedIp(), jprotocl=self.syn_protocol)
 
     def jesuis_hub(self) -> bool:
         """

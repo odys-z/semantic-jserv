@@ -484,6 +484,10 @@ class InstallerForm(QMainWindow):
             self.enable_widgets()
             return
 
+        h = self.cli.chk_hub()
+        if h is not None:
+            warn_msg('Hub synode is incorrect, need to reset again when the hub node is running.', h)
+
         self.cli.stop_web()
         msg_box('Installing Windows Services...\n'
                 'Click Ok to continue, and confirm the administrator permission request\n'
