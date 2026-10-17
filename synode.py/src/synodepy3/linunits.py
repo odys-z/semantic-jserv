@@ -137,6 +137,13 @@ def _unit_exists(unit: str) -> bool:
                                capture_output=True, text=True).stdout.strip())
 
 
+def linusrvs_installed(units: List[str]) -> List[str]:
+    """
+    :return: the units of units already installed, for InstallerCli.chk_srv_install().
+    """
+    return [u for u in units if _unit_exists(u)]
+
+
 def _unit_active(unit: str) -> str:
     return subprocess.run(['systemctl', 'is-active', unit], capture_output=True, text=True).stdout.strip()
 

@@ -8,7 +8,7 @@ from semanticshare.io.odysz.jclient import AnclientSettings
 from semanticshare.io.oz.anclient.app import DesktopSettings, UIResources
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from .jre_downloader import JreDownloader, _jre_, java_cmd
+from .jre_downloader import JreDownloader, _jre_, java_cmd, validate_jre
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -46,6 +46,37 @@ from .prerequisites import check_exiftool, checkinstall_exiftool, exiftool_exe, 
 from .validators import check_domain_id
 
 mypath : str = os.path.dirname(__file__)
+
+
+def readable_state(s: str = ''):
+    """
+    The registered state of a synode id, for users choosing the id (setup-cli & setup-gui).
+    """
+    return '' if LangExt.len(s) == 0 \
+            else '✅ Available planned node' if s == CynodeStats.create \
+            else '⛔ Already running as a Hub node' if s == CynodeStats.asHub \
+            else '⛔ Already running as a Peer node' if s == CynodeStats.asPeer \
+            else '[❗] Unknown state (Dangerous! Create a new domain if possible)'
+
+
+def available_state(s: str = '') -> bool:
+    """
+    Can a synode id of the state be installed (setup-cli & setup-gui)?
+    Only a planned (create) or unknown-yet (blank) one. A running synode (Java, AppSettings.synotifyCentral())
+    is the only one setting 'h' or 'p' at the central, while the installers submit no state.
+    """
+    return LangExt.len(s) == 0 or s == CynodeStats.create
+
+
+def state_mark(s: str = ''):
+    """
+    The short mark of readable_state(), prefixing synode ids where the space is limited.
+    """
+    return '' if LangExt.len(s) == 0 \
+            else '✅' if s == CynodeStats.create \
+            else '⛔' if s in (CynodeStats.asHub, CynodeStats.asPeer) \
+            else '❗'
+
 '''
 this script file path
 '''
@@ -484,6 +515,75 @@ class InstallerCli:
 
     def vol_valid(self):
         return self.validateVol() is None
+
+    def chk_synid(self, synid: str) -> Optional[dict]:
+        """
+        Check the synode id to be saved / installed, while the volume has never run (see hasrun()).
+        :return: error, {'synid': reason}, or None if the id is planned (create) or not registered yet.
+        """
+        n = self.registry.find_peer(synid)
+        if n is not None and not available_state(n.stat):
+            return {'synid': f'{synid}: {readable_state(n.stat)}. Select another synode id.'}
+        return None
+
+    def chk_service_resources(self) -> Optional[dict]:
+        """
+        Check the resources for running the services, by file existence only (no subprocess),
+        as it is called for each setup-gui widgets update.
+        :return: {item: missing reason}, or None if all are found.
+        """
+        err = {}
+        for jar in (jserv_07_jar, html_web_jar):
+            if not os.path.isfile(os.path.join('bin', jar)):
+                err[jar] = f'Service package is missing: bin/{jar}'
+
+        if validate_jre() is not None:
+            err['jre'] = 'JRE 17 is not available.'
+
+        if Utils.iswindows():
+            if not os.path.isfile(exiftool_exe):
+                err['exiftool'] = f'Depending tool, exiftool is missing: {exiftool_exe}'
+            from .winsrv import install_jserv_w_bat, install_html_w_bat # winsrv imports this module
+            for bat in (install_jserv_w_bat, install_html_w_bat):
+                if not os.path.isfile(bat):
+                    err[bat] = f'Service script is missing: {bat}'
+        elif shutil.which('exiftool') is None:
+            err['exiftool'] = 'Depending tool, exiftool is not installed.'
+
+        volume = self.settings.Volume()
+        if self.validateVol() is not None or LangExt.isblank(volume):
+            err['volume'] = f'Volume is not valid: {volume}'
+        else:
+            for f in (sys_db, syn_db, syntity_json, dictionary_json):
+                if not os.path.isfile(os.path.join(volume, f)):
+                    err[f] = f'Not saved yet, missing in volume: {f}'
+
+        return err if len(err) > 0 else None
+
+    def chk_srv_install(self, synid: str, installed_srvs: Callable[[], List[str]]) -> Optional[dict]:
+        """
+        Can the services of the synode id be installed (setup-gui & setup-cli)?
+        Services can't be re-installed, other than by upgrading.
+        :param synid: the selected synode id
+        :param installed_srvs: returns the names of the services already installed, for this synode,
+               e.g. winsrv.winsrvs_installed(); called only if all the other checks are passed.
+        :return: {reason: details}, or None
+        """
+        if self.hasrun():
+            return {'hasrun': 'The synode has run. Services can only be re-installed by upgrading.'}
+
+        if LangExt.isblank(synid) or synid != self.registry.config.synid:
+            return {'saved': f'Save the settings of {synid} first.'}
+
+        err = self.chk_synid(synid) or self.chk_service_resources()
+        if err is not None:
+            return err
+
+        srvs = installed_srvs()
+        if LangExt.len(srvs) > 0:
+            return {'installed': f'Service(s) already installed: {", ".join(srvs)}. '
+                                 'Services can only be re-installed by upgrading.'}
+        return None
 
     def hasrun(self, override_vol: str = None):
         try:

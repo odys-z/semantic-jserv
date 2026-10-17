@@ -15,10 +15,11 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, App
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
-from synodepy3.winsrv import install_winsrvs
-from synodepy3.linunits import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ
+from synodepy3.winsrv import install_winsrvs, winsrvs_installed
+from synodepy3.linunits import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ, \
+    linusrvs_installed
 from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath, posix_path, \
-    desktop_exe, start_desktop
+    desktop_exe, start_desktop, readable_state, available_state
 from synodepy3.validators import PJservValidator, PIPValidator, PDomainValidator, domain_maxlen
 from synodepy3.prerequisites import check_prerequisites
 from synodepy3.get_avail_ports import report_port_ranges
@@ -26,13 +27,6 @@ from synodepy3.get_avail_ports import report_port_ranges
 
 def reach_central():
     pass
-
-def readable_state(s: str = ''):
-    return '' if LangExt.len(s) == 0 \
-            else '✅ Available planned node' if s == CynodeStats.create \
-            else '⛔ Already running as a Hub node' if s == CynodeStats.asHub \
-            else '⛔ Already running as a Peer node' if s == CynodeStats.asPeer \
-            else '[❗] Unknown state (Dangerous! Create a new domain if possible)'
 
 
 from synodepy3.__version__ import synode_ver
@@ -408,7 +402,7 @@ if not has_run:
 
     # 4.2 select a peer
     synid, cynstat = None, CynodeStats.die
-    while not _quit and cynstat is not None and cynstat != CynodeStats.create:
+    while not _quit and not available_state(cynstat):
         nodes = respeers_options(cli.registry.config)
 
         selected_id = cli.registry.config.synid, ''
@@ -426,8 +420,8 @@ if not has_run:
             _quit = True
         elif synid == '': # another domain
             create_find_update_dom()
-        elif cynstat is not None and cynstat != CynodeStats.create:
-            print(f'Cannot re-install {synid}.\n'
+        elif not available_state(cynstat):
+            print(f'Cannot install {synid}, which is running somewhere ({readable_state(cynstat)}).\n'
                   '[Note 0.7.6] Some settings can be modified in settings.json, e.g. port or ip, by which way is not recommended.')
         else: # ui.select_peer()
             cfg.synid = synid
@@ -641,7 +635,21 @@ if caninstall == 1:
                 f'{cli.settings.webProxyPort if cli.settings.reverseProxy else cli.settings.webport}/login.html'
     login_tip = f'Login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n{login_url}\n\n'
 
+    def refuse_srvs(err: dict):
+        """
+        Services are not to be installed (InstallerCli.chk_srv_install(), the same as setup-gui): report and quit.
+        """
+        session.prompt(message=
+            'Services are not installed:\n' + '\n'.join(str(v) for v in err.values()) + '\n\n' +
+            login_tip +
+            'Return to quit Portfolio Setup ...')
+        sys.exit(0)
+
     if Utils.iswindows():
+        srv_err = cli.chk_srv_install(cfg.synid, lambda: winsrvs_installed(cli))
+        if srv_err is not None:
+            refuse_srvs(srv_err)
+
         install_srvs = choice(
             message='Install the Windows services now? (administrator permission required, asked once)',
             options=[(1, 'Yes, install the services.'),
@@ -671,6 +679,11 @@ if caninstall == 1:
                 'And click "install Windows service" with default settings.\n\n'
                 'Return to quit Portfolio Setup ...')
     else:
+        # the units' names are asked below, and checked there
+        srv_err = cli.chk_srv_install(cfg.synid, lambda: [])
+        if srv_err is not None:
+            refuse_srvs(srv_err)
+
         syn_templ, web_templ = generate_service_templ(cli.settings, cfg)
 
         print(f'The service configuration files are generated: ./{syn_templ} & ./{web_templ}.')
@@ -685,6 +698,10 @@ if caninstall == 1:
             srv_name = session.prompt(
                 message='Service name (installed as <name>.service & <name>.web.service): ',
                 default=cfg.synid, validator=SrvNameValidator()).strip().removesuffix('.service') or cfg.synid
+            installed = linusrvs_installed([f'{srv_name}.service', f'{srv_name}.web.service'])
+            if installed:
+                refuse_srvs({'installed': f'Service(s) already installed: {", ".join(installed)}. '
+                                          'Services can only be re-installed by upgrading.'})
             try:
                 states = install_linusrvs(cli, {linusrv_synode: (f'{srv_name}.service', syn_templ),
                                                 linusrv_websrv: (f'{srv_name}.web.service', web_templ)})

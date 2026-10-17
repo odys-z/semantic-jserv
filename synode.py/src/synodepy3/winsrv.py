@@ -118,6 +118,14 @@ def winsrv_exists(srvname: str) -> bool:
     return subprocess.run(['sc', 'query', srvname], capture_output=True).returncode == 0
 
 
+def winsrvs_installed(cli: InstallerCli) -> list[str]:
+    """
+    :return: the synode & web services' names (by registry.config.synid) already installed,
+             for InstallerCli.chk_srv_install().
+    """
+    return [s for s in (cli.gen_wsrv_name(), cli.gen_html_srvname()) if winsrv_exists(s)]
+
+
 def install_winsrvs(cli: InstallerCli, log: str = 'winsrv-install.log',
                     versions: dict = None, replace: tuple = ()) -> dict[str, bool]:
     """
