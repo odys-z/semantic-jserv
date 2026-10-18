@@ -483,9 +483,13 @@ def _report_port_ranges(start_port, end_port, host, verbose, marks):
     def flush_marked(status, port, note):
         if status == "available":
             print_formatted_range("marked", port, port, note)
-        else:
-            flush(status, port, port)
-            print_formatted_range("marked", port, port, f"{note}, but in use")
+            return
+        # One line for a marked port in use, with its holder: it is not listed again as a used range.
+        holders = [(synode_label(pid, port, st) if pid is not None else None)
+                   or f"pid {pid if pid is not None else '?'} {describe_process(pid)}"
+                   for pid, st in (owners or {}).get(port, {}).items()]
+        print_formatted_range("used", port, port,
+                              f"{note}, in use: {'; '.join(holders) or unowned_note(errors.get(port))}")
 
     if owners_partial:
         _emit(f"(Not root: only your own programs' sockets are listed, {ELEVATE} to see all.)")
