@@ -10,6 +10,7 @@ vol-X29/temp
 vol-X29/ura
 vol-Y201/**
 !vol-Y201/README.md
+vol-my-7
 
 volume/*.db
 test/results

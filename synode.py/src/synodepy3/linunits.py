@@ -132,6 +132,23 @@ class Sudo:
         return subprocess.run(argv, input=inp, text=True, capture_output=True)
 
 
+def _yes_no(msg: str, default: bool) -> bool:
+    """
+    Ask until answered y[es] / n[o]; Enter takes the default.
+    Not prompt_toolkit's confirm(): Enter there accepts the empty buffer and returns '' (falsy),
+    so an Enter, typed or left over from the previous prompt, silently answers "no".
+    """
+    from prompt_toolkit import prompt
+    while True:
+        a = prompt(f'{msg} ({"Y/n" if default else "y/N"}) ').strip().lower()
+        if not a:
+            return default
+        if a in ('y', 'yes'):
+            return True
+        if a in ('n', 'no'):
+            return False
+
+
 def _unit_exists(unit: str) -> bool:
     return bool(subprocess.run(['systemctl', 'list-unit-files', '--no-legend', unit],
                                capture_output=True, text=True).stdout.strip())
@@ -176,8 +193,6 @@ def install_linusrvs(cli: InstallerCli, units: Dict[str, Tuple[str, str]],
     :return: {unit: state of systemctl is-active} of the installed units ('inactive' if not started),
              empty if user declined to overwrite, or failed.
     """
-    from prompt_toolkit.shortcuts import confirm
-
     def install_unit_file(unit_file: str, unit: str) -> bool:
         dest = _unit_path(unit)
         r = sudo.run('install', '-m', '644', '-o', 'root', '-g', 'root', unit_file, dest)
@@ -188,7 +203,7 @@ def install_linusrvs(cli: InstallerCli, units: Dict[str, Tuple[str, str]],
         return False
 
     existing = [u for u, _ in units.values() if _unit_exists(u)]
-    if existing and not confirm(f'{", ".join(existing)} already installed. Overwrite?'):
+    if existing and not _yes_no(f'{", ".join(existing)} already installed. Overwrite?', default=False):
         return {}
 
     sudo = sudo or Sudo()
@@ -222,9 +237,7 @@ def restart_sysunits(sudo: Sudo, units: List[str], ask: bool = True) -> Dict[str
     :param ask: False to restart without asking (upgrade, see commands.update_srv())
     :return: {unit: state of systemctl is-active}
     """
-    from prompt_toolkit.shortcuts import confirm
-
-    if not ask or confirm(f'Start {", ".join(units)} now?'):
+    if not ask or _yes_no(f'Start {", ".join(units)} now?', default=True):
         for unit in units:
             # restart: also takes effect for an overwritten, running unit
             r = sudo.run('systemctl', 'restart', unit)
