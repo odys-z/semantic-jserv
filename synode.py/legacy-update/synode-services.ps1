@@ -12,9 +12,17 @@
     stop     sc stop; a service still not stopped after -Wait seconds has its process killed
     start    sc start, waits for RUNNING
     backup   stop, back up the local data and settings (below), start again
-    upgrade  stop, back up, ask to go on (unless -Yes), then the new package's upgrade.exe (its upgrade.pkg,
-             unless -KeepTool) with the package: it backs up again, unpacks, copies back and restarts the
-             services (synodepy3 commands.update_srv())
+    upgrade  check the package accepts the installed version, ask to disconnect the network, stop, back up,
+             write bin/resource.json of the installed version if there is none, ask to go on (unless -Yes),
+             then the new package's upgrade.exe (its upgrade.pkg, unless -KeepTool) with the package: it backs
+             up again, unpacks, copies back, restarts the services, reinstalled first if the versions changed
+             (synodepy3 commands.update_srv())
+
+  The installed version: an installation without bin/resource.json (packages before 2026-10) gets one written
+  from its services (the jars of their Procrun Classpath, or else their names Synode-<jar_ver>-<id>,
+  Synode.web-<web_ver>-<id>). Without it upgrade.exe would take its own version for the installed one, and an
+  older installation would keep running its old jar.
+  See README.md.
 
   The backup, made while the services are stopped, goes to a new folder <root>/pre-upgrade-<yyyyMMdd-HHmmss>,
   never written again: the volume's dictionary.json, *.db, syntity.json; WEB-INF/; web-dist/private/;
@@ -169,6 +177,120 @@ function Backup-Local {
     return $dir
 }
 
+function Compare-Ver([string]$a, [string]$b) {
+    <# < 0, 0, > 0 as a is older than, the same as, newer than b ("0.8" = "0.8.0"), as semanticshare ver_cmp() #>
+    $x = @([regex]::Matches($a, '\d+') | ForEach-Object { [int]$_.Value })
+    $y = @([regex]::Matches($b, '\d+') | ForEach-Object { [int]$_.Value })
+    for ($i = 0; $i -lt [Math]::Max($x.Count, $y.Count); $i++) {
+        $u = if ($i -lt $x.Count) { $x[$i] } else { 0 }
+        $v = if ($i -lt $y.Count) { $y[$i] } else { 0 }
+        if ($u -ne $v) { return $u - $v }
+    }
+    return 0
+}
+
+function Read-ZipJson([string]$zip, [string]$name) {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $z = [IO.Compression.ZipFile]::OpenRead($zip)
+    try {
+        $e = $z.Entries | Where-Object { ($_.FullName -replace '^\./', '') -eq $name } | Select-Object -First 1
+        if (-not $e) { return $null }
+        $r = New-Object IO.StreamReader($e.Open())
+        try { return $r.ReadToEnd() | ConvertFrom-Json } finally { $r.Dispose() }
+    } finally { $z.Dispose() }
+}
+
+function Get-ProcrunJar([string]$name) {
+    <# The jar of a Procrun service (its Java Classpath), or $null #>
+    foreach ($k in "HKLM:\SOFTWARE\WOW6432Node\Apache Software Foundation\Procrun 2.0\$name\Parameters\Java",
+                   "HKLM:\SOFTWARE\Apache Software Foundation\Procrun 2.0\$name\Parameters\Java") {
+        try {
+            $cp = (Get-ItemProperty -Path $k -ErrorAction Stop).Classpath
+            if ($cp) { return ($cp -split ';')[0] }
+        } catch { }
+    }
+    return $null
+}
+
+function Get-Installed {
+    <# The installed versions and jars: bin/resource.json, or else from the services. #>
+    $res = Join-Path $Root 'bin\resource.json'
+    if (Test-Path $res) {
+        $r = Get-Content -Raw -Encoding UTF8 $res | ConvertFrom-Json
+        return @{ jar_ver = $r.versions.jar_ver; web_ver = $r.versions.web_ver; html_srver = $r.versions.html_srver
+                  synode = $r.files.synode; htmlweb = $r.files.'html-web'; manifest = $true }
+    }
+    $srv, $web = Get-ServiceNames
+    if ($srv -notmatch '^Synode-([\d.]+)-' ) { throw "Can't read the version from the service name $srv." }
+    $jver = $Matches[1]
+    if ($web -notmatch '^Synode\.web-([\d.]+)-') { throw "Can't read the version from the service name $web." }
+    $wver = $Matches[1]
+
+    $jar = Get-ProcrunJar $srv
+    if (-not $jar) { $jar = "bin\jserv-album-$jver.jar" }
+    $hjar = Get-ProcrunJar $web
+    if (-not $hjar) {
+        $h = @(Get-ChildItem -Path (Join-Path $Root 'bin') -Filter 'html-web-*.jar' | Sort-Object Name)
+        if ($h.Count -ne 1) { throw "Can't tell the web service's jar: bin\html-web-*.jar are $($h.Name -join ', ')." }
+        $hjar = "bin\$($h[0].Name)"
+    }
+    $jar = $jar -replace '^[.\\/]+', '' -replace '\\', '/'
+    $hjar = $hjar -replace '^[.\\/]+', '' -replace '\\', '/'
+    if ($hjar -notmatch 'html-web-([\d.]+)\.jar$') { throw "Can't read the version of the web service's jar $hjar." }
+    return @{ jar_ver = $jver; web_ver = $wver; html_srver = $Matches[1]; synode = $jar; htmlweb = $hjar; manifest = $false }
+}
+
+function Write-InstalledResources($inst) {
+    <# bin/resource.json of the installed version, for upgrade.exe (semanticshare PkgResources) #>
+    $json = [ordered]@{
+        type = 'io.oz.syn.pkgresource.PkgResources'
+        files = [ordered]@{ synode = $inst.synode; 'html-web' = $inst.htmlweb }
+        versions = [ordered]@{ jar_ver = $inst.jar_ver; web_ver = $inst.web_ver; html_srver = $inst.html_srver }
+        upgrade_from = @{}
+    } | ConvertTo-Json -Depth 4
+    $p = Join-Path $Root 'bin\resource.json'
+    [IO.File]::WriteAllText($p, $json, (New-Object Text.UTF8Encoding $false))   # no BOM
+    Write-Host "Written $p, the installed version $($inst.jar_ver)"
+    return $p
+}
+
+function Test-Accepts($inst) {
+    <# Does the package accept the installed version? Its bin/resource.json upgrade_from {min, max}, no downgrade. #>
+    $pkg = Read-ZipJson $Package 'bin/resource.json'
+    if (-not $pkg) { throw "$Package has no bin/resource.json, not a package this upgrade is for." }
+    $mine, $lo, $hi = $pkg.versions.jar_ver, $pkg.upgrade_from.min, $pkg.upgrade_from.max
+    $v = $inst.jar_ver
+    if ($lo -and (Compare-Ver $v $lo) -lt 0) { throw "The installed version $v is older than $lo, the oldest the package $mine upgrades. Nothing is changed." }
+    if ($hi -and (Compare-Ver $v $hi) -gt 0) { throw "The installed version $v is newer than $hi, the newest the package $mine upgrades. Nothing is changed." }
+    if ($mine -and (Compare-Ver $v $mine) -gt 0) { throw "The installed version $v is newer than the package $mine (a downgrade). Nothing is changed." }
+    Write-Host "Upgrading $v -> $mine"
+}
+
+function Confirm-Offline {
+    <# Ask to disconnect the network: the synode must not exchange with its peers or the central while upgrading. #>
+    Write-Host ''
+    Write-Host '================================================================' -ForegroundColor Yellow
+    Write-Host ' Please disconnect this computer from the network now' -ForegroundColor Yellow
+    Write-Host ' (unplug the cable, turn off Wi-Fi), until the upgrade is done.' -ForegroundColor Yellow
+    Write-Host ' A synode stopped in the middle of a synchronization or a registry' -ForegroundColor Yellow
+    Write-Host ' update can leave doc-refs unresolved. The upgrade needs no network.' -ForegroundColor Yellow
+    Write-Host '================================================================' -ForegroundColor Yellow
+    while ($true) {
+        $nets = @()
+        try { $nets = @(Get-NetConnectionProfile -ErrorAction Stop | ForEach-Object { "$($_.InterfaceAlias) ($($_.Name))" }) } catch { }
+        if ($nets.Count -eq 0) {
+            if ($Yes) { return }
+            if ((Read-Host 'Disconnected? Press Enter to go on (q to quit)') -eq 'q') { throw 'Aborted, nothing is changed.' }
+            return
+        }
+        Write-Host "Still connected: $($nets -join ', ')" -ForegroundColor Yellow
+        if ($Yes) { return }
+        $a = Read-Host 'Disconnect, then press Enter to check again (c to continue anyway, q to quit)'
+        if ($a -eq 'q') { throw 'Aborted, nothing is changed.' }
+        if ($a -eq 'c') { return }
+    }
+}
+
 function Expand-Tool {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip = [IO.Compression.ZipFile]::OpenRead($Package)
@@ -187,14 +309,21 @@ function Invoke-Upgrade {
             throw 'Aborted, nothing is changed.'
         }
     }
+    $inst = Get-Installed
+    Test-Accepts $inst
+    Confirm-Offline
+
     $exe = Join-Path $Root 'upgrade.exe'
     if ($KeepTool) { if (-not (Test-Path $exe)) { throw "No $exe." } } else { Expand-Tool }
 
-    foreach ($n in Get-ServiceNames) { Stop-Srv $n }
+    $names = Get-ServiceNames
+    foreach ($n in $names) { Stop-Srv $n }
     try { $backup = Backup-Local }
-    catch { Write-Host 'Backup failed, starting the services again ...'; foreach ($n in Get-ServiceNames) { Start-Srv $n }; throw }
+    catch { Write-Host 'Backup failed, starting the services again ...'; foreach ($n in $names) { Start-Srv $n }; throw }
+    $written = if ($inst.manifest) { $null } else { Write-InstalledResources $inst }
     if (-not $Yes -and (Read-Host "Upgrade now with $Package ? [y/N]") -ne 'y') {
-        foreach ($n in Get-ServiceNames) { Start-Srv $n }
+        if ($written) { Remove-Item $written }
+        foreach ($n in $names) { Start-Srv $n }
         throw "Not upgraded, the services are started again. The backup is kept: $backup"
     }
 
@@ -211,10 +340,12 @@ function Invoke-Upgrade {
     $ErrorActionPreference = 'Stop'
     if (-not $complete) {
         throw "The upgrade did not complete, see its output above. Before retrying, keep the backup $backup " +
-              "(upgrade.exe's backup-<date>\ will be overwritten by the retry)."
+              "(upgrade.exe's backup-<date>\ will be overwritten by the retry). The services may be stopped: " +
+              "legacy-update\start-services.bat starts them."
     }
     foreach ($n in Get-ServiceNames) { Show-Srv $n }   # the names can change with the versions
     Write-Host "Upgraded. The backup before the upgrade is kept: $backup"
+    Write-Host 'You can connect this computer to the network again.' -ForegroundColor Green
 }
 
 # ---- main ----
