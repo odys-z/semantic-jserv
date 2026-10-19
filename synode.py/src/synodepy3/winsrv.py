@@ -365,6 +365,9 @@ def apply_winsrv_resources(cli: InstallerCli, old: PkgResources, new: PkgResourc
     ov, nv = old.versions, new.versions
     keys = ('jar_ver', 'web_ver', 'html_srver')
     if all(ov.get(k) == nv.get(k) for k in keys):
+        # The unpacking replaced the install bats with the package's unstamped ones (e.g. @set jar_ver=0.8.0
+        # in a 0.8.1 package): stamp them again, so a later reinstall / uninstall uses the installed jars.
+        stamp_winsrv_bats(nv.get('jar_ver'), nv.get('html_srver'))
         return restart_wsrvs()
 
     envars = cli.settings.envars
