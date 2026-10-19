@@ -33,6 +33,7 @@ if 'install-maven-local' not in _tasks and not _independent:
     mvn.requir_installed("io.github.odys-z:anclient.java", "[0.5.23,)")
     mvn.requir_installed("io.github.odys-z:semantic.jserv", "[1.5.18,)")
     mvn.requir_installed("io.github.odys-z:docsync.jserv", "[0.3.5,)")
+    mvn.requir_installed("io.github.odys-z:ws-agent", "[0.2.1,)")
 
 from semanticshare.io.oz.invoke import SynodeTask
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
@@ -272,7 +273,8 @@ def install_maven_local(c: Context, deploy: str='tasks.closed-test.json', gpg: s
         git('docsync.jserv'),
         git('album-android', 'albumtier'),
 
-        git('html-service')
+        git('html-service'),
+        git('album-wsagent')
     ]
 
     print('----------  Install Local Maven ---------')
