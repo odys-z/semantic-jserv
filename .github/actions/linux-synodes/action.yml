@@ -70,12 +70,21 @@ runs:
         echo "PACKAGE=$WORK/dl/$name" >> $GITHUB_ENV
         echo "### Package: \`$name\` (release \`$tag\`, uploaded $updated)" >> $GITHUB_STEP_SUMMARY
 
-        # the desktop of the same release: its IPC agent jar and settings
-        gh release download "$tag" -R "$GITHUB_REPOSITORY" -p 'desktop-*.zip' -D $WORK/dl/desktop || {
-          echo "::error::no desktop-*.zip in release $tag"; exit 1; }
-        mkdir -p $WORK/desktop && unzip -q -o $WORK/dl/desktop/desktop-*.zip 'res/ws-agent-*.jar' 'settings/app-settings.json' -d $WORK/desktop
+        # the desktop of the same release (the only one there, pick-release checks): its IPC agent jar and settings
+        dpick=$(python $CONFIG/closed_test.py pick-release $WORK/dl/releases.json '^desktop-.*\.zip$' "$tag")
+        [ -n "$dpick" ] || { echo "::error::no desktop-*.zip in release $tag"; exit 1; }
+        IFS=$'\t' read -r dupdated dtag dname <<< "$dpick"
+        gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$dname" -D $WORK/dl/desktop
+        mkdir -p $WORK/desktop && unzip -q -o "$WORK/dl/desktop/$dname" 'res/ws-agent-*.jar' 'settings/app-settings.json' -d $WORK/desktop
         ls -l $WORK/desktop/res $WORK/desktop/settings
-        echo "### Desktop: \`$(cd $WORK/dl/desktop && ls)\` ($(cd $WORK/desktop/res && ls))" >> $GITHUB_STEP_SUMMARY
+        # one IPC agent jar, the one the desktop's settings name (wsagent_jar): with several (versions), stop
+        agents=($WORK/desktop/res/ws-agent-*.jar)
+        [ ${#agents[@]} -eq 1 ] || {
+          echo "::error::$dname has ${#agents[@]} IPC agent jars: $(cd $WORK/desktop/res && echo ws-agent-*.jar). Keep only one in the desktop's res/ (rebuild the desktop)."; exit 1; }
+        want=$(jq -r .wsagent_jar $WORK/desktop/settings/app-settings.json)
+        [ "$want" = "res/$(basename ${agents[0]})" ] || {
+          echo "::error::$dname: settings/app-settings.json wsagent_jar is $want, but res/ has $(basename ${agents[0]})"; exit 1; }
+        echo "### Desktop: \`$dname\` (uploaded $dupdated, $(cd $WORK/desktop/res && ls))" >> $GITHUB_STEP_SUMMARY
 
     # ---- 2. three nodes ----
     - name: Extract hub, prv1, prv2

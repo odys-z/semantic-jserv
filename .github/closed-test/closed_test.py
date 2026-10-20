@@ -30,7 +30,9 @@ the BEGIN line's mark), with the jar versions of its bin/resource.json; Windows 
 stopped stamping them (synodepy3 winsrv.py), so a package built before fails here.
 
 pick-release reads `gh api --paginate --slurp repos/<repo>/releases` and prints the newest matching
-asset as "<updated>\t<tag>\t<name>" (nothing if none).
+asset as "<updated>\t<tag>\t<name>" (nothing if none). The release it is in must hold at most one asset
+of each kind (RELEASE_KINDS: synode Windows zip, synode Linux tar.gz, desktop zip, apk): with two of a
+kind (versions), which one goes with the others is not known, so it fails, listing them.
 
 Exit status 1 with an ::error:: line when a check fails.
 """
@@ -198,14 +200,32 @@ def h_photos(docname, timeout, vols, md=None, least=1):
     sys.exit(1 if missing else 0)
 
 
+RELEASE_KINDS = {
+    'synode Windows zip': r'^synode-.*x64_windows.*\.zip$',
+    'synode Linux tar.gz': r'^synode-.*x64_linux.*\.tar\.gz$',
+    'desktop zip': r'^desktop-.*\.zip$',
+    'apk': r'\.apk$',
+}
+
+
 def pick_release(releases, regex, tag=''):
     with open(releases, encoding='utf-8') as f:
         pages = json.load(f)
     assets = [(a['updated_at'], r['tag_name'], a['name'])
               for page in pages for r in page if not tag or r['tag_name'] == tag
               for a in r['assets'] if re.match(regex, a['name'])]
-    if assets:
-        print('\t'.join(max(assets)))
+    if not assets:
+        return
+    pick = max(assets)
+    # stderr: stdout is the pick, read by the caller ($(...)); the runner takes ::error:: from both
+    names = [a['name'] for page in pages for r in page if r['tag_name'] == pick[1] for a in r['assets']]
+    for kind, rx in RELEASE_KINDS.items():
+        same = sorted(n for n in names if re.search(rx, n))
+        if len(same) > 1:
+            print(f'::error::release {pick[1]} has {len(same)} {kind}s: {", ".join(same)}. '
+                  f'Keep only one of each kind (the same version) in a release.', file=sys.stderr)
+            sys.exit(1)
+    print('\t'.join(pick))
 
 
 def upgraded(node, log):
