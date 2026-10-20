@@ -74,8 +74,6 @@ def upgrade_srv(zip_path: str = None):
             cmd = f'{install_jserv_w_bat} install {srvname}'
             ctx.run(cmd)
         
-        The version replacement should happen at build time.
-
         - note: this is also why the unzipped package come with winsrv/install-jserv-w.bat has line
 
                 jar_ver = 0.7.7

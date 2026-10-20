@@ -13,6 +13,7 @@ Used by the synodes-{windows,linux}-{closed,upgrade}-test.yml workflows.
     python closed_test.py pick-release <releases.json> <asset-regex> [<tag>]
     python closed_test.py upgraded     <node> <upgrade-log>
     python closed_test.py resources-applied <node>
+    python closed_test.py packed-bats  <node>
     python closed_test.py repack       <package> <out-package> <json>
 
 repack: a copy of a package whose bin/resource.json is updated with <json> (top-level keys replaced),
@@ -23,6 +24,10 @@ service-names prints the Windows (winsrv.*) or Linux (linusrv.*) service names s
 h-photos: a docname with '%' is a LIKE pattern; each node needs at least --min rows (default 1).
 upgrade-tool: the installed synode_py3 is the version of the package's bin/synode_py3-*.whl
 (Linux: synode-upgrade-srv installs it, synodepy3 installer_api.promote_upgrade_whl()).
+
+packed-bats: the package's winsrv/install-*.bat are stamped at build (jserv-album/tasks.py config,
+the BEGIN line's mark), with the jar versions of its bin/resource.json; Windows packages since installing
+stopped stamping them (synodepy3 winsrv.py), so a package built before fails here.
 
 pick-release reads `gh api --paginate --slurp repos/<repo>/releases` and prints the newest matching
 asset as "<updated>\t<tag>\t<name>" (nothing if none).
@@ -276,6 +281,37 @@ def resources_applied(node):
         print(f"{name}: services {expect['winsrv.synode']}, {expect['winsrv.web']}")
 
 
+BUILD_MARK = 'stamped at build by jserv-album/tasks.py config'
+
+
+def packed_bats(node):
+    """
+    The extracted package's winsrv/install-jserv-w.bat and install-html-w.bat: the BEGIN line has the
+    build mark, and the jar versions are those of the package's bin/resource.json. Since installing no
+    longer stamps the bats, a package without the mark would install services of the wrong jars.
+    """
+    name = os.path.basename(node)
+    js = os.path.join(node, 'bin', 'resource.json')
+    if not os.path.isfile(js):
+        fail(f'{name}: no bin/resource.json in the package')
+    with open(js, encoding='utf-8') as f:
+        v = json.load(f).get('versions') or {}
+    stamped = []
+    for bat, ver in (('install-jserv-w.bat', v.get('jar_ver')), ('install-html-w.bat', v.get('html_srver'))):
+        with open(os.path.join(node, 'winsrv', bat), encoding='utf-8', errors='replace') as f:
+            text = f.read()
+        if BUILD_MARK not in text:
+            fail(f'{name}: winsrv/{bat} has no build mark ("{BUILD_MARK}"): the package was built '
+                 f'before the bats were stamped at build. Rebuild it (inv build / make).')
+        got = re.search(r'^@set jar_ver=([0-9.]+)', text, re.M)
+        got = got.group(1) if got else None
+        if got != ver:
+            fail(f'{name}: winsrv/{bat} has jar_ver={got}, bin/resource.json {ver}: built without '
+                 f'`inv config` for this version?')
+        stamped.append(f'{bat} jar_ver={got}')
+    summary(f'### Build mark: winsrv bats {BUILD_MARK} ({", ".join(stamped)})')
+
+
 def upgrade_tool(package):
     """The installed synode_py3 is the version of the package's wheel (its file name, as pip reads it)."""
     import tarfile
@@ -362,6 +398,8 @@ def main():
         upgraded(a[0], a[1])
     elif cmd == 'resources-applied':
         resources_applied(a[0])
+    elif cmd == 'packed-bats':
+        packed_bats(a[0])
     elif cmd == 'repack':
         repack(*a)
     elif cmd == 'upgrade-tool':

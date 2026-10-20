@@ -70,6 +70,7 @@ upgrade_node() {
   ( cd $WORK/$1 && synode-upgrade-srv "$4" < /dev/null ) 2>&1 | tee $WORK/logs/$1-upgrade.log
   grep -q 'Update complete' $WORK/logs/$1-upgrade.log || {
     echo "::error::$1: synode-upgrade-srv did not complete, see $1-upgrade.log"; return 1; }
+  upgrade_mark $1 synode-upgrade-srv || return 1
 
   python $CONFIG/closed_test.py upgraded $WORK/$1 $WORK/logs/$1-upgrade.log || return 1   # backed up, copied back
   python $CONFIG/closed_test.py installed $WORK/$1 $CENTRAL_DOMAIN $3 || return 1
@@ -79,6 +80,19 @@ upgrade_node() {
   check_services $1 $2 || return 1
   python $CONFIG/closed_test.py upgrade-tool "$4" || return 1                  # the new synode_py3
   systemctl cat "${after%% *}" > $WORK/logs/$1-service-after-upgrade.txt || true
+}
+
+# upgrade_mark <node> <tool>: the upgrade tool's mark of applying the manifests, "Applying bin/resource.json:
+#   jar_ver <old> -> <new>, ..." (synodepy3 commands.update_srv()), into the job summary. Tools built before
+#   it never applied them (a falsy PkgResources skipped it) and print no mark.
+upgrade_mark() {
+  local mark
+  mark=$(grep -m1 -E 'Applying bin.resource\.json:' $WORK/logs/$1-upgrade.log)
+  [ -n "$mark" ] || {
+    echo "::error::$1: no 'Applying bin/resource.json' in $1-upgrade.log: the installed $2 predates applying the manifests. Install a package built since (release_tag)."
+    return 1; }
+  echo "### $1 upgrade mark: ${mark}" >> $GITHUB_STEP_SUMMARY
+  echo "$1: $mark"
 }
 
 # refuse_node <node> <jserv-port> <package.tar.gz>

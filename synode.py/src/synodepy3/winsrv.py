@@ -14,11 +14,9 @@ import sys
 import time
 from typing import cast, Optional
 
-from anson.io.odysz.common import Utils
 from invoke import Context, UnexpectedExit
 from semanticshare.io.oz.syn.pkgresource import PkgResources
 
-from .__version__ import jar_ver, html_srver
 from .installer_api import InstallerCli, settings_json, web_inf
 
 winsrv = 'winsrv'
@@ -39,17 +37,6 @@ def uninstall_wsrv_byname(srvname: str = None):
     cmd = f'{install_jserv_w_bat} uninstall {srvname}'
     print(cmd)
     ctx.run(cmd)
-
-
-def stamp_winsrv_bats(jver: str = None, hver: str = None):
-    """
-    Update the jar versions in the install bats. Done without elevation, before installing.
-    :param jver: jserv-album's version, default this synodepy3's (__version__.jar_ver);
-                 an upgrade takes the new package's (bin/resource.json versions.jar_ver)
-    :param hver: html-web's version, default __version__.html_srver; or versions.html_srver
-    """
-    Utils.update_patterns(install_jserv_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={jver or jar_ver}'})
-    Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={hver or html_srver}'})
 
 
 def is_winadmin() -> bool:
@@ -146,8 +133,6 @@ def install_winsrvs(cli: InstallerCli, log: str = 'winsrv-install.log',
     # 2026-01-06 Must save before start service to avoid competition.
     cli.settings.toFile(cast(str, os.path.join(web_inf, settings_json)))
 
-    stamp_winsrv_bats(versions.get('jar_ver'), versions.get('html_srver'))
-
     old = [(bat, name) for bat, name in zip((install_jserv_w_bat, install_html_w_bat), replace) if name]
     if is_winadmin():
         for bat, name in old:
@@ -157,7 +142,7 @@ def install_winsrvs(cli: InstallerCli, log: str = 'winsrv-install.log',
                 print(f'Error uninstalling {name}: {e}', file=sys.stderr)
         for inst, name in ((install_wsrv_byname, srvname), (install_htmlsrv, websrvname)):
             try:
-                inst(name, stamp=False)
+                inst(name)
             except UnexpectedExit as e:
                 print(f'Error installing {name}: {e}', file=sys.stderr)
     else:
@@ -177,10 +162,7 @@ def install_winsrvs(cli: InstallerCli, log: str = 'winsrv-install.log',
     return {s: winsrv_exists(s) for s in (srvname, websrvname)}
 
 
-def install_wsrv_byname(srvname: str, stamp: bool = True):
-    if stamp:
-        Utils.update_patterns(install_jserv_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={jar_ver}'})
-
+def install_wsrv_byname(srvname: str):
     ctx = Context()
     cmd = f'{install_jserv_w_bat} install {srvname}'
     print(cmd)
@@ -188,12 +170,7 @@ def install_wsrv_byname(srvname: str, stamp: bool = True):
     return srvname
 
 
-def install_htmlsrv(srvname: str, stamp: bool = True):
-    if stamp:
-        Utils.update_patterns(install_html_w_bat, {'@set jar_ver=[0-9\\.]+': f'@set jar_ver={html_srver}'})
-    '''
-    FIXME: This replace is not correct. See comments of upgrade_cli.
-    '''
+def install_htmlsrv(srvname: str):
     ctx = Context()
     cmd = f'{install_html_w_bat} install {srvname}'
     print(cmd)
@@ -365,9 +342,6 @@ def apply_winsrv_resources(cli: InstallerCli, old: PkgResources, new: PkgResourc
     ov, nv = old.versions, new.versions
     keys = ('jar_ver', 'web_ver', 'html_srver')
     if all(ov.get(k) == nv.get(k) for k in keys):
-        # The unpacking replaced the install bats with the package's unstamped ones (e.g. @set jar_ver=0.8.0
-        # in a 0.8.1 package): stamp them again, so a later reinstall / uninstall uses the installed jars.
-        stamp_winsrv_bats(nv.get('jar_ver'), nv.get('html_srver'))
         return restart_wsrvs()
 
     envars = cli.settings.envars

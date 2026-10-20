@@ -182,6 +182,20 @@ after the upgrade, "Update complete" and every backed-up file "Restored" in the 
 `bin/resource.json` (`closed_test.py resources-applied`), they are up, and on Linux the installed
 synode_py3 is the package's.
 
+### Build marks
+
+Two marks in each run's summary say the package was built from the code these tests expect:
+
+- `### Build mark: winsrv bats stamped at build by jserv-album/tasks.py config (...)` (Windows, after
+  extracting the package; `closed_test.py packed-bats`). `tasks.py config` stamps the jar versions into
+  `synode.py/winsrv/install-*.bat`, whose BEGIN line carries that text; installing no longer stamps them.
+  A package built before has no mark and fails here; one built without `inv config` for its version
+  fails on the versions differing from its `bin/resource.json`.
+- `### <node> upgrade mark: Applying bin/resource.json: jar_ver <old> -> <new>, ...` (both OSes, after
+  each upgrade; `upgrade_mark` in `windows_nodes.sh` / `linux_nodes.sh`), printed by the installed
+  upgrade tool (synodepy3 `commands.update_srv()`). Tools built before it never applied the manifests
+  (`PkgResources`, a `dict` subclass with no items, tested falsy) and fail here.
+
 ## Answer files
 
 Linux and Windows have their own answer files: the prompts are the same up to the install, then

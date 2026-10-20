@@ -1,10 +1,9 @@
 @REM @echo "Run this file from upper dir, e. g. run: winsrv/install-html-w.bat"
 @echo "--- Installing Web-dist Windows Service ---"
 
-@REM BEGIN Python modifying section, by commands.install_htmlsrv. Do not modify except debugging (Not using bat file arg for easy debugging)
+@REM BEGIN version section, stamped at build by jserv-album/tasks.py config. Do not modify except debugging (Not using bat file arg for easy debugging)
 @set jar_ver=0.2.0
-
-@REM END Python modifying section
+@REM END version section
 
 @REM @set serv_name="Synode.web-%jar_ver%"
 @set serv_name=%~2

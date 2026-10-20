@@ -117,7 +117,10 @@ def update_srv(pkg_path: str):
         return
 
     # 0. does the new package accept the installed version?
-    installed = load_resources() or running_resources()
+    # PkgResources is an Anson, a dict subclass with no items: always falsy, so test None, never truthiness
+    installed = load_resources()
+    if installed is None:
+        installed = running_resources()
     try:
         pkg_res = read_package_res(pkg_path)
     except Exception as e:
@@ -225,14 +228,18 @@ def update_srv(pkg_path: str):
     new_res = load_resources() if unpacked else None
     if unpacked and new_res is None:
         print(f'Warning: the package has no {resource_json}, the services are kept as they were.', file=sys.stderr)
+    if new_res is not None:
+        # also the closed tests' mark that the upgrade tool applies the manifests (.github/closed-test)
+        print(f'Applying {resource_json}: ' + ', '.join(
+            f'{k} {old_res.versions.get(k)} -> {new_res.versions.get(k)}' for k in ('jar_ver', 'web_ver', 'html_srver')))
     applied = True
     if Utils.iswindows():
-        if new_res:
+        if new_res is not None:
             applied = apply_winsrv_resources(cli, old_res, new_res)
         else:
             applied = restart_wsrvs()
     else:
-        if new_res:
+        if new_res is not None:
             applied = apply_unit_resources(cast(Sudo, sudo), units, old_res, new_res)
         for u, st in restart_sysunits(cast(Sudo, sudo), units, ask=False).items():
             print(f'{u}: {st}')

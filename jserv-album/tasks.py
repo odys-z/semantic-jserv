@@ -186,6 +186,16 @@ def config(c: Context, deploy: str = 'tasks.json'):
         f'<!-- auto update token TASKS.PY/CONFIG --><version>{taskcfg.version}</version>',
     })
 
+    # winsrv install bats: the packed bats carry the jar versions (stamped here, at build time), so an
+    # unpacked package, also an upgrade's unpack over an installation, has the bats of its own jars.
+    # Installing doesn't stamp them any more (synodepy3 winsrv.py). The bats' BEGIN line says so, which the
+    # closed tests check as the mark of a package built since (.github/closed-test, closed_test.py packed-bats).
+    winsrv = Path(taskcfg.git_prj('synode.py')) / 'winsrv'
+    Utils.update_patterns(winsrv / 'install-jserv-w.bat', {
+        f'@set jar_ver={version_pattern}': f'@set jar_ver={taskcfg.version}'})
+    Utils.update_patterns(winsrv / 'install-html-w.bat', {
+        f'@set jar_ver={version_pattern}': f'@set jar_ver={taskcfg.html_jar_v}'})
+
     # apk
     version_file = taskcfg.git_prj('album-android', 'build.gradle')
     Utils.update_patterns(version_file, {
