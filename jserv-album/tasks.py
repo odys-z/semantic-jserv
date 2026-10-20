@@ -466,10 +466,20 @@ def build(c: Context, deploy: str = 'tasks.json'):
             global taskcfg
             return os.path.join(desktop, 'tests', 'res')
 
-        print(src_wsagent_jar(), "=>", desk_res_dir())
-        shutil.copy(src_wsagent_jar(), desk_res_dir())
-        print(src_wsagent_jar(), "=>", desk_dist_res_dir())
-        shutil.copy(src_wsagent_jar(), desk_dist_res_dir())
+        def cp_only(jar: str, res: str):
+            '''
+            Copy the jar into res, removing the other versions' ws-agent-*.jar there first: the desktop
+            package carries its whole dist/res, and the closed tests stop on two IPC agent jars.
+            '''
+            for old in Path(res).glob('ws-agent-*.jar'):
+                if old.name != os.path.basename(jar):
+                    print('removing', old)
+                    old.unlink()
+            print(jar, "=>", res)
+            shutil.copy(jar, res)
+
+        cp_only(src_wsagent_jar(), desk_res_dir())
+        cp_only(src_wsagent_jar(), desk_dist_res_dir())
 
     buildcmds = [
         # desktop

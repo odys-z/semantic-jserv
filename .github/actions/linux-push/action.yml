@@ -41,7 +41,7 @@ runs:
         LABEL: ${{ inputs.label }}
       run: |
         cd ${{ github.workspace }}/github-tests-build      # build-github-tests' default build-dir
-        jar=$(ls $WORK/desktop/res/ws-agent-*.jar)
+        jar=$WORK/desktop/$(jq -r .wsagent_jar $WORK/desktop/settings/app-settings.json)   # the one, checked by linux-synodes
         # the released desktop settings, pointed at the hub of this test
         jq --arg java "$JAVA_HOME/bin/java" --arg jar "$jar" --arg jserv "$HUB_JSERV" \
            --arg vol "$WORK/hub/vol" --arg hub "$HUB_ID" \

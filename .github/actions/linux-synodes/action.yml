@@ -77,6 +77,13 @@ runs:
         gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$dname" -D $WORK/dl/desktop
         mkdir -p $WORK/desktop && unzip -q -o "$WORK/dl/desktop/$dname" 'res/ws-agent-*.jar' 'settings/app-settings.json' -d $WORK/desktop
         ls -l $WORK/desktop/res $WORK/desktop/settings
+        # one IPC agent jar, the one the desktop's settings name (wsagent_jar): with several (versions), stop
+        agents=($WORK/desktop/res/ws-agent-*.jar)
+        [ ${#agents[@]} -eq 1 ] || {
+          echo "::error::$dname has ${#agents[@]} IPC agent jars: $(cd $WORK/desktop/res && echo ws-agent-*.jar). Keep only one in the desktop's res/ (rebuild the desktop)."; exit 1; }
+        want=$(jq -r .wsagent_jar $WORK/desktop/settings/app-settings.json)
+        [ "$want" = "res/$(basename ${agents[0]})" ] || {
+          echo "::error::$dname: settings/app-settings.json wsagent_jar is $want, but res/ has $(basename ${agents[0]})"; exit 1; }
         echo "### Desktop: \`$dname\` (uploaded $dupdated, $(cd $WORK/desktop/res && ls))" >> $GITHUB_STEP_SUMMARY
 
     # ---- 2. three nodes ----
