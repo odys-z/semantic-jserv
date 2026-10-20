@@ -24,7 +24,10 @@ report), `java-push` (build the Java client, push a photo, check `h_photos`) and
 Each run downloads two things from this repo's releases, so nothing heavy is committed here:
 
 - the newest `synode-*-x64_linux*.tar.gz` / `synode-*-x64_windows*.zip` in any release (or the
-  release tag typed in the run form);
+  release tag typed in the run form), and on Linux the `desktop-*.zip` of the same release;
+- a release used must hold at most one asset of each kind: synode Windows zip, synode Linux
+  tar.gz, desktop zip, apk (`closed_test.py` `RELEASE_KINDS`). With two of a kind, e.g. the
+  desktops of 0.8.0 and 0.8.1, the run stops and lists them: delete the old one;
 - the registry central, from the release `alpha-central-0.1.8` of the private repository
   `Acadynamo/Resources-release` (both can be changed in the run form).
 

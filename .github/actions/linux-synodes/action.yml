@@ -70,12 +70,14 @@ runs:
         echo "PACKAGE=$WORK/dl/$name" >> $GITHUB_ENV
         echo "### Package: \`$name\` (release \`$tag\`, uploaded $updated)" >> $GITHUB_STEP_SUMMARY
 
-        # the desktop of the same release: its IPC agent jar and settings
-        gh release download "$tag" -R "$GITHUB_REPOSITORY" -p 'desktop-*.zip' -D $WORK/dl/desktop || {
-          echo "::error::no desktop-*.zip in release $tag"; exit 1; }
-        mkdir -p $WORK/desktop && unzip -q -o $WORK/dl/desktop/desktop-*.zip 'res/ws-agent-*.jar' 'settings/app-settings.json' -d $WORK/desktop
+        # the desktop of the same release (the only one there, pick-release checks): its IPC agent jar and settings
+        dpick=$(python $CONFIG/closed_test.py pick-release $WORK/dl/releases.json '^desktop-.*\.zip$' "$tag")
+        [ -n "$dpick" ] || { echo "::error::no desktop-*.zip in release $tag"; exit 1; }
+        IFS=$'\t' read -r dupdated dtag dname <<< "$dpick"
+        gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$dname" -D $WORK/dl/desktop
+        mkdir -p $WORK/desktop && unzip -q -o "$WORK/dl/desktop/$dname" 'res/ws-agent-*.jar' 'settings/app-settings.json' -d $WORK/desktop
         ls -l $WORK/desktop/res $WORK/desktop/settings
-        echo "### Desktop: \`$(cd $WORK/dl/desktop && ls)\` ($(cd $WORK/desktop/res && ls))" >> $GITHUB_STEP_SUMMARY
+        echo "### Desktop: \`$dname\` (uploaded $dupdated, $(cd $WORK/desktop/res && ls))" >> $GITHUB_STEP_SUMMARY
 
     # ---- 2. three nodes ----
     - name: Extract hub, prv1, prv2
