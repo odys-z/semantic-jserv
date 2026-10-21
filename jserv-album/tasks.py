@@ -16,7 +16,7 @@ _independent = bool(_tasks & {'github-head', 'gh-release'})
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.10")
-    requir_pkg("semantics.py3", "0.6.17") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), gh_release
+    requir_pkg("semantics.py3", "0.6.17") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("build")               # by synode.py
@@ -777,10 +777,10 @@ def github_head(c: Context, deploy: str = 'tasks.closed-test.json'):
 
 
 @task
-def github_release(c: Context, deploy: str = 'tasks.json', dry_run: bool = False, no_proxy: bool = False):
+def github_release(c: Context, deploy: str = 'tasks.json', dry_run: bool = False, no_proxy: bool = True):
     '''
     Upload the built packages (SynodeTask.dist_assets()) to the GitHub release configured in the
-    task json's gh_release (default: odys-z/semantic-jserv's latest release), with gh (GitHub CLI).
+    task json's github_release (none configured: not uploaded), with gh (GitHub CLI).
     Run after make / package. Independent of the build environment.
 
     :: bash
@@ -801,15 +801,15 @@ def github_release(c: Context, deploy: str = 'tasks.json', dry_run: bool = False
     if cfg.gh_upload(dry_run=dry_run, no_proxy=no_proxy) != 0:
         sys.exit(-1)
     if not dry_run:
-        print_ci_tests(cfg.gh_release.repo, cfg.gh_release.tag)
+        print_ci_tests(cfg.github_release.repo, cfg.github_release.tag)
 
 
 def print_ci_tests(repo: str, tag: str):
     '''
     Print the gh commands to run the CI tests of release packages: the workflows in this repository's
     .github/workflows started by workflow_dispatch, with a release_tag or upgrade_tag input.
-    :param repo: where the packages are uploaded, gh_release.repo
-    :param tag: gh_release.tag; blank: the tests' default, the newest packages in any release
+    :param repo: where the packages are uploaded, github_release.repo
+    :param tag: github_release.tag; blank: the tests' default, the newest packages in any release
     '''
     import re
     import subprocess

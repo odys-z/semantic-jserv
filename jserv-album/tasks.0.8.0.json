@@ -83,7 +83,7 @@
       "// c.run(formated cmd)"
   ],
 
-  "gh_release"    : {
+  "github_release": {
     "//": "inv gh-release, with gh (GitHub CLI). repo blank: not uploaded (packages carry central_pswd & root_key); tag blank: the latest release",
     "type": "io.oz.invoke.GhRelease",
     "repo": "odys-z/semantic-jserv",
