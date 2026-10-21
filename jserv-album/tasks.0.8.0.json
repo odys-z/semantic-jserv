@@ -16,7 +16,7 @@
   "vol_files"    : {"volume": ["jserv-main.db", "doc-jserv.db"]},
   "vol_resource" : {"volume": "volume/*"},
   "registry_dir" : "../synode.py/registry",
-  "dist_dir"     : "build-0.8.0",
+  "package_dir"  : "build-0.8.0",
   "github"       : "../..",
   "gitprjs"      : {
     "antson"            : "{github}/antson",
@@ -78,10 +78,16 @@
     "// deploy_cmds: [{cmd: cmd template, vars{k: v}}, ...],",
       "// auto args:",
               "// built_zip: self.get_distzip()",
-              "// built_dir: self.dist_dir",
+              "// package_dir: self.package_dir",
               "// zip_name : self.zip_name()",
       "// c.run(formated cmd)"
   ],
+
+  "gh_release"    : {
+    "//": "inv gh-release, with gh (GitHub CLI). repo blank: not uploaded (packages carry central_pswd & root_key); tag blank: the latest release",
+    "type": "io.oz.invoke.GhRelease",
+    "repo": "odys-z/semantic-jserv",
+    "tag" : ""},
 
   "deploy_scps"   : [{
     "//": "scp -p user@host ...",

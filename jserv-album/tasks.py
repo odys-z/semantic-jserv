@@ -10,13 +10,13 @@ import os
 from anson.io.odysz.common import requir_pkg, requir_npm_package_resolve, mvn  # mvn: anson.py3 0.6.9+
 _tasks = {a.replace('_', '-') for a in sys.argv[1:] if not a.startswith('-')}
 
-# Tasks that don't need the build environment, e.g. github-head.
-_independent = 'github-head' in _tasks
+# Tasks that don't need the build environment, e.g. github-head, gh-release.
+_independent = bool(_tasks & {'github-head', 'gh-release'})
 
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.10")
-    requir_pkg("semantics.py3", "0.6.16") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res()
+    requir_pkg("semantics.py3", "0.6.17") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), gh_release
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("build")               # by synode.py
@@ -687,14 +687,12 @@ def run_scps(c: Context, deploy:str = 'task.json'):
     ok, err = taskcfg.run_deploycmds(c)
     print(f"Run deploy_cmds, ok: {ok}, error: {err}")
 
-    taskcfg.run_deployscps(str(taskcfg.get_distzip()))
-    taskcfg.run_deployscps(str(Path(taskcfg.package_dir) / taskcfg.get_apk_name()))
-
-    if os.name == 'nt': # not posix 0.8.0
-        taskcfg.run_deployscps(str(Path(taskcfg.git_prj('album-desktop')) / taskcfg.package_dir / taskcfg.deskzip_name()))
+    assets = taskcfg.dist_assets()
+    for asset in assets:
+        taskcfg.run_deployscps(str(asset))
 
     print('', sep='\n')
-    print(f"Run deploy_cmds, 3 package copyied.")
+    print(f"Run deploy_scps, {len(assets)} packages copied.")
 
 
 @task
@@ -776,6 +774,64 @@ def github_head(c: Context, deploy: str = 'tasks.closed-test.json'):
         print(f'{err} {prj}: {pth}')
 
     write_source_tree(cfg.github, ignores)
+
+
+@task
+def github_release(c: Context, deploy: str = 'tasks.json', dry_run: bool = False):
+    '''
+    Upload the built packages (SynodeTask.dist_assets()) to the GitHub release configured in the
+    task json's gh_release (default: odys-z/semantic-jserv's latest release), with gh (GitHub CLI).
+    Run after make / package. Independent of the build environment.
+
+    :: bash
+        inv gh-release --deploy=tasks.pm-king.json --dry-run
+        inv gh-release --deploy=tasks.pm-king.json
+    ..
+
+    :param c: Context
+    :param deploy: task json
+    :param dry_run: only print the release and what would be uploaded
+    '''
+    cfg = cast(SynodeTask, Anson.from_file(deploy))
+    if cfg.gh_upload(dry_run=dry_run) != 0:
+        sys.exit(-1)
+    if not dry_run:
+        print_ci_tests(cfg.gh_release.repo, cfg.gh_release.tag)
+
+
+def print_ci_tests(repo: str, tag: str):
+    '''
+    Print the gh commands to run the CI tests of release packages: the workflows in this repository's
+    .github/workflows started by workflow_dispatch, with a release_tag or upgrade_tag input.
+    :param repo: where the packages are uploaded, gh_release.repo
+    :param tag: gh_release.tag; blank: the tests' default, the newest packages in any release
+    '''
+    import re
+    import subprocess
+
+    def git(*args: str) -> str:
+        r = subprocess.run(['git', *args], capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else ''
+
+    top = git('rev-parse', '--show-toplevel')
+    branch = git('rev-parse', '--abbrev-ref', 'HEAD')
+    workflows = sorted(Path(top, '.github', 'workflows').glob('*.yml')) if top else []
+
+    cmds = []
+    for wf in workflows:
+        yml = wf.read_text(encoding='utf-8')
+        if 'workflow_dispatch' not in yml:
+            continue
+        has = lambda name: re.search(rf'^\s+{name}\s*:', yml, re.MULTILINE) is not None
+        ref = f' --ref {branch}' if branch and branch != 'HEAD' else ''
+        if has('upgrade_tag'):
+            cmds.append(f'gh workflow run {wf.name} -R {repo}{ref}'
+                        f'{f" -f upgrade_tag={tag}" if tag else ""} -f release_tag=<the release to install first>')
+        elif has('release_tag'):
+            cmds.append(f'gh workflow run {wf.name} -R {repo}{ref}{f" -f release_tag={tag}" if tag else ""}')
+
+    if cmds:
+        print('Run the CI tests on the uploaded packages:', *cmds, sep='\n    ')
 
 
 def write_source_tree(github: str, ignores: list) -> Path:
