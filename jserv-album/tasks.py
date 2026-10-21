@@ -777,7 +777,7 @@ def github_head(c: Context, deploy: str = 'tasks.closed-test.json'):
 
 
 @task
-def github_release(c: Context, deploy: str = 'tasks.json', dry_run: bool = False):
+def github_release(c: Context, deploy: str = 'tasks.json', dry_run: bool = False, no_proxy: bool = False):
     '''
     Upload the built packages (SynodeTask.dist_assets()) to the GitHub release configured in the
     task json's gh_release (default: odys-z/semantic-jserv's latest release), with gh (GitHub CLI).
@@ -786,14 +786,19 @@ def github_release(c: Context, deploy: str = 'tasks.json', dry_run: bool = False
     :: bash
         inv gh-release --deploy=tasks.pm-king.json --dry-run
         inv gh-release --deploy=tasks.pm-king.json
+        inv gh-release --deploy=tasks.pm-king.json --no-proxy
     ..
+
+    The proxy is the first configured of "https_proxy" in ~/.tasksrc.json, $HTTPS_PROXY,
+    git config https.proxy / http.proxy (SynodeTask.gh_proxy()).
 
     :param c: Context
     :param deploy: task json
     :param dry_run: only print the release and what would be uploaded
+    :param no_proxy: connect directly, not using any proxy
     '''
     cfg = cast(SynodeTask, Anson.from_file(deploy))
-    if cfg.gh_upload(dry_run=dry_run) != 0:
+    if cfg.gh_upload(dry_run=dry_run, no_proxy=no_proxy) != 0:
         sys.exit(-1)
     if not dry_run:
         print_ci_tests(cfg.gh_release.repo, cfg.gh_release.tag)
