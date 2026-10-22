@@ -50,7 +50,7 @@
     "ws_port"       : 8700,
     "market"        : "[Alpha Test]",
     "market_id"     : "alpha",
-    "orgid"         : "ura",
+    "orgid"         : "github",
     "domain"        : "",
     "dom_nodes"     : 3,
     "syn_admin_pswd": "deprecated, replaced by domain_token, keep v0.7.8",

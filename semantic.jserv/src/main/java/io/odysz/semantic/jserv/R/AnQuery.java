@@ -29,6 +29,7 @@ import io.odysz.transact.sql.parts.JoinTabl.join;
 import io.odysz.transact.x.TransException;
 
 import static io.odysz.common.LangExt.len;
+import static io.odysz.common.LangExt.isNull;
 
 /**
  * CRUD read service.
@@ -165,7 +166,8 @@ public class AnQuery extends ServPort<AnQueryReq> {
 		// ORDER BY
 		selct.orderby(msg.orders);
 		
-		if (msg.limt != null)
+//		if (msg.limt != null)
+		if (!isNull(msg.limt))
 			selct.limit(msg.limt[0], msg.limt.length > 1 ? msg.limt[1] : null);
 		
 		return selct;
