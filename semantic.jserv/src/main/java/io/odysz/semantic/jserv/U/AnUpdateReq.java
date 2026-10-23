@@ -73,11 +73,15 @@ public class AnUpdateReq extends AnsonBody {
 		mtabl = mtbl;
 		return this;
 	}
+	/** @return main table, for tiers checking requests before committing. */
+	public String mtabl() { return mtabl; }
 
 	/**nvs: [nv-obj],
 	 * nv-obj: {n: "roleName", v: "admin"}
 	 */
 	ArrayList<Object[]> nvs;
+	/** @return updating n-vs, [[n, v], ...], for tiers checking requests before committing. */
+	public ArrayList<Object[]> nvs() { return nvs; }
 	
 	/**inserting values, used for "I". 3d array [[[n, v], ...]] */
 	protected ArrayList<ArrayList<Object[]>> nvss;
@@ -96,10 +100,15 @@ public class AnUpdateReq extends AnsonBody {
 
 	/**where: [cond-obj], see {@link #joins}for cond-obj.*/
 	ArrayList<Object[]> where;
+	/** @return where conditions, for tiers checking requests before committing. */
+	public ArrayList<Object[]> where() { return where; }
 	
 	String limt;
+	public String limt() { return limt; }
 
 	ArrayList<AnUpdateReq> postUpds;
+	/** @return post updates, for tiers checking requests before committing. */
+	public ArrayList<AnUpdateReq> postUpds() { return postUpds; }
 	
 //	public AnsonHeader header;
 

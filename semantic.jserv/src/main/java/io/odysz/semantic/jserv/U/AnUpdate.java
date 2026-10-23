@@ -147,7 +147,7 @@ public class AnUpdate extends ServPort<AnUpdateReq> {
 	 * @param where
 	 * @return predicates[[logic, n, v], ...]
 	 */
-	static ArrayList<Object[]> tolerateNv(ArrayList<Object[]> where) {
+	public static ArrayList<Object[]> tolerateNv(ArrayList<Object[]> where) {
 		if (where != null) {
 			for (int ix = 0; ix < where.size(); ix++) {
 				Object[] nv = where.get(ix);
