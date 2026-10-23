@@ -85,6 +85,9 @@ def validate(c: Context):
 
 @task
 def register_org(c: Context, taskcfg: SynodeTask):
+    # ISSUE org-communitier: to be moved from the Registry tier (regist.serv, a = c/org) to the
+    # central's Communitier (community.serv), which creates / updates a_orgs with a verified session.
+    # See ../issues/central-org-communitier.md
     regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
 
     def registerOrg(client: SessionClient, func_uri: str, market: str, orgid: str):
