@@ -1,0 +1,109 @@
+# Linux end-to-end test of the closed-test packages, started by hand from the Actions tab.
+#
+# 1-5. .github/actions/linux-synodes:
+#      1. Downloads the newest synode-*-x64_linux*.tar.gz from this repo's releases (or the tag given),
+#         and the desktop-*.zip of the same release (its IPC agent jar and settings).
+#      2. Extracts the synode package for 3 nodes: hub, prv1, prv2, and installs its synode_py3 wheel.
+#      3. Starts the registry central of CENTRAL_RELEASE (.github/actions/start-central; private
+#         release, read with the secret REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN).
+#      4. Configures each node with synode-cli, fed by .github/closed-test/answers/linux/<node>.txt,
+#         which installs and starts the node's 2 systemd services (<synid>.service, <synid>.web.service).
+#         The hub creates the domain CENTRAL_DOMAIN (ci-0.8); the peers join it.
+#      5. Reports the central's domain tables in the run's Summary, and checks the new domain's synodes
+#         (hub h, peers p) and that the other domains are unchanged.
+# 6.   .github/actions/linux-push: builds the desktop's test client without Slint (odys-z/Anclient
+#      examples/example.slint/github-tests, doclient_tests; .github/actions/build-github-tests),
+#      pushes a file to the hub through the IPC agent (Ipclient.E2E_PushSync), and checks it in
+#      h_photos of hub, prv1 and prv2.
+#
+# See .github/closed-test/README.md for the central release to upload.
+
+name: synodes-linux-closed-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to test (empty: the newest synode linux tar.gz in any release)'
+        required: false
+        default: ''
+      central_repo:
+        description: 'Repository of the central release'
+        required: false
+        default: 'Acadynamo/Resources-release'
+      central_release:
+        description: 'Release tag of the central (jar, WEB-INF, regist-vol)'
+        required: false
+        default: 'alpha-central-0.1.8'
+      anclient_ref:
+        description: 'Branch / tag of odys-z/Anclient for the test client'
+        required: false
+        default: 'portfolio-0.8'
+
+permissions:
+  contents: read
+
+jobs:
+  closed-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CONFIG: ${{ github.workspace }}/.github/closed-test
+      WORK: ${{ github.workspace }}/e2e
+      CENTRAL_URL: http://127.0.0.1:1991/regist-central
+      CENTRAL_ORG: closed-test          # the org of the package; only its rows are reported
+      CENTRAL_DOMAIN: ci-0.8            # created by the hub (answers/linux/hub.txt), at most 8 chars
+      HUB_ID: ci-0.8-hub                # the central names the new domain's synodes <domain>-hub, -1, -2
+      CENTRAL_PSWD: '123456'            # admin of the test central (alpha-central-0.1.8), test only
+      SYNC_INS: '20'
+      HUB_JSERV: http://127.0.0.1:8961/jserv-album
+
+    steps:
+      - uses: actions/checkout@v7          # the test resources and the composite actions; no sources
+        with:
+          sparse-checkout: |
+            .github
+
+      - uses: actions/checkout@v7          # the test client
+        with:
+          repository: odys-z/Anclient
+          ref: ${{ inputs.anclient_ref }}
+          path: Anclient
+
+      - uses: actions/setup-java@v6          # for the central and the IPC agent; the synodes download their own jre17
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # ---- 1-5. the synodes ----
+      - name: Set up the synodes
+        id: synodes
+        uses: ./.github/actions/linux-synodes
+        with:
+          token: ${{ secrets.REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN }}
+          central-repo: ${{ inputs.central_repo }}
+          central-release: ${{ inputs.central_release }}
+          release-tag: ${{ inputs.release_tag }}
+
+      # ---- 6. the test client pushes a file to the hub ----
+      - name: Push a file to the hub
+        uses: ./.github/actions/linux-push
+
+      - name: Collect logs
+        if: always()
+        run: |
+          sudo journalctl -u regist-central --no-pager > $WORK/logs/central.log 2>&1 || true
+          . $CONFIG/linux_nodes.sh
+          node_logs
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: synodes-linux-closed-test
+          path: |
+            e2e/logs/

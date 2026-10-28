@@ -8,23 +8,19 @@ from semanticshare.io.odysz.jclient import AnclientSettings
 from semanticshare.io.oz.anclient.app import DesktopSettings, UIResources
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from .install_jre import java_cmd
-from .jre_downloader import JreDownloader, _jre_
+from .jre_downloader import JreDownloader, _jre_, java_cmd, validate_jre
 
 sys.stdout.reconfigure(encoding="utf-8")
 
 import ipaddress
 import json
 import os
-import re
 import shutil
 import socket
 import subprocess
 import time
-import zipfile
-from glob import glob
 from pathlib import Path
-from typing import List, cast, Optional, Callable, Final, Iterable, Tuple, Dict
+from typing import List, cast, Optional, Callable, Final, Iterable, Tuple
 
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
@@ -41,11 +37,46 @@ from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq
 
 from anclient.io.odysz.jclient import Clients, OnError, SessionClient
 
+from semanticshare.io.oz.syn.pkgresource import PkgResources
+
 from .__version__ import jar_ver, web_ver, html_srver, ipcagent_ver
 
 from . import jre_mirror_key
+from .prerequisites import check_exiftool, checkinstall_exiftool, exiftool_exe, exiftool_missing_msg
+from .validators import check_domain_id
 
 mypath : str = os.path.dirname(__file__)
+
+
+def readable_state(s: str = ''):
+    """
+    The registered state of a synode id, for users choosing the id (setup-cli & setup-gui).
+    """
+    return '' if LangExt.len(s) == 0 \
+            else '✅ Available planned node' if s == CynodeStats.create \
+            else '⛔ Already running as a Hub node' if s == CynodeStats.asHub \
+            else '⛔ Already running as a Peer node' if s == CynodeStats.asPeer \
+            else '[❗] Unknown state (Dangerous! Create a new domain if possible)'
+
+
+def available_state(s: str = '') -> bool:
+    """
+    Can a synode id of the state be installed (setup-cli & setup-gui)?
+    Only a planned (create) or unknown-yet (blank) one. A running synode (Java, AppSettings.synotifyCentral())
+    is the only one setting 'h' or 'p' at the central, while the installers submit no state.
+    """
+    return LangExt.len(s) == 0 or s == CynodeStats.create
+
+
+def state_mark(s: str = ''):
+    """
+    The short mark of readable_state(), prefixing synode ids where the space is limited.
+    """
+    return '' if LangExt.len(s) == 0 \
+            else '✅' if s == CynodeStats.create \
+            else '⛔' if s in (CynodeStats.asHub, CynodeStats.asPeer) \
+            else '❗'
+
 '''
 this script file path
 '''
@@ -67,6 +98,127 @@ cfgpaths = CfgPaths()
 vol_dict_json: file path to dictionary.json,
 web_settings: file path to settings.json
 '''
+
+def posix_path(path: Optional[str]) -> Optional[str]:
+    """
+    Convert a user input path to a posix path, e.g. 'C:\\Users\\vol' -> 'C:/Users/vol'.
+    MEMO: Anson writes strings unescaped, so a Windows path saved in settings.json
+    breaks the json (Invalid \\escape), and setup-gui can't load it after setup-cli.
+    """
+    return path if LangExt.isblank(path) else os.path.normpath(path.strip()).replace('\\', '/')
+
+
+upgrade_pkg: Final = 'upgrade.pkg'
+upgrade_exe: Final = 'upgrade.exe'
+
+
+def promote_upgrade_pkg(folder: str = '.') -> bool:
+    """
+    Move <folder>/upgrade.pkg, the upgrade.exe packed in the package (jserv-album/tasks.py), over
+    <folder>/upgrade.exe. The package carries it as upgrade.pkg so that unpacking it over an
+    installation (commands.update_srv(), run by upgrade.exe) can't hit the running upgrade.exe.
+    :param folder: the installation folder, default the working folder (where setup-* runs).
+    :return: True if upgrade.exe has been replaced; False if there is no upgrade.pkg, or upgrade.exe
+             is locked (running), in which case upgrade.pkg is kept for the next try.
+    """
+    pkg, exe = os.path.join(folder, upgrade_pkg), os.path.join(folder, upgrade_exe)
+    if not os.path.isfile(pkg):
+        return False
+    try:
+        os.replace(pkg, exe)
+        print(f'{upgrade_pkg} -> {os.path.abspath(exe)}')
+        return True
+    except OSError as e:
+        Utils.warn(f'Cannot replace {exe} with {upgrade_pkg} (is it running?), {upgrade_pkg} is kept: {e}')
+        return False
+
+
+desktop_dir: Final = 'desktop'
+desktop_app: Final = 'album_gui'
+"""
+The desktop app packaged in <installation>/desktop (Anclient/examples/example.slint, dist/), which
+reads settings/app-settings.json relative to the working folder, so it must start in desktop/.
+"""
+
+
+def desktop_exe(folder: str = '.') -> Optional[Path]:
+    """
+    :param folder: the installation folder, default the working folder (where setup-* runs).
+    :return: <folder>/desktop/album_gui(.exe), or None if the desktop is not packaged.
+    """
+    exe = Path(folder) / desktop_dir / (desktop_app + '.exe' if Utils.iswindows() else desktop_app)
+    return exe if exe.is_file() else None
+
+
+def desktop_running(folder: str = '.') -> bool:
+    """
+    Windows: whether <folder>/desktop/album_gui.exe is running (a running exe can't be opened for
+    writing), which would stop an upgrade's unpack half way. Elsewhere a running binary can be
+    replaced, so False.
+    """
+    exe = desktop_exe(folder)
+    if exe is None or not Utils.iswindows():
+        return False
+    try:
+        with open(exe, 'r+b'):
+            return False
+    except OSError:
+        return True
+
+
+def start_desktop(folder: str = '.') -> Optional[subprocess.Popen]:
+    """
+    Start the desktop app, detached from setup-*, in its own folder, <folder>/desktop.
+    :return: the process, or None if the desktop is not packaged.
+    :raise OSError: if it can't be started.
+    """
+    exe = desktop_exe(folder)
+    if exe is None:
+        return None
+    exe = exe.absolute()
+
+    if not Utils.iswindows():
+        return subprocess.Popen([str(exe)], cwd=exe.parent, start_new_session=True,
+                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # A frozen setup-* (PyInstaller) may have set the DLL directory to its _internal/, which the child
+    # inherits - the desktop must load its own Qt / runtime DLLs, not setup-gui's PySide6 ones.
+    import ctypes
+    k32 = ctypes.windll.kernel32
+    buf = ctypes.create_unicode_buffer(32768)
+    dlldir = k32.GetDllDirectoryW(len(buf), buf)
+    k32.SetDllDirectoryW(None)
+    try:
+        return subprocess.Popen([str(exe)], cwd=exe.parent, close_fds=True,
+                                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+    finally:
+        if dlldir:
+            k32.SetDllDirectoryW(buf.value)
+
+
+def promote_upgrade_whl(folder: str = '.') -> bool:
+    """
+    The Linux counterpart of promote_upgrade_pkg(). On Linux unpacking a new package only brings the new
+    wheel, <folder>/bin/synode_py3-*.whl. This installs it, with the Python running this, so the
+    next upgrade runs the new version. pip --upgrade keeps a re-deployment of the same version as is.
+
+    Linux can replace the files of the running package (the process keeps the modules it has loaded),
+    so this can be the last step of the running upgrade (commands.update_srv()).
+    :param folder: the installation folder, default the working folder.
+    :return: True if pip succeeded.
+    """
+    whls = sorted(Path(folder, 'bin').glob('synode_py3-*.whl'), key=os.path.getmtime, reverse=True)
+    if not whls:
+        print(f'No bin/synode_py3-*.whl in {os.path.abspath(folder)}, the upgrade tool is kept as is.')
+        return False
+    cmd = [sys.executable, '-m', 'pip', 'install', '--upgrade', str(whls[0])]
+    print(' '.join(cmd))
+    r = subprocess.run(cmd)
+    if r.returncode != 0:
+        Utils.warn(f'Cannot install {whls[0]} (pip exit code {r.returncode}); install it by hand for the next '
+                   f'upgrade:\n    {" ".join(cmd)}')
+    return r.returncode == 0
+
 
 synode_ui = cast(UIResources, Anson.from_file(os.path.join(mypath, "synode.json")))
 err_uihandlers: list[OnError] = cast(list, [None])
@@ -90,6 +242,7 @@ def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
     return resp
 
 
+# ISSUE central-login: requests to central below carry no AnsonHeader, see issues/central-client-login.md
 def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
     req = RegistReq(RegistReq.A.queryDomx, market=market)
     req.Uri(func_uri)
@@ -171,24 +324,6 @@ def submit_settings(client: SessionClient, func_uri: str, market: str,
     return cast(RegistResp, resp)
 
 
-def decode(warns: bytes):
-    lines = []
-    if warns is not None:
-        for l in warns.split(b'\n'):
-            if isinstance(l, bytes):
-                try:
-                    s = l.decode('utf-8')
-                except UnicodeDecodeError:
-                    try:
-                        s = l.decode('gbk')
-                    except UnicodeDecodeError:
-                        s = ''.join(str(l))
-                if s is not None:
-                    lines.extend(s.split('\n'))
-            else:
-                lines.append(str(l))
-    return lines
-
 def valid_local_reg(reg: AnRegistry):
     """
     config.admin must presents in syn-users, which should be more than or equal 1 record.
@@ -199,91 +334,6 @@ def valid_local_reg(reg: AnRegistry):
     if LangExt.len(reg.synusers) < 1 or AnRegistry.find_synuser(reg.synusers, id=reg.config.admin) is None:
         raise PortfolioException('Dictionary Synuser configuration is invalid.')
     pass
-
-
-def unzip_file(zip_filepath, extract_to_path):
-    """
-    Unzips a file to a specified directory.
-
-    Args:
-        zip_filepath (str): The path to the zip file.
-        extract_to_path (str): The directory to extract the contents to.
-    """
-    try:
-        with zipfile.ZipFile(zip_filepath, 'r') as zip_ref:
-            zip_ref.extractall(extract_to_path)
-        print(f"Successfully extracted '{zip_filepath}' to '{extract_to_path}'")
-    except FileNotFoundError:
-        print(f"Error: Zip file '{zip_filepath}' not found.")
-    except zipfile.BadZipFile:
-        print(f"Error: '{zip_filepath}' is not a valid zip file.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-
-def get_zipath(zipath):
-    if os.path.isfile(zipath):
-        with zipfile.ZipFile(zipath, 'r') as zip_ref:
-            for subf in zip_ref.infolist():
-                if not subf.is_dir():
-                    raise PortfolioException('Not a recognized zip file structure in: {zippath}')
-                return subf.filename
-    return None
-
-
-def install_exiftool_win():
-    """
-    If in Windows, unzip exiftool-13.21_64 and move to root path
-    :return: None
-    """
-
-    zips = glob(os.path.join('bin', exiftool_zip))
-    if len(zips) > 0:
-        xtract_files = glob(exiftool_v_exe)
-        if len(xtract_files) == 0:
-            subfolder = get_zipath(zips[-1])
-            unzip_file(zips[-1], '.')
-            for res in glob(os.path.join(subfolder or '', '*')):
-                print(res)
-                if re.match(f'{subfolder.removesuffix("/")}.exiftool.*', res):
-                    shutil.move(res, '.')
-
-            try: os.remove(exiftool_exe)
-            except FileNotFoundError: pass
-
-            xtract_files = glob(exiftool_v_exe)
-            os.rename(xtract_files[0], exiftool_exe)
-
-
-def check_exiftool():
-    if Utils.iswindows():
-        return os.path.isfile(exiftool_exe)
-    else:
-        print('exiftool -ver')
-        try:
-            p = subprocess.Popen(['exiftool', '-ver'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if p is None:
-                return False
-            out, err = p.communicate()
-            if len(err) > 0:
-                print(err, file=sys.stderr)
-                return False
-
-            print(decode(out), 'exiftool is working...')
-            return True
-        except Exception as e:
-            print(e)
-            return False
-
-
-def checkinstall_exiftool():
-    check = check_exiftool()
-
-    if Utils.iswindows() and not check:
-        install_exiftool_win()
-        return True
-    else:
-        return check
 
 
 jserv_album: Final[str] = 'jserv-album'
@@ -307,10 +357,65 @@ html_web_jar = f'html-web-{html_srver}.jar'
 serv_port0 = 8964
 web_port0 = 8900
 jserv_07_jar = f'jserv-album-{jar_ver}.jar'
-exiftool_zip = 'exiftool.zip'
-exiftool_v_exe = 'exiftool*.exe'
-exiftool_exe = 'exiftool.exe'
-exiftool_testver = 'exiftool -ver'
+
+resource_json = os.path.join('bin', 'resource.json')
+'''
+The package's resources, semanticshare PkgResources, generated by jserv-album/tasks.py package()
+(SynodeTask.pkg_res()): files {"synode", "html-web", "synode.py"}, paths relative to the installation
+folder; versions {"jar_ver", "web_ver", "html_srver", "synodepy3"}; upgrade_from {"min", "max"}.
+'''
+res_synode, res_htmlweb, res_synodepy = 'synode', 'html-web', 'synode.py'
+
+
+def load_resources(path: str = resource_json) -> Optional[PkgResources]:
+    '''
+    :return: the package bin/resource.json, None if there is none (packages built before it).
+    '''
+    if not os.path.isfile(path):
+        return None
+    return cast(PkgResources, Anson.from_file(path))
+
+
+def running_resources() -> PkgResources:
+    '''
+    The package resources of the version of this synodepy3 (__version__.py), for an installed package without
+    bin/resource.json: the upgrade tool (upgrade.exe, synode-upgrade-srv) is the installed one.
+    '''
+    return PkgResources(files={res_synode: f'bin/{jserv_07_jar}', res_htmlweb: f'bin/{html_web_jar}'},
+                           versions={'jar_ver': jar_ver, 'web_ver': web_ver, 'html_srver': html_srver})
+
+
+def read_package_res(pkg_path: str) -> Optional[PkgResources]:
+    '''
+    Read bin/resource.json out of an update package (zip or tar.gz), without unpacking it, so that the
+    upgrade can be checked before anything is stopped or changed.
+    :return: the package's resources, None if it has none (packages built before it).
+    '''
+    import tarfile
+    import tempfile
+    import zipfile
+
+    want = resource_json.replace(os.sep, '/')
+    data = None
+    if zipfile.is_zipfile(pkg_path):
+        with zipfile.ZipFile(pkg_path) as z:
+            for n in z.namelist():
+                if n.removeprefix('./') == want:
+                    data = z.read(n)
+                    break
+    else:
+        with tarfile.open(pkg_path) as t:
+            for m in t.getmembers():
+                if m.isfile() and m.name.removeprefix('./') == want:
+                    data = t.extractfile(m).read()
+                    break
+    if data is None:
+        return None
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, 'resource.json')
+        with open(p, 'wb') as f:
+            f.write(data)
+        return load_resources(p)
 
 pswd_min, pswd_max = 8, 32
 
@@ -328,14 +433,6 @@ class InstallerCli:
     '''
     Can be load, modified later.
     '''
-
-    @staticmethod
-    def check_prerequisites() -> Optional[Dict[str, str]]:
-        print("Checking prerequisites")
-        if not check_exiftool():
-            return {"exiftool": "Check and install exiftool failed!" \
-                if Utils.get_os() == 'Windows' \
-                else "Please install exiftool and test it's working with command 'exiftool -ver'"}
 
     @staticmethod
     def parsejservstr(jservstr: str) -> list[list[str]]:
@@ -368,7 +465,7 @@ class InstallerCli:
         self.settings.Jservs(jsrvs)
         return self
 
-    def load_settings(self):
+    def load_settings(self) -> AppSettings:
         """
         Load from res_path/setings.json,
         :return: loaded settings
@@ -419,6 +516,100 @@ class InstallerCli:
     def vol_valid(self):
         return self.validateVol() is None
 
+    def chk_synid(self, synid: str) -> Optional[dict]:
+        """
+        Check the synode id to be saved / installed, while the volume has never run (see hasrun()).
+        :return: error, {'synid': reason}, or None if the id is planned (create) or not registered yet.
+        """
+        n = self.registry.find_peer(synid)
+        if n is not None and not available_state(n.stat):
+            return {'synid': f'{synid}: {readable_state(n.stat)}. Select another synode id.'}
+        return None
+
+    def chk_hub(self) -> Optional[dict]:
+        """
+        Check the hub synode's jserv of a peer, only for warnings: a peer can be saved, installed and started
+        before the hub. The hub's jserv can be updated later, e.g. saving again with the hub's jserv, as the
+        newer settings.jserv_utc (stamped by settings.Jservs() while saving) takes effect over the db's.
+        :return: {'hub-node': reason} if this peer has no hub's jserv, or None (also for a hub).
+        """
+        if self.registry.config.mode == SynodeMode.hub.name:
+            return None
+        hub_node = self.registry.find_hubpeer()
+        if hub_node is None:
+            return {'hub-node': 'The hub synode is missing in the domain. Save again when the hub node is running.'}
+
+        # The central's hub jserv can be a suggestion from the domain creator (Registry.registDom()),
+        # e.g. http://ip:port/regist-central, created by register() before it took the synode's protocol.
+        jsrv = self.settings.jservs.get(hub_node.synid) if self.settings.jservs else None
+        try:
+            valid = not LangExt.isblank(jsrv) and JServUrl.valid(jsrv, rootpath=self.syn_protocol.protocolpath)
+        except ValueError:
+            valid = False
+        if not valid:
+            return {'hub-node': f'The hub synode, {hub_node.synid}, has no valid jserv (service address): {jsrv}. '
+                                'Save again with the hub\'s jserv when the hub node is running.'}
+        return None
+
+    def chk_service_resources(self) -> Optional[dict]:
+        """
+        Check the resources for running the services, by file existence only (no subprocess),
+        as it is called for each setup-gui widgets update.
+        :return: {item: missing reason}, or None if all are found.
+        """
+        err = {}
+        for jar in (jserv_07_jar, html_web_jar):
+            if not os.path.isfile(os.path.join('bin', jar)):
+                err[jar] = f'Service package is missing: bin/{jar}'
+
+        if validate_jre() is not None:
+            err['jre'] = 'JRE 17 is not available.'
+
+        if Utils.iswindows():
+            if not os.path.isfile(exiftool_exe):
+                err['exiftool'] = f'Depending tool, exiftool is missing: {exiftool_exe}'
+            from .winsrv import install_jserv_w_bat, install_html_w_bat # winsrv imports this module
+            for bat in (install_jserv_w_bat, install_html_w_bat):
+                if not os.path.isfile(bat):
+                    err[bat] = f'Service script is missing: {bat}'
+        elif shutil.which('exiftool') is None:
+            err['exiftool'] = 'Depending tool, exiftool is not installed.'
+
+        volume = self.settings.Volume()
+        if self.validateVol() is not None or LangExt.isblank(volume):
+            err['volume'] = f'Volume is not valid: {volume}'
+        else:
+            for f in (sys_db, syn_db, syntity_json, dictionary_json):
+                if not os.path.isfile(os.path.join(volume, f)):
+                    err[f] = f'Not saved yet, missing in volume: {f}'
+
+        return err if len(err) > 0 else None
+
+    def chk_srv_install(self, synid: str, installed_srvs: Callable[[], List[str]]) -> Optional[dict]:
+        """
+        Can the services of the synode id be installed (setup-gui & setup-cli)?
+        Services can't be re-installed, other than by upgrading.
+        :param synid: the selected synode id
+        :param installed_srvs: returns the names of the services already installed, for this synode,
+               e.g. winsrv.winsrvs_installed(); called only if all the other checks are passed.
+        :return: {reason: details}, or None
+        """
+        if self.hasrun():
+            return {'hasrun': 'The synode has run. Services can only be re-installed by upgrading.'}
+
+        if LangExt.isblank(synid) or synid != self.registry.config.synid:
+            return {'saved': f'Save the settings of {synid} first.'}
+
+        err = self.chk_synid(synid) or self.chk_service_resources()
+        if err is not None:
+            return err
+
+        srvs = installed_srvs()
+        if LangExt.len(srvs) > 0:
+            return {'installed': f'Service(s) already installed: {", ".join(srvs)}. '
+                                 'Services can only be re-installed by upgrading.'}
+        return None
+
     def hasrun(self, override_vol: str = None):
         try:
             psys_db, psyn_db, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume() if override_vol is None else override_vol)
@@ -461,7 +652,11 @@ class InstallerCli:
         ip, port = self.getProxiedIp()
         return f'{ip}:{port}'
 
-    def validate_domain(self) -> Optional[dict]:
+    def validate_domain(self, creating: bool = False) -> Optional[dict]:
+        '''
+        :param creating: True if the domain is new (to be created in central): its id is at most
+        validators.domain_maxlen chars, see validators.check_domain_id().
+        '''
         # 0.7.7 central-pswd must be re-configured when building
         if LangExt.isblank(self.settings.centralPswd):
             return {"Central Password is invalid (0.7.7 not a valid distribution): ": self.settings.centralPswd}
@@ -470,9 +665,9 @@ class InstallerCli:
             return {"Central Password is invalid, len (6-32)": self.settings.centralPswd}
 
         cfg = self.registry.config
-        try: LangExt.only_id_len(cfg.domain, minlen=2, maxlen=12)
-        except AnsonException as e:
-            return {"domain length": f"2 <= Len('{cfg.domain}') <= 12"}
+        err = check_domain_id(cfg.domain, creating)
+        if err is not None:
+            return {"domain id": err}
 
         try: LangExt.only_id_len(cfg.org.orgId, minlen=2, maxlen=12)
         except AnsonException as e:
@@ -600,6 +795,12 @@ class InstallerCli:
         """
         cfg = self.registry.config
 
+        # The package's resources, checked again by install(); here before the time-consuming
+        # JRE download, check_install_jre(), which both setup-cli and setup-gui do after validating.
+        try: self.check_src_jar_db()
+        except FileNotFoundError as e:
+            return {'package': str(e)}
+
         v = self.validate_domain()
         if v is not None: return v
 
@@ -612,6 +813,10 @@ class InstallerCli:
         v = self.validate_iport()
         if v is not None: return v
 
+        if LangExt.len(cfg.peers) == 0:
+            return {'domain': f'No synodes of domain "{cfg.domain}" are loaded from the central. '
+                              'Select a domain, or create one.'}
+
         # TODO 0.7.8 Check the synode id is domain wide unique, in Central.
         if self.find_peer(self.registry.config.synid) is None:
             return {'peer-id': f'synode id is not a peer id: {self.registry.config.synid}'}
@@ -620,22 +825,16 @@ class InstallerCli:
             return {'synode-id': f'synode id is not a service node: {self.registry.config.synid}'}
 
         if not checkinstall_exiftool():
-            return {"exiftool": "Check and install exiftool failed!" \
-                    if Utils.get_os() == 'Windows' \
-                    else "Please install exiftool and test it's working with command 'exiftool -ver'"}
+            return {"exiftool": exiftool_missing_msg()}
 
         if cfg.mode != SynodeMode.hub.name:
             v = self.validate_synins()
             if v is not None: return v
             # self.ping(self.settings.jservs[cfg.peers[0].synid])
-            if ping_hub:
+            # A peer can be saved and started without the hub's jserv, see chk_hub().
+            if ping_hub and self.chk_hub() is None:
                 hub_node = self.registry.find_hubpeer()
-                if hub_node is None:
-                    return {'hub-node': 'Hub information is missing.'}
-                elif hub_node.synid in self.settings.jservs:
-                    self.ping(self.settings.jservs[hub_node.synid], timeout=ping_timeout)
-                else:
-                    return {'hub-node': 'Hub information is missing.'}
+                self.ping(self.settings.jservs[hub_node.synid], timeout=ping_timeout)
 
         if LangExt.len(self.registry.synusers) == 0:
             return {'synusers': 'Admin must present'}
@@ -670,20 +869,28 @@ class InstallerCli:
         if LangExt.isblank(self.settings.installkey) and not LangExt.isblank(self.settings.rootkey):
             sysdb, syndb, _ = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
             if  os.path.isfile(sysdb) and os.stat(sysdb).st_size == 0 and \
-                os.path.isfile(sysdb) and os.stat(syndb).st_size == 0:
+                os.path.isfile(syndb) and os.stat(syndb).st_size == 0:
 
                 self.settings.installkey, self.settings.rootkey = self.settings.rootkey, ''
                 self.settings.toFile(os.path.join(web_inf, settings_json))
                 return f'Fixed errors: {sysdb} size & {syndb} size = 0, reset flags for setup db.'
-            elif os.path.isfile(sysdb) and os.path.isfile(sysdb) and (os.stat(syndb).st_atime > 0 or os.stat(sysdb).st_size > 0):
+            elif os.path.isfile(sysdb) and os.path.isfile(syndb) and (os.stat(syndb).st_size > 0 or os.stat(sysdb).st_size > 0):
                 raise PortfolioException(f'Find sizes about {syndb} and {sysdb} != 0.')
         return None
 
-    def gen_wsrv_name(self) -> str:
-        return f'Synode-{jar_ver}-{self.registry.config.synid}'
+    def gen_wsrv_name(self, jver: str = None) -> str:
+        '''
+        :param jver: the jar version, default this synodepy3's (__version__.jar_ver); an upgrade
+                     takes the new package's, bin/resource.json versions.jar_ver.
+        '''
+        return f'Synode-{jver or jar_ver}-{self.registry.config.synid}'
 
-    def gen_html_srvname(self) -> str:
-        return f'Synode.web-{web_ver}-{self.registry.config.synid}'
+    def gen_html_srvname(self, wver: str = None) -> str:
+        '''
+        :param wver: the web version, default this synodepy3's (__version__.web_ver); an upgrade
+                     takes the new package's, bin/resource.json versions.web_ver.
+        '''
+        return f'Synode.web-{wver or web_ver}-{self.registry.config.synid}'
 
     def update_domain(self, orgtype,
                       orgid: Optional[str]=None,
@@ -709,7 +916,6 @@ class InstallerCli:
             market: str, org: Optional[str] = None, domain: Optional[str]=None,
             reg_jserv: Optional[str] = None,
             admin: Optional[str]=None, domphrase: Optional[str]=None,
-            # 0.7.7 central pswd is build by tasks.py
             volume: Optional[str]=None,
             hubmode: Optional[bool]=None,
             jservss: Optional[str]=None, synid: Optional[str]=None,
@@ -718,10 +924,7 @@ class InstallerCli:
             proxyPort: Optional[str]=None, proxyIp: Optional[str]=None,
             syncins: Optional[str]=None, envars=None, webProxyPort=None):
 
-        self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain
-                           # 0.7.7 central pswd is build by tasks.py
-                           # centralPswd=None
-                           )
+        self.update_domain(reg_jserv=reg_jserv, orgtype=market, orgid=org, domain=domain)
 
         for u in self.registry.synusers:
             if u.userId == admin and admin is not None:
@@ -731,7 +934,7 @@ class InstallerCli:
             if org is not None:
                 u.org = org
 
-        for p in self.registry.config.peers:
+        for p in self.registry.config.peers or []:
             if domain is not None:
                 p.domain = domain
             if org is not None:
@@ -770,14 +973,15 @@ class InstallerCli:
             envars = {}
 
         if volume is not None:
-            self.settings.Volume(os.path.abspath(volume))
+            # MEMO: settings.json's volume MUST be saved as an absolute path.
+            #   The synode (Java, AppSettings.checkInstall()) resolves a relative volume against WEB-INF,
+            #   while Python (settings.Volume(), the installers and commands.update_srv()) resolves it
+            #   against cwd, so they would use different folders. The upgrade (upgrade.exe /
+            #   synode-upgrade-srv) refuses a relative volume, see commands.installed_settings_error().
+            self.settings.Volume(posix_path(os.path.abspath(volume)))
 
         if syncins is not None:
             self.registry.config.syncIns = 0.0 if syncins is None or hubmode else float(syncins)
-
-        # 0.7.6
-        # if port is not None and len(port) > 1:
-        #     InstallerCli.update_private(self.registry.config, self.settings)
 
         for k in envars:
             self.settings.envars[k] = envars[k]
@@ -797,13 +1001,39 @@ class InstallerCli:
     def ping(self, jsrv, timeout=10):
         return ping(install_uri, jsrv, timeout_snd=timeout)
 
+    def central_uid(self) -> str:
+        """
+        The central (registry) user id, configured at build time as tasks.json deploy.centralUid,
+        and packaged in desktop/settings/app-settings.json (AnclientSettings.centralUid).
+        Falls back to the domain admin, registry.synusers[0], if the desktop is not packaged.
+        """
+        desk_sets = Path('desktop') / 'settings' / 'app-settings.json'
+        if desk_sets.exists():
+            try:
+                csets = cast(AnclientSettings, Anson.from_file(desk_sets))
+                if hasattr(csets, 'centralUid') and not LangExt.isblank(csets.centralUid):
+                    return csets.centralUid
+            except Exception as e:
+                Utils.warn(f'Cannot load centralUid from {desk_sets}: {e}')
+        return self.registry.synusers[0].userId
+
+    def update_central_pswd(self, pswd: str):
+        """
+        Set the password of Central, save it to WEB-INF/settings.json, and drop the central client,
+        so the next request logs in with it.
+        """
+        self.settings.centralPswd = pswd
+        self.regclient = None
+        self.settings.toFile(cfgpaths.web_settings)
+
     def check_cent_login(self) -> SessionClient:
+        # ISSUE central-login: loginWithUri() makes no login request, see issues/central-client-login.md
         if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
             self.regclient = SessionClient.loginWithUri(
                 uri=install_uri,
                 servroot=self.settings.regiserv,
-                uid=self.registry.synusers[0].userId,
-                pswdPlain=self.registry.synusers[0].pswd)
+                uid=self.central_uid(),
+                pswdPlain=self.settings.centralPswd)
         return self.regclient # type: ignore
 
     def query_orgs(self) -> Tuple[list[str], str]:
@@ -836,7 +1066,9 @@ class InstallerCli:
         return register(client=self.check_cent_login(),
                         func_uri=install_uri,
                         market=self.settings.market_id, cfg=self.registry.config,
-                        s=self.settings, iport=self.getProxiedIp(), jprotocl=self.reg_jserv.jprotocol)
+                        # the synode's protocol: the central takes this jserv as the suggested hub's
+                        # (Registry.registDom()), not the central's protocol (regist-central).
+                        s=self.settings, iport=self.getProxiedIp(), jprotocl=self.syn_protocol)
 
     def jesuis_hub(self) -> bool:
         """
@@ -915,6 +1147,9 @@ class InstallerCli:
                        f'Ignore existing database:\n{sysdb}\n{syndb}')
             self.settings.toFile(os.path.join(web_inf, settings_json))
 
+        # upgrade.exe, packed as upgrade.pkg (Windows packages only)
+        promote_upgrade_pkg()
+
         if (Path(mypath) / 'desktop').exists():
             self.update_clients([(Path('desktop'), 'settings/app-settings.json')])
         else:
@@ -957,6 +1192,7 @@ class InstallerCli:
             csets.toFile((apppath / setpath).absolute())
             print("Saved", Path(apppath) / setpath, ":", csets.synode_id, csets.synode_jserv)
 
+    '''
     def clean_install(self, vol: str = None):
         clean = False if self.settings is None or vol is None else os.path.samefile(self.settings.volume, vol)
         if clean:
@@ -977,6 +1213,7 @@ class InstallerCli:
             else:
                 try: os.remove(res)
                 except FileNotFoundError or IOError or OSError: pass
+    '''
 
     def test_in_term(self):
         system = Utils.get_os()
@@ -1137,10 +1374,11 @@ class InstallerCli:
     def check_install_jre(self, jredownloader: Optional[JreDownloader], prog_label=None,
                           cli_progress: Callable[[int, int, int], None]=None):
         '''
+        Check and isntall jre. The JreDownloader will use the proxy if configured in cwd().
         :param jredownloader:
         :param prog_label:
         :param cli_progress:
-        :return: return downlaoder (with background thread) or None if already done
+        :return: return downloader (with background thread) or None if already done
         '''
 
         if jredownloader and jredownloader.isrunning():

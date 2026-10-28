@@ -7,7 +7,7 @@
   "webport"     : 8900,
   "installkey"  : null,
   "startHandler": ["io.oz.syntier.serv.T_WebservExposer", "web-dist/private/host.json"],
-  "volume"      : "../../../../volumes-0.7/volume-hub",
+  "volume"      : "../../../../vol-synode-netest/volume-hub",
   "proxyPort"   : 0,
   "connIdleSnds": 0.0,
   "port"        : 8964,

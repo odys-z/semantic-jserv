@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import cast, Optional, List, Tuple
+from typing import cast, Optional, List
 
 from anson.io.odysz.anson import AnsonException
 from anson.io.odysz.common import LangExt, Utils, passwd_allow_ext
@@ -10,102 +10,86 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import choice
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import Validator, ValidationError
-from semanticshare.io.odysz.semantic.jprotocol import JServUrl
+from semanticshare.io.odysz.semantic.jprotocol import JServUrl, MsgCode
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, AppSettings
 from semanticshare.io.oz.syn import SynodeMode
 from semanticshare.io.oz.syn.registry import CynodeStats, SynodeConfig
 
-from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath
-from synodepy3.jre_downloader import _jre_
-from synodepy3.validators import PJservValidator, PIPValidator
+from synodepy3.winsrv import install_winsrvs, winsrvs_installed
+from synodepy3.linunits import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ, \
+    linusrvs_installed
+from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath, posix_path, \
+    desktop_exe, start_desktop, readable_state, available_state
+from synodepy3.validators import PJservValidator, PIPValidator, PDomainValidator, domain_maxlen
+from synodepy3.prerequisites import check_prerequisites
+from synodepy3.get_avail_ports import report_port_ranges
 
 
 def reach_central():
     pass
 
-def readable_state(s: str = ''):
-    return '' if LangExt.len(s) == 0 \
-            else '✅ Available planned node' if s == CynodeStats.create \
-            else '⛔ Already running as a Hub node' if s == CynodeStats.asHub \
-            else '⛔ Already running as a Peer node' if s == CynodeStats.asPeer \
-            else '[❗] Unknown state (Dangerous! Create a new domain if possible)'
 
-def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8g'):
-    """
-    :param s: settings
-    :param c: synode registry config
-    :param xms: JRE option Xms
-    :param xmx: JRE option Xmx
-    :return:
-    """
+from synodepy3.__version__ import synode_ver
+from synodepy3.commands_help import commands_table, doc_link
 
-    cwd = os.getcwd()
-    java_home = f'{cwd}/{_jre_}'
-    from .__version__ import jar_ver, web_ver
-    synode_desc = f'Synode {jar_ver} {synid}'
-    etc_syn = f"""[Unit]
-Description={synode_desc}
-After=network.target
+cli_help = f'''Synode {synode_ver} command line setup.
 
-[Service]
-Type=simple
-User={os.getlogin()}
-WorkingDirectory={cwd}
-Environment="JAVA_HOME={java_home}"
-ExecStart={java_home}/bin/java -jar {cwd}/bin/{jserv_07_jar}
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-Environment="JAVA_OPTS=-Xms{xms} -Xmx{xmx}"
+Usage:
+    synode-cli               configure and install this synode, interactively
+    synode-cli -h | --help   show this help and quit
 
-[Install]
-WantedBy=multi-user.target
-    """
+Run it in the synode's folder (with WEB-INF/settings.json). Return with empty input to abort.
+At the ports prompt, enter '?' to list the available ports, or '??' to also show what holds the used ones.
 
-    web_desc = f'Synode {web_ver} {synid}'
-    etc_web = f"""[Unit]
-Description={web_desc}
-After=network.target
+{commands_table}
 
-[Service]
-Type=simple
-User={os.getlogin()}
-WorkingDirectory={cwd}
-Environment="JAVA_HOME={java_home}"
-ExecStart={java_home}/bin/java -jar {cwd}/bin/{html_web_jar}
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-Environment="JAVA_OPTS=-Xms512m -Xmx2g"
+On Windows, list the available ports with the "find ports?" button next to the ports in setup-gui.exe.
 
-[Install] 
-WantedBy=multi-user.target
-    """
-    syn_templ, web_templ = f'{c.synid}.service', f'{c.synid}.web.service'
-    with open(syn_templ, "w") as fo:
-        fo.write(etc_syn)
-    with open(web_templ, "w") as fo:
-        fo.write(etc_web)
+Documentation: {doc_link}
+'''
 
-    return syn_templ, web_templ
+if any(a in ('-h', '--help', 'help') for a in sys.argv[1:]):
+    print(cli_help)
+    sys.exit(0)
 
 _quit = False
 details = [cast(Optional[str], None)]
 
+def quit_or_start_desktop(session: PromptSession, tip: str):
+    """
+    The end of a successful installation: ask for starting the desktop app (desktop/, if packaged),
+    which then runs on its own, and quit.
+    """
+    if desktop_exe() is None:
+        session.prompt(message=tip + 'Return to quit Portfolio Setup ...')
+        return
+
+    print(tip)
+    if choice(message='Start Portfolio Desktop now? (setup quits either way)',
+              options=[(1, 'Yes, start Portfolio Desktop.'),
+                       (2, 'No, quit.')],
+              default=1) == 1:
+        try:
+            start_desktop()
+            print('Portfolio Desktop is started.')
+        except OSError as e:
+            Utils.warn(f'Starting Portfolio Desktop failed: {e}')
+            session.prompt(message='Start it later with desktop/album_gui.exe.\n'
+                                   'Return to quit Portfolio Setup ...')
+
+
 def check_quit(q: bool):
     if q:
         for itm in details:
-            print(itm)
+            if itm is not None:
+                print(itm)
         sys.exit(-1)
+
 
 style = Style.from_dict({
     'prompt': 'bg:#ansiblue #ffffff',  # Blue background, white text
 })
 
-# path = os.path.dirname(__file__)
-# synode_ui = cast(SynodeUi, Anson.from_file(os.path.join(path, "synode.json")))
 
 class QuitValidator(Validator):
     def validate(self, document: Document) -> None:
@@ -114,6 +98,7 @@ class QuitValidator(Validator):
             _quit = True
         else:
             _quit = False
+
 
 class VolumeValidator(Validator):
     def validate(self, document: Document) -> None:
@@ -145,20 +130,17 @@ class VolumeValidator(Validator):
         except OSError as e:
             raise ValidationError(message=f"An OS error occurred while testing creation: {e}")
 
-# class NodeStateValidator(Validator):
-#     def validate(self, document: Document) -> None:
-#         if document[1] == 'installed':
-#             raise ValidationError(message=f'Node {document[0]} is installed.')
-
-class DomainValidator(Validator):
-    def validate(self, document: Document) -> None:
-        try: LangExt.only_id_len(document.text, minlen=2, maxlen=12)
-        except AnsonException:
-            raise ValidationError(message=f"domain length: 2 <= Len('{cfg.domain}') <= 12")
-
 class PortsValidator(Validator):
+    def __init__(self, allow_query: bool = False):
+        '''
+        :param allow_query: accept '?' and '??', asking for the list of local available ports
+        '''
+        self.allow_query = allow_query
+
     def validate(self, document: Document) -> None:
         if document is None or LangExt.isblank(document.text):
+            return
+        if self.allow_query and document.text.strip() in ('?', '??'):
             return
         try:
             poss = document.text.split(':')
@@ -177,12 +159,52 @@ class DomainTokenValidator(Validator):
         except AnsonException:
             raise ValidationError(message=f"token length must be in [8 ~ 16], allowed special chars: [{passwd_allow_ext}]")
 
+class CentralPswdValidator(Validator):
+    """
+    The password of Central, settings.centralPswd, with the same rule as InstallerCli.validate_domain().
+    Blank is passed to QuitValidator.
+    """
+    minlen, maxlen = 6, 32
+
+    @staticmethod
+    def check(pswd: Optional[str]) -> Optional[str]:
+        """
+        :return: the error message, or None if pswd is valid
+        """
+        if LangExt.isblank(pswd):
+            return 'The password of Central is not set.'
+        try:
+            LangExt.only_passwdlen(pswd, minlen=CentralPswdValidator.minlen, maxlen=CentralPswdValidator.maxlen)
+            return None
+        except AnsonException:
+            return f'Password length must be in [{CentralPswdValidator.minlen} ~ {CentralPswdValidator.maxlen}], ' \
+                   f'allowed special chars: [{passwd_allow_ext}]'
+
+    def validate(self, document: Document) -> None:
+        if document is None or LangExt.isblank(document.text):
+            return
+        err = CentralPswdValidator.check(document.text)
+        if err is not None:
+            raise ValidationError(message=err)
+
 class SyncInsValidator(Validator):
     def validate(self, document: Document) -> None:
         if not LangExt.isblank(document.text):
             err = cli.validate_synins(document.text)
             if err is not None:
                 raise ValidationError(message=err['config.syncIns'])
+
+class SrvNameValidator(Validator):
+    """
+    systemd unit name, without suffix .service. Blank is allowed (use the default).
+    """
+    def validate(self, document: Document) -> None:
+        name = document.text.strip().removesuffix('.service')
+        if not name:
+            return
+        try: LangExt.only_wordextlen(name, ext='_-.', maxlen=240)
+        except AnsonException:
+            raise ValidationError(message='Service name can only have letters, digits and "_-."')
 
 class MultiValidator(Validator):
     valids = list[Validator]
@@ -194,8 +216,12 @@ class MultiValidator(Validator):
         for vld in self.valids:
             vld.validate(document)
 
+err_code = [cast(Optional[MsgCode], None)]
+'''The code of the last error reported by Central, MsgCode or its name.'''
+
 def err_ctx(c, e: str, *args: str) -> None:
     global _quit, details
+    err_code[0] = c
     try: details[0] = e.format(args) if e is not None else e
     except Exception as ex:
         print(ex)
@@ -203,10 +229,12 @@ def err_ctx(c, e: str, *args: str) -> None:
         details[0] = e
     _quit = True
 
+
 err_uihandlers[0] = err_ctx
 
 cli = InstallerCli()
-cli.registry = cli.load_settings()
+# cli.registry = cli.load_settings()
+cli.load_settings()
 cli.registry = InstallerCli.loadRegistry(cli.settings.volume, 'registry')
 
 ssclient = None
@@ -214,50 +242,111 @@ session = PromptSession(style=style)
 
 cfg = cli.registry.config # for shot
 
-from .__version__ import synode_ver
 print(f"Starting configure Synode {synode_ver}. Return with empty input to abort.")
 
 has_run = cli.hasrun()
 
-missing_requires = cli.check_prerequisites()
+missing_requires = check_prerequisites()
 
 if missing_requires:
     details.extend(missing_requires)
     check_quit(True)
 
+def ask_central_pswd(reason: str):
+    """
+    Ask for the password of the central user at settings.regiserv, empty to quit.
+    The central client is dropped, so the next request logs in with the new password.
+    """
+    global _quit
+    print(reason)
+    print(f'Central: {cli.settings.regiserv}')
+    # A separate session: is_password=True sticks to a PromptSession, masking all its later prompts.
+    pswd = PromptSession(style=style).prompt(
+        message=f'Password of "{cli.central_uid()}" (empty to quit): ',
+        is_password=True,
+        validator=MultiValidator(QuitValidator(), CentralPswdValidator()))
+    check_quit(_quit)
+
+    cli.update_central_pswd(pswd)
+    details[0] = None
+
+def ensure_central_pswd():
+    """
+    Ask for the central password if it's not set or invalid.
+    It is set in WEB-INF/settings.json by the distribution build (jserv-album/tasks.py).
+    """
+    pswd_err = CentralPswdValidator.check(cli.settings.centralPswd)
+    if pswd_err is not None:
+        ask_central_pswd(pswd_err)
+
+def query_domains(orgid: str):
+    """
+    Query the domains from Central, the first request to it.
+    A wrong password is answered with exSession, by AnSession / JUser: ask for it and retry.
+    :return: (domains, error code); domains is None if failed, with the error in details[0]
+    """
+    global _quit
+    while True:
+        err_code[0] = None
+        domains = cli.query_domx(market=cli.settings.market_id, commu=orgid)
+        if domains is not None:
+            return domains, None
+
+        if err_code[0] in (MsgCode.exSession, MsgCode.exSession.name):
+            # ISSUE central-uid: the synode logs in central as the domain admin, so in 0.8.0 the central
+            # user id must be 'admin'; it is not asked for, nor saved. See issues/central-uid-synode-login.md
+            central_uid = cli.central_uid()
+            if central_uid != 'admin':
+                details.append(f'Central refused the login of user "{central_uid}", which must be "admin" in '
+                               f'Portfolio {synode_ver} (ISSUE central-uid, the synode logs in central as the '
+                               f'domain admin). Check centralUid in desktop/settings/app-settings.json.')
+                check_quit(True)
+
+            _quit = False  # set by err_ctx(); ask_central_pswd() quits on empty input
+            ask_central_pswd(f'Central refused the login of user "{central_uid}": {details[0]}')
+            continue
+
+        return None, err_code[0]
+
 if not has_run:
-    # 0. central jserv
+    # 0. central jserv, 2. bind domains, e.g. ['zsu', 'edu-0']
     orgs: list[str] = None # type: ignore
     orgid: str = None # type: ignore
-    while not _quit and not reach_central():
+    domains = None
+    while True:
         cli.settings.regiserv = session.prompt(
               message="Please input central service url (empty to quit): ",
               validator=MultiValidator(QuitValidator(), PJservValidator(JServUrl(cli.settings.regiserv).jprotocol.protocolpath)),
               default=cli.settings.regiserv,
               validate_while_typing=True)
+        check_quit(_quit)
+
+        ensure_central_pswd()
 
         ssclient = cli.check_cent_login()
         orgs, orgid = cli.query_orgs()
 
-        if LangExt.len(orgs) > 0:
+        domains, code = query_domains(orgid)
+        if domains is not None:
             break
 
-    check_quit(_quit)
+        if code in (MsgCode.exIo, MsgCode.exIo.name):
+            # e.g. a correct url of an unreachable site: let the user fix it and try again
+            print(f'Cannot reach Central at {cli.settings.regiserv}:\n{details[0]}\n'
+                  'Please check the url and try again.')
+            details[0] = None
+            _quit = False  # set by err_ctx()
+            continue
+
+        Utils.warn('Cannot find domains in market {}, community / org: {}',
+                   cli.settings.market_id, orgid)
+        check_quit(True)
 
     # 1. orgs / community
     session.prompt(
         message=f"Portfolio {synode_ver} market ID: {cli.settings.market_id}. ",
         validator=QuitValidator(),
         default="Return to continue ...")
-
-    # 2. bind domains
-    # e.g. ['zsu', 'edu-0']
-    domains = cli.query_domx(market=cli.settings.market_id, commu=orgid)
-
-    if domains is None:
-        Utils.warn('Cannot find domains in market {}, community / org: {}',
-                   cli.settings.market_id, orgid)
-        _quit = True
     check_quit(_quit)
 
     # 3. create or select a domain
@@ -283,8 +372,8 @@ if not has_run:
         else:
             # 3.2 create domain
             cfg.domain = session.prompt(
-                message='Please input new domain name: ',
-                validator=MultiValidator(QuitValidator(), DomainValidator()),
+                message=f'Please input new domain name (2 - {domain_maxlen} chars): ',
+                validator=MultiValidator(QuitValidator(), PDomainValidator(creating=True)),
                 validate_while_typing=False)
             resp = cli.register()
             Utils.logi('Doamin created: {}\n{}', domid, 'None' if resp is None else resp.diction)
@@ -313,7 +402,7 @@ if not has_run:
 
     # 4.2 select a peer
     synid, cynstat = None, CynodeStats.die
-    while not _quit and cynstat is not None and cynstat != CynodeStats.create:
+    while not _quit and not available_state(cynstat):
         nodes = respeers_options(cli.registry.config)
 
         selected_id = cli.registry.config.synid, ''
@@ -331,8 +420,8 @@ if not has_run:
             _quit = True
         elif synid == '': # another domain
             create_find_update_dom()
-        elif cynstat is not None and cynstat != CynodeStats.create:
-            print(f'Cannot re-install {synid}.\n'
+        elif not available_state(cynstat):
+            print(f'Cannot install {synid}, which is running somewhere ({readable_state(cynstat)}).\n'
                   '[Note 0.7.6] Some settings can be modified in settings.json, e.g. port or ip, by which way is not recommended.')
         else: # ui.select_peer()
             cfg.synid = synid
@@ -340,16 +429,20 @@ if not has_run:
     check_quit(_quit)
 
     # 4.3 volume
-    cli.settings.volume = session.prompt(
+    # MEMO: settings.json's volume MUST be an absolute path. The synode (Java) resolves a relative one
+    #   against WEB-INF, Python against cwd, and the upgrade refuses it (commands.installed_settings_error()).
+    #   See InstallerCli.updateWithUi(volume=...). It's also converted to posix, see posix_path().
+    cli.settings.volume = posix_path(os.path.abspath(session.prompt(
         message=f"Set volume path, emtpy to quit (volume is where the files and data saved). ",
         validator = MultiValidator(QuitValidator(), VolumeValidator()),
-        default=f"{Path(os.getcwd()).as_posix()}/vol")
+        default=f"{Path(os.getcwd()).as_posix()}/vol")))
 
     check_quit(_quit)
     print(cli.settings.volume)
 
 else:
     print(f'This folder and the volume has already run as [{cfg.domain}]{cfg.synid}')
+    ensure_central_pswd()
 
 # 5A mode & syncIns
 synmode_v = choice(
@@ -386,10 +479,23 @@ def parse_web_jserv_ports(ports: str) -> List[int]:
 def default_ports(s: AppSettings) -> str:
     return f'{web_port0 if s.webport == 0 else s.webport}:{serv_port0 if s.port == 0 else s.port}'
 
-ports = session.prompt(
-    message=f'Please set the ports. Format: "www-port : synode-service", [1024-65535]\n',
-    default=default_ports(cli.settings),
-    validator=MultiValidator(QuitValidator(), PortsValidator()))
+def print_avail_ports(verbose: int = 0):
+    print('Scanning local TCP ports, this may take a few seconds ...')
+    try:
+        report_port_ranges(1024, 65535, verbose=verbose)
+    except Exception as e:
+        print(f'Cannot list the ports: {e}')
+
+while True:
+    ports = session.prompt(
+        message=f'Please set the ports. Format: "www-port : synode-service", [1024-65535]. '
+                f"'?' to list available ports, '??' with owners.\n",
+        default=default_ports(cli.settings),
+        validator=MultiValidator(QuitValidator(), PortsValidator(allow_query=True)))
+    if ports.strip() in ('?', '??'):
+        print_avail_ports(verbose=len(ports.strip()) - 1)
+        continue
+    break
 
 check_quit(_quit)
 
@@ -451,18 +557,28 @@ if cli.registry.config.mode != SynodeMode.hub.name:
     if hub_node is None:
         session.prompt(message='Cannot find the hub node, which is possibly can be found automatically. Press Enter to continue.\n')
     else:
-        s_j = cli.settings.jservs[hub_node.synid]
+        # A peer can be saved without the hub's jserv (warned after saving), but its services can't be
+        # installed until the hub's jserv is set, see InstallerCli.chk_hub() & chk_srv_install().
+        if cli.settings.jservs is None:
+            cli.settings.jservs = {}
+        s_j = cli.settings.jservs.get(hub_node.synid)
         hub_jserv = hub_node.jserv if LangExt.isblank(s_j) else s_j
-        cli.settings.jservs[hub_node.synid] = session.prompt(
-                message=f'Pinging the hub node, {hub_node.synid} ? (Empty to quit) ',
-                default=hub_jserv,
-                validator=MultiValidator(QuitValidator(), PJservValidator(cli.syn_protocol.protocolpath)))
-        try:
-            # rsp = cli.ping(hub_node.jserv)
-            rep = cli.ping(cli.settings.jservs[hub_node.synid], timeout=6) 
-        except Exception as e:
-            print(e)
-            print("There are errors while finding the hub node. But it can still work. Let's continue ...")
+        hub_input = session.prompt(
+                message=f'Pinging the hub node, {hub_node.synid} ? '
+                        '(Empty to skip, and set it later by running this setup again) ',
+                default=hub_jserv or '',
+                validator=PJservValidator(cli.syn_protocol.protocolpath)).strip()
+
+        if LangExt.isblank(hub_input):
+            print(f'Hub synode {hub_node.synid} is missing. Run this setup again when the hub node is running.')
+        else:
+            cli.settings.jservs[hub_node.synid] = hub_input
+            try:
+                # rsp = cli.ping(hub_node.jserv)
+                rep = cli.ping(cli.settings.jservs[hub_node.synid], timeout=6)
+            except Exception as e:
+                print(e)
+                print("There are errors while finding the hub node. But it can still work. Let's continue ...")
 
         go_on = choice( message=f'Continue installation? (Can re-configure, or can auto-connect if both nodes can visit Central)' if not has_run \
                         else f'Continue to save changes?',
@@ -505,6 +621,10 @@ if caninstall == 1:
         cli.install()
         post_err = cli.postFix()
         post_install()
+
+        h = cli.chk_hub()
+        if h is not None:
+            Utils.warn(f'Hub synode is missing. {h["hub-node"]}')
     except FileNotFoundError or IOError as e:
         Utils.warn(e)
         session.prompt('Setting up synodepy3 failed.')
@@ -514,31 +634,120 @@ if caninstall == 1:
         Utils.warn(e.msg)
         session.prompt('Configuration is updated with cautions. Check the details.')
         post_install() # let's still take effects for changes
-        _quit = True
+        # e.g. reinstalling over an existing volume (dbs not empty) - the services,
+        # possibly uninstalled at upgrade or removed manually, still need to be installed.
+        _quit = choice(
+            message='Continue to install the services?',
+            options=[(1, 'Yes, continue.'),
+                     (2, 'No, quit.')],
+            default=1) == 2
         check_quit(_quit)
 
-    if Utils.iswindows():
-        session.prompt(f'Synode-cli is for the remote servers, and cannot install the required Windows services.\n'
-                       'Please install it with the GUI version:\n'
-                       './setup-gui.exe\n'
-                       'And click "install Windows service" with default settings.')
-    else:
-        syn_templ, web_templ = generate_service_templ(cli.settings, cfg)
-        # TODO merge with the cli function
-        login_url = f'{"https" if cli.registry.config.https else "http"}://' + \
-                    f'{ cli.settings.proxyIp if cli.settings.reverseProxy else "127.0.0.1"}:' + \
-                    f'{cli.settings.webProxyPort if cli.settings.reverseProxy else cli.settings.webport}/login.html'
+    # TODO merge with the cli function
+    login_url = f'{"https" if cli.registry.config.https else "http"}://' + \
+                f'{ cli.settings.proxyIp if cli.settings.reverseProxy else "127.0.0.1"}:' + \
+                f'{cli.settings.webProxyPort if cli.settings.reverseProxy else cli.settings.webport}/login.html'
+    login_tip = f'Login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n{login_url}\n\n'
 
+    def refuse_srvs(err: dict):
+        """
+        Services are not to be installed (InstallerCli.chk_srv_install(), the same as setup-gui): report and quit.
+        """
         session.prompt(message=
-               f'The service configuration template is saved in ./{syn_templ} & ./{web_templ}.\n\n'
-                'Before setup the services, it is recommend to try the service with this two commands:\n'
+            'Services are not installed:\n' + '\n'.join(str(v) for v in err.values()) + '\n\n' +
+            login_tip +
+            'Return to quit Portfolio Setup ...')
+        sys.exit(0)
+
+    def warn_hub():
+        h = cli.chk_hub()
+        if h is not None:
+            Utils.warn('Hub synode is incorrect, need to reset again when the hub node is running.\n'
+                       f'{h["hub-node"]}')
+
+    if Utils.iswindows():
+        srv_err = cli.chk_srv_install(cfg.synid, lambda: winsrvs_installed(cli))
+        if srv_err is not None:
+            refuse_srvs(srv_err)
+        warn_hub()
+
+        install_srvs = choice(
+            message='Install the Windows services now? (administrator permission required, asked once)',
+            options=[(1, 'Yes, install the services.'),
+                     (2, 'No, I will install them with setup-gui.exe later.')],
+            default=1)
+
+        states = {}
+        if install_srvs == 1:
+            print('Please confirm the administrator permission request (the dialog can be hidden) ...')
+            try:
+                states = install_winsrvs(cli)
+            except (PermissionError, OSError) as e:
+                Utils.warn(e)
+
+        report = '\n'.join(f'{s}: {"installed" if ok else "NOT installed"}' for s, ok in states.items())
+        if states and all(states.values()):
+            quit_or_start_desktop(session,
+                report + '\n\n' +
+                'Check the services in Windows Service Control (services.msc), or logs in current folder.\n\n' +
+                login_tip)
+        else:
+            session.prompt(message=
+                (report + '\nCheck winsrv-install.log in current folder.\n\n' if states else
+                 'Services are not installed.\n\n') +
+                'To install the services later, run this setup again, or use the GUI version:\n'
+                './setup-gui.exe\n'
+                'And click "install Windows service" with default settings.\n\n'
+                'Return to quit Portfolio Setup ...')
+    else:
+        # the units' names are asked below, and checked there
+        srv_err = cli.chk_srv_install(cfg.synid, lambda: [])
+        if srv_err is not None:
+            refuse_srvs(srv_err)
+        warn_hub()
+
+        syn_templ, web_templ = generate_service_templ(cli.settings, cfg)
+
+        print(f'The service configuration files are generated: ./{syn_templ} & ./{web_templ}.')
+        install_units = choice(
+            message='Install them as systemd services now? (sudo required)',
+            options=[(1, 'Yes, install the services.'),
+                     (2, 'No, I will install them myself.')],
+            default=1)
+
+        states = {}
+        if install_units == 1:
+            srv_name = session.prompt(
+                message='Service name (installed as <name>.service & <name>.web.service): ',
+                default=cfg.synid, validator=SrvNameValidator()).strip().removesuffix('.service') or cfg.synid
+            installed = linusrvs_installed([f'{srv_name}.service', f'{srv_name}.web.service'])
+            if installed:
+                refuse_srvs({'installed': f'Service(s) already installed: {", ".join(installed)}. '
+                                          'Services can only be re-installed by upgrading.'})
+            try:
+                states = install_linusrvs(cli, {linusrv_synode: (f'{srv_name}.service', syn_templ),
+                                                linusrv_websrv: (f'{srv_name}.web.service', web_templ)})
+            except PermissionError as e:
+                Utils.warn(e)
+
+        if states:
+            session.prompt(message=
+                '\n'.join(f'{u}: {st}' for u, st in states.items()) + '\n\n' +
+                'Check logs with:\n' +
+                ''.join(f'journalctl -u {u} -f\n' for u in states) + '\n' +
+                login_tip +
+                'Return to quit Portfolio Setup ...')
+        else:
+            session.prompt(message=
+                'Services are not installed.\n\n'
+                'You can try the service with these two commands:\n'
                f'java -jar bin/{jserv_07_jar}\n'
                f'java -jar bin/{html_web_jar}\n\n'
-               f'Then try login with user Id "{cli.registry.config.admin}" & password, your-domain-token at\n'
-               f'{login_url}\n\n'
-                'A simple tutorial for installing Unix services is to be build. You have to Google it. Sorry!\n'
-               f'Return to quit Portfolio Setup ...'
-               )
+                'Then ' + login_tip +
+                'To install the services, copy the files to /etc/systemd/system/, then:\n'
+                'sudo systemctl daemon-reload\n'
+               f'sudo systemctl enable --now {Path(syn_templ).name} {Path(web_templ).name}\n\n'
+                'Return to quit Portfolio Setup ...')
 
 def main():
     '''

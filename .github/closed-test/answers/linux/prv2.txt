@@ -1,0 +1,20 @@
+# Linux: synode-cli answers for private node 2, one per line, in the order of the prompts.
+# Format: see feed_answers.py. Runs after private node 1 is installed and started.
+
+<clear>${CENTRAL_URL}     # Please input central service url. Value from yml file
+<enter>                   # Portfolio 0.8.0 market ID: alpha. Return to continue ...
+1                         # Please select a domain: 1 = ci-0.8 (created by the hub), 2 = closed-1, 3 = closed-2
+3                         # Please select a Synode: 1 = ci-0.8-hub, 2 = ci-0.8-1, 3 = ci-0.8-2
+<enter>                   # Set volume path: default ./vol
+2                         # Synode mode: 2 = Primary Storage Node
+<clear>${SYNC_INS}        # Synchronization interval, seconds
+<clear>8953:8963          # Ports "www-port:synode-service"
+2                         # Mapped to a public address / reverse proxy? 2 = No
+1                         # All settings are collected, install? 1 = Yes
+<enter>                   # Domain token of user Admin: the packaged default, the same as the hub's
+<enter>                   # Pinging the hub node? accept the hub's jserv url
+1                         # Continue installation? 1 = Yes (asked only when the hub is found)
+1                         # Install them as systemd services now? 1 = Yes (the runner has passwordless sudo)
+<enter>                   # Service name: the default, the synode id (<synid>.service & <synid>.web.service)
+<enter>                   # Start ... now? (Y/n): Enter takes the default, Yes
+<enter>                   # Return to quit Portfolio Setup

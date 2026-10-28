@@ -7,7 +7,7 @@
   "iso": "http://www.lingoes.net/en/translator/langcode.htm",
   "ui": "ui_form.py",
   "credits": "https://odys-z.github.io/products/album/credits.html",
-  "lang": "zh-CN",
+  "lang": "en",
   "langs": {
     "en": { "jre_mirror": "http://10.0.0.1:1984/jre-17/jdk-17.0.17+10/bins",
       "jre_mirror_for_debug": "http://127.0.0.1:1984/jre-17/jdk-17.0.17+10/bins",

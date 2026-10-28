@@ -1,0 +1,383 @@
+"""
+Linux systemd units of Synode: <name>.service (jserv-album) & <name>.web.service (html-web).
+
+The unit names are saved in WEB-INF/settings.json, envars[linusrv_synode / linusrv_websrv],
+like the Windows services' names are in envars[winsrv_synode / winsrv_websrv].
+
+Used by prompt.py (generate & install at the last step), cli.uninst_srv() (uninstall_linusrvs(), was
+linusrv/remove-srv.py) and commands.update_srv() (stop, update the unit files, restart).
+"""
+import getpass
+import os
+import subprocess
+import sys
+from typing import Dict, List, Optional, Tuple
+
+from anson.io.odysz.common import Utils
+from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
+from semanticshare.io.oz.syn.registry import SynodeConfig
+
+from .__version__ import jar_ver, web_ver
+from semanticshare.io.oz.syn.pkgresource import PkgResources
+
+from .installer_api import InstallerCli, settings_json, web_inf, jserv_07_jar, html_web_jar, res_synode, res_htmlweb
+from .jre_downloader import _jre_
+
+linusrv = 'linusrv'
+linusrv_synode = f'{linusrv}.synode'
+linusrv_websrv = f'{linusrv}.web'
+
+
+def _login_user() -> str:
+    """
+    The user the services run as: the one who logged in, also under sudo.
+    os.getlogin() needs a controlling terminal, and fails (ENOTTY) under a pipe, systemd or CI.
+    """
+    return os.environ.get('SUDO_USER') or getpass.getuser()
+
+def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8g'):
+    """
+    :param s: settings
+    :param c: synode registry config
+    :param xms: JRE option Xms
+    :param xmx: JRE option Xmx
+    :return: (synode service file, web service file), generated in cwd: <synid>.service, <synid>.web.service
+    """
+
+    cwd = os.getcwd()
+    java_home = f'{cwd}/{_jre_}'
+    synode_desc = f'Synode {jar_ver} {c.synid}'
+    etc_syn = f"""[Unit]
+
+
+Description={synode_desc}
+After=network.target
+
+[Service]
+Type=simple
+User={_login_user()}
+WorkingDirectory={cwd}
+Environment="JAVA_HOME={java_home}"
+ExecStart={java_home}/bin/java -jar {cwd}/bin/{jserv_07_jar}
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+Environment="JAVA_OPTS=-Xms{xms} -Xmx{xmx}"
+
+[Install]
+WantedBy=multi-user.target
+    """
+
+    web_desc = f'Synode {web_ver} {c.synid}'
+    etc_web = f"""[Unit]
+Description={web_desc}
+After=network.target
+
+[Service]
+Type=simple
+User={_login_user()}
+WorkingDirectory={cwd}
+Environment="JAVA_HOME={java_home}"
+ExecStart={java_home}/bin/java -jar {cwd}/bin/{html_web_jar}
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+Environment="JAVA_OPTS=-Xms512m -Xmx2g"
+
+[Install] 
+WantedBy=multi-user.target
+    """
+    syn_templ, web_templ = f'{c.synid}.service', f'{c.synid}.web.service'
+    with open(syn_templ, "w") as fo:
+        fo.write(etc_syn)
+    with open(web_templ, "w") as fo:
+        fo.write(etc_web)
+
+    return syn_templ, web_templ
+
+class Sudo:
+    """
+    Run commands as root. Asks for the password at most once, and not at all
+    if running as root, or sudo has a cached credential / NOPASSWD.
+    """
+    def __init__(self):
+        self.is_root = os.geteuid() == 0
+        self._pswd: Optional[str] = None
+
+    def ensure(self, retries: int = 3):
+        # -n: non-interactive, returns 0 if sudo is available without password
+        if self.is_root or subprocess.run(['sudo', '-n', 'true'], capture_output=True).returncode == 0:
+            return
+        from prompt_toolkit import prompt
+        for _ in range(retries):
+            p = prompt('[sudo] password: ', is_password=True)
+            # -k: ignore cached timestamp, so this really validates the password
+            # -S: read from stdin, input: feed the stdin, -p: empty prompt (otherwise the password is echoed)
+            if subprocess.run(['sudo', '-S', '-k', '-p', '', 'true'],
+                              input=p + '\n', text=True, capture_output=True).returncode == 0:
+                self._pswd = p
+                return
+            print('Sorry, try again.')
+        raise PermissionError('sudo authentication failed.')
+
+    def run(self, *cmd: str, stdin: str = '') -> subprocess.CompletedProcess:
+        if self.is_root:
+            argv, inp = list(cmd), stdin
+        elif self._pswd is None:
+            argv, inp = ['sudo', '-n', *cmd], stdin
+        else:
+            argv, inp = ['sudo', '-S', '-p', '', *cmd], self._pswd + '\n' + stdin
+        return subprocess.run(argv, input=inp, text=True, capture_output=True)
+
+
+def _yes_no(msg: str, default: bool) -> bool:
+    """
+    Ask until answered y[es] / n[o]; Enter takes the default.
+    Not prompt_toolkit's confirm(): Enter there accepts the empty buffer and returns '' (falsy),
+    so an Enter, typed or left over from the previous prompt, silently answers "no".
+    """
+    from prompt_toolkit import prompt
+    while True:
+        a = prompt(f'{msg} ({"Y/n" if default else "y/N"}) ').strip().lower()
+        if not a:
+            return default
+        if a in ('y', 'yes'):
+            return True
+        if a in ('n', 'no'):
+            return False
+
+
+def _unit_exists(unit: str) -> bool:
+    return bool(subprocess.run(['systemctl', 'list-unit-files', '--no-legend', unit],
+                               capture_output=True, text=True).stdout.strip())
+
+
+def linusrvs_installed(units: List[str]) -> List[str]:
+    """
+    :return: the units of units already installed, for InstallerCli.chk_srv_install().
+    """
+    return [u for u in units if _unit_exists(u)]
+
+
+def _unit_active(unit: str) -> str:
+    return subprocess.run(['systemctl', 'is-active', unit], capture_output=True, text=True).stdout.strip()
+
+
+def _unit_path(unit: str, systemd_dir: str = '/etc/systemd/system') -> str:
+    """
+    Where the unit is installed (FragmentPath), or systemd_dir/unit if not installed.
+    """
+    return subprocess.run(['systemctl', 'show', '-p', 'FragmentPath', '--value', unit],
+                          capture_output=True, text=True).stdout.strip() \
+           or os.path.join(systemd_dir, unit)
+
+
+def _daemon_reload(sudo: Sudo):
+    r = sudo.run('systemctl', 'daemon-reload')
+    if r.returncode != 0:
+        Utils.warn(f'systemctl daemon-reload failed: {r.stderr.strip()}')
+
+
+def install_linusrvs(cli: InstallerCli, units: Dict[str, Tuple[str, str]],
+                     sudo: Optional[Sudo] = None) -> Dict[str, str]:
+    """
+    Install unit files as systemd services, save the names into settings.envars[linusrv_synode / linusrv_websrv]
+    (WEB-INF/settings.json, like the Windows way), then daemon-reload and enable them,
+    and start them by restart_sysunits(), on user's confirmation.
+    Used by prompt.py's last step. The upgrade keeps the units installed (stop_sysunits(), apply_unit_resources()).
+
+    :param units: {linusrv_synode | linusrv_websrv: (unit name, unit file)}, jserv first.
+                  Unit files are generated by generate_service_templ().
+    :return: {unit: state of systemctl is-active} of the installed units ('inactive' if not started),
+             empty if user declined to overwrite, or failed.
+    """
+    def install_unit_file(unit_file: str, unit: str) -> bool:
+        dest = _unit_path(unit)
+        r = sudo.run('install', '-m', '644', '-o', 'root', '-g', 'root', unit_file, dest)
+        if r.returncode == 0:
+            print(f'Installed {unit_file} -> {dest}')
+            return True
+        Utils.warn(f'Failed to install {unit_file} -> {dest}: {r.stderr.strip()}')
+        return False
+
+    existing = [u for u, _ in units.values() if _unit_exists(u)]
+    if existing and not _yes_no(f'{", ".join(existing)} already installed. Overwrite?', default=False):
+        return {}
+
+    sudo = sudo or Sudo()
+    sudo.ensure()
+
+    for unit, unit_file in units.values():
+        if not install_unit_file(unit_file, unit):
+            return {}
+
+    # Save before starting services, like installWinsrv()
+    for k, (unit, _) in units.items():
+        cli.settings.envars[k] = unit
+    cli.settings.toFile(os.path.join(web_inf, settings_json))
+
+    _daemon_reload(sudo)
+
+    names = [unit for unit, _ in units.values()]  # jserv first
+    for unit in names:
+        r = sudo.run('systemctl', 'enable', unit)
+        if r.returncode != 0:
+            Utils.warn(f'Failed to enable {unit}: {r.stderr.strip()}')
+
+    return restart_sysunits(sudo, names)
+
+
+def restart_sysunits(sudo: Sudo, units: List[str], ask: bool = True) -> Dict[str, str]:
+    """
+    On user's confirmation, (re)start the installed units, or print the commands for starting them later.
+
+    :param units: unit names, in starting order (jserv first)
+    :param ask: False to restart without asking (upgrade, see commands.update_srv())
+    :return: {unit: state of systemctl is-active}
+    """
+    if not ask or _yes_no(f'Start {", ".join(units)} now?', default=True):
+        for unit in units:
+            # restart: also takes effect for an overwritten, running unit
+            r = sudo.run('systemctl', 'restart', unit)
+            if r.returncode != 0:
+                Utils.warn(f'Failed to start {unit}: {r.stderr.strip()}')
+    else:
+        # an overwritten unit may still be running with the previous unit file
+        print('Start the services later with:\n' +
+              ''.join(f'  sudo systemctl {"restart" if _unit_active(u) == "active" else "start"} {u}\n'
+                      for u in units))
+
+    return {unit: _unit_active(unit) for unit in units}
+
+
+def stop_sysunits(cli: InstallerCli, sudo: Sudo) -> Optional[List[str]]:
+    """
+    Upgrade's first step on Linux, without user intervention: stop the 2 systemd units saved in
+    settings.envars[linusrv_synode / linusrv_websrv]. The units stay installed, and are restarted by
+    restart_sysunits(sudo, units, ask=False) after the files are restored, like the Windows services.
+    (sudo asks for a password only if it needs one: not as root, nor with NOPASSWD.)
+
+    :return: the units in starting order (jserv first); None if the names are not saved, or a unit
+             cannot be stopped (the units already stopped are started again), so nothing is upgraded.
+    """
+    names = [cli.settings.envars.get(k) for k in (linusrv_synode, linusrv_websrv)]
+    if not all(names):
+        print('Error: cannot find the systemd service names (envars linusrv.synode / linusrv.web) '
+              f'in {web_inf}/{settings_json}. Install the services with synode-cli first.', file=sys.stderr)
+        return None
+    for unit in names:
+        if not _unit_exists(unit):
+            print(f'Error: {unit} (saved in {web_inf}/{settings_json}) is not installed.', file=sys.stderr)
+            return None
+
+    sudo.ensure()
+    stopped = []
+    for unit in reversed(names):  # web first
+        print(f'Stopping {unit} ...')
+        r = sudo.run('systemctl', 'stop', unit)
+        if r.returncode != 0 or _unit_active(unit) == 'active':
+            print(f'Error stopping {unit}: {r.stderr.strip()}', file=sys.stderr)
+            restart_sysunits(sudo, list(reversed(stopped)), ask=False)
+            return None
+        stopped.append(unit)
+    return names
+
+
+def apply_unit_resources(sudo: Sudo, units: List[str], old: PkgResources, new: PkgResources) -> bool:
+    """
+    Upgrade's step 5 on Linux, before restarting: point the units to the new package's files. For each
+    item whose file changed between the installed package's manifest and the new one (bin/resource.json,
+    synode -> the jserv unit, html-web -> the web unit), replace the old path in the unit file (ExecStart)
+    with the new one, then daemon-reload. The unit names don't change.
+
+    :param units: the units, jserv first (stop_sysunits())
+    :param old: the installed package's manifest
+    :param new: the new package's manifest
+    :return: False if a unit file doesn't have the old path, or can't be written (it is left as it was)
+    """
+    import tempfile
+
+    ok, changed = True, False
+    for unit, item in zip(units, (res_synode, res_htmlweb)):
+        o, n = old.file(item), new.file(item)
+        if not n or o == n:
+            continue
+        path = _unit_path(unit)
+        with open(path, encoding='utf-8') as f:
+            text = f.read()
+        if not o or o not in text:
+            print(f'Error: {path} does not start {o}, not changed to {n}', file=sys.stderr)
+            ok = False
+            continue
+        with tempfile.NamedTemporaryFile('w', suffix='.service', delete=False, encoding='utf-8') as t:
+            t.write(text.replace(o, n))
+        r = sudo.run('install', '-m', '644', '-o', 'root', '-g', 'root', t.name, path)
+        os.unlink(t.name)
+        if r.returncode != 0:
+            print(f'Error writing {path}: {r.stderr.strip()}', file=sys.stderr)
+            ok = False
+            continue
+        print(f'{unit}: {o} -> {n}')
+        changed = True
+    if changed:
+        _daemon_reload(sudo)
+    return ok
+
+
+def _ask_unit(label: str, dflt: str) -> Optional[str]:
+    """
+    Ask for an installed unit's name, for services installed before the names were saved.
+    :return: the unit name, or None if user skipped it.
+    """
+    from prompt_toolkit import prompt
+    while True:
+        n = prompt(f'systemd service of {label} (empty to skip): ', default=dflt).strip()
+        if not n:
+            Utils.warn(f'{label}: skipped.')
+            return None
+        n = n if n.endswith('.service') else f'{n}.service'
+        if _unit_exists(n):
+            return n
+        print(f'{n} is not found by systemctl.')
+
+
+def uninstall_linusrvs(cli: InstallerCli, sudo: Optional[Sudo] = None) -> Dict[str, str]:
+    """
+    Uninstall the systemd units saved in settings.envars[linusrv_synode / linusrv_websrv], web first:
+    stop, disable (which removes the *.target.wants links), remove the unit files, then daemon-reload
+    and reset-failed. Entry-point synode-uninstall-srv on Linux (cli.uninst_srv()).
+
+    For services installed before the names were saved (installed by user from the generated *.service
+    files), ask for the names.
+
+    :return: {unit: 'removed' | the error}; empty if no unit names are saved or given.
+    """
+    units = [u for u in (cli.settings.envars.get(linusrv_websrv), cli.settings.envars.get(linusrv_synode)) if u]
+    if not units:
+        synid = cli.registry.config.synid
+        Utils.warn('No systemd service names are saved in settings.json.')
+        units = [u for u in (_ask_unit('html-web', f'{synid}.web.service'),
+                             _ask_unit('synode (jserv-album)', f'{synid}.service')) if u]
+    if not units:
+        return {}
+
+    sudo = sudo or Sudo()
+    sudo.ensure()
+
+    states = {}
+    for unit in units:
+        if not _unit_exists(unit):
+            states[unit] = 'not installed'
+            continue
+        unit_file = _unit_path(unit)
+        print(f'Stopping and disabling {unit} ...')
+        sudo.run('systemctl', 'stop', unit)
+        sudo.run('systemctl', 'disable', unit)
+        r = sudo.run('rm', '-f', unit_file)
+        states[unit] = 'removed' if r.returncode == 0 else f'error removing {unit_file}: {r.stderr.strip()}'
+
+    _daemon_reload(sudo)
+    sudo.run('systemctl', 'reset-failed')
+    return states

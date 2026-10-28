@@ -39,7 +39,7 @@ requir_pkg("qrcode")
 requir_pkg("psutil")
 requir_pkg("prompt-toolkit", "3.0.52")
 requir_pkg("pyside6", ["6.6.0", "6.8.2.1"])
-requir_pkg("semantics.py3", "0.6.9")
+requir_pkg("semantics.py3", "0.6.16")  # SynodeTask.synodepy3_ver(), pkg_res()
 requir_pkg("anson.py3", "0.6.6")
 requir_pkg("anclient.py3", "0.2.7")
 
@@ -77,7 +77,7 @@ def validate(c: Context):
             for lx, line in enumerate(f, start=1):
                 if '(__file__)' in line and not line.strip().startswith('#'):
                     Utils.warn('################################################################################\n#')
-                    Utils.warn(f'# {srcpy} is supposed to be packaaged as an exe entry, but found it is using itself\'s __file__ property.')
+                    Utils.warn(f'# {srcpy} is supposed to be packaged as an exe entry, but found it is using itself\'s __file__ property.')
                     Utils.warn(f'# This can be an error as the exe is running in a temp environment.\n#')
                     Utils.warn(f'# {lx}:    {line}')
                     input('  Press Enter to continue...')
@@ -85,6 +85,9 @@ def validate(c: Context):
 
 @task
 def register_org(c: Context, taskcfg: SynodeTask):
+    # ISSUE org-communitier: to be moved from the Registry tier (regist.serv, a = c/org) to the
+    # central's Communitier (community.serv), which creates / updates a_orgs with a verified session.
+    # See ../issues/central-org-communitier.md
     regiserv = f'http://{taskcfg.deploy.central_iport}/{taskcfg.deploy.central_path}'
 
     def registerOrg(client: SessionClient, func_uri: str, market: str, orgid: str):
@@ -103,6 +106,7 @@ def register_org(c: Context, taskcfg: SynodeTask):
         return cast(RegistResp, resp)
 
     print("* login   :", regiserv)
+    # ISSUE central-login: loginWithUri() makes no login request, see ../issues/central-client-login.md
     ssclient = SessionClient.loginWithUri(servroot=regiserv,
             uri='/sys/tasks', uid=taskcfg.deploy.admin, pswdPlain=taskcfg.deploy.central_pswd)
 
@@ -124,6 +128,13 @@ def config(c, abstask_json: str):
     this_directory = os.getcwd()
 
     taskcfg = cast(SynodeTask, Anson.from_file(abstask_json))
+
+    # ISSUE central-uid: deploy.admin is written as registry synusers[0], with which Synodes log in central
+    # (AppSettings.merge_ip_json2db()). 0.8.0: both must be 'admin'. See ../issues/central-uid-synode-login.md
+    if not (taskcfg.deploy.admin == taskcfg.deploy.centralUid == 'admin'):
+        Utils.warn(f"**** ERROR **** deploy.admin ({taskcfg.deploy.admin}) and deploy.centralUid "
+                   f"({taskcfg.deploy.centralUid}) must both be 'admin'. See ../issues/central-uid-synode-login.md")
+        sys.exit(-1)
     version_file = os.path.join(this_directory, 'src', 'synodepy3', '__version__.py')
     Utils.update_patterns(version_file, {
         'synode_ver = "[0-9\\.]+"': f'synode_ver = "{taskcfg.version}"',
@@ -135,6 +146,8 @@ def config(c, abstask_json: str):
     })
 
     synode_ui = cast(UIResources, Anson.from_file(Path('src') / 'synodepy3' / 'synode.github.json'))
+    synode_ui.lang = taskcfg.deploy.lang
+
     if LangExt.len(taskcfg.deploy.mirror_path) > 0:
         # according to synode_ui, not tasks.json
         for lang, ss in synode_ui.langs.items():
@@ -150,11 +163,15 @@ def config(c, abstask_json: str):
     dom_registry: AnRegistry = cast(AnRegistry, Anson.from_file(Path('registry') / 'dictionary.github.json'))
     dom_registry.config.org.orgId = taskcfg.deploy.orgid
     dom_registry.config.org.orgType = taskcfg.deploy.market_id
+    # The default domain, deploy.domain; blank: the installers select the community's first domain in the central.
+    # getattr(): task jsons and semantics.py3 wheels before deploy.domain.
+    dom_registry.config.domain = getattr(taskcfg.deploy, 'domain', None) or ''
     dom_registry.synusers = [SyncUser(orgid=taskcfg.deploy.orgid, userId=taskcfg.deploy.admin, pswd=taskcfg.deploy.domain_token)]
+    dom_registry.synusers[0].domain = dom_registry.config.domain
     dom_registry.toFile(Path('registry') / 'dictionary.json')
 
     Utils.update_patterns('pyproject.toml',
-                          {'version = "[0-9\\.]+" # ': f'version = "{taskcfg.version}" # '})
+                          {'version = "[0-9\\.]+" # ': f'version = "{taskcfg.synodepy3_ver()}" # '})
 
     print("***********************************************")
     print(f"* Registering Markt Org {taskcfg.deploy.market_id} : {taskcfg.deploy.orgid}")
@@ -162,24 +179,6 @@ def config(c, abstask_json: str):
     print("* TODO - to further simplify configuration, let's setup the default domain.")
     print("***********************************************")
 
-'''
-def must_copy():
-    if os.name == 'nt':
-        return None
-    else:
-        # for linux, copy the exe to dist folder
-        src = Path('dist') / 'setup-cli.exe'
-        dst = Path('dist') / 'setup-gui.exe'
-        for src in [Path('dist') / 'setup-cli.exe', Path('dist') / 'setup-gui.exe', Path('dist') / 'uninstall-srv.exe']:
-            if src.exists():
-                break
-        if src.exists():
-            Utils.copy_anyway(src, dst, log=True)
-            return None
-        else:
-            print(f'*** ERROR: {src} not found, cannot copy to {dst}')
-            sys.exit(1)
-'''
 
 @task
 def build(c: Context, deploy: str):
@@ -225,6 +224,7 @@ def build(c: Context, deploy: str):
             ret = c.run(f'cd {pth} && {cmd}')
             print('OK:', ret.ok, ret.stderr)
     return False
+
 
 @task
 def scp_upload_exe(c: Context, deploy: str='tasks.upload.json'):

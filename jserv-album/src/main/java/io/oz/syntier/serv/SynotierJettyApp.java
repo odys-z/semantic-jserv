@@ -42,7 +42,6 @@ import io.odysz.semantic.jserv.ServPort;
 import io.odysz.semantic.jserv.ServPort.PrintstreamProvider;
 import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
-import io.odysz.semantic.jserv.echo.Echo;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
 import io.odysz.semantics.x.SemanticException;
@@ -132,6 +131,11 @@ public class SynotierJettyApp implements Daemon {
 	            Utils.logi("Active threads before stop: " + Thread.getAllStackTraces().keySet().size());
 	            Utils.logi("Stopping Jetty server ...");
 	            server.stop();
+
+	            // AnSession's scheduler (pool-1-thread-1, non-daemon) is only stopped by
+	            // JSingleton.onDestroyed(), a servlet listener the embedded Jetty app doesn't register.
+	            // Left running, it keeps the JVM alive and the service STOP_PENDING.
+	            AnSession.stopScheduled(5000);
 	            Connects.close();
 
 	            Utils.logi("Active threads after stop: " + Thread.getAllStackTraces().keySet().size());
@@ -145,7 +149,8 @@ public class SynotierJettyApp implements Daemon {
 
 	            // Interrupt remaining non-daemon threads
 	            Thread.getAllStackTraces().keySet().forEach(thread -> {
-	                if (!thread.isDaemon() && !thread.getName().equals(Thread.currentThread().getName())) {
+	                if (!thread.isDaemon() && thread != Thread.currentThread()
+	                		&& !"DestroyJavaVM".equals(thread.getName())) {
 	                    Utils.logi("Interrupting thread: " + thread.getName());
 	                    thread.interrupt();
 	                }
@@ -159,10 +164,14 @@ public class SynotierJettyApp implements Daemon {
 	            // List threads again after interruption
 	            listAllThreads("After thread interruption");
 
-	            if (remainingThreads > 1) {
-	                Utils.warn("Forcing JVM exit due to % lingering threads...", remainingThreads - 1);
-	                System.exit(0);
-	            }
+	            // No System.exit() here: called from Procrun's stop thread (StopMode=jvm), it never returns
+	            // and the JVM never ends (the service stays STOP_PENDING). Procrun ends the JVM once
+	            // this method returns and no non-daemon thread is left (DestroyJavaVM is Procrun's own).
+	            Thread.getAllStackTraces().keySet().forEach(thread -> {
+	                if (!thread.isDaemon() && thread != Thread.currentThread()
+	                		&& !"DestroyJavaVM".equals(thread.getName()))
+	                    Utils.warn("Non-daemon thread still alive, the JVM can't end: %s", thread.getName());
+	            });
 
 	            Utils.logi("Service stopped cleanly at " + new Date());
 	        } catch (Exception e) {
@@ -338,7 +347,7 @@ public class SynotierJettyApp implements Daemon {
 
 		return registerPorts(synapp, cfg.synconn,
 				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
-				new Echo(), new HeartLink(),
+				new AlbumEcho(settings, cfg), new HeartLink(),
 				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain), cfg, settings))
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)

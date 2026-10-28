@@ -27,7 +27,6 @@ public class T_CentralApp extends CentralApp {
 
 	static final String cent_conn = "t-central-sqlite";
 
-	@SuppressWarnings("deprecation")
 	public static Thread startCentral(boolean[] quit)
 			throws InterruptedException, SQLException, TransException {
 		boolean[] ready = new boolean[] {false};

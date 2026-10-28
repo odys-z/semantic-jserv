@@ -7,7 +7,7 @@
 
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-album</artifactId>
-  <!-- auto update token TASKS.PY/CONFIG --><version>0.8.0</version>
+  <!-- auto update token TASKS.PY/CONFIG --><version>0.8.1</version>
   <packaging>jar</packaging>
 
   <name>jserv-album Synode</name>
@@ -17,7 +17,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	<maven.compiler.source>17</maven.compiler.source>
 	<maven.compiler.target>17</maven.compiler.target>
-	<jetty.version>12.0.32</jetty.version>
+	<jetty.version>12.0.36</jetty.version>
 	<jetty-ee8.version>12.0.32</jetty-ee8.version>
   </properties>
 
@@ -48,7 +48,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.9.1</version>
+      <version>6.1.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -87,13 +87,13 @@
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>docsync.jserv</artifactId>
-	    <version>[0.3.4,)</version>
+	    <version>[0.3.5,)</version>
 	</dependency>
 
 	<dependency>
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>syndoc-lib</artifactId>
-	    <version>[0.5.20,)</version>
+	    <version>[0.5.21,)</version>
 	</dependency>
 
 	<dependency>
@@ -112,7 +112,7 @@
 	<dependency>
 		<groupId>io.github.odys-z</groupId>
 		<artifactId>anclient.java</artifactId>
-		<version>0.5.20</version>
+		<version>0.5.22</version>
 	</dependency>
 	
 	<dependency>

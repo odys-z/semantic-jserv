@@ -1,9 +1,18 @@
 import sys
 import time
 
+# Before anything imports PySide6: on Linux, Qt needs system libraries pip can't install (libEGL.so.1, ...).
+from synodepy3.prerequisites import check_prerequisites
+_missing = check_prerequisites(gui=True)
+if _missing and 'Qt runtime' in _missing:
+    print(_missing['Qt runtime'], file=sys.stderr)
+    sys.exit(1)
+# The other items, e.g. exiftool, are checked again by InstallerCli.validate() before installing.
+
 from semanticshare.io.odysz.semantic.jprotocol import JServUrl
 
 from synodepy3.jre_downloader import JreDownloader
+from synodepy3.ports_dialog import find_ports
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -23,9 +32,9 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException, get
 from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp, CynodeStats, SynodeConfig
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
-from synodepy3.commands import install_htmlsrv, install_wsrv_byname, winsrv_synode, winsrv_websrv
+from synodepy3.winsrv import install_winsrvs, winsrvs_installed
 from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
-    synode_ui, cfgpaths
+    synode_ui, cfgpaths, posix_path, desktop_exe, start_desktop, readable_state, state_mark
 from synodepy3.install_jre import validate_jre
 from synodepy3.jre_downloader import _event_loop_interval_
 
@@ -33,6 +42,43 @@ from synodepy3.jre_downloader import _event_loop_interval_
 # Run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py
 from synodepy3.ui_form import Ui_InstallForm
+
+
+# DEBUG-WINSRV begin: temporary tracing of bWinserv enabling, remove later
+def _trace_winsrv(form, where: str):
+    def _try(f):
+        try: return f()
+        except Exception as e: return f'<{type(e).__name__}: {e}>'
+
+    def _dbs():
+        sysdb, syndb, _ = InstallerCli.sys_syn_db_syntity(form.cli.settings.Volume())
+        return {p: os.path.getsize(p) if os.path.exists(p) else 'missing' for p in (sysdb, syndb)}
+
+    def _peer():
+        pid = form.cbb_synid()
+        n = form.cli.registry.find_peer(pid)
+        return f'{pid}: ' + ('not found' if n is None else f'stat={n.stat!r}')
+
+    dl = form.jredownloader
+    print(f'[DEBUG-WINSRV] @{where}\n'
+          f'  iswindows        = {_try(Utils.iswindows)}\n'
+          f'  validate_jre()   = {_try(validate_jre)}\n'
+          f'  isjre_ready()    = {_try(form.cli.isjre_ready)}\n'
+          f'  jredownloader    = {dl!r}\n'
+          f'  volume           = {_try(form.cli.settings.Volume)}\n'
+          f'  validateVol()    = {_try(form.cli.validateVol)}\n'
+          f'  installkey       = {_try(lambda: form.cli.settings.installkey)!r}\n'
+          f'  rootkey          = {_try(lambda: form.cli.settings.rootkey)!r}\n'
+          f'  db sizes         = {_try(_dbs)}\n'
+          f'  hasrun()         = {_try(form.cli.hasrun)}\n'
+          f'  peer             = {_try(_peer)}\n'
+          f'  iscreating_state = {_try(form.iscreating_state)}\n'
+          f'  chk_synid        = {_try(lambda: form.cli.chk_synid(form.cbb_synid()))}\n'
+          f'  chk_srv_install  = {_try(lambda: form.cli.chk_srv_install(form.cbb_synid(), lambda: winsrvs_installed(form.cli)))}\n'
+          f'  bSetup.enabled   = {form.ui.bSetup.isEnabled()}\n'
+          f'  bWinserv.enabled = {form.ui.bWinserv.isEnabled()}',
+          flush=True)
+# DEBUG-WINSRV end
 
 def msg_box(info: str, details: object = None):
     msg = QMessageBox()
@@ -103,7 +149,7 @@ def has_err():
 class InstallerForm(QMainWindow):
     ui: Ui_InstallForm
     cli: InstallerCli
-    jredownloader: JreDownloader
+    jredownloader: Optional[JreDownloader]
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -111,7 +157,7 @@ class InstallerForm(QMainWindow):
         self.ui = Ui_InstallForm()
         self.ui.setupUi(self)
         self.cli = InstallerCli()
-        self.jredownloader = cast(JreDownloader, None)
+        self.jredownloader = None
 
     @staticmethod
     def set_qr_label(label, text):
@@ -154,6 +200,26 @@ class InstallerForm(QMainWindow):
 
         return {"ip": ip, "port": port, "synodepy3": synode}
 
+    def on_find_ports(self):
+        """
+        The "find ports?" button. The dialog only returns the picked ports; on OK they are
+        updated into cli.settings, then the settings are bound to the UI.
+        settings.json is still only written by save().
+        """
+        settings = self.cli.settings
+        ok, webport, port = find_ports(self, settings.webport, settings.port)
+        if not ok:
+            return
+
+        settings.webport, settings.port = webport, port
+
+        self.bind_ports(settings)
+        # self.gen_qr()  # the QR / jserv option uses get_iport() -> settings.port
+
+    def bind_ports(self, settings: AppSettings):
+        self.ui.txtPort.setText(str(settings.port))
+        self.ui.txtWebport.setText(str(settings.webport))
+
     def default_ui_values(self):
         if LangExt.len(self.ui.txtSyncIns.text()) == 0:
             self.ui.txtSyncIns.setText('120.0')
@@ -162,6 +228,8 @@ class InstallerForm(QMainWindow):
         if LangExt.len(self.ui.txtWebport.text()) == 0:
             self.ui.txtWebport.setText(web_port0)
         if LangExt.len(self.ui.txtVolpath.text()) == 0:
+            # MEMO: a relative path is only a UI default; it is saved as an absolute path by
+            #   InstallerCli.updateWithUi(volume=...), which the synode and the upgrade require.
             self.ui.txtVolpath.setText('vol')
 
     def show_validation(self, err: dict):
@@ -210,7 +278,8 @@ class InstallerForm(QMainWindow):
                 reg_jserv=self.ui.txtCentral.text().strip(),
                 orgid=self.ui.cbbOrgs.currentText().strip(),
                 domain=domainid)
-        v = self.cli.validate_domain()
+        # a new domain's id is shorter: the central names its synodes <domain>-hub, ...
+        v = self.cli.validate_domain(creating=domainid not in self.domains_arr)
         if v is None:
             resp = self.cli.register()
 
@@ -259,7 +328,7 @@ class InstallerForm(QMainWindow):
             jservss = InstallerCli.parsejservstr(jservss)
 
             for jsrv in jservss:
-                mon_id = self.ui.cbbPeers.currentText()
+                mon_id = self.cbb_synid()
                 if not self.cli.is_hub(mon_id):
                     print(f'Ping with ui timeout:', int(self.ui.txtimeout.text()))
                     resp = self.cli.ping(jsrv[0], timeout=int(self.ui.txtimeout.text()))
@@ -290,7 +359,7 @@ class InstallerForm(QMainWindow):
             domphrase=self.ui.txtDompswd.text(),
             hubmode=self.ui.chkHub.checkState() == Qt.CheckState.Checked,
             jservss=self.ui.jservLines.toPlainText(),
-            synid=self.ui.cbbPeers.currentText().strip(),
+            synid=self.cbb_synid(),
             syncins=self.ui.txtSyncIns.text(),
             port=self.ui.txtPort.text(),
             webport=self.ui.txtWebport.text(),
@@ -298,7 +367,7 @@ class InstallerForm(QMainWindow):
             reverseProxy=self.ui.chkReverseProxy.checkState() == Qt.CheckState.Checked,
             proxyIp=self.ui.txtIP_proxy.text(),
             proxyPort=self.ui.txtPort_proxy.text(),
-            volume=self.ui.txtVolpath.text())
+            volume=posix_path(self.ui.txtVolpath.text()))
 
         v = self.cli.validate(ping_timeout=int(self.ui.txtimeout.text()))
         if v is not None:
@@ -316,14 +385,34 @@ class InstallerForm(QMainWindow):
 
     def save(self):
         err_ready()
-        if self.update_valid() is not None:
+
+        # A running synode id ('p' or 'h' at the central) can't be selected, saved or installed.
+        # Once this volume has run, the id is locked (see enable_widgets()) and other settings can be saved.
+        if not self.cli.hasrun():
+            v = self.cli.chk_synid(self.cbb_synid())
+            if v is not None:
+                warn_msg('The synode id is already running somewhere. Nothing is saved.', v)
+                _trace_winsrv(self, 'save: chk_synid(), returned') # DEBUG-WINSRV
+                return
+
+        try:
+            if self.update_valid() is not None:
+                _trace_winsrv(self, 'save: update_valid() failed, returned') # DEBUG-WINSRV
+                return
+        except Exception as e:
+            # A slot's exception is silent in the windowed setup-gui.exe.
+            err_msg('Checking the settings failed.', e)
+            _trace_winsrv(self, 'save: update_valid() raised, returned') # DEBUG-WINSRV
             return
 
         if self.check_install_jre() is not None:
+            _trace_winsrv(self, 'save: check_install_jre() not None, returned') # DEBUG-WINSRV
             return
+        _trace_winsrv(self, 'save: after check_install_jre()') # DEBUG-WINSRV
 
         try:
             self.cli.install()
+            _trace_winsrv(self, 'save: after cli.install()') # DEBUG-WINSRV
 
             post_err = self.cli.postFix()
             if not post_err:
@@ -338,16 +427,23 @@ class InstallerForm(QMainWindow):
                 self.gen_qr()
 
             self.submit_jserv()
+            _trace_winsrv(self, 'save: after submit_jserv()') # DEBUG-WINSRV
+
+            h = self.cli.chk_hub()
+            if h is not None:
+                warn_msg('Hub synode is missing.', h)
 
         except FileNotFoundError or IOError as e:
             # Changing vol path can reach here
             err_msg('Setting up synodepy3 is failed.', e)
+            _trace_winsrv(self, f'save: except {type(e).__name__}: {e}') # DEBUG-WINSRV
         except PortfolioException as e:
             warn_msg('Configuration is updated with errors. Check the details.\n'
                      'If this is not switching volume, that is not correct' , e)
             self.gen_qr()
+            _trace_winsrv(self, f'save: except PortfolioException: {e}') # DEBUG-WINSRV
 
-        self.enableWinsrvInstall()
+        self.enable_widgets()
 
     def test_run(self):
         syncins = self.cli.registry.config.syncIns
@@ -366,7 +462,7 @@ class InstallerForm(QMainWindow):
             self.cli.test_in_term()
             qr_data = self.gen_qr()
             print(qr_data)
-            self.enableWinsrvInstall()
+            self.enable_widgets()
 
         except FileNotFoundError or IOError as e:
             # Changing vol path can reach here
@@ -382,31 +478,56 @@ class InstallerForm(QMainWindow):
         self.bind_config()
 
     def installWinsrv(self):
+        v = self.cli.chk_srv_install(self.cbb_synid(), lambda: winsrvs_installed(self.cli))
+        if v is not None:
+            warn_msg('The services cannot be installed.', v)
+            self.enable_widgets()
+            return
+
+        h = self.cli.chk_hub()
+        if h is not None:
+            warn_msg('Hub synode is incorrect, need to reset again when the hub node is running.', h)
+
         self.cli.stop_web()
-        msg_box('Please close any service Window if any been started\n'
-                'Click Ok to continue, and confirm all permission requests.\n'
-                '4 Times Confirmation Required (Dialog can be hidden)!')
+        msg_box('Installing Windows Services...\n'
+                'Click Ok to continue, and confirm the administrator permission request\n'
+                '(asked only once, the dialog can be hidden).')
 
-        srvname = self.cli.gen_wsrv_name()
-        if srvname is not None:
-            self.cli.settings.envars.update({winsrv_synode: srvname})
+        try:
+            states = install_winsrvs(self.cli)
+        except (PermissionError, OSError) as e:
+            err_msg('Installing Windows services failed.', e)
+            self.enable_widgets()
+            return
 
-        websrvname = self.cli.gen_html_srvname()
-        if websrvname is not None:
-            self.cli.settings.envars.update({winsrv_websrv: websrvname})
+        failed = [s for s, ok in states.items() if not ok]
+        if failed:
+            err_msg(f'Service(s) not installed: {", ".join(failed)}\n'
+                    'Check winsrv-install.log in current folder.')
+            self.enable_widgets()
+            return
 
-        # 2026-01-06 Must save before start service to avoid competition.
-        self.cli.settings.toFile(cast(str, os.path.join(web_inf, settings_json)))
-
-        install_wsrv_byname(srvname)
-        install_htmlsrv(websrvname)
         self.gen_qr()
 
         msg_box('Services installed. You can check in Windows Service Control, or logs in current folder.\n'
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
 
-        self.seal_has_run()
         self.enable_widgets()
+        self.ask_start_desktop()
+
+    def ask_start_desktop(self):
+        '''
+        Services are installed: ask for starting the desktop app (desktop/, if packaged), which runs on its own.
+        '''
+        if desktop_exe() is None:
+            return
+        yes = QMessageBox.StandardButton.Yes
+        if QMessageBox.question(self, 'Portfolio Desktop', 'Start Portfolio Desktop now?',
+                                yes | QMessageBox.StandardButton.No, yes) == yes:
+            try:
+                start_desktop()
+            except OSError as e:
+                err_msg('Starting Portfolio Desktop failed. Start it later with desktop/album_gui.exe.', e)
 
     def update_bind_domconf(self, resp: RegistResp):
         myid = self.cli.registry.config.synid
@@ -443,9 +564,13 @@ class InstallerForm(QMainWindow):
             else:
                 self.ui.cbbDomains.setCurrentText('')
 
-        if LangExt.isblank(prev_domid) and LangExt.len(self.domains_arr) > 0:
-            prev_domid = self.domains_arr[0]
-            self.ui.cbbDomains.setCurrentText(prev_domid) # -> if different: self.select_domid(prev_domid)
+        if LangExt.len(self.domains_arr) > 0 and \
+                (LangExt.isblank(prev_domid) or prev_domid not in self.domains_arr):
+            # A blank or stale domain id, e.g. the package's registry template's, is not one of the community's:
+            # take the first one and load its synodes from the central, so that peers are never left empty.
+            with QSignalBlocker(self.ui.cbbDomains):
+                self.ui.cbbDomains.setCurrentText(self.domains_arr[0])
+            self.select_domid(0)
 
     def select_domid(self, dix):
         domid = self.ui.cbbDomains.currentText()
@@ -514,14 +639,33 @@ class InstallerForm(QMainWindow):
         self.select_community(self.ui.cbbOrgs.currentText())
 
     def bind_cbbpeers(self, peers: list[Synode], select_id):
+        """
+        Items are shown as "<state mark> synid", with the synode id as the item's data,
+        and readable_state() as the tooltip, like the synode id choices in prompt.py.
+        Use cbb_synid() for the selected id.
+        """
         self.ui.cbbPeers.clear()
         if peers is not None:
-            self.ui.cbbPeers.addItems([s.synid for s in peers if s is not None])
+            for s in peers:
+                if s is None: continue
+                mark = state_mark(s.stat)
+                self.ui.cbbPeers.addItem(f'{mark} {s.synid}' if mark else s.synid, s.synid)
+                self.ui.cbbPeers.setItemData(self.ui.cbbPeers.count() - 1,
+                                             readable_state(s.stat), Qt.ItemDataRole.ToolTipRole)
 
         # if select_id is not None:
         if not LangExt.isblank(select_id):
-            self.ui.cbbPeers.setCurrentText(select_id)
+            ix = self.ui.cbbPeers.findData(select_id)
+            if ix >= 0:
+                self.ui.cbbPeers.setCurrentIndex(ix)
             self.select_peer_byid(select_id)
+
+    def cbb_synid(self) -> str:
+        """
+        The selected synode id of cbbPeers, without the state mark.
+        """
+        synid = self.ui.cbbPeers.currentData()
+        return synid if synid is not None else self.ui.cbbPeers.currentText().strip()
 
     def bindIdentity(self, registry: AnRegistry, settings: AppSettings):
         cfg = registry.config
@@ -533,7 +677,10 @@ class InstallerForm(QMainWindow):
         self.ui.txtDompswd.setText(registry.synusers[0].pswd)
 
         self.bind_cbborg([cfg.org.orgId], cfg.org.orgId)
-        self.ui.cbbDomains.setCurrentText(cfg.domain)
+        # select_community() has selected the configured domain, or the community's first one if the
+        # configured is not in the central. Only show the configured one if the central can't be reached.
+        if LangExt.len(self.domains_arr) == 0:
+            self.ui.cbbDomains.setCurrentText(cfg.domain)
 
         u = self.cli.find_synuser(cfg.admin)
         if u is not None:
@@ -568,8 +715,7 @@ class InstallerForm(QMainWindow):
         self.ui.txtPswd.setText(settings.centralPswd)
         self.ui.txtPswd2.setText(settings.centralPswd)
 
-        self.ui.txtPort.setText(str(settings.port))
-        self.ui.txtWebport.setText(str(settings.webport))
+        self.bind_ports(settings)
 
         self.ui.chkReverseProxy.setChecked(settings.reverseProxy)
         self.ui.txtIP_proxy.setText(settings.proxyIp)
@@ -599,7 +745,7 @@ class InstallerForm(QMainWindow):
         The synode id is correct and is not installed
         :return:
         """
-        next_id = self.ui.cbbPeers.currentText()
+        next_id = self.cbb_synid()
         le_node = self.cli.registry.find_peer(next_id)
         # if le_node is not None and (le_node.stat is None or le_node.stat == CynodeStats.create):
         if le_node is None or le_node.stat is None or le_node.stat == CynodeStats.create:
@@ -609,7 +755,7 @@ class InstallerForm(QMainWindow):
 
     def enableWinsrvInstall(self):
         """
-        replaced by enable_widgets()
+        Deprecated, not called: replaced by enable_widgets()
         :return:
         """
         jre_ready = validate_jre() == None
@@ -618,10 +764,13 @@ class InstallerForm(QMainWindow):
         iscreate = self.iscreating_state()
         if Utils.iswindows():
             self.ui.bWinserv.setEnabled(jre_ready and installed and neverun and iscreate)
+        print(f'[DEBUG-WINSRV] enableWinsrvInstall(): jre_ready={jre_ready}, installed={installed}, '
+              f'neverun={neverun}, iscreate={iscreate}', flush=True) # DEBUG-WINSRV
+        _trace_winsrv(self, 'enableWinsrvInstall() end') # DEBUG-WINSRV
 
     def seal_has_run(self):
         """
-        replaced by enable_widgets()
+        Deprecated, not called: replaced by enable_widgets()
         :return:
         """
 
@@ -630,7 +779,7 @@ class InstallerForm(QMainWindow):
             The synode id is correct and is not installed
             :return:
             """
-            next_id = self.ui.cbbPeers.currentText()
+            next_id = self.cbb_synid()
             le_node = self.cli.registry.find_peer(next_id)
             if le_node is not None and (le_node.stat is None or le_node.stat == CynodeStats.create):
                 return self.cli.validateVol() is None
@@ -652,6 +801,14 @@ class InstallerForm(QMainWindow):
         self.ui.txtDompswd.setEnabled(neverun)
 
     def enable_widgets(self):
+        """
+        The only place updating the widgets' states (until the validator pattern applies to all widgets).
+        Call this after any data / state change, instead of setting the widgets elsewhere.
+
+        - Save is always enabled: save() refuses a running synode id (InstallerCli.chk_synid()), and
+          once this volume has run, the synode id, domain & volume are locked, other settings can be saved.
+        - Installing services follows InstallerCli.chk_srv_install(), the same as setup-cli.
+        """
 
         def update_chkhub(check: bool):
             self.cli.registry.config.mode = SynodeMode.hub.name if check else SynodeMode.peer.name
@@ -687,11 +844,8 @@ class InstallerForm(QMainWindow):
 
         # cansave = valid_peers and (neverun or self.cli.registry.config.synid == self.ui.cbbPeers.currentText())
 
-        # cansave = self.iscreating_state()
-        # self.ui.bSetup.setEnabled(cansave)
-        # self.ui.bSetup.setEnabled(True)
+        self.ui.bSetup.setEnabled(True)
 
-        jre_ready = self.cli.isjre_ready()
         # test_run() is now actually saved syncIns == 0, but will not reinitialize dbs.
         # cantest = neverun and iscreating_state() and self.cli.vol_valid() and cansave
 
@@ -699,20 +853,26 @@ class InstallerForm(QMainWindow):
         # self.ui.bTestRun.setEnabled(cantest)
         self.ui.bTestRun.setEnabled(False)
 
-        can_start = neverun and self.iscreating_state() and self.cli.vol_valid() and jre_ready
-        can_winsrv = can_start and Utils.iswindows() and jre_ready
-        self.ui.bWinserv.setEnabled(can_winsrv)
+        if Utils.iswindows():
+            srv_err = self.cli.chk_srv_install(self.cbb_synid(), lambda: winsrvs_installed(self.cli))
+        else:
+            srv_err = {'os': 'Windows services only.'}
+        self.ui.bWinserv.setEnabled(srv_err is None)
+        self.ui.bWinserv.setToolTip('' if srv_err is None else '\n'.join(str(v) for v in srv_err.values()))
 
         # ISSUE 2026-03-02
         # The service is registered by Procrun.exe as \SOFTWARE\WOW6432Node\Apache Software Foundation\Procrun 2.0\...,
         # rather than HKLM\SYSTEM\CurrentControlSet\Services\Synode-7.10-service-id.
         # That makes the services lost after Windows updated.
         # Brutally re-install and start the service can solve the problem, and files are synchronized.
-        # TODO source review for re-installation is allowed.
-        self.ui.bWinserv.setEnabled(True)
+        # 2026-10-17: services can't be re-installed by setup-gui / setup-cli, only by upgrading.
+        _trace_winsrv(self, 'enable_widgets() end') # DEBUG-WINSRV
 
     def showEvent(self, event: PySide6.QtGui.QShowEvent):
         def translateUI():
+            from synodepy3.__version__ import synode_ver
+            self.setWindowTitle(f'Portfolio Synode {synode_ver}')
+
             self.ui.gboxRegistry.setTitle(synode_ui.langstrf(
                     'gboxRegistry', market=self.cli.settings.market_id))
 
@@ -726,7 +886,8 @@ class InstallerForm(QMainWindow):
 
             def setVolumePath():
                 volpath = QFileDialog.getExistingDirectory(self, caption='Volume Path')
-                self.ui.txtVolpath.setText(volpath)
+                if not LangExt.isblank(volpath):
+                    self.ui.txtVolpath.setText(posix_path(volpath))
 
             if err_uihandlers[0] is None:
                 err_uihandlers[0] = err_ctx
@@ -741,18 +902,16 @@ class InstallerForm(QMainWindow):
             self.ui.chkHub.clicked.connect(self.enable_widgets)
             self.ui.cbbPeers.currentIndexChanged.connect(self.select_peer)
             self.ui.bVolpath.clicked.connect(setVolumePath)
+            self.ui.bFindPorts.clicked.connect(self.on_find_ports)
 
             self.ui.bLogin.clicked.connect(self.login)
             self.ui.bPing.clicked.connect(self.pings)
 
             self.ui.bSetup.clicked.connect(self.save)
-            self.ui.bTestRun.setEnabled(False)
             self.ui.chkReverseProxy.clicked.connect(self.update_chkreverse)
 
             if Utils.get_os() == 'Windows':
                 self.ui.bWinserv.clicked.connect(self.installWinsrv)
-            else:
-                self.ui.bWinserv.setEnabled(False)
 
             self.bind_config()
             translateUI()

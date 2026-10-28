@@ -96,7 +96,6 @@ public class SynodetierJoinTest {
 	static {
 		try {
 			jetties = new SynotierJettyApp[4];
-
 			docm = new T_PhotoMeta(clientconn);
 			
 			errLog = new ErrorCtx() {
@@ -107,12 +106,16 @@ public class SynodetierJoinTest {
 					fail(msg);
 				}
 			};
-
 		} catch (TransException e) {
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * Set VOLUME_HOME = /volume,
+	 * Volume_i = src/test/res/vol-prefix i
+	 * @param vol_prefix
+	 */
 	public static void setVolumeEnv(String vol_prefix) {
 		String p = new File("src/test/res").getAbsolutePath();
     	System.setProperty("VOLUME_HOME", p + "/volume");
@@ -127,7 +130,8 @@ public class SynodetierJoinTest {
 	@BeforeAll
 	static void init() throws Exception {
 		FileUtils.copyDirectory(new File("src/test/res/WEB-INF-synodier-join-test"),
-								new File("src/test/res/WEB-INF"));
+//								 new File("src/test/res/WEB-INF"));
+								new File(webinf));
 
 		setVolumeEnv("v-");
 		JProtocol.setup(servpath, Port.echo);
@@ -160,7 +164,7 @@ public class SynodetierJoinTest {
 
 			AppSettings settings = AppSettings.load(webinf, stjson);
 			settings.installkey = "0123456789ABCDEF";	
-			settings.regiserv = null; // disable jserv_worker to "http://182.150.29.34:1989/regist-central";
+			settings.regiserv = null; // disable jserv_worker to regist-central;
 			settings.rootkey = null;
 			settings.toFile(FilenameUtils.concat(webinf, stjson), JsonOpt.beautify());
 
@@ -197,7 +201,6 @@ public class SynodetierJoinTest {
 	 * </pre>
 	 * @throws Exception
 	 */
-	@SuppressWarnings("deprecation")
 	void setupDomain() throws Exception {
 		boolean[] lights = new boolean[] {true, false, false};
 		
@@ -227,7 +230,7 @@ public class SynodetierJoinTest {
 		ck[Z].synodes(X, -1, Z);
 
 		Utils.logrst("Z sync domain", ++no);
-		// exists sessions for joioning X <-Z
+		// exists sessions for joining X <-Z
 		cleanSessions(Z);
 		syncdomain(Z);
 

@@ -1,0 +1,139 @@
+# Bash functions of the Windows closed tests (Git Bash on the runner), sourced by
+# .github/actions/windows-synodes and .github/workflows/synodes-windows-upgrade-test.yml.
+#
+# Expects CONFIG, WORK (D:/a/... paths), CENTRAL_DOMAIN, CENTRAL_PSWD, and the answer files
+# answers/windows/<node>.txt.
+
+# wait_port <port> <seconds>
+wait_port() {
+  python -c "
+import socket, sys, time
+end = time.time() + $2
+while time.time() < end:
+    try: socket.create_connection(('127.0.0.1', $1), 2).close(); sys.exit(0)
+    except OSError: time.sleep(2)
+sys.exit(1)"
+}
+
+# services <node>: prints "<synode-service> <web-service>", from settings.json envars winsrv.synode / winsrv.web
+services() {
+  python $CONFIG/closed_test.py service-names $WORK/$1 | tr -d '\r'
+}
+
+# check_services <node> <jserv-port>: the node's services are installed, and its jserv listens
+check_services() {
+  local srv websrv s
+  read -r srv websrv <<< "$(services $1)"
+  [ -n "$srv" ] || { echo "::error::$1: no Windows service in settings.json (envars winsrv.synode)"; return 1; }
+  for s in $srv $websrv; do
+    sc.exe query "$s" > /dev/null || { echo "::error::$1: service $s is not installed"; return 1; }
+  done
+  if ! wait_port $2 60; then
+    sc.exe start "$srv" || true      # installed but not started?
+    wait_port $2 120 || { sc.exe query "$srv"; echo "::error::$1: jserv not listening on $2"; return 1; }
+  fi
+  echo "$1 is up on $2 ($srv, $websrv)"
+}
+
+# check_central: the central still listens (it must outlive the step that started it)
+check_central() {
+  wait_port 1991 10 && return 0
+  echo "::error::the central is not listening on 1991 any more"
+  [ -z "$CENTRAL_HOME" ] || tail -40 "$CENTRAL_HOME/central.log" "$CENTRAL_HOME/central.err.log" 2>/dev/null
+  return 1
+}
+
+# upgrade_mark <node> <tool>: the upgrade tool's mark of applying the manifests, "Applying bin\resource.json:
+#   jar_ver <old> -> <new>, ..." (synodepy3 commands.update_srv()), into the job summary. Tools built before
+#   it never applied them (a falsy PkgResources skipped it) and print no mark.
+upgrade_mark() {
+  local mark
+  mark=$(grep -m1 -E 'Applying bin.resource\.json:' $WORK/logs/$1-upgrade.log | tr -d '\r')
+  [ -n "$mark" ] || {
+    echo "::error::$1: no 'Applying bin/resource.json' in $1-upgrade.log: the installed $2 predates applying the manifests. Install a package built since (release_tag)."
+    return 1; }
+  echo "### $1 upgrade mark: ${mark}" >> $GITHUB_STEP_SUMMARY
+  echo "$1: $mark"
+}
+
+# setup_node <node> <jserv-port> <expected synode id>
+#   setup-cli.exe also moves the package's upgrade.pkg to upgrade.exe (installer_api.promote_upgrade_pkg()).
+setup_node() {
+  local pkg=
+  check_central || return 1
+  [ -f $WORK/$1/upgrade.pkg ] && pkg=1
+  # the test central's admin password, not the package's default (else setup-cli.exe asks for it)
+  python $CONFIG/closed_test.py central-pswd $WORK/$1/WEB-INF/settings.json "$CENTRAL_PSWD"
+
+  python $CONFIG/feed_answers.py $CONFIG/answers/windows/$1.txt --console --cwd $WORK/$1 \
+         --log $WORK/logs/$1-cli.log setup-cli.exe
+  [ -f $WORK/$1/jre17/bin/java.exe ] || { echo "::error::$1: setup did not finish, see $1-cli.log"; return 1; }
+  python $CONFIG/closed_test.py installed $WORK/$1 $CENTRAL_DOMAIN $3 || return 1
+  check_services $1 $2 || { echo "::error::$1: see $1-cli.log, winsrv-install.log"; return 1; }
+  if [ -n "$pkg" ]; then
+    [ -f $WORK/$1/upgrade.exe ] && [ ! -e $WORK/$1/upgrade.pkg ] || {
+      echo "::error::$1: setup-cli.exe didn't move upgrade.pkg to upgrade.exe, see $1-cli.log"; return 1; }
+  else
+    echo "::notice::$1: the package has no upgrade.pkg (built before upgrade.exe was packed as upgrade.pkg)"
+  fi
+}
+
+# refuse_node <node> <jserv-port> <package.zip>
+#   the installed upgrade.exe with a package whose bin/resource.json doesn't accept the installed
+#   version (closed_test.py repack): it must refuse before changing anything, i.e. no backup-*,
+#   services up.
+# count_backups <node>: the number of backup-* folders, 0 if none. A glob, not `ls | wc -l`: with
+#   none, ls exits 2, which fails the step under `bash -eo pipefail` (the Windows jobs' `shell: bash`).
+count_backups() {
+  local b
+  shopt -s nullglob
+  b=($WORK/$1/backup-*/)
+  shopt -u nullglob
+  echo ${#b[@]}
+}
+
+refuse_node() {
+  local n0 n1
+  n0=$(count_backups $1)
+  ( cd $WORK/$1 && echo | ./upgrade.exe "$3" ) 2>&1 | tee $WORK/logs/$1-refused.log
+  grep -q 'Upgrade refused' $WORK/logs/$1-refused.log || {
+    echo "::error::$1: upgrade.exe did not refuse the package, see $1-refused.log"; return 1; }
+  n1=$(count_backups $1)
+  [ "$n1" = "$n0" ] || { echo "::error::$1: a refused upgrade made a backup"; return 1; }
+  check_services $1 $2
+}
+
+# upgrade_node <node> <jserv-port> <expected synode id> <package.zip>
+#   the installed upgrade.exe <zip>, in the installation folder (synodepy3 commands.update_srv()): stops the 2
+#   services, backs up the data and settings, unpacks the zip over the folder, copies the backup back,
+#   and restarts the services; if the new bin/resource.json has other versions, it reinstalls them first,
+#   with the new names (settings.json envars) and jars (winsrv/*.bat). upgrade_cli.py ends with
+#   input('Press Enter to quit ...'), which keeps a double-clicked console open: answered by the echo.
+upgrade_node() {
+  local before after
+  check_central || return 1
+  before=$(services $1)
+  [ -f $WORK/$1/upgrade.exe ] || {
+    echo "::error::$1: no upgrade.exe installed (the installed package has no upgrade.pkg?)"; return 1; }
+  # the installed upgrade.exe applies a new package's bin/resource.json since the packages that have one
+  [ -f $WORK/$1/bin/resource.json ] || {
+    echo "::error::$1: the installed package has no bin/resource.json: its upgrade.exe predates the manifest. Install a package built since (release_tag)."
+    return 1; }
+  ( cd $WORK/$1 && echo | ./upgrade.exe "$4" ) 2>&1 | tee $WORK/logs/$1-upgrade.log
+  grep -q 'Update complete' $WORK/logs/$1-upgrade.log || {
+    echo "::error::$1: upgrade.exe did not complete, see $1-upgrade.log"; return 1; }
+  upgrade_mark $1 upgrade.exe || return 1
+
+  python $CONFIG/closed_test.py upgraded $WORK/$1 $WORK/logs/$1-upgrade.log || return 1   # backed up, copied back
+  python $CONFIG/closed_test.py installed $WORK/$1 $CENTRAL_DOMAIN $3 || return 1
+  after=$(services $1)
+  [ "$after" = "$before" ] || echo "$1: services $before -> $after (new versions)"
+  python $CONFIG/closed_test.py resources-applied $WORK/$1 || return 1        # names and jars of the new versions
+  for s in $before; do                                                        # the old services, if renamed, are gone
+    case " $after " in *" $s "*) ;; *)
+      ! sc.exe query "$s" > /dev/null || { echo "::error::$1: the old service $s is still installed"; return 1; } ;;
+    esac
+  done
+  check_services $1 $2 || return 1
+  sc.exe qc "${after%% *}" > $WORK/logs/$1-service-after-upgrade.txt || true
+}

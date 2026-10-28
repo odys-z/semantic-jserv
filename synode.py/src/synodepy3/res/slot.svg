@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="512" height="512" viewBox="0 0 256 256" xml:space="preserve">
+  <!-- Outer Bezel -->
+  <rect x="16" y="16" width="224" height="224" rx="28" fill="#202020" stroke="#7A7A7A" stroke-width="8"/>
+  <rect x="28" y="28" width="200" height="200" rx="20" fill="#d4dfdd" stroke="#111111" stroke-width="4"/>
+
+  <!-- Stepped RJ-45 Cavity Matching the Raster Reference (Head at Top) -->
+  <path d="M 64 64 
+           L 84 44 
+           L 112 44 
+           L 112 36 
+           L 144 36 
+           L 144 44 
+           L 172 44 
+           L 192 64 
+           L 192 196 
+           L 64 196 Z" 
+        fill="#cbe2ee" stroke="#1A1A1A" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- Top Locking Clip Recess -->
+  <path d="M 108 36 h 40 v 32 h -40 Z" fill="#78b5bb"/>
+
+  <!-- Internal Gold Contact Pins (Top-Mounted / Head Alignment) -->
+  <g fill="#000000" stroke="#7A7A7A" stroke-width="2">
+    <rect x="76" y="60" width="10" height="32" rx="2"/>
+    <rect x="91" y="60" width="10" height="32" rx="2"/>
+    <rect x="106" y="60" width="10" height="32" rx="2"/>
+    <rect x="121" y="60" width="10" height="32" rx="2"/>
+    <rect x="136" y="60" width="10" height="32" rx="2"/>
+    <rect x="151" y="60" width="10" height="32" rx="2"/>
+    <rect x="166" y="60" width="10" height="32" rx="2"/>
+  </g>
+
+  <!-- Bottom Shielding Bar -->
+  <rect x="56" y="204" width="144" height="14" rx="3" fill="#3A3A3A"/>
+</svg>

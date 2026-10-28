@@ -1,0 +1,73 @@
+name: Push a photo with the Java client
+description: >
+  Step 6 of the Windows closed test: builds the Java client from source (semantic.jserv and
+  jserv-album-lib of this branch, Anclient/java/eclipse-workspace/anclient.jserv), pushes a new
+  photo to the hub with the albumtier test E2EPushTest (the Android app's AlbumContext), and waits
+  for it in h_photos of hub, prv1 and prv2.
+
+  Expects the checkouts and the job env of synodes-windows-closed-test.yml (CONFIG, WORK, HUB_JSERV,
+  DEVICE, CENTRAL_ORG, SUREFIRE), and the synodes set up by .github/actions/windows-synodes.
+
+inputs:
+  build:
+    description: "'true' to build the Java client first (once per job)"
+    default: 'true'
+  label:
+    description: Name of this push in the logs and the Summary
+    default: push
+
+outputs:
+  docname:
+    description: Name of the pushed document (h_photos.docname)
+    value: ${{ steps.push.outputs.docname }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build the Java client from source
+      if: inputs.build == 'true'
+      shell: bash
+      run: |
+        # -U: ask Maven Central again for the versions in ranges ([x,)), not only the cached metadata
+        #     (setup-java cache: maven), e.g. for a version published since the cache was saved
+        mvn_install() { mvn -B -q -U -f "$1" install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true; }
+        mvn_install semantic.jserv/pom.xml
+        mvn_install jserv-album-lib/pom.xml
+        mvn_install Anclient/java/eclipse-workspace/anclient.jserv/pom.xml
+
+        # albumtier takes version ranges ([x,)): Maven picks the newest, here or in Maven Central
+        ver() { mvn -B -q -f "$1" help:evaluate -Dexpression=project.version -DforceStdout; }
+        built="semantic.jserv:$(ver semantic.jserv/pom.xml) syndoc-lib:$(ver jserv-album-lib/pom.xml) anclient.java:$(ver Anclient/java/eclipse-workspace/anclient.jserv/pom.xml)"
+        mvn -B -q -U -f Anclient/examples/example.android/albumtier/pom.xml dependency:list \
+            -DincludeArtifactIds=semantic.jserv,syndoc-lib,anclient.java -DoutputFile=$WORK/logs/albumtier-deps.txt
+        echo "### Java client: built $built" >> $GITHUB_STEP_SUMMARY
+        sed -n 's/^ *//p' $WORK/logs/albumtier-deps.txt | grep -E 'semantic.jserv|syndoc-lib|anclient.java' | sed 's/^/- resolved /' >> $GITHUB_STEP_SUMMARY
+        for b in $built; do
+          grep -q ":${b%%:*}:jar:${b#*:}:" $WORK/logs/albumtier-deps.txt || \
+            echo "::warning::albumtier doesn't use ${b%%:*} ${b#*:} built from source (a newer one from Maven Central?), see albumtier-deps.txt"
+        done
+
+    - name: Push a photo to the hub (albumtier E2EPushTest, ${{ inputs.label }})
+      id: push
+      shell: bash
+      env:
+        LABEL: ${{ inputs.label }}
+      run: |
+        pswd=$(python $CONFIG/closed_test.py admin-pswd $WORK/hub | tr -d '\r')   # the domain token
+        echo "::add-mask::$pswd"
+        rm -f $WORK/pushed-$LABEL.txt
+        ( cd Anclient/examples/example.android/albumtier
+          SYNODE_E2E_JSERV=$HUB_JSERV SYNODE_E2E_PSWD="$pswd" SYNODE_E2E_DEVICE=$DEVICE SYNODE_E2E_ORG=$CENTRAL_ORG \
+          SYNODE_E2E_OUT=$WORK/pushed-$LABEL.txt \
+            mvn -B -f pom.xml test-compile $SUREFIRE -Dtest=E2EPushTest ) 2>&1 | tee $WORK/logs/albumtier-test-$LABEL.log
+        [ -s $WORK/pushed-$LABEL.txt ] || { echo "::error::E2EPushTest didn't push (skipped?), see albumtier-test-$LABEL.log"; exit 1; }
+        echo "docname=$(tr -d '\r\n' < $WORK/pushed-$LABEL.txt)" >> $GITHUB_OUTPUT
+
+    - name: Check the pushed photo in h_photos (${{ inputs.label }})
+      shell: bash
+      env:
+        DOCNAME: ${{ steps.push.outputs.docname }}
+        LABEL: ${{ inputs.label }}
+      run: |
+        python $CONFIG/closed_test.py h-photos "$DOCNAME" 300 $WORK/hub/vol $WORK/prv1/vol $WORK/prv2/vol \
+               --summary $WORK/logs/h_photos-$LABEL.md

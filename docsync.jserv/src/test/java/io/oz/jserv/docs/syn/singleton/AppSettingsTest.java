@@ -11,6 +11,7 @@ import java.util.Date;
 
 import static io.odysz.common.LangExt.f;
 import static io.odysz.common.LangExt.isblank;
+import static io.odysz.common.LangExt.musteq;
 import static io.odysz.common.LangExt.musteqs;
 import static io.odysz.common.LangExt.mustnonull;
 import static io.odysz.common.LangExt.mustnull;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import io.odysz.anson.Anson;
 import io.odysz.common.Configs;
 import io.odysz.common.DateFormat;
 import io.odysz.common.FilenameUtils;
@@ -102,10 +104,10 @@ class AppSettingsTest {
 		Configs.init(webinf);
 		Connects.init(webinf);
 
-		settings = new AppSettings();
-		settings.centralPswd = System.getProperty("central_pswd");
-		mustnonull(settings.centralPswd);
-		settings.regiserv = "http://182.150.29.34:1989/regist-central";
+		settings = Anson.fromPath(webinf + "/settings.central-config.gitignore.json");
+		mustnonull(settings.market_id);
+		musteq("alpha", cfg.org.orgType);
+		mustnonull(settings.rootkey); // Memo: the test case of already run
 
 		settings.reverseProxy = false;
 		settings.port = 8964;
@@ -116,8 +118,6 @@ class AppSettingsTest {
 		install_peers();
 		
 		test_userConfig();
-//		settings.localIp = get_ip(changes);
-//		settings.jserv_utc = "1989-06-04";
 
 		mustnonull(settings.localIp);
 		mustnonull(settings.jserv_utc); 
@@ -148,7 +148,7 @@ class AppSettingsTest {
 	}	
 	
 	/**
-	 * Requires the Portofolio setup program use current time to save settings.json.
+	 * Requires the Portfolio setup program to use current time to save settings.json.
 	 * @throws Exception
 	 */
 	void test_userConfig() throws Exception {

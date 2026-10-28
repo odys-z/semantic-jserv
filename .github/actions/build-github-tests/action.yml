@@ -1,0 +1,97 @@
+name: Build the desktop's github-tests
+description: >
+  Builds odys-z/Anclient examples/example.slint/github-tests (the desktop's test clients without
+  Slint) with vcpkg at a fixed commit and g++-14. vcpkg's compiled packages are cached under a
+  fixed key: every run that restores it keeps it from GitHub's 7-day eviction
+  (see version-revival-7days.yml).
+
+inputs:
+  anclient:
+    description: Checkout of odys-z/Anclient
+    default: ${{ github.workspace }}/Anclient
+  targets:
+    description: CMake targets, space separated (revial_tests, doclient_tests)
+    default: revial_tests doclient_tests
+  build-dir:
+    description: CMake build folder
+    default: ${{ github.workspace }}/github-tests-build
+  vcpkg-commit:
+    description: The vcpkg the desktop is built with
+    default: 7e43e0768a
+  vcpkg-packages:
+    description: vcpkg packages (triplet x64-linux)
+    default: openssl boost-url entt nlohmann-json ixwebsocket[core,openssl]
+
+outputs:
+  build-dir:
+    description: Folder of the test binaries, with ast/, settings/ and res/ beside them
+    value: ${{ inputs.build-dir }}
+  cache-hit:
+    description: true if vcpkg's packages came from the cache
+    value: ${{ steps.restore.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Tools
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        # vcpkg's build tools, Ninja; g++-14 and CMake >= 3.30 are preinstalled on ubuntu-24.04
+        sudo apt-get install -y -qq ninja-build pkg-config zip unzip curl tar autoconf automake libtool
+        g++-14 --version | head -1; cmake --version | head -1
+
+    - name: vcpkg ${{ inputs.vcpkg-commit }}
+      id: vcpkg
+      shell: bash
+      env:
+        COMMIT: ${{ inputs.vcpkg-commit }}
+        PACKAGES: ${{ inputs.vcpkg-packages }}
+      run: |
+        root=$RUNNER_TEMP/vcpkg
+        git clone -q --filter=blob:none https://github.com/microsoft/vcpkg.git $root
+        git -C $root checkout -q $COMMIT
+        $root/bootstrap-vcpkg.sh -disableMetrics > /dev/null
+        echo "VCPKG_ROOT=$root" >> $GITHUB_ENV
+        echo "VCPKG_DEFAULT_BINARY_CACHE=$RUNNER_TEMP/vcpkg-archives" >> $GITHUB_ENV
+        mkdir -p $RUNNER_TEMP/vcpkg-archives
+        # fixed key: same image, commit and package list -> same archives
+        pk=$(echo "$PACKAGES" | tr ' ' '\n' | sort | sha256sum | cut -c1-12)
+        echo "key=vcpkg-$ImageOS-x64-linux-$COMMIT-$pk" >> $GITHUB_OUTPUT
+
+    - name: Restore vcpkg's packages
+      id: restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ runner.temp }}/vcpkg-archives
+        key: ${{ steps.vcpkg.outputs.key }}
+
+    - name: vcpkg install
+      shell: bash
+      env:
+        PACKAGES: ${{ inputs.vcpkg-packages }}
+      run: |
+        set -f      # no globbing of ixwebsocket[core,openssl]
+        $VCPKG_ROOT/vcpkg install --triplet x64-linux $PACKAGES
+
+    # saved right after the install, so that a failing test later doesn't lose it
+    - name: Save vcpkg's packages
+      if: steps.restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ runner.temp }}/vcpkg-archives
+        key: ${{ steps.vcpkg.outputs.key }}
+
+    - name: Build ${{ inputs.targets }}
+      shell: bash
+      env:
+        SRC: ${{ inputs.anclient }}/examples/example.slint/github-tests
+        BUILD: ${{ inputs.build-dir }}
+        TARGETS: ${{ inputs.targets }}
+      run: |
+        # GCC 14 at least: C++20 std::chrono::parse (anson.cmake common.h)
+        CC=gcc-14 CXX=g++-14 cmake -S $SRC -B $BUILD -G Ninja -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+          -DVCPKG_INSTALLED_DIR=$VCPKG_ROOT/installed -DVCPKG_MANIFEST_MODE=OFF \
+          -DVCPKG_TARGET_TRIPLET=x64-linux
+        cmake --build $BUILD --target $TARGETS

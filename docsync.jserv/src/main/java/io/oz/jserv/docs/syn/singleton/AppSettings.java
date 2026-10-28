@@ -532,7 +532,6 @@ public class AppSettings extends Anson {
 	}
 	
 	/**
-	 * @deprecated not used?
 	 * @return
 	 */
 	public String reverseIp() {
@@ -547,6 +546,17 @@ public class AppSettings extends Anson {
 		if (port == 0) port = https ? 443 : 80;
 		return this.reverseProxy ? proxyPort : port;
 	}
+
+	/**
+	 * @since 0.3.6
+	 * @param https
+	 * @return web port (reversed proxy if any)
+	 */
+	public int reversedWebPort(boolean https) {
+		if (port == 0) port = https ? 443 : 80;
+		return this.reverseProxy ? webProxyPort : webport;
+	}
+
 	
 	/**
 	 * Update env-vars to system properties.
@@ -685,6 +695,8 @@ setp (6)
 			if (registryClient == null) {
 				mustnonull(centralPswd);
 
+				// ISSUE central-uid: logs in central as the domain admin, synusr.uid(), not centralUid
+				// (tasks.json deploy.centralUid), see semantic-jserv/issues/central-uid-synode-login.md
 				registryClient = SessionClient.loginWithUri(
 						regiserv, reg_uri + "/" + c.synid, synusr.uid(), centralPswd, c.synid);
 			}
@@ -767,6 +779,7 @@ setp (6)
 				.myjserv(jserv(cfg.synid), jserv_utc)
 				.mystate(cfg.mode == SynodeMode.hub ? CynodeStats.asHub : CynodeStats.asPeer);
 
+		req.market = cfg.org.orgType;
 		req.a(RegistReq.A.submitSettings);
 
 		// ISSUE FIXME 

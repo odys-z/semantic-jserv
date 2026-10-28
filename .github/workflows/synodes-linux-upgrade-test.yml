@@ -1,0 +1,181 @@
+# Linux upgrade test, started by hand from the Actions tab, the counterpart of
+# synodes-windows-upgrade-test.yml: the Linux closed test, then an upgrade of every synode with
+# synode-upgrade-srv, then the closed test's checks again.
+#
+# 1-6. As synodes-linux-closed-test.yml (.github/actions/linux-synodes, linux-push): installs the
+#      package of RELEASE_TAG on hub, prv1, prv2 as systemd services, installs its synode_py3 wheel,
+#      pushes file 1.
+# 7.   Downloads the upgrade package (UPGRADE_TAG, empty: the newest synode linux tar.gz, which may
+#      be the same package: a re-deployment).
+# 7b.  The installed synode-upgrade-srv refuses a copy of the upgrade package whose bin/resource.json
+#      doesn't accept the installed version (upgrade_from min 99.0.0): nothing changed, no backup,
+#      services up. Skipped if the installed package has no bin/resource.json (its tool predates it).
+# 8.   Upgrades hub, prv1, prv2 one by one, in each installation folder, with the installed
+#      synode-upgrade-srv (the wheel of the installed package, as a user runs it):
+#          synode-upgrade-srv <upgrade package tar.gz>
+#      with stdin from /dev/null (an upgrade asks nothing)
+#      (synodepy3 commands.update_srv(): stop the 2 units, back up the volume's dbs and
+#      dictionary.json and the settings, unpack the tar.gz over the folder, copy the backup back,
+#      point the units to the jars of the new bin/resource.json and restart them, then install the
+#      package's bin/synode_py3-*.whl, the upgrade tool itself), and checks: "Update complete", every
+#      backed-up file restored, the node is still the same domain / synode with the same units, which
+#      start the new bin/resource.json's jars, are active and the jserv is up again, and the installed
+#      synode_py3 is the package's.
+# 9.   The central's domain tables again (ci-0.8 hub h, peers p; other domains unchanged), file 1
+#      still on every node, and file 2 pushed and synchronized after the upgrade.
+
+name: synodes-linux-upgrade-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to install first (empty: the newest synode linux tar.gz in any release)'
+        required: false
+        default: ''
+      upgrade_tag:
+        description: 'Release tag to upgrade to (empty: the newest synode linux tar.gz in any release)'
+        required: false
+        default: ''
+      central_repo:
+        description: 'Repository of the central release'
+        required: false
+        default: 'Acadynamo/Resources-release'
+      central_release:
+        description: 'Release tag of the central (jar, WEB-INF, regist-vol)'
+        required: false
+        default: 'alpha-central-0.1.8'
+      anclient_ref:
+        description: 'Branch / tag of odys-z/Anclient for the test client'
+        required: false
+        default: 'portfolio-0.8'
+
+permissions:
+  contents: read
+
+jobs:
+  upgrade-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CONFIG: ${{ github.workspace }}/.github/closed-test
+      WORK: ${{ github.workspace }}/e2e
+      CENTRAL_URL: http://127.0.0.1:1991/regist-central
+      CENTRAL_ORG: closed-test          # the org of the package; only its rows are reported
+      CENTRAL_DOMAIN: ci-0.8            # created by the hub (answers/linux/hub.txt), at most 8 chars
+      HUB_ID: ci-0.8-hub                # the central names the new domain's synodes <domain>-hub, -1, -2
+      CENTRAL_PSWD: '123456'            # admin of the test central (alpha-central-0.1.8), test only
+      SYNC_INS: '20'
+      HUB_JSERV: http://127.0.0.1:8961/jserv-album
+
+    steps:
+      - uses: actions/checkout@v7          # the test resources and the composite actions; no sources
+        with:
+          sparse-checkout: |
+            .github
+
+      - uses: actions/checkout@v7          # the test client
+        with:
+          repository: odys-z/Anclient
+          ref: ${{ inputs.anclient_ref }}
+          path: Anclient
+
+      - uses: actions/setup-java@v6          # for the central and the IPC agent; the synodes download their own jre17
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # ---- 1-6. the closed test ----
+      - name: Set up the synodes
+        id: synodes
+        uses: ./.github/actions/linux-synodes
+        with:
+          token: ${{ secrets.REGIST_CENTRAL_0_1_8_SNAPSHOT_TOKEN }}
+          central-repo: ${{ inputs.central_repo }}
+          central-release: ${{ inputs.central_release }}
+          release-tag: ${{ inputs.release_tag }}
+
+      - name: Push file 1 (before the upgrade)
+        uses: ./.github/actions/linux-push
+        with:
+          label: before-upgrade
+          pushed: '1'
+
+      # ---- 7. the upgrade package ----
+      - name: Download the upgrade package
+        env:
+          UPGRADE_TAG: ${{ inputs.upgrade_tag }}
+        run: |
+          pick=$(python $CONFIG/closed_test.py pick-release $WORK/dl/releases.json '^synode-.*x64_linux.*\.tar\.gz$' "$UPGRADE_TAG")
+          [ -n "$pick" ] || { echo "::error::no synode linux tar.gz found in releases ${UPGRADE_TAG:+(tag $UPGRADE_TAG)}"; exit 1; }
+          IFS=$'\t' read -r updated tag name <<< "$pick"
+          mkdir -p $WORK/dl/upgrade
+          gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$name" -D $WORK/dl/upgrade
+          pkg=$WORK/dl/upgrade/$name
+          echo "UPGRADE_PKG=$pkg" >> $GITHUB_ENV
+          same=; cmp -s "$pkg" "$PACKAGE" && same=', the installed package: a re-deployment'
+          echo "### Upgrade to: \`$name\` (release \`$tag\`, uploaded $updated$same)" >> $GITHUB_STEP_SUMMARY
+          echo "Installed synode_py3: $(pip show synode_py3 | sed -n 's/^Version: //p')" >> $GITHUB_STEP_SUMMARY
+
+      # ---- 7b. a package that doesn't accept the installed version is refused, nothing changed ----
+      - name: Refuse an upgrade out of range (synode-upgrade-srv)
+        run: |
+          # the installed synode-upgrade-srv checks bin/resource.json upgrade_from since the packages that have one
+          [ -f $WORK/hub/bin/resource.json ] || {
+            echo "::notice::the installed package has no bin/resource.json: its synode-upgrade-srv doesn't check versions, skipped"; exit 0; }
+          mkdir -p $WORK/dl/refused
+          python $CONFIG/closed_test.py repack "$UPGRADE_PKG" $WORK/dl/refused/out-of-range.tar.gz '{"upgrade_from": {"min": "99.0.0"}}'
+          . $CONFIG/linux_nodes.sh
+          refuse_node hub 8961 $WORK/dl/refused/out-of-range.tar.gz
+          echo "### Refused: a package with upgrade_from min 99.0.0 (logs/hub-refused.log)" >> $GITHUB_STEP_SUMMARY
+
+      # ---- 8. upgrade: stop the units, upgrade, point them to the new jars, restart them ----
+      - name: Upgrade the synodes (synode-upgrade-srv)
+        run: |
+          . $CONFIG/linux_nodes.sh
+          upgrade_node hub  8961 $HUB_ID           "$UPGRADE_PKG"
+          upgrade_node prv1 8962 $CENTRAL_DOMAIN-1 "$UPGRADE_PKG"
+          upgrade_node prv2 8963 $CENTRAL_DOMAIN-2 "$UPGRADE_PKG"
+          echo "### Upgraded hub, prv1, prv2 (logs/<node>-upgrade.log), synode_py3 $(pip show synode_py3 | sed -n 's/^Version: //p')" >> $GITHUB_STEP_SUMMARY
+
+      # ---- 9. the checks again ----
+      - name: Report the central's domain tables (after the upgrade)
+        if: always()
+        env:
+          DB: ${{ steps.synodes.outputs.central-db }}
+        run: |
+          [ -n "$DB" ] && [ -f $WORK/others-before.txt ] || { echo "no central db or no before-state"; exit 0; }
+          echo "## After the upgrade" >> $GITHUB_STEP_SUMMARY
+          python $CONFIG/closed_test.py report "$DB" $CENTRAL_ORG $CENTRAL_DOMAIN $HUB_ID $WORK/others-before.txt \
+                 --summary $WORK/logs/central-tables-after-upgrade.md
+
+      - name: File 1 is still on every node
+        run: |
+          python $CONFIG/closed_test.py h-photos '182x121_e2e_%' 30 $WORK/hub/vol $WORK/prv1/vol $WORK/prv2/vol \
+                 --min 1 --summary $WORK/logs/h_photos-kept.md
+
+      - name: Push file 2 (after the upgrade)
+        uses: ./.github/actions/linux-push
+        with:
+          build: 'false'
+          label: after-upgrade
+          pushed: '2'
+
+      - name: Collect logs
+        if: always()
+        run: |
+          sudo journalctl -u regist-central --no-pager > $WORK/logs/central.log 2>&1 || true
+          . $CONFIG/linux_nodes.sh
+          node_logs
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: synodes-linux-upgrade-test
+          path: |
+            e2e/logs/

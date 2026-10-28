@@ -5,3 +5,5 @@ vol-*/*.db
 v-*/*.db
 ignore-*.json
 ignore-*.json.*
+settings-*.json
+!settings-*.github.json
