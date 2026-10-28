@@ -14,9 +14,9 @@ requires-python = ">=3.12.0"
 dependencies = [
     "pyside6>=6.6.0,<=6.8.2.1",
     "qrcode",
-    "semantics.py3>=0.6.16",   # PkgResources (bin/resource.json), read by the upgrade
+    "semantics.py3>=0.6.18",   # PkgResources (bin/resource.json), read by the upgrade; SsException
     "anson.py3>=0.6.11",
-    "anclient.py3>=0.2.7",
+    "anclient.py3>=0.2.8",     # a real login to the central, SessionClient.userReq() with the session header
     "jre-mirror>=0.1.2",
     "psutil",
     "pillow>=10.0.0",

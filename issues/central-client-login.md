@@ -1,7 +1,9 @@
 # ISSUE central-login: Python clients of central use SessionClient.loginWithUri()
 
 - Found: 2026-10-05, Portfolio 0.8.0 (`portfolio-0.8`)
-- Status: open
+- Status: fixed, anclient.py3 0.2.8: SessionClient.loginWithUri() logs in (login.serv), and synode.py's
+  installer_api sends the requests to the central with SessionClient.userReq(), carrying the session header,
+  which the central's Registry (regist.serv) verifies.
 - Tags: `ISSUE central-login` in
   - `synode.py/tasks.py`, `register_org()`
   - `synode.py/src/synodepy3/installer_api.py`, `check_cent_login()` and above `query_domx()`

@@ -28,6 +28,7 @@ from anson.io.odysz.common import Utils, LangExt
 from semanticshare.io.oz.srv import WebConfig
 
 from semanticshare.io.odysz.semantic.jprotocol import MsgCode, AnsonMsg, JProtocol, JServUrl
+from semanticshare.io.odysz.semantic.jserv.crud import SsException
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, \
@@ -242,8 +243,17 @@ def ping(clientUri: str, peerserv: str, timeout_snd: int = 10):
     return resp
 
 
-# ISSUE central-login: requests to central below carry no AnsonHeader, see issues/central-client-login.md
-def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
+central_super_role: Final = 'r00'
+'''
+The central's super role (Semantic-Network CentralSettings), which can't create or update domains.
+'''
+
+
+# Requests to the central below carry the session header of client (SessionClient.userReq()),
+# verified by the central's Registry (regist.serv). client is None if the login failed (reported).
+def query_domx(client: Optional[SessionClient], func_uri: str, market: str, commuid: str):
+    if client is None:
+        return None
     req = RegistReq(RegistReq.A.queryDomx, market=market)
     req.Uri(func_uri)
     req.market = market
@@ -252,7 +262,7 @@ def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
     org.orgId = commuid
     req.dictionary(SynodeConfig(org=org))
 
-    msg = AnsonMsg(Centralport.regist).Body(req)
+    msg = client.userReq(func_uri, Centralport.regist, req)
 
     resp = client.commit(msg, err_uihandlers[0])
 
@@ -263,12 +273,14 @@ def query_domx(client: SessionClient, func_uri: str, market: str, commuid: str):
     return cast(RegistResp, resp)
 
 
-def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: str, domid: str, myid:str):
+def query_domconfig(client: Optional[SessionClient], func_uri: str, market: str, orgid: str, domid: str, myid:str):
+    if client is None:
+        return None
     req = RegistReq(RegistReq.A.queryDomConfig, market)
     req.Uri(func_uri)
     req.diction = SynodeConfig(synode=myid, domain=domid)
     req.diction.org = SynOrg(orgid=orgid, orgname=domid, orgtype=market)
-    msg = cast(AnsonMsg, AnsonMsg(Centralport.regist).Body(req))
+    msg = client.userReq(func_uri, Centralport.regist, req)
 
     resp = client.commit(msg, err_uihandlers[0])
 
@@ -279,7 +291,7 @@ def query_domconfig(client: SessionClient, func_uri: str, market: str, orgid: st
     return cast(RegistResp, resp)
 
 
-def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfig,
+def register(client: Optional[SessionClient], func_uri: str, market: str, cfg: SynodeConfig,
              s: AppSettings, iport: tuple[str, int], jprotocl: JProtocol):
     '''
     Ask central for registering a domain, expecting a reply with planned synodes (peers).
@@ -291,9 +303,16 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
     :param iport:
     :return:
     '''
+    if client is None:
+        return None
+    if client.ssInf is not None and client.ssInf.roleId == central_super_role:
+        # the central refuses it too (Registry); only reported here, before any request
+        err_uihandlers[0](MsgCode.exSemantics, 'The super user can\'t create or update domains. Log in as a domain admin.')
+        return None
+
     req = RegistReq(RegistReq.A.registDom, market)
     req.Uri(func_uri).dictionary(cfg).jserurl(cfg.https, iport=iport, jprotcl=jprotocl)
-    msg = AnsonMsg(Centralport.regist).Body(req)
+    msg = client.userReq(func_uri, Centralport.regist, req)
 
     resp = client.commit(msg, err_uihandlers[0])
 
@@ -304,9 +323,11 @@ def register(client: SessionClient, func_uri: str, market: str, cfg: SynodeConfi
     return cast(RegistResp, resp)
 
 
-def submit_settings(client: SessionClient, func_uri: str, market: str,
+def submit_settings(client: Optional[SessionClient], func_uri: str, market: str,
                     cfg: SynodeConfig, s: AppSettings, iport: tuple[str, int], syn_protocol: JProtocol,
                     stat: str = CynodeStats.create):
+    if client is None:
+        return None
     req = RegistReq(RegistReq.A.submitSettings, market)\
         .Uri(func_uri)\
         .jserurl(https=cfg.https, iport=iport, jprotcl=syn_protocol)\
@@ -314,7 +335,7 @@ def submit_settings(client: SessionClient, func_uri: str, market: str,
         .mystate(stat)\
         .Jservtime(s.jserv_utc) # .protocol_path(syn_jprotocol.protocolpath)
 
-    msg = AnsonMsg(Centralport.regist).Body(req)
+    msg = client.userReq(func_uri, Centralport.regist, req)
 
     resp = client.commit(msg, err_uihandlers[0])
     if resp is not None:
@@ -1026,15 +1047,25 @@ class InstallerCli:
         self.regclient = None
         self.settings.toFile(cfgpaths.web_settings)
 
-    def check_cent_login(self) -> SessionClient:
-        # ISSUE central-login: loginWithUri() makes no login request, see issues/central-client-login.md
+    def check_cent_login(self) -> Optional[SessionClient]:
+        '''
+        Log in to the central (anclient.py3 0.2.8+, a real login.serv request), once per central url.
+        :return: the logged in client, or None if the login failed, which is reported to err_uihandlers[0]
+                 as exSession (refused) or exIo (unreachable), e.g. setup-cli asks for the password again.
+        '''
         if self.regclient is None or self.regclient.myservRt != self.settings.regiserv:
-            self.regclient = SessionClient.loginWithUri(
-                uri=install_uri,
-                servroot=self.settings.regiserv,
-                uid=self.central_uid(),
-                pswdPlain=self.settings.centralPswd)
-        return self.regclient # type: ignore
+            self.regclient = None
+            try:
+                self.regclient = SessionClient.loginWithUri(
+                    uri=install_uri,
+                    servroot=self.settings.regiserv,
+                    uid=self.central_uid(),
+                    pswdPlain=self.settings.centralPswd)
+            except SsException as e:
+                err_uihandlers[0](MsgCode.exSession, str(e))
+            except IOError as e:
+                err_uihandlers[0](MsgCode.exIo, str(e))
+        return self.regclient
 
     def query_orgs(self) -> Tuple[list[str], str]:
         # 0.7.6

@@ -106,7 +106,7 @@ def register_org(c: Context, taskcfg: SynodeTask):
         return cast(RegistResp, resp)
 
     print("* login   :", regiserv)
-    # ISSUE central-login: loginWithUri() makes no login request, see ../issues/central-client-login.md
+    # a real login since anclient.py3 0.2.8 (ISSUE central-login, fixed); raises SsException if refused
     ssclient = SessionClient.loginWithUri(servroot=regiserv,
             uri='/sys/tasks', uid=taskcfg.deploy.admin, pswdPlain=taskcfg.deploy.central_pswd)
 
