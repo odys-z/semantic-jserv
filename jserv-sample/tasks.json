@@ -1,0 +1,6 @@
+{ "type": "io.oz.invoke.SynodeTask",
+  "//": "jserv-sample/tasks.py: the jsample test app's package. The version is the pom's.",
+  "web_inf_dir" : "src/test/res/WEB-INF",
+  "vol_resource": {"volume": "src/test/res/volume/*.sqlite"},
+  "package_dir" : "build-jsample"
+}
