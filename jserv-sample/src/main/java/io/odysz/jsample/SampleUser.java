@@ -1,5 +1,6 @@
 package io.odysz.jsample;
 
+import io.odysz.semantic.jsession.JProfile;
 import io.odysz.semantic.jsession.JUser;
 import io.odysz.semantics.meta.TableMeta;
 import io.odysz.semantics.x.SemanticException;
@@ -36,5 +37,16 @@ public class SampleUser extends JUser {
 	@Override
 	public boolean login(Object reqObj) throws TransException {
 		return super.login(reqObj);
+	}
+
+	/**
+	 * Replied on login, AnSessionResp.profile, evaluated by AnSession on each login
+	 * on the user freshly loaded from DB (a_users.orgId).
+	 * 
+	 * @since 1.5.19
+	 */
+	@Override
+	public JProfile profile() {
+		return new JProfile(null, orgId());
 	}
 }
