@@ -1,7 +1,5 @@
 package io.odysz.semantic.jsession;
 
-import java.io.IOException;
-
 import io.odysz.anson.Anson;
 import io.odysz.anson.AnsonCtor;
 import io.odysz.common.Utils;
@@ -64,10 +62,11 @@ public class AnSessionResp extends AnsonResp {
 		if (profile == null || profile instanceof JProfile)
 			this.profile = (JProfile) profile;
 		else {
-			Utils.warn("AnSessionResp.profile(): can't serialize %s into JProfile.customExt. %s",
-					profile.getClass().getName(), e.getMessage());
-			this.profile = new JProfile();
-			this.profile = new JProfile().customExt("Can't set %s into JProfile", profile.getClass().getName());
+			// clients can't deserialize other types, without polymorphism
+			Utils.warn("AnSessionResp.profile(): %s is not a JProfile, replied as an empty JProfile.",
+					profile.getClass().getName());
+			this.profile = new JProfile().customExt(
+					String.format("Can't set %s into JProfile", profile.getClass().getName()));
 		}
 		return this;
 	}
