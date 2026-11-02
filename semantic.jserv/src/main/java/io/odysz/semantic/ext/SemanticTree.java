@@ -1,11 +1,12 @@
 package io.odysz.semantic.ext;
 
+import static io.odysz.transact.sql.parts.condition.ExprPart.constr;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -37,13 +38,11 @@ import io.odysz.semantic.tier.DatasetierReq;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
-import io.odysz.transact.sql.Delete;
 import io.odysz.transact.sql.Insert;
 import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.Condit;
-import io.odysz.transact.sql.parts.select.WithClause;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -665,11 +664,17 @@ where p0.parentId is null; </pre>
 		List<String> kids = children(t, connId, sm, parent, usr);
 		kids.remove(req.nid);
 
-		// by parent links, not fullpaths, which may be stale while others are modifying the tree
-		((Delete) t.delete(sm.tabl(), usr).with(descendants(t, sm, req.nid)))
-			.whereIn(sm.dbRecId(), t.select("sub_").col("nid"))
-			.post(renumber(t, sm, kids, null))
-			.d(t.instancontxt(connId, usr));
+		// the subtree by parent links, not fullpaths, which may be stale while others are modifying the tree
+		t.with(true)
+			.withTable("sub_(nid)")
+			.withVal(constr(req.nid))
+			.union(t.select(sm.tabl(), "me")
+					.col("me." + sm.dbRecId())
+					.je("me", "sub_", "s", sm.dbParent(), "nid"))
+			.delete(t.delete(sm.tabl(), usr))
+		  .whereIn(sm.dbRecId(), t.select("sub_").col("nid"))
+		  .post(renumber(t, sm, kids, null))
+		  .d(t.instancontxt(connId, usr));
 
 		if (parent == null)
 			reshapeForest(t, connId, sm, usr);
@@ -723,40 +728,27 @@ where p0.parentId is null; </pre>
 	}
 
 	/**
-	 * with recursive sub_(nid) as (values('nid') union all
-	 * select me.nid from tabl me join sub_ s on me.parent = s.nid)
-	 * <p>Table sub_: the node and all its descendants, by parent links.</p>
-	 */
-	static WithClause descendants(DATranscxt t, TreeSemantics sm, String nid) throws TransException {
-		return new WithClause(true).with("sub_(nid)", String.format("values(%s)", quote(nid)),
-				t.select(sm.tabl(), "me")
-				 .col("me." + sm.dbRecId())
-				 .je("me", "sub_", "s", sm.dbParent(), "nid"));
-	}
-
-	/**
 	 * Is node a an ancestor of node b, by parent links?
-	 * <pre>with recursive anc_(nid) as (values('b') union all
+	 * <pre>with recursive anc_(nid) as (select 'b' union
 	 * select me.parent from tabl me join anc_ a on me.nid = a.nid)
 	 * select nid from anc_ where nid = 'a'</pre>
+	 * The union (distinct) stops on cyclic parent links.
 	 */
 	static boolean isAncestor(DATranscxt t, String connId, TreeSemantics sm, String a, String b, IUser usr)
 			throws TransException, SQLException {
-		WithClause anc = new WithClause(true).with("anc_(nid)", String.format("values(%s)", quote(b)),
-				t.select(sm.tabl(), "me")
-				 .col("me." + sm.dbParent())
-				 .je("me", "anc_", "a", sm.dbRecId(), "nid"));
-
-		AnResultset rs = (AnResultset) ((Query) t.select("anc_").with(anc))
-				.col("nid")
-				.whereEq("nid", a)
-				.rs(t.instancontxt(connId, usr))
-				.rs(0);
+		AnResultset rs = (AnResultset) t
+			.with(true)
+				.withTable("anc_(nid)")
+				.withVal(constr(b))
+				.union(t.select(sm.tabl(), "me")
+						.col("me." + sm.dbParent())
+						.je("me", "anc_", "a", sm.dbRecId(), "nid"))
+				.select(t.select("anc_"))
+			.col("nid")
+			.whereEq("nid", a)
+			.rs(t.instancontxt(connId, usr))
+			.rs(0);
 		return rs.beforeFirst().next();
-	}
-
-	static String quote(String v) {
-		return v == null ? "null" : "'" + v.replace("'", "''") + "'";
 	}
 
 	/** fullpath = fp or fullpath like 'fp.%' (for reading the reloaded subtree) */
