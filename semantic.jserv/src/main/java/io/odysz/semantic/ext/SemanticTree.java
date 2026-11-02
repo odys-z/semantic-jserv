@@ -45,6 +45,10 @@ import io.odysz.transact.sql.Query;
 import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.Condit;
+import io.odysz.semantics.SemanticObject;
+import io.odysz.transact.sql.parts.Colname;
+import io.odysz.transact.sql.parts.condition.ExprPart;
+import io.odysz.transact.sql.parts.condition.Funcall;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -888,86 +892,93 @@ where p0.parentId is null; </pre>
 	 * @author Odys Zhou
 	 */
 	public static class Reforest {
-		
-		/** sqlite<pre>
-	with backtrace (indId, parent, fullpath) as (
-		select indId, parent, fullpath from ind_emotion2 where indId = 'C'
-		union all
-		select me.indId, me.parent, p.fullpath || '.' || printf('%02d', sort) from backtrace p
-		join ind_emotion2 me on me.parent = p.indId 
-	) 
-	update ind_emotion2 set fullpath = (
-	select fullpath from backtrace t where ind_emotion2.indId = t.indId) where indId in (select indId from backtrace); 
-		</pre>
+
+		/**
+		 * Reshape fullpaths of the subtree, by parent links:
+		 * child's fullpath = parent's fullpath + '.' + sort, padded to {@link SemanticTree#sortDigits} digits.
+		 * The root's fullpath is not changed.
+		 * <pre>
+		 * with recursive tree_(nid, parent, fullpath) as (
+		 *   select nid, parent, fullpath from doctree where nid = 'A'
+		 *   union all
+		 *   select me.nid, me.parent, p.fullpath || '.' || substr('00' || me.sort, -2, 2)
+		 *   from doctree me join tree_ p on me.parent = p.nid)
+		 * update doctree set fullpath=(select t.fullpath from tree_ t where t.nid = doctree.nid)
+		 * where nid in (select nid from tree_)</pre>
+		 * Note: the recursion never stops on cyclic parent links (fullpaths differ, so union won't help).
+		 * 
 		 * @param connId
-		 * @param rootId 
+		 * @param rootId
 		 * @param sm
 		 * @param dblog
-		 * @return  updated count
+		 * @return updated count
 		 * @throws TransException
 		 * @throws SQLException
 		 */
-		public static int shapeSubtree(String connId, String rootId, TreeSemantics sm, IUser dblog) throws TransException, SQLException {
-
-			if (Connects.driverType(connId) != dbtype.sqlite) {
+		public static int shapeSubtree(String connId, String rootId, TreeSemantics sm, IUser dblog)
+				throws TransException, SQLException {
+			if (Connects.driverType(connId) != dbtype.sqlite)
 				throw new SemanticException("[TODO] Reshape fullpath are not supported yet.");
-			}
-			else {
-				/* sqlite
-				with backtrace (indId, parent, fullpath) as (
-					select indId, parent, fullpath from ind_emotion2 where indId = 'C'
-					union all
-					select me.indId, me.parent, p.fullpath || '.' || printf('%02d', sort) from backtrace p
-					join ind_emotion2 me on me.parent = p.indId 
-				) 
-				update ind_emotion2 set fullpath = (
-				select fullpath from backtrace t where ind_emotion2.indId = t.indId) where indId in (select indId from backtrace); 
-				*/
-				return Connects.commit(connId, dblog, String.format(
-				"with backtrace (indId, parent, fullpath) as (" +
-					"select %2$s indId, %3$s parent, %4$s fullpath from %1$s where %2$s = '%6$s' " +
-					"union all " +
-					// FIXME should be "me.<recId> indId" instead of me.indId?
-					"select me.%2$s, me.%3$s, p.fullpath || '.' || printf('%%0%7$sd', %5$s) from backtrace p " +
-					"join %1$s me on me.%3$s = p.indId) " +
-				"update %1$s set %4$s = " +
-				"(select %4$s from backtrace t where %1$s.%2$s = t.indId) where %2$s in (select indId from backtrace)",
-				sm.tabl(), sm.dbRecId(), sm.dbParent(), sm.dbFullpath(), sm.dbSort(), rootId, 2))[0];
-			}
+
+			DATranscxt t = trans(connId);
+			String id = sm.dbRecId(), pid = sm.dbParent(), fp = sm.dbFullpath();
+
+			// p.fullpath || '.' || substr('00' || me.sort, -2, 2)
+			ExprPart path = new Funcall("concat", new ExprPart[] {
+					Colname.parseFullname("p.fullpath"), constr("."),
+					Funcall.subStr(new Funcall("concat", new ExprPart[] {
+						constr("0".repeat(sortDigits)), Colname.parseFullname("me." + sm.dbSort())}),
+						-sortDigits, sortDigits)});
+
+			SemanticObject res = t.with(true)
+				.withTable("tree_(nid, parent, fullpath)")
+				.withVal(t.select(sm.tabl()).cols(id, pid, fp).whereEq(id, rootId))
+				.unionAll(t.select(sm.tabl(), "me")
+						.col("me." + id).col("me." + pid).col(path)
+						.je("me", "tree_", "p", pid, "nid"))
+				.update(t.update(sm.tabl(), dblog))
+				.nv(fp, t.select("tree_", "t").col("t.fullpath").whereEq("t", "nid", sm.tabl(), id))
+				.whereIn(id, t.select("tree_").col("nid"))
+				.u(t.instancontxt(connId, dblog));
+
+			return res == null ? 0 : res.total();
 		}
 		
-		/** Tag all subtree nodes with root's Id.
+		/**
+		 * Tag all nodes of the subtree, by parent links.
+		 * <pre>
+		 * with recursive tag_(nid) as (select 'A' union
+		 *   select me.nid from doctree me join tag_ t on me.parent = t.nid)
+		 * update doctree set tag='A' where nid in (select nid from tag_)</pre>
+		 * The union (distinct) stops on cyclic parent links.
+		 * 
 		 * @param connId
 		 * @param rootId
-		 * @param tagval 'root-id' or "null"
+		 * @param tagval sql value, e.g. "'root-id'" or "null"
 		 * @param sm
 		 * @param dblog
 		 * @return updated count
 		 * @throws SQLException
 		 * @throws TransException
 		 */
-		public static int tagSubtree(String connId, String rootId, String tagval, TreeSemantics sm, IUser dblog) throws SQLException, TransException {
-			if (Connects.driverType(connId) != dbtype.sqlite) {
+		public static int tagSubtree(String connId, String rootId, String tagval, TreeSemantics sm, IUser dblog)
+				throws SQLException, TransException {
+			if (Connects.driverType(connId) != dbtype.sqlite)
 				throw new SemanticException("[TODO] Reshape fullpath are not supported yet.");
-			}
-			else {
-			/* with backtrace (indId, parent) as (
-				select indId, parent from ind_emotion where indId = '000001'
-				union all
-				select me.indId, me.parent from backtrace p
-				join ind_emotion me on me.parent = p.indId 
-			) update ind_emotion set templId = '000001' where indId in (select indId from backtrace);
-			 */
-				return Connects.commit(connId, dblog, String.format(
-					"with backtrace (indId, parent) as (" +
-					"select %2$s indId,%3$s parent from %1$s where indId = '%5$s' " +
-					"union all " +
-					"select me.%2$s indId, me.%3$s parent from backtrace p " +
-					"join %1$s me on me.parent = p.indId" +
-					") update %1$s set %4$s = %6$s where %2$s in (select indId from backtrace)",
-					sm.tabl(), sm.dbRecId(), sm.dbParent(), sm.dbTagCol(), rootId, tagval))[0];
-			}
+
+			DATranscxt t = trans(connId);
+			SemanticObject res = t.with(true)
+				.withTable("tag_(nid)")
+				.withVal(constr(rootId))
+				.union(t.select(sm.tabl(), "me")
+						.col("me." + sm.dbRecId())
+						.je("me", "tag_", "t", sm.dbParent(), "nid"))
+				.update(t.update(sm.tabl(), dblog))
+				.nv(sm.dbTagCol(), ExprPart.constVal(tagval))
+				.whereIn(sm.dbRecId(), t.select("tag_").col("nid"))
+				.u(t.instancontxt(connId, dblog));
+
+			return res == null ? 0 : res.total();
 		}
-		
 	}
 }
