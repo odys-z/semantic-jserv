@@ -42,11 +42,13 @@ public class AnDatasetReq extends AnQueryReq {
 	 */
 	protected TreeSemantics stcs;
 
+	/**
+	 * The root of the subtree the request acts on, e.g. retree, tagtree;
+	 * since 1.5.20, the node to be moved, inserted or deleted (with its subtree).
+	 */
 	public String rootId;
 	public String root() { return rootId; }
 
-	/** Tree modification: the node to be moved, inserted or deleted. @since 1.5.20 */
-	public String nid;
 	/** Tree modification: target parent, null for the top level. @since 1.5.20 */
 	public String toParent;
 	/**

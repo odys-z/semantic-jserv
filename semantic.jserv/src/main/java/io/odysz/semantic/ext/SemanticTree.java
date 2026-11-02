@@ -599,7 +599,7 @@ where p0.parentId is null; </pre>
 	}
 
 	/**
-	 * Move node req.nid (with its subtree) to req.toParent (null: top level), at req.toIndex,
+	 * Move node req.rootId (with its subtree) to req.toParent (null: top level), at req.toIndex,
 	 * which is the final position among toParent's children, counted after the node is detached.
 	 * 
 	 * <p>Rejected, with the table unchanged: "cycle" (into itself or a descendant),
@@ -614,24 +614,24 @@ where p0.parentId is null; </pre>
 		sqliteOnly(connId);
 		DATranscxt t = trans(connId);
 
-		String from = nodeRow(t, connId, sm, req.nid, usr).getString(sm.dbParent());
+		String from = nodeRow(t, connId, sm, req.root(), usr).getString(sm.dbParent());
 		if (!isblank(req.toParent))
 			nodeRow(t, connId, sm, req.toParent, usr); // must exist
 
-		if (req.nid.equals(req.toParent)
-			|| !isblank(req.toParent) && isAncestor(t, connId, sm, req.nid, req.toParent, usr))
+		if (req.root().equals(req.toParent)
+			|| !isblank(req.toParent) && isAncestor(t, connId, sm, req.root(), req.toParent, usr))
 			return new AnDatasetResp().rejected("cycle");
 
 		List<String> oldKids = children(t, connId, sm, from, usr);
 		boolean sameParent = isblank(from) ? isblank(req.toParent) : eq(from, req.toParent);
-		if (sameParent && oldKids.indexOf(req.nid) == req.toIndex)
+		if (sameParent && oldKids.indexOf(req.root()) == req.toIndex)
 			return new AnDatasetResp().rejected("no-op");
 
 		String root = lca(t, connId, sm, from, req.toParent, usr);
 
-		oldKids.remove(req.nid);
+		oldKids.remove(req.root());
 		List<String> newKids = sameParent ? oldKids : children(t, connId, sm, req.toParent, usr);
-		insertAt(newKids, req.toIndex, req.nid);
+		insertAt(newKids, req.toIndex, req.root());
 
 		ArrayList<Statement<?>> sorts = renumber(t, sm, newKids, null);
 		if (!sameParent)
@@ -639,7 +639,7 @@ where p0.parentId is null; </pre>
 
 		t.update(sm.tabl(), usr)
 			.nv(sm.dbParent(), req.toParent)
-			.whereEq(sm.dbRecId(), req.nid)
+			.whereEq(sm.dbRecId(), req.root())
 			.post(sorts)
 			.u(t.instancontxt(connId, usr));
 
@@ -655,7 +655,7 @@ where p0.parentId is null; </pre>
 	}
 
 	/**
-	 * Delete node req.nid and its subtree, then renumber its siblings.
+	 * Delete node req.rootId and its subtree, then renumber its siblings.
 	 * 
 	 * @return response with reload root, the parent of the deleted node
 	 * @throws SemanticException node not found
@@ -666,14 +666,14 @@ where p0.parentId is null; </pre>
 		sqliteOnly(connId);
 		DATranscxt t = trans(connId);
 
-		String parent = nodeRow(t, connId, sm, req.nid, usr).getString(sm.dbParent());
+		String parent = nodeRow(t, connId, sm, req.root(), usr).getString(sm.dbParent());
 		List<String> kids = children(t, connId, sm, parent, usr);
-		kids.remove(req.nid);
+		kids.remove(req.root());
 
 		// the subtree by parent links, not fullpaths, which may be stale while others are modifying the tree
 		t.with(true)
 			.withTable("sub_(nid)")
-			.withVal(constr(req.nid))
+			.withVal(constr(req.root()))
 			.union(t.select(sm.tabl(), "me")
 					.col("me." + sm.dbRecId())
 					.je("me", "sub_", "s", sm.dbParent(), "nid"))
@@ -691,7 +691,7 @@ where p0.parentId is null; </pre>
 	}
 
 	/**
-	 * Insert node req.nid under req.toParent (null: top level) at req.toIndex,
+	 * Insert node req.rootId under req.toParent (null: top level) at req.toIndex,
 	 * with other columns in req.nvs, [name, value].
 	 * 
 	 * @return response with reload root, the parent
@@ -706,10 +706,10 @@ where p0.parentId is null; </pre>
 		if (!isblank(req.toParent))
 			nodeRow(t, connId, sm, req.toParent, usr); // must exist
 		List<String> kids = children(t, connId, sm, req.toParent, usr);
-		insertAt(kids, req.toIndex, req.nid);
+		insertAt(kids, req.toIndex, req.root());
 
 		Insert ins = t.insert(sm.tabl(), usr)
-			.nv(sm.dbRecId(), req.nid)
+			.nv(sm.dbRecId(), req.root())
 			.nv(sm.dbParent(), req.toParent)
 			.nv(sm.dbSort(), 0); // fullpath: by table semantics if configured, then reshaped below
 		if (req.nvs != null)

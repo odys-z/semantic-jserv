@@ -66,13 +66,13 @@ class SemanticTreeTest {
 	@TestFactory
 	Stream<DynamicTest> testModifyTree() {
 		return jcases.steps.stream()
-			.map(c -> DynamicTest.dynamicTest(String.format("%s %s -> %s[%s]", c.req.a(), c.req.nid, c.req.toParent, c.req.toIndex), () -> runCase(c)));
+			.map(c -> DynamicTest.dynamicTest(String.format("%s %s -> %s[%s]", c.req.a(), c.req.root(), c.req.toParent, c.req.toIndex), () -> runCase(c)));
 	}
 
 	static void runCase(StreeStep c) throws Exception {
 		resetTable();
 
-		String msg = String.format("step %s %s -> %s[%s]", c.req.a(), c.req.nid, c.req.toParent, c.req.toIndex);
+		String msg = String.format("step %s %s -> %s[%s]", c.req.a(), c.req.root(), c.req.toParent, c.req.toIndex);
 
 		AnDatasetResp res = null;
 		AnDatasetReq req = c.req;

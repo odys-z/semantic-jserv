@@ -52,7 +52,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a1",
+    "rootId": "a1",
     "toParent": "A",
     "toIndex": 1
    },
@@ -84,7 +84,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a3",
+    "rootId": "a3",
     "toParent": "A",
     "toIndex": 0
    },
@@ -116,7 +116,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a1",
+    "rootId": "a1",
     "toParent": "A",
     "toIndex": 2
    },
@@ -148,7 +148,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a1",
+    "rootId": "a1",
     "toParent": "A",
     "toIndex": 0
    },
@@ -180,7 +180,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "E",
+    "rootId": "E",
     "toParent": "D1",
     "toIndex": 2
    },
@@ -212,7 +212,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "b1",
+    "rootId": "b1",
     "toParent": "C",
     "toIndex": 0
    },
@@ -244,7 +244,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a1",
+    "rootId": "a1",
     "toParent": "E",
     "toIndex": 2
    },
@@ -276,7 +276,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a3",
+    "rootId": "a3",
     "toParent": "B",
     "toIndex": 0
    },
@@ -308,7 +308,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a2",
+    "rootId": "a2",
     "toParent": "e2",
     "toIndex": 0
    },
@@ -340,7 +340,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "B",
+    "rootId": "B",
     "toParent": "A",
     "toIndex": 1
    },
@@ -372,7 +372,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a3",
+    "rootId": "a3",
     "toParent": "a2",
     "toIndex": 2
    },
@@ -404,7 +404,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "C",
+    "rootId": "C",
     "toParent": "B",
     "toIndex": 1
    },
@@ -436,7 +436,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a22",
+    "rootId": "a22",
     "toParent": "A",
     "toIndex": 2
    },
@@ -468,7 +468,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "e21",
+    "rootId": "e21",
     "toParent": "E",
     "toIndex": 2
    },
@@ -500,7 +500,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "f1",
+    "rootId": "f1",
     "toParent": "A",
     "toIndex": 1
    },
@@ -532,7 +532,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "C",
+    "rootId": "C",
     "toParent": null,
     "toIndex": 1
    },
@@ -564,7 +564,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "D2",
+    "rootId": "D2",
     "toParent": null,
     "toIndex": 0
    },
@@ -596,7 +596,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "i",
-    "nid": "n",
+    "rootId": "n",
     "toParent": "C",
     "toIndex": 0,
     "nvs": [
@@ -639,7 +639,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "i",
-    "nid": "n",
+    "rootId": "n",
     "toParent": "E",
     "toIndex": 2,
     "nvs": [
@@ -682,7 +682,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "i",
-    "nid": "n",
+    "rootId": "n",
     "toParent": "B",
     "toIndex": 0,
     "nvs": [
@@ -725,7 +725,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "i",
-    "nid": "D0",
+    "rootId": "D0",
     "toParent": null,
     "toIndex": 0,
     "nvs": [
@@ -768,7 +768,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "d",
-    "nid": "a3"
+    "rootId": "a3"
    },
    "root": "A",
    "rejected": null,
@@ -797,7 +797,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "d",
-    "nid": "a2"
+    "rootId": "a2"
    },
    "root": "A",
    "rejected": null,
@@ -824,7 +824,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "d",
-    "nid": "E"
+    "rootId": "E"
    },
    "root": "D1",
    "rejected": null,
@@ -850,7 +850,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "A",
+    "rootId": "A",
     "toParent": "a21",
     "toIndex": 0
    },
@@ -882,7 +882,7 @@
    "req": {
     "type": "io.odysz.semantic.ext.AnDatasetReq",
     "a": "u/move",
-    "nid": "a1",
+    "rootId": "a1",
     "toParent": "a1",
     "toIndex": 0
    },
