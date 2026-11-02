@@ -21,6 +21,13 @@ public class AnDatasetReq extends AnQueryReq {
 		 * then format tree indents.
 		 */
 		public static final String ds  = "sqltree";
+		
+		/** @since 1.5.20 */
+		public static final String insrt = "i";
+		/** @since 1.5.20 */
+		public static final String umove = "u/move";
+		/** @since 1.5.20 */
+		public static final String del = "d";
 	}
 
 	String sk;

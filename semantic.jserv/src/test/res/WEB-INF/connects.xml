@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<!-- Connections for semantic.jserv's own tests, e.g. SemanticTreeTest.
+	The db file is created on first connection; tests create their own tables. -->
+<conns>
+  <t id="drvmnger" pk="id" columns="id,type,isdef,src,usr,pswd,dbg,smtcs">
+  	<c>
+  		<id>main-sqlite</id>
+  		<type>sqlite</type>
+  		<isdef>true</isdef>
+  		<!-- relative to this file -->
+  		<src>../jserv-main.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg>true</dbg>
+  	</c>
+  </t>
+
+  <!-- required by Connects.init(), even if empty -->
+  <t id="dbcp" pk="id" columns="id,type,src,usr,pswd,isdef,dbg,smtcs">
+  </t>
+
+  <t id="conn-uri" pk='uri' columns="uri, conn">
+   	<c>
+  		<uri>/test/stree</uri>
+  		<conn>main-sqlite</conn>
+  	</c>
+  </t>
+</conns>

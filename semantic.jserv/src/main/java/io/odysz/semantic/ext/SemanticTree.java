@@ -2,6 +2,7 @@ package io.odysz.semantic.ext;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -552,10 +553,34 @@ where p0.parentId is null; </pre>
 					pi, sm.dbFullpath(), pi - 1, sm.dbSort(), sm.dbRecId());
 		}
 	}
-	
+
+	/**
+	 * @since 1.5.20
+	 */
+	public static AnDatasetResp onMoveTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
+			throws TransException, SQLException {
+		throw new SemanticException("TODO: SemanticTree.onModifyTree() is not implemented yet.");
+	}
+
+	/**
+	 * @since 1.5.20
+	 */
+	public static AnDatasetResp onDelTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
+			throws TransException, SQLException {
+		throw new SemanticException("TODO: Removing subtree is not implemented yet. %s", req.root());
+	}
+
+	/**
+	 * @since 1.5.20
+	 */
+	public static AnDatasetResp onInsertTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
+			throws TransException, SQLException {
+		throw new SemanticException("TODO: Creating subtree is not implemented yet. %s", req.root());
+	}
+
 	/**
 	 * Update fullpath, recursively.
-	 * 
+	 *
 	 * TODO oracle 11gr2: https://dev.mysql.com/doc/refman/8.0/en/with.html 
 	 * TODO mysql 8: https://dev.mysql.com/doc/refman/8.0/en/with.html 
 	 * 

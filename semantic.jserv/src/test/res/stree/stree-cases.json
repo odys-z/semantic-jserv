@@ -1,0 +1,52 @@
+{
+ "type": "io.odysz.semantic.ext.StreeCases",
+ "table": "doctree",
+ "stree": ",doctree,nid,parent,fullpath,sort,text,nodetype,false",
+ "ddl": [
+  "drop table if exists doctree",
+  "create table doctree (nid varchar(12) primary key, parent varchar(12), sort integer, fullpath varchar(256), nodetype varchar(12), text varchar(256))",
+  "create index doctree_fullpath on doctree(fullpath)"
+ ],
+ "fixture": [
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('D1', null, 1, '01', 'doc', 'Doc 1')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('A', 'D1', 1, '01.01', 'section', 'A')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('a1', 'A', 1, '01.01.01', 'para', 'a1')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('a2', 'A', 2, '01.01.02', 'section', 'a2')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('a21', 'a2', 1, '01.01.02.01', 'para', 'a21')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('a22', 'a2', 2, '01.01.02.02', 'para', 'a22')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('a3', 'A', 3, '01.01.03', 'para', 'a3')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('B', 'D1', 2, '01.02', 'section', 'B')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('b1', 'B', 1, '01.02.01', 'para', 'b1')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('C', 'D1', 3, '01.03', 'section', 'C (empty)')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('E', 'D1', 4, '01.04', 'section', 'E')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('e1', 'E', 1, '01.04.01', 'para', 'e1')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('e2', 'E', 2, '01.04.02', 'section', 'e2')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('e21', 'e2', 1, '01.04.02.01', 'para', 'e21')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('D2', null, 2, '02', 'doc', 'Doc 2')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('F', 'D2', 1, '02.01', 'section', 'F')",
+  "insert into doctree (nid, parent, sort, fullpath, nodetype, text) values ('f1', 'F', 1, '02.01.01', 'para', 'f1')"
+ ],
+ "fixtureTree": [
+  "- D1 - 1 01",
+  "|- A D1 1 01.01",
+  "| |- a2 A 1 01.01.01 vlink,childi",
+  ...
+ ],
+ "steps": [
+  {
+   "//": "a1 down (middle swap; fullpaths change, indents don't)",
+   "a": "u/move",
+   "nid": "a1",
+   "toParent": "A",
+   "root": "A",
+   "rejected": "cycle",
+   "expectings": [
+      "- D1 - 1 01",
+      "|- A D1 1 01.01",
+      "| |- a2 A 1 01.01.01 vlink,childi",
+	  ...
+     ]
+   }
+   ...
+   ]
+}
