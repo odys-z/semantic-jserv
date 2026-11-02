@@ -557,7 +557,7 @@ where p0.parentId is null; </pre>
 	/**
 	 * @since 1.5.20
 	 */
-	public static AnDatasetResp onMoveTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
+	public AnDatasetResp onMoveTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
 			throws TransException, SQLException {
 		throw new SemanticException("TODO: SemanticTree.onModifyTree() is not implemented yet.");
 	}
@@ -565,7 +565,7 @@ where p0.parentId is null; </pre>
 	/**
 	 * @since 1.5.20
 	 */
-	public static AnDatasetResp onDelTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
+	public AnDatasetResp onDelTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
 			throws TransException, SQLException {
 		throw new SemanticException("TODO: Removing subtree is not implemented yet. %s", req.root());
 	}
@@ -573,7 +573,7 @@ where p0.parentId is null; </pre>
 	/**
 	 * @since 1.5.20
 	 */
-	public static AnDatasetResp onInsertTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
+	public AnDatasetResp onInsertTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
 			throws TransException, SQLException {
 		throw new SemanticException("TODO: Creating subtree is not implemented yet. %s", req.root());
 	}

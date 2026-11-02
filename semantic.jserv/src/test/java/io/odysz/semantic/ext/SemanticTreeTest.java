@@ -7,6 +7,7 @@ import static io.odysz.common.LangExt.eq;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -86,12 +87,13 @@ class SemanticTreeTest {
 			public IUser logAct(String funcName, String funcId) { return null; }
 		};
 
+		SemanticTree stree = new SemanticTree();
 		if (eq(AnDatasetReq.A.insrt, req.a()))
-			res = SemanticTree.onInsertTree(conn, sm, req, testRobot);
+			res = stree.onInsertTree(conn, sm, req, testRobot);
 		else if (eq(AnDatasetReq.A.umove, req.a()))
-			res = SemanticTree.onMoveTree(conn, sm, req, testRobot);
+			res = stree.onMoveTree(conn, sm, req, testRobot);
 		else if (eq(AnDatasetReq.A.del, req.a()))
-			res = SemanticTree.onDelTree(conn, sm, req, testRobot);
+			res = stree.onDelTree(conn, sm, req, testRobot);
 		else
 			fail("Unknow A: " + req.a());
 
@@ -110,9 +112,16 @@ class SemanticTreeTest {
 		Connects.commit(conn, null, sqls);
 	}
 
+	/** IndentFlag to text icon, the same as anclient's defltIcons (space: spacex) */
+	static final HashMap<String, String> icons = new HashMap<String, String>() {
+		private static final long serialVersionUID = 1L;
+		{	put("childi", "├"); put("childx", "L"); put("vlink", "|"); put("space", ".");
+			put("expand", "T"); put("collapse", "+"); put("hlink", "-"); put("deflt", ".");
+		}};
+
 	/**
-	 * Load the table back, build the forest, and compare line by line:
-	 * "nid parent sort fullpath indents", in depth-first order.
+	 * Load the table back, build the forest, and compare line by line, in depth-first order:
+	 * "indent-icons nid parent sort fullpath", e.g. "| L a22 a2 2 01.01.02.02"; a root's icons are "-".
 	 */
 	static void assertTree(String msg, List<String> expect) throws Exception {
 		AnResultset rs = Connects.select(conn, String.format(
@@ -134,9 +143,9 @@ class SemanticTreeTest {
 
 		List<?> indents = n.indents();
 		out.add(String.format("%s %s %s %s %s",
-				n.id(), parentId == null ? "-" : parentId, n.get("sort"), n.get("fullpath"),
 				indents == null || indents.isEmpty() ? "-"
-				: indents.stream().map(String::valueOf).collect(Collectors.joining(","))));
+				: indents.stream().map(f -> icons.get(String.valueOf(f))).collect(Collectors.joining(" ")),
+				n.id(), parentId == null ? "-" : parentId, n.get("sort"), n.get("fullpath")));
 
 		List<?> children = n.children();
 		if (children != null)
