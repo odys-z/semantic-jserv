@@ -1,5 +1,7 @@
 package io.odysz.semantic.ext;
 
+import java.util.ArrayList;
+
 import org.xml.sax.SAXException;
 
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
@@ -42,6 +44,18 @@ public class AnDatasetReq extends AnQueryReq {
 
 	public String rootId;
 	public String root() { return rootId; }
+
+	/** Tree modification: the node to be moved, inserted or deleted. @since 1.5.20 */
+	public String nid;
+	/** Tree modification: target parent, null for the top level. @since 1.5.20 */
+	public String toParent;
+	/**
+	 * Tree modification: final position among toParent's children,
+	 * counted after the node is detached (move). @since 1.5.20
+	 */
+	public int toIndex;
+	/** Tree modification: other columns of the inserted node, [name, value]. @since 1.5.20 */
+	public ArrayList<String[]> nvs;
 
 	public AnDatasetReq() { super(null, null);}
 

@@ -1,7 +1,7 @@
 {
  "type": "io.odysz.semantic.ext.StreeCases",
  "table": "doctree",
- "stree": ",doctree,nid,parent,fullpath,sort,text,nodetype,false",
+ "sk": "test.doctree",
  "ddl": [
   "drop table if exists doctree",
   "create table doctree (nid varchar(12) primary key, parent varchar(12), sort integer, fullpath varchar(256), nodetype varchar(12), text varchar(256))",
@@ -599,8 +599,16 @@
     "nid": "n",
     "toParent": "C",
     "toIndex": 0,
-    "nodetype": "para",
-    "text": "n"
+    "nvs": [
+     [
+      "nodetype",
+      "para"
+     ],
+     [
+      "text",
+      "n"
+     ]
+    ]
    },
    "root": "C",
    "rejected": null,
@@ -634,8 +642,16 @@
     "nid": "n",
     "toParent": "E",
     "toIndex": 2,
-    "nodetype": "para",
-    "text": "n"
+    "nvs": [
+     [
+      "nodetype",
+      "para"
+     ],
+     [
+      "text",
+      "n"
+     ]
+    ]
    },
    "root": "E",
    "rejected": null,
@@ -669,8 +685,16 @@
     "nid": "n",
     "toParent": "B",
     "toIndex": 0,
-    "nodetype": "para",
-    "text": "n"
+    "nvs": [
+     [
+      "nodetype",
+      "para"
+     ],
+     [
+      "text",
+      "n"
+     ]
+    ]
    },
    "root": "B",
    "rejected": null,
@@ -704,8 +728,16 @@
     "nid": "D0",
     "toParent": null,
     "toIndex": 0,
-    "nodetype": "doc",
-    "text": "D0"
+    "nvs": [
+     [
+      "nodetype",
+      "doc"
+     ],
+     [
+      "text",
+      "D0"
+     ]
+    ]
    },
    "root": null,
    "rejected": null,

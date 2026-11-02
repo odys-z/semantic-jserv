@@ -20,6 +20,7 @@ import org.junit.jupiter.api.TestFactory;
 import io.odysz.anson.Anson;
 import io.odysz.module.rs.AnResultset;
 import io.odysz.semantic.DA.Connects;
+import io.odysz.semantic.DA.DatasetCfg;
 import io.odysz.semantic.DA.DatasetCfg.AnTreeNode;
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
 import io.odysz.semantic.DA.DatasetHelper;
@@ -42,15 +43,17 @@ import io.odysz.transact.x.TransException;
 class SemanticTreeTest {
 	static final String conn = "main-sqlite";
 	static final String json = "src/test/res/stree/stree-cases.json";
+	static final String webinf = "src/test/res/WEB-INF";
 
 	static StreeCases jcases;
 	static TreeSemantics sm;
 
 	@BeforeAll
 	static void init() throws Exception {
-		Connects.init("src/test/res/WEB-INF");
+		Connects.init(webinf);
+		DatasetCfg.init(webinf);
 		jcases = Anson.fromPath(json);
-		sm = new TreeSemantics(jcases.stree);
+		sm = DatasetCfg.getTreeSemtcs(jcases.sk);
 	}
 
 	/** The fixture alone: verifies loading / building the forest, before any modification. */
@@ -63,13 +66,13 @@ class SemanticTreeTest {
 	@TestFactory
 	Stream<DynamicTest> testModifyTree() {
 		return jcases.steps.stream()
-			.map(c -> DynamicTest.dynamicTest(c.req.a(), () -> runCase(c)));
+			.map(c -> DynamicTest.dynamicTest(String.format("%s %s -> %s[%s]", c.req.a(), c.req.nid, c.req.toParent, c.req.toIndex), () -> runCase(c)));
 	}
 
 	static void runCase(StreeStep c) throws Exception {
 		resetTable();
 
-		String msg = String.format("step %s", c.req.a());
+		String msg = String.format("step %s %s -> %s[%s]", c.req.a(), c.req.nid, c.req.toParent, c.req.toIndex);
 
 		AnDatasetResp res = null;
 		AnDatasetReq req = c.req;
@@ -97,10 +100,12 @@ class SemanticTreeTest {
 		else
 			fail("Unknow A: " + req.a());
 
-		assertEquals(c.rejected, c.rejected, msg + ", rejected");
+		assertEquals(c.rejected, res.rejected(), msg + ", rejected");
 
-		if (c.rejected == null)
+		if (c.rejected == null) {
+			assertEquals(c.root, res.root(), msg + ", reload root");
 			assertTrue(res.forest().size() > 0, "update forest size");
+		}
 
 		assertTree(msg, c.expectings);
 	}

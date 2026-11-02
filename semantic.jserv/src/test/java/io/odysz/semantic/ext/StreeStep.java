@@ -11,6 +11,9 @@ import io.odysz.anson.Anson;
 public class StreeStep extends Anson {
 	AnDatasetReq req;
 
+	/** expected reload root, null for the whole forest */
+	String root;
+
 	/** expected rejection reason, null if accepted */
 	String rejected;
 

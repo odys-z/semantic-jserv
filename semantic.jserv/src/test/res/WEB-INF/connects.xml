@@ -13,6 +13,8 @@
   		<usr>test</usr>
   		<pswd>test</pswd>
   		<dbg>true</dbg>
+  		<!-- relative to this file -->
+  		<smtcs>semantics.xml</smtcs>
   	</c>
   </t>
 

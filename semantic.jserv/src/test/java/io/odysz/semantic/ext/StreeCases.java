@@ -15,8 +15,8 @@ import io.odysz.anson.Anson;
 public class StreeCases extends Anson {
 	String table;
 
-	/** tree semantics, see {@link io.odysz.semantic.DA.DatasetCfg.TreeSemantics} */
-	String stree;
+	/** dataset key of the tree semantics, in src/test/res/WEB-INF/dataset.xml */
+	String sk;
 
 	/** drop / create table */
 	List<String> ddl;

@@ -2,6 +2,9 @@ package io.odysz.semantic.ext;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -34,8 +37,13 @@ import io.odysz.semantic.tier.DatasetierReq;
 import io.odysz.semantics.ISemantext;
 import io.odysz.semantics.IUser;
 import io.odysz.semantics.x.SemanticException;
+import io.odysz.transact.sql.Delete;
+import io.odysz.transact.sql.Insert;
+import io.odysz.transact.sql.Query;
+import io.odysz.transact.sql.Statement;
 import io.odysz.transact.sql.parts.Logic.op;
 import io.odysz.transact.sql.parts.condition.Condit;
+import io.odysz.transact.sql.parts.select.WithClause;
 import io.odysz.transact.x.TransException;
 
 /**
@@ -554,28 +562,339 @@ where p0.parentId is null; </pre>
 		}
 	}
 
+	/*
+	 * Tree modification, SQLite only (fullpaths are reshaped by Reforest.shapeSubtree()).
+	 *
+	 * Each method updates parent and sibling sorts, reshapes the fullpaths under the changed
+	 * parents, then responds with the reload root and the forest under it:
+	 * the root is the closest node whose subtree contains every node with changed fullpath or
+	 * indents, i.e. the lowest common ancestor of the old and new parent, found by fullpath prefix
+	 * before updating. Null when the top level is involved: the forest is then the whole table.
+	 *
+	 * Statements are committed with the connection's semantics, e.g. a fullpath handler on the table
+	 * may set temporary fullpaths; Reforest.shapeSubtree() reshapes them afterwards.
+	 */
+
+	/** Digits of a sibling sort in fullpath, the same as {@link Reforest#shapeSubtree(String, String, TreeSemantics, IUser)}. */
+	static final int sortDigits = 2;
+
+	/** Transact builders for tree modification, per connection. */
+	static HashMap<String, DATranscxt> trxes;
+
 	/**
+	 * The connection's transact builder, created when first used,
+	 * which also loads the connection's table metas.
+	 */
+	static DATranscxt trans(String connId) throws TransException, SQLException {
+		if (trxes == null)
+			trxes = new HashMap<String, DATranscxt>();
+		if (!trxes.containsKey(connId))
+			trxes.put(connId, new DATranscxt(connId));
+		return trxes.get(connId);
+	}
+
+	/**
+	 * Move node req.nid (with its subtree) to req.toParent (null: top level), at req.toIndex,
+	 * which is the final position among toParent's children, counted after the node is detached.
+	 * 
+	 * <p>Rejected, with the table unchanged: "cycle" (into itself or a descendant),
+	 * "no-op" (same parent, same index).</p>
+	 * 
+	 * @return response with reload root, or rejected reason
+	 * @throws SemanticException node or parent not found, index out of range
 	 * @since 1.5.20
 	 */
 	public AnDatasetResp onMoveTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
 			throws TransException, SQLException {
-		throw new SemanticException("TODO: SemanticTree.onModifyTree() is not implemented yet.");
+		sqliteOnly(connId);
+		DATranscxt t = trans(connId);
+
+		String[] n = nodeRow(t, connId, sm, req.nid, usr);
+		String[] p = req.toParent == null ? null : nodeRow(t, connId, sm, req.toParent, usr);
+
+		if (req.nid.equals(req.toParent) || p != null && isAncestor(t, connId, sm, req.nid, req.toParent, usr))
+			return new AnDatasetResp().rejected("cycle");
+
+		String from = n[1];
+		List<String> oldKids = children(t, connId, sm, from, usr);
+		boolean sameParent = eq(from, req.toParent);
+		if (sameParent && oldKids.indexOf(req.nid) == req.toIndex)
+			return new AnDatasetResp().rejected("no-op");
+
+		String root = lca(t, connId, sm, from, req.toParent, usr);
+
+		oldKids.remove(req.nid);
+		List<String> newKids = sameParent ? oldKids : children(t, connId, sm, req.toParent, usr);
+		insertAt(newKids, req.toIndex, req.nid);
+
+		ArrayList<Statement<?>> sorts = renumber(t, sm, newKids, null);
+		if (!sameParent)
+			renumber(t, sm, oldKids, sorts);
+
+		t.update(sm.tabl(), usr)
+			.nv(sm.dbParent(), req.toParent)
+			.whereEq(sm.dbRecId(), req.nid)
+			.post(sorts)
+			.u(t.instancontxt(connId, usr));
+
+		if (from == null || req.toParent == null)
+			reshapeForest(t, connId, sm, usr);
+		else {
+			Reforest.shapeSubtree(connId, from, sm, usr);
+			if (!sameParent)
+				Reforest.shapeSubtree(connId, req.toParent, sm, usr);
+		}
+
+		return respond(t, connId, sm, root, usr);
 	}
 
 	/**
+	 * Delete node req.nid and its subtree, then renumber its siblings.
+	 * 
+	 * @return response with reload root, the parent of the deleted node
+	 * @throws SemanticException node not found
 	 * @since 1.5.20
 	 */
 	public AnDatasetResp onDelTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
 			throws TransException, SQLException {
-		throw new SemanticException("TODO: Removing subtree is not implemented yet. %s", req.root());
+		sqliteOnly(connId);
+		DATranscxt t = trans(connId);
+
+		String[] n = nodeRow(t, connId, sm, req.nid, usr);
+		String parent = n[1];
+		List<String> kids = children(t, connId, sm, parent, usr);
+		kids.remove(req.nid);
+
+		// by parent links, not fullpaths, which may be stale while others are modifying the tree
+		((Delete) t.delete(sm.tabl(), usr).with(descendants(t, sm, req.nid)))
+			.whereIn(sm.dbRecId(), t.select("sub_").col("nid"))
+			.post(renumber(t, sm, kids, null))
+			.d(t.instancontxt(connId, usr));
+
+		if (parent == null)
+			reshapeForest(t, connId, sm, usr);
+		else
+			Reforest.shapeSubtree(connId, parent, sm, usr);
+
+		return respond(t, connId, sm, parent, usr);
 	}
 
 	/**
+	 * Insert node req.nid under req.toParent (null: top level) at req.toIndex,
+	 * with other columns in req.nvs, [name, value].
+	 * 
+	 * @return response with reload root, the parent
+	 * @throws SemanticException parent not found, index out of range
 	 * @since 1.5.20
 	 */
 	public AnDatasetResp onInsertTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
 			throws TransException, SQLException {
-		throw new SemanticException("TODO: Creating subtree is not implemented yet. %s", req.root());
+		sqliteOnly(connId);
+		DATranscxt t = trans(connId);
+
+		if (req.toParent != null)
+			nodeRow(t, connId, sm, req.toParent, usr); // must exist
+		List<String> kids = children(t, connId, sm, req.toParent, usr);
+		insertAt(kids, req.toIndex, req.nid);
+
+		Insert ins = t.insert(sm.tabl(), usr)
+			.nv(sm.dbRecId(), req.nid)
+			.nv(sm.dbParent(), req.toParent)
+			.nv(sm.dbSort(), 0); // fullpath: by table semantics if configured, then reshaped below
+		if (req.nvs != null)
+			for (String[] nv : req.nvs)
+				ins.nv(nv[0], nv.length > 1 ? nv[1] : null);
+
+		// posted updates are committed after the insert, the new node included
+		ins.post(renumber(t, sm, kids, null))
+			.ins(t.instancontxt(connId, usr));
+
+		if (req.toParent == null)
+			reshapeForest(t, connId, sm, usr);
+		else
+			Reforest.shapeSubtree(connId, req.toParent, sm, usr);
+
+		return respond(t, connId, sm, req.toParent, usr);
+	}
+
+	static void sqliteOnly(String connId) throws SemanticException {
+		if (Connects.driverType(connId) != dbtype.sqlite)
+			throw new SemanticException("Modifying s-tree is only supported for SQLite yet.");
+	}
+
+	/**
+	 * with recursive sub_(nid) as (values('nid') union all
+	 * select me.nid from tabl me join sub_ s on me.parent = s.nid)
+	 * <p>Table sub_: the node and all its descendants, by parent links.</p>
+	 */
+	static WithClause descendants(DATranscxt t, TreeSemantics sm, String nid) throws TransException {
+		return new WithClause(true).with("sub_(nid)", String.format("values(%s)", quote(nid)),
+				t.select(sm.tabl(), "me")
+				 .col("me." + sm.dbRecId())
+				 .je("me", "sub_", "s", sm.dbParent(), "nid"));
+	}
+
+	/**
+	 * Is node a an ancestor of node b, by parent links?
+	 * <pre>with recursive anc_(nid) as (values('b') union all
+	 * select me.parent from tabl me join anc_ a on me.nid = a.nid)
+	 * select nid from anc_ where nid = 'a'</pre>
+	 */
+	static boolean isAncestor(DATranscxt t, String connId, TreeSemantics sm, String a, String b, IUser usr)
+			throws TransException, SQLException {
+		WithClause anc = new WithClause(true).with("anc_(nid)", String.format("values(%s)", quote(b)),
+				t.select(sm.tabl(), "me")
+				 .col("me." + sm.dbParent())
+				 .je("me", "anc_", "a", sm.dbRecId(), "nid"));
+
+		AnResultset rs = (AnResultset) ((Query) t.select("anc_").with(anc))
+				.col("nid")
+				.whereEq("nid", a)
+				.rs(t.instancontxt(connId, usr))
+				.rs(0);
+		return rs.beforeFirst().next();
+	}
+
+	static String quote(String v) {
+		return v == null ? "null" : "'" + v.replace("'", "''") + "'";
+	}
+
+	/** fullpath = fp or fullpath like 'fp.%' (for reading the reloaded subtree) */
+	static Condit subtree(TreeSemantics sm, String fp) {
+		return new Condit(op.eq, sm.dbFullpath(), "'" + fp + "'")
+			.or(new Condit(op.rlike, sm.dbFullpath(), "'" + fp + ".'"));
+	}
+
+	/**
+	 * Response with the reload root and the forest under it (the whole table if root is null).
+	 * The root's own indents are empty: the client keeps the indents it has for the root.
+	 */
+	static AnDatasetResp respond(DATranscxt t, String connId, TreeSemantics sm, String root, IUser usr)
+			throws SQLException, TransException {
+		Query q = t.select(sm.tabl()).orderby(sm.dbFullpath());
+		if (root != null)
+			q.where(subtree(sm, nodeRow(t, connId, sm, root, usr)[2]));
+
+		AnResultset rs = (AnResultset) q.rs(t.instancontxt(connId, usr)).rs(0);
+		return new AnDatasetResp().root(root).forest(DatasetHelper.buildForest(rs, sm));
+	}
+
+	/** Top level changed: top-level fullpath = sort, then reshape every tree. */
+	static void reshapeForest(DATranscxt t, String connId, TreeSemantics sm, IUser usr)
+			throws SQLException, TransException {
+		List<String> tops = children(t, connId, sm, null, usr);
+		if (tops.size() == 0) return;
+
+		ArrayList<Statement<?>> fps = new ArrayList<Statement<?>>(tops.size());
+		for (int x = 1; x < tops.size(); x++)
+			fps.add(t.update(sm.tabl())
+				.nv(sm.dbFullpath(), pad(x + 1))
+				.whereEq(sm.dbRecId(), tops.get(x)));
+
+		t.update(sm.tabl(), usr)
+			.nv(sm.dbFullpath(), pad(1))
+			.whereEq(sm.dbRecId(), tops.get(0))
+			.post(fps)
+			.u(t.instancontxt(connId, usr));
+
+		for (String top : tops)
+			Reforest.shapeSubtree(connId, top, sm, usr);
+	}
+
+	/**
+	 * @return [id, parent (null if blank), fullpath]
+	 * @throws SemanticException not found
+	 */
+	static String[] nodeRow(DATranscxt t, String connId, TreeSemantics sm, String nid, IUser usr)
+			throws SQLException, TransException {
+		if (nid == null)
+			throw new SemanticException("Tree node id is null.");
+
+		AnResultset rs = (AnResultset) t.select(sm.tabl())
+				.col(sm.dbParent()).col(sm.dbFullpath())
+				.whereEq(sm.dbRecId(), nid)
+				.rs(t.instancontxt(connId, usr))
+				.rs(0);
+
+		if (!rs.beforeFirst().next())
+			throw new SemanticException("Can't find tree node %s in %s.", nid, sm.tabl());
+		return new String[] { nid, blank2null(rs.getString(sm.dbParent())), rs.getString(sm.dbFullpath()) };
+	}
+
+	/** Children ids of parent (null for the top level), in sibling order. */
+	static List<String> children(DATranscxt t, String connId, TreeSemantics sm, String parent, IUser usr)
+			throws SQLException, TransException {
+		Query q = t.select(sm.tabl())
+				.col(sm.dbRecId())
+				.orderby(sm.dbSort())
+				.orderby(sm.dbFullpath());
+		if (parent == null)
+			q.where(new Condit(op.isnull, sm.dbParent(), "null").or(new Condit(op.eq, sm.dbParent(), "''")));
+		else
+			q.whereEq(sm.dbParent(), parent);
+
+		AnResultset rs = (AnResultset) q.rs(t.instancontxt(connId, usr)).rs(0);
+		ArrayList<String> kids = new ArrayList<String>();
+		rs.beforeFirst();
+		while (rs.next())
+			kids.add(rs.getString(sm.dbRecId()));
+		return kids;
+	}
+
+	/**
+	 * Lowest common ancestor of two parents, by fullpath prefix.
+	 * @return null if any is the top level, or they are in different trees
+	 */
+	static String lca(DATranscxt t, String connId, TreeSemantics sm, String a, String b, IUser usr)
+			throws SQLException, TransException {
+		if (a == null || b == null) return null;
+		if (a.equals(b)) return a;
+
+		String[] pa = nodeRow(t, connId, sm, a, usr)[2].split("\\.");
+		String[] pb = nodeRow(t, connId, sm, b, usr)[2].split("\\.");
+		int x = 0;
+		while (x < pa.length && x < pb.length && pa[x].equals(pb[x])) x++;
+		if (x == 0) return null;
+
+		AnResultset rs = (AnResultset) t.select(sm.tabl())
+				.col(sm.dbRecId())
+				.whereEq(sm.dbFullpath(), String.join(".", Arrays.copyOf(pa, x)))
+				.rs(t.instancontxt(connId, usr))
+				.rs(0);
+		return rs.beforeFirst().next() ? rs.getString(sm.dbRecId()) : null;
+	}
+
+	static void insertAt(List<String> kids, int ix, String nid) throws SemanticException {
+		if (ix < 0 || ix > kids.size())
+			throw new SemanticException("Index %s out of range [0, %s] for %s.", ix, kids.size(), nid);
+		kids.add(ix, nid);
+	}
+
+	/**
+	 * Update statements setting sort = position + 1, for each of kids.
+	 * @param to appending to, created if null
+	 */
+	static ArrayList<Statement<?>> renumber(DATranscxt t, TreeSemantics sm, List<String> kids,
+			ArrayList<Statement<?>> to) {
+		if (to == null)
+			to = new ArrayList<Statement<?>>(kids.size());
+		for (int x = 0; x < kids.size(); x++)
+			to.add(t.update(sm.tabl())
+				.nv(sm.dbSort(), x + 1)
+				.whereEq(sm.dbRecId(), kids.get(x)));
+		return to;
+	}
+
+	static String pad(int sort) {
+		return String.format("%0" + sortDigits + "d", sort);
+	}
+
+	static boolean eq(String a, String b) {
+		return a == null ? b == null : a.equals(b);
+	}
+
+	static String blank2null(String s) {
+		return s == null || s.trim().length() == 0 ? null : s;
 	}
 
 	/**

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<!-- Semantics of connection main-sqlite, for semantic.jserv's own tests. -->
+<semantics>
+  <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
+  <!-- smtc: semantics type, see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html
+		args of fullpath: parent field, sibling sort field, fullpath field, sort size
+			(2: the same as SemanticTree.Reforest.shapeSubtree())
+   -->
+	<s>
+		<id>doctree.fp</id>
+		<smtc>fullpath</smtc>
+		<tabl>doctree</tabl>
+		<pk>nid</pk>
+		<args>parent,sort,fullpath,2</args>
+	</s>
+  </t>
+</semantics>
