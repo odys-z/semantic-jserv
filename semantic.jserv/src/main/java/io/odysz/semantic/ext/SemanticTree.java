@@ -1,5 +1,7 @@
 package io.odysz.semantic.ext;
 
+import static io.odysz.common.LangExt.eq;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.transact.sql.parts.condition.ExprPart.constr;
 
 import java.io.IOException;
@@ -608,15 +610,16 @@ where p0.parentId is null; </pre>
 		sqliteOnly(connId);
 		DATranscxt t = trans(connId);
 
-		String[] n = nodeRow(t, connId, sm, req.nid, usr);
-		String[] p = req.toParent == null ? null : nodeRow(t, connId, sm, req.toParent, usr);
+		String from = nodeRow(t, connId, sm, req.nid, usr).getString(sm.dbParent());
+		if (!isblank(req.toParent))
+			nodeRow(t, connId, sm, req.toParent, usr); // must exist
 
-		if (req.nid.equals(req.toParent) || p != null && isAncestor(t, connId, sm, req.nid, req.toParent, usr))
+		if (req.nid.equals(req.toParent)
+			|| !isblank(req.toParent) && isAncestor(t, connId, sm, req.nid, req.toParent, usr))
 			return new AnDatasetResp().rejected("cycle");
 
-		String from = n[1];
 		List<String> oldKids = children(t, connId, sm, from, usr);
-		boolean sameParent = eq(from, req.toParent);
+		boolean sameParent = isblank(from) ? isblank(req.toParent) : eq(from, req.toParent);
 		if (sameParent && oldKids.indexOf(req.nid) == req.toIndex)
 			return new AnDatasetResp().rejected("no-op");
 
@@ -636,7 +639,7 @@ where p0.parentId is null; </pre>
 			.post(sorts)
 			.u(t.instancontxt(connId, usr));
 
-		if (from == null || req.toParent == null)
+		if (isblank(from) || isblank(req.toParent))
 			reshapeForest(t, connId, sm, usr);
 		else {
 			Reforest.shapeSubtree(connId, from, sm, usr);
@@ -659,8 +662,7 @@ where p0.parentId is null; </pre>
 		sqliteOnly(connId);
 		DATranscxt t = trans(connId);
 
-		String[] n = nodeRow(t, connId, sm, req.nid, usr);
-		String parent = n[1];
+		String parent = nodeRow(t, connId, sm, req.nid, usr).getString(sm.dbParent());
 		List<String> kids = children(t, connId, sm, parent, usr);
 		kids.remove(req.nid);
 
@@ -676,7 +678,7 @@ where p0.parentId is null; </pre>
 		  .post(renumber(t, sm, kids, null))
 		  .d(t.instancontxt(connId, usr));
 
-		if (parent == null)
+		if (isblank(parent))
 			reshapeForest(t, connId, sm, usr);
 		else
 			Reforest.shapeSubtree(connId, parent, sm, usr);
@@ -697,7 +699,7 @@ where p0.parentId is null; </pre>
 		sqliteOnly(connId);
 		DATranscxt t = trans(connId);
 
-		if (req.toParent != null)
+		if (!isblank(req.toParent))
 			nodeRow(t, connId, sm, req.toParent, usr); // must exist
 		List<String> kids = children(t, connId, sm, req.toParent, usr);
 		insertAt(kids, req.toIndex, req.nid);
@@ -714,7 +716,7 @@ where p0.parentId is null; </pre>
 		ins.post(renumber(t, sm, kids, null))
 			.ins(t.instancontxt(connId, usr));
 
-		if (req.toParent == null)
+		if (isblank(req.toParent))
 			reshapeForest(t, connId, sm, usr);
 		else
 			Reforest.shapeSubtree(connId, req.toParent, sm, usr);
@@ -764,8 +766,8 @@ where p0.parentId is null; </pre>
 	static AnDatasetResp respond(DATranscxt t, String connId, TreeSemantics sm, String root, IUser usr)
 			throws SQLException, TransException {
 		Query q = t.select(sm.tabl()).orderby(sm.dbFullpath());
-		if (root != null)
-			q.where(subtree(sm, nodeRow(t, connId, sm, root, usr)[2]));
+		if (!isblank(root))
+			q.where(subtree(sm, nodeRow(t, connId, sm, root, usr).getString(sm.dbFullpath())));
 
 		AnResultset rs = (AnResultset) q.rs(t.instancontxt(connId, usr)).rs(0);
 		return new AnDatasetResp().root(root).forest(DatasetHelper.buildForest(rs, sm));
@@ -794,12 +796,12 @@ where p0.parentId is null; </pre>
 	}
 
 	/**
-	 * @return [id, parent (null if blank), fullpath]
+	 * @return the node's row, with the cursor on it: parent, fullpath
 	 * @throws SemanticException not found
 	 */
-	static String[] nodeRow(DATranscxt t, String connId, TreeSemantics sm, String nid, IUser usr)
+	static AnResultset nodeRow(DATranscxt t, String connId, TreeSemantics sm, String nid, IUser usr)
 			throws SQLException, TransException {
-		if (nid == null)
+		if (isblank(nid))
 			throw new SemanticException("Tree node id is null.");
 
 		AnResultset rs = (AnResultset) t.select(sm.tabl())
@@ -810,7 +812,7 @@ where p0.parentId is null; </pre>
 
 		if (!rs.beforeFirst().next())
 			throw new SemanticException("Can't find tree node %s in %s.", nid, sm.tabl());
-		return new String[] { nid, blank2null(rs.getString(sm.dbParent())), rs.getString(sm.dbFullpath()) };
+		return rs;
 	}
 
 	/** Children ids of parent (null for the top level), in sibling order. */
@@ -820,17 +822,12 @@ where p0.parentId is null; </pre>
 				.col(sm.dbRecId())
 				.orderby(sm.dbSort())
 				.orderby(sm.dbFullpath());
-		if (parent == null)
+		if (isblank(parent))
 			q.where(new Condit(op.isnull, sm.dbParent(), "null").or(new Condit(op.eq, sm.dbParent(), "''")));
 		else
 			q.whereEq(sm.dbParent(), parent);
 
-		AnResultset rs = (AnResultset) q.rs(t.instancontxt(connId, usr)).rs(0);
-		ArrayList<String> kids = new ArrayList<String>();
-		rs.beforeFirst();
-		while (rs.next())
-			kids.add(rs.getString(sm.dbRecId()));
-		return kids;
+		return ((AnResultset) q.rs(t.instancontxt(connId, usr)).rs(0)).toArr(sm.dbRecId());
 	}
 
 	/**
@@ -839,11 +836,11 @@ where p0.parentId is null; </pre>
 	 */
 	static String lca(DATranscxt t, String connId, TreeSemantics sm, String a, String b, IUser usr)
 			throws SQLException, TransException {
-		if (a == null || b == null) return null;
+		if (isblank(a) || isblank(b)) return null;
 		if (a.equals(b)) return a;
 
-		String[] pa = nodeRow(t, connId, sm, a, usr)[2].split("\\.");
-		String[] pb = nodeRow(t, connId, sm, b, usr)[2].split("\\.");
+		String[] pa = nodeRow(t, connId, sm, a, usr).getString(sm.dbFullpath()).split("\\.");
+		String[] pb = nodeRow(t, connId, sm, b, usr).getString(sm.dbFullpath()).split("\\.");
 		int x = 0;
 		while (x < pa.length && x < pb.length && pa[x].equals(pb[x])) x++;
 		if (x == 0) return null;
@@ -881,13 +878,6 @@ where p0.parentId is null; </pre>
 		return String.format("%0" + sortDigits + "d", sort);
 	}
 
-	static boolean eq(String a, String b) {
-		return a == null ? b == null : a.equals(b);
-	}
-
-	static String blank2null(String s) {
-		return s == null || s.trim().length() == 0 ? null : s;
-	}
 
 	/**
 	 * Update fullpath, recursively.
