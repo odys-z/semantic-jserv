@@ -27,6 +27,7 @@
     "semantic-jserv"    : "{github}/semantic-jserv/semantic.jserv",
     "jserv-album-lib"   : "{github}/semantic-jserv/jserv-album-lib",
     "docsync.jserv"     : "{github}/semantic-jserv/docsync.jserv",
+    "doctree.jserv"     : "{github}/semantic-doc/doctree.jserv",
     "synode.py"         : "{github}/semantic-jserv/synode.py",
     "anclient.jserv"    : "{github}/Anclient/java/eclipse-workspace/anclient.jserv",
     "anclient.py3"      : "{github}/Anclient/py3",
