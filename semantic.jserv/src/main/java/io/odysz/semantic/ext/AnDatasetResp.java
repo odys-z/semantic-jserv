@@ -29,4 +29,20 @@ public class AnDatasetResp extends AnsonResp {
 	}
 
 	public List<?> forest() { return forest; }
+
+	/**
+	 * Tree modification: the root of the reloaded subtree in {@link #forest}, null for the whole forest.
+	 * @since 1.5.20
+	 */
+	String root;
+	public String root() { return root; }
+	public AnDatasetResp root(String r) { root = r; return this; }
+
+	/**
+	 * Tree modification: null if accepted, otherwise the reason, e.g. "cycle", "no-op".
+	 * @since 1.5.20
+	 */
+	String rejected;
+	public String rejected() { return rejected; }
+	public AnDatasetResp rejected(String why) { rejected = why; return this; }
 }

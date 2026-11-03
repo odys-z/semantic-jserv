@@ -1,5 +1,7 @@
 package io.odysz.semantic.ext;
 
+import java.util.ArrayList;
+
 import org.xml.sax.SAXException;
 
 import io.odysz.semantic.DA.DatasetCfg.TreeSemantics;
@@ -21,6 +23,13 @@ public class AnDatasetReq extends AnQueryReq {
 		 * then format tree indents.
 		 */
 		public static final String ds  = "sqltree";
+		
+		/** @since 1.5.20 */
+		public static final String insrt = "i";
+		/** @since 1.5.20 */
+		public static final String umove = "u/move";
+		/** @since 1.5.20 */
+		public static final String del = "d";
 	}
 
 	String sk;
@@ -33,8 +42,22 @@ public class AnDatasetReq extends AnQueryReq {
 	 */
 	protected TreeSemantics stcs;
 
+	/**
+	 * The root of the subtree the request acts on, e.g. retree, tagtree;
+	 * since 1.5.20, the node to be moved, inserted or deleted (with its subtree).
+	 */
 	public String rootId;
 	public String root() { return rootId; }
+
+	/** Tree modification: target parent, null for the top level. @since 1.5.20 */
+	public String toParent;
+	/**
+	 * Tree modification: final position among toParent's children,
+	 * counted after the node is detached (move). @since 1.5.20
+	 */
+	public int toIndex;
+	/** Tree modification: other columns of the inserted node, [name, value]. @since 1.5.20 */
+	public ArrayList<String[]> nvs;
 
 	public AnDatasetReq() { super(null, null);}
 

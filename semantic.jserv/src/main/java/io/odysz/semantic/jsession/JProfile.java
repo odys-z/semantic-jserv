@@ -9,6 +9,8 @@ import io.odysz.anson.Anson;
  * <p>Peers: semantics.py3, semanticshare.io.odysz.semantic.jsession.JProfile;
  * @anclient/semantier / registry.ts.</p>
  *
+ * ISSUE/TODO move the semantic.transact like IUser before next stable release of Portfolio.
+ * 
  * @since 1.5.19
  */
 public class JProfile extends Anson {
