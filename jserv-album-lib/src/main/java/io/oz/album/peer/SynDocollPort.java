@@ -33,6 +33,12 @@ public enum SynDocollPort implements IPort {
 	menu("menu.serv"), settings("settings.less"),
 
 	/**
+	 * doctree.less, semantic-doc's doc-tree tier (doctree.jserv's DoctreeTier).
+	 * Also in {@link AlbumPort}; synodes parse ports with this enum.
+	 */
+	doctree("doctree.less"),
+
+	/**
 	 * By forcing understanding Centralport.register, can accept response from central.
 	 * But this is not correct, and is not possible to fix if anson.java cannot parse multiple
 	 * enum classes for the same field.

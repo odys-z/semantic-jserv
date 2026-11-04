@@ -57,6 +57,7 @@ import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
+import io.oz.sdoc.DoctreeTier;
 import io.oz.syn.DBSynTransBuilder;
 import io.oz.syn.SyncUser;
 import io.oz.syn.SynodeMode;
@@ -350,6 +351,7 @@ public class SynotierJettyApp implements Daemon {
 				new AlbumEcho(settings, cfg), new HeartLink(),
 				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain), cfg, settings))
 			.addDocServPort(cfg, regists.syntities)
+			.addServPort(new DoctreeTier(SynDocollPort.doctree))
 			.addSynodetier(synapp, cfg)
 			.allowCors(synapp.schandler)
 			;

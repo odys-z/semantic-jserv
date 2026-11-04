@@ -95,8 +95,8 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
     print('taskcfg:', taskcfg.deploy.orgid, taskcfg.version)
 
     # was checked at module level, now paths are from taskcfg
-    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/anreact', '0.7.1')
-    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/semantier', '1.0.5')
+    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/anreact', '0.8.0')
+    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/semantier', '1.1.0')
 
     # ISSUE central-uid: Synodes log in central as deploy.admin (synusr.uid()), not centralUid.
     # 0.8.0: both must be 'admin'. See ../issues/central-uid-synode-login.md
@@ -281,6 +281,7 @@ def install_maven_local(c: Context, deploy: str='tasks.closed-test.json', gpg: s
         git('registry-jclient'),
         git('registry-central'),
         git('docsync.jserv'),
+        git('doctree.jserv'),
         git('album-android', 'albumtier'),
 
         git('html-service'),
