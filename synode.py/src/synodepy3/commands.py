@@ -59,14 +59,17 @@ def installed_settings_error(cli: InstallerCli) -> Optional[str]:
         errs.append(f'volume is not an absolute path: {st.volume}')
     if not LangExt.isblank(st.installkey) or LangExt.isblank(st.rootkey):
         errs.append('installkey is set or rootkey is empty, the synode has never been set up with it')
+    if not LangExt.isblank(st.sandbox):
+        errs.append(f'sandbox is "{st.sandbox}", a debugging copy, which must never be upgraded as a service')
     return f'{web_inf}/{settings_json} is not an installed synode\'s: {"; ".join(errs)}.' if errs else None
 
 
 def update_srv(pkg_path: str):
     """
     Update a running Synode install in-place, in the installation folder (cwd):
-      0. check WEB-INF/settings.json is an installed synode's: absolute volume, installkey cleared and
-         rootkey set (installed_settings_error()), not e.g. a package template unpacked over it;
+      0. check WEB-INF/settings.json is an installed synode's: absolute volume, installkey cleared,
+         rootkey set and no sandbox (installed_settings_error()), not e.g. a package template unpacked
+         over it, nor a debugging copy;
          check the new package accepts the installed version: its bin/resource.json upgrade_from
          {min, max}, and no downgrade (PkgResources.refuses()); read out of the package, before
          anything is stopped or changed, so a refused upgrade changes nothing;
