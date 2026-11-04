@@ -273,6 +273,39 @@ public class AppSettings extends Anson {
 	public String centralPswd;
 
 	/**
+	 * Sandbox mode, for debugging a copy of a real synode, e.g. running jserv-album as pm-1-hub
+	 * in an IDE, without touching the central or the peers. Never written by the installers or
+	 * the upgrade (synodepy3 refuses to upgrade a sandbox).
+	 * <ul>
+	 * <li>null / blank: a real synode (default)</li>
+	 * <li>{@link #sandbox_nocentral}: no login, submit or query to {@link #regiserv};
+	 *     the local merge of jservs into syn_node, and syncing with the peers, still run</li>
+	 * <li>{@link #sandbox_isolated}: also no syncing with the peers (no syn_worker)</li>
+	 * </ul>
+	 * @since 0.8.1
+	 */
+	public String sandbox;
+
+	public static final String sandbox_nocentral = "no-central";
+	public static final String sandbox_isolated  = "isolated";
+
+	/** @return whether this synode must not contact the central, see {@link #sandbox} */
+	public boolean sandboxed() {
+		if (isblank(sandbox))
+			return false;
+		if (!eq(sandbox, sandbox_nocentral) && !eq(sandbox, sandbox_isolated))
+			throw new IllegalArgumentException(f(
+				"Unknown sandbox mode in %s: %s, expecting null, \"%s\" or \"%s\".",
+				setup_json, sandbox, sandbox_nocentral, sandbox_isolated));
+		return true;
+	}
+
+	/** @return whether this synode must not contact the central nor the peers */
+	public boolean isolated() {
+		return sandboxed() && eq(sandbox, sandbox_isolated);
+	}
+
+	/**
 	 * Should only be used in win-serv mode.
 	 * @param web_inf
 	 * @return Settings
@@ -690,6 +723,14 @@ setp (6)
 			// (1.3) local != null, jservs_utc > syn_node[others].utc,
 			toSubmit = refresh_myserv(c, synm);
 		
+
+		if (sandboxed()) {
+			// a sandbox never logs in, submits or queries the central, see #sandbox
+			if (toSubmit)
+				logi("[sandbox %s] %s's jserv is changed locally, not submitted to central %s.",
+					sandbox, c.synid, regiserv);
+			return toSubmit;
+		}
 
 		try {
 			if (registryClient == null) {

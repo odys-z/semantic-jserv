@@ -259,6 +259,15 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		this.syncInSnds = syncIns;
 		this.needExpose = false;
 
+		AppSettings s = domanager0.syngleton.settings;
+		if (s.sandboxed())
+			warn("\n================================ SANDBOX ================================\n" +
+				 "  %s is running in sandbox mode \"%s\" (settings.json): it never contacts\n" +
+				 "  the central %s%s.\n" +
+				 "  This is not a working synode. Remove \"sandbox\" for a real one.\n" +
+				 "=========================================================================",
+				 synid, s.sandbox, s.regiserv, s.isolated() ? ", nor syncs with its peers" : "");
+
 		scheduler = Executors.newSingleThreadScheduledExecutor(
 				(r) -> new Thread(r, f("synworker-%s", synid)));
 
@@ -266,7 +275,7 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 
 		scheduler.scheduleWithFixedDelay(workers[0], 2, 5 * 60, TimeUnit.SECONDS);
 		
-		if (syncIns > 1) {
+		if (syncIns > 1 && !s.isolated()) {
 			DATranscxt syntb = new DATranscxt(domanager0.synconn);
 			workers[1] = syn_worker(syntb, err);
 			reschedule_1(0);
@@ -381,7 +390,8 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 	 * @return worker
 	 */
 	private Runnable jserv_worker(OnError err) {
-		mustnonull(domanager0.syngleton.settings.centralPswd);
+		if (!domanager0.syngleton.settings.sandboxed())
+			mustnonull(domanager0.syngleton.settings.centralPswd);
 		
 	  return () -> {
 		boolean stop0 = false;
