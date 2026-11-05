@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static io.odysz.common.LangExt.eq;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -48,14 +52,33 @@ class SemanticTreeTest {
 	static StreeCases jcases;
 	static TreeSemantics sm;
 
+	/** The test db, created empty if missing (Connects requires the file); tests create their tables. */
+	static final String db = "src/test/res/jserv-main.db";
+
 	@BeforeAll
 	static void init() throws Exception {
+		new File(db).createNewFile();
+
 		Connects.init(webinf);
 		DatasetCfg.init(webinf);
 		jcases = Anson.fromPath(json);
 		sm = DatasetCfg.getTreeSemtcs(jcases.sk);
+
+		// Table metas of a connection are loaded once, by its first DATranscxt (SemanticTree.trans()),
+		// so the tables must exist before any test runs one: doctree, and doctree4 of testSortDigits().
+		ArrayList<String> ddl = new ArrayList<String>(jcases.ddl);
+		for (String sql : jcases.ddl) ddl.add(sql.replace(jcases.table, "doctree4"));
+		Connects.commit(conn, null, ddl);
+		Connects.clearMeta(conn);
 	}
 
+	/** Close the connections (on Windows an open db file can't be deleted), then delete the test db. */
+	@AfterAll
+	static void clean() throws Exception {
+		Connects.close();
+		Files.deleteIfExists(Paths.get(db));
+	}
+	
 	/** The fixture alone: verifies loading / building the forest, before any modification. */
 	@Test
 	void testFixture() throws Exception {

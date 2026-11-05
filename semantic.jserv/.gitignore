@@ -8,3 +8,5 @@ RemoteSystemsTempFiles
 **/tester
 test/results
 **/64A+B=C02
+# created by SemanticTreeTest, modified by every run
+/src/test/res/jserv-main.db
