@@ -63,6 +63,25 @@ class SemanticTreeTest {
 		assertTree("fixture", jcases.fixtureTree);
 	}
 
+	/** Sort digits configured for the table: reshaped fullpaths are padded to 4 digits. */
+	@Test
+	void testSortDigits() throws Exception {
+		resetTable();
+		try {
+			SemanticTree.sortDigits(sm.tabl(), 4);
+			SemanticTree.Reforest.shapeSubtree(conn, "D1", sm, new io.odysz.semantic.jserv.JRobot());
+
+			AnResultset rs = Connects.select(conn, String.format(
+					"select nid, fullpath from %s where nid in ('D1', 'a22', 'e1') order by nid", jcases.table));
+			ArrayList<String> fps = new ArrayList<String>();
+			while (rs.next())
+				fps.add(rs.getString("nid") + " " + rs.getString("fullpath"));
+			assertEquals("[D1 01, a22 01.0001.0002.0002, e1 01.0004.0001]", fps.toString());
+		} finally {
+			SemanticTree.sortDigits(sm.tabl(), SemanticTree.defltSortDigits);
+		}
+	}
+
 	@TestFactory
 	Stream<DynamicTest> testModifyTree() {
 		return jcases.steps.stream()
