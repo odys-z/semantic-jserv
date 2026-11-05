@@ -580,32 +580,6 @@ where p0.parentId is null; </pre>
 	 * may set temporary fullpaths; Reforest.shapeSubtree() reshapes them afterwards.
 	 */
 
-	/** Digits of a sibling sort in fullpath, by table.
-	static HashMap<String, Integer> sortDigits = new HashMap<String, Integer>();
-	*/
-
-	/**
-	 * Configure the digits of a sibling sort in the table's fullpath, e.g. 4 for "0001.0012",
-	 * which must be the same as the sort size of the table's fullpath semantics (args[3]).
-	 * Default: {@link #defltSortDigits}.
-	 * 
-	 * @param tabl
-	 * @param digits
-	 * @since 1.5.20
-	public static void sortDigits(String tabl, int digits) {
-		sortDigits.put(tabl, digits);
-	}
-	 */
-
-	/**
-	 * @param sm
-	 * @return digits of a sibling sort in the tree table's fullpath
-	 * @since 1.5.20
-	public static int sortDigits(TreeSemantics sm) {
-		return sortDigits.getOrDefault(sm.tabl(), 2);
-	}
-	 */
-
 	/** Transact builders for tree modification, per connection. */
 	static HashMap<String, DATranscxt> trxes;
 
@@ -901,10 +875,6 @@ where p0.parentId is null; </pre>
 		return to;
 	}
 
-//	static String pad(int sort) {
-//		return String.format("%0" + sh.siblinSize + "d", sort);
-//	}
-
 
 	/**
 	 * Update fullpath, recursively.
@@ -918,7 +888,8 @@ where p0.parentId is null; </pre>
 
 		/**
 		 * Reshape fullpaths of the subtree, by parent links:
-		 * child's fullpath = parent's fullpath + '.' + sort, padded to {@link SemanticTree#sortDigits(TreeSemantics)} digits.
+		 * child's fullpath = parent's fullpath + '.' + sort, padded to the sibling sort size
+		 * of the table's fullpath semantics (args[3], {@link TreeSemantics#siblingWidth(String)}).
 		 * The root's fullpath is not changed.
 		 * <pre>
 		 * with recursive tree_(nid, parent, fullpath) as (
@@ -946,7 +917,7 @@ where p0.parentId is null; </pre>
 			DATranscxt t = trans(connId);
 			String id = sm.dbRecId(), pid = sm.dbParent(), fp = sm.dbFullpath();
 
-			// p.fullpath || '.' || substr('00' || me.sort, -2, 2), for 2 digits
+			// p.fullpath || '.' || substr('0..0' || me.sort, -n, n), n = args[3] of the fullpath semantics
 			int sortDigits = sm.siblingWidth(connId);
 			ExprPart path = new Funcall("concat", new ExprPart[] {
 					Colname.parseFullname("p.fullpath"), constr("."),

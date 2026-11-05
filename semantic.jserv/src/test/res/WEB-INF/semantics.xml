@@ -5,7 +5,7 @@
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
   <!-- smtc: semantics type, see javadoc: https://odys-z.github.io/javadoc/semantic.DA/io/odysz/semantic/DASemantics.smtype.html
 		args of fullpath: parent field, sibling sort field, fullpath field, sort size
-			(2: the same as SemanticTree.Reforest.shapeSubtree())
+			(SemanticTree reshapes with the same size, TreeSemantics.siblingWidth())
    -->
 	<s>
 		<id>doctree.fp</id>
@@ -13,6 +13,14 @@
 		<tabl>doctree</tabl>
 		<pk>nid</pk>
 		<args>parent,sort,fullpath,2</args>
+	</s>
+	<s>
+		<!-- SemanticTreeTest.testSortDigits() -->
+		<id>doctree4.fp</id>
+		<smtc>fullpath</smtc>
+		<tabl>doctree4</tabl>
+		<pk>nid</pk>
+		<args>parent,sort,fullpath,4</args>
 	</s>
   </t>
 </semantics>
