@@ -2,7 +2,6 @@ package io.oz.jserv.docs.syn;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Set;
 
 import io.odysz.common.AESHelper2;
 import io.odysz.semantic.jsession.AnSessionReq;
@@ -55,8 +54,6 @@ public class DocUser extends SyncUser {
 
 	@Override public ArrayList<String> dbLog(ArrayList<String> sqls) { return null; }
 
-	protected Set<String> tempDirs;
-	
 	@Override
 	public TableMeta meta(String ... connId) throws SQLException, TransException {
 		return new JUserMeta("a_users");

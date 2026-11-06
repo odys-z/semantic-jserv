@@ -27,6 +27,18 @@
   		<dbg>1</dbg>
   		<smtcs>semantics-syn.xml</smtcs>
 	</c>
+
+  	<c>
+  		<!-- semantic-doc's doc-tree working copy (doctree.jserv, DoctreeDB), not synchronized.
+  			Id: "doctree." + settings.vol_name, see SynotierJettyApp.doctreeConn(). -->
+  		<id>doctree.VOLUME_HOME</id>
+  		<type>sqlite</type>
+  		<src>$VOLUME_HOME/doctree.db</src>
+  		<usr>test</usr>
+  		<pswd>test</pswd>
+  		<dbg></dbg>
+  		<smtcs>semantics-doctree.xml</smtcs>
+  	</c>
   </t>
 
   <!-- NOTE: dbcp configuration shouldn't work because you don't have container providing the connections.

@@ -91,6 +91,13 @@
 	</dependency>
 
 	<dependency>
+		<!-- 1.5.26: DASemantext.isRadix32(), synodes' auto keys must be radix 32 -->
+	    <groupId>io.github.odys-z</groupId>
+	    <artifactId>semantic.DA</artifactId>
+	    <version>[1.5.26,2.0.0-SNAPSHOT)</version>
+	</dependency>
+
+	<dependency>
 		<!-- semantic-doc's doc-tree tier, github semantic-doc/doctree.jserv, not published yet -->
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>doctree.jserv</artifactId>

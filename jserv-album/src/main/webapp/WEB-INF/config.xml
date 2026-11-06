@@ -3,8 +3,12 @@
 <configs>
   <t id="default" pk="k" columns="k,v">
     <c>
+    	<!-- "windows" (or win32, rad32, radix32): auto keys in Radix32 (0-9A-V), on every synode, whatever its OS.
+    		Auto keys prefix file names in the volume, and Windows file names are case-insensitive.
+    		Read only by semantic-DA's DASemantext.radix64_32(). Radix32 keys never equal earlier
+    		Radix64 ones (same digits, same values), as long as a sequence stays below 32^id-len. -->
     	<k>file-sys</k>
-    	<v></v>
+    	<v>windows</v>
     </c>
     <c>
     	<k>id-len</k>

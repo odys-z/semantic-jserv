@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<!-- Semantics of the doc-tree db (DoctreeDB). The same as doctree.jserv's test resource.
+	fullpath args: parent field, sibling sort field, fullpath field, sort size
+		(sort size: DoctreeDB.sortDigits, registered to SemanticTree.sortDigits(tabl, digits))
+ -->
+<semantics>
+  <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
+	<s>
+		<!-- doc id, unique across synodes: synode + '.' + auto key, e.g. X.000A,
+			in Radix32 with config.xml file-sys = windows, id-len digits.
+			args: pk, start, prefix (column synode) -->
+		<id>docs.pk</id>
+		<smtc>autopk</smtc>
+		<tabl>s_docs</tabl>
+		<pk>docId</pk>
+		<args>docId,0,synode</args>
+	</s>
+	<s>
+		<id>docnodes.fp</id>
+		<smtc>fullpath</smtc>
+		<tabl>s_docnodes</tabl>
+		<pk>nid</pk>
+		<args>parentId,sort,fullpath,4</args>
+	</s>
+  </t>
+</semantics>

@@ -322,8 +322,8 @@ public class AnSession extends ServPort<AnSessionReq> implements ISessionVerifie
 						IUser usr = users.remove(ssid);
 
 						if (usr != null) {
-							SemanticObject resp = usr.logout();
-							write(response, AnsonMsg.ok(p, resp.msg()),
+							SemanticObject resp = usr.logout(); // IUser.logout() may return null, e.g. SyncUser
+							write(response, AnsonMsg.ok(p, resp == null ? "Logged out." : resp.msg()),
 									msg.opts());
 						}
 						else

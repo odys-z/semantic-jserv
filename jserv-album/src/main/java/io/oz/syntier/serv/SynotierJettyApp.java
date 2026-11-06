@@ -30,6 +30,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import com.google.zxing.WriterException;
 
 import io.odysz.common.Configs;
+import io.odysz.common.Configs.keys;
 import io.odysz.common.DateFormat;
 import io.odysz.common.EnvPath;
 import io.odysz.common.FilenameUtils;
@@ -44,6 +45,7 @@ import io.odysz.semantic.jserv.R.AnQuery;
 import io.odysz.semantic.jserv.U.AnUpdate;
 import io.odysz.semantic.jsession.AnSession;
 import io.odysz.semantic.jsession.HeartLink;
+import io.odysz.semantic.DASemantext;
 import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.helpers.QrProps;
@@ -57,7 +59,10 @@ import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
+import io.oz.sdoc.DoctreeDBHelper;
 import io.oz.sdoc.DoctreeTier;
+import io.oz.sdoc.docx.DocxWalker;
+import io.oz.sdoc.imports.DocxSource;
 import io.oz.syn.DBSynTransBuilder;
 import io.oz.syn.SyncUser;
 import io.oz.syn.SynodeMode;
@@ -228,6 +233,12 @@ public class SynotierJettyApp implements Daemon {
 			String srcwebinf = ifnull(System.getProperty("WEB-INF"), webinf);
 			JProtocol.setup(servpath, SynDocollPort.docoll);
 
+			// before installing, which may create records with auto keys
+			Configs.init(srcwebinf);
+
+			// 0.8.1: Not sure if a radix64 id prefixed file name can by synchronized to a case-insensitive file system (Windows) by synodes. 
+			mustRadix32(srcwebinf);
+
 			AppSettings settings = AppSettings.checkInstall(servpath,
 					srcwebinf, config_xml, _0(args, settings_json), false);
 
@@ -282,6 +293,10 @@ public class SynotierJettyApp implements Daemon {
 		Utils.logi("%s : %s", settings.vol_name, EnvPath.getEnv(settings.vol_name));
 
 		Configs.init(webinf);
+		mustRadix32(webinf);
+		// before Connects.init(), which requires the file: a volume of an earlier version has no doc-tree db.
+		// An empty file; the tables are created at the first doc-tree request (DoctreeTier).
+		DoctreeDBHelper.touch(webinf, f("$%s/%s", settings.vol_name, doctree_db));
 		Connects.init(webinf);
 		Syngleton.appName = ifnull(Configs.getCfg("app-name"), "Portfolio 0.7");
 
@@ -321,6 +336,36 @@ public class SynotierJettyApp implements Daemon {
 	}
 
 	/**
+	 * Synodes generate auto keys in Radix32 only, on every OS: auto keys prefix file names
+	 * in volumes, and are synchronized to synodes on case-insensitive file systems (Windows).
+	 * 
+	 * @param webinf
+	 * @throws SemanticException config.xml/k=file-sys is not a radix 32 keyword,
+	 * see {@link DASemantext#isRadix32(String)}
+	 */
+	static void mustRadix32(String webinf) throws SemanticException {
+		String fs = Configs.getCfg(keys.fileSys);
+		if (!DASemantext.isRadix32(fs))
+			throw new SemanticException(
+				"Synodes must generate auto keys in radix 32. Configure %s/config.xml, file-sys = windows (or radix32). Current value: '%s'.",
+				webinf, fs);
+		DASemantext.file_sys = 0; // read it again, if any key was generated before
+	}
+
+	/** semantic-doc's doc-tree working copy, in the volume */
+	static final String doctree_db = "doctree.db";
+
+	/**
+	 * Connection id of the doc-tree db, configured in connects.xml for each volume.
+	 * 
+	 * @param settings
+	 * @return "doctree." + settings.vol_name, e.g. "doctree.VOLUME_HOME"
+	static String doctreeConn(AppSettings settings) {
+		return "doctree." + settings.vol_name;
+	}
+	 */
+
+	/**
 	 * Create an application instance working as a synode tier,
 	 * by loading configurations, registering ServPorts.
 	 * @param urlpath e. g. jserv-album
@@ -351,8 +396,11 @@ public class SynotierJettyApp implements Daemon {
 				new AlbumEcho(settings, cfg), new HeartLink(),
 				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain), cfg, settings))
 			.addDocServPort(cfg, regists.syntities)
-			.addServPort(new DoctreeTier(SynDocollPort.doctree))
 			.addSynodetier(synapp, cfg)
+//			.addServPort(new DoctreeTier(SynDocollPort.doctree)
+//					.conn(doctreeConn(settings), synid)
+//					.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks))
+			.addServPort(new DoctreeTier(SynDocollPort.doctree, settings.semanticDoconn, synid).syntityCfg(cfg))
 			.allowCors(synapp.schandler)
 			;
 	}

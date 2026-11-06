@@ -65,7 +65,7 @@ import io.oz.syn.registry.YellowPages;
  * Jetty 12 Programming Guide</a>, Jetty Documentation</li>
  * </ol>
  * 
- * @author odys-z@github.com
+ * @author ody
  *
  */
 public class SynotierJettyApp {
