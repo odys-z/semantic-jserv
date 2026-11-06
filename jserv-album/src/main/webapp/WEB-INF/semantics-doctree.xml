@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE xml>
-<!-- Semantics of the doc-tree db (DoctreeDB). The same as doctree.jserv's test resource.
+<!-- Semantics of the doc-tree db (DoctreeDB). The same as doctree.jserv's test resource; the name is hard coded (DoctreeDBHelper.smtcs).
 	fullpath args: parent field, sibling sort field, fullpath field, sort size
-		(sort size: DoctreeDB.sortDigits, registered to SemanticTree.sortDigits(tabl, digits))
+		(sort size: the only place configuring it; SemanticTree and the importer read it, DocNodeMeta.siblingWidth())
  -->
 <semantics>
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">

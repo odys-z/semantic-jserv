@@ -294,9 +294,6 @@ public class SynotierJettyApp implements Daemon {
 
 		Configs.init(webinf);
 		mustRadix32(webinf);
-		// before Connects.init(), which requires the file: a volume of an earlier version has no doc-tree db.
-		// An empty file; the tables are created at the first doc-tree request (DoctreeTier).
-		DoctreeDBHelper.touch(webinf, f("$%s/%s", settings.vol_name, doctree_db));
 		Connects.init(webinf);
 		Syngleton.appName = ifnull(Configs.getCfg("app-name"), "Portfolio 0.7");
 
@@ -352,19 +349,6 @@ public class SynotierJettyApp implements Daemon {
 		DASemantext.file_sys = 0; // read it again, if any key was generated before
 	}
 
-	/** semantic-doc's doc-tree working copy, in the volume */
-	static final String doctree_db = "doctree.db";
-
-	/**
-	 * Connection id of the doc-tree db, configured in connects.xml for each volume.
-	 * 
-	 * @param settings
-	 * @return "doctree." + settings.vol_name, e.g. "doctree.VOLUME_HOME"
-	static String doctreeConn(AppSettings settings) {
-		return "doctree." + settings.vol_name;
-	}
-	 */
-
 	/**
 	 * Create an application instance working as a synode tier,
 	 * by loading configurations, registering ServPorts.
@@ -397,10 +381,9 @@ public class SynotierJettyApp implements Daemon {
 				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain), cfg, settings))
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)
-//			.addServPort(new DoctreeTier(SynDocollPort.doctree)
-//					.conn(doctreeConn(settings), synid)
-//					.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks))
-			.addServPort(new DoctreeTier(SynDocollPort.doctree, settings.semanticDoconn, synid).syntityCfg(cfg))
+			.addServPort(new DoctreeTier(SynDocollPort.doctree)
+					.conn(DoctreeDBHelper.connect(webinf, settings.volume, synid), synid)
+					.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks))
 			.allowCors(synapp.schandler)
 			;
 	}
