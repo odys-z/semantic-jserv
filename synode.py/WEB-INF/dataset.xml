@@ -148,5 +148,11 @@ from a_orgs o left join orgrec on o.orgId = orgrec.orgId left join h_photo_org p
   </sqlit>
   <s-tree>checked,a_orgs,orgId nodeId,parent,fullpath,sort,text,children,false</s-tree>
  </c>
+ <c>
+   <!-- semantic-doc's doc tree (doctree.jserv DoctreeTier.sk): only the s-tree is used,
+        the nodes are selected by DoctreeTier; ptext is sent as text -->
+   <sk>sdoc.tree</sk>
+   <s-tree>,s_docnodes,nid,parentId,fullpath,sort,ptext text,kind,false</s-tree>
+ </c>
 </t>
 </dataset>
