@@ -1,0 +1,48 @@
+/*
+ * RST role styles. Shared by the editor AND the Sphinx theme
+ * (add to html_css_files in conf.py) so both render identically.
+ * docutils renders :large:`x` as <span class="large">x</span>.
+ * Role names are listed in rst/marks.ts (ROLES).
+ */
+
+/* size */
+.small   { font-size: 0.85em; }
+.large   { font-size: 1.25em; }
+.x-large { font-size: 1.5em; }
+
+/* colour */
+.red    { color: #c0392b; }
+.orange { color: #d35400; }
+.green  { color: #1e8449; }
+.blue   { color: #1f5fbf; }
+.gray   { color: #707070; }
+
+/* background */
+.bg-yellow { background-color: #fff3a3; }
+.bg-green  { background-color: #d5f5dc; }
+.bg-blue   { background-color: #dbe9ff; }
+.bg-red    { background-color: #fde0dc; }
+.bg-gray   { background-color: #ececec; }
+
+/* decoration (both on one element in a composite role) */
+.underline        { text-decoration: underline; }
+.strike           { text-decoration: line-through; }
+.underline.strike { text-decoration: underline line-through; }
+
+/*
+ * Composite roles: effects combined on one element, e.g.
+ *   .. role:: strong_em_red(strong)
+ *      :class: sd-em red
+ * The first of sup / sub / literal / strong / emphasis is the base role
+ * (<sup>, <code>, <strong>, …); the others become these classes.
+ */
+.sd-strong { font-weight: bold; }
+.sd-em     { font-style: italic; }
+.sd-code   { font-family: SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 0.9em; }
+
+/*
+ * Formulas take size / colour / background only. Sphinx keeps the classes on
+ * the formula: <span class="red math notranslate nohighlight"> (inline) and
+ * <div class="bg-yellow math …"> (.. math:: with :class:); MathJax and KaTeX
+ * draw in the inherited colour. Plain docutils MathML output drops them.
+ */

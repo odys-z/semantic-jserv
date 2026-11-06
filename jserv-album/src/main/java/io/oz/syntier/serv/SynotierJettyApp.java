@@ -2,6 +2,7 @@ package io.oz.syntier.serv;
 
 import static io.odysz.common.LangExt._0;
 import static io.odysz.common.LangExt.f;
+import static io.odysz.common.LangExt.isblank;
 import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
@@ -342,6 +343,8 @@ public class SynotierJettyApp implements Daemon {
 	 */
 	static void mustRadix32(String webinf) throws SemanticException {
 		String fs = Configs.getCfg(keys.fileSys);
+		if (isblank(fs))
+			fs = "radix32";
 		if (!DASemantext.isRadix32(fs))
 			throw new SemanticException(
 				"Synodes must generate auto keys in radix 32. Configure %s/config.xml, file-sys = windows (or radix32). Current value: '%s'.",
