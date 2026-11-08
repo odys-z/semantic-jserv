@@ -3,11 +3,5 @@
 <!-- Datasets for semantic.jserv's own tests. For the fields, see src/main/webapp/WEB-INF/dataset.xml -->
 <dataset>
 <t id="ds" pk="sk" columns="sk,conn,cols,mysql,orcl,ms2k,sqlit,s-tree">
-	<c>
-		<!-- SemanticTreeTest -->
-		<sk>test.doctree</sk>
-		<sqlit>select nid, parent, sort, fullpath, nodetype, text from doctree order by fullpath</sqlit>
-		<s-tree>,doctree,nid,parent,fullpath,sort,text,nodetype,false</s-tree>
-	</c>
 </t>
 </dataset>

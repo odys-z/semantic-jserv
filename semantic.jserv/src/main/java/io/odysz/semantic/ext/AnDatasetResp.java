@@ -39,7 +39,7 @@ public class AnDatasetResp extends AnsonResp {
 	public AnDatasetResp root(String r) { root = r; return this; }
 
 	/**
-	 * Tree modification: null if accepted, otherwise the reason, e.g. "cycle", "no-op".
+	 * Tree modification: null if accepted, otherwise the reason, see {@link TreeModify.Rejected}.
 	 * @since 1.5.20
 	 */
 	TreeModify.Rejected rejected;

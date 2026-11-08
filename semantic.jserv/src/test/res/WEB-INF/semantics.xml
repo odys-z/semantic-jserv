@@ -14,13 +14,5 @@
 		<pk>nid</pk>
 		<args>parent,sort,fullpath,2</args>
 	</s>
-	<s>
-		<!-- SemanticTreeTest.testSortDigits() -->
-		<id>doctree4.fp</id>
-		<smtc>fullpath</smtc>
-		<tabl>doctree4</tabl>
-		<pk>nid</pk>
-		<args>parent,sort,fullpath,4</args>
-	</s>
   </t>
 </semantics>

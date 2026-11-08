@@ -599,8 +599,8 @@ where p0.parentId is null; </pre>
 	 * Modify a tree as the user means it, see {@link TreeModify}: work out the parent and
 	 * position, check the table's rules ({@link ITreeMeta}), then move / insert / remove.
 	 *
-	 * <p>Rejected, with the table unchanged ({@link TreeModify.Rejected}): no-op (e.g. the first
-	 * child up), cycle, not-holder (under a node that can't have children), fixed-roots.</p>
+	 * <p>Rejected, with the table unchanged ({@link TreeModify.Rejected}): noop (e.g. the first
+	 * child up), cycle, holder (under a node that can't have children), fixed (a top-level node).</p>
 	 *
 	 * @param connId
 	 * @param m the table
@@ -700,7 +700,7 @@ where p0.parentId is null; </pre>
 	 * which is the final position among parent's children, counted after the node is detached.
 	 * 
 	 * <p>Rejected, with the table unchanged: cycle (into itself or a descendant),
-	 * no-op (same parent, same index).</p>
+	 * noop (same parent, same index).</p>
 	 * 
 	 * @return response with reload root, or rejected reason
 	 * @throws SemanticException node or parent not found, index out of range
@@ -929,6 +929,25 @@ where p0.parentId is null; </pre>
 			q.whereEq(sm.dbParent(), parent);
 
 		return ((AnResultset) q.rs(t.instancontxt(connId, usr)).rs(0)).toArr(sm.dbRecId());
+	}
+
+	/**
+	 * Helper: children ids of a node, in sibling order.
+	 * @param parentId null for the top level
+	 * @return e.g. [a1, a3, a2]
+	 */
+	public static List<String> childIds(String connId, TreeSemantics sm, String parentId, IUser usr)
+			throws SQLException, TransException {
+		return children(trans(connId), connId, sm, parentId, usr);
+	}
+
+	/**
+	 * Helper: a node's fullpath, as stored.
+	 * @throws SemanticException not found
+	 */
+	public static String fullpathOf(String connId, TreeSemantics sm, String nid, IUser usr)
+			throws SQLException, TransException {
+		return nodeRow(trans(connId), connId, sm, nid, usr).getString(sm.dbFullpath());
 	}
 
 	/**
