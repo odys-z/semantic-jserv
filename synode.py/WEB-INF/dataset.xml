@@ -99,7 +99,7 @@ from h_photos f where f.family = '%1$s' group by f.folder
   <sk>tree-docs-folder</sk>
   <sqlit>select h.pid, '%1$s' || '.' || h.folder folder, h.tags, h.shareby, h.docname, h.pdate sort, family || '.' || h.folder || h.pid fullpath, 'doc' nodetype, css, filesize,
   null pdf, null txt, null zip, 1 total,
-  case when (geox != 0) then geox || ',' || geoy end geo, null fav, mime
+  case when (geox != 0) then geox || ',' || geoy end geo, null fav, mime, h.io_oz_synuid synuid
   from h_photos h where family = '%1$s' and (substr(mime, 0, 6) != 'image' and substr(mime, 0, 6) != 'video' and substr(mime, 0, 6) !='audio')
   union select * from (
   select '%1$s' || '.' || folder, folder, max(tags) tags, max(shareby) shareby, folder docname, folder sort, family || '.' || folder fullpath, 'dir' nodetype, css, null filesize,
@@ -107,7 +107,7 @@ from h_photos f where f.family = '%1$s' group by f.folder
   sum(case when substr(mime, 0, 5) = 'text' then 1 else 0 end) txt,
   sum(case when substr(mime, 0, 16) = 'application/zip' then 1 else 0 end) zip,
   sum(case when mime is not null then 1 else 0 end) total,
-  sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime
+  sum(CASE WHEN geox != 0 THEN 1 ELSE 0 END) geo , 0 fav, mime, null synuid
   from h_photos f where f.family = '%1$s' and substr(mime, 0, 6) != 'image' and substr(mime, 0, 6) != 'video' and substr(mime, 0, 6) !='audio'
   group by f.folder
   ) where total > 0 order by fullpath
